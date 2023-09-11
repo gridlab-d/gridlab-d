@@ -32,14 +32,19 @@ EXPORT STATUS node_update_shunt_values(OBJECT *obj);
 #define voltageA voltage[0]		/// phase A voltage to ground
 #define voltageB voltage[1]		/// phase B voltage to ground
 #define voltageC voltage[2]		/// phase C voltage to ground
+#define voltageN voltage[3]		/// phase N voltage to ground
 
 #define voltageAB voltaged[0]	/// phase A-B voltage
 #define voltageBC voltaged[1]	/// phase B-C voltage
 #define voltageCA voltaged[2]	/// phase C-A voltage
+#define voltageAN voltaged[3]	/// phase A-N voltage
+#define voltageBN voltaged[4]	/// phase B-N voltage
+#define voltageCN voltaged[5]	/// phase C-N voltage
 
 #define currentA current[0]		/// phase A current accumulator
 #define currentB current[1]		/// phase B current accumulator
 #define currentC current[2]		/// phase C current accumulator
+#define currentN current[3]		/// phase N current accumulator
 
 #define powerA power[0]			/// phase A power injection accumulator (AB for Delta)
 #define powerB power[1]			/// phase B power injection accumulator (BC for Delta)
@@ -48,11 +53,12 @@ EXPORT STATUS node_update_shunt_values(OBJECT *obj);
 #define shuntA shunt[0]			/// phase A shunt admittance accumulator (reset to 1/impedance on each pass)
 #define shuntB shunt[1]			/// phase B shunt admittance accumulator (reset to 1/impedance on each pass)
 #define shuntC shunt[2]			/// phase C shunt admittance accumulator (reset to 1/impedance on each pass)
+#define shuntN shunt[3]			/// phase C shunt admittance accumulator (reset to 1/impedance on each pass)
 
 // these are only valid when phases&PHASE_S is set
 #define voltage1 voltage[0]		/// phase 1 voltage to ground
 #define voltage2 voltage[1]		/// phase 2 voltage to ground
-#define voltageN voltage[2]		/// phase N voltage to ground
+#define voltage12N voltage[2]	/// phase N voltage to ground
 
 #define voltage12 voltaged[0]	/// phase 1-2 voltage
 #define voltage2N voltaged[1]	/// phase 2-N voltage
@@ -60,7 +66,7 @@ EXPORT STATUS node_update_shunt_values(OBJECT *obj);
 
 #define current1 current[0]		/// line 1 constant current accumulator
 #define current2 current[1]		/// line 2 constant current accumulator
-#define currentN current[2]	    /// line N constant current accumulator
+#define current12N current[2]	/// line N constant current accumulator
 
 #define power1 power[0]			/// phase 1 constant power load
 #define power2 power[1]			/// phase 2 constant power load
@@ -98,11 +104,11 @@ typedef struct {
 class node : public powerflow_object
 {
 private:
-	gld::complex last_voltage[3];		///< voltage at last pass
-	gld::complex current_inj[3];			///< current injection (total of current+shunt+power)
+	gld::complex last_voltage[4];		///< voltage at last pass
+	gld::complex current_inj[4];			///< current injection (total of current+shunt+power)
 	TIMESTAMP prev_NTime;			///< Previous timestep - used for propogating child properties
-	gld::complex last_child_power[4][3];	///< Previous power values - used for child object propogation
-	gld::complex last_child_power_dy[6][3];	///< Previous power values joint - used for child object propogation
+	gld::complex last_child_power[4][4];	///< Previous power values - used for child object propogation
+	gld::complex last_child_power_dy[10][3];	///< Previous power values joint - used for child object propogation
 	gld::complex last_child_current12;	///< Previous current value - used for child object propogation (namely triplex)
 	bool deltamode_inclusive;		///< Flag for deltamode functionality, just to prevent having to mask the flags
 	gld::complex BusHistTerm[3];			///< Pointer for array used to store load history value for deltamode-based in-rush computations
@@ -113,8 +119,8 @@ private:
 	gld::complex *LoadHistTermL;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Inductive terms
 	gld::complex *LoadHistTermC;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Shunt capacitance terms
 
-	gld::complex shunt_change_check[3];		///< Change tracker for FPI - to trigger update of "standard" loads
-	gld::complex shunt_change_check_dy[6];	///< Change tracker for FPI - trigger update of explicit Wye-Delta loads
+	gld::complex shunt_change_check[4];		///< Change tracker for FPI - to trigger update of "standard" loads
+	gld::complex shunt_change_check_dy[10];	///< Change tracker for FPI - trigger update of explicit Wye-Delta loads
 	gld::complex *Extra_Data_Track_FPI;		///Link to extra data tracker information (NR-FPI)
 
 	//Frequently measurement variables
@@ -214,23 +220,23 @@ public:
 	double maximum_voltage_error;  // convergence voltage limit
 
 	// properties
-	gld::complex voltage[3];		/// bus voltage to ground
-	gld::complex voltaged[3];	/// bus voltage differences
-	gld::complex current[3];		/// bus current injection (positive = in)
-	gld::complex pre_rotated_current[3];	/// bus current that has been rotated already for deltamode (direct post to powerflow)
-	gld::complex deltamode_dynamic_current[3];	/// bus current that is pre-rotated, but also has ability to be reset within powerflow
+	gld::complex voltage[4];		/// bus voltage to ground
+	gld::complex voltaged[6];	/// bus voltage differences
+	gld::complex current[4];		/// bus current injection (positive = in)
+	gld::complex pre_rotated_current[4];	/// bus current that has been rotated already for deltamode (direct post to powerflow)
+	gld::complex deltamode_dynamic_current[4];	/// bus current that is pre-rotated, but also has ability to be reset within powerflow
 	gld::complex deltamode_PGenTotal;			/// Bus generated power - used deltamode
-	gld::complex power[3];		/// bus power injection (positive = in)
-	gld::complex shunt[3];		/// bus shunt admittance 
-	gld::complex current_dy[6];	/// bus current injection (positive = in), explicitly specify delta and wye portions
-	gld::complex power_dy[6];	/// bus power injection (positive = in), explicitly specify delta and wye portions
-	gld::complex shunt_dy[6];	/// bus shunt admittance, explicitly specify delta and wye portions
+	gld::complex power[4];		/// bus power injection (positive = in)
+	gld::complex shunt[4];		/// bus shunt admittance 
+	gld::complex current_dy[10];	/// bus current injection (positive = in), explicitly specify delta and wye portions
+	gld::complex power_dy[10];	/// bus power injection (positive = in), explicitly specify delta and wye portions
+	gld::complex shunt_dy[10];	/// bus shunt admittance, explicitly specify delta and wye portions
 	gld::complex *full_Y;		/// full 3x3 bus shunt admittance - populate as necessary
-	gld::complex full_Y_load[3][3];	/// 3x3 bus shunt admittance - meant to update - used for in-rush or FPI
+	gld::complex full_Y_load[4][4];	/// 3x3 bus shunt admittance - meant to update - used for in-rush or FPI
 	gld::complex *full_Y_all;	/// Full 3x3 bus admittance with "other" contributions (self of full admittance) - populate as necessary
 	DYN_NODE_TYPE node_type;/// Variable to indicate what we are - prevents needing a gl_object_isa EVERY...SINGLE...TIME in an already slow dynamic simulation
 	gld::complex current12;		/// Used for phase 1-2 current injections in triplex
-	gld::complex nom_res_curr[3];/// Used for the inclusion of nominal residential currents (for angle adjustments)
+	gld::complex nom_res_curr[4];/// Used for the inclusion of nominal residential currents (for angle adjustments)
 	bool house_present;		/// Indicator flag for a house being attached (NR primarily)
 	bool dynamic_norton;	/// Norton-equivalent posting on this bus -- deltamode and diesel generator ties
 	bool dynamic_norton_child;	/// Flag to indicate a childed node object is posting to this bus - prevents a double-accumulation in meters

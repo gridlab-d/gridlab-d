@@ -465,7 +465,7 @@ switch(state) {
 			}
 		else if (cycle_time<=0 && control_check == false)//one-over
 			{
-					state = DRYER_MOTOR_COIL_ONLY;;
+					state = DRYER_MOTOR_COIL_ONLY;
 					double cycle_t = 1000 * (energy_needed - energy_used) / (motor_power + coil_power[0]) * 60 * 60;
 					double interval = pulse_interval[1];
 					control_check = true;

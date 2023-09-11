@@ -646,7 +646,7 @@ int inverter::init(OBJECT *parent)
 	bool temp_bool_value;
 	int temp_idx_x, temp_idx_y;
 	gld::complex temp_complex_value;
-	complex_array temp_complex_array, temp_child_complex_array;;
+	complex_array temp_complex_array, temp_child_complex_array;
 	set parent_phases;
 	OBJECT *tmp_obj = nullptr;
 	gld_object *tmp_gld_obj = nullptr;
@@ -2162,7 +2162,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				if (pf_reg_activate == pf_reg_deactivate)
 				{
-					gl_warning("inverter:%s - pf_reg_activate and pf_reg_deactivate are equal - pf regluation may not behave properly and/or oscillate.",obj->name);;
+					gl_warning("inverter:%s - pf_reg_activate and pf_reg_deactivate are equal - pf regluation may not behave properly and/or oscillate.",obj->name);
 				}
 			}
 		}
@@ -2836,7 +2836,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 						if ( ((phases & PHASE_A) == PHASE_A) && phaseA_V_Out.Mag() != 0)
 						{
-							power_val[0] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+							power_val[0] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;
 							phaseA_I_Out = ~(power_val[0] / phaseA_V_Out);
 						}
 						else 
@@ -2844,7 +2844,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 						if ( ((phases & PHASE_B) == PHASE_B) && phaseB_V_Out.Mag() != 0)
 						{
-							power_val[1] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+							power_val[1] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;
 							phaseB_I_Out = ~(power_val[1] / phaseB_V_Out);
 						}
 						else 
@@ -2852,7 +2852,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 						if ( ((phases & PHASE_C) == PHASE_C) && phaseC_V_Out.Mag() != 0)
 						{
-							power_val[2] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+							power_val[2] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;
 							phaseC_I_Out = ~(power_val[2] / phaseC_V_Out);
 						}
 						else 

@@ -773,7 +773,7 @@ EXPORT int create_refrigerator(OBJECT **obj, OBJECT *parent)
 	*obj = gl_create_object(refrigerator::oclass);
 	if (*obj!=NULL)
 	{
-		refrigerator *my = OBJECTDATA(*obj,refrigerator);;
+		refrigerator *my = OBJECTDATA(*obj,refrigerator);
 		gl_set_parent(*obj,parent);
 		my->create();
 		return 1;

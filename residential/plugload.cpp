@@ -144,7 +144,7 @@ EXPORT int create_plugload(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(plugload::oclass);
 		if (*obj!=NULL)
 		{
-			plugload *my = OBJECTDATA(*obj,plugload);;
+			plugload *my = OBJECTDATA(*obj,plugload);
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;

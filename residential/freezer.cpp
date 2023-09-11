@@ -297,7 +297,7 @@ EXPORT int create_freezer(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(freezer::oclass);
 		if (*obj!=NULL)
 		{
-			freezer *my = OBJECTDATA(*obj,freezer);;
+			freezer *my = OBJECTDATA(*obj,freezer);
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;

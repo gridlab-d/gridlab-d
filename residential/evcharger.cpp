@@ -604,7 +604,7 @@ EXPORT int create_evcharger(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(evcharger::oclass);
 		if (*obj!=NULL)
 		{
-			evcharger *my = OBJECTDATA(*obj,evcharger);;
+			evcharger *my = OBJECTDATA(*obj,evcharger);
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;

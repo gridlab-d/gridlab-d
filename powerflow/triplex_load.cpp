@@ -722,8 +722,8 @@ void triplex_load::triplex_load_delete_update_fxn(void)
 
 		//Remove the components
 		NR_busdata[extract_node_ref].full_Y_load[0] -= prev_load_values[0][0];
-		NR_busdata[extract_node_ref].full_Y_load[4] -= prev_load_values[0][1];
-		NR_busdata[extract_node_ref].full_Y_load[8] -= prev_load_values[0][2];
+		NR_busdata[extract_node_ref].full_Y_load[5] -= prev_load_values[0][1];
+		NR_busdata[extract_node_ref].full_Y_load[10] -= prev_load_values[0][2];
 
 		//Flag the FPI change
 		NR_FPI_imp_load_change = true;

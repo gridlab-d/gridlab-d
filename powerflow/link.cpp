@@ -131,18 +131,23 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "power_in_A[VA]", PADDR(indiv_power_in[0]),PT_DESCRIPTION,"power flow in (w.r.t from node), phase A",
 			PT_complex, "power_in_B[VA]", PADDR(indiv_power_in[1]),PT_DESCRIPTION,"power flow in (w.r.t from node), phase B",
 			PT_complex, "power_in_C[VA]", PADDR(indiv_power_in[2]),PT_DESCRIPTION,"power flow in (w.r.t from node), phase C",
+			PT_complex, "power_in_N[VA]", PADDR(indiv_power_in[3]),PT_DESCRIPTION,"power flow in (w.r.t from node), phase N",
 			PT_complex, "power_out_A[VA]", PADDR(indiv_power_out[0]),PT_DESCRIPTION,"power flow out (w.r.t to node), phase A",
 			PT_complex, "power_out_B[VA]", PADDR(indiv_power_out[1]),PT_DESCRIPTION,"power flow out (w.r.t to node), phase B",
 			PT_complex, "power_out_C[VA]", PADDR(indiv_power_out[2]),PT_DESCRIPTION,"power flow out (w.r.t to node), phase C",
+			PT_complex, "power_out_N[VA]", PADDR(indiv_power_out[3]),PT_DESCRIPTION,"power flow out (w.r.t to node), phase N",
 			PT_complex, "power_losses_A[VA]", PADDR(indiv_power_loss[0]),PT_DESCRIPTION,"power losses, phase A",
 			PT_complex, "power_losses_B[VA]", PADDR(indiv_power_loss[1]),PT_DESCRIPTION,"power losses, phase B",
 			PT_complex, "power_losses_C[VA]", PADDR(indiv_power_loss[2]),PT_DESCRIPTION,"power losses, phase C",
+			PT_complex, "power_losses_N[VA]", PADDR(indiv_power_loss[3]),PT_DESCRIPTION,"power losses, phase N",
 			PT_complex, "current_out_A[A]", PADDR(read_I_out[0]),PT_DESCRIPTION,"current flow out of link (w.r.t. to node), phase A",
 			PT_complex, "current_out_B[A]", PADDR(read_I_out[1]),PT_DESCRIPTION,"current flow out of link (w.r.t. to node), phase B",
 			PT_complex, "current_out_C[A]", PADDR(read_I_out[2]),PT_DESCRIPTION,"current flow out of link (w.r.t. to node), phase C",
+			PT_complex, "current_out_N[A]", PADDR(read_I_out[3]),PT_DESCRIPTION,"current flow out of link (w.r.t. to node), phase N",
 			PT_complex, "current_in_A[A]", PADDR(read_I_in[0]),PT_DESCRIPTION,"current flow to link (w.r.t from node), phase A",
 			PT_complex, "current_in_B[A]", PADDR(read_I_in[1]),PT_DESCRIPTION,"current flow to link (w.r.t from node), phase B",
 			PT_complex, "current_in_C[A]", PADDR(read_I_in[2]),PT_DESCRIPTION,"current flow to link (w.r.t from node), phase C",
+			PT_complex, "current_in_N[A]", PADDR(read_I_in[3]),PT_DESCRIPTION,"current flow to link (w.r.t from node), phase N",
 			PT_complex, "fault_current_in_A[A]", PADDR(If_in[0]),PT_DESCRIPTION,"fault current flowing in, phase A",
 			PT_complex, "fault_current_in_B[A]", PADDR(If_in[1]),PT_DESCRIPTION,"fault current flowing in, phase B",
 			PT_complex, "fault_current_in_C[A]", PADDR(If_in[2]),PT_DESCRIPTION,"fault current flowing in, phase C",
@@ -171,9 +176,11 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_double, "continuous_rating_A[A]", PADDR(link_rating[0][0]), PT_DESCRIPTION, "Continuous rating for phase A of this link object (set individual line segments)",
 			PT_double, "continuous_rating_B[A]", PADDR(link_rating[0][1]), PT_DESCRIPTION, "Continuous rating for phase B of this link object (set individual line segments)",
 			PT_double, "continuous_rating_C[A]", PADDR(link_rating[0][2]), PT_DESCRIPTION, "Continuous rating for phase C of this link object (set individual line segments)",
+			PT_double, "continuous_rating_N[A]", PADDR(link_rating[0][3]), PT_DESCRIPTION, "Continuous rating for phase N of this link object (set individual line segments)",
 			PT_double, "emergency_rating_A[A]", PADDR(link_rating[1][0]), PT_DESCRIPTION, "Emergency rating for phase A of this link object (set individual line segments)",
 			PT_double, "emergency_rating_B[A]", PADDR(link_rating[1][1]), PT_DESCRIPTION, "Emergency rating for phase B of this link object (set individual line segments)",
 			PT_double, "emergency_rating_C[A]", PADDR(link_rating[1][2]), PT_DESCRIPTION, "Emergency rating for phase C of this link object (set individual line segments)",
+			PT_double, "emergency_rating_N[A]", PADDR(link_rating[1][3]), PT_DESCRIPTION, "Emergency rating for phase N of this link object (set individual line segments)",
 			PT_double, "inrush_convergence_value[V]", PADDR(inrush_tol_value), PT_DESCRIPTION, "Tolerance, as change in line voltage drop between iterations, for deltamode in-rush completion",
 
 			//Hidden properties to do linking better
@@ -228,9 +235,9 @@ int link_object::create(void)
 	power_in = 0;
 	power_out = 0;
 	power_loss = 0;
-	indiv_power_in[0] = indiv_power_in[1] = indiv_power_in[2] = 0.0;
-	indiv_power_out[0] = indiv_power_out[1] = indiv_power_out[2] = 0.0;
-	indiv_power_loss[0] = indiv_power_loss[1] = indiv_power_loss[2] = 0.0;
+	indiv_power_in[0] = indiv_power_in[1] = indiv_power_in[2] = indiv_power_in[3] = complex(0.0,0.0);
+	indiv_power_out[0] = indiv_power_out[1] = indiv_power_out[2] = indiv_power_out[3] = complex(0.0,0.0);
+	indiv_power_loss[0] = indiv_power_loss[1] = indiv_power_loss[2] = indiv_power_loss[3] = complex(0.0,0.0);
 	flow_direction = FD_UNKNOWN;
 	voltage_ratio = 1.0;
 	SpecialLnk = NORMAL;
@@ -241,12 +248,13 @@ int link_object::create(void)
 
 	protect_locations[0] = protect_locations[1] = protect_locations[2] = -1;	//Initalize cleared
 
-	current_in[0] = current_in[1] = current_in[2] = gld::complex(0,0);
+	current_in[0] = current_in[1] = current_in[2] = current_in[3] = gld::complex(0,0);
 
-	link_limits[0][0] = link_limits[0][1] = link_limits[0][2] = link_limits[1][0] = link_limits[1][1] = link_limits[1][2] = 0;
+	link_limits[0][0] = link_limits[0][1] = link_limits[0][2] = link_limits[1][0] = link_limits[1][1] = link_limits[1][2] = nullptr;
+	link_limits[0][3] = link_limits[1][3] = nullptr;
 	
-	link_rating[0][0] = link_rating[0][1] = link_rating[0][2] = 1000;	//Replicates current defaults of line objects
-	link_rating[1][0] = link_rating[1][1] = link_rating[1][2] = 2000;
+	link_rating[0][0] = link_rating[0][1] = link_rating[0][2] = link_rating[0][3] = 1000;	//Replicates current defaults of line objects
+	link_rating[1][0] = link_rating[1][1] = link_rating[1][2] = link_rating[1][3] = 2000;
 
 	check_link_limits = false;
 
@@ -569,15 +577,17 @@ int link_object::init(OBJECT *parent)
 			link_limits[0][0] = &link_rating[0][0];
 			link_limits[0][1] = &link_rating[0][1];
 			link_limits[0][2] = &link_rating[0][2];
+			link_limits[0][3] = &link_rating[0][3];
 			link_limits[1][0] = &link_rating[1][0];
 			link_limits[1][1] = &link_rating[1][1];
 			link_limits[1][2] = &link_rating[1][2];
+			link_limits[1][3] = &link_rating[1][3];
 
 			//Set flag to check
 			check_link_limits = true;
 
 			//See if the limits are zero and toss some warnings
-			if (*link_limits[0][0] == 0.0 || *link_limits[0][1] == 0.0 || *link_limits[0][2] == 0.0)
+			if (*link_limits[0][0] == 0.0 || *link_limits[0][1] == 0.0 || *link_limits[0][2] == 0.0 || *link_limits[0][3] == 0.0)
 			{
 				gl_warning("continuous_rating for link:%s is zero - this may lead to odd warning messages about line limits with nonsense values",obj->name);
 				/*  TROUBLESHOOT
@@ -587,7 +597,7 @@ int link_object::init(OBJECT *parent)
 				*/
 			}
 
-			if (*link_limits[1][0] == 0.0 || *link_limits[1][1] == 0.0 || *link_limits[1][2] == 0.0)
+			if (*link_limits[1][0] == 0.0 || *link_limits[1][1] == 0.0 || *link_limits[1][2] == 0.0 || *link_limits[1][3] == 0.0)
 			{
 				gl_warning("emergency_rating for link:%s is zero - this may lead to odd warning messages about line limits with nonsense values",obj->name);
 				/*  TROUBLESHOOT
@@ -1746,17 +1756,18 @@ void link_object::NR_link_sync_fxn(void)
 
 	if ((status != prev_status) || force_link_update)	//Something's changed, update us
 	{
-		gld::complex Ylinecharge[3][3];
-		gld::complex Y[3][3];
-		gld::complex Yc[3][3];
-		gld::complex Ylefttemp[3][3];
-		gld::complex Yto[3][3];
-		gld::complex Yfrom[3][3];
+		gld::complex Ylinecharge[4][4];
+		gld::complex Y[4][4];
+		gld::complex Yc[4][4];
+		gld::complex Ylefttemp[4][4];
+		gld::complex Yto[4][4];
+		gld::complex Yfrom[4][4];
+		gld::complex b_mat_temp[3][3], Y_mat_temp[3][3];
 		double invratio, workingvalue;
 
 		//Create initial admittance matrix - use code from GS below - store in From_Y (for now)
-		for (jindex=0; jindex<3; jindex++)
-			for (kindex=0; kindex<3; kindex++)
+		for (jindex=0; jindex<4; jindex++)
+			for (kindex=0; kindex<4; kindex++)
 				Y[jindex][kindex] = 0.0;
 
 		// compute admittance - invert b matrix - special circumstances given different methods
@@ -1813,7 +1824,27 @@ void link_object::NR_link_sync_fxn(void)
 			Y[2][2] = b_mat[1][1] / detvalue;
 		}
 		else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
-			inverse(b_mat,Y);
+		{
+			//Down-select for 3x3 first
+			for (jindex=0; jindex<3; jindex++)
+			{
+				for (kindex=0; kindex<3; kindex++)
+				{
+					b_mat_temp[jindex][kindex] = b_mat[jindex][kindex];
+				}
+			}
+
+			inverse(b_mat_temp,Y_mat_temp);
+
+			//Copy it into the 4x4 matrix - temporary for dedicated neutral
+			for (jindex=0; jindex<3; jindex++)
+			{
+				for (kindex=0; kindex<3; kindex++)
+				{
+					Y[jindex][kindex]=Y_mat_temp[jindex][kindex];
+				}
+			}
+		}
 		// defaulted else - No phases (e.g., the line does not exist) - just = 0
 
 		if (SpecialLnk!=NORMAL)	//Handle transformers and "special" devices slightly different
@@ -1849,11 +1880,11 @@ void link_object::NR_link_sync_fxn(void)
 				equalm(base_admittance_mat,Yto);
 
 				//Store value into YSto
-				for (jindex=0; jindex<3; jindex++)
+				for (jindex=0; jindex<4; jindex++)
 				{
-					for (kindex=0; kindex<3; kindex++)
+					for (kindex=0; kindex<4; kindex++)
 					{
-						YSto[jindex*3+kindex]=Yto[jindex][kindex];
+						YSto[jindex*4+kindex]=Yto[jindex][kindex];
 					}
 				}
 
@@ -1865,11 +1896,11 @@ void link_object::NR_link_sync_fxn(void)
 				multiply(invratio,Ylefttemp,Yfrom);
 
 				//Store value into YSfrom
-				for (jindex=0; jindex<3; jindex++)
+				for (jindex=0; jindex<4; jindex++)
 				{
-					for (kindex=0; kindex<3; kindex++)
+					for (kindex=0; kindex<4; kindex++)
 					{
-						YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
+						YSfrom[jindex*4+kindex]=Yfrom[jindex][kindex];
 					}
 				}
 
@@ -1878,69 +1909,67 @@ void link_object::NR_link_sync_fxn(void)
 			}
 			else if (SpecialLnk==SPLITPHASE)	//Split phase
 			{
+				//Zero the two matrices
+				for (jindex=0; jindex<16; jindex++)
+				{
+					YSto[jindex] = gld::complex(0.0,0.0);
+					YSfrom[jindex] = gld::complex(0.0,0.0);
+				}
+
+				//Zero To_Y and From_Y to be sure
+				for (jindex=0; jindex<4; jindex++)
+				{
+					for (kindex=0; kindex<4; kindex++)
+					{
+						To_Y[jindex][kindex] = gld::complex(0.0,0.0);
+						From_Y[jindex][kindex] = gld::complex(0.0,0.0);
+					}
+				}
+
 				//Yto - same for all
 				YSto[0] = base_admittance_mat[0][0];
 				YSto[1] = base_admittance_mat[0][1];
-				YSto[3] = base_admittance_mat[1][0];
-				YSto[4] = base_admittance_mat[1][1];
-				YSto[2] = YSto[5] = YSto[6] = YSto[7] = YSto[8] = 0.0;
+				YSto[4] = base_admittance_mat[1][0];
+				YSto[5] = base_admittance_mat[1][1];
 
 				if (has_phase(PHASE_A))		//A connected
 				{
 					//To_Y
 					To_Y[0][0] = -base_admittance_mat[0][2];
 					To_Y[1][0] = -base_admittance_mat[1][2];
-					To_Y[0][1] = To_Y[0][2] = To_Y[1][1] = 0.0;
-					To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
 
 					//Yfrom
 					YSfrom[0] = base_admittance_mat[2][2];
-					YSfrom[1] = YSfrom[2] = YSfrom[3] = YSfrom[4] = 0.0;
-					YSfrom[5] = YSfrom[6] = YSfrom[7] = YSfrom[8] = 0.0;
 
 					//From_Y
 					From_Y[0][0] = -base_admittance_mat[2][0];
 					From_Y[0][1] = -base_admittance_mat[2][1];
-					From_Y[0][2] = From_Y[1][0] = From_Y[1][1] = 0.0;
-					From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
 				}
 				else if (has_phase(PHASE_B))	//B connected
 				{
 					//To_Y
 					To_Y[0][1] = -base_admittance_mat[0][2];
 					To_Y[1][1] = -base_admittance_mat[1][2];
-					To_Y[0][0] = To_Y[0][2] = To_Y[1][0] = 0.0;
-					To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
 
 					//Yfrom
-					YSfrom[4] = base_admittance_mat[2][2];
-					YSfrom[0] = YSfrom[1] = YSfrom[2] = YSfrom[3] = 0.0;
-					YSfrom[5] = YSfrom[6] = YSfrom[7] = YSfrom[8] = 0.0;
+					YSfrom[5] = base_admittance_mat[2][2];
 
 					//From_Y
 					From_Y[1][0] = -base_admittance_mat[2][0];
 					From_Y[1][1] = -base_admittance_mat[2][1];
-					From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
-					From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
 				}
 				else if (has_phase(PHASE_C))	//C connected
 				{
 					//To_Y
 					To_Y[0][2] = -base_admittance_mat[0][2];
 					To_Y[1][2] = -base_admittance_mat[1][2];
-					To_Y[0][0] = To_Y[0][1] = To_Y[1][0] = 0.0;
-					To_Y[1][1] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
 
 					//Yfrom
-					YSfrom[8] = base_admittance_mat[2][2];
-					YSfrom[0] = YSfrom[1] = YSfrom[2] = YSfrom[3] = 0.0;
-					YSfrom[4] = YSfrom[5] = YSfrom[6] = YSfrom[7] = 0.0;
+					YSfrom[10] = base_admittance_mat[2][2];
 
 					//From_Y
 					From_Y[2][0] = -base_admittance_mat[2][0];
 					From_Y[2][1] = -base_admittance_mat[2][1];
-					From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
-					From_Y[1][0] = From_Y[1][1] = From_Y[1][2] = From_Y[2][2] = 0.0;
 				}
 				else
 					GL_THROW("NR: Unknown phase configuration on split-phase transformer");
@@ -1996,11 +2025,11 @@ void link_object::NR_link_sync_fxn(void)
 					equalm(base_admittance_mat,Yto);
 
 					//Store value into YSto
-					for (jindex=0; jindex<3; jindex++)
+					for (jindex=0; jindex<4; jindex++)
 					{
-						for (kindex=0; kindex<3; kindex++)
+						for (kindex=0; kindex<4; kindex++)
 						{
-							YSto[jindex*3+kindex]=Yto[jindex][kindex];
+							YSto[jindex*4+kindex]=Yto[jindex][kindex];
 						}
 					}
 
@@ -2008,11 +2037,11 @@ void link_object::NR_link_sync_fxn(void)
 					multiply(invratio,Ylefttemp,Yfrom);
 
 					//Store value into YSfrom
-					for (jindex=0; jindex<3; jindex++)
+					for (jindex=0; jindex<4; jindex++)
 					{
-						for (kindex=0; kindex<3; kindex++)
+						for (kindex=0; kindex<4; kindex++)
 						{
-							YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
+							YSfrom[jindex*4+kindex]=Yfrom[jindex][kindex];
 						}
 					}
 
@@ -2026,10 +2055,12 @@ void link_object::NR_link_sync_fxn(void)
 			//Compute the inductance portions for inrush
 			if (enable_inrush_calculations && require_inrush_update)
 			{
+				//***** TODO: Needs updating for full 4x4 matrix ****//
+
 				//Zero working matrices - reuse existing, just to annoy later coders
-				for (jindex=0; jindex<3; jindex++)
+				for (jindex=0; jindex<4; jindex++)
 				{
-					for (kindex=0; kindex<3; kindex++)
+					for (kindex=0; kindex<4; kindex++)
 					{
 						Ylefttemp[jindex][kindex] = gld::complex(0.0,0.0);
 						Yfrom[jindex][kindex] = gld::complex(0.0,0.0);
@@ -2106,7 +2137,27 @@ void link_object::NR_link_sync_fxn(void)
 					Y[2][2] = b_mat[1][1] / detvalue;
 				}
 				else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
-					inverse(b_mat,Y);
+				{
+					//Down-select for 3x3 first
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							b_mat_temp[jindex][kindex] = b_mat[jindex][kindex];
+						}
+					}
+
+					inverse(b_mat_temp,Y_mat_temp);
+
+					//Copy it into the 4x4 matrix - temporary for dedicated neutral
+					for (jindex=0; jindex<3; jindex++)
+					{
+						for (kindex=0; kindex<3; kindex++)
+						{
+							Y[jindex][kindex]=Y_mat_temp[jindex][kindex];
+						}
+					}
+				}
 
 				//Form the bhrl term - Y*Zh = bhrl
 				multiply(Y,Ylefttemp,Yfrom);
@@ -2155,11 +2206,11 @@ void link_object::NR_link_sync_fxn(void)
 					equalm(Y,From_Y);
 
 					//Do the same for the "shunt" term, even though it is the same here
-					for (jindex=0; jindex<3; jindex++)
+					for (jindex=0; jindex<4; jindex++)
 					{
-						for (kindex=0; kindex<3; kindex++)
+						for (kindex=0; kindex<4; kindex++)
 						{
-							YSfrom[jindex*3+kindex]=Y[jindex][kindex];
+							YSfrom[jindex*4+kindex]=Y[jindex][kindex];
 						}
 					}
 				}//End triplex capacitance code
@@ -2169,9 +2220,9 @@ void link_object::NR_link_sync_fxn(void)
 					equalm(Y,From_Y);
 
 					//Zero out Y first, just in case - mainly if something above used it
-					for (jindex=0; jindex<3; jindex++)
+					for (jindex=0; jindex<4; jindex++)
 					{
-						for (kindex=0; kindex<3; kindex++)
+						for (kindex=0; kindex<4; kindex++)
 						{
 							Y[jindex][kindex]=gld::complex(0.0,0.0);
 						}
@@ -2213,7 +2264,27 @@ void link_object::NR_link_sync_fxn(void)
 						Y[2][2] = b_mat[1][1] / detvalue;
 					}
 					else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
-						inverse(b_mat,Y);
+					{
+						//Down-select for 3x3 first
+						for (jindex=0; jindex<3; jindex++)
+						{
+							for (kindex=0; kindex<3; kindex++)
+							{
+								b_mat_temp[jindex][kindex] = b_mat[jindex][kindex];
+							}
+						}
+
+						inverse(b_mat_temp,Y_mat_temp);
+
+						//Copy it into the 4x4 matrix - temporary for dedicated neutral
+						for (jindex=0; jindex<3; jindex++)
+						{
+							for (kindex=0; kindex<3; kindex++)
+							{
+								Y[jindex][kindex]=Y_mat_temp[jindex][kindex];
+							}
+						}
+					}
 
 					//Compute total self admittance - include line charging capacitance
 					//Basically undo a_mat = I + 1/2 Zabc*Yabc
@@ -2231,9 +2302,9 @@ void link_object::NR_link_sync_fxn(void)
 					if (enable_inrush_calculations && require_inrush_update)
 					{
 						//Update constant terms - shunt is the same for capacitance
-						for (jindex=0; jindex<3; jindex++)
+						for (jindex=0; jindex<4; jindex++)
 						{
-							for (kindex=0; kindex<3; kindex++)
+							for (kindex=0; kindex<4; kindex++)
 							{
 								if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
 								{
@@ -2241,7 +2312,7 @@ void link_object::NR_link_sync_fxn(void)
 									workingvalue = Ylefttemp[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
 
 									//Create chrcstore while we're in here
-									chrcstore[jindex*3+kindex] = 2.0 * workingvalue;
+									chrcstore[jindex*4+kindex] = 2.0 * workingvalue;
 								}
 								else if (inrush_int_method_capacitance == IRM_BACKEULER)
 								{
@@ -2249,7 +2320,7 @@ void link_object::NR_link_sync_fxn(void)
 									workingvalue = Ylefttemp[jindex][kindex].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
 
 									//Create chrcstore while we're in here
-									chrcstore[jindex*3+kindex] = workingvalue;
+									chrcstore[jindex*4+kindex] = workingvalue;
 								}
 								//Default else
 
@@ -2257,7 +2328,7 @@ void link_object::NR_link_sync_fxn(void)
 								Ylefttemp[jindex][kindex] += gld::complex(workingvalue,0.0);
 
 								//Copy this value into the final storage matrix too
-								LinkCapShuntTerm[jindex*3+kindex] = Ylefttemp[jindex][kindex];
+								LinkCapShuntTerm[jindex*4+kindex] = Ylefttemp[jindex][kindex];
 							}
 						}
 					}
@@ -2267,11 +2338,11 @@ void link_object::NR_link_sync_fxn(void)
 					addition(Ylefttemp,From_Y,Yc);
 
 					//Now parse into the new storage structure (manual to ensure things are placed right)
-					for (jindex=0; jindex<3; jindex++)
+					for (jindex=0; jindex<4; jindex++)
 					{
-						for (kindex=0; kindex<3; kindex++)
+						for (kindex=0; kindex<4; kindex++)
 						{
-							YSfrom[jindex*3+kindex]=Yc[jindex][kindex];
+							YSfrom[jindex*4+kindex]=Yc[jindex][kindex];
 						}
 					}
 				}//End non-triplex lines
@@ -2454,7 +2525,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					else
 					{
 						//Create them
-						YSfrom = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
+						YSfrom = (gld::complex *)gl_malloc(16*sizeof(gld::complex));
 						if (YSfrom == nullptr)
 							GL_THROW("NR: Memory allocation failure for transformer matrices.");
 							/*  TROUBLESHOOT
@@ -2463,7 +2534,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 							your code and a bug report on the trac site.
 							*/
 
-						YSto = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
+						YSto = (gld::complex *)gl_malloc(16*sizeof(gld::complex));
 						if (YSto == nullptr)
 							GL_THROW("NR: Memory allocation failure for transformer matrices.");
 							//defined above
@@ -2480,7 +2551,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					if (use_line_cap)
 					{
 						//Allocate a matrix to store the secondary information (could use To_Y, but the may be confusing)
-						YSfrom = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
+						YSfrom = (gld::complex *)gl_malloc(16*sizeof(gld::complex));
 						if (YSfrom == nullptr)
 						{
 							GL_THROW("NR: Memory allocation failure for line matrix.");
@@ -2531,7 +2602,14 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				}
 
 				//Populate original phases property
-				NR_branchdata[NR_branch_reference].origphases = phases & PHASE_INFO;;
+				if (enable_neutral_modeling)	//Full model
+				{
+					NR_branchdata[NR_branch_reference].origphases = phases & PHASE_INFO;
+				}
+				else	//Legacy 3-wire model
+				{
+					NR_branchdata[NR_branch_reference].origphases = phases & PHASE_INFO_NONEUTRAL;
+				}
 
 				//Populate phases property - check status
 				if (status == LS_CLOSED)
@@ -2903,7 +2981,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 							if (NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm == nullptr)
 							{
 								//Allocate three spots -- always assume three for now
-								NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm = (gld::complex *)gl_malloc(3*sizeof(gld::complex));
+								NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm = (gld::complex *)gl_malloc(4*sizeof(gld::complex));
 
 								//Check it
 								if (NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm == nullptr)
@@ -2916,6 +2994,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 									NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[0] = gld::complex(0.0,0.0);
 									NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[1] = gld::complex(0.0,0.0);
 									NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[2] = gld::complex(0.0,0.0);
+									NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[3] = gld::complex(0.0,0.0);
 								}
 							}//End allocation routine
 							//Default else -- assume someone else go to it
@@ -3069,6 +3148,7 @@ void link_object::BOTH_link_postsync_fxn(void)
 		read_I_in[0] = current_in[0];
 		read_I_in[1] = current_in[1];
 		read_I_in[2] = current_in[2];
+		read_I_in[3] = current_in[3];
 
 	//Do the same for current out - if NR (FBS done above)
 	if (solver_method == SM_NR)
@@ -3077,6 +3157,7 @@ void link_object::BOTH_link_postsync_fxn(void)
 		read_I_out[0] = current_out[0];
 		read_I_out[1] = current_out[1];
 		read_I_out[2] = current_out[2];
+		read_I_out[3] = current_out[3];
 	}
 
 	// This portion can be removed once tape/recorders are being updated in commit.
@@ -14160,7 +14241,7 @@ void link_object::mesh_fault_current_calc(gld::complex Zth[3][3],gld::complex CV
 
 void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_phase, double fault_type)
 {
-	int temp_branch_fc, temp_node, current_branch, temp_connection_type;;
+	int temp_branch_fc, temp_node, current_branch, temp_connection_type;
 	unsigned int temp_table_loc;
 	set temp_branch_phases;
 	char *temp_branch_name;
@@ -14919,12 +15000,27 @@ void inverse(gld::complex in[3][3], gld::complex out[3][3])
 	out[2][2] = x * (in[0][0] * in[1][1] - in[0][1] * in[1][0]);
 }
 
+void inverse(gld::complex in[4][4], gld::complex out[4][4])
+{
+	lu_matrix_inverse(&in[0][0],&out[0][0],4);
+}
+
 void multiply(double a, gld::complex b[3][3], gld::complex c[3][3])
 {
 	#define MUL(i, j) c[i][j] = b[i][j] * a
 	MUL(0, 0); MUL(0, 1); MUL(0, 2);
 	MUL(1, 0); MUL(1, 1); MUL(1, 2);
 	MUL(2, 0); MUL(2, 1); MUL(2, 2);
+	#undef MUL
+}
+
+void multiply(double a, gld::complex b[4][4], gld::complex c[4][4])
+{
+	#define MUL(i, j) c[i][j] = b[i][j] * a
+	MUL(0, 0); MUL(0, 1); MUL(0, 2); MUL(0,3);
+	MUL(1, 0); MUL(1, 1); MUL(1, 2); MUL(1,3);
+	MUL(2, 0); MUL(2, 1); MUL(2, 2); MUL(2,3);
+	MUL(3, 0); MUL(3, 1); MUL(3, 2); MUL(3,3);
 	#undef MUL
 }
 
@@ -14937,12 +15033,32 @@ void multiply(gld::complex a[3][3], gld::complex b[3][3], gld::complex c[3][3])
 	#undef MUL
 }
 
+void multiply(gld::complex a[4][4], gld::complex b[4][4], gld::complex c[4][4])
+{
+	#define MUL(i, j) c[i][j] = a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j] + a[i][3] * b[3][j]
+	MUL(0, 0); MUL(0, 1); MUL(0, 2); MUL(0,3);
+	MUL(1, 0); MUL(1, 1); MUL(1, 2); MUL(1,3);
+	MUL(2, 0); MUL(2, 1); MUL(2, 2); MUL(2,3);
+	MUL(3, 0); MUL(3, 1); MUL(3, 2); MUL(3,3);
+	#undef MUL
+}
+
 void subtract(gld::complex a[3][3], gld::complex b[3][3], gld::complex c[3][3])
 {
 	#define SUB(i, j) c[i][j] = a[i][j] - b[i][j]
 	SUB(0, 0); SUB(0, 1); SUB(0, 2);
 	SUB(1, 0); SUB(1, 1); SUB(1, 2);
 	SUB(2, 0); SUB(2, 1); SUB(2, 2);
+	#undef SUB
+}
+
+void subtract(gld::complex a[4][4], gld::complex b[4][4], gld::complex c[4][4])
+{
+	#define SUB(i, j) c[i][j] = a[i][j] - b[i][j]
+	SUB(0, 0); SUB(0, 1); SUB(0, 2); SUB(0, 3);
+	SUB(1, 0); SUB(1, 1); SUB(1, 2); SUB(1, 3);
+	SUB(2, 0); SUB(2, 1); SUB(2, 2); SUB(2, 3);
+	SUB(3, 0); SUB(3, 1); SUB(3, 2); SUB(3, 3);
 	#undef SUB
 }
 
@@ -14955,12 +15071,32 @@ void addition(gld::complex a[3][3], gld::complex b[3][3], gld::complex c[3][3])
 	#undef ADD
 }
 
+void addition(gld::complex a[4][4], gld::complex b[4][4], gld::complex c[4][4])
+{
+	#define ADD(i, j) c[i][j] = a[i][j] + b[i][j]
+	ADD(0, 0); ADD(0, 1); ADD(0, 2); ADD(0, 3);
+	ADD(1, 0); ADD(1, 1); ADD(1, 2); ADD(1, 3);
+	ADD(2, 0); ADD(2, 1); ADD(2, 2); ADD(2, 3);
+	ADD(3, 0); ADD(3, 1); ADD(3, 2); ADD(3, 3);
+	#undef ADD
+}
+
 void equalm(gld::complex a[3][3], gld::complex b[3][3])
 {
 	#define MEQ(i, j) b[i][j] = a[i][j]
 	MEQ(0, 0); MEQ(0, 1); MEQ(0, 2);
 	MEQ(1, 0); MEQ(1, 1); MEQ(1, 2);
 	MEQ(2, 0); MEQ(2, 1); MEQ(2, 2);
+	#undef MEQ
+}
+
+void equalm(gld::complex a[4][4], gld::complex b[4][4])
+{
+	#define MEQ(i, j) b[i][j] = a[i][j]
+	MEQ(0, 0); MEQ(0, 1); MEQ(0, 2); MEQ(0, 3);
+	MEQ(1, 0); MEQ(1, 1); MEQ(1, 2); MEQ(1, 3);
+	MEQ(2, 0); MEQ(2, 1); MEQ(2, 2); MEQ(2, 3);
+	MEQ(3, 0); MEQ(3, 1); MEQ(3, 2); MEQ(3, 3);
 	#undef MEQ
 }
 

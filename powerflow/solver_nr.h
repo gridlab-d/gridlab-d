@@ -28,8 +28,8 @@ typedef struct  {
 	gld::complex *house_var;		///< Extra variable - used mainly for nominal house current
 	int *Link_Table;		///< table of links that connect to us (for population purposes)
 	unsigned int Link_Table_Size;	///< Number of entries in the link table (number of links connected to us)
-	double PL[3];			///< real power component of total bus load
-	double QL[3];			///< reactive power component of total bus load
+	double PL[4];			///< real power component of total bus load
+	double QL[4];			///< reactive power component of total bus load
 	bool *dynamics_enabled;	///< Flag indicating this particular node has a dynamics contribution function
 	bool swing_functions_enabled;	///< Flag indicating if this particular node is a swing node, and if so, if it is behaving "all swingy"
 	bool swing_topology_entry;		///< Flag to indicate this bus was the source entry point, even if it isn't a swing anymore (SWING_PQ generator stuff)
@@ -39,11 +39,11 @@ typedef struct  {
 	gld::complex *BusSatTerm;	///< Saturation term pointer for in-rush-based transformer calculations - separate for ease
 	double volt_base;		///< voltage basis
     double mva_base;		/// MVA basis
-	double Jacob_A[3];		// Element a in equation (37), which is used to update the Jacobian matrix at each iteration
-	double Jacob_B[3];		// Element b in equation (38), which is used to update the Jacobian matrix at each iteration
-	double Jacob_C[3];		// Element c in equation (39), which is used to update the Jacobian matrix at each iteration
-	double Jacob_D[3];		// Element d in equation (40), which is used to update the Jacobian matrix at each iteration
-	gld::complex FPI_current[3];	// Current for  FPI RHS
+	double Jacob_A[4];		// Element a in equation (37), which is used to update the Jacobian matrix at each iteration
+	double Jacob_B[4];		// Element b in equation (38), which is used to update the Jacobian matrix at each iteration
+	double Jacob_C[4];		// Element c in equation (39), which is used to update the Jacobian matrix at each iteration
+	double Jacob_D[4];		// Element d in equation (40), which is used to update the Jacobian matrix at each iteration
+	gld::complex FPI_current[4];	// Current for  FPI RHS
 	unsigned int Matrix_Loc;// Starting index of this object's place in all matrices/equations
 	double max_volt_error;	///< Maximum voltage error specified for that node
 	char *name;				///< original name
@@ -87,8 +87,8 @@ typedef struct Y_NR{
 typedef struct {
 	int row_ind;  ///< row location of the element in n*n bus admittance matrix in NR solver
 	int	col_ind;  ///< column location of the element in n*n bus admittance matrix in NR solver
-    gld::complex Y[3][3]; ///< complex value of elements in bus admittance matrix in NR solver
-	gld::complex Yload[3][3];	///< complex value of elements in load portion of bus admittance matrix
+    gld::complex Y[4][4]; ///< complex value of elements in bus admittance matrix in NR solver
+	gld::complex Yload[4][4];	///< complex value of elements in load portion of bus admittance matrix
 	char size;		///< size of the admittance diagonal - assumed square, useful for smaller size
 } Bus_admit;
 

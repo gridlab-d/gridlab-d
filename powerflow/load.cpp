@@ -127,6 +127,46 @@ load::load(MODULE *mod) : node(mod)
 			PT_double, "constant_impedance_BC_reac[Ohm]", PADDR(constant_impedance_dy[1].Im()),PT_DESCRIPTION,"constant impedance delta-connected load on phase B, imaginary only, specified as Ohms",
 			PT_double, "constant_impedance_CA_reac[Ohm]", PADDR(constant_impedance_dy[2].Im()),PT_DESCRIPTION,"constant impedance delta-connected load on phase C, imaginary only, specified as Ohms",
 
+			//Phase-to-ground
+			PT_complex, "constant_power_AE[VA]", PADDR(constant_power_dy[6]),PT_DESCRIPTION,"constant power wye-connected to ground load on phase A, specified as VA",
+			PT_complex, "constant_power_BE[VA]", PADDR(constant_power_dy[7]),PT_DESCRIPTION,"constant power wye-connected to ground load on phase B, specified as VA",
+			PT_complex, "constant_power_CE[VA]", PADDR(constant_power_dy[8]),PT_DESCRIPTION,"constant power wye-connected to ground load on phase C, specified as VA",
+			PT_double, "constant_power_AE_real[W]", PADDR(constant_power_dy[6].Re()),PT_DESCRIPTION,"constant power wye-connected to ground load on phase A, real only, specified as W",
+			PT_double, "constant_power_BE_real[W]", PADDR(constant_power_dy[7].Re()),PT_DESCRIPTION,"constant power wye-connected to ground load on phase B, real only, specified as W",
+			PT_double, "constant_power_CE_real[W]", PADDR(constant_power_dy[8].Re()),PT_DESCRIPTION,"constant power wye-connected to ground load on phase C, real only, specified as W",
+			PT_double, "constant_power_AE_reac[VAr]", PADDR(constant_power_dy[6].Im()),PT_DESCRIPTION,"constant power wye-connected to ground load on phase A, imaginary only, specified as VAr",
+			PT_double, "constant_power_BE_reac[VAr]", PADDR(constant_power_dy[7].Im()),PT_DESCRIPTION,"constant power wye-connected to ground load on phase B, imaginary only, specified as VAr",
+			PT_double, "constant_power_CE_reac[VAr]", PADDR(constant_power_dy[8].Im()),PT_DESCRIPTION,"constant power wye-connected to ground load on phase C, imaginary only, specified as VAr",
+			PT_complex, "constant_current_AE[A]", PADDR(constant_current_dy[6]),PT_DESCRIPTION,"constant current wye-connected to ground load on phase A, specified as Amps",
+			PT_complex, "constant_current_BE[A]", PADDR(constant_current_dy[7]),PT_DESCRIPTION,"constant current wye-connected to ground load on phase B, specified as Amps",
+			PT_complex, "constant_current_CE[A]", PADDR(constant_current_dy[8]),PT_DESCRIPTION,"constant current wye-connected to ground load on phase C, specified as Amps",
+			PT_double, "constant_current_AE_real[A]", PADDR(constant_current_dy[6].Re()),PT_DESCRIPTION,"constant current wye-connected to ground load on phase A, real only, specified as Amps",
+			PT_double, "constant_current_BE_real[A]", PADDR(constant_current_dy[7].Re()),PT_DESCRIPTION,"constant current wye-connected to ground load on phase B, real only, specified as Amps",
+			PT_double, "constant_current_CE_real[A]", PADDR(constant_current_dy[8].Re()),PT_DESCRIPTION,"constant current wye-connected to ground load on phase C, real only, specified as Amps",
+			PT_double, "constant_current_AE_reac[A]", PADDR(constant_current_dy[6].Im()),PT_DESCRIPTION,"constant current wye-connected to ground load on phase A, imaginary only, specified as Amps",
+			PT_double, "constant_current_BE_reac[A]", PADDR(constant_current_dy[7].Im()),PT_DESCRIPTION,"constant current wye-connected to ground load on phase B, imaginary only, specified as Amps",
+			PT_double, "constant_current_CE_reac[A]", PADDR(constant_current_dy[8].Im()),PT_DESCRIPTION,"constant current wye-connected to ground load on phase C, imaginary only, specified as Amps",
+			PT_complex, "constant_impedance_AE[Ohm]", PADDR(constant_impedance_dy[6]),PT_DESCRIPTION,"constant impedance wye-connected to ground load on phase A, specified as Ohms",
+			PT_complex, "constant_impedance_BE[Ohm]", PADDR(constant_impedance_dy[7]),PT_DESCRIPTION,"constant impedance wye-connected to ground load on phase B, specified as Ohms",
+			PT_complex, "constant_impedance_CE[Ohm]", PADDR(constant_impedance_dy[8]),PT_DESCRIPTION,"constant impedance wye-connected to ground load on phase C, specified as Ohms",
+			PT_double, "constant_impedance_AE_real[Ohm]", PADDR(constant_impedance_dy[6].Re()),PT_DESCRIPTION,"constant impedance wye-connected to ground load on phase A, real only, specified as Ohms",
+			PT_double, "constant_impedance_BE_real[Ohm]", PADDR(constant_impedance_dy[7].Re()),PT_DESCRIPTION,"constant impedance wye-connected to ground load on phase B, real only, specified as Ohms",
+			PT_double, "constant_impedance_CE_real[Ohm]", PADDR(constant_impedance_dy[8].Re()),PT_DESCRIPTION,"constant impedance wye-connected to ground load on phase C, real only, specified as Ohms",
+			PT_double, "constant_impedance_AE_reac[Ohm]", PADDR(constant_impedance_dy[6].Im()),PT_DESCRIPTION,"constant impedance wye-connected to ground load on phase A, imaginary only, specified as Ohms",
+			PT_double, "constant_impedance_BE_reac[Ohm]", PADDR(constant_impedance_dy[7].Im()),PT_DESCRIPTION,"constant impedance wye-connected to ground load on phase B, imaginary only, specified as Ohms",
+			PT_double, "constant_impedance_CE_reac[Ohm]", PADDR(constant_impedance_dy[8].Im()),PT_DESCRIPTION,"constant impedance wye-connected to ground load on phase C, imaginary only, specified as Ohms",
+
+			//Neutral to ground
+			PT_complex, "constant_power_NE[VA]", PADDR(constant_power_dy[9]),PT_DESCRIPTION,"constant power wye-connected to ground load on phase N, specified as VA",
+			PT_double, "constant_power_NE_real[W]", PADDR(constant_power_dy[9].Re()),PT_DESCRIPTION,"constant power wye-connected to ground load on phase N, real only, specified as W",
+			PT_double, "constant_power_NE_reac[VAr]", PADDR(constant_power_dy[9].Im()),PT_DESCRIPTION,"constant power wye-connected to ground load on phase N, imaginary only, specified as VAr",
+			PT_complex, "constant_current_NE[A]", PADDR(constant_current_dy[9]),PT_DESCRIPTION,"constant current wye-connected to ground load on phase N, specified as Amps",
+			PT_double, "constant_current_NE_real[A]", PADDR(constant_current_dy[9].Re()),PT_DESCRIPTION,"constant current wye-connected to ground load on phase N, real only, specified as Amps",
+			PT_double, "constant_current_NE_reac[A]", PADDR(constant_current_dy[9].Im()),PT_DESCRIPTION,"constant current wye-connected to ground load on phase N, imaginary only, specified as Amps",
+			PT_complex, "constant_impedance_NE[Ohm]", PADDR(constant_impedance_dy[9]),PT_DESCRIPTION,"constant impedance wye-connected to ground load on phase N, specified as Ohms",
+			PT_double, "constant_impedance_NE_real[Ohm]", PADDR(constant_impedance_dy[9].Re()),PT_DESCRIPTION,"constant impedance wye-connected to ground load on phase N, real only, specified as Ohms",
+			PT_double, "constant_impedance_NE_reac[Ohm]", PADDR(constant_impedance_dy[9].Im()),PT_DESCRIPTION,"constant impedance wye-connected to ground load on phase N, imaginary only, specified as Ohms",
+
 			PT_complex,	"measured_voltage_A[V]",PADDR(measured_voltage_A),PT_DESCRIPTION,"current measured voltage on phase A",
 			PT_complex,	"measured_voltage_B[V]",PADDR(measured_voltage_B),PT_DESCRIPTION,"current measured voltage on phase B",
 			PT_complex,	"measured_voltage_C[V]",PADDR(measured_voltage_C),PT_DESCRIPTION,"current measured voltage on phase C",
@@ -234,6 +274,16 @@ int load::create(void)
 	constant_current_dy[3] = constant_current_dy[4] = constant_current_dy[5] = gld::complex(0.0,0.0);
 	constant_impedance_dy[3] = constant_impedance_dy[4] = constant_impedance_dy[5] = gld::complex(0.0,0.0);
 
+	constant_power_dy[6] = constant_power_dy[7] = constant_power_dy[8] = gld::complex(0.0,0.0);
+	constant_current_dy[6] = constant_current_dy[7] = constant_current_dy[8] = gld::complex(0.0,0.0);
+	constant_impedance_dy[6] = constant_impedance_dy[7] = constant_impedance_dy[8] = gld::complex(0.0,0.0);
+
+	constant_power_dy[9] = constant_current_dy[9] = gld::complex(0.0,0.0);
+
+	//Initalize the NE for somehing big
+	//@TODO: probably just exclude this
+	constant_impedance_dy[9] = complex(250000.0,250000.0);
+
 	//Initialize the tracking variables - do it as a loop (complex mucks things up)
 	for (index_x=0; index_x<3; index_x++)
 	{
@@ -243,7 +293,10 @@ int load::create(void)
 
 			prev_load_values_dy[index_x][index_y] = gld::complex(0.0,0.0);
 			prev_load_values_dy[index_x][index_y+3] = gld::complex(0.0,0.0);
+			prev_load_values_dy[index_x][index_y+6] = gld::complex(0.0,0.0);
 		}
+
+		prev_load_values_dy[index_x][9] = gld::complex(0.0,0.0);
 	}
 
 	//Flag us as a load
@@ -526,8 +579,8 @@ void load::load_update_fxn(void)
 	bool fault_mode;
 	bool all_three_phases, transf_from_stdy_state;
 	gld::complex intermed_impedance[3];
-	gld::complex intermed_impedance_dy[6];
-	int index_var, extract_node_ref;
+	gld::complex intermed_impedance_dy[10];
+	int index_var, extract_node_ref, index_limit;
 	bool volt_below_thresh;
 	double voltage_base_val;
 	double voltage_pu_vals[3];
@@ -552,6 +605,16 @@ void load::load_update_fxn(void)
 	else
 		fault_mode = true;
 
+	//Set index limit for neutral vs. not
+	if (enable_neutral_modeling && has_phase(PHASE_N))
+	{
+		index_limit=10;
+	}
+	else
+	{
+		index_limit=6;
+	}
+
 	//Roll GFA check into here, so current loads updates are handled properly
 	//See if GFA functionality is enabled
 	if (GFA_enable)
@@ -569,6 +632,18 @@ void load::load_update_fxn(void)
 	//Default elses - just continue like normal
 
 	//Remove prior contributions - do this first so everything else can just accumulate to the trackers and accumalators below
+	if (enable_neutral_modeling)
+	{
+		//Neutral trackers
+		shunt_dy[9] -= prev_load_values_dy[0][9];
+		current_dy[9] -= prev_load_values_dy[1][9];
+		power_dy[9] -= prev_load_values_dy[2][9];
+		prev_load_values_dy[0][9] = gld::complex(0.0,0.0);
+		prev_load_values_dy[1][9] = gld::complex(0.0,0.0);
+		prev_load_values_dy[2][9] = gld::complex(0.0,0.0);
+	}
+
+	//Others	
 	for (index_var=0; index_var<3; index_var++)
 	{
 		//Remove last values - stops massive accumulations
@@ -585,6 +660,13 @@ void load::load_update_fxn(void)
 		current_dy[index_var+3] -= prev_load_values_dy[1][index_var+3];
 		power_dy[index_var+3] -= prev_load_values_dy[2][index_var+3];
 
+		if (enable_neutral_modeling)
+		{
+			shunt_dy[index_var+6] -= prev_load_values_dy[0][index_var+6];
+			current_dy[index_var+6] -= prev_load_values_dy[1][index_var+6];
+			power_dy[index_var+6] -= prev_load_values_dy[2][index_var+6];
+		}
+
 		//Zero the trackers too
 		prev_load_values[0][index_var] = gld::complex(0.0,0.0);
 		prev_load_values[1][index_var] = gld::complex(0.0,0.0);
@@ -597,8 +679,15 @@ void load::load_update_fxn(void)
 		prev_load_values_dy[0][index_var+3] = gld::complex(0.0,0.0);
 		prev_load_values_dy[1][index_var+3] = gld::complex(0.0,0.0);
 		prev_load_values_dy[2][index_var+3] = gld::complex(0.0,0.0);
-	}
 
+		if (enable_neutral_modeling)
+		{
+			prev_load_values_dy[0][index_var+6] = gld::complex(0.0,0.0);
+			prev_load_values_dy[1][index_var+6] = gld::complex(0.0,0.0);
+			prev_load_values_dy[2][index_var+6] = gld::complex(0.0,0.0);
+		}
+	}
+	
 	//Set base angles for ZIP calculations below
 	//Note this assumption HAS to be done this way -- while the ZIP calculation below
 	//correctly rotates for deltamode, no other constant current values do, which means this one
@@ -771,7 +860,7 @@ void load::load_update_fxn(void)
 		}
 
 		//Check impedance values for explicit delta/wye connections
-		for (index_var=0; index_var<6; index_var++)
+		for (index_var=0; index_var<index_limit; index_var++)
 		{
 			if (!constant_impedance_dy[index_var].IsZero())
 			{
@@ -801,7 +890,7 @@ void load::load_update_fxn(void)
 		intermed_impedance[2] = constant_impedance[2];
 
 		//Do the same for explicit delta/wye connections -- both parent types get this
-		for (index_var=0; index_var<6; index_var++)
+		for (index_var=0; index_var<index_limit; index_var++)
 		{
 			intermed_impedance_dy[index_var] = constant_impedance_dy[index_var];
 		}
@@ -977,7 +1066,7 @@ void load::load_update_fxn(void)
 		prev_load_values[2][2] += constant_power[2];
 
 		//Do the same for explicit delta/wye connections
-		for (index_var=0; index_var<6; index_var++)
+		for (index_var=0; index_var<index_limit; index_var++)
 		{
 			if (!intermed_impedance_dy[index_var].IsZero())
 			{
@@ -1386,84 +1475,266 @@ void load::load_update_fxn(void)
 								}
 							}//End CA check
 
-							// ********** WYE portions *****************
-							//Set new base value
-							voltage_base_val = nominal_voltage;
-
-							//Check phases - A
-							if ((NR_busdata[NR_node_reference].phases & PHASE_A) == PHASE_A)
+							//Neutral updates - for this part, same as above
+							if (enable_neutral_modeling)
 							{
-								//Check power value
-								if (!(constant_power_dy[3].IsZero()))
+								// ********** WYE portions *****************
+								//Set new base value
+								voltage_base_val = nominal_voltage;
+
+								//Check phases - AN
+								if ((NR_busdata[NR_node_reference].phases & PHASE_AN) == PHASE_AN)
 								{
-									//Set nominal voltage - |V|^2
-									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+									//Check power value
+									if (!(constant_power_dy[3].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
-									//Compute the value
-									intermed_impedance_dy[3] += ~(nominal_voltage_value/constant_power_dy[3]);
-								}
+										//Compute the value
+										intermed_impedance_dy[3] += ~(nominal_voltage_value/constant_power_dy[3]);
+									}
 
-								//Check current
-								if (!(constant_current_dy[3].IsZero()))
+									//Check current
+									if (!(constant_current_dy[3].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value = gld::complex(voltage_base_val,0.0);
+
+										//Compute the value
+										intermed_impedance_dy[3] += nominal_voltage_value/constant_current_dy[3];
+									}
+								}//End AN check
+
+								//Check phases - BN
+								if ((NR_busdata[NR_node_reference].phases & PHASE_BN) == PHASE_BN)
 								{
-									//Set nominal voltage - actual angle
-									nominal_voltage_value = gld::complex(voltage_base_val,0.0);
+									//Check power value
+									if (!(constant_power_dy[4].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
-									//Compute the value
-									intermed_impedance_dy[3] += nominal_voltage_value/constant_current_dy[3];
-								}
-							}//End A check
+										//Compute the value
+										intermed_impedance_dy[4] += ~(nominal_voltage_value/constant_power_dy[4]);
+									}
 
-							//Check phases - B
-							if ((NR_busdata[NR_node_reference].phases & PHASE_B) == PHASE_B)
+									//Check current
+									if (!(constant_current_dy[4].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,-2.0*PI/3.0);
+
+										//Compute the value
+										intermed_impedance_dy[4] += nominal_voltage_value/constant_current_dy[4];
+									}
+								}//End BN check
+
+								//Check phases - CN
+								if ((NR_busdata[NR_node_reference].phases & PHASE_CN) == PHASE_CN)
+								{
+									//Check power value
+									if (!(constant_power_dy[5].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance_dy[5] += ~(nominal_voltage_value/constant_power_dy[5]);
+									}
+
+									//Check current
+									if (!(constant_current_dy[5].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,2.0*PI/3.0);
+
+										//Compute the value
+										intermed_impedance_dy[5] += nominal_voltage_value/constant_current_dy[5];
+									}
+								}//End CN check
+
+								// ********** WYE_Ground portions (same as YN for this, except phase mask) *****************
+								//Set new base value
+								voltage_base_val = nominal_voltage;
+
+								//Check phases - A
+								if ((NR_busdata[NR_node_reference].phases & PHASE_A) == PHASE_A)
+								{
+									//Check power value
+									if (!(constant_power_dy[6].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance_dy[6] += ~(nominal_voltage_value/constant_power_dy[6]);
+									}
+
+									//Check current
+									if (!(constant_current_dy[6].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value = gld::complex(voltage_base_val,0.0);
+
+										//Compute the value
+										intermed_impedance_dy[6] += nominal_voltage_value/constant_current_dy[6];
+									}
+								}//End A check
+
+								//Check phases - B
+								if ((NR_busdata[NR_node_reference].phases & PHASE_B) == PHASE_B)
+								{
+									//Check power value
+									if (!(constant_power_dy[7].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance_dy[7] += ~(nominal_voltage_value/constant_power_dy[7]);
+									}
+
+									//Check current
+									if (!(constant_current_dy[7].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,-2.0*PI/3.0);
+
+										//Compute the value
+										intermed_impedance_dy[7] += nominal_voltage_value/constant_current_dy[7];
+									}
+								}//End B check
+
+								//Check phases - C
+								if ((NR_busdata[NR_node_reference].phases & PHASE_C) == PHASE_C)
+								{
+									//Check power value
+									if (!(constant_power_dy[8].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance_dy[8] += ~(nominal_voltage_value/constant_power_dy[8]);
+									}
+
+									//Check current
+									if (!(constant_current_dy[8].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,2.0*PI/3.0);
+
+										//Compute the value
+										intermed_impedance_dy[8] += nominal_voltage_value/constant_current_dy[8];
+									}
+								}//End C check
+
+								//Check phases - N
+								if ((NR_busdata[NR_node_reference].phases & PHASE_N) == PHASE_N)
+								{
+									//Check power value
+									if (!(constant_power_dy[9].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance_dy[9] += ~(nominal_voltage_value/constant_power_dy[9]);
+									}
+
+									//Check current
+									if (!(constant_current_dy[9].IsZero()))
+									{
+										//Set nominal voltage - actual angle - assume A-referenced
+										nominal_voltage_value.SetPolar(voltage_base_val,0.0);
+
+										//Compute the value
+										intermed_impedance_dy[9] += nominal_voltage_value/constant_current_dy[9];
+									}
+								}//End N check
+							}
+							else	//Standard modeling
 							{
-								//Check power value
-								if (!(constant_power_dy[4].IsZero()))
+								// ********** WYE portions *****************
+								//Set new base value
+								voltage_base_val = nominal_voltage;
+
+								//Check phases - A
+								if ((NR_busdata[NR_node_reference].phases & PHASE_A) == PHASE_A)
 								{
-									//Set nominal voltage - |V|^2
-									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+									//Check power value
+									if (!(constant_power_dy[3].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
-									//Compute the value
-									intermed_impedance_dy[4] += ~(nominal_voltage_value/constant_power_dy[4]);
-								}
+										//Compute the value
+										intermed_impedance_dy[3] += ~(nominal_voltage_value/constant_power_dy[3]);
+									}
 
-								//Check current
-								if (!(constant_current_dy[4].IsZero()))
+									//Check current
+									if (!(constant_current_dy[3].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value = gld::complex(voltage_base_val,0.0);
+
+										//Compute the value
+										intermed_impedance_dy[3] += nominal_voltage_value/constant_current_dy[3];
+									}
+								}//End A check
+
+								//Check phases - B
+								if ((NR_busdata[NR_node_reference].phases & PHASE_B) == PHASE_B)
 								{
-									//Set nominal voltage - actual angle
-									nominal_voltage_value.SetPolar(voltage_base_val,-2.0*PI/3.0);
+									//Check power value
+									if (!(constant_power_dy[4].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
-									//Compute the value
-									intermed_impedance_dy[4] += nominal_voltage_value/constant_current_dy[4];
-								}
-							}//End B check
+										//Compute the value
+										intermed_impedance_dy[4] += ~(nominal_voltage_value/constant_power_dy[4]);
+									}
 
-							//Check phases - C
-							if ((NR_busdata[NR_node_reference].phases & PHASE_C) == PHASE_C)
-							{
-								//Check power value
-								if (!(constant_power_dy[5].IsZero()))
+									//Check current
+									if (!(constant_current_dy[4].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,-2.0*PI/3.0);
+
+										//Compute the value
+										intermed_impedance_dy[4] += nominal_voltage_value/constant_current_dy[4];
+									}
+								}//End B check
+
+								//Check phases - C
+								if ((NR_busdata[NR_node_reference].phases & PHASE_C) == PHASE_C)
 								{
-									//Set nominal voltage - |V|^2
-									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+									//Check power value
+									if (!(constant_power_dy[5].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
-									//Compute the value
-									intermed_impedance_dy[5] += ~(nominal_voltage_value/constant_power_dy[5]);
-								}
+										//Compute the value
+										intermed_impedance_dy[5] += ~(nominal_voltage_value/constant_power_dy[5]);
+									}
 
-								//Check current
-								if (!(constant_current_dy[5].IsZero()))
-								{
-									//Set nominal voltage - actual angle
-									nominal_voltage_value.SetPolar(voltage_base_val,2.0*PI/3.0);
+									//Check current
+									if (!(constant_current_dy[5].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,2.0*PI/3.0);
 
-									//Compute the value
-									intermed_impedance_dy[5] += nominal_voltage_value/constant_current_dy[5];
-								}
-							}//End C check
+										//Compute the value
+										intermed_impedance_dy[5] += nominal_voltage_value/constant_current_dy[5];
+									}
+								}//End C check
+							}
 
 							//Do the updated portion
-							for (index_var=0; index_var<6; index_var++)
+							for (index_var=0; index_var<index_limit; index_var++)
 							{
 								if (!intermed_impedance_dy[index_var].IsZero())
 								{
@@ -1523,7 +1794,7 @@ void load::load_update_fxn(void)
 
 							//Combination portion
 							//Do the same for explicit delta/wye connections
-							for (index_var=0; index_var<6; index_var++)
+							for (index_var=0; index_var<index_limit; index_var++)
 							{
 								if (!intermed_impedance_dy[index_var].IsZero())
 								{
@@ -1591,7 +1862,7 @@ void load::load_update_fxn(void)
 
 						//Combination Portion
 						//Do the same for explicit delta/wye connections
-						for (index_var=0; index_var<6; index_var++)
+						for (index_var=0; index_var<index_limit; index_var++)
 						{
 							if (!intermed_impedance_dy[index_var].IsZero())
 							{
@@ -1673,6 +1944,33 @@ void load::load_update_fxn(void)
 							if (((NR_busdata[NR_node_reference].phases & PHASE_C) == PHASE_C) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
+							}
+
+							//Check explicit neutral ones too
+							if (enable_neutral_modeling && has_phase(PHASE_N))
+							{
+								//Compute per-unit values
+								voltage_pu_vals[0] = voltaged[3].Mag()/voltage_base_val;
+								voltage_pu_vals[1] = voltaged[4].Mag()/voltage_base_val;
+								voltage_pu_vals[2] = voltaged[5].Mag()/voltage_base_val;
+
+								//Check them - Phase A
+								if (((NR_busdata[NR_node_reference].phases & PHASE_AN) == PHASE_AN) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+								{
+									volt_below_thresh = true;
+								}
+
+								//Check them - Phase B
+								if (((NR_busdata[NR_node_reference].phases & PHASE_BN) == PHASE_BN) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+								{
+									volt_below_thresh = true;
+								}
+
+								//Check them - Phase C
+								if (((NR_busdata[NR_node_reference].phases & PHASE_CN) == PHASE_CN) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+								{
+									volt_below_thresh = true;
+								}
 							}
 						}
 
@@ -1943,7 +2241,7 @@ void load::load_update_fxn(void)
 								}
 							}//End CA check
 
-							// ********** WYE portions *****************
+							// ********** WYE-Neutral portions *****************
 							//Set new base value
 							voltage_base_val = nominal_voltage;
 
@@ -2019,8 +2317,90 @@ void load::load_update_fxn(void)
 								}
 							}//End C check
 
+							//Do the Wye-Earth portions too
+							if (enable_neutral_modeling)
+							{
+								// ********** WYE-Earth portions *****************
+								//Set new base value
+								voltage_base_val = nominal_voltage;
+
+								//Check phases - A
+								if ((NR_busdata[NR_node_reference].phases & PHASE_A) == PHASE_A)
+								{
+									//Check power value
+									if (!(constant_power_dy[6].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance_dy[6] += ~(nominal_voltage_value/constant_power_dy[6]);
+									}
+
+									//Check current
+									if (!(constant_current_dy[6].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value = gld::complex(voltage_base_val,0.0);
+
+										//Compute the value
+										intermed_impedance_dy[6] += nominal_voltage_value/constant_current_dy[6];
+									}
+								}//End A check
+
+								//Check phases - B
+								if ((NR_busdata[NR_node_reference].phases & PHASE_B) == PHASE_B)
+								{
+									//Check power value
+									if (!(constant_power_dy[7].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance_dy[7] += ~(nominal_voltage_value/constant_power_dy[7]);
+									}
+
+									//Check current
+									if (!(constant_current_dy[7].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,-2.0*PI/3.0);
+
+										//Compute the value
+										intermed_impedance_dy[7] += nominal_voltage_value/constant_current_dy[7];
+									}
+								}//End B check
+
+								//Check phases - C
+								if ((NR_busdata[NR_node_reference].phases & PHASE_C) == PHASE_C)
+								{
+									//Check power value
+									if (!(constant_power_dy[8].IsZero()))
+									{
+										//Set nominal voltage - |V|^2
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+
+										//Compute the value
+										intermed_impedance_dy[8] += ~(nominal_voltage_value/constant_power_dy[8]);
+									}
+
+									//Check current
+									if (!(constant_current_dy[8].IsZero()))
+									{
+										//Set nominal voltage - actual angle
+										nominal_voltage_value.SetPolar(voltage_base_val,2.0*PI/3.0);
+
+										//Compute the value
+										intermed_impedance_dy[8] += nominal_voltage_value/constant_current_dy[8];
+									}
+								}//End C check
+
+								//Neutral might need done eventually?  Won't nominal always be zero though?
+							}
+
 							//Do the updated portion
-							for (index_var=0; index_var<6; index_var++)
+							for (index_var=0; index_var<index_limit; index_var++)
 							{
 								if (!intermed_impedance_dy[index_var].IsZero())
 								{
@@ -2081,7 +2461,7 @@ void load::load_update_fxn(void)
 
 							//Combination Portion
 							//Do the same for explicit delta/wye connections
-							for (index_var=0; index_var<6; index_var++)
+							for (index_var=0; index_var<index_limit; index_var++)
 							{
 								if (!intermed_impedance_dy[index_var].IsZero())
 								{
@@ -2150,7 +2530,7 @@ void load::load_update_fxn(void)
 
 						//Combination Portion
 						//Do the same for explicit delta/wye connections
-						for (index_var=0; index_var<6; index_var++)
+						for (index_var=0; index_var<index_limit; index_var++)
 						{
 							if (!intermed_impedance_dy[index_var].IsZero())
 							{
@@ -2257,6 +2637,33 @@ void load::load_update_fxn(void)
 						if (((NR_busdata[node_reference_value].phases & PHASE_C) == PHASE_C) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
 						{
 							volt_below_thresh = true;
+						}
+
+						//Do the neutral check, just to be thorough
+						if (enable_neutral_modeling)
+						{
+							//Compute per-unit values
+							voltage_pu_vals[0] = voltaged[3].Mag()/voltage_base_val;
+							voltage_pu_vals[1] = voltaged[4].Mag()/voltage_base_val;
+							voltage_pu_vals[2] = voltaged[5].Mag()/voltage_base_val;
+
+							//Check them - Phase A
+							if (((NR_busdata[node_reference_value].phases & PHASE_AN) == PHASE_AN) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+
+							//Check them - Phase B
+							if (((NR_busdata[node_reference_value].phases & PHASE_BN) == PHASE_BN) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}
+
+							//Check them - Phase C
+							if (((NR_busdata[node_reference_value].phases & PHASE_CN) == PHASE_CN) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+							{
+								volt_below_thresh = true;
+							}	
 						}
 					}
 
@@ -2529,7 +2936,7 @@ void load::load_update_fxn(void)
 							}
 						}//End CA check
 
-						// ********** WYE portions *****************
+						// ********** WYE-Neutral portions *****************
 						//Set new base value
 						voltage_base_val = nominal_voltage;
 
@@ -2605,8 +3012,89 @@ void load::load_update_fxn(void)
 							}
 						}//End C check
 
+						//Earth portion
+						if (enable_neutral_modeling)
+						{
+							// ********** WYE-Ground portions *****************
+							//Set new base value
+							voltage_base_val = nominal_voltage;
+
+							//Check phases - A
+							if ((NR_busdata[node_reference_value].phases & PHASE_A) == PHASE_A)
+							{
+								//Check power value
+								if (!(constant_power_dy[6].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[6] += ~(nominal_voltage_value/constant_power_dy[6]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[6].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value = gld::complex(voltage_base_val,0.0);
+
+									//Compute the value
+									intermed_impedance_dy[6] += nominal_voltage_value/constant_current_dy[6];
+								}
+							}//End A check
+
+							//Check phases - B
+							if ((NR_busdata[node_reference_value].phases & PHASE_B) == PHASE_B)
+							{
+								//Check power value
+								if (!(constant_power_dy[7].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[7] += ~(nominal_voltage_value/constant_power_dy[7]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[7].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,-2.0*PI/3.0);
+
+									//Compute the value
+									intermed_impedance_dy[7] += nominal_voltage_value/constant_current_dy[7];
+								}
+							}//End B check
+
+							//Check phases - C
+							if ((NR_busdata[node_reference_value].phases & PHASE_C) == PHASE_C)
+							{
+								//Check power value
+								if (!(constant_power_dy[8].IsZero()))
+								{
+									//Set nominal voltage - |V|^2
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
+
+									//Compute the value
+									intermed_impedance_dy[8] += ~(nominal_voltage_value/constant_power_dy[8]);
+								}
+
+								//Check current
+								if (!(constant_current_dy[8].IsZero()))
+								{
+									//Set nominal voltage - actual angle
+									nominal_voltage_value.SetPolar(voltage_base_val,2.0*PI/3.0);
+
+									//Compute the value
+									intermed_impedance_dy[8] += nominal_voltage_value/constant_current_dy[8];
+								}
+							}//End C check
+
+						}
+
 						//Do the updated portion
-						for (index_var=0; index_var<6; index_var++)
+						for (index_var=0; index_var<index_limit; index_var++)
 						{
 							if (!intermed_impedance_dy[index_var].IsZero())
 							{
@@ -2666,7 +3154,7 @@ void load::load_update_fxn(void)
 						prev_load_values[2][2] += constant_power[2];
 
 						//Do the same for explicit delta/wye connections
-						for (index_var=0; index_var<6; index_var++)
+						for (index_var=0; index_var<index_limit; index_var++)
 						{
 							if (!intermed_impedance_dy[index_var].IsZero())
 							{
@@ -2734,7 +3222,7 @@ void load::load_update_fxn(void)
 					prev_load_values[2][2] += constant_power[2];
 
 					//Do the same for explicit delta/wye connections
-					for (index_var=0; index_var<6; index_var++)
+					for (index_var=0; index_var<index_limit; index_var++)
 					{
 						if (!intermed_impedance_dy[index_var].IsZero())
 						{
@@ -3087,8 +3575,8 @@ void load::load_update_fxn(void)
 				{
 					//Add this into the main admittance matrix (handled directly)
 					NR_busdata[NR_node_reference].full_Y_load[0] = gld::complex(0.0,0.0);
-					NR_busdata[NR_node_reference].full_Y_load[4] = gld::complex(0.0,0.0);
-					NR_busdata[NR_node_reference].full_Y_load[8] = gld::complex(0.0,0.0);
+					NR_busdata[NR_node_reference].full_Y_load[5] = gld::complex(0.0,0.0);
+					NR_busdata[NR_node_reference].full_Y_load[10] = gld::complex(0.0,0.0);
 				}
 			}
 			else	//It is a child - look at parent
@@ -3102,8 +3590,8 @@ void load::load_update_fxn(void)
 				if (NR_solver_algorithm == NRM_TCIM)
 				{
 					NR_busdata[*NR_subnode_reference].full_Y_load[0] = gld::complex(0.0,0.0);
-					NR_busdata[*NR_subnode_reference].full_Y_load[4] = gld::complex(0.0,0.0);
-					NR_busdata[*NR_subnode_reference].full_Y_load[8] = gld::complex(0.0,0.0);
+					NR_busdata[*NR_subnode_reference].full_Y_load[5] = gld::complex(0.0,0.0);
+					NR_busdata[*NR_subnode_reference].full_Y_load[10] = gld::complex(0.0,0.0);
 				}
 			}
 
@@ -3231,12 +3719,12 @@ void load::load_update_fxn(void)
 				if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 				{
 					//Add this into the main admittance matrix (handled directly)
-					NR_busdata[NR_node_reference].full_Y_load[(index_var*3+index_var)] += shunt[index_var]-prev_shunt[index_var];
+					NR_busdata[NR_node_reference].full_Y_load[(index_var*4+index_var)] += shunt[index_var]-prev_shunt[index_var];
 				}
 				else	//It is a child - look at parent
 				{
 					//Add this into the main admittance matrix (handled directly)
-					NR_busdata[*NR_subnode_reference].full_Y_load[(index_var*3+index_var)] += shunt[index_var]-prev_shunt[index_var];
+					NR_busdata[*NR_subnode_reference].full_Y_load[(index_var*4+index_var)] += shunt[index_var]-prev_shunt[index_var];
 				}
 
 				//Update tracker
@@ -3268,7 +3756,17 @@ void load::load_update_fxn(void)
 //Function to appropriately zero load - make sure we don't get too heavy handed
 void load::load_delete_update_fxn(void)
 {
-	int index_var, extract_node_ref;
+	int index_var, extract_node_ref, index_limit;
+
+	//Set index limit for neutral vs. not
+	if (enable_neutral_modeling && has_phase(PHASE_N))
+	{
+		index_limit=10;
+	}
+	else
+	{
+		index_limit=6;
+	}
 
 	//If FPI - remove the impedance portions from the tracked matrix
 	if (NR_solver_algorithm == NRM_FPI)
@@ -3284,37 +3782,70 @@ void load::load_delete_update_fxn(void)
 			extract_node_ref = *NR_subnode_reference;
 		}
 
-		//Remove the explicit Delta-Wye componenents
-		NR_busdata[extract_node_ref].full_Y_load[0] -= prev_load_values_dy[0][0] + prev_load_values_dy[0][2] + prev_load_values_dy[0][3];
-		NR_busdata[extract_node_ref].full_Y_load[1] += prev_load_values_dy[0][0];
-		NR_busdata[extract_node_ref].full_Y_load[2] += prev_load_values_dy[0][2];
-		NR_busdata[extract_node_ref].full_Y_load[3] += prev_load_values_dy[0][0];
-		NR_busdata[extract_node_ref].full_Y_load[4] -= prev_load_values_dy[0][1] + prev_load_values_dy[0][0] + prev_load_values_dy[0][4];
-		NR_busdata[extract_node_ref].full_Y_load[5] += prev_load_values_dy[0][1];
-		NR_busdata[extract_node_ref].full_Y_load[6] += prev_load_values_dy[0][2];
-		NR_busdata[extract_node_ref].full_Y_load[7] += prev_load_values_dy[0][1];
-		NR_busdata[extract_node_ref].full_Y_load[8] -= prev_load_values_dy[0][2] + prev_load_values_dy[0][1] + prev_load_values_dy[0][5];
+		//Neutral check
+		if (enable_neutral_modeling)
+		{
+			//Remove the explicit Delta-Wye componenents
+			NR_busdata[extract_node_ref].full_Y_load[0] -= prev_load_values_dy[0][0] + prev_load_values_dy[0][2] + prev_load_values_dy[0][6];
+			NR_busdata[extract_node_ref].full_Y_load[1] += prev_load_values_dy[0][0];
+			NR_busdata[extract_node_ref].full_Y_load[2] += prev_load_values_dy[0][2];
+			NR_busdata[extract_node_ref].full_Y_load[3] += prev_load_values_dy[0][3];
+			NR_busdata[extract_node_ref].full_Y_load[4] += prev_load_values_dy[0][0];
+			NR_busdata[extract_node_ref].full_Y_load[5] -= prev_load_values_dy[0][1] + prev_load_values_dy[0][0] + prev_load_values_dy[0][7];
+			NR_busdata[extract_node_ref].full_Y_load[6] += prev_load_values_dy[0][1];
+			NR_busdata[extract_node_ref].full_Y_load[7] += prev_load_values_dy[0][4];
+			NR_busdata[extract_node_ref].full_Y_load[8] += prev_load_values_dy[0][2];
+			NR_busdata[extract_node_ref].full_Y_load[9] += prev_load_values_dy[0][1];
+			NR_busdata[extract_node_ref].full_Y_load[10] -= prev_load_values_dy[0][2] + prev_load_values_dy[0][1] + prev_load_values_dy[0][8];
+			NR_busdata[extract_node_ref].full_Y_load[11] += prev_load_values_dy[0][5];
+			NR_busdata[extract_node_ref].full_Y_load[12] += prev_load_values_dy[0][3];
+			NR_busdata[extract_node_ref].full_Y_load[13] += prev_load_values_dy[0][4];
+			NR_busdata[extract_node_ref].full_Y_load[14] += prev_load_values_dy[0][5];
+			NR_busdata[extract_node_ref].full_Y_load[15] -= prev_load_values_dy[0][3] + prev_load_values_dy[0][4] + prev_load_values_dy[0][5] + prev_load_values_dy[0][9];
+		}
+		else
+		{
+			//Remove the explicit Delta-Wye componenents
+			NR_busdata[extract_node_ref].full_Y_load[0] -= prev_load_values_dy[0][0] + prev_load_values_dy[0][2] + prev_load_values_dy[0][3];
+			NR_busdata[extract_node_ref].full_Y_load[1] += prev_load_values_dy[0][0];
+			NR_busdata[extract_node_ref].full_Y_load[2] += prev_load_values_dy[0][2];
+			//3
+			NR_busdata[extract_node_ref].full_Y_load[4] += prev_load_values_dy[0][0];
+			NR_busdata[extract_node_ref].full_Y_load[5] -= prev_load_values_dy[0][1] + prev_load_values_dy[0][0] + prev_load_values_dy[0][4];
+			NR_busdata[extract_node_ref].full_Y_load[6] += prev_load_values_dy[0][1];
+			//7
+			NR_busdata[extract_node_ref].full_Y_load[8] += prev_load_values_dy[0][2];
+			NR_busdata[extract_node_ref].full_Y_load[9] += prev_load_values_dy[0][1];
+			NR_busdata[extract_node_ref].full_Y_load[10] -= prev_load_values_dy[0][2] + prev_load_values_dy[0][1] + prev_load_values_dy[0][5];
+			//11
+			//12-15
+		}
 
 		//Do the "traditional" load removal
 		if (has_phase(PHASE_D))
 		{
 			//Update the matrix
+			//TODO: Dedicated Neutral - handle those values!!! - also YG
 			NR_busdata[extract_node_ref].full_Y_load[0] -= prev_load_values[0][0] + prev_load_values[0][2];
 			NR_busdata[extract_node_ref].full_Y_load[1] += prev_load_values[0][0];
 			NR_busdata[extract_node_ref].full_Y_load[2] += prev_load_values[0][2];
-			NR_busdata[extract_node_ref].full_Y_load[3] += prev_load_values[0][0];
-			NR_busdata[extract_node_ref].full_Y_load[4] -= prev_load_values[0][1] + prev_load_values[0][0];
-			NR_busdata[extract_node_ref].full_Y_load[5] += prev_load_values[0][1];
-			NR_busdata[extract_node_ref].full_Y_load[6] += prev_load_values[0][2];
-			NR_busdata[extract_node_ref].full_Y_load[7] += prev_load_values[0][1];
-			NR_busdata[extract_node_ref].full_Y_load[8] -= prev_load_values[0][2] + prev_load_values[0][1];
+			//3
+			NR_busdata[extract_node_ref].full_Y_load[4] += prev_load_values[0][0];
+			NR_busdata[extract_node_ref].full_Y_load[5] -= prev_load_values[0][1] + prev_load_values[0][0];
+			NR_busdata[extract_node_ref].full_Y_load[6] += prev_load_values[0][1];
+			//7
+			NR_busdata[extract_node_ref].full_Y_load[8] += prev_load_values[0][2];
+			NR_busdata[extract_node_ref].full_Y_load[9] += prev_load_values[0][1];
+			NR_busdata[extract_node_ref].full_Y_load[10] -= prev_load_values[0][2] + prev_load_values[0][1];
+			//11
+			//12-15
 		}
 		else
 		{
 			//Update the matrix
 			NR_busdata[extract_node_ref].full_Y_load[0] -= prev_load_values[0][0];
-			NR_busdata[extract_node_ref].full_Y_load[4] -= prev_load_values[0][1];
-			NR_busdata[extract_node_ref].full_Y_load[8] -= prev_load_values[0][2];
+			NR_busdata[extract_node_ref].full_Y_load[5] -= prev_load_values[0][1];
+			NR_busdata[extract_node_ref].full_Y_load[10] -= prev_load_values[0][2];
 		}
 
 		//Flag an update, because we just changed things
@@ -3336,7 +3867,7 @@ void load::load_delete_update_fxn(void)
 	}
 
 	//Now do again for the explicit connections
-	for (index_var=0; index_var<6; index_var++)
+	for (index_var=0; index_var<index_limit; index_var++)
 	{
 		//Remove contributions
 		shunt_dy[index_var] -= prev_load_values_dy[0][index_var];

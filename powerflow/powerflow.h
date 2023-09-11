@@ -145,6 +145,7 @@ GLOBAL double current_frequency INIT(60.0);			/**< Current operating frequency o
 GLOBAL bool master_frequency_update INIT(false);	/**< Whether a generator has designated itself "keeper of frequency" -- temporary deltamode override */
 GLOBAL bool enable_frequency_dependence INIT(false);	/**< Flag to enable frequency-based updates of impedance values, namely loads and lines */
 GLOBAL double default_resistance INIT(1e-4);		/**< sets the default resistance for safety devices */
+GLOBAL bool enable_neutral_modeling INIT(false);	/**< Flag to set if using 4-wire vs. old 3-wire assumptions (Kron reductions)*/
 
 //In-rush deltamode stuff
 GLOBAL bool enable_inrush_calculations INIT(false);	/**< Flag to enable in-rush calculations in deltamode */

@@ -599,7 +599,7 @@ EXPORT int create_ZIPload(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(ZIPload::oclass);
 		if (*obj!=NULL)
 		{
-			ZIPload *my = OBJECTDATA(*obj,ZIPload);;
+			ZIPload *my = OBJECTDATA(*obj,ZIPload);
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;

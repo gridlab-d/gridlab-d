@@ -23,7 +23,7 @@ private:
 	bool base_load_val_was_nonzero[3];		///< Tracking variable to make ZIP-fraction loads check for zero conditions (but not already zeroed)
 
 	gld::complex prev_load_values[3][3];			///< Tracking variable for accumulators - make loads behave more like nodes
-	gld::complex prev_load_values_dy[3][6];		///< Tracking variable for accumulators - full connection - make loads behave more like nodes.
+	gld::complex prev_load_values_dy[3][10];		///< Tracking variable for accumulators - full connection - make loads behave more like nodes.
 
 public:
 	gld::complex measured_voltage_A;	///< measured voltage
@@ -37,9 +37,9 @@ public:
 	gld::complex constant_power[3];		// power load
 	gld::complex constant_current[3];	// current load
 	gld::complex constant_impedance[3];	// impedance load
-	gld::complex constant_power_dy[6];		// Power load, explicitly specified wye and delta -- delta first, then wye
-	gld::complex constant_current_dy[6];	// Current load, explicitly specified wye and delta -- delta first, then wye
-	gld::complex constant_impedance_dy[6];	// Impedance load, explicitly specified wye and delta -- delta first, then wye
+	gld::complex constant_power_dy[10];		// Power load, explicitly specified wye and delta -- delta first, then wye
+	gld::complex constant_current_dy[10];	// Current load, explicitly specified wye and delta -- delta first, then wye
+	gld::complex constant_impedance_dy[10];	// Impedance load, explicitly specified wye and delta -- delta first, then wye
 	INRUSHINTMETHOD inrush_int_method_inductance;	//Individual mode selection
 	INRUSHINTMETHOD inrush_int_method_capacitance;
 

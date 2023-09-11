@@ -185,9 +185,9 @@ int transformer::init(OBJECT *parent)
 	zt = (config->impedance * V_base * V_base) / (config->kVA_rating * 1000.0);
 	zc =  gld::complex(V_base * V_base,0) / (config->kVA_rating * 1000.0) * gld::complex(config->shunt_impedance.Re(),0) * gld::complex(0,config->shunt_impedance.Im()) / gld::complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
 
-	for (int i = 0; i < 3; i++) 
+	for (int i = 0; i < 4; i++) 
 	{
-		for (int j = 0; j < 3; j++)
+		for (int j = 0; j < 4; j++)
 		{
 			a_mat[i][j] = b_mat[i][j] = c_mat[i][j] = d_mat[i][j] = A_mat[i][j] = B_mat[i][j] = gld::complex(0.0,0.0);
 			base_admittance_mat[i][j] = gld::complex(0.0,0.0);

@@ -301,6 +301,7 @@ void triplex_line::phase_conductor_checks(void)
 
 void triplex_line::recalc(void)
 {
+	gld::complex temp_b_mat[3][3], temp_B_mat[3][3];
 	triplex_line_configuration *line_config = OBJECTDATA(configuration,triplex_line_configuration);
 
 	OBJECT *obj = OBJECTHDR(this);
@@ -430,8 +431,26 @@ void triplex_line::recalc(void)
 		tn[1] = -zp23/zp33;
 		tn[2] = 0;
 
-		multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
-		multiply(length/5280.0,zs,B_mat);
+		multiply(length/5280.0,zs,temp_b_mat); // Length comes in ft, convert to miles.
+		multiply(length/5280.0,zs,temp_B_mat);
+
+		//Copy values in
+		for (int rval=0; rval<4; rval++)
+		{
+			for (int cval=0; cval<4; cval++)
+			{
+				if ((rval<3) && (cval<3))
+				{
+					b_mat[rval][cval] = temp_b_mat[rval][cval];
+					B_mat[rval][cval] = temp_B_mat[rval][cval];
+				}
+				else
+				{
+					b_mat[rval][cval] = gld::complex(0.0,0.0);
+					B_mat[rval][cval] = gld::complex(0.0,0.0);
+				}
+			}
+		}
 	}
 	
 	//Check for negative resistance in the line's impedance matrix

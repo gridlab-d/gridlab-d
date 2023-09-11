@@ -490,7 +490,7 @@ static bool import_objects(MYSQL *mysql)
 				row[10], row[11], row[12], row[13], row[14], row[15], row[16], row[17]);
 
 		// find class for this object (include module match)
-		CLASS *cls = gl_class_get_by_name(row[1]) ;;
+		CLASS *cls = gl_class_get_by_name(row[1]) ;
 		while ( cls!=NULL && !( ( cls->module==NULL && row[18]==NULL ) || strcmp(cls->module->name,row[18])==0 ) )
 		{
 			gl_verbose("searching for class that matches module: '%s' -> %s:%s ", row[18], cls->module, cls->name);

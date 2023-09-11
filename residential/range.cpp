@@ -1244,7 +1244,7 @@ EXPORT int create_range(OBJECT **obj, OBJECT *parent)
 	*obj = gl_create_object(range::oclass);
 	if (*obj!=NULL)
 	{
-		range *my = OBJECTDATA(*obj,range);;
+		range *my = OBJECTDATA(*obj,range);
 		gl_set_parent(*obj,parent);
 		my->create();
 		return 1;

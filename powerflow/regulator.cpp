@@ -103,6 +103,7 @@ int regulator::init(OBJECT *parent)
 	bool TapInitialValue[3];
 	char jindex;
 	int result = link_object::init(parent);
+	gld::complex temp_3_matrix_A[3][3], temp_3_matrix_B[3][3];
 
 	//Check for deferred
 	if (result == 2)
@@ -288,7 +289,26 @@ int regulator::init(OBJECT *parent)
 		case regulator_configuration::WYE_WYE:
 			for (int i = 0; i < 3; i++)
 				d_mat[i][i] = gld::complex(1.0,0) / a_mat[i][i];
-			inverse(a_mat,A_mat);
+
+			//3-phase down-select (temporary fix)
+			for (int r=0; r<3; r++)
+			{
+				for (int c=0; c<3; c++)
+				{
+					temp_3_matrix_A[r][c] = a_mat[r][c];
+				}
+			}
+
+			inverse(temp_3_matrix_A,temp_3_matrix_B);	//a_mat, A_mat
+
+			//Copy it out (temporary fix)
+			for (int r=0; r<3; r++)
+			{
+				for (int c=0; c<3; c++)
+				{
+					A_mat[r][c] = temp_3_matrix_B[r][c];
+				}
+			}
 
 			if (solver_method == SM_NR)
 			{
@@ -332,7 +352,15 @@ int regulator::init(OBJECT *parent)
 			a_mat[2][2] = 0;
 
 			multiply(W_mat,tmp_mat,tmp_mat1);
-			multiply(tmp_mat1,D_mat,A_mat);
+			multiply(tmp_mat1,D_mat,temp_3_matrix_A);
+
+			for (int r=0; r<3; r++)
+			{
+				for (int c=0; c<3; c++)
+				{
+					A_mat[r][c] = temp_3_matrix_A[r][c];
+				}
+			}
 
 			gl_warning("Only WYE-WYE configurations are working in either Newton-Raphson or non-Manual controls");
 			/*  TROUBLESHOOT
@@ -510,7 +538,7 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 void regulator::reg_prePre_fxn(double curr_time_value)
 {
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
-
+	gld::complex temp_3_matrix_A[3][3], temp_3_matrix_B[3][3];
 
 	if (pConfig->Control == pConfig->MANUAL) {
 		for (int i = 0; i < 3; i++) {
@@ -909,7 +937,26 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 		case regulator_configuration::WYE_WYE:
 			for (int i = 0; i < 3; i++)
 			{	d_mat[i][i] = gld::complex(1.0,0) / a_mat[i][i]; }
-			inverse(a_mat,A_mat);
+			
+			//3-phase down-select (temporary fix)
+			for (int r=0; r<3; r++)
+			{
+				for (int c=0; c<3; c++)
+				{
+					temp_3_matrix_A[r][c] = a_mat[r][c];
+				}
+			}
+
+			inverse(temp_3_matrix_A,temp_3_matrix_B);	//a_mat, A_mat
+
+			//Copy it out (temporary fix)
+			for (int r=0; r<3; r++)
+			{
+				for (int c=0; c<3; c++)
+				{
+					A_mat[r][c] = temp_3_matrix_B[r][c];
+				}
+			}
 			break;
 		case regulator_configuration::OPEN_DELTA_ABBC:
 			d_mat[0][0] = gld::complex(1,0) / a_mat[0][0];
@@ -922,7 +969,16 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 			a_mat[2][2] = 0;
 
 			multiply(W_mat,tmp_mat,tmp_mat1);
-			multiply(tmp_mat1,D_mat,A_mat);
+			multiply(tmp_mat1,D_mat,temp_3_matrix_A);
+
+			for (int r=0; r<3; r++)
+			{
+				for (int c=0; c<3; c++)
+				{
+					A_mat[r][c] = temp_3_matrix_A[r][c];
+				}
+			}
+
 			break;
 		case regulator_configuration::OPEN_DELTA_BCAC:
 			break;
@@ -950,9 +1006,9 @@ void regulator::reg_postPre_fxn(void)
 	{
 		//Get matrices for NR
 		int jindex,kindex;
-		gld::complex Ylefttemp[3][3];
-		gld::complex Yto[3][3];
-		gld::complex Yfrom[3][3];
+		gld::complex Ylefttemp[4][4];
+		gld::complex Yto[4][4];
+		gld::complex Yfrom[4][4];
 
 		//Pre-admittancized matrix
 		equalm(base_admittance_mat,Yto);
@@ -962,7 +1018,7 @@ void regulator::reg_postPre_fxn(void)
 		{
 			for (kindex=0; kindex<3; kindex++)
 			{
-				YSto[jindex*3+kindex]=Yto[jindex][kindex];
+				YSto[jindex*4+kindex]=Yto[jindex][kindex];
 			}
 		}
 		
@@ -981,7 +1037,7 @@ void regulator::reg_postPre_fxn(void)
 		{
 			for (kindex=0; kindex<3; kindex++)
 			{
-				YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
+				YSfrom[jindex*4+kindex]=Yfrom[jindex][kindex];
 			}
 		}
 
@@ -1299,6 +1355,7 @@ double regulator::reg_postPost_fxn(double curr_time_value)
 void regulator::get_monitored_voltage()
 {
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+	gld::complex temp_3_matrix_A[3][3], temp_3_matrix_B[3][3];
 
 	int testval = (int)(pConfig->Control);
 	switch (testval)
@@ -1318,7 +1375,26 @@ void regulator::get_monitored_voltage()
 				{
 					//Calculate outgoing currents
 					gld::complex tmp_mat2[3][3];
-					inverse(d_mat,tmp_mat2);
+
+					//3-phase down-select (temporary fix)
+					for (int r=0; r<3; r++)
+					{
+						for (int c=0; c<3; c++)
+						{
+							temp_3_matrix_A[r][c] = d_mat[r][c];
+						}
+					}
+
+					inverse(temp_3_matrix_A,temp_3_matrix_B);	//d_mat, tmp_mat2
+
+					//Copy it out (temporary fix)
+					for (int r=0; r<3; r++)
+					{
+						for (int c=0; c<3; c++)
+						{
+							tmp_mat2[r][c] = temp_3_matrix_B[r][c];
+						}
+					}
 
 					curr[0] = tmp_mat2[0][0]*current_in[0]+tmp_mat2[0][1]*current_in[1]+tmp_mat2[0][2]*current_in[2];
 					curr[1] = tmp_mat2[1][0]*current_in[0]+tmp_mat2[1][1]*current_in[1]+tmp_mat2[1][2]*current_in[2];
@@ -1348,7 +1424,26 @@ void regulator::get_monitored_voltage()
 				{
 					//Calculate outgoing currents
 					gld::complex tmp_mat2[3][3];
-					inverse(d_mat,tmp_mat2);
+
+					//3-phase down-select (temporary fix)
+					for (int r=0; r<3; r++)
+					{
+						for (int c=0; c<3; c++)
+						{
+							temp_3_matrix_A[r][c] = d_mat[r][c];
+						}
+					}
+
+					inverse(temp_3_matrix_A,temp_3_matrix_B);	//d_mat, tmp_mat2
+
+					//Copy it out (temporary fix)
+					for (int r=0; r<3; r++)
+					{
+						for (int c=0; c<3; c++)
+						{
+							tmp_mat2[r][c] = temp_3_matrix_B[r][c];
+						}
+					}
 
 					curr[0] = tmp_mat2[0][0]*current_in[0]+tmp_mat2[0][1]*current_in[1]+tmp_mat2[0][2]*current_in[2];
 					curr[1] = tmp_mat2[1][0]*current_in[0]+tmp_mat2[1][1]*current_in[1]+tmp_mat2[1][2]*current_in[2];

@@ -43,18 +43,18 @@ typedef enum {
 class link_object : public powerflow_object
 {
 public: /// @todo make this private and create interfaces to control values
-	gld::complex a_mat[3][3];				// a_mat - 3x3 matrix, 'a' matrix
-	gld::complex b_mat[3][3];				// b_mat - 3x3 matrix, 'b' matrix
-	gld::complex c_mat[3][3];				// c_mat - 3x3 matrix, 'c' matrix
-	gld::complex d_mat[3][3];				// d_mat - 3x3 matrix, 'd' matrix
-	gld::complex A_mat[3][3];				// A_mat - 3x3 matrix, 'A' matrix
-	gld::complex B_mat[3][3];				// B_mat - 3x3 matrix, 'B' matrix
+	gld::complex a_mat[4][4];				// a_mat - 4x4 matrix, 'a' matrix
+	gld::complex b_mat[4][4];				// b_mat - 4x4 matrix, 'b' matrix
+	gld::complex c_mat[4][4];				// c_mat - 4x4 matrix, 'c' matrix
+	gld::complex d_mat[4][4];				// d_mat - 4x4 matrix, 'd' matrix
+	gld::complex A_mat[4][4];				// A_mat - 4x4 matrix, 'A' matrix
+	gld::complex B_mat[4][4];				// B_mat - 4x4 matrix, 'B' matrix
 	gld::complex tn[3];						// Used to calculate return current
-	gld::complex base_admittance_mat[3][3];	// 3x3 matrix as "pre-inverted" matrix for NR - mostly for transformers
-	gld::complex To_Y[3][3];					// To_Y  - 3x3 matrix, object transition to admittance
-	gld::complex From_Y[3][3];				// From_Y - 3x3 matrix, object transition from admittance
-	gld::complex *YSfrom;					// YSfrom - Pointer to 3x3 matrix representing admittance seen from "from" side (transformers)
-	gld::complex *YSto;						// YSto - Pointer to 3x3 matrix representing admittance seen from "to" side (transformers)
+	gld::complex base_admittance_mat[4][4];	// 4x4 matrix as "pre-inverted" matrix for NR - mostly for transformers
+	gld::complex To_Y[4][4];					// To_Y  - 4x4 matrix, object transition to admittance
+	gld::complex From_Y[4][4];				// From_Y - 4x4 matrix, object transition from admittance
+	gld::complex *YSfrom;					// YSfrom - Pointer to 4x4 matrix representing admittance seen from "from" side (transformers)
+	gld::complex *YSto;						// YSto - Pointer to 4x4 matrix representing admittance seen from "to" side (transformers)
 	double voltage_ratio;				// voltage ratio (normally 1.0)
 	int NR_branch_reference;			//Index of NR_branchdata this link is contained in
 	SPECIAL_LINK SpecialLnk;			//Flag for exceptions to the normal handling
@@ -66,8 +66,8 @@ public: /// @todo make this private and create interfaces to control values
 	int link_fault_off(int *implemented_fault, char *imp_fault_name);	//Function to remove fault from line
 	int clear_fault_only(int *implemented_fault, char *imp_fault_name); //Function to remove the fault from the link object but not restore the system
 	double mean_repair_time;
-	double *link_limits[2][3];		/**< pointers for line limits (emergency vs. continuous) for link objects and by phase - pointered for variation */
-	double link_rating[2][3];		/**< Values for current line rating - gives individual segments the ability to set */
+	double *link_limits[2][4];		/**< pointers for line limits (emergency vs. continuous) for link objects and by phase - pointered for variation */
+	double link_rating[2][4];		/**< Values for current line rating - gives individual segments the ability to set */
 	double *get_double(OBJECT *obj, const char *name);	/**< Gets address of double - mainly for mean_repair_time */
 	bool overloaded_status;
 public:
@@ -78,19 +78,19 @@ public:
 	bool check_link_limits;	///< Flag to see if this particular link needs limits checked
 	OBJECT *from;			///< from_node - source node
 	OBJECT *to;				///< to_node - load node
-	gld::complex current_in[3];		///< current flow to link (w.r.t from node)
-	gld::complex current_out[3];	///< current flow out of link (w.r.t. to node)
-	gld::complex read_I_in[3];	///< published current flow to link (w.r.t from node)
-	gld::complex read_I_out[3];  ///< published current flow out of link (w.r.t to node)
-	gld::complex If_in[3];		///< fault current flowing in
-	gld::complex If_out[3];		///< fault current flowing out
-	gld::complex Vf_out[3];
+	gld::complex current_in[4];		///< current flow to link (w.r.t from node)
+	gld::complex current_out[4];	///< current flow out of link (w.r.t. to node)
+	gld::complex read_I_in[4];	///< published current flow to link (w.r.t from node)
+	gld::complex read_I_out[4];  ///< published current flow out of link (w.r.t to node)
+	gld::complex If_in[4];		///< fault current flowing in
+	gld::complex If_out[4];		///< fault current flowing out
+	gld::complex Vf_out[4];
 	gld::complex power_in;		///< power flow in (w.r.t from node)
 	gld::complex power_out;		///< power flow out (w.r.t to node)
 	gld::complex power_loss;		///< power losses
-	gld::complex indiv_power_in[3];	///< power flow in (w.r.t. from node) - individual quantities
-	gld::complex indiv_power_out[3];	///< power flow out (w.r.t. to node) - individual quantities
-	gld::complex indiv_power_loss[3];///< power losses - individual quantities
+	gld::complex indiv_power_in[4];	///< power flow in (w.r.t. from node) - individual quantities
+	gld::complex indiv_power_out[4];	///< power flow out (w.r.t. to node) - individual quantities
+	gld::complex indiv_power_loss[4];///< power losses - individual quantities
 	int protect_locations[3];	///< Links to protection object for different phase faults - part of reliability
 	FUNCTIONADDR link_recalc_fxn;	///< Function address for link recalculation function - frequency dependence
 
@@ -182,13 +182,19 @@ public:
 
 };
 
-//Macros
+//Macros - aliased for 4x4 setup
 void inverse(gld::complex in[3][3], gld::complex out[3][3]);
+void inverse(gld::complex in[4][4], gld::complex out[4][4]);
 void multiply(double a, gld::complex b[3][3], gld::complex c[3][3]);
 void multiply(gld::complex a[3][3], gld::complex b[3][3], gld::complex c[3][3]);
+void multiply(double a, gld::complex b[4][4], gld::complex c[4][4]);
+void multiply(gld::complex a[4][4], gld::complex b[4][4], gld::complex c[4][4]);
 void subtract(gld::complex a[3][3], gld::complex b[3][3], gld::complex c[3][3]);
+void subtract(gld::complex a[4][4], gld::complex b[4][4], gld::complex c[4][4]);
 void addition(gld::complex a[3][3], gld::complex b[3][3], gld::complex c[3][3]);
+void addition(gld::complex a[4][4], gld::complex b[4][4], gld::complex c[4][4]);
 void equalm(gld::complex a[3][3], gld::complex b[3][3]);
+void equalm(gld::complex a[4][4], gld::complex b[4][4]);
 
 //LU Decomp stuff
 void lu_decomp(gld::complex *a, gld::complex *l, gld::complex *u, int size_val); //lu decomposition function for a generic square matrix

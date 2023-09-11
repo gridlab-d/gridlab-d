@@ -4134,7 +4134,7 @@ EXPORT int create_house(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(house_e::oclass);
 		if (*obj!=nullptr)
 		{
-			house_e *my = OBJECTDATA(*obj,house_e);;
+			house_e *my = OBJECTDATA(*obj,house_e);
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;

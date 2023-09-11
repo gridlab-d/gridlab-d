@@ -117,26 +117,35 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "voltage_A[V]", PADDR(voltage[0]),PT_DESCRIPTION,"bus voltage, Phase A to ground",
 			PT_complex, "voltage_B[V]", PADDR(voltage[1]),PT_DESCRIPTION,"bus voltage, Phase B to ground",
 			PT_complex, "voltage_C[V]", PADDR(voltage[2]),PT_DESCRIPTION,"bus voltage, Phase C to ground",
+			PT_complex, "voltage_N[V]", PADDR(voltage[3]),PT_DESCRIPTION,"bus voltage, Phase N to ground",
 			PT_complex, "voltage_AB[V]", PADDR(voltaged[0]),PT_DESCRIPTION,"line voltages, Phase AB",
 			PT_complex, "voltage_BC[V]", PADDR(voltaged[1]),PT_DESCRIPTION,"line voltages, Phase BC",
 			PT_complex, "voltage_CA[V]", PADDR(voltaged[2]),PT_DESCRIPTION,"line voltages, Phase CA",
+			PT_complex, "voltage_AN[V]", PADDR(voltaged[3]),PT_DESCRIPTION,"line voltages, Phase AN",
+			PT_complex, "voltage_BN[V]", PADDR(voltaged[4]),PT_DESCRIPTION,"line voltages, Phase BN",
+			PT_complex, "voltage_CN[V]", PADDR(voltaged[5]),PT_DESCRIPTION,"line voltages, Phase CN",
 			PT_complex, "current_A[A]", PADDR(current[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "current_B[A]", PADDR(current[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "current_C[A]", PADDR(current[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_N[A]", PADDR(current[3]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "power_A[VA]", PADDR(power[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "power_B[VA]", PADDR(power[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "power_C[VA]", PADDR(power[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_N[VA]", PADDR(power[3]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "shunt_A[S]", PADDR(shunt[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
 			PT_complex, "shunt_B[S]", PADDR(shunt[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
 			PT_complex, "shunt_C[S]", PADDR(shunt[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_N[S]", PADDR(shunt[3]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt admittance, this an accumulator only, not a output or input variable",
 
 			PT_complex, "prerotated_current_A[A]", PADDR(pre_rotated_current[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "prerotated_current_B[A]", PADDR(pre_rotated_current[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "prerotated_current_C[A]", PADDR(pre_rotated_current[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+			PT_complex, "prerotated_current_N[A]", PADDR(pre_rotated_current[3]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 
 			PT_complex, "deltamode_generator_current_A[A]", PADDR(deltamode_dynamic_current[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
 			PT_complex, "deltamode_generator_current_B[A]", PADDR(deltamode_dynamic_current[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
 			PT_complex, "deltamode_generator_current_C[A]", PADDR(deltamode_dynamic_current[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
+			PT_complex, "deltamode_generator_current_N[A]", PADDR(deltamode_dynamic_current[3]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
 
 			PT_complex, "deltamode_PGenTotal",PADDR(deltamode_PGenTotal),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - power value for a diesel generator -- accumulator only, not an output or input",
 
@@ -147,6 +156,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "current_inj_A[A]", PADDR(current_inj[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "current_inj_B[A]", PADDR(current_inj[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "current_inj_C[A]", PADDR(current_inj[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+			PT_complex, "current_inj_N[A]", PADDR(current_inj[3]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 
 			PT_complex, "current_AB[A]", PADDR(current_dy[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "current_BC[A]", PADDR(current_dy[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
@@ -154,29 +164,44 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "current_AN[A]", PADDR(current_dy[3]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "current_BN[A]", PADDR(current_dy[4]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "current_CN[A]", PADDR(current_dy[5]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_AE[A]", PADDR(current_dy[6]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_BE[A]", PADDR(current_dy[7]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_CE[A]", PADDR(current_dy[8]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "current_NE[A]", PADDR(current_dy[9]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "power_AB[VA]", PADDR(power_dy[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "power_BC[VA]", PADDR(power_dy[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "power_CA[VA]", PADDR(power_dy[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "power_AN[VA]", PADDR(power_dy[3]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "power_BN[VA]", PADDR(power_dy[4]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
 			PT_complex, "power_CN[VA]", PADDR(power_dy[5]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
-			PT_complex, "shunt_AB[S]", PADDR(power_dy[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
-			PT_complex, "shunt_BC[S]", PADDR(power_dy[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
-			PT_complex, "shunt_CA[S]", PADDR(power_dy[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
-			PT_complex, "shunt_AN[S]", PADDR(power_dy[3]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
-			PT_complex, "shunt_BN[S]", PADDR(power_dy[4]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
-			PT_complex, "shunt_CN[S]", PADDR(power_dy[5]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "power_AE[VA]", PADDR(power_dy[6]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_BE[VA]", PADDR(power_dy[7]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_CE[VA]", PADDR(power_dy[8]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "power_NE[VA]", PADDR(power_dy[9]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_AB[S]", PADDR(shunt_dy[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_BC[S]", PADDR(shunt_dy[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_CA[S]", PADDR(shunt_dy[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_AN[S]", PADDR(shunt_dy[3]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_BN[S]", PADDR(shunt_dy[4]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_CN[S]", PADDR(shunt_dy[5]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_AE[S]", PADDR(shunt_dy[6]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_BE[S]", PADDR(shunt_dy[7]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_CE[S]", PADDR(shunt_dy[8]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+			PT_complex, "shunt_NE[S]", PADDR(shunt_dy[9]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
 
 			//House-related variables - for 3-phase house connections
 			PT_complex, "residential_nominal_current_A[A]", PADDR(nom_res_curr[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase A from a residential object, if attached",
 			PT_complex, "residential_nominal_current_B[A]", PADDR(nom_res_curr[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase B from a residential object, if attached",
 			PT_complex, "residential_nominal_current_C[A]", PADDR(nom_res_curr[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase C from a residential object, if attached",
+			PT_complex, "residential_nominal_current_N[A]", PADDR(nom_res_curr[3]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase N from a residential object, if attached",
 			PT_double, "residential_nominal_current_A_real[A]", PADDR(nom_res_curr[0].Re()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase A, real, from a residential object, if attached",
 			PT_double, "residential_nominal_current_A_imag[A]", PADDR(nom_res_curr[0].Im()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase A, imag, from a residential object, if attached",
 			PT_double, "residential_nominal_current_B_real[A]", PADDR(nom_res_curr[1].Re()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase B, real, from a residential object, if attached",
 			PT_double, "residential_nominal_current_B_imag[A]", PADDR(nom_res_curr[1].Im()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase B, imag, from a residential object, if attached",
 			PT_double, "residential_nominal_current_C_real[A]", PADDR(nom_res_curr[2].Re()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase C, real, from a residential object, if attached",
 			PT_double, "residential_nominal_current_C_imag[A]", PADDR(nom_res_curr[2].Im()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase C, imag, from a residential object, if attached",
+			PT_double, "residential_nominal_current_N_real[A]", PADDR(nom_res_curr[3].Re()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase N, real, from a residential object, if attached",
+			PT_double, "residential_nominal_current_N_imag[A]", PADDR(nom_res_curr[3].Im()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase N, imag, from a residential object, if attached",
 
 			PT_bool, "house_present", PADDR(house_present),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"boolean for detecting whether a house is attached, not an input",
 
@@ -290,7 +315,7 @@ int node::create(void)
 
 	NR_node_reference = -1;	//Newton-Raphson bus index, set to -1 initially
 	house_present = false;	//House attachment flag
-	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;	//Nominal house current variables
+	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = nom_res_curr[3] = 0.0;	//Nominal house current variables
 
 	prev_phases = NO_PHASE;
 
@@ -304,9 +329,10 @@ int node::create(void)
 	current_uptime = -1.0;		///< Flags as not initialized
 
 	full_Y = nullptr;		//Not used by default
-	full_Y_load[0][0] = full_Y_load[0][1] = full_Y_load[0][2] = gld::complex(0.0,0.0);	//Empty, by default
-	full_Y_load[1][0] = full_Y_load[1][1] = full_Y_load[1][2] = gld::complex(0.0,0.0);
-	full_Y_load[2][0] = full_Y_load[2][1] = full_Y_load[2][2] = gld::complex(0.0,0.0);
+	full_Y_load[0][0] = full_Y_load[0][1] = full_Y_load[0][2] = full_Y_load[0][3] = gld::complex(0.0,0.0);	//Empty, by default
+	full_Y_load[1][0] = full_Y_load[1][1] = full_Y_load[1][2] = full_Y_load[1][3] = gld::complex(0.0,0.0);
+	full_Y_load[2][0] = full_Y_load[2][1] = full_Y_load[2][2] = full_Y_load[2][3] = gld::complex(0.0,0.0);
+	full_Y_load[3][0] = full_Y_load[3][1] = full_Y_load[3][2] = full_Y_load[3][3] = gld::complex(0.0,0.0);
 	full_Y_all = nullptr;	//Not used by default   **** NOTE -- full_Y_all only appears to be used by diesel QSTS exciter code - it can probably be removed when that is fixed *****
 	BusHistTerm[0] = gld::complex(0.0,0.0);
 	BusHistTerm[1] = gld::complex(0.0,0.0);
@@ -318,10 +344,10 @@ int node::create(void)
 	LoadHistTermL = nullptr;
 	LoadHistTermC = nullptr;
 
-	shunt_change_check[0] = shunt_change_check[1] = shunt_change_check[2] = gld::complex (0.0,0.0);
-	shunt_change_check_dy[0] = shunt_change_check_dy[1] = gld::complex (0.0,0.0);
-	shunt_change_check_dy[2] = shunt_change_check_dy[3] = gld::complex (0.0,0.0);
-	shunt_change_check_dy[4] = shunt_change_check_dy[5] = gld::complex (0.0,0.0);
+	shunt_change_check[0] = shunt_change_check[1] = shunt_change_check[2] = shunt_change_check[3] = gld::complex (0.0,0.0);
+	shunt_change_check_dy[0] = shunt_change_check_dy[1] = shunt_change_check_dy[2] = gld::complex (0.0,0.0);
+	shunt_change_check_dy[3] = shunt_change_check_dy[4] = shunt_change_check_dy[5] = gld::complex (0.0,0.0);
+	shunt_change_check_dy[6] = shunt_change_check_dy[7] = shunt_change_check_dy[8] = shunt_change_check_dy[9] = gld::complex (0.0,0.0);
 
 	memset(voltage,0,sizeof(voltage));
 	memset(voltaged,0,sizeof(voltaged));
@@ -336,10 +362,13 @@ int node::create(void)
 
 	current_dy[0] = current_dy[1] = current_dy[2] = gld::complex(0.0,0.0);
 	current_dy[3] = current_dy[4] = current_dy[5] = gld::complex(0.0,0.0);
+	current_dy[6] = current_dy[7] = current_dy[8] = current_dy[9] = gld::complex(0.0,0.0);
 	power_dy[0] = power_dy[1] = power_dy[2] = gld::complex(0.0,0.0);
 	power_dy[3] = power_dy[4] = power_dy[5] = gld::complex(0.0,0.0);
+	power_dy[6] = power_dy[7] = power_dy[8] = power_dy[9] = gld::complex(0.0,0.0);
 	shunt_dy[0] = shunt_dy[1] = shunt_dy[2] = gld::complex(0.0,0.0);
 	shunt_dy[3] = shunt_dy[4] = shunt_dy[5] = gld::complex(0.0,0.0);
+	shunt_dy[6] = shunt_dy[7] = shunt_dy[8] = shunt_dy[9] = gld::complex(0.0,0.0);
 
 	prev_voltage_value = nullptr;	//NULL the pointer, just for the sake of doing so
 	prev_power_value = nullptr;	//NULL the pointer, again just for the sake of doing so
@@ -760,7 +789,7 @@ int node::init(OBJECT *parent)
 				//Allocate and point our properties up to the parent node
 				if (tmp_par_node->Extra_Data == nullptr)	//Make sure someone else hasn't allocated it for us
 				{
-					tmp_par_node->Extra_Data = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
+					tmp_par_node->Extra_Data = (gld::complex *)gl_malloc(12*sizeof(gld::complex));
 					if (tmp_par_node->Extra_Data == nullptr)
 					{
 						GL_THROW("NR: Memory allocation failure for differently connected load.");
@@ -772,7 +801,7 @@ int node::init(OBJECT *parent)
 					}
 
 					//Zero the entries
-					for (index_loop_val=0; index_loop_val<9; index_loop_val++)
+					for (index_loop_val=0; index_loop_val<12; index_loop_val++)
 					{
 						tmp_par_node->Extra_Data[index_loop_val] = gld::complex(0.0,0.0);
 					}
@@ -784,7 +813,7 @@ int node::init(OBJECT *parent)
 						if (tmp_par_node->Extra_Data_Track_FPI == nullptr)
 						{
 							//Allocate it
-							tmp_par_node->Extra_Data_Track_FPI = (gld::complex *)gl_malloc(3*sizeof(gld::complex));
+							tmp_par_node->Extra_Data_Track_FPI = (gld::complex *)gl_malloc(4*sizeof(gld::complex));
 
 							//Check it
 							if (tmp_par_node->Extra_Data_Track_FPI == nullptr)
@@ -794,7 +823,7 @@ int node::init(OBJECT *parent)
 							}
 
 							//Zero the entries, just to be safe/paranoid
-							for (index_loop_val=0; index_loop_val<3; index_loop_val++)
+							for (index_loop_val=0; index_loop_val<4; index_loop_val++)
 							{
 								tmp_par_node->Extra_Data_Track_FPI[index_loop_val] = gld::complex(0.0,0.0);
 							}
@@ -812,10 +841,10 @@ int node::init(OBJECT *parent)
 					tmp_par_node->SubNode |= SNT_PARENT;
 
 				//Zero out last child power vector (used for updates)
-				last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = gld::complex(0,0);
-				last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = gld::complex(0,0);
-				last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = gld::complex(0,0);
-				last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = gld::complex(0,0);
+				last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = last_child_power[0][3] = gld::complex(0,0);
+				last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = last_child_power[1][3] = gld::complex(0,0);
+				last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = last_child_power[2][3] = gld::complex(0,0);
+				last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = last_child_power[3][3] = gld::complex(0,0);
 				last_child_current12 = 0.0;
 
 				//Do the same for the delta/wye explicit portions
@@ -825,6 +854,10 @@ int node::init(OBJECT *parent)
 				last_child_power_dy[3][0] = last_child_power_dy[3][1] = last_child_power_dy[3][2] = gld::complex(0.0,0.0);
 				last_child_power_dy[4][0] = last_child_power_dy[4][1] = last_child_power_dy[4][2] = gld::complex(0.0,0.0);
 				last_child_power_dy[5][0] = last_child_power_dy[5][1] = last_child_power_dy[5][2] = gld::complex(0.0,0.0);
+				last_child_power_dy[6][0] = last_child_power_dy[6][1] = last_child_power_dy[6][2] = gld::complex(0.0,0.0);
+				last_child_power_dy[7][0] = last_child_power_dy[7][1] = last_child_power_dy[7][2] = gld::complex(0.0,0.0);
+				last_child_power_dy[8][0] = last_child_power_dy[8][1] = last_child_power_dy[8][2] = gld::complex(0.0,0.0);
+				last_child_power_dy[9][0] = last_child_power_dy[9][1] = last_child_power_dy[9][2] = gld::complex(0.0,0.0);
 			}
 
 			//Make sure nominal voltages match
@@ -1335,6 +1368,7 @@ int node::init(OBJECT *parent)
 		voltageAB = voltageA - voltageB;
 		voltageBC = voltageB - voltageC;
 		voltageCA = voltageC - voltageA;
+
 	}
 	else if (has_phase(PHASE_S))
 	{
@@ -1344,12 +1378,18 @@ int node::init(OBJECT *parent)
 		voltaged[2] = voltage[0] - voltage[2];	//1N -- odd order
 	}
 
+	//Compute neutral ones, even if it is just NG
+	voltaged[3] = voltage[0] - voltage[3];
+	voltaged[4] = voltage[1] - voltage[3];
+	voltaged[5] = voltage[2] - voltage[3];
+
 	//Populate last_voltage with initial values - just in case
 	if (solver_method == SM_NR)
 	{
 		last_voltage[0] = voltage[0];
 		last_voltage[1] = voltage[1];
 		last_voltage[2] = voltage[2];
+		last_voltage[3] = voltage[3];
 	}
 
 	//Initialize uptime variables
@@ -1403,7 +1443,7 @@ TIMESTAMP node::NR_node_presync_fxn(TIMESTAMP t0_val)
 	tresults_val = TS_NEVER;
 
 	//Zero the accumulators for later (meters and such)
-	current_inj[0] = current_inj[1] = current_inj[2] = 0.0;
+	current_inj[0] = current_inj[1] = current_inj[2] = current_inj[3] = complex(0.0,0.0);
 
 	//Reset flag
 	current_accumulated = false;
@@ -1435,17 +1475,19 @@ TIMESTAMP node::NR_node_presync_fxn(TIMESTAMP t0_val)
 	if (((SubNode & SNT_DIFF_PARENT) == SNT_DIFF_PARENT))	//Differently connected parent - zero our accumulators
 	{
 		//Zero them.  Row 1 is power, row 2 is admittance, row 3 is current
-		Extra_Data[0] = Extra_Data[1] = Extra_Data[2] = 0.0;
+		Extra_Data[0] = Extra_Data[1] = Extra_Data[2] = gld::complex(0.0,0.0);
 
-		Extra_Data[3] = Extra_Data[4] = Extra_Data[5] = 0.0;
+		Extra_Data[3] = Extra_Data[4] = Extra_Data[5] = gld::complex(0.0,0.0);
 
-		Extra_Data[6] = Extra_Data[7] = Extra_Data[8] = 0.0;
+		Extra_Data[6] = Extra_Data[7] = Extra_Data[8] = gld::complex(0.0,0.0);
+
+		Extra_Data[9] = Extra_Data[10] = Extra_Data[11] = gld::complex(0.0,0.0);
 	}
 
 	//If we're a parent and "have house", zero our accumulator
 	if (((SubNode & (SNT_PARENT | SNT_DIFF_PARENT)) != 0) && house_present)
 	{
-		nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
+		nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = nom_res_curr[3] = gld::complex(0.0,0.0);
 	}
 
 	//Base GFA Functionality
@@ -1970,12 +2012,13 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		}
 #endif
 		/* reset the current accumulator */
-		current_inj[0] = current_inj[1] = current_inj[2] = gld::complex(0,0);
+		current_inj[0] = current_inj[1] = current_inj[2] = current_inj[3] = gld::complex(0,0);
 
 		/* record the last sync voltage */
 		last_voltage[0] = voltage[0];
 		last_voltage[1] = voltage[1];
 		last_voltage[2] = voltage[2];
+		last_voltage[3] = voltage[3];
 
 		/* get frequency from reference bus */
 		if (reference_bus!=nullptr)
@@ -2044,6 +2087,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 							voltage[0] = last_voltage[0];
 							voltage[1] = last_voltage[1];
 							voltage[2] = last_voltage[2];
+							voltage[3] = last_voltage[3];
 						}
 						else	//When restoring from inrush, a very small term is needed (or nothing happens)
 						{
@@ -2135,10 +2179,39 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 						}
 					}//End Phase C change
 
+					//Find out changes, and direction
+					if ((phase_checks_var & PHASE_N) == PHASE_N)	//Phase N change
+					{
+						//See which way
+						if ((prev_phases & PHASE_N) == PHASE_N)	//Means N just disappeared
+						{
+							last_voltage[3] = voltage[3];	//Store the last value
+							voltage[3] = 0.0;				//Put us to zero, so volt_dump is happy
+						}
+						else	//N just came back
+						{
+							if (!enable_inrush_calculations)
+							{
+								voltage[3] = last_voltage[3];	//Read in the previous values
+							}
+							else	//When restoring from inrush, a very small term is needed (or nothing happens)
+							{
+								voltage[3] = last_voltage[3] * MULTTERM;
+							}
+
+							//Default else - in-rush enabled and want them zero
+						}
+					}//End Phase N change
+
 					//Recalculated VAB, VBC, and VCA, in case a child uses them
 					voltaged[0] = voltage[0] - voltage[1];
 					voltaged[1] = voltage[1] - voltage[2];
 					voltaged[2] = voltage[2] - voltage[0];
+
+					//Neutral calc - VAN, VBN, VCN
+					voltaged[3] = voltage[0] - voltage[3];
+					voltaged[4] = voltage[1] - voltage[3];
+					voltaged[5] = voltage[2] - voltage[3];
 				}//End not triplex
 
 				//Assign current value in
@@ -2158,18 +2231,22 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			ParToLoad->power[0]+=power[0]-last_child_power[0][0];
 			ParToLoad->power[1]+=power[1]-last_child_power[0][1];
 			ParToLoad->power[2]+=power[2]-last_child_power[0][2];
+			ParToLoad->power[3]+=power[3]-last_child_power[0][3];
 
 			ParToLoad->shunt[0]+=shunt[0]-last_child_power[1][0];
 			ParToLoad->shunt[1]+=shunt[1]-last_child_power[1][1];
 			ParToLoad->shunt[2]+=shunt[2]-last_child_power[1][2];
+			ParToLoad->shunt[3]+=shunt[3]-last_child_power[1][3];
 
 			ParToLoad->current[0]+=current[0]-last_child_power[2][0];
 			ParToLoad->current[1]+=current[1]-last_child_power[2][1];
 			ParToLoad->current[2]+=current[2]-last_child_power[2][2];
+			ParToLoad->current[3]+=current[3]-last_child_power[2][3];
 
 			ParToLoad->pre_rotated_current[0] += pre_rotated_current[0]-last_child_power[3][0];
 			ParToLoad->pre_rotated_current[1] += pre_rotated_current[1]-last_child_power[3][1];
 			ParToLoad->pre_rotated_current[2] += pre_rotated_current[2]-last_child_power[3][2];
+			ParToLoad->pre_rotated_current[3] += pre_rotated_current[3]-last_child_power[3][3];
 
 			//And the deltamode accumulators too -- if deltamode
 			//Only do this if we are a dynamic norton child - otherwise may do extra
@@ -2180,10 +2257,11 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 				deltamode_dynamic_current[0] = ParToLoad->deltamode_dynamic_current[0];
 				deltamode_dynamic_current[1] = ParToLoad->deltamode_dynamic_current[1];
 				deltamode_dynamic_current[2] = ParToLoad->deltamode_dynamic_current[2];
+				deltamode_dynamic_current[3] = ParToLoad->deltamode_dynamic_current[3];
 			}
 
 			//Do the same for the explicit delta/wye loads - last_child_power is set up as columns of ZIP, not ABC
-			for (loop_index_var=0; loop_index_var<6; loop_index_var++)
+			for (loop_index_var=0; loop_index_var<10; loop_index_var++)
 			{
 				ParToLoad->power_dy[loop_index_var] += power_dy[loop_index_var] - last_child_power_dy[loop_index_var][0];
 				ParToLoad->shunt_dy[loop_index_var] += shunt_dy[loop_index_var] - last_child_power_dy[loop_index_var][1];
@@ -2201,6 +2279,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 				ParToLoad->nom_res_curr[0] += nom_res_curr[0];
 				ParToLoad->nom_res_curr[1] += nom_res_curr[1];
 				ParToLoad->nom_res_curr[2] += nom_res_curr[2];
+				ParToLoad->nom_res_curr[3] += nom_res_curr[3];
 			}
 
 			//Unlock the parent now that we are done
@@ -2210,21 +2289,25 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			last_child_power[0][0] = power[0];
 			last_child_power[0][1] = power[1];
 			last_child_power[0][2] = power[2];
+			last_child_power[0][3] = power[3];
 
 			last_child_power[1][0] = shunt[0];
 			last_child_power[1][1] = shunt[1];
 			last_child_power[1][2] = shunt[2];
+			last_child_power[1][3] = shunt[3];
 
 			last_child_power[2][0] = current[0];
 			last_child_power[2][1] = current[1];
 			last_child_power[2][2] = current[2];
+			last_child_power[2][3] = current[3];
 
 			last_child_power[3][0] = pre_rotated_current[0];
 			last_child_power[3][1] = pre_rotated_current[1];
 			last_child_power[3][2] = pre_rotated_current[2];
+			last_child_power[3][3] = pre_rotated_current[3];
 
 			//Do the same for delta/wye explicit loads
-			for (loop_index_var=0; loop_index_var<6; loop_index_var++)
+			for (loop_index_var=0; loop_index_var<10; loop_index_var++)
 			{
 				last_child_power_dy[loop_index_var][0] = power_dy[loop_index_var];
 				last_child_power_dy[loop_index_var][1] = shunt_dy[loop_index_var];
@@ -2248,19 +2331,23 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			ParToLoad->Extra_Data[0] += power[0];
 			ParToLoad->Extra_Data[1] += power[1];
 			ParToLoad->Extra_Data[2] += power[2];
+			ParToLoad->Extra_Data[3] += power[3];
 
-			ParToLoad->Extra_Data[3] += shunt[0];
-			ParToLoad->Extra_Data[4] += shunt[1];
-			ParToLoad->Extra_Data[5] += shunt[2];
+			ParToLoad->Extra_Data[4] += shunt[0];
+			ParToLoad->Extra_Data[5] += shunt[1];
+			ParToLoad->Extra_Data[6] += shunt[2];
+			ParToLoad->Extra_Data[7] += shunt[3];
 
-			ParToLoad->Extra_Data[6] += current[0];
-			ParToLoad->Extra_Data[7] += current[1];
-			ParToLoad->Extra_Data[8] += current[2];
+			ParToLoad->Extra_Data[8] += current[0];
+			ParToLoad->Extra_Data[9] += current[1];
+			ParToLoad->Extra_Data[10] += current[2];
+			ParToLoad->Extra_Data[11] += current[3];
 
 			//Add in the unrotated stuff too -- it should never be subject to "connectivity"
 			ParToLoad->pre_rotated_current[0] += pre_rotated_current[0];
 			ParToLoad->pre_rotated_current[1] += pre_rotated_current[1];
 			ParToLoad->pre_rotated_current[2] += pre_rotated_current[2];
+			ParToLoad->pre_rotated_current[3] += pre_rotated_current[3];
 
 			//And the deltamode accumulators too -- if deltamode
 			//Only do this if we are a dynamic norton child - otherwise may do extra
@@ -2271,10 +2358,11 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 				deltamode_dynamic_current[0] = ParToLoad->deltamode_dynamic_current[0];
 				deltamode_dynamic_current[1] = ParToLoad->deltamode_dynamic_current[1];
 				deltamode_dynamic_current[2] = ParToLoad->deltamode_dynamic_current[2];
+				deltamode_dynamic_current[3] = ParToLoad->deltamode_dynamic_current[3];
 			}
 
 			//Import power and "load" characteristics for explicit delta/wye portions
-			for (loop_index_var=0; loop_index_var<6; loop_index_var++)
+			for (loop_index_var=0; loop_index_var<10; loop_index_var++)
 			{
 				ParToLoad->power_dy[loop_index_var] += power_dy[loop_index_var];
 				ParToLoad->shunt_dy[loop_index_var] += shunt_dy[loop_index_var];
@@ -2285,7 +2373,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			UNLOCK_OBJECT(SubNodeParent);
 
 			//Update our tracking variable
-			for (loop_index_var=0; loop_index_var<6; loop_index_var++)
+			for (loop_index_var=0; loop_index_var<10; loop_index_var++)
 			{
 				last_child_power_dy[loop_index_var][0] = power_dy[loop_index_var];
 				last_child_power_dy[loop_index_var][1] = shunt_dy[loop_index_var];
@@ -2296,6 +2384,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			last_child_power[3][0] = pre_rotated_current[0];
 			last_child_power[3][1] = pre_rotated_current[1];
 			last_child_power[3][2] = pre_rotated_current[2];
+			last_child_power[3][3] = pre_rotated_current[3];
 		}//End differently connected child
 
 		//Call the VFD update, if we need it
@@ -2534,7 +2623,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			else {
 				gld::complex d = ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
 								   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero()))) 
-									? currentN : -(temp_inj[0] + temp_inj[1]);
+									? current12N : -(temp_inj[0] + temp_inj[1]);
 				current_inj[2] += d;
 			}
 		}
@@ -3015,10 +3104,37 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 							}
 						}//End Phase C change
 
+						//Find out changes, and direction
+						if ((phase_checks_var & PHASE_N) == PHASE_N)	//Phase N change
+						{
+							//See which way
+							if ((prev_phases & PHASE_N) == PHASE_C)	//Means N just disappeared
+							{
+								last_voltage[3] = voltage[3];	//Store the last value
+								voltage[3] = 0.0;				//Put us to zero, so volt_dump is happy
+							}
+							else	//N just came back
+							{
+								if (!enable_inrush_calculations)
+								{
+									voltage[3] = last_voltage[3];	//Read in the previous values
+								}
+								else	//When restoring from inrush, a very small term is needed (or nothing happens)
+								{
+									voltage[3] = last_voltage[3] * MULTTERM;
+								}
+
+								//Default else - in-rush enabled and want them zero
+							}
+						}//End Phase C change
+
 						//Recalculated VAB, VBC, and VCA, in case a child uses them
 						voltaged[0] = voltage[0] - voltage[1];
 						voltaged[1] = voltage[1] - voltage[2];
 						voltaged[2] = voltage[2] - voltage[0];
+						voltaged[3] = voltage[0] - voltage[3];
+						voltaged[4] = voltage[1] - voltage[3];
+						voltaged[5] = voltage[2] - voltage[3];
 					}//End not triplex
 
 					//Assign current value in
@@ -3137,6 +3253,9 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 		voltaged[0] = voltage[0] - voltage[1];	//AB
 		voltaged[1] = voltage[1] - voltage[2];	//BC
 		voltaged[2] = voltage[2] - voltage[0];	//CA
+		voltaged[3] = voltage[0] - voltage[3];	//AN
+		voltaged[4] = voltage[1] - voltage[3];	//BN
+		voltaged[5] = voltage[2] - voltage[3];	//CN
 	}
 
 	//This code performs the new "flattened" NR calculations.
@@ -3236,8 +3355,8 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			if (phases&PHASE_S)
 			{	// split-tap voltage diffs are different
 				voltage12 = voltage1 + voltage2;
-				voltage1N = voltage1 - voltageN;
-				voltage2N = voltage2 - voltageN;
+				voltage1N = voltage1 - voltage12N;
+				voltage2N = voltage2 - voltage12N;
 			}
 			else
 			{	// compute 3phase voltage differences
@@ -3768,7 +3887,14 @@ int node::NR_populate(void)
 	NR_busdata[NR_node_reference].swing_topology_entry = false;
 
 	//Populate phases
-	NR_busdata[NR_node_reference].phases = phases & PHASE_INFO;
+	if (enable_neutral_modeling)	//Full modeling
+	{
+		NR_busdata[NR_node_reference].phases = phases & PHASE_INFO;
+	}
+	else	//No neutral - Legacy modeling
+	{
+		NR_busdata[NR_node_reference].phases = phases & PHASE_INFO_NONEUTRAL;
+	}
 
 	//Link our name in
 	NR_busdata[NR_node_reference].name = me->name;
@@ -4062,6 +4188,7 @@ int node::NR_populate(void)
 
 //Computes "load" portions of current injection
 //parentcall is set when a parent object has called this update - mainly for locking purposes
+//+++++************** partially updated ************************+++++//
 int node::NR_current_update(bool parentcall)
 {
 	unsigned int table_index;
@@ -4069,8 +4196,8 @@ int node::NR_current_update(bool parentcall)
 	int temp_result, loop_index;
 	OBJECT *obj = OBJECTHDR(this);
 	OBJECT *tmp_obj;
-	gld::complex temp_current_inj[3];
-	gld::complex temp_current_val[3];
+	gld::complex temp_current_inj[4];
+	gld::complex temp_current_val[4];
 	gld::complex adjusted_current_val[3];
 	gld::complex delta_shunt[3];
 	gld::complex delta_current[3];
@@ -4092,11 +4219,15 @@ int node::NR_current_update(bool parentcall)
 				NR_child_nodes[table_index]->voltage[0] = voltage[0];
 				NR_child_nodes[table_index]->voltage[1] = voltage[1];
 				NR_child_nodes[table_index]->voltage[2] = voltage[2];
+				NR_child_nodes[table_index]->voltage[3] = voltage[3];
 
 				//Do the same for delta-voltages - just for giggles (might be needed)
 				NR_child_nodes[table_index]->voltaged[0] = voltaged[0];
 				NR_child_nodes[table_index]->voltaged[1] = voltaged[1];
 				NR_child_nodes[table_index]->voltaged[2] = voltaged[2];
+				NR_child_nodes[table_index]->voltaged[3] = voltaged[3];
+				NR_child_nodes[table_index]->voltaged[4] = voltaged[4];
+				NR_child_nodes[table_index]->voltaged[5] = voltaged[5];
 			}//End FOR child table
 		}//End we have children
 
@@ -4178,14 +4309,17 @@ int node::NR_current_update(bool parentcall)
 			ParToLoad->power[0]-=last_child_power[0][0];
 			ParToLoad->power[1]-=last_child_power[0][1];
 			ParToLoad->power[2]-=last_child_power[0][2];
+			ParToLoad->power[3]-=last_child_power[0][3];
 
 			ParToLoad->shunt[0]-=last_child_power[1][0];
 			ParToLoad->shunt[1]-=last_child_power[1][1];
 			ParToLoad->shunt[2]-=last_child_power[1][2];
+			ParToLoad->shunt[3]-=last_child_power[1][3];
 
 			ParToLoad->current[0]-=last_child_power[2][0];
 			ParToLoad->current[1]-=last_child_power[2][1];
 			ParToLoad->current[2]-=last_child_power[2][2];
+			ParToLoad->current[3]-=last_child_power[2][3];
 
 			if (has_phase(PHASE_S))	//Triplex slightly different
 				ParToLoad->current12-=last_child_current12;
@@ -4194,6 +4328,7 @@ int node::NR_current_update(bool parentcall)
 			ParToLoad->pre_rotated_current[0] -= last_child_power[3][0];
 			ParToLoad->pre_rotated_current[1] -= last_child_power[3][1];
 			ParToLoad->pre_rotated_current[2] -= last_child_power[3][2];
+			ParToLoad->pre_rotated_current[3] -= last_child_power[3][3];
 
 			//And the deltamode accumulators too -- if deltamode
 			//Only do this if we are a dynamic norton child - otherwise may do extra
@@ -4204,10 +4339,11 @@ int node::NR_current_update(bool parentcall)
 				deltamode_dynamic_current[0] = ParToLoad->deltamode_dynamic_current[0];
 				deltamode_dynamic_current[1] = ParToLoad->deltamode_dynamic_current[1];
 				deltamode_dynamic_current[2] = ParToLoad->deltamode_dynamic_current[2];
+				deltamode_dynamic_current[3] = ParToLoad->deltamode_dynamic_current[3];
 			}
 
 			//Remove power and "load" characteristics for explicit delta/wye values
-			for (loop_index=0; loop_index<6; loop_index++)
+			for (loop_index=0; loop_index<10; loop_index++)
 			{
 				ParToLoad->power_dy[loop_index] -= last_child_power_dy[loop_index][0];		//Power
 				ParToLoad->shunt_dy[loop_index] -= last_child_power_dy[loop_index][1];		//Shunt
@@ -4222,16 +4358,16 @@ int node::NR_current_update(bool parentcall)
 
 			//Update previous power tracker - if we haven't really converged, things will mess up without this
 			//Power
-			last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = 0.0;
+			last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = last_child_power[0][3] = gld::complex(0.0,0.0);
 
 			//Shunt
-			last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = 0.0;
+			last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = last_child_power[1][3] = gld::complex(0.0,0.0);
 
 			//Current
-			last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = 0.0;
+			last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = last_child_power[2][3] = gld::complex(0.0,0.0);
 
 			//Zero the last power accumulators
-			for (loop_index=0; loop_index<6; loop_index++)
+			for (loop_index=0; loop_index<10; loop_index++)
 			{
 				last_child_power_dy[loop_index][0] = gld::complex(0.0);	//Power
 				last_child_power_dy[loop_index][1] = gld::complex(0.0);	//Shunt
@@ -4243,7 +4379,7 @@ int node::NR_current_update(bool parentcall)
 				last_child_current12 = 0.0;
 
 			//Do the same for the prerorated stuff
-			last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = gld::complex(0.0,0.0);
+			last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = last_child_power[3][3] = gld::complex(0.0,0.0);
 		}
 		else if ((SubNode & SNT_DIFF_CHILD)==SNT_DIFF_CHILD)	//Differently connected
 		{
@@ -4256,7 +4392,7 @@ int node::NR_current_update(bool parentcall)
 			}
 
 			//Remove power and "load" characteristics for explicit delta/wye values
-			for (loop_index=0; loop_index<6; loop_index++)
+			for (loop_index=0; loop_index<10; loop_index++)
 			{
 				ParToLoad->power_dy[loop_index] -= last_child_power_dy[loop_index][0];		//Power
 				ParToLoad->shunt_dy[loop_index] -= last_child_power_dy[loop_index][1];		//Shunt
@@ -4267,6 +4403,7 @@ int node::NR_current_update(bool parentcall)
 			ParToLoad->pre_rotated_current[0] -= last_child_power[3][0];
 			ParToLoad->pre_rotated_current[1] -= last_child_power[3][1];
 			ParToLoad->pre_rotated_current[2] -= last_child_power[3][2];
+			ParToLoad->pre_rotated_current[3] -= last_child_power[3][3];
 
 			if (!parentcall)	//Wasn't a parent call - unlock us so our siblings get a shot
 			{
@@ -4275,7 +4412,7 @@ int node::NR_current_update(bool parentcall)
 			}
 
 			//Zero the last power accumulators
-			for (loop_index=0; loop_index<6; loop_index++)
+			for (loop_index=0; loop_index<10; loop_index++)
 			{
 				last_child_power_dy[loop_index][0] = gld::complex(0.0);	//Power
 				last_child_power_dy[loop_index][1] = gld::complex(0.0);	//Shunt
@@ -4283,11 +4420,11 @@ int node::NR_current_update(bool parentcall)
 			}
 
 			//Now zero the accmulator, just in case
-			last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = gld::complex(0.0,0.0);
+			last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = last_child_power[3][3] = gld::complex(0.0,0.0);
 		}
 
 		//Handle our "self" - do this in a "temporary fashion" for children problems
-		temp_current_inj[0] = temp_current_inj[1] = temp_current_inj[2] = gld::complex(0.0,0.0);
+		temp_current_inj[0] = temp_current_inj[1] = temp_current_inj[2] = temp_current_inj[3] = gld::complex(0.0,0.0);
 
 		//Set up reference voltage for any accumulator adjustments
 		//See if we're a triplex
@@ -4351,6 +4488,7 @@ int node::NR_current_update(bool parentcall)
 			temp_current_inj[0] = temp_current_val[0];
 			temp_current_inj[1] = temp_current_val[1];
 			temp_current_inj[2] = temp_current_val[2];
+			temp_current_inj[3] = temp_current_val[3];
 		}
 		else if (has_phase(PHASE_S))	//Split phase node
 		{
@@ -4422,7 +4560,7 @@ int node::NR_current_update(bool parentcall)
 				/* normally the calc would not be inside the lock, but it's reflexive so that's ok */
 				temp_current_inj[2] = ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
 								   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero())))
-									? currentN : -((temp_current_inj[0]-temp_current[2])+(temp_current_inj[1]-temp_current[2]));
+									? current12N : -((temp_current_inj[0]-temp_current[2])+(temp_current_inj[1]-temp_current[2]));
 			}
 		}
 		else					//Wye connection
@@ -5703,12 +5841,13 @@ double node::compute_angle_diff(double angle_B, double angle_A)
 }
 
 //Function to perform the shunt update for FPI
+//******+++++++ This is partially updated - all the intermediate needs more +++++++*******//
 STATUS node::shunt_update_fxn(void)
 {
 	bool local_shunt_update;
 	int loop_index_var;
-	gld::complex intermed_impedance_dy[6];
-	gld::complex intermed_impedance[3];
+	gld::complex intermed_impedance_dy[10];
+	gld::complex intermed_impedance[4];
 	gld::complex working_impedance_value;
 
 	//FPIM "convergence check" stuff
@@ -5718,7 +5857,7 @@ STATUS node::shunt_update_fxn(void)
 		local_shunt_update = false;
 
 		//Loop through
-		for (loop_index_var=0; loop_index_var<6; loop_index_var++)
+		for (loop_index_var=0; loop_index_var<10; loop_index_var++)
 		{
 			intermed_impedance_dy[loop_index_var] = shunt_dy[loop_index_var] - shunt_change_check_dy[loop_index_var];
 
@@ -5733,16 +5872,43 @@ STATUS node::shunt_update_fxn(void)
 		//See if any updated
 		if (local_shunt_update)
 		{
-			//Update the matrix - both delta and Wye portions
-			NR_busdata[NR_node_reference].full_Y_load[0] += intermed_impedance_dy[0] + intermed_impedance_dy[2] + intermed_impedance_dy[3];
-			NR_busdata[NR_node_reference].full_Y_load[1] -= intermed_impedance_dy[0];
-			NR_busdata[NR_node_reference].full_Y_load[2] -= intermed_impedance_dy[2];
-			NR_busdata[NR_node_reference].full_Y_load[3] -= intermed_impedance_dy[0];
-			NR_busdata[NR_node_reference].full_Y_load[4] += intermed_impedance_dy[1] + intermed_impedance_dy[0] + intermed_impedance_dy[4];
-			NR_busdata[NR_node_reference].full_Y_load[5] -= intermed_impedance_dy[1];
-			NR_busdata[NR_node_reference].full_Y_load[6] -= intermed_impedance_dy[2];
-			NR_busdata[NR_node_reference].full_Y_load[7] -= intermed_impedance_dy[1];
-			NR_busdata[NR_node_reference].full_Y_load[8] += intermed_impedance_dy[2] + intermed_impedance_dy[1] + intermed_impedance_dy[5];
+			if (enable_neutral_modeling)
+			{
+				//Remove the explicit Delta-Wye componenents
+				NR_busdata[NR_node_reference].full_Y_load[0] += intermed_impedance_dy[0] + intermed_impedance_dy[2] + intermed_impedance_dy[6];
+				NR_busdata[NR_node_reference].full_Y_load[1] -= intermed_impedance_dy[0];
+				NR_busdata[NR_node_reference].full_Y_load[2] -= intermed_impedance_dy[2];
+				NR_busdata[NR_node_reference].full_Y_load[3] -= intermed_impedance_dy[3];
+				NR_busdata[NR_node_reference].full_Y_load[4] -= intermed_impedance_dy[0];
+				NR_busdata[NR_node_reference].full_Y_load[5] += intermed_impedance_dy[1] + intermed_impedance_dy[0] + intermed_impedance_dy[7];
+				NR_busdata[NR_node_reference].full_Y_load[6] -= intermed_impedance_dy[1];
+				NR_busdata[NR_node_reference].full_Y_load[7] -= intermed_impedance_dy[4];
+				NR_busdata[NR_node_reference].full_Y_load[8] -= intermed_impedance_dy[2];
+				NR_busdata[NR_node_reference].full_Y_load[9] -= intermed_impedance_dy[1];
+				NR_busdata[NR_node_reference].full_Y_load[10] += intermed_impedance_dy[2] + intermed_impedance_dy[1] + intermed_impedance_dy[8];
+				NR_busdata[NR_node_reference].full_Y_load[11] -= intermed_impedance_dy[5];
+				NR_busdata[NR_node_reference].full_Y_load[12] -= intermed_impedance_dy[3];
+				NR_busdata[NR_node_reference].full_Y_load[13] -= intermed_impedance_dy[4];
+				NR_busdata[NR_node_reference].full_Y_load[14] -= intermed_impedance_dy[5];
+				NR_busdata[NR_node_reference].full_Y_load[15] += intermed_impedance_dy[3] + intermed_impedance_dy[4] + intermed_impedance_dy[5] + intermed_impedance_dy[9];
+			}
+			else	//Standard
+			{
+				//Update the matrix - both delta and Wye portions
+				NR_busdata[NR_node_reference].full_Y_load[0] += intermed_impedance_dy[0] + intermed_impedance_dy[2] + intermed_impedance_dy[3];
+				NR_busdata[NR_node_reference].full_Y_load[1] -= intermed_impedance_dy[0];
+				NR_busdata[NR_node_reference].full_Y_load[2] -= intermed_impedance_dy[2];
+				//3
+				NR_busdata[NR_node_reference].full_Y_load[4] -= intermed_impedance_dy[0];
+				NR_busdata[NR_node_reference].full_Y_load[5] += intermed_impedance_dy[1] + intermed_impedance_dy[0] + intermed_impedance_dy[4];
+				NR_busdata[NR_node_reference].full_Y_load[6] -= intermed_impedance_dy[1];
+				//7
+				NR_busdata[NR_node_reference].full_Y_load[8] -= intermed_impedance_dy[2];
+				NR_busdata[NR_node_reference].full_Y_load[9] -= intermed_impedance_dy[1];
+				NR_busdata[NR_node_reference].full_Y_load[10] += intermed_impedance_dy[2] + intermed_impedance_dy[1] + intermed_impedance_dy[5];
+				//11
+				//12-15
+			}
 		}
 
 		if (has_phase(PHASE_D))
@@ -5768,15 +5934,20 @@ STATUS node::shunt_update_fxn(void)
 			if (local_shunt_update)
 			{
 				//Update the matrix
+				//TODO: Dedicated Neutral - handle those values!!! - also YG
 				NR_busdata[NR_node_reference].full_Y_load[0] += intermed_impedance[0] + intermed_impedance[2];
 				NR_busdata[NR_node_reference].full_Y_load[1] -= intermed_impedance[0];
 				NR_busdata[NR_node_reference].full_Y_load[2] -= intermed_impedance[2];
-				NR_busdata[NR_node_reference].full_Y_load[3] -= intermed_impedance[0];
-				NR_busdata[NR_node_reference].full_Y_load[4] += intermed_impedance[1] + intermed_impedance[0];
-				NR_busdata[NR_node_reference].full_Y_load[5] -= intermed_impedance[1];
-				NR_busdata[NR_node_reference].full_Y_load[6] -= intermed_impedance[2];
-				NR_busdata[NR_node_reference].full_Y_load[7] -= intermed_impedance[1];
-				NR_busdata[NR_node_reference].full_Y_load[8] += intermed_impedance[2] + intermed_impedance[1];
+				//3
+				NR_busdata[NR_node_reference].full_Y_load[4] -= intermed_impedance[0];
+				NR_busdata[NR_node_reference].full_Y_load[5] += intermed_impedance[1] + intermed_impedance[0];
+				NR_busdata[NR_node_reference].full_Y_load[6] -= intermed_impedance[1];
+				//7
+				NR_busdata[NR_node_reference].full_Y_load[8] -= intermed_impedance[2];
+				NR_busdata[NR_node_reference].full_Y_load[9] -= intermed_impedance[1];
+				NR_busdata[NR_node_reference].full_Y_load[10] += intermed_impedance[2] + intermed_impedance[1];
+				//11
+				//12-15
 			}
 			//Default else - no update, so no need to recalc anything
 
@@ -5784,10 +5955,10 @@ STATUS node::shunt_update_fxn(void)
 			if ((SubNode & SNT_DIFF_PARENT) == SNT_DIFF_PARENT)
 			{
 				//Loop through and check for "differences"
-				for (loop_index_var=0; loop_index_var<3; loop_index_var++)
+				for (loop_index_var=0; loop_index_var<4; loop_index_var++)
 				{
 					//Compute the difference
-					intermed_impedance[loop_index_var] = Extra_Data[loop_index_var+3] - Extra_Data_Track_FPI[loop_index_var];
+					intermed_impedance[loop_index_var] = Extra_Data[loop_index_var+4] - Extra_Data_Track_FPI[loop_index_var];
 
 					//Check it
 					if (intermed_impedance[loop_index_var].Mag() > 0.0)
@@ -5795,10 +5966,10 @@ STATUS node::shunt_update_fxn(void)
 						NR_FPI_imp_load_change = true;
 
 						//Apply the update - Wye update (since different)
-						NR_busdata[NR_node_reference].full_Y_load[loop_index_var*3+loop_index_var] += intermed_impedance[loop_index_var];
+						NR_busdata[NR_node_reference].full_Y_load[loop_index_var*4+loop_index_var] += intermed_impedance[loop_index_var];
 
 						//Update the tracking value
-						Extra_Data_Track_FPI[loop_index_var] = Extra_Data[loop_index_var+3];
+						Extra_Data_Track_FPI[loop_index_var] = Extra_Data[loop_index_var+4];
 					}
 				}
 			}//End DIFF_PARENT - Wye on a Delta
@@ -5835,7 +6006,7 @@ STATUS node::shunt_update_fxn(void)
 		}
 		else
 		{
-			for (loop_index_var=0; loop_index_var<3; loop_index_var++)
+			for (loop_index_var=0; loop_index_var<4; loop_index_var++)
 			{
 				//Compute the difference
 				working_impedance_value = shunt[loop_index_var] - shunt_change_check[loop_index_var];
@@ -5846,7 +6017,7 @@ STATUS node::shunt_update_fxn(void)
 					NR_FPI_imp_load_change = true;
 
 					//Update the matrix
-					NR_busdata[NR_node_reference].full_Y_load[loop_index_var*3+loop_index_var] += working_impedance_value;
+					NR_busdata[NR_node_reference].full_Y_load[loop_index_var*4+loop_index_var] += working_impedance_value;
 				}
 			}//End of for loop for Wye
 
@@ -5857,10 +6028,10 @@ STATUS node::shunt_update_fxn(void)
 				local_shunt_update = false;
 
 				//Loop through and check for "differences"
-				for (loop_index_var=0; loop_index_var<3; loop_index_var++)
+				for (loop_index_var=0; loop_index_var<4; loop_index_var++)
 				{
 					//Compute the difference
-					intermed_impedance[loop_index_var] = Extra_Data[loop_index_var+3] - Extra_Data_Track_FPI[loop_index_var];
+					intermed_impedance[loop_index_var] = Extra_Data[loop_index_var+4] - Extra_Data_Track_FPI[loop_index_var];
 
 					//Check it
 					if (intermed_impedance[loop_index_var].Mag() > 0.0)
@@ -5869,23 +6040,27 @@ STATUS node::shunt_update_fxn(void)
 						local_shunt_update = true;
 
 						//Update the tracker
-						Extra_Data_Track_FPI[loop_index_var] = Extra_Data[loop_index_var+3];
+						Extra_Data_Track_FPI[loop_index_var] = Extra_Data[loop_index_var+4];
 					}
 				}
 
 				//Perform the update if we changed - if not, no reason to do so
 				if (local_shunt_update)
 				{
-					//Update the matrix
+					//Update the matrix - legacy code, so neutral handles not needed
 					NR_busdata[NR_node_reference].full_Y_load[0] += intermed_impedance[0] + intermed_impedance[2];
 					NR_busdata[NR_node_reference].full_Y_load[1] -= intermed_impedance[0];
 					NR_busdata[NR_node_reference].full_Y_load[2] -= intermed_impedance[2];
-					NR_busdata[NR_node_reference].full_Y_load[3] -= intermed_impedance[0];
-					NR_busdata[NR_node_reference].full_Y_load[4] += intermed_impedance[1] + intermed_impedance[0];
-					NR_busdata[NR_node_reference].full_Y_load[5] -= intermed_impedance[1];
-					NR_busdata[NR_node_reference].full_Y_load[6] -= intermed_impedance[2];
-					NR_busdata[NR_node_reference].full_Y_load[7] -= intermed_impedance[1];
-					NR_busdata[NR_node_reference].full_Y_load[8] += intermed_impedance[2] + intermed_impedance[1];
+					//3
+					NR_busdata[NR_node_reference].full_Y_load[4] -= intermed_impedance[0];
+					NR_busdata[NR_node_reference].full_Y_load[5] += intermed_impedance[1] + intermed_impedance[0];
+					NR_busdata[NR_node_reference].full_Y_load[6] -= intermed_impedance[1];
+					//7
+					NR_busdata[NR_node_reference].full_Y_load[8] -= intermed_impedance[2];
+					NR_busdata[NR_node_reference].full_Y_load[9] -= intermed_impedance[1];
+					NR_busdata[NR_node_reference].full_Y_load[10] += intermed_impedance[2] + intermed_impedance[1];
+					//11
+					//12-15
 				}
 				//Default else - no update, so no need to recalc anything
 			}//End DIFF_PARENT - Delta on a Wye
@@ -5896,14 +6071,19 @@ STATUS node::shunt_update_fxn(void)
 		shunt_change_check[0] = shunt[0];
 		shunt_change_check[1] = shunt[1];
 		shunt_change_check[2] = shunt[2];
+		shunt_change_check[3] = shunt[3];
 
 		//Capture the explicit Delta-Wye portion too
 		shunt_change_check_dy[0] = shunt_dy[0];	//Delta
 		shunt_change_check_dy[1] = shunt_dy[1];
 		shunt_change_check_dy[2] = shunt_dy[2];
-		shunt_change_check_dy[3] = shunt_dy[3];	//Wye
+		shunt_change_check_dy[3] = shunt_dy[3];	//Wye-Neutral
 		shunt_change_check_dy[4] = shunt_dy[4];
 		shunt_change_check_dy[5] = shunt_dy[5];
+		shunt_change_check_dy[6] = shunt_dy[6];	//Wye-Ground
+		shunt_change_check_dy[7] = shunt_dy[7];
+		shunt_change_check_dy[8] = shunt_dy[8];
+		shunt_change_check_dy[9] = shunt_dy[9];	//Neutral-Ground
 	}//End FPI
 	//TCIM doesn't use this - shouldn't even be called
 

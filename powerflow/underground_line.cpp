@@ -286,24 +286,26 @@ int underground_line::init(OBJECT *parent)
 void underground_line::recalc(void)
 {
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
-	gld::complex Zabc_mat[3][3], Yabc_mat[3][3];
+	gld::complex Zabc_mat[4][4], Yabc_mat[4][4];
 	bool not_TS_CN = false;
 	bool is_CN_ug_line = false;
 	OBJECT *obj = OBJECTHDR(this);
+	gld::complex temp_imped_matrix[3][3];
 
 	// Zero out Zabc_mat and Yabc_mat. Un-needed phases will be left zeroed.
-	for (int i = 0; i < 3; i++) 
+	for (int i = 0; i < 4; i++) 
 	{
-		for (int j = 0; j < 3; j++) 
+		for (int j = 0; j < 4; j++) 
 		{
 			Zabc_mat[i][j] = 0.0;
 			Yabc_mat[i][j] = 0.0;
+			temp_imped_matrix[i][j] = gld::complex(0.0,0.0);
 		}
 	}
 
 	// Set auxillary matrices
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
 			a_mat[i][j] = 0.0;
 			d_mat[i][j] = 0.0;
 			A_mat[i][j] = 0.0;
@@ -689,8 +691,16 @@ void underground_line::recalc(void)
 				//multiply(z_p1, z_nj, z_p2);
 
 				subtract(z_ij_cn, z_p2_cn, z_abc_cn);
-				multiply(miles, z_abc_cn, Zabc_mat);
+				multiply(miles, z_abc_cn, temp_imped_matrix);
 
+				//Transfer it into the larger matrix
+				for (int rval=0; rval<4; rval++)
+				{
+					for (int cval=0; cval<4; cval++)
+					{
+						Zabc_mat[rval][cval] = temp_imped_matrix[rval][cval];
+					}
+				}
 			}
 			else {
 			gld::complex z_ij_ts[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
@@ -750,7 +760,16 @@ void underground_line::recalc(void)
 				//multiply(z_p1, z_nj, z_p2);
 				
 				subtract(z_ij_ts, z_p2_ts, z_abc_ts);
-				multiply(miles, z_abc_ts, Zabc_mat);
+				multiply(miles, z_abc_ts, temp_imped_matrix);
+
+				//Transfer it into the larger matrix
+				for (int rval=0; rval<4; rval++)
+				{
+					for (int cval=0; cval<4; cval++)
+					{
+						Zabc_mat[rval][cval] = temp_imped_matrix[rval][cval];
+					}
+				}
 
 				/* //This is a test example based on example 4.4 in Kersting's
 				gld::complex z_ij_ts[1][1] = {Z(1, 1)};
@@ -1086,8 +1105,8 @@ void underground_line::recalc(void)
 		else	//No line capacitance, carry on as usual
 		{
 			// Set auxillary matrices
-			for (int i = 0; i < 3; i++) {
-				for (int j = 0; j < 3; j++) {
+			for (int i = 0; i < 4; i++) {
+				for (int j = 0; j < 4; j++) {
 					a_mat[i][j] = 0.0;
 					d_mat[i][j] = 0.0;
 					A_mat[i][j] = 0.0;
@@ -1125,8 +1144,8 @@ void underground_line::recalc(void)
 	
 	//Check for negative resistance in the line's impedance matrix
 	bool neg_res = false;
-	for (int n = 0; n < 3; n++){
-		for (int m = 0; m < 3; m++){
+	for (int n = 0; n < 4; n++){
+		for (int m = 0; m < 4; m++){
 			if(b_mat[n][m].Re() < 0.0){
 				neg_res = true;
 			}

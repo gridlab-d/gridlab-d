@@ -155,9 +155,9 @@ int switch_object::init(OBJECT *parent)
 	//Basically zero everything
 	if (solver_method==SM_FBS)
 	{
-		for (indexa=0; indexa<3; indexa++)
+		for (indexa=0; indexa<4; indexa++)
 		{
-			for (indexb=0; indexb<3; indexb++)
+			for (indexb=0; indexb<4; indexb++)
 			{
 				//These have to be zeroed (nature of switch - mostly to zero, but also are zero-impedance in FBS)
 				b_mat[indexa][indexb] = 0.0;
@@ -187,9 +187,9 @@ int switch_object::init(OBJECT *parent)
 
 		//Index out "voltage_ratio" matrix (same as A_mat, basically)
 		//and From_Y - just because
-		for (indexa=0; indexa<3; indexa++)
+		for (indexa=0; indexa<4; indexa++)
 		{
-			for (indexb=0; indexb<3; indexb++)
+			for (indexb=0; indexb<4; indexb++)
 			{
 				From_Y[indexa][indexb] = 0.0;
 				a_mat[indexa][indexb] = 0.0;

@@ -323,7 +323,7 @@ EXPORT int create_microwave(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(microwave::oclass);
 		if (*obj!=NULL)
 		{
-			microwave *my = OBJECTDATA(*obj,microwave);;
+			microwave *my = OBJECTDATA(*obj,microwave);
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;

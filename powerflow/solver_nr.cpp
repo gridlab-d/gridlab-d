@@ -339,6 +339,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	//Phase collapser variable
 	set phase_worka;
 
+	//Masking for switch statements
+	set neutral_switch_masking;
+
 	//Temporary calculation variables
 	double tempIcalcReal, tempIcalcImag;
 	double tempPbus; //tempPbus store the temporary value of active power load at each bus
@@ -350,9 +353,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	char temp_index, temp_index_b;
 	unsigned int temp_index_c;
 	char mat_temp_index;
-
-	//Working matrix for admittance collapsing/determinations
-	gld::complex tempY[3][3];
 
 	//Working matrix for mesh fault impedance storage, prior to "reconstruction"
 	double temp_z_store[6][6];
@@ -367,13 +367,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	//Temporary size variable
 	char temp_size, temp_size_b, temp_size_c;
 
-	//Temporary admittance variables
-	gld::complex Temp_Ad_A[3][3];
-	gld::complex Temp_Ad_B[3][3];
-
 	//DV checking array
-	gld::complex DVConvCheck[3];
-	gld::complex currVoltConvCheck[3];
+	gld::complex DVConvCheck[4];
+	gld::complex currVoltConvCheck[4];
 	double CurrConvVal;
 
 	//Miscellaneous working variable
@@ -406,6 +402,16 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	superlu_options_t options;	//Additional variables for sequential superLU
 	SuperLUStat_t stat;
 #endif
+
+	//Set the overall phase masking
+	if (enable_neutral_modeling)
+	{
+		neutral_switch_masking = PHASE_ABCN;
+	}
+	else
+	{
+		neutral_switch_masking = PHASE_ABC;
+	}
 
 	//Set the global - we're working now, so no more adjustments to island arrays until we're done (except removals)
 	NR_solver_working = true;
@@ -822,7 +828,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								{
 									if (NR_solver_algorithm == NRM_TCIM)
 									{
-										work_vals_char_0 = jindex*3;
+										work_vals_char_0 = jindex*4;
 
 										//This situation can only be a normal line (triplex will never be the from for another type)
 										//Again only, & always 2 columns (just do them explicitly)
@@ -831,8 +837,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 										tempIcalcImag += ((branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Im() + ((branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 
 										//Column2
-										tempIcalcReal += ((branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - ((branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-										tempIcalcImag += ((branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + ((branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+										tempIcalcReal += ((branch[jindexer].Yfrom[jindex*4+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - ((branch[jindexer].Yfrom[jindex*4+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+										tempIcalcImag += ((branch[jindexer].Yfrom[jindex*4+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + ((branch[jindexer].Yfrom[jindex*4+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 									}
 									else	//Implies FPI
 									{
@@ -841,7 +847,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 											if ((bus[indexer].type > 1) && bus[indexer].swing_functions_enabled && (bus[indexer].DynCurrent != nullptr))	//We're a generator-type bus
 											{
 												//Copy from above, since initialization is same
-												work_vals_char_0 = jindex*3;
+												work_vals_char_0 = jindex*4;
 
 												//This situation can only be a normal line (triplex will never be the from for another type)
 												//Again only, & always 2 columns (just do them explicitly)
@@ -850,8 +856,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 												tempIcalcImag += ((branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Im() + ((branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 
 												//Column2
-												tempIcalcReal += ((branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - ((branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-												tempIcalcImag += ((branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + ((branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+												tempIcalcReal += ((branch[jindexer].Yfrom[jindex*4+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - ((branch[jindexer].Yfrom[jindex*4+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+												tempIcalcImag += ((branch[jindexer].Yfrom[jindex*4+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + ((branch[jindexer].Yfrom[jindex*4+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 											}
 											//Not a swing-initing-generator, so ignore it
 										}
@@ -860,7 +866,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 										//SWING bus does something different - injections
 										if ((bus[branch[jindexer].to].type > 1) && bus[branch[jindexer].to].swing_functions_enabled)
 										{
-											work_vals_char_0 = jindex*3;
+											work_vals_char_0 = jindex*4;
 
 											//This situation can only be a normal line (triplex will never be the from for another type)
 											//Again only, & always 2 columns (just do them explicitly)
@@ -869,8 +875,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 											tempIcalcImag -= ((branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Im() + ((branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Re();
 
 											//Column2
-											tempIcalcReal -= ((branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - ((branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();
-											tempIcalcImag -= ((branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + ((branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();
+											tempIcalcReal -= ((branch[jindexer].Yfrom[jindex*4+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - ((branch[jindexer].Yfrom[jindex*4+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();
+											tempIcalcImag -= ((branch[jindexer].Yfrom[jindex*4+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + ((branch[jindexer].Yfrom[jindex*4+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();
 										}
 										//Default else - normal line, so no injection
 									}
@@ -879,7 +885,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								{
 									if (NR_solver_algorithm == NRM_TCIM)
 									{
-										work_vals_char_0 = jindex*3;
+										work_vals_char_0 = jindex*4;
 										//This situation can only be a normal line (triplex will never be the from for another type)
 										//Again only, & always 2 columns (just do them explicitly)
 										//Column 1
@@ -887,8 +893,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 										tempIcalcImag += (-(branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Im() + (-(branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 
 										//Column2
-										tempIcalcReal += (-(branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - (-(branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-										tempIcalcImag += (-(branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + (-(branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+										tempIcalcReal += (-(branch[jindexer].Yfrom[jindex*4+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - (-(branch[jindexer].Yfrom[jindex*4+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+										tempIcalcImag += (-(branch[jindexer].Yfrom[jindex*4+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + (-(branch[jindexer].Yfrom[jindex*4+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 									}
 									else	//Implies FPI
 									{
@@ -897,7 +903,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 											if ((bus[indexer].type > 1) && bus[indexer].swing_functions_enabled && (bus[indexer].DynCurrent != nullptr))	//We're a generator-type bus
 											{
 												//Copy from above, since initialization is same
-												work_vals_char_0 = jindex*3;
+												work_vals_char_0 = jindex*4;
 												//This situation can only be a normal line (triplex will never be the from for another type)
 												//Again only, & always 2 columns (just do them explicitly)
 												//Column 1
@@ -905,8 +911,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 												tempIcalcImag += (-(branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Im() + (-(branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 
 												//Column2
-												tempIcalcReal += (-(branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - (-(branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
-												tempIcalcImag += (-(branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + (-(branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+												tempIcalcReal += (-(branch[jindexer].Yfrom[jindex*4+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - (-(branch[jindexer].Yfrom[jindex*4+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
+												tempIcalcImag += (-(branch[jindexer].Yfrom[jindex*4+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + (-(branch[jindexer].Yfrom[jindex*4+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();// equation (8), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
 											}
 											//Not a swing-initing-generator, so ignore it
 										}
@@ -914,7 +920,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 										if ((bus[branch[jindexer].to].type > 1) && bus[branch[jindexer].to].swing_functions_enabled)
 										{
-											work_vals_char_0 = jindex*3;
+											work_vals_char_0 = jindex*4;
 											//This situation can only be a normal line (triplex will never be the from for another type)
 											//Again only, & always 2 columns (just do them explicitly)
 											//Column 1
@@ -922,8 +928,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 											tempIcalcImag -= (-(branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Im() + (-(branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Re();
 
 											//Column2
-											tempIcalcReal -= (-(branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - (-(branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();
-											tempIcalcImag -= (-(branch[jindexer].Yfrom[jindex*3+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + (-(branch[jindexer].Yfrom[jindex*3+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();
+											tempIcalcReal -= (-(branch[jindexer].Yfrom[jindex*4+1])).Re() * (bus[branch[jindexer].to].V[1]).Re() - (-(branch[jindexer].Yfrom[jindex*4+1])).Im() * (bus[branch[jindexer].to].V[1]).Im();
+											tempIcalcImag -= (-(branch[jindexer].Yfrom[jindex*4+1])).Re() * (bus[branch[jindexer].to].V[1]).Im() + (-(branch[jindexer].Yfrom[jindex*4+1])).Im() * (bus[branch[jindexer].to].V[1]).Re();
 										}
 										//Default else - normal bus, so ignore
 									}
@@ -953,7 +959,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 									if (NR_solver_algorithm == NRM_TCIM)
 									{
-										work_vals_char_0 = jindex*3+temp_index;
+										work_vals_char_0 = jindex*4+temp_index;
 
 										//Perform the update, it only happens for one column (nature of the transformer)
 										tempIcalcReal += (-(branch[jindexer].Yto[work_vals_char_0])).Re() * (bus[branch[jindexer].from].V[temp_index]).Re() - (-(branch[jindexer].Yto[work_vals_char_0])).Im() * (bus[branch[jindexer].from].V[temp_index]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
@@ -966,7 +972,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 											if ((bus[indexer].type > 1) && bus[indexer].swing_functions_enabled && (bus[indexer].DynCurrent != nullptr))	//We're a generator-type bus
 											{
 												//Copy from above, since initialization is same
-												work_vals_char_0 = jindex*3+temp_index;
+												work_vals_char_0 = jindex*4+temp_index;
 
 												//Perform the update, it only happens for one column (nature of the transformer)
 												tempIcalcReal += (-(branch[jindexer].Yto[work_vals_char_0])).Re() * (bus[branch[jindexer].from].V[temp_index]).Re() - (-(branch[jindexer].Yto[work_vals_char_0])).Im() * (bus[branch[jindexer].from].V[temp_index]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
@@ -979,7 +985,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 										//Bit ridiculous - another "low side triplex is a SWING" scenario
 										if ((bus[branch[jindexer].from].type > 1) && bus[branch[jindexer].from].swing_functions_enabled)
 										{
-											work_vals_char_0 = jindex*3+temp_index;
+											work_vals_char_0 = jindex*4+temp_index;
 
 											//Perform the update, it only happens for one column (nature of the transformer)
 											tempIcalcReal -= (-(branch[jindexer].Yto[work_vals_char_0])).Re() * (bus[branch[jindexer].from].V[temp_index]).Re() - (-(branch[jindexer].Yto[work_vals_char_0])).Im() * (bus[branch[jindexer].from].V[temp_index]).Im();
@@ -994,7 +1000,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									{
 										if (NR_solver_algorithm == NRM_TCIM)
 										{
-											work_vals_char_0 = jindex*3;
+											work_vals_char_0 = jindex*4;
 											//This case should never really exist, but if someone reverses a secondary or is doing meshed secondaries, it might
 											//Again only, & always 2 columns (just do them explicitly)
 											//Column 1
@@ -1012,7 +1018,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 												if ((bus[indexer].type > 1) && bus[indexer].swing_functions_enabled && (bus[indexer].DynCurrent != nullptr))	//We're a generator-type bus
 												{
 													//Copy from above, since initialization is same
-													work_vals_char_0 = jindex*3;
+													work_vals_char_0 = jindex*4;
 													//This case should never really exist, but if someone reverses a secondary or is doing meshed secondaries, it might
 													//Again only, & always 2 columns (just do them explicitly)
 													//Column 1
@@ -1030,7 +1036,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 											//SWING injections for FPIM
 											if ((bus[branch[jindexer].from].type > 1) && bus[branch[jindexer].from].swing_functions_enabled)
 											{
-												work_vals_char_0 = jindex*3;
+												work_vals_char_0 = jindex*4;
 												//This case should never really exist, but if someone reverses a secondary or is doing meshed secondaries, it might
 												//Again only, & always 2 columns (just do them explicitly)
 												//Column 1
@@ -1048,7 +1054,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									{
 										if (NR_solver_algorithm == NRM_TCIM)
 										{
-											work_vals_char_0 = jindex*3;
+											work_vals_char_0 = jindex*4;
 											//Again only, & always 2 columns (just do them explicitly)
 											//Column 1
 											tempIcalcReal += (-(branch[jindexer].Yto[work_vals_char_0])).Re() * (bus[branch[jindexer].from].V[0]).Re() - (-(branch[jindexer].Yto[work_vals_char_0])).Im() * (bus[branch[jindexer].from].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
@@ -1065,7 +1071,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 												if ((bus[indexer].type > 1) && bus[indexer].swing_functions_enabled && (bus[indexer].DynCurrent != nullptr))	//We're a generator-type bus
 												{
 													//Copy from above, since initialization is same
-													work_vals_char_0 = jindex*3;
+													work_vals_char_0 = jindex*4;
 													//Again only, & always 2 columns (just do them explicitly)
 													//Column 1
 													tempIcalcReal += (-(branch[jindexer].Yto[work_vals_char_0])).Re() * (bus[branch[jindexer].from].V[0]).Re() - (-(branch[jindexer].Yto[work_vals_char_0])).Im() * (bus[branch[jindexer].from].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
@@ -1081,7 +1087,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 											if ((bus[branch[jindexer].from].type > 1) && bus[branch[jindexer].from].swing_functions_enabled)
 											{
-												work_vals_char_0 = jindex*3;
+												work_vals_char_0 = jindex*4;
 												//Again only, & always 2 columns (just do them explicitly)
 												//Column 1
 												tempIcalcReal -= (-(branch[jindexer].Yto[work_vals_char_0])).Re() * (bus[branch[jindexer].from].V[0]).Re() - (-(branch[jindexer].Yto[work_vals_char_0])).Im() * (bus[branch[jindexer].from].V[0]).Im();
@@ -1221,7 +1227,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						{
 							//Determine our indices, based on phase information
 							temp_index = -1;
-							switch(bus[indexer].phases & PHASE_ABC) {
+
+							switch(bus[indexer].phases & neutral_switch_masking) {
 								case PHASE_C:	//C
 									{
 										temp_index=2;
@@ -1266,6 +1273,70 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 										temp_index = kindex;	//Will loop all 3
 										break;
 									}//end PHASE_ABC
+								case PHASE_CN:	//C
+									{
+										if (kindex==0)	//C
+											temp_index=2;
+										else
+											temp_index=3;	//N
+										break;
+									}//end PHASE_CN
+								case PHASE_BN:	//BN
+									{
+										if (kindex==0)
+											temp_index=1;	//B
+										else
+											temp_index=3;	//N
+										break;
+									}//end PHASE_BN
+								case PHASE_BCN:	//BCN
+									{
+										if (kindex==0)	//B
+											temp_index=1;
+										else if (kindex==1)	//C
+											temp_index=2;
+										else
+											temp_index=3;	//N
+										break;
+									}//end PHASE_BCN
+								case PHASE_AN:	//AN
+									{
+										if (kindex==0)	//A
+											temp_index=0;
+										else
+											temp_index=3;	//N
+										break;
+									}//end PHASE_AN
+								case PHASE_ACN:	//ACN
+									{
+										if (kindex==0)	//A
+											temp_index=0;
+										else if (kindex==1)	//C
+											temp_index=2;
+										else				//N
+											temp_index=3;
+										break;
+									}//end PHASE_ACN
+								case PHASE_ABN:	//ABN
+									{
+										if (kindex==0)	//A
+											temp_index=0;
+										else if (kindex==1)	//B
+											temp_index=1;
+										else
+											temp_index=3;	//N
+										break;
+									}//end PHASE_ABN
+								case PHASE_ABCN:	//ABCN
+									{
+										temp_index = kindex;	//Will loop all 4
+										break;
+									}//end PHASE_ABCN
+								case PHASE_N:	//Neutral only...somehow
+									{
+										temp_index=3;	//N
+										break;
+									}
 							}//End switch/case
 
 							if (temp_index==-1)	//Error check
@@ -1309,7 +1380,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							//Off diagonal contributions
 							//Need another variable to handle the rows
 							temp_index_b = -1;
-							switch(bus[indexer].phases & PHASE_ABC) {
+							switch(bus[indexer].phases & neutral_switch_masking) {
 								case PHASE_C:	//C
 									{
 										temp_index_b=2;
@@ -1354,6 +1425,70 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 										temp_index_b = jindex;	//Will loop all 3
 										break;
 									}//end PHASE_ABC
+								case PHASE_CN:	//CN
+									{
+										if (jindex==0)
+											temp_index_b=2;	//C
+										else
+											temp_index_b=3;	//N
+										break;
+									}//end PHASE_CN
+								case PHASE_BN:	//BN
+									{
+										if (jindex==0)
+											temp_index_b=1;	//B
+										else
+											temp_index_b=3;	//N
+										break;
+									}//end PHASE_BN
+								case PHASE_BCN:	//BCN
+									{
+										if (jindex==0)	//B
+											temp_index_b=1;
+										else if (jindex==1)	//C
+											temp_index_b=2;
+										else
+											temp_index_b=3;	//N
+										break;
+									}//end PHASE_BCN
+								case PHASE_AN:	//AN
+									{
+										if (jindex==0)
+											temp_index_b=0;	//A
+										else
+											temp_index_b=3;	//N
+										break;
+									}//end PHASE_AN
+								case PHASE_ACN:	//ACN
+									{
+										if (jindex==0)	//A
+											temp_index_b=0;
+										else if (jindex==1)		//C
+											temp_index_b=2;
+										else
+											temp_index_b=3;		//N
+										break;
+									}//end PHASE_ACN
+								case PHASE_ABN:	//ABN
+									{
+										if (jindex==0)	//A
+											temp_index_b=0;
+										else if (jindex==1)		//B
+											temp_index_b=1;
+										else
+											temp_index_b=3;	//N
+										break;
+									}//end PHASE_ABN
+								case PHASE_ABCN:	//ABCN
+									{
+										temp_index_b = jindex;	//Will loop all 4
+										break;
+									}//end PHASE_ABCN
+								case PHASE_N:	//N
+								{
+									temp_index_b = 3;	//N
+									break;
+								}
 							}//End switch/case
 
 							if (temp_index_b==-1)	//Error check
@@ -1430,11 +1565,12 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 											}//end switch
 										}//End if kindex==0
 
+										//**** TODO - Figure out how Neutral for triplex may translate here *****//
 										if (proceed_flag)
 										{
 											if (NR_solver_algorithm == NRM_TCIM)
 											{
-												work_vals_char_0 = temp_index_b*3;
+												work_vals_char_0 = temp_index_b*4;
 												//Do columns individually
 												//1
 												tempIcalcReal += (-(branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Re() - (-(branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
@@ -1452,7 +1588,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 													if ((bus[indexer].type > 1) && bus[indexer].swing_functions_enabled && (bus[indexer].DynCurrent != nullptr))	//We're a generator-type bus
 													{
 														//Same code as above
-														work_vals_char_0 = temp_index_b*3;
+														work_vals_char_0 = temp_index_b*4;
 														//Do columns individually
 														//1
 														tempIcalcReal += (-(branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Re() - (-(branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Im();// equation (7), the off_diag elements of bus admittance matrix are equal to negative value of branch admittance
@@ -1469,7 +1605,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 												//SWING bus does something different
 												if ((bus[branch[jindexer].to].type > 1) && bus[branch[jindexer].to].swing_functions_enabled)
 												{
-													work_vals_char_0 = temp_index_b*3;
+													work_vals_char_0 = temp_index_b*4;
 													//Do columns individually
 													//1
 													tempIcalcReal -= (-(branch[jindexer].Yfrom[work_vals_char_0])).Re() * (bus[branch[jindexer].to].V[0]).Re() - (-(branch[jindexer].Yfrom[work_vals_char_0])).Im() * (bus[branch[jindexer].to].V[0]).Im();
@@ -1485,7 +1621,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									}//end SPCT transformer
 									else	///Must be a standard line
 									{
-										work_vals_char_0 = temp_index_b*3+temp_index;
+										work_vals_char_0 = temp_index_b*4+temp_index;
 										work_vals_double_0 = (-branch[jindexer].Yfrom[work_vals_char_0]).Re();
 										work_vals_double_1 = (-branch[jindexer].Yfrom[work_vals_char_0]).Im();
 										work_vals_double_2 = (bus[branch[jindexer].to].V[temp_index]).Re();
@@ -1523,7 +1659,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								}	
 								else if  (branch[jindexer].to == indexer)
 								{
-									work_vals_char_0 = temp_index_b*3+temp_index;
+									work_vals_char_0 = temp_index_b*4+temp_index;
 									work_vals_double_0 = (-branch[jindexer].Yto[work_vals_char_0]).Re();
 									work_vals_double_1 = (-branch[jindexer].Yto[work_vals_char_0]).Im();
 									work_vals_double_2 = (bus[branch[jindexer].from].V[temp_index]).Re();
@@ -2254,7 +2390,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
 
 			//Initiliaze it
-			sparse_init(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, powerflow_values->island_matrix_values[island_loop_index].size_Amatrix, 6*powerflow_values->island_matrix_values[island_loop_index].bus_count);
+			sparse_init(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, powerflow_values->island_matrix_values[island_loop_index].size_Amatrix, 8*powerflow_values->island_matrix_values[island_loop_index].bus_count);
 		}
 		else if (powerflow_values->island_matrix_values[island_loop_index].NR_realloc_needed)	//If one of the above changed, we changed too
 		{
@@ -2262,12 +2398,12 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			sparse_clear(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix);
 
 			//Create a new 
-			sparse_init(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, powerflow_values->island_matrix_values[island_loop_index].size_Amatrix, 6*powerflow_values->island_matrix_values[island_loop_index].bus_count);
+			sparse_init(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, powerflow_values->island_matrix_values[island_loop_index].size_Amatrix, 8*powerflow_values->island_matrix_values[island_loop_index].bus_count);
 		}
 		else
 		{
 			//Just clear it out
-			sparse_reset(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, 6*powerflow_values->island_matrix_values[island_loop_index].bus_count);
+			sparse_reset(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, 8*powerflow_values->island_matrix_values[island_loop_index].bus_count);
 		}
 
 		//integrate off diagonal components
@@ -3035,16 +3171,14 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					{
 						for (jindex=0; jindex<powerflow_values->BA_diag[indexer].size; jindex++)	//parse through the phases
 						{
-							switch(bus[indexer].phases & PHASE_ABC) {
+							switch(bus[indexer].phases & neutral_switch_masking) {
 								case PHASE_C:	//C
 									{
-										temp_index=0;
 										temp_index_b=2;
 										break;
 									}
 								case PHASE_B:	//B
 									{
-										temp_index=0;
 										temp_index_b=1;
 										break;
 									}
@@ -3052,12 +3186,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									{
 										if (jindex==0)	//B
 										{
-											temp_index=0;
 											temp_index_b=1;
 										}
 										else			//C
 										{
-											temp_index=1;
 											temp_index_b=2;
 										}
 
@@ -3065,7 +3197,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									}
 								case PHASE_A:	//A
 									{
-										temp_index=0;
 										temp_index_b=0;
 										break;
 									}
@@ -3073,12 +3204,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									{
 										if (jindex==0)	//A
 										{
-											temp_index=0;
 											temp_index_b=0;
 										}
 										else			//C
 										{
-											temp_index=1;
 											temp_index_b=2;
 										}
 										break;
@@ -3086,13 +3215,107 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								case PHASE_AB:	//AB
 								case PHASE_ABC:	//ABC
 									{
-										temp_index = jindex;
 										temp_index_b = jindex;
+										break;
+									}
+								case PHASE_CN:	//CN
+									{
+										if (jindex==0)	//C
+										{
+											temp_index_b=2;
+										}
+										else	//N
+										{
+											temp_index_b=3;
+										}
+										break;
+									}
+								case PHASE_BN:	//BN
+									{
+										if (jindex==0)	//B
+										{
+											temp_index_b=1;
+										}
+										else	//N
+										{
+											temp_index_b=3;
+										}
+										break;
+									}
+								case PHASE_BCN:	//BCN
+									{
+										if (jindex==0)	//B
+										{
+											temp_index_b=1;
+										}
+										else if (jindex==1)			//C
+										{
+											temp_index_b=2;
+										}
+										else			//N
+										{
+											temp_index_b=3;
+										}
+
+										break;
+									}
+								case PHASE_AN:	//AN
+									{
+										if (jindex==0)	//A
+										{
+											temp_index_b=0;
+										}
+										else	//N
+										{
+											temp_index_b=3;
+										}
+										break;
+									}
+								case PHASE_ACN:	//AC
+									{
+										if (jindex==0)	//A
+										{
+											temp_index_b=0;
+										}
+										else if (jindex==1)			//C
+										{
+											temp_index_b=2;
+										}
+										else				//N
+										{
+											temp_index_b=3;
+										}
+										break;
+									}
+								case PHASE_ABN:	//ABN
+									{
+										if (jindex==0)	//A
+										{
+											temp_index_b=0;
+										}
+										else if (jindex==1)
+										{
+											temp_index_b=1;	//B
+										}
+										else		//N
+										{
+											temp_index_b=3;
+										}
+										break;
+									}
+								case PHASE_ABCN:	//ABCN
+									{
+										temp_index_b = jindex;
+										break;
+									}
+								case PHASE_N:	//N Only
+									{
+										temp_index_b=3;
 										break;
 									}
 							}//end phase switch/case
 
-							if ((temp_index==-1) || (temp_index_b==-1))
+							if (temp_index_b==-1)
 							{
 								GL_THROW("NR: An error occurred indexing voltage updates");
 								/*  TROUBLESHOOT
@@ -3104,13 +3327,13 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 							if (NR_solver_algorithm == NRM_TCIM)
 							{
-								DVConvCheck[jindex]=gld::complex(sol_LU[(2*bus[indexer].Matrix_Loc+temp_index)],sol_LU[(2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size+temp_index)]);
+								DVConvCheck[jindex]=gld::complex(sol_LU[(2*bus[indexer].Matrix_Loc+jindex)],sol_LU[(2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size+jindex)]);
 								bus[indexer].V[temp_index_b] += DVConvCheck[jindex];
 							}
 							else if (NR_solver_algorithm == NRM_FPI)
 							{
 								//Pull the update
-								currVoltConvCheck[jindex] = gld::complex(sol_LU[(2*bus[indexer].Matrix_Loc+temp_index)],sol_LU[(2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size+temp_index)]);
+								currVoltConvCheck[jindex] = gld::complex(sol_LU[(2*bus[indexer].Matrix_Loc+jindex)],sol_LU[(2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size+jindex)]);
 
 								//Calculate convergence
 								DVConvCheck[jindex] = bus[indexer].V[temp_index_b] - currVoltConvCheck[jindex];
@@ -3563,9 +3786,9 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 	int island_loop_index;
 	unsigned int indexer, tempa, tempb, jindexer, kindexer;
 	char jindex, kindex;
-	gld::complex tempY[3][3];
-	gld::complex Temp_Ad_A[3][3];
-	gld::complex Temp_Ad_B[3][3];
+	gld::complex tempY[4][4];
+	gld::complex Temp_Ad_A[4][4];
+	gld::complex Temp_Ad_B[4][4];
 	set phase_worka, phase_workb, phase_workc, phase_workd, phase_worke;
 	char phase_count_a, phase_count_b;
 	char temp_index, temp_index_b;
@@ -3573,7 +3796,22 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 	char temp_size, temp_size_b, temp_size_c;
 	char mat_temp_index;
 	STATUS call_return_status;
-	set phase_check_vals[] = {PHASE_A, PHASE_B, PHASE_C};
+	set phase_check_vals[] = {PHASE_A, PHASE_B, PHASE_C,PHASE_N};
+	char fphase_idx[4], tphase_idx[4];
+	set neutral_switch_masking;
+	char phase_check_lim;
+	
+	//Set the overall phase masking
+	if (enable_neutral_modeling)
+	{
+		neutral_switch_masking = PHASE_ABCN;
+		phase_check_lim = 4;
+	}
+	else
+	{
+		neutral_switch_masking = PHASE_ABC;
+		phase_check_lim = 3;
+	}
 
 	if (NR_admit_change)	//If an admittance update was detected, fix it
 	{
@@ -3620,7 +3858,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 			else										//Other cases, figure out how big they are
 			{
 				phase_count_a = 0;
-				for (jindex=0; jindex<3; jindex++)		//Accumulate number of phases
+				for (jindex=0; jindex<phase_check_lim; jindex++)		//Accumulate number of phases
 				{
 					if ((bus[indexer].phases & phase_check_vals[jindex]) == phase_check_vals[jindex])
 						phase_count_a++;
@@ -3629,9 +3867,9 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 			}
 
 			//Ensure the admittance matrix is zeroed
-			for (jindex=0; jindex<3; jindex++)
+			for (jindex=0; jindex<4; jindex++)
 			{
-				for (kindex=0; kindex<3; kindex++)
+				for (kindex=0; kindex<4; kindex++)
 				{
 					powerflow_values->BA_diag[indexer].Y[jindex][kindex] = 0;
 					tempY[jindex][kindex] = 0;
@@ -3741,16 +3979,16 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 
 				if ((branch[jindexer].from == indexer) || (branch[jindexer].to == indexer))	//Bus is the from or to side of things - not sure how it would be in link table otherwise, but meh
 				{
-					if ((bus[indexer].phases & PHASE_ABC) == PHASE_ABC)		//Full three phase
+					if ((bus[indexer].phases & PHASE_ABC) == PHASE_ABC)		//Full three phase - even if N, phase_check_lim will catch it below
 					{
-						for (jindex=0; jindex<3; jindex++)	//Add in all three phase values
+						for (jindex=0; jindex<phase_check_lim; jindex++)	//Add in all three phase values
 						{
 							//See if this phase is valid
 							phase_workb = phase_check_vals[jindex];
 
 							if ((phase_workb & branch[jindexer].phases) == phase_workb)
 							{
-								for (kindex=0; kindex<3; kindex++)
+								for (kindex=0; kindex<phase_check_lim; kindex++)
 								{
 									//Check phase
 									phase_workd = phase_check_vals[kindex];
@@ -3759,11 +3997,11 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									{
 										if (branch[jindexer].from == indexer)	//We're the from version
 										{
-											tempY[jindex][kindex] += branch[jindexer].YSfrom[jindex*3+kindex];
+											tempY[jindex][kindex] += branch[jindexer].YSfrom[jindex*4+kindex];
 										}
 										else									//Must be the to version
 										{
-											tempY[jindex][kindex] += branch[jindexer].YSto[jindex*3+kindex];
+											tempY[jindex][kindex] += branch[jindexer].YSto[jindex*4+kindex];
 										}
 									}//End valid column phase
 								}
@@ -3780,15 +4018,15 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								//Other triplexes need to be negated to match sign conventions
 								tempY[0][0] -= branch[jindexer].YSfrom[0];
 								tempY[0][1] -= branch[jindexer].YSfrom[1];
-								tempY[1][0] -= branch[jindexer].YSfrom[3];
-								tempY[1][1] -= branch[jindexer].YSfrom[4];
+								tempY[1][0] -= branch[jindexer].YSfrom[4];
+								tempY[1][1] -= branch[jindexer].YSfrom[5];
 							}
 							else										//Just a normal to bus
 							{
 								tempY[0][0] += branch[jindexer].YSfrom[0];
 								tempY[0][1] += branch[jindexer].YSfrom[1];
-								tempY[1][0] += branch[jindexer].YSfrom[3];
-								tempY[1][1] += branch[jindexer].YSfrom[4];
+								tempY[1][0] += branch[jindexer].YSfrom[4];
+								tempY[1][1] += branch[jindexer].YSfrom[5];
 							}
 						}
 						else									//To branch
@@ -3799,21 +4037,21 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 							{
 								tempY[0][0] -= branch[jindexer].YSto[0];
 								tempY[0][1] -= branch[jindexer].YSto[1];
-								tempY[1][0] -= branch[jindexer].YSto[3];
-								tempY[1][1] -= branch[jindexer].YSto[4];
+								tempY[1][0] -= branch[jindexer].YSto[4];
+								tempY[1][1] -= branch[jindexer].YSto[5];
 							}
 							else	//Normal bus - no funky SPCT nonsense
 							{
 								tempY[0][0] += branch[jindexer].YSto[0];
 								tempY[0][1] += branch[jindexer].YSto[1];
-								tempY[1][0] += branch[jindexer].YSto[3];
-								tempY[1][1] += branch[jindexer].YSto[4];
+								tempY[1][0] += branch[jindexer].YSto[4];
+								tempY[1][1] += branch[jindexer].YSto[5];
 							}
 						}
 					}
 					else	//We must be a single or two-phase line - always populate the upper left portion of matrix (easier for later)
 					{
-						switch(bus[indexer].phases & PHASE_ABC) {
+						switch(bus[indexer].phases & neutral_switch_masking) {
 							case NO_PHASE:	//No phases (we've been faulted out
 								{
 									break;	//Just get us outta here
@@ -3824,11 +4062,11 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
-											tempY[0][0] += branch[jindexer].YSfrom[8];
+											tempY[0][0] += branch[jindexer].YSfrom[10];
 										}
 										else									//To branch
 										{
-											tempY[0][0] += branch[jindexer].YSto[8];
+											tempY[0][0] += branch[jindexer].YSto[10];
 										}
 									}//End valid phase C
 									break;
@@ -3839,11 +4077,11 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
-											tempY[0][0] += branch[jindexer].YSfrom[4];
+											tempY[0][0] += branch[jindexer].YSfrom[5];
 										}
 										else									//To branch
 										{
-											tempY[0][0] += branch[jindexer].YSto[4];
+											tempY[0][0] += branch[jindexer].YSto[5];
 										}
 									}//End valid phase B
 									break;
@@ -3856,39 +4094,39 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
-											tempY[0][0] += branch[jindexer].YSfrom[4];
-											tempY[0][1] += branch[jindexer].YSfrom[5];
-											tempY[1][0] += branch[jindexer].YSfrom[7];
-											tempY[1][1] += branch[jindexer].YSfrom[8];
+											tempY[0][0] += branch[jindexer].YSfrom[5];
+											tempY[0][1] += branch[jindexer].YSfrom[6];
+											tempY[1][0] += branch[jindexer].YSfrom[9];
+											tempY[1][1] += branch[jindexer].YSfrom[10];
 										}
 										else									//To branch
 										{
-											tempY[0][0] += branch[jindexer].YSto[4];
-											tempY[0][1] += branch[jindexer].YSto[5];
-											tempY[1][0] += branch[jindexer].YSto[7];
-											tempY[1][1] += branch[jindexer].YSto[8];
+											tempY[0][0] += branch[jindexer].YSto[5];
+											tempY[0][1] += branch[jindexer].YSto[6];
+											tempY[1][0] += branch[jindexer].YSto[9];
+											tempY[1][1] += branch[jindexer].YSto[10];
 										}
 									}//End valid B & C
 									else if (phase_worka == PHASE_C)	//Only C branch
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
-											tempY[1][1] += branch[jindexer].YSfrom[8];
+											tempY[1][1] += branch[jindexer].YSfrom[10];
 										}
 										else									//To branch
 										{
-											tempY[1][1] += branch[jindexer].YSto[8];
+											tempY[1][1] += branch[jindexer].YSto[10];
 										}
 									}//end valid C
 									else if (phase_worka == PHASE_B)	//Only B branch
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
-											tempY[0][0] += branch[jindexer].YSfrom[4];
+											tempY[0][0] += branch[jindexer].YSfrom[5];
 										}
 										else									//To branch
 										{
-											tempY[0][0] += branch[jindexer].YSto[4];
+											tempY[0][0] += branch[jindexer].YSto[5];
 										}
 									}//end valid B
 									else	//Must be nothing then - all phases must be faulted, or something
@@ -3920,15 +4158,15 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 										{
 											tempY[0][0] += branch[jindexer].YSfrom[0];
 											tempY[0][1] += branch[jindexer].YSfrom[2];
-											tempY[1][0] += branch[jindexer].YSfrom[6];
-											tempY[1][1] += branch[jindexer].YSfrom[8];
+											tempY[1][0] += branch[jindexer].YSfrom[8];
+											tempY[1][1] += branch[jindexer].YSfrom[10];
 										}
 										else									//To branch
 										{
 											tempY[0][0] += branch[jindexer].YSto[0];
 											tempY[0][1] += branch[jindexer].YSto[2];
-											tempY[1][0] += branch[jindexer].YSto[6];
-											tempY[1][1] += branch[jindexer].YSto[8];
+											tempY[1][0] += branch[jindexer].YSto[8];
+											tempY[1][1] += branch[jindexer].YSto[10];
 										}
 									}//End A & C valid
 									else if (phase_worka == PHASE_A)	//Only A valid
@@ -3946,11 +4184,11 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
-											tempY[1][1] += branch[jindexer].YSfrom[8];
+											tempY[1][1] += branch[jindexer].YSfrom[10];
 										}
 										else									//To branch
 										{
-											tempY[1][1] += branch[jindexer].YSto[8];
+											tempY[1][1] += branch[jindexer].YSto[10];
 										}
 									}//end only C valid
 									else	//No connection - must be faulted
@@ -3967,15 +4205,15 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 										{
 											tempY[0][0] += branch[jindexer].YSfrom[0];
 											tempY[0][1] += branch[jindexer].YSfrom[1];
-											tempY[1][0] += branch[jindexer].YSfrom[3];
-											tempY[1][1] += branch[jindexer].YSfrom[4];
+											tempY[1][0] += branch[jindexer].YSfrom[4];
+											tempY[1][1] += branch[jindexer].YSfrom[5];
 										}
 										else									//To branch
 										{
 											tempY[0][0] += branch[jindexer].YSto[0];
 											tempY[0][1] += branch[jindexer].YSto[1];
-											tempY[1][0] += branch[jindexer].YSto[3];
-											tempY[1][1] += branch[jindexer].YSto[4];
+											tempY[1][0] += branch[jindexer].YSto[4];
+											tempY[1][1] += branch[jindexer].YSto[5];
 										}
 									}//End valid A & B
 									else if (phase_worka == PHASE_A)	//Only valid A
@@ -3993,14 +4231,523 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
-											tempY[1][1] += branch[jindexer].YSfrom[4];
+											tempY[1][1] += branch[jindexer].YSfrom[5];
 										}
 										else									//To branch
 										{
-											tempY[1][1] += branch[jindexer].YSto[4];
+											tempY[1][1] += branch[jindexer].YSto[5];
 										}
 									}//end valid B
 									else	//Default - must be already handled
+										;
+									break;
+								}
+							case PHASE_CN:	//Only CN
+								{
+									if ((branch[jindexer].phases & PHASE_CN) == PHASE_CN)	//Phase CN valid on branch
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[10];
+											tempY[0][1] += branch[jindexer].YSfrom[11];
+											tempY[1][0] += branch[jindexer].YSfrom[14];
+											tempY[1][1] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[10];
+											tempY[0][1] += branch[jindexer].YSto[11];
+											tempY[1][0] += branch[jindexer].YSto[14];
+											tempY[1][1] += branch[jindexer].YSto[15];
+										}
+									}//End valid phase CN
+									else if ((branch[jindexer].phases & PHASE_C) == PHASE_C)	//Phase C valid on branch
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[10];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[10];
+										}
+									}//End valid phase C
+									else if ((branch[jindexer].phases & PHASE_N) == PHASE_N)	//Phase N valid on branch
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[1][1] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[1][1] += branch[jindexer].YSto[15];
+										}
+									}//End valid phase N
+									else	//Must be nothing then - all phases must be faulted, or something
+										;
+									break;
+								}
+							case PHASE_BN:	//Only BN
+								{
+									if ((branch[jindexer].phases & PHASE_BN) == PHASE_BN)	//Phase B valid on branch
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[5];
+											tempY[0][1] += branch[jindexer].YSfrom[7];
+											tempY[1][0] += branch[jindexer].YSfrom[13];
+											tempY[1][1] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[5];
+											tempY[0][1] += branch[jindexer].YSto[7];
+											tempY[1][0] += branch[jindexer].YSto[13];
+											tempY[1][1] += branch[jindexer].YSto[15];
+										}
+									}//End valid phase B
+									else if ((branch[jindexer].phases & PHASE_B) == PHASE_B)	//Phase B valid on branch
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[5];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[5];
+										}
+									}//End valid phase B
+									else if ((branch[jindexer].phases & PHASE_N) == PHASE_N)	//Phase N valid on branch
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[1][1] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[1][1] += branch[jindexer].YSto[15];
+										}
+									}//End valid phase N
+									else	//Must be nothing then - all phases must be faulted, or something
+										;
+									break;
+								}
+							case PHASE_BCN:	//B & C & N
+								{
+									phase_worka = (branch[jindexer].phases & PHASE_BCN);	//Extract branch phases
+
+									if (phase_worka == PHASE_BCN)	//Full B & C & N
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[5];
+											tempY[0][1] += branch[jindexer].YSfrom[6];
+											tempY[0][2] += branch[jindexer].YSfrom[7];
+											tempY[1][0] += branch[jindexer].YSfrom[9];
+											tempY[1][1] += branch[jindexer].YSfrom[10];
+											tempY[1][2] += branch[jindexer].YSfrom[11];
+											tempY[2][0] += branch[jindexer].YSfrom[13];
+											tempY[2][1] += branch[jindexer].YSfrom[14];
+											tempY[2][2] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[5];
+											tempY[0][1] += branch[jindexer].YSto[6];
+											tempY[0][2] += branch[jindexer].YSto[7];
+											tempY[1][0] += branch[jindexer].YSto[9];
+											tempY[1][1] += branch[jindexer].YSto[10];
+											tempY[1][2] += branch[jindexer].YSto[11];
+											tempY[2][0] += branch[jindexer].YSto[13];
+											tempY[2][1] += branch[jindexer].YSto[14];
+											tempY[2][2] += branch[jindexer].YSto[15];
+										}
+									}//End valid B & C & N
+									else if (phase_worka == PHASE_BC)	//Full B & C
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[5];
+											tempY[0][1] += branch[jindexer].YSfrom[6];
+											tempY[1][0] += branch[jindexer].YSfrom[9];
+											tempY[1][1] += branch[jindexer].YSfrom[10];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[5];
+											tempY[0][1] += branch[jindexer].YSto[6];
+											tempY[1][0] += branch[jindexer].YSto[9];
+											tempY[1][1] += branch[jindexer].YSto[10];
+										}
+									}//End valid B & C
+									else if (phase_worka == PHASE_BN)	//BN
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[5];
+											tempY[0][2] += branch[jindexer].YSfrom[7];
+											tempY[2][0] += branch[jindexer].YSfrom[13];
+											tempY[2][2] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[5];
+											tempY[0][2] += branch[jindexer].YSto[7];
+											tempY[2][0] += branch[jindexer].YSto[13];
+											tempY[2][2] += branch[jindexer].YSto[15];
+										}
+									}//End valid B & N
+									else if (phase_worka == PHASE_CN)	//Full CN
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[1][1] += branch[jindexer].YSfrom[10];
+											tempY[1][2] += branch[jindexer].YSfrom[11];
+											tempY[2][1] += branch[jindexer].YSfrom[14];
+											tempY[2][2] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[1][1] += branch[jindexer].YSto[10];
+											tempY[1][2] += branch[jindexer].YSto[11];
+											tempY[2][1] += branch[jindexer].YSto[14];
+											tempY[2][2] += branch[jindexer].YSto[15];
+										}
+									}//End valid C & N
+									else if (phase_worka == PHASE_C)	//Only C branch
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[1][1] += branch[jindexer].YSfrom[10];
+										}
+										else									//To branch
+										{
+											tempY[1][1] += branch[jindexer].YSto[10];
+										}
+									}//end valid C
+									else if (phase_worka == PHASE_B)	//Only B branch
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[5];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[5];
+										}
+									}//end valid B
+									else if (phase_worka == PHASE_N)	//Only N branch
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[2][2] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[2][2] += branch[jindexer].YSto[15];
+										}
+									}//end valid N
+									else	//Must be nothing then - all phases must be faulted, or something
+										;
+									break;
+								}
+							case PHASE_AN:	//Only AN
+								{
+									if ((branch[jindexer].phases & PHASE_AN) == PHASE_AN)	//Phase AN valid on branch
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+											tempY[0][1] += branch[jindexer].YSfrom[3];
+											tempY[1][0] += branch[jindexer].YSfrom[12];
+											tempY[1][1] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+											tempY[0][1] += branch[jindexer].YSto[3];
+											tempY[1][0] += branch[jindexer].YSto[12];
+											tempY[1][1] += branch[jindexer].YSto[15];
+										}
+									}//End valid phase AN
+									else if ((branch[jindexer].phases & PHASE_A) == PHASE_A)	//Phase A valid on branch
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+										}
+									}//End valid phase A
+									else if ((branch[jindexer].phases & PHASE_N) == PHASE_N)	//Phase N valid on branch
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[1][1] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[1][1] += branch[jindexer].YSto[15];
+										}
+									}//End valid phase N
+									else	//Must be nothing then - all phases must be faulted, or something
+										;
+									break;
+								}
+							case PHASE_ACN:	//A & C & N
+								{
+									phase_worka = branch[jindexer].phases & PHASE_ACN;	//Extract phases
+
+									if (phase_worka == PHASE_ACN)	//Both A & C & N valid
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+											tempY[0][1] += branch[jindexer].YSfrom[2];
+											tempY[0][2] += branch[jindexer].YSfrom[3];
+											tempY[1][0] += branch[jindexer].YSfrom[8];
+											tempY[1][1] += branch[jindexer].YSfrom[10];
+											tempY[1][2] += branch[jindexer].YSfrom[11];
+											tempY[2][0] += branch[jindexer].YSfrom[12];
+											tempY[2][1] += branch[jindexer].YSfrom[14];
+											tempY[2][2] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+											tempY[0][1] += branch[jindexer].YSto[2];
+											tempY[0][2] += branch[jindexer].YSto[3];
+											tempY[1][0] += branch[jindexer].YSto[8];
+											tempY[1][1] += branch[jindexer].YSto[10];
+											tempY[1][2] += branch[jindexer].YSto[11];
+											tempY[2][0] += branch[jindexer].YSto[12];
+											tempY[2][1] += branch[jindexer].YSto[14];
+											tempY[2][2] += branch[jindexer].YSto[15];
+										}
+									}//End A & C & N valid
+									else if (phase_worka == PHASE_AC)	//Both A & C valid
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+											tempY[0][1] += branch[jindexer].YSfrom[2];
+											tempY[1][0] += branch[jindexer].YSfrom[8];
+											tempY[1][1] += branch[jindexer].YSfrom[10];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+											tempY[0][1] += branch[jindexer].YSto[2];
+											tempY[1][0] += branch[jindexer].YSto[8];
+											tempY[1][1] += branch[jindexer].YSto[10];
+										}
+									}//End A & C valid
+									else if (phase_worka == PHASE_AN)	//Both A & N valid
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+											tempY[0][2] += branch[jindexer].YSfrom[3];
+											tempY[2][0] += branch[jindexer].YSfrom[12];
+											tempY[2][2] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+											tempY[0][2] += branch[jindexer].YSto[3];
+											tempY[2][0] += branch[jindexer].YSto[12];
+											tempY[2][2] += branch[jindexer].YSto[15];
+										}
+									}//End A & N valid
+									else if (phase_worka == PHASE_CN)	//Both C & N valid
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[1][1] += branch[jindexer].YSfrom[10];
+											tempY[1][2] += branch[jindexer].YSfrom[11];
+											tempY[2][1] += branch[jindexer].YSfrom[14];
+											tempY[2][2] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[1][1] += branch[jindexer].YSto[10];
+											tempY[1][2] += branch[jindexer].YSto[11];
+											tempY[2][1] += branch[jindexer].YSto[14];
+											tempY[2][2] += branch[jindexer].YSto[15];
+										}
+									}//End C & N valid
+									else if (phase_worka == PHASE_A)	//Only A valid
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+										}
+									}//end only A valid
+									else if (phase_worka == PHASE_C)	//Only C valid
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[1][1] += branch[jindexer].YSfrom[10];
+										}
+										else									//To branch
+										{
+											tempY[1][1] += branch[jindexer].YSto[10];
+										}
+									}//end only C valid
+									else if (phase_worka == PHASE_N)	//Only N valid
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[2][2] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[2][2] += branch[jindexer].YSto[15];
+										}
+									}//end only N valid
+									else	//No connection - must be faulted
+										;
+									break;
+								}
+							case PHASE_ABN:	//A & B & N
+								{
+									phase_worka = branch[jindexer].phases & PHASE_ABN;	//Extract phases
+
+									if (phase_worka == PHASE_ABN)	//Valid A & B & N phase
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+											tempY[0][1] += branch[jindexer].YSfrom[1];
+											tempY[0][2] += branch[jindexer].YSfrom[3];
+											tempY[1][0] += branch[jindexer].YSfrom[4];
+											tempY[1][1] += branch[jindexer].YSfrom[5];
+											tempY[1][2] += branch[jindexer].YSfrom[7];
+											tempY[2][0] += branch[jindexer].YSfrom[12];
+											tempY[2][1] += branch[jindexer].YSfrom[13];
+											tempY[2][2] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+											tempY[0][1] += branch[jindexer].YSto[1];
+											tempY[0][2] += branch[jindexer].YSto[3];
+											tempY[1][0] += branch[jindexer].YSto[4];
+											tempY[1][1] += branch[jindexer].YSto[5];
+											tempY[1][2] += branch[jindexer].YSto[7];
+											tempY[2][0] += branch[jindexer].YSto[12];
+											tempY[2][1] += branch[jindexer].YSto[13];
+											tempY[2][2] += branch[jindexer].YSto[15];
+										}
+									}//End valid A & B & N
+									else if (phase_worka == PHASE_AB)	//Valid A & B phase
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+											tempY[0][1] += branch[jindexer].YSfrom[1];
+											tempY[1][0] += branch[jindexer].YSfrom[4];
+											tempY[1][1] += branch[jindexer].YSfrom[5];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+											tempY[0][1] += branch[jindexer].YSto[1];
+											tempY[1][0] += branch[jindexer].YSto[4];
+											tempY[1][1] += branch[jindexer].YSto[5];
+										}
+									}//End valid A & B
+									else if (phase_worka == PHASE_AN)	//Valid A & N phase
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+											tempY[0][2] += branch[jindexer].YSfrom[3];
+											tempY[2][0] += branch[jindexer].YSfrom[12];
+											tempY[2][2] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+											tempY[0][2] += branch[jindexer].YSto[3];
+											tempY[2][0] += branch[jindexer].YSto[12];
+											tempY[2][2] += branch[jindexer].YSto[15];
+										}
+									}//End valid A & N
+									else if (phase_worka == PHASE_BN)	//Valid B & N phase
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[1][1] += branch[jindexer].YSfrom[5];
+											tempY[1][2] += branch[jindexer].YSfrom[7];
+											tempY[2][1] += branch[jindexer].YSfrom[13];
+											tempY[2][2] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[1][1] += branch[jindexer].YSto[5];
+											tempY[1][2] += branch[jindexer].YSto[7];
+											tempY[2][1] += branch[jindexer].YSto[13];
+											tempY[2][2] += branch[jindexer].YSto[15];
+										}
+									}//End valid B & N
+									else if (phase_worka == PHASE_A)	//Only valid A
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[0];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[0];
+										}
+									}//end valid A
+									else if (phase_worka == PHASE_B)	//Only valid B
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[1][1] += branch[jindexer].YSfrom[5];
+										}
+										else									//To branch
+										{
+											tempY[1][1] += branch[jindexer].YSto[5];
+										}
+									}//end valid B
+									else if (phase_worka == PHASE_N)	//Only valid N
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[2][2] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[2][2] += branch[jindexer].YSto[15];
+										}
+									}//end valid N
+									else	//Default - must be already handled
+										;
+									break;
+								}
+							case PHASE_N:	//Not sure howe get an N-only line, but guess it is possible
+								{
+									if ((branch[jindexer].phases & PHASE_N) == PHASE_N)	//Phase N is valid
+									{
+										if (branch[jindexer].from == indexer)	//From branch
+										{
+											tempY[0][0] += branch[jindexer].YSfrom[15];
+										}
+										else									//To branch
+										{
+											tempY[0][0] += branch[jindexer].YSto[15];
+										}
+									}//end valid phase N
+									else	//Must be nothing then - all phases must be faulted, or something
 										;
 									break;
 								}
@@ -4156,16 +4903,16 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 				{
 					for (kindex=0; kindex<2; kindex++)		//columns
 					{
-						if (((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+						if (((branch[jindexer].Yfrom[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
 							powerflow_values->island_matrix_values[island_index_val].size_offdiag_PQ += 1;
 
-						if (((branch[jindexer].Yto[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+						if (((branch[jindexer].Yto[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
 							powerflow_values->island_matrix_values[island_index_val].size_offdiag_PQ += 1;
 
-						if (((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+						if (((branch[jindexer].Yfrom[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
 							powerflow_values->island_matrix_values[island_index_val].size_offdiag_PQ += 1;
 
-						if (((branch[jindexer].Yto[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+						if (((branch[jindexer].Yto[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
 							powerflow_values->island_matrix_values[island_index_val].size_offdiag_PQ += 1;
 					}//end columns of split phase
 				}//end rows of split phase
@@ -4175,30 +4922,30 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 				//Make sure we aren't SPCT, otherwise things get jacked
 				if ((branch[jindexer].phases & PHASE_S) != PHASE_S)	//SPCT, but v_ratio not = 1
 				{
-					for (jindex=0; jindex<3; jindex++)			//rows
+					for (jindex=0; jindex<phase_check_lim; jindex++)			//rows
 					{
 						//See if this phase is valid
 						phase_workb = phase_check_vals[jindex];
 
 						if ((phase_workb & branch[jindexer].phases) == phase_workb)	//Row check
 						{
-							for (kindex=0; kindex<3; kindex++)		//columns
+							for (kindex=0; kindex<phase_check_lim; kindex++)		//columns
 							{
 								//Check this phase as well
 								phase_workd = phase_check_vals[kindex];
 
 								if ((phase_workd & branch[jindexer].phases) == phase_workd)	//Column validity check
 								{
-									if (((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+									if (((branch[jindexer].Yfrom[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
 										powerflow_values->island_matrix_values[island_index_val].size_offdiag_PQ += 1;
 
-									if (((branch[jindexer].Yto[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+									if (((branch[jindexer].Yto[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
 										powerflow_values->island_matrix_values[island_index_val].size_offdiag_PQ += 1;
 
-									if (((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+									if (((branch[jindexer].Yfrom[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
 										powerflow_values->island_matrix_values[island_index_val].size_offdiag_PQ += 1;
 
-									if (((branch[jindexer].Yto[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+									if (((branch[jindexer].Yto[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
 										powerflow_values->island_matrix_values[island_index_val].size_offdiag_PQ += 1;
 								}//end column validity check
 							}//end columns of 3 phase
@@ -4207,29 +4954,29 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 				}//end not SPCT
 				else	//SPCT implementation
 				{
-					for (jindex=0; jindex<3; jindex++)			//rows
+					for (jindex=0; jindex<phase_check_lim; jindex++)			//rows
 					{
 						//See if this phase is valid
 						phase_workb = phase_check_vals[jindex];
 
 						if ((phase_workb & branch[jindexer].phases) == phase_workb)	//Row check
 						{
-							for (kindex=0; kindex<3; kindex++)		//Row valid, traverse all columns for SPCT Yfrom
+							for (kindex=0; kindex<phase_check_lim; kindex++)		//Row valid, traverse all columns for SPCT Yfrom
 							{
-								if (((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+								if (((branch[jindexer].Yfrom[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
 									powerflow_values->island_matrix_values[island_index_val].size_offdiag_PQ += 1;
 
-								if (((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+								if (((branch[jindexer].Yfrom[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
 									powerflow_values->island_matrix_values[island_index_val].size_offdiag_PQ += 1;
 							}//end columns traverse
 
 							//If row is valid, now traverse the rows of that column for Yto
-							for (kindex=0; kindex<3; kindex++)
+							for (kindex=0; kindex<phase_check_lim; kindex++)
 							{
-								if (((branch[jindexer].Yto[kindex*3+jindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+								if (((branch[jindexer].Yto[kindex*4+jindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
 									powerflow_values->island_matrix_values[island_index_val].size_offdiag_PQ += 1;
 
-								if (((branch[jindexer].Yto[kindex*3+jindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
+								if (((branch[jindexer].Yto[kindex*4+jindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))
 									powerflow_values->island_matrix_values[island_index_val].size_offdiag_PQ += 1;
 							}//end rows traverse
 						}//End row validity check
@@ -4305,7 +5052,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 
 			phase_count_a = 0;
 			phase_count_b = 0;
-			for (jindex=0; jindex<3; jindex++)		//Accumulate number of phases
+			for (jindex=0; jindex<phase_check_lim; jindex++)		//Accumulate number of phases
 			{
 				if ((bus[tempa].phases & phase_check_vals[jindex]) == phase_check_vals[jindex])
 					phase_count_a++;
@@ -4314,81 +5061,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 					phase_count_b++;
 			}
 
-			if ((phase_count_a==3) && (phase_count_b==3))	//Both ends are full three phase, normal operations
-			{
-				for (jindex=0; jindex<3; jindex++)		//Loop through rows of admittance matrices
-				{
-					//See if this row is valid for this branch
-					phase_workd = phase_check_vals[jindex];
-
-					if ((branch[jindexer].phases & phase_workd) == phase_workd)	//Validity check
-					{
-						for (kindex=0; kindex<3; kindex++)	//Loop through columns of admittance matrices
-						{
-							//Extract column information
-							phase_worke = phase_check_vals[kindex];
-
-							if ((branch[jindexer].phases & phase_worke) == phase_worke)	//Valid column too!
-							{
-								//Make sure neither are a PV bus (even though unsupported so far)
-								if ((bus[tempa].type != 1) && (bus[tempb].type != 1))
-								{
-									//Indices counted out from Self admittance above.  needs doubling due to complex separation
-									if ((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0)	//From imags
-									{
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Im());
-										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 3;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 3;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yfrom[jindex*3+kindex]).Im();
-										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-									}
-
-									if ((branch[jindexer].Yto[jindex*3+kindex]).Im() != 0)	//To imags
-									{
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Im());
-										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 3;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 3;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yto[jindex*3+kindex]).Im();
-										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-									}
-
-									if ((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0)	//From reals
-									{
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 3;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
-										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 3;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
-										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-									}
-
-									if ((branch[jindexer].Yto[jindex*3+kindex]).Re() != 0)	//To reals
-									{
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 3;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
-										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 3;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
-										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-									}
-								}//End not PV bus
-								//Default else - somehow is PV bus - we don't support those, so ignore it
-							}//End valid column
-						}//column end
-					}//End valid row
-				}//row end
-			}//if all 3 end
-			else if (((bus[tempa].phases & PHASE_S) == PHASE_S) || ((bus[tempb].phases & PHASE_S) == PHASE_S))	//Someone's a triplex
+			if (((bus[tempa].phases & PHASE_S) == PHASE_S) || ((bus[tempb].phases & PHASE_S) == PHASE_S))	//Someone's a triplex
 			{
 				if (((bus[tempa].phases & PHASE_S) == PHASE_S) && ((bus[tempb].phases & PHASE_S) == PHASE_S))	//Both are triplex, easy case
 				{
@@ -4410,55 +5083,55 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 							{
 								//Indices counted out from Self admittance above.  needs doubling due to complex separation
 
-								if (((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
+								if (((branch[jindexer].Yfrom[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
 								{
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yfrom[jindex*3+kindex]).Im());
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yfrom[jindex*4+kindex]).Im());
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 2;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 2;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(branch[jindexer].Yfrom[jindex*3+kindex]).Im();
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(branch[jindexer].Yfrom[jindex*4+kindex]).Im();
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 								}
 
-								if (((branch[jindexer].Yto[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
+								if (((branch[jindexer].Yto[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
 								{
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Im());
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*4+kindex]).Im());
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 2;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 2;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yto[jindex*3+kindex]).Im();
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yto[jindex*4+kindex]).Im();
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 								}
 
-								if (((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
+								if (((branch[jindexer].Yfrom[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
 								{
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 2;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yfrom[jindex*4+kindex]).Re());
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 2;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yfrom[jindex*4+kindex]).Re());
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 								}
 
-								if (((branch[jindexer].Yto[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1 && bus[tempb].type != 1))	//To reals
+								if (((branch[jindexer].Yto[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1 && bus[tempb].type != 1))	//To reals
 								{
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 2;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*4+kindex]).Re());
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 2;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*4+kindex]).Re());
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 								}
 							}//end From end SPCT to
@@ -4471,109 +5144,109 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								{
 
 									//Indices counted out from Self admittance above.  needs doubling due to complex separation
-									if (((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
+									if (((branch[jindexer].Yfrom[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
 									{
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Im());
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*4+kindex]).Im());
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 2;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 2;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yfrom[jindex*3+kindex]).Im();
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yfrom[jindex*4+kindex]).Im();
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 									}
 
-									if (((branch[jindexer].Yto[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
+									if (((branch[jindexer].Yto[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
 									{
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yto[jindex*3+kindex]).Im());
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yto[jindex*4+kindex]).Im());
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 2;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 2;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(branch[jindexer].Yto[jindex*3+kindex]).Im();
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(branch[jindexer].Yto[jindex*4+kindex]).Im();
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 									}
 
-									if (((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
+									if (((branch[jindexer].Yfrom[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
 									{
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 2;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*4+kindex]).Re());
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 2;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*4+kindex]).Re());
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 									}
 
-									if (((branch[jindexer].Yto[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1 && bus[tempb].type != 1))	//To reals
+									if (((branch[jindexer].Yto[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1 && bus[tempb].type != 1))	//To reals
 									{
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 2;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yto[jindex*3+kindex]).Re());
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yto[jindex*4+kindex]).Re());
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 2;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yto[jindex*3+kindex]).Re());
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yto[jindex*4+kindex]).Re());
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 									}
 								}//End SPCT TO bus and we're a line
 								else	//Transformer to - don't do things weird
 								{
-									if (((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
+									if (((branch[jindexer].Yfrom[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
 									{
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Im());
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*4+kindex]).Im());
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 2;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 2;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yfrom[jindex*3+kindex]).Im();
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yfrom[jindex*4+kindex]).Im();
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 									}
 
-									if (((branch[jindexer].Yto[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
+									if (((branch[jindexer].Yto[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
 									{
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yto[jindex*3+kindex]).Im());
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yto[jindex*4+kindex]).Im());
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 2;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 2;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(branch[jindexer].Yto[jindex*3+kindex]).Im();
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(branch[jindexer].Yto[jindex*4+kindex]).Im();
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 									}
 
-									if (((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
+									if (((branch[jindexer].Yfrom[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
 									{
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 2;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*4+kindex]).Re());
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 2;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*4+kindex]).Re());
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 									}
 
-									if (((branch[jindexer].Yto[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1 && bus[tempb].type != 1))	//To reals
+									if (((branch[jindexer].Yto[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1 && bus[tempb].type != 1))	//To reals
 									{
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 2;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yto[jindex*3+kindex]).Re());
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yto[jindex*4+kindex]).Re());
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
 										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 2;
-										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yto[jindex*3+kindex]).Re());
+										powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((branch[jindexer].Yto[jindex*4+kindex]).Re());
 										powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 									}
 								}//End SPCT TO and we're the transformer
@@ -4582,55 +5255,55 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 							{
 								//Indices counted out from Self admittance above.  needs doubling due to complex separation
 
-								if (((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
+								if (((branch[jindexer].Yfrom[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
 								{
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Im());
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*4+kindex]).Im());
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 2;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 2;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yfrom[jindex*3+kindex]).Im();
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yfrom[jindex*4+kindex]).Im();
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 								}
 
-								if (((branch[jindexer].Yto[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
+								if (((branch[jindexer].Yto[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
 								{
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Im());
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*4+kindex]).Im());
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 2;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 2;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yto[jindex*3+kindex]).Im();
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yto[jindex*4+kindex]).Im();
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 								}
 
-								if (((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
+								if (((branch[jindexer].Yfrom[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
 								{
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex + 2;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*4+kindex]).Re());
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + jindex;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 2;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*4+kindex]).Re());
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 								}
 
-								if (((branch[jindexer].Yto[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1 && bus[tempb].type != 1))	//To reals
+								if (((branch[jindexer].Yto[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1 && bus[tempb].type != 1))	//To reals
 								{
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex + 2;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*4+kindex]).Re());
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + jindex;
 									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + kindex + 2;
-									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*3+kindex]).Re());
+									powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[jindex*4+kindex]).Re());
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 								}
 							}//end Normal triplex branch
@@ -4819,70 +5492,84 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 					for (kindex=0; kindex<2; kindex++)	//Loop through columns of admittance matrices (only 2x2)
 					{
 
-						if (((branch[jindexer].Yfrom[jindex*3+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
+						if (((branch[jindexer].Yfrom[jindex*4+kindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
 						{
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index;
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Im());
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*4+kindex]).Im());
 							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + temp_size;
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 2;
-							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yfrom[jindex*3+kindex]).Im();
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yfrom[jindex*4+kindex]).Im();
 							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 						}
 
-						if (((branch[jindexer].Yto[kindex*3+jindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
+						if (((branch[jindexer].Yto[kindex*4+jindex]).Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
 						{
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + kindex;
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index;
-							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[kindex*3+jindex]).Im());
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[kindex*4+jindex]).Im());
 							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + kindex + 2;
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + temp_size;
-							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yto[kindex*3+jindex]).Im();
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (branch[jindexer].Yto[kindex*4+jindex]).Im();
 							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 						}
 
-						if (((branch[jindexer].Yfrom[jindex*3+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
+						if (((branch[jindexer].Yfrom[jindex*4+kindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
 						{
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + temp_size;
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex;
-							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*4+kindex]).Re());
 							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index;
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + kindex + 2;
-							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*3+kindex]).Re());
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yfrom[jindex*4+kindex]).Re());
 							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 						}
 
-						if (((branch[jindexer].Yto[kindex*3+jindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To reals
+						if (((branch[jindexer].Yto[kindex*4+jindex]).Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To reals
 						{
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + kindex + 2;
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index;
-							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[kindex*3+jindex]).Re());
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[kindex*4+jindex]).Re());
 							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + kindex;
 							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + temp_size;
-							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[kindex*3+jindex]).Re());
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((branch[jindexer].Yto[kindex*4+jindex]).Re());
 							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 						}
 					}//secondary index end
 
 				}//end to triplexy
 			}//end triplex in here
-			else					//Some combination of not-3 phase
+			else					//Some combination of phases
 			{
 				//Clear working variables, just in case
 				temp_index = temp_index_b = -1;
 				temp_size = temp_size_b = temp_size_c = -1;
 				Full_Mat_A = Full_Mat_B = false;
 
+				//Zero the tracking matrices, because I like to be paranoid
+				for (jindex=0; jindex<4; jindex++)
+				{
+					for (kindex=0; kindex<4; kindex++)
+					{
+						Temp_Ad_A[jindex][kindex] = complex(0.0,0.0);
+						Temp_Ad_B[jindex][kindex] = complex(0.0,0.0);
+					}
+
+					//Index variables
+					fphase_idx[jindex] = -1;
+					tphase_idx[jindex] = -1;
+				}
+
 				//Intermediate store the admittance matrices so they can be directly indexed later
-				switch(branch[jindexer].phases & PHASE_ABC) {
+				switch(branch[jindexer].phases & neutral_switch_masking) {
 					case NO_PHASE:	//No phases (open switch or reliability excluded item)
 						{
 							temp_size_c = -99;	//Arbitrary flag
@@ -4890,29 +5577,29 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 						}
 					case PHASE_C:	//C only
 						{
-							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[8];
-							Temp_Ad_B[0][0] = branch[jindexer].Yto[8];
+							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[10];
+							Temp_Ad_B[0][0] = branch[jindexer].Yto[10];
 							temp_size_c = 1;
 							break;
 						}
 					case PHASE_B:	//B only
 						{
-							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[4];
-							Temp_Ad_B[0][0] = branch[jindexer].Yto[4];
+							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[5];
+							Temp_Ad_B[0][0] = branch[jindexer].Yto[5];
 							temp_size_c = 1;
 							break;
 						}
 					case PHASE_BC:	//BC only
 						{
-							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[4];
-							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[5];
-							Temp_Ad_A[1][0] = branch[jindexer].Yfrom[7];
-							Temp_Ad_A[1][1] = branch[jindexer].Yfrom[8];
+							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[5];
+							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[6];
+							Temp_Ad_A[1][0] = branch[jindexer].Yfrom[9];
+							Temp_Ad_A[1][1] = branch[jindexer].Yfrom[10];
 
-							Temp_Ad_B[0][0] = branch[jindexer].Yto[4];
-							Temp_Ad_B[0][1] = branch[jindexer].Yto[5];
-							Temp_Ad_B[1][0] = branch[jindexer].Yto[7];
-							Temp_Ad_B[1][1] = branch[jindexer].Yto[8];
+							Temp_Ad_B[0][0] = branch[jindexer].Yto[5];
+							Temp_Ad_B[0][1] = branch[jindexer].Yto[6];
+							Temp_Ad_B[1][0] = branch[jindexer].Yto[9];
+							Temp_Ad_B[1][1] = branch[jindexer].Yto[10];
 
 							temp_size_c = 2;
 							break;
@@ -4928,13 +5615,13 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 						{
 							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[0];
 							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[2];
-							Temp_Ad_A[1][0] = branch[jindexer].Yfrom[6];
-							Temp_Ad_A[1][1] = branch[jindexer].Yfrom[8];
+							Temp_Ad_A[1][0] = branch[jindexer].Yfrom[8];
+							Temp_Ad_A[1][1] = branch[jindexer].Yfrom[10];
 
 							Temp_Ad_B[0][0] = branch[jindexer].Yto[0];
 							Temp_Ad_B[0][1] = branch[jindexer].Yto[2];
-							Temp_Ad_B[1][0] = branch[jindexer].Yto[6];
-							Temp_Ad_B[1][1] = branch[jindexer].Yto[8];
+							Temp_Ad_B[1][0] = branch[jindexer].Yto[8];
+							Temp_Ad_B[1][1] = branch[jindexer].Yto[10];
 
 							temp_size_c = 2;
 							break;
@@ -4943,15 +5630,178 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 						{
 							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[0];
 							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[1];
-							Temp_Ad_A[1][0] = branch[jindexer].Yfrom[3];
-							Temp_Ad_A[1][1] = branch[jindexer].Yfrom[4];
+							Temp_Ad_A[1][0] = branch[jindexer].Yfrom[4];
+							Temp_Ad_A[1][1] = branch[jindexer].Yfrom[5];
 
 							Temp_Ad_B[0][0] = branch[jindexer].Yto[0];
 							Temp_Ad_B[0][1] = branch[jindexer].Yto[1];
-							Temp_Ad_B[1][0] = branch[jindexer].Yto[3];
-							Temp_Ad_B[1][1] = branch[jindexer].Yto[4];
+							Temp_Ad_B[1][0] = branch[jindexer].Yto[4];
+							Temp_Ad_B[1][1] = branch[jindexer].Yto[5];
 
 							temp_size_c = 2;
+							break;
+						}
+					case PHASE_ABC:	//ABC only (implies N is enabled and this didn't have one)
+						{
+							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[0];
+							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[1];
+							Temp_Ad_A[0][2] = branch[jindexer].Yfrom[2];
+							Temp_Ad_A[1][0] = branch[jindexer].Yfrom[4];
+							Temp_Ad_A[1][1] = branch[jindexer].Yfrom[5];
+							Temp_Ad_A[1][2] = branch[jindexer].Yfrom[6];
+							Temp_Ad_A[2][0] = branch[jindexer].Yfrom[8];
+							Temp_Ad_A[2][1] = branch[jindexer].Yfrom[9];
+							Temp_Ad_A[2][2] = branch[jindexer].Yfrom[10];
+
+							Temp_Ad_B[0][0] = branch[jindexer].Yto[0];
+							Temp_Ad_B[0][1] = branch[jindexer].Yto[1];
+							Temp_Ad_B[0][2] = branch[jindexer].Yto[2];
+							Temp_Ad_B[1][0] = branch[jindexer].Yto[4];
+							Temp_Ad_B[1][1] = branch[jindexer].Yto[5];
+							Temp_Ad_B[1][2] = branch[jindexer].Yto[6];
+							Temp_Ad_B[2][0] = branch[jindexer].Yto[8];
+							Temp_Ad_B[2][1] = branch[jindexer].Yto[9];
+							Temp_Ad_B[2][2] = branch[jindexer].Yto[10];
+
+							temp_size_c = 3;
+							break;
+						}
+					case PHASE_CN:	//CN only
+						{
+							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[10];
+							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[11];
+							Temp_Ad_A[1][0] = branch[jindexer].Yfrom[14];
+							Temp_Ad_A[1][1] = branch[jindexer].Yfrom[15];
+
+							Temp_Ad_B[0][0] = branch[jindexer].Yto[10];
+							Temp_Ad_B[0][1] = branch[jindexer].Yto[11];
+							Temp_Ad_B[1][0] = branch[jindexer].Yto[14];
+							Temp_Ad_B[1][1] = branch[jindexer].Yto[15];
+							temp_size_c = 2;
+							break;
+						}
+					case PHASE_BN:	//BN only
+						{
+							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[5];
+							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[7];
+							Temp_Ad_A[1][0] = branch[jindexer].Yfrom[13];
+							Temp_Ad_A[1][1] = branch[jindexer].Yfrom[15];
+
+							Temp_Ad_B[0][0] = branch[jindexer].Yto[5];
+							Temp_Ad_B[0][1] = branch[jindexer].Yto[7];
+							Temp_Ad_B[1][0] = branch[jindexer].Yto[13];
+							Temp_Ad_B[1][1] = branch[jindexer].Yto[15];
+							temp_size_c = 2;
+							break;
+						}
+					case PHASE_BCN:	//BCN only
+						{
+							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[5];
+							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[6];
+							Temp_Ad_A[0][2] = branch[jindexer].Yfrom[7];
+							Temp_Ad_A[1][0] = branch[jindexer].Yfrom[9];
+							Temp_Ad_A[1][1] = branch[jindexer].Yfrom[10];
+							Temp_Ad_A[1][2] = branch[jindexer].Yfrom[11];
+							Temp_Ad_A[2][0] = branch[jindexer].Yfrom[13];
+							Temp_Ad_A[2][1] = branch[jindexer].Yfrom[14];
+							Temp_Ad_A[2][2] = branch[jindexer].Yfrom[15];
+
+							Temp_Ad_B[0][0] = branch[jindexer].Yto[5];
+							Temp_Ad_B[0][1] = branch[jindexer].Yto[6];
+							Temp_Ad_B[0][2] = branch[jindexer].Yto[7];
+							Temp_Ad_B[1][0] = branch[jindexer].Yto[9];
+							Temp_Ad_B[1][1] = branch[jindexer].Yto[10];
+							Temp_Ad_B[1][2] = branch[jindexer].Yto[11];
+							Temp_Ad_B[2][0] = branch[jindexer].Yto[13];
+							Temp_Ad_B[2][1] = branch[jindexer].Yto[14];
+							Temp_Ad_B[2][2] = branch[jindexer].Yto[15];
+
+							temp_size_c = 3;
+							break;
+						}
+					case PHASE_AN:	//A only
+						{
+							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[0];
+							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[3];
+							Temp_Ad_A[1][0] = branch[jindexer].Yfrom[12];
+							Temp_Ad_A[1][1] = branch[jindexer].Yfrom[15];
+
+							Temp_Ad_B[0][0] = branch[jindexer].Yto[0];
+							Temp_Ad_B[0][1] = branch[jindexer].Yto[3];
+							Temp_Ad_B[1][0] = branch[jindexer].Yto[12];
+							Temp_Ad_B[1][1] = branch[jindexer].Yto[15];
+							temp_size_c = 2;
+							break;
+						}
+					case PHASE_ACN:	//ACN only
+						{
+							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[0];
+							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[2];
+							Temp_Ad_A[0][2] = branch[jindexer].Yfrom[3];
+							Temp_Ad_A[1][0] = branch[jindexer].Yfrom[8];
+							Temp_Ad_A[1][1] = branch[jindexer].Yfrom[10];
+							Temp_Ad_A[1][2] = branch[jindexer].Yfrom[11];
+							Temp_Ad_A[2][0] = branch[jindexer].Yfrom[12];
+							Temp_Ad_A[2][1] = branch[jindexer].Yfrom[14];
+							Temp_Ad_A[2][2] = branch[jindexer].Yfrom[15];
+
+							Temp_Ad_B[0][0] = branch[jindexer].Yto[0];
+							Temp_Ad_B[0][1] = branch[jindexer].Yto[2];
+							Temp_Ad_B[0][2] = branch[jindexer].Yto[3];
+							Temp_Ad_B[1][0] = branch[jindexer].Yto[8];
+							Temp_Ad_B[1][1] = branch[jindexer].Yto[10];
+							Temp_Ad_B[1][2] = branch[jindexer].Yto[11];
+							Temp_Ad_B[2][0] = branch[jindexer].Yto[12];
+							Temp_Ad_B[2][1] = branch[jindexer].Yto[14];
+							Temp_Ad_B[2][2] = branch[jindexer].Yto[15];
+
+							temp_size_c = 3;
+							break;
+						}
+					case PHASE_ABN:	//ABN only
+						{
+							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[0];
+							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[1];
+							Temp_Ad_A[0][2] = branch[jindexer].Yfrom[3];
+							Temp_Ad_A[1][0] = branch[jindexer].Yfrom[4];
+							Temp_Ad_A[1][1] = branch[jindexer].Yfrom[5];
+							Temp_Ad_A[1][2] = branch[jindexer].Yfrom[7];
+							Temp_Ad_A[2][0] = branch[jindexer].Yfrom[12];
+							Temp_Ad_A[2][1] = branch[jindexer].Yfrom[13];
+							Temp_Ad_A[2][2] = branch[jindexer].Yfrom[15];
+
+							Temp_Ad_B[0][0] = branch[jindexer].Yto[0];
+							Temp_Ad_B[0][1] = branch[jindexer].Yto[1];
+							Temp_Ad_B[0][2] = branch[jindexer].Yto[3];
+							Temp_Ad_B[1][0] = branch[jindexer].Yto[4];
+							Temp_Ad_B[1][1] = branch[jindexer].Yto[5];
+							Temp_Ad_B[1][2] = branch[jindexer].Yto[7];
+							Temp_Ad_B[2][0] = branch[jindexer].Yto[12];
+							Temp_Ad_B[2][1] = branch[jindexer].Yto[13];
+							Temp_Ad_B[2][2] = branch[jindexer].Yto[15];
+
+							temp_size_c = 3;
+							break;
+						}
+					case PHASE_ABCN:	//Full phases
+						{
+							for (jindex=0; jindex<4; jindex++)
+							{
+								for (kindex=0; kindex<4; kindex++)
+								{
+									Temp_Ad_A[jindex][kindex] = branch[jindexer].Yfrom[4*jindex+kindex];
+									Temp_Ad_B[jindex][kindex] = branch[jindexer].Yto[4*jindex+kindex];
+								}
+							}
+
+							temp_size_c = 4;
+							break;
+						}
+					case PHASE_N:	//N only
+						{
+							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[15];
+							Temp_Ad_B[0][0] = branch[jindexer].Yto[15];
+							temp_size_c = 1;
 							break;
 						}
 					default:
@@ -4967,158 +5817,460 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 
 				if (temp_size_c==-1)	//Make sure it is right
 				{
-					GL_THROW("NR: A line's phase was flagged as not full three-phase, but wasn't: (%s) %u %u %u %u",
-									 branch[jindexer].name, branch[jindexer].phases, branch[jindexer].origphases, phase_worka, phase_workb);
+					GL_THROW("NR: A line's phase did not meet any known templates: (%s)",branch[jindexer].name);
 					/*  TROUBLESHOOT
-					A line inside the powerflow model was flagged as not being full three-phase or
-					triplex in any form.  It failed the other cases though, so it must have been.
-					Please submit your code and a bug report to the trac website.
+					A line inside the powerflow model failed to match a known phase case or
+					triplex in any form.  Please submit your code and a bug report to the ticketing system.
 					*/
 				}
 
 				//Check the from side and get all appropriate offsets
-				switch(bus[tempa].phases & PHASE_ABC) {
+				switch(bus[tempa].phases & neutral_switch_masking) {
 					case PHASE_C:	//C
 						{
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
+							temp_size = 1;		//Single size
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
 							{
-								temp_size = 1;		//Single size
-								temp_index = 0;		//No offset (only 1 big)
+								fphase_idx[0] = 0;	//from index placement
+	
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
 								/*  TROUBLESHOOT
 								One of the lines in the powerflow model has an invalid phase in
-								reference to its to and from ends.  This should have been caught
-								earlier, so submit your code and a bug report using the trac website.
+								reference to its from end.  This should have been caught
+								earlier, so submit your code and a bug report to the issue tracker.
 								*/
 							}
 							break;
 						}//end PHASE_C
 					case PHASE_B:	//B
 						{
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
+							temp_size = 1;		//Single size
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
 							{
-								temp_size = 1;		//Single size
-								temp_index = 0;		//No offset (only 1 big)
+								fphase_idx[0] = 0;	//from index placement
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
 							}
 							break;
 						}//end PHASE_B
 					case PHASE_BC:	//BC
 						{
 							temp_size = 2;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
 							{
-								temp_index = 1;		//offset
+								fphase_idx[0] = 1;	//from index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
 							{
-								temp_index = 0;		//offset
+								fphase_idx[0] = 0;	//from index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_BC)	//BC
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BC)	//BC
 							{
-								temp_index = 0;
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
 							}
 							break;
 						}//end PHASE_BC
 					case PHASE_A:	//A
 						{
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
+							temp_size = 1;		//Single size
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
 							{
-								temp_size = 1;		//Single size
-								temp_index = 0;		//No offset (only 1 big)
+								fphase_idx[0] = 0;	//from index placement
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
 							}
 							break;
 						}//end PHASE_A
 					case PHASE_AC:	//AC
 						{
 							temp_size = 2;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
 							{
-								temp_index = 1;		//offset
+								fphase_idx[0] = 1;	//from index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
 							{
-								temp_index = 0;		//offset
+								fphase_idx[0] = 0;	//from index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AC)	//AC
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AC)	//AC
 							{
-								temp_index = 0;
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
 							}
 							break;
 						}//end PHASE_AC
 					case PHASE_AB:	//AB
 						{
 							temp_size = 2;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
 							{
-								temp_index = 1;		//offset
+								fphase_idx[0] = 1;	//from index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
 							{
-								temp_index = 0;		//offset
+								fphase_idx[0] = 0;	//from index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AB)	//AB
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AB)	//AB
 							{
-								temp_index = 0;
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
 							}
 							break;
 						}//end PHASE_AB
 					case PHASE_ABC:	//ABC
 						{
 							temp_size = 3;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
 							{
-								temp_index = 2;		//offset
+								fphase_idx[0] = 2;	//from index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
 							{
-								temp_index = 1;		//offset
+								fphase_idx[0] = 1;	//from index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_BC)	//BC
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BC)	//BC
 							{
-								temp_index = 1;
+								fphase_idx[0] = 1;	//from index placement
+								fphase_idx[1] = 2;
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
 							{
-								temp_index = 0;		//offset
+								fphase_idx[0] = 0;	//from index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AC)	//AC
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AC)	//AC
 							{
-								temp_index = 0;
-								Full_Mat_A = true;		//Flag so we know C needs to be gapped
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 2;
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AB)	//AB
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AB)	//AB
 							{
-								temp_index = 0;
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ABC)	//ABC - in neutral case
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+								fphase_idx[2] = 2;
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
 							}
 							break;
 						}//end PHASE_ABC
+					case PHASE_CN:	//CN
+						{
+							temp_size = 2;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								fphase_idx[0] = 1;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
+							{
+								fphase_idx[0] = 0;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_CN)	//CN
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
+							}
+							break;
+						}//end PHASE_CN
+					case PHASE_BN:	//BN
+						{
+							temp_size = 2;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								fphase_idx[0] = 1;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
+							{
+								fphase_idx[0] = 0;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BN)	//BN
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
+							}
+							break;
+						}//end PHASE_B
+					case PHASE_BCN:	//BCN
+						{
+							temp_size = 3;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								fphase_idx[0] = 2;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
+							{
+								fphase_idx[0] = 1;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_CN)	//CN
+							{
+								fphase_idx[0] = 1;	//from index placement
+								fphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
+							{
+								fphase_idx[0] = 0;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BN)	//BN
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BC)	//BC
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BCN)	//BCN - in nuetral case
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+								fphase_idx[2] = 2;
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
+							}
+							break;
+						}//end PHASE_BCN
+					case PHASE_AN:	//AN
+						{
+							temp_size = 2;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								fphase_idx[0] = 1;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
+							{
+								fphase_idx[0] = 0;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AN)	//AN
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;	//from index placement
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
+							}
+							break;
+						}//end PHASE_AN
+					case PHASE_ACN:	//ACN
+						{
+							temp_size = 3;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								fphase_idx[0] = 2;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
+							{
+								fphase_idx[0] = 1;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_CN)	//CN
+							{
+								fphase_idx[0] = 1;	//from index placement
+								fphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
+							{
+								fphase_idx[0] = 0;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AN)	//AN
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AC)	//AC
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ACN)	//ACN - in nuetral case
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+								fphase_idx[2] = 2;
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
+							}
+							break;
+						}//end PHASE_AC
+					case PHASE_ABN:	//AB
+						{
+							temp_size = 3;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								fphase_idx[0] = 2;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
+							{
+								fphase_idx[0] = 1;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BN)	//BN
+							{
+								fphase_idx[0] = 1;	//from index placement
+								fphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
+							{
+								fphase_idx[0] = 0;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AN)	//AN
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AB)	//AB
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ABN)	//ABN - in nuetral case
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+								fphase_idx[2] = 2;
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
+							}
+							break;
+						}//end PHASE_AB
+					case PHASE_ABCN:	//ABCN
+						{
+							temp_size = 4;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
+							{
+								fphase_idx[0] = 2;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
+							{
+								fphase_idx[0] = 1;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BC)	//BC
+							{
+								fphase_idx[0] = 1;	//from index placement
+								fphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
+							{
+								fphase_idx[0] = 0;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AC)	//AC
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AB)	//AB
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ABC)	//ABC
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+								fphase_idx[2] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								fphase_idx[0] = 3;	//from index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_CN)	//CN
+							{
+								fphase_idx[0] = 2;	//from index placement
+								fphase_idx[1] = 3;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BN)	//BN
+							{
+								fphase_idx[0] = 1;	//from index placement
+								fphase_idx[1] = 3;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BCN)	//BCN
+							{
+								fphase_idx[0] = 1;	//from index placement
+								fphase_idx[1] = 2;
+								fphase_idx[2] = 3;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AN)	//AN
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 3;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ACN)	//ACN
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 2;
+								fphase_idx[2] = 3;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ABN)	//ABN
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+								fphase_idx[2] = 3;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ABCN)	//ABCN
+							{
+								fphase_idx[0] = 0;	//from index placement
+								fphase_idx[1] = 1;
+								fphase_idx[2] = 2;
+								fphase_idx[3] = 3;
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
+							}
+							break;
+						}//end PHASE_ABCN
+					case PHASE_N:	//N
+						{
+							temp_size = 1;		//Single size
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								fphase_idx[0] = 0;	//from index placement
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) from bus (%s) is not phase compatible",branch[jindexer].name,bus[tempa].name);
+								//Defined above
+							}
+							break;
+						}//end PHASE_N
 					default:
 						{
 							break;
@@ -5126,349 +6278,527 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 				}//End switch/case for from
 
 				//Check the to side and get all appropriate offsets
-				switch(bus[tempb].phases & PHASE_ABC) {
+				switch(bus[tempb].phases & neutral_switch_masking) {
 					case PHASE_C:	//C
 						{
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
+							temp_size_b = 1;		//Single size
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
 							{
-								temp_size_b = 1;		//Single size
-								temp_index_b = 0;		//No offset (only 1 big)
+								tphase_idx[0] = 0;	//to index placement
+	
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
 								/*  TROUBLESHOOT
 								One of the lines in the powerflow model has an invalid phase in
-								reference to its to and from ends.  This should have been caught
-								earlier, so submit your code and a bug report using the trac website.
+								reference to its to end.  This should have been caught
+								earlier, so submit your code and a bug report to the issue tracker.
 								*/
 							}
 							break;
 						}//end PHASE_C
 					case PHASE_B:	//B
 						{
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
+							temp_size_b = 1;		//Single size
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
 							{
-								temp_size_b = 1;		//Single size
-								temp_index_b = 0;		//No offset (only 1 big)
+								tphase_idx[0] = 0;	//to index placement
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
 							}
 							break;
 						}//end PHASE_B
 					case PHASE_BC:	//BC
 						{
 							temp_size_b = 2;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
 							{
-								temp_index_b = 1;		//offset
+								tphase_idx[0] = 1;	//to index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
 							{
-								temp_index_b = 0;		//offset
+								tphase_idx[0] = 0;	//to index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_BC)	//BC
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BC)	//BC
 							{
-								temp_index_b = 0;
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
 							}
 							break;
 						}//end PHASE_BC
 					case PHASE_A:	//A
 						{
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
+							temp_size_b = 1;		//Single size
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
 							{
-								temp_size_b = 1;		//Single size
-								temp_index_b = 0;		//No offset (only 1 big)
+								tphase_idx[0] = 0;	//to index placement
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
 							}
 							break;
 						}//end PHASE_A
 					case PHASE_AC:	//AC
 						{
 							temp_size_b = 2;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
 							{
-								temp_index_b = 1;		//offset
+								tphase_idx[0] = 1;	//to index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
 							{
-								temp_index_b = 0;		//offset
+								tphase_idx[0] = 0;	//to index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AC)	//AC
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AC)	//AC
 							{
-								temp_index_b = 0;
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
 							}
 							break;
 						}//end PHASE_AC
 					case PHASE_AB:	//AB
 						{
 							temp_size_b = 2;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
 							{
-								temp_index_b = 1;		//offset
+								tphase_idx[0] = 1;	//to index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
 							{
-								temp_index_b = 0;		//offset
+								tphase_idx[0] = 0;	//to index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AB)	//AB
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AB)	//AB
 							{
-								temp_index_b = 0;
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
 							}
 							break;
 						}//end PHASE_AB
 					case PHASE_ABC:	//ABC
 						{
 							temp_size_b = 3;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
 							{
-								temp_index_b = 2;		//offset
+								tphase_idx[0] = 2;	//to index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
 							{
-								temp_index_b = 1;		//offset
+								tphase_idx[0] = 1;	//to index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_BC)	//BC
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BC)	//BC
 							{
-								temp_index_b = 1;
+								tphase_idx[0] = 1;	//to index placement
+								tphase_idx[1] = 2;
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
 							{
-								temp_index_b = 0;		//offset
+								tphase_idx[0] = 0;	//to index placement
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AC)	//AC
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AC)	//AC
 							{
-								temp_index_b = 0;
-								Full_Mat_B = true;		//Flag so we know C needs to be gapped
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 2;
 							}
-							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AB)	//AB
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AB)	//AB
 							{
-								temp_index_b = 0;
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ABC)	//ABC - in neutral case
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+								tphase_idx[2] = 2;
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
 							}
 							break;
 						}//end PHASE_ABC
+					case PHASE_CN:	//CN
+						{
+							temp_size_b = 2;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								tphase_idx[0] = 1;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
+							{
+								tphase_idx[0] = 0;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_CN)	//CN
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
+							}
+							break;
+						}//end PHASE_CN
+					case PHASE_BN:	//BN
+						{
+							temp_size_b = 2;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								tphase_idx[0] = 1;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
+							{
+								tphase_idx[0] = 0;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BN)	//BN
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
+							}
+							break;
+						}//end PHASE_B
+					case PHASE_BCN:	//BCN
+						{
+							temp_size_b = 3;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								tphase_idx[0] = 2;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
+							{
+								tphase_idx[0] = 1;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_CN)	//CN
+							{
+								tphase_idx[0] = 1;	//to index placement
+								tphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
+							{
+								tphase_idx[0] = 0;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BN)	//BN
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BC)	//BC
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BCN)	//BCN - in nuetral case
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+								tphase_idx[2] = 2;
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
+							}
+							break;
+						}//end PHASE_BCN
+					case PHASE_AN:	//AN
+						{
+							temp_size_b = 2;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								tphase_idx[0] = 1;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
+							{
+								tphase_idx[0] = 0;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AN)	//AN
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;	//to index placement
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
+							}
+							break;
+						}//end PHASE_AN
+					case PHASE_ACN:	//ACN
+						{
+							temp_size_b = 3;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								tphase_idx[0] = 2;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
+							{
+								tphase_idx[0] = 1;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_CN)	//CN
+							{
+								tphase_idx[0] = 1;	//to index placement
+								tphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
+							{
+								tphase_idx[0] = 0;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AN)	//AN
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AC)	//AC
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ACN)	//ACN - in nuetral case
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+								tphase_idx[2] = 2;
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
+							}
+							break;
+						}//end PHASE_AC
+					case PHASE_ABN:	//AB
+						{
+							temp_size_b = 3;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								tphase_idx[0] = 2;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
+							{
+								tphase_idx[0] = 1;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BN)	//BN
+							{
+								tphase_idx[0] = 1;	//to index placement
+								tphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
+							{
+								tphase_idx[0] = 0;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AN)	//AN
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AB)	//AB
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ABN)	//ABN - in nuetral case
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+								tphase_idx[2] = 2;
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
+							}
+							break;
+						}//end PHASE_AB
+					case PHASE_ABCN:	//ABCN
+						{
+							temp_size_b = 4;	//Size of this matrix's admittance
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_C)	//C
+							{
+								tphase_idx[0] = 2;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_B)	//B
+							{
+								tphase_idx[0] = 1;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BC)	//BC
+							{
+								tphase_idx[0] = 1;	//to index placement
+								tphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_A)	//A
+							{
+								tphase_idx[0] = 0;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AC)	//AC
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AB)	//AB
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ABC)	//ABC
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+								tphase_idx[2] = 2;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								tphase_idx[0] = 3;	//to index placement
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_CN)	//CN
+							{
+								tphase_idx[0] = 2;	//to index placement
+								tphase_idx[1] = 3;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BN)	//BN
+							{
+								tphase_idx[0] = 1;	//to index placement
+								tphase_idx[1] = 3;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_BCN)	//BCN
+							{
+								tphase_idx[0] = 1;	//to index placement
+								tphase_idx[1] = 2;
+								tphase_idx[2] = 3;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_AN)	//AN
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 3;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ACN)	//ACN
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 2;
+								tphase_idx[2] = 3;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ABN)	//ABN
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+								tphase_idx[2] = 3;
+							}
+							else if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_ABCN)	//ABCN
+							{
+								tphase_idx[0] = 0;	//to index placement
+								tphase_idx[1] = 1;
+								tphase_idx[2] = 2;
+								tphase_idx[3] = 3;
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
+							}
+							break;
+						}//end PHASE_ABCN
+					case PHASE_N:	//N
+						{
+							temp_size_b = 1;		//Single size
+							if ((branch[jindexer].phases & neutral_switch_masking) == PHASE_N)	//N
+							{
+								tphase_idx[0] = 0;	//to index placement
+							}
+							else
+							{
+								GL_THROW("NR: line (%s) to bus (%s) is not phase compatible",branch[jindexer].name,bus[tempb].name);
+								//Defined above
+							}
+							break;
+						}//end PHASE_N
 					default:
 						{
 							break;
 						}
 				}//End switch/case for to
 
-				//Make sure everything was set before proceeding
-				if ((temp_index==-1) || (temp_index_b==-1) || (temp_size==-1) || (temp_size_b==-1) || (temp_size_c==-1))
+				//Make sure everything was set before proceeding - should never get here
+				if ((temp_size==-1) || (temp_size_b==-1) || (temp_size_c==-1))
 				{
-					GL_THROW("NR: Failure to construct single/double phase line indices");
+					GL_THROW("NR: Failure to construct line (%s) phase indices",branch[jindexer].name);
 					/*  TROUBLESHOOT
-					A single or double phase line (e.g., just A or AB) has failed to properly initialize all of the indices
-					necessary to form the admittance matrix.  Please submit a bug report, with your code, to the trac site.
+					A link object has failed to properly initialize all of the indices
+					necessary to form the admittance matrix.  Please submit a bug report, with your code,
+					to the issue tracker website.
 					*/
 				}
 
-				if (Full_Mat_A)	//From side is a full ABC and we have AC
+				for (jindex=0; jindex<temp_size_c; jindex++)		//Loop through rows of admittance matrices
 				{
-					for (jindex=0; jindex<temp_size_c; jindex++)		//Loop through rows of admittance matrices
+					for (kindex=0; kindex<temp_size_c; kindex++)	//Loop through columns of admittance matrices
 					{
-						for (kindex=0; kindex<temp_size_c; kindex++)	//Loop through columns of admittance matrices
+						//Indices counted out from Self admittance above.  needs doubling due to complex separation
+						if ((Temp_Ad_A[jindex][kindex].Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
 						{
-							//Indices counted out from Self admittance above.  needs doubling due to complex separation
-							if ((Temp_Ad_A[jindex][kindex].Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
-							{
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + jindex*2;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + kindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_A[jindex][kindex].Im());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + fphase_idx[jindex];
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + tphase_idx[kindex];
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_A[jindex][kindex].Im());
+							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + jindex*2 + temp_size;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + kindex + temp_size_b;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (Temp_Ad_A[jindex][kindex].Im());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-							}
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + fphase_idx[jindex] + temp_size;
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + tphase_idx[kindex] + temp_size_b;
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (Temp_Ad_A[jindex][kindex].Im());
+							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+						}
 
-							if ((Temp_Ad_B[jindex][kindex].Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
-							{
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + jindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + kindex*2;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_B[jindex][kindex].Im());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + jindex + temp_size_b;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + kindex*2 + temp_size;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = Temp_Ad_B[jindex][kindex].Im();
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-							}
-
-							if ((Temp_Ad_A[jindex][kindex].Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
-							{
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + jindex*2 + temp_size;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + kindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_A[jindex][kindex].Re());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + jindex*2;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + kindex + temp_size_b;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_A[jindex][kindex].Re());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-							}
-
-							if ((Temp_Ad_B[jindex][kindex].Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To reals
-							{
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + jindex + temp_size_b;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + kindex*2;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_B[jindex][kindex].Re());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + jindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + kindex*2 + temp_size;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_B[jindex][kindex].Re());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-							}
-						}//column end
-					}//row end
-				}//end full ABC for from AC
-
-				if (Full_Mat_B)	//To side is a full ABC and we have AC
-				{
-					for (jindex=0; jindex<temp_size_c; jindex++)		//Loop through rows of admittance matrices
-					{
-						for (kindex=0; kindex<temp_size_c; kindex++)	//Loop through columns of admittance matrices
+						if ((Temp_Ad_B[jindex][kindex].Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
 						{
-							//Indices counted out from Self admittance above.  needs doubling due to complex separation
-							if ((Temp_Ad_A[jindex][kindex].Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
-							{
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + jindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + kindex*2;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_A[jindex][kindex].Im());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + tphase_idx[jindex];
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + fphase_idx[kindex];
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_B[jindex][kindex].Im());
+							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + jindex + temp_size;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + kindex*2 + temp_size_b;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (Temp_Ad_A[jindex][kindex].Im());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-							}
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + tphase_idx[jindex] + temp_size_b;
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + fphase_idx[kindex] + temp_size;
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = Temp_Ad_B[jindex][kindex].Im();
+							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+						}
 
-							if ((Temp_Ad_B[jindex][kindex].Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
-							{
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + jindex*2;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + kindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_B[jindex][kindex].Im());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + jindex*2 + temp_size_b;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + kindex + temp_size;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = Temp_Ad_B[jindex][kindex].Im();
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-							}
-
-							if ((Temp_Ad_A[jindex][kindex].Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
-							{
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + jindex + temp_size;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + kindex*2;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_A[jindex][kindex].Re());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + jindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + kindex*2 + temp_size_b;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_A[jindex][kindex].Re());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-							}
-
-							if ((Temp_Ad_B[jindex][kindex].Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To reals
-							{
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + jindex*2 + temp_size_b;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + kindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_B[jindex][kindex].Re());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + jindex*2;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + kindex + temp_size;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_B[jindex][kindex].Re());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-							}
-						}//column end
-					}//row end
-				}//end full ABC for to AC
-
-				if ((!Full_Mat_A) && (!Full_Mat_B))	//Neither is a full ABC, or we aren't doing AC, so we don't care
-				{
-					for (jindex=0; jindex<temp_size_c; jindex++)		//Loop through rows of admittance matrices
-					{
-						for (kindex=0; kindex<temp_size_c; kindex++)	//Loop through columns of admittance matrices
+						if ((Temp_Ad_A[jindex][kindex].Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
 						{
-							//Indices counted out from Self admittance above.  needs doubling due to complex separation
-							if ((Temp_Ad_A[jindex][kindex].Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From imags
-							{
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + jindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + kindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_A[jindex][kindex].Im());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + fphase_idx[jindex] + temp_size;
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + tphase_idx[kindex];
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_A[jindex][kindex].Re());
+							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + jindex + temp_size;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + kindex + temp_size_b;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (Temp_Ad_A[jindex][kindex].Im());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-							}
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + fphase_idx[jindex];
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + tphase_idx[kindex] + temp_size_b;
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_A[jindex][kindex].Re());
+							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+						}
 
-							if ((Temp_Ad_B[jindex][kindex].Im() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To imags
-							{
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + jindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + kindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_B[jindex][kindex].Im());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+						if ((Temp_Ad_B[jindex][kindex].Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To reals
+						{
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + tphase_idx[jindex] + temp_size_b;
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + fphase_idx[kindex];
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_B[jindex][kindex].Re());
+							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + jindex + temp_size_b;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + kindex + temp_size;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = Temp_Ad_B[jindex][kindex].Im();
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-							}
-
-							if ((Temp_Ad_A[jindex][kindex].Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//From reals
-							{
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + jindex + temp_size;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + kindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_A[jindex][kindex].Re());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempa].Matrix_Loc + temp_index + jindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + kindex + temp_size_b;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_A[jindex][kindex].Re());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-							}
-
-							if ((Temp_Ad_B[jindex][kindex].Re() != 0) && (bus[tempa].type != 1) && (bus[tempb].type != 1))	//To reals
-							{
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + jindex + temp_size_b;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + kindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_B[jindex][kindex].Re());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + temp_index_b + jindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + temp_index + kindex + temp_size;
-								powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_B[jindex][kindex].Re());
-								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-							}
-						}//column end
-					}//row end
-				}//end not full ABC with AC on either side case
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*bus[tempb].Matrix_Loc + tphase_idx[jindex];
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*bus[tempa].Matrix_Loc + fphase_idx[kindex] + temp_size;
+							powerflow_values->island_matrix_values[island_index_val].Y_offdiag_PQ[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(Temp_Ad_B[jindex][kindex].Re());
+							powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+						}
+					}//column end
+				}//row end
 			}//end all others else
 		}//end branch for
 	}// Off-diagonal elements update, as well as diagon fixed "base" elements- same for both
@@ -5520,27 +6850,27 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 						if ((bus[jindexer].phases & PHASE_S) != PHASE_S)
 						{
 							//Figure out what our casing looks like - populate based on this (in case some were children)
-							switch(bus[jindexer].phases & PHASE_ABC) {
+							switch(bus[jindexer].phases & neutral_switch_masking) {
 								case NO_PHASE:	//No phases
 								{
 									break;	//Just get us out
 								}
 								case PHASE_C:	//Phase C
 								{
-									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[8];
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[10];
 									break;
 								}
 								case PHASE_B:	//Phase B
 								{
-									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[4];
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[5];
 									break;
 								}
 								case PHASE_BC:	//Phase BC
 								{
-									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[4];
-									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[5];
-									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[7];
-									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[8];
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[5];
+									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[6];
+									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[9];
+									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[10];
 									break;
 								}
 								case PHASE_A:	//Phase A
@@ -5552,16 +6882,16 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								{
 									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[0];
 									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[2];
-									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[6];
-									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[8];
+									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[8];
+									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[10];
 									break;
 								}
 								case PHASE_AB:	//Phase AB
 								{
 									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[0];
 									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[1];
-									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[3];
-									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[4];
+									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[4];
+									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[5];
 									break;
 								}
 								case PHASE_ABC:	//Phase ABC
@@ -5571,9 +6901,89 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									{
 										for (kindex=0; kindex<3; kindex++)
 										{
-											powerflow_values->BA_diag[jindexer].Yload[jindex][kindex] = bus[jindexer].full_Y_load[jindex*3+kindex];	//Adds in any self-admittance terms (generators)
+											powerflow_values->BA_diag[jindexer].Yload[jindex][kindex] = bus[jindexer].full_Y_load[jindex*4+kindex];	//Adds in any self-admittance terms (generators)
 										}
 									}
+									break;
+								}
+								case PHASE_CN:	//Phase CN
+								{
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[10];
+									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[11];
+									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[14];
+									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[15];
+									break;
+								}
+								case PHASE_BN:	//Phase BN
+								{
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[5];
+									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[7];
+									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[13];
+									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[15];
+									break;
+								}
+								case PHASE_BCN:	//Phase BCN
+								{
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[5];
+									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[6];
+									powerflow_values->BA_diag[jindexer].Yload[0][2] = bus[jindexer].full_Y_load[7];
+									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[9];
+									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[10];
+									powerflow_values->BA_diag[jindexer].Yload[1][2] = bus[jindexer].full_Y_load[11];
+									powerflow_values->BA_diag[jindexer].Yload[2][0] = bus[jindexer].full_Y_load[13];
+									powerflow_values->BA_diag[jindexer].Yload[2][1] = bus[jindexer].full_Y_load[14];
+									powerflow_values->BA_diag[jindexer].Yload[2][2] = bus[jindexer].full_Y_load[15];
+									break;
+								}
+								case PHASE_AN:	//Phase AN
+								{
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[0];
+									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[3];
+									powerflow_values->BA_diag[jindexer].Yload[2][0] = bus[jindexer].full_Y_load[12];
+									powerflow_values->BA_diag[jindexer].Yload[2][1] = bus[jindexer].full_Y_load[15];
+									break;
+								}
+								case PHASE_ACN:	//Phase ACN
+								{
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[0];
+									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[2];
+									powerflow_values->BA_diag[jindexer].Yload[0][2] = bus[jindexer].full_Y_load[3];
+									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[8];
+									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[10];
+									powerflow_values->BA_diag[jindexer].Yload[1][2] = bus[jindexer].full_Y_load[11];
+									powerflow_values->BA_diag[jindexer].Yload[2][0] = bus[jindexer].full_Y_load[12];
+									powerflow_values->BA_diag[jindexer].Yload[2][1] = bus[jindexer].full_Y_load[14];
+									powerflow_values->BA_diag[jindexer].Yload[2][2] = bus[jindexer].full_Y_load[15];
+									break;
+								}
+								case PHASE_ABN:	//Phase ABN
+								{
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[0];
+									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[1];
+									powerflow_values->BA_diag[jindexer].Yload[0][2] = bus[jindexer].full_Y_load[3];
+									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[4];
+									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[5];
+									powerflow_values->BA_diag[jindexer].Yload[1][2] = bus[jindexer].full_Y_load[7];
+									powerflow_values->BA_diag[jindexer].Yload[2][0] = bus[jindexer].full_Y_load[12];
+									powerflow_values->BA_diag[jindexer].Yload[2][1] = bus[jindexer].full_Y_load[13];
+									powerflow_values->BA_diag[jindexer].Yload[2][2] = bus[jindexer].full_Y_load[15];
+									break;
+								}
+								case PHASE_ABCN:	//Phase ABCN
+								{
+									//Loop and add all in
+									for (jindex=0; jindex<4; jindex++)
+									{
+										for (kindex=0; kindex<4; kindex++)
+										{
+											powerflow_values->BA_diag[jindexer].Yload[jindex][kindex] = bus[jindexer].full_Y_load[jindex*4+kindex];	//Adds in any self-admittance terms (generators)
+										}
+									}
+									break;
+								}
+								case PHASE_N:	//Just phase N
+								{
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[15];
 									break;
 								}
 								default:
@@ -5625,9 +7035,6 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 							}
 							else	//Implies FPIM
 							{
-								//Calculate matrix index
-								mat_temp_index = jindex*3+kindex;
-
 								if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() != 0) || ((powerflow_values->BA_diag[jindexer].Yload[jindex][kindex]).Re() !=0))
 									powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1;
 								if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() != 0) || ((powerflow_values->BA_diag[jindexer].Yload[jindex][kindex]).Im() !=0))
@@ -5789,12 +7196,24 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 	unsigned int indexer;
 	double adjust_nominal_voltage_val, adjust_nominal_voltaged_val;
 	double tempPbus, tempQbus;
-	double adjust_temp_voltage_mag[6];
-	gld::complex adjust_temp_nominal_voltage[6], adjusted_constant_current[6];
-	gld::complex delta_current[3], voltageDel[3], undeltacurr[3];
-	gld::complex temp_current[3], temp_store[3];
+	double adjust_temp_voltage_mag[10], adjust_temp_nom_voltage_mag_val[10];
+	gld::complex adjust_temp_nominal_voltage[10], adjusted_constant_current[10];
+	gld::complex delta_current[6], voltageDel[6], undeltacurr[4];
+	gld::complex temp_current[4], temp_store[4];
+	gld::complex temp_voltage_val[10];
 	char jindex, temp_index, temp_index_b;
 	STATUS temp_status;
+	set neutral_switch_masking;
+
+	//Set the overall phase masking
+	if (enable_neutral_modeling)
+	{
+		neutral_switch_masking = PHASE_ABCN;
+	}
+	else
+	{
+		neutral_switch_masking = PHASE_ABC;
+	}
 
 	//Loop through the buses
 	for (indexer=0; indexer<bus_count; indexer++)
@@ -5832,9 +7251,9 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				adjust_temp_nominal_voltage[2].SetPolar(adjust_nominal_voltage_val,5.0*PI/6.0);
 
 				//Compute delta voltages
-				voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
-				voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
-				voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
+				voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];	//AB
+				voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];	//BC
+				voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];	//CA
 
 				//Get magnitudes of all
 				adjust_temp_voltage_mag[0] = voltageDel[0].Mag();
@@ -5891,10 +7310,10 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					adjust_temp_voltage_mag[5] = bus[indexer].V[2].Mag();
 
 					//Start adjustments - A
-					if ((bus[indexer].extra_var[6] != 0.0) && (adjust_temp_voltage_mag[3] != 0.0))
+					if ((bus[indexer].extra_var[8] != 0.0) && (adjust_temp_voltage_mag[3] != 0.0))
 					{
 						//calculate new value
-						adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[3] * ~bus[indexer].extra_var[6] * adjust_temp_voltage_mag[3] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
+						adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[3] * ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[3] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
 					}
 					else
 					{
@@ -5902,10 +7321,10 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					}
 
 					//Start adjustments - B
-					if ((bus[indexer].extra_var[7] != 0.0) && (adjust_temp_voltage_mag[4] != 0.0))
+					if ((bus[indexer].extra_var[9] != 0.0) && (adjust_temp_voltage_mag[4] != 0.0))
 					{
 						//calculate new value
-						adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[4] * ~bus[indexer].extra_var[7] * adjust_temp_voltage_mag[4] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
+						adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[4] * ~bus[indexer].extra_var[9] * adjust_temp_voltage_mag[4] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
 					}
 					else
 					{
@@ -5913,10 +7332,10 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					}
 
 					//Start adjustments - C
-					if ((bus[indexer].extra_var[8] != 0.0) && (adjust_temp_voltage_mag[5] != 0.0))
+					if ((bus[indexer].extra_var[10] != 0.0) && (adjust_temp_voltage_mag[5] != 0.0))
 					{
 						//calculate new value
-						adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[5] * ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[5] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
+						adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[5] * ~bus[indexer].extra_var[10] * adjust_temp_voltage_mag[5] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
 					}
 					else
 					{
@@ -6010,7 +7429,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						//Shunt values
 						if (NR_solver_algorithm == NRM_TCIM)
 						{
-							undeltacurr[0] += bus[indexer].extra_var[3]*bus[indexer].V[0];
+							undeltacurr[0] += bus[indexer].extra_var[4]*bus[indexer].V[0];
 						}
 						//Default else - FPI handles impedance/admittance directly
 
@@ -6037,7 +7456,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						//Shunt values
 						if (NR_solver_algorithm == NRM_TCIM)
 						{
-							undeltacurr[1] += bus[indexer].extra_var[4]*bus[indexer].V[1];
+							undeltacurr[1] += bus[indexer].extra_var[5]*bus[indexer].V[1];
 						}
 						//Default else - FPI handles impedance/admittance directly
 
@@ -6064,7 +7483,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						//Shunt values
 						if (NR_solver_algorithm == NRM_TCIM)
 						{
-							undeltacurr[2] += bus[indexer].extra_var[5]*bus[indexer].V[2];
+							undeltacurr[2] += bus[indexer].extra_var[6]*bus[indexer].V[2];
 						}
 						//Default else - FPI handles impedance/admittance directly
 
@@ -6323,6 +7742,23 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 			else	//Wye-connected system/load
 			{
 				//Populate the values for constant current -- adjusted to maintain PF (used to be deltamode-only)
+				//See if we're on the dedicated neutral aspect
+				if (enable_neutral_modeling && ((bus[indexer].phases & PHASE_N) == PHASE_N))
+				{
+					//Compute delta voltages
+					temp_voltage_val[0] = bus[indexer].V[0] - bus[indexer].V[3];	//AN
+					temp_voltage_val[1] = bus[indexer].V[1] - bus[indexer].V[3];	//BN
+					temp_voltage_val[2] = bus[indexer].V[2] - bus[indexer].V[3];	//CN
+				}
+				else	//Traditional or no neutral
+				{
+					//Copy voltages
+					temp_voltage_val[0] = bus[indexer].V[0];	//AG
+					temp_voltage_val[1] = bus[indexer].V[1];	//BG
+					temp_voltage_val[2] = bus[indexer].V[2];	//CG
+				}
+
+				//Populate the values for constant current -- adjusted to maintain PF (used to be deltamode-only)
 				//Create nominal magnitudes
 				adjust_nominal_voltage_val = bus[indexer].volt_base;
 
@@ -6332,15 +7768,15 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				adjust_temp_nominal_voltage[5].SetPolar(bus[indexer].volt_base,2.0*PI/3.0);
 
 				//Get magnitudes of all
-				adjust_temp_voltage_mag[3] = bus[indexer].V[0].Mag();
-				adjust_temp_voltage_mag[4] = bus[indexer].V[1].Mag();
-				adjust_temp_voltage_mag[5] = bus[indexer].V[2].Mag();
+				adjust_temp_voltage_mag[3] = temp_voltage_val[0].Mag();
+				adjust_temp_voltage_mag[4] = temp_voltage_val[1].Mag();
+				adjust_temp_voltage_mag[5] = temp_voltage_val[2].Mag();
 
 				//Start adjustments - A
 				if ((bus[indexer].I[0] != 0.0) && (adjust_temp_voltage_mag[3] != 0.0))
 				{
 					//calculate new value
-					adjusted_constant_current[0] = ~(adjust_temp_nominal_voltage[3] * ~bus[indexer].I[0] * adjust_temp_voltage_mag[3] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
+					adjusted_constant_current[0] = ~(adjust_temp_nominal_voltage[3] * ~bus[indexer].I[0] * adjust_temp_voltage_mag[3] / (temp_voltage_val[0] * adjust_nominal_voltage_val));
 				}
 				else
 				{
@@ -6351,7 +7787,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				if ((bus[indexer].I[1] != 0.0) && (adjust_temp_voltage_mag[4] != 0.0))
 				{
 					//calculate new value
-					adjusted_constant_current[1] = ~(adjust_temp_nominal_voltage[4] * ~bus[indexer].I[1] * adjust_temp_voltage_mag[4] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
+					adjusted_constant_current[1] = ~(adjust_temp_nominal_voltage[4] * ~bus[indexer].I[1] * adjust_temp_voltage_mag[4] / (temp_voltage_val[1] * adjust_nominal_voltage_val));
 				}
 				else
 				{
@@ -6362,7 +7798,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				if ((bus[indexer].I[2] != 0.0) && (adjust_temp_voltage_mag[5] != 0.0))
 				{
 					//calculate new value
-					adjusted_constant_current[2] = ~(adjust_temp_nominal_voltage[5] * ~bus[indexer].I[2] * adjust_temp_voltage_mag[5] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
+					adjusted_constant_current[2] = ~(adjust_temp_nominal_voltage[5] * ~bus[indexer].I[2] * adjust_temp_voltage_mag[5] / (temp_voltage_val[2] * adjust_nominal_voltage_val));
 				}
 				else
 				{
@@ -6390,9 +7826,9 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					adjust_temp_nominal_voltage[2].SetPolar(adjust_nominal_voltage_val,5.0*PI/6.0);
 
 					//Compute delta voltages
-					voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
-					voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
-					voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
+					voltageDel[0] = temp_voltage_val[0] - temp_voltage_val[1];
+					voltageDel[1] = temp_voltage_val[1] - temp_voltage_val[2];
+					voltageDel[2] = temp_voltage_val[2] - temp_voltage_val[0];
 
 					//Get magnitudes of all
 					adjust_temp_voltage_mag[0] = voltageDel[0].Mag();
@@ -6400,10 +7836,10 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					adjust_temp_voltage_mag[2] = voltageDel[2].Mag();
 
 					//Start adjustments - AB
-					if ((bus[indexer].extra_var[6] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
+					if ((bus[indexer].extra_var[8] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
 					{
 						//calculate new value
-						adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].extra_var[6] * adjust_temp_voltage_mag[0] / (voltageDel[0] * adjust_nominal_voltage_val));
+						adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[0] / (voltageDel[0] * adjust_nominal_voltage_val));
 					}
 					else
 					{
@@ -6411,10 +7847,10 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					}
 
 					//Start adjustments - BC
-					if ((bus[indexer].extra_var[7] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
+					if ((bus[indexer].extra_var[9] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
 					{
 						//calculate new value
-						adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].extra_var[7] * adjust_temp_voltage_mag[1] / (voltageDel[1] * adjust_nominal_voltage_val));
+						adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].extra_var[9] * adjust_temp_voltage_mag[1] / (voltageDel[1] * adjust_nominal_voltage_val));
 					}
 					else
 					{
@@ -6422,10 +7858,10 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					}
 
 					//Start adjustments - CA
-					if ((bus[indexer].extra_var[8] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
+					if ((bus[indexer].extra_var[10] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
 					{
 						//calculate new value
-						adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[2] / (voltageDel[2] * adjust_nominal_voltage_val));
+						adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].extra_var[10] * adjust_temp_voltage_mag[2] / (voltageDel[2] * adjust_nominal_voltage_val));
 					}
 					else
 					{
@@ -6450,7 +7886,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					if ((bus[indexer].phases & PHASE_AB) == PHASE_AB)	//Has A-B
 					{
 						//Delta voltages
-						voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
+						voltageDel[0] = temp_voltage_val[0] - temp_voltage_val[1];
 
 						//Power - put into a current value (iterates less this way)
 						delta_current[0] = (voltageDel[0] == 0) ? 0 : ~(bus[indexer].extra_var[0]/voltageDel[0]);
@@ -6458,7 +7894,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						//Convert delta connected load to appropriate Wye
 						if (NR_solver_algorithm == NRM_TCIM)
 						{
-							delta_current[0] += voltageDel[0] * (bus[indexer].extra_var[3]);
+							delta_current[0] += voltageDel[0] * (bus[indexer].extra_var[4]);
 						}
 						//Default else - FPI handles impedance/admittance directly
 					}
@@ -6473,7 +7909,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					if ((bus[indexer].phases & PHASE_BC) == PHASE_BC)	//Has B-C
 					{
 						//Delta voltages
-						voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
+						voltageDel[1] = temp_voltage_val[1] - temp_voltage_val[2];
 
 						//Power - put into a current value (iterates less this way)
 						delta_current[1] = (voltageDel[1] == 0) ? 0 : ~(bus[indexer].extra_var[1]/voltageDel[1]);
@@ -6481,7 +7917,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						//Convert delta connected load to appropriate Wye
 						if (NR_solver_algorithm == NRM_TCIM)
 						{
-							delta_current[1] += voltageDel[1] * (bus[indexer].extra_var[4]);
+							delta_current[1] += voltageDel[1] * (bus[indexer].extra_var[5]);
 						}
 						//Default else - FPI handles impedance/admittance directly
 					}
@@ -6496,7 +7932,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					if ((bus[indexer].phases & PHASE_AC) == PHASE_AC)	//Has C-A
 					{
 						//Delta voltages
-						voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
+						voltageDel[2] = temp_voltage_val[2] - temp_voltage_val[0];
 
 						//Power - put into a current value (iterates less this way)
 						delta_current[2] = (voltageDel[2] == 0) ? 0 : ~(bus[indexer].extra_var[2]/voltageDel[2]);
@@ -6504,7 +7940,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						//Convert delta connected load to appropriate Wye
 						if (NR_solver_algorithm == NRM_TCIM)
 						{
-							delta_current[2] += voltageDel[2] * (bus[indexer].extra_var[5]);
+							delta_current[2] += voltageDel[2] * (bus[indexer].extra_var[6]);
 						}
 						//Default else - FPI handles impedance/admittance directly
 					}
@@ -6527,7 +7963,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 				for (jindex=0; jindex<powerflow_values->BA_diag[indexer].size; jindex++)
 				{
-					switch(bus[indexer].phases & PHASE_ABC) {
+					switch(bus[indexer].phases & neutral_switch_masking) {
 						case PHASE_C:	//C
 							{
 								temp_index=0;
@@ -6581,6 +8017,116 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 								temp_index_b=jindex;
 								break;
 							}
+						case PHASE_CN:	//C
+							{
+								if (jindex==0)
+								{
+									temp_index=0;
+									temp_index_b=2;
+								}
+								else	//N
+								{
+									temp_index=1;
+									temp_index_b=3;
+								}
+								break;
+							}
+						case PHASE_BN:	//BN
+							{
+								if (jindex==0)
+								{
+									temp_index=0;
+									temp_index_b=1;
+								}
+								else	//N
+								{
+									temp_index=1;
+									temp_index_b=3;
+								}
+								break;
+							}
+						case PHASE_BCN:	//BCN
+							{
+								if (jindex==0)	//B
+								{
+									temp_index=0;
+									temp_index_b=1;
+								}
+								else if (jindex==1)			//C
+								{
+									temp_index=1;
+									temp_index_b=2;
+								}
+								else		//N
+								{
+									temp_index=2;
+									temp_index_b=3;
+								}
+								break;
+							}
+						case PHASE_AN:	//AN
+							{
+								if (jindex==0)
+								{
+									temp_index=0;
+									temp_index_b=0;
+								}
+								else	//N
+								{
+									temp_index=1;
+									temp_index_b=3;
+								}
+								break;
+							}
+						case PHASE_ACN:	//ACN
+							{
+								if (jindex==0)	//A
+								{
+									temp_index=0;
+									temp_index_b=0;
+								}
+								else if (jindex==1)			//C
+								{
+									temp_index=1;
+									temp_index_b=2;
+								}
+								else	//N
+								{
+									temp_index=2;
+									temp_index_b=3;
+								}
+								break;
+							}
+						case PHASE_ABN:	//ABN
+						{
+							if (jindex==0)	//A
+							{
+								temp_index=0;
+								temp_index_b=0;
+							}
+							else if (jindex==1)	//B
+							{
+								temp_index=1;
+								temp_index_b=1;
+							}
+							else	//N
+							{
+								temp_index=2;
+								temp_index_b=3;
+							}
+							break;
+						}
+						case PHASE_ABCN:	//ABCN
+							{
+								temp_index=jindex;
+								temp_index_b=jindex;
+								break;
+							}
+						case PHASE_N:	//Only N
+						{
+							temp_index=0;
+							temp_index_b=3;
+						}
 						default:
 							break;
 					}//end case
@@ -6601,16 +8147,16 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 							//Perform the power calculation
 							tempPbus = (bus[indexer].S[temp_index_b]).Re();									// Real power portion of constant power portion
-							tempPbus += (adjusted_constant_current[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Re() + (adjusted_constant_current[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Im();	// Real power portion of Constant current component multiply the magnitude of bus voltage
-							tempPbus += (undeltacurr[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Im();	// Real power portion of Constant current from "different" children
-							tempPbus += (bus[indexer].Y[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Re() + (bus[indexer].Y[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Im();	// Real power portion of Constant impedance component multiply the square of the magnitude of bus voltage
+							tempPbus += (adjusted_constant_current[temp_index_b]).Re() * (temp_voltage_val[temp_index_b]).Re() + (adjusted_constant_current[temp_index_b]).Im() * (temp_voltage_val[temp_index_b]).Im();	// Real power portion of Constant current component multiply the magnitude of bus voltage
+							tempPbus += (undeltacurr[temp_index_b]).Re() * (temp_voltage_val[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() * (temp_voltage_val[temp_index_b]).Im();	// Real power portion of Constant current from "different" children
+							tempPbus += (bus[indexer].Y[temp_index_b]).Re() * (temp_voltage_val[temp_index_b]).Re() * (temp_voltage_val[temp_index_b]).Re() + (bus[indexer].Y[temp_index_b]).Re() * (temp_voltage_val[temp_index_b]).Im() * (temp_voltage_val[temp_index_b]).Im();	// Real power portion of Constant impedance component multiply the square of the magnitude of bus voltage
 							bus[indexer].PL[temp_index] = tempPbus;	//Real power portion
 
 
 							tempQbus = (bus[indexer].S[temp_index_b]).Im();									// Reactive power portion of constant power portion
-							tempQbus += (adjusted_constant_current[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Im() - (adjusted_constant_current[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Re();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
-							tempQbus += (undeltacurr[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Re();	// Reactive power portion of Constant current from "different" children
-							tempQbus += -(bus[indexer].Y[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Im() - (bus[indexer].Y[temp_index_b]).Im() * (bus[indexer].V[temp_index_b]).Re() * (bus[indexer].V[temp_index_b]).Re();	// Reactive power portion of Constant impedance component multiply the square of the magnitude of bus voltage
+							tempQbus += (adjusted_constant_current[temp_index_b]).Re() * (temp_voltage_val[temp_index_b]).Im() - (adjusted_constant_current[temp_index_b]).Im() * (temp_voltage_val[temp_index_b]).Re();	// Reactive power portion of Constant current component multiply the magnitude of bus voltage
+							tempQbus += (undeltacurr[temp_index_b]).Re() * (temp_voltage_val[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Im() * (temp_voltage_val[temp_index_b]).Re();	// Reactive power portion of Constant current from "different" children
+							tempQbus += -(bus[indexer].Y[temp_index_b]).Im() * (temp_voltage_val[temp_index_b]).Im() * (temp_voltage_val[temp_index_b]).Im() - (bus[indexer].Y[temp_index_b]).Im() * (temp_voltage_val[temp_index_b]).Re() * (temp_voltage_val[temp_index_b]).Re();	// Reactive power portion of Constant impedance component multiply the square of the magnitude of bus voltage
 							bus[indexer].QL[temp_index] = tempQbus;	//Reactive power portion
 						}
 						else	//Jacobian update pass
@@ -6625,23 +8171,23 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 								*/
 							}
 
-							if ((bus[indexer].V[temp_index_b]).Mag()!=0)
+							if ((temp_voltage_val[temp_index_b]).Mag()!=0)
 							{
-								bus[indexer].Jacob_A[temp_index] = ((bus[indexer].S[temp_index_b]).Im() * (gld::pow((bus[indexer].V[temp_index_b]).Re(),2) - gld::pow((bus[indexer].V[temp_index_b]).Im(),2)) - 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Re())/gld::pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(37)
-								bus[indexer].Jacob_A[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Re() + (adjusted_constant_current[temp_index_b]).Im() *gld::pow((bus[indexer].V[temp_index_b]).Im(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3) + (bus[indexer].Y[temp_index_b]).Im();// second part of equation(37)
-								bus[indexer].Jacob_A[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() *gld::pow((bus[indexer].V[temp_index_b]).Im(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3);// current part of equation (37) - Handles "different" children
+								bus[indexer].Jacob_A[temp_index] = ((bus[indexer].S[temp_index_b]).Im() * (gld::pow((temp_voltage_val[temp_index_b]).Re(),2) - gld::pow((temp_voltage_val[temp_index_b]).Im(),2)) - 2*(temp_voltage_val[temp_index_b]).Re()*(temp_voltage_val[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Re())/gld::pow((temp_voltage_val[temp_index_b]).Mag(),4);// first part of equation(37)
+								bus[indexer].Jacob_A[temp_index] += ((temp_voltage_val[temp_index_b]).Re()*(temp_voltage_val[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Re() + (adjusted_constant_current[temp_index_b]).Im() *gld::pow((temp_voltage_val[temp_index_b]).Im(),2))/gld::pow((temp_voltage_val[temp_index_b]).Mag(),3) + (bus[indexer].Y[temp_index_b]).Im();// second part of equation(37)
+								bus[indexer].Jacob_A[temp_index] += ((temp_voltage_val[temp_index_b]).Re()*(temp_voltage_val[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() *gld::pow((temp_voltage_val[temp_index_b]).Im(),2))/gld::pow((temp_voltage_val[temp_index_b]).Mag(),3);// current part of equation (37) - Handles "different" children
 
-								bus[indexer].Jacob_B[temp_index] = ((bus[indexer].S[temp_index_b]).Re() * (gld::pow((bus[indexer].V[temp_index_b]).Re(),2) - gld::pow((bus[indexer].V[temp_index_b]).Im(),2)) + 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Im())/gld::pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(38)
-								bus[indexer].Jacob_B[temp_index] += -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Im() + (adjusted_constant_current[temp_index_b]).Re() *gld::pow((bus[indexer].V[temp_index_b]).Re(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Re();// second part of equation(38)
-								bus[indexer].Jacob_B[temp_index] += -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() + (undeltacurr[temp_index_b]).Re() *gld::pow((bus[indexer].V[temp_index_b]).Re(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3);// current part of equation(38) - Handles "different" children
+								bus[indexer].Jacob_B[temp_index] = ((bus[indexer].S[temp_index_b]).Re() * (gld::pow((temp_voltage_val[temp_index_b]).Re(),2) - gld::pow((temp_voltage_val[temp_index_b]).Im(),2)) + 2*(temp_voltage_val[temp_index_b]).Re()*(temp_voltage_val[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Im())/gld::pow((temp_voltage_val[temp_index_b]).Mag(),4);// first part of equation(38)
+								bus[indexer].Jacob_B[temp_index] += -((temp_voltage_val[temp_index_b]).Re()*(temp_voltage_val[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Im() + (adjusted_constant_current[temp_index_b]).Re() *gld::pow((temp_voltage_val[temp_index_b]).Re(),2))/gld::pow((temp_voltage_val[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Re();// second part of equation(38)
+								bus[indexer].Jacob_B[temp_index] += -((temp_voltage_val[temp_index_b]).Re()*(temp_voltage_val[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() + (undeltacurr[temp_index_b]).Re() *gld::pow((temp_voltage_val[temp_index_b]).Re(),2))/gld::pow((temp_voltage_val[temp_index_b]).Mag(),3);// current part of equation(38) - Handles "different" children
 
-								bus[indexer].Jacob_C[temp_index] = ((bus[indexer].S[temp_index_b]).Re() * (gld::pow((bus[indexer].V[temp_index_b]).Im(),2) - gld::pow((bus[indexer].V[temp_index_b]).Re(),2)) - 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Im())/gld::pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(39)
-								bus[indexer].Jacob_C[temp_index] +=((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Im() - (adjusted_constant_current[temp_index_b]).Re() *gld::pow((bus[indexer].V[temp_index_b]).Im(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Re();// second part of equation(39)
-								bus[indexer].Jacob_C[temp_index] +=((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Re() *gld::pow((bus[indexer].V[temp_index_b]).Im(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3);// Current part of equation(39) - Handles "different" children
+								bus[indexer].Jacob_C[temp_index] = ((bus[indexer].S[temp_index_b]).Re() * (gld::pow((temp_voltage_val[temp_index_b]).Im(),2) - gld::pow((temp_voltage_val[temp_index_b]).Re(),2)) - 2*(temp_voltage_val[temp_index_b]).Re()*(temp_voltage_val[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Im())/gld::pow((temp_voltage_val[temp_index_b]).Mag(),4);// first part of equation(39)
+								bus[indexer].Jacob_C[temp_index] +=((temp_voltage_val[temp_index_b]).Re()*(temp_voltage_val[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Im() - (adjusted_constant_current[temp_index_b]).Re() *gld::pow((temp_voltage_val[temp_index_b]).Im(),2))/gld::pow((temp_voltage_val[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Re();// second part of equation(39)
+								bus[indexer].Jacob_C[temp_index] +=((temp_voltage_val[temp_index_b]).Re()*(temp_voltage_val[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Re() *gld::pow((temp_voltage_val[temp_index_b]).Im(),2))/gld::pow((temp_voltage_val[temp_index_b]).Mag(),3);// Current part of equation(39) - Handles "different" children
 
-								bus[indexer].Jacob_D[temp_index] = ((bus[indexer].S[temp_index_b]).Im() * (gld::pow((bus[indexer].V[temp_index_b]).Re(),2) - gld::pow((bus[indexer].V[temp_index_b]).Im(),2)) - 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Re())/gld::pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(40)
-								bus[indexer].Jacob_D[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Re() - (adjusted_constant_current[temp_index_b]).Im() *gld::pow((bus[indexer].V[temp_index_b]).Re(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Im();// second part of equation(40)
-								bus[indexer].Jacob_D[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() - (undeltacurr[temp_index_b]).Im() *gld::pow((bus[indexer].V[temp_index_b]).Re(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3);// Current part of equation(40) - Handles "different" children
+								bus[indexer].Jacob_D[temp_index] = ((bus[indexer].S[temp_index_b]).Im() * (gld::pow((temp_voltage_val[temp_index_b]).Re(),2) - gld::pow((temp_voltage_val[temp_index_b]).Im(),2)) - 2*(temp_voltage_val[temp_index_b]).Re()*(temp_voltage_val[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Re())/gld::pow((temp_voltage_val[temp_index_b]).Mag(),4);// first part of equation(40)
+								bus[indexer].Jacob_D[temp_index] += ((temp_voltage_val[temp_index_b]).Re()*(temp_voltage_val[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Re() - (adjusted_constant_current[temp_index_b]).Im() *gld::pow((temp_voltage_val[temp_index_b]).Re(),2))/gld::pow((temp_voltage_val[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Im();// second part of equation(40)
+								bus[indexer].Jacob_D[temp_index] += ((temp_voltage_val[temp_index_b]).Re()*(temp_voltage_val[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() - (undeltacurr[temp_index_b]).Im() *gld::pow((temp_voltage_val[temp_index_b]).Re(),2))/gld::pow((temp_voltage_val[temp_index_b]).Mag(),3);// Current part of equation(40) - Handles "different" children
 
 							}
 							else
@@ -6665,9 +8211,9 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						bus[indexer].FPI_current[temp_index_b] = adjusted_constant_current[temp_index_b] + undeltacurr[temp_index_b];
 
 						//Do Power, as relevant
-						if ((bus[indexer].V[temp_index_b]).Mag()!=0)
+						if ((temp_voltage_val[temp_index_b]).Mag()!=0)
 						{
-							bus[indexer].FPI_current[temp_index_b] += ~(bus[indexer].S[temp_index_b]/bus[indexer].V[temp_index_b]);
+							bus[indexer].FPI_current[temp_index_b] += ~(bus[indexer].S[temp_index_b]/temp_voltage_val[temp_index_b]);
 						}
 					}
 				}//End phase traversion - Wye
@@ -6743,97 +8289,160 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					delta_current[2] = gld::complex(0.0,0.0);
 				}
 
+				if (enable_neutral_modeling)
+				{
+					//"Delta" Neutral components - populate according to what is there
+					if ((bus[indexer].phases & PHASE_AN) == PHASE_AN)	//Check for AN
+					{
+						//Voltage calculations
+						voltageDel[3] = bus[indexer].V[0] - bus[indexer].V[3];
+
+						//Power - convert to a current (uses less iterations this way)
+						delta_current[3] = (voltageDel[3] == 0) ? 0 : ~(bus[indexer].S_dy[3]/voltageDel[3]);
+
+						//Convert delta connected load to appropriate Wye - if TCIM
+						if (NR_solver_algorithm == NRM_TCIM)
+						{
+							delta_current[3] += voltageDel[3] * (bus[indexer].Y_dy[3]);
+						}
+						//Default else - FPI handled directly
+					}
+					else
+					{
+						//Zero values - they shouldn't be used anyhow
+						voltageDel[3] = gld::complex(0.0,0.0);
+						delta_current[3] = gld::complex(0.0,0.0);
+					}
+
+					if ((bus[indexer].phases & PHASE_BN) == PHASE_BN)	//Check for BN
+					{
+						//Voltage calculations
+						voltageDel[4] = bus[indexer].V[1] - bus[indexer].V[3];
+
+						//Power - convert to a current (uses less iterations this way)
+						delta_current[4] = (voltageDel[4] == 0) ? 0 : ~(bus[indexer].S_dy[4]/voltageDel[4]);
+
+						//Convert delta connected load to appropriate Wye - if TCIM
+						if (NR_solver_algorithm == NRM_TCIM)
+						{
+							delta_current[4] += voltageDel[4] * (bus[indexer].Y_dy[4]);
+						}
+						//Default else - FPI handled directly
+					}
+					else
+					{
+						//Zero unused
+						voltageDel[4] = gld::complex(0.0,0.0);
+						delta_current[4] = gld::complex(0.0,0.0);
+					}
+
+					if ((bus[indexer].phases & PHASE_AN) == PHASE_AN)	//Check for CN
+					{
+						//Voltage calculations
+						voltageDel[5] = bus[indexer].V[2] - bus[indexer].V[3];
+
+						//Power - convert to a current (uses less iterations this way)
+						delta_current[5] = (voltageDel[5] == 0) ? 0 : ~(bus[indexer].S_dy[5]/voltageDel[5]);
+
+						//Convert delta connected load to appropriate Wye - if TCIM
+						if (NR_solver_algorithm == NRM_TCIM)
+						{
+							delta_current[5] += voltageDel[5] * (bus[indexer].Y_dy[5]);
+						}
+						//Default else - FPI handled directly
+					}
+					else
+					{
+						//Zero unused
+						voltageDel[5] = gld::complex(0.0,0.0);
+						delta_current[5] = gld::complex(0.0,0.0);
+					}
+				}
+				else	//No explicit neutral - zero these, just to be thorough
+				{
+					voltageDel[3] = voltageDel[4] = voltageDel[5] = gld::complex(0.0,0.0);
+					delta_current[3] = delta_current[4] = delta_current[5] = gld::complex(0.0,0.0);
+				}
+
 				//Populate the values for constant current -- adjusted to maintain PF (used to be deltamode-only)
 				//Create line-line nominal magnitude
 				adjust_nominal_voltage_val = bus[indexer].volt_base;
 				adjust_nominal_voltaged_val = bus[indexer].volt_base * sqrt(3.0);
 
+				//Use it to populate an adjustment array, so this can be looped
+				adjust_temp_nom_voltage_mag_val[0] = adjust_temp_nom_voltage_mag_val[1] = adjust_temp_nom_voltage_mag_val[2] = adjust_nominal_voltaged_val;
+				adjust_temp_nom_voltage_mag_val[3] = adjust_temp_nom_voltage_mag_val[4] = adjust_temp_nom_voltage_mag_val[5] = adjust_nominal_voltage_val;
+				adjust_temp_nom_voltage_mag_val[6] = adjust_temp_nom_voltage_mag_val[7] = adjust_temp_nom_voltage_mag_val[8] = adjust_nominal_voltage_val;
+				adjust_temp_nom_voltage_mag_val[9] = 0.0;	//Neutral assumed zero?
+
 				//Create the nominal voltage vectors
-				adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltaged_val,PI/6.0);
-				adjust_temp_nominal_voltage[1].SetPolar(adjust_nominal_voltaged_val,-1.0*PI/2.0);
-				adjust_temp_nominal_voltage[2].SetPolar(adjust_nominal_voltaged_val,5.0*PI/6.0);
-				adjust_temp_nominal_voltage[3].SetPolar(adjust_nominal_voltage_val,0.0);
-				adjust_temp_nominal_voltage[4].SetPolar(adjust_nominal_voltage_val,-2.0*PI/3.0);
-				adjust_temp_nominal_voltage[5].SetPolar(adjust_nominal_voltage_val,2.0*PI/3.0);
+				adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltaged_val,PI/6.0);		//AB
+				adjust_temp_nominal_voltage[1].SetPolar(adjust_nominal_voltaged_val,-1.0*PI/2.0);	//BC
+				adjust_temp_nominal_voltage[2].SetPolar(adjust_nominal_voltaged_val,5.0*PI/6.0);	//CA
+				adjust_temp_nominal_voltage[3].SetPolar(adjust_nominal_voltage_val,0.0);			//AN
+				adjust_temp_nominal_voltage[4].SetPolar(adjust_nominal_voltage_val,-2.0*PI/3.0);	//BN
+				adjust_temp_nominal_voltage[5].SetPolar(adjust_nominal_voltage_val,2.0*PI/3.0);		//CN
+				adjust_temp_nominal_voltage[6].SetPolar(adjust_nominal_voltage_val,0.0);			//AG
+				adjust_temp_nominal_voltage[7].SetPolar(adjust_nominal_voltage_val,-2.0*PI/3.0);	//BG
+				adjust_temp_nominal_voltage[8].SetPolar(adjust_nominal_voltage_val,2.0*PI/3.0);		//CG
+				//adjust_temp_nominal_voltage[9].SetPolar(0.0,0.0);									//NG - Assumes always bonded?
 
 				//Compute delta voltages
-				voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
-				voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
-				voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
+				temp_voltage_val[0] = bus[indexer].V[0] - bus[indexer].V[1];	//AB
+				temp_voltage_val[1] = bus[indexer].V[1] - bus[indexer].V[2];	//BC
+				temp_voltage_val[2] = bus[indexer].V[2] - bus[indexer].V[0];	//CA
+
+				//Compute the others
+				if (enable_neutral_modeling)
+				{
+					temp_voltage_val[3] = bus[indexer].V[0] - bus[indexer].V[3];	//AN
+					temp_voltage_val[4] = bus[indexer].V[1] - bus[indexer].V[3];	//BN
+					temp_voltage_val[5] = bus[indexer].V[2] - bus[indexer].V[3];	//CN
+					temp_voltage_val[6] = bus[indexer].V[0];		//AG
+					temp_voltage_val[7] = bus[indexer].V[1];		//BG
+					temp_voltage_val[8] = bus[indexer].V[2];		//CG
+					temp_voltage_val[9] = bus[indexer].V[3];		//NG
+				}
+				else	//Standard
+				{
+					temp_voltage_val[3] = bus[indexer].V[0];		//ANG
+					temp_voltage_val[4] = bus[indexer].V[1];		//BNG
+					temp_voltage_val[5] = bus[indexer].V[2];		//CNG
+					temp_voltage_val[6] = bus[indexer].V[0];		//ANG
+					temp_voltage_val[7] = bus[indexer].V[1];		//BNG
+					temp_voltage_val[8] = bus[indexer].V[2];		//CNG
+					temp_voltage_val[9] = gld::complex(0.0,0.0);	//NG
+				}
 
 				//Get magnitudes of all
-				adjust_temp_voltage_mag[0] = voltageDel[0].Mag();
-				adjust_temp_voltage_mag[1] = voltageDel[1].Mag();
-				adjust_temp_voltage_mag[2] = voltageDel[2].Mag();
-				adjust_temp_voltage_mag[3] = bus[indexer].V[0].Mag();
-				adjust_temp_voltage_mag[4] = bus[indexer].V[1].Mag();
-				adjust_temp_voltage_mag[5] = bus[indexer].V[2].Mag();
+				adjust_temp_voltage_mag[0] = temp_voltage_val[0].Mag();
+				adjust_temp_voltage_mag[1] = temp_voltage_val[1].Mag();
+				adjust_temp_voltage_mag[2] = temp_voltage_val[2].Mag();
+				adjust_temp_voltage_mag[3] = temp_voltage_val[3].Mag();
+				adjust_temp_voltage_mag[4] = temp_voltage_val[4].Mag();
+				adjust_temp_voltage_mag[5] = temp_voltage_val[5].Mag();
+				adjust_temp_voltage_mag[6] = temp_voltage_val[6].Mag();
+				adjust_temp_voltage_mag[7] = temp_voltage_val[7].Mag();
+				adjust_temp_voltage_mag[8] = temp_voltage_val[8].Mag();
+				adjust_temp_voltage_mag[9] = temp_voltage_val[9].Mag();
 
-				//Start adjustments - A
-				if ((bus[indexer].I_dy[3] != 0.0) && (adjust_temp_voltage_mag[3] != 0.0))
+				//Loop the current adjustments
+				for (jindex=0; jindex<10; jindex++)
 				{
-					//calculate new value
-					adjusted_constant_current[3] = ~(adjust_temp_nominal_voltage[3] * ~bus[indexer].I_dy[3] * adjust_temp_voltage_mag[3] / (bus[indexer].V[0] * adjust_nominal_voltage_val));
-				}
-				else
-				{
-					adjusted_constant_current[3] = gld::complex(0.0,0.0);
-				}
-
-				//Start adjustments - B
-				if ((bus[indexer].I_dy[4] != 0.0) && (adjust_temp_voltage_mag[4] != 0.0))
-				{
-					//calculate new value
-					adjusted_constant_current[4] = ~(adjust_temp_nominal_voltage[4] * ~bus[indexer].I_dy[4] * adjust_temp_voltage_mag[4] / (bus[indexer].V[1] * adjust_nominal_voltage_val));
-				}
-				else
-				{
-					adjusted_constant_current[4] = gld::complex(0.0,0.0);
+					//Start adjustments
+					if ((bus[indexer].I_dy[jindex] != 0.0) && (adjust_temp_voltage_mag[jindex] != 0.0))
+					{
+						//calculate new value
+						adjusted_constant_current[jindex] = ~(adjust_temp_nominal_voltage[jindex] * ~bus[indexer].I_dy[jindex] * adjust_temp_voltage_mag[jindex] / (temp_voltage_val[jindex] * adjust_temp_nom_voltage_mag_val[jindex]));
+					}
+					else
+					{
+						adjusted_constant_current[jindex] = gld::complex(0.0,0.0);
+					}
 				}
 
-				//Start adjustments - C
-				if ((bus[indexer].I_dy[5] != 0.0) && (adjust_temp_voltage_mag[5] != 0.0))
-				{
-					//calculate new value
-					adjusted_constant_current[5] = ~(adjust_temp_nominal_voltage[5] * ~bus[indexer].I_dy[5] * adjust_temp_voltage_mag[5] / (bus[indexer].V[2] * adjust_nominal_voltage_val));
-				}
-				else
-				{
-					adjusted_constant_current[5] = gld::complex(0.0,0.0);
-				}
-
-				//Start adjustments - AB
-				if ((bus[indexer].I_dy[0] != 0.0) && (adjust_temp_voltage_mag[0] != 0.0))
-				{
-					//calculate new value
-					adjusted_constant_current[0] = ~(adjust_temp_nominal_voltage[0] * ~bus[indexer].I_dy[0] * adjust_temp_voltage_mag[0] / (voltageDel[0] * adjust_nominal_voltaged_val));
-				}
-				else
-				{
-					adjusted_constant_current[0] = gld::complex(0.0,0.0);
-				}
-
-				//Start adjustments - BC
-				if ((bus[indexer].I_dy[1] != 0.0) && (adjust_temp_voltage_mag[1] != 0.0))
-				{
-					//calculate new value
-					adjusted_constant_current[1] = ~(adjust_temp_nominal_voltage[1] * ~bus[indexer].I_dy[1] * adjust_temp_voltage_mag[1] / (voltageDel[1] * adjust_nominal_voltaged_val));
-				}
-				else
-				{
-					adjusted_constant_current[1] = gld::complex(0.0,0.0);
-				}
-
-				//Start adjustments - CA
-				if ((bus[indexer].I_dy[2] != 0.0) && (adjust_temp_voltage_mag[2] != 0.0))
-				{
-					//calculate new value
-					adjusted_constant_current[2] = ~(adjust_temp_nominal_voltage[2] * ~bus[indexer].I_dy[2] * adjust_temp_voltage_mag[2] / (voltageDel[2] * adjust_nominal_voltaged_val));
-				}
-				else
-				{
-					adjusted_constant_current[2] = gld::complex(0.0,0.0);
-				}
+				//Zero the neutral current, just to be safe
+				undeltacurr[3] = gld::complex(0.0,0.0);
 
 				//Convert delta-current into a phase current, where appropriate - reuse temp variable
 				//Everything will be accumulated into the "current" field for ease (including differents)
@@ -6845,23 +8454,43 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					//Apply explicit wye-connected loads
 
 					//Power values
-					undeltacurr[0] += (bus[indexer].V[0] == 0) ? 0 : ~(bus[indexer].S_dy[3]/bus[indexer].V[0]);
+					undeltacurr[0] += (temp_voltage_val[3] == 0) ? 0 : ~(bus[indexer].S_dy[3]/temp_voltage_val[3]);	//AN
+					undeltacurr[0] += (temp_voltage_val[6] == 0) ? 0 : ~(bus[indexer].S_dy[6]/temp_voltage_val[6]);	//AG
+
+					//Explicit neutral
+					if (enable_neutral_modeling)
+					{
+						undeltacurr[3] -= (temp_voltage_val[3] == 0) ? 0 : ~(bus[indexer].S_dy[3]/temp_voltage_val[3]);	//AN
+					}
 
 					//Shunt values - if TCIM
 					if (NR_solver_algorithm == NRM_TCIM)
 					{
-						undeltacurr[0] += bus[indexer].Y_dy[3]*bus[indexer].V[0];
+						undeltacurr[0] += bus[indexer].Y_dy[3]*temp_voltage_val[3];	//AN
+						undeltacurr[0] += bus[indexer].Y_dy[6]*temp_voltage_val[6];	//AG
+
+						//Explicit neutral
+						if (enable_neutral_modeling)
+						{
+							undeltacurr[3] -= bus[indexer].Y_dy[3]*temp_voltage_val[3];	//AN
+						}
 					}
 					//Default else - FPI handled directly
 
 					//Current values
-					undeltacurr[0] += adjusted_constant_current[3];
+					undeltacurr[0] += adjusted_constant_current[3] + adjusted_constant_current[6];
+
+					//Explicit neutral
+					if (enable_neutral_modeling)
+					{
+						undeltacurr[3] -= adjusted_constant_current[3];
+					}
 
 					//Add any three-phase/non-triplex house contributions, if they exist
 					if ((bus[indexer].phases & PHASE_HOUSE_PRESENT) == PHASE_HOUSE_PRESENT)
 					{
 						//Update phase adjustments - use the temp array (not really needed)
-						temp_store[0].SetPolar(1.0,bus[indexer].V[0].Arg());
+						temp_store[0].SetPolar(1.0,temp_voltage_val[3].Arg());
 
 						//Update these current contributions
 						undeltacurr[0] += bus[indexer].house_var[0]/(~temp_store[0]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
@@ -6880,23 +8509,43 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					//Apply explicit wye-connected loads
 
 					//Power values
-					undeltacurr[1] += (bus[indexer].V[1] == 0) ? 0 : ~(bus[indexer].S_dy[4]/bus[indexer].V[1]);
+					undeltacurr[1] += (temp_voltage_val[4] == 0) ? 0 : ~(bus[indexer].S_dy[4]/temp_voltage_val[4]);	//BN
+					undeltacurr[1] += (temp_voltage_val[7] == 0) ? 0 : ~(bus[indexer].S_dy[7]/temp_voltage_val[7]);	//BG
+
+					//Explicit neutral
+					if (enable_neutral_modeling)
+					{
+						undeltacurr[3] -= (temp_voltage_val[4] == 0) ? 0 : ~(bus[indexer].S_dy[4]/temp_voltage_val[4]);	//BN
+					}
 
 					//Shunt values - if TCIM
 					if (NR_solver_algorithm == NRM_TCIM)
 					{
-						undeltacurr[1] += bus[indexer].Y_dy[4]*bus[indexer].V[1];
+						undeltacurr[1] += bus[indexer].Y_dy[4]*temp_voltage_val[4];	//BN
+						undeltacurr[1] += bus[indexer].Y_dy[7]*temp_voltage_val[7];	//BG
+
+						//Explicit neutral
+						if (enable_neutral_modeling)
+						{
+							undeltacurr[3] -= bus[indexer].Y_dy[4]*temp_voltage_val[4];	//BN
+						}
 					}
 					//Default else - FPI handled directly
 
 					//Current values
-					undeltacurr[1] += adjusted_constant_current[4];
+					undeltacurr[1] += adjusted_constant_current[4] + adjusted_constant_current[7];
+
+					//Explicit neutral
+					if (enable_neutral_modeling)
+					{
+						undeltacurr[3] -= adjusted_constant_current[4];	//BN
+					}
 
 					//Add any three-phase/non-triplex house contributions, if they exist
 					if ((bus[indexer].phases & PHASE_HOUSE_PRESENT) == PHASE_HOUSE_PRESENT)
 					{
 						//Update phase adjustments - use the temp array (not really needed)
-						temp_store[1].SetPolar(1.0,bus[indexer].V[1].Arg());
+						temp_store[1].SetPolar(1.0,temp_voltage_val[4].Arg());
 
 						//Update these current contributions
 						undeltacurr[1] += bus[indexer].house_var[1]/(~temp_store[1]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
@@ -6915,23 +8564,43 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					//Apply explicit wye-connected loads
 
 					//Power values
-					undeltacurr[2] += (bus[indexer].V[2] == 0) ? 0 : ~(bus[indexer].S_dy[5]/bus[indexer].V[2]);
+					undeltacurr[2] += (temp_voltage_val[5] == 0) ? 0 : ~(bus[indexer].S_dy[5]/temp_voltage_val[5]);	//CN
+					undeltacurr[2] += (temp_voltage_val[8] == 0) ? 0 : ~(bus[indexer].S_dy[8]/temp_voltage_val[8]);	//CG
+
+					//Explicit neutral
+					if (enable_neutral_modeling)
+					{
+						undeltacurr[3] -= (temp_voltage_val[5] == 0) ? 0 : ~(bus[indexer].S_dy[5]/temp_voltage_val[5]);	//CN
+					}
 
 					//Shunt values - if TCIM
 					if (NR_solver_algorithm == NRM_TCIM)
 					{
-						undeltacurr[2] += bus[indexer].Y_dy[5]*bus[indexer].V[2];
+						undeltacurr[2] += bus[indexer].Y_dy[5]*temp_voltage_val[5];	//CN
+						undeltacurr[2] += bus[indexer].Y_dy[8]*temp_voltage_val[8];	//CG
+
+						//Explicit neutral
+						if (enable_neutral_modeling)
+						{
+							undeltacurr[3] -= bus[indexer].Y_dy[5]*temp_voltage_val[5];	//CN
+						}
 					}
 					//Default else - FPI handled directly
 
 					//Current values
-					undeltacurr[2] += adjusted_constant_current[5];
+					undeltacurr[2] += adjusted_constant_current[5] + adjusted_constant_current[8];
+
+					//Explicit neutral
+					if (enable_neutral_modeling)
+					{
+						undeltacurr[3] -= adjusted_constant_current[5];	//CN
+					}
 
 					//Add any three-phase/non-triplex house contributions, if they exist
 					if ((bus[indexer].phases & PHASE_HOUSE_PRESENT) == PHASE_HOUSE_PRESENT)
 					{
 						//Update phase adjustments - use the temp array (not really needed)
-						temp_store[2].SetPolar(1.0,bus[indexer].V[2].Arg());
+						temp_store[2].SetPolar(1.0,temp_voltage_val[5].Arg());
 
 						//Update these current contributions
 						undeltacurr[2] += bus[indexer].house_var[2]/(~temp_store[2]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
@@ -6943,6 +8612,42 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					undeltacurr[2] = gld::complex(0.0,0.0);
 				}
 
+				//Neutral, if it exists
+				if (enable_neutral_modeling && ((bus[indexer].phases & PHASE_N) == PHASE_N))
+				{
+					//subtract all the XN currents - handled as things went above
+
+					//Apply explicit wye-connected loads
+
+					//Power values
+					undeltacurr[3] += (temp_voltage_val[9] == 0) ? 0 : ~(bus[indexer].S_dy[9]/temp_voltage_val[9]);	//NG
+
+					//Shunt values - if TCIM
+					if (NR_solver_algorithm == NRM_TCIM)
+					{
+						undeltacurr[3] += bus[indexer].Y_dy[9]*temp_voltage_val[9];	//NG
+					}
+					//Default else - FPI handled directly
+
+					//Current values
+					undeltacurr[3] += adjusted_constant_current[9];	//NG
+
+					//Add any three-phase/non-triplex house contributions, if they exist
+					if ((bus[indexer].phases & PHASE_HOUSE_PRESENT) == PHASE_HOUSE_PRESENT)
+					{
+						//Update phase adjustments - use the temp array (not really needed)
+						temp_store[3].SetPolar(1.0,temp_voltage_val[9].Arg());
+
+						//Update these current contributions
+						undeltacurr[3] += bus[indexer].house_var[3]/(~temp_store[3]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+					}//End house-attached non-triplex
+				}
+				else
+				{
+					//Zero it, just in case
+					undeltacurr[3] = gld::complex(0.0,0.0);
+				}
+
 				//Provide updates to relevant phases
 				//only compute and store phases that exist (make top heavy)
 				temp_index = -1;
@@ -6950,7 +8655,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 				for (jindex=0; jindex<powerflow_values->BA_diag[indexer].size; jindex++)
 				{
-					switch(bus[indexer].phases & PHASE_ABC) {
+					switch(bus[indexer].phases & neutral_switch_masking) {
 						case PHASE_C:	//C
 							{
 								temp_index=0;
@@ -7004,6 +8709,116 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 								temp_index_b=jindex;
 								break;
 							}
+						case PHASE_CN:	//C
+							{
+								if (jindex==0)
+								{
+									temp_index=0;
+									temp_index_b=2;
+								}
+								else	//N
+								{
+									temp_index=1;
+									temp_index_b=3;
+								}
+								break;
+							}
+						case PHASE_BN:	//BN
+							{
+								if (jindex==0)
+								{
+									temp_index=0;
+									temp_index_b=1;
+								}
+								else	//N
+								{
+									temp_index=1;
+									temp_index_b=3;
+								}
+								break;
+							}
+						case PHASE_BCN:	//BCN
+							{
+								if (jindex==0)	//B
+								{
+									temp_index=0;
+									temp_index_b=1;
+								}
+								else if (jindex==1)			//C
+								{
+									temp_index=1;
+									temp_index_b=2;
+								}
+								else		//N
+								{
+									temp_index=2;
+									temp_index_b=3;
+								}
+								break;
+							}
+						case PHASE_AN:	//AN
+							{
+								if (jindex==0)
+								{
+									temp_index=0;
+									temp_index_b=0;
+								}
+								else	//N
+								{
+									temp_index=1;
+									temp_index_b=3;
+								}
+								break;
+							}
+						case PHASE_ACN:	//ACN
+							{
+								if (jindex==0)	//A
+								{
+									temp_index=0;
+									temp_index_b=0;
+								}
+								else if (jindex==1)			//C
+								{
+									temp_index=1;
+									temp_index_b=2;
+								}
+								else	//N
+								{
+									temp_index=2;
+									temp_index_b=3;
+								}
+								break;
+							}
+						case PHASE_ABN:	//ABN
+						{
+							if (jindex==0)	//A
+							{
+								temp_index=0;
+								temp_index_b=0;
+							}
+							else if (jindex==1)	//B
+							{
+								temp_index=1;
+								temp_index_b=1;
+							}
+							else	//N
+							{
+								temp_index=2;
+								temp_index_b=3;
+							}
+							break;
+						}
+						case PHASE_ABCN:	//ABCN
+							{
+								temp_index=jindex;
+								temp_index_b=jindex;
+								break;
+							}
+						case PHASE_N:	//Only N
+						{
+							temp_index=0;
+							temp_index_b=3;
+						}
 						default:
 							break;
 					}//end case
@@ -7083,13 +8898,13 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 							case PHASE_C:	//C
 								{
 									temp_index=0;
-									temp_index_b=8;
+									temp_index_b=10;
 									break;
 								}
 							case PHASE_B:	//B
 								{
 									temp_index=0;
-									temp_index_b=4;
+									temp_index_b=5;
 									break;
 								}
 							case PHASE_BC:	//BC
@@ -7097,12 +8912,12 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 									if (jindex==0)	//B
 									{
 										temp_index=0;
-										temp_index_b=4;
+										temp_index_b=5;
 									}
 									else			//C
 									{
 										temp_index=1;
-										temp_index_b=8;
+										temp_index_b=10;
 									}
 									break;
 								}
@@ -7122,17 +8937,138 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 									else			//C
 									{
 										temp_index=1;
-										temp_index_b=8;
+										temp_index_b=10;
 									}
 									break;
 								}
 							case PHASE_AB:	//AB
+									if (jindex==0)	//A
+									{
+										temp_index=0;
+										temp_index_b=0;
+									}
+									else			//B
+									{
+										temp_index=1;
+										temp_index_b=5;
+									}
+									break;
 							case PHASE_ABC:	//ABC
 								{
 									temp_index=jindex;
-									temp_index_b=(jindex*3+jindex);
+									temp_index_b=(jindex*4+jindex);
 									break;
 								}
+							case PHASE_CN:	//C
+								{
+									if (jindex==0)
+									{
+										temp_index=0;
+										temp_index_b=10;
+									}
+									else	//N
+									{
+										temp_index=1;
+										temp_index_b=15;
+									}
+									break;
+								}
+							case PHASE_BN:	//BN
+								{
+									if (jindex==0)
+									{
+										temp_index=0;
+										temp_index_b=5;
+									}
+									else	//N
+									{
+										temp_index=1;
+										temp_index_b=15;
+									}
+									break;
+								}
+							case PHASE_BCN:	//BCN
+								{
+									if (jindex==0)	//B
+									{
+										temp_index=0;
+										temp_index_b=5;
+									}
+									else if (jindex==1)			//C
+									{
+										temp_index=1;
+										temp_index_b=10;
+									}
+									else		//N
+									{
+										temp_index=2;
+										temp_index_b=15;
+									}
+									break;
+								}
+							case PHASE_AN:	//AN
+								{
+									if (jindex==0)
+									{
+										temp_index=0;
+										temp_index_b=0;
+									}
+									else	//N
+									{
+										temp_index=1;
+										temp_index_b=15;
+									}
+									break;
+								}
+							case PHASE_ACN:	//ACN
+								{
+									if (jindex==0)	//A
+									{
+										temp_index=0;
+										temp_index_b=0;
+									}
+									else if (jindex==1)			//C
+									{
+										temp_index=1;
+										temp_index_b=10;
+									}
+									else	//N
+									{
+										temp_index=2;
+										temp_index_b=15;
+									}
+									break;
+								}
+							case PHASE_ABN:	//ABN
+							{
+								if (jindex==0)	//A
+								{
+									temp_index=0;
+									temp_index_b=0;
+								}
+								else if (jindex==1)	//B
+								{
+									temp_index=1;
+									temp_index_b=5;
+								}
+								else	//N
+								{
+									temp_index=2;
+									temp_index_b=15;
+								}
+								break;
+							}
+							case PHASE_ABCN:	//ABCN
+								{
+									temp_index=jindex;
+									temp_index_b=(jindex*4+jindex);
+									break;
+								}
+							case PHASE_N:	//Only N
+							{
+								temp_index=0;
+								temp_index_b=15;
+							}
 							default:
 								break;
 						}//end case

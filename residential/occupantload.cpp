@@ -175,7 +175,7 @@ EXPORT int create_occupantload(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(occupantload::oclass);
 		if (*obj!=NULL)
 		{
-			occupantload *my = OBJECTDATA(*obj,occupantload);;
+			occupantload *my = OBJECTDATA(*obj,occupantload);
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;

@@ -734,10 +734,10 @@ void series_compensator::sercom_postPre_fxn(void)
 {
 	char phaseWarn;
 	int jindex,kindex;
-	gld::complex Ylefttemp[3][3];
-	gld::complex Yto[3][3];
-	gld::complex Yfrom[3][3];
-	gld::complex invratio[3];
+	gld::complex Ylefttemp[4][4];
+	gld::complex Yto[4][4];
+	gld::complex Yfrom[4][4];
+	gld::complex invratio[4];
 
 	if (solver_method == SM_NR)
 	{
@@ -795,6 +795,9 @@ void series_compensator::sercom_postPre_fxn(void)
 				{
 					invratio[2] = gld::complex(0.0,0.0);
 				}
+
+				//Neutral placeholder
+				invratio[3] = gld::complex(0.0,0.0);
 			}//End three-phase
 
 			//Get matrices for NR (should be the same for triplex vs normal, with this implementation)
@@ -803,31 +806,31 @@ void series_compensator::sercom_postPre_fxn(void)
 			equalm(base_admittance_mat,Yto);
 
 			//Store value into YSto
-			for (jindex=0; jindex<3; jindex++)
+			for (jindex=0; jindex<4; jindex++)
 			{
-				for (kindex=0; kindex<3; kindex++)
+				for (kindex=0; kindex<4; kindex++)
 				{
-					YSto[jindex*3+kindex]=Yto[jindex][kindex];
+					YSto[jindex*4+kindex]=Yto[jindex][kindex];
 				}
 			}
 			
 			//Assumes diagonal
-			for (jindex=0; jindex<3; jindex++)
+			for (jindex=0; jindex<4; jindex++)
 			{
 				Ylefttemp[jindex][jindex] = Yto[jindex][jindex] * invratio[jindex];
 				Yfrom[jindex][jindex]=Ylefttemp[jindex][jindex] * invratio[jindex];
 			}
 
 			//Store value into YSfrom
-			for (jindex=0; jindex<3; jindex++)
+			for (jindex=0; jindex<4; jindex++)
 			{
-				for (kindex=0; kindex<3; kindex++)
+				for (kindex=0; kindex<4; kindex++)
 				{
-					YSfrom[jindex*3+kindex]=Yfrom[jindex][kindex];
+					YSfrom[jindex*4+kindex]=Yfrom[jindex][kindex];
 				}
 			}
 
-			for (jindex=0; jindex<3; jindex++)
+			for (jindex=0; jindex<4; jindex++)
 			{
 				To_Y[jindex][jindex] = Yto[jindex][jindex] * invratio[jindex];
 				From_Y[jindex][jindex]=Yfrom[jindex][jindex] * a_mat[jindex][jindex];

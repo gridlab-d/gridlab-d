@@ -357,7 +357,7 @@ static void sync_scheduled(loadshape *ls, TIMESTAMP t1)
 				ls->s = MS_OFF;
 				ls->q = ls->params.scheduled.low;
 				ls->r = 0;
-				dt = 24-hour+ls->params.scheduled.on_time;;
+				dt = 24-hour+ls->params.scheduled.on_time;
 			}
 		}
 		

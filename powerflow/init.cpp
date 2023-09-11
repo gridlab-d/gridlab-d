@@ -103,6 +103,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("powerflow::master_frequency_update",PT_bool,&master_frequency_update,PT_DESCRIPTION,"Tracking variable to see if an object has become the system frequency updater",NULL);
 	gl_global_create("powerflow::enable_frequency_dependence",PT_bool,&enable_frequency_dependence,PT_DESCRIPTION,"Flag to enable frequency-based variations in impedance values of lines and loads",NULL);
 	gl_global_create("powerflow::default_resistance",PT_double,&default_resistance,NULL);
+	gl_global_create("powerflow::enable_neutral_modeling",PT_bool,&enable_neutral_modeling,PT_DESCRIPTION,"Flag to enable explicit neutral modeling (4-wire) - defaults to legacy 3-wire",NULL);
 	gl_global_create("powerflow::enable_inrush",PT_bool,&enable_inrush_calculations,PT_DESCRIPTION,"Flag to enable in-rush calculations for lines and transformers in deltamode",NULL);
 	gl_global_create("powerflow::inrush_integration",PT_enumeration,&default_inrush_integration_method,PT_DESCRIPTION,"Determine the integration method utilized in in-rush calculations",
 		PT_KEYWORD,"NONE",IRM_NONE,
@@ -362,7 +363,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 #else
 
                 pf_result = NR_Solver.solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow,
-                                      powerflow_type, nullptr, &bad_computation);;
+                                      powerflow_type, nullptr, &bad_computation);
 #endif
 			}
 			catch (const char *msg)
@@ -833,7 +834,7 @@ EXPORT int check()
 					gl_testmsg("reversed link: %s goes from %s to %s", now->name, l->from->name, l->to->name);
 					l->from = l->to;
 					l->to = t;
-					rankmap[l->to->id] = rankmap[l->from->id]+1;;
+					rankmap[l->to->id] = rankmap[l->from->id]+1;
 				}
 				// enqueue the "to" node
 				back->next = (PFLIST *)malloc(sizeof(PFLIST));

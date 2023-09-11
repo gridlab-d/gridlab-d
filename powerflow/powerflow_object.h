@@ -80,6 +80,7 @@
 #define PHASE_D		0x0100		/**< delta connection (requires ABCN) */
 /* phase info mask */
 #define PHASE_INFO	0x01FF		/**< all phase info */
+#define PHASE_INFO_NONEUTRAL	0x01F7		/**< all phase info except neutral - legacy support*/
 
 /* NR-oriented flag variables - not really phase, but included here */
 #define PHASE_DIFF_CHILD	0x1000	/**< NR - Parent/child connection is a mix of Wye/Delta */

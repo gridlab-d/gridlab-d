@@ -255,13 +255,13 @@ int overhead_line::init(OBJECT *parent)
 void overhead_line::recalc(void)
 {
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
-	gld::complex Zabc_mat[3][3], Yabc_mat[3][3];
+	gld::complex Zabc_mat[4][4], Yabc_mat[4][4];
 	OBJECT *obj = OBJECTHDR(this);
 
 	// Zero out Zabc_mat and Yabc_mat. Un-needed phases will be left zeroed.
-	for (int i = 0; i < 3; i++) 
+	for (int i = 0; i < 4; i++) 
 	{
-		for (int j = 0; j < 3; j++) 
+		for (int j = 0; j < 4; j++) 
 		{
 			Zabc_mat[i][j] = 0.0;
 			Yabc_mat[i][j] = 0.0;
@@ -269,8 +269,8 @@ void overhead_line::recalc(void)
 	}
 
 	// Set auxillary matrices
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
 			a_mat[i][j] = 0.0;
 			d_mat[i][j] = 0.0;
 			A_mat[i][j] = 0.0;
@@ -828,8 +828,8 @@ void overhead_line::recalc(void)
 	
 	//Check for negative resistance in the line's impedance matrix
 	bool neg_res = false;
-	for (int n = 0; n < 3; n++){
-		for (int m = 0; m < 3; m++){
+	for (int n = 0; n < 4; n++){
+		for (int m = 0; m < 4; m++){
 			if(b_mat[n][m].Re() < 0.0){
 				neg_res = true;
 			}

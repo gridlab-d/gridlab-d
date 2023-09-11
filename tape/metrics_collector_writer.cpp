@@ -1230,7 +1230,7 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 			Json::Value mtr = name[uid];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);
 			tbl[idx].total_load_min = mtr[HSE_MIN_TOTAL_LOAD].asDouble();
 			tbl[idx].total_load_max = mtr[HSE_MAX_TOTAL_LOAD].asDouble();
 			tbl[idx].total_load_avg = mtr[HSE_AVG_TOTAL_LOAD].asDouble();
@@ -1273,7 +1273,7 @@ void metrics_collector_writer::hdfInverterWrite (size_t objs, Json::Value& metri
 			Json::Value mtr = name[uid];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);
 			tbl[idx].real_power_min = mtr[INV_MIN_REAL_POWER].asDouble();
 			tbl[idx].real_power_max = mtr[INV_MAX_REAL_POWER].asDouble();
 			tbl[idx].real_power_avg = mtr[INV_AVG_REAL_POWER].asDouble();
@@ -1298,7 +1298,7 @@ void metrics_collector_writer::hdfCapacitorWrite (size_t objs, Json::Value& metr
 			Json::Value mtr = name[uid];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);
 			tbl[idx].operation_count = mtr[CAP_OPERATION_CNT].asDouble();
 			idx++;
 		}
@@ -1318,7 +1318,7 @@ void metrics_collector_writer::hdfRegulatorWrite (size_t objs, Json::Value& metr
 			Json::Value mtr = name[uid];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);
 			tbl[idx].operation_count = mtr[REG_OPERATION_CNT].asDouble();
 			idx++;
 		}
@@ -1338,7 +1338,7 @@ void metrics_collector_writer::hdfFeederWrite (size_t objs, Json::Value& metrics
 			Json::Value mtr = name[uid];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);
 			tbl[idx].real_power_min = mtr[FDR_MIN_REAL_POWER].asDouble();
 			tbl[idx].real_power_max = mtr[FDR_MAX_REAL_POWER].asDouble();
 			tbl[idx].real_power_avg = mtr[FDR_AVG_REAL_POWER].asDouble();
@@ -1375,7 +1375,7 @@ void metrics_collector_writer::hdfTransformerWrite (size_t objs, Json::Value& me
 			Json::Value mtr = name[uid];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);
 			tbl[idx].trans_overload_perc = mtr[TRANS_OVERLOAD_PERC].asDouble();
 			idx++;
 		}
@@ -1395,7 +1395,7 @@ void metrics_collector_writer::hdfLineWrite (size_t objs, Json::Value& metrics) 
 			Json::Value mtr = name[uid];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);
 			tbl[idx].line_overload_perc = mtr[LINE_OVERLOAD_PERC].asDouble();
 			idx++;
 		}
@@ -1415,7 +1415,7 @@ void metrics_collector_writer::hdfEvChargerDetWrite (size_t objs, Json::Value& m
 			Json::Value mtr = name[uid];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);
 			tbl[idx].charge_rate_min = mtr[EV_MIN_CHARGE_RATE].asDouble();
 			tbl[idx].charge_rate_max = mtr[EV_MAX_CHARGE_RATE].asDouble();
 			tbl[idx].charge_rate_avg = mtr[EV_AVG_CHARGE_RATE].asDouble();

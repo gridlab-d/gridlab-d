@@ -99,7 +99,7 @@ int line::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 	gld_property *fNode_nominal, *tNode_nominal;
 	double f_nominal_voltage, t_nominal_voltage;
-	gld::complex Zabc_mat_temp[3][3], Yabc_mat_temp[3][3];
+	gld::complex Zabc_mat_temp[4][4], Yabc_mat_temp[4][4];
 
 	int result = link_object::init(parent);
 
@@ -140,7 +140,7 @@ int line::init(OBJECT *parent)
 
 	/* check for node nominal voltage mismatch */
 	if (fabs(f_nominal_voltage - t_nominal_voltage) > (0.001*f_nominal_voltage))
-		throw "from and to node nominal voltage mismatch of greater than 0.1%%";
+		throw "from and to node nominal voltage mismatch of greater than 0.1%";
 
 	if (solver_method == SM_NR && length == 0.0)
 		throw "Newton-Raphson method does not support zero length lines at this time";
@@ -178,7 +178,7 @@ int line::isa(char *classname)
 	return strcmp(classname,"line")==0 || link_object::isa(classname);
 }
 
-void line::load_matrix_based_configuration(gld::complex Zabc_mat[3][3], gld::complex Yabc_mat[3][3])
+void line::load_matrix_based_configuration(gld::complex Zabc_mat[4][4], gld::complex Yabc_mat[4][4])
 {
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
 	double miles;
@@ -255,14 +255,15 @@ void line::load_matrix_based_configuration(gld::complex Zabc_mat[3][3], gld::com
 	}
 }
 
-void line::recalc_line_matricies(gld::complex Zabc_mat[3][3], gld::complex Yabc_mat[3][3])
+void line::recalc_line_matricies(gld::complex Zabc_mat[4][4], gld::complex Yabc_mat[4][4])
 {
-	gld::complex U_mat[3][3], temp_mat[3][3];
+	gld::complex U_mat[4][4], temp_mat[4][4];
 
 	//Do an initial zero
-	U_mat[0][0] = U_mat[0][1] = U_mat[0][2] = 0.0;
-	U_mat[1][0] = U_mat[1][1] = U_mat[1][2] = 0.0;
-	U_mat[2][0] = U_mat[2][1] = U_mat[2][2] = 0.0;
+	U_mat[0][0] = U_mat[0][1] = U_mat[0][2] = U_mat[0][3] = 0.0;
+	U_mat[1][0] = U_mat[1][1] = U_mat[1][2] = U_mat[1][3] = 0.0;
+	U_mat[2][0] = U_mat[2][1] = U_mat[2][2] = U_mat[2][3] = 0.0;
+	U_mat[3][0] = U_mat[3][1] = U_mat[3][2] = U_mat[3][3] = 0.0;
 
 	// Setup unity matrix - by phase
 	if (has_phase(PHASE_A))
@@ -309,9 +310,9 @@ void line::recalc_line_matricies(gld::complex Zabc_mat[3][3], gld::complex Yabc_
 
 	//A_mat is phase dependent inversion - B_mat is a product associated with it
 	//Zero them first
-	for (int i = 0; i < 3; i++) 
+	for (int i = 0; i < 4; i++) 
 	{
-		for (int j = 0; j < 3; j++) 
+		for (int j = 0; j < 4; j++) 
 		{
 			A_mat[i][j] = B_mat[i][j] = 0.0;
 		}

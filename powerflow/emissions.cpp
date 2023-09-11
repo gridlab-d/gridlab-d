@@ -441,7 +441,7 @@ int emissions::init(OBJECT *parent)
 
 TIMESTAMP emissions::postsync(TIMESTAMP t0)
 {
-	double temp_energy, dispatch_order;;
+	double temp_energy, dispatch_order;
 	gld::complex temp_power;
 	gld::complex energy_for_calc;
 	bool energy_requirement;

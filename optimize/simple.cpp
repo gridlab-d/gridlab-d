@@ -129,7 +129,7 @@ int simple::init(OBJECT *parent)
 			gl_error("property '%s' in object '%s' is not a double", pname, oname);
 			return 0;
 		}
-		*(map[n].var) = (double*)gl_get_addr(obj,pname);;
+		*(map[n].var) = (double*)gl_get_addr(obj,pname);
 
 		// parse constraint
 		if ( map[n].op!=NULL )

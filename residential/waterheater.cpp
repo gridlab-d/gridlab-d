@@ -2079,7 +2079,7 @@ EXPORT int create_waterheater(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(waterheater::oclass);
 		if (*obj!=NULL)
 		{
-			waterheater *my = OBJECTDATA(*obj,waterheater);;
+			waterheater *my = OBJECTDATA(*obj,waterheater);
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
