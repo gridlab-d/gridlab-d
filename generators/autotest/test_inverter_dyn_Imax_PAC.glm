@@ -7,8 +7,6 @@ clock {
 #set suppress_repeat_messages=1
 #set relax_naming_rules=1;
 #set profiler=1
-#set pauseatexit=1
-#define rotor_convergence=0.00000000000001
 #set double_format=%+.12lg
 #set complex_format=%+.12lg%+.12lg%c
 
@@ -16,7 +14,6 @@ clock {
 #set deltamode_timestep=100000000		//100 ms
 #set deltamode_maximumtime=60000000000	//1 minute
 #set deltamode_iteration_limit=10		//Iteration limit
-#set deltamode_forced_always=true
 
 module tape;
 module assert;
