@@ -1090,15 +1090,31 @@ SIMULATIONMODE ibr_gfl::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 	prev_timestamp_dbl = gl_globaldeltaclock;
 
 	//*** Deltamode/differential equation updates would go here ****//
-	
+	// Check pass
+   if (iteration_count_val == 0) // Predictor pass
+	{
+		//filt_test_out_pred = filt_test_obj.getoutput(filt_test_in,deltat,PREDICTOR);
+		desired_simulation_mode = SM_DELTA_ITER;
+		simmode_return_value = SM_DELTA_ITER;
+	}
+	else if (iteration_count_val == 1) // Corrector pass
+	{
+		//filt_test_out_corr = filt_test_obj.getoutput(filt_test_in,deltat,CORRECTOR);
+		desired_simulation_mode = SM_DELTA;	//Just keep in deltamode
+		simmode_return_value = SM_DELTA;
+	}
+	else //Additional iterations
+	{
+		//Just return whatever our "last desired" was
+		simmode_return_value = desired_simulation_mode;
+	}
+
+
 	//Sync the powerflow variables
 	if (parent_is_a_meter)
 	{
 		push_complex_powerflow_values(false);
 	}
-
-	//Set the mode tracking variable for this exit
-	desired_simulation_mode = simmode_return_value;
 	
 	//**** Return here designates how to proceed ****//
 	//**** SM_EVENT = we desire to go back to QSTS mode ****//
