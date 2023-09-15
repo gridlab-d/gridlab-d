@@ -1116,9 +1116,6 @@ SIMULATIONMODE ibr_graybox::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		push_complex_powerflow_values(false);
 	}
 
-	//Set the mode tracking variable for this exit
-	desired_simulation_mode = simmode_return_value;
-	
 	//**** Return here designates how to proceed ****//
 	//**** SM_EVENT = we desire to go back to QSTS mode ****//
 	//**** SM_DELTA = we are ready for the next deltamode timestep ****//
