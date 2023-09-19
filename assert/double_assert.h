@@ -18,12 +18,12 @@ public:
 	enum {IN_ABS=0, IN_RATIO=1};
 	enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE};
 
-	GL_ATOMIC(enumeration,status); 
+	GL_ATOMIC(enumeration, status);
 	GL_STRING(char1024,target);		
 	GL_ATOMIC(double,value);
-	GL_ATOMIC(enumeration,once);
+	GL_ATOMIC(enumeration, once);
 	GL_ATOMIC(double,once_value);
-	GL_ATOMIC(enumeration,within_mode);
+	GL_ATOMIC(enumeration, within_mode);
 	GL_ATOMIC(double,within);
 
 public:

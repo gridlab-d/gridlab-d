@@ -187,7 +187,7 @@ public:
 		UNDER_FREQUENCY=1,
 		OVER_UNDER_FREQUENCY=2,
 	} PFCMODE;
-	enumeration PFC_mode;	
+	enumeration PFC_mode;
 	typedef enum {
 		FREE=0,
 		TRIGGERED_OFF=1,

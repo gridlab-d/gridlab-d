@@ -16,7 +16,7 @@ typedef enum {
 
 class xml : public native {
 public:
-	GL_ATOMIC(enumeration,encoding);
+	GL_ATOMIC(enumeration, encoding);
 	GL_STRING(char8,version);
 	GL_STRING(char1024,schema);
 	GL_STRING(char1024,stylesheet); 

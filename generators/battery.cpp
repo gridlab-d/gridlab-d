@@ -50,11 +50,11 @@ battery::battery(MODULE *module)
 
 			PT_enumeration,"generator_status",PADDR(gen_status_v), PT_DESCRIPTION, "describes whether the generator is online or offline",
 				PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE,
-				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,	
+				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,
 
 			PT_enumeration,"rfb_size", PADDR(rfb_size_v), PT_DESCRIPTION, "Default settings for certain sizes of batteries",
 				PT_KEYWORD, "HOUSEHOLD", (enumeration)HOUSEHOLD,
-				PT_KEYWORD, "SMALL", (enumeration)SMALL, 
+				PT_KEYWORD, "SMALL", (enumeration)SMALL,
 				PT_KEYWORD, "MED_COMMERCIAL", (enumeration)MED_COMMERCIAL,
 				PT_KEYWORD, "MED_HIGH_ENERGY", (enumeration)MED_HIGH_ENERGY,
 				PT_KEYWORD, "LARGE", (enumeration)LARGE,

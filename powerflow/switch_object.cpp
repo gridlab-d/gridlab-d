@@ -124,7 +124,7 @@ int switch_object::init(OBJECT *parent)
 {
 	double phase_total, switch_total;
 	char indexa, indexb;
-	set phase_from, phase_to;
+	gld::set phase_from, phase_to;
 
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -1924,10 +1924,10 @@ void switch_object::set_switch_faulted_phases(unsigned char desired_status)
 }
 
 //Function to pull phase information from the from/to node, using API - for triplex check at this point
-set switch_object::node_phase_information(OBJECT *obj)
+gld::set switch_object::node_phase_information(OBJECT *obj)
 {
 	gld_property *temp_phase_property;
-	set phase_information;
+	gld::set phase_information;
 
 	//Map it
 	temp_phase_property = new gld_property(obj,"phases");

@@ -49,7 +49,7 @@ typedef struct s_enduse {
 	gld::complex demand;				/* maximum power in kW (can be reset) */
 
 	/* circuit configuration */	
-	set config;					/* end-use configuration */
+	gld::set config;					/* end-use configuration */
 	double breaker_amps;		/* breaker limit (if any) */
 
 	/* zip values */

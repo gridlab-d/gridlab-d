@@ -92,7 +92,7 @@ int property_check(void)
 		case PT_double: sz = sizeof(double); break;
 		case PT_complex: sz = sizeof(gld::complex); break;
 		case PT_enumeration: sz = sizeof(enumeration); break;
-		case PT_set: sz = sizeof(set); break;
+		case PT_set: sz = sizeof(gld::set); break;
 		case PT_int16: sz = sizeof(int16); break;
 		case PT_int32: sz = sizeof(int32); break;
 		case PT_int64: sz = sizeof(int64); break;

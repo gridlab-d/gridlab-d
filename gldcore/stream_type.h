@@ -1,4 +1,5 @@
-using namespace gld;
+using gld::set;
+using gld::complex;
 
 stream_type(double);
 stream_type(complex);

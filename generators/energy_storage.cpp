@@ -47,7 +47,7 @@ energy_storage::energy_storage(MODULE *module)
 
 			PT_enumeration,"generator_status",PADDR(gen_status_v),
 				PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE,
-				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,	
+				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,
 
 			PT_enumeration,"power_type",PADDR(power_type_v),
 				PT_KEYWORD,"AC",(enumeration)AC,
@@ -76,11 +76,11 @@ energy_storage::energy_storage(MODULE *module)
 
 			PT_set, "phases", PADDR(phases),
 
-				PT_KEYWORD, "A",(set)PHASE_A,
-				PT_KEYWORD, "B",(set)PHASE_B,
-				PT_KEYWORD, "C",(set)PHASE_C,
-				PT_KEYWORD, "N",(set)PHASE_N,
-				PT_KEYWORD, "S",(set)PHASE_S,
+				PT_KEYWORD, "A",(gld::set)PHASE_A,
+				PT_KEYWORD, "B",(gld::set)PHASE_B,
+				PT_KEYWORD, "C",(gld::set)PHASE_C,
+				PT_KEYWORD, "N",(gld::set)PHASE_N,
+				PT_KEYWORD, "S",(gld::set)PHASE_S,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 

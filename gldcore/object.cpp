@@ -575,20 +575,20 @@ enumeration *object_get_enum_by_name(OBJECT *obj, const char *name){
 	}
 }
 
-set *object_get_set(OBJECT *obj, PROPERTY *prop){
+gld::set *object_get_set(OBJECT *obj, PROPERTY *prop){
 	if(object_prop_in_class(obj, prop) && prop->ptype == PT_set && prop->access != PA_PRIVATE){
-		return (set *)((char *)(obj) + sizeof(OBJECT) + (int64)(prop->addr));
+		return (gld::set *)((char *)(obj) + sizeof(OBJECT) + (int64)(prop->addr));
 	} else {
 		errno = ENOENT;
 		return NULL;
 	}
 }
 
-set *object_get_set_by_name(OBJECT *obj, const char *name){
+gld::set *object_get_set_by_name(OBJECT *obj, const char *name){
 	PROPERTY *prop = class_find_property(obj->oclass, name);
 
 	if(prop != NULL && prop->access != PA_PRIVATE){
-		return (set *)((char *)(obj) + sizeof(OBJECT) + (int64)(prop->addr));
+		return (gld::set *)((char *)(obj) + sizeof(OBJECT) + (int64)(prop->addr));
 	} else {
 		errno = ENOENT;
 		return NULL;

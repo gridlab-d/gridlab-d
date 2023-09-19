@@ -201,7 +201,7 @@ int metrics_collector::init(OBJECT *parent){
 			*/
 		}
 		//Map to the intermediate
-		auto *meter_bustype = (enumeration*)GETADDR(parent,pval);
+		auto *meter_bustype = (enumeration*)GETADDR(parent, pval);
 		// Check if the parent meter is a swing bus (2) or not
 		if (*meter_bustype != 2) {
 			gl_error("If a metrics_collector is attached to a substation, it must be a SWING bus");
@@ -226,7 +226,7 @@ int metrics_collector::init(OBJECT *parent){
 		PROPERTY *pval = gl_get_property(parent, const_cast<char *>("bustype"));
 		if ((pval!=NULL) && (pval->ptype==PT_enumeration))
 		{
-			auto *meter_bustype = (enumeration*)GETADDR(parent,pval);
+			auto *meter_bustype = (enumeration*)GETADDR(parent, pval);
 			if (*meter_bustype == 2) {
 				parent_string = const_cast<char *>("swingbus");
 				if (propSwingMeterS == NULL) propSwingMeterS = gl_get_property (parent,

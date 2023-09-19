@@ -35,7 +35,7 @@ public:
 	char1024 max_vdrop_txt;				//List of maximum allowed voltage drops
 	char1024 vbw_low_txt;				//List of bandwidth (deadband) for low loading
 	char1024 vbw_high_txt;				//List of bandwidth (deadband) for high loading
-	set pf_phase;						//Phases for power factor monitoring to occur
+	gld::set pf_phase;						//Phases for power factor monitoring to occur
 	double react_pwr;					//Reactive power quantity at the substation
 	double curr_pf;						//Current pf at the substation
 	bool pf_signed;						//Flag to indicate if a signed pf value should be maintained, or just a "deadband around 1"

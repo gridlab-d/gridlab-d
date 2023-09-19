@@ -210,7 +210,7 @@ int double_controller::init(OBJECT *parent){
 		return 0;
 	}
 
-	state_ptr = (enumeration*)gl_get_addr(parent,state_name);
+	state_ptr = (enumeration*)gl_get_addr(parent, state_name);
 
 	next_run = 0;
 

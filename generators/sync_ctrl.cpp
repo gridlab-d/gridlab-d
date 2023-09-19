@@ -872,7 +872,7 @@ void sync_ctrl::init_sensors()
                                                        &gld_property::is_enumeration);
     cgu_P_f_droop_setting_mode = static_cast<PF_DROOP_MODE>(
         get_prop_value<enumeration>(prop_cgu_P_f_droop_setting_mode_ptr,
-                                    &gld_property::get_enumeration, false));
+                                        &gld_property::get_enumeration, false));
 
     //--DG or INV
     if (gl_object_isa(cgu_obj_ptr, "inverter_dyn", "generators"))

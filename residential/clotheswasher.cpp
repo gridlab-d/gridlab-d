@@ -117,7 +117,7 @@ clotheswasher::clotheswasher(MODULE *module) : residential_enduse(module)
 				PT_KEYWORD,"SPIN1",(enumeration)SPIN1,
 				PT_KEYWORD,"SPIN2",(enumeration)SPIN2,
 				PT_KEYWORD,"SPIN3",(enumeration)SPIN3,
-				PT_KEYWORD,"SPIN4",(enumeration)SPIN4,		
+				PT_KEYWORD,"SPIN4",(enumeration)SPIN4,
 
 			PT_enumeration,"spin_mode", PADDR(spin_mode),
 				PT_KEYWORD,"SPIN_LOW",(enumeration)SPIN_LOW,
@@ -129,7 +129,7 @@ clotheswasher::clotheswasher(MODULE *module) : residential_enduse(module)
 			PT_enumeration,"wash_mode", PADDR(wash_mode),
 				PT_KEYWORD,"NORMAL",(enumeration)NORMAL,
 				PT_KEYWORD,"PERM_PRESS",(enumeration)PERM_PRESS,
-				PT_KEYWORD,"GENTLE",(enumeration)GENTLE,		
+				PT_KEYWORD,"GENTLE",(enumeration)GENTLE,
 
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);

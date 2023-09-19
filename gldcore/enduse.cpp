@@ -445,8 +445,8 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		{PT_double, "voltage_factor[pu]",        (char *)PADDR_C(voltage_factor), "the voltage change factor"},
 		{PT_double, "breaker_amps[A]",           (char *)PADDR_C(breaker_amps), "the rated breaker amperage"},
 		{PT_set, "configuration",                (char *)PADDR_C(config), "the load configuration options"},
-			{PT_KEYWORD, "IS110",                reinterpret_cast<char *>((set)EUC_IS110)},
-			{PT_KEYWORD, "IS220",                reinterpret_cast<char *>((set)EUC_IS220)},
+			{PT_KEYWORD, "IS110",                reinterpret_cast<char *>((gld::set)EUC_IS110)},
+			{PT_KEYWORD, "IS220",                reinterpret_cast<char *>((gld::set)EUC_IS220)},
 	}, *last=NULL;
 
 	// publish the enduse load itself

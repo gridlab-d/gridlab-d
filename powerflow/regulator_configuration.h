@@ -65,8 +65,8 @@ public:
 	double PT_ratio;		// potential transformer rating (x:1)
 	double ldc_R_V[3];		// Line Drop Compensation R setting of regulator control (in volts)
 	double ldc_X_V[3];		// Line Drop Compensation X setting of regulator control (in volts)
-	set CT_phase;			// phase(s) monitored by CT
-	set PT_phase;			// phase(s) monitored by PT
+	gld::set CT_phase;			// phase(s) monitored by CT
+	gld::set PT_phase;			// phase(s) monitored by PT
 	double regulation;		// regulation of voltage regulator in %
 	int16 tap_pos[3];
 

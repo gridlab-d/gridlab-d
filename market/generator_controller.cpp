@@ -165,7 +165,7 @@ int generator_controller::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	PROPERTY *ptemp;
-	set *temp_set;
+	gld::set *temp_set;
 	int index;
 	double glob_min_timestep, temp_val;
 	char temp_buff[128];
@@ -214,7 +214,7 @@ int generator_controller::init(OBJECT *parent)
 		}
 
 		//Get the address
-		temp_set = (set *)GETADDR(parent,ptemp);
+		temp_set = (gld::set *)GETADDR(parent, ptemp);
 
 		//Check this as well
 		if (temp_set == NULL)

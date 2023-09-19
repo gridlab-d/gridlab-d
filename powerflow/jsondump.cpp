@@ -139,7 +139,7 @@ STATUS jsondump::dump_system(void)
 	gld::complex b_mat_fuse_pu[9];
 	bool b_mat_fuse_defined;
 	int fuse_phase_count;
-	set temp_set_value;
+	gld::set temp_set_value;
 	enumeration temp_enum_value;
 	bool found_match_config;
 
@@ -3904,10 +3904,10 @@ gld::complex jsondump::get_complex_value(OBJECT *obj, const char *name)
 }
 
 //Sets value
-set jsondump::get_set_value(OBJECT *obj, const char *name)
+gld::set jsondump::get_set_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	set output_value;
+	gld::set output_value;
 	OBJECT *objhdr = OBJECTHDR(this);
 
 	//Map to the property of interest

@@ -350,7 +350,7 @@ void cast_from_double(PROPERTYTYPE ptype, void *addr, double value)
 	case PT_int32: *(int32*)addr = (int32)value; break;
 	case PT_int64: *(int64*)addr = (int64)value; break;
 	case PT_enumeration: *(enumeration*)addr = (enumeration)value; break;
-	case PT_set: *(set*)addr = (set)value; break;
+	case PT_set: *(gld::set*)addr = (gld::set)value; break;
 	case PT_object: break;
 	case PT_timestamp: *(int64*)addr = (int64)value; break;
 	case PT_float: *(float*)addr = (float)value; break;

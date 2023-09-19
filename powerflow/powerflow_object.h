@@ -94,7 +94,7 @@
 class powerflow_object : public gld_object
 {
 public:
-	set phases;				/**< device phases (see PHASE codes) */
+	gld::set phases;				/**< device phases (see PHASE codes) */
 	double nominal_voltage;	/**< nominal voltage */
 	INRUSHINTMETHOD inrush_integration_method;	/** Set on an individual object level */
 #ifdef SUPPORT_OUTAGES
@@ -127,13 +127,13 @@ public:
 	inline unsigned int get_id(void) const {return OBJECTHDR(this)->id;};
 	
 	/* has_phase checks whether a particular phase is configured */
-	inline bool has_phase(set ph, set flags=0) const { return ((flags?flags:phases)& ph)==ph; };
+	inline bool has_phase(gld::set ph, gld::set flags=0) const { return ((flags ? flags : phases) & ph) == ph; };
 	
 	/* phase_index returns the array index of a phase if configured (use flags to test another variable) */
-	inline unsigned int phase_index(set ph=0) const { return ((unsigned int)((ph?ph:phases)&PHASE_ABC)>>2)%3;};
+	inline unsigned int phase_index(gld::set ph=0) const { return ((unsigned int)((ph ? ph : phases) & PHASE_ABC) >> 2) % 3;};
 	
 	/* get_phases acquires the phase part of the flags given */
-	inline set get_phases(set flags) const { return flags&PHASE_INFO;};
+	inline gld::set get_phases(gld::set flags) const { return flags & PHASE_INFO;};
 
 	inline OBJECT* objecthdr() const { return OBJECTHDR(this);}
 public:

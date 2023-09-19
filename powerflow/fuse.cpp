@@ -1166,7 +1166,7 @@ void fuse::set_fuse_faulted_phases(unsigned char desired_status)
 * @param phase_to_check - the current phase to check fusing action for
 * @param fcurr - array of from (line input) currents
 */
-void fuse::fuse_check(set phase_to_check, gld::complex *fcurr)
+void fuse::fuse_check(gld::set phase_to_check, gld::complex *fcurr)
 {
 	char indexval;
 	char phase_verbose;

@@ -50,16 +50,16 @@ violation_recorder::violation_recorder(MODULE *mod){
 			PT_double, "inverter_v_chng_per_interval_lower_bound", PADDR(inverter_v_chng_per_interval_lower_bound), PT_DESCRIPTION, "inverter_v_chng_per_interval_lower_bound",
 			PT_double, "inverter_v_chng_interval", PADDR(inverter_v_chng_interval), PT_DESCRIPTION, "inverter_v_chng_interval",
 			PT_set, "violation_flag", PADDR(violation_flag), PT_DESCRIPTION, "bit set for determining which violations to check",
-				PT_KEYWORD,"VIOLATION0",(set)VIOLATION0,
-				PT_KEYWORD,"VIOLATION1",(set)VIOLATION1,
-				PT_KEYWORD,"VIOLATION2",(set)VIOLATION2,
-				PT_KEYWORD,"VIOLATION3",(set)VIOLATION3,
-				PT_KEYWORD,"VIOLATION4",(set)VIOLATION4,
-				PT_KEYWORD,"VIOLATION5",(set)VIOLATION5,
-				PT_KEYWORD,"VIOLATION6",(set)VIOLATION6,
-				PT_KEYWORD,"VIOLATION7",(set)VIOLATION7,
-				PT_KEYWORD,"VIOLATION8",(set)VIOLATION8,
-				PT_KEYWORD,"ALLVIOLATIONS",(set)ALLVIOLATIONS,
+				PT_KEYWORD,"VIOLATION0",(gld::set)VIOLATION0,
+				PT_KEYWORD,"VIOLATION1",(gld::set)VIOLATION1,
+				PT_KEYWORD,"VIOLATION2",(gld::set)VIOLATION2,
+				PT_KEYWORD,"VIOLATION3",(gld::set)VIOLATION3,
+				PT_KEYWORD,"VIOLATION4",(gld::set)VIOLATION4,
+				PT_KEYWORD,"VIOLATION5",(gld::set)VIOLATION5,
+				PT_KEYWORD,"VIOLATION6",(gld::set)VIOLATION6,
+				PT_KEYWORD,"VIOLATION7",(gld::set)VIOLATION7,
+				PT_KEYWORD,"VIOLATION8",(gld::set)VIOLATION8,
+				PT_KEYWORD,"ALLVIOLATIONS",(gld::set)ALLVIOLATIONS,
 		NULL) < 1){
 			;//GL_THROW("unable to publish properties in %s",__FILE__);
 		}
@@ -849,7 +849,7 @@ int violation_recorder::check_reverse_flow_violation(TIMESTAMP t1, int violation
 
 	double nominal = 1.;
 	PROPERTY *p_ptr;
-	set *directions;
+	gld::set *directions;
 	p_ptr = gl_get_property(link_monitor_obj, const_cast<char *>("flow_direction"));
 	if (p_ptr == NULL)
 		return 0;
@@ -1267,7 +1267,7 @@ int violation_recorder::fails_continuous_condition (vobjlist *curr, int i, const
 
 int violation_recorder::has_phase(OBJECT *obj, int phase) {
 	PROPERTY *p_ptr;
-	set *phases;
+	gld::set *phases;
 	p_ptr = gl_get_property(obj, const_cast<char *>("phases"));
 	phases = gl_get_set(obj, p_ptr);
 	if ((*phases & phase) == phase)

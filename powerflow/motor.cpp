@@ -417,7 +417,7 @@ int motor::init(OBJECT *parent)
 			}
 
 			//Pull the value
-			temp_gld_property->getp<enumeration>(temp_house_type,*test_rlock);
+			temp_gld_property->getp<enumeration>(temp_house_type, *test_rlock);
 
 			//Delete the connection
 			delete temp_gld_property;
@@ -478,7 +478,7 @@ int motor::init(OBJECT *parent)
 			}
 
 			//Pull the value
-			temp_gld_property->getp<enumeration>(temp_house_type,*test_rlock);
+			temp_gld_property->getp<enumeration>(temp_house_type, *test_rlock);
 
 			//Delete the connection
 			delete temp_gld_property;

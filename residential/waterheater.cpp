@@ -138,7 +138,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_enumeration,"load_state",PADDR(load_state),
 				PT_KEYWORD,"DEPLETING",(enumeration)DEPLETING,
 				PT_KEYWORD,"RECOVERING",(enumeration)RECOVERING,
-				PT_KEYWORD,"STABLE",(enumeration)STABLE,	
+				PT_KEYWORD,"STABLE",(enumeration)STABLE,
 			PT_double,"actual_voltage",PADDR(actual_voltage),PT_ACCESS,PA_HIDDEN,
 			PT_double,"nominal_voltage",PADDR(nominal_voltage),PT_ACCESS,PA_HIDDEN,
 			PT_enumeration,"re_override",PADDR(re_override), PT_DESCRIPTION, "the override setting for the water heater",
