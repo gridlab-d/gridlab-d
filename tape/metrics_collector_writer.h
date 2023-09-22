@@ -121,6 +121,21 @@ const string m_waterheater_temp_min ("waterheater_temp_min");
 const string m_waterheater_temp_max ("waterheater_temp_max");
 const string m_waterheater_temp_avg ("waterheater_temp_avg");
 
+const string m_wh_lower_setpoint_min ("wh_lower_setpoint_min");
+const string m_wh_lower_setpoint_max ("wh_lower_setpoint_max");
+const string m_wh_lower_setpoint_avg ("wh_lower_setpoint_avg");
+const string m_wh_upper_setpoint_min ("wh_upper_setpoint_min");
+const string m_wh_upper_setpoint_max ("wh_upper_setpoint_max");
+const string m_wh_upper_setpoint_avg ("wh_upper_setpoint_avg");
+const string m_wh_lower_temp_min ("wh_lower_temp_min");
+const string m_wh_lower_temp_max ("wh_lower_temp_max");
+const string m_wh_lower_temp_avg ("wh_lower_temp_avg");
+const string m_wh_upper_temp_min ("wh_upper_temp_min");
+const string m_wh_upper_temp_max ("wh_upper_temp_max");
+const string m_wh_upper_temp_avg ("wh_upper_temp_avg");
+const string m_wh_lower_elem_state ("wh_lower_elem_state");
+const string m_wh_upper_elem_state ("wh_upper_elem_state");
+
 const string m_operation_count ("operation_count");
 
 const string m_trans_overload_perc ("trans_overload_perc");
@@ -203,6 +218,21 @@ typedef struct _House {
 	double waterheater_temp_min;
 	double waterheater_temp_max;
 	double waterheater_temp_avg;
+
+	double wh_lower_setpoint_min;
+	double wh_lower_setpoint_max;
+	double wh_lower_setpoint_avg;
+	double wh_upper_setpoint_min;
+	double wh_upper_setpoint_max;
+	double wh_upper_setpoint_avg;
+	double wh_lower_temp_min;
+	double wh_lower_temp_max;
+	double wh_lower_temp_avg;
+	double wh_upper_temp_min;
+	double wh_upper_temp_max;
+	double wh_upper_temp_avg;
+	int wh_lower_elem_state;
+	int wh_upper_elem_state;
 } House;
 
 typedef struct _Inverter {

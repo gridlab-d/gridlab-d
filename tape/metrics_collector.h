@@ -73,7 +73,22 @@
 #define WH_MIN_TEMP         9
 #define WH_MAX_TEMP        10
 #define WH_AVG_TEMP        11
-#define WH_ARRAY_SIZE      12
+
+#define WH_MIN_L_SETPOINT  12
+#define WH_MAX_L_SETPOINT  13
+#define WH_AVG_L_SETPOINT  14
+#define WH_MIN_U_SETPOINT  15
+#define WH_MAX_U_SETPOINT  16
+#define WH_AVG_U_SETPOINT  17
+#define WH_MIN_L_TEMP      18
+#define WH_MAX_L_TEMP      19
+#define WH_AVG_L_TEMP      20
+#define WH_MIN_U_TEMP      21
+#define WH_MAX_U_TEMP      22
+#define WH_AVG_U_TEMP      23
+#define WH_ELEM_L_MODE     24
+#define WH_ELEM_U_MODE     25
+#define WH_ARRAY_SIZE      26
 
 #define INV_MIN_REAL_POWER 0
 #define INV_MAX_REAL_POWER 1
@@ -202,6 +217,13 @@ private:
 	static PROPERTY *propWaterDemand;
 	static PROPERTY *propWaterTemp;
 
+	static PROPERTY *propWaterLSetPoint;
+	static PROPERTY *propWaterUSetPoint;
+	static PROPERTY *propWaterLTemp;
+	static PROPERTY *propWaterUTemp;
+	static PROPERTY *propWaterElemLMode;
+	static PROPERTY *propWaterElemUMode;
+
 	static PROPERTY *propInverterS;
 
 	static PROPERTY *propCapCountA;
@@ -255,6 +277,13 @@ private:
 	double *wh_setpoint_array;
 	double *wh_demand_array; 	
 	double *wh_temp_array; 		
+
+	double *wh_l_setpoint_array;
+	double *wh_l_temp_array;
+	double *wh_u_setpoint_array;
+	double *wh_u_temp_array;
+	int elem_l_mode;
+	int elem_u_mode;
 	char waterheaterName[256];				// char array storing names of the waterheater
 
 	// Parameters related to inverter object
