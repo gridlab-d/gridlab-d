@@ -8,8 +8,6 @@
 
 #include "metrics_collector_writer.h"
 
-#define USE_DEPRECATED_FASTWRITER
-
 CLASS *metrics_collector_writer::oclass = NULL;
 
 void new_metrics_collector_writer(MODULE *mod) {
@@ -372,13 +370,8 @@ int metrics_collector_writer::init(OBJECT *parent) {
 void metrics_collector_writer::writeMetadata(Json::Value &meta,
 		Json::Value &metadata, char *time_str, char256 filename) {
 	if (strcmp(extension, m_json.c_str()) == 0) {
-#ifdef USE_DEPRECATED_FASTWRITER
-    Json::FastWriter writer;
-    writer.omitEndingLineFeed();
-#else
-    Json::StreamWriterBuilder builder; // FastWriter is deprecated
-    builder["indentation"] = "";
-#endif
+		Json::StreamWriterBuilder builder;
+		builder["indentation"] = "";
 		ofstream out_file;
 
 		metadata[m_starttime] = time_str;
@@ -387,11 +380,7 @@ void metrics_collector_writer::writeMetadata(Json::Value &meta,
 		if (strcmp(alternate, "yes") == 0)
 			FileName.append("." + m_json);
 		out_file.open (FileName);
-#ifdef USE_DEPRECATED_FASTWRITER
-		out_file << writer.write(metadata);
-#else
-    out_file << Json::writeString(builder, metadata);
-#endif
+		out_file << Json::writeString(builder, metadata);
 		out_file.close();
 #ifdef HAVE_HDF5
 		if (both) {
@@ -710,13 +699,8 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 
 // Write seperate JSON files for each object
 void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& metrics) {
-#ifdef USE_DEPRECATED_FASTWRITER
-	Json::FastWriter writer;
-	writer.omitEndingLineFeed();
-#else
-	Json::StreamWriterBuilder builder; // FastWriter is deprecated
+	Json::StreamWriterBuilder builder;
 	builder["indentation"] = "";
-#endif
 	long pos = 0;
 	long offset = 1;
 	ofstream out_file;
@@ -725,25 +709,14 @@ void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& met
 	if (strcmp(alternate, "yes") == 0)
 		FileName.append("." + m_json);
 	out_file.open (FileName, ofstream::in | ofstream::ate);
-//	std::cout << "** opened " << FileName << std::endl;
 	pos = out_file.tellp();
-//	std::cout << "   tellp " << pos << " offset " << offset << std::endl;
-#ifdef USE_DEPRECATED_FASTWRITER
-	out_file << writer.write(metrics);
-#else
 	out_file << Json::writeString(builder, metrics);
-#endif
-//	std::cout << "   write metrics" << std::endl;
 	out_file.seekp(pos-offset);
-//	std::cout << "   seekp " << (pos-offset) << std::endl;
 	out_file << ", ";
 	out_file.close();
-//	std::cout << "   closed " << FileName << std::endl;
 	if (!both) {
 		metrics.clear();
-//		std::cout << "   cleared metrics" << std::endl;
 	}
-//	std::cout << "   returning" << std::endl;
 }
 
 #ifdef HAVE_HDF5
