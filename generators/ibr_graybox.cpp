@@ -36,6 +36,10 @@ ibr_graybox::ibr_graybox(MODULE *module)
 			PT_complex, "power_B[VA]", PADDR(power_val[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
 			PT_complex, "power_C[VA]", PADDR(power_val[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
 			PT_complex, "VA_Out[VA]", PADDR(VA_Out), PT_DESCRIPTION, "AC power",
+			PT_double, "P_out_pu", PADDR(P_out_pu), PT_DESCRIPTION, "active power",
+			PT_double, "P_out_pu_Filtered", PADDR(P_out_pu_Filtered), PT_DESCRIPTION, "active power filter output",
+			PT_double, "Q_out_pu", PADDR(Q_out_pu), PT_DESCRIPTION, "reactive power",
+			PT_double, "Q_out_pu_Filtered", PADDR(Q_out_pu_Filtered), PT_DESCRIPTION, "reactive power filter output",
 
 			//Input
 			PT_double, "rated_power[VA]", PADDR(S_base), PT_DESCRIPTION, " The rated power of the inverter",
@@ -422,6 +426,19 @@ int ibr_graybox::init(OBJECT *parent)
 			//See if we are deltamode-enabled -- powerflow parent version
 			if (deltamode_inclusive)
 			{
+				temp_property_pointer = new gld_property(tmp_obj, "Norton_dynamic");
+				//Make sure it worked
+				if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_bool())
+				{
+					GL_THROW("inverter_dyn:%s failed to map Norton-equivalence deltamode variable from %s", obj->name ? obj->name : "unnamed", tmp_obj->name ? tmp_obj->name : "unnamed");
+					//Defined elsewhere
+				}
+				//Flag it to true
+				temp_bool_value = true;
+				temp_property_pointer->setp<bool>(temp_bool_value, *test_rlock);
+				//Remove it
+				delete temp_property_pointer;
+
 				// Obtain the Z_base of the system for calculating filter impedance
 				//Link to nominal voltage
 				temp_property_pointer = new gld_property(parent, "nominal_voltage");
@@ -472,7 +489,7 @@ int ibr_graybox::init(OBJECT *parent)
 				//**** This will need to be updated for the object (junk values put here for now) ****//
 
 				//Convert filter to admittance
-				filter_admittance = gld::complex(1.0, 0.0) / (gld::complex(Rfilter, Xfilter) * Z_base);
+				//filter_admittance = gld::complex(1.0, 0.0) / (gld::complex(Rfilter, Xfilter) * Z_base);
 
 				//Placeholder diagonals
 				generator_admittance[0][0] = generator_admittance[1][1] = generator_admittance[2][2] = filter_admittance;
@@ -1090,15 +1107,63 @@ SIMULATIONMODE ibr_graybox::inter_deltaupdate(unsigned int64 delta_time, unsigne
 	prev_timestamp_dbl = gl_globaldeltaclock;
 
 	//*** Deltamode/differential equation updates would go here ****//
+
+	//* Physical model
+	double dV_ref;
+	double P_set = 0.4;
+	double Q_set = 0.2;
+	double V0 = 1.0;
+	double m_p = 0.05;
+	double n_q = 0.05;
+	double delta_w;
+	double delta_Vs;
+	double Angle;
+	double Vs;
+	gld::complex generator_impedance;
+	generator_impedance = gld::complex(0.03, 0.15)*Z_base;
+	terminal_current_val[0] = (value_IGenerated_Nortan[0] - value_Circuit_V[0]/generator_impedance);
+	terminal_current_val[1] = (value_IGenerated_Nortan[1] - value_Circuit_V[1]/generator_impedance);
+	terminal_current_val[2] = (value_IGenerated_Nortan[2] - value_Circuit_V[2]/generator_impedance);
+
+	//Update per-unit value
+	terminal_current_val_pu[0] = terminal_current_val[0] / I_base;
+	terminal_current_val_pu[1] = terminal_current_val[1] / I_base;
+	terminal_current_val_pu[2] = terminal_current_val[2] / I_base;
+	//Update power output variables
+	power_val[0] = value_Circuit_V[0] * ~terminal_current_val[0];
+	power_val[1] = value_Circuit_V[1] * ~terminal_current_val[1];
+	power_val[2] = value_Circuit_V[2] * ~terminal_current_val[2];
+	VA_Out = power_val[0] + power_val[1] + power_val[2];
+	P_out_pu = VA_Out.Re()/S_base;
+	Q_out_pu = VA_Out.Im()/S_base;
+
 	// Check pass
 	if (iteration_count_val == 0) // Predictor pass
 	{
+		P_out_pu_Filtered = Pmeas_blk.getoutput(P_out_pu,deltat,PREDICTOR);
+		Q_out_pu_Filtered = Qmeas_blk.getoutput(Q_out_pu,deltat,PREDICTOR);
+		// droop control
+		delta_w = - m_p*(P_out_pu_Filtered - P_set);
+		dV_ref = - n_q*(Q_out_pu_Filtered - Q_set);
+		// Integral
+		Angle = Angle_blk.getoutput(delta_w,deltat,PREDICTOR)*2*M_PI*60;
+		// low-pass filter
+		delta_Vs = Vmeas_blk.getoutput(dV_ref,deltat,PREDICTOR);
 		//filt_test_out_pred = filt_test_obj.getoutput(filt_test_in,deltat,PREDICTOR);
 		desired_simulation_mode = SM_DELTA_ITER;
 		simmode_return_value = SM_DELTA_ITER;
 	}
 	else if (iteration_count_val == 1) // Corrector pass
 	{
+		P_out_pu_Filtered = Pmeas_blk.getoutput(P_out_pu,deltat,CORRECTOR);
+		Q_out_pu_Filtered = Qmeas_blk.getoutput(Q_out_pu,deltat,CORRECTOR);
+		// droop control
+		delta_w = - m_p*(P_out_pu_Filtered - P_set);
+		dV_ref = - n_q*(Q_out_pu_Filtered - Q_set);
+		// Integral
+		Angle = Angle_blk.getoutput(delta_w,deltat,CORRECTOR)*2*M_PI*60;
+		// low-pass filter
+		delta_Vs = Vmeas_blk.getoutput(dV_ref,deltat,CORRECTOR);
 		//filt_test_out_corr = filt_test_obj.getoutput(filt_test_in,deltat,CORRECTOR);
 		desired_simulation_mode = SM_DELTA;	//Just keep in deltamode
 		simmode_return_value = SM_DELTA;
@@ -1109,7 +1174,141 @@ SIMULATIONMODE ibr_graybox::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		simmode_return_value = desired_simulation_mode;
 	}
 	
-	
+	Vs = delta_Vs + V0;
+	value_IGenerated_Nortan[0] = gld::complex(Vs*V_base*cos(Angle), Vs*V_base*sin(Angle))/generator_impedance;
+	value_IGenerated_Nortan[1] = gld::complex(Vs*V_base*cos(Angle-2*M_PI/3), Vs*V_base*sin(Angle-2*M_PI/3))/generator_impedance;
+	value_IGenerated_Nortan[2] = gld::complex(Vs*V_base*cos(Angle+2*M_PI/3), Vs*V_base*sin(Angle+2*M_PI/3))/generator_impedance;
+	physical_output[0] = (value_IGenerated_Nortan[0] - value_Circuit_V[0]/generator_impedance);
+	physical_output[1] = (value_IGenerated_Nortan[1] - value_Circuit_V[1]/generator_impedance);
+	physical_output[2] = (value_IGenerated_Nortan[2] - value_Circuit_V[2]/generator_impedance);
+
+	//NN data for case 1 - Small-Load change
+	double u[4][3];
+	double w1[1][4] = {{-0.000265151635782668, 0.000256068102657914, -0.0284316025094079, 0.0814581502249045}};
+	double w2[2][1] = {{-3.79792733597627},{10.9740740072813}};;
+	double b1[1][1] = {0.0116373550214972};
+	double b2[2][1] = {{0.0140448114136540},{-0.137911469055814}};
+	double z11[1][3] = {{0,0,0}};
+	double z1[1][3];
+	double z21[2][3] = {{0,0,0},{0,0,0}};
+	double z2[2][3];
+	double yout[2][3];
+	double v_A_mag_max = 0.932640112448389;
+	double v_A_arg_max = -0.120953657920666;
+	double physical_output_i_A_mag_max = 0.613433462017583;
+	double physical_output_i_A_arg_max = -0.754993319033009;
+	double v_A_mag_min = 0.923668295904476;
+	double v_A_arg_min = -0.143448237773265;
+	double physical_output_i_A_mag_min = 0.489704248188363;
+	double physical_output_i_A_arg_min = -0.866532706968217;
+	double y_i_A_mag_max = 0.613433462017583;
+	double y_i_A_arg_max = -0.754993319033009;
+	double y_i_A_mag_min = 0.489704248188363;
+	double y_i_A_arg_min = -0.866532706968217;
+	// End of NN data of case 1
+
+	/*
+	// NN data of case 2 - Large Load Change
+	double u[4][3];
+	double w1[1][4] = {{-1.60234761435779e-05, -9.80348818674849e-05, 0.109866824026380, -0.111421282912237}};
+	double w2[2][1] = {{4.49363521276080},{-4.55623522118514}};;
+	double b1[1][1] = {0.0758360527274168};
+	double b2[2][1] = {{-0.183440119382269},{0.499633703829218}};
+	double z11[1][3] = {{0,0,0}};
+	double z1[1][3];
+	double z21[2][3] = {{0,0,0},{0,0,0}};
+	double z2[2][3];
+	double yout[2][3];
+	double v_A_mag_max = 0.923750383279800;
+	double v_A_arg_max = -0.136226632308439;
+	double physical_output_i_A_mag_max = 1.09233592069872;
+	double physical_output_i_A_arg_max = -0.788842380523714;
+	double v_A_mag_min = 0.861859798415177;
+	double v_A_arg_min = -0.292441151071582;
+	double physical_output_i_A_mag_min = 0.421414701733923;
+	double physical_output_i_A_arg_min = -1.83193660428916;
+	double y_i_A_mag_max = 1.09233592069872;
+	double y_i_A_arg_max = -0.788842380523714;
+	double y_i_A_mag_min = 0.421414701733923;
+	double y_i_A_arg_min = -1.83193660428916;
+	// End of data of case 2
+	*/
+
+	double physical_output_i_A_mag;
+	double physical_output_i_A_arg;
+	int i,j,k;
+	physical_output_i_A_mag = physical_output[0].Mag()/I_base;
+	physical_output_i_A_arg = physical_output[0].Arg();
+	//  Normalize
+	//  phase 1
+	u[0][0] = 2 * (value_Circuit_V[0].Mag()/V_base-v_A_mag_min) / (v_A_mag_max - v_A_mag_min) - 1;
+	u[1][0] = 2 * (value_Circuit_V[0].Arg() - v_A_arg_min) / (v_A_arg_max-v_A_arg_min) - 1;
+	u[2][0] = 2 * (physical_output_i_A_mag - physical_output_i_A_mag_min) / (physical_output_i_A_mag_max - physical_output_i_A_mag_min) - 1;
+	u[3][0] = 2 * (physical_output_i_A_arg - physical_output_i_A_arg_min) / (physical_output_i_A_arg_max-physical_output_i_A_arg_min) - 1;
+	//  phase2
+	u[0][1] = 2 * (value_Circuit_V[1].Mag()/V_base- v_A_mag_min) / (v_A_mag_max - v_A_mag_min) - 1;
+	u[1][1] = 2 * (value_Circuit_V[0].Arg()-2*M_PI/3 -(v_A_arg_min-2*M_PI/3)) / (v_A_arg_max-v_A_arg_min) - 1;
+	u[2][1] = 2 * (physical_output_i_A_mag - physical_output_i_A_mag_min) / (physical_output_i_A_mag_max -  physical_output_i_A_mag_min) - 1;
+	u[3][1] = 2 * (physical_output_i_A_arg - 2*M_PI/3-(physical_output_i_A_arg_min-2*M_PI/3)) / (physical_output_i_A_arg_max-physical_output_i_A_arg_min) - 1;
+	// Phase 3
+	u[0][2] = 2 * (value_Circuit_V[2].Mag()/V_base- v_A_mag_min) / (v_A_mag_max - v_A_mag_min) - 1;
+	u[1][2] = 2 * (value_Circuit_V[0].Arg()+2*M_PI/3 -(v_A_arg_min+2*M_PI/3)) / (v_A_arg_max-v_A_arg_min) - 1;
+	u[2][2] = 2 * (physical_output_i_A_mag - physical_output_i_A_mag_min) / (physical_output_i_A_mag_max -  physical_output_i_A_mag_min) - 1;
+	u[3][2] = 2 * (physical_output_i_A_arg + 2*M_PI/3-(physical_output_i_A_arg_min+2*M_PI/3)) / (physical_output_i_A_arg_max-physical_output_i_A_arg_min) - 1;
+	// From input layer to hidden layer 1
+	for (i = 0; i < 1; i++) {
+			for (j = 0; j < 3; j++) {
+					for (k = 0; k < 4; k++) {
+							z11[i][j] += w1[i][k] * u[k][j];
+					}
+			}
+	}
+	for (i = 0; i < 1; i++) {
+			for (j = 0; j < 3; j++) {
+					z1[i][j]=z11[i][j]+b1[i][0];
+			}
+	}
+	for (i = 0; i < 1; i++) {
+			for (j = 0; j < 3; j++) {
+					z1[i][j]= tanh(z1[i][j]);
+			}
+	}
+	// From hidden layer 1 to output layer
+	for (i = 0; i < 2; i++) {
+			for (j = 0; j < 3; j++) {
+					for (k = 0; k < 1; k++) {
+							z21[i][j] += w2[i][k] * z1[k][j];
+					}
+			}
+	}
+	 for (i = 0; i < 2; i++) {
+			 for (j = 0; j < 3; j++) {
+					 z2[i][j]=z21[i][j]+b2[i][0];
+			 }
+	 }
+	// Reverse normalization
+	// Phase 1
+	yout[0][0] = (z2[0][0]+1)*(y_i_A_mag_max-y_i_A_mag_min)/2+y_i_A_mag_min;
+	yout[1][0] = (z2[1][0]+1)*(y_i_A_arg_max-y_i_A_arg_min)/2+y_i_A_arg_min;
+	// Phase 2
+	yout[0][1] = (z2[0][1]+1)*(y_i_A_mag_max-y_i_A_mag_min)/2+y_i_A_mag_min;
+	yout[1][1] = (z2[1][1]+1)*(y_i_A_arg_max-y_i_A_arg_min)/2+y_i_A_arg_min-2*M_PI/3;
+	// Phase 3
+	yout[0][2] = (z2[0][2]+1)*(y_i_A_mag_max-y_i_A_mag_min)/2+y_i_A_mag_min;
+	yout[1][2] = (z2[1][2]+1)*(y_i_A_arg_max-y_i_A_arg_min)/2+y_i_A_arg_min+2*M_PI/3;
+	value_IGenerated[0].SetPolar(yout[0][0]*I_base,yout[1][0]);
+	value_IGenerated[1].SetPolar(yout[0][1]*I_base,yout[1][1]);
+	value_IGenerated[2].SetPolar(yout[0][2]*I_base,yout[1][2]);
+	prev_value_IGenerated[0] = value_IGenerated[0];
+	prev_value_IGenerated[1] = value_IGenerated[1];
+	prev_value_IGenerated[2] = value_IGenerated[2];
+	terminal_current_val[0] = value_IGenerated[0];
+	terminal_current_val[1] = value_IGenerated[1];
+	terminal_current_val[2] = value_IGenerated[2];
+	terminal_current_val_pu[0] = terminal_current_val[0]/I_base;
+	terminal_current_val_pu[1] = terminal_current_val[1]/I_base;
+	terminal_current_val_pu[2] = terminal_current_val[2]/I_base;
+
 	//Sync the powerflow variables
 	if (parent_is_a_meter)
 	{
@@ -1137,6 +1336,17 @@ STATUS ibr_graybox::init_dynamics()
 	}
 
 	//**** This would be where any initalizations would occur, especially to initalize differential equations from QSTS values ****//
+
+	// Initialize the Angle integrator
+	Angle_blk.setparams(1.0);
+	Angle_blk.init_given_y(0);
+	// Initialize V, P, Q measurement filters
+	Vmeas_blk.setparams(1,0.01);
+	Vmeas_blk.init_given_y(0.0);
+	Pmeas_blk.setparams(1,0.01);
+	Pmeas_blk.init_given_y(0.0);
+	Qmeas_blk.setparams(1,0.01);
+	Qmeas_blk.init_given_y(0.0);
 
 	//Set the mode tracking variable to a default - not really needed, but be paranoid
 	desired_simulation_mode = SM_EVENT;

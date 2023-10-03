@@ -27,8 +27,10 @@ private:
 
 	gld_property *pIGenerated[3];		//Link to direct current injections to powerflow at bus-level
 	gld::complex generator_admittance[3][3]; //Generator admittance matrix converted from sequence values
+	gld::complex generator_impedance;  // Inverter L filter
 
 	gld::complex value_IGenerated[3];		//Value/accumulator for IGenerated values
+	gld::complex value_IGenerated_Nortan[3]; //Value/accumulator for value_IGenerated_Nortan values
 	gld::complex prev_value_IGenerated[3];	//Tracking variable for grid following "QSTS exit"
 
 	bool parent_is_a_meter;		 //Boolean to indicate if the parent object is a meter/triplex_meter
@@ -80,6 +82,8 @@ public:
 	double I_base;	 // Ibase is the rated current
 	double P_out_pu; // P_out_pu is the per unit value of VA_OUT.Re()
 	double Q_out_pu; // Q_out_pu is the per-unit value of VA_Out.Im()
+	double P_out_pu_Filtered; // P_out_pu_Filtered is the per unit value of P_out_pu after filter
+	double Q_out_pu_Filtered; // Q_out_pu_Filtered is the per-unit value of Q_out_pu after filter
 
 	double f_nominal;	 // rated frequency, 60 Hz
 
@@ -92,6 +96,12 @@ public:
 	double Qref;
 
 	double Vset0;		  // Vset0 is the voltage set point in volt-var in grid-following
+	Integrator Angle_blk; // Integrator block for calculating phase angle of the internal voltage
+	double Angle;  // output of phase angle integrator block
+	Filter Vmeas_blk; // Voltage measurement block
+	Filter Pmeas_blk; // Active power measurement block
+	Filter Qmeas_blk; // Reactive power measurement block
+	gld::complex physical_output[3]; //Output of the physical model part
 
 	/* required implementations */
 	ibr_graybox(MODULE *module);
