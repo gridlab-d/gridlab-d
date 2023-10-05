@@ -676,9 +676,11 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 	metrics_writer_evchargerdets[time_str] = evchargerdet_objects;
 
 	if (writeTime == (interim_length * interim_cnt) || final_write - startTime <= writeTime) {
-		cout << "meterics collected -> " << index << endl;
-		cout << "interim write time -> " << writeTime << endl;
+        gl_debug("metrics collected -> %d\n", index);
+        gl_debug("interim write time -> %d\n", writeTime);
 		/*
+		 cout << "meterics collected -> " << index << endl;
+		 cout << "interim write time -> " << writeTime << endl;
 		 cout << "final_write -> " << final_write-startTime << endl;
 		 cout << "interim_length -> " << interim_length << endl;
 		 cout << "interim_cnt -> " << interim_cnt << endl;
