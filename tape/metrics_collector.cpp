@@ -47,6 +47,14 @@ PROPERTY *metrics_collector::propWaterLoad = NULL;
 PROPERTY *metrics_collector::propWaterSetPoint = NULL;
 PROPERTY *metrics_collector::propWaterDemand = NULL;
 PROPERTY *metrics_collector::propWaterTemp = NULL;
+
+PROPERTY *metrics_collector::propWaterLSetPoint = NULL;
+PROPERTY *metrics_collector::propWaterUSetPoint = NULL;
+PROPERTY *metrics_collector::propWaterLTemp = NULL;
+PROPERTY *metrics_collector::propWaterUTemp = NULL;
+PROPERTY *metrics_collector::propWaterElemLMode = NULL;
+PROPERTY *metrics_collector::propWaterElemUMode = NULL;
+
 PROPERTY *metrics_collector::propInverterS = NULL;
 PROPERTY *metrics_collector::propCapCountA = NULL;
 PROPERTY *metrics_collector::propCapCountB = NULL;
@@ -115,6 +123,11 @@ int metrics_collector::create(){
 	wh_demand_array = NULL;
 	wh_temp_array = NULL;
 
+	wh_l_setpoint_array = NULL;
+	wh_u_setpoint_array = NULL;
+	wh_l_temp_array = NULL;
+	wh_u_temp_array = NULL;
+
 	trans_overload_status_array = NULL;
 	line_overload_status_array = NULL;
 
@@ -177,6 +190,13 @@ int metrics_collector::init(OBJECT *parent){
 		if (propWaterSetPoint == NULL) propWaterSetPoint = gl_get_property (parent, "tank_setpoint");
 		if (propWaterDemand == NULL) propWaterDemand = gl_get_property (parent, "water_demand");
 		if (propWaterTemp == NULL) propWaterTemp = gl_get_property (parent, "temperature");
+
+		if (propWaterLSetPoint == NULL) propWaterLSetPoint = gl_get_property (parent, "lower_tank_setpoint");
+		if (propWaterUSetPoint == NULL) propWaterUSetPoint = gl_get_property (parent, "upper_tank_setpoint");
+		if (propWaterLTemp == NULL) propWaterLTemp = gl_get_property (parent, "lower_tank_temperature");
+		if (propWaterUTemp == NULL) propWaterUTemp = gl_get_property (parent, "upper_tank_temperature");
+		if (propWaterElemLMode == NULL) propWaterElemLMode = gl_get_property (parent, "lower_heating_element_state");
+		if (propWaterElemUMode == NULL) propWaterElemUMode = gl_get_property (parent, "upper_heating_element_state");
 	} else if (gl_object_isa(parent,"inverter")) {
 		parent_string = const_cast<char*>("inverter");
 		if (propInverterS == NULL) propInverterS = gl_get_property (parent, "VA_Out");
@@ -557,7 +577,7 @@ int metrics_collector::init(OBJECT *parent){
 			air_temperature_array[curr_index] = 0.0;
 			set_cooling_array[curr_index] = 0.0;
 			set_heating_array[curr_index] = 0.0;
-			system_mode = 0.0;
+			system_mode = 0;
 		}
 	}
 	// If parent is waterheater
@@ -610,13 +630,68 @@ int metrics_collector::init(OBJECT *parent){
 			*/
 		}
 
+		// Allocate wh_l_setpoint_array array
+		wh_l_setpoint_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (wh_l_setpoint_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_l_setpoint array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+
+		// Allocate wh_u_setpoint_array array
+		wh_u_setpoint_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (wh_u_setpoint_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_u_setpoint array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+
+		// Allocate wh_l_temp_array array
+		wh_l_temp_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (wh_l_temp_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_l_temp array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+
+		// Allocate wh_u_setpoint_array array
+		wh_u_temp_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (wh_u_temp_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_u_temp array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+
 		for (curr_index=0; curr_index<vector_length; curr_index++)
 		{
 			wh_load_array[curr_index] = 0.0;
 			wh_setpoint_array[curr_index] = 0.0;
 			wh_demand_array[curr_index] = 0.0;
 			wh_temp_array[curr_index] = 0.0;
+
+			wh_l_setpoint_array[curr_index] = 0.0;
+			wh_u_setpoint_array[curr_index] = 0.0;
+			wh_l_temp_array[curr_index] = 0.0;
+			wh_u_temp_array[curr_index] = 0.0;
 		}
+		elem_l_mode = 0;
+		elem_u_mode = 0;
 	}
 	// If parent is inverter
 	else if (strcmp(parent_string, "inverter") == 0) {
@@ -907,6 +982,13 @@ int metrics_collector::read_line(OBJECT *obj){
 		wh_setpoint_array[curr_index] = *gl_get_double(obj->parent, propWaterSetPoint);
 		wh_demand_array[curr_index] = *gl_get_double(obj->parent, propWaterDemand);
 		wh_temp_array[curr_index] = *gl_get_double(obj->parent, propWaterTemp);
+
+		wh_l_setpoint_array[curr_index] = *gl_get_double(obj->parent, propWaterLSetPoint);
+		wh_u_setpoint_array[curr_index] = *gl_get_double(obj->parent, propWaterUSetPoint);
+		wh_l_temp_array[curr_index] = *gl_get_double(obj->parent, propWaterLTemp);
+		wh_u_temp_array[curr_index] = *gl_get_double(obj->parent, propWaterUTemp);
+		elem_l_mode = *gl_get_enum(obj->parent, propWaterElemLMode);
+		elem_u_mode = *gl_get_enum(obj->parent, propWaterElemUMode);
 	}
 	else if (strcmp(parent_string, "inverter") == 0) {
 		gld::complex VAOut = *gl_get_complex(obj->parent, propInverterS);
@@ -1145,6 +1227,21 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[WH_MIN_TEMP] = findMin(wh_temp_array, curr_index);
 		metrics[WH_MAX_TEMP] = findMax(wh_temp_array, curr_index);
 		metrics[WH_AVG_TEMP] = findAverage(wh_temp_array, curr_index);
+
+		metrics[WH_MIN_L_SETPOINT] = findMin(wh_l_setpoint_array, curr_index);
+		metrics[WH_MAX_L_SETPOINT] = findMax(wh_l_setpoint_array, curr_index);
+		metrics[WH_AVG_L_SETPOINT] = findAverage(wh_l_setpoint_array, curr_index);
+		metrics[WH_MIN_U_SETPOINT] = findMin(wh_u_setpoint_array, curr_index);
+		metrics[WH_MAX_U_SETPOINT] = findMax(wh_u_setpoint_array, curr_index);
+		metrics[WH_AVG_U_SETPOINT] = findAverage(wh_u_setpoint_array, curr_index);
+		metrics[WH_MIN_L_TEMP] = findMin(wh_l_temp_array, curr_index);
+		metrics[WH_MAX_L_TEMP] = findMax(wh_l_temp_array, curr_index);
+		metrics[WH_AVG_L_TEMP] = findAverage(wh_l_temp_array, curr_index);
+		metrics[WH_MIN_U_TEMP] = findMin(wh_u_temp_array, curr_index);
+		metrics[WH_MAX_U_TEMP] = findMax(wh_u_temp_array, curr_index);
+		metrics[WH_AVG_U_TEMP] = findAverage(wh_u_temp_array, curr_index);
+		metrics[WH_ELEM_L_MODE] = (double) elem_l_mode;
+		metrics[WH_ELEM_U_MODE] = (double) elem_u_mode;
 	}
 	else if (strcmp(parent_string, "inverter") == 0) {
 		metrics[INV_MIN_REAL_POWER] = findMin(real_power_array, curr_index);
