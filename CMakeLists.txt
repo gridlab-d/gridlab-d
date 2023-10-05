@@ -61,6 +61,10 @@ include(cmake/CheckDependencies.cmake)
 include(cmake/BuildNumber.cmake)
 include(cmake/SanitizePaths.cmake)
 
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib/static)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
+
 option(GLD_USE_EIGEN "[NOT YET SUPPORTED] - Use Eigen package for LU Decomposition in Powerflow" OFF)
 option(GLD_USE_SUPERLU "Use SuperLU package for LU Decomposition in Powerflow" ON)
 option(GLD_USE_HELICS "Link with HELICS" OFF)
@@ -383,7 +387,6 @@ mark_as_advanced(FORCE
         GLD_SHARE
         GLD_CI_BUILD
         )
-
 
 set(FILE_PERMISSIONS PERMISSIONS
         OWNER_EXECUTE OWNER_READ OWNER_WRITE

@@ -154,7 +154,10 @@ STATUS jsondump::dump_system(void)
 	Json::Value jsonArray1; // for storing rmatrix and xmatrix
 	Json::Value jsonArray2; // for storing rmatrix and xmatrix
 	// Start write to file
-	Json::StyledWriter writer;
+	Json::StreamWriterBuilder builder;
+	builder["commentStyle"] = "None";
+	builder["indentation"] = "";
+
 	// Open file for writing
 	ofstream out_file;
 
@@ -3409,7 +3412,9 @@ STATUS jsondump::dump_system(void)
 
 	// Write JSON files for line and line_codes
 	out_file.open (filename_dump_system);
-	out_file << writer.write(metrics_lines) << endl;
+	std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+	writer->write(metrics_lines, &out_file);
+	out_file << endl;
 	out_file.close();
 
 	//Clean up the mallocs
@@ -3494,7 +3499,10 @@ STATUS jsondump::dump_reliability(void)
 	Json::Value other_obj;
 	Json::Value jsonArray; // for storing temperary opening status of devices
 	// Start write to file
-	Json::StyledWriter writer;
+	Json::StreamWriterBuilder builder;
+	builder["commentStyle"] = "None";
+	builder["indentation"] = "";
+
 	// Open file for writing
 	ofstream out_file;
 
@@ -3784,7 +3792,9 @@ STATUS jsondump::dump_reliability(void)
 
 	// Write JSON files for line and line_codes
 	out_file.open (filename_dump_reliability);
-	out_file << writer.write(metrics_reliability) << endl;
+	std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+	writer->write(metrics_reliability, &out_file);
+	out_file << endl;
 	out_file.close();
 
 	//Remove the various mallocs/findlists

@@ -173,10 +173,12 @@ int triplex_node::init(OBJECT *parent)
 	if ( !(has_phase(PHASE_S)) )
 	{
 		OBJECT *obj = OBJECTHDR(this);
-		gl_warning("Init() triplex_node (name:%s, id:%d): Phases specified did not include phase S. Adding phase S.", obj->name,obj->id);
+		gl_warning("Init() triplex_node (name:%s, id:%d): Phases specified did not include phase S. Adding phase S. Check upstream devices.", obj->name,obj->id);
 		/* TROUBLESHOOT
 		Triplex nodes and meters require a single phase and a phase S component (for split-phase).
-		This particular triplex object did not include it, so it is being added.
+		This particular triplex object did not include it, so it is being added.  Check upstream devices
+		(mostly tranformers) to make sure they are appropriate.  A duplicate NR admittance entry can occur
+		if the upstream transformer is incorrect too.
 		*/
 		phases = (phases | PHASE_S);
 	}

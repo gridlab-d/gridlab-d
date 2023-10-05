@@ -20836,7 +20836,7 @@ object triplex_line:3082 {
 }
 
 
-object triplex_line_conductor: {
+object triplex_line_conductor {
 	name triplex_1/0 AA;
 	resistance 0.97;
 	geometric_mean_radius 0.0111;

@@ -141,6 +141,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <unordered_map>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -917,62 +918,50 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 	return SUCCESS;
 }
 
-
-static OBJECT **object_index = NULL;
-static unsigned char *object_linked = NULL;
-static unsigned int object_index_size = 65536;
-/*static*/ STATUS load_set_index(OBJECT *obj, OBJECTNUM id)
+static std::unordered_map<std::size_t, OBJECT*> object_index;
+static std::unordered_map<std::size_t, bool> object_linked;
+static bool object_index_initialized = false;
+STATUS load_set_index(OBJECT *obj, OBJECTNUM id)
 {
-	if (object_index==NULL)
-	{
-        object_index = static_cast<OBJECT **>(malloc(sizeof(OBJECT *) * object_index_size));
-		memset(object_index,0,sizeof(OBJECT*)*object_index_size);
-        object_linked = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * object_index_size));
-		memset(object_linked,0,sizeof(unsigned char)*object_index_size);
-	}
-	if (id>=object_index_size) /* index needs to grow */
-	{
-		int new_size = (id/object_index_size+1)*object_index_size;
-        object_index = static_cast<OBJECT **>(realloc(object_index, sizeof(OBJECT *) * new_size));
-//		memset(object_index+object_index_size*sizeof(OBJECT *),0,sizeof(OBJECT*)*(new_size-object_index_size));
-        object_linked = static_cast<unsigned char *>(realloc(object_linked, sizeof(unsigned char) * new_size));
-//		memset(object_linked+object_index_size*sizeof(unsigned char),0,sizeof(unsigned char)*(new_size-object_index_size));
-		object_index_size = new_size;
-	}
-	if (object_index==NULL) { errno = ENOMEM; return FAILED;}
-	/* collision check here */
+    if(!object_index_initialized){
+        object_index.reserve(500);
+        object_linked.reserve(500);
+        object_index_initialized = true;
+    }
+
+    if(object_index.find(id) != object_index.end()){
+        output_error("Duplicate object key detected for object id '%d'", id);
+        return FAILED;
+    }
 	object_index[id] = obj;
-	object_linked[id] = 0;
+	object_linked[id] = false;
 	return SUCCESS;
 }
-/*static*/ OBJECT *load_get_index(OBJECTNUM id)
+OBJECT *load_get_index(OBJECTNUM id)
 {
-	if (object_index==NULL || id<0 || id>=object_index_size)
-		return NULL;
-	object_linked[id]++;
-	return object_index[id];
+    try {
+        object_linked.at(id) = true;
+        return object_index.at(id);
+    } catch(const std::exception& ex){
+        output_error("load_get_index failure");
+        return nullptr;
+    }
 }
 static OBJECT *get_next_unlinked(CLASS *oclass)
 {
-	unsigned int id;
-	if (object_index==NULL)
-		return NULL;
-	for (id=0; id<object_index_size; id++)
-	{
-		if (object_linked[id]==0 && object_index[id]!=NULL && object_index[id]->oclass==oclass)
-		{
-			object_linked[id]++;
-			return object_index[id];
-		}
-	}
-	return NULL;
+    for(const auto& entry : object_index){
+        if(!object_linked[entry.first] && entry.second->oclass==oclass){
+            object_linked[entry.first] = true;
+            return entry.second;
+        }
+    }
+    output_warning("get_next_unlinked did a weird thing?");
+	return nullptr;
 }
 static void free_index(void)
 {
-	if (object_index!=NULL)
-		free(object_index);
-	object_index=NULL;
-	object_index_size = 65536;
+    object_index.clear();
+    object_linked.clear();
 }
 
 static UNRESOLVED *first_unresolved = NULL;

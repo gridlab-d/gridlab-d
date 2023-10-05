@@ -216,11 +216,20 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 		strncpy((char *)addr, valstr, 32);
 //	} else if(prop->ptype == PT_char256){
 //		strncpy((char *)addr, valstr, 256);
+	} else if(prop->ptype == PT_int32){
+		if(1 != sscanf(valstr, "%ld", static_cast<long*>(addr))){
+			gl_error(R"(csv_reader::read_prop ~ unable to set property '%s' to '%s')", propstr, valstr);
+			/* TROUBLESHOOT
+				The int parser was not able to convert the property value into a number.  Please
+				review the input line for non-numeric characters and re-run GridLAB-D.
+			*/
+			return 0;
+		}
 	} else {
 		gl_error("csv_reader::read_prop ~ unable to convert property \'%s\' due to type restrictions", propstr);
 		/* TROUBLESHOOT
 			This is a programming problem.  The property parser within the csv_reader is only able to
-			properly handle char32 and double properties.  Please contact matthew.hauer@pnl.gov for
+			properly handle char32, int32 and double properties.  Please contact matthew.hauer@pnl.gov for
 			technical support.
 		 */
 		return 0;

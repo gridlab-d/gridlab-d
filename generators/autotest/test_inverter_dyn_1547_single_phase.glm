@@ -48,7 +48,7 @@ object meter {
 	};
 }
 
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name intermed_line;
      from subtation_bus;
@@ -81,7 +81,7 @@ object node {
 	nominal_voltage 7200;
 }
 
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name lA;
      from feeder_head;
@@ -90,7 +90,7 @@ object overhead_line:  {
      configuration olcAN;
 }
 
-object overhead_line:  {
+object overhead_line {
      phases "BN";
      name lB;
      from feeder_head;
@@ -99,7 +99,7 @@ object overhead_line:  {
      configuration olcBN;
 }
 
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name lC;
      from feeder_head;
