@@ -13,7 +13,7 @@ clock {
 module powerflow;
 
 
-object triplex_line_conductor: {
+object triplex_line_conductor {
 	name 1/0 AA triplex;
 	resistance 0.97;
 	geometric_mean_radius 0.0111;

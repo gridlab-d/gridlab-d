@@ -6293,7 +6293,7 @@ object transformer_configuration:456 {
       shunt_impedance 1851.960+1814.886j;
 } 
 
-object triplex_line_conductor: { 
+object triplex_line_conductor {
      name TLC 1/0 AA triplex; 
      resistance 0.97; 
      geometric_mean_radius 0.0111; 
