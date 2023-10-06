@@ -57,7 +57,7 @@
 	Navajo			Version 4.3 originated at PNNL 2020
 	Ostrander		Version 5.0 originated at PNNL 2022
 	Palo Verde      Version 5.1 originated at PNNL 2023
-	Perkins
+	Perkins         Version 5.2 originated at PNNL 2023
 	Redhawk
 	Sacajawea
 	Tesla
