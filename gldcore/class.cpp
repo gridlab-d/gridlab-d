@@ -1032,7 +1032,10 @@ int class_define_set_member(CLASS *oclass, /**< pointer to the class which imple
 {
 	PROPERTY *prop = class_find_property(oclass, property_name);
 	KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
-	if (prop==NULL || key==NULL) return 0;
+	if (prop==NULL || key==NULL) {
+        delete key;
+        return 0;
+    }
 	if (prop->keywords==NULL)
 		prop->flags |= PF_CHARSET; /* enable single character keywords until a long keyword is defined */
 	key->next = prop->keywords;

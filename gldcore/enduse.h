@@ -7,9 +7,15 @@
 #include "timestamp.h"
 #include "loadshape.h"
 
-#define EUC_IS110 0x0000 ///< enduse flag to indicate that the voltage is line-to-neutral
-#define EUC_IS220 0x0001 ///< enduse flag to indicate that the voltage is line-to-line
-#define EUC_HEATLOAD 0x0002 ///< enduse flag to indicate that the load drives the heatgain instead of the total power
+//#define EUC_IS110 0x0000 ///< enduse flag to indicate that the voltage is line-to-neutral
+//#define EUC_IS220 0x0001 ///< enduse flag to indicate that the voltage is line-to-line
+//#define EUC_HEATLOAD 0x0002 ///< enduse flag to indicate that the load drives the heatgain instead of the total power
+
+enum {
+    EUC_IS110=0,
+    EUC_IS220,
+    EUC_HEATLOAD
+};
 
 typedef enum {
 	EUMT_MOTOR_A, /**< 3ph induction motors driving constant torque loads */
