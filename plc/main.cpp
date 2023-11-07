@@ -19,7 +19,7 @@ int load_library(char *name, PLCCODE *code, PLCINIT *init, PLCDATA *data)
 		*data = (PLCDATA)GetProcAddress((HMODULE)hLib,"data");
 		*init = (PLCINIT)GetProcAddress((HMODULE)hLib,"init");
 		*code= (PLCCODE)GetProcAddress((HMODULE)hLib,"code");
-		return (*data!=NULL && *init!=NULL && *code!=NULL) ? 0 : -1;
+		return (*data!=nullptr && *init!=nullptr && *code!=nullptr) ? 0 : -1;
 	}
 	return -1;
 }
@@ -36,7 +36,7 @@ int load_library(char *name, PLCCODE *code, PLCINIT *init, PLCDATA *data)
 		*data = (PLCDATA)dlsym(hLib,"data");
 		*init = (PLCINIT)dlsym(hLib,"init");
 		*code = (PLCCODE)dlsym(hLib,"code");
-		return (*data!=NULL && *init!=NULL && *code!=NULL) ? 0 : -1;
+		return (*data!=nullptr && *init!=nullptr && *code!=nullptr) ? 0 : -1;
 	}
 	return -1;
 }

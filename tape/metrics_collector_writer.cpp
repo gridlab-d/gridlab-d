@@ -8,16 +8,16 @@
 
 #include "metrics_collector_writer.h"
 
-CLASS *metrics_collector_writer::oclass = NULL;
+CLASS *metrics_collector_writer::oclass = nullptr;
 
 void new_metrics_collector_writer(MODULE *mod) {
 	new metrics_collector_writer(mod);
 }
 
 metrics_collector_writer::metrics_collector_writer(MODULE *mod) {
-	if (oclass == NULL) {
+	if (oclass == nullptr) {
 		oclass = gl_register_class(mod, const_cast<char *>("metrics_collector_writer"), sizeof(metrics_collector_writer), PC_POSTTOPDOWN);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class metrics_collector_writer";
 
 		if (gl_publish_variable(oclass,
@@ -27,7 +27,7 @@ metrics_collector_writer::metrics_collector_writer(MODULE *mod) {
 				PT_char8, "allextensions", PADDR(allextensions), PT_DESCRIPTION, "write all file extensions",
 				PT_double, "interim[s]", PADDR(interim_length_dbl), PT_DESCRIPTION, "Interim at which metrics_collector_writer output is written",
 				PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector_writer output is stored in JSON format",
-				NULL) < 1)
+				nullptr) < 1)
 			GL_THROW(const_cast<char *>("unable to publish properties in %s"), __FILE__);
 	}
 }
@@ -42,7 +42,7 @@ int metrics_collector_writer::create() {
 
 int metrics_collector_writer::init(OBJECT *parent) {
 	OBJECT *obj = OBJECTHDR(this);
-	FILE *fn = NULL;
+	FILE *fn = nullptr;
 	int index = 0;
 	char time_str[64];
 
@@ -125,7 +125,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
 
 	// Find the metrics_collector objects
 	metrics_collectors = gl_find_objects(FL_NEW, FT_CLASS, SAME, "metrics_collector", FT_END); //find all metrics_collector objects
-	if (metrics_collectors == NULL) {
+	if (metrics_collectors == nullptr) {
 		gl_error("metrics_collector_writer::init(): no metrics_collector objects were found.");
 		return 0;
 		/* TROUBLESHOOT
@@ -135,14 +135,14 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	}
 
 	// Go through each metrics_collector object, and check its time interval given
-	obj = NULL;
+	obj = nullptr;
 	while (obj = gl_find_next(metrics_collectors, obj)) {
 		if (index >= metrics_collectors->hit_count) {
 			break;
 		}
 		// Obtain the object data
 		metrics_collector *temp_metrics_collector = OBJECTDATA(obj, metrics_collector);
-		if (temp_metrics_collector == NULL) {
+		if (temp_metrics_collector == nullptr) {
 			gl_error("metrics_collector_writer::init(): unable to map object as metrics_collector object.");
 			return 0;
 		}
@@ -430,7 +430,7 @@ int metrics_collector_writer::commit(TIMESTAMP t1) {
  **/
 int metrics_collector_writer::write_line(TIMESTAMP t1) {
 	char time_str[64];
-	time_t now = time(NULL);
+	time_t now = time(nullptr);
 	int index = 0;
 
 	double *metrics;
@@ -452,7 +452,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 //	cout << "write_line at " << writeTime << " seconds, final " << final_write << ", now " << t1 << endl;
 
 	// Go through each metrics_collector object, and check its time interval given
-	OBJECT *obj = NULL;
+	OBJECT *obj = nullptr;
 	while (obj = gl_find_next(metrics_collectors, obj)) {
 		if (index >= metrics_collectors->hit_count) {
 			break;
@@ -460,7 +460,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 
 		// Obtain the object data
 		metrics_collector *temp_metrics_collector = OBJECTDATA(obj, metrics_collector);
-		if (temp_metrics_collector == NULL) {
+		if (temp_metrics_collector == nullptr) {
 			gl_error("Unable to map object as metrics_collector object.");
 			return 0;
 		}
@@ -1407,7 +1407,7 @@ EXPORT int create_metrics_collector_writer(OBJECT **obj, OBJECT *parent) {
 	int rv = 0;
 	try {
 		*obj = gl_create_object(metrics_collector_writer::oclass);
-		if (*obj != NULL) {
+		if (*obj != nullptr) {
 			metrics_collector_writer *my = OBJECTDATA(*obj,
 					metrics_collector_writer);
 			gl_set_parent(*obj, parent);

@@ -21,18 +21,18 @@
 //////////////////////////////////////////////////////////////////////////
 // loadshape CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* loadshape::oclass = NULL;
-loadshape *loadshape::defaults = NULL;
+CLASS* loadshape::oclass = nullptr;
+loadshape *loadshape::defaults = nullptr;
 
 loadshape::loadshape(MODULE *module) 
 {
 
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(module,"loadshape",sizeof(loadshape),PC_BOTTOMUP);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
@@ -74,7 +74,7 @@ loadshape::loadshape(MODULE *module)
 			PT_char256, "selection", PADDR(selection),
 			PT_char1024, "group", PADDR(group),
 
-			NULL)<1) 
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// setup the default values
@@ -111,13 +111,13 @@ int loadshape::init(OBJECT *parent)
 		return 1;
 	}
 
-	if(parent == NULL && group[0] == 0){
+	if(parent == nullptr && group[0] == 0){
 		gl_error("loadshapes require either a parent object or a target group");
 		state = TS_ERROR;
 		return 1;
 	}
 
-	if(parent != NULL && group[0] != 0){
+	if(parent != nullptr && group[0] != 0){
 		gl_warning("loadshape has both parent & group ~ using the parent and not the group");
 	}
 
@@ -178,7 +178,7 @@ int loadshape::init(OBJECT *parent)
 	/* generate schedule groupings ... adapt schedule object or migrate schedule to core? */
 	if(selection[0] != 0){
 		sel_list = parse_cron(selection);
-		if(sel_list == NULL){
+		if(sel_list == nullptr){
 			gl_error("Unable to parse the selection list ~ ignoring & continuing ungrouped");
 		}
 	}
@@ -209,7 +209,7 @@ EXPORT void new_loadshape(MODULE *mod){
 EXPORT int create_loadshape(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(loadshape::oclass);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		loadshape *my = OBJECTDATA(*obj,loadshape);
 		gl_set_parent(*obj,parent);

@@ -52,7 +52,7 @@ void COutputView::OnInitialUpdate()
 void COutputView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 {
 	CGldEditorDoc *pDoc = GetDocument();
-	ASSERT(pDoc!=NULL);
+	ASSERT(pDoc!=nullptr);
 
 	CTreeCtrl &tree = GetTreeCtrl();
 	UINT nItems = tree.GetCount();
@@ -60,18 +60,18 @@ void COutputView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 	CStringList &buffer = pDoc->m_OutputBuffer;
 	POSITION pos = buffer.FindIndex(nItems);
 
-	HTREEITEM group = NULL;
-	while (pos!=NULL)
+	HTREEITEM group = nullptr;
+	while (pos!=nullptr)
 	{
 		CString item = buffer.GetNext(pos);
 		CString flag = item.Left(1);
 		CString text = item.Mid(1);
 		text.Replace("\n"," ");
-		if (flag=="+" && pos!=NULL)
+		if (flag=="+" && pos!=nullptr)
 			group = tree.InsertItem(text);
 		else if (flag=="-" || flag=="=")
 		{
-			ASSERT(group!=NULL);
+			ASSERT(group!=nullptr);
 			HTREEITEM hItem = tree.InsertItem(text,group);
 			if (flag=="=")
 			{

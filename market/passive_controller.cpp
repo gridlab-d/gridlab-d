@@ -8,7 +8,7 @@
 
 #include "passive_controller.h"
 
-CLASS *passive_controller::oclass = NULL;
+CLASS *passive_controller::oclass = nullptr;
 
 // ref: http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=c++&artnum=3659
 /***************************
@@ -79,9 +79,9 @@ static double tc_erf(double x)
 
 passive_controller::passive_controller(MODULE *mod)
 {
-	if(oclass == NULL){
+	if(oclass == nullptr){
 		oclass = gl_register_class(mod,"passive_controller",sizeof(passive_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class passive_controller";
 		else
 			oclass->trl = TRL_QUALIFIED;
@@ -188,7 +188,7 @@ passive_controller::passive_controller(MODULE *mod)
                                PT_KEYWORD, "CYCLING", (enumeration)DLC_CYCLING, PT_DESCRIPTION, "this mode is roughly designed to force cycle an AC unit",
                                PT_double, "cycle_length_off[s]", PADDR(cycle_off),
                                PT_double, "cycle_length_on[s]", PADDR(cycle_on),
-                               NULL) < 1)
+                               nullptr) < 1)
 		{
 				GL_THROW("unable to publish properties in %s",__FILE__);
 		}
@@ -205,7 +205,7 @@ void passive_controller::fetch_double(double **prop, const char *name, OBJECT *p
 		char msg[256];
 		sprintf(tname, "passive_controller:%i", hdr->id);
 		if(*name == static_cast<char>(0))
-			sprintf(msg, "%s: passive_controller unable to find property: name is NULL", namestr);
+			sprintf(msg, "%s: passive_controller unable to find property: name is nullptr", namestr);
 		else
 			sprintf(msg, "%s: passive_controller unable to find %s", namestr, name);
 		throw(std::runtime_error(msg));
@@ -221,7 +221,7 @@ void passive_controller::fetch_int(int **prop, const char *name, OBJECT *parent)
 		char msg[256];
 		sprintf(tname, "passive_controller:%i", hdr->id);
 		if(*name == static_cast<char>(0))
-			sprintf(msg, "%s: passive_controller unable to find property: name is NULL", namestr);
+			sprintf(msg, "%s: passive_controller unable to find property: name is nullptr", namestr);
 		else
 			sprintf(msg, "%s: passive_controller unable to find %s", namestr, name);
 		throw(std::runtime_error(msg));
@@ -243,7 +243,7 @@ int passive_controller::init(OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	PROPERTY *enduseProperty;
 
-	if(parent == NULL){
+	if(parent == nullptr){
 		gl_error("passive_controller has no parent and will be operating in 'dummy' mode");
 	} else {
 		if(output_state_propname[0] == 0 && output_setpoint_propname[0] == 0 && control_mode != CM_DLC){
@@ -282,7 +282,7 @@ int passive_controller::init(OBJECT *parent){
 		// output_state
 		if(output_state_propname[0] != 0){
 			output_state_prop = gl_get_property(parent, output_state_propname);
-			if(output_state_prop == NULL){
+			if(output_state_prop == nullptr){
 				GL_THROW("passive_controller parent \"%s\" does not contain property \"%s\"", 
 					(parent->name ? parent->name : "anon"), output_state_propname.get_string());
 			}
@@ -297,7 +297,7 @@ int passive_controller::init(OBJECT *parent){
 			}
 			if(output_setpoint_propname[0] != 0){
 				output_setpoint_property = gl_get_property(parent, output_setpoint_propname);
-				if(output_setpoint_property == NULL){
+				if(output_setpoint_property == nullptr){
 					GL_THROW("passive_controller parent \"%s\" does not contain property \"%s\"", 
 						(parent->name ? parent->name : "anon"), output_setpoint_propname.get_string());
 				}
@@ -311,7 +311,7 @@ int passive_controller::init(OBJECT *parent){
 	
 	if (control_mode != CM_PFC || (control_mode == CM_PFC && observation_object != 0)){
 		gl_set_dependent(hdr, observation_object);
-		if(observation_object == NULL){
+		if(observation_object == nullptr){
 			GL_THROW("passive_controller observation_object object is undefined, and can not function");
 		}
 	}
@@ -354,7 +354,7 @@ int passive_controller::init(OBJECT *parent){
 	{
 		if(state_observed_propname[0] != 0){
 			state_observed_prop = gl_get_property(parent, state_observed_propname);
-			if(state_observed_prop == NULL){
+			if(state_observed_prop == nullptr){
 				GL_THROW("passive_controller parent \"%s\" does not contain property \"%s\"", 
 					(parent->name ? parent->name : "anon"), state_observed_propname.get_string());
 			}
@@ -440,17 +440,17 @@ int passive_controller::init(OBJECT *parent){
 		
 		tier_prices = (double *)gl_malloc(ArraySize*sizeof(double));
 
-		if (tier_prices == NULL)
+		if (tier_prices == nullptr)
 			GL_THROW("Failure to allocate tier_prices array");
 
 		cleared_load = (double *)gl_malloc(ArraySize*sizeof(double));
 
-		if (cleared_load == NULL)
+		if (cleared_load == nullptr)
 			GL_THROW("Failure to allocate cleared_load array");
 
 		//Link up to parent object
 		enduseProperty = gl_get_property(parent,"base_power");
-		if (enduseProperty == NULL)
+		if (enduseProperty == nullptr)
 			GL_THROW("Unable to map base power property");
 			
 		current_load_enduse = (enduse*)GETADDR(parent,enduseProperty);
@@ -616,17 +616,17 @@ int passive_controller::init(OBJECT *parent){
 		//Initialize all the arrays for 24 hours to avoid reinitializing and re-mallocing
 		offPeakLoad = (double *)gl_malloc(ArraySize*sizeof(double));
 
-		if (offPeakLoad == NULL)
+		if (offPeakLoad == nullptr)
 			GL_THROW("Failure to allocate offPeakLoad array");
 
 		peakLoad = (double *)gl_malloc(ArraySize*sizeof(double));
 
-		if (peakLoad == NULL)
+		if (peakLoad == nullptr)
 			GL_THROW("Failure to allocate peakLoad array");
 
 		criticalPeakLoad = (double *)gl_malloc(ArraySize*sizeof(double));
 
-		if (criticalPeakLoad == NULL)
+		if (criticalPeakLoad == nullptr)
 			GL_THROW("Failure to allocate criticalPeakLoad array");	
 		
 		//Initialize the array locations
@@ -1623,7 +1623,7 @@ EXPORT int create_passive_controller(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(passive_controller::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			passive_controller *my = OBJECTDATA(*obj,passive_controller);
 			gl_set_parent(*obj,parent);
@@ -1639,7 +1639,7 @@ EXPORT int init_passive_controller(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL){
+		if (obj!=nullptr){
 			return OBJECTDATA(obj,passive_controller)->init(parent);
 		}
 		else

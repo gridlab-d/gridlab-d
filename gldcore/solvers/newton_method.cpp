@@ -32,7 +32,7 @@ EXPORT int newton_method_set(char *param, ...)
 	va_list arg;
 	va_start(arg,param);
 	char *tag = param;
-	while ( tag!=NULL )
+	while ( tag!=nullptr )
 	{
 		if ( strcmp(param,"max_iterations")==0 )
 			max_iterations = va_arg(arg,unsigned int);
@@ -55,7 +55,7 @@ EXPORT int newton_method_get(char *param, ...)
 	va_list arg;
 	va_start(arg,param);
 	char *tag = param;
-	while ( tag!=NULL )
+	while ( tag!=nullptr )
 	{
 		if ( strcmp(param,"solver_version")==0 )
 			*va_arg(arg,unsigned int*) = solver_version;
@@ -77,8 +77,8 @@ EXPORT int newton_method_get(char *param, ...)
 			for ( i=0 ; i<dimensions ; i++ )
 			{
 				data->x[i] = 0;
-				data->df[i] = NULL;
-				data->f[i] = NULL;
+				data->df[i] = nullptr;
+				data->f[i] = nullptr;
 				data->m[i] = 1;
 				data->p[i] = 1e-8;
 				data->s[i] = 1;

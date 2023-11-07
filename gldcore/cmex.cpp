@@ -64,25 +64,25 @@ static char *make_fieldname(char *str)
 static OBJECT *find_object(mxArray *handle)
 {
 	unsigned int64 *data = (unsigned int64*)mxGetPr(handle);
-	return data[0]==MH_OBJECT ? (OBJECT*)data[1] : NULL;
+	return data[0]==MH_OBJECT ? (OBJECT*)data[1] : nullptr;
 }
 
 static GLOBALVAR *find_global(mxArray *handle)
 {
 	unsigned int64 *data = (unsigned int64*)mxGetPr(handle);
-	return data[0]==MH_GLOBAL ? (GLOBALVAR*)data[1] : NULL;
+	return data[0]==MH_GLOBAL ? (GLOBALVAR*)data[1] : nullptr;
 }
 
 static CLASS *find_class(mxArray *handle)
 {
 	unsigned int64 *data = (unsigned int64*)mxGetPr(handle);
-	return data[0]==MH_CLASS ? (CLASS*)data[1] : NULL;
+	return data[0]==MH_CLASS ? (CLASS*)data[1] : nullptr;
 }
 
 static MODULE *find_module(mxArray *handle)
 {
 	unsigned int64 *data = (unsigned int64*)mxGetPr(handle);
-	return data[0]==MH_MODULE ? (MODULE*)data[1] : NULL;
+	return data[0]==MH_MODULE ? (MODULE*)data[1] : nullptr;
 }
 
 static mxArray *get_object_data(OBJECT *obj)
@@ -92,14 +92,14 @@ static mxArray *get_object_data(OBJECT *obj)
 	/* set the standard info */
 #define ERROR "(error)"
 #define NONE "(none)"
-	char *fnames[1024] = {"id","class","parent","rank","clock","latitude","longitude","in_svc","out_svc","flags",NULL}; // };
+	char *fnames[1024] = {"id","class","parent","rank","clock","latitude","longitude","in_svc","out_svc","flags",nullptr}; // };
 	int nFields = 0;
 	int nData = 0;
 	char value[1024];
 	PROPERTY *prop;
-	mxArray *pId = mxCreateString(convert_from_object(value,sizeof(value),&obj,NULL)?value:ERROR);
+	mxArray *pId = mxCreateString(convert_from_object(value,sizeof(value),&obj,nullptr)?value:ERROR);
 	mxArray *pClass = mxCreateString(obj->oclass->name);
-	mxArray *pParent = mxCreateString(obj->parent!=NULL&&convert_from_object(value,sizeof(value),&(obj->parent),NULL)?value:NONE);
+	mxArray *pParent = mxCreateString(obj->parent!=nullptr&&convert_from_object(value,sizeof(value),&(obj->parent),nullptr)?value:NONE);
 	mxArray *pRank = mxCreateNumericMatrix(1,1,mxUINT32_CLASS,mxREAL);
 	mxArray *pClock = mxCreateString(convert_from_timestamp(obj->clock,value,sizeof(value))?value:ERROR);
 	mxArray *pLatitude = mxCreateString(convert_from_latitude(obj->latitude,value,sizeof(value))?value:NONE);
@@ -111,10 +111,10 @@ static mxArray *get_object_data(OBJECT *obj)
 	*(OBJECTRANK*)mxGetPr(pRank) = obj->rank;
 
 	/* count the number of header items */
-	while (fnames[nFields]!=NULL) nFields++;
+	while (fnames[nFields]!=nullptr) nFields++;
 
 	/* count the number of object properties and assign the field names */
-	for (prop=class_get_first_property(obj->oclass);  prop!=NULL; prop=class_get_next_property(prop))
+	for (prop=class_get_first_property(obj->oclass);  prop!=nullptr; prop=class_get_next_property(prop))
 		/** @todo don't damage the original fieldname when making it safe for Matlab */
 		fnames[nFields+nData++] = make_fieldname(prop->name);
 
@@ -134,7 +134,7 @@ static mxArray *get_object_data(OBJECT *obj)
 	mxSetFieldByNumber(plhs[0],0,9,pFlags);
 
 	/* construct the data fields */
-	for (prop=class_get_first_property(obj->oclass);  prop!=NULL; nFields++,prop=class_get_next_property(prop))
+	for (prop=class_get_first_property(obj->oclass);  prop!=nullptr; nFields++,prop=class_get_next_property(prop))
 	{
 		mxArray *pValue;
 		if (prop->ptype==PT_double)
@@ -168,11 +168,11 @@ static void set_object_data(const mxArray *data)
 	OBJECT *obj;
 	mxArray *pId = mxGetField(data,0,"id");
 	char id[256];
-	if (pId==NULL)
+	if (pId==nullptr)
 		output_error("set_object_data(const mxArray *data={...}) did not find a required object id field");
 	else if (mxGetString(pId,id,sizeof(id)))
 		output_error("set_object_data(const mxArray *data={...}) couldn't read the object id field");
-	else if ((obj=object_find_name(id))==NULL)
+	else if ((obj=object_find_name(id))==nullptr)
 		output_error("set_object_data(const mxArray *data={id='%s',...}) couldn't find object id", id);
 	else
 	{
@@ -182,11 +182,11 @@ static void set_object_data(const mxArray *data)
 			const char *name;
 			const mxArray *pField = mxGetFieldByNumber(data,0,i);
 			char value[4096];
-			if ((name=mxGetFieldNameByNumber(data,i))==NULL)
+			if ((name=mxGetFieldNameByNumber(data,i))==nullptr)
 				output_error("set_object_data(const mxArray *data={id='%s',...}) couldn't read the name of field %d", id, i);
 			else if (strcmp(name,"id")==0 || strcmp(name,"class")==0)
 			{	/* these may not be changed */ }
-			else if (pField==NULL)
+			else if (pField==nullptr)
 				output_error("set_object_data(const mxArray *data={id='%s',...}) couldn't read the object field '%s' for object '%s'", id, name);
 			else if (mxIsChar(pField) && mxGetString(pField,value,sizeof(value)))
 				output_error("set_object_data(const mxArray *data={id='%s',...}) couldn't read the string value '%s' from field '%s'", id, value, name);
@@ -198,7 +198,7 @@ static void set_object_data(const mxArray *data)
 				output_error("set_object_data(const mxArray *data={id='%s',...}) couldn't read the uint32 value '%lu' from field '%s'", id, *(unsigned int*)mxGetPr(pField), name);
 			else if (strcmp(value,ERROR)==0)
 				output_error("set_object_data(const mxArray *data={id='%s',...}) couldn't use error value '%s'", id, value);
-			else if (strcmp(value,NONE)==0 && strcpy(value,"")==NULL)
+			else if (strcmp(value,NONE)==0 && strcpy(value,"")==nullptr)
 				output_error("set_object_data(const mxArray *data={id='%s',...}) couldn't clear empty value '%s'", id, value);
 			else if (!object_set_value_by_name(obj,name,value))
 				output_error("set_object_data(const mxArray *data={id='%s',...}) couldn't read the value '%s' into property '%s'", id, value, name);
@@ -228,23 +228,23 @@ void cmex_object_list(int nlhs, mxArray *plhs[], /**< entlist */
 {
 	OBJECT *obj;
 	char criteria[1024]="(undefined)";
-	FINDPGM *search = NULL;
+	FINDPGM *search = nullptr;
 	char *fields[] = {"name","class","parent","flags","location","service","rank","clock","handle"};
-	FINDLIST *list = NULL;
+	FINDLIST *list = nullptr;
 	if (nrhs>0 && mxGetString(prhs[0],criteria,sizeof(criteria))!=0)
 		output_error("gl('list',type='object'): unable to read search criteria (arg 2)");
-	else if (nrhs>0 && (search=find_mkpgm(criteria))==NULL)
+	else if (nrhs>0 && (search=find_mkpgm(criteria))==nullptr)
 		output_error("gl('list',type='object'): unable to run search '%s'",criteria);
-	else if (search==NULL && (list=find_objects(NULL,NULL))==NULL)
+	else if (search==nullptr && (list=find_objects(nullptr,nullptr))==nullptr)
 		output_error("gl('list',type='object'): unable to obtain default list");
-	else if (list==NULL && (list=find_runpgm(NULL,search))==NULL)
+	else if (list==nullptr && (list=find_runpgm(nullptr,search))==nullptr)
 		output_error("gl('list',type='object'): unable search failed");
-	else if ((plhs[0] = mxCreateStructMatrix(list->hit_count,1,sizeof(fields)/sizeof(fields[0]),fields))==NULL)
+	else if ((plhs[0] = mxCreateStructMatrix(list->hit_count,1,sizeof(fields)/sizeof(fields[0]),fields))==nullptr)
 		output_error("gl('list',type='object'): unable to allocate memory for result list");
 	else
 	{
 		unsigned int n;
-		for (n=0, obj=find_first(list); obj!=NULL; n++, obj=find_next(list,obj))
+		for (n=0, obj=find_first(list); obj!=nullptr; n++, obj=find_next(list,obj))
 		{
 			char tmp[1024];
 			mxArray *data;
@@ -305,7 +305,7 @@ void cmex_version(int nlhs, mxArray *plhs[], /**< [major minor] */
 	/* setup result array */
 	if (nlhs>0)
 	{
-		double *res = NULL;
+		double *res = nullptr;
 		plhs[0] = mxCreateDoubleMatrix(1, 2, mxREAL);
 		res = mxGetPr(plhs[0]);
 		*res++ = global_version_major;
@@ -334,7 +334,7 @@ void cmex_global(int nlhs, mxArray *plhs[], /**< () */
 		output_error("global name (arg 1) must be a string");
 	else if ((nDims=(size_t)mxGetNumberOfDimensions(prhs[1]))<2)
 		output_error("dimensions of array (arg 2) are not valid");
-	else if ((dim=mxGetDimensions(prhs[1]))==NULL)
+	else if ((dim=mxGetDimensions(prhs[1]))==nullptr)
 		output_error("dimensions of array (arg 2) are not available");
 	else
 	{
@@ -344,7 +344,7 @@ void cmex_global(int nlhs, mxArray *plhs[], /**< () */
 		if (mxIsChar(prhs[1]))
 		{
 			char *buffer = malloc(1024);
-			if(mxGetString(prhs[1],buffer,1024) && global_create(name,PT_char1024,buffer,PT_SIZE,1,NULL)==NULL)
+			if(mxGetString(prhs[1],buffer,1024) && global_create(name,PT_char1024,buffer,PT_SIZE,1,nullptr)==nullptr)
 				output_error("unable to register string variable '%s' in globals", name);
 		}
 		else if (mxIsDouble(prhs[1]))
@@ -354,7 +354,7 @@ void cmex_global(int nlhs, mxArray *plhs[], /**< () */
 			memset(x,0,sizeof(double)*size);
 			for (i=0; i<size; i++)
 				x[i] = ((double*)mxGetPr(prhs[1]))[i];
-			if (global_create(name,PT_double,x,PT_SIZE,size,NULL)==NULL)
+			if (global_create(name,PT_double,x,PT_SIZE,size,nullptr)==nullptr)
 				output_error("unable to register double array variable '%s' in globals", name);
 		}
 		else if (mxIsComplex(prhs[1]))
@@ -368,7 +368,7 @@ void cmex_global(int nlhs, mxArray *plhs[], /**< () */
 				x[i].i = ((double*)mxGetPi(prhs[1]))[i];
 				x[i].f = I;
 			}
-			if (global_create(name,PT_complex,x,PT_SIZE,size,NULL)==NULL)
+			if (global_create(name,PT_complex,x,PT_SIZE,size,nullptr)==nullptr)
 				output_error("unable to register complex array variable '%s' in globals", name);
 			free(x);
 		}
@@ -429,7 +429,7 @@ void cmex_getenv(int nlhs, mxArray *plhs[], /**< () */
 	else 
 	{
 		char *value = getenv(name);
-		if (value==NULL)
+		if (value==nullptr)
 			output_error("%s is not defined",name);
 		else if (nlhs==0)
 			output_message("%s='%s'",name,value);
@@ -468,11 +468,11 @@ void cmex_create(int nlhs, mxArray *plhs[], /**< {properties} */
 		output_error("an object property value is missing");
 
 	/* create object */
-	else if ((oclass=class_get_class_from_classname(classname))==NULL)
+	else if ((oclass=class_get_class_from_classname(classname))==nullptr)
 		output_error("class '%s' is not registered", classname);
 
 	/* create the object */
-	else if (oclass->create(&obj,NULL)==FAILED)
+	else if (oclass->create(&obj,nullptr)==FAILED)
 		output_error("unable to create object of class %s", classname);
 
 	/* copy properties */
@@ -497,7 +497,7 @@ void cmex_create(int nlhs, mxArray *plhs[], /**< {properties} */
 				output_error("property %s (arg %d) value couldn't be converted from complex", name, n);
 			else if (object_set_value_by_name(obj,name,value)==0)
 				output_error("property %s (arg %d) couldn't be set to '%s'", name, n, value);
-			else if (nlhs>0 && (plhs[0]=get_object_data(obj))==NULL)
+			else if (nlhs>0 && (plhs[0]=get_object_data(obj))==nullptr)
 				output_error("couldn't get object data for %s", name);
 		}
 	}
@@ -556,7 +556,7 @@ void cmex_module(int nlhs, mxArray *plhs[], /**< () */
 			output_error("Only one return value is possible");
 		else if (mxGetString(prhs[0],fname,sizeof(fname))!=0)
 			output_error("Module name too long");
-		else if ((mod=module_find(fname))==NULL && (mod=module_load(fname,0,NULL))==NULL)
+		else if ((mod=module_find(fname))==nullptr && (mod=module_load(fname,0,nullptr))==nullptr)
 			output_error("Module load failed");
 		else if (nlhs=0)
 			output_message("Module '%s(%d.%d)' loaded ok", mod->name, mod->major, mod->minor);
@@ -580,7 +580,7 @@ void cmex_module(int nlhs, mxArray *plhs[], /**< () */
 			*pMinor = (unsigned char)mod->minor;
 
 			/* get the module data */
-			while (module_getvar(mod,varname,NULL,0))
+			while (module_getvar(mod,varname,nullptr,0))
 			{
 				char32 buffer;
 				if (module_getvar(mod,varname,buffer,sizeof(buffer)) && nFields<sizeof(fname)/sizeof(fname[0]))
@@ -630,8 +630,8 @@ void cmex_set(int nlhs, mxArray *plhs[], /**< () */
 	{
 		char value[1024];
 		PROPERTY* prop;
-		OBJECT *obj=NULL;
-		GLOBALVAR *var=NULL;
+		OBJECT *obj=nullptr;
+		GLOBALVAR *var=nullptr;
 		if (mxGetString(prhs[0],value,sizeof(value))!=0)
 			output_error("object name (arg 0) too long");
 		else if (strcmp(value,"global")==0)
@@ -649,11 +649,11 @@ void cmex_set(int nlhs, mxArray *plhs[], /**< () */
 					output_error("unable to set global '%s' to '%s'", name,value);
 			}
 		}
-		else if (convert_to_object(value,&obj,NULL)==0)
+		else if (convert_to_object(value,&obj,nullptr)==0)
 			output_error("object (arg 0) %s not found",value);
 		else if (mxGetString(prhs[1],value,sizeof(value))!=0)
 			output_error("property name (arg 1) too long");
-		else if ((prop=object_get_property(obj,value))==NULL)
+		else if ((prop=object_get_property(obj,value))==nullptr)
 			output_error("property name (arg 1) %s not found in object %s:%d", value,obj->oclass->name, obj->id);
 		else if (mxIsChar(prhs[2]))
 		{
@@ -692,7 +692,7 @@ void cmex_get(int nlhs, mxArray *plhs[], /**< {data} */
 	if (nrhs>0)
 	{
 		char name[1024];
-		OBJECT *obj=NULL;
+		OBJECT *obj=nullptr;
 		if (!mxIsChar(prhs[0]))
 			output_error("entity name (arg 1) is not a string");
 		else if (nlhs>1)
@@ -760,10 +760,10 @@ void cmex_get(int nlhs, mxArray *plhs[], /**< {data} */
 					output_error("property name not in class.name format");
 			}
 		}
-		else if ((convert_to_object(name,&obj,NULL))==0)
+		else if ((convert_to_object(name,&obj,nullptr))==0)
 		{
 			GLOBALVAR *var = global_find(name);
-			if (var==NULL)
+			if (var==nullptr)
 				output_error("entity '%s' not found", name);
 			else if (var->prop->ptype==PT_double)
 			{
@@ -781,7 +781,7 @@ void cmex_get(int nlhs, mxArray *plhs[], /**< {data} */
 			else if (var->prop->ptype!=PT_double)
 				output_error("cannot retrieve globals that are of type %s",class_get_property_typename(var->prop->ptype));
 		}
-		else if ((plhs[0]=get_object_data(obj))==NULL)
+		else if ((plhs[0]=get_object_data(obj))==nullptr)
 			output_error("unable to extract %s data", name);
 	}
 	else
@@ -906,7 +906,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
 	{
 		if (strcmp(key,cmdMap[i].name)==0)
 		{
-			if (cmdMap[i].call == NULL) /* help request */
+			if (cmdMap[i].call == nullptr) /* help request */
 			{
 				int j;
 				if (nrhs==1)

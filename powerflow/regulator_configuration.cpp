@@ -85,7 +85,7 @@ regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_librar
 			PT_int16, "tap_pos_A",PADDR(tap_posA),PT_DESCRIPTION,"initial tap position of phase A",
 			PT_int16, "tap_pos_B",PADDR(tap_posB),PT_DESCRIPTION,"initial tap position of phase B",
 			PT_int16, "tap_pos_C",PADDR(tap_posC),PT_DESCRIPTION,"initial tap position of phase C",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
 

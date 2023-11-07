@@ -72,7 +72,7 @@ rectifier::rectifier(MODULE *module)
 			PT_KEYWORD, "C",(gld::set)PHASE_C,
 			PT_KEYWORD, "N",(gld::set)PHASE_N,
 			PT_KEYWORD, "S",(gld::set)PHASE_S,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			defaults = this;
 
 		memset(this,0,sizeof(rectifier));

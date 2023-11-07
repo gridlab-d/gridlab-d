@@ -22,7 +22,7 @@
 #include "lock.h"
 #include "exec.h"
 
-static SCHEDULE *schedule_list = NULL;
+static SCHEDULE *schedule_list = nullptr;
 static uint32 n_schedules = 0;
 static int interpolated_schedules = false;
 
@@ -45,9 +45,9 @@ SCHEDULE *schedule_getfirst(void)
 /** Iterate through the schedule list
 	@return the next schedule pointer (or first schedule)
  **/
-SCHEDULE *schedule_getnext(SCHEDULE *sch) /**< the schedule (or NULL to get first) */
+SCHEDULE *schedule_getnext(SCHEDULE *sch) /**< the schedule (or nullptr to get first) */
 {
-	return sch==NULL ? schedule_list : sch->next;
+	return sch==nullptr ? schedule_list : sch->next;
 }
 
 /** Find a schedule by its name 
@@ -56,12 +56,12 @@ SCHEDULE *schedule_getnext(SCHEDULE *sch) /**< the schedule (or NULL to get firs
 SCHEDULE *schedule_find_byname(const char *name) /**< the name of the schedule */
 {
 	SCHEDULE *sch;
-	for (sch=schedule_list; sch!=NULL; sch=sch->next)
+	for (sch=schedule_list; sch!=nullptr; sch=sch->next)
 	{
 		if (strcmp(sch->name,name)==0)
 			return sch;
 	}
-	return NULL;
+	return nullptr;
 }
 
 /* performs a schedule pattern match 
@@ -262,7 +262,7 @@ int schedule_compile_dtnext(SCHEDULE *sch, unsigned char calendar)
 
 int schedule_compile_block(SCHEDULE *sch, unsigned char block, const char *blockname, char *blockdef)
 {
-	char *token = NULL;
+	char *token = nullptr;
 	unsigned int minute=0;
 
 	/* check block count */
@@ -277,7 +277,7 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, const char *block
 
 	/* first index is always default value 0 */
 	sch->count[block]=1;
-	while ( (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL )
+	while ( (token=strtok(token==nullptr?blockdef:nullptr,";\r\n"))!=nullptr )
 	{
 		struct {
 			const char *name;
@@ -423,7 +423,7 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, const char *block
 						{
 							if (matcher[0].table[minute%60])
 							{
-								if (sch->index[calendar] != NULL && sch->index[calendar][minute]>0)
+								if (sch->index[calendar] != nullptr && sch->index[calendar][minute]>0)
 								{
 									const char *dayofweek[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Hol"};
 									output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) '%s' in block '%s' has a conflict with value %g on %s %d/%d %02d:%02d", sch->name, token, blockname, sch->data[sch->index[calendar][minute]], dayofweek[weekday], month+1, day+1, hour, minute%60);
@@ -435,7 +435,7 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, const char *block
 								else
 								{
 									/* associate this time with the current value */
-									if (sch->index[calendar] != NULL) sch->index[calendar][minute] = n;
+									if (sch->index[calendar] != nullptr) sch->index[calendar][minute] = n;
 									sch->weight[n]++;
 									sch->minutes[block]++;
 
@@ -449,7 +449,7 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, const char *block
 		}
 	}
 	sch->blockname[block] = strdup(blockname);
-	if (sch->blockname[block] == NULL) {
+	if (sch->blockname[block] == nullptr) {
 		output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) insufficient memory for block name", sch->name);
 		return 0;
 	}
@@ -462,12 +462,12 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, const char *block
 
 int schedule_recompile_block(SCHEDULE *sch, unsigned char calendar, unsigned char block, char *blockname, char *blockdef)
 {
-	char *token = NULL;
+	char *token = nullptr;
 	unsigned int minute=0;
 
-	if (sch->index[calendar] == NULL)
+	if (sch->index[calendar] == nullptr)
 	{
-		output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') sch->index was NULL", sch->name);
+		output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') sch->index was nullptr", sch->name);
 		return 0;
 	}
 
@@ -478,7 +478,7 @@ int schedule_recompile_block(SCHEDULE *sch, unsigned char calendar, unsigned cha
 		return 0;
 	}
 
-	while ( (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL )
+	while ( (token=strtok(token==nullptr?blockdef:nullptr,";\r\n"))!=nullptr )
 	{
 		struct {
 			const char *name;
@@ -664,7 +664,7 @@ int schedule_recompile(SCHEDULE *sch, unsigned char calendar)
 	unsigned char block;
 	if (sch->index[calendar] == 0) {
 		sch->index[calendar] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
-		if (sch->index[calendar] == NULL) {
+		if (sch->index[calendar] == nullptr) {
 			output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') insufficient memory for index", sch->name);
 			return 0;
 		}
@@ -672,7 +672,7 @@ int schedule_recompile(SCHEDULE *sch, unsigned char calendar)
 	}
 	if (sch->dtnext[calendar] == 0) {
 		sch->dtnext[calendar] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
-		if (sch->dtnext[calendar] == NULL) {
+		if (sch->dtnext[calendar] == nullptr) {
 			output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') insufficient memory for dtnext", sch->name);
 			return 0;
 		}
@@ -695,21 +695,21 @@ int schedule_recompile(SCHEDULE *sch, unsigned char calendar)
  */
 int schedule_compile(SCHEDULE *sch)
 {
-	char *p = const_cast<char*>(sch->definition), *q = NULL;
+	char *p = const_cast<char*>(sch->definition), *q = nullptr;
 	char blockdef[MAXDEFINITION];
 	char blockname[MAXNAME];
 	enum {INIT, NAME, OPEN, BLOCK, CLOSE} state = INIT;
 	int comment=0;
 	
 	/* check to see no blocks are defined */
-	if (strchr(p,'{')==NULL && strchr(p,'}')==NULL)
+	if (strchr(p,'{')==nullptr && strchr(p,'}')==nullptr)
 	{
 		/* this is single block unnamed schedule */
 		/* remove leading whitespace */
 		while (isspace(*p)) p++;
 		strcpy(blockdef,p);
 		sch->blockdef[sch->block] = strdup(p);
-		if (sch->blockdef[sch->block] == NULL) {
+		if (sch->blockdef[sch->block] == nullptr) {
 			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) insufficient memory for block definition", sch->name);
 			return 0;
 		}
@@ -833,10 +833,10 @@ int schedule_compile(SCHEDULE *sch)
 			if (*p=='}')
 			{	/* end block */
 				state = CLOSE;
-				q = NULL;
+				q = nullptr;
 				p++;
 				sch->blockdef[sch->block] = strdup(blockdef);
-				if (sch->blockdef[sch->block] == NULL) {
+				if (sch->blockdef[sch->block] == nullptr) {
 					output_error("schedule %s: block %s insufficient memory for block definition", sch->name, blockname);
 					return 0;
 				}
@@ -960,22 +960,22 @@ int schedule_createwait(void)
 
 /** Create a schedule. 
 	If the schedule has already been defined, the existing structure is returned, otherwise a new one is created. 
-	If the definition is not provided, then the named schedule is searched and NULL is returned if it is not found.
+	If the definition is not provided, then the named schedule is searched and nullptr is returned if it is not found.
 	
 	Example:
 	<code>schedule_create("weekdays 8am-5pm 100%, weekends 9-noon 50%","* 8-17 * * 1-5; * 9-12 * * 0,6 0.5");</code>
 	
-	@return a pointer to the new schedule, NULL if failed
+	@return a pointer to the new schedule, nullptr if failed
  **/
 SCHEDULE *schedule_create(const char *name,		/**< the name of the schedule */
-						  const char *definition)	/**< the definition of the schedule (using crontab format with semicolon delimiters), NULL is only a search */
+						  const char *definition)	/**< the definition of the schedule (using crontab format with semicolon delimiters), nullptr is only a search */
 {
 	/* find the schedule is already defined (by name) */
 	SCHEDULE *sch = schedule_find_byname(name);
 	STATUS result;
-	if (sch!=NULL) 
+	if (sch!=nullptr)
 	{
-		if (definition!=NULL && strcmp(sch->definition,definition)!=0)
+		if (definition!=nullptr && strcmp(sch->definition,definition)!=0)
 		{
 			output_error("schedule_create(char *name='%s', char *definition='%s') definition does not match previous definition of schedule '%s')", name, definition, name);
 			/* TROUBLESHOOT
@@ -987,20 +987,20 @@ SCHEDULE *schedule_create(const char *name,		/**< the name of the schedule */
 	}
 
 	/* create without a definition is simply a search */
-	else if (definition==NULL)
+	else if (definition==nullptr)
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	/* create a new schedule */
 	sch = schedule_new();
-	if (sch==NULL)
+	if (sch==nullptr)
 	{
 		output_error("schedule_create(char *name='%s', char *definition='%s') memory allocation failed)", name, definition);
 		/* TROUBLESHOOT
 			The schedule module could not allocate enough memory to create a schedule item.  Try freeing system memory and try again.
 		 */
-		return NULL;
+		return nullptr;
 	}
 	output_debug("schedule '%s' uses %.1f MB of memory", name, sizeof(SCHEDULE)/1000000.0);
 	if (strlen(name)>=MAXNAME)
@@ -1010,13 +1010,13 @@ SCHEDULE *schedule_create(const char *name,		/**< the name of the schedule */
 			The name given the schedule is too long to be used.  Use a name that is less than 64 characters and try again.
 		 */
 		schedule_free(sch);
-		return NULL;
+		return nullptr;
 	}
 	sch->name = strdup(name);
-	if (sch->name == NULL) {
+	if (sch->name == nullptr) {
 		output_error("schedule_create(char *name='%s', char *definition='%s') insufficient memory for name)", name, definition);
 		schedule_free(sch);
-		return NULL;
+		return nullptr;
 	}
 	if (strlen(definition)>=MAXDEFINITION)
 	{
@@ -1025,13 +1025,13 @@ SCHEDULE *schedule_create(const char *name,		/**< the name of the schedule */
 			The definition given the schedule is too long to be used.  Use a definition that is less than 1024 characters and try again.
 		 */
 		schedule_free(sch);
-		return NULL;
+		return nullptr;
 	}
 	sch->definition = strdup(definition);
-	if (sch->definition == NULL) {
+	if (sch->definition == nullptr) {
 		output_error("schedule_create(char *name='%s', char *definition='%s') insufficient memory for definition)", name, definition);
 		schedule_free(sch);
-		return NULL;
+		return nullptr;
 	}
 
 	/* attach to schedule list */
@@ -1049,8 +1049,8 @@ SCHEDULE *schedule_create(const char *name,		/**< the name of the schedule */
 		{
 			/* error message should be given by schedule_compile */
 			schedule_free(sch);
-			sch = NULL;
-			return NULL;
+			sch = nullptr;
+			return nullptr;
 		}
 	}
 
@@ -1059,11 +1059,11 @@ SCHEDULE *schedule_create(const char *name,		/**< the name of the schedule */
 	{
 		static unsigned int n_threads = 0;
 		static pthread_t thread_id;
-		if ( pthread_create(&thread_id,NULL, reinterpret_cast<void* (*)(void*)>(schedule_createproc),(void*)sch)!=0 )
+		if ( pthread_create(&thread_id,nullptr, reinterpret_cast<void* (*)(void*)>(schedule_createproc),(void*)sch)!=0 )
 		{
 			/* fails so do it inline */
 			output_warning("schedule_createproc failed, schedule '%s' created inline instead", sch->name);
-			return schedule_createproc(sch) ? sch : NULL;
+			return schedule_createproc(sch) ? sch : nullptr;
 		}
 		sc_started++;
 		return sch;
@@ -1081,7 +1081,7 @@ SCHEDULE *schedule_new(void)
 
 	/* create the schedule */
 	SCHEDULE *sch = (SCHEDULE*)malloc(sizeof(SCHEDULE));
-	if (sch==NULL) return NULL;
+	if (sch==nullptr) return nullptr;
 	memset(sch,0,sizeof(SCHEDULE));
 
 	/* only allocate the initial calendar(s) */
@@ -1101,27 +1101,27 @@ SCHEDULE *schedule_new(void)
 
 	/* create the first calendar needed */
 	sch->index[cal] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
-	if (sch->index[cal]==NULL) return NULL;
+	if (sch->index[cal]==nullptr) return nullptr;
 	memset(sch->index[cal],0,sizeof(unsigned char)*MAXMINUTES);
 	sch->dtnext[cal] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
-	if (sch->dtnext[cal]==NULL) return NULL;
+	if (sch->dtnext[cal]==nullptr) return nullptr;
 	memset(sch->dtnext[cal],0,sizeof(unsigned char)*MAXMINUTES);
 	/* create left skewed calendar, if needed */
 	if (cal_lo != cal) {
 		sch->index[cal_lo] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
-		if (sch->index[cal_lo]==NULL) return NULL;
+		if (sch->index[cal_lo]==nullptr) return nullptr;
 		memset(sch->index[cal_lo],0,sizeof(unsigned char)*MAXMINUTES);
 		sch->dtnext[cal_lo] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
-		if (sch->dtnext[cal_lo]==NULL) return NULL;
+		if (sch->dtnext[cal_lo]==nullptr) return nullptr;
 		memset(sch->dtnext[cal_lo],0,sizeof(unsigned char)*MAXMINUTES);
 	}
 	/* create right skewed calendar, if needed */
 	if (cal_hi != cal) {
 		sch->index[cal_hi] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
-		if (sch->index[cal_hi]==NULL) return NULL;
+		if (sch->index[cal_hi]==nullptr) return nullptr;
 		memset(sch->index[cal_hi],0,sizeof(unsigned char)*MAXMINUTES);
 		sch->dtnext[cal_hi] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
-		if (sch->dtnext[cal_hi]==NULL) return NULL;
+		if (sch->dtnext[cal_hi]==nullptr) return nullptr;
 		memset(sch->dtnext[cal_hi],0,sizeof(unsigned char)*MAXMINUTES);
 	}
 
@@ -1498,7 +1498,7 @@ void *schedule_syncproc(void *ptr)
 
 		// process the list for this thread
 		t2 = TS_NEVER;
-		for ( sch=data->sch, n=0 ; sch!=NULL, n<data->nsch ; sch=sch->next, n++ )
+		for ( sch=data->sch, n=0 ; sch!=nullptr, n<data->nsch ; sch=sch->next, n++ )
 		{
 			TIMESTAMP t = schedule_sync(sch,next_t1_sch);
 			if (t<t2) t2 = t;
@@ -1530,7 +1530,7 @@ void *schedule_syncproc(void *ptr)
 TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is synchronized */
 {
 	static unsigned int n_threads_sch=0;
-	static SCHEDULESYNCDATA *thread_sch = NULL;
+	static SCHEDULESYNCDATA *thread_sch = nullptr;
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t ts = (clock_t)exec_clock();
 
@@ -1573,7 +1573,7 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 			memset(thread_sch,0,sizeof(SCHEDULESYNCDATA)*n_threads_sch);
 
 			// assign starting shape for each thread
-			for (sch=schedule_list; sch!=NULL; sch=sch->next)
+			for (sch=schedule_list; sch!=nullptr; sch=sch->next)
 			{
 				if (thread_sch[schn].nsch==n_items)
 					schn++;
@@ -1586,7 +1586,7 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 			for (n=0; n<n_threads_sch; n++)
 			{
 				thread_sch[n].ok = true;
-				if ( pthread_create(&(thread_sch[n].pt),NULL,schedule_syncproc,&(thread_sch[n]))!=0 )
+				if ( pthread_create(&(thread_sch[n].pt),nullptr,schedule_syncproc,&(thread_sch[n]))!=0 )
 				{
 					output_fatal("loadshape_sync thread creation failed");
 					thread_sch[n].ok = false;
@@ -1610,7 +1610,7 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 	{
 		// process list directly
 		SCHEDULE *sch;
-		for (sch=schedule_list; sch!=NULL; sch=sch->next)
+		for (sch=schedule_list; sch!=nullptr; sch=sch->next)
 		{
 			TIMESTAMP t3 = schedule_sync(sch,t1);
 			if (t3<t2) t2 = t3;
@@ -1671,16 +1671,16 @@ int schedule_test(void)
 		/* schedule name	schedule definition							sync time				next time expected		normalize	value expected */
 		{"empty",			"", 										"2000/01/01 00:00:00",	"NEVER",				0,			 0.0},
 		{"halfday-binary",	"* 12-23 * * *",							"2001/02/03 01:30:00",	"2001/02/03 12:00:00",	0,			 0.0},
-		{"halfday-binary",	NULL,										"2002/03/05 13:45:00",	"2002/03/06 00:00:00",	0,			 1.0},
+		{"halfday-binary",	nullptr,										"2002/03/05 13:45:00",	"2002/03/06 00:00:00",	0,			 1.0},
 		{"halfday-bimodal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2003/04/07 01:15:00",	"2003/04/07 12:00:00",	0,			 0.25},
 		{"halfday-bimodal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2004/05/09 00:00:00",	"2004/05/09 12:00:00",	0,			 0.25},
-		{"halfday-bimodal",	NULL,										"2005/06/11 13:20:00",	"2005/06/12 00:00:00",	0,			 0.75},
-		{"halfday-bimodal",	NULL,										"2006/07/13 12:00:00",	"2006/07/14 00:00:00",	0,			 0.75},
-		{"halfday-bimodal",	NULL,										"2007/08/15 00:00:00",	"2007/08/15 12:00:00",	0,			 0.25},
+		{"halfday-bimodal",	nullptr,										"2005/06/11 13:20:00",	"2005/06/12 00:00:00",	0,			 0.75},
+		{"halfday-bimodal",	nullptr,										"2006/07/13 12:00:00",	"2006/07/14 00:00:00",	0,			 0.75},
+		{"halfday-bimodal",	nullptr,										"2007/08/15 00:00:00",	"2007/08/15 12:00:00",	0,			 0.25},
 		{"quarterday-normal", "* 0-5 * * *; * 12-17 * * *;",			"2008/09/17 00:00:00",	"2008/09/17 06:00:00",	SN_WEIGHTED, 0.5},
-		{"quarterday-normal", NULL,										"2009/10/19 06:00:00",	"2009/10/19 12:00:00",	SN_WEIGHTED, 0.0},
-		{"quarterday-normal", NULL,										"2010/11/21 12:00:00",	"2010/11/21 18:00:00",	SN_WEIGHTED, 0.5},
-		{"quarterday-normal", NULL,										"2011/12/23 18:00:00",	"2011/12/24 00:00:00",	SN_WEIGHTED, 0.0},
+		{"quarterday-normal", nullptr,										"2009/10/19 06:00:00",	"2009/10/19 12:00:00",	SN_WEIGHTED, 0.0},
+		{"quarterday-normal", nullptr,										"2010/11/21 12:00:00",	"2010/11/21 18:00:00",	SN_WEIGHTED, 0.5},
+		{"quarterday-normal", nullptr,										"2011/12/23 18:00:00",	"2011/12/24 00:00:00",	SN_WEIGHTED, 0.0},
 	};
 
 	output_test("\nBEGIN: schedule tests");
@@ -1690,7 +1690,7 @@ int schedule_test(void)
 		int errors=0;
 		SCHEDULE *s = schedule_create(p->name, p->def);
 		output_test("Schedule %s { %s } sync to %s...", p->name, p->def?p->def:(s?s->definition:"???"), convert_from_timestamp(t1,ts,sizeof(ts))?ts:"???");
-		if (s==NULL)
+		if (s==nullptr)
 		{
 			output_test(" ! schedule %s { %s } create failed", p->name, p->def);
 			errors++;
@@ -1740,7 +1740,7 @@ int schedule_test(void)
 void schedule_dumpall(char *file)
 {
 	SCHEDULE *sch;
-	for (sch=schedule_list; sch!=NULL; sch=sch->next)
+	for (sch=schedule_list; sch!=nullptr; sch=sch->next)
 		schedule_dump(sch, file, const_cast<char *>(sch == schedule_list ? "w" : "a"));
 }
 
@@ -1819,7 +1819,7 @@ int schedule_saveall(FILE *fp)
 {
 	int count = fprintf(fp,"%s\n","// schedules");
 	SCHEDULE *sch;
-	for (sch=schedule_list; sch!=NULL; sch=sch->next)
+	for (sch=schedule_list; sch!=nullptr; sch=sch->next)
 		count += fprintf(fp,"schedule %s {\n%s\n}\n", sch->name, sch->definition);
 	return count;
 }

@@ -119,11 +119,11 @@
 #include "engine.h"
 
 // matlab implementation data
-Engine *engine=NULL;
+Engine *engine=nullptr;
 char output[4096];
 PASSCONFIG passconfig;
-CLASS *oclass=NULL;
-mxArray *defaults = NULL;
+CLASS *oclass=nullptr;
+mxArray *defaults = nullptr;
 char *matlab_server = ""; // use "standalone" to engage single use servers for each run
 bool debugmode = false;
 
@@ -148,7 +148,7 @@ int object_from_string(void *addr, char *value)
 int object_to_string(void *addr, char *value, int size)
 {
 	mxArray **my = (mxArray**)addr;
-	if (*my!=NULL)
+	if (*my!=nullptr)
 	{
 		engPutVariable(engine,"object",*my);
 		engEvalString(engine,"disp(char(object));");
@@ -161,10 +161,10 @@ int object_to_string(void *addr, char *value, int size)
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
-	if (set_callback(fntable)==NULL)
+	if (set_callback(fntable)==nullptr)
 	{
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
 	// open a connection to the Matlab engine
@@ -173,13 +173,13 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	if (gl_global_getvar("matlab_server",server,sizeof(server)))
 		matlab_server = server;
 	if (strcmp(matlab_server,"standalone")==0)
-		engine = engOpenSingleUse(NULL,NULL,&status);
+		engine = engOpenSingleUse(nullptr,nullptr,&status);
 	else
 		engine = engOpen(matlab_server);
-	if (engine==NULL)
+	if (engine==nullptr)
 	{
 		gl_error("unable to start Matlab engine (code %d)",status);
-		return NULL;
+		return nullptr;
 	}
 
 	// prepare session
@@ -211,15 +211,15 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 			{"NOSYNC",PC_NOSYNC,keys+1},
 			{"PRETOPDOWN",PC_PRETOPDOWN,keys+2},
 			{"BOTTOMUP",PC_BOTTOMUP,keys+3},
-			{"POSTTOPDOWN",PC_POSTTOPDOWN,NULL},
+			{"POSTTOPDOWN",PC_POSTTOPDOWN,nullptr},
 		};
-		PROPERTY pctype = {0,"passconfig",PT_set,1,PA_PUBLIC,NULL,&passconfig,NULL,keys,NULL};
+		PROPERTY pctype = {0,"passconfig",PT_set,1,PA_PUBLIC,nullptr,&passconfig,nullptr,keys,nullptr};
 		set passdata;
 		if (mxGetString(pcfg,passinfo,sizeof(passinfo))==0 && callback->convert.string_to_property(&pctype,&passdata,passinfo)>0)
 		{
 			passconfig = (PASSCONFIG)passdata;
 			oclass=gl_register_class(module,argv[0],passconfig);
-			if (oclass==NULL)
+			if (oclass==nullptr)
 				gl_error("unable to register '%s' as a class",argv[0]);
 
 			DELEGATEDTYPE *pDelegate = new DELEGATEDTYPE;
@@ -227,7 +227,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 			strncpy(pDelegate->type,"matlab",sizeof(pDelegate->type));
 			pDelegate->from_string = object_from_string;
 			pDelegate->to_string = object_to_string;
-			if (gl_publish_variable(oclass,PT_delegated,pDelegate,"data",0,NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			if (gl_publish_variable(oclass,PT_delegated,pDelegate,"data",0,nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		}
 		else
@@ -256,7 +256,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 
 #ifdef OPTIONAL
 	/* TODO: publish global variables (see class_define_map() for details) */
-	gl_global_create(char *name, ..., NULL);
+	gl_global_create(char *name, ..., nullptr);
 	/* TODO: use gl_global_setvar, gl_global_getvar, and gl_global_find for access */
 #endif
 
@@ -269,7 +269,7 @@ EXPORT int create_matlab(OBJECT **obj, OBJECT *parent)
 	try 
 	{
 		*obj = gl_create_object(oclass,sizeof(mxArray*));
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			gl_set_parent(*obj,parent);
 			char createcall[1024];
@@ -282,7 +282,7 @@ EXPORT int create_matlab(OBJECT **obj, OBJECT *parent)
 			if (parent)
 			{
 				// @todo transfer parent data in matlab create call
-				mxArray *pParent = mxCreateStructMatrix(0,0,0,NULL);
+				mxArray *pParent = mxCreateStructMatrix(0,0,0,nullptr);
 				engPutVariable(engine,"parent",pParent);
 				sprintf(createcall,"create(object,parent)");
 			}
@@ -301,7 +301,7 @@ EXPORT int create_matlab(OBJECT **obj, OBJECT *parent)
 				*my = engGetVariable(engine,"ans");
 			else
 			{
-				*my = NULL;
+				*my = nullptr;
 				gl_error("matlab::@%s/create(...) failed to return an object of class %s",oclass->name,oclass->name);
 				throw "create failed";
 			}
@@ -321,7 +321,7 @@ EXPORT int init_matlab(OBJECT *obj, OBJECT *parent)
 {
 	try 
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 		{
 			char initcall[1024];
 			// @todo transfer parent data in matlab init call
@@ -334,7 +334,7 @@ EXPORT int init_matlab(OBJECT *obj, OBJECT *parent)
 			if (parent)
 			{
 				// @todo transfer parent data in matlab init call
-				mxArray *pParent = mxCreateStructMatrix(0,0,0,NULL);
+				mxArray *pParent = mxCreateStructMatrix(0,0,0,nullptr);
 				engPutVariable(engine,"parent",pParent);
 				sprintf(initcall,"init(object,parent)",oclass->name);
 			}
@@ -348,7 +348,7 @@ EXPORT int init_matlab(OBJECT *obj, OBJECT *parent)
 			if (ans && mxIsClass(ans,oclass->name))
 			{
 				mxArray **my = OBJECTDATA(obj,mxArray*);
-				if (*my!=NULL)
+				if (*my!=nullptr)
 					mxFree(*my);
 				*my = mxDuplicateArray(ans);
 				return 1;
@@ -416,7 +416,7 @@ EXPORT TIMESTAMP sync_matlab(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 			if (mxIsClass(ans,oclass->name))
 			{
 				mxArray **my = OBJECTDATA(obj,mxArray*);
-				if (*my!=NULL)
+				if (*my!=nullptr)
 					mxFree(*my);
 				*my = mxDuplicateArray(ans);
 			}

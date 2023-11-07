@@ -176,7 +176,7 @@ load::load(MODULE *mod) : node(mod)
 				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
 				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
 
-         	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+         	nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_load)==nullptr)

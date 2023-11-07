@@ -59,19 +59,19 @@
 //////////////////////////////////////////////////////////////////////////
 // underground_line_conductor CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* refrigerator::oclass = NULL;
-CLASS *refrigerator::pclass = NULL;
+CLASS* refrigerator::oclass = nullptr;
+CLASS *refrigerator::pclass = nullptr;
 
 refrigerator::refrigerator(MODULE *module) : residential_enduse(module)
 {
 	// first time init
-	if (oclass == NULL)
+	if (oclass == nullptr)
 	{
 		pclass = residential_enduse::oclass;
 
 		// register the class definition
 		oclass = gl_register_class(module,"refrigerator",sizeof(refrigerator),PC_PRETOPDOWN | PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 			/* TROUBLESHOOT
 				The file that implements the lights in the residential module cannot register the class.
@@ -130,7 +130,7 @@ refrigerator::refrigerator(MODULE *module) : residential_enduse(module)
 				PT_KEYWORD,"COMPRESSSOR_OFF_NORMAL",(enumeration)RS_COMPRESSSOR_OFF_NORMAL,
 				PT_KEYWORD,"COMPRESSSOR_ON_LONG",(enumeration)RS_COMPRESSSOR_ON_LONG,
 				PT_KEYWORD,"COMPRESSSOR_ON_NORMAL",(enumeration)RS_COMPRESSSOR_ON_NORMAL,
-			NULL) < 1)
+			nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 	}
 }
@@ -160,7 +160,7 @@ int refrigerator::create()
 int refrigerator::init(OBJECT *parent)
 {
 
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("refrigerator::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -182,7 +182,7 @@ int refrigerator::init(OBJECT *parent)
 	if (load.power_factor==0)		load.power_factor = 0.95;
 
 	pTout = (double*)gl_get_addr(parent, "air_temperature");
-	if (pTout==NULL)
+	if (pTout==nullptr)
 	{
 		static double default_air_temperature = 72;
 		gl_warning("%s (%s:%d) parent object lacks air temperature, using %0f degF instead", hdr->name, hdr->oclass->name, hdr->id, default_air_temperature);
@@ -771,7 +771,7 @@ EXPORT int create_refrigerator(OBJECT **obj, OBJECT *parent)
 {
 	
 	*obj = gl_create_object(refrigerator::oclass);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		refrigerator *my = OBJECTDATA(*obj,refrigerator);;
 		gl_set_parent(*obj,parent);

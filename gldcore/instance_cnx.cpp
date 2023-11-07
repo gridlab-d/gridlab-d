@@ -8,7 +8,7 @@ STATUS instance_cnx_mmap(instance *inst){
 #ifdef _WIN32
 		char cachename[1024];
 		char eventname[64];
-		SECURITY_ATTRIBUTES secAttr = {sizeof(SECURITY_ATTRIBUTES),(LPSECURITY_ATTRIBUTES)NULL,TRUE}; 
+		SECURITY_ATTRIBUTES secAttr = {sizeof(SECURITY_ATTRIBUTES),(LPSECURITY_ATTRIBUTES)nullptr,TRUE};
 
 		if(inst == 0){
 			output_error("instance_cnx_mmap: no instance provided");
@@ -139,7 +139,7 @@ STATUS instance_cnx_socket(instance *inst){
 	// un-mangle hostname
 	colon = strchr(inst->hostname, ':');
 	if(colon != 0){
-		inst->port = (unsigned short)strtol(colon+1, NULL, 10);
+		inst->port = (unsigned short)strtol(colon+1, nullptr, 10);
 		*colon = 0;
 	}
 	// create socket
@@ -474,24 +474,24 @@ STATUS instance_cnx_socket(instance *inst){
 	/* NOTICE: any data recv'ed from inst->sockfd may actually be stdio from the slave */
 
 	// init socket lock & condition
-	rv = pthread_mutex_init(&inst->sock_lock,NULL);
+	rv = pthread_mutex_init(&inst->sock_lock,nullptr);
 	if(rv != 0){
 		output_error("error with pthread_mutex_init() in instance_cnx_socket()");
 		return FAILED;
 	}
-	rv = pthread_cond_init(&inst->sock_signal,NULL);
+	rv = pthread_cond_init(&inst->sock_signal,nullptr);
 	if(rv != 0){
 		output_error("error with pthread_cond_init() in instance_cnx_socket()");
 		return FAILED;
 	}
 	sock_created = 1;
 
-	rv = pthread_mutex_init(&inst->wait_lock,NULL);
+	rv = pthread_mutex_init(&inst->wait_lock,nullptr);
 	if(rv != 0){
 		output_error("error with pthread_mutex_init() in instance_cnx_socket()");
 		return FAILED;
 	}
-	rv = pthread_cond_init(&inst->wait_signal,NULL);
+	rv = pthread_cond_init(&inst->wait_signal,nullptr);
 	if(rv != 0){
 		output_error("error with pthread_cond_init() in instance_cnx_socket()");
 		return FAILED;

@@ -43,18 +43,18 @@
 	#define DLERR dlerror()
 #endif
 
-glxlink *glxlink::first = NULL;
+glxlink *glxlink::first = nullptr;
 
 LINKLIST * glxlink::add_global(char *name)
 {
 	LINKLIST *item = new LINKLIST;
-	if ( item==NULL ) return NULL;
+	if ( item==nullptr ) return nullptr;
 	item->next = globals;
-	item->data = NULL;
+	item->data = nullptr;
 	item->name = (char*)malloc(strlen(name)+1);
-	item->addr = NULL;
+	item->addr = nullptr;
 	item->size = 0;
-	if ( item->name==NULL ) return NULL;
+	if ( item->name==nullptr ) return nullptr;
 	strcpy(item->name,name);
 	globals = item;
 	return item;
@@ -64,9 +64,9 @@ LINKLIST * glxlink::add_object(char *name)
 {
 	LINKLIST *item = new LINKLIST;
 	item->next = objects;
-	item->data = NULL;
+	item->data = nullptr;
 	item->name = (char*)malloc(strlen(name)+1);
-	item->addr = NULL;
+	item->addr = nullptr;
 	item->size = 0;
 	strcpy(item->name,name);
 	objects = item;
@@ -77,9 +77,9 @@ LINKLIST * glxlink::add_export(char *name)
 {
 	LINKLIST *item = new LINKLIST;
 	item->next = exports;
-	item->data = NULL;
+	item->data = nullptr;
 	item->name = (char*)malloc(strlen(name)+1);
-	item->addr = NULL;
+	item->addr = nullptr;
 	item->size = 0;
 	strcpy(item->name,name);
 	exports = item;
@@ -90,9 +90,9 @@ LINKLIST * glxlink::add_import(char *name)
 {
 	LINKLIST *item = new LINKLIST;
 	item->next = imports;
-	item->data = NULL;
+	item->data = nullptr;
 	item->name = (char*)malloc(strlen(name)+1);
-	item->addr = NULL;
+	item->addr = nullptr;
 	item->size = 0;
 	strcpy(item->name,name);
 	imports = item;
@@ -123,22 +123,22 @@ int link_initall(void)
 {
 	output_debug("link_initall(): link startup in progress...");
 	glxlink *mod;
-	for ( mod=glxlink::get_first() ; mod!=NULL ; mod=mod->get_next() )
+	for ( mod=glxlink::get_first() ; mod!=nullptr ; mod=mod->get_next() )
 	{
 		LINKLIST *item;
 
 		output_debug("link_initall(): setting up %s link", mod->get_target());
 
 		// set default global list (if needed)
-		if ( mod->get_globals()==NULL )
+		if ( mod->get_globals()==nullptr )
 		{
-			GLOBALVAR *var = NULL;
-			while ( (var=global_getnext(var))!=NULL )
+			GLOBALVAR *var = nullptr;
+			while ( (var=global_getnext(var))!=nullptr )
 			{
-				if ( var->prop!=NULL && var->prop->name!=NULL )
+				if ( var->prop!=nullptr && var->prop->name!=nullptr )
 				{
 					LINKLIST *item = mod->add_global(var->prop->name);
-					if ( item!=NULL )
+					if ( item!=nullptr )
 						item->data = (void*)var;
 					else
 						output_error("link_initall(): unable to link %s", var->prop->name);
@@ -150,25 +150,25 @@ int link_initall(void)
 		else 
 		{
 			// link global variables
-			for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
+			for ( item=mod->get_globals() ; item!=nullptr ; item=mod->get_next(item) )
 			{
 				if ( strcmp(item->name,"")==0 ) continue;
 				item->data = (void*)global_find(item->name);
-				if ( item->data==NULL )
+				if ( item->data==nullptr )
 					output_error("link_initall(target='%s'): global '%s' is not found", mod->get_target(), item->name);
 			}
 		}
 
 		// link objects
-		if ( mod->get_objects()==NULL )
+		if ( mod->get_objects()==nullptr )
 		{
 			// set default object list
-			OBJECT *obj = NULL;
-			for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
+			OBJECT *obj = nullptr;
+			for ( obj=object_get_first() ; obj!=nullptr ; obj=object_get_next(obj) )
 			{
 				// add named objects
-				LINKLIST *item = NULL;
-				if ( obj->name!=NULL )
+				LINKLIST *item = nullptr;
+				if ( obj->name!=nullptr )
 					item = mod->add_object(obj->name);
 				else
 				{
@@ -184,18 +184,18 @@ int link_initall(void)
 			LINKLIST *item;
 
 			// link global variables
-			for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
+			for ( item=mod->get_objects() ; item!=nullptr ; item=mod->get_next(item) )
 			{
 				if ( strcmp(item->name,"")==0 ) continue;
-				OBJECT *obj = NULL;
+				OBJECT *obj = nullptr;
 				item->data = (void*)object_find_name(item->name);
-				if ( item->data==NULL)
+				if ( item->data==nullptr)
 					output_error("link_initall(target='%s'): object '%s' is not found", mod->get_target(), item->name);
 			}
 		}
 
 		// link exports
-		for ( item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+		for ( item=mod->get_exports() ; item!=nullptr ; item=mod->get_next(item) )
 		{
 			char objname[64], propname[64], varname[64];
 			if ( sscanf(item->name,"%[^.].%s %s",objname,propname,varname)==3 )
@@ -205,7 +205,7 @@ int link_initall(void)
 				if ( objprop->obj )
 				{
 					objprop->prop = class_find_property(objprop->obj->oclass,propname);
-					if ( objprop->prop==NULL )
+					if ( objprop->prop==nullptr )
 						output_error("link_initall(target='%s'): export '%s' property not found", mod->get_target(), item->name);
 					else
 					{
@@ -221,7 +221,7 @@ int link_initall(void)
 		}
 
 		// link imports
-		for ( item=mod->get_imports() ; item!=NULL ; item=mod->get_next(item) )
+		for ( item=mod->get_imports() ; item!=nullptr ; item=mod->get_next(item) )
 		{
 			char objname[64], propname[64], varname[64];
 			if ( sscanf(item->name,"%[^.].%s %s",objname,propname,varname)==3 )
@@ -231,7 +231,7 @@ int link_initall(void)
 				if ( objprop->obj )
 				{
 					objprop->prop = class_find_property(objprop->obj->oclass,propname);
-					if ( objprop->prop==NULL )
+					if ( objprop->prop==nullptr )
 						output_error("link_initall(target='%s'): import '%s' property not found", mod->get_target(), item->name);
 					else
 					{
@@ -263,7 +263,7 @@ TIMESTAMP link_syncall(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = TS_NEVER;
 	glxlink *mod;
-	for ( mod=glxlink::get_first() ; mod!=NULL ; mod=mod->get_next() )
+	for ( mod=glxlink::get_first() ; mod!=nullptr ; mod=mod->get_next() )
 	{
 		TIMESTAMP t2 = mod->do_sync(t0);
 		if ( absolute_timestamp(t2)<absolute_timestamp(t1) ) t1 = t2;
@@ -275,7 +275,7 @@ int link_termall(void)
 {
 	bool ok = true;
 	glxlink *mod;
-	for ( mod=glxlink::get_first() ; mod!=NULL ; mod=mod->get_next() )
+	for ( mod=glxlink::get_first() ; mod!=nullptr ; mod=mod->get_next() )
 	{
 		output_debug("link_initall(): terminating %s link...",mod->get_target());
 		if ( !mod->do_term() ) ok = false;
@@ -287,27 +287,27 @@ int link_termall(void)
 glxlink::glxlink(char *filename)
 {
 	bool ok = true;
-	globals = NULL;
-	imports = NULL;
-	exports = NULL;
-	objects = NULL;
-	handle = NULL;
-	settag = NULL;
-	init = NULL;
-	sync = NULL;
-	term = NULL;
+	globals = nullptr;
+	imports = nullptr;
+	exports = nullptr;
+	objects = nullptr;
+	handle = nullptr;
+	settag = nullptr;
+	init = nullptr;
+	sync = nullptr;
+	term = nullptr;
 	glxflags = 0;
 	valid_to = 0;
 	last_t = 0;
 
 	FILE *fp = fopen(filename,"rt");
-	if ( fp==NULL )
+	if ( fp==nullptr )
 		throw "file open failed";
 	output_debug("opened link '%s'", filename);
 
 	char line[1024];
 	int linenum=0;
-	while ( fgets(line,sizeof(line),fp)!=NULL )
+	while ( fgets(line,sizeof(line),fp)!=nullptr )
 	{
 		linenum++;
 		if ( line[0]=='#' ) continue;
@@ -315,7 +315,7 @@ glxlink::glxlink(char *filename)
 		if ( sscanf(line,"%s %[^\r\n]",tag,data)>0 )
 		{
 			output_debug("%s(%d): %s %s", filename, linenum, tag,data);
-			if ( settag!=NULL )
+			if ( settag!=nullptr )
 			{
 				if ( strcmp(tag,"global")==0 )
 				{
@@ -366,11 +366,11 @@ bool glxlink::set_target(char *name)
 	char libname[1024];
 	char path[1024];
 	sprintf(libname,PREFIX "glx%s" DLEXT,name);
-	if ( find_file(libname,nullptr,X_OK|R_OK,path,sizeof(path))!=NULL )
+	if ( find_file(libname,nullptr,X_OK|R_OK,path,sizeof(path))!=nullptr )
 	{
 		// load library
 		handle = DLLOAD(path);
-		if ( handle==NULL )
+		if ( handle==nullptr )
 		{
 			output_error("unable to load '%s' for target '%s': %s", path,name,DLERR);
 			return false;
@@ -384,7 +384,7 @@ bool glxlink::set_target(char *name)
 
 		// call create routine
 		bool (*create)(glxlink*,CALLBACKS*) = (bool(*)(glxlink*,CALLBACKS*))DLSYM(handle,"glx_create");
-		if ( create!=NULL && create(this,module_callbacks()) )
+		if ( create!=nullptr && create(this,module_callbacks()) )
 		{
 			strcpy(target,name);
 			return true;

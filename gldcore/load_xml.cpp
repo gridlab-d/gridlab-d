@@ -36,7 +36,7 @@ XERCES_CPP_NAMESPACE_USE
 }*/
 
 STATUS loadall_xml(const char *filename){
-	if(filename == NULL)
+	if(filename == nullptr)
 		return FAILED;
 	try{
 		XMLPlatformUtils::Initialize();

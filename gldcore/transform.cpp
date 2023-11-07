@@ -69,7 +69,7 @@ char *gldvar_getstring(GLDVAR *var, unsigned int n, char *buffer, int size)
 		return buffer;
 	}
 	else
-		return strncpy(buffer,"NULL",size);
+		return strncpy(buffer,"nullptr",size);
 }
 UNIT *gldvar_getunits(GLDVAR *var, unsigned int n)
 {
@@ -395,7 +395,7 @@ TIMESTAMP apply_filter(TRANSFERFUNCTION *f,	///< transfer function
 	return ((int64)(t1/f->timestep)+1)*f->timestep + f->timeskew;
 }
 
-/** apply the transform, source is optional and xform.source is used when source is NULL 
+/** apply the transform, source is optional and xform.source is used when source is nullptr
     @return timestamp for next update, TS_NEVER for none, TS_INVALID for error
 **/
 TIMESTAMP transform_apply(TIMESTAMP t1, TRANSFORM *xform, double *source, double *dm_time)

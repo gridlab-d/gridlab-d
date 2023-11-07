@@ -192,7 +192,7 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
 				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
 
-			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
+			nullptr) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
 
 			//Publish deltamode functions
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
@@ -2308,7 +2308,7 @@ void link_object::NR_link_sync_fxn(void)
 			if (status != prev_status)
 			{
 				//See if we're deltamode and a fault_check object exists
-				if (fault_check_object != NULL)
+				if (fault_check_object != nullptr)
 				{
 					if (deltatimestep_running > 0)
 					{
@@ -2316,7 +2316,7 @@ void link_object::NR_link_sync_fxn(void)
 						topo_update_function = gl_get_function(fault_check_object,"rescan_topology");
 
 						//Make sure it worked
-						if (topo_update_function == NULL)
+						if (topo_update_function == nullptr)
 						{
 							GL_THROW("link:%d - %s - failed to map fault_check rescan_topology function",obj->id,(obj->name?obj->name:"Unnamed"));
 							/*  TROUBLESHOOT
@@ -5069,7 +5069,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		//Default switch_val - special case
 		switch_val = false;
 
-		//Protective device set to NULL (should already be this way, but just in case)
+		//Protective device set to nullptr (should already be this way, but just in case)
 		*protect_obj = nullptr;
 
 		//Default repair time is non-existant
@@ -8004,7 +8004,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		//Default switch_val - special case
 		switch_val = false;
 
-		//Protective device set to NULL (should already be this way, but just in case)
+		//Protective device set to nullptr (should already be this way, but just in case)
 		*protect_obj = nullptr;
 
 		//Default repair time is non-existant
@@ -14786,7 +14786,7 @@ void link_object::lmatrix_add(gld::complex *matrix_in_A, gld::complex *matrix_in
 	int jindex, kindex;
 	OBJECT *obj = OBJECTHDR(this);
 
-	//Initial check - make sure nothing NULL has been passed
+	//Initial check - make sure nothing nullptr has been passed
 	if ((matrix_in_A == nullptr) || (matrix_in_B == nullptr) || (matrix_out == nullptr))
 	{
 		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));
@@ -14822,7 +14822,7 @@ void link_object::lmatrix_mult(gld::complex *matrix_in_A, gld::complex *matrix_i
 	int jindex, kindex, lindex;
 	OBJECT *obj = OBJECTHDR(this);
 
-	//Initial check - make sure nothing NULL has been passed
+	//Initial check - make sure nothing nullptr has been passed
 	if ((matrix_in_A == nullptr) || (matrix_in_B == nullptr) || (matrix_out == nullptr))
 	{
 		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));
@@ -14864,7 +14864,7 @@ void link_object::lmatrix_vmult(gld::complex *matrix_in, gld::complex *vector_in
 	int jindex, kindex;
 	OBJECT *obj = OBJECTHDR(this);
 
-	//Initial check - make sure nothing NULL has been passed
+	//Initial check - make sure nothing nullptr has been passed
 	if ((matrix_in == nullptr) || (vector_in == nullptr) || (vector_out == nullptr))
 	{
 		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));

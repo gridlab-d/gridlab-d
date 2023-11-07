@@ -137,7 +137,7 @@ powerflow_object::powerflow_object(MODULE *mod)
 				PT_KEYWORD, "NORMAL", PS_NORMAL,
 				PT_KEYWORD, "OUTAGE", PS_OUTAGE,
 #endif
-         	NULL) < 1) GL_THROW("unable to publish powerflow_object properties in %s",__FILE__);
+         	nullptr) < 1) GL_THROW("unable to publish powerflow_object properties in %s",__FILE__);
 
 		// set defaults
 	}

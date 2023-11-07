@@ -27,11 +27,11 @@ bool debug_window = FALSE;
 
 ////////////////////////////////////////////////////////////////////////////////
 // notification handler
-static NOTIFICATION *first_notice = NULL;
+static NOTIFICATION *first_notice = nullptr;
 bool add_notification(OBJECT *target, PROPERTY *prop, OBJECT *recipient, int (*call)(NOTIFICATION*))
 {
 	NOTIFICATION *item = (NOTIFICATION*)malloc(sizeof(NOTIFICATION));
-	if ( item==NULL ) return false;
+	if ( item==nullptr ) return false;
 	item->recipient = recipient;
 	item->target = target;
 	item->prop = prop;
@@ -43,7 +43,7 @@ bool add_notification(OBJECT *target, PROPERTY *prop, OBJECT *recipient, int (*c
 EXPORT int notify_debug(OBJECT *obj, int type, PROPERTY *prop, char *value)
 {
 	NOTIFICATION *notice;
-	for ( notice=first_notice ; notice!=NULL ; notice=notice->next )
+	for ( notice=first_notice ; notice!=nullptr ; notice=notice->next )
 	{
 		// check if this is the notice of interest
 		if ( notice->target==obj && notice->prop==prop )
@@ -57,13 +57,13 @@ EXPORT int notify_debug(OBJECT *obj, int type, PROPERTY *prop, char *value)
 }
 ////////////////////////////////////////////////////////////////////////////////
 // class implementation
-CLASS *g_debug::oclass = NULL;
-g_debug *g_debug::defaults = NULL;
+CLASS *g_debug::oclass = nullptr;
+g_debug *g_debug::defaults = nullptr;
 
 unsigned long g_debug::history_next = 0;
 unsigned long g_debug::command_num = 0;
 unsigned long g_debug::history_size = 5;
-char **g_debug::history = NULL;
+char **g_debug::history = nullptr;
 
 bool break_on = false;
 void break_enable(void)
@@ -88,11 +88,11 @@ void break_disable(void)
 
 g_debug::g_debug(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gld_class::create(module,"debug",sizeof(g_debug),PC_BOTTOMUP|PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class debug";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -133,7 +133,7 @@ g_debug::g_debug(MODULE *module)
 			PT_char1024, "upper", get_value2_offset(),PT_DESCRIPTION,"the upper bound to compare with for interval tests",
 			PT_set,"options", get_options_offset(), PT_DESCRIPTION,"debugging options",
 				PT_KEYWORD,"DETAILS",(gld::set)DBO_DETAILS,
-			NULL)<1)
+			nullptr)<1)
 		{
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
@@ -163,10 +163,10 @@ int g_debug::init(OBJECT *parent)
 	if ( get_parent() )
 		message("%s init(OBJECT *parent={name:'%s';...})",buffer,get_parent()->get_name());
 	else
-		message("%s init(OBJECT *parent=NULL)",buffer);
+		message("%s init(OBJECT *parent=nullptr)",buffer);
 
 	// find target
-	if ( get_parent()!=NULL )
+	if ( get_parent()!=nullptr )
 	{
 		char pname[1024];
 		strcpy(pname, get_parent()->get_name());
@@ -311,7 +311,7 @@ size_t g_debug::message(char *fmt, ...)
 			gld_clock now;
 			len = fprintf(stdout,"\nDEBUG [%s] %s %u%s ",
 				now.to_string(buffer,sizeof(buffer))>0?buffer:"???", get_name(), command_num,fmt?":":">");
-			if ( fmt!=NULL )
+			if ( fmt!=nullptr )
 			{
 				len += vfprintf(stdout,fmt,ptr);
 			}
@@ -344,7 +344,7 @@ bool g_debug::get_command(void)
 		fgets(buffer,sizeof(buffer),stdin); 
 		char cmd[64];
 		char args[1024]="";
-		char *last = (history[(history_next-1)%history_size]==NULL) ? NULL : history[(history_next-1)%history_size];
+		char *last = (history[(history_next-1)%history_size]==nullptr) ? nullptr : history[(history_next-1)%history_size];
 
 		// repeat history commands
 		if ( buffer[0]=='!' )
@@ -354,7 +354,7 @@ bool g_debug::get_command(void)
 			else if ( strlen(buffer)>2 ) // include \n
 			{ // older command
 				int n = atoi(buffer+1)%history_size;
-				if ( history[n]!=NULL )
+				if ( history[n]!=nullptr )
 				{
 					strcpy(buffer,history[n]);
 					message(buffer);
@@ -412,9 +412,9 @@ bool g_debug::get_command(void)
 				abort();
 			else
 				message("command '%s' not found",cmd);
-			if ( last==NULL || strcmp(last,buffer)!=0 )
+			if ( last==nullptr || strcmp(last,buffer)!=0 )
 			{
-				if ( history[history_next]!=NULL ) free(history[history_next]);
+				if ( history[history_next]!=nullptr ) free(history[history_next]);
 				history[history_next] = (char*)malloc(strlen(buffer)+1);
 				strcpy(history[history_next++],buffer);
 				if ( history_next==history_size )
@@ -510,7 +510,7 @@ bool g_debug::cmd_list(char *args)
 	}
 
 	gld_objlist list;
-	if ( strlen(args)==0 || strchr(args,'=')!=NULL ) // full search
+	if ( strlen(args)==0 || strchr(args,'=')!=nullptr ) // full search
 		list.set(args);
 	else if ( strlen(args)>0 ) // just class name
 	{
@@ -608,7 +608,7 @@ bool g_debug::cmd_print(char *args)
 		while ( *args=='.' )
 		{
 			OBJECT *parent = obj->parent;
-			if ( parent==NULL )
+			if ( parent==nullptr )
 			{
 				gld_string name(get_object(obj)->get_name());
 				message("object '%s' has no parent", (const char*)name);
@@ -736,7 +736,7 @@ bool g_debug::cmd_history(char *args)
 	int start = command_num - history_size;
 	for ( n=start<0?0:start ; (n%history_size)!=history_next ; n++ ) 
 	{
-		if ( history[n%history_size]!=NULL ) 
+		if ( history[n%history_size]!=nullptr )
 			printf("%4d: %s", n, history[n%history_size]);
 	}
 	return true;
@@ -747,7 +747,7 @@ bool g_debug::cmd_history(char *args)
 ////////////////////////////////////////////////////////////////////////////////////////////////
 static bool console_initialized = false;
 static gld_global major, minor, patch, build, branch, modelname;
-static gld_object *selected_object = NULL;
+static gld_object *selected_object = nullptr;
 static int selected_item=0;
 unsigned long console_object_input_handler(unsigned int input);
 unsigned long console_data_input_handler(unsigned int input);
@@ -803,7 +803,7 @@ static CONSOLEWINDOW debugwnd = {
 	0x0e,	// panes that are tab stops (panes 1,2, & 3)
 	WH_PANE,// current highlight
 	5,		// size of message buffer
-	{NULL}, // header input handler
+	{nullptr}, // header input handler
 	{console_object_input_handler},
 	{console_data_input_handler},
 	{console_message_input_handler},
@@ -843,7 +843,7 @@ int g_debug::console_message(const char *fmt, ...)
 
 	// add message to list
 	int pos = debugwnd.msgs.buffer.next;
-	if ( debugwnd.msgs.buffer.list[pos]!=NULL )
+	if ( debugwnd.msgs.buffer.list[pos]!=nullptr )
 		free(debugwnd.msgs.buffer.list[pos]);
 	char *msg = (char*)malloc(len+1);
 	debugwnd.msgs.buffer.list[pos] = msg;
@@ -859,9 +859,9 @@ int g_debug::console_message(const char *fmt, ...)
 void g_debug::console_show_objlist(gld_object *parent, int level)
 {
 	unsigned int i;
-	gld_object *obj=NULL;
-	OBJECT *parent_object = parent?parent->my():NULL;
-	for ( i=0,obj=gld_object::get_first(); i<debugwnd.height+debugwnd.hpos-2 && obj!=NULL ; i++,obj=obj->get_next() )
+	gld_object *obj=nullptr;
+	OBJECT *parent_object = parent?parent->my():nullptr;
+	for ( i=0,obj=gld_object::get_first(); i<debugwnd.height+debugwnd.hpos-2 && obj!=nullptr ; i++,obj=obj->get_next() )
 	{
 		OBJECT *this_object = obj->my();
 		if ( parent_object==this_object->parent )
@@ -889,7 +889,7 @@ bool g_debug::show_line(int row, const char *label, const char *fmt, ...)
 	if ( is_selected ) attron(A_BOLD);
 	
 	// heading item
-	if ( fmt==NULL ) 
+	if ( fmt==nullptr )
 	{
 		int i=0;
 		for ( i=last_header_row+1 ; i<row ; i++ )
@@ -1252,7 +1252,7 @@ Again:
 void g_debug::console_load(void)
 {
 	FILE *fp = fopen("gridlabd_debug.cfg","r");
-	if ( fp==NULL ) return;
+	if ( fp==nullptr ) return;
 	fscanf(fp,"%d,%d,%d,%d",
 		&debugwnd.height, &debugwnd.width,
 		&debugwnd.hpos, &debugwnd.vpos);
@@ -1262,7 +1262,7 @@ void g_debug::console_load(void)
 void g_debug::console_save(void)
 {
 	FILE *fp = fopen("gridlabd_debug.cfg","w");
-	if ( fp==NULL ) return;
+	if ( fp==nullptr ) return;
 	fprintf(fp,"%d,%d,%d,%d",
 		debugwnd.height, debugwnd.width,
 		debugwnd.hpos, debugwnd.vpos);

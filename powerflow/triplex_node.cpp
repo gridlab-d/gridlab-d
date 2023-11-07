@@ -137,7 +137,7 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
                                PT_double, "measured_frequency_12[Hz]", PADDR(curr_freq_state.fmeas[2]), PT_DESCRIPTION, "frequency measurement, across the phases",
                                PT_double, "measured_frequency[Hz]", PADDR(curr_freq_state.average_freq), PT_DESCRIPTION, "frequency measurement - average of present phases",
 
-                               NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+                               nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_node)==nullptr)

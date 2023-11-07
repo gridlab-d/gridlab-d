@@ -15,14 +15,14 @@ extern "C" {
 	struct s_stream {
 		STREAMCALL call;
 		struct s_stream *next;
-	} *stream_list = NULL;
+	} *stream_list = nullptr;
 
 	/** Register a stream 
 	 **/
 	void stream_register ( STREAMCALL call )
 	{
 		struct s_stream *stream = (struct s_stream*)malloc(sizeof(struct s_stream));
-		if ( stream==NULL ) 
+		if ( stream==nullptr )
 		{
 			fprintf(stderr,"FATAL ERROR: stream_register(): malloc failed");
 			return;
@@ -49,7 +49,7 @@ extern "C" {
 #define STREAM_VERSION 2
 
 /* stream handle */
-static FILE *fp = NULL;
+static FILE *fp = nullptr;
 
 /* stream size */
 static size_t count=0;
@@ -357,7 +357,7 @@ size_t stream(void *ptr, ///< pointer to buffer
 			((char*)ptr)[i] = (char)b;
 		}
 		while ( fgetc(fp)!='\n' ) {}
-		if ( match!=NULL && memcmp(ptr,match,a)!=0 ) throw 0;
+		if ( match!=nullptr && memcmp(ptr,match,a)!=0 ) throw 0;
 		unsigned int b = (log((double)a)+2)+a*3;
 		stream_pos += b;
 		return b;
@@ -367,7 +367,7 @@ size_t stream(void *ptr, ///< pointer to buffer
 		if ( a>len ) throw;
 		size_t c = fread((void*)ptr,1,a,fp);
 		if ( a!=c ) throw;
-		if ( match!=NULL && memcmp(ptr,match,a)!=0 ) throw 0;
+		if ( match!=nullptr && memcmp(ptr,match,a)!=0 ) throw 0;
 		b+=c;
 		stream_pos += b;
 		return b;
@@ -393,7 +393,7 @@ void stream(MODULE *mod)
 		stream(name,sizeof(name));
 
 		if ( flags&SF_OUT ) mod = mod->next;
-		if ( flags&SF_IN ) module_load(name,0,NULL);
+		if ( flags&SF_IN ) module_load(name,0,nullptr);
 	}
 	stream("/MOD");
 }
@@ -445,14 +445,14 @@ void stream(CLASS *oclass)
 		PASSCONFIG passconfig; if ( oclass ) passconfig = oclass->passconfig;
 		stream(passconfig);
 
-		if ( flags&SF_IN ) oclass = class_register(NULL,name,size,passconfig);
+		if ( flags&SF_IN ) oclass = class_register(nullptr,name,size,passconfig);
 
 		// TODO parent
 
 		stream(oclass,oclass->pmap);
 
 		if ( flags&SF_OUT ) oclass = class_get_next_runtime(oclass);
-		if ( flags&SF_IN ) module_load(oclass->name,0,NULL);
+		if ( flags&SF_IN ) module_load(oclass->name,0,nullptr);
 	}
 	stream("/RTC");
 }
@@ -535,11 +535,11 @@ size_t stream(FILE *fileptr,int opts)
 		try { stream(object_get_first()); } catch (int) {};
 
 		// globals
-		try { stream(global_getnext(NULL)); } catch (int) {};
+		try { stream(global_getnext(nullptr)); } catch (int) {};
 
 		// module data
 		struct s_stream *s;
-		for ( s=stream_list ; s!=NULL ; s=s->next )
+		for ( s=stream_list ; s!=nullptr ; s=s->next )
 		{	
 			s->call((int)flags,(STREAMCALLBACK)stream_callback);
 		}

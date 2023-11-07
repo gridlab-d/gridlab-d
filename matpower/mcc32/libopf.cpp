@@ -9,7 +9,7 @@
 #define EXPORTING_libopf 1
 #include "libopf.h"
 
-static HMCRINSTANCE _mcr_inst = NULL;
+static HMCRINSTANCE _mcr_inst = nullptr;
 
 
 #ifdef __cplusplus
@@ -57,7 +57,7 @@ bool MW_CALL_CONV libopfInitializeWithHandlers(
     mclOutputHandlerFcn print_handler)
 {
     int bResult = 0;
-  if (_mcr_inst != NULL)
+  if (_mcr_inst != nullptr)
     return true;
   if (!mclmcrInitialize())
     return false;
@@ -90,7 +90,7 @@ bool MW_CALL_CONV libopfInitialize(void)
 LIB_libopf_C_API 
 void MW_CALL_CONV libopfTerminate(void)
 {
-  if (_mcr_inst != NULL)
+  if (_mcr_inst != nullptr)
     mclTerminateInstance(&_mcr_inst);
 }
 

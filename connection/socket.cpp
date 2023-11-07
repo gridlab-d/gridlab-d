@@ -32,7 +32,7 @@ int Socket::init(void)
 int Socket::get_saddr(char *buffer, size_t len) 
 {
 	static char static_buffer[16];
-	if (buffer==NULL) buffer = static_buffer;
+	if (buffer==nullptr) buffer = static_buffer;
 	unsigned int addr = get_laddr();
 	unsigned char a = (addr>>24)&0xff;
 	unsigned char b = (addr>>16)&0xff;

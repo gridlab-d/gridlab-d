@@ -13,18 +13,18 @@
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
-	if (set_callback(fntable)==NULL)
+	if (set_callback(fntable)==nullptr)
 	{
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
-	gl_global_create("mysql::hostname",PT_char256,default_hostname,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL server name",NULL);
-	gl_global_create("mysql::username",PT_char32,default_username,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL user name",NULL);
-	gl_global_create("mysql::password",PT_char32,default_password,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL user password",NULL);
-	gl_global_create("mysql::schema",PT_char256,default_schema,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL database schema name",NULL);
-	gl_global_create("mysql::port",PT_int32,&default_port,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL server port number (TCP/IP only)",NULL);
-	gl_global_create("mysql::socketname",PT_char1024,default_socketname,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL socket name (unix only)",NULL);
+	gl_global_create("mysql::hostname",PT_char256,default_hostname,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL server name",nullptr);
+	gl_global_create("mysql::username",PT_char32,default_username,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL user name",nullptr);
+	gl_global_create("mysql::password",PT_char32,default_password,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL user password",nullptr);
+	gl_global_create("mysql::schema",PT_char256,default_schema,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL database schema name",nullptr);
+	gl_global_create("mysql::port",PT_int32,&default_port,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL server port number (TCP/IP only)",nullptr);
+	gl_global_create("mysql::socketname",PT_char1024,default_socketname,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL socket name (unix only)",nullptr);
 	gl_global_create("mysql::clientflags",PT_set,&default_clientflags,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL client flags",
 		PT_KEYWORD,"COMPRESS",(int64)CLIENT_COMPRESS,
 		PT_KEYWORD,"FOUND_ROWS",(int64)CLIENT_FOUND_ROWS,
@@ -37,8 +37,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD,"ODBC",(int64)CLIENT_ODBC,
 		PT_KEYWORD,"SSL",(int64)CLIENT_SSL,
 		PT_KEYWORD,"REMEMBER_OPTIONS",(int64)CLIENT_REMEMBER_OPTIONS,
-		NULL);
-	gl_global_create("mysql::table_prefix",PT_char256,default_table_prefix,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"table prefix for import/export",NULL);
+		nullptr);
+	gl_global_create("mysql::table_prefix",PT_char256,default_table_prefix,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"table prefix for import/export",nullptr);
 
 	new database(module);
 	new recorder(module);
@@ -47,7 +47,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new group_recorder(module);
 
 	static int32 mysql_flag = 1;
-	gl_global_create("MYSQL",PT_int32,&mysql_flag,PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"indicates that MySQL is available",NULL);
+	gl_global_create("MYSQL",PT_int32,&mysql_flag,PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"indicates that MySQL is available",nullptr);
 
 	/* always return the first class registered */
 	return database::oclass;
@@ -56,7 +56,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 EXPORT void term(void)
 {
 	database *db;
-	for ( db=database::get_first() ; db!=NULL ; db=db->get_next() )
+	for ( db=database::get_first() ; db!=nullptr ; db=db->get_next() )
 		db->term();
 }
 
@@ -65,13 +65,13 @@ EXPORT void term(void)
 #include "gridlabd.h"
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
-	if (set_callback(fntable)==NULL)
+	if (set_callback(fntable)==nullptr)
 	{
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 	gl_error("mysql module was built on a system without mysql libraries");
-	return NULL;
+	return nullptr;
 }
 #endif // HAVE_MYSQL
 

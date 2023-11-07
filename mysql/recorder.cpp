@@ -16,8 +16,8 @@ EXPORT_INIT(recorder);
 EXPORT_COMMIT(recorder);
 EXPORT_FINALIZE(recorder);
 
-CLASS *recorder::oclass = NULL;
-recorder *recorder::defaults = NULL;
+CLASS *recorder::oclass = nullptr;
+recorder *recorder::defaults = nullptr;
 using namespace std;
 
 vector<string> split(char* str, const char* delim) {
@@ -26,18 +26,18 @@ vector<string> split(char* str, const char* delim) {
 
 	vector<string> result;
 
-	while (token != NULL) {
+	while (token != nullptr) {
 		result.push_back(token);
-		token = strtok_r(NULL, delim, &saveptr);
+		token = strtok_r(nullptr, delim, &saveptr);
 	}
 	return result;
 }
 
 recorder::recorder(MODULE *module) {
-	if (oclass == NULL) {
+	if (oclass == nullptr) {
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gld_class::create(module, "recorder", sizeof(recorder), PC_AUTOLOCK | PC_OBSERVER);
-		if (oclass == NULL)
+		if (oclass == nullptr)
 			throw "unable to register class recorder";
 		else
 			oclass->trl = TRL_PROTOTYPE;
@@ -63,7 +63,7 @@ recorder::recorder(MODULE *module) {
 				PT_int32, "query_buffer_limit", get_query_buffer_limit_offset(), PT_DESCRIPTION, "max number of queries to buffer before pushing to database",
 				PT_bool, "minimize_data", get_minified_offset(), PT_DESCRIPTION, "sets a signal for size minimization to the database. will use VARCHAR and FLOAT instead of CHAR and DOUBLE for most types",
 				PT_char1024, "custom_sql", get_custom_sql_offset(), PT_DESCRIPTION, "Custom SQL",
-				NULL) < 1) {
+				nullptr) < 1) {
 			char msg[256];
 			sprintf(msg, "unable to publish properties in %s", __FILE__);
 			throw msg;
@@ -89,9 +89,9 @@ int recorder::create(void) {
 int recorder::init(OBJECT *parent) {
 // check the connection
 
-	if ( get_connection()!=NULL )
+	if ( get_connection()!=nullptr )
 		db = (database*)(get_connection()+1);
-	if ( db==NULL )
+	if ( db==nullptr )
 		exception("no database connection available or specified");
 	if ( !db->isa("database") )
 		exception("connection is not a mysql database");
@@ -195,7 +195,7 @@ int recorder::init(OBJECT *parent) {
 					strcpy(buffer, (const char*) spec[1].c_str());
 					unit = gld_unit(buffer);
 				}
-				else if (prop.get_unit() != NULL && (options & MO_USEUNITS))
+				else if (prop.get_unit() != nullptr && (options & MO_USEUNITS))
 					unit = *prop.get_unit();
 				property_unit.push_back(unit);
 				n_properties++;
@@ -224,12 +224,12 @@ int recorder::init(OBJECT *parent) {
 			if (spec.size() > 0) {
 				strcpy(buffer, (const char*) spec[0].c_str());
 				gld_property prop;
-				if (get_parent() == NULL)
+				if (get_parent() == nullptr)
 					prop = gld_property(buffer);
 				else
 					prop = gld_property(get_parent(), buffer);
-				if (prop.get_object() == NULL) {
-					if (get_parent() == NULL)
+				if (prop.get_object() == nullptr) {
+					if (get_parent() == nullptr)
 						exception("parent object is not set");
 					prop = gld_property(get_parent(), buffer);
 				}
@@ -245,7 +245,7 @@ int recorder::init(OBJECT *parent) {
 					strcpy(buffer, (const char*) spec[1].c_str());
 					unit = gld_unit(buffer);
 				}
-				else if (prop.get_unit() != NULL && (options & MO_USEUNITS))
+				else if (prop.get_unit() != nullptr && (options & MO_USEUNITS))
 					unit = *prop.get_unit();
 				property_unit.push_back(unit);
 				n_properties++;
@@ -272,7 +272,7 @@ int recorder::init(OBJECT *parent) {
 
 	// get header fields
 	if (strlen(header_fieldnames) > 0) {
-		if (get_parent() == NULL)
+		if (get_parent() == nullptr)
 			exception("cannot find header fields without a parent");
 		char buffer[1024];
 		strcpy(buffer, header_fieldnames);
@@ -339,7 +339,7 @@ int recorder::init(OBJECT *parent) {
 
 // check row count
 		else {
-			if (db->select("SELECT count(*) FROM `%s`", rc->get_table().get_string()) == NULL)
+			if (db->select("SELECT count(*) FROM `%s`", rc->get_table().get_string()) == nullptr)
 				exception("unable to get row count of table '%s'", rc->get_table().get_string());
 
 			gl_verbose("table '%s' ok", rc->get_table().get_string());
@@ -454,11 +454,11 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 					char name_buffer[64];
 					string* name_string = new string(property_target[n].get_sql_safe_name(name_buffer));
 
-					char buffer[1024] = "NULL";
+					char buffer[1024] = "nullptr";
 					bool valid_unit_test;
 
-					//NULL check for get_unit - no unit = NULL return
-					if (target_prop.get_unit() != NULL)
+					//nullptr check for get_unit - no unit = nullptr return
+					if (target_prop.get_unit() != nullptr)
 					{
 						//Do a validity check on it
 						valid_unit_test = target_prop.get_unit()->is_valid();
@@ -474,8 +474,8 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 						rc->get_table_path()->add_insert_values(rc, name_string, string(buffer));
 						rc->get_table_path()->add_insert_values(rc, new string(*name_string + "_units"), "'" + string(target_prop.get_unit()->get_name()) + "'");
 					} else if (get_options() & MO_USEUNITS) {
-						rc->get_table_path()->add_insert_values(rc, name_string, string("NULL"));
-						rc->get_table_path()->add_insert_values(rc, new string(*name_string + "_units"), string("NULL"));
+						rc->get_table_path()->add_insert_values(rc, name_string, string("nullptr"));
+						rc->get_table_path()->add_insert_values(rc, new string(*name_string + "_units"), string("nullptr"));
 					}
 					else {
 						db->get_sqldata(buffer, sizeof(buffer), target_prop, target_prop.get_unit());
@@ -510,7 +510,7 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 			for (size_t n = 0; n < property_target.size(); n++) {
 				char name_buffer[64];
 				string* name_string = new string(property_target[n].get_sql_safe_name(name_buffer));
-				char buffer[1024] = "NULL";
+				char buffer[1024] = "nullptr";
 
 				if (property_unit[n].is_valid()) {
 					db->get_sqldata(buffer, sizeof(buffer), property_target[n], &property_unit[n]);
@@ -535,13 +535,13 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 				}
 				else if (header_specs[n].compare("latitude") == 0) {
 					if (isnan(get_parent()->get_latitude()))
-						rc->get_table_path()->add_insert_values(rc, new string("latitude"), string("NULL"));
+						rc->get_table_path()->add_insert_values(rc, new string("latitude"), string("nullptr"));
 					else
 						rc->get_table_path()->add_insert_values(rc, new string("latitude"), string(to_string(get_parent()->get_latitude())));
 				}
 				else if (header_specs[n].compare("longitude") == 0) {
 					if (isnan(get_parent()->get_longitude()))
-						rc->get_table_path()->add_insert_values(rc, new string("longitude"), string("NULL"));
+						rc->get_table_path()->add_insert_values(rc, new string("longitude"), string("nullptr"));
 					else
 						rc->get_table_path()->add_insert_values(rc, new string("longitude"), string(to_string(get_parent()->get_longitude())));
 				}

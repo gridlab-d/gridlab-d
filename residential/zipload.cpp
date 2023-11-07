@@ -28,17 +28,17 @@
 //////////////////////////////////////////////////////////////////////////
 // ZIPload CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* ZIPload::oclass = NULL;
-CLASS* ZIPload::pclass = NULL;
+CLASS* ZIPload::oclass = nullptr;
+CLASS* ZIPload::pclass = nullptr;
 
 ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(module,"ZIPload",sizeof(ZIPload),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
@@ -80,7 +80,7 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 			PT_double,"recovery_duty_cycle[pu]",PADDR(recovery_duty_cycle),PT_DESCRIPTION, "fraction of time in the on state, while in recovery interval",
 			PT_double,"period[h]",PADDR(period),PT_DESCRIPTION, "time interval to apply duty cycle",
 			PT_double,"phase[pu]",PADDR(phase),PT_DESCRIPTION, "initial phase of load; duty will be assumed to occur at beginning of period",
-			NULL)<1) 
+			nullptr)<1)
 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -127,7 +127,7 @@ int ZIPload::create()
 
 int ZIPload::init(OBJECT *parent)
 {
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("zipload::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -187,7 +187,7 @@ int ZIPload::init(OBJECT *parent)
 
 		drm.off = (double*)malloc(sizeof(double)*L);
 		drm.on = (double*)malloc(sizeof(double)*L);
-		if (drm.off==NULL || drm.on==NULL)
+		if (drm.off==nullptr || drm.on==nullptr)
 		{
 			GL_THROW("zipload_init: memory allocation error.  Please report this error.");
 			/*  TROUBLESHOOT
@@ -493,7 +493,7 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 		// last_duty_cycle = duty_cycle;
 	}
 
-	if (pCircuit!=NULL){
+	if (pCircuit!=nullptr){
 		//Pull the current voltage value
 		temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
 
@@ -597,7 +597,7 @@ EXPORT int create_ZIPload(OBJECT **obj, OBJECT *parent)
 	try 
 	{
 		*obj = gl_create_object(ZIPload::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			ZIPload *my = OBJECTDATA(*obj,ZIPload);;
 			gl_set_parent(*obj,parent);

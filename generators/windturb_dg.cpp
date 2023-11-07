@@ -159,7 +159,7 @@ windturb_dg::windturb_dg(MODULE *module)
                                 PT_KEYWORD, "C", (gld::set)PHASE_C,
                                 PT_KEYWORD, "N", (gld::set)PHASE_N,
                                 PT_KEYWORD, "S", (gld::set)PHASE_S,
-                                NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+                                nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
             if (gl_publish_function(oclass, "current_injection_update", (FUNCTIONADDR)windturb_dg_NR_current_injection_update) == nullptr)
 				GL_THROW("Unable to publish wind turbine current injection update function");
 	}
@@ -290,7 +290,7 @@ int windturb_dg::init_climate()
 		else //climate data was found
 		{
 			// force rank of object w.r.t climate
-			OBJECT *obj = gl_find_next(climates,NULL);
+			OBJECT *obj = gl_find_next(climates,nullptr);
 			if (obj->rank<=hdr->rank)
 				gl_set_dependent(obj,hdr);
 
@@ -1956,7 +1956,7 @@ void windturb_dg::push_complex_powerflow_values(void)
 
 	if (parent_is_triplex)
 	{
-		//Shouldn't need to NULL check this one, but do it anyways, for consistency
+		//Shouldn't need to nullptr check this one, but do it anyways, for consistency
 		if (pLine12 != nullptr)
 		{
 			//**** Current value ***/

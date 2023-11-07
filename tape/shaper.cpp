@@ -47,13 +47,13 @@
 #include "odbc.h"
 
 
-CLASS *shaper_class = NULL;
-static OBJECT *last_shaper = NULL;
+CLASS *shaper_class = nullptr;
+static OBJECT *last_shaper = nullptr;
 
 EXPORT int create_shaper(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(shaper_class);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		struct shaper *my = OBJECTDATA(*obj,struct shaper);
 		last_shaper = *obj;
@@ -65,7 +65,7 @@ EXPORT int create_shaper(OBJECT **obj, OBJECT *parent)
 		strcpy(my->mode, "file");
 		my->loopnum = 0;
 		my->status = TS_INIT;
-		my->targets = NULL;
+		my->targets = nullptr;
 		memset(my->shape,0,sizeof(my->shape));
 		my->scale = 1.0;	/* scale of shape values */
 		my->magnitude = 1.0;	/* magnitude of 1 event (only used when QUEUE is enabled) */
@@ -102,10 +102,10 @@ static int shaper_open(OBJECT *obj)
 
 	/* if type is file or file is stdin */
 	fns = get_ftable(my->mode);
-	if (fns==NULL)
+	if (fns==nullptr)
 		return 0;
 	my->ops = fns->shaper;
-	if(my->ops == NULL)
+	if(my->ops == nullptr)
 		return 0;
 	if (my->ops->open(my, fname, flags))
 		return 1;
@@ -194,12 +194,12 @@ EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	if (my->status==TS_OPEN)
 	{	
 		/* build target list */
-		if (my->targets==NULL && my->group[0]!='\0')
+		if (my->targets==nullptr && my->group[0]!='\0')
 		{
 			FINDLIST *object_list = gl_find_objects(FL_GROUP,my->group.get_string());
-			OBJECT *item=NULL;
+			OBJECT *item=nullptr;
 			int n=0;
-			if (object_list==NULL || object_list->hit_count<=0)
+			if (object_list==nullptr || object_list->hit_count<=0)
 			{
 				gl_warning("shaper group '%s' is empty", my->group.get_string());
 				my->status=TS_DONE;
@@ -208,16 +208,16 @@ EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			my->n_targets = object_list->hit_count;
 			my->targets = (SHAPERTARGET*)gl_malloc(sizeof(SHAPERTARGET)*my->n_targets);
 			memset(my->targets,0,sizeof(SHAPERTARGET)*my->n_targets);
-			if (my->targets==NULL)
+			if (my->targets==nullptr)
 			{
 				gl_error("shaper memory allocation failed!");
 				my->status=TS_DONE;
 				return TS_NEVER;
 			}
-			for ( ;(item=gl_find_next(object_list,item))!=NULL; n++)
+			for ( ;(item=gl_find_next(object_list,item))!=nullptr; n++)
 			{
-				PROPERTY *prop=gl_get_property(item,my->property,NULL);
-				if (prop!=NULL)
+				PROPERTY *prop=gl_get_property(item,my->property,nullptr);
+				if (prop!=nullptr)
 				{
 					if (prop->ptype==PT_double)
 					{
@@ -229,7 +229,7 @@ EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 						{
 							if (my->targets[n].addr!=nullptr)
 								GL_THROW(
-										const_cast<char *>("gl_get_addr(OBJECT *obj=[%s (%s:%d)], char *name='%s') return an invalid non-NULL pointer"), item->name ? item->name : "unnamed object", item->oclass->name, obj->id, prop->name);
+										const_cast<char *>("gl_get_addr(OBJECT *obj=[%s (%s:%d)], char *name='%s') return an invalid non-nullptr pointer"), item->name ? item->name : "unnamed object", item->oclass->name, obj->id, prop->name);
 							else
 								GL_THROW(const_cast<char *>("property '%s' not found in %s (%s:%d)"), prop->name, item->name ? item->name : "unnamed object", item->oclass->name, item->id);
 						}
@@ -247,7 +247,7 @@ EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		}
 
 		/* write to targets */
-		if (my->targets!=NULL)
+		if (my->targets!=nullptr)
 		{
 			unsigned int n;
 			for (n=0; n<my->n_targets; n++)

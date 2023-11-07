@@ -790,7 +790,7 @@ int inverter_dyn::init(OBJECT *parent)
 					parent_is_single_phase = true;
 					parent_is_triplex = false;
 
-					//NULL all the secondary indices - we won't use any of them
+					//nullptr all the secondary indices - we won't use any of them
 					pCircuit_V[1] = nullptr;
 					pCircuit_V[2] = nullptr;
 

@@ -74,7 +74,7 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 PT_DESCRIPTION, "The output of the PI controller that adjusts the frequency difference (i.e., the control variable, which is denoted as u(t) in usual).",
                                 PT_enumeration, "mode_status", PADDR(mode_status), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The current working mode status.",
-                                NULL) < 1)
+                                nullptr) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
 
         if (gl_publish_function(oclass, "interupdate_controller_object", (FUNCTIONADDR)interupdate_sync_ctrl) == nullptr)

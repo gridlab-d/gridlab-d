@@ -13,9 +13,9 @@
 EXPORT_CREATE(group_recorder);
 EXPORT_INIT(group_recorder);
 
-CLASS *group_recorder::oclass = NULL;
-CLASS *group_recorder::pclass = NULL;
-group_recorder *group_recorder::defaults = NULL;
+CLASS *group_recorder::oclass = nullptr;
+CLASS *group_recorder::pclass = nullptr;
+group_recorder *group_recorder::defaults = nullptr;
 using namespace std;
 
 vector<string> group_recorder::gr_split(char* str, const char* delim) {
@@ -24,9 +24,9 @@ vector<string> group_recorder::gr_split(char* str, const char* delim) {
 
 	vector<string> result;
 
-	while (token != NULL) {
+	while (token != nullptr) {
 		result.push_back(token);
-		token = strtok_r(NULL, delim, &saveptr);
+		token = strtok_r(nullptr, delim, &saveptr);
 	}
 	return result;
 }
@@ -36,12 +36,12 @@ void new_group_recorder(MODULE *mod) {
 }
 
 group_recorder::group_recorder(MODULE *mod) {
-	if (oclass == NULL) {
+	if (oclass == nullptr) {
 #ifdef _DEBUG
 		gl_debug("construction group_recorder class");
 #endif
 		oclass = gl_register_class(mod, "group_recorder", sizeof(group_recorder), PC_POSTTOPDOWN);
-		if (oclass == NULL)
+		if (oclass == nullptr)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		if (gl_publish_variable(oclass,
@@ -65,7 +65,7 @@ group_recorder::group_recorder(MODULE *mod) {
 				// legacy compatibility components.
 				PT_bool, "format", PADDR(format), PT_DESCRIPTION, "(unused) legacy variable for compatibility with tape group_recorder",
 				PT_double, "flush_interval[s]", PADDR(dFlush_interval), PT_DESCRIPTION, "(unused) legacy variable for compatibility with tape group_recorder",
-				NULL) < 1) {
+				nullptr) < 1) {
 			; //GL_THROW("unable to publish properties in %s",__FILE__);
 		}
 		defaults = this;
@@ -103,7 +103,7 @@ int group_recorder::init(OBJECT *obj) {
 
 	// check the connection
 	group_recorder_connection = new query_engine(
-			get_connection() != NULL ? (database*) (get_connection() + 1) : db, query_buffer_limit, column_limit);
+			get_connection() != nullptr ? (database*) (get_connection() + 1) : db, query_buffer_limit, column_limit);
 
 	// check mode
 	if (strlen(mode) > 0) {
@@ -184,7 +184,7 @@ int group_recorder::init(OBJECT *obj) {
 			gr_obj = gl_find_next(items, gr_obj)) {
 		prop_ptr = gl_get_property(gr_obj, property_name.get_string());
 		// might make this a 'strict-only' issue in the future
-		if (prop_ptr == NULL) {
+		if (prop_ptr == nullptr) {
 			gl_error("group_recorder::init(): unable to find property '%s' in an object of type '%s'", property_name.get_string(), gr_obj->oclass->name);
 			/* TROUBLESHOOT
 			 An error occured while reading the specified property in one of the objects.
@@ -203,7 +203,7 @@ int group_recorder::init(OBJECT *obj) {
 	if (!print_units) {
 		quickobjlist *itr = obj_list;
 		for (; itr != 0; itr = itr->next) {
-			itr->prop.unit = NULL;
+			itr->prop.unit = nullptr;
 		}
 	}
 
@@ -296,14 +296,14 @@ void cleanup_property_buffer(stringstream* property_name_buffer) {
  @return 0 on failure, 1 on success
  **/
 int group_recorder::write_header() {
-	time_t now = time(NULL);
+	time_t now = time(nullptr);
 	quickobjlist *qol = 0;
 	OBJECT *obj = OBJECTHDR(this);
 	query_engine* grc = group_recorder_connection;
 	grc->set_table_root(get_table());
 	grc->init_tables(recordid_fieldname, datetime_fieldname, false);
 	// check for table existence and create if not found
-	if (get_property_name() != NULL) {
+	if (get_property_name() != nullptr) {
 		stringstream property_list;
 
 		char buffer[1024];
@@ -476,7 +476,7 @@ int group_recorder::write_header() {
 
 			// check row count
 			else {
-				if (db->select("SELECT count(*) FROM `%s`", grc->get_table().get_string()) == NULL)
+				if (db->select("SELECT count(*) FROM `%s`", grc->get_table().get_string()) == nullptr)
 					exception("unable to get row count of table '%s'", grc->get_table().get_string());
 
 				gl_verbose("table '%s' ok", grc->get_table().get_string());
@@ -505,7 +505,7 @@ int group_recorder::write_header() {
 
 		// check row count
 		else {
-			if (db->select("SELECT count(*) FROM `%s`", grc->get_table_references().get_string()) == NULL)
+			if (db->select("SELECT count(*) FROM `%s`", grc->get_table_references().get_string()) == nullptr)
 				exception("unable to get row count of table '%s'", grc->get_table_references().get_string());
 
 			gl_verbose("table '%s' ok", grc->get_table_references().get_string());

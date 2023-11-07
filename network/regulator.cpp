@@ -19,19 +19,19 @@
 //////////////////////////////////////////////////////////////////////////
 // regulator CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* regulator::oclass = NULL;
-CLASS* regulator::pclass = NULL;
-regulator *regulator::defaults = NULL;
-CLASS *regulator_class = (NULL);
+CLASS* regulator::oclass = nullptr;
+CLASS* regulator::pclass = nullptr;
+regulator *regulator::defaults = nullptr;
+CLASS *regulator_class = (nullptr);
 
 regulator::regulator(MODULE *mod) : link(mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		regulator_class = oclass = gl_register_class(mod,"regulator",sizeof(regulator),PC_BOTTOMUP);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class regulator";
 		else
 			oclass->trl = TRL_CONCEPT;
@@ -47,7 +47,7 @@ regulator::regulator(MODULE *mod) : link(mod)
 			PT_object, "CTlink", PADDR(CTlink),
 			PT_object, "PTbus", PADDR(PTbus),
 			PT_double, "TimeDelay", PADDR(TimeDelay),
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// setup the default values
 		defaults = this;
@@ -66,7 +66,7 @@ TIMESTAMP regulator::sync(TIMESTAMP t0)
 {
 	node *f = OBJECTDATA(from,node);
 	node *t = OBJECTDATA(to,node);
-	if (f==NULL || t==NULL)
+	if (f==nullptr || t==nullptr)
 		return TS_NEVER;
 	// TODO: update regulator state
 	return link::sync(t0);
@@ -78,7 +78,7 @@ TIMESTAMP regulator::sync(TIMESTAMP t0)
 EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(regulator_class);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		regulator *my = OBJECTDATA(*obj,regulator);
 		gl_set_parent(*obj,parent);

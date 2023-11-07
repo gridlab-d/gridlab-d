@@ -38,22 +38,22 @@
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
-	if (set_callback(fntable)==NULL)
+	if (set_callback(fntable)==nullptr)
 	{
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
-	gl_global_create("residential::default_line_voltage",PT_double,&default_line_voltage,PT_UNITS,"V",PT_DESCRIPTION,"line voltage (L-N) to use when no circuit is attached",NULL);
-	gl_global_create("residential::default_outdoor_temperature",PT_double,&default_outdoor_temperature,PT_UNITS,"degF",PT_DESCRIPTION,"outdoor air temperature when no climate data is found",NULL);
-	gl_global_create("residential::default_humidity",PT_double,&default_humidity,PT_UNITS,"%",PT_DESCRIPTION,"humidity when no climate data is found",NULL);
-	gl_global_create("residential::default_horizontal_solar",PT_double,&default_horizontal_solar,PT_UNITS,"Btu/sf",PT_DESCRIPTION,"horizontal solar gains when no climate data is found",NULL);
-	gl_global_create("residential::default_etp_iterations",PT_int64,&default_etp_iterations,PT_DESCRIPTION,"number of iterations ETP solver will run",NULL);
-	gl_global_create("residential::default_grid_frequency",PT_double,&default_grid_frequency,PT_UNITS,"Hz",PT_DESCRIPTION,"grid frequency when no powerflow attachment is found",NULL);
-	gl_global_create("residential::ANSI_voltage_check",PT_bool,&ANSI_voltage_check,PT_DESCRIPTION,"enable or disable messages about ANSI voltage limit violations in the house",NULL);
-	gl_global_create("residential::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the residential module",NULL);
-	gl_global_create("residential::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
-	gl_global_create("residential::all_residential_delta", PT_bool, &all_residential_delta,PT_DESCRIPTION,"Modeling convenient - enables all residential objects in deltamode",NULL);
+	gl_global_create("residential::default_line_voltage",PT_double,&default_line_voltage,PT_UNITS,"V",PT_DESCRIPTION,"line voltage (L-N) to use when no circuit is attached",nullptr);
+	gl_global_create("residential::default_outdoor_temperature",PT_double,&default_outdoor_temperature,PT_UNITS,"degF",PT_DESCRIPTION,"outdoor air temperature when no climate data is found",nullptr);
+	gl_global_create("residential::default_humidity",PT_double,&default_humidity,PT_UNITS,"%",PT_DESCRIPTION,"humidity when no climate data is found",nullptr);
+	gl_global_create("residential::default_horizontal_solar",PT_double,&default_horizontal_solar,PT_UNITS,"Btu/sf",PT_DESCRIPTION,"horizontal solar gains when no climate data is found",nullptr);
+	gl_global_create("residential::default_etp_iterations",PT_int64,&default_etp_iterations,PT_DESCRIPTION,"number of iterations ETP solver will run",nullptr);
+	gl_global_create("residential::default_grid_frequency",PT_double,&default_grid_frequency,PT_UNITS,"Hz",PT_DESCRIPTION,"grid frequency when no powerflow attachment is found",nullptr);
+	gl_global_create("residential::ANSI_voltage_check",PT_bool,&ANSI_voltage_check,PT_DESCRIPTION,"enable or disable messages about ANSI voltage limit violations in the house",nullptr);
+	gl_global_create("residential::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the residential module",nullptr);
+	gl_global_create("residential::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",nullptr);
+	gl_global_create("residential::all_residential_delta", PT_bool, &all_residential_delta,PT_DESCRIPTION,"Modeling convenient - enables all residential objects in deltamode",nullptr);
 
 	new residential_enduse(module);
 	new appliance(module);
@@ -105,13 +105,13 @@ void allocate_deltamode_arrays(void)
 {
 	int obj_idx;
 
-	if ((res_object_current == -1) || (delta_objects==NULL))
+	if ((res_object_current == -1) || (delta_objects==nullptr))
 	{
 		//Allocate the deltamode object array
 		delta_objects = (OBJECT**)gl_malloc(res_object_count*sizeof(OBJECT*));
 
 		//Make sure it worked
-		if (delta_objects == NULL)
+		if (delta_objects == nullptr)
 		{
 			GL_THROW("Failed to allocate deltamode objects array for residential module!");
 			/*  TROUBLESHOOT
@@ -125,7 +125,7 @@ void allocate_deltamode_arrays(void)
 		delta_functions = (FUNCTIONADDR*)gl_malloc(res_object_count*sizeof(FUNCTIONADDR));
 
 		//Make sure it worked
-		if (delta_functions == NULL)
+		if (delta_functions == nullptr)
 		{
 			GL_THROW("Failed to allocate deltamode objects function array for residential module!");
 			/*  TROUBLESHOOT
@@ -139,7 +139,7 @@ void allocate_deltamode_arrays(void)
 		post_delta_functions = (FUNCTIONADDR*)gl_malloc(res_object_count*sizeof(FUNCTIONADDR));
 
 		//Make sure it worked
-		if (post_delta_functions == NULL)
+		if (post_delta_functions == nullptr)
 		{
 			GL_THROW("Failed to allocate deltamode objects function array for residential module!");
 			//Defined above
@@ -148,9 +148,9 @@ void allocate_deltamode_arrays(void)
 		//Null all of these, just for a baseline
 		for (obj_idx=0; obj_idx<res_object_count; obj_idx++)
 		{
-			delta_objects[obj_idx] = NULL;
-			delta_functions[obj_idx] = NULL;
-			post_delta_functions[obj_idx] = NULL;
+			delta_objects[obj_idx] = nullptr;
+			delta_functions[obj_idx] = nullptr;
+			post_delta_functions[obj_idx] = nullptr;
 		}
 
 		//Initialize index
@@ -334,7 +334,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		for (curr_object_number=0; curr_object_number<res_object_count; curr_object_number++)
 		{
 			//See if it has a post-update function
-			if (post_delta_functions[curr_object_number] != NULL)
+			if (post_delta_functions[curr_object_number] != nullptr)
 			{
 				//See if we're in service or not
 				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))

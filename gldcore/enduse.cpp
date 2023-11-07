@@ -23,7 +23,7 @@
 #include "exec.h"
 #include "gld_complex.h"
 
-static enduse *enduse_list = NULL;
+static enduse *enduse_list = nullptr;
 static unsigned int n_enduses = 0;
 
 double enduse_get_part(void *x, const char *name)
@@ -110,7 +110,7 @@ int enduse_init(enduse *e)
 int enduse_initall(void)
 {
 	enduse *e;
-	for (e=enduse_list; e!=NULL; e=e->next)
+	for (e=enduse_list; e!=nullptr; e=e->next)
 	{
 		if (enduse_init(e)==1)
 			return FAILED;
@@ -235,7 +235,7 @@ void *enduse_syncproc(void *ptr)
 
 		// process the list for this thread
 		t2 = TS_NEVER;
-		for ( e=data->e, n=0 ; e!=NULL, n<data->ne ; e=e->next, n++ )
+		for ( e=data->e, n=0 ; e!=nullptr, n<data->ne ; e=e->next, n++ )
 		{
 			TIMESTAMP t = enduse_sync(e, PC_PRETOPDOWN, next_t1_ed);
 			if (t<t2) t2 = t;
@@ -265,7 +265,7 @@ void *enduse_syncproc(void *ptr)
 TIMESTAMP enduse_syncall(TIMESTAMP t1)
 {
 	static unsigned int n_threads_ed=0;
-	static ENDUSESYNCDATA *thread_ed = NULL;
+	static ENDUSESYNCDATA *thread_ed = nullptr;
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t ts = (clock_t)exec_clock();
 	
@@ -307,7 +307,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 			memset(thread_ed,0,sizeof(ENDUSESYNCDATA)*n_threads_ed);
 
 			// assign starting enduse for each thread
-			for (e=enduse_list; e!=NULL; e=e->next)
+			for (e=enduse_list; e!=nullptr; e=e->next)
 			{
 				if (thread_ed[en].ne==n_items)
 					en++;
@@ -320,7 +320,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 			for (n=0; n<n_threads_ed; n++)
 			{
 				thread_ed[n].ok = true;
-				if (pthread_create(&(thread_ed[n].pt),NULL,enduse_syncproc,&(thread_ed[n]))!=0)
+				if (pthread_create(&(thread_ed[n].pt),nullptr,enduse_syncproc,&(thread_ed[n]))!=0)
 				{
 					output_fatal("enduse_sync thread creation failed");
 					thread_ed[n].ok = false;
@@ -336,7 +336,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 	{
 		// process list directly
 		enduse *e;
-		for (e=enduse_list; e!=NULL; e=e->next)
+		for (e=enduse_list; e!=nullptr; e=e->next)
 		{
 			TIMESTAMP t3 = enduse_sync(e, PC_PRETOPDOWN, t1);
 			if (t3<t2) t2 = t3;
@@ -383,7 +383,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 	/*enduse *e;
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t start = exec_clock();
-	for (e=enduse_list; e!=NULL; e=e->next)
+	for (e=enduse_list; e!=nullptr; e=e->next)
 	{
 		TIMESTAMP t3 = enduse_sync(e,PC_PRETOPDOWN,t1);
 		if (t3<t2) t2 = t3;
@@ -420,7 +420,7 @@ int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
 
 int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 {
-	enduse *self=NULL; // temporary enduse structure used for mapping variables
+	enduse *self=nullptr; // temporary enduse structure used for mapping variables
 	int result = 0;
     struct s_map_enduse{
         PROPERTYTYPE type;
@@ -448,10 +448,10 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
             {.type=PT_set, .name="configuration",                .addr=(char*)PADDR_C(config), .description="the load configuration options"},
             {.type=PT_KEYWORD, .name="IS110",                .value=EUC_IS110},
             {.type=PT_KEYWORD, .name="IS220",                .value=EUC_IS220},
-    }, *last=NULL;
+    }, *last=nullptr;
 
     // publish the enduse load itself
-	PROPERTY *prop = property_malloc(PT_enduse, oclass, const_cast<char *>(strcmp(prefix, "") == 0 ? "load" : prefix), struct_address, NULL);
+	PROPERTY *prop = property_malloc(PT_enduse, oclass, const_cast<char *>(strcmp(prefix, "") == 0 ? "load" : prefix), struct_address, nullptr);
 	prop->description = "the enduse load description";
 	prop->flags = 0;
 	class_add_property(oclass,prop);
@@ -460,7 +460,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 	{
 		char name[256], lastname[256];
 
-		if(prefix == NULL || strcmp(prefix,"")==0)
+		if(prefix == nullptr || strcmp(prefix,"")==0)
 		{
 			strcpy(name,p->name);
 		}
@@ -474,13 +474,13 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 
 		if (p->type<_PT_LAST)
 		{
-			prop = property_malloc(p->type,oclass,name,p->addr+(int64)struct_address,NULL);
+			prop = property_malloc(p->type,oclass,name,p->addr+(int64)struct_address,nullptr);
 			prop->description = p->description;
 			prop->flags = p->flags;
 			class_add_property(oclass,prop);
 			result++;
 		}
-		else if (last==NULL)
+		else if (last==nullptr)
 		{
 			output_error("PT_KEYWORD not allowed unless it follows another property specification");
 			/* TROUBLESHOOT
@@ -544,16 +544,16 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 {
 	enduse *e = (enduse*)data;
 	char buffer[1024];
-	char *token = NULL;
+	char *token = nullptr;
 
 	/* use structure conversion if opens with { */
 	if ( string[0]=='{')
 	{
 		UNIT *unit = unit_find("kVA");
 		PROPERTY eus[] = {
-			{NULL,"total",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->total)-(char*)e),NULL,NULL,NULL,eus+1},
-			{NULL,"energy",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->energy)-(char*)e),NULL,NULL,NULL,eus+2},
-			{NULL,"demand",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->demand)-(char*)e),NULL,NULL,NULL,NULL},
+			{nullptr,"total",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->total)-(char*)e),nullptr,nullptr,nullptr,eus+1},
+			{nullptr,"energy",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->energy)-(char*)e),nullptr,nullptr,nullptr,eus+2},
+			{nullptr,"demand",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->demand)-(char*)e),nullptr,nullptr,nullptr,nullptr},
 		};
 		return convert_to_struct(string, data, eus);
 	}
@@ -567,7 +567,7 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 	strcpy(buffer,string);
 
 	/* parse tuples separate by semicolon*/
-	while ((token=strtok(token==NULL?buffer:NULL,";"))!=NULL)
+	while ((token=strtok(token==nullptr?buffer:nullptr,";"))!=nullptr)
 	{
 		/* colon separate tuple parts */
 		char *param = token;
@@ -575,7 +575,7 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 
 		/* isolate param and token and eliminte leading whitespaces */
 		while (isspace(*param) || iscntrl(*param)) param++;
-		if (value==NULL)
+		if (value==nullptr)
 			value= const_cast<char*>("1");
 		else
 			*value++ = '\0'; /* separate value from param */
@@ -597,7 +597,7 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 		else if (strcmp(param,"loadshape")==0)
 		{
 			PROPERTY *pref = class_find_property(prop->oclass,value);
-			if (pref==NULL)
+			if (pref==nullptr)
 			{
 				output_warning("convert_to_enduse(string='%-.64s...', ...) loadshape '%s' not found in class '%s'",string,value,prop->oclass->name);
 				return 0;

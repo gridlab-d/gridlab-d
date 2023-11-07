@@ -9,14 +9,14 @@
 
 #include "double_controller.h"
 
-CLASS *double_controller::oclass = NULL;
+CLASS *double_controller::oclass = nullptr;
 
 double_controller::double_controller(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module, "double_controller",sizeof(double_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class double_controller";
 		else
 			oclass->trl = TRL_QUALIFIED;
@@ -80,7 +80,7 @@ double_controller::double_controller(MODULE *module)
 			PT_double, "avg_price", PADDR(avg_price),
 			PT_double, "stdev_price", PADDR(stdev_price),
 			
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(double_controller));
 	}
 }
@@ -120,7 +120,7 @@ void double_controller::fetch(double **value, char *name, OBJECT *parent, PROPER
 	if(*name == 0){
 		GL_THROW("double_controller:%i, %s property not specified", hdr->id,goal);
 	}
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		sprintf(tname, "double_controller:%i", hdr->id);
@@ -145,12 +145,12 @@ int double_controller::init(OBJECT *parent){
 
 	cheat();
 
-	if(parent == NULL){
+	if(parent == nullptr){
 		gl_error("%s: double_controller has no parent, therefore nothing to control", namestr);
 		return 0;
 	}
 
-	if(pMarket == NULL){
+	if(pMarket == nullptr){
 		gl_error("%s: double_controller has no market, therefore no price signals", namestr);
 		return 0;
 	}
@@ -216,7 +216,7 @@ int double_controller::init(OBJECT *parent){
 
 	controller_bid.bid_id = (int64)hdr->id;
 	submit = (FUNCTIONADDR)(gl_get_function(pMarket, "submit_bid_state"));
-	if(submit == NULL){
+	if(submit == nullptr){
 	char buf[256];
 	gl_error("Unable to find function, submit_bid_state(), for object %s.", (char *)gl_name(pMarket, buf, 255));
 		return 0;
@@ -540,7 +540,7 @@ EXPORT int create_double_controller(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(double_controller::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			double_controller *my = OBJECTDATA(*obj,double_controller);
 			gl_set_parent(*obj,parent);
@@ -556,7 +556,7 @@ EXPORT int init_double_controller(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL){
+		if (obj!=nullptr){
 			return OBJECTDATA(obj,double_controller)->init(parent);
 		}
 		else

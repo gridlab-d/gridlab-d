@@ -18,17 +18,17 @@
 //////////////////////////////////////////////////////////////////////////
 // CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* residential_enduse::oclass = NULL;
+CLASS* residential_enduse::oclass = nullptr;
 
 // the constructor registers the class and properties and sets the defaults
 residential_enduse::residential_enduse(MODULE *mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gld_class::create(mod,"residential_enduse",sizeof(residential_enduse),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 			/* TROUBLESHOOT
 				The registration for the residential_enduse class failed.   This is usually caused
@@ -48,7 +48,7 @@ residential_enduse::residential_enduse(MODULE *mod)
 				PT_KEYWORD, "OFF", (enumeration)PS_OFF,
 				PT_KEYWORD, "ON", (enumeration)PS_ON,
 				PT_KEYWORD, "UNKNOWN", (enumeration)PS_UNKNOWN,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
 				The registration for the residential_enduse properties failed.   This is usually caused
 				by a coding error in the core implementation of classes or the module implementation.
@@ -77,7 +77,7 @@ int residential_enduse::init(OBJECT *parent)
 	gld_object *pParent = OBJECTDATA(parent,gld_object);
 
 	//	pull parent attach_enduse and attach the enduseload
-	if ( pParent!=NULL && pParent->is_valid() )
+	if ( pParent!=nullptr && pParent->is_valid() )
 	{
 		ATTACHFUNCTION attach = (ATTACHFUNCTION)pParent->get_function("attach_enduse");
 		if ( attach )
@@ -91,8 +91,8 @@ int residential_enduse::init(OBJECT *parent)
 			 */
 	}
 
-	if (load.shape!=NULL) {
-		if (load.shape->schedule==NULL)
+	if (load.shape!=nullptr) {
+		if (load.shape->schedule==nullptr)
 		{
 			gl_verbose("%s (%s:%d) schedule is not specified so the load may be inactive", get_name(), get_oclass()->get_name(), get_id());
 			/* TROUBLESHOOT
@@ -131,7 +131,7 @@ EXPORT int create_residential_enduse(OBJECT **obj, OBJECT *parent)
 {
 	try {
 		*obj = gl_create_object(residential_enduse::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			residential_enduse *my = OBJECTDATA(*obj,residential_enduse);
 			gl_set_parent(*obj,parent);

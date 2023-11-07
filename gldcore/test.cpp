@@ -27,14 +27,14 @@ static TESTLIST test_list[] = {
 	{"schedule",	schedule_test,		0, test_list+4},
 	{"loadshape",	loadshape_test,		0, test_list+5},
 	{"enduse",		enduse_test,		0, test_list+6},
-	{"lock",		test_lock,			0, NULL}, /* last test in list has no next */
+	{"lock",		test_lock,			0, nullptr}, /* last test in list has no next */
 	/* add new core test routines before this line */
 }, *last_test = test_list+sizeof(test_list)/sizeof(test_list[0])-1;
 
 int test_register(char *name, TESTFUNCTION call)
 {
 	TESTLIST *item = (TESTLIST*)malloc(sizeof(TESTLIST));
-	if ( item==NULL )
+	if ( item==nullptr )
 	{
 		output_error("test_register(char *name='%s', TESTFUNCTION call=%p): memory allocation failed", name, call);
 		return FAILED;
@@ -43,7 +43,7 @@ int test_register(char *name, TESTFUNCTION call)
 	strncpy(item->name,name,sizeof(item->name));
 	item->call = call;
 	item->enabled = 0;
-	item->next = NULL;
+	item->next = nullptr;
 	last_test = item;
 	return SUCCESS;
 }
@@ -56,7 +56,7 @@ int test_request(char *name)
 	output_verbose("running test '%s'...",name);
 
 	/* try already list ones */
-	for ( item=test_list ; item!=NULL ; item=item->next )
+	for ( item=test_list ; item!=nullptr ; item=item->next )
 	{
 		if ( strcmp(item->name,name)==0 )
 		{
@@ -66,10 +66,10 @@ int test_request(char *name)
 	}
 
 	/* try module test */
-	if ( (mod=module_load(name,0,NULL))!=NULL )
+	if ( (mod=module_load(name,0,nullptr))!=nullptr )
 	{
-		if ( mod->test!=NULL )
-			mod->test(0,NULL);
+		if ( mod->test!=nullptr )
+			mod->test(0,nullptr);
 		else
 			output_warning("module '%s' does not implement a test routine", name);
 		return SUCCESS;
@@ -81,7 +81,7 @@ int test_request(char *name)
 int test_exec(void)
 {
 	TESTLIST *item;
-	for ( item=test_list ; item!=NULL ; item=item->next )
+	for ( item=test_list ; item!=nullptr ; item=item->next )
 	{
 		if ( item->enabled!=0 )
 		{
@@ -99,7 +99,7 @@ int test_exec(void)
 #include "exec.h"
 #define TESTCOUNT (100000000/global_threadcount)
 
-static volatile unsigned int *count = NULL;
+static volatile unsigned int *count = nullptr;
 static volatile unsigned int total = 0;
 static unsigned int key = 0;
 static volatile int done = 0;
@@ -141,7 +141,7 @@ int test_lock(void)
 		{
 			pthread_t pt;
 			count[n] = 0;
-			if ( pthread_create(&pt,NULL,test_lock_proc,(void*)&n)!=0 )
+			if ( pthread_create(&pt,nullptr,test_lock_proc,(void*)&n)!=0 )
 			{
 				output_test("thread creation failed");
 				return FAILED;

@@ -50,7 +50,7 @@ stubauction::stubauction(MODULE *module)
 			PT_enumeration,"control_mode",PADDR(control_mode),PT_DESCRIPTION,"the control mode to use for determining average and deviation calculations",
 				PT_KEYWORD,"NORMAL",(enumeration)CON_NORMAL,
 				PT_KEYWORD,"DISABLED",(enumeration)CON_DISABLED,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(stubauction));
 	}
@@ -195,7 +195,7 @@ EXPORT int create_stubauction(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(stubauction::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			stubauction *my = OBJECTDATA(*obj,stubauction);
 			gl_set_parent(*obj,parent);
@@ -211,7 +211,7 @@ EXPORT int init_stubauction(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,stubauction)->init(parent);
 		else
 			return 0;

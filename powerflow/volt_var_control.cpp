@@ -56,7 +56,7 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 			PT_char1024, "high_load_deadband",PADDR(vbw_high_txt),PT_DESCRIPTION,"High loading case voltage deadband for each regulator, separated by commas",
 			PT_char1024, "low_load_deadband",PADDR(vbw_low_txt),PT_DESCRIPTION,"Low loading case voltage deadband for each regulator, separated by commas",
 			PT_bool, "pf_signed",PADDR(pf_signed),PT_DESCRIPTION,"Set to true to consider the sign on the power factor.  Otherwise, it just maintains the deadband of +/-desired_pf",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
 
@@ -1309,7 +1309,7 @@ int volt_var_control::init(OBJECT *parent)
 
 				token_b1 = numchar;	//Reference the temporary array
 
-				indexa = ((int)(strtod(token_b1,NULL))-1);	//Convert back
+				indexa = ((int)(strtod(token_b1,nullptr))-1);	//Convert back
 
 				if ((indexa <0) || (indexa > (num_regs-1)))		//Pre-offset for C indexing
 				{
@@ -2664,7 +2664,7 @@ char *volt_var_control::dbl_token(char *start_token, double *dbl_val)
 	workIndex = workArray;
 
 	//Convert it
-	*dbl_val = strtod(workIndex,NULL);
+	*dbl_val = strtod(workIndex,nullptr);
 
 	//Return the end pointer
 	return end_token;

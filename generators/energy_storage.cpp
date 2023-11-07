@@ -16,8 +16,8 @@
 
 #define HOUR 3600 * TS_SECOND
 
-CLASS *energy_storage::oclass = NULL;
-energy_storage *energy_storage::defaults = NULL;
+CLASS *energy_storage::oclass = nullptr;
+energy_storage *energy_storage::defaults = nullptr;
 
 static PASSCONFIG passconfig = PC_BOTTOMUP|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
@@ -29,10 +29,10 @@ energy_storage::energy_storage(){};
 /* Class registration is only called once to register the class with the core */
 energy_storage::energy_storage(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"energy_storage",sizeof(energy_storage),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class energy_storage";
 		else
 			oclass->trl = TRL_PROOF;
@@ -81,7 +81,7 @@ energy_storage::energy_storage(MODULE *module)
 				PT_KEYWORD, "C",(gld::set)PHASE_C,
 				PT_KEYWORD, "N",(gld::set)PHASE_N,
 				PT_KEYWORD, "S",(gld::set)PHASE_S,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 
 
@@ -152,7 +152,7 @@ EXPORT int create_energy_storage(OBJECT **obj, OBJECT *parent)
 	try 
 	{
 		*obj = gl_create_object(energy_storage::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			energy_storage *my = OBJECTDATA(*obj,energy_storage);
 			gl_set_parent(*obj,parent);
@@ -168,7 +168,7 @@ EXPORT int init_energy_storage(OBJECT *obj, OBJECT *parent)
 {
 	try 
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,energy_storage)->init(parent);
 		else
 			return 0;

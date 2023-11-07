@@ -233,7 +233,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 
                                PT_object, "topological_parent", PADDR(TopologicalParent), PT_DESCRIPTION, "topological parent as per GLM configuration",
                                PT_bool, "behaving_as_swing", PADDR(swing_functions_enabled), PT_DESCRIPTION, "Indicator flag for if a bus is behaving as a reference voltage source - valid for a SWING or SWING_PQ",
-                               NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+                               nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==nullptr)
 			GL_THROW("Unable to publish node deltamode function");
@@ -341,8 +341,8 @@ int node::create(void)
 	shunt_dy[0] = shunt_dy[1] = shunt_dy[2] = gld::complex(0.0,0.0);
 	shunt_dy[3] = shunt_dy[4] = shunt_dy[5] = gld::complex(0.0,0.0);
 
-	prev_voltage_value = nullptr;	//NULL the pointer, just for the sake of doing so
-	prev_power_value = nullptr;	//NULL the pointer, again just for the sake of doing so
+	prev_voltage_value = nullptr;	//nullptr the pointer, just for the sake of doing so
+	prev_power_value = nullptr;	//nullptr the pointer, again just for the sake of doing so
 	node_type = NORMAL_NODE;	//Assume we're nothing special by default
 	current_accumulated = false;
 	deltamode_inclusive = false;	//Begin assuming we aren't delta-enabled
@@ -798,7 +798,7 @@ int node::init(OBJECT *parent)
 							{
 								tmp_par_node->Extra_Data_Track_FPI[index_loop_val] = gld::complex(0.0,0.0);
 							}
-						}//End NULLed Extra_Data_Track_FPI
+						}//End nullptred Extra_Data_Track_FPI
 					}//End FPI block
 				}//End Extra data alloc
 			}//End phase D check
@@ -4101,7 +4101,7 @@ int node::NR_current_update(bool parentcall)
 		}//End we have children
 
 		//Handle our links - let's the get posted to the children properly first
-		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)	//Make sure we aren't children as well, since we'll get NULL pointers and make everyone upset
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)	//Make sure we aren't children as well, since we'll get nullptr pointers and make everyone upset
 		{
 			for (table_index=0; table_index<NR_busdata[NR_node_reference].Link_Table_Size; table_index++)
 			{

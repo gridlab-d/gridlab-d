@@ -134,7 +134,7 @@ battery::battery(MODULE *module)
 			PT_double,"battery_load[W]", PADDR(bat_load), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the current power output of the battery.",
 			PT_double,"reserve_state_of_charge[pu]", PADDR(b_soc_reserve), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the reserve state of charge the battery can reach.",
 
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(battery));
 
@@ -495,7 +495,7 @@ int battery::init(OBJECT *parent)
 				{
 					climate_object_found = true;
 
-					OBJECT *clim = gl_find_next(climates,NULL);
+					OBJECT *clim = gl_find_next(climates,nullptr);
 
 					if (clim->rank<=obj->rank)
 						gl_set_dependent(clim,obj);
@@ -2296,7 +2296,7 @@ void battery::push_powerflow_currents(void)
 		//See if it is triplex
 		if (parent_is_triplex)	//It is
 		{
-			//Shouldn't need to NULL check this one, but do it anyways, for consistency
+			//Shouldn't need to nullptr check this one, but do it anyways, for consistency
 			if (pLine12 != nullptr)
 			{
 				//**** Current value ***/

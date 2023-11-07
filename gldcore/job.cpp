@@ -50,15 +50,15 @@ static const char *GetLastErrorMsg(void)
     FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | 
         FORMAT_MESSAGE_FROM_SYSTEM,
-        NULL,
+        nullptr,
         dw,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
         (LPTSTR) &lpMsgBuf,
-        0, NULL );
+        0, nullptr );
 
 	char *p;
-	while ( (p=strchr((char*)lpMsgBuf,'\n'))!=NULL ) *p=' ';
-	while ( (p=strchr((char*)lpMsgBuf,'\r'))!=NULL ) *p=' ';
+	while ( (p=strchr((char*)lpMsgBuf,'\n'))!=nullptr ) *p=' ';
+	while ( (p=strchr((char*)lpMsgBuf,'\r'))!=nullptr ) *p=' ';
     sprintf(szBuf, "%s (error code %d)", lpMsgBuf, dw); 
  
     LocalFree(lpMsgBuf);
@@ -74,32 +74,32 @@ static DIR *opendir(const char *dirname)
 	if ( dh==INVALID_HANDLE_VALUE )
 	{
 		output_error("opendir(const char *dirname='%s'): %s", dirname, GetLastErrorMsg());
-		return NULL;
+		return nullptr;
 	}
 	DIR *dirp = new DIR;
 	dirp->first = dirp->next = new struct dirent;
 	dirp->first->d_type = (fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) ? DT_DIR : 0;
 	dirp->first->d_name = new char[strlen(fd.cFileName)+1];
 	strcpy(dirp->first->d_name,fd.cFileName);
-	dirp->first->next = NULL;
+	dirp->first->next = nullptr;
 	struct dirent *last = dirp->first;
 	while ( FindNextFile(dh,&fd)!=0 )
 	{
 		struct dirent *dp = (struct dirent*)malloc(sizeof(struct dirent));
-		if ( dp==NULL )
+		if ( dp==nullptr )
 		{
 			output_error("opendir(const char *dirname='%s'): %s", dirname, GetLastErrorMsg());
-			return NULL;
+			return nullptr;
 		}
 		dp->d_type = (fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) ? DT_DIR : 0;
 		dp->d_name = (char*)malloc(strlen(fd.cFileName)+10);
-		if ( dp->d_name==NULL )
+		if ( dp->d_name==nullptr )
 		{
 			output_error("opendir(const char *dirname='%s'): %s", dirname, GetLastErrorMsg());
-			return NULL;
+			return nullptr;
 		}
 		strcpy(dp->d_name,fd.cFileName);
-		dp->next = NULL;
+		dp->next = nullptr;
 		last->next = dp;
 		last = dp;
 	}
@@ -119,7 +119,7 @@ static struct dirent *readdir(DIR *dirp)
 static int closedir(DIR *dirp)
 {
 	struct dirent *dp = dirp->first; 
-	while ( dp!=NULL )
+	while ( dp!=nullptr )
 	{
 		struct dirent *del = dp;
 		dp = dp->next;
@@ -154,10 +154,10 @@ static int vsystem(const char *fmt, ...)
 static bool destroy_dir(char *name)
 {
 	DIR *dirp = opendir(name);
-	if ( dirp==NULL ) return true; // directory does not exist
+	if ( dirp==nullptr ) return true; // directory does not exist
 	struct dirent *dp;
 	output_debug("destroying contents of '%s'", name);
-	while ( dirp!=NULL && (dp=readdir(dirp))!=NULL )
+	while ( dirp!=nullptr && (dp=readdir(dirp))!=nullptr )
 	{
 		if ( strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0 )
 		{
@@ -182,13 +182,13 @@ static bool copyfile(char *from, char *to)
 {
 	output_debug("copying '%s' to '%s'", from, to);
 	FILE *in = fopen(from,"r");
-	if ( in==NULL )
+	if ( in==nullptr )
 	{
 		output_error("copyfile(char *from='%s', char *to='%s'): unable to open '%s' for reading - %s", from,to,from,strerror(errno));
 		return false; 
 	}
 	FILE *out = fopen(to,"w");
-	if ( out==NULL )
+	if ( out==nullptr )
 	{
 		output_error("copyfile(char *from='%s', char *to='%s'): unable to open '%s' for writing - %s", from,to,to,strerror(errno));
 		fclose(in);
@@ -212,7 +212,7 @@ static bool copyfile(char *from, char *to)
 }
 
 /** routine to run a validation test */
-static bool run_job(char *file, double *elapsed_time=NULL)
+static bool run_job(char *file, double *elapsed_time=nullptr)
 {
 	output_debug("run_job(char *file='%s') starting", file);
 
@@ -220,7 +220,7 @@ static bool run_job(char *file, double *elapsed_time=NULL)
 	strcpy(dir,file);
 	char *ext = strrchr(dir,'.');
 	char *name = strrchr(dir,'/')+1;
-	if ( ext==NULL || strcmp(ext,".glm")!=0 ) 
+	if ( ext==nullptr || strcmp(ext,".glm")!=0 )
 	{
 		output_error("run_job(char *file='%s'): file is not a GLM", file);
 		return false;
@@ -243,7 +243,7 @@ static bool run_job(char *file, double *elapsed_time=NULL)
 		job_cmdargs, name);
 	dt = exec_clock() - dt;
 	double t = (double)dt/(double)global_ms_per_second;
-	if ( elapsed_time!=NULL ) *elapsed_time = t;
+	if ( elapsed_time!=nullptr ) *elapsed_time = t;
 	if ( code!=0 )
 	{
 		output_error("exit code %d received from %s", code, name);
@@ -258,7 +258,7 @@ typedef struct s_jobstack {
 	char name[1024];
 	struct s_jobstack *next;
 } JOBLIST;
-static JOBLIST *jobstack = NULL;
+static JOBLIST *jobstack = nullptr;
 static unsigned int joblock = 0;
 static void pushjob(char *dir)
 {
@@ -288,14 +288,14 @@ void *(run_job_proc)(void *arg)
 	output_debug("starting run_test_proc id %d", id);
 	JOBLIST *item;
 	bool passed = true;
-	while ( (item=popjob())!=NULL )
+	while ( (item=popjob())!=nullptr )
 	{
 		output_debug("process %d picked up '%s'", id, item->name);
 		double dt;
 		if ( !run_job(item->name,&dt) )
 			final_result = false;
 	}
-	return NULL;
+	return nullptr;
 }
 
 /** routine to process a directory for autotests */
@@ -305,8 +305,8 @@ static size_t process_dir(const char *path)
 	output_debug("processing job directory '%s'", path);
 	struct dirent *dp;
 	DIR *dirp = opendir(path);
-	if ( dirp==NULL ) return 0; // nothing to do
-	while ( (dp=readdir(dirp))!=NULL )
+	if ( dirp==nullptr ) return 0; // nothing to do
+	while ( (dp=readdir(dirp))!=nullptr )
 	{
 		char item[1024];
 		size_t len = sprintf(item,"%s/%s",path,dp->d_name);
@@ -339,7 +339,7 @@ extern "C" int job(int argc, char *argv[])
 	global_suppress_repeat_messages = 0;
 	output_message("Starting job in directory '%s'", global_workdir);
 	char var[64];
-	if ( global_getvar("clean",var,sizeof(var))!=NULL && atoi(var)!=0 ) clean = true;
+	if ( global_getvar("clean",var,sizeof(var))!=nullptr && atoi(var)!=0 ) clean = true;
 
 
 	char mailto[1024];
@@ -357,7 +357,7 @@ extern "C" int job(int argc, char *argv[])
 	pthread_t *pid = new pthread_t[n_procs];
 	output_debug("starting job with cmdargs '%s' using %d threads", job_cmdargs, n_procs);
 	for ( i=0 ; i<fmin(count,n_procs) ; i++ )
-		pthread_create(&pid[i],NULL,run_job_proc,(void*)i);
+		pthread_create(&pid[i],nullptr,run_job_proc,(void*)i);
 	void *rc;
 	output_debug("begin waiting process");
 	for ( i=0 ; i<fmin(count,n_procs) ; i++ )
@@ -381,7 +381,7 @@ extern "C" int job(int argc, char *argv[])
 #define MAILER "/bin/mail"
 #endif
 // TODO
-//	if ( global_getvar("mailto",mailto,sizeof(mailto))!=NULL 
+//	if ( global_getvar("mailto",mailto,sizeof(mailto))!=nullptr
 //		&& vsystem(MAILER " -s 'GridLAB-D Job Report' %s <%s", 
 //			count, mailto, report_file)==0 )
 //		output_verbose("Mail message send to %s",mailto);
