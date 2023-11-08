@@ -212,7 +212,7 @@ int motor::create()
 	DM_volt_exit_per = 95; // share the variable with TPIM
 	DM_speed_exit_per = 95; // share the variable with TPIM
 	speed_error = 1e-10; // share the variable with TPIM
-	ndiv = 20;
+	ndiv = 1;
 
 	wbase=2.0*PI*nominal_frequency;
 
