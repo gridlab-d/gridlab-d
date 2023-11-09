@@ -28,6 +28,12 @@ add_library(${GLD_MODULE_NAME}
         windturb_dg.h
 	cblock.cpp
 	cblock.h
+        inverter_DC_Ctrl.cpp
+        inverter_DC_Ctrl.h
+        dc_link.cpp
+        dc_link.h
+        inverter_DC.cpp
+        inverter_DC.h
         )
 
 set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
