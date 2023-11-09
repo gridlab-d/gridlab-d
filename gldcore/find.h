@@ -6,6 +6,7 @@
 
 #ifndef _FIND_H
 #define _FIND_H
+#include <vector>
 
 #include <stdarg.h>
 #include <stdlib.h>
