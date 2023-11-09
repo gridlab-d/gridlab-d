@@ -1,0 +1,64 @@
+//////////////////////////////////// Inverter #1 M1/////////////////////////////////////////
+
+object inverter_dyn {
+	name Inv1;
+	parent node_18;
+	flags DELTAMODE;
+	rated_power ${inv1rate} kW;	
+	control_mode GFL_CURRENT_SOURCE;
+	grid_following_mode POSITIVE_SEQUENCE;	
+	
+	frequency_watt ${FW};  // Disable the frequency support function
+	volt_var ${VV};  // Disable the voltage support function
+
+	// Grid following values
+	Pref 240000;
+	Qref 0.0;
+	
+	kpPLL  50;  // proportional gain of PLL
+	kiPLL  900;  // Integral gain of PLL
+	
+	// Frequency Watt
+	Tpf 0.50;   // time constant of the power loop, second
+	Tff 0.01;  // time constant of the frequency measurement filter, second
+	Rp 0.05;  // frequency-watt droop  5%
+	Pref_min 0;
+	
+	// Volt-VAR
+	Rq 0.05; // volt-var droop 5%
+	Tqf 0.2; // time constant of the reactive power loop, second
+	Tvf 0.05; // time constat of the voltage measurement loop, second
+	
+	enable_1547_checks true;
+	IEEE_1547_version NONE;//IEEE1547A; 
+	reconnect_time 300 s;	//Set for testing - I don't want to wait 5 minutes
+
+	
+	//1547-2018 defaults for triggering - so people can change them - will get adjusted to 1547 in init, if desired
+	over_freq_high_cutout  62.0;	//OF2 set point for IEEE 1547-2018
+	over_freq_high_disconnect_time  1;		//OF2 clearing time for IEEE1547-2018 (changed to avoid tripping on transient)
+
+	over_freq_low_cutout  61.2;		//OF1 set point for IEEE 1547-2018
+	over_freq_low_disconnect_time  300.0;			//OF1 clearing time for IEEE 1547-2018
+
+	under_freq_high_cutout  58.5;	//UF2 set point for IEEE 1547-2018
+	under_freq_high_disconnect_time  300.0;		//UF2 clearing time for IEEE1547-2018
+
+	under_freq_low_cutout  56.5;		//UF1 set point for IEEE 1547-2018
+	under_freq_low_disconnect_time  0.16;		//UF1 clearing time for IEEE 1547-2018
+	
+	
+	//Voltage set points - 1547a defaults
+	under_voltage_low_cutout  0.45;	//Lowest voltage threshold for undervoltage
+	under_voltage_middle_cutout  0.60;	//Middle-lowest voltage threshold for undervoltage
+	under_voltage_high_cutout  0.88;		//High value of low voltage threshold for undervoltage
+	over_voltage_low_cutout  1.10;				//Lowest voltage value for overvoltage
+	over_voltage_high_cutout  1.20;				//High voltage value for overvoltage
+	under_voltage_low_disconnect_time  0.16;				//Lowest voltage clearing time for undervoltage
+	under_voltage_middle_disconnect_time  1.0;				//Middle-lowest voltage clearing time for undervoltage
+	under_voltage_high_disconnect_time  2.0;					//Highest voltage clearing time for undervoltage
+	over_voltage_low_disconnect_time  1.0;					//Lowest voltage clearing time for overvoltage
+	over_voltage_high_disconnect_time  0.16;					//Highest voltage clearing time for overvoltage
+
+
+};

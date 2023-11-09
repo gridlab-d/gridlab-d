@@ -54,7 +54,7 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 PT_double, "pi_freq_kp", PADDR(pi_freq_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the frequency setting.",
                                 PT_double, "pi_freq_ki", PADDR(pi_freq_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the frequency setting.",
                                 PT_double, "pi_freq_ub_pu[pu]", PADDR(pi_freq_ub_pu), PT_DESCRIPTION, "The upper bound of the output (i.e., the control variable 'Pset'/'fset') of the PI controller that adjusts the frequency difference in per unit.",
-                                PT_double, "pi_freq_lb_pu[pu]", PADDR(pi_freq_lb_pu), PT_DESCRIPTION, "	The lower bound of the output (i.e., the control variable 'Pset'/'fset') of the PI controller that adjusts the frequency difference in per unit.",
+                                PT_double, "pi_freq_lb_pu[pu]", PADDR(pi_freq_lb_pu), PT_DESCRIPTION, "The lower bound of the output (i.e., the control variable 'Pset'/'fset') of the PI controller that adjusts the frequency difference in per unit.",
                                 PT_double, "pi_volt_mag_kp", PADDR(pi_volt_mag_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the voltage magnitude setting.",
                                 PT_double, "pi_volt_mag_ki", PADDR(pi_volt_mag_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the voltage magnitude setting.",
                                 PT_double, "pi_volt_mag_ub_pu[pu]", PADDR(pi_volt_mag_ub_pu), PT_DESCRIPTION, "The upper bound of the output (i.e., the control variable 'Vset') of the PI controller that adjusts the voltage magnitude difference in per unit.",
@@ -110,8 +110,6 @@ int sync_ctrl::init(OBJECT *parent)
 
 TIMESTAMP sync_ctrl::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
-    deltamode_reg();
-
     return TS_NEVER; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
@@ -784,6 +782,7 @@ void sync_ctrl::init_data_sanity_check()
 void sync_ctrl::init_deltamode_check()
 {
     OBJECT *obj = OBJECTHDR(this);
+    STATUS fxn_return_status;
 
     //==Set the deltamode flag, if desired
     if (obj->flags & OF_DELTAMODE)
@@ -817,8 +816,18 @@ void sync_ctrl::init_deltamode_check()
     }
     else if (deltamode_inclusive) // Both the 'generators' module and 'sync_ctrl' object are enabled for the deltamode
     {
-        gen_object_count++;
-        reg_dm_flag = true;
+        //Add us to the list
+        fxn_return_status = add_gen_delta_obj(obj,false);
+
+        //Check it
+        if (fxn_return_status == FAILED)
+        {
+            GL_THROW("sync_ctrl:%s - failed to add object to generator deltamode object list", obj->name ? obj->name : "unnamed");
+            /*  TROUBLESHOOT
+            The sync_ctrl object encountered an issue while trying to add itself to the generator deltamode object list.  If the error
+            persists, please submit an issue via GitHub.
+            */
+        }
     }
 }
 
@@ -934,56 +943,6 @@ void sync_ctrl::init_controllers()
 
     pi_ctrl_cgu_volt_set_fsu_flag = true;
     pi_ctrl_cgu_freq_set_fsu_flag = true;
-}
-
-//==QSTS Member Funcs
-void sync_ctrl::deltamode_reg()
-{
-    if (reg_dm_flag) // Check if this object needs to be registered for running in deltamode
-    {
-        reg_dm_flag = false; // Turn off this one-time flag
-
-        //==Call the allocation routine, if needed
-        if ((gen_object_current == -1) || (delta_objects == nullptr))
-        {
-            allocate_deltamode_arrays();
-        }
-
-        //==Check limits
-        OBJECT *obj = OBJECTHDR(this);
-        if (gen_object_current >= gen_object_count)
-        {
-            GL_THROW("Too many objects tried to populate deltamode objects array in the '%s' module!",
-                     obj->oclass->module->name);
-            /*  TROUBLESHOOT
-			While attempting to populate a reference array of deltamode-enabled objects for the 'generators'
-			module, an attempt was made to write beyond the allocated array space. Please try again.
-            If the error persists, please submit a bug report and your code via the issue tracker.
-			*/
-        }
-
-        //==Map func
-        delta_objects[gen_object_current] = obj; // Add this object into the list of deltamode objects
-        delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_controller_object"));
-
-        //==Dobule check the mapped function
-        if (delta_functions[gen_object_current] == nullptr)
-        {
-            gl_warning("Failure to map deltamode function for this device: %s", obj->name);
-            /*  TROUBLESHOOT
-			Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-			the object supports deltamode. This warning may simply be an indication that the object of interest
-			does not support deltamode. If the warning persists and the object does, please submit your code and
-			a bug report via the issue tracker.
-			*/
-        }
-
-        //==Set the post delta function to nullptr, thus it does not need to be checked
-        post_delta_functions[gen_object_current] = nullptr;
-
-        //==Increment
-        gen_object_current++;
-    }
 }
 
 /* ================================================

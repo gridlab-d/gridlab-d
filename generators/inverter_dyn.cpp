@@ -87,6 +87,10 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "Xfilter[pu]", PADDR(Xfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
 			PT_double, "Rfilter[pu]", PADDR(Rfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
 
+			// Dispatch variables
+			PT_double,"pdispatch[pu]", PADDR(pdispatch_exp.pdispatch), PT_DESCRIPTION, "Desired generator dispatch set point in p.u.",
+			PT_double,"pdispatch_offset[pu]", PADDR(pdispatch_exp.pdispatch_offset), PT_DESCRIPTION, "Desired offset to generator dispatch in p.u.",
+
 			// Grid-Following Controller Parameters
 			PT_double, "Pref[W]", PADDR(Pref), PT_DESCRIPTION, "DELTAMODE: The real power reference.",
 			PT_double, "Qref[VAr]", PADDR(Qref), PT_DESCRIPTION, "DELTAMODE: The reactive power reference.",
@@ -165,6 +169,7 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "rampDownRate_real", PADDR(rampDownRate_real), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following frequency-watt",
 			PT_double, "rampUpRate_reactive", PADDR(rampUpRate_reactive), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following volt-var",
 			PT_double, "rampDownRate_reactive", PADDR(rampDownRate_reactive), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following volt-var",
+			PT_double, "Pref_droop_pu", PADDR(Pref_droop_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: power reference in frequency-watt",
 
 			PT_double, "frequency_convergence_criterion[rad/s]", PADDR(GridForming_freq_convergence_criterion), PT_DESCRIPTION, "Max frequency update for grid-forming inverters to return to QSTS",
 			PT_double, "voltage_convergence_criterion[V]", PADDR(GridForming_volt_convergence_criterion), PT_DESCRIPTION, "Max voltage update for grid-forming inverters to return to QSTS",
@@ -203,8 +208,8 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "kiqmax", PADDR(kiqmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Qmax controller.",
 			PT_double, "Qmax[pu]", PADDR(Qmax), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
 			PT_double, "Qmin[pu]", PADDR(Qmin), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
-
-
+			PT_double, "delta_w_droop[pu]", PADDR(delta_w_droop), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: delta omega fro p-f droop",
+			PT_bool, "VFlag", PADDR(VFlag), PT_DESCRIPTION, "DELTAMODE: Voltage flag to choose between PI control or direct control.",
 			PT_double, "Vdc_pu[pu]", PADDR(curr_state.Vdc_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: dc bus voltage of PV panel when using grid-forming PV Inverter",
 			PT_double, "Vdc_min_pu[pu]", PADDR(Vdc_min_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: The reference voltage of the Vdc_min controller",
 			PT_double, "C_pu[pu]", PADDR(C_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: capacitance of dc bus",
@@ -270,7 +275,12 @@ inverter_dyn::inverter_dyn(MODULE *module)
 				PT_KEYWORD, "UNDER_VOLTAGE_HIGH",(enumeration)IEEE_1547_HIGH_UV, PT_DESCRIPTION, "High under-voltage level trip",
 				PT_KEYWORD, "OVER_VOLTAGE_LOW",(enumeration)IEEE_1547_LOW_OV, PT_DESCRIPTION, "Low over-voltage level trip",
 				PT_KEYWORD, "OVER_VOLTAGE_HIGH",(enumeration)IEEE_1547_HIGH_OV, PT_DESCRIPTION, "High over-voltage level trip",
-
+	                PT_bool, "phase_angle_correction",PADDR(phase_angle_correction), PT_DESCRIPTION,
+			"DELTAMODE: Boolean used to indicate whether inverter applies "
+                        "phase angle correction during current limiting",
+	                PT_bool, "virtual_resistance_correction", PADDR(virtual_resistance_correction),
+	                PT_DESCRIPTION,"DELTAMODE: Boolean used to indicate whether inverter applies "
+                        "virtual resistance correction during current limiting",
 			nullptr) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -344,6 +354,11 @@ int inverter_dyn::create(void)
 	Xfilter = 0.15; //per unit
 	Rfilter = 0.01; // per unit
 
+	// Dispatch setpoints
+	pdispatch.pdispatch = -99.0; //essentially flagged as unset
+	pdispatch.pdispatch_offset = 0; //default offset is 0
+	memcpy(&pdispatch_exp,&pdispatch,sizeof(PDISPATCH));
+
 	// Grid-Forming controller parameters
 	Tp = 0.01; // s
 	Tq = 0.01; // s
@@ -370,6 +385,7 @@ int inverter_dyn::create(void)
 	kiqmax = 20;
 	Qmax = 10;
 	Qmin = -10;
+	VFlag = 1;  // Default VFlag = 1 so that voltage control PI loop is active
 	V_lim = 10;
 
 	// Initial value for previous step frequency deviation
@@ -383,9 +399,9 @@ int inverter_dyn::create(void)
 	Angle_PLL_blk[0].setparams(1.0);
 	Angle_PLL_blk[1].setparams(1.0);
 	Angle_PLL_blk[2].setparams(1.0);
-	Angle_PLL_blk[0].init(0.0,0.0);
-	Angle_PLL_blk[1].init(0.0,(4.0 / 3.0) * PI);
-	Angle_PLL_blk[2].init(0.0,(2.0 / 3.0) * PI);
+	Angle_PLL_blk[0].init_given_y(0.0);
+	Angle_PLL_blk[1].init_given_y((4.0 / 3.0) * PI);
+	Angle_PLL_blk[2].init_given_y((2.0 / 3.0) * PI);
 
 	Angle_PLL[0] = 0.0;
 	Angle_PLL[1] = (4.0 / 3.0) * PI;
@@ -512,6 +528,14 @@ int inverter_dyn::create(void)
 
 	node_nominal_voltage = 120.0;		//Just pick a value
 
+	imax_phase_correction_done[0] = false;
+	imax_phase_correction_done[1] = false;
+	imax_phase_correction_done[2] = false;
+	phase_angle_correction = false; // Phase angle correction off by default
+	virtual_resistance_correction = false; // virtual resistance correction off by default
+
+	update_chk_vars();
+
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -533,6 +557,7 @@ int inverter_dyn::init(OBJECT *parent)
 	gld_object *tmp_gld_obj = nullptr;
 	STATUS return_value_init;
 	bool childed_connection = false;
+	STATUS fxn_return_status;
 
 	//Deferred initialization code
 	if (parent != nullptr)
@@ -640,7 +665,7 @@ int inverter_dyn::init(OBJECT *parent)
 						//Make sure it worked
 						if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_bool())
 						{
-							GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+							GL_THROW("inverter_dyn:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
 							//Defined elsewhere
 						}
 
@@ -1075,7 +1100,7 @@ int inverter_dyn::init(OBJECT *parent)
 						//Check it
 						if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_complex_array())
 						{
-							GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+							GL_THROW("inverter_dyn:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
 							//Defined above
 						}
 
@@ -1101,7 +1126,7 @@ int inverter_dyn::init(OBJECT *parent)
 						{
 							if ((temp_child_complex_array.get_rows() != 3) && (temp_child_complex_array.get_cols() != 3))
 							{
-								GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
+								GL_THROW("inverter_dyn:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
 								//Defined above
 							}
 							//Default else -- right size
@@ -1279,8 +1304,21 @@ int inverter_dyn::init(OBJECT *parent)
 		}
 		else
 		{
-			gen_object_count++; //Increment the counter
+			//Flag as the first run
 			first_sync_delta_enabled = true;
+
+			//Add us to the list
+			fxn_return_status = add_gen_delta_obj(obj,false);
+
+			//Check it
+			if (fxn_return_status == FAILED)
+			{
+				GL_THROW("inverter_dyn:%s - failed to add object to generator deltamode object list", obj->name ? obj->name : "unnamed");
+				/*  TROUBLESHOOT
+				The inverter_dyn object encountered an issue while trying to add itself to the generator deltamode object list.  If the error
+				persists, please submit an issue via GitHub.
+				*/
+			}
 		}
 		//Default else - don't do anything
 
@@ -1440,6 +1478,8 @@ int inverter_dyn::init(OBJECT *parent)
 		mp = P_f_droop * w_ref;
 	}
 
+	pdispatch_sync(); //sync up pdispatch and reference point settings
+
 	return 1;
 }
 
@@ -1497,75 +1537,8 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//TODO: LOCKING!
 		if (deltamode_inclusive && enable_subsecond_models) //We want deltamode - see if it's populated yet
 		{
-			if (((gen_object_current == -1) || (delta_objects == nullptr)) && enable_subsecond_models)
-			{
-				//Call the allocation routine
-				allocate_deltamode_arrays();
-			}
-
-			//Check limits of the array
-			if (gen_object_current >= gen_object_count)
-			{
-				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
-				/*  TROUBLESHOOT
-				While attempting to populate a reference array of deltamode-enabled objects for the generator
-				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
-				error persists, please submit a bug report and your code via the trac website.
-				*/
-			}
-
-			//Add us into the list
-			delta_objects[gen_object_current] = obj;
-
-			//Map up the function for interupdate
-			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_gen_object"));
-
-			//Make sure it worked
-			if (delta_functions[gen_object_current] == nullptr)
-			{
-				GL_THROW("Failure to map deltamode function for device:%s", obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			/* post_delta_functions removed, since it didn't seem to be doing anything - empty it out/delete it if this is the case! */
-			// //Map up the function for postupdate
-			// post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "postupdate_gen_object"));
-
-			// //Make sure it worked
-			// if (post_delta_functions[gen_object_current] == nullptr)
-			// {
-			// 	GL_THROW("Failure to map post-deltamode function for device:%s", obj->name);
-			// 	/*  TROUBLESHOOT
-			// 	Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
-			// 	the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-			// 	trac website.
-			// 	*/
-			// }
-
-			//Map up the function for postupdate
-			delta_preupdate_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "preupdate_gen_object"));
-
-			//Make sure it worked
-			if (delta_preupdate_functions[gen_object_current] == nullptr)
-			{
-				GL_THROW("Failure to map pre-deltamode function for device:%s", obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the preupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Update pointer
-			gen_object_current++;
-
 			if (parent_is_a_meter)
 			{
-
 				//Accumulate the starting power
 				if (sqrt(Pref*Pref+Qref*Qref) > S_base)
 				{
@@ -1696,7 +1669,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Get current injected
 			terminal_current_val[0] = value_IGenerated[0] - filter_admittance * value_Circuit_V[0];
 
-			//Update per-unti value
+			//Update per-unit value
 			terminal_current_val_pu[0] = terminal_current_val[0] / I_base;
 
 			//Update power output variables, just so we can see what is going on
@@ -2228,6 +2201,8 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 		ieee_1547_delta_return = perform_1547_checks(deltat);
 	}
 
+	pdispatch_sync(); //sync up setpoints and pdispatch
+
 	if (control_mode == GRID_FORMING)
 	{
 		if (P_f_droop_setting_mode == PSET_MODE) //Define using power set point at rated frequency
@@ -2403,21 +2378,26 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,PREDICTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,PREDICTOR);
 				  
-					//E_mag = E_mag * (V_DC/Vdc_base);
-
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
+					  //E_mag = E_mag * (V_DC/Vdc_base);
+					  
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
 					// Function end
 				}
 				else
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,PREDICTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,PREDICTOR);
 
 					// V_ref is the voltage reference obtained from Q-V droop
 					// Vset is the voltage set point, usually 1 pu
@@ -2426,6 +2406,9 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
 					// E_max and E_min are the maximum and minimum of the output of voltage controller
 					// Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
 				}
 
 				// Function: P-f droop, Pmax and Pmin controller
@@ -2622,29 +2605,38 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				
 				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,PREDICTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,PREDICTOR);
 				  
-					//E_mag = E_mag * (V_DC/Vdc_base);
+					  //E_mag = E_mag * (V_DC/Vdc_base);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
 					// Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
+
 				}
 				else
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,PREDICTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,PREDICTOR);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
 				}
 
 				// Function: P-f droop, Pmax and Pmin controller
@@ -2833,29 +2825,38 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,CORRECTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,CORRECTOR);
 				  
-					//E_mag = E_mag * (V_DC/Vdc_base);
+					  //E_mag = E_mag * (V_DC/Vdc_base);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
+
 				}
 				else
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,CORRECTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,CORRECTOR);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
 				}
 
 				// Function: P-f droop, Pmax and Pmin controller
@@ -3079,29 +3080,37 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,CORRECTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,CORRECTOR);
 				  
-					//E_mag = E_mag * (V_DC/Vdc_base);
-
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
+					  //E_mag = E_mag * (V_DC/Vdc_base);
+					  
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
 				}
 				else
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,CORRECTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,CORRECTOR);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
 				}
 
 				// Function: P-f droop, Pmax and Pmin controller
@@ -4917,6 +4926,9 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			//Update per-unit value
 			terminal_current_val_pu[0] = terminal_current_val[0] / I_base;
 
+			terminal_current_val_pu_prefault[0] = terminal_current_val_pu[0];
+
+
 			//Update power output variables, just so we can see what is going on
 			power_val[0] = value_Circuit_V[0] * ~terminal_current_val[0];
 
@@ -4933,19 +4945,25 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				e_droop[i] = (value_IGenerated[i] * gld::complex(Rfilter, Xfilter) * Z_base);
 				e_droop_prev[i] = e_droop[i];
 				Angle_blk[i].setparams(1.0);
-				Angle_blk[i].init(0.0,(e_droop[i].Arg()));
+				Angle_blk[i].init_given_y(e_droop[i].Arg());
 			}
 
-			// Initialize the voltage control block
-			V_ctrl_blk.setparams(kpv,kiv,E_min,E_max,E_min,E_max);
-			V_ctrl_blk.init(0.0,e_droop[0].Mag() / V_base);
+			if(VFlag) {
+			  // Initialize the voltage control block
+			  V_ctrl_blk.setparams(kpv,kiv,E_min,E_max,E_min,E_max);
+			  V_ctrl_blk.init_given_y(e_droop[0].Mag() / V_base);
+			}
 			
 			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
 			if (first_deltamode_init)
 			{
 				//Make sure it wasn't "pre-set"
 
-				Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+			        if(VFlag) {
+				  Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+				} else {
+				  Vset = e_droop[0].Mag() / V_base + VA_Out.Im() / S_base *mq;
+				}
 
 				if (P_f_droop_setting_mode == PSET_MODE)
 				{
@@ -4965,29 +4983,29 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 			// Initialize P measurement filter block
 			Pmeas_blk.setparams(Tp);
-			Pmeas_blk.init(0,VA_Out.Re()/S_base);
+			Pmeas_blk.init_given_y(VA_Out.Re()/S_base);
 
 			// Initialize Q measurement filter block
 			Qmeas_blk.setparams(Tq);
-			Qmeas_blk.init(0,VA_Out.Im()/S_base);
+			Qmeas_blk.init_given_y(VA_Out.Im()/S_base);
 
 			// Initialize V measurement filter
 			Vmeas_blk.setparams(Tv);
-			Vmeas_blk.init(0,pCircuit_V_Avg_pu);
+			Vmeas_blk.init_given_y(pCircuit_V_Avg_pu);
 
 			// Initialize Pmax and Pmin controller
 			Pmax_ctrl_blk.setparams(kppmax,kipmax,-w_lim,0.0,-w_lim,0.0);
 			Pmin_ctrl_blk.setparams(kppmax,kipmax,0.0,w_lim,0.0,w_lim);
 
-			Pmax_ctrl_blk.init(0.0,0.0);
-			Pmin_ctrl_blk.init(0.0,0.0);
+			Pmax_ctrl_blk.init_given_y(0.0);
+			Pmin_ctrl_blk.init_given_y(0.0);
 			
 			// Initialize Qmax and Qmin controller
 			Qmax_ctrl_blk.setparams(kpqmax,kiqmax,-V_lim,0.0,-V_lim,0.0);
 			Qmin_ctrl_blk.setparams(kpqmax,kiqmax,0.0,V_lim,0.0,V_lim);
 
-			Qmax_ctrl_blk.init(0.0,0.0);
-			Qmin_ctrl_blk.init(0.0,0.0);
+			Qmax_ctrl_blk.init_given_y(0.0);
+			Qmin_ctrl_blk.init_given_y(0.0);
 
 			// Initialize Vdc_min controller and DC bus voltage
 			if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
@@ -5046,6 +5064,10 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			terminal_current_val_pu[1] = terminal_current_val[1] / I_base;
 			terminal_current_val_pu[2] = terminal_current_val[2] / I_base;
 
+			terminal_current_val_pu_prefault[0] = terminal_current_val_pu[0];
+			terminal_current_val_pu_prefault[1] = terminal_current_val_pu[1];
+			terminal_current_val_pu_prefault[2] = terminal_current_val_pu[2];
+
 			//Update power output variables, just so we can see what is going on
 			power_val[0] = value_Circuit_V[0] * ~terminal_current_val[0];
 			power_val[1] = value_Circuit_V[1] * ~terminal_current_val[1];
@@ -5064,20 +5086,23 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				e_droop_prev[i] = e_droop[i];
 
 				Angle_blk[i].setparams(1.0);
-				Angle_blk[i].init(0.0,(e_droop[i].Arg()));
+				Angle_blk[i].init_given_y(e_droop[i].Arg());
 
 			}
 
 			// Initializa the voltage control block
 			V_ctrl_blk.setparams(kpv,kiv,E_min,E_max,E_min,E_max);
-			V_ctrl_blk.init(0.0,(e_droop[0].Mag() + e_droop[1].Mag() + e_droop[2].Mag()) / 3 / V_base);
+			V_ctrl_blk.init_given_y((e_droop[0].Mag() + e_droop[1].Mag() + e_droop[2].Mag()) / 3 / V_base);
 			
 			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
 			if (first_deltamode_init)
 			{
 				//Make sure it wasn't "pre-set"
-
-				Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+			        if(VFlag) {
+			          Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+				} else {
+				  Vset = (e_droop[0].Mag() + e_droop[1].Mag() + e_droop[2].Mag()) / 3 / V_base + VA_Out.Im() / S_base * mq;
+				}
 
 				if (P_f_droop_setting_mode == PSET_MODE)
 				{
@@ -5098,29 +5123,29 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			// Initialize measured P,Q,and V
 
 			Pmeas_blk.setparams(Tp);
-			Pmeas_blk.init(0,VA_Out.Re()/S_base);
+			Pmeas_blk.init_given_y(VA_Out.Re()/S_base);
 			
 			// Initialize Q measurement filter block
 			Qmeas_blk.setparams(Tq);
-			Qmeas_blk.init(0,VA_Out.Im()/S_base);
+			Qmeas_blk.init_given_y(VA_Out.Im()/S_base);
 
 			// Initialize V measurement filter
 			Vmeas_blk.setparams(Tv);
-			Vmeas_blk.init(0,pCircuit_V_Avg_pu);
+			Vmeas_blk.init_given_y(pCircuit_V_Avg_pu);
 
 			// Initialize Pmax and Pmin controller
 			Pmax_ctrl_blk.setparams(kppmax,kipmax,-w_lim,0.0,-w_lim,0.0);
 			Pmin_ctrl_blk.setparams(kppmax,kipmax,0.0,w_lim,0.0,w_lim);
 
-			Pmax_ctrl_blk.init(0.0,0.0);
-			Pmin_ctrl_blk.init(0.0,0.0);
+			Pmax_ctrl_blk.init_given_y(0.0);
+			Pmin_ctrl_blk.init_given_y(0.0);
 			
 			// Initialize Qmax and Qmin controller
 			Qmax_ctrl_blk.setparams(kpqmax,kiqmax,-V_lim,0.0,-V_lim,0.0);
 			Qmin_ctrl_blk.setparams(kpqmax,kiqmax,0.0,V_lim,0.0,V_lim);
 
-			Qmax_ctrl_blk.init(0.0,0.0);
-			Qmin_ctrl_blk.init(0.0,0.0);
+			Qmax_ctrl_blk.init_given_y(0.0);
+			Qmin_ctrl_blk.init_given_y(0.0);
 
 			// Initialize Vdc_min controller and DC bus voltage
 			if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
@@ -5192,11 +5217,11 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			//Default else - all changes should be in deltamode
 
 			// Initialize the PLL
-			Angle_PLL_blk[0].init(0.0,value_Circuit_V[0].Arg());
+			Angle_PLL_blk[0].init_given_y(value_Circuit_V[0].Arg());
 			Angle_PLL[0] = Angle_PLL_blk[0].x[0];
 			
 			delta_w_PLL_blk[0].setparams(kpPLL,kiPLL,-1000.0,1000.0,-1000.0,1000.0);
-			delta_w_PLL_blk[0].init(0.0,0.0);
+			delta_w_PLL_blk[0].init_given_y(0.0);
 
 
 			ugd_pu[0] = (value_Circuit_V[0].Re() * cos(value_Circuit_V[0].Arg()) + value_Circuit_V[0].Im() * sin(value_Circuit_V[0].Arg())) / V_base;
@@ -5214,8 +5239,8 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				igd_blk[0].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
 				igq_blk[0].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
 
-				igd_blk[0].init(0.0,ed_pu[0] - ugd_pu[0] + igq_pu[0] * Xfilter * F_current);
-				igq_blk[0].init(0.0,eq_pu[0] - ugq_pu[0] - igd_pu[0] * Xfilter * F_current);
+				igd_blk[0].init_given_y(ed_pu[0] - ugd_pu[0] + igq_pu[0] * Xfilter * F_current);
+				igq_blk[0].init_given_y(eq_pu[0] - ugq_pu[0] - igd_pu[0] * Xfilter * F_current);
 			}
 			else if(control_mode == GFL_CURRENT_SOURCE)
 			{
@@ -5225,8 +5250,8 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				igd_filter_blk[0].setparams(Tif);
 				igq_filter_blk[0].setparams(Tif);
 
-				igd_filter_blk[0].init(0.0,igd_pu[0]);
-				igq_filter_blk[0].init(0.0,igq_pu[0]);
+				igd_filter_blk[0].init_given_y(igd_pu[0]);
+				igq_filter_blk[0].init_given_y(igq_pu[0]);
 
 				igd_filter[0] = igd_filter_blk[0].x[0];
 				igq_filter[0] = igq_filter_blk[0].x[0];
@@ -5236,7 +5261,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			{
 				// Initialize the frequency-watt
 			        f_filter_blk.setparams(Tff);
-				f_filter_blk.init(0.0,fPLL[0]);
+				f_filter_blk.init_given_y(fPLL[0]);
 				f_filter = f_filter_blk.x[0];
 				
 				if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
@@ -5250,7 +5275,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 				
 				Pref_droop_pu_filter_blk.setparams(Tpf);
-				Pref_droop_pu_filter_blk.init(0.0,Pref_droop_pu);
+				Pref_droop_pu_filter_blk.init_given_y(Pref_droop_pu);
 				Pref_droop_pu_filter = Pref_droop_pu_filter_blk.x[0];
 			}
 
@@ -5259,7 +5284,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				// Initialize the volt-var control
 			        V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
 			        V_filter_blk.setparams(Tvf);
-				V_filter_blk.init(0.0,V_Avg_pu);
+				V_filter_blk.init_given_y(V_Avg_pu);
 				V_filter = V_filter_blk.x[0];
 
 				if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
@@ -5272,7 +5297,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				}
 
 				Qref_droop_pu_filter_blk.setparams(Tqf);
-				Qref_droop_pu_filter_blk.init(0.0,Qref_droop_pu);
+				Qref_droop_pu_filter_blk.init_given_y(Qref_droop_pu);
 				Qref_droop_pu_filter = Qref_droop_pu_filter_blk.x[0];
 			}
 		}
@@ -5318,11 +5343,11 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					for (int i = 0; i < 3; i++)
 					{
 						// Initialize the PLL
-					        Angle_PLL_blk[i].init(0.0,value_Circuit_V[i].Arg());
+					        Angle_PLL_blk[i].init_given_y(value_Circuit_V[i].Arg());
 						Angle_PLL[i] = Angle_PLL_blk[i].x[0];
 
 						delta_w_PLL_blk[i].setparams(kpPLL,kiPLL,-1000.0,1000.0,-1000.0,1000.0);
-						delta_w_PLL_blk[i].init(0.0,0.0);
+						delta_w_PLL_blk[i].init_given_y(0.0);
 					}
 				}
 				else if(grid_following_mode == POSITIVE_SEQUENCE)
@@ -5331,9 +5356,9 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * gld::complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * gld::complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
 
 					// only consider positive sequence
-					Angle_PLL_blk[0].init(0.0,value_Circuit_V_PS.Arg());
-					Angle_PLL_blk[1].init(0.0,value_Circuit_V_PS.Arg() - 2.0 / 3.0 * PI);
-					Angle_PLL_blk[2].init(0.0,value_Circuit_V_PS.Arg() + 2.0 / 3.0 * PI);
+					Angle_PLL_blk[0].init_given_y(value_Circuit_V_PS.Arg());
+					Angle_PLL_blk[1].init_given_y(value_Circuit_V_PS.Arg() - 2.0 / 3.0 * PI);
+					Angle_PLL_blk[2].init_given_y(value_Circuit_V_PS.Arg() + 2.0 / 3.0 * PI);
 					Angle_PLL[0] = Angle_PLL_blk[0].x[0];
 					Angle_PLL[1] = Angle_PLL_blk[1].x[0];
 					Angle_PLL[2] = Angle_PLL_blk[2].x[0];
@@ -5342,7 +5367,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					{
 						// Initialize the PLL
 					        delta_w_PLL_blk[i].setparams(kpPLL,kiPLL,-1000.0,1000.0,-1000.0,1000.0);
-					        delta_w_PLL_blk[i].init(0.0,0.0);
+					        delta_w_PLL_blk[i].init_given_y(0.0);
 					}
 				}
 
@@ -5363,8 +5388,8 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 						igd_blk[i].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
 						igq_blk[i].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
 
-						igd_blk[i].init(0.0,ed_pu[i] - ugd_pu[i] + igq_pu[i] * Xfilter * F_current);
-						igq_blk[i].init(0.0,eq_pu[i] - ugq_pu[i] - igd_pu[i] * Xfilter * F_current);
+						igd_blk[i].init_given_y(ed_pu[i] - ugd_pu[i] + igq_pu[i] * Xfilter * F_current);
+						igq_blk[i].init_given_y(eq_pu[i] - ugq_pu[i] - igd_pu[i] * Xfilter * F_current);
 					}
 					else if(control_mode == GFL_CURRENT_SOURCE)
 					{
@@ -5374,8 +5399,8 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 												igd_filter_blk[i].setparams(Tif);
 						igq_filter_blk[i].setparams(Tif);
 
-						igd_filter_blk[i].init(0.0,igd_pu[i]);
-						igq_filter_blk[i].init(0.0,igq_pu[i]);
+						igd_filter_blk[i].init_given_y(igd_pu[i]);
+						igq_filter_blk[i].init_given_y(igq_pu[i]);
 
 						igd_filter[i]  = igd_filter_blk[i].x[0];
 						igq_filter[i]  = igq_filter_blk[i].x[0];
@@ -5386,7 +5411,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				{
 					// Initialize the frequency-watt
 				        f_filter_blk.setparams(Tff);
-				        f_filter_blk.init(0.0,(fPLL[0]+fPLL[1]+fPLL[2])/3.0);
+				        f_filter_blk.init_given_y((fPLL[0]+fPLL[1]+fPLL[2])/3.0);
 					f_filter = f_filter_blk.x[0];
 
 					if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
@@ -5399,7 +5424,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					}
 
 					Pref_droop_pu_filter_blk.setparams(Tpf);
-					Pref_droop_pu_filter_blk.init(0.0,Pref_droop_pu);
+					Pref_droop_pu_filter_blk.init_given_y(Pref_droop_pu);
 					Pref_droop_pu_filter = Pref_droop_pu_filter_blk.x[0];
 				}
 
@@ -5408,7 +5433,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					// Initialize the volt-var control
 					V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
 					V_filter_blk.setparams(Tvf);
-					V_filter_blk.init(0.0,V_Avg_pu);
+					V_filter_blk.init_given_y(V_Avg_pu);
 					V_filter = V_filter_blk.x[0];
 
 					if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
@@ -5421,7 +5446,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					}
 
 					Qref_droop_pu_filter_blk.setparams(Tqf);
-					Qref_droop_pu_filter_blk.init(0.0,Qref_droop_pu);
+					Qref_droop_pu_filter_blk.init_given_y(Qref_droop_pu);
 					Qref_droop_pu_filter = Qref_droop_pu_filter_blk.x[0];
 				}
 
@@ -5429,6 +5454,9 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 		}
 	}
+
+	pdispatch_sync(); //sync up dispatch variables and controller setpoints
+
 	return SUCCESS;
 }
 
@@ -6082,17 +6110,55 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 				//Make a per-unit value for comparison
 				terminal_current_val_pu[0] = terminal_current_val[0]/I_base;
 
+				
 				//Compare it
 				if ((terminal_current_val_pu[0].Mag() > Imax) && running_in_delta)	//Current limit only gets applied when controls valid (deltamode)
-				{
-					//Compute the limited value - pu
-					intermed_curr_calc[0].SetPolar(Imax,terminal_current_val_pu[0].Arg());
-
-					//Copy into the per-unit representation
-					terminal_current_val_pu[0] = intermed_curr_calc[0];
-
-					//Adjust the terminal current from per-unit
-					terminal_current_val[0] = terminal_current_val_pu[0] * I_base;
+				{ // Current limit only gets applied when controls
+                              // valid (deltamode)
+				  if (phase_angle_correction) {
+				    if(!imax_phase_correction_done[0]) {
+				      // Calculate phase angle correction
+				      double theta = terminal_current_val_pu[0].Arg(); // Current angle
+				      double theta_prefault = terminal_current_val_pu_prefault[0]
+					.Arg(); // Prefault current angle
+				      double theta_jump = theta_prefault - theta; // Jump in angle
+				      double Inolimit_mag =
+					terminal_current_val_pu[0].Mag(); // Current magnitude
+				      double Iprefault_mag = terminal_current_val_pu_prefault[0]
+					.Mag(); // Prefault current magnitude
+				      theta_c[0] = (Inolimit_mag - Imax) /
+					(Inolimit_mag - Iprefault_mag) * theta_jump;
+				      imax_phase_correction_done[0] = true;
+				    }
+				    // Compute the limited value - pu
+				    intermed_curr_calc[0].SetPolar(
+								   Imax, terminal_current_val_pu[0].Arg() + theta_c[0]);
+				  } else if(virtual_resistance_correction) {
+				    double Re; // virtual resistance
+				    double Vt_pu = value_Circuit_V[0].Mag() / V_base;
+				    double Vang_pu = value_Circuit_V[0].Arg();
+				    double e_droop_mag_pu = e_droop_pu[0].Mag();
+				    double temp;
+				    
+				    temp = (e_droop_mag_pu*e_droop_mag_pu + Vt_pu*Vt_pu - 2*e_droop_mag_pu*Vt_pu*cos(Angle[0] - Vang_pu))/(Imax*Imax) - Xfilter*Xfilter;
+				    
+				    Re = sqrt(temp) - Rfilter;
+				    
+				    gld::complex Ilim = (e_droop_pu[0] - value_Circuit_V[0])/gld::complex(Re+Rfilter,Xfilter);
+				    double Ilim_ang = Ilim.Arg();
+				    
+				    intermed_curr_calc[0].SetPolar(Imax, Ilim_ang);
+				  } else {
+				    // default
+				    //Compute the limited value - pu
+				    intermed_curr_calc[0].SetPolar(Imax,terminal_current_val_pu[0].Arg());
+				  }
+				  
+				  // Copy into the per-unit representation
+				  terminal_current_val_pu[0] = intermed_curr_calc[0];
+				  
+				  // Adjust the terminal current from per-unit
+				  terminal_current_val[0] = terminal_current_val_pu[0] * I_base;
 				}
 
 				//Update the injection
@@ -6124,20 +6190,59 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 
 					//Make a per-unit value for comparison
 					terminal_current_val_pu[loop_var] = terminal_current_val[loop_var]/I_base;
-
-					//Compare it
-					if ((terminal_current_val_pu[loop_var].Mag() > Imax) && running_in_delta)	//Current limit only gets applied when controls valid (deltamode)
+					
+					// Compare it
+					if ((terminal_current_val_pu[loop_var].Mag() > Imax) &&
+					    running_in_delta) // Current limit only gets applied when controls
+					  // valid (deltamode)
 					{
-						//Compute the limited value - pu
-						intermed_curr_calc[loop_var].SetPolar(Imax,terminal_current_val_pu[loop_var].Arg());
-
-						//Copy into the per-unit representation
-						terminal_current_val_pu[loop_var] = intermed_curr_calc[loop_var];
-
-						//Adjust the terminal current from per-unit
-						terminal_current_val[loop_var] = terminal_current_val_pu[loop_var] * I_base;
+					  if (phase_angle_correction) {
+					    if(!imax_phase_correction_done[loop_var]) {
+					      // Calculate phase angle correction
+					      double theta =
+						terminal_current_val_pu[loop_var].Arg(); // Current angle
+					      double theta_prefault = terminal_current_val_pu_prefault[loop_var]
+						.Arg(); // Prefault current angle
+					      double theta_jump = theta_prefault - theta; // Jump in angle
+					      double Inolimit_mag =
+						terminal_current_val_pu[loop_var].Mag(); // Current magnitude
+					      double Iprefault_mag = terminal_current_val_pu_prefault[loop_var]
+						.Mag(); // Prefault current magnitude
+					      theta_c[loop_var] = (Inolimit_mag - Imax) /
+						(Inolimit_mag - Iprefault_mag) * theta_jump;
+					      imax_phase_correction_done[loop_var] = true;
+					    }
+					    // Compute the limited value - pu
+					    intermed_curr_calc[loop_var].SetPolar(
+										  Imax,
+										  terminal_current_val_pu[loop_var].Arg() + theta_c[loop_var]);
+					  } else if(virtual_resistance_correction) {
+					    double Re; // virtual resistance
+					    double Vt_pu = value_Circuit_V[loop_var].Mag() / V_base;
+					    double Vang_pu = value_Circuit_V[loop_var].Arg();
+					    double e_droop_mag_pu = e_droop_pu[loop_var].Mag();
+					    double temp;
+					    
+					    temp = (e_droop_mag_pu*e_droop_mag_pu + Vt_pu*Vt_pu - 2*e_droop_mag_pu*Vt_pu*cos(Angle[loop_var] - Vang_pu))/(Imax*Imax) - Xfilter*Xfilter;
+					    
+					    Re = sqrt(temp) - Rfilter;
+					    
+					    gld::complex Ilim = (e_droop_pu[loop_var] - value_Circuit_V[loop_var])/gld::complex(Re+Rfilter,Xfilter);
+					    double Ilim_ang = Ilim.Arg();
+					    
+					    intermed_curr_calc[loop_var].SetPolar(Imax, Ilim_ang);
+					  } else {
+					    intermed_curr_calc[loop_var].SetPolar(Imax,terminal_current_val_pu[loop_var].Arg());
+					  }
+					  
+					  // Copy into the per-unit representation
+					  terminal_current_val_pu[loop_var] = intermed_curr_calc[loop_var];
+					  
+					  // Adjust the terminal current from per-unit
+					  terminal_current_val[loop_var] =
+					    terminal_current_val_pu[loop_var] * I_base;
 					}
-
+					
 					//Update the injection
 					value_IGenerated[loop_var] = terminal_current_val[loop_var] + value_Circuit_V[loop_var] / (gld::complex(Rfilter, Xfilter) * Z_base);
 
@@ -6846,6 +6951,124 @@ double inverter_dyn::perform_1547_checks(double timestepvalue)
 			//All is well, indicate as much
 			return return_value;
 		}
+	}
+}
+
+//update checker variables with controller setpoints
+void inverter_dyn::update_chk_vars()
+{
+	setpoint_chk.fset = fset;
+	setpoint_chk.Pref = Pref;
+	setpoint_chk.Pset = Pset;
+	setpoint_chk.inverter_1547_status = inverter_1547_status;
+}
+
+// Sync the pdispatch variable with the various possible controller set points.
+//
+// Controller sets points (Pref, Pset and fset) take precedence over pdispatch, that is
+// an update to these properties will *overwrite* pdispatch.
+// If these properties have not been changed, however, then pdispatch can be used
+// to update the appropriate one via a unified interface.
+void inverter_dyn::pdispatch_sync()
+{
+	
+	// Check if Pref, Pset or fset were changed
+	if ((Pref != setpoint_chk.Pref) || 
+		(Pset != setpoint_chk.Pset) ||
+		(fset != setpoint_chk.fset) ||
+		(inverter_1547_status != setpoint_chk.inverter_1547_status))
+	{
+		// There has been some change to a reference value. 
+		//  - Override pdispatch and set pdispatch_offset = 0.
+		//  - Note: this also overwrites any changes to the exposed pdispatch!!
+		pdispatch.pdispatch_offset = 0;
+		
+		//update pdispatch accordingly
+		if (control_mode == GRID_FORMING)
+		{
+			switch (P_f_droop_setting_mode)
+			{
+			case FSET_MODE:
+				pdispatch.pdispatch = (fset * (2*PI) - w_ref)/mp;
+				break;
+
+			case PSET_MODE:
+				pdispatch.pdispatch = Pset;
+				break;
+			
+			default:
+				// guess pdsipatch doesn't work with this mode
+				break;
+			}
+		}
+		else if ((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE))
+		{
+			if (inverter_1547_status)
+			{ //inverter is NOT tripped
+				pdispatch.pdispatch = Pref/S_base;
+			}
+			else{
+				pdispatch.pdispatch = 0; //inverter has tripped.
+			}
+			
+		}
+		// No else since this just means it is a control mode for which pdispatch cannot be used (yet)
+
+		// update the check variables
+		update_chk_vars();
+
+		// overwrite the exposed pdispatch variables
+		memcpy(&pdispatch_exp, &pdispatch, sizeof(PDISPATCH));
+
+	}
+
+	double pstar = pdispatch.pdispatch + pdispatch.pdispatch_offset;
+	if ((pdispatch_exp.pdispatch + pdispatch_exp.pdispatch_offset) != (pstar))
+	{
+		// pdispatch or pdispatch_offset have been changed
+		pdispatch.pdispatch = pdispatch_exp.pdispatch;
+		pdispatch.pdispatch_offset = pdispatch_exp.pdispatch_offset;
+		
+		// update pstar
+		pstar = pdispatch.pdispatch + pdispatch.pdispatch_offset;
+		// Update appropriate controll variable 
+		if (control_mode == GRID_FORMING)
+		{
+			switch (P_f_droop_setting_mode)
+			{
+			case FSET_MODE:
+				fset = (w_ref + pstar * mp)/(2*PI);
+				break;
+
+			case PSET_MODE:
+				Pset = pstar;
+				break;
+			
+			default:
+				// guess pdsipatch doesn't work with this mode
+				break;
+			}
+		}
+		else if ((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE))
+		{
+			if (inverter_1547_status)
+			{ //inverter is NOT tripped
+				Pref = pstar * S_base;
+			}
+			else{
+				// Inverter tripped. OVERRIDE change to pdispatch and reset to 0
+				pdispatch.pdispatch = 0;
+				pdispatch.pdispatch_offset =  0;
+				// overwrite the exposed pdispatch variables
+				memcpy(&pdispatch_exp, &pdispatch, sizeof(PDISPATCH));
+			}
+		}
+		else {
+			GL_THROW("inverter_dyn::pdispatch_sync: pdispatch property cannot be used with the provided control mode %d", control_mode);
+		}
+
+		// update the check variables
+		update_chk_vars();
 	}
 }
 

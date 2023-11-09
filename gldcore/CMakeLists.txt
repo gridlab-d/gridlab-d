@@ -149,6 +149,11 @@ if (XercesC_FOUND)
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${XercesC_LIBRARIES})
 endif ()
 
+target_include_directories(${GLD_MODULE_NAME} PRIVATE
+        "${CMAKE_SOURCE_DIR}/third_party/jsonCpp"
+        )
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${JSONCPP_LIB})
+
 target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
 set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
 target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})

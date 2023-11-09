@@ -1,0 +1,26 @@
+// Test large ID behavior
+
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 0:00:00 PST';
+	stoptime '2000-01-02 0:00:00 PST';
+}
+
+module residential {
+	implicit_enduses NONE;
+}
+
+// Create house with ID large enough to allocate 10 PB in old system
+object house:11258999068426240 {
+	groupid A;
+}
+
+module tape;
+
+object collector {
+	group "class=house AND groupid=A";
+	property "count(floor_area)";
+	limit 10;
+	interval 3600;
+	file output.csv;
+}

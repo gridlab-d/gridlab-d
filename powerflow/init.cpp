@@ -83,6 +83,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD,"ONCE",MD_ONCE,
 		PT_KEYWORD,"PER_CALL",MD_PERCALL,
 		PT_KEYWORD,"ALL",MD_ALL,
+		PT_KEYWORD,"FINAL",MD_FINAL,
 		NULL);
 	gl_global_create("powerflow::NR_matrix_output_references",PT_bool,&NRMatReferences,NULL);
 	gl_global_create("powerflow::NR_matrix_output_rhs",PT_bool,&NRMatRHSDump,PT_DESCRIPTION,"Flag to indicate if the RHS (delta-current-injections) should be output to the matrix dump",NULL);

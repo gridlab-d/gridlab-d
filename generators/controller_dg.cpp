@@ -91,6 +91,7 @@ int controller_dg::init(OBJECT *parent)
 	OBJECT *obj;
 	gld_property *temp_prop;
 	gld_object *temp_from, *temp_to;
+	STATUS fxn_return_status;
 
 	//See if the global flag is set - if so, add the object flag
 	if (all_generator_delta)
@@ -385,7 +386,18 @@ int controller_dg::init(OBJECT *parent)
 				//Defined above
 			}
 
-			gen_object_count++;	//Increment the counter
+			//Add us to the list
+			fxn_return_status = add_gen_delta_obj(obj,false);
+
+			//Check it
+			if (fxn_return_status == FAILED)
+			{
+				GL_THROW("controller_dg:%s - failed to add object to generator deltamode object list", obj->name ? obj->name : "unnamed");
+				/*  TROUBLESHOOT
+				The controller_dg object encountered an issue while trying to add itself to the generator deltamode object list.  If the error
+				persists, please submit an issue via GitHub.
+				*/
+			}
 		}
 	}//End deltamode inclusive
 	else	//Not enabled for this model
@@ -419,74 +431,6 @@ TIMESTAMP controller_dg::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP controller_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
-	TIMESTAMP tret_value;
-
-	//Assume always want TS_NEVER
-	tret_value = TS_NEVER;
-
-	//First run allocation - in diesel_dg for now, but may need to move elsewhere
-	if (first_run)	//First run
-	{
-		//TODO: LOCKING!
-		if (deltamode_inclusive && enable_subsecond_models )	//We want deltamode - see if it's populated yet
-		{
-			if (((gen_object_current == -1) || (delta_objects==nullptr)) && enable_subsecond_models)
-			{
-				//Call the allocation routine
-				allocate_deltamode_arrays();
-			}
-
-			//Check limits of the array
-			if (gen_object_current>=gen_object_count)
-			{
-				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
-				/*  TROUBLESHOOT
-				While attempting to populate a reference array of deltamode-enabled objects for the generator
-				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
-				error persists, please submit a bug report and your code via the trac website.
-				*/
-			}
-
-			//Add us into the list
-			delta_objects[gen_object_current] = obj;
-
-			//Map up the function for interupdate
-			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_controller_object"));
-
-			//Make sure it worked
-			if (delta_functions[gen_object_current] == nullptr)
-			{
-				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Map up the function for postupdate
-			post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_controller_object"));
-
-			//Make sure it worked
-			if (post_delta_functions[gen_object_current] == nullptr)
-			{
-				GL_THROW("Failure to map post-deltamode function for device:%s",obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Update pointer
-			gen_object_current++;
-
-			//Force us to reiterate one
-			tret_value = t1;
-
-		}//End deltamode specials - first pass
-		//Default else - no deltamode stuff
-	}//End first timestep
 
 	return TS_NEVER;
 }
