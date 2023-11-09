@@ -4576,7 +4576,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 #ifdef NAMEOBJ
 			obj = &nameobj;
 #endif
-			if ((*oclass->create)(&obj,parent)==0) 
+			if (oclass->create(&obj,parent)==0)
 			{
 				output_error_raw("%s(%d): create failed for object %s:%d", filename, linenum, classname, id);
 				REJECT;

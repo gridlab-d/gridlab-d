@@ -4162,7 +4162,7 @@ EXPORT int init_house(OBJECT *obj)
 
 EXPORT int isa_house(OBJECT *obj, char *classname)
 {
-	if(obj != 0 && classname != 0){
+	if(obj != nullptr && classname != nullptr){
 		return OBJECTDATA(obj,house_e)->isa(classname);
 	} else {
 		return 0;
@@ -4171,7 +4171,6 @@ EXPORT int isa_house(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-
 	try {
 		house_e *my = OBJECTDATA(obj,house_e);
 		TIMESTAMP t1 = TS_NEVER;

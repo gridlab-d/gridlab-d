@@ -873,8 +873,8 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			{
 				char notify_fname[256];
 				sprintf(notify_fname, "notify_%s_%s", prop->oclass->name, prop->name);
-				prop->notify = (FUNCTIONADDR)DLSYM(prop->oclass->module->hLib, notify_fname);
-				if(prop->notify == 0){
+				prop->notify = reinterpret_cast<prop_notify_handle>(DLSYM(prop->oclass->module->hLib, notify_fname));
+				if(prop->notify == nullptr){
 					errno = EINVAL;
 					output_error("Unable to find function '%s' in %s module", notify_fname, prop->oclass->module->name);
 					goto Error;

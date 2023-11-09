@@ -1305,7 +1305,7 @@ static unsigned int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 }
 static unsigned int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
-	return global_bigranks==true ? _set_rankx(obj,rank,nullptr) : _set_rank(obj,rank,nullptr);
+	return global_bigranks ? _set_rankx(obj,rank,nullptr) : _set_rank(obj,rank,nullptr);
 }
 
 /** Set the rank of an object but forcing it's parent

@@ -1402,7 +1402,8 @@ char *find_file(const char *name, /**< the name of the file to find */
 
 OBJLIST *objlist_create(CLASS *oclass, PROPERTY *match_property, char *part, char *match_op, void *match_value1, void *match_value2 )
 {
-	OBJLIST *list = (OBJLIST *)(malloc(sizeof(OBJLIST)));
+    OBJLIST *list = new OBJLIST;
+//	OBJLIST *list = (OBJLIST *)(malloc(sizeof(OBJLIST)));
 	
 	/* check parameters */
 	if ( !list ) return (OBJLIST *)(output_error("find_create(): memory allocation failed"),nullptr);
@@ -1410,8 +1411,9 @@ OBJLIST *objlist_create(CLASS *oclass, PROPERTY *match_property, char *part, cha
 	/* setup object list structure */
 	list->asize = INITSIZE;
 	list->size = 0;
-	list->objlist = (s_object_list **)(malloc(sizeof(OBJECT*) * INITSIZE));
-	if ( !list->objlist ) return (OBJLIST *)(output_error("find_create(): memory allocation failed"),free(list),nullptr);
+//	list->objlist = (s_object_list **)(malloc(sizeof(OBJECT*) * INITSIZE));
+	list->objlist = std::vector<OBJECT*>(INITSIZE);
+//	if ( !list->objlist ) return (OBJLIST *)(output_error("find_create(): memory allocation failed"),delete list,nullptr);
 	list->oclass = oclass;
 
 	/* perform search */
@@ -1426,7 +1428,7 @@ OBJLIST *objlist_search(char *group)
 	int n;
 	FINDPGM *pgm = find_mkpgm(group);
 	
-	// a null group  should return all objects
+	// a nullptr group  should return all objects
 	if ( pgm==nullptr && strcmp(group,"")!=0 )
 	{
 		return nullptr;
@@ -1440,8 +1442,9 @@ OBJLIST *objlist_search(char *group)
 	if ( !list ) return nullptr;
 	list->oclass = nullptr;
 	list->asize = list->size = result->hit_count;
-	list->objlist = (s_object_list **)(malloc(sizeof(OBJECT*) * result->hit_count));
-	if ( !list->objlist ) return nullptr;
+//	list->objlist = (s_object_list **)(malloc(sizeof(OBJECT*) * result->hit_count));
+    list->objlist = std::vector<OBJECT*>(result->hit_count);
+//	if ( !list->objlist ) return nullptr;
 	for ( obj=find_first(result),n=0 ; obj!=nullptr ; obj=find_next(result,obj),n++ )
 		list->objlist[n] = obj;
 	return list;
@@ -1451,8 +1454,9 @@ void objlist_destroy(OBJLIST *list)
 {
 	if ( list )
 	{
-		if ( list->objlist ) free(list->objlist);
-		free(list);
+//		if ( list->objlist ) free(list->objlist);
+//		free(list);
+        delete list;
 	}
 }
 
@@ -1468,12 +1472,15 @@ size_t objlist_add(OBJLIST *list, PROPERTY *match, char *match_part, char *match
 		{
 			if ( list->size==list->asize )
 			{	// grow the list
-				OBJECT **larger = (OBJECT**)malloc(sizeof(OBJECT*)*list->asize*2);
-				memcpy(larger,list->objlist,sizeof(OBJECT*)*list->asize);
-				memset(larger+list->asize,0,sizeof(OBJECT*)*list->asize);
-				list->asize*=2;
-				free(list->objlist);
-				list->objlist = larger;
+                list->objlist.resize(list->asize*2);
+                list->asize*=2;
+//                auto larger = std::make_unique<OBJECT*[]>(list->asize*2);
+////                OBJECT **larger = (OBJECT**)malloc(sizeof(OBJECT*)*list->asize*2);
+//				memcpy(larger,list->objlist,sizeof(OBJECT*)*list->asize);
+//				memset(&larger+list->asize,0,sizeof(OBJECT*)*list->asize);
+//				list->asize*=2;
+//				free(list->objlist);
+//				list->objlist = larger;
 			}
 			list->objlist[list->size++] = obj;
 		}

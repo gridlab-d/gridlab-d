@@ -38,14 +38,14 @@ EXPORT MODULE *subload(char *modname, MODULE **pMod, CLASS **cptr, int argc, cha
 	java_init(callback, (JAVACALLBACKS *)getvar("jcallback", nullptr, nullptr), mod, modname, argc, argv);
 	c = *cptr;
 	while(c != nullptr){
-		c->create = (FUNCTIONADDR)create_java;
-		c->init = (FUNCTIONADDR)init_java;
-		c->isa = (FUNCTIONADDR)isa_java;
-		c->notify = (FUNCTIONADDR)notify_java;
-		c->plc = (FUNCTIONADDR)plc_java;
-		c->recalc = (FUNCTIONADDR)recalc_java;
-		c->sync = (FUNCTIONADDR)sync_java;
-		c->commit = (FUNCTIONADDR)commit_java;
+		c->create = (create_handle)create_java;
+		c->init = (init_handle)init_java;
+		c->isa = (isa_handle)isa_java;
+		c->notify = (notify_handle)notify_java;
+		c->plc = (plc_handle)plc_java;
+		c->recalc = (recalc_handle)recalc_java;
+		c->sync = (sync_handle)sync_java;
+		c->commit = (commit_handle)commit_java;
 		c = c->next;
 	}
 	return mod;

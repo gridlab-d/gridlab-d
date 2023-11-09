@@ -610,13 +610,13 @@ template <class T> inline int gl_set_value(OBJECT *obj, ///< the object whose pr
 	if (ptr==NULL)
 		GL_THROW("property %s not found in object %s", prop->name, gl_name(obj, buffer, 255));
 	if(obj->oclass->notify){
-		if(obj->oclass->notify(obj,NM_PREUPDATE,prop) == 0){
+		if(obj->oclass->notify(obj,NM_PREUPDATE,prop,"") == 0){
 			gl_error("preupdate notify failure on %s in %s", prop->name, obj->name ? obj->name : "an unnamed object");
 		}
 	}
 	*ptr = value;
 	if(obj->oclass->notify){
-		if(obj->oclass->notify(obj,NM_POSTUPDATE,prop) == 0){
+		if(obj->oclass->notify(obj,NM_POSTUPDATE,prop,"") == 0){
 			gl_error("postupdate notify failure on %s in %s", prop->name, obj->name ? obj->name : "an unnamed object");
 		}
 	}

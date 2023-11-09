@@ -22,13 +22,7 @@
 #include "gld_complex.h"
 #include "unit.h"
 #include "property.h"
-
-//typedef struct s_class_list CLASS;
-
-#ifndef FADDR
-#define FADDR
-typedef int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module function */
-#endif
+#include "timestamp.h"
 
 /* pass configuration */
 typedef unsigned long PASSCONFIG; /**< the pass configuration */
@@ -49,6 +43,10 @@ typedef enum {
 	NM_RESET = 2,/**< notify module of system reset event */
 } NOTIFYMODULE; /**< notification message types */
 
+/*
+TODO: this still uses the FUNCTIONADDR behavior, which is unreliable on non-x86 architecture, but seems to be working for now.
+ Consider updating it when possible, or if it causes issues (may be possible to replace with some kind of generic.
+ */
 typedef struct s_function_map {
 	CLASS *oclass;
 	FUNCTIONNAME name;
@@ -85,6 +83,19 @@ typedef enum {
 	TRL_PROVEN			= 9,
 } TECHNOLOGYREADINESSLEVEL;
 
+typedef int64_t (*create_handle)(s_object_list**, s_object_list*);
+typedef int64_t (*init_handle)(s_object_list*, s_object_list*);
+typedef int64_t (*precommit_handle)(s_object_list*, TIMESTAMP);
+typedef int64_t (*isa_handle)(s_object_list*, const char*);
+typedef int64_t (*sync_handle)(s_object_list*, TIMESTAMP, PASSCONFIG);
+typedef int64_t (*commit_handle)(s_object_list*, TIMESTAMP, TIMESTAMP);
+typedef int64_t (*finalize_handle)(s_object_list*);
+typedef int64_t (*notify_handle)(s_object_list*, int, PROPERTY *, const char *);
+typedef int64_t (*plc_handle)(s_object_list*, TIMESTAMP);
+typedef int64_t (*recalc_handle)(s_object_list*);
+typedef int64_t (*update_handle)(s_object_list*, TIMESTAMP, DELTAT, DT, uint32_t);
+typedef int64_t (*heartbeat_handle)(s_object_list*);
+
 #define _MODULE_DEFINED_
 typedef struct s_module_list MODULE;
 struct s_class_list {
@@ -96,19 +107,19 @@ struct s_class_list {
 	MODULE *module;
 	PROPERTY *pmap;
 	FUNCTION *fmap;
-	FUNCTIONADDR create;
-	FUNCTIONADDR init;
-	FUNCTIONADDR precommit;
-	FUNCTIONADDR sync;
-	FUNCTIONADDR commit;
-	FUNCTIONADDR finalize;
-	FUNCTIONADDR notify;
-	FUNCTIONADDR isa;
-	FUNCTIONADDR plc;
+	create_handle create;
+	init_handle init;
+	precommit_handle precommit;
+	sync_handle sync;
+	commit_handle commit;
+	finalize_handle finalize;
+	notify_handle notify;
+	isa_handle isa;
+	plc_handle plc;
 	PASSCONFIG passconfig;
-	FUNCTIONADDR recalc;
-	FUNCTIONADDR update;	/**< deltamode related */
-	FUNCTIONADDR heartbeat;
+	recalc_handle recalc;
+	update_handle update;	/**< deltamode related */
+	heartbeat_handle heartbeat;
 	LOADMETHOD *loadmethods;
 	CLASS *parent;			/**< parent class from which properties should be inherited */
 	struct {
@@ -123,9 +134,9 @@ struct s_class_list {
 	struct s_class_list *next;
 }; /* CLASS */
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 PROPERTY *class_get_first_property(CLASS *oclass);
 PROPERTY *class_get_next_property(PROPERTY *prop);
@@ -165,9 +176,9 @@ int class_define_type(CLASS *oclass, DELEGATEDTYPE *delegation, ...);
 int class_add_loadmethod(CLASS *oclass, const char *name, int (*call)(void*,char*));
 LOADMETHOD *class_get_loadmethod(CLASS *oclass, const char *name);
 
-//#ifdef __cplusplus
-//}
-//#endif
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

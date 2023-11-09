@@ -22,7 +22,6 @@
 // also in object.h
 typedef struct s_class_list CLASS;
 
-// also in class.h
 #ifndef FADDR
 #define FADDR
 
@@ -1261,6 +1260,7 @@ typedef struct s_keyword {
 } KEYWORD;
 
 typedef int (*METHODCALL)(void *obj, char *string, int size); /**< the function that read and writes a string */
+typedef int64_t (*prop_notify_handle)(s_object_list*, const char*);
 
 typedef uint32 PROPERTYFLAGS;
 #define PF_RECALC    0x0001 /**< property has a recalc trigger (only works if recalc_<class> is exported) */
@@ -1283,7 +1283,7 @@ typedef struct s_property_map {
     const char *description; /**< description of property */
     struct s_property_map *next; /**< next property in property list */
     PROPERTYFLAGS flags; /**< property flags (e.g., PF_RECALC) */
-    FUNCTIONADDR notify;
+    prop_notify_handle notify;
     METHODCALL method; /**< method call, addr must be 0 */
     bool notify_override;
 } PROPERTY; /**< property definition item */

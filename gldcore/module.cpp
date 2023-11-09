@@ -616,32 +616,86 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	if ( mod->oclass==nullptr && errno!=0 )
 		return nullptr;
 
+    enum INTRINSICS {
+        INTR_CREATE,
+        INTR_INIT,
+        INTR_PRECOMMIT,
+        INTR_SYNC,
+        INTR_COMMIT,
+        INTR_FINALIZE,
+        INTR_NOTIFY,
+        INTR_ISA,
+        INTR_PLC,
+        INTR_RECALC,
+        INTR_UPDATE,
+        INTR_HEARTBEAT
+    };
 	/* connect intrinsic functions */
 	for (c=mod->oclass; c!=nullptr; c=c->next) {
 		char fname[1024];
 		struct {
-			FUNCTIONADDR *func;
 			const char *name;
 			int optional;
-		} map[] = {
-			{&c->create,"create",       false},
-			{&c->init,"init",           true},
-			{&c->precommit,"precommit", true},
-			{&c->sync,"sync",           true},
-			{&c->commit,"commit",       true},
-			{&c->finalize,"finalize",   true},
-			{&c->notify,"notify",       true},
-			{&c->isa,"isa",             true},
-			{&c->plc,"plc",             true},
-			{&c->recalc,"recalc",       true},
-			{&c->update,"update",       true},
-			{&c->heartbeat,"heartbeat",true},
-		};
-		int i;
-		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
+            INTRINSICS type;
+        } map[] = {
+                {"create",    false, INTR_CREATE},
+                {"init",      true, INTR_INIT},
+                {"precommit", true, INTR_PRECOMMIT},
+                {"sync",      true, INTR_SYNC},
+                {"commit",    true, INTR_COMMIT},
+                {"finalize",  true, INTR_FINALIZE},
+                {"notify",    true, INTR_NOTIFY},
+                {"isa",       true, INTR_ISA},
+                {"plc",       true, INTR_PLC},
+                {"recalc",    true, INTR_RECALC},
+                {"update",    true, INTR_UPDATE},
+                {"heartbeat", true, INTR_HEARTBEAT},
+        };
+        int i;
+        for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 		{
 			snprintf(fname, sizeof(fname) ,"%s_%s",map[i].name,isforeign?fmod:c->name);
-			if ((*(map[i].func) = (FUNCTIONADDR)DLSYM(hLib,fname))==nullptr && !map[i].optional)
+            bool load_fail;
+            switch(map[i].type) {
+                case INTR_CREATE:
+                    load_fail = (c->create = reinterpret_cast<create_handle>(DLSYM(hLib, fname))) == nullptr;
+                    break;
+                case INTR_INIT:
+                    load_fail = (c->init = reinterpret_cast<init_handle>(DLSYM(hLib, fname))) == nullptr;
+                    break;
+                case INTR_PRECOMMIT:
+                    load_fail = (c->precommit = reinterpret_cast<precommit_handle>(DLSYM(hLib, fname))) == nullptr;
+                    break;
+                case INTR_SYNC:
+                    load_fail = (c->sync = reinterpret_cast<sync_handle>(DLSYM(hLib, fname))) == nullptr;
+                case INTR_HEARTBEAT:
+                    load_fail = (c->heartbeat = reinterpret_cast<heartbeat_handle>(DLSYM(hLib, fname))) == nullptr;
+                    break;
+                case INTR_COMMIT:
+                    load_fail = (c->commit = reinterpret_cast<commit_handle>(DLSYM(hLib, fname))) == nullptr;
+                    break;
+                case INTR_FINALIZE:
+                    load_fail = (c->finalize = reinterpret_cast<finalize_handle>(DLSYM(hLib, fname))) == nullptr;
+                    break;
+                case INTR_NOTIFY:
+                    load_fail = (c->notify = reinterpret_cast<notify_handle>(DLSYM(hLib, fname))) == nullptr;
+                    break;
+                case INTR_ISA:
+                    load_fail = (c->isa = reinterpret_cast<isa_handle>(DLSYM(hLib, fname))) == nullptr;
+                    break;
+                case INTR_PLC:
+                    load_fail = (c->plc = reinterpret_cast<plc_handle>(DLSYM(hLib, fname))) == nullptr;
+                    break;
+                case INTR_RECALC:
+                    load_fail = (c->recalc = reinterpret_cast<recalc_handle>(DLSYM(hLib, fname))) == nullptr;
+                    break;
+                case INTR_UPDATE:
+                    load_fail = (c->update = reinterpret_cast<update_handle>(DLSYM(hLib, fname))) == nullptr;
+                    break;
+            }
+
+
+			if (load_fail && !map[i].optional)
 			{
 				output_fatal("intrinsic %s is not defined in class %s", fname,file);
 				/*	TROUBLESHOOT

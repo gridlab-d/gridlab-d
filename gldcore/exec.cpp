@@ -1122,7 +1122,7 @@ static void commit_call(MTIDATA output, MTIITEM item, MTIDATA input)
 	else if ((*t0 == obj->in_svc) && (obj->in_svc_micro != 0))
 		*t2 = obj->in_svc + 1;
 	else if ( obj->out_svc>=*t0 )
-		*t2 = obj->oclass->commit(obj,*t0);
+		*t2 = obj->oclass->commit(obj,*t0, 0);
 	else
 		*t2 = TS_NEVER;
 }

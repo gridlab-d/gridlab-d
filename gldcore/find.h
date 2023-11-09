@@ -95,7 +95,8 @@ typedef struct s_objlist {
 	CLASS *oclass;		/**< class of object */
 	size_t asize;		/**< size of arrays */
 	size_t size;		/**< number of items in list */
-	struct s_object_list **objlist;	/**< pointer to array of objects that match */
+//	std::unique_ptr<s_object_list*[]> objlist;	/**< pointer to array of objects that match */
+	std::vector<s_object_list*> objlist;	/**< pointer to array of objects that match */
 } OBJLIST;
 
 #ifdef __cplusplus

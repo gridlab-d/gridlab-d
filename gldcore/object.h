@@ -7,9 +7,6 @@
 #ifndef _OBJECT_H
 #define _OBJECT_H
 
-//#pragma GCC push_options
-//#pragma GCC optimize ("O0")
-
 #include "gld_complex.h"
 #include "timestamp.h"
 #include "class.h"
