@@ -11,6 +11,7 @@
  @{
  **/
 
+#include <json/json.h> 
 #include <cstdio>
 #include <cstring>
 #if defined(_WIN32) && !defined(__MINGW__)
@@ -80,8 +81,10 @@ void modhelp_alpha(pntree **ctree, CLASS *oclass){
 	cmpval = strcmp(oclass->name, targ->name);
 	
 	if(cmpval == 0){
-		; /* exception? */
-	} if(cmpval < 0){ /*  class < root ~ go left */
+		//printf("ERROR %s", oclass->name); /* exception? */
+		return;
+	} 
+	if(cmpval < 0){ /*  class < root ~ go left */
 		if(targ->left == NULL){
 			targ->left = (pntree *)malloc(sizeof(pntree));
 			memset(targ->left, 0, sizeof(pntree));
@@ -118,6 +121,60 @@ void set_tabs(char *tabs, int tabdepth){
 		memset(tabs, 0, 33);
 		for(i = 0; i < tabdepth; ++i)
 			tabs[i] = '\t';
+	}
+}
+
+void jprint_class_d(CLASS *oclass, int tabdepth, Json::Value& _module){
+	PROPERTY *prop;
+	Json::Value _class;
+
+	if (oclass->parent) {
+		_class[oclass->parent->name]["type"] = "parent";
+	}
+	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next) {
+		const char *propname = class_get_property_typename(prop->ptype);
+		if (propname!=NULL) {
+			if ( (prop->access&PA_HIDDEN)==PA_HIDDEN )
+				continue;
+
+			Json::Value _property;
+			if (prop->unit != NULL) {
+				_property["type"] = propname;
+				_property["unit"] = prop->unit->name;
+			}
+			else if (prop->ptype==PT_set || prop->ptype==PT_enumeration) {
+				KEYWORD *key;
+				_property["type"] = propname;
+				for (key=prop->keywords; key!=NULL; key=key->next)
+					_property["keywords"][key->name] = key->value;
+			} 
+			else {
+				_property["type"] = propname;
+			}
+			if (prop->description!=NULL)
+				_property["description"] = prop->description;
+			if (prop->flags&PF_DEPRECATED)
+				_property["deprecated"] = true;
+
+			_class[prop->name] = _property;
+		}
+	}
+	_module[oclass->name] = _class;
+}
+void jprint_class(CLASS *oclass, Json::Value& _module){
+	jprint_class_d(oclass, 0, _module);
+}
+void jprint_modhelp_tree(pntree *ctree, Json::Value& _module){
+	if(ctree->left != NULL){
+		jprint_modhelp_tree(ctree->left, _module);
+		free(ctree->left);
+		ctree->left = 0;
+	}
+	jprint_class(ctree->oclass, _module);
+	if(ctree->right != NULL){
+		jprint_modhelp_tree(ctree->right, _module);
+		free(ctree->right);
+		ctree->right = 0;
 	}
 }
 
@@ -165,11 +222,9 @@ void print_class_d(CLASS *oclass, int tabdepth){
 	}
 	printf("%s}\n\n", tabs);
 }
-
 void print_class(CLASS *oclass){
 	print_class_d(oclass, 0);
 }
-
 void print_modhelp_tree(pntree *ctree){
 	if(ctree->left != NULL){
 		print_modhelp_tree(ctree->left);
@@ -248,7 +303,6 @@ static STATUS no_cmdargs()
 
 	return SUCCESS;
 }
-
 static int copyright(int argc, char *argv[])
 {
 	legal_notice();
@@ -503,6 +557,98 @@ static int testall(int argc, char *argv[])
 		return CMDERR;
 	return 1;
 }
+static int modattr(int argc, char *argv[])
+{
+	if(argc > 1){
+		MODULE *mod = NULL;
+		CLASS *oclass = NULL;
+		argv++;
+		argc--;
+		if(strchr(argv[0], ':') == 0){ // no class
+			mod = module_load(argv[0],0,NULL);
+		} else {
+			mod = module_load(strtok(argv[0],":"),0,NULL);
+		}
+
+		Json::Value _module;
+		Json::Value _global;
+		GLOBALVAR *var=NULL;
+			/* dump module globals */
+		while ((var=global_getnext(var))!=NULL)
+		{
+			PROPERTY *prop = var->prop;
+			const char *proptype = class_get_property_typename(prop->ptype);
+			if ( strncmp(var->prop->name,mod->name,strlen(mod->name))!=0 )
+				continue;
+			if ( (prop->access&PA_HIDDEN)==PA_HIDDEN )
+				continue;
+			if (proptype!=NULL)
+			{
+				Json::Value _property;
+				if ( prop->unit!=NULL )
+				{
+					_property["type"] = proptype;
+					_property["unit"] = prop->unit->name;
+				}
+				else if (prop->ptype==PT_set || prop->ptype==PT_enumeration)
+				{
+					KEYWORD *key;
+					_property["type"] = proptype;
+					for (key=prop->keywords; key!=NULL; key=key->next)
+						_property["keywords"][key->name] = key->value;
+				} 
+				else 
+				{
+					_property["type"] = proptype;
+				}
+				if (prop->description!=NULL)
+					_property["description"] = prop->description;
+				if (prop->flags&PF_DEPRECATED)
+					_property["deprecated"] = true;
+
+				_global[prop->name] = _property;
+			}
+		}
+		_module["global_attributes"] = _global;
+
+		if(mod == NULL){
+			output_fatal("module %s is not found",*argv);
+			/*	TROUBLESHOOT
+				The <b>--modhelp</b> parameter was found on the command line, but
+				if was followed by a module specification that isn't valid.
+				Verify that the module exists in GridLAB-D's <b>lib</b> folder.
+			*/
+			return FAILED;
+		}
+		pntree	*ctree;
+		/* lexographically sort all elements from class_get_first_class & oclass->next */
+
+		oclass=class_get_first_class();
+		ctree = (pntree *)malloc(sizeof(pntree));
+		
+		if(ctree == NULL){
+			throw_exception("--modhelp: malloc failure");
+			/* TROUBLESHOOT
+				The memory allocation needed for module help to function has failed.  Try freeing up system memory and try again.
+			 */
+		}
+		
+		ctree->name = oclass->name;
+		ctree->oclass = oclass;
+		ctree->left = ctree->right = 0;
+		
+		for(; oclass != NULL; oclass = oclass->next){
+			modhelp_alpha(&ctree, oclass);
+		}
+
+		/* flatten tree */
+		jprint_modhelp_tree(ctree, _module);
+		Json::StreamWriterBuilder builder;
+		builder["indentation"] = "  ";
+		std::cout << Json::writeString(builder, _module);
+	}
+	return 1;
+}
 static int modhelp(int argc, char *argv[])
 {
 	if(argc > 1){
@@ -549,7 +695,7 @@ static int modhelp(int argc, char *argv[])
 						KEYWORD *key;
 						printf("\t%s {", proptype);
 						for (key=prop->keywords; key!=NULL; key=key->next)
-							printf("%s=%ld%s", key->name, key->value, key->next==NULL?"":", ");
+							printf("%s=%ld%s", key->name, key->value, key->next==NULL?"\n":",\n");
 						printf("} %s;", strrchr(prop->name,':')+1);
 					} 
 					else 
@@ -1053,14 +1199,13 @@ static int slave(int argc, char *argv[])
 	output_verbose("slave instance for master '%s' using connection '%" FMT_INT64 "x' started ok", global_master, global_master_port);
 	return 1;
 }
-
 static int slavenode(int argc, char *argv[])
 {
 	exec_slave_node();
 	return CMDOK;
 }
-
-static int slave_id(int argc, char *argv[]){
+static int slave_id(int argc, char *argv[])
+{
 	if(argc < 2){
 		output_error("--id requires an ID number argument");
 		return CMDERR;
@@ -1189,7 +1334,8 @@ static int locktest(int argc, char *argv[])
 	test_lock();
 	return CMDOK;
 }
-static int lock(int argc, char *argv[]){
+static int lock(int argc, char *argv[])
+{
 	global_lock_enabled = !global_lock_enabled;
 	return 0;
 }
@@ -1235,7 +1381,7 @@ static CMDARG main_cmd[] = {
 	{"verbose",		"v",	verbose,		NULL, "Toggles output of verbose messages" },
 	{"warn",		"w",	warn,			NULL, "Toggles display of warning messages" },
 	{"workdir",		"W",	workdir,		NULL, "Sets the working directory" },
-	{"lock",        "l",    lock,           NULL, "Toggles read and write locks"},
+	{"lock",		"l",	lock,		NULL, "Toggles read and write locks"},
 	
 	{NULL,NULL,NULL,NULL, "Global and module control"},
 	{"define",		"D",	define,			"<name>=[<module>:]<value>", "Defines or sets a global (or module) variable" },
@@ -1274,6 +1420,7 @@ static CMDARG main_cmd[] = {
 	{NULL,NULL,NULL,NULL, "Help"},
 	{"help",		"h",		help,		NULL, "Displays command line help" },
 	{"info",		NULL,		info,		"<subject>", "Obtain online help regarding <subject>"},
+	{"modattr",		NULL,		modattr,	"module", "Display structure of all classes in a module and its attributes in json format" },
 	{"modhelp",		NULL,		modhelp,	"module[:class]", "Display structure of a class or all classes in a module" },
 	{"modlist",		NULL,		modlist,	NULL, "Display list of available modules"},
 	{"example",		NULL,		example,	"module:class", "Display an example of an instance of the class after init" },
