@@ -267,16 +267,16 @@ int fncs_msg::configure(char *value)
 				stringstream json_config_stream ("");
 				string json_config_line;
 				string json_config_string;
-				Json::Reader json_reader;
 				while (ifile >> json_config_line) { //Place the entire contents of the file into a stringstream
 					json_config_stream << json_config_line << "\n";
 				}
 				json_config_string = json_config_stream.str();
 				gl_verbose("fncs_msg::configure(): json string read from configure file: %s .\n", json_config_string.c_str()); //renke debug
-				json_reader.parse(json_config_string, publish_json_config);
 
 				//test code start
 
+				//Json::Reader json_reader;
+				//json_reader.parse(json_config_string, publish_json_config);
 				//Json::FastWriter jsonwriter;
 				//string pubjsonstr;
 				//pubjsonstr = jsonwriter.write(publish_json_config);
@@ -1312,11 +1312,9 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 		}
 	}
 	// write publish_json_data to a string and publish it through fncs API
-	Json::FastWriter jsonwriter;
 	string pubjsonstr;
-	pubjsonstr = jsonwriter.write(publish_json_data);
+	pubjsonstr = publish_json_data.toStyledString();
 	string skey = "";
-
 	skey = "fncs_output";
 
 	gl_verbose("fncs_msg::publishJsonVariables() fncs_publish: key: %s value %s \n", skey.c_str(),
@@ -1357,10 +1355,18 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 	for(string & value : values) {
 		if(value.empty() == false){
 			Json::Value subscribe_json_data_full;
-			Json::Reader json_reader;
-			json_reader.parse(value, subscribe_json_data_full);
-			//use isMember to check the simName is in the subscribe_json_data_full
-			if (!subscribe_json_data_full.isMember(simName.c_str())){
+
+			Json::CharReaderBuilder builder {};
+			// Don't leak memory! Use std::unique_ptr!
+			auto reader = std::unique_ptr<Json::CharReader>( builder.newCharReader() );
+			std::string errors {};
+			const auto is_parsed = reader->parse( value.c_str(),
+			                                     value.c_str() + value.length(),
+			                                     &subscribe_json_data_full,
+			                                     &errors );
+			if (!is_parsed ) {
+			//used to use isMember to check the simName is in the subscribe_json_data_full
+//			if (!subscribe_json_data_full.isMember(simName.c_str())){
 				gl_warning("fncs_msg::subscribeJsonVariables(), the simName: %s is not a member in the subscribed json data!! \n",
 						simName.c_str());
 				return 1;
@@ -1512,9 +1518,9 @@ static size_t fncs_to_hex(char *out, size_t max, const char *in, size_t len)
 extern "C" size_t fncs_from_hex(void *buf, size_t len, const char *hex, size_t hexlen)
 {
 	char *p = (char*)buf;
-	char lo = NULL;
-	char hi = NULL;
-	char c = NULL;
+	char lo = (char)NULL;
+	char hi = (char)NULL;
+	char c = (char)NULL;
 	size_t n = 0;
 	for(n = 0; n < hexlen && *hex != '\0'; n += 2)
 	{
@@ -1565,7 +1571,7 @@ extern "C" void outgoing_fncs_function(char *from, char *to, char *funcName, cha
 		//TODO: deliver message to fncs
 		stringstream payload;
 		char buffer[sizeof(len)];
-		sprintf(buffer, "%d", len);
+		sprintf(buffer, "%ld", len);
 		payload << "\"{\"from\":\"" << from << "\", " << "\"to\":\"" << to << "\", " << "\"function\":\"" << funcName << "\", " <<  "\"data\":\"" << message << "\", " << "\"data length\":\"" << buffer <<"\"}\"";
 		string key = string(relay->remotename);
 		if( relay->ctype == CT_PUBSUB){

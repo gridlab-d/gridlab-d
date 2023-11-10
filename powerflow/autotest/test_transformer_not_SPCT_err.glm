@@ -1,0 +1,104 @@
+// Test to check "failure" for a single-phase
+// transformer and triplex phasing/connections
+// This should error out, per the checks added
+// as part of #1432
+
+module powerflow 
+{
+	solver_method NR;
+}   
+
+// Phase Conductor 556,500 26/7 ACSR
+object overhead_line_conductor 
+{
+	name conductor1; 
+	geometric_mean_radius 0.031300;
+	resistance 0.185900;
+}
+
+// Phase Conductor 4/0 6/1 ACSR
+object overhead_line_conductor 
+{
+	name conductor2;
+	geometric_mean_radius 0.00814;
+	resistance 0.592000;
+}
+
+// Overhead line spacings
+
+// ID-500abcn
+object line_spacing 
+{
+	name line_spacing1;
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_BN 5.656854;
+	distance_AN 4.272002;
+	distance_CN 5.0;
+}
+
+// Line configurations
+// Configuration 601
+object line_configuration 
+{
+	name line_configuration1;
+	conductor_A conductor1;
+	conductor_B conductor1;
+	conductor_C conductor1;
+	conductor_N conductor2;
+	spacing line_spacing1;
+}
+
+object overhead_line 
+{
+	 name overhead_line3;
+	 phases "ABCN";
+	 from Swing_node;
+	 to three_phase_node;
+	 length 2000;
+	 configuration line_configuration1;
+}
+
+// Create node objects
+object node 
+{
+	name Swing_node;
+	bustype SWING;
+	phases "ABCN";
+	nominal_voltage 2401.7771;
+}
+
+object node 
+{
+	name three_phase_node;
+	phases "ABCN";
+	nominal_voltage 2401.7771;
+}
+
+//Added objects that would fail for #1432
+object transformer_configuration {
+	name "xfrmcfg_ABCN_480";
+	primary_voltage 480.0 V;
+	secondary_voltage 120 V;
+	connect_type SINGLE_PHASE;
+	// connect_type SINGLE_PHASE_CENTER_TAPPED;	//Correct transformer
+	resistance 0.01 Ohm;
+	reactance 0.06 Ohm;
+	install_type "PADMOUNT";
+	power_rating 80000.0;
+}
+object transformer {
+	name "broken_transformer";
+	from "three_phase_node";
+	to "node_5";
+	phases C;
+	// phases CS;	//Correct phases, with correct transformer
+	configuration "xfrmcfg_ABCN_480";
+}
+
+object triplex_node {
+	name "node_5";
+	phases CS;
+	nominal_voltage 120 V;
+}

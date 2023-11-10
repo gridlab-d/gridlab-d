@@ -1,0 +1,40 @@
+// Test large ID behavior
+
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 0:00:00 PST';
+	stoptime '2000-01-02 0:00:00 PST';
+}
+
+module residential {
+	implicit_enduses NONE;
+}
+
+// This is a syntax error. The colon is for assigning IDs, and should be omitted from anonymous objects.
+// The correct version of this behavior is shown below in the comment.
+object house: {
+	groupid A;
+}
+
+object house: {
+	groupid B;
+}
+
+// This is the correct behavior for anonymous objects
+// object house {
+//      groupid A;
+// }
+//
+// object house {
+// 	    groupid B;
+// }
+
+module tape;
+
+object collector {
+	group "class=house AND groupid=A";
+	property "count(floor_area)";
+	limit 10;
+	interval 3600;
+	file output.csv;
+}

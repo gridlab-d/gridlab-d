@@ -34470,7 +34470,7 @@ object overhead_line:12432 {
 	length 250.500;
 	configuration line_configuration:25;
 }
-object overhead_line:10716 {
+object overhead_line:107161 {
 	name R3-12-47-3_ol_1511;
 	phases ABCN;
 	from R3-12-47-3_node_122;
@@ -64128,7 +64128,7 @@ object triplex_line:8785 {
 }
 
 
-object triplex_line_conductor: {
+object triplex_line_conductor {
 	name TLC 1/0 AA triplex;
 	resistance 0.97;
 	geometric_mean_radius 0.0111;
