@@ -39,7 +39,6 @@ private:
 	gld_property *inverter2_power_property;
 
 	bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
-	bool first_sync_delta_enabled;
 
 	/*  SA: commented out*
 	//Inverter connections

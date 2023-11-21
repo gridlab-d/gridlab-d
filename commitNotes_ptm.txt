@@ -1,0 +1,1 @@
+[#1361] Updated the deltamode functions in dc_link, inverter_DC and invertter_DC_Ctrl objects to match the deltamode functions from 730 after merging with 730.
