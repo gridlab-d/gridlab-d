@@ -1,22 +1,5 @@
 SET(GLD_MODULE_NAME generators)
 
-if (GLD_USE_FRUGALLY)
-    FIND_PACKAGE(frugally-deep CONFIG
-            HINTS
-            ${GLD_FRUGALLY_DIR} $ENV{GLD_FRUGALLY_DIR}
-            ${frugally-deep_DIR} $ENV{frugally-deep_DIR})
-    if (frugally-deep_FOUND)
-        set(FRUGALLY_LIB frugally-deep::fdeep)
-        message(STATUS "Frugally-deep library found.")
-    else ()
-        message(STATUS "Frugal-deep library could not be located on the platform. Those capabilities are disabled.")
-        set(FRUGALLY_LIB)
-    endif ()
-else ()
-    message(STATUS "Frugal-deep library not enabled. Those capabilities are disabled.")
-    set(FRUGALLY_LIB)
-endif ()
-
 add_library(${GLD_MODULE_NAME}
         battery.cpp
         battery.h
@@ -82,12 +65,9 @@ else ()
     )
 endif ()
 
-if (GLD_USE_FRUGALLY AND FRUGALLY_LIB)
-    target_link_libraries(${GLD_MODULE_NAME} PRIVATE
-            ${FRUGALLY_LIB}
-    )
-    target_compile_definitions(${GLD_MODULE_NAME} PRIVATE HAVE_FRUGALLY)
-endif ()
+if (GLD_USE_FRUGALLY)
+    target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${FRUGALLY_LIBS})
+endif()
 
 target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
 set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")

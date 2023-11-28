@@ -310,6 +310,12 @@ if (GLD_USE_SUPERLU)
     #    set(SUPERLU_LIB superlu)
 endif ()
 
+if (GLD_USE_FRUGALLY)
+    include(cmake/GetDependencies.cmake)
+    find_package(frugally-deep CONFIG REQUIRED)
+    SET(FRUGALLY_LIBS frugally-deep::fdeep)
+endif()
+
 option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
 set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Cache the shared library state")
 SET(BUILD_SHARED_LIBS OFF)
