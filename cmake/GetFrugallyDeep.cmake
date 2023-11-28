@@ -33,7 +33,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   Eigen3
   GIT_REPOSITORY git@github.com:eigen-mirror/eigen.git
-  GIT_TAG        v3.4.0
+  GIT_TAG        3.4.0
 )
 FetchContent_Declare(
   nlohmann_json
