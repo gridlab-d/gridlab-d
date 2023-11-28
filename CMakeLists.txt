@@ -127,7 +127,7 @@ add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     FetchContent_Declare(
             dlfcn-win32
-            GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
+            GIT_REPOSITORY git@github.com:dlfcn-win32/dlfcn-win32.git
             GIT_TAG v1.3.1
     )
     FetchContent_MakeAvailable(dlfcn-win32)
@@ -311,7 +311,7 @@ if (GLD_USE_SUPERLU)
 endif ()
 
 if (GLD_USE_FRUGALLY)
-    include(cmake/GetDependencies.cmake)
+    include(cmake/GetFrugallyDeep.cmake)
     find_package(frugally-deep CONFIG REQUIRED)
     SET(FRUGALLY_LIBS frugally-deep::fdeep)
 endif()
