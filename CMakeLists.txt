@@ -73,8 +73,6 @@ set(GLD_MYSQL_DIR "" CACHE PATH "Search path for MySQL library")
 set(GLD_FNCS_DIR "" CACHE PATH "Search path for FNCS library")
 set(GLD_ZeroMQ_DIR "" CACHE PATH "Search path for ZeroMQ library (FNCS dependency)")
 set(GLD_CZMQ_DIR "" CACHE PATH "Search path for CZMQ library (FNCS dependency)")
-set(GLD_FRUGALLY_DIR "" CACHE PATH "Search path for Frugally-deep library")
-set(GLD_FRUGAL_EIGEN_DIR "" CACHE PATH "Search path for Eigen installed as part of Frugally-deep library")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON) # TODO: only required for SuperLU_MT support with Clang. Future removal recommended.
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
@@ -312,7 +310,6 @@ endif ()
 
 if (GLD_USE_FRUGALLY)
     include(cmake/GetFrugallyDeep.cmake)
-    find_package(frugally-deep CONFIG REQUIRED)
     SET(FRUGALLY_LIBS frugally-deep::fdeep)
 endif()
 
