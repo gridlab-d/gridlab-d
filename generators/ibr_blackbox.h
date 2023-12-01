@@ -30,10 +30,9 @@ private:
 	double last_QSTS_GF_Update;
 
 	gld_property *pIGenerated[3];		//Link to direct current injections to powerflow at bus-level
-	gld::complex generator_admittance[3][3]; //Generator admittance matrix converted from sequence values
 
 	gld::complex value_IGenerated[3];		//Value/accumulator for IGenerated values
-	gld::complex prev_value_IGenerated[3];	//Tracking variable for grid following "QSTS exit"
+	gld::complex prev_value_IGenerated[3];	//Tracking variable for grid following "QSTS exit" and delta injections
 
 	bool parent_is_a_meter;		 //Boolean to indicate if the parent object is a meter/triplex_meter
 	bool parent_is_single_phase; //Boolean to indicate if the parent object is single-phased (main or triplexed)
@@ -49,9 +48,6 @@ private:
 	gld::complex value_Circuit_V[3];	   ///< value holder for the three L-N voltage fields
 	enumeration value_MeterStatus; ///< value holder for service_status variable on meter parent
 
-	gld_property *pbus_full_Y_mat; //Link to the full_Y bus variable -- used for Norton equivalents
-	gld_property *pGenerated;	   //Link to pGenerated value - used for Norton equivalents
-
 	SIMULATIONMODE desired_simulation_mode; //deltamode desired simulation mode after corrector pass - prevents starting iterations again
 
 	//Map functions
@@ -60,10 +56,17 @@ private:
 	void pull_complex_powerflow_values(void);
 	void push_complex_powerflow_values(bool update_voltage);
 
+	//Frugally deep model adds
+	std::unique_ptr<fdeep::model> bb_model = {nullptr};
+	fdeep::tensors result_output;
+	std::vector<std::vector<std::vector<float>>> simulation_data;
+
 public:
 	set phases;				 /**< device phases (see PHASE codes) */
 	gld::complex terminal_current_val[3];
 	gld::complex terminal_current_val_pu[3];
+	double dc_input_voltage;
+	double dc_output_current;
 	TIMESTAMP inverter_start_time;
 	bool inverter_first_step;
 	bool first_deltamode_init;
@@ -88,9 +91,6 @@ public:
 	double f_nominal;	 // rated frequency, 60 Hz
 
 	double pCircuit_V_Avg_pu; //pCircuit_V_Avg_pu refers to the average value of three phase voltages, it is per-unit value
-	double Xfilter;			  // Rfilter and Xfilter are the per-unit values of inverter filter, they are per-unit values
-	double Rfilter;
-	gld::complex filter_admittance;
 
 	double Pref;	// Pref and Qref are the refrences for P and Q
 	double Qref;

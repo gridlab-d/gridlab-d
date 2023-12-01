@@ -67,6 +67,7 @@ endif ()
 
 if (GLD_USE_FRUGALLY)
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${FRUGALLY_LIBS})
+	target_compile_definitions(${GLD_MODULE_NAME} PRIVATE HAVE_FRUGALLY)
 endif()
 
 target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})

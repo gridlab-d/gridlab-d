@@ -1,5 +1,7 @@
 // Skeleton/empty object with deltamode capabilities
 // Comments in //**** ****// are brief descriptions of what a function does or where it may go.
+#include<memory>
+
 #include "ibr_blackbox.h"
 
 CLASS *ibr_blackbox::oclass = nullptr;
@@ -21,9 +23,9 @@ ibr_blackbox::ibr_blackbox(MODULE *module)
 		if (gl_publish_variable(oclass,
 			//**** This is where the mapping between the C/C++ programming variables and the "GLM-accessible" variables is done ****//
 			//**** Anything you want to set in the GLM or have a player/recorder/HELICS manipulate need to be published here. ****//
-			PT_complex, "phaseA_I_Out[A]", PADDR(terminal_current_val[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system",
-			PT_complex, "phaseB_I_Out[A]", PADDR(terminal_current_val[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system",
-			PT_complex, "phaseC_I_Out[A]", PADDR(terminal_current_val[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system",
+			PT_complex, "phaseA_I_Out[A]", PADDR(value_IGenerated[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system",
+			PT_complex, "phaseB_I_Out[A]", PADDR(value_IGenerated[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system",
+			PT_complex, "phaseC_I_Out[A]", PADDR(value_IGenerated[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system",
 			PT_complex, "phaseA_I_Out_PU[pu]", PADDR(terminal_current_val_pu[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system, pu",
 			PT_complex, "phaseB_I_Out_PU[pu]", PADDR(terminal_current_val_pu[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system, pu",
 			PT_complex, "phaseC_I_Out_PU[pu]", PADDR(terminal_current_val_pu[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system, pu",
@@ -37,15 +39,14 @@ ibr_blackbox::ibr_blackbox(MODULE *module)
 			PT_complex, "power_C[VA]", PADDR(power_val[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
 			PT_complex, "VA_Out[VA]", PADDR(VA_Out), PT_DESCRIPTION, "AC power",
 
+			PT_double, "dc_input_voltage[V]", PADDR(dc_input_voltage),
+			PT_double, "dc_output_current[A]", PADDR(dc_output_current),
+
 			//Input
 			PT_double, "rated_power[VA]", PADDR(S_base), PT_DESCRIPTION, " The rated power of the inverter",
 			// Grid-Following Controller Parameters
 			PT_double, "Pref[W]", PADDR(Pref), PT_DESCRIPTION, "DELTAMODE: The real power reference.",
 			PT_double, "Qref[VAr]", PADDR(Qref), PT_DESCRIPTION, "DELTAMODE: The reactive power reference.",
-
-			// Inverter filter parameters
-			PT_double, "Xfilter[pu]", PADDR(Xfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
-			PT_double, "Rfilter[pu]", PADDR(Rfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
 
 			// ibr_blackbox_NOTE: Any variables that need to be published should go here.
 
@@ -100,18 +101,12 @@ int ibr_blackbox::create(void)
 	pIGenerated[0] = pIGenerated[1] = pIGenerated[2] = nullptr;
 
 	pMeterStatus = nullptr; // check if the meter is in service
-	pbus_full_Y_mat = nullptr;
-	pGenerated = nullptr;
 
 	//Zero the accumulators
 	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = gld::complex(0.0, 0.0);
 	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = gld::complex(0.0, 0.0);
 	prev_value_IGenerated[0] = prev_value_IGenerated[1] = prev_value_IGenerated[2] = gld::complex(0.0, 0.0);
 	value_MeterStatus = 1; //Connected, by default
-
-	// Inverter filter
-	Xfilter = 0.15; //per unit
-	Rfilter = 0.01; // per unit
 
 	f_nominal = 60;
 
@@ -122,6 +117,10 @@ int ibr_blackbox::create(void)
 	last_QSTS_GF_Update = TS_NEVER_DBL;
 
 	node_nominal_voltage = 120.0;		//Just pick a value
+
+	//Initial values
+	dc_input_voltage = 0.508587;
+	dc_output_current = 0.0;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -145,7 +144,17 @@ int ibr_blackbox::init(OBJECT *parent)
 	OBJECT *tmp_obj = nullptr;
 	gld_object *tmp_gld_obj = nullptr;
 	STATUS return_value_init, fxn_return_status;
-	bool childed_connection = false;
+
+	// // added by sunil
+	// fdeep::tensor input_tensor(fdeep::tensor_shape(5, 7, 1), fdeep::float_vec(5 * 7 * 1, 0.0));
+	// std::vector<std::vector<std::vector<float>>> simulation_data = {
+	//     {{0, 0, 0, 0, 0, 0,0}},
+	// 	{{0, 0, 0, 0, 0, 0,0}},
+	// 	{{0, 0, 0, 0, 0, 0,0}},
+	// 	{{0, 0, 0, 0, 0, 0,0}},
+	//     {{0.508587, 0.747836, 0.749498, 0.749134, 0.405156, 0.11261,0.739529}}
+	// };
+
 
 	//Deferred initialization code
 	if (parent != nullptr)
@@ -221,49 +230,7 @@ int ibr_blackbox::init(OBJECT *parent)
 						//Not a wierd map, just use normal parent
 						tmp_obj = parent;
 					}
-					else //Implies it is a powerflow parent
-					{
-						//Set the flag
-						childed_connection = true;
-
-						//See if we are deltamode-enabled -- if so, flag our parent while we're here
-						//Map our deltamode flag and set it (parent will be done below)
-						temp_property_pointer = new gld_property(parent, "Norton_dynamic");
-
-						//Make sure it worked
-						if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_bool())
-						{
-							GL_THROW("ibr_blackbox:%s failed to map Norton-equivalence deltamode variable from %s", obj->name ? obj->name : "unnamed", parent->name ? parent->name : "unnamed");
-							/*  TROUBLESHOOT
-							While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
-							Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
-							*/
-						}
-
-						//Flag it to true
-						temp_bool_value = true;
-						temp_property_pointer->setp<bool>(temp_bool_value, *test_rlock);
-
-						//Remove it
-						delete temp_property_pointer;
-
-						//Set the child accumulator flag too
-						temp_property_pointer = new gld_property(tmp_obj,"Norton_dynamic_child");
-
-						//Make sure it worked
-						if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_bool())
-						{
-							GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
-							//Defined elsewhere
-						}
-
-						//Flag it to true
-						temp_bool_value = true;
-						temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
-
-						//Remove it
-						delete temp_property_pointer;
-					} //End we were a powerflow child
+					//Default else - Implies it is a powerflow parent
 				}	  //Parent has a parent
 				else  //It is null
 				{
@@ -332,7 +299,7 @@ int ibr_blackbox::init(OBJECT *parent)
 				pCircuit_V[2] = map_complex_value(tmp_obj, "voltage_2");
 
 				//Map IGenerated, even though triplex can't really use this yet (just for the sake of doing so)
-				pIGenerated[0] = map_complex_value(tmp_obj, "deltamode_generator_current_12");
+				pIGenerated[0] = map_complex_value(tmp_obj, "prerotated_current_12");
 				pIGenerated[1] = nullptr;
 				pIGenerated[2] = nullptr;
 			} //End triplex parent
@@ -351,9 +318,9 @@ int ibr_blackbox::init(OBJECT *parent)
 					pCircuit_V[2] = map_complex_value(tmp_obj, "voltage_C");
 
 					//Map the current injection variables
-					pIGenerated[0] = map_complex_value(tmp_obj, "deltamode_generator_current_A");
-					pIGenerated[1] = map_complex_value(tmp_obj, "deltamode_generator_current_B");
-					pIGenerated[2] = map_complex_value(tmp_obj, "deltamode_generator_current_C");
+					pIGenerated[0] = map_complex_value(tmp_obj, "prerotated_current_A");
+					pIGenerated[1] = map_complex_value(tmp_obj, "prerotated_current_B");
+					pIGenerated[2] = map_complex_value(tmp_obj, "prerotated_current_C");
 				}
 				else //Not three-phase
 				{
@@ -373,19 +340,19 @@ int ibr_blackbox::init(OBJECT *parent)
 					{
 						//Map the various powerflow variables
 						pCircuit_V[0] = map_complex_value(tmp_obj, "voltage_A");
-						pIGenerated[0] = map_complex_value(tmp_obj, "deltamode_generator_current_A");
+						pIGenerated[0] = map_complex_value(tmp_obj, "prerotated_current_A");
 					}
 					else if ((phases & 0x07) == 0x02) //B
 					{
 						//Map the various powerflow variables
 						pCircuit_V[0] = map_complex_value(tmp_obj, "voltage_B");
-						pIGenerated[0] = map_complex_value(tmp_obj, "deltamode_generator_current_B");
+						pIGenerated[0] = map_complex_value(tmp_obj, "prerotated_current_B");
 					}
 					else if ((phases & 0x07) == 0x04) //C
 					{
 						//Map the various powerflow variables
 						pCircuit_V[0] = map_complex_value(tmp_obj, "voltage_C");
-						pIGenerated[0] = map_complex_value(tmp_obj, "deltamode_generator_current_C");
+						pIGenerated[0] = map_complex_value(tmp_obj, "prerotated_current_C");
 					}
 					else //Not three-phase, but has more than one phase - fail, because we don't do this right
 					{
@@ -466,147 +433,6 @@ int ibr_blackbox::init(OBJECT *parent)
 					I_base = S_base / V_base;
 					Z_base = (node_nominal_voltage * node_nominal_voltage) / S_base; // voltage is phase to ground voltage, S_base is single phase capacity
 				}
-
-				//Provide the Norton-equivalent admittance up to powerflow
-				//**** generator_admittance is the Norton current source equivalent admittance ****//
-				//**** This will need to be updated for the object (junk values put here for now) ****//
-
-				//Convert filter to admittance
-				filter_admittance = gld::complex(1.0, 0.0) / (gld::complex(Rfilter, Xfilter) * Z_base);
-
-				//Placeholder diagonals
-				generator_admittance[0][0] = generator_admittance[1][1] = generator_admittance[2][2] = filter_admittance;
-				generator_admittance[0][1] = generator_admittance[1][0] = generator_admittance[2][0] = complex(0.0,0.0);
-				generator_admittance[0][2] = generator_admittance[1][2] = generator_admittance[2][1] = complex(0.0,0.0);
-
-				//Map the full_Y parameter to inject the admittance portion into it
-				pbus_full_Y_mat = new gld_property(tmp_obj, "deltamode_full_Y_matrix");
-
-				//Check it
-				if (!pbus_full_Y_mat->is_valid() || !pbus_full_Y_mat->is_complex_array())
-				{
-					GL_THROW("ibr_blackbox:%s failed to map Norton-equivalence deltamode variable from %s", obj->name ? obj->name : "unnamed", tmp_obj->name ? tmp_obj->name : "unnamed");
-					/*  TROUBLESHOOT
-					While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
-					Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
-					*/
-				}
-
-				//Pull down the variable
-				pbus_full_Y_mat->getp<complex_array>(temp_complex_array, *test_rlock);
-
-				//See if it is valid
-				if (!temp_complex_array.is_valid(0, 0))
-				{
-					//Create it
-					temp_complex_array.grow_to(3, 3);
-
-					//Zero it, by default
-					for (temp_idx_x = 0; temp_idx_x < 3; temp_idx_x++)
-					{
-						for (temp_idx_y = 0; temp_idx_y < 3; temp_idx_y++)
-						{
-							temp_complex_array.set_at(temp_idx_x, temp_idx_y, gld::complex(0.0, 0.0));
-						}
-					}
-				}
-				else //Already populated, make sure it is the right size!
-				{
-					if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
-					{
-						GL_THROW("ibr_blackbox:%s exposed Norton-equivalent matrix is the wrong size!", obj->name ? obj->name : "unnamed");
-						/*  TROUBLESHOOT
-						While mapping to an admittance matrix on the parent node device, it was found it is the wrong size.
-						Please try again.  If the error persists, please submit your code and model via the issue tracking system.
-						*/
-					}
-					//Default else -- right size
-				}
-
-				//See if we were connected to a powerflow child
-				if (childed_connection)
-				{
-					temp_property_pointer = new gld_property(parent,"deltamode_full_Y_matrix");
-
-					//Check it
-					if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_complex_array())
-					{
-						GL_THROW("ibr_blackbox:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
-						//Defined above
-					}
-
-					//Pull down the variable
-					temp_property_pointer->getp<complex_array>(temp_child_complex_array,*test_rlock);
-
-					//See if it is valid
-					if (!temp_child_complex_array.is_valid(0,0))
-					{
-						//Create it
-						temp_child_complex_array.grow_to(3,3);
-
-						//Zero it, by default
-						for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
-						{
-							for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
-							{
-								temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,gld::complex(0.0,0.0));
-							}
-						}
-					}
-					else	//Already populated, make sure it is the right size!
-					{
-						if ((temp_child_complex_array.get_rows() != 3) && (temp_child_complex_array.get_cols() != 3))
-						{
-							GL_THROW("ibr_blackbox:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
-							//Defined above
-						}
-						//Default else -- right size
-					}
-				}//End childed powerflow parent
-
-				//Loop through and store the values
-				for (temp_idx_x = 0; temp_idx_x < 3; temp_idx_x++)
-				{
-					for (temp_idx_y = 0; temp_idx_y < 3; temp_idx_y++)
-					{
-						//Read the existing value
-						temp_complex_value = temp_complex_array.get_at(temp_idx_x, temp_idx_y);
-
-						//Accumulate admittance into it
-						temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
-
-						//Store it
-						temp_complex_array.set_at(temp_idx_x, temp_idx_y, temp_complex_value);
-
-						//Do the childed object, if exists
-						if (childed_connection)
-						{
-							//Read the existing value
-							temp_complex_value = temp_child_complex_array.get_at(temp_idx_x,temp_idx_y);
-
-							//Accumulate into it
-							temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
-
-							//Store it
-							temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
-						}
-					}
-				}
-
-				//Push it back up
-				pbus_full_Y_mat->setp<complex_array>(temp_complex_array, *test_rlock);
-
-				//See if the childed powerflow exists
-				if (childed_connection)
-				{
-					temp_property_pointer->setp<complex_array>(temp_child_complex_array,*test_rlock);
-
-					//Clear it
-					delete temp_property_pointer;
-				}
-
-				//Map the power variable (intialization related)
-				pGenerated = map_complex_value(tmp_obj, "deltamode_PGenTotal");
 			} //End VSI common items
 
 			//Map status - true parent
@@ -676,6 +502,11 @@ int ibr_blackbox::init(OBJECT *parent)
 		//Double-set the nominal frequency to NA - no powerflow available
 		f_nominal = 60.0;
 	}
+
+    //Frugrally deep manual allocation (since it lacks a constructor)
+    auto model_construct = std::make_unique<fdeep::model>(fdeep::load_model("fdeep_CNN_ge1.json"));
+    bb_model.swap(model_construct);
+	first_sync_delta_enabled = true;
 
 	///////////////////////////////////////////////////////////////////////////
 	// DELTA MODE
@@ -859,36 +690,24 @@ TIMESTAMP ibr_blackbox::sync(TIMESTAMP t0, TIMESTAMP t1)
 						Qref = -sqrt(S_base*S_base-Pref*Pref);
 					}
 				}
-
-				temp_complex_value = gld::complex(Pref, Qref);
-
-
-				//Push it up
-				pGenerated->setp<gld::complex>(temp_complex_value, *test_rlock);
-
-				//Map the current injection function
-				test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent, "pwr_current_injection_update_map"));
-
-				//See if it was located
-				if (test_fxn == nullptr)
-				{
-					GL_THROW("ibr_blackbox:%s - failed to map additional current injection mapping for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
-					/*  TROUBLESHOOT
-					While attempting to map the additional current injection function, an error was encountered.
-					Please try again.  If the error persists, please submit your code and a bug report via the trac website.
-					*/
-				}
-
-				//Call the mapping function
-				fxn_return_status = ((STATUS(*)(OBJECT *, OBJECT *))(*test_fxn))(obj->parent, obj);
-
-				//Make sure it worked
-				if (fxn_return_status != SUCCESS)
-				{
-					GL_THROW("ibr_blackbox:%s - failed to map additional current injection mapping for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
-					//Defined above
-				}
 			}
+
+			// Assuming these variables holding the latest values
+			float Vdc_latest = dc_input_voltage;
+			float Va_mag_latest = value_Circuit_V[0].Mag()/node_nominal_voltage;
+			float Vb_mag_latest = value_Circuit_V[1].Mag()/node_nominal_voltage;
+			float Vc_mag_latest = value_Circuit_V[2].Mag()/node_nominal_voltage;
+			float Va_ang_latest = value_Circuit_V[0].Arg()/(2.0*PI);
+			float Vb_ang_latest = value_Circuit_V[1].Arg()/(2.0*PI);
+			float Vc_ang_latest = value_Circuit_V[2].Arg()/(2.0*PI);
+
+			simulation_data = {
+				{{Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}}, // Initialize with zeros
+				{{Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}},
+				{{Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}},
+				{{Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}},
+				{{Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}}
+			};
 
 			//Flag it
 			first_sync_delta_enabled = false;
@@ -907,21 +726,87 @@ TIMESTAMP ibr_blackbox::sync(TIMESTAMP t0, TIMESTAMP t1)
 		inverter_first_step = false;
 	}
 
+    //Fdeep add
+//    result_output = bb_model->predict({fdeep::tensor(fdeep::tensor_shape(4), fdeep::float_vec({1., 2., 3., 4.}))});
+
+    //added by sunil
+
+	// Create a tensor with shape (5, 7, 1)
+	//fdeep::tensor input_tensor(fdeep::tensor_shape(5, 7, 1), fdeep::float_vec(5 * 7 * 1, 0.0));
+
+	// std::vector<std::vector<std::vector<float>>> simulation_data = {
+	//     {{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}}, // Initialize with zeros
+	//     {{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}},
+	//     {{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}},
+	//     {{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}},
+	//     {{0.508587, 0.747836, 0.749498, 0.749134, 0.405156, 0.11261, 0.739529}}
+	// };
+
+
+
+
+	// Assuming these variables holding the latest values
+	float Vdc_latest = dc_input_voltage;
+	float Va_mag_latest = value_Circuit_V[0].Mag()/node_nominal_voltage;
+	float Vb_mag_latest = value_Circuit_V[1].Mag()/node_nominal_voltage;
+	float Vc_mag_latest = value_Circuit_V[2].Mag()/node_nominal_voltage;
+	float Va_ang_latest = value_Circuit_V[0].Arg()/(2.0*PI);
+	float Vb_ang_latest = value_Circuit_V[1].Arg()/(2.0*PI);
+	float Vc_ang_latest = value_Circuit_V[2].Arg()/(2.0*PI);
+
+	// Update simulation_data for rolling updates
+	for (int i = 0; i < simulation_data.size() - 1; ++i) {
+	    simulation_data[i] = simulation_data[i + 1];
+	}
+
+	// Update the latest block with the new values from variables
+	simulation_data[simulation_data.size() - 1] = {
+	    {Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}
+	};
+
+
+	// Create a vector to hold the input data
+	std::vector<float> input_data;
+
+	// Flatten the updated simulated data and store it in input_data
+	for (int time_step = 0; time_step < 5; ++time_step) {
+	    for (int variable = 0; variable < 7; ++variable) {
+	        float value = simulation_data[time_step][0][variable];
+	        input_data.push_back(value);
+	    }
+	}
+
+	// Create an input tensor from the updated simulation data
+	fdeep::tensor input_tensor(fdeep::tensor_shape(5, 7, 1), input_data);
+
+	// Use the input tensor for prediction
+	result_output = bb_model->predict({input_tensor});
+
+	fdeep::tensor one_tensor = result_output[0];
+
+	std::vector<float> vec = one_tensor.to_vector();
+
+	//Put this into current - and unnormalize
+	dc_output_current = vec[0];
+	value_IGenerated[0].SetPolar(vec[1]*I_base,vec[4]*2*PI);
+	value_IGenerated[1].SetPolar(vec[2]*I_base,vec[5]*2*PI);
+	value_IGenerated[2].SetPolar(vec[3]*I_base,vec[6]*2*PI);
+
+	// Print the example
+	std::cout << fdeep::show_tensors(result_output) << std::endl;
+
 	//Calculate power based on measured terminal voltage and currents
 	if (parent_is_single_phase) // single phase/split-phase implementation
 	{
 		if (!inverter_first_step)
 		{
 			//Update output power
-			//Get current injected
-			terminal_current_val[0] = value_IGenerated[0] - filter_admittance * value_Circuit_V[0];
-
 			//Update per-unti value
-			terminal_current_val_pu[0] = terminal_current_val[0] / I_base;
+			terminal_current_val_pu[0] = value_IGenerated[0] / I_base;
 
 			//Update power output variables, just so we can see what is going on
 
-			power_val[0] = value_Circuit_V[0] * ~terminal_current_val[0];
+			power_val[0] = value_Circuit_V[0] * ~value_IGenerated[0];
 
 			VA_Out = power_val[0];
 
@@ -932,21 +817,15 @@ TIMESTAMP ibr_blackbox::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		if (!inverter_first_step)
 		{
-			//Update output power
-			//Get current injected
-			terminal_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0] * value_Circuit_V[0] - generator_admittance[0][1] * value_Circuit_V[1] - generator_admittance[0][2] * value_Circuit_V[2]);
-			terminal_current_val[1] = (value_IGenerated[1] - generator_admittance[1][0] * value_Circuit_V[0] - generator_admittance[1][1] * value_Circuit_V[1] - generator_admittance[1][2] * value_Circuit_V[2]);
-			terminal_current_val[2] = (value_IGenerated[2] - generator_admittance[2][0] * value_Circuit_V[0] - generator_admittance[2][1] * value_Circuit_V[1] - generator_admittance[2][2] * value_Circuit_V[2]);
-
 			//Update per-unit value
-			terminal_current_val_pu[0] = terminal_current_val[0] / I_base;
-			terminal_current_val_pu[1] = terminal_current_val[1] / I_base;
-			terminal_current_val_pu[2] = terminal_current_val[2] / I_base;
+			terminal_current_val_pu[0] = value_IGenerated[0] / I_base;
+			terminal_current_val_pu[1] = value_IGenerated[1] / I_base;
+			terminal_current_val_pu[2] = value_IGenerated[2] / I_base;
 
 			//Update power output variables, just so we can see what is going on
-			power_val[0] = value_Circuit_V[0] * ~terminal_current_val[0];
-			power_val[1] = value_Circuit_V[1] * ~terminal_current_val[1];
-			power_val[2] = value_Circuit_V[2] * ~terminal_current_val[2];
+			power_val[0] = value_Circuit_V[0] * ~value_IGenerated[0];
+			power_val[1] = value_Circuit_V[1] * ~value_IGenerated[1];
+			power_val[2] = value_Circuit_V[2] * ~value_IGenerated[2];
 
 			VA_Out = power_val[0] + power_val[1] + power_val[2];
 
@@ -994,33 +873,26 @@ TIMESTAMP ibr_blackbox::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		if (parent_is_single_phase) // single phase/split-phase implementation
 		{
 			//Update output power
-			//Get current injected
-			terminal_current_val[0] = value_IGenerated[0] - filter_admittance * value_Circuit_V[0];
-
 			//Update per-unit value
-			terminal_current_val_pu[0] = terminal_current_val[0] / I_base;
+			terminal_current_val_pu[0] = value_IGenerated[0] / I_base;
 
 			//Update power output variables, just so we can see what is going on
-			power_val[0] = value_Circuit_V[0] * ~terminal_current_val[0];
+			power_val[0] = value_Circuit_V[0] * ~value_IGenerated[0];
 			VA_Out = power_val[0];
 		}
 		else //Three-phase, by default
 		{
 			//Update output power
-			//Get current injected
-			terminal_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0] * value_Circuit_V[0] - generator_admittance[0][1] * value_Circuit_V[1] - generator_admittance[0][2] * value_Circuit_V[2]);
-			terminal_current_val[1] = (value_IGenerated[1] - generator_admittance[1][0] * value_Circuit_V[0] - generator_admittance[1][1] * value_Circuit_V[1] - generator_admittance[1][2] * value_Circuit_V[2]);
-			terminal_current_val[2] = (value_IGenerated[2] - generator_admittance[2][0] * value_Circuit_V[0] - generator_admittance[2][1] * value_Circuit_V[1] - generator_admittance[2][2] * value_Circuit_V[2]);
 
 			//Update per-unit values
-			terminal_current_val_pu[0] = terminal_current_val[0] / I_base;
-			terminal_current_val_pu[1] = terminal_current_val[1] / I_base;
-			terminal_current_val_pu[2] = terminal_current_val[2] / I_base;
+			terminal_current_val_pu[0] = value_IGenerated[0] / I_base;
+			terminal_current_val_pu[1] = value_IGenerated[1] / I_base;
+			terminal_current_val_pu[2] = value_IGenerated[2] / I_base;
 
 			//Update power output variables, just so we can see what is going on
-			power_val[0] = value_Circuit_V[0] * ~terminal_current_val[0];
-			power_val[1] = value_Circuit_V[1] * ~terminal_current_val[1];
-			power_val[2] = value_Circuit_V[2] * ~terminal_current_val[2];
+			power_val[0] = value_Circuit_V[0] * ~value_IGenerated[0];
+			power_val[1] = value_Circuit_V[1] * ~value_IGenerated[1];
+			power_val[2] = value_Circuit_V[2] * ~value_IGenerated[2];
 
 			VA_Out = power_val[0] + power_val[1] + power_val[2];
 		}
@@ -1075,7 +947,7 @@ SIMULATIONMODE ibr_blackbox::inter_deltaupdate(unsigned int64 delta_time, unsign
 	OBJECT *obj = OBJECTHDR(this);
 
 	SIMULATIONMODE simmode_return_value = SM_EVENT;
-	
+
 	//If we have a meter, reset the accumulators
 	if (parent_is_a_meter)
 	{
@@ -1088,6 +960,61 @@ SIMULATIONMODE ibr_blackbox::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 	//Update time tracking variables
 	prev_timestamp_dbl = gl_globaldeltaclock;
+
+    //Fdeep add
+    //result_output = bb_model->predict({fdeep::tensor(fdeep::tensor_shape(4), fdeep::float_vec({1., 2., 3., 4.}))});
+
+
+    //added by sunil
+	// Assuming these variables holding the latest values
+	float Vdc_latest = dc_input_voltage;
+	float Va_mag_latest = value_Circuit_V[0].Mag()/node_nominal_voltage;
+	float Vb_mag_latest = value_Circuit_V[1].Mag()/node_nominal_voltage;
+	float Vc_mag_latest = value_Circuit_V[2].Mag()/node_nominal_voltage;
+	float Va_ang_latest = value_Circuit_V[0].Arg()/(2.0*PI);
+	float Vb_ang_latest = value_Circuit_V[1].Arg()/(2.0*PI);
+	float Vc_ang_latest = value_Circuit_V[2].Arg()/(2.0*PI);
+
+	// Update simulation_data for rolling updates
+	for (int i = 0; i < simulation_data.size() - 1; ++i) {
+	    simulation_data[i] = simulation_data[i + 1];
+	}
+
+	// Update the latest block with the new values from variables
+	simulation_data[simulation_data.size() - 1] = {
+	    {Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}
+	};
+
+
+	// Create a vector to hold the input data
+	std::vector<float> input_data;
+
+	// Flatten the updated simulated data and store it in input_data
+	for (int time_step = 0; time_step < 5; ++time_step) {
+	    for (int variable = 0; variable < 7; ++variable) {
+	        float value = simulation_data[time_step][0][variable];
+	        input_data.push_back(value);
+	    }
+	}
+
+	// Create an input tensor from the updated simulation data
+	fdeep::tensor input_tensor(fdeep::tensor_shape(5, 7, 1), input_data);
+
+	// Use the input tensor for prediction
+	result_output = bb_model->predict({input_tensor});
+
+	fdeep::tensor one_tensor = result_output[0];
+
+	std::vector<float> vec = one_tensor.to_vector();
+
+	//Put this into current - and unnormalize
+	dc_output_current = vec[0];
+	value_IGenerated[0].SetPolar(vec[1]*I_base,vec[4]*2*PI);
+	value_IGenerated[1].SetPolar(vec[2]*I_base,vec[5]*2*PI);
+	value_IGenerated[2].SetPolar(vec[3]*I_base,vec[6]*2*PI);
+
+	//Print the example
+	std::cout << fdeep::show_tensors(result_output) << std::endl;
 
 	//*** Deltamode/differential equation updates would go here ****//
 	// Check pass
@@ -1217,8 +1144,6 @@ void ibr_blackbox::pull_complex_powerflow_values(void)
 	{
 		//Just pull "zero" values
 		value_Circuit_V[0] = pCircuit_V[0]->get_complex();
-
-		value_IGenerated[0] = pIGenerated[0]->get_complex();
 	}
 	else
 	{
@@ -1226,11 +1151,6 @@ void ibr_blackbox::pull_complex_powerflow_values(void)
 		value_Circuit_V[0] = pCircuit_V[0]->get_complex();
 		value_Circuit_V[1] = pCircuit_V[1]->get_complex();
 		value_Circuit_V[2] = pCircuit_V[2]->get_complex();
-
-		//Pull currents
-		value_IGenerated[0] = pIGenerated[0]->get_complex();
-		value_IGenerated[1] = pIGenerated[1]->get_complex();
-		value_IGenerated[2] = pIGenerated[2]->get_complex();
 	}
 }
 
@@ -1259,12 +1179,18 @@ void ibr_blackbox::push_complex_powerflow_values(bool update_voltage)
 			//Loop through the three-phases/accumulators
 			for (indexval = 0; indexval < 3; indexval++)
 			{
-				/* If was VSI, adjust Norton injection */
-				{
-					//**** IGenerated Current value ***/
-					//Direct write, not an accumulator
-					pIGenerated[indexval]->setp<gld::complex>(value_IGenerated[indexval], *test_rlock);
-				}
+				//**** pre-rotated Current value ***/
+				//Pull current value again, just in case
+				temp_complex_val = pIGenerated[indexval]->get_complex();
+
+				//Add the difference
+				temp_complex_val += value_IGenerated[indexval] - prev_value_IGenerated[indexval];
+
+				//Push it back up
+				pIGenerated[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
+
+				//Update tracker
+				prev_value_IGenerated[indexval] = value_IGenerated[indexval];
 			}//End phase loop
 		}//End not voltage push
 	}//End three-phase
@@ -1280,11 +1206,18 @@ void ibr_blackbox::push_complex_powerflow_values(bool update_voltage)
 		else
 		{
 			//Pull the relevant values -- all single pulls
+			//**** pre-rotated Current value ***/
+			//Pull current value again, just in case
+			temp_complex_val = pIGenerated[0]->get_complex();
 
-			//*** IGenerated ***/
-			//********* TODO - Does this need to be deltamode-flagged? *************//
-			//Direct write, not an accumulator
-			pIGenerated[0]->setp<gld::complex>(value_IGenerated[0], *test_rlock);
+			//Add the difference
+			temp_complex_val += value_IGenerated[0] - prev_value_IGenerated[0];
+
+			//Push it back up
+			pIGenerated[0]->setp<gld::complex>(temp_complex_val,*test_rlock);
+
+			//Update tracker
+			prev_value_IGenerated[0] = value_IGenerated[0];
 		}//End not voltage update
 	}//End single-phase
 }
@@ -1440,25 +1373,6 @@ STATUS ibr_blackbox::updateCurrInjection(int64 iteration_count,bool *converged_f
 		}//End three-phase
 	}
 	//Default else - things are handled elsewhere
-
-	//Check to see if we're disconnected
-	if (value_MeterStatus == 0)
-	{
-		//Disconnected - offset our admittance contribution - could remove it from powerflow - visit this in the future
-		if (parent_is_single_phase)
-		{
-			value_IGenerated[0] = filter_admittance * value_Circuit_V[0];
-		}
-		else	//Assumed to be a three-phase variant
-		{
-			value_IGenerated[0] = generator_admittance[0][0] * value_Circuit_V[0] + generator_admittance[0][1] * value_Circuit_V[1] + generator_admittance[0][2] * value_Circuit_V[2];
-			value_IGenerated[1] = generator_admittance[1][0] * value_Circuit_V[0] + generator_admittance[1][1] * value_Circuit_V[1] + generator_admittance[1][2] * value_Circuit_V[2];
-			value_IGenerated[2] = generator_admittance[2][0] * value_Circuit_V[0] + generator_admittance[2][1] * value_Circuit_V[1] + generator_admittance[2][2] * value_Circuit_V[2];
-		}
-	}//End Disconnected
-	else
-	{
-	}//End connected/working
 
 	//Push the changes up
 	if (parent_is_a_meter)
