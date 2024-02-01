@@ -9,6 +9,7 @@
 #include "../powerflow/line.h"
 
 #include <new>
+#include <string>
 
 EXPORT void new_violation_recorder(MODULE *);
 
@@ -250,6 +251,8 @@ public:
 	double inverter_v_chng_per_interval_lower_bound;
 	double inverter_v_chng_interval;
 	TIMESTAMP violation_start_delay;
+	char1024 helics_sender_name;
+	bool helics_only;
 private:
 	int write_header();
 	int flush_line();
@@ -340,6 +343,8 @@ private:
 	size_t line_size;
 	bool interval_write;
 	TIMESTAMP sim_start;
+	OBJECT *helics_msg_object;
+	FUNCTIONADDR helics_publish_function;
 };
 
 #endif // C++

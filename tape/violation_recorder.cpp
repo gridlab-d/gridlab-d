@@ -60,6 +60,8 @@ violation_recorder::violation_recorder(MODULE *mod){
 				PT_KEYWORD,"VIOLATION7",(set)VIOLATION7,
 				PT_KEYWORD,"VIOLATION8",(set)VIOLATION8,
 				PT_KEYWORD,"ALLVIOLATIONS",(set)ALLVIOLATIONS,
+			PT_char1024, "helics_sender_name", PADDR(helics_sender_name), PT_DESCRIPTION, "The name of the HELICS Publication or Endpoint to send Violation data on.",
+			PT_bool, "helics_only", PADDR(helics_only), PT_DESCRIPTION, "True by default. Flag that indicates whether to write violations to the recorder file when sending violations through HELICS as well.",
 		NULL) < 1){
 			;//GL_THROW("unable to publish properties in %s",__FILE__);
 		}
@@ -72,6 +74,8 @@ violation_recorder::violation_recorder(MODULE *mod){
 int violation_recorder::create(){
 	memcpy(this, defaults, sizeof(violation_recorder));
 	strict = false;
+	helics_msg_object = nullptr;
+	helics_only = true;
 	return 1;
 }
 
@@ -174,7 +178,27 @@ int violation_recorder::init(OBJECT *obj){
 	inverter_list_v6 = uniqueList_alloc_fxn(inverter_list_v6);
 	tplx_meter_list_v7 = uniqueList_alloc_fxn(tplx_meter_list_v7);
 	comm_meter_list_v7 = uniqueList_alloc_fxn(comm_meter_list_v7);
-
+	if(helics_sender_name[0] == 0){
+		helics_msg_object = nullptr;
+		helics_publish_function = nullptr;
+	} else {
+		FINDLIST *helics_msg_objs = gl_find_objects(FL_NEW,FT_CLASS,SAME,"helics_msg",FT_END);
+		if(helics_msg_objs != nullptr){
+			if(helics_msg_objs->hit_count > 0){
+				helics_msg_object = gl_find_next(helics_msg_objs,nullptr);
+				helics_publish_function = (FUNCTIONADDR)(gl_get_function(helics_msg_object, "publish_helics_string"));
+				if(helics_publish_function == nullptr){
+					gl_error("violation_recorder::init(): Unable to map to the helics_msg object!");
+					tape_status = TS_ERROR;
+					return 0;
+				}
+			} else {
+				gl_error("violation_recorder::init(): The violation recorder has been setup to send violations through HELICS but no helics_msg object is present in the model! please add an appropriate helics_msg object to the glm file.");
+				tape_status = TS_ERROR;
+				return 0;
+			}
+		}
+	}
 	return 1;
 }
 
@@ -1297,75 +1321,88 @@ int violation_recorder::get_violation_count(int number, int type) {
 int violation_recorder::write_to_stream (TIMESTAMP t1, bool echo, char *fmt, ...) {
 	char time_str[64];
 	DATETIME dt;
-	if(TS_OPEN != tape_status){
-		gl_error("violation_recorder::write_line(): trying to write line when the tape is not open");
-		// could be ERROR or CLOSED, should not have happened
-		return 0;
-	}
-	if(0 == rec_file){
-		gl_error("violation_recorder::write_line(): no output file open and state is 'open'");
-		/* TROUBLESHOOT
-			violation_recorder claimed to be open and attempted to write to a file when
-			a file had not successfully	opened.
-		 */
-		tape_status = TS_ERROR;
-		return 0;
-	}
-	if(0 == gl_localtime(t1, &dt)){
-		gl_error("violation_recorder::write_line(): error when converting the sync time");
-		/* TROUBLESHOOT
-			Unprintable timestamp.
-		 */
-		tape_status = TS_ERROR;
-		return 0;
-	}
-	if(0 == gl_strtime(&dt, time_str, sizeof(time_str) ) ){
-		gl_error("violation_recorder::write_line(): error when writing the sync time as a string");
-		/* TROUBLESHOOT
-			Error printing the timestamp.
-		 */
-		tape_status = TS_ERROR;
-		return 0;
-	}
-	char buffer[1024];
-	va_list ptr;
-	va_start(ptr,fmt);
-	vsprintf(buffer,fmt,ptr); /* note the lack of check on buffer overrun */
-	va_end(ptr);
-	// print line to file
-	if(0 >= fprintf(rec_file, "%s,%s\n", time_str, buffer)){
-		gl_error("violation_recorder::write_line(): error when writing to the output file");
-		/* TROUBLESHOOT
-			File I/O error.
-		 */
-		tape_status = TS_ERROR;
-		return 0;
-	}
-	++write_count;
-	// if periodic flush, check for flush
-	if(flush_interval > 0){
-		if(last_flush + flush_interval <= t1){
-			last_flush = t1;
-		}
-	} else if(flush_interval < 0){
-		if( ((write_count + 1) % (-flush_interval)) == 0 ){
-			flush_line();
-		}
-	} // if 0, no flush
-	// check if write limit
-	if(limit > 0 && write_count >= limit){
-		// write footer
-		write_footer();
-		fclose(rec_file);
-		rec_file = 0;
-		free(line_buffer);
-		line_buffer = 0;
-		line_size = 0;
-		tape_status = TS_DONE;
-	}
-	if (echo)
-		gl_output("%s", buffer);
+	bool write_to_file = true;
 
+	if(helics_sender_name[0] != '\0'){
+		std::string pubEpName(const_cast<const char *>(helics_sender_name.get_string()));
+		std::string helicsData = std::to_string(t1) + ",";
+		helicsData.append(const_cast<const char *>(fmt));
+		((void(*)(OBJECT*,std::string,std::string))(*helics_publish_function))(helics_msg_object, pubEpName, helicsData);
+		if(helics_only){
+			write_to_file = false;
+		}
+	}
+	if(write_to_file){
+		if(TS_OPEN != tape_status){
+			gl_error("violation_recorder::write_line(): trying to write line when the tape is not open");
+			// could be ERROR or CLOSED, should not have happened
+			return 0;
+		}
+		if(0 == rec_file){
+			gl_error("violation_recorder::write_line(): no output file open and state is 'open'");
+			/* TROUBLESHOOT
+				violation_recorder claimed to be open and attempted to write to a file when
+				a file had not successfully	opened.
+			*/
+			tape_status = TS_ERROR;
+			return 0;
+		}
+		if(0 == gl_localtime(t1, &dt)){
+			gl_error("violation_recorder::write_line(): error when converting the sync time");
+			/* TROUBLESHOOT
+				Unprintable timestamp.
+			*/
+			tape_status = TS_ERROR;
+			return 0;
+		}
+		if(0 == gl_strtime(&dt, time_str, sizeof(time_str) ) ){
+			gl_error("violation_recorder::write_line(): error when writing the sync time as a string");
+			/* TROUBLESHOOT
+				Error printing the timestamp.
+			*/
+			tape_status = TS_ERROR;
+			return 0;
+		}
+		char buffer[1024];
+		va_list ptr;
+		va_start(ptr,fmt);
+		vsprintf(buffer,fmt,ptr); /* note the lack of check on buffer overrun */
+		va_end(ptr);
+		// print line to file
+
+		if(0 >= fprintf(rec_file, "%s,%s\n", time_str, buffer)){
+			gl_error("violation_recorder::write_line(): error when writing to the output file");
+			/* TROUBLESHOOT
+				File I/O error.
+			*/
+			tape_status = TS_ERROR;
+			return 0;
+		}
+		++write_count;
+		// if periodic flush, check for flush
+		if(flush_interval > 0){
+			if(last_flush + flush_interval <= t1){
+				last_flush = t1;
+			}
+		} else if(flush_interval < 0){
+			if( ((write_count + 1) % (-flush_interval)) == 0 ){
+				flush_line();
+			}
+		} // if 0, no flush
+		// check if write limit
+		if(limit > 0 && write_count >= limit){
+			// write footer
+			write_footer();
+			fclose(rec_file);
+			rec_file = 0;
+			free(line_buffer);
+			line_buffer = 0;
+			line_size = 0;
+			tape_status = TS_DONE;
+		}
+		if (echo)
+			gl_output("%s", buffer);
+	}
 	return 1;
 }
 
