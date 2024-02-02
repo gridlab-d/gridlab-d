@@ -7,7 +7,7 @@
 #include "../powerflow/transformer_configuration.h"
 #include "../powerflow/transformer.h"
 #include "../powerflow/line.h"
-
+#include <json/json.h>
 #include <new>
 #include <string>
 

@@ -1322,11 +1322,63 @@ int violation_recorder::write_to_stream (TIMESTAMP t1, bool echo, char *fmt, ...
 	char time_str[64];
 	DATETIME dt;
 	bool write_to_file = true;
-
+	if(0 == gl_localtime(t1, &dt)){
+		gl_error("violation_recorder::write_line(): error when converting the sync time");
+		/* TROUBLESHOOT
+			Unprintable timestamp.
+		*/
+		tape_status = TS_ERROR;
+		return 0;
+	}
+	if(0 == gl_strtime(&dt, time_str, sizeof(time_str) ) ){
+		gl_error("violation_recorder::write_line(): error when writing the sync time as a string");
+		/* TROUBLESHOOT
+			Error printing the timestamp.
+		*/
+		tape_status = TS_ERROR;
+		return 0;
+	}
 	if(helics_sender_name[0] != '\0'){
+		size_t pos = 0;
+		std::vector<std::string> fmt_parsed;
+		std::string violation;
+		double observation;
+		double upper_limit;
+		double lower_limit;
+		std::string obj_name;
+		std::string obj_type;
+		std::string phase;
+		std::string message;
+		Json::Value json_violation;
+		Json::StreamWriterBuilder builder;
+		std::string fmt_str(fmt);
+		//tokenize fmt using "," as the delimiter
+		pos = fmt_str.find(",");
+		while(pos != std::string::npos){
+			fmt_parsed.push_back(fmt_str.substr(0,pos));
+			fmt_str.erase(0, pos+1);
+			pos = fmt_str.find(",");
+		}
+		fmt_parsed.push_back(fmt_str);
+		violation = fmt_parsed[0];
+		observation = std::stod(fmt_parsed[1]);
+		upper_limit = std::stod(fmt_parsed[2]);
+		upper_limit = std::stod(fmt_parsed[3]);
+		obj_name = fmt_parsed[4];
+		obj_type = fmt_parsed[5];
+		phase = fmt_parsed[6];
+		message = fmt_parsed[7];
+		json_violation["TIMESTAMP"] = std::string(const_cast<const char *>(&time_str[0]));
+		json_violation["VIOLATION"] = violation;
+		json_violation["OBSERVATION"] = observation;
+		json_violation["UPPER_LIMIT"] = upper_limit;
+		json_violation["LOWER_LIMIT"] = lower_limit;
+		json_violation["OBJECT"] = obj_name;
+		json_violation["OBJECT_TYPE"] = obj_type;
+		json_violation["PHASE"] = phase;
+		json_violation["MESSAGE"] = message;
+		std::string helicsData = Json::writeString(builder, json_violation);
 		std::string pubEpName(const_cast<const char *>(helics_sender_name.get_string()));
-		std::string helicsData = std::to_string(t1) + ",";
-		helicsData.append(const_cast<const char *>(fmt));
 		((void(*)(OBJECT*,std::string,std::string))(*helics_publish_function))(helics_msg_object, pubEpName, helicsData);
 		if(helics_only){
 			write_to_file = false;
