@@ -82,6 +82,7 @@ inverter_DC_Ctrl::inverter_DC_Ctrl(MODULE *module)
 			//Input
 			PT_double, "rated_power[VA]", PADDR(S_base), PT_DESCRIPTION, " The rated power of the inverter",
 			PT_double, "rated_DC_Voltage[V]", PADDR(Vdc_base), PT_DESCRIPTION, " The rated dc bus of the inverter",
+			PT_double, "Vdco[V]", PADDR(Vdco), PT_DESCRIPTION, " The initial DC voltage of the inverter; it should match that of the dc_link object.",
 
 			// Inverter filter parameters
 			PT_double, "Xfilter[pu]", PADDR(Xfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
@@ -457,6 +458,7 @@ int inverter_DC_Ctrl::create(void)
 	Rq = 0.4;		// per unit, default value by IEEE 1547 2018
 
 	Vdc_base = 600; // default value of dc bus voltage
+	Vdco=333;
 	Vdc_min_pu = 0.7; // default reference of the Vdc_min controller
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     Vdc_ref=Vdc_ref_pu*Vdc_base; // Default for DC-Link reference voltage in V
@@ -484,7 +486,7 @@ int inverter_DC_Ctrl::create(void)
 
 	//DC Bus items
 	P_DC = 0.0;
-	V_DC = Vdc_base;
+	V_DC = Vdco;
 	I_DC = 0.0;
     
 	//1547 parameters
@@ -906,6 +908,10 @@ int inverter_DC_Ctrl::init(OBJECT *parent)
 			{
 				if (control_mode != GFL_CURRENT_SOURCE)
 				{
+					
+					
+					
+					
 					//Map our deltamode flag and set it (parent will be done below)
 					temp_property_pointer = new gld_property(tmp_obj, "Norton_dynamic");
 
@@ -1287,6 +1293,50 @@ int inverter_DC_Ctrl::init(OBJECT *parent)
 		value_Frequency = 60.0;
 	}
 
+
+
+
+
+
+
+
+
+	//++++++++++++++++++++++++++++++++++++++++++++++++ HM errors and warnings 1 +++++++++++++++++++++++++++++++++
+	if (control_mode != GFL_CURRENT_SOURCE)
+	{
+		gl_error("inverter_DC_Ctrl:%d %s failed: inverter_DC_Ctrl only accepts GFL_CURRENT_SOURCE control mode", obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the nominal_voltage property, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+
+		return FAILED;
+	}
+
+	if (!DC_Ctrl || frequency_watt)
+	{
+		gl_error("inverter_DC_Ctrl:%d %s failed: inverter_DC_Ctrl only accepts DC_Ctrl(Default) or DC_Ctrl and volt_var", obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the nominal_voltage property, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+
+		return FAILED;
+	}
+	
+	
+
+
+
+
+
+
+
+
+	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	
+	
+	
 	///////////////////////////////////////////////////////////////////////////
 	// DELTA MODE
 	///////////////////////////////////////////////////////////////////////////
@@ -1994,6 +2044,8 @@ void inverter_DC_Ctrl::update_iGen(gld::complex VA_Out)
 /* Check the inverter output and make sure it is in the limit */
 void inverter_DC_Ctrl::check_and_update_VA_Out(OBJECT *obj)
 {
+
+
 	if (grid_forming_mode == DYNAMIC_DC_BUS)
 	{
 		// Update the P_DC
@@ -2028,6 +2080,53 @@ void inverter_DC_Ctrl::check_and_update_VA_Out(OBJECT *obj)
 		// Update I_DC
 		I_DC = P_DC/V_DC;
 	}
+
+
+	//+++++++++++++++++++++++++++++++++++++++++++++++ HM: this portion is added to initialize the DC link voltage from the DC-Link Ovject initial voltage Vco
+	if (control_mode == GFL_CURRENT_SOURCE)
+	{
+		// Update the P_DC
+		P_DC = VA_Out.Re(); //Lossless
+
+		// Update V_DC
+		if (!dc_interface_objects.empty())
+		{
+			int temp_idx;
+			STATUS fxn_return_status;
+
+			//Loop through and call the DC objects
+			for (temp_idx = 0; temp_idx < dc_interface_objects.size(); temp_idx++)
+			{
+				//DC object, calling object (us), init mode (true/false)
+				//False at end now, because not initialization
+				fxn_return_status = ((STATUS(*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object, obj, false);
+
+				//Make sure it worked
+				if (fxn_return_status == FAILED)
+				{
+					//Pull the object from the array - this is just for readability (otherwise the
+					OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
+
+					//Error it up
+					GL_THROW("inverter_DC_Ctrl:%d - %s - DC object update for object:%d - %s - failed!", obj->id, (obj->name ? obj->name : "Unnamed"), temp_obj->id, (temp_obj->name ? temp_obj->name : "Unnamed"));
+					//Defined above
+				}
+			}
+		}
+
+		// Update I_DC
+		//I_DC = P_DC/V_DC;
+	}
+
+
+
+
+
+
+
+
+
+
 }
 
 /* Postsync is called when the clock needs to advance on the second top-down pass */
@@ -3587,21 +3686,23 @@ SIMULATIONMODE inverter_DC_Ctrl::inter_deltaupdate(unsigned int64 delta_time, un
 						igd_ref[0] = Pref / S_base / ugd_pu[0];
 					}
 
-					if (volt_var)
-					{
-						if(checkRampRate_reactive)
-						{
-							igq_ref[0] = -Qref_droop_pu / ugd_pu[0];
-						}
-						else
-						{
-							igq_ref[0] = -Qref_droop_pu_filter / ugd_pu[0];
-						}
-					}
-					else
-					{
-						igq_ref[0] = -Qref / S_base / ugd_pu[0];
-					}
+
+					//++++++++++++ HM, eliminate separate volt_var mode as it can only happen with DC_Ctrl in inverter_DC_Ctrl
+					//if (volt_var)
+					//{
+					//	if(checkRampRate_reactive)
+					//	{
+					//		igq_ref[0] = -Qref_droop_pu / ugd_pu[0];
+					//	}
+					//	else
+					//	{
+					//		igq_ref[0] = -Qref_droop_pu_filter / ugd_pu[0];
+					//	}
+					//}
+					//else
+					//{
+					//	igq_ref[0] = -Qref / S_base / ugd_pu[0];
+					//}
 
 
 					//Add the limits for igd_ref and idq_ref
@@ -5362,6 +5463,8 @@ STATUS inverter_DC_Ctrl::init_dynamics(INV_DC_Ctrl_STATE *curr_time)
 	desired_simulation_mode = SM_EVENT;
 
 	Vdc_ctrl_blk.setparams(Kp_dc,Ki_dc,-500.0,500.0,-500.0,500.0);
+	Vdc_ctrl_blk.init(Vdco,Vdco);
+	//V_DC=8000;
 
 	if (control_mode == GRID_FORMING)
 	{
@@ -5878,8 +5981,7 @@ STATUS inverter_DC_Ctrl::init_dynamics(INV_DC_Ctrl_STATE *curr_time)
 					{
 						// Initialize the current control loops
 						I_source[i] = value_IGenerated[i];
-
-												igd_filter_blk[i].setparams(Tif);
+						igd_filter_blk[i].setparams(Tif);
 						igq_filter_blk[i].setparams(Tif);
 
 						igd_filter_blk[i].init(0.0,igd_pu[i]);
@@ -5939,45 +6041,48 @@ STATUS inverter_DC_Ctrl::init_dynamics(INV_DC_Ctrl_STATE *curr_time)
 			//         Grid-Following:   VDC Dynamic Initialization - Three Phase
 
 			// Initialize Vdc_min controller and DC bus voltage
-			if (((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE)) && (DC_Ctrl)) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
-			{
-				//See if there are any DC objects to handle
-				if (!dc_interface_objects.empty())
-				{
-					//Figure out what our DC power is
-					P_DC = VA_Out.Re();
+			//if (((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE)) && (DC_Ctrl)) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
+			//{
+			//	//See if there are any DC objects to handle
+			//	if (!dc_interface_objects.empty())
+			//	{
+			//		//Figure out what our DC power is
+			//		P_DC = VA_Out.Re();
 
-					int temp_idx;
-					STATUS fxn_return_status;
+			//		int temp_idx;
+			//		STATUS fxn_return_status;
 
-					//Loop through and call the DC objects
-					for (temp_idx = 0; temp_idx < dc_interface_objects.size(); temp_idx++)
-					{
-						//May eventually have a "DC ratio" or similar, if multiple objects on bus or "you are DC voltage master"
-						//DC object, calling object (us), init mode (true/false)
-						fxn_return_status = ((STATUS(*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object, obj, true);
+			//		//Loop through and call the DC objects
+			//		for (temp_idx = 0; temp_idx < dc_interface_objects.size(); temp_idx++)
+			//		{
+			//			//May eventually have a "DC ratio" or similar, if multiple objects on bus or "you are DC voltage master"
+			//			//DC object, calling object (us), init mode (true/false)
+			//			fxn_return_status = ((STATUS(*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object, obj, true);
 
-						//Make sure it worked
-						if (fxn_return_status == FAILED)
-						{
-							//Pull the object from the array - this is just for readability (otherwise the
-							OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
+			//			//Make sure it worked
+			//			if (fxn_return_status == FAILED)
+			//			{
+			//				//Pull the object from the array - this is just for readability (otherwise the
+			//				OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
 
-							//Error it up
-							GL_THROW("inverter_DC_Ctrl:%d - %s - DC object update for object:%d - %s - failed!", obj->id, (obj->name ? obj->name : "Unnamed"), temp_obj->id, (temp_obj->name ? temp_obj->name : "Unnamed"));
+			//				//Error it up
+			//				GL_THROW("inverter_DC_Ctrl:%d - %s - DC object update for object:%d - %s - failed!", obj->id, (obj->name ? obj->name : "Unnamed"), temp_obj->id, (temp_obj->name ? temp_obj->name : "Unnamed"));
 							/*  TROUBLESHOOT
 							While performing the update to a DC-bus object on this inverter, an error occurred.  Please try again.
 							If the error persists, please check your model.  If the model appears correct, please submit a bug report via the issues tracker.
 							*/
-						}
-					}
+			//			}
+			//		}
 
 					//Theoretically, the DC objects have no set V_DC and I_DC appropriately - updated equations would go here
-				} //End DC object update
-
+			//	} //End DC object update
+				V_DC=Vdco;
 				curr_time->Vdc_pu = V_DC / Vdc_base; // This should be done through PV curve
 				//curr_time->delta_w_Vdc_min_ini = 0;
-			}
+
+
+			    
+			//}
 
 
 			//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

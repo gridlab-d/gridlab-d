@@ -345,6 +345,8 @@ public:
 	double S_base;	 // S_base is the rated caspacity
 	double V_base;	 // Vbase is the rated Line to ground voltage
 	double Vdc_base; // rated dc bus voltage
+	double Vdco; // initial dc bus voltage in [V]
+
 	double Idc_base; // rated dc current
 	double Z_base;	 // Zbase is the reated impedance
 	double I_base;	 // Ibase is the rated current

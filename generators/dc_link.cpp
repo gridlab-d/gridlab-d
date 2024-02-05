@@ -131,7 +131,7 @@ int dc_link::create(void)
 	C=5000e-6;
 
 
-
+   
 
 	prev_time = 0.0; // Previous model update time
 
@@ -592,7 +592,7 @@ int dc_link::init(OBJECT *parent)
 			*/
 		}
 	}
-
+	
 	return SUCCESS; //Unless something could fail it
 }
 

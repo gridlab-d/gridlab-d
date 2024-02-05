@@ -1287,6 +1287,60 @@ int inverter_DC::init(OBJECT *parent)
 		value_Frequency = 60.0;
 	}
 
+	//++++++++++++++++++++++++++++++++++++++++++++++++ HM errors and warnings 1 +++++++++++++++++++++++++++++++++
+	if (control_mode == GRID_FOLLOWING)
+	{
+		gl_error("inverter_DC:%d %s failed: inverter_DC only accepts GRID_FORMING and GFL_CURRENT_SOURCE control modes", obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the nominal_voltage property, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+
+		return FAILED;
+	}
+
+	if (!DC_Ctrl)
+	{
+		gl_error("inverter_DC:%d %s failed: inverter_DC only accepts DC_Ctrl(Default), DC_Ctrl and volt_var, or DC_Ctrl and frequency_watt.", obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the nominal_voltage property, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+
+		return FAILED;
+	}
+
+	if (grid_forming_mode == DYNAMIC_DC_BUS)
+	{
+		gl_error("inverter_DC:%d %s failed: DYNAMIC_DC_BUS can not be implemented in inverter_DC as the DC-link voltage is controlled by an inverter_DC_Ctrl object.", obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the nominal_voltage property, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+
+		return FAILED;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	///////////////////////////////////////////////////////////////////////////
 	// DELTA MODE
 	///////////////////////////////////////////////////////////////////////////
@@ -2031,6 +2085,43 @@ void inverter_DC::check_and_update_VA_Out(OBJECT *obj)
 		P_DC = VA_Out.Re(); //Lossless
 		I_DC = P_DC/V_DC;
 	}
+
+	//+++++++++++++++++++++++++++++++++++++++++++++++ HM: this portion is added to initialize the DC link voltage from the DC-Link Ovject initial voltage Vco
+	if (DC_Ctrl)
+	{
+		// Update the P_DC
+		P_DC = VA_Out.Re(); //Lossless
+
+		// Update V_DC
+		if (!dc_interface_objects.empty())
+		{
+			int temp_idx;
+			STATUS fxn_return_status;
+
+			//Loop through and call the DC objects
+			for (temp_idx = 0; temp_idx < dc_interface_objects.size(); temp_idx++)
+			{
+				//DC object, calling object (us), init mode (true/false)
+				//False at end now, because not initialization
+				fxn_return_status = ((STATUS(*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object, obj, false);
+
+				//Make sure it worked
+				if (fxn_return_status == FAILED)
+				{
+					//Pull the object from the array - this is just for readability (otherwise the
+					OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
+
+					//Error it up
+					GL_THROW("inverter_DC_Ctrl:%d - %s - DC object update for object:%d - %s - failed!", obj->id, (obj->name ? obj->name : "Unnamed"), temp_obj->id, (temp_obj->name ? temp_obj->name : "Unnamed"));
+					//Defined above
+				}
+			}
+		}
+
+		// Update I_DC
+		//I_DC = P_DC/V_DC;
+	}
+
 }
 
 /* Postsync is called when the clock needs to advance on the second top-down pass */
