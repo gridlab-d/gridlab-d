@@ -59,7 +59,13 @@ private:
 	//Frugally deep model adds
 	std::unique_ptr<fdeep::model> bb_model = {nullptr};
 	fdeep::tensors result_output;
-	std::vector<std::vector<std::vector<float>>> simulation_data;
+	std::vector<std::vector<double>>  simulation_data;
+	std::size_t bb_model_time_buffer;
+	char1024 fdeep_model_name;
+
+	//Debug
+	gld::complex volt_pu_debug[3];
+	gld::complex curr_pu_debug[3];
 
 public:
 	set phases;				 /**< device phases (see PHASE codes) */

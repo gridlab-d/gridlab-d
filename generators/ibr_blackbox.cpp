@@ -4,6 +4,12 @@
 
 #include "ibr_blackbox.h"
 
+#include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <sstream>
+
 CLASS *ibr_blackbox::oclass = nullptr;
 ibr_blackbox *ibr_blackbox::defaults = nullptr;
 
@@ -26,6 +32,21 @@ ibr_blackbox::ibr_blackbox(MODULE *module)
 			PT_complex, "phaseA_I_Out[A]", PADDR(value_IGenerated[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system",
 			PT_complex, "phaseB_I_Out[A]", PADDR(value_IGenerated[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system",
 			PT_complex, "phaseC_I_Out[A]", PADDR(value_IGenerated[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system",
+			
+			//Debugging - per-unit variables for fdeep model
+			PT_double, "Va_mag", PADDR(volt_pu_debug[0].Re()), PT_ACCESS, PA_HIDDEN,
+			PT_double, "Vb_mag", PADDR(volt_pu_debug[1].Re()), PT_ACCESS, PA_HIDDEN,
+			PT_double, "Vc_mag", PADDR(volt_pu_debug[2].Re()), PT_ACCESS, PA_HIDDEN,
+			PT_double, "Va_ang", PADDR(volt_pu_debug[0].Im()), PT_ACCESS, PA_HIDDEN,
+			PT_double, "Vb_ang", PADDR(volt_pu_debug[1].Im()), PT_ACCESS, PA_HIDDEN,
+			PT_double, "Vc_ang", PADDR(volt_pu_debug[2].Im()), PT_ACCESS, PA_HIDDEN,
+			PT_double, "Ia_mag", PADDR(curr_pu_debug[0].Re()), PT_ACCESS, PA_HIDDEN,
+			PT_double, "Ib_mag", PADDR(curr_pu_debug[1].Re()), PT_ACCESS, PA_HIDDEN,
+			PT_double, "Ic_mag", PADDR(curr_pu_debug[2].Re()), PT_ACCESS, PA_HIDDEN,
+			PT_double, "Ia_ang", PADDR(curr_pu_debug[0].Im()), PT_ACCESS, PA_HIDDEN,
+			PT_double, "Ib_ang", PADDR(curr_pu_debug[1].Im()), PT_ACCESS, PA_HIDDEN,
+			PT_double, "Ic_ang", PADDR(curr_pu_debug[2].Im()), PT_ACCESS, PA_HIDDEN,
+
 			PT_complex, "phaseA_I_Out_PU[pu]", PADDR(terminal_current_val_pu[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system, pu",
 			PT_complex, "phaseB_I_Out_PU[pu]", PADDR(terminal_current_val_pu[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system, pu",
 			PT_complex, "phaseC_I_Out_PU[pu]", PADDR(terminal_current_val_pu[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system, pu",
@@ -47,6 +68,9 @@ ibr_blackbox::ibr_blackbox(MODULE *module)
 			// Grid-Following Controller Parameters
 			PT_double, "Pref[W]", PADDR(Pref), PT_DESCRIPTION, "DELTAMODE: The real power reference.",
 			PT_double, "Qref[VAr]", PADDR(Qref), PT_DESCRIPTION, "DELTAMODE: The reactive power reference.",
+
+			//Name for Frugally deep
+			PT_char1024, "fdeep_model", PADDR(fdeep_model_name), PT_DESCRIPTION, "JSON Model name for Frugally Deep",
 
 			// ibr_blackbox_NOTE: Any variables that need to be published should go here.
 
@@ -144,16 +168,6 @@ int ibr_blackbox::init(OBJECT *parent)
 	OBJECT *tmp_obj = nullptr;
 	gld_object *tmp_gld_obj = nullptr;
 	STATUS return_value_init, fxn_return_status;
-
-	// // added by sunil
-	// fdeep::tensor input_tensor(fdeep::tensor_shape(5, 7, 1), fdeep::float_vec(5 * 7 * 1, 0.0));
-	// std::vector<std::vector<std::vector<float>>> simulation_data = {
-	//     {{0, 0, 0, 0, 0, 0,0}},
-	// 	{{0, 0, 0, 0, 0, 0,0}},
-	// 	{{0, 0, 0, 0, 0, 0,0}},
-	// 	{{0, 0, 0, 0, 0, 0,0}},
-	//     {{0.508587, 0.747836, 0.749498, 0.749134, 0.405156, 0.11261,0.739529}}
-	// };
 
 
 	//Deferred initialization code
@@ -504,9 +518,24 @@ int ibr_blackbox::init(OBJECT *parent)
 	}
 
     //Frugrally deep manual allocation (since it lacks a constructor)
-    auto model_construct = std::make_unique<fdeep::model>(fdeep::load_model("fdeep_CNN_ge1.json"));
-    bb_model.swap(model_construct);
+	std::string fdeep_name(fdeep_model_name);
+    auto model_construct = std::make_unique<fdeep::model>(fdeep::load_model(fdeep_name));
+		
+	bb_model.swap(model_construct);
 	first_sync_delta_enabled = true;
+
+	//Get information
+	//@TODO - needs to be generalized further - may end up just being a pulished property
+	fdeep::tensors input_shape_data = bb_model->generate_dummy_inputs();
+	bb_model_time_buffer = input_shape_data[0].height();
+
+	//Initialize the data array
+	std::vector<double> empty_row = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+	
+	for (int x_val=0; x_val<bb_model_time_buffer; x_val++)
+	{
+		simulation_data.push_back(empty_row);
+	}
 
 	///////////////////////////////////////////////////////////////////////////
 	// DELTA MODE
@@ -602,7 +631,7 @@ int ibr_blackbox::init(OBJECT *parent)
 	}
 
 	//Init tracking variables
-	prev_timestamp_dbl = (double)gl_globalclock;
+	prev_timestamp_dbl = 0.0; //(double)gl_globalclock;
 
 	return 1;
 }
@@ -692,23 +721,6 @@ TIMESTAMP ibr_blackbox::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 			}
 
-			// Assuming these variables holding the latest values
-			float Vdc_latest = dc_input_voltage;
-			float Va_mag_latest = value_Circuit_V[0].Mag()/node_nominal_voltage;
-			float Vb_mag_latest = value_Circuit_V[1].Mag()/node_nominal_voltage;
-			float Vc_mag_latest = value_Circuit_V[2].Mag()/node_nominal_voltage;
-			float Va_ang_latest = value_Circuit_V[0].Arg()/(2.0*PI);
-			float Vb_ang_latest = value_Circuit_V[1].Arg()/(2.0*PI);
-			float Vc_ang_latest = value_Circuit_V[2].Arg()/(2.0*PI);
-
-			simulation_data = {
-				{{Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}}, // Initialize with zeros
-				{{Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}},
-				{{Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}},
-				{{Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}},
-				{{Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}}
-			};
-
 			//Flag it
 			first_sync_delta_enabled = false;
 
@@ -726,113 +738,88 @@ TIMESTAMP ibr_blackbox::sync(TIMESTAMP t0, TIMESTAMP t1)
 		inverter_first_step = false;
 	}
 
-    //Fdeep add
-//    result_output = bb_model->predict({fdeep::tensor(fdeep::tensor_shape(4), fdeep::float_vec({1., 2., 3., 4.}))});
+	//Time-series update
 
-    //added by sunil
+	//Timestep update
+	curr_ts_dbl = (double)t1;
 
-	// Create a tensor with shape (5, 7, 1)
-	//fdeep::tensor input_tensor(fdeep::tensor_shape(5, 7, 1), fdeep::float_vec(5 * 7 * 1, 0.0));
-
-	// std::vector<std::vector<std::vector<float>>> simulation_data = {
-	//     {{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}}, // Initialize with zeros
-	//     {{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}},
-	//     {{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}},
-	//     {{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}},
-	//     {{0.508587, 0.747836, 0.749498, 0.749134, 0.405156, 0.11261, 0.739529}}
-	// };
-
-
-
-
-	// Assuming these variables holding the latest values
-	float Vdc_latest = dc_input_voltage;
-	float Va_mag_latest = value_Circuit_V[0].Mag()/node_nominal_voltage;
-	float Vb_mag_latest = value_Circuit_V[1].Mag()/node_nominal_voltage;
-	float Vc_mag_latest = value_Circuit_V[2].Mag()/node_nominal_voltage;
-	float Va_ang_latest = value_Circuit_V[0].Arg()/(2.0*PI);
-	float Vb_ang_latest = value_Circuit_V[1].Arg()/(2.0*PI);
-	float Vc_ang_latest = value_Circuit_V[2].Arg()/(2.0*PI);
-
-	// Update simulation_data for rolling updates
-	for (int i = 0; i < simulation_data.size() - 1; ++i) {
-	    simulation_data[i] = simulation_data[i + 1];
-	}
-
-	// Update the latest block with the new values from variables
-	simulation_data[simulation_data.size() - 1] = {
-	    {Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}
-	};
-
-
-	// Create a vector to hold the input data
-	std::vector<float> input_data;
-
-	// Flatten the updated simulated data and store it in input_data
-	for (int time_step = 0; time_step < 5; ++time_step) {
-	    for (int variable = 0; variable < 7; ++variable) {
-	        float value = simulation_data[time_step][0][variable];
-	        input_data.push_back(value);
-	    }
-	}
-
-	// Create an input tensor from the updated simulation data
-	fdeep::tensor input_tensor(fdeep::tensor_shape(5, 7, 1), input_data);
-
-	// Use the input tensor for prediction
-	result_output = bb_model->predict({input_tensor});
-
-	fdeep::tensor one_tensor = result_output[0];
-
-	std::vector<float> vec = one_tensor.to_vector();
-
-	//Put this into current - and unnormalize
-	dc_output_current = vec[0];
-	value_IGenerated[0].SetPolar(vec[1]*I_base,vec[4]*2*PI);
-	value_IGenerated[1].SetPolar(vec[2]*I_base,vec[5]*2*PI);
-	value_IGenerated[2].SetPolar(vec[3]*I_base,vec[6]*2*PI);
-
-	// Print the example
-	std::cout << fdeep::show_tensors(result_output) << std::endl;
-
-	//Calculate power based on measured terminal voltage and currents
-	if (parent_is_single_phase) // single phase/split-phase implementation
+	//Perform update
+	if (curr_ts_dbl > prev_timestamp_dbl)
 	{
-		if (!inverter_first_step)
-		{
-			//Update output power
-			//Update per-unti value
-			terminal_current_val_pu[0] = value_IGenerated[0] / I_base;
+		//Normalize the data
+		double Va_mag = value_Circuit_V[0].Mag()/V_base;
+		double Vb_mag = value_Circuit_V[1].Mag()/V_base;
+		double Vc_mag = value_Circuit_V[2].Mag()/V_base;
+		double Va_pha = value_Circuit_V[0].Arg();
+		double Vb_pha = value_Circuit_V[1].Arg();
+		double Vc_pha = value_Circuit_V[2].Arg();
 
-			//Update power output variables, just so we can see what is going on
+		if (Va_pha < 0.0)
+			Va_pha += (2.0*PI);
 
-			power_val[0] = value_Circuit_V[0] * ~value_IGenerated[0];
+		if (Vb_pha < 0.0)
+			Vb_pha += (2.0*PI);
 
-			VA_Out = power_val[0];
+		if (Vc_pha < 0.0)
+			Vc_pha += (2.0*PI);
 
+		//Angle calc
+		Va_pha /=(2.0*PI);
+		Vb_pha /=(2.0*PI);
+		Vc_pha /=(2.0*PI);
+
+		//Update the temporary vector
+		std::vector temp_data = {dc_input_voltage, Va_mag, Vb_mag, Vc_mag, Va_pha, Vb_pha, Vc_pha};
+
+		//Storage vector
+		volt_pu_debug[0] = gld::complex(Va_mag,Va_pha);
+		volt_pu_debug[1] = gld::complex(Vb_mag,Vb_pha);
+		volt_pu_debug[2] = gld::complex(Vc_mag,Vc_pha);
+
+		//Roll the vector first
+		// std::rotate(simulation_data.begin(), simulation_data.end()-1, simulation_data.end());
+		std::rotate(simulation_data.begin(), simulation_data.begin()+1, simulation_data.end());
+		simulation_data.pop_back();
+		simulation_data.push_back(temp_data);
+
+		//Convert it to the tensor format
+		fdeep::tensor input_tensor(fdeep::tensor_shape(5, 7, 1), 0.0f);
+
+		//Manual loop
+		// Populate the tensor with values from the current time step
+		for (int i = 0; i < bb_model_time_buffer; ++i) {
+			for (int j = 0; j < 7; ++j) {
+				input_tensor.set(fdeep::tensor_pos(i, j, 0), simulation_data[i][j]);
+			}
 		}
+
+		//ML it
+		// Predict using the model
+		auto result_output = (*bb_model).predict({input_tensor});
+
+		//Extract the "result"
+		fdeep::tensor one_tensor = result_output[0];
+
+		//Convert it to a vector
+		std::vector<float> vec = one_tensor.to_vector();
+
+		//Put this into current - and unnormalize
+		dc_output_current = vec[0];
+		//Not correct - just using complex value to extract
+		curr_pu_debug[0] = gld::complex(vec[1],vec[4]);
+		curr_pu_debug[1] = gld::complex(vec[2],vec[5]);
+		curr_pu_debug[2] = gld::complex(vec[3],vec[6]);
+
+		//Expand back to "normal"
+		value_IGenerated[0].SetPolar(I_base*vec[1],(Va_pha+vec[4])*2.0*PI);
+		value_IGenerated[1].SetPolar(I_base*vec[2],(Vb_pha+vec[5])*2.0*PI);
+		value_IGenerated[2].SetPolar(I_base*vec[3],(Vc_pha+vec[6])*2.0*PI);
+
+		//Update timestep
+		prev_timestamp_dbl = curr_ts_dbl;
 	}
-	else //Three phase variant
-	{
 
-		if (!inverter_first_step)
-		{
-			//Update per-unit value
-			terminal_current_val_pu[0] = value_IGenerated[0] / I_base;
-			terminal_current_val_pu[1] = value_IGenerated[1] / I_base;
-			terminal_current_val_pu[2] = value_IGenerated[2] / I_base;
-
-			//Update power output variables, just so we can see what is going on
-			power_val[0] = value_Circuit_V[0] * ~value_IGenerated[0];
-			power_val[1] = value_Circuit_V[1] * ~value_IGenerated[1];
-			power_val[2] = value_Circuit_V[2] * ~value_IGenerated[2];
-
-			VA_Out = power_val[0] + power_val[1] + power_val[2];
-
-		}
-	}
-
-	//**** QSTS update items would go here ****//
+	// //**** QSTS update items would go here ****//
 
 	//Sync the powerflow variables
 	if (parent_is_a_meter)
@@ -943,6 +930,7 @@ STATUS ibr_blackbox::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 SIMULATIONMODE ibr_blackbox::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
 	double deltat, deltath;
+	double curr_timestamp_dbl;
 
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -959,95 +947,111 @@ SIMULATIONMODE ibr_blackbox::inter_deltaupdate(unsigned int64 delta_time, unsign
 	deltath = deltat / 2.0;
 
 	//Update time tracking variables
-	prev_timestamp_dbl = gl_globaldeltaclock;
+	curr_timestamp_dbl = gl_globaldeltaclock;
 
-    //Fdeep add
-    //result_output = bb_model->predict({fdeep::tensor(fdeep::tensor_shape(4), fdeep::float_vec({1., 2., 3., 4.}))});
+	if ((curr_timestamp_dbl > prev_timestamp_dbl) && (iteration_count_val == 0))	//First pass on the timestep
+	{
+		//Normalize the data
+		double Va_mag = value_Circuit_V[0].Mag()/V_base;
+		double Vb_mag = value_Circuit_V[1].Mag()/V_base;
+		double Vc_mag = value_Circuit_V[2].Mag()/V_base;
+		double Va_pha = value_Circuit_V[0].Arg();
+		double Vb_pha = value_Circuit_V[1].Arg();
+		double Vc_pha = value_Circuit_V[2].Arg();
 
+		if (Va_pha < 0.0)
+			Va_pha += (2.0*PI);
 
-    //added by sunil
-	// Assuming these variables holding the latest values
-	float Vdc_latest = dc_input_voltage;
-	float Va_mag_latest = value_Circuit_V[0].Mag()/node_nominal_voltage;
-	float Vb_mag_latest = value_Circuit_V[1].Mag()/node_nominal_voltage;
-	float Vc_mag_latest = value_Circuit_V[2].Mag()/node_nominal_voltage;
-	float Va_ang_latest = value_Circuit_V[0].Arg()/(2.0*PI);
-	float Vb_ang_latest = value_Circuit_V[1].Arg()/(2.0*PI);
-	float Vc_ang_latest = value_Circuit_V[2].Arg()/(2.0*PI);
+		if (Vb_pha < 0.0)
+			Vb_pha += (2.0*PI);
 
-	// Update simulation_data for rolling updates
-	for (int i = 0; i < simulation_data.size() - 1; ++i) {
-	    simulation_data[i] = simulation_data[i + 1];
+		if (Vc_pha < 0.0)
+			Vc_pha += (2.0*PI);
+
+		//Angle calc
+		Va_pha /=(2.0*PI);
+		Vb_pha /=(2.0*PI);
+		Vc_pha /=(2.0*PI);
+
+		//Update the temporary vector
+		std::vector temp_data = {dc_input_voltage, Va_mag, Vb_mag, Vc_mag, Va_pha, Vb_pha, Vc_pha};
+
+		//Storage vector
+		volt_pu_debug[0] = gld::complex(Va_mag,Va_pha);
+		volt_pu_debug[1] = gld::complex(Vb_mag,Vb_pha);
+		volt_pu_debug[2] = gld::complex(Vc_mag,Vc_pha);
+
+		//Roll the vector first
+		// std::rotate(simulation_data.begin(), simulation_data.end()-1, simulation_data.end());
+		std::rotate(simulation_data.begin(), simulation_data.begin()+1, simulation_data.end());
+		simulation_data.pop_back();
+		simulation_data.push_back(temp_data);
+
+		//Convert it to the tensor format
+		fdeep::tensor input_tensor(fdeep::tensor_shape(5, 7, 1), 0.0f);
+
+		//Manual loop
+		// Populate the tensor with values from the current time step
+		for (int i = 0; i < bb_model_time_buffer; ++i) {
+			for (int j = 0; j < 7; ++j) {
+				input_tensor.set(fdeep::tensor_pos(i, j, 0), simulation_data[i][j]);
+			}
+		}
+
+		//ML it
+		// Predict using the model
+		auto result_output = (*bb_model).predict({input_tensor});
+
+		//Extract the "result"
+		fdeep::tensor one_tensor = result_output[0];
+
+		//Convert it to a vector
+		std::vector<float> vec = one_tensor.to_vector();
+
+		//Put this into current - and unnormalize
+		dc_output_current = vec[0];
+		//Not correct - just using complex value to extract
+		curr_pu_debug[0] = gld::complex(vec[1],vec[4]);
+		curr_pu_debug[1] = gld::complex(vec[2],vec[5]);
+		curr_pu_debug[2] = gld::complex(vec[3],vec[6]);
+
+		//Expand back to "normal"
+		value_IGenerated[0].SetPolar(I_base*vec[1],(Va_pha+vec[4])*2.0*PI);
+		value_IGenerated[1].SetPolar(I_base*vec[2],(Vb_pha+vec[5])*2.0*PI);
+		value_IGenerated[2].SetPolar(I_base*vec[3],(Vc_pha+vec[6])*2.0*PI);
+
+		//Update timestep
+		prev_timestamp_dbl = curr_timestamp_dbl;
 	}
 
-	// Update the latest block with the new values from variables
-	simulation_data[simulation_data.size() - 1] = {
-	    {Vdc_latest, Va_mag_latest, Vb_mag_latest, Vc_mag_latest, Va_ang_latest, Vb_ang_latest, Vc_ang_latest}
-	};
-
-
-	// Create a vector to hold the input data
-	std::vector<float> input_data;
-
-	// Flatten the updated simulated data and store it in input_data
-	for (int time_step = 0; time_step < 5; ++time_step) {
-	    for (int variable = 0; variable < 7; ++variable) {
-	        float value = simulation_data[time_step][0][variable];
-	        input_data.push_back(value);
-	    }
-	}
-
-	// Create an input tensor from the updated simulation data
-	fdeep::tensor input_tensor(fdeep::tensor_shape(5, 7, 1), input_data);
-
-	// Use the input tensor for prediction
-	result_output = bb_model->predict({input_tensor});
-
-	fdeep::tensor one_tensor = result_output[0];
-
-	std::vector<float> vec = one_tensor.to_vector();
-
-	//Put this into current - and unnormalize
-	dc_output_current = vec[0];
-	value_IGenerated[0].SetPolar(vec[1]*I_base,vec[4]*2*PI);
-	value_IGenerated[1].SetPolar(vec[2]*I_base,vec[5]*2*PI);
-	value_IGenerated[2].SetPolar(vec[3]*I_base,vec[6]*2*PI);
-
-	//Print the example
-	std::cout << fdeep::show_tensors(result_output) << std::endl;
+	// //*** Deltamode/differential equation updates would go here ****//
+	// // Check pass
+	// if (iteration_count_val == 0) // Predictor pass
+	// {
+	// 	desired_simulation_mode = SM_DELTA_ITER;
+	// 	simmode_return_value = SM_DELTA_ITER;
+	// }
+	// else if (iteration_count_val == 1) // Corrector pass
+	// {
+	// 	desired_simulation_mode = SM_DELTA;	//Just keep in deltamode
+	// 	simmode_return_value = SM_DELTA;
+	// }
+	// else //Additional iterations
+	// {
+	// 	//Just return whatever our "last desired" was
+	// 	simmode_return_value = desired_simulation_mode;
+	// }
 
 	//*** Deltamode/differential equation updates would go here ****//
-	// Check pass
-	if (iteration_count_val == 0) // Predictor pass
-	{
-		//filt_test_out_pred = filt_test_obj.getoutput(filt_test_in,deltat,PREDICTOR);
-		desired_simulation_mode = SM_DELTA_ITER;
-		simmode_return_value = SM_DELTA_ITER;
-	}
-	else if (iteration_count_val == 1) // Corrector pass
-	{
-		//filt_test_out_corr = filt_test_obj.getoutput(filt_test_in,deltat,CORRECTOR);
-		desired_simulation_mode = SM_DELTA;	//Just keep in deltamode
-		simmode_return_value = SM_DELTA;
-	}
-	else //Additional iterations
-	{
-		//Just return whatever our "last desired" was
-		simmode_return_value = desired_simulation_mode;
-	}
-	
+	// Right now, just will hop back out to QSTS (unless something drives it)
+	desired_simulation_mode = SM_EVENT;
+	simmode_return_value = SM_EVENT;
 	
 	//Sync the powerflow variables
 	if (parent_is_a_meter)
 	{
 		push_complex_powerflow_values(false);
 	}
-	
-	//**** Return here designates how to proceed ****//
-	//**** SM_EVENT = we desire to go back to QSTS mode ****//
-	//**** SM_DELTA = we are ready for the next deltamode timestep ****//
-	//**** SM_DELTA_ITER = we want to reiterate this timestep, so don't move forward (e.g., predictor step) ****//
-	//**** SM_ERROR = an error occurred and we should terminate ****//
 
 	return simmode_return_value;
 }
@@ -1063,7 +1067,6 @@ STATUS ibr_blackbox::init_dynamics()
 		pull_complex_powerflow_values();
 	}
 
-	//**** This would be where any initalizations would occur, especially to initalize differential equations from QSTS values ****//
 
 	//Set the mode tracking variable to a default - not really needed, but be paranoid
 	desired_simulation_mode = SM_EVENT;
@@ -1071,20 +1074,7 @@ STATUS ibr_blackbox::init_dynamics()
 	return SUCCESS;
 }
 
-//Module-level post update call
-//**** Called right before returning to QSTS mode.  Useful to initialize QSTS model to any deltamode changes (if different model)****//
-//**** Not used in all models, so commented out here ****//
-// STATUS ibr_blackbox::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
-// {
 
-// 	//Should have a parent, but be paranoid
-// 	if (parent_is_a_meter)
-// 	{
-// 		push_complex_powerflow_values();
-// 	}
-
-// 	return SUCCESS; //Always succeeds right now
-// }
 
 //Map Complex value
 gld_property *ibr_blackbox::map_complex_value(OBJECT *obj, const char *name)
@@ -1486,23 +1476,7 @@ EXPORT SIMULATIONMODE interupdate_ibr_blackbox(OBJECT *obj, unsigned int64 delta
 }
 
 // EXPORT STATUS postupdate_ibr_blackbox(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
-// {
-// 	ibr_blackbox *my = OBJECTDATA(obj, ibr_blackbox);
-// 	STATUS status = FAILED;
-// 	try
-// 	{
-// 		status = my->post_deltaupdate(useful_value, mode_pass);
-// 		return status;
-// 	}
-// 	catch (char *msg)
-// 	{
-// 		gl_error("postupdate_ibr_blackbox(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
-// 		return status;
-// 	}
-// }
 
-//// Define export function that update the VSI current injection IGenerated to the grid
-//Updates mid-solve on powerflow calls - allows values to update for moving voltages
 EXPORT STATUS ibr_blackbox_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure)
 {
 	STATUS temp_status;
