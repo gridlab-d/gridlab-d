@@ -868,7 +868,7 @@ TIMESTAMP helics_msg::clk_update(TIMESTAMP t1)
 		if(gl_globalclock == gl_globalstoptime){
 #if HAVE_HELICS
 			gl_verbose("helics_msg: Calling finalize");
-			pHelicsFederate->finalize();
+			gld_helics_federate->finalize();
 #endif
 			return t1;
 		} else if (t1 > gl_globalstoptime && gl_globalclock < gl_globalstoptime){
@@ -1604,18 +1604,33 @@ EXPORT void publish_helics_string(OBJECT *helicsMsgObj, string helicsObjName, st
 	helics_msg *my = OBJECTDATA(helicsMsgObj, helics_msg);
 	//find the helics endpoint or publication and send the data
 #if HAVE_HELICS
-	try
-	{
-		helicscpp::Publication pub = my->gld_helics_federate->getPublication(helicsObjName);
-		pub.publish(helicsData);
-	}
-	catch(...)
-	{
-		helicscpp::Endpoint ep = my->gld_helics_federate->getEndpoint(helicsObjName);
-		helicscpp::Message *msg = new helicscpp::Message(ep);
-		msg->data(helicsData);
-		ep.sendMessage(*msg);
-		delete msg;
+
+	const HelicsFederateState fed_state = my->gld_helics_federate->getCurrentMode();
+	if(fed_state == HELICS_STATE_EXECUTION) {
+		try {
+			helicscpp::Publication pub = my->gld_helics_federate->getPublication(helicsObjName);
+			if(pub.isValid()) {
+				pub.publish(helicsData);
+			} else {
+				gl_debug("helics_msg::publish_helics_string(): The publication specified to send data exists but is not valid. Data was not published.");
+			}
+		} catch(...) {
+			try {
+				helicscpp::Endpoint ep = my->gld_helics_federate->getEndpoint(helicsObjName);
+				if(ep.isValid()) {
+					helicscpp::Message *msg = new helicscpp::Message(ep);
+					msg->data(helicsData);
+					ep.sendMessage(*msg);
+					delete msg;
+				} else {
+					gl_debug("helics_msg::publish_helics_string(): The endpoint specified to send data exists but is not valid. Data was not sent.");
+				}
+			} catch(...) {
+				throw("helics_msg::publish_helics_string(): The name given to send the data on does not match an existing Publication or Endpoint. Please check your glm file and your HELICS configuration file.");
+			}
+		}
+	} else {
+		gl_warning("helics_msg::publish_helics_string(): Can't publish or send messages outside of execution state. data was not sent!");
 	}
 #endif
 }
