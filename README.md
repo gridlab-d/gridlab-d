@@ -9,11 +9,20 @@ g++ or Clang
 ## Installation
 
 ### Git
+#### Setting up SSH Keys for GitHub
+- Run `ssh-keygen` and choose a location to save the file (default `~/.ssh/id_rsa` on linux, `C:\Users\<your username>\.ssh\id_rsa` on Windows)
+- Enter a passphrase if on a shared computer or if desired
+- Copy the contents of the generated public key (e.g. `cat ~/.ssh/id_rsa.pub` for default settings on linux)
+  - Note: this key will start with `ssh-rsa` and end with your username and machine name
+  - **Warning**: Do **not** copy the contents of the `id_rsa` as this is the *private* key used for encryption
+- Add public key to your github profile in [Keys](https://github.com/settings/keys) by clicking "New SSH key" button
+  - Key should be added as an "Authentication Key" for access. It can additionally be added as a "Signing Key" if commit signing is desired
+
 
 Clone the git repository for GridLAB-D and update submodules:
 
 ```shell script
-git clone https://github.com/gridlab-d/gridlab-d.git
+git clone git@github.com:gridlab-d/gridlab-d.git
 cd gridlab-d
 git submodule update --init
 ```
