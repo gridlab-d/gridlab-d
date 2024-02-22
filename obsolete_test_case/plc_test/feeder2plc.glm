@@ -201,7 +201,7 @@ object load:8 {
 	sync_V_limit 0.001;
 }
 
-object switch_object: {
+object switch_object {
 	name Switch12;
 	from DummyNode1;
 	to node:2;
@@ -209,7 +209,7 @@ object switch_object: {
 	phases "ABCN";
 	}
 
-object switch_object: {
+object switch_object {
     name Switch56;
     from DummyNode5;
     to node:6;
@@ -217,7 +217,7 @@ object switch_object: {
     status CLOSED;
 }
 
-#object switch_object: {
+#object switch_object {
 #	name Switch37;
 #	from node:7;
 #	to DummyNode3;

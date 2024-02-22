@@ -41,7 +41,7 @@ namespace space2 {
 	object mytest {
 		namespace space1 {
 			object mytest {
-				test `{namespace}:{class}:{id}`;
+				test `{namespace} {class} {id}`;
 			};
 		};
 	};
