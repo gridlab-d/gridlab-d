@@ -1,0 +1,493 @@
+clock {
+     timezone EST+5EDT;
+     timestamp '2010-08-15 00:00:00';
+     stoptime '2010-08-16 00:12:00';
+}
+
+#set double_format=%+.12lg
+#set randomseed=10;
+#set relax_naming_rules=1;
+//#set minimum_timestep=60;
+#include "../water_and_setpoint_schedule_v3.glm";
+
+module tape;
+module residential {
+     implicit_enduses NONE;
+};
+module powerflow {
+     solver_method FBS;
+     NR_iteration_limit 100;
+};
+
+object metrics_collector_writer {
+  interval 300;
+  interim 3600;
+  filename sub_;
+  alternate yes;
+  extension json;
+}
+
+object transformer_configuration {
+     name substation_config;
+     connect_type WYE_WYE;
+     install_type PADMOUNT;
+     primary_voltage 7200 V;
+     secondary_voltage 7200 V;
+     power_rating 75;
+     powerA_rating 25;
+     powerB_rating 25;
+     powerC_rating 25;
+     impedance 0.0015+0.00675j;
+}
+
+object transformer_configuration {
+     name default_transformer_A;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type PADMOUNT;
+     primary_voltage 7200 V;
+     secondary_voltage 124 V;
+     power_rating 25;
+     powerA_rating 25;
+     impedance 0.015+0.0675j;
+}
+
+object transformer_configuration {
+     name default_transformer_B;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type PADMOUNT;
+     primary_voltage 7200 V;
+     secondary_voltage 124 V;
+     power_rating 25;
+     powerB_rating 25;
+     impedance 0.015+0.0675j;
+}
+
+object transformer_configuration {
+     name default_transformer_C;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type PADMOUNT;
+     primary_voltage 7200 V;
+     secondary_voltage 124 V;
+     power_rating 25;
+     powerC_rating 25;
+     impedance 0.015+0.0675j;
+}
+
+object triplex_line_conductor {
+     name Name_1_0_AA_triplex;
+     resistance 0.57;
+     geometric_mean_radius 0.0111;
+}
+
+object triplex_line_configuration {
+     name TLCFG;
+     conductor_1 Name_1_0_AA_triplex;
+     conductor_2 Name_1_0_AA_triplex;
+     conductor_N Name_1_0_AA_triplex;
+     insulation_thickness 0.08;
+     diameter 0.368;
+}
+
+object meter {
+     bustype SWING;
+     name ROOT;
+     phases ABCN;
+     nominal_voltage 7200;
+}
+
+object transformer {
+     phases ABCN;
+     groupid _Network_Trans;
+     name _Transformer1;
+     from ROOT;
+     to _transformer_meter;
+     configuration substation_config;
+     object recorder {
+          property power_out_real;
+          limit 100000000;
+          interval 60;
+          file totalload_5_houses_Aug.csv;
+     };
+}
+
+object meter {
+     name _transformer_meter;
+     phases ABCN;
+     nominal_voltage 7200;
+}
+
+object transformer {
+     name _center_tap_transformer_A;
+     phases AS;
+     from _transformer_meter;
+     to _triplex_node_A;
+     configuration default_transformer_A;
+}
+
+object transformer {
+     name _center_tap_transformer_B;
+     phases BS;
+     from _transformer_meter;
+     to _triplex_node_B;
+     configuration default_transformer_B;
+}
+
+object transformer {
+     name _center_tap_transformer_C;
+     phases CS;
+     from _transformer_meter;
+     to _triplex_node_C;
+     configuration default_transformer_C;
+}
+
+object triplex_meter {
+     name _triplex_node_A;
+     phases AS;
+     nominal_voltage 124.00;
+}
+
+object triplex_meter {
+     name _triplex_node_B;
+     phases BS;
+     nominal_voltage 124.00;
+}
+
+object triplex_meter {
+     name _triplex_node_C;
+     phases CS;
+     nominal_voltage 124.00;
+}
+
+object triplex_line {
+     from _triplex_node_A;
+     to _tpm_flatrate_A1;
+     groupid _Triplex_Line;
+     phases AS;
+     length 10;
+     configuration TLCFG;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases AS;
+     name _tpm_flatrate_A1;
+     groupid _flatrate_meter;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases AS;
+     name _tpm_rt_A1;
+     groupid _rt_meter;
+     parent _tpm_flatrate_A1;
+}
+
+object house {
+     name H_1;
+     //Residential_2
+     parent _tpm_rt_A1;
+     schedule_skew -685;
+     Rroof 33.69;
+     Rwall 17.71;
+     Rfloor 17.02;
+     Rdoors 5;
+     Rwindows 1.81;
+     airchange_per_hour 0.80;
+     hvac_power_factor 0.97;
+     cooling_system_type ELECTRIC;
+     heating_system_type RESISTANCE;
+     fan_type ONE_SPEED;
+     hvac_breaker_rating 200;
+     total_thermal_mass_per_floor_area 3.01;
+     motor_efficiency AVERAGE;
+     motor_model BASIC;
+     cooling_COP 3.90;
+     floor_area 1040;
+     number_of_doors 2;
+     air_temperature 71.9;
+     mass_temperature 71.9;
+    object waterheater {
+      name wh_1;
+      schedule_skew -5660;
+      heating_element_capacity 4.0 kW;
+      thermostat_deadband 1.0;
+      location INSIDE;
+      tank_diameter 1.5;
+      tank_UA 3.6;
+      water_demand 4.02;
+      tank_volume 50;
+      waterheater_model MULTILAYER;
+      discrete_step_size 60.0;
+      lower_tank_setpoint 117.3;
+      upper_tank_setpoint 127.3;
+      T_mixing_valve 122.3;
+      object metrics_collector {
+        interval 300;
+      };
+    };
+    object metrics_collector {
+      interval 300;
+    };
+}
+
+object triplex_line {
+     from _triplex_node_B;
+     to _tpm_flatrate_B2;
+     groupid _Triplex_Line;
+     phases BS;
+     length 10;
+     configuration TLCFG;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases BS;
+     name _tpm_flatrate_B2;
+     groupid _flatrate_meter;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases BS;
+     name _tpm_rt_B2;
+     groupid _rt_meter;
+     parent _tpm_flatrate_B2;
+}
+
+object house {
+     name H_2;
+     //Residential_1
+     parent _tpm_rt_B2;
+     schedule_skew -97;
+     Rroof 21.61;
+     Rwall 9.30;
+     Rfloor 11.38;
+     Rdoors 3;
+     Rwindows 1.56;
+     airchange_per_hour 1.02;
+     hvac_power_factor 0.97;
+     cooling_system_type ELECTRIC;
+     heating_system_type RESISTANCE;
+     fan_type ONE_SPEED;
+     hvac_breaker_rating 200;
+     total_thermal_mass_per_floor_area 4.59;
+     motor_efficiency AVERAGE;
+     motor_model BASIC;
+     cooling_COP 3.75;
+     floor_area 1438;
+     number_of_doors 2;
+     air_temperature 71.9;
+     mass_temperature 71.9;
+  object waterheater {
+    name wh_2;
+    object metrics_collector {
+      interval 300;
+    };
+  };
+  object metrics_collector {
+    interval 300;
+  };
+}
+
+object triplex_line {
+     from _triplex_node_B;
+     to _tpm_flatrate_B3;
+     groupid _Triplex_Line;
+     phases BS;
+     length 10;
+     configuration TLCFG;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases BS;
+     name _tpm_flatrate_B3;
+     groupid _flatrate_meter;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases BS;
+     name _tpm_rt_B3;
+     groupid _rt_meter;
+     parent _tpm_flatrate_B3;
+}
+
+object house {
+     name H_3;
+     //Residential_3
+     parent _tpm_rt_B3;
+     schedule_skew -481;
+     Rroof 18.58;
+     Rwall 11.08;
+     Rfloor 11.36;
+     Rdoors 3;
+     Rwindows 0.91;
+     airchange_per_hour 0.97;
+     hvac_power_factor 0.97;
+     cooling_system_type ELECTRIC;
+     heating_system_type RESISTANCE;
+     fan_type ONE_SPEED;
+     hvac_breaker_rating 200;
+     total_thermal_mass_per_floor_area 3.64;
+     motor_efficiency AVERAGE;
+     motor_model BASIC;
+     cooling_COP 3.22;
+     floor_area 3176;
+     number_of_doors 4;
+     air_temperature 71.2;
+     mass_temperature 71.2;
+  object waterheater {
+    name wh_3;
+    schedule_skew -2094;
+    heating_element_capacity 5.0 kW;
+    thermostat_deadband 1.0;
+    location INSIDE;
+    tank_diameter 1.5;
+    tank_UA 3.5;
+    water_demand 10.03;
+    tank_volume 70;
+    waterheater_model MULTILAYER;
+    discrete_step_size 60.0;
+    lower_tank_setpoint 119.2;
+    upper_tank_setpoint 129.2;
+    T_mixing_valve 124.2;
+    object metrics_collector {
+      interval 300;
+    };
+  };  
+  object metrics_collector {
+    interval 300;
+  };
+}
+
+object triplex_line {
+     from _triplex_node_C;
+     to _tpm_flatrate_C4;
+     groupid _Triplex_Line;
+     phases CS;
+     length 10;
+     configuration TLCFG;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases CS;
+     name _tpm_flatrate_C4;
+     groupid _flatrate_meter;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases CS;
+     name _tpm_rt_C4;
+     groupid _rt_meter;
+     parent _tpm_flatrate_C4;
+}
+
+object house {
+     name H_4;
+     //Residential_1
+     parent _tpm_rt_C4;
+     schedule_skew 1997;
+     Rroof 16.68;
+     Rwall 11.39;
+     Rfloor 11.98;
+     Rdoors 3;
+     Rwindows 1.08;
+     airchange_per_hour 0.81;
+     hvac_power_factor 0.97;
+     cooling_system_type ELECTRIC;
+     heating_system_type RESISTANCE;
+     fan_type ONE_SPEED;
+     hvac_breaker_rating 200;
+     total_thermal_mass_per_floor_area 4.35;
+     motor_efficiency AVERAGE;
+     motor_model BASIC;
+     cooling_COP 3.18;
+     floor_area 618;
+     number_of_doors 1;
+     air_temperature 71.7;
+     mass_temperature 71.7;
+  object waterheater {
+    name wh_4;
+    schedule_skew -13972;
+    heating_element_capacity 5.5 kW;
+    thermostat_deadband 1.0;
+    location INSIDE;
+    tank_diameter 1.5;
+    tank_UA 3.9;
+    water_demand 8.01;
+    tank_volume 60;
+    waterheater_model MULTILAYER;
+    discrete_step_size 60.0;
+    lower_tank_setpoint 113.2;
+    upper_tank_setpoint 123.2;
+    T_mixing_valve 118.2;
+    object metrics_collector {
+      interval 300;
+    };
+  };
+  object metrics_collector {
+    interval 300;
+  };
+}
+
+object triplex_line {
+     from _triplex_node_C;
+     to _tpm_flatrate_C5;
+     groupid _Triplex_Line;
+     phases CS;
+     length 10;
+     configuration TLCFG;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases CS;
+     name _tpm_flatrate_C5;
+     groupid _flatrate_meter;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases CS;
+     name _tpm_rt_C5;
+     groupid _rt_meter;
+     parent _tpm_flatrate_C5;
+}
+
+object house {
+     name H_5;
+     //Residential_1
+     parent _tpm_rt_C5;
+     schedule_skew -2380;
+     Rroof 17.77;
+     Rwall 8.67;
+     Rfloor 10.59;
+     Rdoors 3;
+     Rwindows 1.14;
+     airchange_per_hour 1.16;
+     hvac_power_factor 0.97;
+     cooling_system_type ELECTRIC;
+     heating_system_type RESISTANCE;
+     fan_type ONE_SPEED;
+     hvac_breaker_rating 200;
+     total_thermal_mass_per_floor_area 4.90;
+     motor_efficiency AVERAGE;
+     motor_model BASIC;
+     cooling_COP 2.82;
+     floor_area 746;
+     number_of_doors 1;
+     air_temperature 69.5;
+     mass_temperature 69.5;
+  object waterheater {
+    name wh_5;
+    object metrics_collector {
+      interval 300;
+    };
+  };
+  object metrics_collector {
+    interval 300;
+  };
+}
