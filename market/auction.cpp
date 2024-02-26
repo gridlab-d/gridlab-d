@@ -16,9 +16,9 @@
 #include "auction.h"
 #include "stubauction.h"
 
-CLASS *auction::oclass = NULL;
-auction *auction::defaults = NULL;
-STATISTIC *auction::stats = NULL;
+CLASS *auction::oclass = nullptr;
+auction *auction::defaults = nullptr;
+STATISTIC *auction::stats = nullptr;
 TIMESTAMP auction::longest_statistic = 0;
 int auction::statistic_check = -1;
 uint32 auction::statistic_count = 0;
@@ -74,10 +74,10 @@ EXPORT int64 register_participant(OBJECT *mkt, OBJECT *part)
 /* Class registration is only called once to register the class with the core */
 auction::auction(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module, "auction",sizeof(auction),passconfig|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class auction";
 		else
 			oclass->trl = TRL_QUALIFIED;
@@ -121,7 +121,7 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "MARGINAL_PRICE", (enumeration)CT_PRICE,
 				PT_KEYWORD, "EXACT", (enumeration)CT_EXACT,
 				PT_KEYWORD, "FAILURE", (enumeration)CT_FAILURE,
-				PT_KEYWORD, "NULL", (enumeration)CT_NULL,
+				PT_KEYWORD, "nullptr", (enumeration)CT_NULL,
 			PT_double, "current_market.marginal_quantity_load", PADDR(current_frame.marginal_quantity),
 			PT_double, "current_market.marginal_quantity", PADDR(current_frame.marginal_quantity),
 			PT_double, "current_market.marginal_quantity_bid", PADDR(current_frame.total_marginal_quantity),
@@ -142,7 +142,7 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "MARGINAL_PRICE", (enumeration)CT_PRICE,
 				PT_KEYWORD, "EXACT", (enumeration)CT_EXACT,
 				PT_KEYWORD, "FAILURE", (enumeration)CT_FAILURE,
-				PT_KEYWORD, "NULL", (enumeration)CT_NULL,
+				PT_KEYWORD, "nullptr", (enumeration)CT_NULL,
 			PT_double, "next_market.marginal_quantity_load", PADDR(next_frame.marginal_quantity),
 			PT_double, "next_market.marginal_quantity_bid", PADDR(next_frame.total_marginal_quantity),
 			PT_double, "next_market.marginal_quantity_frac", PADDR(next_frame.marginal_frac),
@@ -161,7 +161,7 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "MARGINAL_PRICE", (enumeration)CT_PRICE,
 				PT_KEYWORD, "EXACT", (enumeration)CT_EXACT,
 				PT_KEYWORD, "FAILURE", (enumeration)CT_FAILURE,
-				PT_KEYWORD, "NULL", (enumeration)CT_NULL,
+				PT_KEYWORD, "nullptr", (enumeration)CT_NULL,
 			PT_double, "past_market.marginal_quantity_load", PADDR(past_frame.marginal_quantity),
 			PT_double, "past_market.marginal_quantity_bid", PADDR(past_frame.total_marginal_quantity),
 			PT_double, "past_market.marginal_quantity_frac", PADDR(past_frame.marginal_frac),
@@ -189,7 +189,7 @@ auction::auction(MODULE *module)
 				PT_KEYWORD, "NORMAL", (enumeration)CO_NORMAL,
 				PT_KEYWORD, "EXTRA", (enumeration)CO_EXTRA,
 
-			NULL)<1){
+			nullptr)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
@@ -233,7 +233,7 @@ int auction::create(void)
 			;
 		} // else some number of statistics came back
 	}
-	for(stat = stats; stat != NULL; stat = stat->next){
+	for(stat = stats; stat != nullptr; stat = stat->next){
 		gl_set_value(OBJECTHDR(this), stat->prop, val);
 	}
 	statistic_mode = ST_ON;
@@ -247,7 +247,7 @@ int auction::init(OBJECT *parent)
 	OBJECT *obj=OBJECTHDR(this);
 	unsigned int i = 0;
 
-	if(capacity_reference_object != NULL){
+	if(capacity_reference_object != nullptr){
 		if(obj->rank <= capacity_reference_object->rank){
 			gl_set_rank(obj,capacity_reference_object->rank+1);
 		}
@@ -259,7 +259,7 @@ int auction::init(OBJECT *parent)
 	}
 
 	if(trans_log[0] != 0){
-		time_t now = time(NULL);
+		time_t now = time(nullptr);
 		trans_file = fopen(trans_log, "w");
 		if(trans_file == 0){
 			gl_error("%s (auction:%d) unable to open '%s' as a transaction log output file", obj->name?obj->name:"anonymous", obj->id, trans_log.get_string());
@@ -275,7 +275,7 @@ int auction::init(OBJECT *parent)
 	}
 
 	if(curve_log[0] != 0){
-		time_t now = time(NULL);
+		time_t now = time(nullptr);
 		curve_file = fopen(curve_log, "w");
 		if(curve_file == 0){
 			gl_error("%s (auction:%d) unable to open '%s' as an aurction curve log output file", obj->name?obj->name:"anonymous", obj->id, trans_log.get_string());
@@ -310,7 +310,7 @@ int auction::init(OBJECT *parent)
 
 	// init statistics, vs create statistics
 	STATISTIC *statprop;
-	for(statprop = stats; statprop != NULL; statprop = statprop->next){
+	for(statprop = stats; statprop != nullptr; statprop = statprop->next){
 		if(statprop->interval < this->period){
 			static int was_warned = 0;
 			if(was_warned == 0){
@@ -332,10 +332,10 @@ int auction::init(OBJECT *parent)
 		}
 	}
 	/* reference object & property */	
-	if(capacity_reference_object != NULL){
+	if(capacity_reference_object != nullptr){
 		if(capacity_reference_propname[0] != 0){
 			capacity_reference_property = gl_get_property(capacity_reference_object, capacity_reference_propname.get_string());
-			if(capacity_reference_property == NULL){
+			if(capacity_reference_property == nullptr){
 				gl_error("%s (auction:%d) capacity_reference_object of type '%s' does not contain specified reference property '%s'", obj->name?obj->name:"anonymous", obj->id, capacity_reference_object->oclass->name, capacity_reference_propname.get_string());
 				/* TROUBLESHOOT
 					capacity_reference_object must contain a property named by capacity_reference_property.  Review the published properties of the object specified
@@ -423,7 +423,7 @@ int auction::init(OBJECT *parent)
 		return 0;
 	}
 	STATISTIC *stat;
-	for(stat = stats; stat != NULL; stat = stat->next){
+	for(stat = stats; stat != nullptr; stat = stat->next){
 		double check = 0.0;
 		if(stat->stat_type == SY_STDEV){
 			check = *gl_get_double(obj, stat->prop);
@@ -459,7 +459,7 @@ int auction::init_statistics(){
 	STATISTIC statprop;
 	PROPERTY *prop = oclass->pmap;
 	OBJECT *obj = OBJECTHDR(this);
-	for(prop = oclass->pmap; prop != NULL; prop = prop->next){
+	for(prop = oclass->pmap; prop != nullptr; prop = prop->next){
 		char frame[32], price[32], stat[32], period[32], period_unit[32];
 		memset(&statprop, 0, sizeof(STATISTIC));
 		period_unit[0] = 0;
@@ -767,7 +767,7 @@ TIMESTAMP auction::presync(TIMESTAMP t0, TIMESTAMP t1)
 		if (t1>t0 && ((t1/TS_SECOND) % period)==0)
 		{
 			/* save the last clearing and reset the next clearing */
-			next.from = NULL; /* in the context of a clearing, from is the marginal resource */
+			next.from = nullptr; /* in the context of a clearing, from is the marginal resource */
 			next.quantity = next.price = 0;
 		}
 	}
@@ -873,14 +873,14 @@ void auction::clear_market(void)
 	memset(&unresponsive, 0, sizeof(unresponsive));
 
 	/* handle unbidding capacity */
-	if(capacity_reference_property != NULL && special_mode != MD_FIXED_BUYER){
+	if(capacity_reference_property != nullptr && special_mode != MD_FIXED_BUYER){
 		char name[256];
 
 		double total_unknown = asks.get_total() - asks.get_total_on() - asks.get_total_off();
 		double *pRefload = gl_get_double(capacity_reference_object, capacity_reference_property);
 		double refload;
 		
-		if(pRefload == NULL){
+		if(pRefload == nullptr){
 			char msg[256];
 			sprintf(msg, "unable to retreive property '%s' from capacity reference object '%s'", capacity_reference_property->name, capacity_reference_object->name);
 			throw msg;
@@ -933,10 +933,10 @@ void auction::clear_market(void)
 
 
 	/* handle bidding capacity reference */
-	if(capacity_reference_object != NULL && special_mode == MD_NONE) {
+	if(capacity_reference_object != nullptr && special_mode == MD_NONE) {
 		double *pCaprefq = gl_get_double(capacity_reference_object, capacity_reference_property);
 		double caprefq;
-		if(pCaprefq == NULL) {
+		if(pCaprefq == nullptr) {
 			char msg[256];
 			sprintf(msg, "unable to retreive property '%s' from capacity reference object '%s'", capacity_reference_property->name, capacity_reference_object->name);
 			throw msg;
@@ -1102,7 +1102,7 @@ void auction::clear_market(void)
 		/* clear market */
 		unsigned int i=0, j=0;
 		BID *buy = asks.getbid(i), *sell = offers.getbid(j);
-		BID clear = {NULL,0,0};
+		BID clear = {nullptr,0,0};
 		double demand_quantity = 0, supply_quantity = 0;
 		double a=this->pricecap, b=-pricecap;
 		bool check=false;
@@ -1623,7 +1623,7 @@ EXPORT int create_auction(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(auction::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			auction *my = OBJECTDATA(*obj,auction);
 			gl_set_parent(*obj,parent);
@@ -1639,7 +1639,7 @@ EXPORT int init_auction(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,auction)->init(parent);
 		else
 			return 0;

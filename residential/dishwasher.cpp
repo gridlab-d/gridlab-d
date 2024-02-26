@@ -17,20 +17,20 @@
 //////////////////////////////////////////////////////////////////////////
 // dishwasher CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* dishwasher::oclass = NULL;
-CLASS* dishwasher::pclass = NULL;
-dishwasher *dishwasher::defaults = NULL;
+CLASS* dishwasher::oclass = nullptr;
+CLASS* dishwasher::pclass = nullptr;
+dishwasher *dishwasher::defaults = nullptr;
 
 dishwasher::dishwasher(MODULE *module) : residential_enduse(module)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		pclass = residential_enduse::oclass;
 		
 		// register the class definition
 		oclass = gl_register_class(module,"dishwasher",sizeof(dishwasher),PC_PRETOPDOWN|PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
@@ -143,7 +143,7 @@ dishwasher::dishwasher(MODULE *module) : residential_enduse(module)
 			
 
 			PT_bool,"is_240",PADDR(is_240), PT_DESCRIPTION, "load is 220/240 V (across both phases)",
-			NULL)<1) 
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
@@ -189,7 +189,7 @@ int dishwasher::init(OBJECT *parent)
 	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
 
 	OBJECT *hdr = OBJECTHDR(this);
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("dishwasher::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -1470,7 +1470,7 @@ EXPORT TIMESTAMP sync_dishwasher(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int create_dishwasher(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(dishwasher::oclass);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		dishwasher *my = OBJECTDATA(*obj,dishwasher);
 		gl_set_parent(*obj,parent);

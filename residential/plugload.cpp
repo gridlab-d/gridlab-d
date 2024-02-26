@@ -20,17 +20,17 @@
 //////////////////////////////////////////////////////////////////////////
 // plugload CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* plugload::oclass = NULL;
-CLASS* plugload::pclass = NULL;
+CLASS* plugload::oclass = nullptr;
+CLASS* plugload::pclass = nullptr;
 
 plugload::plugload(MODULE *module) : residential_enduse(module)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(module,"plugload",sizeof(plugload),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class plugload";
 		else
 			oclass->trl = TRL_QUALIFIED;
@@ -42,7 +42,7 @@ plugload::plugload(MODULE *module) : residential_enduse(module)
 			PT_double,"demand[unit]",PADDR(shape.load),
 			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power), PT_DESCRIPTION, "installed plugs capacity",
 			PT_complex,"actual_power[kVA]",PADDR(plugs_actual_power),PT_DESCRIPTION,"actual power demand",
-			NULL)<1) 
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
@@ -95,7 +95,7 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double temp_voltage_magnitude;
 	double val = 0.0;
 
-	if (pCircuit!=NULL)
+	if (pCircuit!=nullptr)
 	{
 		//Get the current voltage
 		temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
@@ -142,7 +142,7 @@ EXPORT int create_plugload(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(plugload::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			plugload *my = OBJECTDATA(*obj,plugload);;
 			gl_set_parent(*obj,parent);

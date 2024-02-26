@@ -13,15 +13,15 @@
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
-	if (set_callback(fntable)==NULL)
+	if (set_callback(fntable)==nullptr)
 	{
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
-	gl_global_create("commercial::warn_control",PT_bool,&office::warn_control,NULL);
-	gl_global_create("commercial::warn_low_temp",PT_double,&office::warn_low_temp,NULL);
-	gl_global_create("commercial::warn_high_temp",PT_double,&office::warn_high_temp,NULL);
+	gl_global_create("commercial::warn_control",PT_bool,&office::warn_control,nullptr);
+	gl_global_create("commercial::warn_low_temp",PT_double,&office::warn_low_temp,nullptr);
+	gl_global_create("commercial::warn_high_temp",PT_double,&office::warn_high_temp,nullptr);
 
 	new office(module);
 	new multizone(module); 

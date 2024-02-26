@@ -12,8 +12,8 @@ EXPORT_ISA(pw_recorder);
 EXPORT_COMMIT(pw_recorder);
 EXPORT_PRECOMMIT(pw_recorder);
 
-CLASS *pw_recorder::oclass = NULL;
-pw_recorder *pw_recorder::defaults = NULL;
+CLASS *pw_recorder::oclass = nullptr;
+pw_recorder *pw_recorder::defaults = nullptr;
 
 int pw_recorder::get_pw_values(){
 	return 1;
@@ -21,11 +21,11 @@ int pw_recorder::get_pw_values(){
 
 pw_recorder::pw_recorder(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gld_class::create(module,"pw_recorder",sizeof(pw_recorder),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class pw_recorder";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -40,7 +40,7 @@ pw_recorder::pw_recorder(MODULE *module)
 			PT_char1024, "properties", get_properties_offset(), PT_DESCRIPTION, "Properties desired to record from PowerWorld object",
 			PT_int64, "interval", get_interval_offset(), PT_DESCRIPTION, "Interval of output for pw_recorder object",
 			PT_int64, "limit", get_limit_offset(),PT_DESCRIPTION, "Number of data points to write before stopping",
-			NULL)<1){
+			nullptr)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
@@ -336,13 +336,13 @@ int pw_recorder::build_keys(){
 	// tokenize key_strings
 	string_ptrs[0] = strtok_s(key_strings_copy, ",\n\r\t", &context);
 	for(i = 1; i < key_str_ct; ++i){
-		string_ptrs[i] = strtok_s(NULL, ",\n\r\t", &context);
+		string_ptrs[i] = strtok_s(nullptr, ",\n\r\t", &context);
 	}
 
 	// tokenize key_values
 	value_ptrs[0] = strtok_s(key_values_copy, ",\n\r\t", &context);
 	for(i = 1; i < key_val_ct; ++i){
-		value_ptrs[i] = strtok_s(NULL, ",\n\r\t", &context);
+		value_ptrs[i] = strtok_s(nullptr, ",\n\r\t", &context);
 	}
 	
 	key_count = key_str_ct;
@@ -365,7 +365,7 @@ int pw_recorder::build_keys(){
 	// tokenize properties
 	prop_ptrs[0] = strtok_s(props_copy, ",\n\r\t", &context);
 	for(i = 1; i < prop_str_ct; ++i){
-		prop_ptrs[i] = strtok_s(NULL, ",\n\r\t", &context);
+		prop_ptrs[i] = strtok_s(nullptr, ",\n\r\t", &context);
 	}
 	
 	// with everything tokenized, crunch it into VARIANTs
@@ -519,7 +519,7 @@ int pw_recorder::GPSE(){
  **/
 int pw_recorder::write_header(){
 	char namebuf[64];
-	time_t now = time(NULL);
+	time_t now = time(nullptr);
 
 	fprintf(outfile, "# file...... %s\n", (const char*)outfile_name);
 	fprintf(outfile, "# date...... %s", asctime(localtime(&now))); // adds its own newline

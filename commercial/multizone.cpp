@@ -21,8 +21,8 @@
 #include "office.h"
 #include "multizone.h"
 
-CLASS *multizone::oclass = NULL;
-multizone *multizone::defaults = NULL;
+CLASS *multizone::oclass = nullptr;
+multizone *multizone::defaults = nullptr;
 
 static PASSCONFIG passconfig = PC_BOTTOMUP;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
@@ -31,10 +31,10 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* Class registration is only called once to register the class with the core */
 multizone::multizone(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"multizone",sizeof(multizone),passconfig);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class multizone";
 		else
 			oclass->trl = TRL_INTEGRATED;
@@ -44,7 +44,7 @@ multizone::multizone(MODULE *module)
 			PT_object, "from", PADDR(from),
 			PT_object, "to", PADDR(to),
 			PT_double, "ua", PADDR(ua),
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		/* TODO: set the default values of all properties here */
 		memset(this,0,sizeof(multizone));
@@ -62,11 +62,11 @@ int multizone::create(void)
 int multizone::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
-	if (from==NULL)
+	if (from==nullptr)
 		gl_error("%s (multizone:%d): from zone is not specified", obj->name?obj->name:"unnamed",obj->id);
 	else if (!gl_object_isa(from,"office"))
 		gl_error("%s (multizone:%d): from object is not an commercial office space", obj->name?obj->name:"unnamed",obj->id);
-	if (to==NULL)
+	if (to==nullptr)
 		gl_error("%s (multizone:%d): to zone is not specified", obj->name?obj->name:"unnamed",obj->id);
 	else if (!gl_object_isa(to,"office"))
 		gl_error("%s (multizone:%d): to object is not an commercial office space", obj->name?obj->name:"unnamed",obj->id);
@@ -135,7 +135,7 @@ EXPORT int create_multizone(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(multizone::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			multizone *my = OBJECTDATA(*obj,multizone);
 			gl_set_parent(*obj,parent);
@@ -151,7 +151,7 @@ EXPORT int init_multizone(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,multizone)->init(parent);
 		else
 			return 0;

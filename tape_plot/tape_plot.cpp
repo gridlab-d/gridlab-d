@@ -34,12 +34,12 @@
  */
 EXPORT int open_player(struct player *my, char *fname, char *flags)
 {
-	//char *ff = gl_findfile(fname,NULL,FF_READ);
+	//char *ff = gl_findfile(fname,nullptr,FF_READ);
 	char *ff = fname;
 
 	/* "-" means stdin */
-	my->fp = (strcmp(fname,"-")==0?stdin:(ff?fopen(ff,flags):NULL));
-	if (my->fp==NULL)
+	my->fp = (strcmp(fname,"-")==0?stdin:(ff?fopen(ff,flags):nullptr));
+	if (my->fp==nullptr)
 	{
 		//gl_error(
 		fprintf(stderr, "player file %s: %s", fname, strerror(errno));
@@ -75,7 +75,7 @@ EXPORT void close_player(struct player *my)
 #define MAPSIZE(N) ((N-1)/8+1)
 #define SET(X,B) ((X)[(B)/8]|=(1<<((B)&7)))
 #define ISSET(X,B) (((X)[(B)/8]&(1<<((B)&7)))==(1<<((B)&7)))
-char *file=NULL;
+char *file=nullptr;
 int linenum=0;
 static void setmap(char *spec, unsigned char *map, int size)
 {
@@ -156,7 +156,7 @@ EXPORT int open_shaper(struct shaper *my, char *fname, char *flags)
 	char line[1024], group[256]="(unnamed)";
 	float sum=0, load=0, peak=0;
 	float scale[12][31][7][24];
-	//char *ff = gl_findfile(fname,NULL,FF_READ);
+	//char *ff = gl_findfile(fname,nullptr,FF_READ);
 	char *ff = fname;
 
 	/* clear everything */
@@ -165,8 +165,8 @@ EXPORT int open_shaper(struct shaper *my, char *fname, char *flags)
 	file=fname;
 
 	/* "-" means stdin */
-	my->fp = (strcmp(fname,"-")==0?stdin:(ff?fopen(ff,flags):NULL));
-	if (my->fp==NULL)
+	my->fp = (strcmp(fname,"-")==0?stdin:(ff?fopen(ff,flags):nullptr));
+	if (my->fp==nullptr)
 	{
 		//gl_error(
 		fprintf(stderr, "shaper file %s: %s", fname, strerror(errno));
@@ -180,7 +180,7 @@ EXPORT int open_shaper(struct shaper *my, char *fname, char *flags)
 	my->interval = 24; /* default unint shape integrated over one day */
 	memset(my->shape,0,sizeof(my->shape));
 	/* load the file into the shape */
-	while (fgets(line,sizeof(line),my->fp)!=NULL)
+	while (fgets(line,sizeof(line),my->fp)!=nullptr)
 	{
 		unsigned char *hours, *days, *months, *weekdays;
 		char min[256],hour[256],day[256],month[256],weekday[256],value[32];
@@ -309,7 +309,7 @@ EXPORT void write_default_plot_commands_rec(struct recorder *my, char32 extensio
 		} else {
 			strcpy(list,my->property); /* avoid destroying orginal list */
 			k = 2;
-			for (item=strtok(list,","); item!=NULL; item=strtok(NULL,",")){
+			for (item=strtok(list,","); item!=nullptr; item=strtok(nullptr,",")){
 				if(k == 2){
 					fprintf(my->fp, "plot \'-\' using 1:%i title \'%s\' with lines", k, item);
 					/* only handles one column properly as-is, will be fixed with the tape module update -MH */
@@ -343,7 +343,7 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 	char extension[33];
 	char columnlist[1025];
 	char **columns;
-	time_t now=time(NULL);
+	time_t now=time(nullptr);
 	OBJECT *obj=OBJECTHDR(my);
 	static int block=0;
 
@@ -361,7 +361,7 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 	}
 
 	my->fp = (strcmp(fname,"-")==0?stdout:fopen(fname,flags));
-	if (my->fp==NULL)
+	if (my->fp==nullptr)
 	{
 		//gl_error(
 		fprintf(stderr, "recorder file %s: %s", fname, strerror(errno));
@@ -504,7 +504,7 @@ EXPORT void close_recorder(struct recorder *my)
 	int result;
 	my->status = TS_DONE;
 
-	if (my->fp == NULL)
+	if (my->fp == nullptr)
 		return;
 	else {
 		fprintf(my->fp,"e\n");
@@ -515,7 +515,7 @@ EXPORT void close_recorder(struct recorder *my)
 		sprintf(command,"%s %s", gnuplot, fname);
 		result = system( command );
 	}
- 	my->fp = NULL;
+ 	my->fp = nullptr;
 }
 
 /*******************************************************************
@@ -559,7 +559,7 @@ EXPORT void write_default_plot_commands_col(struct collector *my, char32 extensi
 EXPORT int open_collector(struct collector *my, char *fname, char *flags)
 {
 	unsigned int count=0;
-	time_t now=time(NULL);
+	time_t now=time(nullptr);
 
 	char extension[sizeof(char32)];
 	char columnlist[sizeof(char1024)];
@@ -573,7 +573,7 @@ EXPORT int open_collector(struct collector *my, char *fname, char *flags)
 	}
 
 	my->fp = (strcmp(fname,"-")==0?stdout:fopen(fname,flags));
-	if (my->fp==NULL)
+	if (my->fp==nullptr)
 	{
 		//gl_error(
 		fprintf(stderr, "collector file %s: %s", fname, strerror(errno));
@@ -675,7 +675,7 @@ EXPORT void close_collector(struct collector *my)
 	int result;
 	my->status = TS_DONE;
 
-	if (my->fp == NULL)
+	if (my->fp == nullptr)
 		return;
 	else {
 		fprintf(my->fp,"e\n");
@@ -686,6 +686,6 @@ EXPORT void close_collector(struct collector *my)
 		sprintf(command,"%s %s", gnuplot, fname);
 		result = system( command );
 	}
- 	my->fp = NULL;
+ 	my->fp = nullptr;
 }
 /**@}*/

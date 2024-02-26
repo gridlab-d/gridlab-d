@@ -38,7 +38,7 @@ voltdump::voltdump(MODULE *mod)
 			PT_enumeration, "mode", PADDR(mode),PT_DESCRIPTION,"dumps the voltages in either polar or rectangular notation",
 				PT_KEYWORD, "RECT", (enumeration)VDM_RECT,
 				PT_KEYWORD, "POLAR", (enumeration)VDM_POLAR,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}
 }

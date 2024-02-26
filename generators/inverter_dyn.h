@@ -245,7 +245,7 @@ private:
 	double perform_1547_checks(double timestepvalue);
 
 public:
-	set phases;				 /**< device phases (see PHASE codes) */
+	gld::set phases;				 /**< device phases (see PHASE codes) */
 	enum INVERTER_TYPE
 	{
 		GRID_FORMING = 0,

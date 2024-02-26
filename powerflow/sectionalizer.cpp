@@ -33,7 +33,7 @@ sectionalizer::sectionalizer(MODULE *mod) : switch_object(mod)
 		// publish the class properties
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "switch",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		if (gl_publish_function(oclass,"change_sectionalizer_state",(FUNCTIONADDR)change_sectionalizer_state)==nullptr)
 			GL_THROW("Unable to publish sectionalizer state change function");

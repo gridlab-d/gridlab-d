@@ -8,7 +8,7 @@
 #define JAVA_CLASS_PATH "Win32/Debug/"
 #define JAVA_LIB_PATH "Win32/Debug/"
 
-static JavaVM *jvm = NULL;
+static JavaVM *jvm = nullptr;
 char256 classpath, libpath;
 
 char *get_classpath(){return classpath;}
@@ -32,9 +32,9 @@ void *get_jcb(){
 
 CDECL JNIEnv *get_env(){
 	JNIEnv *env;
-	if(jvm == NULL)
+	if(jvm == nullptr)
 		init_jvm();
-	jvm->AttachCurrentThread((void **)&env, NULL);
+	jvm->AttachCurrentThread((void **)&env, nullptr);
 	return env;
 }
 
@@ -42,19 +42,19 @@ CDECL void *set_obj(jobject obj, OBJECT * object_addr, void *block_addr, int id)
 	JNIEnv *jnienv = get_env();
 	jclass cls = jnienv->FindClass("GObject");
 
-	if(cls == NULL){
+	if(cls == nullptr){
 		gl_error("%s(%s): unable to find GObject.class", __FILE__, __LINE__);
-		return NULL;
+		return nullptr;
 	}
 
 	jmethodID mid = jnienv->GetMethodID(cls, "SetObject", "(JJI)V");
 
-	if(mid == NULL){
+	if(mid == nullptr){
 		gl_error("%s(%s): unable to find \"void GObject.SetObject(long, long, int)\"", __FILE__, __LINE__);
-		return NULL;
+		return nullptr;
 	}
 	jnienv->CallVoidMethod(obj, mid, (int64)object_addr, (int64)block_addr, id);
-	return NULL;
+	return nullptr;
 }
 
 EXPORT int do_kill()
@@ -63,8 +63,8 @@ EXPORT int do_kill()
 	#if 0
 	// if anything needs to be deleted or freed, this is a good time to do it
 	if(jvm->DestroyJavaVM() == 0){;
-		jvm = NULL;
-		jnienv = NULL;
+		jvm = nullptr;
+		jnienv = nullptr;
 	} else {
 		gl_error("javamod/init.cpp:do_kill() - error with jvm->DestroyJavaVM()");
 	}
@@ -73,7 +73,7 @@ EXPORT int do_kill()
 }
 
 EXPORT void *getvar(char *varname, char *value, unsigned int size){
-	void *rv = NULL;
+	void *rv = nullptr;
 	if(strcmp(varname, "jcallback") == 0)
 	{
 		rv = (void *)&jcallbacks;
@@ -92,7 +92,7 @@ EXPORT void *getvar(char *varname, char *value, unsigned int size){
 JavaVM *init_jvm(){
 	JavaVMOption options[2];
 	JavaVMInitArgs vm_args;
-	JNIEnv *jnienv = NULL;
+	JNIEnv *jnienv = nullptr;
 	int rv = 0;
 	PROPERTYTYPE p;
 
@@ -120,8 +120,8 @@ JavaVM *init_jvm(){
 	else
 		printf("JVM creation failed.\n");
 
-	gl_global_create("glmjava::jvm",p,get_jvm(),PT_ACCESS,PA_REFERENCE,NULL);
-	gl_global_create("glmjava::jnienv",p,get_env(),PT_ACCESS,PA_REFERENCE,NULL);
+	gl_global_create("glmjava::jvm",p,get_jvm(),PT_ACCESS,PA_REFERENCE,nullptr);
+	gl_global_create("glmjava::jnienv",p,get_env(),PT_ACCESS,PA_REFERENCE,nullptr);
 
 	return jvm;
 }
@@ -208,7 +208,7 @@ EXPORT jstring JNICALL Java_gridlabd_GObject__1GetStringProp(JNIEnv *env, jclass
 }
 
 EXPORT void JNICALL Java_gridlabd_GObject__1SetStringProp(JNIEnv *env, jclass _this, jlong oaddr, jlong offset, jlong size, jstring str){
-	const char *buffer = env->GetStringUTFChars(str, NULL);
+	const char *buffer = env->GetStringUTFChars(str, nullptr);
 	size_t s = env->GetStringUTFLength(str);
 	memcpy((void *)(oaddr+offset+sizeof(OBJECT)), buffer, (s < size) ? s : (size_t)size);
 }
@@ -274,7 +274,7 @@ EXPORT void JNICALL Java_gridlabd_GObject__1SetComplexProp(JNIEnv *env, jclass _
  */
 
 EXPORT jint JNICALL Java_gridlabd_GridlabD_verbose(JNIEnv *env, jclass _this, jstring str){
-	char *instr = (char *)env->GetStringUTFChars(str, NULL);
+	char *instr = (char *)env->GetStringUTFChars(str, nullptr);
 	int len = (int)strlen(instr);
 	gl_verbose(instr);
 //	env->ReleaseStringUTFChars(str, instr);
@@ -282,7 +282,7 @@ EXPORT jint JNICALL Java_gridlabd_GridlabD_verbose(JNIEnv *env, jclass _this, js
 }
 
 EXPORT jint JNICALL Java_gridlabd_GridlabD_output(JNIEnv *env, jclass _this, jstring str){
-	char *instr = (char *)env->GetStringUTFChars(str, NULL);
+	char *instr = (char *)env->GetStringUTFChars(str, nullptr);
 	int len = (int)strlen(instr);
 	gl_output(instr);
 	env->ReleaseStringUTFChars(str, instr);
@@ -290,7 +290,7 @@ EXPORT jint JNICALL Java_gridlabd_GridlabD_output(JNIEnv *env, jclass _this, jst
 }
 
 EXPORT jint JNICALL Java_gridlabd_GridlabD_warning(JNIEnv *env, jobject _this, jstring str){
-	char *instr = (char *)env->GetStringUTFChars(str, NULL);
+	char *instr = (char *)env->GetStringUTFChars(str, nullptr);
 	int len = (int)strlen(instr);
 	gl_warning(instr);
 	env->ReleaseStringUTFChars(str, instr);
@@ -298,7 +298,7 @@ EXPORT jint JNICALL Java_gridlabd_GridlabD_warning(JNIEnv *env, jobject _this, j
 }
 
 EXPORT jint JNICALL Java_gridlabd_GridlabD_error(JNIEnv *env, jobject _this, jstring str){
-	char *instr = (char *)env->GetStringUTFChars(str, NULL);
+	char *instr = (char *)env->GetStringUTFChars(str, nullptr);
 	int len = (int)strlen(instr);
 	gl_error(instr);
 	env->ReleaseStringUTFChars(str, instr);
@@ -306,7 +306,7 @@ EXPORT jint JNICALL Java_gridlabd_GridlabD_error(JNIEnv *env, jobject _this, jst
 }
 
 EXPORT jint JNICALL Java_gridlabd_GridlabD_debug(JNIEnv *env, jobject _this, jstring str){
-	char *instr = (char *)env->GetStringUTFChars(str, NULL);
+	char *instr = (char *)env->GetStringUTFChars(str, nullptr);
 	int len = (int)strlen(instr);
 	gl_debug(instr);
 	env->ReleaseStringUTFChars(str, instr);
@@ -314,7 +314,7 @@ EXPORT jint JNICALL Java_gridlabd_GridlabD_debug(JNIEnv *env, jobject _this, jst
 }
 
 EXPORT jint JNICALL Java_gridlabd_GridlabD_testmsg(JNIEnv *env, jobject _this, jstring str){
-	char *instr = (char *)env->GetStringUTFChars(str, NULL);
+	char *instr = (char *)env->GetStringUTFChars(str, nullptr);
 	int len = (int)strlen(instr);
 	gl_testmsg(instr);
 	env->ReleaseStringUTFChars(str, instr);
@@ -327,7 +327,7 @@ EXPORT jint JNICALL Java_gridlabd_GridlabD_testmsg(JNIEnv *env, jobject _this, j
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_module_find(JNIEnv *env, jobject _this, jstring modulename){
 	int64 rv = 0;
-	char *instr = (char *)env->GetStringUTFChars(modulename, NULL);
+	char *instr = (char *)env->GetStringUTFChars(modulename, nullptr);
 	rv = (int64)gl_find_module(instr);
 	env->ReleaseStringUTFChars(modulename, instr);
 	return rv;
@@ -335,10 +335,10 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_module_find(JNIEnv *env, jobject _th
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_module_var(JNIEnv *env, jobject _this, jstring modulename, jstring varname){
 	int64 rv = 0;
-	char *instr = (char *)env->GetStringUTFChars(modulename, NULL);
+	char *instr = (char *)env->GetStringUTFChars(modulename, nullptr);
 	MODULE *module = gl_find_module(instr);
-	if(module != NULL){
-		char *varstr = (char *)env->GetStringUTFChars(varname, NULL);
+	if(module != nullptr){
+		char *varstr = (char *)env->GetStringUTFChars(varname, nullptr);
 		void *addr = gl_get_module_var(module, varstr);
 		env->ReleaseStringUTFChars(varname, varstr);
 		rv = (int64)addr;
@@ -348,10 +348,10 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_module_var(JNIEnv *env, jobject 
 }
 
 EXPORT jstring JNICALL Java_gridlabd_GridlabD_findfile(JNIEnv *env, jobject _this, jstring filename){
-	char *instr = (char *)env->GetStringUTFChars(filename, NULL);
+	char *instr = (char *)env->GetStringUTFChars(filename, nullptr);
 	char buffer[256];
-	char *filestr = gl_findfile(instr, NULL, 0, buffer, 255);
-	jstring rv = NULL;
+	char *filestr = gl_findfile(instr, nullptr, 0, buffer, 255);
+	jstring rv = nullptr;
 	if(filestr)
 		rv = env->NewStringUTF(filestr);
 	env->ReleaseStringUTFChars(filename, instr);
@@ -359,7 +359,7 @@ EXPORT jstring JNICALL Java_gridlabd_GridlabD_findfile(JNIEnv *env, jobject _thi
 }
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_find_1module(JNIEnv *env, jobject _this, jstring modulename){
-	char *instr = (char *)env->GetStringUTFChars(modulename, NULL);
+	char *instr = (char *)env->GetStringUTFChars(modulename, nullptr);
 	int64 rv = (int64)gl_find_module(instr);
 	env->ReleaseStringUTFChars(modulename, instr);
 	return rv;
@@ -367,7 +367,7 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_find_1module(JNIEnv *env, jobject _t
 
 // new
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_find_1property(JNIEnv *env, jobject _this, jlong oclass_addr, jstring propname){
-	char *instr = (char *)env->GetStringUTFChars(propname, NULL);
+	char *instr = (char *)env->GetStringUTFChars(propname, nullptr);
 	int64 rv = (int64)(gl_find_property((CLASS *)oclass_addr, instr));
 	env->ReleaseStringUTFChars(propname, instr);
 	return rv;
@@ -375,13 +375,13 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_find_1property(JNIEnv *env, jobject 
 
 // new
 EXPORT jint JNICALL Java_gridlabd_GridlabD_module_1depends(JNIEnv *env, jobject _this, jstring modname, jint major, jint minor, jint build){
-	char *instr = (char *)env->GetStringUTFChars(modname, NULL);
+	char *instr = (char *)env->GetStringUTFChars(modname, nullptr);
 	int rv = gl_module_depends(instr, (unsigned char)major, (unsigned char)minor, (unsigned char)build);
 	return rv;
 }
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_register_1class(JNIEnv *env, jobject _this, jlong moduleaddr, jstring classname, jint passconfig){
-	char *instr = (char *)env->GetStringUTFChars(classname, NULL);
+	char *instr = (char *)env->GetStringUTFChars(classname, nullptr);
 	int64 rv = (int64)gl_register_class((MODULE *)moduleaddr, instr, 0, (PASSCONFIG)(0xFF & passconfig));
 	env->ReleaseStringUTFChars(classname, instr);
 	return rv;
@@ -402,7 +402,7 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_create_foreign(JNIEnv *env, jobject 
 }
 
 EXPORT jint JNICALL Java_gridlabd_GridlabD_object_1isa(JNIEnv *env, jobject _this, jlong obj_addr, jstring _typename){
-	char *name = (char *)env->GetStringUTFChars(_typename, NULL);
+	char *name = (char *)env->GetStringUTFChars(_typename, nullptr);
 	int rv = gl_object_isa((OBJECT *)obj_addr, name);
 	env->ReleaseStringUTFChars(_typename, name);
 	return rv;
@@ -425,16 +425,16 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_publish_1variable(JNIEnv *env, jobje
 		{"complex", PT_complex, sizeof(complex)},
 		{"object", PT_object, sizeof(OBJECT *)},
 	};
-	char *varstr = (char *)env->GetStringUTFChars(varname, NULL);
-	char *typestr = (char *)env->GetStringUTFChars(vartype, NULL);
-	PROPERTY *prop = NULL;
+	char *varstr = (char *)env->GetStringUTFChars(varname, nullptr);
+	char *typestr = (char *)env->GetStringUTFChars(vartype, nullptr);
+	PROPERTY *prop = nullptr;
 	int i = 0;
 	for(i = 0; i < (sizeof(map)/sizeof(map[0])); ++i){
 		if(0 == strcmp(map[i].name, typestr))
 			break;
 	}
 	if(i < sizeof(map)/sizeof(map[0])){
-		if(gl_publish_variable((CLASS *)(classaddr),map[i].pt, varstr, (void*)offset, PT_EXTEND, NULL) != 0){
+		if(gl_publish_variable((CLASS *)(classaddr),map[i].pt, varstr, (void*)offset, PT_EXTEND, nullptr) != 0){
 			env->ReleaseStringUTFChars(varname, varstr);
 			env->ReleaseStringUTFChars(vartype, typestr);
 			return map[i].size;
@@ -482,7 +482,7 @@ EXPORT jint JNICALL Java_gridlabd_GridlabD_publish_1delegate(JNIEnv *env, jobjec
 }
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1property(JNIEnv *env, jobject _this, jlong oaddr, jstring propertyname){
-	char *pstr = (char *)env->GetStringUTFChars(propertyname, NULL);
+	char *pstr = (char *)env->GetStringUTFChars(propertyname, nullptr);
 	OBJECT *obj = (OBJECT *)oaddr;
 	int64 rv = (int64)gl_get_property(obj, pstr);
 	env->ReleaseStringUTFChars(propertyname, pstr);
@@ -491,8 +491,8 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1property(JNIEnv *env, jobject _
 
 // does not have gl_ parallel?
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1property_1by_1name(JNIEnv *env, jobject _this, jstring objectname, jstring propertyname){
-	char *ostr = (char *)env->GetStringUTFChars(objectname, NULL);
-	char *pstr = (char *)env->GetStringUTFChars(propertyname, NULL);
+	char *ostr = (char *)env->GetStringUTFChars(objectname, nullptr);
+	char *pstr = (char *)env->GetStringUTFChars(propertyname, nullptr);
 	OBJECT *obj = gl_get_object(ostr);
 	int64 rv = (int64)gl_get_property(obj, pstr);
 	env->ReleaseStringUTFChars(propertyname, pstr);
@@ -502,17 +502,17 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1property_1by_1name(JNIEnv *env,
 
 EXPORT jstring JNICALL Java_gridlabd_GridlabD_get_1value(JNIEnv *env, jobject _this, jlong object_addr, jstring propertyname){
 	char buffer[1025];
-	char *pstr = (char *)env->GetStringUTFChars(propertyname, NULL);
+	char *pstr = (char *)env->GetStringUTFChars(propertyname, nullptr);
 	PROPERTY *prop = gl_get_property((OBJECT *)object_addr, pstr);
-	// GETADDR(O,P) (O?((void*)((char*)(O+1)+(unsigned int64)((P)->addr))):NULL)
+	// GETADDR(O,P) (O?((void*)((char*)(O+1)+(unsigned int64)((P)->addr))):nullptr)
 	int rv = gl_get_value((OBJECT *)object_addr, (void *)(object_addr+sizeof(OBJECT)+(int64)prop->addr), buffer, 1024, prop);
 	env->ReleaseStringUTFChars(propertyname, pstr);
-	return rv ? env->NewStringUTF(buffer) : NULL;
+	return rv ? env->NewStringUTF(buffer) : nullptr;
 }
 
 EXPORT jint JNICALL Java_gridlabd_GridlabD_set_1value(JNIEnv *env, jobject _this, jlong object_addr, jstring propertyname, jstring value){
-	char *vstr = (char *)env->GetStringUTFChars(value, NULL);
-	char *pstr = (char *)env->GetStringUTFChars(propertyname, NULL);
+	char *vstr = (char *)env->GetStringUTFChars(value, nullptr);
+	char *pstr = (char *)env->GetStringUTFChars(propertyname, nullptr);
 	OBJECT *obj = (OBJECT *)object_addr;
 	PROPERTY *prop = gl_get_property(obj, pstr);
 	int rv = gl_set_value(obj, (void *)(object_addr + sizeof(OBJECT) + (int64)prop->addr), vstr, prop);
@@ -525,8 +525,8 @@ EXPORT jint JNICALL Java_gridlabd_GridlabD_set_1value(JNIEnv *env, jobject _this
 }
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_unit_1convert(JNIEnv *env, jobject _this, jstring from, jstring to, jdouble invalue){
-	char *fromstr = (char *)env->GetStringUTFChars(from, NULL);
-	char *tostr = (char *)env->GetStringUTFChars(to, NULL);
+	char *fromstr = (char *)env->GetStringUTFChars(from, nullptr);
+	char *tostr = (char *)env->GetStringUTFChars(to, nullptr);
 	double rv = gl_convert(fromstr, tostr, &invalue);
 	env->ReleaseStringUTFChars(from, fromstr);
 	env->ReleaseStringUTFChars(to, tostr);
@@ -538,7 +538,7 @@ EXPORT jdouble JNICALL Java_gridlabd_GridlabD_get_1complex_1real(JNIEnv *env, jo
 }
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_get_1complex_1_real_1by_1name(JNIEnv *env, jobject _this, jlong object_addr, jstring propertyname){
-	char *pname =(char *)env->GetStringUTFChars(propertyname, NULL);
+	char *pname =(char *)env->GetStringUTFChars(propertyname, nullptr);
 	double rv = (gl_get_complex_by_name((OBJECT *)object_addr, pname))->Re();
 	env->ReleaseStringUTFChars(propertyname, pname);
 	return rv;
@@ -549,14 +549,14 @@ EXPORT jdouble JNICALL Java_gridlabd_GridlabD_get_1complex_1imag(JNIEnv *env, jo
 }
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_get_1complex_1imag_1by_1name(JNIEnv *env, jobject _this, jlong object_addr, jstring propertyname){
-	char *pname =(char *)env->GetStringUTFChars(propertyname, NULL);
+	char *pname =(char *)env->GetStringUTFChars(propertyname, nullptr);
 	double rv = (gl_get_complex_by_name((OBJECT *)object_addr, pname))->Im();
 	env->ReleaseStringUTFChars(propertyname, pname);
 	return rv;
 }
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1object(JNIEnv *env, jobject _this, jstring oname){
-	char *name =(char *)env->GetStringUTFChars(oname, NULL);
+	char *name =(char *)env->GetStringUTFChars(oname, nullptr);
 	int64 rv = (int64)gl_get_object(name);
 	env->ReleaseStringUTFChars(oname, name);
 	return rv;
@@ -567,7 +567,7 @@ EXPORT jint JNICALL Java_gridlabd_GridlabD_get_1int16(JNIEnv *env, jobject _this
 }
 
 EXPORT jint JNICALL Java_gridlabd_GridlabD_get_1int16_1by_1name(JNIEnv *env, jobject _this, jlong object_addr, jstring propertyname){
-	char *pname =(char *)env->GetStringUTFChars(propertyname, NULL);
+	char *pname =(char *)env->GetStringUTFChars(propertyname, nullptr);
 	int16 rv = *gl_get_int16_by_name((OBJECT *)object_addr, pname);
 	env->ReleaseStringUTFChars(propertyname, pname);
 	return rv;
@@ -578,7 +578,7 @@ EXPORT jint JNICALL Java_gridlabd_GridlabD_get_1int32(JNIEnv *env, jobject _this
 }
 
 EXPORT jint JNICALL Java_gridlabd_GridlabD_get_1int32_1by_1name(JNIEnv *env, jobject _this, jlong object_addr, jstring propertyname){
-	char *pname =(char *)env->GetStringUTFChars(propertyname, NULL);
+	char *pname =(char *)env->GetStringUTFChars(propertyname, nullptr);
 	int32 rv = *gl_get_int32_by_name((OBJECT *)object_addr, pname);
 	env->ReleaseStringUTFChars(propertyname, pname);
 	return rv;
@@ -589,7 +589,7 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1int64(JNIEnv *env, jobject _thi
 }
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1int64_1by_1name(JNIEnv *env, jobject _this, jlong object_addr, jstring propertyname){
-	char *pname =(char *)env->GetStringUTFChars(propertyname, NULL);
+	char *pname =(char *)env->GetStringUTFChars(propertyname, nullptr);
 	int64 rv = *gl_get_int64_by_name((OBJECT *)object_addr, pname);
 	env->ReleaseStringUTFChars(propertyname, pname);
 	return rv;
@@ -600,7 +600,7 @@ EXPORT jdouble JNICALL Java_gridlabd_GridlabD_get_1double(JNIEnv *env, jobject _
 }
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_get_1double_1by_1name(JNIEnv *env, jobject _this, jlong object_addr, jstring propertyname){
-	char *pname =(char *)env->GetStringUTFChars(propertyname, NULL);
+	char *pname =(char *)env->GetStringUTFChars(propertyname, nullptr);
 	int l = env->GetStringUTFLength(propertyname);
 	double rv = *gl_get_double_by_name((OBJECT *)object_addr, pname);
 	env->ReleaseStringUTFChars(propertyname, pname);
@@ -613,7 +613,7 @@ EXPORT jstring JNICALL Java_gridlabd_GridlabD_get_1string(JNIEnv *env, jobject _
 }
 
 EXPORT jstring JNICALL Java_gridlabd_GridlabD_get_1string_1by_1name(JNIEnv *env, jobject _this, jlong object_addr, jstring propertyname){
-	char *pname =(char *)env->GetStringUTFChars(propertyname, NULL);
+	char *pname =(char *)env->GetStringUTFChars(propertyname, nullptr);
 	char *str = gl_get_string_by_name((OBJECT *)object_addr, pname);
 	env->ReleaseStringUTFChars(propertyname, pname);
 	return env->NewStringUTF(str);
@@ -627,7 +627,7 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1object_1prop(JNIEnv *env, jobje
 
 // new for glmjava
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1object_1by_1name(JNIEnv *env, jobject _this, jlong object_addr, jstring propertyname){
-	char *pname =(char *)env->GetStringUTFChars(propertyname, NULL);
+	char *pname =(char *)env->GetStringUTFChars(propertyname, nullptr);
 	int64 rv = (int64)gl_get_object_prop((OBJECT *)object_addr, gl_get_property((OBJECT *)object_addr, pname));
 	env->ReleaseStringUTFChars(propertyname, pname);
 	return rv;
@@ -644,8 +644,8 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_get_1object_1by_1name(JNIEnv *env, j
 // gl_free is not relevant to glmjava modules. -mhauer
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_create_1aggregate(JNIEnv *env, jobject _this, jstring aggregator, jstring group_expression){
-	char *agstr = (char *)env->GetStringUTFChars(aggregator, NULL);
-	char *expstr = (char *)env->GetStringUTFChars(group_expression, NULL);
+	char *agstr = (char *)env->GetStringUTFChars(aggregator, nullptr);
+	char *expstr = (char *)env->GetStringUTFChars(group_expression, nullptr);
 	int64 rv = (int64)gl_create_aggregate(agstr, expstr);
 	env->ReleaseStringUTFChars(group_expression, expstr);
 	env->ReleaseStringUTFChars(aggregator, agstr);
@@ -681,7 +681,7 @@ EXPORT jdouble JNICALL Java_gridlabd_GridlabD_random_1pareto(JNIEnv *env, jobjec
 }
 
 EXPORT jdouble JNICALL Java_gridlabd_GridlabD_random_1sampled(JNIEnv *env, jobject _this, jint n, jdoubleArray x){
-	double *_x = env->GetDoubleArrayElements(x, NULL);
+	double *_x = env->GetDoubleArrayElements(x, nullptr);
 	double rv = gl_random_sampled(0, n, _x);
 	env->ReleaseDoubleArrayElements(x, _x, 0);
 	return rv;
@@ -700,7 +700,7 @@ EXPORT jdouble JNICALL Java_gridlabd_GridlabD_random_1exponential(JNIEnv *env, j
 // gl_globalclock
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_parsetime(JNIEnv *env, jobject _this, jstring value){
-	char *timestr = (char *)env->GetStringUTFChars(value, NULL);
+	char *timestr = (char *)env->GetStringUTFChars(value, nullptr);
 	int64 rv = gl_parsetime(timestr);
 	env->ReleaseStringUTFChars(value, timestr);
 	return rv;
@@ -728,8 +728,8 @@ EXPORT jdouble JNICALL Java_gridlabd_GridlabD_tominutes(JNIEnv *env, jobject _th
 // gl_gethour
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_global_1create(JNIEnv *env, jobject _this, jstring name, jstring args){
-	char *namestr = (char *)env->GetStringUTFChars(name, NULL);
-	char *argstr = (char *)env->GetStringUTFChars(args, NULL);
+	char *namestr = (char *)env->GetStringUTFChars(name, nullptr);
+	char *argstr = (char *)env->GetStringUTFChars(args, nullptr);
 	int rv = gl_global_setvar(namestr, argstr);
 	env->ReleaseStringUTFChars(args, argstr);
 	env->ReleaseStringUTFChars(name, namestr);
@@ -737,8 +737,8 @@ EXPORT jlong JNICALL Java_gridlabd_GridlabD_global_1create(JNIEnv *env, jobject 
 }
 
 EXPORT jint JNICALL Java_gridlabd_GridlabD_global_1setvar(JNIEnv *env, jobject _this, jstring def, jstring args){
-	char *namestr = (char *)env->GetStringUTFChars(def, NULL);
-	char *argstr = (char *)env->GetStringUTFChars(args, NULL);
+	char *namestr = (char *)env->GetStringUTFChars(def, nullptr);
+	char *argstr = (char *)env->GetStringUTFChars(args, nullptr);
 	int rv = gl_global_setvar(namestr, argstr);
 	env->ReleaseStringUTFChars(args, argstr);
 	env->ReleaseStringUTFChars(def, namestr);
@@ -747,14 +747,14 @@ EXPORT jint JNICALL Java_gridlabd_GridlabD_global_1setvar(JNIEnv *env, jobject _
 
 EXPORT jstring JNICALL Java_gridlabd_GridlabD_global_1getvar(JNIEnv *env, jobject _this, jstring name){
 	char buffer[1025];
-	char *namestr = (char *)env->GetStringUTFChars(name, NULL);
+	char *namestr = (char *)env->GetStringUTFChars(name, nullptr);
 	int64 rv = (int64)gl_global_getvar(namestr, buffer, 1024);
 	env->ReleaseStringUTFChars(name, namestr);
-	return rv ? env->NewStringUTF(buffer) : NULL;
+	return rv ? env->NewStringUTF(buffer) : nullptr;
 }
 
 EXPORT jlong JNICALL Java_gridlabd_GridlabD_global_1find(JNIEnv *env, jobject _this, jstring name){
-	char *namestr = (char *)env->GetStringUTFChars(name, NULL);
+	char *namestr = (char *)env->GetStringUTFChars(name, nullptr);
 	int64 rv = (int64)gl_global_find(namestr);
 	env->ReleaseStringUTFChars(name, namestr);
 	return rv;
@@ -776,26 +776,26 @@ EXPORT jstring Java_gridlabd_GridlabD_name(JNIEnv *env, jobject _this, jlong mya
 	char *ptr;
 	OBJECT *my = (OBJECT *)myaddr;
 	if(my == 0){
-		return NULL;
+		return nullptr;
 	}
 	ptr = gl_name(my, buffer, 255);
 	if(ptr){
 		return env->NewStringUTF(buffer);
 	} else {
-		return NULL;
+		return nullptr;
 	}
 }
 
 // gl_schedule_find
 JNIEXPORT jlong JNICALL Java_gridlabd_GridlabD_find_1schedule(JNIEnv *env, jobject _this, jstring name){
-	char *namestr = (char *)env->GetStringUTFChars(name, NULL);
+	char *namestr = (char *)env->GetStringUTFChars(name, nullptr);
 	return (jlong)(callback->schedule.find(namestr));
 }
 
 // gl_schedule_create
 JNIEXPORT jlong JNICALL Java_gridlabd_GridlabD_schedule_1create(JNIEnv *env, jobject _this, jstring name, jstring def){
-	char *namestr = (char *)(env->GetStringUTFChars(name, NULL));
-	char *definition = (char *)(env->GetStringUTFChars(def, NULL));
+	char *namestr = (char *)(env->GetStringUTFChars(name, nullptr));
+	char *definition = (char *)(env->GetStringUTFChars(def, nullptr));
 	return (jlong)(callback->schedule.create(namestr, definition));
 }
 

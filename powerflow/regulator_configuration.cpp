@@ -59,13 +59,13 @@ regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_librar
 			PT_double, "compensator_x_setting_B[V]",PADDR(ldc_X_V_B),PT_DESCRIPTION,"Line Drop Compensation X setting of regulator control (in volts) on Phase B",
 			PT_double, "compensator_x_setting_C[V]",PADDR(ldc_X_V_C),PT_DESCRIPTION,"Line Drop Compensation X setting of regulator control (in volts) on Phase C",
 			PT_set, "CT_phase",PADDR(CT_phase),PT_DESCRIPTION,"phase(s) monitored by CT",
-				PT_KEYWORD, "A",(set)PHASE_A,
-				PT_KEYWORD, "B",(set)PHASE_B,
-				PT_KEYWORD, "C",(set)PHASE_C,
+				PT_KEYWORD, "A",(gld::set)PHASE_A,
+				PT_KEYWORD, "B",(gld::set)PHASE_B,
+				PT_KEYWORD, "C",(gld::set)PHASE_C,
 			PT_set, "PT_phase",PADDR(PT_phase),PT_DESCRIPTION,"phase(s) monitored by PT",
-				PT_KEYWORD, "A",(set)PHASE_A,
-				PT_KEYWORD, "B",(set)PHASE_B,
-				PT_KEYWORD, "C",(set)PHASE_C,
+				PT_KEYWORD, "A",(gld::set)PHASE_A,
+				PT_KEYWORD, "B",(gld::set)PHASE_B,
+				PT_KEYWORD, "C",(gld::set)PHASE_C,
 			PT_double, "regulation",PADDR(regulation),PT_DESCRIPTION,"regulation of voltage regulator in %",
 			PT_enumeration, "control_level",PADDR(control_level),PT_DESCRIPTION,"Designates whether control is on per-phase or banked level",
 				PT_KEYWORD, "INDIVIDUAL", (enumeration)INDIVIDUAL,
@@ -85,7 +85,7 @@ regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_librar
 			PT_int16, "tap_pos_A",PADDR(tap_posA),PT_DESCRIPTION,"initial tap position of phase A",
 			PT_int16, "tap_pos_B",PADDR(tap_posB),PT_DESCRIPTION,"initial tap position of phase B",
 			PT_int16, "tap_pos_C",PADDR(tap_posC),PT_DESCRIPTION,"initial tap position of phase C",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
 

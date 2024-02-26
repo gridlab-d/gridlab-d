@@ -14,7 +14,7 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CCore_testDlg dialog
 
-CCore_testDlg::CCore_testDlg(CWnd* pParent /*=NULL*/)
+CCore_testDlg::CCore_testDlg(CWnd* pParent /*=nullptr*/)
 	: CDialog(CCore_testDlg::IDD, pParent)
 {
 	//{{AFX_DATA_INIT(CCore_testDlg)

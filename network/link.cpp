@@ -57,20 +57,20 @@
 // link CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* link::oclass = NULL;
-CLASS* link::pclass = NULL;
-link *link::defaults = NULL;
-CLASS *link_class = (NULL);
-OBJECT *last_link = (NULL);
+CLASS* link::oclass = nullptr;
+CLASS* link::pclass = nullptr;
+link *link::defaults = nullptr;
+CLASS *link_class = (nullptr);
+OBJECT *last_link = (nullptr);
 
 link::link(MODULE *mod) 
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		link_class = oclass = gl_register_class(mod,"link",sizeof(link),PC_BOTTOMUP|PC_UNSAFE_OVERRIDE_OMIT);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class link";
 		else
 			oclass->trl = TRL_STANDALONE;
@@ -82,15 +82,15 @@ link::link(MODULE *mod)
 			PT_double, "B", PADDR(B),
 			PT_object, "from", PADDR(from),
 			PT_object, "to", PADDR(to),
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// setup the default values
 		defaults = this;
 		Y = complex(0,0);
 		B = 0.0;
 		I = complex(0,0);
-		from = NULL;
-		to = NULL;
+		from = nullptr;
+		to = nullptr;
 		turns_ratio = 1.0;
 	}
 }
@@ -104,12 +104,12 @@ int link::create()
 int link::init(node *parent)
 {
 	node *f = OBJECTDATA(from,node);
-	if (f==NULL)
+	if (f==nullptr)
 		throw "from node not specified";
 	f->attach(this);
 
 	node *t = OBJECTDATA(to,node);
-	if (t==NULL)
+	if (t==nullptr)
 		throw "to node not specified";
 	t->attach(this);
 
@@ -201,7 +201,7 @@ void link::apply_dV(OBJECT *source, complex dV)
 EXPORT int create_link(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(link_class);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		last_link = *obj;
 		link *my = OBJECTDATA(*obj,link);

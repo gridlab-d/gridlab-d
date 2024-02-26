@@ -42,7 +42,7 @@
 #include "schedule.h"
 #include "exec.h"
 
-static loadshape *loadshape_list = NULL;
+static loadshape *loadshape_list = nullptr;
 static unsigned int n_shapes = 0;
 
 static void sync_analog(loadshape *ls, double dt)
@@ -493,7 +493,7 @@ int loadshape_create(loadshape *data)
 int loadshape_initall(void)
 {
 	loadshape *ls;
-	for (ls=loadshape_list; ls!=NULL; ls=ls->next)
+	for (ls=loadshape_list; ls!=nullptr; ls=ls->next)
 	{
 		if (loadshape_init(ls)==1)
 			return FAILED;
@@ -520,7 +520,7 @@ void loadshape_recalc(loadshape *ls)
 	case MT_QUEUED:
 		ls->d[MS_OFF] = ls->params.queued.q_off;
 		ls->d[MS_ON] = ls->params.queued.q_on;
-		if (ls->s == 0 && ls->schedule!=NULL) /* load is off */
+		if (ls->s == 0 && ls->schedule!=nullptr) /* load is off */
 		{
 			/* recalculate time to next on */
 			ls->r = 1/random_exponential(&(ls->rng_state),ls->schedule->value * ls->params.pulsed.scalar * (ls->params.queued.q_on - ls->params.queued.q_off));
@@ -533,7 +533,7 @@ void loadshape_recalc(loadshape *ls)
 		break;
 	}
 
-	if (ls->schedule!=NULL && ls->schedule->duration==0)
+	if (ls->schedule!=nullptr && ls->schedule->duration==0)
 	{
 		ls->load = 0;
 		ls->t2=TS_NEVER;
@@ -550,7 +550,7 @@ int loadshape_init(loadshape *ls) /**< load shape */
 	}
 
 	/* no schedule -> nothing to initialized */
-	if (ls->schedule==NULL && ls->type!=MT_SCHEDULED){
+	if (ls->schedule==nullptr && ls->type!=MT_SCHEDULED){
 		output_warning("loadshape_init(): a loadshape without a schedule is meaningless");
 		ls->t2 = TS_NEVER;
 		return 0;
@@ -734,7 +734,7 @@ int loadshape_init(loadshape *ls) /**< load shape */
 	}
 	
 	/* initialize the random number generator state */
-	ls->rng_state = randwarn(NULL);
+	ls->rng_state = randwarn(nullptr);
 
 	/* establish the initial parameters */
 	loadshape_recalc(ls);
@@ -755,7 +755,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 #endif
 
 	/* if the clock is running and the loadshape is driven by a schedule */
-	if (ls->schedule!=NULL && t1 > ls->t0)
+	if (ls->schedule!=nullptr && t1 > ls->t0)
 	{
 		double dt = ls->t0>0 ? (double)(t1 - ls->t0)/3600 : 0.0;
 
@@ -907,7 +907,7 @@ void *loadshape_syncproc(void *ptr)
 
 		// process the list for this thread
 		t2 = TS_NEVER;
-		for ( s=data->ls, n=0 ; s!=NULL, n<data->ns ; s=s->next, n++ )
+		for ( s=data->ls, n=0 ; s!=nullptr, n<data->ns ; s=s->next, n++ )
 		{
 			TIMESTAMP t = loadshape_sync(s,next_t1_ls);
 			if (t<t2) t2 = t;
@@ -937,7 +937,7 @@ void *loadshape_syncproc(void *ptr)
 TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 {
 	static unsigned int n_threads_ls=0;
-	static LOADSHAPESYNCDATA *thread_ls = NULL;
+	static LOADSHAPESYNCDATA *thread_ls = nullptr;
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t ts = (clock_t)exec_clock();
 
@@ -979,7 +979,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 			memset(thread_ls,0,sizeof(LOADSHAPESYNCDATA)*n_threads_ls);
 
 			// assign starting shape for each thread
-			for (s=loadshape_list; s!=NULL; s=s->next)
+			for (s=loadshape_list; s!=nullptr; s=s->next)
 			{
 				if (thread_ls[ln].ns==n_items)
 					ln++;
@@ -992,7 +992,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 			for (n=0; n<n_threads_ls; n++)
 			{
 				thread_ls[n].ok = true;
-				if ( pthread_create(&(thread_ls[n].pt),NULL,loadshape_syncproc,&(thread_ls[n]))!=0 )
+				if ( pthread_create(&(thread_ls[n].pt),nullptr,loadshape_syncproc,&(thread_ls[n]))!=0 )
 				{
 					output_fatal("loadshape_sync thread creation failed");
 					thread_ls[n].ok = false;
@@ -1012,7 +1012,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 	{
 		// process list directly
 		loadshape *s;
-		for (s=loadshape_list; s!=NULL; s=s->next)
+		for (s=loadshape_list; s!=nullptr; s=s->next)
 		{
 			TIMESTAMP t3 = loadshape_sync(s,t1);
 			if (t3<t2) t2 = t3;
@@ -1126,7 +1126,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 {
 	loadshape *ls = (loadshape*)data;
 	char buffer[1024];
-	char *token = NULL;
+	char *token = nullptr;
 
 	/* check string length before copying to buffer */
 	if (strlen(string)>sizeof(buffer)-1)
@@ -1140,7 +1140,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 	ls->type = MT_UNKNOWN;
 
 	/* parse tuples separate by semicolon*/
-	while ((token=strtok(token==NULL?buffer:NULL,";"))!=NULL)
+	while ((token=strtok(token==nullptr?buffer:nullptr,";"))!=nullptr)
 	{
 		/* colon separate tuple parts */
 		char *param = token;
@@ -1148,7 +1148,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 
 		/* isolate param and token and eliminte leading whitespaces */
 		while (*param!='\0' && (isspace(*param) || iscntrl(*param))) param++;		
-		if (value==NULL)
+		if (value==nullptr)
 			value= const_cast<char*>("1");
 		else
 			*value++ = '\0'; /* separate value from param */
@@ -1213,7 +1213,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 		else if (strcmp(param,"schedule")==0)
 		{
 			SCHEDULE *s = schedule_find_byname(value);
-			if (s==NULL)
+			if (s==nullptr)
 			{
 				output_error("convert_to_loadshape(string='%-.64s...', ...) schedule '%s' does not exist",string,value);
 				return 0;

@@ -155,7 +155,7 @@ motor::motor(MODULE *mod):node(mod)
 			PT_double, "sigma1", PADDR(sigma1),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"intermediate variable 1 associated with synch. react.",
 			PT_double, "sigma2", PADDR(sigma2),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"intermediate variable 2 associated with synch. react.",
 
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_motor)==nullptr)
@@ -417,7 +417,7 @@ int motor::init(OBJECT *parent)
 			}
 
 			//Pull the value
-			temp_gld_property->getp<enumeration>(temp_house_type,*test_rlock);
+			temp_gld_property->getp<enumeration>(temp_house_type, *test_rlock);
 
 			//Delete the connection
 			delete temp_gld_property;
@@ -478,7 +478,7 @@ int motor::init(OBJECT *parent)
 			}
 
 			//Pull the value
-			temp_gld_property->getp<enumeration>(temp_house_type,*test_rlock);
+			temp_gld_property->getp<enumeration>(temp_house_type, *test_rlock);
 
 			//Delete the connection
 			delete temp_gld_property;

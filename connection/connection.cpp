@@ -8,7 +8,7 @@
 connection_mode::connection_mode(void)
 {
 	seqnum = 0;
-	transport = NULL;
+	transport = nullptr;
 	ignore_error = 1;
 }
 
@@ -30,14 +30,14 @@ void connection_mode::set_translators(EXCHANGETRANSLATOR *out,
 
 connection_mode* connection_mode::new_instance(const char *options)
 {
-	char *next_tag=NULL;
-	char *tag = NULL;
-	connection_mode *connection = NULL;
+	char *next_tag=nullptr;
+	char *tag = nullptr;
+	connection_mode *connection = nullptr;
 	char temp[4096];
 	strcpy(temp,options);
-	while ( (tag=strtok_s(tag==NULL?temp:NULL,",",&next_tag))!=NULL )
+	while ( (tag=strtok_s(tag==nullptr?temp:nullptr,",",&next_tag))!=nullptr )
 	{
-		if ( connection==NULL )
+		if ( connection==nullptr )
 		{
 			CONNECTIONMODE e = get_mode(tag);
 			switch ( e ) {
@@ -49,11 +49,11 @@ connection_mode* connection_mode::new_instance(const char *options)
 				break;
 			default: 
 				gl_error("connection_mode::new_instance(char *options='%s'): unknown connection mode '%s'", options, tag);
-				return NULL;
+				return nullptr;
 				break;
 			}
 		}
-		else if ( connection->get_transport()==NULL )
+		else if ( connection->get_transport()==nullptr )
 		{
 			connection->set_transport(connection_transport::get_transport(tag));
 		}
@@ -64,13 +64,13 @@ connection_mode* connection_mode::new_instance(const char *options)
 			if ( n==0 )
 			{
 				gl_error("connection_mode::new_instance(char *options='%s'): unable to parse tag '%s'", options, tag);
-				return NULL;
+				return nullptr;
 			}
 			else if ( n==1 )
 			{
 				// TODO add flag options here
 				gl_error("connection_mode::new_instance(char *options='%s'): unrecognized tag '%s'", options, tag);
-				return NULL;
+				return nullptr;
 			}
 			else if ( n==2 )
 			{
@@ -84,14 +84,14 @@ connection_mode* connection_mode::new_instance(const char *options)
 					else
 					{
 						gl_error("connection_mode::new_instance(char *options='%s'): unrecognized %s value '%s'", options, cmd, arg);
-						return NULL;
+						return nullptr;
 					}
 				}
 				// TODO add multi-argument options here
 				else
 				{
 					gl_error("connection_mode::new_instance(char *options='%s'): unrecognized tag '%s'", options, tag);
-					return NULL;
+					return nullptr;
 				}
 				goto OK;
 			}
@@ -99,16 +99,16 @@ connection_mode* connection_mode::new_instance(const char *options)
 			if ( !connection->option(tag)  )
 			{
 				gl_error("connection_mode::new_instance(char *options='%s'): unrecognized connection option '%s'", options, tag);
-				return NULL;
+				return nullptr;
 			}
 		}
 	}
 OK:
-	if ( connection==NULL )
+	if ( connection==nullptr )
 	{
 		gl_warning("connection_mode::new_instance(char *options='%s'): connection mode not specified", options);
 	}
-	if ( connection->get_transport()==NULL )
+	if ( connection->get_transport()==nullptr )
 	{
 		gl_warning("connection_mode::new_instance(char *options='%s'): transport not specified, using default UDP", options);
 		connection->set_transport(CT_UDP);
@@ -120,18 +120,18 @@ OK:
 void connection_mode::set_transport(CONNECTIONTRANSPORT t)
 {
 	// ignore same transport
-	if ( transport!=NULL && transport->get_transport()==t )
+	if ( transport!=nullptr && transport->get_transport()==t )
 		return;
 
 	// delete old transport
-	if ( transport!=NULL )
+	if ( transport!=nullptr )
 		delete transport; 
 
 	// create new transport
 	transport = connection_transport::new_instance(t);
 
 	// check result
-	if ( transport==NULL )
+	if ( transport==nullptr )
 		gl_warning("connection_mode::set_transport(): unable to create new instance");
 
 	// reset sequence number
@@ -255,7 +255,7 @@ int connection_mode::update(varmap *varlist, const char *tag, TRANSLATOR *xlate)
 	int count=0;
 	VARMAP *v;
 	//update outgoing cache variables with the local values
-	for ( v = varlist->getfirst() ; v!=NULL ; v = v->next )
+	for ( v = varlist->getfirst() ; v!=nullptr ; v = v->next )
 		if ( !update(v,DXD_WRITE,xlate) )
 			return -1;
 		else
@@ -273,7 +273,7 @@ int connection_mode::update(varmap *varlist, const char *tag, TRANSLATOR *xlate)
 					MSG_DATA,&write_cache,
 				MSG_CLOSE,
 				MSG_COMPLETE, &id,
-				NULL)<0 )
+				nullptr)<0 )
 			return -1;
 		//recieve incoming data
 		if ( server_response(
@@ -283,11 +283,11 @@ int connection_mode::update(varmap *varlist, const char *tag, TRANSLATOR *xlate)
 					MSG_DATA,&read_cache,
 				MSG_CLOSE,
 				MSG_COMPLETE, &id,
-				NULL)<0 )
+				nullptr)<0 )
 			return ignore_error>0;
 		//update local variables with incoming cache values.
 		count = 0;
-		for ( v = varlist->getfirst() ; v!=NULL ; v = v->next )
+		for ( v = varlist->getfirst() ; v!=nullptr ; v = v->next )
 			if ( !update(v,DXD_READ,xlate) )
 				return -1;
 			else
@@ -302,19 +302,19 @@ cacheitem *connection_mode::create_cache(VARMAP *map)
 {
 	if ( map->dir==DXD_READ ){
 		cacheitem * item = read_cache.find_item(map);
-		if(item != NULL){
+		if(item != nullptr){
 			return item;
 		} else{
 			return read_cache.add_item(map);
 		}
 	} else if ( map->dir==DXD_WRITE ){
 		cacheitem * item = write_cache.find_item(map);
-		if(item != NULL){
+		if(item != nullptr){
 			return item;
 		} else{
 			return write_cache.add_item(map);
 		}
-	} else return NULL;
+	} else return nullptr;
 }
 
 int connection_mode::exchange(EXCHANGETRANSLATOR *xlate, bool critical)
@@ -327,7 +327,7 @@ int connection_mode::exchange(EXCHANGETRANSLATOR *xlate, bool critical)
 	else
 		debug(9,"message queue control: MSG_INITIATE (critical=%s)", critical?"yes":"no");
 	transport->reset_fieldcount();
-	xlate(transport,NULL,NULL,ET_GROUPOPEN,ETO_NONE);
+	xlate(transport,nullptr,nullptr,ET_GROUPOPEN,ETO_NONE);
 	transport->reset_fieldcount();
 	return 0;
 }
@@ -345,9 +345,9 @@ int connection_mode::exchange(EXCHANGETRANSLATOR *xlate)
 int connection_mode::exchange(EXCHANGETRANSLATOR *xlate, int64 *id)
 {
 	exchange(xlate,"id",(int64&)seqnum);
-	if ( id!=NULL ) *id = seqnum;
+	if ( id!=nullptr ) *id = seqnum;
 	transport->reset_fieldcount();
-	xlate(transport,NULL,NULL,ET_GROUPCLOSE,ETO_NONE);
+	xlate(transport,nullptr,nullptr,ET_GROUPCLOSE,ETO_NONE);
 	if ( !transport->message_close() )
 	{
 		error("message queue closed with none open");
@@ -416,14 +416,14 @@ int connection_mode::exchange_data(EXCHANGETRANSLATOR *xlate, cache *list)
 }
 int connection_mode::exchange_open(EXCHANGETRANSLATOR *xlate, char *tag)
 {
-	int status = xlate(transport,tag,NULL,ET_GROUPOPEN,ETO_QUOTES);
+	int status = xlate(transport,tag,nullptr,ET_GROUPOPEN,ETO_QUOTES);
 	transport->reset_fieldcount();
 	return status;
 }
 int connection_mode::exchange_close(EXCHANGETRANSLATOR *xlate)
 {
 	transport->reset_fieldcount();
-	return xlate(transport,NULL,NULL,ET_GROUPCLOSE,ETO_NONE);
+	return xlate(transport,nullptr,nullptr,ET_GROUPCLOSE,ETO_NONE);
 }
 
 int connection_mode::send(char *buf, size_t len)
@@ -440,7 +440,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 	bool critical = flag==MSG_CRITICAL;
 	int count;
 	int msgcount = 0;
-	int64 *id=NULL;
+	int64 *id=nullptr;
 	bool stop = false;
 	va_list flg;
 	va_start(flg, flag);
@@ -498,7 +498,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 				case MSG_SCHEMA:
 				{
 					DATAEXCHANGEDIRECTION dir = (DATAEXCHANGEDIRECTION)va_arg(flg,int);
-					debug(9,"connection_mode::exchange(...) MSG_SCHEMA('%s',cache=0x%p)",dir==DXD_READ?"input":(dir==DXD_WRITE?"output":"invalid"),dir==DXD_READ?&read_cache:(dir==DXD_WRITE?&write_cache:NULL));
+					debug(9,"connection_mode::exchange(...) MSG_SCHEMA('%s',cache=0x%p)",dir==DXD_READ?"input":(dir==DXD_WRITE?"output":"invalid"),dir==DXD_READ?&read_cache:(dir==DXD_WRITE?&write_cache:nullptr));
 					if( dir==DXD_READ){
 						if ( exchange_schema(xlate_out,&read_cache)<0 )
 						{
@@ -702,7 +702,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 			case MSG_SCHEMA:
 			{
 				DATAEXCHANGEDIRECTION dir = (DATAEXCHANGEDIRECTION)va_arg(flg,int);
-				debug(9,"connection_mode::exchange(...) MSG_SCHEMA('%s',cache=0x%p)",dir==DXD_READ?"input":(dir==DXD_WRITE?"output":"invalid"),dir==DXD_READ?&read_cache:(dir==DXD_WRITE?&write_cache:NULL));
+				debug(9,"connection_mode::exchange(...) MSG_SCHEMA('%s',cache=0x%p)",dir==DXD_READ?"input":(dir==DXD_WRITE?"output":"invalid"),dir==DXD_READ?&read_cache:(dir==DXD_WRITE?&write_cache:nullptr));
 				if( dir==DXD_READ){
 					if ( exchange_schema(xlate_out,&read_cache)<0 )
 					{
@@ -865,7 +865,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 	bool critical = flag==MSG_CRITICAL;
 	int count;
 	int msgcount = 0;
-	int64 *id=NULL;
+	int64 *id=nullptr;
 	bool stop = false;
 	va_list flg;
 	va_start(flg, flag);
@@ -921,7 +921,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 			case MSG_SCHEMA:
 			{
 				DATAEXCHANGEDIRECTION dir = (DATAEXCHANGEDIRECTION)va_arg(flg,int);
-				debug(9,"connection_mode::exchange(...) MSG_SCHEMA('%s',cache=0x%p)",dir==DXD_READ?"input":(dir==DXD_WRITE?"output":"invalid"),dir==DXD_READ?&read_cache:(dir==DXD_WRITE?&write_cache:NULL));
+				debug(9,"connection_mode::exchange(...) MSG_SCHEMA('%s',cache=0x%p)",dir==DXD_READ?"input":(dir==DXD_WRITE?"output":"invalid"),dir==DXD_READ?&read_cache:(dir==DXD_WRITE?&write_cache:nullptr));
 				if( dir==DXD_READ){
 					if ( exchange_schema(xlate_out,&read_cache)<0 )
 					{
@@ -1130,7 +1130,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 				case MSG_SCHEMA:
 				{
 					DATAEXCHANGEDIRECTION dir = (DATAEXCHANGEDIRECTION)va_arg(flg,int);
-					debug(9,"connection_mode::exchange(...) MSG_SCHEMA('%s',cache=0x%p)",dir==DXD_READ?"input":(dir==DXD_WRITE?"output":"invalid"),dir==DXD_READ?&read_cache:(dir==DXD_WRITE?&write_cache:NULL));
+					debug(9,"connection_mode::exchange(...) MSG_SCHEMA('%s',cache=0x%p)",dir==DXD_READ?"input":(dir==DXD_WRITE?"output":"invalid"),dir==DXD_READ?&read_cache:(dir==DXD_WRITE?&write_cache:nullptr));
 					if( dir==DXD_READ){
 						if ( exchange_schema(xlate_out,&read_cache)<0 )
 						{

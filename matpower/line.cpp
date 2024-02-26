@@ -19,12 +19,12 @@
 
 #include "line.h"
 
-CLASS *line::oclass = NULL;
-line *line::defaults = NULL;
+CLASS *line::oclass = nullptr;
+line *line::defaults = nullptr;
 
 #ifdef OPTIONAL
 /* TODO: define this to allow the use of derived classes */
-CLASS *PARENTline::pclass = NULL;
+CLASS *PARENTline::pclass = nullptr;
 #endif
 
 /* TODO: remove passes that aren't needed */
@@ -44,11 +44,11 @@ line::line(MODULE *module)
 	/* TODO: include this if you are deriving this from a superclass */
   pclass = SUPERCLASS::oclass;
 #endif
-  if (oclass==NULL)
+  if (oclass==nullptr)
     {
       // pclass = wholesale_object::oclass;
       oclass = gl_register_class(module,"line",sizeof(line),passconfig);
-      if (oclass==NULL)
+      if (oclass==nullptr)
 	GL_THROW("unable to register object class implemented by %s", __FILE__);
       
       if (gl_publish_variable(oclass,
@@ -68,7 +68,7 @@ line::line(MODULE *module)
               PT_double, "ANGMIN", PADDR(ANGMIN),       // minimum angle difference, \theta_f - \theta_t (degrees)
               PT_double, "ANGMAX", PADDR(ANGMAX),       // maximum angle difference, \theta_f - \theta_t (degrees)
            
-              NULL)<1 && errno) GL_THROW("unable to publish properties in %s",__FILE__);
+              nullptr)<1 && errno) GL_THROW("unable to publish properties in %s",__FILE__);
       defaults = this;
       memset(this,0,sizeof(line));
       /* TODO: set the default values of all properties here */
@@ -123,7 +123,7 @@ EXPORT int create_line(OBJECT **obj)
 	try
 	{
 		*obj = gl_create_object(line::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 			return OBJECTDATA(*obj,line)->create();
 	}
 	catch (char *msg)
@@ -137,7 +137,7 @@ EXPORT int init_line(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,line)->init(parent);
 	}
 	catch (char *msg)

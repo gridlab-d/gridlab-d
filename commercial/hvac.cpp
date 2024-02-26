@@ -44,7 +44,7 @@ OBJECT *last_hvac = nullptr;
 EXPORT int create_hvac(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(hvac_class);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		last_hvac = *obj;
 		hvac *my = OBJECTDATA(*obj,hvac);

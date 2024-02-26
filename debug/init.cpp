@@ -13,10 +13,10 @@
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
-	if (set_callback(fntable)==NULL)
+	if (set_callback(fntable)==nullptr)
 	{
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
 	try {
@@ -25,7 +25,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	catch (const char *msg)
 	{
 		gl_error("exception caught: %s", msg);
-		return NULL;
+		return nullptr;
 	}
 
 	/* always return the first class registered */

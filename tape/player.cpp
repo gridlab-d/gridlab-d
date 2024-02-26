@@ -44,15 +44,15 @@
 #include "file.h"
 #include "odbc.h"
 
-CLASS *player_class = NULL;
-static OBJECT *last_player = NULL;
+CLASS *player_class = nullptr;
+static OBJECT *last_player = nullptr;
 
 extern TIMESTAMP delta_mode_needed;
 
 PROPERTY *player_link_properties(struct player *player, OBJECT *obj, char *property_list) {
     char *item;
-    PROPERTY *first = NULL, *last = NULL;
-    UNIT *unit = NULL;
+    PROPERTY *first = nullptr, *last = nullptr;
+    UNIT *unit = nullptr;
     PROPERTY *prop;
     PROPERTY *target;
     char1024 list;
@@ -63,11 +63,11 @@ PROPERTY *player_link_properties(struct player *player, OBJECT *obj, char *prope
     int64 cid = -1;
 
     strcpy(list, property_list); /* avoid destroying orginal list */
-    for (item = strtok(list, ","); item != NULL; item = strtok(NULL, ",")) {
-        prop = NULL;
-        target = NULL;
+    for (item = strtok(list, ","); item != nullptr; item = strtok(nullptr, ",")) {
+        prop = nullptr;
+        target = nullptr;
         scale = 1.0;
-        unit = NULL;
+        unit = nullptr;
         cpart = 0;
         cid = -1;
 
@@ -75,10 +75,10 @@ PROPERTY *player_link_properties(struct player *player, OBJECT *obj, char *prope
         while (isspace(*item)) item++;
         if (2 == sscanf(item, "%[A-Za-z0-9_.][%[^]\n,]", pstr.get_string(), ustr.get_string())) {
             unit = gl_find_unit(ustr);
-            if (unit == NULL) {
+            if (unit == nullptr) {
                 gl_error("sync_player:%d: unable to find unit '%s' for property '%s'", obj->id, ustr.get_string(),
                          pstr.get_string());
-                return NULL;
+                return nullptr;
             }
             item = pstr;
         }
@@ -87,7 +87,7 @@ PROPERTY *player_link_properties(struct player *player, OBJECT *obj, char *prope
         /* branch: test to see if we're trying to split up a complex property */
         /* must occur w/ *cpart=0 before gl_get_property in order to properly reformat the property name string */
         cpart = strchr(item, '.');
-        if (cpart != NULL) {
+        if (cpart != nullptr) {
             if (strcmp("imag", cpart + 1) == 0) {
                 cid = (int) ((int64) &(oblig.Im()) - (int64) &oblig);
                 *cpart = 0;
@@ -98,27 +98,27 @@ PROPERTY *player_link_properties(struct player *player, OBJECT *obj, char *prope
             }
         }
 
-        target = gl_get_property(obj, item, NULL);
+        target = gl_get_property(obj, item, nullptr);
 
-        if (prop != NULL && target != NULL) {
-            if (unit != NULL && target->unit == NULL) {
+        if (prop != nullptr && target != nullptr) {
+            if (unit != nullptr && target->unit == nullptr) {
 				gl_warning("sync_player:%d: property '%s' is unitless, ignoring unit conversion", obj->id, item);
-            } else if (unit != NULL && 0 == gl_convert_ex(target->unit, unit, &scale)) {
+            } else if (unit != nullptr && 0 == gl_convert_ex(target->unit, unit, &scale)) {
                 gl_error("sync_player:%d: unable to convert property '%s' units to '%s'", obj->id, item,
                          ustr.get_string());
-                return NULL;
+                return nullptr;
             }
-            if (first == NULL) first = prop; else last->next = prop;
+            if (first == nullptr) first = prop; else last->next = prop;
             last = prop;
             memcpy(prop, target, sizeof(PROPERTY));
             prop->unit = unit;
-            //if(unit == NULL && player->line_units == LU_ALL){
+            //if(unit == nullptr && player->line_units == LU_ALL){
             //	prop->unit = target->unit;
             //}
-            prop->next = NULL;
+            prop->next = nullptr;
         } else {
             gl_error("sync_player: property '%s' not found", item);
-            return NULL;
+            return nullptr;
         }
         if (cid >= 0) { /* doing the complex part thing */
             prop->ptype = PT_double;
@@ -136,9 +136,9 @@ int player_write_properties(struct player *my, OBJECT *thisplyr, OBJECT *obj, PR
     memcpy(bufcpy, buffer, sizeof(char1024));
     char *next;
     char *token = strtok_s(bufcpy, delim, &next);
-    PROPERTY *p = NULL;
-    for (p = prop; p != NULL; p = p->next) {
-        if (token == NULL) {
+    PROPERTY *p = nullptr;
+    for (p = prop; p != nullptr; p = p->next) {
+        if (token == nullptr) {
 			gl_error("sync_player:%d: not enough values on line: %s", thisplyr->id, buffer);
 			return -1;
         }
@@ -151,14 +151,14 @@ int player_write_properties(struct player *my, OBJECT *thisplyr, OBJECT *obj, PR
 			return -1;
         }
         count++;
-        token = strtok_s(NULL, delim, &next);
+        token = strtok_s(nullptr, delim, &next);
     }
     return count;
 }
 
 EXPORT int create_player(OBJECT **obj, OBJECT *parent) {
     *obj = gl_create_object(player_class);
-    if (*obj != NULL)
+    if (*obj != nullptr)
 	{
         struct player *my = OBJECTDATA(*obj, struct player);
         last_player = *obj;
@@ -172,7 +172,7 @@ EXPORT int create_player(OBJECT **obj, OBJECT *parent) {
         my->loopnum = 0;
         my->loop = 0;
         my->status = TS_INIT;
-        my->target = gl_get_property(*obj, my->property, NULL);
+        my->target = gl_get_property(*obj, my->property, nullptr);
         my->delta_track.ns = 0;
         my->delta_track.ts = TS_NEVER;
         my->delta_track.value[0] = '\0';
@@ -206,10 +206,10 @@ static int player_open(OBJECT *obj) {
 
     /* if type is file or file is stdin */
     tf = get_ftable(my->mode);
-    if (tf == NULL)
+    if (tf == nullptr)
         return 0;
     my->ops = tf->player;
-    if (my->ops == NULL)
+    if (my->ops == nullptr)
         return 0;
 
 	//Store the starting timestamp - for deltamode stuff
@@ -270,7 +270,7 @@ TIMESTAMP player_read(OBJECT *obj) {
     struct player *my = OBJECTDATA(obj, struct player);
     char unit[2];
     TIMESTAMP t1;
-    char *result = NULL;
+    char *result = nullptr;
     char1024 value;
     int voff = 0;
 
@@ -295,7 +295,7 @@ TIMESTAMP player_read(OBJECT *obj) {
         memset(tbuf, 0, 64);
         memset(value, 0, 1024);
         memset(tz, 0, 6);
-        if (result == NULL) {
+        if (result == nullptr) {
             if (my->loopnum > 0) {
                 rewind_player(my);
                 my->loopnum--;
@@ -498,8 +498,8 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
     if (my->status == TS_INIT) {
 
         /* get local target if remote is not used and "value" is defined by the user at runtime */
-        if (my->target == NULL && obj->parent == NULL)
-            my->target = gl_get_property(obj, "value", NULL);
+        if (my->target == nullptr && obj->parent == nullptr)
+            my->target = gl_get_property(obj, "value", nullptr);
 
         if (player_open(obj) == 0) {
             gl_fatal("sync_player: Unable to open player file '%s' for object '%s'", my->file.get_string(),
@@ -519,16 +519,16 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
     while (my->status == TS_OPEN && t1 <= t0
            && my->next.ns == 0) /* only use this method when not operating in subsecond mode */
     {    /* post this value */
-        if (my->target == NULL)
+        if (my->target == nullptr)
             my->target = player_link_properties(my, obj->parent, my->property);
-        if (my->target == NULL) {
+        if (my->target == nullptr) {
             gl_fatal("sync_player: Unable to find property '%s' in object %s", my->property.get_string(),
                      obj->name ? obj->name : "(anon)");
             gl_globalexitcode = XC_ARGERR;
 			my->status = TS_ERROR;
 			return TS_INVALID;
         }
-        if (my->target != NULL) {
+        if (my->target != nullptr) {
             OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
 			return_val = player_write_properties(my, obj, target, my->target, my->next.value);
 
@@ -552,7 +552,7 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 
     /* Apply an intermediate value, if necessary - mainly for "DELTA players in non-delta situations" */
-	if ((my->target!=NULL) && (my->delta_track.ts<t0) && (my->delta_track.ns!=0))
+	if ((my->target!=nullptr) && (my->delta_track.ts<t0) && (my->delta_track.ns!=0))
 	{
 		OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
 		return_val = player_write_properties(my, obj, target, my->target, my->delta_track.value);
@@ -569,9 +569,9 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
         temp_t = t1;
 
         /* Copied verbatim from above - just in case it still needs to be done - if a first timestep is a deltamode timestep */
-        if (my->target == NULL)
+        if (my->target == nullptr)
             my->target = player_link_properties(my, obj->parent, my->property);
-        if (my->target == NULL) {
+        if (my->target == nullptr) {
             gl_error("sync_player: Unable to find property \"%s\" in object %s", my->property.get_string(),
                      obj->name ? obj->name : "(anon)");
             my->status = TS_ERROR;
@@ -583,7 +583,7 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		{
 			/* Post the value as we go, so the "final" is correct */
 			/* Apply the "current value", if it is relevant (player_next_value contains the previous, so this will override it) */
-			if ((my->target!=NULL) && (my->next.ts<t0))
+			if ((my->target!=nullptr) && (my->next.ts<t0))
 			{
 				OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
 				return_val = player_write_properties(my, obj, target, my->target, my->next.value);
@@ -620,7 +620,7 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			{
 				/* Post the value as we go, so the "final" is correct */
 				/* Apply the "current value", if it is relevant (player_next_value contains the previous, so this will override it) */
-				if ((my->target!=NULL) && (my->next.ts<t0))
+				if ((my->target!=nullptr) && (my->next.ts<t0))
 				{
 					OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
 					return_val = player_write_properties(my, obj, target, my->target, my->next.value);			

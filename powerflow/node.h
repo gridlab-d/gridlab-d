@@ -207,10 +207,10 @@ public:
 	double GFA_volt_disconnect_time;
 	bool GFA_status;
 
-	set SubNode;			///< Node child/subtype flags (for NR)
-	set busflags;			///< node flags (see NF_*)
-	set busphasesIn;		///< phase check flags for "reconvergent" lines (input)
-	set busphasesOut;		///< phase check flags for output
+	gld::set SubNode;			///< Node child/subtype flags (for NR)
+	gld::set busflags;			///< node flags (see NF_*)
+	gld::set busphasesIn;		///< phase check flags for "reconvergent" lines (input)
+	gld::set busphasesOut;		///< phase check flags for output
 	double maximum_voltage_error;  // convergence voltage limit
 
 	// properties

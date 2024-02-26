@@ -32,7 +32,7 @@ extern MODULE *load_java_module(const char *file, /**< module filename, searches
 									  char *argv[]) /**< arguments passed from the command line */
 {
 	output_error("support for Java modules is implemented somewhere else ~ please review the documentation");
-	return NULL;
+	return nullptr;
 }
 
 extern MODULE *load_python_module(const char *file, /**< module filename, searches \p PATH */
@@ -41,7 +41,7 @@ extern MODULE *load_python_module(const char *file, /**< module filename, search
 {
 	/** @todo add support for Python modules (ticket #120) */
 	output_error("support for Python modules is not implemented yet");
-	return NULL;
+	return nullptr;
 }
 
 /** @} **/

@@ -35,13 +35,13 @@
 #include "odbc.h"
 
 
-CLASS *collector_class = NULL;
-static OBJECT *last_collector = NULL;
+CLASS *collector_class = nullptr;
+static OBJECT *last_collector = nullptr;
 
 EXPORT int create_collector(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(collector_class);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		struct collector *my = OBJECTDATA(*obj,struct collector);
 		last_collector = *obj;
@@ -60,7 +60,7 @@ EXPORT int create_collector(OBJECT **obj, OBJECT *parent)
 		my->status = TS_INIT;
 		my->trigger[0]='\0';
 		my->format = 0;
-		my->aggr = NULL;
+		my->aggr = nullptr;
 		return 1;
 	}
 	return 0;
@@ -101,10 +101,10 @@ static int collector_open(OBJECT *obj)
 
 	/* if type is file or file is stdin */
 	tf = get_ftable(type);
-	if(tf == NULL)
+	if(tf == nullptr)
 		return 0;
 	my->ops = tf->collector;
-	if(my->ops == NULL)
+	if(my->ops == nullptr)
 		return 0;
 	set_csv_options();
 	return my->ops->open(my, fname, flags);
@@ -113,7 +113,7 @@ static int collector_open(OBJECT *obj)
 static int write_collector(struct collector *my, char *ts, char *value)
 {
 	int rc=my->ops->write(my, ts, value);
-	if ( (my->flush==0 || (my->flush>0 && gl_globalclock%my->flush==0)) && my->ops->flush!=NULL )
+	if ( (my->flush==0 || (my->flush>0 && gl_globalclock%my->flush==0)) && my->ops->flush!=nullptr )
 		my->ops->flush(my);
 	return rc;
 }
@@ -156,21 +156,21 @@ static TIMESTAMP collector_write(OBJECT *obj)
 AGGREGATION *link_aggregates(char *aggregate_list, char *group)
 {
 	char *item;
-	AGGREGATION *first=NULL, *last=NULL;
+	AGGREGATION *first=nullptr, *last=nullptr;
 	char1024 list;
 	strcpy(list,aggregate_list); /* avoid destroying orginal list */
-	for (item=strtok(list,","); item!=NULL; item=strtok(NULL,","))
+	for (item=strtok(list,","); item!=nullptr; item=strtok(nullptr,","))
 	{
 		AGGREGATION *aggr = gl_create_aggregate(item,group);
-		if (aggr!=NULL)
+		if (aggr!=nullptr)
 		{
 			/* TODO: ideally the aggregation group program from the previous should be reused */
-			if (first==NULL) first=aggr; else last->next=aggr;
+			if (first==nullptr) first=aggr; else last->next=aggr;
 			last=aggr;
-			aggr->next = NULL;
+			aggr->next = nullptr;
 		}
 		else
-			return NULL; // allowable to have null (zero-length) aggrs, but only give time-varying aggregates
+			return nullptr; // allowable to have null (zero-length) aggrs, but only give time-varying aggregates
 	}
 	return first;
 }
@@ -183,7 +183,7 @@ int read_aggregates(AGGREGATION *aggr, char *buffer, int size)
 	char32 fmt;
 
 	gl_global_getvar(const_cast<char *>("double_format"), fmt, 32);
-	for (p=aggr; p!=NULL && offset<size-33; p=p->next)
+	for (p=aggr; p!=nullptr && offset<size-33; p=p->next)
 	{
 		if (offset>0) strcpy(buffer+offset++,",");
 		offset+=sprintf(buffer+offset,fmt,gl_run_aggregate(p));
@@ -206,11 +206,11 @@ TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 
 	/* connect to property */
-	if (my->aggr==NULL)
+	if (my->aggr==nullptr)
 		my->aggr = link_aggregates(my->property,my->group);
 
 	/* read property */
-	if (my->aggr==NULL)
+	if (my->aggr==nullptr)
 	{
 		sprintf(buffer,"'%s' contains an aggregate that is not found in the group '%s'", (char*)my->property, (char*)my->group);
 		my->status = TS_ERROR;
@@ -226,8 +226,8 @@ TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		}
 	}
 
-	//if(my->aggr != NULL && (my->aggr = link_aggregates(my->property,my->group)),read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
-	if(my->aggr != NULL && (my->interval == 0 || my->interval == -1)){
+	//if(my->aggr != nullptr && (my->aggr = link_aggregates(my->property,my->group)),read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
+	if(my->aggr != nullptr && (my->interval == 0 || my->interval == -1)){
 		if(read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
 		{
 			sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property.get_string(), my->group.get_string());
@@ -236,7 +236,7 @@ TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		}
 	}
 
-	if(my->aggr != NULL && my->interval > 0){
+	if(my->aggr != nullptr && my->interval > 0){
 		if((t0 >= my->last.ts + my->interval) || (t0 == my->last.ts)){
 			if(read_aggregates(my->aggr,buffer,sizeof(buffer))==0){
 				sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property.get_string(), my->group.get_string());

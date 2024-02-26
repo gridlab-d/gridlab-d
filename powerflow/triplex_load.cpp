@@ -103,7 +103,7 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 			PT_double, "current_fraction_12[pu]",PADDR(current_fraction[2]),PT_DESCRIPTION,"this is the constant current fraction of base power on phase 12",
 			PT_double, "impedance_fraction_12[pu]",PADDR(impedance_fraction[2]),PT_DESCRIPTION,"this is the constant impedance fraction of base power on phase 12",
 
-         	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+         	nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			//Publish deltamode functions
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_load)==nullptr)

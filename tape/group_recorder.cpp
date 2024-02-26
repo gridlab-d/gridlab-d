@@ -2,22 +2,22 @@
 
 #include <sstream>
 
-CLASS *group_recorder::oclass = NULL;
-CLASS *group_recorder::pclass = NULL;
-group_recorder *group_recorder::defaults = NULL;
+CLASS *group_recorder::oclass = nullptr;
+CLASS *group_recorder::pclass = nullptr;
+group_recorder *group_recorder::defaults = nullptr;
 
 void new_group_recorder(MODULE *mod){
 	new group_recorder(mod);
 }
 
 group_recorder::group_recorder(MODULE *mod){
-	if(oclass == NULL)
+	if(oclass == nullptr)
 		{
 #ifdef _DEBUG
 		gl_debug("construction group_recorder class");
 #endif
 		oclass = gl_register_class(mod, const_cast<char *>("group_recorder"), sizeof(group_recorder), PC_POSTTOPDOWN);
-        if(oclass == NULL)
+        if(oclass == nullptr)
             GL_THROW(const_cast<char *>("unable to register object class implemented by %s"), __FILE__);
         
         if(gl_publish_variable(oclass,
@@ -37,11 +37,11 @@ group_recorder::group_recorder(MODULE *mod){
 				PT_KEYWORD, "MAG", MAG,
 				PT_KEYWORD, "ANG_DEG", ANG,
 				PT_KEYWORD, "ANG_RAD", ANG_RAD,
-		NULL) < 1){
+		nullptr) < 1){
 			;//GL_THROW("unable to publish properties in %s",__FILE__);
 		}
 
-		if (gl_publish_function(oclass, const_cast<char *>("obj_postupdate_fxn"), (FUNCTIONADDR)group_recorder_postroutine) == NULL)
+		if (gl_publish_function(oclass, const_cast<char *>("obj_postupdate_fxn"), (FUNCTIONADDR)group_recorder_postroutine) == nullptr)
 			GL_THROW(const_cast<char *>("Unable to publish deltamode postupdate function for group_recorder"));
 
 		defaults = this;
@@ -159,7 +159,7 @@ int group_recorder::init(OBJECT *obj){
 	for(gr_obj = gl_find_next(items, 0); gr_obj != 0; gr_obj = gl_find_next(items, gr_obj) ){
 		prop_ptr = gl_get_property(gr_obj, property_name.get_string());
 		// might make this a 'strict-only' issue in the future
-		if(prop_ptr == NULL){
+		if(prop_ptr == nullptr){
 			gl_error("group_recorder::init(): unable to find property '%s' in an object of type '%s'", property_name.get_string(), gr_obj->oclass->name);
 			/* TROUBLESHOOT
 				An error occured while reading the specified property in one of the objects.
@@ -178,7 +178,7 @@ int group_recorder::init(OBJECT *obj){
 	if(!print_units){
 		quickobjlist *itr = obj_list;
 		for(; itr != 0; itr = itr->next){
-			itr->prop.unit = NULL;
+			itr->prop.unit = nullptr;
 		}
 	}
 
@@ -407,7 +407,7 @@ int group_recorder::isa(char *classname){
  **/
 int group_recorder::write_header(){
 //	size_t name_size;
-	time_t now = time(NULL);
+	time_t now = time(nullptr);
 	quickobjlist *qol = 0;
 	OBJECT *obj=OBJECTHDR(this);
 
@@ -725,7 +725,7 @@ EXPORT int create_group_recorder(OBJECT **obj, OBJECT *parent){
 	int rv = 0;
 	try {
 		*obj = gl_create_object(group_recorder::oclass);
-		if(*obj != NULL){
+		if(*obj != nullptr){
 			group_recorder *my = OBJECTDATA(*obj, group_recorder);
 			gl_set_parent(*obj, parent);
 			rv = my->create();

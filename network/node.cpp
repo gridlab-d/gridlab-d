@@ -67,22 +67,22 @@
 // node CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* node::oclass = NULL;
-CLASS* node::pclass = NULL;
-node *node::defaults = NULL;
+CLASS* node::oclass = nullptr;
+CLASS* node::pclass = nullptr;
+node *node::defaults = nullptr;
 
-CLASS *node_class = (NULL);
-OBJECT *last_node = (NULL);
+CLASS *node_class = (nullptr);
+OBJECT *last_node = (nullptr);
 
 node::node(MODULE *mod) 
 {
 
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		node_class = oclass = gl_register_class(mod,"node",sizeof(node),PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class node";
 		else
 			oclass->trl = TRL_STANDALONE;
@@ -106,7 +106,7 @@ node::node(MODULE *mod)
 			PT_complex, "Vobs", PADDR(Vobs),
 			PT_double, "Vstdev", PADDR(Vstdev),
 #endif
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// setup the default values
 		memset(this,0,sizeof(node));
@@ -122,7 +122,7 @@ node::node(MODULE *mod)
 
 node::~node()
 {
-	while (linklist!=NULL)
+	while (linklist!=nullptr)
 	{
 		LINKLIST *next = linklist->next;
 		delete linklist;
@@ -139,7 +139,7 @@ int node::create()
 void node::attach(link *pLink)
 {
 	LINKLIST *item = new LINKLIST;
-	if (item==NULL)
+	if (item==nullptr)
 		throw "node::attach() - memory allocation failed";
 	item->data = pLink;
 	item->next = linklist;
@@ -371,7 +371,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 
 	// send dV through all links
 	LINKLIST *item;
-	for (item=linklist; item!=NULL; item=item->next)
+	for (item=linklist; item!=nullptr; item=item->next)
 		item->data->apply_dV(hdr,dV);
 
 	if (dV.Mag()>convergence_limit)
@@ -387,7 +387,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 EXPORT int create_node(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(node_class);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		last_node = *obj;
 		node *my = OBJECTDATA(*obj,node);

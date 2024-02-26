@@ -2193,7 +2193,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				}//End island relevance check
 			}//End bus parse list
 		}
-		//Default else - FPIM, nothing needed (zero size and NULL still valid)
+		//Default else - FPIM, nothing needed (zero size and nullptr still valid)
 
 		// Build the Amatrix, Amatrix includes all the elements of Y_offdiag_PQ, Y_diag_fixed and Y_diag_update.
 		powerflow_values->island_matrix_values[island_loop_index].size_Amatrix = powerflow_values->island_matrix_values[island_loop_index].size_offdiag_PQ*2 + powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed*2 + 4*powerflow_values->island_matrix_values[island_loop_index].size_diag_update;
@@ -2651,7 +2651,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				powerflow_values->island_matrix_values[island_loop_index].matrices_LU.rhs_LU[temp_index_c] = powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[temp_index_c];
 			}
 		}
-		//Default else -- it is NULL - zero it and "populate it" below
+		//Default else -- it is nullptr - zero it and "populate it" below
 
 		if (matrix_solver_method==MM_SUPERLU)
 		{
@@ -3166,7 +3166,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						}
 						//Default else -- it worked, keep going
 					}
-					//Default else - is NULL
+					//Default else - is nullptr
 				}
 				//Default else -- not part of this island, so don't mess with it
 			}//End inefficient branch traversion
@@ -5601,7 +5601,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								powerflow_values->BA_diag[jindexer].Yload[1][1] = -bus[jindexer].full_Y_load[4];
 							}
 						}
-					}//End full_Y_load not NULL
+					}//End full_Y_load not nullptr
 				}//End FPI provisions
 
 				//Loop through and get sizes - make sure not a PV bus (not sure how would be)

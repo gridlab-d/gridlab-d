@@ -100,7 +100,7 @@ int server::init(void)
 			status = READY;
 
 		// start handler
-		if ( pthread_create(&handler,NULL,tcp_handler,(void*)this)!=0 )
+		if ( pthread_create(&handler,nullptr,tcp_handler,(void*)this)!=0 )
 		{
 			gl_error("%s: unable to start tcp handler", local.get_saddr());
 			return 0;
@@ -109,7 +109,7 @@ int server::init(void)
 	else if ( type==SOCK_DGRAM )
 	{
 		status = READY;
-		if ( pthread_create(&handler,NULL,udp_handler,(void*)this)!=0 )
+		if ( pthread_create(&handler,nullptr,udp_handler,(void*)this)!=0 )
 		{
 			gl_error("%s: unable to start udp handler", local.get_saddr());
 			return 0;
@@ -127,7 +127,7 @@ void server::accept_tcp(void)
 	if ( client->accept(local) )
 	{
 		// process incoming messages as they arrive
-		if ( pthread_create(client->get_proc(),NULL,msg_handler,(void*)client)!=0 )
+		if ( pthread_create(client->get_proc(),nullptr,msg_handler,(void*)client)!=0 )
 			gl_error("%s: unable to start stream handler for %s", local.get_saddr(), client->get_saddr());
 	}
 
@@ -142,7 +142,7 @@ void server::accept_udp(void)
 
 	// wait/peek at incoming message
 	int infosize = client->get_infosize();
-	switch ( ::recvfrom(local.get_socket(),NULL,0,MSG_PEEK,(struct sockaddr*)client->get_info(),(socklen_t*)&infosize) ) {
+	switch ( ::recvfrom(local.get_socket(),nullptr,0,MSG_PEEK,(struct sockaddr*)client->get_info(),(socklen_t*)&infosize) ) {
 	case 0:
 		// connection gracefully closed
 		break;
@@ -151,7 +151,7 @@ void server::accept_udp(void)
 		break;
 	default:
 		// begin processing incoming messages as they arrive
-		if ( pthread_create(client->get_proc(),NULL,msg_handler,(void*)client)!=0 )
+		if ( pthread_create(client->get_proc(),nullptr,msg_handler,(void*)client)!=0 )
 			gl_error("%s: unable to start datagram handler", local.get_saddr());
 		break;
 	}

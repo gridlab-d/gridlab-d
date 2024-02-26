@@ -35,7 +35,7 @@ void msghandler(void *param)
 	unsigned int sig = (unsigned int)(int64)param;
 	pid_t pid = (pid_t)_getpid();
 	sprintf(name,"gridlabd.%u.%u",pid,sig);
-	hEvent = CreateEventA(NULL,TRUE,FALSE,name);
+	hEvent = CreateEventA(nullptr,TRUE,FALSE,name);
 	output_verbose("creating gridlabd signal handler %u for process %u",sig,pid);
 	while (WaitForSingleObject(hEvent,INFINITE)==WAIT_OBJECT_0)
 	{
@@ -71,7 +71,7 @@ int kill(pid_t pid,	/**< the window process id */
 	/* existence check only */
 	if ( sig==0 )
 	{
-		if ( hEvent!=NULL )
+		if ( hEvent!=nullptr )
 		{
 			CloseHandle(hEvent);
 			return 0;
@@ -84,7 +84,7 @@ int kill(pid_t pid,	/**< the window process id */
 	}
 
 	/* valid signal needs to be sent */
-	else if (hEvent==NULL)
+	else if (hEvent==nullptr)
 	{
 		errno = EINVAL; // TODO distinguish between bad signal and bad pid
 		output_error("unable to signal gridlabd process %d with signal %d (error %d)", pid, sig, GetLastError());

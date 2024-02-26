@@ -21,7 +21,7 @@
 	 void *addr;
 	} data[];
 	@endcode
-	with the last entry having a \p NULL name (this is \e very important).
+	with the last entry having a \p nullptr name (this is \e very important).
 
 	The compiler will automatically create a conforming DLL from a \p .plc file
 	having the following typical structure
@@ -37,18 +37,18 @@
 
 #include "plc.h"
 
-CLASS *plc::oclass = NULL; ///< a pointer to the registered object class definition
-plc *plc::defaults = NULL; ///< a pointer to the default values for new objects
+CLASS *plc::oclass = nullptr; ///< a pointer to the registered object class definition
+plc *plc::defaults = nullptr; ///< a pointer to the default values for new objects
 
 /** Register the new object class and construct the default object properties */
 plc::plc(MODULE *mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"plc",sizeof(plc),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class plc";
 		else
 			oclass->trl = TRL_INTEGRATED;
@@ -57,13 +57,13 @@ plc::plc(MODULE *mod)
 		if (gl_publish_variable(oclass,
 			PT_char1024,"source",PADDR(source),
 			PT_object,"network",PADDR(network),
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// set defaults
 		memset(this,0,sizeof(plc));
 		strcpy(source,"");
-		controller = NULL;
-		network = NULL;
+		controller = nullptr;
+		network = nullptr;
 		defaults = this;
 	}
 }
@@ -82,7 +82,7 @@ int plc::create()
 /** Initialize the new object */
 int plc::init(OBJECT *parent)
 {
-	if (strcmp(source,"")==0 && parent!=NULL) /* default source */
+	if (strcmp(source,"")==0 && parent!=nullptr) /* default source */
 		sprintf(source.get_string(),"%s.plc",parent->oclass->name);
 	if (controller->compile(source)<0)
 		GL_THROW("%s: PLC compile failed", source.get_string());
@@ -124,7 +124,7 @@ EXPORT int create_plc(OBJECT **obj, OBJECT *parent)
 	try 
 	{
 		*obj = gl_create_object(plc::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			plc *my = OBJECTDATA(*obj,plc);
 			gl_set_parent(*obj,parent);
@@ -141,7 +141,7 @@ EXPORT int init_plc(OBJECT *obj)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 		{
 			plc *my = OBJECTDATA(obj,plc);
 			return my->init(obj->parent);
