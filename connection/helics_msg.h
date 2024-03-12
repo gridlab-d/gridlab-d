@@ -35,7 +35,8 @@ using std::vector;
 
 class helics_msg;
 
-EXPORT void publish_helics_string(OBJECT *helicsMsgObj, string helicsObjName, string helicsData);
+EXPORT void publish_helics_string(OBJECT *helicsMsgObj, string helicsPublicationName, string helicsData);
+EXPORT void send_helics_message(OBJECT *helicsMsgObj, string helicsEndpointName, string helicsData);
 
 class json_publication {
 public:

@@ -68,7 +68,9 @@ helics_msg::helics_msg(MODULE *module)
 	if ( !gl_publish_loadmethod(oclass,"configure",[]( void *val,char *str)->int{return loadmethod_helics_msg_configure(static_cast<OBJECT *>(val),str);}) )
 		throw "connection/helics_msg::helics_msg(MODULE*): unable to publish configure method of connection:helics_msg";
 	if (gl_publish_function(oclass,	"publish_helics_string", (FUNCTIONADDR)publish_helics_string)==nullptr)
-			GL_THROW("Unable to publish helics publish string function.");
+		GL_THROW("Unable to publish helics publish string function.");
+	if (gl_publish_function(oclass,	"send_helics_message", (FUNCTIONADDR)send_helics_message)==nullptr)
+		GL_THROW("Unable to publish helics send string function.");
 }
 
 int helics_msg::create(){
@@ -1599,38 +1601,50 @@ int helics_msg::subscribeJsonVariables(){
 }
 
 
-EXPORT void publish_helics_string(OBJECT *helicsMsgObj, string helicsObjName, string helicsData)
+EXPORT void publish_helics_string(OBJECT *helicsMsgObj, string helicsPublicationName, string helicsData)
 {
 	helics_msg *my = OBJECTDATA(helicsMsgObj, helics_msg);
-	//find the helics endpoint or publication and send the data
 #if HAVE_HELICS
-
 	const HelicsFederateState fed_state = my->gld_helics_federate->getCurrentMode();
 	if(fed_state == HELICS_STATE_EXECUTION) {
 		try {
-			helicscpp::Publication pub = my->gld_helics_federate->getPublication(helicsObjName);
+			helicscpp::Publication pub = my->gld_helics_federate->getPublication(helicsPublicationName);
 			if(pub.isValid()) {
 				pub.publish(helicsData);
 			} else {
 				gl_debug("helics_msg::publish_helics_string(): The publication specified to send data exists but is not valid. Data was not published.");
 			}
 		} catch(...) {
-			try {
-				helicscpp::Endpoint ep = my->gld_helics_federate->getEndpoint(helicsObjName);
-				if(ep.isValid()) {
-					helicscpp::Message *msg = new helicscpp::Message(ep);
-					msg->data(helicsData);
-					ep.sendMessage(*msg);
-					delete msg;
-				} else {
-					gl_debug("helics_msg::publish_helics_string(): The endpoint specified to send data exists but is not valid. Data was not sent.");
-				}
-			} catch(...) {
-				throw("helics_msg::publish_helics_string(): The name given to send the data on does not match an existing Publication or Endpoint. Please check your glm file and your HELICS configuration file.");
-			}
+			throw("helics_msg::publish_helics_string(): The name given to send the data on does not match an existing Publication or Endpoint. Please check your glm file and your HELICS configuration file.");
 		}
 	} else {
 		gl_warning("helics_msg::publish_helics_string(): Can't publish or send messages outside of execution state. data was not sent!");
+	}
+#endif
+}
+
+
+EXPORT void send_helics_message(OBJECT *helicsMsgObj, string helicsEndpointName, string helicsData)
+{
+	helics_msg *my = OBJECTDATA(helicsMsgObj, helics_msg);
+#if HAVE_HELICS
+	const HelicsFederateState fed_state = my->gld_helics_federate->getCurrentMode();
+	if(fed_state == HELICS_STATE_EXECUTION) {
+		try {
+			helicscpp::Endpoint ep = my->gld_helics_federate->getEndpoint(helicsEndpointName);
+			if(ep.isValid()) {
+				helicscpp::Message *msg = new helicscpp::Message(ep);
+				msg->data(helicsData);
+				ep.sendMessage(*msg);
+				delete msg;
+			} else {
+				gl_debug("helics_msg::send_helics_message(): The endpoint specified to send data exists but is not valid. Data was not sent.");
+			}
+		} catch(...) {
+			throw("helics_msg::send_helics_message(): The name given to send the data on does not match an existing Publication or Endpoint. Please check your glm file and your HELICS configuration file.");
+		}
+	} else {
+		gl_warning("helics_msg::send_helics_message(): Can't publish or send messages outside of execution state. data was not sent!");
 	}
 #endif
 }

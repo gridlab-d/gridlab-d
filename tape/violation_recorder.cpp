@@ -60,7 +60,7 @@ violation_recorder::violation_recorder(MODULE *mod){
 				PT_KEYWORD,"VIOLATION7",(set)VIOLATION7,
 				PT_KEYWORD,"VIOLATION8",(set)VIOLATION8,
 				PT_KEYWORD,"ALLVIOLATIONS",(set)ALLVIOLATIONS,
-			PT_char1024, "helics_sender_name", PADDR(helics_sender_name), PT_DESCRIPTION, "The name of the HELICS Publication or Endpoint to send Violation data on.",
+			PT_char1024, "helics_endpoint_name", PADDR(helics_endpoint_name), PT_DESCRIPTION, "The name of the HELICS Endpoint to send Violation data on.",
 			PT_bool, "helics_only", PADDR(helics_only), PT_DESCRIPTION, "True by default. Flag that indicates whether to write violations to the recorder file when sending violations through HELICS as well.",
 		NULL) < 1){
 			;//GL_THROW("unable to publish properties in %s",__FILE__);
@@ -178,16 +178,16 @@ int violation_recorder::init(OBJECT *obj){
 	inverter_list_v6 = uniqueList_alloc_fxn(inverter_list_v6);
 	tplx_meter_list_v7 = uniqueList_alloc_fxn(tplx_meter_list_v7);
 	comm_meter_list_v7 = uniqueList_alloc_fxn(comm_meter_list_v7);
-	if(helics_sender_name[0] == 0){
+	if(helics_endpoint_name[0] == 0){
 		helics_msg_object = nullptr;
-		helics_publish_function = nullptr;
+		helics_send_function = nullptr;
 	} else {
 		FINDLIST *helics_msg_objs = gl_find_objects(FL_NEW,FT_CLASS,SAME,"helics_msg",FT_END);
 		if(helics_msg_objs != nullptr){
 			if(helics_msg_objs->hit_count > 0){
 				helics_msg_object = gl_find_next(helics_msg_objs,nullptr);
-				helics_publish_function = (FUNCTIONADDR)(gl_get_function(helics_msg_object, "publish_helics_string"));
-				if(helics_publish_function == nullptr){
+				helics_send_function = (FUNCTIONADDR)(gl_get_function(helics_msg_object, "send_helics_message"));
+				if(helics_send_function == nullptr){
 					gl_error("violation_recorder::init(): Unable to map to the helics_msg object!");
 					tape_status = TS_ERROR;
 					return 0;
@@ -1343,7 +1343,7 @@ int violation_recorder::write_to_stream (TIMESTAMP t1, bool echo, char *fmt, ...
 	va_start(ptr,fmt);
 	vsprintf(buffer,fmt,ptr); /* note the lack of check on buffer overrun */
 	va_end(ptr);
-	if(helics_sender_name[0] != '\0'){
+	if(helics_endpoint_name[0] != '\0'){
 		size_t pos = 0;
 		std::vector<std::string> buffer_parsed;
 		std::string violation;
@@ -1384,8 +1384,8 @@ int violation_recorder::write_to_stream (TIMESTAMP t1, bool echo, char *fmt, ...
 			json_violation["PHASE"] = phase;
 			json_violation["MESSAGE"] = message;
 			std::string helicsData = Json::writeString(builder, json_violation);
-			std::string pubEpName(const_cast<const char *>(helics_sender_name.get_string()));
-			((void(*)(OBJECT*,std::string,std::string))(*helics_publish_function))(helics_msg_object, pubEpName, helicsData);
+			std::string epName(const_cast<const char *>(helics_endpoint_name.get_string()));
+			((void(*)(OBJECT*,std::string,std::string))(*helics_send_function))(helics_msg_object, epName, helicsData);
 			if(helics_only){
 				write_to_file = false;
 			}
