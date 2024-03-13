@@ -1615,7 +1615,7 @@ EXPORT void publish_helics_string(OBJECT *helicsMsgObj, string helicsPublication
 				gl_debug("helics_msg::publish_helics_string(): The publication specified to send data exists but is not valid. Data was not published.");
 			}
 		} catch(...) {
-			throw("helics_msg::publish_helics_string(): The name given to send the data on does not match an existing Publication or Endpoint. Please check your glm file and your HELICS configuration file.");
+			throw("helics_msg::publish_helics_string(): The name given to send the data on does not match an existing Publication. Please check your glm file and your HELICS configuration file.");
 		}
 	} else {
 		gl_warning("helics_msg::publish_helics_string(): Can't publish or send messages outside of execution state. data was not sent!");
@@ -1641,7 +1641,7 @@ EXPORT void send_helics_message(OBJECT *helicsMsgObj, string helicsEndpointName,
 				gl_debug("helics_msg::send_helics_message(): The endpoint specified to send data exists but is not valid. Data was not sent.");
 			}
 		} catch(...) {
-			throw("helics_msg::send_helics_message(): The name given to send the data on does not match an existing Publication or Endpoint. Please check your glm file and your HELICS configuration file.");
+			throw("helics_msg::send_helics_message(): The name given to send the data on does not match an existing Endpoint. Please check your glm file and your HELICS configuration file.");
 		}
 	} else {
 		gl_warning("helics_msg::send_helics_message(): Can't publish or send messages outside of execution state. data was not sent!");
