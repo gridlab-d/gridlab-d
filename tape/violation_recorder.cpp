@@ -60,6 +60,8 @@ violation_recorder::violation_recorder(MODULE *mod){
 				PT_KEYWORD,"VIOLATION7",(gld::set)VIOLATION7,
 				PT_KEYWORD,"VIOLATION8",(gld::set)VIOLATION8,
 				PT_KEYWORD,"ALLVIOLATIONS",(gld::set)ALLVIOLATIONS,
+			PT_char1024, "helics_endpoint_name", PADDR(helics_endpoint_name), PT_DESCRIPTION, "The name of the HELICS Endpoint to send Violation data on.",
+			PT_bool, "helics_only", PADDR(helics_only), PT_DESCRIPTION, "True by default. Flag that indicates whether to write violations to the recorder file when sending violations through HELICS as well.",
 		nullptr) < 1){
 			;//GL_THROW("unable to publish properties in %s",__FILE__);
 		}
