@@ -170,7 +170,7 @@ void CMainFrame::OnUpdateViewStyles(CCmdUI* pCmdUI)
 	// if the right-hand pane hasn't been created or isn't a view,
 	// disable commands in our range
 
-	if (pView == NULL)
+	if (pView == nullptr)
 		pCmdUI->Enable(FALSE);
 	else
 	{
@@ -228,7 +228,7 @@ void CMainFrame::OnViewStyle(UINT nCommandID)
 
 	// if the right-hand pane has been created and is a CGldEditorTestView,
 	// process the menu commands...
-	if (pView != NULL)
+	if (pView != nullptr)
 	{
 		DWORD dwStyle = -1;
 

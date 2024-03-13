@@ -30,7 +30,7 @@ HTTP* hopen(const char *url, int maxlen)
 	if ( WSAStartup(wsaVersion,&wsaData)!=0 )
 	{
 		output_error("hopen(char *url='%s', int maxlen=%d): unable to initialize Windows sockets", url, maxlen);
-		return NULL;
+		return nullptr;
 	}
 #endif
 
@@ -38,19 +38,19 @@ HTTP* hopen(const char *url, int maxlen)
 	if ( sscanf(url,"%63[^:]://%1023[^/]%1023s", protocol,hostname, filespec)!=3 )
 	{
 		output_error("hopen(char *url='%s', int maxlen=%d): badly formed URL", url, maxlen);
-		return NULL;
+		return nullptr;
 	}
 
 	/* setup handle */
 	http = (HTTP*)malloc(sizeof(HTTP));
-	if ( http==NULL )
+	if ( http==nullptr )
 	{
 		output_error("hopen(char *url='%s', int maxlen=%d): memory allocation failure", url, maxlen);
-		return NULL;
+		return nullptr;
 	}
 
 	/* initialize http */
-	http->buf = NULL;
+	http->buf = nullptr;
 	http->len = 0;
 	http->pos = 0;
 
@@ -64,7 +64,7 @@ HTTP* hopen(const char *url, int maxlen)
 
 	/* find server */
 	server = gethostbyname(hostname);
-	if ( server==NULL )
+	if ( server==nullptr )
 	{
 		output_error("hopen(char *url='%s', int maxlen=%d): server not found", url, maxlen);
 		goto Error;
@@ -122,7 +122,7 @@ Error:
 #ifdef _WIN32
 		output_error("hopen(char *url='%s', int maxlen=%d): WSA error code %d", url, maxlen, WSAGetLastError());
 #endif
-	return NULL;
+	return nullptr;
 }
 int hclose(HTTP*http)
 {
@@ -134,7 +134,7 @@ int hclose(HTTP*http)
 #else
 			close(http->sd);
 #endif
-		if ( http->buf!=NULL ) free(http->buf);
+		if ( http->buf!=nullptr ) free(http->buf);
 		free(http);
 	}
 	return 1;
@@ -164,9 +164,9 @@ size_t hread(char *buffer, size_t size, HTTP* http)
 HTTPRESULT *http_new_result(void)
 {
 	HTTPRESULT *result = (HTTPRESULT *) malloc(sizeof(HTTPRESULT));
-	result->body.data = NULL;
+	result->body.data = nullptr;
 	result->body.size = 0;
-	result->header.data = NULL;
+	result->header.data = nullptr;
 	result->header.size = 0;
 	result->status = 0;
 	return result;
@@ -189,7 +189,7 @@ void *http_read(const char *url, int maxlen)
 	if ( strncmp(url,"http://",7)==0 )
 	{
 		HTTP *fp = hopen(url,maxlen);
-		if ( fp==NULL )
+		if ( fp==nullptr )
 		{
 			output_error("http_read('%s'): unable to access url", url);
 			result->status = errno;
@@ -199,7 +199,7 @@ void *http_read(const char *url, int maxlen)
 			size_t len = (int)hfilelength(fp);
 			size_t hlen = len;
 			char *buffer = (char*)malloc(len+1);
-			char *data = NULL;
+			char *data = nullptr;
 			if ( hread(buffer,len,fp)<=0 )
 			{
 				output_error("http_read('%s'): unable to read file", url);
@@ -209,7 +209,7 @@ void *http_read(const char *url, int maxlen)
 			{
 				buffer[len]='\0';
 				data = strstr(buffer,"\r\n\r\n");
-				if ( data!=NULL )
+				if ( data!=nullptr )
 				{
 					hlen = data - buffer;
 					*data++ = '\0';
@@ -246,7 +246,7 @@ void *http_read(const char *url, int maxlen)
 	else if ( strncmp(url,"file://",7)==0 )
 	{
 		FILE *fp = fopen(url+7,"rt");
-		if ( fp==NULL )
+		if ( fp==nullptr )
 		{
 			output_error("http_read('%s'): unable to access file", url);
 			result->status = errno;
@@ -273,10 +273,10 @@ const char * http_get_header_data(HTTPRESULT *result, const char* param)
 	static char buffer[1024]="";
 	char target[256];
 	char *ptr;
-	if ( param==NULL ) return result->header.data;
+	if ( param==nullptr ) return result->header.data;
 	sprintf(target,"\n%s: ",param);
 	ptr = strstr(result->header.data,target);
-	if ( ptr==NULL ) return NULL;
+	if ( ptr==nullptr ) return nullptr;
 	sscanf(ptr+strlen(param)+3,"%1023[^\r\n]",buffer);
 	return buffer;
 }
@@ -293,8 +293,8 @@ static char wget_cachedir[1024]="-";
 
 void http_get_options(void)
 {
-	char *option=NULL, *last=NULL;
-	while ( (option=strtok_r(((option==NULL)?global_wget_options.get_string():NULL),";",&last))!=NULL )
+	char *option=nullptr, *last=nullptr;
+	while ( (option=strtok_r(((option==nullptr)?global_wget_options.get_string():nullptr),";",&last))!=nullptr )
 	{
 		char name[1024], value[1024];
 		int n = sscanf(option,"%[^:]:%[^\n\r]",name,value);
@@ -363,7 +363,7 @@ time_t http_read_datetime(const char *timestamp)
 	struct tm dt;
 	char month[4], tzone[16];
 	const char *months[]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
-	if ( timestamp==NULL ) return 0;
+	if ( timestamp==nullptr ) return 0;
 	if ( sscanf(timestamp,"%*[A-Za-z], %d %3s %d %d:%d:%d %15s", &dt.tm_mday, month, &dt.tm_year, &dt.tm_hour, &dt.tm_min, &dt.tm_sec, tzone)!=7 )
 	{
 		output_debug("http_read_datetime(const char *timestamp='%s'): unable to parse string", timestamp);
@@ -399,7 +399,7 @@ int http_saveas(char *url, char *file)
 //		return 1;
 
 	result = static_cast<HTTPRESULT *>(http_read(url, 0x4000)); /* read only enough to get header */
-	if ( result==NULL )
+	if ( result==nullptr )
 	{
 		output_error("http_saveas(char *url='%s', char *file='%s'): hopen failed", url, file);
 		return 0;
@@ -424,7 +424,7 @@ int http_saveas(char *url, char *file)
 		result = static_cast<HTTPRESULT *>(http_read(url, wget_maxsize));
 		fp = fopen(file,"w");
 	
-		if ( fp==NULL )
+		if ( fp==nullptr )
 		{
 			output_error("unable to write file '%s': %s", file, strerror(errno));
 			return 0;

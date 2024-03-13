@@ -80,7 +80,7 @@ substation::substation(MODULE *mod) : node(mod)
 			PT_complex, "distribution_current_C[A]", PADDR(current_inj[2]),
 			PT_double, "distribution_real_energy[Wh]", PADDR(distribution_real_energy),
 			//PT_double, "measured_reactive[kVar]", PADDR(measured_reactive), has not implemented yet
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_substation)==nullptr)
 			GL_THROW("Unable to publish substation deltamode function");
@@ -129,7 +129,7 @@ void substation::fetch_complex(gld::complex **prop, const char *name, OBJECT *pa
 		char msg[256];
 		sprintf(tname, "substation:%i", hdr->id);
 		if(name == nullptr || name[0] == '\0')
-			sprintf(msg, "%s: substation unable to find property: name is NULL", namestr);
+			sprintf(msg, "%s: substation unable to find property: name is nullptr", namestr);
 		else
 			sprintf(msg, "%s: substation unable to find %s", namestr, name);
 		throw(msg);

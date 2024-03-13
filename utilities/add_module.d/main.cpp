@@ -70,7 +70,7 @@ CDECL int dllinit()
 }
 
 CDECL int dllkill() {
-	do_kill(NULL);
+	do_kill(nullptr);
 }
 
 #endif // !WIN32

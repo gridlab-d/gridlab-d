@@ -13,12 +13,12 @@
 
 #include "output.h"
 
-static Display *dsp = NULL;
+static Display *dsp = nullptr;
 static Window win;
 static GC gc;
 static Font font;
-static PRINTFUNCTION stdprint=NULL;
-static PRINTFUNCTION errprint=NULL;
+static PRINTFUNCTION stdprint=nullptr;
+static PRINTFUNCTION errprint=nullptr;
 
 bool is_server = 1;
 int pfd[2];
@@ -87,7 +87,7 @@ extern "C" void xrejoin(void)
 
 extern "C" int xstart(void)
 {
-	dsp = XOpenDisplay( NULL );
+	dsp = XOpenDisplay( nullptr );
 	if( !dsp ) return 1;
 
 	int screenNumber = DefaultScreen(dsp);
@@ -114,10 +114,10 @@ extern "C" int xstart(void)
 
 	gc = XCreateGC( dsp, win,
 		0,        // mask of values
-		NULL );   // array of values
+		nullptr );   // array of values
 	XSetForeground( dsp, gc, black );
 
-	XSetStandardProperties(dsp, win, "GridLAB-D", "GridLAB-D", None,NULL,0,NULL);
+	XSetStandardProperties(dsp, win, "GridLAB-D", "GridLAB-D", None,nullptr,0,nullptr);
 
 	font = XLoadFont(dsp,"*-lucida-bold-r-normal-*-12-*");
 
@@ -126,7 +126,7 @@ extern "C" int xstart(void)
 	xbutton(10,10,"Quit");
 
 	pthread_t pt_info;
-	if (pthread_create(&pt_info,NULL,xmainloop,NULL))
+	if (pthread_create(&pt_info,nullptr,xmainloop,nullptr))
 		perror("xstart(pthread_create)");
 
 	is_server = 1;

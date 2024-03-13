@@ -58,7 +58,7 @@ public: /// @todo make this private and create interfaces to control values
 	double voltage_ratio;				// voltage ratio (normally 1.0)
 	int NR_branch_reference;			//Index of NR_branchdata this link is contained in
 	SPECIAL_LINK SpecialLnk;			//Flag for exceptions to the normal handling
-	set flow_direction;					// Flag direction of powerflow: 1 is normal, -1 is reverse flow, 0 is no flow
+	gld::set flow_direction;					// Flag direction of powerflow: 1 is normal, -1 is reverse flow, 0 is no flow
 	void calculate_power();
 	void calculate_power_splitphase();
 	void set_flow_directions();
@@ -119,21 +119,21 @@ public:
 	int isa(char *classname);
 public:
 	/* status values */
-	set affected_phases;				/* use this to determine which phases are affected by status change */
+	gld::set affected_phases;				/* use this to determine which phases are affected by status change */
 	#define IMPEDANCE_CHANGED		1	/* use this status to indicate an impedance change (e.g., line contact) */
 	double resistance;					/* use this resistance when status=IMPEDANCE_CHANGED */
 	#define LINE_CONTACT			2	/* use this to indicate line contact */
-	set line_contacted;					/* use this to indicate which line was contacted (N means ground) */
+	gld::set line_contacted;					/* use this to indicate which line was contacted (N means ground) */
 	#define CONTROL_FAILED			4	/* use this status to indicate a controller failure (e.g., PLC failure) */
 
 	class node *get_from(void) const;
 	class node *get_to(void) const;
-	set get_flow(class node **from, class node **to) const; /* determine flow direction (return phases on which flow is reverse) */
+	gld::set get_flow(class node **from, class node **to) const; /* determine flow direction (return phases on which flow is reverse) */
 
 	inline enumeration open(void) { enumeration previous=status; status=LS_OPEN; return previous;};
 	inline enumeration close(void) { enumeration previous=status; status=LS_CLOSED; return previous;};
-	inline enumeration is_open(void) const { return status==LS_OPEN;};
-	inline enumeration is_closed(void) const { return status==LS_CLOSED;};
+	inline enumeration is_open(void) const { return status == LS_OPEN;};
+	inline enumeration is_closed(void) const { return status == LS_CLOSED;};
 	inline enumeration get_status(void) const {return status;};
 
 	bool is_frequency_nominal();

@@ -99,11 +99,11 @@ schedule_list *parse_cron(char *cron_str){
 	strcpy(cron_cpy, cron_str);
 
 	mohs = strtok(cron_cpy, " \t\n\r");
-	hods = strtok(NULL, " \t\n\r");
-	doms = strtok(NULL, " \t\n\r");
-	moys = strtok(NULL, " \t\n\r");
-	dows = strtok(NULL, " \t\n\r");
-	vals = strtok(NULL, " \t\n\r");
+	hods = strtok(nullptr, " \t\n\r");
+	doms = strtok(nullptr, " \t\n\r");
+	moys = strtok(nullptr, " \t\n\r");
+	dows = strtok(nullptr, " \t\n\r");
+	vals = strtok(nullptr, " \t\n\r");
 	
 	if((mohs && hods && doms && moys && dows) == 0){
 		gl_error("Insufficient arguements in cron line \"%s\"", cron_str);
@@ -153,7 +153,7 @@ schedule_list *parse_cron(char *cron_str){
 		return 0;
 	}
 
-	if(vals == NULL){
+	if(vals == nullptr){
 		value = 1.0;
 	} else {
 		value = atof(vals);
@@ -175,27 +175,27 @@ schedule_list *parse_cron(char *cron_str){
 	dow = (range_list **)malloc(sizeof(range_list *) * dowr->get_count());
 
 	dowptr = dowr;
-	for(i = 0; i < dowr->get_count() && dowptr != NULL; ++i){
+	for(i = 0; i < dowr->get_count() && dowptr != nullptr; ++i){
 		dow[i] = dowptr;
 		dowptr = dowptr->next;
 	}
 	moyptr = moyr;
-	for(j = 0; j < moyr->get_count() && moyptr != NULL; ++j){
+	for(j = 0; j < moyr->get_count() && moyptr != nullptr; ++j){
 		moy[j] = moyptr;
 		moyptr = moyptr->next;
 	}
 	domptr = domr;
-	for(k = 0; k < domr->get_count() && domptr != NULL; ++k){
+	for(k = 0; k < domr->get_count() && domptr != nullptr; ++k){
 		dom[k] = domptr;
 		domptr = domptr->next;
 	}
 	hodptr = hodr;
-	for(l = 0; l < hodr->get_count() && hodptr != NULL; ++l){
+	for(l = 0; l < hodr->get_count() && hodptr != nullptr; ++l){
 		hod[l] = hodptr;
 		hodptr = hodptr->next;
 	}
 	mohptr = mohr;
-	for(m = 0; m <mohr->get_count() && mohptr != NULL; ++m){
+	for(m = 0; m <mohr->get_count() && mohptr != nullptr; ++m){
 		moh[m] = mohptr;
 		mohptr = mohptr->next;
 	}
@@ -252,18 +252,18 @@ schedule_list::schedule_list(range_list *moh, range_list *hod, range_list *dom, 
 //////////////////////////////////////////////////////////////////////////
 // schedule CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* schedule::oclass = NULL;
-schedule *schedule::defaults = NULL;
+CLASS* schedule::oclass = nullptr;
+schedule *schedule::defaults = nullptr;
 
 schedule::schedule(MODULE *module) 
 {
 
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(module,"schedule",sizeof(schedule),PC_PRETOPDOWN);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
@@ -279,7 +279,7 @@ schedule::schedule(MODULE *module)
 			PT_char256, "error_msg", PADDR(errmsg), PT_ACCESS, PA_REFERENCE,
 			PT_char256, "filename", PADDR(filename),
 			PT_char1024, "schedule", PADDR(sched),
-			NULL)<1) 
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// setup the default values
@@ -364,13 +364,13 @@ TIMESTAMP schedule::presync(TIMESTAMP t0, TIMESTAMP t1){
 
 	currval = default_value;
 
-	for(lptr = sched_list; lptr != NULL; lptr = lptr->next){
+	for(lptr = sched_list; lptr != nullptr; lptr = lptr->next){
 		// process lptr rule
 		// traverse lptr children
 		// track when current state ends OR when next state begins
 
 		/* group_right & group_left should actually be used ... coming soon! */
-		for(child = lptr; child != NULL; child = child->group_right){
+		for(child = lptr; child != nullptr; child = child->group_right){
 			res = test_sched_dt(child->moy_start, child->moy_end, dt.month);
 			if(res == 0){
 				continue;
@@ -422,9 +422,9 @@ int schedule::parse_schedule(){
 	/* simulate strtok effects, replacing ';' with '\0' and 
 	 *  getting char* to each schedule token. */
 	temp = strtok(sched_buf, ";");
-	for(i = 0; i < 128 && temp != NULL; ++i){
+	for(i = 0; i < 128 && temp != nullptr; ++i){
 		sched_ptr[i] = temp;
-		temp = strtok(NULL, ";");
+		temp = strtok(nullptr, ";");
 	}
 
 	token_ct = i;
@@ -468,7 +468,7 @@ void new_schedule(MODULE *mod){
 EXPORT int create_schedule(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(schedule::oclass);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		schedule *my = OBJECTDATA(*obj,schedule);
 		gl_set_parent(*obj,parent);

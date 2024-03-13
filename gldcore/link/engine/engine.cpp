@@ -5,12 +5,12 @@
 
 #include "engine.h"
 
-CALLBACKS *callback = NULL;
+CALLBACKS *callback = nullptr;
 
 #include "link.h"
 #include "build.h"
 
-gld_property **sync_index = NULL;
+gld_property **sync_index = nullptr;
 unsigned int sync_index_size = 0;
 
 typedef enum {ELS_INIT=0, ELS_OK=1, ELS_ERROR=2, ELS_TERM=3} ENGINELINKSTATUS;
@@ -58,8 +58,8 @@ EXPORT bool glx_create(glxlink *mod, CALLBACKS *fntable)
 
 	engine->recv_timeout = 100; // 10 seconds before recv gives up
 	engine->cachesize = 0; // automatic
-	engine->send = NULL;
-	engine->recv = NULL;
+	engine->send = nullptr;
+	engine->recv = nullptr;
 
 	mod->set_data(engine);
 	return true;
@@ -135,7 +135,7 @@ int engine_send(ENGINELINK *engine, char *buffer,int len){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // PROTOCOL MESSAGE HANDLING
-bool recv_status(ENGINELINK *engine, ENGINELINKSTATUS *status, char *msg=NULL, int maxlen=0)
+bool recv_status(ENGINELINK *engine, ENGINELINKSTATUS *status, char *msg=nullptr, int maxlen=0)
 {
 	char buffer[1500];
 	int len = engine_recv(engine,buffer,sizeof(buffer));
@@ -147,25 +147,25 @@ bool recv_status(ENGINELINK *engine, ENGINELINKSTATUS *status, char *msg=NULL, i
 	char *tag = strchr(buffer,' ');
 	if ( strcmp(buffer,"INIT")==0 )
 	{
-		if ( msg!=NULL && tag!=NULL && maxlen>1) strncpy(msg,tag+1,maxlen-1);
+		if ( msg!=nullptr && tag!=nullptr && maxlen>1) strncpy(msg,tag+1,maxlen-1);
 		*status = ELS_INIT;
 		return true;
 	}
 	else if ( strcmp(buffer,"OK")==0 )
 	{
-		if ( msg!=NULL && tag!=NULL && maxlen>1) strncpy(msg,tag+1,maxlen-1);
+		if ( msg!=nullptr && tag!=nullptr && maxlen>1) strncpy(msg,tag+1,maxlen-1);
 		*status = ELS_OK;
 		return true;
 	}
 	else if ( strcmp(buffer,"ERROR")==0 )
 	{
-		if ( msg!=NULL && tag!=NULL && maxlen>1) strncpy(msg,tag+1,maxlen-1);
+		if ( msg!=nullptr && tag!=nullptr && maxlen>1) strncpy(msg,tag+1,maxlen-1);
 		*status = ELS_ERROR;
 		return true;
 	}
 	else if ( strcmp(buffer,"TERM")==0 )
 	{
-		if ( msg!=NULL && tag!=NULL && maxlen>1) strncpy(msg,tag+1,maxlen-1);
+		if ( msg!=nullptr && tag!=nullptr && maxlen>1) strncpy(msg,tag+1,maxlen-1);
 		*status = ELS_TERM;
 		return true;
 	}
@@ -230,12 +230,12 @@ bool send_timeout(ENGINELINK *engine)
 	return engine_send(engine,buffer,len) > 0;
 }
 
-bool send_status(ENGINELINK *engine, ENGINELINKSTATUS status,char *msg=NULL)
+bool send_status(ENGINELINK *engine, ENGINELINKSTATUS status,char *msg=nullptr)
 {
 	char buffer[1500];
 	int len;
 
-	if ( msg==NULL ){
+	if ( msg==nullptr ){
 		len = sprintf(buffer,"%s", enginelinkstatus[status]);
 		return engine_send(engine,buffer,len+1) > 0;
 	}
@@ -283,7 +283,7 @@ bool send_exports(ENGINELINK *engine)
 	char buffer[1500];
 	int len;
 	SYNCDATA *item;
-	for ( item=engine->send ; item!=NULL ; item=item->next )
+	for ( item=engine->send ; item!=nullptr ; item=item->next )
 	{
 		len=sprintf(buffer,"%d %s", item->index, item->prop->get_string().get_buffer());
 		if ( engine_send(engine,buffer,len+1)<=0 )
@@ -295,7 +295,7 @@ bool send_exports(ENGINELINK *engine)
 bool recv_imports(ENGINELINK *engine)
 {
 	SYNCDATA *item;
-	for ( item=engine->recv ; item!=NULL ; item=item->next )
+	for ( item=engine->recv ; item!=nullptr ; item=item->next )
 	{
 		char buffer[1500];
 		unsigned int index;
@@ -339,8 +339,8 @@ bool add_global(ENGINELINK *engine, unsigned int index, GLOBALVAR *var)
 	engine->recv = add_property(engine->recv, index, prop);
 	char buffer[1500];
 	char buffname[255];
-	if(gl_name(prop->get_object(),buffname,255)==NULL){
-		strcpy(buffname,"NULL");
+	if(gl_name(prop->get_object(),buffname,255)==nullptr){
+		strcpy(buffname,"nullptr");
 	}
 	int len = sprintf(buffer,"GLOBAL %d %d %lu %s %s %s", index,
 		(PROPERTYTYPE)prop->get_type(), // TODO convert this to text
@@ -353,8 +353,8 @@ bool add_import(ENGINELINK *engine, unsigned int index, OBJECTPROPERTY *objprop)
 	engine->recv = add_property(engine->recv, index, prop);
 	char buffer[1500];
 	char buffname[255];
-	if(gl_name(prop->get_object(),buffname,255)==NULL){
-		strcpy(buffname,"NULL");
+	if(gl_name(prop->get_object(),buffname,255)==nullptr){
+		strcpy(buffname,"nullptr");
 	}
 	int len = sprintf(buffer,"IMPORT %d %d %lu %s %s %s", index,
 		(PROPERTYTYPE)prop->get_type(), // TODO convert this to text
@@ -367,8 +367,8 @@ bool add_export(ENGINELINK *engine, unsigned int index, OBJECTPROPERTY *objprop)
 	engine->send = add_property(engine->send, index, prop);
 	char buffer[1500];
 	char buffname[255];
-	if(gl_name(prop->get_object(),buffname,255)==NULL){
-		strcpy(buffname,"NULL");
+	if(gl_name(prop->get_object(),buffname,255)==nullptr){
+		strcpy(buffname,"nullptr");
 	}
 	int len = sprintf(buffer,"EXPORT %d %d %lu %s %s %s", index,
 		(PROPERTYTYPE)prop->get_type(), // TODO convert this to text
@@ -426,10 +426,10 @@ EXPORT bool glx_init(glxlink *mod)
 	// construct and send globals lists
 	unsigned int index = 0;
 	LINKLIST *item;
-	for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
+	for ( item=mod->get_globals() ; item!=nullptr ; item=mod->get_next(item) )
 	{
 		GLOBALVAR *var = mod->get_globalvar(item);
-		if ( var!=NULL && !add_global(engine,index++,var) )
+		if ( var!=nullptr && !add_global(engine,index++,var) )
 		{
 			gl_error("unable to send global specs for %s", var->prop->name);
 			return false;
@@ -437,10 +437,10 @@ EXPORT bool glx_init(glxlink *mod)
 	}
 
 	// construct and send imports lists
-	for ( LINKLIST *item=mod->get_imports() ; item!=NULL ; item=mod->get_next(item) )
+	for ( LINKLIST *item=mod->get_imports() ; item!=nullptr ; item=mod->get_next(item) )
 	{
 		OBJECTPROPERTY *objprop = mod->get_import(item);
-		if ( objprop!=NULL && !add_import(engine,index++,objprop) )
+		if ( objprop!=nullptr && !add_import(engine,index++,objprop) )
 		{
 			gl_error("unable to send import specs for %s.%s", objprop->obj->name, objprop->prop->name);
 			return false;
@@ -448,10 +448,10 @@ EXPORT bool glx_init(glxlink *mod)
 	}
 
 	// construct and send exports lists
-	for ( LINKLIST *item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+	for ( LINKLIST *item=mod->get_exports() ; item!=nullptr ; item=mod->get_next(item) )
 	{
 		OBJECTPROPERTY *objprop = mod->get_export(item);
-		if ( objprop!=NULL && !add_export(engine,index++,objprop) )
+		if ( objprop!=nullptr && !add_export(engine,index++,objprop) )
 		{
 			gl_error("unable to send export specs for %s.%s", objprop->obj->name, objprop->prop->name);
 			return false;
@@ -479,9 +479,9 @@ EXPORT bool glx_init(glxlink *mod)
 	sync_index_size = index;
 	sync_index = new gld_property*[sync_index_size];
 	memset(sync_index,0,sizeof(gld_property*)*sync_index_size);
-	for ( data=engine->send ; data!=NULL ; data=data->next )
+	for ( data=engine->send ; data!=nullptr ; data=data->next )
 		sync_index[data->index] = data->prop;
-	for ( data=engine->recv ; data!=NULL ; data=data->next )
+	for ( data=engine->recv ; data!=nullptr ; data=data->next )
 		sync_index[data->index] = data->prop;
 
 	return true;

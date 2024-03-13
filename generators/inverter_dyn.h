@@ -204,7 +204,7 @@ private:
 	PDISPATCH pdispatch;	//Dispatch setpoint in p.u. for internal use
 
 public:
-	set phases;				 /**< device phases (see PHASE codes) */
+	gld::set phases;				 /**< device phases (see PHASE codes) */
 	enum INVERTER_TYPE
 	{
 		GRID_FORMING = 0,

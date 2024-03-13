@@ -3,22 +3,22 @@
 
 #include "violation_recorder.h"
 
-CLASS *violation_recorder::oclass = NULL;
-CLASS *violation_recorder::pclass = NULL;
-violation_recorder *violation_recorder::defaults = NULL;
+CLASS *violation_recorder::oclass = nullptr;
+CLASS *violation_recorder::pclass = nullptr;
+violation_recorder *violation_recorder::defaults = nullptr;
 
 void new_violation_recorder(MODULE *mod){
 	new violation_recorder(mod);
 }
 
 violation_recorder::violation_recorder(MODULE *mod){
-	if(oclass == NULL)
+	if(oclass == nullptr)
 		{
 #ifdef _DEBUG
 		gl_debug("construction violation_recorder class");
 #endif
 		oclass = gl_register_class(mod, const_cast<char *>("violation_recorder"), sizeof(violation_recorder), PC_POSTTOPDOWN);
-        if(oclass == NULL)
+        if(oclass == nullptr)
             GL_THROW(const_cast<char *>("unable to register object class implemented by %s"), __FILE__);
 
         if(gl_publish_variable(oclass,
@@ -50,19 +50,17 @@ violation_recorder::violation_recorder(MODULE *mod){
 			PT_double, "inverter_v_chng_per_interval_lower_bound", PADDR(inverter_v_chng_per_interval_lower_bound), PT_DESCRIPTION, "inverter_v_chng_per_interval_lower_bound",
 			PT_double, "inverter_v_chng_interval", PADDR(inverter_v_chng_interval), PT_DESCRIPTION, "inverter_v_chng_interval",
 			PT_set, "violation_flag", PADDR(violation_flag), PT_DESCRIPTION, "bit set for determining which violations to check",
-				PT_KEYWORD,"VIOLATION0",(set)VIOLATION0,
-				PT_KEYWORD,"VIOLATION1",(set)VIOLATION1,
-				PT_KEYWORD,"VIOLATION2",(set)VIOLATION2,
-				PT_KEYWORD,"VIOLATION3",(set)VIOLATION3,
-				PT_KEYWORD,"VIOLATION4",(set)VIOLATION4,
-				PT_KEYWORD,"VIOLATION5",(set)VIOLATION5,
-				PT_KEYWORD,"VIOLATION6",(set)VIOLATION6,
-				PT_KEYWORD,"VIOLATION7",(set)VIOLATION7,
-				PT_KEYWORD,"VIOLATION8",(set)VIOLATION8,
-				PT_KEYWORD,"ALLVIOLATIONS",(set)ALLVIOLATIONS,
-			PT_char1024, "helics_endpoint_name", PADDR(helics_endpoint_name), PT_DESCRIPTION, "The name of the HELICS Endpoint to send Violation data on.",
-			PT_bool, "helics_only", PADDR(helics_only), PT_DESCRIPTION, "True by default. Flag that indicates whether to write violations to the recorder file when sending violations through HELICS as well.",
-		NULL) < 1){
+				PT_KEYWORD,"VIOLATION0",(gld::set)VIOLATION0,
+				PT_KEYWORD,"VIOLATION1",(gld::set)VIOLATION1,
+				PT_KEYWORD,"VIOLATION2",(gld::set)VIOLATION2,
+				PT_KEYWORD,"VIOLATION3",(gld::set)VIOLATION3,
+				PT_KEYWORD,"VIOLATION4",(gld::set)VIOLATION4,
+				PT_KEYWORD,"VIOLATION5",(gld::set)VIOLATION5,
+				PT_KEYWORD,"VIOLATION6",(gld::set)VIOLATION6,
+				PT_KEYWORD,"VIOLATION7",(gld::set)VIOLATION7,
+				PT_KEYWORD,"VIOLATION8",(gld::set)VIOLATION8,
+				PT_KEYWORD,"ALLVIOLATIONS",(gld::set)ALLVIOLATIONS,
+		nullptr) < 1){
 			;//GL_THROW("unable to publish properties in %s",__FILE__);
 		}
         // TODO set defaults here
@@ -409,7 +407,7 @@ int violation_recorder::isa(char *classname){
  **/
 int violation_recorder::write_header(){
 
-	time_t now = time(NULL);
+	time_t now = time(nullptr);
 	//quickobjlist *qol = 0;
 	OBJECT *obj=OBJECTHDR(this);
 
@@ -527,7 +525,7 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 
 				if (has_phase(curr->obj, PHASE_A)) {
 					underground_line_conductor *pConfigurationA = OBJECTDATA(pConfiguration1->phaseA_conductor,underground_line_conductor);
-					if ( pConfigurationA == NULL)
+					if ( pConfigurationA == nullptr)
 						nominalA = pConfiguration1->summer.continuous;
 					else
 						nominalA = pConfigurationA->summer.continuous;
@@ -535,7 +533,7 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 					
 				if (has_phase(curr->obj, PHASE_B)) {
 					underground_line_conductor *pConfigurationB = OBJECTDATA(pConfiguration1->phaseB_conductor,underground_line_conductor);	
-					if ( pConfigurationB == NULL)
+					if ( pConfigurationB == nullptr)
 						nominalB = pConfiguration1->summer.continuous;
 					else
 						nominalB = pConfigurationB->summer.continuous;
@@ -543,7 +541,7 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 
 				if (has_phase(curr->obj, PHASE_C)) {
 					underground_line_conductor *pConfigurationC = OBJECTDATA(pConfiguration1->phaseC_conductor,underground_line_conductor);	
-					if ( pConfigurationC == NULL)
+					if ( pConfigurationC == nullptr)
 						nominalC = pConfiguration1->summer.continuous;
 					else
 						nominalC = pConfigurationC->summer.continuous;
@@ -555,7 +553,7 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 
 				if (has_phase(curr->obj, PHASE_A)) {
 					overhead_line_conductor *pConfigurationA = OBJECTDATA(pConfiguration1->phaseA_conductor,overhead_line_conductor);
-					if ( pConfigurationA == NULL)
+					if ( pConfigurationA == nullptr)
 						nominalA = pConfiguration1->summer.continuous;
 					else
 						nominalA = pConfigurationA->summer.continuous;
@@ -563,7 +561,7 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 
 				if (has_phase(curr->obj, PHASE_B)) {
 					overhead_line_conductor *pConfigurationB = OBJECTDATA(pConfiguration1->phaseB_conductor,overhead_line_conductor);
-					if ( pConfigurationB == NULL)
+					if ( pConfigurationB == nullptr)
 						nominalB = pConfiguration1->summer.continuous;
 					else
 						nominalB = pConfigurationB->summer.continuous;
@@ -571,7 +569,7 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 
 				if (has_phase(curr->obj, PHASE_C)) {
 					overhead_line_conductor *pConfigurationC = OBJECTDATA(pConfiguration1->phaseC_conductor,overhead_line_conductor);
-					if ( pConfigurationC == NULL)
+					if ( pConfigurationC == nullptr)
 						nominalC = pConfiguration1->summer.continuous;
 					else
 						nominalC = pConfigurationC->summer.continuous;
@@ -873,9 +871,9 @@ int violation_recorder::check_reverse_flow_violation(TIMESTAMP t1, int violation
 
 	double nominal = 1.;
 	PROPERTY *p_ptr;
-	set *directions;
+	gld::set *directions;
 	p_ptr = gl_get_property(link_monitor_obj, const_cast<char *>("flow_direction"));
-	if (p_ptr == NULL)
+	if (p_ptr == nullptr)
 		return 0;
 	directions = gl_get_set(link_monitor_obj, p_ptr);
 
@@ -1128,7 +1126,7 @@ int violation_recorder::check_violation_8(TIMESTAMP t1) {
 	PROPERTY *p_ptr;
 	p_ptr = gl_get_property(link_monitor_obj, const_cast<char *>("power_in"));
 
-	if (p_ptr == NULL)
+	if (p_ptr == nullptr)
 		return 0;
 
 	gld::complex power_in = get_observed_complex_value(link_monitor_obj, p_ptr);
@@ -1184,7 +1182,7 @@ int violation_recorder::fails_static_condition (OBJECT *curr, char *prop_name, d
 	PROPERTY *p_ptr;
 	double value;
 	p_ptr = gl_get_property(curr, prop_name);
-	if (p_ptr == NULL)
+	if (p_ptr == nullptr)
 		return 0;
 	value = get_observed_double_value(curr, p_ptr);
 	return fails_static_condition (value, upper_bound, lower_bound, normalization_value, retval);
@@ -1204,7 +1202,7 @@ int violation_recorder::fails_dynamic_condition (vobjlist *curr, int i, char *pr
 	PROPERTY *p_ptr;
 	double value, pu;
 	p_ptr = gl_get_property(curr->obj, prop_name);
-	if (p_ptr == NULL)
+	if (p_ptr == nullptr)
 		return 0;
 	value = get_observed_double_value(curr->obj, p_ptr);
 	pu = value/normalization_value;
@@ -1245,7 +1243,7 @@ int violation_recorder::fails_continuous_condition (vobjlist *curr, int i, const
 	PROPERTY *p_ptr;
 	double value, pu;
 	p_ptr = gl_get_property(curr->obj, const_cast<char *>(prop_name));
-	if (p_ptr == NULL)
+	if (p_ptr == nullptr)
 		return 0;
 	int s_curr = 0, s_prev = 0;
 	value = get_observed_double_value(curr->obj, p_ptr);
@@ -1291,7 +1289,7 @@ int violation_recorder::fails_continuous_condition (vobjlist *curr, int i, const
 
 int violation_recorder::has_phase(OBJECT *obj, int phase) {
 	PROPERTY *p_ptr;
-	set *phases;
+	gld::set *phases;
 	p_ptr = gl_get_property(obj, const_cast<char *>("phases"));
 	phases = gl_get_set(obj, p_ptr);
 	if ((*phases & phase) == phase)
@@ -1507,7 +1505,7 @@ int violation_recorder::write_summary() {
 	}
 
 	char buffer[1024];
-	time_t now = time(NULL);
+	time_t now = time(nullptr);
 
 	if(0 > fprintf(f,"# file...... %s\n", summary.get_string())){ return 0; }
 	if(0 > fprintf(f,"# date...... %s", asctime(localtime(&now)))){ return 0; }
@@ -1519,67 +1517,67 @@ int violation_recorder::write_summary() {
 	if(0 > fprintf(f,"# host...... %s\n", getenv("HOST"))){ return 0; }
 #endif
 	if(0 > fprintf(f,"VIOLATION1 TOTAL,%i\n", get_violation_count(VIOLATION1))){ return 0; }
-	if (xfrmr_list_v1 != NULL)
+	if (xfrmr_list_v1 != nullptr)
 	{
 		if(0 > fprintf(f,"    TRANSFORMER (%i of %i transformers in violation),%i\n", xfrmr_list_v1->length(), xfrmr_obj_list->length(), get_violation_count(VIOLATION1,XFMR))){ return 0; }
 	}
-	if (ohl_list_v1 != NULL)
+	if (ohl_list_v1 != nullptr)
 	{
 		if(0 > fprintf(f,"    OVERHEAD LINE (%i of %i lines in violation),%i\n", ohl_list_v1->length(), ohl_obj_list->length(), get_violation_count(VIOLATION1,OHLN))){ return 0; }
 	}
-	if (ugl_list_v1 != NULL)
+	if (ugl_list_v1 != nullptr)
 	{
 		if(0 > fprintf(f,"    UNDERGROUND LINE (%i of %i lines in violation),%i\n", ugl_list_v1->length(), ugl_obj_list->length(), get_violation_count(VIOLATION1,UGLN))){ return 0; }
 	}
-	if (tplxl_list_v1 != NULL)
+	if (tplxl_list_v1 != nullptr)
 	{
 		if(0 > fprintf(f,"    TRIPLEX LINE (%i of %i lines in violation),%i\n", tplxl_list_v1->length(), tplxl_obj_list->length(), get_violation_count(VIOLATION1,TPXL))){ return 0; }
 	}
 	if(0 > fprintf(f,"VIOLATION2 TOTAL,%i\n", get_violation_count(VIOLATION2))){ return 0; }
-	if (node_list_v2 != NULL)
+	if (node_list_v2 != nullptr)
 	{
 		if(0 > fprintf(f,"    NODE (%i of %i nodes in violation),%i\n", node_list_v2->length(), node_obj_list->length(), get_violation_count(VIOLATION2,NODE))){ return 0; }
 	}
-	if (tplx_node_list_v2 != NULL)
+	if (tplx_node_list_v2 != nullptr)
 	{
 		if(0 > fprintf(f,"    TRIPLEX NODE (%i of %i nodes in violation),%i\n", tplx_node_list_v2->length(), tplx_node_obj_list->length(), get_violation_count(VIOLATION2,TPXN))){ return 0; }
 	}
-	if (tplx_meter_list_v2 != NULL)
+	if (tplx_meter_list_v2 != nullptr)
 	{
 		if(0 > fprintf(f,"    TRIPLEX METER (%i of %i meters in violation),%i\n", tplx_meter_list_v2->length(), tplx_mtr_obj_list->length(), get_violation_count(VIOLATION2,TPXM))){ return 0; }
 	}
-	if (comm_meter_list_v2 != NULL)
+	if (comm_meter_list_v2 != nullptr)
 	{
 		if(0 > fprintf(f,"    COMMERCIAL METER (%i of %i meters in violation),%i\n", comm_meter_list_v2->length(), comm_mtr_obj_list->length(), get_violation_count(VIOLATION2,CMTR))){ return 0; }
 	}
 	
 	if(0 > fprintf(f,"VIOLATION3 TOTAL,%i\n", get_violation_count(VIOLATION3))){ return 0; }
-	if (tplx_node_list_v3 != NULL)
+	if (tplx_node_list_v3 != nullptr)
 	{
 		if(0 > fprintf(f,"    TRIPLEX NODE (%i of %i nodes in violation),%i\n", tplx_node_list_v3->length(), tplx_node_obj_list->length(), get_violation_count(VIOLATION3,TPXN))){ return 0; }
 	}
-	if (tplx_meter_list_v3 != NULL)
+	if (tplx_meter_list_v3 != nullptr)
 	{
 		if(0 > fprintf(f,"    TRIPLEX METER (%i of %i meters in violation),%i\n", tplx_meter_list_v3->length(), tplx_mtr_obj_list->length(), get_violation_count(VIOLATION3,TPXM))){ return 0; }
 	}
-	if (comm_meter_list_v3 != NULL)
+	if (comm_meter_list_v3 != nullptr)
 	{
 		if(0 > fprintf(f,"    COMMERCIAL METER (%i of %i meters in violation),%i\n", comm_meter_list_v3->length(), comm_mtr_obj_list->length(), get_violation_count(VIOLATION3,CMTR))){ return 0; }
 	}
 
 	if(0 > fprintf(f,"VIOLATION4 TOTAL,%i\n", get_violation_count(VIOLATION4))){ return 0; }
 	if(0 > fprintf(f,"VIOLATION5 TOTAL,%i\n", get_violation_count(VIOLATION5))){ return 0; }
-	if (inverter_list_v6 != NULL)
+	if (inverter_list_v6 != nullptr)
 	{
 		if(0 > fprintf(f,"VIOLATION6 TOTAL (%i of %i inverters in violation),%i\n", inverter_list_v6->length(), inverter_obj_list->length(), get_violation_count(VIOLATION6))){ return 0; }
 	}
 	if(0 > fprintf(f,"VIOLATION7 TOTAL,%i\n", get_violation_count(VIOLATION7))){ return 0; }
 	
-	if (tplx_meter_list_v7 != NULL)
+	if (tplx_meter_list_v7 != nullptr)
 	{
 		if(0 > fprintf(f,"    TRIPLEX METER (%i of %i meters in violation),%i\n", tplx_meter_list_v7->length(), tplx_mtr_obj_list->length(), get_violation_count(VIOLATION7,TPXM))){ return 0; }
 	}
-	if (comm_meter_list_v7 != NULL)
+	if (comm_meter_list_v7 != nullptr)
 	{
 		if(0 > fprintf(f,"    COMMERCIAL METER (%i of %i meters in violation),%i\n", comm_meter_list_v7->length(), comm_mtr_obj_list->length(), get_violation_count(VIOLATION7,CMTR))){ return 0; }
 	}
@@ -1625,13 +1623,13 @@ vobjlist *violation_recorder::vobjlist_alloc_fxn(vobjlist *input_list)
 	OBJECT *obj = OBJECTHDR(this);
 
 	//Null the address, for giggles
-	input_list = NULL;
+	input_list = nullptr;
 
 	//Perform the allocation
 	input_list = (vobjlist *)gl_malloc(sizeof(vobjlist));
 
 	//Check it
-	if (input_list == NULL)
+	if (input_list == nullptr)
 	{
 		GL_THROW(const_cast<char *>("violation_recorder:%d %s - Failed to allocate space for object list to check"),obj->id,obj->name ? obj->name : "Unnamed");
 		/*  TROUBLESHOOT
@@ -1652,13 +1650,13 @@ uniqueList *violation_recorder::uniqueList_alloc_fxn(uniqueList *input_unlist)
 	OBJECT *obj = OBJECTHDR(this);
 
 	//Null the address, for giggles
-	input_unlist = NULL;
+	input_unlist = nullptr;
 
 	//Perform the allocation
 	input_unlist = (uniqueList *)gl_malloc(sizeof(uniqueList));
 
 	//Check it
-	if (input_unlist == NULL)
+	if (input_unlist == nullptr)
 	{
 		GL_THROW(const_cast<char *>("violation_recorder:%d %s - Failed to allocate space for unique list"),obj->id,obj->name ? obj->name : "Unnamed");
 		/*  TROUBLESHOOT
@@ -1680,7 +1678,7 @@ EXPORT int create_violation_recorder(OBJECT **obj, OBJECT *parent){
 	int rv = 0;
 	try {
 		*obj = gl_create_object(violation_recorder::oclass);
-		if(*obj != NULL){
+		if(*obj != nullptr){
 			violation_recorder *my = OBJECTDATA(*obj, violation_recorder);
 			gl_set_parent(*obj, parent);
 			rv = my->create();
@@ -1765,7 +1763,7 @@ EXPORT STATUS finalize_violation_recorder(OBJECT *obj)
 {
 	violation_recorder *my = OBJECTDATA(obj,violation_recorder);
 	try {
-		return obj!=NULL ? my->finalize(obj) : FAILED;
+		return obj!=nullptr ? my->finalize(obj) : FAILED;
 	}
 	//T_CATCHALL(pw_model,finalize);
 	catch (char *msg) {

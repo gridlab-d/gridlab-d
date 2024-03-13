@@ -17,20 +17,20 @@
 //////////////////////////////////////////////////////////////////////////
 // capbank CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS *capbank::oclass = NULL;
-CLASS *capbank::pclass = NULL;
-capbank *capbank::defaults = NULL;
-CLASS *capbank_class = NULL;
+CLASS *capbank::oclass = nullptr;
+CLASS *capbank::pclass = nullptr;
+capbank *capbank::defaults = nullptr;
+CLASS *capbank_class = nullptr;
 
 capbank::capbank(MODULE *mod) : link(mod)
 {
 	// TODO: set default values
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		capbank_class = oclass = gl_register_class(mod,"capbank",sizeof(capbank),PC_BOTTOMUP);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class capbank";
 		else
 			oclass->trl = TRL_CONCEPT;
@@ -48,7 +48,7 @@ capbank::capbank(MODULE *mod) : link(mod)
 			PT_double, "VARclose", PADDR(VARclose),
 			PT_double, "Vopen", PADDR(Vopen),
 			PT_double, "Vclose", PADDR(Vclose),
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// setup the default values
 		defaults = this;
@@ -66,7 +66,7 @@ TIMESTAMP capbank::sync(TIMESTAMP t0)
 {
 	node *f = OBJECTDATA(from,node);
 	node *t = OBJECTDATA(to,node);
-	if (f==NULL || t==NULL)
+	if (f==nullptr || t==nullptr)
 		return TS_NEVER;
 	// TODO: update capbank state
 	return link::sync(t0);
@@ -79,7 +79,7 @@ TIMESTAMP capbank::sync(TIMESTAMP t0)
 EXPORT int create_capbank(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(capbank_class);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		capbank *my = OBJECTDATA(*obj,capbank);
 		gl_set_parent(*obj,parent);

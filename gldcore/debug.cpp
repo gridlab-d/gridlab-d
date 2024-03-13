@@ -316,7 +316,7 @@ void exec_sighandler(int sig) /**< the signal number, see \p <signal.h> */
 			{
 				output_debug("debugger activation failed, signal processing disabled");
 				debug_active=1;
-				signal(sig,NULL);
+				signal(sig,nullptr);
 			}
 		}
 		else
@@ -347,7 +347,7 @@ const char *strsignal(int sig)
 }
 #endif
 
-typedef enum {DBG_QUIT,DBG_RUN,DBG_NEXT} DEBUGCMD; /**< commands that are automatically repeated when a \p NULL command is entered */
+typedef enum {DBG_QUIT,DBG_RUN,DBG_NEXT} DEBUGCMD; /**< commands that are automatically repeated when a \p nullptr command is entered */
 typedef enum {BP_MODULE, BP_CLASS, BP_OBJECT, BP_PASS, BP_RANK, BP_TIME, BP_CLOCK, BP_ERROR} BREAKPOINTTYPE; /**< breakpoint types that are supported */
 typedef struct s_breakpoint {
 	BREAKPOINTTYPE type; /**< the breakpoint type for this entry */
@@ -364,8 +364,8 @@ typedef struct s_breakpoint {
 	}; /**< breakpoint criteria */
 	struct s_breakpoint *next; /**< the next breakpoint in the breakpoint list */
 } BREAKPOINT; /**< the structure for a breakpoint entry */
-static BREAKPOINT *first_breakpoint=NULL, /**< pointer to the first breakpoint */
-	*last_breakpoint=NULL; /**< pointer to the last breakpoint */
+static BREAKPOINT *first_breakpoint=nullptr, /**< pointer to the first breakpoint */
+	*last_breakpoint=nullptr; /**< pointer to the last breakpoint */
 static int breakpoint_count=0; /**< the number of breakpoints defined so far */
 
 /** This function adds a breakpoint to the list of breakpoints that examined by the debugger 
@@ -374,7 +374,7 @@ static int exec_add_breakpoint(BREAKPOINTTYPE type, /**< the breakpoint type */
 							   int64 data) /**< the breakpoint type-neutral data */
 {
 	BREAKPOINT *bp = (BREAKPOINT*)malloc(sizeof(BREAKPOINT));
-	if (bp==NULL)
+	if (bp==nullptr)
 	{
 		output_error("exec_add_breakpoint() - memory allocation failed");
 		/* TROUBLESHOOT
@@ -388,8 +388,8 @@ static int exec_add_breakpoint(BREAKPOINTTYPE type, /**< the breakpoint type */
 	bp->data = data;
 	bp->enabled = 1;
 	bp->num = breakpoint_count++;
-	bp->next = NULL;
-	if (last_breakpoint!=NULL) 
+	bp->next = nullptr;
+	if (last_breakpoint!=nullptr)
 		last_breakpoint->next=bp;
 	else 
 		first_breakpoint=bp;
@@ -405,8 +405,8 @@ typedef struct s_watchpoint {
 	char buffer[65536]; /**< the current value being watched */
 	struct s_watchpoint *next; /**< the next watchpoint in the watchpoint list */
 } WATCHPOINT; /**< the structure for a watchpoint entry */
-static WATCHPOINT *first_watchpoint=NULL, /**< a pointer to the first watchpoint */
-	*last_watchpoint=NULL; /**< a pointer to the last watchpoint */
+static WATCHPOINT *first_watchpoint=nullptr, /**< a pointer to the first watchpoint */
+	*last_watchpoint=nullptr; /**< a pointer to the last watchpoint */
 static int watchpoint_count=0; /**< the number of watchpoints defined so far */
 
 /** This function adds a watchpoint to the watchpoint list 
@@ -416,7 +416,7 @@ static int exec_add_watchpoint(OBJECT *obj, /**< the object being watched */
 {
 	WATCHPOINT *wp = (WATCHPOINT*)malloc(sizeof(WATCHPOINT));
 	char buffer[65536];
-	if (wp==NULL)
+	if (wp==nullptr)
 	{
 		output_error("exec_add_watchpoint() - memory allocation failed");
 		/* TROUBLESHOOT
@@ -430,12 +430,12 @@ static int exec_add_watchpoint(OBJECT *obj, /**< the object being watched */
 	wp->num = watchpoint_count++;
 	wp->obj = obj;
 	wp->prop = prop;
-	if (prop==NULL)
+	if (prop==nullptr)
 		object_dump(wp->buffer,sizeof(wp->buffer),obj);
 	else
 		strcpy(wp->buffer,object_property_to_string(obj,prop->name, buffer, 1023));
-	wp->next = NULL;
-	if (last_watchpoint!=NULL) 
+	wp->next = nullptr;
+	if (last_watchpoint!=nullptr)
 		last_watchpoint->next=wp;
 	else 
 		first_watchpoint=wp;
@@ -447,11 +447,11 @@ static void list_object(OBJECT *obj, PASSCONFIG pass)
 {
 	char details[2048] = "";
 	char buf1[64],buf2[64],buf3[64];
-	if (list_unnamed==0 && obj->name==NULL)
+	if (list_unnamed==0 && obj->name==nullptr)
 		return;
 	if (list_inactive==0 && (global_clock<obj->in_svc || global_clock>obj->out_svc))
 		return;
-	if (list_sync==0 && obj->oclass->sync==NULL)
+	if (list_sync==0 && obj->oclass->sync==nullptr)
 		return;
 	if (list_details)
 	{
@@ -470,8 +470,8 @@ static void list_object(OBJECT *obj, PASSCONFIG pass)
 		(obj->flags&OF_HASPLC)==OF_HASPLC?"x":"-", /* object PLC status */
 		obj->rank, 
 		obj->clock>0?(convert_from_timestamp(obj->clock,buf3,sizeof(buf3))?buf3:"(error)"):"INIT",
-		obj->name?obj->name:convert_from_object(buf1,sizeof(buf1),&obj,NULL)?buf1:"(error)",
-		obj->parent?(obj->parent->name?obj->parent->name:convert_from_object(buf2,sizeof(buf2),&(obj->parent),NULL)?buf2:"(error)"):"ROOT",
+		obj->name?obj->name:convert_from_object(buf1,sizeof(buf1),&obj,nullptr)?buf1:"(error)",
+		obj->parent?(obj->parent->name?obj->parent->name:convert_from_object(buf2,sizeof(buf2),&(obj->parent),nullptr)?buf2:"(error)"):"ROOT",
 		details);
 }
 
@@ -496,7 +496,7 @@ DEBUGCMD exec_debug_cmd(struct sync_data *data, /**< the current sync status of 
 		global_iteration_limit-iteration_counter+1);
 	{
 		extern void (*notify_error)(void);
-		if (notify_error != NULL)
+		if (notify_error != nullptr)
 			output_debug("output errors are trapped");
 	}
 	while (1)
@@ -522,8 +522,8 @@ Retry:
 			char* nl;
 			read_val = fgets(buffer,1024,load_fp);
 			
-			/* check the returned value.  If NULL, drop out of file load mode */
-			if(read_val == NULL)
+			/* check the returned value.  If nullptr, drop out of file load mode */
+			if(read_val == nullptr)
 			{
 				load_from_file = 0;
 				fclose(load_fp);
@@ -561,11 +561,11 @@ Retry:
 			
 			if(sscanf(buffer,"%*s %s", modname)){
 				output_message("Loading module %s...", modname);
-				module_load(modname, 0, NULL);
+				module_load(modname, 0, nullptr);
 			} else {
 				MODULE *mod = module_get_first();
 				output_message("Loaded modules:");
-				while(mod != NULL){
+				while(mod != nullptr){
 					output_message(" * %s v%i.%i", mod->name, mod->major, mod->minor);
 					mod = mod->next;
 				}
@@ -591,7 +591,7 @@ Retry:
 			   output_message("%-16.16s %4s %6s %-16.16s %-32.32s",	"----------------","----","------","----------------","--------------------------------");
 			 */
 			/* NOTE ~ this has been copy/paste-ed for "find" as well! */
-			for (obj=object_get_first(); obj!=NULL; obj=obj->next) 
+			for (obj=object_get_first(); obj!=nullptr; obj=obj->next)
 			{
 				if (lclass[0]=='\0' || strcmp(lclass,obj->oclass->name)==0)
 					list_object(obj,pass);
@@ -717,7 +717,7 @@ Retry:
 				 */
 			}
 			load_fp = fopen(load_filename,"r");
-			if(load_fp == NULL)
+			if(load_fp == nullptr)
 			{
 				output_error("unable to open file %s for reading",load_filename);
 				/* TROUBLESHOOT
@@ -733,12 +733,12 @@ Retry:
 			if (sscanf(buffer,"%*s %s", cmd)==1)
 				int result = system(cmd);
 #ifdef _WIN32
-			else if (getenv("COMSPEC")!=NULL)
+			else if (getenv("COMSPEC")!=nullptr)
 				system(getenv("COMSPEC"));
 			else
 				system("cmd");
 #else
-			else if (getenv("SHELL")!=NULL)
+			else if (getenv("SHELL")!=nullptr)
 				int result = system(getenv("SHELL"));
 			else
 				int result = system("/bin/sh");
@@ -752,9 +752,9 @@ Retry:
 			{
 				/* display all breakpoints */
 				BREAKPOINT *bp;
-				if (last_breakpoint==NULL)
+				if (last_breakpoint==nullptr)
 					output_debug("no breakpoints");
-				for (bp=first_breakpoint; bp!=NULL; bp=bp->next)
+				for (bp=first_breakpoint; bp!=nullptr; bp=bp->next)
 				{
 					char tmp[64];
 					switch (bp->type) {
@@ -814,7 +814,7 @@ Retry:
 			else if (strncmp(bptype,"object",strlen(bptype))==0)
 			{	/* create object breakpoint */
 				OBJECT *obj = object_find_name(bpval);
-				if (obj!=NULL || convert_to_object(bpval,&obj,NULL))
+				if (obj!=nullptr || convert_to_object(bpval,&obj,nullptr))
 				{
 					if (!exec_add_breakpoint(BP_OBJECT,(int64)obj)) /* warning: cast from pointer to integer of different size */
 						output_error("unable to add object breakpoint");
@@ -835,7 +835,7 @@ Retry:
 			else if (strncmp(bptype,"module",strlen(bptype))==0)
 			{	/* create module breakpoint */
 				MODULE *mod = module_find(bpval);
-				if (mod!=NULL)
+				if (mod!=nullptr)
 				{
 					if (!exec_add_breakpoint(BP_MODULE,(int64)mod)) /* warning: cast from pointer to integer of different size */
 						output_error("unable to add module breakpoint");
@@ -856,7 +856,7 @@ Retry:
 			else if (strncmp(bptype,"class",strlen(bptype))==0)
 			{	/* create class breakpoint */
 				CLASS *oclass = class_get_class_from_classname(bpval);
-				if (oclass!=NULL)
+				if (oclass!=nullptr)
 				{
 					if (!exec_add_breakpoint(BP_CLASS,(int64)oclass)) /* warning: cast from pointer to integer of different size */
 						output_error("unable to add class breakpoint");
@@ -940,7 +940,7 @@ Retry:
 						continue;
 					}
 				}
-				for (bp=first_breakpoint; bp!=NULL; bp=bp->next)
+				for (bp=first_breakpoint; bp!=nullptr; bp=bp->next)
 				{
 					if (bp->num==n || n==-1)
 						bp->enabled = 0;
@@ -961,7 +961,7 @@ Retry:
 						continue;
 					}
 				}
-				for (bp=first_breakpoint; bp!=NULL; bp=bp->next)
+				for (bp=first_breakpoint; bp!=nullptr; bp=bp->next)
 				{
 					if (bp->num==n || n==-1)
 						bp->enabled = 1;
@@ -983,11 +983,11 @@ Retry:
 			{
 				/* display all watchpoints */
 				WATCHPOINT *wp;
-				if (last_watchpoint==NULL)
+				if (last_watchpoint==nullptr)
 					output_debug("no watchpoints");
-				for (wp=first_watchpoint; wp!=NULL; wp=wp->next)
+				for (wp=first_watchpoint; wp!=nullptr; wp=wp->next)
 				{
-					if (wp->prop==NULL)
+					if (wp->prop==nullptr)
 						output_debug("watchpoint %d - object %s %s", wp->num, get_objname(wp->obj), wp->enabled?"":"(disabled)");
 					else
 						output_debug("watchpoint %d - object %s %s - property %s", wp->num, get_objname(wp->obj), wp->enabled?"":"(disabled)", wp->prop->name);
@@ -997,7 +997,7 @@ Retry:
 			{
 				int n=atoi(wptype);
 				WATCHPOINT *wp;
-				for (wp=first_watchpoint; wp!=NULL; wp=wp->next)
+				for (wp=first_watchpoint; wp!=nullptr; wp=wp->next)
 				{
 					if (wp->num==n)
 						output_debug("watchpoint %d - object %s %s\n%s", 
@@ -1027,7 +1027,7 @@ Retry:
 						continue;
 					}
 				}
-				for (wp=first_watchpoint; wp!=NULL; wp=wp->next)
+				for (wp=first_watchpoint; wp!=nullptr; wp=wp->next)
 				{
 					if (wp->num==n || n==-1)
 						wp->enabled = 0;
@@ -1048,18 +1048,18 @@ Retry:
 						continue;
 					}
 				}
-				for (wp=first_watchpoint; wp!=NULL; wp=wp->next)
+				for (wp=first_watchpoint; wp!=nullptr; wp=wp->next)
 				{
 					if (wp->num==n || n==-1)
 						wp->enabled = 1;
 				}
 			}
-			else if ((obj=object_find_name(wptype)) || convert_to_object(wptype,&obj,NULL))
+			else if ((obj=object_find_name(wptype)) || convert_to_object(wptype,&obj,nullptr))
 			{
 				if (strcmp(wpval,"")!=0)
 				{
-					PROPERTY *prop = object_get_property(obj,wpval,NULL);
-					if (prop==NULL)
+					PROPERTY *prop = object_get_property(obj,wpval,nullptr);
+					if (prop==nullptr)
 						output_error("object %s does not have a property named '%s'", wptype,wpval);
 					/* TROUBLESHOOT
 						The <b>watch</b> command refers to an object property that isn't defined.
@@ -1074,7 +1074,7 @@ Retry:
 						and try again.
 					 */
 				}
-				else if (!exec_add_watchpoint(obj,NULL))
+				else if (!exec_add_watchpoint(obj,nullptr))
 					output_error("unable to add object watchpoint");
 				/* repeat last TROUBLESHOOT */
 			}
@@ -1114,7 +1114,7 @@ Retry:
 			else
 			{
 				OBJECT *obj = object_find_name(tmp);
-				if (obj!=NULL || convert_to_object(tmp,&obj,NULL))
+				if (obj!=nullptr || convert_to_object(tmp,&obj,nullptr))
 				{
 					if (object_dump(tmp,sizeof(tmp),obj))
 						output_debug("%s",tmp);
@@ -1133,13 +1133,13 @@ Retry:
 		else if (strncmp(cmd,"globals",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			GLOBALVAR *var;
-			for (var=global_getnext(NULL); var!=NULL; var=global_getnext(var))
+			for (var=global_getnext(nullptr); var!=nullptr; var=global_getnext(var))
 			{
 				char buffer[256];
 				char *val = global_getvar(var->prop->name, buffer, 255);
-				if (val!=NULL && strlen(val)>64)
+				if (val!=nullptr && strlen(val)>64)
 					strcpy(val+28,"...");
-				output_message("%-32.32s: \"%s\"", var->prop->name, val==NULL?"(error)":val);
+				output_message("%-32.32s: \"%s\"", var->prop->name, val==nullptr?"(error)":val);
 			}
 		}
 		else if (strncmp(cmd,"set",std::max<unsigned long>(1,strlen(cmd)))==0)
@@ -1163,7 +1163,7 @@ Retry:
 							and try again.
 						 */
 				}
-				else if ((obj=object_find_name(objname)) || convert_to_object(objname,&obj,NULL))
+				else if ((obj=object_find_name(objname)) || convert_to_object(objname,&obj,nullptr))
 				{
 					if (!object_set_value_by_name(obj,propname,value))
 						output_error("unable to set value of object %s property %s", objname.get_string(),propname.get_string());
@@ -1172,7 +1172,7 @@ Retry:
 							converted to the type required for the property.  Check the command
 							syntax and try again.
 						 */
-					else if (!object_get_property(obj,propname,NULL))
+					else if (!object_get_property(obj,propname,nullptr))
 						output_error("invalid property for object %s",objname.get_string());
 						/* TROUBLESHOOT
 							This error should not occur and in harmless.  
@@ -1198,15 +1198,15 @@ Retry:
 		}
 		else if (strncmp(cmd,"find ",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
-			FINDLIST *fl = NULL;
-			OBJECT *obj = NULL;
+			FINDLIST *fl = nullptr;
+			OBJECT *obj = nullptr;
 			output_debug("running search with \"%s\"", buffer+5);
 			fl = find_objects(FL_GROUP, buffer+5);
 			obj = find_first(fl);
-			//while(obj != NULL){
+			//while(obj != nullptr){
 			//	output_debug(" * %s (%s)", get_objname(obj), obj->oclass->name);
 			//	obj = find_next(fl, obj);
-			for (obj=find_first(fl); obj!=NULL; obj=find_next(fl, obj)) 
+			for (obj=find_first(fl); obj!=nullptr; obj=find_next(fl, obj))
 				list_object(obj,pass);
 		}
 		else if (strncmp(cmd,"gdb",3)==0)
@@ -1307,13 +1307,13 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 		}
 
 		/* check watchpoints */
-		for (wp=first_watchpoint; wp!=NULL; wp=wp->next)
+		for (wp=first_watchpoint; wp!=nullptr; wp=wp->next)
 		{
 			if (wp->enabled==0)
 				continue;
 			if (obj==wp->obj)
 			{
-				if (wp->prop==NULL)
+				if (wp->prop==nullptr)
 				{
 					char tmp[65536];
 					if (object_dump(tmp,sizeof(tmp),obj) && strcmp(tmp,wp->buffer)!=0)
@@ -1328,7 +1328,7 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 				{
 					char temp[1024];
 					char *tmp = object_property_to_string(obj,wp->prop->name, temp, 1023);
-					if (tmp!=NULL && strcmp(tmp,wp->buffer)!=0)
+					if (tmp!=nullptr && strcmp(tmp,wp->buffer)!=0)
 					{
 						output_debug("watchpoint %d stopped on object %s property %s", wp->num, get_objname(obj), wp->prop->name);
 						output_debug("from... %s",wp->buffer);
@@ -1341,7 +1341,7 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 		}
 
 		/* check breakpoints */
-		for (bp=first_breakpoint; bp!=NULL; bp=bp->next)
+		for (bp=first_breakpoint; bp!=nullptr; bp=bp->next)
 		{
 			if (bp->enabled==0)
 				continue;

@@ -31,22 +31,22 @@ EXPORT int check(void)
 	// check links for connectivity
 	int linkcount[10000];
 	memset(linkcount,0,sizeof(linkcount));
-	obj=NULL;
-	while ((obj=gl_find_next(links,obj))!=NULL)
+	obj=nullptr;
+	while ((obj=gl_find_next(links,obj))!=nullptr)
 	{
 		link *branch=OBJECTDATA(obj,link);
-		if (branch->from==NULL && branch->to==NULL)
+		if (branch->from==nullptr && branch->to==nullptr)
 		{
 			gl_error("link:%d is not connected on either end", obj->id);
 			errcount++;
 		}
-		else if (branch->from==NULL) 
+		else if (branch->from==nullptr)
 		{
 			gl_error("link:%d is not connected on 'from' end", obj->id);
 			errcount++;
 			linkcount[branch->to->id]++;
 		}
-		else if (branch->to==NULL) 
+		else if (branch->to==nullptr)
 		{
 			gl_error("link:%d is not connected on 'to' end", obj->id);
 			errcount++;
@@ -67,15 +67,15 @@ EXPORT int check(void)
 		int count;
 	} areas[1000];
 	memset(areas,0,sizeof(areas));
-	obj=NULL;
-	while ( (obj=gl_find_next(nodes,obj))!=NULL)
+	obj=nullptr;
+	while ( (obj=gl_find_next(nodes,obj))!=nullptr)
 	{
 		node *bus=OBJECTDATA(obj,node);
 		int n = bus->flow_area_num;
 		areas[n].count++;
 		if (bus->type==SWING)
 		{
-			if (areas[n].swing!=NULL)
+			if (areas[n].swing!=nullptr)
 				gl_warning("flow area %d has more than one swing bus (node:%d and node:%d)", n, areas[n].swing->id, obj->id);
 			else
 				areas[n].swing = obj;
@@ -88,7 +88,7 @@ EXPORT int check(void)
 	int i;
 	for (i=0; i<sizeof(areas)/sizeof(areas[0]); i++)
 	{
-		if (areas[i].count>0 && areas[i].swing==NULL)
+		if (areas[i].count>0 && areas[i].swing==nullptr)
 		{
 			gl_error("flow area %d has no swing bus", i);
 			errcount++;
@@ -97,10 +97,10 @@ EXPORT int check(void)
 	}
 
 	// check for islands without swing buses
-	obj=NULL;
+	obj=nullptr;
 	OBJECTNUM bus[10000];
 	memset(bus,0xff,sizeof(bus));
-	while ( (obj=gl_find_next(swings,obj))!=NULL)
+	while ( (obj=gl_find_next(swings,obj))!=nullptr)
 	{
 		// mark swing bus
 		bus[obj->id]=obj->id;
@@ -108,14 +108,14 @@ EXPORT int check(void)
 		// scan all links to spread swing info until no changes made
 		bool changed;
 		do {
-			OBJECT *p=NULL;
+			OBJECT *p=nullptr;
 			changed=false;
-			while ((p=gl_find_next(links,p))!=NULL)
+			while ((p=gl_find_next(links,p))!=nullptr)
 			{
 				link *q=OBJECTDATA(p,link);
 				OBJECT *f = q->from;
 				OBJECT *t = q->to;
-				if (f==NULL || t==NULL)
+				if (f==nullptr || t==nullptr)
 					continue;
 				if (bus[f->id]==obj->id && bus[t->id]==0xffffffff)
 				{
@@ -130,8 +130,8 @@ EXPORT int check(void)
 			}
 		} while (changed);
 	}
-	obj=NULL;
-	while ( (obj=gl_find_next(nodes,obj))!=NULL)
+	obj=nullptr;
+	while ( (obj=gl_find_next(nodes,obj))!=nullptr)
 	{
 		if (bus[obj->id]==0xffffffff)
 		{

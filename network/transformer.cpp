@@ -20,20 +20,20 @@
 //////////////////////////////////////////////////////////////////////////
 // transformer CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* transformer::oclass = NULL;
-CLASS* transformer::pclass = NULL;
-transformer *transformer::defaults = NULL;
+CLASS* transformer::oclass = nullptr;
+CLASS* transformer::pclass = nullptr;
+transformer *transformer::defaults = nullptr;
 
-CLASS *transformer_class = (NULL);
+CLASS *transformer_class = (nullptr);
 
 transformer::transformer(MODULE *mod) : link(mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		transformer_class = oclass = gl_register_class(mod,"transformer",sizeof(transformer),PC_BOTTOMUP);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class transformer";
 		else
 			oclass->trl = TRL_CONCEPT;
@@ -50,7 +50,7 @@ transformer::transformer(MODULE *mod) : link(mod)
 			PT_double, "Zpu", PADDR(Zpu),
 			PT_double, "Vprimary", PADDR(Vprimary),
 			PT_double, "Vsecondary", PADDR(Vsecondary),
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// setup the default values
 		defaults = this;
@@ -68,7 +68,7 @@ TIMESTAMP transformer::sync(TIMESTAMP t0)
 {
 	node *f = OBJECTDATA(from,node);
 	node *t = OBJECTDATA(to,node);
-	if (f==NULL || t==NULL)
+	if (f==nullptr || t==nullptr)
 		return TS_NEVER;
 	// TODO: update transformer state
 	return link::sync(t0);
@@ -80,7 +80,7 @@ TIMESTAMP transformer::sync(TIMESTAMP t0)
 EXPORT int create_transformer(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(transformer_class);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		transformer *my = OBJECTDATA(*obj,transformer);
 		gl_set_parent(*obj,parent);

@@ -115,7 +115,7 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 			PT_double, "I_M[pu]", PADDR(IM_pu), PT_DESCRIPTION,"Peak magnetization current at rated voltage of the saturation curve",
 			PT_double, "T_D", PADDR(TD_val), PT_DESCRIPTION, "Inrush decay time constant for inrush current",
 
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
 

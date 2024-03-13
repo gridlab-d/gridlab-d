@@ -68,7 +68,7 @@ sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 								PT_double, "volt_B_ang_deg_diff", PADDR(volt_B_ang_deg_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase B voltage angle in degree",
 								PT_double, "volt_C_ang_deg_diff", PADDR(volt_C_ang_deg_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase C voltage angle in degree",
 								PT_double, "nominal_volt_v", PADDR(volt_norm), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement Property: Nominal voltage of from/to node of the parent switch",
-								NULL) < 1)
+								nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 
 		if (gl_publish_function(oclass, "interupdate_pwr_object", (FUNCTIONADDR)interupdate_sync_check) == nullptr)
@@ -678,7 +678,7 @@ void sync_check::reg_deltamode()
 			*/
 		}
 
-		// Set the post delta function to NULL, thus it does not need to be checked
+		// Set the post delta function to nullptr, thus it does not need to be checked
 		post_delta_functions[pwr_object_current] = nullptr;
 
 		//Increment

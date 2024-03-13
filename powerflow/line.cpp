@@ -68,7 +68,7 @@ line::line(MODULE *mod) : link_object(mod) {
 			PT_INHERIT, "link",
 			PT_object, "configuration",PADDR(configuration),
 			PT_double, "length[ft]",PADDR(length),
-			NULL) < 1) GL_THROW("unable to publish line properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish line properties in %s",__FILE__);
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)

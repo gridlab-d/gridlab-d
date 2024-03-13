@@ -18,16 +18,16 @@ EXPORT_CREATE(enum_assert);
 EXPORT_INIT(enum_assert);
 EXPORT_COMMIT(enum_assert);
 
-CLASS *enum_assert::oclass = NULL;
-enum_assert *enum_assert::defaults = NULL;
+CLASS *enum_assert::oclass = nullptr;
+enum_assert *enum_assert::defaults = nullptr;
 
 enum_assert::enum_assert(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gl_register_class(module,"enum_assert",sizeof(enum_assert),PC_AUTOLOCK|PC_OBSERVER);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class enum_assert";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -40,7 +40,7 @@ enum_assert::enum_assert(MODULE *module)
 				PT_KEYWORD,"ASSERT_NONE",(enumeration)ASSERT_NONE,
 			PT_int32, "value", get_value_offset(),PT_DESCRIPTION,"Value to assert",
 			PT_char1024, "target", get_target_offset(),PT_DESCRIPTION,"Property to perform the assert upon",	
-			NULL)<1){
+			nullptr)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
@@ -140,7 +140,7 @@ EXPORT SIMULATIONMODE update_enum_assert(OBJECT *obj, TIMESTAMP t0, unsigned int
 			//Get the value
 			x = (int32*)gl_get_enum_by_name(obj->parent,da->get_target());
 
-			if (x==NULL) 
+			if (x==nullptr)
 			{
 				gl_error("Specified target %s for %s is not valid.",da->get_target(),gl_name(obj->parent,buff,64));
 				/*  TROUBLESHOOT

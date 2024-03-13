@@ -48,7 +48,7 @@ udp::~udp()
 int udp::option(char *command)
 {
 	char param[256], value[1024];
-	while ( command!=NULL && *command!='\0' ) 
+	while ( command!=nullptr && *command!='\0' )
 	{
 		switch ( sscanf(command,"%256[^ =]%*[ =]%[^,;]",param,value) ) {
 		case 1:
@@ -124,7 +124,7 @@ int udp::option(char *command)
 		else if ( semic )
 			command = semic;
 		else
-			command = NULL;
+			command = nullptr;
 		if ( command )
 		{
 			while ( isspace(*command) || *command==',' || *command==';' ) command++;
@@ -144,7 +144,7 @@ int udp::create(void)
 	}
 
 	// erase the sockdata structure
-	set_sockdata(NULL);
+	set_sockdata(nullptr);
 
 	// reset the error message to anticipate init coming next
 	set_errormsg("udp::init() not called");
@@ -183,7 +183,7 @@ Retry:
 
 size_t udp::send(const char *msg, size_t len)
 {
-	if ( msg==NULL )
+	if ( msg==nullptr )
 	{
 		msg = output;
 		len = position;
@@ -210,7 +210,7 @@ size_t udp::send(const char *msg, size_t len)
 }
 size_t udp::recv(char *buf, size_t len)
 {
-	if ( buf==NULL )
+	if ( buf==nullptr )
 	{
 		memset(input,0,sizeof(input));
 		buf = input;
@@ -300,7 +300,7 @@ Retry:
 	debug(2,"udp::recv() => [%s]",buf);
 
 	// destroy the existing translation (if any)
-	if ( translator!=NULL )
+	if ( translator!=nullptr )
 		translation = (*translator)(buf,translation);
 
 	return size;

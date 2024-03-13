@@ -22,12 +22,12 @@
 
 #include "branch.h"
 
-CLASS *branch::oclass = NULL;
-branch *branch::defaults = NULL;
+CLASS *branch::oclass = nullptr;
+branch *branch::defaults = nullptr;
 
 #ifdef OPTIONAL
 /* TODO: define this to allow the use of derived classes */
-CLASS *PARENTbranch::pclass = NULL;
+CLASS *PARENTbranch::pclass = nullptr;
 #endif
 
 /* TODO: remove passes that aren't needed */
@@ -47,10 +47,10 @@ branch::branch(MODULE *module)
 	/* TODO: include this if you are deriving this from a superclass */
 	pclass = SUPERCLASS::oclass;
 #endif
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"branch",sizeof(branch),passconfig);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		if (gl_publish_variable(oclass,
@@ -80,7 +80,7 @@ branch::branch(MODULE *module)
 		PT_double, "MU_ANGMIN", PADDR(MU_ANGMIN), PT_DESCRIPTION, "Kuhn-Tucker multiplier lower angle difference limit (mu/degree)",
 		PT_double, "MU_ANGMAX", PADDR(MU_ANGMAX), PT_DESCRIPTION, "Kuhn-Tucker multiplier upper angle difference limit (mu/degree)",
            
-              NULL)<1 && errno) GL_THROW("unable to publish properties in %s",__FILE__);
+              nullptr)<1 && errno) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(branch));
 		/* TODO: set the default values of all properties here */
@@ -135,7 +135,7 @@ EXPORT int create_branch(OBJECT **obj)
 	try
 	{
 		*obj = gl_create_object(branch::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 			return OBJECTDATA(*obj,branch)->create();
 	}
 	catch (char *msg)
@@ -149,7 +149,7 @@ EXPORT int init_branch(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,branch)->init(parent);
 	}
 	catch (char *msg)

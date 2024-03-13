@@ -44,7 +44,7 @@ restoration::restoration(MODULE *mod) : powerflow_library(mod)
 			PT_double,"upper_voltage_limit[pu]",PADDR(voltage_limit[1]),PT_DESCRIPTION,"Upper voltage limit for the reconfiguration validity checks - per unit",
 			PT_char1024,"output_filename",PADDR(logfile_name),PT_DESCRIPTION,"Output text file name to describe final or attempted switching operations",
 			PT_bool,"generate_all_scenarios",PADDR(stop_and_generate),PT_DESCRIPTION,"Flag to determine if restoration reconfiguration and continues, or explores the full space",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		if (gl_publish_function(oclass,	"perform_restoration", (FUNCTIONADDR)perform_restoration)==nullptr)
 			GL_THROW("Unable to publish restoration function");
@@ -329,7 +329,7 @@ int restoration::init(OBJECT *parent)
 			//Try to map the function
 			fLinkPowerFunc[indexval] = (FUNCTIONADDR)(gl_get_function(fLinkObjList[indexval],"update_power_pwr_object"));
 
-			//Check to see if it worked -- would let it be NULL, but will cause problems later
+			//Check to see if it worked -- would let it be nullptr, but will cause problems later
 			if (fLinkPowerFunc[indexval] == nullptr)
 			{
 				GL_THROW("Restoration: failed to find power calculation function for link:%s",fLinkObjList[indexval]->name ? fLinkObjList[indexval]->name : "Unnamed");
@@ -408,7 +408,7 @@ int restoration::init(OBJECT *parent)
 			//Try to map the function
 			mLinkPowerFunc[indexval] = (FUNCTIONADDR)(gl_get_function(mLinkObjList[indexval],"update_power_pwr_object"));
 
-			//Check to see if it worked -- would let it be NULL, but will cause problems later
+			//Check to see if it worked -- would let it be nullptr, but will cause problems later
 			if (mLinkPowerFunc[indexval] == nullptr)
 			{
 				GL_THROW("Restoration: failed to find power calculation function for link:%s",mLinkObjList[indexval]->name ? mLinkObjList[indexval]->name : "Unnamed");
@@ -948,7 +948,7 @@ double *restoration::ParseDoubleString(char *input_string,int *num_items_found)
 					*parsing_token = '\0';
 
 					//Read the double value
-					output_array[item_count] = strtod(working_token,NULL);
+					output_array[item_count] = strtod(working_token,nullptr);
 
 					//Increment counters/pointers
 					item_count++;
@@ -959,7 +959,7 @@ double *restoration::ParseDoubleString(char *input_string,int *num_items_found)
 		//Defaulted else -- only 1
 
 		//Last item/singular item handled the same
-		output_array[item_count] = strtod(working_token,NULL);
+		output_array[item_count] = strtod(working_token,nullptr);
 	}
 	else	//No items, warn and exit
 	{
@@ -1104,7 +1104,7 @@ gld::complex *restoration::ParseComplexString(char *input_string,int *num_items_
 						offset_token = complex_token;
 
 						//Read it
-						temp_value = strtod(complex_token,NULL);
+						temp_value = strtod(complex_token,nullptr);
 
 						//Store it
 						output_array[item_count].SetImag(temp_value);
@@ -1113,7 +1113,7 @@ gld::complex *restoration::ParseComplexString(char *input_string,int *num_items_
 						*offset_token = '\0';
 
 						//Read the real part
-						temp_value = strtod(working_token,NULL);
+						temp_value = strtod(working_token,nullptr);
 
 						//Store it
 						output_array[item_count].SetReal(temp_value);
@@ -1155,7 +1155,7 @@ gld::complex *restoration::ParseComplexString(char *input_string,int *num_items_
 			offset_token = complex_token;
 
 			//Read it
-			temp_value = strtod(complex_token,NULL);
+			temp_value = strtod(complex_token,nullptr);
 
 			//Store it
 			output_array[item_count].SetImag(temp_value);
@@ -1164,7 +1164,7 @@ gld::complex *restoration::ParseComplexString(char *input_string,int *num_items_
 			*offset_token = '\0';
 
 			//Read the real part
-			temp_value = strtod(working_token,NULL);
+			temp_value = strtod(working_token,nullptr);
 
 			//Store it
 			output_array[item_count].SetReal(temp_value);
@@ -1379,7 +1379,7 @@ void restoration::CHORDSETalloc(CHORDSET *inititem, int allocsizeval)
 	{
 		gl_free(inititem->data_1);
 
-		//NULL it
+		//nullptr it
 		inititem->data_1 = nullptr;
 	}
 
@@ -1387,7 +1387,7 @@ void restoration::CHORDSETalloc(CHORDSET *inititem, int allocsizeval)
 	{
 		gl_free(inititem->data_2);
 
-		//NULL it
+		//nullptr it
 		inititem->data_2 = nullptr;
 	}
 
@@ -1421,7 +1421,7 @@ void restoration::CHORDSETfree(CHORDSET *inititem)
 	{
 		gl_free(inititem->data_1);
 
-		//NULL it
+		//nullptr it
 		inititem->data_1 = nullptr;
 	}
 
@@ -1429,7 +1429,7 @@ void restoration::CHORDSETfree(CHORDSET *inititem)
 	{
 		gl_free(inititem->data_2);
 
-		//NULL it
+		//nullptr it
 		inititem->data_2 = nullptr;
 	}
 
@@ -1450,7 +1450,7 @@ void restoration::LOCSETalloc(LOCSET *inititem, int allocsizeval)
 	{
 		gl_free(inititem->data_1);
 
-		//NULL it
+		//nullptr it
 		inititem->data_1 = nullptr;
 	}
 
@@ -1458,7 +1458,7 @@ void restoration::LOCSETalloc(LOCSET *inititem, int allocsizeval)
 	{
 		gl_free(inititem->data_2);
 
-		//NULL it
+		//nullptr it
 		inititem->data_2 = nullptr;
 	}
 
@@ -1466,7 +1466,7 @@ void restoration::LOCSETalloc(LOCSET *inititem, int allocsizeval)
 	{
 		gl_free(inititem->data_3);
 
-		//NULL it
+		//nullptr it
 		inititem->data_3 = nullptr;
 	}
 
@@ -1474,7 +1474,7 @@ void restoration::LOCSETalloc(LOCSET *inititem, int allocsizeval)
 	{
 		gl_free(inititem->data_4);
 
-		//NULL it
+		//nullptr it
 		inititem->data_4 = nullptr;
 	}
 
@@ -1512,7 +1512,7 @@ void restoration::LOCSETfree(LOCSET *inititem)
 	{
 		gl_free(inititem->data_1);
 
-		//NULL it
+		//nullptr it
 		inititem->data_1 = nullptr;
 	}
 
@@ -1520,7 +1520,7 @@ void restoration::LOCSETfree(LOCSET *inititem)
 	{
 		gl_free(inititem->data_2);
 
-		//NULL it
+		//nullptr it
 		inititem->data_2 = nullptr;
 	}
 
@@ -1528,7 +1528,7 @@ void restoration::LOCSETfree(LOCSET *inititem)
 	{
 		gl_free(inititem->data_3);
 
-		//NULL it
+		//nullptr it
 		inititem->data_3 = nullptr;
 	}
 
@@ -1536,7 +1536,7 @@ void restoration::LOCSETfree(LOCSET *inititem)
 	{
 		gl_free(inititem->data_4);
 
-		//NULL it
+		//nullptr it
 		inititem->data_4 = nullptr;
 	}
 
@@ -1557,7 +1557,7 @@ void restoration::CANDSWOPalloc(CANDSWOP *inititem, int allocsizeval)
 	{
 		gl_free(inititem->data_1);
 
-		//NULL it
+		//nullptr it
 		inititem->data_1 = nullptr;
 	}
 
@@ -1565,7 +1565,7 @@ void restoration::CANDSWOPalloc(CANDSWOP *inititem, int allocsizeval)
 	{
 		gl_free(inititem->data_2);
 
-		//NULL it
+		//nullptr it
 		inititem->data_2 = nullptr;
 	}
 
@@ -1573,7 +1573,7 @@ void restoration::CANDSWOPalloc(CANDSWOP *inititem, int allocsizeval)
 	{
 		gl_free(inititem->data_3);
 
-		//NULL it
+		//nullptr it
 		inititem->data_3 = nullptr;
 	}
 
@@ -1581,7 +1581,7 @@ void restoration::CANDSWOPalloc(CANDSWOP *inititem, int allocsizeval)
 	{
 		gl_free(inititem->data_4);
 
-		//NULL it
+		//nullptr it
 		inititem->data_4 = nullptr;
 	}
 
@@ -1589,7 +1589,7 @@ void restoration::CANDSWOPalloc(CANDSWOP *inititem, int allocsizeval)
 	{
 		gl_free(inititem->data_5);
 
-		//NULL it
+		//nullptr it
 		inititem->data_5 = nullptr;
 	}
 
@@ -1597,7 +1597,7 @@ void restoration::CANDSWOPalloc(CANDSWOP *inititem, int allocsizeval)
 	{
 		gl_free(inititem->data_6);
 
-		//NULL it
+		//nullptr it
 		inititem->data_6 = nullptr;
 	}
 
@@ -1605,7 +1605,7 @@ void restoration::CANDSWOPalloc(CANDSWOP *inititem, int allocsizeval)
 	{
 		gl_free(inititem->data_7);
 
-		//NULL it
+		//nullptr it
 		inititem->data_7 = nullptr;
 	}
 
@@ -1667,7 +1667,7 @@ void restoration::CANDSWOPfree(CANDSWOP *inititem)
 	{
 		gl_free(inititem->data_1);
 
-		//NULL it
+		//nullptr it
 		inititem->data_1 = nullptr;
 	}
 
@@ -1675,7 +1675,7 @@ void restoration::CANDSWOPfree(CANDSWOP *inititem)
 	{
 		gl_free(inititem->data_2);
 
-		//NULL it
+		//nullptr it
 		inititem->data_2 = nullptr;
 	}
 
@@ -1683,7 +1683,7 @@ void restoration::CANDSWOPfree(CANDSWOP *inititem)
 	{
 		gl_free(inititem->data_3);
 
-		//NULL it
+		//nullptr it
 		inititem->data_3 = nullptr;
 	}
 
@@ -1691,7 +1691,7 @@ void restoration::CANDSWOPfree(CANDSWOP *inititem)
 	{
 		gl_free(inititem->data_4);
 
-		//NULL it
+		//nullptr it
 		inititem->data_4 = nullptr;
 	}
 
@@ -1699,7 +1699,7 @@ void restoration::CANDSWOPfree(CANDSWOP *inititem)
 	{
 		gl_free(inititem->data_5);
 
-		//NULL it
+		//nullptr it
 		inititem->data_5 = nullptr;
 	}
 
@@ -1707,7 +1707,7 @@ void restoration::CANDSWOPfree(CANDSWOP *inititem)
 	{
 		gl_free(inititem->data_6);
 
-		//NULL it
+		//nullptr it
 		inititem->data_6 = nullptr;
 	}
 
@@ -1715,7 +1715,7 @@ void restoration::CANDSWOPfree(CANDSWOP *inititem)
 	{
 		gl_free(inititem->data_7);
 
-		//NULL it
+		//nullptr it
 		inititem->data_7 = nullptr;
 	}
 
@@ -1947,7 +1947,7 @@ void restoration::setFeederVertices_2(void)
 	//Allocate the feederVertices_2 vector
 	INTVECTalloc(&feederVertices_2,feederVertices_1.maxSize);
 	
-	//Arbitrarily size, since "NULL/-1" seems to be a status vector of this???
+	//Arbitrarily size, since "nullptr/-1" seems to be a status vector of this???
 	feederVertices_2.currSize = feederVertices_2.maxSize;
 
 	for (idx=0; idx<feederVertices.currSize; idx++)
@@ -4419,7 +4419,7 @@ LinkedBase::LinkedBase(int nVer)
 			*/
 		}
 
-		//NULL out the chain iterator - gets populated elsewhere, theoretically
+		//nullptr out the chain iterator - gets populated elsewhere, theoretically
 		iterPos = nullptr;
 
 		//Create the default vectors - initialize at the end (all same size)
@@ -4504,7 +4504,7 @@ void LinkedBase::delAllVer(void)
 		{
 			gl_free(adjList[indexvar]);
 
-			//NULL it
+			//nullptr it
 			adjList[indexvar] = nullptr;
 		}
 
@@ -4527,7 +4527,7 @@ void LinkedBase::delAllVer(void)
 		gl_free(dTime);
 		gl_free(fTime);
 
-		//NULL em all
+		//nullptr em all
 		status_value = nullptr;
 		parent_value = nullptr;
 		dist = nullptr;
@@ -4841,7 +4841,7 @@ void LinkedBase::addAIsoVer(int n)
 	//Now that it is copied, destroy the old "main list" (elements stay alloced)
 	gl_free(tempBase);
 
-	//NULL it, for giggles
+	//nullptr it, for giggles
 	tempBase = nullptr;
     
 	//See if interPos has anything -- if it does, delete it first (just to be thorough)
@@ -4864,7 +4864,7 @@ void LinkedBase::addAIsoVer(int n)
 		gl_free(dTime);
 		gl_free(fTime);
 
-		//NULL us, to be safe
+		//nullptr us, to be safe
 		status_value = nullptr;
 		parent_value = nullptr;
 		dist = nullptr;
@@ -5495,8 +5495,8 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 			//Free it
 			gl_free(vMap->data);
 
-			//No need to NULL it, we're just going to allocate it again in a second
-			//Changed my mind, NULL it anyways
+			//No need to nullptr it, we're just going to allocate it again in a second
+			//Changed my mind, nullptr it anyways
 			vMap->data = nullptr;
 
 			//Flag
@@ -5635,7 +5635,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 	//Theoretically, any of the "extended" items have already been dealloced above in the adjacency list for loop (previous for)
 	gl_free(tempList);
 
-	//NULL us, out of paranoia
+	//nullptr us, out of paranoia
 	tempList = nullptr;
     
     // modify the number of vertices
@@ -5650,7 +5650,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 		gl_free(dTime);
 		gl_free(fTime);
 
-		//NULL em all
+		//nullptr em all
 		status_value = nullptr;
 		parent_value = nullptr;
 		dist = nullptr;
@@ -5950,7 +5950,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 	//Theoretically, any of the "extended" items have already been dealloced above in the adjacency list for loop (previous for)
 	gl_free(tempList);
 
-	//NULL it, to be safe
+	//nullptr it, to be safe
 	tempList = nullptr;
     
     // modify the number of vertices
@@ -5965,7 +5965,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 		gl_free(dTime);
 		gl_free(fTime);
 
-		//NULL them all
+		//nullptr them all
 		status_value = nullptr;
 		parent_value = nullptr;
 		dist = nullptr;

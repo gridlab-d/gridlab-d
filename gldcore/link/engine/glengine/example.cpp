@@ -14,9 +14,9 @@ int main(int argc, char *argv[])
 		glengine engine;
 		engine.set_debug_level(1);
 		//engine.set_window(false); //this operation is currently not supported.
-		//engine.connect("gridlabd","--pause","test_engine.glm",NULL);
+		//engine.connect("gridlabd","--pause","test_engine.glm",nullptr);
 		try{
-			engine.connect("C:\\ciraci_gld\\VS2005\\Win32\\Debug","C:\\ciraci_gld\\VS2005\\Win32\\Debug\\test_engine.glm",NULL);
+			engine.connect("C:\\ciraci_gld\\VS2005\\Win32\\Debug","C:\\ciraci_gld\\VS2005\\Win32\\Debug\\test_engine.glm",nullptr);
 			//engine.connect(UDP,string("127.0.0.1"));
 		}catch(const char *c){
 			cout << "Launching gld failed:" << c << endl; 

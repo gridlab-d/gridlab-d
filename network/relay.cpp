@@ -45,20 +45,20 @@ static const double Cr[] = {2.0000,		2.0000,		2.0000,		2.0000,		2.00000	};
 //////////////////////////////////////////////////////////////////////////
 // relay CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* relay::oclass = NULL;
-CLASS* relay::pclass = NULL;
-relay *relay::defaults = NULL;
+CLASS* relay::oclass = nullptr;
+CLASS* relay::pclass = nullptr;
+relay *relay::defaults = nullptr;
 
-CLASS *relay_class = (NULL);
+CLASS *relay_class = (nullptr);
 
 relay::relay(MODULE *mod) : link(mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		relay_class = oclass = gl_register_class(mod,"relay",sizeof(relay),PC_BOTTOMUP);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class relay";
 		else
 			oclass->trl = TRL_PROOF;
@@ -79,7 +79,7 @@ relay::relay(MODULE *mod) : link(mod)
 				PT_KEYWORD,"FS_RECLOSED",FS_RECLOSED,
 				PT_KEYWORD,"FS_LOCKOUT",FS_LOCKOUT,
 				PT_KEYWORD,"FS_FAULT",FS_FAULT,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// setup the default values
 		defaults = this;
@@ -156,7 +156,7 @@ TIMESTAMP relay::sync(TIMESTAMP t0)
 EXPORT int create_relay(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(relay_class);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		relay *my = OBJECTDATA(*obj,relay);
 		gl_set_parent(*obj,parent);

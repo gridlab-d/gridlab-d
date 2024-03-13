@@ -67,7 +67,7 @@ private: /* Measurements, actuator, gld objs, & Nominal Values */
 
 	gld_property *swt_prop_status;
 
-	set swt_phases;
+	gld::set swt_phases;
 	bool swt_ph_A_flag;
 	bool swt_ph_B_flag;
 	bool swt_ph_C_flag;

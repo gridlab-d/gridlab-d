@@ -64,7 +64,7 @@ void CControlView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 {
 	CTreeCtrl &tree = GetTreeCtrl();
 	CGldEditorDoc *pDoc = GetDocument();
-	ASSERT(pDoc!=NULL);
+	ASSERT(pDoc!=nullptr);
 }
 
 // CControlView diagnostics

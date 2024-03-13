@@ -17,7 +17,7 @@
 #define new DEBUG_NEW
 #endif
 
-CGldEditorDoc *CurrentDocument = NULL;
+CGldEditorDoc *CurrentDocument = nullptr;
 int view_stdout(char *format, ...)
 {
 	char buffer[1024];
@@ -25,7 +25,7 @@ int view_stdout(char *format, ...)
 	va_start(ptr,format);
 	vsprintf_s(buffer,format,ptr);
 	va_end(ptr);
-	ASSERT(CurrentDocument!=NULL);
+	ASSERT(CurrentDocument!=nullptr);
 	CurrentDocument->OutputStdout(CString(buffer));
 	return 0;
 }
@@ -36,7 +36,7 @@ int view_stderr(char *format, ...)
 	va_start(ptr,format);
 	vsprintf_s(buffer,format,ptr);
 	va_end(ptr);
-	ASSERT(CurrentDocument!=NULL);
+	ASSERT(CurrentDocument!=nullptr);
 	CurrentDocument->OutputStderr(CString(buffer));
 	return 0;
 }
@@ -56,7 +56,7 @@ CGldEditorDoc::CGldEditorDoc()
 	output_set_stdout(view_stdout);
 	output_set_stderr(view_stderr);
 	CurrentDocument = this;
-	m_OutputGroup = NULL;
+	m_OutputGroup = nullptr;
 
 	OutputStdout(_T("GLD Editor Version 1.0"));
 	OutputStdout(_T("Copyright (C) 2008, Battelle Memorial Institute"));
@@ -127,7 +127,7 @@ BOOL CGldEditorDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	if (result==FAILED)
 	{
 		OutputStderr("FAILED: %s", strerror(errno));
-		UpdateAllViews(NULL);
+		UpdateAllViews(nullptr);
 	}
 	else
 		OutputStdout("SUCCESS");

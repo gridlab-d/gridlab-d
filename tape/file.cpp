@@ -23,8 +23,8 @@ int file_open_player(struct player *my, char *fname, char *flags)
 	char ff[1024];
 
 	/* "-" means stdin */
-	my->fp = (strcmp(fname,"-")==0?stdin:(gl_findfile(fname,NULL,R_OK,ff,sizeof(ff))?fopen(ff,flags):NULL));
-	if (my->fp==NULL)
+	my->fp = (strcmp(fname,"-")==0?stdin:(gl_findfile(fname,nullptr,R_OK,ff,sizeof(ff))?fopen(ff,flags):nullptr));
+	if (my->fp==nullptr)
 	{
 		gl_error("player file %s: %s", fname, strerror(errno));
 		my->status = TS_DONE;
@@ -59,7 +59,7 @@ void file_close_player(struct player *my)
 #define MAPSIZE(N) ((N-1)/8+1)
 #define SET(X,B) ((X)[(B)/8]|=(1<<((B)&7)))
 #define ISSET(X,B) (((X)[(B)/8]&(1<<((B)&7)))==(1<<((B)&7)))
-char *file=NULL;
+char *file=nullptr;
 int linenum=0;
 static void setmap(char *spec, unsigned char *map, int size)
 {
@@ -148,8 +148,8 @@ int file_open_shaper(struct shaper *my, char *fname, char *flags)
 	file=fname;
 
 	/* "-" means stdin */
-	my->fp = (strcmp(fname,"-")==0?stdin:(gl_findfile(fname,NULL,R_OK,ff,sizeof(ff))?fopen(ff,flags):NULL));
-	if (my->fp==NULL)
+	my->fp = (strcmp(fname,"-")==0?stdin:(gl_findfile(fname,nullptr,R_OK,ff,sizeof(ff))?fopen(ff,flags):nullptr));
+	if (my->fp==nullptr)
 	{
 		gl_error("shaper file %s: %s", fname, strerror(errno));
 		my->status = TS_DONE;
@@ -162,7 +162,7 @@ int file_open_shaper(struct shaper *my, char *fname, char *flags)
 	my->interval = 24; /* default unint shape integrated over one day */
 	memset(my->shape,0,sizeof(my->shape));
 	/* load the file into the shape */
-	while (fgets(line,sizeof(line),my->fp)!=NULL)
+	while (fgets(line,sizeof(line),my->fp)!=nullptr)
 	{
 		unsigned char *hours, *days, *months, *weekdays;
 		char min[256],hour[256],day[256],month[256],weekday[256],value[32];
@@ -257,11 +257,11 @@ void file_close_shaper(struct shaper *my)
  */
 int file_open_recorder(struct recorder *my, char *fname, char *flags)
 {
-	time_t now=time(NULL);
+	time_t now=time(nullptr);
 	OBJECT *obj=OBJECTHDR(my);
 
 	my->fp = (strcmp(fname,"-")==0?stdout:fopen(fname,flags));
-	if (my->fp==NULL)
+	if (my->fp==nullptr)
 	{
 		gl_error("recorder file %s: %s", fname, strerror(errno));
 		my->status = TS_DONE;
@@ -312,10 +312,10 @@ void file_flush_recorder(struct recorder *my)
 int file_open_collector(struct collector *my, char *fname, char *flags)
 {
 	unsigned int count=0;
-	time_t now=time(NULL);
+	time_t now=time(nullptr);
 
 	my->fp = (strcmp(fname,"-")==0?stdout:fopen(fname,flags));
-	if (my->fp==NULL)
+	if (my->fp==nullptr)
 	{
 		gl_error("collector file %s: %s", fname, strerror(errno));
 		my->status = TS_DONE;

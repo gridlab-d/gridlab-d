@@ -59,18 +59,18 @@
 //////////////////////////////////////////////////////////////////////////
 // underground_line_conductor CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* freezer::oclass = NULL;
-CLASS* freezer::pclass = NULL;
+CLASS* freezer::oclass = nullptr;
+CLASS* freezer::pclass = nullptr;
 
 
 
 freezer::freezer(MODULE *module) : residential_enduse(module)
 {
 	// first time init
-	if (oclass == NULL)
+	if (oclass == nullptr)
 	{
 		oclass = gl_register_class(module,"freezer",sizeof(freezer),PC_PRETOPDOWN | PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class freezer";
 		else
 			oclass->trl = TRL_DEMONSTRATED;
@@ -91,7 +91,7 @@ freezer::freezer(MODULE *module) : residential_enduse(module)
 			PT_enumeration,"state",PADDR(motor_state),
 				PT_KEYWORD,"OFF",(enumeration)S_OFF,
 				PT_KEYWORD,"ON",(enumeration)S_ON,
-			NULL) < 1)
+			nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 	}
 }
@@ -116,7 +116,7 @@ int freezer::init(OBJECT *parent)
 {
 	gl_warning("This device, %s, is considered very experimental and has not been validated.", get_name());
 
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("freezer::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -139,7 +139,7 @@ int freezer::init(OBJECT *parent)
 
 	
 	pTempProp = gl_get_property(parent, "air_temperature");
-	if(pTempProp == NULL){
+	if(pTempProp == nullptr){
 		GL_THROW("Parent house of freezer lacks property \'air_temperature\'");
 	}
 
@@ -176,7 +176,7 @@ TIMESTAMP freezer::presync(TIMESTAMP t0, TIMESTAMP t1){
 	double nHours = (gl_tohours(t1)- gl_tohours(t0))/TS_SECOND;
 
 	pTout = gl_get_double(hdr->parent, pTempProp);
-	if(pTout == NULL){
+	if(pTout == nullptr){
 		GL_THROW("Parent house of freezer lacks property \'air_temperature\' at sync time?");
 	}
 	Tout = *pTout;
@@ -295,7 +295,7 @@ EXPORT int create_freezer(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(freezer::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			freezer *my = OBJECTDATA(*obj,freezer);;
 			gl_set_parent(*obj,parent);

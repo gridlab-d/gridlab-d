@@ -23,8 +23,8 @@ EXPORT_PLC(json);
 EXPORT_LOADMETHOD(json,link);
 EXPORT_LOADMETHOD(json,option);
 
-CLASS *json::oclass = NULL;
-json *json::defaults = NULL;
+CLASS *json::oclass = nullptr;
+json *json::defaults = nullptr;
 
 // translates data to cache
 int json_translate(char *local, size_t local_len, char *remote, size_t remote_len, TRANSLATIONFLAG flag, ...)
@@ -86,7 +86,7 @@ json::json(MODULE *module) : native(module)
 {
 	// register to receive notice for first top down. bottom up, and second top down synchronizations
 	oclass = gld_class::create(module,"json",sizeof(json),PC_AUTOLOCK|PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_OBSERVER);
-	if (oclass==NULL)
+	if (oclass==nullptr)
 		throw "connection/json::json(MODULE*): unable to register class connection:json";
 	else
 		oclass->trl = TRL_UNKNOWN;
@@ -96,7 +96,7 @@ json::json(MODULE *module) : native(module)
 		PT_INHERIT, "native",
 		PT_double, "version", get_version_offset(), PT_DESCRIPTION, "json version",
 		// TODO add published properties here
-		NULL)<1)
+		nullptr)<1)
 			throw "connection/json::json(MODULE*): unable to publish properties of connection:json";
 
 	if ( !gl_publish_loadmethod(oclass, "link", reinterpret_cast<int (*)(void *, char *)>(loadmethod_json_link)) )
@@ -107,14 +107,14 @@ json::json(MODULE *module) : native(module)
 
 // export data to json
 int json_export(connection_transport *transport,
-				const char *tag,		// NULL for group close, name for group open (or NULL if none)
-				char *v,		// NULL for group open/close
+				const char *tag,		// nullptr for group close, name for group open (or nullptr if none)
+				char *v,		// nullptr for group open/close
 				size_t vlen,	// 0 for match only on read (ignored on export)
 								// -1 for group begin
 								// -2 for group end
 				int options)	// ETO_QUOTES enclose value in quotes
 {
-	if ( v==NULL ) // group control only
+	if ( v==nullptr ) // group control only
 	{
 		if ( transport->get_size()<2 )
 		{
@@ -123,7 +123,7 @@ int json_export(connection_transport *transport,
 		}
 		switch ( vlen ) {
 		case ET_GROUPOPEN:
-			if ( tag==NULL )
+			if ( tag==nullptr )
 				return transport->message_append("%s","{");
 			else
 				return transport->message_append("\"%s\": {",tag);
@@ -150,16 +150,16 @@ int json_export(connection_transport *transport,
 	}
 }
 
-void *json_translator(char *buffer, void *translation=NULL)
+void *json_translator(char *buffer, void *translation=nullptr)
 {
-	if ( translation!=NULL )
+	if ( translation!=nullptr )
 		json::destroy((JSONLIST*)translation);
 	return json::parse(buffer);
 }
 // import data from json
 int json_import(connection_transport *transport,
-				const char *tag,		// NULL for group close, name for group open (or NULL if none)
-				char *v,		// NULL for group open/close
+				const char *tag,		// nullptr for group close, name for group open (or nullptr if none)
+				char *v,		// nullptr for group open/close
 				size_t vlen,	// 0 for match only on read (ignored on export)
 								// -1 for group begin
 								// -2 for group end
@@ -181,21 +181,21 @@ int json_import(connection_transport *transport,
 	//	JSONLIST *data = json::parse(transport->get_input());
 	// TODO extract data
 	JSONLIST *translation = (JSONLIST*)transport->get_translation();
-	if ( translation==NULL )
+	if ( translation==nullptr )
 	{
 		transport->set_translator(json_translator);
 		translation = (JSONLIST*)json_translator(transport->get_input());
 		transport->set_translation(translation);
 	}
-	if ( tag==NULL ) // ignore grouping calls
+	if ( tag==nullptr ) // ignore grouping calls
 		return 1;
 	char *value = json::get(translation,tag);
-	if ( value==NULL )
+	if ( value==nullptr )
 	{
 		gl_error("json_import(tag='%s',...) tag not found in incoming data",tag);
 		return 0;
 	}
-	if ( v==NULL ) // tag check (done)
+	if ( v==nullptr ) // tag check (done)
 		return 1;
 	if ( vlen==0 ) // compare only
 	{	
@@ -226,7 +226,7 @@ int json::init(OBJECT *parent)
 {
 	native::init(parent,&json_translate);
 
-	if ( get_connection()==NULL )
+	if ( get_connection()==nullptr )
 	{
 		error("connection options not specified");
 		return 0;
@@ -256,7 +256,7 @@ int json::init(OBJECT *parent)
 					MSG_STRING, "modelname",sizeof(name),name,
 				MSG_CLOSE,
 			MSG_COMPLETE, &id,
-			NULL)<0 )
+			nullptr)<0 )
 	{
 		error("handshake initiation failed");
 		return 0;
@@ -266,7 +266,7 @@ int json::init(OBJECT *parent)
 		MSG_INITIATE, 
 		MSG_TAG,"result","init",
 		MSG_COMPLETE, &id,
-		NULL)<0 )
+		nullptr)<0 )
 	{
 		error("handshake response failed");
 		return 0;
@@ -281,7 +281,7 @@ int json::init(OBJECT *parent)
 		MSG_SCHEMA,DXD_READ,
 		MSG_CLOSE,
 		MSG_COMPLETE,  &id,
-		NULL)<0 )
+		nullptr)<0 )
 	{
 		error("schema exchange failed");
 		return 0;
@@ -291,7 +291,7 @@ int json::init(OBJECT *parent)
 		MSG_INITIATE, 
 		MSG_TAG,"result","input",
 		MSG_COMPLETE, &id,
-		NULL)<0 )
+		nullptr)<0 )
 	{
 		error("handshake response failed");
 		return 0;
@@ -306,7 +306,7 @@ int json::init(OBJECT *parent)
 		MSG_SCHEMA,DXD_WRITE,
 		MSG_CLOSE,
 		MSG_COMPLETE, &id,
-		NULL)<0 )
+		nullptr)<0 )
 	{
 		error("schema exchange failed");
 		return 0;
@@ -316,7 +316,7 @@ int json::init(OBJECT *parent)
 		MSG_INITIATE, 
 		MSG_TAG,"result","output",
 		MSG_COMPLETE, &id,
-		NULL)<0 )
+		nullptr)<0 )
 	{
 		error("handshake response failed");
 		return 0;
@@ -403,11 +403,11 @@ void json::term(TIMESTAMP t)
 // JSON STATE MACHINE
 
 // create a new list
-static JSONLIST *json_new_list(JSONLIST *tail=NULL)
+static JSONLIST *json_new_list(JSONLIST *tail=nullptr)
 {
 	JSONLIST *list = new JSONLIST;
 	memset(list,0,sizeof(JSONLIST));
-	if ( tail!=NULL ) {
+	if ( tail!=nullptr ) {
 		tail->next = list;
 		list->parent = tail->parent;
 	}
@@ -441,7 +441,7 @@ static void json_dump(JSONLIST *item, unsigned int indent=0)
 	memset(indentchars,32,indent+1);
 	indentchars[indent]='\0';
 	if ( indent==0 ) gl_debug("{");
-	for ( ; item!=NULL ; item=item->next )
+	for ( ; item!=nullptr ; item=item->next )
 	{
 		if ( item->type==JT_LIST )
 		{
@@ -450,11 +450,11 @@ static void json_dump(JSONLIST *item, unsigned int indent=0)
 			gl_debug(" %s}",indentchars);
 		}
 		else if ( item->type==JT_STRING )
-			gl_debug(" %s\"%s\" : \"%s\"%s",indentchars,item->tag,item->string,item->next==NULL?"":",");
+			gl_debug(" %s\"%s\" : \"%s\"%s",indentchars,item->tag,item->string,item->next==nullptr?"":",");
 		else if ( item->type==JT_VOID )
-			gl_debug(" %s\"%s\" : (void)%s",indentchars,item->tag,item->next==NULL?"":",");
+			gl_debug(" %s\"%s\" : (void)%s",indentchars,item->tag,item->next==nullptr?"":",");
 		else
-			gl_debug(" %s\"%s\" : %s%s",indentchars,item->tag,item->string,item->next==NULL?"":",");
+			gl_debug(" %s\"%s\" : %s%s",indentchars,item->tag,item->string,item->next==nullptr?"":",");
 	}
 	if ( indent==0 ) gl_debug("}");
 	delete indentchars;
@@ -465,7 +465,7 @@ JSONLIST *json::parse(char *buffer)
 {
 	JSONLIST *head = json_new_list();
 	JSONLIST *tail = head;
-	tail->next = NULL;
+	tail->next = nullptr;
 	int nest = 0;
 	enum {START, TAG0, TAG, COLON, PARAM, STRING, NUMBER, COMMA, END} state = START;
 	char *p, *t;
@@ -558,16 +558,16 @@ Syntax:
 	gl_error("json::parse(char *buffer='%s'): syntax error at position %d: ...%-16.16s...", buffer,(int)(p-buffer), p);
 Error:
 	destroy(head);
-	return NULL;
+	return nullptr;
 }
 
 // find a tag in a json structure
 JSONLIST *json::find(JSONLIST *list, const char *tag)
 {
-	if ( list==NULL ) return NULL;
+	if ( list==nullptr ) return nullptr;
 	if ( strcmp(list->tag,tag)==0 ) return list;
-	JSONLIST *sub = list->type==JT_LIST?find(list->list,tag):NULL;
-	if ( sub!=NULL ) return sub;
+	JSONLIST *sub = list->type==JT_LIST?find(list->list,tag):nullptr;
+	if ( sub!=nullptr ) return sub;
 	return find(list->next,tag);
 }
 
@@ -576,13 +576,13 @@ char *json::get(JSONLIST *list, const char *tag)
 {
 	JSONLIST *found = find(list,tag);
 	if ( found ) return found->string;
-	else return NULL;
+	else return nullptr;
 }
 
 // destroy a json structure
 void json::destroy(JSONLIST *list)
 {
-	if ( list!=NULL )
+	if ( list!=nullptr )
 	{
 		if ( list->type==JT_LIST ) destroy(list->list);
 		destroy(list->next);

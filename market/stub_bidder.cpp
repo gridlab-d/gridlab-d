@@ -1,13 +1,13 @@
 #include "stub_bidder.h"
 
-CLASS* stub_bidder::oclass = NULL;
+CLASS* stub_bidder::oclass = nullptr;
 
 stub_bidder::stub_bidder(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"stub_bidder",sizeof(stub_bidder),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		if (gl_publish_variable(oclass,
@@ -20,7 +20,7 @@ stub_bidder::stub_bidder(MODULE *module)
 				PT_double, "price", PADDR(price),
 				PT_double, "quantity", PADDR(quantity),
 				PT_int64, "bid_id", PADDR(bid_id),
-				NULL)<1) 
+				nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 		
 		memset(this,0,sizeof(stub_bidder));
@@ -43,10 +43,10 @@ int stub_bidder::init(OBJECT *parent)
 	lastbid_id = -1;
 	lastmkt_id = -1;
 	OBJECT *hdr = OBJECTHDR(this);
-	if (market==NULL)			
+	if (market==nullptr)
 		throw "market is not defined";
 	thismkt_id = (int64*)gl_get_addr(market,"market_id");
-	if (thismkt_id==NULL)
+	if (thismkt_id==nullptr)
 		throw "market does not define market_id";
 	char mktname[1024];
 	if(bid_id == -1){
@@ -56,7 +56,7 @@ int stub_bidder::init(OBJECT *parent)
 		controller_bid.bid_id = bid_id;
 	}
 	submit = (FUNCTIONADDR)(gl_get_function(market, "submit_bid_state"));
-	if(submit == NULL){
+	if(submit == nullptr){
 		gl_error("Unable to find function, submit_bid_state(), for object %s.", (char *)gl_name(market, mktname, 1024));
 		return 0;
 	}
@@ -111,7 +111,7 @@ EXPORT int create_stub_bidder(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(stub_bidder::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			stub_bidder *my = OBJECTDATA(*obj,stub_bidder);
 			gl_set_parent(*obj,parent);
@@ -130,7 +130,7 @@ EXPORT int init_stub_bidder(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL){
+		if (obj!=nullptr){
 			return OBJECTDATA(obj,stub_bidder)->init(parent);
 		}
 	}

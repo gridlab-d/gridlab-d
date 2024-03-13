@@ -58,7 +58,7 @@
 #include "exception.h"
 #include "output.h"
 
-EXCEPTIONHANDLER *handlers = NULL;
+EXCEPTIONHANDLER *handlers = nullptr;
 
 /** Creates an exception handler for use in a try block 
 	@return a pointer to an EXCEPTIONHANDLER structure
@@ -66,12 +66,12 @@ EXCEPTIONHANDLER *handlers = NULL;
 EXCEPTIONHANDLER *create_exception_handler(void)
 {
 	EXCEPTIONHANDLER *ptr = static_cast<EXCEPTIONHANDLER*>(malloc(sizeof(EXCEPTIONHANDLER)));
-	if(ptr == NULL){
+	if(ptr == nullptr){
 		output_fatal("create_exception_handler(): malloc failure");
-		return NULL;
+		return nullptr;
 	}
 	ptr->next = handlers;
-	ptr->id = (handlers==NULL?0:handlers->id)+1;
+	ptr->id = (handlers==nullptr?0:handlers->id)+1;
 	memset(ptr->msg,0,sizeof(ptr->msg));
 	handlers = ptr;
 	return ptr;
@@ -82,7 +82,7 @@ EXCEPTIONHANDLER *create_exception_handler(void)
 void delete_exception_handler(EXCEPTIONHANDLER *ptr) /**< a pointer to the exception handler */
 {
 	EXCEPTIONHANDLER *target;
-	if(ptr == NULL){
+	if(ptr == nullptr){
 		output_fatal("delete_exception_handler(): ending an exception handler block where no exception handler was present");
 		return;
 	}
@@ -92,8 +92,8 @@ void delete_exception_handler(EXCEPTIONHANDLER *ptr) /**< a pointer to the excep
 		ptr = handlers;
 		handlers=ptr->next;
 		free(ptr);
-		ptr = NULL;
-		/* if(handlers == NULL) break; */
+		ptr = nullptr;
+		/* if(handlers == nullptr) break; */
 	}
 }
 

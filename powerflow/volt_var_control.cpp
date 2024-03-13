@@ -43,9 +43,9 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 			PT_double, "d_min", PADDR(d_min),PT_DESCRIPTION,"Scaling constant for capacitor switching off - typically 0.1 - 0.4",
 			PT_object, "substation_link",PADDR(substation_lnk_obj),PT_DESCRIPTION,"Substation link, transformer, or regulator to measure power factor",
 			PT_set, "pf_phase", PADDR(pf_phase),PT_DESCRIPTION,"Phase to include in power factor monitoring",
-				PT_KEYWORD, "A",(set)PHASE_A,
-				PT_KEYWORD, "B",(set)PHASE_B,
-				PT_KEYWORD, "C",(set)PHASE_C,
+				PT_KEYWORD, "A",(gld::set)PHASE_A,
+				PT_KEYWORD, "B",(gld::set)PHASE_B,
+				PT_KEYWORD, "C",(gld::set)PHASE_C,
 			PT_char1024, "regulator_list",PADDR(regulator_list),PT_DESCRIPTION,"List of voltage regulators for the system, separated by commas",
 			PT_char1024, "capacitor_list",PADDR(capacitor_list),PT_DESCRIPTION,"List of controllable capacitors on the system separated by commas",
 			PT_char1024, "voltage_measurements",PADDR(measurement_list),PT_DESCRIPTION,"List of voltage measurement devices, separated by commas",
@@ -56,7 +56,7 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 			PT_char1024, "high_load_deadband",PADDR(vbw_high_txt),PT_DESCRIPTION,"High loading case voltage deadband for each regulator, separated by commas",
 			PT_char1024, "low_load_deadband",PADDR(vbw_low_txt),PT_DESCRIPTION,"Low loading case voltage deadband for each regulator, separated by commas",
 			PT_bool, "pf_signed",PADDR(pf_signed),PT_DESCRIPTION,"Set to true to consider the sign on the power factor.  Otherwise, it just maintains the deadband of +/-desired_pf",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
 
@@ -130,7 +130,7 @@ int volt_var_control::init(OBJECT *parent)
 	double *temp_cap_size;
 	int *temp_cap_idx, *temp_cap_idx_work, *temp_meas_idx;
 	double cap_adder, temp_double, nom_volt, default_min, default_max, default_des, default_max_vdrop, default_vbw_low, default_vbw_high;
-	set temp_phase;
+	gld::set temp_phase;
 	int num_min_volt, num_max_volt, num_des_volt, num_max_vdrop, num_vbw_low, num_vbw_high, total_meas;
 	bool reg_list_type;
 
@@ -1309,7 +1309,7 @@ int volt_var_control::init(OBJECT *parent)
 
 				token_b1 = numchar;	//Reference the temporary array
 
-				indexa = ((int)(strtod(token_b1,NULL))-1);	//Convert back
+				indexa = ((int)(strtod(token_b1,nullptr))-1);	//Convert back
 
 				if ((indexa <0) || (indexa > (num_regs-1)))		//Pre-offset for C indexing
 				{
@@ -2664,7 +2664,7 @@ char *volt_var_control::dbl_token(char *start_token, double *dbl_val)
 	workIndex = workArray;
 
 	//Convert it
-	*dbl_val = strtod(workIndex,NULL);
+	*dbl_val = strtod(workIndex,nullptr);
 
 	//Return the end pointer
 	return end_token;

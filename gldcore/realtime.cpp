@@ -10,7 +10,7 @@
 
 extern time_t realtime_now()
 {
-	return time(NULL);
+	return time(nullptr);
 }
 static time_t starttime = 0;
 extern time_t realtime_starttime()
@@ -30,12 +30,12 @@ typedef struct s_eventlist {
 	STATUS (*call)();
 	struct s_eventlist *next;
 } EVENT;
-static EVENT *eventlist = NULL;
+static EVENT *eventlist = nullptr;
 
 extern STATUS realtime_schedule_event(time_t at, STATUS (*callback)())
 {
 	EVENT *event = static_cast<EVENT *>(malloc(sizeof(EVENT)));
-	if (event==NULL)
+	if (event==nullptr)
 	{
 		errno=ENOMEM;
 		return FAILED;
@@ -50,20 +50,20 @@ extern STATUS realtime_schedule_event(time_t at, STATUS (*callback)())
 extern STATUS realtime_run_schedule()
 {
 	time_t now = realtime_now();
-	EVENT *event, *last=NULL;
-	for (event=eventlist; event!=NULL; event=event->next)
+	EVENT *event, *last=nullptr;
+	for (event=eventlist; event!=nullptr; event=event->next)
 	{
 		if (event->at<=now)
 		{
 			STATUS (*call)(void) = event->call;
 
 			/* delete from list */
-			if (last==NULL) /* event is first in list */
+			if (last==nullptr) /* event is first in list */
 				eventlist = event->next;
 			else
 				last->next = event->next;
 			free(event);
-			event = NULL;
+			event = nullptr;
 
 			/* callback */
 			if ((*call)()==FAILED)
@@ -71,7 +71,7 @@ extern STATUS realtime_run_schedule()
 
 			/* retreat to previous event */
 			event = last;
-			if (event==NULL)
+			if (event==nullptr)
 				break;
 		}
 	}

@@ -91,28 +91,28 @@ typedef struct s_evdemandprofilelist {
 	struct s_evdemandprofilelist *next;
 } EVPROFILEITEM;
 
-EVPROFILEITEM *first_demand_profile = NULL;
+EVPROFILEITEM *first_demand_profile = nullptr;
 
 /// Find an EV demand profile
 /// @returns pointer to the matching EVPROFILEITEM structure
 EVDEMAND *find_demand_profile(char *name) ///< name of profile
 {
 	EVPROFILEITEM *item = first_demand_profile;
-	while (item!=NULL)
+	while (item!=nullptr)
 	{
 		if (strcmp(name,item->data->name)==0)
 			break;
 		else
 			item = item->next;
 	}
-	return item?item->data:NULL;
+	return item?item->data:nullptr;
 }
 /// Add an EV demand profile
 /// @returns pointer to the new EVPROFILEITEM structure
 EVPROFILEITEM *add_demand_profile(EVDEMAND *data)
 {
 	EVPROFILEITEM *item = new EVPROFILEITEM;
-	if (item==NULL)
+	if (item==nullptr)
 		GL_THROW( "evcharter.cpp: add_demand_profile() memory allocation failed" );
 	item->data = data;
 	item->next = first_demand_profile;
@@ -121,13 +121,13 @@ EVPROFILEITEM *add_demand_profile(EVDEMAND *data)
 EVDEMAND *load_demand_profile(char *filename)
 {
 	char filepath[1024];
-	if (gl_findfile(filename,NULL,R_OK,filepath,sizeof(filepath))==NULL)	
+	if (gl_findfile(filename,nullptr,R_OK,filepath,sizeof(filepath))==nullptr)
 	{
 		//gl_error("searching for demand profile file '%s'",filename);
 		GL_THROW( "unable to find demand profile" );
 	}
 	EVDEMAND *data = new EVDEMAND;
-	if (data==NULL)
+	if (data==nullptr)
 			GL_THROW( "unable to allocate memory for new demand profile" );
 	memset(data,0,sizeof(EVDEMAND));
 
@@ -137,14 +137,14 @@ EVDEMAND *load_demand_profile(char *filename)
 
 	strcpy(data->name,filepath);
 	FILE *fp = fopen(filepath,"r");
-	if (fp==NULL)
+	if (fp==nullptr)
 	{	
 		//gl_error("reading file %s line %d",filename,linenum);
 		GL_THROW( "unable to read demand profile in '%s' at line %d", filename, linenum );
 	}
 	char line[1024];
 	double *hdr[8]; memset(hdr,0,sizeof(hdr));
-	while (!feof(fp) && fgets(line,sizeof(line),fp)!=NULL)
+	while (!feof(fp) && fgets(line,sizeof(line),fp)!=nullptr)
 	{
 		linenum++;
 
@@ -240,10 +240,10 @@ EVDEMAND *load_demand_profile(char *filename)
 EVDEMAND *get_demand_profile(char *name)
 {
 	EVDEMAND *profile = find_demand_profile(name);
-	if (profile==NULL)
+	if (profile==nullptr)
 	{
 		profile = load_demand_profile(name);
-		if (profile!=NULL)
+		if (profile!=nullptr)
 			add_demand_profile(profile);
 	}
 	return profile;
@@ -252,18 +252,18 @@ EVDEMAND *get_demand_profile(char *name)
 //////////////////////////////////////////////////////////////////////////
 // evcharger CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* evcharger::oclass = NULL;
-CLASS* evcharger::pclass = NULL;
-evcharger *evcharger::defaults = NULL;
+CLASS* evcharger::oclass = nullptr;
+CLASS* evcharger::pclass = nullptr;
+evcharger *evcharger::defaults = nullptr;
 
 evcharger::evcharger(MODULE *module) : residential_enduse(module)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(module,"evcharger",sizeof(evcharger),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class evcharger";
 		else
 			oclass->trl = TRL_DEMONSTRATED;
@@ -303,7 +303,7 @@ evcharger::evcharger(MODULE *module) : residential_enduse(module)
 			PT_double,"power_train_efficiency[mile/kWh]", PADDR(mileage), PT_DESCRIPTION, "Miles per kWh of battery charge",
 			PT_double,"mileage_classification[mile]", PADDR(mileage_classification), PT_DESCRIPTION, "Miles expected range on battery only",
 			PT_char1024,"demand_profile", PADDR(demand_profile),
-			NULL)<1) 
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
@@ -337,7 +337,7 @@ int evcharger::init(OBJECT *parent)
 {
 	int retval;
 
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("evcharger::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -410,7 +410,7 @@ double evcharger::update_state(double dt /* seconds */)
 
 		int hour = now.hour;
 		int daytype = 0;
-		if(pDemand != NULL){
+		if(pDemand != nullptr){
 			pDemand->n_daytypes>0 ? (now.weekday>0&&now.weekday<6) : 0;
 
 			demand.home = pDemand->home[daytype][DEPART][hour];
@@ -602,7 +602,7 @@ EXPORT int create_evcharger(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(evcharger::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			evcharger *my = OBJECTDATA(*obj,evcharger);;
 			gl_set_parent(*obj,parent);

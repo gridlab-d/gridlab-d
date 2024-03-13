@@ -229,7 +229,7 @@ public:
 	char256 summary;
 	char256 virtual_substation;
 	bool strict;
-	set violation_flag;
+	gld::set violation_flag;
 	bool echo;
 	double xfrmr_thermal_limit_upper;
 	double xfrmr_thermal_limit_lower;
