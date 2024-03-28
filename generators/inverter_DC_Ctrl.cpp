@@ -5463,7 +5463,7 @@ STATUS inverter_DC_Ctrl::init_dynamics(INV_DC_Ctrl_STATE *curr_time)
 	desired_simulation_mode = SM_EVENT;
 
 	Vdc_ctrl_blk.setparams(Kp_dc,Ki_dc,-500.0,500.0,-500.0,500.0);
-	Vdc_ctrl_blk.init(Vdco,Vdco);
+	//Vdc_ctrl_blk.init(Vdco,Vdco);
 	//V_DC=8000;
 
 	if (control_mode == GRID_FORMING)
