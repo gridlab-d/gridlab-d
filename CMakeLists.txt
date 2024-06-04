@@ -293,6 +293,8 @@ set(GLD_SHARE
 
 file(COPY ${GLD_SHARE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/share)
 
+set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Cache the shared library state")
+set(BUILD_SHARED_LIBS OFF)
 if (GLD_USE_SUPERLU)
     set(THIRD_PARTY_PATH ${CMAKE_SOURCE_DIR}/third_party)
 
@@ -306,18 +308,19 @@ if (GLD_USE_SUPERLU)
         option(enable_internal_blaslib "Build the CBLAS library" OFF)
     endif ()
 
+    # SuperLU's generic names here can cause issues, make sure other projects do not cross these names
+    option(enable_examples "Build SuperLU examples" OFF)
+    option(enable_tests "Build SuperLU tests" OFF)
+
     include_directories(third_party/SuperLU/SRC)
     add_subdirectory(third_party/SuperLU)
     set(SUPERLU_LIB superlu)
 endif ()
 
 option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
-set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Cache the shared library state")
-SET(BUILD_SHARED_LIBS OFF)
 add_subdirectory(third_party/jsoncpp_lib)
 get_target_property(JSON_INC_PATH jsoncpp_static INTERFACE_INCLUDE_DIRECTORIES)
 include_directories(${JSON_INC_PATH})
-set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
 set(JSONCPP_LIB jsoncpp_static)
 
 if (GLD_USE_EIGEN)
@@ -326,6 +329,8 @@ if (GLD_USE_EIGEN)
     include_directories(third_party/Eigen)
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 endif ()
+
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
 
 # Configure module targets
 add_subdirectory(assert)
