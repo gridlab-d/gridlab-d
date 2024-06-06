@@ -2,10 +2,6 @@
 	path = third_party/jsoncpp_lib
 	url = https://github.com/open-source-parsers/jsoncpp.git
 	ignore = dirty
-[submodule "third_party/dlfcn-win32"]
-	path = third_party/dlfcn-win32
-	url = https://github.com/dlfcn-win32/dlfcn-win32.git
-	ignore = dirty
 [submodule "third_party/SuperLU"]
 	path = third_party/SuperLU
 	url = https://github.com/xiaoyeli/superlu.git
