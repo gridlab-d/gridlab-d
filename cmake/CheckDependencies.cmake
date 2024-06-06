@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 2.8.12)
-
 # Check header files
 CHECK_INCLUDE_FILES(arpa/inet.h HAVE_ARPA_INET_H)
 CHECK_INCLUDE_FILES(fcntl.h HAVE_FCNTL_H)

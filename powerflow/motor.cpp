@@ -1493,7 +1493,7 @@ void motor::TPIMUpdateMotorStatus() {
 			Vas.Mag() <= 0.1 || Vbs.Mag() <= 0.1 || Vcs.Mag() <= 0.1) {
 		motor_status = statusOFF;
 	}
-	else if (wr_pu > 0.0) {
+	else if (wr_pu > 1e-10) {	//Threshold as very small number - accommodates for slight powerflow differences where this is technically non-zero
 		motor_status = statusRUNNING;
 	}
 	else if (motor_trip == 1) {
