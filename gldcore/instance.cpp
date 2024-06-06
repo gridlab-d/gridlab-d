@@ -120,7 +120,7 @@ STATUS messagewrapper_init(MESSAGEWRAPPER **msgwpr,
 /////////////////////////////////////////////////////////////////////
 // MASTER INSTANCE
 
-static instance *instance_list = NULL;
+static instance *instance_list = nullptr;
 int instances_count = 0;
 int instances_exited = 0;
 
@@ -249,14 +249,14 @@ instance *instance_create(char *host)
 	
 	if(0 == host){
 		output_error("instance_create(): null host string provided");
-		return NULL;
+		return nullptr;
 	}
 	/* allocate memory for new instance */
 	inst = (instance*)malloc(sizeof(instance));
 	if ( !inst )
 	{
 		output_error("instance_create(): unable to allocate memory for instance on %s", host);
-		return NULL;
+		return nullptr;
 	}
 
 	/* initialize instance */
@@ -390,7 +390,7 @@ int instance_master_wait(void)
 	instance *inst = 0;
 	int status = 0;
 
-	for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
+	for ( inst=instance_list ; inst!=nullptr ; inst=inst->next )
 	{
 		output_verbose("master waiting on slave %d", inst->id);
 #ifdef _WIN32
@@ -472,7 +472,7 @@ void instance_master_done_socket(instance *inst){
 void instance_master_done(TIMESTAMP t1)
 {
 	instance *inst;
-	for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
+	for ( inst=instance_list ; inst!=nullptr ; inst=inst->next )
 	{
 		//output_debug("master setting slave %d controller c->ts from %lli to t1 %lli", inst->cache->id, inst->cache->ts, t1);
 		// needs to be done in instance_write_slave, this is too late
@@ -555,7 +555,7 @@ STATUS instance_init(instance *inst)
 	inst->prop_size = 0;
 	inst->name_size = 0;
 
-	for ( lnk=inst->write ; lnk!=NULL ; lnk=lnk->next ){
+	for ( lnk=inst->write ; lnk!=nullptr ; lnk=lnk->next ){
 		if ( linkage_init(inst, lnk)==FAILED ){
 			output_error("instance_init(): linkage_init failed for inst '%s.%s' on link '%s.%s'", inst->hostname, inst->model, lnk->local.obj, lnk->local.prop);
 			return FAILED;
@@ -566,7 +566,7 @@ STATUS instance_init(instance *inst)
 			++inst->writer_count;
 		}
 	}
-	for ( lnk=inst->read ; lnk!=NULL ; lnk=lnk->next ){
+	for ( lnk=inst->read ; lnk!=nullptr ; lnk=lnk->next ){
 		if ( linkage_init(inst, lnk)==FAILED ){
 			output_error("instance_init(): linkage_init failed for inst '%s.%s' on link '%s.%s'", inst->hostname, inst->model, lnk->local.obj, lnk->local.prop);
 			return FAILED;
@@ -595,13 +595,13 @@ STATUS instance_init(instance *inst)
 	// write property lists
 	// properties are written into the buffer as "obj1.prop1,obj2.prop2 obj3.prop3,obj4.prop4\0".
 	//	a space separates the writers from the readers.
-	for ( lnk=inst->write ; lnk!=NULL ; lnk=lnk->next ){
+	for ( lnk=inst->write ; lnk!=nullptr ; lnk=lnk->next ){
 		sprintf(inst->message->name_buffer+name_offset, "%s.%s%c", lnk->remote.obj, lnk->remote.prop, (lnk->next == 0 ? ' ' : ','));
 		lnk->addr = (char *)(inst->message->data_buffer + prop_offset);
 		name_offset += lnk->name_size;
 		prop_offset += lnk->prop_size;
 	}
-	for ( lnk=inst->read ; lnk!=NULL ; lnk=lnk->next ){
+	for ( lnk=inst->read ; lnk!=nullptr ; lnk=lnk->next ){
 		sprintf(inst->message->name_buffer+name_offset, "%s.%s%c", lnk->remote.obj, lnk->remote.prop, (lnk->next == 0 ? '\0' : ','));
 		lnk->addr = (char *)(inst->message->data_buffer + prop_offset);
 		name_offset += lnk->name_size;
@@ -622,7 +622,7 @@ STATUS instance_init(instance *inst)
 	}
 	// start instance_proc thread
 	/* start the slave instance */
-	if ( pthread_create(&(inst->threadid), NULL, instance_runproc, (void*)inst) )
+	if ( pthread_create(&(inst->threadid), nullptr, instance_runproc, (void*)inst) )
 	{
 		output_error("instance_init(): unable to starte instance slave %d", inst->id);
 		return FAILED;
@@ -655,7 +655,7 @@ STATUS instance_initall(void)
 	} else {
 		return SUCCESS;
 	}
-	for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
+	for ( inst=instance_list ; inst!=nullptr ; inst=inst->next )
 	{
 		if ( FAILED == instance_init(inst)){
 			return FAILED;
@@ -687,7 +687,7 @@ STATUS instance_write_slave(instance *inst)
 
 	/* write output to instance */
 	//output_verbose("master writing links for inst %d", inst->id);
-	for ( lnk=inst->write ; lnk!=NULL ; lnk=lnk->next ){
+	for ( lnk=inst->write ; lnk!=nullptr ; lnk=lnk->next ){
 		res = linkage_master_to_slave(0, lnk);
 		if(FAILED == res){
 			output_error("instance_write_slave(): linkage_master_to_slave failed");
@@ -719,7 +719,7 @@ TIMESTAMP instance_read_slave(instance *inst)
 
 	//output_debug("master reading links for inst %d", inst->id);
 	/* @todo read input from instance */
-	for ( lnk=inst->read ; lnk!=NULL ; lnk=lnk->next ){
+	for ( lnk=inst->read ; lnk!=nullptr ; lnk=lnk->next ){
 		res = linkage_slave_to_master(0, lnk);
 		if(FAILED == res){
 			;
@@ -760,7 +760,7 @@ TIMESTAMP instance_syncall(TIMESTAMP t1)
 		}
 	
 		/* send linkage to slaves */
-		for ( inst=instance_list ; inst!=NULL ; inst=inst->next ){
+		for ( inst=instance_list ; inst!=nullptr ; inst=inst->next ){
 			inst->cache->ts = t1;
 			instance_write_slave(inst);
 		}
@@ -774,7 +774,7 @@ TIMESTAMP instance_syncall(TIMESTAMP t1)
 		}
 
 		/* read linkages from slaves */
-		for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
+		for ( inst=instance_list ; inst!=nullptr ; inst=inst->next )
 		{
 			TIMESTAMP t3 = 0;
 			

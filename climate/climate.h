@@ -208,7 +208,7 @@ class climate : public gld_object {
 	GL_ATOMIC(double,solar_raw);
 	GL_ATOMIC(double,wind_dir);
 	GL_ATOMIC(double,wind_gust);
-	GL_ATOMIC(enumeration,interpolate);
+	GL_ATOMIC(enumeration, interpolate);
 	GL_ATOMIC(double,solar_elevation);
 	GL_ATOMIC(double,solar_azimuth);
 	GL_ATOMIC(double,solar_zenith);
@@ -221,7 +221,7 @@ class climate : public gld_object {
 	GL_ATOMIC(double,cloud_opacity);
 	GL_ATOMIC(double,cloud_reflectivity);
 	GL_ATOMIC(double,cloud_speed_factor);
-	GL_ATOMIC(enumeration,cloud_model);
+	GL_ATOMIC(enumeration, cloud_model);
     GL_ATOMIC(double,update_time);
 
 	// data not shared with classes in this module (no locks needed)

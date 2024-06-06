@@ -41,7 +41,7 @@ int open_player(struct player *my, char *fname, char *flags)
 {
 	/* "-" means stdin */
 	my->memory = (MEMORY*)malloc(sizeof(MEMORY));
-	if (my->memory==NULL)
+	if (my->memory==nullptr)
 	{
 		//gl_error(
 		fprintf(stderr, "player memory %s: %s\n", fname, strerror(errno));
@@ -49,7 +49,7 @@ int open_player(struct player *my, char *fname, char *flags)
 		return 0;
 	}
 	my->memory->buffer = gl_global_find(fname);
-	if (my->memory->buffer!=NULL)
+	if (my->memory->buffer!=nullptr)
 	{
 		my->memory->index = 0;
 		my->loopnum = my->loop;
@@ -68,7 +68,7 @@ char *read_player(struct player *my,char *buffer,unsigned int size)
 	
 	/* if no more data in current loop buffer */
 	if (my->memory->index >= my->memory->buffer->prop->size-1) /* need two values */
-		return NULL;
+		return nullptr;
 	else
 	{
 		double *ptr = (double*)my->memory->buffer->prop->addr + my->memory->index;
@@ -96,7 +96,7 @@ void close_player(struct player *my)
 #define MAPSIZE(N) ((N-1)/8+1)
 #define SET(X,B) ((X)[(B)/8]|=(1<<((B)&7)))
 #define ISSET(X,B) (((X)[(B)/8]&(1<<((B)&7)))==(1<<((B)&7)))
-static char *memory=NULL;
+static char *memory=nullptr;
 static int linenum=0;
 static void setmap(char *spec, unsigned char *map, int size)
 {
@@ -186,7 +186,7 @@ int open_shaper(struct shaper *my, char *fname, char *flags)
 	/** @todo finish write memory shaper -- it still uses files (no ticket) */
 	/* "-" means stdin */
 	my->fp = (strcmp(fname,"-")==0?stdin:fopen(fname,flags));
-	if (my->fp==NULL)
+	if (my->fp==nullptr)
 	{
 		//gl_error(
 		fprintf(stderr, "shaper memory %s: %s\n", fname, strerror(errno));
@@ -200,7 +200,7 @@ int open_shaper(struct shaper *my, char *fname, char *flags)
 	my->interval = 24; /* default unint shape integrated over one day */
 	memset(my->shape,0,sizeof(my->shape));
 	/* load the memory into the shape */
-	while (fgets(line,sizeof(line),my->fp)!=NULL)
+	while (fgets(line,sizeof(line),my->fp)!=nullptr)
 	{
 		unsigned char *hours, *days, *months, *weekdays;
 		char min[256],hour[256],day[256],month[256],weekday[256],value[32];
@@ -298,11 +298,11 @@ void close_shaper(struct shaper *my)
  */
 int open_recorder(struct recorder *my, char *fname, char *flags)
 {
-	time_t now=time(NULL);
+	time_t now=time(nullptr);
 	OBJECT *obj=OBJECTHDR(my);
 
 	my->memory = (MEMORY*)malloc(sizeof(MEMORY));
-	if (my->memory==NULL)
+	if (my->memory==nullptr)
 	{
 		//gl_error(
 		fprintf(stderr, "open_recorder(struct recorder *my={...}, char *fname='%s', char *flags='%s'): %s\n", fname, flags, strerror(errno));
@@ -310,7 +310,7 @@ int open_recorder(struct recorder *my, char *fname, char *flags)
 		return 0;
 	}
 	my->memory->buffer = gl_global_find(fname);
-	if (my->memory->buffer==NULL)
+	if (my->memory->buffer==nullptr)
 	{
 		//gl_error(
 		fprintf(stderr, "open_recorder(struct recorder *my={...}, char *fname='%s', char *flags='%s'): global '%s' not found\n", fname, flags, fname);
@@ -349,11 +349,11 @@ void close_recorder(struct recorder *my)
  */
 int open_collector(struct collector *my, char *fname, char *flags)
 {
-	time_t now=time(NULL);
+	time_t now=time(nullptr);
 	OBJECT *obj=OBJECTHDR(my);
 
 	my->memory = (MEMORY*)malloc(sizeof(MEMORY));
-	if (my->memory==NULL)
+	if (my->memory==nullptr)
 	{
 		//gl_error(
 		fprintf(stderr, "open_collector(struct recorder *my={...}, char *fname='%s', char *flags='%s'): %s\n", fname, flags, strerror(errno));
@@ -361,7 +361,7 @@ int open_collector(struct collector *my, char *fname, char *flags)
 		return 0;
 	}
 	my->memory->buffer = gl_global_find(fname);
-	if (my->memory->buffer==NULL)
+	if (my->memory->buffer==nullptr)
 	{
 		//gl_error(
 		fprintf(stderr, "open_collector(struct recorder *my={...}, char *fname='%s', char *flags='%s'): global '%s' not found\n", fname, flags, fname);

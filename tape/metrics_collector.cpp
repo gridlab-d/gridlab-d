@@ -15,61 +15,61 @@
 #include <iostream>
 #include <vector>
 
-CLASS *metrics_collector::oclass = NULL;
-CLASS *metrics_collector::pclass = NULL;
-metrics_collector *metrics_collector::defaults = NULL;
-PROPERTY *metrics_collector::propTriplexNomV = NULL;
-PROPERTY *metrics_collector::propTriplexV1 = NULL;
-PROPERTY *metrics_collector::propTriplexV2 = NULL;
-PROPERTY *metrics_collector::propTriplexV12 = NULL;
-PROPERTY *metrics_collector::propTriplexPrice = NULL;
-PROPERTY *metrics_collector::propTriplexBill = NULL;
-PROPERTY *metrics_collector::propTriplexP = NULL;
-PROPERTY *metrics_collector::propTriplexQ = NULL;
-PROPERTY *metrics_collector::propMeterNomV = NULL;
-PROPERTY *metrics_collector::propMeterVa = NULL;
-PROPERTY *metrics_collector::propMeterVb = NULL;
-PROPERTY *metrics_collector::propMeterVc = NULL;
-PROPERTY *metrics_collector::propMeterVab = NULL;
-PROPERTY *metrics_collector::propMeterVbc = NULL;
-PROPERTY *metrics_collector::propMeterVca = NULL;
-PROPERTY *metrics_collector::propMeterPrice = NULL;
-PROPERTY *metrics_collector::propMeterBill = NULL;
-PROPERTY *metrics_collector::propMeterP = NULL;
-PROPERTY *metrics_collector::propMeterQ = NULL;
-PROPERTY *metrics_collector::propHouseLoad = NULL;
-PROPERTY *metrics_collector::propHouseHVAC = NULL;
-PROPERTY *metrics_collector::propHouseAirTemp = NULL;
-PROPERTY *metrics_collector::propHouseCoolSet = NULL;
-PROPERTY *metrics_collector::propHouseHeatSet = NULL;
-PROPERTY *metrics_collector::propHouseSystemMode = NULL;
-PROPERTY *metrics_collector::propWaterLoad = NULL;
-PROPERTY *metrics_collector::propWaterSetPoint = NULL;
-PROPERTY *metrics_collector::propWaterDemand = NULL;
-PROPERTY *metrics_collector::propWaterTemp = NULL;
+CLASS *metrics_collector::oclass = nullptr;
+CLASS *metrics_collector::pclass = nullptr;
+metrics_collector *metrics_collector::defaults = nullptr;
+PROPERTY *metrics_collector::propTriplexNomV = nullptr;
+PROPERTY *metrics_collector::propTriplexV1 = nullptr;
+PROPERTY *metrics_collector::propTriplexV2 = nullptr;
+PROPERTY *metrics_collector::propTriplexV12 = nullptr;
+PROPERTY *metrics_collector::propTriplexPrice = nullptr;
+PROPERTY *metrics_collector::propTriplexBill = nullptr;
+PROPERTY *metrics_collector::propTriplexP = nullptr;
+PROPERTY *metrics_collector::propTriplexQ = nullptr;
+PROPERTY *metrics_collector::propMeterNomV = nullptr;
+PROPERTY *metrics_collector::propMeterVa = nullptr;
+PROPERTY *metrics_collector::propMeterVb = nullptr;
+PROPERTY *metrics_collector::propMeterVc = nullptr;
+PROPERTY *metrics_collector::propMeterVab = nullptr;
+PROPERTY *metrics_collector::propMeterVbc = nullptr;
+PROPERTY *metrics_collector::propMeterVca = nullptr;
+PROPERTY *metrics_collector::propMeterPrice = nullptr;
+PROPERTY *metrics_collector::propMeterBill = nullptr;
+PROPERTY *metrics_collector::propMeterP = nullptr;
+PROPERTY *metrics_collector::propMeterQ = nullptr;
+PROPERTY *metrics_collector::propHouseLoad = nullptr;
+PROPERTY *metrics_collector::propHouseHVAC = nullptr;
+PROPERTY *metrics_collector::propHouseAirTemp = nullptr;
+PROPERTY *metrics_collector::propHouseCoolSet = nullptr;
+PROPERTY *metrics_collector::propHouseHeatSet = nullptr;
+PROPERTY *metrics_collector::propHouseSystemMode = nullptr;
+PROPERTY *metrics_collector::propWaterLoad = nullptr;
+PROPERTY *metrics_collector::propWaterSetPoint = nullptr;
+PROPERTY *metrics_collector::propWaterDemand = nullptr;
+PROPERTY *metrics_collector::propWaterTemp = nullptr;
 
-PROPERTY *metrics_collector::propWaterLSetPoint = NULL;
-PROPERTY *metrics_collector::propWaterUSetPoint = NULL;
-PROPERTY *metrics_collector::propWaterLTemp = NULL;
-PROPERTY *metrics_collector::propWaterUTemp = NULL;
-PROPERTY *metrics_collector::propWaterElemLMode = NULL;
-PROPERTY *metrics_collector::propWaterElemUMode = NULL;
+PROPERTY *metrics_collector::propWaterLSetPoint = nullptr;
+PROPERTY *metrics_collector::propWaterUSetPoint = nullptr;
+PROPERTY *metrics_collector::propWaterLTemp = nullptr;
+PROPERTY *metrics_collector::propWaterUTemp = nullptr;
+PROPERTY *metrics_collector::propWaterElemLMode = nullptr;
+PROPERTY *metrics_collector::propWaterElemUMode = nullptr;
 
-PROPERTY *metrics_collector::propInverterS = NULL;
-PROPERTY *metrics_collector::propCapCountA = NULL;
-PROPERTY *metrics_collector::propCapCountB = NULL;
-PROPERTY *metrics_collector::propCapCountC = NULL;
-PROPERTY *metrics_collector::propRegCountA = NULL;
-PROPERTY *metrics_collector::propRegCountB = NULL;
-PROPERTY *metrics_collector::propRegCountC = NULL;
-PROPERTY *metrics_collector::propSwingSubLoad = NULL;
-PROPERTY *metrics_collector::propSwingMeterS = NULL;
+PROPERTY *metrics_collector::propInverterS = nullptr;
+PROPERTY *metrics_collector::propCapCountA = nullptr;
+PROPERTY *metrics_collector::propCapCountB = nullptr;
+PROPERTY *metrics_collector::propCapCountC = nullptr;
+PROPERTY *metrics_collector::propRegCountA = nullptr;
+PROPERTY *metrics_collector::propRegCountB = nullptr;
+PROPERTY *metrics_collector::propRegCountC = nullptr;
+PROPERTY *metrics_collector::propSwingSubLoad = nullptr;
+PROPERTY *metrics_collector::propSwingMeterS = nullptr;
 
-PROPERTY *metrics_collector::propTransformerOverloaded = NULL;
-PROPERTY *metrics_collector::propLineOverloaded = NULL;
+PROPERTY *metrics_collector::propTransformerOverloaded = nullptr;
+PROPERTY *metrics_collector::propLineOverloaded = nullptr;
 
-PROPERTY *metrics_collector::propChargeRate = NULL;
-PROPERTY *metrics_collector::propBatterySOC = NULL;
+PROPERTY *metrics_collector::propChargeRate = nullptr;
+PROPERTY *metrics_collector::propBatterySOC = nullptr;
 
 bool metrics_collector::log_set = true;  // if false, the first (some class) instance will print messages to console
 
@@ -78,17 +78,17 @@ void new_metrics_collector(MODULE *mod){
 }
 
 metrics_collector::metrics_collector(MODULE *mod){
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 #ifdef _DEBUG
 		gl_debug("construction metrics_collector class");
 #endif
 		oclass = gl_register_class(mod, const_cast<char *>("metrics_collector"), sizeof(metrics_collector), PC_POSTTOPDOWN);
-    if(oclass == NULL)
+    if(oclass == nullptr)
       GL_THROW(const_cast<char *>("unable to register object class implemented by %s"),__FILE__);
 
     if(gl_publish_variable(oclass,
-			PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector output is stored in JSON format",NULL) < 1) 
+			PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector output is stored in JSON format",nullptr) < 1)
 			GL_THROW(const_cast<char *>("unable to publish properties in %s"), __FILE__);
 
 		defaults = this;
@@ -104,37 +104,37 @@ int metrics_collector::create(){
 
 	memcpy(this, defaults, sizeof(metrics_collector));
 
-	time_array = NULL;
-	real_power_array = NULL;
-	reactive_power_array = NULL;
-	voltage_vll_array = NULL;
-	voltage_vln_array = NULL;
-	voltage_unbalance_array = NULL;
-	total_load_array = NULL;
-	hvac_load_array = NULL;
-	wh_load_array = NULL;
-	air_temperature_array = NULL;
-	set_cooling_array = NULL;
-	set_heating_array = NULL;
-	count_array = NULL;
-	real_power_loss_array = NULL;
-	reactive_power_loss_array = NULL;
-	wh_setpoint_array = NULL;
-	wh_demand_array = NULL;
-	wh_temp_array = NULL;
+	time_array = nullptr;
+	real_power_array = nullptr;
+	reactive_power_array = nullptr;
+	voltage_vll_array = nullptr;
+	voltage_vln_array = nullptr;
+	voltage_unbalance_array = nullptr;
+	total_load_array = nullptr;
+	hvac_load_array = nullptr;
+	wh_load_array = nullptr;
+	air_temperature_array = nullptr;
+	set_cooling_array = nullptr;
+	set_heating_array = nullptr;
+	count_array = nullptr;
+	real_power_loss_array = nullptr;
+	reactive_power_loss_array = nullptr;
+	wh_setpoint_array = nullptr;
+	wh_demand_array = nullptr;
+	wh_temp_array = nullptr;
 
-	wh_l_setpoint_array = NULL;
-	wh_u_setpoint_array = NULL;
-	wh_l_temp_array = NULL;
-	wh_u_temp_array = NULL;
+	wh_l_setpoint_array = nullptr;
+	wh_u_setpoint_array = nullptr;
+	wh_l_temp_array = nullptr;
+	wh_u_temp_array = nullptr;
 
-	trans_overload_status_array = NULL;
-	line_overload_status_array = NULL;
+	trans_overload_status_array = nullptr;
+	line_overload_status_array = nullptr;
 
-	charge_rate_array = NULL;
-	battery_SOC_array = NULL;
+	charge_rate_array = nullptr;
+	battery_SOC_array = nullptr;
 
-	metrics = NULL;
+	metrics = nullptr;
 
 	// Interval related
 	interval_length = -1;
@@ -153,7 +153,7 @@ int metrics_collector::init(OBJECT *parent){
 	OBJECT *obj = OBJECTHDR(this);
 
 //	int temp = strcmp(parent->oclass->name,"triplex_meter") != 0;
-	if (parent == NULL)
+	if (parent == nullptr)
 	{
 		gl_error("metrics_collector must have a parent (triplex meter, house, waterheater, inverter, substation, or meter)");
 		/*  TROUBLESHOOT
@@ -165,54 +165,54 @@ int metrics_collector::init(OBJECT *parent){
 	// Find parent, if not defined, or if the parent is not a supported class, throw an exception
 	if (gl_object_isa(parent, "triplex_meter"))	{
 		parent_string = const_cast<char *>("triplex_meter");
-		if (propTriplexNomV == NULL) propTriplexNomV = gl_get_property (parent, "nominal_voltage");
-		if (propTriplexPrice == NULL) propTriplexPrice = gl_get_property (parent, "price");
-		if (propTriplexBill == NULL) propTriplexBill = gl_get_property (parent, "monthly_bill");
-		if (propTriplexP == NULL) propTriplexP = gl_get_property (parent, "measured_real_power");
-		if (propTriplexQ == NULL) propTriplexQ = gl_get_property (parent, "measured_reactive_power");
-		if (propTriplexV1 == NULL) propTriplexV1 = gl_get_property (parent, "voltage_1");
-		if (propTriplexV2 == NULL) propTriplexV2 = gl_get_property (parent, "voltage_2");
-		if (propTriplexV12 == NULL) propTriplexV12 = gl_get_property (parent, "voltage_12");
+		if (propTriplexNomV == nullptr) propTriplexNomV = gl_get_property (parent, "nominal_voltage");
+		if (propTriplexPrice == nullptr) propTriplexPrice = gl_get_property (parent, "price");
+		if (propTriplexBill == nullptr) propTriplexBill = gl_get_property (parent, "monthly_bill");
+		if (propTriplexP == nullptr) propTriplexP = gl_get_property (parent, "measured_real_power");
+		if (propTriplexQ == nullptr) propTriplexQ = gl_get_property (parent, "measured_reactive_power");
+		if (propTriplexV1 == nullptr) propTriplexV1 = gl_get_property (parent, "voltage_1");
+		if (propTriplexV2 == nullptr) propTriplexV2 = gl_get_property (parent, "voltage_2");
+		if (propTriplexV12 == nullptr) propTriplexV12 = gl_get_property (parent, "voltage_12");
 		if (!log_set) {
 			log_set = log_me = true;
 		}
 	} else if (gl_object_isa(parent, "house")) {
 		parent_string = const_cast<char*>("house");
-		if (propHouseLoad == NULL) propHouseLoad = gl_get_property (parent, "total_load");
-		if (propHouseHVAC == NULL) propHouseHVAC = gl_get_property (parent, "hvac_load");
-		if (propHouseAirTemp == NULL) propHouseAirTemp = gl_get_property (parent, "air_temperature");
-		if (propHouseCoolSet == NULL) propHouseCoolSet = gl_get_property (parent, "cooling_setpoint");
-		if (propHouseHeatSet == NULL) propHouseHeatSet = gl_get_property (parent, "heating_setpoint");
-		if (propHouseSystemMode == NULL) propHouseSystemMode = gl_get_property (parent, "system_mode");
+		if (propHouseLoad == nullptr) propHouseLoad = gl_get_property (parent, "total_load");
+		if (propHouseHVAC == nullptr) propHouseHVAC = gl_get_property (parent, "hvac_load");
+		if (propHouseAirTemp == nullptr) propHouseAirTemp = gl_get_property (parent, "air_temperature");
+		if (propHouseCoolSet == nullptr) propHouseCoolSet = gl_get_property (parent, "cooling_setpoint");
+		if (propHouseHeatSet == nullptr) propHouseHeatSet = gl_get_property (parent, "heating_setpoint");
+		if (propHouseSystemMode == nullptr) propHouseSystemMode = gl_get_property (parent, "system_mode");
 	} else if (gl_object_isa(parent,"waterheater")) {
 		parent_string = const_cast<char*>("waterheater");
-		if (propWaterLoad == NULL) propWaterLoad = gl_get_property (parent, "actual_load");
-		if (propWaterSetPoint == NULL) propWaterSetPoint = gl_get_property (parent, "tank_setpoint");
-		if (propWaterDemand == NULL) propWaterDemand = gl_get_property (parent, "water_demand");
-		if (propWaterTemp == NULL) propWaterTemp = gl_get_property (parent, "temperature");
+		if (propWaterLoad == nullptr) propWaterLoad = gl_get_property (parent, "actual_load");
+		if (propWaterSetPoint == nullptr) propWaterSetPoint = gl_get_property (parent, "tank_setpoint");
+		if (propWaterDemand == nullptr) propWaterDemand = gl_get_property (parent, "water_demand");
+		if (propWaterTemp == nullptr) propWaterTemp = gl_get_property (parent, "temperature");
 
-		if (propWaterLSetPoint == NULL) propWaterLSetPoint = gl_get_property (parent, "lower_tank_setpoint");
-		if (propWaterUSetPoint == NULL) propWaterUSetPoint = gl_get_property (parent, "upper_tank_setpoint");
-		if (propWaterLTemp == NULL) propWaterLTemp = gl_get_property (parent, "lower_tank_temperature");
-		if (propWaterUTemp == NULL) propWaterUTemp = gl_get_property (parent, "upper_tank_temperature");
-		if (propWaterElemLMode == NULL) propWaterElemLMode = gl_get_property (parent, "lower_heating_element_state");
-		if (propWaterElemUMode == NULL) propWaterElemUMode = gl_get_property (parent, "upper_heating_element_state");
+		if (propWaterLSetPoint == nullptr) propWaterLSetPoint = gl_get_property (parent, "lower_tank_setpoint");
+		if (propWaterUSetPoint == nullptr) propWaterUSetPoint = gl_get_property (parent, "upper_tank_setpoint");
+		if (propWaterLTemp == nullptr) propWaterLTemp = gl_get_property (parent, "lower_tank_temperature");
+		if (propWaterUTemp == nullptr) propWaterUTemp = gl_get_property (parent, "upper_tank_temperature");
+		if (propWaterElemLMode == nullptr) propWaterElemLMode = gl_get_property (parent, "lower_heating_element_state");
+		if (propWaterElemUMode == nullptr) propWaterElemUMode = gl_get_property (parent, "upper_heating_element_state");
 	} else if (gl_object_isa(parent,"inverter")) {
 		parent_string = const_cast<char*>("inverter");
-		if (propInverterS == NULL) propInverterS = gl_get_property (parent, "VA_Out");
+		if (propInverterS == nullptr) propInverterS = gl_get_property (parent, "VA_Out");
 	} else if (gl_object_isa(parent,"capacitor")) {
 		parent_string = const_cast<char*>("capacitor");
-		if (propCapCountA == NULL) propCapCountA = gl_get_property (parent, "cap_A_switch_count");
-		if (propCapCountB == NULL) propCapCountB = gl_get_property (parent, "cap_B_switch_count");
-		if (propCapCountC == NULL) propCapCountC = gl_get_property (parent, "cap_C_switch_count");
+		if (propCapCountA == nullptr) propCapCountA = gl_get_property (parent, "cap_A_switch_count");
+		if (propCapCountB == nullptr) propCapCountB = gl_get_property (parent, "cap_B_switch_count");
+		if (propCapCountC == nullptr) propCapCountC = gl_get_property (parent, "cap_C_switch_count");
 	} else if (gl_object_isa(parent,"regulator")) {
 		parent_string = const_cast<char*>("regulator");
-		if (propRegCountA == NULL) propRegCountA = gl_get_property (parent, "tap_A_change_count");
-		if (propRegCountB == NULL) propRegCountB = gl_get_property (parent, "tap_B_change_count");
-		if (propRegCountC == NULL) propRegCountC = gl_get_property (parent, "tap_C_change_count");
+		if (propRegCountA == nullptr) propRegCountA = gl_get_property (parent, "tap_A_change_count");
+		if (propRegCountB == nullptr) propRegCountB = gl_get_property (parent, "tap_B_change_count");
+		if (propRegCountC == nullptr) propRegCountC = gl_get_property (parent, "tap_C_change_count");
 	} else if (gl_object_isa(parent,"substation")) {  // must be a swing bus
 		PROPERTY *pval = gl_get_property(parent,"bustype");
-		if ((pval==NULL) || (pval->ptype!=PT_enumeration))
+		if ((pval==nullptr) || (pval->ptype!=PT_enumeration))
 		{
 			GL_THROW(const_cast<char *>("metrics_collector:%s failed to map bustype variable from %s"), obj->name ? obj->name : "unnamed", parent->name ? parent->name : "unnamed");
 			/*  TROUBLESHOOT
@@ -221,48 +221,48 @@ int metrics_collector::init(OBJECT *parent){
 			*/
 		}
 		//Map to the intermediate
-		auto *meter_bustype = (enumeration*)GETADDR(parent,pval);
+		auto *meter_bustype = (enumeration*)GETADDR(parent, pval);
 		// Check if the parent meter is a swing bus (2) or not
 		if (*meter_bustype != 2) {
 			gl_error("If a metrics_collector is attached to a substation, it must be a SWING bus");
 			return 0;
 		}
 		parent_string = const_cast<char *>("swingbus");
-		if (propSwingSubLoad == NULL) propSwingSubLoad = gl_get_property (parent,
+		if (propSwingSubLoad == nullptr) propSwingSubLoad = gl_get_property (parent,
                                                                           const_cast<char *>("distribution_load"));
 	} else if (gl_object_isa(parent, const_cast<char *>("meter"))) {
 		parent_string = const_cast<char *>("meter"); // unless it's a swing bus
-		if (propMeterNomV == NULL) propMeterNomV = gl_get_property (parent, "nominal_voltage");
-		if (propMeterPrice == NULL) propMeterPrice = gl_get_property (parent, "price");
-		if (propMeterBill == NULL) propMeterBill = gl_get_property (parent, "monthly_bill");
-		if (propMeterP == NULL) propMeterP = gl_get_property (parent, "measured_real_power");
-		if (propMeterQ == NULL) propMeterQ = gl_get_property (parent, "measured_reactive_power");
-		if (propMeterVa == NULL) propMeterVa = gl_get_property (parent, "voltage_A");
-		if (propMeterVb == NULL) propMeterVb = gl_get_property (parent, "voltage_B");
-		if (propMeterVc == NULL) propMeterVc = gl_get_property (parent, "voltage_C");
-		if (propMeterVab == NULL) propMeterVab = gl_get_property (parent, "voltage_AB");
-		if (propMeterVbc == NULL) propMeterVbc = gl_get_property (parent, "voltage_BC");
-		if (propMeterVca == NULL) propMeterVca = gl_get_property (parent, "voltage_CA");
+		if (propMeterNomV == nullptr) propMeterNomV = gl_get_property (parent, "nominal_voltage");
+		if (propMeterPrice == nullptr) propMeterPrice = gl_get_property (parent, "price");
+		if (propMeterBill == nullptr) propMeterBill = gl_get_property (parent, "monthly_bill");
+		if (propMeterP == nullptr) propMeterP = gl_get_property (parent, "measured_real_power");
+		if (propMeterQ == nullptr) propMeterQ = gl_get_property (parent, "measured_reactive_power");
+		if (propMeterVa == nullptr) propMeterVa = gl_get_property (parent, "voltage_A");
+		if (propMeterVb == nullptr) propMeterVb = gl_get_property (parent, "voltage_B");
+		if (propMeterVc == nullptr) propMeterVc = gl_get_property (parent, "voltage_C");
+		if (propMeterVab == nullptr) propMeterVab = gl_get_property (parent, "voltage_AB");
+		if (propMeterVbc == nullptr) propMeterVbc = gl_get_property (parent, "voltage_BC");
+		if (propMeterVca == nullptr) propMeterVca = gl_get_property (parent, "voltage_CA");
 		PROPERTY *pval = gl_get_property(parent, const_cast<char *>("bustype"));
-		if ((pval!=NULL) && (pval->ptype==PT_enumeration))
+		if ((pval!=nullptr) && (pval->ptype==PT_enumeration))
 		{
-			auto *meter_bustype = (enumeration*)GETADDR(parent,pval);
+			auto *meter_bustype = (enumeration*)GETADDR(parent, pval);
 			if (*meter_bustype == 2) {
 				parent_string = const_cast<char *>("swingbus");
-				if (propSwingMeterS == NULL) propSwingMeterS = gl_get_property (parent,
+				if (propSwingMeterS == nullptr) propSwingMeterS = gl_get_property (parent,
                                                                                 const_cast<char *>("measured_power"));
 			}
 		}
 	} else if (gl_object_isa(parent, "transformer")) {
 		parent_string = const_cast<char*>("transformer");
-		if (propTransformerOverloaded == NULL) propTransformerOverloaded = gl_get_property (parent, "overloaded_status");
+		if (propTransformerOverloaded == nullptr) propTransformerOverloaded = gl_get_property (parent, "overloaded_status");
 	} else if (gl_object_isa(parent, "line")) {
 		parent_string = const_cast<char*>("line");
-		if (propLineOverloaded == NULL) propLineOverloaded = gl_get_property (parent, "overloaded_status");
+		if (propLineOverloaded == nullptr) propLineOverloaded = gl_get_property (parent, "overloaded_status");
 	} else if (gl_object_isa(parent, "evcharger_det")) {
 		parent_string = const_cast<char*>("evcharger_det");
-		if (propChargeRate == NULL) propChargeRate = gl_get_property (parent, "charge_rate");
-		if (propBatterySOC == NULL) propBatterySOC = gl_get_property (parent, "battery_SOC");
+		if (propChargeRate == nullptr) propChargeRate = gl_get_property (parent, "charge_rate");
+		if (propBatterySOC == nullptr) propBatterySOC = gl_get_property (parent, "battery_SOC");
 	}
 	else {
 		gl_error("metrics_collector allows only these parents: triplex meter, house, waterheater, inverter, substation, meter, capacitor, regulator, transformer, line.");
@@ -275,44 +275,44 @@ int metrics_collector::init(OBJECT *parent){
 	// Create the structures for JSON outputs
 	if (strcmp(parent_string, "triplex_meter") == 0)
 	{
-		if (parent->name != NULL) {
+		if (parent->name != nullptr) {
 			strcpy (parent_name, parent->name);
 		}
 		metrics = (double *)gl_malloc(MTR_ARRAY_SIZE*sizeof(double));
-		if (metrics == NULL)
+		if (metrics == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate JSON metrics array"), obj->id);
 		}
 	}
 	else if (strcmp(parent_string, "meter") == 0)
 	{
-		if (parent->name != NULL) {
+		if (parent->name != nullptr) {
 			strcpy (parent_name, parent->name);
 		}
 		metrics = (double *)gl_malloc(MTR_ARRAY_SIZE*sizeof(double));
-		if (metrics == NULL)
+		if (metrics == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate JSON metrics array"), obj->id);
 		}
 	} 
 	else if (strcmp(parent_string, "house") == 0)
 	{
-		if (parent->name != NULL) {
+		if (parent->name != nullptr) {
 			strcpy (parent_name, parent->name);
 		}
 		metrics = (double *)gl_malloc(HSE_ARRAY_SIZE*sizeof(double));
-		if (metrics == NULL)
+		if (metrics == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate JSON metrics array"), obj->id);
 		}
 	}
 	else if (strcmp(parent_string, "waterheater") == 0) 
 	{
-		if (parent->parent->name != NULL) {
+		if (parent->parent->name != nullptr) {
 			strcpy (parent_name, parent->parent->name);
 		}
 		metrics = (double *)gl_malloc(WH_ARRAY_SIZE*sizeof(double));
-		if (metrics == NULL)
+		if (metrics == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate JSON metrics array"), obj->id);
 		}
@@ -324,33 +324,33 @@ int metrics_collector::init(OBJECT *parent){
 	}
 	else if (strcmp(parent_string, "inverter") == 0)
 	{
-		if (parent->name != NULL) {
+		if (parent->name != nullptr) {
 			strcpy (parent_name, parent->name);
 		}
 		metrics = (double *)gl_malloc(INV_ARRAY_SIZE*sizeof(double));
-		if (metrics == NULL)
+		if (metrics == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate JSON metrics array"), obj->id);
 		}
 	}
 	else if (strcmp(parent_string, "capacitor") == 0)
 	{
-		if (parent->name != NULL) {
+		if (parent->name != nullptr) {
 			strcpy (parent_name, parent->name);
 		}
 		metrics = (double *)gl_malloc(CAP_ARRAY_SIZE*sizeof(double));
-		if (metrics == NULL)
+		if (metrics == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate JSON metrics array"), obj->id);
 		}
 	}
 	else if (strcmp(parent_string, "regulator") == 0)
 	{
-		if (parent->name != NULL) {
+		if (parent->name != nullptr) {
 			strcpy (parent_name, parent->name);
 		}
 		metrics = (double *)gl_malloc(REG_ARRAY_SIZE*sizeof(double));
-		if (metrics == NULL)
+		if (metrics == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate JSON metrics array"), obj->id);
 		}
@@ -360,53 +360,53 @@ int metrics_collector::init(OBJECT *parent){
 		// In this work, only when a metrics_collector is attached to a swing-bus, the feeder losses are recorded
 		// Find all the link objects for collecting loss values
 		link_objects = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",FT_END); //find all link objects
-		if(link_objects == NULL){
+		if(link_objects == nullptr){
 			gl_warning("No link objects were found.");
 			/* TROUBLESHOOT
 			No link objects were found in your .glm file. In this way, there is no losses calculated.
 			*/
 		}
-		if (parent->name != NULL) {
+		if (parent->name != nullptr) {
 			strcpy (parent_name, parent->name);
 		}
 		else {
 			strcpy (parent_name, "Swing Bus Metrics");
 		}
 		metrics = (double *)gl_malloc(FDR_ARRAY_SIZE*sizeof(double));
-		if (metrics == NULL)
+		if (metrics == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate JSON metrics array"), obj->id);
 		}
 	}
 	else if (strcmp(parent_string, "transformer") == 0)
 	{
-		if (parent->name != NULL) {
+		if (parent->name != nullptr) {
 			strcpy (parent_name, parent->name);
 		}
 		metrics = (double *)gl_malloc(TRANS_OVERLOAD_ARRAY_SIZE*sizeof(double));
-		if (metrics == NULL)
+		if (metrics == nullptr)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
 		}
 	}
 	else if (strcmp(parent_string, "line") == 0)
 	{
-		if (parent->name != NULL) {
+		if (parent->name != nullptr) {
 			strcpy (parent_name, parent->name);
 		}
 		metrics = (double *)gl_malloc(LINE_OVERLOAD_ARRAY_SIZE*sizeof(double));
-		if (metrics == NULL)
+		if (metrics == nullptr)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
 		}
 	}
 	else if (strcmp(parent_string, "evcharger_det") == 0)
 	{
-		if (parent->name != NULL) {
+		if (parent->name != nullptr) {
 			strcpy (parent_name, parent->name);
 		}
 		metrics = (double *)gl_malloc(EVCHARGER_DET_ARRAY_SIZE*sizeof(double));
-		if (metrics == NULL)
+		if (metrics == nullptr)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
 		}
@@ -425,7 +425,7 @@ int metrics_collector::init(OBJECT *parent){
 
 	// need the time sample points for every parent type
 	time_array = (TIMESTAMP *)gl_malloc(vector_length*sizeof(TIMESTAMP));
-	if (time_array == NULL)
+	if (time_array == nullptr)
 	{
 		GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate time array"), obj->id);
 		/*  TROUBLESHOOT
@@ -439,7 +439,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate real power array
 		real_power_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (real_power_array == NULL)
+		if (real_power_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate real power array"), obj->id);
 			/*  TROUBLESHOOT
@@ -451,7 +451,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate reactive power array
 		reactive_power_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (reactive_power_array == NULL)
+		if (reactive_power_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate reactive power array"), obj->id);
 			/*  TROUBLESHOOT
@@ -463,7 +463,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate phase 1-2 voltage array
 		voltage_vll_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (voltage_vll_array == NULL)
+		if (voltage_vll_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate phase 1-2 voltage array"), obj->id);
 			/*  TROUBLESHOOT
@@ -475,7 +475,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate average voltage array
 		voltage_vln_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (voltage_vln_array == NULL)
+		if (voltage_vln_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate average vln voltage array"), obj->id);
 			/*  TROUBLESHOOT
@@ -487,7 +487,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate voltage unbalance array
 		voltage_unbalance_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (voltage_unbalance_array == NULL)
+		if (voltage_unbalance_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate voltage unbalance array"), obj->id);
 			/*  TROUBLESHOOT
@@ -512,7 +512,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate total_load array
 		total_load_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (total_load_array == NULL)
+		if (total_load_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate total_load array"), obj->id);
 			/*  TROUBLESHOOT
@@ -524,7 +524,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate hvac_load array
 		hvac_load_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (hvac_load_array == NULL)
+		if (hvac_load_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate hvac_load array"), obj->id);
 			/*  TROUBLESHOOT
@@ -536,7 +536,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate air temperature array
 		air_temperature_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (air_temperature_array == NULL)
+		if (air_temperature_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate air_temperature array"), obj->id);
 			/*  TROUBLESHOOT
@@ -548,7 +548,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate air temperature deviation from cooling setpointarray
 		set_cooling_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (set_cooling_array == NULL)
+		if (set_cooling_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate set_cooling_array array"), obj->id);
 			/*  TROUBLESHOOT
@@ -560,7 +560,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate air temperature deviation from heating setpointarray
 		set_heating_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (set_heating_array == NULL)
+		if (set_heating_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate set_heating_array array"), obj->id);
 			/*  TROUBLESHOOT
@@ -585,7 +585,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate hvac_load array
 		wh_load_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (wh_load_array == NULL)
+		if (wh_load_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate wh_load array"), obj->id);
 			/*  TROUBLESHOOT
@@ -597,7 +597,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate wh_setpoint array
 		wh_setpoint_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (wh_setpoint_array == NULL)
+		if (wh_setpoint_array == nullptr)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_setpoint array",obj->id);
 			/*  TROUBLESHOOT
@@ -609,7 +609,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate wh_demand array
 		wh_demand_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (wh_demand_array == NULL)
+		if (wh_demand_array == nullptr)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_demand array",obj->id);
 			/*  TROUBLESHOOT
@@ -621,7 +621,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate wh_temp array
 		wh_temp_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (wh_temp_array == NULL)
+		if (wh_temp_array == nullptr)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_temp array",obj->id);
 			/*  TROUBLESHOOT
@@ -698,7 +698,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate real power array
 		real_power_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (real_power_array == NULL)
+		if (real_power_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate real power array"), obj->id);
 			/*  TROUBLESHOOT
@@ -710,7 +710,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate reactive power array
 		reactive_power_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (reactive_power_array == NULL)
+		if (reactive_power_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate reactive power array"), obj->id);
 			/*  TROUBLESHOOT
@@ -724,7 +724,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate real power array
 		real_power_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (real_power_array == NULL)
+		if (real_power_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate real power array"), obj->id);
 			/*  TROUBLESHOOT
@@ -736,7 +736,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate reactive power array
 		reactive_power_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (reactive_power_array == NULL)
+		if (reactive_power_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate reactive power array"), obj->id);
 			/*  TROUBLESHOOT
@@ -747,7 +747,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate real power loss array
 		real_power_loss_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (real_power_loss_array == NULL)
+		if (real_power_loss_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate real power loss array"), obj->id);
 			/*  TROUBLESHOOT
@@ -759,7 +759,7 @@ int metrics_collector::init(OBJECT *parent){
 		// Allocate reactive power loss array
 		reactive_power_loss_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (reactive_power_loss_array == NULL)
+		if (reactive_power_loss_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate reactive power loss array"), obj->id);
 			/*  TROUBLESHOOT
@@ -771,7 +771,7 @@ int metrics_collector::init(OBJECT *parent){
 	else if ((strcmp(parent_string, "capacitor") == 0) || (strcmp(parent_string, "regulator") == 0)) {
 		count_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (count_array == NULL)
+		if (count_array == nullptr)
 		{
 			GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate operation count array"), obj->id);
 			/*  TROUBLESHOOT
@@ -784,7 +784,7 @@ int metrics_collector::init(OBJECT *parent){
 	else if (strcmp(parent_string, "transformer") == 0) {
 		trans_overload_status_array = (int *)gl_malloc(vector_length*sizeof(int));
 		// Check
-		if (trans_overload_status_array == NULL)
+		if (trans_overload_status_array == nullptr)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocate overload status array",obj->id);
 			/*  TROUBLESHOOT
@@ -797,7 +797,7 @@ int metrics_collector::init(OBJECT *parent){
 	else if (strcmp(parent_string, "line") == 0) {
 		line_overload_status_array = (int *)gl_malloc(vector_length*sizeof(int));
 		// Check
-		if (line_overload_status_array == NULL)
+		if (line_overload_status_array == nullptr)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocate overload status array",obj->id);
 			/*  TROUBLESHOOT
@@ -810,7 +810,7 @@ int metrics_collector::init(OBJECT *parent){
 	else if (strcmp(parent_string, "evcharger_det") == 0) {
 		charge_rate_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (charge_rate_array == NULL)
+		if (charge_rate_array == nullptr)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocate overload status array",obj->id);
 			/*  TROUBLESHOOT
@@ -820,7 +820,7 @@ int metrics_collector::init(OBJECT *parent){
 		}
 		battery_SOC_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (battery_SOC_array == NULL)
+		if (battery_SOC_array == nullptr)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocate overload status array",obj->id);
 			/*  TROUBLESHOOT
@@ -1017,7 +1017,7 @@ int metrics_collector::read_line(OBJECT *obj){
 		reactive_power_array[curr_index] = (double)VAfeeder.Im();
 		// Feeder Losses calculation
 		int index = 0;
-		obj = NULL;
+		obj = nullptr;
 		gld::complex lossesSum = 0.0;
 		while(obj = gl_find_next(link_objects,obj)){
 			if(index >= link_objects->hit_count){
@@ -1029,7 +1029,7 @@ int metrics_collector::read_line(OBJECT *obj){
 					strcmp(oclassName, "regulator") == 0 || strcmp(oclassName, "switch") == 0 || strcmp(oclassName, "fuse") == 0) {
 				// Obtain the link data
 				link_object *one_link = OBJECTDATA(obj,link_object);
-				if(one_link == NULL){
+				if(one_link == nullptr){
 					gl_error("Unable to map the object as link.");
 					return 0;
 				}
@@ -1514,7 +1514,7 @@ EXPORT int create_metrics_collector(OBJECT **obj, OBJECT *parent){
 	int rv = 0;
 	try {
 		*obj = gl_create_object(metrics_collector::oclass);
-		if(*obj != NULL){
+		if(*obj != nullptr){
 			metrics_collector *my = OBJECTDATA(*obj, metrics_collector);
 			gl_set_parent(*obj, parent);
 			rv = my->create();

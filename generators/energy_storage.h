@@ -21,9 +21,9 @@ protected:
 	/* TODO: put unpublished but inherited variables */
 public:
 	/* TODO: put published variables here */
-	set phases;	/**< device phases (see PHASE codes) */
+	gld::set phases;	/**< device phases (see PHASE codes) */
 	enum GENERATOR_MODE {CONSTANT_V=1, CONSTANT_PQ, CONSTANT_PF, SUPPLY_DRIVEN};
-	enumeration gen_mode_v;  //operating mode of the generator 
+	enumeration gen_mode_v;  //operating mode of the generator
 	//note energy_storage panel will always operate under the SUPPLY_DRIVEN generator mode
 	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2};
 	enumeration gen_status_v;

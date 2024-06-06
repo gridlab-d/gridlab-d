@@ -74,7 +74,7 @@ typedef struct s_locklist {
 	unsigned int last_value;
 	struct s_locklist *next;
 } LOCKLIST;
-LOCKLIST *locklist = NULL;
+LOCKLIST *locklist = nullptr;
 /** Register a lock trave
  **/
 void register_lock(const char *name, unsigned int *lock)
@@ -104,12 +104,12 @@ void check_lock(unsigned int *lock, bool write, bool unlock)
 			throw_exception("check lock timeout");
 	} while ((value&1) || !atomic_compare_and_swap(&check_lock, value, value + 1));
 
-	for ( item=locklist ; item!=NULL ; item=item->next )
+	for ( item=locklist ; item!=nullptr ; item=item->next )
 	{
 		if ( item->lock==lock )
 			break;
 	}
-	if ( item==NULL )
+	if ( item==nullptr )
 	{
 		printf("%s %slock(%p) = %d (unregistered)\n", 
 			write?"write":"read ", 

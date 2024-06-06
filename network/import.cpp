@@ -28,18 +28,18 @@ int import_cdf(char *file)
 	OBJECT *swing[100]; memset(swing,0,sizeof(swing)); 
 	int count[100]; memset(count,0,sizeof(count)); 
 	char line[1024];
-	char *ff;// = gl_findfile(file,NULL,FF_READ);
-	FILE *fp;// = ff?fopen(ff, "r"):NULL;
+	char *ff;// = gl_findfile(file,nullptr,FF_READ);
+	FILE *fp;// = ff?fopen(ff, "r"):nullptr;
 	OBJECT *obj;
 	enum {LD_INIT, LD_READY, LD_BUS, LD_BRANCH} state = LD_INIT;
 	// model variables
 	// branch variables
 	char buffer[1024];
-	ff = gl_findfile(file,NULL,FF_READ,buffer,sizeof(buffer)-1);
-	fp = ff?fopen(ff, "r"):NULL;
-	if (fp==NULL)
+	ff = gl_findfile(file,nullptr,FF_READ,buffer,sizeof(buffer)-1);
+	fp = ff?fopen(ff, "r"):nullptr;
+	if (fp==nullptr)
 		return 0;
-	while (fgets(line,sizeof(line),fp)!=NULL)
+	while (fgets(line,sizeof(line),fp)!=nullptr)
 	{
 		linenum++;
 		switch (state) {
@@ -64,7 +64,7 @@ int import_cdf(char *file)
 					&n, name, &area, &zone, &type, &Vm, &Va, &Lr, &Li, &Gr, &Gi, &bV, &dV, &Qh, &Ql, &G, &B, &remote)==18 && n_bus<10000)
 				{
 					obj = gl_create_object(node_class);
-					obj->parent = NULL;
+					obj->parent = nullptr;
 					bus[n] = obj;
 					node *p = OBJECTDATA(obj,node);
 					p->create();
@@ -116,7 +116,7 @@ int import_cdf(char *file)
 					&from,&to,&area,&zone,&type,&circuit,&R,&X,&B, &n)>=9 && n_branch<10000)
 				{
 					obj = gl_create_object(link_class);
-					obj->parent = NULL;
+					obj->parent = nullptr;
 					branch[n_branch] = obj;
 					link *p = OBJECTDATA(obj,link);
 					p->create();
@@ -149,7 +149,7 @@ int import_cdf(char *file)
 	// check area for swing buses
 	for (n=0; n<sizeof(count)/sizeof(count[0]); n++)
 	{
-		if (count[n]>0 && swing[n]==NULL)
+		if (count[n]>0 && swing[n]==nullptr)
 		{
 			gl_output("%s : flow area %d has no swing bus", file, n);
 			errors++;
@@ -160,12 +160,12 @@ int import_cdf(char *file)
 	for (n=0; n<sizeof(bus)/sizeof(bus[0]); n++)
 	{
 		OBJECT *obj = bus[n];
-		if (obj==NULL) continue;
+		if (obj==nullptr) continue;
 		node *p = OBJECTDATA(obj,node);
 		if (p->type!=SWING)
 		{
 			OBJECT *swingbus = swing[p->flow_area_num];
-			if (swingbus!=NULL)
+			if (swingbus!=nullptr)
 				gl_set_parent(obj,swingbus);
 		}
 		p->remote_bus_id= bus[(int64)p->remote_bus_id];
@@ -175,9 +175,9 @@ int import_cdf(char *file)
 	for (n=0; n<sizeof(branch)/sizeof(branch[0]); n++)
 	{
 		OBJECT *obj = branch[n];
-		if (obj==NULL) continue;
+		if (obj==nullptr) continue;
 		link *p = OBJECTDATA(obj,link);
-		if (p->from!=NULL && p->to!=NULL)
+		if (p->from!=nullptr && p->to!=nullptr)
 			gl_set_parent(obj, p->from->rank<p->to->rank ? p->from : p->to);
 
 		// update injections to node
@@ -189,7 +189,7 @@ int import_cdf(char *file)
 EXPORT int import_file(char *file)
 {
 	char *ext = strrchr(file,'.');
-	if (ext!=NULL && stricmp(ext,".cdf")==0)
+	if (ext!=nullptr && stricmp(ext,".cdf")==0)
 		return import_cdf(file);
 	errno = ENOENT;
 	return 0;

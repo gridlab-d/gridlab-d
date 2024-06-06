@@ -11,16 +11,16 @@ EXPORT_CREATE(collector);
 EXPORT_INIT(collector);
 EXPORT_COMMIT(collector);
 
-CLASS *collector::oclass = NULL;
-collector *collector::defaults = NULL;
+CLASS *collector::oclass = nullptr;
+collector *collector::defaults = nullptr;
 
 collector::collector(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gld_class::create(module,"collector",sizeof(collector),PC_AUTOLOCK|PC_OBSERVER);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class collector";
 		else
 			oclass->trl = TRL_PROTOTYPE;
@@ -37,7 +37,7 @@ collector::collector(MODULE *module)
 			PT_object,"connection",get_connection_offset(),PT_DESCRIPTION,"database connection",
 			PT_set,"options",get_options_offset(),PT_DESCRIPTION,"SQL options",
 				PT_KEYWORD,"PURGE",(int64)MO_DROPTABLES,PT_DESCRIPTION,"flag to drop tables before creation",
-			NULL)<1){
+			nullptr)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
@@ -57,9 +57,9 @@ int collector::create(void)
 int collector::init(OBJECT *parent)
 {
 	// check the connection
-	if ( get_connection()!=NULL )
+	if ( get_connection()!=nullptr )
 		db = (database*)(get_connection()+1);
-	if ( db==NULL )
+	if ( db==nullptr )
 		exception("no database connection available or specified");
 	if ( !db->isa("database") )
 		exception("connection is not a mysql database");
@@ -113,7 +113,7 @@ int collector::init(OBJECT *parent)
 	do {
 		n_aggregates++;
 		p = strchr(p,',');
-	} while (p++!=NULL);
+	} while (p++!=nullptr);
 	list = new gld_aggregate[n_aggregates];
 	names = new char*[n_aggregates];
 
@@ -122,7 +122,7 @@ int collector::init(OBJECT *parent)
 	for ( p=propspecs,n=0 ; n<n_aggregates ; n++ )
 	{
 		char *np = strchr(p,',');
-		if ( np!=NULL ) *np='\0';
+		if ( np!=nullptr ) *np='\0';
 		while ( *p!='\0' && isspace(*p) ) p++; // left trim
 		int len = strlen(p);
 		while ( len>0 && isspace(p[len-1]) ) p[--len]='\0'; // right trim
@@ -168,7 +168,7 @@ int collector::init(OBJECT *parent)
 	// check row count
 	else 
 	{
-		if ( db->select("SELECT count(*) FROM `%s`", get_table())==NULL )
+		if ( db->select("SELECT count(*) FROM `%s`", get_table())==nullptr )
 			exception("unable to get row count of table '%s'", get_table());
 
 		gl_verbose("table '%s' ok", get_table());

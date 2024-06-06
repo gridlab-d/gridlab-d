@@ -76,7 +76,7 @@ typedef struct NR_SOLVER_VARS NR_SOLVER_VARS;
 void *LU_init(void *ext_array)
 {
     EIGEN_STRUCT *EigenValues;
-    if (ext_array == NULL){
+    if (ext_array == nullptr){
         EigenValues = (EIGEN_STRUCT*)malloc(sizeof(EIGEN_STRUCT));
         EigenValues->col_count = 0;
         EigenValues->row_count = 0;

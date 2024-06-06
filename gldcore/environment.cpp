@@ -95,7 +95,7 @@ UseGui:
 			GUIENTITY *gui;
 			if ( result!=SUCCESS ) return result;
 			gui = gui_get_root();
-			if ( gui==NULL ) return FAILED;
+			if ( gui==nullptr ) return FAILED;
 			if ( gui->hold )
 				return server_join();
 			else

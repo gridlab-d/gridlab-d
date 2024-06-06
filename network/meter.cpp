@@ -19,24 +19,24 @@
 // meter CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* meter::oclass = NULL;
-meter *meter::defaults = NULL;
-CLASS* meter::pclass = NULL;
-//CLASS *meter_class = NULL;
+CLASS* meter::oclass = nullptr;
+meter *meter::defaults = nullptr;
+CLASS* meter::pclass = nullptr;
+//CLASS *meter_class = nullptr;
 
-CLASS *meter_class = (NULL);
+CLASS *meter_class = (nullptr);
 
 meter::meter(MODULE *mod) : node(mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// link to parent class (used by isa)
 		pclass = node::oclass;
 
 		// register the class definition
 		meter_class = oclass = gl_register_class(mod,"meter",sizeof(meter),PC_BOTTOMUP);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class meter";
 		else
 			oclass->trl = TRL_STANDALONE;
@@ -60,7 +60,7 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_complex, "line1_volts[V]", PADDR(V),
 			PT_complex, "line2_volts[V]", PADDR(V),
 			PT_complex, "line3_volts[V]", PADDR(V),
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// setup the default values
 		defaults = this;
@@ -139,7 +139,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 EXPORT int create_meter(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(meter_class);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		meter *my = OBJECTDATA(*obj,meter);
 		gl_set_parent(*obj,parent);

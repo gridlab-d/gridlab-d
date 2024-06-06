@@ -86,16 +86,16 @@ double office::warn_low_temp = 50.0;
 double office::warn_high_temp = 90.0;
 bool office::warn_control = true;
 
-CLASS *office::oclass = NULL;
-office *office::defaults = NULL;
+CLASS *office::oclass = nullptr;
+office *office::defaults = nullptr;
 
 /* Class registration is only called once to register the class with the core */
 office::office(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gld_class::create(module,"office",sizeof(office),PC_PRETOPDOWN|PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class office";
 		oclass->trl = TRL_DEMONSTRATED;
 		defaults = this;
@@ -200,7 +200,7 @@ office::office(MODULE *module)
 			PT_double, "control.lighting_fraction", PADDR(zone.control.lighting_fraction),
 			PT_double, "ACH", PADDR(zone.hvac.minimum_ach),
 
-			NULL)<1) throw("unable to publish properties in " __FILE__);
+			nullptr)<1) throw("unable to publish properties in " __FILE__);
 
 		memset(defaults,0,sizeof(office));
 
@@ -375,13 +375,13 @@ int office::init(OBJECT *parent)
 
 	// link to climate data
 	static FINDLIST *climates = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
-	if (climates==NULL)
+	if (climates==nullptr)
 		gl_warning("office: no climate data found, using static data");
 	else if (climates->hit_count>1)
 		gl_warning("house: %d climates found, using first one defined", climates->hit_count);
 	if (climates->hit_count>0)
 	{
-		OBJECT *obj = gl_find_next(climates,NULL);
+		OBJECT *obj = gl_find_next(climates,nullptr);
 		if (obj->rank<=hdr->rank)
 			gl_set_dependent(obj,hdr);
 		zone.current.pTemperature = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));

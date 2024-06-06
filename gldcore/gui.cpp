@@ -20,10 +20,10 @@
 #include "server.h"
 #include "exec.h"
 
-static GUIENTITY *gui_root = NULL;
-static GUIENTITY *gui_last = NULL;
+static GUIENTITY *gui_root = nullptr;
+static GUIENTITY *gui_last = nullptr;
 
-void *fp = NULL; /* output stream */
+void *fp = nullptr; /* output stream */
 GUIACTIONSTATUS wait_status = GUIACT_NONE;
 
 #ifdef _DEBUG
@@ -38,7 +38,7 @@ static int gui_default_stream(void *ref, const char *format,...)
 	va_list ptr;
 
 	FILE *fp = (FILE*)ref;
-	if (fp==NULL) fp=stdout;
+	if (fp==nullptr) fp=stdout;
 	va_start(ptr,format);
 	len = vfprintf(fp,format,ptr);
 	va_end(ptr);
@@ -67,13 +67,13 @@ GUIENTITY *gui_create_entity()
 {
 	/* resuse last entity if it remains unused */
 	GUIENTITY *entity = gui_last;
-	if (entity==NULL || entity->type!=GUI_UNKNOWN)
+	if (entity==nullptr || entity->type!=GUI_UNKNOWN)
 		entity = (GUIENTITY*)malloc(sizeof(GUIENTITY));
-	if (entity==NULL)
-		return NULL;
+	if (entity==nullptr)
+		return nullptr;
 	memset(entity,0,sizeof(GUIENTITY));
-	if (gui_root==NULL) gui_root = entity;
-	if (gui_last!=NULL) gui_last->next = entity;
+	if (gui_root==nullptr) gui_root = entity;
+	if (gui_last!=nullptr) gui_last->next = entity;
 	gui_last = entity;
 	return entity;
 }
@@ -108,7 +108,7 @@ const char *gui_get_typename(GUIENTITY *entity)
 
 int gui_is_header(GUIENTITY *entity)
 {
-	if (entity->type==GUI_TITLE && !(entity->parent!=NULL && entity->parent->type==GUI_GROUP)) return 1;
+	if (entity->type==GUI_TITLE && !(entity->parent!=nullptr && entity->parent->type==GUI_GROUP)) return 1;
 	return 0;
 }
 
@@ -153,12 +153,12 @@ void gui_set_variablename(GUIENTITY *entity, char *globalname)
 }
 void gui_set_objectname(GUIENTITY *entity, char *objectname)
 {
-	entity->data = NULL;
+	entity->data = nullptr;
 	strncpy(entity->objectname,objectname,sizeof(entity->objectname));
 }
 void gui_set_propertyname(GUIENTITY *entity, char *propertyname)
 {
-	entity->data = NULL;
+	entity->data = nullptr;
 	strncpy(entity->propertyname,propertyname,sizeof(entity->propertyname));
 }
 void gui_set_span(GUIENTITY *entity, int span)
@@ -251,7 +251,7 @@ OBJECT *gui_get_object(GUIENTITY *entity)
 }
 PROPERTY *gui_get_property(GUIENTITY *entity)
 {
-	if (entity->prop==NULL)
+	if (entity->prop==nullptr)
 	{
 		if (gui_get_object(entity))
 			entity->prop = class_find_property(entity->obj->oclass,entity->propertyname);
@@ -275,25 +275,25 @@ char *gui_get_name(GUIENTITY *entity)
 }
 void *gui_get_data(GUIENTITY *entity)
 {
-	if (entity->data==NULL)
+	if (entity->data==nullptr)
 	{
 		if (gui_get_object(entity)) 
 			entity->data = object_get_addr(entity->obj,entity->propertyname);
 		else if (gui_get_variable(entity))
 			entity->data = entity->var->prop->addr; 
 		else
-			entity->data=NULL;
+			entity->data=nullptr;
 	}
 	return entity->data;
 }
 GLOBALVAR *gui_get_variable(GUIENTITY *entity)
 {
-	if (entity->var==NULL) entity->var = global_find(entity->globalname);
+	if (entity->var==nullptr) entity->var = global_find(entity->globalname);
 	return entity->var;
 }
 char *gui_get_environment(GUIENTITY *entity)
 {
-	if (entity->env==NULL) entity->env = getenv(entity->globalname);
+	if (entity->env==nullptr) entity->env = getenv(entity->globalname);
 	return entity->env;
 }
 int gui_get_span(GUIENTITY *entity)
@@ -321,7 +321,7 @@ int gui_post_action(char *action)
 	}
 
 	/* gui-defined actions */
-	for (entity=gui_root; entity!=NULL; entity=entity->next)
+	for (entity=gui_root; entity!=nullptr; entity=entity->next)
 	{
 		if (entity->type==GUI_ACTION && strcmp(entity->action,action)==0)
 		{
@@ -384,7 +384,7 @@ void gui_cmd_prompt(GUIENTITY *parent)
 	int item=0, ans=-1;
 	char *label;
 	GUIENTITY *entity;
-	for ( entity=gui_root ; entity!=NULL ; entity=entity->next )
+	for ( entity=gui_root ; entity!=nullptr ; entity=entity->next )
 	{
 		if ( entity->parent==parent )
 		{
@@ -430,7 +430,7 @@ int gui_cmd_input_count(GUIENTITY *entity)
 {
 	GUIENTITY *item;
 	int count = 0;
-	for ( item=gui_root; item!=NULL ; item=item->next )
+	for ( item=gui_root; item!=nullptr ; item=item->next )
 	{
 		if (item->parent!=entity)
 			continue;
@@ -452,7 +452,7 @@ void gui_cmd_menu(GUIENTITY *parent)
 	while (1) {
 		int item=0, ans=-1;
 
-		for ( entity=gui_root ; entity!=NULL ; entity=entity->next )
+		for ( entity=gui_root ; entity!=nullptr ; entity=entity->next )
 		{
 			if ( entity->parent==parent && gui_cmd_entity(item+1,entity))
 				list[++item]=entity; 
@@ -485,7 +485,7 @@ Retry:
 
 void gui_cmd_start(void)
 {
-	gui_cmd_menu(NULL);
+	gui_cmd_menu(nullptr);
 } 
 
 #ifdef X11
@@ -568,7 +568,7 @@ static void gui_output_html_textarea(GUIENTITY *entity)
 	if (entity->height>0) sprintf(rows," rows=\"%d\"",entity->height);
 	if (entity->width>0) sprintf(cols," cols=\"%d\"",entity->width);
 	gui_html_output(fp,"<textarea class=\"browse\"%s%s >\n",rows,cols);
-	if (src==NULL)
+	if (src==nullptr)
 	{
 		gui_html_output(fp,"***'%s' is not found: %s***",entity->source,strerror(errno));
 		goto Done;
@@ -595,12 +595,12 @@ static void gui_output_html_table(GUIENTITY *entity)
 	int col=0;
 	char header[1024];
 	gui_html_output(fp,"<table class=\"data\" %s>\n",entity->options);
-	if (src==NULL)
+	if (src==nullptr)
 	{
 		gui_html_output(fp,"***'%s' is not found: %s***",entity->source,strerror(errno));
 		goto Done;
 	}
-	while ( fgets(line,sizeof(line),src)!=NULL )
+	while ( fgets(line,sizeof(line),src)!=nullptr )
 	{
 		char *eol = strchr(line,'\n');
 		if (eol) *eol='\0';
@@ -611,18 +611,18 @@ static void gui_output_html_table(GUIENTITY *entity)
 		}
 		else 
 		{
-			char *p = NULL;
+			char *p = nullptr;
 			if ( row++==0 )
 			{
 				gui_html_output(fp,"<tr>");
-				while ( (p=strtok(p?NULL:header,","))!=NULL )
+				while ( (p=strtok(p?nullptr:header,","))!=nullptr )
 					gui_html_output(fp,"<th>%s</th>", p);
 				gui_html_output(fp,"</tr>\n");
 			}
 			if ( entity->height==0 || row<=entity->height )
 			{
 				gui_html_output(fp,"<tr>");
-				while ( (p=strtok(p?NULL:line,","))!=NULL )
+				while ( (p=strtok(p?nullptr:line,","))!=nullptr )
 					gui_html_output(fp,"<td>%s</td>", p);
 				gui_html_output(fp,"</tr>\n");
 			}
@@ -641,7 +641,7 @@ static void gui_output_html_graph(GUIENTITY *entity)
 	char image[2048];
 	char height[32]="";
 	char width[32]="";
-	FILE *plot=NULL;
+	FILE *plot=nullptr;
 
 	/* setup gnuplot command */
 	sprintf(script,"%s.plt",entity->source);
@@ -656,7 +656,7 @@ static void gui_output_html_graph(GUIENTITY *entity)
 
 	/* generate script */
 	plot = fopen(script,"w");
-	if ( plot==NULL )
+	if ( plot==nullptr )
 	{
 		gui_html_output(fp,"<span class=\"error\">Unable to run gnuplot</span>\n");
 		goto Done;
@@ -681,7 +681,7 @@ static void gui_output_html_graph(GUIENTITY *entity)
 	else
 		fprintf(plot,"%s",entity->gnuplot);
 	fclose(plot);
-	plot=NULL;
+	plot=nullptr;
 
 	/* run gnuplot */
 	if (system(command)==0)
@@ -692,7 +692,7 @@ static void gui_output_html_graph(GUIENTITY *entity)
 		goto Done;
 	}
 Done:
-	if ( plot!=NULL )
+	if ( plot!=nullptr )
 		fclose(plot);
 	return;
 }
@@ -702,7 +702,7 @@ static int gui_html_source_page(char *source)
 	char buffer[65536];
 	FILE *src = fopen(source,"rt");
 	size_t len;
-	if (src==NULL) return 0;
+	if (src==nullptr) return 0;
 	while ((len=fread(buffer,1,sizeof(buffer)-1,src))>0)
 	{
 		buffer[len]='\0';
@@ -723,7 +723,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 
 	// labeling 
 	case GUI_TITLE: 
-		if (entity->parent==NULL)
+		if (entity->parent==nullptr)
 			gui_html_output(fp,"<title>%s</title>\n",gui_get_value(entity));
 		else if (entity->parent->type==GUI_GROUP)
 			gui_html_output(fp,"<legend>%s</legend>\n",gui_get_value(entity));
@@ -746,9 +746,9 @@ static void gui_entity_html_content(GUIENTITY *entity)
 	case GUI_CHECK: 
 		{	
 			PROPERTY *prop = gui_get_property(entity);
-			KEYWORD *key = NULL;
+			KEYWORD *key = nullptr;
 			if (!entity->parent || gui_get_type(entity->parent)!=GUI_SPAN) newcol(entity);
-			for (key=prop->keywords; key!=NULL; key=key->next)
+			for (key=prop->keywords; key!=nullptr; key=key->next)
 			{
 				int value = *(int*)gui_get_data(entity);
 				char *checked = const_cast<char *>((value == key->value) ? "checked" : "");
@@ -764,9 +764,9 @@ static void gui_entity_html_content(GUIENTITY *entity)
 	case GUI_RADIO: 
 		{
 			PROPERTY *prop = gui_get_property(entity);
-			KEYWORD *key = NULL;
+			KEYWORD *key = nullptr;
 			if (!entity->parent || gui_get_type(entity->parent)!=GUI_SPAN) newcol(entity);
-			for (key=prop->keywords; key!=NULL; key=key->next)
+			for (key=prop->keywords; key!=nullptr; key=key->next)
 			{
 				int value = *(int*)gui_get_data(entity);
 				char *checked = const_cast<char *>((value == key->value) ? "checked" : "");
@@ -781,13 +781,13 @@ static void gui_entity_html_content(GUIENTITY *entity)
 	case GUI_SELECT: 
 		{
 			PROPERTY *prop = gui_get_property(entity);
-			KEYWORD *key = NULL;
+			KEYWORD *key = nullptr;
 			char *multiple = const_cast<char *>(prop->ptype == PT_set ? "multiple" : "");
 			char size[64] = "";
 			if (entity->size>0) sprintf(size,"size=\"%d\"",entity->size);
 			if (!entity->parent || gui_get_type(entity->parent)!=GUI_SPAN) newcol(entity);
 			gui_html_output(fp,"<select class=\"%s\" name=\"%s\" %s %s onchange=\"update_%s(this)\">\n", ptype, gui_get_name(entity),multiple,size,ptype);
-			for (key=prop->keywords; key!=NULL; key=key->next)
+			for (key=prop->keywords; key!=nullptr; key=key->next)
 			{
 				int value = *(int*)gui_get_data(entity);
 				char *checked = const_cast<char *>((value == key->value) ? "selected" : "");
@@ -867,13 +867,13 @@ static void gui_entity_html_close(GUIENTITY *entity)
 void gui_html_output_children(GUIENTITY *entity)
 {
 	GUIENTITY *child;
-	if (entity!=NULL) gui_entity_html_open(entity);
-	for (child=gui_get_root(); child!=NULL; child=child->next)
+	if (entity!=nullptr) gui_entity_html_open(entity);
+	for (child=gui_get_root(); child!=nullptr; child=child->next)
 	{
 		if (!gui_is_header(child) && child->parent==entity)
 			gui_html_output_children(child);
 	}
-	if (entity!=NULL) gui_entity_html_close(entity);
+	if (entity!=nullptr) gui_entity_html_close(entity);
 }
 
 void gui_include_element(const char *tag, const char *options, const char *file)
@@ -908,16 +908,16 @@ int gui_html_output_page(char *page)
 	int len = 0;
 
 	// output specific page
-	if (page!=NULL)
+	if (page!=nullptr)
 	{
-		for (entity=gui_get_root(); entity!=NULL; entity=entity->next)
+		for (entity=gui_get_root(); entity!=nullptr; entity=entity->next)
 			if (strcmp(page,entity->value)==0)
 				return gui_html_source_page(entity->source);
 	}
 
 	// header entities
 	len += gui_html_output(fp,"<html>\n<head>\n");
-	for (entity=gui_get_root(); entity!=NULL; entity=entity->next)
+	for (entity=gui_get_root(); entity!=nullptr; entity=entity->next)
 	{
 		if (gui_is_header(entity))
 			gui_entity_html_content(entity);
@@ -925,11 +925,11 @@ int gui_html_output_page(char *page)
 	len += gui_html_output(fp,"</head>\n");
 
 	gui_include_element("script","lang=\"jscript\"","gridlabd.js");
-	gui_include_element("style",NULL,"gridlabd.css");
+	gui_include_element("style",nullptr,"gridlabd.css");
 
 	// body entities
 	len += gui_html_output(fp,"<body>\n");
-	gui_html_output_children(NULL);
+	gui_html_output_children(nullptr);
 	endtable();
 	len += gui_html_output(fp,"</body>\n</html>\n");
 
@@ -942,7 +942,7 @@ STATUS gui_html_output_all(void)
 
 	// header entities
 	gui_html_output(fp,"<html>\n<head>\n");
-	for (entity=gui_get_root(); entity!=NULL; entity=entity->next)
+	for (entity=gui_get_root(); entity!=nullptr; entity=entity->next)
 	{
 		if (gui_is_header(entity))
 			gui_entity_html_content(entity);
@@ -950,11 +950,11 @@ STATUS gui_html_output_all(void)
 	gui_html_output(fp,"</head>\n");
 
 	gui_include_element("script","lang=\"jscript\"","gridlabd.js");
-	gui_include_element("style",NULL,"gridlabd.css");
+	gui_include_element("style",nullptr,"gridlabd.css");
 
 	// body entities
 	gui_html_output(fp,"<body>\n");
-	gui_html_output_children(NULL);
+	gui_html_output_children(nullptr);
 	endtable();
 	gui_html_output(fp,"</body>\n</html>\n");
 	return SUCCESS;
@@ -966,17 +966,17 @@ STATUS gui_html_output_all(void)
 const char *gui_glm_typename(GUIENTITYTYPE type)
 {
 	const char *type_name[] = {
-		NULL, 
-		"row", "tab", "page", "group", "span", NULL,
-		"title", "status", "text", NULL,
-		"input", "check", "radio", "select", "action", NULL,
-		"browse", "table", "graph", NULL,
-		NULL,
+		nullptr,
+		"row", "tab", "page", "group", "span", nullptr,
+		"title", "status", "text", nullptr,
+		"input", "check", "radio", "select", "action", nullptr,
+		"browse", "table", "graph", nullptr,
+		nullptr,
 	};
 	if (type>=0 || type<sizeof(type_name)/sizeof(type_name[0]))
 		return type_name[type];
 	else
-		return NULL;
+		return nullptr;
 }
 size_t gui_glm_write(FILE *fp, GUIENTITY *entity, int indent)
 {
@@ -985,7 +985,7 @@ size_t gui_glm_write(FILE *fp, GUIENTITY *entity, int indent)
 	const char *type_name = gui_glm_typename(parent->type);
 	char tabs[] = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"; // but why? surely there's a better way.
 	if (indent<0) tabs[0]='\0'; else if (indent<sizeof(tabs)) tabs[indent]='\0';
-	if (type_name==NULL)
+	if (type_name==nullptr)
 		return FAILED;
 	
 	if (entity->type==GUI_ACTION)
@@ -1010,7 +1010,7 @@ size_t gui_glm_write(FILE *fp, GUIENTITY *entity, int indent)
 			count += fprintf(fp,"%s\taction %s;\n", tabs,entity->action);
 
 		if (gui_is_grouping(entity))
-			for ( entity=gui_root ; entity!=NULL ; entity=entity->next )
+			for ( entity=gui_root ; entity!=nullptr ; entity=entity->next )
 				if (entity->parent==parent)
 					count+=gui_glm_write(fp,entity,indent+1);
 
@@ -1022,12 +1022,12 @@ size_t gui_glm_write_all(FILE *fp)
 {
 	size_t count=0;
 	GUIENTITY *entity;
-	if (gui_root==NULL)
+	if (gui_root==nullptr)
 		return 0;
 	count += fprintf(fp,"gui {\n");
-	for ( entity=gui_get_root() ; entity!=NULL ; entity=entity->next )
+	for ( entity=gui_get_root() ; entity!=nullptr ; entity=entity->next )
 	{
-		if (entity->parent==NULL)
+		if (entity->parent==nullptr)
 			count += gui_glm_write(fp,entity,1);
 	}
 	count += fprintf(fp,"}\n");
@@ -1063,12 +1063,12 @@ STATUS gui_startup(int argc, char *argv[])
  **/
 int gui_wait(void)
 {
-	if (server_startup(0,NULL)==FAILED)
+	if (server_startup(0,nullptr)==FAILED)
 	{
 		output_error("gui is unable to start server");
 		return 0;
 	}
-	if (gui_startup(0,NULL)==FAILED)
+	if (gui_startup(0,nullptr)==FAILED)
 	{
 		output_error("gui is unable to start client");
 		return 0;

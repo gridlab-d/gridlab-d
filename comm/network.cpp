@@ -17,17 +17,17 @@
 //////////////////////////////////////////////////////////////////////////
 // CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* network::oclass = NULL;
+CLASS* network::oclass = nullptr;
 
 // the constructor registers the class and properties and sets the defaults
 network::network(MODULE *mod) 
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"network",sizeof(network),PC_BOTTOMUP);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 			/* TROUBLESHOOT
 				The registration for the network class failed.   This is usually caused
@@ -49,7 +49,7 @@ network::network(MODULE *mod)
 				PT_KEYWORD, "QUEUE", QR_QUEUE,
 			PT_double, "buffer_size[MB]", PADDR(buffer_size),
 			PT_double, "bandwidth_used[MB/s]", PADDR(bandwidth_used), PT_ACCESS, PA_REFERENCE,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
 				The registration for the network properties failed.   This is usually caused
 				by a coding error in the core implementation of classes or the module implementation.
@@ -434,7 +434,7 @@ int network::notify(int update_mode, PROPERTY *prop){
 EXPORT int create_network(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(network::oclass);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		network *my = OBJECTDATA(*obj,network);
 		gl_set_parent(*obj,parent);

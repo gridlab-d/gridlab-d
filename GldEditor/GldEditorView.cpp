@@ -187,10 +187,10 @@ void CGldEditorView::LoadObject(OBJECT *obj)
 	list.SetItemText(nItem,Access,"PROTECTED");
 	list.SetItemText(nItem,Data,convert_from_set(buffer,sizeof(buffer),&(obj->flags),object_flag_property())?buffer:"");
 
-	for (oclass=obj->oclass; oclass!=NULL; oclass=oclass->parent)
+	for (oclass=obj->oclass; oclass!=nullptr; oclass=oclass->parent)
 	{
 		list.InsertItem(list.GetItemCount(),"");
-		for (prop=class_get_first_property(oclass); prop!=NULL; prop=class_get_next_property(prop))
+		for (prop=class_get_first_property(oclass); prop!=nullptr; prop=class_get_next_property(prop))
 		{
 			nItem = list.InsertItem(list.GetItemCount(),prop->name);
 			list.SetItemText(nItem,Type,class_get_property_typename(prop->ptype));
@@ -250,7 +250,7 @@ void CGldEditorView::LoadClass(CLASS *oclass)
 	list.InsertItem(list.GetItemCount(),"");
 
 	PROPERTY *prop;
-	for (prop=class_get_first_property(oclass); prop!=NULL; prop=class_get_next_property(prop))
+	for (prop=class_get_first_property(oclass); prop!=nullptr; prop=class_get_next_property(prop))
 	{
 		nItem = list.InsertItem(list.GetItemCount(),prop->name);
 
@@ -297,33 +297,33 @@ void CGldEditorView::LoadModule(MODULE *mod)
 	list.SetItemText(nItem,Data,buffer);
 
 	CLASS *oclass;
-	for (oclass=mod->oclass; oclass!=NULL && oclass->module==mod; oclass=oclass->next)
-	{	//if (oclass!=NULL && oclass->module==mod)
+	for (oclass=mod->oclass; oclass!=nullptr && oclass->module==mod; oclass=oclass->next)
+	{	//if (oclass!=nullptr && oclass->module==mod)
 			nItem = list.InsertItem(list.GetItemCount(),oclass==mod->oclass?"Classes":"");
 		list.SetItemText(nItem,Data,oclass->name);
 	}
 
 	nItem = list.InsertItem(list.GetItemCount(),"Implementations");
-	if (mod->cmdargs!=NULL) {list.SetItemText(nItem,Data,"cmdargs "); nItem=list.InsertItem(list.GetItemCount(),"");}
-	if (mod->getvar!=NULL) {list.SetItemText(nItem,Data,"getvar "); nItem=list.InsertItem(list.GetItemCount(),"");}
-	if (mod->setvar!=NULL) {list.SetItemText(nItem,Data,"setvar "); nItem=list.InsertItem(list.GetItemCount(),"");}
-	if (mod->import_file!=NULL) {list.SetItemText(nItem,Data,"import_file "); nItem=list.InsertItem(list.GetItemCount(),"");}
-	if (mod->export_file!=NULL) {list.SetItemText(nItem,Data,"export_file "); nItem=list.InsertItem(list.GetItemCount(),"");}
-	if (mod->check!=NULL) {list.SetItemText(nItem,Data,"check "); nItem=list.InsertItem(list.GetItemCount(),"");}
-	if (mod->kmldump!=NULL) {list.SetItemText(nItem,Data,"kmldump "); nItem=list.InsertItem(list.GetItemCount(),"");}
+	if (mod->cmdargs!=nullptr) {list.SetItemText(nItem,Data,"cmdargs "); nItem=list.InsertItem(list.GetItemCount(),"");}
+	if (mod->getvar!=nullptr) {list.SetItemText(nItem,Data,"getvar "); nItem=list.InsertItem(list.GetItemCount(),"");}
+	if (mod->setvar!=nullptr) {list.SetItemText(nItem,Data,"setvar "); nItem=list.InsertItem(list.GetItemCount(),"");}
+	if (mod->import_file!=nullptr) {list.SetItemText(nItem,Data,"import_file "); nItem=list.InsertItem(list.GetItemCount(),"");}
+	if (mod->export_file!=nullptr) {list.SetItemText(nItem,Data,"export_file "); nItem=list.InsertItem(list.GetItemCount(),"");}
+	if (mod->check!=nullptr) {list.SetItemText(nItem,Data,"check "); nItem=list.InsertItem(list.GetItemCount(),"");}
+	if (mod->kmldump!=nullptr) {list.SetItemText(nItem,Data,"kmldump "); nItem=list.InsertItem(list.GetItemCount(),"");}
 #ifndef _NO_CPPUNIT
-	if (mod->module_test!=NULL) {list.SetItemText(nItem,Data,"module_test ");}
+	if (mod->module_test!=nullptr) {list.SetItemText(nItem,Data,"module_test ");}
 #endif
 	PROPERTY *prop;
 	nItem = list.InsertItem(list.GetItemCount(),"Globals");
-	for (prop=mod->globals; prop!=NULL; prop=prop->next)
+	for (prop=mod->globals; prop!=nullptr; prop=prop->next)
 	{
 		if (prop!=mod->globals)
 			nItem = list.InsertItem(list.GetItemCount(),"");
 		list.SetItemText(nItem,Data,prop->name);
 	}
-	GLOBALVAR *global=NULL;
-	while ((global=global_getnext(global))!=NULL)
+	GLOBALVAR *global=nullptr;
+	while ((global=global_getnext(global))!=nullptr)
 	{
 		char modname[1024], varname[1024];
 		if (sscanf(global->name,"%[^:]::%s",modname,varname)==2 && strcmp(modname,mod->name)==0)
@@ -355,8 +355,8 @@ void CGldEditorView::LoadGlobals(void)
 	int Data = list.InsertColumn(nCol++,"Data",LVCFMT_LEFT,wr.Width()-nWid,nCol);
 	#undef W
 
-	GLOBALVAR *var = NULL;
-	while ((var=global_getnext(var))!=NULL)
+	GLOBALVAR *var = nullptr;
+	while ((var=global_getnext(var))!=nullptr)
 	{
 		char modname[1024], varname[1024];
 		int nItem = list.InsertItem(list.GetItemCount(),var->name);
@@ -415,7 +415,7 @@ void CGldEditorView::LoadSolver(void)
 		#define PASSINC(p) (p % 2 ? 1 : -1)
 		list.SetItemText(nItem,0,passmap[pass].name);
 		INDEX **ranks = exec_getranks();
-		if (ranks!=NULL && ranks[pass]!=NULL)
+		if (ranks!=nullptr && ranks[pass]!=nullptr)
 		{
 			int i;
 
@@ -424,13 +424,13 @@ void CGldEditorView::LoadSolver(void)
 			{
 				LISTITEM *item;
 				/* skip empty lists */
-				if (ranks[pass]->ordinal[i] == NULL) 
+				if (ranks[pass]->ordinal[i] == nullptr)
 					continue;
 
 				sprintf(buffer,"%d",i);
 				list.SetItemText(nItem,Rank,buffer);
 							
-				for (item=ranks[pass]->ordinal[i]->first; item!=NULL; item=item->next)
+				for (item=ranks[pass]->ordinal[i]->first; item!=nullptr; item=item->next)
 				{
 					OBJECT *obj = (OBJECT*)item->data;
 					list.SetItemText(nItem,Object,obj->name);
@@ -465,8 +465,8 @@ void CGldEditorView::LoadFile(char *filename)
 	int Text = list.InsertColumn(nCol++,"Text",LVCFMT_LEFT,wr.Width()-nWid,nCol);
 	#undef W
 
-	char *file = find_file(filename,NULL,4);
-	if (file==NULL)
+	char *file = find_file(filename,nullptr,4);
+	if (file==nullptr)
 	{
 		int nItem = list.InsertItem(list.GetItemCount(),"ERROR");
 		list.SetItemText(nItem,Text,"File not found");
@@ -479,7 +479,7 @@ void CGldEditorView::LoadFile(char *filename)
 	FILE *fp = fopen(file,"r");
 	char buffer[1024];
 	int line=0;
-	while (fp!=NULL && !ferror(fp) && !feof(fp) && fgets(buffer,sizeof(buffer),fp))
+	while (fp!=nullptr && !ferror(fp) && !feof(fp) && fgets(buffer,sizeof(buffer),fp))
 	{
 		line++;
 		char linenum[64];
@@ -496,7 +496,7 @@ void CGldEditorView::LoadFile(char *filename)
 			break;
 		}
 	}
-	if (fp==NULL || ferror(fp))
+	if (fp==nullptr || ferror(fp))
 	{
 		int nItem = list.InsertItem(list.GetItemCount(),"ERROR");
 		list.SetItemText(nItem,Text,strerror(errno));
@@ -585,7 +585,7 @@ void CGldEditorView::LoadSchedule(SCHEDULE *sch)
 	TIMESTAMP tstop = global_stoptime;
 	if (tstart==0)
 	{
-		time_t now = time(NULL);
+		time_t now = time(nullptr);
 		struct tm* ts = localtime(&now);
 		DATETIME dt = {ts->tm_year,1,1,0,0,0,0,0};
 		tstart = mkdatetime(&dt);

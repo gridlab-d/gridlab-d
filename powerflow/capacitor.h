@@ -19,8 +19,8 @@ public:
 	typedef enum {OPEN=0, CLOSED=1} CAPSWITCH;
 	typedef enum {BANK=0, INDIVIDUAL=1} CAPCONTROL2;
 
-	set pt_phase;				// phase PT on
-	set phases_connected;		// phases capacitors connected to
+	gld::set pt_phase;				// phase PT on
+	gld::set phases_connected;		// phases capacitors connected to
 	double voltage_set_high;    // high voltage set point for voltage control (turn off)
 	double voltage_set_low;     // low voltage set point for voltage control (turn on)
 	double voltage_center;		// CIM support for setting voltage_set_high and voltage_set_low

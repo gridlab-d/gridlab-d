@@ -15,8 +15,8 @@
 #include "gridlabd.h"
 #include "simple.h"
 
-CLASS *simple::oclass = NULL;
-simple *simple::defaults = NULL;
+CLASS *simple::oclass = nullptr;
+simple *simple::defaults = nullptr;
 
 static PASSCONFIG passconfig = PC_PRETOPDOWN|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_POSTTOPDOWN;
@@ -32,10 +32,10 @@ static inline bool gt(double a, double b) { return a>b; };
 /* Class registration is only called once to register the class with the core */
 simple::simple(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"simple",sizeof(simple),passconfig|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class simple";
 		else
 			oclass->trl = TRL_PROOF;
@@ -51,7 +51,7 @@ simple::simple(MODULE *module)
 				PT_KEYWORD, "EXTREMUM", OG_EXTREMUM,
 				PT_KEYWORD, "MINIMUM", OG_MINIMUM,
 				PT_KEYWORD, "MAXIMUM", OG_MAXIMUM,
-			NULL)<1)
+			nullptr)<1)
 		{
 			static char msg[256];
 			sprintf(msg, "unable to publish properties in %s",__FILE__);
@@ -108,7 +108,7 @@ int simple::init(OBJECT *parent)
 		
 		// find the object
 		obj = gl_get_object(oname);
-		if ( obj==NULL )
+		if ( obj==nullptr )
 		{
 			gl_error("object '%s' could not be found", oname);
 			return 0;
@@ -119,7 +119,7 @@ int simple::init(OBJECT *parent)
 
 		// get property
 		prop = gl_get_property(obj,pname);
-		if ( prop==NULL )
+		if ( prop==nullptr )
 		{
 			gl_error("property '%s' could not be found in object '%s'", pname, oname);
 			return 0;
@@ -132,7 +132,7 @@ int simple::init(OBJECT *parent)
 		*(map[n].var) = (double*)gl_get_addr(obj,pname);;
 
 		// parse constraint
-		if ( map[n].op!=NULL )
+		if ( map[n].op!=nullptr )
 		{
 			char varname[256], op[32], value[64];
 			switch (sscanf(constraint.get_string(), "%[^ \t<=>!]%[<=>!]%s", varname, op, value)) {
@@ -178,14 +178,14 @@ int simple::init(OBJECT *parent)
 	}
 
 	// read the current values
-	if ( pObjective!=NULL )
+	if ( pObjective!=nullptr )
 		last_y = *pObjective;
 	else
 	{
 		gl_error("The property 'objective' must be set in simple optimizer object '%s'", gl_name(my,buffer,sizeof(buffer))?buffer:"???");
 		return 0;
 	}
-	if ( pVariable!=NULL)
+	if ( pVariable!=nullptr)
 		next_x = last_x = *pVariable;
 	else
 	{
@@ -373,7 +373,7 @@ EXPORT int create_simple(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(simple::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			simple *my = OBJECTDATA(*obj,simple);
 			gl_set_parent(*obj,parent);
@@ -389,7 +389,7 @@ EXPORT int init_simple(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,simple)->init(parent);
 		else
 			return 0;

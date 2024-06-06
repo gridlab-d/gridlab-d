@@ -130,7 +130,7 @@ solar::solar(MODULE *module)
 			//PT_KEYWORD, "ONE_AXIS", ONE_AXIS,			//To be implemented later
 			//PT_KEYWORD, "TWO_AXIS", TWO_AXIS,			//To be implemented later
 			//PT_KEYWORD, "AZIMUTH_AXIS", AZIMUTH_AXIS,	//To be implemented later
-			NULL) < 1)
+			nullptr) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
 		//Deltamode linkage
@@ -172,7 +172,7 @@ int solar::create(void)
 	Pmax_temp_coeff = 0.0;
 	Voc_temp_coeff = 0.0;
 
-	//Property values - NULL out
+	//Property values - nullptr out
 	pTout = nullptr;
 	pWindSpeed = nullptr;
 
@@ -270,12 +270,12 @@ int solar::init_climate()
 			climates = gl_find_objects(FL_NEW, FT_CLASS, SAME, "climate", FT_END);
 			if (climates == nullptr)
 			{
-				//Ensure weather is set to NULL - catch below
+				//Ensure weather is set to nullptr - catch below
 				weather = nullptr;
 			}
 			else if (climates->hit_count == 0)
 			{
-				//Ensure weather is set to NULL - catch below
+				//Ensure weather is set to nullptr - catch below
 				weather = nullptr;
 			}
 			else //climate data must have been found
@@ -290,7 +290,7 @@ int solar::init_climate()
 
 				gl_verbose("solar init: climate data was found!");
 				// force rank of object w.r.t climate
-				obj = gl_find_next(climates, NULL);
+				obj = gl_find_next(climates, nullptr);
 				weather = obj;
 			}
 

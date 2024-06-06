@@ -37,7 +37,7 @@ currdump::currdump(MODULE *mod)
 			PT_enumeration, "mode", PADDR(mode),
 				PT_KEYWORD, "RECT", (enumeration)CDM_RECT,
 				PT_KEYWORD, "POLAR", (enumeration)CDM_POLAR,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}
 }

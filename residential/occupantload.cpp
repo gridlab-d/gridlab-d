@@ -21,17 +21,17 @@
 //////////////////////////////////////////////////////////////////////////
 // occupantload CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* occupantload::oclass = NULL;
-CLASS* occupantload::pclass = NULL;
+CLASS* occupantload::oclass = nullptr;
+CLASS* occupantload::pclass = nullptr;
 
 occupantload::occupantload(MODULE *module) : residential_enduse(module)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(module,"occupantload",sizeof(occupantload),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class occupantload";
 		else
 			oclass->trl = TRL_QUALIFIED;
@@ -42,7 +42,7 @@ occupantload::occupantload(MODULE *module) : residential_enduse(module)
 			PT_int32,"number_of_occupants",PADDR(number_of_occupants),
 			PT_double,"occupancy_fraction[unit]",PADDR(occupancy_fraction),
 			PT_double,"heatgain_per_person[Btu/h]",PADDR(heatgain_per_person),
-			NULL)<1) 
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
@@ -65,7 +65,7 @@ int occupantload::create()
 
 int occupantload::init(OBJECT *parent)
 {
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("occupantload::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -78,7 +78,7 @@ int occupantload::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	if (parent==NULL || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
+	if (parent==nullptr || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
 	{
 		gl_error("occupantload must have a parent house");
 		/*	TROUBLESHOOT
@@ -93,7 +93,7 @@ int occupantload::init(OBJECT *parent)
 	FUNCTIONADDR attach = 0;
 	load.end_obj = hdr;
 	attach = (gl_get_function(parent, "attach_enduse"));
-	if(attach == NULL){
+	if(attach == nullptr){
 		gl_error("occupantload parent must publish attach_enduse()");
 		/*	TROUBLESHOOT
 			The occupantload object attempt to attach itself to its parent, which
@@ -173,7 +173,7 @@ EXPORT int create_occupantload(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(occupantload::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			occupantload *my = OBJECTDATA(*obj,occupantload);;
 			gl_set_parent(*obj,parent);

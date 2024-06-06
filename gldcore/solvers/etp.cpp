@@ -33,7 +33,7 @@ EXPORT int etp_set(char *param, ...)
 	va_list arg;
 	va_start(arg,param);
 	char *tag = param;
-	while ( tag!=NULL )
+	while ( tag!=nullptr )
 	{
 		if ( strcmp(param,"max_iterations")==0 )
 			default_etp_iterations = va_arg(arg,unsigned int);
@@ -54,7 +54,7 @@ EXPORT int etp_get(char *param, ...)
 	va_list arg;
 	va_start(arg,param);
 	char *tag = param;
-	while ( tag!=NULL )
+	while ( tag!=nullptr )
 	{
 		if ( strcmp(param,"max_iterations")==0 )
 			*va_arg(arg,unsigned int*) = default_etp_iterations;

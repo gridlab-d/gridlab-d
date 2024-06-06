@@ -8,7 +8,7 @@
 
 #include "controller2.h"
 
-CLASS *controller2::oclass = NULL;
+CLASS *controller2::oclass = nullptr;
 
 // ref: http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=c++&artnum=3659
 /***************************
@@ -78,9 +78,9 @@ static double tc_erf(double x)
 }
 
 controller2::controller2(MODULE *mod){
-	if(oclass == NULL){
+	if(oclass == nullptr){
 		oclass = gl_register_class(mod,"controller2",sizeof(controller2),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
-		if(oclass == NULL){
+		if(oclass == nullptr){
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 		}
 		if(gl_publish_variable(oclass,
@@ -124,7 +124,7 @@ controller2::controller2(MODULE *mod){
 				PT_KEYWORD,"DUTYCYCLE",(enumeration)CM_DUTYCYCLE,
 				PT_KEYWORD,"THIRD",(enumeration)CM_THIRD,
 				PT_KEYWORD,"PROBOFF",(enumeration)CM_PROBOFF,
-			NULL) < 1)
+			nullptr) < 1)
 		{
 				GL_THROW("unable to publish properties in %s",__FILE__);
 		}
@@ -140,7 +140,7 @@ int controller2::create(){
 
 int controller2::init(OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	if(parent == NULL){
+	if(parent == nullptr){
 		gl_error("controller2 has no parent and will be operating in 'dummy' mode");
 	} else {
 		if(output_state_propname[0] == 0 && output_setpoint_propname[0] == 0){
@@ -176,7 +176,7 @@ int controller2::init(OBJECT *parent){
 		// output_state
 		if(output_state_propname[0] != 0){
 			output_state_prop = gl_get_property(parent, output_state_propname);
-			if(output_state_prop == NULL){
+			if(output_state_prop == nullptr){
 				GL_THROW("controller2 parent \"%s\" does not contain property \"%s\"", 
 					(parent->name ? parent->name : "anon"), output_state_propname);
 			}
@@ -189,7 +189,7 @@ int controller2::init(OBJECT *parent){
 		}
 		if(output_setpoint_propname[0] != 0){
 			output_setpoint_prop = gl_get_property(parent, output_setpoint_propname);
-			if(output_setpoint_prop == NULL){
+			if(output_setpoint_prop == nullptr){
 				GL_THROW("controller2 parent \"%s\" does not contain property \"%s\"", 
 					(parent->name ? parent->name : "anon"), output_setpoint_propname);
 			}
@@ -198,7 +198,7 @@ int controller2::init(OBJECT *parent){
 
 	}
 
-	if(observable == NULL){
+	if(observable == nullptr){
 		GL_THROW("controller2 observable object is undefined, and can not function");
 	}
 	
@@ -403,7 +403,7 @@ EXPORT int create_controller2(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(controller2::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			controller2 *my = OBJECTDATA(*obj,controller2);
 			gl_set_parent(*obj,parent);
@@ -421,7 +421,7 @@ EXPORT int init_controller2(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL){
+		if (obj!=nullptr){
 			return OBJECTDATA(obj,controller2)->init(parent);
 		}
 	}

@@ -74,7 +74,7 @@ private:
 	gld::complex switch_impedance_value;			//Used for closed-switch value
 	gld::complex switch_admittance_value;		//Admittance version - save some divides
 
-	set node_phase_information(OBJECT *obj);
+	gld::set node_phase_information(OBJECT *obj);
 };
 
 EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool state);

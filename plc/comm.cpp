@@ -38,12 +38,12 @@ unsigned int64 Message::next_id = 0;
 Queue::Queue(void)
 {
 	gl_verbose("creating queue %x", this);
-	first = last = NULL;
+	first = last = nullptr;
 }
 Queue::~Queue(void)
 {
 	gl_verbose("destroying queue %x", this);
-	while (first!=NULL)
+	while (first!=nullptr)
 	{
 		Message *next = first->get_next();
 		delete first;
@@ -53,14 +53,14 @@ Queue::~Queue(void)
 void Queue::add(Message *msg)
 {
 	// @todo message need to be sorted by delivery time
-	if (first==NULL)
+	if (first==nullptr)
 		first = last = msg;
 	else
 	{
 		msg->set_prev(last);
 		last->set_next(msg);
 	}
-	msg->set_next(NULL);
+	msg->set_next(nullptr);
 	gl_verbose("message %" FMT_INT64 "d '%-8.8s%s' added to queue %x", msg->get_id(), msg->get_data(), msg->get_size()>8?"...":"", this);
 }
 Message *Queue::peek(void)
@@ -69,17 +69,17 @@ Message *Queue::peek(void)
 }
 Message *Queue::take(Message *msg)
 {
-	if (msg==NULL)
+	if (msg==nullptr)
 		msg = first;
-	if (msg==NULL)
-		return NULL;
+	if (msg==nullptr)
+		return nullptr;
 	Message *prev = msg->get_prev();
 	Message *next = msg->get_next();
-	if (prev!=NULL)
+	if (prev!=nullptr)
 		prev->set_next(next);
 	else
 		first = next;
-	if (next!=NULL)
+	if (next!=nullptr)
 		next->set_prev(prev);
 	else
 		last = prev;
@@ -94,7 +94,7 @@ Message *Queue::drop(Message *msg, bool reverse)
 {
 	Message *prev = msg->get_prev();
 	Message *next = msg->get_next();
-	if (msg!=NULL)
+	if (msg!=nullptr)
 		delete take(msg);
 	return reverse?prev:next;
 }
@@ -106,8 +106,8 @@ TIMESTAMP Queue::next_delivery_time(void)
 
 //////////////////////////////////////////////////
 // comm implementation
-CLASS *comm::oclass = NULL; ///< a pointer to the registered object class definition
-comm *comm::defaults = NULL; ///< a pointer to the default values for new objects
+CLASS *comm::oclass = nullptr; ///< a pointer to the registered object class definition
+comm *comm::defaults = nullptr; ///< a pointer to the default values for new objects
 
 void comm::route(Message *msg)
 {
@@ -130,11 +130,11 @@ comm::comm(MODULE *mod)
 : queue()
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"comm",sizeof(comm),PC_PRETOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class comm";
 		else
 			oclass->trl = TRL_PROOF;
@@ -145,7 +145,7 @@ comm::comm(MODULE *mod)
 			PT_double,"reliability[pu]", PADDR(reliability),
 			PT_double,"bitrate[b/s]",PADDR(bitrate),
 			PT_double,"timeout[s]",PADDR(timeout),
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// set defaults
 		strcpy(latency,"random.degenerate(0)"); // instant delivery always
@@ -191,8 +191,8 @@ TIMESTAMP comm::sync(TIMESTAMP t0)
 {
 	if (queue.is_empty())
 		return TS_NEVER;
-	Message *msg=NULL;
-	while ((msg=queue.next(msg))!=NULL)
+	Message *msg=nullptr;
+	while ((msg=queue.next(msg))!=nullptr)
 	{
 		if (msg->get_deliverytime()<=t0)
 		{
@@ -224,7 +224,7 @@ EXPORT int create_comm(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(comm::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 			return OBJECTDATA(*obj,comm)->create();
 		else
 			return 0;
@@ -236,7 +236,7 @@ EXPORT int init_comm(OBJECT *obj)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,comm)->init(obj->parent);
 		else
 			return 0;

@@ -32,8 +32,8 @@ gld_loadHndl::gld_loadHndl() : fFormatter("LATIN1", 0, this, XMLFormatter::NoEsc
 
 	load_state = false;
 	module_name[0] = 0;
-	obj = NULL;
-	stack_ptr = NULL;
+	obj = nullptr;
+	stack_ptr = nullptr;
 	object_count = 0;
 	class_count = 0;
 }
@@ -43,12 +43,12 @@ gld_loadHndl::gld_loadHndl(const char* const encodingName, const XMLFormatter::U
 		fExpandNS ( expandNamespaces ){
 	depth = 0;
 	first = last = -1;
-	obj = NULL;
+	obj = nullptr;
 	stack_state = EMPTY;
 
 	load_state = false;
 	module_name[0] = 0;
-	stack_ptr = NULL;
+	stack_ptr = nullptr;
 	object_count = 0;
 	class_count = 0;
 }
@@ -109,15 +109,15 @@ char *gld_loadHndl::read_module_prop(char *buffer, size_t len){
 		module_getvar(this->module, "major", temp, 8);
 		major = atoi(temp);
 		if(major == 0)					//	don't care if major = 0
-			return NULL;
+			return nullptr;
 		if(major == major_in){			//	current version, continue
-			return NULL;
+			return nullptr;
 		} else if(major > major_in){	//	old version
 			output_warning("The input file was built using an older major version of the module.");
-			return NULL;
+			return nullptr;
 		} else if(major < major_in){	//	newer version
 			output_warning("The file was built using a newer major version of the module loading it!");
-			return NULL;
+			return nullptr;
 		}
 	} else if(strcmp(propname, "minor") == 0){
 		char temp[8];
@@ -129,9 +129,9 @@ char *gld_loadHndl::read_module_prop(char *buffer, size_t len){
 		module_getvar(this->module, "minor", temp, 8);
 		minor = atoi(temp);
 		if(major == 0)	//	don't care if major = 0
-			return NULL;
+			return nullptr;
 		if(minor == minor_in){			//	current version, continue
-			return NULL;
+			return nullptr;
 		} else if(minor > minor_in){	//	old version
 			output_warning("XML::read_module_prop(): The input file was built using an older minor version of the module.");
 		} else if(minor < minor_in){	//	new version
@@ -140,7 +140,7 @@ char *gld_loadHndl::read_module_prop(char *buffer, size_t len){
 	} else {
 		global_setvar(propname, buffer);
 	}
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::read_global_prop(char *buffer, size_t len){
@@ -152,7 +152,7 @@ char *gld_loadHndl::read_clock_prop(char* buffer, size_t len){
 	if(strcmp(propname, "tick") == 0){
 		;
 	} else if(strcmp(propname, "timezone") == 0){
-		if (timestamp_set_tz(buffer)==NULL){
+		if (timestamp_set_tz(buffer)==nullptr){
 			sprintf(errmsg, "timezone %s is not defined", timezone);
 			return errmsg;
 		}
@@ -169,27 +169,27 @@ char *gld_loadHndl::read_clock_prop(char* buffer, size_t len){
 		sprintf(errmsg, "Unrecognized keyword in start_element_clock(%s)", buffer);
 		return errmsg;
 	}
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::read_object_prop(char *buffer, size_t len){
 	//wchar_t wbuff[1024];
 	//char tbuff[1024];
-	char *rand_ptr = NULL;
-	char *rand_mode_ptr = NULL;
-	char *unit_ptr = NULL;
+	char *rand_ptr = nullptr;
+	char *rand_mode_ptr = nullptr;
+	char *unit_ptr = nullptr;
 	double realval = 0.0;
-	UNIT *unit=NULL;
-	SAXParseException *e = NULL;
+	UNIT *unit=nullptr;
+	SAXParseException *e = nullptr;
 	void *addr = object_get_addr(obj, propname); /* get the & to set later */
-	if(this->obj == NULL){
+	if(this->obj == nullptr){
 		sprintf(errmsg, "Null object pointer in read_object_prop(%s)", buffer);
 		return errmsg;	//	no object
 	}
-	if(this->prop == NULL){
+	if(this->prop == nullptr){
 		if (strcmp(propname, "parent")==0){
 			if (strcmp(propname, "root")==0){
-				obj->parent = NULL;
+				obj->parent = nullptr;
 			} else {
 				add_unresolved(obj,PT_object,(void*)&obj->parent,oclass,buffer,"XML",42,UR_RANKS); 
 			}
@@ -209,7 +209,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len){
 			sprintf(errmsg, "Null property pointer in read_object_prop(%s)", buffer);
 			return errmsg;
 		}
-		return NULL;
+		return nullptr;
 	}
 	//	determine property type
 	switch(prop->ptype){
@@ -217,12 +217,12 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len){
 			//	scan for "random"
 			if(strncmp("random.", buffer, 7) == 0){
 				char temp[256];
-				char *modep = NULL;
+				char *modep = nullptr;
 				double first = 0.0, second = 0.0;
 				RANDOMTYPE rt;
 				strncpy(temp, buffer, 256);
 				modep = strtok(temp+7, "(");
-				if(modep == NULL){
+				if(modep == nullptr){
 					//output_error("XML_Load: misformed random() value");
 					load_state = false;
 					sprintf(errmsg, "Misformed random() value in read_object_prop(%s)", buffer);
@@ -235,26 +235,26 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len){
 					sprintf(errmsg, "Invalid random distribution in read_object_prop(%s)", buffer);
 					return errmsg;
 				} else {
-					first = atof(strtok(NULL, ","));
-					second = atof(strtok(NULL, ")"));
+					first = atof(strtok(nullptr, ","));
+					second = atof(strtok(nullptr, ")"));
 					realval = random_value(rt, first, second);
 				}
 				if(strlen(strchr(buffer, ')')+1) > 0){ /* look for units */
 					unit = unit_find(strchr(buffer, ')') + 2);
-					if (unit!=NULL && prop->unit!=NULL && unit_convert_ex(unit,prop->unit,&realval)==0){
+					if (unit!=nullptr && prop->unit!=nullptr && unit_convert_ex(unit,prop->unit,&realval)==0){
 						sprintf(errmsg, "Cannot convert units from %s to %s in read_object_prop(%s)", unit->name,prop->unit->name, buffer);
 						load_state = false;
 						return errmsg;
 					}
 				}
 			} else {
-				unit_ptr = NULL;
+				unit_ptr = nullptr;
 				realval = strtod(buffer, &unit_ptr);
-				if(unit_ptr != NULL){
+				if(unit_ptr != nullptr){
 					while(*unit_ptr == ' ') ++unit_ptr;
 					unit = unit_find(unit_ptr);
 					if(strlen(unit_ptr) > 0){
-						if (unit!=NULL && prop->unit!=NULL && unit_convert_ex(unit,prop->unit,&realval)==0){
+						if (unit!=nullptr && prop->unit!=nullptr && unit_convert_ex(unit,prop->unit,&realval)==0){
 							sprintf(errmsg, "Cannot convert units from %s to %s in read_object_prop(%s)", unit->name,prop->unit->name, buffer);
 							load_state = false;
 							return errmsg;
@@ -262,17 +262,17 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len){
 					}
 				}
 			}
-			/* if((unit_ptr != NULL) && (*unit_ptr != '\0')){;} */
+			/* if((unit_ptr != nullptr) && (*unit_ptr != '\0')){;} */
 			if(object_set_double_by_name(obj, propname, realval) == 0){
 				sprintf(errmsg, "Could not set \"%s\" to %f in read_object_prop(%s)", propname, realval, buffer);
 				load_state = false;
 				return errmsg;
 			} else {
-				return NULL; /* success */
+				return nullptr; /* success */
 			}
 			break;
 		case PT_object:
-			if(add_unresolved(obj,PT_object,(void*)addr,oclass,buffer,"XML",42,UR_NONE) == NULL){
+			if(add_unresolved(obj,PT_object,(void*)addr,oclass,buffer,"XML",42,UR_NONE) == nullptr){
 				sprintf(errmsg, "Failure with add_unresolved() in read_object_prop(%s)", buffer);
 				return errmsg;
 			}
@@ -301,11 +301,11 @@ void gld_loadHndl::characters(const XMLCh* const chars, const unsigned int lengt
     char buffer[1024];
 	char tbuff[1024];
 	wchar_t wbuff[1024];
-	SAXParseException *e = NULL;
-	char *unit_ptr = NULL;
+	SAXParseException *e = nullptr;
+	char *unit_ptr = nullptr;
 	unsigned int i = 0;
 	size_t len = 0;
-	char *retval = NULL;	//	negative logic
+	char *retval = nullptr;	//	negative logic
 	switch(stack_state){
 		case MODULE_PROP:
 		case GLOBAL_PROP:
@@ -369,7 +369,7 @@ void gld_loadHndl::characters(const XMLCh* const chars, const unsigned int lengt
 		case CLOCK_PROP:
 			retval = this->read_clock_prop(buffer, len);
 	}
-	if(retval != NULL){
+	if(retval != nullptr){
 		stack_state = EMPTY;	//	stop processing
 		output_error("Error reading the XML file");
 		mbstowcs(wbuff, errmsg, 1024);
@@ -393,7 +393,7 @@ void gld_loadHndl::endDocument(){
 	}
 	/* "establish ranks" */
 
-	for (; obj!=NULL; obj=obj->next)
+	for (; obj!=nullptr; obj=obj->next)
 		object_set_parent(obj,obj->parent);
 	output_verbose("XML_Load: %d object%s loaded.", object_get_count(), object_get_count() > 0 ? "s" : "");
 	if(object_count > 0)
@@ -406,19 +406,19 @@ void gld_loadHndl::endDocument(){
 }
 
 char *gld_loadHndl::end_element_empty(char *buffer, size_t len){	//	why are we here?
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::end_element_load(char *buffer, size_t len){
 	if(strcmp("load", buffer) == 0)
 		stack_state = EMPTY;
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::end_element_module(char *buffer, size_t len){
 	if(strcmp("module", buffer) == 0)
 		stack_state = LOAD;
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::end_element_module_prop(char *buffer, size_t len){
@@ -426,13 +426,13 @@ char *gld_loadHndl::end_element_module_prop(char *buffer, size_t len){
 		memset(propname, 0, len);
 		stack_state = MODULE_STATE;
 	}
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::end_element_object(char *buffer, size_t len){
 	if(strcmp("object", buffer) == 0)
 		stack_state = MODULE_STATE;
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::end_element_object_prop(char *buffer, size_t len){
@@ -440,13 +440,13 @@ char *gld_loadHndl::end_element_object_prop(char *buffer, size_t len){
 		memset(propname, 0, len);
 		stack_state = OBJECT_STATE;
 	}
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::end_element_global(char *buffer, size_t len){
 	if(strcmp("global", buffer) == 0)
 		stack_state = LOAD;
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::end_element_global_prop(char *buffer, size_t len){
@@ -454,7 +454,7 @@ char *gld_loadHndl::end_element_global_prop(char *buffer, size_t len){
 		memset(propname, 0, len);
 		stack_state = GLOBAL_STATE;
 	}
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::end_element_clock_prop(char *buffer, size_t len){
@@ -462,13 +462,13 @@ char *gld_loadHndl::end_element_clock_prop(char *buffer, size_t len){
 		memset(propname, 0, len);
 		stack_state = CLOCK_STATE;
 	}
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::end_element_clock(char *buffer, size_t len){
 	if(strcmp("clock", buffer) == 0)
 		stack_state = LOAD;
-	return NULL;
+	return nullptr;
 }
 
 /**	endElement() is called for every tag, and should zero whatever level of the stack corresponds to the tag.
@@ -477,8 +477,8 @@ void gld_loadHndl::endElement(const XMLCh* const uri, const XMLCh* const localna
 	char buffer[128];
 	int i = 0;
 	size_t len = 0;
-	gldStack *temp_stack = NULL;
-	char *retval = NULL;	// negative logic
+	gldStack *temp_stack = nullptr;
+	char *retval = nullptr;	// negative logic
 	
 	--depth;
 
@@ -542,7 +542,7 @@ char *gld_loadHndl::start_element_empty(char *buffer, size_t len, const Attribut
 	if(strcmp(buffer, "load") == 0){
 		stack_state = LOAD;
 	} // cut some slack, don't break here.
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::start_element_load(char *buffer, size_t len, const Attributes& attributes){
@@ -550,7 +550,7 @@ char *gld_loadHndl::start_element_load(char *buffer, size_t len, const Attribute
 	static size_t wcs_type_len = mbstowcs(wcs_type, "type", 5);
 	static size_t wcs_major_len = mbstowcs(wcs_major, "major", 6);
 	static size_t wcs_minor_len = mbstowcs(wcs_minor, "minor", 6);
-	XMLCh *_major = NULL, *_minor = NULL;
+	XMLCh *_major = nullptr, *_minor = nullptr;
 	int32 major = 0, minor = 0;
 	if(strcmp(buffer, "global") == 0){
 		stack_state = GLOBAL_STATE;
@@ -558,12 +558,12 @@ char *gld_loadHndl::start_element_load(char *buffer, size_t len, const Attribute
 		wcstombs(module_name, (const wchar_t *)attributes.getValue((const XMLCh *)wcs_type), 1024);
 		_major = (XMLCh *)attributes.getValue((const XMLCh *)wcs_major);
 		_minor = (XMLCh *)attributes.getValue((const XMLCh *)wcs_minor);
-		if(_major != NULL)
-			major = wcstol((const wchar_t *)_major, NULL, 10);
-		if(_minor != NULL)
-			minor = wcstol((const wchar_t *)_minor, NULL, 10);
+		if(_major != nullptr)
+			major = wcstol((const wchar_t *)_major, nullptr, 10);
+		if(_minor != nullptr)
+			minor = wcstol((const wchar_t *)_minor, nullptr, 10);
 		
-		if((module = module_load(module_name, 0, NULL)) == NULL){
+		if((module = module_load(module_name, 0, nullptr)) == nullptr){
 			sprintf(errmsg, "Unable to load module \"%s\" in start_element_load()", module_name);
 			return errmsg;
 		} else {
@@ -577,10 +577,10 @@ char *gld_loadHndl::start_element_load(char *buffer, size_t len, const Attribute
 				int minor_in = atoi(temp);
 				if(major < major_in){
 					output_warning("XML::read_module_prop(): The input file was built using an older major version of the module.");
-					return NULL; /* avoid minor var complaints */
+					return nullptr; /* avoid minor var complaints */
 				}
 				if(minor == minor_in){			//	current version, continue
-					return NULL;
+					return nullptr;
 				} else if(minor > minor_in){	//	old version
 					output_warning("XML::read_module_prop(): The input file was built using an older minor version of the module.");
 				} else if(minor < minor_in){	//	new version
@@ -594,7 +594,7 @@ char *gld_loadHndl::start_element_load(char *buffer, size_t len, const Attribute
 		sprintf(errmsg, "Unrecognized keyword in start_element_load(%s)", buffer);
 		return errmsg;
 	}
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::start_element_module_build_object(const Attributes &attributes){
@@ -607,8 +607,8 @@ char *gld_loadHndl::start_element_module_build_object(const Attributes &attribut
 	char object_type[64],
 		object_id[64],
 		object_name[64];
-	char *temp = NULL;
-	char *retval = NULL;
+	char *temp = nullptr;
+	char *retval = nullptr;
 	int first = -1,
 		last = -1;
 	if(attributes.getIndex((const XMLCh *) str_type) < 0){
@@ -617,7 +617,7 @@ char *gld_loadHndl::start_element_module_build_object(const Attributes &attribut
 	} else {
 		wcstombs(object_type, (const wchar_t *)attributes.getValue((const XMLCh *) str_type), 64);
 		oclass = class_get_class_from_classname_in_module(object_type, module);
-		if(oclass == NULL){
+		if(oclass == nullptr){
 			sprintf(errmsg, "Class \"%s\" for module \"%s\"is not recognized in start_element_module_build_object()", object_type, module->name);
 			return errmsg;
 		} else {
@@ -630,8 +630,8 @@ char *gld_loadHndl::start_element_module_build_object(const Attributes &attribut
 	} else {
 		wcstombs(object_id, (wchar_t *)attributes.getValue((const XMLCh *) str_id), 64);
 		temp = strchr(object_id, '.');
-		if(temp == NULL){ /* no "..", just a number*/
-			first = strtol(object_id, NULL, 10);
+		if(temp == nullptr){ /* no "..", just a number*/
+			first = strtol(object_id, nullptr, 10);
 			if(first < 0){
 				sprintf(errmsg, "Invalid object id of %i in start_element_module_build_object()", first);
 				return errmsg;
@@ -641,7 +641,7 @@ char *gld_loadHndl::start_element_module_build_object(const Attributes &attribut
 		} else {
 			if(temp[0] == temp[1]){
 				if(temp == object_id){ /* "..x", count */
-					last = strtol(object_id+2, NULL, 10);
+					last = strtol(object_id+2, nullptr, 10);
 					if(last < 1){
 						sprintf(errmsg, "Invalid object id of %i in start_element_module_build_object()", first);
 						return errmsg;
@@ -650,8 +650,8 @@ char *gld_loadHndl::start_element_module_build_object(const Attributes &attribut
 					}
 				} else { /* "x..y", range */
 					*temp = 0;
-					first = strtol(object_id, NULL, 10);
-					last = strtol(temp+2, NULL, 10);
+					first = strtol(object_id, nullptr, 10);
+					last = strtol(temp+2, nullptr, 10);
 					*temp = '.';
 					if(first < 0){
 						output_error("XML_Load: first ID < 0 !");
@@ -689,7 +689,7 @@ char *gld_loadHndl::start_element_module_build_object(const Attributes &attribut
 	}
 	//printf("object: type = %s, id = %s, name = %s\n", object_type, object_id, object_name);
 	stack_state = OBJECT_STATE;
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::start_element_module(char *buffer, size_t len, const Attributes& attributes){
@@ -710,7 +710,7 @@ char *gld_loadHndl::start_element_module(char *buffer, size_t len, const Attribu
 		sprintf(errmsg, "Unrecognized keyword in start_element_module(%s)", buffer);
 		return errmsg;
 	}
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::start_element_module_prop(char *buffer, size_t len, const Attributes& attributes){
@@ -722,7 +722,7 @@ char *gld_loadHndl::start_element_module_prop(char *buffer, size_t len, const At
 		output_warning("XML: start_element_module_prop: property \"\" not found, initializing");
 		strcpy(propname, pname);
 	}
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::start_element_object(char *buffer, size_t len, const Attributes& attributes){
@@ -755,20 +755,20 @@ char *gld_loadHndl::start_element_object(char *buffer, size_t len, const Attribu
 		strcpy(propname, "library");	//	uhm?  an object library?
 		stack_state = OBJECT_PROP;
 	}	//	check specific props
-	else if((prop = class_find_property(oclass, buffer)) != NULL){
+	else if((prop = class_find_property(oclass, buffer)) != nullptr){
 		strcpy(propname, buffer);
 		stack_state = OBJECT_PROP;
 	} else {
 		sprintf(errmsg, "Unrecognized property in start_element_object(%s)", buffer);
 		return errmsg;
 	}
-	prop = class_find_property(obj->oclass, buffer);	//	prop = NULL is valid for hardcoded properties. -MH
-	return NULL;
+	prop = class_find_property(obj->oclass, buffer);	//	prop = nullptr is valid for hardcoded properties. -MH
+	return nullptr;
 }
 
 char *gld_loadHndl::start_element_object_prop(char *buffer, size_t len, const Attributes& attributes){
 	//	we shouldn't be here.
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::start_element_global(char *buffer, size_t len, const Attributes& attributes){
@@ -793,12 +793,12 @@ char *gld_loadHndl::start_element_global(char *buffer, size_t len, const Attribu
 		stack_state = GLOBAL_PROP;
 	}
 	//	anything else, we don't care about.
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::start_element_global_prop(char *buffer, size_t len, const Attributes& attributes){
 	//	we may not supposed to be here?
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::start_element_clock(char *buffer, size_t len, const Attributes& attributes){
@@ -821,11 +821,11 @@ char *gld_loadHndl::start_element_clock(char *buffer, size_t len, const Attribut
 		sprintf(errmsg, "Unrecognized keyword in start_element_clock(%s)", buffer);
 		return errmsg;
 	}
-	return NULL;
+	return nullptr;
 }
 
 char *gld_loadHndl::start_element_clock_prop(char *buffer, size_t len, const Attributes& attributes){
-	return NULL;
+	return nullptr;
 }
 
 #define ADD_KEYWORD(A) 	stack_ptr = new gldStack(); \
@@ -835,11 +835,11 @@ char *gld_loadHndl::start_element_clock_prop(char *buffer, size_t len, const Att
 void gld_loadHndl::startElement(const XMLCh* const uri, const XMLCh* const localname, const XMLCh* const qname,
 								const Attributes& attributes){
 	char buffer[128];
-	char *temp = NULL;
+	char *temp = nullptr;
 	unsigned int i = 0;
 	size_t len = 0;
 	char *retval = 0;	//	negative logic
-	gldStack *currStack = NULL;
+	gldStack *currStack = nullptr;
 	wchar_t str_id[3],	/* = "id", */
 			str_name[5],/* = "name", */
 			str_type[5];/* = "type"; */
@@ -890,10 +890,10 @@ void gld_loadHndl::startElement(const XMLCh* const uri, const XMLCh* const local
 			retval = start_element_clock_prop(buffer, len, attributes);
 			break;
 	}
-	if(retval != NULL){
+	if(retval != nullptr){
 		char tbuff[256];
 		wchar_t wbuff[256];
-		SAXParseException *e = NULL;
+		SAXParseException *e = nullptr;
 		sprintf(tbuff, "Error in start_element with tag \"%s\": %s", buffer, retval);
 		mbstowcs(wbuff, tbuff, 1024);
 		e = new SAXParseException((const XMLCh *)wbuff, *(this->locator));
@@ -913,7 +913,7 @@ char *gld_loadHndl::build_object_vect(int start, int end){
 	int count = 0, i = 0;
 	obj_vect.clear();
 	if(start == end){
-		if((*oclass->create)(&obj, NULL) == 0){
+		if((*oclass->create)(&obj, nullptr) == 0){
 			//output_error("XML_Load: Unable to create a lone object with ID = %i.", start);
 			sprintf(errmsg, "Unable to create a lone object with ID = %i in build_object_vect(%i, %i)", start, start, end);
 			load_state = false;
@@ -929,7 +929,7 @@ char *gld_loadHndl::build_object_vect(int start, int end){
 			}
 		}
 		/* successfully created object */
-		return NULL;
+		return nullptr;
 	}
 	if(start == -1){ /* create unindexed objects */
 		count = end;
@@ -944,7 +944,7 @@ char *gld_loadHndl::build_object_vect(int start, int end){
 	}
 	obj_vect.reserve(count);
 	for(i = (start == -1) ? 0 : start; i <= last; ++i){ /* "if start == -1, use 0, else use start" */
-		if((*oclass->create)((obj_vect[i]), NULL) != 0){
+		if((*oclass->create)((obj_vect[i]), nullptr) != 0){
 			if(start != -1){
 				if(load_set_index(obj_vect[i], (OBJECTNUM)i) == 0){
 					sprintf(errmsg, "Unable to index a batch item in build_object_vect(%i, %i)", start, end);
@@ -960,7 +960,7 @@ char *gld_loadHndl::build_object_vect(int start, int end){
 			return errmsg;
 		}
 	}
-	return NULL; /* positive logic */
+	return nullptr; /* positive logic */
 }
 
 #undef _CRT_SECURE_NO_DEPRECATE

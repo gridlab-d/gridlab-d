@@ -23,10 +23,10 @@ bool enable_subsecond_models = false;
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
-	if (set_callback(fntable)==NULL)
+	if (set_callback(fntable)==nullptr)
 	{
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
 	Socket::init();
@@ -39,12 +39,12 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD, "HIGH", (enumeration)CS_HIGH,
 		PT_KEYWORD, "EXTREME", (enumeration)CS_EXTREME,
 		PT_KEYWORD, "PARANOID", (enumeration)CS_PARANOID,
-		NULL);
+		nullptr);
 	gl_global_create("connection::lockout",PT_double,&connection_lockout,
 		PT_UNITS, "s",
 		PT_DESCRIPTION, "default connection security lockout time",
-		NULL);
-	gl_global_create("connection::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the connection module",NULL);
+		nullptr);
+	gl_global_create("connection::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the connection module",nullptr);
 
 	new native(module);
 //	new xml(module); // TODO finish XML implementation
@@ -74,7 +74,7 @@ EXPORT int check(){
 	return 0;
 }
 
-static CLKUPDATELIST *clkupdatelist = NULL;
+static CLKUPDATELIST *clkupdatelist = nullptr;
 
 void add_clock_update(void *data, CLOCKUPDATE clkupdate)
 {
@@ -97,7 +97,7 @@ EXPORT TIMESTAMP clock_update(TIMESTAMP t1)
 	while (!ok)
 	{
 		ok = 1;
-		for ( item=clkupdatelist ; item!=NULL ; item = item->next )
+		for ( item=clkupdatelist ; item!=nullptr ; item = item->next )
 		{
 			TIMESTAMP t2 = item->clkupdate(item->data,t1);
 			if ( t2<t1 )
@@ -158,7 +158,7 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	}
 }
 
-static DELTAINTERUPDATELIST *dInterUpdateList = NULL;
+static DELTAINTERUPDATELIST *dInterUpdateList = nullptr;
 
 void register_object_interupdate (void * data, DELTAINTERUPDATE dInterUpdate)
 {
@@ -174,7 +174,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 	struct s_deltainterupdatelist *item;
 	SIMULATIONMODE result = SM_EVENT;
 	SIMULATIONMODE rv = SM_EVENT;
-	for (item = dInterUpdateList; item != NULL; item = item->next)
+	for (item = dInterUpdateList; item != nullptr; item = item->next)
 	{
 		result = item->deltainterupdate(item->data, iteration_count_val, t0, delta_time);
 		switch(result)
@@ -201,7 +201,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 	return rv;
 }
 
-static DELTACLOCKUPDATELIST *dClockUpdateList = NULL;
+static DELTACLOCKUPDATELIST *dClockUpdateList = nullptr;
 
 void register_object_deltaclockupdate(void *data, DELTACLOCKUPDATE dClockUpdate)
 {
@@ -216,14 +216,14 @@ EXPORT SIMULATIONMODE deltaClockUpdate(MODULE *module, double t1, unsigned long 
 {
 	struct s_deltaclockupdatelist *item;
 	SIMULATIONMODE result = SM_DELTA;
-	for(item = dClockUpdateList; item != NULL; item = item->next)
+	for(item = dClockUpdateList; item != nullptr; item = item->next)
 	{
 		result = item->dclkupdate(item->data, t1, timestep, systemmode);
 		return result;
 	}
 
-	//Check for a NULL list (no objects), that could get us here
-	if (dClockUpdateList == NULL)
+	//Check for a nullptr list (no objects), that could get us here
+	if (dClockUpdateList == nullptr)
 	{
 		//Our list is empty, so nothing wants deltamode
 		return SM_EVENT;

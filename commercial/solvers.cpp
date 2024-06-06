@@ -89,7 +89,7 @@ double e2solve(double a,/**< the parameter \p a */
 		gl_error("etp::solve(a=%.4f,n=%.4f,b=%.4f,m=%.4f,c=%.4f,prec=%.g) failed to converge",a,n,b,m,c,p);
 		return NaN;	// failed to catch limit condition above
 	}
-	if (e!=NULL)
+	if (e!=nullptr)
 		*e = p/dfdt;
 	return t>0?t:NaN;
 }

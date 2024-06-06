@@ -184,7 +184,7 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_double, "third_tier_energy[kWh]", PADDR(tier_energy[2]),PT_DESCRIPTION,"switching point between second tier price and third tier price",
 
 			//PT_double, "measured_reactive[kVar]", PADDR(measured_reactive), has not implemented yet
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// publish meter reset function
 		if (gl_publish_function(oclass,"reset",(FUNCTIONADDR)meter_reset)==nullptr)

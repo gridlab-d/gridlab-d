@@ -55,16 +55,16 @@ static int edit_globals(void)
 	int i;
 
 	// global variable list
-	static GLOBALVAR **var = NULL;
+	static GLOBALVAR **var = nullptr;
 	static size_t nvars=0;
 	static int nsize=0; // max name size
-	if ( var==NULL )
+	if ( var==nullptr )
 	{	// load the var list
-		GLOBALVAR *v = NULL;
+		GLOBALVAR *v = nullptr;
 		while ( (v=global_getnext(v)) ) 
 			nvars++;
 		var = (GLOBALVAR**)malloc(sizeof(GLOBALVAR*)*nvars);
-		nvars=0, v=NULL;
+		nvars=0, v=nullptr;
 		while ( (v=global_getnext(v)) ) 
 		{
 			var[nvars++] = v;
@@ -185,7 +185,7 @@ SETUPGROUP group[] = {
 extern "C" int setup(int argc, char *argv[])
 {
 #ifdef HAVE_CURSES
-	if ( !loadall(NULL) )
+	if ( !loadall(nullptr) )
 		sprintf(status,"ERROR: %s","unable to load configuration files");
 
 	bool done = false;

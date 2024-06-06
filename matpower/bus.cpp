@@ -37,8 +37,8 @@ using namespace std;
 
 #define TIME_INTERVAL 900
 
-CLASS *bus::oclass = NULL;
-bus *bus::defaults = NULL;
+CLASS *bus::oclass = nullptr;
+bus *bus::defaults = nullptr;
 
 // Global Variable
 multimap<string,unsigned int>bus_map;
@@ -60,7 +60,7 @@ unsigned int BRANCH_NUM = 0;
 
 #ifdef OPTIONAL
 /* TODO: define this to allow the use of derived classes */
-CLASS *PARENTbus::pclass = NULL;
+CLASS *PARENTbus::pclass = nullptr;
 #endif
 
 /* TODO: remove passes that aren't needed */
@@ -83,10 +83,10 @@ bus::bus(MODULE *module)
 
 
 
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"bus",sizeof(bus),passconfig);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
                 
                 // attributes of bus class. the names follow the MATPOWER Bus Data structure
@@ -132,7 +132,7 @@ bus::bus(MODULE *module)
 			PT_complex,"feeder8", PADDR(feeder8), PT_DESCRIPTION, "Feeder 8 Complex power",
 			PT_complex,"feeder9", PADDR(feeder9), PT_DESCRIPTION, "Feeder 9 Complex power",
 		     /* TODO: add your published properties here */
-		    NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+		    nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(bus));
 		/* TODO: set the default values of all properties here */
@@ -198,7 +198,7 @@ int bus::init(OBJECT *parent)
 		OBJECT *obj_baseMVA;
 		obj_baseMVA = gl_create_object(baseMVA::oclass);
 		//printf("Arrive tihs point2\n");
-		if (obj_baseMVA == NULL)
+		if (obj_baseMVA == nullptr)
 			gl_error("Create baseMVA object failed\n");
 		else
 		{
@@ -213,7 +213,7 @@ int bus::init(OBJECT *parent)
 		// Create Areas object
 		OBJECT *obj_areas;
 		obj_areas = gl_create_object(areas::oclass);
-		if (obj_areas == NULL)
+		if (obj_areas == nullptr)
 			gl_error("Create Areas object failed\n");
 		else
 		{
@@ -228,10 +228,10 @@ int bus::init(OBJECT *parent)
 
 		multimap<string,unsigned int>::iterator it;
 		unsigned int bus_index = 0;
-		OBJECT *obj_map = NULL;
+		OBJECT *obj_map = nullptr;
 		bus *bus_obj_map;
 		FINDLIST *bus_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"bus",FT_END);
-		while (gl_find_next(bus_list,obj_map) != NULL)
+		while (gl_find_next(bus_list,obj_map) != nullptr)
 		{
 			bus_index++;
 			obj_map = gl_find_next(bus_list,obj_map);
@@ -242,12 +242,12 @@ int bus::init(OBJECT *parent)
 		}
 
 		//Update bus index in branch
-		OBJECT *obj_branch = NULL;
+		OBJECT *obj_branch = nullptr;
 		branch *branch_obj;
 		FINDLIST *branch_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"branch",FT_END);
 		multimap<string,unsigned int>::iterator find_res;
 		
-		while (gl_find_next(branch_list,obj_branch) != NULL)
+		while (gl_find_next(branch_list,obj_branch) != nullptr)
 		{
 			obj_branch = gl_find_next(branch_list,obj_branch);
 			branch_obj = OBJECTDATA(obj_branch,branch);
@@ -277,12 +277,12 @@ int bus::init(OBJECT *parent)
 		}
 
 		//Update bus index in gen
-		OBJECT *obj_gen = NULL;
+		OBJECT *obj_gen = nullptr;
 		gen *gen_obj;
 		FINDLIST *gen_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"gen",FT_END);
 		bus *gen_parent_bus;
 		multimap<string,unsigned int>::iterator find_gen;
-		while (gl_find_next(gen_list,obj_gen) != NULL)
+		while (gl_find_next(gen_list,obj_gen) != nullptr)
 		{
 					
 	
@@ -434,11 +434,11 @@ TIMESTAMP bus::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	//printf("Bus %d, Real power %f, reactive power %f\n",tempbus->BUS_I,tempbus->LAM_P,tempbus->LAM_Q);
 /*	if (tempbus->BUS_TYPE == 3)
 	{
-		OBJECT *temp_obj = NULL;
+		OBJECT *temp_obj = nullptr;
 		bus *iter_bus;
 		FINDLIST *bus_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"bus",FT_END);
 		printf("After simulation\n");
-		while (gl_find_next(bus_list,temp_obj)!=NULL)
+		while (gl_find_next(bus_list,temp_obj)!=nullptr)
 		{
 			temp_obj = gl_find_next(bus_list,temp_obj);
 			iter_bus = OBJECTDATA(temp_obj,bus);
@@ -458,7 +458,7 @@ EXPORT int create_bus(OBJECT **obj)
 	try
 	{
 		*obj = gl_create_object(bus::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 			return OBJECTDATA(*obj,bus)->create();
 	}
 	catch (char *msg)
@@ -472,7 +472,7 @@ EXPORT int init_bus(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,bus)->init(parent);
 	}
 	catch (char *msg)
