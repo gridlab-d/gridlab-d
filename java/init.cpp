@@ -24,17 +24,17 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	callback = fntable;
 
 
-	gl_global_create("glmjava::classpath",PT_char256,get_classpath(),NULL);
-	gl_global_create("glmjava::libpath",PT_char256,get_libpath(),NULL);
-	gl_global_create("glmjava::jcallback",p,get_jcb(),PT_ACCESS,PA_REFERENCE,NULL);
+	gl_global_create("glmjava::classpath",PT_char256,get_classpath(),nullptr);
+	gl_global_create("glmjava::libpath",PT_char256,get_libpath(),nullptr);
+	gl_global_create("glmjava::jcallback",p,get_jcb(),PT_ACCESS,PA_REFERENCE,nullptr);
 	//	default values
 	strcpy(get_classpath(), "Win32/Debug/");
 	strcpy(get_libpath(), "Win32/Debug/");
 
 
-//	if(get_jvm() == NULL){
+//	if(get_jvm() == nullptr){
 //		gl_error("Unable to initialize JVM in java->init()");
-//		return NULL;
+//		return nullptr;
 //	}
 
 	// very nonstandard.
@@ -45,7 +45,7 @@ EXPORT int check(){
 	return 0;
 }
 
-//static CALLBACKS *callback = NULL;
+//static CALLBACKS *callback = nullptr;
 
 
 /* EOF */

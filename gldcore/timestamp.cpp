@@ -132,13 +132,13 @@ int timestamp_year(TIMESTAMP ts, TIMESTAMP *remainder)
 int isdst(TIMESTAMP t)
 {
 	int DSTstart_year, DSTend_year;
-	int year = timestamp_year(t + tzoffset, NULL) - YEAR0;
+	int year = timestamp_year(t + tzoffset, nullptr) - YEAR0;
 
 	//Preliminary check to make sure something exists
 	if (dststart[year]>=0)	//If it's -1, no sense going forth
 	{
-		DSTstart_year = timestamp_year(dststart[year],NULL);
-		DSTend_year = timestamp_year(dstend[year],NULL);
+		DSTstart_year = timestamp_year(dststart[year],nullptr);
+		DSTend_year = timestamp_year(dstend[year],nullptr);
 
 		//Southern hemisphere DST-oriented check
 		if (DSTstart_year != DSTend_year)
@@ -225,7 +225,7 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 	if( ts == TS_NEVER || ts==TS_ZERO )
 		return 0;
 
-	if( dt==NULL || ts<TS_ZERO || ts>TS_MAX ) /* no buffer or timestamp out of range */
+	if( dt==nullptr || ts<TS_ZERO || ts>TS_MAX ) /* no buffer or timestamp out of range */
 	{
 		output_error("local_datetime(ts=%lli,...): invalid local_datetime request",ts);
 		return 0;
@@ -359,7 +359,7 @@ int local_datetime_delta(double tsdbl, DATETIME *dt)
 	if( ts == TS_NEVER || ts==TS_ZERO )
 		return 0;
 
-	if( dt==NULL || ts<TS_ZERO || ts>TS_MAX ) /* no buffer or timestamp out of range */
+	if( dt==nullptr || ts<TS_ZERO || ts>TS_MAX ) /* no buffer or timestamp out of range */
 	{
 		output_error("local_datetime_delta(ts=%lli,...): invalid local_datetime request",ts);
 		return 0;
@@ -476,12 +476,12 @@ TIMESTAMP mkdatetime(DATETIME *dt)
 	TIMESTAMP ts;
 	int n;
 
-	if(dt == NULL){
+	if(dt == nullptr){
 		return TS_INVALID;
 	}
 
 	/* start with year */
-	timestamp_year(0,NULL); /* initializes tszero */
+	timestamp_year(0,nullptr); /* initializes tszero */
 	if(dt->year < YEAR0 || dt->year >= YEAR0 + sizeof(tszero) / sizeof(tszero[0]) ){
 		return TS_INVALID;
 	}
@@ -544,12 +544,12 @@ int strdatetime(DATETIME *t, char *buffer, int size){
 	int len;
 	char tbuffer[1024];
 
-	if(t == NULL){
+	if(t == nullptr){
 		output_error("strdatetime: null DATETIME pointer passed in");
 		return 0;
 	}
 
-	if(buffer == NULL){
+	if(buffer == nullptr){
 		output_error("strdatetime: null string buffer passed in");
 		return 0;
 	}
@@ -609,7 +609,7 @@ TIMESTAMP compute_dstevent(int year, SPEC *spec, time_t offset){
 	TIMESTAMP t = TS_INVALID;
 	int y, m, d, ndays = 0, day1;
 
-	if(spec == NULL){
+	if(spec == nullptr){
 		output_error("compute_dstevent: null SPEC* pointer passed in");
 		return -1;
 	}
@@ -656,7 +656,7 @@ int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset){
 	memset(buf2,0,sizeof(buf2));
 
 
-	if ((strchr(tzspec, ':') != NULL ) && (sscanf(tzspec, "%[A-Z]%d:%d%[A-Z]", buf1, &hours, &minutes, buf2) < 3)){
+	if ((strchr(tzspec, ':') != nullptr ) && (sscanf(tzspec, "%[A-Z]%d:%d%[A-Z]", buf1, &hours, &minutes, buf2) < 3)){
 		output_error("tz_info: \'%s\' not a timezone-format string", tzspec);
 		return 0;
 	}
@@ -677,12 +677,12 @@ int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset){
 		return 0;
 	}
 
-	if ( std!=NULL )
+	if ( std!=nullptr )
 	{
 		strcpy(std, buf1);
 	}
 	
-	if ( rv>2 && dst!=NULL )
+	if ( rv>2 && dst!=nullptr )
 	{
 		strcpy(dst, buf2);
 	}
@@ -698,12 +698,12 @@ int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset){
 
 		return 1;
 	} else {
-		if ( tzname!=NULL )
+		if ( tzname!=nullptr )
 		{
 			sprintf(tzname, "%s%d:%02d%s", buf1, hours, minutes, buf2);
 		}
 		
-		if ( offset!=NULL )
+		if ( offset!=nullptr )
 		{
 			*offset = hours * 3600 + minutes * 60;
 		}
@@ -717,12 +717,12 @@ char *tz_locale(char *country, char *province, char *city)
 	extern char *tz_name(char *tzspec);
 	static char tzname[256]="";
 	char filepath[1024];
-	FILE *fp = NULL;
+	FILE *fp = nullptr;
 	char buffer[1024];
 	char target[256];
 	int len = sprintf(target,"%s/%s/%s",country,province,city);
 
-	if(find_file(TZFILE, nullptr, R_OK,filepath,sizeof(filepath)) == NULL){
+	if(find_file(TZFILE, nullptr, R_OK,filepath,sizeof(filepath)) == nullptr){
 		throw_exception(const_cast<char *>("timezone specification file %s not found in GLPATH=%s: %s"), TZFILE, global_gl_path.c_str(), strerror(errno));
 		/* TROUBLESHOOT
 			The system could not locate the timezone file <code>tzinfo.txt</code>.
@@ -730,13 +730,13 @@ char *tz_locale(char *country, char *province, char *city)
 		 */
 	}
 	fp = fopen(filepath,"r");
-	if(fp == NULL){
+	if(fp == nullptr){
 		throw_exception(const_cast<char *>("%s: access denied: %s"), filepath, strerror(errno));
 		/* TROUBLESHOOT
 			The system was unable to read the timezone file.  Check that the file has the correct permissions and try again.
 		 */
 	}
-	while( fgets(buffer,sizeof(buffer),fp)!=NULL )
+	while( fgets(buffer,sizeof(buffer),fp)!=nullptr )
 	{
 		char *locale = buffer;
 		if ( locale[0]==';' || locale[0]=='\0' ) continue;
@@ -754,7 +754,7 @@ char *tz_locale(char *country, char *province, char *city)
 	}
 	throw_exception(
 			const_cast<char *>("tz_locale(char *country='%s', char *province='%s', char *city='%s'): not tzinfo entry found"), country, province, city);
-	return NULL;
+	return nullptr;
 }
 
 /** Converts a timezone spec into a standard timezone name
@@ -768,7 +768,7 @@ char *tz_name(char *tzspec)
 	if ( sscanf(tzspec,"%[^/]/%[^/]/%[^/]",country,province,city)==3 )
 		return tz_locale(country,province,city);
 
-	if(tz_info(tzspec, name, NULL, NULL, NULL))
+	if(tz_info(tzspec, name, nullptr, nullptr, nullptr))
 	{
 		return name;
 	} 
@@ -778,9 +778,9 @@ char *tz_name(char *tzspec)
 		/*	don'tTROUBLESHOOT
 			The timezone specification was not found in the timezone subsystem.  Double-check the spelling and format of the specification.
 		*/
-		return NULL;
+		return nullptr;
 	}
-	//return (tz_info(tzspec, name, NULL, NULL, NULL) ? name : NULL);
+	//return (tz_info(tzspec, name, nullptr, nullptr, nullptr) ? name : nullptr);
 }
 
 /** Compute the offset of a tz spec
@@ -788,12 +788,12 @@ char *tz_name(char *tzspec)
 time_t tz_offset(char *tzspec){
 	time_t offset;
 
-	if(tz_info(tzspec, NULL, NULL, NULL, &offset)){
+	if(tz_info(tzspec, nullptr, nullptr, nullptr, &offset)){
 		return offset;
 	} else {
 		return -1;
 	}
-	//return tz_info(tzspec,NULL,NULL,NULL,&offset)?offset:-1;
+	//return tz_info(tzspec,nullptr,nullptr,nullptr,&offset)?offset:-1;
 }
 
 /** Get the std timezone name
@@ -801,12 +801,12 @@ time_t tz_offset(char *tzspec){
 const char *tz_std(char *tzspec){
 	static char std[32] = "GMT";
 
-	if(tz_info(tzspec, NULL, std, NULL, NULL)){
+	if(tz_info(tzspec, nullptr, std, nullptr, nullptr)){
 		return std;
 	} else {
 		return "GMT";
 	}
-	//return tz_info(tzspec, NULL, std, NULL, NULL) ? std : "GMT";
+	//return tz_info(tzspec, nullptr, std, nullptr, nullptr) ? std : "GMT";
 }
 
 /** Get the std timezone name
@@ -814,12 +814,12 @@ const char *tz_std(char *tzspec){
 const char *tz_dst(char *tzspec){
 	static char dst[32]="GMT";
 
-	if(tz_info(tzspec,NULL,NULL,dst,NULL)){
+	if(tz_info(tzspec,nullptr,nullptr,dst,nullptr)){
 		return dst;
 	} else {
 		return "GMT";
 	}
-	//return tz_info(tzspec,NULL,NULL,dst,NULL)?dst:"GMT";
+	//return tz_info(tzspec,nullptr,nullptr,dst,nullptr)?dst:"GMT";
 }
 
 /** Apply a timezone spec to the current tz rules
@@ -830,7 +830,7 @@ void set_tzspec(int year, char *tzname, SPEC *pStart, SPEC *pEnd){
 
 	for (y = year - YEAR0; y < sizeof(tszero) / sizeof(tszero[0]); y++)
 	{
-		if (pStart!=NULL && pEnd!=NULL) // no DST events (cf. ticket:372)
+		if (pStart!=nullptr && pEnd!=nullptr) // no DST events (cf. ticket:372)
 		{
 			//Look for southern hemisphere items (or reversed DST, in general)
 			if (pStart->month > pEnd->month)
@@ -854,7 +854,7 @@ void set_tzspec(int year, char *tzname, SPEC *pStart, SPEC *pEnd){
 void load_tzspecs(char *tz){
 	char filepath[1024];
 	char *pTzname = 0;
-	FILE *fp = NULL;
+	FILE *fp = nullptr;
 	char buffer[1024];
 	int linenum = 0;
 	int year = YEAR0;
@@ -878,7 +878,7 @@ void load_tzspecs(char *tz){
 	strncpy(tzstd, tz_std(current_tzname), sizeof(tzstd));
 	strncpy(tzdst, tz_dst(current_tzname), sizeof(tzdst));
 
-	if(find_file(TZFILE, nullptr, R_OK,filepath,sizeof(filepath)) == NULL){
+	if(find_file(TZFILE, nullptr, R_OK,filepath,sizeof(filepath)) == nullptr){
 		throw_exception(const_cast<char *>("timezone specification file %s not found in GLPATH=%s: %s"), TZFILE, global_gl_path.c_str(), strerror(errno));
 		/* TROUBLESHOOT
 			The system could not locate the timezone file <code>tzinfo.txt</code>.
@@ -888,7 +888,7 @@ void load_tzspecs(char *tz){
 
 	fp = fopen(filepath,"r");
 
-	if(fp == NULL){
+	if(fp == nullptr){
 		throw_exception(const_cast<char *>("%s: access denied: %s"), filepath, strerror(errno));
 		/* TROUBLESHOOT
 			The system was unable to read the timezone file.  Check that the file has the correct permissions and try again.
@@ -901,7 +901,7 @@ void load_tzspecs(char *tz){
 	}
 
 	while(fgets(buffer,sizeof(buffer),fp)){
-		char *p = NULL;
+		char *p = nullptr;
 		char tzname[32];
 		SPEC start, end;
 		int form = -1;
@@ -911,7 +911,7 @@ void load_tzspecs(char *tz){
 		/* wipe comments */
 		p = strchr(buffer,';');
 
-		if(p != NULL){
+		if(p != nullptr){
 			*p = '\0';
 		}
 
@@ -940,12 +940,12 @@ void load_tzspecs(char *tz){
 		/* load only TZ requested */
 		pTzname = tz_name(tzname);
 
-		if (tz != NULL && pTzname != NULL && strcmp(pTzname,current_tzname) != 0){
+		if (tz != nullptr && pTzname != nullptr && strcmp(pTzname,current_tzname) != 0){
 			continue;
 		}
 
 		if(form == 1){ /* no DST */
-			set_tzspec(year, current_tzname, NULL, NULL);
+			set_tzspec(year, current_tzname, nullptr, nullptr);
 			found = 1;
 		} else if(form == 11) { /* full DST spec */
 			set_tzspec(year, current_tzname, &start, &end);
@@ -974,7 +974,7 @@ void load_tzspecs(char *tz){
 }
 
 /** Establish the default timezone for time conversion.
-	\p NULL \p tzname uses \p TZ environment for default
+	\p nullptr \p tzname uses \p TZ environment for default
  **/
 char *timestamp_set_tz(char *tz_name)
 {

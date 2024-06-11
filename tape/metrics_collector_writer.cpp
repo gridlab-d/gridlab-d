@@ -8,18 +8,16 @@
 
 #include "metrics_collector_writer.h"
 
-#define USE_DEPRECATED_FASTWRITER
-
-CLASS *metrics_collector_writer::oclass = NULL;
+CLASS *metrics_collector_writer::oclass = nullptr;
 
 void new_metrics_collector_writer(MODULE *mod) {
 	new metrics_collector_writer(mod);
 }
 
 metrics_collector_writer::metrics_collector_writer(MODULE *mod) {
-	if (oclass == NULL) {
+	if (oclass == nullptr) {
 		oclass = gl_register_class(mod, const_cast<char *>("metrics_collector_writer"), sizeof(metrics_collector_writer), PC_POSTTOPDOWN);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class metrics_collector_writer";
 
 		if (gl_publish_variable(oclass,
@@ -29,7 +27,7 @@ metrics_collector_writer::metrics_collector_writer(MODULE *mod) {
 				PT_char8, "allextensions", PADDR(allextensions), PT_DESCRIPTION, "write all file extensions",
 				PT_double, "interim[s]", PADDR(interim_length_dbl), PT_DESCRIPTION, "Interim at which metrics_collector_writer output is written",
 				PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector_writer output is stored in JSON format",
-				NULL) < 1)
+				nullptr) < 1)
 			GL_THROW(const_cast<char *>("unable to publish properties in %s"), __FILE__);
 	}
 }
@@ -44,7 +42,7 @@ int metrics_collector_writer::create() {
 
 int metrics_collector_writer::init(OBJECT *parent) {
 	OBJECT *obj = OBJECTHDR(this);
-	FILE *fn = NULL;
+	FILE *fn = nullptr;
 	int index = 0;
 	char time_str[64];
 
@@ -127,7 +125,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
 
 	// Find the metrics_collector objects
 	metrics_collectors = gl_find_objects(FL_NEW, FT_CLASS, SAME, "metrics_collector", FT_END); //find all metrics_collector objects
-	if (metrics_collectors == NULL) {
+	if (metrics_collectors == nullptr) {
 		gl_error("metrics_collector_writer::init(): no metrics_collector objects were found.");
 		return 0;
 		/* TROUBLESHOOT
@@ -137,14 +135,14 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	}
 
 	// Go through each metrics_collector object, and check its time interval given
-	obj = NULL;
+	obj = nullptr;
 	while (obj = gl_find_next(metrics_collectors, obj)) {
 		if (index >= metrics_collectors->hit_count) {
 			break;
 		}
 		// Obtain the object data
 		metrics_collector *temp_metrics_collector = OBJECTDATA(obj, metrics_collector);
-		if (temp_metrics_collector == NULL) {
+		if (temp_metrics_collector == nullptr) {
 			gl_error("metrics_collector_writer::init(): unable to map object as metrics_collector object.");
 			return 0;
 		}
@@ -301,6 +299,22 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_waterheater_temp_min] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_waterheater_temp_max] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_waterheater_temp_avg] = jsn;
+
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_wh_lower_setpoint_min] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_wh_lower_setpoint_max] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_wh_lower_setpoint_avg] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_wh_upper_setpoint_min] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_wh_upper_setpoint_max] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_wh_upper_setpoint_avg] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_wh_lower_temp_min] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_wh_lower_temp_max] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_wh_lower_temp_avg] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_wh_upper_temp_min] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_wh_upper_temp_max] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_wh_upper_temp_avg] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "";		meta[m_wh_lower_elem_state] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "";		meta[m_wh_upper_elem_state] = jsn;
+
 	ary_houses.resize(idx);
 	writeMetadata(meta, metadata, time_str, filename_house);
 
@@ -372,13 +386,8 @@ int metrics_collector_writer::init(OBJECT *parent) {
 void metrics_collector_writer::writeMetadata(Json::Value &meta,
 		Json::Value &metadata, char *time_str, char256 filename) {
 	if (strcmp(extension, m_json.c_str()) == 0) {
-#ifdef USE_DEPRECATED_FASTWRITER
-    Json::FastWriter writer;
-    writer.omitEndingLineFeed();
-#else
-    Json::StreamWriterBuilder builder; // FastWriter is deprecated
-    builder["indentation"] = "";
-#endif
+		Json::StreamWriterBuilder builder;
+		builder["indentation"] = "";
 		ofstream out_file;
 
 		metadata[m_starttime] = time_str;
@@ -387,11 +396,7 @@ void metrics_collector_writer::writeMetadata(Json::Value &meta,
 		if (strcmp(alternate, "yes") == 0)
 			FileName.append("." + m_json);
 		out_file.open (FileName);
-#ifdef USE_DEPRECATED_FASTWRITER
-		out_file << writer.write(metadata);
-#else
-    out_file << Json::writeString(builder, metadata);
-#endif
+		out_file << Json::writeString(builder, metadata);
 		out_file.close();
 #ifdef HAVE_HDF5
 		if (both) {
@@ -441,7 +446,7 @@ int metrics_collector_writer::commit(TIMESTAMP t1) {
  **/
 int metrics_collector_writer::write_line(TIMESTAMP t1) {
 	char time_str[64];
-	time_t now = time(NULL);
+	time_t now = time(nullptr);
 	int index = 0;
 
 	double *metrics;
@@ -463,7 +468,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 //	cout << "write_line at " << writeTime << " seconds, final " << final_write << ", now " << t1 << endl;
 
 	// Go through each metrics_collector object, and check its time interval given
-	OBJECT *obj = NULL;
+	OBJECT *obj = nullptr;
 	while (obj = gl_find_next(metrics_collectors, obj)) {
 		if (index >= metrics_collectors->hit_count) {
 			break;
@@ -471,7 +476,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 
 		// Obtain the object data
 		metrics_collector *temp_metrics_collector = OBJECTDATA(obj, metrics_collector);
-		if (temp_metrics_collector == NULL) {
+		if (temp_metrics_collector == nullptr) {
 			gl_error("Unable to map object as metrics_collector object.");
 			return 0;
 		}
@@ -561,6 +566,22 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 			ary_houses[idx++] = metrics[WH_MIN_TEMP];
 			ary_houses[idx++] = metrics[WH_MAX_TEMP];
 			ary_houses[idx++] = metrics[WH_AVG_TEMP];
+
+			ary_houses[idx++] = metrics[WH_MIN_L_SETPOINT];
+			ary_houses[idx++] = metrics[WH_MAX_L_SETPOINT];
+			ary_houses[idx++] = metrics[WH_AVG_L_SETPOINT];
+			ary_houses[idx++] = metrics[WH_MIN_U_SETPOINT];
+			ary_houses[idx++] = metrics[WH_MAX_U_SETPOINT];
+			ary_houses[idx++] = metrics[WH_AVG_U_SETPOINT];
+			ary_houses[idx++] = metrics[WH_MIN_L_TEMP];
+			ary_houses[idx++] = metrics[WH_MAX_L_TEMP];
+			ary_houses[idx++] = metrics[WH_AVG_L_TEMP];
+			ary_houses[idx++] = metrics[WH_MIN_U_TEMP];
+			ary_houses[idx++] = metrics[WH_MAX_U_TEMP];
+			ary_houses[idx++] = metrics[WH_AVG_U_TEMP];
+			ary_houses[idx++] = metrics[WH_ELEM_L_MODE];
+			ary_houses[idx++] = metrics[WH_ELEM_U_MODE];
+
 			house_objects[key] = ary_houses;
 
 		} // End of recording metrics_collector data attached to one waterheater
@@ -655,9 +676,11 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 	metrics_writer_evchargerdets[time_str] = evchargerdet_objects;
 
 	if (writeTime == (interim_length * interim_cnt) || final_write - startTime <= writeTime) {
-		cout << "meterics collected -> " << index << endl;
-		cout << "interim write time -> " << writeTime << endl;
+        gl_debug("metrics collected -> %d\n", index);
+        gl_debug("interim write time -> %d\n", writeTime);
 		/*
+		 cout << "meterics collected -> " << index << endl;
+		 cout << "interim write time -> " << writeTime << endl;
 		 cout << "final_write -> " << final_write-startTime << endl;
 		 cout << "interim_length -> " << interim_length << endl;
 		 cout << "interim_cnt -> " << interim_cnt << endl;
@@ -710,13 +733,8 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 
 // Write seperate JSON files for each object
 void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& metrics) {
-#ifdef USE_DEPRECATED_FASTWRITER
-	Json::FastWriter writer;
-	writer.omitEndingLineFeed();
-#else
-	Json::StreamWriterBuilder builder; // FastWriter is deprecated
+	Json::StreamWriterBuilder builder;
 	builder["indentation"] = "";
-#endif
 	long pos = 0;
 	long offset = 1;
 	ofstream out_file;
@@ -725,25 +743,14 @@ void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& met
 	if (strcmp(alternate, "yes") == 0)
 		FileName.append("." + m_json);
 	out_file.open (FileName, ofstream::in | ofstream::ate);
-//	std::cout << "** opened " << FileName << std::endl;
 	pos = out_file.tellp();
-//	std::cout << "   tellp " << pos << " offset " << offset << std::endl;
-#ifdef USE_DEPRECATED_FASTWRITER
-	out_file << writer.write(metrics);
-#else
 	out_file << Json::writeString(builder, metrics);
-#endif
-//	std::cout << "   write metrics" << std::endl;
 	out_file.seekp(pos-offset);
-//	std::cout << "   seekp " << (pos-offset) << std::endl;
 	out_file << ", ";
 	out_file.close();
-//	std::cout << "   closed " << FileName << std::endl;
 	if (!both) {
 		metrics.clear();
-//		std::cout << "   cleared metrics" << std::endl;
 	}
-//	std::cout << "   returning" << std::endl;
 }
 
 #ifdef HAVE_HDF5
@@ -822,6 +829,21 @@ void metrics_collector_writer::hdfHouse () {
 	mtype_houses->insertMember(m_waterheater_temp_min, HOFFSET(House, waterheater_temp_min), H5::PredType::NATIVE_DOUBLE);
 	mtype_houses->insertMember(m_waterheater_temp_max, HOFFSET(House, waterheater_temp_max), H5::PredType::NATIVE_DOUBLE);
 	mtype_houses->insertMember(m_waterheater_temp_avg, HOFFSET(House, waterheater_temp_avg), H5::PredType::NATIVE_DOUBLE);
+
+	mtype_houses->insertMember(m_wh_lower_setpoint_min, HOFFSET(House, wh_lower_setpoint_min), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_wh_lower_setpoint_max, HOFFSET(House, wh_lower_setpoint_max), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_wh_lower_setpoint_avg, HOFFSET(House, wh_lower_setpoint_avg), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_wh_upper_setpoint_min, HOFFSET(House, wh_upper_setpoint_min), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_wh_upper_setpoint_max, HOFFSET(House, wh_upper_setpoint_max), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_wh_upper_setpoint_avg, HOFFSET(House, wh_upper_setpoint_avg), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_wh_lower_temp_min, HOFFSET(House, wh_lower_temp_min), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_wh_lower_temp_max, HOFFSET(House, wh_lower_temp_max), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_wh_lower_temp_avg, HOFFSET(House, wh_lower_temp_avg), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_wh_upper_temp_min, HOFFSET(House, wh_upper_temp_min), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_wh_upper_temp_max, HOFFSET(House, wh_upper_temp_max), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_wh_upper_temp_avg, HOFFSET(House, wh_upper_temp_avg), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_wh_lower_elem_state, HOFFSET(House, wh_lower_elem_state), H5::PredType::NATIVE_INT);
+	mtype_houses->insertMember(m_wh_upper_elem_state, HOFFSET(House, wh_upper_elem_state), H5::PredType::NATIVE_INT);
 }
 
 void metrics_collector_writer::hdfInverter () {
@@ -1255,6 +1277,26 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 			tbl[idx].waterheater_temp_min = mtr[HSE_SYSTEM_MODE + 10].asDouble();
 			tbl[idx].waterheater_temp_max = mtr[HSE_SYSTEM_MODE + 11].asDouble();
 			tbl[idx].waterheater_temp_avg = mtr[HSE_SYSTEM_MODE + 12].asDouble();
+
+
+			tbl[idx].wh_lower_setpoint_min = mtr[HSE_SYSTEM_MODE + 13].asDouble();
+			tbl[idx].wh_lower_setpoint_max = mtr[HSE_SYSTEM_MODE + 14].asDouble();
+			tbl[idx].wh_lower_setpoint_avg = mtr[HSE_SYSTEM_MODE + 15].asDouble();
+			tbl[idx].wh_upper_setpoint_min = mtr[HSE_SYSTEM_MODE + 16].asDouble();
+			tbl[idx].wh_upper_setpoint_max = mtr[HSE_SYSTEM_MODE + 17].asDouble();
+			tbl[idx].wh_upper_setpoint_avg = mtr[HSE_SYSTEM_MODE + 18].asDouble();
+			tbl[idx].wh_lower_temp_min = mtr[HSE_SYSTEM_MODE + 19].asDouble();
+			tbl[idx].wh_lower_temp_max = mtr[HSE_SYSTEM_MODE + 20].asDouble();
+			tbl[idx].wh_lower_temp_avg = mtr[HSE_SYSTEM_MODE + 21].asDouble();
+			tbl[idx].wh_upper_temp_min = mtr[HSE_SYSTEM_MODE + 22].asDouble();
+			tbl[idx].wh_upper_temp_max = mtr[HSE_SYSTEM_MODE + 23].asDouble();
+			tbl[idx].wh_upper_temp_avg = mtr[HSE_SYSTEM_MODE + 24].asDouble();
+			tbl[idx].wh_lower_elem_state = mtr[HSE_SYSTEM_MODE + 25].asInt();
+			tbl[idx].wh_upper_elem_state = mtr[HSE_SYSTEM_MODE + 26].asInt();
+
+
+
+
 			idx++;
 		}
 	}
@@ -1434,7 +1476,7 @@ EXPORT int create_metrics_collector_writer(OBJECT **obj, OBJECT *parent) {
 	int rv = 0;
 	try {
 		*obj = gl_create_object(metrics_collector_writer::oclass);
-		if (*obj != NULL) {
+		if (*obj != nullptr) {
 			metrics_collector_writer *my = OBJECTDATA(*obj,
 					metrics_collector_writer);
 			gl_set_parent(*obj, parent);

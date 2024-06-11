@@ -67,12 +67,12 @@ rectifier::rectifier(MODULE *module)
 			//PT_int64, "generator_mode_choice", PADDR(generator_mode_choice),
 
 			PT_set, "phases", PADDR(phases),
-			PT_KEYWORD, "A",(set)PHASE_A,
-			PT_KEYWORD, "B",(set)PHASE_B,
-			PT_KEYWORD, "C",(set)PHASE_C,
-			PT_KEYWORD, "N",(set)PHASE_N,
-			PT_KEYWORD, "S",(set)PHASE_S,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			PT_KEYWORD, "A",(gld::set)PHASE_A,
+			PT_KEYWORD, "B",(gld::set)PHASE_B,
+			PT_KEYWORD, "C",(gld::set)PHASE_C,
+			PT_KEYWORD, "N",(gld::set)PHASE_N,
+			PT_KEYWORD, "S",(gld::set)PHASE_S,
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			defaults = this;
 
 		memset(this,0,sizeof(rectifier));

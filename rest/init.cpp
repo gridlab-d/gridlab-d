@@ -14,15 +14,15 @@
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
-	if (set_callback(fntable)==NULL)
+	if (set_callback(fntable)==nullptr)
 	{
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
 #ifdef OPTIONAL
 	/* TODO: publish global variables (see class_define_map() for details) */
-	  //gl_global_create(char *name, ..., NULL);
+	  //gl_global_create(char *name, ..., nullptr);
 	/* TODO: use gl_global_setvar, gl_global_getvar, and gl_global_find for access */
 #endif
 

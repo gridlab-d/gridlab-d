@@ -72,7 +72,7 @@ public:
 	/// Get voltage on a circuit
 	/// @return voltage (or 0 if breaker is open)
 	IMPLICITENDUSE *implicit_enduse_list;	///< implicit enduses
-	static set implicit_enduses_active;		///< implicit enduses that are to be activated
+	static gld::set implicit_enduses_active;		///< implicit enduses that are to be activated
 	static enumeration implicit_enduse_source; ///< source of implicit enduses (e.g., ELCAP1990, ELCAP2010, RBSA2014)
 public:
 	// building design variables
@@ -102,7 +102,7 @@ public:
 	double number_of_stories;
 	
 	// additional reverse etp parameters
-	set include_solar_quadrant;
+	gld::set include_solar_quadrant;
 	typedef enum {HC_DEFAULT=0, HC_FLAT=1, HC_LINEAR=2, HC_CURVED=3} HEATING_COP;
 	enumeration heating_cop_curve;
 	typedef enum {HP_DEFAULT=0, HP_FLAT=1, HP_LINEAR=2, HP_CURVED=3} HEATING_CAP;
@@ -241,7 +241,7 @@ public:
 		ST_VAR	= 0x00000008,	///< flag to indicate the variable speed system is used
 		ST_RST	= 0x00000010,	///< flag to indicate that the heat is purely resistive
 	} SYSTEMTYPE; ///< flags for system type options
-	set system_type;///< system type
+	gld::set system_type;///< system type
 	/* obsolete? -MH */
 
 	typedef enum  {
@@ -250,7 +250,7 @@ public:
 		AX_TIMER = 0x2,
 		AX_LOCKOUT = 0x4,
 	} AUXSTRATEGY;
-	set auxiliary_strategy;
+	gld::set auxiliary_strategy;
 
 	typedef enum{
 		AT_UNKNOWN = 0,
@@ -461,7 +461,7 @@ private:
 	gld_property *pNominalVoltage;
 	gld_property *pPhases;
 	double internalTurnsRatio;  // ratio of meter VLN / 120
-	set externalPhases;         // for A, B and C present
+	gld::set externalPhases;         // for A, B and C present
 	int numPhases;
 
 	//Pointers for climate properties

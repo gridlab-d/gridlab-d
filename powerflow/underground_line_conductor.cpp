@@ -47,7 +47,7 @@ underground_line_conductor::underground_line_conductor(MODULE *mod) : powerflow_
 			PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),PT_DESCRIPTION,"amp rating in summer, short term",
 			PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),PT_DESCRIPTION,"amp rating in winter, continuous",
 			PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),PT_DESCRIPTION,"amp rating in winter, short term",
-            NULL) < 1) GL_THROW("unable to publish underground_line_conductor properties in %s",__FILE__);
+            nullptr) < 1) GL_THROW("unable to publish underground_line_conductor properties in %s",__FILE__);
     }
 }
 int underground_line_conductor::create(void)

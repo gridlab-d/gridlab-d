@@ -82,6 +82,9 @@ private:
 	double DM_volt_exit;
 	double DM_speed_exit;
 	double speed_error;
+	//-- yuan add below --//
+	int32 ndiv;
+	//-- yuan add above --//
 	
 	typedef enum {
 		statusRUNNING=0,		///< Motor is running

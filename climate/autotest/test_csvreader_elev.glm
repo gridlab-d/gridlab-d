@@ -1,0 +1,26 @@
+#set minimum_timestep=60;
+#set suppress_repeat_messages=FALSE;
+
+module residential{
+  implicit_enduses NONE;
+}
+module tape;
+module climate;
+
+clock{
+  timezone EST+5EDT;
+  starttime '2023-01-01 0:00:00';
+  stoptime '2023-12-31 23:59:00';
+}
+
+object csv_reader {
+  name CsvReader;
+  filename ../weather_elev.csv;
+}
+object climate {
+  name climate;
+  reader CsvReader;
+  tmyfile ../weather_elev.csv;
+  interpolate QUADRATIC;
+}
+

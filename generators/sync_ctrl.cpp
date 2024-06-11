@@ -54,7 +54,7 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 PT_double, "pi_freq_kp", PADDR(pi_freq_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the frequency setting.",
                                 PT_double, "pi_freq_ki", PADDR(pi_freq_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the frequency setting.",
                                 PT_double, "pi_freq_ub_pu[pu]", PADDR(pi_freq_ub_pu), PT_DESCRIPTION, "The upper bound of the output (i.e., the control variable 'Pset'/'fset') of the PI controller that adjusts the frequency difference in per unit.",
-                                PT_double, "pi_freq_lb_pu[pu]", PADDR(pi_freq_lb_pu), PT_DESCRIPTION, "	The lower bound of the output (i.e., the control variable 'Pset'/'fset') of the PI controller that adjusts the frequency difference in per unit.",
+                                PT_double, "pi_freq_lb_pu[pu]", PADDR(pi_freq_lb_pu), PT_DESCRIPTION, "The lower bound of the output (i.e., the control variable 'Pset'/'fset') of the PI controller that adjusts the frequency difference in per unit.",
                                 PT_double, "pi_volt_mag_kp", PADDR(pi_volt_mag_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the voltage magnitude setting.",
                                 PT_double, "pi_volt_mag_ki", PADDR(pi_volt_mag_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the voltage magnitude setting.",
                                 PT_double, "pi_volt_mag_ub_pu[pu]", PADDR(pi_volt_mag_ub_pu), PT_DESCRIPTION, "The upper bound of the output (i.e., the control variable 'Vset') of the PI controller that adjusts the voltage magnitude difference in per unit.",
@@ -74,7 +74,7 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 PT_DESCRIPTION, "The output of the PI controller that adjusts the frequency difference (i.e., the control variable, which is denoted as u(t) in usual).",
                                 PT_enumeration, "mode_status", PADDR(mode_status), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The current working mode status.",
-                                NULL) < 1)
+                                nullptr) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
 
         if (gl_publish_function(oclass, "interupdate_controller_object", (FUNCTIONADDR)interupdate_sync_ctrl) == nullptr)
@@ -881,7 +881,7 @@ void sync_ctrl::init_sensors()
                                                        &gld_property::is_enumeration);
     cgu_P_f_droop_setting_mode = static_cast<PF_DROOP_MODE>(
         get_prop_value<enumeration>(prop_cgu_P_f_droop_setting_mode_ptr,
-                                    &gld_property::get_enumeration, false));
+                                        &gld_property::get_enumeration, false));
 
     //--DG or INV
     if (gl_object_isa(cgu_obj_ptr, "inverter_dyn", "generators"))

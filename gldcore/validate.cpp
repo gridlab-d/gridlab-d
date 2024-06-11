@@ -124,9 +124,9 @@ static counters final; // global counter
 static bool clean = false; // set to true to force purge of test directories
 
 /* report generation functions */
-static FILE *report_fp = NULL;
+static FILE *report_fp = nullptr;
 static char report_file[1024] = "validate.txt";
-static const char *report_ext = NULL;
+static const char *report_ext = nullptr;
 static const char *report_col="    ";
 static const char *report_eol="\n";
 static const char *report_eot="\f";
@@ -138,7 +138,7 @@ static bool report_open(void)
 	wlock(&report_lock);
 
 	global_getvar("validate_report",report_file,sizeof(report_file));
-	if ( report_fp==NULL )
+	if ( report_fp==nullptr )
 	{
 		report_ext = strrchr(report_file,'.');
 		if ( strcmp(report_ext,".csv")==0 ) 
@@ -154,7 +154,7 @@ static bool report_open(void)
 		report_fp = fopen(report_file,"w");
 	}
 	wunlock(&report_lock);
-	return report_fp!=NULL;
+	return report_fp!=nullptr;
 }
 static int report_title(const char *fmt,...)
 {
@@ -222,7 +222,7 @@ static int report_close(void)
 {
 	wlock(&report_lock);
 	if ( report_fp ) fclose(report_fp);
-	report_fp = NULL;
+	report_fp = nullptr;
 	wunlock(&report_lock);
 	return report_rows;
 }
@@ -250,15 +250,15 @@ const char *GetLastErrorMsg(void)
     FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | 
         FORMAT_MESSAGE_FROM_SYSTEM,
-        NULL,
+        nullptr,
         dw,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
         (LPTSTR) &lpMsgBuf,
-        0, NULL );
+        0, nullptr );
 
 	char *p;
-	while ( (p=strchr((char*)lpMsgBuf,'\n'))!=NULL ) *p=' ';
-	while ( (p=strchr((char*)lpMsgBuf,'\r'))!=NULL ) *p=' ';
+	while ( (p=strchr((char*)lpMsgBuf,'\n'))!=nullptr ) *p=' ';
+	while ( (p=strchr((char*)lpMsgBuf,'\r'))!=nullptr ) *p=' ';
     sprintf(szBuf, "%s (error code %d)", lpMsgBuf, dw); 
  
     LocalFree(lpMsgBuf);
@@ -275,34 +275,34 @@ DIR *opendir(const char *dirname)
 	{
 		output_error("opendir(const char *dirname='%s'): %s", dirname, GetLastErrorMsg());
 		final.inc_access(dirname);
-		return NULL;
+		return nullptr;
 	}
 	DIR *dirp = new DIR;
 	dirp->first = dirp->next = new struct dirent;
 	dirp->first->d_type = (fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) ? DT_DIR : 0;
 	dirp->first->d_name = new char[strlen(fd.cFileName)+1];
 	strcpy(dirp->first->d_name,fd.cFileName);
-	dirp->first->next = NULL;
+	dirp->first->next = nullptr;
 	struct dirent *last = dirp->first;
 	while ( FindNextFile(dh,&fd)!=0 )
 	{
 		struct dirent *dp = (struct dirent*)malloc(sizeof(struct dirent));
-		if ( dp==NULL )
+		if ( dp==nullptr )
 		{
 			output_error("opendir(const char *dirname='%s'): %s", dirname, GetLastErrorMsg());
 			final.inc_access(dirname);
-			return NULL;
+			return nullptr;
 		}
 		dp->d_type = (fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) ? DT_DIR : 0;
 		dp->d_name = (char*)malloc(strlen(fd.cFileName)+10);
-		if ( dp->d_name==NULL )
+		if ( dp->d_name==nullptr )
 		{
 			output_error("opendir(const char *dirname='%s'): %s", dirname, GetLastErrorMsg());
 			final.inc_access(dirname);
-			return NULL;
+			return nullptr;
 		}
 		strcpy(dp->d_name,fd.cFileName);
-		dp->next = NULL;
+		dp->next = nullptr;
 		last->next = dp;
 		last = dp;
 	}
@@ -323,7 +323,7 @@ struct dirent *readdir(DIR *dirp)
 int closedir(DIR *dirp)
 {
 	struct dirent *dp = dirp->first; 
-	while ( dp!=NULL )
+	while ( dp!=nullptr )
 	{
 		struct dirent *del = dp;
 		dp = dp->next;
@@ -358,10 +358,10 @@ static int vsystem(const char *fmt, ...)
 static bool destroy_dir(char *name)
 {
 	DIR *dirp = opendir(name);
-	if ( dirp==NULL ) return true; // directory does not exist
+	if ( dirp==nullptr ) return true; // directory does not exist
 	struct dirent *dp;
 	output_debug("destroying contents of '%s'", name);
-	while ( dirp!=NULL && (dp=readdir(dirp))!=NULL )
+	while ( dirp!=nullptr && (dp=readdir(dirp))!=nullptr )
 	{
 		if ( strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0 )
 		{
@@ -386,13 +386,13 @@ static bool copyfile(char *from, char *to)
 {
 	output_debug("copying '%s' to '%s'", from, to);
 	FILE *in = fopen(from,"r");
-	if ( in==NULL )
+	if ( in==nullptr )
 	{
 		output_error("copyfile(char *from='%s', char *to='%s'): unable to open '%s' for reading - %s", from,to,from,strerror(errno));
 		return false; 
 	}
 	FILE *out = fopen(to,"w");
-	if ( out==NULL )
+	if ( out==nullptr )
 	{
 		output_error("copyfile(char *from='%s', char *to='%s'): unable to open '%s' for writing - %s", from,to,to,strerror(errno));
 		fclose(in);
@@ -416,18 +416,18 @@ static bool copyfile(char *from, char *to)
 }
 
 /** routine to run a validation test */
-static counters run_test(char *file, double *elapsed_time=NULL)
+static counters run_test(char *file, double *elapsed_time=nullptr)
 {
 	output_debug("run_test(char *file='%s') starting", file);
 	counters result;
 
-	bool is_err = strstr(file,"_err.")!=NULL || strstr(file,"_err_")!=NULL;
+	bool is_err = strstr(file,"_err.")!=nullptr || strstr(file,"_err_")!=nullptr;
 	if ( is_err && (global_validateoptions&VO_TSTERR)==0 ) return result;
 
-	bool is_exc = strstr(file,"_exc.")!=NULL || strstr(file,"_exc_")!=NULL;
+	bool is_exc = strstr(file,"_exc.")!=nullptr || strstr(file,"_exc_")!=nullptr;
 	if ( is_exc && (global_validateoptions&VO_TSTEXC)==0 ) return result;
 
-	bool is_opt = strstr(file,"_opt.")!=NULL || strstr(file,"_opt_")!=NULL;
+	bool is_opt = strstr(file,"_opt.")!=nullptr || strstr(file,"_opt_")!=nullptr;
 	if ( is_opt && (global_validateoptions&VO_TSTOPT)==0 ) return result;
 
 	if ( !is_err && !is_opt && !is_exc && (global_validateoptions&VO_TSTRUN)==0 ) return result;
@@ -437,7 +437,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	char *ext = strrchr(dir,'.');
 	char *name = strrchr(dir,'/')+1;
 	char * char_result;
-	if ( ext==NULL || strcmp(ext,".glm")!=0 ) 
+	if ( ext==nullptr || strcmp(ext,".glm")!=0 )
 	{
 		output_error("run_test(char *file='%s'): file is not a GLM", file);
 		return result;
@@ -485,7 +485,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 		dir,validate_cmdargs, name);
 	dt = exec_clock() - dt;
 	double t = (double)dt/(double)global_ms_per_second;
-	if ( elapsed_time!=NULL ) *elapsed_time = t;
+	if ( elapsed_time!=nullptr ) *elapsed_time = t;
 //#ifdef _WIN32
 // 	if ( code>256 )
 // 		output_warning("%s exit code %x is outside normal exit code range and may be interpreted incorrectly", name, code);
@@ -568,9 +568,9 @@ typedef struct s_dirstack {
 	unsigned short id;
 	struct s_dirstack *next;
 } DIRLIST;
-static DIRLIST *dirstack = NULL;
+static DIRLIST *dirstack = nullptr;
 static unsigned short next_id = 0;
-static char *result_code = NULL;
+static char *result_code = nullptr;
 static unsigned int dirlock = 0;
 static void pushdir(char *dir)
 {
@@ -588,15 +588,15 @@ static void sortlist(void)
 	bool done = false;
 	while ( !done )
 	{
-		DIRLIST *item, *prev=NULL;
+		DIRLIST *item, *prev=nullptr;
 		done = true;
-		for ( item=dirstack ; item!=NULL && item->next!=NULL ; prev=item,item=item->next )
+		for ( item=dirstack ; item!=nullptr && item->next!=nullptr ; prev=item,item=item->next )
 		{
 			DIRLIST *first = item;
 			DIRLIST *second = item->next;
 			if ( strcmp(first->name,second->name)>0 )
 			{
-				if ( prev!=NULL )
+				if ( prev!=nullptr )
 					prev->next = second;
 				else
 					dirstack = second;
@@ -625,7 +625,7 @@ void *(run_test_proc)(void *arg)
 	output_debug("starting run_test_proc id %d", id);
 	DIRLIST *item;
 	bool passed = true;
-	while ( (item=popdir())!=NULL )
+	while ( (item=popdir())!=nullptr )
 	{
 		output_debug("process %d picked up '%s'", id, item->name);
 		double dt;
@@ -647,7 +647,7 @@ void *(run_test_proc)(void *arg)
 		final += result;
 	}
 	if ( passed ) final.inc_passed();
-	return NULL;
+	return nullptr;
 }
 
 /** routine to process a directory for autotests */
@@ -669,13 +669,13 @@ static size_t process_dir(const char *path, bool runglms=false)
 	if ( runglms ) final.inc_tested();
 	struct dirent *dp;
 	DIR *dirp = opendir(path);
-	if ( dirp==NULL ) return 0; // nothing to do
+	if ( dirp==nullptr ) return 0; // nothing to do
 
 	#ifdef __linux__
 	struct stat s;
 	#endif
 
-	while ( (dp=readdir(dirp))!=NULL )
+	while ( (dp=readdir(dirp))!=nullptr )
 	{
 		char item[1024];
 		size_t len = sprintf(item,"%s/%s",path,dp->d_name);
@@ -751,10 +751,10 @@ int validate(int argc, char *argv[])
 	global_suppress_repeat_messages = 0;
 	output_message("Starting validation test in directory '%s'", global_workdir);
 	char var[64];
-	if ( global_getvar("clean",var,sizeof(var))!=NULL && atoi(var)!=0 ) clean = true;
+	if ( global_getvar("clean",var,sizeof(var))!=nullptr && atoi(var)!=0 ) clean = true;
 
 	report_open();
-	if ( report_fp==NULL )
+	if ( report_fp==nullptr )
 		output_warning("unable to open '%s' for writing", report_file);
 	report_title("VALIDATION TEST REPORT");
 	report_title("GridLAB-D %d.%d.%d-%d (%s)", global_version_major, global_version_minor, global_version_patch, global_version_build, global_version_branch);
@@ -763,7 +763,7 @@ int validate(int argc, char *argv[])
 	report_newtable("TEST CONFIGURATION");
 	
 	char tbuf[64];
-	time_t now = time(NULL);
+	time_t now = time(nullptr);
 	struct tm *ts = localtime(&now);
 	report_data();
 	report_data("Date");
@@ -846,7 +846,7 @@ int validate(int argc, char *argv[])
 	pthread_t *pid = new pthread_t[n_procs];
 	output_debug("starting validation with cmdargs '%s' using %d threads", validate_cmdargs, n_procs);
 	for ( i=0 ; i<n_procs ; i++ )
-		pthread_create(&pid[i],NULL,run_test_proc,(void*)i);
+		pthread_create(&pid[i],nullptr,run_test_proc,(void*)i);
 	void *rc;
 	output_debug("begin waiting process");
 	for ( i=0 ; i<n_procs ; i++ )

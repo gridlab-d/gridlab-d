@@ -11,6 +11,7 @@
  @{
  **/
 
+#include <json/json.h> 
 #include <cstdio>
 #include <cstring>
 #if defined(_WIN32) && !defined(__MINGW__)
@@ -80,9 +81,11 @@ void modhelp_alpha(pntree **ctree, CLASS *oclass){
 	cmpval = strcmp(oclass->name, targ->name);
 	
 	if(cmpval == 0){
-		; /* exception? */
-	} if(cmpval < 0){ /*  class < root ~ go left */
-		if(targ->left == NULL){
+		//printf("ERROR %s", oclass->name); /* exception? */
+		return;
+	} 
+	if(cmpval < 0){ /*  class < root ~ go left */
+		if(targ->left == nullptr){
 			targ->left = (pntree *)malloc(sizeof(pntree));
 			memset(targ->left, 0, sizeof(pntree));
 			targ->left->name = oclass->name;
@@ -93,7 +96,7 @@ void modhelp_alpha(pntree **ctree, CLASS *oclass){
 			modhelp_alpha(&targ->left, oclass);
 		}
 	} else {
-		if(targ->right == NULL){
+		if(targ->right == nullptr){
 			targ->right = (pntree *)malloc(sizeof(pntree));
 			memset(targ->right, 0, sizeof(pntree));
 			targ->right->name = oclass->name;
@@ -121,6 +124,60 @@ void set_tabs(char *tabs, int tabdepth){
 	}
 }
 
+void jprint_class_d(CLASS *oclass, int tabdepth, Json::Value& _module){
+	PROPERTY *prop;
+	Json::Value _class;
+
+	if (oclass->parent) {
+		_class[oclass->parent->name]["type"] = "parent";
+	}
+	for (prop=oclass->pmap; prop!=nullptr && prop->oclass==oclass; prop=prop->next) {
+		const char *propname = class_get_property_typename(prop->ptype);
+		if (propname!=nullptr) {
+			if ( (prop->access&PA_HIDDEN)==PA_HIDDEN )
+				continue;
+
+			Json::Value _property;
+			if (prop->unit != nullptr) {
+				_property["type"] = propname;
+				_property["unit"] = prop->unit->name;
+			}
+			else if (prop->ptype==PT_set || prop->ptype==PT_enumeration) {
+				KEYWORD *key;
+				_property["type"] = propname;
+				for (key=prop->keywords; key!=nullptr; key=key->next)
+					_property["keywords"][key->name] = key->value;
+			} 
+			else {
+				_property["type"] = propname;
+			}
+			if (prop->description!=nullptr)
+				_property["description"] = prop->description;
+			if (prop->flags&PF_DEPRECATED)
+				_property["deprecated"] = true;
+
+			_class[prop->name] = _property;
+		}
+	}
+	_module[oclass->name] = _class;
+}
+void jprint_class(CLASS *oclass, Json::Value& _module){
+	jprint_class_d(oclass, 0, _module);
+}
+void jprint_modhelp_tree(pntree *ctree, Json::Value& _module){
+	if(ctree->left != nullptr){
+		jprint_modhelp_tree(ctree->left, _module);
+		free(ctree->left);
+		ctree->left = 0;
+	}
+	jprint_class(ctree->oclass, _module);
+	if(ctree->right != nullptr){
+		jprint_modhelp_tree(ctree->right, _module);
+		free(ctree->right);
+		ctree->right = 0;
+	}
+}
+
 void print_class_d(CLASS *oclass, int tabdepth){
 	PROPERTY *prop;
 	FUNCTION *func;
@@ -133,16 +190,16 @@ void print_class_d(CLASS *oclass, int tabdepth){
 		printf("%s\tparent %s;\n", tabs, oclass->parent->name);
 		print_class_d(oclass->parent, tabdepth+1);
 	}
-	for (func=oclass->fmap; func!=NULL && func->oclass==oclass; func=func->next)
+	for (func=oclass->fmap; func!=nullptr && func->oclass==oclass; func=func->next)
 		printf( "%s\tfunction %s();\n", tabs, func->name);
-	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
+	for (prop=oclass->pmap; prop!=nullptr && prop->oclass==oclass; prop=prop->next)
 	{
 		const char *propname = class_get_property_typename(prop->ptype);
-		if (propname!=NULL)
+		if (propname!=nullptr)
 		{
 			if ( (prop->access&PA_HIDDEN)==PA_HIDDEN )
 				continue;
-			if (prop->unit != NULL)
+			if (prop->unit != nullptr)
 			{
 				printf("%s\t%s %s[%s];", tabs, propname, prop->name, prop->unit->name);
 			}
@@ -150,34 +207,32 @@ void print_class_d(CLASS *oclass, int tabdepth){
 			{
 				KEYWORD *key;
 				printf("%s\t%s {", tabs, propname);
-				for (key=prop->keywords; key!=NULL; key=key->next)
-					printf("%s=%" FMT_INT64 "u%s", key->name, (int64)key->value, key->next==NULL?"":", ");
+				for (key=prop->keywords; key!=nullptr; key=key->next)
+					printf("%s=%" FMT_INT64 "u%s", key->name, (int64)key->value, key->next==nullptr?"":", ");
 				printf("} %s;", prop->name);
 			} 
 			else 
 			{
 				printf("%s\t%s %s;", tabs, propname, prop->name);
 			}
-			if (prop->description!=NULL)
+			if (prop->description!=nullptr)
 				printf(" // %s%s",prop->flags&PF_DEPRECATED?"(DEPRECATED) ":"",prop->description);
 			printf("\n");
 		}
 	}
 	printf("%s}\n\n", tabs);
 }
-
 void print_class(CLASS *oclass){
 	print_class_d(oclass, 0);
 }
-
 void print_modhelp_tree(pntree *ctree){
-	if(ctree->left != NULL){
+	if(ctree->left != nullptr){
 		print_modhelp_tree(ctree->left);
 		free(ctree->left);
 		ctree->left = 0;
 	}
 	print_class(ctree->oclass);
-	if(ctree->right != NULL){
+	if(ctree->right != nullptr){
 		print_modhelp_tree(ctree->right);
 		free(ctree->right);
 		ctree->right = 0;
@@ -216,7 +271,7 @@ static int help(int argc, char *argv[]);
 static STATUS no_cmdargs()
 {
 	char htmlfile[1024];
-	if ( global_autostartgui && find_file("gridlabd.htm",nullptr,R_OK,htmlfile,sizeof(htmlfile)-1)!=NULL )
+	if ( global_autostartgui && find_file("gridlabd.htm",nullptr,R_OK,htmlfile,sizeof(htmlfile)-1)!=nullptr )
 	{
 		char cmd[1024];
 
@@ -248,7 +303,6 @@ static STATUS no_cmdargs()
 
 	return SUCCESS;
 }
-
 static int copyright(int argc, char *argv[])
 {
 	legal_notice();
@@ -451,7 +505,7 @@ static int relax(int argc, char *argv[])
 static int pidfile(int argc, char *argv[])
 {
 	char *filename = strchr(*argv,'=');
-	if (filename==NULL)
+	if (filename==nullptr)
 		strcpy(global_pidfile,"gridlabd.pid");
 	else
 		strcpy(global_pidfile,filename+1);
@@ -474,8 +528,8 @@ static int avlbalance(int argc, char *argv[])
 static int testall(int argc, char *argv[])
 {
 	int test_mod_num = 1;
-	FILE *fd = NULL;
-	if(*++argv != NULL)
+	FILE *fd = nullptr;
+	if(*++argv != nullptr)
 		fd = fopen(*argv,"r");
 	else {
 		output_fatal("no filename for testall");
@@ -489,7 +543,7 @@ static int testall(int argc, char *argv[])
 	argc--;
 	global_test_mode=true;
 
-	if(fd == NULL)
+	if(fd == nullptr)
 	{
 		output_fatal("incorrect module list file name");
 		/*	TROUBLESHOOT
@@ -503,22 +557,114 @@ static int testall(int argc, char *argv[])
 		return CMDERR;
 	return 1;
 }
-static int modhelp(int argc, char *argv[])
+static int modattr(int argc, char *argv[])
 {
 	if(argc > 1){
-		MODULE *mod = NULL;
-		CLASS *oclass = NULL;
+		MODULE *mod = nullptr;
+		CLASS *oclass = nullptr;
 		argv++;
 		argc--;
 		if(strchr(argv[0], ':') == 0){ // no class
-			mod = module_load(argv[0],0,NULL);
+			mod = module_load(argv[0],0,nullptr);
 		} else {
-			GLOBALVAR *var=NULL;
+			mod = module_load(strtok(argv[0],":"),0,nullptr);
+		}
+
+		Json::Value _module;
+		Json::Value _global;
+		GLOBALVAR *var=nullptr;
+			/* dump module globals */
+		while ((var=global_getnext(var))!=nullptr)
+		{
+			PROPERTY *prop = var->prop;
+			const char *proptype = class_get_property_typename(prop->ptype);
+			if ( strncmp(var->prop->name,mod->name,strlen(mod->name))!=0 )
+				continue;
+			if ( (prop->access&PA_HIDDEN)==PA_HIDDEN )
+				continue;
+			if (proptype!=nullptr)
+			{
+				Json::Value _property;
+				if ( prop->unit!=nullptr )
+				{
+					_property["type"] = proptype;
+					_property["unit"] = prop->unit->name;
+				}
+				else if (prop->ptype==PT_set || prop->ptype==PT_enumeration)
+				{
+					KEYWORD *key;
+					_property["type"] = proptype;
+					for (key=prop->keywords; key!=nullptr; key=key->next)
+						_property["keywords"][key->name] = key->value;
+				} 
+				else 
+				{
+					_property["type"] = proptype;
+				}
+				if (prop->description!=nullptr)
+					_property["description"] = prop->description;
+				if (prop->flags&PF_DEPRECATED)
+					_property["deprecated"] = true;
+
+				_global[prop->name] = _property;
+			}
+		}
+		_module["global_attributes"] = _global;
+
+		if(mod == nullptr){
+			output_fatal("module %s is not found",*argv);
+			/*	TROUBLESHOOT
+				The <b>--modhelp</b> parameter was found on the command line, but
+				if was followed by a module specification that isn't valid.
+				Verify that the module exists in GridLAB-D's <b>lib</b> folder.
+			*/
+			return FAILED;
+		}
+		pntree	*ctree;
+		/* lexographically sort all elements from class_get_first_class & oclass->next */
+
+		oclass=class_get_first_class();
+		ctree = (pntree *)malloc(sizeof(pntree));
+		
+		if(ctree == nullptr){
+			throw_exception("--modhelp: malloc failure");
+			/* TROUBLESHOOT
+				The memory allocation needed for module help to function has failed.  Try freeing up system memory and try again.
+			 */
+		}
+		
+		ctree->name = oclass->name;
+		ctree->oclass = oclass;
+		ctree->left = ctree->right = 0;
+		
+		for(; oclass != nullptr; oclass = oclass->next){
+			modhelp_alpha(&ctree, oclass);
+		}
+
+		/* flatten tree */
+		jprint_modhelp_tree(ctree, _module);
+		Json::StreamWriterBuilder builder;
+		builder["indentation"] = "  ";
+		std::cout << Json::writeString(builder, _module);
+	}
+	return 1;
+}
+static int modhelp(int argc, char *argv[])
+{
+	if(argc > 1){
+		MODULE *mod = nullptr;
+		CLASS *oclass = nullptr;
+		argv++;
+		argc--;
+		if(strchr(argv[0], ':') == 0){ // no class
+			mod = module_load(argv[0],0,nullptr);
+		} else {
+			GLOBALVAR *var=nullptr;
 			char *cname;
 			cname = strchr(argv[0], ':')+1;
-			mod = module_load(strtok(argv[0],":"),0,NULL);
+			mod = module_load(strtok(argv[0],":"),0,nullptr);
 			oclass = class_get_class_from_classname(cname);
-			if(oclass == NULL){
+			if(oclass == nullptr){
 				output_fatal("Unable to find class '%s' in module '%s'", cname, argv[0]);
 				/*	TROUBLESHOOT
 					The <b>--modhelp</b> parameter was found on the command line, but
@@ -530,7 +676,7 @@ static int modhelp(int argc, char *argv[])
 
 			/* dump module globals */
 			printf("module %s {\n", mod->name);
-			while ((var=global_getnext(var))!=NULL)
+			while ((var=global_getnext(var))!=nullptr)
 			{
 				PROPERTY *prop = var->prop;
 				const char *proptype = class_get_property_typename(prop->ptype);
@@ -538,9 +684,9 @@ static int modhelp(int argc, char *argv[])
 					continue;
 				if ( (prop->access&PA_HIDDEN)==PA_HIDDEN )
 					continue;
-				if (proptype!=NULL)
+				if (proptype!=nullptr)
 				{
-					if ( prop->unit!=NULL )
+					if ( prop->unit!=nullptr )
 					{
 						printf("\t%s %s[%s];", proptype, strrchr(prop->name,':')+1, prop->unit->name);
 					}
@@ -548,22 +694,22 @@ static int modhelp(int argc, char *argv[])
 					{
 						KEYWORD *key;
 						printf("\t%s {", proptype);
-						for (key=prop->keywords; key!=NULL; key=key->next)
-							printf("%s=%ld%s", key->name, key->value, key->next==NULL?"":", ");
+						for (key=prop->keywords; key!=nullptr; key=key->next)
+							printf("%s=%ld%s", key->name, key->value, key->next==nullptr?"\n":",\n");
 						printf("} %s;", strrchr(prop->name,':')+1);
 					} 
 					else 
 					{
 						printf("\t%s %s;", proptype, strrchr(prop->name,':')+1);
 					}
-					if (prop->description!=NULL)
+					if (prop->description!=nullptr)
 						printf(" // %s%s",prop->flags&PF_DEPRECATED?"(DEPRECATED) ":"",prop->description);
 					printf("\n");
 				}
 			}
 			printf("}\n");
 		}
-		if(mod == NULL){
+		if(mod == nullptr){
 			output_fatal("module %s is not found",*argv);
 			/*	TROUBLESHOOT
 				The <b>--modhelp</b> parameter was found on the command line, but
@@ -572,7 +718,7 @@ static int modhelp(int argc, char *argv[])
 			*/
 			return FAILED;
 		}
-		if(oclass != NULL)
+		if(oclass != nullptr)
 		{
 			print_class(oclass);
 		}
@@ -585,7 +731,7 @@ static int modhelp(int argc, char *argv[])
 			oclass=class_get_first_class();
 			ctree = (pntree *)malloc(sizeof(pntree));
 			
-			if(ctree == NULL){
+			if(ctree == nullptr){
 				throw_exception("--modhelp: malloc failure");
 				/* TROUBLESHOOT
 					The memory allocation needed for module help to function has failed.  Try freeing up system memory and try again.
@@ -596,7 +742,7 @@ static int modhelp(int argc, char *argv[])
 			ctree->oclass = oclass;
 			ctree->left = ctree->right = 0;
 			
-			for(; oclass != NULL; oclass = oclass->next){
+			for(; oclass != nullptr; oclass = oclass->next){
 				modhelp_alpha(&ctree, oclass);
 				//print_class(oclass);
 			}
@@ -616,8 +762,8 @@ static int modtest(int argc, char *argv[])
 {
 	if (argc>1)
 	{
-		MODULE *mod = module_load(argv[1],0,NULL);
-		if (mod==NULL)
+		MODULE *mod = module_load(argv[1],0,nullptr);
+		if (mod==nullptr)
 			output_fatal("module %s is not found",argv[1]);
 			/*	TROUBLESHOOT
 				The <b>--modtest</b> parameter was found on the command line, but
@@ -627,7 +773,7 @@ static int modtest(int argc, char *argv[])
 		else 
 		{
 			argv++;argc--;
-			if (mod->test==NULL)
+			if (mod->test==nullptr)
 				output_fatal("module %s does not implement a test routine", argv[0]);
 				/*	TROUBLESHOOT
 					The <b>--modtest</b> parameter was found on the command line, but
@@ -639,7 +785,7 @@ static int modtest(int argc, char *argv[])
 			else
 			{
 				output_test("*** modtest of %s beginning ***", argv[0]);
-				mod->test(0,NULL);
+				mod->test(0,nullptr);
 				output_test("*** modtest of %s ended ***", argv[0]);
 			}
 		}			
@@ -674,7 +820,7 @@ static int define(int argc, char *argv[])
 	{
 		bool namestate = global_strictnames;
 		global_strictnames = false;
-		if (global_setvar(*++argv,NULL)==SUCCESS){
+		if (global_setvar(*++argv,nullptr)==SUCCESS){
 			argc--;
 		}
 		global_strictnames = namestate;
@@ -696,10 +842,10 @@ static int globals(int argc, char *argv[])
 {
 	char *list[65536];
 	int i, n=0;
-	GLOBALVAR *var = NULL;
+	GLOBALVAR *var = nullptr;
 
 	/* load the list into the array */
-	while ((var=global_getnext(var))!=NULL)
+	while ((var=global_getnext(var))!=nullptr)
 	{
 		if (n<sizeof(list)/sizeof(list[0]))
 			list[n++] = var->prop->name;
@@ -737,13 +883,13 @@ static int redirect(int argc, char *argv[])
 		{} /* used by validate to block default --redirect all behavior */
 		else if (strcmp(buffer,"all")==0)
 		{
-			if (output_redirect("output",NULL)==NULL ||
-				output_redirect("error",NULL)==NULL ||
-				output_redirect("warning",NULL)==NULL ||
-				output_redirect("debug",NULL)==NULL ||
-				output_redirect("verbose",NULL)==NULL ||
-				output_redirect("profile",NULL)==NULL ||
-				output_redirect("progress",NULL)==NULL)
+			if (output_redirect("output",nullptr)==nullptr ||
+				output_redirect("error",nullptr)==nullptr ||
+				output_redirect("warning",nullptr)==nullptr ||
+				output_redirect("debug",nullptr)==nullptr ||
+				output_redirect("verbose",nullptr)==nullptr ||
+				output_redirect("profile",nullptr)==nullptr ||
+				output_redirect("progress",nullptr)==nullptr)
 			{
 				output_fatal("redirection of all failed");
 				/* TROUBLESHOOT
@@ -756,10 +902,10 @@ static int redirect(int argc, char *argv[])
 				return FAILED;
 			}
 		}
-		else if ((p=strchr(buffer,':'))!=NULL)
+		else if ((p=strchr(buffer,':'))!=nullptr)
 		{
 			*p++='\0';
-			if (output_redirect(buffer,p)==NULL)
+			if (output_redirect(buffer,p)==nullptr)
 			{
 				output_fatal("redirection of %s to '%s' failed: %s",buffer,p, strerror(errno));
 				/*	TROUBLESHOOT
@@ -771,7 +917,7 @@ static int redirect(int argc, char *argv[])
 				return FAILED;
 			}
 		}
-		else if (output_redirect(buffer,NULL)==NULL)
+		else if (output_redirect(buffer,nullptr)==nullptr)
 		{
 				output_fatal("default redirection of %s failed: %s",buffer, strerror(errno));
 				/*	TROUBLESHOOT
@@ -894,7 +1040,7 @@ static int xsd(int argc, char *argv[])
 	else
 	{
 		MODULE *mod;
-		for (mod=module_get_first(); mod!=NULL; mod=mod->next)
+		for (mod=module_get_first(); mod!=nullptr; mod=mod->next)
 			output_xsd(mod->name);
 		return 0;
 	}
@@ -912,10 +1058,10 @@ static int xsl(int argc, char *argv[])
 		p_args = (char**)malloc(sizeof(char*)*n_args);
 		p_arg = strtok(*argv,",");
 		n_args=0;
-		while (p_arg!=NULL)
+		while (p_arg!=nullptr)
 		{
 			p_args[n_args++] = p_arg;
-			p_arg = strtok(NULL,",");
+			p_arg = strtok(nullptr,",");
 		}
 		sprintf(fname,"gridlabd-%d_%d.xsl",global_version_major,global_version_minor);
 		output_xsl(fname,n_args,p_args);
@@ -1053,14 +1199,13 @@ static int slave(int argc, char *argv[])
 	output_verbose("slave instance for master '%s' using connection '%" FMT_INT64 "x' started ok", global_master, global_master_port);
 	return 1;
 }
-
 static int slavenode(int argc, char *argv[])
 {
 	exec_slave_node();
 	return CMDOK;
 }
-
-static int slave_id(int argc, char *argv[]){
+static int slave_id(int argc, char *argv[])
+{
 	if(argc < 2){
 		output_error("--id requires an ID number argument");
 		return CMDERR;
@@ -1093,27 +1238,27 @@ static int example(int argc, char *argv[])
 		output_error("--example: %s name is not valid",n==0?"module":"class");
 		return CMDERR;
 	}
-	module = module_load(modname,0,NULL);
-	if ( module==NULL )
+	module = module_load(modname,0,nullptr);
+	if ( module==nullptr )
 	{
 		output_error("--example: module %d is not found", modname);
 		return CMDERR;
 	}
 	oclass = class_get_class_from_classname(classname);
-	if ( oclass==NULL )
+	if ( oclass==nullptr )
 	{
 		output_error("--example: class %d is not found", classname);
 		return CMDERR;
 	}
 	object = object_create_single(oclass);
-	if ( object==NULL )
+	if ( object==nullptr )
 	{
 		output_error("--example: unable to create example object from class %s", classname);
 		return CMDERR;
 	}
-	global_clock = time(NULL);
-	output_redirect("error",NULL);
-	output_redirect("warning",NULL);
+	global_clock = time(nullptr);
+	output_redirect("error",nullptr);
+	output_redirect("warning",nullptr);
 	if ( !object_init(object) )
 		output_warning("--example: unable to initialize example object from class %s", classname);
 	if ( object_save(buffer,sizeof(buffer),object)>0 )
@@ -1145,39 +1290,39 @@ static int mclassdef(int argc, char *argv[])
                 output_error("--mclassdef: %s name is not valid",n==0?"module":"class");
                 return CMDERR;
         }
-        module = module_load(modname,0,NULL);
-        if ( module==NULL )
+        module = module_load(modname,0,nullptr);
+        if ( module==nullptr )
         {
                 output_error("--mclassdef: module %d is not found", modname);
                 return CMDERR;
         }
         oclass = class_get_class_from_classname(classname);
-        if ( oclass==NULL )
+        if ( oclass==nullptr )
         {
                 output_error("--mclassdef: class %d is not found", classname);
                 return CMDERR;
         }
         obj = object_create_single(oclass);
-        if ( obj==NULL )
+        if ( obj==nullptr )
         {
                 output_error("--mclassdef: unable to create mclassdef object from class %s", classname);
                 return CMDERR;
         }
-        global_clock = time(NULL);
-        output_redirect("error",NULL);
-        output_redirect("warning",NULL);
+        global_clock = time(nullptr);
+        output_redirect("error",nullptr);
+        output_redirect("warning",nullptr);
         if ( !object_init(obj) )
                 output_warning("--mclassdef: unable to initialize mclassdef object from class %s", classname);
 	
 	/* output the classdef */
 	count = sprintf(buffer,"struct('module','%s','class','%s'", modname, classname);
-	for ( prop = oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
+	for ( prop = oclass->pmap ; prop!=nullptr && prop->oclass==oclass ; prop=prop->next )
 	{
 		char temp[1024];
 		char *value = object_property_to_string(obj, prop->name, temp, 1023);
-		if ( strchr(prop->name,'.')!=NULL )
+		if ( strchr(prop->name,'.')!=nullptr )
 			continue; /* do not output structures */
-		if ( value!=NULL )
+		if ( value!=nullptr )
                        count += sprintf(buffer+count, ",...\n\t'%s','%s'", prop->name, value);
 	}
 	count += sprintf(buffer+count,");\n");
@@ -1189,7 +1334,8 @@ static int locktest(int argc, char *argv[])
 	test_lock();
 	return CMDOK;
 }
-static int lock(int argc, char *argv[]){
+static int lock(int argc, char *argv[])
+{
 	global_lock_enabled = !global_lock_enabled;
 	return 0;
 }
@@ -1221,93 +1367,94 @@ static int workdir(int argc, char *argv[])
 
 static CMDARG main_cmd[] = {
 
-	/* NULL,NULL,NULL,NULL, "Section heading */
-	{NULL,NULL,NULL,NULL, "Command-line options"},
+	/* nullptr,nullptr,nullptr,nullptr, "Section heading */
+	{nullptr,nullptr,nullptr,nullptr, "Command-line options"},
 
 	/* long_str, short_str, processor_call, arglist_desc, help_desc */
-	{"check",		"c",	check,			NULL, "Performs module checks before starting simulation" },
-	{"debug",		NULL,	debug,			NULL, "Toggles display of debug messages" },
-	{"debugger",	NULL,	debugger,		NULL, "Enables the debugger" },
-	{"dumpall",		NULL,	dumpall,		NULL, "Dumps the global variable list" },
-	{"mt_profile",	NULL,	mt_profile,		"<n-threads>", "Analyses multithreaded performance profile" },
-	{"profile",		NULL,	profile,		NULL, "Toggles performance profiling of core and modules while simulation runs" },
-	{"quiet",		"q",	quiet,			NULL, "Toggles suppression of all but error and fatal messages" },
-	{"verbose",		"v",	verbose,		NULL, "Toggles output of verbose messages" },
-	{"warn",		"w",	warn,			NULL, "Toggles display of warning messages" },
-	{"workdir",		"W",	workdir,		NULL, "Sets the working directory" },
-	{"lock",        "l",    lock,           NULL, "Toggles read and write locks"},
+	{"check",		"c",	check,			nullptr, "Performs module checks before starting simulation" },
+	{"debug",		nullptr,	debug,			nullptr, "Toggles display of debug messages" },
+	{"debugger",	nullptr,	debugger,		nullptr, "Enables the debugger" },
+	{"dumpall",		nullptr,	dumpall,		nullptr, "Dumps the global variable list" },
+	{"mt_profile",	nullptr,	mt_profile,		"<n-threads>", "Analyses multithreaded performance profile" },
+	{"profile",		nullptr,	profile,		nullptr, "Toggles performance profiling of core and modules while simulation runs" },
+	{"quiet",		"q",	quiet,			nullptr, "Toggles suppression of all but error and fatal messages" },
+	{"verbose",		"v",	verbose,		nullptr, "Toggles output of verbose messages" },
+	{"warn",		"w",	warn,			nullptr, "Toggles display of warning messages" },
+	{"workdir",		"W",	workdir,		nullptr, "Sets the working directory" },
+	{"lock",		"l",	lock,		nullptr, "Toggles read and write locks"},
 	
-	{NULL,NULL,NULL,NULL, "Global and module control"},
+	{nullptr,nullptr,nullptr,nullptr, "Global and module control"},
 	{"define",		"D",	define,			"<name>=[<module>:]<value>", "Defines or sets a global (or module) variable" },
-	{"globals",		NULL,	globals,		NULL, "Displays a sorted list of all global variables" },
+	{"globals",		nullptr,	globals,		nullptr, "Displays a sorted list of all global variables" },
 	{"libinfo",		"L",	libinfo,		"<module>", "Displays information about a module" },
 
-	{NULL,NULL,NULL,NULL, "Information"},
-	{"copyright",	NULL,	copyright,		NULL, "Displays copyright" },
-	{"license",		NULL,	license,		NULL, "Displays the license agreement" },
-	{"version",		"V",	version,		NULL, "Displays the version information" },
-	{"setup",		NULL,	setup,			NULL, "Open simulation setup screen" },
+	{nullptr,nullptr,nullptr,nullptr, "Information"},
+	{"copyright",	nullptr,	copyright,		nullptr, "Displays copyright" },
+	{"license",		nullptr,	license,		nullptr, "Displays the license agreement" },
+	{"version",		"V",	version,		nullptr, "Displays the version information" },
+	{"setup",		nullptr,	setup,			nullptr, "Open simulation setup screen" },
 
-	{NULL,NULL,NULL,NULL, "Test processes"},
-	{"dsttest",		NULL,	dsttest,		NULL, "Perform daylight savings rule test" },
-	{"endusetest",	NULL,	endusetest,		NULL, "Perform enduse pseudo-object test" },
-	{"globaldump",	NULL,	globaldump,		NULL, "Perform a dump of the global variables" },
-	{"loadshapetest", NULL,	loadshapetest,	NULL, "Perform loadshape pseudo-object test" },
-	{"locktest",	NULL,	locktest,		NULL, "Perform memory locking test" },
-	{"modtest",		NULL,	modtest,		"<module>", "Perform test function provided by module" },
-	{"randtest",	NULL,	randtest,		NULL, "Perform random number generator test" },
-	{"scheduletest", NULL,	scheduletest,	NULL, "Perform schedule pseudo-object test" },	
-	{"test",		NULL,	test,			"<module>", "Perform unit test of module (deprecated)" },
-	{"testall",		NULL,	testall,		"=<filename>", "Perform tests of modules listed in file" },
-	{"unitstest",	NULL,	unitstest,		NULL, "Perform unit conversion system test" },
-	{"validate",	NULL,	validate,		"...", "Perform model validation check" },
+	{nullptr,nullptr,nullptr,nullptr, "Test processes"},
+	{"dsttest",		nullptr,	dsttest,		nullptr, "Perform daylight savings rule test" },
+	{"endusetest",	nullptr,	endusetest,		nullptr, "Perform enduse pseudo-object test" },
+	{"globaldump",	nullptr,	globaldump,		nullptr, "Perform a dump of the global variables" },
+	{"loadshapetest", nullptr,	loadshapetest,	nullptr, "Perform loadshape pseudo-object test" },
+	{"locktest",	nullptr,	locktest,		nullptr, "Perform memory locking test" },
+	{"modtest",		nullptr,	modtest,		"<module>", "Perform test function provided by module" },
+	{"randtest",	nullptr,	randtest,		nullptr, "Perform random number generator test" },
+	{"scheduletest", nullptr,	scheduletest,	nullptr, "Perform schedule pseudo-object test" },
+	{"test",		nullptr,	test,			"<module>", "Perform unit test of module (deprecated)" },
+	{"testall",		nullptr,	testall,		"=<filename>", "Perform tests of modules listed in file" },
+	{"unitstest",	nullptr,	unitstest,		nullptr, "Perform unit conversion system test" },
+	{"validate",	nullptr,	validate,		"...", "Perform model validation check" },
 
-	{NULL,NULL,NULL,NULL, "File and I/O Formatting"},
-	{"kml",			NULL,	kml,			"[=<filename>]", "Output to KML (Google Earth) file of model (only supported by some modules)" },
-	{"stream",		NULL,	_stream,		NULL, "Toggles streaming I/O" },
-	{"sanitize",	NULL,	sanitize,		"<options> <indexfile> <outputfile>", "Output a sanitized version of the GLM model"},
-	{"xmlencoding",	NULL,	xmlencoding,	"8|16|32", "Set the XML encoding system" },
-	{"xmlstrict",	NULL,	xmlstrict,		NULL, "Toggle strict XML formatting (default is enabled)" },
-	{"xsd",			NULL,	xsd,			"[module[:class]]", "Prints the XSD of a module or class" },
-	{"xsl",			NULL,	xsl,			"module[,module[,...]]]", "Create the XSL file for the module(s) listed" },
+	{nullptr,nullptr,nullptr,nullptr, "File and I/O Formatting"},
+	{"kml",			nullptr,	kml,			"[=<filename>]", "Output to KML (Google Earth) file of model (only supported by some modules)" },
+	{"stream",		nullptr,	_stream,		nullptr, "Toggles streaming I/O" },
+	{"sanitize",	nullptr,	sanitize,		"<options> <indexfile> <outputfile>", "Output a sanitized version of the GLM model"},
+	{"xmlencoding",	nullptr,	xmlencoding,	"8|16|32", "Set the XML encoding system" },
+	{"xmlstrict",	nullptr,	xmlstrict,		nullptr, "Toggle strict XML formatting (default is enabled)" },
+	{"xsd",			nullptr,	xsd,			"[module[:class]]", "Prints the XSD of a module or class" },
+	{"xsl",			nullptr,	xsl,			"module[,module[,...]]]", "Create the XSL file for the module(s) listed" },
 
-	{NULL,NULL,NULL,NULL, "Help"},
-	{"help",		"h",		help,		NULL, "Displays command line help" },
-	{"info",		NULL,		info,		"<subject>", "Obtain online help regarding <subject>"},
-	{"modhelp",		NULL,		modhelp,	"module[:class]", "Display structure of a class or all classes in a module" },
-	{"modlist",		NULL,		modlist,	NULL, "Display list of available modules"},
-	{"example",		NULL,		example,	"module:class", "Display an example of an instance of the class after init" },
-	{"mclassdef",		NULL,		mclassdef,	"module:class", "Generate Matlab classdef of an instance of the class after init" },
+	{nullptr,nullptr,nullptr,nullptr, "Help"},
+	{"help",		"h",		help,		nullptr, "Displays command line help" },
+	{"info",		nullptr,		info,		"<subject>", "Obtain online help regarding <subject>"},
+	{"modattr",		nullptr,		modattr,	"module", "Display structure of all classes in a module and its attributes in json format" },
+	{"modhelp",		nullptr,		modhelp,	"module[:class]", "Display structure of a class or all classes in a module" },
+	{"modlist",		nullptr,		modlist,	nullptr, "Display list of available modules"},
+	{"example",		nullptr,		example,	"module:class", "Display an example of an instance of the class after init" },
+	{"mclassdef",		nullptr,		mclassdef,	"module:class", "Generate Matlab classdef of an instance of the class after init" },
 
-	{NULL,NULL,NULL,NULL, "Process control"},
-	{"pidfile",		NULL,	pidfile,		"[=<filename>]", "Set the process ID file (default is gridlabd.pid)" },
+	{nullptr,nullptr,nullptr,nullptr, "Process control"},
+	{"pidfile",		nullptr,	pidfile,		"[=<filename>]", "Set the process ID file (default is gridlabd.pid)" },
 	{"threadcount", "T",	threadcount,	"<n>", "Set the maximum number of threads allowed" },
-	{"job",			NULL,	job,			"...", "Start a job"},
+	{"job",			nullptr,	job,			"...", "Start a job"},
 
-	{NULL,NULL,NULL,NULL, "System options"},
-	{"avlbalance",	NULL,	avlbalance,		NULL, "Toggles automatic balancing of object index" },
-	{"bothstdout",	NULL,	bothstdout,		NULL, "Merges all output on stdout" },
-	{"check_version", NULL,	_check_version,	NULL, "Perform online version check to see if any updates are available" },
-	{"compile",		"C",	compile,		NULL, "Toggles compile-only flags" },
+	{nullptr,nullptr,nullptr,nullptr, "System options"},
+	{"avlbalance",	nullptr,	avlbalance,		nullptr, "Toggles automatic balancing of object index" },
+	{"bothstdout",	nullptr,	bothstdout,		nullptr, "Merges all output on stdout" },
+	{"check_version", nullptr,	_check_version,	nullptr, "Perform online version check to see if any updates are available" },
+	{"compile",		"C",	compile,		nullptr, "Toggles compile-only flags" },
 	{"environment",	"e",	environment,	"<appname>", "Set the application to use for run environment" },
 	{"output",		"o",	output,			"<file>", "Enables save of output to a file (default is gridlabd.glm)" },
-	{"pause",		NULL,	pauseatexit,			NULL, "Toggles pause-at-exit feature" },
-	{"relax",		NULL,	relax,			NULL, "Allows implicit variable definition when assignments are made" },
+	{"pause",		nullptr,	pauseatexit,			nullptr, "Toggles pause-at-exit feature" },
+	{"relax",		nullptr,	relax,			nullptr, "Allows implicit variable definition when assignments are made" },
 
-	{NULL,NULL,NULL,NULL, "Server mode"},
-	{"server",		NULL,	server,			NULL, "Enables the server"},
-	{"clearmap",	NULL,	clearmap,		NULL, "Clears the process map of defunct jobs (deprecated form)" },
-	{"pclear",		NULL,	clearmap,		NULL, "Clears the process map of defunct jobs" },
-	{"pcontrol",	NULL,	pcontrol,		NULL, "Enters process controller" },
-	{"pkill",		NULL,	pkill,			"<procnum>", "Kills a run on a processor" },
-	{"plist",		NULL,	plist,			NULL, "List runs on processes" },
-	{"pstatus",		NULL,	pstatus,		NULL, "Prints the process list" },
-	{"redirect",	NULL,	redirect,		"<stream>[:<file>]", "Redirects an output to stream to a file (or null)" },
-	{"server_portnum", "P", server_portnum, NULL, "Sets the server port number (default is 6267)" },
-	{"server_inaddr", NULL, server_inaddr,	NULL, "Sets the server interface address (default is INADDR_ANY, any interface)"},
-	{"slave",		NULL,	slave,			"<master>", "Enables slave mode under master"},
-	{"slavenode",	NULL,	slavenode,		NULL, "Sets a listener for a remote GridLAB-D call to run in slave mode"},
-	{"id",			NULL,	slave_id,		"<idnum>", "Sets the ID number for the slave to inform its using to the master"},
+	{nullptr,nullptr,nullptr,nullptr, "Server mode"},
+	{"server",		nullptr,	server,			nullptr, "Enables the server"},
+	{"clearmap",	nullptr,	clearmap,		nullptr, "Clears the process map of defunct jobs (deprecated form)" },
+	{"pclear",		nullptr,	clearmap,		nullptr, "Clears the process map of defunct jobs" },
+	{"pcontrol",	nullptr,	pcontrol,		nullptr, "Enters process controller" },
+	{"pkill",		nullptr,	pkill,			"<procnum>", "Kills a run on a processor" },
+	{"plist",		nullptr,	plist,			nullptr, "List runs on processes" },
+	{"pstatus",		nullptr,	pstatus,		nullptr, "Prints the process list" },
+	{"redirect",	nullptr,	redirect,		"<stream>[:<file>]", "Redirects an output to stream to a file (or null)" },
+	{"server_portnum", "P", server_portnum, nullptr, "Sets the server port number (default is 6267)" },
+	{"server_inaddr", nullptr, server_inaddr,	nullptr, "Sets the server interface address (default is INADDR_ANY, any interface)"},
+	{"slave",		nullptr,	slave,			"<master>", "Enables slave mode under master"},
+	{"slavenode",	nullptr,	slavenode,		nullptr, "Sets a listener for a remote GridLAB-D call to run in slave mode"},
+	{"id",			nullptr,	slave_id,		"<idnum>", "Sets the ID number for the slave to inform its using to the master"},
 };
 
 int cmdarg_runoption(const char *value)
@@ -1318,7 +1465,7 @@ int cmdarg_runoption(const char *value)
 	{
 		for ( i=0 ; i<sizeof(main_cmd)/sizeof(main_cmd[0]) ; i++ )
 		{
-			if ( main_cmd[i].lopt!=NULL && strcmp(main_cmd[i].lopt,option)==0 )
+			if ( main_cmd[i].lopt!=nullptr && strcmp(main_cmd[i].lopt,option)==0 )
 				return main_cmd[i].call(n,(char**)&params);
 		}
 	}
@@ -1345,7 +1492,7 @@ static int help(int argc, char *argv[])
 		CMDARG arg = main_cmd[i];
 
 		/* if this entry is a heading */
-		if ( arg.lopt==NULL && arg.sopt==NULL && arg.call==NULL && arg.args==NULL)
+		if ( arg.lopt==nullptr && arg.sopt==nullptr && arg.call==nullptr && arg.args==nullptr)
 		{
 			size_t l = strlen(arg.desc);
 			char buffer[1024];
@@ -1371,7 +1518,7 @@ static int help(int argc, char *argv[])
 				strcat(buffer,"-");
 				strcat(buffer,arg.sopt);
 			}
-			if ( arg.args==NULL || ( arg.args[0]!='=' && strncmp(arg.args,"[=",2)!=0 ) )
+			if ( arg.args==nullptr || ( arg.args[0]!='=' && strncmp(arg.args,"[=",2)!=0 ) )
 				strcat(buffer," ");
 			if ( arg.args )
 			{

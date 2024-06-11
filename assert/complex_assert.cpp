@@ -19,16 +19,16 @@ EXPORT_INIT(complex_assert);
 EXPORT_COMMIT(complex_assert);
 EXPORT_NOTIFY(complex_assert);
 
-CLASS *complex_assert::oclass = NULL;
-complex_assert *complex_assert::defaults = NULL;
+CLASS *complex_assert::oclass = nullptr;
+complex_assert *complex_assert::defaults = nullptr;
 
 complex_assert::complex_assert(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gl_register_class(module,"complex_assert",sizeof(complex_assert),PC_AUTOLOCK|PC_OBSERVER);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class complex_assert";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -52,7 +52,7 @@ complex_assert::complex_assert(MODULE *module)
 			PT_complex, "value", get_value_offset(),PT_DESCRIPTION,"Value to assert",
 			PT_double, "within", get_within_offset(),PT_DESCRIPTION,"Tolerance for a successful assert",
 			PT_char1024, "target", get_target_offset(),PT_DESCRIPTION,"Property to perform the assert upon",	
-			NULL)<1){
+			nullptr)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
@@ -268,7 +268,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 			//Get value
 			x = (complex*)gl_get_complex_by_name(obj->parent,da->get_target());
 
-			if (x==NULL) 
+			if (x==nullptr)
 			{
 				gl_error("Specified target %s for %s is not valid.",da->get_target(),gl_name(obj->parent,buff,64));
 				/*  TROUBLESHOOT

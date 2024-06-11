@@ -12,7 +12,7 @@ CLASS *csv_reader::oclass = 0;
 EXPORT int create_csv_reader(OBJECT **obj, OBJECT *parent){
 	csv_reader *my = 0;
 	*obj = gl_create_object(csv_reader::oclass);
-	if(*obj != NULL){
+	if(*obj != nullptr){
 		return 1;
 	}
 	//printf("create_csv_reader\n");
@@ -35,7 +35,7 @@ csv_reader::csv_reader(){
 
 csv_reader::csv_reader(MODULE *module){
 	memset(this, 0, sizeof(csv_reader));
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"csv_reader",sizeof(csv_reader), 0);
 		if (gl_publish_variable(oclass,
@@ -59,7 +59,7 @@ csv_reader::csv_reader(MODULE *module){
 			PT_double,"timezone_offset",PADDR(tz_numval),
 			PT_char256,"columns",PADDR(columns_str),
 			PT_char256,"filename",PADDR(filename),
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(csv_reader));
 	}
 }
@@ -105,7 +105,7 @@ int csv_reader::open(const char *file){
 			has_cols = 1;
 		}
 	}
-	while(fgets(line, 1024, infile) != NULL){
+	while(fgets(line, 1024, infile) != nullptr){
 		++linenum;
 		// consume leading whitespace?
 		// comments following valid lines?
@@ -145,7 +145,7 @@ int csv_reader::open(const char *file){
 	}
 	/* move list into double pointer */
 	samples = (weather**)malloc(sizeof(weather *) * (size_t) sample_ct);
-	for(i = 0, wtr = weather_root; i < sample_ct && wtr != NULL; ++i, wtr=wtr->next){
+	for(i = 0, wtr = weather_root; i < sample_ct && wtr != nullptr; ++i, wtr=wtr->next){
 		samples[i] = wtr;
 	}
 	sample_ct = i; // if wtr was the limiting factor, truncate the count
@@ -166,7 +166,7 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 	char propstr[256], valstr[256];
 	PROPERTY *prop = 0;
 
-	if(split == NULL){
+	if(split == nullptr){
 		gl_error("csv_reader::read_prop ~ missing \'=\' seperator");
 		/* TROUBLESHOOT
 			Property lines must have the property name and property value seperated by an
@@ -216,11 +216,20 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 		strncpy((char *)addr, valstr, 32);
 //	} else if(prop->ptype == PT_char256){
 //		strncpy((char *)addr, valstr, 256);
+	} else if(prop->ptype == PT_int32){
+		if(1 != sscanf(valstr, "%ld", static_cast<long*>(addr))){
+			gl_error(R"(csv_reader::read_prop ~ unable to set property '%s' to '%s')", propstr, valstr);
+			/* TROUBLESHOOT
+				The int parser was not able to convert the property value into a number.  Please
+				review the input line for non-numeric characters and re-run GridLAB-D.
+			*/
+			return 0;
+		}
 	} else {
 		gl_error("csv_reader::read_prop ~ unable to convert property \'%s\' due to type restrictions", propstr);
 		/* TROUBLESHOOT
 			This is a programming problem.  The property parser within the csv_reader is only able to
-			properly handle char32 and double properties.  Please contact matthew.hauer@pnl.gov for
+			properly handle char32, int32 and double properties.  Please contact matthew.hauer@pnl.gov for
 			technical support.
 		 */
 		return 0;
@@ -372,7 +381,7 @@ int csv_reader::read_line(char *line, int linenum){
 		}
 	}
 
-	while((token=strtok(NULL, ",\n\r")) != 0 && col < column_ct){
+	while((token=strtok(nullptr, ",\n\r")) != 0 && col < column_ct){
 		if(columns[col]->ptype == PT_double){
 			double *dptr = (double *)((uint64)(columns[col]->addr) + (uint64)(sample));
 			if(sscanf(token, "%lg", dptr) != 1){

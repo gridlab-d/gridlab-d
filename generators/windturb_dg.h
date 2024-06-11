@@ -79,7 +79,7 @@ protected:
 
 public:
 	/* TODO: put published variables here */
-	set phases;	/**< device phases (see PHASE codes) */
+	gld::set phases;	/**< device phases (see PHASE codes) */
 
 	gld::complex power_A;//power
 	gld::complex power_B;

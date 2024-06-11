@@ -69,7 +69,7 @@ char *gldvar_getstring(GLDVAR *var, unsigned int n, char *buffer, int size)
 		return buffer;
 	}
 	else
-		return strncpy(buffer,"NULL",size);
+		return strncpy(buffer,"nullptr",size);
 }
 UNIT *gldvar_getunits(GLDVAR *var, unsigned int n)
 {
@@ -350,7 +350,7 @@ void cast_from_double(PROPERTYTYPE ptype, void *addr, double value)
 	case PT_int32: *(int32*)addr = (int32)value; break;
 	case PT_int64: *(int64*)addr = (int64)value; break;
 	case PT_enumeration: *(enumeration*)addr = (enumeration)value; break;
-	case PT_set: *(set*)addr = (set)value; break;
+	case PT_set: *(gld::set*)addr = (gld::set)value; break;
 	case PT_object: break;
 	case PT_timestamp: *(int64*)addr = (int64)value; break;
 	case PT_float: *(float*)addr = (float)value; break;
@@ -395,7 +395,7 @@ TIMESTAMP apply_filter(TRANSFERFUNCTION *f,	///< transfer function
 	return ((int64)(t1/f->timestep)+1)*f->timestep + f->timeskew;
 }
 
-/** apply the transform, source is optional and xform.source is used when source is NULL 
+/** apply the transform, source is optional and xform.source is used when source is nullptr
     @return timestamp for next update, TS_NEVER for none, TS_INVALID for error
 **/
 TIMESTAMP transform_apply(TIMESTAMP t1, TRANSFORM *xform, double *source, double *dm_time)

@@ -75,10 +75,10 @@ int solver_matpower(vector<unsigned int> bus_BUS_I, vector<unsigned int> branch_
 	//printf("========Getting Data=============\n");
 
 	// Get Bus objects
-	OBJECT *temp_obj = NULL;
+	OBJECT *temp_obj = nullptr;
 	bus *list_bus;
 	FINDLIST *bus_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"bus",FT_END);
-	while (gl_find_next(bus_list,temp_obj)!=NULL)
+	while (gl_find_next(bus_list,temp_obj)!=nullptr)
 	{
 		
 		temp_obj = gl_find_next(bus_list,temp_obj);
@@ -90,9 +90,9 @@ int solver_matpower(vector<unsigned int> bus_BUS_I, vector<unsigned int> branch_
 	// Get Generator objects
 	gen *list_gen;
 	FINDLIST *gen_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"gen",FT_END);
-	temp_obj = NULL;
+	temp_obj = nullptr;
 	
-	while (gl_find_next(gen_list,temp_obj)!=NULL)
+	while (gl_find_next(gen_list,temp_obj)!=nullptr)
 	{
 		temp_obj = gl_find_next(gen_list,temp_obj);
 		list_gen = OBJECTDATA(temp_obj,gen);
@@ -102,9 +102,9 @@ int solver_matpower(vector<unsigned int> bus_BUS_I, vector<unsigned int> branch_
 	// Get Line/Branch Objects
 	branch *list_branch;
 	FINDLIST *branch_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"branch",FT_END);
-	temp_obj = NULL;
+	temp_obj = nullptr;
 
-	while (gl_find_next(branch_list,temp_obj)!=NULL)	
+	while (gl_find_next(branch_list,temp_obj)!=nullptr)
 	{
 		temp_obj = gl_find_next(branch_list,temp_obj);
 		list_branch = OBJECTDATA(temp_obj,branch);
@@ -115,9 +115,9 @@ int solver_matpower(vector<unsigned int> bus_BUS_I, vector<unsigned int> branch_
 /*
 	areas *list_areas;
 	FINDLIST *areas_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"areas",FT_END);
-	temp_obj = NULL;
+	temp_obj = nullptr;
 	
-	while (gl_find_next(areas_list,temp_obj) != NULL)
+	while (gl_find_next(areas_list,temp_obj) != nullptr)
 	{
 		temp_obj = gl_find_next(areas_list,temp_obj);
 		list_areas = OBJECTDATA(temp_obj,areas);
@@ -129,9 +129,9 @@ int solver_matpower(vector<unsigned int> bus_BUS_I, vector<unsigned int> branch_
 	/*
 	gen_cost *list_gen_cost;
 	FINDLIST *gen_cost_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"gen_cost",FT_END);
-	temp_obj = NULL;
+	temp_obj = nullptr;
 
-	while (gl_find_next(gen_cost_list,temp_obj)!=NULL)
+	while (gl_find_next(gen_cost_list,temp_obj)!=nullptr)
 	{
 		temp_obj = gl_find_next(gen_cost_list,temp_obj);
 		list_gen_cost = OBJECTDATA(temp_obj,gen_cost);
@@ -142,7 +142,7 @@ int solver_matpower(vector<unsigned int> bus_BUS_I, vector<unsigned int> branch_
 	// Get Base Information object
 	//baseMVA *list_baseMVA;
 	//FINDLIST *baseMVA_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"baseMVA",FT_END);
-	//temp_obj = NULL;
+	//temp_obj = nullptr;
 	//temp_obj = gl_find_next(baseMVA_list,temp_obj);
 	//list_baseMVA = OBJECTDATA(temp_obj,baseMVA);
 	//vec_baseMVA.push_back(*list_baseMVA);
@@ -396,7 +396,7 @@ int solver_matpower(vector<unsigned int> bus_BUS_I, vector<unsigned int> branch_
 
 	// Update class bus
 
-	temp_obj = NULL;
+	temp_obj = nullptr;
 	for (unsigned int i=0; i < nbus; i++)
 	{
 		/*		
@@ -464,7 +464,7 @@ int solver_matpower(vector<unsigned int> bus_BUS_I, vector<unsigned int> branch_
 	// Update class gen
 	
 	iter_gen = vec_gen.begin();
-	temp_obj = NULL;
+	temp_obj = nullptr;
 	for (unsigned int i = 0; i < ngen; i++)
 	{
 /*		
@@ -526,7 +526,7 @@ int solver_matpower(vector<unsigned int> bus_BUS_I, vector<unsigned int> branch_
 	
 	
 	//iter_branch = vec_branch.begin();
-	temp_obj = NULL;
+	temp_obj = nullptr;
 	for (unsigned int i = 0; i<nbranch; i++)
 	{
 /*

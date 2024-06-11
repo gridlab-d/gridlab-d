@@ -28,12 +28,12 @@
 #include "server.h"
 #include "mongoose.h"
 
-CLASS *server::oclass = NULL;
-server *server::defaults = NULL;
+CLASS *server::oclass = nullptr;
+server *server::defaults = nullptr;
 
 #ifdef OPTIONAL
 /* TODO: define this to allow the use of derived classes */
-CLASS *PARENTserver::pclass = NULL;
+CLASS *PARENTserver::pclass = nullptr;
 #endif
 
 /* TODO: remove passes that aren't needed */
@@ -53,16 +53,16 @@ server::server(MODULE *module)
 	/* TODO: include this if you are deriving this from a superclass */
 	pclass = SUPERCLASS::oclass;
 #endif
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"server",sizeof(server),passconfig);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		if (gl_publish_variable(oclass,
 			/* TODO: add your published properties here */
                         PT_int16, "port", PADDR(port), PT_DESCRIPTION, "server port",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(server));
 		/* TODO: set the default values of all properties here */
@@ -84,10 +84,10 @@ static int send_element_headers(struct mg_event * event) {
       char to[1024] = "";
       stream << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
       stream << "<Elements>\n";
-      for (gld_obj=gld_object::get_first(); (gld_obj->my())!=NULL; gld_obj=(gld_obj->get_next()))
+      for (gld_obj=gld_object::get_first(); (gld_obj->my())!=nullptr; gld_obj=(gld_obj->get_next()))
       {
 	  int has_location = !(isnan(gld_obj->get_latitude()) || isnan(gld_obj->get_longitude()) \
-			     || (gld_obj->get_name() == NULL) || (gld_obj->get_oclass() == NULL));
+			     || (gld_obj->get_name() == nullptr) || (gld_obj->get_oclass() == nullptr));
 	  if (has_location)
 	  {
 	      stream << "\t<" << gld_obj->get_oclass()->get_name() << ">\n";
@@ -152,15 +152,15 @@ int server::init(OBJECT *parent)
 	sprintf(portString, "%d", port);
 
         char path[1024];
-	if ( callback->file.find_file("rest/gui_root", NULL, X_OK, path, sizeof(path)) != NULL) {
+	if ( callback->file.find_file("rest/gui_root", nullptr, X_OK, path, sizeof(path)) != nullptr) {
 		gl_warning("%s\n", path);
-		// List of options. Last element must be NULL.
+		// List of options. Last element must be nullptr.
 		const char *options[] = {
 			"listening_ports", portString,
 			"document_root", path,
-			NULL
+			nullptr
 		};
-		ctx = mg_start(options, &event_handler, NULL);	
+		ctx = mg_start(options, &event_handler, nullptr);
 		return 1; /* return 1 on success, 0 on failure */
 	}
 	return 0;
@@ -199,7 +199,7 @@ EXPORT int create_server(OBJECT **obj)
 	try
 	{
 		*obj = gl_create_object(server::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 			return OBJECTDATA(*obj,server)->create();
 	}
 	catch (char *msg)
@@ -213,7 +213,7 @@ EXPORT int init_server(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,server)->init(parent);
 	}
 	catch (char *msg)

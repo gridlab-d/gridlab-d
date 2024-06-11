@@ -326,9 +326,9 @@ GLOBAL unsigned int global_inline_block_size INIT(16*65536); /**< inline code bl
 /* runaway clock time */
 GLOBAL TIMESTAMP global_runaway_time INIT(2209017600); /**< signal runaway clock on 1/1/2040 */
 
-GLOBAL set global_validateoptions INIT(VO_TSTSTD|VO_RPTALL); /**< validation options */
+GLOBAL gld::set global_validateoptions INIT(VO_TSTSTD | VO_RPTALL); /**< validation options */
 
-GLOBAL set global_sanitizeoptions INIT(SO_NAMES|SO_GEOCOORDS); /**< sanitizing options */
+GLOBAL gld::set global_sanitizeoptions INIT(SO_NAMES | SO_GEOCOORDS); /**< sanitizing options */
 GLOBAL char8 global_sanitizeprefix INIT("GLD_"); /**< sanitized name prefix */
 GLOBAL char1024 global_sanitizeindex INIT(".txt"); /**< sanitize index file spec */
 GLOBAL char32 global_sanitizeoffset INIT(""); /**< sanitize lat/lon offset */

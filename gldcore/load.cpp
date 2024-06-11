@@ -141,6 +141,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <unordered_map>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -201,7 +202,7 @@ static char *format_object(OBJECT *obj)
 {
 	static char256 buffer;
 	strcpy(buffer,"(unidentified)");
-	if (obj->name==NULL)
+	if (obj->name==nullptr)
 		sprintf(buffer,global_object_format,obj->oclass->name,obj->id);
 	else
 		sprintf(buffer,"%s (%s:%d)",obj->name,obj->oclass->name, obj->id);
@@ -222,17 +223,17 @@ static char *strip_right_white(char *b){
 }
 
 /* inline source code support */
-char *code_block = NULL;
-char *global_block = NULL;
-char *init_block = NULL;
+char *code_block = nullptr;
+char *global_block = nullptr;
+char *init_block = nullptr;
 int code_used = 0;
 
 int inline_code_init(void)
 {
-	if ( code_block==NULL )
+	if ( code_block==nullptr )
 	{
         code_block = static_cast<char *>(malloc(global_inline_block_size));
-		if ( code_block==NULL ) {
+		if ( code_block==nullptr ) {
 			output_error("code_block malloc failed (inline_block_size=%d)", global_inline_block_size);
 			/* TROUBLESHOOT
 			   The memory allocation for the inline code block failed.
@@ -242,10 +243,10 @@ int inline_code_init(void)
 		}
 		memset(code_block,0,global_inline_block_size);
 	}
-	if ( global_block==NULL )
+	if ( global_block==nullptr )
 	{
         global_block = static_cast<char *>(malloc(global_inline_block_size));
-		if ( global_block==NULL ) {
+		if ( global_block==nullptr ) {
 			output_error("global_block malloc failed (inline_block_size=%d)", global_inline_block_size);
 			/* TROUBLESHOOT
 			   The memory allocation for the inline global code block failed.
@@ -255,10 +256,10 @@ int inline_code_init(void)
 		}
 		memset(global_block,0,global_inline_block_size);
 	}
-	if ( init_block==NULL )
+	if ( init_block==nullptr )
 	{
         init_block = static_cast<char *>(malloc(global_inline_block_size));
-		if ( init_block==NULL ) {
+		if ( init_block==nullptr ) {
 			output_error("init_block malloc failed (inline_block_size=%d)", global_inline_block_size);
 			/* TROUBLESHOOT
 			   The memory allocation for the inline init block failed.
@@ -273,20 +274,20 @@ int inline_code_init(void)
 
 void inline_code_term(void)
 {
-	if ( code_block!=NULL )
+	if ( code_block!=nullptr )
 	{
 		free(code_block);
-		code_block = NULL;
+		code_block = nullptr;
 	}
-	if ( global_block!=NULL )
+	if ( global_block!=nullptr )
 	{
 		free(global_block);
-		global_block = NULL;
+		global_block = nullptr;
 	}
-	if ( init_block!=NULL )
+	if ( init_block!=nullptr )
 	{
 		free(init_block);
-		init_block = NULL;
+		init_block = nullptr;
 	}
 	return;
 }
@@ -314,10 +315,10 @@ typedef struct s_include_list {
 	struct s_include_list *next;
 } INCLUDELIST;
 
-INCLUDELIST *include_list = NULL;
-INCLUDELIST *header_list = NULL;
+INCLUDELIST *include_list = nullptr;
+INCLUDELIST *header_list = nullptr;
 
-//UNR_STATIC *static_list = NULL;
+//UNR_STATIC *static_list = nullptr;
 
 static char *forward_slashes(char *a)
 {
@@ -355,7 +356,7 @@ static void filename_parts(char *fullname, char *path, char *name, char *ext)
 	if (e && s && e<s) 
 		
 		/* there is not extension */
-		e = NULL;
+		e = nullptr;
 	
 	/* copy extension (if any) and terminate filename at dot */
 	if (e)
@@ -453,7 +454,7 @@ static int append_global(const char* format,...)
 static void mark_linex(char *filename, int linenum)
 {
 	char buffer[64];
-	if (global_getvar("noglmrefs",buffer, 63)==NULL)
+	if (global_getvar("noglmrefs",buffer, 63)==nullptr)
 		append_code("#line %d \"%s\"\n", linenum, forward_slashes(filename));
 }
 static void mark_line()
@@ -467,7 +468,7 @@ static STATUS exec_cmd(const char *format,...)
 	va_start(ptr,format);
 	vsprintf(cmd,format,ptr);
 	va_end(ptr);
-	output_debug("Running '%s' in '%s'", cmd, getcwd(NULL,0));
+	output_debug("Running '%s' in '%s'", cmd, getcwd(nullptr,0));
 	return system(cmd)==0?SUCCESS:FAILED;
 }
 
@@ -495,10 +496,10 @@ static char *setup_class(CLASS *oclass)
 	len += sprintf(buffer+len,"\tOBJECT obj; obj.oclass = oclass; %s *t = (%s*)((&obj)+1);\n",oclass->name,oclass->name);
 	len += sprintf(buffer+len,"\toclass->size = sizeof(%s);\n", oclass->name);
 //	len += sprintf(buffer+len,"\tif (callback->define_map(oclass,\n");
-	for (prop=oclass->pmap; prop!=NULL; prop=prop->next)
+	for (prop=oclass->pmap; prop!=nullptr; prop=prop->next)
 	{
-		len += sprintf(buffer+len,"\t(*(callback->properties.get_property))(&obj,\"%s\",NULL)->addr = (PROPERTYADDR)((char*)&(t->%s) - (char*)t);\n",prop->name,prop->name);
-//		if (prop->unit==NULL)
+		len += sprintf(buffer+len,"\t(*(callback->properties.get_property))(&obj,\"%s\",nullptr)->addr = (PROPERTYADDR)((char*)&(t->%s) - (char*)t);\n",prop->name,prop->name);
+//		if (prop->unit==nullptr)
 //			len += sprintf(buffer+len,"\t\tPT_%s,\"%s\",(char*)&(t->%s)-(char*)t,\n",
 //				class_get_property_typename(prop->ptype),prop->name,prop->name);
 //		else
@@ -507,17 +508,17 @@ static char *setup_class(CLASS *oclass)
 //		if (prop->keywords)
 //		{
 //			KEYWORD *key;
-//			for (key=prop->keywords; key!=NULL; key=key->next)
+//			for (key=prop->keywords; key!=nullptr; key=key->next)
 //				len += sprintf(buffer+len, "\t\t\tPT_KEYWORD, \"%s\", %d,\n", key->name, key->value);
 //		}
 	}
-//	len += sprintf(buffer+len,"\t\tNULL)<1) throw(\"unable to publish properties in class %s\");\n", oclass->name);
+//	len += sprintf(buffer+len,"\t\tnullptr)<1) throw(\"unable to publish properties in class %s\");\n", oclass->name);
 	len += sprintf(buffer+len,"\t/* begin init block */\n%s\n\t/* end init block */\n",init_block);
 	return buffer;
 }
 
 static int outlinenum = 0;
-static char *outfilename = NULL;
+static char *outfilename = nullptr;
 static int write_file(FILE *fp, const char *data, ...)
 {
 	char buffer[65536];
@@ -530,7 +531,7 @@ static int write_file(FILE *fp, const char *data, ...)
 	va_start(ptr,data);
 	vsprintf(buffer,data,ptr);
 	va_end(ptr);
-	while ((c=strstr(d,"/*RESETLINE*/\n"))!=NULL)
+	while ((c=strstr(d,"/*RESETLINE*/\n"))!=nullptr)
 	{
 		for (b=d; b<c; b++)
 		{
@@ -541,7 +542,7 @@ static int write_file(FILE *fp, const char *data, ...)
 			len++;
 		}
 		d =  c + strlen("/*RESETLINE*/\n");
-		if (global_getvar("noglmrefs",var_buf,63)==NULL)
+		if (global_getvar("noglmrefs",var_buf,63)==nullptr)
 			len += fprintf(fp,"#line %d \"%s\"\n", ++outlinenum+1,forward_slashes(outfilename));
 	}
 	for (b=d; *b!='\0'; b++)
@@ -556,7 +557,7 @@ static int write_file(FILE *fp, const char *data, ...)
 static void reset_line(FILE *fp, char *file)
 {
 	char buffer[64];
-	if (global_getvar("noglmrefs", buffer, 63)==NULL)
+	if (global_getvar("noglmrefs", buffer, 63)==nullptr)
 		write_file(fp,"#line %s \"%s\"\n", outlinenum,forward_slashes(file));
 }
 
@@ -597,7 +598,7 @@ static int mkdirs(char *path)
 			if (errno != ENOENT) {
 				output_error("cannot access directory '%s': %s", tmp, strerror(errno));
 				free(tmp);
-				tmp = NULL;
+				tmp = nullptr;
 				return -1;
 			}
 		}
@@ -608,13 +609,13 @@ static int mkdirs(char *path)
 				if ((rc = mkdir(tmp, 0775)) && errno != EEXIST) {
 					output_error("cannot create directory '%s': %s", tmp, strerror(errno));
 					free(tmp);
-					tmp = NULL;
+					tmp = nullptr;
 					return -1;
 				}
 			}
 		}
 		free(tmp);
-		tmp = NULL;
+		tmp = nullptr;
 		return 0;
 	} else if (rc)
 		output_error("cannot access directory '%s': %s", path, strerror(errno));
@@ -625,7 +626,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 {
 	char include_file_str[1024];
 	char buffer[256];
-	bool use_msvc = (global_getvar("use_msvc",buffer,255)!=NULL);
+	bool use_msvc = (global_getvar("use_msvc",buffer,255)!=nullptr);
 
 	include_file_str[0] = '\0';
 
@@ -682,7 +683,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 		/* peek at library file */
 		fp = fopen(afile,"r");
-		if (fp!=NULL && FSTAT(fileno(fp),&stat)==0)
+		if (fp!=nullptr && FSTAT(fileno(fp),&stat)==0)
 		{
 			if (global_debug_mode || use_msvc || global_gdb || global_gdb_window )
 			{
@@ -706,7 +707,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			fp = fopen(cfile,"w");
 
 			output_verbose("writing inline code to '%s'", cfile);
-			if (fp==NULL)
+			if (fp==nullptr)
 			{
 				output_fatal("unable to open '%s' for writing", cfile);
 				/*	TROUBLESHOOT
@@ -728,12 +729,12 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 					"%s\n\n"
 					"#include <gridlabd.h>\n\n"
 					"%s"
-					"CALLBACKS *callback = NULL;\n"
-					"static CLASS *myclass = NULL;\n"
+					"CALLBACKS *callback = nullptr;\n"
+					"static CLASS *myclass = nullptr;\n"
 					"static int setup_class(CLASS *);\n\n",
 					REV_MAJOR, REV_MINOR,
 					include_file_str,
-					global_getvar("use_msvc",tbuf,63)!=NULL
+					global_getvar("use_msvc",tbuf,63)!=nullptr
 					?
 						"int __declspec(dllexport) dllinit() { return 0;};\n"
 						"int __declspec(dllexport) dllkill() { return 0;};\n"
@@ -747,8 +748,8 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 					"{\n"
 					"\tcallback=fntable;\n"
 					"\tmyclass=(CLASS*)((*(callback->class_getname))(\"%s\"));\n"
-					"\tif (!myclass) return NULL;\n"
-					"\tif (!setup_class(myclass)) return NULL;\n"
+					"\tif (!myclass) return nullptr;\n"
+					"\tif (!setup_class(myclass)) return nullptr;\n"
 					"\treturn myclass;"
 					"}\n",oclass->name)<0
 				|| write_file(fp,"%s",code_block)<0 
@@ -767,7 +768,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				return FAILED;
 			}
 			fclose(fp);
-			outfilename=NULL;
+			outfilename=nullptr;
 
 			/* compile object file */
 			output_verbose("compiling inline code from '%s'", cfile);
@@ -819,7 +820,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 					return FAILED;
 				}
 				/* post linking command (optional) */
-				if ( global_getvar("LDPOSTLINK",tbuf,sizeof(tbuf))!=NULL )
+				if ( global_getvar("LDPOSTLINK",tbuf,sizeof(tbuf))!=nullptr )
 				{
 					/* SE linux needs the new module marked as relocatable (textrel_shlib_t) */
 					exec_cmd("%s '%s'", tbuf, afile);
@@ -878,8 +879,8 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 		/* load runtime module */
 		output_verbose("loading dynamic link library %s...", afile);
-		mod = module_load(oclass->name,0,NULL);
-		if (mod==NULL)
+		mod = module_load(oclass->name,0,nullptr);
+		if (mod==nullptr)
 		{
 			output_error("unable to load inline code");
 			return FAILED;
@@ -917,84 +918,72 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 	return SUCCESS;
 }
 
-
-static OBJECT **object_index = NULL;
-static unsigned char *object_linked = NULL;
-static unsigned int object_index_size = 65536;
-/*static*/ STATUS load_set_index(OBJECT *obj, OBJECTNUM id)
+static std::unordered_map<std::size_t, OBJECT*> object_index;
+static std::unordered_map<std::size_t, bool> object_linked;
+static bool object_index_initialized = false;
+STATUS load_set_index(OBJECT *obj, OBJECTNUM id)
 {
-	if (object_index==NULL)
-	{
-        object_index = static_cast<OBJECT **>(malloc(sizeof(OBJECT *) * object_index_size));
-		memset(object_index,0,sizeof(OBJECT*)*object_index_size);
-        object_linked = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * object_index_size));
-		memset(object_linked,0,sizeof(unsigned char)*object_index_size);
-	}
-	if (id>=object_index_size) /* index needs to grow */
-	{
-		int new_size = (id/object_index_size+1)*object_index_size;
-        object_index = static_cast<OBJECT **>(realloc(object_index, sizeof(OBJECT *) * new_size));
-//		memset(object_index+object_index_size*sizeof(OBJECT *),0,sizeof(OBJECT*)*(new_size-object_index_size));
-        object_linked = static_cast<unsigned char *>(realloc(object_linked, sizeof(unsigned char) * new_size));
-//		memset(object_linked+object_index_size*sizeof(unsigned char),0,sizeof(unsigned char)*(new_size-object_index_size));
-		object_index_size = new_size;
-	}
-	if (object_index==NULL) { errno = ENOMEM; return FAILED;}
-	/* collision check here */
+    if(!object_index_initialized){
+        object_index.reserve(500);
+        object_linked.reserve(500);
+        object_index_initialized = true;
+    }
+
+    if(object_index.find(id) != object_index.end()){
+        output_error("Duplicate object key detected for object id '%d'", id);
+        return FAILED;
+    }
 	object_index[id] = obj;
-	object_linked[id] = 0;
+	object_linked[id] = false;
 	return SUCCESS;
 }
-/*static*/ OBJECT *load_get_index(OBJECTNUM id)
+OBJECT *load_get_index(OBJECTNUM id)
 {
-	if (object_index==NULL || id<0 || id>=object_index_size)
-		return NULL;
-	object_linked[id]++;
-	return object_index[id];
+    try {
+        object_linked.at(id) = true;
+        return object_index.at(id);
+    } catch(const std::exception& ex){
+        output_error("load_get_index failure");
+        return nullptr;
+    }
 }
 static OBJECT *get_next_unlinked(CLASS *oclass)
 {
-	unsigned int id;
-	if (object_index==NULL)
-		return NULL;
-	for (id=0; id<object_index_size; id++)
-	{
-		if (object_linked[id]==0 && object_index[id]!=NULL && object_index[id]->oclass==oclass)
-		{
-			object_linked[id]++;
-			return object_index[id];
-		}
-	}
-	return NULL;
+    for(const auto& entry : object_index){
+        if(!object_linked[entry.first] && entry.second->oclass==oclass){
+            object_linked[entry.first] = true;
+            return entry.second;
+        }
+    }
+    output_warning("get_next_unlinked did a weird thing?");
+	return nullptr;
 }
 static void free_index(void)
 {
-	if (object_index!=NULL)
-		free(object_index);
-	object_index=NULL;
-	object_index_size = 65536;
+    object_index.clear();
+    object_linked.clear();
 }
 
-static UNRESOLVED *first_unresolved = NULL;
+static UNRESOLVED *first_unresolved = nullptr;
 /*static*/ UNRESOLVED *add_unresolved(OBJECT *by, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file, unsigned int line, int flags)
 {
 	UNRESOLVED *item;
 	if ( strlen(id)>=sizeof(item->id))
 	{
 		output_error("add_unresolved(...): id '%s' is too long to resolve", id);
-		return NULL;
+		return nullptr;
 	}
     item = static_cast<UNRESOLVED *>(malloc(sizeof(UNRESOLVED)));
-	if (item==NULL) { errno = ENOMEM; return NULL; }
+	if (item==nullptr) { errno = ENOMEM; return nullptr; }
 	item->by = by;
 	item->ptype = ptype;
 	item->ref = ref;
 	item->oclass = oclass;
 	strncpy(item->id,id,sizeof(item->id));
-	if (first_unresolved!=NULL && strcmp(first_unresolved->file,file)==0)
+	if (first_unresolved!=nullptr && strcmp(first_unresolved->file,file)==0)
 	{
 		item->file = first_unresolved->file; // means keep using the same file
-		first_unresolved->file = NULL;
+		first_unresolved->file = nullptr;
 	}
 	else
 	{
@@ -1018,10 +1007,10 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 	char star;
 
 	if(0 == strcmp(item->id, "root"))
-		obj = NULL;
+		obj = nullptr;
 	else if (sscanf(item->id,"childless:%[^=]=%s",propname,target))
 	{
-		for ( obj = object_get_first() ; obj != NULL ; obj = object_get_next(obj) )
+		for ( obj = object_get_first() ; obj != nullptr ; obj = object_get_next(obj) )
 		{
 			char value[1024];
 			if ( object_get_child_count(obj)==0 && object_get_value_by_name(obj,propname,value,sizeof(value))!='\0' && strcmp(value,target)==0 )
@@ -1030,7 +1019,7 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 				break;
 			}
 		}
-		if ( obj==NULL )
+		if ( obj==nullptr )
 		{
 			output_error_raw("%s(%d): no childless objects found in %s=%s (parent unresolved)", filename, item->line, propname, target);
 			return FAILED;
@@ -1040,14 +1029,14 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 	{
 		char *value = strchr(item->id,':');
 		FINDLIST *match;
-		if (value++==NULL)
+		if (value++==nullptr)
 		{
 			output_error_raw("%s(%d): %s reference to %s is missing match value", filename, item->line,
 				format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 		match = find_objects(FL_NEW,FT_CLASS,SAME,classname,AND,FT_PROPERTY,propname,SAME,value,FT_END);
-		if (match==NULL || match->hit_count==0)
+		if (match==nullptr || match->hit_count==0)
 		{
 			output_error_raw("%s(%d): %s reference to %s does not match any existing objects", filename, item->line,
 				format_object(item->by), item->id.get_string());
@@ -1065,7 +1054,7 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 	{
 		CLASS *oclass = class_get_class_from_classname(classname);
 		obj = object_find_by_id(item->by->id + (op[0]=='+'?+1:-1)*id);
-		if (obj==NULL)
+		if (obj==nullptr)
 		{
 			output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
 				format_object(item->by), item->id.get_string());
@@ -1075,7 +1064,7 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 	else if (sscanf(item->id,global_object_scan,classname,&id)==2)
 	{
 		obj = load_get_index(id);
-		if (obj==NULL)
+		if (obj==nullptr)
 		{
 			output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
 				format_object(item->by), item->id.get_string());
@@ -1092,14 +1081,14 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 	{
 		CLASS *oclass = class_get_class_from_classname(classname);
 		obj = get_next_unlinked(oclass);
-		if (obj==NULL)
+		if (obj==nullptr)
 		{
 			output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
 				format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 	}
-	else if ((obj=object_find_name(item->id))!=NULL)
+	else if ((obj=object_find_name(item->id))!=nullptr)
 	{
 		/* found it already*/
 	}
@@ -1121,22 +1110,22 @@ static int resolve_double(UNRESOLVED *item, char *context)
 
 	if (sscanf(item->id,"%64[^.].%64s",oname,pname)==2)
 	{
-		OBJECT *obj = NULL;
-		PROPERTY *prop = NULL;
-		double **ref = NULL;
-		TRANSFORM *xform = NULL;
+		OBJECT *obj = nullptr;
+		PROPERTY *prop = nullptr;
+		double **ref = nullptr;
+		TRANSFORM *xform = nullptr;
 
 		/* get and check the object */
 		obj = object_find_name(oname);
-		if (obj==NULL)
+		if (obj==nullptr)
 		{
 			output_error_raw("%s(%d): object '%s' not found", filename, item->line, oname);
 			return FAILED;
 		}
 
 		/* get and check the property */
-		prop = object_get_property(obj,pname,NULL);
-		if (prop==NULL)
+		prop = object_get_property(obj,pname,nullptr);
+		if (prop==nullptr)
 		{
 			output_error_raw("%s(%d): property '%s' not found", filename, item->line, pname);
 			return FAILED;
@@ -1146,7 +1135,7 @@ static int resolve_double(UNRESOLVED *item, char *context)
 		if ((item->flags&UR_TRANSFORM)==UR_TRANSFORM)
 		{
 			/* find transform that uses this target */
-			while ((xform=transform_getnext(xform))!=NULL)
+			while ((xform=transform_getnext(xform))!=nullptr)
 			{
 				/* the reference is to the schedule's source */
 				if (xform==item->ref)
@@ -1194,16 +1183,16 @@ static int resolve_double(UNRESOLVED *item, char *context)
 static int resolve_list(UNRESOLVED *item)
 {
 	UNRESOLVED *next;
-	char *filename = NULL;
-	while (item!=NULL)
+	char *filename = nullptr;
+	while (item!=nullptr)
 	{	
 		// context file name changes
-		if (item->file!=NULL)
+		if (item->file!=nullptr)
 		{
 			// free last context file name
-			if (filename!=NULL){
+			if (filename!=nullptr){
 				free(filename); // last one - not used again
-				filename = NULL;
+				filename = nullptr;
 			}
 
 			// get next context file name
@@ -1236,7 +1225,7 @@ static int resolve_list(UNRESOLVED *item)
 /*static*/ int load_resolve_all()
 {
 	int result = resolve_list(first_unresolved);
-	first_unresolved = NULL;
+	first_unresolved = nullptr;
 	return result;
 }
 
@@ -1261,7 +1250,7 @@ static void syntax_error(char *p)
 	char context[16], *nl;
 	strncpy(context,p,15);
 	nl = strchr(context,'\n');
-	if (nl!=NULL) *nl='\0'; else context[15]='\0';
+	if (nl!=nullptr) *nl='\0'; else context[15]='\0';
 	if (strlen(context)>0)
 		output_error_raw("%s(%d): syntax error at '%s...'", filename, linenum, context);
 	else
@@ -1373,7 +1362,7 @@ static int unitspec(PARSER, UNIT **unit)
 	while (size>1 && isalpha(*_p) || isdigit(*_p) || *_p=='$' || *_p=='%' || *_p=='*' || *_p=='/' || *_p=='^') COPY(result);
 	result[_n]='\0';
     try {
-		if ((*unit=unit_find(result))==NULL){
+		if ((*unit=unit_find(result))==nullptr){
 			linenum=_l;
 			_n = 0;
 		} else {
@@ -1443,7 +1432,7 @@ static int delim_value(PARSER, char *result, int size, const char *delims)
 		*_p++;
 		size--;
 	}
-	while (size>1 && *_p!='\0' && ((quote&&*_p!='"') || strchr(delims,*_p)==NULL) && *_p!='\n') 
+	while (size>1 && *_p!='\0' && ((quote&&*_p!='"') || strchr(delims,*_p)==nullptr) && *_p!='\n')
 	{
 		if ( _p[0]=='\\' && _p[1]!='\0' ) _p++; 
 		COPY(result);
@@ -1988,7 +1977,7 @@ static int expression(PARSER, double *pValue, UNIT **unit, OBJECT *obj){
 		} else if ( TERM(name(HERE,oname,sizeof(oname))) && LITERAL(".") && TERM(name(HERE,tname,sizeof(tname))))
 		{
 			OBJECT *nobj = object_find_name(oname);
-			if ( nobj == NULL )
+			if ( nobj == nullptr )
 			{
 				output_error_raw("%s(%d): object not found (object must already exist): %s.%s", filename,linenum, oname, tname);
 				REJECT;
@@ -2002,7 +1991,7 @@ static int expression(PARSER, double *pValue, UNIT **unit, OBJECT *obj){
 			{
 				valptr = &(obj->longitude);
 			}
-			else if (valptr == NULL)
+			else if (valptr == nullptr)
 			{
 				output_error_raw("%s(%d): invalid property: %s.%s", filename,linenum, oname, tname);
 				REJECT;
@@ -2015,7 +2004,7 @@ static int expression(PARSER, double *pValue, UNIT **unit, OBJECT *obj){
 			++rpn_i;
 		} else if ((LITERAL("$") || LITERAL("this.")) && TERM(name(HERE,tname,sizeof(tname)))){
 			double *valptr = object_get_double_by_name(obj, tname);
-			if(valptr == NULL){
+			if(valptr == nullptr){
 				output_error_raw("%s(%d): invalid property: %s.%s", filename,linenum, obj->oclass->name, tname);
 				REJECT;
 			}
@@ -2035,7 +2024,7 @@ static int expression(PARSER, double *pValue, UNIT **unit, OBJECT *obj){
 			++rpn_sz;
 		} else if(TERM(name(HERE,oname,sizeof(oname))) && LITERAL(".") && TERM(name(HERE,pname,sizeof(pname)))){
 			/* obj.prop*/
-			OBJECT *otarg = NULL;
+			OBJECT *otarg = nullptr;
 			ACCEPT;
 			if WHITE ACCEPT;
 			if(0 == strcmp(oname, "parent")){
@@ -2043,14 +2032,14 @@ static int expression(PARSER, double *pValue, UNIT **unit, OBJECT *obj){
 			} else {
 				otarg = object_find_name(oname);
 			}
-			if(otarg == NULL){ // delayed checking
+			if(otarg == nullptr){ // delayed checking
 				// disabled for now
 				output_error_raw("%s(%d): unknown reference: %s.%s", filename, linenum, oname, pname);
 				output_error("may be an order issue, delayed reference checking is a todo");
 				REJECT;
 			} else {
 				double *valptr = object_get_double_by_name(otarg, pname);
-				if(valptr == NULL){
+				if(valptr == nullptr){
 					output_error_raw("%s(%d): invalid property: %s.%s", filename,linenum, oname, pname);
 					REJECT;
 				}
@@ -2160,7 +2149,7 @@ static int functional_unit(PARSER,double *pValue,UNIT **unit)
 	START;
 	if TERM(functional(HERE,pValue))
 	{
-		*unit = NULL;
+		*unit = nullptr;
 		if WHITE ACCEPT;
 		if TERM(unitspec(HERE,unit)) ACCEPT;
 		ACCEPT;
@@ -2216,7 +2205,7 @@ static int complex_unit(PARSER,gld::complex *pValue,UNIT **unit)
 	START;
 	if TERM(complex_value(HERE,pValue))
 	{
-		*unit = NULL;
+		*unit = nullptr;
 		if WHITE ACCEPT;
 		if TERM(unitspec(HERE,unit)) ACCEPT;
 		ACCEPT;
@@ -2345,7 +2334,7 @@ double load_latitude(char *buffer)
 	if ( sscanf(buffer,"(%[^.].%[^)])",oname,pname)==2 && strcmp(pname,"latitude")==0 )
 	{
 		OBJECT *obj = object_find_name(oname);
-		if ( obj==NULL )
+		if ( obj==nullptr )
 			output_error_raw("%s(%d): '%s' does not refer to an existing object", filename,linenum,buffer);
 		return obj->latitude;
 	}
@@ -2363,7 +2352,7 @@ double load_longitude(char *buffer)
 	if ( sscanf(buffer,"(%[^.].%[^)])",oname,pname)==2 && strcmp(pname,"longitude")==0 )
 	{
 		OBJECT *obj = object_find_name(oname);
-		if ( obj==NULL )
+		if ( obj==nullptr )
 			output_error_raw("%s(%d): '%s' does not refer to an existing object", filename,linenum,buffer);
 		return obj->longitude;
 	}
@@ -2434,7 +2423,7 @@ static int clock_properties(PARSER)
 	{
 		if (TERM(value(HERE,timezone,sizeof(timezone))) && (WHITE,LITERAL(";")) && strlen(timezone)>0)
 		{
-			if (timestamp_set_tz(timezone)==NULL)
+			if (timestamp_set_tz(timezone)==nullptr)
 				output_warning("%s(%d): timezone %s is not defined",filename,linenum,timezone.get_string());
 				/* TROUBLESHOOT
 					The specified timezone is not defined in the timezone file <code>.../etc/tzinfo.txt</code>.  
@@ -2477,8 +2466,8 @@ static int pathname(PARSER, char *path, int size)
 	{var} embeds the current value of the current object's variable <var>
 
  **/
-static OBJECT *current_object = NULL; /* context object */
-static MODULE *current_module = NULL; /* context module */
+static OBJECT *current_object = nullptr; /* context object */
+static MODULE *current_module = nullptr; /* context module */
 static int expanded_value(char *text, char *result, int size, const char *delims)
 {
 	int n=0;
@@ -2588,7 +2577,7 @@ static int expanded_value(char *text, char *result, int size, const char *delims
 			return 0;
 		}
 	}
-	else if (delims==NULL)
+	else if (delims==nullptr)
 		return value(text,result,size);
 	else
 		return delim_value(text,result,size,delims);
@@ -2607,7 +2596,7 @@ static int alternate_value(PARSER, char *value, int size)
 	char value2[1024];
 	START;
 	if (WHITE) ACCEPT;
-	if (TERM(expression(HERE,&test,NULL,current_object)) && (WHITE,LITERAL("?")))
+	if (TERM(expression(HERE,&test,nullptr,current_object)) && (WHITE,LITERAL("?")))
 	{
 		if ((WHITE,TERM(expanded_value(HERE,value1,sizeof(value1), " \t\n:"))) && (WHITE,LITERAL(":")) && (WHITE,TERM(expanded_value(HERE,value2,sizeof(value2), " \n\t;"))))
 		{
@@ -2646,7 +2635,7 @@ static int alternate_value(PARSER, char *value, int size)
 		}
 		DONE;
 	}
-	OR if (TERM(expanded_value(HERE,value,size,NULL)))
+	OR if (TERM(expanded_value(HERE,value,size,nullptr)))
 	{
 		ACCEPT;
 		DONE
@@ -2782,7 +2771,7 @@ static int module_properties(PARSER, MODULE *mod)
 			if LITERAL(";")
 			{
 				CLASS *oclass = class_get_class_from_classname(classname);
-				if (oclass==NULL || oclass->module!=mod)
+				if (oclass==nullptr || oclass->module!=mod)
 				{
 					output_error_raw("%s(%d): module '%s' does not implement class '%s'", filename, linenum, mod->name, classname);
 					REJECT;
@@ -2804,7 +2793,7 @@ static int module_properties(PARSER, MODULE *mod)
 	}
 	OR if (TERM(name(HERE,propname,sizeof(propname))) && (WHITE))
 	{
-		current_object = NULL; /* object context */
+		current_object = nullptr; /* object context */
 		current_module = mod; /* module context */
 		if TERM(alternate_value(HERE,propvalue,sizeof(propvalue)))
 		{
@@ -2857,7 +2846,7 @@ static int module_block(PARSER)
 	if (TERM(name(HERE,fmod,sizeof(fmod))) && LITERAL("::") && TERM(name(HERE,mod,sizeof(mod))))
 	{
 		sprintf(module_name,"%s::%s",fmod,mod);
-		if ((module=module_load(module_name,0,NULL))!=NULL)
+		if ((module=module_load(module_name,0,nullptr))!=nullptr)
 		{
 			ACCEPT;
 		}
@@ -2872,7 +2861,7 @@ static int module_block(PARSER)
 	/* native C/C++ module */
 	if (TERM(name(HERE,module_name,sizeof(module_name))))
 	{
-		if ((module=module_load(module_name,0,NULL))!=NULL)
+		if ((module=module_load(module_name,0,nullptr))!=nullptr)
 		{
 			ACCEPT;
 		}
@@ -2911,7 +2900,7 @@ static int property_specs(PARSER, KEYWORD **keys)
 	if ( TERM(name(HERE,keyname,sizeof(keyname))) && (WHITE,LITERAL("=")) && TERM(integer32(HERE,&keyvalue)))
 	{
         *keys = static_cast<KEYWORD *>(malloc(sizeof(KEYWORD)));
-		(*keys)->next = NULL;
+		(*keys)->next = nullptr;
 		if WHITE ACCEPT;
 		if LITERAL(",") ACCEPT;
 		if WHITE ACCEPT;
@@ -3141,7 +3130,7 @@ static int source_code(PARSER, char *code, int size)
 		case COMMENTBLOCK:
 			if (c1=='*' && c2=='/')
 			{
-				if (!global_debug_output && global_getvar("noglmrefs",buffer,63)==NULL)
+				if (!global_debug_output && global_getvar("noglmrefs",buffer,63)==nullptr)
 					sprintf(code+strlen(code),"#line %d \"%s\"\n", linenum,forward_slashes(filename));
 				state = CODE;
 			}
@@ -3181,8 +3170,8 @@ static int source_code(PARSER, char *code, int size)
 
 static int class_intrinsic_function(PARSER, CLASS *oclass, int64 *functions, char *code, int size)
 {
-	const char *fname = NULL;
-	const char *ftype = NULL;
+	const char *fname = nullptr;
+	const char *ftype = nullptr;
 	char arglist[1024];
 	char source[65536];
 	int startline;
@@ -3190,7 +3179,7 @@ static int class_intrinsic_function(PARSER, CLASS *oclass, int64 *functions, cha
 	if WHITE ACCEPT;
 	if (LITERAL("intrinsic") && WHITE && TERM(class_intrinsic_function_name(HERE,oclass,functions,&ftype,&fname)) && (WHITE,TERM(argument_list(HERE,arglist,sizeof(arglist)))) && (startline=linenum,WHITE,TERM(source_code(HERE,source,sizeof(source)))) && (WHITE,LITERAL(";")))
 	{
-		if (oclass->module==NULL)
+		if (oclass->module==nullptr)
 		{
 			mark_linex(filename,startline);
 			append_code("\t%s %s (%s) {\n\tOBJECT*my=((OBJECT*)this)-1; ",ftype,fname,arglist);
@@ -3225,14 +3214,14 @@ static int class_export_function(PARSER, CLASS *oclass, char *fname, int fsize, 
 		&& (WHITE,TERM(argument_list(HERE,arglist,asize))) 
 		&& (startline=linenum,WHITE,TERM(source_code(HERE,code,csize))) && (WHITE,LITERAL(";")))
 	{
-		if (oclass->module==NULL)
+		if (oclass->module==nullptr)
 		{
 			mark_linex(filename,startline);
 			append_code("\tstatic int64 %s (%s) %s;\n/*RESETLINE*/\n",fname,arglist,code);
 
-			if (global_getvar("noglmrefs",buffer,63)==NULL)
+			if (global_getvar("noglmrefs",buffer,63)==nullptr)
 				append_init(const_cast<char*>("#line %d \"%s\"\n"
-					"\tif ((*(callback->function.define))(oclass,\"%s\",(FUNCTIONADDR)&%s::%s)==NULL) return 0;\n"
+					"\tif ((*(callback->function.define))(oclass,\"%s\",(FUNCTIONADDR)&%s::%s)==nullptr) return 0;\n"
 					"/*RESETLINE*/\n"), startline, forward_slashes(filename),
 					fname,oclass->name,fname);
 
@@ -3297,7 +3286,7 @@ static int class_explicit_definition(PARSER, CLASS *oclass)
 	if WHITE ACCEPT;
 	if (TERM(class_explicit_declaration(HERE,type,sizeof(type)/*,&is_static*/)))
 	{
-		if (oclass->module==NULL)
+		if (oclass->module==nullptr)
 		{
 			startline=linenum;
 			if WHITE ACCEPT;
@@ -3340,10 +3329,10 @@ static int class_external_function(PARSER, CLASS *oclass, CLASS **eclass,char *f
 	START;
 	if (LITERAL("function") && WHITE && TERM(name(HERE,classname,sizeof(classname))) && LITERAL("::") && TERM(name(HERE,fname,fsize)) && WHITE,LITERAL(";"))
 	{
-		if (oclass->module==NULL)
+		if (oclass->module==nullptr)
 		{
 			CLASS *oclass = class_get_class_from_classname(classname);
-			if (oclass==NULL) 
+			if (oclass==nullptr)
 			{
 				output_error_raw("%s(%d): class '%s' does not exist", filename, linenum, classname);
 				REJECT;
@@ -3382,8 +3371,8 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 	CLASS *eclass;
 	PROPERTYTYPE type;
 	PROPERTYNAME propname;
-	KEYWORD *keys = NULL;
-	UNIT *pUnit=NULL;
+	KEYWORD *keys = nullptr;
+	UNIT *pUnit=nullptr;
 	START;
 	if WHITE ACCEPT;
 	if TERM(class_intrinsic_function(HERE,oclass,functions,code,sizeof(code)))
@@ -3392,9 +3381,9 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 	}
 	else if TERM(class_external_function(HERE,oclass,&eclass,fname,sizeof(fname)))
 	{
-		append_global("FUNCTIONADDR %s::%s = NULL;\n",oclass->name,fname);
-		if (global_getvar("noglmrefs",buffer,63)==NULL)
-			append_init("#line %d \"%s\"\n\tif ((%s::%s=gl_get_function(\"%s\",\"%s\"))==NULL) throw \"%s::%s not defined\";\n", 
+		append_global("FUNCTIONADDR %s::%s = nullptr;\n",oclass->name,fname);
+		if (global_getvar("noglmrefs",buffer,63)==nullptr)
+			append_init("#line %d \"%s\"\n\tif ((%s::%s=gl_get_function(\"%s\",\"%s\"))==nullptr) throw \"%s::%s not defined\";\n",
 				linenum, forward_slashes(filename), oclass->name, fname, 
 				eclass->name, fname, eclass->name, fname);
 		append_code("\tstatic FUNCTIONADDR %s;\n",fname);
@@ -3412,7 +3401,7 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 	else if (TERM(property_type(HERE,&type,&keys)) && (WHITE,(TERM(nameunit(HERE,propname,sizeof(propname),&pUnit))||TERM(name(HERE,propname,sizeof(propname))))) && (WHITE,LITERAL(";")) )
 	{
 		PROPERTY *prop = class_find_property(oclass,propname);
-		if (prop==NULL)
+		if (prop==nullptr)
 		{
 			if (type==PT_void)
 			{
@@ -3421,7 +3410,7 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 			}
 			else
 			{
-				if (pUnit != NULL)
+				if (pUnit != nullptr)
 				{
 					if (type==PT_double || type==PT_complex || type==PT_random)
 						prop = class_add_extended_property(oclass,propname,type,pUnit->name);
@@ -3431,11 +3420,11 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 						REJECT;
 					}
 				}
-				else if (keys!=NULL)
+				else if (keys!=nullptr)
 				{
 					if (type==PT_enumeration || type==PT_set)
 					{
-						prop = class_add_extended_property(oclass,propname,type,NULL);
+						prop = class_add_extended_property(oclass,propname,type,nullptr);
 						prop->keywords = keys;
 					}
 					else
@@ -3445,14 +3434,14 @@ static int class_properties(PARSER, CLASS *oclass, int64 *functions, char *initc
 					}
 				}
 				else
-					prop = class_add_extended_property(oclass,propname,type,NULL);
-				if (oclass->module==NULL)
+					prop = class_add_extended_property(oclass,propname,type,nullptr);
+				if (oclass->module==nullptr)
 				{
 					mark_line();
-					if (keys!=NULL)
+					if (keys!=nullptr)
 					{
 						KEYWORD *key;
-						for (key=prop->keywords; key!=NULL; key=key->next)
+						for (key=prop->keywords; key!=nullptr; key=key->next)
 							append_code("#define %s (0x%x)\n", key->name, key->value);
 					}
 					append_code("\t%s %s;\n", class_get_property_typename(prop->ptype), prop->name);
@@ -3514,7 +3503,7 @@ static int class_block(PARSER)
 					REJECT;
 					DONE;
 				}
-				if (class_get_class_from_classname(parent)==NULL)
+				if (class_get_class_from_classname(parent)==nullptr)
 				{
 					output_error_raw("%s(%d): class %s inherits from undefined class %s", filename, linenum, classname, parent);
 					REJECT;
@@ -3525,9 +3514,9 @@ static int class_block(PARSER)
 			if LITERAL("{")
 			{
 				oclass = class_get_class_from_classname(classname);
-				if (oclass==NULL)
+				if (oclass==nullptr)
 				{
-					oclass = class_register(NULL,classname,0,0x00);
+					oclass = class_register(nullptr,classname,0,0x00);
 					mark_line();
 					switch (inherit) {
 					case NONE:
@@ -3570,17 +3559,17 @@ static int class_block(PARSER)
 		if WHITE ACCEPT;
 		if LITERAL("}")
 		{
-			if ( oclass->module==NULL && functions!=0 )
+			if ( oclass->module==nullptr && functions!=0 )
 			{
 				append_code("};\n");
-#define ENTERING(OBJ,X) if (strstr(global_trace,#X)!=NULL) append_code("trace(\"call %s::%s\",("#OBJ"));",oclass->name,#X)
-#define EXITING(OBJ,X) if (strstr(global_trace,#X)!=NULL) append_code("trace(\"exit %s::%s\",("#OBJ"));",oclass->name,#X)
+#define ENTERING(OBJ,X) if (strstr(global_trace,#X)!=nullptr) append_code("trace(\"call %s::%s\",("#OBJ"));",oclass->name,#X)
+#define EXITING(OBJ,X) if (strstr(global_trace,#X)!=nullptr) append_code("trace(\"exit %s::%s\",("#OBJ"));",oclass->name,#X)
 
 				append_code("/*RESETLINE*/\n");
 				append_code("/*RESETLINE*/\n");
 				append_code("extern \"C\" int64 create_%s(OBJECT **obj, OBJECT *parent)\n{\n",oclass->name);
 				append_code(
-						"\tif ((*obj=gl_create_object(myclass))==NULL)\n\t\treturn 0;\n"
+						"\tif ((*obj=gl_create_object(myclass))==nullptr)\n\t\treturn 0;\n"
 						"\tif ( parent ) gl_set_parent(*obj,parent);\n", oclass->name,oclass->name);
 					if (functions&FN_CREATE) 
 					{
@@ -3693,7 +3682,7 @@ static int class_block(PARSER)
 
 				/* TODO add other intrinsics (notify, recalc, isa) */
 				if (!compile_code(oclass,functions)) REJECT;
-			} else if ( functions!=0 ) { // if module != NULL
+			} else if ( functions!=0 ) { // if module != nullptr
 				if(code_used){
 					output_error_raw("%s(%d): intrinsic functions found for compiled class", filename, linenum);
 					REJECT;
@@ -3738,7 +3727,7 @@ static int schedule_ref(PARSER, SCHEDULE **sch)
 	if (TERM(dashed_name(HERE,name,sizeof(name))))
 	{
 		ACCEPT;
-		if (((*sch)=schedule_find_byname(name))==NULL)
+		if (((*sch)=schedule_find_byname(name))==nullptr)
 			REJECT;
 	}
 	else
@@ -3756,18 +3745,18 @@ static int property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *fro
 		OBJECT *obj = (strcmp(oname,"this")==0 ? from : object_find_name(oname));
 
 		// object isn't defined yet
-		if (obj==NULL)
+		if (obj==nullptr)
 		{
 			// add to unresolved list
 			char id[1024];
 			sprintf(id,"%s.%s",oname,pname);
-			*ref = (void*)add_unresolved(from,PT_double,NULL,from->oclass,id,filename,linenum,UR_TRANSFORM);
+			*ref = (void*)add_unresolved(from,PT_double,nullptr,from->oclass,id,filename,linenum,UR_TRANSFORM);
 			ACCEPT;
 		}
 		else 
 		{
-			PROPERTY *prop = object_get_property(obj,pname,NULL);
-			if (prop==NULL)
+			PROPERTY *prop = object_get_property(obj,pname,nullptr);
+			if (prop==nullptr)
 			{
 				output_error_raw("%s(%d): property '%s' of object '%s' not found", filename, linenum, oname,pname);
 				REJECT;
@@ -3960,13 +3949,13 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 	char1024 propval;
 	double dval;
 	gld::complex cval;
-	void *source=NULL;
+	void *source=nullptr;
 	TRANSFORMSOURCE xstype = XS_UNKNOWN;
 	char transformname[1024];
 	char sources[4096];
 	double scale=1,bias=0;
-	UNIT *unit=NULL;
-	OBJECT *subobj=NULL;
+	UNIT *unit=nullptr;
+	OBJECT *subobj=nullptr;
 	START;
 	if WHITE ACCEPT;
 	if TERM(line_spec(HERE)) {ACCEPT;}
@@ -3985,7 +3974,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 	else if (TERM(dotted_name(HERE,propname,sizeof(propname))) && WHITE)
 	{
 		LOADMETHOD *method = class_get_loadmethod(obj->oclass,propname);
-		if ( method!=NULL )
+		if ( method!=nullptr )
 		{
 			if ( TERM(value(HERE,propval,sizeof(propval))) )
 			{
@@ -4007,12 +3996,12 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 		}
 		else {
 			PROPERTY *prop = class_find_property(oclass,propname);
-			OBJECT *subobj=NULL;
+			OBJECT *subobj=nullptr;
 			current_object = obj; /* object context */
 			current_module = obj->oclass->module; /* module context */
 			char targetprop[1024];
 			char targetvalue[1024];
-			if (prop!=NULL && prop->ptype==PT_object && TERM(object_block(HERE,NULL,&subobj)))
+			if (prop!=nullptr && prop->ptype==PT_object && TERM(object_block(HERE,nullptr,&subobj)))
 			{
 				char objname[128];
 				if (subobj->name) strcpy(objname,subobj->name); else sprintf(objname,"%s:%d", subobj->oclass->name,subobj->id);
@@ -4024,14 +4013,14 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					REJECT;
 				}
 			}
-			else if ( prop==NULL && strcmp(propname,"parent")==0
+			else if ( prop==nullptr && strcmp(propname,"parent")==0
 					&& (WHITE,LITERAL("childless")) && (WHITE,LITERAL(":"))
 					&& (WHITE,TERM(name(HERE,targetprop,sizeof(targetprop))))
 					&& (WHITE,LITERAL("="))
 					&& (WHITE,TERM(dashed_name(HERE,targetvalue,sizeof(targetvalue)))) )
 			{
 				OBJECT *target;
-				for ( target = object_get_first() ; target != NULL ; target = object_get_next(target) )
+				for ( target = object_get_first() ; target != nullptr ; target = object_get_next(target) )
 				{
 					char value[1024];
 					if ( object_get_child_count(target)==0 && object_get_value_by_name(target,targetprop,value,sizeof(value))!='\0' && strcmp(value,targetvalue)==0 )
@@ -4040,7 +4029,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 						break;
 					}
 				}
-				if ( obj==NULL )
+				if ( obj==nullptr )
 				{
 					output_error_raw("%s(%d): no childless objects found in %s=%s (immediate)", filename, linenum, targetprop, targetvalue);
 					REJECT;
@@ -4050,10 +4039,10 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					ACCEPT;
 				}
 			}
-			else if (prop!=NULL && LITERAL("inherit"))
+			else if (prop!=nullptr && LITERAL("inherit"))
 			{
 				char value[1024];
-				if ( obj->parent==NULL )
+				if ( obj->parent==nullptr )
 				{
 					output_error_raw("%s(%d): cannot inherit from an parent that hasn't been resolved yet or isn't specified", filename, linenum);
 					REJECT;
@@ -4069,9 +4058,9 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					REJECT;
 				}
 			}
-			else if (prop!=NULL && prop->ptype==PT_complex && TERM(complex_unit(HERE,&cval,&unit)))
+			else if (prop!=nullptr && prop->ptype==PT_complex && TERM(complex_unit(HERE,&cval,&unit)))
 			{
-				if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_complex(unit,prop->unit,&cval)==0)
+				if (unit!=nullptr && prop->unit!=nullptr && strcmp((char *)unit, "") != 0 && unit_convert_complex(unit,prop->unit,&cval)==0)
 				{
 					output_error_raw("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
 					REJECT;
@@ -4084,9 +4073,9 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				else
 					ACCEPT;
 			}
-			else if (prop!=NULL && prop->ptype==PT_double && TERM(expression(HERE, &dval, &unit, obj)))
+			else if (prop!=nullptr && prop->ptype==PT_double && TERM(expression(HERE, &dval, &unit, obj)))
 			{
-				if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit,prop->unit,&dval)==0)
+				if (unit!=nullptr && prop->unit!=nullptr && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit,prop->unit,&dval)==0)
 				{
 					output_error_raw("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
 					REJECT;
@@ -4099,9 +4088,9 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				else
 					ACCEPT;
 			}
-			else if (prop!=NULL && prop->ptype==PT_double && TERM(functional_unit(HERE,&dval,&unit)))
+			else if (prop!=nullptr && prop->ptype==PT_double && TERM(functional_unit(HERE,&dval,&unit)))
 			{
-				if (unit!=NULL && prop->unit!=NULL && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit,prop->unit,&dval)==0)
+				if (unit!=nullptr && prop->unit!=nullptr && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit,prop->unit,&dval)==0)
 				{
 					output_error_raw("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
 					REJECT;
@@ -4114,14 +4103,14 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				else
 					ACCEPT;
 			}
-			else if(prop != NULL && is_int(prop->ptype) && TERM(functional_unit(HERE, &dval, &unit))){
+			else if(prop != nullptr && is_int(prop->ptype) && TERM(functional_unit(HERE, &dval, &unit))){
 				int64 ival = 0;
 				int16 ival16 = 0;
 				int32 ival32 = 0;
 				int64 ival64 = 0;
 				int rv = 0;
 
-				if(unit != NULL && prop->unit != NULL && strcmp((char *)(unit), "") != 0 && unit_convert_ex(unit, prop->unit, &dval) == 0){
+				if(unit != nullptr && prop->unit != nullptr && strcmp((char *)(unit), "") != 0 && unit_convert_ex(unit, prop->unit, &dval) == 0){
 					output_error_raw("%s(%d): units of value are incompatible with units of property, cannot convert from %s to %s", filename, linenum, unit->name,prop->unit->name);
 					REJECT;
 				} else {
@@ -4159,7 +4148,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 #endif
 				} /* end unit_convert_ex else */
 			}
-			else if (prop!=NULL
+			else if (prop!=nullptr
 				&& ( ( prop->ptype>=PT_double && prop->ptype<=PT_int64 ) || ( prop->ptype>=PT_bool && prop->ptype<=PT_timestamp ) || ( prop->ptype>=PT_float && prop->ptype<=PT_enduse ) )
 				&& TERM(linear_transform(HERE, &xstype, &source,&scale,&bias,obj)))
 			{
@@ -4171,18 +4160,18 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					output_error_raw("%s(%d): schedule transform could not be created - %s", filename, linenum, errno?strerror(errno):"(no details)");
 					REJECT;
 				}
-				else if ( source!=NULL )
+				else if ( source!=nullptr )
 				{
 					/* a transform is unresolved */
 					if (first_unresolved==source)
 
 						/* source was the unresolved entry, for now it will be the transform itself */
-						first_unresolved->ref = (void*)transform_getnext(NULL);
+						first_unresolved->ref = (void*)transform_getnext(nullptr);
 
 					ACCEPT;
 				}
 			}
-			else if (prop!=NULL && prop->ptype==PT_double && TERM(external_transform(HERE, &xstype, sources, sizeof(sources), transformname, sizeof(transformname), obj)))
+			else if (prop!=nullptr && prop->ptype==PT_double && TERM(external_transform(HERE, &xstype, sources, sizeof(sources), transformname, sizeof(transformname), obj)))
 			{
 				// TODO handle more than one source
 				char sobj[64], sprop[64];
@@ -4200,7 +4189,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 
 				/* get source property */
-				source_prop = object_get_property(source_obj, n==1?sobj:sprop,NULL);
+				source_prop = object_get_property(source_obj, n==1?sobj:sprop,nullptr);
 				if ( !source_prop )
 				{
 					output_error_raw("%s(%d): transform source property '%s' of object '%s' not found", filename, linenum, n==1?sobj:sprop, n==1?"this":sobj);
@@ -4215,18 +4204,18 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					REJECT;
 					DONE;
 				}
-				else if ( source!=NULL )
+				else if ( source!=nullptr )
 				{
 					/* a transform is unresolved */
 					if (first_unresolved==source)
 
 						/* source was the unresolved entry, for now it will be the transform itself */
-						first_unresolved->ref = (void*)transform_getnext(NULL);
+						first_unresolved->ref = (void*)transform_getnext(nullptr);
 
 					ACCEPT;
 				}
 			}
-			else if (prop!=NULL && prop->ptype==PT_double && TERM(filter_transform(HERE, &xstype, sources, sizeof(sources), transformname, sizeof(transformname), obj)))
+			else if (prop!=nullptr && prop->ptype==PT_double && TERM(filter_transform(HERE, &xstype, sources, sizeof(sources), transformname, sizeof(transformname), obj)))
 			{
 				// TODO handle more than one source
 				char sobj[64], sprop[64];
@@ -4244,7 +4233,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 
 				/* get source property */
-				source_prop = object_get_property(source_obj, n==1?sobj:sprop,NULL);
+				source_prop = object_get_property(source_obj, n==1?sobj:sprop,nullptr);
 				if ( !source_prop )
 				{
 					output_error_raw("%s(%d): filter source property '%s' of object '%s' not found", filename, linenum, n==1?sobj:sprop, n==1?"this":sobj);
@@ -4259,27 +4248,27 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					REJECT;
 					DONE;
 				}
-				else if ( source!=NULL )
+				else if ( source!=nullptr )
 				{
 					/* a transform is unresolved */
 					if (first_unresolved==source)
 
 						/* source was the unresolved entry, for now it will be the transform itself */
-						first_unresolved->ref = (void*)transform_getnext(NULL);
+						first_unresolved->ref = (void*)transform_getnext(nullptr);
 
 					ACCEPT;
 				}
 			}
 			else if TERM(alternate_value(HERE,propval,sizeof(propval)))
 			{
-				if (prop==NULL)
+				if (prop==nullptr)
 				{
 					/* check for special properties */
 					if (strcmp(propname,"root")==0)
-						obj->parent = NULL;
+						obj->parent = nullptr;
 					else if (strcmp(propname,"parent")==0)
 					{
-						if (add_unresolved(obj,PT_object,(void*)&obj->parent,oclass,propval,filename,linenum,UR_RANKS)==NULL)
+						if (add_unresolved(obj,PT_object,(void*)&obj->parent,oclass,propval,filename,linenum,UR_RANKS)==nullptr)
 						{
 							output_error_raw("%s(%d): unable to add unresolved reference to parent %s", filename, linenum, propval.get_string());
 							REJECT;
@@ -4334,7 +4323,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					}
 					else if (strcmp(propname,"name")==0)
 					{
-						if (object_set_name(obj,propval)==NULL)
+						if (object_set_name(obj,propval)==nullptr)
 						{
 							output_error_raw("%s(%d): property name %s could not be used", filename, linenum, propval.get_string());
 							REJECT;
@@ -4377,7 +4366,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				}
 				else if (prop->ptype==PT_object)
 				{	void *addr = object_get_addr(obj,propname);
-					if (addr==NULL)
+					if (addr==nullptr)
 					{
 						output_error_raw("%s(%d): unable to get %s member %s", filename, linenum, format_object(obj), propname);
 						REJECT;
@@ -4486,7 +4475,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 	FULLNAME space;
 	CLASSNAME classname;
 	CLASS *oclass;
-	OBJECT *obj=NULL;
+	OBJECT *obj=nullptr;
 	int64 id=-1, id2=-1;
 	START;
 
@@ -4532,7 +4521,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 	if TERM(object_name_id_range(HERE,classname,&id,&id2))
 	{
 		oclass = class_get_class_from_classname(classname);
-		if (oclass==NULL) 
+		if (oclass==nullptr)
 		{
 			output_error_raw("%s(%d): class '%s' is not known", filename, linenum, classname);
 			REJECT;
@@ -4544,7 +4533,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 	{
 		id=-1; id2--;  /* count down to zero inclusive */
 		oclass = class_get_class_from_classname(classname);
-		if (oclass==NULL) 
+		if (oclass==nullptr)
 		{
 			output_error_raw("%s(%d): class '%s' is not known", filename, linenum, classname);
 			REJECT;
@@ -4554,7 +4543,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 	else if TERM(object_name_id(HERE,classname,&id))
 	{
 		oclass = class_get_class_from_classname(classname);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 		{
 			output_error_raw("%s(%d): class '%s' is not known", filename, linenum, classname);
 			REJECT;
@@ -4582,7 +4571,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 	while (id<id2)
 	{
 		REPEAT;
-		if (oclass->create!=NULL)
+		if (oclass->create!=nullptr)
 		{
 #ifdef NAMEOBJ
 			obj = &nameobj;
@@ -4592,7 +4581,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 				output_error_raw("%s(%d): create failed for object %s:%d", filename, linenum, classname, id);
 				REJECT;
 			}
-			else if (obj==NULL
+			else if (obj==nullptr
 #ifdef NAMEOBJ
 				|| obj==&nameobj
 #endif
@@ -4605,7 +4594,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 		else // need to create object here because class has no create function 
 		{
 			obj = object_create_single(oclass);
-			if ( obj==NULL )
+			if ( obj==nullptr )
 			{
 				output_error_raw("%s(%d): create failed for object %s:%d", filename, linenum, classname, id);
 				REJECT;
@@ -4648,15 +4637,15 @@ static int load_import(PARSER) {
 	{
 		if (TERM(name(HERE,modname,sizeof(modname))) && WHITE) /* enforced whitespace */
 		{
-			current_object = NULL; /* object context */
-			current_module = NULL; /* module context */
+			current_object = nullptr; /* object context */
+			current_module = nullptr; /* module context */
 			if TERM(alternate_value(HERE,fname,sizeof(fname)))
 			{
 				if LITERAL(";")
 				{
 					int result;
 					MODULE *module = module_find(modname);
-					if (module==NULL)
+					if (module==nullptr)
 					{
 						output_error_raw("%s(%d): module %s not loaded", filename, linenum, modname.get_string());
 						REJECT;
@@ -4708,15 +4697,15 @@ int load_export(PARSER) {
 	{
 		if (TERM(name(HERE,modname,sizeof(modname))) && WHITE) /* enforced whitespace */
 		{
-			current_object = NULL; /* object context */
-			current_module = NULL; /* module context */
+			current_object = nullptr; /* object context */
+			current_module = nullptr; /* module context */
 			if TERM(alternate_value(HERE,fname,sizeof(fname)))
 			{
 				if LITERAL(";")
 				{
 					int result;
 					MODULE *module = module_find(modname);
-					if (module==NULL)
+					if (module==nullptr)
 					{
 						output_error_raw("%s(%d): module %s not loaded", filename, linenum, modname.get_string());
 						REJECT;
@@ -5291,7 +5280,7 @@ static int gui(PARSER)
 	if WHITE ACCEPT;
 	if (LITERAL("gui") && WHITE,LITERAL("{"))
 	{
-		while TERM(gui_entity(HERE,NULL)) ACCEPT;
+		while TERM(gui_entity(HERE,nullptr)) ACCEPT;
 		if (WHITE,LITERAL("}")) 
 		{
 			if (gui_wait()==0)
@@ -5350,7 +5339,7 @@ static int double_timestep(PARSER,double *step)
 	START;
 	if ( WHITE,TERM(real_value(HERE,step)) )
 	{
-		UNIT *from = NULL;
+		UNIT *from = nullptr;
 		if ( WHITE,TERM(unitspec(HERE,&from)) )
 		{
 			// convert to seconds
@@ -5615,17 +5604,17 @@ static int global_declaration(PARSER)
 			&& (WHITE,TERM(name(HERE,varname,sizeof(varname))))
 			)
 		{
-			UNIT *pUnit = NULL;
+			UNIT *pUnit = nullptr;
 			if ( (WHITE,LITERAL("[")) && (WHITE,TERM(unitspec(HERE,&pUnit))) && (WHITE,LITERAL("]")) )
 			{
 			}
 			else
-				pUnit = NULL;
+				pUnit = nullptr;
 			if ( (WHITE,TERM(value(HERE,pvalue,sizeof(pvalue)))) )
 			{
 				PROPERTYTYPE ptype = property_get_type(proptype);
-				GLOBALVAR *var = global_create(varname,ptype,NULL,PT_SIZE,1,PT_ACCESS,PA_PUBLIC,NULL);
-				if ( var==NULL )
+				GLOBALVAR *var = global_create(varname,ptype,nullptr,PT_SIZE,1,PT_ACCESS,PA_PUBLIC,nullptr);
+				if ( var==nullptr )
 				{
 					output_error_raw("%s(%d): global '%s %s' cannot be defined", filename, linenum, proptype, varname);
 					REJECT;
@@ -5824,7 +5813,7 @@ static int gridlabd_file(PARSER)
 	if WHITE {ACCEPT; DONE;}
 	OR if LITERAL(";") {ACCEPT; DONE;}
 	OR if TERM(line_spec(HERE)) { ACCEPT; DONE; }
-	OR if TERM(object_block(HERE,NULL,NULL)) {ACCEPT; DONE;}
+	OR if TERM(object_block(HERE,nullptr,nullptr)) {ACCEPT; DONE;}
 	OR if TERM(class_block(HERE)) {ACCEPT; DONE;}
 	OR if TERM(module_block(HERE)) {ACCEPT; DONE;}
 	OR if TERM(clock_block(HERE)) {ACCEPT; DONE;}
@@ -5849,7 +5838,7 @@ int replace_variables(char *to,char *from,int len,int warn)
 {
 	char *p, *e=from;
 	int n = 0;
-	while ((p=strstr(e,"${"))!=NULL)
+	while ((p=strstr(e,"${"))!=nullptr)
 	{
 		char varname[1024];
 		if (sscanf(p+2,"%1024[^}]",varname)==1)
@@ -5860,9 +5849,9 @@ int replace_variables(char *to,char *from,int len,int warn)
 			strncpy(to+n,e,m);
 			n += m;
 			var =  global_getvar(varname,to+n,len-n);
-			if (var!=NULL)
+			if (var!=nullptr)
 				n+=(int)strlen(var);
-			else if (env!=NULL)
+			else if (env!=nullptr)
 			{
 				strncpy(to+n,env,len-n);
 				n+=(int)strlen(env);
@@ -5877,7 +5866,7 @@ int replace_variables(char *to,char *from,int len,int warn)
 				 */
 			}
 			e = strchr(p,'}');
-			if (e==NULL)
+			if (e==nullptr)
 				goto Unterminated;
 			e++;
 		}
@@ -5911,7 +5900,7 @@ static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
 	int n=0;
 	int linenum=0;
 	int startnest = nesting;
-	while (fgets(line,sizeof(line),fp)!=NULL)
+	while (fgets(line,sizeof(line),fp)!=nullptr)
 	{
 		int len;
 		char subst[65536];
@@ -5919,7 +5908,7 @@ static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
 		/* comments must have preceding whitespace in macros */
 		char *c = line[0]!='#'?strstr(line,COMMENT):strstr(line, " " COMMENT);
 		linenum++;
-		if (c!=NULL) /* truncate at comment */
+		if (c!=nullptr) /* truncate at comment */
 			strcpy(c,"\n");
 		len = (int)strlen(line);
 		if (len>=size-1)
@@ -5984,7 +5973,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 	int bnest = 0, quote = 0;
 	int hassc = 0; // has semicolon
 	int quoteline = 0;
-	while (fgets(line,sizeof(line),fp)!=NULL)
+	while (fgets(line,sizeof(line),fp)!=nullptr)
 	{
 		int len;
 		char subst[65536];
@@ -5997,7 +5986,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 			/* Trim off a comment with a space */
 			c = strstr(line, " " COMMENT);
 
-			if (c!=NULL) /* truncate at comment */
+			if (c!=nullptr) /* truncate at comment */
 			{
 				strcpy(c,"\n");
 			}
@@ -6007,7 +5996,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 				c = strstr(line, "\t" COMMENT);
 
 				/* Trim, if necessary */
-				if (c!=NULL)
+				if (c!=nullptr)
 					strcpy(c,"\n");
 			}
 		}
@@ -6015,7 +6004,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 		{
 			c = strstr(line,COMMENT);	
 
-			if (c!=NULL) /* truncate at comment */
+			if (c!=nullptr) /* truncate at comment */
 				strcpy(c,"\n");
 		}
 		_linenum++;
@@ -6141,7 +6130,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 
 	buffer2[0]=0;
 	
-	for (list = include_list; list != NULL; list = list->next)
+	for (list = include_list; list != nullptr; list = list->next)
 	{
 		if (strcmp(incname, list->file) == 0 && !global_reinclude )
 		{
@@ -6156,7 +6145,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	if (ext>name) {
 		if(strcmp(ext, ".hpp") == 0 || strcmp(ext, ".h")==0 || strcmp(ext, ".c") == 0 || strcmp(ext, ".cpp") == 0){
 			// append to list
-			for (list = header_list; list != NULL; list = list->next){
+			for (list = header_list; list != nullptr; list = list->next){
 				if(strcmp(incname, list->file) == 0){
 					// normal behavior
 					return 0;
@@ -6166,7 +6155,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
             header_list = self;
 		}
 	} else { /* no extension */
-		for (list = header_list; list != NULL; list = list->next){
+		for (list = header_list; list != nullptr; list = list->next){
 			if(strcmp(incname, list->file) == 0){
 				// normal behavior
 				return 0;
@@ -6177,15 +6166,15 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	}
 
 	/* open file */
-	fp = find_file(incname,nullptr,R_OK,ff,sizeof(ff)) ? fopen(ff, "rt") : NULL;
+	fp = find_file(incname,nullptr,R_OK,ff,sizeof(ff)) ? fopen(ff, "rt") : nullptr;
 	
-	if(fp == NULL){
+	if(fp == nullptr){
 		output_error_raw("%s(%d): include file open failed: %s", incname, _linenum, errno?strerror(errno):"(no details)");
 		return -1;
 	}
 	else
 		output_verbose("include_file(char *incname='%s', char *buffer=0x%p, int size=%d): search of GLPATH='%s' result is '%s'", 
-			incname, buffer, size, getenv("GLPATH") ? getenv("GLPATH") : "NULL", ff ? ff : "NULL");
+			incname, buffer, size, getenv("GLPATH") ? getenv("GLPATH") : "nullptr", ff ? ff : "nullptr");
 
 	old_linenum = linenum;
 	linenum = 1;
@@ -6274,10 +6263,10 @@ int is_autodef(char *value)
 struct s_threadlist {
 	pthread_t *data;
 	struct s_threadlist *next;
-} *threadlist = NULL;
+} *threadlist = nullptr;
 void kill_processes(void)
 {
-	while ( threadlist!=NULL )
+	while ( threadlist!=nullptr )
 	{
 		void *ptr;
 		struct s_threadlist *next = threadlist->next;
@@ -6310,10 +6299,10 @@ void* start_process(const char *cmd)
 	struct s_threadlist *thread = (struct s_threadlist*)malloc(sizeof(struct s_threadlist));
     char *args = static_cast<char *>(malloc(strlen(cmd) + 1));
 	strcpy(args,cmd);
-	if ( thread==NULL || pThreadInfo==NULL || pthread_create(pThreadInfo,NULL,(void*(*)(void*))system,args)!=0 )
+	if ( thread==nullptr || pThreadInfo==nullptr || pthread_create(pThreadInfo,nullptr,(void*(*)(void*))system,args)!=0 )
 	{
 		output_error_raw("%s(%d): unable to create thread to start '%s'", filename, linenum, cmd);
-		return NULL;
+		return nullptr;
 	}
 	else
 		output_debug("creating thread %p for process '%s'", pThreadInfo, cmd);
@@ -6333,8 +6322,8 @@ void* start_process(const char *cmd)
 char *strsep(char **from, const char *delim) {
     char *s, *dp, *ret;
 
-    if ((s = *from) == NULL)
-        return NULL;
+    if ((s = *from) == nullptr)
+        return nullptr;
 
     ret = s;
     while (*s != '\0') {
@@ -6353,7 +6342,7 @@ char *strsep(char **from, const char *delim) {
         s++;
     }
     /* end of string case */
-    *from = NULL;
+    *from = nullptr;
     return ret;
 }
 #endif
@@ -6407,14 +6396,14 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+6,' ');
 		char value[1024];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %sifdef macro missing term",filename,linenum,MACRO);
 			return false;
 		}
-		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, buffer, 63)==NULL && getenv(value)==NULL)
+		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, buffer, 63)==nullptr && getenv(value)==nullptr)
 		strcpy(value, strip_right_white(term+1));
-		if ( !is_autodef(value) && global_getvar(value, buffer, 63)==NULL && getenv(value)==NULL){
+		if ( !is_autodef(value) && global_getvar(value, buffer, 63)==nullptr && getenv(value)==nullptr){
 			suppress |= (1<<nesting);
 		}
 		macro_line[nesting] = linenum;
@@ -6429,21 +6418,21 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 		char *term = strchr(line+8,' ');
 		char value[1024];
 		char path[1024];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %sifexist macro missing term",filename,linenum,MACRO);
 			return false;
 		}
 		while(isspace((unsigned char)(*term)))
 			++term;
-		//if (sscanf(term,"\"%[^\"\n]",value)==1 && find_file(value, NULL, 0)==NULL)
+		//if (sscanf(term,"\"%[^\"\n]",value)==1 && find_file(value, nullptr, 0)==nullptr)
 		strcpy(value, strip_right_white(term));
 		if(value[0] == '"'){
 			char stripbuf[1024];
 			sscanf(value, "\"%[^\"\n]", stripbuf);
 			strcpy(value, stripbuf);
 		}
-		if (find_file(value, NULL, F_OK, path,sizeof(path))==NULL)
+		if (find_file(value, nullptr, F_OK, path,sizeof(path))==nullptr)
 			suppress |= (1<<nesting);
 		macro_line[nesting] = linenum;
 		nesting++;
@@ -6455,14 +6444,14 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+7,' ');
 		char value[1024];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %sifndef macro missing term",filename,linenum,MACRO);
 			return false;
 		}
-		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, buffer, 63)!=NULL || getenv(value)!=NULL))
+		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, buffer, 63)!=nullptr || getenv(value)!=nullptr))
 		strcpy(value, strip_right_white(term+1));
-		if(global_getvar(value, buffer, 63)!=NULL || getenv(value)!=NULL){
+		if(global_getvar(value, buffer, 63)!=nullptr || getenv(value)!=nullptr){
 			suppress |= (1<<nesting);
 		}
 		macro_line[nesting] = linenum;
@@ -6482,7 +6471,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 			return false;
 		}
 		value = global_getvar(var, buffer, 63);
-		if (value==NULL)
+		if (value==nullptr)
 		{
 			output_error_raw("%s(%d): %s is not defined", filename,linenum,var);
 			strcpy(line,"\n");
@@ -6520,7 +6509,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 		char *term = strchr(line+8,' ');
 		char value[1024];
 		char oldfile[1024];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %sinclude macro missing term",filename,linenum,MACRO);
 			strcpy(line,"\n");
@@ -6532,7 +6521,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			char *token, tmp[1024], *string=tmp;
 			strcpy(tmp,value);
-			while ( (token=strsep(&string, ",")) != NULL)
+			while ( (token=strsep(&string, ",")) != nullptr)
 			{
 				int old_strictnames = global_strictnames;
 				global_strictnames = false;
@@ -6585,7 +6574,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 			FILE *fp;
 			HTTPRESULT *http = static_cast<HTTPRESULT *>(http_read(value, 0x40000));
 			char tmpname[1024];
-			if ( http==NULL )
+			if ( http==nullptr )
 			{
 				output_error("%s(%d): unable to include [%s]", filename, linenum, value);
 				return false;
@@ -6605,7 +6594,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 			if ( access(tmpname,R_OK)!=0 )
 			{
 				fp = fopen(tmpname,"wt");
-				if ( fp==NULL )
+				if ( fp==nullptr )
 				{
 					output_error("%s(%d): unable to write temp file '%s'", filename, linenum, tmpname);
 					return false;
@@ -6643,7 +6632,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+7,' ');
 		char value[65536];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %ssetenv macro missing term",filename,linenum,MACRO);
 			strcpy(line,"\n");
@@ -6656,7 +6645,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 			putenv(value);
 #else
 			var = strtok_r(value, "=", &save);
-                        val = strtok_r(NULL, "=", &save);
+                        val = strtok_r(nullptr, "=", &save);
                         setenv(var, val, 1);
 #endif
 			strcpy(line,"\n");
@@ -6673,7 +6662,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+4,' ');
 		char value[1024];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %sset macro missing term",filename,linenum,MACRO);
 			strcpy(line,"\n");
@@ -6683,7 +6672,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 		strcpy(value, strip_right_white(term+1));
 		if(1){
 			STATUS result;
-			if (strchr(value,'=')==NULL)
+			if (strchr(value,'=')==nullptr)
 			{
 				output_error_raw("%s(%d): %sset missing assignment",filename,linenum,MACRO);
 				return FAILED;
@@ -6726,7 +6715,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+7,' ');
 		char value[1024];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %sdefine macro missing term",filename,linenum, MACRO);
 			strcpy(line,"\n");
@@ -6737,7 +6726,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 		if(1){
 			STATUS result;
 			int oldstrict = global_strictnames;
-			if (strchr(value,'=')==NULL)
+			if (strchr(value,'=')==nullptr)
 				strcat(value,"="); // void entry
 			global_strictnames = false;
 			result = global_setvar(value,"\"\""); // extra "" is used in case value is term is empty string
@@ -6758,7 +6747,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+6,' ');
 		char value[1024];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %sprint missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
@@ -6782,7 +6771,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+6,' ');
 		char value[1024];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %serror missing expression",filename,linenum,MACRO);
 			strcpy(line,"\n");
@@ -6807,7 +6796,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+8,' ');
 		char value[1024];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %swarning missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
@@ -6831,7 +6820,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+8,' ');
 		char value[1024];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %sdebug missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
@@ -6855,7 +6844,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+7,' ');
 		char value[1024];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %ssystem missing system call",filename,linenum,MACRO);
 			strcpy(line,"\n");
@@ -6880,7 +6869,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+6,' ');
 		char value[1024];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %sstart missing system call",filename,linenum,MACRO);
 			strcpy(line,"\n");
@@ -6888,7 +6877,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		strcpy(value, strip_right_white(term+1));
 		output_debug("%s(%d): executing system(char *cmd='%s')", filename, linenum, value);
-		if( start_process(value)==NULL )
+		if( start_process(value)==nullptr )
 		{
 			output_error_raw("%s(%d): ERROR unable to start '%s'", filename, linenum, value);
 			strcpy(line,"\n");
@@ -6904,7 +6893,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char *term = strchr(line+7,' ');
 		char value[1024];
-		if (term==NULL)
+		if (term==nullptr)
 		{
 			output_error_raw("%s(%d): %soption missing command option name",filename,linenum,MACRO);
 			strcpy(line,"\n");
@@ -6928,7 +6917,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 		else if ( n==1 )
 		{
 			char *basename = strrchr(url,'/');
-			if ( basename==NULL )
+			if ( basename==nullptr )
 			{
 				output_error_raw("%s(%d): unable to extract basename of URL '%s'", filename, linenum, url);
 				return false;
@@ -6974,7 +6963,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 STATUS loadall_glm(char *file) /**< a pointer to the first character in the file name string */
 {
 	OBJECT *obj, *first = object_get_first();
-	char *buffer = NULL, *p = NULL;
+	char *buffer = nullptr, *p = nullptr;
 	int fsize = 0;
 	STATUS status=FAILED;
 	STAT stat;
@@ -6984,7 +6973,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 	errno = 0;
 
 	fp = fopen(file,"rt");
-	if (fp==NULL)
+	if (fp==nullptr)
 		goto Failed;
 	if (FSTAT(fileno(fp),&stat)==0)
 	{
@@ -6993,7 +6982,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
         buffer = static_cast<char *>(malloc(BUFFERSIZE)); /* lots of space */
 	}
 	output_verbose("file '%s' is %d bytes long", file,fsize);
-	if (buffer==NULL)
+	if (buffer==nullptr)
 	{
 		output_error("unable to allocate buffer for file '%s': %s", file, errno?strerror(errno):"(no details)");
 		errno = ENOMEM;
@@ -7023,7 +7012,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 	if (status==FAILED)
 	{
 		char *eol = strchr(p,'\n');
-		if (eol!=NULL)
+		if (eol!=nullptr)
 			*eol='\0';
 		output_error_raw("%s(%d): load failed at or near '%.12s...'", file, linenum,*p=='\0'?"end of line":p);
 		if (p==0)
@@ -7033,7 +7022,7 @@ STATUS loadall_glm(char *file) /**< a pointer to the first character in the file
 		goto Failed;
 
 	/* establish ranks */
-	for (obj=first?first:object_get_first(); obj!=NULL; obj=obj->next)
+	for (obj=first?first:object_get_first(); obj!=nullptr; obj=obj->next)
 		object_set_parent(obj,obj->parent);
 	output_verbose("%d object%s loaded", object_get_count(), object_get_count()>1?"s":"");
 	goto Done;
@@ -7047,7 +7036,7 @@ Failed:
 	}
 Done:
 	free(buffer);
-	buffer = NULL;
+	buffer = nullptr;
 	free_index();
 	linenum=1; // parser starts at 1
 	return status;
@@ -7057,8 +7046,8 @@ Done:
 STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the file name string */
 {
 	OBJECT *obj, *first = object_get_first();
-	//char *buffer = NULL, *p = NULL;
-	char *p = NULL;
+	//char *buffer = nullptr, *p = nullptr;
+	char *p = nullptr;
 	char buffer[20480];
 	int fsize = 0;
 	STATUS status=FAILED;
@@ -7069,7 +7058,7 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 	errno = 0;
 
 	fp = fopen(file,"rt");
-	if (fp==NULL)
+	if (fp==nullptr)
 		goto Failed;
 	if (FSTAT(fileno(fp),&stat)==0)
 	{
@@ -7109,13 +7098,13 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 	}
 	if (status==FAILED)
 	{
-		char *eol = NULL;
+		char *eol = nullptr;
 		if(p){
 			eol = strchr(p,'\n');
 		} else {
             p = const_cast<char *>("");
 		}
-		if (eol!=NULL){
+		if (eol!=nullptr){
 			*eol='\0';
 		}
 		output_error_raw("%s(%d): load failed at or near '%.12s...'", file, linenum,*p=='\0'?"end of line":p);
@@ -7126,7 +7115,7 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 		goto Failed;
 
 	/* establish ranks */
-	for (obj=first?first:object_get_first(); obj!=NULL; obj=obj->next)
+	for (obj=first?first:object_get_first(); obj!=nullptr; obj=obj->next)
 		object_set_parent(obj,obj->parent);
 	output_verbose("%d object%s loaded", object_get_count(), object_get_count()>1?"s":"");
 	goto Done;
@@ -7142,7 +7131,7 @@ Done:
 	//free(buffer);
 	free_index();
 	linenum=1; // parser starts at one
-	if (fp!=NULL) fclose(fp);
+	if (fp!=nullptr) fclose(fp);
 	return status;
 }
 
@@ -7155,7 +7144,7 @@ TECHNOLOGYREADINESSLEVEL calculate_trl(void)
 	technology_readiness_level = TRL_PROVEN; 
 	
 	// examine each class loaded
-	for ( oclass=class_get_first_class() ; oclass!=NULL ; oclass=oclass->next )
+	for ( oclass=class_get_first_class() ; oclass!=nullptr ; oclass=oclass->next )
 	{
 		// if class is inferior
 		if ( oclass->profiler.numobjs>0 && oclass->trl<technology_readiness_level )
@@ -7176,8 +7165,8 @@ TECHNOLOGYREADINESSLEVEL calculate_trl(void)
 	@todo Support nested loads and maintain context during subloads (ticket #33)
  **/
 STATUS loadall(char *file){
-	char *buffer = NULL, *p = NULL;
-	char *ext = file?strrchr(file,'.'):NULL;
+	char *buffer = nullptr, *p = nullptr;
+	char *ext = file?strrchr(file,'.'):nullptr;
 	unsigned int old_obj_count = object_get_count();
 	unsigned int new_obj_count = 0;
 //	unsigned int i;
@@ -7196,7 +7185,7 @@ STATUS loadall(char *file){
 	if (loaded_files==0)
 	{
 		/* load the gridlabd.conf file */
-		if (find_file("gridlabd.conf",NULL,R_OK,conf,sizeof(conf))==NULL)
+		if (find_file("gridlabd.conf",nullptr,R_OK,conf,sizeof(conf))==nullptr)
 			output_warning("gridlabd.conf was not found");
 			/* TROUBLESHOOT
 				The <code>gridlabd.conf</code> was not found in the <b>GLPATH</b> environment path.
@@ -7215,7 +7204,7 @@ STATUS loadall(char *file){
 		{
 			char dbg[1024];
 			
-			if (find_file("debugger.conf",NULL,R_OK,dbg,sizeof(dbg))==NULL)
+			if (find_file("debugger.conf",nullptr,R_OK,dbg,sizeof(dbg))==nullptr)
 				output_warning("debugger.conf was not found");
 				/* TROUBLESHOOT
 					The <code>debugger.conf</code> was not found in the <b>GLPATH</b> environment path.
@@ -7228,22 +7217,22 @@ STATUS loadall(char *file){
 	}
 
 	/* if nothing requested only config files are loaded */
-	if ( file==NULL )
+	if ( file==nullptr )
 		return SUCCESS;
 
 	/* handle default extension */
 	strcpy(filename,file);
-	if (ext==NULL || ext<file+strlen(file)-5)
+	if (ext==nullptr || ext<file+strlen(file)-5)
 	{
 		ext = filename+strlen(filename);
 		strcat(filename,".glm");
 	}
 
 	/* load the appropriate type of file */
-	if (global_streaming_io_enabled || (ext!=NULL && isdigit(ext[1])) )
+	if (global_streaming_io_enabled || (ext!=nullptr && isdigit(ext[1])) )
 	{
 		FILE *fp = fopen(file,"rb");
-		if (fp==NULL || stream(fp,SF_IN)<0)
+		if (fp==nullptr || stream(fp,SF_IN)<0)
 		{
 			output_error("%s: unable to read stream", file);
 			return FAILED;
@@ -7251,7 +7240,7 @@ STATUS loadall(char *file){
 		else
 			load_status = SUCCESS;
 	}
-	else if (ext==NULL || strcmp(ext, ".glm")==0)
+	else if (ext==nullptr || strcmp(ext, ".glm")==0)
 		load_status = loadall_glm_roll(filename);
 #ifdef HAVE_XERCES
 	else if(strcmp(ext, ".xml")==0)

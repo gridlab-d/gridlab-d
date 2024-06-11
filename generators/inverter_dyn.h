@@ -204,7 +204,7 @@ private:
 	PDISPATCH pdispatch;	//Dispatch setpoint in p.u. for internal use
 
 public:
-	set phases;				 /**< device phases (see PHASE codes) */
+	gld::set phases;				 /**< device phases (see PHASE codes) */
 	enum INVERTER_TYPE
 	{
 		GRID_FORMING = 0,
@@ -237,6 +237,16 @@ public:
 
 	gld::complex terminal_current_val[3];
 	gld::complex terminal_current_val_pu[3];
+
+
+        // Used for Imax limiting
+        gld::complex terminal_current_val_pu_prefault[3]; // Pre-fault current, used in Imax angle correction only
+        bool imax_phase_correction_done[3];
+        bool phase_angle_correction; // GLM input - Enable or disable phase angle correction?
+        bool virtual_resistance_correction; // GLM input - Current limiting through adding virtual resistance
+        double theta_c[3];
+       // -----------------------
+
 	TIMESTAMP inverter_start_time;
 	bool inverter_first_step;
 	bool first_deltamode_init;

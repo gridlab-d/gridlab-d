@@ -49,7 +49,7 @@ jsondump::jsondump(MODULE *mod)
 			PT_double,"min_node_voltage[pu]",PADDR(min_volt_value),PT_DESCRIPTION,"Per-unit minimum voltage level allowed for nodes",
 			PT_double,"max_node_voltage[pu]",PADDR(max_volt_value),PT_DESCRIPTION,"Per-unit maximum voltage level allowed for nodes",
 
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
 
@@ -139,7 +139,7 @@ STATUS jsondump::dump_system(void)
 	gld::complex b_mat_fuse_pu[9];
 	bool b_mat_fuse_defined;
 	int fuse_phase_count;
-	set temp_set_value;
+	gld::set temp_set_value;
 	enumeration temp_enum_value;
 	bool found_match_config;
 
@@ -154,7 +154,10 @@ STATUS jsondump::dump_system(void)
 	Json::Value jsonArray1; // for storing rmatrix and xmatrix
 	Json::Value jsonArray2; // for storing rmatrix and xmatrix
 	// Start write to file
-	Json::StyledWriter writer;
+	Json::StreamWriterBuilder builder;
+	builder["commentStyle"] = "None";
+	builder["indentation"] = "";
+
 	// Open file for writing
 	ofstream out_file;
 
@@ -266,7 +269,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Pull the first line config
-		obj_lineConf = gl_find_next(lineConfs,NULL);
+		obj_lineConf = gl_find_next(lineConfs,nullptr);
 		
 		//Zero the index
 		index = 0;
@@ -336,7 +339,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Pull the first line config
-		obj_lineConf = gl_find_next(tpLineConfs,NULL);
+		obj_lineConf = gl_find_next(tpLineConfs,nullptr);
 		
 		//Zero the index
 		index = 0;
@@ -423,7 +426,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Grab the first object
-		obj_lineConf = gl_find_next(TransConfsList,NULL);
+		obj_lineConf = gl_find_next(TransConfsList,nullptr);
 
 		index=0;
 		while(obj_lineConf != nullptr)
@@ -435,7 +438,7 @@ STATUS jsondump::dump_system(void)
 			obj_lineConf = gl_find_next(TransConfsList,obj_lineConf);
 		}
 	}
-	else //No transformers, just NULL everything
+	else //No transformers, just nullptr everything
 	{
 		pTransConf = nullptr;
 		b_mat_trans_pu = nullptr;
@@ -506,7 +509,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Grab the first object
-		obj_lineConf = gl_find_next(regConfs,NULL);
+		obj_lineConf = gl_find_next(regConfs,nullptr);
 
 		index=0;
 		while(obj_lineConf != nullptr)
@@ -518,7 +521,7 @@ STATUS jsondump::dump_system(void)
 			obj_lineConf = gl_find_next(regConfs,obj_lineConf);
 		}
 	}
-	else //No transformers, just NULL everything
+	else //No transformers, just nullptr everything
 	{
 		pRegConf = nullptr;
 		b_mat_reg_pu = nullptr;
@@ -536,7 +539,7 @@ STATUS jsondump::dump_system(void)
 	if (inverters->hit_count > 0)
 	{
 		//Get the first one
-		obj = gl_find_next(inverters,NULL);
+		obj = gl_find_next(inverters,nullptr);
 
 		//Loop until done
 		while (obj != nullptr)
@@ -663,7 +666,7 @@ STATUS jsondump::dump_system(void)
 	if (diesels->hit_count > 0)
 	{
 		//Get the first one
-		obj = gl_find_next(diesels,NULL);
+		obj = gl_find_next(diesels,nullptr);
 
 		//Loop until done
 		while (obj != nullptr)
@@ -797,7 +800,7 @@ STATUS jsondump::dump_system(void)
 	if (nodes->hit_count > 0)
 	{
 		//Find the first one
-		obj = gl_find_next(nodes,NULL);
+		obj = gl_find_next(nodes,nullptr);
 
 		//Loop through nodes list
 		while (obj != nullptr)
@@ -908,7 +911,7 @@ STATUS jsondump::dump_system(void)
 	if (meters->hit_count > 0)
 	{
 		//Find the first one
-		obj = gl_find_next(meters,NULL);
+		obj = gl_find_next(meters,nullptr);
 
 		//Loop through meters list
 		while (obj != nullptr)
@@ -1023,7 +1026,7 @@ STATUS jsondump::dump_system(void)
 	if (loads->hit_count > 0)
 	{
 		//Find the first one
-		obj = gl_find_next(loads,NULL);
+		obj = gl_find_next(loads,nullptr);
 
 		//Loop through loads list
 		while (obj != nullptr)
@@ -1229,7 +1232,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Grab the first object
-		obj = gl_find_next(TransformerList,NULL);
+		obj = gl_find_next(TransformerList,nullptr);
 
 		//Zero the index
 		index = 0;
@@ -1438,7 +1441,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Grab the first object
-		obj = gl_find_next(regulators,NULL);
+		obj = gl_find_next(regulators,nullptr);
 
 		//Zero the index
 		index = 0;
@@ -1646,7 +1649,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Grab the first object
-		obj = gl_find_next(ohlines,NULL);
+		obj = gl_find_next(ohlines,nullptr);
 
 		//Zero the index
 		index = 0;
@@ -1853,7 +1856,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Grab the first object
-		obj = gl_find_next(uglines,NULL);
+		obj = gl_find_next(uglines,nullptr);
 
 		//Zero the index
 		index = 0;
@@ -2060,7 +2063,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Grab the first object
-		obj = gl_find_next(tplines,NULL);
+		obj = gl_find_next(tplines,nullptr);
 
 		//Zero the index
 		index = 0;
@@ -2272,7 +2275,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Grab the first object
-		obj = gl_find_next(switches,NULL);
+		obj = gl_find_next(switches,nullptr);
 
 		//Zero the index
 		index = 0;
@@ -2458,7 +2461,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Grab the first object
-		obj = gl_find_next(sectionalizers,NULL);
+		obj = gl_find_next(sectionalizers,nullptr);
 
 		//Zero the index
 		index = 0;
@@ -2645,7 +2648,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Grab the first object
-		obj = gl_find_next(reclosers,NULL);
+		obj = gl_find_next(reclosers,nullptr);
 
 		//Zero the index
 		index = 0;
@@ -2835,7 +2838,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Grab the first object
-		obj = gl_find_next(fuses,NULL);
+		obj = gl_find_next(fuses,nullptr);
 
 		//Zero the index
 		index = 0;
@@ -3409,7 +3412,9 @@ STATUS jsondump::dump_system(void)
 
 	// Write JSON files for line and line_codes
 	out_file.open (filename_dump_system);
-	out_file << writer.write(metrics_lines) << endl;
+	std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+	writer->write(metrics_lines, &out_file);
+	out_file << endl;
 	out_file.close();
 
 	//Clean up the mallocs
@@ -3474,7 +3479,7 @@ STATUS jsondump::dump_reliability(void)
 						const_cast<char*>("SAIDI"),
 						const_cast<char*>("CAIDI"),
 						const_cast<char*>("ASAI"),
-						const_cast<char*>("MAIFI"), NULL};
+						const_cast<char*>("MAIFI"), nullptr};
 	int index1366;
 	double *temp_double;
 	enumeration *temp_emu;
@@ -3494,7 +3499,10 @@ STATUS jsondump::dump_reliability(void)
 	Json::Value other_obj;
 	Json::Value jsonArray; // for storing temperary opening status of devices
 	// Start write to file
-	Json::StyledWriter writer;
+	Json::StreamWriterBuilder builder;
+	builder["commentStyle"] = "None";
+	builder["indentation"] = "";
+
 	// Open file for writing
 	ofstream out_file;
 
@@ -3521,12 +3529,12 @@ STATUS jsondump::dump_reliability(void)
 
 			// Loop through the reliability indices to find the value and put into JSON variable
 			index1366 = -1;
-			while (indices1366[++index1366] != NULL) {
+			while (indices1366[++index1366] != nullptr) {
 
 				temp_double = gl_get_double_by_name(obj, indices1366[index1366]);
 
 				if(temp_double == nullptr){
-					gl_error("Unable to to find property for %s: %s is NULL", obj->name, indices1366[index1366]);
+					gl_error("Unable to to find property for %s: %s is nullptr", obj->name, indices1366[index1366]);
 					return FAILED;
 				}
 
@@ -3784,7 +3792,9 @@ STATUS jsondump::dump_reliability(void)
 
 	// Write JSON files for line and line_codes
 	out_file.open (filename_dump_reliability);
-	out_file << writer.write(metrics_reliability) << endl;
+	std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+	writer->write(metrics_reliability, &out_file);
+	out_file << endl;
 	out_file.close();
 
 	//Remove the various mallocs/findlists
@@ -3904,10 +3914,10 @@ gld::complex jsondump::get_complex_value(OBJECT *obj, const char *name)
 }
 
 //Sets value
-set jsondump::get_set_value(OBJECT *obj, const char *name)
+gld::set jsondump::get_set_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	set output_value;
+	gld::set output_value;
 	OBJECT *objhdr = OBJECTHDR(this);
 
 	//Map to the property of interest

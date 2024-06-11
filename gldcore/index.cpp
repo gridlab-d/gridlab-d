@@ -26,7 +26,7 @@ INDEX *index_create(int first_ordinal, /**< the first ordinal */
 {
 	int size = (unsigned int)(last_ordinal - first_ordinal + 1);
 	INDEX *index = (INDEX*) malloc(sizeof(INDEX));
-	if (index!=NULL)
+	if (index!=nullptr)
 	{
 		if (size<1)
 		{
@@ -34,7 +34,7 @@ INDEX *index_create(int first_ordinal, /**< the first ordinal */
 			goto Undo;
 		}
 		index->ordinal = (GLLIST**) malloc(sizeof(GLLIST*)*size);
-		if (index->ordinal==NULL)
+		if (index->ordinal==nullptr)
 		{
 			errno = ENOMEM;
 			goto Undo;
@@ -48,7 +48,7 @@ INDEX *index_create(int first_ordinal, /**< the first ordinal */
 	else
 	{
 		errno = ENOMEM;
-		return NULL;
+		return nullptr;
 	}
 
 	/* reversal forces adjustment when first item is received */
@@ -57,8 +57,8 @@ INDEX *index_create(int first_ordinal, /**< the first ordinal */
 	return index;
 Undo:
 	free(index);
-	index = NULL;
-	return NULL;
+	index = nullptr;
+	return nullptr;
 }
 
 /** Insert an item into an index
@@ -91,11 +91,11 @@ STATUS index_insert(INDEX *index,	/**< the index to which the item is added */
 	{	
 		int oldsize = index->last_ordinal - index->first_ordinal;
 		int newsize = oldsize;
-		GLLIST **newblock = NULL;
+		GLLIST **newblock = nullptr;
 		while (ordinal >= index->first_ordinal + newsize)
 			newsize *= 2;	/* double until it fits */
 		newblock = (GLLIST**) malloc(sizeof(GLLIST*)*newsize);
-		if (newblock==NULL)
+		if (newblock==nullptr)
 		{
 			output_fatal("unable to grow index %d: %s",index->id, strerror(errno));
 			/*	TROUBLESHOOT
@@ -113,13 +113,13 @@ STATUS index_insert(INDEX *index,	/**< the index to which the item is added */
 		index->last_ordinal = index->first_ordinal + newsize;
 	
 	}
-	if (index->ordinal[pos]==NULL) /* new list at ordinal */
+	if (index->ordinal[pos]==nullptr) /* new list at ordinal */
 	{
 		index->ordinal[pos] = list_create();
-		if (index->ordinal[pos]==NULL)
+		if (index->ordinal[pos]==nullptr)
 			return FAILED;
 	}
-	if (list_append(index->ordinal[pos],data)==NULL)
+	if (list_append(index->ordinal[pos],data)==nullptr)
 		return FAILED;
 	if (ordinal<index->first_used) index->first_used=ordinal;
 	if (ordinal>index->last_used) index->last_used=ordinal;

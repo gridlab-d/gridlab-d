@@ -332,7 +332,7 @@ object line_configuration:10012 {
 
 
 //Define line objects 
-object overhead_line:  {
+object overhead_line {
      phases "BN";
      name 1-2;
      from load:1;
@@ -341,7 +341,7 @@ object overhead_line:  {
      configuration line_configuration:10010;
 }
 
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 1-3;
      from load:1;
@@ -350,7 +350,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 1-7;
      from load:1;
@@ -359,7 +359,7 @@ object overhead_line:  {
      configuration line_configuration:1001;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 3-4;
      from node:3;
@@ -368,7 +368,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 3-5;
      from node:3;
@@ -377,7 +377,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 5-6;
      from load:5;
@@ -386,7 +386,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 7-8;
      from load:7;
@@ -395,7 +395,7 @@ object overhead_line:  {
      configuration line_configuration:1001;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "BN";
      name 8-12;
      from meter:8;
@@ -404,7 +404,7 @@ object overhead_line:  {
      configuration line_configuration:10010;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 8-9;
      from meter:8;
@@ -413,7 +413,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 8-13;
      from meter:8;
@@ -422,7 +422,7 @@ object overhead_line:  {
      configuration line_configuration:1001;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 1401-14;
      from node:1401;
@@ -431,7 +431,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 13-34;
      from meter:13;
@@ -440,7 +440,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 13-18;
      from meter:13;
@@ -449,7 +449,7 @@ object overhead_line:  {
      configuration line_configuration:1002;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 14-11;
      from node:14;
@@ -458,7 +458,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 14-10;
      from node:14;
@@ -467,7 +467,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 15-16;
      from node:15;
@@ -476,7 +476,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 15-17;
      from node:15;
@@ -485,7 +485,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 18-19;
      from node:18;
@@ -494,7 +494,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 18-21;
      from node:18;
@@ -503,7 +503,7 @@ object overhead_line:  {
      configuration line_configuration:1002;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 19-20;
      from load:19;
@@ -512,7 +512,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "BN";
      name 21-22;
      from node:21;
@@ -521,7 +521,7 @@ object overhead_line:  {
      configuration line_configuration:10010;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 21-23;
      from node:21;
@@ -530,7 +530,7 @@ object overhead_line:  {
      configuration line_configuration:1002;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 23-24;
      from node:23;
@@ -539,7 +539,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 23-25;
      from node:23;
@@ -548,7 +548,7 @@ object overhead_line:  {
      configuration line_configuration:1002;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ACN";
      name 2601-26;
      from node:2601;
@@ -557,7 +557,7 @@ object overhead_line:  {
      configuration line_configuration:1007;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 25-28;
      from node:25;
@@ -566,7 +566,7 @@ object overhead_line:  {
      configuration line_configuration:1002;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ACN";
      name 26-27;
      from node:26;
@@ -575,7 +575,7 @@ object overhead_line:  {
      configuration line_configuration:1007;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 26-31;
      from node:26;
@@ -584,7 +584,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 27-33;
      from node:27;
@@ -593,7 +593,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 28-29;
      from load:28;
@@ -602,7 +602,7 @@ object overhead_line:  {
      configuration line_configuration:1002;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 29-30;
      from load:29;
@@ -611,7 +611,7 @@ object overhead_line:  {
      configuration line_configuration:1002;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 30-250;
      from load:30;
@@ -620,7 +620,7 @@ object overhead_line:  {
      configuration line_configuration:1002;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 31-32;
      from load:31;
@@ -629,7 +629,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 34-15;
      from load:34;
@@ -638,7 +638,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABN";
      name 35-36;
      from load:35;
@@ -647,7 +647,7 @@ object overhead_line:  {
      configuration line_configuration:1008;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 35-40;
      from load:35;
@@ -656,7 +656,7 @@ object overhead_line:  {
      configuration line_configuration:1001;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 36-37;
      from node:36;
@@ -665,7 +665,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "BN";
      name 36-38;
      from node:36;
@@ -674,7 +674,7 @@ object overhead_line:  {
      configuration line_configuration:10010;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "BN";
      name 38-39;
      from load:38;
@@ -683,7 +683,7 @@ object overhead_line:  {
      configuration line_configuration:10010;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 40-41;
      from node:40;
@@ -692,7 +692,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 40-42;
      from node:40;
@@ -701,7 +701,7 @@ object overhead_line:  {
      configuration line_configuration:1001;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "BN";
      name 42-43;
      from load:42;
@@ -710,7 +710,7 @@ object overhead_line:  {
      configuration line_configuration:10010;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 42-44;
      from load:42;
@@ -719,7 +719,7 @@ object overhead_line:  {
      configuration line_configuration:1001;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 44-45;
      from node:44;
@@ -728,7 +728,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 44-47;
      from node:44;
@@ -737,7 +737,7 @@ object overhead_line:  {
      configuration line_configuration:1001;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 45-46;
      from load:45;
@@ -746,7 +746,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 47-48;
      from load:47;
@@ -755,7 +755,7 @@ object overhead_line:  {
      configuration line_configuration:1004;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 47-49;
      from load:47;
@@ -764,7 +764,7 @@ object overhead_line:  {
      configuration line_configuration:1004;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 49-50;
      from load:49;
@@ -773,7 +773,7 @@ object overhead_line:  {
      configuration line_configuration:1004;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 50-51;
      from meter:50;
@@ -782,7 +782,7 @@ object overhead_line:  {
      configuration line_configuration:1004;
 }
 
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";			//undefined line segment
      name 51-151;
      from load:51;
@@ -791,7 +791,7 @@ object overhead_line:  {
      configuration line_configuration:1004;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 52-53;
      from load:52;
@@ -800,7 +800,7 @@ object overhead_line:  {
      configuration line_configuration:1001;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 53-54;
      from load:53;
@@ -809,7 +809,7 @@ object overhead_line:  {
      configuration line_configuration:1001;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 54-55;
      from node:54;
@@ -818,7 +818,7 @@ object overhead_line:  {
      configuration line_configuration:1001;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 54-57;
      from node:54;
@@ -827,7 +827,7 @@ object overhead_line:  {
      configuration line_configuration:1003;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 55-56;
      from load:55;
@@ -836,7 +836,7 @@ object overhead_line:  {
      configuration line_configuration:1001;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "BN";
      name 57-58;
      from meter:57;
@@ -845,7 +845,7 @@ object overhead_line:  {
      configuration line_configuration:10010;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 57-60;
      from meter:57;
@@ -854,7 +854,7 @@ object overhead_line:  {
      configuration line_configuration:1003;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "BN";
      name 58-59;
      from load:58;
@@ -863,7 +863,7 @@ object overhead_line:  {
      configuration line_configuration:10010;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 60-61;
      from load:60;
@@ -872,7 +872,7 @@ object overhead_line:  {
      configuration line_configuration:1005;
 }
  
-object underground_line:  {
+object underground_line {
      phases "ABC";
      name 60-62;
      from load:60;
@@ -881,7 +881,7 @@ object underground_line:  {
      configuration line_configuration:10012;
 }
  
-object underground_line:  {
+object underground_line {
      phases "ABC";
      name 62-63;
      from load:62;
@@ -890,7 +890,7 @@ object underground_line:  {
      configuration line_configuration:10012;
 }
  
-object underground_line:  {
+object underground_line {
      phases "ABC";
      name 63-64;
      from load:63;
@@ -899,7 +899,7 @@ object underground_line:  {
      configuration line_configuration:10012;
 }
  
-object underground_line:  {
+object underground_line {
      phases "ABC";
      name 64-65;
      from load:64;
@@ -908,7 +908,7 @@ object underground_line:  {
      configuration line_configuration:10012;
 }
  
-object underground_line:  {
+object underground_line {
      phases "ABC";
      name 65-66;
      from load:65;
@@ -917,7 +917,7 @@ object underground_line:  {
      configuration line_configuration:10012;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 67-68;
      from meter:67;
@@ -926,7 +926,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 67-72;
      from meter:67;
@@ -936,7 +936,7 @@ object overhead_line:  {
 }
 
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 67-97;
      from meter:67;
@@ -945,7 +945,7 @@ object overhead_line:  {
      configuration line_configuration:1003;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 68-69;
      from load:68;
@@ -954,7 +954,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 69-70;
      from load:69;
@@ -963,7 +963,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 70-71;
      from load:70;
@@ -972,7 +972,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 72-73;
      from load:72;
@@ -981,7 +981,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 72-76;
      from load:72;
@@ -990,7 +990,7 @@ object overhead_line:  {
      configuration line_configuration:1003;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 73-74;
      from load:73;
@@ -999,7 +999,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 74-75;
      from load:74;
@@ -1008,7 +1008,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 76-77;
      from load:76;
@@ -1017,7 +1017,7 @@ object overhead_line:  {
      configuration line_configuration:1006;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 76-86;
      from load:76;
@@ -1026,7 +1026,7 @@ object overhead_line:  {
      configuration line_configuration:1003;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 77-78;
      from load:77;
@@ -1035,7 +1035,7 @@ object overhead_line:  {
      configuration line_configuration:1006;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 78-79;
      from node:78;
@@ -1044,7 +1044,7 @@ object overhead_line:  {
      configuration line_configuration:1006;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 78-80;
      from node:78;
@@ -1053,7 +1053,7 @@ object overhead_line:  {
      configuration line_configuration:1006;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 80-81;
      from load:80;
@@ -1062,7 +1062,7 @@ object overhead_line:  {
      configuration line_configuration:1006;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 81-82;
      from node:81;
@@ -1071,7 +1071,7 @@ object overhead_line:  {
      configuration line_configuration:1006;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 81-84;
      from node:81;
@@ -1080,7 +1080,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 82-83;
      from load:82;
@@ -1089,7 +1089,7 @@ object overhead_line:  {
      configuration line_configuration:1006;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 84-85;
      from load:84;
@@ -1098,7 +1098,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 86-87;
      from load:86;
@@ -1107,7 +1107,7 @@ object overhead_line:  {
      configuration line_configuration:1006;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 87-88;
      from load:87;
@@ -1116,7 +1116,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 87-89;
      from load:87;
@@ -1125,7 +1125,7 @@ object overhead_line:  {
      configuration line_configuration:1006;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "BN";
      name 89-90;
      from node:89;
@@ -1134,7 +1134,7 @@ object overhead_line:  {
      configuration line_configuration:10010;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 89-91;
      from node:89;
@@ -1143,7 +1143,7 @@ object overhead_line:  {
      configuration line_configuration:1006;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 91-92;
      from node:91;
@@ -1152,7 +1152,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 91-93;
      from node:91;
@@ -1161,7 +1161,7 @@ object overhead_line:  {
      configuration line_configuration:1006;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 93-94;
      from node:93;
@@ -1170,7 +1170,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 93-95;
      from node:93;
@@ -1179,7 +1179,7 @@ object overhead_line:  {
      configuration line_configuration:1006;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "BN";
      name 95-96;
      from load:95;
@@ -1188,7 +1188,7 @@ object overhead_line:  {
      configuration line_configuration:10010;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 97-98;
      from node:97;
@@ -1197,7 +1197,7 @@ object overhead_line:  {
      configuration line_configuration:1003;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 98-99;
      from load:98;
@@ -1206,7 +1206,7 @@ object overhead_line:  {
      configuration line_configuration:1003;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 99-100;
      from load:99;
@@ -1215,7 +1215,7 @@ object overhead_line:  {
      configuration line_configuration:1003;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 100-450;
      from load:100;
@@ -1224,7 +1224,7 @@ object overhead_line:  {
      configuration line_configuration:1003;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 101-102;
      from load:101;
@@ -1233,7 +1233,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 101-105;
      from load:101;
@@ -1242,7 +1242,7 @@ object overhead_line:  {
      configuration line_configuration:1003;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 102-103;
      from load:102;
@@ -1251,7 +1251,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "CN";
      name 103-104;
      from load:103;
@@ -1260,7 +1260,7 @@ object overhead_line:  {
      configuration line_configuration:10011;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "BN";
      name 105-106;
      from node:105;
@@ -1269,7 +1269,7 @@ object overhead_line:  {
      configuration line_configuration:10010;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 105-108;
      from node:105;
@@ -1278,7 +1278,7 @@ object overhead_line:  {
      configuration line_configuration:1003;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "BN";
      name 106-107;
      from load:106;
@@ -1287,7 +1287,7 @@ object overhead_line:  {
      configuration line_configuration:10010;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 108-109;
      from node:108;
@@ -1296,7 +1296,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 108-300;
      from node:108;
@@ -1305,7 +1305,7 @@ object overhead_line:  {
      configuration line_configuration:1003;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 109-110;
      from load:109;
@@ -1314,7 +1314,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 110-111;
      from node:110;
@@ -1323,7 +1323,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 110-112;
      from node:110;
@@ -1332,7 +1332,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 112-113;
      from load:112;
@@ -1341,7 +1341,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "AN";
      name 113-114;
      from load:113;
@@ -1350,7 +1350,7 @@ object overhead_line:  {
      configuration line_configuration:1009;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 135-35;
      from node:135;
@@ -1359,7 +1359,7 @@ object overhead_line:  {
      configuration line_configuration:1004;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 149-1;
      from node:149;
@@ -1368,7 +1368,7 @@ object overhead_line:  {
      configuration line_configuration:1001;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 152-52;
      from node:152;
@@ -1377,7 +1377,7 @@ object overhead_line:  {
      configuration line_configuration:1001;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 6701-67;
      from node:6701;
@@ -1386,7 +1386,7 @@ object overhead_line:  {
      configuration line_configuration:1006;
 }
  
-object overhead_line:  {
+object overhead_line {
      phases "ABCN";
      name 197-101;
      from node:197;

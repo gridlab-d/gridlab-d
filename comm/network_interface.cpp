@@ -17,17 +17,17 @@
 //////////////////////////////////////////////////////////////////////////
 // CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* network_interface::oclass = NULL;
+CLASS* network_interface::oclass = nullptr;
 
 // the constructor registers the class and properties and sets the defaults
 network_interface::network_interface(MODULE *mod) 
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"network_interface",sizeof(network_interface),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 			/* TROUBLESHOOT
 				The registration for the network_interface class failed.   This is usually caused
@@ -66,7 +66,7 @@ network_interface::network_interface(MODULE *mod)
 				PT_KEYWORD, "UPDATE", NSM_UPDATE,
 				PT_KEYWORD, "INTERVAL", NSM_INTERVAL,
 				PT_KEYWORD, "UPDATE_PERIOD", NSM_UPDATE_PERIOD,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
 				The registration for the network_interface properties failed.   This is usually caused
 				by a coding error in the core implementation of classes or the module implementation.
@@ -191,7 +191,7 @@ int network_interface::check_buffer(){
 	write_msg = false;
 	//void *a = OBJECTDATA((void),obj->parent);
 	void *b = (target->addr);
-	void *c = ((void *)((obj->parent)?((obj->parent)+1):NULL));
+	void *c = ((void *)((obj->parent)?((obj->parent)+1):nullptr));
 	void *d = (void *)((int64)c + (int64)b);
 	bool time_for_update = (last_message_send_time + update_rate <= gl_globalclock);
 
@@ -294,7 +294,7 @@ network_message *network_interface::handle_inbox(TIMESTAMP t1, network_message *
 EXPORT int create_network_interface(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(network_interface::oclass);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		network_interface *my = OBJECTDATA(*obj,network_interface);
 		gl_set_parent(*obj,parent);

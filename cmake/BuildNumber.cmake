@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 2.8.12)
-
 SET(GIT_OUTPUT git_out_${CMAKE_BUILD_TYPE})
 
 FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/build_number)

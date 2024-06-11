@@ -7,9 +7,9 @@
 curve::curve(void)
 {
 	len = 0;
-	bids = NULL;
-	keys = NULL;
-	bid_ids = NULL;
+	bids = nullptr;
+	keys = nullptr;
+	bid_ids = nullptr;
 	n_bids = 0;
 	total = 0;
 }

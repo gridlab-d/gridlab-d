@@ -10,17 +10,17 @@ EXPORT_PRECOMMIT(appliance);
 EXPORT_SYNC(appliance);
 EXPORT_NOTIFY(appliance);
 
-CLASS *appliance::oclass = NULL;
-CLASS *appliance::pclass = NULL;
-appliance *appliance::defaults = NULL;
+CLASS *appliance::oclass = nullptr;
+CLASS *appliance::pclass = nullptr;
+appliance *appliance::defaults = nullptr;
 
 appliance::appliance(MODULE *module) : residential_enduse(module)
 {
-	if ( oclass==NULL )
+	if ( oclass==nullptr )
 	{
 		pclass = residential_enduse::oclass;
 		oclass = gl_register_class(module, "appliance",sizeof(appliance),PC_PRETOPDOWN|PC_AUTOLOCK);
-		if ( oclass==NULL )
+		if ( oclass==nullptr )
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		if ( gl_publish_variable(oclass,
 			PT_INHERIT,"residential_enduse",
@@ -30,7 +30,7 @@ appliance::appliance(MODULE *module) : residential_enduse(module)
 			PT_double_array, "durations",PADDR(duration),
 			PT_double_array, "transitions",PADDR(transition),
 			PT_double_array, "heatgains", PADDR(heatgain),
-			NULL)<1 )
+			nullptr)<1 )
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }  
@@ -144,7 +144,7 @@ void appliance::update_power(void)
 }
 void appliance::update_state(void)
 {
-	if ( transition_probabilities==NULL )
+	if ( transition_probabilities==nullptr )
 	{
 		// linear transition array
 		state = (state+1)%n_states;

@@ -48,8 +48,7 @@ energy_storage::energy_storage(MODULE *module)
 			PT_double, "R_ES_pu[pu]", PADDR(R_ES_pu), PT_DESCRIPTION, "ES internal resitance, per unit",
 			PT_double, "P_ES_pu[pu]", PADDR(P_ES_pu), PT_DESCRIPTION, "ES output active power, per unit",
 
-
-			NULL) < 1)
+			nullptr) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
 		//Deltamode linkage

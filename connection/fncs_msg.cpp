@@ -41,17 +41,17 @@ EXPORT SIMULATIONMODE fncs_dClockupdate(void *ptr, double t1, unsigned long time
 	return my->deltaClockUpdate(t1, timestep, sysmode);
 }
 
-static FUNCTIONSRELAY *first_fncsfunction = NULL;
+static FUNCTIONSRELAY *first_fncsfunction = nullptr;
 
-CLASS *fncs_msg::oclass = NULL;
-fncs_msg *fncs_msg::defaults = NULL;
+CLASS *fncs_msg::oclass = nullptr;
+fncs_msg *fncs_msg::defaults = nullptr;
 
 //Constructor
 fncs_msg::fncs_msg(MODULE *module)
 {
 	// register to receive notice for first top down. bottom up, and second top down synchronizations
 	oclass = gld_class::create(module,"fncs_msg",sizeof(fncs_msg),PC_AUTOLOCK|PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_OBSERVER);
-	if (oclass == NULL)
+	if (oclass == nullptr)
 		throw "connection/fncs_msg::fncs_msg(MODULE*): unable to register class connection:fncs_msg";
 	else
 		oclass->trl = TRL_UNKNOWN;
@@ -67,7 +67,7 @@ fncs_msg::fncs_msg(MODULE *module)
 		PT_bool, "aggregate_publications", PADDR(aggregate_pub), PT_DESCRIPTION, "enable FNCS flag to aggregate publications",
 		PT_bool, "aggregate_subscriptions", PADDR(aggregate_sub), PT_DESCRIPTION, "enable FNCS flag to aggregate subscriptions",
 		// TODO add published properties here
-		NULL)<1)
+		nullptr)<1)
 			throw "connection/fncs_msg::fncs_msg(MODULE*): unable to publish properties of connection:fncs_msg";
 	if ( !gl_publish_loadmethod(oclass,"route",(int (*)(void*, char*))loadmethod_fncs_msg_route) )
 		throw "connection/fncs_msg::fncs_msg(MODULE*): unable to publish route method of connection:fncs_msg";
@@ -152,7 +152,7 @@ int fncs_msg::option(char *value){
 		rv = 1;
 	} else if(strncmp(target, "transport", 9) == 0){
 		char param[256], val[1024];
-		while ( cmd!=NULL && *cmd!='\0' )
+		while ( cmd!=nullptr && *cmd!='\0' )
 		{
 			memset(param,'\0',256);
 			memset(val,'\0',1024);
@@ -198,7 +198,7 @@ int fncs_msg::option(char *value){
 			else if ( semic )
 				cmd = semic;
 			else
-				cmd = NULL;
+				cmd = nullptr;
 			if ( cmd )
 			{
 				while ( isspace(*cmd) || *cmd==',' || *cmd==';' ) cmd++;
@@ -267,16 +267,16 @@ int fncs_msg::configure(char *value)
 				stringstream json_config_stream ("");
 				string json_config_line;
 				string json_config_string;
-				Json::Reader json_reader;
 				while (ifile >> json_config_line) { //Place the entire contents of the file into a stringstream
 					json_config_stream << json_config_line << "\n";
 				}
 				json_config_string = json_config_stream.str();
 				gl_verbose("fncs_msg::configure(): json string read from configure file: %s .\n", json_config_string.c_str()); //renke debug
-				json_reader.parse(json_config_string, publish_json_config);
 
 				//test code start
 
+				//Json::Reader json_reader;
+				//json_reader.parse(json_config_string, publish_json_config);
 				//Json::FastWriter jsonwriter;
 				//string pubjsonstr;
 				//pubjsonstr = jsonwriter.write(publish_json_config);
@@ -344,7 +344,7 @@ int fncs_msg::init(OBJECT *parent){
 	int i = 0;
 	int d = 0;
 	OBJECT *obj = OBJECTHDR(this);
-	OBJECT *vObj = NULL;
+	OBJECT *vObj = nullptr;
 	char buffer[1024] = "";
 	string simName = string(gl_name(obj, buffer, 1023));
 	string dft;
@@ -360,7 +360,7 @@ int fncs_msg::init(OBJECT *parent){
 	for(n = 1; n < 14; n++){
 		vmap[n]->resolve();
 		//defer till all other objects have initialized
-		for(pMap = vmap[n]->getfirst(); pMap != NULL; pMap = pMap->next){
+		for(pMap = vmap[n]->getfirst(); pMap != nullptr; pMap = pMap->next){
 			vObj = pMap->obj->get_object();
 			if((vObj->flags & OF_INIT) != OF_INIT){
 				defer = true;
@@ -428,12 +428,12 @@ int fncs_msg::init(OBJECT *parent){
 			if (vjson_publish_gld_property_name[isize]->prop->is_valid()) {
 				vObj = vjson_publish_gld_property_name[isize]->prop->get_object();
 			} else {
-				vObj = NULL;
+				vObj = nullptr;
 			}
 		} else {
 			vObj = vjson_publish_gld_property_name[isize]->obj;
 		}
-		if(vObj != NULL){
+		if(vObj != nullptr){
 			if((vObj->flags & OF_INIT) != OF_INIT){
 				gl_warning("%d, fncs_msg::init(): vjson_publish_gld_property %s.%s not initialized!:  \n", isize,
 						vjson_publish_gld_property_name[isize]->object_name.c_str(), vjson_publish_gld_property_name[isize]->object_property.c_str());
@@ -478,7 +478,7 @@ int fncs_msg::init(OBJECT *parent){
 		zplfile << "values" << endl;
 		for(n = 1; n < 14; n++){
 			if( n >= 1 && n <= 13){
-				for(pMap = vmap[n]->getfirst(); pMap != NULL; pMap = pMap->next){
+				for(pMap = vmap[n]->getfirst(); pMap != nullptr; pMap = pMap->next){
 					if(pMap->dir == DXD_READ){
 						uniqueTopic = true;
 						for(i = 0; i < inVariableTopics.size(); i++){
@@ -525,7 +525,7 @@ int fncs_msg::init(OBJECT *parent){
 	}
 
 	//get a string vector of the unique function subscriptions
-	for(relay = first_fncsfunction; relay != NULL; relay = relay->next){
+	for(relay = first_fncsfunction; relay != nullptr; relay = relay->next){
 		if(relay->drtn == DXD_READ){
 			uniqueTopic = true;
 			for(i = 0; i < inFunctionTopics->size(); i++){
@@ -929,7 +929,7 @@ int fncs_msg::fncs_link(char *value, COMMUNICATIONTYPE comtype){
 	int n = 0;
 	char command[1024] = "";
 	char argument[1024] = "";
-	VARMAP *mp = NULL;
+	VARMAP *mp = nullptr;
 	//parse argument to fill the relay function link list and the varmap link list.
 	if(sscanf(value, "%[^:]:%[^\n]", command, argument) == 2){
 		if(strncmp(command,"init", 4) == 0){
@@ -957,15 +957,15 @@ int fncs_msg::parse_fncs_function(char *value, COMMUNICATIONTYPE comtype){
 	char remoteClassName[64] = "";
 	char remoteFuncName[64] = "";
 	char topic[1024] = "";
-	CLASS *fclass = NULL;
-	FUNCTIONADDR flocal = NULL;
+	CLASS *fclass = nullptr;
+	FUNCTIONADDR flocal = nullptr;
 	if(sscanf(value, "%[^/]/%[^-<>\t ]%*[\t ]%[-<>]%*[\t ]%[^\n]", localClass, localFuncName, direction, topic) != 4){
 		gl_error("fncs_msg::parse_fncs_function: Unable to parse input %s.", value);
 		return rv;
 	}
 	// get local class structure
 	fclass = callback->class_getname(localClass);
-	if ( fclass==NULL )
+	if ( fclass==nullptr )
 	{
 		gl_error("fncs_msg::parse_fncs_function(const char *spec='%s'): local class '%s' does not exist", value, localClass);
 		return rv;
@@ -974,18 +974,18 @@ int fncs_msg::parse_fncs_function(char *value, COMMUNICATIONTYPE comtype){
 	// setup outgoing call
 	if(strcmp(direction, "->") == 0){
 		// check local class function map
-		if ( flocal!=NULL )
+		if ( flocal!=nullptr )
 			gl_warning("fncs_msg::parse_fncs_function(const char *spec='%s'): outgoing call definition of '%s' overwrites existing function definition in class '%s'",value,localFuncName,localClass);
 
 		sscanf(topic, "%[^/]/%[^\n]", remoteClassName, remoteFuncName);
 		// get relay function
-		flocal = add_fncs_function(this,localClass, localFuncName,remoteClassName,remoteFuncName,NULL,DXD_WRITE, comtype);
+		flocal = add_fncs_function(this,localClass, localFuncName,remoteClassName,remoteFuncName,nullptr,DXD_WRITE, comtype);
 
-		if ( flocal==NULL )
+		if ( flocal==nullptr )
 			return rv;
 
 		// define relay function
-		rv = callback->function.define(fclass,localFuncName,flocal)!=NULL;
+		rv = callback->function.define(fclass,localFuncName,flocal)!=nullptr;
 		if(rv == 0){
 			gl_error("fncs_msg::parse_fncs_function(const char *spec='%s'): failed to define the function '%s' in local class '%s'.", value, localFuncName, localClass);
 			return rv;
@@ -993,12 +993,12 @@ int fncs_msg::parse_fncs_function(char *value, COMMUNICATIONTYPE comtype){
 	// setup incoming call
 	} else if ( strcmp(direction,"<-")==0 ){
 		// check to see is local class function is valid
-		if( flocal == NULL){
+		if( flocal == nullptr){
 			gl_error("fncs_msg::parse_fncs_function(const char *spec='%s'): local function '%s' is not valid.",value, localFuncName);
 			return 0;
 		}
-		flocal = add_fncs_function(this, localClass, localFuncName, "", topic, NULL, DXD_READ, comtype);
-		if( flocal == NULL){
+		flocal = add_fncs_function(this, localClass, localFuncName, "", topic, nullptr, DXD_READ, comtype);
+		if( flocal == nullptr){
 			rv = 1;
 		}
 	}
@@ -1007,7 +1007,7 @@ int fncs_msg::parse_fncs_function(char *value, COMMUNICATIONTYPE comtype){
 
 void fncs_msg::incoming_fncs_function()
 {
-	FUNCTIONSRELAY *relay = NULL;
+	FUNCTIONSRELAY *relay = nullptr;
 	vector<string> functionCalls;
 	const char *message;
 	char from[64] = "";
@@ -1019,10 +1019,10 @@ void fncs_msg::incoming_fncs_function()
 	int payloadStringLength = 0;
 	size_t s = 0;
 	size_t rplen = 0;
-	OBJECT *obj = NULL;
-	FUNCTIONADDR funcAddr = NULL;
+	OBJECT *obj = nullptr;
+	FUNCTIONADDR funcAddr = nullptr;
 
-	for(relay = first_fncsfunction; relay!=NULL; relay=relay->next){
+	for(relay = first_fncsfunction; relay!=nullptr; relay=relay->next){
 		if(relay->drtn == DXD_READ){
 #if HAVE_FNCS
 			functionCalls = fncs::get_values(string(relay->remotename));
@@ -1056,7 +1056,7 @@ void fncs_msg::incoming_fncs_function()
 					}
 					//call local function
 					obj = gl_get_object(to);
-					if( obj == NULL){
+					if( obj == nullptr){
 						throw("fncs_msg::incomming_fncs_function: the to object does not exist. %s.", to);
 					}
 					funcAddr = (FUNCTIONADDR)(gl_get_function(obj, relay->localcall));
@@ -1083,7 +1083,7 @@ int fncs_msg::publishVariables(varmap *wmap){
 	int64 ival;
 	bool bval;
 	bool pub_value = false;
-	for(mp = wmap->getfirst(); mp != NULL; mp = mp->next){
+	for(mp = wmap->getfirst(); mp != nullptr; mp = mp->next){
 		pub_value = false;
 		if(mp->dir == DXD_WRITE){
 			if( mp->obj->to_string(&buffer[0], 1023 ) < 0){
@@ -1226,11 +1226,11 @@ int fncs_msg::publishVariables(varmap *wmap){
 int fncs_msg::subscribeVariables(varmap *rmap){
 	string value = "";
 	char valueBuf[1024] = "";
-	VARMAP *mp = NULL;
+	VARMAP *mp = nullptr;
 #if HAVE_FNCS
 	vector<string> updated_events = fncs::get_events();
 #endif
-	for(mp = rmap->getfirst(); mp != NULL; mp = mp->next){
+	for(mp = rmap->getfirst(); mp != nullptr; mp = mp->next){
 		if(mp->dir == DXD_READ){
 			if(mp->ctype == CT_PUBSUB){
 #if HAVE_FNCS
@@ -1289,7 +1289,7 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 					} else {
 						complex_val << fixed << imag_part << "j";
 					}
-					if(val_unit != NULL && val_unit->is_valid()){
+					if(val_unit != nullptr && val_unit->is_valid()){
 						string unit_name = string(val_unit->get_name());
 						complex_val << " " << unit_name;
 					}
@@ -1312,11 +1312,9 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 		}
 	}
 	// write publish_json_data to a string and publish it through fncs API
-	Json::FastWriter jsonwriter;
 	string pubjsonstr;
-	pubjsonstr = jsonwriter.write(publish_json_data);
+	pubjsonstr = publish_json_data.toStyledString();
 	string skey = "";
-
 	skey = "fncs_output";
 
 	gl_verbose("fncs_msg::publishJsonVariables() fncs_publish: key: %s value %s \n", skey.c_str(),
@@ -1357,10 +1355,18 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 	for(string & value : values) {
 		if(value.empty() == false){
 			Json::Value subscribe_json_data_full;
-			Json::Reader json_reader;
-			json_reader.parse(value, subscribe_json_data_full);
-			//use isMember to check the simName is in the subscribe_json_data_full
-			if (!subscribe_json_data_full.isMember(simName.c_str())){
+
+			Json::CharReaderBuilder builder {};
+			// Don't leak memory! Use std::unique_ptr!
+			auto reader = std::unique_ptr<Json::CharReader>( builder.newCharReader() );
+			std::string errors {};
+			const auto is_parsed = reader->parse( value.c_str(),
+			                                     value.c_str() + value.length(),
+			                                     &subscribe_json_data_full,
+			                                     &errors );
+			if (!is_parsed ) {
+			//used to use isMember to check the simName is in the subscribe_json_data_full
+//			if (!subscribe_json_data_full.isMember(simName.c_str())){
 				gl_warning("fncs_msg::subscribeJsonVariables(), the simName: %s is not a member in the subscribed json data!! \n",
 						simName.c_str());
 				return 1;
@@ -1449,7 +1455,7 @@ int fncs_msg::publish_fncsjson_link()  //Renke add
 	}
 
 	vjson_publish_gld_property_name.clear();
-	JsonProperty *gldProperty = NULL;
+	JsonProperty *gldProperty = nullptr;
 	for (Json::ValueIterator it = publish_json_config.begin(); it != publish_json_config.end(); it++) {
 
 		const string gldObjectName = it.name();
@@ -1512,9 +1518,9 @@ static size_t fncs_to_hex(char *out, size_t max, const char *in, size_t len)
 extern "C" size_t fncs_from_hex(void *buf, size_t len, const char *hex, size_t hexlen)
 {
 	char *p = (char*)buf;
-	char lo = NULL;
-	char hi = NULL;
-	char c = NULL;
+	char lo = (char)nullptr;
+	char hi = (char)nullptr;
+	char c = (char)nullptr;
 	size_t n = 0;
 	for(n = 0; n < hexlen && *hex != '\0'; n += 2)
 	{
@@ -1542,7 +1548,7 @@ extern "C" void outgoing_fncs_function(char *from, char *to, char *funcName, cha
 	char *lclass = from;
 	size_t hexlen = 0;
 	FUNCTIONSRELAY *relay = find_fncs_function(funcClass, funcName);
-	if(relay == NULL){
+	if(relay == nullptr){
 		throw("fncs_msg::outgoing_route_function: the relay function for function name %s could not be found.", funcName);
 	}
 	if( relay->drtn != DXD_WRITE){
@@ -1553,7 +1559,7 @@ extern "C" void outgoing_fncs_function(char *from, char *to, char *funcName, cha
 	size_t msglen = 0;
 
 	// check from and to names
-	if ( to==NULL || from==NULL )
+	if ( to==nullptr || from==nullptr )
 	{
 		throw("from objects and to objects must be named.");
 	}
@@ -1565,7 +1571,7 @@ extern "C" void outgoing_fncs_function(char *from, char *to, char *funcName, cha
 		//TODO: deliver message to fncs
 		stringstream payload;
 		char buffer[sizeof(len)];
-		sprintf(buffer, "%d", len);
+		sprintf(buffer, "%ld", len);
 		payload << "\"{\"from\":\"" << from << "\", " << "\"to\":\"" << to << "\", " << "\"function\":\"" << funcName << "\", " <<  "\"data\":\"" << message << "\", " << "\"data length\":\"" << buffer <<"\"}\"";
 		string key = string(relay->remotename);
 		if( relay->ctype == CT_PUBSUB){
@@ -1586,7 +1592,7 @@ extern "C" FUNCTIONADDR add_fncs_function(fncs_msg *route, const char *fclass, c
 {
 	// check for existing of relay (note only one relay is allowed per class pair)
 	FUNCTIONSRELAY *relay = find_fncs_function(rclass, rname);
-	if ( relay!=NULL )
+	if ( relay!=nullptr )
 	{
 		gl_error("fncs_msg::add_fncs_function(rclass='%s', rname='%s') a relay function is already defined for '%s/%s'", rclass,rname,rclass,rname);
 		return 0;
@@ -1594,7 +1600,7 @@ extern "C" FUNCTIONADDR add_fncs_function(fncs_msg *route, const char *fclass, c
 
 	// allocate space for relay info
 	relay = (FUNCTIONSRELAY*)malloc(sizeof(FUNCTIONSRELAY));
-	if ( relay==NULL )
+	if ( relay==nullptr )
 	{
 		gl_error("fncs_msg::add_fncs_function(rclass='%s', rname='%s') memory allocation failed", rclass,rname);
 		return 0;
@@ -1618,7 +1624,7 @@ extern "C" FUNCTIONADDR add_fncs_function(fncs_msg *route, const char *fclass, c
 	if( direction == DXD_WRITE){
 		return (FUNCTIONADDR)outgoing_fncs_function;
 	} else {
-		return NULL;
+		return nullptr;
 	}
 }
 
@@ -1626,10 +1632,10 @@ extern "C" FUNCTIONSRELAY *find_fncs_function(const char *rclass, const char*rna
 {
 	// TODO: this is *very* inefficient -- a hash should be used instead
 	FUNCTIONSRELAY *relay;
-	for ( relay=first_fncsfunction ; relay!=NULL ; relay=relay->next )
+	for ( relay=first_fncsfunction ; relay!=nullptr ; relay=relay->next )
 	{
 		if (strcmp(relay->remotename, rname)==0 && strcmp(relay->remoteclass, rclass)==0)
 			return relay;
 	}
-	return NULL;
+	return nullptr;
 }

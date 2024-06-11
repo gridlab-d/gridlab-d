@@ -10425,7 +10425,7 @@ object triplex_line:1157 {
 }
 
 
-object triplex_line_conductor: {
+object triplex_line_conductor {
 	name TLC 1/0 AA triplex;
 	resistance 0.97;
 	geometric_mean_radius 0.0111;

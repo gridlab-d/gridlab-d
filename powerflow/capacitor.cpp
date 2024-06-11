@@ -42,17 +42,17 @@ capacitor::capacitor(MODULE *mod):node(mod)
 		if(gl_publish_variable(oclass,
 			PT_INHERIT, "node",
 			PT_set, "pt_phase", PADDR(pt_phase),PT_DESCRIPTION,"Phase(s) that the PT is on, used as measurement points for control",
-				PT_KEYWORD, "A",(set)PHASE_A,
-				PT_KEYWORD, "B",(set)PHASE_B,
-				PT_KEYWORD, "C",(set)PHASE_C,
-				PT_KEYWORD, "D",(set)PHASE_D,
-				PT_KEYWORD, "N",(set)PHASE_N,
+				PT_KEYWORD, "A",(gld::set)PHASE_A,
+				PT_KEYWORD, "B",(gld::set)PHASE_B,
+				PT_KEYWORD, "C",(gld::set)PHASE_C,
+				PT_KEYWORD, "D",(gld::set)PHASE_D,
+				PT_KEYWORD, "N",(gld::set)PHASE_N,
 			PT_set, "phases_connected", PADDR(phases_connected),PT_DESCRIPTION,"phases capacitors connected to",
-				PT_KEYWORD, "A",(set)PHASE_A,
-				PT_KEYWORD, "B",(set)PHASE_B,
-				PT_KEYWORD, "C",(set)PHASE_C,
-				PT_KEYWORD, "D",(set)PHASE_D,
-				PT_KEYWORD, "N",(set)PHASE_N,
+				PT_KEYWORD, "A",(gld::set)PHASE_A,
+				PT_KEYWORD, "B",(gld::set)PHASE_B,
+				PT_KEYWORD, "C",(gld::set)PHASE_C,
+				PT_KEYWORD, "D",(gld::set)PHASE_D,
+				PT_KEYWORD, "N",(gld::set)PHASE_N,
 			PT_enumeration, "switchA", PADDR(switchA_state),PT_DESCRIPTION,"capacitor A switch open or close",
 				PT_KEYWORD, "OPEN", (enumeration)OPEN,
 				PT_KEYWORD, "CLOSED", (enumeration)CLOSED,
@@ -94,7 +94,7 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			PT_object, "remote_sense_B", PADDR(SecondaryRemote),PT_DESCRIPTION,"Secondary Remote object for sensing values used for control schemes (VARVOLT uses two)",
 			PT_enumeration, "control_level", PADDR(control_level),PT_DESCRIPTION,"define bank or individual control",
 				PT_KEYWORD, "BANK", (enumeration)BANK,
-				PT_KEYWORD, "INDIVIDUAL", (enumeration)INDIVIDUAL, 
+				PT_KEYWORD, "INDIVIDUAL", (enumeration)INDIVIDUAL,
          	nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
@@ -181,7 +181,7 @@ int capacitor::init(OBJECT *parent)
 {
 	gld_property *pTempProperty = nullptr;
 	gld_wlock *test_rlock = nullptr;
-	set temp_phases;
+	gld::set temp_phases;
 	OBJECT *temp_obj_link = nullptr;
 	int result = node::init();
 

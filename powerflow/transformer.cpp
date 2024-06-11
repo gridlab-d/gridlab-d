@@ -61,7 +61,7 @@ transformer::transformer(MODULE *mod) : link_object(mod)
 			PT_double, "phase_A_secondary_flux_value[Wb]", PADDR(flux_vals_inst[3]), PT_DESCRIPTION, "instantaneous magnetic flux in phase A on the secondary side of the transformer during saturation calculations",
 			PT_double, "phase_B_secondary_flux_value[Wb]", PADDR(flux_vals_inst[4]), PT_DESCRIPTION, "instantaneous magnetic flux in phase B on the secondary side of the transformer during saturation calculations",
 			PT_double, "phase_C_secondary_flux_value[Wb]", PADDR(flux_vals_inst[5]), PT_DESCRIPTION, "instantaneous magnetic flux in phase C on the secondary side of the transformer during saturation calculations",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			if (gl_publish_function(oclass,"power_calculation",(FUNCTIONADDR)power_calculation)==nullptr)
 					GL_THROW("Unable to publish fuse state change function");
@@ -132,6 +132,8 @@ void transformer::fetch_double(double **prop, const char *name, OBJECT *parent){
 int transformer::init(OBJECT *parent)
 {
 	int idex;
+	gld_property *tphases_ref;
+	set tphases;
 
 	if (!configuration)
 		GL_THROW("no transformer configuration specified.");
@@ -179,6 +181,25 @@ int transformer::init(OBJECT *parent)
 		return 2;	//Return the deferment - no sense doing everything else!
 
 	OBJECT *obj = OBJECTHDR(this);
+
+	//map and pull the phases
+	tphases_ref = new gld_property(to,"phases");
+
+	//Check it
+	if (!tphases_ref->is_set() || !tphases_ref->is_valid())
+	{
+		GL_THROW("Transformer:%s failed to map the phases of the \"to\" node",obj->name?obj->name:"unnamed");
+		/*  TROUBLESHOOT
+		While attempting to map the phases property of the "to" node of the transformer, an error occurred.  Ensure that object
+		actually is a powerflow node and try again.  If the error persists, please submit an issue in issue tracker.
+		*/
+	}
+
+	//Map them back
+	tphases = tphases_ref->get_set();
+
+	//Remove it
+	delete tphases_ref;
 
 	V_base = config->V_secondary;
 	voltage_ratio = nt = config->V_primary / config->V_secondary;
@@ -234,6 +255,17 @@ int transformer::init(OBJECT *parent)
 			{
 				nt_c = inv_nt_c = 0.0;
 				zt_c = gld::complex(0,0);
+			}
+
+			//General phase check - prevents issue that popped up in issue 1432
+			if (has_phase(PHASE_S) || ((tphases & PHASE_S) == PHASE_S))
+			{
+				GL_THROW("Transformer:%s has a triplex phase or a triplex \"to\" node, but it is not an SPCT transformer",obj->name?obj->name:"unnamed");
+				/*  TROUBLESHOOT
+				A transformer has triplex characteristics (S phase or a triplex_node attached), but it is not
+				configured as an SPCT transformer.  Please check your transformer configuration or attached
+				node.
+				*/
 			}
 			
 			if (solver_method==SM_FBS)
@@ -496,6 +528,13 @@ int transformer::init(OBJECT *parent)
 			break;
 		case transformer_configuration::DELTA_DELTA:
 
+			//General phase check - prevents issue that popped up in issue 1432
+			if (has_phase(PHASE_S) || ((tphases & PHASE_S) == PHASE_S))
+			{
+				GL_THROW("Transformer:%s has a triplex phase or a triplex \"to\" node, but it is not an SPCT transformer",obj->name?obj->name:"unnamed");
+				//Defined above
+			}
+
 			if (solver_method==SM_FBS)
 			{
 				a_mat[0][0] = a_mat[1][1] = a_mat[2][2] = nt * 2.0 / 3.0;
@@ -546,7 +585,14 @@ int transformer::init(OBJECT *parent)
 			}
 			break;
 		case transformer_configuration::DELTA_GWYE:
-			
+
+			//General phase check - prevents issue that popped up in issue 1432
+			if (has_phase(PHASE_S) || ((tphases & PHASE_S) == PHASE_S))
+			{
+				GL_THROW("Transformer:%s has a triplex phase or a triplex \"to\" node, but it is not an SPCT transformer",obj->name?obj->name:"unnamed");
+				//Defined above
+			}
+
 			if (solver_method==SM_FBS)
 			{
 				if (nt>1.0)//step down transformer

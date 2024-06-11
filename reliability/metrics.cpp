@@ -13,8 +13,8 @@
 #include "gridlabd.h"
 #include "metrics.h"
 
-CLASS *metrics::oclass = NULL;
-metrics *metrics::defaults = NULL;
+CLASS *metrics::oclass = nullptr;
+metrics *metrics::defaults = nullptr;
 
 bool metrics::report_event_log = true; /* dumps detailed event log by default */
 
@@ -23,10 +23,10 @@ static PASSCONFIG clockpass = PC_POSTTOPDOWN;
 /* Class registration is only called once to register the class with the core */
 metrics::metrics(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"metrics",sizeof(metrics),PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class metrics";
 		else
 			oclass->trl = TRL_DEMONSTRATED;
@@ -39,15 +39,15 @@ metrics::metrics(MODULE *module)
 			PT_double, "metric_interval[s]", PADDR(metric_interval_dbl),
 			PT_double, "report_interval[s]", PADDR(report_interval_dbl),
 			PT_bool,"perform_secondary_interruptions_count",PADDR(secondary_interruptions_count),PT_ACCESS,PA_HIDDEN,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-		if (gl_publish_function(oclass,	"metrics_event_ended", (FUNCTIONADDR)metrics_event_ended)==NULL)
+		if (gl_publish_function(oclass,	"metrics_event_ended", (FUNCTIONADDR)metrics_event_ended)==nullptr)
 			GL_THROW("Unable to publish reliability external function");
-		if (gl_publish_function(oclass,	"metrics_event_ended_secondary", (FUNCTIONADDR)metrics_event_ended_secondary)==NULL)
+		if (gl_publish_function(oclass,	"metrics_event_ended_secondary", (FUNCTIONADDR)metrics_event_ended_secondary)==nullptr)
 			GL_THROW("Unable to publish reliability external function");
-		if (gl_publish_function(oclass,	"metrics_get_interrupted_count", (FUNCTIONADDR)metrics_get_interrupted_count)==NULL)
+		if (gl_publish_function(oclass,	"metrics_get_interrupted_count", (FUNCTIONADDR)metrics_get_interrupted_count)==nullptr)
 			GL_THROW("Unable to publish reliability external function");
-		if (gl_publish_function(oclass,	"metrics_get_interrupted_count_secondary", (FUNCTIONADDR)metrics_get_interrupted_count_secondary)==NULL)
+		if (gl_publish_function(oclass,	"metrics_get_interrupted_count_secondary", (FUNCTIONADDR)metrics_get_interrupted_count_secondary)==nullptr)
 			GL_THROW("Unable to publish reliability external function");
 	}
 }
@@ -56,14 +56,14 @@ metrics::metrics(MODULE *module)
 int metrics::create(void)
 {
 	customer_group[0] = '\0';
-	module_metrics_obj = NULL;
+	module_metrics_obj = nullptr;
 	metrics_oi[0] = '\0';
 	metric_interval_dbl = 0.0;
 	report_interval_dbl = 31536000.0;	//Defaults to a year
 
 	//Internal variables
 	num_indices = 0;
-	CalcIndices = NULL;
+	CalcIndices = nullptr;
 	next_metric_interval = 0;
 	next_report_interval = 0;
 	next_annual_interval = 0;
@@ -71,15 +71,15 @@ int metrics::create(void)
 	metric_interval = 0;
 	report_interval = 0;
 	CustomerCount = 0;
-	Customers = NULL;
+	Customers = nullptr;
 	curr_time = TS_NEVER;	//Flagging value
 	metric_interval_event_count = 0;
 	annual_interval_event_count = 0;
 	metric_equal_annual = false;
 
-	reset_interval_func = NULL;
-	reset_annual_func = NULL;
-	compute_metrics = NULL;
+	reset_interval_func = nullptr;
+	reset_annual_func = nullptr;
+	compute_metrics = nullptr;
 
 	secondary_interruptions_count = false;	//By default, we don't look for the secondary interruptions flag
 
@@ -99,11 +99,11 @@ int metrics::init(OBJECT *parent)
 	FINDLIST *CandidateObjs;
 	OBJECT *temp_obj;
 	bool *temp_bool;
-	FUNCTIONADDR funadd = NULL;
+	FUNCTIONADDR funadd = nullptr;
 	STATUS temp_return_status;
 
 	//Ensure our "module metrics" object is populated
-	if (module_metrics_obj == NULL)
+	if (module_metrics_obj == nullptr)
 	{
 		GL_THROW("Please specify a module metrics object for metrics:%s",hdr->name);
 		/*  TROUBLESHOOT
@@ -117,7 +117,7 @@ int metrics::init(OBJECT *parent)
 	funadd = (FUNCTIONADDR)(gl_get_function(module_metrics_obj,"init_reliability"));
 					
 	//Make sure it was found
-	if (funadd == NULL)
+	if (funadd == nullptr)
 	{
 		GL_THROW("Unable to map reliability init function on %s in %s",module_metrics_obj->name,hdr->name);
 		/*  TROUBLESHOOT
@@ -182,7 +182,7 @@ int metrics::init(OBJECT *parent)
 	CalcIndices = (INDEXARRAY*)gl_malloc(num_indices * sizeof(INDEXARRAY));
 
 	//Make sure it worked
-	if (CalcIndices == NULL)
+	if (CalcIndices == nullptr)
 	{
 		GL_THROW("Failure to allocate indices memory in metrics:%s",hdr->name);
 		/*  TROUBLESHOOT
@@ -195,7 +195,7 @@ int metrics::init(OBJECT *parent)
 	//Initialize these, just in case
 	for (index=0; index<num_indices; index++)
 	{
-		CalcIndices[index].MetricLoc = NULL;	//No address by default
+		CalcIndices[index].MetricLoc = nullptr;	//No address by default
 		
 		for (indexa=0; indexa<257; indexa++)	//+1 due to end \0
 			CalcIndices[index].MetricName[indexa]='\0';
@@ -280,7 +280,7 @@ int metrics::init(OBJECT *parent)
 				*/
 			}
 
-			//No NULL check - if it wasn't found, we won't deal with it
+			//No nullptr check - if it wasn't found, we won't deal with it
 		}
 	}//end metric traversion
 	
@@ -288,7 +288,7 @@ int metrics::init(OBJECT *parent)
 	reset_interval_func = (FUNCTIONADDR)(gl_get_function(module_metrics_obj,"reset_interval_metrics"));
 	
 	//Make sure it worked
-	if (reset_interval_func == NULL)
+	if (reset_interval_func == nullptr)
 	{
 		GL_THROW("Failed to map interval reset in metrics object %s for metrics:%s",module_metrics_obj->name,hdr->name);
 		/*  TROUBLESHOOT
@@ -301,7 +301,7 @@ int metrics::init(OBJECT *parent)
 	reset_annual_func = (FUNCTIONADDR)(gl_get_function(module_metrics_obj,"reset_annual_metrics"));
 
 	//Make sure it worked
-	if (reset_annual_func == NULL)
+	if (reset_annual_func == nullptr)
 	{
 		GL_THROW("Failed to map annual reset in metrics object %s for metrics:%s",module_metrics_obj->name,hdr->name);
 		/*  TROUBLESHOOT
@@ -314,7 +314,7 @@ int metrics::init(OBJECT *parent)
 	compute_metrics = (FUNCTIONADDR)(gl_get_function(module_metrics_obj,"calc_metrics"));
 
 	//Make sure it worked
-	if (compute_metrics == NULL)
+	if (compute_metrics == nullptr)
 	{
 		GL_THROW("Failed to map metric computation function in metrics object %s for metrics:%s",module_metrics_obj->name,hdr->name);
 		/*  TROUBLESHOOT
@@ -370,7 +370,7 @@ int metrics::init(OBJECT *parent)
 	FPVal = fopen(report_file,"wt");
 
 	//Make sure it worked
-	if (FPVal == NULL)
+	if (FPVal == nullptr)
 	{
 		GL_THROW("Unable to create the report file '%s' for metrics:%s",report_file,hdr->name);
 		/*  TROUBLESHOOT
@@ -385,7 +385,7 @@ int metrics::init(OBJECT *parent)
 
 	//Find our lucky candidate objects
 	CandidateObjs = gl_find_objects(FL_GROUP,customer_group.get_string());
-	if (CandidateObjs==NULL)
+	if (CandidateObjs==nullptr)
 	{
 		GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,customer_group.get_string());
 		/*  TROUBLESHOOT
@@ -409,7 +409,7 @@ int metrics::init(OBJECT *parent)
 	Customers = (CUSTARRAY*)gl_malloc(CustomerCount*sizeof(CUSTARRAY));
 
 	//Make sure it worked
-	if (Customers == NULL)
+	if (Customers == nullptr)
 	{
 		GL_THROW("Failure to allocate customer list memory in metrics:%s",hdr->name);
 		/*  TROUBLESHOOT
@@ -420,13 +420,13 @@ int metrics::init(OBJECT *parent)
 	}
 
 	//Let's populate the beast now!
-	temp_obj = NULL;
+	temp_obj = nullptr;
 	for (index=0; index<CustomerCount; index++)
 	{
 		//Find the object
 		temp_obj = gl_find_next(CandidateObjs, temp_obj);
 
-		if (temp_obj == NULL)
+		if (temp_obj == nullptr)
 		{
 			GL_THROW("Failed to populate customer list in metrics: %s",hdr->name);
 			/*  TROUBLESHOOT
@@ -470,7 +470,7 @@ int metrics::init(OBJECT *parent)
 				*/
 
 				//Null it too, just out of principle
-				Customers[index].CustInterrupted_Secondary = NULL;
+				Customers[index].CustInterrupted_Secondary = nullptr;
 			}
 			else	//One found, assume all want one now
 			{
@@ -505,13 +505,13 @@ int metrics::init(OBJECT *parent)
 	fprintf(FPVal,"Number of customers = %d\n\n",CustomerCount);
 
 	//See if the particular metrics object has any "comments" to add to the file header (units, notes, etc.)
-	funadd = NULL;	//Reset function pointer - just in case
+	funadd = nullptr;	//Reset function pointer - just in case
 
 	//Map up the "extra print" function - if it isn't there, well nothing is done
 	funadd = (FUNCTIONADDR)(gl_get_function(module_metrics_obj,"logfile_extra"));
 
 	//See if it was found
-	if (funadd != NULL)
+	if (funadd != nullptr)
 	{
 		//Do the extra printing
 		returnval = ((int (*)(OBJECT *, char *))(*funadd))(module_metrics_obj,workbuffer);
@@ -766,7 +766,7 @@ void metrics::event_ended(OBJECT *event_obj, OBJECT *fault_obj, OBJECT *faulting
 		FPVal = fopen(report_file,"at");
 
 		//Print the name of the "safety" device?
-		if (faulting_obj==NULL)
+		if (faulting_obj==nullptr)
 		{
 		//Print the details out
 			fprintf(FPVal,"%d,%d,%04d-%02d-%02d %02d:%02d:%02d,%04d-%02d-%02d %02d:%02d:%02d,%s,%s,%s,N/A,%s,%s,%d\n",annual_interval_event_count,metric_interval_event_count,start_dt.year,start_dt.month,start_dt.day,start_dt.hour,start_dt.minute,start_dt.second,end_dt.year,end_dt.month,end_dt.day,end_dt.hour,end_dt.minute,end_dt.second,fault_obj->oclass->name,fault_obj->name,event_obj->name,fault_type,impl_fault,number_customers_int);
@@ -829,7 +829,7 @@ void metrics::event_ended_sec(OBJECT *event_obj, OBJECT *fault_obj, OBJECT *faul
 		FPVal = fopen(report_file,"at");
 
 		//Print the details out - Print the name of the "safety" device?
-		if (faulting_obj==NULL)
+		if (faulting_obj==nullptr)
 		{
 			fprintf(FPVal,"%d,%d,%04d-%02d-%02d %02d:%02d:%02d,%04d-%02d-%02d %02d:%02d:%02d,%s,%s,%s,N/A,%s,%s,%d,%d\n",annual_interval_event_count,metric_interval_event_count,start_dt.year,start_dt.month,start_dt.day,start_dt.hour,start_dt.minute,start_dt.second,end_dt.year,end_dt.month,end_dt.day,end_dt.hour,end_dt.minute,end_dt.second,fault_obj->oclass->name,fault_obj->name,event_obj->name,fault_type,impl_fault,number_customers_int,number_customers_int_secondary);
 		}
@@ -941,7 +941,7 @@ void metrics::write_metrics(void)
 
 		for (index=0; index<num_indices; index++)
 		{
-			if (CalcIndices[index].MetricLocInterval != NULL)
+			if (CalcIndices[index].MetricLocInterval != nullptr)
 			{
 				if (first_written == false)
 				{
@@ -1080,7 +1080,7 @@ EXPORT int create_metrics(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(metrics::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			metrics *my = OBJECTDATA(*obj,metrics);
 			gl_set_parent(*obj,parent);
@@ -1096,7 +1096,7 @@ EXPORT int init_metrics(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,metrics)->init(parent);
 		else
 			return 0;

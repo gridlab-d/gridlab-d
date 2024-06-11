@@ -86,16 +86,16 @@ EXPORT_INIT(pw_load);
 EXPORT_SYNC(pw_load);
 EXPORT_ISA(pw_load);
 
-CLASS *pw_load::oclass = NULL;
-pw_load *pw_load::defaults = NULL;
+CLASS *pw_load::oclass = nullptr;
+pw_load *pw_load::defaults = nullptr;
 
 pw_load::pw_load(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gld_class::create(module,"pw_load",sizeof(pw_load),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL){
+		if (oclass==nullptr){
 			throw "unable to register class pw_load";
 			/* TROUBLESHOOT */
 		} else {
@@ -120,7 +120,7 @@ pw_load::pw_load(MODULE *module)
 //			PT_complex, "next_load_power", get_next_load_power_offset(),
 			PT_double, "pw_load_mw", get_pw_load_mw_offset(),PT_DESCRIPTION,"Real power portion of total power of the PowerWorld load",
 			PT_complex, "pw_load_mva", get_pw_load_mva_offset(),PT_DESCRIPTION,"Complex value of total power of the PowerWorld load",
-			NULL)<1){
+			nullptr)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
@@ -516,7 +516,7 @@ int pw_load::post_powerworld_current(){
 			throw _com_error(hr);
 		}
 		pvariant[0] = this->powerworld_bus_num;
-		pvariant[1] = tempbstr = _com_util::ConvertStringToBSTR(this->powerworld_load_id); // NULL
+		pvariant[1] = tempbstr = _com_util::ConvertStringToBSTR(this->powerworld_load_id); // nullptr
 		pvariant[2] = load_power.Re();
 		pvariant[3] = load_power.Im();
 		pvariant[4] = load_current.Re();
