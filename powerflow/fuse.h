@@ -60,7 +60,7 @@ private:
 	bool event_schedule_map_attempt;		//Flag to see if we've tried to map the event_schedule variable, or not
 	
 	//Legacy FBS code
-	void fuse_check(set phase_to_check, gld::complex *fcurr);
+	void fuse_check(gld::set phase_to_check, gld::complex *fcurr);
 };
 
 EXPORT int change_fuse_state(OBJECT *thisobj, unsigned char phase_change, bool state);

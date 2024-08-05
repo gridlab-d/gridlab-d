@@ -49,7 +49,7 @@ series_reactor::series_reactor(MODULE *mod) : link_object(mod)
 			PT_double, "phase_C_resistance[Ohm]",PADDR(phase_C_impedance.Re()),PT_DESCRIPTION,"Resistive portion of phase C's impedance",
 			PT_double, "phase_C_reactance[Ohm]",PADDR(phase_C_impedance.Im()),PT_DESCRIPTION,"Reactive portion of phase C's impedance",
 			PT_double, "rated_current_limit[A]",PADDR(rated_current_limit),PT_DESCRIPTION,"Rated current limit for the reactor",
-            NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+            nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)

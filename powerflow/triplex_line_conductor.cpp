@@ -36,7 +36,7 @@ triplex_line_conductor::triplex_line_conductor(MODULE *mod) : powerflow_library(
 			PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),PT_DESCRIPTION,"amp ratings for the cable during short term operation in summer",
 			PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),PT_DESCRIPTION,"amp ratings for the cable during continuous operation in winter",
 			PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),PT_DESCRIPTION,"amp ratings for the cable during short term operation in winter",
-			NULL) < 1) GL_THROW("unable to publish triplex_line_conductor properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish triplex_line_conductor properties in %s",__FILE__);
 	}   
 }
 

@@ -14,7 +14,7 @@
 
 /** Create a list item and attach it to a list
 	@return a pointer to the LISTITEM structure,
-	\p NULL on error, errno
+	\p nullptr on error, errno
 	- \p ENOMEM memory allocation failed
  **/
 static LISTITEM *create_item(void *data,	/* a pointer to the data */
@@ -22,7 +22,7 @@ static LISTITEM *create_item(void *data,	/* a pointer to the data */
 							 LISTITEM *next)	/* the item following the new item */
 {
 	LISTITEM *item = static_cast<LISTITEM *>(malloc(sizeof(LISTITEM)));
-	if (item!=NULL)
+	if (item!=nullptr)
 	{
 		item->data = data;
 		item->next = next;
@@ -37,26 +37,26 @@ static LISTITEM *create_item(void *data,	/* a pointer to the data */
  **/
 static void destroy_item(LISTITEM *item) /**< a pointer to the LISTITEM structure of the item */
 {
-	if (item->prev!=NULL) 
+	if (item->prev!=nullptr)
 		item->prev->next = item->next;
-	if (item->next!=NULL) 
+	if (item->next!=nullptr)
 		item->next->prev = item->prev;
 	free(item);
-	item = NULL;
+	item = nullptr;
 }
 
 /** Create a new list
 	@return a pointer to the new LIST structure, 
-	\p NULL on error, errno
+	\p nullptr on error, errno
 	- \p ENOMEM memory allocation failed
  **/
 GLLIST *list_create(void)
 {
 	GLLIST *list = static_cast<GLLIST *>(malloc(sizeof(GLLIST)));
-	if (list!=NULL)
+	if (list!=nullptr)
 	{
-		list->first = NULL;
-		list->last = NULL;
+		list->first = nullptr;
+		list->last = nullptr;
 		list->size = 0;
 	}
 	else
@@ -69,7 +69,7 @@ GLLIST *list_create(void)
 void list_destroy(GLLIST *list) /**< a pointer to the LIST structure to destroy */
 {
 	LISTITEM *item = list->first;
-	while ( item!=NULL )
+	while ( item!=nullptr )
 	{
 		LISTITEM *target = item;
 		item = item->next;
@@ -81,17 +81,17 @@ void list_destroy(GLLIST *list) /**< a pointer to the LIST structure to destroy 
 
 /** Append an item to a list
 	@return a pointer to the LISTITEM created and appended,
- 	\p NULL on error, errno
+ 	\p nullptr on error, errno
 	- \p ENOMEM memory allocation failed
  **/
 LISTITEM *list_append(GLLIST *list, /**< a pointer to the LIST structure to which the item it to be appended */
 					  void *data) /**< a pointer to the data which the new LISTITEM will contain */
 {
-	LISTITEM *item = create_item(data,list->last,NULL);
-	if (item!=NULL) {
-		if (list->first==NULL)
+	LISTITEM *item = create_item(data,list->last,nullptr);
+	if (item!=nullptr) {
+		if (list->first==nullptr)
 			list->first = item;
-		if (list->last!=NULL)
+		if (list->last!=nullptr)
 			list->last->next = item;
 		list->last = item;
 		list->size++;
@@ -107,13 +107,13 @@ void list_shuffle(GLLIST *list)
 	unsigned int i=0;
 	LISTITEM *item;
 
-	if (list == NULL)
+	if (list == nullptr)
 		return;
 	if (list->size < 2)
 		return;
 
 	index = (LISTITEM**)malloc(sizeof(LISTITEM*)*list->size);
-	for (item=list->first; item!=NULL; item=item->next)
+	for (item=list->first; item!=nullptr; item=item->next)
 		index[i++] = item;
 	for (i=0; i<list->size; i++)
 	{

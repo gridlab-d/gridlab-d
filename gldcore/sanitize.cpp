@@ -13,11 +13,11 @@ typedef struct s_safename {
 	char *old;
 	struct s_safename *next;
 } SAFENAME;
-static SAFENAME *safename_list = NULL;
+static SAFENAME *safename_list = nullptr;
 static char *sanitize_name(OBJECT *obj)
 {
 	SAFENAME *safe = (SAFENAME*)malloc(sizeof(SAFENAME));
-	if ( !safe ) return NULL;
+	if ( !safe ) return nullptr;
 	safe->old = obj->name;
 	char buffer[1024];
 	sprintf(buffer,"%s%llX",global_sanitizeprefix.get_string(),(unsigned int64)safe);
@@ -42,8 +42,8 @@ extern "C" int sanitize(int argc, char *argv[])
 	// lat/lon change
 	if ( strcmp(global_sanitizeoffset,"")==0 )
 	{
-		delta_latitude = random_uniform(NULL,-5,+5);
-		delta_longitude = random_uniform(NULL,-180,+180);
+		delta_latitude = random_uniform(nullptr,-5,+5);
+		delta_longitude = random_uniform(nullptr,-180,+180);
 	}
 	else if ( global_sanitizeoffset=="destroy" )
 		delta_latitude = delta_longitude = QNAN;
@@ -54,9 +54,9 @@ extern "C" int sanitize(int argc, char *argv[])
 	}
 
 	// sanitize object names
-	for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
+	for ( obj=object_get_first() ; obj!=nullptr ; obj=object_get_next(obj) )
 	{
-		if ( obj->name!=NULL && (global_sanitizeoptions&SO_NAMES)==SO_NAMES )
+		if ( obj->name!=nullptr && (global_sanitizeoptions&SO_NAMES)==SO_NAMES )
 			sanitize_name(obj);
 		if ( isfinite(obj->latitude) && (global_sanitizeoptions&SO_GEOCOORDS)==SO_GEOCOORDS )
 		{
@@ -105,7 +105,7 @@ extern "C" int sanitize(int argc, char *argv[])
 				fprintf(fp,"\t\t<longitude>%.6f</longitude>\n",delta_longitude);
 				fprintf(fp,"\t</geographic_offsets>\n");
 				fprintf(fp,"\t<safename_list>\n");
-				for ( item=safename_list ; item!=NULL ; item=item->next )
+				for ( item=safename_list ; item!=nullptr ; item=item->next )
 					fprintf(fp,"\t\t<name>\n\t\t\t<safe>%s</safe>\n\t\t\t<unsafe>%s</unsafe>\n\t\t</name>\n", item->name, item->old);
 				fprintf(fp,"\t</safename_list>\n");
 				fprintf(fp,"</data>\n");
@@ -117,7 +117,7 @@ extern "C" int sanitize(int argc, char *argv[])
 				fprintf(fp,"latitude\t= %.6f\n",delta_latitude);
 				fprintf(fp,"longitude\t= %.6f\n",delta_longitude);
 				fprintf(fp,"\n[NAMES]\n");
-				for ( item=safename_list ; item!=NULL ; item=item->next )
+				for ( item=safename_list ; item!=nullptr ; item=item->next )
 					fprintf(fp,"%s\t= %s\n", item->name, item->old);
 			}
 			fclose(fp);

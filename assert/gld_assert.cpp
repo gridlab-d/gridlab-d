@@ -17,17 +17,17 @@ EXPORT_INIT_C(assert,g_assert);
 EXPORT_COMMIT_C(assert,g_assert);
 EXPORT_NOTIFY_C(assert,g_assert);
 
-CLASS *g_assert::oclass = NULL;
-g_assert *g_assert::defaults = NULL;
+CLASS *g_assert::oclass = nullptr;
+g_assert *g_assert::defaults = nullptr;
 
 g_assert::g_assert(MODULE *module)
 {
 
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gld_class::create(module,"assert",sizeof(g_assert),PC_AUTOLOCK|PC_OBSERVER);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class assert";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -54,7 +54,7 @@ g_assert::g_assert(MODULE *module)
 			PT_char1024, "within", get_value2_offset(),PT_DESCRIPTION,"the bounds within which the value must bed compared",
 			PT_char1024, "lower", get_value_offset(),PT_DESCRIPTION,"the lower bound to compare with for interval tests",
 			PT_char1024, "upper", get_value2_offset(),PT_DESCRIPTION,"the upper bound to compare with for interval tests",
-			NULL)<1){
+			nullptr)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;

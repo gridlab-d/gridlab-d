@@ -47,21 +47,21 @@ struct s_thermal_default_schedule_list {
 //////////////////////////////////////////////////////////////////////////
 // thermal_storage CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* thermal_storage::oclass = NULL;
-CLASS* thermal_storage::pclass = NULL;
+CLASS* thermal_storage::oclass = nullptr;
+CLASS* thermal_storage::pclass = nullptr;
 
 // the constructor registers the class and properties and sets the defaults
 thermal_storage::thermal_storage(MODULE *mod)
 : residential_enduse(mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		pclass = residential_enduse::oclass;
 
 		// register the class definition
 		oclass = gl_register_class(mod,"thermal_storage",sizeof(thermal_storage),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register class thermal_storage");
 			/* TROUBLESHOOT
 				The file that implements the thermal_storage in the residential module cannot register the class.
@@ -88,7 +88,7 @@ thermal_storage::thermal_storage(MODULE *mod)
 			PT_double, "discharge_rate[Btu/h]", PADDR(discharge_rate), PT_DESCRIPTION, "rating of discharge or cooling",
 			PT_double, "SOC[%]", PADDR(state_of_charge), PT_DESCRIPTION, "state of charge as percentage of total capacity",		//storage/stored capacity
 			PT_double, "k[W/m/K]", PADDR(k), PT_DESCRIPTION, "coefficient of thermal conductivity (W/m/K)",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
 				The file that implements the specified class cannot publish the variables in the class.
 				This is an internal error.  Contact support for assistance.
@@ -120,16 +120,16 @@ int thermal_storage::create(void)
 	k = -1;
 
 	//Pointers to house
-	thermal_storage_available = NULL;
-	thermal_storage_active = NULL;
+	thermal_storage_available = nullptr;
+	thermal_storage_active = nullptr;
 
 	//Pointers for values
-	recharge_time_ptr = NULL;
-	discharge_time_ptr = NULL;
+	recharge_time_ptr = nullptr;
+	discharge_time_ptr = nullptr;
 
 	//Pointers for schedules
-	recharge_schedule_vals = NULL;
-	discharge_schedule_vals = NULL;
+	recharge_schedule_vals = nullptr;
+	discharge_schedule_vals = nullptr;
 
 	//Set scheduling type for internal initially
 	discharge_schedule_type=INTERNAL;
@@ -140,7 +140,7 @@ int thermal_storage::create(void)
 
 int thermal_storage::init(OBJECT *parent)
 {
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("thermal_storage::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -266,13 +266,13 @@ int thermal_storage::init(OBJECT *parent)
 		recharge_schedule_vals = gl_schedule_find(thermal_default_schedule_list[1].schedule_name);
 
 		//If not found, create
-		if (recharge_schedule_vals == NULL)
+		if (recharge_schedule_vals == nullptr)
 		{
 			//Populate schedules - charging
 			recharge_schedule_vals = gl_schedule_create(thermal_default_schedule_list[1].schedule_name,thermal_default_schedule_list[1].schedule_definition);
 
 			//Make sure it worked
-			if (recharge_schedule_vals==NULL)
+			if (recharge_schedule_vals==nullptr)
 			{
 				GL_THROW("Failure to create default charging schedule");
 				/*  TROUBLESHOOT
@@ -304,13 +304,13 @@ int thermal_storage::init(OBJECT *parent)
 		discharge_schedule_vals = gl_schedule_find(thermal_default_schedule_list[0].schedule_name);
 
 		//If not found, create
-		if (discharge_schedule_vals == NULL)
+		if (discharge_schedule_vals == nullptr)
 		{
 			//Populate schedules - discharging
 			discharge_schedule_vals = gl_schedule_create(thermal_default_schedule_list[0].schedule_name,thermal_default_schedule_list[0].schedule_definition);
 
 			//Make sure it worked
-			if (discharge_schedule_vals==NULL)
+			if (discharge_schedule_vals==nullptr)
 			{
 				GL_THROW("Failure to create default discharging schedule");
 				/*  TROUBLESHOOT
@@ -512,7 +512,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 EXPORT int create_thermal_storage(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(thermal_storage::oclass);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		thermal_storage *my = OBJECTDATA(*obj,thermal_storage);
 		gl_set_parent(*obj,parent);

@@ -37,37 +37,37 @@ CoreUnitTest::~CoreUnitTest()
 
 void CoreUnitTest::testModuleLoad()
 {
-    CPPUNIT_ASSERT(network != NULL);
+    CPPUNIT_ASSERT(network != nullptr);
 }
 
 void CoreUnitTest::testNodeLoad()
 {
-    CPPUNIT_ASSERT(node != NULL);
+    CPPUNIT_ASSERT(node != nullptr);
 }
 
 void CoreUnitTest::testLinkLoad()
 {
-    CPPUNIT_ASSERT(link != NULL);
+    CPPUNIT_ASSERT(link != nullptr);
 }
 
 void CoreUnitTest::testTapeLoad()
 {
-    CPPUNIT_ASSERT(tape != NULL);
+    CPPUNIT_ASSERT(tape != nullptr);
 }
 
 void CoreUnitTest::testPlayerLoad()
 {
-    CPPUNIT_ASSERT(player != NULL);
+    CPPUNIT_ASSERT(player != nullptr);
 }
 
 void CoreUnitTest::testRecorderLoad()
 {
-    CPPUNIT_ASSERT(recorder != NULL);
+    CPPUNIT_ASSERT(recorder != nullptr);
 }
 
 void CoreUnitTest::testCollectorLoad()
 {
-    CPPUNIT_ASSERT(collector != NULL);
+    CPPUNIT_ASSERT(collector != nullptr);
 }
 
 void CoreUnitTest::testModuleImport()
@@ -96,7 +96,7 @@ void CoreUnitTest::testRecorderCreate()
 
 void CoreUnitTest::testTapeCollectorCreate()
 {
-    CPPUNIT_ASSERT((*collector->create)(&obj[5],NULL)==FAILED);
+    CPPUNIT_ASSERT((*collector->create)(&obj[5],nullptr)==FAILED);
     
     // Not sure what this is needed for, or if I should have a separate test for it.
     object_set_value_by_name(obj[5],"property","count(V.mag),min(V.mag),avg(V.mag),std(V.mag),max(V.mag),min(V.ang),avg(V.ang),std(V.ang),max(V.ang)");

@@ -104,7 +104,7 @@ pqload::pqload(MODULE *mod) : load(mod)
 			PT_complex, "output_impedance[ohm]", PADDR(kZ), PT_ACCESS, PA_REFERENCE,
 			PT_complex, "output_current[A]", PADDR(kI), PT_ACCESS, PA_REFERENCE,
 			PT_complex, "output_power[VA]", PADDR(kP), PT_ACCESS, PA_REFERENCE,
-			NULL) < 1){
+			nullptr) < 1){
 				GL_THROW("unable to publish properties in %s",__FILE__);
 		}
 	defaults = this;

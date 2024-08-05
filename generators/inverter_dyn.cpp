@@ -242,26 +242,26 @@ inverter_dyn::inverter_dyn(MODULE *module)
 				PT_KEYWORD, "IEEE1547_2018", (enumeration)IEEE1547_2018,
 
 			//Frequency bands of 1547a-2014 checks
-			PT_double, "over_freq_high_cutout[Hz]", PADDR(IEEE1547_over_freq_high_band_setpoint),PT_DESCRIPTION,"DELTAMODE: OF2 set point for IEEE 1547a",
-			PT_double, "over_freq_high_disconnect_time[s]", PADDR(IEEE1547_over_freq_high_band_delay),PT_DESCRIPTION,"DELTAMODE: OF2 clearing time for IEEE1547a",
-			PT_double, "over_freq_low_cutout[Hz]", PADDR(IEEE1547_over_freq_low_band_setpoint),PT_DESCRIPTION,"DELTAMODE: OF1 set point for IEEE 1547a",
-			PT_double, "over_freq_low_disconnect_time[s]", PADDR(IEEE1547_over_freq_low_band_delay),PT_DESCRIPTION,"DELTAMODE: OF1 clearing time for IEEE 1547a",
-			PT_double, "under_freq_high_cutout[Hz]", PADDR(IEEE1547_under_freq_high_band_setpoint),PT_DESCRIPTION,"DELTAMODE: UF2 set point for IEEE 1547a",
-			PT_double, "under_freq_high_disconnect_time[s]", PADDR(IEEE1547_under_freq_high_band_delay),PT_DESCRIPTION,"DELTAMODE: UF2 clearing time for IEEE1547a",
-			PT_double, "under_freq_low_cutout[Hz]", PADDR(IEEE1547_under_freq_low_band_setpoint),PT_DESCRIPTION,"DELTAMODE: UF1 set point for IEEE 1547a",
-			PT_double, "under_freq_low_disconnect_time[s]", PADDR(IEEE1547_under_freq_low_band_delay),PT_DESCRIPTION,"DELTAMODE: UF1 clearing time for IEEE 1547a",
+			PT_double, "over_freq_high_cutout[Hz]", PADDR(IEEE1547_over_freq_high_band_setpoint), PT_DESCRIPTION, "DELTAMODE: OF2 set point for IEEE 1547a",
+			PT_double, "over_freq_high_disconnect_time[s]", PADDR(IEEE1547_over_freq_high_band_delay), PT_DESCRIPTION, "DELTAMODE: OF2 clearing time for IEEE1547a",
+			PT_double, "over_freq_low_cutout[Hz]", PADDR(IEEE1547_over_freq_low_band_setpoint), PT_DESCRIPTION, "DELTAMODE: OF1 set point for IEEE 1547a",
+			PT_double, "over_freq_low_disconnect_time[s]", PADDR(IEEE1547_over_freq_low_band_delay), PT_DESCRIPTION, "DELTAMODE: OF1 clearing time for IEEE 1547a",
+			PT_double, "under_freq_high_cutout[Hz]", PADDR(IEEE1547_under_freq_high_band_setpoint), PT_DESCRIPTION, "DELTAMODE: UF2 set point for IEEE 1547a",
+			PT_double, "under_freq_high_disconnect_time[s]", PADDR(IEEE1547_under_freq_high_band_delay), PT_DESCRIPTION, "DELTAMODE: UF2 clearing time for IEEE1547a",
+			PT_double, "under_freq_low_cutout[Hz]", PADDR(IEEE1547_under_freq_low_band_setpoint), PT_DESCRIPTION, "DELTAMODE: UF1 set point for IEEE 1547a",
+			PT_double, "under_freq_low_disconnect_time[s]", PADDR(IEEE1547_under_freq_low_band_delay), PT_DESCRIPTION, "DELTAMODE: UF1 clearing time for IEEE 1547a",
 
 			//Voltage bands of 1547 checks
-			PT_double,"under_voltage_low_cutout[pu]",PADDR(IEEE1547_under_voltage_lowest_voltage_setpoint),PT_DESCRIPTION,"Lowest voltage threshold for undervoltage",
-			PT_double,"under_voltage_middle_cutout[pu]",PADDR(IEEE1547_under_voltage_middle_voltage_setpoint),PT_DESCRIPTION,"Middle-lowest voltage threshold for undervoltage",
-			PT_double,"under_voltage_high_cutout[pu]",PADDR(IEEE1547_under_voltage_high_voltage_setpoint),PT_DESCRIPTION,"High value of low voltage threshold for undervoltage",
-			PT_double,"over_voltage_low_cutout[pu]",PADDR(IEEE1547_over_voltage_low_setpoint),PT_DESCRIPTION,"Lowest voltage value for overvoltage",
-			PT_double,"over_voltage_high_cutout[pu]",PADDR(IEEE1547_over_voltage_high_setpoint),PT_DESCRIPTION,"High voltage value for overvoltage",
-			PT_double,"under_voltage_low_disconnect_time[s]",PADDR(IEEE1547_under_voltage_lowest_delay),PT_DESCRIPTION,"Lowest voltage clearing time for undervoltage",
-			PT_double,"under_voltage_middle_disconnect_time[s]",PADDR(IEEE1547_under_voltage_middle_delay),PT_DESCRIPTION,"Middle-lowest voltage clearing time for undervoltage",
-			PT_double,"under_voltage_high_disconnect_time[s]",PADDR(IEEE1547_under_voltage_high_delay),PT_DESCRIPTION,"Highest voltage clearing time for undervoltage",
-			PT_double,"over_voltage_low_disconnect_time[s]",PADDR(IEEE1547_over_voltage_low_delay),PT_DESCRIPTION,"Lowest voltage clearing time for overvoltage",
-			PT_double,"over_voltage_high_disconnect_time[s]",PADDR(IEEE1547_over_voltage_high_delay),PT_DESCRIPTION,"Highest voltage clearing time for overvoltage",
+			PT_double, "under_voltage_low_cutout[pu]", PADDR(IEEE1547_under_voltage_lowest_voltage_setpoint), PT_DESCRIPTION, "Lowest voltage threshold for undervoltage",
+			PT_double, "under_voltage_middle_cutout[pu]", PADDR(IEEE1547_under_voltage_middle_voltage_setpoint), PT_DESCRIPTION, "Middle-lowest voltage threshold for undervoltage",
+			PT_double, "under_voltage_high_cutout[pu]", PADDR(IEEE1547_under_voltage_high_voltage_setpoint), PT_DESCRIPTION, "High value of low voltage threshold for undervoltage",
+			PT_double, "over_voltage_low_cutout[pu]", PADDR(IEEE1547_over_voltage_low_setpoint), PT_DESCRIPTION, "Lowest voltage value for overvoltage",
+			PT_double, "over_voltage_high_cutout[pu]", PADDR(IEEE1547_over_voltage_high_setpoint), PT_DESCRIPTION, "High voltage value for overvoltage",
+			PT_double, "under_voltage_low_disconnect_time[s]", PADDR(IEEE1547_under_voltage_lowest_delay), PT_DESCRIPTION, "Lowest voltage clearing time for undervoltage",
+			PT_double, "under_voltage_middle_disconnect_time[s]", PADDR(IEEE1547_under_voltage_middle_delay), PT_DESCRIPTION, "Middle-lowest voltage clearing time for undervoltage",
+			PT_double, "under_voltage_high_disconnect_time[s]", PADDR(IEEE1547_under_voltage_high_delay), PT_DESCRIPTION, "Highest voltage clearing time for undervoltage",
+			PT_double, "over_voltage_low_disconnect_time[s]", PADDR(IEEE1547_over_voltage_low_delay), PT_DESCRIPTION, "Lowest voltage clearing time for overvoltage",
+			PT_double, "over_voltage_high_disconnect_time[s]", PADDR(IEEE1547_over_voltage_high_delay), PT_DESCRIPTION, "Highest voltage clearing time for overvoltage",
 
 			//1547 trip reason
 			PT_enumeration, "IEEE_1547_trip_method", PADDR(ieee_1547_trip_method), PT_DESCRIPTION, "DELTAMODE: Reason for IEEE 1547 disconnect - which threshold was hit",
@@ -275,12 +275,8 @@ inverter_dyn::inverter_dyn(MODULE *module)
 				PT_KEYWORD, "UNDER_VOLTAGE_HIGH",(enumeration)IEEE_1547_HIGH_UV, PT_DESCRIPTION, "High under-voltage level trip",
 				PT_KEYWORD, "OVER_VOLTAGE_LOW",(enumeration)IEEE_1547_LOW_OV, PT_DESCRIPTION, "Low over-voltage level trip",
 				PT_KEYWORD, "OVER_VOLTAGE_HIGH",(enumeration)IEEE_1547_HIGH_OV, PT_DESCRIPTION, "High over-voltage level trip",
-	                PT_bool, "phase_angle_correction",PADDR(phase_angle_correction), PT_DESCRIPTION,
-			"DELTAMODE: Boolean used to indicate whether inverter applies "
-                        "phase angle correction during current limiting",
-	                PT_bool, "virtual_resistance_correction", PADDR(virtual_resistance_correction),
-	                PT_DESCRIPTION,"DELTAMODE: Boolean used to indicate whether inverter applies "
-                        "virtual resistance correction during current limiting",
+				PT_bool, "phase_angle_correction",PADDR(phase_angle_correction), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter applies phase angle correction during current limiting",
+				PT_bool, "virtual_resistance_correction", PADDR(virtual_resistance_correction),PT_DESCRIPTION,"DELTAMODE: Boolean used to indicate whether inverter applies virtual resistance correction during current limiting",
 			nullptr) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -826,7 +822,7 @@ int inverter_dyn::init(OBJECT *parent)
 					parent_is_single_phase = true;
 					parent_is_triplex = false;
 
-					//NULL all the secondary indices - we won't use any of them
+					//nullptr all the secondary indices - we won't use any of them
 					pCircuit_V[1] = nullptr;
 					pCircuit_V[2] = nullptr;
 

@@ -34,7 +34,7 @@ impedance_dump::impedance_dump(MODULE *mod)
 			PT_char256,"filename",PADDR(filename),PT_DESCRIPTION,"the file to dump the current data into",
 			PT_timestamp,"runtime",PADDR(runtime),PT_DESCRIPTION,"the time to check voltage data",
 			PT_int32,"runcount",PADDR(runcount),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the number of times the file has been written to",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
 

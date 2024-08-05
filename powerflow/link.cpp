@@ -161,16 +161,16 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_bool, "overloaded_status", PADDR(overloaded_status),PT_DESCRIPTION,"overloaded status (true/false)",
 				
 			PT_set, "flow_direction", PADDR(flow_direction),PT_DESCRIPTION,"flag used for describing direction of the flow of power",
-				PT_KEYWORD, "UNKNOWN", (set)FD_UNKNOWN,
-				PT_KEYWORD, "AF", (set)FD_A_NORMAL,
-				PT_KEYWORD, "AR", (set)FD_A_REVERSE,
-				PT_KEYWORD, "AN", (set)FD_A_NONE,
-				PT_KEYWORD, "BF", (set)FD_B_NORMAL,
-				PT_KEYWORD, "BR", (set)FD_B_REVERSE,
-				PT_KEYWORD, "BN", (set)FD_B_NONE,
-				PT_KEYWORD, "CF", (set)FD_C_NORMAL,
-				PT_KEYWORD, "CR", (set)FD_C_REVERSE,
-				PT_KEYWORD, "CN", (set)FD_C_NONE,
+				PT_KEYWORD, "UNKNOWN", (gld::set)FD_UNKNOWN,
+				PT_KEYWORD, "AF", (gld::set)FD_A_NORMAL,
+				PT_KEYWORD, "AR", (gld::set)FD_A_REVERSE,
+				PT_KEYWORD, "AN", (gld::set)FD_A_NONE,
+				PT_KEYWORD, "BF", (gld::set)FD_B_NORMAL,
+				PT_KEYWORD, "BR", (gld::set)FD_B_REVERSE,
+				PT_KEYWORD, "BN", (gld::set)FD_B_NONE,
+				PT_KEYWORD, "CF", (gld::set)FD_C_NORMAL,
+				PT_KEYWORD, "CR", (gld::set)FD_C_REVERSE,
+				PT_KEYWORD, "CN", (gld::set)FD_C_NONE,
 			PT_double, "mean_repair_time[s]",PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
 			PT_double, "continuous_rating_A[A]", PADDR(link_rating[0][0]), PT_DESCRIPTION, "Continuous rating for phase A of this link object (set individual line segments)",
 			PT_double, "continuous_rating_B[A]", PADDR(link_rating[0][1]), PT_DESCRIPTION, "Continuous rating for phase B of this link object (set individual line segments)",
@@ -196,12 +196,12 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
 				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
 
-			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
+			nullptr) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
 
 			//Publish deltamode functions
 			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
 				GL_THROW("Unable to publish link deltamode function");
-			
+
 			//Publish restoration-related function (current update)
 			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 				GL_THROW("Unable to publish link external power calculation function");
@@ -224,7 +224,7 @@ int link_object::create(void)
 #ifdef SUPPORT_OUTAGES
 	condition=OC_NORMAL;
 #endif
-	
+
 	from = nullptr;
 	to = nullptr;
 	status = LS_CLOSED;
@@ -254,7 +254,7 @@ int link_object::create(void)
 	current_in[0] = current_in[1] = current_in[2] = gld::complex(0,0);
 
 	link_limits[0][0] = link_limits[0][1] = link_limits[0][2] = link_limits[1][0] = link_limits[1][1] = link_limits[1][2] = 0;
-	
+
 	link_rating[0][0] = link_rating[0][1] = link_rating[0][2] = 1000;	//Replicates current defaults of line objects
 	link_rating[1][0] = link_rating[1][1] = link_rating[1][2] = 2000;
 
@@ -282,7 +282,7 @@ int link_object::create(void)
 	YBase_Sec = nullptr;
 	inrush_computations_needed = false;	//By default, we behave like an ordinary deltamode link
 	inrush_vdiffmag_prev[0] = inrush_vdiffmag_prev[1] = inrush_vdiffmag_prev[2] = 0.0;
-	deltamode_prev_time = -1.0; 
+	deltamode_prev_time = -1.0;
 	inrush_tol_value = 0.0001;	//0.1 mV - arbitrary
 
 	//Saturation-based items -- probably need to be moved, but putting here since me=lazy
@@ -350,7 +350,7 @@ int link_object::init(OBJECT *parent)
 
 	powerflow_object::init(parent);
 
-	set phase_f_test, phase_t_test, phases_test;
+	gld::set phase_f_test, phase_t_test, phases_test;
 	node *fNode = OBJECTDATA(from,node);
 	node *tNode = OBJECTDATA(to,node);
 
@@ -389,8 +389,8 @@ int link_object::init(OBJECT *parent)
 					An error has occurred while setting the parent field of a link.  Please
 					submit a bug report and your code so this error can be diagnosed further.
 					*/
-			} 
-			else 
+			}
+			else
 				throw "link from reference not a node";
 				/*  TROUBLESHOOT
 				The from connection of a link is not a node-based object.  Ensure that the from object is a
@@ -400,7 +400,7 @@ int link_object::init(OBJECT *parent)
 		else
 			/* promote 'from' object if necessary */
 			gl_set_rank(from,obj->rank+1);
-		
+
 		if (to->parent==nullptr)
 		{
 			/* make this object parent to 'to' object */
@@ -409,8 +409,8 @@ int link_object::init(OBJECT *parent)
 				if(gl_set_parent(to, obj) < 0)
 					throw "error when setting parent";
 					//Defined above
-			} 
-			else 
+			}
+			else
 				throw "link to reference not a node";
 				//Defined above
 		}
@@ -449,7 +449,7 @@ int link_object::init(OBJECT *parent)
 	case SM_GS: /* Gauss-Seidel */
 		{
 			GL_THROW("Gauss_Seidel is a deprecated solver and has been removed");
-			/*  TROUBLESHOOT 
+			/*  TROUBLESHOOT
 			The Gauss-Seidel solver implementation has been removed as of version 3.0.
 			It was never fully functional and has not been updated in a couple versions.  The source
 			code still exists in older repositories, so if you have an interest in that implementation, please
@@ -507,8 +507,8 @@ int link_object::init(OBJECT *parent)
 	//Simple Phase checks
 	phases_test = (phases & (~(PHASE_N | PHASE_D)));	//N and D phases are stripped off for now.  Redundant to D-Gwye tests.
 	phase_f_test = (fNode->phases & phases_test);		//Will need to be handled differently if in the future explicit N/G phases are introduced.
-	phase_t_test = (tNode->phases & phases_test);	
-																		
+	phase_t_test = (tNode->phases & phases_test);
+
 	if ((SpecialLnk==DELTAGWYE) | (SpecialLnk==SPLITPHASE) | (SpecialLnk==SWITCH))	//Delta-Gwye and Split-phase transformers will cause problems, handle special.
 	{																				//Switches/fuses have the potential, so put them in here too.
 		if (SpecialLnk==SPLITPHASE)
@@ -581,7 +581,7 @@ int link_object::init(OBJECT *parent)
 		tNode->busphasesIn |= phases_test;
 		fNode->busphasesOut |= phases_test;
 	}
-	
+
 	/* record this link on the nodes' incidence counts */
 	OBJECTDATA(from,node)->k++;
 	OBJECTDATA(to,node)->k++;
@@ -862,7 +862,7 @@ int link_object::init(OBJECT *parent)
 				ahrlstore[6] = ahrlstore[15] = ahrlstore[24] = ahrlstore[33] = gld::complex(0.0,0.0);
 				ahrlstore[7] = ahrlstore[16] = ahrlstore[25] = ahrlstore[34] = gld::complex(0.0,0.0);
 				ahrlstore[8] = ahrlstore[17] = ahrlstore[26] = ahrlstore[35] = gld::complex(0.0,0.0);
-				
+
 				//Bhrl
 				//Allocate the terms -- inductance bhrl constant
 				bhrlstore = (gld::complex *)gl_malloc(36*sizeof(gld::complex));
@@ -906,7 +906,7 @@ int link_object::init(OBJECT *parent)
 				ahmstore[6] = ahmstore[15] = gld::complex(0.0,0.0);
 				ahmstore[7] = ahmstore[16] = gld::complex(0.0,0.0);
 				ahmstore[8] = ahmstore[17] = gld::complex(0.0,0.0);
-				
+
 				//Bhrl
 				//Allocate the terms -- inductance bhrl constant
 				bhmstore = (gld::complex *)gl_malloc(18*sizeof(gld::complex));
@@ -960,11 +960,11 @@ node *link_object::get_to(void) const
 	get_flow(nullptr,&to);
 	return to;
 }
-set link_object::get_flow(node **fn, node **tn) const
+gld::set link_object::get_flow(node **fn, node **tn) const
 {
 	node *f = OBJECTDATA(from, node);
 	node *t = OBJECTDATA(to, node);
-	set reverse = 0;
+	gld::set reverse = 0;
 	reverse |= (f->voltage[0].Mag()<t->voltage[0].Mag())?PHASE_A:0;
 	reverse |= (f->voltage[1].Mag()<t->voltage[1].Mag())?PHASE_B:0;
 	reverse |= (f->voltage[2].Mag()<t->voltage[2].Mag())?PHASE_C:0;
@@ -1032,7 +1032,7 @@ void link_object::NR_link_sync_fxn(void)
 	{
 		force_link_update = false;
 	}
-	
+
 	//Deltamode catch and check
 	if (enable_inrush_calculations && ((SpecialLnk==NORMAL) || (SpecialLnk==WYEWYE)))	//Lines are only supported at the moment -- maybe flag this different in the future?
 	{
@@ -1096,7 +1096,7 @@ void link_object::NR_link_sync_fxn(void)
 						//Set the transformer flag for "normal"
 						transf_from_stdy_state = false;
 					}
-					
+
 					//Update the tracker
 					deltamode_prev_time = curr_delta_time;
 
@@ -1981,7 +1981,7 @@ void link_object::NR_link_sync_fxn(void)
 					center-tapped transformer.  The Newton-Raphson solver does not know how to
 					handle it.  Fix the phase and try again.
 					*/
-								
+
 			}
 			else if ((SpecialLnk==SWITCH) || (SpecialLnk==REGULATOR) || (SpecialLnk==VFD))
 			{
@@ -2340,7 +2340,7 @@ void link_object::NR_link_sync_fxn(void)
 			if (status != prev_status)
 			{
 				//See if we're deltamode and a fault_check object exists
-				if (fault_check_object != NULL)
+				if (fault_check_object != nullptr)
 				{
 					if (deltatimestep_running > 0)
 					{
@@ -2348,7 +2348,7 @@ void link_object::NR_link_sync_fxn(void)
 						topo_update_function = gl_get_function(fault_check_object,"rescan_topology");
 
 						//Make sure it worked
-						if (topo_update_function == NULL)
+						if (topo_update_function == nullptr)
 						{
 							GL_THROW("link:%d - %s - failed to map fault_check rescan_topology function",obj->id,(obj->name?obj->name:"Unnamed"));
 							/*  TROUBLESHOOT
@@ -2386,7 +2386,7 @@ void link_object::NR_link_sync_fxn(void)
 //Presync call
 TIMESTAMP link_object::presync(TIMESTAMP t0)
 {
-	TIMESTAMP t1 = powerflow_object::presync(t0); 
+	TIMESTAMP t1 = powerflow_object::presync(t0);
 
 	if (solver_method==SM_NR)
 	{
@@ -2577,7 +2577,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 
 				//Zero fault phases - presumably nothing is broken right now
 				NR_branchdata[NR_branch_reference].faultphases = 0x00;
-				
+
 				//link If_in and If_out
 				NR_branchdata[NR_branch_reference].If_from = &If_in[0];
 				NR_branchdata[NR_branch_reference].If_to = &If_out[0];
@@ -2675,7 +2675,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 
 					//Lock the parent object while we steal location information, and give ourselves a unique value
 					LOCK_OBJECT(fnode->SubNodeParent);
-					
+
 					TempTableIndex = LinkTableLoc[1];	//Get our index in the table
 					LinkTableLoc[1]++;					//Increment the index for the next guy
 
@@ -2690,7 +2690,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 
 					//Lock the from object while we steal location information, and give ourselves a unique value
 					LOCK_OBJECT(from);
-					
+
 					TempTableIndex = LinkTableLoc[1];	//Get our index in the table
 					LinkTableLoc[1]++;					//Increment the index for the next guy
 
@@ -2726,7 +2726,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 
 					//Lock the parent object while we steal location information, and give ourselves a unique value
 					LOCK_OBJECT(tnode->SubNodeParent);
-					
+
 					TempTableIndex = LinkTableLoc[1];	//Get our index in the table
 					LinkTableLoc[1]++;					//Increment the index for the next guy
 
@@ -2741,7 +2741,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 
 					//Lock the to object while we steal location information, and give ourselves a unique value
 					LOCK_OBJECT(to);
-					
+
 					TempTableIndex = LinkTableLoc[1];	//Get our index in the table
 					LinkTableLoc[1]++;					//Increment the index for the next guy
 
@@ -2893,7 +2893,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					//Call the function once, right now
 					resultval = ((int (*)(OBJECT *,bool *))(*NR_branchdata[NR_branch_reference].ExtraDeltaModeFunc))(obj,temp_empty);
 
-					//Check the results 
+					//Check the results
 					if (resultval == -1)	//Not a supported transformer type
 					{
 						//Null the function to prevent it from being called
@@ -2928,7 +2928,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 							}//End allocation routine
 							//Default else -- assume someone else go to it
 						}//End primary side needed
-						
+
 						if ((resultval == 2) || (resultval == 3))	//Secondary winding needed, allocate
 						{
 							//See if it has already been allocated
@@ -3015,7 +3015,7 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 		{
 			node *f;
 			node *t;
-			set reverse = get_flow(&f,&t);
+			gld::set reverse = get_flow(&f,&t);
 
 #ifdef SUPPORT_OUTAGES
 			tNode->condition=fNode->condition;
@@ -3027,21 +3027,21 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 
 			gld::complex i0, i1, i2;
 
-			current_in[0] = i0 = 
+			current_in[0] = i0 =
 				c_mat[0][0] * t->voltage[0] +
 				c_mat[0][1] * t->voltage[1] +
 				c_mat[0][2] * t->voltage[2] +
 				d_mat[0][0] * tc[0] +
 				d_mat[0][1] * tc[1] +
 				d_mat[0][2] * tc[2];
-			current_in[1] = i1 = 
+			current_in[1] = i1 =
 				c_mat[1][0] * t->voltage[0] +
 				c_mat[1][1] * t->voltage[1] +
 				c_mat[1][2] * t->voltage[2] +
 				d_mat[1][0] * tc[0] +
 				d_mat[1][1] * tc[1] +
 				d_mat[1][2] * tc[2];
-			current_in[2] = i2 = 
+			current_in[2] = i2 =
 				c_mat[2][0] * t->voltage[0] +
 				c_mat[2][1] * t->voltage[1] +
 				c_mat[2][2] * t->voltage[2] +
@@ -3376,7 +3376,7 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 			}//End "normal line" check
 		}//End must be a line check
 	}//End Limit checks
-	
+
 	return overloaded_status;
 }
 
@@ -3389,7 +3389,7 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 	{
 		node *f;
 		node *t; //@# make else/if statement for solver method NR; & set current_out->to t->node current_inj;
-		set reverse = get_flow(&f,&t);
+		gld::set reverse = get_flow(&f,&t);
 
 		// update published current_out values;
 		READLOCK_OBJECT(to);
@@ -3403,13 +3403,13 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 			read_I_out[2] = -tc[1] - tc[0];	//Implies ground at TP Node, so I_n is full neutral + ground
 		else
 			read_I_out[2] = tc[2];
-		
+
 		if (!is_open())
 		{
 			/* compute and update voltages */
 			gld::complex v0 =
 				A_mat[0][0] * f->voltage[0] +
-				A_mat[0][1] * f->voltage[1] + // 
+				A_mat[0][1] * f->voltage[1] + //
 				A_mat[0][2] * f->voltage[2] - //@todo current inj; flowing from t node
 				B_mat[0][0] * tc[0] - // current injection put into link from end mode
 				B_mat[0][1] * tc[1] -
@@ -3435,7 +3435,7 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 			t->voltage[2] = v2;
 			WRITEUNLOCK_OBJECT(to);
 
-#ifdef SUPPORT_OUTAGES		
+#ifdef SUPPORT_OUTAGES
 			t->condition=f->condition;
 		}
 		else if (is_open()) //open
@@ -3447,7 +3447,7 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 		if (t->bustype==node::PQ)
 		{
 			/* keep a copy of the old flags on the to-bus */
-			set of = t->busflags&NF_HASSOURCE;
+			gld::set of = t->busflags&NF_HASSOURCE;
 
 			/* if the admittance is non-zero */
 			if ((a_mat[0][0].Mag()>0 || a_mat[1][1].Mag()>0 || a_mat[2][2].Mag()>0))
@@ -3723,7 +3723,7 @@ EXPORT int init_link(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	try 
+	try
 	{
 		link_object *pObj = OBJECTDATA(obj,link_object);
 		TIMESTAMP t1 = TS_NEVER;
@@ -3785,11 +3785,11 @@ EXPORT int updatepowercalc_link(OBJECT *obj)
 EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *overloaded)
 {
 	link_object *my = OBJECTDATA(obj,link_object);
-	
+
 	//Set some default values - assume we start "not loaded"
 	*overload_value = 0.0;
 	*overloaded = false;
-	
+
 	//Do another overall line limits check -- restoration does this, but just in case something else does, as well
 	if (use_link_limits)
 	{
@@ -4520,13 +4520,13 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						//Compute shunt current values
 						if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 						{
-							shunt_current_val[0] = LinkCapShuntTerm[0] * fnode->voltage[0] + 
-												   LinkCapShuntTerm[1] * fnode->voltage[1] + 
+							shunt_current_val[0] = LinkCapShuntTerm[0] * fnode->voltage[0] +
+												   LinkCapShuntTerm[1] * fnode->voltage[1] +
 												   LinkCapShuntTerm[2] * fnode->voltage[2] -
 												   LinkHistTermCf[0];
 
-							shunt_current_val[3] = LinkCapShuntTerm[0] * tnode->voltage[0] + 
-												   LinkCapShuntTerm[1] * tnode->voltage[1] + 
+							shunt_current_val[3] = LinkCapShuntTerm[0] * tnode->voltage[0] +
+												   LinkCapShuntTerm[1] * tnode->voltage[1] +
 												   LinkCapShuntTerm[2] * tnode->voltage[2] -
 												   LinkHistTermCt[0];
 						}
@@ -4539,13 +4539,13 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						//Compute shunt current values
 						if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 						{
-							shunt_current_val[1] = LinkCapShuntTerm[3] * fnode->voltage[0] + 
-												   LinkCapShuntTerm[4] * fnode->voltage[1] + 
+							shunt_current_val[1] = LinkCapShuntTerm[3] * fnode->voltage[0] +
+												   LinkCapShuntTerm[4] * fnode->voltage[1] +
 												   LinkCapShuntTerm[5] * fnode->voltage[2] -
 												   LinkHistTermCf[1];
 
-							shunt_current_val[4] = LinkCapShuntTerm[3] * tnode->voltage[0] + 
-												   LinkCapShuntTerm[4] * tnode->voltage[1] + 
+							shunt_current_val[4] = LinkCapShuntTerm[3] * tnode->voltage[0] +
+												   LinkCapShuntTerm[4] * tnode->voltage[1] +
 												   LinkCapShuntTerm[5] * tnode->voltage[2] -
 												   LinkHistTermCt[1];
 						}
@@ -4558,13 +4558,13 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						//Compute shunt current values
 						if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 						{
-							shunt_current_val[2] = LinkCapShuntTerm[6] * fnode->voltage[0] + 
-												   LinkCapShuntTerm[7] * fnode->voltage[1] + 
+							shunt_current_val[2] = LinkCapShuntTerm[6] * fnode->voltage[0] +
+												   LinkCapShuntTerm[7] * fnode->voltage[1] +
 												   LinkCapShuntTerm[8] * fnode->voltage[2] -
 												   LinkHistTermCf[2];
 
-							shunt_current_val[5] = LinkCapShuntTerm[6] * tnode->voltage[0] + 
-												   LinkCapShuntTerm[7] * tnode->voltage[1] + 
+							shunt_current_val[5] = LinkCapShuntTerm[6] * tnode->voltage[0] +
+												   LinkCapShuntTerm[7] * tnode->voltage[1] +
 												   LinkCapShuntTerm[8] * tnode->voltage[2] -
 												   LinkHistTermCt[2];
 						}
@@ -4781,7 +4781,7 @@ SIMULATIONMODE link_object::inter_deltaupdate_link(unsigned int64 delta_time, un
 	{
 		//Link sync/status update stuff
 		NR_link_sync_fxn();
-		
+
 		return SM_DELTA;	//Just return something other than SM_ERROR for this call
 	}
 	else	//After the call
@@ -4818,12 +4818,12 @@ void link_object::calculate_power_splitphase()
 
 	if (solver_method == SM_NR)
 	{
-		if (SpecialLnk!=SPLITPHASE) 
+		if (SpecialLnk!=SPLITPHASE)
 		{
 			//Original code - attempted to split so single phase matches three phase in terms of output capabilities
 			//power_in = (f->voltage[0]*~current_in[0] - f->voltage[1]*~current_in[1] + f->voltage[2]*~current_in[2]).Mag();
 			//power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
-				
+
 			//Follows convention of three phase calculations below
 			indiv_power_in[0] = f->voltage[0]*~current_in[0];
 			indiv_power_in[1] = gld::complex(-1.0) * f->voltage[1]*~current_in[1];
@@ -4833,7 +4833,7 @@ void link_object::calculate_power_splitphase()
 			indiv_power_out[1] = gld::complex(-1.0) * t->voltage[1]*~current_out[1];
 			indiv_power_out[2] = t->voltage[2]*~current_out[2];
 		}
-		else  
+		else
 		{
 			//Original code - attempted to split so matches three phase below
 			//power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
@@ -4855,12 +4855,12 @@ void link_object::calculate_power_splitphase()
 		gld::complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
 		READUNLOCK_OBJECT(to);
 
-		if (SpecialLnk!=SPLITPHASE) 
+		if (SpecialLnk!=SPLITPHASE)
 		{
 			//Original code - attempted to split so single phase matches three phase in terms of output capabilities
 			//power_in = (f->voltage[0]*~current_in[0] - f->voltage[1]*~current_in[1] + f->voltage[2]*~current_in[2]).Mag();
 			//power_out = (t->voltage[0]*~t->current_inj[0] - t->voltage[1]*~t->current_inj[1] + t->voltage[2]*~t->current_inj[2]).Mag();
-				
+
 			//Follows convention of three phase calculations below
 			indiv_power_in[0] = f->voltage[0]*~current_in[0];
 			indiv_power_in[1] = gld::complex(-1.0) * f->voltage[1]*~current_in[1];
@@ -4870,7 +4870,7 @@ void link_object::calculate_power_splitphase()
 			indiv_power_out[1] = gld::complex(-1.0) * t->voltage[1]*~tc[1];
 			indiv_power_out[2] = t->voltage[2]*~tc[2];
 		}
-		else  
+		else
 		{
 			//Original code - attempted to split so matches three phase below
 			//power_in = (f->voltage[0]*~current_in[0]).Mag() + (f->voltage[1]*~current_in[1]).Mag() + (f->voltage[2]*~current_in[2]).Mag();
@@ -4891,7 +4891,7 @@ void link_object::calculate_power_splitphase()
 	power_in = indiv_power_in[0] + indiv_power_in[1] + indiv_power_in[2];
 	power_out = indiv_power_out[0] + indiv_power_out[1] + indiv_power_out[2];
 
-	if (SpecialLnk!=SPLITPHASE) 
+	if (SpecialLnk!=SPLITPHASE)
 	{
 		for (int i=0; i<3; i++)
 		{
@@ -4932,7 +4932,7 @@ void link_object::set_flow_directions(void)
 	int i;
 	flow_direction = FD_UNKNOWN; // clear the flows
 	for (i=0; i<3; i++)
-	{	
+	{
 		static int shift[] = {0,4,8};
 		double power_in = indiv_power_in[i].Mag();
 		double power_out = indiv_power_out[i].Mag();
@@ -5026,7 +5026,7 @@ void link_object::calculate_power()
 			//Calculate overall losses
 			power_loss = power_in - power_out;
 		}
-	
+
 		set_flow_directions();
 }
 
@@ -5109,11 +5109,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 		}
 		C_mat[0][0]=C_mat[1][1]=C_mat[2][2]=gld::complex(1,0);
-		
+
 		//Default switch_val - special case
 		switch_val = false;
 
-		//Protective device set to NULL (should already be this way, but just in case)
+		//Protective device set to nullptr (should already be this way, but just in case)
 		*protect_obj = nullptr;
 
 		//Default repair time is non-existant
@@ -5269,7 +5269,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (fault_type[4] == 'X')	//Random, flag as such
 				work_phases |= 0x08;
-			
+
 			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
 				work_phases |= 0x04;
 
@@ -5595,7 +5595,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (fault_type[3] == 'X')	//Random, flag as such
 				work_phases |= 0x08;
-			
+
 			if ((fault_type[3] == 'A') || (fault_type[4] == 'A'))	//A is desired
 				work_phases |= 0x04;
 
@@ -5934,7 +5934,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (fault_type[4] == 'X')	//Random, flag as such
 				work_phases |= 0x08;
-			
+
 			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
 				work_phases |= 0x04;
 
@@ -6908,7 +6908,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (fault_type[4] == 'X')	//Random, flag as such
 				work_phases |= 0x08;
-			
+
 			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
 				work_phases |= 0x04;
 
@@ -7209,7 +7209,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
 
 			NR_admit_change = true;		//Flag an admittance update - this should trigger fault_check
-			
+
 			UNLOCK_OBJECT(NR_swing_bus);	//Release us
 
 			//set up the remaining 4 fault specific equations in C_mat before calculating the fault current
@@ -7260,7 +7260,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 			// Calculate the fault current
 
-			
+
 
 			//Progress upward through the list until we hit a "safety" device (fuse or switch) - pop said device
 			//If we somehow hit the swing bus, kill that entire phase
@@ -7283,7 +7283,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
-				
+
 				//Make sure it was found
 				if (funadd == nullptr)
 				{
@@ -7338,7 +7338,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Update our fault phases so we aren't restored
 				NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
 
-				//Remove the relevant phases 
+				//Remove the relevant phases
 				NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
 
 				//Store the object handle
@@ -7363,7 +7363,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
-				
+
 				//Make sure it was found
 				if (funadd == nullptr)
 				{
@@ -7416,7 +7416,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Update our fault phases so we aren't restored
 				NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
 
-				//Remove the relevant phases 
+				//Remove the relevant phases
 				NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
 
 				//Store the object handle
@@ -7443,7 +7443,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
-				
+
 				//Make sure it was found
 				if (funadd == nullptr)
 				{
@@ -7493,7 +7493,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Flag our fault phases
 				NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
 
-				//Remove the relevant phases 
+				//Remove the relevant phases
 				NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
 
 				//Store the object handle
@@ -7591,7 +7591,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -7747,7 +7747,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -7836,7 +7836,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -7977,7 +7977,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			//Safety device enacted - now call fault_check function and let it remove all invalid objects
 			//Map the function
 			funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
-			
+
 			//Make sure it was found
 			if (funadd == nullptr)
 			{
@@ -8044,11 +8044,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		}
 
 		C_mat[0][0]=C_mat[1][1]=C_mat[2][2]=gld::complex(1,0);
-		
+
 		//Default switch_val - special case
 		switch_val = false;
 
-		//Protective device set to NULL (should already be this way, but just in case)
+		//Protective device set to nullptr (should already be this way, but just in case)
 		*protect_obj = nullptr;
 
 		//Default repair time is non-existant
@@ -8237,7 +8237,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (fault_type[4] == 'X')	//Random, flag as such
 				work_phases |= 0x08;
-			
+
 			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
 				work_phases |= 0x04;
 
@@ -8563,7 +8563,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (fault_type[3] == 'X')	//Random, flag as such
 				work_phases |= 0x08;
-			
+
 			if ((fault_type[3] == 'A') || (fault_type[4] == 'A'))	//A is desired
 				work_phases |= 0x04;
 
@@ -8902,7 +8902,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (fault_type[4] == 'X')	//Random, flag as such
 				work_phases |= 0x08;
-			
+
 			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
 				work_phases |= 0x04;
 
@@ -9580,7 +9580,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (fault_type[4] == 'X')	//Random, flag as such
 				work_phases |= 0x08;
-			
+
 			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
 				work_phases |= 0x04;
 
@@ -9881,7 +9881,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
 
 			NR_admit_change = true;		//Flag an admittance update - this should trigger fault_check
-			
+
 			UNLOCK_OBJECT(NR_swing_bus);	//Release us
 
 			//See which fault current mode we are leveraging
@@ -9999,7 +9999,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							type_fault = 522;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
-						
+
 					} else if(*implemented_fault == 6){ //DLG-CA -> Ifb=Vax=Vcx=Vxg=0
 						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x02) { //three-phase: ABC. check if B is in phases
 							CI_mat[0][1] = gld::complex(1,0);
@@ -10015,7 +10015,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							type_fault = 622;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
-						
+
 					} else if(*implemented_fault == 7){ //LL-AB -> Ifa+Ifb=Ifc=Vax=Vbx=0
 						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x01) { //three-phase: ABC. check if C is in phases
 							CI_mat[0][2] = CI_mat[1][0] = CI_mat[1][1]=gld::complex(1,0);
@@ -10032,7 +10032,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							type_fault = 722;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
-						
+
 					} else if(*implemented_fault == 8){ //LL-BC -> Ifb+Ifc=Ifa=Vbx=Vcx=0
 						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x04) { //three-phase: ABC. check if A is in phases
 							CI_mat[0][0] = CI_mat[1][1] = CI_mat[1][2]=gld::complex(1,0);
@@ -10049,7 +10049,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							type_fault = 822;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
-						
+
 					} else if(*implemented_fault == 9){ //LL-CA -> Ifa+Ifc=Ifb=Vax=Vcx=0
 						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x02) { //three-phase: ABC. check if B is in phases
 							CI_mat[0][1] = CI_mat[1][0] = CI_mat[1][2]=gld::complex(1,0);
@@ -10066,7 +10066,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							type_fault = 922;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
-						
+
 					} else if(*implemented_fault == 10){ //TLG-ABC -> Vax=Vbx=Vcx=Vxg=0
 						//C_mat[3][3]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=gld::complex(1,0);
 						CI_mat[0][0] = CI_mat[1][1] = CI_mat[2][2] = (fault_Z + ground_Z)*-1.0;
@@ -10168,7 +10168,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
-				
+
 				//Make sure it was found
 				if (funadd == nullptr)
 				{
@@ -10223,7 +10223,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Update our fault phases so we aren't restored
 				NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
 
-				//Remove the relevant phases 
+				//Remove the relevant phases
 				NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
 
 				//Store the object handle
@@ -10248,7 +10248,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
-				
+
 				//Make sure it was found
 				if (funadd == nullptr)
 				{
@@ -10301,7 +10301,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Update our fault phases so we aren't restored
 				NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
 
-				//Remove the relevant phases 
+				//Remove the relevant phases
 				NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
 
 				//Store the object handle
@@ -10328,7 +10328,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
-				
+
 				//Make sure it was found
 				if (funadd == nullptr)
 				{
@@ -10378,7 +10378,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Flag our fault phases
 				NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
 
-				//Remove the relevant phases 
+				//Remove the relevant phases
 				NR_branchdata[NR_branch_reference].phases &= ~(phase_remove);
 
 				//Store the object handle
@@ -10476,7 +10476,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -10632,7 +10632,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -10721,7 +10721,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -10862,7 +10862,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			//Safety device enacted - now call fault_check function and let it remove all invalid objects
 			//Map the function
 			funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
-			
+
 			//Make sure it was found
 			if (funadd == nullptr)
 			{
@@ -11310,7 +11310,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							{
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11336,7 +11336,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11357,7 +11357,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Restore other phase(s)
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11380,7 +11380,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Just update fault phases
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11455,7 +11455,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							{
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11481,7 +11481,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11502,7 +11502,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Restore other phase(s)
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11525,7 +11525,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Just update fault phases
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11585,7 +11585,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							{
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11611,7 +11611,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11632,7 +11632,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Restore other phase(s)
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11655,7 +11655,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Just update fault phases
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11673,7 +11673,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 									//defined above
 								}
 							}
-							
+
 							//Modify our phases as appropriate
 							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
 
@@ -11715,7 +11715,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							{
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11741,7 +11741,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11762,7 +11762,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Restore other phase(s)
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11785,7 +11785,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Just update fault phases
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -11895,7 +11895,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 			//Safety device enacted - now call fault_check function and let it restore  objects
 			//Map the function
 			funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
-			
+
 			//Make sure it was found
 			if (funadd == nullptr)
 			{
@@ -11925,7 +11925,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 			}
 
 			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
-			NR_admit_change = true;	
+			NR_admit_change = true;
 			UNLOCK_OBJECT(NR_swing_bus);	//Release us
 
 			if (temp_node == -99)
@@ -12316,7 +12316,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 							//Get function address
 							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
-							
+
 							//Make sure it was found
 							if (funadd == nullptr)
 							{
@@ -12384,7 +12384,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							{
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -12410,7 +12410,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -12431,7 +12431,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Restore other phase(s)
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -12454,7 +12454,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Just update fault phases
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -12514,7 +12514,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							{
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -12540,7 +12540,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -12561,7 +12561,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Restore other phase(s)
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -12584,7 +12584,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Just update fault phases
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -12602,7 +12602,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 									//defined above
 								}
 							}
-							
+
 							//Modify our phases as appropriate
 							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
 
@@ -12644,7 +12644,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							{
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -12670,7 +12670,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -12691,7 +12691,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Restore other phase(s)
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -12714,7 +12714,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Just update fault phases
 								//Get function address
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
-								
+
 								//Make sure it was found
 								if (funadd == nullptr)
 								{
@@ -12824,7 +12824,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 			//Safety device enacted - now call fault_check function and let it restore  objects
 			//Map the function
 			funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
-			
+
 			//Make sure it was found
 			if (funadd == nullptr)
 			{
@@ -12854,7 +12854,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 			}
 
 			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
-			NR_admit_change = true;	
+			NR_admit_change = true;
 			UNLOCK_OBJECT(NR_swing_bus);	//Release us
 
 			if (temp_node == -99)
@@ -14830,7 +14830,7 @@ void link_object::lmatrix_add(gld::complex *matrix_in_A, gld::complex *matrix_in
 	int jindex, kindex;
 	OBJECT *obj = OBJECTHDR(this);
 
-	//Initial check - make sure nothing NULL has been passed
+	//Initial check - make sure nothing nullptr has been passed
 	if ((matrix_in_A == nullptr) || (matrix_in_B == nullptr) || (matrix_out == nullptr))
 	{
 		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));
@@ -14866,7 +14866,7 @@ void link_object::lmatrix_mult(gld::complex *matrix_in_A, gld::complex *matrix_i
 	int jindex, kindex, lindex;
 	OBJECT *obj = OBJECTHDR(this);
 
-	//Initial check - make sure nothing NULL has been passed
+	//Initial check - make sure nothing nullptr has been passed
 	if ((matrix_in_A == nullptr) || (matrix_in_B == nullptr) || (matrix_out == nullptr))
 	{
 		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));
@@ -14908,7 +14908,7 @@ void link_object::lmatrix_vmult(gld::complex *matrix_in, gld::complex *vector_in
 	int jindex, kindex;
 	OBJECT *obj = OBJECTHDR(this);
 
-	//Initial check - make sure nothing NULL has been passed
+	//Initial check - make sure nothing nullptr has been passed
 	if ((matrix_in == nullptr) || (vector_in == nullptr) || (vector_out == nullptr))
 	{
 		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));

@@ -28,19 +28,19 @@
 //////////////////////////////////////////////////////////////////////////
 // clotheswasher CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* clotheswasher::oclass = NULL;
-CLASS* clotheswasher::pclass = NULL;
-clotheswasher *clotheswasher::defaults = NULL;
+CLASS* clotheswasher::oclass = nullptr;
+CLASS* clotheswasher::pclass = nullptr;
+clotheswasher *clotheswasher::defaults = nullptr;
 
 clotheswasher::clotheswasher(MODULE *module) : residential_enduse(module)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(module,"clotheswasher",sizeof(clotheswasher),PC_PRETOPDOWN|PC_BOTTOMUP|PC_AUTOLOCK);
 		pclass = residential_enduse::oclass;
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
@@ -117,7 +117,7 @@ clotheswasher::clotheswasher(MODULE *module) : residential_enduse(module)
 				PT_KEYWORD,"SPIN1",(enumeration)SPIN1,
 				PT_KEYWORD,"SPIN2",(enumeration)SPIN2,
 				PT_KEYWORD,"SPIN3",(enumeration)SPIN3,
-				PT_KEYWORD,"SPIN4",(enumeration)SPIN4,		
+				PT_KEYWORD,"SPIN4",(enumeration)SPIN4,
 
 			PT_enumeration,"spin_mode", PADDR(spin_mode),
 				PT_KEYWORD,"SPIN_LOW",(enumeration)SPIN_LOW,
@@ -129,9 +129,9 @@ clotheswasher::clotheswasher(MODULE *module) : residential_enduse(module)
 			PT_enumeration,"wash_mode", PADDR(wash_mode),
 				PT_KEYWORD,"NORMAL",(enumeration)NORMAL,
 				PT_KEYWORD,"PERM_PRESS",(enumeration)PERM_PRESS,
-				PT_KEYWORD,"GENTLE",(enumeration)GENTLE,		
+				PT_KEYWORD,"GENTLE",(enumeration)GENTLE,
 
-			NULL)<1) 
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
@@ -164,7 +164,7 @@ int clotheswasher::create()
 int clotheswasher::init(OBJECT *parent)
 {
 	OBJECT *hdr = OBJECTHDR(this);
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("clotheswasher::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -252,7 +252,7 @@ TIMESTAMP clotheswasher::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double dt = 0.0;
 	TIMESTAMP t2 = residential_enduse::sync(t0, t1);
 
-	if (pCircuit!=NULL)
+	if (pCircuit!=nullptr)
 	{
 		//Pull the current value
 		temp_complex_value = pCircuit->pV->get_complex();
@@ -765,7 +765,7 @@ double clotheswasher::update_state(double dt)
 EXPORT int create_clotheswasher(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(clotheswasher::oclass);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		clotheswasher *my = OBJECTDATA(*obj,clotheswasher);
 		gl_set_parent(*obj,parent);

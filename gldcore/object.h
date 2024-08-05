@@ -133,7 +133,7 @@ public:
 		FUNCTION *(*define)(CLASS*,const FUNCTIONNAME,FUNCTIONADDR);
 		FUNCTIONADDR (*get)(char*,const char*);
 	} function;
-	int (*define_enumeration_member)(CLASS*,const char*,const char*,enumeration);
+	int (*define_enumeration_member)(CLASS*, const char*, const char*, enumeration);
 	int (*define_set_member)(CLASS*,const char*,const char*,unsigned int64);
 	struct {
 		OBJECT *(*get_first)(void);
@@ -237,7 +237,7 @@ public:
 		bool *(*bool_var)(OBJECT *obj, PROPERTY *prop);
 		gld::complex *(*complex_var)(OBJECT *obj, PROPERTY *prop);
 		enumeration *(*enum_var)(OBJECT *obj, PROPERTY *prop);
-		set *(*set_var)(OBJECT *obj, PROPERTY *prop);
+		gld::set *(*set_var)(OBJECT *obj, PROPERTY *prop);
 		int16 *(*int16_var)(OBJECT *obj, PROPERTY *prop);
 		int32 *(*int32_var)(OBJECT *obj, PROPERTY *prop);
 		int64 *(*int64_var)(OBJECT *obj, PROPERTY *prop);
@@ -249,7 +249,7 @@ public:
 		bool *(*bool_var)(OBJECT *obj, const char *name);
 		gld::complex *(*complex_var)(OBJECT *obj, const char *name);
 		enumeration *(*enum_var)(OBJECT *obj, const char *name);
-		set *(*set_var)(OBJECT *obj, const char *name);
+		gld::set *(*set_var)(OBJECT *obj, const char *name);
 		int16 *(*int16_var)(OBJECT *obj, const char *name);
 		int32 *(*int32_var)(OBJECT *obj, const char *name);
 		int64 *(*int64_var)(OBJECT *obj, const char *name);
@@ -381,8 +381,8 @@ OBJECT **object_get_object(OBJECT *obj, PROPERTY *prop);
 OBJECT **object_get_object_by_name(OBJECT *obj, const char *name);
 enumeration *object_get_enum(OBJECT *obj, PROPERTY *prop);
 enumeration *object_get_enum_by_name(OBJECT *obj, const char *name);
-set *object_get_set(OBJECT *obj, PROPERTY *prop);
-set *object_get_set_by_name(OBJECT *obj, const char *name);
+gld::set *object_get_set(OBJECT *obj, PROPERTY *prop);
+gld::set *object_get_set_by_name(OBJECT *obj, const char *name);
 bool *object_get_bool(OBJECT *obj, PROPERTY *prop);
 bool *object_get_bool_by_name(OBJECT *obj, const char *name);
 int16 *object_get_int16(OBJECT *obj, PROPERTY *prop);

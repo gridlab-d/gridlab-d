@@ -13,12 +13,12 @@
 #define tzset _tzset
 #endif
 
-static LOCALE *stack=NULL;
+static LOCALE *stack=nullptr;
 void locale_push(void)
 {
 	char *tz = timestamp_current_timezone();
 	LOCALE *locale = (LOCALE*)malloc(sizeof(LOCALE));
-	if (locale==NULL)
+	if (locale==nullptr)
 	{
 		output_error("locale push failed; no memory");
 		return;
@@ -27,7 +27,7 @@ void locale_push(void)
 	{
 		locale->next=stack;
 		stack=locale;
-		if (tz==NULL)
+		if (tz==nullptr)
 			output_warning("locale TZ is empty");
 			/* TROUBLESHOOT
 				This warning indicates that the TZ environment variable has not be set.  
@@ -43,7 +43,7 @@ void locale_push(void)
 
 void locale_pop(void)
 {
-	if (stack==NULL)
+	if (stack==nullptr)
 	{
 		output_error("locale pop failed; stack empty");
 		return;

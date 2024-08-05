@@ -18,16 +18,16 @@ EXPORT_INIT(int_assert);
 EXPORT_COMMIT(int_assert);
 EXPORT_NOTIFY(int_assert);
 
-CLASS *int_assert::oclass = NULL;
-int_assert *int_assert::defaults = NULL;
+CLASS *int_assert::oclass = nullptr;
+int_assert *int_assert::defaults = nullptr;
 
 int_assert::int_assert(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gl_register_class(module,"int_assert",sizeof(int_assert),PC_AUTOLOCK|PC_OBSERVER);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class int_assert";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -48,7 +48,7 @@ int_assert::int_assert(MODULE *module)
                                 PT_int32, "value", get_value_offset(),
                                 PT_int32, "within", get_within_offset(),
                                 PT_char1024, "target", get_target_offset(),
-                                NULL)<1){
+                                nullptr)<1){
             char msg[256];
             sprintf(msg, "unable to publish properties in %s",__FILE__);
             throw msg;

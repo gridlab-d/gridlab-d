@@ -640,7 +640,7 @@ int diesel_dg::create(void)
 	pwr_electric_init = -1;
 	frequency_deviation_energy = 0;
 	frequency_deviation_max = 0;
-	//NULL/zero pointers
+	//nullptr/zero pointers
 	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = nullptr;
 	pLine_I[0] = pLine_I[1] = pLine_I[2] = nullptr;
 	pPower[0] = pPower[1] = pPower[2] = nullptr;
@@ -692,7 +692,7 @@ int diesel_dg::init(OBJECT *parent)
 	complex_array temp_complex_array, temp_child_complex_array;
 	gld_property *pNominal_Voltage;
 	double nominal_voltage_value, nom_test_val;
-	set temp_phases;
+	gld::set temp_phases;
 	bool childed_connection = false;
 	STATUS fxn_return_status;
 	

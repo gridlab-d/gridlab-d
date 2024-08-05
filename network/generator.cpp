@@ -50,21 +50,21 @@ int generator_state_to_string(void *addr, char *value, int size)
 // generator CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* generator::oclass = NULL;
-CLASS* generator::pclass = NULL;
-generator *generator::defaults = NULL;
+CLASS* generator::oclass = nullptr;
+CLASS* generator::pclass = nullptr;
+generator *generator::defaults = nullptr;
 
-CLASS *generator_class = (NULL);
-OBJECT *last_generator = (NULL);
+CLASS *generator_class = (nullptr);
+OBJECT *last_generator = (nullptr);
 
 generator::generator(MODULE *mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		generator_class = oclass = gl_register_class(mod,"generator",sizeof(generator),PC_BOTTOMUP);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class generator";
 		else
 			oclass->trl = TRL_STANDALONE;
@@ -89,7 +89,7 @@ generator::generator(MODULE *mod)
 				PT_KEYWORD,"ONLINE",ONLINE,
 				PT_KEYWORD,"TRIPPED",TRIPPED,
 			//PT_delegated, "state", state,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// setup the default values
 		defaults = this;
@@ -178,7 +178,7 @@ TIMESTAMP generator::sync(TIMESTAMP t0)
 EXPORT int create_generator(OBJECT **obj)
 {
 	*obj = gl_create_object(generator_class);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		last_generator = *obj;
 		generator *my = OBJECTDATA(*obj,generator);

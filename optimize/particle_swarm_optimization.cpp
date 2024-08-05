@@ -17,9 +17,9 @@
 #include "gridlabd.h"
 #include "particle_swarm_optimization.h"
 
-CLASS* particle_swarm_optimization::oclass = NULL;
-CLASS* particle_swarm_optimization::pclass = NULL;
-particle_swarm_optimization *particle_swarm_optimization::defaults = NULL;
+CLASS* particle_swarm_optimization::oclass = nullptr;
+CLASS* particle_swarm_optimization::pclass = nullptr;
+particle_swarm_optimization *particle_swarm_optimization::defaults = nullptr;
 
 static PASSCONFIG passconfig = PC_PRETOPDOWN|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_POSTTOPDOWN;
@@ -27,10 +27,10 @@ static PASSCONFIG clockpass = PC_POSTTOPDOWN;
 // Class registration is only called once to register the class with the core
 particle_swarm_optimization::particle_swarm_optimization(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"particle_swarm_optimization",sizeof(particle_swarm_optimization),passconfig);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class particle_swarm_optimization";
 		else
 			oclass->trl = TRL_PROOF;
@@ -38,8 +38,8 @@ particle_swarm_optimization::particle_swarm_optimization(MODULE *module)
 		if (gl_publish_variable(oclass,
 			
 			PT_double, "no_particles", PADDR(no_particles), PT_DESCRIPTION, "The number of agents (particles) in a swarm.", //this might not work if it isn't specified in input
-			PT_double, "C1", PADDR(C1), PT_DESCRIPTION, "Hookes’s coefficients", //
-			PT_double, "C2", PADDR(C2), PT_DESCRIPTION, "Hookes’s coefficients", //
+			PT_double, "C1", PADDR(C1), PT_DESCRIPTION, "Hookesï¿½s coefficients", //
+			PT_double, "C2", PADDR(C2), PT_DESCRIPTION, "Hookesï¿½s coefficients", //
 			PT_double, "no_unknowns", PADDR(no_unknowns), PT_DESCRIPTION, "This is the dimension of solution space. It is equal to the number of unknowns in a variable to be optimized", //
 			PT_double, "max_iterations", PADDR(max_iterations), PT_DESCRIPTION, "Total number of iterations.",
 
@@ -62,7 +62,7 @@ particle_swarm_optimization::particle_swarm_optimization(MODULE *module)
 
 			PT_double,"cycle_interval[s]", PADDR(cycle_interval),
 						
-			NULL)<1)
+			nullptr)<1)
 		{
 			static char msg[256];
 			sprintf(msg, "unable to publish properties in %s",__FILE__);
@@ -358,7 +358,7 @@ EXPORT int create_particle_swarm_optimization(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(particle_swarm_optimization::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			particle_swarm_optimization *my = OBJECTDATA(*obj,particle_swarm_optimization);
 			gl_set_parent(*obj,parent);
@@ -374,7 +374,7 @@ EXPORT int init_particle_swarm_optimization(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,particle_swarm_optimization)->init(parent);
 		else
 			return 0;

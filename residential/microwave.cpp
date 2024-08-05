@@ -20,17 +20,17 @@
 //////////////////////////////////////////////////////////////////////////
 // microwave CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* microwave::oclass = NULL;
-CLASS* microwave::pclass = NULL;
+CLASS* microwave::oclass = nullptr;
+CLASS* microwave::pclass = nullptr;
 
 microwave::microwave(MODULE *module) : residential_enduse(module)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(module,"microwave",sizeof(microwave),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class microwave";
 		else
 			oclass->trl = TRL_DEMONSTRATED;
@@ -48,7 +48,7 @@ microwave::microwave(MODULE *module) : residential_enduse(module)
 			PT_double,"cycle_length[s]",PADDR(cycle_time),PT_DESCRIPTION,"length of the combined on/off cycle between uses",
 			PT_double,"runtime[s]",PADDR(runtime),PT_DESCRIPTION,"",
 			PT_double,"state_time[s]",PADDR(state_time),PT_DESCRIPTION,"",
-			NULL)<1) 
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
@@ -105,7 +105,7 @@ void microwave::init_noshape(){
 
 int microwave::init(OBJECT *parent)
 {
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("microwave::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -281,7 +281,7 @@ TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (t0 <= 0)
 		return TS_NEVER;
 	
-	if (pCircuit!=NULL)
+	if (pCircuit!=nullptr)
 	{
 		//Pull the voltage magnitude
 		temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
@@ -321,7 +321,7 @@ EXPORT int create_microwave(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(microwave::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			microwave *my = OBJECTDATA(*obj,microwave);;
 			gl_set_parent(*obj,parent);

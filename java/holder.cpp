@@ -10,9 +10,9 @@
 CLASS *oclass = 0;
 
 CLASS *new_holder(MODULE *module){
-	if(oclass == NULL){
+	if(oclass == nullptr){
 		oclass = gl_register_class(module, "holder", 0, 0);
-		if(oclass == NULL){
+		if(oclass == nullptr){
 			gl_error("unable to register class holder");
 			return 0;
 		} else {
@@ -29,7 +29,7 @@ EXPORT int create_holder(OBJECT **obj, OBJECT *parent){
 	try
 	{
 		*obj = gl_create_object(oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			rv = 1;
 		}

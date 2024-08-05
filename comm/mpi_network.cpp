@@ -24,17 +24,17 @@
 //////////////////////////////////////////////////////////////////////////
 // CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* mpi_network::oclass = NULL;
+CLASS* mpi_network::oclass = nullptr;
 
 // the constructor registers the class and properties and sets the defaults
 mpi_network::mpi_network(MODULE *mod) 
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"mpi_network",sizeof(mpi_network),PC_BOTTOMUP);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 			/* TROUBLESHOOT
 				The registration for the mpi_network class failed.   This is usually caused
@@ -47,7 +47,7 @@ mpi_network::mpi_network(MODULE *mod)
 			PT_int64, "interval", PADDR(interval),
 			PT_int32, "mpi_target", PADDR(mpi_target),
 			PT_int64, "reply_time", PADDR(reply_time), PT_ACCESS, PA_REFERENCE,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
 				The registration for the network properties failed.   This is usually caused
 				by a coding error in the core implementation of classes or the module implementation.
@@ -144,7 +144,7 @@ int mpi_network::notify(int update_mode, PROPERTY *prop){
 EXPORT int create_mpi_network(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(mpi_network::oclass);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		mpi_network *my = OBJECTDATA(*obj,mpi_network);
 		gl_set_parent(*obj,parent);

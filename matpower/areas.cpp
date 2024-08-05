@@ -22,12 +22,12 @@
 
 #include "areas.h"
 
-CLASS *areas::oclass = NULL;
-areas *areas::defaults = NULL;
+CLASS *areas::oclass = nullptr;
+areas *areas::defaults = nullptr;
 
 #ifdef OPTIONAL
 /* TODO: define this to allow the use of derived classes */
-CLASS *PARENTareas::pclass = NULL;
+CLASS *PARENTareas::pclass = nullptr;
 #endif
 
 /* TODO: remove passes that aren't needed */
@@ -47,17 +47,17 @@ areas::areas(MODULE *module)
 	/* TODO: include this if you are deriving this from a superclass */
 	pclass = SUPERCLASS::oclass;
 #endif
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"areas",sizeof(areas),passconfig);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		if (gl_publish_variable(oclass,
 			/* TODO: add your published properties here */
 			PT_int16, "AREA", PADDR(AREA), PT_DESCRIPTION, "area number",
 			PT_int16, "REFBUS", PADDR(REFBUS), PT_DESCRIPTION, "reference bus in this area",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(areas));
 		/* TODO: set the default values of all properties here */
@@ -112,7 +112,7 @@ EXPORT int create_areas(OBJECT **obj)
 	try
 	{
 		*obj = gl_create_object(areas::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 			return OBJECTDATA(*obj,areas)->create();
 	}
 	catch (char *msg)
@@ -126,7 +126,7 @@ EXPORT int init_areas(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,areas)->init(parent);
 	}
 	catch (char *msg)

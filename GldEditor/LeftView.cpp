@@ -57,14 +57,14 @@ void CLeftView::OnInitialUpdate()
 void CLeftView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 {
 	CGldEditorDoc *pDoc = GetDocument();
-	ASSERT(pDoc!=NULL);
+	ASSERT(pDoc!=nullptr);
 
 	CTreeCtrl &tree = GetTreeCtrl();
 	while (tree.GetCount()>0)
 	{
 		HTREEITEM hItem = tree.GetNextItem(TVI_ROOT,TVGN_ROOT);
 		HTREEITEM hSubItem = hItem;
-		while ((hSubItem=tree.GetChildItem(hSubItem))!=NULL)
+		while ((hSubItem=tree.GetChildItem(hSubItem))!=nullptr)
 			hItem = hSubItem;
 		CTreeRef *pRef = (CTreeRef*)tree.GetItemData(hItem);
 		if (pRef)
@@ -74,19 +74,19 @@ void CLeftView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 
 	CTreeRef *pRef;
 	HTREEITEM modules = tree.InsertItem("Model");
-	for (MODULE *mod=module_get_first(); mod!=NULL; mod=mod->next)
+	for (MODULE *mod=module_get_first(); mod!=nullptr; mod=mod->next)
 	{
 		HTREEITEM hItem1 = tree.InsertItem(mod->name,modules);
 		pRef = new CTreeRef("module",(DWORD_PTR)mod);
 		tree.SetItemData(hItem1,(DWORD_PTR)pRef);
-		for (CLASS *oclass=class_get_first_class(); oclass!=NULL; oclass=oclass->next)
+		for (CLASS *oclass=class_get_first_class(); oclass!=nullptr; oclass=oclass->next)
 		{
 			if (oclass->module==mod)
 			{
 				HTREEITEM hItem2 = tree.InsertItem(oclass->name,hItem1);
 				pRef = new CTreeRef("class",(DWORD_PTR)oclass);
 				tree.SetItemData(hItem2,(DWORD_PTR)pRef);
-				for (OBJECT *obj = object_get_first(); obj!=NULL; obj=obj->next)
+				for (OBJECT *obj = object_get_first(); obj!=nullptr; obj=obj->next)
 				{
 					if (obj->oclass==oclass)
 					{
@@ -103,8 +103,8 @@ void CLeftView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 	}
 
 	HTREEITEM schedules = tree.InsertItem("Schedules");
-	SCHEDULE *sch = NULL;
-	while ((sch=schedule_getnext(sch))!=NULL)
+	SCHEDULE *sch = nullptr;
+	while ((sch=schedule_getnext(sch))!=nullptr)
 	{
 		HTREEITEM hItem1 = tree.InsertItem(sch->name,schedules);
 		pRef = new CTreeRef("schedule",(DWORD_PTR)sch);
@@ -124,15 +124,15 @@ void CLeftView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 
 	HTREEITEM files = tree.InsertItem("Files");
 	OBJECT *obj;
-	for (obj=object_get_first(); obj!=NULL; obj=obj->next)
+	for (obj=object_get_first(); obj!=nullptr; obj=obj->next)
 	{
 		PROPERTY *prop;
-		for (prop=class_get_first_property(obj->oclass); prop!=NULL; prop=class_get_next_property(prop))
+		for (prop=class_get_first_property(obj->oclass); prop!=nullptr; prop=class_get_next_property(prop))
 		{
-			if (strstr(prop->name,"file")!=NULL)
+			if (strstr(prop->name,"file")!=nullptr)
 			{
 				char *file = (char*)object_get_addr(obj,prop->name);
-				if (file!=NULL)
+				if (file!=nullptr)
 				{	
 					HTREEITEM hItem = tree.InsertItem(file,files);
 					pRef = new CTreeRef("file",(DWORD_PTR)file);
@@ -143,11 +143,11 @@ void CLeftView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 		}
 	}
 	HTREEITEM globals = tree.InsertItem("System");
-	pRef = new CTreeRef("globals",NULL);
+	pRef = new CTreeRef("globals",nullptr);
 	tree.SetItemData(globals,(DWORD_PTR)pRef);
 
 	HTREEITEM solver = tree.InsertItem("Solver");
-	pRef = new CTreeRef("solver",NULL);
+	pRef = new CTreeRef("solver",nullptr);
 	tree.SetItemData(solver,(DWORD_PTR)pRef);
 }
 
@@ -186,7 +186,7 @@ void CLeftView::OnTvnSelchanged(NMHDR *pNMHDR, LRESULT *pResult)
 	HTREEITEM hItem = ((TVITEM)(pNMTreeView->itemNew)).hItem;
 	HTREEITEM hParent = tree.GetParentItem(hItem);
 	CTreeRef *pRef = (CTreeRef*)tree.GetItemData(hItem);
-	if (pRef!=NULL)
+	if (pRef!=nullptr)
 	{
 		CString type = pRef->GetType();
 		if (type=="object")

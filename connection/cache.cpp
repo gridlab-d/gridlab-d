@@ -57,7 +57,7 @@ bool cache::write(VARMAP *var, TRANSLATOR *xltr)
 	char *remote = var->remote_name;
 	CACHEID id = cacheitem::get_id(var);
 	cacheitem *item = cacheitem::get_item(id);
-	if ( item==NULL ) item = new cacheitem(var);
+	if ( item==nullptr ) item = new cacheitem(var);
 	char buffer[1025];
 	{	gld_rlock lock(var->obj->get_object());
 		var->obj->to_string(buffer,sizeof(buffer));
@@ -73,7 +73,7 @@ bool cache::read(VARMAP *var, TRANSLATOR *xltr)
 	char *remote = var->remote_name;
 	CACHEID id = cacheitem::get_id(var);
 	cacheitem *item = cacheitem::get_item(id);
-	if ( item==NULL ) item = new cacheitem(var);
+	if ( item==nullptr ) item = new cacheitem(var);
 	char buffer[1025];
 	if ( item->read(buffer,sizeof(buffer)) )
 	{
@@ -94,7 +94,7 @@ cacheitem *cache::add_item(VARMAP *var)
 	// create the cache item
 	CACHEID id = cacheitem::get_id(var);
 	cacheitem *item = cacheitem::get_item(id);
-	if ( item==NULL ) 
+	if ( item==nullptr )
 		item = new cacheitem(var);
 
 	// assign it to the cache list
@@ -103,13 +103,13 @@ cacheitem *cache::add_item(VARMAP *var)
 	{
 		gl_error("cache id index overrun");
 		delete item;
-		return NULL;
+		return nullptr;
 	}
 	if ( list[id]!=0 )
 	{
 		gl_error("cache id index collision");
 		delete item;
-		return NULL;
+		return nullptr;
 	}
 	list[tail++] = id;
 
@@ -123,7 +123,7 @@ cacheitem *cache::find_item(VARMAP *var)
 {
 	int n;
 	cacheitem *m;
-	cacheitem *item = NULL;
+	cacheitem *item = nullptr;
 	for(n=0; n < tail; n++){
 		cacheitem *m = get_item(n);
 		if(strcmp((const char*)var->local_name, (const char*)m->get_var()->local_name) == 0 && strcmp((const char*)var->remote_name, (const char*)m->get_var()->remote_name) == 0){
@@ -152,8 +152,8 @@ void cache::dump(void)
 // cacheitem implementation
 ////////////////////////////////////////////////////////////////////////////////////////
 size_t cacheitem::indexsize = 0x100;
-cacheitem **cacheitem::index = NULL;
-cacheitem *cacheitem::first = NULL;
+cacheitem **cacheitem::index = nullptr;
+cacheitem *cacheitem::first = nullptr;
 cacheitem::cacheitem(VARMAP *v)
 {
 	OBJECT *o = v->obj->get_object();
@@ -163,7 +163,7 @@ Retry:
 	id = get_id(v);
 
 	// id already in use
-	if ( index[id]!=NULL ) 
+	if ( index[id]!=nullptr )
 	{
 		// item is the same
 		cacheitem *item = get_item(id);
@@ -183,16 +183,16 @@ Retry:
 	var = v;
 	value = new char[1025]; // TODO look into using prop->width instead to save some memory
 	memset(value,0,1025);
-	xltr = NULL;
-	next = NULL;
-	if ( first!=NULL )
+	xltr = nullptr;
+	next = nullptr;
+	if ( first!=nullptr )
 		first->next = this;
 	first = this;
 }
 
 void cacheitem::init(void)
 {
-	if ( index==NULL )
+	if ( index==nullptr )
 	{
 		gl_verbose("cacheitem::init(): initial cache index size is %d", indexsize);
 		index = new cacheitem*[indexsize];
@@ -210,7 +210,7 @@ void cacheitem::grow(void)
 	// TODO this takes a while--put a mechanism in place to keep/use a list of non-null entries
 	// copy old ids to new ids
 	cacheitem *n;
-	for ( n=first ; n!=NULL ; n=n->next )
+	for ( n=first ; n!=nullptr ; n=n->next )
 	{
 		CACHEID newid = get_id(n->get_var());
 		newindex[newid] = n;
@@ -240,7 +240,7 @@ bool cacheitem::read(char *buffer, size_t len)
 	if ( len>strlen(value)+1 )
 	{
 		// copy/xlate cache to buffer
-		if ( xltr==NULL )
+		if ( xltr==nullptr )
 			strcpy(buffer,value);
 		else
 			xltr(buffer,len,value,1025,TF_DATA,var);
@@ -264,7 +264,7 @@ bool cacheitem::write(char *buffer)
 			gl_warning("cacheitem::write(): cache already contains different data for local '%s'/remote '%s'", var->local_name,var->remote_name);
 
 		// copy/xlate buffer to cache
-		if ( xltr==NULL )
+		if ( xltr==nullptr )
 			strcpy(value,buffer);
 		else
 			xltr(value,1025,buffer,strlen(buffer)+1,TF_DATA,var);

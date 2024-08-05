@@ -136,7 +136,7 @@ char *_strlwr(char *s)
 static complex A_OPERATOR =  complex (-0.5,  0.8660254);
 static complex A2_OPERATOR = complex (-0.5, -0.8660254);
 // list of enduses that are implicitly active
-set house_e::implicit_enduses_active = IEU_ALL;
+gld::set house_e::implicit_enduses_active = IEU_ALL;
 enumeration house_e::implicit_enduse_source = IES_ELCAP1990;
 static double aux_cutin_temperature = 10;
 
@@ -235,12 +235,12 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"heat_cool_gain[Btu/h]",PADDR(load.heatgain),PT_DESCRIPTION,"system heat gains(losses)",
 
 			PT_set,"include_solar_quadrant",PADDR(include_solar_quadrant),PT_DESCRIPTION,"bit set for determining which solar incidence quadrants should be included in the solar heatgain",
-				PT_KEYWORD,"NONE",(set)NO_SOLAR,
-				PT_KEYWORD,"H",(set)HORIZONTAL,
-				PT_KEYWORD,"N",(set)NORTH,
-				PT_KEYWORD,"E",(set)EAST,
-				PT_KEYWORD,"S",(set)SOUTH,
-				PT_KEYWORD,"W",(set)WEST,
+				PT_KEYWORD,"NONE",(gld::set)NO_SOLAR,
+				PT_KEYWORD,"H",(gld::set)HORIZONTAL,
+				PT_KEYWORD,"N",(gld::set)NORTH,
+				PT_KEYWORD,"E",(gld::set)EAST,
+				PT_KEYWORD,"S",(gld::set)SOUTH,
+				PT_KEYWORD,"W",(gld::set)WEST,
 			PT_double,"horizontal_diffuse_solar_radiation[Btu/h*sf]",PADDR(horizontal_diffuse_solar_radiation),PT_DESCRIPTION,"incident solar radiation hitting the top of the house",
 			PT_double,"north_incident_solar_radiation[Btu/h*sf]",PADDR(north_incident_solar_radiation),PT_DESCRIPTION,"incident solar radiation hitting the north side of the house",
 			PT_double,"northwest_incident_solar_radiation[Btu/h*sf]",PADDR(north_west_incident_solar_radiation),PT_DESCRIPTION,"incident solar radiation hitting the northwest side of the house",
@@ -354,17 +354,17 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD, "COOL", (enumeration)TM_COOL,
 
 			PT_set,"system_type",PADDR(system_type),PT_DESCRIPTION,"heating/cooling system type/options",
-				PT_KEYWORD, "NONE", (set)ST_NONE,
-				PT_KEYWORD, "GAS",	(set)ST_GAS,
-				PT_KEYWORD, "AIRCONDITIONING", (set)ST_AC,
-				PT_KEYWORD, "FORCEDAIR", (set)ST_AIR,
-				PT_KEYWORD, "TWOSTAGE", (set)ST_VAR,
-				PT_KEYWORD, "RESISTIVE", (set)ST_RST,
+				PT_KEYWORD, "NONE", (gld::set)ST_NONE,
+				PT_KEYWORD, "GAS",	(gld::set)ST_GAS,
+				PT_KEYWORD, "AIRCONDITIONING", (gld::set)ST_AC,
+				PT_KEYWORD, "FORCEDAIR", (gld::set)ST_AIR,
+				PT_KEYWORD, "TWOSTAGE", (gld::set)ST_VAR,
+				PT_KEYWORD, "RESISTIVE", (gld::set)ST_RST,
 			PT_set,"auxiliary_strategy",PADDR(auxiliary_strategy),PT_DESCRIPTION,"auxiliary heating activation strategies",
-				PT_KEYWORD, "NONE", (set)AX_NONE,
-				PT_KEYWORD, "DEADBAND", (set)AX_DEADBAND,
-				PT_KEYWORD, "TIMER", (set)AX_TIMER,
-				PT_KEYWORD, "LOCKOUT", (set)AX_LOCKOUT,
+				PT_KEYWORD, "NONE", (gld::set)AX_NONE,
+				PT_KEYWORD, "DEADBAND", (gld::set)AX_DEADBAND,
+				PT_KEYWORD, "TIMER", (gld::set)AX_TIMER,
+				PT_KEYWORD, "LOCKOUT", (gld::set)AX_LOCKOUT,
 			PT_enumeration,"system_mode",PADDR(system_mode),PT_DESCRIPTION,"heating/cooling system operation state",
 				PT_KEYWORD,"UNKNOWN",(enumeration)SM_UNKNOWN,
 				PT_KEYWORD,"HEAT",(enumeration)SM_HEAT,
@@ -514,19 +514,19 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 
 		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)attach_enduse_house_e);
 		gl_global_create("residential::implicit_enduses",PT_set,&implicit_enduses_active,
-			PT_KEYWORD, "LIGHTS", (set)IEU_LIGHTS,
-			PT_KEYWORD, "PLUGS", (set)IEU_PLUGS,
-			PT_KEYWORD, "OCCUPANCY", (set)IEU_OCCUPANCY,
-			PT_KEYWORD, "DISHWASHER", (set)IEU_DISHWASHER,
-			PT_KEYWORD, "MICROWAVE", (set)IEU_MICROWAVE,
-			PT_KEYWORD, "FREEZER", (set)IEU_FREEZER,
-			PT_KEYWORD, "REFRIGERATOR", (set)IEU_REFRIGERATOR,
-			PT_KEYWORD, "RANGE", (set)IEU_RANGE,
-			PT_KEYWORD, "EVCHARGER", (set)IEU_EVCHARGER,
-			PT_KEYWORD, "WATERHEATER", (set)IEU_WATERHEATER,
-			PT_KEYWORD, "CLOTHESWASHER", (set)IEU_CLOTHESWASHER,
-			PT_KEYWORD, "DRYER", (set)IEU_DRYER,
-			PT_KEYWORD, "NONE", (set)0,
+			PT_KEYWORD, "LIGHTS", (gld::set)IEU_LIGHTS,
+			PT_KEYWORD, "PLUGS", (gld::set)IEU_PLUGS,
+			PT_KEYWORD, "OCCUPANCY", (gld::set)IEU_OCCUPANCY,
+			PT_KEYWORD, "DISHWASHER", (gld::set)IEU_DISHWASHER,
+			PT_KEYWORD, "MICROWAVE", (gld::set)IEU_MICROWAVE,
+			PT_KEYWORD, "FREEZER", (gld::set)IEU_FREEZER,
+			PT_KEYWORD, "REFRIGERATOR", (gld::set)IEU_REFRIGERATOR,
+			PT_KEYWORD, "RANGE", (gld::set)IEU_RANGE,
+			PT_KEYWORD, "EVCHARGER", (gld::set)IEU_EVCHARGER,
+			PT_KEYWORD, "WATERHEATER", (gld::set)IEU_WATERHEATER,
+			PT_KEYWORD, "CLOTHESWASHER", (gld::set)IEU_CLOTHESWASHER,
+			PT_KEYWORD, "DRYER", (gld::set)IEU_DRYER,
+			PT_KEYWORD, "NONE", (gld::set)0,
 			PT_DESCRIPTION, "list of implicit enduses that are active in houses",
 			nullptr);
 		gl_global_create("residential::implicit_enduse_source",PT_enumeration,&implicit_enduse_source,

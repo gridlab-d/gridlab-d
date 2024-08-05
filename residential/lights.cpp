@@ -25,8 +25,8 @@
 //////////////////////////////////////////////////////////////////////////
 // lights CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* lights::oclass = NULL;
-CLASS* lights::pclass = NULL;
+CLASS* lights::oclass = nullptr;
+CLASS* lights::pclass = nullptr;
 
 double lights::power_factor[_MAXTYPES] = {
 	1.00, // INCANDESCENT
@@ -50,13 +50,13 @@ lights::lights(MODULE *mod)
 : residential_enduse(mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		pclass = residential_enduse::oclass;
 
 		// register the class definition
 		oclass = gl_register_class(mod, "lights",sizeof(lights),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class lights";
 			/* TROUBLESHOOT
 				The file that implements the lights in the residential module cannot register the class.
@@ -82,7 +82,7 @@ lights::lights(MODULE *mod)
 			PT_double,"curtailment[pu]", PADDR(curtailment), PT_DESCRIPTION, "lighting curtailment factor",
 			PT_double,"demand[pu]", PADDR(shape.load), PT_DESCRIPTION, "the current lighting demand",
 			PT_complex,"actual_power[kVA]", PADDR(lights_actual_power), PT_DESCRIPTION, "actual power demand of lights object",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
 				The file that implements the specified class cannot publisht the variables in the class.
 				This is an internal error.  Contact support for assistance.
@@ -108,7 +108,7 @@ int lights::create(void)
 
 int lights::init(OBJECT *parent)
 {
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("lights::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -164,13 +164,13 @@ int lights::init(OBJECT *parent)
 		 */
 
 	// installed power intially re_overrides use of power density
-	double *floor_area = parent?gl_get_double_by_name(parent, "floor_area"):NULL;
-	if (shape.params.analog.power==0 && shape.schedule==NULL) 
+	double *floor_area = parent?gl_get_double_by_name(parent, "floor_area"):nullptr;
+	if (shape.params.analog.power==0 && shape.schedule==nullptr)
 	{		
 		// set basic properties
 		if (power_density==0) power_density = gl_random_triangle(RNGSTATE,0.75, 1.25);  // W/sf
 
-		if(floor_area == NULL)
+		if(floor_area == nullptr)
 		{
 			gl_error("lights parent must publish \'floor_area\' to work properly if no installed_power is given ~ default 2500 sf");
 			/* TROUBLESHOOT
@@ -184,7 +184,7 @@ int lights::init(OBJECT *parent)
 	}
 	else if (power_density==0 && shape.params.analog.power>0)
 	{
-		if (floor_area!=NULL)
+		if (floor_area!=nullptr)
 			power_density = shape.params.analog.power / *floor_area ;
 		else
 			power_density = shape.params.analog.power / 2500;
@@ -217,7 +217,7 @@ TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double val = 0.0;
 	TIMESTAMP t2 = TS_NEVER;
 
-	if (pCircuit!=NULL)
+	if (pCircuit!=nullptr)
 	{
 		//Pull voltage magnitude
 		temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
@@ -260,7 +260,7 @@ EXPORT int create_lights(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(lights::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			lights *my = OBJECTDATA(*obj,lights);
 			gl_set_parent(*obj,parent);

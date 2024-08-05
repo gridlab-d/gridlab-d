@@ -179,7 +179,7 @@ STATUS linkage_init(instance *inst, linkage *lnk)
 	}
 
 	/* find local property */
-	lnk->target.prop = object_get_property(lnk->target.obj,lnk->local.prop,NULL);
+	lnk->target.prop = object_get_property(lnk->target.obj,lnk->local.prop,nullptr);
 	if ( !lnk->target.prop )
 	{
 		output_error("unable to find linkage source property '%s' in object '%s'", lnk->local.prop, lnk->local.obj);

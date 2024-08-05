@@ -19,12 +19,12 @@
 
 #include "CLASSNAME.h"
 
-CLASS *CLASSNAME::oclass = NULL;
-CLASSNAME *CLASSNAME::defaults = NULL;
+CLASS *CLASSNAME::oclass = nullptr;
+CLASSNAME *CLASSNAME::defaults = nullptr;
 
 #ifdef OPTIONAL
 /* TODO: define this to allow the use of derived classes */
-CLASS *PARENTCLASSNAME::pclass = NULL;
+CLASS *PARENTCLASSNAME::pclass = nullptr;
 #endif
 
 /* TODO: remove passes that aren't needed */
@@ -44,15 +44,15 @@ CLASSNAME::CLASSNAME(MODULE *module)
 	/* TODO: include this if you are deriving this from a superclass */
 	pclass = SUPERCLASS::oclass;
 #endif
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"CLASSNAME",sizeof(CLASSNAME),passconfig);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		if (gl_publish_variable(oclass,
 			/* TODO: add your published properties here */
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(CLASSNAME));
 		/* TODO: set the default values of all properties here */
@@ -107,7 +107,7 @@ EXPORT int create_CLASSNAME(OBJECT **obj)
 	try
 	{
 		*obj = gl_create_object(CLASSNAME::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 			return OBJECTDATA(*obj,CLASSNAME)->create();
 	}
 	catch (char *msg)
@@ -121,7 +121,7 @@ EXPORT int init_CLASSNAME(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,CLASSNAME)->init(parent);
 	}
 	catch (char *msg)

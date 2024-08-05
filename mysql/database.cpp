@@ -24,19 +24,19 @@ EXPORT_CREATE(database);
 EXPORT_INIT(database);
 EXPORT_COMMIT(database);
 
-CLASS *database::oclass = NULL;
-database *database::defaults = NULL;
-database *database::first = NULL;
-database *database::last = NULL;
-database *database::last_used = NULL;
+CLASS *database::oclass = nullptr;
+database *database::defaults = nullptr;
+database *database::first = nullptr;
+database *database::last = nullptr;
+database *database::last_used = nullptr;
 
 database::database(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gld_class::create(module,"database",sizeof(database),PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class database";
 		else
 			oclass->trl = TRL_PROTOTYPE;
@@ -72,7 +72,7 @@ database::database(MODULE *module)
 			PT_double,"sync_interval[s]",get_sync_interval_offset(),PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"interval at which on_sync is called",
 			PT_int32,"tz_offset",get_tz_offset_offset(),PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"timezone offset used by timestamp in the database",
 			PT_bool,"uses_dst",get_uses_dst_offset(),PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"timestamps in database include summer time offsets",
-			NULL)<1){
+			nullptr)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
@@ -96,10 +96,10 @@ int database::create(void)
 	last_database = this;
 
 	// term list
-	if ( first==NULL ) first = this;
-	if ( last!=NULL ) last->next=this; 
+	if ( first==nullptr ) first = this;
+	if ( last!=nullptr ) last->next=this;
 	last=this;
-	next=NULL;
+	next=nullptr;
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -108,10 +108,10 @@ int database::init(OBJECT *parent)
 	db_initialized = true;
 	// initialize the client
 	mysql_client = mysql_init(mysql_client);
-	if ( mysql_client==NULL )
+	if ( mysql_client==nullptr )
 	{
 		errno = ENOENT;
-		return NULL;
+		return nullptr;
 	}
 
 	// set options
@@ -124,7 +124,7 @@ int database::init(OBJECT *parent)
 	gl_verbose("mysql_connect(hostname='%s',username='%s',password='%s',schema='%s',port=%u,socketname='%s',clientflags=0x%016llx[%s])",
 		(const char*)hostname,(const char*)username,(const char*)password,(const char*)schema,port,(const char*)socketname,get_clientflags(),(const char*)flags);
 
-	mysql = mysql_real_connect(mysql_client,hostname,username,password,NULL,port,socketname,(unsigned long)clientflags);
+	mysql = mysql_real_connect(mysql_client,hostname,username,password,nullptr,port,socketname,(unsigned long)clientflags);
 	if ( mysql==0 )
 		exception("mysql connect failed - %s", mysql_error(mysql_client));
 	else
@@ -280,7 +280,7 @@ const char *database::get_sqltype(gld_property &prop, bool minified){
 		case PT_complex_array:
 			return "HUGETEXT";
 		default:
-			return NULL;
+			return nullptr;
 		}
 }
 
@@ -318,7 +318,7 @@ const char *database::get_sqltype(gld_property &prop)
 	case PT_complex_array:
 		return "HUGETEXT";
 	default:
-		return NULL;
+		return nullptr;
 	}
 }
 const char *database::get_last_error(void)
@@ -353,7 +353,7 @@ char *database::get_sqldata(char *buffer, size_t size, gld_property &prop, doubl
 		{
 			double *value = (double*)prop.get_addr();
 			if ( sprintf(buffer,"%g",*value*scale)>size )
-				return NULL;
+				return nullptr;
 			return buffer;
 		}
 	}
@@ -361,7 +361,7 @@ char *database::get_sqldata(char *buffer, size_t size, gld_property &prop, doubl
 	if ( prop.to_string(tmp,sizeof(tmp))<size )
 		sprintf(buffer,"'%s'",tmp);
 	else
-		strcpy(buffer,"NULL");
+		strcpy(buffer,"nullptr");
 	return buffer;
 }
 
@@ -372,11 +372,11 @@ char *database::get_sqldata(char *buffer, size_t size, gld_property &prop, gld_u
 	case PT_random:
 	case PT_loadshape:
 	case PT_enduse:
-		if ( unit!=NULL && unit->is_valid() && prop.get_unit()!=unit )
+		if ( unit!=nullptr && unit->is_valid() && prop.get_unit()!=unit )
 		{
 			double value = prop.get_double((UNIT*)unit);
 			if ( isnan(value) )
-				sprintf(buffer,"%s","NULL");
+				sprintf(buffer,"%s","nullptr");
 			else
 				sprintf(buffer,"%g",value);
 		}
@@ -393,7 +393,7 @@ char *database::get_sqldata(char *buffer, size_t size, gld_property &prop, gld_u
 	if ( prop.to_string(tmp,sizeof(tmp))<size )
 		sprintf(buffer,"'%s'",tmp);
 	else
-		strcpy(buffer,"NULL");
+		strcpy(buffer,"nullptr");
 	return buffer;
 }
 
@@ -452,12 +452,12 @@ MYSQL_RES *database::select(char *fmt,...)
 
 	// get result
 	MYSQL_RES *res = mysql_store_result(mysql);
-	if ( res==NULL )
+	if ( res==nullptr )
 		exception("%s->select[%s] result failed - %s", get_name(), command, mysql_error(mysql));
 	int n = mysql_num_rows(res);
 	gl_verbose("%s->select[%s] %d rows returned", get_name(), command, n);
 	//if ( n==0 )
-	//	return mysql_free_result(res),NULL;
+	//	return mysql_free_result(res),nullptr;
 
 	// TODO map variables
 	va_end(ptr);
@@ -476,9 +476,9 @@ int database::run_script(char *file)
 	char buffer[65536]="";
 	int eol=0;
 	FILE *fp = fopen(file,"r");
-	if ( fp==NULL )
+	if ( fp==nullptr )
 		exception("run_script(char *file='%s'): unable to open script", file); 
-	while ( fgets(line,sizeof(line)-1,fp)!=NULL )
+	while ( fgets(line,sizeof(line)-1,fp)!=nullptr )
 	{
 		num++;
 		int len = strlen(line);
@@ -565,12 +565,12 @@ size_t database::dump(char *table, char *file, unsigned long options)
 
 	// open the file
 	FILE *fp = fopen(file,"at");
-	if ( fp==NULL ) return -1;
+	if ( fp==nullptr ) return -1;
 
 	// request data
 	check_schema();
 	MYSQL_RES *result = select("SELECT * FROM `%s`", table, file);
-	if ( result==NULL )
+	if ( result==nullptr )
 	{
 		fclose(fp);
 		gl_error("dump of '%s' to '%s' failed - %s", table, file, mysql_error(mysql));
@@ -581,7 +581,7 @@ size_t database::dump(char *table, char *file, unsigned long options)
 	MYSQL_ROW row;
 	int nfields = 0;
 	int nrows = 0;
-	while ( (row=mysql_fetch_row(result))!=NULL )
+	while ( (row=mysql_fetch_row(result))!=nullptr )
 	{
 		int n;
 
@@ -601,7 +601,7 @@ size_t database::dump(char *table, char *file, unsigned long options)
 				for ( n=0 ; n<nfields ; n++ )
 				{
 					// determine type of data
-					char *type=NULL;
+					char *type=nullptr;
 					int size=0;
 					switch ( fields[n].type ) {
 					case MYSQL_TYPE_TINY: type="SMALLINT"; break;
@@ -613,7 +613,7 @@ size_t database::dump(char *table, char *file, unsigned long options)
 					case MYSQL_TYPE_TIMESTAMP: type="TIMESTAMP"; break;
 					default: break;
 					}
-					if ( type==NULL )
+					if ( type==nullptr )
 					{
 						gl_warning("unable to determine type of field '%s' in table '%s' - using DOUBLE", table,fields[n].name);
 						type = "DOUBLE";
@@ -624,7 +624,7 @@ size_t database::dump(char *table, char *file, unsigned long options)
 						fprintf(fp,"%s\n\t`%s` %s(%u)",n==0?"":", ",fields[n].name,type,size);
 					else
 						fprintf(fp,"%s\n\t`%s` %s",n==0?"":",",fields[n].name,type);
-					if ( fields[n].flags&NOT_NULL_FLAG ) fprintf(fp," %s","NOT NULL");
+					if ( fields[n].flags&NOT_nullptr_FLAG ) fprintf(fp," %s","NOT nullptr");
 					if ( fields[n].flags&AUTO_INCREMENT_FLAG ) fprintf(fp," %s","AUTO_INCREMENT");
 					if ( fields[n].flags&PRI_KEY_FLAG ) fprintf(fp," %s","PRIMARY KEY");
 				}
@@ -682,7 +682,7 @@ size_t database::backup(char *file)
 	// get list of tables
 	check_schema();
 	MYSQL_RES *res = select("SHOW TABLES");
-	if ( res==NULL )
+	if ( res==nullptr )
 	{
 		gl_error("backup of '%s' failed - %s", file, mysql_error(mysql));
 		return -1;
@@ -695,7 +695,7 @@ size_t database::backup(char *file)
 		MYSQL_ROW row;
 		row = mysql_fetch_row(res);
 		unsigned long *len = mysql_fetch_lengths(res);
-		tables[n] = new char[len==NULL?1024:(len[0]+1)];
+		tables[n] = new char[len==nullptr?1024:(len[0]+1)];
 		strcpy(tables[n],row[0]);
 	}
 	mysql_free_result(res);

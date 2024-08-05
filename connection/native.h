@@ -29,8 +29,8 @@ extern "C" FUNCTIONRELAY *find_relay_function(const char *rname, const char *rcl
 
 class native : public gld_object {
 public:
-	GL_ATOMIC(enumeration,mode);
-	GL_ATOMIC(enumeration,transport);
+	GL_ATOMIC(enumeration, mode);
+	GL_ATOMIC(enumeration, transport);
 	GL_ATOMIC(double,timestep);
 private:
 	connection_mode *m;

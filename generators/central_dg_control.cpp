@@ -66,7 +66,7 @@ central_dg_control::central_dg_control(MODULE *module)
 			PT_double, "pf_low[unit]", PADDR(pf_low),
 			PT_double, "pf_high[unit]", PADDR(pf_high),
 
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			defaults = this;
 

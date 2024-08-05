@@ -18,19 +18,19 @@
 //////////////////////////////////////////////////////////////////////////
 // fuse CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* fuse::oclass = NULL;
-CLASS* fuse::pclass = NULL;
-fuse *fuse::defaults = NULL;
-CLASS *fuse_class = (NULL);
+CLASS* fuse::oclass = nullptr;
+CLASS* fuse::pclass = nullptr;
+fuse *fuse::defaults = nullptr;
+CLASS *fuse_class = (nullptr);
 
 fuse::fuse(MODULE *mod) : link(mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		fuse_class = oclass = gl_register_class(mod,"fuse",sizeof(fuse),PC_BOTTOMUP);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class fuse";
 		else
 			oclass->trl = TRL_STANDALONE;
@@ -48,7 +48,7 @@ fuse::fuse(MODULE *mod) : link(mod)
 				PT_KEYWORD,"FS_GOOD",FS_GOOD,
 				PT_KEYWORD,"FS_BLOWN",FS_BLOWN,
 				PT_KEYWORD,"FS_FAULT",FS_FAULT,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// setup the default values
 		defaults = this;
@@ -127,7 +127,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 EXPORT int create_fuse(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(fuse_class);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		fuse *my = OBJECTDATA(*obj,fuse);
 		gl_set_parent(*obj,parent);

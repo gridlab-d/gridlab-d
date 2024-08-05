@@ -34,7 +34,7 @@
 #include "exec.h"
 
 #ifdef _WIN32
-#define finite _finite
+#define isfinite _finite
 #include <process.h>
 #define getpid _getpid
 #else
@@ -46,7 +46,7 @@ char* strtok_t(char *str, const char *delim, char **nextp)
 {
     char *ret;
 
-    if (str == NULL)
+    if (str == nullptr)
     {
         str = *nextp;
     }
@@ -55,7 +55,7 @@ char* strtok_t(char *str, const char *delim, char **nextp)
 
     if (*str == '\0')
     {
-        return NULL;
+        return nullptr;
     }
 
     ret = str;
@@ -75,12 +75,12 @@ char* strtok_t(char *str, const char *delim, char **nextp)
 #define strtok_s strtok_t
 #endif
 
-static unsigned int *ur_state = NULL;
+static unsigned int *ur_state = nullptr;
 
 unsigned entropy_source(void)
 {
 	struct timeval t;
-	gettimeofday(&t,NULL);
+	gettimeofday(&t,nullptr);
 	return (unsigned)(getpid()*t.tv_usec);
 }
 
@@ -156,7 +156,7 @@ int randwarn(unsigned int *state)
 	if ( global_randomnumbergenerator==RNG2 )
 	{
 		/* use the stdc (RNG2) rand functions */
-		if ( state!=NULL )
+		if ( state!=nullptr )
 			srand(*state);
 		return rand();
 		/* note that RNG2 does not write back the state */
@@ -166,8 +166,8 @@ int randwarn(unsigned int *state)
 		/* Park-Miller LCG allows very large modulus - this one is use in Cray RANF */
 #define MODULUS 281474976710656ULL (2^48)
 #define MULTIPLIER 44485709377909ULL
-		if ( state==NULL ){
-			if(ur_state != NULL){
+		if ( state==nullptr ){
+			if(ur_state != nullptr){
 				state = ur_state;
 				*ur_state = (unsigned int)((MULTIPLIER*(unsigned int64)(*ur_state))&0xffffffffffffULL);
 				return ((*state)>>16)&0x7fff;
@@ -195,7 +195,7 @@ unsigned int64 random_id(void)
 {
 	static unsigned int state = 0;
 	int64 rv = 0;
-	if ( state==0 ) state = (unsigned int)time(NULL);	
+	if ( state==0 ) state = (unsigned int)time(nullptr);
 	rv = randwarn(&state);
 	rv = (rv<<15) ^ randwarn(&state);
 	rv = (rv<<15) ^ randwarn(&state);
@@ -214,7 +214,7 @@ double randunit(unsigned int *state)
 	unsigned int ur;
 	static unsigned int random_lock=0;
 
-	if ( state==NULL || state==ur_state )
+	if ( state==nullptr || state==ur_state )
 	{
 		state=ur_state;
 		wlock(&random_lock);
@@ -222,7 +222,7 @@ double randunit(unsigned int *state)
 
 TryAgain:
 	ur = randwarn(state);
-	if (state!=NULL && global_randomnumbergenerator==RNG2 )
+	if (state!=nullptr && global_randomnumbergenerator==RNG2 )
 		*state = ur;
 	u = ur/(0x7fff+1.0);
 	if ( u<=0 || u>=1 ){
@@ -318,8 +318,8 @@ double random_uniform(unsigned int *state, /**< the rng state */
 	{
 		double r, a, b;
 		do { 
-			a = 2*randunit(NULL)-1;
-			b = 2*randunit(NULL)-1;
+			a = 2*randunit(nullptr)-1;
+			b = 2*randunit(nullptr)-1;
 			r = a*a+b*b;
 		} while (r>=1);
 		return sqrt(-2*log(r)/r)*a*r*s+m;
@@ -745,10 +745,10 @@ int random_apply(char *group_expression, /**< the group definition; see find_obj
 	unsigned count=0;
 	va_list ptr;
 	va_start(ptr,type);
-	for (obj=find_first(list); obj!=NULL; find_next(list,obj))
+	for (obj=find_first(list); obj!=nullptr; find_next(list,obj))
 	{
 		/* this is quite slow and should use a class property lookup */
-		object_set_double_by_name(obj,property,_random_value(type,NULL,ptr));
+		object_set_double_by_name(obj,property,_random_value(type,nullptr,ptr));
 		count++;
 	}
 	va_end(ptr);
@@ -764,7 +764,7 @@ double random_value(RANDOMTYPE type, /**< the type of distribution desired */
 	double x;
 	va_list ptr;
 	va_start(ptr,type);
-	x = _random_value(type,NULL,ptr);
+	x = _random_value(type,nullptr,ptr);
 	va_end(ptr);
 	return x;
 }
@@ -835,7 +835,7 @@ static void sort(double sample[], unsigned int count)
 }
 static int report(const char *parameter, double actual, double expected, double error)
 {
-	if (parameter==NULL)
+	if (parameter==nullptr)
 	{
 		output_test("   Parameter       Actual    Expected    Error");
 		output_test("---------------- ---------- ---------- ----------");
@@ -870,15 +870,15 @@ int random_test(void)
 	output_test("\nBEGIN: random random distributions tests");
 
 	/* Dirac distribution test */
-	a = 10*randunit(NULL)/2-5;
+	a = 10*randunit(nullptr)/2-5;
 	output_test("\ndegenerate(x=%g)",a);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_degenerate(NULL,a);
-		if (!finite(sample[i]))
+		sample[i] = random_degenerate(nullptr,a);
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0);
+	errorcount+=report(nullptr,0,0,0);
 	errorcount+=report("Mean",samp_mean(sample,count),a,0.01);
 	errorcount+=report("Stdev",samp_stdev(sample,count),0,0.01);
 	errorcount+=report("Min",samp_min(sample,count),a,0.01);
@@ -887,16 +887,16 @@ int random_test(void)
 	preverrors=errorcount;
 
 	/* uniform distribution test */
-	a = 10*randunit(NULL)/2;
-	b = 10*randunit(NULL)/2 + 5;
+	a = 10*randunit(nullptr)/2;
+	b = 10*randunit(nullptr)/2 + 5;
 	output_test("\nuniform(min=%g, max=%g)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_uniform(NULL,a,b);
-		if (!finite(sample[i]))
+		sample[i] = random_uniform(nullptr,a,b);
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0);
+	errorcount+=report(nullptr,0,0,0);
 	errorcount+=report("Mean",samp_mean(sample,count),(a+b)/2,0.01);
 	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt((b-a)*(b-a)/12),0.01);
 	errorcount+=report("Min",samp_min(sample,count),a,0.01);
@@ -905,15 +905,15 @@ int random_test(void)
 	preverrors=errorcount;
 
 	/* Bernoulli distribution test */
-	a = randunit(NULL);
+	a = randunit(nullptr);
 	output_test("\nBernoulli(prob=%g)",a);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_bernoulli(NULL,a);
-		if (!finite(sample[i]))
+		sample[i] = random_bernoulli(nullptr,a);
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report(nullptr,0,0,0.01);
 	errorcount+=report("Mean",samp_mean(sample,count),a,0.01);
 	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt(a*(1-a)),0.01);
 	errorcount+=report("Min",samp_min(sample,count),0,0.01);
@@ -922,31 +922,31 @@ int random_test(void)
 	preverrors=errorcount;
 
 	/* normal distribution test */
-	a = 20*randunit(NULL)-5;
-	b = 5*randunit(NULL);
+	a = 20*randunit(nullptr)-5;
+	b = 5*randunit(nullptr);
 	output_test("\nnormal(mean=%g, stdev=%g)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_normal(NULL,a,b);
-		if (!finite(sample[i]))
+		sample[i] = random_normal(nullptr,a,b);
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report(nullptr,0,0,0.01);
 	errorcount+=report("Mean",samp_mean(sample,count),a,0.01);
 	errorcount+=report("Stdev",samp_stdev(sample,count),b,0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
 	/* exponential distribution test */
-	a = 1/randunit(NULL)-1;
+	a = 1/randunit(nullptr)-1;
 	output_test("\nexponential(lambda=%g)",a);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_exponential(NULL,a);
-		if (!finite(sample[i]))
+		sample[i] = random_exponential(nullptr,a);
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report(nullptr,0,0,0.01);
 	errorcount+=report("Mean",samp_mean(sample,count),1/a,0.01);
 	errorcount+=report("Stdev",samp_stdev(sample,count),1/a,0.01);
 	errorcount+=report("Min",samp_min(sample,count),0,0.01);
@@ -954,16 +954,16 @@ int random_test(void)
 	preverrors=errorcount;
 	
 	/* lognormal distribution test */
-	a = 2*randunit(NULL)-1;
-	b = 2*randunit(NULL);
+	a = 2*randunit(nullptr)-1;
+	b = 2*randunit(nullptr);
 	output_test("\nlognormal(gmean=%g, gstdev=%g)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_lognormal(NULL,a,b);
-		if (!finite(sample[i]))
+		sample[i] = random_lognormal(nullptr,a,b);
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report(nullptr,0,0,0.01);
 	errorcount+=report("Mean",samp_mean(sample,count),exp(a+b*b/2),0.01);
 	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt((exp(b*b)-1)*exp(2*a+b*b)),0.1);
 	errorcount+=report("Min",samp_min(sample,count),0,0.1);
@@ -971,16 +971,16 @@ int random_test(void)
 	preverrors=errorcount;
 
 	/* Pareto distribution test */
-	a = 10*randunit(NULL);
-	b = randunit(NULL)+2.5;
+	a = 10*randunit(nullptr);
+	b = randunit(nullptr)+2.5;
 	output_test("\nPareto(base=%g, gamma=%g)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_pareto(NULL,a,b);
-		if (!finite(sample[i]))
+		sample[i] = random_pareto(nullptr,a,b);
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report(nullptr,0,0,0.01);
 	errorcount+=report("Mean",samp_mean(sample,count),b*a/(b-1),0.01);
 	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt(a*a*b/((b-1)*(b-1)*(b-2))),0.25);
 	errorcount+=report("Min",samp_min(sample,count),a,0.01);
@@ -988,64 +988,64 @@ int random_test(void)
 	preverrors=errorcount;
 
 	/* rayleigh distribution test */
-	a = 10*randunit(NULL);
-	b = 4*randunit(NULL);
+	a = 10*randunit(nullptr);
+	b = 4*randunit(nullptr);
 	output_test("\nRayleigh(sigma=%g)",a);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_rayleigh(NULL,a);
-		if (!finite(sample[i]))
+		sample[i] = random_rayleigh(nullptr,a);
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report(nullptr,0,0,0.01);
 	errorcount+=report("Mean",samp_mean(sample,count),a*sqrt(3.1415926/2),0.01);
 	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt((4-3.1415926)/2*a*a),0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
 	/* beta distribution test */
-	a = 15*randunit(NULL);
-	b = 4*randunit(NULL);
+	a = 15*randunit(nullptr);
+	b = 4*randunit(nullptr);
 	output_test("\nBeta(a=%f,b=%f)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_beta(NULL,a,b);
-		if (!finite(sample[i]))
+		sample[i] = random_beta(nullptr,a,b);
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report(nullptr,0,0,0.01);
 	errorcount+=report("Mean",samp_mean(sample,count),a/(a+b),0.01);
 	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt(a*b/((a+b)*(a+b)*(a+b+1))),0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
 	/* gamma distribution test */
-	a = 15*randunit(NULL);
-	b = 4*randunit(NULL);
+	a = 15*randunit(nullptr);
+	b = 4*randunit(nullptr);
 	output_test("\nGamma(a=%f,b=%f)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_gamma(NULL,a,b);
-		if (!finite(sample[i]))
+		sample[i] = random_gamma(nullptr,a,b);
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report(nullptr,0,0,0.01);
 	errorcount+=report("Mean",samp_mean(sample,count),a*b,0.25);
 	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt(a*b*b),0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
 	preverrors=errorcount;
 
 	/* triangle distribution test */
-	a = -randunit(NULL)*10;
-	b = randunit(NULL)*10;
+	a = -randunit(nullptr)*10;
+	b = randunit(nullptr)*10;
 	output_test("\nTriangle(a=%f,b=%f)",a,b);
 	for (i=0; i<count; i++)
 	{
-		sample[i] = random_triangle(NULL,a,b);
-		if (!finite(sample[i]))
+		sample[i] = random_triangle(nullptr,a,b);
+		if (!isfinite(sample[i]))
 			output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report(nullptr,0,0,0.01);
 	errorcount+=report("Mean",samp_mean(sample,count),(a+b)/2,0.01);
 	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt((a-b)*(a-b)/24),0.01);
 	if (preverrors==errorcount)	ok++; else failed++;
@@ -1056,11 +1056,11 @@ int random_test(void)
 	for (i=0; i<count; i++)
 	{
 		double set[10]={0,1,2,3,4,5,6,7,8,9};
-		sample[i] = random_sampled(NULL,10,set);
-		if (!finite(sample[i]))
+		sample[i] = random_sampled(nullptr,10,set);
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
-	errorcount+=report(NULL,0,0,0.01);
+	errorcount+=report(nullptr,0,0,0.01);
 	errorcount+=report("Mean",samp_mean(sample,count),4.5,0.01);
 	//report("Stdev",samp_stdev(sample,count),sqrt(9*9/12),0.01);
 	errorcount+=report("Stdev",samp_stdev(sample,count),sqrt(99/12),0.1); /* sqrt((b-a+1)^2-1 / 12)*/ /* 2.87 is more accurate and was Mathematica's answer */
@@ -1125,7 +1125,7 @@ int random_test(void)
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // Random Variables
 
-static randomvar_struct *randomvar_list = NULL;
+static randomvar_struct *randomvar_list = nullptr;
 static unsigned int n_randomvars = 0;
 clock_t randomvar_synctime = 0;
 
@@ -1133,8 +1133,8 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 {
 	randomvar_struct *var = (randomvar_struct*)data;
 	char buffer[1024];
-	char *token = NULL;
-	char *last = NULL;
+	char *token = nullptr;
+	char *last = nullptr;
 
 	/* clean memory */
 	randomvar_struct *next = var->next;
@@ -1150,7 +1150,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 	strcpy(buffer,string);
 
 	/* parse tuples separate by semicolon*/
-	while ((token=strtok_s(token==NULL?buffer:NULL,";",&last))!=NULL)
+	while ((token=strtok_s(token==nullptr?buffer:nullptr,";",&last))!=nullptr)
 	{
 		/* colon separate tuple parts */
 		char *param = token;
@@ -1158,7 +1158,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 
 		/* isolate param and token and eliminate leading whitespaces */
 		while (*param!='\0' && (isspace(*param) || iscntrl(*param))) param++;		
-		if (value==NULL)
+		if (value==nullptr)
 			value=const_cast<char*>("1");
 		else
 			*value++ = '\0'; /* separate value from param */
@@ -1260,7 +1260,7 @@ int randomvar_create(randomvar_struct *var)
 {
 	memset(var,0,sizeof(randomvar_struct));
 	var->next = randomvar_list;
-	var->state = randwarn(NULL);
+	var->state = randwarn(nullptr);
 	randomvar_list = var;
 	n_randomvars++;
 	return 1;
@@ -1287,7 +1287,7 @@ int randomvar_init(randomvar_struct *var)
 int randomvar_initall(void)
 {
 	randomvar_struct *var;
-	for (var=randomvar_list; var!=NULL; var=var->next)
+	for (var=randomvar_list; var!=nullptr; var=var->next)
 	{
 		if (randomvar_init(var)==1)
 			return FAILED;
@@ -1332,7 +1332,7 @@ TIMESTAMP randomvar_syncall(TIMESTAMP t1)
 		randomvar_struct *var;
 		TIMESTAMP t2 = TS_NEVER;
 		clock_t ts = (clock_t)exec_clock();
-		for (var=randomvar_list; var!=NULL; var=var->next)
+		for (var=randomvar_list; var!=nullptr; var=var->next)
 		{
 			TIMESTAMP t3 = randomvar_sync(var,t1);
 			if ( absolute_timestamp(t3)<absolute_timestamp(t2) ) t2 = t3;

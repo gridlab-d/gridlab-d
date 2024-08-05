@@ -18,8 +18,8 @@ EXPORT_PLC(native);
 EXPORT_LOADMETHOD(native,link);
 EXPORT_LOADMETHOD(native,option);
 
-CLASS *native::oclass = NULL;
-native *native::defaults = NULL;
+CLASS *native::oclass = nullptr;
+native *native::defaults = nullptr;
 
 native::VARMAPINDEX native::get_varmapindex(const char *name)
 {
@@ -65,7 +65,7 @@ int native::parse_function(const char *specs)
 	{
 		// get local class structure
 		CLASS *fclass = callback->class_getname(localclass);
-		if ( fclass==NULL )
+		if ( fclass==nullptr )
 		{
 			gl_error("native::add_function(const char *spec='%s'): local class '%s' does not exist",specs,localclass);
 			return 0;
@@ -73,16 +73,16 @@ int native::parse_function(const char *specs)
 
 		// check local class function map
 		FUNCTIONADDR flocal = callback->function.get(localclass,localname);
-		if ( flocal!=NULL )
+		if ( flocal!=nullptr )
 			gl_warning("native::add_function(const char *spec='%s'): outgoing call definition of '%s' overwrites existing function definition in class '%s'",specs,localname,localclass);
 
 		// get relay function
-		flocal = add_relay_function(this,localclass,"",remoteclass,remotename,NULL, DXD_WRITE);
-		if ( flocal==NULL )
+		flocal = add_relay_function(this,localclass,"",remoteclass,remotename,nullptr, DXD_WRITE);
+		if ( flocal==nullptr )
 			return 0;
 
 		// define relay function
-		return callback->function.define(fclass,localname,flocal)!=NULL;
+		return callback->function.define(fclass,localname,flocal)!=nullptr;
 	}
 
 	// setup incoming call
@@ -103,11 +103,11 @@ int native::parse_function(const char *specs)
 
 native::native(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gld_class::create(module,"native",sizeof(native),PC_AUTOLOCK|PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_OBSERVER);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "connection/native::native(MODULE*): unable to register class connection:native";
 		else
 			oclass->trl = TRL_UNKNOWN;
@@ -128,7 +128,7 @@ native::native(MODULE *module)
 				PT_DESCRIPTION,"timestep between updates",
 				PT_UNITS, "s",
 			// TODO add published properties here
-			NULL)<1)
+			nullptr)<1)
 				throw "connection/native::native(MODULE*): unable to publish properties of connection:native";
 
 		if ( !gl_publish_loadmethod(oclass, "link", reinterpret_cast<int (*)(void *, char *)>(loadmethod_native_link)) )
@@ -230,10 +230,10 @@ int native::option(char *target, char *command)
 {
 	if ( strcmp(target,"connection")==0 )
 	{
-		if ( get_connection()==NULL )
+		if ( get_connection()==nullptr )
 		{
 			new_connection(command);
-			if ( m==NULL )
+			if ( m==nullptr )
 			{
 				gl_error("connection/native::option(char *target='%s', char *command='%s'): connection with options '%s' failed", target, command, command);
 				return 0;
@@ -245,7 +245,7 @@ int native::option(char *target, char *command)
 			gl_error("connection/native::option(char *target='%s', char *command='%s'): connection mode already set", target, command);
 		return 0;
 	}
-	else if ( get_connection()==NULL )
+	else if ( get_connection()==nullptr )
 	{
 		gl_error("option(char *target='%s', char *command='%s'): connection mode hasn't be established", target, command);
 		return 0;
@@ -371,7 +371,7 @@ void native::term(TIMESTAMP t, TRANSLATOR *xlate)
 // FUNCTION RELAY
 ///////////////////////////////////////////////////////////////////////////////////////
 
-static FUNCTIONRELAY *first_relayfunction = NULL;
+static FUNCTIONRELAY *first_relayfunction = nullptr;
 
 static char hex(char c)
 {
@@ -435,7 +435,7 @@ extern "C" void outgoing_route_function(char *from, char *to, char *funcName, ch
 	char *lclass = from;
 	size_t hexlen = 0;
 	FUNCTIONRELAY *relay = find_relay_function(funcName,rclass);
-	if(relay == NULL){
+	if(relay == nullptr){
 		throw("native::outgoing_route_function: the relay function for function name %s could not be found.", funcName);
 	}
 	char message[3000] = "";
@@ -446,7 +446,7 @@ extern "C" void outgoing_route_function(char *from, char *to, char *funcName, ch
 	size_t msglen = 0;
 
 	// check from and to names
-	if ( to==NULL || from==NULL )
+	if ( to==nullptr || from==nullptr )
 	{
 		throw("from objects and to objects must be named.");
 	}
@@ -473,7 +473,7 @@ extern "C" FUNCTIONADDR add_relay_function(native *route, const char *fclass,con
 {
 	// check for existing of relay (note only one relay is allowed per class pair)
 	FUNCTIONRELAY *relay = find_relay_function(rname, rclass);
-	if ( relay!=NULL )
+	if ( relay!=nullptr )
 	{
 		gl_error("connection_transport::create_relay_function(rclass='%s', rname='%s') a relay function is already defined for '%s/%s'", rclass,rname,rclass,rname);
 		return 0;
@@ -481,7 +481,7 @@ extern "C" FUNCTIONADDR add_relay_function(native *route, const char *fclass,con
 
 	// allocate space for relay info
 	relay = (FUNCTIONRELAY*)malloc(sizeof(FUNCTIONRELAY));
-	if ( relay==NULL )
+	if ( relay==nullptr )
 	{
 		gl_error("connection_transport::create_relay_function(rclass='%s', rname='%s') memory allocation failed", rclass,rname);
 		return 0;
@@ -508,11 +508,11 @@ extern "C" FUNCTIONRELAY *find_relay_function(const char*rname, const char *rcla
 {
 	// TODO: this is *very* inefficient -- a hash should be used instead
 	FUNCTIONRELAY *relay;
-	for ( relay=first_relayfunction ; relay!=NULL ; relay=relay->next )
+	for ( relay=first_relayfunction ; relay!=nullptr ; relay=relay->next )
 	{
 		if ( strcmp(relay->remoteclass,rclass)==0 && strcmp(relay->remotename, rname)==0 )
 			return relay;
 	}
-	return NULL;
+	return nullptr;
 }
 

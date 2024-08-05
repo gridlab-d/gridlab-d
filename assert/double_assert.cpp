@@ -18,16 +18,16 @@ EXPORT_INIT(double_assert);
 EXPORT_COMMIT(double_assert);
 EXPORT_NOTIFY(double_assert);
 
-CLASS *double_assert::oclass = NULL;
-double_assert *double_assert::defaults = NULL;
+CLASS *double_assert::oclass = nullptr;
+double_assert *double_assert::defaults = nullptr;
 
 double_assert::double_assert(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gl_register_class(module,"double_assert",sizeof(double_assert),PC_AUTOLOCK|PC_OBSERVER);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class double_assert";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -48,7 +48,7 @@ double_assert::double_assert(MODULE *module)
 			PT_double, "value", get_value_offset(),PT_DESCRIPTION,"Value to assert",
 			PT_double, "within", get_within_offset(),PT_DESCRIPTION,"Tolerance for a successful assert",
 			PT_char1024, "target", get_target_offset(),PT_DESCRIPTION,"Property to perform the assert upon",
-			NULL)<1){
+			nullptr)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
@@ -228,7 +228,7 @@ EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned i
 			//Get value
 			x = (double*)gl_get_double_by_name(obj->parent,da->get_target());
 
-			if (x==NULL) 
+			if (x==nullptr)
 			{
 				gl_error("Specified target %s for %s is not valid.",da->get_target(),gl_name(obj->parent,buff,64));
 				/*  TROUBLESHOOT

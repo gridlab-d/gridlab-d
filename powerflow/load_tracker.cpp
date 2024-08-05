@@ -30,7 +30,7 @@ load_tracker::load_tracker(MODULE *mod)
 			PT_double, "damping",PADDR(damping),PT_DESCRIPTION,"load setpoint to track to",
 			PT_double, "output", PADDR(output),PT_DESCRIPTION,"output scaling value",
 			PT_double, "feedback", PADDR(feedback),PT_DESCRIPTION,"the feedback signal, for reference purposes",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
 

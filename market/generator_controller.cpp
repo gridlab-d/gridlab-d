@@ -11,13 +11,13 @@
 //////////////////////////////////////////////////////////////////////////
 // generator_controller CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* generator_controller::oclass = NULL;
+CLASS* generator_controller::oclass = nullptr;
 
 generator_controller::generator_controller(MODULE *module){
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"generator_controller",sizeof(generator_controller),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		if (gl_publish_variable(oclass,
@@ -59,7 +59,7 @@ generator_controller::generator_controller(MODULE *module){
 			PT_double, "hours_in_year[h]", PADDR(hours_in_year), PT_DESCRIPTION, "Number of hours assumed for the total year",
 			PT_double, "op_and_maint_cost[$]", PADDR(op_and_maint_cost), PT_DESCRIPTION, "Operation and maintenance cost per runtime year",
 			PT_int64, "bid_id", PADDR(bid_id),
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
 
@@ -70,16 +70,16 @@ int generator_controller::isa(char *classname)
 
 int generator_controller::create(void)
 {
-	market_object = NULL;
+	market_object = nullptr;
 	market_period = 0;
 	market_latency = 0;
 
 	gen_rating = 0.0;
 	bid_gen_rating = 0.0;
 
-	bid_curve_values = NULL;
+	bid_curve_values = nullptr;
 	bid_curve_current.bid_curve_parsed = 0;
-	bid_curve_current.Curve_Info = NULL;
+	bid_curve_current.Curve_Info = nullptr;
 	bid_curve_current.number_bid_curve_sections = -1;
 	bid_curve_current.valid_bid_period = false;
 	bid_curve_current.expected_state = GEN_ACTIVE;
@@ -97,14 +97,14 @@ int generator_controller::create(void)
 	runtime_hours_left = true;	//Generator is assumed to have life left by default
 
 	last_market_id = 0;
-	curr_market_id = NULL;
+	curr_market_id = nullptr;
 	bid_market_id = 0;
 
-	power_link = NULL;
+	power_link = nullptr;
 	phase_information = 0x00;
 	num_phases = 0;
 
-	next_clear = NULL;
+	next_clear = nullptr;
 	next_bid = TS_NEVER;
 
 	current_power_output = 0.0;
@@ -165,13 +165,13 @@ int generator_controller::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	PROPERTY *ptemp;
-	set *temp_set;
+	gld::set *temp_set;
 	int index;
 	double glob_min_timestep, temp_val;
 	char temp_buff[128];
 
 	//Make sure we have a proper parent
-	if (parent == NULL)	//No parent >:|
+	if (parent == nullptr)	//No parent >:|
 	{
 		GL_THROW("generator_controller:%s has no parent!",obj->name);
 		/*  TROUBLESHOOT
@@ -185,7 +185,7 @@ int generator_controller::init(OBJECT *parent)
 		ptemp = gl_get_property(parent,"constant_power_A");
 
 		//Check
-		if ((ptemp == NULL) || (ptemp->ptype!=PT_complex))
+		if ((ptemp == nullptr) || (ptemp->ptype!=PT_complex))
 		{
 			GL_THROW("generator_controller:%s failed to map the power property of the parent device",obj->name);
 			/*  TROUBLESHOOT
@@ -197,7 +197,7 @@ int generator_controller::init(OBJECT *parent)
 		power_link = (gld::complex *)GETADDR(parent,ptemp);
 
 		//Check this as well
-		if (power_link == NULL)
+		if (power_link == nullptr)
 		{
 			GL_THROW("generator_controller:%s failed to map the power property of the parent device",obj->name);
 			//Defined above
@@ -207,17 +207,17 @@ int generator_controller::init(OBJECT *parent)
 		ptemp = gl_get_property(parent,"phases");
 
 		//Check
-		if ((ptemp == NULL) || (ptemp->ptype!=PT_set))
+		if ((ptemp == nullptr) || (ptemp->ptype!=PT_set))
 		{
 			GL_THROW("generator_controller:%s failed to map the power property of the parent device",obj->name);
 			//Defined above - technically different, but it is part of the same idea, so meh
 		}
 
 		//Get the address
-		temp_set = (set *)GETADDR(parent,ptemp);
+		temp_set = (gld::set *)GETADDR(parent, ptemp);
 
 		//Check this as well
-		if (temp_set == NULL)
+		if (temp_set == nullptr)
 		{
 			GL_THROW("generator_controller:%s failed to map the power property of the parent device",obj->name);
 			//Defined above - again not really, but meh
@@ -252,7 +252,7 @@ int generator_controller::init(OBJECT *parent)
 		ptemp = gl_get_property(parent,"power_1");
 
 		//Check
-		if ((ptemp == NULL) || (ptemp->ptype!=PT_complex))
+		if ((ptemp == nullptr) || (ptemp->ptype!=PT_complex))
 		{
 			GL_THROW("generator_controller:%s failed to map the power property of the parent device",obj->name);
 			/*  TROUBLESHOOT
@@ -264,7 +264,7 @@ int generator_controller::init(OBJECT *parent)
 		power_link = (gld::complex *)GETADDR(parent,ptemp);
 
 		//Check this as well
-		if (power_link == NULL)
+		if (power_link == nullptr)
 		{
 			GL_THROW("generator_controller:%s failed to map the power property of the parent device",obj->name);
 			//Defined above
@@ -285,7 +285,7 @@ int generator_controller::init(OBJECT *parent)
 	}
 
 	//Make sure the market object has been found
-	if (market_object == NULL)
+	if (market_object == nullptr)
 	{
 		GL_THROW("Market object not found for generator_controller:%s",obj->name);
 		/*  TROUBLESHOOT
@@ -316,7 +316,7 @@ int generator_controller::init(OBJECT *parent)
 		controller_bid.bid_id = bid_id;
 	}
 	submit = (FUNCTIONADDR)(gl_get_function(market_object, "submit_bid_state"));
-	if(submit == NULL){
+	if(submit == nullptr){
 		char buf[256];
 		gl_error("Unable to find function, submit_bid_state(), for object %s.", (char *)gl_name(market_object, buf, 255));
 		return 0;
@@ -356,7 +356,7 @@ int generator_controller::init(OBJECT *parent)
 	bid_curve_values = (CURVEENTRY*)gl_malloc(number_latency_sections * sizeof(CURVEENTRY));
 
 	//Make sure it worked
-	if (bid_curve_values == NULL)
+	if (bid_curve_values == nullptr)
 	{
 		GL_THROW("Failed to allocate bid_curve memory in %s",obj->name);
 		/*  TROUBLESHOOT
@@ -370,7 +370,7 @@ int generator_controller::init(OBJECT *parent)
 	for (index=0; index<number_latency_sections; index++)
 	{
 		bid_curve_values[index].bid_curve_parsed = -1;
-		bid_curve_values[index].Curve_Info = NULL;
+		bid_curve_values[index].Curve_Info = nullptr;
 		bid_curve_values[index].number_bid_curve_sections = 0;
 		bid_curve_values[index].valid_bid_period = false;
 		bid_curve_values[index].expected_state = (GENERATOR_STATE)gen_state;		//Initial bidding needs to know how we are running - assume it populates all the way back
@@ -386,7 +386,7 @@ int generator_controller::init(OBJECT *parent)
 	bid_curve_values[latency_write_section].Curve_Info = (CURVEDETAILS*)gl_malloc(sizeof(CURVEDETAILS));
 
 	//Make sure it worked
-	if (bid_curve_values[latency_write_section].Curve_Info == NULL)
+	if (bid_curve_values[latency_write_section].Curve_Info == nullptr)
 	{
 		GL_THROW("generator_controller:%s failed to allocate the initial bid curve memory",obj->name);
 		/*  TROUBLESHOOT
@@ -1428,7 +1428,7 @@ void generator_controller::parse_bid_curve(OBJECT *thisobj, TIMESTAMP t0)
 		FHandle = fopen(bidding_curve_file,"rt");
 
 		//See if it worked
-		if (FHandle==NULL)
+		if (FHandle==nullptr)
 		{
 			GL_THROW("generator_controller:%s has an invalid bid_curve_file specified!",thisobj->name);
 			/*  TROUBLESHOOT
@@ -1531,26 +1531,26 @@ void generator_controller::parse_bid_curve(OBJECT *thisobj, TIMESTAMP t0)
 	number_bid_curve_sections = num_entries + 2;	//1 is just base (1 space becomes 0, which is 1 set) and 1 is the addition mentioned
 
 	//See if a realloc is needed
-	if ((bid_curve_current.Curve_Info != NULL) && (bid_curve_current.number_bid_curve_sections != number_bid_curve_sections))
+	if ((bid_curve_current.Curve_Info != nullptr) && (bid_curve_current.number_bid_curve_sections != number_bid_curve_sections))
 	{
 		//Free the current one
 		gl_free(bid_curve_current.Curve_Info);
 
 		//Ensure it was nulled
-		bid_curve_current.Curve_Info = NULL;
+		bid_curve_current.Curve_Info = nullptr;
 
 		//Reset the variable
 		bid_curve_current.number_bid_curve_sections = -1;
 	}
 
 	//See if one needs to be allocated or not?
-	if (bid_curve_current.Curve_Info == NULL)
+	if (bid_curve_current.Curve_Info == nullptr)
 	{
 		//Malloc the new one
 		bid_curve_current.Curve_Info = (CURVEDETAILS*)(gl_malloc(number_bid_curve_sections*sizeof(CURVEDETAILS)));
 
 		//Make sure it worked
-		if (bid_curve_current.Curve_Info == NULL)
+		if (bid_curve_current.Curve_Info == nullptr)
 		{
 			GL_THROW("generator_controller:%s failed to map memory for the bid curve parsing.",thisobj->name);
 			/*  TROUBLESHOOT
@@ -1868,7 +1868,7 @@ void generator_controller::copy_bid_curve(OBJECT *thisobj)
 	if (bid_curve_values[latency_write_section].number_bid_curve_sections != bid_curve_current.number_bid_curve_sections)
 	{
 		//Free it, if necessary
-		if (bid_curve_values[latency_write_section].Curve_Info != NULL)
+		if (bid_curve_values[latency_write_section].Curve_Info != nullptr)
 		{
 			gl_free(bid_curve_values[latency_write_section].Curve_Info);
 		}
@@ -1878,7 +1878,7 @@ void generator_controller::copy_bid_curve(OBJECT *thisobj)
 		bid_curve_values[latency_write_section].Curve_Info = (CURVEDETAILS*)(gl_malloc(bid_curve_current.number_bid_curve_sections*sizeof(CURVEDETAILS)));
 
 		//Make sure it worked
-		if (bid_curve_values[latency_write_section].Curve_Info == NULL)
+		if (bid_curve_values[latency_write_section].Curve_Info == nullptr)
 		{
 			GL_THROW("generator_controller:%s failed to map memory for the bid curve parsing.",thisobj->name);
 			//Defined above
@@ -1920,7 +1920,7 @@ EXPORT int create_generator_controller(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(generator_controller::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			generator_controller *my = OBJECTDATA(*obj,generator_controller);
 			gl_set_parent(*obj,parent);
