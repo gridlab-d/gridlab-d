@@ -2312,8 +2312,15 @@ void house_e::update_system(double dt)
 		}
 	}
 	if(heating_cop_curve == HC_CURVED){
-		gl_error("CURVED heating_cop_curve is not supported yet.");
-		error_flag = 1;
+//		gl_error("CURVED heating_cop_curve is not supported yet.");
+//		error_flag = 1;
+        heating_COP = 4.1;
+		if(value_Tout > 80){
+			temp_temperature = 80;
+			heating_cop_adj = heating_COP / (2.1106 -0.0397*temp_temperature + 0.0003*temp_temperature*temp_temperature);
+		} else {
+			heating_cop_adj = heating_COP / (2.1106 -0.0397*value_Tout + 0.0003*value_Tout*value_Tout);
+		}
 	}
 
 	if(cooling_cop_curve == CC_DEFAULT){
@@ -2353,8 +2360,9 @@ void house_e::update_system(double dt)
 		error_flag = 1;
 	}
 	if(heating_cap_curve == HP_CURVED){
-		gl_error("CURVED heating _cap_curve is not supported at this time");
-		error_flag = 1;
+//		gl_error("CURVED heating _cap_curve is not supported at this time");
+//		error_flag = 1;
+		heating_capacity_adj = design_heating_capacity*(0.6946 + 0.0101*value_Tout -0.00005*value_Tout*value_Tout);
 	}
 
 	if(cooling_cap_curve == CP_DEFAULT){
