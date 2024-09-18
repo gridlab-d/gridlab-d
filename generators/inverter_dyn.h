@@ -19,36 +19,36 @@ EXPORT STATUS inverter_dyn_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj);
 #define phaseB_I_Out terminal_current_val[1]
 #define phaseC_I_Out terminal_current_val[2]
 
-// State variables of grid-forming & grid-following controller
-typedef struct
-{
-
-	///////Grid-Forming
-
-	// state variables of the dc bus voltage when using grid-forming PV
-	double dVdc_pu;
-	double Vdc_pu;
-
-	// state variables of Vdc_min controller when using PV grid-forming control
-	double ddelta_w_Vdc_min_ini;
-	double delta_w_Vdc_min_ini;
-
-	////////Grid-Following
-
-	//  state variables in volt-var
-
-} INV_DYN_STATE;
-
-typedef struct
-{
-	FUNCTIONADDR fxn_address;
-	OBJECT *dc_object;
-} DC_OBJ_FXNS;
-
 //inverter_dyn class
 class inverter_dyn : public gld_object
 {
 private:
+	// State variables of grid-forming & grid-following controller
+	typedef struct
+	{
+
+		///////Grid-Forming
+
+		// state variables of the dc bus voltage when using grid-forming PV
+		double dVdc_pu;
+		double Vdc_pu;
+
+		// state variables of Vdc_min controller when using PV grid-forming control
+		double ddelta_w_Vdc_min_ini;
+		double delta_w_Vdc_min_ini;
+
+		////////Grid-Following
+
+		//  state variables in volt-var
+
+	} INV_DYN_STATE;
+
+	typedef struct
+	{
+		FUNCTIONADDR fxn_address;
+		OBJECT *dc_object;
+	} DC_OBJ_FXNS;
+
 	bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
 	bool first_sync_delta_enabled;
 	char first_iter_counter;

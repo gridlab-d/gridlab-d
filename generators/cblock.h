@@ -662,6 +662,18 @@ class Integrator: public Cblock
        T         Integrator time constant
   **/
   void setparams(double T);
+
+    /**
+     SETPARAMS - Set the Integrator time constant
+
+     INPUTS:
+       T          Integrator time constant
+       xmin       Min. limit for state variable
+       xmax       Max. limit for state variable
+       ymin       Min. limit for output y
+       ymax       Max. limit for output y
+  **/
+  void setparams(double T,double xmin,double xmax,double ymin,double ymax);
 };
 
 
