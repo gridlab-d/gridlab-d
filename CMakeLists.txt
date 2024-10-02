@@ -292,6 +292,8 @@ if (GLD_USE_SUPERLU)
     if (WIN32 OR MSYS OR MINGW OR CYGWIN)
         # The CBLAS version provided by SuperLU does not build in MSYS2.
         option(enable_internal_blaslib "Build the CBLAS library" OFF)
+    else ()
+        option(enable_internal_blaslib "Build the CBLAS library" ON)
     endif ()
 
     # SuperLU's generic names here can cause issues, make sure other projects do not cross these names
