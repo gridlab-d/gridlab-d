@@ -1,24 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
-OPTION(GLD_WARNING_WORK "Make warnings more pedantic" OFF)
-if (GLD_WARNING_WORK)
-    if (MSVC)
-        SET(GLD_COMPILE_OPTIONS
-                "/W4"
-                "/WX"
-                CACHE INTERNAL
-                "GLD_COMPILE_OPTIONS"
-        )
-    else ()
-        SET(GLD_COMPILE_OPTIONS
-                "-Wall"
-                "-Wextra"
-                "-pedantic"
-                CACHE INTERNAL
-                "GLD_COMPILE_OPTIONS"
-        )
-    endif ()
+include(cmake/Warnings.cmake)
+OPTION(GLD_EXTRA_WARNINGS "Make warnings more pedantic" OFF)
+if (GLD_EXTRA_WARNINGS)
+    set(GLD_COMPILE_OPTIONS ${WARNING_FLAGS} CACHE INTERNAL "GLD_COMPILE_OPTIONS")
 else ()
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         # TODO: resolve these warnings and un-supress them
@@ -287,7 +273,6 @@ set(GLD_SHARE
         ${CMAKE_SOURCE_DIR}/models/waterheater_example.glm
         ${CMAKE_SOURCE_DIR}/models/weather.csv
         ${CMAKE_SOURCE_DIR}/models/wind_turbine_example.glm
-        #        ${CMAKE_SOURCE_DIR}/gldcore/gridlabd.htm
         ${CMAKE_SOURCE_DIR}/gldcore/gridlabd.htm
 )
 
