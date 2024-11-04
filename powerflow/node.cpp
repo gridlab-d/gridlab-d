@@ -3708,6 +3708,9 @@ int node::NR_populate(void)
 		*/
 	}
 
+	//Populate no intentional failures by default
+	NR_busdata[NR_node_reference].swing_disabled_by_fail = false;
+
 	//Populate the swing flag - it will get "deflagged" elsewhere
 	if ((bustype == SWING) || (bustype == SWING_PQ))
 	{
@@ -5490,6 +5493,9 @@ STATUS node::reset_node_island_condition(void)
 		{
 			//Reset our phases (assume full-on reset)
 			NR_busdata[NR_node_reference].phases = NR_busdata[NR_node_reference].origphases;
+
+			//Clear our fault condition, just in case
+			NR_busdata[NR_node_reference].swing_disabled_by_fail = false;
 		}
 	}
 	else	//We're a child, see if our parent is appropriately disabled
@@ -5506,6 +5512,9 @@ STATUS node::reset_node_island_condition(void)
 		{
 			//Reset our parent's phases
 			NR_busdata[*NR_subnode_reference].phases = NR_busdata[*NR_subnode_reference].origphases;
+
+			//Clear our fault condition, just in case
+			NR_busdata[*NR_subnode_reference].swing_disabled_by_fail = false;
 		}
 	}
 

@@ -2199,7 +2199,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		powerflow_values->island_matrix_values[island_loop_index].size_Amatrix = powerflow_values->island_matrix_values[island_loop_index].size_offdiag_PQ*2 + powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed*2 + 4*powerflow_values->island_matrix_values[island_loop_index].size_diag_update;
 
 		//Test to make sure it isn't an empty matrix - reliability induced 3-phase fault
-		if (powerflow_values->island_matrix_values[island_loop_index].size_Amatrix==0)
+		if (powerflow_values->island_matrix_values[island_loop_index].bus_count==1)
 		{
 			//Figure out which message to send
 			if (NR_islands_detected > 1)

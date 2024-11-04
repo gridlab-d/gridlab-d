@@ -2021,6 +2021,9 @@ void fault_check::associate_grids(void)
 				//See if we have phases
 				if ((NR_busdata[indexval].phases & 0x07) != 0x00)
 				{
+					//Flag ourselves as this island
+					NR_busdata[indexval].island_number = grid_counter;
+
 					//Call the associater routine
 					search_associated_grids(indexval,grid_counter);
 
@@ -2053,13 +2056,40 @@ void fault_check::associate_grids(void)
 					//Flag us as the topological entry point
 					NR_busdata[indexval].swing_topology_entry = true;
 
+					//Flag ourselves as this grid
+					NR_busdata[indexval].island_number = grid_counter;
+
 					//Call the associater routine
 					search_associated_grids(indexval,grid_counter);
 
 					//Increment the counter, when we're done
 					grid_counter++;
 				}
-				//Default else -- no phases, so pretend it still doesn't exist
+				else	//Zero phases somehow
+				{
+					//See if we've been intentionally disabled
+					if (!NR_busdata[indexval].swing_disabled_by_fail)
+					{
+						//We're dissociated, but not intentionally - reboost us
+						NR_busdata[indexval].phases = NR_busdata[indexval].origphases;
+
+						//Flag valid_phases, so it doesn't get angry
+						valid_phases[indexval] = NR_busdata[indexval].origphases & 0x07;
+
+						//Flag us as a swing - to be safe
+						NR_busdata[indexval].swing_functions_enabled = true;
+
+						//Flag us as the topological entry point
+						NR_busdata[indexval].swing_topology_entry = true;
+
+						//Call the associater routine
+						search_associated_grids(indexval,grid_counter);
+
+						//Increment the counter, when we're done
+						grid_counter++;
+					}
+					//Default else - no phases and intentionally flagged - pretend doesn't exit
+				}
 			}
 			else	//Deflag us as a swing
 			{
@@ -2085,6 +2115,9 @@ void fault_check::associate_grids(void)
 				//See if we have phases
 				if ((NR_busdata[indexval].phases & 0x07) != 0x00)
 				{
+					//Flag ourselves as part of this island
+					NR_busdata[indexval].island_number = grid_counter;
+					
 					//Call the associater routine
 					search_associated_grids(indexval,grid_counter);
 
@@ -2255,6 +2288,13 @@ STATUS fault_check::disable_island(int island_number)
 
 			//Empty the valid phases property
 			valid_phases[index_value] = 0x00;
+
+			//See if we're a SWING or SWING_PQ masquerading as a SWING
+			if ((NR_busdata[index_value].type == 2) || ((NR_busdata[index_value].type == 3) && NR_busdata[index_value].swing_functions_enabled))
+			{
+				//Flag as a powerflow-induced fail - will make it so fault_check doesn't try to revive it
+				NR_busdata[index_value].swing_disabled_by_fail = true;
+			}
 		}
 		//Default else -- next bus
 	}
