@@ -417,7 +417,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 
 	/* check for foreign modules */
 	strcpy(buffer,file);
-	fmod = strtok(buffer,"::");
+	fmod = strstr(buffer,"::");
 	if (fmod!=nullptr && strcmp(fmod, file) != 0)
 	{
 		char *modname = strtok(nullptr,"::");

@@ -879,7 +879,13 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 		/* load runtime module */
 		output_verbose("loading dynamic link library %s...", afile);
+
+#ifdef _WIN32
+		sprintf(tbuf,"%s\\%s",getcwd(nullptr,0),oclass->name);
+		mod = module_load(tbuf,0,nullptr);
+#else
 		mod = module_load(oclass->name,0,nullptr);
+#endif
 		if (mod==nullptr)
 		{
 			output_error("unable to load inline code");
