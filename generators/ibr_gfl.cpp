@@ -77,7 +77,7 @@ ibr_gfl::ibr_gfl(MODULE *module)
 			//LIMITS
 			PT_double, "Smax", PADDR(Smax), PT_DESCRIPTION, "Smax",
 			PT_double, "I_base", PADDR(I_base), PT_DESCRIPTION, "I_base",
-			PT_double, "igq_ref_A", PADDR(igq_ref[0]), PT_DESCRIPTION, "phase A q axis current reference",
+			//PT_double, "igq_ref_A", PADDR(igq_ref[0]), PT_DESCRIPTION, "phase A q axis current reference",
 			PT_double, "ug_pu_PS1", PADDR(ug_pu_PS1), PT_DESCRIPTION, "DELTAMODE: ug magnitude.",
 			PT_double, "Pref_max[pu]", PADDR(Pref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
 			PT_double, "Pref_min[pu]", PADDR(Pref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
