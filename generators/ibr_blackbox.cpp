@@ -47,6 +47,14 @@ ibr_blackbox::ibr_blackbox(MODULE *module)
 			PT_double, "Ib_ang", PADDR(curr_pu_debug[1].Im()), PT_ACCESS, PA_HIDDEN,
 			PT_double, "Ic_ang", PADDR(curr_pu_debug[2].Im()), PT_ACCESS, PA_HIDDEN,
 
+			// ADDED P AND Q CALCULATION CODE
+			PT_double, "P_A", PADDR(Pcal_A), PT_ACCESS, PA_REFERENCE,
+			PT_double, "P_B", PADDR(Pcal_B), PT_ACCESS, PA_REFERENCE,
+			PT_double, "P_C", PADDR(Pcal_C), PT_ACCESS, PA_REFERENCE,
+			PT_double, "Q_A", PADDR(Qcal_A), PT_ACCESS, PA_REFERENCE,
+			PT_double, "Q_B", PADDR(Qcal_B), PT_ACCESS, PA_REFERENCE,
+			PT_double, "Q_C", PADDR(Qcal_C), PT_ACCESS, PA_REFERENCE,
+
 			PT_complex, "phaseA_I_Out_PU[pu]", PADDR(terminal_current_val_pu[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system, pu",
 			PT_complex, "phaseB_I_Out_PU[pu]", PADDR(terminal_current_val_pu[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system, pu",
 			PT_complex, "phaseC_I_Out_PU[pu]", PADDR(terminal_current_val_pu[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system, pu",
@@ -60,8 +68,8 @@ ibr_blackbox::ibr_blackbox(MODULE *module)
 			PT_complex, "power_C[VA]", PADDR(power_val[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
 			PT_complex, "VA_Out[VA]", PADDR(VA_Out), PT_DESCRIPTION, "AC power",
 
-			PT_double, "dc_input_voltage[V]", PADDR(dc_input_voltage),
-			PT_double, "dc_output_current[A]", PADDR(dc_output_current),
+//			PT_double, "dc_input_voltage[V]", PADDR(dc_input_voltage),
+//			PT_double, "dc_output_current[A]", PADDR(dc_output_current),
 
 			//Input
 			PT_double, "rated_power[VA]", PADDR(S_base), PT_DESCRIPTION, " The rated power of the inverter",
@@ -142,9 +150,9 @@ int ibr_blackbox::create(void)
 
 	node_nominal_voltage = 120.0;		//Just pick a value
 
-	//Initial values
-	dc_input_voltage = 0.508587;
-	dc_output_current = 0.0;
+	// //Initial values
+	// dc_input_voltage = 0.508587;
+	// dc_output_current = 0.0;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -169,6 +177,15 @@ int ibr_blackbox::init(OBJECT *parent)
 	gld_object *tmp_gld_obj = nullptr;
 	STATUS return_value_init, fxn_return_status;
 
+	//Check for Frugally Deep, since without it, this object will be basically useless
+#ifndef HAVE_FRUGALLY
+	gl_error("ibr_blackbox::init(): ibr_blackbox requires the Frugally Deep Library to be compiled into GridLAB-D!");
+	/* TROUBLESHOOT
+	The functionality of the ibr_blackbox model requires the Frugally Deep library and all of its dependencies.
+	This should be as easy as adding -DGLD_USE_FRUGALLY=ON to the cmake command.
+	*/
+	return 0;
+#endif
 
 	//Deferred initialization code
 	if (parent != nullptr)
@@ -519,6 +536,8 @@ int ibr_blackbox::init(OBJECT *parent)
 
     //Frugrally deep manual allocation (since it lacks a constructor)
 	std::string fdeep_name(fdeep_model_name);
+
+#ifdef HAVE_FRUGALLY
     auto model_construct = std::make_unique<fdeep::model>(fdeep::load_model(fdeep_name));
 		
 	bb_model.swap(model_construct);
@@ -530,12 +549,13 @@ int ibr_blackbox::init(OBJECT *parent)
 	bb_model_time_buffer = input_shape_data[0].height();
 
 	//Initialize the data array
-	std::vector<double> empty_row = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+	std::vector<double> empty_row = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 	
 	for (int x_val=0; x_val<bb_model_time_buffer; x_val++)
 	{
 		simulation_data.push_back(empty_row);
 	}
+#endif
 
 	///////////////////////////////////////////////////////////////////////////
 	// DELTA MODE
@@ -769,26 +789,27 @@ TIMESTAMP ibr_blackbox::sync(TIMESTAMP t0, TIMESTAMP t1)
 		Vc_pha /=(2.0*PI);
 
 		//Update the temporary vector
-		std::vector temp_data = {dc_input_voltage, Va_mag, Vb_mag, Vc_mag, Va_pha, Vb_pha, Vc_pha};
+		std::vector temp_data = {Va_mag, Vb_mag, Vc_mag, Va_pha, Vb_pha, Vc_pha};
 
 		//Storage vector
 		volt_pu_debug[0] = gld::complex(Va_mag,Va_pha);
 		volt_pu_debug[1] = gld::complex(Vb_mag,Vb_pha);
 		volt_pu_debug[2] = gld::complex(Vc_mag,Vc_pha);
 
+
 		//Roll the vector first
-		// std::rotate(simulation_data.begin(), simulation_data.end()-1, simulation_data.end());
 		std::rotate(simulation_data.begin(), simulation_data.begin()+1, simulation_data.end());
 		simulation_data.pop_back();
 		simulation_data.push_back(temp_data);
 
+#ifdef HAVE_FRUGALLY
 		//Convert it to the tensor format
-		fdeep::tensor input_tensor(fdeep::tensor_shape(5, 7, 1), 0.0f);
+		fdeep::tensor input_tensor(fdeep::tensor_shape(5, 6, 1), 0.0f);
 
 		//Manual loop
 		// Populate the tensor with values from the current time step
 		for (int i = 0; i < bb_model_time_buffer; ++i) {
-			for (int j = 0; j < 7; ++j) {
+			for (int j = 0; j < 6; ++j) {
 				input_tensor.set(fdeep::tensor_pos(i, j, 0), simulation_data[i][j]);
 			}
 		}
@@ -804,16 +825,30 @@ TIMESTAMP ibr_blackbox::sync(TIMESTAMP t0, TIMESTAMP t1)
 		std::vector<float> vec = one_tensor.to_vector();
 
 		//Put this into current - and unnormalize
-		dc_output_current = vec[0];
+		// dc_output_current = vec[0];
 		//Not correct - just using complex value to extract
-		curr_pu_debug[0] = gld::complex(vec[1],vec[4]);
-		curr_pu_debug[1] = gld::complex(vec[2],vec[5]);
-		curr_pu_debug[2] = gld::complex(vec[3],vec[6]);
+		curr_pu_debug[0] = gld::complex(vec[0]-0.03,vec[3]);
+		curr_pu_debug[1] = gld::complex(vec[1]-0.03,vec[4]);
+		curr_pu_debug[2] = gld::complex(vec[2]-0.03,vec[5]);
+
+		//Standard de-per-unit
+		double temp_curr_ang_A = vec[3]*2.0*PI;
+		double temp_curr_ang_B = vec[4]*2.0*PI;
+		double temp_curr_ang_C = vec[5]*2.0*PI;
 
 		//Expand back to "normal"
-		value_IGenerated[0].SetPolar(I_base*vec[1],(Va_pha+vec[4])*2.0*PI);
-		value_IGenerated[1].SetPolar(I_base*vec[2],(Vb_pha+vec[5])*2.0*PI);
-		value_IGenerated[2].SetPolar(I_base*vec[3],(Vc_pha+vec[6])*2.0*PI);
+		value_IGenerated[0].SetPolar(I_base*vec[0],temp_curr_ang_A);
+		value_IGenerated[1].SetPolar(I_base*vec[1],temp_curr_ang_B);
+		value_IGenerated[2].SetPolar(I_base*vec[2],temp_curr_ang_C);
+
+		Pcal_A = temp_data[0] * (vec[0]-0.03) * (S_base / 3) * cos(temp_data[3] * 2.0 * PI - vec[3] * 2.0 * PI);
+		Pcal_B = temp_data[1] * (vec[1]-0.03) * (S_base / 3) * cos(temp_data[4] * 2.0 * PI - vec[4] * 2.0 * PI);
+		Pcal_C = temp_data[2] * (vec[2]-0.03) * (S_base / 3) * cos(temp_data[5] * 2.0 * PI - vec[5] * 2.0 * PI);
+		Qcal_A = temp_data[0] * (vec[0]-0.03) * (S_base / 3) * sin(temp_data[3] * 2.0 * PI - vec[3] * 2.0 * PI);
+		Qcal_B = temp_data[1] * (vec[1]-0.03) * (S_base / 3) * sin(temp_data[4] * 2.0 * PI - vec[4] * 2.0 * PI);
+		Qcal_C = temp_data[2] * (vec[0]-0.03) * (S_base / 3) * sin(temp_data[5] * 2.0 * PI - vec[5] * 2.0 * PI);
+
+#endif
 
 		//Update timestep
 		prev_timestamp_dbl = curr_ts_dbl;
@@ -974,26 +1009,27 @@ SIMULATIONMODE ibr_blackbox::inter_deltaupdate(unsigned int64 delta_time, unsign
 		Vc_pha /=(2.0*PI);
 
 		//Update the temporary vector
-		std::vector temp_data = {dc_input_voltage, Va_mag, Vb_mag, Vc_mag, Va_pha, Vb_pha, Vc_pha};
+		std::vector temp_data = {Va_mag, Vb_mag, Vc_mag, Va_pha, Vb_pha, Vc_pha};
 
 		//Storage vector
 		volt_pu_debug[0] = gld::complex(Va_mag,Va_pha);
 		volt_pu_debug[1] = gld::complex(Vb_mag,Vb_pha);
 		volt_pu_debug[2] = gld::complex(Vc_mag,Vc_pha);
 
+
 		//Roll the vector first
-		// std::rotate(simulation_data.begin(), simulation_data.end()-1, simulation_data.end());
 		std::rotate(simulation_data.begin(), simulation_data.begin()+1, simulation_data.end());
 		simulation_data.pop_back();
 		simulation_data.push_back(temp_data);
 
+#ifdef HAVE_FRUGALLY
 		//Convert it to the tensor format
-		fdeep::tensor input_tensor(fdeep::tensor_shape(5, 7, 1), 0.0f);
+		fdeep::tensor input_tensor(fdeep::tensor_shape(5, 6, 1), 0.0f);
 
 		//Manual loop
 		// Populate the tensor with values from the current time step
 		for (int i = 0; i < bb_model_time_buffer; ++i) {
-			for (int j = 0; j < 7; ++j) {
+			for (int j = 0; j < 6; ++j) {
 				input_tensor.set(fdeep::tensor_pos(i, j, 0), simulation_data[i][j]);
 			}
 		}
@@ -1009,16 +1045,30 @@ SIMULATIONMODE ibr_blackbox::inter_deltaupdate(unsigned int64 delta_time, unsign
 		std::vector<float> vec = one_tensor.to_vector();
 
 		//Put this into current - and unnormalize
-		dc_output_current = vec[0];
+		// dc_output_current = vec[0];
 		//Not correct - just using complex value to extract
-		curr_pu_debug[0] = gld::complex(vec[1],vec[4]);
-		curr_pu_debug[1] = gld::complex(vec[2],vec[5]);
-		curr_pu_debug[2] = gld::complex(vec[3],vec[6]);
+		curr_pu_debug[0] = gld::complex(vec[0]-0.03,vec[3]);
+		curr_pu_debug[1] = gld::complex(vec[1]-0.03,vec[4]);
+		curr_pu_debug[2] = gld::complex(vec[2]-0.03,vec[5]);
+
+		//Standard de-per-unit
+		double temp_curr_ang_A = vec[3]*2.0*PI;
+		double temp_curr_ang_B = vec[4]*2.0*PI;
+		double temp_curr_ang_C = vec[5]*2.0*PI;
 
 		//Expand back to "normal"
-		value_IGenerated[0].SetPolar(I_base*vec[1],(Va_pha+vec[4])*2.0*PI);
-		value_IGenerated[1].SetPolar(I_base*vec[2],(Vb_pha+vec[5])*2.0*PI);
-		value_IGenerated[2].SetPolar(I_base*vec[3],(Vc_pha+vec[6])*2.0*PI);
+		value_IGenerated[0].SetPolar(I_base*vec[0],temp_curr_ang_A);
+		value_IGenerated[1].SetPolar(I_base*vec[1],temp_curr_ang_B);
+		value_IGenerated[2].SetPolar(I_base*vec[2],temp_curr_ang_C);
+
+		Pcal_A = temp_data[0] * (vec[0]-0.03) * (S_base / 3) * cos(temp_data[3] * 2.0 * PI - vec[3] * 2.0 * PI);
+		Pcal_B = temp_data[1] * (vec[1]-0.03) * (S_base / 3) * cos(temp_data[4] * 2.0 * PI - vec[4] * 2.0 * PI);
+		Pcal_C = temp_data[2] * (vec[2]-0.03) * (S_base / 3) * cos(temp_data[5] * 2.0 * PI - vec[5] * 2.0 * PI);
+		Qcal_A = temp_data[0] * (vec[0]-0.03) * (S_base / 3) * sin(temp_data[3] * 2.0 * PI - vec[3] * 2.0 * PI);
+		Qcal_B = temp_data[1] * (vec[1]-0.03) * (S_base / 3) * sin(temp_data[4] * 2.0 * PI - vec[4] * 2.0 * PI);
+		Qcal_C = temp_data[2] * (vec[0]-0.03) * (S_base / 3) * sin(temp_data[5] * 2.0 * PI - vec[5] * 2.0 * PI);
+
+#endif
 
 		//Update timestep
 		prev_timestamp_dbl = curr_timestamp_dbl;

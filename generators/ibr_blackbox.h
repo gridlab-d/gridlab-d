@@ -56,9 +56,12 @@ private:
 	void pull_complex_powerflow_values(void);
 	void push_complex_powerflow_values(bool update_voltage);
 
+#ifdef HAVE_FRUGALLY
 	//Frugally deep model adds
 	std::unique_ptr<fdeep::model> bb_model = {nullptr};
 	fdeep::tensors result_output;
+#endif
+
 	std::vector<std::vector<double>>  simulation_data;
 	std::size_t bb_model_time_buffer;
 	char1024 fdeep_model_name;
@@ -71,8 +74,8 @@ public:
 	set phases;				 /**< device phases (see PHASE codes) */
 	gld::complex terminal_current_val[3];
 	gld::complex terminal_current_val_pu[3];
-	double dc_input_voltage;
-	double dc_output_current;
+	// double dc_input_voltage;
+	// double dc_output_current;
 	TIMESTAMP inverter_start_time;
 	bool inverter_first_step;
 	bool first_deltamode_init;
@@ -101,6 +104,14 @@ public:
 	double Pref;	// Pref and Qref are the refrences for P and Q
 	double Qref;
 
+	double Pcal_A;
+	double Pcal_B;
+	double Pcal_C;
+	double Qcal_A;
+	double Qcal_B;
+	double Qcal_C;
+
+	
 	double Vset0;		  // Vset0 is the voltage set point in volt-var in grid-following
 
 	/* required implementations */
