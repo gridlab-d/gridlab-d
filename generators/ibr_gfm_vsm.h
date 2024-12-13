@@ -58,7 +58,7 @@ private:
 	double last_QSTS_GF_Update;
 
 	INV_DYN_STATE pred_state; ///< The predictor state of the inverter in delamode
-	INV_DYN_STATE next_state; ///< The next state of the inverter in delamode																		
+	INV_DYN_STATE next_state; ///< The next state of the inverter in delamode																																					
 	
 
 	gld_property *pIGenerated[3];		//Link to direct current injections to powerflow at bus-level
@@ -118,9 +118,9 @@ private:
 	void reset_complex_powerflow_accumulators(void);
 	void push_complex_powerflow_values(bool update_voltage);
 
+	// Check limit func
+	void check_and_update_VA_Out(OBJECT *obj);
 	
-	
-
 	// Update current func
 	void update_iGen(gld::complex);
 
@@ -191,21 +191,21 @@ private:
 
 public:
 	gld::set phases;				 /**< device phases (see PHASE codes) */
-	// enum INVERTER_TYPE
-	// {
-		// GRID_FORMING = 0,
-		// GRID_FOLLOWING = 1,
-		// GFL_CURRENT_SOURCE = 2,
-		// GFL_NEGATIVE = 3
-	// };
-	// enumeration control_mode; //
+	enum INVERTER_TYPE
+	{
+		GRID_FORMING = 0,
+		GRID_FOLLOWING = 1,
+		GFL_CURRENT_SOURCE = 2,
+		GFL_NEGATIVE = 3
+	};
+	enumeration control_mode; //
 
-	// enum GRID_FOLLOWING_TYPE
-	// {
-		// BALANCED_POWER = 0,
-		// POSITIVE_SEQUENCE = 1
-	// };
-	// enumeration grid_following_mode; //
+	enum GRID_FOLLOWING_TYPE
+	{
+		BALANCED_POWER = 0,
+		POSITIVE_SEQUENCE = 1
+	};
+	enumeration grid_following_mode; //
 
 	enum GRID_FORMING_TYPE
 	{
@@ -231,7 +231,7 @@ public:
 
 	double GridForming_freq_convergence_criterion;
 	double GridForming_volt_convergence_criterion;
-	/* double GridFollowing_curr_convergence_criterion; */
+	double GridFollowing_curr_convergence_criterion;
 
 	INV_DYN_STATE curr_state; ///< The current state of the inverter in deltamode
 
@@ -602,8 +602,8 @@ public:
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 	STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
 	STATUS updateCurrInjection(int64 iteration_count,bool *converged_failure);
-	//STATUS init_dynamics(INV_DYN_STATE *curr_time);
-	STATUS init_dynamics(void);
+	STATUS init_dynamics(INV_DYN_STATE *curr_time);											  
+	//STATUS init_dynamics(void);
 
 
 public:
