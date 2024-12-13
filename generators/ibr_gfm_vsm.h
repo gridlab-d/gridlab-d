@@ -19,36 +19,36 @@ EXPORT STATUS ibr_gfm_vsm_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj);
 #define phaseB_I_Out terminal_current_val[1]
 #define phaseC_I_Out terminal_current_val[2]
 
-// State variables of grid-forming & grid-following controller
-typedef struct
-{
-
-	///////Grid-Forming
-
-	// state variables of the dc bus voltage when using grid-forming PV
-	double dVdc_pu;
-	double Vdc_pu;
-
-	// state variables of Vdc_min controller when using PV grid-forming control
-	double ddelta_w_Vdc_min_ini;
-	double delta_w_Vdc_min_ini;
-
-	////////Grid-Following
-
-	//  state variables in volt-var
-
-} INV_DYN_STATE;
-
-typedef struct
-{
-	FUNCTIONADDR fxn_address;
-	OBJECT *dc_object;
-} DC_OBJ_FXNS;
-
 //ibr_gfm_vsm class
 class ibr_gfm_vsm : public gld_object
 {
 private:
+	// State variables of grid-forming & grid-following controller
+	typedef struct
+	{
+
+		///////Grid-Forming
+
+		// state variables of the dc bus voltage when using grid-forming PV
+		double dVdc_pu;
+		double Vdc_pu;
+
+		// state variables of Vdc_min controller when using PV grid-forming control
+		double ddelta_w_Vdc_min_ini;
+		double delta_w_Vdc_min_ini;
+
+		////////Grid-Following
+
+		//  state variables in volt-var
+
+	} INV_DYN_STATE;
+
+	typedef struct
+	{
+		FUNCTIONADDR fxn_address;
+		OBJECT *dc_object;
+	} DC_OBJ_FXNS;
+
 	bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
 	bool first_sync_delta_enabled;
 	char first_iter_counter;
@@ -58,14 +58,12 @@ private:
 	double last_QSTS_GF_Update;
 
 	INV_DYN_STATE pred_state; ///< The predictor state of the inverter in delamode
-	INV_DYN_STATE next_state; ///< The next state of the inverter in delamode																																					
-	
+	INV_DYN_STATE next_state; ///< The next state of the inverter in delamode
 
 	gld_property *pIGenerated[3];		//Link to direct current injections to powerflow at bus-level
 	gld::complex generator_admittance[3][3]; //Generator admittance matrix converted from sequence values
 	gld::complex filter_admittance;			//Filter admittance value - mostly separate to make single-phase easier
 	gld::complex value_IGenerated[3];		//Value/accumulator for IGenerated values
-	gld::complex prev_value_IGenerated[3];	//Tracking variable for grid following "QSTS exit"
 
 	//Comaptibility variables - used to be in power_electronics
 	bool parent_is_a_meter;		 //Boolean to indicate if the parent object is a meter/triplex_meter
@@ -76,21 +74,12 @@ private:
 	FUNCTIONADDR swing_test_fxn;	//Function to map to swing testing function, if needed
 
 	gld_property *pCircuit_V[3];   ///< pointer to the three L-N voltage fields
-	gld_property *pLine_I[3];	   ///< pointer to the three current fields
-	gld_property *pLine_unrotI[3]; ///< pointer to the three pre-rotated current fields
-	gld_property *pPower[3];	   ///< pointer to power value on meter parent
 	gld_property *pMeterStatus;	   ///< Pointer to service_status variable on meter parent
-	gld_property *pSOC;            ///< Pointer to battery SOC
 
 
 	//Default or "connecting point" values for powerflow interactions
 	gld::complex value_Circuit_V[3];	   ///< value holder for the three L-N voltage fields
-
-	gld::complex value_Line_I[3];	   ///< value holder for the three current fields
-	gld::complex value_Line_unrotI[3];  ///< value holder for the three pre-rotated current fields
-	gld::complex value_Power[3];		   ///< value holder for power value on meter parent
 	enumeration value_MeterStatus; ///< value holder for service_status variable on meter parent
-	gld::complex value_Meter_I[3];	   ///< value holder for meter measured current on three lines
 
 	gld_property *pbus_full_Y_mat; //Link to the full_Y bus variable -- used for Norton equivalents
 	gld_property *pGenerated;	   //Link to pGenerated value - used for Norton equivalents
@@ -102,8 +91,6 @@ private:
 	double P_DC;
 	double V_DC;
 	double I_DC;
-	double SOC;
-
 
 	// DC object "update" of steady-state
 	double pvc_Pmax;
@@ -115,12 +102,11 @@ private:
 	gld_property *map_complex_value(OBJECT *obj, const char *name);
 	gld_property *map_double_value(OBJECT *obj, const char *name);
 	void pull_complex_powerflow_values(void);
-	void reset_complex_powerflow_accumulators(void);
 	void push_complex_powerflow_values(bool update_voltage);
 
 	// Check limit func
 	void check_and_update_VA_Out(OBJECT *obj);
-	
+
 	// Update current func
 	void update_iGen(gld::complex);
 
@@ -188,24 +174,25 @@ private:
 
 	STATUS initalize_IEEE_1547_checks(void);
 	double perform_1547_checks(double timestepvalue);
+	void pdispatch_sync(void);
+	void update_chk_vars(void);
+	
+	typedef struct {
+	double pdispatch; //Desired generator dispatch set point in p.u.
+	double pdispatch_offset; //Desired offset to generator dispatch in p.u.
+	}PDISPATCH;
+
+	typedef struct {
+		double Pset; //helper variable to check changes to Pset
+		double Pref; //helper variable to check changes to Pref
+		double fset; //helper variable to check changes to fset
+		bool inverter_1547_status; //helper variable to check changes to inverter 1547 status
+	}SETPOINT_CHK;
+
+	PDISPATCH pdispatch;	//Dispatch setpoint in p.u. for internal use
 
 public:
 	gld::set phases;				 /**< device phases (see PHASE codes) */
-	enum INVERTER_TYPE
-	{
-		GRID_FORMING = 0,
-		GRID_FOLLOWING = 1,
-		GFL_CURRENT_SOURCE = 2,
-		GFL_NEGATIVE = 3
-	};
-	enumeration control_mode; //
-
-	enum GRID_FOLLOWING_TYPE
-	{
-		BALANCED_POWER = 0,
-		POSITIVE_SEQUENCE = 1
-	};
-	enumeration grid_following_mode; //
 
 	enum GRID_FORMING_TYPE
 	{
@@ -221,9 +208,17 @@ public:
 	};
 	enumeration P_f_droop_setting_mode; //
 
-
 	gld::complex terminal_current_val[3];
 	gld::complex terminal_current_val_pu[3];
+
+	// Used for Imax limiting
+	gld::complex terminal_current_val_pu_prefault[3]; // Pre-fault current, used in Imax angle correction only
+	bool imax_phase_correction_done[3];
+	bool phase_angle_correction; // GLM input - Enable or disable phase angle correction?
+	bool virtual_resistance_correction; // GLM input - Current limiting through adding virtual resistance
+	double theta_c[3];
+	// -----------------------
+
 	TIMESTAMP inverter_start_time;
 	bool inverter_first_step;
 	bool first_deltamode_init;
@@ -231,81 +226,78 @@ public:
 
 	double GridForming_freq_convergence_criterion;
 	double GridForming_volt_convergence_criterion;
-	double GridFollowing_curr_convergence_criterion;
 
 	INV_DYN_STATE curr_state; ///< The current state of the inverter in deltamode
+	int VFlag; // Voltage control flag for grid forming inverter
+	
+	// Grid forming control blocks
+	Filter Pmeas_blk; // P-measurement filter block
+	double p_measured; // P-measurement filter block output
 
-        // Grid forming control blocks
-        Filter Pmeas_blk; // P-measurement filter block
-        double p_measured; // P-measurement filter block output
-  
-        Filter Vmeas_blk; // Voltage measurement block
-        double v_measured; // Output of voltage measurement block
+	Filter Vmeas_blk; // Voltage measurement block
+	double v_measured; // Output of voltage measurement block
 
-        Filter Qmeas_blk; // Q-measurement block
-        double q_measured;  // Output of Q-measurement block
+	Filter Qmeas_blk; // Q-measurement block
+	double q_measured;  // Output of Q-measurement block
 
-        PIControl Qmin_ctrl_blk; // Qmin controller
-        double delta_V_Qmin;  // Output of Qmin controller
+	PIControl Qmin_ctrl_blk; // Qmin controller
+	double delta_V_Qmin;  // Output of Qmin controller
 
-        PIControl V_unbl_d_blk; // Neg d-axis current controller
-        PIControl V_unbl_q_blk; // Neg q-axis current controller
-        double test;
+	PIControl Qmax_ctrl_blk; // Qmax controller
+	double delta_V_Qmax;  // Output of Qmax controller
 
-        PIControl Qmax_ctrl_blk; // Qmax controller
-        double delta_V_Qmax;  // Output of Qmax controller
+	PIControl Pmin_ctrl_blk; // Pmin controller
+	double delta_w_Pmin;  // Output of Pmin controller
 
-        PIControl Pmin_ctrl_blk; // Pmin controller
-        double delta_w_Pmin;  // Output of Pmin controller
+	PIControl Pmax_ctrl_blk; // Pmax controller
+	double delta_w_Pmax;  // Output of Pmax controller
 
-        PIControl Pmax_ctrl_blk; // Pmax controller
-        double delta_w_Pmax;  // Output of Pmax controller
+	PIControl V_unbl_d_blk; // Neg d-axis current controller
+	PIControl V_unbl_q_blk; // Neg q-axis current controller
 
-        double delta_wmin;
-        double delta_wmax;
-        double delta_w;   // frequency of the internal voltage
-        double delta_w_prev_step; // frequency of the internal voltage at previous step
-  
-        Integrator Angle_blk[3]; // Integrator block for calculating phase angle of the internal voltage
-        double Angle[3];  // output of phase angle integrator block
+	double delta_wmin;
+	double delta_wmax;
+	double delta_w;   // frequency of the internal voltage
+	double delta_w_prev_step; // frequency of the internal voltage at previous step
 
-        Integrator V_ctrl_blk; // Voltage control block
-        double E_mag; //internal voltage magnitude, used for grid-forming control, output of voltage control block
+	Integrator Angle_blk[3]; // Integrator block for calculating phase angle of the internal voltage
+	double Angle[3];  // output of phase angle integrator block
 
-        // Grid following control blocks
-        Integrator Angle_PLL_blk[3]; // Integrator block for PLL angle
-        double     Angle_PLL[3];      // Output of PLL angle block
+	Integrator V_ctrl_blk; // Voltage control block
+	double E_mag; //internal voltage magnitude, used for grid-forming control, output of voltage control block
 
-        PIControl  delta_w_PLL_blk[3]; // PI block for PLL
-        double     delta_w_PLL[3];     // Output of PI block for PLL
+	// Grid following control blocks
+	Integrator Angle_PLL_blk[3]; // Integrator block for PLL angle
+	double     Angle_PLL[3];      // Output of PLL angle block
 
-        PIControl igd_blk[3]; // d-axis current control PI block
-        double    igd_PI[3]; // output of d-axis current block
+	PIControl  delta_w_PLL_blk[3]; // PI block for PLL
+	double     delta_w_PLL[3];     // Output of PI block for PLL
 
-        PIControl igq_blk[3]; // q-axis current control PI block
-        double    igq_PI[3];  // output of q-axis current block
+	PIControl igd_blk[3]; // d-axis current control PI block
+	double    igd_PI[3]; // output of d-axis current block
 
-        Filter igd_filter_blk[3]; // Low pass filter block for current igd
-        double igd_filter_ref[3]; // Output of low pass igd filter block
-        double igd_filter[3]; // igd filter pass to the current source model
+	PIControl igq_blk[3]; // q-axis current control PI block
+	double    igq_PI[3];  // output of q-axis current block
 
-        Filter igq_filter_blk[3]; // Low pass filter block for current igq
-        double igq_filter_ref[3]; // Output of low pass igq filter block
-        double igq_filter[3]; // igq filter pass to the current source model
+	Filter igd_filter_blk[3]; // Low pass filter block for current igd
+	double igd_filter_ref[3]; // Output of low pass igd filter block
+	double igd_filter[3]; // Output of low pass igd filter block
 
-        Filter f_filter_blk; // filter block for frequency-watt
-        double f_filter; // Output of filter block for frequency watt
+	Filter igq_filter_blk[3]; // Low pass filter block for current igq
+	double igq_filter_ref[3]; // Output of low pass igq filter block
+	double igq_filter[3]; // Output of low pass igq filter block
 
-        Filter Pref_droop_pu_filter_blk; // Pref droop filter block for frequency-watt
-        double Pref_droop_pu_filter; // Output of Pref droop filter block for frequency watt
+	Filter f_filter_blk; // filter block for frequency-watt
+	double f_filter; // Output of filter block for frequency watt
 
-        Filter V_filter_blk; // filter block for volt-var
-        double V_filter; // Output of filter block for volt-var
+	Filter Pref_droop_pu_filter_blk; // Pref droop filter block for frequency-watt
+	double Pref_droop_pu_filter; // Output of Pref droop filter block for frequency watt
 
-        Filter Qref_droop_pu_filter_blk; // Qref droop filter block for volt-var
-        double Qref_droop_pu_filter; // Output of Qref droop filter block for volt-var
+	Filter V_filter_blk; // filter block for volt-var
+	double V_filter; // Output of filter block for volt-var
 
-	gld::complex I_out_PU_temp[3];  //This is mainly used for current limiting function of a grid-forming inverter
+	Filter Qref_droop_pu_filter_blk; // Qref droop filter block for volt-var
+	double Qref_droop_pu_filter; // Output of Qref droop filter block for volt-var
 
 	gld::complex power_val[3];		   //power
 	gld::complex VA_Out;				   // complex output power
@@ -316,45 +308,12 @@ public:
 	gld::complex VA_Out_PS;				   // complex output positive sequence power
 	gld::complex VA_Out_NS;				   // complex output negative sequence power
 
-
-	gld::complex value_Circuit_I_PS[3]; // Positive sequence current of three phase terminal currents, assume no negative or zero sequence, Phase A equals to positive sequence
-
 	double node_nominal_voltage; // Nominal voltage
 
 	double mdc;	  // only used when dc bus dynamic is enabled, make sure that the modulation index is enough
 
-	bool frequency_watt; // Boolean value indicating whether the f/p droop curve is included in the inverter or not
-	bool checkRampRate_real; // check the active power ramp rate
-	bool volt_var;		 // Boolean value indicating whether the volt-var droop curve is included in the inverter or not
-	bool checkRampRate_reactive; // check the reactive power ramp rate
-
-	double rampUpRate_real; // unit: pu/s
-	double rampDownRate_real; // unit: pu/s
-	double rampUpRate_reactive; // unit: pu/s
-	double rampDownRate_reactive; // unit: pu/s
-	double Pref_droop_pu_prev; // The value of Pref in last simulation step, note it is only defined in the predictor pass
-	double Qref_droop_pu_prev; // The value of Qref in last simulation step, note it is only defined in the predictor pass
-
 	// voltages and currents in dq frame, used for grid-following control
-	double ugd_pu[3];
 	double ugq_pu[3];
-	double igd_pu[3];
-	double igq_pu[3];
-	double igd_ref[3];
-	double igq_ref[3];
-	double igd_ref_old[3];
-	double igd_ref_max;  //Upper limit for igd_ref
-	double igd_ref_min;  //Lower limit for igd_ref
-	double igq_ref_max;  //Upper limit for igq_ref
-	double igq_ref_min;  //Lower limit for igq_ref
-
-	double ugd_pu_PS; // positive sequence voltage value in dq frame
-	double ugq_pu_PS; // positive sequence voltage value in dq frame
-
-
-	// used for grid-following control
-	double ed_pu[3]; // internal votlage in dq frame
-	double eq_pu[3]; // internal votlage in dq frame
 
 	double S_base;	 // S_base is the rated caspacity
 	double V_base;	 // Vbase is the rated Line to ground voltage
@@ -364,10 +323,7 @@ public:
 	double I_base;	 // Ibase is the rated current
 	double P_out_pu; // P_out_pu is the per unit value of VA_OUT.Re()
 	double Q_out_pu; // Q_out_pu is the per-unit value of VA_Out.Im()
-	double Q_out_pu1; // Q_out_pu is the per-unit value of VA_Out.Im()
 	double Tp;		 // Tp is the time constant of low pass filter, it is per-unit value
-	//also, Time constant of the low-pass filter in the VSM control block
-
 	double Tq;		 // Tq is the time constant of low pass filter, it is per-unit value
 	double Tv;		 // Tv is the time constant of low pass filter,
 
@@ -400,7 +356,6 @@ public:
 	gld::complex e_source_pu[3]; // e_source[i] is the complex per-unit value of internal voltage
 	gld::complex e_droop[3]; // e_droop is the complex value of the inverter internal voltage given by the grid-forming droop control
 	gld::complex e_droop_pu[3]; // e_droop is the complex value of the inverter internal voltage given by the grid-forming droop control
-	gld::complex e_droop_pu_NS[3];
 	double e_source_Re[3];
 	double e_source_Im[3];
 	gld::complex I_source[3]; // I_source[i] is the complex value when using current source representation
@@ -427,7 +382,6 @@ public:
 	double Tff;			  // Tff is the time constant of low pass filter in frequency measurement
 	double Tif;			  // Tif is the low pass filter when using current source representation
 	double Vset0;		  // Vset0 is the voltage set point in volt-var in grid-following
-	double Pref_droop_pu; // Power reference in frequency-watt
 	double Pref_max;	  // Pref_max and Pref_min are the upper and lower limits of power references
 	double Pref_min;	  //
 	double V_Avg_pu;	  // average voltage in volt-var
@@ -453,69 +407,11 @@ public:
 
 	double delta_w_Vdc_min; //variable in the Vdc_min controller
 
-	double Tif_igd_ref;	  // Tif_igd_ref is the low pass filter of Id command when using current source representation
-	double Tif_igq_ref;   // Tif_igq_ref is the low pass filter of Iq command when using current source representation
-	double kqp;			  //proportional and integral gains for Q controller
-	double Tqi;
-	double kvp;			  //proportional and integral gains for V controller
-	double Tvi;
-
-    Integrator Qreg_ctrl_blk[3]; // Qreg controller
-    double Vref_pu[3];  // Output of Qreg controller
-    double Verr[3];
-    double Qref_pu;
-    double Qerr[3];
-    double Qreg_ctrl_out[3];
-
-    Integrator Vreg_ctrl_blk[3]; // Vreg controller
-    //double Vref_pu;  // Output of Vref controller
-
-    double ug_pu_PS[3]; // positive sequence voltage mag value in dq frame
-    double ug_pu_PS_old[3];
-    double ug_pu_PS1;
-
-    double start_time_igd_delay;
-    double igd_delay_flag;
-    double count[3];
-
-    double ug_pu_PS_risingedge[3]; //sign when Vgrid drops
-    double start_time_ug_risingedge[3]; //start time when rising edge is enabled.
+	SETPOINT_CHK setpoint_chk; //Checker variable for the controller setpoints
+	PDISPATCH pdispatch_exp;		//Dispatch setpoint in p.u., exposed via glm
 
 	// Inverter circuit parameters
-	double Ucn;
-	double Icn;
 	double CFilt;
-	double Xi_filter[3];
-	double Qcap[3];
-	double count1;
-
-	// Limits
-	double Smax;
-	double Icmax;
-	double igd_cmd[3];
-	double igq_cmd[3];
-	double Ipmax[3];
-	double IpUL[3];
-
-	// Negative
-
-	double ug_pu_NS;
-	double ig_pu_NS;
-	double ig_pu_PS;
-	double ig_mag_pu_NS;
-	double ig_pu_NS_edge;
-    double igd_ns_filter[3];
-    double igq_ns_filter[3];
-	double ugd_pu_NS;
-	double ugq_pu_NS;
-
-    double igd_ns_pu[3];
-    double igq_ns_pu[3];
-	double I_source_ns_Re[3];
-	double I_source_ns_Im[3];
-	double P_o_pu;
-	double Q_o_pu;
-	double Negative;
 
 	// VSM GFM
 	double R1;
@@ -525,11 +421,10 @@ public:
 	double w_base;
 
 	double ImaxF;  // Used in Transient current limiting function
-
+					//** FT Notes - Fixed value and not published - hardcode or publish? */
 	double w_PLL[3];
 	double TiPLL;
-	double igd_pu_Avg;
-	double igq_pu_Avg;
+
     Filter Idmeas_blk; // Voltage measurement block
     double Id_measured; // Output of voltage measurement block
     Filter Iqmeas_blk; // Voltage measurement block
@@ -549,12 +444,12 @@ public:
 
 	double Qset;  // Qset is the Q set point in grid-forming inverter, usually 0 pu
 
-	double VdrpFlag;
-	double wFlaga;
-	double wFlagb;
-	double wset;
-	double wm;
-	double kb;
+	double VdrpFlag;	//** FT Note - used, but fixed in init - should this be published? */
+	double wFlaga;		//** FT Note - used, but fixed in init - should this be published? */
+	double wFlagb;		//** FT Note - used, but fixed in init - should this be published? */
+	double wset;		//** FT Note - used, but fixed in init - should this be published? */
+	double wm;			//** FT Note - used, but fixed in init - should this be published? */
+	double kb;			//** FT Note - used, but fixed in init - should this be published? */
 	double delta_P_droop;
 	Filter deltaP_droop_blk;
 	double delta_wm;
@@ -562,30 +457,24 @@ public:
 	double delta_P_damping;
 	Filter delta_P_transdamping_blk;
 	double delta_P_transdamping;
-	double D1;
-	double D2;
+	double D1;			//** FT Note - used, but fixed in init - should this be published?  Also fixed to zero right now, so negates the delta_P_damping */
+	double D2;			//** FT Note - used, but fixed in init - should this be published? */
 
 	double delta_wIT;
-	double Angle_e[3];
+	double Angle_e[3];	//** FT Notes - Used?  Gets assigned, but bunch of limit stuff commented */
 	double TIf;
-	double Tidmax;
-	double H;
-	double wD;
-
-	gld::complex Test1;
-	double Test2;
-	double Test3;
+	double Tidmax;		//** FT Note - used, but fixed in init - should this be published? */
+	double H;			//** FT Note - used, but fixed in init - should this be published? */
+	double wD;			//** FT Note - used, but fixed in init - should this be published? */
 
 	double igd_pu_PS;
 	double igq_pu_PS;
-	double igd_pu_NS;
-	double igq_pu_NS;
-
-	double Ed_pu_NS;
-	double Eq_pu_NS;
+	double igd_pu_NS;	//** FT Note - just an output, so debug only? */
+	double igq_pu_NS;	//** FT Note - just an output, so debug only? */
 
 	double kpunbl;        // proportional and integral gains for Qmax and Qmin controllers
-	double kiunbl;
+						//** FT Note - used, but fixed in init - should this be published? */
+	double kiunbl;		//** FT Note - used, but fixed in init - should this be published? */
 
     Integrator  delta_w_PLL_blk_gfm[3]; // I block for PLL
 
@@ -602,9 +491,8 @@ public:
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 	STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
 	STATUS updateCurrInjection(int64 iteration_count,bool *converged_failure);
-	STATUS init_dynamics(INV_DYN_STATE *curr_time);											  
-	//STATUS init_dynamics(void);
-
+	STATUS init_dynamics(INV_DYN_STATE *curr_time);
+	STATUS DC_object_register(OBJECT *DC_object);
 
 public:
 	static CLASS *oclass;
