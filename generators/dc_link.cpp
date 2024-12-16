@@ -608,7 +608,8 @@ TIMESTAMP dc_link::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	OBJECT *obj = OBJECTHDR(this);
 
-
+	//double inv2_I_tr;
+	//double inv2_P_tr;
 
 	//******* QSTS Updates might go here - this may also be called by deltamode *******//
 
@@ -629,39 +630,63 @@ TIMESTAMP dc_link::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		//        Update currents from inverters
 
-		inv1_current = inverter1_current_property->get_double(); // ++ remove
-		inv2_current  = inverter2_current_property->get_double();   
+		//inv1_current = inverter1_current_property->get_double(); // ++ remove
+		//inv2_current  = inverter2_current_property->get_double();   
 		
 		//        Update Vc based on previous Vc
 
-		dVc=-1*(inv1_current+inv2_current)/C;
-		Vc = Vc + dVc * deltat;
-		Vc_pu=Vc/Vbase;
+		//dVc=-1*(inv1_current+inv2_current)/C;
+		//Vc = Vc + dVc * deltat;
+		//Vc_pu=Vc/Vbase;
+
+		//inv1_voltage=Vc;
+		//inv2_voltage=Vc;
+
+		//        Push back updated Vc (Question: can we do this here?)
+
+		//inverter1_voltage_property->setp<double>(inv1_voltage, *test_rlock);
+		//inverter2_voltage_property->setp<double>(inv2_voltage, *test_rlock); 
+
+		
+		//+++++++++++++++++++++++++++++++++++++++++++++++++
+
+		//+++++++++++++ HM:Oct. 18, 2024, Replace the above voltage update with Constant DC-Link Voltage for QSTS ++++++++++++++++++++
 
 		inv1_voltage=Vc;
 		inv2_voltage=Vc;
 
-		//        Push back updated Vc (Question: can we do this here?)
+		inv1_current = inverter1_current_property->get_double(); // ++ remove
+		inv2_current  = inverter2_current_property->get_double();  
+		
 
 		inverter1_voltage_property->setp<double>(inv1_voltage, *test_rlock);
 		inverter2_voltage_property->setp<double>(inv2_voltage, *test_rlock); 
-         
-
-		//+++++++++++++++++++++++++++++++++++++++++++++++++
 
 
+		
+		//++++++++++++++++++++++ Added on Oct. 28 
+		inv1_current=-1*inv2_current;
+		inverter1_current_property->setp<double>(inv1_current, *test_rlock);//++++++++++ HM I changed it from inverter 1 to 2 intentionally
+		inverter2_current_property->setp<double>(inv2_current, *test_rlock);
+
+		//+++ HM inverter1_voltage_property->setp<double>(inv1_voltage, *test_rlock);
+		//+++ HM inverter2_voltage_property->setp<double>(inv2_voltage, *test_rlock);
+        
+		
+
+		inv1_power = inverter1_power_property->get_double(); 
+		inv2_power  = inverter2_power_property->get_double(); 
+		
+		inv1_power=-1*inv2_power;
+
+		//+++ HM Note: powers are not updated because they are not used by the inverters, so this is just for the sake of completness 
+		inverter1_power_property->setp<double>(inv1_power, *test_rlock); //++++++++++ HM I changed it from inverter 1 to 2 intentionally
+		inverter2_power_property->setp<double>(inv2_power, *test_rlock);
 
 
-		/* SA: added code for obtaining variables*/
-		// Get V, I and P from the inverters
-		//+++ HM inv1_current = inverter1_current_property->get_double(); 
-		//+++ HM inv2_current  = inverter2_current_property->get_double(); 
 
-		//+++ HM inv1_voltage = inverter1_voltage_property->get_double(); 
-		//+++ HM inv2_voltage = inverter2_voltage_property->get_double(); 
 
-		//+++ HM inv1_power = inverter1_power_property->get_double(); 
-		//+++ HM inv2_power  = inverter2_power_property->get_double(); 
+
 
 		prev_time = curr_time;
 
@@ -732,8 +757,16 @@ SIMULATIONMODE dc_link::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
          
 		// Question: Do we need to update Powers? Inverters don't need them
 
-		//++++++++++++++++++++++++++++++++++++++++++++++++++
+		//++++++++++++++++ Added on Oct 28   ++++++++++++++++++++++++++++++++++
+		inverter1_current_property->setp<double>(inv1_current, *test_rlock);
+		inverter2_current_property->setp<double>(inv2_current, *test_rlock);
 
+		//+++ HM inverter1_voltage_property->setp<double>(inv1_voltage, *test_rlock);
+		//+++ HM inverter2_voltage_property->setp<double>(inv2_voltage, *test_rlock);
+        
+		//+++ HM Note: powers are not updated because they are not used by the inverters, so this is just for the sake of completness 
+		inverter1_power_property->setp<double>(inv1_power, *test_rlock);
+		inverter2_power_property->setp<double>(inv2_power, *test_rlock);
 
 
 

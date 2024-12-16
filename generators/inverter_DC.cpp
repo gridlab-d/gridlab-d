@@ -1864,7 +1864,7 @@ TIMESTAMP inverter_DC::sync(TIMESTAMP t0, TIMESTAMP t1)
 								Qref = -sqrt(S_base*S_base-Pref*Pref);
 							}
 						}
-
+						
 						gld::complex temp_VA = gld::complex(Pref, Qref);
 
 						//Copy in value
@@ -2119,7 +2119,8 @@ void inverter_DC::check_and_update_VA_Out(OBJECT *obj)
 		}
 
 		// Update I_DC
-		//I_DC = P_DC/V_DC;
+		P_DC = VA_Out.Re();
+		I_DC = P_DC/V_DC;
 	}
 
 }

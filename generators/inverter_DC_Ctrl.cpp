@@ -215,7 +215,7 @@ inverter_DC_Ctrl::inverter_DC_Ctrl(MODULE *module)
 			PT_double, "Vdc_min_pu[pu]", PADDR(Vdc_min_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: The reference voltage of the Vdc_min controller",
 			//++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			PT_double, "Vdc_ref[pu]", PADDR(Vdc_ref_pu), PT_DESCRIPTION, "DELTAMODE: DC-Link voltage reference in pu.",
-			PT_double, "Pdc_ref_pu[pu]", PADDR(Pdc_ref_pu), PT_DESCRIPTION, "Output of the DC-Link Controller - Reference DC power in pu.",
+			PT_double, "Pdc_ref_pu[pu]", PADDR(Pdc_ref_pu), PT_DESCRIPTION, "DELTAMODE: Output of the DC-Link Controller - Reference DC power in pu.",
 			PT_double, "Test_1", PADDR(Test_1), PT_DESCRIPTION, "Test Parameter for Debugging",
 			//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			PT_double, "C_pu[pu]", PADDR(C_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: capacitance of dc bus",
@@ -229,9 +229,9 @@ inverter_DC_Ctrl::inverter_DC_Ctrl(MODULE *module)
 			PT_double, "v_measure", PADDR(Vmeas_blk.x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: filtered voltage for grid-forming inverter",
 
 			//DC Bus portions
-			PT_double, "V_In[V]", PADDR(V_DC), PT_DESCRIPTION, "DC input voltage",
-			PT_double, "I_In[A]", PADDR(I_DC), PT_DESCRIPTION, "DC input current",
-			PT_double, "P_In[W]", PADDR(P_DC), PT_DESCRIPTION, "DC input power",
+			PT_double, "V_In[V]", PADDR(V_DC), PT_DESCRIPTION, "DELTAMODE: DC input voltage",
+			PT_double, "I_In[A]", PADDR(I_DC), PT_DESCRIPTION, "DELTAMODE: DC input current",
+			PT_double, "P_In[W]", PADDR(P_DC), PT_DESCRIPTION, "DELTAMODE: DC input power",
 
 			PT_double, "pvc_Pmax[W]", PADDR(pvc_Pmax), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "P max from the PV curve",
 
@@ -1860,8 +1860,12 @@ TIMESTAMP inverter_DC_Ctrl::sync(TIMESTAMP t0, TIMESTAMP t1)
 							}
 						}
 
-						gld::complex temp_VA = gld::complex(Pref, Qref);
 
+						//++++++++++HM Oct 29, 2024, so in QSTS it operates as a simple grid following with Pref is the last P_DC
+						Pref=P_DC;
+						//+++++++++++++++++++++++++
+						gld::complex temp_VA = gld::complex(Pref, Qref);
+						
 						//Copy in value
 						//temp_power_val[0] = power_val[0] + (temp_VA - VA_Out) / 3.0;
 						//temp_power_val[1] = power_val[1] + (temp_VA - VA_Out) / 3.0;
@@ -2078,12 +2082,50 @@ void inverter_DC_Ctrl::check_and_update_VA_Out(OBJECT *obj)
 		}
 
 		// Update I_DC
+		P_DC = VA_Out.Re(); //Lossless
 		I_DC = P_DC/V_DC;
 	}
 
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++ HM: this portion is added to initialize the DC link voltage from the DC-Link Ovject initial voltage Vco
-	if (control_mode == GFL_CURRENT_SOURCE)
+	// if (control_mode == GFL_CURRENT_SOURCE)
+	// {
+	// 	// Update the P_DC
+	// 	P_DC = VA_Out.Re(); //Lossless
+
+	// 	// Update V_DC
+	// 	if (!dc_interface_objects.empty())
+	// 	{
+	// 		int temp_idx;
+	// 		STATUS fxn_return_status;
+
+	// 		//Loop through and call the DC objects
+	// 		for (temp_idx = 0; temp_idx < dc_interface_objects.size(); temp_idx++)
+	// 		{
+	// 			//DC object, calling object (us), init mode (true/false)
+	// 			//False at end now, because not initialization
+	// 			fxn_return_status = ((STATUS(*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object, obj, false);
+
+	// 			//Make sure it worked
+	// 			if (fxn_return_status == FAILED)
+	// 			{
+	// 				//Pull the object from the array - this is just for readability (otherwise the
+	// 				OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
+
+	// 				//Error it up
+	// 				GL_THROW("inverter_DC_Ctrl:%d - %s - DC object update for object:%d - %s - failed!", obj->id, (obj->name ? obj->name : "Unnamed"), temp_obj->id, (temp_obj->name ? temp_obj->name : "Unnamed"));
+	// 				//Defined above
+	// 			}
+	// 		}
+	// 	}
+
+	// 	//Update I_DC
+	// 	P_DC = VA_Out.Re(); //Lossless
+	// 	I_DC = P_DC/V_DC;
+	// }
+
+	//+++++++++++++++++++++++++++++++++++++++++++++++ HM: this portion is added to initialize the DC link voltage from the DC-Link Ovject initial voltage Vco
+	if (DC_Ctrl)
 	{
 		// Update the P_DC
 		P_DC = VA_Out.Re(); //Lossless
@@ -2115,10 +2157,9 @@ void inverter_DC_Ctrl::check_and_update_VA_Out(OBJECT *obj)
 		}
 
 		// Update I_DC
-		//I_DC = P_DC/V_DC;
+		P_DC = VA_Out.Re();
+		I_DC = P_DC/V_DC;
 	}
-
-
 
 
 
@@ -5462,7 +5503,9 @@ STATUS inverter_DC_Ctrl::init_dynamics(INV_DC_Ctrl_STATE *curr_time)
 	//Set the mode tracking variable to a default - not really needed, but be paranoid
 	desired_simulation_mode = SM_EVENT;
 
-	Vdc_ctrl_blk.setparams(Kp_dc,Ki_dc,-500.0,500.0,-500.0,500.0);
+	//Vdc_ctrl_blk.setparams(Kp_dc,Ki_dc,-500.0,500.0,-500.0,500.0);
+	Vdc_ctrl_blk.setparams(Kp_dc,Ki_dc,-Pmax,Pmax,-Pmax,Pmax);
+
 	//Vdc_ctrl_blk.init(Vdco,Vdco);
 	//V_DC=8000;
 
