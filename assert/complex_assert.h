@@ -19,11 +19,11 @@ public:
 	enum {ONCE_FALSE=0, ONCE_TRUE=1, ONCE_DONE=2};
 	enum {ASSERT_TRUE=1, ASSERT_FALSE, ASSERT_NONE};
 
-	GL_ATOMIC(enumeration,status);
+	GL_ATOMIC(enumeration, status);
 	GL_STRING(char1024,target);											
 	GL_ATOMIC(complex,value);											
-	GL_ATOMIC(enumeration,operation); 
-	GL_ATOMIC(enumeration,once);				
+	GL_ATOMIC(enumeration, operation);
+	GL_ATOMIC(enumeration, once);
 	GL_STRUCT(complex,once_value);
 	GL_ATOMIC(double,within);
 

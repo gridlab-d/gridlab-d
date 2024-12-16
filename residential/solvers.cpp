@@ -19,7 +19,7 @@ double dfdt(double t)
 }
 double e2solve(double _a, double _n, double _b, double _m, double _c, double p, double *e)
 {
-	static glsolver *newton_method = NULL;
+	static glsolver *newton_method = nullptr;
 	static struct {
 		unsigned int n; // dimensions (default 1)
 		double *x; // current values of x
@@ -31,15 +31,15 @@ double e2solve(double _a, double _n, double _b, double _m, double _c, double p, 
 	} data;
 
 	// load the solver if not yet loaded
-	if ( newton_method==NULL )
+	if ( newton_method==nullptr )
 	{
 		newton_method = new glsolver("newton_method");
 		unsigned int version=0;
-		if ( newton_method->get("version",&version,NULL)==0 || version!=1 )
+		if ( newton_method->get("version",&version,nullptr)==0 || version!=1 )
 			throw "newton_method version incorrect";
-		if ( newton_method->set("dimensions",1,NULL)==0 )
+		if ( newton_method->set("dimensions",1,nullptr)==0 )
 			throw "newton_method dimensions can't be set";
-		if ( newton_method->get("init",&data,NULL)==0 )
+		if ( newton_method->get("init",&data,nullptr)==0 )
 			throw "newton_method data can't be obtained";
 		data.f[0] = ft;
 		data.df[0] = dfdt;
@@ -51,7 +51,7 @@ double e2solve(double _a, double _n, double _b, double _m, double _c, double p, 
 	a=_a; b=_b; c=_c; n=_n; m=_m; 
 	if ( newton_method->solve(&data) )
 	{
-		if ( e!=NULL )
+		if ( e!=nullptr )
 			*e = data.x[0] / dfdt(data.x[0]);
 		return data.x[0];
 	}
@@ -64,18 +64,18 @@ double e2solve(double _a, double _n, double _b, double _m, double _c, double p, 
 double e2solve(double a, double n, double b, double m, double c, double p, double *e)
 {
 	// load the solver if not yet loaded
-	static glsolver *etp = NULL;
+	static glsolver *etp = nullptr;
 	static struct etpdata {
 		double t,a,n,b,m,c,p,e;
 		unsigned int i;
 	} data;
-	if ( etp==NULL )
+	if ( etp==nullptr )
 	{
 		etp = new glsolver("etp");
 		int version;
-		if ( etp->get("version",&version,NULL)==0 || version!=1 )
+		if ( etp->get("version",&version,nullptr)==0 || version!=1 )
 			throw "incorrect ETP solver version";
-		if ( etp->get("init",&data,NULL)==0 )
+		if ( etp->get("init",&data,nullptr)==0 )
 			throw "unable to initialize ETP solver data";
 		data.i = 100;
 	}
@@ -90,7 +90,7 @@ double e2solve(double a, double n, double b, double m, double c, double p, doubl
 	data.p = p;
 	if ( etp->solve(&data) )
 	{
-		if ( e!=NULL )
+		if ( e!=nullptr )
 			*e = data.e;
 		return data.t;
 	}

@@ -46,7 +46,7 @@ triplex_line_configuration::triplex_line_configuration(MODULE *mod) : line_confi
 			PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),PT_DESCRIPTION,"amp rating in summer, short term",
 			PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),PT_DESCRIPTION,"amp rating in winter, continuous",
 			PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),PT_DESCRIPTION,"amp rating in winter, short term",
-            NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+            nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
 

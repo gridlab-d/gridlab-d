@@ -43,7 +43,7 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 			PT_int16, "tap_C",PADDR(tap[2]),PT_DESCRIPTION,"current tap position of tap C",
 			PT_enumeration, "msg_mode", PADDR(msgmode),PT_DESCRIPTION,"messages regarding remote node voltage to come internally from gridlabd or externally through co-simulation. Set to EXTERNAL only if you have co-simulation enabled",
 				PT_KEYWORD, "INTERNAL", (enumeration)msg_INTERNAL,
-				PT_KEYWORD, "EXTERNAL", (enumeration)msg_EXTERNAL, 
+				PT_KEYWORD, "EXTERNAL", (enumeration)msg_EXTERNAL,
 			PT_complex, "remote_voltage_A[V]", PADDR(check_voltage[0]),PT_DESCRIPTION,"remote node voltage, Phase A to ground",
             PT_complex, "remote_voltage_B[V]", PADDR(check_voltage[1]),PT_DESCRIPTION,"remote node voltage, Phase B to ground",
             PT_complex, "remote_voltage_C[V]", PADDR(check_voltage[2]),PT_DESCRIPTION,"remote node voltage, Phase C to ground",

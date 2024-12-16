@@ -15,7 +15,7 @@
 #include "gridlabd.h"
 #include "link.h"
 
-CALLBACKS *callback = NULL;
+CALLBACKS *callback = nullptr;
 
 #ifdef HAVE_MATLAB
 
@@ -70,7 +70,7 @@ static mxArray* matlab_exec(MATLABLINK *matlab, char *format, ...)
 
 static mxArray* matlab_create_value(gld_property *prop)
 {
-	mxArray *value=NULL;
+	mxArray *value=nullptr;
 	switch ( prop->get_type() ) {
 	case PT_double:
 	case PT_random:
@@ -134,7 +134,7 @@ static mxArray* matlab_create_value(gld_property *prop)
 		// TODO
 		break;
 	default:
-		value = NULL;
+		value = nullptr;
 		break;
 	}
 	return value;
@@ -205,7 +205,7 @@ static mxArray* matlab_set_value(mxArray *value, gld_property *prop)
 		// TODO
 		break;
 	default:
-		value = NULL;
+		value = nullptr;
 		break;
 	}
 	return value;
@@ -270,7 +270,7 @@ static mxArray* matlab_get_value(mxArray *value, gld_property *prop)
 		// TODO
 		break;
 	default:
-		value = NULL;
+		value = nullptr;
 		break;
 	}
 	return value;
@@ -324,7 +324,7 @@ EXPORT bool glx_settag(glxlink *mod, char *tag, char *data)
 	else if ( strcmp(tag,"root")==0 )
 	{
 		if ( strcmp(data,"")==0 ) // no root
-			matlab->rootname=NULL;
+			matlab->rootname=nullptr;
 		else 
 		{
 			matlab->rootname = (char*)malloc(strlen(data)+1);
@@ -434,15 +434,15 @@ EXPORT bool glx_init(glxlink *mod)
 	if ( matlab->command )
 		matlab->engine = engOpen(matlab->command);
 	else
-		matlab->engine = engOpenSingleUse(NULL,NULL,&matlab->status);
-	if ( matlab->engine==NULL )
+		matlab->engine = engOpenSingleUse(nullptr,nullptr,&matlab->status);
+	if ( matlab->engine==nullptr )
 	{
 		gl_error("matlab engine start failed, status code is '%d'", matlab->status);
 		return false;
 	}
 #else
 	matlab->engine = engOpen(matlab->command);
-	if ( matlab->engine==NULL )
+	if ( matlab->engine==nullptr )
 	{
 		gl_error("matlab engine start failed");
 		return false;
@@ -450,7 +450,7 @@ EXPORT bool glx_init(glxlink *mod)
 #endif
 
 	// set the output buffer
-	if ( matlab->output_buffer!=NULL )
+	if ( matlab->output_buffer!=nullptr )
 		engOutputBuffer(matlab->engine,matlab->output_buffer,(int)matlab->output_size);
 
 	// setup matlab engine
@@ -479,7 +479,7 @@ EXPORT bool glx_init(glxlink *mod)
 		if ( matlab->workdir[0]=='/' )
 			matlab_exec(matlab,"cd '%s'", matlab->workdir);
 		else
-			matlab_exec(matlab,"cd '%s/%s'", getcwd(NULL,0),matlab->workdir);
+			matlab_exec(matlab,"cd '%s/%s'", getcwd(nullptr,0),matlab->workdir);
 	}
 
 	// run the initialization command(s)
@@ -509,30 +509,30 @@ EXPORT bool glx_init(glxlink *mod)
 		}
 	}
 
-	if ( matlab->rootname!=NULL )
+	if ( matlab->rootname!=nullptr )
 	{
 		// build gridlabd data
 		mwSize dims[] = {1,1};
-		mxArray *gridlabd_struct = mxCreateStructArray(2,dims,0,NULL);
+		mxArray *gridlabd_struct = mxCreateStructArray(2,dims,0,nullptr);
 
 		///////////////////////////////////////////////////////////////////////////
 		// build global data
 		LINKLIST *item;
-		mxArray *global_struct = mxCreateStructArray(2,dims,0,NULL);
-		for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
+		mxArray *global_struct = mxCreateStructArray(2,dims,0,nullptr);
+		for ( item=mod->get_globals() ; item!=nullptr ; item=mod->get_next(item) )
 		{
 			char *name = mod->get_name(item);
 			GLOBALVAR *var = mod->get_globalvar(item);
-			mxArray *var_struct = NULL;
+			mxArray *var_struct = nullptr;
 			mwIndex var_index;
-			if ( var==NULL ) continue;
+			if ( var==nullptr ) continue;
 
 			// do not map module or structured globals
-			if ( strchr(var->prop->name,':')!=NULL )
+			if ( strchr(var->prop->name,':')!=nullptr )
 			{
 				// ignore module globals here
 			}
-			else if ( strchr(var->prop->name,'.')!=NULL )
+			else if ( strchr(var->prop->name,'.')!=nullptr )
 			{
 				char struct_name[256];
 				if ( sscanf(var->prop->name,"%[^.]",struct_name)==0 )
@@ -540,7 +540,7 @@ EXPORT bool glx_init(glxlink *mod)
 					gld_property prop(var);
 					var_index = mxAddField(global_struct,prop.get_name());
 					var_struct = matlab_create_value(&prop);
-					if ( var_struct!=NULL )
+					if ( var_struct!=nullptr )
 					{
 						//mod->add_copyto(var->prop->addr,mxGetData(var_struct));
 						mxSetFieldByNumber(global_struct,0,var_index,var_struct);
@@ -552,7 +552,7 @@ EXPORT bool glx_init(glxlink *mod)
 				gld_property prop(var);
 				var_index = mxAddField(global_struct,prop.get_name());
 				var_struct = matlab_create_value(&prop);
-				if ( var_struct!=NULL )
+				if ( var_struct!=nullptr )
 				{
 					//mod->add_copyto(var->prop->addr,mxGetData(var_struct));
 					mxSetFieldByNumber(global_struct,0,var_index,var_struct);
@@ -560,7 +560,7 @@ EXPORT bool glx_init(glxlink *mod)
 			}
 
 			// update export list
-			if ( var_struct!=NULL )
+			if ( var_struct!=nullptr )
 			{
 				mod->set_addr(item,(void*)var_struct);
 				mod->set_index(item,(size_t)var_index);
@@ -574,14 +574,14 @@ EXPORT bool glx_init(glxlink *mod)
 		///////////////////////////////////////////////////////////////////////////
 		// build module data
 		dims[0] = dims[1] = 1;
-		mxArray *module_struct = mxCreateStructArray(2,dims,0,NULL);
+		mxArray *module_struct = mxCreateStructArray(2,dims,0,nullptr);
 
 		// add modules
-		for ( MODULE *module = callback->module.getfirst() ; module!=NULL ; module=module->next )
+		for ( MODULE *module = callback->module.getfirst() ; module!=nullptr ; module=module->next )
 		{
 			// create module info struct
 			mwIndex dims[] = {1,1};
-			mxArray *module_data = mxCreateStructArray(2,dims,0,NULL);
+			mxArray *module_data = mxCreateStructArray(2,dims,0,nullptr);
 			mwIndex module_index = mxAddField(module_struct,module->name);
 			mxSetFieldByNumber(module_struct,0,module_index,module_data);
 			
@@ -604,48 +604,48 @@ EXPORT bool glx_init(glxlink *mod)
 		///////////////////////////////////////////////////////////////////////////
 		// build class data
 		dims[0] = dims[1] = 1;
-		mxArray *class_struct = mxCreateStructArray(2,dims,0,NULL);
+		mxArray *class_struct = mxCreateStructArray(2,dims,0,nullptr);
 		gridlabd_index = mxAddField(gridlabd_struct,"class");
 		mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,class_struct);
 		mwIndex class_id[1024]; // index into class struct
 		memset(class_id,0,sizeof(class_id));
 
 		// add classes
-		for ( CLASS *oclass = callback->class_getfirst() ; oclass!=NULL ; oclass=oclass->next )
+		for ( CLASS *oclass = callback->class_getfirst() ; oclass!=nullptr ; oclass=oclass->next )
 		{
 			// count objects in this class
 			mwIndex dims[] = {0,1};
-			for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
+			for ( item=mod->get_objects() ; item!=nullptr ; item=mod->get_next(item) )
 			{
 				OBJECT *obj = mod->get_object(item);
-				if ( obj==NULL || obj->oclass!=oclass ) continue;
+				if ( obj==nullptr || obj->oclass!=oclass ) continue;
 				dims[0]++;
 			}
 			if ( dims[0]==0 ) continue;
-			mxArray *runtime_struct = mxCreateStructArray(2,dims,0,NULL);
+			mxArray *runtime_struct = mxCreateStructArray(2,dims,0,nullptr);
 
 			// add class 
 			mwIndex class_index = mxAddField(class_struct,oclass->name);
 			mxSetFieldByNumber(class_struct,0,class_index,runtime_struct);
 
 			// add properties to class
-			for ( PROPERTY *prop=oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
+			for ( PROPERTY *prop=oclass->pmap ; prop!=nullptr && prop->oclass==oclass ; prop=prop->next )
 			{
 				mwIndex dims[] = {1,1};
-				mxArray *property_struct = mxCreateStructArray(2,dims,0,NULL);
+				mxArray *property_struct = mxCreateStructArray(2,dims,0,nullptr);
 				mwIndex runtime_index = mxAddField(runtime_struct,prop->name);
 				mxSetFieldByNumber(runtime_struct,0,runtime_index,property_struct);
 			}
 
 			// add objects to class
-			for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
+			for ( item=mod->get_objects() ; item!=nullptr ; item=mod->get_next(item) )
 			{
 				OBJECT *obj = mod->get_object(item);
-				if ( obj==NULL || obj->oclass!=oclass ) continue;
+				if ( obj==nullptr || obj->oclass!=oclass ) continue;
 				mwIndex index = class_id[obj->oclass->id]++;
 				
 				// add properties to class
-				for ( PROPERTY *prop=oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
+				for ( PROPERTY *prop=oclass->pmap ; prop!=nullptr && prop->oclass==oclass ; prop=prop->next )
 				{
 					gld_property p(obj,prop);
 					mxArray *data = matlab_create_value(&p);
@@ -661,9 +661,9 @@ EXPORT bool glx_init(glxlink *mod)
 		///////////////////////////////////////////////////////////////////////////
 		// build the object data
 		dims[0] = 0;
-		for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
+		for ( item=mod->get_objects() ; item!=nullptr ; item=mod->get_next(item) )
 		{
-			if ( mod->get_object(item)!=NULL ) dims[0]++;
+			if ( mod->get_object(item)!=nullptr ) dims[0]++;
 		}
 		dims[1] = 1;
 		memset(class_id,0,sizeof(class_id));
@@ -671,10 +671,10 @@ EXPORT bool glx_init(glxlink *mod)
 			"latitude","longitude","in","out","rng_state","heartbeat","lock","flags"};
 		mxArray *object_struct = mxCreateStructArray(2,dims,sizeof(objfields)/sizeof(objfields[0]),objfields);
 		mwIndex n=0;
-		for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
+		for ( item=mod->get_objects() ; item!=nullptr ; item=mod->get_next(item) )
 		{
 			OBJECT *obj = mod->get_object(item);
-			if ( obj==NULL ) continue;
+			if ( obj==nullptr ) continue;
 			class_id[obj->oclass->id]++; // index into class struct
 
 			//Explicit error on object - prevents segfaults if relax_naming_rules is enabled
@@ -691,7 +691,7 @@ EXPORT bool glx_init(glxlink *mod)
 				return false;
 			}
 
-			const char *objname[] = {obj->name&&isdigit(obj->name[0])?NULL:obj->name};
+			const char *objname[] = {obj->name&&isdigit(obj->name[0])?nullptr:obj->name};
 			const char *oclassname[] = {obj->oclass->name};
 
 			if (obj->name) mxSetFieldByNumber(object_struct,n,0,mxCreateCharMatrixFromStrings(mwSize(1),objname));
@@ -723,25 +723,25 @@ EXPORT bool glx_init(glxlink *mod)
 
 	///////////////////////////////////////////////////////////////////////////
 	// build the import/export data
-	for ( LINKLIST *item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+	for ( LINKLIST *item=mod->get_exports() ; item!=nullptr ; item=mod->get_next(item) )
 	{
 		OBJECTPROPERTY *objprop = mod->get_export(item);
-		if ( objprop==NULL ) continue;
+		if ( objprop==nullptr ) continue;
 
 		// add to published items
 		gld_property prop(objprop->obj,objprop->prop);
 		item->addr = (mxArray*)matlab_create_value(&prop);
 		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
 	}
-	for ( LINKLIST *item=mod->get_imports() ; item!=NULL ; item=mod->get_next(item) )
+	for ( LINKLIST *item=mod->get_imports() ; item!=nullptr ; item=mod->get_next(item) )
 	{
 		OBJECTPROPERTY *objprop = mod->get_import(item);
-		if ( objprop==NULL ) continue;
+		if ( objprop==nullptr ) continue;
 
 		// check that not already in export list
 		LINKLIST *export_item;
 		bool found=false;
-		for ( export_item=mod->get_exports() ; export_item!=NULL ; export_item=mod->get_next(export_item) )
+		for ( export_item=mod->get_exports() ; export_item!=nullptr ; export_item=mod->get_next(export_item) )
 		{
 			OBJECTPROPERTY *other = mod->get_export(item);
 			if ( memcmp(objprop,other,sizeof(OBJECTPROPERTY)) )
@@ -756,7 +756,7 @@ EXPORT bool glx_init(glxlink *mod)
 	}
 
 	static int32 matlab_flag = 1;
-	gl_global_create("MATLAB",PT_int32,&matlab_flag,PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"indicates that MATLAB is available",NULL);
+	gl_global_create("MATLAB",PT_int32,&matlab_flag,PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"indicates that MATLAB is available",nullptr);
 	mod->last_t = gl_globalclock;
 	return true;
 }
@@ -766,13 +766,13 @@ bool copy_exports(glxlink *mod)
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
 	LINKLIST *item;
 
-	if ( matlab->rootname!=NULL )
+	if ( matlab->rootname!=nullptr )
 	{
 		// update globals
-		for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
+		for ( item=mod->get_globals() ; item!=nullptr ; item=mod->get_next(item) )
 		{
 			mxArray *var_struct = (mxArray*)mod->get_addr(item);
-			if ( var_struct!=NULL )
+			if ( var_struct!=nullptr )
 			{
 				mwIndex var_index = (mwIndex)mod->get_index(item);
 				GLOBALVAR *var = mod->get_globalvar(item);
@@ -785,16 +785,16 @@ bool copy_exports(glxlink *mod)
 		// TODO
 
 		// update objects
-		for ( item=mod->get_objects() ; item!=NULL ; item=mod->get_next(item) )
+		for ( item=mod->get_objects() ; item!=nullptr ; item=mod->get_next(item) )
 		{
 			OBJECT *obj = mod->get_object(item);
-			if ( obj==NULL ) continue;
+			if ( obj==nullptr ) continue;
 			mwIndex index = mod->get_index(item);
 			mxArray *runtime_struct = (mxArray*)mod->get_addr(item); 
 			
 			// add properties to class
 			CLASS *oclass = obj->oclass;
-			for ( PROPERTY *prop=oclass->pmap ; prop!=NULL && prop->oclass==oclass ; prop=prop->next )
+			for ( PROPERTY *prop=oclass->pmap ; prop!=nullptr && prop->oclass==oclass ; prop=prop->next )
 			{
 				gld_property p(obj,prop);
 				mxArray *data = mxGetField(runtime_struct,index,prop->name);
@@ -807,20 +807,20 @@ bool copy_exports(glxlink *mod)
 	}
 
 	// update exports
-	for ( item=mod->get_exports() ; item!=NULL ; item=mod->get_next(item) )
+	for ( item=mod->get_exports() ; item!=nullptr ; item=mod->get_next(item) )
 	{
 		OBJECTPROPERTY *objprop = mod->get_export(item);
-		if ( objprop==NULL ) continue;
+		if ( objprop==nullptr ) continue;
 		gld_property prop(objprop->obj,objprop->prop);
 		item->addr = matlab_set_value((mxArray*)item->addr,&prop);
 		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
 	}
 
 	// update imports
-	for ( item=mod->get_imports() ; item!=NULL ; item=mod->get_next(item) )
+	for ( item=mod->get_imports() ; item!=nullptr ; item=mod->get_next(item) )
 	{
 		OBJECTPROPERTY *objprop = mod->get_import(item);
-		if ( objprop==NULL ) continue;
+		if ( objprop==nullptr ) continue;
 		gld_property prop(objprop->obj,objprop->prop);
 		item->addr = matlab_set_value((mxArray*)item->addr,&prop);
 		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
@@ -834,13 +834,13 @@ bool copy_imports(glxlink *mod)
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
 	LINKLIST *item;
 
-	if ( matlab->rootname!=NULL )
+	if ( matlab->rootname!=nullptr )
 	{
 		// update globals
-		for ( item=mod->get_globals() ; item!=NULL ; item=mod->get_next(item) )
+		for ( item=mod->get_globals() ; item!=nullptr ; item=mod->get_next(item) )
 		{
 			mxArray *var_struct = (mxArray*)mod->get_addr(item);
-			if ( var_struct!=NULL )
+			if ( var_struct!=nullptr )
 			{
 				mwIndex var_index = (mwIndex)mod->get_index(item);
 				GLOBALVAR *var = mod->get_globalvar(item);
@@ -851,10 +851,10 @@ bool copy_imports(glxlink *mod)
 	}
 
 	// update imports
-	for ( item=mod->get_imports()==NULL?mod->get_exports():mod->get_imports() ; item!=NULL ; item=mod->get_next(item) )
+	for ( item=mod->get_imports()==nullptr?mod->get_exports():mod->get_imports() ; item!=nullptr ; item=mod->get_next(item) )
 	{
 		OBJECTPROPERTY *objprop = mod->get_import(item);
-		if ( objprop==NULL ) continue;
+		if ( objprop==nullptr ) continue;
 		gld_property prop(objprop->obj,objprop->prop);
 		mxArray *data = engGetVariable(matlab->engine,item->name);
 		if ( data )
@@ -886,7 +886,7 @@ EXPORT TIMESTAMP glx_sync(glxlink* mod,TIMESTAMP t0)
 		if ( ans && mxIsDouble(ans) )
 		{
 			double *pVal = (double*)mxGetData(ans);
-			if ( pVal!=NULL ){
+			if ( pVal!=nullptr ){
 				t1 = floor(*pVal);
 			}
 			if ( t1<TS_INVALID || t1 > TS_MAX ){

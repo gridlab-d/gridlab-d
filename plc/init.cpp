@@ -12,23 +12,23 @@
 
 char libpath[1024] = ".";
 char incpath[1024] = ".";
-TIMESTAMP *pGlobalClock=NULL;
+TIMESTAMP *pGlobalClock=nullptr;
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
-	if (set_callback(fntable)==NULL)
+	if (set_callback(fntable)==nullptr)
 	{
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 	pGlobalClock = fntable->global_clock;
 	gl_global_getvar("execdir",libpath,sizeof(libpath));
 	strcat(libpath,"/plc/lib");
-	gl_global_create("plc::libpath",PT_char1024,libpath,NULL);
+	gl_global_create("plc::libpath",PT_char1024,libpath,nullptr);
 
 	gl_global_getvar("execdir",incpath,sizeof(incpath));
 	strcat(incpath,"/plc/include");
-	gl_global_create("plc::incpath",PT_char1024,incpath,NULL);
+	gl_global_create("plc::incpath",PT_char1024,incpath,nullptr);
 
 	new plc(module);
 	new comm(module);

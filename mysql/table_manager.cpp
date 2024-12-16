@@ -51,7 +51,7 @@ void table_manager::init_table(table_manager* next_table_in) {
 
 void table_manager::extend_list(query_engine* parent) {
 	table_manager* new_table = new table_manager(db, threshold, column_limit, table_index + 1, table_root, recordid_fieldname, datetime_fieldname, false);
-	new_table->init_table((next_table != NULL) ? next_table : this);
+	new_table->init_table((next_table != nullptr) ? next_table : this);
 	next_table = new_table;
 	parent->inc_table_count();
 }
@@ -75,7 +75,7 @@ int table_manager::add_table_header(query_engine* parent, stringstream& property
 		property_list.str("");
 		property_list.clear();
 
-		if (property_unit != NULL) {
+		if (property_unit != nullptr) {
 			strcpy(property_unit_buffer, property_unit);
 		} else {
 			strcpy(property_unit_buffer, "N/A");

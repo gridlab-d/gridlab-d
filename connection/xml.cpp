@@ -19,8 +19,8 @@ EXPORT_PLC(xml);
 EXPORT_LOADMETHOD(xml,link);
 EXPORT_LOADMETHOD(xml,option);
 
-CLASS *xml::oclass = NULL;
-xml *xml::defaults = NULL;
+CLASS *xml::oclass = nullptr;
+xml *xml::defaults = nullptr;
 
 int xml_translate(char *local, size_t local_len, char *remote, size_t remote_len, TRANSLATIONFLAG flag, ...)
 {
@@ -81,7 +81,7 @@ xml::xml(MODULE *module) : native(module)
 {
 	// register to receive notice for first top down. bottom up, and second top down synchronizations
 	oclass = gld_class::create(module,"xml",sizeof(xml),PC_AUTOLOCK|PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_OBSERVER);
-	if (oclass==NULL)
+	if (oclass==nullptr)
 		throw "connection/xml::xml(MODULE*): unable to register class connection:xml";
 	else
 		oclass->trl = TRL_UNKNOWN;
@@ -96,7 +96,7 @@ xml::xml(MODULE *module) : native(module)
 		PT_char1024, "schema", get_schema_offset(), PT_DESCRIPTION, "XSD url",
 		PT_char1024, "stylesheet", get_stylesheet_offset(), PT_DESCRIPTION, "XSL url",
 		// TODO add published properties here
-		NULL)<1)
+		nullptr)<1)
 			throw "connection/xml::xml(MODULE*): unable to publish properties of connection:xml";
 
 	if ( !gl_publish_loadmethod(oclass, "link", reinterpret_cast<int (*)(void *, char *)>(loadmethod_xml_link)) )
@@ -116,7 +116,7 @@ int xml::create(void)
 
 int xml::init(OBJECT *parent)
 {
-	if ( get_connection()==NULL )
+	if ( get_connection()==nullptr )
 	{
 		error("connection options not specified");
 		return 0;
@@ -133,18 +133,18 @@ int xml::init(OBJECT *parent)
 			"xml-version",(const char*)version,
 			"xml-schema",(const char*)schema,
 			"xml-stylesheet",(const char*)stylesheet,
-			NULL, // required to end tag/value list
+			nullptr, // required to end tag/value list
 		MSG_COMPLETE, &id,
-		NULL);
+		nullptr);
 	if ( id<0 )
 		error("client initiated initial message exchange failed");
 	if ( get_connection()->server_response(			
 		MSG_CRITICAL,
 		MSG_INITIATE, 
 		MSG_CONTINUE,
-		NULL)<0
+		nullptr)<0
 // TODO FIX THIS:		|| get_connection()->server_response("id","%d",id)<0
-		|| get_connection()->server_response(MSG_COMPLETE,&id,NULL)<0 )
+		|| get_connection()->server_response(MSG_COMPLETE,&id,nullptr)<0 )
 	{
 		error("server response initial message exchange failed");
 		return 0;

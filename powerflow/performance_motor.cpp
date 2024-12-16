@@ -71,7 +71,7 @@ performance_motor::performance_motor(MODULE *mod):node(mod)
             PT_double,"Vinit[pu]",PADDR(Vinit),PT_DESCRIPTION,"Initial assumed voltage value of connected terminal",
             PT_double,"stall_time_tracker[s]",PADDR(stall_time_tracker),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"internal stall time tracker variable",
             PT_double,"reconnect_time_tracker[s]",PADDR(reconnect_time_tracker),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"internal reconnect time tracker variable",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_performance_motor)==nullptr)

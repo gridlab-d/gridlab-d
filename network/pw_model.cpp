@@ -27,7 +27,7 @@ EXPORT_ISA(pw_model);
 EXPORT int finalize_pw_model(OBJECT *obj) 
 {	pw_model *my = OBJECTDATA(obj,pw_model);
 	try {
-		return obj!=NULL ? my->finalize() : 0;
+		return obj!=nullptr ? my->finalize() : 0;
 	} 
 	//T_CATCHALL(pw_model,finalize); 
 	catch (char *msg) {
@@ -44,17 +44,17 @@ EXPORT int finalize_pw_model(OBJECT *obj)
 	}
 }
 
-CLASS *pw_model::oclass = NULL;
-pw_model *pw_model::defaults = NULL;
+CLASS *pw_model::oclass = nullptr;
+pw_model *pw_model::defaults = nullptr;
 
 pw_model::pw_model(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		//GLOBAL char32 model_name INIT("(unnamed)")
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gld_class::create(module,"pw_model",sizeof(pw_model),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class assert";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -71,7 +71,7 @@ pw_model::pw_model(MODULE *module)
 			PT_bool, "update_flag", get_update_flag_offset(), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "flag set by pw_load objects signaling the loads need updating",
 			PT_int32, "exchange_count", get_exchange_count_offset(), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "number of times PowerWorld and GridLAB-D have exchanged data",
 			PT_bool, "valid_flag", get_valid_flag_offset(), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "flag set by pw_model signaling if the PowerWorld model solved successfully",
-			NULL)<1){
+			nullptr)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
@@ -176,7 +176,7 @@ int pw_model::init(OBJECT *parent){
 		LPCOLESTR clsid_str = L"pwrworld.SimulatorAuto";
 		
 	//	* initialize COM
-		rv = ::CoInitialize(NULL);
+		rv = ::CoInitialize(nullptr);
 
 		//Set flag to true to uninitialize us upon closing
 		startedCOM=true;
@@ -223,7 +223,7 @@ int pw_model::init(OBJECT *parent){
 			*/
 			return 0;
 		}
-		hr = A.CreateInstance(clsid, NULL, CLSCTX_SERVER);
+		hr = A.CreateInstance(clsid, nullptr, CLSCTX_SERVER);
 		//	* if !connect(model_name), fail!
 		output = A->OpenCase(model_name.get_string()); // must catch RV in a _variant_t!
 		if(0 == check_COM_output(output)){

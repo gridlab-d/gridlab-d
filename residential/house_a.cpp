@@ -123,10 +123,10 @@ EXPORT CIRCUIT *attach_enduse_house_a(OBJECT *obj, enduse *target, double breake
 	house *pHouse = 0;
 	CIRCUIT *c = 0;
 
-	if(obj == NULL){
+	if(obj == nullptr){
 		GL_THROW("attach_house_a: null object reference");
 	}
-	if(target == NULL){
+	if(target == nullptr){
 		GL_THROW("attach_house_a: null enduse target data");
 	}
 	if(breaker_amps < 0 || breaker_amps > 1000){ /* at 3kA, we're looking into substation power levels, not enduses */
@@ -140,8 +140,8 @@ EXPORT CIRCUIT *attach_enduse_house_a(OBJECT *obj, enduse *target, double breake
 //////////////////////////////////////////////////////////////////////////
 // house CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* house::oclass = NULL;
-CLASS* house::pclass = NULL;
+CLASS* house::oclass = nullptr;
+CLASS* house::pclass = nullptr;
 
 /** House object constructor:  Registers the class and publishes the variables that can be set by the user. 
 Sets default randomized values for published variables.
@@ -149,11 +149,11 @@ Sets default randomized values for published variables.
 house::house(MODULE *mod) : residential_enduse(mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"house_a",sizeof(house),PC_PRETOPDOWN|PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class house_a";
 		else
 			oclass->trl = TRL_DEMONSTRATED;
@@ -193,7 +193,7 @@ house::house(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD,"HEAT",(enumeration)HEAT,
 				PT_KEYWORD,"COOL",(enumeration)COOL,
 			PT_enduse,"houseload",PADDR(tload), PT_DESCRIPTION, "",
-			NULL)<1) 
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)&attach_enduse_house_a);		
 	}	
@@ -239,7 +239,7 @@ int house::create()
 	house_content_thermal_mass = 10000.0;		// thermal mass of house [BTU/F]
 
 	// set defaults for panel/meter variables
-	panel.circuits=NULL;
+	panel.circuits=nullptr;
 	panel.max_amps=200;
 
 	return res;
@@ -255,12 +255,12 @@ int house::init_climate()
 	OBJECT *hdr = OBJECTHDR(this);
 
 	// link to climate data
-	static FINDLIST *climates = NULL;
+	static FINDLIST *climates = nullptr;
 	int not_found = 0;
-	if (climates==NULL && not_found==0) 
+	if (climates==nullptr && not_found==0)
 	{
 		climates = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
-		if (climates==NULL)
+		if (climates==nullptr)
 		{
 			not_found = 1;
 			gl_warning("house: no climate data found, using static data");
@@ -276,7 +276,7 @@ int house::init_climate()
 			gl_warning("house: %d climates found, using first one defined", climates->hit_count);
 		}
 	}
-	if (climates!=NULL)
+	if (climates!=nullptr)
 	{
 		if (climates->hit_count==0)
 		{
@@ -289,7 +289,7 @@ int house::init_climate()
 		else //climate data was found
 		{
 			// force rank of object w.r.t climate
-			OBJECT *obj = gl_find_next(climates,NULL);
+			OBJECT *obj = gl_find_next(climates,nullptr);
 			if (obj->rank<=hdr->rank)
 				gl_set_dependent(obj,hdr);
 			pTout = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
@@ -327,12 +327,12 @@ int house::init(OBJECT *parent)
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	OBJECT *obj = OBJECTHDR(this);
-	if (parent!=NULL && gl_object_isa(parent,"triplex_meter"))
+	if (parent!=nullptr && gl_object_isa(parent,"triplex_meter"))
 	{
 		// attach meter variables to each circuit
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
 		{
-			if ((*(map[i].var) = get_complex(parent,map[i].varname))==NULL)
+			if ((*(map[i].var) = get_complex(parent,map[i].varname))==nullptr)
 				GL_THROW("%s (%s:%d) does not implement triplex_meter variable %s for %s (house:%d)", 
 				/*	TROUBLESHOOT
 					The House requires that the triplex_meter contains certain published properties in order to properly connect
@@ -345,7 +345,7 @@ int house::init(OBJECT *parent)
 	}
 	else
 	{
-		gl_error("house:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
+		gl_error("house:%d %s; using static voltages", obj->id, parent==nullptr?"has no parent triplex_meter defined":"parent is not a triplex_meter");
 		/*	TROUBLESHOOT
 			The House model relies on a triplex_meter as a parent to calculate voltages based on
 			events within the powerflow module.  Create a triplex_meter object and set it as
@@ -450,7 +450,7 @@ CIRCUIT *house::attach(enduse *pLoad, ///< enduse structure
 					   int is220///< 0 for 120V, 1 for 240V load
 					   ) 
 {
-	if (pLoad==NULL){
+	if (pLoad==nullptr){
 		GL_THROW("end-use load couldn't be connected because it was not provided");
 		/*	TROUBLESHOOT
 			The house model expects all enduse load models to publish an 'enduse_load' property that points to the top
@@ -461,7 +461,7 @@ CIRCUIT *house::attach(enduse *pLoad, ///< enduse structure
 	
 	// construct and id the new circuit
 	CIRCUIT *c = new CIRCUIT;
-	if (c==NULL)
+	if (c==nullptr)
 	{
 		GL_THROW("memory allocation failure");
 
@@ -552,7 +552,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 
 	// gather load power and compute current for each circuit
 	CIRCUIT *c;
-	for (c=panel.circuits; c!=NULL; c=c->next)
+	for (c=panel.circuits; c!=nullptr; c=c->next)
 	{
 		// get circuit type
 		int n = (int)c->type;
@@ -632,7 +632,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	// compute line currents and post to meter
-	if (obj->parent != NULL)
+	if (obj->parent != nullptr)
 		LOCK_OBJECT(obj->parent);
 
 	pLine_I[0] = I[X13];
@@ -640,7 +640,7 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	pLine_I[2] = 0;
 	*pLine12 = I[X12];
 
-	if (obj->parent != NULL)
+	if (obj->parent != nullptr)
 		UNLOCK_OBJECT(obj->parent);
 
 	return sync_time;
@@ -923,8 +923,8 @@ double house::get_Tsolar(int hour, int month, double Tair, double Tout)
 complex *house::get_complex(OBJECT *obj, char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_complex)
-		return NULL;
+	if (p==nullptr || p->ptype!=PT_complex)
+		return nullptr;
 	return (complex*)GETADDR(obj,p);
 }
 
@@ -937,7 +937,7 @@ EXPORT int create_house_a(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(house::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			house *my = OBJECTDATA(*obj,house);;
 			gl_set_parent(*obj,parent);

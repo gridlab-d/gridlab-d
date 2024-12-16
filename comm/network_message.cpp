@@ -18,17 +18,17 @@
 //////////////////////////////////////////////////////////////////////////
 // CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* network_message::oclass = NULL;
+CLASS* network_message::oclass = nullptr;
 
 // the constructor registers the class and properties and sets the defaults
 network_message::network_message(MODULE *mod) 
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"network_message",sizeof(network_message),PC_BOTTOMUP);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 			/* TROUBLESHOOT
 				The registration for the network_message class failed.   This is usually caused
@@ -59,7 +59,7 @@ network_message::network_message(MODULE *mod)
 				PT_KEYWORD, "FAILED", NMS_FAILED,
 				PT_KEYWORD, "ERROR", NMS_ERROR,
 				PT_KEYWORD, "DELAYED", NMS_DELAYED,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
 				The registration for the network_message properties failed.   This is usually caused
 				by a coding error in the core implementation of classes or the module implementation.
@@ -190,7 +190,7 @@ int network_message::notify(int update_mode, PROPERTY *prop){
 EXPORT int create_network_message(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(network_message::oclass);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		network_message *my = OBJECTDATA(*obj,network_message);
 		gl_set_parent(*obj,parent);

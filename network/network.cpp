@@ -23,10 +23,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	//cmdargs(argc,argv);
 #endif // _DEBUG
 
-	if (set_callback(fntable)==NULL)
+	if (set_callback(fntable)==nullptr)
 	{
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
 #ifdef HAVE_POWERWORLD
@@ -37,10 +37,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new pw_recorder(module);
 	/* always return the first class registered */
 #else
-	CLASS *first = NULL;
+	CLASS *first = nullptr;
 #endif
 #else
-	CLASS *first = NULL;
+	CLASS *first = nullptr;
 #endif
 	return first;
 

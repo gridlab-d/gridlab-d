@@ -8,13 +8,13 @@
 
 #include "controller.h"
 
-CLASS* controller::oclass = NULL;
+CLASS* controller::oclass = nullptr;
 
 controller::controller(MODULE *module){
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module, "controller",sizeof(controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class controller";
 		else
 			oclass->trl = TRL_QUALIFIED;
@@ -159,15 +159,15 @@ controller::controller(MODULE *module){
 				PT_KEYWORD, "MARGINAL_PRICE", (enumeration)CT_PRICE,
 				PT_KEYWORD, "EXACT", (enumeration)CT_EXACT,
 				PT_KEYWORD, "FAILURE", (enumeration)CT_FAILURE,
-				PT_KEYWORD, "NULL", (enumeration)CT_NULL,
+				PT_KEYWORD, "nullptr", (enumeration)CT_NULL,
 			PT_enumeration, "proxy_clearing_type2", PADDR(proxy_clearing_type2),
 				PT_KEYWORD, "MARGINAL_SELLER", (enumeration)CT_SELLER,
 				PT_KEYWORD, "MARGINAL_BUYER", (enumeration)CT_BUYER,
 				PT_KEYWORD, "MARGINAL_PRICE", (enumeration)CT_PRICE,
 				PT_KEYWORD, "EXACT", (enumeration)CT_EXACT,
 				PT_KEYWORD, "FAILURE", (enumeration)CT_FAILURE,
-				PT_KEYWORD, "NULL", (enumeration)CT_NULL,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+				PT_KEYWORD, "nullptr", (enumeration)CT_NULL,
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(controller));
 	}
 }
@@ -325,20 +325,20 @@ int controller::init(OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	char tname[32];
 	char *namestr = (hdr->name ? hdr->name : tname);
-	gld_property *pInitPrice = NULL;
+	gld_property *pInitPrice = nullptr;
 
 	sprintf(tname, "controller:%i", hdr->id);
 
 	cheat();
 
-	if(parent == NULL){
+	if(parent == nullptr){
 		gl_error("%s: controller has no parent, therefore nothing to control", namestr);
 		return 0;
 	}
 
 	if(bidmode != BM_PROXY){
 		pMarket = gl_get_object((char *)(&pMkt));
-		if(pMarket == NULL){
+		if(pMarket == nullptr){
 			gl_error("%s: controller has no market, therefore no price signals", namestr);
 			return 0;
 		}
@@ -354,7 +354,7 @@ int controller::init(OBJECT *parent){
 		}
 
 		if(dPeriod == 0.0){
-			gld_property *pPeriod = NULL;
+			gld_property *pPeriod = nullptr;
 			if(fetch_property(&pPeriod, "period", pMarket) == 0){
 				return 0;
 			}
@@ -364,7 +364,7 @@ int controller::init(OBJECT *parent){
 
 		if(control_mode == CN_DEV_LEVEL){
 			pMarket2 = gl_get_object((char *)(&pMkt2));
-			if(pMarket2 == NULL){
+			if(pMarket2 == nullptr){
 				gl_error("%s: controller has no second market, therefore no price signals from the second market", namestr);
 				return 0;
 			}
@@ -382,7 +382,7 @@ int controller::init(OBJECT *parent){
 				return 2; // defer
 			}
 			if(dPeriod2 == 0.0){
-				gld_property *pPeriod2 = NULL;
+				gld_property *pPeriod2 = nullptr;
 				if(fetch_property(&pPeriod2, "period", pMarket2) == 0) {
 					return 0;
 				}
@@ -429,7 +429,7 @@ int controller::init(OBJECT *parent){
 		mku = marketunit->get_string();
 		strncpy(market_unit, mku.get_buffer(), 31);
 		submit = (FUNCTIONADDR)(gl_get_function(pMarket, "submit_bid_state"));
-		if(submit == NULL){
+		if(submit == nullptr){
 			char buf[256];
 			gl_error("Unable to find function, submit_bid_state(), for object %s.", (char *)gl_name(pMarket, buf, 255));
 			return 0;
@@ -466,7 +466,7 @@ int controller::init(OBJECT *parent){
 			mku = marketunit2->get_string();
 			strncpy(market_unit2, mku.get_buffer(), 31);
 			submit2 = (FUNCTIONADDR)(gl_get_function(pMarket2, "submit_bid_state"));
-			if(submit2 == NULL){
+			if(submit2 == nullptr){
 				char buf[256];
 				gl_error("Unable to find function, submit_bid_state(), for object %s.", (char *)gl_name(pMarket2, buf, 255));
 				return 0;
@@ -514,7 +514,7 @@ int controller::init(OBJECT *parent){
 		}
 		strncpy(market_unit, proxy_mkt_unit, 31);
 		submit = (FUNCTIONADDR)(gl_get_function(pMarket, "submit_bid_state"));
-		if(submit == NULL){
+		if(submit == nullptr){
 			char buf[256];
 			gl_error("Unable to find function, submit_bid_state(), for object %s.", (char *)gl_name(pMarket, buf, 255));
 			return 0;
@@ -552,7 +552,7 @@ int controller::init(OBJECT *parent){
 			}
 			strncpy(market_unit2, proxy_mkt_unit2, 31);
 			submit2 = (FUNCTIONADDR)(gl_get_function(pMarket2, "submit_bid_state"));
-			if(submit2 == NULL){
+			if(submit2 == nullptr){
 				char buf[256];
 				gl_error("Unable to find function, submit_bid_state(), for object %s.", (char *)gl_name(pMarket2, buf, 255));
 				return 0;
@@ -744,7 +744,7 @@ int controller::init(OBJECT *parent){
 	}
 	controller_bid2.bid_id = controller_bid.bid_id;
 	if(thermostat_state[0] == 0){
-		pThermostatState = NULL;
+		pThermostatState = nullptr;
 	} else {
 		pThermostatState = gl_get_enum_by_name(parent, thermostat_state.get_string());
 		if(pThermostatState == 0){
@@ -808,7 +808,7 @@ int controller::init(OBJECT *parent){
 		PS_OFF = powerstate_prop.find_keyword("OFF");
 		PS_ON = powerstate_prop.find_keyword("ON");
 		PS_UNKNOWN = powerstate_prop.find_keyword("UNKNOWN");
-		if ( PS_OFF==NULL || PS_ON==NULL || PS_UNKNOWN==NULL )
+		if ( PS_OFF==nullptr || PS_ON==nullptr || PS_UNKNOWN==nullptr )
 		{
 			gl_error("state property '%s' of object '%s' does not published all required keywords OFF, ON, and UNKNOWN", state,get_object(parent)->get_name());
 		}
@@ -844,7 +844,7 @@ int controller::init(OBJECT *parent){
 		OV_OFF = override_prop.find_keyword("OFF");
 		OV_ON = override_prop.find_keyword("ON");
 		OV_NORMAL = override_prop.find_keyword("NORMAL");
-		if ( OV_OFF==NULL || OV_ON==NULL || OV_NORMAL==NULL )
+		if ( OV_OFF==nullptr || OV_ON==nullptr || OV_NORMAL==nullptr )
 		{
 			gl_error("the use_override property '%s' does not define the expected enumeration keywords NORMAL, ON, and OFF");
 			return 0;
@@ -1930,12 +1930,12 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		last_q = 0.0;
 		
 		// We have to cool
-		if(monitor > cool_max && (pThermostatState == NULL || *pThermostatState == 1 || *pThermostatState == 3)){
+		if(monitor > cool_max && (pThermostatState == nullptr || *pThermostatState == 1 || *pThermostatState == 3)){
 			last_p = pCap;
 			last_q = coolDemand;
 		}
 		// We have to heat
-		else if(monitor < heat_min && (pThermostatState == NULL || *pThermostatState == 1 || *pThermostatState == 2)){
+		else if(monitor < heat_min && (pThermostatState == nullptr || *pThermostatState == 1 || *pThermostatState == 2)){
 			last_p = pCap;
 			last_q = heatDemand;
 		}
@@ -1945,7 +1945,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			last_q = 0.0;
 		}
 		// We might heat, if the price is right
-		else if(monitor <= heat_max && monitor >= heat_min && (pThermostatState == NULL || *pThermostatState == 1 || *pThermostatState == 2)){
+		else if(monitor <= heat_max && monitor >= heat_min && (pThermostatState == nullptr || *pThermostatState == 1 || *pThermostatState == 2)){
 			double ramp, range;
 			ramp = (monitor > heating_setpoint0 ? heat_ramp_high : heat_ramp_low);
 			range = (monitor > heating_setpoint0 ? heat_range_high : heat_range_low);
@@ -1957,7 +1957,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			last_q = heatDemand;
 		}
 		// We might cool, if the price is right
-		else if(monitor <= cool_max && monitor >= cool_min && (pThermostatState == NULL || *pThermostatState == 1 || *pThermostatState == 3)){
+		else if(monitor <= cool_max && monitor >= cool_min && (pThermostatState == nullptr || *pThermostatState == 1 || *pThermostatState == 3)){
 			double ramp, range;
 			ramp = (monitor > cooling_setpoint0 ? cool_ramp_high : cool_ramp_low);
 			range = (monitor > cooling_setpoint0 ? cool_range_high : cool_range_low);
@@ -2629,7 +2629,7 @@ EXPORT int create_controller(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(controller::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			controller *my = OBJECTDATA(*obj,controller);
 			gl_set_parent(*obj,parent);
@@ -2645,7 +2645,7 @@ EXPORT int init_controller(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 		{
 			return OBJECTDATA(obj,controller)->init(parent);
 		}

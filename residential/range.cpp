@@ -22,19 +22,19 @@
 //////////////////////////////////////////////////////////////////////////
 // range CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* range::oclass = NULL;
-CLASS* range::pclass = NULL;
+CLASS* range::oclass = nullptr;
+CLASS* range::pclass = nullptr;
 
 /**  Register the class and publish range object properties
  **/
 range::range(MODULE *module) : residential_enduse(module){
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		pclass = residential_enduse::oclass;
 		// register the class definition
 		oclass = gl_register_class(module,"range",sizeof(range),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
@@ -123,7 +123,7 @@ range::range(MODULE *module) : residential_enduse(module){
 			PT_double,"previous_load[kW]",PADDR(prev_load),PT_DESCRIPTION, "the actual load based on current voltage stored for use in controllers",
 			PT_complex,"actual_power[kVA]",PADDR(range_actual_power), PT_DESCRIPTION, "the actual power based on the current voltage across the coils",
 			PT_double,"is_range_on",PADDR(is_range_on),PT_DESCRIPTION, "simple logic output to determine state of range (1-on, 0-off)",
-			NULL)<1) 
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
@@ -227,7 +227,7 @@ int range::init(OBJECT *parent)
 {
 	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
 	
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("range::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -1144,7 +1144,7 @@ double range::actual_kW(void)
 			return heating_element_capacity; /* gas heating is voltage independent. */
 		}
 
-		if (pCircuit == NULL)
+		if (pCircuit == nullptr)
 		{
 			actual_voltage = default_line_voltage;
 		}
@@ -1242,7 +1242,7 @@ double range::get_Tambient(enumeration loc)
 EXPORT int create_range(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(range::oclass);
-	if (*obj!=NULL)
+	if (*obj!=nullptr)
 	{
 		range *my = OBJECTDATA(*obj,range);;
 		gl_set_parent(*obj,parent);

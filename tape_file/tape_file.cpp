@@ -42,12 +42,12 @@ EXPORT void set_csv_keep_clean()
  */
 EXPORT int open_player(struct player *my, char *fname, char *flags)
 {
-	//char *ff = gl_findfile(fname,NULL,FF_READ);
+	//char *ff = gl_findfile(fname,nullptr,FF_READ);
 	char *ff = fname;
 
 	/* "-" means stdin */
-	my->fp = (strcmp(fname,"-")==0?stdin:(ff?fopen(ff,flags):NULL));
-	if (my->fp==NULL)
+	my->fp = (strcmp(fname,"-")==0?stdin:(ff?fopen(ff,flags):nullptr));
+	if (my->fp==nullptr)
 	{
 		sprintf(my->lasterr, "player file %s: %s", fname, strerror(errno));
 		my->status = TS_DONE;
@@ -84,7 +84,7 @@ EXPORT void close_player(struct player *my)
 #define MAPSIZE(N) ((N-1)/8+1)
 #define SET(X,B) ((X)[(B)/8]|=(1<<((B)&7)))
 #define ISSET(X,B) (((X)[(B)/8]&(1<<((B)&7)))==(1<<((B)&7)))
-char *file=NULL;
+char *file=nullptr;
 int linenum=0;
 static int setmap(char *spec, unsigned char *map, int size)
 {
@@ -144,7 +144,7 @@ static unsigned char *hourmap(char *spec)
 	if (setmap(spec,hours,24))
 		return hours;
 	else
-		return NULL;
+		return nullptr;
 }
 static unsigned char *daymap(char *spec)
 {
@@ -152,7 +152,7 @@ static unsigned char *daymap(char *spec)
 	if (setmap(spec,days,31))
 		return days;
 	else
-		return NULL;
+		return nullptr;
 }
 static unsigned char *monthmap(char *spec)
 {
@@ -160,7 +160,7 @@ static unsigned char *monthmap(char *spec)
 	if (setmap(spec,months,12))
 		return months;
 	else
-		return NULL;
+		return nullptr;
 }
 static unsigned char *weekdaymap(char *spec)
 {
@@ -168,7 +168,7 @@ static unsigned char *weekdaymap(char *spec)
 	if (setmap(spec,weekdays,7))
 		return weekdays;
 	else
-		return NULL;
+		return nullptr;
 }
 
 EXPORT int open_shaper(struct shaper *my, char *fname, char *flags)
@@ -176,7 +176,7 @@ EXPORT int open_shaper(struct shaper *my, char *fname, char *flags)
 	char line[1024], group[256]="(unnamed)";
 	float sum=0, load=0, peak=0;
 	float scale[12][31][7][24];
-	//char *ff = gl_findfile(fname,NULL,FF_READ);
+	//char *ff = gl_findfile(fname,nullptr,FF_READ);
 	char *ff = fname;
 
 	/* clear everything */
@@ -185,8 +185,8 @@ EXPORT int open_shaper(struct shaper *my, char *fname, char *flags)
 	file=fname;
 
 	/* "-" means stdin */
-	my->fp = (strcmp(fname,"-")==0?stdin:(ff?fopen(ff,flags):NULL));
-	if (my->fp==NULL)
+	my->fp = (strcmp(fname,"-")==0?stdin:(ff?fopen(ff,flags):nullptr));
+	if (my->fp==nullptr)
 	{
 		sprintf(my->lasterr, "shaper file %s: %s", fname, strerror(errno));
 		goto Error;
@@ -198,7 +198,7 @@ EXPORT int open_shaper(struct shaper *my, char *fname, char *flags)
 	my->interval = 24; /* default unint shape integrated over one day */
 	memset(my->shape,0,sizeof(my->shape));
 	/* load the file into the shape */
-	while (fgets(line,sizeof(line),my->fp)!=NULL)
+	while (fgets(line,sizeof(line),my->fp)!=nullptr)
 	{
 		unsigned char *hours, *days, *months, *weekdays;
 		char min[256],hour[256],day[256],month[256],weekday[256],value[32];
@@ -221,25 +221,25 @@ EXPORT int open_shaper(struct shaper *my, char *fname, char *flags)
 				goto Error;
 			}
 			hours=hourmap(hour);
-			if (hours==NULL)
+			if (hours==nullptr)
 			{
 				sprintf(my->lasterr,"%s(%d): hours in '%s' not valid", file, linenum, line);
 				goto Error;
 			}
 			days=daymap(day);
-			if (days==NULL)
+			if (days==nullptr)
 			{
 				sprintf(my->lasterr,"%s(%d): days in '%s' not valid", file, linenum, line);
 				goto Error;
 			}
 			months=monthmap(month);
-			if (months==NULL)
+			if (months==nullptr)
 			{
 				sprintf(my->lasterr,"%s(%d): months in '%s' not valid", file, linenum, line);
 				goto Error;
 			}
 			weekdays=weekdaymap(weekday);
-			if (weekdays==NULL)
+			if (weekdays==nullptr)
 			{
 				sprintf(my->lasterr,"%s(%d): weekdays in '%s' not valid", file, linenum, line);
 				goto Error;
@@ -297,14 +297,14 @@ EXPORT int open_shaper(struct shaper *my, char *fname, char *flags)
 		}
 	}
 	fclose(my->fp);
-	my->fp=NULL;
+	my->fp=nullptr;
 	my->status = TS_OPEN;
 	return 1;
 Error:
 	if (my->fp)
 	{
 		fclose(my->fp);
-		my->fp = NULL;
+		my->fp = nullptr;
 	}
 	my->status = TS_ERROR;
 	return 0;
@@ -312,7 +312,7 @@ Error:
 
 EXPORT char *read_shaper(struct shaper *my,char *buffer,unsigned int size)
 {
-	return NULL;
+	return nullptr;
 }
 
 EXPORT int rewind_shaper(struct shaper *my)
@@ -329,11 +329,11 @@ EXPORT void close_shaper(struct shaper *my)
  */
 EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 {
-	time_t now=time(NULL);
+	time_t now=time(nullptr);
 	OBJECT *obj=OBJECTHDR(my);
 	
 	my->fp = (strcmp(fname,"-")==0?stdout:fopen(fname,flags));
-	if (my->fp==NULL)
+	if (my->fp==nullptr)
 	{
 		//gl_error(
 		fprintf(stderr, "recorder file %s: %s", fname, strerror(errno));
@@ -387,7 +387,7 @@ EXPORT void close_recorder(struct recorder *my)
 	{
 		if (!csv_data_only) fprintf(my->fp,"# end of tape\n");
 		fclose(my->fp);
-		my->fp = NULL; // Defensive programming. For some reason GridlabD was 
+		my->fp = nullptr; // Defensive programming. For some reason GridlabD was
 		// closing the same pointer twice, causing it to crash.
 	}
 }
@@ -397,11 +397,11 @@ EXPORT void close_recorder(struct recorder *my)
  */
 EXPORT int open_histogram(histogram *my, char *fname, char *flags)
 {
-	time_t now=time(NULL);
+	time_t now=time(nullptr);
 	OBJECT *obj=OBJECTHDR(my);
 	
 	my->fp = (strcmp(fname,"-")==0?stdout:fopen(fname,"w"));
-	if (my->fp==NULL)
+	if (my->fp==nullptr)
 	{
 		//gl_error(
 		fprintf(stderr, "histogram file %s: %s", fname, strerror(errno));
@@ -423,7 +423,7 @@ EXPORT int open_histogram(histogram *my, char *fname, char *flags)
 		fprintf(my->fp,"# user...... %s\n", getenv("USER"));
 		fprintf(my->fp,"# host...... %s\n", getenv("HOST"));
 #endif
-		if(obj->parent != NULL){
+		if(obj->parent != nullptr){
 			fprintf(my->fp,"# target.... %s %d\n", obj->parent->oclass->name, obj->parent->id);
 		} else {
 			fprintf(my->fp,"# group.... %s\n", my->group.get_string());
@@ -462,7 +462,7 @@ EXPORT void close_histogram(histogram *my)
 	{
 		fprintf(my->fp,"# end of tape\n");
 		fclose(my->fp);
-		my->fp = NULL;
+		my->fp = nullptr;
 		/* Defensive programming. For some reason GridlabD was 
 		 * closing the same pointer twice, causing it to crash.
 		 */
@@ -475,10 +475,10 @@ EXPORT void close_histogram(histogram *my)
 EXPORT int open_collector(struct collector *my, char *fname, char *flags)
 {
 	unsigned int count=0;
-	time_t now=time(NULL);
+	time_t now=time(nullptr);
 
 	my->fp = (strcmp(fname,"-")==0?stdout:fopen(fname,flags));
-	if (my->fp==NULL)
+	if (my->fp==nullptr)
 	{
 		//gl_error(
 		fprintf(stderr, "collector file %s: %s", fname, strerror(errno));

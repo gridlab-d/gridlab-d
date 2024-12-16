@@ -68,7 +68,7 @@ power_metrics::power_metrics(MODULE *mod) : powerflow_library(mod)
 			PT_double, "MAIFI", PADDR(MAIFI),PT_DESCRIPTION, "Displays annual MAIFI values as per IEEE 1366-2003",
 			PT_double, "MAIFI_int", PADDR(MAIFI_int),PT_DESCRIPTION, "Displays MAIFI values over the period specified by base_time_value as per IEEE 1366-2003",
 			PT_double, "base_time_value[s]", PADDR(stat_base_time_value), PT_DESCRIPTION,"time period over which _int values are claculated",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 			if (gl_publish_function(oclass, "calc_metrics", (FUNCTIONADDR)calc_pfmetrics)== nullptr)
 				GL_THROW("Unable to publish metrics calculation function");
 			if (gl_publish_function(oclass,	"reset_interval_metrics", (FUNCTIONADDR)reset_pfinterval_metrics)==nullptr)

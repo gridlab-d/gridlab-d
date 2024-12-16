@@ -14,7 +14,7 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CMaster_testDlg dialog
 
-CMaster_testDlg::CMaster_testDlg(CWnd* pParent /*=NULL*/)
+CMaster_testDlg::CMaster_testDlg(CWnd* pParent /*=nullptr*/)
 	: CDialog(CMaster_testDlg::IDD, pParent)
 {
 	//{{AFX_DATA_INIT(CMaster_testDlg)

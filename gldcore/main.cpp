@@ -130,7 +130,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     char *browser = getenv("GLBROWSER");
 
     /* set the default timezone */
-    timestamp_set_tz(NULL);
+    timestamp_set_tz(nullptr);
 
     exec_clock(); /* initialize the wall clock */
     realtime_starttime(); /* mark start */
@@ -139,7 +139,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     global_process_id = getpid();
 
     /* specify the default browser */
-    if (browser != NULL)
+    if (browser != nullptr)
         strncpy(global_browser, browser, sizeof(global_browser) - 1);
 
 #if defined WIN32 && _DEBUG
@@ -216,7 +216,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     /* pidfile */
     if (strcmp(global_pidfile, "") != 0) {
         FILE *fp = fopen(global_pidfile, "w");
-        if (fp == NULL) {
+        if (fp == nullptr) {
             output_fatal("unable to create pidfile '%s'", global_pidfile);
             /*	TROUBLESHOOT
                 The system must allow creation of the process id file at

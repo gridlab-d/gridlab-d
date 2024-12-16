@@ -18,16 +18,16 @@ EXPORT_INIT(ss_model);
 EXPORT_SYNC(ss_model);
 EXPORT_PRECOMMIT(ss_model);
 
-CLASS *ss_model::oclass = NULL;
-ss_model *ss_model::defaults = NULL;
+CLASS *ss_model::oclass = nullptr;
+ss_model *ss_model::defaults = nullptr;
 
 ss_model::ss_model(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gld_class::create(module,"ss_model",sizeof(ss_model),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class ss_model";
 		else
 			oclass->trl = TRL_PRINCIPLE;
@@ -49,7 +49,7 @@ ss_model::ss_model(MODULE *module)
 			PT_char1024, "C", get_y_offset(),PT_DESCRIPTION,"canonical C matrix",
 			PT_char1024, "D", get_y_offset(),PT_DESCRIPTION,"canonical D matrix",
 
-			NULL)<1){
+			nullptr)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
@@ -94,7 +94,7 @@ unsigned int ss_model::scan_references(char *input, gld_property *target[], unsi
 			exception("'%s' is not a valid 'object.property' reference",ref); 
 		
 		OBJECT *obj = gl_get_object(objname);
-		if ( obj==NULL )
+		if ( obj==nullptr )
 			exception("object '%s' is not found", objname);
 
 		target[n] = new gld_property(obj,propname);

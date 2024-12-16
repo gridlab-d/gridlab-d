@@ -15,18 +15,18 @@
 #include "gridlabd.h"
 #include "supervisory_control.h"
 
-CLASS *supervisory_control::oclass = NULL;
-supervisory_control *supervisory_control::defaults = NULL;
+CLASS *supervisory_control::oclass = nullptr;
+supervisory_control *supervisory_control::defaults = nullptr;
 
 static PASSCONFIG passconfig = PC_PRETOPDOWN|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_POSTTOPDOWN;
 
 /* Class registration is only called once to register the class with the core */
 supervisory_control::supervisory_control(MODULE *module) {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"supervisory_control",sizeof(supervisory_control),passconfig|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class supervisory_control";
 		else
 			oclass->trl = TRL_QUALIFIED;
@@ -48,7 +48,7 @@ supervisory_control::supervisory_control(MODULE *module) {
 				PT_KEYWORD,"POWER_DECREASING",(enumeration)SORT_POWER_DECREASE,
 				PT_KEYWORD,"VOLTAGE_DEVIAION_FROM_NOMINAL",(enumeration)SORT_VOLTAGE,
 				PT_KEYWORD,"VOLTAGE_EXTREMES",(enumeration)SORT_VOLTAGE2,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(supervisory_control));
 	}
@@ -63,7 +63,7 @@ void supervisory_control::fetch_double(double **prop, char *name, OBJECT *parent
 		char msg[256];
 		sprintf(tname, "supervisory_control:%i", hdr->id);
 		if(*name == static_cast<char>(0))
-			sprintf(msg, "%s: supervisory_control unable to find property: name is NULL", namestr);
+			sprintf(msg, "%s: supervisory_control unable to find property: name is nullptr", namestr);
 		else
 			sprintf(msg, "%s: supervisory_control unable to find %s", namestr, name);
 		throw(std::runtime_error(msg));
@@ -177,7 +177,7 @@ EXPORT int create_supervisory_control(OBJECT **obj, OBJECT *parent) {
 	try
 	{
 		*obj = gl_create_object(supervisory_control::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			supervisory_control *my = OBJECTDATA(*obj,supervisory_control);
 			gl_set_parent(*obj,parent);
@@ -192,7 +192,7 @@ EXPORT int create_supervisory_control(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_supervisory_control(OBJECT *obj, OBJECT *parent) {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,supervisory_control)->init(parent);
 		else
 			return 0;

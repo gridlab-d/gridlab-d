@@ -154,7 +154,7 @@ emissions::emissions(MODULE *mod) : powerflow_object(mod)
 			PT_double, "Region", PADDR(Region),
 
 			PT_double,"cycle_interval[s]", PADDR(cycle_interval),
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
 

@@ -7,8 +7,9 @@
 #include "../powerflow/transformer_configuration.h"
 #include "../powerflow/transformer.h"
 #include "../powerflow/line.h"
-
+#include <json/json.h>
 #include <new>
+#include <string>
 
 EXPORT void new_violation_recorder(MODULE *);
 
@@ -228,7 +229,7 @@ public:
 	char256 summary;
 	char256 virtual_substation;
 	bool strict;
-	set violation_flag;
+	gld::set violation_flag;
 	bool echo;
 	double xfrmr_thermal_limit_upper;
 	double xfrmr_thermal_limit_lower;
@@ -250,6 +251,8 @@ public:
 	double inverter_v_chng_per_interval_lower_bound;
 	double inverter_v_chng_interval;
 	TIMESTAMP violation_start_delay;
+	char1024 helics_endpoint_name;
+	bool helics_only;
 private:
 	int write_header();
 	int flush_line();
@@ -340,6 +343,8 @@ private:
 	size_t line_size;
 	bool interval_write;
 	TIMESTAMP sim_start;
+	OBJECT *helics_msg_object;
+	FUNCTIONADDR helics_send_function;
 };
 
 #endif // C++

@@ -10,7 +10,7 @@
 #define MAJOR 1
 #define MINOR 0
 
-static JNIEnv *jnienv = NULL;
+static JNIEnv *jnienv = nullptr;
 
 EXPORT CLASS *javainit(CALLBACKS *fntable, MODULE *module, int argc, char *argv[], JNIEnv *env)
 {
@@ -25,15 +25,15 @@ EXPORT CLASS *javainit(CALLBACKS *fntable, MODULE *module, int argc, char *argv[
 	// init is int (*)(long, int, String[])
 	jmethodID init_mid = env->GetStaticMethodID(cls, "init", "(JI[Ljava/lang/String;)I");
 
-	if(cls == NULL)
-		return NULL;
+	if(cls == nullptr)
+		return nullptr;
 
-	if(init_mid == NULL)
-		return NULL;
+	if(init_mid == nullptr)
+		return nullptr;
 
-	jobjectArray args = env->NewObjectArray(argc, jnienv->FindClass("[Ljava/lang/String;"), NULL);
-	if(args == NULL)
-		return NULL;
+	jobjectArray args = env->NewObjectArray(argc, jnienv->FindClass("[Ljava/lang/String;"), nullptr);
+	if(args == nullptr)
+		return nullptr;
 
 	jstring jargv[argc];
 	for(int i = 0; i < argc; ++i){
@@ -54,7 +54,7 @@ EXPORT CLASS *javainit(CALLBACKS *fntable, MODULE *module, int argc, char *argv[
 	for(int i = 0; i < argc; ++i)
 		; /* delete the strings */
 
-	return NULL;
+	return nullptr;
 }
 
 CDECL int do_kill()

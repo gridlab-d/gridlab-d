@@ -25,7 +25,7 @@
 
 #include "kml.h"
 
-FILE *kml = NULL;
+FILE *kml = nullptr;
 int kml_write(const char *fmt,...)
 {
 	int len;
@@ -38,29 +38,29 @@ int kml_write(const char *fmt,...)
 
 int kml_document(FILE *fp)
 {
-	CLASS *oclass, *openclass=NULL;
+	CLASS *oclass, *openclass=nullptr;
 	MODULE *mod;
 	char buffer[1024];
-	time_t now = time(NULL);
+	time_t now = time(nullptr);
 	kml_write("%s","  <Document>\n");
 	kml_write("    <name>%s</name>\n", global_modelname);
 	kml_write("    <description>GridLAB-D results for %s</description>\n",
 		convert_from_timestamp(global_clock,buffer,sizeof(buffer))?buffer:"unknown date/time");
 
 	/* for each module */
-	for (mod=module_get_first(); mod!=NULL; mod=mod->next)
+	for (mod=module_get_first(); mod!=nullptr; mod=mod->next)
 	{
 		if (mod->kmldump)
-			mod->kmldump(kml_write,NULL); /* dump styles */
+			mod->kmldump(kml_write,nullptr); /* dump styles */
 	}
 
 	/* scan each class in the model */
-	for (oclass=class_get_first_class(); oclass!=NULL; oclass=oclass->next)
+	for (oclass=class_get_first_class(); oclass!=nullptr; oclass=oclass->next)
 	{
 		OBJECT *obj;
 
 		/* scan each object in the model */
-		for (obj=object_get_first(); obj!=NULL; obj=obj->next)
+		for (obj=object_get_first(); obj!=nullptr; obj=obj->next)
 		{
 			int has_location = !(isnan(obj->latitude) || isnan(obj->longitude));
 			if ( !has_location )
@@ -72,11 +72,11 @@ int kml_document(FILE *fp)
 				continue;
 
 			/* first instance of this class needs folder */
-			else if (openclass==NULL)
+			else if (openclass==nullptr)
 			{
 				kml_write("  <Folder><name>Class %s</name>\n", oclass->name);
 				kml_write("    <description>Module %s",oclass->module ? oclass->module->name : "(runtime)");
-				if ( oclass->module!=NULL )
+				if ( oclass->module!=nullptr )
 					kml_write(" (V%d.%02d)",oclass->module->major,oclass->module->minor);
 				kml_write("</description>\n");
 				openclass=oclass;
@@ -84,7 +84,7 @@ int kml_document(FILE *fp)
 
 			/* module overrides KML output */
 			mod = (MODULE*)(obj->oclass->module);
-			if (mod!=NULL && mod->kmldump!=NULL)
+			if (mod!=nullptr && mod->kmldump!=nullptr)
 				(*(mod->kmldump))(kml_write,obj);
 			else
 			{
@@ -98,10 +98,10 @@ int kml_document(FILE *fp)
 				kml_write("      <description>\n");
 				kml_write("        <![CDATA[\n");
 				kml_write("          <TABLE><TR>\n");
-				for (prop=oclass->pmap;prop!=NULL && prop->oclass==oclass; prop=prop->next)
+				for (prop=oclass->pmap;prop!=nullptr && prop->oclass==oclass; prop=prop->next)
 				{
 					char *value = object_property_to_string(obj,prop->name, buffer, 1023);
-					if (value!=NULL)
+					if (value!=nullptr)
 						kml_write("<TR><TH ALIGN=LEFT>%s</TH><TD ALIGN=RIGHT>%s</TD></TR>",
 							prop->name, value);
 				}
@@ -116,10 +116,10 @@ int kml_document(FILE *fp)
 		}
 
 		/* close folder if any */
-		if (openclass!=NULL)
+		if (openclass!=nullptr)
 		{
 			kml_write("  </Folder>\n");
-			openclass=NULL;
+			openclass=nullptr;
 		}
 	}
 
@@ -145,7 +145,7 @@ int kml_dump(char *filename)
 	FILE *fp;
 
 	/* handle default filename */
-	if (filename==NULL)
+	if (filename==nullptr)
 		filename=const_cast<char*>("gridlabd.kml");
 
 	/* find basename */
@@ -156,7 +156,7 @@ int kml_dump(char *filename)
 	ext = strrchr(filename,'.');
 
 	/* if extension is valid */
-	if (ext!=NULL && ext>basename)
+	if (ext!=nullptr && ext>basename)
 
 		/* use filename verbatim */
 		strcpy(fname,filename);
@@ -168,7 +168,7 @@ int kml_dump(char *filename)
 
 	/* open file */
 	fp = fopen(fname,"w");
-	if (fp==NULL)
+	if (fp==nullptr)
 		throw_exception("kml_dump(char *filename='%s'): %s", filename, strerror(errno));
 		/* TROUBLESHOOT
 			The system was unable to output the KML data to the specified file.  

@@ -15,7 +15,7 @@ absconnection::~absconnection()
 }
 
 absconnection *absconnection::getconnectionTCP(const string &toIP,const int &toPort){
-	return NULL;
+	return nullptr;
 }
 
 absconnection *absconnection::getconnectionUDP(const string &toIP,const int &toPort){
@@ -27,11 +27,11 @@ absconnection *absconnection::getconnection(ENGINE_SOCK_TYPE socktype,const stri
 		case UDP:
 			return new udpconnection(toIP,toPort);
 		case TCP:
-			return NULL;
+			return nullptr;
 		deafult:
-			return NULL;
+			return nullptr;
 	}
-	return NULL;
+	return nullptr;
 }
 
 const string absconnection::getProtocolStr(){

@@ -10,8 +10,8 @@
 collect::collect(void) {
 	len_on = 0;
 	len_off = 0;
-	supervisor_bid_on = NULL;
-	supervisor_bid_off = NULL;
+	supervisor_bid_on = nullptr;
+	supervisor_bid_off = nullptr;
 	number_of_bids_on = 0;
 	number_of_bids_off = 0;
 }
@@ -141,7 +141,7 @@ void collect::fetch_double(double **prop, const char *name, OBJECT *parent){
 		char msg[256];
 		sprintf(tname, "collect:%i", hdr->id);
 		if(*name == static_cast<char>(0))
-			sprintf(msg, "%s: collect unable to find property: name is NULL", namestr);
+			sprintf(msg, "%s: collect unable to find property: name is nullptr", namestr);
 		else
 			sprintf(msg, "%s: collect unable to find %s", namestr, name);
 		throw(msg);
@@ -157,7 +157,7 @@ void collect::fetch_int(int **prop, const char *name, OBJECT *parent){
 		char msg[256];
 		sprintf(tname, "collect:%i", hdr->id);
 		if(*name == static_cast<char>(0))
-			sprintf(msg, "%s: collect unable to find property: name is NULL", namestr);
+			sprintf(msg, "%s: collect unable to find property: name is nullptr", namestr);
 		else
 			sprintf(msg, "%s: collect unable to find %s", namestr, name);
 		throw(std::runtime_error(msg));

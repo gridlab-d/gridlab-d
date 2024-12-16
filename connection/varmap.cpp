@@ -7,7 +7,7 @@
 
 varmap::varmap() 
 {
-	map = NULL;
+	map = nullptr;
 }
 
 int varmap::add(char *spec, COMMUNICATIONTYPE comtype)
@@ -40,13 +40,13 @@ int varmap::add(char *spec, COMMUNICATIONTYPE comtype)
 
 	// load the new varmap
 	VARMAP *next = new VARMAP;
-	if ( next==NULL )
+	if ( next==nullptr )
 	{
 		gl_error("varmap::add(char *spec='%s'): unable to allocate memory for new VARMAP", spec);
 		return 0;
 	}
 	next->local_name = new char[strlen(local)+1];
-	if ( next->local_name==NULL )
+	if ( next->local_name==nullptr )
 	{
 		gl_error("varmap::add(char *local='%s', char *remote='%s'): unable to allocate memory for VARMAP local name", local, remote);
 		return 0;
@@ -55,7 +55,7 @@ int varmap::add(char *spec, COMMUNICATIONTYPE comtype)
 	if(sscanf(remote, "%1024[^;];%*[ ]%1023[^\n]",remName, threshold) != 2)
 	{
 		next->remote_name = new char[strlen(remote)+1];
-		if ( next->remote_name==NULL )
+		if ( next->remote_name==nullptr )
 		{
 			gl_error("varmap::add(char *local='%s', char *remote='%s'): unable to allocate memory for VARMAP remote name", local, remote);
 			return 0;
@@ -64,7 +64,7 @@ int varmap::add(char *spec, COMMUNICATIONTYPE comtype)
 		strcpy(next->threshold,"");
 	} else {
 		next->remote_name = new char[strlen(remName)+1];
-		if ( next->remote_name==NULL )
+		if ( next->remote_name==nullptr )
 		{
 			gl_error("varmap::add(char *local='%s', char *remote='%s'): unable to allocate memory for VARMAP remote name", local, remName);
 			return 0;
@@ -72,7 +72,7 @@ int varmap::add(char *spec, COMMUNICATIONTYPE comtype)
 		strcpy(next->remote_name,remName);
 		strcpy(next->threshold,threshold);
 	}
-	next->obj = NULL;
+	next->obj = nullptr;
 	next->next = map;
 	next->dir = dxd;
 	next->ctype = comtype;
@@ -82,7 +82,7 @@ int varmap::add(char *spec, COMMUNICATIONTYPE comtype)
 void varmap::resolve(void)
 {
 	VARMAP *item;
-	for ( item=getfirst() ; item!=NULL ; item=getnext(item) )
+	for ( item=getfirst() ; item!=nullptr ; item=getnext(item) )
 	{	
 		item->obj = new gld_property(item->local_name);
 		if ( item->obj->is_valid() )
@@ -95,10 +95,10 @@ void varmap::resolve(void)
 void varmap::linkcache(class connection_mode *connection, void *xlate)
 {
 	VARMAP *item;
-	for ( item=getfirst() ; item!=NULL ; item=getnext(item) )
+	for ( item=getfirst() ; item!=nullptr ; item=getnext(item) )
 	{
 		cacheitem *cache = connection->create_cache(item);
-		if ( cache==NULL )
+		if ( cache==nullptr )
 			gl_error("unable to create cache item for %s", item->local_name);
 		else
 			cache->set_translator((TRANSLATOR*)xlate);

@@ -23,7 +23,7 @@
 #include "exec.h"
 #include "gld_complex.h"
 
-static enduse *enduse_list = NULL;
+static enduse *enduse_list = nullptr;
 static unsigned int n_enduses = 0;
 
 double enduse_get_part(void *x, const char *name)
@@ -110,7 +110,7 @@ int enduse_init(enduse *e)
 int enduse_initall(void)
 {
 	enduse *e;
-	for (e=enduse_list; e!=NULL; e=e->next)
+	for (e=enduse_list; e!=nullptr; e=e->next)
 	{
 		if (enduse_init(e)==1)
 			return FAILED;
@@ -235,7 +235,7 @@ void *enduse_syncproc(void *ptr)
 
 		// process the list for this thread
 		t2 = TS_NEVER;
-		for ( e=data->e, n=0 ; e!=NULL, n<data->ne ; e=e->next, n++ )
+		for ( e=data->e, n=0 ; e!=nullptr, n<data->ne ; e=e->next, n++ )
 		{
 			TIMESTAMP t = enduse_sync(e, PC_PRETOPDOWN, next_t1_ed);
 			if (t<t2) t2 = t;
@@ -265,7 +265,7 @@ void *enduse_syncproc(void *ptr)
 TIMESTAMP enduse_syncall(TIMESTAMP t1)
 {
 	static unsigned int n_threads_ed=0;
-	static ENDUSESYNCDATA *thread_ed = NULL;
+	static ENDUSESYNCDATA *thread_ed = nullptr;
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t ts = (clock_t)exec_clock();
 	
@@ -307,7 +307,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 			memset(thread_ed,0,sizeof(ENDUSESYNCDATA)*n_threads_ed);
 
 			// assign starting enduse for each thread
-			for (e=enduse_list; e!=NULL; e=e->next)
+			for (e=enduse_list; e!=nullptr; e=e->next)
 			{
 				if (thread_ed[en].ne==n_items)
 					en++;
@@ -320,7 +320,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 			for (n=0; n<n_threads_ed; n++)
 			{
 				thread_ed[n].ok = true;
-				if (pthread_create(&(thread_ed[n].pt),NULL,enduse_syncproc,&(thread_ed[n]))!=0)
+				if (pthread_create(&(thread_ed[n].pt),nullptr,enduse_syncproc,&(thread_ed[n]))!=0)
 				{
 					output_fatal("enduse_sync thread creation failed");
 					thread_ed[n].ok = false;
@@ -336,7 +336,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 	{
 		// process list directly
 		enduse *e;
-		for (e=enduse_list; e!=NULL; e=e->next)
+		for (e=enduse_list; e!=nullptr; e=e->next)
 		{
 			TIMESTAMP t3 = enduse_sync(e, PC_PRETOPDOWN, t1);
 			if (t3<t2) t2 = t3;
@@ -383,7 +383,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 	/*enduse *e;
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t start = exec_clock();
-	for (e=enduse_list; e!=NULL; e=e->next)
+	for (e=enduse_list; e!=nullptr; e=e->next)
 	{
 		TIMESTAMP t3 = enduse_sync(e,PC_PRETOPDOWN,t1);
 		if (t3<t2) t2 = t3;
@@ -420,37 +420,38 @@ int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
 
 int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 {
-	enduse *self=NULL; // temporary enduse structure used for mapping variables
+	enduse *self=nullptr; // temporary enduse structure used for mapping variables
 	int result = 0;
-	struct s_map_enduse{
-		PROPERTYTYPE type;
-		const char *name;
-		char *addr;
-		const char *description;
-		int flags;
-	}*p, prop_list[]={
-		{PT_complex, "energy[kVAh]", (char *)PADDR_C(energy), "the total energy consumed since the last meter reading"},
-		{PT_complex, "power[kVA]", (char *)PADDR_C(total), "the total power consumption of the load"},
-		{PT_complex, "peak_demand[kVA]", (char *)PADDR_C(demand), "the peak power consumption since the last meter reading"},
-		{PT_double, "heatgain[Btu/h]", (char *)PADDR_C(heatgain), "the heat transferred from the enduse to the parent"},
-		{PT_double, "cumulative_heatgain[Btu]", (char *)PADDR_C(cumulative_heatgain), "the cumulative heatgain from the enduse to the parent"},
-		{PT_double, "heatgain_fraction[pu]", (char *)PADDR_C(heatgain_fraction), "the fraction of the heat that goes to the parent"},
-		{PT_double, "current_fraction[pu]", (char *)PADDR_C(current_fraction),"the fraction of total power that is constant current"},
-		{PT_double, "impedance_fraction[pu]", (char *)PADDR_C(impedance_fraction), "the fraction of total power that is constant impedance"},
-		{PT_double, "power_fraction[pu]", (char *)PADDR_C(power_fraction), "the fraction of the total power that is constant power"},
-		{PT_double, "power_factor", (char *)PADDR_C(power_factor), "the power factor of the load"},
-		{PT_complex, "constant_power[kVA]", (char *)PADDR_C(power), "the constant power portion of the total load"},
-		{PT_complex, "constant_current[kVA]",    (char *)PADDR_C(current), "the constant current portion of the total load"},
-		{PT_complex, "constant_admittance[kVA]", (char *)PADDR_C(admittance), "the constant admittance portion of the total load"},
-		{PT_double, "voltage_factor[pu]",        (char *)PADDR_C(voltage_factor), "the voltage change factor"},
-		{PT_double, "breaker_amps[A]",           (char *)PADDR_C(breaker_amps), "the rated breaker amperage"},
-		{PT_set, "configuration",                (char *)PADDR_C(config), "the load configuration options"},
-			{PT_KEYWORD, "IS110",                reinterpret_cast<char *>((set)EUC_IS110)},
-			{PT_KEYWORD, "IS220",                reinterpret_cast<char *>((set)EUC_IS220)},
-	}, *last=NULL;
+    struct s_map_enduse{
+        PROPERTYTYPE type;
+        const char *name;
+        char *addr = nullptr;
+        const char *description;
+        int64 value = -1;
+        int flags;
+    }*p, prop_list[]={
+            {.type=PT_complex, .name="energy[kVAh]", .addr=(char*)PADDR_C(energy), .description="the total energy consumed since the last meter reading"},
+            {.type=PT_complex, .name="power[kVA]", .addr=(char*)PADDR_C(total), .description="the total power consumption of the load"},
+            {.type=PT_complex, .name="peak_demand[kVA]", .addr=(char*)PADDR_C(demand), .description="the peak power consumption since the last meter reading"},
+            {.type=PT_double, .name="heatgain[Btu/h]", .addr=(char*)PADDR_C(heatgain), .description="the heat transferred from the enduse to the parent"},
+            {.type=PT_double, .name="cumulative_heatgain[Btu]", .addr=(char*)PADDR_C(cumulative_heatgain), .description="the cumulative heatgain from the enduse to the parent"},
+            {.type=PT_double, .name="heatgain_fraction[pu]", .addr=(char*)PADDR_C(heatgain_fraction), .description="the fraction of the heat that goes to the parent"},
+            {.type=PT_double, .name="current_fraction[pu]", .addr=(char*)PADDR_C(current_fraction),"the fraction of total power that is constant current"},
+            {.type=PT_double, .name="impedance_fraction[pu]", .addr=(char*)PADDR_C(impedance_fraction), .description="the fraction of total power that is constant impedance"},
+            {.type=PT_double, .name="power_fraction[pu]", .addr=(char*)PADDR_C(power_fraction), .description="the fraction of the total power that is constant power"},
+            {.type=PT_double, .name="power_factor", .addr=(char*)PADDR_C(power_factor), .description="the power factor of the load"},
+            {.type=PT_complex, .name="constant_power[kVA]", .addr=(char*)PADDR_C(power), .description="the constant power portion of the total load"},
+            {.type=PT_complex, .name="constant_current[kVA]",    .addr=(char*)PADDR_C(current), .description="the constant current portion of the total load"},
+            {.type=PT_complex, .name="constant_admittance[kVA]", .addr=(char*)PADDR_C(admittance), .description="the constant admittance portion of the total load"},
+            {.type=PT_double, .name="voltage_factor[pu]",        .addr=(char*)PADDR_C(voltage_factor), .description="the voltage change factor"},
+            {.type=PT_double, .name="breaker_amps[A]",           .addr=(char*)PADDR_C(breaker_amps), .description="the rated breaker amperage"},
+            {.type=PT_set, .name="configuration",                .addr=(char*)PADDR_C(config), .description="the load configuration options"},
+            {.type=PT_KEYWORD, .name="IS110",                .value=EUC_IS110},
+            {.type=PT_KEYWORD, .name="IS220",                .value=EUC_IS220},
+    }, *last=nullptr;
 
-	// publish the enduse load itself
-	PROPERTY *prop = property_malloc(PT_enduse, oclass, const_cast<char *>(strcmp(prefix, "") == 0 ? "load" : prefix), struct_address, NULL);
+    // publish the enduse load itself
+	PROPERTY *prop = property_malloc(PT_enduse, oclass, const_cast<char *>(strcmp(prefix, "") == 0 ? "load" : prefix), struct_address, nullptr);
 	prop->description = "the enduse load description";
 	prop->flags = 0;
 	class_add_property(oclass,prop);
@@ -459,7 +460,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 	{
 		char name[256], lastname[256];
 
-		if(prefix == NULL || strcmp(prefix,"")==0)
+		if(prefix == nullptr || strcmp(prefix,"")==0)
 		{
 			strcpy(name,p->name);
 		}
@@ -473,13 +474,13 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 
 		if (p->type<_PT_LAST)
 		{
-			prop = property_malloc(p->type,oclass,name,p->addr+(int64)struct_address,NULL);
+			prop = property_malloc(p->type,oclass,name,p->addr+(int64)struct_address,nullptr);
 			prop->description = p->description;
 			prop->flags = p->flags;
 			class_add_property(oclass,prop);
 			result++;
 		}
-		else if (last==NULL)
+		else if (last==nullptr)
 		{
 			output_error("PT_KEYWORD not allowed unless it follows another property specification");
 			/* TROUBLESHOOT
@@ -491,7 +492,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		else if (p->type==PT_KEYWORD) {
 			switch (last->type) {
 			case PT_enumeration:
-				if (!class_define_enumeration_member(oclass,lastname,p->name,p->type))
+				if (!class_define_enumeration_member(oclass,last->name,p->name,p->type))
 				{
 					output_error("unable to publish enumeration member '%s' of enduse '%s'", p->name,last->name);
 					/* TROUBLESHOOT
@@ -502,7 +503,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 				}
 				break;
 			case PT_set:
-				if (!class_define_set_member(oclass,lastname,p->name,(int64)p->addr))
+				if (!class_define_set_member(oclass,last->name,p->name,p->value))
 				{
 					output_error("unable to publish set member '%s' of enduse '%s'", p->name,last->name);
 					/* TROUBLESHOOT
@@ -543,16 +544,16 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 {
 	enduse *e = (enduse*)data;
 	char buffer[1024];
-	char *token = NULL;
+	char *token = nullptr;
 
 	/* use structure conversion if opens with { */
 	if ( string[0]=='{')
 	{
 		UNIT *unit = unit_find("kVA");
 		PROPERTY eus[] = {
-			{NULL,"total",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->total)-(char*)e),NULL,NULL,NULL,eus+1},
-			{NULL,"energy",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->energy)-(char*)e),NULL,NULL,NULL,eus+2},
-			{NULL,"demand",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->demand)-(char*)e),NULL,NULL,NULL,NULL},
+			{nullptr,"total",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->total)-(char*)e),nullptr,nullptr,nullptr,eus+1},
+			{nullptr,"energy",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->energy)-(char*)e),nullptr,nullptr,nullptr,eus+2},
+			{nullptr,"demand",PT_complex,0,0,PA_PUBLIC,unit,(PROPERTYADDR)((char*)(&e->demand)-(char*)e),nullptr,nullptr,nullptr,nullptr},
 		};
 		return convert_to_struct(string, data, eus);
 	}
@@ -566,7 +567,7 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 	strcpy(buffer,string);
 
 	/* parse tuples separate by semicolon*/
-	while ((token=strtok(token==NULL?buffer:NULL,";"))!=NULL)
+	while ((token=strtok(token==nullptr?buffer:nullptr,";"))!=nullptr)
 	{
 		/* colon separate tuple parts */
 		char *param = token;
@@ -574,7 +575,7 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 
 		/* isolate param and token and eliminte leading whitespaces */
 		while (isspace(*param) || iscntrl(*param)) param++;
-		if (value==NULL)
+		if (value==nullptr)
 			value= const_cast<char*>("1");
 		else
 			*value++ = '\0'; /* separate value from param */
@@ -596,7 +597,7 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 		else if (strcmp(param,"loadshape")==0)
 		{
 			PROPERTY *pref = class_find_property(prop->oclass,value);
-			if (pref==NULL)
+			if (pref==nullptr)
 			{
 				output_warning("convert_to_enduse(string='%-.64s...', ...) loadshape '%s' not found in class '%s'",string,value,prop->oclass->name);
 				return 0;

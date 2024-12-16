@@ -80,7 +80,7 @@ glproperty* glproperty::deserialize(char* given)
     }
     
 	string fname;
-	if(objname=="NULL")
+	if(objname=="nullptr")
 		fname=string(name);
 	else
 		fname=string(objname+"."+name);
