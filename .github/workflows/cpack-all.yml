@@ -10,7 +10,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
-  helics-ref: 'v3.4.0'
+  helics-ref: 'v3.6.0'
 
 jobs:
   linux-build:
