@@ -178,7 +178,7 @@ jobs:
       - name: Install Homebrew dependencies
         run: |
           brew update --preinstall
-          env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost@1.85
+          env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost
 
       - name: Build HELICS Cache
         id: cache-helics
@@ -207,8 +207,7 @@ jobs:
           threads=`sysctl -n hw.logicalcpu`
           cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS -DHELICS_ZMQ_SUBPROJECT=ON \
-          -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DLDFLAGS=-L/opt/homebrew/opt/boost@1.85/lib \
-          -DCPPFLAGS=-I/opt/homebrew/opt/boost@1.85/include
+          -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DHELICS_DISABLE_WEBSERVER=ON
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
 
