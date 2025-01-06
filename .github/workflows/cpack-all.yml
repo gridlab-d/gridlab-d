@@ -177,7 +177,7 @@ jobs:
       - name: Install Homebrew dependencies
         run: |
           brew update --preinstall
-          env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost@1.83
+          env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost@1.85
 
       - name: Build HELICS Cache
         id: cache-helics
