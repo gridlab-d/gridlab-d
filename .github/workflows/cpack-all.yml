@@ -51,8 +51,8 @@ jobs:
         working-directory: ${{github.workspace}}/helics-build
         run: |
           threads=`nproc`
-          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
-          -DHELICS_ZMQ_SUBPROJECT=ON
+          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS -DHELICS_ZMQ_SUBPROJECT=ON
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
 
@@ -64,8 +64,8 @@ jobs:
       - name: Build GridLAB-D
         run: |
           threads=`nproc`
-          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
-          -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} 
+          -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
           -DGLD_CI_BUILD=ON
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
 
@@ -148,8 +148,9 @@ jobs:
         run: |
           threads=`nproc`
           workspace="$(cygpath -u '${{github.workspace}}')"
-          cmake -G "Unix Makefiles" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX="$workspace/.temp/GridLAB-D" \
-          -DGLD_USE_HELICS=ON -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DGLD_CI_BUILD=ON
+          cmake -G "Unix Makefiles" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_INSTALL_PREFIX="$workspace/.temp/GridLAB-D" -DGLD_USE_HELICS=ON -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_CXX_COMPILER=g++ -DGLD_CI_BUILD=ON
           cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
@@ -204,8 +205,10 @@ jobs:
         working-directory: ${{github.workspace}}/helics-build
         run: |
           threads=`sysctl -n hw.logicalcpu`
-          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
-          -DHELICS_ZMQ_SUBPROJECT=ON -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
+          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS -DHELICS_ZMQ_SUBPROJECT=ON \
+          -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DLDFLAGS=-L/opt/homebrew/opt/boost@1.85/lib \
+          -CPPFLAGS=-I/opt/homebrew/opt/boost@1.85/include
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
 
@@ -217,9 +220,9 @@ jobs:
       - name: Build GridLAB-D
         run: |
           threads=`sysctl -n hw.logicalcpu`
-          cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
-          -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} \
-          -DGLD_CI_BUILD=ON
+          cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
+          -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DGLD_CI_BUILD=ON
           cmake --build ${{github.workspace}}/build-${{matrix.arch}} --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
