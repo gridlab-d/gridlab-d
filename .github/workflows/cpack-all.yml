@@ -64,7 +64,7 @@ jobs:
       - name: Build GridLAB-D
         run: |
           threads=`nproc`
-          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} 
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
           -DGLD_CI_BUILD=ON
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
@@ -208,7 +208,7 @@ jobs:
           cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS -DHELICS_ZMQ_SUBPROJECT=ON \
           -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DLDFLAGS=-L/opt/homebrew/opt/boost@1.85/lib \
-          -CPPFLAGS=-I/opt/homebrew/opt/boost@1.85/include
+          -DCPPFLAGS=-I/opt/homebrew/opt/boost@1.85/include
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
 
