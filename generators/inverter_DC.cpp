@@ -1830,6 +1830,41 @@ TIMESTAMP inverter_DC::sync(TIMESTAMP t0, TIMESTAMP t1)
 				// //for grid forming inverter, the internal voltages and their norton equivalent currents need to be balanced
 				// value_IGenerated[1].SetPolar(value_IGenerated[0].Mag(),value_IGenerated[0].Arg() - 2.0/3.0*PI);
 				// value_IGenerated[2].SetPolar(value_IGenerated[0].Mag(),value_IGenerated[0].Arg() + 2.0/3.0*PI);
+				// if (DC_Ctrl)
+				// {
+				// 	// Update the P_DC
+				// 	//P_DC = VA_Out.Re(); //Lossless
+
+				// 	// Update V_DC
+				// 	if (!dc_interface_objects.empty())
+				// 	{
+				// 		int temp_idx;
+				// 		STATUS fxn_return_status;
+
+				// 		//Loop through and call the DC objects
+				// 		for (temp_idx = 0; temp_idx < dc_interface_objects.size(); temp_idx++)
+				// 		{
+				// 			//DC object, calling object (us), init mode (true/false)
+				// 			//False at end now, because not initialization
+				// 			fxn_return_status = ((STATUS(*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object, obj, false);
+
+				// 			//Make sure it worked
+				// 			if (fxn_return_status == FAILED)
+				// 				{
+				// 				//Pull the object from the array - this is just for readability (otherwise the
+				// 				OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
+
+				// 				//Error it up
+				// 				GL_THROW("inverter_DC_Ctrl:%d - %s - DC object update for object:%d - %s - failed!", obj->id, (obj->name ? obj->name : "Unnamed"), temp_obj->id, (temp_obj->name ? temp_obj->name : "Unnamed"));
+				// 				//Defined above
+				// 			}
+				// 		}
+				// 	}
+
+				// 	// Update I_DC
+				// 	//P_DC = VA_Out.Re(); // +HM Commented out on Jan 27
+				// 	I_DC = P_DC/V_DC;
+				// }
 			}
 			else // grid following or GFL_CURRENT_SOURCE
 			{
@@ -2082,7 +2117,7 @@ void inverter_DC::check_and_update_VA_Out(OBJECT *obj)
 
 		// Update I_DC
 		//++ July 2023
-		P_DC = VA_Out.Re(); //Lossless
+		//P_DC = VA_Out.Re(); //Lossless
 		I_DC = P_DC/V_DC;
 	}
 
@@ -2090,7 +2125,7 @@ void inverter_DC::check_and_update_VA_Out(OBJECT *obj)
 	if (DC_Ctrl)
 	{
 		// Update the P_DC
-		P_DC = VA_Out.Re(); //Lossless
+		//P_DC = VA_Out.Re(); //Lossless
 
 		// Update V_DC
 		if (!dc_interface_objects.empty())
@@ -2119,8 +2154,8 @@ void inverter_DC::check_and_update_VA_Out(OBJECT *obj)
 		}
 
 		// Update I_DC
-		P_DC = VA_Out.Re();
-		I_DC = P_DC/V_DC;
+		//P_DC = VA_Out.Re(); // +HM Commented out on Jan 27
+		I_DC = (P_DC/V_DC);
 	}
 
 }
@@ -2251,6 +2286,8 @@ STATUS inverter_DC::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 		memcpy(prev_value_IGenerated,value_IGenerated,3*sizeof(gld::complex));
 	}
 
+	
+
 	//Reset the QSTS criterion flag
 	deltamode_exit_iteration_met = false;
 
@@ -2364,9 +2401,9 @@ SIMULATIONMODE inverter_DC::inter_deltaupdate(unsigned int64 delta_time, unsigne
 			//+++++++++++++++++++ July, 2023, pull up the DC link voltage and current, and use the pulled voltage and output power to claculate I_DC
 			if (DC_Ctrl)
 			{
-				I_dc_pu = P_out_pu / curr_state.Vdc_pu; // Calculate the equivalent dc current, including the dc capacitor
+				//I_dc_pu = P_out_pu / curr_state.Vdc_pu; // ++HM commented out on Feb 3, 2025
 				//++++++++++++++++ July, 2023
-				P_DC = P_out_pu * S_base;
+				//P_DC = P_out_pu * S_base; //++HM commented out on Feb 3, 2025
 
 				if (!dc_interface_objects.empty())
 				{
@@ -3499,7 +3536,7 @@ SIMULATIONMODE inverter_DC::inter_deltaupdate(unsigned int64 delta_time, unsigne
 				{
 					//I_dc_pu = P_out_pu / curr_state.Vdc_pu; // Calculate the equivalent dc current, including the dc capacitor
 					//++++++++++++++++ July, 2023
-					P_DC = P_out_pu * S_base;
+					//P_DC = P_out_pu * S_base;
 
 					if (!dc_interface_objects.empty())
 					{

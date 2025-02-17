@@ -2128,7 +2128,7 @@ void inverter_DC_Ctrl::check_and_update_VA_Out(OBJECT *obj)
 	if (DC_Ctrl)
 	{
 		// Update the P_DC
-		P_DC = VA_Out.Re(); //Lossless
+		//P_DC = VA_Out.Re(); //Lossless ++//HM commented out on Feb. 3
 
 		// Update V_DC
 		if (!dc_interface_objects.empty())
@@ -2157,7 +2157,7 @@ void inverter_DC_Ctrl::check_and_update_VA_Out(OBJECT *obj)
 		}
 
 		// Update I_DC
-		P_DC = VA_Out.Re();
+		// P_DC = VA_Out.Re(); //++//HM commented out on Feb. 3
 		I_DC = P_DC/V_DC;
 	}
 
@@ -5505,6 +5505,7 @@ STATUS inverter_DC_Ctrl::init_dynamics(INV_DC_Ctrl_STATE *curr_time)
 
 	//Vdc_ctrl_blk.setparams(Kp_dc,Ki_dc,-500.0,500.0,-500.0,500.0);
 	Vdc_ctrl_blk.setparams(Kp_dc,Ki_dc,-Pmax,Pmax,-Pmax,Pmax);
+	//Vdc_ctrl_blk.setparams(Kp_dc,Ki_dc,-S_base,S_base,-S_base,S_base);
 
 	//Vdc_ctrl_blk.init(Vdco,Vdco);
 	//V_DC=8000;

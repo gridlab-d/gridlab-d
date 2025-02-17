@@ -665,7 +665,7 @@ TIMESTAMP dc_link::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		
 		//++++++++++++++++++++++ Added on Oct. 28 
-		inv1_current=-1*inv2_current;
+		//inv1_current=-1*inv2_current;
 		inverter1_current_property->setp<double>(inv1_current, *test_rlock);//++++++++++ HM I changed it from inverter 1 to 2 intentionally
 		inverter2_current_property->setp<double>(inv2_current, *test_rlock);
 
@@ -677,7 +677,7 @@ TIMESTAMP dc_link::sync(TIMESTAMP t0, TIMESTAMP t1)
 		inv1_power = inverter1_power_property->get_double(); 
 		inv2_power  = inverter2_power_property->get_double(); 
 		
-		inv1_power=-1*inv2_power;
+		//inv1_power=-1*inv2_power;
 
 		//+++ HM Note: powers are not updated because they are not used by the inverters, so this is just for the sake of completness 
 		inverter1_power_property->setp<double>(inv1_power, *test_rlock); //++++++++++ HM I changed it from inverter 1 to 2 intentionally
