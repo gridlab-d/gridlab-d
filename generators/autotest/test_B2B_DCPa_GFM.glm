@@ -1,0 +1,548 @@
+// This model is to autotest a B2B operating in GFM mode on the inverter_DC side
+// Tested variables are the P and Q of Phase A on the inverter_DC side of the B2B converter
+
+
+
+
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2023-01-01 0:00:00';
+    stoptime '2023-01-01 0:00:30';
+}
+
+#set suppress_repeat_messages=1
+#set relax_naming_rules=1;
+#set profiler=1
+//#set pauseatexit=1
+#define rotor_convergence=0.00000000000001
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+
+//Deltamode declarations - global values
+#set deltamode_timestep=10000000		//100 ms
+//#set deltamode_maximumtime=60000000000	//1 minute
+#set deltamode_maximumtime=10000000000	//1 minute
+//#set deltamode_iteration_limit=10		//Iteration limit
+//#set deltamode_forced_always=true
+
+module tape;
+module assert;
+
+module reliability {
+	enable_subsecond_models true;
+	maximum_event_length 1800000;	//Maximum length of events in seconds (manual events are excluded from this limit)
+	report_event_log true;
+}
+
+module powerflow {
+	enable_subsecond_models true;
+	deltamode_timestep 1 ms;	//10 ms
+	solver_method NR;
+	all_powerflow_delta true;
+	//enable_inrush TRUE;
+};
+
+module generators {
+	enable_subsecond_models true;
+	deltamode_timestep 1 ms;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+//#include "b2b.glm"
+
+
+object inverter_DC_Ctrl{   
+	name VSI1;
+	parent node_b2b_grid;
+	flags DELTAMODE;
+	control_mode GFL_CURRENT_SOURCE;         //GRID_FORMING; // by default this is a GF current source
+	
+
+		
+	rated_power 55000;	   
+	
+
+	Pref 0.0 MW; 
+	Qref 0.0 MW; 
+	
+
+	current_convergence_criterion 1e-8;
+	voltage_convergence_criterion 1e-8;
+
+	Vdc_min_pu 0.1; // 1pu
+
+	Vdc_ref 1;
+	Kp_dc  8; // 8.4     
+    Ki_dc 14.0; //9.6
+
+	Tif 0.001;
+	
+
+	Xfilter 0.1;
+	Rfilter 0.001;
+	
+	//Vdc_base = 8000;
+
+	rated_DC_Voltage 600 V;
+	
+	// E_max 1.2; +++ HM commented it out
+	
+  
+	
+	mp 3.77;  // 3.77 represents 1% droop.
+    kppmax 3;
+	kipmax 60;
+	Pmax 2;
+	Pmin -2;
+	
+	mq 0.05; // 0.05 represents 5% droop
+	
+	
+	
+	kpVdc 35 ;
+	kiVdc 350 ;
+	
+
+	
+};
+
+
+object inverter_DC{
+	name VSI2;
+	parent node_b2b_mg;
+	rated_power 55000;	 // per phase +++++++++++++ HM changed it from 0.1 to 0.001
+	flags DELTAMODE;
+	control_mode GRID_FORMING; //GFL_CURRENT_SOURCE;//
+
+	//control_mode GFL_CURRENT_SOURCE;
+
+	
+	
+	
+	current_convergence_criterion 1e-8;
+	voltage_convergence_criterion 1e-8;
+	frequency_convergence_criterion 1e-4;
+
+
+	
+
+
+
+	Xfilter 0.1;
+	Rfilter 0.001;
+	
+	rated_DC_Voltage 600 V;
+	
+    Tif 0.001;
+
+	mp 3.770;  // 3.77 represents 1% droop. If Isochronous, all changes are absorbed and we don't see Pset dynamics
+	//mp 0;
+    kppmax 3;
+	kipmax 60;
+	Pmax 1;
+	Pmin -1;
+	
+	Tp  0.01; // s // 0.01
+	Tq  0.01; // s // 0.01
+	Tv  0.01; // s // 0.01
+	kpv  0;
+	kiv  5.86; //5.86
+	mq  0.05;
+	E_max  1.25;
+	E_min  0;
+	
+	kpPLL  50;
+    kiPLL  900;
+
+	
+	
+	Pset 0.0;  // In pu when Grid Forming Mode is used
+	Vset 1;	
+	
+	C_pu 0.01;  // e.g., 10mf C, Cpu = C*ZB = 0.01 * 2.3 = 0.023 //+++ HM added this to consider a very small capacitor in parallel with the DC-Link
+
+	  object player {
+	 	 property Pref;
+	 	 file "../b2b_Pref_grid.player";
+	 	 flags DELTAMODE;
+	  };	
+	 
+	 object player {
+		 property Vset;
+		 file "../trigger_b2b.player";
+		 flags DELTAMODE;
+	 };	
+
+
+	
+	 object recorder {
+		file Inverter_VSI2_meter.csv;
+		flags DELTAMODE;
+		property "power_A";
+		interval 1;
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target power_A;
+		operation FULL;
+		within 0.01;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_B2B_DCPa_GFM.csv;
+		};
+	};
+
+
+	
+		
+}
+	
+object dc_link {
+    name DC_LINK;
+    inv1 VSI1;
+	inv2 VSI2;
+	parent VSI1;
+	
+	Vbase 600 V;
+	C 5000e-6;
+	Vco 500;
+
+
+	flags DELTAMODE;
+  
+	 object recorder {
+		file ES_values.csv;
+		flags DELTAMODE;
+		property "In1, Vn1, Pn1,  Vn2, In2, Pn2";
+		interval 1;
+
+	};	
+	
+}
+	
+	
+	
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//Fault check option
+object fault_check {
+	name base_fault_check_object;
+	check_mode ONCHANGE;
+	strictly_radial false;
+	////eventgen_object testgendev;
+	grid_association true;	//Flag to ensure non-monolithic islands
+	output_filename test_connect.txt;
+	full_output_file true;
+}
+
+
+
+
+///////////////////////////////////////////////////////////////////////////
+// Start of individual objects/////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+
+
+// object line_configuration {	
+	// name LINE1;
+	// z11 0.01058+0.01058j;
+	// z12 0;
+	// z13 0;
+	// z21 0;
+	// z22 0.01058+0.01058j;
+	// z23 0;
+	// z31 0;
+	// z32 0;
+	// z33 0.01058+0.01058j;
+// }
+
+// object line_configuration {	
+	// name LINE2;
+	// z11 0.00345+0.00345j; //
+	// z12 0;
+	// z13 0;
+	// z21 0;
+	// z22 0.00345+0.00345j;
+	// z23 0;
+	// z31 0;
+	// z32 0;
+	// z33 0.00345+0.00345j;
+// }
+
+// object line_configuration {	// grid line
+	// name LINE3;
+	// z11 0.01932+0.115j;
+	// z12 0;
+	// z13 0;
+	// z21 0;
+	// z22 0.01932+0.115j;
+	// z23 0;
+	// z31 0;
+	// z32 0;
+	// z33 0.01932+0.115j;
+// }
+
+// Line configuration
+
+object line_configuration {	
+	name LINE0;
+	z11 0.1+0.03141j;
+	z12 0;
+	z13 0;
+	z21 0;
+	z22 0.1+0.03141j;
+	z23 0;
+	z31 0;
+	z32 0;
+	z33 0.1+0.03141j;
+}
+
+
+// Transformer configuration
+object transformer_configuration {
+	name transformer_configuration1;
+	connect_type WYE_WYE;
+  	install_type PADMOUNT;
+  	power_rating 250000000; //25000
+  	primary_voltage 34000;
+  	secondary_voltage 208;
+  	resistance 0.002;
+  	reactance 0.08;
+}
+
+
+
+
+////---- System Config Start----
+
+object meter {
+	flags DELTAMODE;
+	name node_grid; // Grid
+	phases "ABCN";
+	bustype SWING;
+	frequency_measure_type PLL;
+	nominal_voltage 19629.90; 
+	voltage_A 19629.90;
+	voltage_B -9814.95 -16972.00j;
+	voltage_C -9814.5 +16972.00j;
+	
+	//object recorder {
+	//property measured_real_power,measured_reactive_power,measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag,behaving_as_swing;
+	//interval -1;
+	//flags DELTAMODE;
+	//file Grid.csv;
+    // };	
+}
+
+
+object node {
+	flags DELTAMODE;
+	name node_1_b2b_grid; 
+	phases "ABCN";
+	frequency_measure_type PLL;
+	nominal_voltage 120; 
+	voltage_A  120;
+	voltage_B  -60 -103.92j;
+	voltage_C  -60 +103.92j;
+}
+
+
+object meter {
+	flags DELTAMODE;
+	name node_b2b_grid;	
+	phases "ABCN";
+	bustype SWING_PQ;
+	frequency_measure_type PLL;
+	nominal_voltage 120; 
+	voltage_A  120;
+	voltage_B  -60 -103.92j;
+	voltage_C  -60 +103.92j;
+	
+	//object recorder {
+	//property measured_real_power,measured_reactive_power,measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
+	//interval -1;
+	//flags DELTAMODE;
+	//file Inverter_grid_side.csv;
+    // };
+}
+
+
+
+object meter {
+	flags DELTAMODE;
+	name node_mg; // Microgrid
+	phases "ABCN";
+	//bustype SWING; // HM: should be disable when using grid forming, and enabled when using grid following
+	frequency_measure_type PLL;
+	nominal_voltage 19629.90; 
+	voltage_A  19629.90;
+	voltage_B  -9814.95 -16972.00j;
+	voltage_C  -9814.5 +16972.00j;
+
+
+
+	
+	
+}
+
+
+object node {
+	flags DELTAMODE;
+	name node_1_b2b_mg; 
+	phases "ABCN";
+	frequency_measure_type PLL;
+	nominal_voltage 120; 
+	voltage_A  120;
+	voltage_B  -60 -103.92j;
+	voltage_C  -60 +103.92j;
+}
+
+
+object meter {
+	flags DELTAMODE;
+	name node_b2b_mg; 
+	bustype SWING_PQ;
+	phases "ABCN";
+	frequency_measure_type PLL;
+	nominal_voltage 120; 
+	voltage_A  120;
+	voltage_B  -60 -103.92j;
+	voltage_C  -60 +103.92j;
+	
+	
+	
+}
+
+
+// Grid_side Transformer
+
+  object transformer {
+	name XFMR1;
+  	phases "ABCN";
+  	from node_grid;
+  	to node_1_b2b_grid;
+  	configuration transformer_configuration1;
+}
+
+// MG_side Transformer
+  object transformer {
+	name XFMR2;
+  	phases "ABCN";
+  	from node_mg;
+  	to node_1_b2b_mg;
+  	configuration transformer_configuration1;
+}
+
+
+// Grid_side Line
+object overhead_line  {
+     phases "ABCN";
+     name Line_grid;
+     from node_1_b2b_grid;
+     to node_b2b_grid;
+     length 1 mile;
+     configuration LINE0;
+ 
+    
+	 
+	 }
+	 
+// MG_side Line 
+object overhead_line  {
+     phases "ABCN";
+     name Line_mg;
+     from node_1_b2b_mg;
+     to node_b2b_mg;
+     length 1 mile;
+     configuration LINE0;
+ 
+    	  
+	 
+	 }
+
+
+
+
+
+// ///// Ficticious Loads for testing the system
+
+ object switch {
+	  name switch_load_b2b_mg;
+	  flags DELTAMODE;
+      phases "ABCN";
+      from node_b2b_mg;
+      to load_mg_mtr;
+     status CLOSED;
+	
+  }
+ 
+
+ object meter {
+	 flags DELTAMODE;
+	name "load_mg_mtr";
+	 phases ABCN;
+	 nominal_voltage 120;
+  
+     
+ }
+ 
+ object load {
+	 parent "load_mg_mtr";
+	flags DELTAMODE;
+    name Load_mg;
+     phases "ABC";
+	 nominal_voltage 120; 
+	 voltage_A  120;
+	 voltage_B  -60 -103.92j;
+	 voltage_C  -60 +103.92j;
+     
+	  
+      
+	 
+	object player{
+	 property constant_power_A;
+	 file "../b2b_load_mg.player";
+     flags DELTAMODE;
+     };
+     object player{
+	 property constant_power_B;
+	 file "../b2b_load_mg.player";
+     flags DELTAMODE;
+	  };
+    object player{
+	property constant_power_C;
+	 file "../b2b_load_mg.player";
+     flags DELTAMODE;
+	  };
+    
+ }
+
+
+
+ object switch {
+	  name switch_load_b2b_grid;
+	  flags DELTAMODE;
+      phases "ABCN";
+      from node_b2b_grid;
+      to load_grid_mtr;
+      status CLOSED;
+	 
+  }
+ 
+
+ object meter {
+	 flags DELTAMODE;
+	 name "load_grid_mtr";
+	 phases ABCN;
+	 nominal_voltage 120;
+  
+     
+ }
+ 
+ 
