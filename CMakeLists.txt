@@ -115,7 +115,7 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     FetchContent_Declare(
             dlfcn-win32
             GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
-            GIT_TAG v1.3.1
+            GIT_TAG v1.4.2
     )
     FetchContent_MakeAvailable(dlfcn-win32)
     include_directories(${dlfcn-win32_SOURCE_DIR}/src)

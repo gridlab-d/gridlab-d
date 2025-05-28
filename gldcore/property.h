@@ -103,7 +103,7 @@ public:
 
     inline char *findrev(const char c) { return strrchr(buffer, c); };
 
-    inline char *token(char *from, const char *delim, char **context) { return this->strtok_s(from, delim, context); };
+    inline char *token(char *from, const char *delim, char **context) { return strtok_s(from, delim, context); };
 
     inline size_t format(char *fmt, ...) {
         va_list ptr;
