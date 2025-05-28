@@ -78,22 +78,21 @@ void new_metrics_collector(MODULE *mod){
 }
 
 metrics_collector::metrics_collector(MODULE *mod){
-	if(oclass == nullptr)
-	{
+	if (oclass == nullptr)	{
 #ifdef _DEBUG
 		gl_debug("construction metrics_collector class");
 #endif
 		oclass = gl_register_class(mod, const_cast<char *>("metrics_collector"), sizeof(metrics_collector), PC_POSTTOPDOWN);
-    if(oclass == nullptr)
-      GL_THROW(const_cast<char *>("unable to register object class implemented by %s"),__FILE__);
+		if(oclass == nullptr)
+			GL_THROW(const_cast<char *>("unable to register object class implemented by %s"),__FILE__);
 
-    if(gl_publish_variable(oclass,
-			PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector output is stored in JSON format",nullptr) < 1)
+		if(gl_publish_variable(oclass,
+			PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector output is stored in JSON format",NULL) < 1) 
 			GL_THROW(const_cast<char *>("unable to publish properties in %s"), __FILE__);
 
 		defaults = this;
 		memset(this, 0, sizeof(metrics_collector));
-  }
+	}
 }
 
 int metrics_collector::isa(char *classname){
@@ -152,10 +151,9 @@ int metrics_collector::init(OBJECT *parent){
 
 	OBJECT *obj = OBJECTHDR(this);
 
-//	int temp = strcmp(parent->oclass->name,"triplex_meter") != 0;
 	if (parent == nullptr)
 	{
-		gl_error("metrics_collector must have a parent (triplex meter, house, waterheater, inverter, substation, or meter)");
+		gl_error("metrics_collector must have a one these parent objects: triplex meter, house, waterheater, inverter, capacitor, regulator, substation, meter, transformer or evcharger_det");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector.
 		*/
@@ -212,8 +210,7 @@ int metrics_collector::init(OBJECT *parent){
 		if (propRegCountC == nullptr) propRegCountC = gl_get_property (parent, "tap_C_change_count");
 	} else if (gl_object_isa(parent,"substation")) {  // must be a swing bus
 		PROPERTY *pval = gl_get_property(parent,"bustype");
-		if ((pval==nullptr) || (pval->ptype!=PT_enumeration))
-		{
+		if ((pval==nullptr) || (pval->ptype!=PT_enumeration)) {
 			GL_THROW(const_cast<char *>("metrics_collector:%s failed to map bustype variable from %s"), obj->name ? obj->name : "unnamed", parent->name ? parent->name : "unnamed");
 			/*  TROUBLESHOOT
 			While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
@@ -228,8 +225,7 @@ int metrics_collector::init(OBJECT *parent){
 			return 0;
 		}
 		parent_string = const_cast<char *>("swingbus");
-		if (propSwingSubLoad == nullptr) propSwingSubLoad = gl_get_property (parent,
-                                                                          const_cast<char *>("distribution_load"));
+		if (propSwingSubLoad == nullptr) propSwingSubLoad = gl_get_property (parent,"distribution_load");
 	} else if (gl_object_isa(parent, const_cast<char *>("meter"))) {
 		parent_string = const_cast<char *>("meter"); // unless it's a swing bus
 		if (propMeterNomV == nullptr) propMeterNomV = gl_get_property (parent, "nominal_voltage");
@@ -249,8 +245,7 @@ int metrics_collector::init(OBJECT *parent){
 			auto *meter_bustype = (enumeration*)GETADDR(parent, pval);
 			if (*meter_bustype == 2) {
 				parent_string = const_cast<char *>("swingbus");
-				if (propSwingMeterS == nullptr) propSwingMeterS = gl_get_property (parent,
-                                                                                const_cast<char *>("measured_power"));
+				if (propSwingMeterS == nullptr) propSwingMeterS = gl_get_property (parent,"measured_power");
 			}
 		}
 	} else if (gl_object_isa(parent, "transformer")) {
@@ -261,7 +256,7 @@ int metrics_collector::init(OBJECT *parent){
 		if (propLineOverloaded == nullptr) propLineOverloaded = gl_get_property (parent, "overloaded_status");
 	} else if (gl_object_isa(parent, "evcharger_det")) {
 		parent_string = const_cast<char*>("evcharger_det");
-		if (propChargeRate == nullptr) propChargeRate = gl_get_property (parent, "charge_rate");
+		if (propChargeRate == nullptr) propChargeRate = gl_get_property (parent, "actual_charge_rate");
 		if (propBatterySOC == nullptr) propBatterySOC = gl_get_property (parent, "battery_SOC");
 	}
 	else {
@@ -415,7 +410,7 @@ int metrics_collector::init(OBJECT *parent){
 	// Check valid metrics_collector output interval
 	interval_length = (TIMESTAMP)(interval_length_dbl);
 	vector_length = interval_length + 1;
-	if(interval_length <= 0){
+	if (interval_length <= 0) {
 		gl_error("metrics_collector::init(): invalid interval of %i, must be greater than 0", interval_length);
 		/* TROUBLESHOOT
 			The metrics_collector interval must be a positive number of seconds.
@@ -425,8 +420,7 @@ int metrics_collector::init(OBJECT *parent){
 
 	// need the time sample points for every parent type
 	time_array = (TIMESTAMP *)gl_malloc(vector_length*sizeof(TIMESTAMP));
-	if (time_array == nullptr)
-	{
+	if (time_array == nullptr) {
 		GL_THROW(const_cast<char *>("metrics_collector %d::init(): Failed to allocate time array"), obj->id);
 		/*  TROUBLESHOOT
 		While attempting to allocate the array, an error was encountered.
@@ -435,6 +429,7 @@ int metrics_collector::init(OBJECT *parent){
 	}
 
 	// Allocate the arrays based on the parent type
+	// If parent is triplex_meter or meter
 	if ((strcmp(parent_string, "triplex_meter") == 0) || (strcmp(parent_string, "meter") == 0)) {
 		// Allocate real power array
 		real_power_array = (double *)gl_malloc(vector_length*sizeof(double));
@@ -719,7 +714,7 @@ int metrics_collector::init(OBJECT *parent){
 			*/
 		}
 	}
-	// If parent is meter
+	// If parent is swingbus
 	else if (strcmp(parent_string, "swingbus") == 0) {
 		// Allocate real power array
 		real_power_array = (double *)gl_malloc(vector_length*sizeof(double));
@@ -768,6 +763,7 @@ int metrics_collector::init(OBJECT *parent){
 			*/
 		}
 	}
+	// If parent is capacitor or regulator
 	else if ((strcmp(parent_string, "capacitor") == 0) || (strcmp(parent_string, "regulator") == 0)) {
 		count_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
@@ -781,6 +777,7 @@ int metrics_collector::init(OBJECT *parent){
 		}
 		for (int i = 0; i < vector_length; i++) count_array[i] = 0.0;
 	}
+	// If parent is transformer
 	else if (strcmp(parent_string, "transformer") == 0) {
 		trans_overload_status_array = (int *)gl_malloc(vector_length*sizeof(int));
 		// Check
@@ -794,6 +791,7 @@ int metrics_collector::init(OBJECT *parent){
 		}
 		for (int i = 0; i < vector_length; i++) trans_overload_status_array[i] = 0;
 	}
+	// If parent is line
 	else if (strcmp(parent_string, "line") == 0) {
 		line_overload_status_array = (int *)gl_malloc(vector_length*sizeof(int));
 		// Check
@@ -807,6 +805,7 @@ int metrics_collector::init(OBJECT *parent){
 		}
 		for (int i = 0; i < vector_length; i++) line_overload_status_array[i] = 0;
 	}
+	// If parent is evcharger_det
 	else if (strcmp(parent_string, "evcharger_det") == 0) {
 		charge_rate_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
@@ -911,8 +910,7 @@ int metrics_collector::read_line(OBJECT *obj){
 		voltage_vln_array[curr_index] = vavg;
 		voltage_unbalance_array[curr_index] =  0.5 * fabs(v1 - v2)/vavg;
 	}
-	else if (strcmp(parent_string, "meter") == 0)
-	{
+	else if (strcmp(parent_string, "meter") == 0) {
 		real_power_array[curr_index] = *gl_get_double(obj->parent, propMeterP);
 		reactive_power_array[curr_index] = *gl_get_double(obj->parent, propMeterQ);
 
@@ -968,8 +966,7 @@ int metrics_collector::read_line(OBJECT *obj){
 		voltage_vln_array[curr_index] = vavg;  // Vln
 		voltage_unbalance_array[curr_index] = vdev / vll; // max deviation from Vll / average Vll
 	} 
-	else if (strcmp(parent_string, "house") == 0)
-	{
+	else if (strcmp(parent_string, "house") == 0) {
 		total_load_array[curr_index] = *gl_get_double(obj->parent, propHouseLoad);
 		hvac_load_array[curr_index] = *gl_get_double(obj->parent, propHouseHVAC);
 		air_temperature_array[curr_index] = *gl_get_double(obj->parent, propHouseAirTemp);

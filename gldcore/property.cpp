@@ -126,7 +126,7 @@ int property_check(void)
 	return status;
 }
 
-PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation)
+PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, const char *name, void *addr, DELEGATEDTYPE *delegation)
 {
 	char unitspec[1024];
 	PROPERTY *prop = (PROPERTY*)malloc(sizeof(PROPERTY));

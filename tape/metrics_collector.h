@@ -258,9 +258,9 @@ private:
 	// Parameters related to triplex_meter and (billing) meter objects
 	double *real_power_array;		//array storing real power measured at the meter
 	double *reactive_power_array;		//array storing reactive power measured at the meter
-	double *voltage_vll_array;		//average line-to-line (or hot-to-hot) voltage at the meter
-	double *voltage_vln_array;		//average line-to-neutral (or hot-to-neutral) voltage at the meter
-	double *voltage_unbalance_array;		//array storing voltage unbalance per ANSI C84.1
+	double *voltage_vll_array; 		//average line-to-line (or hot-to-hot) voltage at the meter
+	double *voltage_vln_array;		  //average line-to-neutral (or hot-to-neutral) voltage at the meter
+	double *voltage_unbalance_array;  //array storing voltage unbalance per ANSI C84.1
 	double price_parent;
 	double bill_parent;
 
@@ -293,11 +293,11 @@ private:
 	// Parameters related to capacitor and regulator objects
 	double *count_array;  // these _count member variables are doubles in capacitor.h and regulator.h
 
-  // Parameters related to transformer objects
+    // Parameters related to transformer objects
 	int *trans_overload_status_array;
 	int *line_overload_status_array;
 
-  // Parameters related to evcharger det objects
+    // Parameters related to evcharger det objects
 	double *charge_rate_array;
 	double *battery_SOC_array;
 

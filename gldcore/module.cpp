@@ -2032,6 +2032,7 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 #elif defined DYN_PROC_AFFINITY
 	if (sched_setaffinity(pid,CPU_ALLOC_SIZE(n_procs),cpuset) )
 		output_warning("unable to set current process affinity mask: %s", strerror(errno));
+	CPU_FREE(cpuset);
 #elif defined HAVE_SCHED_SETAFFINITY
 	if (sched_setaffinity(pid,sizeof(cpu_set_t),cpuset) )
 		output_warning("unable to set current process affinity mask: %s", strerror(errno));
