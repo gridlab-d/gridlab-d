@@ -37,7 +37,7 @@ overhead_line_conductor::overhead_line_conductor(MODULE *mod) : powerflow_librar
 		   PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),PT_DESCRIPTION, "Emergency summer amp rating",
 		   PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),PT_DESCRIPTION, "Continuous winter amp rating",
 		   PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),PT_DESCRIPTION, "Emergency winter amp rating",
-            NULL) < 1) GL_THROW("unable to publish overhead_line_conductor properties in %s",__FILE__);
+            nullptr) < 1) GL_THROW("unable to publish overhead_line_conductor properties in %s",__FILE__);
     }
 }
 

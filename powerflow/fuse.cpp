@@ -54,7 +54,7 @@ fuse::fuse(MODULE *mod) : link_object(mod)
 			PT_double, "current_limit[A]", PADDR(current_limit),
 			PT_double, "mean_replacement_time[s]",PADDR(mean_replacement_time),	//Retains compatibility with older files
 			PT_double, "fuse_resistance[Ohm]",PADDR(fuse_resistance), PT_DESCRIPTION,"The resistance value of the fuse when it is not blown.",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		if (gl_publish_function(oclass,"change_fuse_state",(FUNCTIONADDR)change_fuse_state)==nullptr)
 			GL_THROW("Unable to publish fuse state change function");
@@ -1166,7 +1166,7 @@ void fuse::set_fuse_faulted_phases(unsigned char desired_status)
 * @param phase_to_check - the current phase to check fusing action for
 * @param fcurr - array of from (line input) currents
 */
-void fuse::fuse_check(set phase_to_check, gld::complex *fcurr)
+void fuse::fuse_check(gld::set phase_to_check, gld::complex *fcurr)
 {
 	char indexval;
 	char phase_verbose;

@@ -51,7 +51,7 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 				PT_KEYWORD, "CHANGING", (enumeration)VFD_CHANGING,
 				PT_KEYWORD, "STEADY_STATE", (enumeration)VFD_STEADY,
 			
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_vfd)==nullptr)
@@ -875,7 +875,7 @@ STATUS vfd::alloc_freq_arrays(double delta_t_val)
 		//Deflag our force, just because
 		force_array_realloc = false;
 		
-		//NULL the pointer, for giggles - put out here, just to be paranoid
+		//nullptr the pointer, for giggles - put out here, just to be paranoid
 		settleFreq = nullptr;
 	}
 	

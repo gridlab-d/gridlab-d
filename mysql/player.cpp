@@ -12,16 +12,16 @@ EXPORT_PRECOMMIT(player);
 EXPORT_COMMIT(player);
 EXPORT_INIT(player);
 
-CLASS *player::oclass = NULL;
-player *player::defaults = NULL;
+CLASS *player::oclass = nullptr;
+player *player::defaults = nullptr;
 
 player::player(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gld_class::create(module,"player",sizeof(player),PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class player";
 		else
 			oclass->trl = TRL_PROTOTYPE;
@@ -34,7 +34,7 @@ player::player(MODULE *module)
 			PT_char8,"filetype",get_filetype_offset(),PT_DESCRIPTION,"table type from which samples are read",
 			PT_char32,"mode",get_mode_offset(),PT_DESCRIPTION,"table output mode",
 			PT_object,"connection",get_connection_offset(),PT_DESCRIPTION,"database connection",
-			NULL)<1){
+			nullptr)<1){
 				char msg[256];
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
@@ -54,9 +54,9 @@ int player::create(void)
 int player::init(OBJECT *parent)
 {
 	// check the connection
-	if ( get_connection()!=NULL )
+	if ( get_connection()!=nullptr )
 		db = (database*)(get_connection()+1);
-	if ( db==NULL )
+	if ( db==nullptr )
 		exception("no database connection available or specified");
 	if ( !db->isa("database") )
 		exception("connection is not a mysql database");
@@ -93,7 +93,7 @@ int player::init(OBJECT *parent)
 	}
 
 	// connect the target property
-	if ( get_parent()==NULL )
+	if ( get_parent()==nullptr )
 		exception("parent is not set");
 	target.set_object(get_parent());
 	char propname[64]="", propunit[64]="";
@@ -106,7 +106,7 @@ int player::init(OBJECT *parent)
 		strncpy(field,propname,sizeof(field)-1);
 		target.set_property(propname);
 		scale = 1.0;
-		if ( unit.is_valid() && target.get_unit()!=NULL )
+		if ( unit.is_valid() && target.get_unit()!=nullptr )
 		{
 			target.get_unit()->convert(unit,scale);
 			sprintf(field,"%s[%s]",propname,propunit);
@@ -129,7 +129,7 @@ int player::init(OBJECT *parent)
 	gld_clock start;
 	data = db->select("SELECT t,`%s` FROM `%s` WHERE t>=from_unixtime(%llu) ORDER BY id",
 		get_property(),get_table(),db->convert_to_dbtime(start.get_timestamp()));
-	if ( data==NULL )
+	if ( data==nullptr )
 		return 0; // no data
 	n_rows = mysql_num_rows(data);
 	n_fields = mysql_num_fields(data);
@@ -154,7 +154,7 @@ int player::precommit(TIMESTAMP t0)
 	{
 		target.from_string(row[1]);
 		row = mysql_fetch_row(data);
-		if ( row==NULL )
+		if ( row==nullptr )
 			return 1;
 		row_num++;
 		gl_verbose("%s: row %d, %s='%s', %s='%s'", get_name(), row_num, fields[0].name, row[0], fields[1].name, row[1]);

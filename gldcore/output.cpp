@@ -120,10 +120,10 @@ FILE* output_redirect_stream(char *name, FILE *fp)
 			return oldfp;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
-void (*notify_error)(void) = NULL;
+void (*notify_error)(void) = nullptr;
 int output_notify_error(void (*notify)(void))
 {
 	notify_error = notify;
@@ -151,11 +151,11 @@ FILE* output_redirect(const char *name, char *path)
 		if (strcmp(name,map[i].name)==0)
 		{
 			char *mode = const_cast<char*>("w");
-			if (*(map[i].file)!=NULL)
+			if (*(map[i].file)!=nullptr)
 				fclose(*(map[i].file));
 			
 			/* test for append mode, path led with + */
-			if (path != NULL && path[0]=='+')
+			if (path != nullptr && path[0]=='+')
 			{	mode = const_cast<char*>("a");
 				path++;
 			}
@@ -167,31 +167,31 @@ FILE* output_redirect(const char *name, char *path)
 			return *(map[i].file);
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 /**	prep_stream() sets the curr_stream objects to stdin, stdout, and stderr, since VS2005 is picky
 	about non-constant initializers.
 **/
-static FILE *curr_stream[3] = {NULL, NULL, NULL};
+static FILE *curr_stream[3] = {nullptr, nullptr, nullptr};
 static int stream_prep = 0;
 static void prep_stream(){
 	if(stream_prep)
 		return;
 	stream_prep = 1;
-	if(curr_stream[FS_IN] == NULL){
+	if(curr_stream[FS_IN] == nullptr){
 		curr_stream[FS_IN] = stdin;
 #ifdef DEBUG
 		if (global_verbose_mode) printf("    ... prep_stream() set FS_IN to stdin\n");
 #endif
 	}
-	if(curr_stream[FS_STD] == NULL){
+	if(curr_stream[FS_STD] == nullptr){
 		curr_stream[FS_STD] = stdout;
 #ifdef DEBUG
 		if (global_verbose_mode) printf("    ... prep_stream() set FS_STD to stdout\n");
 #endif
 	}
-	if(curr_stream[FS_ERR] == NULL){
+	if(curr_stream[FS_ERR] == nullptr){
 		curr_stream[FS_ERR] = stderr;
 #ifdef DEBUG
 		if (global_verbose_mode) printf("    ... prep_stream() set FS_ERR to stderr\n");
@@ -208,13 +208,13 @@ int output_init(int argc,char *argv[])
 
 void output_cleanup(void)
 {
-	/* NULL purges buffers */
-	output_verbose(NULL);
-	output_warning(NULL);
-	output_error(NULL);
-	output_fatal(NULL);
-	output_message(NULL);
-	output_debug(NULL);
+	/* nullptr purges buffers */
+	output_verbose(nullptr);
+	output_warning(nullptr);
+	output_error(nullptr);
+	output_fatal(nullptr);
+	output_message(nullptr);
+	output_debug(nullptr);
 }
 
 static int default_printstd(const char *format,...)
@@ -253,9 +253,9 @@ static int default_printerr(const char *format,...)
 FILE *output_set_stream(FILESTREAM fs, FILE *newfp){
 	FILE *oldfp = curr_stream[fs];
 	if(fs > FS_ERR)	/* input check */
-		return NULL;
-	if(newfp == NULL)
-		return NULL;
+		return nullptr;
+	if(newfp == nullptr)
+		return nullptr;
 	curr_stream[fs] = newfp;
 	return oldfp;
 }
@@ -326,7 +326,7 @@ int output_fatal(const char *format,...) /**< \bprintf style argument list */
 	static int count=0;
 	int result = 0;
 	wlock(&output_lock);
-	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+	if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
 		goto Unlock;
@@ -340,10 +340,10 @@ int output_fatal(const char *format,...) /**< \bprintf style argument list */
 		{
 			len = sprintf(buffer,"last fatal error message was repeated %d times", count);
 			count = 0;
-			if(format == NULL) goto Output;
+			if(format == nullptr) goto Output;
 			else len += sprintf(buffer+len,"\n%sFATAL    [%s] : ",prefix, time_context);
 		}
-		else if (format==NULL)
+		else if (format==nullptr)
 			goto Unlock;
 		va_start(ptr,format);
 		vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
@@ -372,7 +372,7 @@ int output_error(const char *format,...) /**< \bprintf style argument list */
 	static int count=0;
 	int result = 0;
 	wlock(&output_lock);
-	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+	if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
 		goto Unlock;
@@ -386,10 +386,10 @@ int output_error(const char *format,...) /**< \bprintf style argument list */
 		{
 			len = sprintf(buffer,"last error message was repeated %d times", count);
 			count = 0;
-			if(format == NULL) goto Output;
+			if(format == nullptr) goto Output;
 			else len += sprintf(buffer+len,"\n%sERROR    [%s] : ", prefix, time_context);
 		}
-		else if (format==NULL)
+		else if (format==nullptr)
 			goto Unlock;
 		va_start(ptr,format);
 		vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
@@ -397,7 +397,7 @@ int output_error(const char *format,...) /**< \bprintf style argument list */
 	}
 Output:
 
-	if (notify_error!=NULL)
+	if (notify_error!=nullptr)
 		(*notify_error)();
 
 	if (redirect.error)
@@ -422,7 +422,7 @@ int output_error_raw(const char *format,...) /**< \bprintf style argument list *
 	static int count=0;
 	int result = 0;
 	wlock(&output_lock);
-	if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+	if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
 		goto Unlock;
@@ -436,10 +436,10 @@ int output_error_raw(const char *format,...) /**< \bprintf style argument list *
 		{
 			len = sprintf(buffer,"last error message was repeated %d times", count);
 			count = 0;
-			if(format == NULL) goto Output;
+			if(format == nullptr) goto Output;
 			else len += sprintf(buffer+len,"\n");
 		}
-		else if (format==NULL)
+		else if (format==nullptr)
 			goto Unlock;
 		va_start(ptr,format);
 		vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
@@ -447,7 +447,7 @@ int output_error_raw(const char *format,...) /**< \bprintf style argument list *
 	}
 Output:
 
-	if (notify_error!=NULL)
+	if (notify_error!=nullptr)
 		(*notify_error)();
 
 	if (redirect.error)
@@ -467,7 +467,7 @@ Unlock:
  **/
 int output_test(const char *format,...) /**< \bprintf style argument list */
 {
-	static FILE *fp = NULL;
+	static FILE *fp = nullptr;
 	char minor_b[32], major_b[32];
 	char testoutputfilename[1024];
 	char commandline[256];
@@ -476,7 +476,7 @@ int output_test(const char *format,...) /**< \bprintf style argument list */
 	int result = 0;
 	wlock(&output_lock);
 
-	if(format == NULL){
+	if(format == nullptr){
 		goto Unlock;
 	}
 
@@ -484,11 +484,11 @@ int output_test(const char *format,...) /**< \bprintf style argument list */
 	vsprintf(buffer,format,ptr); /* note the lack of check on buffer overrun */
 	va_end(ptr);
 
-	if (fp==NULL)
+	if (fp==nullptr)
 	{
-		time_t now = time(NULL);
+		time_t now = time(nullptr);
 		fp = fopen(global_getvar("testoutputfile", testoutputfilename, 1023), "w");
-		if (fp==NULL)
+		if (fp==nullptr)
 		{
 			/* can't write to output file, write to stderr instead */
 			return (*printstd)("TEST: %s\n",buffer);
@@ -522,7 +522,7 @@ int output_warning(const char *format,...) /**< \bprintf style argument list */
 		static int count=0;
 		int result = 0;
 		wlock(&output_lock);
-		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+		if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
 			goto Unlock;
@@ -536,10 +536,10 @@ int output_warning(const char *format,...) /**< \bprintf style argument list */
 			{
 				len = sprintf(buffer,"last warning message was repeated %d times", count);
 				count = 0;
-				if(format == NULL) goto Output;
+				if(format == nullptr) goto Output;
 				else len += sprintf(buffer+len,"\n%sWARNING  [%s] : ", prefix, time_context);
 			}
-			else if (format==NULL)
+			else if (format==nullptr)
 				goto Unlock;
 			va_start(ptr,format);
 			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
@@ -572,7 +572,7 @@ int output_debug(const char *format,...) /**< \bprintf style argument list */
 		static int count=0;
 		int result = 0;
 		wlock(&output_lock);
-		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+		if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
 			goto Unlock;
@@ -589,7 +589,7 @@ int output_debug(const char *format,...) /**< \bprintf style argument list */
 				if(format == 0) goto Output;
 				else len += sprintf(buffer+len,"\n%sDEBUG [%s] : ", prefix, time_context);
 			}
-			else if (format==NULL)
+			else if (format==nullptr)
 				goto Unlock;
 			va_start(ptr,format);
 			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
@@ -623,7 +623,7 @@ int output_verbose(const char *format,...) /**< \bprintf style argument list */
 		static int count=0;
 		int result = 0;
 		wlock(&output_lock);
-		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+		if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
 			goto Unlock;
@@ -639,7 +639,7 @@ int output_verbose(const char *format,...) /**< \bprintf style argument list */
 				count = 0;
 				if(format == 0) goto Output;
 			}
-			else if (format==NULL)
+			else if (format==nullptr)
 				goto Unlock;
 			va_start(ptr,format);
 			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
@@ -671,7 +671,7 @@ int output_message(const char *format,...) /**< \bprintf style argument list */
 		size_t sz = strlen(format?format:"");
 		int result = 0;
 		wlock(&output_lock);
-		if (format!=NULL && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+		if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
 			goto Unlock;
@@ -685,9 +685,9 @@ int output_message(const char *format,...) /**< \bprintf style argument list */
 			{
 				len = sprintf(buffer,"%slast message was repeated %d times\n", prefix, count);
 				count = 0;
-				if(format == NULL) goto Output;
+				if(format == nullptr) goto Output;
 			}
-			if (format==NULL)
+			if (format==nullptr)
 				goto Unlock;
 			va_start(ptr,format);
 			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
@@ -716,7 +716,7 @@ int output_profile(const char *format, ...) /**< /bprintf style argument list */
 	vsprintf(tmp,format,ptr);
 	va_end(ptr);
 
-	if (redirect.profile!=NULL)
+	if (redirect.profile!=nullptr)
 		return fprintf(redirect.profile,"%s%s\n", prefix, tmp);
 	else
 		return (*printstd)("%s%s\n", prefix, tmp);
@@ -799,15 +799,15 @@ int output_raw(const char *format,...) /**< \bprintf style argument list */
 /** Output the XSD snippet of a class */
 int output_xsd(char *spec)
 {
-	MODULE *mod = NULL;
-	CLASS *oclass = NULL;
+	MODULE *mod = nullptr;
+	CLASS *oclass = nullptr;
 	char modulename[1024], classname[1024]="";
 	char buffer[65536];
 	/*if(sscanf(spec, "%[A-Za-z_0-9]::%[A-Za-z_0-9]:%s",modulename, submodulename, classname) == 3)
 	{
 		sprintf(jointname, "%s::%s", modulename, submodulename);
-		mod = module_load(jointname, 0, NULL);
-		if(mod == NULL){
+		mod = module_load(jointname, 0, nullptr);
+		if(mod == nullptr){
 			output_error("unable to load parent module %s", modulename);
 			return 0;
 		}
@@ -816,8 +816,8 @@ int output_xsd(char *spec)
 	else if(sscanf(spec, "%[A-Za-z_0-9]::%[A-Za-z_0-9]",modulename, submodulename) == 2)
 	{
 		sprintf(jointname, "%s::%s", modulename, submodulename);
-		mod = module_load(jointname, 0, NULL);
-		if(mod == NULL){
+		mod = module_load(jointname, 0, nullptr);
+		if(mod == nullptr){
 			output_error("unable to load parent module %s", modulename);
 			return 0;
 		}
@@ -827,14 +827,14 @@ int output_xsd(char *spec)
 		output_error("improperly formatted XSD dump specification");
 		return 0;
 	}
-	if (mod == NULL)
-		mod = module_load(modulename,0,NULL);
-	if (mod==NULL)
+	if (mod == nullptr)
+		mod = module_load(modulename,0,nullptr);
+	if (mod==nullptr)
 	{
 		output_error("unable to find module '%s'", spec);
 		return 0;
 	}
-	if (classname[0]!='\0' && (oclass=class_get_class_from_classname(classname))==NULL)
+	if (classname[0]!='\0' && (oclass=class_get_class_from_classname(classname))==nullptr)
 	{
 		output_error("unable to find class '%s' in module '%s'", classname, modulename);
 		return 0;
@@ -843,7 +843,7 @@ int output_xsd(char *spec)
 	//	strcpy(modulename, submodulename);
 	output_message("<?xml version=\"1.0\" encoding=\"utf-%d\"?>",global_xml_encoding);
 	output_message("<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"http://www.w3.org/\" xmlns=\"http://www.w3.org/\" elementFormDefault=\"qualified\">\n");
-	for (oclass=(classname[0]!='\0'?oclass:class_get_first_class()); oclass!=NULL; oclass=oclass->next) 
+	for (oclass=(classname[0]!='\0'?oclass:class_get_first_class()); oclass!=nullptr; oclass=oclass->next)
 	{
 		if (class_get_xsd(oclass,buffer,sizeof(buffer))<=0)
 		{
@@ -865,8 +865,8 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 	/* load modules */
 	while (n_mods-->0)
 	{
-		MODULE *mod = module_load(*p_mods,0,NULL);
-		if (mod==NULL)
+		MODULE *mod = module_load(*p_mods,0,nullptr);
+		if (mod==nullptr)
 		{
 			output_error("module %s not found", *p_mods);
 			return FAILED;
@@ -876,7 +876,7 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 
 	/* open the output file */
 	fp = fopen(fname,"w");
-	if (fp==NULL)
+	if (fp==nullptr)
 	{
 		output_error("%s open failed: %s", fname, strerror(errno));
 		return errno;
@@ -895,7 +895,7 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 			{
 				GLOBALVAR *stylesheet = global_find("stylesheet");
 				fprintf(fp,"<title>GridLAB-D <xsl:value-of select=\"version.major\"/>.<xsl:value-of select=\"version.minor\"/> - <xsl:value-of select=\"modelname\"/></title>\n");
-				if (stylesheet==NULL || stylesheet->prop->ptype!=PT_char1024) /* only char1024 is allowed */
+				if (stylesheet==nullptr || stylesheet->prop->ptype!=PT_char1024) /* only char1024 is allowed */
 					fprintf(fp,"<link rel=\"stylesheet\" href=\"%sgridlabd-%d_%d.css\" type=\"text/css\"/>\n",global_urlbase,global_version_major,global_version_minor);
 				else
 					fprintf(fp,"<link rel=\"stylesheet\" href=\"%s.css\" type=\"text/css\"/>\n",static_cast<char*>(stylesheet->prop->addr));
@@ -903,7 +903,7 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 			fprintf(fp,"</head>\n");
 			fprintf(fp,"<body>\n");
 			{
-				GLOBALVAR *var=NULL;
+				GLOBALVAR *var=nullptr;
 				MODULE *mod;
 				
 				fprintf(fp,"<H1><xsl:value-of select=\"modelname\"/></H1>\n");
@@ -914,7 +914,7 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 				fprintf(fp,"<LI><A HREF=\"#global_variables\">Global variables</A></LI>\n");
 				fprintf(fp,"<LI><A HREF=\"#solver_ranks\">Solver ranks</A></LI>\n");
 				fprintf(fp,"<LI><A HREF=\"#modules\">Modules</A></LI><OL TYPE=\"a\">\n");
-				for (mod=module_get_first(); mod!=NULL; mod=mod->next)
+				for (mod=module_get_first(); mod!=nullptr; mod=mod->next)
 					fprintf(fp,"<LI><A HREF=\"#modules_%s\">%s</A></LI>\n",mod->name,mod->name);
 				fprintf(fp,"</OL>\n");
 				fprintf(fp,"<LI><A HREF=\"#output\">Output</A></LI>\n");
@@ -954,7 +954,7 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 
 				/* module object dumps */
 				fprintf(fp,"<H2><A NAME=\"modules\">Modules</A></H2>\n");
-				for (mod=module_get_first(); mod!=NULL; mod=mod->next)
+				for (mod=module_get_first(); mod!=nullptr; mod=mod->next)
 				{
 					CLASS *oclass;
 					PROPERTY *prop;
@@ -976,22 +976,22 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 					fprintf(fp,"</TABLE>\n");
 
 					/* object dump */
-					for (oclass=mod->oclass; oclass!=NULL && oclass->module==mod; oclass=oclass->next)
+					for (oclass=mod->oclass; oclass!=nullptr && oclass->module==mod; oclass=oclass->next)
 					{
 						CLASS *pclass = oclass;
 						fprintf(fp,"<H4>%s objects</H4>", oclass->name);
 						fprintf(fp,"<TABLE BORDER=\"1\">\n");
 						fprintf(fp,"<TR><TH>Name</TH>");
-						for (pclass=oclass; pclass!=NULL; pclass=pclass->parent)
-							for (prop=class_get_first_property(pclass); prop!=NULL; prop=class_get_next_property(prop))
+						for (pclass=oclass; pclass!=nullptr; pclass=pclass->parent)
+							for (prop=class_get_first_property(pclass); prop!=nullptr; prop=class_get_next_property(prop))
 								fprintf(fp,"<TH>%s</TH>",prop->name);
 						fprintf(fp,"</TR>\n");
 						{
 							fprintf(fp,"<xsl:for-each select=\"%s/%s_list/%s\">", mod->name,oclass->name,oclass->name);
 							{
 								fprintf(fp,"<TR><TD><a name=\"#{name}\"/><xsl:value-of select=\"name\"/> (#<xsl:value-of select=\"id\"/>)</TD>");
-								for (pclass=oclass; pclass!=NULL; pclass=pclass->parent)
-									for (prop=class_get_first_property(pclass); prop!=NULL; prop=class_get_next_property(prop))
+								for (pclass=oclass; pclass!=nullptr; pclass=pclass->parent)
+									for (prop=class_get_first_property(pclass); prop!=nullptr; prop=class_get_next_property(prop))
 									{
 										if (prop->ptype==PT_object)
 											fprintf(fp,"<TD><a href=\"#{%s}\"><xsl:value-of select=\"%s\"/></a></TD>",prop->name,prop->name);
@@ -1025,9 +1025,9 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 					fprintf(fp,"}\n");
 
 					/* module blocks */
-					for (mod=module_get_first(); mod!=NULL; mod=mod->next)
+					for (mod=module_get_first(); mod!=nullptr; mod=mod->next)
 					{
-						GLOBALVAR *var=NULL;
+						GLOBALVAR *var=nullptr;
 						fprintf(fp,"<xsl:for-each select=\"%s\">", mod->name);
 						{
 							CLASS *oclass;
@@ -1047,7 +1047,7 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 							}
 							fprintf(fp,"}\n");
 
-							for (oclass=mod->oclass; oclass!=NULL && oclass->module==mod; oclass=oclass->next)
+							for (oclass=mod->oclass; oclass!=nullptr && oclass->module==mod; oclass=oclass->next)
 							{
 								fprintf(fp,"\n# %s::%s objects\n", mod->name, oclass->name);
 								{
@@ -1063,7 +1063,7 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 										fprintf(fp,"<xsl:if test=\"latitude!=''\">\tlatitude <xsl:value-of select=\"latitude\"/>;\n</xsl:if>");
 										fprintf(fp,"<xsl:if test=\"longitude!=''\">\tlongitude <xsl:value-of select=\"longitude\"/>;\n</xsl:if>");
 										fprintf(fp,"<xsl:if test=\"rank!=''\">\trank <xsl:value-of select=\"rank\"/>;\n</xsl:if>");
-										for (prop=class_get_first_property(oclass); prop!=NULL; prop=class_get_next_property(prop))
+										for (prop=class_get_first_property(oclass); prop!=nullptr; prop=class_get_next_property(prop))
 										{
 											if (prop->ptype==PT_object)
 												fprintf(fp,"<xsl:if test=\"%s\">\t%s <a href=\"#GLM.{%s}\"><xsl:value-of select=\"%s\"/></a>;\n</xsl:if>",prop->name,prop->name,prop->name,prop->name);

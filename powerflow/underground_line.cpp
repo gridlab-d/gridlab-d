@@ -33,7 +33,7 @@ underground_line::underground_line(MODULE *mod) : line(mod)
 
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ugline)==nullptr)
 			GL_THROW("Unable to publish fault creation function");
 		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ugline)==nullptr)
@@ -163,7 +163,7 @@ int underground_line::init(OBJECT *parent)
 				//Get continuous - summer
 				temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
 
-				//Check if NULL
+				//Check if nullptr
 				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
@@ -176,7 +176,7 @@ int underground_line::init(OBJECT *parent)
 				//Get continuous - winter
 				temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
 
-				//Check if NULL
+				//Check if nullptr
 				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
@@ -189,7 +189,7 @@ int underground_line::init(OBJECT *parent)
 				//Now get emergency - summer
 				temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
 
-				//Check if NULL
+				//Check if nullptr
 				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
@@ -202,7 +202,7 @@ int underground_line::init(OBJECT *parent)
 				//Now get emergency - winter
 				temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
 
-				//Check if NULL
+				//Check if nullptr
 				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
@@ -226,7 +226,7 @@ int underground_line::init(OBJECT *parent)
 			//Get continuous - summer
 			temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
 
-			//Check if NULL
+			//Check if nullptr
 			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
@@ -239,7 +239,7 @@ int underground_line::init(OBJECT *parent)
 			//Get continuous - winter
 			temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
 
-			//Check if NULL
+			//Check if nullptr
 			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
@@ -252,7 +252,7 @@ int underground_line::init(OBJECT *parent)
 			//Now get emergency - summer
 			temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
 
-			//Check if NULL
+			//Check if nullptr
 			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
@@ -265,7 +265,7 @@ int underground_line::init(OBJECT *parent)
 			//Now get emergency - winter
 			temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
 
-			//Check if NULL
+			//Check if nullptr
 			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary

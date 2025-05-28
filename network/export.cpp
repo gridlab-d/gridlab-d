@@ -17,8 +17,8 @@
 //static int save_cdf(char *file)
 //{
 //	FILE *fp=fopen(file,"w");
-//	if (fp==NULL) return 0;
-//	time_t now = time(NULL);
+//	if (fp==nullptr) return 0;
+//	time_t now = time(nullptr);
 //	char timestamp[32];
 //	int count=0;
 //	/* TODO: these should be set as module parameters */
@@ -32,8 +32,8 @@
 //	// process nodes
 //	FINDLIST *found = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",FT_END);
 //	count += fprintf(fp,"%-38.38s %d ITEMS\n","BUS DATA FOLLOWS",found->hit_count);
-//	OBJECT *obj=NULL;
-//	while ((obj=gl_find_next(found,obj))!=NULL)
+//	OBJECT *obj=nullptr;
+//	while ((obj=gl_find_next(found,obj))!=nullptr)
 //	{
 //		node *my = (node*)(obj+1);
 //		char name[32];
@@ -51,13 +51,13 @@
 //	// process links
 //	found = gl_find_objects(FL_NEW,FT_CLASS,SAME,"link",FT_END);
 //	count += fprintf(fp,"%-38.38s %d ITEMS\n","BRANCH DATA FOLLOWS",found->hit_count);
-//	obj=NULL;
-//	while ((obj=gl_find_next(found,obj))!=NULL)
+//	obj=nullptr;
+//	while ((obj=gl_find_next(found,obj))!=nullptr)
 //	{
 //		link *my = (link*)(obj+1);
-//		node *from = my->from?(node*)(((OBJECT*)my->from)+1):NULL;
-//		node *to= my->to?(node*)(((OBJECT*)my->to)+1):NULL;
-//		if (from==NULL||to==NULL) /* ignore badly connected nodes */
+//		node *from = my->from?(node*)(((OBJECT*)my->from)+1):nullptr;
+//		node *to= my->to?(node*)(((OBJECT*)my->to)+1):nullptr;
+//		if (from==nullptr||to==nullptr) /* ignore badly connected nodes */
 //			continue;
 //		double R = (complex(1)/my->Y).Re();
 //		double X = (complex(1)/my->Y).Im();
@@ -79,10 +79,10 @@
 //
 //EXPORT int export_file(char *file)
 //{
-//	if (file==NULL) file="network.cdf";
+//	if (file==nullptr) file="network.cdf";
 //
 //	char *ext = strrchr(file,'.');
-//	if (ext!=NULL && stricmp(ext,".cdf")==0)
+//	if (ext!=nullptr && stricmp(ext,".cdf")==0)
 //		return save_cdf(file);
 //	errno = ENOENT;
 //	return 0;
@@ -90,7 +90,7 @@
 //
 //EXPORT int kmldump(FILE *fp, OBJECT *obj)
 //{
-//	if (obj==NULL) /* dump document styles */
+//	if (obj==nullptr) /* dump document styles */
 //	{
 //		/* line styles */
 //		fprintf(fp,"    <Style id=\"TransmissionLine\">\n");

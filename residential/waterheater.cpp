@@ -73,19 +73,19 @@ void RUN_WH_FC (
 //////////////////////////////////////////////////////////////////////////
 // waterheater CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* waterheater::oclass = NULL;
-CLASS* waterheater::pclass = NULL;
+CLASS* waterheater::oclass = nullptr;
+CLASS* waterheater::pclass = nullptr;
 
 /**  Register the class and publish water heater object properties
  **/
 waterheater::waterheater(MODULE *module) : residential_enduse(module){
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		pclass = residential_enduse::oclass;
 		// register the class definition
 		oclass = gl_register_class(module,"waterheater",sizeof(waterheater),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
@@ -138,7 +138,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_enumeration,"load_state",PADDR(load_state),
 				PT_KEYWORD,"DEPLETING",(enumeration)DEPLETING,
 				PT_KEYWORD,"RECOVERING",(enumeration)RECOVERING,
-				PT_KEYWORD,"STABLE",(enumeration)STABLE,	
+				PT_KEYWORD,"STABLE",(enumeration)STABLE,
 			PT_double,"actual_voltage",PADDR(actual_voltage),PT_ACCESS,PA_HIDDEN,
 			PT_double,"nominal_voltage",PADDR(nominal_voltage),PT_ACCESS,PA_HIDDEN,
 			PT_enumeration,"re_override",PADDR(re_override), PT_DESCRIPTION, "the override setting for the water heater",
@@ -161,7 +161,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_enumeration,"upper_heating_element_state", PADDR(control_switch_2), PT_DESCRIPTION, "MULTILAYER MODEL: The state of the upper heating element in the tank.",
 				PT_KEYWORD,"OFF",(enumeration)OFF,
 				PT_KEYWORD,"ON",(enumeration)ON,
-			NULL)<1) 
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
@@ -259,7 +259,7 @@ int waterheater::init(OBJECT *parent)
 	nominal_voltage = (2.0 * default_line_voltage); //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
 	actual_voltage = nominal_voltage;
 	
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("waterheater::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -1703,7 +1703,7 @@ double waterheater::actual_kW(void)
 			return heating_element_capacity; /* gas heating is voltage independent. */
 		}
 
-		if (pCircuit == NULL)
+		if (pCircuit == nullptr)
 		{
 			actual_voltage = nominal_voltage;
 		}
@@ -2077,7 +2077,7 @@ EXPORT int create_waterheater(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(waterheater::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			waterheater *my = OBJECTDATA(*obj,waterheater);;
 			gl_set_parent(*obj,parent);

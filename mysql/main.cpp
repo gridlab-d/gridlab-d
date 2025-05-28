@@ -79,9 +79,9 @@ const char *process_command(const char *command)
 	// parse command
 	char buffer[4096];
 	strcpy(buffer,command);
-	char *token=NULL, *next;
+	char *token=nullptr, *next;
 	enum { PS_SCHEMA, PS_HOSTNAME, PS_USERNAME, PS_PASSWORD, PS_PORT, PS_SOCKET, PS_FLAGS, PS_PREFIX} state = PS_SCHEMA;
-	while ( (token=strtok_s(token?NULL:buffer," \t",&next))!=NULL )
+	while ( (token=strtok_s(token?nullptr:buffer," \t",&next))!=nullptr )
 	{
 		if ( strcmp(token,"-h")==0 || strcmp(token,"--hostname")==0)
 			state = PS_HOSTNAME;
@@ -123,7 +123,7 @@ const char *process_command(const char *command)
 		else if ( token[0]=='-' )
 		{
 			gl_error("mysql option '%s' is not recognized", token);
-			return NULL;
+			return nullptr;
 		}
 		else
 		{
@@ -133,12 +133,12 @@ const char *process_command(const char *command)
 				if ( strlen(schema)>0 )
 				{
 					gl_error("schema '%s' is not allowed because only one schema may be specified", schema);
-					return NULL;
+					return nullptr;
 				}
 				else if ( strlen(token)>=sizeof(schema) )
 				{
 					gl_error("schema name '%s' is too long to process", token);
-					return NULL;
+					return nullptr;
 				}
 				strcpy(schema,token);
 				break;
@@ -146,7 +146,7 @@ const char *process_command(const char *command)
 				if ( strlen(token)>=sizeof(hostname) )
 				{
 					gl_error("hostname '%s' is too long to process", token);
-					return NULL;
+					return nullptr;
 				}
 				strcpy(hostname,token);
 				state = PS_SCHEMA;
@@ -155,7 +155,7 @@ const char *process_command(const char *command)
 				if ( strlen(token)>=sizeof(username) )
 				{
 					gl_error("username '%s' is too long to process", token);
-					return NULL;
+					return nullptr;
 				}
 				strcpy(username,token);
 				state = PS_SCHEMA;
@@ -164,7 +164,7 @@ const char *process_command(const char *command)
 				if ( strlen(token)>=sizeof(password) )
 				{
 					gl_error("password '%s' is too long to process", token);
-					return NULL;
+					return nullptr;
 				}
 				strcpy(password,token);
 				state = PS_SCHEMA;
@@ -181,14 +181,14 @@ const char *process_command(const char *command)
 				if ( strlen(token)>=sizeof(table_prefix) )
 				{
 					gl_error("table prefix '%s' is too long to process", token);
-					return NULL;
+					return nullptr;
 				}
 				strcpy(table_prefix,token);
 				state = PS_SCHEMA;
 				break;
 			default:
 				gl_error("process_command(const char *command='%s'): state = %d is invalid", command, state);
-				return NULL;
+				return nullptr;
 			}
 		}
 	}
@@ -197,13 +197,13 @@ const char *process_command(const char *command)
 	if ( strlen(schema)==0 )
 	{
 		gl_error("no schema is specified");
-		return NULL;
+		return nullptr;
 	}
 	else if ( strcmp(schema,"mysql")==0 || strcmp(schema,"sys")==0 )
 	{
 		strcpy(schema,"");
 		gl_error("access to the mysql system databases is not supported");
-		return NULL;
+		return nullptr;
 	}
 	else
 		return schema;
@@ -253,16 +253,16 @@ if ( !query(mysql,"CREATE SCHEMA IF NOT EXISTS `%s`", schema) )
 static MYSQL *get_connection(const char *schema, bool autocreate=false)
 {
 	// connect to server
-	MYSQL *mysql = mysql_init(NULL);
-	if ( mysql==NULL )
+	MYSQL *mysql = mysql_init(nullptr);
+	if ( mysql==nullptr )
 	{
 		gl_error("mysql_init memory allocation failure");
 		return 0;
 	}
 	gl_debug("mysql_connect(hostname='%s',username='%s',password='%s',schema='%s',port=%u,socketname='%s',clientflags=0x%016llx)",
 		(const char*)hostname,(const char*)username,(const char*)password,(const char*)schema,port,(const char*)socketname,clientflags);
-	mysql = mysql_real_connect(mysql,hostname,username,password,NULL,port,socketname,(unsigned long)clientflags);
-	if ( mysql==NULL )
+	mysql = mysql_real_connect(mysql,hostname,username,password,nullptr,port,socketname,(unsigned long)clientflags);
+	if ( mysql==nullptr )
 	{
 		gl_error("mysql connect failed - %s", mysql_error(mysql_client));
 		return 0;
@@ -285,7 +285,7 @@ static MYSQL *get_connection(const char *schema, bool autocreate=false)
 		else
 		{
 			gl_error("unable to establish connection to schema '%s'", schema);
-			return NULL;
+			return nullptr;
 		}
 	}
 	else
@@ -307,17 +307,17 @@ static MYSQL_RES *query_result(MYSQL *mysql, const char *fmt,...)
 	if ( mysql_query(mysql,command)!=0 )
 	{
 		gl_error("query [%s] failed - %s", command, mysql_error(mysql));
-		return NULL;
+		return nullptr;
 	}
 	else if ( show_query )
 		gl_verbose("query [%s] ok", command);
 
 	// get result
 	MYSQL_RES *res = mysql_store_result(mysql);
-	if ( res==NULL )
+	if ( res==nullptr )
 	{
 		gl_error("query [%s] store result failed - %s", command, mysql_error(mysql));
-		return NULL;
+		return nullptr;
 	}
 	int n = mysql_num_rows(res);
 	gl_debug("query [%s] returned %d rows", command, n);
@@ -347,7 +347,7 @@ static TIMESTAMP get_mysql_timestamp(char *string)
 static bool import_modules(MYSQL *mysql)
 {
 	MYSQL_RES *data = query_result(mysql,"SELECT `name`,`major`,`minor` FROM `%s` ORDER BY `id`", get_table_name("modules"));
-	if ( data==NULL)
+	if ( data==nullptr)
 		return false;
 
 	// get size of result
@@ -375,7 +375,7 @@ static bool import_modules(MYSQL *mysql)
 static bool import_globals(MYSQL *mysql)
 {
 	MYSQL_RES *data = query_result(mysql,"SELECT `name`,`type`,`value` FROM `%s`", get_table_name("globals"));
-	if ( data==NULL )
+	if ( data==nullptr )
 		return false;
 
 	// get size of result
@@ -420,7 +420,7 @@ static bool import_classes(MYSQL *mysql)
 {
 	MYSQL_RES *data = query_result(mysql,"SELECT `name`, `module`, `property`, `type`, `flags`, `units`, `description` "
 			"FROM `%s` WHERE type<%d", get_table_name("classes"), _PT_LAST);
-	if ( data==NULL )
+	if ( data==nullptr )
 		return false;
 
 	// get size of result
@@ -446,13 +446,13 @@ static bool import_classes(MYSQL *mysql)
 
 		// create runtime classes
 		CLASS *cls = gl_class_get_by_name(name);
-		if ( module==NULL && cls==NULL && (cls=gl_register_class(NULL,name,0,0))==NULL )
+		if ( module==nullptr && cls==nullptr && (cls=gl_register_class(nullptr,name,0,0))==nullptr )
 			return false;
 
 		// create extended properties in classes
 		if ( flags&PF_EXTENDED )
 		{
-			if ( gl_class_add_extended_property(cls,property,type,unit)==NULL )
+			if ( gl_class_add_extended_property(cls,property,type,unit)==nullptr )
 				return false;
 			else
 				gl_verbose("property '%s[%s]' added to class '%s'", property, unit, name);
@@ -470,7 +470,7 @@ static bool import_objects(MYSQL *mysql)
 {
 	MYSQL_RES *data = query_result(mysql,"SELECT `id`,`class`,`name`,`groupid`,`parent`,`rank`,`clock`,`valid_to`,`schedule_skew`,"
 			"`latitude`,`longitude`,`in_svc`,`in_svc_micro`,`out_svc`,`out_svc_micro`,`rngstate`,`heartbeat`,`flags`,`module` FROM `%s` ORDER by `id`", get_table_name("objects"));
-	if ( data==NULL )
+	if ( data==nullptr )
 		return false;
 
 	// get size of result
@@ -479,7 +479,7 @@ static bool import_objects(MYSQL *mysql)
 	gl_debug("objects table: %d rows x %d fields", n_rows, n_fields);
 
 	// scan result
-	OBJECT *first_object = NULL;
+	OBJECT *first_object = nullptr;
 	for ( unsigned long n=0 ; n<n_rows ; n++ )
 	{
 		MYSQL_ROW row = mysql_fetch_row(data);
@@ -491,12 +491,12 @@ static bool import_objects(MYSQL *mysql)
 
 		// find class for this object (include module match)
 		CLASS *cls = gl_class_get_by_name(row[1]) ;;
-		while ( cls!=NULL && !( ( cls->module==NULL && row[18]==NULL ) || strcmp(cls->module->name,row[18])==0 ) )
+		while ( cls!=nullptr && !( ( cls->module==nullptr && row[18]==nullptr ) || strcmp(cls->module->name,row[18])==0 ) )
 		{
 			gl_verbose("searching for class that matches module: '%s' -> %s:%s ", row[18], cls->module, cls->name);
-			do { cls=cls->next; } while ( cls!=NULL && strcmp(cls->name,row[1])!=0 );
+			do { cls=cls->next; } while ( cls!=nullptr && strcmp(cls->name,row[1])!=0 );
 		}
-		if ( cls==NULL )
+		if ( cls==nullptr )
 		{
 			gl_error("class '%s' not found", row[1]);
 			return false;
@@ -504,29 +504,29 @@ static bool import_objects(MYSQL *mysql)
 
 		// create new objects
 		OBJECT *obj = gl_create_object(cls);
-		if ( obj==NULL )
+		if ( obj==nullptr )
 		{
 			gl_error("unable to create object of class '%s'", cls->name);
 			return false;
 		}
-		if ( row[2]!=NULL )
+		if ( row[2]!=nullptr )
 		{
 			obj->name = (char*)malloc(strlen(row[2])+1);
-			if ( obj->name==NULL )
+			if ( obj->name==nullptr )
 			{
 				gl_error("memory allocation failed");
 				return false;
 			}
 			strcpy(obj->name,row[2]);
 		}
-		if ( row[3]!=NULL ) strncpy(obj->groupid,row[3],sizeof(obj->groupid));
-		obj->parent = row[4]==NULL ? NULL : gl_object_find_by_id(atoi(row[4]));
+		if ( row[3]!=nullptr ) strncpy(obj->groupid,row[3],sizeof(obj->groupid));
+		obj->parent = row[4]==nullptr ? nullptr : gl_object_find_by_id(atoi(row[4]));
 		obj->rank = atoi(row[5]);
 		obj->clock = get_mysql_timestamp(row[6]);
 		obj->valid_to = get_mysql_timestamp(row[7]);
 		obj->schedule_skew = get_mysql_timestamp(row[8]);
-		obj->latitude = row[9]==NULL ? QNAN : atof(row[9]);
-		obj->longitude = row[10]==NULL ? QNAN : atof(row[10]);
+		obj->latitude = row[9]==nullptr ? QNAN : atof(row[9]);
+		obj->longitude = row[10]==nullptr ? QNAN : atof(row[10]);
 		obj->in_svc = get_mysql_timestamp(row[11]);
 		obj->in_svc_micro = atoi(row[12]);
 		obj->out_svc = get_mysql_timestamp(row[13]);
@@ -534,18 +534,18 @@ static bool import_objects(MYSQL *mysql)
 		obj->rng_state = atoi(row[15]);
 		obj->heartbeat = get_mysql_timestamp(row[16]);
 		obj->flags = atoi(row[17]);
-		if ( first_object==NULL )
+		if ( first_object==nullptr )
 			first_object = obj;
 	}
 
 	// load object properties
-	for ( OBJECT *obj=first_object ; obj!=NULL ; obj=obj->next )
+	for ( OBJECT *obj=first_object ; obj!=nullptr ; obj=obj->next )
 	{
 		// read properties of object from each class
-		for ( CLASS *cls = obj->oclass ; cls!=NULL ; cls=cls->parent )
+		for ( CLASS *cls = obj->oclass ; cls!=nullptr ; cls=cls->parent )
 		{
 			MYSQL_RES *vars = query_result(mysql,"SELECT * FROM `%s` WHERE id=%d", get_table_name("%s_%s", cls->module?cls->module->name:"", cls->name), obj->id);
-			if ( vars==NULL )
+			if ( vars==nullptr )
 				return false;
 			unsigned n_vars = mysql_num_rows(vars);
 			unsigned n_props = mysql_num_fields(vars);
@@ -557,7 +557,7 @@ static bool import_objects(MYSQL *mysql)
 				gl_verbose("row/field fetches ok");
 				for ( unsigned long p=1 ; p<n_props ; p++ ) // don't process the first field, it's the id
 				{
-					if ( var[p]==NULL ) continue; // NULLs are ignored because core does not allow unsetting properties
+					if ( var[p]==nullptr ) continue; // nullptrs are ignored because core does not allow unsetting properties
 					gl_debug("gl_set_value_by_name(obj=%0x, property='%s', value='%s')", obj,prop[p].name, var[p]);
 					gld_property value(obj,prop[p].name);
 					if ( !value.is_valid() )
@@ -588,18 +588,18 @@ static bool import_objects(MYSQL *mysql)
 		MYSQL_ROW row = mysql_fetch_row(data);
 		MYSQL_FIELD *fields = mysql_fetch_fields(data);
 		gl_verbose("import_objects(MYSQL*): row %d, id=%s, parent=%s", n, row[0], row[1]);
-		if ( row[0]!=NULL && row[1]!=NULL )
+		if ( row[0]!=nullptr && row[1]!=nullptr )
 		{
 			unsigned int obj_id = atoi(row[0]);
 			unsigned int parent_id = atoi(row[1]);
 			OBJECT *obj = gl_object_find_by_id(obj_id);
 			OBJECT *parent = gl_object_find_by_id(parent_id);
-			if ( obj==NULL )
+			if ( obj==nullptr )
 			{
 				gl_error("import_objects(MYSQL*): object id %d is not found", obj->id);
 				return false;
 			}
-			else if ( parent==NULL )
+			else if ( parent==nullptr )
 			{
 				gl_error("import_objects(MYSQL*): parent object id %d is not found", obj->id);
 				return false;
@@ -617,7 +617,7 @@ static bool import_objects(MYSQL *mysql)
 bool import_properties(MYSQL *mysql)
 {
 	MYSQL_RES *data = query_result(mysql,"SELECT `id`,`property`,`type`,`specs` FROM `%s`", get_table_name("properties"));
-	if ( data==NULL )
+	if ( data==nullptr )
 		return false;
 
 	// get size of result
@@ -626,21 +626,21 @@ bool import_properties(MYSQL *mysql)
 	gl_debug("properties table: %d rows x %d fields", n_rows, n_fields);
 
 	// scan result
-	OBJECT *first_object = NULL;
+	OBJECT *first_object = nullptr;
 	for ( unsigned long n=0 ; n<n_rows ; n++ )
 	{
 		MYSQL_ROW row = mysql_fetch_row(data);
 		MYSQL_FIELD *fields = mysql_fetch_fields(data);
 		gl_verbose("import_objects(MYSQL*): row %d, id=%s, property=%s, type=%s, specs=%s",
 				n, row[0], row[1], row[2], row[3]);
-		if ( row[0]==NULL || row[1]==NULL || row[2]==NULL || row[3]==NULL )
+		if ( row[0]==nullptr || row[1]==nullptr || row[2]==nullptr || row[3]==nullptr )
 		{
 			gl_error("import_objects(MYSQL*): properties specs contains null values");
 			return false;
 		}
 		unsigned int obj_id = atoi(row[0]);
 		OBJECT *obj = gl_object_find_by_id(obj_id);
-		if ( obj==NULL )
+		if ( obj==nullptr )
 		{
 			gl_error("import_objects(MYSQL*): object id %d is not found", obj_id);
 			return false;
@@ -671,7 +671,7 @@ bool import_properties(MYSQL *mysql)
 EXPORT int import_schedules(MYSQL *mysql)
 {
 	MYSQL_RES *data = query_result(mysql,"SELECT `name`,`definition` FROM `%s`", get_table_name("schedules"));
-	if ( data==NULL )
+	if ( data==nullptr )
 		return false;
 
 	// get size of result
@@ -683,15 +683,15 @@ EXPORT int import_schedules(MYSQL *mysql)
 	for ( unsigned long n=0 ; n<n_rows ; n++ )
 	{
 		MYSQL_ROW row = mysql_fetch_row(data);
-		if ( row[0]==NULL || row[1]==NULL )
+		if ( row[0]==nullptr || row[1]==nullptr )
 		{
-			gl_error("NULL schedule name or definition is not valid");
+			gl_error("nullptr schedule name or definition is not valid");
 			return false;
 		}
 		SCHEDULE *schedule = gl_schedule_find(row[0]);
-		if ( schedule==NULL )
+		if ( schedule==nullptr )
 		{
-			if ( gl_schedule_create(row[0],row[1])==NULL )
+			if ( gl_schedule_create(row[0],row[1])==nullptr )
 			{
 				gl_error("unable to create schedule '%s'=[%s]", row[0], row[1]);
 				return false;
@@ -736,7 +736,7 @@ static bool add_linear_transform(unsigned int source_type, char *source, char *t
 	case 1: // source is a schedule
 	{
 		SCHEDULE *schedule = gl_schedule_find(name);
-		if ( schedule==NULL )
+		if ( schedule==nullptr )
 		{
 			gl_error("add_linear_transform(char *source='%s', char *target='%s', char *spec='%s'): source schedule is not found", source, target, spec);
 			return false;
@@ -754,7 +754,7 @@ static bool add_linear_transform(unsigned int source_type, char *source, char *t
 			gl_error("add_linear_transform(char *source='%s', char *target='%s', char *spec='%s'): source is not found", source, target, spec);
 			return false;
 		}
-		if ( !gl_transform_add_linear((TRANSFORMSOURCE)source_type,(double*)src.get_addr(),dst.get_addr(),scale,bias,dst.get_object(),dst.get_property(),NULL) )
+		if ( !gl_transform_add_linear((TRANSFORMSOURCE)source_type,(double*)src.get_addr(),dst.get_addr(),scale,bias,dst.get_object(),dst.get_property(),nullptr) )
 		{
 			gl_error("add_linear_transform(char *source='%s', char *target='%s', char *spec='%s'): add transform failed - probable memory allocation failure", source, target, spec);
 			return false;
@@ -776,7 +776,7 @@ static bool add_external_transform(unsigned int source_type, char *source, char 
 EXPORT int import_transforms(MYSQL *mysql)
 {
 	MYSQL_RES *data = query_result(mysql,"SELECT `source`,`target`,`transform_type`,`source_type`,`specification` FROM `%s`", get_table_name("transforms"));
-	if ( data==NULL )
+	if ( data==nullptr )
 		return false;
 
 	// get size of result
@@ -793,9 +793,9 @@ EXPORT int import_transforms(MYSQL *mysql)
 		char *ttype = row[2];
 		char *stype = row[3];
 		char *spec = row[4];
-		if ( source==NULL || target==NULL || ttype==NULL || stype==NULL || spec==NULL)
+		if ( source==nullptr || target==nullptr || ttype==nullptr || stype==nullptr || spec==nullptr)
 		{
-			gl_error("import_transforms cannot have a NULL source, target, type or specification");
+			gl_error("import_transforms cannot have a nullptr source, target, type or specification");
 			return false;
 		}
 		int transform_type = 0;
@@ -819,10 +819,10 @@ EXPORT int import_transforms(MYSQL *mysql)
 }
 EXPORT int import_file(const char *info)
 {
-	if ( process_command(info)==NULL )
+	if ( process_command(info)==nullptr )
 		return 0;
 	MYSQL *mysql = get_connection(schema,true);
-	if ( mysql==NULL )
+	if ( mysql==nullptr )
 		return 0;
 	int rc = import_modules(mysql)
 			&& import_globals(mysql)
@@ -892,8 +892,8 @@ static bool export_globals(MYSQL *mysql)
 		}
 		if ( strlen(value)>0 )
 			mysql_real_escape_string(mysql,quoted,value,strlen(value)); // protect SQL from contents
-		char unit[1024] = "NULL";
-		if ( prop->unit!=NULL )
+		char unit[1024] = "nullptr";
+		if ( prop->unit!=nullptr )
 			sprintf(unit,"\"%s\"",prop->unit->name);
 		if ( !query(mysql,"REPLACE INTO `%s` (`name`,`type`,`flags`,`value`,`unit`,`description`) VALUES (\"%s\",%d,%d,\"%s\",%s,\"%s\")",
 				get_table_name("globals"), prop->name, prop->ptype, var.get_flags(), quoted, unit, prop->description) )
@@ -907,12 +907,12 @@ static bool export_globals(MYSQL *mysql)
 static bool export_class(MYSQL *mysql, CLASS *cls)
 {
 	MODULE *mod = cls->module;
-	char modname[128] = "NULL";
+	char modname[128] = "nullptr";
 	if ( mod )
 		sprintf(modname,"\"%s\"",mod->name);
 
 	// handle parent class first
-	if ( cls->parent!=NULL )
+	if ( cls->parent!=nullptr )
 	{
 		if ( !export_class(mysql,cls->parent) || !query(mysql,"REPLACE INTO `%s` (`name`,`module`,`property`,`type`) "
 				"VALUES (\"%s\",%s,\"%s\",%d)",
@@ -927,16 +927,16 @@ static bool export_class(MYSQL *mysql, CLASS *cls)
 	int len = sprintf(query_string,"CREATE TABLE IF NOT EXISTS `%s` ("
 			"`id` mediumint primary key",
 			get_table_name("%s_%s",mod?mod->name:"", cls->name));
-	for ( PROPERTY *prop = cls->pmap ; prop!=NULL && prop->oclass==cls ; prop=prop->next )
+	for ( PROPERTY *prop = cls->pmap ; prop!=nullptr && prop->oclass==cls ; prop=prop->next )
 	{
 		if ( !(prop->access&(PA_R|PA_S) ) )
 			continue; // ignore unreadable non-saved properties
 
 		// write class structure info
-		char units[1024] = "NULL";
-		if ( prop->unit!=NULL ) sprintf(units,"\"%s\"",prop->unit->name);
-		char description[1024] = "NULL";
-		if ( prop->description!=NULL ) sprintf(description,"\"%s\"",prop->description);
+		char units[1024] = "nullptr";
+		if ( prop->unit!=nullptr ) sprintf(units,"\"%s\"",prop->unit->name);
+		char description[1024] = "nullptr";
+		if ( prop->description!=nullptr ) sprintf(description,"\"%s\"",prop->description);
 		if ( !query(mysql,"REPLACE INTO `%s` (`name`,`module`,`property`,`type`,`flags`,`units`,`description`) "
 				"VALUES (\"%s\",%s,\"%s\",%d,%d,%s,%s)",
 				get_table_name("classes"), prop->oclass->name,modname,prop->name,prop->ptype,prop->flags,units,description) )
@@ -944,7 +944,7 @@ static bool export_class(MYSQL *mysql, CLASS *cls)
 
 		// write class table
 		len += sprintf(query_string+len, ", `%s` text", prop->name);
-		if ( prop->description!=NULL )
+		if ( prop->description!=nullptr )
 		{
 			char quoted[4096];
 			mysql_real_escape_string(mysql,quoted,prop->description,strlen(prop->description));
@@ -952,7 +952,7 @@ static bool export_class(MYSQL *mysql, CLASS *cls)
 		}
 
 		// write keyword list (if any)
-		for ( KEYWORD *keyword=prop->keywords; keyword!=NULL ; keyword=keyword->next )
+		for ( KEYWORD *keyword=prop->keywords; keyword!=nullptr ; keyword=keyword->next )
 		{
 			if ( !query(mysql,"REPLACE INTO `%s` (`name`,`module`,`property`,`keyword`,`type`,`flags`) "
 					"VALUES (\"%s\",%s,\"%s\",\"%s\",%d,%lld)",
@@ -970,11 +970,11 @@ static bool export_classes(MYSQL *mysql)
 	if ( overwrite && !query(mysql,"DROP TABLE IF EXISTS `%s`", get_table_name("classes")) )
 		return false;
 	if ( !no_create && !query(mysql,"CREATE TABLE IF NOT EXISTS `%s` ("
-			"`id` mediumint NOT NULL AUTO_INCREMENT PRIMARY KEY, "
+			"`id` mediumint NOT nullptr AUTO_INCREMENT PRIMARY KEY, "
 			"`name` char(64), "
 			"`module` char(64),"
 			"`property` char(64), "
-			"`keyword` char(64) DEFAULT NULL, "
+			"`keyword` char(64) DEFAULT nullptr, "
 			"`type` bigint, "
 			"`flags` bigint, "
 			"`units` text, "
@@ -982,7 +982,7 @@ static bool export_classes(MYSQL *mysql)
 			" KEY (`name`,`module`,`property`,`keyword`))", get_table_name("classes")) )
 		return false;
 
-	for ( CLASS *cls = gl_class_get_first(); cls!=NULL ; cls=cls->next )
+	for ( CLASS *cls = gl_class_get_first(); cls!=nullptr ; cls=cls->next )
 	{
 		if ( cls->profiler.numobjs==0 )
 			continue; // ignore unused classes
@@ -992,20 +992,20 @@ static bool export_classes(MYSQL *mysql)
 	}
 	return true;
 }
-static bool export_properties(MYSQL *mysql, OBJECT *obj, CLASS *cls = NULL)
+static bool export_properties(MYSQL *mysql, OBJECT *obj, CLASS *cls = nullptr)
 {
 	// default is object's class
-	if ( cls==NULL )
+	if ( cls==nullptr )
 		cls = obj->oclass;
 	// output parent class first
-	if ( cls->parent!=NULL && !export_properties(mysql,obj,cls->parent) )
+	if ( cls->parent!=nullptr && !export_properties(mysql,obj,cls->parent) )
 		return false;
 	MODULE *mod = cls->module;
 	char names[65536] = "";
 	char values[65536] = "";
 	unsigned int len_names = 0;
 	unsigned int len_values = 0;
-	for ( PROPERTY *prop=cls->pmap ; prop!=NULL && prop->oclass==cls; prop=prop->next )
+	for ( PROPERTY *prop=cls->pmap ; prop!=nullptr && prop->oclass==cls; prop=prop->next )
 	{
 		gld_property var(obj,prop);
 		if ( !var.get_access(PA_R|PA_S) )
@@ -1018,7 +1018,7 @@ static bool export_properties(MYSQL *mysql, OBJECT *obj, CLASS *cls = NULL)
 		else if ( prop->ptype==PT_object )
 		{
 			OBJECT **os = (OBJECT**)var.get_addr();
-			if ( os!=NULL && *os!=NULL )
+			if ( os!=nullptr && *os!=nullptr )
 				sprintf(value,"%s:%d", (*os)->oclass->name, (*os)->id);
 		}
 		else
@@ -1035,7 +1035,7 @@ static bool export_properties(MYSQL *mysql, OBJECT *obj, CLASS *cls = NULL)
 			len_values += sprintf(values+len_values,",\"%s\"", quoted);
 		}
 		else
-			len_values += sprintf(values+len_values,",NULL");
+			len_values += sprintf(values+len_values,",nullptr");
 	}
 	if ( !query(mysql,"REPLACE INTO `%s` (`id`%s) VALUES (%d%s)", get_table_name("%s_%s",mod?mod->name:"", cls->name), names, obj->id, values) )
 		return false;
@@ -1067,27 +1067,27 @@ static bool export_objects(MYSQL *mysql)
 			" `flags` bigint,"
 			" KEY (`name`))", get_table_name("objects")) )
 		return false;
-	for ( OBJECT *obj = gl_object_get_first(); obj!=NULL ; obj=obj->next )
+	for ( OBJECT *obj = gl_object_get_first(); obj!=nullptr ; obj=obj->next )
 	{
 		// objects table
 		CLASS *cls = obj->oclass;
 		MODULE *mod = cls->module;
-		char modname[64]="NULL";
-		char name[1024]="NULL";
-		char parent[64]="NULL";
-		char groupid[32]="NULL";
-		char latitude[64] = "NULL";
-		char longitude[64] = "NULL";
+		char modname[64]="nullptr";
+		char name[1024]="nullptr";
+		char parent[64]="nullptr";
+		char groupid[32]="nullptr";
+		char latitude[64] = "nullptr";
+		char longitude[64] = "nullptr";
 		char clock[64] = MYSQL_TS_NEVER;
 		char valid_to[64] = MYSQL_TS_NEVER;
 		char schedule_skew[64] = MYSQL_TS_NEVER;
 		char in_svc[64] = MYSQL_TS_NEVER;
 		char out_svc[64] = MYSQL_TS_NEVER;
 		char heartbeat[64] = MYSQL_TS_NEVER;
-		if ( mod!=NULL ) sprintf(modname,"\"%s\"", mod->name);
-		if ( obj->name!=NULL ) sprintf(name,"\"%s\"", obj->name);
+		if ( mod!=nullptr ) sprintf(modname,"\"%s\"", mod->name);
+		if ( obj->name!=nullptr ) sprintf(name,"\"%s\"", obj->name);
 		if ( strcmp(obj->groupid,"")!=0 ) sprintf(groupid,"\"%s\"", (const char*)obj->groupid);
-		if ( obj->parent!=NULL ) sprintf(parent,"%d", obj->parent->id);
+		if ( obj->parent!=nullptr ) sprintf(parent,"%d", obj->parent->id);
 		if ( !isnan(obj->latitude) ) sprintf(latitude,"%g", obj->latitude);
 		if ( !isnan(obj->longitude) ) sprintf(longitude,"%g", obj->longitude);
 		if ( obj->clock<TS_NEVER ) if ( obj->clock==TS_ZERO) strcpy(clock,MYSQL_TS_ZERO); else sprintf(clock,"from_unixtime(%lld)", obj->clock);
@@ -1120,20 +1120,20 @@ bool export_properties(MYSQL *mysql)
 	if ( overwrite && !query(mysql,"DROP TABLE IF EXISTS `%s`", get_table_name("properties")) )
 		return false;
 	if ( !no_create && !query(mysql,"CREATE TABLE IF NOT EXISTS `%s` ("
-					" `id` mediumint NOT NULL,"
-					" `property` char(64) NOT NULL,"
-					" `type` char(16) NOT NULL,"
-					" `specs` text NOT NULL,"
+					" `id` mediumint NOT nullptr,"
+					" `property` char(64) NOT nullptr,"
+					" `type` char(16) NOT nullptr,"
+					" `specs` text NOT nullptr,"
 					" UNIQUE (`id`,`property`,`type`))", get_table_name("properties")) )
 		return false;
-	for ( OBJECT *obj = gl_object_get_first(); obj!=NULL ; obj=obj->next )
+	for ( OBJECT *obj = gl_object_get_first(); obj!=nullptr ; obj=obj->next )
 	{
 		CLASS *cls = obj->oclass;
-		for ( PROPERTY *prop=cls->pmap ; prop!=NULL && prop->oclass==cls; prop=prop->next )
+		for ( PROPERTY *prop=cls->pmap ; prop!=nullptr && prop->oclass==cls; prop=prop->next )
 		{
 			gld_property var(obj,prop);
 			char specs[1024] = "";
-			char *type = NULL;
+			char *type = nullptr;
 			void *addr = var.get_addr();
 			switch ( prop->ptype ) {
 			case PT_random:
@@ -1143,12 +1143,12 @@ bool export_properties(MYSQL *mysql)
 			default:
 				break;
 			}
-			if ( type!=NULL && specs[0]=='\0' )
+			if ( type!=nullptr && specs[0]=='\0' )
 			{
 				gl_error("unable to get extended property specs for object %s:%d property %s", cls->name, obj->id, prop->name);
 				return false;
 			}
-			if ( type!=NULL && !query(mysql,"REPLACE INTO `%s` (`id`,`property`,`type`,`specs`) VALUES "
+			if ( type!=nullptr && !query(mysql,"REPLACE INTO `%s` (`id`,`property`,`type`,`specs`) VALUES "
 					"(%d,'%s','%s','%s')", get_table_name("properties"), obj->id, prop->name, type, specs) )
 				return false;
 		}
@@ -1157,10 +1157,10 @@ bool export_properties(MYSQL *mysql)
 }
 gld_property find_property_at_addr(void *addr)
 {
-	for ( OBJECT *obj = gl_object_get_first(); obj!=NULL ; obj=obj->next )
+	for ( OBJECT *obj = gl_object_get_first(); obj!=nullptr ; obj=obj->next )
 	{
 		CLASS *cls = obj->oclass;
-		for ( PROPERTY *prop=cls->pmap ; prop!=NULL && prop->oclass==cls; prop=prop->next )
+		for ( PROPERTY *prop=cls->pmap ; prop!=nullptr && prop->oclass==cls; prop=prop->next )
 		{
 			gld_property var(obj,prop);
 			if ( addr==var.get_addr() )
@@ -1174,14 +1174,14 @@ bool export_transforms(MYSQL *mysql)
 	if ( overwrite && !query(mysql,"DROP TABLE IF EXISTS `%s`", get_table_name("transforms")) )
 		return false;
 	if ( !no_create && !query(mysql,"CREATE TABLE IF NOT EXISTS `%s` ("
-					" `source` char(255) NOT NULL,"
-					" `target` char(255) NOT NULL,"
-					" `transform_type` mediumint NOT NULL,"
-					" `source_type` mediumint NOT NULL,"
-					" `specification` text NOT NULL,"
+					" `source` char(255) NOT nullptr,"
+					" `target` char(255) NOT nullptr,"
+					" `transform_type` mediumint NOT nullptr,"
+					" `source_type` mediumint NOT nullptr,"
+					" `specification` text NOT nullptr,"
 					" UNIQUE (`source`,`target`))", get_table_name("transforms")) )
 		return false;
-	for ( TRANSFORM *xform=gl_transform_getfirst() ; xform!=NULL ; xform=gl_transform_getnext(xform) )
+	for ( TRANSFORM *xform=gl_transform_getfirst() ; xform!=nullptr ; xform=gl_transform_getnext(xform) )
 	{
 		char source[256];
 		switch ( xform->source_type ) {
@@ -1228,7 +1228,7 @@ bool export_transforms(MYSQL *mysql)
 			if ( xform->nlhs>1 )
 				len += sprintf(specs+len,"%s",")");
 			function = gl_module_find_transform_function(xform->function);
-			if ( function==NULL )
+			if ( function==nullptr )
 			{
 				gl_error("export transform cannot resolve a module transfer function");
 				return false;
@@ -1263,9 +1263,9 @@ bool export_schedules(MYSQL *mysql)
 		return false;
 	if ( !no_create && !query(mysql,"CREATE TABLE IF NOT EXISTS `%s` ("
 					" `name` char(64) PRIMARY KEY,"
-					" `definition` text NOT NULL)", get_table_name("schedules")) )
+					" `definition` text NOT nullptr)", get_table_name("schedules")) )
 		return false;
-	for ( SCHEDULE *schedule=gl_schedule_getfirst() ; schedule!=NULL ; schedule=schedule->next )
+	for ( SCHEDULE *schedule=gl_schedule_getfirst() ; schedule!=nullptr ; schedule=schedule->next )
 	{
 		char quoted[sizeof(schedule->definition)*2+1];
 		mysql_real_escape_string(mysql,quoted,schedule->definition,strlen(schedule->definition));
@@ -1277,10 +1277,10 @@ bool export_schedules(MYSQL *mysql)
 }
 EXPORT int export_file(char *info)
 {
-	if ( process_command(info)==NULL )
+	if ( process_command(info)==nullptr )
 		return 0;
 	MYSQL *mysql = get_connection(schema,true);
-	if ( mysql==NULL )
+	if ( mysql==nullptr )
 		return 0;
 	int rc = export_modules(mysql)
 			&& export_globals(mysql)

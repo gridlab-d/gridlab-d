@@ -58,7 +58,7 @@
 	Ostrander		Version 5.0 originated at PNNL 2022
 	Palo Verde      Version 5.1 originated at PNNL 2023
 	Perkins         Version 5.2 originated at PNNL 2023
-	Redhawk
+	Redhawk			Version 5.3 originated at PNNL 2024
 	Sacajawea
 	Tesla
 	Troutdale
@@ -82,11 +82,11 @@ STATUS legal_notice(void)
 	global_suppress_repeat_messages = 0;
 	sprintf(copyright,"GridLAB-D %s", version_copyright());
 	end = strchr(copyright,'\n');
-	while ((end = strchr(copyright,'\n'))!=NULL)
+	while ((end = strchr(copyright,'\n'))!=nullptr)
 	{
 		*end = ' ';
 	}
-	if (find_file(copyright,nullptr,R_OK,path,sizeof(path))==NULL)
+	if (find_file(copyright,nullptr,R_OK,path,sizeof(path))==nullptr)
 	{
 		output_message("GridLAB-D %d.%d.%d-%d (%s) %d-bit %s %s\n%s", 
 			global_version_major, global_version_minor, global_version_patch, global_version_build, 
@@ -188,13 +188,13 @@ void *check_version_proc(void *ptr)
 	const char *url = "https://raw.githubusercontent.com/gridlab-d/gridlab-d/master/gldcore/versions.txt";
 	HTTPRESULT *result = static_cast<HTTPRESULT *>(http_read(url, 0x1000));
 	char target[32];
-	char *pv = NULL, *nv = NULL;
+	char *pv = nullptr, *nv = nullptr;
 	int rc = 0;
 	int mypatch = version_patch();
 	int mybuild = version_build();
 
 	/* if result not found */
-	if ( result==NULL || result->body.size==0 )
+	if ( result==nullptr || result->body.size==0 )
 	{
 		output_warning("check_version: unable to read %s", url);
 		rc=CV_NOINFO;
@@ -212,7 +212,7 @@ void *check_version_proc(void *ptr)
 	/* read version data */
 	sprintf(target,"%d.%d:",version_major(),version_minor());
 	pv = strstr(result->body.data,target);
-	if ( pv==NULL )
+	if ( pv==nullptr )
 	{
 		output_warning("check_version: '%s' has no entry for version %d.%d", url, version_major(),version_minor());
 		rc=CV_NODATA;
@@ -226,7 +226,7 @@ void *check_version_proc(void *ptr)
 	}
 
 	nv = strchr(pv,'\n');
-	if ( nv!=NULL )
+	if ( nv!=nullptr )
 	{
 		while ( *nv!='\0' && isspace(*nv) ) nv++;
 		if ( *nv!='\0' )
@@ -259,10 +259,10 @@ Done:
 void check_version(int mt)
 {
 	/* start version check thread */
-	if ( mt==0 || pthread_create(&check_version_thread_id,NULL,check_version_proc,NULL)!=0 )
+	if ( mt==0 || pthread_create(&check_version_thread_id,nullptr,check_version_proc,nullptr)!=0 )
 	{
 		/* unable to create a thread to do this so just do it inline (much slower) */
-		check_version_proc(NULL);
+		check_version_proc(nullptr);
 	}
 }
 

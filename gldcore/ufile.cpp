@@ -11,17 +11,17 @@
 
 UFILE *uopen(char *fname, void *arg)
 {
-	UFILE *rp = NULL;
+	UFILE *rp = nullptr;
 	errno = 0;
 	if ( strncmp(fname,"http://",7)==0)
 	{
 		HTTP *http = hopen(fname,*(int*)arg);
-		if ( http==NULL ) return NULL;
+		if ( http==nullptr ) return nullptr;
 		rp = (UFILE*)malloc(sizeof(UFILE));
-		if ( rp==NULL ) 
+		if ( rp==nullptr )
 		{
 			hclose(http);
-			return NULL;
+			return nullptr;
 		}
 		rp->type = UFT_HTTP;
 		rp->handle = http;
@@ -30,12 +30,12 @@ UFILE *uopen(char *fname, void *arg)
 	else
 	{
 		FILE *fp = fopen(fname,(char*)arg);
-		if ( fp==NULL ) return NULL;
+		if ( fp==nullptr ) return nullptr;
 		rp = (UFILE*)malloc(sizeof(UFILE));
-		if ( rp==NULL )
+		if ( rp==nullptr )
 		{
 			fclose(fp);
-			return NULL;
+			return nullptr;
 		}
 		rp->type = UFT_FILE;
 		rp->handle = fp;

@@ -59,7 +59,7 @@
 
 // module version info (must match core version info)
 #define MAJOR 5
-#define MINOR 2
+#define MINOR 3
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -1816,7 +1816,7 @@ public: // read accessors
 	/// Get the bit pattern for the keyword
 	inline long unsigned int get_value(void) { return core.value; };
 	inline enumeration get_enumeration_value(void) { return (enumeration)get_value(); };
-	inline set get_set_value(void) { return (set)get_value(); };
+	inline gld::set get_set_value(void) { return (gld::set)get_value(); };
 
 public: // write accessors
 	inline int compare(const char *name) { return strcmp(name,core.name); };
@@ -2179,8 +2179,8 @@ public: // special operations
 	inline gld::complex get_complex(void) { errno=0; if ( pstruct.prop->ptype==PT_complex ) return *(gld::complex*)get_addr(); else return gld::complex(QNAN,QNAN); };
 	inline int64 get_integer(void) { errno=0; switch(pstruct.prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: errno=EINVAL; return 0;} };
 	inline TIMESTAMP get_timestamp(void) { if (pstruct.prop->ptype != PT_timestamp) exception("get_timestamp() called on a property that is not a timestamp");return *(TIMESTAMP*) get_addr();};
-	inline enumeration get_enumeration(void) { if ( pstruct.prop->ptype != PT_enumeration ) exception("get_enumeration() called on a property that is not an enumeration"); return *(enumeration*)get_addr(); };
-	inline set get_set(void) { if ( pstruct.prop->ptype != PT_set ) exception("get_set() called on a property that is not a set"); return *(set*)get_addr(); };
+	inline enumeration get_enumeration(void) { if (pstruct.prop->ptype != PT_enumeration ) exception("get_enumeration() called on a property that is not an enumeration"); return *(enumeration*)get_addr(); };
+	inline gld::set get_set(void) { if (pstruct.prop->ptype != PT_set ) exception("get_set() called on a property that is not a set"); return *(gld::set*)get_addr(); };
 	inline gld_object* get_objectref(void) { if ( is_objectref() ) return ::get_object(*(OBJECT**)get_addr()); else return NULL; };
 	template <class T> inline void getp(T &value) { gld_core::rlock(&obj->lock); value = *(T*)get_addr(); gld_core::runlock(&obj->lock); };
 	template <class T> inline void setp(T &value) { gld_core::wlock(&obj->lock); *(T*)get_addr()=value; gld_core::wunlock(&obj->lock); };
@@ -2188,30 +2188,30 @@ public: // special operations
 	template <class T> inline void getp(T &value, gld_wlock&) { value = *(T*)get_addr(); };
 	template <class T> inline void setp(T &value, gld_wlock&) { *(T*)get_addr()=value; };
 	inline void setp(enumeration value) { gld_core::wlock(&obj->lock); *(enumeration*)get_addr()=value; gld_core::wunlock(&obj->lock); };
-	inline void setp(set value) { gld_core::wlock(&obj->lock); *(set*)get_addr()=value; gld_core::wunlock(&obj->lock); };
+	inline void setp(gld::set value) { gld_core::wlock(&obj->lock); *(gld::set*)get_addr()=value; gld_core::wunlock(&obj->lock); };
 	inline gld_keyword* find_keyword(unsigned long value) { return get_first_keyword()->find(value); };
 	inline gld_keyword* find_keyword(const char *name) { return get_first_keyword()->find(name); };
 	inline bool compare(char *op, char *a, char *b=NULL, char *p=NULL) 
 	{ 
 		PROPERTYCOMPAREOP n = callback->properties.get_compare_op(pstruct.prop->ptype,op); 
 		if (n==TCOP_ERR) throw "invalid property compare operation";
-		return compare((enumeration)n,a,b,p); 
+		return compare((enumeration)n, a, b, p);
 	};
-	inline bool compare(enumeration op, char *a, char *b=NULL) 
+	inline bool compare(enumeration op, char *a, char *b=NULL)
 	{ 
 		char v1[1024], v2[1024]; 
 		return callback->convert.string_to_property(pstruct.prop,(void*)v1,a)>0 && callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),(void*)v1,(b&&callback->convert.string_to_property(pstruct.prop,(void*)v2,b)>0)?(void*)v2:NULL, NULL);
 	};
-	inline bool compare(enumeration op, char *a, char *b, char *p) 
+	inline bool compare(enumeration op, char *a, char *b, char *p)
 	{
 		double v1, v2; v1=atof(a); v2=b?atof(b):0;
 		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),(void*)&v1,b?(void*)&v2:NULL, p);
 	};
-	inline bool compare(enumeration op, double *a, double *b=NULL, char *p=NULL) 
+	inline bool compare(enumeration op, double *a, double *b=NULL, char *p=NULL)
 	{ 
 		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),a,b,p);
 	};
-	inline bool compare(enumeration op, void *a, void *b=NULL) 
+	inline bool compare(enumeration op, void *a, void *b=NULL)
 	{ 
 		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),a,b,NULL);
 	};

@@ -69,7 +69,7 @@ protected:
 	/* TODO: put unpublished but inherited variables */
 public:
 	/* TODO: put published variables here */
-	set phases;	/**< device phases (see PHASE codes) */
+	gld::set phases;	/**< device phases (see PHASE codes) */
 	double power_transferred;
 	enum GENERATOR_MODE {
 		GM_UNKNOWN=0,

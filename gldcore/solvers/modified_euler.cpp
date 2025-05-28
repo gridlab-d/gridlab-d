@@ -34,11 +34,11 @@ EXPORT int modified_euler_set(char *param, ...)
 	va_start(arg,param);
 	char *tag = param;
 
-	if (tag!=NULL)
+	if (tag!=nullptr)
 	{
 		gl_error("modified_euler_set(char *param='%s',...): tag '%s' is not recognized - no input parameters expected!",param,tag);
 		/*  TROUBLESHOOT
-		The modified Euler integration solver does not expect any input parameters for setup.  Please pass just a NULL argument
+		The modified Euler integration solver does not expect any input parameters for setup.  Please pass just a nullptr argument
 		and set all relevant parameters in the input structure.
 		*/
 		return 0;
@@ -56,7 +56,7 @@ EXPORT int modified_euler_get(char *param, ...)
 	va_list arg;
 	va_start(arg,param);
 	char *tag = param;
-	while ( tag!=NULL )
+	while ( tag!=nullptr )
 	{
 		if ( strcmp(param,"solver_version")==0 )
 			*va_arg(arg,unsigned int*) = mod_eul_solver_version;
@@ -75,7 +75,7 @@ EXPORT int modified_euler_get(char *param, ...)
 
 			//Allocate the arrays
 			data->x = (double*)malloc(sizeof(double)*variable_x_size);				//X_0 variables
-			if (data->x==NULL)
+			if (data->x==nullptr)
 			{
 				gl_error("modified_euler_get:init - failed to allocate storage array");
 				/*  TROUBLESHOOT
@@ -87,7 +87,7 @@ EXPORT int modified_euler_get(char *param, ...)
 			}
 
 			data->x_next = (double*)malloc(sizeof(double)*variable_x_size);			//X_0 + delta_T variables
-			if (data->x_next==NULL)
+			if (data->x_next==nullptr)
 			{
 				gl_error("modified_euler_get:init - failed to allocate storage array");
 				//TS defined above
@@ -95,7 +95,7 @@ EXPORT int modified_euler_get(char *param, ...)
 			}
 
 			data->y = (double*)malloc(sizeof(double)*variable_y_size);				//Y_0 variables
-			if (data->y==NULL)
+			if (data->y==nullptr)
 			{
 				gl_error("modified_euler_get:init - failed to allocate storage array");
 				//TS defined above
@@ -103,7 +103,7 @@ EXPORT int modified_euler_get(char *param, ...)
 			}
 
 			data->y_intermed = (double*)malloc(sizeof(double)*variable_y_size);		//Y_i - Y_0 + f'(X_0,Y_0)*delta_T
-			if (data->y_intermed==NULL)
+			if (data->y_intermed==nullptr)
 			{
 				gl_error("modified_euler_get:init - failed to allocate storage array");
 				//TS defined above
@@ -111,7 +111,7 @@ EXPORT int modified_euler_get(char *param, ...)
 			}
 
 			data->y_first_deriv = (double*)malloc(sizeof(double)*variable_y_size);		//f'(X_0,Y_0)
-			if (data->y_first_deriv==NULL)
+			if (data->y_first_deriv==nullptr)
 			{
 				gl_error("modified_euler_get:init - failed to allocate storage array");
 				//TS defined above
@@ -119,7 +119,7 @@ EXPORT int modified_euler_get(char *param, ...)
 			}
 
 			data->y_second_deriv = (double*)malloc(sizeof(double)*variable_y_size);		//f'(X_0+dT,Y_i)
-			if (data->y_second_deriv==NULL)
+			if (data->y_second_deriv==nullptr)
 			{
 				gl_error("modified_euler_get:init - failed to allocate storage array");
 				//TS defined above
@@ -127,7 +127,7 @@ EXPORT int modified_euler_get(char *param, ...)
 			}
 
 			data->y_next = (double*)malloc(sizeof(double)*variable_y_size);			//Y_1 - expected next output
-			if (data->y_next==NULL)
+			if (data->y_next==nullptr)
 			{
 				gl_error("modified_euler_get:init - failed to allocate storage array");
 				//TS defined above
@@ -153,7 +153,7 @@ EXPORT int modified_euler_get(char *param, ...)
 
 			data->deltaT = 1.0;				//Defaults to 1 second
 			data->deriv_function = (unsigned char(*)(double *, double *, double *,double,double))malloc(sizeof(void*));
-			if (data->deriv_function==NULL)
+			if (data->deriv_function==nullptr)
 			{
 				gl_error("modified_euler_get:init - failed to allocate derivative pointer");
 				/*  TROUBLESHOOT

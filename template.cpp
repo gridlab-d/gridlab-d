@@ -22,22 +22,22 @@ public:
 
 #endif
 
-CLASS *classtemplate::oclass = NULL;
-classtemplate *classtemplate::defaults = NULL;
+CLASS *classtemplate::oclass = nullptr;
+classtemplate *classtemplate::defaults = nullptr;
 
 classtemplate::classtemplate(MODULE *module){
-	if (oclass==NULL)
+	if (oclass==nullptr)
 		{
 			// register the class definition
 			oclass = gl_register_class(mod,"house",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 
-			if (oclass==NULL)
+			if (oclass==nullptr)
 				GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 			// publish the class properties
 		if (gl_publish_variable(oclass,
 			// insert properties here
-			NULL) < 1)
+			nullptr) < 1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 		}
 }

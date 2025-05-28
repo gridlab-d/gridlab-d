@@ -39,7 +39,7 @@ billdump::billdump(MODULE *mod)
 			PT_enumeration,"meter_type",PADDR(meter_type), PT_DESCRIPTION, "describes whether to collect from 3-phase or S-phase meters",
 				PT_KEYWORD,"TRIPLEX_METER",(enumeration)METER_TP,
 				PT_KEYWORD,"METER",(enumeration)METER_3P,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}
 }

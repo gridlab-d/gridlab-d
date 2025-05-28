@@ -13,11 +13,11 @@ connection_transport::connection_transport(void)
 	memset(output,0,sizeof(output));
 	position = -1;
 	field_count = 0;
-	delimiter = NULL;
+	delimiter = nullptr;
 
 	memset(input,0,sizeof(input));
-	translation = NULL;
-	translator = NULL;
+	translation = nullptr;
+	translator = nullptr;
 
 	on_error = TE_RETRY;
 	maxretry = 5;
@@ -48,12 +48,12 @@ connection_transport* connection_transport::new_instance(CONNECTIONTRANSPORT e)
 		break;
 	default: 
 		gl_error("invalid transport type");
-		return NULL;
+		return nullptr;
 	}
 	if ( !t->create() )
 	{
 		delete t;
-		return NULL;
+		return nullptr;
 	}
 	else
 		return t;
@@ -155,7 +155,7 @@ int connection_transport::message_append(const char *fmt,...)
 		error("message exceeds protocol size limit");
 		return -1;
 	}
-	if ( delimiter!=NULL && field_count>0 )
+	if ( delimiter!=nullptr && field_count>0 )
 	{
 		if ( get_size()<strlen(delimiter) )
 		{

@@ -16,11 +16,11 @@ void submit_bid_state(char *from, char *to, const char *function_name, const cha
 {
 	char biddername[64];
 	int rv;
-	OBJECT *obj = NULL;
+	OBJECT *obj = nullptr;
 	BIDINFO *bidding_info = (BIDINFO *)bidding_buffer;
 	if( strncmp(function_name, "submit_bid_state", 16)== 0){
 		obj = gl_get_object(to);
-		if( obj == NULL){
+		if( obj == nullptr){
 			gl_error("bid::submit_bid_state: No market object exists with given name %s.", to);
 			bidding_info->bid_accepted = false;
 		}
@@ -44,10 +44,10 @@ void submit_bid_state(char *from, char *to, const char *function_name, const cha
 			bidding_info->bid_accepted = false;
 	} else if(obj->oclass == supervisory_control::oclass){
 		supervisory_control *mkt = OBJECTDATA(obj,supervisory_control);
-		OBJECT *fObj = NULL;
+		OBJECT *fObj = nullptr;
 		int is_on = 0;
 		fObj = gl_get_object(from);
-		if(fObj == NULL) {
+		if(fObj == nullptr) {
 			gl_error("bid::submit_bid_state: No market object exists with given name %s.", from);
 			bidding_info->bid_accepted = false;
 		}

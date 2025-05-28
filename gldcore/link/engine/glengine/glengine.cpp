@@ -56,7 +56,7 @@ glengine::glengine(void)
 {
 	debug_level = 0;
 	shut=false;
-	this->interface=NULL;
+	this->interface=nullptr;
 }
 
 
@@ -80,18 +80,18 @@ glproperty* glengine::getFromCache(string name) const
 {
     map<string,pair<PROPOERTYCONTEXT,int> >::const_iterator it=this->cacheIndex.find(name);
     if(it==this->cacheIndex.end())
-      return NULL;
+      return nullptr;
     int index=it->second.second;
     if(it->second.first==EXPORT || it->second.first==GLOBAL){
      map<int,glproperty*>::const_iterator it= this->exports_cache.find(index);
      if(it==this->exports_cache.end())
-       return NULL;
+       return nullptr;
      return it->second;
     }
     else{
      map<int,glproperty*>::const_iterator it= this->imports_cache.find(index);
      if(it==this->imports_cache.end())
-       return NULL;
+       return nullptr;
      return it->second;
     }
      
@@ -100,7 +100,7 @@ glproperty* glengine::getFromCache(string name) const
 int glengine::getType(const string name, string& type) const
 {
  glproperty *fc=getFromCache(name);
-    if(fc==NULL)
+    if(fc==nullptr)
       return -1;
     type = fc->getType();
     return 0;
@@ -110,7 +110,7 @@ int glengine::getType(const string name, string& type) const
 int glengine::get(const string name, string& value) const
 {
     glproperty *fc=getFromCache(name);
-    if(fc==NULL)
+    if(fc==nullptr)
       return -1;
     value=fc->getValue();
     return 0;
@@ -162,7 +162,7 @@ void glengine::startGLD(const char *gldexecpath,const char **args){
 	stringstream ss;
 	ss << gldexecpath << "\\" << "gridlabd.exe";
 	int i=0;
-	while(args[i]!=NULL)
+	while(args[i]!=nullptr)
 		ss << " " << args[i++];
 	string command=ss.str();
 	STARTUPINFO glsi;
@@ -170,7 +170,7 @@ void glengine::startGLD(const char *gldexecpath,const char **args){
 	glsi.cb=sizeof(glsi);
 	ZeroMemory(&this->gldpid,sizeof(this->gldpid));
 	LPSTR s=const_cast<char *>(command.c_str());
-	if(!CreateProcess(NULL,s,NULL,NULL,FALSE,0,NULL,NULL,&glsi,&this->gldpid)){
+	if(!CreateProcess(nullptr,s,nullptr,nullptr,FALSE,0,nullptr,nullptr,&glsi,&this->gldpid)){
 		exception("staring gld failed");
 	}
 	debug(1,"GLD started");
@@ -180,9 +180,9 @@ void glengine::startGLD(const char *gldexecpath,const char **args){
 	vector<const char *> args;
 	argv.push_back(exec_string.c_str());
 	int i=0;
-	while(args[i]!=NULL)
+	while(args[i]!=nullptr)
 		argv.push_back(args[i++]);
-	argv.push_back(NULL);
+	argv.push_back(nullptr);
 	this->gldpid=fork();
 	if(gldpid<0)
 		exception("fork gld process failed!")
@@ -298,60 +298,60 @@ bool glengine::recvProperty(char *prop){
 	return true;
 }
 void glengine::connect(const char *pathToGLD,const char *parameters,...){
-	if(pathToGLD==NULL)
+	if(pathToGLD==nullptr)
 		exception("PATH to GLS is not specified!");
 	vector<const char *> argsVec;
-	if ( parameters!=NULL )
+	if ( parameters!=nullptr )
 	{
 		va_list ptr;
 		va_start(ptr,parameters);
 		argsVec.push_back(parameters);
 		char *arg;
-		while ( (arg=va_arg(ptr,char*))!=NULL )
+		while ( (arg=va_arg(ptr,char*))!=nullptr )
 		{
 			argsVec.push_back(arg);
 		}
 		va_end(ptr);
-		argsVec.push_back(NULL);
+		argsVec.push_back(nullptr);
 		
 	}
 	else{
-		argsVec.push_back(NULL);
+		argsVec.push_back(nullptr);
 	}
 	this->startGLD(pathToGLD,&argsVec[0]);
 
 	this->interface=absconnection::getconnection(UDP,string("127.0.0.1"),6267);
-	if(interface==NULL)
+	if(interface==nullptr)
 		exception("Interface creation error, unsupported socket type or socket operation error");
 	protocolConnect();
 }
 
 void glengine::connect(ENGINE_SOCK_TYPE socktype,const char *pathToGLD,const char *parameters,...){
 	
-	if(pathToGLD==NULL)
+	if(pathToGLD==nullptr)
 		exception("PATH to GLS is not specified!");
 	vector<const char *> argsVec;
-	if ( parameters!=NULL )
+	if ( parameters!=nullptr )
 	{
 		va_list ptr;
 		va_start(ptr,parameters);
 		argsVec.push_back(parameters);
 		char *arg;
-		while ( (arg=va_arg(ptr,char*))!=NULL )
+		while ( (arg=va_arg(ptr,char*))!=nullptr )
 		{
 			argsVec.push_back(arg);
 		}
 		va_end(ptr);
-		argsVec.push_back(NULL);
+		argsVec.push_back(nullptr);
 		
 	}
 	else{
-		argsVec.push_back(NULL);
+		argsVec.push_back(nullptr);
 	}
 	this->startGLD(pathToGLD,&argsVec[0]);
 
 	this->interface=absconnection::getconnection(socktype,string("127.0.0.1"),6267);
-	if(interface==NULL)
+	if(interface==nullptr)
 		exception("Interface creation error, unsupported socket type or socket operation error");
 
 	protocolConnect();
@@ -359,7 +359,7 @@ void glengine::connect(ENGINE_SOCK_TYPE socktype,const char *pathToGLD,const cha
 
 void glengine::connect(ENGINE_SOCK_TYPE socktype,const string &ip,const int &port){
 	this->interface=absconnection::getconnection(socktype,ip,port);
-	if(interface==NULL)
+	if(interface==nullptr)
 		exception("Interface creation error, unsupported socket type or socket operation error");
 
 	protocolConnect();
@@ -397,7 +397,7 @@ int glengine::shutdown(const int signum)
 #else
 	
 	if(kill(this->gldpid,SIGTERM))
-		wait(NULL);
+		wait(nullptr);
 #endif
 	
 	return 0;

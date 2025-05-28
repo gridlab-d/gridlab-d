@@ -118,9 +118,9 @@ public:
 	int32 number_of_phases_out;	//Count for number of phases
 
 	//General status variables
-	set phases;	/**< device phases (see PHASE codes) */
+	gld::set phases;	/**< device phases (see PHASE codes) */
     enum GENERATOR_MODE {CONSTANT_V=1, CONSTANT_PQ=2, CONSTANT_PF=4, SUPPLY_DRIVEN=5};
-    enumeration gen_mode_v;  //operating mode of the generator 
+    enumeration gen_mode_v;  //operating mode of the generator
 
 	INV_STATE curr_state; ///< The current state of the inverter in deltamode
 	enum INVERTER_TYPE {TWO_PULSE=0, SIX_PULSE=1, TWELVE_PULSE=2, PWM=3, FOUR_QUADRANT = 4};

@@ -108,7 +108,7 @@ STATUS instance_slave_parse_prop_list(char *line, linkage **root, LINKAGETYPE ty
 			output_error("instance_slave_link_properties(): unable to find object '%s'", objname);
 			return FAILED;
 		}
-		prop = object_get_property(obj, propname,NULL);
+		prop = object_get_property(obj, propname,nullptr);
 		if(prop == 0){
 			output_error("instance_slave_link_properties(): prop '%s' not found in object '%s'", propname, objname);
 			return FAILED;
@@ -141,7 +141,7 @@ STATUS instance_slave_parse_prop_list(char *line, linkage **root, LINKAGETYPE ty
 		}
 
 		// repeat
-		token = strtok(NULL, ", \0\n\r");
+		token = strtok(nullptr, ", \0\n\r");
 	}
 	return SUCCESS;
 }
@@ -470,7 +470,7 @@ void *instance_slaveproc(void *ptr)
 		}
 
 		output_debug("instance_slaveproc(): slave %d controller reading links", slave_id);
-		for ( lnk=local_inst.write ; lnk!=NULL ; lnk=lnk->next ){
+		for ( lnk=local_inst.write ; lnk!=nullptr ; lnk=lnk->next ){
 			if(FAILED == linkage_master_to_slave(0, lnk)){
 				output_warning("instance_slaveproc(): linkage_master_to_slave failed");
 				rv = FAILED;
@@ -484,8 +484,8 @@ void *instance_slaveproc(void *ptr)
 		// note, if TS_NEVER, we want the slave's exec loop to end normally
 		//output_debug("slave %d controller resuming exec with %lli", slave_id, local_inst.cache->ts);
 		output_debug("slave %d controller resuming exec with %lli", local_inst.cache->id, local_inst.cache->ts);
-		output_debug("slave %d controller setting step_to %lli to cache->ts %lli", local_inst.cache->id, exec_sync_get(NULL), local_inst.cache->ts);
-		exec_sync_merge(NULL, reinterpret_cast<struct sync_data *>(&local_inst.cache));
+		output_debug("slave %d controller setting step_to %lli to cache->ts %lli", local_inst.cache->id, exec_sync_get(nullptr), local_inst.cache->ts);
+		exec_sync_merge(nullptr, reinterpret_cast<struct sync_data *>(&local_inst.cache));
 
 		pthread_cond_broadcast(&mls_inst_signal);
 
@@ -502,7 +502,7 @@ void *instance_slaveproc(void *ptr)
 
 		/* @todo copy output linkages */
 		output_debug("slave %d controller writing links", slave_id);
-		for ( lnk=local_inst.read ; lnk!=NULL ; lnk=lnk->next ){
+		for ( lnk=local_inst.read ; lnk!=nullptr ; lnk=lnk->next ){
 			if(FAILED == linkage_slave_to_master(0, lnk)){
 				output_warning("linkage_slave_to_master failed");
 				rv = FAILED;
@@ -519,8 +519,8 @@ void *instance_slaveproc(void *ptr)
 		instance_slave_done();
 	} while (global_clock != TS_NEVER && rv == SUCCESS);
 	output_verbose("slave %" FMT_INT64 " completion state reached", local_inst.cacheid);
-	pthread_exit(NULL);
-	return NULL;
+	pthread_exit(nullptr);
+	return nullptr;
 }
 
 
@@ -580,7 +580,7 @@ STATUS instance_slave_init_mem(){
 	
 	local_inst.name_size = *(local_inst.message->name_size);
 	local_inst.prop_size = *(local_inst.message->data_size);
-	exec_sync_merge(NULL,reinterpret_cast<sync_data*>(&local_inst.cache));
+	exec_sync_merge(nullptr,reinterpret_cast<sync_data*>(&local_inst.cache));
 
 	/* open slave signalling event */
 	sprintf(eventName,"GLD-%" FMT_INT64 "x-S", global_master_port);
@@ -724,7 +724,7 @@ STATUS instance_slave_init_socket(){
 
 	// FIXME: the next two lines compile, but the types are disparate enough that the reinterpret cast could be a problem going forward.
 	exec_sync_set(reinterpret_cast<sync_data*>(&local_inst.cache),pickle.ts,false);
-	exec_sync_merge(NULL,reinterpret_cast<sync_data*>(&local_inst.cache));
+	exec_sync_merge(nullptr,reinterpret_cast<sync_data*>(&local_inst.cache));
 	if(0 == local_inst.buffer){
 		output_error("malloc() error with li.buffer");
 		return FAILED;
@@ -821,12 +821,12 @@ STATUS instance_slave_init_socket(){
 STATUS instance_slave_init_pthreads(){
 	int rv = 0;
 	//	global_mainloopstate = MLS_PAUSED;
-	rv = pthread_mutex_init(&mls_inst_lock,NULL);
+	rv = pthread_mutex_init(&mls_inst_lock,nullptr);
 	if(rv != 0){
 		output_error("error with pthread_mutex_init() in instance_slave_init_pthreads()");
 		return FAILED;
 	}
-	rv = pthread_cond_init(&mls_inst_signal,NULL);
+	rv = pthread_cond_init(&mls_inst_signal,nullptr);
 	if(rv != 0){
 		output_error("error with pthread_cond_init() in instance_slave_init_pthreads()");
 		return FAILED;
@@ -837,7 +837,7 @@ STATUS instance_slave_init_pthreads(){
 
 	/* start the slave controller */
 	// !!! &local_inst.pid causes a warning, pthread_t * -> us*__w64, but pt_t is a struct with [void * + uint], bad recast
-	if ( pthread_create(&(local_inst.threadid), NULL, instance_slaveproc, NULL) )
+	if ( pthread_create(&(local_inst.threadid), nullptr, instance_slaveproc, nullptr) )
 	{
 		output_error("unable to start slave controller for slave %d", slave_id);
 		return FAILED;
@@ -904,7 +904,7 @@ STATUS instance_slave_init(void)
 //	output_debug("slave %" FMT_INT64 " exited init_pthreads()", local_inst.cacheid);
 //	output_debug("li: %" FMT_INT64 " %d %d %d %d", local_inst.cacheid, local_inst.cachesize, local_inst.name_size, local_inst.prop_size, local_inst.id);
 	
-	global_clock = exec_sync_get(NULL); // copy time signal to gc, legit since it's from msg
+	global_clock = exec_sync_get(nullptr); // copy time signal to gc, legit since it's from msg
 	output_debug("inst_slave_init(): gc = %lli", global_clock);
 
 	// signal master that slave init is done

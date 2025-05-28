@@ -123,7 +123,7 @@ void sendx(machine *src, char *to, void *str, unsigned int len)
 int recvx(machine *dst, char *from, void *str, unsigned int len)
 {
 	Message *msg = dst->receive();
-	if (msg!=NULL)
+	if (msg!=nullptr)
 	{
 		unsigned int sz = (unsigned int)msg->get_size()+1;
 		if (sz>len) sz=len;
@@ -138,9 +138,9 @@ int recvx(machine *dst, char *from, void *str, unsigned int len)
 machine::machine(void)
 : _link()
 {
-	_code=NULL;
-	_init=NULL;
-	_data=NULL;
+	_code=nullptr;
+	_init=nullptr;
+	_data=nullptr;
 	wait=-1;
 }
 
@@ -178,9 +178,9 @@ int machine::compile(char *source)
 	strcpy(name,source);
 	pSlash = strrchr(name,'/');
 	pDot = strrchr(name,'.');
-	if (pDot!=NULL && pDot>pSlash)
+	if (pDot!=nullptr && pDot>pSlash)
 		*pDot='\0';
-	basename = (pSlash==NULL ? name : pSlash+1);
+	basename = (pSlash==nullptr ? name : pSlash+1);
 	sprintf(cfile,"%s/%s.c", tmpdir,basename);
 	sprintf(ofile,"%s/%s.o", tmpdir,basename);
 
@@ -193,7 +193,7 @@ int machine::compile(char *source)
 	/* build source code */
 	gl_verbose("converting %s to %s...", source, cfile);
 	fp=fopen(cfile,"w");
-	if (fp==NULL)
+	if (fp==nullptr)
 	{
 		gl_error("%s: %s", cfile, strerror(errno));
 		return -1;
@@ -242,17 +242,17 @@ int machine::compile(char *source)
 #endif
 		return -1;
 	}
-	if (_code==NULL)
+	if (_code==nullptr)
 	{
 		gl_error("%s: CODE block not found", source);
 		return -1;
 	}
-	if (_init==NULL)
+	if (_init==nullptr)
 	{
 		gl_error("%s: INIT block not found", source);
 		return -1;
 	}
-	if (_data==NULL)
+	if (_data==nullptr)
 	{
 		gl_error("%s: DATA block not found", source);
 		return -1;
@@ -270,10 +270,10 @@ int machine::init(OBJECT *parent)
 {
 	gl_debug("Connecting PLC to %s:%d...", parent->oclass->name, parent->id);
 	PLCDATA item;
-	for (item=_data; item->name!=NULL; item++)
+	for (item=_data; item->name!=nullptr; item++)
 	{
 		PROPERTY *p = gl_get_property(parent,item->name);
-		if (p==NULL)
+		if (p==nullptr)
 		{
 			gl_error("PCL data item %s is not found in object %s:%d", item->name, parent->oclass->name, parent->id);
 			return -1;

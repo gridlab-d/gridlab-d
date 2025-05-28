@@ -12,7 +12,7 @@ typedef struct  {
 	int type;				///< bus type (0=PQ, 1=PV, 2=SWING, 3=SWING_PQ)
 	unsigned char phases;	///< Phases property - used for construction of matrices (skip bad entries) - [Split Phase | House present | To side of SPCT | Diff Phase Child | D | A | B | C]
 	unsigned char origphases;	///< Original phases property - follows same format - used to save what object's original capabilities
-	set *busflag;			///< Pointer to busflags property - mainly used for reliability checks
+	gld::set *busflag;			///< Pointer to busflags property - mainly used for reliability checks
 	gld::complex *V;				///< bus voltage
 	gld::complex *S;				///< constant power
 	gld::complex *Y;				///< constant admittance (impedance loads)

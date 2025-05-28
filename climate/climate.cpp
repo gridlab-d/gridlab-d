@@ -273,7 +273,7 @@ int tmy2_reader::open(const char *file){
 
 	fp = fopen(file, "r");
 
-	if(fp == NULL){
+	if(fp == nullptr){
 		gl_error("tmy2_reader::open() -- fopen failed on \"%s\"", file);
 		return 0;
 	}
@@ -349,7 +349,7 @@ int tmy2_reader::next()
 	// read the next line into the buffer using fgets.
 	char *val = fgets(buf,500,fp);
 
-	if(val != NULL)
+	if(val != nullptr)
 		return 1;
 	else
 		return 0;
@@ -396,9 +396,9 @@ int tmy2_reader::read_data(double *dnr, double *dhr, double *ghr, double *tdb, d
 	//sscanf(buf, "%*2s%2d%2d%2d%*14s%4d%*2s%4d%*40s%4d%8*s%3d%*s",month,day,hour,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh);
 	int tmh, tday, thr, t_mon, t_d,t_hr;
 	char t_ymd[11],t_hm[10],t_ehr[10],t_dni[10],t_ghr[10],t_dnr[10],t_dhr[10],t_tkc[10],t_osc[10],t_tdb[10],t_rh[10],t_press[10],t_wd[10],t_ws[10],t_precip[10],t_sf[10],t_month[2],t_day[2],t_year[5],t_hour[2],t_min[2];
-	if(month == NULL) month = &tmh;
-	if(day == NULL) day = &tday;
-	if(hour == NULL) hour = &thr;
+	if(month == nullptr) month = &tmh;
+	if(day == nullptr) day = &tday;
+	if(hour == nullptr) hour = &thr;
 	if(buf[2] == '/') {
 		//rct = sscanf(buf, "%d/%d/%*s,%d:%*s,%*s,%d,%d,%*s,%*s,%d,%*s,%*s,%d,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%d,%*s,%*s,%*s,%*s,%*s,%d,%*s,%*s,%d,%*s,%*s,%*s,%*s,%*s,%d,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%d,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%*s,%d",month,day,hour,&tmp_extra_dni,&tmp_ghr,&tmp_dnr,&tmp_dhr,&tmp_tdb,&tmp_rh,&tmp_press,&tmp_ws,&tmp_precip,&tmp_sf);
 		rct = sscanf(buf, "%[^','],%[^','],%[^','],%[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%*[^','],%[^','],%*[^','],%*[^','],%*[^','],%*s",t_ymd,t_hm,t_ehr,t_dni,t_ghr,t_dnr,t_dhr,t_tkc,t_osc,t_tdb,t_rh,t_press,t_wd,t_ws,t_precip,t_sf);
@@ -518,13 +518,13 @@ void tmy2_reader::close(){
 	Climate implementation
  @{
  **/
-CLASS *climate::oclass = NULL;
-climate *climate::defaults = NULL;
+CLASS *climate::oclass = nullptr;
+climate *climate::defaults = nullptr;
 
 climate::climate(MODULE *module)
 {
 	memset(this, 0, sizeof(climate));
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gld_class::create(module,"climate",sizeof(climate),PC_PRETOPDOWN|PC_AUTOLOCK);
 		if (gl_publish_variable(oclass,
@@ -584,7 +584,7 @@ climate::climate(MODULE *module)
 			PT_double,"cloud_num_layers[pu]",PADDR(cloud_num_layers),
 			PT_double,"cloud_aerosol_transmissivity[pu]",PADDR(cloud_aerosol_transmissivity),
             PT_double,"update_time",PADDR(update_time),
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(climate));
 		sa = new SolarAngles();
 		defaults = this;
@@ -618,7 +618,7 @@ int climate::create(void)
 	cloud_opacity = 1.0;
 	cloud_speed_factor = 1;
 	//cloud_reflectivity = 1.0; // very reflective!
-	tmy = NULL;
+	tmy = nullptr;
 	cloud_model = CM_NONE;
 	cloud_num_layers = 40;
 	cloud_alpha = 400;
@@ -653,7 +653,7 @@ int climate::init(OBJECT *parent)
 
 	// open access to the TMY file
 	char found_file[1024];
-	if (gl_findfile(tmyfile.get_string(),NULL,R_OK,found_file,sizeof(found_file))==NULL) // TODO: get proper values for solar
+	if (gl_findfile(tmyfile.get_string(),nullptr,R_OK,found_file,sizeof(found_file))==nullptr) // TODO: get proper values for solar
 	{
 		gl_error("weather file '%s' access failed", tmyfile.get_string());
 		return 0;
@@ -718,7 +718,7 @@ int climate::init(OBJECT *parent)
 		// have not called open()
 		int rv = 0;
 
-		if(reader == NULL){
+		if(reader == nullptr){
 			gl_error("climate::init(): no csv_reader specified for tmyfile %s", tmyfile.get_string());
 			/* TROUBLESHOOT
 				The weather file provided is for the csv_reader object but not csv_reader object was specified in the reader property. 
@@ -788,7 +788,7 @@ int climate::init(OBJECT *parent)
 	// begin parsing the TMY file
 	int line=0;
 	tmy = (TMYDATA*)malloc(sizeof(TMYDATA)*8760);
-	if (tmy==NULL)
+	if (tmy==nullptr)
 	{
 		gl_error("TMY buffer allocation failed");
 		return 0;
@@ -801,7 +801,7 @@ int climate::init(OBJECT *parent)
 	int lat_deg,lat_min,long_deg,long_min;
 	/* The city/state data isn't used anywhere.  -mhauer */
 	//file.header_info(cty,st,&lat_deg,&lat_min,&long_deg,&long_min);
-	file.header_info(NULL,NULL,&lat_deg,&lat_min,&long_deg,&long_min);
+	file.header_info(nullptr,nullptr,&lat_deg,&lat_min,&long_deg,&long_min);
 
 	//Handle hemispheres
 	if (lat_deg<0)
@@ -954,17 +954,17 @@ int climate::init(OBJECT *parent)
 
 	/* enable forecasting if specified */
 #if 0
-	if ( strcmp(forecast_spec,"")!=0 && gl_forecast_create(my(),forecast_spec)==NULL )
+	if ( strcmp(forecast_spec,"")!=0 && gl_forecast_create(my(),forecast_spec)==nullptr )
 	{
 		gl_error("%s: forecast '%s' is not valid", get_name(), forecast_spec.get_string());
 		return 0;
 	}
-	else if (get_forecast()!=NULL)
+	else if (get_forecast()!=nullptr)
 	{	
 		/* initialize the forecast data entity */
 		FORECAST *fc = get_forecast();
 		fc->propref = get_property("temperature");
-		gl_forecast_save(fc,get_clock(),3600,0,NULL);
+		gl_forecast_save(fc,get_clock(),3600,0,nullptr);
 		set_flags(get_flags()|OF_FORECAST);
 	}
 #endif
@@ -1945,7 +1945,7 @@ void climate::update_forecasts(TIMESTAMP t0)
 #if 0
 	FORECAST *fc;
 	
-	for ( fc=get_forecast() ; fc!=NULL ; fc=fc->next )
+	for ( fc=get_forecast() ; fc!=nullptr ; fc=fc->next )
 	{
 		/* don't update forecasts that are already current */
 		if ( t0/dt==(fc->starttime/dt) ) continue;
@@ -1995,7 +1995,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
     // establish the current time
     update_time = t0;
     // %%%%% 20170224 MJB Stub in solar computation
-    if(t0 > TS_ZERO && tmy==NULL && reader_type != RT_CSV) { // no file was read, so it's probably manual, FNCS or HELICS control
+    if(t0 > TS_ZERO && tmy==nullptr && reader_type != RT_CSV) { // no file was read, so it's probably manual, FNCS or HELICS control
         gld_clock now(t0);
         //calculate the solar radiation
         OBJECT *obj=OBJECTHDR(this);
@@ -2047,7 +2047,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 		}
 	}
 
-	if (t0>TS_ZERO && tmy!=NULL)
+	if (t0>TS_ZERO && tmy!=nullptr)
 	{
 		DATETIME ts;
 		int localres = gl_localtime(t0,&ts);
@@ -2251,7 +2251,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 	else if (cloud_model == CM_NONE)
 		if (reader_type == RT_CSV)
 			return csv_rv;
-		else if (tmy!=NULL)
+		else if (tmy!=nullptr)
 			return tmy_rv;
 		else
 			return TS_NEVER;

@@ -1,24 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
-OPTION(GLD_WARNING_WORK "Make warnings more pedantic" OFF)
-if (GLD_WARNING_WORK)
-    if (MSVC)
-        SET(GLD_COMPILE_OPTIONS
-                "/W4"
-                "/WX"
-                CACHE INTERNAL
-                "GLD_COMPILE_OPTIONS"
-                )
-    else ()
-        SET(GLD_COMPILE_OPTIONS
-                "-Wall"
-                "-Wextra"
-                "-pedantic"
-                CACHE INTERNAL
-                "GLD_COMPILE_OPTIONS"
-                )
-    endif ()
+include(cmake/Warnings.cmake)
+OPTION(GLD_EXTRA_WARNINGS "Make warnings more pedantic" OFF)
+if (GLD_EXTRA_WARNINGS)
+    set(GLD_COMPILE_OPTIONS ${WARNING_FLAGS} CACHE INTERNAL "GLD_COMPILE_OPTIONS")
 else ()
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         # TODO: resolve these warnings and un-supress them
@@ -28,7 +14,7 @@ else ()
                 "-Wno-stringop-overflow"
                 CACHE INTERNAL
                 "GLD_COMPILE_OPTIONS"
-                )
+        )
     endif ()
 endif ()
 
@@ -157,7 +143,7 @@ set(GENFILE_WARNING
         "WARNING: This is a CMake generated file, modifications to this file will be overwritten."
         CACHE INTERNAL
         "Warn user that gridlabd.sh is a generated file."
-        )
+)
 
 find_program(
         GLD_CLANG_TIDY_EXE
@@ -197,7 +183,7 @@ set(GLD_MODULES
         tape_plot
         glsolvers
         glxengine
-        )
+)
 
 set(HEADER_FILE_NAMES
         ${CMAKE_SOURCE_DIR}/gldcore/class.h
@@ -212,12 +198,12 @@ set(HEADER_FILE_NAMES
         ${CMAKE_SOURCE_DIR}/gldcore/property.h
         ${CMAKE_SOURCE_DIR}/gldcore/schedule.h
         ${CMAKE_SOURCE_DIR}/gldcore/test.h
-        )
+)
 file(COPY ${HEADER_FILE_NAMES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/headers)
 list(APPEND HEADER_FILE_NAMES
         ${CMAKE_CURRENT_BINARY_DIR}/headers/build.h
         ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h
-        )
+)
 
 set(GLD_SHARE
         ${CMAKE_SOURCE_DIR}/gldcore/tzinfo.txt
@@ -289,36 +275,41 @@ set(GLD_SHARE
         ${CMAKE_SOURCE_DIR}/models/wind_turbine_example.glm
         #        ${CMAKE_SOURCE_DIR}/gldcore/gridlabd.htm
         ${CMAKE_SOURCE_DIR}/gldcore/gridlabd.htm
-        )
+)
 
 file(COPY ${GLD_SHARE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/share)
 
-#include_directories(third_party/dlfcn-win32)
-
+set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Cache the shared library state")
+set(BUILD_SHARED_LIBS OFF)
 if (GLD_USE_SUPERLU)
     set(THIRD_PARTY_PATH ${CMAKE_SOURCE_DIR}/third_party)
-    #    include(third_party/superLU_MT/CMakeLists.txt)
 
-    add_subdirectory(third_party/superLU_MT EXCLUDE_FROM_ALL)
-    set(SUPERLU_LIB superlu_lib)
+    list(APPEND CMAKE_MODULE_PATH
+            ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC
+            ${CMAKE_BINARY_DIR}/third_party/SuperLU/CBLAS
+    )
 
-    #    list(APPEND CMAKE_MODULE_PATH
-    #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC
-    #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/CBLAS
-    #            )
-    #    include_directories(third_party/SuperLU/SRC)
-    #    add_subdirectory(third_party/SuperLU)
-    #    set(SUPERLU_LIB superlu)
+    if (WIN32 OR MSYS OR MINGW OR CYGWIN)
+        # The CBLAS version provided by SuperLU does not build in MSYS2.
+        option(enable_internal_blaslib "Build the CBLAS library" OFF)
+    else ()
+        option(enable_internal_blaslib "Build the CBLAS library" ON)
+    endif ()
+
+    # SuperLU's generic names here can cause issues, make sure other projects do not cross these names
+    option(enable_examples "Build SuperLU examples" OFF)
+    option(enable_tests "Build SuperLU tests" OFF)
+
+    include_directories(third_party/SuperLU/SRC)
+    add_subdirectory(third_party/SuperLU)
+    set(SUPERLU_LIB superlu)
 endif ()
 
 option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
-set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Cache the shared library state")
-SET(BUILD_SHARED_LIBS OFF)
-add_subdirectory(third_party/jsoncpp_lib EXCLUDE_FROM_ALL)
-get_target_property(JSON_INC_PATH jsoncpp_lib INTERFACE_INCLUDE_DIRECTORIES)
+add_subdirectory(third_party/jsoncpp_lib)
+get_target_property(JSON_INC_PATH jsoncpp_static INTERFACE_INCLUDE_DIRECTORIES)
 include_directories(${JSON_INC_PATH})
-set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
-set(JSONCPP_LIB jsoncpp_lib)
+set(JSONCPP_LIB jsoncpp_static)
 
 if (GLD_USE_EIGEN)
     message(FATAL_ERROR "Eigen implementation is not complete, and should not be used at this time.")
@@ -326,6 +317,8 @@ if (GLD_USE_EIGEN)
     include_directories(third_party/Eigen)
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 endif ()
+
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
 
 # Configure module targets
 add_subdirectory(assert)
@@ -371,12 +364,12 @@ set(GLD_LIBS
         tape_plot
         glsolvers
         glxengine
-        )
+)
 set(GLD_DEPS
         ${SUPERLU_LIB}
         ${JSONCPP_LIB}
         ${DL_LIB}
-        )
+)
 
 mark_as_advanced(FORCE
         OS_SPECIFIC_LIBRARIES
@@ -386,42 +379,42 @@ mark_as_advanced(FORCE
         HEADER_FILE_NAMES
         GLD_SHARE
         GLD_CI_BUILD
-        )
+)
 
 set(FILE_PERMISSIONS PERMISSIONS
         OWNER_EXECUTE OWNER_READ OWNER_WRITE
         GROUP_EXECUTE GROUP_READ
         WORLD_EXECUTE WORLD_READ
-        )
+)
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
         ${FILE_PERMISSIONS}
         DESTINATION bin
         COMPONENT Runtime
-        )
+)
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     install(FILES
             ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.bat
             ${FILE_PERMISSIONS}
             DESTINATION bin
             COMPONENT Runtime
-            )
+    )
 endif ()
 install(FILES ${HEADER_FILE_NAMES}
         ${FILE_PERMISSIONS}
         DESTINATION include
         COMPONENT Runtime
-        )
+)
 install(FILES ${GLD_SHARE}
         ${FILE_PERMISSIONS}
         DESTINATION share
         COMPONENT Runtime
-        )
+)
 install(FILES COPYRIGHT LICENSE
         ${FILE_PERMISSIONS}
         DESTINATION share/doc
         COMPONENT Runtime
-        )
+)
 install(TARGETS
         ${GLD_LIBS}
         ${GLD_BINARIES}
@@ -434,6 +427,6 @@ install(TARGETS
         COMPONENT Runtime
         ARCHIVE DESTINATION lib/static
         COMPONENT Development
-        )
+)
 
 include(cmake/CPackConfig.cmake)

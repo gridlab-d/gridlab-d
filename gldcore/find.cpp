@@ -127,7 +127,7 @@ static int compare_double(double a, FINDOP op, double b)
 
 static int compare_string(char *a, FINDOP op, char *b)
 {
-	if ( a==NULL || b==NULL ) return 0;
+	if ( a==nullptr || b==nullptr ) return 0;
 	switch (op) {
 	case SAME: op=EQ; goto CompareInt;
 	case BEFORE: op=LT; goto CompareInt;
@@ -161,7 +161,7 @@ static int compare_string(char *a, FINDOP op, char *b)
 		return 0;
 	}
 CompareInt:
-	return compare_int(a!=NULL && b!=NULL && (int64)strcmp(a,b),op,0);
+	return compare_int(a!=nullptr && b!=nullptr && (int64)strcmp(a,b),op,0);
 
 }
 
@@ -170,7 +170,7 @@ static int compare_property(OBJECT *obj, char *propname, FINDOP op, void *value)
 	/** @todo comparisons should type based and not using string representation (ticket #20) */
 	char buffer[1024];
 	char *propval = object_property_to_string(obj,propname, buffer, 1023);
-	if (propval==NULL) return 0;
+	if (propval==nullptr) return 0;
 	return compare_string(propval,op,(char*)value);
 }
 
@@ -178,14 +178,14 @@ static int compare_property(OBJECT *obj, char *propname, FINDOP op, void *value)
 	@return boolean value
 **/
 static int compare_property_alt(OBJECT *obj, char *propname, FINDOP op, void *value){
-	gld::complex *complex_target = NULL;
-	char *char_target = NULL;
-	int16 *int16_target = NULL;
-	int32 *int32_target = NULL;
-	int64 *int64_target = NULL;
-	PROPERTY *prop = object_get_property(obj, propname,NULL);
+	gld::complex *complex_target = nullptr;
+	char *char_target = nullptr;
+	int16 *int16_target = nullptr;
+	int32 *int32_target = nullptr;
+	int64 *int64_target = nullptr;
+	PROPERTY *prop = object_get_property(obj, propname,nullptr);
 
-	if(prop == NULL){
+	if(prop == nullptr){
 		/* property not found in object ~ normal operation */
 		return 0;
 	}
@@ -197,7 +197,7 @@ static int compare_property_alt(OBJECT *obj, char *propname, FINDOP op, void *va
 			break;
 		case PT_complex:
 			complex_target = object_get_complex(obj, prop);
-			if(complex_target == NULL)
+			if(complex_target == nullptr)
 				return 0; /* error value */
 			break;
 		case PT_enumeration:
@@ -205,7 +205,7 @@ static int compare_property_alt(OBJECT *obj, char *propname, FINDOP op, void *va
 			break;		/* not 100% sure how to make these cooperate yet */
 		case PT_int16:
 			int16_target = (int16 *)object_get_int16(obj, prop);
-			if(int16_target == NULL)
+			if(int16_target == nullptr)
 				return 0;
 			return compare_int16(*int16_target, op, *(int64 *)value);
 		case PT_int32:
@@ -221,7 +221,7 @@ static int compare_property_alt(OBJECT *obj, char *propname, FINDOP op, void *va
 		case PT_char256:
 		case PT_char1024:
 			char_target = (char *)object_get_string(obj, prop);
-			if(char_target == NULL)
+			if(char_target == nullptr)
 				return 0;
 			return compare_string(char_target, op, static_cast<char*>(value));
 			break;
@@ -259,9 +259,9 @@ static int compare(OBJECT *obj, FINDTYPE ftype, FINDOP op, void *value, char *pr
 	switch (ftype) {
 	case FT_ID: return compare_int((int64)obj->id,op,(int64)*(OBJECTNUM*)value);
 	case FT_SIZE: return compare_int((int64)obj->oclass->size,op,(int64)*(int*)value);
-	case FT_CLASS: return obj->oclass->module!=NULL && compare_string((char*)obj->oclass->name,op,(char*)value);
+	case FT_CLASS: return obj->oclass->module!=nullptr && compare_string((char*)obj->oclass->name,op,(char*)value);
 	case FT_ISA: return object_isa(obj,(char*)value);
-	case FT_MODULE: return ( obj->oclass->module!=NULL && compare_string((char*)obj->oclass->module->name,op,(char*)value) );
+	case FT_MODULE: return ( obj->oclass->module!=nullptr && compare_string((char*)obj->oclass->module->name,op,(char*)value) );
 	case FT_GROUPID: return compare_string((char*)obj->groupid,op,(char*)value);
 	case FT_RANK: return compare_int((int64)obj->rank,op,(int64)*(int*)value);
 	case FT_CLOCK: return compare_int((int64)obj->clock,op,(int64)*(TIMESTAMP*)value);
@@ -285,10 +285,10 @@ FINDLIST *new_list(unsigned int n)
 {
 	unsigned int size = (n>>3)+1;
 	FINDLIST *list = static_cast<FINDLIST*>(module_malloc(sizeof(FINDLIST)+size-1));
-	if (list==NULL)
+	if (list==nullptr)
 	{
 		errno=ENOMEM;
-		return NULL;
+		return nullptr;
 	}
 	memset(list->result,0,size);
 	list->result_size = size;
@@ -312,11 +312,11 @@ FINDPGM *find_mkpgm(char *expression);
 
 	Searches criteria may be as follows:
 
-		find_objects(\p FT_NEW, \p ftype, \p compare, \p value[, ...], \p NULL);
+		find_objects(\p FT_NEW, \p ftype, \p compare, \p value[, ...], \p nullptr);
 
 	and may be grouped using \p AND and \p OR.
 
-	The criteria list must be terminated by \p NULL or \p FT_END.
+	The criteria list must be terminated by \p nullptr or \p FT_END.
 
 	Values of \p ftype are:
 		- \p FT_ID		 compares object ids (expects \e long value)
@@ -359,7 +359,7 @@ FINDPGM *find_mkpgm(char *expression);
 
 	OBJECT *find_next(FINDLIST *list, OBJECT *previous) returns the next object in the result list
 
-	@return a pointer for FINDLIST structure used by find_first(), find_next, and find_makearray(), will return NULL if an error occurs.
+	@return a pointer for FINDLIST structure used by find_first(), find_next, and find_makearray(), will return nullptr if an error occurs.
 **/
 FINDLIST *find_objects(FINDLIST * volatile start, ...)
 {	
@@ -382,16 +382,16 @@ FINDLIST *find_objects(FINDLIST * volatile start, ...)
 		va_list(ptr);
 		va_start(ptr,start);
 		pgm = find_mkpgm(va_arg(ptr,char*));
-		if (pgm!=NULL){
+		if (pgm!=nullptr){
 			return find_runpgm(result,pgm);
 		} else {
 			va_end(ptr);
-			DELALL(*result); /* pgm == NULL */
+			DELALL(*result); /* pgm == nullptr */
 			return result;
 		}
 	}
 	/* if we're not using FL_GROUP, we break apart the va_arg list, taking data inputs in the "correct" type. */
-	for (obj=object_get_first(); obj!=NULL; obj=obj->next)
+	for (obj=object_get_first(); obj!=nullptr; obj=obj->next)
 	{
 		FINDTYPE ftype;
 		va_list(ptr);
@@ -402,7 +402,7 @@ FINDLIST *find_objects(FINDLIST * volatile start, ...)
 			int parent=0;
 			FINDOP conj=static_cast<FINDOP>(AND);
 			FINDOP op;
-			char *propname = NULL;
+			char *propname = nullptr;
 			void *value;
 			OBJECT *target=obj;
 
@@ -475,15 +475,15 @@ FINDLIST *find_objects(FINDLIST * volatile start, ...)
 					problem.
 				 */
 				if (start == FL_NEW) module_free(result);
-				return NULL;
+				return nullptr;
 			}
 
 			/* follow target to parent */
-			while (parent-- > 0 && target != NULL)
+			while (parent-- > 0 && target != nullptr)
 				target = target->parent;
 
 			/* if target exists */
-			if (target != NULL)
+			if (target != nullptr)
 			{
 				/* match */
 				if (compare(target,ftype,op,value,propname)!=invert)
@@ -512,12 +512,12 @@ int find_makearray(FINDLIST *list, /**< the search list to scan */
 {
 	OBJECT *obj=find_first(list);
 	int n = list->hit_count, i;
-	if (n<=0 || obj==NULL)
+	if (n<=0 || obj==nullptr)
 		return 0;
-	(*objs) = (OBJECT**)module_malloc(sizeof(OBJECT*)*(n+1)); /* one extra for handy NULL to terminate list */
-	for ( i=0 ; i<n && obj!=NULL; obj=find_next(list,obj),i++)
+	(*objs) = (OBJECT**)module_malloc(sizeof(OBJECT*)*(n+1)); /* one extra for handy nullptr to terminate list */
+	for ( i=0 ; i<n && obj!=nullptr; obj=find_next(list,obj),i++)
 		(*objs)[i] = obj;
-	objs[n]=NULL;/* NULL to terminate list */
+	objs[n]=nullptr;/* nullptr to terminate list */
 	return n;
 }
 
@@ -527,7 +527,7 @@ int find_makearray(FINDLIST *list, /**< the search list to scan */
  **/
 OBJECT *find_first(FINDLIST * volatile list) /**< the search list to scan */
 {
-	return find_next(list,NULL);
+	return find_next(list,nullptr);
 }
 
 /** Return the next object in the currenet search list
@@ -536,11 +536,11 @@ OBJECT *find_first(FINDLIST * volatile list) /**< the search list to scan */
 OBJECT *find_next(FINDLIST * volatile list, /**< the search list to scan */
 				  OBJECT *obj) /**< the current object */
 {
-	if (obj==NULL)
+	if (obj==nullptr)
 		obj = object_get_first();
 	else
 		obj = obj->next;
-	while (obj!=NULL && !FOUND(*list,obj->id))
+	while (obj!=nullptr && !FOUND(*list,obj->id))
 		obj=obj->next;
 
 	return obj;
@@ -598,28 +598,28 @@ int compare_isa(void *a, FINDVALUE b) { return object_isa((OBJECT*)a,b.string); 
 
 /* NOTE: this only works with short-circuiting logic! */
 int compare_string_eq(void *a, FINDVALUE b) {
-	int one = (char **)a != NULL;
+	int one = (char **)a != nullptr;
 	int two = strcmp((char*)a,b.string)==0;
-	return (char *)a != NULL && strcmp((char*)a,b.string)==0;
+	return (char *)a != nullptr && strcmp((char*)a,b.string)==0;
 }
-int compare_string_ne(void *a, FINDVALUE b) { return *(char **)a != NULL && strcmp(*(char**)a,b.string)!=0;}
-int compare_string_lt(void *a, FINDVALUE b) { return *(char **)a != NULL && strcmp(*(char**)a,b.string)<0;}
-int compare_string_gt(void *a, FINDVALUE b) { return *(char **)a != NULL && strcmp(*(char**)a,b.string)>0;}
-int compare_string_le(void *a, FINDVALUE b) { return *(char **)a != NULL && strcmp(*(char**)a,b.string)<=0;}
-int compare_string_ge(void *a, FINDVALUE b) { return *(char **)a != NULL && strcmp(*(char**)a,b.string)>=0;}
+int compare_string_ne(void *a, FINDVALUE b) { return *(char **)a != nullptr && strcmp(*(char**)a,b.string)!=0;}
+int compare_string_lt(void *a, FINDVALUE b) { return *(char **)a != nullptr && strcmp(*(char**)a,b.string)<0;}
+int compare_string_gt(void *a, FINDVALUE b) { return *(char **)a != nullptr && strcmp(*(char**)a,b.string)>0;}
+int compare_string_le(void *a, FINDVALUE b) { return *(char **)a != nullptr && strcmp(*(char**)a,b.string)<=0;}
+int compare_string_ge(void *a, FINDVALUE b) { return *(char **)a != nullptr && strcmp(*(char**)a,b.string)>=0;}
 
 int compare_pointer_li(void *a, FINDVALUE b) {return 0;}
 
 int compare_integer_li(void *a, FINDVALUE b) {
 	char temp[256];
-	if(convert_from_int64(temp, 256, &(b.integer), NULL))
+	if(convert_from_int64(temp, 256, &(b.integer), nullptr))
 		return match(*(char **)a, temp);
 	return 0;
 }
 
 int compare_real_li(void *a, FINDVALUE b) {
 	char temp[256];
-	if(convert_from_double(temp, 256, &(b.real), NULL))
+	if(convert_from_double(temp, 256, &(b.real), nullptr))
 		return match(*(char **)a, temp);
 	return 0;
 }
@@ -628,21 +628,21 @@ int compare_string_li(void *a, FINDVALUE b) {return match(b.string, (char *)a);}
 
 int compare_integer16_li(void *a, FINDVALUE b) {
 	char temp[256];
-	if(convert_from_int16(temp, 256, &(b.integer), NULL))
+	if(convert_from_int16(temp, 256, &(b.integer), nullptr))
 		return match(*(char **)a, temp);
 	return 0;
 }
 
 int compare_integer32_li(void *a, FINDVALUE b) {
 	char temp[256];
-	if(convert_from_int32(temp, 256, &(b.integer), NULL))
+	if(convert_from_int32(temp, 256, &(b.integer), nullptr))
 		return match(*(char **)a, temp);
 	return 0;
 }
 
 int compare_integer64_li(void *a, FINDVALUE b) {
 	char temp[256];
-	if(convert_from_int64(temp, 256, &(b.integer), NULL))
+	if(convert_from_int64(temp, 256, &(b.integer), nullptr))
 		return match(*(char **)a, temp);
 	return 0;
 }
@@ -651,14 +651,14 @@ int compare_pointer_nl(void *a, FINDVALUE b) {return 1;}
 
 int compare_integer_nl(void *a, FINDVALUE b) {
 	char temp[256];
-	if(convert_from_int64(temp, 256, &(b.integer), NULL))
+	if(convert_from_int64(temp, 256, &(b.integer), nullptr))
 		return 1 != match(*(char **)a, temp);
 	return 0;
 }
 
 int compare_real_nl(void *a, FINDVALUE b) {
 	char temp[256];
-	if(convert_from_double(temp, 256, &(b.real), NULL))
+	if(convert_from_double(temp, 256, &(b.real), nullptr))
 		return 1 != match(*(char **)a, temp);
 	return 0;
 }
@@ -669,21 +669,21 @@ int compare_string_nl(void *a, FINDVALUE b) {
 
 int compare_integer16_nl(void *a, FINDVALUE b) {
 	char temp[256];
-	if(convert_from_int16(temp, 256, &(b.integer), NULL))
+	if(convert_from_int16(temp, 256, &(b.integer), nullptr))
 		return 1 != match(*(char **)a, temp);
 	return 0;
 }
 
 int compare_integer32_nl(void *a, FINDVALUE b) {
 	char temp[256];
-	if(convert_from_int32(temp, 256, &(b.integer), NULL))
+	if(convert_from_int32(temp, 256, &(b.integer), nullptr))
 		return 1 != match(*(char **)a, temp);
 	return 0;
 }
 
 int compare_integer64_nl(void *a, FINDVALUE b) {
 	char temp[256];
-	if(convert_from_int64(temp, 256, &(b.integer), NULL))
+	if(convert_from_int64(temp, 256, &(b.integer), nullptr))
 		return 1 != match(*(char **)a, temp);
 	return 0;
 }
@@ -722,11 +722,11 @@ static void findlist_nop(FINDLIST * volatile list, OBJECT *obj)
 
 PGMCONSTFLAGS find_pgmconstants(FINDPGM *pgm)
 {
-	if (pgm==NULL)
+	if (pgm==nullptr)
 		return 0;
 
 	/* find the end of the program */
-	while (pgm->next!=NULL) pgm=pgm->next;
+	while (pgm->next!=nullptr) pgm=pgm->next;
 	return pgm->constflags;
 
 }
@@ -735,7 +735,7 @@ static FINDPGM *add_pgm(FINDPGM **pgm, COMPAREFUNC op, unsigned short target, FI
 {
 	/* create program entry */
 	FINDPGM *item = (FINDPGM*)malloc(sizeof(FINDPGM));
-	if (item!=NULL)
+	if (item!=nullptr)
 	{
 		item->constflags = CF_CONSTANT; /* initially the result is invariant */
 		item->op = op;
@@ -743,17 +743,17 @@ static FINDPGM *add_pgm(FINDPGM **pgm, COMPAREFUNC op, unsigned short target, FI
 		item->value = value;
 		item->pos = pos;
 		item->neg = neg;
-		item->next = NULL;
+		item->next = nullptr;
 
 		/* attach to existing program */
-		if (*pgm!=NULL)
+		if (*pgm!=nullptr)
 		{
 			FINDPGM *tail = *pgm;
 
 			item->constflags = tail->constflags; /* inherit flags from previous result set */
 
 			/* find tail of existing program */
-			while (tail->next!=NULL) tail=tail->next;
+			while (tail->next!=nullptr) tail=tail->next;
 			tail->next = item;
 		}
 		else
@@ -768,15 +768,15 @@ static FINDPGM *add_pgm(FINDPGM **pgm, COMPAREFUNC op, unsigned short target, FI
 /** Runs a search engine built by find_mkpgm **/
 FINDLIST *find_runpgm(FINDLIST *list, FINDPGM *pgm)
 {
-	if (list==NULL)
+	if (list==nullptr)
 	{
 		list=new_list(object_get_count());
 		ADDALL(*list);
 	}
-	if (pgm!=NULL)
+	if (pgm!=nullptr)
 	{
 		OBJECT *obj;
-		for (obj=find_first(list); obj!=NULL; obj=find_next(list,obj))
+		for (obj=find_first(list); obj!=nullptr; obj=find_next(list,obj))
 		{
 			if ((*pgm->op)((void*)(((char*)obj)+pgm->target),pgm->value))
 			{	if (pgm->pos) (*pgm->pos)(list,obj); }
@@ -805,7 +805,7 @@ void syntax_error(char *p)
 	char context[16], *nl;
 	strncpy(context,p,15);
 	nl = strchr(context,'\n');
-	if (nl!=NULL) *nl='\0'; else context[15]='\0';
+	if (nl!=nullptr) *nl='\0'; else context[15]='\0';
 	if (strlen(context)>0)
 		output_message("find expression syntax error at '%s...'", context);
 	else
@@ -1039,7 +1039,7 @@ static int expression(PARSER, FINDPGM **pgm)
 		{
 			FINDVALUE v;
 			CLASS *oclass = class_get_class_from_classname(pvalue);
-			if (oclass==NULL)
+			if (oclass==nullptr)
 				output_error("class '%s' not found", pvalue.get_string());
 				/*	TROUBLESHOOT
 					A search rule specified a class that doesn't exist.  
@@ -1048,7 +1048,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			else
 			{
 				v.pointer=(void*)oclass;
-				add_pgm(pgm,comparemap[op].pointer,OFFSET(oclass),v,NULL,findlist_del);
+				add_pgm(pgm,comparemap[op].pointer,OFFSET(oclass),v,nullptr,findlist_del);
 				(*pgm)->constflags |= CF_CLASS; /* this will always reduce in a set class of fixed class, leaving it invariant if already so */
 				ACCEPT;	DONE;
 			}
@@ -1057,7 +1057,7 @@ static int expression(PARSER, FINDPGM **pgm)
 		{
 			FINDVALUE v;
 			CLASS *oclass = class_get_class_from_classname(pvalue);
-			if (oclass==NULL)
+			if (oclass==nullptr)
 				output_error("class '%s' not found", pvalue.get_string());
 				/*	TROUBLESHOOT
 					A search rule specified a class that doesn't exist.  
@@ -1066,7 +1066,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			else
 			{
 				v.pointer=(void*)oclass;
-				add_pgm(pgm,compare_isa,OFFSET(oclass),v,NULL,findlist_del);
+				add_pgm(pgm,compare_isa,OFFSET(oclass),v,nullptr,findlist_del);
 				(*pgm)->constflags |= CF_CLASS; /* this will always reduce in a set class of fixed class, leaving it invariant if already so */
 				ACCEPT;	DONE;
 			}
@@ -1076,7 +1076,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			FINDVALUE v;
 			strcpy(v.string, pvalue);
 			//printf("find(): v.string=\"%s\", pvalue=\"%s\"\n", v.string, pvalue);
-			add_pgm(pgm, comparemap[op%7].string, OFFSET(groupid), v, NULL, findlist_del);
+			add_pgm(pgm, comparemap[op%7].string, OFFSET(groupid), v, nullptr, findlist_del);
 			(*pgm)->constflags |= CF_NAME;
 			ACCEPT;
 			DONE;
@@ -1085,7 +1085,7 @@ static int expression(PARSER, FINDPGM **pgm)
 		{
 			FINDVALUE v;
 			MODULE *mod = module_find(pvalue);
-			if (mod==NULL)
+			if (mod==nullptr)
 				output_error("module '%s' not found", pvalue.get_string());
 				/* TROUBLESHOOT
 					A search rule specified a module that hasn't been loaded.
@@ -1094,7 +1094,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			else
 			{
 				v.pointer=(void*)mod;
-				add_pgm(pgm,comparemap[op].pointer,OFFSET(oclass),v,NULL,findlist_del);
+				add_pgm(pgm,comparemap[op].pointer,OFFSET(oclass),v,nullptr,findlist_del);
 				(*pgm)->constflags |= CF_MODULE; 
 				ACCEPT;	DONE;
 			}
@@ -1111,7 +1111,7 @@ static int expression(PARSER, FINDPGM **pgm)
 				 */
 			} else {
 				v.integer = idnum;
-				add_pgm(pgm,comparemap[op].integer,OFFSET(id),v,NULL,findlist_del);
+				add_pgm(pgm,comparemap[op].integer,OFFSET(id),v,nullptr,findlist_del);
 				(*pgm)->constflags |= CF_ID;
 				ACCEPT;
 				DONE;
@@ -1122,7 +1122,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			/* Accept implicitly.  If it's bad, it's bad. -MH */
 			FINDVALUE v;
 			strcpy(v.string, pvalue);
-			add_pgm(pgm, comparemap[op].string, OFFSET(name), v, NULL, findlist_del);
+			add_pgm(pgm, comparemap[op].string, OFFSET(name), v, nullptr, findlist_del);
 			(*pgm)->constflags |= CF_NAME;
 			ACCEPT;
 			DONE;
@@ -1131,7 +1131,7 @@ static int expression(PARSER, FINDPGM **pgm)
 		{
 			FINDVALUE v;
 			OBJECT *parent = object_find_name(pvalue);
-			if (parent==NULL && strcmp(pvalue, "root") != 0 && strcmp(pvalue, "ROOT") != 0)
+			if (parent==nullptr && strcmp(pvalue, "root") != 0 && strcmp(pvalue, "ROOT") != 0)
 				output_error("parent '%s' not found", pvalue.get_string());
 				/* TROUBLESHOOT 
 					A search rule specified a parent that isn't defined.
@@ -1140,7 +1140,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			else
 			{
 				v.pointer = (void*)parent;
-				add_pgm(pgm,comparemap[op].pointer,OFFSET(parent),v,NULL,findlist_del);
+				add_pgm(pgm,comparemap[op].pointer,OFFSET(parent),v,nullptr,findlist_del);
 				(*pgm)->constflags |= CF_PARENT;
 				ACCEPT; DONE;
 			}
@@ -1158,7 +1158,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			else
 			{
 				v.integer = rank;
-				add_pgm(pgm,comparemap[op].integer,OFFSET(rank),v,NULL,findlist_del);
+				add_pgm(pgm,comparemap[op].integer,OFFSET(rank),v,nullptr,findlist_del);
 				(*pgm)->constflags |= CF_RANK;
 				ACCEPT; DONE;
 			}
@@ -1185,7 +1185,7 @@ static int expression(PARSER, FINDPGM **pgm)
 					REJECT;
 				}
 				v.real = val;
-				add_pgm(pgm, comparemap[op].real, OFFSET(latitude), v, NULL, findlist_del);
+				add_pgm(pgm, comparemap[op].real, OFFSET(latitude), v, nullptr, findlist_del);
 				(*pgm)->constflags |= CF_LAT;
 				ACCEPT; DONE;
 			}
@@ -1212,7 +1212,7 @@ static int expression(PARSER, FINDPGM **pgm)
 					REJECT;
 				}
 				v.real = val;
-				add_pgm(pgm, comparemap[op].real, OFFSET(longitude), v, NULL, findlist_del);
+				add_pgm(pgm, comparemap[op].real, OFFSET(longitude), v, nullptr, findlist_del);
 				(*pgm)->constflags |= CF_LONG;
 				ACCEPT; DONE;
 			}
@@ -1223,7 +1223,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			v.integer = convert_to_timestamp(pvalue);
 			if(v.integer == TS_NEVER)
 				REJECT;
-			add_pgm(pgm, comparemap[op].integer, OFFSET(clock), v, NULL, findlist_del);
+			add_pgm(pgm, comparemap[op].integer, OFFSET(clock), v, nullptr, findlist_del);
 			(*pgm)->constflags |= CF_CLOCK;
 			ACCEPT; DONE;
 		}
@@ -1234,7 +1234,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			printf("find insvc=%lld\n", v.integer);
 			if(v.integer == TS_NEVER)
 				REJECT;
-			add_pgm(pgm, comparemap[op].integer, OFFSET(in_svc), v, NULL, findlist_del);
+			add_pgm(pgm, comparemap[op].integer, OFFSET(in_svc), v, nullptr, findlist_del);
 			(*pgm)->constflags |= CF_INSVC;
 			ACCEPT; DONE;
 		}
@@ -1244,7 +1244,7 @@ static int expression(PARSER, FINDPGM **pgm)
 			v.integer = convert_to_timestamp(pvalue);
 			if(v.integer == TS_NEVER)
 				REJECT;
-			add_pgm(pgm, comparemap[op].integer, OFFSET(out_svc), v, NULL, findlist_del);
+			add_pgm(pgm, comparemap[op].integer, OFFSET(out_svc), v, nullptr, findlist_del);
 			(*pgm)->constflags |= CF_OUTSVC;
 			ACCEPT; DONE;
 		}
@@ -1291,7 +1291,7 @@ static int expression_list(PARSER, FINDPGM **pgm)
 FINDPGM *find_mkpgm(char *search)
 {
 	STATUS status=FAILED;
-	FINDPGM *pgm = NULL;
+	FINDPGM *pgm = nullptr;
 	char *p = search;
 	while (*p!='\0')
 	{
@@ -1310,7 +1310,7 @@ FINDPGM *find_mkpgm(char *search)
 	having the desired access mode
  **/
 char *find_file(const char *name, /**< the name of the file to find */
-				const char *path, /**< the path to search (or NULL to search the GLPATH environment) */
+				const char *path, /**< the path to search (or nullptr to search the GLPATH environment) */
 				int mode, /**< the file access mode to use, see access() for valid modes */
 				char *buffer, /**< the buffer into which the full path is written */
 				int len) /**< the len of the buffer */
@@ -1353,7 +1353,7 @@ char *find_file(const char *name, /**< the name of the file to find */
 				strncpy(buffer,filepath,len);
 				return buffer;
 			}
-			dir = strtok(NULL, env_delim);
+			dir = strtok(nullptr, env_delim);
 		}
 	}
 
@@ -1392,7 +1392,7 @@ char *find_file(const char *name, /**< the name of the file to find */
 		return buffer;
 	}
 #endif
-	return NULL;
+	return nullptr;
 }
 
 /***********************************************************************************
@@ -1405,13 +1405,13 @@ OBJLIST *objlist_create(CLASS *oclass, PROPERTY *match_property, char *part, cha
 	OBJLIST *list = (OBJLIST *)(malloc(sizeof(OBJLIST)));
 	
 	/* check parameters */
-	if ( !list ) return (OBJLIST *)(output_error("find_create(): memory allocation failed"),NULL);
+	if ( !list ) return (OBJLIST *)(output_error("find_create(): memory allocation failed"),nullptr);
 	
 	/* setup object list structure */
 	list->asize = INITSIZE;
 	list->size = 0;
 	list->objlist = (s_object_list **)(malloc(sizeof(OBJECT*) * INITSIZE));
-	if ( !list->objlist ) return (OBJLIST *)(output_error("find_create(): memory allocation failed"),free(list),NULL);
+	if ( !list->objlist ) return (OBJLIST *)(output_error("find_create(): memory allocation failed"),free(list),nullptr);
 	list->oclass = oclass;
 
 	/* perform search */
@@ -1427,22 +1427,22 @@ OBJLIST *objlist_search(char *group)
 	FINDPGM *pgm = find_mkpgm(group);
 	
 	// a null group  should return all objects
-	if ( pgm==NULL && strcmp(group,"")!=0 ) 
+	if ( pgm==nullptr && strcmp(group,"")!=0 )
 	{
-		return NULL;
+		return nullptr;
 	}
-	result=find_runpgm(NULL,pgm);
-	if ( result==NULL ) 
+	result=find_runpgm(nullptr,pgm);
+	if ( result==nullptr )
 	{
-		return NULL;
+		return nullptr;
 	}
 	list = (OBJLIST *)(malloc(sizeof(OBJLIST)));
-	if ( !list ) return NULL;
-	list->oclass = NULL;
+	if ( !list ) return nullptr;
+	list->oclass = nullptr;
 	list->asize = list->size = result->hit_count;
 	list->objlist = (s_object_list **)(malloc(sizeof(OBJECT*) * result->hit_count));
-	if ( !list->objlist ) return NULL;
-	for ( obj=find_first(result),n=0 ; obj!=NULL ; obj=find_next(result,obj),n++ )
+	if ( !list->objlist ) return nullptr;
+	for ( obj=find_first(result),n=0 ; obj!=nullptr ; obj=find_next(result,obj),n++ )
 		list->objlist[n] = obj;
 	return list;
 }
@@ -1460,7 +1460,7 @@ size_t objlist_add(OBJLIST *list, PROPERTY *match, char *match_part, char *match
 {
 	OBJECT *obj;
 	PROPERTYCOMPAREOP op = property_compare_op(match->ptype, match_op);
-	for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
+	for ( obj=object_get_first() ; obj!=nullptr ; obj=object_get_next(obj) )
 	{
 		void *x = GETADDR(obj,match);
 		if ( obj->oclass!=list->oclass ) continue;
@@ -1491,15 +1491,15 @@ size_t objlist_del(OBJLIST *list, PROPERTY *match, char *match_part, char *match
 	{
 		OBJECT *obj = list->objlist[n];
 		void *x = (void*)((char*)(obj+1) + (int64)match->addr);
-		if ( list->oclass!=NULL && obj->oclass!=list->oclass ) continue;
+		if ( list->oclass!=nullptr && obj->oclass!=list->oclass ) continue;
 		if ( property_compare_basic(match->ptype,op,x,match_value1,match_value2,match_part) )
-			list->objlist[n] = NULL; // marked for deletion
+			list->objlist[n] = nullptr; // marked for deletion
 	}
 
 	// compress list
 	for ( n=0,m=0 ; n<list->size ; n++ )
 	{
-		if ( list->objlist[n]==NULL ) continue;
+		if ( list->objlist[n]==nullptr ) continue;
 		if ( n>m ) list->objlist[m++] = list->objlist[n];
 	}
 	list->size = m;
@@ -1511,7 +1511,7 @@ size_t objlist_size(OBJLIST *list)
 }
 struct s_object_list *objlist_get(OBJLIST *list,size_t n)
 {
-	return (n<list->size)?list->objlist[n]:NULL;
+	return (n<list->size)?list->objlist[n]:nullptr;
 }
 
 /** Apply the function to each object in the object list.
@@ -1519,7 +1519,7 @@ struct s_object_list *objlist_get(OBJLIST *list,size_t n)
 	The function must accept an object pointer as first argument,
 	a pointer to additional data structure as second argument, and
 	the third argument is a position indicator.
-	For the last call the object pointer is NULL and the position indicate is -1. 
+	For the last call the object pointer is nullptr and the position indicate is -1.
 
 	The function's return value must indicate success (non-zero) or failure (zero).
 
@@ -1552,11 +1552,11 @@ struct s_object_list *objlist_get(OBJLIST *list,size_t n)
 	{
 		struct s_arg arg = {0,0.0,00.0};
 		CLASS *oclass = class_get_class_from_classname(classname);
-		PROPERTY *prop = oclass?class_find_property(oclass,propertyname):NULL;
+		PROPERTY *prop = oclass?class_find_property(oclass,propertyname):nullptr;
 		double zero=0;
-		if ( prop==NULL ) return QNAN;
-		OBJLIST *list = objlist_create(oclass,prop,NULL,">",&zero,NULL);
-		if ( list==NULL ) return QNAN;
+		if ( prop==nullptr ) return QNAN;
+		OBJLIST *list = objlist_create(oclass,prop,nullptr,">",&zero,nullptr);
+		if ( list==nullptr ) return QNAN;
 		arg.addr = prop->addr;
 		return objlist_apply(list,&arg,logmean);
 	}
@@ -1575,7 +1575,7 @@ int objlist_apply(OBJLIST *list, /**< object list */
 		if ( function(obj,arg,n)==0 )
 			return -n;
 	}
-	if ( function(NULL,arg,-1)==0 )
+	if ( function(nullptr,arg,-1)==0 )
 		return -n;
 	else
 		return n;

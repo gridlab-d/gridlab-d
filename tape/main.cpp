@@ -16,7 +16,7 @@ CDECL EXPORT int setvar(char *varname, char *value)
 {
 	VARMAP *p;
 
-	for (p=varmap; p->name!=NULL; p++)
+	for (p=varmap; p->name!=nullptr; p++)
 	{
 		if (strcmp(p->name,varname)==0)
 		{

@@ -21,12 +21,12 @@
 #include "bus.h"
 #include "matpower.h"
 
-CLASS *gen::oclass = NULL;
-gen *gen::defaults = NULL;
+CLASS *gen::oclass = nullptr;
+gen *gen::defaults = nullptr;
 
 #ifdef OPTIONAL
 /* TODO: define this to allow the use of derived classes */
-CLASS *PARENTgen::pclass = NULL;
+CLASS *PARENTgen::pclass = nullptr;
 #endif
 
 /* TODO: remove passes that aren't needed */
@@ -46,10 +46,10 @@ gen::gen(MODULE *module)
 	/* TODO: include this if you are deriving this from a superclass */
 	pclass = SUPERCLASS::oclass;
 #endif
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"gen",sizeof(gen),passconfig);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		if (gl_publish_variable(oclass,
@@ -95,7 +95,7 @@ PT_DESCRIPTION, "Kuhn-Tucker multiplier on lower P_g limit (mu/MW)",
                         //PT_int16, "NCOST", PADDR(NCOST),PT_DESCRIPTION, "number of cost coeff for poly cost function or number of data points for piecewise linear",
                         /*Only support model 2 right now -- LYZ @ Jan 11th, 2012*/
                         PT_char1024, "COST", PADDR(COST), PT_DESCRIPTION, "n+1 coeff of n-th order polynomial cost, starting with highest order",
-                        NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+                        nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(gen));
 		/* TODO: set the default values of all properties here */
@@ -165,7 +165,7 @@ EXPORT int create_gen(OBJECT **obj)
 	try
 	{
 		*obj = gl_create_object(gen::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 			return OBJECTDATA(*obj,gen)->create();
 	}
 	catch (char *msg)
@@ -179,7 +179,7 @@ EXPORT int init_gen(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,gen)->init(parent);
 	}
 	catch (char *msg)

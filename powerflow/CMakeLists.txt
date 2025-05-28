@@ -131,13 +131,9 @@ if (GLD_USE_EIGEN)
             ${KLU_LIBRARIES}
             )
 else ()
-    target_include_directories(${GLD_MODULE_NAME} PRIVATE
-            #            "${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC"
-            "${CMAKE_SOURCE_DIR}/third_party/superLU_MT"
-            )
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE
             #            superlu
-            superlu_lib
+            ${SUPERLU_LIB}
             )
 endif ()
 
@@ -146,7 +142,7 @@ target_include_directories(${GLD_MODULE_NAME} PRIVATE
         )
 
 target_link_libraries(${GLD_MODULE_NAME} PRIVATE
-        jsoncpp_lib
+        ${JSONCPP_LIB}
         )
 
 target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
