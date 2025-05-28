@@ -1,24 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
-OPTION(GLD_WARNING_WORK "Make warnings more pedantic" OFF)
-if (GLD_WARNING_WORK)
-    if (MSVC)
-        SET(GLD_COMPILE_OPTIONS
-                "/W4"
-                "/WX"
-                CACHE INTERNAL
-                "GLD_COMPILE_OPTIONS"
-        )
-    else ()
-        SET(GLD_COMPILE_OPTIONS
-                "-Wall"
-                "-Wextra"
-                "-pedantic"
-                CACHE INTERNAL
-                "GLD_COMPILE_OPTIONS"
-        )
-    endif ()
+include(cmake/Warnings.cmake)
+OPTION(GLD_EXTRA_WARNINGS "Make warnings more pedantic" OFF)
+if (GLD_EXTRA_WARNINGS)
+    set(GLD_COMPILE_OPTIONS ${WARNING_FLAGS} CACHE INTERNAL "GLD_COMPILE_OPTIONS")
 else ()
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         # TODO: resolve these warnings and un-supress them
@@ -306,6 +292,8 @@ if (GLD_USE_SUPERLU)
     if (WIN32 OR MSYS OR MINGW OR CYGWIN)
         # The CBLAS version provided by SuperLU does not build in MSYS2.
         option(enable_internal_blaslib "Build the CBLAS library" OFF)
+    else ()
+        option(enable_internal_blaslib "Build the CBLAS library" ON)
     endif ()
 
     # SuperLU's generic names here can cause issues, make sure other projects do not cross these names
