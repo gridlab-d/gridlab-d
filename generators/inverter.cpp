@@ -33,311 +33,314 @@ inverter::inverter(MODULE *module)
 			oclass->trl = TRL_PROOF;
 		
 		if (gl_publish_variable(oclass,
+			PT_enumeration, "inverter_type", PADDR(inverter_type_v), PT_DESCRIPTION, "LEGACY MODEL: Sets efficiencies and other parameters; if using four_quadrant_control_mode, set this to FOUR_QUADRANT",
+				PT_KEYWORD, "TWO_PULSE", (enumeration)TWO_PULSE,
+				PT_KEYWORD, "SIX_PULSE", (enumeration)SIX_PULSE,
+				PT_KEYWORD, "TWELVE_PULSE", (enumeration)TWELVE_PULSE,
+				PT_KEYWORD, "PWM", (enumeration)PWM,
+				PT_KEYWORD, "FOUR_QUADRANT", (enumeration)FOUR_QUADRANT,
 
-                                PT_enumeration, "inverter_type", PADDR(inverter_type_v), PT_DESCRIPTION, "LEGACY MODEL: Sets efficiencies and other parameters; if using four_quadrant_control_mode, set this to FOUR_QUADRANT",
-                                PT_KEYWORD, "TWO_PULSE", (enumeration)TWO_PULSE,
-                                PT_KEYWORD, "SIX_PULSE", (enumeration)SIX_PULSE,
-                                PT_KEYWORD, "TWELVE_PULSE", (enumeration)TWELVE_PULSE,
-                                PT_KEYWORD, "PWM", (enumeration)PWM,
-                                PT_KEYWORD, "FOUR_QUADRANT", (enumeration)FOUR_QUADRANT,
-
-                                PT_enumeration, "four_quadrant_control_mode", PADDR(four_quadrant_control_mode), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Activates various control modes",
-                                PT_KEYWORD, "NONE", (enumeration)FQM_NONE,
-                                PT_KEYWORD, "CONSTANT_PQ", (enumeration)FQM_CONSTANT_PQ,
-                                PT_KEYWORD, "CONSTANT_PF", (enumeration)FQM_CONSTANT_PF,
+			PT_enumeration, "four_quadrant_control_mode", PADDR(four_quadrant_control_mode), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Activates various control modes",
+				PT_KEYWORD, "NONE", (enumeration)FQM_NONE,
+				PT_KEYWORD, "CONSTANT_PQ", (enumeration)FQM_CONSTANT_PQ,
+				PT_KEYWORD, "CONSTANT_PF", (enumeration)FQM_CONSTANT_PF,
 				//PT_KEYWORD,"CONSTANT_V",FQM_CONSTANT_V,	//Not implemented yet
 				PT_KEYWORD, "VOLT_VAR", (enumeration)FQM_VOLT_VAR,
-                                PT_KEYWORD, "VOLT_WATT", (enumeration)FQM_VOLT_WATT,
-                                PT_KEYWORD, "VOLT_VAR_FREQ_PWR", FQM_VOLT_VAR_FREQ_PWR, //Ab add : mode
+				PT_KEYWORD, "VOLT_WATT", (enumeration)FQM_VOLT_WATT,
+				PT_KEYWORD, "VOLT_VAR_FREQ_PWR", FQM_VOLT_VAR_FREQ_PWR, //Ab add : mode
 				PT_KEYWORD, "LOAD_FOLLOWING", (enumeration)FQM_LOAD_FOLLOWING,
-                                PT_KEYWORD, "GROUP_LOAD_FOLLOWING", (enumeration)FQM_GROUP_LF,
-                                PT_KEYWORD, "VOLTAGE_SOURCE", (enumeration)FQM_VSI,
+				PT_KEYWORD, "GROUP_LOAD_FOLLOWING", (enumeration)FQM_GROUP_LF,
+				PT_KEYWORD, "VOLTAGE_SOURCE", (enumeration)FQM_VSI,
 
-                                PT_enumeration, "pf_reg", PADDR(pf_reg), PT_DESCRIPTION, "Activate (or not) power factor regulation in four_quadrant_control_mode",
-                                PT_KEYWORD, "INCLUDED", (enumeration)INCLUDED,
-                                PT_KEYWORD, "INCLUDED_ALT", (enumeration)INCLUDED_ALT,
-                                PT_KEYWORD, "EXCLUDED", (enumeration)EXCLUDED,
+			PT_enumeration, "pf_reg", PADDR(pf_reg), PT_DESCRIPTION, "Activate (or not) power factor regulation in four_quadrant_control_mode",
+				PT_KEYWORD, "INCLUDED", (enumeration)INCLUDED,
+				PT_KEYWORD, "INCLUDED_ALT", (enumeration)INCLUDED_ALT,
+				PT_KEYWORD, "EXCLUDED", (enumeration)EXCLUDED,
 
-                                PT_enumeration, "generator_status", PADDR(gen_status_v), PT_DESCRIPTION, "describes whether the generator is online or offline",
-                                PT_KEYWORD, "OFFLINE", (enumeration)OFFLINE,
-                                PT_KEYWORD, "ONLINE", (enumeration)ONLINE,
+			PT_enumeration, "generator_status", PADDR(gen_status_v), PT_DESCRIPTION, "describes whether the generator is online or offline",
+				PT_KEYWORD, "OFFLINE", (enumeration)OFFLINE,
+				PT_KEYWORD, "ONLINE", (enumeration)ONLINE,
 
-                                PT_enumeration, "generator_mode", PADDR(gen_mode_v), PT_DESCRIPTION, "LEGACY MODEL: Selects generator control mode when using legacy model; in non-legacy models, this should be SUPPLY_DRIVEN.",
-                                PT_KEYWORD, "UNKNOWN", UNKNOWN,
-                                PT_KEYWORD, "CONSTANT_V", (enumeration)CONSTANT_V,
-                                PT_KEYWORD, "CONSTANT_PQ", (enumeration)CONSTANT_PQ,
-                                PT_KEYWORD, "CONSTANT_PF", (enumeration)CONSTANT_PF,
-                                PT_KEYWORD, "SUPPLY_DRIVEN", (enumeration)SUPPLY_DRIVEN,
+			PT_enumeration, "generator_mode", PADDR(gen_mode_v), PT_DESCRIPTION, "LEGACY MODEL: Selects generator control mode when using legacy model; in non-legacy models, this should be SUPPLY_DRIVEN.",
+				PT_KEYWORD, "UNKNOWN", UNKNOWN,
+				PT_KEYWORD, "CONSTANT_V", (enumeration)CONSTANT_V,
+				PT_KEYWORD, "CONSTANT_PQ", (enumeration)CONSTANT_PQ,
+				PT_KEYWORD, "CONSTANT_PF", (enumeration)CONSTANT_PF,
+				PT_KEYWORD, "SUPPLY_DRIVEN", (enumeration)SUPPLY_DRIVEN,
 
-                                PT_double, "inverter_convergence_criterion", PADDR(inverter_convergence_criterion), PT_DESCRIPTION, "The maximum change in error threshold for exitting deltamode.",
-                                PT_double, "current_convergence[A]", PADDR(current_convergence_criterion), PT_DESCRIPTION, "Convergence criterion for current changes on first timestep - basically initialization of system",
-                                PT_double, "V_In[V]", PADDR(V_In), PT_DESCRIPTION, "DC voltage",
-                                PT_double, "I_In[A]", PADDR(I_In), PT_DESCRIPTION, "DC current",
-                                PT_double, "P_In[W]", PADDR(P_In), PT_DESCRIPTION, "DC power",
-                                PT_complex, "VA_Out[VA]", PADDR(VA_Out), PT_DESCRIPTION, "AC power",
-                                PT_double, "Vdc[V]", PADDR(Vdc), PT_DESCRIPTION, "LEGACY MODEL: DC voltage",
-                                PT_complex, "phaseA_V_Out[V]", PADDR(phaseA_V_Out), PT_DESCRIPTION, "AC voltage on A phase in three-phase system; 240-V connection on a triplex system",
-                                PT_complex, "phaseB_V_Out[V]", PADDR(phaseB_V_Out), PT_DESCRIPTION, "AC voltage on B phase in three-phase system",
-                                PT_complex, "phaseC_V_Out[V]", PADDR(phaseC_V_Out), PT_DESCRIPTION, "AC voltage on C phase in three-phase system",
-                                PT_complex, "phaseA_I_Out[V]", PADDR(phaseA_I_Out), PT_DESCRIPTION, "AC current on A phase in three-phase system; 240-V connection on a triplex system",
-                                PT_complex, "phaseB_I_Out[V]", PADDR(phaseB_I_Out), PT_DESCRIPTION, "AC current on B phase in three-phase system",
-                                PT_complex, "phaseC_I_Out[V]", PADDR(phaseC_I_Out), PT_DESCRIPTION, "AC current on C phase in three-phase system",
-                                PT_complex, "power_A[VA]", PADDR(power_val[0]), PT_DESCRIPTION, "AC power on A phase in three-phase system; 240-V connection on a triplex system",
-                                PT_complex, "power_B[VA]", PADDR(power_val[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
-                                PT_complex, "power_C[VA]", PADDR(power_val[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
-                                PT_complex, "curr_VA_out_A[VA]", PADDR(curr_VA_out[0]), PT_DESCRIPTION, "AC power on A phase in three-phase system; 240-V connection on a triplex system",
-                                PT_complex, "curr_VA_out_B[VA]", PADDR(curr_VA_out[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
-                                PT_complex, "curr_VA_out_C[VA]", PADDR(curr_VA_out[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
-                                PT_complex, "prev_VA_out_A[VA]", PADDR(prev_VA_out[0]), PT_DESCRIPTION, "AC power on A phase in three-phase system; 240-V connection on a triplex system",
-                                PT_complex, "prev_VA_out_B[VA]", PADDR(prev_VA_out[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
-                                PT_complex, "prev_VA_out_C[VA]", PADDR(prev_VA_out[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
+			PT_double, "inverter_convergence_criterion", PADDR(inverter_convergence_criterion), PT_DESCRIPTION, "The maximum change in error threshold for exitting deltamode.",
+			PT_double, "current_convergence[A]", PADDR(current_convergence_criterion), PT_DESCRIPTION, "Convergence criterion for current changes on first timestep - basically initialization of system",
+			PT_double, "V_In[V]", PADDR(V_In), PT_DESCRIPTION, "DC voltage",
+			PT_double, "I_In[A]", PADDR(I_In), PT_DESCRIPTION, "DC current",
+			PT_double, "P_In[W]", PADDR(P_In), PT_DESCRIPTION, "DC power",
+			PT_complex, "VA_Out[VA]", PADDR(VA_Out), PT_DESCRIPTION, "AC power",
+			PT_double, "Vdc[V]", PADDR(Vdc), PT_DESCRIPTION, "LEGACY MODEL: DC voltage",
+			PT_complex, "phaseA_V_Out[V]", PADDR(phaseA_V_Out), PT_DESCRIPTION, "AC voltage on A phase in three-phase system; 240-V connection on a triplex system",
+			PT_complex, "phaseB_V_Out[V]", PADDR(phaseB_V_Out), PT_DESCRIPTION, "AC voltage on B phase in three-phase system",
+			PT_complex, "phaseC_V_Out[V]", PADDR(phaseC_V_Out), PT_DESCRIPTION, "AC voltage on C phase in three-phase system",
+			PT_complex, "phaseA_I_Out[V]", PADDR(phaseA_I_Out), PT_DESCRIPTION, "AC current on A phase in three-phase system; 240-V connection on a triplex system",
+			PT_complex, "phaseB_I_Out[V]", PADDR(phaseB_I_Out), PT_DESCRIPTION, "AC current on B phase in three-phase system",
+			PT_complex, "phaseC_I_Out[V]", PADDR(phaseC_I_Out), PT_DESCRIPTION, "AC current on C phase in three-phase system",
+			PT_complex, "power_A[VA]", PADDR(power_val[0]), PT_DESCRIPTION, "AC power on A phase in three-phase system; 240-V connection on a triplex system",
+			PT_complex, "power_B[VA]", PADDR(power_val[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
+			PT_complex, "power_C[VA]", PADDR(power_val[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
+			PT_complex, "curr_VA_out_A[VA]", PADDR(curr_VA_out[0]), PT_DESCRIPTION, "AC power on A phase in three-phase system; 240-V connection on a triplex system",
+			PT_complex, "curr_VA_out_B[VA]", PADDR(curr_VA_out[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
+			PT_complex, "curr_VA_out_C[VA]", PADDR(curr_VA_out[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
+			PT_complex, "prev_VA_out_A[VA]", PADDR(prev_VA_out[0]), PT_DESCRIPTION, "AC power on A phase in three-phase system; 240-V connection on a triplex system",
+			PT_complex, "prev_VA_out_B[VA]", PADDR(prev_VA_out[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
+			PT_complex, "prev_VA_out_C[VA]", PADDR(prev_VA_out[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
 
 			// Internal Voltage magnutue and angle of VSI_DROOP, e_source[i],
 			PT_double, "e_source_A", PADDR(e_source[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-forming source, phase A",
-                                PT_double, "e_source_B", PADDR(e_source[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-forming source, phase B",
-                                PT_double, "e_source_C", PADDR(e_source[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-forming source, phase C",
-                                PT_double, "V_angle_A", PADDR(V_angle[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle of grid-forming source, phase A",
-                                PT_double, "V_angle_B", PADDR(V_angle[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle of grid-forming source, phase B",
-                                PT_double, "V_angle_C", PADDR(V_angle[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle of grid-forming source, phase C",
+			PT_double, "e_source_B", PADDR(e_source[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-forming source, phase B",
+			PT_double, "e_source_C", PADDR(e_source[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-forming source, phase C",
+			PT_double, "V_angle_A", PADDR(V_angle[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle of grid-forming source, phase A",
+			PT_double, "V_angle_B", PADDR(V_angle[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle of grid-forming source, phase B",
+			PT_double, "V_angle_C", PADDR(V_angle[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle of grid-forming source, phase C",
 
-                                PT_complex, "phaseA_I_Forming[A]", PADDR(temp_current_val[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system, only for grid_forming",
-                                PT_complex, "phaseB_I_Forming[A]", PADDR(temp_current_val[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system, only for grid_forming",
-                                PT_complex, "phaseC_I_Forming[A]", PADDR(temp_current_val[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system, only for grid_forming",
+			PT_complex, "phaseA_I_Forming[A]", PADDR(temp_current_val[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system, only for grid_forming",
+			PT_complex, "phaseB_I_Forming[A]", PADDR(temp_current_val[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system, only for grid_forming",
+			PT_complex, "phaseC_I_Forming[A]", PADDR(temp_current_val[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system, only for grid_forming",
 
-                                PT_complex, "phaseA_I_Following[A]", PADDR(I_Out[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system, only for grid_following",
-                                PT_complex, "phaseB_I_Following[A]", PADDR(I_Out[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system, only for grid_following",
-                                PT_complex, "phaseC_I_Following[A]", PADDR(I_Out[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system, only for grid_following",
+			PT_complex, "phaseA_I_Following[A]", PADDR(I_Out[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system, only for grid_following",
+			PT_complex, "phaseB_I_Following[A]", PADDR(I_Out[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system, only for grid_following",
+			PT_complex, "phaseC_I_Following[A]", PADDR(I_Out[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system, only for grid_following",
 
 			// 3 phase average value of terminal voltage
 			PT_double, "pCircuit_V_Avg", PADDR(pCircuit_V_Avg), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: three-phase average value of terminal voltage",
 
 			//Input
 			PT_double, "P_Out[VA]", PADDR(P_Out), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Scheduled real power out in CONSTANT_PQ control mode",
-                                PT_double, "Q_Out[VAr]", PADDR(Q_Out), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Schedule reactive power out in CONSTANT_PQ control mode",
-                                PT_double, "power_in[W]", PADDR(p_in), PT_DESCRIPTION, "LEGACY MODEL: No longer used",
-                                PT_double, "rated_power[VA]", PADDR(p_rated), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The rated power of the inverter",
-                                PT_double, "rated_battery_power[W]", PADDR(bp_rated), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The rated power of battery when battery is attached",
-                                PT_double, "inverter_efficiency", PADDR(inv_eta), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The efficiency of the inverter",
-                                PT_double, "battery_soc[pu]", PADDR(b_soc), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The state of charge of an attached battery",
-                                PT_double, "soc_reserve[pu]", PADDR(soc_reserve), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The reserve state of charge of an attached battery for islanding cases",
-                                PT_double, "power_factor[unit]", PADDR(power_factor), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The power factor used for CONSTANT_PF control mode",
-                                PT_bool, "islanded_state", PADDR(islanded), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Boolean used to let control modes to act under island conditions",
-                                PT_double, "nominal_frequency[Hz]", PADDR(f_nominal),
+			PT_double, "Q_Out[VAr]", PADDR(Q_Out), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Schedule reactive power out in CONSTANT_PQ control mode",
+			PT_double, "power_in[W]", PADDR(p_in), PT_DESCRIPTION, "LEGACY MODEL: No longer used",
+			PT_double, "rated_power[VA]", PADDR(p_rated), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The rated power of the inverter",
+			PT_double, "rated_battery_power[W]", PADDR(bp_rated), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The rated power of battery when battery is attached",
+			PT_double, "inverter_efficiency", PADDR(inv_eta), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The efficiency of the inverter",
+			PT_double, "battery_soc[pu]", PADDR(b_soc), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The state of charge of an attached battery",
+			PT_double, "soc_reserve[pu]", PADDR(soc_reserve), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The reserve state of charge of an attached battery for islanding cases",
+			PT_double, "power_factor[unit]", PADDR(power_factor), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The power factor used for CONSTANT_PF control mode",
+			PT_bool, "islanded_state", PADDR(islanded), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Boolean used to let control modes to act under island conditions",
+			PT_double, "nominal_frequency[Hz]", PADDR(f_nominal),
 
 			// Dynamic Current Control Parameters - PID mode
 			PT_double, "Pref", PADDR(Pref), PT_DESCRIPTION, "DELTAMODE: The real power reference.",
-                                PT_double, "Qref", PADDR(Qref), PT_DESCRIPTION, "DELTAMODE: The reactive power reference.",
-                                PT_double, "kpd", PADDR(kpd), PT_DESCRIPTION, "DELTAMODE: The d-axis integration gain for the current modulation PI controller.",
-                                PT_double, "kpq", PADDR(kpq), PT_DESCRIPTION, "DELTAMODE: The q-axis integration gain for the current modulation PI controller.",
-                                PT_double, "kid", PADDR(kid), PT_DESCRIPTION, "DELTAMODE: The d-axis proportional gain for the current modulation PI controller.",
-                                PT_double, "kiq", PADDR(kiq), PT_DESCRIPTION, "DELTAMODE: The q-axis proportional gain for the current modulation PI controller.",
-                                PT_double, "kdd", PADDR(kdd), PT_DESCRIPTION, "DELTAMODE: The d-axis differentiator gain for the current modulation PID controller",
-                                PT_double, "kdq", PADDR(kdq), PT_DESCRIPTION, "DELTAMODE: The q-axis differentiator gain for the current modulation PID controller",
+			PT_double, "Qref", PADDR(Qref), PT_DESCRIPTION, "DELTAMODE: The reactive power reference.",
+			PT_double, "kpd", PADDR(kpd), PT_DESCRIPTION, "DELTAMODE: The d-axis integration gain for the current modulation PI controller.",
+			PT_double, "kpq", PADDR(kpq), PT_DESCRIPTION, "DELTAMODE: The q-axis integration gain for the current modulation PI controller.",
+			PT_double, "kid", PADDR(kid), PT_DESCRIPTION, "DELTAMODE: The d-axis proportional gain for the current modulation PI controller.",
+			PT_double, "kiq", PADDR(kiq), PT_DESCRIPTION, "DELTAMODE: The q-axis proportional gain for the current modulation PI controller.",
+			PT_double, "kdd", PADDR(kdd), PT_DESCRIPTION, "DELTAMODE: The d-axis differentiator gain for the current modulation PID controller",
+			PT_double, "kdq", PADDR(kdq), PT_DESCRIPTION, "DELTAMODE: The q-axis differentiator gain for the current modulation PID controller",
 			
 			//Additional control parameters -- PI mode
 			PT_double, "epA", PADDR(curr_state.ed[0]), PT_DESCRIPTION, "DELTAMODE: The real current error for phase A or triplex phase.",
-                                PT_double, "epB", PADDR(curr_state.ed[1]), PT_DESCRIPTION, "DELTAMODE: The real current error for phase B.",
-                                PT_double, "epC", PADDR(curr_state.ed[2]), PT_DESCRIPTION, "DELTAMODE: The real current error for phase C.",
-                                PT_double, "eqA", PADDR(curr_state.eq[0]), PT_DESCRIPTION, "DELTAMODE: The reactive current error for phase A or triplex phase.",
-                                PT_double, "eqB", PADDR(curr_state.eq[1]), PT_DESCRIPTION, "DELTAMODE: The reactive current error for phase B.",
-                                PT_double, "eqC", PADDR(curr_state.eq[2]), PT_DESCRIPTION, "DELTAMODE: The reactive current error for phase C.",
-                                PT_double, "delta_epA", PADDR(curr_state.ded[0]), PT_DESCRIPTION, "DELTAMODE: The change in real current error for phase A or triplex phase.",
-                                PT_double, "delta_epB", PADDR(curr_state.ded[1]), PT_DESCRIPTION, "DELTAMODE: The change in real current error for phase B.",
-                                PT_double, "delta_epC", PADDR(curr_state.ded[2]), PT_DESCRIPTION, "DELTAMODE: The change in real current error for phase C.",
-                                PT_double, "delta_eqA", PADDR(curr_state.deq[0]), PT_DESCRIPTION, "DELTAMODE: The change in reactive current error for phase A or triplex phase.",
-                                PT_double, "delta_eqB", PADDR(curr_state.deq[1]), PT_DESCRIPTION, "DELTAMODE: The change in reactive current error for phase B.",
-                                PT_double, "delta_eqC", PADDR(curr_state.deq[2]), PT_DESCRIPTION, "DELTAMODE: The change in reactive current error for phase C.",
-                                PT_double, "mdA", PADDR(curr_state.md[0]), PT_DESCRIPTION, "DELTAMODE: The d-axis current modulation for phase A or triplex phase.",
-                                PT_double, "mdB", PADDR(curr_state.md[1]), PT_DESCRIPTION, "DELTAMODE: The d-axis current modulation for phase B.",
-                                PT_double, "mdC", PADDR(curr_state.md[2]), PT_DESCRIPTION, "DELTAMODE: The d-axis current modulation for phase C.",
-                                PT_double, "mqA", PADDR(curr_state.mq[0]), PT_DESCRIPTION, "DELTAMODE: The q-axis current modulation for phase A or triplex phase.",
-                                PT_double, "mqB", PADDR(curr_state.mq[1]), PT_DESCRIPTION, "DELTAMODE: The q-axis current modulation for phase B.",
-                                PT_double, "mqC", PADDR(curr_state.mq[2]), PT_DESCRIPTION, "DELTAMODE: The q-axis current modulation for phase C.",
-                                PT_double, "delta_mdA", PADDR(curr_state.dmd[0]), PT_DESCRIPTION, "DELTAMODE: The change in d-axis current modulation for phase A or triplex phase.",
-                                PT_double, "delta_mdB", PADDR(curr_state.dmd[1]), PT_DESCRIPTION, "DELTAMODE: The change in d-axis current modulation for phase B.",
-                                PT_double, "delta_mdC", PADDR(curr_state.dmd[2]), PT_DESCRIPTION, "DELTAMODE: The change in d-axis current modulation for phase C.",
-                                PT_double, "delta_mqA", PADDR(curr_state.dmq[0]), PT_DESCRIPTION, "DELTAMODE: The change in q-axis current modulation for phase A or triplex phase.",
-                                PT_double, "delta_mqB", PADDR(curr_state.dmq[1]), PT_DESCRIPTION, "DELTAMODE: The change in q-axis current modulation for phase B.",
-                                PT_double, "delta_mqC", PADDR(curr_state.dmq[2]), PT_DESCRIPTION, "DELTAMODE: The change in q-axis current modulation for phase C.",
-                                PT_complex, "IdqA", PADDR(curr_state.Idq[0]), PT_DESCRIPTION, "DELTAMODE: The dq-axis current for phase A or triplex phase.",
-                                PT_complex, "IdqB", PADDR(curr_state.Idq[1]), PT_DESCRIPTION, "DELTAMODE: The dq-axis current for phase B.",
-                                PT_complex, "IdqC", PADDR(curr_state.Idq[2]), PT_DESCRIPTION, "DELTAMODE: The dq-axis current for phase C.",
+			PT_double, "epB", PADDR(curr_state.ed[1]), PT_DESCRIPTION, "DELTAMODE: The real current error for phase B.",
+			PT_double, "epC", PADDR(curr_state.ed[2]), PT_DESCRIPTION, "DELTAMODE: The real current error for phase C.",
+			PT_double, "eqA", PADDR(curr_state.eq[0]), PT_DESCRIPTION, "DELTAMODE: The reactive current error for phase A or triplex phase.",
+			PT_double, "eqB", PADDR(curr_state.eq[1]), PT_DESCRIPTION, "DELTAMODE: The reactive current error for phase B.",
+			PT_double, "eqC", PADDR(curr_state.eq[2]), PT_DESCRIPTION, "DELTAMODE: The reactive current error for phase C.",
+			PT_double, "delta_epA", PADDR(curr_state.ded[0]), PT_DESCRIPTION, "DELTAMODE: The change in real current error for phase A or triplex phase.",
+			PT_double, "delta_epB", PADDR(curr_state.ded[1]), PT_DESCRIPTION, "DELTAMODE: The change in real current error for phase B.",
+			PT_double, "delta_epC", PADDR(curr_state.ded[2]), PT_DESCRIPTION, "DELTAMODE: The change in real current error for phase C.",
+			PT_double, "delta_eqA", PADDR(curr_state.deq[0]), PT_DESCRIPTION, "DELTAMODE: The change in reactive current error for phase A or triplex phase.",
+			PT_double, "delta_eqB", PADDR(curr_state.deq[1]), PT_DESCRIPTION, "DELTAMODE: The change in reactive current error for phase B.",
+			PT_double, "delta_eqC", PADDR(curr_state.deq[2]), PT_DESCRIPTION, "DELTAMODE: The change in reactive current error for phase C.",
+			PT_double, "mdA", PADDR(curr_state.md[0]), PT_DESCRIPTION, "DELTAMODE: The d-axis current modulation for phase A or triplex phase.",
+			PT_double, "mdB", PADDR(curr_state.md[1]), PT_DESCRIPTION, "DELTAMODE: The d-axis current modulation for phase B.",
+			PT_double, "mdC", PADDR(curr_state.md[2]), PT_DESCRIPTION, "DELTAMODE: The d-axis current modulation for phase C.",
+			PT_double, "mqA", PADDR(curr_state.mq[0]), PT_DESCRIPTION, "DELTAMODE: The q-axis current modulation for phase A or triplex phase.",
+			PT_double, "mqB", PADDR(curr_state.mq[1]), PT_DESCRIPTION, "DELTAMODE: The q-axis current modulation for phase B.",
+			PT_double, "mqC", PADDR(curr_state.mq[2]), PT_DESCRIPTION, "DELTAMODE: The q-axis current modulation for phase C.",
+			PT_double, "delta_mdA", PADDR(curr_state.dmd[0]), PT_DESCRIPTION, "DELTAMODE: The change in d-axis current modulation for phase A or triplex phase.",
+			PT_double, "delta_mdB", PADDR(curr_state.dmd[1]), PT_DESCRIPTION, "DELTAMODE: The change in d-axis current modulation for phase B.",
+			PT_double, "delta_mdC", PADDR(curr_state.dmd[2]), PT_DESCRIPTION, "DELTAMODE: The change in d-axis current modulation for phase C.",
+			PT_double, "delta_mqA", PADDR(curr_state.dmq[0]), PT_DESCRIPTION, "DELTAMODE: The change in q-axis current modulation for phase A or triplex phase.",
+			PT_double, "delta_mqB", PADDR(curr_state.dmq[1]), PT_DESCRIPTION, "DELTAMODE: The change in q-axis current modulation for phase B.",
+			PT_double, "delta_mqC", PADDR(curr_state.dmq[2]), PT_DESCRIPTION, "DELTAMODE: The change in q-axis current modulation for phase C.",
+			PT_complex, "IdqA", PADDR(curr_state.Idq[0]), PT_DESCRIPTION, "DELTAMODE: The dq-axis current for phase A or triplex phase.",
+			PT_complex, "IdqB", PADDR(curr_state.Idq[1]), PT_DESCRIPTION, "DELTAMODE: The dq-axis current for phase B.",
+			PT_complex, "IdqC", PADDR(curr_state.Idq[2]), PT_DESCRIPTION, "DELTAMODE: The dq-axis current for phase C.",
 
-                                PT_double, "Tfreq_delay", PADDR(Tfreq_delay), PT_DESCRIPTION, "DELTAMODE: The time constant for delayed frequency seen by the inverter",
-                                PT_bool, "inverter_droop_fp", PADDR(inverter_droop_fp), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter f/p droop is included or not",
-                                PT_double, "R_fp", PADDR(R_fp), PT_DESCRIPTION, "DELTAMODE: The droop parameter of the f/p droop",
-                                PT_double, "kppmax", PADDR(kppmax), PT_DESCRIPTION, "DELTAMODE: The proportional gain of Pmax controller",
-                                PT_double, "kipmax", PADDR(kipmax), PT_DESCRIPTION, "DELTAMODE: The integral gain of Pmax controller",
-                                PT_double, "Pmax", PADDR(Pmax), PT_DESCRIPTION, "DELTAMODE: power limit of grid forming inverter",
-                                PT_double, "Pmin", PADDR(Pmin), PT_DESCRIPTION, "DELTAMODE: power limit of grid forming inverter",
-                                PT_double, "Pmax_Low_Limit", PADDR(Pmax_Low_Limit), PT_DESCRIPTION, "DELTAMODE: output limit of Pmax controller",
+			PT_double, "Tfreq_delay", PADDR(Tfreq_delay), PT_DESCRIPTION, "DELTAMODE: The time constant for delayed frequency seen by the inverter",
+			PT_bool, "inverter_droop_fp", PADDR(inverter_droop_fp), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter f/p droop is included or not",
+			PT_double, "R_fp", PADDR(R_fp), PT_DESCRIPTION, "DELTAMODE: The droop parameter of the f/p droop",
+			PT_double, "kppmax", PADDR(kppmax), PT_DESCRIPTION, "DELTAMODE: The proportional gain of Pmax controller",
+			PT_double, "kipmax", PADDR(kipmax), PT_DESCRIPTION, "DELTAMODE: The integral gain of Pmax controller",
+			PT_double, "Pmax", PADDR(Pmax), PT_DESCRIPTION, "DELTAMODE: power limit of grid forming inverter",
+			PT_double, "Pmin", PADDR(Pmin), PT_DESCRIPTION, "DELTAMODE: power limit of grid forming inverter",
+			PT_double, "Pmax_Low_Limit", PADDR(Pmax_Low_Limit), PT_DESCRIPTION, "DELTAMODE: output limit of Pmax controller",
 
 
-                                PT_double, "Tvol_delay", PADDR(Tvol_delay), PT_DESCRIPTION, "DELTAMODE: The time constant for delayed voltage seen by the inverter",
-                                PT_bool, "inverter_droop_vq", PADDR(inverter_droop_vq), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter q/v droop is included or not",
-                                PT_double, "R_vq", PADDR(R_vq), PT_DESCRIPTION, "DELTAMODE: The droop parameter of the v/q droop",
+			PT_double, "Tvol_delay", PADDR(Tvol_delay), PT_DESCRIPTION, "DELTAMODE: The time constant for delayed voltage seen by the inverter",
+			PT_bool, "inverter_droop_vq", PADDR(inverter_droop_vq), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter q/v droop is included or not",
+			PT_double, "R_vq", PADDR(R_vq), PT_DESCRIPTION, "DELTAMODE: The droop parameter of the v/q droop",
 
-                                PT_double, "Tp_delay", PADDR(Tp_delay), PT_DESCRIPTION, "DELTAMODE: The time constant for delayed real power seen by the VSI droop controller",
-                                PT_double, "Tq_delay", PADDR(Tq_delay), PT_DESCRIPTION, "DELTAMODE: The time constant for delayed reactive power seen by the VSI droop controller",
+			PT_double, "Tp_delay", PADDR(Tp_delay), PT_DESCRIPTION, "DELTAMODE: The time constant for delayed real power seen by the VSI droop controller",
+			PT_double, "Tq_delay", PADDR(Tq_delay), PT_DESCRIPTION, "DELTAMODE: The time constant for delayed reactive power seen by the VSI droop controller",
 
 			// Parameters for VSI mode
 			PT_complex, "VSI_Rfilter[pu]", PADDR(Rfilter), PT_DESCRIPTION, "VSI filter resistance (p.u.)",
-                                PT_complex, "VSI_Xfilter[pu]", PADDR(Xfilter), PT_DESCRIPTION, "VSI filter inductance (p.u.)",
-                                PT_enumeration, "VSI_mode", PADDR(VSI_mode), PT_DESCRIPTION, "VSI MODEL: Selects VSI mode for either isochronous or droop one",
-                                PT_KEYWORD, "VSI_ISOCHRONOUS", (enumeration)VSI_ISOCHRONOUS,
-                                PT_KEYWORD, "VSI_DROOP", (enumeration)VSI_DROOP,
-                                PT_double, "VSI_freq", PADDR(VSI_freq), PT_DESCRIPTION, "VSI frequency",
-                                PT_double, "ki_Vterminal", PADDR(ki_Vterminal), PT_DESCRIPTION, "DELTAMODE: The integrator gain for the VSI terminal voltage modulation",
-                                PT_double, "kp_Vterminal", PADDR(kp_Vterminal), PT_DESCRIPTION, "DELTAMODE: The proportional gain for the VSI terminal voltage modulation",
-                                PT_double, "V_set_droop", PADDR(V_mag_ref[0]), PT_DESCRIPTION, "DELTAMODE: The voltage setpoint of droop control",
-                                PT_double, "V_set0", PADDR(V_ref[0]), PT_DESCRIPTION, "DELTAMODE: The voltage setpoint of grid-following Q-V droop control",
-                                PT_double, "V_set1", PADDR(V_ref[1]), PT_DESCRIPTION, "DELTAMODE: The voltage setpoint of grid-following Q-V droop control",
-                                PT_double, "V_set2", PADDR(V_ref[2]), PT_DESCRIPTION, "DELTAMODE: The voltage setpoint of grid-following Q-V droop control",
+			PT_complex, "VSI_Xfilter[pu]", PADDR(Xfilter), PT_DESCRIPTION, "VSI filter inductance (p.u.)",
+			PT_enumeration, "VSI_mode", PADDR(VSI_mode), PT_DESCRIPTION, "VSI MODEL: Selects VSI mode for either isochronous or droop one",
+			PT_KEYWORD, "VSI_ISOCHRONOUS", (enumeration)VSI_ISOCHRONOUS,
+			PT_KEYWORD, "VSI_DROOP", (enumeration)VSI_DROOP,
+			PT_double, "VSI_freq", PADDR(VSI_freq), PT_DESCRIPTION, "VSI frequency",
+			PT_double, "ki_Vterminal", PADDR(ki_Vterminal), PT_DESCRIPTION, "DELTAMODE: The integrator gain for the VSI terminal voltage modulation",
+			PT_double, "kp_Vterminal", PADDR(kp_Vterminal), PT_DESCRIPTION, "DELTAMODE: The proportional gain for the VSI terminal voltage modulation",
+			PT_double, "V_set_droop", PADDR(V_mag_ref[0]), PT_DESCRIPTION, "DELTAMODE: The voltage setpoint of droop control",
+			PT_double, "V_set0", PADDR(V_ref[0]), PT_DESCRIPTION, "DELTAMODE: The voltage setpoint of grid-following Q-V droop control",
+			PT_double, "V_set1", PADDR(V_ref[1]), PT_DESCRIPTION, "DELTAMODE: The voltage setpoint of grid-following Q-V droop control",
+			PT_double, "V_set2", PADDR(V_ref[2]), PT_DESCRIPTION, "DELTAMODE: The voltage setpoint of grid-following Q-V droop control",
 
 			// Parameter for checking slew rate of inverters
 			PT_bool, "enable_ramp_rates_real", PADDR(checkRampRate_real), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter ramp rate is enforced or not",
-                                PT_double, "max_ramp_up_real[W/s]", PADDR(rampUpRate_real), PT_DESCRIPTION, "DELTAMODE: The real power ramp up rate limit",
-                                PT_double, "max_ramp_down_real[W/s]", PADDR(rampDownRate_real), PT_DESCRIPTION, "DELTAMODE: The real power ramp down rate limit",
-                                PT_bool, "enable_ramp_rates_reactive", PADDR(checkRampRate_reactive), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter ramp rate is enforced or not",
-                                PT_double, "max_ramp_up_reactive[VAr/s]", PADDR(rampUpRate_reactive), PT_DESCRIPTION, "DELTAMODE: The reactive power ramp up rate limit",
-                                PT_double, "max_ramp_down_reactive[VAr/s]", PADDR(rampDownRate_reactive), PT_DESCRIPTION, "DELTAMODE: The reactive power ramp down rate limit",
+			PT_double, "max_ramp_up_real[W/s]", PADDR(rampUpRate_real), PT_DESCRIPTION, "DELTAMODE: The real power ramp up rate limit",
+			PT_double, "max_ramp_down_real[W/s]", PADDR(rampDownRate_real), PT_DESCRIPTION, "DELTAMODE: The real power ramp down rate limit",
+			PT_bool, "enable_ramp_rates_reactive", PADDR(checkRampRate_reactive), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter ramp rate is enforced or not",
+			PT_double, "max_ramp_up_reactive[VAr/s]", PADDR(rampUpRate_reactive), PT_DESCRIPTION, "DELTAMODE: The reactive power ramp up rate limit",
+			PT_double, "max_ramp_down_reactive[VAr/s]", PADDR(rampDownRate_reactive), PT_DESCRIPTION, "DELTAMODE: The reactive power ramp down rate limit",
 
 			//Selection method
 			PT_enumeration, "dynamic_model_mode", PADDR(inverter_dyn_mode), PT_DESCRIPTION, "DELTAMODE: Underlying model to use for deltamode control",
-                                PT_KEYWORD, "PID", (enumeration)PID_CONTROLLER,
-                                PT_KEYWORD, "PI", (enumeration)PI_CONTROLLER,
+				PT_KEYWORD, "PID", (enumeration)PID_CONTROLLER,
+				PT_KEYWORD, "PI", (enumeration)PI_CONTROLLER,
 
 			//1547 stuff
 			PT_bool, "enable_1547_checks", PADDR(enable_1547_compliance), PT_DESCRIPTION, "DELTAMODE: Enable IEEE 1547-2003 disconnect checking",
-                                PT_double, "reconnect_time[s]", PADDR(reconnect_time), PT_DESCRIPTION, "DELTAMODE: Time delay after IEEE 1547-2003 violation clears before resuming generation",
-                                PT_bool, "inverter_1547_status", PADDR(inverter_1547_status), PT_DESCRIPTION, "DELTAMODE: Indicator if the inverter is curtailed due to a 1547 violation or not",
+			PT_double, "reconnect_time[s]", PADDR(reconnect_time), PT_DESCRIPTION, "DELTAMODE: Time delay after IEEE 1547-2003 violation clears before resuming generation",
+			PT_bool, "inverter_1547_status", PADDR(inverter_1547_status), PT_DESCRIPTION, "DELTAMODE: Indicator if the inverter is curtailed due to a 1547 violation or not",
 
 			//Select 1547 type to auto-populate
 			PT_enumeration, "IEEE_1547_version", PADDR(ieee_1547_version), PT_DESCRIPTION, "DELTAMODE: Version of IEEE 1547 to use to populate defaults",
-                                PT_KEYWORD, "NONE", (enumeration)IEEE_NONE,
-                                PT_KEYWORD, "IEEE1547", (enumeration)IEEE1547,
-                                PT_KEYWORD, "IEEE1547A", (enumeration)IEEE1547A,
-                                PT_KEYWORD, "IEEE1547_2003", (enumeration)IEEE1547,	//Duplicated to reflect inverter_dyn changes and make the same
+				PT_KEYWORD, "NONE", (enumeration)IEEE_NONE,
+				PT_KEYWORD, "IEEE1547", (enumeration)IEEE1547,
+				PT_KEYWORD, "IEEE1547A", (enumeration)IEEE1547A,
+				PT_KEYWORD, "IEEE1547_2003", (enumeration)IEEE1547,	//Duplicated to reflect inverter_dyn changes and make the same
 				PT_KEYWORD, "IEEE1547A_2014", (enumeration)IEEE1547A,
 
 			//Frequency bands of 1547a checks
 			PT_double, "over_freq_high_cutout[Hz]", PADDR(over_freq_high_band_setpoint), PT_DESCRIPTION, "DELTAMODE: OF2 set point for IEEE 1547a",
-                                PT_double, "over_freq_high_disconnect_time[s]", PADDR(over_freq_high_band_delay), PT_DESCRIPTION, "DELTAMODE: OF2 clearing time for IEEE1547a",
-                                PT_double, "over_freq_low_cutout[Hz]", PADDR(over_freq_low_band_setpoint), PT_DESCRIPTION, "DELTAMODE: OF1 set point for IEEE 1547a",
-                                PT_double, "over_freq_low_disconnect_time[s]", PADDR(over_freq_low_band_delay), PT_DESCRIPTION, "DELTAMODE: OF1 clearing time for IEEE 1547a",
-                                PT_double, "under_freq_high_cutout[Hz]", PADDR(under_freq_high_band_setpoint), PT_DESCRIPTION, "DELTAMODE: UF2 set point for IEEE 1547a",
-                                PT_double, "under_freq_high_disconnect_time[s]", PADDR(under_freq_high_band_delay), PT_DESCRIPTION, "DELTAMODE: UF2 clearing time for IEEE1547a",
-                                PT_double, "under_freq_low_cutout[Hz]", PADDR(under_freq_low_band_setpoint), PT_DESCRIPTION, "DELTAMODE: UF1 set point for IEEE 1547a",
-                                PT_double, "under_freq_low_disconnect_time[s]", PADDR(under_freq_low_band_delay), PT_DESCRIPTION, "DELTAMODE: UF1 clearing time for IEEE 1547a",
+			PT_double, "over_freq_high_disconnect_time[s]", PADDR(over_freq_high_band_delay), PT_DESCRIPTION, "DELTAMODE: OF2 clearing time for IEEE1547a",
+			PT_double, "over_freq_low_cutout[Hz]", PADDR(over_freq_low_band_setpoint), PT_DESCRIPTION, "DELTAMODE: OF1 set point for IEEE 1547a",
+			PT_double, "over_freq_low_disconnect_time[s]", PADDR(over_freq_low_band_delay), PT_DESCRIPTION, "DELTAMODE: OF1 clearing time for IEEE 1547a",
+			PT_double, "under_freq_high_cutout[Hz]", PADDR(under_freq_high_band_setpoint), PT_DESCRIPTION, "DELTAMODE: UF2 set point for IEEE 1547a",
+			PT_double, "under_freq_high_disconnect_time[s]", PADDR(under_freq_high_band_delay), PT_DESCRIPTION, "DELTAMODE: UF2 clearing time for IEEE1547a",
+			PT_double, "under_freq_low_cutout[Hz]", PADDR(under_freq_low_band_setpoint), PT_DESCRIPTION, "DELTAMODE: UF1 set point for IEEE 1547a",
+			PT_double, "under_freq_low_disconnect_time[s]", PADDR(under_freq_low_band_delay), PT_DESCRIPTION, "DELTAMODE: UF1 clearing time for IEEE 1547a",
 
 			//Voltage bands of 1547 checks
 			PT_double, "under_voltage_low_cutout[pu]", PADDR(under_voltage_lowest_voltage_setpoint), PT_DESCRIPTION, "Lowest voltage threshold for undervoltage",
-                                PT_double, "under_voltage_middle_cutout[pu]", PADDR(under_voltage_middle_voltage_setpoint), PT_DESCRIPTION, "Middle-lowest voltage threshold for undervoltage",
-                                PT_double, "under_voltage_high_cutout[pu]", PADDR(under_voltage_high_voltage_setpoint), PT_DESCRIPTION, "High value of low voltage threshold for undervoltage",
-                                PT_double, "over_voltage_low_cutout[pu]", PADDR(over_voltage_low_setpoint), PT_DESCRIPTION, "Lowest voltage value for overvoltage",
-                                PT_double, "over_voltage_high_cutout[pu]", PADDR(over_voltage_high_setpoint), PT_DESCRIPTION, "High voltage value for overvoltage",
-                                PT_double, "under_voltage_low_disconnect_time[s]", PADDR(under_voltage_lowest_delay), PT_DESCRIPTION, "Lowest voltage clearing time for undervoltage",
-                                PT_double, "under_voltage_middle_disconnect_time[s]", PADDR(under_voltage_middle_delay), PT_DESCRIPTION, "Middle-lowest voltage clearing time for undervoltage",
-                                PT_double, "under_voltage_high_disconnect_time[s]", PADDR(under_voltage_high_delay), PT_DESCRIPTION, "Highest voltage clearing time for undervoltage",
-                                PT_double, "over_voltage_low_disconnect_time[s]", PADDR(over_voltage_low_delay), PT_DESCRIPTION, "Lowest voltage clearing time for overvoltage",
-                                PT_double, "over_voltage_high_disconnect_time[s]", PADDR(over_voltage_high_delay), PT_DESCRIPTION, "Highest voltage clearing time for overvoltage",
+			PT_double, "under_voltage_middle_cutout[pu]", PADDR(under_voltage_middle_voltage_setpoint), PT_DESCRIPTION, "Middle-lowest voltage threshold for undervoltage",
+			PT_double, "under_voltage_high_cutout[pu]", PADDR(under_voltage_high_voltage_setpoint), PT_DESCRIPTION, "High value of low voltage threshold for undervoltage",
+			PT_double, "over_voltage_low_cutout[pu]", PADDR(over_voltage_low_setpoint), PT_DESCRIPTION, "Lowest voltage value for overvoltage",
+			PT_double, "over_voltage_high_cutout[pu]", PADDR(over_voltage_high_setpoint), PT_DESCRIPTION, "High voltage value for overvoltage",
+			PT_double, "under_voltage_low_disconnect_time[s]", PADDR(under_voltage_lowest_delay), PT_DESCRIPTION, "Lowest voltage clearing time for undervoltage",
+			PT_double, "under_voltage_middle_disconnect_time[s]", PADDR(under_voltage_middle_delay), PT_DESCRIPTION, "Middle-lowest voltage clearing time for undervoltage",
+			PT_double, "under_voltage_high_disconnect_time[s]", PADDR(under_voltage_high_delay), PT_DESCRIPTION, "Highest voltage clearing time for undervoltage",
+			PT_double, "over_voltage_low_disconnect_time[s]", PADDR(over_voltage_low_delay), PT_DESCRIPTION, "Lowest voltage clearing time for overvoltage",
+			PT_double, "over_voltage_high_disconnect_time[s]", PADDR(over_voltage_high_delay), PT_DESCRIPTION, "Highest voltage clearing time for overvoltage",
 
 			//1547 trip reason
 			PT_enumeration, "IEEE_1547_trip_method", PADDR(ieee_1547_trip_method), PT_DESCRIPTION, "DELTAMODE: Reason for IEEE 1547 disconnect - which threshold was hit",
-                                PT_KEYWORD, "NONE", (enumeration)IEEE_1547_NONE, PT_DESCRIPTION, "No trip reason",
-                                PT_KEYWORD, "OVER_FREQUENCY_HIGH", (enumeration)IEEE_1547_HIGH_OF, PT_DESCRIPTION, "High over-frequency level trip - OF2",
-                                PT_KEYWORD, "OVER_FREQUENCY_LOW", (enumeration)IEEE_1547_LOW_OF, PT_DESCRIPTION, "Low over-frequency level trip - OF1",
-                                PT_KEYWORD, "UNDER_FREQUENCY_HIGH", (enumeration)IEEE_1547_HIGH_UF, PT_DESCRIPTION, "High under-frequency level trip - UF2",
-                                PT_KEYWORD, "UNDER_FREQUENCY_LOW", (enumeration)IEEE_1547_LOW_UF, PT_DESCRIPTION, "Low under-frequency level trip - UF1",
-                                PT_KEYWORD, "UNDER_VOLTAGE_LOW", (enumeration)IEEE_1547_LOWEST_UV, PT_DESCRIPTION, "Lowest under-voltage level trip",
-                                PT_KEYWORD, "UNDER_VOLTAGE_MID", (enumeration)IEEE_1547_MIDDLE_UV, PT_DESCRIPTION, "Middle under-voltage level trip",
-                                PT_KEYWORD, "UNDER_VOLTAGE_HIGH", (enumeration)IEEE_1547_HIGH_UV, PT_DESCRIPTION, "High under-voltage level trip",
-                                PT_KEYWORD, "OVER_VOLTAGE_LOW", (enumeration)IEEE_1547_LOW_OV, PT_DESCRIPTION, "Low over-voltage level trip",
-                                PT_KEYWORD, "OVER_VOLTAGE_HIGH", (enumeration)IEEE_1547_HIGH_OV, PT_DESCRIPTION, "High over-voltage level trip",
+				PT_KEYWORD, "NONE", (enumeration)IEEE_1547_NONE, PT_DESCRIPTION, "No trip reason",
+				PT_KEYWORD, "OVER_FREQUENCY_HIGH", (enumeration)IEEE_1547_HIGH_OF, PT_DESCRIPTION, "High over-frequency level trip - OF2",
+				PT_KEYWORD, "OVER_FREQUENCY_LOW", (enumeration)IEEE_1547_LOW_OF, PT_DESCRIPTION, "Low over-frequency level trip - OF1",
+				PT_KEYWORD, "UNDER_FREQUENCY_HIGH", (enumeration)IEEE_1547_HIGH_UF, PT_DESCRIPTION, "High under-frequency level trip - UF2",
+				PT_KEYWORD, "UNDER_FREQUENCY_LOW", (enumeration)IEEE_1547_LOW_UF, PT_DESCRIPTION, "Low under-frequency level trip - UF1",
+				PT_KEYWORD, "UNDER_VOLTAGE_LOW", (enumeration)IEEE_1547_LOWEST_UV, PT_DESCRIPTION, "Lowest under-voltage level trip",
+				PT_KEYWORD, "UNDER_VOLTAGE_MID", (enumeration)IEEE_1547_MIDDLE_UV, PT_DESCRIPTION, "Middle under-voltage level trip",
+				PT_KEYWORD, "UNDER_VOLTAGE_HIGH", (enumeration)IEEE_1547_HIGH_UV, PT_DESCRIPTION, "High under-voltage level trip",
+				PT_KEYWORD, "OVER_VOLTAGE_LOW", (enumeration)IEEE_1547_LOW_OV, PT_DESCRIPTION, "Low over-voltage level trip",
+				PT_KEYWORD, "OVER_VOLTAGE_HIGH", (enumeration)IEEE_1547_HIGH_OV, PT_DESCRIPTION, "High over-voltage level trip",
 
-                                PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "The phases the inverter is attached to",
-                                PT_KEYWORD, "A", (gld::set)PHASE_A,
-                                PT_KEYWORD, "B", (gld::set)PHASE_B,
-                                PT_KEYWORD, "C", (gld::set)PHASE_C,
-                                PT_KEYWORD, "N", (gld::set)PHASE_N,
-                                PT_KEYWORD, "S", (gld::set)PHASE_S,
+			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "The phases the inverter is attached to",
+				PT_KEYWORD, "A", (gld::set)PHASE_A,
+				PT_KEYWORD, "B", (gld::set)PHASE_B,
+				PT_KEYWORD, "C", (gld::set)PHASE_C,
+				PT_KEYWORD, "N", (gld::set)PHASE_N,
+				PT_KEYWORD, "S", (gld::set)PHASE_S,
 			//multipoint efficiency model parameters'
 			PT_bool, "use_multipoint_efficiency", PADDR(use_multipoint_efficiency), PT_DESCRIPTION, "FOUR QUADRANT MODEL: boolean to used the multipoint efficiency curve for the inverter when solar is attached",
-                                PT_enumeration, "inverter_manufacturer", PADDR(inverter_manufacturer), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the manufacturer of the inverter to setup up pre-existing efficiency curves",
-                                PT_KEYWORD, "NONE", (enumeration)NONE,
-                                PT_KEYWORD, "FRONIUS", (enumeration)FRONIUS,
-                                PT_KEYWORD, "SMA", (enumeration)SMA,
-                                PT_KEYWORD, "XANTREX", (enumeration)XANTREX,
-                                PT_double, "maximum_dc_power", PADDR(p_dco), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the maximum dc power point for the efficiency curve",
-                                PT_double, "maximum_dc_voltage", PADDR(v_dco), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the maximum dc voltage point for the efficiency curve",
-                                PT_double, "minimum_dc_power", PADDR(p_so), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the minimum dc power point for the efficiency curve",
-                                PT_double, "c_0", PADDR(c_o), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the first coefficient in the efficiency curve",
-                                PT_double, "c_1", PADDR(c_1), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the second coefficient in the efficiency curve",
-                                PT_double, "c_2", PADDR(c_2), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the third coefficient in the efficiency curve",
-                                PT_double, "c_3", PADDR(c_3), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the fourth coefficient in the efficiency curve",
+			PT_enumeration, "inverter_manufacturer", PADDR(inverter_manufacturer), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the manufacturer of the inverter to setup up pre-existing efficiency curves",
+				PT_KEYWORD, "NONE", (enumeration)NONE,
+				PT_KEYWORD, "FRONIUS", (enumeration)FRONIUS,
+				PT_KEYWORD, "SMA", (enumeration)SMA,
+				PT_KEYWORD, "XANTREX", (enumeration)XANTREX,
+			PT_double, "maximum_dc_power", PADDR(p_dco), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the maximum dc power point for the efficiency curve",
+			PT_double, "maximum_dc_voltage", PADDR(v_dco), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the maximum dc voltage point for the efficiency curve",
+			PT_double, "minimum_dc_power", PADDR(p_so), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the minimum dc power point for the efficiency curve",
+			PT_double, "c_0", PADDR(c_o), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the first coefficient in the efficiency curve",
+			PT_double, "c_1", PADDR(c_1), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the second coefficient in the efficiency curve",
+			PT_double, "c_2", PADDR(c_2), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the third coefficient in the efficiency curve",
+			PT_double, "c_3", PADDR(c_3), PT_DESCRIPTION, "MULTIPOINT EFFICIENCY MODEL: the fourth coefficient in the efficiency curve",
 			//load following parameters
 			PT_object, "sense_object", PADDR(sense_object), PT_DESCRIPTION, "FOUR QUADRANT MODEL: name of the object the inverter is trying to mitigate the load on (node/link) in LOAD_FOLLOWING",
-                                PT_double, "max_charge_rate[W]", PADDR(max_charge_rate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: maximum rate the battery can be charged in LOAD_FOLLOWING",
-                                PT_double, "max_discharge_rate[W]", PADDR(max_discharge_rate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: maximum rate the battery can be discharged in LOAD_FOLLOWING",
-                                PT_double, "charge_on_threshold[W]", PADDR(charge_on_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: power level at which the inverter should try charging the battery in LOAD_FOLLOWING",
-                                PT_double, "charge_off_threshold[W]", PADDR(charge_off_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: power level at which the inverter should cease charging the battery in LOAD_FOLLOWING",
-                                PT_double, "discharge_on_threshold[W]", PADDR(discharge_on_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: power level at which the inverter should try discharging the battery in LOAD_FOLLOWING",
-                                PT_double, "discharge_off_threshold[W]", PADDR(discharge_off_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: power level at which the inverter should cease discharging the battery in LOAD_FOLLOWING",
-                                PT_double, "excess_input_power[W]", PADDR(excess_input_power), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Excess power at the input of the inverter that is otherwise just lost, or could be shunted to a battery",
-                                PT_double, "charge_lockout_time[s]", PADDR(charge_lockout_time), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lockout time when a charging operation occurs before another LOAD_FOLLOWING dispatch operation can occur",
-                                PT_double, "discharge_lockout_time[s]", PADDR(discharge_lockout_time), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lockout time when a discharging operation occurs before another LOAD_FOLLOWING dispatch operation can occur",
+			PT_double, "max_charge_rate[W]", PADDR(max_charge_rate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: maximum rate the battery can be charged in LOAD_FOLLOWING",
+			PT_double, "max_discharge_rate[W]", PADDR(max_discharge_rate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: maximum rate the battery can be discharged in LOAD_FOLLOWING",
+			PT_double, "charge_on_threshold[W]", PADDR(charge_on_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: power level at which the inverter should try charging the battery in LOAD_FOLLOWING",
+			PT_double, "charge_off_threshold[W]", PADDR(charge_off_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: power level at which the inverter should cease charging the battery in LOAD_FOLLOWING",
+			PT_double, "discharge_on_threshold[W]", PADDR(discharge_on_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: power level at which the inverter should try discharging the battery in LOAD_FOLLOWING",
+			PT_double, "discharge_off_threshold[W]", PADDR(discharge_off_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: power level at which the inverter should cease discharging the battery in LOAD_FOLLOWING",
+			PT_double, "excess_input_power[W]", PADDR(excess_input_power), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Excess power at the input of the inverter that is otherwise just lost, or could be shunted to a battery",
+			PT_double, "charge_lockout_time[s]", PADDR(charge_lockout_time), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lockout time when a charging operation occurs before another LOAD_FOLLOWING dispatch operation can occur",
+			PT_double, "discharge_lockout_time[s]", PADDR(discharge_lockout_time), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lockout time when a discharging operation occurs before another LOAD_FOLLOWING dispatch operation can occur",
 
 			//Power-factor regulation  parameters
 			//PT_object,"sense_object", PADDR(sense_object), PF regulation uses the same sense object as load-following
 			PT_double, "pf_reg_activate", PADDR(pf_reg_activate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lowest acceptable power-factor level below which power-factor regulation will activate.",
-                                PT_double, "pf_reg_deactivate", PADDR(pf_reg_deactivate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lowest acceptable power-factor above which no power-factor regulation is needed.",
+			PT_double, "pf_reg_deactivate", PADDR(pf_reg_deactivate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lowest acceptable power-factor above which no power-factor regulation is needed.",
 
 			//Second power-factor regulation control parameters
 			PT_double, "pf_target", PADDR(pf_target_var), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Desired power-factor to maintain (signed) positive is inductive",
-                                PT_double, "pf_reg_high", PADDR(pf_reg_high), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Upper limit for power-factor - if exceeds, go full reverse reactive",
-                                PT_double, "pf_reg_low", PADDR(pf_reg_low), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lower limit for power-factor - if exceeds, stop regulating - pf_target_var is below this",
+			PT_double, "pf_reg_high", PADDR(pf_reg_high), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Upper limit for power-factor - if exceeds, go full reverse reactive",
+			PT_double, "pf_reg_low", PADDR(pf_reg_low), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Lower limit for power-factor - if exceeds, stop regulating - pf_target_var is below this",
 			
 			//Common parameters for power-factor regulation approaches
 			PT_double, "pf_reg_activate_lockout_time[s]", PADDR(pf_reg_activate_lockout_time), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Mandatory pause between the deactivation of power-factor regulation and it reactivation",
 			//Ab add : VOLT_VAR_PWR_FREQ parameters
 			PT_bool, "disable_volt_var_if_no_input_power", PADDR(disable_volt_var_if_no_input_power),
-                                PT_double, "delay_time[s]", PADDR(delay_time),
-                                PT_double, "max_var_slew_rate[VAr/s]", PADDR(max_var_slew_rate),
-                                PT_double, "max_pwr_slew_rate[W/s]", PADDR(max_pwr_slew_rate),
-                                PT_char1024, "volt_var_sched", PADDR(volt_var_sched),
-                                PT_char1024, "freq_pwr_sched", PADDR(freq_pwr_sched),
+			PT_double, "delay_time[s]", PADDR(delay_time),
+			PT_double, "max_var_slew_rate[VAr/s]", PADDR(max_var_slew_rate),
+			PT_double, "max_pwr_slew_rate[W/s]", PADDR(max_pwr_slew_rate),
+			PT_char1024, "volt_var_sched", PADDR(volt_var_sched),
+			PT_char1024, "freq_pwr_sched", PADDR(freq_pwr_sched),
 			//Group load-following (and power factor regulation) parameters
 			PT_double, "charge_threshold[W]", PADDR(charge_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Level at which all inverters in the group will begin charging attached batteries. Regulated minimum load level.",
-                                PT_double, "discharge_threshold[W]", PADDR(discharge_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Level at which all inverters in the group will begin discharging attached batteries. Regulated maximum load level.",
-                                PT_double, "group_max_charge_rate[W]", PADDR(group_max_charge_rate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Sum of the charge rates of the batteries involved in the group load-following.",
-                                PT_double, "group_max_discharge_rate[W]", PADDR(group_max_discharge_rate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Sum of the discharge rates of the batteries involved in the group load-following.",
-                                PT_double, "group_rated_power[W]", PADDR(group_rated_power), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Sum of the inverter power ratings of the inverters involved in the group power-factor regulation.",
+			PT_double, "discharge_threshold[W]", PADDR(discharge_threshold), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Level at which all inverters in the group will begin discharging attached batteries. Regulated maximum load level.",
+			PT_double, "group_max_charge_rate[W]", PADDR(group_max_charge_rate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Sum of the charge rates of the batteries involved in the group load-following.",
+			PT_double, "group_max_discharge_rate[W]", PADDR(group_max_discharge_rate), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Sum of the discharge rates of the batteries involved in the group load-following.",
+			PT_double, "group_rated_power[W]", PADDR(group_rated_power), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Sum of the inverter power ratings of the inverters involved in the group power-factor regulation.",
 			//Volt Var Parameters
 			PT_double, "V_base[V]", PADDR(V_base), PT_DESCRIPTION, "FOUR QUADRANT MODEL: The base voltage on the grid side of the inverter. Used in VOLT_VAR control mode.",
-                                PT_double, "V1[pu]", PADDR(V1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: voltage point 1 in volt/var curve. Used in VOLT_VAR control mode.",
-                                PT_double, "Q1[pu]", PADDR(Q1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: VAR point 1 in volt/var curve. Used in VOLT_VAR control mode.",
-                                PT_double, "V2[pu]", PADDR(V2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: voltage point 2 in volt/var curve. Used in VOLT_VAR control mode.",
-                                PT_double, "Q2[pu]", PADDR(Q2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: VAR point 2 in volt/var curve. Used in VOLT_VAR control mode.",
-                                PT_double, "V3[pu]", PADDR(V3), PT_DESCRIPTION, "FOUR QUADRANT MODEL: voltage point 3 in volt/var curve. Used in VOLT_VAR control mode.",
-                                PT_double, "Q3[pu]", PADDR(Q3), PT_DESCRIPTION, "FOUR QUADRANT MODEL: VAR point 3 in volt/var curve. Used in VOLT_VAR control mode.",
-                                PT_double, "V4[pu]", PADDR(V4), PT_DESCRIPTION, "FOUR QUADRANT MODEL: voltage point 4 in volt/var curve. Used in VOLT_VAR control mode.",
-                                PT_double, "Q4[pu]", PADDR(Q4), PT_DESCRIPTION, "FOUR QUADRANT MODEL: VAR point 4 in volt/var curve. Used in VOLT_VAR control mode.",
-                                PT_double, "volt_var_control_lockout[s]", PADDR(vv_lockout), PT_DESCRIPTION, "FOUR QUADRANT QUADRANT MODEL: the lockout time between volt/var actions.",
+			PT_double, "V1[pu]", PADDR(V1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: voltage point 1 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double, "Q1[pu]", PADDR(Q1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: VAR point 1 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double, "V2[pu]", PADDR(V2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: voltage point 2 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double, "Q2[pu]", PADDR(Q2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: VAR point 2 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double, "V3[pu]", PADDR(V3), PT_DESCRIPTION, "FOUR QUADRANT MODEL: voltage point 3 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double, "Q3[pu]", PADDR(Q3), PT_DESCRIPTION, "FOUR QUADRANT MODEL: VAR point 3 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double, "V4[pu]", PADDR(V4), PT_DESCRIPTION, "FOUR QUADRANT MODEL: voltage point 4 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double, "Q4[pu]", PADDR(Q4), PT_DESCRIPTION, "FOUR QUADRANT MODEL: VAR point 4 in volt/var curve. Used in VOLT_VAR control mode.",
+			PT_double, "volt_var_control_lockout[s]", PADDR(vv_lockout), PT_DESCRIPTION, "FOUR QUADRANT QUADRANT MODEL: the lockout time between volt/var actions.",
 
 			//Hidden variables for solar checks
 			PT_int32, "number_of_phases_out", PADDR(number_of_phases_out), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Exposed variable - hidden for solar",
-                                PT_double, "efficiency_value", PADDR(efficiency), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Exposed variable - hidden for solar",
+			PT_double, "efficiency_value", PADDR(efficiency), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Exposed variable - hidden for solar",
 			
 			//Volt Var Parameters
 			PT_double, "VW_V1[pu]", PADDR(VW_V1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Voltage at which power limiting begins (e.g. 1.0583). Used in VOLT_WATT control mode.",
-                                PT_double, "VW_V2[pu]", PADDR(VW_V2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Voltage at which power limiting ends. (e.g. 1.1000). Used in VOLT_WATT control mode.",
-                                PT_double, "VW_P1[pu]", PADDR(VW_P1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Power limit at VW_P1 (e.g. 1). Used in VOLT_WATT control mode.",
-                                PT_double, "VW_P2[pu]", PADDR(VW_P2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Power limit at VW_P2 (e.g. 0). Used in VOLT_WATT control mode.",
+			PT_double, "VW_V2[pu]", PADDR(VW_V2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Voltage at which power limiting ends. (e.g. 1.1000). Used in VOLT_WATT control mode.",
+			PT_double, "VW_P1[pu]", PADDR(VW_P1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Power limit at VW_P1 (e.g. 1). Used in VOLT_WATT control mode.",
+			PT_double, "VW_P2[pu]", PADDR(VW_P2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Power limit at VW_P2 (e.g. 0). Used in VOLT_WATT control mode.",
 
 			//Hidden variables for wind turbine checks
 			PT_bool, "WT_is_connected", PADDR(WT_is_connected), PT_DESCRIPTION, "Internal flag that indicates a wind turbine child is connected",
-
-                                nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			
+			//IEEE 1547 Curtailment Priority Mode
+			PT_enumeration, "curtailment_priority_mode", PADDR(curtailment_priority_mode), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Sets whether P or Q has priority when output needs to be curtailed to not exceed the inverter output rating.",
+				PT_KEYWORD, "WATT", (enumeration)CPM_WATT, PT_DESCRIPTION, "VAR output is curtailed in favor of Watt output.",
+				PT_KEYWORD, "VAR", (enumeration)CPM_VAR, PT_DESCRIPTION, "Watt output is curtailed in favor of VAR output.",
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			defaults = this;
 
@@ -452,6 +455,7 @@ int inverter::create(void)
 	lf_dispatch_power = 0.0;
 	load_follow_status = IDLE;	//LOAD_FOLLOWING starts out doing nothing
 	four_quadrant_control_mode = FQM_CONSTANT_PF;	//Four quadrant defaults to constant PF mode
+	curtailment_priority_mode = CPM_WATT;	//default curtailment is P has priority over Q output.
 
 	next_update_time = 0;
 	lf_dispatch_change_allowed = true;	//Begins with change allowed
@@ -3244,7 +3248,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 		else	//FOUR_QUADRANT code
 		{
 			//FOUR_QUADRANT model (originally written for NAS/CES, altered for PV)
-			double VA_Efficiency, temp_PF, temp_QVal, net_eff; //Ab added last two
+			double VA_Efficiency, temp_PF, temp_Val, net_eff; //Ab added last two
 			gld::complex temp_VA;
 			gld::complex battery_power_out = gld::complex(0,0);
 			if ((four_quadrant_control_mode != FQM_VOLT_VAR) && (four_quadrant_control_mode != FQM_VOLT_WATT))
@@ -3488,39 +3492,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 
 					//Ensuring power rating of inverter is not exceeded.
-					if (fabs(temp_VA.Mag()) > p_max){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
-						if (p_max > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the inverter rating?
-						{
-							//Determine the Q we can provide
-							temp_QVal = sqrt((p_max*p_max) - (temp_VA.Re()*temp_VA.Re()));
-
-							//Assign to output, negating signs as necessary (temp_VA already negated)
-							if (temp_VA.Im() < 0.0)	//Negative Q dispatch
-							{
-								VA_Out = gld::complex(temp_VA.Re(),-temp_QVal);
-							}
-							else	//Positive Q dispatch
-							{
-								VA_Out = gld::complex(temp_VA.Re(),temp_QVal);
-							}
-						}
-						else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
-						{
-							//Maintain desired sign convention
-							if (temp_VA.Re() < 0.0)
-							{
-								VA_Out = gld::complex(-p_max,0.0);
-							}
-							else	//Positive
-							{
-								VA_Out = gld::complex(p_max,0.0);
-							}
-						}
-					}
-					else	//Doesn't exceed, assign it
-					{
-						VA_Out = temp_VA;
-					}
+					curtail_PQ_output(&temp_VA, p_max);
+					VA_Out = temp_VA;
 					//Update values to represent what is being pulled (battery uses for SOC updates) - assumes only storage
 					//p_in used by battery - appears reversed to VA_Out
 					if (VA_Out.Re() > 0.0)	//Discharging
@@ -3536,73 +3509,15 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						p_in = VA_Out.Re()*inv_eta;
 					}
 				} else {// no battery is attached we are attached to a solar panel
-					//Ensuring power rating of inverter is not exceeded.
-					if (fabs(temp_VA.Mag()) > p_max){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
-						if (p_max > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the inverter rating?
-						{
-							//Determine the Q we can provide
-							temp_QVal = sqrt((p_max*p_max) - (temp_VA.Re()*temp_VA.Re()));
-
-							//Assign to output, negating signs as necessary (temp_VA already negated)
-							if (temp_VA.Im() < 0.0)	//Negative Q dispatch
-							{
-								temp_VA.SetImag(-temp_QVal);
-							}
-							else	//Positive Q dispatch
-							{
-								temp_VA.SetImag(temp_QVal);
-							}
-						}
-						else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
-						{
-							//Maintain desired sign convention
-							if (temp_VA.Re() < 0.0)
-							{
-								temp_VA = gld::complex(-p_max,0.0);
-							}
-							else	//Positive
-							{
-								temp_VA = gld::complex(p_max,0.0);
-							}
-						}
-					}
-					//Determine how much we can supply from the solar panel output.
-					if (fabs(temp_VA.Mag()) > VA_Efficiency){ //Requested power output (P_Out, Q_Out) is greater than solar input
-						if (VA_Efficiency > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the solar input?
-						{
-							//Determine the Q we can provide
-							temp_QVal = sqrt((VA_Efficiency*VA_Efficiency) - (temp_VA.Re()*temp_VA.Re()));
-
-							//Assign to output, negating signs as necessary (temp_VA already negated)
-							if (temp_VA.Im() < 0.0)	//Negative Q dispatch
-							{
-								VA_Out = gld::complex(temp_VA.Re(),-temp_QVal);
-							}
-							else	//Positive Q dispatch
-							{
-								VA_Out = gld::complex(temp_VA.Re(),temp_QVal);
-							}
-						}
-						else	//solar panel output is equal to or smaller than real power desired, give it all we can
-						{
-							//Maintain desired sign convention
-							if (temp_VA.Re() < 0.0)
-							{
-								VA_Out = gld::complex(-VA_Efficiency,0.0);
-							}
-							else	//Positive
-							{
-								VA_Out = gld::complex(VA_Efficiency,0.0);
-							}
-						}
+					if (P_Out < 0.0) {
+						temp_VA.SetReal(std::max(P_Out,-VA_Efficiency));
 					} else {
-						VA_Out = temp_VA;
+						temp_VA.SetReal(std::min(P_Out,VA_Efficiency));
 					}
+					//Ensuring power rating of inverter is not exceeded.
+					curtail_PQ_output(&temp_VA, p_max);
+					VA_Out = temp_VA;
 				}
-
-
-
-				//}
 			}
 			else if (four_quadrant_control_mode == FQM_VSI)
 			{
@@ -3658,39 +3573,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 
 					//Ensuring power rating of inverter is not exceeded.
-					if (fabs(temp_VA.Mag()) > p_max){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
-						if (p_max > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the inverter rating?
-						{
-							//Determine the Q we can provide
-							temp_QVal = sqrt((p_max*p_max) - (temp_VA.Re()*temp_VA.Re()));
-
-							//Assign to output, negating signs as necessary (temp_VA already negated)
-							if (temp_VA.Im() < 0.0)	//Negative Q dispatch
-							{
-								VA_Out = gld::complex(temp_VA.Re(),-temp_QVal);
-							}
-							else	//Positive Q dispatch
-							{
-								VA_Out = gld::complex(temp_VA.Re(),temp_QVal);
-							}
-						}
-						else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
-						{
-							//Maintain desired sign convention
-							if (temp_VA.Re() < 0.0)
-							{
-								VA_Out = gld::complex(-p_max,0.0);
-							}
-							else	//Positive
-							{
-								VA_Out = gld::complex(p_max,0.0);
-							}
-						}
-					}
-					else	//Doesn't exceed, assign it
-					{
-						VA_Out = temp_VA;
-					}
+					curtail_PQ_output(&temp_VA, p_max);
+					VA_Out = temp_VA;
 
 					//Update values to represent what is being pulled (battery uses for SOC updates) - assumes only storage
 					//p_in used by battery - appears reversed to VA_Out
@@ -4089,56 +3973,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			} else { // Volt Var or Volt-Watt Control mode
 				if (four_quadrant_control_mode == FQM_VOLT_VAR)
 				{
-					if (power_val[0].Mag() > p_rated) {
-						if (power_val[0].Re() > p_rated) {
-							power_val[0].SetReal(p_rated);
-							power_val[0].SetImag(0);
-						} else if (power_val[0].Re() < -p_rated) {
-							power_val[0].SetReal(-p_rated);
-							power_val[0].SetImag(0);
-						} else if (power_val[0].Re() < p_rated && power_val[0].Re() > -p_rated) {
-							double q_max = 0;
-							q_max = sqrt((p_rated * p_rated) - (power_val[0].Re() * power_val[0].Re()));
-							if (power_val[0].Im() > q_max) {
-								power_val[0].SetImag(q_max);
-							} else {
-								power_val[0].SetImag(-q_max);
-							}
-						}
-					}
-					if (power_val[1].Mag() > p_rated ) {
-						if (power_val[1].Re() > p_rated) {
-							power_val[1].SetReal(p_rated);
-							power_val[1].SetImag(0);
-						} else if (power_val[1].Re() < -p_rated) {
-							power_val[1].SetReal(-p_rated);
-							power_val[1].SetImag(0);
-						} else if (power_val[1].Re() < p_rated && power_val[1].Re() > -p_rated) {
-							double q_max = 0;
-							q_max = sqrt((p_rated * p_rated) - (power_val[1].Re() * power_val[1].Re()));
-							if (power_val[1].Im() > q_max) {
-								power_val[1].SetImag(q_max);
-							} else {
-								power_val[1].SetImag(-q_max);
-							}
-						}
-					}
-					if (power_val[2].Mag() > p_rated ) {
-						if (power_val[2].Re() > p_rated) {
-							power_val[2].SetReal(p_rated);
-							power_val[2].SetImag(0);
-						} else if (power_val[2].Re() < -p_rated) {
-							power_val[2].SetReal(-p_rated);
-							power_val[2].SetImag(0);
-						} else if (power_val[2].Re() < p_rated && power_val[2].Re() > -p_rated) {
-							double q_max = 0;
-							q_max = sqrt((p_rated * p_rated) - (power_val[2].Re() * power_val[2].Re()));
-							if (power_val[2].Im() > q_max) {
-								power_val[2].SetImag(q_max);
-							} else {
-								power_val[2].SetImag(-q_max);
-							}
-						}
+					for (int i=0; i < 3; i++) {
+						curtail_PQ_output(&power_val[i], p_rated);
 					}
 				}
 				else if (four_quadrant_control_mode == FQM_VOLT_WATT)
@@ -8314,7 +8150,7 @@ STATUS inverter::init_PID_dynamics(void)
 void inverter::update_control_references(void)
 {
 	//FOUR_QUADRANT model (originally written for NAS/CES, altered for PV)
-	double VA_Efficiency, temp_PF, temp_QVal;
+	double VA_Efficiency, temp_PF, temp_Val;
 	gld::complex temp_VA, VA_Outref;
 	gld::complex battery_power_out = gld::complex(0,0);
 	OBJECT *obj = OBJECTHDR(this);
@@ -8429,39 +8265,9 @@ void inverter::update_control_references(void)
 		//Ensuring power rating of inverter is not exceeded.
 		if (fabs(temp_VA.Mag()) > p_max ){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
 			VA_changed = true;
-			if (p_max > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the inverter rating?
-			{
-				//Determine the Q we can provide
-				temp_QVal = sqrt((p_max*p_max) - (temp_VA.Re()*temp_VA.Re()));
-
-				//Assign to output, negating signs as necessary (temp_VA already negated)
-				if (temp_VA.Im() < 0.0)	//Negative Q dispatch
-				{
-					VA_Outref = gld::complex(temp_VA.Re(),-temp_QVal);
-				}
-				else	//Positive Q dispatch
-				{
-					VA_Outref = gld::complex(temp_VA.Re(),temp_QVal);
-				}
-			}
-			else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
-			{
-				//Maintain desired sign convention
-				if (temp_VA.Re() < 0.0)
-				{
-					VA_Outref = gld::complex(-p_max,0.0);
-				}
-				else	//Positive
-				{
-					VA_Outref = gld::complex(p_max,0.0);
-				}
-			}
 		}
-		else	//Doesn't exceed, assign it
-		{
-			VA_Outref = temp_VA;
-		}
-
+		curtail_PQ_output(&temp_VA, p_max);
+		VA_Outref = temp_VA;
 
 		//Update values to represent what is being pulled (battery uses for SOC updates) - assumes only storage
 		//p_in used by battery - appears reversed to VA_Outref
@@ -9715,6 +9521,70 @@ STATUS inverter::updateCurrInjection(int64 iteration_count, bool *converged_fail
 	return SUCCESS;
 }
 
+void inverter::curtail_PQ_output(gld::complex *requested_output, double magnitude_limit) {
+	double temp_Val = 0;
+	if (fabs(requested_output->Mag()) > magnitude_limit){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
+		if (curtailment_priority_mode == CPM_WATT) {
+			if (magnitude_limit > fabs(requested_output->Re())) //Can we reduce the reactive power output and stay within the inverter rating?
+			{
+				//Determine the Q we can provide
+				temp_Val = sqrt((magnitude_limit*magnitude_limit) - (requested_output->Re()*requested_output->Re()));
+
+				//Assign to output, negating signs as necessary (temp_VA already negated)
+				if (requested_output->Im() < 0.0)	//Negative Q dispatch
+				{
+					requested_output->SetImag(-temp_Val);
+				}
+				else	//Positive Q dispatch
+				{
+					requested_output->SetImag(temp_Val);
+				}
+			}
+			else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
+			{
+				//Maintain desired sign convention
+				if (requested_output->Re() < 0.0)
+				{
+					requested_output->SetReal(-magnitude_limit);
+				}
+				else	//Positive
+				{
+					requested_output->SetReal(magnitude_limit);
+				}
+				requested_output->SetImag(0.0);
+			}
+		} else if (curtailment_priority_mode == CPM_VAR) {
+			if (magnitude_limit > fabs(requested_output->Im())) //Can we reduce the real power output and stay within the inverter rating?
+			{
+				//Determine the Q we can provide
+				temp_Val = sqrt((magnitude_limit*magnitude_limit) - (requested_output->Im()*requested_output->Im()));
+
+				//Assign to output, negating signs as necessary (temp_VA already negated)
+				if (requested_output->Re() < 0.0)	//Negative P dispatch
+				{
+					requested_output->SetReal(-temp_Val);
+				}
+				else	//Positive P dispatch
+				{
+					requested_output->SetReal(temp_Val);
+				}
+			}
+			else	//Inverter real power is equal to or smaller than real power desired, give it all we can
+			{
+				//Maintain desired sign convention
+				if (requested_output->Im() < 0.0)
+				{
+					requested_output->SetImag(-magnitude_limit);
+				}
+				else	//Positive
+				{
+					requested_output->SetImag(magnitude_limit);
+				}
+				requested_output->SetReal(0.0);
+			}
+		}
+	}
+}
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
