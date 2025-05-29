@@ -1337,7 +1337,7 @@ int property_check(void);
 
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype);
 
-PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, char *, void *, DELEGATEDTYPE *);
+PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, const char *, void *, DELEGATEDTYPE *);
 
 uint32 property_size(PROPERTY *);
 

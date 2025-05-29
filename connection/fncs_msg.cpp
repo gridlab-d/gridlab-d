@@ -1518,9 +1518,9 @@ static size_t fncs_to_hex(char *out, size_t max, const char *in, size_t len)
 extern "C" size_t fncs_from_hex(void *buf, size_t len, const char *hex, size_t hexlen)
 {
 	char *p = (char*)buf;
-	char lo = (char)nullptr;
-	char hi = (char)nullptr;
-	char c = (char)nullptr;
+	char lo = '\0';
+	char hi = '\0';
+	char c = '\0';
 	size_t n = 0;
 	for(n = 0; n < hexlen && *hex != '\0'; n += 2)
 	{

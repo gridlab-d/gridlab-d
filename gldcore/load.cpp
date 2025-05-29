@@ -979,7 +979,7 @@ static UNRESOLVED *first_unresolved = nullptr;
 		output_error("add_unresolved(...): id '%s' is too long to resolve", id);
 		return nullptr;
 	}
-    item = static_cast<UNRESOLVED *>(malloc(sizeof(UNRESOLVED)));
+    item = (UNRESOLVED *)malloc(sizeof(UNRESOLVED));
 	if (item==nullptr) { errno = ENOMEM; return nullptr; }
 	item->by = by;
 	item->ptype = ptype;
