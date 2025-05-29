@@ -257,19 +257,19 @@ private:
 
 	// Parameters related to triplex_meter and (billing) meter objects
 	double *real_power_array;		//array storing real power measured at the meter
-	double *reactive_power_array;		//array storing reactive power measured at the meter
-	double *voltage_vll_array; 		//average line-to-line (or hot-to-hot) voltage at the meter
-	double *voltage_vln_array;		  //average line-to-neutral (or hot-to-neutral) voltage at the meter
-	double *voltage_unbalance_array;  //array storing voltage unbalance per ANSI C84.1
+	double *reactive_power_array;	//array storing reactive power measured at the meter
+	double *voltage_vll_array;		//average line-to-line (or hot-to-hot) voltage at the meter
+	double *voltage_vln_array;		//average line-to-neutral (or hot-to-neutral) voltage at the meter
+	double *voltage_unbalance_array;	//array storing voltage unbalance per ANSI C84.1
 	double price_parent;
 	double bill_parent;
 
 	// Parameters related to house object
-	double *total_load_array; 		//array storing total_load measured at the house
-	double *hvac_load_array; 		//array storing hvac_load measured at the house
-	double *air_temperature_array; 		//array storing air_temperature measured at the house
-	double *set_cooling_array;	// array storing air_temperature cooling setpoint
-	double *set_heating_array;	// array storing air_temperature heating setpoint
+	double *total_load_array;		//array storing total_load measured at the house
+	double *hvac_load_array;		//array storing hvac_load measured at the house
+	double *air_temperature_array;	//array storing air_temperature measured at the house
+	double *set_cooling_array;		//array storing air_temperature cooling setpoint
+	double *set_heating_array;		//array storing air_temperature heating setpoint
 	int system_mode;
 
 	// Parameters related to waterheater object
@@ -304,11 +304,11 @@ private:
 	// Parameters related to Swing-bus meter object
 	FINDLIST *link_objects;
 	double *real_power_loss_array;		//array storing real power losses for the whole feeder
-	double *reactive_power_loss_array;		//array storing real power losses for the whole feeder
+	double *reactive_power_loss_array;	//array storing real power losses for the whole feeder
 
-	TIMESTAMP interval_length;	  // integer averaging length (seconds)
-	int vector_length;     // padded interval_length to hold both endpoints
-	TIMESTAMP *time_array; // actual sample times
+	TIMESTAMP interval_length;	// integer averaging length (seconds)
+	int vector_length;			// padded interval_length to hold both endpoints
+	TIMESTAMP *time_array;		// actual sample times
 
 	int curr_index;	// Index [0..interval_length-1] for current position of averaging array
 };

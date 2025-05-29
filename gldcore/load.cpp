@@ -980,7 +980,7 @@ static UNRESOLVED *first_unresolved = nullptr;
 		return nullptr;
 	}
     item = (UNRESOLVED *)malloc(sizeof(UNRESOLVED));
-	if (item==NULL) { errno = ENOMEM; return NULL; }
+	if (item==nullptr) { errno = ENOMEM; return nullptr; }
 	item->by = by;
 	item->ptype = ptype;
 	item->ref = ref;

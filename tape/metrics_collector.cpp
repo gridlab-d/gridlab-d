@@ -87,7 +87,7 @@ metrics_collector::metrics_collector(MODULE *mod){
 			GL_THROW(const_cast<char *>("unable to register object class implemented by %s"),__FILE__);
 
 		if(gl_publish_variable(oclass,
-			PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector output is stored in JSON format",NULL) < 1) 
+			PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector output is stored in JSON format",nullptr) < 1) 
 			GL_THROW(const_cast<char *>("unable to publish properties in %s"), __FILE__);
 
 		defaults = this;
