@@ -3,6 +3,8 @@ SET(GLD_MODULE_NAME gridlabd)
 # Load and link C/C++ files for the executeable
 set(SOURCE_LIST
         gridlabd.h
+	gldapi.h
+	gldapi.cpp
         globals.cpp
         globals.h
         object.cpp

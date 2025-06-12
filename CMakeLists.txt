@@ -198,7 +198,9 @@ set(HEADER_FILE_NAMES
         ${CMAKE_SOURCE_DIR}/gldcore/property.h
         ${CMAKE_SOURCE_DIR}/gldcore/schedule.h
         ${CMAKE_SOURCE_DIR}/gldcore/test.h
+	${CMAKE_SOURCE_DIR}/gldcore/gldapi.h
 )
+
 file(COPY ${HEADER_FILE_NAMES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/headers)
 list(APPEND HEADER_FILE_NAMES
         ${CMAKE_CURRENT_BINARY_DIR}/headers/build.h
