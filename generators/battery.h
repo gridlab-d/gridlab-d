@@ -35,7 +35,6 @@ private:
 	double p_br;
 
 	bool deltamode_inclusive;	   //Boolean for deltamode calls - pulled from object flags
-	bool first_run;
 	bool enableDelta; // is true only if battery is use_internal_battery_model, and its parent inverter is FQM_CONSTANT_PQ mode
 
 	gld_property *pCircuit_V[3];		//< pointer to the three voltages on three lines

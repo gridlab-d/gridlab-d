@@ -17,261 +17,267 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
-                                PT_enumeration, "control_mode", PADDR(control_mode), PT_DESCRIPTION, "Inverter control mode: grid-forming or grid-following",
-                                PT_KEYWORD, "GRID_FORMING", (enumeration)GRID_FORMING,
-                                PT_KEYWORD, "GRID_FOLLOWING", (enumeration)GRID_FOLLOWING,
-                                PT_KEYWORD, "GFL_CURRENT_SOURCE", (enumeration)GFL_CURRENT_SOURCE,
+			PT_enumeration, "control_mode", PADDR(control_mode), PT_DESCRIPTION, "Inverter control mode: grid-forming or grid-following",
+				PT_KEYWORD, "GRID_FORMING", (enumeration)GRID_FORMING,
+				PT_KEYWORD, "GRID_FOLLOWING", (enumeration)GRID_FOLLOWING,
+				PT_KEYWORD, "GFL_CURRENT_SOURCE", (enumeration)GFL_CURRENT_SOURCE,
 
-                                PT_enumeration, "grid_following_mode", PADDR(grid_following_mode), PT_DESCRIPTION, "grid-following mode, positive sequency or balanced three phase power",
-                                PT_KEYWORD, "BALANCED_POWER", (enumeration)BALANCED_POWER,
-                                PT_KEYWORD, "POSITIVE_SEQUENCE", (enumeration)POSITIVE_SEQUENCE,
+			PT_enumeration, "grid_following_mode", PADDR(grid_following_mode), PT_DESCRIPTION, "grid-following mode, positive sequency or balanced three phase power",
+				PT_KEYWORD, "BALANCED_POWER", (enumeration)BALANCED_POWER,
+				PT_KEYWORD, "POSITIVE_SEQUENCE", (enumeration)POSITIVE_SEQUENCE,
 
-                                PT_enumeration, "grid_forming_mode", PADDR(grid_forming_mode), PT_DESCRIPTION, "grid-forming mode, CONSTANT_DC_BUS or DYNAMIC_DC_BUS",
-                                PT_KEYWORD, "CONSTANT_DC_BUS", (enumeration)CONSTANT_DC_BUS,
-                                PT_KEYWORD, "DYNAMIC_DC_BUS", (enumeration)DYNAMIC_DC_BUS,
+			PT_enumeration, "grid_forming_mode", PADDR(grid_forming_mode), PT_DESCRIPTION, "grid-forming mode, CONSTANT_DC_BUS or DYNAMIC_DC_BUS",
+				PT_KEYWORD, "CONSTANT_DC_BUS", (enumeration)CONSTANT_DC_BUS,
+				PT_KEYWORD, "DYNAMIC_DC_BUS", (enumeration)DYNAMIC_DC_BUS,
 
-                                PT_enumeration, "P_f_droop_setting_mode", PADDR(P_f_droop_setting_mode), PT_DESCRIPTION, "Definition of P-f droop curve",
-                                PT_KEYWORD, "FSET_MODE", (enumeration)FSET_MODE,
-                                PT_KEYWORD, "PSET_MODE", (enumeration)PSET_MODE,
+			PT_enumeration, "P_f_droop_setting_mode", PADDR(P_f_droop_setting_mode), PT_DESCRIPTION, "Definition of P-f droop curve",
+				PT_KEYWORD, "FSET_MODE", (enumeration)FSET_MODE,
+				PT_KEYWORD, "PSET_MODE", (enumeration)PSET_MODE,
 
-                                PT_complex, "phaseA_I_Out[A]", PADDR(terminal_current_val[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system",
-                                PT_complex, "phaseB_I_Out[A]", PADDR(terminal_current_val[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system",
-                                PT_complex, "phaseC_I_Out[A]", PADDR(terminal_current_val[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system",
-                                PT_complex, "phaseA_I_Out_PU[pu]", PADDR(terminal_current_val_pu[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system, pu",
-                                PT_complex, "phaseB_I_Out_PU[pu]", PADDR(terminal_current_val_pu[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system, pu",
-                                PT_complex, "phaseC_I_Out_PU[pu]", PADDR(terminal_current_val_pu[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system, pu",
+			PT_complex, "phaseA_I_Out[A]", PADDR(terminal_current_val[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system",
+			PT_complex, "phaseB_I_Out[A]", PADDR(terminal_current_val[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system",
+			PT_complex, "phaseC_I_Out[A]", PADDR(terminal_current_val[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system",
+			PT_complex, "phaseA_I_Out_PU[pu]", PADDR(terminal_current_val_pu[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system, pu",
+			PT_complex, "phaseB_I_Out_PU[pu]", PADDR(terminal_current_val_pu[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system, pu",
+			PT_complex, "phaseC_I_Out_PU[pu]", PADDR(terminal_current_val_pu[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system, pu",
 
-                                PT_complex, "IA_Out_PU_temp[pu]", PADDR(I_out_PU_temp[0]), PT_DESCRIPTION, " Phase A current for current limiting calculation of a grid-forming inverter, pu",
-                                PT_complex, "IB_Out_PU_temp[pu]", PADDR(I_out_PU_temp[1]), PT_DESCRIPTION, " Phase B current for current limiting calculation of a grid-forming inverter, pu",
-                                PT_complex, "IC_Out_PU_temp[pu]", PADDR(I_out_PU_temp[2]), PT_DESCRIPTION, " Phase C current for current limiting calculation of a grid-forming inverter, pu",
+			PT_complex, "IA_Out_PU_temp[pu]", PADDR(I_out_PU_temp[0]), PT_DESCRIPTION, " Phase A current for current limiting calculation of a grid-forming inverter, pu",
+			PT_complex, "IB_Out_PU_temp[pu]", PADDR(I_out_PU_temp[1]), PT_DESCRIPTION, " Phase B current for current limiting calculation of a grid-forming inverter, pu",
+			PT_complex, "IC_Out_PU_temp[pu]", PADDR(I_out_PU_temp[2]), PT_DESCRIPTION, " Phase C current for current limiting calculation of a grid-forming inverter, pu",
 
 
-                                PT_complex, "power_A[VA]", PADDR(power_val[0]), PT_DESCRIPTION, "AC power on A phase in three-phase system",
-                                PT_complex, "power_B[VA]", PADDR(power_val[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
-                                PT_complex, "power_C[VA]", PADDR(power_val[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
-                                PT_complex, "VA_Out[VA]", PADDR(VA_Out), PT_DESCRIPTION, "AC power",
+			PT_complex, "power_A[VA]", PADDR(power_val[0]), PT_DESCRIPTION, "AC power on A phase in three-phase system",
+			PT_complex, "power_B[VA]", PADDR(power_val[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
+			PT_complex, "power_C[VA]", PADDR(power_val[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
+			PT_complex, "VA_Out[VA]", PADDR(VA_Out), PT_DESCRIPTION, "AC power",
 
 			// Internal Voltage and angle of VSI_DROOP, e_source[i],
 			PT_complex, "e_source_A", PADDR(e_source[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Actual internal voltage of grid-forming source, phase A",
-                                PT_complex, "e_source_B", PADDR(e_source[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Actual internal voltage of grid-forming source, phase B",
-                                PT_complex, "e_source_C", PADDR(e_source[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Actual internal voltage of grid-forming source, phase C",
+			PT_complex, "e_source_B", PADDR(e_source[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Actual internal voltage of grid-forming source, phase B",
+			PT_complex, "e_source_C", PADDR(e_source[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Actual internal voltage of grid-forming source, phase C",
 
 			// Internal Voltage and angle of VSI_DROOP, e_source[i],
 			PT_complex, "e_source_A_PU", PADDR(e_source_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Actual internal voltage of grid-forming source, per unit, phase A",
-                                PT_complex, "e_source_B_PU", PADDR(e_source_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Actual internal voltage of grid-forming source, per unit, phase B",
-                                PT_complex, "e_source_C_PU", PADDR(e_source_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Actual internal voltage of grid-forming source, per unit, phase C",
+			PT_complex, "e_source_B_PU", PADDR(e_source_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Actual internal voltage of grid-forming source, per unit, phase B",
+			PT_complex, "e_source_C_PU", PADDR(e_source_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Actual internal voltage of grid-forming source, per unit, phase C",
 
-                                PT_complex, "e_droop_A", PADDR(e_droop[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of given by the grid-forming droop controller, phase A",
-                                PT_complex, "e_droop_B", PADDR(e_droop[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of given by the grid-forming droop controller, phase B",
-                                PT_complex, "e_droop_C", PADDR(e_droop[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of given by the grid-forming droop controller, phase C",
+			PT_complex, "e_droop_A", PADDR(e_droop[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of given by the grid-forming droop controller, phase A",
+			PT_complex, "e_droop_B", PADDR(e_droop[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of given by the grid-forming droop controller, phase B",
+			PT_complex, "e_droop_C", PADDR(e_droop[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of given by the grid-forming droop controller, phase C",
 
-                                PT_complex, "e_droop_A_PU", PADDR(e_droop_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of given by the grid-forming droop controller, phase A",
-                                PT_complex, "e_droop_B_PU", PADDR(e_droop_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of given by the grid-forming droop controller, phase B",
-                                PT_complex, "e_droop_C_PU", PADDR(e_droop_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of given by the grid-forming droop controller, phase C",
+			PT_complex, "e_droop_A_PU", PADDR(e_droop_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of given by the grid-forming droop controller, phase A",
+			PT_complex, "e_droop_B_PU", PADDR(e_droop_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of given by the grid-forming droop controller, phase B",
+			PT_complex, "e_droop_C_PU", PADDR(e_droop_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of given by the grid-forming droop controller, phase C",
 
 
-                                PT_double, "e_droop_angle_A", PADDR(curr_state.Angle[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle given by the droop controller, phase A",
-                                PT_double, "e_droop_angle_B", PADDR(curr_state.Angle[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle given by the droop controller, phase B",
-                                PT_double, "e_droop_angle_C", PADDR(curr_state.Angle[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle given by the droop controller, phase C",
+			PT_double, "e_droop_angle_A", PADDR(Angle_blk[0].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle given by the droop controller, phase A",
+			PT_double, "e_droop_angle_B", PADDR(Angle_blk[1].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle given by the droop controller, phase B",
+			PT_double, "e_droop_angle_C", PADDR(Angle_blk[2].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle given by the droop controller, phase C",
 
 
 			// 3 phase average value of terminal voltage
 			PT_double, "pCircuit_V_Avg_pu", PADDR(pCircuit_V_Avg_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: three-phase average value of terminal voltage, per unit value",
-                                PT_double, "E_mag", PADDR(E_mag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: magnitude of internal voltage of grid-forming inverter",
+			PT_double, "E_mag", PADDR(E_mag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: magnitude of internal voltage of grid-forming inverter",
 
 			//Input
 			PT_double, "rated_power[VA]", PADDR(S_base), PT_DESCRIPTION, " The rated power of the inverter",
-                                PT_double, "rated_DC_Voltage[V]", PADDR(Vdc_base), PT_DESCRIPTION, " The rated dc bus of the inverter",
+			PT_double, "rated_DC_Voltage[V]", PADDR(Vdc_base), PT_DESCRIPTION, " The rated dc bus of the inverter",
 
 			// Inverter filter parameters
 			PT_double, "Xfilter[pu]", PADDR(Xfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
-                                PT_double, "Rfilter[pu]", PADDR(Rfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
+			PT_double, "Rfilter[pu]", PADDR(Rfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
+
+			// Dispatch variables
+			PT_double,"pdispatch[pu]", PADDR(pdispatch_exp.pdispatch), PT_DESCRIPTION, "Desired generator dispatch set point in p.u.",
+			PT_double,"pdispatch_offset[pu]", PADDR(pdispatch_exp.pdispatch_offset), PT_DESCRIPTION, "Desired offset to generator dispatch in p.u.",
 
 			// Grid-Following Controller Parameters
 			PT_double, "Pref[W]", PADDR(Pref), PT_DESCRIPTION, "DELTAMODE: The real power reference.",
-                                PT_double, "Qref[VAr]", PADDR(Qref), PT_DESCRIPTION, "DELTAMODE: The reactive power reference.",
-                                PT_double, "kpc", PADDR(kpc), PT_DESCRIPTION, "DELTAMODE: Proportional gain of the current loop.",
-                                PT_double, "kic", PADDR(kic), PT_DESCRIPTION, "DELTAMODE: Integral gain of the current loop.",
-                                PT_double, "F_current", PADDR(F_current), PT_DESCRIPTION, "DELTAMODE: feed forward term gain in current loop.",
-                                PT_double, "Tif", PADDR(Tif), PT_DESCRIPTION, "DELTAMODE: time constant of first-order low-pass filter of current loop when using current source representation.",
-                                PT_double, "ugd_pu_A", PADDR(ugd_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase A",
-                                PT_double, "ugd_pu_B", PADDR(ugd_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase B",
-                                PT_double, "ugd_pu_C", PADDR(ugd_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase C",
-                                PT_double, "ugq_pu_A", PADDR(ugq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase A",
-                                PT_double, "ugq_pu_B", PADDR(ugq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase B",
-                                PT_double, "ugq_pu_C", PADDR(ugq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase C",
-                                PT_double, "ed_pu_A", PADDR(ed_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase A",
-                                PT_double, "ed_pu_B", PADDR(ed_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase B",
-                                PT_double, "ed_pu_C", PADDR(ed_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase C",
-                                PT_double, "eq_pu_A", PADDR(eq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase A",
-                                PT_double, "eq_pu_B", PADDR(eq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase B",
-                                PT_double, "eq_pu_C", PADDR(eq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase C",
+			PT_double, "Qref[VAr]", PADDR(Qref), PT_DESCRIPTION, "DELTAMODE: The reactive power reference.",
+			PT_double, "kpc", PADDR(kpc), PT_DESCRIPTION, "DELTAMODE: Proportional gain of the current loop.",
+			PT_double, "kic", PADDR(kic), PT_DESCRIPTION, "DELTAMODE: Integral gain of the current loop.",
+			PT_double, "F_current", PADDR(F_current), PT_DESCRIPTION, "DELTAMODE: feed forward term gain in current loop.",
+			PT_double, "Tif", PADDR(Tif), PT_DESCRIPTION, "DELTAMODE: time constant of first-order low-pass filter of current loop when using current source representation.",
+			PT_double, "ugd_pu_A", PADDR(ugd_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase A",
+			PT_double, "ugd_pu_B", PADDR(ugd_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase B",
+			PT_double, "ugd_pu_C", PADDR(ugd_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase C",
+			PT_double, "ugq_pu_A", PADDR(ugq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase A",
+			PT_double, "ugq_pu_B", PADDR(ugq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase B",
+			PT_double, "ugq_pu_C", PADDR(ugq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase C",
+			PT_double, "ed_pu_A", PADDR(ed_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase A",
+			PT_double, "ed_pu_B", PADDR(ed_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase B",
+			PT_double, "ed_pu_C", PADDR(ed_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase C",
+			PT_double, "eq_pu_A", PADDR(eq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase A",
+			PT_double, "eq_pu_B", PADDR(eq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase B",
+			PT_double, "eq_pu_C", PADDR(eq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase C",
 
-                                PT_double, "igd_pu_A", PADDR(igd_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase A",
-                                PT_double, "igd_pu_B", PADDR(igd_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase B",
-                                PT_double, "igd_pu_C", PADDR(igd_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase C",
-                                PT_double, "igq_pu_A", PADDR(igq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase A",
-                                PT_double, "igq_pu_B", PADDR(igq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase B",
-                                PT_double, "igq_pu_C", PADDR(igq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase C",
+			PT_double, "igd_pu_A", PADDR(igd_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase A",
+			PT_double, "igd_pu_B", PADDR(igd_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase B",
+			PT_double, "igd_pu_C", PADDR(igd_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase C",
+			PT_double, "igq_pu_A", PADDR(igq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase A",
+			PT_double, "igq_pu_B", PADDR(igq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase B",
+			PT_double, "igq_pu_C", PADDR(igq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase C",
 
-                                PT_double, "igd_pu_A_filter", PADDR(curr_state.igd_filter[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase A, current source representation",
-                                PT_double, "igd_pu_B_filter", PADDR(curr_state.igd_filter[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase B, current source representation",
-                                PT_double, "igd_pu_C_filter", PADDR(curr_state.igd_filter[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase C, current source representation",
-                                PT_double, "igq_pu_A_filter", PADDR(curr_state.igq_filter[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase A, current source representation",
-                                PT_double, "igq_pu_B_filter", PADDR(curr_state.igq_filter[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase B, current source representation",
-                                PT_double, "igq_pu_C_filter", PADDR(curr_state.igq_filter[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase C, current source representation",
+			PT_double, "igd_pu_A_filter", PADDR(igd_filter_blk[0].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase A, current source representation",
+			PT_double, "igd_pu_B_filter", PADDR(igd_filter_blk[1].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase B, current source representation",
+			PT_double, "igd_pu_C_filter", PADDR(igd_filter_blk[2].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase C, current source representation",
+			PT_double, "igq_pu_A_filter", PADDR(igq_filter_blk[0].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase A, current source representation",
+			PT_double, "igq_pu_B_filter", PADDR(igq_filter_blk[1].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase B, current source representation",
+			PT_double, "igq_pu_C_filter", PADDR(igq_filter_blk[2].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase C, current source representation",
 
-                                PT_double, "igd_ref_A", PADDR(igd_ref[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase A",
-                                PT_double, "igd_ref_B", PADDR(igd_ref[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase B",
-                                PT_double, "igd_ref_C", PADDR(igd_ref[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase C",
-                                PT_double, "igq_ref_A", PADDR(igq_ref[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase A",
-                                PT_double, "igq_ref_B", PADDR(igq_ref[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase B",
-                                PT_double, "igq_ref_C", PADDR(igq_ref[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase C",
+			PT_double, "igd_ref_A", PADDR(igd_ref[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase A",
+			PT_double, "igd_ref_B", PADDR(igd_ref[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase B",
+			PT_double, "igd_ref_C", PADDR(igd_ref[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase C",
+			PT_double, "igq_ref_A", PADDR(igq_ref[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase A",
+			PT_double, "igq_ref_B", PADDR(igq_ref[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase B",
+			PT_double, "igq_ref_C", PADDR(igq_ref[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase C",
 
-                                PT_double, "igd_ref_max", PADDR(igd_ref_max), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Upper limit of igd_ref of grid-following inverter, d-axis",
-                                PT_double, "igd_ref_min", PADDR(igd_ref_min), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Lower limit of igd_ref of grid-following inverter, d-axis",
-                                PT_double, "igq_ref_max", PADDR(igq_ref_max), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Upper limit of igq_ref of grid-following inverter, q-axis",
-                                PT_double, "igq_ref_min", PADDR(igq_ref_min), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Lower limit of igq_ref of grid-following inverter, q-axis",
+			PT_double, "igd_ref_max", PADDR(igd_ref_max), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Upper limit of igd_ref of grid-following inverter, d-axis",
+			PT_double, "igd_ref_min", PADDR(igd_ref_min), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Lower limit of igd_ref of grid-following inverter, d-axis",
+			PT_double, "igq_ref_max", PADDR(igq_ref_max), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Upper limit of igq_ref of grid-following inverter, q-axis",
+			PT_double, "igq_ref_min", PADDR(igq_ref_min), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Lower limit of igq_ref of grid-following inverter, q-axis",
 
-                                PT_double, "Angle_PLL_A", PADDR(curr_state.Angle_PLL[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase A",
-                                PT_double, "Angle_PLL_B", PADDR(curr_state.Angle_PLL[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase B",
-                                PT_double, "Angle_PLL_C", PADDR(curr_state.Angle_PLL[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase C",
-                                PT_double, "f_PLL_A", PADDR(fPLL[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase A",
-                                PT_double, "f_PLL_B", PADDR(fPLL[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase B",
-                                PT_double, "f_PLL_C", PADDR(fPLL[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase C",
+			PT_double, "Angle_PLL_A", PADDR(Angle_PLL_blk[0].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase A",
+			PT_double, "Angle_PLL_B", PADDR(Angle_PLL_blk[1].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase B",
+			PT_double, "Angle_PLL_C", PADDR(Angle_PLL_blk[2].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase C",
+			PT_double, "f_PLL_A", PADDR(fPLL[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase A",
+			PT_double, "f_PLL_B", PADDR(fPLL[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase B",
+			PT_double, "f_PLL_C", PADDR(fPLL[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase C",
 
 			// Frequency-watt and volt-var in Grid-Following Control mode
 			PT_bool, "frequency_watt", PADDR(frequency_watt), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter f/p droop is included or not",
-                                PT_bool, "checkRampRate_real", PADDR(checkRampRate_real), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether check the ramp rate",
-                                PT_bool, "volt_var", PADDR(volt_var), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter volt-var droop is included or not",
-                                PT_bool, "checkRampRate_reactive", PADDR(checkRampRate_reactive), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether check the ramp rate",
-                                PT_double, "Tpf[s]", PADDR(Tpf), PT_DESCRIPTION, "DELTAMODE: the time constant of power measurement low pass filter in frequency-watt.",
-                                PT_double, "Tff[s]", PADDR(Tff), PT_DESCRIPTION, "DELTAMODE: the time constant of frequency measurement low pass filter in frequency-watt.",
-                                PT_double, "Tqf[s]", PADDR(Tqf), PT_DESCRIPTION, "DELTAMODE: the time constant of low pass filter in volt-var.",
-                                PT_double, "Tvf[s]", PADDR(Tvf), PT_DESCRIPTION, "DELTAMODE: the time constant of low pass filter in volt-var.",
-                                PT_double, "Pref_max[pu]", PADDR(Pref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
-                                PT_double, "Pref_min[pu]", PADDR(Pref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
-                                PT_double, "Qref_max[pu]", PADDR(Qref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
-                                PT_double, "Qref_min[pu]", PADDR(Qref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
-                                PT_double, "Rp[pu]", PADDR(Rp), PT_DESCRIPTION, "DELTAMODE: p-f droop gain in frequency-watt.",
-                                PT_double, "frequency_watt_droop[pu]", PADDR(Rp), PT_DESCRIPTION, "DELTAMODE: p-f droop gain in frequency-watt.",
-                                PT_double, "db_UF[Hz]", PADDR(db_UF), PT_DESCRIPTION, "DELTAMODE: upper dead band for frequency-watt control, UF for under-frequency",
-                                PT_double, "db_OF[Hz]", PADDR(db_OF), PT_DESCRIPTION, "DELTAMODE: lower dead band for frequency-watt control, OF for over-frequency",
-                                PT_double, "Rq[pu]", PADDR(Rq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain in volt-var.",
-                                PT_double, "volt_var_droop[pu]", PADDR(Rq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain in volt-var.",
-                                PT_double, "db_UV[pu]", PADDR(db_UV), PT_DESCRIPTION, "DELTAMODE: dead band for volt-var control, UV for under-voltage",
-                                PT_double, "db_OV[pu]", PADDR(db_OV), PT_DESCRIPTION, "DELTAMODE: dead band for volt-var control, OV for over-voltage",
-                                PT_double, "rampUpRate_real", PADDR(rampUpRate_real), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following frequency-watt",
-                                PT_double, "rampDownRate_real", PADDR(rampDownRate_real), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following frequency-watt",
-                                PT_double, "rampUpRate_reactive", PADDR(rampUpRate_reactive), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following volt-var",
-                                PT_double, "rampDownRate_reactive", PADDR(rampDownRate_reactive), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following volt-var",
+			PT_bool, "checkRampRate_real", PADDR(checkRampRate_real), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether check the ramp rate",
+			PT_bool, "volt_var", PADDR(volt_var), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter volt-var droop is included or not",
+			PT_bool, "checkRampRate_reactive", PADDR(checkRampRate_reactive), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether check the ramp rate",
+			PT_double, "Tpf[s]", PADDR(Tpf), PT_DESCRIPTION, "DELTAMODE: the time constant of power measurement low pass filter in frequency-watt.",
+			PT_double, "Tff[s]", PADDR(Tff), PT_DESCRIPTION, "DELTAMODE: the time constant of frequency measurement low pass filter in frequency-watt.",
+			PT_double, "Tqf[s]", PADDR(Tqf), PT_DESCRIPTION, "DELTAMODE: the time constant of low pass filter in volt-var.",
+			PT_double, "Tvf[s]", PADDR(Tvf), PT_DESCRIPTION, "DELTAMODE: the time constant of low pass filter in volt-var.",
+			PT_double, "Pref_max[pu]", PADDR(Pref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
+			PT_double, "Pref_min[pu]", PADDR(Pref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
+			PT_double, "Qref_max[pu]", PADDR(Qref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
+			PT_double, "Qref_min[pu]", PADDR(Qref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
+			PT_double, "Rp[pu]", PADDR(Rp), PT_DESCRIPTION, "DELTAMODE: p-f droop gain in frequency-watt.",
+			PT_double, "frequency_watt_droop[pu]", PADDR(Rp), PT_DESCRIPTION, "DELTAMODE: p-f droop gain in frequency-watt.",
+			PT_double, "db_UF[Hz]", PADDR(db_UF), PT_DESCRIPTION, "DELTAMODE: upper dead band for frequency-watt control, UF for under-frequency",
+			PT_double, "db_OF[Hz]", PADDR(db_OF), PT_DESCRIPTION, "DELTAMODE: lower dead band for frequency-watt control, OF for over-frequency",
+			PT_double, "Rq[pu]", PADDR(Rq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain in volt-var.",
+			PT_double, "volt_var_droop[pu]", PADDR(Rq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain in volt-var.",
+			PT_double, "db_UV[pu]", PADDR(db_UV), PT_DESCRIPTION, "DELTAMODE: dead band for volt-var control, UV for under-voltage",
+			PT_double, "db_OV[pu]", PADDR(db_OV), PT_DESCRIPTION, "DELTAMODE: dead band for volt-var control, OV for over-voltage",
+			PT_double, "rampUpRate_real", PADDR(rampUpRate_real), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following frequency-watt",
+			PT_double, "rampDownRate_real", PADDR(rampDownRate_real), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following frequency-watt",
+			PT_double, "rampUpRate_reactive", PADDR(rampUpRate_reactive), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following volt-var",
+			PT_double, "rampDownRate_reactive", PADDR(rampDownRate_reactive), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following volt-var",
+			PT_double, "Pref_droop_pu", PADDR(Pref_droop_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: power reference in frequency-watt",
 
-                                PT_double, "frequency_convergence_criterion[rad/s]", PADDR(GridForming_freq_convergence_criterion), PT_DESCRIPTION, "Max frequency update for grid-forming inverters to return to QSTS",
-                                PT_double, "voltage_convergence_criterion[V]", PADDR(GridForming_volt_convergence_criterion), PT_DESCRIPTION, "Max voltage update for grid-forming inverters to return to QSTS",
-                                PT_double, "current_convergence_criterion[A]", PADDR(GridFollowing_curr_convergence_criterion), PT_DESCRIPTION, "Max current magnitude update for grid-following inverters to return to QSTS, or initialize",
+			PT_double, "frequency_convergence_criterion[rad/s]", PADDR(GridForming_freq_convergence_criterion), PT_DESCRIPTION, "Max frequency update for grid-forming inverters to return to QSTS",
+			PT_double, "voltage_convergence_criterion[V]", PADDR(GridForming_volt_convergence_criterion), PT_DESCRIPTION, "Max voltage update for grid-forming inverters to return to QSTS",
+			PT_double, "current_convergence_criterion[A]", PADDR(GridFollowing_curr_convergence_criterion), PT_DESCRIPTION, "Max current magnitude update for grid-following inverters to return to QSTS, or initialize",
 
 			// PLL Parameters
 			PT_double, "kpPLL", PADDR(kpPLL), PT_DESCRIPTION, "DELTAMODE: Proportional gain of the PLL.",
-                                PT_double, "kiPLL", PADDR(kiPLL), PT_DESCRIPTION, "DELTAMODE: Proportional gain of the PLL.",
+			PT_double, "kiPLL", PADDR(kiPLL), PT_DESCRIPTION, "DELTAMODE: Proportional gain of the PLL.",
 
 			// Grid-Forming Controller Parameters
 			PT_double, "Tp", PADDR(Tp), PT_DESCRIPTION, "DELTAMODE: time constant of low pass filter, P calculation.",
-                                PT_double, "Tq", PADDR(Tq), PT_DESCRIPTION, "DELTAMODE: time constant of low pass filter, Q calculation.",
-                                PT_double, "Tv", PADDR(Tv), PT_DESCRIPTION, "DELTAMODE: time constant of low pass filter, V calculation.",
-                                PT_double, "Vset[pu]", PADDR(Vset), PT_DESCRIPTION, "DELTAMODE: voltage set point in grid-forming inverter, usually 1 pu.",
-                                PT_double, "kpv", PADDR(kpv), PT_DESCRIPTION, "DELTAMODE: proportional gain and integral gain of voltage loop.",
-                                PT_double, "kiv", PADDR(kiv), PT_DESCRIPTION, "DELTAMODE: proportional gain and integral gain of voltage loop.",
-                                PT_double, "mq[pu]", PADDR(mq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain, usually 0.05 pu.",
-                                PT_double, "Q_V_droop[pu]", PADDR(mq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain, usually 0.05 pu.",
-                                PT_double, "E_max", PADDR(E_max), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
-                                PT_double, "E_min", PADDR(E_min), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
-                                PT_double, "Emax", PADDR(E_max), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
-                                PT_double, "Emin", PADDR(E_min), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
-                                PT_double, "Pset[pu]", PADDR(Pset), PT_DESCRIPTION, "DELTAMODE: power set point in P-f droop.",
-                                PT_double, "fset[Hz]", PADDR(fset), PT_DESCRIPTION, "DELTAMODE: frequency set point in P-f droop.",
-                                PT_double, "mp[rad/s/pu]", PADDR(mp), PT_DESCRIPTION, "DELTAMODE: P-f droop gain, usually 3.77 rad/s/pu.",
-                                PT_double, "P_f_droop[pu]", PADDR(P_f_droop), PT_DESCRIPTION, "DELTAMODE: P-f droop gain in per unit value, usually 0.01.",
-                                PT_double, "kppmax", PADDR(kppmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Pmax controller.",
-                                PT_double, "kipmax", PADDR(kipmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Pmax controller.",
-                                PT_double, "w_lim", PADDR(w_lim), PT_DESCRIPTION, "DELTAMODE: saturation limit of Pmax controller.",
-                                PT_double, "Pmax[pu]", PADDR(Pmax), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.",
-                                PT_double, "Pmin[pu]", PADDR(Pmin), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.",
-                                PT_double, "w_ref[rad/s]", PADDR(w_ref), PT_DESCRIPTION, "DELTAMODE: the rated frequency, usually 376.99 rad/s.",
-                                PT_double, "freq[Hz]", PADDR(freq), PT_DESCRIPTION, "DELTAMODE: the frequency obtained from the P-f droop controller.",
-                                PT_double, "Imax[pu]", PADDR(Imax), PT_DESCRIPTION, "DELTAMODE: the maximum current of a grid-forming inverter.",
-                                PT_double, "kpqmax", PADDR(kpqmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Qmax controller.",
-                                PT_double, "kiqmax", PADDR(kiqmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Qmax controller.",
-                                PT_double, "Qmax[pu]", PADDR(Qmax), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
-                                PT_double, "Qmin[pu]", PADDR(Qmin), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
+			PT_double, "Tq", PADDR(Tq), PT_DESCRIPTION, "DELTAMODE: time constant of low pass filter, Q calculation.",
+			PT_double, "Tv", PADDR(Tv), PT_DESCRIPTION, "DELTAMODE: time constant of low pass filter, V calculation.",
+			PT_double, "Vset[pu]", PADDR(Vset), PT_DESCRIPTION, "DELTAMODE: voltage set point in grid-forming inverter, usually 1 pu.",
+			PT_double, "kpv", PADDR(kpv), PT_DESCRIPTION, "DELTAMODE: proportional gain and integral gain of voltage loop.",
+			PT_double, "kiv", PADDR(kiv), PT_DESCRIPTION, "DELTAMODE: proportional gain and integral gain of voltage loop.",
+			PT_double, "mq[pu]", PADDR(mq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain, usually 0.05 pu.",
+			PT_double, "Q_V_droop[pu]", PADDR(mq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain, usually 0.05 pu.",
+			PT_double, "E_max", PADDR(E_max), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
+			PT_double, "E_min", PADDR(E_min), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
+			PT_double, "Emax", PADDR(E_max), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
+			PT_double, "Emin", PADDR(E_min), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
+			PT_double, "Pset[pu]", PADDR(Pset), PT_DESCRIPTION, "DELTAMODE: power set point in P-f droop.",
+			PT_double, "fset[Hz]", PADDR(fset), PT_DESCRIPTION, "DELTAMODE: frequency set point in P-f droop.",
+			PT_double, "mp[rad/s/pu]", PADDR(mp), PT_DESCRIPTION, "DELTAMODE: P-f droop gain, usually 3.77 rad/s/pu.",
+			PT_double, "P_f_droop[pu]", PADDR(P_f_droop), PT_DESCRIPTION, "DELTAMODE: P-f droop gain in per unit value, usually 0.01.",
+			PT_double, "kppmax", PADDR(kppmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Pmax controller.",
+			PT_double, "kipmax", PADDR(kipmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Pmax controller.",
+			PT_double, "w_lim", PADDR(w_lim), PT_DESCRIPTION, "DELTAMODE: saturation limit of Pmax controller.",
+			PT_double, "Pmax[pu]", PADDR(Pmax), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.",
+			PT_double, "Pmin[pu]", PADDR(Pmin), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.",
+			PT_double, "w_ref[rad/s]", PADDR(w_ref), PT_DESCRIPTION, "DELTAMODE: the rated frequency, usually 376.99 rad/s.",
+			PT_double, "freq[Hz]", PADDR(freq), PT_DESCRIPTION, "DELTAMODE: the frequency obtained from the P-f droop controller.",
+			PT_double, "Imax[pu]", PADDR(Imax), PT_DESCRIPTION, "DELTAMODE: the maximum current of a grid-forming inverter.",
+			PT_double, "kpqmax", PADDR(kpqmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Qmax controller.",
+			PT_double, "kiqmax", PADDR(kiqmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Qmax controller.",
+			PT_double, "Qmax[pu]", PADDR(Qmax), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
+			PT_double, "Qmin[pu]", PADDR(Qmin), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
+			PT_double, "delta_w_droop[pu]", PADDR(delta_w_droop), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: delta omega fro p-f droop",
+			PT_bool, "VFlag", PADDR(VFlag), PT_DESCRIPTION, "DELTAMODE: Voltage flag to choose between PI control or direct control.",
+			PT_double, "Vdc_pu[pu]", PADDR(curr_state.Vdc_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: dc bus voltage of PV panel when using grid-forming PV Inverter",
+			PT_double, "Vdc_min_pu[pu]", PADDR(Vdc_min_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: The reference voltage of the Vdc_min controller",
+			PT_double, "C_pu[pu]", PADDR(C_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: capacitance of dc bus",
+			PT_double, "mdc", PADDR(mdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: saturation limit of modulation index",
+			PT_double, "kpVdc", PADDR(kpVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: proportional gain of Vdc_min controller",
+			PT_double, "kiVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: integral gain of Vdc_min controller",
+			PT_double, "kdVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: derivative gain of Vdc_min controller",
 
-
-                                PT_double, "Vdc_pu[pu]", PADDR(curr_state.Vdc_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: dc bus voltage of PV panel when using grid-forming PV Inverter",
-                                PT_double, "Vdc_min_pu[pu]", PADDR(Vdc_min_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: The reference voltage of the Vdc_min controller",
-                                PT_double, "C_pu[pu]", PADDR(C_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: capacitance of dc bus",
-                                PT_double, "mdc", PADDR(mdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: saturation limit of modulation index",
-                                PT_double, "kpVdc", PADDR(kpVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: proportional gain of Vdc_min controller",
-                                PT_double, "kiVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: integral gain of Vdc_min controller",
-                                PT_double, "kdVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: derivative gain of Vdc_min controller",
-
-                                PT_double, "p_measure", PADDR(curr_state.p_measure), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: filtered active power for grid-forming inverter",
-                                PT_double, "q_measure", PADDR(curr_state.q_measure), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: filtered reactive power for grid-forming inverter",
-                                PT_double, "v_measure", PADDR(curr_state.v_measure), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: filtered voltage for grid-forming inverter",
+			PT_double, "p_measure", PADDR(Pmeas_blk.x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: filtered active power for grid-forming inverter",
+			PT_double, "q_measure", PADDR(Qmeas_blk.x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: filtered reactive power for grid-forming inverter",
+			PT_double, "v_measure", PADDR(Vmeas_blk.x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: filtered voltage for grid-forming inverter",
 
 			//DC Bus portions
 			PT_double, "V_In[V]", PADDR(V_DC), PT_DESCRIPTION, "DC input voltage",
-                                PT_double, "I_In[A]", PADDR(I_DC), PT_DESCRIPTION, "DC input current",
-                                PT_double, "P_In[W]", PADDR(P_DC), PT_DESCRIPTION, "DC input power",
+			PT_double, "I_In[A]", PADDR(I_DC), PT_DESCRIPTION, "DC input current",
+			PT_double, "P_In[W]", PADDR(P_DC), PT_DESCRIPTION, "DC input power",
 
-                                PT_double, "pvc_Pmax[W]", PADDR(pvc_Pmax), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "P max from the PV curve",
+			PT_double, "pvc_Pmax[W]", PADDR(pvc_Pmax), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "P max from the PV curve",
 
 			//IEEE 1547 variables
 			PT_bool, "enable_1547_checks", PADDR(enable_1547_compliance), PT_DESCRIPTION, "DELTAMODE: Enable IEEE 1547-2003 disconnect checking",
-                                PT_double, "reconnect_time[s]", PADDR(IEEE1547_reconnect_time), PT_DESCRIPTION, "DELTAMODE: Time delay after IEEE 1547-2003 violation clears before resuming generation",
-                                PT_bool, "inverter_1547_status", PADDR(inverter_1547_status), PT_DESCRIPTION, "DELTAMODE: Indicator if the inverter is curtailed due to a 1547 violation or not",
+			PT_double, "reconnect_time[s]", PADDR(IEEE1547_reconnect_time), PT_DESCRIPTION, "DELTAMODE: Time delay after IEEE 1547-2003 violation clears before resuming generation",
+			PT_bool, "inverter_1547_status", PADDR(inverter_1547_status), PT_DESCRIPTION, "DELTAMODE: Indicator if the inverter is curtailed due to a 1547 violation or not",
 
 			//Select 1547 type to auto-populate
 			PT_enumeration, "IEEE_1547_version", PADDR(ieee_1547_version), PT_DESCRIPTION, "DELTAMODE: Version of IEEE 1547 to use to populate defaults",
-                                PT_KEYWORD, "NONE", (enumeration)IEEE1547_NONE,
-                                PT_KEYWORD, "IEEE1547_2003", (enumeration)IEEE1547_2003,
-                                PT_KEYWORD, "IEEE1547A_2014", (enumeration)IEEE1547A_2014,
-                                PT_KEYWORD, "IEEE1547_2018", (enumeration)IEEE1547_2018,
+				PT_KEYWORD, "NONE", (enumeration)IEEE1547_NONE,
+				PT_KEYWORD, "IEEE1547_2003", (enumeration)IEEE1547_2003,
+				PT_KEYWORD, "IEEE1547A_2014", (enumeration)IEEE1547A_2014,
+				PT_KEYWORD, "IEEE1547_2018", (enumeration)IEEE1547_2018,
 
 			//Frequency bands of 1547a-2014 checks
 			PT_double, "over_freq_high_cutout[Hz]", PADDR(IEEE1547_over_freq_high_band_setpoint), PT_DESCRIPTION, "DELTAMODE: OF2 set point for IEEE 1547a",
-                                PT_double, "over_freq_high_disconnect_time[s]", PADDR(IEEE1547_over_freq_high_band_delay), PT_DESCRIPTION, "DELTAMODE: OF2 clearing time for IEEE1547a",
-                                PT_double, "over_freq_low_cutout[Hz]", PADDR(IEEE1547_over_freq_low_band_setpoint), PT_DESCRIPTION, "DELTAMODE: OF1 set point for IEEE 1547a",
-                                PT_double, "over_freq_low_disconnect_time[s]", PADDR(IEEE1547_over_freq_low_band_delay), PT_DESCRIPTION, "DELTAMODE: OF1 clearing time for IEEE 1547a",
-                                PT_double, "under_freq_high_cutout[Hz]", PADDR(IEEE1547_under_freq_high_band_setpoint), PT_DESCRIPTION, "DELTAMODE: UF2 set point for IEEE 1547a",
-                                PT_double, "under_freq_high_disconnect_time[s]", PADDR(IEEE1547_under_freq_high_band_delay), PT_DESCRIPTION, "DELTAMODE: UF2 clearing time for IEEE1547a",
-                                PT_double, "under_freq_low_cutout[Hz]", PADDR(IEEE1547_under_freq_low_band_setpoint), PT_DESCRIPTION, "DELTAMODE: UF1 set point for IEEE 1547a",
-                                PT_double, "under_freq_low_disconnect_time[s]", PADDR(IEEE1547_under_freq_low_band_delay), PT_DESCRIPTION, "DELTAMODE: UF1 clearing time for IEEE 1547a",
+			PT_double, "over_freq_high_disconnect_time[s]", PADDR(IEEE1547_over_freq_high_band_delay), PT_DESCRIPTION, "DELTAMODE: OF2 clearing time for IEEE1547a",
+			PT_double, "over_freq_low_cutout[Hz]", PADDR(IEEE1547_over_freq_low_band_setpoint), PT_DESCRIPTION, "DELTAMODE: OF1 set point for IEEE 1547a",
+			PT_double, "over_freq_low_disconnect_time[s]", PADDR(IEEE1547_over_freq_low_band_delay), PT_DESCRIPTION, "DELTAMODE: OF1 clearing time for IEEE 1547a",
+			PT_double, "under_freq_high_cutout[Hz]", PADDR(IEEE1547_under_freq_high_band_setpoint), PT_DESCRIPTION, "DELTAMODE: UF2 set point for IEEE 1547a",
+			PT_double, "under_freq_high_disconnect_time[s]", PADDR(IEEE1547_under_freq_high_band_delay), PT_DESCRIPTION, "DELTAMODE: UF2 clearing time for IEEE1547a",
+			PT_double, "under_freq_low_cutout[Hz]", PADDR(IEEE1547_under_freq_low_band_setpoint), PT_DESCRIPTION, "DELTAMODE: UF1 set point for IEEE 1547a",
+			PT_double, "under_freq_low_disconnect_time[s]", PADDR(IEEE1547_under_freq_low_band_delay), PT_DESCRIPTION, "DELTAMODE: UF1 clearing time for IEEE 1547a",
 
 			//Voltage bands of 1547 checks
 			PT_double, "under_voltage_low_cutout[pu]", PADDR(IEEE1547_under_voltage_lowest_voltage_setpoint), PT_DESCRIPTION, "Lowest voltage threshold for undervoltage",
-                                PT_double, "under_voltage_middle_cutout[pu]", PADDR(IEEE1547_under_voltage_middle_voltage_setpoint), PT_DESCRIPTION, "Middle-lowest voltage threshold for undervoltage",
-                                PT_double, "under_voltage_high_cutout[pu]", PADDR(IEEE1547_under_voltage_high_voltage_setpoint), PT_DESCRIPTION, "High value of low voltage threshold for undervoltage",
-                                PT_double, "over_voltage_low_cutout[pu]", PADDR(IEEE1547_over_voltage_low_setpoint), PT_DESCRIPTION, "Lowest voltage value for overvoltage",
-                                PT_double, "over_voltage_high_cutout[pu]", PADDR(IEEE1547_over_voltage_high_setpoint), PT_DESCRIPTION, "High voltage value for overvoltage",
-                                PT_double, "under_voltage_low_disconnect_time[s]", PADDR(IEEE1547_under_voltage_lowest_delay), PT_DESCRIPTION, "Lowest voltage clearing time for undervoltage",
-                                PT_double, "under_voltage_middle_disconnect_time[s]", PADDR(IEEE1547_under_voltage_middle_delay), PT_DESCRIPTION, "Middle-lowest voltage clearing time for undervoltage",
-                                PT_double, "under_voltage_high_disconnect_time[s]", PADDR(IEEE1547_under_voltage_high_delay), PT_DESCRIPTION, "Highest voltage clearing time for undervoltage",
-                                PT_double, "over_voltage_low_disconnect_time[s]", PADDR(IEEE1547_over_voltage_low_delay), PT_DESCRIPTION, "Lowest voltage clearing time for overvoltage",
-                                PT_double, "over_voltage_high_disconnect_time[s]", PADDR(IEEE1547_over_voltage_high_delay), PT_DESCRIPTION, "Highest voltage clearing time for overvoltage",
+			PT_double, "under_voltage_middle_cutout[pu]", PADDR(IEEE1547_under_voltage_middle_voltage_setpoint), PT_DESCRIPTION, "Middle-lowest voltage threshold for undervoltage",
+			PT_double, "under_voltage_high_cutout[pu]", PADDR(IEEE1547_under_voltage_high_voltage_setpoint), PT_DESCRIPTION, "High value of low voltage threshold for undervoltage",
+			PT_double, "over_voltage_low_cutout[pu]", PADDR(IEEE1547_over_voltage_low_setpoint), PT_DESCRIPTION, "Lowest voltage value for overvoltage",
+			PT_double, "over_voltage_high_cutout[pu]", PADDR(IEEE1547_over_voltage_high_setpoint), PT_DESCRIPTION, "High voltage value for overvoltage",
+			PT_double, "under_voltage_low_disconnect_time[s]", PADDR(IEEE1547_under_voltage_lowest_delay), PT_DESCRIPTION, "Lowest voltage clearing time for undervoltage",
+			PT_double, "under_voltage_middle_disconnect_time[s]", PADDR(IEEE1547_under_voltage_middle_delay), PT_DESCRIPTION, "Middle-lowest voltage clearing time for undervoltage",
+			PT_double, "under_voltage_high_disconnect_time[s]", PADDR(IEEE1547_under_voltage_high_delay), PT_DESCRIPTION, "Highest voltage clearing time for undervoltage",
+			PT_double, "over_voltage_low_disconnect_time[s]", PADDR(IEEE1547_over_voltage_low_delay), PT_DESCRIPTION, "Lowest voltage clearing time for overvoltage",
+			PT_double, "over_voltage_high_disconnect_time[s]", PADDR(IEEE1547_over_voltage_high_delay), PT_DESCRIPTION, "Highest voltage clearing time for overvoltage",
 
 			//1547 trip reason
 			PT_enumeration, "IEEE_1547_trip_method", PADDR(ieee_1547_trip_method), PT_DESCRIPTION, "DELTAMODE: Reason for IEEE 1547 disconnect - which threshold was hit",
-                                PT_KEYWORD, "NONE", (enumeration)IEEE_1547_NOTRIP, PT_DESCRIPTION, "No trip reason",
-                                PT_KEYWORD, "OVER_FREQUENCY_HIGH", (enumeration)IEEE_1547_HIGH_OF, PT_DESCRIPTION, "High over-frequency level trip - OF2",
-                                PT_KEYWORD, "OVER_FREQUENCY_LOW", (enumeration)IEEE_1547_LOW_OF, PT_DESCRIPTION, "Low over-frequency level trip - OF1",
-                                PT_KEYWORD, "UNDER_FREQUENCY_HIGH", (enumeration)IEEE_1547_HIGH_UF, PT_DESCRIPTION, "High under-frequency level trip - UF2",
-                                PT_KEYWORD, "UNDER_FREQUENCY_LOW", (enumeration)IEEE_1547_LOW_UF, PT_DESCRIPTION, "Low under-frequency level trip - UF1",
-                                PT_KEYWORD, "UNDER_VOLTAGE_LOW", (enumeration)IEEE_1547_LOWEST_UV, PT_DESCRIPTION, "Lowest under-voltage level trip",
-                                PT_KEYWORD, "UNDER_VOLTAGE_MID", (enumeration)IEEE_1547_MIDDLE_UV, PT_DESCRIPTION, "Middle under-voltage level trip",
-                                PT_KEYWORD, "UNDER_VOLTAGE_HIGH", (enumeration)IEEE_1547_HIGH_UV, PT_DESCRIPTION, "High under-voltage level trip",
-                                PT_KEYWORD, "OVER_VOLTAGE_LOW", (enumeration)IEEE_1547_LOW_OV, PT_DESCRIPTION, "Low over-voltage level trip",
-                                PT_KEYWORD, "OVER_VOLTAGE_HIGH", (enumeration)IEEE_1547_HIGH_OV, PT_DESCRIPTION, "High over-voltage level trip",
-
-                                nullptr) < 1)
+				PT_KEYWORD, "NONE",(enumeration)IEEE_1547_NOTRIP, PT_DESCRIPTION, "No trip reason",
+				PT_KEYWORD, "OVER_FREQUENCY_HIGH",(enumeration)IEEE_1547_HIGH_OF, PT_DESCRIPTION, "High over-frequency level trip - OF2",
+				PT_KEYWORD, "OVER_FREQUENCY_LOW",(enumeration)IEEE_1547_LOW_OF, PT_DESCRIPTION, "Low over-frequency level trip - OF1",
+				PT_KEYWORD, "UNDER_FREQUENCY_HIGH",(enumeration)IEEE_1547_HIGH_UF, PT_DESCRIPTION, "High under-frequency level trip - UF2",
+				PT_KEYWORD, "UNDER_FREQUENCY_LOW",(enumeration)IEEE_1547_LOW_UF, PT_DESCRIPTION, "Low under-frequency level trip - UF1",
+				PT_KEYWORD, "UNDER_VOLTAGE_LOW",(enumeration)IEEE_1547_LOWEST_UV, PT_DESCRIPTION, "Lowest under-voltage level trip",
+				PT_KEYWORD, "UNDER_VOLTAGE_MID",(enumeration)IEEE_1547_MIDDLE_UV, PT_DESCRIPTION, "Middle under-voltage level trip",
+				PT_KEYWORD, "UNDER_VOLTAGE_HIGH",(enumeration)IEEE_1547_HIGH_UV, PT_DESCRIPTION, "High under-voltage level trip",
+				PT_KEYWORD, "OVER_VOLTAGE_LOW",(enumeration)IEEE_1547_LOW_OV, PT_DESCRIPTION, "Low over-voltage level trip",
+				PT_KEYWORD, "OVER_VOLTAGE_HIGH",(enumeration)IEEE_1547_HIGH_OV, PT_DESCRIPTION, "High over-voltage level trip",
+				PT_bool, "phase_angle_correction",PADDR(phase_angle_correction), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter applies phase angle correction during current limiting",
+				PT_bool, "virtual_resistance_correction", PADDR(virtual_resistance_correction),PT_DESCRIPTION,"DELTAMODE: Boolean used to indicate whether inverter applies virtual resistance correction during current limiting",
+			nullptr) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
 		defaults = this;
@@ -344,6 +350,11 @@ int inverter_dyn::create(void)
 	Xfilter = 0.15; //per unit
 	Rfilter = 0.01; // per unit
 
+	// Dispatch setpoints
+	pdispatch.pdispatch = -99.0; //essentially flagged as unset
+	pdispatch.pdispatch_offset = 0; //default offset is 0
+	memcpy(&pdispatch_exp,&pdispatch,sizeof(PDISPATCH));
+
 	// Grid-Forming controller parameters
 	Tp = 0.01; // s
 	Tq = 0.01; // s
@@ -370,15 +381,27 @@ int inverter_dyn::create(void)
 	kiqmax = 20;
 	Qmax = 10;
 	Qmin = -10;
+	VFlag = 1;  // Default VFlag = 1 so that voltage control PI loop is active
 	V_lim = 10;
 
+	// Initial value for previous step frequency deviation
+	delta_w_prev_step = 0.0;
+	
 	// PLL controller parameters
 	kpPLL = 50;
 	kiPLL = 900;
 	fPLL[0] = fPLL[1] = fPLL[2] = 60.0;
-	curr_state.Angle_PLL[0] = 0.0;
-	curr_state.Angle_PLL[1] = (4.0 / 3.0) * PI;
-	curr_state.Angle_PLL[2] = (2.0 / 3.0) * PI;
+
+	Angle_PLL_blk[0].setparams(1.0);
+	Angle_PLL_blk[1].setparams(1.0);
+	Angle_PLL_blk[2].setparams(1.0);
+	Angle_PLL_blk[0].init_given_y(0.0);
+	Angle_PLL_blk[1].init_given_y((4.0 / 3.0) * PI);
+	Angle_PLL_blk[2].init_given_y((2.0 / 3.0) * PI);
+
+	Angle_PLL[0] = 0.0;
+	Angle_PLL[1] = (4.0 / 3.0) * PI;
+	Angle_PLL[2] = (2.0 / 3.0) * PI;
 
 
 	// ramp rate check for grid-following inverters
@@ -501,6 +524,14 @@ int inverter_dyn::create(void)
 
 	node_nominal_voltage = 120.0;		//Just pick a value
 
+	imax_phase_correction_done[0] = false;
+	imax_phase_correction_done[1] = false;
+	imax_phase_correction_done[2] = false;
+	phase_angle_correction = false; // Phase angle correction off by default
+	virtual_resistance_correction = false; // virtual resistance correction off by default
+
+	update_chk_vars();
+
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -522,6 +553,7 @@ int inverter_dyn::init(OBJECT *parent)
 	gld_object *tmp_gld_obj = nullptr;
 	STATUS return_value_init;
 	bool childed_connection = false;
+	STATUS fxn_return_status;
 
 	//Deferred initialization code
 	if (parent != nullptr)
@@ -629,7 +661,7 @@ int inverter_dyn::init(OBJECT *parent)
 						//Make sure it worked
 						if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_bool())
 						{
-							GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+							GL_THROW("inverter_dyn:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
 							//Defined elsewhere
 						}
 
@@ -1064,7 +1096,7 @@ int inverter_dyn::init(OBJECT *parent)
 						//Check it
 						if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_complex_array())
 						{
-							GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+							GL_THROW("inverter_dyn:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
 							//Defined above
 						}
 
@@ -1090,7 +1122,7 @@ int inverter_dyn::init(OBJECT *parent)
 						{
 							if ((temp_child_complex_array.get_rows() != 3) && (temp_child_complex_array.get_cols() != 3))
 							{
-								GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
+								GL_THROW("inverter_dyn:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
 								//Defined above
 							}
 							//Default else -- right size
@@ -1149,7 +1181,7 @@ int inverter_dyn::init(OBJECT *parent)
 			//Check it
 			if (!pMeterStatus->is_valid() || !pMeterStatus->is_enumeration())
 			{
-				GL_THROW("Inverter_dyn failed to map powerflow status variable");
+				GL_THROW("inverter_dyn failed to map powerflow status variable");
 				/*  TROUBLESHOOT
 				While attempting to map the service_status variable of the parent
 				powerflow object, an error occurred.  Please try again.  If the error
@@ -1214,7 +1246,7 @@ int inverter_dyn::init(OBJECT *parent)
 		}	 //End valid powerflow parent
 		else //Not sure what it is
 		{
-			GL_THROW("Inverter_dyn must have a valid powerflow object as its parent, or no parent at all");
+			GL_THROW("inverter_dyn must have a valid powerflow object as its parent, or no parent at all");
 			/*  TROUBLESHOOT
 			Check the parent object of the inverter.  The inverter_dyn is only able to be childed via to powerflow objects.
 			Alternatively, you can also choose to have no parent, in which case the inverter_dyn will be a stand-alone application
@@ -1268,8 +1300,21 @@ int inverter_dyn::init(OBJECT *parent)
 		}
 		else
 		{
-			gen_object_count++; //Increment the counter
+			//Flag as the first run
 			first_sync_delta_enabled = true;
+
+			//Add us to the list
+			fxn_return_status = add_gen_delta_obj(obj,false);
+
+			//Check it
+			if (fxn_return_status == FAILED)
+			{
+				GL_THROW("inverter_dyn:%s - failed to add object to generator deltamode object list", obj->name ? obj->name : "unnamed");
+				/*  TROUBLESHOOT
+				The inverter_dyn object encountered an issue while trying to add itself to the generator deltamode object list.  If the error
+				persists, please submit an issue via GitHub.
+				*/
+			}
 		}
 		//Default else - don't do anything
 
@@ -1429,6 +1474,8 @@ int inverter_dyn::init(OBJECT *parent)
 		mp = P_f_droop * w_ref;
 	}
 
+	pdispatch_sync(); //sync up pdispatch and reference point settings
+
 	return 1;
 }
 
@@ -1486,75 +1533,8 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//TODO: LOCKING!
 		if (deltamode_inclusive && enable_subsecond_models) //We want deltamode - see if it's populated yet
 		{
-			if (((gen_object_current == -1) || (delta_objects == nullptr)) && enable_subsecond_models)
-			{
-				//Call the allocation routine
-				allocate_deltamode_arrays();
-			}
-
-			//Check limits of the array
-			if (gen_object_current >= gen_object_count)
-			{
-				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
-				/*  TROUBLESHOOT
-				While attempting to populate a reference array of deltamode-enabled objects for the generator
-				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
-				error persists, please submit a bug report and your code via the trac website.
-				*/
-			}
-
-			//Add us into the list
-			delta_objects[gen_object_current] = obj;
-
-			//Map up the function for interupdate
-			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_gen_object"));
-
-			//Make sure it worked
-			if (delta_functions[gen_object_current] == nullptr)
-			{
-				GL_THROW("Failure to map deltamode function for device:%s", obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			/* post_delta_functions removed, since it didn't seem to be doing anything - empty it out/delete it if this is the case! */
-			// //Map up the function for postupdate
-			// post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "postupdate_gen_object"));
-
-			// //Make sure it worked
-			// if (post_delta_functions[gen_object_current] == nullptr)
-			// {
-			// 	GL_THROW("Failure to map post-deltamode function for device:%s", obj->name);
-			// 	/*  TROUBLESHOOT
-			// 	Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
-			// 	the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-			// 	trac website.
-			// 	*/
-			// }
-
-			//Map up the function for postupdate
-			delta_preupdate_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "preupdate_gen_object"));
-
-			//Make sure it worked
-			if (delta_preupdate_functions[gen_object_current] == nullptr)
-			{
-				GL_THROW("Failure to map pre-deltamode function for device:%s", obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the preupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Update pointer
-			gen_object_current++;
-
 			if (parent_is_a_meter)
 			{
-
 				//Accumulate the starting power
 				if (sqrt(Pref*Pref+Qref*Qref) > S_base)
 				{
@@ -1685,7 +1665,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Get current injected
 			terminal_current_val[0] = value_IGenerated[0] - filter_admittance * value_Circuit_V[0];
 
-			//Update per-unti value
+			//Update per-unit value
 			terminal_current_val_pu[0] = terminal_current_val[0] / I_base;
 
 			//Update power output variables, just so we can see what is going on
@@ -2124,7 +2104,7 @@ STATUS inverter_dyn::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 
 	if (stat_val != SUCCESS)
 	{
-		gl_error("Inverter_dyn failed pre_deltaupdate call");
+		gl_error("inverter_dyn failed pre_deltaupdate call");
 		/*  TROUBLESHOOT
 		While attempting to call the pre_deltaupdate portion of the inverter_dyn code, an error
 		was encountered.  Please submit your code and a bug report via the ticketing system.
@@ -2193,7 +2173,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 	OBJECT *obj = OBJECTHDR(this);
 
 	SIMULATIONMODE simmode_return_value = SM_EVENT;
-
+	
 	//If we have a meter, reset the accumulators
 	if (parent_is_a_meter)
 	{
@@ -2216,6 +2196,8 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 		//Do the checks
 		ieee_1547_delta_return = perform_1547_checks(deltat);
 	}
+
+	pdispatch_sync(); //sync up setpoints and pdispatch
 
 	if (control_mode == GRID_FORMING)
 	{
@@ -2307,9 +2289,9 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// The following code is only for three phase system
 				// Function: Low pass filter of P
 				P_out_pu = VA_Out.Re() / S_base;
-				pred_state.dp_measure = 1.0 / Tp * (P_out_pu - curr_state.p_measure);
-				pred_state.p_measure = curr_state.p_measure + (deltat * pred_state.dp_measure);
-
+				// Output of active power measurement block
+				p_measured = Pmeas_blk.getoutput(P_out_pu,deltat,PREDICTOR);
+				
 				// VA_OUT.Re() refers to the output active power from the inverter.
 				// S_base is the rated capacity
 				// P_out_pu is the per unit value of VA_OUT.Re()
@@ -2319,9 +2301,9 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				// Function: Low pass filter of Q
 				Q_out_pu = VA_Out.Im() / S_base;
-				pred_state.dq_measure = 1.0 / Tq * (Q_out_pu - curr_state.q_measure);
-				pred_state.q_measure = curr_state.q_measure + (deltat * pred_state.dq_measure);
-
+				// Output of reactive power measurement block
+				q_measured = Qmeas_blk.getoutput(Q_out_pu,deltat,PREDICTOR);
+				
 				// VA_OUT.Im() refers to the output reactive power from the inverter
 				// Q_out_pu is the per-unit value of VA_Out.Im()
 				// q_measure is the filtered reactive power, it is per-unit value
@@ -2371,9 +2353,9 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				// Function: Low pass filter of V
 				pCircuit_V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
-				pred_state.dv_measure = 1.0 / Tv * (pCircuit_V_Avg_pu - curr_state.v_measure);
-				pred_state.v_measure = curr_state.v_measure + (deltat * pred_state.dv_measure);
-
+				// Output of V-measurement block
+				v_measured = Vmeas_blk.getoutput(pCircuit_V_Avg_pu,deltat,PREDICTOR);
+				
 				// Value_Circuit_V[i] refers to the voltage of each phase at the grid side
 				// Vbase is the rated Line to ground voltage
 				// pCircuit_V_Avg_pu refers to the average value of three phase voltages, it is per-unit value
@@ -2382,125 +2364,36 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// Function end
 
 				// Qmax controller
-				pred_state.ddelta_V_Qmax_ini = Qmax - pred_state.q_measure;
-				pred_state.delta_V_Qmax_ini = curr_state.delta_V_Qmax_ini + pred_state.ddelta_V_Qmax_ini * kiqmax * deltat;
-
-				if (pred_state.delta_V_Qmax_ini > 0)
-				{
-					pred_state.delta_V_Qmax_ini = 0;
-				}
-
-				if (pred_state.delta_V_Qmax_ini < -V_lim) // -V_lim = -10
-				{
-					pred_state.delta_V_Qmax_ini = -V_lim;
-				}
-
-				delta_V_Qmax = pred_state.delta_V_Qmax_ini + pred_state.ddelta_V_Qmax_ini * kpqmax; //output of Qmax controller
-
-				if (delta_V_Qmax > 0) //
-				{
-					delta_V_Qmax = 0;
-				}
-
-				if (delta_V_Qmax < -V_lim) // -V_lim = -10
-				{
-					delta_V_Qmax = -V_lim;
-				}
-				// End of Qmax controller
-
+				delta_V_Qmax = Qmax_ctrl_blk.getoutput(Qmax - q_measured,deltat,PREDICTOR);
 
 				// Qmin controller
-				pred_state.ddelta_V_Qmin_ini = Qmin - pred_state.q_measure;
-				pred_state.delta_V_Qmin_ini = curr_state.delta_V_Qmin_ini + pred_state.ddelta_V_Qmin_ini * kiqmax * deltat;
-
-				if (pred_state.delta_V_Qmin_ini < 0) //
-				{
-					pred_state.delta_V_Qmin_ini = 0;
-				}
-
-				if (pred_state.delta_V_Qmin_ini > V_lim) // V_lim = 10
-				{
-					pred_state.delta_V_Qmin_ini = V_lim;
-				}
-
-				delta_V_Qmin = pred_state.delta_V_Qmin_ini + pred_state.ddelta_V_Qmin_ini * kpqmax; // output from Qmin controller
-
-				if (delta_V_Qmin < 0) //
-				{
-					delta_V_Qmin = 0;
-				}
-
-				if (delta_V_Qmin > V_lim) // V_lim = 10
-				{
-					delta_V_Qmin = V_lim;
-				}
-				//End of Qmin controller
-
+				delta_V_Qmin = Qmin_ctrl_blk.getoutput(Qmin - q_measured,deltat,PREDICTOR);
 
 				// Function: Q-V droop control and voltage control loop
-				V_ref = Vset - pred_state.q_measure * mq + delta_V_Qmax + delta_V_Qmin;
-				pred_state.dV_ini = V_ref - pred_state.v_measure;
-				pred_state.V_ini = curr_state.V_ini + pred_state.dV_ini * kiv * deltat;
+				V_ref = Vset - q_measured * mq + delta_V_Qmax + delta_V_Qmin;
 
-				if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
+				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
-
-					if (pred_state.V_ini > pred_state.Vdc_pu * mdc) // E_max = 1.2, V_DC/Vdc_base
-					{
-						pred_state.V_ini = pred_state.Vdc_pu * mdc;
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,PREDICTOR);
+				  
+					  //E_mag = E_mag * (V_DC/Vdc_base);
+					  
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
 					}
-
-					if (pred_state.V_ini < E_min) // E_min = 0
-					{
-						pred_state.V_ini = E_min;
-					}
-
-					E_mag = pred_state.V_ini + pred_state.dV_ini * kpv;
-
-					if (E_mag > pred_state.Vdc_pu * mdc) // E_max = 1
-					{
-						E_mag = pred_state.Vdc_pu * mdc;
-					}
-
-					if (E_mag < E_min) // E_min = 0
-					{
-						E_mag = E_min;
-					}
-
-					//E_mag = E_mag * (V_DC/Vdc_base);
-
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
 					// Function end
 				}
 				else
 				{
-
-					if (pred_state.V_ini > E_max) // E_max = 1.2, V_DC/Vdc_base
-					{
-						pred_state.V_ini = E_max;
-					}
-
-					if (pred_state.V_ini < E_min) // E_min = 0
-					{
-						pred_state.V_ini = E_min;
-					}
-
-					E_mag = pred_state.V_ini + pred_state.dV_ini * kpv;
-
-					if (E_mag > E_max) // E_max = 1
-					{
-						E_mag = E_max;
-					}
-
-					if (E_mag < E_min) // E_min = 0
-					{
-						E_mag = E_min;
-					}
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,PREDICTOR);
 
 					// V_ref is the voltage reference obtained from Q-V droop
 					// Vset is the voltage set point, usually 1 pu
@@ -2509,71 +2402,24 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
 					// E_max and E_min are the maximum and minimum of the output of voltage controller
 					// Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
 				}
-
-
 
 				// Function: P-f droop, Pmax and Pmin controller
-				delta_w_droop = (Pset - pred_state.p_measure) * mp; // P-f droop
-
+				delta_w_droop = (Pset - p_measured) * mp; // P-f droop
 
 				// Pmax controller
-				pred_state.ddelta_w_Pmax_ini = Pmax - pred_state.p_measure ;
-				pred_state.delta_w_Pmax_ini = curr_state.delta_w_Pmax_ini + pred_state.ddelta_w_Pmax_ini * kipmax * deltat;
-
-				if (pred_state.delta_w_Pmax_ini > 0)
-				{
-					pred_state.delta_w_Pmax_ini = 0;
-				}
-
-				if (pred_state.delta_w_Pmax_ini < -w_lim) // -w_lim = -200
-				{
-					pred_state.delta_w_Pmax_ini = -w_lim;
-				}
-
-				delta_w_Pmax = pred_state.delta_w_Pmax_ini + pred_state.ddelta_w_Pmax_ini * kppmax; //output from Pmax controller
-
-				if (delta_w_Pmax > 0) //
-				{
-					delta_w_Pmax = 0;
-				}
-
-				if (delta_w_Pmax < -w_lim) // -w_lim = -200
-				{
-					delta_w_Pmax = -w_lim;
-				}
-
+				delta_w_Pmax = Pmax_ctrl_blk.getoutput(Pmax - p_measured,deltat,PREDICTOR);
+				
 				// Pmin controller
-				pred_state.ddelta_w_Pmin_ini = Pmin - pred_state.p_measure ;
-				pred_state.delta_w_Pmin_ini = curr_state.delta_w_Pmin_ini + pred_state.ddelta_w_Pmin_ini * kipmax * deltat;
+				delta_w_Pmin = Pmin_ctrl_blk.getoutput(Pmin - p_measured,deltat,PREDICTOR);
 
-				if (pred_state.delta_w_Pmin_ini < 0) //
-				{
-					pred_state.delta_w_Pmin_ini = 0;
-				}
-
-				if (pred_state.delta_w_Pmin_ini > w_lim) // w_lim = 200
-				{
-					pred_state.delta_w_Pmin_ini = w_lim;
-				}
-
-				delta_w_Pmin = pred_state.delta_w_Pmin_ini + pred_state.ddelta_w_Pmin_ini * kppmax; // output from Pmin controller
-
-				if (delta_w_Pmin < 0) //
-				{
-					delta_w_Pmin = 0;
-				}
-
-				if (delta_w_Pmin > w_lim) // w_lim = 200
-				{
-					delta_w_Pmin = w_lim;
-				}
-
-				pred_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
+				delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
 
 				// delta_w_droop is the output of P-f droop
 				// Pset is the power set point
-				// delta_w_Pmax_ini and delta_w_Pmin_ini are the outputs of the integrator of Pmax controller and Pmin controller
 				// delta_w_Pmax and delta_w_Pmin are the outputs of Pmax controller and Pmin controller
 				// Pmax and Pmin are the maximum limit and minimum limit of Pmax controller and Pmin controller
 				// w_lim is the saturation limit
@@ -2599,23 +2445,25 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						delta_w_Vdc_min = 0;
 					}
 
-					pred_state.delta_w = pred_state.delta_w + delta_w_Vdc_min; //the summation of the outputs from P-f droop, Pmax control and Pmin control, and Vdc_min control
+					delta_w = delta_w + delta_w_Vdc_min; //the summation of the outputs from P-f droop, Pmax control and Pmin control, and Vdc_min control
 				}
 
-				freq = (pred_state.delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS Droop controller, Hz
+				freq = (delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS Droop controller, Hz
 
 				// Function: Obtaining the Phase Angle, and obtaining the compelx value of internal voltages and their Norton Equivalence for power flow analysis
 				for (i = 0; i < 1; i++)
 				{
-					pred_state.Angle[i] = curr_state.Angle[i] + pred_state.delta_w * deltat;							//Obtain the phase angle
-
-					I_out_PU_temp[i] = (gld::complex(E_mag * cos(pred_state.Angle[i]), E_mag * sin(pred_state.Angle[i]))-value_Circuit_V[i]/V_base)/gld::complex(Rfilter, Xfilter);
+					//Obtain the phase angle
+					Angle[i] = Angle_blk[i].getoutput(delta_w,deltat,PREDICTOR);
+					
+					
+					I_out_PU_temp[i] = (gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i]))-value_Circuit_V[i]/V_base)/gld::complex(Rfilter, Xfilter);
 
 
 					//if(I_out_PU_temp[i].Mag() < Imax)
 					//{
 
-					e_droop_pu[i] = gld::complex(E_mag * cos(pred_state.Angle[i]), E_mag * sin(pred_state.Angle[i])); // per unit value of the internal voltage given by droop control
+					e_droop_pu[i] = gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i])); // per unit value of the internal voltage given by droop control
 					e_droop[i] = e_droop_pu[i] * V_base; // internal voltage given by the droop control
 
 					//}
@@ -2669,9 +2517,9 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// The following code is only for three phase system
 				// Function: Low pass filter of P
 				P_out_pu = VA_Out.Re() / S_base;
-				pred_state.dp_measure = 1.0 / Tp * (P_out_pu - curr_state.p_measure);
-				pred_state.p_measure = curr_state.p_measure + (deltat * pred_state.dp_measure);
-
+				// Output of P-measurement block
+				p_measured = Pmeas_blk.getoutput(P_out_pu,deltat,PREDICTOR);
+				
 				// VA_OUT.Re() refers to the output active power from the inverter.
 				// S_base is the rated capacity
 				// P_out_pu is the per unit value of VA_OUT.Re()
@@ -2681,8 +2529,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				// Function: Low pass filter of Q
 				Q_out_pu = VA_Out.Im() / S_base;
-				pred_state.dq_measure = 1.0 / Tq * (Q_out_pu - curr_state.q_measure);
-				pred_state.q_measure = curr_state.q_measure + (deltat * pred_state.dq_measure);
+				q_measured = Qmeas_blk.getoutput(Q_out_pu,deltat,PREDICTOR);
 
 				// VA_OUT.Im() refers to the output reactive power from the inverter
 				// Q_out_pu is the per-unit value of VA_Out.Im()
@@ -2733,8 +2580,8 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				// Function: Low pass filter of V
 				pCircuit_V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
-				pred_state.dv_measure = 1.0 / Tv * (pCircuit_V_Avg_pu - curr_state.v_measure);
-				pred_state.v_measure = curr_state.v_measure + (deltat * pred_state.dv_measure);
+				// Output of V-measurement block
+				v_measured = Vmeas_blk.getoutput(pCircuit_V_Avg_pu,deltat,PREDICTOR);
 
 				// Value_Circuit_V[i] refers to the voltage of each phase at the grid side
 				// Vbase is the rated Line to ground voltage
@@ -2744,198 +2591,64 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// Function end
 
 				// Qmax controller
-				pred_state.ddelta_V_Qmax_ini = Qmax - pred_state.q_measure;
-				pred_state.delta_V_Qmax_ini = curr_state.delta_V_Qmax_ini + pred_state.ddelta_V_Qmax_ini * kiqmax * deltat;
-
-				if (pred_state.delta_V_Qmax_ini > 0)
-				{
-					pred_state.delta_V_Qmax_ini = 0;
-				}
-
-				if (pred_state.delta_V_Qmax_ini < -V_lim) // -V_lim = -10
-				{
-					pred_state.delta_V_Qmax_ini = -V_lim;
-				}
-
-				delta_V_Qmax = pred_state.delta_V_Qmax_ini + pred_state.ddelta_V_Qmax_ini * kpqmax; //output of Qmax controller
-
-				if (delta_V_Qmax > 0) //
-				{
-					delta_V_Qmax = 0;
-				}
-
-				if (delta_V_Qmax < -V_lim) // -V_lim = -10
-				{
-					delta_V_Qmax = -V_lim;
-				}
-				// End of Qmax controller
-
+				delta_V_Qmax = Qmax_ctrl_blk.getoutput(Qmax - q_measured,deltat,PREDICTOR);
 
 				// Qmin controller
-				pred_state.ddelta_V_Qmin_ini = Qmin - pred_state.q_measure;
-				pred_state.delta_V_Qmin_ini = curr_state.delta_V_Qmin_ini + pred_state.ddelta_V_Qmin_ini * kiqmax * deltat;
-
-				if (pred_state.delta_V_Qmin_ini < 0) //
-				{
-					pred_state.delta_V_Qmin_ini = 0;
-				}
-
-				if (pred_state.delta_V_Qmin_ini > V_lim) // V_lim = 10
-				{
-					pred_state.delta_V_Qmin_ini = V_lim;
-				}
-
-				delta_V_Qmin = pred_state.delta_V_Qmin_ini + pred_state.ddelta_V_Qmin_ini * kpqmax; // output from Qmin controller
-
-				if (delta_V_Qmin < 0) //
-				{
-					delta_V_Qmin = 0;
-				}
-
-				if (delta_V_Qmin > V_lim) // V_lim = 10
-				{
-					delta_V_Qmin = V_lim;
-				}
-				//End of Qmin controller
-
+				delta_V_Qmin = Qmin_ctrl_blk.getoutput(Qmin - q_measured,deltat,PREDICTOR);
 
 				// Function: Q-V droop control and voltage control loop
-				V_ref = Vset - pred_state.q_measure * mq + delta_V_Qmax + delta_V_Qmin;
-				pred_state.dV_ini = V_ref - pred_state.v_measure;
-				pred_state.V_ini = curr_state.V_ini + pred_state.dV_ini * kiv * deltat;
-
-				if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
+				V_ref = Vset - q_measured * mq + delta_V_Qmax + delta_V_Qmin;
+				
+				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,PREDICTOR);
+				  
+					  //E_mag = E_mag * (V_DC/Vdc_base);
 
-					if (pred_state.V_ini > pred_state.Vdc_pu * mdc) // E_max = 1.2, V_DC/Vdc_base
-					{
-						pred_state.V_ini = pred_state.Vdc_pu * mdc;
-					}
-
-					if (pred_state.V_ini < E_min) // E_min = 0
-					{
-						pred_state.V_ini = E_min;
-					}
-
-					E_mag = pred_state.V_ini + pred_state.dV_ini * kpv;
-
-					if (E_mag > pred_state.Vdc_pu * mdc) // E_max = 1
-					{
-						E_mag = pred_state.Vdc_pu * mdc;
-					}
-
-					if (E_mag < E_min) // E_min = 0
-					{
-						E_mag = E_min;
-					}
-
-					//E_mag = E_mag * (V_DC/Vdc_base);
-
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
 					// Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
+
 				}
 				else
 				{
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,PREDICTOR);
 
-					if (pred_state.V_ini > E_max) // E_max = 1.2, V_DC/Vdc_base
-					{
-						pred_state.V_ini = E_max;
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
 					}
-
-					if (pred_state.V_ini < E_min) // E_min = 0
-					{
-						pred_state.V_ini = E_min;
-					}
-
-					E_mag = pred_state.V_ini + pred_state.dV_ini * kpv;
-
-					if (E_mag > E_max) // E_max = 1
-					{
-						E_mag = E_max;
-					}
-
-					if (E_mag < E_min) // E_min = 0
-					{
-						E_mag = E_min;
-					}
-
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
 				}
 
-
-
 				// Function: P-f droop, Pmax and Pmin controller
-				delta_w_droop = (Pset - pred_state.p_measure) * mp; // P-f droop
+				delta_w_droop = (Pset - p_measured) * mp; // P-f droop
 
 
 				// Pmax controller
-				pred_state.ddelta_w_Pmax_ini = Pmax - pred_state.p_measure ;
-				pred_state.delta_w_Pmax_ini = curr_state.delta_w_Pmax_ini + pred_state.ddelta_w_Pmax_ini * kipmax * deltat;
-
-				if (pred_state.delta_w_Pmax_ini > 0)
-				{
-					pred_state.delta_w_Pmax_ini = 0;
-				}
-
-				if (pred_state.delta_w_Pmax_ini < -w_lim) // -w_lim = -200
-				{
-					pred_state.delta_w_Pmax_ini = -w_lim;
-				}
-
-				delta_w_Pmax = pred_state.delta_w_Pmax_ini + pred_state.ddelta_w_Pmax_ini * kppmax; //output from Pmax controller
-
-				if (delta_w_Pmax > 0) //
-				{
-					delta_w_Pmax = 0;
-				}
-
-				if (delta_w_Pmax < -w_lim) // -w_lim = -200
-				{
-					delta_w_Pmax = -w_lim;
-				}
+				delta_w_Pmax = Pmax_ctrl_blk.getoutput(Pmax - p_measured,deltat,PREDICTOR);
 
 				// Pmin controller
-				pred_state.ddelta_w_Pmin_ini = Pmin - pred_state.p_measure ;
-				pred_state.delta_w_Pmin_ini = curr_state.delta_w_Pmin_ini + pred_state.ddelta_w_Pmin_ini * kipmax * deltat;
+				delta_w_Pmin = Pmin_ctrl_blk.getoutput(Pmin - p_measured,deltat,PREDICTOR);
 
-				if (pred_state.delta_w_Pmin_ini < 0) //
-				{
-					pred_state.delta_w_Pmin_ini = 0;
-				}
-
-				if (pred_state.delta_w_Pmin_ini > w_lim) // w_lim = 200
-				{
-					pred_state.delta_w_Pmin_ini = w_lim;
-				}
-
-				delta_w_Pmin = pred_state.delta_w_Pmin_ini + pred_state.ddelta_w_Pmin_ini * kppmax; // output from Pmin controller
-
-				if (delta_w_Pmin < 0) //
-				{
-					delta_w_Pmin = 0;
-				}
-
-				if (delta_w_Pmin > w_lim) // w_lim = 200
-				{
-					delta_w_Pmin = w_lim;
-				}
-
-				pred_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
+				delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
 
 				// delta_w_droop is the output of P-f droop
 				// Pset is the power set point
-				// delta_w_Pmax_ini and delta_w_Pmin_ini are the outputs of the integrator of Pmax controller and Pmin controller
 				// delta_w_Pmax and delta_w_Pmin are the outputs of Pmax controller and Pmin controller
 				// Pmax and Pmin are the maximum limit and minimum limit of Pmax controller and Pmin controller
 				// w_lim is the saturation limit
@@ -2961,23 +2674,23 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						delta_w_Vdc_min = 0;
 					}
 
-					pred_state.delta_w = pred_state.delta_w + delta_w_Vdc_min; //the summation of the outputs from P-f droop, Pmax control and Pmin control, and Vdc_min control
+					delta_w = delta_w + delta_w_Vdc_min; //the summation of the outputs from P-f droop, Pmax control and Pmin control, and Vdc_min control
 				}
 
-				freq = (pred_state.delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS Droop controller, Hz
+				freq = (delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS Droop controller, Hz
 
 				// Function: Obtaining the Phase Angle, and obtaining the compelx value of internal voltages and their Norton Equivalence for power flow analysis
 				for (i = 0; i < 3; i++)
 				{
-					pred_state.Angle[i] = curr_state.Angle[i] + pred_state.delta_w * deltat;							//Obtain the phase angle
+					Angle[i] = Angle_blk[i].getoutput(delta_w,deltat,PREDICTOR);
 
-					I_out_PU_temp[i] = (gld::complex(E_mag * cos(pred_state.Angle[i]), E_mag * sin(pred_state.Angle[i]))-value_Circuit_V[i]/V_base)/gld::complex(Rfilter, Xfilter);
+					I_out_PU_temp[i] = (gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i]))-value_Circuit_V[i]/V_base)/gld::complex(Rfilter, Xfilter);
 
 
 					//if(I_out_PU_temp[i].Mag() < Imax)
 					//{
 
-					e_droop_pu[i] = gld::complex(E_mag * cos(pred_state.Angle[i]), E_mag * sin(pred_state.Angle[i])); // per unit value of the internal voltage given by droop control
+					e_droop_pu[i] = gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i])); // per unit value of the internal voltage given by droop control
 					e_droop[i] = e_droop_pu[i] * V_base; // internal voltage given by the droop control
 
 					//}
@@ -3024,8 +2737,8 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// The following code is only for three phase system
 				// Function: Low pass filter of P
 				P_out_pu = VA_Out.Re() / S_base;
-				next_state.dp_measure = 1.0 / Tp * (P_out_pu - pred_state.p_measure);
-				next_state.p_measure = curr_state.p_measure + (pred_state.dp_measure + next_state.dp_measure) * deltat / 2.0;
+				// Output of P-measurement block
+				p_measured = Pmeas_blk.getoutput(P_out_pu,deltat,CORRECTOR);
 
 				// VA_OUT.Re() refers to the output active power from the inverter, this should be normalized.
 				// S_base is the rated capacity
@@ -3036,9 +2749,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				// Function: Low pass filter of Q
 				Q_out_pu = VA_Out.Im() / S_base;
-				next_state.dq_measure = 1.0 / Tq * (Q_out_pu - pred_state.q_measure);
-				next_state.q_measure = curr_state.q_measure + (pred_state.dq_measure + next_state.dq_measure) * deltat / 2.0;
-
+				q_measured = Qmeas_blk.getoutput(Q_out_pu,deltat,CORRECTOR);
 				// VA_OUT.Im() refers to the output reactive power from the inverter
 				// Q_out_pu is the per-unit value of VA_Out.Im()
 				// q_measure is the filtered reactive power, it is per-unit value
@@ -3088,8 +2799,9 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				// Function: Low pass filter of V
 				pCircuit_V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
-				next_state.dv_measure = 1.0 / Tv * (pCircuit_V_Avg_pu - pred_state.v_measure);
-				next_state.v_measure = curr_state.v_measure + (pred_state.dv_measure + next_state.dv_measure) * deltat / 2.0;
+				// Output of V-measurement block 
+				v_measured = Vmeas_blk.getoutput(pCircuit_V_Avg_pu,deltat,CORRECTOR);
+
 
 				// Value_Circuit_V[i] refers to te voltage of each phase at the inverter terminal
 				// Vbase is the rated Line to ground voltage
@@ -3099,196 +2811,63 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 
 				//Qmax controller
-				next_state.ddelta_V_Qmax_ini = (Qmax - next_state.q_measure) ;
-				next_state.delta_V_Qmax_ini = curr_state.delta_V_Qmax_ini + (pred_state.ddelta_V_Qmax_ini + next_state.ddelta_V_Qmax_ini) * kiqmax * deltat / 2.0;
-
-				if (next_state.delta_V_Qmax_ini > 0) //
-				{
-					next_state.delta_V_Qmax_ini = 0;
-				}
-
-				if (next_state.delta_V_Qmax_ini < -V_lim) // -V_lim = -10
-				{
-					next_state.delta_V_Qmax_ini = -V_lim;
-				}
-
-				delta_V_Qmax = next_state.delta_V_Qmax_ini + next_state.ddelta_V_Qmax_ini * kpqmax; //output from Qmax controller
-
-				if (delta_V_Qmax > 0) //
-				{
-					delta_V_Qmax = 0;
-				}
-
-				if (delta_V_Qmax < -V_lim) // -V_lim = -10
-				{
-					delta_V_Qmax = -V_lim;
-				}
-				// End of Qmax controller
+				delta_V_Qmax = Qmax_ctrl_blk.getoutput(Qmax - q_measured,deltat,CORRECTOR);
 
 				//Qmin controller
-				next_state.ddelta_V_Qmin_ini = Qmin - next_state.q_measure ;
-				next_state.delta_V_Qmin_ini = curr_state.delta_V_Qmin_ini + (pred_state.ddelta_V_Qmin_ini + next_state.ddelta_V_Qmin_ini) * kiqmax * deltat / 2.0;
-
-				if (next_state.delta_V_Qmin_ini < 0) //
-				{
-					next_state.delta_V_Qmin_ini = 0;
-				}
-
-				if (next_state.delta_V_Qmin_ini > V_lim) // V_lim = 10
-				{
-					next_state.delta_V_Qmin_ini = V_lim;
-				}
-
-				delta_V_Qmin = next_state.delta_V_Qmin_ini + next_state.ddelta_V_Qmin_ini * kpqmax; // output from Qmin controller
-
-				if (delta_V_Qmin < 0) //
-				{
-					delta_V_Qmin = 0;
-				}
-
-				if (delta_V_Qmin > V_lim) // V_lim = 10
-				{
-					delta_V_Qmin = V_lim;
-				}
-				// End of Qmin controller
-
+				delta_V_Qmin = Qmin_ctrl_blk.getoutput(Qmin - q_measured,deltat,CORRECTOR);
 
 				// Function: Q-V droop control and voltage control loop
-				V_ref = Vset - next_state.q_measure * mq + delta_V_Qmax + delta_V_Qmin;
-				next_state.dV_ini = V_ref - next_state.v_measure ;
-				next_state.V_ini = curr_state.V_ini + (pred_state.dV_ini + next_state.dV_ini) * kiv * deltat / 2.0;
+				V_ref = Vset - q_measured * mq + delta_V_Qmax + delta_V_Qmin;
 
-				if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
+				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
-					if (next_state.V_ini > next_state.Vdc_pu * mdc) // E_max = 1.2, V_DC/Vdc_base
-					{
-						next_state.V_ini = next_state.Vdc_pu * mdc;
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,CORRECTOR);
+				  
+					  //E_mag = E_mag * (V_DC/Vdc_base);
+
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
 					}
 
-					if (next_state.V_ini < E_min) // E_min = 0
-					{
-						next_state.V_ini = E_min;
-					}
-
-					E_mag = next_state.V_ini + next_state.dV_ini * kpv;
-
-					if (E_mag > next_state.Vdc_pu * mdc) // E_max = 1.2
-					{
-						E_mag = next_state.Vdc_pu * mdc;
-					}
-
-					if (E_mag < E_min) // E_min = 0
-					{
-						E_mag = E_min;
-					}
-
-					//E_mag = E_mag * (V_DC/Vdc_base);
-
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
 				}
 				else
 				{
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,CORRECTOR);
 
-					if (next_state.V_ini > E_max) // E_max = 1.2, V_DC/Vdc_base
-					{
-						next_state.V_ini = E_max;
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
 					}
-
-					if (next_state.V_ini < E_min) // E_min = 0
-					{
-						next_state.V_ini = E_min;
-					}
-
-					E_mag = next_state.V_ini + next_state.dV_ini * kpv;
-
-					if (E_mag > E_max) // E_max = 1.2
-					{
-						E_mag = E_max;
-					}
-
-					if (E_mag < E_min) // E_min = 0
-					{
-						E_mag = E_min;
-					}
-
-					//E_mag = E_mag * (V_DC/Vdc_base);
-
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
 				}
-
 
 				// Function: P-f droop, Pmax and Pmin controller
-				delta_w_droop = (Pset - next_state.p_measure) * mp; // P-f droop
+				delta_w_droop = (Pset - p_measured) * mp; // P-f droop
 
 				// Pmax controller
-				next_state.ddelta_w_Pmax_ini = Pmax - next_state.p_measure;
-				next_state.delta_w_Pmax_ini = curr_state.delta_w_Pmax_ini + (pred_state.ddelta_w_Pmax_ini + next_state.ddelta_w_Pmax_ini) * kipmax * deltat / 2.0;
-
-				if (next_state.delta_w_Pmax_ini > 0) //
-				{
-					next_state.delta_w_Pmax_ini = 0;
-				}
-
-				if (next_state.delta_w_Pmax_ini < -w_lim) // -w_lim = -50
-				{
-					next_state.delta_w_Pmax_ini = -w_lim;
-				}
-
-				delta_w_Pmax = next_state.delta_w_Pmax_ini + next_state.ddelta_w_Pmax_ini * kppmax; //output from Pmax controller
-
-				if (delta_w_Pmax > 0) //
-				{
-					delta_w_Pmax = 0;
-				}
-
-				if (delta_w_Pmax < -w_lim) // -w_lim = -50
-				{
-					delta_w_Pmax = -w_lim;
-				}
+				delta_w_Pmax = Pmax_ctrl_blk.getoutput(Pmax - p_measured,deltat,CORRECTOR);
 
 				// Pmin controller
-				next_state.ddelta_w_Pmin_ini = Pmin - next_state.p_measure;
-				next_state.delta_w_Pmin_ini = curr_state.delta_w_Pmin_ini + (pred_state.ddelta_w_Pmin_ini + next_state.ddelta_w_Pmin_ini) * kipmax * deltat / 2.0;
+				delta_w_Pmin = Pmin_ctrl_blk.getoutput(Pmin - p_measured,deltat,CORRECTOR);
 
-				if (next_state.delta_w_Pmin_ini < 0) //
-				{
-					next_state.delta_w_Pmin_ini = 0;
-				}
-
-				if (next_state.delta_w_Pmin_ini > w_lim) // w_lim = 50
-				{
-					next_state.delta_w_Pmin_ini = w_lim;
-				}
-
-				delta_w_Pmin = next_state.delta_w_Pmin_ini + next_state.ddelta_w_Pmin_ini * kppmax; // output from Pmin controller
-
-				if (delta_w_Pmin < 0) //
-				{
-					delta_w_Pmin = 0;
-				}
-
-				if (delta_w_Pmin > w_lim) // w_lim = 50
-				{
-					delta_w_Pmin = w_lim;
-				}
-
-				next_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
+				delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
 
 				// delta_w_droop is the output of P-f droop
 				// Pset is the power set point
-				// delta_w_Pmax_ini and delta_w_Pmin_ini are the outputs of the integrator of Pmax controller and Pmin controller
 				// delta_w_Pmax and delta_w_Pmin are the outputs of Pmax controller and Pmin controller
 				// Pmax and Pmin are the maximum limit and minimum limit of Pmax controller and Pmin controller
 				// w_lim is the saturation limit
@@ -3314,24 +2893,23 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						delta_w_Vdc_min = 0;
 					}
 
-					next_state.delta_w = next_state.delta_w + delta_w_Vdc_min; //the summation of the outputs from P-f droop, Pmax control and Pmin control, and Vdc_min control
+					delta_w = delta_w + delta_w_Vdc_min; //the summation of the outputs from P-f droop, Pmax control and Pmin control, and Vdc_min control
 				}
 
-				freq = (next_state.delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS droop controller, Hz
+				freq = (delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS droop controller, Hz
 
 				// Function: Obtaining the Phase Angle, and obtaining the compelx value of internal voltages and their Norton Equivalence for power flow analysis
 				for (i = 0; i < 1; i++)
 				{
-					next_state.Angle[i] = curr_state.Angle[i] + (pred_state.delta_w + next_state.delta_w) * deltat / 2.0; //Obtain the phase angle
+					Angle[i] = Angle_blk[i].getoutput(delta_w,deltat,CORRECTOR);
 
-
-					I_out_PU_temp[i] = (gld::complex(E_mag * cos(next_state.Angle[i]), E_mag * sin(next_state.Angle[i])) - value_Circuit_V[i]/V_base)/gld::complex(Rfilter, Xfilter);
+					I_out_PU_temp[i] = (gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i])) - value_Circuit_V[i]/V_base)/gld::complex(Rfilter, Xfilter);
 
 
 					//if(I_out_PU_temp[i].Mag() < Imax)
 					//{
 
-					e_droop_pu[i] = gld::complex(E_mag * cos(next_state.Angle[i]), E_mag * sin(next_state.Angle[i])); // transfers back to non-per-unit values
+					e_droop_pu[i] = gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i])); // transfers back to non-per-unit values
 					e_droop[i] = e_droop_pu[i] * V_base; // transfers back to non-per-unit values
 					//}
 					//else
@@ -3363,7 +2941,9 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// Rfilter and Xfilter are the per-unit values of inverter filter
 				// Function end
 
-				double diff_w = next_state.delta_w - curr_state.delta_w;
+				double diff_w = delta_w - delta_w_prev_step;
+
+				delta_w_prev_step = delta_w;
 
 				memcpy(&curr_state, &next_state, sizeof(INV_DYN_STATE));
 
@@ -3409,8 +2989,9 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// The following code is only for three phase system
 				// Function: Low pass filter of P
 				P_out_pu = VA_Out.Re() / S_base;
-				next_state.dp_measure = 1.0 / Tp * (P_out_pu - pred_state.p_measure);
-				next_state.p_measure = curr_state.p_measure + (pred_state.dp_measure + next_state.dp_measure) * deltat / 2.0;
+
+				// Output of P-measurement block
+				p_measured = Pmeas_blk.getoutput(P_out_pu,deltat,CORRECTOR);
 
 				// VA_OUT.Re() refers to the output active power from the inverter, this should be normalized.
 				// S_base is the rated capacity
@@ -3421,8 +3002,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				// Function: Low pass filter of Q
 				Q_out_pu = VA_Out.Im() / S_base;
-				next_state.dq_measure = 1.0 / Tq * (Q_out_pu - pred_state.q_measure);
-				next_state.q_measure = curr_state.q_measure + (pred_state.dq_measure + next_state.dq_measure) * deltat / 2.0;
+				q_measured = Qmeas_blk.getoutput(Q_out_pu,deltat,CORRECTOR);
 
 				// VA_OUT.Im() refers to the output reactive power from the inverter
 				// Q_out_pu is the per-unit value of VA_Out.Im()
@@ -3473,8 +3053,10 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				// Function: Low pass filter of V
 				pCircuit_V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
-				next_state.dv_measure = 1.0 / Tv * (pCircuit_V_Avg_pu - pred_state.v_measure);
-				next_state.v_measure = curr_state.v_measure + (pred_state.dv_measure + next_state.dv_measure) * deltat / 2.0;
+
+				// Output of V-measurement block 
+				v_measured = Vmeas_blk.getoutput(pCircuit_V_Avg_pu,deltat,CORRECTOR);
+
 
 				// Value_Circuit_V[i] refers to te voltage of each phase at the inverter terminal
 				// Vbase is the rated Line to ground voltage
@@ -3484,196 +3066,62 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 
 				//Qmax controller
-				next_state.ddelta_V_Qmax_ini = (Qmax - next_state.q_measure) ;
-				next_state.delta_V_Qmax_ini = curr_state.delta_V_Qmax_ini + (pred_state.ddelta_V_Qmax_ini + next_state.ddelta_V_Qmax_ini) * kiqmax * deltat / 2.0;
-
-				if (next_state.delta_V_Qmax_ini > 0) //
-				{
-					next_state.delta_V_Qmax_ini = 0;
-				}
-
-				if (next_state.delta_V_Qmax_ini < -V_lim) // -V_lim = -10
-				{
-					next_state.delta_V_Qmax_ini = -V_lim;
-				}
-
-				delta_V_Qmax = next_state.delta_V_Qmax_ini + next_state.ddelta_V_Qmax_ini * kpqmax; //output from Qmax controller
-
-				if (delta_V_Qmax > 0) //
-				{
-					delta_V_Qmax = 0;
-				}
-
-				if (delta_V_Qmax < -V_lim) // -V_lim = -10
-				{
-					delta_V_Qmax = -V_lim;
-				}
-				// End of Qmax controller
+				delta_V_Qmax = Qmax_ctrl_blk.getoutput(Qmax - q_measured,deltat,CORRECTOR);
 
 				//Qmin controller
-				next_state.ddelta_V_Qmin_ini = Qmin - next_state.q_measure ;
-				next_state.delta_V_Qmin_ini = curr_state.delta_V_Qmin_ini + (pred_state.ddelta_V_Qmin_ini + next_state.ddelta_V_Qmin_ini) * kiqmax * deltat / 2.0;
-
-				if (next_state.delta_V_Qmin_ini < 0) //
-				{
-					next_state.delta_V_Qmin_ini = 0;
-				}
-
-				if (next_state.delta_V_Qmin_ini > V_lim) // V_lim = 10
-				{
-					next_state.delta_V_Qmin_ini = V_lim;
-				}
-
-				delta_V_Qmin = next_state.delta_V_Qmin_ini + next_state.ddelta_V_Qmin_ini * kpqmax; // output from Qmin controller
-
-				if (delta_V_Qmin < 0) //
-				{
-					delta_V_Qmin = 0;
-				}
-
-				if (delta_V_Qmin > V_lim) // V_lim = 10
-				{
-					delta_V_Qmin = V_lim;
-				}
-				// End of Qmin controller
-
+				delta_V_Qmin = Qmin_ctrl_blk.getoutput(Qmin - q_measured,deltat,CORRECTOR);
 
 				// Function: Q-V droop control and voltage control loop
-				V_ref = Vset - next_state.q_measure * mq + delta_V_Qmax + delta_V_Qmin;
-				next_state.dV_ini = V_ref - next_state.v_measure ;
-				next_state.V_ini = curr_state.V_ini + (pred_state.dV_ini + next_state.dV_ini) * kiv * deltat / 2.0;
+				V_ref = Vset - q_measured * mq + delta_V_Qmax + delta_V_Qmin;
 
-				if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
+				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
-					if (next_state.V_ini > next_state.Vdc_pu * mdc) // E_max = 1.2, V_DC/Vdc_base
-					{
-						next_state.V_ini = next_state.Vdc_pu * mdc;
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,CORRECTOR);
+				  
+					  //E_mag = E_mag * (V_DC/Vdc_base);
+					  
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
 					}
-
-					if (next_state.V_ini < E_min) // E_min = 0
-					{
-						next_state.V_ini = E_min;
-					}
-
-					E_mag = next_state.V_ini + next_state.dV_ini * kpv;
-
-					if (E_mag > next_state.Vdc_pu * mdc) // E_max = 1.2
-					{
-						E_mag = next_state.Vdc_pu * mdc;
-					}
-
-					if (E_mag < E_min) // E_min = 0
-					{
-						E_mag = E_min;
-					}
-
-					//E_mag = E_mag * (V_DC/Vdc_base);
-
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
 				}
 				else
 				{
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,CORRECTOR);
 
-					if (next_state.V_ini > E_max) // E_max = 1.2, V_DC/Vdc_base
-					{
-						next_state.V_ini = E_max;
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
 					}
-
-					if (next_state.V_ini < E_min) // E_min = 0
-					{
-						next_state.V_ini = E_min;
-					}
-
-					E_mag = next_state.V_ini + next_state.dV_ini * kpv;
-
-					if (E_mag > E_max) // E_max = 1.2
-					{
-						E_mag = E_max;
-					}
-
-					if (E_mag < E_min) // E_min = 0
-					{
-						E_mag = E_min;
-					}
-
-					//E_mag = E_mag * (V_DC/Vdc_base);
-
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
 				}
-
 
 				// Function: P-f droop, Pmax and Pmin controller
-				delta_w_droop = (Pset - next_state.p_measure) * mp; // P-f droop
+				delta_w_droop = (Pset - p_measured) * mp; // P-f droop
 
 				// Pmax controller
-				next_state.ddelta_w_Pmax_ini = Pmax - next_state.p_measure;
-				next_state.delta_w_Pmax_ini = curr_state.delta_w_Pmax_ini + (pred_state.ddelta_w_Pmax_ini + next_state.ddelta_w_Pmax_ini) * kipmax * deltat / 2.0;
-
-				if (next_state.delta_w_Pmax_ini > 0) //
-				{
-					next_state.delta_w_Pmax_ini = 0;
-				}
-
-				if (next_state.delta_w_Pmax_ini < -w_lim) // -w_lim = -50
-				{
-					next_state.delta_w_Pmax_ini = -w_lim;
-				}
-
-				delta_w_Pmax = next_state.delta_w_Pmax_ini + next_state.ddelta_w_Pmax_ini * kppmax; //output from Pmax controller
-
-				if (delta_w_Pmax > 0) //
-				{
-					delta_w_Pmax = 0;
-				}
-
-				if (delta_w_Pmax < -w_lim) // -w_lim = -50
-				{
-					delta_w_Pmax = -w_lim;
-				}
+				delta_w_Pmax = Pmax_ctrl_blk.getoutput(Pmax - p_measured,deltat,CORRECTOR);
 
 				// Pmin controller
-				next_state.ddelta_w_Pmin_ini = Pmin - next_state.p_measure;
-				next_state.delta_w_Pmin_ini = curr_state.delta_w_Pmin_ini + (pred_state.ddelta_w_Pmin_ini + next_state.ddelta_w_Pmin_ini) * kipmax * deltat / 2.0;
+				delta_w_Pmin = Pmin_ctrl_blk.getoutput(Pmin - p_measured,deltat,CORRECTOR);
 
-				if (next_state.delta_w_Pmin_ini < 0) //
-				{
-					next_state.delta_w_Pmin_ini = 0;
-				}
-
-				if (next_state.delta_w_Pmin_ini > w_lim) // w_lim = 50
-				{
-					next_state.delta_w_Pmin_ini = w_lim;
-				}
-
-				delta_w_Pmin = next_state.delta_w_Pmin_ini + next_state.ddelta_w_Pmin_ini * kppmax; // output from Pmin controller
-
-				if (delta_w_Pmin < 0) //
-				{
-					delta_w_Pmin = 0;
-				}
-
-				if (delta_w_Pmin > w_lim) // w_lim = 50
-				{
-					delta_w_Pmin = w_lim;
-				}
-
-				next_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
+				delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
 
 				// delta_w_droop is the output of P-f droop
 				// Pset is the power set point
-				// delta_w_Pmax_ini and delta_w_Pmin_ini are the outputs of the integrator of Pmax controller and Pmin controller
 				// delta_w_Pmax and delta_w_Pmin are the outputs of Pmax controller and Pmin controller
 				// Pmax and Pmin are the maximum limit and minimum limit of Pmax controller and Pmin controller
 				// w_lim is the saturation limit
@@ -3699,24 +3147,23 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						delta_w_Vdc_min = 0;
 					}
 
-					next_state.delta_w = next_state.delta_w + delta_w_Vdc_min; //the summation of the outputs from P-f droop, Pmax control and Pmin control, and Vdc_min control
+					delta_w = delta_w + delta_w_Vdc_min; //the summation of the outputs from P-f droop, Pmax control and Pmin control, and Vdc_min control
 				}
 
-				freq = (next_state.delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS droop controller, Hz
+				freq = (delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS droop controller, Hz
 
 				// Function: Obtaining the Phase Angle, and obtaining the compelx value of internal voltages and their Norton Equivalence for power flow analysis
 				for (i = 0; i < 3; i++)
 				{
-					next_state.Angle[i] = curr_state.Angle[i] + (pred_state.delta_w + next_state.delta_w) * deltat / 2.0; //Obtain the phase angle
+					Angle[i] = Angle_blk[i].getoutput(delta_w,deltat,CORRECTOR);
 
-
-					I_out_PU_temp[i] = (gld::complex(E_mag * cos(next_state.Angle[i]), E_mag * sin(next_state.Angle[i])) - value_Circuit_V[i]/V_base)/gld::complex(Rfilter, Xfilter);
+					I_out_PU_temp[i] = (gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i])) - value_Circuit_V[i]/V_base)/gld::complex(Rfilter, Xfilter);
 
 
 					//if(I_out_PU_temp[i].Mag() < Imax)
 					//{
 
-					e_droop_pu[i] = gld::complex(E_mag * cos(next_state.Angle[i]), E_mag * sin(next_state.Angle[i])); // transfers back to non-per-unit values
+					e_droop_pu[i] = gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i])); // transfers back to non-per-unit values
 					e_droop[i] = e_droop_pu[i] * V_base; // transfers back to non-per-unit values
 					//}
 					//else
@@ -3748,7 +3195,9 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// Rfilter and Xfilter are the per-unit values of inverter filter
 				// Function end
 
-				double diff_w = next_state.delta_w - curr_state.delta_w;
+				double diff_w = delta_w - delta_w_prev_step;
+
+				delta_w_prev_step = delta_w;
 
 				memcpy(&curr_state, &next_state, sizeof(INV_DYN_STATE));
 
@@ -3794,10 +3243,10 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					VA_Out = power_val[0];
 
 					// Function: Coordinate Tranformation, xy to dq
-					ugd_pu[0] = (value_Circuit_V[0].Re() * cos(curr_state.Angle_PLL[0]) + value_Circuit_V[0].Im() * sin(curr_state.Angle_PLL[0])) / V_base;
-					ugq_pu[0] = (-value_Circuit_V[0].Re() * sin(curr_state.Angle_PLL[0]) + value_Circuit_V[0].Im() * cos(curr_state.Angle_PLL[0])) / V_base;
-					igd_pu[0] = (terminal_current_val[0].Re() * cos(curr_state.Angle_PLL[0]) + terminal_current_val[0].Im() * sin(curr_state.Angle_PLL[0])) / I_base;
-					igq_pu[0] = (-terminal_current_val[0].Re() * sin(curr_state.Angle_PLL[0]) + terminal_current_val[0].Im() * cos(curr_state.Angle_PLL[0])) / I_base;
+					ugd_pu[0] = (value_Circuit_V[0].Re() * cos(Angle_PLL[0]) + value_Circuit_V[0].Im() * sin(Angle_PLL[0])) / V_base;
+					ugq_pu[0] = (-value_Circuit_V[0].Re() * sin(Angle_PLL[0]) + value_Circuit_V[0].Im() * cos(Angle_PLL[0])) / V_base;
+					igd_pu[0] = (terminal_current_val[0].Re() * cos(Angle_PLL[0]) + terminal_current_val[0].Im() * sin(Angle_PLL[0])) / I_base;
+					igq_pu[0] = (-terminal_current_val[0].Re() * sin(Angle_PLL[0]) + terminal_current_val[0].Im() * cos(Angle_PLL[0])) / I_base;
 
 					// ugd_pu[i] and ugq_pu[i] are the per-unit values of grid-side voltages in dq frame
 					// igd_pu[i] and igq_pu[i] are the per-unit values of grid-side currents in dq frame
@@ -3809,13 +3258,11 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					// Function end
 
 					// Function: Phase-Lock_Loop, PLL
-					pred_state.ddelta_w_PLL_ini[0] = ugq_pu[0] ;
-					pred_state.delta_w_PLL_ini[0] = curr_state.delta_w_PLL_ini[0] + pred_state.ddelta_w_PLL_ini[0] * kiPLL * deltat;	//output from the integrator term
-					pred_state.delta_w_PLL[0] = pred_state.delta_w_PLL_ini[0] + pred_state.ddelta_w_PLL_ini[0] * kpPLL; // output from the PI controller
-					fPLL[0] = (pred_state.delta_w_PLL[0] + w_ref) / 2.0 / PI;														// frequency measured by PLL
-					pred_state.Angle_PLL[0] = curr_state.Angle_PLL[0] + pred_state.delta_w_PLL[0] * deltat;						// phase angle from PLL
+					delta_w_PLL[0] = delta_w_PLL_blk[0].getoutput(ugq_pu[0],deltat,PREDICTOR);
 
-					// delta_w_PLL_ini[i] is the output from the integrator term
+					fPLL[0] = (delta_w_PLL[0] + w_ref) / 2.0 / PI;		// frequency measured by PLL
+					
+					Angle_PLL[0] = Angle_PLL_blk[0].getoutput(delta_w_PLL[0],deltat,PREDICTOR);	// phase angle from PLL
 					// delta_w_PLL[i] is the output from the PI controller
 					// w_ref is the rated angular frequency, the value is 376.99 rad/s
 					// fPLL is the frequency measured by PLL
@@ -3844,17 +3291,15 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					if (frequency_watt)
 					{
 						Pref_droop_pu_prev = Pref_droop_pu; // the value of Pref_droop_pu in last simulation step
+						f_filter = f_filter_blk.getoutput(fPLL[0],deltat,PREDICTOR);
 
-						pred_state.df_filter = 1.0 / Tff * (fPLL[0] - curr_state.f_filter);
-						pred_state.f_filter = curr_state.f_filter + (deltat * pred_state.df_filter);
-
-						if ((pred_state.f_filter < (f_nominal + db_OF))&&(pred_state.f_filter > (f_nominal - db_UF)))  // add dead band
+						if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
 						{
 							Pref_droop_pu = Pref / S_base;
 						}
 						else
 						{
-							Pref_droop_pu = (f_nominal - pred_state.f_filter) / f_nominal / Rp + Pref / S_base;
+							Pref_droop_pu = (f_nominal - f_filter) / f_nominal / Rp + Pref / S_base;
 						}
 
 
@@ -3894,15 +3339,12 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						}
 						else
 						{
-							pred_state.dPref_droop_pu_filter = 1.0 / Tpf * (Pref_droop_pu - curr_state.Pref_droop_pu_filter);
-							pred_state.Pref_droop_pu_filter = curr_state.Pref_droop_pu_filter + (deltat * pred_state.dPref_droop_pu_filter);
+						        Pref_droop_pu_filter = Pref_droop_pu_filter_blk.getoutput(Pref_droop_pu,deltat,PREDICTOR);
 						}
 					}
 					// f_filter is the frequency pass through the low pass filter
-					// Tf is the time constant in the frequency low pass filter
 					// Pref_droop_pu is the power reference from the frequency-watt
 					// Pref_droop_pu_filter is the power reference pass through the low pass filter
-					// Tpf is the time constant in the power low pass filter
 					// Pref_max and Pref_min are the upper and lower limits of power references
 					// Function end
 
@@ -3966,16 +3408,15 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						Qref_droop_pu_prev = Qref_droop_pu;
 
 						V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
-						pred_state.dV_filter = 1.0 / Tvf * (V_Avg_pu - curr_state.V_filter);
-						pred_state.V_filter = curr_state.V_filter + (deltat * pred_state.dV_filter);
+						V_filter = V_filter_blk.getoutput(V_Avg_pu,deltat,PREDICTOR);
 
-						if ((pred_state.V_filter < (Vset + db_OV))&&(pred_state.V_filter > (Vset - db_UV)))  // add dead band
+						if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
 						{
 							Qref_droop_pu = Qref / S_base;
 						}
 						else
 						{
-							Qref_droop_pu = (Vset - pred_state.V_filter) / Rq + Qref / S_base;
+							Qref_droop_pu = (Vset - V_filter) / Rq + Qref / S_base;
 						}
 
 
@@ -4014,12 +3455,11 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						}
 						else
 						{
-							pred_state.dQref_droop_pu_filter = 1.0 / Tqf * (Qref_droop_pu - curr_state.Qref_droop_pu_filter);
-							pred_state.Qref_droop_pu_filter = curr_state.Qref_droop_pu_filter + (deltat * pred_state.dQref_droop_pu_filter);
+						        Qref_droop_pu_filter = Qref_droop_pu_filter_blk.getoutput(Qref_droop_pu,deltat,PREDICTOR);
+
 						}
 					}
 					// V_Avg_pu is the average value of three phase voltages
-					// Tvf is the time constant of voltage low pass filter
 					// V_filter is the voltage pass through low pass filter
 					// Qref_droop_pu if the Q reference from volt-var
 					// Qref_droop_pu_filter is the Q pass through low pass filter
@@ -4035,7 +3475,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						}
 						else
 						{
-							igd_ref[0] = pred_state.Pref_droop_pu_filter / ugd_pu[0];
+							igd_ref[0] = Pref_droop_pu_filter / ugd_pu[0];
 						}
 					}
 					else
@@ -4052,7 +3492,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						}
 						else
 						{
-							igq_ref[0] = -pred_state.Qref_droop_pu_filter / ugd_pu[0];
+							igq_ref[0] = -Qref_droop_pu_filter / ugd_pu[0];
 						}
 					}
 					else
@@ -4087,17 +3527,14 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					if (control_mode == GRID_FOLLOWING)
 					{
 						// current loop in d axis
-						pred_state.digd_PI_ini[0] = igd_ref[0] - igd_pu[0];
-						pred_state.igd_PI_ini[0] = curr_state.igd_PI_ini[0] + pred_state.digd_PI_ini[0] * kic * deltat; //output from the integrator term of the current control loop
-						igd_PI[0] = pred_state.igd_PI_ini[0] + pred_state.digd_PI_ini[0] * kpc;			  // output from the PI controller of current loop
+					        igd_PI[0] = igd_blk[0].getoutput(igd_ref[0] - igd_pu[0],deltat,PREDICTOR); 		  // output from the PI controller of current loop
+
 						ed_pu[0] = igd_PI[0] + ugd_pu[0] - igq_pu[0] * Xfilter * F_current;						  // the d axis component of internal voltage, Xfilter is per-unit value
 						// current loop in q axis
-						pred_state.digq_PI_ini[0] = igq_ref[0] - igq_pu[0] ;
-						pred_state.igq_PI_ini[0] = curr_state.igq_PI_ini[0] + pred_state.digq_PI_ini[0] * kic * deltat; //output from the integrator term of the current control loop
-						igq_PI[0] = pred_state.igq_PI_ini[0] + pred_state.digq_PI_ini[0] * kpc;			  // output from the PI controller of current loop
+						igq_PI[0] = igq_blk[0].getoutput(igq_ref[0] - igq_pu[0],deltat,PREDICTOR); 			  // output from the PI controller of current loop
+
 						eq_pu[0] = igq_PI[0] + ugq_pu[0] + igd_pu[0] * Xfilter * F_current;						  // the d axis component of internal voltage, Xfilter is per-unit value
 
-						// igd_PI_ini[i] and igq_PI_ini[i] are outputs from the integral terms in current control loops
 						// igd_ref[i] and igq_ref[i] are the current references in dq frame
 						// igd_PI[i] and igq_PI[i] are outputs from the current control loops
 						// ed_pu[i] and eq_pu[i] are the dq components of the internal voltages
@@ -4105,8 +3542,8 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						// Function end
 
 						// Function: Coordinate Transformation: dq to xy
-						e_source_Re[0] = (ed_pu[0] * cos(pred_state.Angle_PLL[0]) - eq_pu[0] * sin(pred_state.Angle_PLL[0])) * V_base;
-						e_source_Im[0] = (ed_pu[0] * sin(pred_state.Angle_PLL[0]) + eq_pu[0] * cos(pred_state.Angle_PLL[0])) * V_base;
+						e_source_Re[0] = (ed_pu[0] * cos(Angle_PLL[0]) - eq_pu[0] * sin(Angle_PLL[0])) * V_base;
+						e_source_Im[0] = (ed_pu[0] * sin(Angle_PLL[0]) + eq_pu[0] * cos(Angle_PLL[0])) * V_base;
 						e_source[0] = gld::complex(e_source_Re[0], e_source_Im[0]);
 						value_IGenerated[0] = e_source[0] / (gld::complex(Rfilter, Xfilter) * Z_base); // Thevenin voltage source to Norton current source convertion
 
@@ -4118,17 +3555,15 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					else if (control_mode == GFL_CURRENT_SOURCE)
 					{
 						// Low pass filter for current id
-						pred_state.digd_filter[0] = 1.0 / Tif * (igd_ref[0] - curr_state.igd_filter[0]);
-						pred_state.igd_filter[0] = curr_state.igd_filter[0] + (deltat * pred_state.digd_filter[0]);
-
+					        igd_filter[0] = igd_filter_blk[0].getoutput(igd_ref[0],deltat,PREDICTOR);
 						// Low pass filter for current iq
-						pred_state.digq_filter[0] = 1.0 / Tif * (igq_ref[0] - curr_state.igq_filter[0]);
-						pred_state.igq_filter[0] = curr_state.igq_filter[0] + (deltat * pred_state.digq_filter[0]);
+						igq_filter[0] = igq_filter_blk[0].getoutput(igq_ref[0],deltat,PREDICTOR);
+
 						// igd_ref[0] and igq_ref[0] are the current references in dq frame
 						// igd_filter[0] and igq_filter[0] are the currents
 
-						I_source_Re[0] = (pred_state.igd_filter[0] * cos(pred_state.Angle_PLL[0]) - pred_state.igq_filter[0] * sin(pred_state.Angle_PLL[0])) * I_base;
-						I_source_Im[0] = (pred_state.igd_filter[0] * sin(pred_state.Angle_PLL[0]) + pred_state.igq_filter[0] * cos(pred_state.Angle_PLL[0])) * I_base;
+						I_source_Re[0] = (igd_filter[0] * cos(Angle_PLL[0]) - igq_filter[0] * sin(Angle_PLL[0])) * I_base;
+						I_source_Im[0] = (igd_filter[0] * sin(Angle_PLL[0]) + igq_filter[0] * cos(Angle_PLL[0])) * I_base;
 						I_source[0] = gld::complex(I_source_Re[0], I_source_Im[0]);
 						value_IGenerated[0] = I_source[0];
 						// I_source[0] is the complex value of injected current
@@ -4163,10 +3598,10 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						// Function: Coordinate Tranformation, xy to dq
 						for (i = 0; i < 3; i++)
 						{
-							ugd_pu[i] = (value_Circuit_V[i].Re() * cos(curr_state.Angle_PLL[i]) + value_Circuit_V[i].Im() * sin(curr_state.Angle_PLL[i])) / V_base;
-							ugq_pu[i] = (-value_Circuit_V[i].Re() * sin(curr_state.Angle_PLL[i]) + value_Circuit_V[i].Im() * cos(curr_state.Angle_PLL[i])) / V_base;
-							igd_pu[i] = (terminal_current_val[i].Re() * cos(curr_state.Angle_PLL[i]) + terminal_current_val[i].Im() * sin(curr_state.Angle_PLL[i])) / I_base;
-							igq_pu[i] = (-terminal_current_val[i].Re() * sin(curr_state.Angle_PLL[i]) + terminal_current_val[i].Im() * cos(curr_state.Angle_PLL[i])) / I_base;
+							ugd_pu[i] = (value_Circuit_V[i].Re() * cos(Angle_PLL[i]) + value_Circuit_V[i].Im() * sin(Angle_PLL[i])) / V_base;
+							ugq_pu[i] = (-value_Circuit_V[i].Re() * sin(Angle_PLL[i]) + value_Circuit_V[i].Im() * cos(Angle_PLL[i])) / V_base;
+							igd_pu[i] = (terminal_current_val[i].Re() * cos(Angle_PLL[i]) + terminal_current_val[i].Im() * sin(Angle_PLL[i])) / I_base;
+							igq_pu[i] = (-terminal_current_val[i].Re() * sin(Angle_PLL[i]) + terminal_current_val[i].Im() * cos(Angle_PLL[i])) / I_base;
 						}
 						// ugd_pu[i] and ugq_pu[i] are the per-unit values of grid-side voltages in dq frame
 						// igd_pu[i] and igq_pu[i] are the per-unit values of grid-side currents in dq frame
@@ -4182,13 +3617,10 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							// Function: Phase-Lock_Loop, PLL
 							for (i = 0; i < 3; i++)
 							{
-								pred_state.ddelta_w_PLL_ini[i] = ugq_pu[i] ;
-								pred_state.delta_w_PLL_ini[i] = curr_state.delta_w_PLL_ini[i] + pred_state.ddelta_w_PLL_ini[i] * kiPLL * deltat;	//output from the integrator term
-								pred_state.delta_w_PLL[i] = pred_state.delta_w_PLL_ini[i] + pred_state.ddelta_w_PLL_ini[i] * kpPLL; // output from the PI controller
-								fPLL[i] = (pred_state.delta_w_PLL[i] + w_ref) / 2.0 / PI;														// frequency measured by PLL
-								pred_state.Angle_PLL[i] = curr_state.Angle_PLL[i] + pred_state.delta_w_PLL[i] * deltat;						// phase angle from PLL
+							        delta_w_PLL[i] = delta_w_PLL_blk[i].getoutput(ugq_pu[i],deltat,PREDICTOR);
+								fPLL[i] = (delta_w_PLL[i] + w_ref) / 2.0 / PI;														// frequency measured by PLL
+								Angle_PLL[i] = Angle_PLL_blk[i].getoutput(delta_w_PLL[i],deltat,PREDICTOR); 	// phase angle from PLL
 							}
-							// delta_w_PLL_ini[i] is the output from the integrator term
 							// delta_w_PLL[i] is the output from the PI controller
 							// w_ref is the rated angular frequency, the value is 376.99 rad/s
 							// fPLL is the frequency measured by PLL
@@ -4199,22 +3631,20 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							// Obtain the positive sequence voltage
 							value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * gld::complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * gld::complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
 							// Positive sequence value of voltage in dq frame
-							ugd_pu_PS = (value_Circuit_V_PS.Re() * cos(curr_state.Angle_PLL[0]) + value_Circuit_V_PS.Im() * sin(curr_state.Angle_PLL[0])) / V_base;
-							ugq_pu_PS = (-value_Circuit_V_PS.Re() * sin(curr_state.Angle_PLL[0]) + value_Circuit_V_PS.Im() * cos(curr_state.Angle_PLL[0])) / V_base;
+							ugd_pu_PS = (value_Circuit_V_PS.Re() * cos(Angle_PLL[0]) + value_Circuit_V_PS.Im() * sin(Angle_PLL[0])) / V_base;
+							ugq_pu_PS = (-value_Circuit_V_PS.Re() * sin(Angle_PLL[0]) + value_Circuit_V_PS.Im() * cos(Angle_PLL[0])) / V_base;
 
 							// Function: Phase-Lock_Loop, PLL, only consider positive sequence voltage
 							for (i = 0; i < 1; i++)
 							{
-								pred_state.ddelta_w_PLL_ini[i] = ugq_pu_PS ;
-								pred_state.delta_w_PLL_ini[i] = curr_state.delta_w_PLL_ini[i] + pred_state.ddelta_w_PLL_ini[i] * kiPLL * deltat;	//output from the integrator term
-								pred_state.delta_w_PLL[i] = pred_state.delta_w_PLL_ini[i] + pred_state.ddelta_w_PLL_ini[i] * kpPLL; // output from the PI controller
-								fPLL[i] = (pred_state.delta_w_PLL[i] + w_ref) / 2.0 / PI;														// frequency measured by PLL
-								pred_state.Angle_PLL[i] = curr_state.Angle_PLL[i] + pred_state.delta_w_PLL[i] * deltat;						// phase angle from PLL
+							        delta_w_PLL[i] = delta_w_PLL_blk[i].getoutput(ugq_pu_PS,deltat,PREDICTOR);
+								fPLL[i] = (delta_w_PLL[i] + w_ref) / 2.0 / PI;														// frequency measured by PLL
+								Angle_PLL[i] = Angle_PLL_blk[i].getoutput(delta_w_PLL[i],deltat,PREDICTOR); 	// phase angle from PLL
 							}
-							pred_state.Angle_PLL[1] = pred_state.Angle_PLL[0] - 2.0 / 3.0 * PI;
-							pred_state.Angle_PLL[2] = pred_state.Angle_PLL[0] + 2.0 / 3.0 * PI;
+							Angle_PLL[1] = Angle_PLL[0] - 2.0 / 3.0 * PI;
+							Angle_PLL[2] = Angle_PLL[0] + 2.0 / 3.0 * PI;
+							
 							fPLL[2] = fPLL[1] = fPLL[0];
-							// delta_w_PLL_ini[i] is the output from the integrator term
 							// delta_w_PLL[i] is the output from the PI controller
 							// w_ref is the rated angular frequency, the value is 376.99 rad/s
 							// fPLL is the frequency measured by PLL
@@ -4243,17 +3673,15 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						if (frequency_watt)
 						{
 							Pref_droop_pu_prev = Pref_droop_pu; // the value of Pref_droop_pu in last simulation step
+							f_filter = f_filter_blk.getoutput((fPLL[0]+fPLL[1]+fPLL[2])/3.0,deltat,PREDICTOR);
 
-							pred_state.df_filter = 1.0 / Tff * ((fPLL[0] + fPLL[1] + fPLL[2]) / 3.0 - curr_state.f_filter);
-							pred_state.f_filter = curr_state.f_filter + (deltat * pred_state.df_filter);
-
-							if ((pred_state.f_filter < (f_nominal + db_OF))&&(pred_state.f_filter > (f_nominal - db_UF)))  // add dead band
+							if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
 							{
 								Pref_droop_pu = Pref / S_base;
 							}
 							else
 							{
-								Pref_droop_pu = (f_nominal - pred_state.f_filter) / f_nominal / Rp + Pref / S_base;
+								Pref_droop_pu = (f_nominal - f_filter) / f_nominal / Rp + Pref / S_base;
 							}
 
 							if (Pref_droop_pu > Pref_max)
@@ -4291,15 +3719,12 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							}
 							else
 							{
-								pred_state.dPref_droop_pu_filter = 1.0 / Tpf * (Pref_droop_pu - curr_state.Pref_droop_pu_filter);
-								pred_state.Pref_droop_pu_filter = curr_state.Pref_droop_pu_filter + (deltat * pred_state.dPref_droop_pu_filter);
+							        Pref_droop_pu_filter = Pref_droop_pu_filter_blk.getoutput(Pref_droop_pu,deltat,PREDICTOR);
 							}
 						}
 						// f_filter is the frequency pass through the low pass filter
-						// Tf is the time constant in the frequency low pass filter
 						// Pref_droop_pu is the power reference from the frequency-watt
 						// Pref_droop_pu_filter is the power reference pass through the low pass filter
-						// Tpf is the time constant in the power low pass filter
 						// Pref_max and Pref_min are the upper and lower limits of power references
 						// Function end
 
@@ -4360,16 +3785,15 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						{
 							Qref_droop_pu_prev = Qref_droop_pu;
 							V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
-							pred_state.dV_filter = 1.0 / Tvf * (V_Avg_pu - curr_state.V_filter);
-							pred_state.V_filter = curr_state.V_filter + (deltat * pred_state.dV_filter);
+							V_filter = V_filter_blk.getoutput(V_Avg_pu,deltat,PREDICTOR);
 
-							if ((pred_state.V_filter < (Vset + db_OV))&&(pred_state.V_filter > (Vset - db_UV)))  // add dead band
+							if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
 							{
 								Qref_droop_pu = Qref / S_base;
 							}
 							else
 							{
-								Qref_droop_pu = (Vset - pred_state.V_filter) / Rq + Qref / S_base;
+								Qref_droop_pu = (Vset - V_filter) / Rq + Qref / S_base;
 							}
 
 							if (Qref_droop_pu > Qref_max)
@@ -4407,12 +3831,10 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							}
 							else
 							{
-								pred_state.dQref_droop_pu_filter = 1.0 / Tqf * (Qref_droop_pu - curr_state.Qref_droop_pu_filter);
-								pred_state.Qref_droop_pu_filter = curr_state.Qref_droop_pu_filter + (deltat * pred_state.dQref_droop_pu_filter);
+							        Qref_droop_pu_filter = Qref_droop_pu_filter_blk.getoutput(Qref_droop_pu,deltat,PREDICTOR);
 							}
 						}
 						// V_Avg_pu is the average value of three phase voltages
-						// Tvf is the time constant of voltage low pass filter
 						// V_filter is the voltage pass through low pass filter
 						// Qref_droop_pu if the Q reference from volt-var
 						// Qref_droop_pu_filter is the Q pass through low pass filter
@@ -4432,7 +3854,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 									}
 									else
 									{
-										igd_ref[i] = pred_state.Pref_droop_pu_filter / ugd_pu[i];
+										igd_ref[i] = Pref_droop_pu_filter / ugd_pu[i];
 									}
 								}
 								else if(grid_following_mode == POSITIVE_SEQUENCE)
@@ -4443,7 +3865,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 									}
 									else
 									{
-										igd_ref[i] = pred_state.Pref_droop_pu_filter / ugd_pu_PS;
+										igd_ref[i] = Pref_droop_pu_filter / ugd_pu_PS;
 									}
 								}
 
@@ -4473,7 +3895,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 									}
 									else
 									{
-										igq_ref[i] = -pred_state.Qref_droop_pu_filter / ugd_pu[i];
+										igq_ref[i] = -Qref_droop_pu_filter / ugd_pu[i];
 									}
 								}
 								else if(grid_following_mode == POSITIVE_SEQUENCE)
@@ -4484,7 +3906,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 									}
 									else
 									{
-										igq_ref[i] = -pred_state.Qref_droop_pu_filter / ugd_pu_PS;
+										igq_ref[i] = -Qref_droop_pu_filter / ugd_pu_PS;
 									}
 								}
 							}
@@ -4528,16 +3950,11 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							if (control_mode == GRID_FOLLOWING)
 							{
 								// current loop in d axis
-								pred_state.digd_PI_ini[i] = igd_ref[i] - igd_pu[i];
-								pred_state.igd_PI_ini[i] = curr_state.igd_PI_ini[i] + pred_state.digd_PI_ini[i] * kic * deltat; //output from the integrator term of the current control loop
-								igd_PI[i] = pred_state.igd_PI_ini[i] + pred_state.digd_PI_ini[i] * kpc;			  // output from the PI controller of current loop
-								ed_pu[i] = igd_PI[i] + ugd_pu[i] - igq_pu[i] * Xfilter * F_current;						  // the d axis component of internal voltage, Xfilter is per-unit value
+							        igd_PI[i] = igd_blk[i].getoutput(igd_ref[i] - igd_pu[i],deltat,PREDICTOR);
+							        ed_pu[i] = igd_PI[i] + ugd_pu[i] - igq_pu[i] * Xfilter * F_current;						  // the d axis component of internal voltage, Xfilter is per-unit value
 								// current loop in q axis
-								pred_state.digq_PI_ini[i] = igq_ref[i] - igq_pu[i];
-								pred_state.igq_PI_ini[i] = curr_state.igq_PI_ini[i] + pred_state.digq_PI_ini[i] * kic * deltat; //output from the integrator term of the current control loop
-								igq_PI[i] = pred_state.igq_PI_ini[i] + pred_state.digq_PI_ini[i] * kpc;			  // output from the PI controller of current loop
+								igq_PI[i] = igq_blk[i].getoutput(igq_ref[i] - igq_pu[i],deltat,PREDICTOR);
 								eq_pu[i] = igq_PI[i] + ugq_pu[i] + igd_pu[i] * Xfilter * F_current;						  // the d axis component of internal voltage, Xfilter is per-unit value
-								// igd_PI_ini[i] and igq_PI_ini[i] are outputs from the integral terms in current control loops
 								// igd_ref[i] and igq_ref[i] are the current references in dq frame
 								// igd_PI[i] and igq_PI[i] are outputs from the current control loops
 								// ed_pu[i] and eq_pu[i] are the dq components of the internal voltages
@@ -4546,8 +3963,8 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 
 								// Function: Coordinate Transformation: dq to xy
-								e_source_Re[i] = (ed_pu[i] * cos(pred_state.Angle_PLL[i]) - eq_pu[i] * sin(pred_state.Angle_PLL[i])) * V_base;
-								e_source_Im[i] = (ed_pu[i] * sin(pred_state.Angle_PLL[i]) + eq_pu[i] * cos(pred_state.Angle_PLL[i])) * V_base;
+								e_source_Re[i] = (ed_pu[i] * cos(Angle_PLL[i]) - eq_pu[i] * sin(Angle_PLL[i])) * V_base;
+								e_source_Im[i] = (ed_pu[i] * sin(Angle_PLL[i]) + eq_pu[i] * cos(Angle_PLL[i])) * V_base;
 								e_source[i] = gld::complex(e_source_Re[i], e_source_Im[i]);
 								value_IGenerated[i] = e_source[i] / (gld::complex(Rfilter, Xfilter) * Z_base); // Thevenin voltage source to Norton current source convertion
 								// e_source[i] is the complex value of internal voltage
@@ -4558,20 +3975,17 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							}
 							else if (control_mode == GFL_CURRENT_SOURCE)
 							{
-								// Low pass filter for current id
-								pred_state.digd_filter[i] = 1.0 / Tif * (igd_ref[i] - curr_state.igd_filter[i]);
-								pred_state.igd_filter[i] = curr_state.igd_filter[i] + (deltat * pred_state.digd_filter[i]);
-
+							        // Low pass filter for current id
+							        igd_filter[i] = igd_filter_blk[i].getoutput(igd_ref[i],deltat,PREDICTOR);
 								// Low pass filter for current iq
-								pred_state.digq_filter[i] = 1.0 / Tif * (igq_ref[i] - curr_state.igq_filter[i]);
-								pred_state.igq_filter[i] = curr_state.igq_filter[i] + (deltat * pred_state.digq_filter[i]);
+								igq_filter[i] = igq_filter_blk[i].getoutput(igq_ref[i],deltat,PREDICTOR);
 								// igd_ref[i] and igq_ref[i] are the current references in dq frame
 								// igd_filter[i] and igq_filter[i] are the currents
 								// Function end
 
 								// Function: Coordinate Transformation: dq to xy
-								I_source_Re[i] = (pred_state.igd_filter[i] * cos(pred_state.Angle_PLL[i]) - pred_state.igq_filter[i] * sin(pred_state.Angle_PLL[i])) * I_base;
-								I_source_Im[i] = (pred_state.igd_filter[i] * sin(pred_state.Angle_PLL[i]) + pred_state.igq_filter[i] * cos(pred_state.Angle_PLL[i])) * I_base;
+								I_source_Re[i] = (igd_filter[i] * cos(Angle_PLL[i]) - igq_filter[i] * sin(Angle_PLL[i])) * I_base;
+								I_source_Im[i] = (igd_filter[i] * sin(Angle_PLL[i]) + igq_filter[i] * cos(Angle_PLL[i])) * I_base;
 								I_source[i] = gld::complex(I_source_Re[i], I_source_Im[i]);
 								value_IGenerated[i] = I_source[i];
 								// I_source[i] is the complex value of injected current
@@ -4603,10 +4017,10 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					VA_Out = power_val[0];
 
 					// Function: Coordinate Tranformation, xy to dq
-					ugd_pu[0] = (value_Circuit_V[0].Re() * cos(pred_state.Angle_PLL[0]) + value_Circuit_V[0].Im() * sin(pred_state.Angle_PLL[0])) / V_base;
-					ugq_pu[0] = (-value_Circuit_V[0].Re() * sin(pred_state.Angle_PLL[0]) + value_Circuit_V[0].Im() * cos(pred_state.Angle_PLL[0])) / V_base;
-					igd_pu[0] = (terminal_current_val[0].Re() * cos(pred_state.Angle_PLL[0]) + terminal_current_val[0].Im() * sin(pred_state.Angle_PLL[0])) / I_base;
-					igq_pu[0] = (-terminal_current_val[0].Re() * sin(pred_state.Angle_PLL[0]) + terminal_current_val[0].Im() * cos(pred_state.Angle_PLL[0])) / I_base;
+					ugd_pu[0] = (value_Circuit_V[0].Re() * cos(Angle_PLL[0]) + value_Circuit_V[0].Im() * sin(Angle_PLL[0])) / V_base;
+					ugq_pu[0] = (-value_Circuit_V[0].Re() * sin(Angle_PLL[0]) + value_Circuit_V[0].Im() * cos(Angle_PLL[0])) / V_base;
+					igd_pu[0] = (terminal_current_val[0].Re() * cos(Angle_PLL[0]) + terminal_current_val[0].Im() * sin(Angle_PLL[0])) / I_base;
+					igq_pu[0] = (-terminal_current_val[0].Re() * sin(Angle_PLL[0]) + terminal_current_val[0].Im() * cos(Angle_PLL[0])) / I_base;
 
 					// ugd_pu[i] and ugq_pu[i] are the per-unit values of grid-side voltages in dq frame
 					// igd_pu[i] and igq_pu[i] are the per-unit values of grid-side currents in dq frame
@@ -4618,13 +4032,11 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					// Function end
 
 					// Function: Phase-Lock_Loop, PLL
-					next_state.ddelta_w_PLL_ini[0] = ugq_pu[0] ;
-					next_state.delta_w_PLL_ini[0] = curr_state.delta_w_PLL_ini[0] + (pred_state.ddelta_w_PLL_ini[0] + next_state.ddelta_w_PLL_ini[0]) * kiPLL * deltat / 2.0; //output from the integrator term
-					next_state.delta_w_PLL[0] = next_state.delta_w_PLL_ini[0] + next_state.ddelta_w_PLL_ini[0] * kpPLL;										  // output from the PI controller
-					fPLL[0] = (next_state.delta_w_PLL[0] + w_ref) / 2.0 / PI;																							  // frequency measured by PLL
-					next_state.Angle_PLL[0] = curr_state.Angle_PLL[0] + (pred_state.delta_w_PLL[0] + next_state.delta_w_PLL[0]) * deltat / 2.0;						  // sphase angle from PLL
+					delta_w_PLL[0] = delta_w_PLL_blk[0].getoutput(ugq_pu[0],deltat,CORRECTOR);
 
-					// delta_w_PLL_ini[i] is the output from the integrator term
+					fPLL[0] = (delta_w_PLL[0] + w_ref) / 2.0 / PI;			  // frequency measured by PLL
+					Angle_PLL[0] = Angle_PLL_blk[0].getoutput(delta_w_PLL[0],deltat,CORRECTOR); // phase angle from PLL
+
 					// delta_w_PLL[i] is the output from the PI controller
 					// w_ref is the rated angular frequency, the value is 376.99 rad/s
 					// fPLL is the frequency measured by PLL
@@ -4648,16 +4060,15 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					// Frequency-watt function enabled
 					if (frequency_watt)
 					{
-						next_state.df_filter = 1.0 / Tff * (fPLL[0] - pred_state.f_filter);
-						next_state.f_filter = curr_state.f_filter + (pred_state.df_filter + next_state.df_filter) * deltat / 2.0;
+					        f_filter = f_filter_blk.getoutput(fPLL[0],deltat,CORRECTOR);
 
-						if ((next_state.f_filter < (f_nominal + db_OF))&&(next_state.f_filter > (f_nominal - db_UF)))  // add dead band
+						if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
 						{
 							Pref_droop_pu = Pref / S_base;
 						}
 						else
 						{
-							Pref_droop_pu = (f_nominal - next_state.f_filter) / f_nominal / Rp + Pref / S_base;
+							Pref_droop_pu = (f_nominal - f_filter) / f_nominal / Rp + Pref / S_base;
 						}
 
 						if (Pref_droop_pu > Pref_max)
@@ -4695,16 +4106,12 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						}
 						else
 						{
-							next_state.dPref_droop_pu_filter = 1.0 / Tpf * (Pref_droop_pu - pred_state.Pref_droop_pu_filter);
-							next_state.Pref_droop_pu_filter = curr_state.Pref_droop_pu_filter + (pred_state.dPref_droop_pu_filter + next_state.dPref_droop_pu_filter) * deltat / 2.0;
+						        Pref_droop_pu_filter = Pref_droop_pu_filter_blk.getoutput(Pref_droop_pu,deltat,CORRECTOR);
 						}
-
 					}
 					// f_filter is the frequency pass through the low pass filter
-					// Tff is the time constant in the frequency low pass filter
 					// Pref_droop_pu is the power reference from the frequency-watt
 					// Pref_droop_pu_filter is the power reference pass through the low pass filter
-					// Tpf is the time constant in the power low pass filter
 					// Pref_max and Pref_min are the upper and lower limits of power references
 					// Function end
 
@@ -4764,16 +4171,15 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					if (volt_var)
 					{
 						V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
-						next_state.dV_filter = 1.0 / Tvf * (V_Avg_pu - pred_state.V_filter);
-						next_state.V_filter = curr_state.V_filter + (pred_state.dV_filter + next_state.dV_filter) * deltat / 2.0;
+						V_filter = V_filter_blk.getoutput(V_Avg_pu,deltat,CORRECTOR);
 
-						if ((next_state.V_filter < (Vset + db_OV))&&(next_state.V_filter > (Vset - db_UV)))  // add dead band
+						if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
 						{
 							Qref_droop_pu = Qref / S_base;
 						}
 						else
 						{
-							Qref_droop_pu = (Vset - next_state.V_filter) / Rq + Qref / S_base;
+							Qref_droop_pu = (Vset - V_filter) / Rq + Qref / S_base;
 						}
 
 						if (Qref_droop_pu > Qref_max)
@@ -4810,12 +4216,10 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						}
 						else
 						{
-							next_state.dQref_droop_pu_filter = 1.0 / Tqf * (Qref_droop_pu - pred_state.Qref_droop_pu_filter);
-							next_state.Qref_droop_pu_filter = curr_state.Qref_droop_pu_filter + (pred_state.dQref_droop_pu_filter + next_state.dQref_droop_pu_filter) * deltat / 2.0;
+						        Qref_droop_pu_filter = Qref_droop_pu_filter_blk.getoutput(Qref_droop_pu,deltat,CORRECTOR);
 						}
 					}
 					// V_Avg_pu is the average value of three phase voltages
-					// Tvf is the time constant of voltage low pass filter
 					// V_filter is the voltage pass through low pass filter
 					// Qref_droop_pu if the Q reference from volt-var
 					// Qref_droop_pu_filter is the Q pass through low pass filter
@@ -4831,7 +4235,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						}
 						else
 						{
-							igd_ref[0] = next_state.Pref_droop_pu_filter / ugd_pu[0];
+							igd_ref[0] = Pref_droop_pu_filter / ugd_pu[0];
 						}
 					}
 					else
@@ -4848,7 +4252,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						}
 						else
 						{
-							igq_ref[0] = -next_state.Qref_droop_pu_filter / ugd_pu[0];
+							igq_ref[0] = -Qref_droop_pu_filter / ugd_pu[0];
 						}
 					}
 					else
@@ -4884,17 +4288,14 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					if(control_mode == GRID_FOLLOWING)
 					{
 						// current loop in d axis
-						next_state.digd_PI_ini[0] = igd_ref[0] - igd_pu[0];
-						next_state.igd_PI_ini[0] = curr_state.igd_PI_ini[0] + (pred_state.digd_PI_ini[0] + next_state.digd_PI_ini[0]) * kic * deltat / 2.0; //output from the integrator term of the current control loop
-						igd_PI[0] = next_state.igd_PI_ini[0] + next_state.digd_PI_ini[0] * kpc;												  // output from the PI controller of current loop
+					        igd_PI[0] = igd_blk[0].getoutput(igd_ref[0] - igd_pu[0],deltat,CORRECTOR); 		  // output from the PI controller of current loop
+
 						ed_pu[0] = igd_PI[0] + ugd_pu[0] - igq_pu[0] * Xfilter * F_current;															  // the d axis component of internal voltage, Xfilter is per-unit value
 						// current loop in q axis
-						next_state.digq_PI_ini[0] = igq_ref[0] - igq_pu[0];
-						next_state.igq_PI_ini[0] = curr_state.igq_PI_ini[0] + (pred_state.digq_PI_ini[0] + next_state.digq_PI_ini[0]) * kic * deltat / 2.0; //output from the integrator term of the current control loop
-						igq_PI[0] = next_state.igq_PI_ini[0] + next_state.digq_PI_ini[0] * kpc;												  // output from the PI controller of current loop
+						igq_PI[0] = igq_blk[0].getoutput(igq_ref[0] - igq_pu[0],deltat,CORRECTOR); 			  // output from the PI controller of current loop
+
 						eq_pu[0] = igq_PI[0] + ugq_pu[0] + igd_pu[0] * Xfilter * F_current;															  // the d axis component of internal voltage, Xfilter is per-unit value
 
-						// igd_PI_ini[i] and igq_PI_ini[i] are outputs from the integral terms in current control loops
 						// igd_ref[i] and igq_ref[i] are the current references in dq frame
 						// igd_PI[i] and igq_PI[i] are outputs from the current control loops
 						// ed_pu[i] and eq_pu[i] are the dq components of the internal voltages
@@ -4902,8 +4303,8 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						// Function end
 
 						// Function: Coordinate Transformation: dq to xy
-						e_source_Re[0] = (ed_pu[0] * cos(next_state.Angle_PLL[0]) - eq_pu[0] * sin(next_state.Angle_PLL[0])) * V_base;
-						e_source_Im[0] = (ed_pu[0] * sin(next_state.Angle_PLL[0]) + eq_pu[0] * cos(next_state.Angle_PLL[0])) * V_base;
+						e_source_Re[0] = (ed_pu[0] * cos(Angle_PLL[0]) - eq_pu[0] * sin(Angle_PLL[0])) * V_base;
+						e_source_Im[0] = (ed_pu[0] * sin(Angle_PLL[0]) + eq_pu[0] * cos(Angle_PLL[0])) * V_base;
 						e_source[0] = gld::complex(e_source_Re[0], e_source_Im[0]);
 						value_IGenerated[0] = e_source[0] / (gld::complex(Rfilter, Xfilter) * Z_base); // Thevenin voltage source to Norton current source convertion
 
@@ -4914,18 +4315,16 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					}
 					else if (control_mode == GFL_CURRENT_SOURCE)
 					{
-						// Low pass filter for current id
-						next_state.digd_filter[0] = 1.0 / Tif * (igd_ref[0] - pred_state.igd_filter[0]);
-						next_state.igd_filter[0] = curr_state.igd_filter[0] + (pred_state.digd_filter[0] + next_state.digd_filter[0]) * deltat / 2.0;
+					        // Low pass filter for current id
+					        igd_filter[0] = igd_filter_blk[0].getoutput(igd_ref[0],deltat,CORRECTOR);
+						// Low pass filter for current iq
+						igq_filter[0] = igq_filter_blk[0].getoutput(igq_ref[0],deltat,CORRECTOR);
 
-						// Low pass filter for current id
-						next_state.digq_filter[0] = 1.0 / Tif * (igq_ref[0] - pred_state.igq_filter[0]);
-						next_state.igq_filter[0] = curr_state.igq_filter[0] + (pred_state.digq_filter[0] + next_state.digq_filter[0]) * deltat / 2.0;
 						// igd_ref[0] and igq_ref[0] are the current references in dq frame
 						// igd_filter[0] and igq_filter[0] are the currents
 
-						I_source_Re[0] = (next_state.igd_filter[0] * cos(next_state.Angle_PLL[0]) - next_state.igq_filter[0] * sin(next_state.Angle_PLL[0])) * I_base;
-						I_source_Im[0] = (next_state.igd_filter[0] * sin(next_state.Angle_PLL[0]) + next_state.igq_filter[0] * cos(next_state.Angle_PLL[0])) * I_base;
+						I_source_Re[0] = (igd_filter[0] * cos(Angle_PLL[0]) - igq_filter[0] * sin(Angle_PLL[0])) * I_base;
+						I_source_Im[0] = (igd_filter[0] * sin(Angle_PLL[0]) + igq_filter[0] * cos(Angle_PLL[0])) * I_base;
 						I_source[0] = gld::complex(I_source_Re[0], I_source_Im[0]);
 						value_IGenerated[0] = I_source[0];
 						// I_source[0] is the complex value of injected current
@@ -4993,10 +4392,10 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						// Function: Coordinate Tranformation, xy to dq
 						for (i = 0; i < 3; i++)
 						{
-							ugd_pu[i] = (value_Circuit_V[i].Re() * cos(pred_state.Angle_PLL[i]) + value_Circuit_V[i].Im() * sin(pred_state.Angle_PLL[i])) / V_base;
-							ugq_pu[i] = (-value_Circuit_V[i].Re() * sin(pred_state.Angle_PLL[i]) + value_Circuit_V[i].Im() * cos(pred_state.Angle_PLL[i])) / V_base;
-							igd_pu[i] = (terminal_current_val[i].Re() * cos(pred_state.Angle_PLL[i]) + terminal_current_val[i].Im() * sin(pred_state.Angle_PLL[i])) / I_base;
-							igq_pu[i] = (-terminal_current_val[i].Re() * sin(pred_state.Angle_PLL[i]) + terminal_current_val[i].Im() * cos(pred_state.Angle_PLL[i])) / I_base;
+							ugd_pu[i] = (value_Circuit_V[i].Re() * cos(Angle_PLL[i]) + value_Circuit_V[i].Im() * sin(Angle_PLL[i])) / V_base;
+							ugq_pu[i] = (-value_Circuit_V[i].Re() * sin(Angle_PLL[i]) + value_Circuit_V[i].Im() * cos(Angle_PLL[i])) / V_base;
+							igd_pu[i] = (terminal_current_val[i].Re() * cos(Angle_PLL[i]) + terminal_current_val[i].Im() * sin(Angle_PLL[i])) / I_base;
+							igq_pu[i] = (-terminal_current_val[i].Re() * sin(Angle_PLL[i]) + terminal_current_val[i].Im() * cos(Angle_PLL[i])) / I_base;
 						}
 						// ugd_pu[i] and ugq_pu[i] are the per-unit values of grid-side voltages in dq frame
 						// igd_pu[i] and igq_pu[i] are the per-unit values of grid-side currents in dq frame
@@ -5012,13 +4411,11 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							// Function: Phase-Lock_Loop, PLL
 							for (i = 0; i < 3; i++)
 							{
-								next_state.ddelta_w_PLL_ini[i] = ugq_pu[i] ;
-								next_state.delta_w_PLL_ini[i] = curr_state.delta_w_PLL_ini[i] + (pred_state.ddelta_w_PLL_ini[i] + next_state.ddelta_w_PLL_ini[i]) * kiPLL * deltat / 2.0; //output from the integrator term
-								next_state.delta_w_PLL[i] = next_state.delta_w_PLL_ini[i] + next_state.ddelta_w_PLL_ini[i] * kpPLL;										  // output from the PI controller
-								fPLL[i] = (next_state.delta_w_PLL[i] + w_ref) / 2.0 / PI;																							  // frequency measured by PLL
-								next_state.Angle_PLL[i] = curr_state.Angle_PLL[i] + (pred_state.delta_w_PLL[i] + next_state.delta_w_PLL[i]) * deltat / 2.0;						  // sphase angle from PLL
+							        delta_w_PLL[i] = delta_w_PLL_blk[i].getoutput(ugq_pu[i],deltat,CORRECTOR);
+								fPLL[i] = (delta_w_PLL[i] + w_ref) / 2.0 / PI; 				  // frequency measured by PLL
+								Angle_PLL[i] = Angle_PLL_blk[i].getoutput(delta_w_PLL[i],deltat,CORRECTOR);			  // sphase angle from PLL
 							}
-							// delta_w_PLL_ini[i] is the output from the integrator term
+
 							// delta_w_PLL[i] is the output from the PI controller
 							// w_ref is the rated angular frequency, the value is 376.99 rad/s
 							// fPLL is the frequency measured by PLL
@@ -5030,22 +4427,20 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * gld::complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * gld::complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
 
 							// Positive sequence value of voltage in dq frame
-							ugd_pu_PS = (value_Circuit_V_PS.Re() * cos(pred_state.Angle_PLL[0]) + value_Circuit_V_PS.Im() * sin(pred_state.Angle_PLL[0])) / V_base;
-							ugq_pu_PS = (-value_Circuit_V_PS.Re() * sin(pred_state.Angle_PLL[0]) + value_Circuit_V_PS.Im() * cos(pred_state.Angle_PLL[0])) / V_base;
+							ugd_pu_PS = (value_Circuit_V_PS.Re() * cos(Angle_PLL[0]) + value_Circuit_V_PS.Im() * sin(Angle_PLL[0])) / V_base;
+							ugq_pu_PS = (-value_Circuit_V_PS.Re() * sin(Angle_PLL[0]) + value_Circuit_V_PS.Im() * cos(Angle_PLL[0])) / V_base;
 
 							// Function: Phase-Lock_Loop, PLL, only consider the positive sequence voltage
 							for (i = 0; i < 1; i++)
 							{
-								next_state.ddelta_w_PLL_ini[i] = ugq_pu_PS ;
-								next_state.delta_w_PLL_ini[i] = curr_state.delta_w_PLL_ini[i] + (pred_state.ddelta_w_PLL_ini[i] + next_state.ddelta_w_PLL_ini[i]) * kiPLL * deltat / 2.0; //output from the integrator term
-								next_state.delta_w_PLL[i] = next_state.delta_w_PLL_ini[i] + next_state.ddelta_w_PLL_ini[i] * kpPLL;										  // output from the PI controller
-								fPLL[i] = (next_state.delta_w_PLL[i] + w_ref) / 2.0 / PI;																							  // frequency measured by PLL
-								next_state.Angle_PLL[i] = curr_state.Angle_PLL[i] + (pred_state.delta_w_PLL[i] + next_state.delta_w_PLL[i]) * deltat / 2.0;						  // sphase angle from PLL
+							        delta_w_PLL[i] = delta_w_PLL_blk[i].getoutput(ugq_pu_PS,deltat,CORRECTOR);
+								fPLL[i] = (delta_w_PLL[i] + w_ref) / 2.0 / PI; 	  // frequency measured by PLL
+								Angle_PLL[i] = Angle_PLL_blk[i].getoutput(delta_w_PLL[i],deltat,CORRECTOR);
 							}
-							next_state.Angle_PLL[1] = next_state.Angle_PLL[0] - 2.0 / 3.0 * PI;
-							next_state.Angle_PLL[2] = next_state.Angle_PLL[0] + 2.0 / 3.0 * PI;
+							Angle_PLL[1] = Angle_PLL[0] - 2.0 / 3.0 * PI;
+							Angle_PLL[2] = Angle_PLL[0] + 2.0 / 3.0 * PI;
 							fPLL[2] = fPLL[1] = fPLL[0];
-							// delta_w_PLL_ini[i] is the output from the integrator term
+
 							// delta_w_PLL[i] is the output from the PI controller
 							// w_ref is the rated angular frequency, the value is 376.99 rad/s
 							// fPLL is the frequency measured by PLL
@@ -5072,16 +4467,14 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						// Frequency-watt function enabled
 						if (frequency_watt)
 						{
-							next_state.df_filter = 1.0 / Tff * ((fPLL[0] + fPLL[1] + fPLL[2]) / 3.0 - pred_state.f_filter);
-							next_state.f_filter = curr_state.f_filter + (pred_state.df_filter + next_state.df_filter) * deltat / 2.0;
-
-							if ((next_state.f_filter < (f_nominal + db_OF))&&(next_state.f_filter > (f_nominal - db_UF)))  // add dead band
+						        f_filter = f_filter_blk.getoutput((fPLL[0]+fPLL[1]+fPLL[2])/3.0,deltat,CORRECTOR);
+							if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
 							{
 								Pref_droop_pu = Pref / S_base;
 							}
 							else
 							{
-								Pref_droop_pu = (f_nominal - next_state.f_filter) / f_nominal / Rp + Pref / S_base;
+								Pref_droop_pu = (f_nominal - f_filter) / f_nominal / Rp + Pref / S_base;
 							}
 
 							if (Pref_droop_pu > Pref_max)
@@ -5119,15 +4512,12 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							}
 							else
 							{
-								next_state.dPref_droop_pu_filter = 1.0 / Tpf * (Pref_droop_pu - pred_state.Pref_droop_pu_filter);
-								next_state.Pref_droop_pu_filter = curr_state.Pref_droop_pu_filter + (pred_state.dPref_droop_pu_filter + next_state.dPref_droop_pu_filter) * deltat / 2.0;
+							         Pref_droop_pu_filter = Pref_droop_pu_filter_blk.getoutput(Pref_droop_pu,deltat,CORRECTOR);
 							}
 						}
 						// f_filter is the frequency pass through the low pass filter
-						// Tff is the time constant in the frequency low pass filter
 						// Pref_droop_pu is the power reference from the frequency-watt
-						// Pref_droop_pu_filter is the power reference pass through the low pass filter
-						// Tpf is the time constant in the power low pass filter
+						// Pref_droop_pu_filter is the power reference pass through the low pass filte
 						// Pref_max and Pref_min are the upper and lower limits of power references
 						// Function end
 
@@ -5187,16 +4577,16 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						if (volt_var)
 						{
 							V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
-							next_state.dV_filter = 1.0 / Tvf * (V_Avg_pu - pred_state.V_filter);
-							next_state.V_filter = curr_state.V_filter + (pred_state.dV_filter + next_state.dV_filter) * deltat / 2.0;
+							V_filter = V_filter_blk.getoutput(V_Avg_pu,deltat,CORRECTOR);
 
-							if ((next_state.V_filter < (Vset + db_OV))&&(next_state.V_filter > (Vset - db_UV)))  // add dead band
+
+							if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
 							{
 								Qref_droop_pu = Qref / S_base;
 							}
 							else
 							{
-								Qref_droop_pu = (Vset - next_state.V_filter) / Rq + Qref / S_base;
+								Qref_droop_pu = (Vset - V_filter) / Rq + Qref / S_base;
 							}
 
 
@@ -5235,13 +4625,10 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							}
 							else
 							{
-								next_state.dQref_droop_pu_filter = 1.0 / Tqf * (Qref_droop_pu - pred_state.Qref_droop_pu_filter);
-								next_state.Qref_droop_pu_filter = curr_state.Qref_droop_pu_filter + (pred_state.dQref_droop_pu_filter + next_state.dQref_droop_pu_filter) * deltat / 2.0;
+								Qref_droop_pu_filter = Qref_droop_pu_filter_blk.getoutput(Qref_droop_pu,deltat,CORRECTOR);
 							}
-
 						}
 						// V_Avg_pu is the average value of three phase voltages
-						// Tvf is the time constant of voltage low pass filter
 						// V_filter is the voltage pass through low pass filter
 						// Qref_droop_pu if the Q reference from volt-var
 						// Qref_droop_pu_filter is the Q pass through low pass filter
@@ -5264,7 +4651,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 									}
 									else
 									{
-										igd_ref[i] = next_state.Pref_droop_pu_filter / ugd_pu[i];
+										igd_ref[i] = Pref_droop_pu_filter / ugd_pu[i];
 									}
 								}
 								else if(grid_following_mode == POSITIVE_SEQUENCE)
@@ -5275,7 +4662,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 									}
 									else
 									{
-										igd_ref[i] = next_state.Pref_droop_pu_filter / ugd_pu_PS;
+										igd_ref[i] = Pref_droop_pu_filter / ugd_pu_PS;
 									}
 								}
 							}
@@ -5304,7 +4691,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 									}
 									else
 									{
-										igq_ref[i] = -next_state.Qref_droop_pu_filter / ugd_pu[i];
+										igq_ref[i] = -Qref_droop_pu_filter / ugd_pu[i];
 									}
 								}
 								else if(grid_following_mode == POSITIVE_SEQUENCE)
@@ -5315,7 +4702,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 									}
 									else
 									{
-										igq_ref[i] = -next_state.Qref_droop_pu_filter / ugd_pu_PS;
+										igq_ref[i] = -Qref_droop_pu_filter / ugd_pu_PS;
 									}
 								}
 							}
@@ -5360,17 +4747,12 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							if(control_mode == GRID_FOLLOWING)
 							{
 								// current loop in d axis
-								next_state.digd_PI_ini[i] = igd_ref[i] - igd_pu[i];
-								next_state.igd_PI_ini[i] = curr_state.igd_PI_ini[i] + (pred_state.digd_PI_ini[i] + next_state.digd_PI_ini[i]) * kic * deltat / 2.0; //output from the integrator term of the current control loop
-								igd_PI[i] = next_state.igd_PI_ini[i] + next_state.digd_PI_ini[i] * kpc;												  // output from the PI controller of current loop
-								ed_pu[i] = igd_PI[i] + ugd_pu[i] - igq_pu[i] * Xfilter * F_current;															  // the d axis component of internal voltage, Xfilter is per-unit value
+							        igd_PI[i] = igd_blk[i].getoutput(igd_ref[i] - igd_pu[i],deltat,CORRECTOR);
+							        ed_pu[i] = igd_PI[i] + ugd_pu[i] - igq_pu[i] * Xfilter * F_current;															  // the d axis component of internal voltage, Xfilter is per-unit value
 								// current loop in q axis
-								next_state.digq_PI_ini[i] = igq_ref[i] - igq_pu[i];
-								next_state.igq_PI_ini[i] = curr_state.igq_PI_ini[i] + (pred_state.digq_PI_ini[i] + next_state.digq_PI_ini[i]) * kic * deltat / 2.0; //output from the integrator term of the current control loop
-								igq_PI[i] = next_state.igq_PI_ini[i] + next_state.digq_PI_ini[i] * kpc;												  // output from the PI controller of current loop
+								igq_PI[i] = igq_blk[i].getoutput(igq_ref[i] - igq_pu[i],deltat,CORRECTOR);
 								eq_pu[i] = igq_PI[i] + ugq_pu[i] + igd_pu[i] * Xfilter * F_current;															  // the d axis component of internal voltage, Xfilter is per-unit value
 
-								// igd_PI_ini[i] and igq_PI_ini[i] are outputs from the integral terms in current control loops
 								// igd_ref[i] and igq_ref[i] are the current references in dq frame
 								// igd_PI[i] and igq_PI[i] are outputs from the current control loops
 								// ed_pu[i] and eq_pu[i] are the dq components of the internal voltages
@@ -5378,8 +4760,8 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 								// Function end
 
 								// Function: Coordinate Transformation: dq to xy
-								e_source_Re[i] = (ed_pu[i] * cos(next_state.Angle_PLL[i]) - eq_pu[i] * sin(next_state.Angle_PLL[i])) * V_base;
-								e_source_Im[i] = (ed_pu[i] * sin(next_state.Angle_PLL[i]) + eq_pu[i] * cos(next_state.Angle_PLL[i])) * V_base;
+								e_source_Re[i] = (ed_pu[i] * cos(Angle_PLL[i]) - eq_pu[i] * sin(Angle_PLL[i])) * V_base;
+								e_source_Im[i] = (ed_pu[i] * sin(Angle_PLL[i]) + eq_pu[i] * cos(Angle_PLL[i])) * V_base;
 								e_source[i] = gld::complex(e_source_Re[i], e_source_Im[i]);
 								value_IGenerated[i] = e_source[i] / (gld::complex(Rfilter, Xfilter) * Z_base); // Thevenin voltage source to Norton current source convertion
 
@@ -5390,21 +4772,18 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							}
 							else if(control_mode == GFL_CURRENT_SOURCE)
 							{
-								// Low pass filter for current id
-								next_state.digd_filter[i] = 1.0 / Tif * (igd_ref[i] - pred_state.igd_filter[i]);
-								next_state.igd_filter[i] = curr_state.igd_filter[i] + (pred_state.digd_filter[i] + next_state.digd_filter[i]) * deltat / 2.0;
-
-								// Low pass filter for current id
-								next_state.digq_filter[i] = 1.0 / Tif * (igq_ref[i] - pred_state.igq_filter[i]);
-								next_state.igq_filter[i] = curr_state.igq_filter[i] + (pred_state.digq_filter[i] + next_state.digq_filter[i]) * deltat / 2.0;
+							        // Low pass filter for current id
+							        igd_filter[i] = igd_filter_blk[i].getoutput(igd_ref[i],deltat,CORRECTOR);
+							        // Low pass filter for current iq
+							        igq_filter[i] = igq_filter_blk[i].getoutput(igq_ref[i],deltat,CORRECTOR);
 
 								// igd_ref[i] and igq_ref[i] are the current references in dq frame
 								// igd_filter[i] and igq_filter[i] are the currents
 								// Function end
 
 								// Function: Coordinate Transformation: dq to xy
-								I_source_Re[i] = (next_state.igd_filter[i] * cos(next_state.Angle_PLL[i]) - next_state.igq_filter[i] * sin(next_state.Angle_PLL[i])) * I_base;
-								I_source_Im[i] = (next_state.igd_filter[i] * sin(next_state.Angle_PLL[i]) + next_state.igq_filter[i] * cos(next_state.Angle_PLL[i])) * I_base;
+								I_source_Re[i] = (igd_filter[i] * cos(Angle_PLL[i]) - igq_filter[i] * sin(Angle_PLL[i])) * I_base;
+								I_source_Im[i] = (igd_filter[i] * sin(Angle_PLL[i]) + igq_filter[i] * cos(Angle_PLL[i])) * I_base;
 								I_source[i] = gld::complex(I_source_Re[i], I_source_Im[i]);
 								value_IGenerated[i] = I_source[i];
 								// I_source[i] is the complex value of injected current
@@ -5543,6 +4922,9 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			//Update per-unit value
 			terminal_current_val_pu[0] = terminal_current_val[0] / I_base;
 
+			terminal_current_val_pu_prefault[0] = terminal_current_val_pu[0];
+
+
 			//Update power output variables, just so we can see what is going on
 			power_val[0] = value_Circuit_V[0] * ~terminal_current_val[0];
 
@@ -5558,18 +4940,26 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				// Initialize the state variables of the internal voltages
 				e_droop[i] = (value_IGenerated[i] * gld::complex(Rfilter, Xfilter) * Z_base);
 				e_droop_prev[i] = e_droop[i];
-				curr_time->Angle[i] = (e_droop[i]).Arg(); // Obtain the inverter internal voltage phase angle
+				Angle_blk[i].setparams(1.0);
+				Angle_blk[i].init_given_y(e_droop[i].Arg());
 			}
 
-			// Initialize the internal voltage magnitudes
-			curr_time->V_ini = e_droop[0].Mag() / V_base;
-
+			if(VFlag) {
+			  // Initialize the voltage control block
+			  V_ctrl_blk.setparams(kpv,kiv,E_min,E_max,E_min,E_max);
+			  V_ctrl_blk.init_given_y(e_droop[0].Mag() / V_base);
+			}
+			
 			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
 			if (first_deltamode_init)
 			{
 				//Make sure it wasn't "pre-set"
 
-				Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+			        if(VFlag) {
+				  Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+				} else {
+				  Vset = e_droop[0].Mag() / V_base + VA_Out.Im() / S_base *mq;
+				}
 
 				if (P_f_droop_setting_mode == PSET_MODE)
 				{
@@ -5587,19 +4977,31 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			}
 			//Default else - all changes should be in deltamode
 
-			// Initialize measured P,Q,and V
-			curr_time->p_measure = VA_Out.Re() / S_base;
-			curr_time->q_measure = VA_Out.Im() / S_base;
-			curr_time->v_measure = pCircuit_V_Avg_pu;
+			// Initialize P measurement filter block
+			Pmeas_blk.setparams(Tp);
+			Pmeas_blk.init_given_y(VA_Out.Re()/S_base);
+
+			// Initialize Q measurement filter block
+			Qmeas_blk.setparams(Tq);
+			Qmeas_blk.init_given_y(VA_Out.Im()/S_base);
+
+			// Initialize V measurement filter
+			Vmeas_blk.setparams(Tv);
+			Vmeas_blk.init_given_y(pCircuit_V_Avg_pu);
 
 			// Initialize Pmax and Pmin controller
-			curr_time->delta_w_Pmax_ini = 0;
-			curr_time->delta_w_Pmin_ini = 0;
+			Pmax_ctrl_blk.setparams(kppmax,kipmax,-w_lim,0.0,-w_lim,0.0);
+			Pmin_ctrl_blk.setparams(kppmax,kipmax,0.0,w_lim,0.0,w_lim);
 
+			Pmax_ctrl_blk.init_given_y(0.0);
+			Pmin_ctrl_blk.init_given_y(0.0);
+			
 			// Initialize Qmax and Qmin controller
-			curr_time->delta_V_Qmax_ini = 0;
-			curr_time->delta_V_Qmin_ini = 0;
+			Qmax_ctrl_blk.setparams(kpqmax,kiqmax,-V_lim,0.0,-V_lim,0.0);
+			Qmin_ctrl_blk.setparams(kpqmax,kiqmax,0.0,V_lim,0.0,V_lim);
 
+			Qmax_ctrl_blk.init_given_y(0.0);
+			Qmin_ctrl_blk.init_given_y(0.0);
 
 			// Initialize Vdc_min controller and DC bus voltage
 			if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
@@ -5658,6 +5060,10 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			terminal_current_val_pu[1] = terminal_current_val[1] / I_base;
 			terminal_current_val_pu[2] = terminal_current_val[2] / I_base;
 
+			terminal_current_val_pu_prefault[0] = terminal_current_val_pu[0];
+			terminal_current_val_pu_prefault[1] = terminal_current_val_pu[1];
+			terminal_current_val_pu_prefault[2] = terminal_current_val_pu[2];
+
 			//Update power output variables, just so we can see what is going on
 			power_val[0] = value_Circuit_V[0] * ~terminal_current_val[0];
 			power_val[1] = value_Circuit_V[1] * ~terminal_current_val[1];
@@ -5674,18 +5080,25 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				// Initialize the state variables of the internal voltages
 				e_droop[i] = (value_IGenerated[i] * gld::complex(Rfilter, Xfilter) * Z_base);
 				e_droop_prev[i] = e_droop[i];
-				curr_time->Angle[i] = (e_droop[i]).Arg(); // Obtain the inverter internal voltage phasor angle
+
+				Angle_blk[i].setparams(1.0);
+				Angle_blk[i].init_given_y(e_droop[i].Arg());
+
 			}
 
-			// Initializa the internal voltage magnitudes
-			curr_time->V_ini = (e_droop[0].Mag() + e_droop[1].Mag() + e_droop[2].Mag()) / 3 / V_base;
-
+			// Initializa the voltage control block
+			V_ctrl_blk.setparams(kpv,kiv,E_min,E_max,E_min,E_max);
+			V_ctrl_blk.init_given_y((e_droop[0].Mag() + e_droop[1].Mag() + e_droop[2].Mag()) / 3 / V_base);
+			
 			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
 			if (first_deltamode_init)
 			{
 				//Make sure it wasn't "pre-set"
-
-				Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+			        if(VFlag) {
+			          Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+				} else {
+				  Vset = (e_droop[0].Mag() + e_droop[1].Mag() + e_droop[2].Mag()) / 3 / V_base + VA_Out.Im() / S_base * mq;
+				}
 
 				if (P_f_droop_setting_mode == PSET_MODE)
 				{
@@ -5704,18 +5117,31 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			//Default else - all changes should be in deltamode
 
 			// Initialize measured P,Q,and V
-			curr_time->p_measure = VA_Out.Re() / S_base;
-			curr_time->q_measure = VA_Out.Im() / S_base;
-			curr_time->v_measure = pCircuit_V_Avg_pu;
+
+			Pmeas_blk.setparams(Tp);
+			Pmeas_blk.init_given_y(VA_Out.Re()/S_base);
+			
+			// Initialize Q measurement filter block
+			Qmeas_blk.setparams(Tq);
+			Qmeas_blk.init_given_y(VA_Out.Im()/S_base);
+
+			// Initialize V measurement filter
+			Vmeas_blk.setparams(Tv);
+			Vmeas_blk.init_given_y(pCircuit_V_Avg_pu);
 
 			// Initialize Pmax and Pmin controller
-			curr_time->delta_w_Pmax_ini = 0;
-			curr_time->delta_w_Pmin_ini = 0;
+			Pmax_ctrl_blk.setparams(kppmax,kipmax,-w_lim,0.0,-w_lim,0.0);
+			Pmin_ctrl_blk.setparams(kppmax,kipmax,0.0,w_lim,0.0,w_lim);
 
+			Pmax_ctrl_blk.init_given_y(0.0);
+			Pmin_ctrl_blk.init_given_y(0.0);
+			
 			// Initialize Qmax and Qmin controller
-			curr_time->delta_V_Qmax_ini = 0;
-			curr_time->delta_V_Qmin_ini = 0;
+			Qmax_ctrl_blk.setparams(kpqmax,kiqmax,-V_lim,0.0,-V_lim,0.0);
+			Qmin_ctrl_blk.setparams(kpqmax,kiqmax,0.0,V_lim,0.0,V_lim);
 
+			Qmax_ctrl_blk.init_given_y(0.0);
+			Qmin_ctrl_blk.init_given_y(0.0);
 
 			// Initialize Vdc_min controller and DC bus voltage
 			if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
@@ -5787,8 +5213,12 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			//Default else - all changes should be in deltamode
 
 			// Initialize the PLL
-			curr_time->Angle_PLL[0] = value_Circuit_V[0].Arg();
-			curr_time->delta_w_PLL_ini[0] = 0;
+			Angle_PLL_blk[0].init_given_y(value_Circuit_V[0].Arg());
+			Angle_PLL[0] = Angle_PLL_blk[0].x[0];
+			
+			delta_w_PLL_blk[0].setparams(kpPLL,kiPLL,-1000.0,1000.0,-1000.0,1000.0);
+			delta_w_PLL_blk[0].init_given_y(0.0);
+
 
 			ugd_pu[0] = (value_Circuit_V[0].Re() * cos(value_Circuit_V[0].Arg()) + value_Circuit_V[0].Im() * sin(value_Circuit_V[0].Arg())) / V_base;
 			ugq_pu[0] = (-value_Circuit_V[0].Re() * sin(value_Circuit_V[0].Arg()) + value_Circuit_V[0].Im() * cos(value_Circuit_V[0].Arg())) / V_base;
@@ -5802,51 +5232,69 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				ed_pu[0] = (e_source[0].Re() * cos(value_Circuit_V[0].Arg()) + e_source[0].Im() * sin(value_Circuit_V[0].Arg())) / V_base;
 				eq_pu[0] = (-e_source[0].Re() * sin(value_Circuit_V[0].Arg()) + e_source[0].Im() * cos(value_Circuit_V[0].Arg())) / V_base;
 
-				curr_time->igd_PI_ini[0] = ed_pu[0] - ugd_pu[0] + igq_pu[0] * Xfilter * F_current;
-				curr_time->igq_PI_ini[0] = eq_pu[0] - ugq_pu[0] - igd_pu[0] * Xfilter * F_current;
+				igd_blk[0].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
+				igq_blk[0].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
+
+				igd_blk[0].init_given_y(ed_pu[0] - ugd_pu[0] + igq_pu[0] * Xfilter * F_current);
+				igq_blk[0].init_given_y(eq_pu[0] - ugq_pu[0] - igd_pu[0] * Xfilter * F_current);
 			}
 			else if(control_mode == GFL_CURRENT_SOURCE)
 			{
 				// Initialize the current source
 				I_source[0] = value_IGenerated[0];
 
-				curr_time->igd_filter[0] = igd_pu[0];
-				curr_time->igq_filter[0] = igq_pu[0];
+				igd_filter_blk[0].setparams(Tif);
+				igq_filter_blk[0].setparams(Tif);
+
+				igd_filter_blk[0].init_given_y(igd_pu[0]);
+				igq_filter_blk[0].init_given_y(igq_pu[0]);
+
+				igd_filter[0] = igd_filter_blk[0].x[0];
+				igq_filter[0] = igq_filter_blk[0].x[0];
 			}
 
 			if (frequency_watt)
 			{
 				// Initialize the frequency-watt
-				curr_time->f_filter = fPLL[0];
-
-				if ((curr_time->f_filter < (f_nominal + db_OF))&&(curr_time->f_filter > (f_nominal - db_UF)))  // add dead band
+			        f_filter_blk.setparams(Tff);
+				f_filter_blk.init_given_y(fPLL[0]);
+				f_filter = f_filter_blk.x[0];
+				
+				if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
 				{
 					Pref_droop_pu = Pref / S_base;
 				}
 				else
 				{
-					Pref_droop_pu = (f_nominal - curr_time->f_filter) / Rp + Pref / S_base;
+					Pref_droop_pu = (f_nominal - f_filter) / Rp + Pref / S_base;
 				}
 
-				curr_time->Pref_droop_pu_filter = Pref_droop_pu;
+				
+				Pref_droop_pu_filter_blk.setparams(Tpf);
+				Pref_droop_pu_filter_blk.init_given_y(Pref_droop_pu);
+				Pref_droop_pu_filter = Pref_droop_pu_filter_blk.x[0];
 			}
 
 			if (volt_var)
 			{
 				// Initialize the volt-var control
-				V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
-				curr_time->V_filter = V_Avg_pu;
+			        V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
+			        V_filter_blk.setparams(Tvf);
+				V_filter_blk.init_given_y(V_Avg_pu);
+				V_filter = V_filter_blk.x[0];
 
-				if ((curr_time->V_filter < (Vset + db_OV))&&(curr_time->V_filter > (Vset - db_UV)))  // add dead band
+				if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
 				{
 					Qref_droop_pu = Qref / S_base;
 				}
 				else
 				{
-					Qref_droop_pu = (Vset - curr_time->V_filter) / Rq + Qref / S_base;
+					Qref_droop_pu = (Vset - V_filter) / Rq + Qref / S_base;
 				}
 
-				curr_time->Qref_droop_pu_filter = Qref_droop_pu;
+				Qref_droop_pu_filter_blk.setparams(Tqf);
+				Qref_droop_pu_filter_blk.init_given_y(Qref_droop_pu);
+				Qref_droop_pu_filter = Qref_droop_pu_filter_blk.x[0];
 			}
 		}
 		else //Three-phase
@@ -5891,8 +5339,11 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					for (int i = 0; i < 3; i++)
 					{
 						// Initialize the PLL
-						curr_time->Angle_PLL[i] = value_Circuit_V[i].Arg();
-						curr_time->delta_w_PLL_ini[i] = 0;
+					        Angle_PLL_blk[i].init_given_y(value_Circuit_V[i].Arg());
+						Angle_PLL[i] = Angle_PLL_blk[i].x[0];
+
+						delta_w_PLL_blk[i].setparams(kpPLL,kiPLL,-1000.0,1000.0,-1000.0,1000.0);
+						delta_w_PLL_blk[i].init_given_y(0.0);
 					}
 				}
 				else if(grid_following_mode == POSITIVE_SEQUENCE)
@@ -5901,83 +5352,107 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * gld::complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * gld::complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
 
 					// only consider positive sequence
-					curr_time->Angle_PLL[0] = value_Circuit_V_PS.Arg();
-					curr_time->Angle_PLL[1] = value_Circuit_V_PS.Arg() - 2.0 / 3.0 * PI;
-					curr_time->Angle_PLL[2] = value_Circuit_V_PS.Arg() + 2.0 / 3.0 * PI;
+					Angle_PLL_blk[0].init_given_y(value_Circuit_V_PS.Arg());
+					Angle_PLL_blk[1].init_given_y(value_Circuit_V_PS.Arg() - 2.0 / 3.0 * PI);
+					Angle_PLL_blk[2].init_given_y(value_Circuit_V_PS.Arg() + 2.0 / 3.0 * PI);
+					Angle_PLL[0] = Angle_PLL_blk[0].x[0];
+					Angle_PLL[1] = Angle_PLL_blk[1].x[0];
+					Angle_PLL[2] = Angle_PLL_blk[2].x[0];
 
 					for (int i = 0; i < 1; i++)
 					{
 						// Initialize the PLL
-						curr_time->delta_w_PLL_ini[i] = 0;
+					        delta_w_PLL_blk[i].setparams(kpPLL,kiPLL,-1000.0,1000.0,-1000.0,1000.0);
+					        delta_w_PLL_blk[i].init_given_y(0.0);
 					}
 				}
 
 				for (int i = 0; i < 3; i++)
 				{
-					ugd_pu[i] = (value_Circuit_V[i].Re() * cos(curr_time->Angle_PLL[i]) + value_Circuit_V[i].Im() * sin(curr_time->Angle_PLL[i])) / V_base;
-					ugq_pu[i] = (-value_Circuit_V[i].Re() * sin(curr_time->Angle_PLL[i]) + value_Circuit_V[i].Im() * cos(curr_time->Angle_PLL[i])) / V_base;
-					igd_pu[i] = (terminal_current_val[i].Re() * cos(curr_time->Angle_PLL[i]) + terminal_current_val[i].Im() * sin(curr_time->Angle_PLL[i])) / I_base;
-					igq_pu[i] = (-terminal_current_val[i].Re() * sin(curr_time->Angle_PLL[i]) + terminal_current_val[i].Im() * cos(curr_time->Angle_PLL[i])) / I_base;
+					ugd_pu[i] = (value_Circuit_V[i].Re() * cos(Angle_PLL[i]) + value_Circuit_V[i].Im() * sin(Angle_PLL[i])) / V_base;
+					ugq_pu[i] = (-value_Circuit_V[i].Re() * sin(Angle_PLL[i]) + value_Circuit_V[i].Im() * cos(Angle_PLL[i])) / V_base;
+					igd_pu[i] = (terminal_current_val[i].Re() * cos(Angle_PLL[i]) + terminal_current_val[i].Im() * sin(Angle_PLL[i])) / I_base;
+					igq_pu[i] = (-terminal_current_val[i].Re() * sin(Angle_PLL[i]) + terminal_current_val[i].Im() * cos(Angle_PLL[i])) / I_base;
 
 					if (control_mode == GRID_FOLLOWING)
 					{
 						// Initialize the current control loops
 						e_source[i] = (value_IGenerated[i] * gld::complex(Rfilter, Xfilter) * Z_base);
-						ed_pu[i] = (e_source[i].Re() * cos(curr_time->Angle_PLL[i]) + e_source[i].Im() * sin(curr_time->Angle_PLL[i])) / V_base;
-						eq_pu[i] = (-e_source[i].Re() * sin(curr_time->Angle_PLL[i]) + e_source[i].Im() * cos(curr_time->Angle_PLL[i])) / V_base;
+						ed_pu[i] = (e_source[i].Re() * cos(Angle_PLL[i]) + e_source[i].Im() * sin(Angle_PLL[i])) / V_base;
+						eq_pu[i] = (-e_source[i].Re() * sin(Angle_PLL[i]) + e_source[i].Im() * cos(Angle_PLL[i])) / V_base;
 
-						curr_time->igd_PI_ini[i] = ed_pu[i] - ugd_pu[i] + igq_pu[i] * Xfilter * F_current;
-						curr_time->igq_PI_ini[i] = eq_pu[i] - ugq_pu[i] - igd_pu[i] * Xfilter * F_current;
+						igd_blk[i].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
+						igq_blk[i].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
+
+						igd_blk[i].init_given_y(ed_pu[i] - ugd_pu[i] + igq_pu[i] * Xfilter * F_current);
+						igq_blk[i].init_given_y(eq_pu[i] - ugq_pu[i] - igd_pu[i] * Xfilter * F_current);
 					}
 					else if(control_mode == GFL_CURRENT_SOURCE)
 					{
 						// Initialize the current control loops
 						I_source[i] = value_IGenerated[i];
 
-						curr_time->igd_filter[i] = igd_pu[i];
-						curr_time->igq_filter[i] = igq_pu[i];
+												igd_filter_blk[i].setparams(Tif);
+						igq_filter_blk[i].setparams(Tif);
+
+						igd_filter_blk[i].init_given_y(igd_pu[i]);
+						igq_filter_blk[i].init_given_y(igq_pu[i]);
+
+						igd_filter[i]  = igd_filter_blk[i].x[0];
+						igq_filter[i]  = igq_filter_blk[i].x[0];
 					}
 				}
 
 				if (frequency_watt)
 				{
 					// Initialize the frequency-watt
-					curr_time->f_filter = (fPLL[0] + fPLL[1] + fPLL[2]) / 3.0;
+				        f_filter_blk.setparams(Tff);
+				        f_filter_blk.init_given_y((fPLL[0]+fPLL[1]+fPLL[2])/3.0);
+					f_filter = f_filter_blk.x[0];
 
-					if ((curr_time->f_filter < (f_nominal + db_OF))&&(curr_time->f_filter > (f_nominal - db_UF)))  // add dead band
+					if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
 					{
 						Pref_droop_pu = Pref / S_base;
 					}
 					else
 					{
-						Pref_droop_pu = (f_nominal - curr_time->f_filter) / Rp + Pref / S_base;
+						Pref_droop_pu = (f_nominal - f_filter) / Rp + Pref / S_base;
 					}
 
-					curr_time->Pref_droop_pu_filter = Pref_droop_pu;
+					Pref_droop_pu_filter_blk.setparams(Tpf);
+					Pref_droop_pu_filter_blk.init_given_y(Pref_droop_pu);
+					Pref_droop_pu_filter = Pref_droop_pu_filter_blk.x[0];
 				}
 
 				if (volt_var)
 				{
 					// Initialize the volt-var control
 					V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
-					curr_time->V_filter = V_Avg_pu;
+					V_filter_blk.setparams(Tvf);
+					V_filter_blk.init_given_y(V_Avg_pu);
+					V_filter = V_filter_blk.x[0];
 
-					if ((curr_time->V_filter < (Vset + db_OV))&&(curr_time->V_filter > (Vset - db_UV)))  // add dead band
+					if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
 					{
 						Qref_droop_pu = Qref / S_base;
 					}
 					else
 					{
-						Qref_droop_pu = (Vset - curr_time->V_filter) / Rq + Qref / S_base;
+						Qref_droop_pu = (Vset - V_filter) / Rq + Qref / S_base;
 					}
 
-					curr_time->Qref_droop_pu_filter = Qref_droop_pu;
+					Qref_droop_pu_filter_blk.setparams(Tqf);
+					Qref_droop_pu_filter_blk.init_given_y(Qref_droop_pu);
+					Qref_droop_pu_filter = Qref_droop_pu_filter_blk.x[0];
 				}
 
 			}	 // end of three phase initialization
 
 		}
 	}
+
+	pdispatch_sync(); //sync up dispatch variables and controller setpoints
+
 	return SUCCESS;
 }
 
@@ -6631,17 +6106,55 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 				//Make a per-unit value for comparison
 				terminal_current_val_pu[0] = terminal_current_val[0]/I_base;
 
+				
 				//Compare it
 				if ((terminal_current_val_pu[0].Mag() > Imax) && running_in_delta)	//Current limit only gets applied when controls valid (deltamode)
-				{
-					//Compute the limited value - pu
-					intermed_curr_calc[0].SetPolar(Imax,terminal_current_val_pu[0].Arg());
-
-					//Copy into the per-unit representation
-					terminal_current_val_pu[0] = intermed_curr_calc[0];
-
-					//Adjust the terminal current from per-unit
-					terminal_current_val[0] = terminal_current_val_pu[0] * I_base;
+				{ // Current limit only gets applied when controls
+                              // valid (deltamode)
+				  if (phase_angle_correction) {
+				    if(!imax_phase_correction_done[0]) {
+				      // Calculate phase angle correction
+				      double theta = terminal_current_val_pu[0].Arg(); // Current angle
+				      double theta_prefault = terminal_current_val_pu_prefault[0]
+					.Arg(); // Prefault current angle
+				      double theta_jump = theta_prefault - theta; // Jump in angle
+				      double Inolimit_mag =
+					terminal_current_val_pu[0].Mag(); // Current magnitude
+				      double Iprefault_mag = terminal_current_val_pu_prefault[0]
+					.Mag(); // Prefault current magnitude
+				      theta_c[0] = (Inolimit_mag - Imax) /
+					(Inolimit_mag - Iprefault_mag) * theta_jump;
+				      imax_phase_correction_done[0] = true;
+				    }
+				    // Compute the limited value - pu
+				    intermed_curr_calc[0].SetPolar(
+								   Imax, terminal_current_val_pu[0].Arg() + theta_c[0]);
+				  } else if(virtual_resistance_correction) {
+				    double Re; // virtual resistance
+				    double Vt_pu = value_Circuit_V[0].Mag() / V_base;
+				    double Vang_pu = value_Circuit_V[0].Arg();
+				    double e_droop_mag_pu = e_droop_pu[0].Mag();
+				    double temp;
+				    
+				    temp = (e_droop_mag_pu*e_droop_mag_pu + Vt_pu*Vt_pu - 2*e_droop_mag_pu*Vt_pu*cos(Angle[0] - Vang_pu))/(Imax*Imax) - Xfilter*Xfilter;
+				    
+				    Re = sqrt(temp) - Rfilter;
+				    
+				    gld::complex Ilim = (e_droop_pu[0] - value_Circuit_V[0])/gld::complex(Re+Rfilter,Xfilter);
+				    double Ilim_ang = Ilim.Arg();
+				    
+				    intermed_curr_calc[0].SetPolar(Imax, Ilim_ang);
+				  } else {
+				    // default
+				    //Compute the limited value - pu
+				    intermed_curr_calc[0].SetPolar(Imax,terminal_current_val_pu[0].Arg());
+				  }
+				  
+				  // Copy into the per-unit representation
+				  terminal_current_val_pu[0] = intermed_curr_calc[0];
+				  
+				  // Adjust the terminal current from per-unit
+				  terminal_current_val[0] = terminal_current_val_pu[0] * I_base;
 				}
 
 				//Update the injection
@@ -6673,20 +6186,59 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 
 					//Make a per-unit value for comparison
 					terminal_current_val_pu[loop_var] = terminal_current_val[loop_var]/I_base;
-
-					//Compare it
-					if ((terminal_current_val_pu[loop_var].Mag() > Imax) && running_in_delta)	//Current limit only gets applied when controls valid (deltamode)
+					
+					// Compare it
+					if ((terminal_current_val_pu[loop_var].Mag() > Imax) &&
+					    running_in_delta) // Current limit only gets applied when controls
+					  // valid (deltamode)
 					{
-						//Compute the limited value - pu
-						intermed_curr_calc[loop_var].SetPolar(Imax,terminal_current_val_pu[loop_var].Arg());
-
-						//Copy into the per-unit representation
-						terminal_current_val_pu[loop_var] = intermed_curr_calc[loop_var];
-
-						//Adjust the terminal current from per-unit
-						terminal_current_val[loop_var] = terminal_current_val_pu[loop_var] * I_base;
+					  if (phase_angle_correction) {
+					    if(!imax_phase_correction_done[loop_var]) {
+					      // Calculate phase angle correction
+					      double theta =
+						terminal_current_val_pu[loop_var].Arg(); // Current angle
+					      double theta_prefault = terminal_current_val_pu_prefault[loop_var]
+						.Arg(); // Prefault current angle
+					      double theta_jump = theta_prefault - theta; // Jump in angle
+					      double Inolimit_mag =
+						terminal_current_val_pu[loop_var].Mag(); // Current magnitude
+					      double Iprefault_mag = terminal_current_val_pu_prefault[loop_var]
+						.Mag(); // Prefault current magnitude
+					      theta_c[loop_var] = (Inolimit_mag - Imax) /
+						(Inolimit_mag - Iprefault_mag) * theta_jump;
+					      imax_phase_correction_done[loop_var] = true;
+					    }
+					    // Compute the limited value - pu
+					    intermed_curr_calc[loop_var].SetPolar(
+										  Imax,
+										  terminal_current_val_pu[loop_var].Arg() + theta_c[loop_var]);
+					  } else if(virtual_resistance_correction) {
+					    double Re; // virtual resistance
+					    double Vt_pu = value_Circuit_V[loop_var].Mag() / V_base;
+					    double Vang_pu = value_Circuit_V[loop_var].Arg();
+					    double e_droop_mag_pu = e_droop_pu[loop_var].Mag();
+					    double temp;
+					    
+					    temp = (e_droop_mag_pu*e_droop_mag_pu + Vt_pu*Vt_pu - 2*e_droop_mag_pu*Vt_pu*cos(Angle[loop_var] - Vang_pu))/(Imax*Imax) - Xfilter*Xfilter;
+					    
+					    Re = sqrt(temp) - Rfilter;
+					    
+					    gld::complex Ilim = (e_droop_pu[loop_var] - value_Circuit_V[loop_var])/gld::complex(Re+Rfilter,Xfilter);
+					    double Ilim_ang = Ilim.Arg();
+					    
+					    intermed_curr_calc[loop_var].SetPolar(Imax, Ilim_ang);
+					  } else {
+					    intermed_curr_calc[loop_var].SetPolar(Imax,terminal_current_val_pu[loop_var].Arg());
+					  }
+					  
+					  // Copy into the per-unit representation
+					  terminal_current_val_pu[loop_var] = intermed_curr_calc[loop_var];
+					  
+					  // Adjust the terminal current from per-unit
+					  terminal_current_val[loop_var] =
+					    terminal_current_val_pu[loop_var] * I_base;
 					}
-
+					
 					//Update the injection
 					value_IGenerated[loop_var] = terminal_current_val[loop_var] + value_Circuit_V[loop_var] / (gld::complex(Rfilter, Xfilter) * Z_base);
 
@@ -7353,7 +6905,7 @@ double inverter_dyn::perform_1547_checks(double timestepvalue)
 			//*********** Warning in place for now - remove this when we update the reconnect behavior properly **************//
 			if (Reconnect_Warn_Flag)
 			{
-				gl_warning("Inverter_dyn - Reconnections after an IEEE-1547 cessation are not fully validated.  May cause odd transients.");
+				gl_warning("inverter_dyn - Reconnections after an IEEE-1547 cessation are not fully validated.  May cause odd transients.");
 				/*  TROUBLESHOOT
 				The simple/base IEEE-1547 functionality in the inverter_dyn object only handles the cessation/disconnect side.  Upon reconnecting,
 				the proper inverter reconnect behavior is not implemented yet.  Additional transients may apply.  This is expected to be fixed in
@@ -7395,6 +6947,124 @@ double inverter_dyn::perform_1547_checks(double timestepvalue)
 			//All is well, indicate as much
 			return return_value;
 		}
+	}
+}
+
+//update checker variables with controller setpoints
+void inverter_dyn::update_chk_vars()
+{
+	setpoint_chk.fset = fset;
+	setpoint_chk.Pref = Pref;
+	setpoint_chk.Pset = Pset;
+	setpoint_chk.inverter_1547_status = inverter_1547_status;
+}
+
+// Sync the pdispatch variable with the various possible controller set points.
+//
+// Controller sets points (Pref, Pset and fset) take precedence over pdispatch, that is
+// an update to these properties will *overwrite* pdispatch.
+// If these properties have not been changed, however, then pdispatch can be used
+// to update the appropriate one via a unified interface.
+void inverter_dyn::pdispatch_sync()
+{
+	
+	// Check if Pref, Pset or fset were changed
+	if ((Pref != setpoint_chk.Pref) || 
+		(Pset != setpoint_chk.Pset) ||
+		(fset != setpoint_chk.fset) ||
+		(inverter_1547_status != setpoint_chk.inverter_1547_status))
+	{
+		// There has been some change to a reference value. 
+		//  - Override pdispatch and set pdispatch_offset = 0.
+		//  - Note: this also overwrites any changes to the exposed pdispatch!!
+		pdispatch.pdispatch_offset = 0;
+		
+		//update pdispatch accordingly
+		if (control_mode == GRID_FORMING)
+		{
+			switch (P_f_droop_setting_mode)
+			{
+			case FSET_MODE:
+				pdispatch.pdispatch = (fset * (2*PI) - w_ref)/mp;
+				break;
+
+			case PSET_MODE:
+				pdispatch.pdispatch = Pset;
+				break;
+			
+			default:
+				// guess pdsipatch doesn't work with this mode
+				break;
+			}
+		}
+		else if ((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE))
+		{
+			if (inverter_1547_status)
+			{ //inverter is NOT tripped
+				pdispatch.pdispatch = Pref/S_base;
+			}
+			else{
+				pdispatch.pdispatch = 0; //inverter has tripped.
+			}
+			
+		}
+		// No else since this just means it is a control mode for which pdispatch cannot be used (yet)
+
+		// update the check variables
+		update_chk_vars();
+
+		// overwrite the exposed pdispatch variables
+		memcpy(&pdispatch_exp, &pdispatch, sizeof(PDISPATCH));
+
+	}
+
+	double pstar = pdispatch.pdispatch + pdispatch.pdispatch_offset;
+	if ((pdispatch_exp.pdispatch + pdispatch_exp.pdispatch_offset) != (pstar))
+	{
+		// pdispatch or pdispatch_offset have been changed
+		pdispatch.pdispatch = pdispatch_exp.pdispatch;
+		pdispatch.pdispatch_offset = pdispatch_exp.pdispatch_offset;
+		
+		// update pstar
+		pstar = pdispatch.pdispatch + pdispatch.pdispatch_offset;
+		// Update appropriate controll variable 
+		if (control_mode == GRID_FORMING)
+		{
+			switch (P_f_droop_setting_mode)
+			{
+			case FSET_MODE:
+				fset = (w_ref + pstar * mp)/(2*PI);
+				break;
+
+			case PSET_MODE:
+				Pset = pstar;
+				break;
+			
+			default:
+				// guess pdsipatch doesn't work with this mode
+				break;
+			}
+		}
+		else if ((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE))
+		{
+			if (inverter_1547_status)
+			{ //inverter is NOT tripped
+				Pref = pstar * S_base;
+			}
+			else{
+				// Inverter tripped. OVERRIDE change to pdispatch and reset to 0
+				pdispatch.pdispatch = 0;
+				pdispatch.pdispatch_offset =  0;
+				// overwrite the exposed pdispatch variables
+				memcpy(&pdispatch_exp, &pdispatch, sizeof(PDISPATCH));
+			}
+		}
+		else {
+			GL_THROW("inverter_dyn::pdispatch_sync: pdispatch property cannot be used with the provided control mode %d", control_mode);
+		}
+
+		// update the check variables
+		update_chk_vars();
 	}
 }
 

@@ -2312,8 +2312,17 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			//Check our frequency
 			if ((NRMatDumpMethod == MD_ALL) || ((NRMatDumpMethod != MD_ALL) && (powerflow_values->island_matrix_values[island_loop_index].iteration_count == 0)))
 			{
-				//Open the text file - append now
-				FPoutVal=fopen(MDFileName,"at");
+				//Check which method it is - reset the file on the "final"
+				if ((NRMatDumpMethod == MD_FINAL) && (island_loop_index==0))
+				{
+					//Open the text file - purge it
+					FPoutVal=fopen(MDFileName,"wt");
+				}
+				else
+				{
+					//Open the text file - append now
+					FPoutVal=fopen(MDFileName,"at");
+				}
 
 				//See if we wanted references - Only do this once per call, regardless (keeps file size down)
 				if (NRMatReferences && (powerflow_values->island_matrix_values[island_loop_index].iteration_count == 0))
@@ -2337,8 +2346,17 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							jindexer = 2*bus[indexer].Matrix_Loc;
 							kindexer = jindexer + 2*powerflow_values->BA_diag[indexer].size - 1;
 
-							//Print them out
-							fprintf(FPoutVal,"%d,%d,%s\n",jindexer,kindexer,bus[indexer].name);
+							
+							if (bus[indexer].swing_functions_enabled && (NR_solver_algorithm==NRM_FPI))
+							{
+								//Print out special SWING bus entry
+								fprintf(FPoutVal,"-1,-1,%s - excluded as SWING\n",bus[indexer].name);
+							}
+							else	//Normal bus, or TCIM
+							{
+								//Print them out
+								fprintf(FPoutVal,"%d,%d,%s\n",jindexer,kindexer,bus[indexer].name);
+							}
 
 							//Set the flag
 							something_has_been_output = true;

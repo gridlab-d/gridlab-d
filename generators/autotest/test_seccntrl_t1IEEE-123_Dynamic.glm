@@ -1,0 +1,3327 @@
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-08-01 12:00:00';
+	stoptime '2001-08-01 12:00:06';
+}
+//Note, simulation doesn't settle until around 12 sec.
+//Kept shorter here for time's sake though.
+
+#set suppress_repeat_messages=1
+#set relax_naming_rules=1;
+#set profiler=1
+#set pauseatexit=0
+#define rotor_convergence=1e-12
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+
+//Deltamode declarations - global values
+// #set deltamode_timestep=100000000		//100 ms
+#set deltamode_maximumtime=3.6e12	//1 hour
+#set deltamode_iteration_limit=10		//Iteration limit
+
+module tape;
+module assert;
+
+module reliability {
+	enable_subsecond_models true;
+	maximum_event_length 1800000;	//Maximum length of events in seconds (manual events are excluded from this limit)
+	report_event_log false;
+};
+
+module powerflow {
+	enable_subsecond_models true;
+	deltamode_timestep 1 ms;	//10 ms
+	solver_method NR;
+     NR_solver_algorithm FPI;
+	all_powerflow_delta true;
+     all_frequency_measure_default PLL;
+	// lu_solver "KLU";
+	//enable_inrush TRUE;
+};
+
+module generators {
+	enable_subsecond_models true;
+	deltamode_timestep 1 ms;
+};
+
+
+// Import Diesels
+#include "../seccntrl_Diesel1.glm"
+#include "../seccntrl_Diesel2.glm"
+#include "../seccntrl_Diesel3.glm"
+#include "../seccntrl_Diesel4.glm"
+// Import Inverters
+#define FW=false
+#define VV=false
+#define inv1rate=350
+#define inv2rate=1000
+#define inv3rate=500
+#define inv4rate=500
+#include "../seccntrl_Inv1_GFL.glm"
+#include "../seccntrl_Inv2_GFM.glm"
+#include "../seccntrl_Inv3_GFL.glm"
+#include "../seccntrl_Inv4_GFM.glm"
+// #include "IEEE-123_Recorders.glm"
+
+
+object sec_control {
+	name secondary_controller;
+	flags DELTAMODE;
+	parent node_150;
+	deadband 0.001; //1 mHz deadband
+	B 12.1187; //MW/Hz
+	kiPID 0.04; // pu/s;
+	kpPID 0; //pu
+	Ts 0.2; // output sample time 200ms
+     Ts_f 0.1; // frequency sample time 100ms
+     Ts_P 0; // unit error sample time will default to Ts since 0 is not allowed
+	anti_windup FEEDBACK_PIDOUT;
+	participant_input "../data_seccntrl_part_init.csv";
+};
+
+//Fault check option
+object fault_check {
+	name base_fault_check_object;
+	check_mode ONCHANGE;
+	strictly_radial false;
+	// eventgen_object testgendev0;
+	grid_association true;	//Flag to ensure non-monolithic islands
+	// output_filename test_connect.txt;
+	// full_output_file true;
+};
+
+//Manual object - needed to get fault_check to behave properly -- arbitrary item added
+
+///////////////////////////////////////////////////////////////////////////
+// Switching events /////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+// switch switch_250-251
+object player{
+     name loadstep_player;
+     flags DELTAMODE;
+     parent switch_250-251;
+     file "../data_seccntrl_t1loadswitch.player";
+     property status;
+};
+
+///////////////////////////////////////////////////////////////////////////
+// ASSERTS
+///////////////////////////////////////////////////////////////////////////
+// Secondary control parameters
+/////////////////////////////////////
+object double_assert {
+     parent secondary_controller;
+     flags DELTAMODE;
+     target Ts;
+     within 0.0001;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1TsAssert.csv";
+     };
+};
+
+object double_assert {
+     parent secondary_controller;
+     flags DELTAMODE;
+     target Ts_f;
+     within 0.0001;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Ts_fAssert.csv";
+     };
+};
+
+object double_assert {
+     parent secondary_controller;
+     flags DELTAMODE;
+     target Ts_P;
+     within 0.0001;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Ts_PAssert.csv";
+     };
+};
+
+// pdispatch and pdispatch offset
+/////////////////////////////////
+// Gen 1
+object double_assert {
+     parent Gen1;
+     flags DELTAMODE;
+     target pdispatch;
+     within 0.001;
+     value 0.720895288266;
+};
+
+object double_assert {
+     parent Gen1;
+     flags DELTAMODE;
+     target pdispatch_offset;
+     within 0.001;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Gen1Pdispatch_offsetAssert.csv";
+     };
+};
+
+// Gen 2
+object double_assert {
+     parent Gen2;
+     flags DELTAMODE;
+     target pdispatch;
+     within 0.001;
+     value 0.65;
+};
+
+object double_assert {
+     parent Gen2;
+     flags DELTAMODE;
+     target pdispatch_offset;
+     within 0.001;
+     value 0;
+};
+
+// Gen 3
+object double_assert {
+     parent Gen3;
+     flags DELTAMODE;
+     target pdispatch;
+     within 0.001;
+     value 0.0;
+};
+
+object double_assert {
+     parent Gen3;
+     flags DELTAMODE;
+     target pdispatch_offset;
+     within 0.001;
+     value 0;
+};
+
+//Gen 4
+object double_assert {
+     parent Gen4;
+     flags DELTAMODE;
+     target pdispatch;
+     within 0.001;
+     value 0.66;
+};
+
+object double_assert {
+     parent Gen4;
+     flags DELTAMODE;
+     target pdispatch_offset;
+     within 0.001;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Gen4Pdispatch_offsetAssert.csv";
+     };
+};
+
+// Inv 1
+object double_assert {
+     parent Inv1;
+     flags DELTAMODE;
+     target pdispatch;
+     within 0.001;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Inv1PdispatchAssert.csv";
+     };
+};
+
+object double_assert {
+     parent Inv1;
+     flags DELTAMODE;
+     target pdispatch_offset;
+     within 0.001;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Inv1Pdispatch_offsetAssert.csv";
+     };
+};
+
+// Inv 2
+object double_assert {
+     parent Inv2;
+     flags DELTAMODE;
+     target pdispatch;
+     within 0.001;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Inv2PdispatchAssert.csv";
+     };
+};
+
+object double_assert {
+     parent Inv2;
+     flags DELTAMODE;
+     target pdispatch_offset;
+     within 0.001;
+     value 0;
+};
+
+// Inv 3
+object double_assert {
+     parent Inv3;
+     flags DELTAMODE;
+     target pdispatch;
+     within 0.001;
+     value 0;
+};
+
+object double_assert {
+     parent Inv3;
+     flags DELTAMODE;
+     target pdispatch_offset;
+     within 0.001;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Inv3Pdispatch_offsetAssert.csv";
+     };
+};
+
+// Inv 4
+object double_assert {
+     parent Inv4;
+     flags DELTAMODE;
+     target pdispatch;
+     within 0.001;
+     value 0;
+};
+
+object double_assert {
+     parent Inv4;
+     flags DELTAMODE;
+     target pdispatch_offset;
+     within 0.001;
+     value 0;
+};
+
+// Power output
+////////////////
+// Gen1
+object complex_assert {
+     parent Gen1;
+     flags DELTAMODE;
+     target pwr_electric;
+     within 100;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Gen1PowerAssert.csv";
+     };
+};
+
+// Gen2
+object complex_assert {
+     parent Gen2;
+     flags DELTAMODE;
+     target pwr_electric;
+     within 100;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Gen2PowerAssert.csv";
+     };
+};
+
+// Gen3
+object complex_assert {
+     parent Gen3;
+     flags DELTAMODE;
+     target pwr_electric;
+     within 100;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Gen3PowerAssert.csv";
+     };
+};
+
+// Gen4
+object complex_assert {
+     parent Gen4;
+     flags DELTAMODE;
+     target pwr_electric;
+     within 100; 
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Gen4PowerAssert.csv";
+     };
+};
+
+// Inv1
+object complex_assert {
+     parent Inv1;
+     flags DELTAMODE;
+     target VA_Out;
+     within 100;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Inv1PowerAssert.csv";
+     };
+};
+
+// Inv2
+object complex_assert {
+     parent Inv2;
+     flags DELTAMODE;
+     target VA_Out;
+     within 100;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Inv2PowerAssert.csv";
+     };
+};
+
+// Inv3
+object complex_assert {
+     parent Inv3;
+     flags DELTAMODE;
+     target VA_Out;
+     within 100;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Inv3PowerAssert.csv";
+     };
+};
+
+// Inv4
+object complex_assert {
+     parent Inv4;
+     flags DELTAMODE;
+     target VA_Out;
+     within 100;
+     object player {
+          flags DELTAMODE;
+          property value;
+          file "../data_seccntrl_t1Inv4PowerAssert.csv";
+     };
+};
+
+///////////////////////////////////////////////////////////////////////////
+// Start of individual objects/////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+//Phase Conductor for 1 thru 8: 336,400 26/7 ACSR
+object overhead_line_conductor {
+	name overhead_line_conductor_1;
+	geometric_mean_radius 0.0244  ;
+	resistance 0.30600;
+}
+
+//Phase Conductor for 9 thru 11: 1/0 ACSR
+object overhead_line_conductor {
+	name overhead_line_conductor_2;
+	geometric_mean_radius 0.004460  ;
+	resistance 1.12000;
+}	
+
+//Phase Conductor for neutral: 4/0 6/1 ACSR
+object overhead_line_conductor {
+	name overhead_line_conductor_3;
+	geometric_mean_radius 0.008140  ;
+	resistance 0.59200;
+}
+
+// Phase Conductor for 12: 1/0 AA,TS
+object underground_line_conductor { 
+     name underground_line_conductor_1;
+	 outer_diameter 1.060000;
+	 conductor_gmr 0.011100;
+	 conductor_diameter 0.368000;
+	 conductor_resistance 0.970000;
+	 neutral_gmr 0.011100;
+	 neutral_resistance 0.970000;
+	 neutral_diameter 0.0640837;
+	 neutral_strands 6.000000;
+	 shield_gmr 0.000000;
+	 shield_resistance 0.000000;
+}
+
+// Overhead line configurations
+// ABCN
+object line_spacing {
+	name line_spacing_1;
+	distance_AB 2.5;
+	distance_AC 7.0;
+	distance_BC 4.5;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+// CABN
+object line_spacing {
+	name line_spacing_2;
+	distance_AB 4.5;
+	distance_AC 2.5;
+	distance_BC 7.0;
+	distance_AN 5.0;
+	distance_BN 4.272002;
+	distance_CN 5.656854;
+}
+
+// BCAN
+object line_spacing {
+	name line_spacing_3;
+	distance_AB 7.0;
+	distance_AC 4.5;
+	distance_BC 2.5;
+	distance_AN 5.0;
+	distance_BN 5.656854;
+	distance_CN 4.272002;
+}
+
+// CBAN
+object line_spacing {
+	name line_spacing_4;
+	distance_AB 4.5;
+	distance_AC 7.0;
+	distance_BC 2.5;
+	distance_AN 5.0;
+	distance_BN 4.272002;
+	distance_CN 5.656854;
+}
+
+// BACN
+object line_spacing {
+	name line_spacing_5;
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_BN 5.656854;
+	distance_AN 4.272002;
+	distance_CN 5.0;
+}
+
+// ACBN
+object line_spacing {
+	name line_spacing_6;
+	distance_AB 7.0;
+	distance_AC 2.5;
+	distance_BC 4.5;
+	distance_AN 5.656854;
+	distance_CN 4.272002;
+	distance_BN 5.0;
+}
+
+//ACN
+object line_spacing {
+	name line_spacing_7;
+	distance_AB 0.0;
+	distance_AC 7.0;
+	distance_BC 0.0;
+	distance_AN 5.656854;
+	distance_BN 0.0;
+	distance_CN 5.0;
+}
+
+//ABN
+object line_spacing {
+	name line_spacing_8;
+	distance_AB 7.0;
+	distance_AC 0.0;
+	distance_BC 0.0;
+	distance_AN 5.656854;
+	distance_BN 5.0;
+	distance_CN 0.0;
+}
+
+//AN
+object line_spacing {
+	name line_spacing_9;
+	distance_AB 0.0;
+	distance_AC 0.0;
+	distance_BC 0.0;
+	distance_AN 5.0;
+	distance_BN 0.0;
+	distance_CN 0.0;
+}
+
+//BN
+object line_spacing {
+	name line_spacing_10;
+	distance_AB 0.0;
+	distance_AC 0.0;
+	distance_BC 0.0;
+	distance_AN 0.0;
+	distance_BN 5.0;
+	distance_CN 0.0;
+}
+
+//CN
+object line_spacing {
+	name line_spacing_11;
+	distance_AB 0.0;
+	distance_AC 0.0;
+	distance_BC 0.0;
+	distance_AN 0.0;
+	distance_BN 0.0;
+	distance_CN 5.0;
+}
+
+//ABC
+object line_spacing {
+	name line_spacing_12;
+	distance_AB 0.5;
+	distance_AC 1.0;
+	distance_BC 0.5;
+	distance_AN 0.0;
+	distance_BN 0.0;
+	distance_CN 0.0;
+}
+
+
+object line_configuration {
+	name line_configuration_1;
+	conductor_A overhead_line_conductor_1;
+	conductor_B overhead_line_conductor_1;
+	conductor_C overhead_line_conductor_1;
+	conductor_N overhead_line_conductor_3;
+	spacing line_spacing_1;
+}
+
+object line_configuration {
+	name line_configuration_2;
+	conductor_A overhead_line_conductor_1;
+	conductor_B overhead_line_conductor_1;
+	conductor_C overhead_line_conductor_1;
+	conductor_N overhead_line_conductor_3;
+	spacing line_spacing_2;
+}
+
+object line_configuration {
+	name line_configuration_3;
+	conductor_A overhead_line_conductor_1;
+	conductor_B overhead_line_conductor_1;
+	conductor_C overhead_line_conductor_1;
+	conductor_N overhead_line_conductor_3;
+	spacing line_spacing_3;
+}
+
+object line_configuration {
+	name line_configuration_4;
+	conductor_A overhead_line_conductor_1;
+	conductor_B overhead_line_conductor_1;
+	conductor_C overhead_line_conductor_1;
+	conductor_N overhead_line_conductor_3;
+	spacing line_spacing_4;
+}
+
+object line_configuration {
+	name line_configuration_5;
+	conductor_A overhead_line_conductor_1;
+	conductor_B overhead_line_conductor_1;
+	conductor_C overhead_line_conductor_1;
+	conductor_N overhead_line_conductor_3;
+	spacing line_spacing_5;
+}
+
+object line_configuration {
+	name line_configuration_6;
+	conductor_A overhead_line_conductor_1;
+	conductor_B overhead_line_conductor_1;
+	conductor_C overhead_line_conductor_1;
+	conductor_N overhead_line_conductor_3;
+	spacing line_spacing_6;
+}
+
+object line_configuration {
+	name line_configuration_7;
+	conductor_A overhead_line_conductor_1;
+	conductor_C overhead_line_conductor_1;
+	conductor_N overhead_line_conductor_3;
+	spacing line_spacing_7;
+}
+
+object line_configuration {
+	name line_configuration_8;
+	conductor_A overhead_line_conductor_1;
+	conductor_B overhead_line_conductor_1;
+	conductor_N overhead_line_conductor_3;
+	spacing line_spacing_8;
+}
+
+object line_configuration {
+	name line_configuration_9;
+	conductor_A overhead_line_conductor_2;
+	conductor_N overhead_line_conductor_2;
+	spacing line_spacing_9;
+}
+
+object line_configuration {
+	name line_configuration_10;
+	conductor_B overhead_line_conductor_1;
+	conductor_N overhead_line_conductor_1;
+	spacing line_spacing_10;
+}
+
+object line_configuration {
+	name line_configuration_11;
+	conductor_C overhead_line_conductor_1;
+	conductor_N overhead_line_conductor_1;
+	spacing line_spacing_11;
+}
+
+object line_configuration {
+	name line_configuration_12;
+	 conductor_A underground_line_conductor_1;
+	 conductor_B underground_line_conductor_1;
+	 conductor_C underground_line_conductor_1;
+	 spacing line_spacing_12;
+}
+
+
+
+//Define line objects 
+object overhead_line  {
+     name OH_line_1-2;
+	 phases "BN";
+     from load_1;
+     to load_2;
+     length 175;
+     configuration line_configuration_10;
+}
+
+object overhead_line  {
+     name OH_line_1-3;
+	 phases "CN";
+     from load_1;
+     to node_3;
+     length 250;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_1-7;
+	 phases "ABCN";
+     from load_1;
+     to load_7;
+     length 300;
+     configuration line_configuration_1;
+}
+ 
+object overhead_line  {
+     name OH_line_3-4;
+	 phases "CN";
+     from node_3;
+     to load_4;
+     length 200;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_3-5;
+	 phases "CN";
+     from node_3;
+     to load_5;
+     length 325;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_5-6;
+	 phases "CN";
+     from load_5;
+     to load_6;
+     length 250;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_7-8;
+	 phases "ABCN";
+     from load_7;
+     to node_8;
+     length 200;
+     configuration line_configuration_1;
+}
+ 
+object overhead_line  {
+     name OH_line_8-12;
+	 phases "BN";
+     from node_8;
+     to load_12;
+     length 225;
+     configuration line_configuration_10;
+}
+ 
+object overhead_line  {
+     name OH_line_8-9;
+	 phases "AN";
+     from node_8;
+     to load_9;
+     length 225;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_8-13;
+	 phases "ABCN";
+     from node_8;
+     to meter_13;
+     length 300;
+     configuration line_configuration_1;
+}
+ 
+object overhead_line  {
+     name OH_line_1401-14;
+	 phases "AN";
+     from node_1401;
+     to node_14;
+     length 425;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_13-34;
+	 phases "CN";
+     from meter_13;
+     to load_34;
+     length 150;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_13-18;
+	 phases "ABCN";
+     from meter_13;
+     to node_18;
+     length 825;
+     configuration line_configuration_2;
+}
+ 
+object overhead_line  {
+     name OH_line_14-11;
+	 phases "AN";
+     from node_14;
+     to load_11;
+     length 250;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_14-10;
+	 phases "AN";
+     from node_14;
+     to load_10;
+     length 250;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_15-16;
+	 phases "CN";
+     from node_15;
+     to load_16;
+     length 375;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_15-17;
+	 phases "CN";
+     from node_15;
+     to load_17;
+     length 350;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_18-19;
+	 phases "AN";
+     from node_18;
+     to load_19;
+     length 250;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_18-21;
+	 phases "ABCN";
+     from node_18;
+     to node_21;
+     length 300;
+     configuration line_configuration_2;
+}
+ 
+object overhead_line  {
+     name OH_line_19-20;
+	 phases "AN";
+     from load_19;
+     to load_20;
+     length 325;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_21-22;
+	 phases "BN";
+     from node_21;
+     to load_22;
+     length 525;
+     configuration line_configuration_10;
+}
+ 
+object overhead_line  {
+     name OH_line_21-23;
+	 phases "ABCN";
+     from node_21;
+     to node_23;
+     length 250;
+     configuration line_configuration_2;
+}
+ 
+object overhead_line  {
+     name OH_line_23-24;
+	 phases "CN";
+     from node_23;
+     to load_24;
+     length 550;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_23-25;
+	 phases "ABCN";
+     from node_23;
+     to node_25;
+     length 275;
+     configuration line_configuration_2;
+}
+ 
+object overhead_line  {
+     name OH_line_2601-26;
+	 phases "ACN";
+     from node_2601;
+     to node_26;
+     length 350;
+     configuration line_configuration_7;
+}
+ 
+object overhead_line  {
+     name OH_line_25-28;
+	 phases "ABCN";
+	 from node_25;
+     to load_28;
+     length 200;
+     configuration line_configuration_2;
+}
+ 
+object overhead_line  {
+     name OH_line_26-27;
+	 phases "ACN";
+     from node_26;
+     to node_27;
+     length 275;
+     configuration line_configuration_7;
+}
+ 
+object overhead_line  {
+     name OH_line_26-31;
+	 phases "CN";
+     from node_26;
+     to load_31;
+     length 225;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_27-33;
+	 phases "AN";
+     from node_27;
+     to load_33;
+     length 500;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_28-29;
+	 phases "ABCN";
+     from load_28;
+     to load_29;
+     length 300;
+     configuration line_configuration_2;
+}
+ 
+object overhead_line  {
+     name OH_line_29-30;
+	 phases "ABCN";
+     from load_29;
+     to load_30;
+     length 350;
+     configuration line_configuration_2;
+}
+ 
+object overhead_line  {
+     name OH_line_30-250;
+	 phases "ABCN";
+     from load_30;
+     to node_250;
+     length 200;
+     configuration line_configuration_2;
+}
+ 
+object overhead_line  {
+     name OH_line_31-32;
+	 phases "CN";
+     from load_31;
+     to load_32;
+     length 300;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_34-15;
+	 phases "CN";
+     from load_34;
+     to node_15;
+     length 100;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_35-36;
+	 phases "ABN";
+     from load_35;
+     to node_36;
+     length 650;
+     configuration line_configuration_8;
+}
+ 
+object overhead_line  {
+     name OH_line_35-40;
+	 phases "ABCN";
+     from load_35;
+     to node_40;
+     length 250;
+     configuration line_configuration_1;
+}
+ 
+object overhead_line  {
+     name OH_line_36-37;
+	 phases "AN";
+     from node_36;
+     to load_37;
+     length 300;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_36-38;
+	 phases "BN";
+     from node_36;
+     to load_38;
+     length 250;
+     configuration line_configuration_10;
+}
+ 
+object overhead_line  {
+     name OH_line_38-39;
+	 phases "BN";
+     from load_38;
+     to load_39;
+     length 325;
+     configuration line_configuration_10;
+}
+ 
+object overhead_line  {
+     name OH_line_40-41;
+	 phases "CN";
+     from node_40;
+     to load_41;
+     length 325;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_40-42;
+	 phases "ABCN";
+     from node_40;
+     to load_42;
+     length 250;
+     configuration line_configuration_1;
+}
+ 
+object overhead_line  {
+     name OH_line_42-43;
+	 phases "BN";
+     from load_42;
+     to load_43;
+     length 500;
+     configuration line_configuration_10;
+}
+ 
+object overhead_line  {
+     name OH_line_42-44;
+	 phases "ABCN";
+     from load_42;
+     to node_44;
+     length 200;
+     configuration line_configuration_1;
+}
+ 
+object overhead_line  {
+     name OH_line_44-45;
+	 phases "AN";
+     from node_44;
+     to load_45;
+     length 200;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_44-47;
+	 phases "ABCN";
+     from node_44;
+     to load_47;
+     length 250;
+     configuration line_configuration_1;
+}
+ 
+object overhead_line  {
+     name OH_line_45-46;
+	 phases "AN";
+     from load_45;
+     to load_46;
+     length 300;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_47-48;
+	 phases "ABCN";
+     from load_47;
+     to load_48;
+     length 150;
+     configuration line_configuration_4;
+}
+ 
+object overhead_line  {
+     name OH_line_47-49;
+	 phases "ABCN";
+     from load_47;
+     to load_49;
+     length 250;
+     configuration line_configuration_4;
+}
+ 
+object overhead_line  {
+     name OH_line_49-50;
+	 phases "ABCN";
+     from load_49;
+     to meter_50;
+     length 250;
+     configuration line_configuration_4;
+}
+ 
+object overhead_line  {
+     name OH_line_50-51;
+	 phases "ABCN";
+     from meter_50;
+     to load_51;
+     length 250;
+     configuration line_configuration_4;
+}
+
+object overhead_line  {
+     name OH_line_51-151;
+	 phases "ABCN";			//undefined line segment
+     from load_51;
+     to node_151;
+     length 700;
+     configuration line_configuration_4;
+}
+ 
+object overhead_line  {
+     name OH_line_52-53;
+	 phases "ABCN";
+     from load_52;
+     to load_53;
+     length 200;
+     configuration line_configuration_1;
+}
+ 
+object overhead_line  {
+     name OH_line_53-54;
+	 phases "ABCN";
+     from load_53;
+     to node_54;
+     length 125;
+     configuration line_configuration_1;
+}
+ 
+object overhead_line  {
+     name OH_line_54-55;
+	 phases "ABCN";
+     from node_54;
+     to load_55;
+     length 275;
+     configuration line_configuration_1;
+}
+ 
+object overhead_line  {
+     name OH_line_54-57;
+	 phases "ABCN";
+     from node_54;
+     to node_57;
+     length 350;
+     configuration line_configuration_3;
+}
+ 
+object overhead_line  {
+     name OH_line_55-56;
+	 phases "ABCN";
+     from load_55;
+     to load_56;
+     length 275;
+     configuration line_configuration_1;
+}
+ 
+object overhead_line  {
+     name OH_line_57-58;
+	 phases "BN";
+     from node_57;
+     to load_58;
+     length 250;
+     configuration line_configuration_10;
+}
+ 
+object overhead_line  {
+     name OH_line_57-60;
+	 phases "ABCN";
+     from node_57;
+     to load_60;
+     length 750;
+     configuration line_configuration_3;
+}
+ 
+object overhead_line  {
+     name OH_line_58-59;
+	 phases "BN";
+     from load_58;
+     to load_59;
+     length 250;
+     configuration line_configuration_10;
+}
+ 
+object overhead_line  {
+     name OH_line_60-61;
+	 phases "ABCN";
+     from load_60;
+     to node_61;
+     length 550;
+     configuration line_configuration_5;
+}
+ 
+object underground_line  {
+     name OH_line_60-62;
+	 phases "ABC";
+     from load_60;
+     to load_62;
+     length 250;
+     configuration line_configuration_12;
+}
+ 
+object underground_line  {
+     name OH_line_62-63;
+	 phases "ABC";
+     from load_62;
+     to load_63;
+     length 175;
+     configuration line_configuration_12;
+}
+ 
+object underground_line  {
+     name OH_line_63-64;
+	 phases "ABC";
+     from load_63;
+     to load_64;
+     length 350;
+     configuration line_configuration_12;
+}
+ 
+object underground_line  {
+     name OH_line_64-65;
+	 phases "ABC";
+     from load_64;
+     to load_65;
+     length 425;
+     configuration line_configuration_12;
+}
+ 
+object underground_line  {
+     name OH_line_65-66;
+	 phases "ABC";
+     from load_65;
+     to meter_66;
+     length 325;
+     configuration line_configuration_12;
+}
+ 
+object overhead_line  {
+     name OH_line_67-68;
+	 phases "AN";
+     from node_67;
+     to load_68;
+     length 200;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_67-72;
+	 phases "ABCN";
+     from node_67;
+     to load_72;
+     length 275;
+     configuration line_configuration_3;
+}
+
+ 
+object overhead_line  {
+     name OH_line_67-97;
+	 phases "ABCN";
+     from node_67;
+     to node_97;
+     length 250;
+     configuration line_configuration_3;
+}
+ 
+object overhead_line  {
+     name OH_line_68-69;
+	 phases "AN";
+     from load_68;
+     to load_69;
+     length 275;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_69-70;
+	 phases "AN";
+     from load_69;
+     to load_70;
+     length 325;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_70-71;
+	 phases "AN";
+     from load_70;
+     to load_71;
+     length 275;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_72-73;
+	 phases "CN";
+     from load_72;
+     to load_73;
+     length 275;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_72-76;
+	 phases "ABCN";
+     from load_72;
+     to load_76;
+     length 200;
+     configuration line_configuration_3;
+}
+ 
+object overhead_line  {
+     name OH_line_73-74;
+	 phases "CN";
+     from load_73;
+     to load_74;
+     length 350;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_74-75;
+	 phases "CN";
+     from load_74;
+     to load_75;
+     length 400;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_76-77;
+	 phases "ABCN";
+     from load_76;
+     to load_77;
+     length 400;
+     configuration line_configuration_6;
+}
+ 
+object overhead_line  {
+     name OH_line_76-86;
+	 phases "ABCN";
+     from load_76;
+     to load_86;
+     length 700;
+     configuration line_configuration_3;
+}
+ 
+object overhead_line  {
+     name OH_line_77-78;
+	 phases "ABCN";
+     from load_77;
+     to node_78;
+     length 100;
+     configuration line_configuration_6;
+}
+ 
+object overhead_line  {
+     name OH_line_78-79;
+	 phases "ABCN";
+     from node_78;
+     to load_79;
+     length 225;
+     configuration line_configuration_6;
+}
+ 
+object overhead_line  {
+     name OH_line_78-80;
+	 phases "ABCN";
+     from node_78;
+     to load_80;
+     length 475;
+     configuration line_configuration_6;
+}
+ 
+object overhead_line  {
+     name OH_line_80-81;
+	 phases "ABCN";
+     from load_80;
+     to node_81;
+     length 475;
+     configuration line_configuration_6;
+}
+ 
+object overhead_line  {
+     name OH_line_81-82;
+	 phases "ABCN";
+     from node_81;
+     to load_82;
+     length 250;
+     configuration line_configuration_6;
+}
+ 
+object overhead_line  {
+     name OH_line_81-84;
+	 phases "CN";
+     from node_81;
+     to load_84;
+     length 675;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_82-83;
+	 phases "ABCN";
+     from load_82;
+     to load_83;
+     length 250;
+     configuration line_configuration_6;
+}
+ 
+object overhead_line  {
+     name OH_line_84-85;
+	 phases "CN";
+     from load_84;
+     to load_85;
+     length 475;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_86-87;
+	 phases "ABCN";
+     from load_86;
+     to load_87;
+     length 450;
+     configuration line_configuration_6;
+}
+ 
+object overhead_line  {
+     name OH_line_87-88;
+	 phases "AN";
+     from load_87;
+     to load_88;
+     length 175;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_87-89;
+	 phases "ABCN";
+     from load_87;
+     to node_89;
+     length 275;
+     configuration line_configuration_6;
+}
+ 
+object overhead_line  {
+     name OH_line_89-90;
+	 phases "BN";
+     from node_89;
+     to load_90;
+     length 225;
+     configuration line_configuration_10;
+}
+ 
+object overhead_line  {
+     name OH_line_89-91;
+	 phases "ABCN";
+     from node_89;
+     to node_91;
+     length 225;
+     configuration line_configuration_6;
+}
+ 
+object overhead_line  {
+     name OH_line_91-92;
+	 phases "CN";
+     from node_91;
+     to load_92;
+     length 300;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_91-93;
+	 phases "ABCN";
+     from node_91;
+     to node_93;
+     length 225;
+     configuration line_configuration_6;
+}
+ 
+object overhead_line  {
+     name OH_line_93-94;
+	 phases "AN";
+     from node_93;
+     to load_94;
+     length 275;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_93-95;
+	 phases "ABCN";
+     from node_93;
+     to load_95;
+     length 300;
+     configuration line_configuration_6;
+}
+ 
+object overhead_line  {
+     name OH_line_95-96;
+	 phases "BN";
+     from load_95;
+     to load_96;
+     length 200;
+     configuration line_configuration_10;
+}
+ 
+object overhead_line  {
+     name OH_line_97-98;
+	 phases "ABCN";
+     from node_97;
+     to load_98;
+     length 275;
+     configuration line_configuration_3;
+}
+ 
+object overhead_line  {
+     name OH_line_98-99;
+	 phases "ABCN";
+     from load_98;
+     to load_99;
+     length 550;
+     configuration line_configuration_3;
+}
+ 
+object overhead_line  {
+     name OH_line_99-100;
+	 phases "ABCN";
+     from load_99;
+     to load_100;
+     length 300;
+     configuration line_configuration_3;
+}
+ 
+object overhead_line  {
+     name OH_line_100-450;
+	 phases "ABCN";
+     from load_100;
+     to node_450;
+     length 800;
+     configuration line_configuration_3;
+}
+ 
+object overhead_line  {
+     name OH_line_101-102;
+	 phases "CN";
+     from load_101;
+     to load_102;
+     length 225;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_101-105;
+	 phases "ABCN";
+     from load_101;
+     to node_105;
+     length 275;
+     configuration line_configuration_3;
+}
+ 
+object overhead_line  {
+     name OH_line_102-103;
+	 phases "CN";
+     from load_102;
+     to load_103;
+     length 325;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_103-104;
+	 phases "CN";
+     from load_103;
+     to load_104;
+     length 700;
+     configuration line_configuration_11;
+}
+ 
+object overhead_line  {
+     name OH_line_105-106;
+	 phases "BN";
+     from node_105;
+     to load_106;
+     length 225;
+     configuration line_configuration_10;
+}
+ 
+object overhead_line  {
+     name OH_line_105-108;
+	 phases "ABCN";
+     from node_105;
+     to node_108;
+     length 325;
+     configuration line_configuration_3;
+}
+ 
+object overhead_line  {
+     name OH_line_106-107;
+	 phases "BN";
+     from load_106;
+     to load_107;
+     length 575;
+     configuration line_configuration_10;
+}
+ 
+object overhead_line  {
+     name OH_line_108-109;
+	 phases "AN";
+     from node_108;
+     to load_109;
+     length 450;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_108-300;
+	 phases "ABCN";
+     from node_108;
+     to meter_300;
+     length 1000;
+     configuration line_configuration_3;
+}
+ 
+object overhead_line  {
+     name OH_line_109-110;
+	 phases "AN";
+     from load_109;
+     to node_110;
+     length 300;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_110-111;
+	 phases "AN";
+     from node_110;
+     to load_111;
+     length 575;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_110-112;
+	 phases "AN";
+     from node_110;
+     to load_112;
+     length 125;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_112-113;
+	 phases "AN";
+     from load_112;
+     to load_113;
+     length 525;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_113-114;
+	 phases "AN";
+     from load_113;
+     to load_114;
+     length 325;
+     configuration line_configuration_9;
+}
+ 
+object overhead_line  {
+     name OH_line_135-35;
+	 phases "ABCN";
+     from node_135;
+     to load_35;
+     length 375;
+     configuration line_configuration_4;
+}
+ 
+object overhead_line  {
+     name OH_line_149-1;
+	 phases "ABCN";
+     from node_149;
+     to load_1;
+     length 400;
+     configuration line_configuration_1;
+}
+ 
+object overhead_line  {
+     name OH_line_152-52;
+	 phases "ABCN";
+     from node_152;
+     to load_52;
+     length 400;
+     configuration line_configuration_1;
+}
+ 
+object overhead_line  {
+     name OH_line_6701-67;
+	 phases "ABCN";
+     from node_6701;
+     to node_67;
+     length 350;
+     configuration line_configuration_6;
+}
+ 
+object overhead_line  {
+     name OH_line_197-101;
+	 phases "ABCN";
+     from node_197;
+     to load_101;
+     length 250;
+     configuration line_configuration_3;
+}
+
+
+
+
+//Create node only objects 
+object node {
+     name node_3;
+	 phases "CN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+ 
+object node {
+     name node_8;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+
+ 
+object meter {
+     name meter_13;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+
+ 
+object node {
+     name node_14;
+	 phases "AN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+
+object node {
+     name node_1401;
+	 phases "AN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object node {
+     name node_15;
+	 phases "CN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+ 
+object node {
+     name node_18;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+ 
+object node {
+     name node_21;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+
+ 
+object node {
+     name node_23;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+ 
+object node {
+     name node_25;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object node {
+     name node_26;
+	 phases "ACN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+
+object node {
+     name node_2601;
+	 phases "ACN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object node {
+     name node_27;
+	 phases "ACN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+
+ 
+object node {
+     name node_36;
+	 phases "ABN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+
+ 
+object node {
+     name node_40;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+
+ 
+object node {
+     name node_44;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+ 
+object node {
+     name node_54;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+
+}
+ 
+
+ 
+object node {
+     name node_57;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+
+}
+ 
+ 
+object node {
+     name node_61;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+
+}
+ 
+
+ 
+object node {
+     name node_67;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+
+}
+
+object node {
+     name node_6701;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+
+ 
+
+ 
+object load {
+     name load_72;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+	 // constant_power_A 250000+90000j;
+	 // constant_power_B 250000+90000j;
+     // constant_power_C 250000+90000j;
+
+}
+
+
+
+object node {
+     name node_78;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+
+}
+ 
+
+ 
+object node {
+     name node_81;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+
+}
+ 
+
+
+ 
+object node {
+     name node_89;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+
+}
+ 
+
+ 
+object node {
+     name node_91;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+
+}
+ 
+
+ 
+object node {
+     name node_93;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+
+}
+ 
+
+ 
+object node {
+     name node_97;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+
+}
+ 
+
+ // This is the GFA Loads, with loads from 106,107,109,111
+object load {
+     name load_101;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+ object load {
+    name load_101_1;
+	parent load_101;
+	frequency_measure_type PLL;
+    phases "ABCN";
+    flags DELTAMODE;
+	constant_power_A 1667+800j;
+	constant_power_B 1667+800j;
+    constant_power_C 1667+800j;
+	nominal_voltage 2401.7;
+	
+	// GFA_enable true;
+	// GFA_freq_low_trip 59.5 Hz;
+	// GFA_freq_high_trip 120.0 Hz;
+	// GFA_volt_low_trip 0.8;
+	// GFA_volt_high_trip 1.2;
+	// GFA_reconnect_time 10 s;
+	// GFA_freq_disconnect_time 0.08 s;
+	// GFA_volt_disconnect_time 0.08 s;
+		
+
+};
+
+
+
+ object load {
+    name load_101_2;
+	parent load_101;
+	frequency_measure_type PLL;
+    phases "ABCN";
+    flags DELTAMODE;
+	constant_power_A 7000+3333j;
+    constant_power_B 7000+3333j;
+	constant_power_C 7000+3333j;
+	nominal_voltage 2401.7;
+	
+	// GFA_enable true;
+	// GFA_freq_low_trip 59.0 Hz;
+	// GFA_freq_high_trip 120.0 Hz;
+	// GFA_volt_low_trip 0.8;
+	// GFA_volt_high_trip 1.2;
+	// GFA_reconnect_time 14 s;
+	// GFA_freq_disconnect_time 0.08 s;
+	// GFA_volt_disconnect_time 0.08 s;
+		
+
+};
+
+
+ object load {
+    name load_101_3;
+	parent load_101;
+	frequency_measure_type PLL;
+    phases "ABCN";
+    flags DELTAMODE;
+	constant_power_A 12667+6000j;
+	constant_power_B 12667+6000j;
+	constant_power_C 12667+6000j;
+	
+    nominal_voltage 2401.7;
+	
+	// GFA_enable true;
+	// GFA_freq_low_trip 58.5 Hz;
+	// GFA_freq_high_trip 120.0 Hz;
+	// GFA_volt_low_trip 0.8;
+	// GFA_volt_high_trip 1.2;
+	// GFA_reconnect_time 18 s;
+	// GFA_freq_disconnect_time 0.08 s;
+	// GFA_volt_disconnect_time 0.08 s;
+		
+
+};
+
+
+ object load {
+    name load_101_4;
+	parent load_101;
+	frequency_measure_type PLL;
+    phases "ABCN";
+    flags DELTAMODE;
+	constant_power_A 16000+7667j;
+	constant_power_B 16000+7667j;
+	constant_power_C 16000+7667j;
+    nominal_voltage 2401.7;
+	
+	// GFA_enable true;
+	// GFA_freq_low_trip 58.0 Hz;
+	// GFA_freq_high_trip 120.0 Hz;
+	// GFA_volt_low_trip 0.8;
+	// GFA_volt_high_trip 1.2;
+	// GFA_reconnect_time 22 s;
+	// GFA_freq_disconnect_time 0.08 s;
+	// GFA_volt_disconnect_time 0.08 s;
+		
+
+};
+
+
+ object load {
+    name load_101_5;
+	parent load_101;
+	frequency_measure_type PLL;
+    phases "ABCN";
+    flags DELTAMODE;
+	constant_power_A 20000+9667j;
+	constant_power_B 20000+9667j;
+	constant_power_C 20000+9667j;
+    nominal_voltage 2401.7;
+	
+	// GFA_enable true;
+	// GFA_freq_low_trip 57.5 Hz;
+	// GFA_freq_high_trip 120.0 Hz;
+	// GFA_volt_low_trip 0.8;
+	// GFA_volt_high_trip 1.2;
+	// GFA_reconnect_time 26 s;
+	// GFA_freq_disconnect_time 0.08 s;
+	// GFA_volt_disconnect_time 0.08 s;
+		
+};
+
+
+ object load {
+    name load_101_6;
+	parent load_101;
+	frequency_measure_type PLL;
+    phases "ABCN";
+    flags DELTAMODE;
+	constant_power_A 32667+15867j;
+	constant_power_B 32667+15867j;
+	constant_power_C 32667+15867j;
+    nominal_voltage 2401.7;
+	
+	// GFA_enable true;
+	// GFA_freq_low_trip 57.0 Hz;
+	// GFA_freq_high_trip 120.0 Hz;
+	// GFA_volt_low_trip 0.8;
+	// GFA_volt_high_trip 1.2;
+	// GFA_reconnect_time 30 s;
+	// GFA_freq_disconnect_time 0.08 s;
+	// GFA_volt_disconnect_time 0.08 s;
+		
+};
+object node {
+     name node_105;
+	 phases "ABCN";
+     flags DELTAMODE;
+	 frequency_measure_type PLL;
+     nominal_voltage 2401.7;
+
+};
+ 
+
+ 
+object node {
+     name node_108;
+	 phases "ABCN";
+	 flags DELTAMODE;
+	 frequency_measure_type PLL;
+     nominal_voltage 2401.7;
+}
+ 
+
+ 
+object node {
+     name node_110;
+	 phases "AN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+ 
+object node {
+     name node_135;
+	 phases "ABCN";
+     flags DELTAMODE;
+	 frequency_measure_type PLL;
+     nominal_voltage 2401.7;
+}
+ 
+object node {
+     name node_149;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+
+object node {
+     name node_1491;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+
+object node {
+     name node_150;
+	 phases "ABCN";
+	 frequency_measure_type PLL;
+     bustype SWING; //SWING_PQ;
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+
+}
+
+// object node {
+//      phases "ABCN";
+//      name node_1501;
+//      bustype SWING;
+//      flags DELTAMODE;
+//      nominal_voltage 2401.7771;
+
+// }
+ 
+object node {
+     name node_151;
+	 phases "ABCN";
+     flags DELTAMODE;
+     bustype SWING_PQ;
+	 frequency_measure_type PLL;
+     nominal_voltage 2401.7;
+}
+
+object node {
+     name node_152;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object node {
+     name node_160;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object node {
+	 name node_195;
+     phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object node {
+     name node_197;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object node {
+     name node_250;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name node_251;
+	phases "ABCN";
+     constant_power_A 137000+45000j;
+     constant_power_B 137000+45000j;
+     constant_power_C 137000+45000j;
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object meter {
+     name meter_300;
+	 phases "ABCN";
+	 bustype SWING_PQ;
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object node {
+     name node_350;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object node {
+     name node_450;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object node {
+     name node_451;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object node {
+     name node_610;
+	 phases "ABCN";
+     voltage_A 480.000+0j;
+     voltage_B -240.000-415.6922j;
+     voltage_C -240.000+415.6922j;
+     nominal_voltage 480.000;
+}
+
+object node {
+     name node_611;
+	 phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+
+
+
+
+//Create load objects
+object load {
+     name load_1;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7;
+
+}
+ 
+object load {
+     name load_2;
+     phases "BN";
+     flags DELTAMODE;
+     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7;
+
+}
+ 
+object load {
+     name load_4;
+     phases "CN";
+     flags DELTAMODE;
+	 constant_power_C 40000+20000j;
+     nominal_voltage 2401.7;
+
+
+}
+ 
+object load {
+     name load_5;
+     phases "CN";
+     flags DELTAMODE;
+     constant_current_C -0.55781+9.2933j;
+     nominal_voltage 2401.7;
+
+     
+}
+ 
+object load {
+     name load_6;
+     phases "CN";
+     flags DELTAMODE;
+     constant_impedance_C 115.3707+57.6853j;
+     nominal_voltage 2401.7;
+
+
+}
+ 
+object load {
+     name load_7;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7;
+
+}
+ 
+object load {
+     name load_9;
+     phases "AN";
+     flags DELTAMODE;
+     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_10;
+     phases "AN";
+     flags DELTAMODE;
+     constant_current_A 8.3272-4.1636j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_11;
+     phases "AN";
+     flags DELTAMODE;
+     constant_impedance_A 115.3707+57.6853j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_12;
+     phases "BN";
+     flags DELTAMODE;
+     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7;
+
+}
+ 
+object load {
+     name load_16;
+     phases "CN";
+     flags DELTAMODE;
+     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_17;
+     phases "CN";
+     flags DELTAMODE;
+     constant_power_C 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_19;
+     phases "AN";
+     flags DELTAMODE;
+     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_20;
+     phases "AN";
+     flags DELTAMODE;
+     constant_current_A 16.6543-8.3272j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_22;
+     phases "BN";
+     flags DELTAMODE;
+     constant_impedance_B 115.3707+57.6853j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_24;
+     phases "CN";
+     flags DELTAMODE;
+     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_28;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_current_A 16.6543-8.3272j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_29;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_impedance_A 115.3707+57.6853j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_30;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_31;
+     phases "CN";
+     flags DELTAMODE;
+     constant_power_C 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_32;
+     phases "CN";
+     flags DELTAMODE;
+     constant_power_C 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_33;
+     phases "AN";
+     flags DELTAMODE;
+     constant_current_A 16.6543-8.3272j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_34;
+     phases "CN";
+     flags DELTAMODE;
+     constant_impedance_C 115.3707+57.6853j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_35;
+     phases "ABCD";
+     flags DELTAMODE;
+     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_37;
+     phases "AN";
+     flags DELTAMODE;
+	 flags DELTAMODE;
+     constant_impedance_A 115.3707+57.6853j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_38;
+     phases "BN";
+     flags DELTAMODE;
+     constant_current_B -7.7694-5.1297j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_39;
+     phases "BN";
+     flags DELTAMODE;
+     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_41;
+     phases "CN";
+     flags DELTAMODE;
+     constant_power_C 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+ 
+object load {
+     name load_42;
+     phases "ABCN";
+     flags DELTAMODE;
+	 //frequency_measure_type PLL;
+     constant_power_A 20000+10000j;
+	 constant_power_B 20000+10000j;
+	 constant_power_C 20000+10000j;
+     nominal_voltage 2401.7;
+
+}
+ 
+object load {
+     name load_43;
+     phases "BN";
+     flags DELTAMODE;
+     constant_impedance_B 115.3707+57.6853j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_45;
+     phases "AN";
+     flags DELTAMODE;
+     constant_current_A 8.3272-4.1636j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_46;
+     phases "AN";
+     flags DELTAMODE;
+     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_47;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_current_A 14.5725-10.409j;
+     constant_current_B -16.3007-7.4157j;
+     constant_current_C 1.7282+17.8247j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_48;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_impedance_A 54.5672+38.9766j;
+     constant_impedance_B 54.5672+38.9766j;
+     constant_impedance_C 54.5672+38.9766j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_49;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_A 35000+25000j;
+     constant_power_B 70000+50000j;
+     constant_power_C 35000+25000j;
+     nominal_voltage 2401.7;
+}
+ 
+object meter {
+     name meter_50;
+     phases "ABCN";
+     flags DELTAMODE;
+	//  bustype SWING_PQ;
+	 frequency_measure_type PLL;
+     //constant_power_C 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_51;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7;
+
+}
+ 
+object load {
+     name load_52;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_53;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_55;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_impedance_A 230.7413+115.3707j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_56;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_58;
+     phases "BN";
+     flags DELTAMODE;
+     constant_current_B -7.7694-5.1297j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_59;
+     phases "BN";
+     flags DELTAMODE;
+     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_60;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_62;
+     phases "ABC";
+     flags DELTAMODE;
+     constant_impedance_C 115.3707+57.6853j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_63;
+     phases "ABC";
+     flags DELTAMODE;
+     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_64;
+     phases "ABC";
+     flags DELTAMODE;
+     constant_current_B -28.2336-19.757j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_65;
+     phases "ABCD";
+     flags DELTAMODE;
+     constant_impedance_A 327.4032+233.8595j;
+     constant_impedance_B 327.4032+233.8595j;
+     constant_impedance_C 163.7016+116.9297j;
+     nominal_voltage 2401.7;
+}
+ 
+object meter {
+     name meter_66;
+     phases "ABC";
+     flags DELTAMODE;
+ //    constant_power_C 75000+35000j;
+     nominal_voltage 2401.7;
+}
+
+ 
+object load {
+     name load_68;
+     phases "AN";
+     flags DELTAMODE;
+     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_69;
+     phases "AN";
+     flags DELTAMODE;
+     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_70;
+     phases "AN";
+     flags DELTAMODE;
+     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_71;
+     phases "AN";
+     flags DELTAMODE;
+     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_73;
+     phases "CN";
+     flags DELTAMODE;
+     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_74;
+     phases "CN";
+     flags DELTAMODE;
+     constant_impedance_C 115.3707+57.6853j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_75;
+     phases "CN";
+     flags DELTAMODE;
+     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_76;
+     phases "ABCD";
+     flags DELTAMODE;
+     constant_current_A 31.4742-4.0341j;
+     constant_current_B -12.0192-16.8269j;
+     constant_current_C -8.5629+18.8224j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_77;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_B 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_79;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_impedance_A 115.3707+57.6853j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_80;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_B 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_82;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_83;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_C 20000+10000j;
+     constant_impedance_A 0.00-28.8427j;          //Shunt Capacitors
+     constant_impedance_B 0.00-28.8427j;
+     constant_impedance_C 0.00-28.8427j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_84;
+     phases "CN";
+     flags DELTAMODE;
+     constant_power_C 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_85;
+     phases "CN";
+     flags DELTAMODE;
+     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_86;
+     phases "ABCN";
+	 flags DELTAMODE;
+     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_87;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_B 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_88;
+     phases "AN";
+     flags DELTAMODE;
+     constant_power_A 40000+20000j;
+     constant_impedance_A 0.00-115.7067j;         //Shunt Capacitor
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_90;
+     phases "BN";
+     flags DELTAMODE;
+     constant_current_B -15.5387-10.2595j;
+     constant_impedance_B 0.00-115.7067j;         //Shunt Capacitor
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_92;
+     phases "CN";
+     flags DELTAMODE;
+     constant_power_C 40000+20000j;
+     constant_impedance_C 0.00-115.7067j;         //Shunt Capacitor
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_94;
+     phases "AN";
+     flags DELTAMODE;
+     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_95;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_96;
+     phases "BN";
+     flags DELTAMODE;
+     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_98;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_99;
+     phases "ABCN";
+     flags DELTAMODE;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_100;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_impedance_C 115.3707+57.6853j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_102;
+     phases "CN";
+     flags DELTAMODE;
+     //constant_power_C 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_103;
+     phases "CN";
+     flags DELTAMODE;
+     //constant_power_C 40000+20000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_104;
+     phases "CN";
+     flags DELTAMODE;
+     //constant_power_C 40000+20000j;
+     nominal_voltage 2401.7;
+}
+
+object load {
+     name load_106;
+     phases "BN";
+     flags DELTAMODE;
+	 frequency_measure_type PLL;
+     //constant_power_B 40000+20000j;
+	 //constant_power_B 26600+13300j;
+     nominal_voltage 2401.7;
+	 
+	
+}
+ 
+object load {
+     name load_107;
+     phases "BN";
+     flags DELTAMODE;
+	 frequency_measure_type PLL;
+     //constant_power_B 40000+20000j;
+     nominal_voltage 2401.7;
+	
+}
+ 
+object load {
+     name load_109;
+     phases "AN";
+     flags DELTAMODE;
+	 frequency_measure_type PLL;
+     //constant_power_A 40000+20000j;
+	 //constant_power_A 60000+30000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_111;
+     phases "AN";
+     flags DELTAMODE;
+	 frequency_measure_type PLL;
+     //constant_power_A 20000+10000j;
+     nominal_voltage 2401.7;
+}
+ 
+object load {
+     name load_112;
+     phases "AN";
+	 //frequency_measure_type PLL;
+     flags DELTAMODE;
+     constant_current_A 8.3272-4.1636j;
+     nominal_voltage 2401.7;
+	 
+}
+ 
+object load {
+     name load_113;
+     phases "AN";
+	 //frequency_measure_type PLL;
+     flags DELTAMODE;
+     constant_impedance_A 115.3707+57.6853j;
+     nominal_voltage 2401.7;
+
+}
+ 
+object load {
+     name load_114;
+     phases "AN";
+     flags DELTAMODE;
+     //constant_power_A 20000+10000j;
+     nominal_voltage 2401.7;
+}
+
+// Switches
+
+// Isolation of the swing node
+// object switch {
+//      name microgrid_switch0;
+// 	 phases "ABCN";
+//      from node_150;
+//      to node_1501;
+//      status CLOSED;
+
+// }
+// Connection between microgrid 1 and microgrid 2
+object switch {
+     name microgrid_switch1;
+	 phases "ABCN";
+     from node_18;
+     to node_135;
+     status CLOSED;
+
+}
+// Connection between microgrid 3 and Region 4
+object switch {
+     name microgrid_switch2;
+	 phases "ABCN";
+     from node_97;
+     to node_197;
+     status OPEN;
+
+}
+// Isolation for Region 4
+object switch {
+     name microgrid_switch3;
+	 phases "ABCN";
+     from load_60;
+     to node_160;
+     status CLOSED; //CLOSED;
+	 
+		 
+}// COnnection between microgid 2 and 3
+
+object switch {
+     name microgrid_switch4;
+	 phases "ABCN";
+     from node_151;
+     to meter_300;
+     status CLOSED;//OPEN;
+
+}
+
+object switch {
+     name switch_13-152;
+	 phases "ABCN";
+     from meter_13;
+     to node_152;
+     status CLOSED;
+}
+
+
+
+object switch {
+     name switch_61-611;
+	 phases "ABCN";
+     from node_61;
+     to node_611;
+     status CLOSED;
+}
+
+
+
+object switch {
+     name switch_1491-149;
+	 phases "ABCN";
+     from node_1491;
+     to node_149;
+     status CLOSED;
+}
+
+// repurposed for load pick up on region 1
+object switch {
+     name switch_250-251;
+	 phases "ABCN";
+     from node_250;
+     to node_251;
+     status OPEN;
+}
+
+object switch {
+     name switch_450-451;
+	 phases "ABCN";
+     from node_450;
+     to node_451;
+     status CLOSED;
+}
+
+object switch {
+     name switch_54-94;
+	 phases "AN";
+     from node_54;
+     to load_94;
+     status OPEN;
+}
+
+
+object switch {
+     name switch_300-350;
+	 phases "ABCN";
+     from meter_300;
+     to node_350;
+     status CLOSED;
+}
+
+object switch {
+     name switch_95-195;
+	 phases "ABCN";
+     from load_95;
+     to node_195;
+     status CLOSED;
+}
+
+
+
+// Transformer
+object transformer_configuration {
+	name transformer_configuration_1;
+	connect_type DELTA_DELTA;
+  	install_type PADMOUNT;
+  	power_rating 150;
+  	primary_voltage 4160;
+  	secondary_voltage 480;
+  	resistance 0.0127;
+  	reactance 0.0272;
+}
+  
+object transformer {
+  	name transformer_611-610;
+	phases "ABCN";
+  	from node_611;
+  	to node_610;
+  	configuration transformer_configuration_1;
+}
+
+
+
+// Regulators
+object regulator_configuration {
+	name regulator_configuration_1;
+	connect_type 1;
+	band_center 120.000;
+	band_width 2.0;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 700;
+	power_transducer_ratio 20;
+	compensator_r_setting_A 3.0;
+	compensator_x_setting_A 7.5;
+	compensator_r_setting_B 3.0;
+	compensator_x_setting_B 7.5;
+	compensator_r_setting_C 3.0;
+	compensator_x_setting_C 7.5;
+	CT_phase "ABC";
+	PT_phase "ABC";
+	regulation 0.10;
+	Control MANUAL;
+	Type A;
+	tap_pos_A 7;
+	tap_pos_B 7;
+	tap_pos_C 7;
+}
+  
+object regulator:1501491 {
+	 name regulator_1;
+	 phases "ABC";
+	 from node_150;
+	 to node_1491;
+	 configuration regulator_configuration_1;
+}
+
+
+object regulator_configuration {
+	name regulator_configuration_2;
+	connect_type 1;
+	band_center 120.000;
+	band_width 1.0;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 50;
+	power_transducer_ratio 20;
+	compensator_r_setting_A 0.4;
+	compensator_x_setting_A 0.4;
+	compensator_r_setting_C 0.4;
+	compensator_x_setting_C 0.4;
+	CT_phase "AC";
+	PT_phase "AC";
+	regulation 0.10;
+	Control MANUAL;
+	Type A;
+	tap_pos_A 0;
+	tap_pos_C -1;
+}
+  
+object regulator {
+	 name regulator_2;
+	 phases "AC";
+	 from node_25;
+	 to node_2601;
+	 configuration regulator_configuration_2;
+}
+
+
+object regulator_configuration {
+	name regulator_configuration_3;
+	connect_type 1;
+	band_center 120.000;
+	band_width 2.0;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 50;
+	power_transducer_ratio 20;
+	compensator_r_setting_A 0.4;
+	compensator_x_setting_A 0.4;
+	CT_phase "A";
+	PT_phase "A";
+	regulation 0.10;
+	Control MANUAL;
+	Type A;
+	tap_pos_A -1;
+}
+  
+object regulator {
+	 name regulator_3;
+	 phases "A";
+	 from load_9;
+	 to node_1401;
+	 configuration regulator_configuration_3;
+}
+
+object regulator_configuration {
+	name regulator_configuration_4;
+	connect_type 1;
+	band_center 124.000;
+	band_width 2.0;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 300;
+	power_transducer_ratio 20;
+	CT_phase "ABC";
+	PT_phase "ABC";
+	regulation 0.10;
+	Control MANUAL;
+	Type A;
+	tap_pos_A 8;
+	tap_pos_B 1;
+	tap_pos_C 5;
+}
+  
+object regulator {
+	 name regulator_4;
+	 phases "ABC";
+	 from node_160;
+	 to node_6701;
+	 configuration regulator_configuration_4;
+}
+
+

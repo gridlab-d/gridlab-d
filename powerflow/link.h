@@ -94,6 +94,18 @@ public:
 	int protect_locations[3];	///< Links to protection object for different phase faults - part of reliability
 	FUNCTIONADDR link_recalc_fxn;	///< Function address for link recalculation function - frequency dependence
 
+	// For secondary control tie-line control include variables to set schedule
+	// NOTE: These values are in Watts NOT in p.u. as for generators
+	typedef struct {
+	double pdispatch; //Scheduled flow from->to in W
+	double pdispatch_offset; //Offset to scheduled flow in W
+	}PDISPATCH;
+
+	PDISPATCH pdispatch; //Scheduled flow from->to in W  
+	bool set_pdispatch; //trigger to set pdispatch equal to (power_in + power_out)/2
+	bool set_pdispatch_internal; //internal flag to help manage pdispatch setting
+	double set_pdispatch_time; //timestamp when pdispatch was set
+	
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP prev_LTime;

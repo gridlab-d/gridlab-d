@@ -199,7 +199,6 @@ int solar::create(void)
 
 	//Deltamode flags
 	deltamode_inclusive = false;
-	first_sync_delta_enabled = false;
 
 	//Inverter pointers
 	inverter_voltage_property = nullptr;
@@ -1052,8 +1051,18 @@ int solar::init(OBJECT *parent)
 		}
 		else
 		{
-			gen_object_count++; //Increment the counter
-			first_sync_delta_enabled = true;
+			//Add us to the list
+			fxn_return_status = add_gen_delta_obj(obj,false);
+
+			//Check it
+			if (fxn_return_status == FAILED)
+			{
+				GL_THROW("solar:%s - failed to add object to generator deltamode object list", obj->name ? obj->name : "unnamed");
+				/*  TROUBLESHOOT
+				The solar object encountered an issue while trying to add itself to the generator deltamode object list.  If the error
+				persists, please submit an issue via GitHub.
+				*/
+			}
 		}
 
 		//Make sure our parent is an inverter and deltamode enabled (otherwise this is dumb)
@@ -1114,64 +1123,6 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = OBJECTHDR(this);
 	double insolwmsq, corrwindspeed, Tback, Ftempcorr;
 	gld_wlock *test_rlock = nullptr;
-
-	if (first_sync_delta_enabled) //Deltamode first pass
-	{
-		//TODO: LOCKING!
-		if (deltamode_inclusive && enable_subsecond_models) //We want deltamode - see if it's populated yet
-		{
-			if ((gen_object_current == -1) || (delta_objects == nullptr))
-			{
-				//Call the allocation routine
-				allocate_deltamode_arrays();
-			}
-
-			//Check limits of the array
-			if (gen_object_current >= gen_object_count)
-			{
-				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
-				/*  TROUBLESHOOT
-				While attempting to populate a reference array of deltamode-enabled objects for the generator
-				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
-				error persists, please submit a bug report and your code via the trac website.
-				*/
-			}
-
-			//Add us into the list
-			delta_objects[gen_object_current] = obj;
-
-			//Map up the function for interupdate
-			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_gen_object"));
-
-			//Make sure it worked
-			if (delta_functions[gen_object_current] == nullptr)
-			{
-				GL_THROW("Failure to map deltamode function for device:%s", obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Map up the function for postupdate
-			post_delta_functions[gen_object_current] = nullptr; //No post-update function for us
-
-			//Map up the function for preupdate
-			delta_preupdate_functions[gen_object_current] = nullptr;
-
-			//Update pointer
-			gen_object_current++;
-
-			//Flag us as complete
-			first_sync_delta_enabled = false;
-		}	 //End deltamode specials - first pass
-		else //Somehow, we got here and deltamode isn't properly enabled...odd, just deflag us
-		{
-			first_sync_delta_enabled = false;
-		}
-	} //End first delta timestep
-	//default else - either not deltamode, or not the first timestep
 
 	//Check the shading factor
 	if ((shading_factor < 0) || (shading_factor > 1))
