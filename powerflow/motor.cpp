@@ -73,10 +73,7 @@ motor::motor(MODULE *mod):node(mod)
             PT_double, "contactor_open_Vmin[pu]", PADDR(contactor_open_Vmin),PT_DESCRIPTION,"pu voltage at which motor contactor opens",
             PT_double, "contactor_close_Vmax[pu]", PADDR(contactor_close_Vmax),PT_DESCRIPTION,"pu voltage at which motor contactor recloses",
 			PT_double, "reconnect_time[s]", PADDR(reconnect_time),PT_DESCRIPTION,"time before tripped motor reconnects",
-			//-- yuan add below --//
 			PT_int32, "time_step_divider", PADDR(ndiv),PT_DESCRIPTION,"divide time step by n - single- and three- phase models",
-			//-- yuan add above --//
-
 
 			//Reconcile torque and speed, primarily
 			PT_double, "mechanical_torque[pu]", PADDR(Tmech),PT_DESCRIPTION,"mechanical torque applied to the motor",
@@ -996,13 +993,16 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 	STATUS return_status_val;
 	bool temp_house_motor_state;
 	gld_wlock *test_rlock = nullptr;
-	double deltat;
+	double deltat, deltat_ndiv;
 
 	// make sure to capture the current time
 	curr_delta_time = gl_globaldeltaclock;
 
 	// I need the time delta in seconds
 	deltat = (double)dt/(double)DT_SECOND;
+	
+	// Find out the division one too
+	deltat_ndiv = deltat / (double)ndiv;
 
 	//Update time tracking variable - mostly for GFA functionality calls
 	if ((iteration_count_val==0) && !interupdate_pos) //Only update timestamp tracker on first iteration
@@ -1109,12 +1109,12 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			}//End crude house coupling check
 
 			// if deltaTime is not small enough we will run into problems
-			//-- yuan: the time_step_divider (ndiv) is introduced to resolve the small dTime issue
-			//-- yuan comment below --//
-//			if (deltat > 0.0003) {
-//				gl_warning("Delta time for the SPIM model needs to be lower than 0.0003 seconds");
-//			}
-			//-- yuan comment above --//
+			if (deltat_ndiv > 0.0003) {
+				gl_warning("Motor: Delta time for the SPIM model needs to be lower than 0.0003 seconds");
+				/*  TROUBLESHOOT
+				The deltamode timestep, or for the motor the deltamodetimestep divided by time_step_divider, is too large and can lead to integration/model issues.
+				*/
+			}
 
 			if(curr_delta_time == last_cycle) { // if time did not advance, load old values
 				SPIMreinitializeVars();
@@ -1190,14 +1190,10 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		else 	//Must be three-phase
 		{
 			// if deltat is not small enough we will run into problems
-			//-- yuan: the time_step_divider (ndiv) is introduced to resolve the small dTime issue
-			//-- yuan comment below --//
-			/*
-			if (deltat > 0.0005) {
-				gl_warning("Delta time for the TPIM model needs to be lower than 0.0005 seconds");
+			if (deltat_ndiv > 0.0005) {
+				gl_warning("Motor: Delta time for the TPIM model needs to be lower than 0.0005 seconds");
+				//Defined above
 			}
-			*/
-			//-- yuan comment above --//
 
 			if(curr_delta_time == last_cycle) { // if time did not advance, load old values
 				TPIMreinitializeVars();
@@ -1972,13 +1968,10 @@ void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 	double psi = -1;
 	double Xc = -1;
 
-    //-- yuan add below --//
     double dTime_sub = dTime / ndiv;
-    //-- yuan add above --//
-    
-    //-- yuan add below --//
+
+	//Loop over the timestep divider
     for (int i=0; i<ndiv; i++) {
-    //-- yuan add above --//
 
 		//Kick in extra capacitor if we droop in speed
 		if (wr < cap_run_speed) {
@@ -1991,10 +1984,7 @@ void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 		// Flux equation
 		psi_b = (Ib*Xm) / ((gld::complex(0.0,1.0)*(ws+wr)*To_prime)+psi_sat);
 
-		//-- yuan comment and add below --//
-//		psi_f = psi_f + ( If*(Xm/To_prime) - (gld::complex(0.0,1.0)*(ws-wr) + psi_sat/To_prime)*psi_f )*dTime;
 		psi_f = psi_f + ( If*(Xm/To_prime) - (gld::complex(0.0,1.0)*(ws-wr) + psi_sat/To_prime)*psi_f )*dTime_sub;
-		//-- yuan comment and add above --//
 
 		//Calculate saturated flux
 		psi = sqrt(psi_f.Re()*psi_f.Re() + psi_f.Im()*psi_f.Im() + psi_b.Re()*psi_b.Re() + psi_b.Im()*psi_b.Im());
@@ -2033,10 +2023,7 @@ void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 		//Default else - direct method, so just read (in case player/else changes it)
 
 		// speed equation
-		//-- yuan comment and add below --//
-//		wr = wr + (((Telec-Tmech)*wbase)/(2*H))*dTime;
 		wr = wr + (((Telec-Tmech)*wbase)/(2*H))*dTime_sub;
-		//-- yuan comment and add below --//
 
 		// speeds below 0 should be avioded
 		if (wr < 0) {
@@ -2045,10 +2032,7 @@ void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 
 		//Get the per-unit version
 		wr_pu = wr / wbase;
-
-	//-- yuan add below --//
     }
-    //-- yuan add above --//
 }
 
 //Dynamic updates for TPIM
@@ -2084,13 +2068,10 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     Vap = (Vas + alpha * Vbs + alpha * alpha * Vcs) / 3.0;
     Van = (Vas + alpha * alpha * Vbs + alpha * Vcs) / 3.0;
 
-    //-- yuan add below --//
     double dTime_sub = dTime / ndiv;
-    //-- yuan add above --//
 
-    //-- yuan add below --//
+	//Loop over timestep divider
     for (int i=0; i<ndiv; i++) {
-    //-- yuan add above --//
 		TPIMupdateVars();
 
 		//See which model we're using
@@ -2110,9 +2091,6 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
 				Tmech_eff = Tmech;
 			}
 		}
-
-		//-- yuan debug --//
-		//gl_warning("yuan debug code");
 
 		//*** Predictor Step ***//
 		// predictor step 1 - calculate coefficients
@@ -2137,20 +2115,11 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
 
 
 		// predictor step 3 - integrate for predicted state variable
-		//-- yuan comment and add below --//
-		/*
-		phips = phips_prev +  dphips_prev_dt * dTime;
-		phins_cj = phins_cj_prev + dphins_cj_prev_dt * dTime;
-		phipr = phipr_prev + dphipr_prev_dt * dTime ;
-		phinr_cj = phinr_cj_prev + dphinr_cj_prev_dt * dTime ;
-		wr_pu = wr_pu_prev + domgr0_prev_dt.Re() * dTime ;
-		*/
 		phips = phips_prev +  dphips_prev_dt * dTime_sub;
 		phins_cj = phins_cj_prev + dphins_cj_prev_dt * dTime_sub;
 		phipr = phipr_prev + dphipr_prev_dt * dTime_sub ;
 		phinr_cj = phinr_cj_prev + dphinr_cj_prev_dt * dTime_sub ;
 		wr_pu = wr_pu_prev + domgr0_prev_dt.Re() * dTime_sub ;
-		//-- yuan comment and add above --//
 		wr = wr_pu * wbase;
 
 		// predictor step 4 - update outputs using predicted state variables
@@ -2185,20 +2154,11 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
 		domgr0_dt =  1.0/(2.0 * H) * ( (~phips * Ips + ~phins_cj * Ins_cj).Im() - Tmech_eff - Kfric * wr_pu );
 
 		// corrector step 3 - integrate
-		//-- yuan comment and add below --//
-		/*
-		phips = phips_prev +  (dphips_prev_dt + dphips_dt) * dTime/2.0;
-		phins_cj = phins_cj_prev + (dphins_cj_prev_dt + dphins_cj_dt) * dTime/2.0;
-		phipr = phipr_prev + (dphipr_prev_dt + dphipr_dt) * dTime/2.0 ;
-		phinr_cj = phinr_cj_prev + (dphinr_cj_prev_dt + dphinr_cj_dt) * dTime/2.0 ;
-		wr_pu = wr_pu_prev + (domgr0_prev_dt + domgr0_dt).Re() * dTime/2.0 ;
-		*/
 		phips = phips_prev +  (dphips_prev_dt + dphips_dt) * dTime_sub/2.0;
 		phins_cj = phins_cj_prev + (dphins_cj_prev_dt + dphins_cj_dt) * dTime_sub/2.0;
 		phipr = phipr_prev + (dphipr_prev_dt + dphipr_dt) * dTime_sub/2.0 ;
 		phinr_cj = phinr_cj_prev + (dphinr_cj_prev_dt + dphinr_cj_dt) * dTime_sub/2.0 ;
 		wr_pu = wr_pu_prev + (domgr0_prev_dt + domgr0_dt).Re() * dTime_sub/2.0 ;
-		//-- yuan comment and add above --//
 		wr = wr_pu * wbase;
 
 		if (wr_pu < -10.0) { // speeds below -10 should be avoided
@@ -2219,10 +2179,7 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
 		Ics = alpha * Ips + alpha * alpha * ~Ins_cj ; // pu
 
 		motor_elec_power = (Vap * ~Ips + Van * Ins_cj) * Pbase; // VA
-	//-- yuan add below --//
     }
-	//-- yuan add above --//
-
 }
 
 //Function to perform exp(j*val) (basically a complex rotation)
