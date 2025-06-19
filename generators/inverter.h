@@ -396,6 +396,10 @@ public:
 	char freq_pwr_sched[1024];		//user input freq-power Schedule
 	std::vector<std::pair<double,double> > VoltVArSched;  //Volt/VAr schedule -- i realize I'm using goofball data types, what would be the GridLABD-esque way of implementing this data type? 
 	std::vector<std::pair<double,double> > freq_pwrSched; //freq-power schedule -- i realize I'm using goofball data types, what would be the GridLABD-esque way of implementing this data type? 
+
+	//IEEE 1547 curtailment priority mode
+	enum CURTAILMENT_PRIORITY_MODE {CPM_WATT=0,CPM_VAR=1};
+	enumeration curtailment_priority_mode;
 private:
 	//Comaptibility variables - used to be in power_electronics
 	bool parent_is_a_meter;		//Boolean to indicate if the parent object is a meter/triplex_meter
@@ -487,6 +491,7 @@ private:
 	void push_complex_powerflow_values(void);
 
 	double lin_eq_volt(double volt, double m, double b);
+	void curtail_PQ_output(gld::complex *requested_output, double magnitude_limit);
 public:
 	/* required implementations */
 	inverter(MODULE *module);
