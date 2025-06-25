@@ -607,7 +607,7 @@ int loadshape_init(loadshape *ls) /**< load shape */
 			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated energy must be a positive number",ls->schedule->name);
 			return 1;
 		}
-		if (static_cast<int>(ls->params.modulated.pulsetype)== static_cast<int>(MT_UNKNOWN))
+		if (ls->params.modulated.pulsetype==MPT_UNKNOWN)
 		{
 			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated pulse type could not be inferred because either duration or power is missing",ls->schedule->name);
 			return 1;
@@ -655,7 +655,7 @@ int loadshape_init(loadshape *ls) /**< load shape */
 			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) queue energy must be a positive number",ls->schedule->name);
 			return 1;
 		}
-		if (static_cast<int>(ls->params.queued.pulsetype)== static_cast<int>(MT_UNKNOWN))
+		if (ls->params.queued.pulsetype==MPT_UNKNOWN)
 		{
 			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) queue pulse type could not be inferred because either duration or power is missing",ls->schedule->name);
 			return 1;
