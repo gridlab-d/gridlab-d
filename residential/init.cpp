@@ -36,6 +36,13 @@
 #include "residential_enduse.h"
 #include "house_e.h"
 
+template <typename T> //arun
+void register_object(MODULE* module) {
+	static std::unique_ptr<T> instance = std::make_unique<T>(module);
+	std::cout << "Registered object: " << typeid(T).name() << std::endl;
+}
+
+
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
 	if (set_callback(fntable)==nullptr)
@@ -55,25 +62,46 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("residential::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",nullptr);
 	gl_global_create("residential::all_residential_delta", PT_bool, &all_residential_delta,PT_DESCRIPTION,"Modeling convenient - enables all residential objects in deltamode",nullptr);
 
-	new residential_enduse(module);
-	new appliance(module);
-	// obsolete as of 3.0: new house(module);
-	new house_e(module);
-	new waterheater(module);
-	new lights(module);
-	new refrigerator(module);
-	new clotheswasher(module);
-	new dishwasher(module);
-	new occupantload(module);
-	new plugload(module);
-	new microwave(module);
-	new range(module);
-	new freezer(module);
-	new dryer(module);
-	new evcharger(module);
-	new ZIPload(module);
-	new thermal_storage(module);
-	new evcharger_det(module);
+	//new residential_enduse(module);
+	//new appliance(module);
+	//// obsolete as of 3.0: new house(module);
+	//new house_e(module);
+	//new waterheater(module);
+	//new lights(module);
+	//new refrigerator(module);
+	//new clotheswasher(module);
+	//new dishwasher(module);
+	//new occupantload(module);
+	//new plugload(module);
+	//new microwave(module);
+	//new range(module);
+	//new freezer(module);
+	//new dryer(module);
+	//new evcharger(module);
+	//new ZIPload(module);
+	//new thermal_storage(module);
+	//new evcharger_det(module);
+
+	register_object<residential_enduse>(module);
+	register_object<appliance>(module);
+	// obsolete as of 3.0:
+	register_object<house_e>(module);
+	register_object<waterheater>(module);
+	register_object<lights>(module);
+	register_object<refrigerator>(module);
+	register_object<clotheswasher>(module);
+	register_object<dishwasher>(module);
+	register_object<occupantload>(module);
+	register_object<plugload>(module);
+	register_object<microwave>(module);
+	register_object<range>(module);
+	register_object<freezer>(module);
+	register_object<dryer>(module);
+	register_object<evcharger>(module);
+	register_object<ZIPload>(module);
+	register_object<thermal_storage>(module);
+	register_object<evcharger_det>(module);
+
 
 	/* always return the first class registered */
 	return residential_enduse::oclass;
@@ -89,7 +117,7 @@ void schedule_deltamode_start(TIMESTAMP tstart)
 	}
 	else
 	{
-		GL_THROW("residential: a call was made to deltamode functions, but subsecond models are not enabled!");
+		GL_THROW("resi•dential: a call was made to deltamode functions, but subsecond models are not enabled!");
 		/*  TROUBLESHOOT
 		The schedule_deltamode_start function was called by an object when residential's overall enabled_subsecond_models
 		flag was not set.  The module-level flag indicates that no devices should use deltamode, but one made the call

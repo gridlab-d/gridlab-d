@@ -1,10 +1,11 @@
 SET(GLD_MODULE_NAME gridlabd)
 
-# Load and link C/C++ files for the executeable
+
+# Load and link C/C++ files for the executable
 set(SOURCE_LIST
         gridlabd.h
-	gldapi.h
-	gldapi.cpp
+	#gldapi.h
+	#gldapi.cpp
         globals.cpp
         globals.h
         object.cpp
@@ -133,6 +134,8 @@ set(SOURCE_LIST
 
 #if(NOT APPLE)
 add_executable(${GLD_MODULE_NAME} ${SOURCE_LIST})
+
+
 #else()
 #    add_executable(${GLD_MODULE_NAME} MACOSX_BUNDLE ${SOURCE_LIST})
 #    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
@@ -142,15 +145,15 @@ add_executable(${GLD_MODULE_NAME} ${SOURCE_LIST})
 #            )
 #endif()
 
-add_library(gldapi ${SOURCE_LIST})
+#add_library(gldapi ${SOURCE_LIST})
 target_link_libraries(${GLD_MODULE_NAME} PUBLIC ${GL_MODULES})
 target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 if (CURSES_FOUND)
-    target_link_libraries(gldapi PRIVATE ${CURSES_LIBRARIES})
+    #target_link_libraries(gldapi PRIVATE ${CURSES_LIBRARIES})
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CURSES_LIBRARIES})
 endif ()
 if (XercesC_FOUND)
-    target_link_libraries(gldapi PRIVATE ${XercesC_LIBRARIES})
+    #target_link_libraries(gldapi PRIVATE ${XercesC_LIBRARIES})
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${XercesC_LIBRARIES})
 endif ()
 
@@ -158,8 +161,8 @@ target_include_directories(${GLD_MODULE_NAME} PRIVATE
         "${CMAKE_SOURCE_DIR}/third_party/jsonCpp"
         )
 
-target_link_libraries(gldapi PRIVATE ${JSONCPP_LIB})
-target_link_libraries(gldapi PRIVATE ${OS_SPECIFIC_LIBRARIES})
+#target_link_libraries(gldapi PRIVATE ${JSONCPP_LIB})
+#target_link_libraries(gldapi PRIVATE ${OS_SPECIFIC_LIBRARIES})
 
 
 target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${JSONCPP_LIB})

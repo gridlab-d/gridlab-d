@@ -1005,21 +1005,70 @@ EXPORT int isa_triplex_meter(OBJECT *obj, char *classname)
 	return OBJECTDATA(obj,triplex_meter)->isa(classname);
 }
 
-EXPORT int create_triplex_meter(OBJECT **obj, OBJECT *parent)
-{
-	try
-	{
+//EXPORT int create_triplex_meter(OBJECT **obj, OBJECT *parent)
+//{
+//	try
+//	{
+//		*obj = gl_create_object(triplex_meter::oclass);
+//		if (*obj!=nullptr)
+//		{
+//
+//			triplex_meter *my = OBJECTDATA(*obj,triplex_meter);
+//
+//			gl_set_parent(*obj,parent);
+//			return my->create();
+//		}
+//		else
+//			return 0;
+//	}
+//	CREATE_CATCHALL(triplex_meter);
+//}
+
+
+EXPORT int create_triplex_meter(OBJECT** obj, OBJECT* parent) {
+	try {
+		// Step 1: Create OBJECT through gl_create_object
 		*obj = gl_create_object(triplex_meter::oclass);
-		if (*obj!=nullptr)
-		{
-			triplex_meter *my = OBJECTDATA(*obj,triplex_meter);
-			gl_set_parent(*obj,parent);
-			return my->create();
-		}
-		else
+		if (*obj == nullptr) {
+			std::cerr << "Error: Failed to allocate memory for triplex_meter object." << std::endl;
 			return 0;
+		}
+
+		// Step 2: Access class-specific data using OBJECTDATA
+		triplex_meter* my = OBJECTDATA(*obj, triplex_meter);
+		if (my == nullptr) {
+			std::cerr << "Error: Failed to access triplex_meter-specific fields via OBJECTDATA!" << std::endl;
+			return 0;
+		}
+
+		// Step 3: Set parent relationship if applicable
+		gl_set_parent(*obj, parent); // Link to parent object
+		if (parent != nullptr) {
+			std::cout << "Parent set for triplex_meter object. Parent address: " << parent << std::endl;
+		}
+		else {
+			std::cout << "No parent provided for triplex_meter object." << std::endl;
+		}
+
+		// Step 4: Call the triplex_meter create method for initialization
+		int result = my->create();
+		if (result != 1) {
+			std::cerr << "Error: triplex_meter initialization failed in create() method!" << std::endl;
+			return 0;
+		}
+
+		// Step 5: Debug successful creation
+		std::cout << "Successfully created triplex_meter object at address: " << my << std::endl;
+		return 1; // Success
 	}
-	CREATE_CATCHALL(triplex_meter);
+	catch (const std::exception& ex) {
+		std::cerr << "Exception during create_triplex_meter: " << ex.what() << std::endl;
+		return 0;
+	}
+	catch (...) {
+		std::cerr << "Unknown error during create_triplex_meter!" << std::endl;
+		return 0;
+	}
 }
 
 EXPORT int init_triplex_meter(OBJECT *obj)

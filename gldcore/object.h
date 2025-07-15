@@ -224,7 +224,7 @@ public:
 		GLOBALVAR *(*create)(const char *name, ...);
 		STATUS (*setvar)(const char *def,...);
 		char *(*getvar)(const char *name, char *buffer, int size);
-		GLOBALVAR *(*find)(const char *name);
+		GLOBALVAR *(*find)(std::string_view name);
 	} global;
 	struct {
 		void (*read)(unsigned int *);

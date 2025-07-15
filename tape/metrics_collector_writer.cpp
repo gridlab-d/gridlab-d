@@ -8,10 +8,18 @@
 
 #include "metrics_collector_writer.h"
 
+template <typename T> //arun
+void register_object(MODULE* module) {
+	static std::unique_ptr<T> instance = std::make_unique<T>(module);
+	std::cout << "Registered object: " << typeid(T).name() << std::endl;
+}
+
 CLASS *metrics_collector_writer::oclass = nullptr;
 
 void new_metrics_collector_writer(MODULE *mod) {
-	new metrics_collector_writer(mod);
+	//new metrics_collector_writer(mod);
+	register_object<metrics_collector_writer>(mod); 
+
 }
 
 metrics_collector_writer::metrics_collector_writer(MODULE *mod) {

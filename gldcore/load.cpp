@@ -5846,8 +5846,8 @@ int replace_variables(char *to,char *from,int len,int warn)
 	int n = 0;
 	while ((p=strstr(e,"${"))!=nullptr)
 	{
-		char varname[1024];
-		if (sscanf(p+2,"%1024[^}]",varname)==1)
+		char varname[4096];
+		if (sscanf(p+2,"%4095[^}]",varname)==1)
 		{
 			char *env = getenv(varname);
 			char *var;

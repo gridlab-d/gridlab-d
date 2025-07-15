@@ -36,7 +36,7 @@ protected:
 public:
 	csv_reader();
 	csv_reader(MODULE *module);
-	~csv_reader();
+	~csv_reader() {}
 
 	static CLASS *oclass;
 

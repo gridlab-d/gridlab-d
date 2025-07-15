@@ -3,7 +3,7 @@
 
 #include "gridlabd.h"
 
-class load_tracker
+class load_tracker: public gld_object
 {
 private:
 	typedef union

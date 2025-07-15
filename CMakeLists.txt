@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
+
+# Enforce C++23 globally
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 include(cmake/Warnings.cmake)
 OPTION(GLD_EXTRA_WARNINGS "Make warnings more pedantic" OFF)
 if (GLD_EXTRA_WARNINGS)
@@ -354,7 +360,7 @@ set(GLD_LIBS
         climate
         commercial
         connection
-	gldapi
+	#gldapi
         generators
         market
         mysql

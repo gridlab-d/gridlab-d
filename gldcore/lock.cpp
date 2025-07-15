@@ -50,7 +50,7 @@
 #elif defined HAVE___SYNC_BOOL_COMPARE_AND_SWAP
 	#define atomic_compare_and_swap __sync_bool_compare_and_swap
 	#ifdef HAVE___SYNC_ADD_AND_FETCH
-		#define atomic_increment(ptr) __sync_add_and_fetch((volatile long *)ptr, 1)
+		#define atomic_increment(ptr) __sync_add_and_fetch((volatile unsigned int*)ptr, 1)
 	#else
 		static inline unsigned int atomic_increment(unsigned int *ptr)
 		{

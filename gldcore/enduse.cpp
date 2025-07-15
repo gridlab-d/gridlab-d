@@ -436,7 +436,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
             {.type=PT_double, .name="heatgain[Btu/h]", .addr=(char*)PADDR_C(heatgain), .description="the heat transferred from the enduse to the parent"},
             {.type=PT_double, .name="cumulative_heatgain[Btu]", .addr=(char*)PADDR_C(cumulative_heatgain), .description="the cumulative heatgain from the enduse to the parent"},
             {.type=PT_double, .name="heatgain_fraction[pu]", .addr=(char*)PADDR_C(heatgain_fraction), .description="the fraction of the heat that goes to the parent"},
-            {.type=PT_double, .name="current_fraction[pu]", .addr=(char*)PADDR_C(current_fraction),"the fraction of total power that is constant current"},
+            {.type=PT_double, .name="current_fraction[pu]", .addr=(char*)PADDR_C(current_fraction),.description="the fraction of total power that is constant current"},
             {.type=PT_double, .name="impedance_fraction[pu]", .addr=(char*)PADDR_C(impedance_fraction), .description="the fraction of total power that is constant impedance"},
             {.type=PT_double, .name="power_fraction[pu]", .addr=(char*)PADDR_C(power_fraction), .description="the fraction of the total power that is constant power"},
             {.type=PT_double, .name="power_factor", .addr=(char*)PADDR_C(power_factor), .description="the power factor of the load"},

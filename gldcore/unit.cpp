@@ -534,9 +534,19 @@ void unit_init(void)
 		}
 
 		/* remove trailing whitespace */
-		p = buffer + strlen(buffer) - 1;
+	/*	p = buffer + strlen(buffer) - 1;
 		while (iswspace(*p) && p>buffer){
 			*p-- = '\0';
+		}*/
+
+
+		/* remove trailing whitespace */
+		size_t len = strlen(buffer);
+		if (len > 0) {
+			p = buffer + strlen(buffer) - 1;
+			while (iswspace(*p) && p > buffer) {
+				*p-- = '\0';
+			}
 		}
 
 		/* ignore blank lines or lines starting with white space*/

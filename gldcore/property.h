@@ -67,7 +67,7 @@ public:
 
     inline charbuf<size>(const char *s) { copy_from(s); };
 
-    inline ~charbuf<size>(void) = default;
+    inline ~charbuf() = default;
 
     inline size_t get_size(void) { return size; };
 
@@ -233,21 +233,39 @@ public:
     }
 
     ~double_array(void) {
-        if (x != nullptr && (*refs)-- == 0) {
-//            size_t r, c;
-            for (auto r = 0; r < n; r++) {
-                if (n > 0 && x[r] != nullptr) {
-                    for (auto c = 0; c < m; c++) {
-                        if (m > 0 && x[r][c] != nullptr && tst_flag(r, c, BYREF))
-                            free(x[r][c]);
+        if ((*refs)-- == 0) {
+            for (size_t r = 0; r < n; r++) {
+                if (x[r] != nullptr) {
+                    for (size_t c = 0; c < m; c++) {
+                        if (x[r][c] != nullptr) {
+                            delete x[r][c];
+                        }
                     }
-                    free(x[r]);
+                    delete[] x[r];
                 }
             }
-            free(x);
+            delete[] x;
             delete refs;
         }
+        delete[] f; // Cleanup flag memory
     }
+
+//    ~double_array(void) {
+//        if (x != nullptr && (*refs)-- == 0) {
+////            size_t r, c;
+//            for (auto r = 0; r < n; r++) {
+//                if (n > 0 && x[r] != nullptr) {
+//                    for (auto c = 0; c < m; c++) {
+//                        if (m > 0 && x[r][c] != nullptr && tst_flag(r, c, BYREF))
+//                            free(x[r][c]);
+//                    }
+//                    free(x[r]);
+//                }
+//            }
+//            free(x);
+//            delete refs;
+//        }
+//    }
 
 //    ~double_array(void)
 //    {
@@ -750,7 +768,7 @@ public:
         (*refs)++;
     }
 
-    ~complex_array(void) {
+    /*~complex_array(void) {
         if ((*refs)-- == 0) {
             size_t r, c;
             for (r = 0; r < n; r++) {
@@ -761,6 +779,25 @@ public:
                 free(x[r]);
             }
             free(x);
+            delete refs;
+        }
+    }*/
+
+
+    ~complex_array() {
+        if (refs && (*refs)-- == 0) {
+            if (x != nullptr) {
+                for (size_t r = 0; r < n; r++) {
+                    if (x[r] != nullptr) {
+                        for (size_t c = 0; c < m; c++) {
+                            if (x[r][c] != nullptr && tst_flag(r, c, BYREF))
+                                free(x[r][c]);
+                        }
+                        free(x[r]);
+                    }
+                }
+                free(x);
+            }
             delete refs;
         }
     }
@@ -1337,7 +1374,7 @@ int property_check(void);
 
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype);
 
-PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, char *, void *, DELEGATEDTYPE *);
+PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, std::string_view, void *, DELEGATEDTYPE *);
 
 uint32 property_size(PROPERTY *);
 

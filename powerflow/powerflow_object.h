@@ -147,6 +147,10 @@ public:
 	static int isa(const char *classname);
 
 	int kmldump(FILE *fp);
+
+public:
+	virtual ~powerflow_object() {}
+
 };
 
 #endif // _POWERFLOWOBJECT_H

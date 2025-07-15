@@ -369,7 +369,9 @@ int convert_from_set(char *buffer, /**< pointer to the string buffer */
 	KEYWORD *keys;
 
 	/* get the actual value */
-	unsigned int64 value = *(unsigned int64*)data;
+	//unsigned int64 value = *(unsigned int64*)data;
+	uint32_t value = *static_cast<uint32_t*>(data); 
+
 
 	/* keep track of how characters written */
 	int count=0;

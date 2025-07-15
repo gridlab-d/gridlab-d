@@ -1932,6 +1932,9 @@ inline bool hasbits(unsigned long flags, unsigned int bits) { return (flags&bits
 /// Object container
 class gld_object {
 public:
+
+	virtual ~gld_object() {}
+
 	inline OBJECT *my() { return this?(((OBJECT*)this)-1):NULL; }
 private:
 	// Make gld_object not copy-constructable.
@@ -2101,7 +2104,7 @@ public: // constructors/casts
 		} 
 		char1024 vn; 
 		sprintf(vn,"%s::%s",m,n); 
-		GLOBALVAR *v=callback->global.find(vn); 
+		GLOBALVAR *v=callback->global.find(vn.get_string()); 
 		pstruct.prop= (v?v->prop:NULL);  
 	};
 	inline operator PROPERTY*(void) { return pstruct.prop; };
@@ -2249,7 +2252,7 @@ private: // data
 	GLOBALVAR *var;
 
 public: // constructors
-	inline gld_global(void) { var=callback->global.find(NULL); };
+	inline gld_global(void) { var=callback->global.find(""); };
 	inline gld_global(GLOBALVAR *v) : var(v) {};
 	inline gld_global(const char *n) { var=callback->global.find(n); };
 	inline gld_global(const char *n, PROPERTYTYPE t, void *p) { var=callback->global.create(n,t,p,NULL); };
@@ -2286,7 +2289,7 @@ public: // external accessors
 	// TODO
 
 public: // iterators
-	inline GLOBALVAR* get_first(void) { return callback->global.find(NULL); };
+	inline GLOBALVAR* get_first(void) { return callback->global.find(""); };
 	inline bool is_last(void) { if (!var) return false; else return (var->next==NULL); };
 	inline GLOBALVAR* get_next(void) { if (!var) return NULL; else return var->next; };
 };

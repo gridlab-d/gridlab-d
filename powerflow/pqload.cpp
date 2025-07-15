@@ -108,7 +108,7 @@ pqload::pqload(MODULE *mod) : load(mod)
 				GL_THROW("unable to publish properties in %s",__FILE__);
 		}
 	defaults = this;
-	memset(this,0,sizeof(pqload));
+	//memset(this,0,sizeof(pqload));
 	input[5] = 1.0; /* constant term */
 	//imped_p[5] = 0;
 	strcpy(schedule, "* * * * *:1.0;");
