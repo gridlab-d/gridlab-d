@@ -1,3 +1,11 @@
+"""
+GLM to JSON Converter.
+
+This module provides functionality to convert GridLAB-D model files (.glm)
+to JSON format, generating both values and schema files for easier 
+programmatic analysis and manipulation of GridLAB-D models.
+"""
+
 import os
 import sys
 import json
@@ -17,6 +25,21 @@ except (ImportError, ValueError):
     from glm_parser import GLMModel
 
 def glm_to_json(glmName="TE_CHALLENGE"):
+    """Convert a GLM file to JSON format.
+    
+    Reads a GridLAB-D model file and converts it to two JSON files:
+    - A values file containing the actual model data and instances
+    - A schema file containing the structure and metadata (TODO: needs work)
+    
+    Args:
+        glmName (str): Name of the GLM file (without .glm extension).
+                      Defaults to "TE_CHALLENGE".
+                      
+    Note:
+        The GLM file should be located in the 'glmFiles/' directory relative
+        to the current working directory. Output files are saved to the 
+        'output/' directory.
+    """
     model_file = GLMModel()
     filePath = os.path.join(os.getcwd(), 'glmFiles', glmName + ".glm")
     if model_file.read_model(filePath):
@@ -35,6 +58,16 @@ def glm_to_json(glmName="TE_CHALLENGE"):
         # For "directives": exclude item_cnt, entity, and instances
         # For other entities: exclude everything except instances and ifDef
         def should_keep_field(entity_key, field_key, field_value):
+            """Determine if a field should be kept in the filtered output.
+            
+            Args:
+                entity_key (str): The entity name/key
+                field_key (str): The field name/key  
+                field_value: The field value
+                
+            Returns:
+                bool: True if the field should be kept, False otherwise
+            """
             # Check for empty containers first
             if (isinstance(field_value, list) and len(field_value) == 0) or \
                (isinstance(field_value, dict) and len(field_value) == 0) or \

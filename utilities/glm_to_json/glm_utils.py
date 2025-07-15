@@ -1,24 +1,32 @@
 """
-Utility functions for GLM processing
+Utility functions for GLM processing.
+
+This module provides helper functions for processing GridLAB-D model data,
+including name sanitization, datatype conversion, and entity attribute
+management. These utilities support the main GLM parsing and conversion
+functionality.
 """
 
 def gld_strict_name(val):
-    """ Sanitizes a name for GridLAB-D publication to FNCS
+    """Sanitizes a name for GridLAB-D publication to FNCS.
+    
     GridLAB-D name should not begin with a number, or contain '-' for FNCS
 
     Args:
         val (str): the input name
 
     Returns:
-        str: val with all '-' replaced by '_', and any leading digit replaced by 'gld_'
+        str: val with all '-' replaced by '_', and any leading digit 
+             replaced by 'gld_'
     """
     val = val.replace('"', '')
     if val[0].isdigit():
         val = "gld_" + val
     return val.replace('-', '_')
 
+
 def get_datatype(m_type: str):
-    """Convert GLM type to standard datatype
+    """Convert GLM type to standard datatype.
     
     Args:
         m_type (str): GLM type name
@@ -51,14 +59,15 @@ def get_datatype(m_type: str):
     return datatype
 
 def add_attr_to_entity(entity, name, attr):
-    """Add attribute to entity based on GLM attribute definition
+    """Add attribute to entity based on GLM attribute definition.
     
     Args:
         entity: Entity object to add attribute to
         name (str): Attribute name
         attr (dict): Attribute definition from GLM classes
     """
-    # unit with define unit or if "enumeration" or "set" use 'keywords' seperated by '|'
+    # unit with define unit or if "enumeration" or "set" 
+    # use 'keywords' separated by '|'
     unit = ""
     if "unit" in attr:
         unit = attr["unit"]
