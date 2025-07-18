@@ -51,55 +51,58 @@ def glm_to_json(glmName="TE_CHALLENGE"):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-        op = open(output_file_path, 'w', encoding='utf-8')
-        jsonEntity = model_file.entities_to_json()
-
-        # Filter: exclude unwanted fields and empty containers
-        # For "directives": exclude item_cnt, entity, and instances
-        # For other entities: exclude everything except instances and ifDef
-        def should_keep_field(entity_key, field_key, field_value):
-            """Determine if a field should be kept in the filtered output.
-            
-            Args:
-                entity_key (str): The entity name/key
-                field_key (str): The field name/key  
-                field_value: The field value
-                
-            Returns:
-                bool: True if the field should be kept, False otherwise
-            """
-            # Check for empty containers first
-            if (isinstance(field_value, list) and len(field_value) == 0) or \
-               (isinstance(field_value, dict) and len(field_value) == 0) or \
-               (isinstance(field_value, str) and len(field_value) == 0):
-                return False
-            
-            if entity_key == "_directives":
-                # For directives, exclude specific unwanted fields
-                return field_key not in ["item_cnt", "entity", "instances"]
-            else:
-                # For other entities, only keep instances and ifDef
-                return field_key in ["instances", "ifDef"]
-        
+        # After loading entities to JSON, separate directives, modules, and objects
+        raw = model_file.entities_to_json()
+        # Directives filtering
+        directives = raw.get('_directives', {})
+        filtered_directives = {
+            field_key: field_value
+            for field_key, field_value in directives.items()
+            if not ((isinstance(field_value, list) and not field_value) or
+                    (isinstance(field_value, dict) and not field_value) or
+                    (isinstance(field_value, str) and not field_value))
+               and field_key not in ['item_cnt', 'entity', 'instances']
+        }
+        # Build modules and objects using parsed data
+        # Modules: from module_entities.instances (single-instance)
+        modules = {}
+        for mtype, entity in model_file.module_entities.items():
+            # Skip 'clock'; treat it as a top-level object
+            if mtype == 'clock':
+                continue
+            inst_dict = getattr(entity, 'instances', {})
+            if inst_dict:
+                # extract the single instance
+                single = next(iter(inst_dict.values()), {})
+                modules[mtype] = single
+        # Separate 'clock' as its own top-level entity
+        clock_entity = model_file.module_entities.get('clock')
+        clock_data = {}
+        if clock_entity:
+            insts = getattr(clock_entity, 'instances', {})
+            if insts:
+                clock_data = next(iter(insts.values()), {})
+        # Objects: from model_file.model (type -> name -> params)
+        objects = {}
+        for otype, insts in model_file.model.items():
+            obj_list = []
+            for name, params in insts.items():
+                entry = {'name': name}
+                entry.update(params)
+                obj_list.append(entry)
+            if obj_list:
+                objects[otype] = {'instances': obj_list}
+        # Compose final JSON structure
         jsonEntity = {
-            k: {
-                field_key: field_value
-                for field_key, field_value in v.items()
-                if should_keep_field(k, field_key, field_value)
-            }
-            for k, v in jsonEntity.items()
-            if k == "_directives" or (isinstance(v, dict) and "instances" in v)
+            '_directives': filtered_directives,
+            'clock': clock_data,
+            'modules': modules,
+            'objects': objects
         }
 
-        # Filter: remove empty instances at the top level
-        jsonEntity = {
-            k: v
-            for k, v in jsonEntity.items()
-            if not (isinstance(v, dict) and len(v) == 0)
-        }
-
-        json.dump(jsonEntity, op, ensure_ascii=False, indent=2)
-        op.close()
+        # Dump filtered values JSON
+        with open(output_file_path, 'w', encoding='utf-8') as op:
+            json.dump(jsonEntity, op, ensure_ascii=False, indent=2)
 
         # Define the output directory and file path
         output_dir = os.path.join(os.getcwd(), 'output')
