@@ -51,8 +51,19 @@ def glm_to_json(glmName="TE_CHALLENGE"):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-        # After loading entities to JSON, separate directives, modules, and objects
+        # Extract class blueprints directly from module_entities (class definitions)
+        classes = {}
+        for ctype in getattr(model_file, 'class_types', []):
+            entity = model_file.module_entities.get(ctype)
+            if entity:
+                insts = getattr(entity, 'instances', {})
+                # blueprint is parameters of the single class instance
+                blueprint_params = next(iter(insts.values()), {})
+                classes[ctype] = blueprint_params
+        # Generate full entities JSON and remove class entries to avoid object overrides
         raw = model_file.entities_to_json()
+        for ctype in classes:
+            raw.pop(ctype, None)
         # Directives filtering
         directives = raw.get('_directives', {})
         filtered_directives = {
@@ -67,8 +78,8 @@ def glm_to_json(glmName="TE_CHALLENGE"):
         # Modules: from module_entities.instances (single-instance)
         modules = {}
         for mtype, entity in model_file.module_entities.items():
-            # Skip 'clock'; treat it as a top-level object
-            if mtype == 'clock':
+            # Skip 'clock' and class definitions
+            if mtype == 'clock' or mtype in classes:
                 continue
             inst_dict = getattr(entity, 'instances', {})
             if inst_dict:
@@ -95,6 +106,7 @@ def glm_to_json(glmName="TE_CHALLENGE"):
         # Compose final JSON structure
         jsonEntity = {
             '_directives': filtered_directives,
+            'classes': classes,
             'clock': clock_data,
             'modules': modules,
             'objects': objects
