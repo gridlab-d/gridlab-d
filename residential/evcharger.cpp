@@ -364,7 +364,7 @@ int evcharger::init(OBJECT *parent)
 	//if (distance.shorttrip==0) distance.shorttrip = gl_random_lognormal(3,1);
 	//if (distance.longtrip==0) distance.longtrip = gl_random_lognormal(4,2);
 
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	//Make sure the efficiency is valid
@@ -397,7 +397,7 @@ double evcharger::update_state(double dt /* seconds */)
 {
 	double temp_voltage_magnitude;
 	
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	if (obj->clock>TS_ZERO && dt>0)
 	{
 		DATETIME now;
@@ -576,7 +576,7 @@ double evcharger::update_state(double dt /* seconds */)
 
 TIMESTAMP evcharger::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	// compute the total load and heat gain
 	if (t0>TS_ZERO && t1>t0)
 			load.energy += (load.total * gl_tohours(t1-t0));
@@ -604,7 +604,7 @@ EXPORT int create_evcharger(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(evcharger::oclass);
 		if (*obj!=nullptr)
 		{
-			evcharger *my = OBJECTDATA(*obj,evcharger);;
+			evcharger *my = object_data<evcharger>(*obj);;
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
@@ -618,7 +618,7 @@ EXPORT int create_evcharger(OBJECT **obj, OBJECT *parent)
 EXPORT int init_evcharger(OBJECT *obj)
 {
 	try {
-		evcharger *my = OBJECTDATA(obj,evcharger);
+		evcharger *my = object_data<evcharger>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(evcharger);
@@ -627,7 +627,7 @@ EXPORT int init_evcharger(OBJECT *obj)
 EXPORT int isa_evcharger(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,evcharger)->isa(classname);
+		return object_data<evcharger>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -636,7 +636,7 @@ EXPORT int isa_evcharger(OBJECT *obj, char *classname)
 EXPORT TIMESTAMP sync_evcharger(OBJECT *obj, TIMESTAMP t0)
 {
 	try {
-		evcharger *my = OBJECTDATA(obj, evcharger);
+		evcharger *my = object_data<evcharger>(obj);
 		TIMESTAMP t1 = my->sync(obj->clock, t0);
 		obj->clock = t0;
 		return t1;

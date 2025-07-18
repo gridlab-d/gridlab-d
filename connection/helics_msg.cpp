@@ -144,7 +144,7 @@ int helics_msg::init(OBJECT *parent){
 	}
 	//write zplfile
 	bool defer = false;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	OBJECT *vObj = nullptr;
 	char buffer[1024] = "";
 	string simName = string(gl_name(obj, buffer, 1023));
@@ -1084,7 +1084,7 @@ int helics_msg::subscribeVariables(){
 	int64_t integer_temp = 0;
 	double double_temp = 0.0;
 	std::complex<double> complex_temp = {0.0, 0.0};
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	char buf[1024] = "";
 	string simName = string(gl_name(obj, buf, 1023));
 	Json::Value jsonMessage;
@@ -1288,7 +1288,7 @@ int helics_msg::subscribeVariables(){
 }
 
 int helics_msg::publishJsonVariables(){
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	char buf[1024] = "";
 	string simName = string(gl_name(obj, buf, 1023));
 	Json::Value jsonPublishData;
@@ -1386,7 +1386,7 @@ int helics_msg::publishJsonVariables(){
 }
 
 int helics_msg::subscribeJsonVariables(){
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	char buf[1024] = "";
 	string simName = string(gld_helics_federate->getName());
 	Json::Value jsonMessage;

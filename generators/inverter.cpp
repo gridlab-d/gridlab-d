@@ -627,7 +627,7 @@ int inverter::create(void)
 /* Object initialization is called once after all object have been created */
 int inverter::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	PROPERTY *pval = nullptr;
 	bool *dyn_gen_posting;
 	unsigned iindex, jindex;
@@ -2126,7 +2126,7 @@ int inverter::init(OBJECT *parent)
 TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//If we have a meter, reset the accumulators
 	if (parent_is_a_meter)
@@ -2458,7 +2458,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP tret_value;
 	double curr_ts_dbl, diff_dbl;
 	double ieee_1547_return_value;
@@ -2780,7 +2780,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					else if(number_of_phases_out == 2) // two-phase connection
 					{
-						OBJECT *obj = OBJECTHDR(this);
+						OBJECT *obj = object_header(this);
 
 						if ( ((phases & 0x01) == 0x01) && phaseA_V_Out.Mag() != 0)
 						{
@@ -4281,7 +4281,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 /* Postsync is called when the clock needs to advance on the second top-down pass */
 TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP t2 = TS_NEVER;		//By default, we're done forever!
 	LOAD_FOLLOW_STATUS new_lf_status;
 	PF_REG_STATUS new_pf_reg_status;
@@ -5363,7 +5363,7 @@ STATUS inverter::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 {
 	STATUS stat_val;
 	FUNCTIONADDR funadd = nullptr;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	//See which method we are
 	if (inverter_dyn_mode == PI_CONTROLLER)
@@ -5449,7 +5449,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 	double inputPower;
 	gld_wlock *test_rlock = nullptr;
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	SIMULATIONMODE simmode_return_value = SM_EVENT;
 
@@ -8265,7 +8265,7 @@ void inverter::update_control_references(void)
 	double VA_Efficiency, temp_PF, temp_QVal;
 	gld::complex temp_VA, VA_Outref;
 	gld::complex battery_power_out = gld::complex(0,0);
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	bool VA_changed = false; // A flag indicating whether VAref is changed due to limitations
 
 	//Compute power in
@@ -8491,7 +8491,7 @@ void inverter::update_control_references(void)
 //Functionalized IEEE 1547 initalizer - mostly so it can easily be done in either deltamode or ss
 STATUS inverter::initalize_IEEE_1547_checks(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	gld_property *temp_nominal_pointer;
 
 	//Check parents and map the variables
@@ -9130,7 +9130,7 @@ gld::complex inverter::complex_exp(double angle)
 gld_property *inverter::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -9153,7 +9153,7 @@ gld_property *inverter::map_complex_value(OBJECT *obj, const char *name)
 gld_property *inverter::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -9348,7 +9348,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count, bool *converged_fail
 	bool ramp_change;
 	double deltat, temp_time;
 	char idx;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	gld::complex temp_VA;
 	bool bus_is_a_swing, bus_is_swing_pq_entry;
 	STATUS temp_status_val;
@@ -9675,7 +9675,7 @@ EXPORT int create_inverter(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(inverter::oclass);
 		if (*obj!=nullptr)
 		{
-			inverter *my = OBJECTDATA(*obj,inverter);
+			inverter *my = /*OBJECTDATA(*obj, inverter)*/ object_data<inverter>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -9690,7 +9690,7 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
 	try 
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,inverter)->init(parent);
+			return /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -9700,7 +9700,7 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	inverter *my = OBJECTDATA(obj,inverter);
+	inverter *my = /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj);
 	try
 	{
 		switch (pass) {
@@ -9726,12 +9726,12 @@ EXPORT TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 
 EXPORT int isa_inverter(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,inverter)->isa(classname);
+	return /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj)->isa(classname);
 }
 
 EXPORT STATUS preupdate_inverter(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)
 {
-	inverter *my = OBJECTDATA(obj,inverter);
+	inverter *my = /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj);
 	STATUS status_output = FAILED;
 
 	try
@@ -9748,7 +9748,7 @@ EXPORT STATUS preupdate_inverter(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta
 
 EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	inverter *my = OBJECTDATA(obj,inverter);
+	inverter *my = /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -9764,7 +9764,7 @@ EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_tim
 
 EXPORT STATUS postupdate_inverter(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
-	inverter *my = OBJECTDATA(obj,inverter);
+	inverter *my = /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj);
 	STATUS status = FAILED;
 	try
 	{
@@ -9784,7 +9784,7 @@ EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_
 	STATUS temp_status;
 
 	//Map the node
-	inverter *my = OBJECTDATA(obj,inverter);
+	inverter *my = /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj);
 
 	//Call the function, where we can update the IGenerated injection
 	temp_status = my->updateCurrInjection(iteration_count,converged_failure);

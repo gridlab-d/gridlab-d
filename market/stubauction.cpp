@@ -69,7 +69,7 @@ int stubauction::create(void)
 /* Object initialization is called once after all object have been created */
 int stubauction::init(OBJECT *parent)
 {
-	OBJECT *obj=OBJECTHDR(this);
+	OBJECT *obj=object_header(this);
 	market_id = 0;
 	if(period == 0) period = 300;
 	clearat = nextclear();
@@ -102,7 +102,7 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 
 		gl_localtime(clearat,&dt);
-//		if (verbose) gl_output("   ...%s clearing process started at %s", gl_name(OBJECTHDR(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+//		if (verbose) gl_output("   ...%s clearing process started at %s", gl_name(object_header(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 
 		/* clear market */
 		thishr = dt.hour;
@@ -176,7 +176,7 @@ TIMESTAMP stubauction::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 		clearat = nextclear();
 		gl_localtime(clearat,&dt);
-//		if (verbose) gl_output("   ...%s opens for clearing of market_id %d at %s", gl_name(OBJECTHDR(this),name,sizeof(name)), (int32)market_id, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+//		if (verbose) gl_output("   ...%s opens for clearing of market_id %d at %s", gl_name(object_header(this),name,sizeof(name)), (int32)market_id, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 	}
 	return (retry ? t1 : -clearat); /* soft return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
@@ -197,7 +197,7 @@ EXPORT int create_stubauction(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(stubauction::oclass);
 		if (*obj!=nullptr)
 		{
-			stubauction *my = OBJECTDATA(*obj,stubauction);
+			stubauction *my = /*OBJECTDATA(obj,<>)*/ object_data<stubauction>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -212,7 +212,7 @@ EXPORT int init_stubauction(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,stubauction)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<stubauction>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -222,7 +222,7 @@ EXPORT int init_stubauction(OBJECT *obj, OBJECT *parent)
 EXPORT int isa_stubauction(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,stubauction)->isa(classname);
+		return /*OBJECTDATA(obj,<>)*/ object_data<stubauction>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -231,7 +231,7 @@ EXPORT int isa_stubauction(OBJECT *obj, char *classname)
 EXPORT TIMESTAMP sync_stubauction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	stubauction *my = OBJECTDATA(obj,stubauction);
+	stubauction *my = /*OBJECTDATA(obj,<>)*/ object_data<stubauction>(obj);
 	try
 	{
 		switch (pass) {

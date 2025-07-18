@@ -142,7 +142,7 @@ int player_write_properties(struct player *my, OBJECT *thisplyr, OBJECT *obj, PR
 			gl_error("sync_player:%d: not enough values on line: %s", thisplyr->id, buffer);
 			return -1;
         }
-        if(gl_set_value(obj, GETADDR(obj, p), token, p) <= 0){
+        if(gl_set_value(obj, get_addr(obj, p), token, p) <= 0){
             gl_fatal("sync_player:%d: failed to set value: %s", obj->id, token);
             gl_globalexitcode = XC_ARGERR;
 			/*  TROUBLESHOOT
@@ -160,7 +160,8 @@ EXPORT int create_player(OBJECT **obj, OBJECT *parent) {
     *obj = gl_create_object(player_class);
     if (*obj != nullptr)
 	{
-        struct player *my = OBJECTDATA(*obj, struct player);
+        //struct player *my = OBJECTDATA(*obj, struct player);
+        struct player* my = object_data<player>(*obj);
         last_player = *obj;
         gl_set_parent(*obj, parent);
         strcpy(my->file, "");
@@ -186,7 +187,8 @@ static int player_open(OBJECT *obj) {
     char32 type = "file";
     char1024 fname = "";
     char32 flags = "r";
-    struct player *my = OBJECTDATA(obj, struct player);
+    //struct player* my = OBJECTDATA(obj, struct player);
+    struct player* my = object_data< player>(obj);
     TAPEFUNCS *tf = 0;
     int retvalue;
 
@@ -267,7 +269,8 @@ TIMESTAMP player_read(OBJECT *obj) {
     char tz[6];
     int Y = 0, m = 0, d = 0, H = 0, M = 0;
     double S = 0;
-    struct player *my = OBJECTDATA(obj, struct player);
+    //struct player* my = OBJECTDATA(obj, struct player);
+    struct player* my = object_data< player>(obj);
     char unit[2];
     TIMESTAMP t1;
     char *result = nullptr;
@@ -491,7 +494,7 @@ TIMESTAMP player_read(OBJECT *obj) {
 EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	int return_val;
-    struct player *my = OBJECTDATA(obj, struct player);
+    struct player *my = object_data< player>(obj);
     TIMESTAMP t1 = (TS_OPEN == my->status) ? my->next.ts : TS_NEVER;
     TIMESTAMP temp_t = TS_INVALID; // FIXME: make sure this makes sense.
 

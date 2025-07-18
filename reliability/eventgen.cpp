@@ -160,7 +160,7 @@ int eventgen::create(void)
 /* Object initialization is called once after all object have been created */
 int eventgen::init(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	int index, comma_count;
 	TIMESTAMP tempTime, globStartTimeVal;
 	FINDLIST *ObjListVals;
@@ -707,7 +707,7 @@ int eventgen::precommit(TIMESTAMP t1)
 /* Presync is called when the clock needs to advance on the first top-down pass */
 TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	int index;
 	double t1_dbl;
 	double gld_stoptime;
@@ -976,7 +976,7 @@ TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	bool temp_bool;
 	gld_rlock *test_rlock;
 	STATUS temp_status;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	//See if we need a "post-fault" count - assumes all customers will determine their outage state by either presync or sync (or before this in postsync)
 	if ((diff_count_needed == true) && (metrics_obj_hdr != nullptr))
@@ -1131,7 +1131,7 @@ void eventgen::gen_random_time(enumeration rand_dist_type, double param_1, doubl
 	TIMESTAMP random_time = 0;
 	double dbl_random_time = 0.0;
 	unsigned int ns_random_time = 0;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	switch(rand_dist_type)
 	{
@@ -1338,7 +1338,7 @@ char *eventgen::obj_token(char *start_token, OBJECT **obj_val)
 //Function to add new event into structure - since externally called, presumes calling object will handle mean_repair_time calls
 int eventgen::add_unhandled_event(OBJECT *obj_to_fault, const char *event_type, TIMESTAMP fail_time, TIMESTAMP rest_length, int implemented_fault, bool fault_state)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	RELEVANTSTRUCT *new_struct;
 	TIMESTAMP rest_time;
 	double fail_time_dbl, rest_time_dbl;
@@ -1452,7 +1452,7 @@ int eventgen::add_unhandled_event(OBJECT *obj_to_fault, const char *event_type, 
 
 //Function to update any event times after a successful state change
 void eventgen::regen_events(TIMESTAMP t1_ts, double t1_dbl){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	TIMESTAMP temp_time_A;
 	double temp_time_A_dbl;
 	unsigned int temp_time_A_nano;
@@ -1567,7 +1567,7 @@ void eventgen::regen_events(TIMESTAMP t1_ts, double t1_dbl){
 //Performs actual event status changes on the system
 void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	TIMESTAMP temp_time_A;
 	double temp_time_A_dbl;
 	unsigned int temp_time_A_nano;
@@ -2270,7 +2270,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 //Module-level call
 EXPORT SIMULATIONMODE interupdate_eventgen(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	eventgen *my = OBJECTDATA(obj,eventgen);
+	eventgen *my = object_data<eventgen>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	status = my->inter_deltaupdate(delta_time, dt, iteration_count_val);
 	return status;
@@ -2372,7 +2372,7 @@ EXPORT int create_eventgen(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(eventgen::oclass);
 		if (*obj!=nullptr)
 		{
-			eventgen *my = OBJECTDATA(*obj,eventgen);
+			eventgen *my = object_data<eventgen>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -2387,7 +2387,7 @@ EXPORT int init_eventgen(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,eventgen)->init(parent);
+			return object_data<eventgen>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -2399,7 +2399,7 @@ EXPORT TIMESTAMP sync_eventgen(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	try
 	{
 		TIMESTAMP t2 = TS_NEVER;
-		eventgen *my = OBJECTDATA(obj,eventgen);
+		eventgen *my = object_data<eventgen>(obj);
 		switch (pass) {
 		case PC_PRETOPDOWN:
 			return my->presync(obj->clock,t1);
@@ -2423,7 +2423,7 @@ EXPORT TIMESTAMP sync_eventgen(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 EXPORT int add_event(OBJECT *event_obj, OBJECT *obj_to_fault, char *event_type, TIMESTAMP fail_time, TIMESTAMP rest_length, int implemented_fault, bool fault_state)
 {
 	int ret_value;
-	eventgen *eventgenobj = OBJECTDATA(event_obj,eventgen);
+	eventgen *eventgenobj = object_data<eventgen>(event_obj);
 
 	//Call the function
 	ret_value = eventgenobj->add_unhandled_event(obj_to_fault, event_type, fail_time, rest_length, implemented_fault, fault_state);

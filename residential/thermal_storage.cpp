@@ -147,7 +147,7 @@ int thermal_storage::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 	gld_property *design_cooling_capacity_prop;
 	double design_cooling_capacity;
@@ -514,7 +514,7 @@ EXPORT int create_thermal_storage(OBJECT **obj, OBJECT *parent)
 	*obj = gl_create_object(thermal_storage::oclass);
 	if (*obj!=nullptr)
 	{
-		thermal_storage *my = OBJECTDATA(*obj,thermal_storage);
+		thermal_storage *my = object_data<thermal_storage>(*obj);
 		gl_set_parent(*obj,parent);
 		try {
 			my->create();
@@ -535,7 +535,7 @@ EXPORT int create_thermal_storage(OBJECT **obj, OBJECT *parent)
 
 EXPORT int init_thermal_storage(OBJECT *obj)
 {
-	thermal_storage *my = OBJECTDATA(obj,thermal_storage);
+	thermal_storage *my = object_data<thermal_storage>(obj);
 	try {
 		return my->init(obj->parent);
 	}
@@ -553,7 +553,7 @@ EXPORT int init_thermal_storage(OBJECT *obj)
 EXPORT int isa_thermal_storage(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,thermal_storage)->isa(classname);
+		return object_data<thermal_storage>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -561,7 +561,7 @@ EXPORT int isa_thermal_storage(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_thermal_storage(OBJECT *obj, TIMESTAMP t1)
 {
-	thermal_storage *my = OBJECTDATA(obj,thermal_storage);
+	thermal_storage *my = object_data<thermal_storage>(obj);
 	try {
 		TIMESTAMP t2 = my->sync(obj->clock, t1);
 		obj->clock = t1;

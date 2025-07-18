@@ -134,7 +134,7 @@ int volt_var_control::init(OBJECT *parent)
 	int num_min_volt, num_max_volt, num_des_volt, num_max_vdrop, num_vbw_low, num_vbw_high, total_meas;
 	bool reg_list_type;
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//General error checks
 	if (pf_signed)
@@ -502,11 +502,11 @@ int volt_var_control::init(OBJECT *parent)
 				
 				if (temp_obj != nullptr)	//Valid object!
 				{
-					pRegulator_list[index] = OBJECTDATA(temp_obj, regulator);	//Store the regulator
+					pRegulator_list[index] = object_data<regulator>(temp_obj);	//Store the regulator
 
-					pRegulator_configs[index] = OBJECTDATA(pRegulator_list[index]->configuration,regulator_configuration);	//Store the configuration
+					pRegulator_configs[index] = object_data<regulator_configuration>(pRegulator_list[index]->configuration);	//Store the configuration
 
-					RegToNodes[index] = OBJECTDATA(pRegulator_list[index]->to,node);	//Store the to node
+					RegToNodes[index] = object_data<node>(pRegulator_list[index]->to);	//Store the to node
 
 					if (pRegulator_configs[index]->time_delay != 0)	//Delay specified
 					{
@@ -818,13 +818,13 @@ int volt_var_control::init(OBJECT *parent)
 		if (solver_method == SM_FBS)
 		{
 			//populate the lnk_obj as well if FBS (we'll need it for parenting)
-			substation_lnk_obj = OBJECTHDR(pRegulator_list[index]);
+			substation_lnk_obj = object_header(pRegulator_list[index]);
 		}
 	}
 	else	//It is defined
 	{
 		//Link it up
-		substation_link = OBJECTDATA(substation_lnk_obj,link_object);
+		substation_link = object_data<link_object>(substation_lnk_obj);
 	}
 
 	//Determine how many capacitors we have to play with
@@ -887,7 +887,7 @@ int volt_var_control::init(OBJECT *parent)
 				
 			if (temp_obj != nullptr)	//Valid object!
 			{
-				pCapacitor_list[0] = OBJECTDATA(temp_obj,capacitor);	//Store it as a capacitor
+				pCapacitor_list[0] = object_data<capacitor>(temp_obj);	//Store it as a capacitor
 
 				//Add up the values
 				if ((pCapacitor_list[0]->phases_connected & PHASE_D) == PHASE_D)	//Delta - grab all three (assumed ABC)
@@ -1003,7 +1003,7 @@ int volt_var_control::init(OBJECT *parent)
 				
 				if (temp_obj != nullptr)	//Valid object!
 				{
-					pCapacitor_list_temp[index] = OBJECTDATA(temp_obj,capacitor);	//Store it as a capacitor
+					pCapacitor_list_temp[index] = object_data<capacitor>(temp_obj);	//Store it as a capacitor
 					temp_cap_idx[index] = index;	//Store the index
 
 					//Add up the values
@@ -1098,7 +1098,7 @@ int volt_var_control::init(OBJECT *parent)
 			{
 				if ((pCapacitor_list[index]->pt_phase & (PHASE_A | PHASE_B | PHASE_C)) == NO_PHASE)
 				{
-					temp_obj = OBJECTHDR(pCapacitor_list[index]);
+					temp_obj = object_header(pCapacitor_list[index]);
 					gl_warning("Capacitor %s has no pt_phase set, volt_var_control %s will pick the first phases_connected",temp_obj->name,obj->name);
 					/*  TROUBLESHOOT
 					To properly operate capacitors from the volt_var_control object, a pt_phase property must be defined.  One was missing,
@@ -1400,7 +1400,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			indexa = ((int)temp_double)-1;	//Figure out the index
 
-			pMeasurement_list[indexa][temp_meas_idx[indexa]] = OBJECTDATA(temp_obj,node);	//Store it in the list
+			pMeasurement_list[indexa][temp_meas_idx[indexa]] = object_data<node>(temp_obj);	//Store it in the list
 
 			temp_meas_idx[indexa]++;	//Increment the storage pointer
 		}
@@ -1469,7 +1469,7 @@ int volt_var_control::init(OBJECT *parent)
 				//Update the pointer - no numbers here, so this goes to next object
 				token_a = token_a1;
 
-				pMeasurement_list[0][indexa] = OBJECTDATA(temp_obj,node);	//Store it in the list
+				pMeasurement_list[0][indexa] = object_data<node>(temp_obj);	//Store it in the list
 
 				indexa++;	//Increment the storage pointer
 			}//End measurement list
@@ -1557,7 +1557,7 @@ int volt_var_control::init(OBJECT *parent)
 
 TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP tret = powerflow_object::presync(t0);
 	TIMESTAMP treg_min;
 	double vmin[3], VDrop[3], VSet[3], VRegTo[3];
@@ -1710,7 +1710,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 					//Make sure it isn't too big or small - otherwise toss a warning (it will cause problem)
 					if (VSet[0] > maximum_voltage[reg_index])	//Will exceed
 					{
-						gl_warning("volt_var_control %s: The set point for phase A will exceed the maximum allowed voltage!",OBJECTHDR(this)->name);
+						gl_warning("volt_var_control %s: The set point for phase A will exceed the maximum allowed voltage!",object_header(this)->name);
 						/*  TROUBLESHOOT
 						The set point necessary to maintain the end point voltage exceeds the maximum voltage limit specified by the system.  Either
 						increase this maximum_voltage limit, or configure your system differently.
@@ -1734,7 +1734,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 					}
 					else if (VSet[0] < minimum_voltage[reg_index])	//Will exceed
 					{
-						gl_warning("volt_var_control %s: The set point for phase A will exceed the minimum allowed voltage!",OBJECTHDR(this)->name);
+						gl_warning("volt_var_control %s: The set point for phase A will exceed the minimum allowed voltage!",object_header(this)->name);
 						/*  TROUBLESHOOT
 						The set point necessary to maintain the end point voltage exceeds the minimum voltage limit specified by the system.  Either
 						decrease this minimum_voltage limit, or configure your system differently.
@@ -1766,7 +1766,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 					//Make sure it isn't too big or small - otherwise toss a warning (it will cause problem)
 					if (VSet[1] > maximum_voltage[reg_index])	//Will exceed
 					{
-						gl_warning("volt_var_control %s: The set point for phase B will exceed the maximum allowed voltage!",OBJECTHDR(this)->name);
+						gl_warning("volt_var_control %s: The set point for phase B will exceed the maximum allowed voltage!",object_header(this)->name);
 
 						//See what region we are currently in
 						if (pRegulator_list[reg_index]->tap[1] > 0)	//In raise region
@@ -1786,7 +1786,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 					}
 					else if (VSet[1] < minimum_voltage[reg_index])	//Will exceed
 					{
-						gl_warning("volt_var_control %s: The set point for phase B will exceed the minimum allowed voltage!",OBJECTHDR(this)->name);
+						gl_warning("volt_var_control %s: The set point for phase B will exceed the minimum allowed voltage!",object_header(this)->name);
 
 						//See what region we are currently in
 						if (pRegulator_list[reg_index]->tap[1] > 0)	//In raise region
@@ -1814,7 +1814,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 
 					if (VSet[2] > maximum_voltage[reg_index])	//Will exceed
 					{
-						gl_warning("volt_var_control %s: The set point for phase C will exceed the maximum allowed voltage!",OBJECTHDR(this)->name);
+						gl_warning("volt_var_control %s: The set point for phase C will exceed the maximum allowed voltage!",object_header(this)->name);
 
 						//See what region we are currently in
 						if (pRegulator_list[reg_index]->tap[2] > 0)	//In raise region
@@ -1834,7 +1834,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 					}
 					else if (VSet[2] < minimum_voltage[reg_index])	//Will exceed
 					{
-						gl_warning("volt_var_control %s: The set point for phase C will exceed the minimum allowed voltage!",OBJECTHDR(this)->name);
+						gl_warning("volt_var_control %s: The set point for phase C will exceed the minimum allowed voltage!",object_header(this)->name);
 
 						//See what region we are currently in
 						if (pRegulator_list[reg_index]->tap[2] > 0)	//In raise region
@@ -2328,7 +2328,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 
 TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP tret = powerflow_object::postsync(t0);
 	gld::complex link_power_vals;
 	int index;
@@ -2801,7 +2801,7 @@ EXPORT int create_volt_var_control(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(volt_var_control::oclass);
 		if (*obj!=nullptr)
 		{
-			volt_var_control *my = OBJECTDATA(*obj,volt_var_control);
+			volt_var_control *my = object_data<volt_var_control>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -2814,7 +2814,7 @@ EXPORT int create_volt_var_control(OBJECT **obj, OBJECT *parent)
 EXPORT int init_volt_var_control(OBJECT *obj)
 {
 	try {
-		volt_var_control *my = OBJECTDATA(obj,volt_var_control);
+		volt_var_control *my = object_data<volt_var_control>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(volt_var_control);
@@ -2831,7 +2831,7 @@ EXPORT int init_volt_var_control(OBJECT *obj)
 EXPORT TIMESTAMP sync_volt_var_control(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		volt_var_control *pObj = OBJECTDATA(obj,volt_var_control);
+		volt_var_control *pObj = object_data<volt_var_control>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -2851,7 +2851,7 @@ EXPORT TIMESTAMP sync_volt_var_control(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pas
 
 EXPORT int isa_volt_var_control(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,volt_var_control)->isa(classname);
+	return object_data<volt_var_control>(obj)->isa(classname);
 }
 
 /**@}**/

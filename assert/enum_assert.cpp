@@ -124,7 +124,7 @@ EXPORT SIMULATIONMODE update_enum_assert(OBJECT *obj, TIMESTAMP t0, unsigned int
 	char dateformat[16]="";
 	char error_output_buff[2028];
 	char datebuff[128];
-	enum_assert *da = OBJECTDATA(obj,enum_assert);
+	enum_assert* da = object_data<enum_assert>(obj);  /*OBJECTDATA(obj, enum_assert);*/
 	DATETIME delta_dt_val;
 	double del_clock;
 	TIMESTAMP del_clock_int;

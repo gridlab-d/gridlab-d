@@ -1462,7 +1462,7 @@ size_t objlist_add(OBJLIST *list, PROPERTY *match, char *match_part, char *match
 	PROPERTYCOMPAREOP op = property_compare_op(match->ptype, match_op);
 	for ( obj=object_get_first() ; obj!=nullptr ; obj=object_get_next(obj) )
 	{
-		void *x = GETADDR(obj,match);
+		void *x = get_addr(obj,match);
 		if ( obj->oclass!=list->oclass ) continue;
 		if ( property_compare_basic(match->ptype,op,x,match_value1,match_value2,match_part) )
 		{

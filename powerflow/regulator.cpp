@@ -108,7 +108,7 @@ int regulator::init(OBJECT *parent)
 	if (result == 2)
 		return 2;	//Return the deferment - no sense doing everything else!
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if (!configuration)
 		throw "no regulator configuration specified.";
@@ -127,7 +127,7 @@ int regulator::init(OBJECT *parent)
 		http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Power_Flow_Guide
 		*/
 
-	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+	regulator_configuration *pConfig = object_data<regulator_configuration>(configuration);
 
 	//See if any initial tap settings have been specified
 	for (jindex=0;jindex<3;jindex++)
@@ -439,7 +439,7 @@ int regulator::init(OBJECT *parent)
 
 TIMESTAMP regulator::presync(TIMESTAMP t0) 
 {
-	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+	regulator_configuration *pConfig = object_data<regulator_configuration>(configuration);
 	TIMESTAMP t1;
 	double t1_dbl, t0_dbl;
 	char phaseWarn;
@@ -509,7 +509,7 @@ TIMESTAMP regulator::postsync(TIMESTAMP t0)
 //Functionalized "presync before link::presync" portions, mostly for deltamode functionality
 void regulator::reg_prePre_fxn(double curr_time_value)
 {
-	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+	regulator_configuration *pConfig = object_data<regulator_configuration>(configuration);
 
 
 	if (pConfig->Control == pConfig->MANUAL) {
@@ -943,7 +943,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 //Functionalized version of the code for deltamode - "post-link::presync" portions
 void regulator::reg_postPre_fxn(void)
 {
-	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+	regulator_configuration *pConfig = object_data<regulator_configuration>(configuration);
 	char phaseWarn;
 
 	if (solver_method == SM_NR)
@@ -1014,7 +1014,7 @@ void regulator::reg_postPre_fxn(void)
 	{
 		phaseWarn='A';	//Just so troubleshoot is generic
 
-		gl_warning("Regulator %s has phase %c at the maximum tap value",OBJECTHDR(this)->name,phaseWarn);
+		gl_warning("Regulator %s has phase %c at the maximum tap value",object_header(this)->name,phaseWarn);
 		/*  TROUBLESHOOT
 		The regulator has set its taps such that it is at the maximum setting.  This may indicate
 		a problem with settings, or your system.
@@ -1025,7 +1025,7 @@ void regulator::reg_postPre_fxn(void)
 	{
 		phaseWarn='B';	//Just so troubleshoot is generic
 
-		gl_warning("Regulator %s has phase %c at the maximum tap value",OBJECTHDR(this)->name,phaseWarn);
+		gl_warning("Regulator %s has phase %c at the maximum tap value",object_header(this)->name,phaseWarn);
 		//Defined above
 	}
 
@@ -1033,7 +1033,7 @@ void regulator::reg_postPre_fxn(void)
 	{
 		phaseWarn='C';	//Just so troubleshoot is generic
 
-		gl_warning("Regulator %s has phase %c at the maximum tap value",OBJECTHDR(this)->name,phaseWarn);
+		gl_warning("Regulator %s has phase %c at the maximum tap value",object_header(this)->name,phaseWarn);
 		//Defined above
 	}
 
@@ -1041,7 +1041,7 @@ void regulator::reg_postPre_fxn(void)
 	{
 		phaseWarn='A';	//Just so troubleshoot is generic
 
-		gl_warning("Regulator %s has phase %c at the minimum tap value",OBJECTHDR(this)->name,phaseWarn);
+		gl_warning("Regulator %s has phase %c at the minimum tap value",object_header(this)->name,phaseWarn);
 		/*  TROUBLESHOOT
 		The regulator has set its taps such that it is at the minimum setting.  This may indicate
 		a problem with settings, or your system.
@@ -1052,7 +1052,7 @@ void regulator::reg_postPre_fxn(void)
 	{
 		phaseWarn='B';	//Just so troubleshoot is generic
 
-		gl_warning("Regulator %s has phase %c at the minimum tap value",OBJECTHDR(this)->name,phaseWarn);
+		gl_warning("Regulator %s has phase %c at the minimum tap value",object_header(this)->name,phaseWarn);
 		//Defined above
 	}
 
@@ -1060,7 +1060,7 @@ void regulator::reg_postPre_fxn(void)
 	{
 		phaseWarn='C';	//Just so troubleshoot is generic
 
-		gl_warning("Regulator %s has phase %c at the minimum tap value",OBJECTHDR(this)->name,phaseWarn);
+		gl_warning("Regulator %s has phase %c at the minimum tap value",object_header(this)->name,phaseWarn);
 		//Defined above
 	}
 }
@@ -1068,7 +1068,7 @@ void regulator::reg_postPre_fxn(void)
 //Functionalized "postsyc after link::postsync" items -- mostly for deltamode compatibility
 double regulator::reg_postPost_fxn(double curr_time_value)
 {
-	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+	regulator_configuration *pConfig = object_data<regulator_configuration>(configuration);
 
 	//Copied from postsync
 	if (iteration_flag)
@@ -1298,7 +1298,7 @@ double regulator::reg_postPost_fxn(double curr_time_value)
 //Function to get the voltages of interest
 void regulator::get_monitored_voltage()
 {
-	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+	regulator_configuration *pConfig = object_data<regulator_configuration>(configuration);
 
 	int testval = (int)(pConfig->Control);
 	switch (testval)
@@ -1471,10 +1471,10 @@ int regulator::kmldata(int (*stream)(const char*,...))
 //Module-level deltamode call
 SIMULATIONMODE regulator::inter_deltaupdate_regulator(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	//OBJECT *hdr = OBJECTHDR(this);
+	//OBJECT *hdr = object_header(this);
 	double curr_time_value;	//Current time of simulation
 	double temp_time;
-	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
+	regulator_configuration *pConfig = object_data<regulator_configuration>(configuration);
 
 	//Get the current time
 	curr_time_value = gl_globaldeltaclock;
@@ -1551,7 +1551,7 @@ EXPORT TIMESTAMP commit_regulator(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if (solver_method==SM_FBS)
 	{
-		regulator *plink = OBJECTDATA(obj,regulator);
+		regulator *plink = object_data<regulator>(obj);
 		plink->calculate_power();
 	}
 	return TS_NEVER;
@@ -1564,7 +1564,7 @@ EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(regulator::oclass);
 		if (*obj!=nullptr)
 		{
-			regulator *my = OBJECTDATA(*obj,regulator);
+			regulator *my = object_data<regulator>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -1583,7 +1583,7 @@ EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)
 EXPORT int init_regulator(OBJECT *obj)
 {
 	try {
-		regulator *my = OBJECTDATA(obj,regulator);
+		regulator *my = object_data<regulator>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(regulator);
@@ -1600,7 +1600,7 @@ EXPORT int init_regulator(OBJECT *obj)
 EXPORT TIMESTAMP sync_regulator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		regulator *pObj = OBJECTDATA(obj,regulator);
+		regulator *pObj = object_data<regulator>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -1620,13 +1620,13 @@ EXPORT TIMESTAMP sync_regulator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_regulator(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,regulator)->isa(classname);
+	return object_data<regulator>(obj)->isa(classname);
 }
 
 //Export for deltamode
 EXPORT SIMULATIONMODE interupdate_regulator(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	regulator *my = OBJECTDATA(obj,regulator);
+	regulator *my = object_data<regulator>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -1643,7 +1643,7 @@ EXPORT SIMULATIONMODE interupdate_regulator(OBJECT *obj, unsigned int64 delta_ti
 //KML Export
 EXPORT int regulator_kmldata(OBJECT *obj,int (*stream)(const char*,...))
 {
-	regulator *n = OBJECTDATA(obj, regulator);
+	regulator *n = object_data<regulator>(obj);
 	int rv = 1;
 
 	rv = n->kmldata(stream);

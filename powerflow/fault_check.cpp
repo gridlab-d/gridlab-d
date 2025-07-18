@@ -84,7 +84,7 @@ int fault_check::create(void)
 
 int fault_check::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	FILE *FPoint;
 
 	//Register us in the global - so faults know who they gonna call
@@ -194,7 +194,7 @@ int fault_check::init(OBJECT *parent)
 
 TIMESTAMP fault_check::sync(TIMESTAMP t0)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP tret = powerflow_object::sync(t0);
 	unsigned int index;
 	int return_val;
@@ -1940,7 +1940,7 @@ void fault_check::momentary_activation(int node_int)
 		}
 
 		//Map it
-		momentary_flag = (bool*)GETADDR(tmp_obj,pval);
+		momentary_flag = (bool*)get_addr(tmp_obj,pval);
 
 		//Flag it
 		*momentary_flag = true;
@@ -2367,7 +2367,7 @@ EXPORT int create_fault_check(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(fault_check::oclass);
 		if (*obj!=nullptr)
 		{
-			fault_check *my = OBJECTDATA(*obj,fault_check);
+			fault_check *my = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -2380,7 +2380,7 @@ EXPORT int create_fault_check(OBJECT **obj, OBJECT *parent)
 EXPORT int init_fault_check(OBJECT *obj, OBJECT *parent)
 {
 	try {
-		fault_check *my = OBJECTDATA(obj,fault_check);
+		fault_check *my = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(obj);
 		return my->init(parent);
 	}
 	INIT_CATCHALL(fault_check);
@@ -2397,7 +2397,7 @@ EXPORT int init_fault_check(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_fault_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		fault_check *pObj = OBJECTDATA(obj,fault_check);
+		fault_check *pObj = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -2417,13 +2417,13 @@ EXPORT TIMESTAMP sync_fault_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_fault_check(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,fault_check)->isa(classname);
+	return /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(obj)->isa(classname);
 }
 
 //Function to remove/restore out of service items following a reliability fault
 EXPORT int powerflow_alterations(OBJECT *thisobj, int baselink, bool rest_mode)
 {
-	fault_check *thsfltchk = OBJECTDATA(thisobj,fault_check);
+	fault_check *thsfltchk = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(thisobj);
 
 	//Perform the removal
 	thsfltchk->support_check_alterations(baselink,rest_mode);
@@ -2495,7 +2495,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
 					}
 
 					//Map it
-					rec_tries = (double*)GETADDR(tmp_obj,Pval);
+					rec_tries = (double*)get_addr(tmp_obj,Pval);
 
 					//Increment it
 					*rec_tries += 1;
@@ -2505,7 +2505,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
 
 					//Propogate downstream and momentary flag objects
 					//map the fault_check object - do as recursion and function is in space
-					fltyobj = OBJECTDATA(fault_check_object,fault_check);
+					fltyobj = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(fault_check_object);
 
 					//Call the function
 					fltyobj->momentary_activation(NR_branchdata[branch_val].to);
@@ -2561,7 +2561,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
 EXPORT STATUS powerflow_disable_island(OBJECT *thisobj, int island_number)
 {
 	//Fault check object link
-	fault_check *fltyobj = OBJECTDATA(fault_check_object,fault_check);
+	fault_check *fltyobj = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(fault_check_object);
 
 	//Call the function
 	return fltyobj->disable_island(island_number);
@@ -2571,7 +2571,7 @@ EXPORT STATUS powerflow_disable_island(OBJECT *thisobj, int island_number)
 EXPORT STATUS powerflow_rescan_topo(OBJECT *thisobj,int bus_that_called_reset)
 {
 	//Fault check object link
-	fault_check *fltyobj = OBJECTDATA(fault_check_object,fault_check);
+	fault_check *fltyobj = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(fault_check_object);
 
 	//Call the function
 	return fltyobj->rescan_topology(bus_that_called_reset);

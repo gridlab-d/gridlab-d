@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0") 
+
 
 # Enforce C++23 globally
 set(CMAKE_CXX_STANDARD 23)
@@ -24,8 +26,8 @@ else ()
     endif ()
 endif ()
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#set(CMAKE_CXX_STANDARD 17)
+#set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(GLD_PACKAGE gridlabd)
 set(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION OFF) # This shouldn't be needed, but seems to fix issues

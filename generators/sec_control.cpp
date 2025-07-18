@@ -66,7 +66,7 @@ sec_control::sec_control(MODULE *module)
 
 		defaults = this;
 
-		memset(this, 0, sizeof(sec_control));
+		//memset(this, 0, sizeof(sec_control));
 
 		//**************** Function publish for deltamode - postupdate may not be needed ****************//
 		if (gl_publish_function(oclass, "preupdate_gen_object", (FUNCTIONADDR)preupdate_sec_control) == NULL)
@@ -123,7 +123,7 @@ int sec_control::create(void)
 /* Object initialization is called once after all object have been created */
 int sec_control::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	STATUS fxn_return_status;
 
 	//Deferred initialization code
@@ -269,7 +269,7 @@ void sec_control::sample_time_update(bool &flag, double &time, double curr_time,
 
 TIMESTAMP sec_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP tret_value;
 
 	//Assume always want TS_NEVER
@@ -358,7 +358,7 @@ void sec_control::participant_tlp_check(SEC_CNTRL_PARTICIPANT & obj)
 SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
 	double deltat, deltath;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double debugval;
 	SIMULATIONMODE simmode_return_value = SM_EVENT;
 
@@ -761,7 +761,7 @@ STATUS sec_control::post_deltaupdate(gld::complex *useful_value, unsigned int mo
 gld_property *sec_control::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj, name);
@@ -793,7 +793,7 @@ gld::complex sec_control::get_complex_value(OBJECT *obj, const char *name)
 gld_property *sec_control::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj, name);
@@ -827,7 +827,7 @@ double sec_control::get_double_value(OBJECT *obj, const char *name)
 gld_property *sec_control::map_enum_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj, name);
@@ -1209,7 +1209,7 @@ EXPORT int create_sec_control(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(sec_control::oclass);
 		if (*obj != NULL)
 		{
-			sec_control *my = OBJECTDATA(*obj, sec_control);
+			sec_control *my = /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(*obj);
 			gl_set_parent(*obj, parent);
 			return my->create();
 		}
@@ -1224,7 +1224,7 @@ EXPORT int init_sec_control(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj != NULL)
-			return OBJECTDATA(obj, sec_control)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -1234,7 +1234,7 @@ EXPORT int init_sec_control(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_sec_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	sec_control *my = OBJECTDATA(obj, sec_control);
+	sec_control *my = /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(obj);
 	try
 	{
 		switch (pass)
@@ -1261,12 +1261,12 @@ EXPORT TIMESTAMP sync_sec_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 
 EXPORT int isa_sec_control(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,sec_control)->isa(classname);
+	return /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(obj)->isa(classname);
 }
 
 EXPORT STATUS preupdate_sec_control(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)
 {
-	sec_control *my = OBJECTDATA(obj, sec_control);
+	sec_control *my = /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(obj);
 	STATUS status_output = FAILED;
 
 	try
@@ -1283,7 +1283,7 @@ EXPORT STATUS preupdate_sec_control(OBJECT *obj, TIMESTAMP t0, unsigned int64 de
 
 EXPORT SIMULATIONMODE interupdate_sec_control(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	sec_control *my = OBJECTDATA(obj, sec_control);
+	sec_control *my = /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -1299,7 +1299,7 @@ EXPORT SIMULATIONMODE interupdate_sec_control(OBJECT *obj, unsigned int64 delta_
 
 EXPORT STATUS postupdate_sec_control(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
-	sec_control *my = OBJECTDATA(obj, sec_control);
+	sec_control *my = /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(obj);
 	STATUS status = FAILED;
 	try
 	{

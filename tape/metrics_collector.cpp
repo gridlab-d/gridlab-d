@@ -92,7 +92,7 @@ metrics_collector::metrics_collector(MODULE *mod){
 			GL_THROW(const_cast<char *>("unable to publish properties in %s"), __FILE__);
 
 		defaults = this;
-		memset(this, 0, sizeof(metrics_collector));
+		//memset(this, 0, sizeof(metrics_collector));
   }
 }
 
@@ -150,7 +150,7 @@ int metrics_collector::create(){
 
 int metrics_collector::init(OBJECT *parent){
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 //	int temp = strcmp(parent->oclass->name,"triplex_meter") != 0;
 	if (parent == nullptr)
@@ -221,7 +221,7 @@ int metrics_collector::init(OBJECT *parent){
 			*/
 		}
 		//Map to the intermediate
-		auto *meter_bustype = (enumeration*)GETADDR(parent, pval);
+		auto *meter_bustype = (enumeration*)get_addr(parent, pval);
 		// Check if the parent meter is a swing bus (2) or not
 		if (*meter_bustype != 2) {
 			gl_error("If a metrics_collector is attached to a substation, it must be a SWING bus");
@@ -246,7 +246,7 @@ int metrics_collector::init(OBJECT *parent){
 		PROPERTY *pval = gl_get_property(parent, const_cast<char *>("bustype"));
 		if ((pval!=nullptr) && (pval->ptype==PT_enumeration))
 		{
-			auto *meter_bustype = (enumeration*)GETADDR(parent, pval);
+			auto *meter_bustype = (enumeration*)get_addr(parent, pval);
 			if (*meter_bustype == 2) {
 				parent_string = const_cast<char *>("swingbus");
 				if (propSwingMeterS == nullptr) propSwingMeterS = gl_get_property (parent,
@@ -866,7 +866,7 @@ TIMESTAMP metrics_collector::postsync(TIMESTAMP t0, TIMESTAMP t1) {
 }
 
 int metrics_collector::commit(TIMESTAMP t1){
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	// read the parameters for each time step
 	if(0 == read_line(obj)){
 		gl_error("metrics_collector::commit(): error when reading the values");
@@ -1028,7 +1028,7 @@ int metrics_collector::read_line(OBJECT *obj){
 					strcmp(oclassName, "triplex_line") == 0 || strcmp(oclassName, "transformer") == 0 || 
 					strcmp(oclassName, "regulator") == 0 || strcmp(oclassName, "switch") == 0 || strcmp(oclassName, "fuse") == 0) {
 				// Obtain the link data
-				link_object *one_link = OBJECTDATA(obj,link_object);
+				link_object *one_link = object_data<link_object>(obj);
 				if(one_link == nullptr){
 					gl_error("Unable to map the object as link.");
 					return 0;
@@ -1515,7 +1515,7 @@ EXPORT int create_metrics_collector(OBJECT **obj, OBJECT *parent){
 	try {
 		*obj = gl_create_object(metrics_collector::oclass);
 		if(*obj != nullptr){
-			metrics_collector *my = OBJECTDATA(*obj, metrics_collector);
+			metrics_collector *my = object_data<metrics_collector>(*obj);
 			gl_set_parent(*obj, parent);
 			rv = my->create();
 		}
@@ -1533,7 +1533,7 @@ EXPORT int create_metrics_collector(OBJECT **obj, OBJECT *parent){
 }
 
 EXPORT int init_metrics_collector(OBJECT *obj){
-    metrics_collector *my = OBJECTDATA(obj, metrics_collector);
+    metrics_collector *my = object_data<metrics_collector>(obj);
     int rv = 0;
     try {
         rv = my->init(obj->parent);
@@ -1552,7 +1552,7 @@ EXPORT int init_metrics_collector(OBJECT *obj){
 
 EXPORT TIMESTAMP sync_metrics_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass){
 	TIMESTAMP rv = 0;
-	metrics_collector *my = OBJECTDATA(obj, metrics_collector);
+	metrics_collector *my = object_data<metrics_collector>(obj);
 	try {
 		switch(pass){
 			case PC_PRETOPDOWN:
@@ -1583,7 +1583,7 @@ EXPORT TIMESTAMP sync_metrics_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pa
 
 EXPORT int commit_metrics_collector(OBJECT *obj){
 	int rv = 0;
-	metrics_collector *my = OBJECTDATA(obj, metrics_collector);
+	metrics_collector *my = object_data<metrics_collector>(obj);
 	try {
 		rv = my->commit(obj->clock);
 	}
@@ -1601,7 +1601,7 @@ EXPORT int commit_metrics_collector(OBJECT *obj){
 
 EXPORT int isa_metrics_collector(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj, metrics_collector)->isa(classname);
+	return object_data<metrics_collector>(obj)->isa(classname);
 }
 
 // EOF

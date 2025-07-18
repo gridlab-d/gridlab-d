@@ -344,7 +344,7 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 	char columnlist[1025];
 	char **columns;
 	time_t now=time(nullptr);
-	OBJECT *obj=OBJECTHDR(my);
+	OBJECT *obj=object_header(my);
 	static int block=0;
 
 	set_recorder(my);
@@ -564,7 +564,7 @@ EXPORT int open_collector(struct collector *my, char *fname, char *flags)
 	char extension[sizeof(char32)];
 	char columnlist[sizeof(char1024)];
 	char **columns;
-	OBJECT *obj=OBJECTHDR(my);
+	OBJECT *obj=object_header(my);
 
 	columns = (char **)calloc(MAXCOLUMNS, sizeof(char *));
 	for(int i=0; i<MAXCOLUMNS; i++){

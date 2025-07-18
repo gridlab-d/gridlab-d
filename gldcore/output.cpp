@@ -24,7 +24,7 @@
 	- <b>Module messages</b> should be produced un the same guidelines as core messages, except that
 	fatal messages are not supported for modules.  However, the context should provide the object, if known
 	\code
-	 gl_error("office:%d occupancy_schedule '%s' day '%c' is invalid", OBJECTHDR(this)->id, block, *p);
+	 gl_error("office:%d occupancy_schedule '%s' day '%c' is invalid", object_header(this)->id, block, *p);
 	\endcode
 
 	@{

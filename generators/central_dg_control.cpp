@@ -96,7 +96,7 @@ int central_dg_control::init(OBJECT *parent)
 	FINDLIST *solar_list;
 	int index = 0;
 	OBJECT *obj = 0;
-	OBJECT *thisobj = OBJECTHDR(this);
+	OBJECT *thisobj = object_header(this);
 	all_inverter_S_rated = 0;
 	all_battery_S_rated = 0;
 	all_solar_S_rated = 0;
@@ -194,7 +194,7 @@ int central_dg_control::init(OBJECT *parent)
 		if(index >= battery_count){
 			break;
 		}
-		battery_set[index] = OBJECTDATA(obj,battery);
+		battery_set[index] = /*OBJECTDATA(obj, battery)*/   object_data<battery>(obj);
 		if(battery_set[index] == nullptr){
 			gl_error("Unable to map object as battery.");
 			/*  TROUBLESHOOT
@@ -202,7 +202,7 @@ int central_dg_control::init(OBJECT *parent)
 			*/
 			return 0;
 		}
-		inverter_set[inverter_filled_to + 1] = OBJECTDATA(obj->parent, inverter);
+		inverter_set[inverter_filled_to + 1] = /*OBJECTDATA(obj->parent, inverter)*/  object_data<inverter>(obj->parent);
 		if(inverter_set[inverter_filled_to + 1] == nullptr){
 			gl_error("Unable to map object as inverter.");
 			/*  TROUBLESHOOT
@@ -230,7 +230,7 @@ int central_dg_control::init(OBJECT *parent)
 		if(index >= solar_count){
 			break;
 		}
-		solar_set[index] = OBJECTDATA(obj,solar);
+		solar_set[index] = /*OBJECTDATA(obj, solar)*/   object_data<solar>(obj);
 		if(solar_set[index] == nullptr){
 			gl_error("Unable to map object as solar.");
 			/*  TROUBLESHOOT
@@ -238,7 +238,7 @@ int central_dg_control::init(OBJECT *parent)
 			*/
 			return 0;
 		}
-		inverter_set[inverter_filled_to + 1] = OBJECTDATA(obj->parent, inverter);
+		inverter_set[inverter_filled_to + 1] = /*OBJECTDATA(obj->parent, inverter)*/   object_data<inverter>(obj->parent);
 		if(inverter_set[inverter_filled_to + 1] == nullptr){
 			gl_error("Unable to map object as inverter.");
 			/*  TROUBLESHOOT
@@ -599,7 +599,7 @@ EXPORT int create_central_dg_control(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(central_dg_control::oclass);
 		if (*obj!=nullptr)
 		{
-			central_dg_control *my = OBJECTDATA(*obj,central_dg_control);
+			central_dg_control *my = /*OBJECTDATA(*obj, central_dg_control)*/  object_data<central_dg_control>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -614,7 +614,7 @@ EXPORT int init_central_dg_control(OBJECT *obj, OBJECT *parent)
 	try 
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,central_dg_control)->init(parent);
+			return /*OBJECTDATA(obj, central_dg_control)*/ object_data<central_dg_control>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -624,7 +624,7 @@ EXPORT int init_central_dg_control(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_central_dg_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	central_dg_control *my = OBJECTDATA(obj,central_dg_control);
+	central_dg_control *my = /*OBJECTDATA(obj, central_dg_control)*/ object_data<central_dg_control>(obj);
 	try
 	{
 		switch (pass) {

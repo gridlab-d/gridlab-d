@@ -126,7 +126,7 @@ int switch_object::init(OBJECT *parent)
 	char indexa, indexb;
 	gld::set phase_from, phase_to;
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Special flag moved to be universal for all solvers - mainly so phase checks catch it now
 	SpecialLnk = SWITCH;
@@ -880,7 +880,7 @@ TIMESTAMP switch_object::presync(TIMESTAMP t0)
 
 TIMESTAMP switch_object::sync(TIMESTAMP t0)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	unsigned char work_phases_pre, work_phases_post;
 	gl_verbose ("switch_object::sync:%s:%ld:%d:%d:%d", get_name(), t0, phase_A_state, phase_B_state, phase_C_state);
 	//Try to map the event_schedule function address, if we haven't tried yet
@@ -968,7 +968,7 @@ void switch_object::switch_sync_function(void)
 {
 	unsigned char pres_status;
 	double phase_total, switch_total;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	int result_val;
 
 	gl_verbose ("  switch_sync_function:%s:%d:%d:%d:%d:%d", get_name(), status, prev_status, phase_A_state, phase_B_state, phase_C_state);
@@ -1912,7 +1912,7 @@ OBJECT **switch_object::get_object(OBJECT *obj, const char *name)
 	PROPERTY *p = gl_get_property(obj,name);
 	if (p==nullptr || p->ptype!=PT_object)
 		return nullptr;
-	return (OBJECT**)GETADDR(obj,p);
+	return (OBJECT**)get_addr(obj,p);
 }
 
 //Function to adjust "faulted phases" block - in case something has tried to restore itself
@@ -1955,7 +1955,7 @@ gld::set switch_object::node_phase_information(OBJECT *obj)
 //Module-level deltamode call
 SIMULATIONMODE switch_object::inter_deltaupdate_switch(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	TIMESTAMP t0_val, t2_val;
 	unsigned char work_phases_pre, work_phases_post;
 
@@ -2000,7 +2000,7 @@ EXPORT TIMESTAMP commit_switch_object(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if (solver_method==SM_FBS)
 	{
-		switch_object *plink = OBJECTDATA(obj,switch_object);
+		switch_object *plink = object_data<switch_object>(obj);
 		plink->calculate_power();
 	}
 	return TS_NEVER;
@@ -2012,7 +2012,7 @@ EXPORT int create_switch(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(switch_object::oclass);
 		if (*obj!=nullptr)
 		{
-			switch_object *my = OBJECTDATA(*obj,switch_object);
+			switch_object *my = object_data<switch_object>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -2031,7 +2031,7 @@ EXPORT int create_switch(OBJECT **obj, OBJECT *parent)
 EXPORT int init_switch(OBJECT *obj)
 {
 	try {
-		switch_object *my = OBJECTDATA(obj,switch_object);
+		switch_object *my = object_data<switch_object>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(switch_object);
@@ -2048,7 +2048,7 @@ EXPORT int init_switch(OBJECT *obj)
 EXPORT TIMESTAMP sync_switch(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		switch_object *pObj = OBJECTDATA(obj,switch_object);
+		switch_object *pObj = object_data<switch_object>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -2068,7 +2068,7 @@ EXPORT TIMESTAMP sync_switch(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_switch(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,switch_object)->isa(classname);
+	return object_data<switch_object>(obj)->isa(classname);
 }
 
 //Function to change switch states
@@ -2077,7 +2077,7 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 	char desA, desB, desC;
 
 	//Map the switch
-	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
+	switch_object *swtchobj = object_data<switch_object>(thisobj);
 	gl_verbose ("  change_switch_state:%d:%d:%d", phase_change, state, swtchobj->switch_banked_mode);
 
 	if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || meshed_fault_checking_enabled)	//Banked mode - all become "state", just cause
@@ -2134,7 +2134,7 @@ EXPORT int change_switch_state_toggle(OBJECT *thisobj)
 
 	gl_verbose ("  change_switch_state_toggle");
 	//Map the switch
-	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
+	switch_object *swtchobj = object_data<switch_object>(thisobj);
 
 	//See the current state
 	if (swtchobj->status == LS_OPEN)
@@ -2183,7 +2183,7 @@ EXPORT int change_switch_state_toggle(OBJECT *thisobj)
 EXPORT int reliability_operation(OBJECT *thisobj, unsigned char desired_phases)
 {
 	//Map the switch
-	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
+	switch_object *swtchobj = object_data<switch_object>(thisobj);
 
 	swtchobj->set_switch_full_reliability(desired_phases);
 
@@ -2195,7 +2195,7 @@ EXPORT int create_fault_switch(OBJECT *thisobj, OBJECT **protect_obj, char *faul
 	int retval;
 
 	//Link to ourselves
-	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
+	switch_object *thisswitch = object_data<switch_object>(thisobj);
 
 	//Try to fault up
 	retval = thisswitch->link_fault_on(protect_obj, fault_type, implemented_fault,repair_time);
@@ -2207,7 +2207,7 @@ EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_f
 	int retval;
 
 	//Link to ourselves
-	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
+	switch_object *thisswitch = object_data<switch_object>(thisobj);
 
 	//Clear the fault
 	retval = thisswitch->link_fault_off(implemented_fault, imp_fault_name);
@@ -2223,7 +2223,7 @@ EXPORT int clear_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp
 	int retval;
 
 	//Link to ourselves
-	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
+	switch_object *thisswitch = object_data<switch_object>(thisobj);
 
 	//Clear the fault
 	retval = thisswitch->clear_fault_only(implemented_fault, imp_fault_name);
@@ -2238,7 +2238,7 @@ EXPORT int switch_fault_updates(OBJECT *thisobj, unsigned char restoration_phase
 {
 	gl_verbose ("  switch_fault_updates:%d", int(restoration_phases));
 	//Link to ourselves
-	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
+	switch_object *thisswitch = object_data<switch_object>(thisobj);
 
 	//Call the update
 	thisswitch->set_switch_faulted_phases(restoration_phases);
@@ -2249,7 +2249,7 @@ EXPORT int switch_fault_updates(OBJECT *thisobj, unsigned char restoration_phase
 //Deltamode export
 EXPORT SIMULATIONMODE interupdate_switch(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	switch_object *my = OBJECTDATA(obj,switch_object);
+	switch_object *my = object_data<switch_object>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -2266,7 +2266,7 @@ EXPORT SIMULATIONMODE interupdate_switch(OBJECT *obj, unsigned int64 delta_time,
 //KML Export
 EXPORT int switch_object_kmldata(OBJECT *obj,int (*stream)(const char*,...))
 {
-	switch_object *n = OBJECTDATA(obj, switch_object);
+	switch_object *n = object_data<switch_object>(obj);
 	int rv = 1;
 
 	rv = n->kmldata(stream);

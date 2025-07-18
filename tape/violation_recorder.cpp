@@ -65,7 +65,7 @@ violation_recorder::violation_recorder(MODULE *mod){
 		}
         // TODO set defaults here
 		defaults = this;
-		memset(this, 0, sizeof(violation_recorder));
+		//memset(this, 0, sizeof(violation_recorder));
     }
 }
 
@@ -241,7 +241,7 @@ int violation_recorder::assoc_meter_w_xfrmr_node(vobjlist *meter_list, vobjlist 
 		while (!found) {
 
 			p_ptr = gl_get_property(node1->obj, const_cast<char *>("to"));
-			gl_get_value(node1->obj, GETADDR(node1->obj, p_ptr), to, 127, p_ptr);
+			gl_get_value(node1->obj, get_addr(node1->obj, p_ptr), to, 127, p_ptr);
 
 			// look through the meters to see if one matches the 'to' field
 			for(meter = meter_list; meter != 0; meter = meter->next){
@@ -249,7 +249,7 @@ int violation_recorder::assoc_meter_w_xfrmr_node(vobjlist *meter_list, vobjlist 
 				// check to see if a meter name matches with 'to' field
 				if (strcmp(to, meter->obj->name) == 0) {
 					p_ptr = gl_get_property(xfrmr->obj, const_cast<char *>("from"));
-					gl_get_value(xfrmr->obj, GETADDR(xfrmr->obj, p_ptr), from, 127, p_ptr);
+					gl_get_value(xfrmr->obj, get_addr(xfrmr->obj, p_ptr), from, 127, p_ptr);
 					// get the node on the primary side of the transformer
 					for(node = node_list; node != 0; node = node->next){
 						if (node->obj == 0) continue;
@@ -271,7 +271,7 @@ int violation_recorder::assoc_meter_w_xfrmr_node(vobjlist *meter_list, vobjlist 
 				if (node2->obj == 0) continue;
 				p_ptr = gl_get_property(node2->obj, const_cast<char *>("from"));
 				if (p_ptr != 0) {
-					gl_get_value(node2->obj, GETADDR(node2->obj, p_ptr), from, 127, p_ptr);
+					gl_get_value(node2->obj, get_addr(node2->obj, p_ptr), from, 127, p_ptr);
 					// found it
 					if (strcmp(to, from) == 0) {
 						// reset node so the next iteration walks down the chain
@@ -387,7 +387,7 @@ int violation_recorder::write_header(){
 
 	time_t now = time(nullptr);
 	//quickobjlist *qol = 0;
-	OBJECT *obj=OBJECTHDR(this);
+	OBJECT *obj=object_header(this);
 
 	if(TS_OPEN != tape_status){
 		// could be ERROR or CLOSED
@@ -477,10 +477,10 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 		//p_ptr = gl_get_property(curr->obj, "continuous_rating");
 		//nominal = get_observed_double_value(curr->obj, p_ptr);
 		if (has_phase(curr->obj, PHASE_S)) { // split phase line
-			triplex_line *pTriplex_line = OBJECTDATA(curr->obj,triplex_line);
-			triplex_line_configuration *pConfiguration1 = OBJECTDATA(pTriplex_line->configuration,triplex_line_configuration);
+			triplex_line *pTriplex_line = object_data<triplex_line>(curr->obj);
+			triplex_line_configuration *pConfiguration1 = object_data<triplex_line_configuration>(pTriplex_line->configuration);
 			
-			triplex_line_conductor *pConfigurationA = OBJECTDATA(pConfiguration1->phaseA_conductor,triplex_line_conductor);
+			triplex_line_conductor *pConfigurationA = object_data<triplex_line_conductor>(pConfiguration1->phaseA_conductor);
 			nominal = pConfigurationA->summer.continuous;
 			if (fails_static_condition(curr->obj, const_cast<char *>("current_out_A"), upper_bound, lower_bound, nominal, &retval)) {
 				uniq_list->insert(curr->obj->name);
@@ -488,7 +488,7 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 				write_to_stream(t1, echo,
                                 const_cast<char *>("VIOLATION1, %f, %f, %f, %s, %s, S1, Current violates thermal limit."), retval, upper_bound, lower_bound, gl_name(curr->obj, objname, 127), curr->obj->oclass->name);
 			}
-			triplex_line_conductor *pConfigurationB = OBJECTDATA(pConfiguration1->phaseB_conductor,triplex_line_conductor);
+			triplex_line_conductor *pConfigurationB = object_data<triplex_line_conductor>(pConfiguration1->phaseB_conductor);
 			nominal = pConfigurationB->summer.continuous;
 			if (fails_static_condition(curr->obj, const_cast<char *>("current_out_B"), upper_bound, lower_bound, nominal, &retval)) {
 				uniq_list->insert(curr->obj->name);
@@ -498,11 +498,11 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 			}
 		} else { // 'normal' 3-phase line
 			if ( gl_object_isa(curr->obj, const_cast<char *>("underground_line"), const_cast<char *>("powerflow")) ) {
-				underground_line *pThree_phase_line = OBJECTDATA(curr->obj,underground_line);
-				line_configuration *pConfiguration1 = OBJECTDATA(pThree_phase_line->configuration,line_configuration);
+				underground_line *pThree_phase_line = object_data<underground_line>(curr->obj);
+				line_configuration *pConfiguration1 = object_data<line_configuration>(pThree_phase_line->configuration);
 
 				if (has_phase(curr->obj, PHASE_A)) {
-					underground_line_conductor *pConfigurationA = OBJECTDATA(pConfiguration1->phaseA_conductor,underground_line_conductor);
+					underground_line_conductor *pConfigurationA = object_data<underground_line_conductor>(pConfiguration1->phaseA_conductor);
 					if ( pConfigurationA == nullptr)
 						nominalA = pConfiguration1->summer.continuous;
 					else
@@ -510,7 +510,7 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 				}
 					
 				if (has_phase(curr->obj, PHASE_B)) {
-					underground_line_conductor *pConfigurationB = OBJECTDATA(pConfiguration1->phaseB_conductor,underground_line_conductor);	
+					underground_line_conductor *pConfigurationB = object_data<underground_line_conductor>(pConfiguration1->phaseB_conductor);
 					if ( pConfigurationB == nullptr)
 						nominalB = pConfiguration1->summer.continuous;
 					else
@@ -518,7 +518,7 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 				}
 
 				if (has_phase(curr->obj, PHASE_C)) {
-					underground_line_conductor *pConfigurationC = OBJECTDATA(pConfiguration1->phaseC_conductor,underground_line_conductor);	
+					underground_line_conductor *pConfigurationC = object_data<underground_line_conductor>(pConfiguration1->phaseC_conductor);
 					if ( pConfigurationC == nullptr)
 						nominalC = pConfiguration1->summer.continuous;
 					else
@@ -526,11 +526,11 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 				}
 			}
 			else {
-				overhead_line *pThree_phase_line = OBJECTDATA(curr->obj,overhead_line);
-				line_configuration *pConfiguration1 = OBJECTDATA(pThree_phase_line->configuration,line_configuration);
+				overhead_line *pThree_phase_line = object_data< overhead_line>(curr->obj);
+				line_configuration *pConfiguration1 = object_data< line_configuration>(pThree_phase_line->configuration);
 
 				if (has_phase(curr->obj, PHASE_A)) {
-					overhead_line_conductor *pConfigurationA = OBJECTDATA(pConfiguration1->phaseA_conductor,overhead_line_conductor);
+					overhead_line_conductor *pConfigurationA = object_data<overhead_line_conductor>(pConfiguration1->phaseA_conductor);
 					if ( pConfigurationA == nullptr)
 						nominalA = pConfiguration1->summer.continuous;
 					else
@@ -538,7 +538,7 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 				}
 
 				if (has_phase(curr->obj, PHASE_B)) {
-					overhead_line_conductor *pConfigurationB = OBJECTDATA(pConfiguration1->phaseB_conductor,overhead_line_conductor);
+					overhead_line_conductor *pConfigurationB = object_data<overhead_line_conductor>(pConfiguration1->phaseB_conductor);
 					if ( pConfigurationB == nullptr)
 						nominalB = pConfiguration1->summer.continuous;
 					else
@@ -546,7 +546,7 @@ int violation_recorder::check_line_thermal_limit(TIMESTAMP t1, vobjlist *list, u
 				}
 
 				if (has_phase(curr->obj, PHASE_C)) {
-					overhead_line_conductor *pConfigurationC = OBJECTDATA(pConfiguration1->phaseC_conductor,overhead_line_conductor);
+					overhead_line_conductor *pConfigurationC = object_data<overhead_line_conductor>(pConfiguration1->phaseC_conductor);
 					if ( pConfigurationC == nullptr)
 						nominalC = pConfiguration1->summer.continuous;
 					else
@@ -596,8 +596,8 @@ int violation_recorder::check_xfrmr_thermal_limit(TIMESTAMP t1, vobjlist *list, 
 		if (curr->obj == 0) continue;
 		// this is for the triplex transformers b/c phase is meaningless
 		if (has_phase(curr->obj, PHASE_S)) {
-			transformer *pTransformer = OBJECTDATA(curr->obj,transformer);
-			transformer_configuration *pConfiguration = OBJECTDATA(pTransformer->configuration,transformer_configuration);
+			transformer *pTransformer = object_data<transformer>(curr->obj);
+			transformer_configuration *pConfiguration = object_data<transformer_configuration>(pTransformer->configuration);
 			nominal = pConfiguration->kVA_rating*1000.;
 			if (fails_static_condition(curr->obj, const_cast<char *>("power_out"), upper_bound, lower_bound, nominal, &retval)) {
 				uniq_list->insert(curr->obj->name);
@@ -607,8 +607,8 @@ int violation_recorder::check_xfrmr_thermal_limit(TIMESTAMP t1, vobjlist *list, 
 			}
 		// this is for the other transformers which have 3 phases, each of which can violate the limit
 		} else {
-			transformer *pTransformer = OBJECTDATA(curr->obj,transformer);
-			transformer_configuration *pConfiguration = OBJECTDATA(pTransformer->configuration,transformer_configuration);
+			transformer *pTransformer = object_data<transformer>(curr->obj);
+			transformer_configuration *pConfiguration = object_data<transformer_configuration>(pTransformer->configuration);
 			if (has_phase(curr->obj, PHASE_A)) {
 				nominal = pConfiguration->phaseA_kVA_rating*1000.;
 				if (fails_static_condition(curr->obj, const_cast<char *>("power_out_A"), upper_bound, lower_bound, nominal, &retval)) {
@@ -1527,7 +1527,7 @@ int violation_recorder::write_footer(){
 //Allocate a vobjlist
 vobjlist *violation_recorder::vobjlist_alloc_fxn(vobjlist *input_list)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Null the address, for giggles
 	input_list = nullptr;
@@ -1554,7 +1554,7 @@ vobjlist *violation_recorder::vobjlist_alloc_fxn(vobjlist *input_list)
 //Allocate a uniqueList
 uniqueList *violation_recorder::uniqueList_alloc_fxn(uniqueList *input_unlist)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Null the address, for giggles
 	input_unlist = nullptr;
@@ -1586,7 +1586,7 @@ EXPORT int create_violation_recorder(OBJECT **obj, OBJECT *parent){
 	try {
 		*obj = gl_create_object(violation_recorder::oclass);
 		if(*obj != nullptr){
-			violation_recorder *my = OBJECTDATA(*obj, violation_recorder);
+			violation_recorder *my = object_data<violation_recorder>(*obj);
 			gl_set_parent(*obj, parent);
 			rv = my->create();
 		}
@@ -1604,7 +1604,7 @@ EXPORT int create_violation_recorder(OBJECT **obj, OBJECT *parent){
 }
 
 EXPORT int init_violation_recorder(OBJECT *obj){
-	violation_recorder *my = OBJECTDATA(obj, violation_recorder);
+	violation_recorder *my = object_data<violation_recorder>(obj);
 	int rv = 0;
 	try {
 		rv = my->init(obj->parent);
@@ -1619,7 +1619,7 @@ EXPORT int init_violation_recorder(OBJECT *obj){
 }
 
 EXPORT TIMESTAMP sync_violation_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass){
-	violation_recorder *my = OBJECTDATA(obj, violation_recorder);
+	violation_recorder *my = object_data<violation_recorder>(obj);
 	TIMESTAMP rv = 0;
 	try {
 		switch(pass){
@@ -1648,7 +1648,7 @@ EXPORT TIMESTAMP sync_violation_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG p
 
 EXPORT int commit_violation_recorder(OBJECT *obj){
 	int rv = 0;
-	violation_recorder *my = OBJECTDATA(obj, violation_recorder);
+	violation_recorder *my = object_data<violation_recorder>(obj);
 	try {
 		rv = my->commit(obj->clock);
 	}
@@ -1663,12 +1663,12 @@ EXPORT int commit_violation_recorder(OBJECT *obj){
 
 EXPORT int isa_violation_recorder(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj, violation_recorder)->isa(classname);
+	return object_data<violation_recorder>(obj)->isa(classname);
 }
 
 EXPORT STATUS finalize_violation_recorder(OBJECT *obj)
 {
-	violation_recorder *my = OBJECTDATA(obj,violation_recorder);
+	violation_recorder *my = object_data<violation_recorder>(obj);
 	try {
 		return obj!=nullptr ? my->finalize(obj) : FAILED;
 	}

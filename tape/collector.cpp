@@ -35,6 +35,7 @@
 #include "odbc.h"
 
 
+
 CLASS *collector_class = nullptr;
 static OBJECT *last_collector = nullptr;
 
@@ -43,7 +44,9 @@ EXPORT int create_collector(OBJECT **obj, OBJECT *parent)
 	*obj = gl_create_object(collector_class);
 	if (*obj!=nullptr)
 	{
-		struct collector *my = OBJECTDATA(*obj,struct collector);
+		//struct collector *my = object_data<struct collector>(*obj);
+		struct collector* my = object_data< collector>(*obj);
+
 		last_collector = *obj;
 		gl_set_parent(*obj,parent);
 		strcpy(my->file,"");
@@ -72,7 +75,8 @@ static int collector_open(OBJECT *obj)
 	char1024 fname="";
 	char32 flags="w";
 	TAPEFUNCS *tf = 0;
-	struct collector *my = OBJECTDATA(obj,struct collector);
+	//struct collector* my = object_data<struct collector>(obj);
+	struct collector* my = object_data< collector>(obj);
 
 	my->interval = (int64)(my->dInterval/TS_SECOND);
 
@@ -125,7 +129,8 @@ static void close_collector(struct collector *my){
 
 static TIMESTAMP collector_write(OBJECT *obj)
 {
-	struct collector *my = OBJECTDATA(obj,struct collector);
+	//struct collector* my = object_data<struct collector>(obj);
+	struct collector* my = object_data< collector>(obj);
 	char ts[64];
 	if (my->format==0)
 	{
@@ -196,7 +201,7 @@ int read_aggregates(AGGREGATION *aggr, char *buffer, int size)
 
 TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	struct collector *my = OBJECTDATA(obj,struct collector);
+	struct collector *my = object_data<struct collector>(obj);
 	typedef enum {NONE='\0', LT='<', EQ='=', GT='>'} COMPAREOP;
 	COMPAREOP comparison;
 	char2048 buffer = "";

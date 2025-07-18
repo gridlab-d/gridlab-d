@@ -402,7 +402,7 @@ EXPORT int check(void)
 		FINDLIST *players = gl_find_objects(FL_NEW,FT_CLASS,SAME,"tape",FT_END);
 		while ((obj=gl_find_next(players,obj))!=nullptr)
 		{
-			struct player *pData = OBJECTDATA(obj,struct player);
+			struct player *pData = object_data<struct player>(obj);
 			if (gl_findfile(pData->file,nullptr,F_OK,fpath,sizeof(fpath))==nullptr)
 			{
 				errcount++;
@@ -416,7 +416,7 @@ EXPORT int check(void)
 		FINDLIST *shapers = gl_find_objects(FL_NEW,FT_CLASS,SAME,"shaper",FT_END);
 		while ((obj=gl_find_next(shapers,obj))!=nullptr)
 		{
-			struct shaper *pData = OBJECTDATA(obj,struct shaper);
+			struct shaper *pData = object_data<struct shaper>(obj);
 			if (gl_findfile(pData->file,nullptr,F_OK,fpath,sizeof(fpath))==nullptr)
 			{
 				errcount++;
@@ -560,7 +560,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				if (index_item->obj_type == RECORDER)
 				{
 					OBJECT *obj = index_item->obj;
-					struct recorder *my = OBJECTDATA(obj,struct recorder);
+					struct recorder *my = object_data<struct recorder>(obj);
 					char value[1024];
 					//extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
 
@@ -607,7 +607,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 		{
 			OBJECT *obj = index_item->obj;
 			OBJECT *temp_obj = nullptr;
-			struct player *my = OBJECTDATA(obj,struct player);
+			struct player *my = object_data<struct player>(obj);
 			int y=0,m=0,d=0,H=0,M=0,S=0,ms=0, n=0;
 			char *fmt = const_cast<char *>("%d/%d/%d %d:%d:%d.%d,%*s");
 			double t = (double)my->next.ts + (double)my->next.ns/1e9;
@@ -693,7 +693,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 						temp_obj = obj->parent ? obj->parent : obj;
 
 						//Set the value
-						ret_value = gl_set_value(temp_obj,GETADDR(temp_obj,my->target),my->next.value,my->target); /* pointer => int64 */
+						ret_value = gl_set_value(temp_obj, get_addr(temp_obj,my->target),my->next.value,my->target); /* pointer => int64 */
 
 						if (ret_value == 0)
 						{
@@ -809,7 +809,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 			}/*End recorder time init */
 
 			obj = index_item->obj;
-			myrec = OBJECTDATA(obj,struct recorder);
+			myrec = object_data<struct recorder>(obj);
 
 			/* See if we're in service */
 			if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
@@ -900,7 +900,8 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		if (index_item->obj_type == PLAYER)
 		{
 			obj = index_item->obj;
-			myplayer = OBJECTDATA(obj,struct player);
+			//myplayer = object_data<struct player>(obj);
+			myplayer = object_data< player>(obj);
 
 			/* See if we're in service */
 			if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))

@@ -221,7 +221,7 @@ int battery::create(void)
 /* Object initialization is called once after all object have been created */
 int battery::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	gld_property *temp_property_pointer;
 	double temp_value_SocReserve;
 	enumeration temp_value_control_mode;
@@ -519,7 +519,7 @@ int battery::init(OBJECT *parent)
 
 		if (gen_status_v == OFFLINE)
 		{
-			//OBJECT *obj = OBJECTHDR(this);
+			//OBJECT *obj = object_header(this);
 			gl_warning("Generator (id:%d) is out of service!",obj->id);
 		}
 		else
@@ -833,7 +833,7 @@ TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	gld::complex temp_complex_value;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if(!use_internal_battery_model){
 		if (gen_mode_v == GM_POWER_DRIVEN || gen_mode_v == GM_POWER_VOLTAGE_HYBRID) 
@@ -2173,7 +2173,7 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 gld_property *battery::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -2196,7 +2196,7 @@ gld_property *battery::map_complex_value(OBJECT *obj, const char *name)
 gld_property *battery::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -2274,7 +2274,7 @@ void battery::push_powerflow_currents(void)
 STATUS battery::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 {
 	STATUS stat_val;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	// Battery delta mode operation is only when enableDelta is true
 	if (!enableDelta) {
@@ -2452,7 +2452,7 @@ EXPORT int create_battery(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(battery::oclass);
 		if (*obj!=nullptr)
 		{
-			battery *my = OBJECTDATA(*obj,battery);
+			battery *my = /*OBJECTDATA(*obj, battery)*/  object_data<battery>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -2467,7 +2467,7 @@ EXPORT int init_battery(OBJECT *obj, OBJECT *parent)
 	try 
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,battery)->init(parent);
+			return /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -2477,7 +2477,7 @@ EXPORT int init_battery(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	battery *my = OBJECTDATA(obj,battery);
+	battery *my = /*OBJECTDATA(obj, battery)*/  object_data<battery>(obj);
 	try
 	{
 		switch (pass) {
@@ -2503,7 +2503,7 @@ EXPORT TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 
 EXPORT STATUS preupdate_battery(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)
 {
-	battery *my = OBJECTDATA(obj,battery);
+	battery *my = /*OBJECTDATA(obj, battery)*/   object_data<battery>(obj);
 	STATUS status_output = FAILED;
 
 	try
@@ -2520,7 +2520,7 @@ EXPORT STATUS preupdate_battery(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_
 
 EXPORT SIMULATIONMODE interupdate_battery(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	battery *my = OBJECTDATA(obj,battery);
+	battery *my = /*OBJECTDATA(obj, battery)*/  object_data<battery>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -2536,7 +2536,7 @@ EXPORT SIMULATIONMODE interupdate_battery(OBJECT *obj, unsigned int64 delta_time
 
 EXPORT STATUS postupdate_battery(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
-	battery *my = OBJECTDATA(obj,battery);
+	battery *my = /*OBJECTDATA(obj, battery)*/   object_data<battery>(obj);
 	STATUS status = FAILED;
 	try
 	{

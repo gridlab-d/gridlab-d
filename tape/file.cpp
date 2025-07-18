@@ -258,7 +258,7 @@ void file_close_shaper(struct shaper *my)
 int file_open_recorder(struct recorder *my, char *fname, char *flags)
 {
 	time_t now=time(nullptr);
-	OBJECT *obj=OBJECTHDR(my);
+	OBJECT *obj=object_header(my);
 
 	my->fp = (strcmp(fname,"-")==0?stdout:fopen(fname,flags));
 	if (my->fp==nullptr)

@@ -266,7 +266,7 @@ int load::create(void)
 int load::init(OBJECT *parent)
 {
 	char temp_buff[128];
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	int ret_value;
 	
 	if (has_phase(PHASE_S))
@@ -451,7 +451,7 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 {
 	//bool all_three_phases;
 	TIMESTAMP tresults_val, result;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Check for straggler nodes - fix so segfaults don't occur
 	if ((prev_NTime==0) && (solver_method == SM_NR))
@@ -468,7 +468,7 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 			if (*NR_subnode_reference == -1)
 			{
 				//Try to initialize it, for giggles
-				node *Temp_Node = OBJECTDATA(SubNodeParent,node);
+				node *Temp_Node = object_data<node>(SubNodeParent);
 
 				//Call the initialization
 				Temp_Node->NR_populate();
@@ -621,7 +621,7 @@ void load::load_update_fxn(void)
 				
 				char temp[3] = {'A','B','C'};
 
-				OBJECT *obj = OBJECTHDR(this);
+				OBJECT *obj = object_header(this);
 
 				gl_warning("load:%s - ZIP components on phase %c did not sum to 1. Setting power_fraction to %.2f", obj->name ? obj->name : "unnamed", temp[index], power_fraction[index]);
 				/*  TROUBLESHOOT
@@ -2185,7 +2185,7 @@ void load::load_update_fxn(void)
 						if (node_reference_value < 0)
 						{
 							//Get header information
-							obj = OBJECTHDR(this);
+							obj = object_header(this);
 
 							GL_THROW("node:%d -- %s tried to perform an impedance conversion with an uninitialzed child node!",obj->id, obj->name?obj->name:"unnamed");
 							/*  TROUBLESHOOT
@@ -3446,7 +3446,7 @@ int load::notify(int update_mode, PROPERTY *prop, char *value)
 //Module-level call
 SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	double deltat;
 	STATUS return_status_val;
 
@@ -3568,7 +3568,7 @@ EXPORT int create_load(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(load::oclass);
 		if (*obj!=nullptr)
 		{
-			load *my = OBJECTDATA(*obj,load);
+			load *my = object_data<load>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -3587,7 +3587,7 @@ EXPORT int create_load(OBJECT **obj, OBJECT *parent)
 EXPORT int init_load(OBJECT *obj)
 {
 	try {
-		load *my = OBJECTDATA(obj,load);
+		load *my = object_data<load>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(load);
@@ -3604,7 +3604,7 @@ EXPORT int init_load(OBJECT *obj)
 EXPORT TIMESTAMP sync_load(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		load *pObj = OBJECTDATA(obj,load);
+		load *pObj = object_data<load>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -3624,11 +3624,11 @@ EXPORT TIMESTAMP sync_load(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_load(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,load)->isa(classname);
+	return object_data<load>(obj)->isa(classname);
 }
 
 EXPORT int notify_load(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
-	load *n = OBJECTDATA(obj, load);
+	load *n = object_data<load>(obj);
 	int rv = 1;
 
 	rv = n->notify(update_mode, prop, value);
@@ -3639,7 +3639,7 @@ EXPORT int notify_load(OBJECT *obj, int update_mode, PROPERTY *prop, char *value
 //Deltamode export
 EXPORT SIMULATIONMODE interupdate_load(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	load *my = OBJECTDATA(obj,load);
+	load *my = object_data<load>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -3656,7 +3656,7 @@ EXPORT SIMULATIONMODE interupdate_load(OBJECT *obj, unsigned int64 delta_time, u
 //Exposed function to do load update - primarily to get impedance conversion into solver_nr directly
 EXPORT STATUS update_load_values(OBJECT *obj)
 {
-	load *my = OBJECTDATA(obj,load);
+	load *my = object_data<load>(obj);
 
 	//Call the update
 	my->load_update_fxn();
@@ -3668,7 +3668,7 @@ EXPORT STATUS update_load_values(OBJECT *obj)
 //KML Export
 EXPORT int load_kmldata(OBJECT *obj,int (*stream)(const char*,...))
 {
-	load *n = OBJECTDATA(obj, load);
+	load *n = object_data<load>(obj);
 	int rv = 1;
 
 	rv = n->kmldata(stream);

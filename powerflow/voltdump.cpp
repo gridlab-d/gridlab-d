@@ -239,7 +239,7 @@ EXPORT int create_voltdump(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(voltdump::oclass);
 		if (*obj!=nullptr)
 		{
-			voltdump *my = OBJECTDATA(*obj,voltdump);
+			voltdump *my = object_data<voltdump>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -252,7 +252,7 @@ EXPORT int create_voltdump(OBJECT **obj, OBJECT *parent)
 EXPORT int init_voltdump(OBJECT *obj)
 {
 	try {
-		voltdump *my = OBJECTDATA(obj,voltdump);
+		voltdump *my = object_data<voltdump>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(voltdump);
@@ -262,7 +262,7 @@ EXPORT TIMESTAMP sync_voltdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	try
 	{
-		voltdump *my = OBJECTDATA(obj,voltdump);
+		voltdump *my = object_data<voltdump>(obj);
 		TIMESTAMP rv;
 		obj->clock = t1;
 		rv = my->runtime > t1 ? my->runtime : TS_NEVER;
@@ -273,7 +273,7 @@ EXPORT TIMESTAMP sync_voltdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 
 EXPORT TIMESTAMP commit_voltdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 	try {
-		voltdump *my = OBJECTDATA(obj,voltdump);
+		voltdump *my = object_data<voltdump>(obj);
 		return my->commit(t1);
 	} 
 	I_CATCHALL(commit,voltdump);
@@ -281,7 +281,7 @@ EXPORT TIMESTAMP commit_voltdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 
 EXPORT int isa_voltdump(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,voltdump)->isa(classname);
+	return object_data<voltdump>(obj)->isa(classname);
 }
 
 /**@}*/

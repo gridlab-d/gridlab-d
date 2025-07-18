@@ -72,7 +72,7 @@ int jsondump::create(void)
 
 int jsondump::init(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	// Check if we need to dump line and line configuration to JSON file
 	if ((filename_dump_system[0] == '\0') && write_system){
@@ -110,7 +110,7 @@ STATUS jsondump::dump_system(void)
 
 	FINDLIST *ohlines, *tplines, *uglines, *switches, *regulators, *regConfs, *lineConfs, *tpLineConfs, *TransformerList, *TransConfsList, *nodes, *meters, *loads, *inverters, *diesels, *fuses;
 	FINDLIST *reclosers, *sectionalizers;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 	OBJECT *obj = nullptr;
 	OBJECT *obj_lineConf = nullptr;
 	OBJECT *obj_tplineConf = nullptr;
@@ -1243,7 +1243,7 @@ STATUS jsondump::dump_system(void)
 				break;
 			}
 
-			pTransformer[index] = OBJECTDATA(obj,transformer);
+			pTransformer[index] = /*OBJECTDATA(obj,<>)*/ object_data<transformer>(obj);
 			if(pTransformer[index] == nullptr){
 				gl_error("Unable to map object as transformer object.");
 				return FAILED;
@@ -1452,7 +1452,7 @@ STATUS jsondump::dump_system(void)
 				break;
 			}
 
-			pRegulator[index] = OBJECTDATA(obj,regulator);
+			pRegulator[index] = /*OBJECTDATA(obj,<>)*/ object_data<regulator>(obj);
 			if(pRegulator[index] == nullptr){
 				gl_error("Unable to map object as regulator object.");
 				return FAILED;
@@ -1660,7 +1660,7 @@ STATUS jsondump::dump_system(void)
 				break;
 			}
 
-			pOhLine[index] = OBJECTDATA(obj,line);
+			pOhLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
 			if(pOhLine[index] == nullptr){
 				gl_error("Unable to map object as overhead_line object.");
 				return FAILED;
@@ -1867,7 +1867,7 @@ STATUS jsondump::dump_system(void)
 				break;
 			}
 
-			pUgLine[index] = OBJECTDATA(obj,line);
+			pUgLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
 			if(pUgLine[index] == nullptr){
 				gl_error("Unable to map object as underground_line object.");
 				return FAILED;
@@ -2074,7 +2074,7 @@ STATUS jsondump::dump_system(void)
 				break;
 			}
 
-			pTpLine[index] = OBJECTDATA(obj,line);
+			pTpLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
 			if(pTpLine[index] == nullptr){
 				gl_error("Unable to map object as triplex_line object.");
 				return FAILED;
@@ -2286,7 +2286,7 @@ STATUS jsondump::dump_system(void)
 				break;
 			}
 
-			pSwitch[index] = OBJECTDATA(obj,switch_object);
+			pSwitch[index] = /*OBJECTDATA(obj,<>)*/ object_data<switch_object>(obj);
 			if(pSwitch[index] == nullptr){
 				gl_error("Unable to map object as switch object.");
 				return FAILED;
@@ -2472,7 +2472,7 @@ STATUS jsondump::dump_system(void)
 				break;
 			}
 
-			pSectionalizer[index] = OBJECTDATA(obj,sectionalizer);
+			pSectionalizer[index] = /*OBJECTDATA(obj,<>)*/ object_data<sectionalizer>(obj);
 			if(pSectionalizer[index] == nullptr){
 				gl_error("Unable to map object as sectionalizer object.");
 				return FAILED;
@@ -2659,7 +2659,7 @@ STATUS jsondump::dump_system(void)
 				break;
 			}
 
-			pRecloser[index] = OBJECTDATA(obj,recloser);
+			pRecloser[index] = /*OBJECTDATA(obj,<>)*/ object_data<recloser>(obj);
 			if(pRecloser[index] == nullptr){
 				gl_error("Unable to map object as recloser object.");
 				return FAILED;
@@ -2849,7 +2849,7 @@ STATUS jsondump::dump_system(void)
 				break;
 			}
 
-			pFuse[index] = OBJECTDATA(obj,fuse);
+			pFuse[index] = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(obj);
 			if(pFuse[index] == nullptr){
 				gl_error("Unable to map object as fuse object.");
 				return FAILED;
@@ -3560,7 +3560,7 @@ STATUS jsondump::dump_reliability(void)
 			}
 
 			// Directly obtain the data information from the object
-			fuseData = OBJECTDATA(obj,fuse);
+			fuseData = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(obj);
 
 			// Write device name
 			protect_obj["Name"] = obj->name;
@@ -3606,7 +3606,7 @@ STATUS jsondump::dump_reliability(void)
 			}
 
 			// Directly obtain the data information from the object
-			reclData = OBJECTDATA(obj,recloser);
+			reclData = /*OBJECTDATA(obj,<>)*/ object_data<recloser>(obj);
 
 			// Write device name
 			protect_obj["Name"] = obj->name;
@@ -3652,7 +3652,7 @@ STATUS jsondump::dump_reliability(void)
 			}
 
 			// Directly obtain the data information from the object
-			secData = OBJECTDATA(obj,sectionalizer);
+			secData = /*OBJECTDATA(obj,<>)*/ object_data<sectionalizer>(obj);
 
 			// Write device name
 			protect_obj["Name"] = obj->name;
@@ -3705,7 +3705,7 @@ STATUS jsondump::dump_reliability(void)
 			}
 
 			// Directly obtain the data information from the object
-			capData = OBJECTDATA(obj,capacitor);
+			capData = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj);
 
 			// Write device name
 			other_obj["Name"] = obj->name;
@@ -3751,7 +3751,7 @@ STATUS jsondump::dump_reliability(void)
 			}
 
 			// Directly obtain the data information from the object
-			regData = OBJECTDATA(obj,regulator);
+			regData = /*OBJECTDATA(obj,<>)*/ object_data<regulator>(obj);
 
 			// Write device name
 			other_obj["Name"] = obj->name;
@@ -3861,7 +3861,7 @@ double jsondump::get_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	double output_value;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -3891,7 +3891,7 @@ gld::complex jsondump::get_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	gld::complex output_value;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -3918,7 +3918,7 @@ gld::set jsondump::get_set_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	gld::set output_value;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -3945,7 +3945,7 @@ enumeration jsondump::get_enum_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	enumeration output_value;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -3973,7 +3973,7 @@ OBJECT *jsondump::get_object_value(OBJECT *obj, const char *name)
 	gld_property *pQuantity;
 	gld_rlock *test_rlock;
 	OBJECT *output_value;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -4014,7 +4014,7 @@ EXPORT int create_jsondump(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(jsondump::oclass);
 		if (*obj!=nullptr)
 		{
-			jsondump *my = OBJECTDATA(*obj,jsondump);
+			jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -4028,7 +4028,7 @@ EXPORT int create_jsondump(OBJECT **obj, OBJECT *parent)
 
 EXPORT int init_jsondump(OBJECT *obj)
 {
-	jsondump *my = OBJECTDATA(obj,jsondump);
+	jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(obj);
 	try {
 		return my->init(obj->parent);
 	}
@@ -4043,7 +4043,7 @@ EXPORT TIMESTAMP sync_jsondump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	try
 	{
-		jsondump *my = OBJECTDATA(obj,jsondump);
+		jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(obj);
 		TIMESTAMP rv;
 		obj->clock = t1;
 		rv = my->runtime > t1 ? my->runtime : TS_NEVER;
@@ -4054,7 +4054,7 @@ EXPORT TIMESTAMP sync_jsondump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 
 EXPORT TIMESTAMP commit_jsondump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 	try {
-		jsondump *my = OBJECTDATA(obj,jsondump);
+		jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(obj);
 		return my->commit(t1);
 	}
 	I_CATCHALL(commit,jsondump);
@@ -4063,7 +4063,7 @@ EXPORT TIMESTAMP commit_jsondump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 EXPORT STATUS finalize_jsondump(OBJECT *obj)
 {
 
-	jsondump *my = OBJECTDATA(obj,jsondump);
+	jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(obj);
 
 	try {
 			return obj!=nullptr ? my->finalize() : FAILED;
@@ -4084,7 +4084,7 @@ EXPORT STATUS finalize_jsondump(OBJECT *obj)
 
 EXPORT int isa_jsondump(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,jsondump)->isa(classname);
+	return /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(obj)->isa(classname);
 }
 
 /**@}*/

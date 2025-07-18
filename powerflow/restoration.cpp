@@ -225,7 +225,7 @@ int restoration::create(void)
 
 int restoration::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	int working_int_val, indexval;
 
 	if (solver_method == SM_NR)
@@ -3019,7 +3019,7 @@ void restoration::modifyModel(int counter)
 	FUNCTIONADDR switching_fxn;
 	int return_val;
 	double return_val_double;
-	OBJECT *thisobj = OBJECTHDR(this);
+	OBJECT *thisobj = object_header(this);
 	OBJECT *swobj;
 	bool switch_occurred, return_is_int_val;
 
@@ -6172,7 +6172,7 @@ void merge_sort_int(int *Input_Array, unsigned int Alen, int *Work_Array)
 //Export for external object function calls
 EXPORT int perform_restoration(OBJECT *thisobj, int faulting_link)
 {
-	restoration *temp_rest_obj = OBJECTDATA(thisobj,restoration);
+	restoration *temp_rest_obj = object_data<restoration>(thisobj);
 
 	return temp_rest_obj->PerformRestoration(faulting_link);
 }
@@ -6196,7 +6196,7 @@ EXPORT int create_restoration(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(restoration::oclass);
 		if (*obj!=nullptr)
 		{
-			restoration *my = OBJECTDATA(*obj,restoration);
+			restoration *my = object_data<restoration>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -6209,7 +6209,7 @@ EXPORT int create_restoration(OBJECT **obj, OBJECT *parent)
 EXPORT int init_restoration(OBJECT *obj, OBJECT *parent)
 {
 	try {
-		return OBJECTDATA(obj,restoration)->init(parent);
+		return object_data<restoration>(obj)->init(parent);
 	}
 	INIT_CATCHALL(restoration);
 }
@@ -6228,7 +6228,7 @@ EXPORT TIMESTAMP sync_restoration(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 }
 EXPORT int isa_restoration(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,restoration)->isa(classname);
+	return object_data<restoration>(obj)->isa(classname);
 }
 
 /**@}**/

@@ -89,7 +89,7 @@ int metrics::create(void)
 /* Object initialization is called once after all object have been created */
 int metrics::init(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	int index, indexa, indexb, returnval;
 	char work_metrics[1025];
 	char *startVal, *endVal, *workVal;
@@ -541,7 +541,7 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	DATETIME dt;
 	int returnval;
 	bool metrics_written;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	FILE *FPVal;
 
 	//Initialization
@@ -724,7 +724,7 @@ void metrics::event_ended(OBJECT *event_obj, OBJECT *fault_obj, OBJECT *faulting
 {
 	DATETIME start_dt, end_dt;
 	TIMESTAMP outage_length;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	int returnval;
 	FILE *FPVal;
 
@@ -787,7 +787,7 @@ void metrics::event_ended_sec(OBJECT *event_obj, OBJECT *fault_obj, OBJECT *faul
 {
 	DATETIME start_dt, end_dt;
 	TIMESTAMP outage_length;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	int returnval;
 	FILE *FPVal;
 
@@ -966,7 +966,7 @@ void metrics::write_metrics(void)
 //Exports for the different external functions
 EXPORT STATUS metrics_get_interrupted_count(OBJECT *obj,int *in_outage)
 {
-	metrics *mymet = OBJECTDATA(obj,metrics);
+	metrics *mymet = object_data<metrics>(obj);
 
 	try
 	{
@@ -993,7 +993,7 @@ EXPORT STATUS metrics_get_interrupted_count(OBJECT *obj,int *in_outage)
 
 EXPORT STATUS metrics_get_interrupted_count_secondary(OBJECT *obj,int *in_outage, int *in_outage_secondary)
 {
-	metrics *mymet = OBJECTDATA(obj,metrics);
+	metrics *mymet = object_data<metrics>(obj);
 
 	try
 	{
@@ -1020,7 +1020,7 @@ EXPORT STATUS metrics_get_interrupted_count_secondary(OBJECT *obj,int *in_outage
 
 EXPORT STATUS metrics_event_ended(OBJECT *obj, OBJECT *event_obj,OBJECT *fault_obj,OBJECT *faulting_obj,TIMESTAMP event_start_time,TIMESTAMP event_end_time,char *fault_type,char *impl_fault,int number_customers_int)
 {
-	metrics *mymet = OBJECTDATA(obj,metrics);
+	metrics *mymet = object_data<metrics>(obj);
 
 	try
 	{
@@ -1047,7 +1047,7 @@ EXPORT STATUS metrics_event_ended(OBJECT *obj, OBJECT *event_obj,OBJECT *fault_o
 
 EXPORT STATUS metrics_event_ended_secondary(OBJECT *obj, OBJECT *event_obj,OBJECT *fault_obj,OBJECT *faulting_obj,TIMESTAMP event_start_time,TIMESTAMP event_end_time,char *fault_type,char *impl_fault,int number_customers_int, int number_customers_int_secondary)
 {
-	metrics *mymet = OBJECTDATA(obj,metrics);
+	metrics *mymet = object_data<metrics>(obj);
 
 	try
 	{
@@ -1082,7 +1082,7 @@ EXPORT int create_metrics(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(metrics::oclass);
 		if (*obj!=nullptr)
 		{
-			metrics *my = OBJECTDATA(*obj,metrics);
+			metrics *my = object_data<metrics>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -1097,7 +1097,7 @@ EXPORT int init_metrics(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,metrics)->init(parent);
+			return object_data<metrics>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -1107,7 +1107,7 @@ EXPORT int init_metrics(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_metrics(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	metrics *my = OBJECTDATA(obj,metrics);
+	metrics *my = object_data<metrics>(obj);
 	try
 	{
 		switch (pass) {

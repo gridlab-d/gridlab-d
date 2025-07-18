@@ -535,6 +535,49 @@ int convert_to_int16(const char *buffer, /**< a pointer to the string buffer */
 	return sscanf(buffer,"%hd",static_cast<short*>(data));
 }
 
+
+/** Convert from an \e uint32
+	Converts an \e int32 property to a string.
+	@return the number of character written to the string
+ **/
+int convert_from_uint32(char* buffer, int size, void* data, PROPERTY* prop) {
+	if (!buffer || !data) {  // Null pointer checks
+		return -1;  // Return an error code distinct from success
+	}
+
+	const int MAX_LENGTH = 1024;  // Define a safe maximum length for numbers
+	char temp[MAX_LENGTH + 1];
+
+	// Use snprintf for safer bounds checking
+	int count = snprintf(temp, sizeof(temp), "%d", *(reinterpret_cast<int*>(data)));
+	if (count < 0 || count > size - 1) {  // Handle snprintf errors and size issues
+		return -2;  // Return error code for overflow
+	}
+
+	strncpy(buffer, temp, static_cast<size_t>(count));  // Safer copy
+	buffer[count] = '\0';  // Null-terminate explicitly
+	return count;  // Return character count
+}
+
+/** Convert to an \e uint32
+	Converts a string to an \e uint32 property.
+	@return 1 on success, 0 on failure, -1 if conversion was incomplete
+ **/
+int convert_to_uint32(const char* buffer, void* data, PROPERTY* prop) {
+	if (!buffer || !data) {  // Null pointer check
+		return -1;  // Return an error code for null pointers
+	}
+
+	int temp;
+	int result = sscanf(buffer, "%d", &temp);  // Parse into a temporary integer
+	if (result != 1) {  // Conversion failed
+		return 0;  // Return 0 for failed conversions
+	}
+
+	*reinterpret_cast<int*>(data) = temp;  // Write back to `data`
+	return 1;  // Success
+}
+
 /** Convert from an \e int32
 	Converts an \e int32 property to a string.  
 	@return the number of character written to the string

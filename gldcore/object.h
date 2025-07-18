@@ -451,19 +451,97 @@ int object_loadmethod(OBJECT *obj, char *name, char *value);
 }
 #endif
 
-#define object_size(X) ((X)?(X)->size:-1) /**< get the size of the object X */
-#define object_id(X) ((X)?(X)->id:-1) /**< get the id of the object X */
-#define object_parent(X) ((X)?(X)->parent:nullptr) /**< get the parent of the object */
-#define object_rank(X) ((X)?(X)->name:-1) /**< get the rank of the object */
+//#define object_size(X) ((X)?(X)->size:-1) /**< get the size of the object X */
+//#define object_id(X) ((X)?(X)->id:-1) /**< get the id of the object X */
+//#define object_parent(X) ((X)?(X)->parent:nullptr) /**< get the parent of the object */
+//#define object_rank(X) ((X)?(X)->name:-1) /**< get the rank of the object */
+//
+//#define OBJECTDATA(X,T) ((T*)((X)?((X)+1):nullptr)) /**< get the object data structure */
+//#define GETADDR(O,P) ((O)?((void*)((char*)((O)+1)+(unsigned int64)((P)->addr))):nullptr) /**< get the addr of an object's property */
+//#define OBJECTHDR(X) ((X)?(((OBJECT*)X)-1):nullptr) /**< get the header from the object's data structure */
+//
+//#define MY (((OBJECT*)this)-1)
+//#define MYPARENT (MY->parent) /**< get the parent from the object's data structure */
+//#define MYCLOCK (MY->clock) /**< get an object's own clock */
+//#define MYRANK (MY->rank) /**< get an object's own rank */
 
-#define OBJECTDATA(X,T) ((T*)((X)?((X)+1):nullptr)) /**< get the object data structure */
-#define GETADDR(O,P) ((O)?((void*)((char*)((O)+1)+(unsigned int64)((P)->addr))):nullptr) /**< get the addr of an object's property */
-#define OBJECTHDR(X) ((X)?(((OBJECT*)X)-1):nullptr) /**< get the header from the object's data structure */
 
-#define MY (((OBJECT*)this)-1)
-#define MYPARENT (MY->parent) /**< get the parent from the object's data structure */
-#define MYCLOCK (MY->clock) /**< get an object's own clock */
-#define MYRANK (MY->rank) /**< get an object's own rank */
+//OBJECT ACCESSORS
+template<typename T>
+constexpr int object_size(const T* obj) {
+	return obj ? obj->size : -1;
+}
+
+template<typename T>
+constexpr int object_id(const T* obj) {
+	return obj ? obj->id : -1;
+}
+
+template<typename T>
+constexpr auto object_parent(const T* obj) -> decltype(obj->parent) {
+	return obj ? obj->parent : nullptr;
+}
+
+template<typename T>
+constexpr int object_rank(const T* obj) {
+	return obj ? obj->name : -1; // Note: 'name' used as rank? Double check that field!
+}
+
+
+//OBJECT LAYOUT HELPERS
+//template<typename T, typename U>
+//constexpr T* object_data(U* obj) {
+//	return obj ? reinterpret_cast<T*>(obj + 1) : nullptr;
+//}
+
+template<typename T, typename U>
+constexpr T* object_data(U* obj) {
+	static_assert(alignof(U) >= alignof(T), "U does not meet alignment requirements for T");
+	return obj ? reinterpret_cast<T*>(obj + 1) : nullptr;
+}
+
+//template<typename T>
+//constexpr OBJECT* object_header(T* data) {
+//	return data ? static_cast<OBJECT*>(reinterpret_cast<OBJECT*>(data) - 1) : nullptr;
+//}
+
+template<typename T>
+constexpr OBJECT* object_header(T* data) {
+	return data ? const_cast<OBJECT*>(reinterpret_cast<const OBJECT*>(data) - 1) : nullptr;
+}
+
+template<typename O, typename P>
+constexpr void* get_addr(O* obj, const P* prop) {
+	return obj ? static_cast<void*>(
+		reinterpret_cast<char*>(obj + 1) + reinterpret_cast<std::uintptr_t>(prop->addr)
+		) : nullptr;
+}
+
+
+//INTERNAL this ACCESSORS
+template<typename T>
+constexpr OBJECT* MY(T* ptr) {
+	static_assert(std::is_pointer_v<T>, "MY() requires a pointer type");
+	return reinterpret_cast<OBJECT*>(ptr) - 1;
+}
+
+template<typename T>
+constexpr auto MYPARENT(T* ptr) -> decltype(MY(ptr)->parent) {
+	return MY(ptr)->parent;
+}
+
+template<typename T>
+constexpr auto MYCLOCK(T* ptr) -> decltype(MY(ptr)->clock) {
+	return MY(ptr)->clock;
+}
+
+template<typename T>
+constexpr auto MYRANK(T* ptr) -> decltype(MY(ptr)->rank) {
+	return MY(ptr)->rank;
+}
+
+
+
 
 
 //#pragma GCC pop_options

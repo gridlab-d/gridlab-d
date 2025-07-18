@@ -88,6 +88,10 @@
 #endif
 
 #include <cstdarg>
+#include <atomic>
+#include <memory>
+#include <execinfo.h>
+
 
 #include "platform.h"
 #include "schedule.h"
@@ -98,6 +102,17 @@
 #define STREAM_MODULE
 #include "stream.h"
 #include "module.h"
+
+// Forward declaration of get_addr
+template<typename O, typename P>
+constexpr void* get_addr(O* obj, const P* prop);
+
+template<typename T, typename U>
+constexpr T* object_data(U* obj);
+
+template<typename T>
+constexpr OBJECT* object_header(T* data);
+
 
 #ifdef DLMAIN
 #define EXTERN
@@ -800,7 +815,8 @@ inline bool *gl_get_bool(OBJECT *obj, /**< object to set dependency */
 	@{
  **/
 
-#define RNGSTATE (&(OBJECTHDR(this))->rng_state)
+#define RNGSTATE (&(object_header(this))->rng_state)
+ /*(&(object_header(this))->rng_state)*/
 
 /** Determine the distribution type to be used from its name
 	@see RANDOMTYPE, random_type()
@@ -1931,9 +1947,98 @@ inline bool hasbits(unsigned long flags, unsigned int bits) { return (flags&bits
 
 /// Object container
 class gld_object {
+private:
+	//static std::atomic<int> deletion_count;
+	mutable std::atomic<bool> is_deleted{ false };
+
+
 public:
 
-	virtual ~gld_object() {}
+	virtual ~gld_object() {
+		mark_deleted();
+		// Log or track destructor calls
+		std::cout << "Destructor called for object at "
+			<< static_cast<void*>(this)
+			//<< ", deletion count: "
+			//<< ++deletion_count
+			<< std::endl;
+	}
+
+	// Stack trace printing (requires additional setup)
+	void print_stack_trace() {
+		void* array[10];
+		size_t size;
+		char** strings;
+		size_t i;
+
+		size = backtrace(array, 10);
+		strings = backtrace_symbols(array, size);
+
+		std::cerr << "Obtained " << size << " stack frames:" << std::endl;
+
+		for (i = 0; i < size; i++)
+			std::cerr << strings[i] << std::endl;
+
+		free(strings);
+	}
+
+	void mark_deleted() {
+		if (is_deleted.exchange(true)) {
+			// Object was already deleted
+			std::cerr << "WARNING: Attempted to delete already deleted object at "
+				<< static_cast<void*>(this)
+				<< std::endl;
+			// Optional: print stack trace
+			print_stack_trace();
+		}
+	}
+
+
+
+	// Virtual cleanup method
+	virtual void destroy() {
+		// Default no-op cleanup
+	}
+
+	//// Placement new and delete
+	//static void* operator new(size_t size, void* ptr) noexcept {
+	//	return ::operator new(size, ptr);
+	//}
+
+	 // Prevent multiple deletions
+	void operator delete(void* ptr) {
+		if (ptr) {
+			std::cout << "Deleting object at " << ptr << std::endl;
+			::operator delete(ptr);
+		}
+	}
+
+	//static void operator delete(void* ptr) noexcept {
+	//	if (ptr) {
+	//		// Cast to base class and call destroy before deleting
+	//		static_cast<gld_object*>(ptr)->destroy();
+	//		::operator delete(ptr);
+	//	}
+	//}
+
+	// Virtual method for cleanup
+	virtual void release() {
+		// Default implementation does nothing
+	}
+
+	// Static method to safely delete an object
+	static void safe_delete(gld_object* ptr) {
+		if (ptr) {
+			try {
+				ptr->release();
+				delete ptr;
+			}
+			catch (const std::exception& e) {
+				// Log the error
+				fprintf(stderr, "Error during object deletion: %s\n", e.what());
+			}
+		}
+	}
 
 	inline OBJECT *my() { return this?(((OBJECT*)this)-1):NULL; }
 private:
@@ -1947,7 +2052,7 @@ public: // header read accessors (no locking)
 	inline OBJECTNUM get_id(void) { return my()->id; };
 	inline char* get_groupid(void) { return my()->groupid.get_string(); };
 	inline gld_class* get_oclass(void) { return (gld_class*)my()->oclass; };
-	inline gld_object* get_parent(void) { return my()->parent?OBJECTDATA(my()->parent,gld_object):NULL; };
+	inline gld_object* get_parent(void) { return my()->parent? object_data<gld_object>(my()->parent) /*OBJECTDATA(my()->parent, gld_object)*/ : NULL; };
 	inline OBJECTRANK get_rank(void) { return my()->rank; };
 	inline TIMESTAMP get_clock(void) { return my()->clock; };
 	inline TIMESTAMP get_valid_to(void) { return my()->valid_to; };
@@ -2006,23 +2111,23 @@ public: // member lookup functions
 	inline FUNCTIONADDR get_function(const char *name) { return (*callback->function.get)(my()->oclass->name,name); };
 
 public: // external accessors
-	template <class T> inline void getp(PROPERTY &prop, T &value) { rlock(); value=*(T*)(GETADDR(my(),&prop)); wunlock(); };
-	template <class T> inline void setp(PROPERTY &prop, T &value) { wlock(); *(T*)(GETADDR(my(),&prop))=value; wunlock(); };
-	template <class T> inline void getp(PROPERTY &prop, T &value, gld_rlock&) { value=*(T*)(GETADDR(my(),&prop)); };
-	template <class T> inline void getp(PROPERTY &prop, T &value, gld_wlock&) { value=*(T*)(GETADDR(my(),&prop)); };
-	template <class T> inline void setp(PROPERTY &prop, T &value, gld_wlock&) { *(T*)(GETADDR(my(),&prop))=value; };
+	template <class T> inline void getp(PROPERTY &prop, T &value) { rlock(); value=*(T*)(get_addr(my(),&prop)); wunlock(); };
+	template <class T> inline void setp(PROPERTY &prop, T &value) { wlock(); *(T*)(get_addr(my(),&prop)   /*GETADDR(my(), &prop)*/) = value; wunlock(); };
+	template <class T> inline void getp(PROPERTY &prop, T &value, gld_rlock&) { value=*(T*)(get_addr(my(),&prop)); };
+	template <class T> inline void getp(PROPERTY &prop, T &value, gld_wlock&) { value=*(T*)(get_addr(my(),&prop)); };
+	template <class T> inline void setp(PROPERTY &prop, T &value, gld_wlock&) { *(T*)(get_addr(my(),&prop))=value; };
 
 public: // core interface
 	inline int set_dependent(OBJECT *obj) { return callback->object.set_dependent(my(),obj); };
 	inline int set_parent(OBJECT *obj) { return callback->object.set_parent(my(),obj); };
 	inline int set_rank(unsigned int r) { return callback->object.set_rank(my(),r); };
 	inline bool isa(char *type) { return callback->object_isa(my(),type) ? true : false; };
-	inline bool is_valid(void) { return my()!=NULL && my()==OBJECTHDR(this); };
+	inline bool is_valid(void) { return my() != NULL && my() == object_header(this);    /*object_header(this);*/ };
 
 public: // iterators
 	inline bool is_last(void) { return my()->next==NULL; };
-	inline static gld_object *get_first(void) { OBJECT *o=callback->object.get_first(); return OBJECTDATA(o,gld_object);};
-	inline gld_object* get_next(void) { return OBJECTDATA(my()->next,gld_object); };
+	inline static gld_object* get_first(void) { OBJECT* o = callback->object.get_first(); return object_data<gld_object>(o);  /*OBJECTDATA(o, gld_object);*/ };
+	inline gld_object* get_next(void) { return  object_data<gld_object>(my()->next);  /*OBJECTDATA(my()->next, gld_object);*/ };
 
 public: // exceptions
 	inline void exception(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); throw (const char*)buf;};
@@ -2034,6 +2139,14 @@ public:
 	bool threadsafe {false};
 	inline bool is_threadsafe(){return threadsafe;}
 };
+
+// Custom deleter for gld_object
+struct gld_object_deleter {
+	void operator()(gld_object* ptr) const {
+		gld_object::safe_delete(ptr);
+	}
+};
+
 /// Create a gld_object from an OBJECT
 static inline gld_object* get_object(OBJECT*obj)
 {
@@ -2239,7 +2352,7 @@ private: // exceptions
 		static char buf[1024]; 
 		va_list ptr; 
 		va_start(ptr,msg); 
-		vsprintf(buf+sprintf(buf,"%s.%s: ",OBJECTDATA(obj,gld_object)->get_name(),pstruct.prop->name),msg,ptr); 
+		vsprintf(buf+sprintf(buf,"%s.%s: ",/*OBJECTDATA(obj, gld_object)*/  object_data<gld_object>(obj)->get_name(), pstruct.prop->name), msg, ptr);
 		va_end(ptr); 
 		throw (const char*)buf;
 	};
@@ -2402,26 +2515,27 @@ CDECL int dllkill() { return do_kill(NULL); }
 
 #define EXPORT_CREATE_C(X,C) EXPORT int create_##X(OBJECT **obj, OBJECT *parent) \
 {	try { *obj = gl_create_object(C::oclass); \
-	if ( *obj != NULL ) { C *my = OBJECTDATA(*obj,C); \
+	if ( *obj != NULL ) { C *my = /*OBJECTDATA(*obj,C);*/  object_data<C>(*obj);   \
 		gl_set_parent(*obj,parent); return my->create(); \
 	} else return 0; } CREATE_CATCHALL(X); }
 /// Implement class create export
 #define EXPORT_CREATE(X) EXPORT_CREATE_C(X,X)
 
 #define EXPORT_INIT_C(X,C) EXPORT int init_##X(OBJECT *obj, OBJECT *parent) \
-{	try { if (obj!=NULL) return OBJECTDATA(obj,C)->init(parent); else return 0; } \
+{	try { if (obj!=NULL) return /*OBJECTDATA(obj,C)*/ object_data<C>(obj)->init(parent); else return 0; } \
 	INIT_CATCHALL(X); }
 /// Implement class init export
 #define EXPORT_INIT(X) EXPORT_INIT_C(X,X)
 
 #define EXPORT_COMMIT_C(X,C) EXPORT TIMESTAMP commit_##X(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2) \
-{	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->commit(t1,t2) : TS_NEVER; } \
+{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj);  try { return obj!=NULL ? my->commit(t1,t2) : TS_NEVER; } \
 	T_CATCHALL(C,commit); }
 /// Implement class commit export
 #define EXPORT_COMMIT(X) EXPORT_COMMIT_C(X,X)
 
 #define EXPORT_NOTIFY_C(X,C) EXPORT int notify_##X(OBJECT *obj, int notice, PROPERTY *prop, char *value) \
-{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj); \
+	try { if ( obj!=NULL ) { \
 	switch (notice) { \
 	case NM_POSTUPDATE: return my->postnotify(prop,value); \
 	case NM_PREUPDATE: return my->prenotify(prop,value); \
@@ -2431,7 +2545,8 @@ CDECL int dllkill() { return do_kill(NULL); }
 #define EXPORT_NOTIFY(X) EXPORT_NOTIFY_C(X,X)
 
 #define EXPORT_SYNC_C(X,C) EXPORT TIMESTAMP sync_##X(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) { \
-	try { TIMESTAMP t1=TS_NEVER; C *p=OBJECTDATA(obj,C); \
+	try { TIMESTAMP t1=TS_NEVER; /*C *p=OBJECTDATA(obj,C);*/ \
+    C *p = object_data<C>(obj); \
 	switch (pass) { \
 	case PC_PRETOPDOWN: t1 = p->presync(t0); break; \
 	case PC_BOTTOMUP: t1 = p->sync(t0); break; \
@@ -2444,31 +2559,32 @@ CDECL int dllkill() { return do_kill(NULL); }
 #define EXPORT_SYNC(X) EXPORT_SYNC_C(X,X)
 
 #define EXPORT_ISA_C(X,C) EXPORT int isa_##X(OBJECT *obj, char *name) { \
-	return ( obj!=0 && name!=0 ) ? OBJECTDATA(obj,C)->isa(name) : 0; }
+	return ( obj!=0 && name!=0 ) ? /*OBJECTDATA(obj,C)*/  object_data<C>(obj)->isa(name) : 0; }
 /// Implement class isa export
 #define EXPORT_ISA(X) EXPORT_ISA_C(X,X)
 
 #define EXPORT_PLC_C(X,C) EXPORT TIMESTAMP plc_##X(OBJECT *obj, TIMESTAMP t1) { \
-	try { return OBJECTDATA(obj,C)->plc(t1); } \
+	try { return object_data<C>(obj)->plc(t1);  /*OBJECTDATA(obj,C)->plc(t1);*/ } \
 	T_CATCHALL(plc,X); }
 /// Implement class plc export
 #define EXPORT_PLC(X) EXPORT_PLC_C(X,X)
 
 // TODO add other linkages as needed
 #define EXPORT_PRECOMMIT_C(X,C) EXPORT int precommit_##X(OBJECT *obj, TIMESTAMP t1) \
-{	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->precommit(t1) : 0; } \
+{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj);   \
+    try { return obj!=NULL ? my->precommit(t1) : 0; } \
 	T_CATCHALL(C,precommit); }
 /// Implement class precommit export
 #define EXPORT_PRECOMMIT(X) EXPORT_PRECOMMIT_C(X,X)
 
 #define EXPORT_FINALIZE_C(X,C) EXPORT int finalize_##X(OBJECT *obj) \
-{	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->finalize() : 0; } \
+{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj);  try { return obj!=NULL ? my->finalize() : 0; } \
 	T_CATCHALL(C,finalize); }
 /// Implement class finalize export
 #define EXPORT_FINALIZE(X) EXPORT_FINALIZE_C(X,X)
 
 #define EXPORT_NOTIFY_C_P(X,C,P) EXPORT int notify_##X##_##P(OBJECT *obj, char *value) \
-{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj);  try { if ( obj!=NULL ) { \
 	return my->notify_##P(value); \
 	} else return 0; } \
 	T_CATCHALL(X,notify_##P); return 1; }
@@ -2476,7 +2592,7 @@ CDECL int dllkill() { return do_kill(NULL); }
 #define EXPORT_NOTIFY_PROP(X,P) EXPORT_NOTIFY_C_P(X,X,P)
 
 #define EXPORT_LOADMETHOD_C(X,C,N) EXPORT int loadmethod_##X##_##N(OBJECT *obj, char *value) \
-{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj);  try { if ( obj!=NULL ) { \
 	return my->N(value); \
 	} else return 0; } \
 	T_CATCHALL(X,loadmethod); }
@@ -2485,7 +2601,7 @@ CDECL int dllkill() { return do_kill(NULL); }
 
 #define DECL_METHOD(X,N) EXPORT int method_##X##_##N(OBJECT *obj, char *value, size_t size)
 #define EXPORT_METHOD_C(X,C,N) DECL_METHOD(X,N) \
-		{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+		{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj);  try { if ( obj!=NULL ) { \
 			return my->N(value,size); \
 			} else return 0; } \
 			T_CATCHALL(X,method); }

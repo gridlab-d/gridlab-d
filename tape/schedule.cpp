@@ -284,7 +284,7 @@ schedule::schedule(MODULE *module)
 
 		// setup the default values
 		defaults = this;
-		memset(this, 0, sizeof(schedule));
+		//memset(this, 0, sizeof(schedule));
 		default_value = 1.0;
 		next_ts = TS_INIT;
 	}
@@ -299,7 +299,7 @@ int schedule::create()
 
 int schedule::init(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	int rv = 1;
 
 	currval = default_value;

@@ -45,7 +45,7 @@ group_recorder::group_recorder(MODULE *mod){
 			GL_THROW(const_cast<char *>("Unable to publish deltamode postupdate function for group_recorder"));
 
 		defaults = this;
-		memset(this, 0, sizeof(group_recorder));
+		//memset(this, 0, sizeof(group_recorder));
     }
 }
 
@@ -58,7 +58,7 @@ int group_recorder::create(){
 
 int group_recorder::init(OBJECT *obj){
 	OBJECT *gr_obj = 0;
-	OBJECT *thisobj = OBJECTHDR(this);
+	OBJECT *thisobj = object_header(this);
 	gld_global min_ts_value("minimum_timestep");
 	int32 temp_min_ts_value;
 	int retvalue;
@@ -409,7 +409,7 @@ int group_recorder::write_header(){
 //	size_t name_size;
 	time_t now = time(nullptr);
 	quickobjlist *qol = 0;
-	OBJECT *obj=OBJECTHDR(this);
+	OBJECT *obj=object_header(this);
 
 	if(TS_OPEN != tape_status){
 		// could be ERROR or CLOSED
@@ -541,7 +541,7 @@ int group_recorder::read_line(){
 			sprintf(buffer, "%f", part_value);
 			offset = strlen(buffer);
 		} else {
-			offset = gl_get_value(curr->obj, GETADDR(curr->obj, &(curr->prop)), buffer, 127, &(curr->prop));
+			offset = gl_get_value(curr->obj, get_addr(curr->obj, &(curr->prop)), buffer, 127, &(curr->prop));
 			if(0 == offset){
 				gl_error("group_recorder::read_line(): unable to get value for '%s' in object '%s'", curr->prop.name, curr->obj->name);
 				/* TROUBLESHOOT
@@ -726,7 +726,7 @@ EXPORT int create_group_recorder(OBJECT **obj, OBJECT *parent){
 	try {
 		*obj = gl_create_object(group_recorder::oclass);
 		if(*obj != nullptr){
-			group_recorder *my = OBJECTDATA(*obj, group_recorder);
+			group_recorder *my = object_data<group_recorder>(*obj);
 			gl_set_parent(*obj, parent);
 			rv = my->create();
 		}
@@ -744,7 +744,7 @@ EXPORT int create_group_recorder(OBJECT **obj, OBJECT *parent){
 }
 
 EXPORT int init_group_recorder(OBJECT *obj){
-	group_recorder *my = OBJECTDATA(obj, group_recorder);
+	group_recorder *my = object_data<group_recorder>(obj);
 	int rv = 0;
 	try {
 		rv = my->init(obj->parent);
@@ -759,7 +759,7 @@ EXPORT int init_group_recorder(OBJECT *obj){
 }
 
 EXPORT TIMESTAMP sync_group_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass){
-	group_recorder *my = OBJECTDATA(obj, group_recorder);
+	group_recorder *my = object_data<group_recorder>(obj);
 	TIMESTAMP rv = 0;
 	try {
 		switch(pass){
@@ -788,7 +788,7 @@ EXPORT TIMESTAMP sync_group_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int commit_group_recorder(OBJECT *obj){
 	int rv = 0;
-	group_recorder *my = OBJECTDATA(obj, group_recorder);
+	group_recorder *my = object_data<group_recorder>(obj);
 	try {
 		rv = my->commit(obj->clock,0.0,false);
 	}
@@ -803,7 +803,7 @@ EXPORT int commit_group_recorder(OBJECT *obj){
 
 EXPORT int isa_group_recorder(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj, group_recorder)->isa(classname);
+	return object_data<group_recorder>(obj)->isa(classname);
 }
 
 //Deltamode -- object-level call
@@ -811,7 +811,7 @@ EXPORT SIMULATIONMODE update_group_recorder(OBJECT *obj, TIMESTAMP t0, unsigned 
 {
 	double tsdblvalue, dblincrement;
 	int return_val;
-	group_recorder *thisrcdr = OBJECTDATA(obj,group_recorder);
+	group_recorder *thisrcdr = object_data<group_recorder>(obj);
 
 	//See if we're the first call
 	if (((iteration_count_val == 0) && (delta_time != 0) && (thisrcdr->write_interval != 0)) || (thisrcdr->write_interval == 0))
@@ -840,7 +840,7 @@ EXPORT SIMULATIONMODE update_group_recorder(OBJECT *obj, TIMESTAMP t0, unsigned 
 EXPORT int group_recorder_postroutine(OBJECT *obj, double timedbl)
 {
 	int return_value;
-	group_recorder *thisrcdr = OBJECTDATA(obj,group_recorder);
+	group_recorder *thisrcdr = object_data<group_recorder>(obj);
 
 	//Call the commit routine
 	return_value = thisrcdr->commit(0,timedbl,true);

@@ -148,7 +148,7 @@ int vfd::create()
 */
 int vfd::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	FUNCTIONADDR temp_fxn;
 	STATUS temp_status_val;
 	double temp_voltage_check, temp_diff_value;
@@ -169,8 +169,8 @@ int vfd::init(OBJECT *parent)
 	}
 
 	//Map up the from and to nodes
-	fNode = OBJECTDATA(from,node);
-	tNode = OBJECTDATA(to,node);
+	fNode = object_data<node>(from);
+	tNode = object_data<node>(to);
 
 	//Check ratings
 	if (voltageLLRating <= 0.0)
@@ -340,7 +340,7 @@ int vfd::init(OBJECT *parent)
 
 void vfd::CheckParameters()
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Make sure desiredRPM hasn't gone negative
 	if (desiredRPM < 0.0)
@@ -855,7 +855,7 @@ gld::complex vfd::complex_exp(double angle)
 //Function to reallocate/allocate variable time arrays
 STATUS vfd::alloc_freq_arrays(double delta_t_val)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	int a_index;
 	
 	//See if we were commanded to reallocate -- this would be done on a zero-th pass of interupdate, most likely (or in postupdate, when transitioning out)
@@ -993,7 +993,7 @@ STATUS vfd::post_deltaupdate_vfd(void)
 //Exposed function - external call to current injection
 EXPORT STATUS current_injection_update_VFD(OBJECT *obj)
 {
-	vfd *vfdObj = OBJECTDATA(obj,vfd);
+	vfd *vfdObj = object_data<vfd>(obj);
 
 	return vfdObj->VFD_current_injection();
 }
@@ -1016,7 +1016,7 @@ EXPORT int create_vfd(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(vfd::oclass);
 		if (*obj!=nullptr)
 		{
-			vfd *my = OBJECTDATA(*obj,vfd);
+			vfd *my = object_data<vfd>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -1035,7 +1035,7 @@ EXPORT int create_vfd(OBJECT **obj, OBJECT *parent)
 EXPORT int init_vfd(OBJECT *obj)
 {
 	try {
-		vfd *my = OBJECTDATA(obj,vfd);
+		vfd *my = object_data<vfd>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(vfd);
@@ -1053,7 +1053,7 @@ EXPORT TIMESTAMP sync_vfd(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try
 	{
-		vfd *pObj = OBJECTDATA(obj,vfd);
+		vfd *pObj = object_data<vfd>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -1073,13 +1073,13 @@ EXPORT TIMESTAMP sync_vfd(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_vfd(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,vfd)->isa(classname);
+	return object_data<vfd>(obj)->isa(classname);
 }
 
 //Deltamode export
 EXPORT SIMULATIONMODE interupdate_vfd(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	vfd *my = OBJECTDATA(obj,vfd);
+	vfd *my = object_data<vfd>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -1096,7 +1096,7 @@ EXPORT SIMULATIONMODE interupdate_vfd(OBJECT *obj, unsigned int64 delta_time, un
 //Deltamode export - post update
 EXPORT STATUS postupdate_vfd(OBJECT *obj)
 {
-	vfd *my = OBJECTDATA(obj,vfd);
+	vfd *my = object_data<vfd>(obj);
 	STATUS status_val = FAILED;
 	try
 	{

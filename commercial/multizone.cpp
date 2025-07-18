@@ -61,7 +61,7 @@ int multizone::create(void)
 /* Object initialization is called once after all object have been created */
 int multizone::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	if (from==nullptr)
 		gl_error("%s (multizone:%d): from zone is not specified", obj->name?obj->name:"unnamed",obj->id);
 	else if (!gl_object_isa(from,"office"))
@@ -89,8 +89,8 @@ TIMESTAMP multizone::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	if (t1>t0 && t0>0)
 	{
-		office *pFrom = OBJECTDATA(from,office);
-		office *pTo = OBJECTDATA(to,office);
+		office *pFrom = /*OBJECTDATA(from,office)*/    object_data<office>(from);
+		office *pTo = /*OBJECTDATA(to, office)*/       object_data<office>(to);
 	
 		/* initial delta T */
 		double dT = pFrom->zone.current.air_temperature - pTo->zone.current.air_temperature;
@@ -137,7 +137,7 @@ EXPORT int create_multizone(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(multizone::oclass);
 		if (*obj!=nullptr)
 		{
-			multizone *my = OBJECTDATA(*obj,multizone);
+			multizone *my = /*OBJECTDATA(*obj, multizone)*/   object_data<multizone>(*obj)   ;
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -152,7 +152,7 @@ EXPORT int init_multizone(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,multizone)->init(parent);
+			return /*OBJECTDATA(obj, multizone)*/  object_data<multizone>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -162,7 +162,7 @@ EXPORT int init_multizone(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_multizone(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	multizone *my = OBJECTDATA(obj,multizone);
+	multizone *my = /*OBJECTDATA(obj, multizone)*/   object_data<multizone>(obj);
 	try
 	{
 		switch (pass) {

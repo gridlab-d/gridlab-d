@@ -240,7 +240,9 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 	char dateformat[16]="";
 	char error_output_buff[2048];
 	char datebuff[128];
-	complex_assert *da = OBJECTDATA(obj,complex_assert);
+	/*complex_assert *da = OBJECTDATA(obj,complex_assert);*/
+	complex_assert* da = object_data<complex_assert>(obj);
+
 	DATETIME delta_dt_val;
 	double del_clock;
 	TIMESTAMP del_clock_int;

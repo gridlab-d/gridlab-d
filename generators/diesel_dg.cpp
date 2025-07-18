@@ -676,7 +676,7 @@ int diesel_dg::create(void)
 /* Object initialization is called once after all object have been created */
 int diesel_dg::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	OBJECT *tmp_obj = nullptr;
 	gld_object *tmp_gld_obj = nullptr;
 
@@ -1689,7 +1689,7 @@ TIMESTAMP diesel_dg::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double tdiff, ang_diff;
 	gld::complex temp_current_val[3];
 	gld::complex temp_voltage_val[3];
@@ -1976,7 +1976,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	gld::complex temp_current_val[3];
 	int ret_state;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	gld::complex aval, avalsq;
 	TIMESTAMP dt;
 	complex_array temp_complex_array;
@@ -2107,7 +2107,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 gld_property *diesel_dg::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -2130,7 +2130,7 @@ gld_property *diesel_dg::map_complex_value(OBJECT *obj, const char *name)
 gld_property *diesel_dg::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -3562,7 +3562,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 //mode_pass 1 is the "update our frequency" call
 STATUS diesel_dg::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if (mode_pass == 0)	//Accumulation pass
 	{
@@ -4672,7 +4672,7 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count, bool *converged_fai
 	bool bus_is_a_swing, bus_is_swing_pq_entry;
 	STATUS temp_status_val;
 	gld_property *temp_property_pointer;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double mag_check_val[3];
 
 	//Start by assuming now convergence failure
@@ -4872,7 +4872,7 @@ gld::complex diesel_dg::complex_exp(double angle)
 void diesel_dg::check_power_output()
 {
 	double test_pf = 0.0;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	//Check specified power against per-phase limit (power_base) - impose that for now
 	for(int i=0; i < 3; i++) {
 		if(real_power_val[i] != -1.0) {
@@ -5052,7 +5052,7 @@ EXPORT int create_diesel_dg(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(diesel_dg::oclass);
 		if (*obj!=nullptr)
 		{
-			diesel_dg *my = OBJECTDATA(*obj,diesel_dg);
+			diesel_dg *my = /*OBJECTDATA(*obj, diesel_dg)*/ object_data<diesel_dg>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -5067,7 +5067,7 @@ EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,diesel_dg)->init(parent);
+			return /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -5077,7 +5077,7 @@ EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP t1 = TS_INVALID;
-	diesel_dg *my = OBJECTDATA(obj,diesel_dg);
+	diesel_dg *my = /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj);
 	try
 	{
 		switch (pass) {
@@ -5122,12 +5122,12 @@ EXPORT STATUS update_diesel_dg(OBJECT *obj, unsigned int64 dt, unsigned int iter
 
 EXPORT int isa_diesel_dg(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,diesel_dg)->isa(classname);
+	return /*OBJECTDATA(obj, diesel_dg)*/  object_data<diesel_dg>(obj)->isa(classname);
 }
 
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	diesel_dg *my = OBJECTDATA(obj,diesel_dg);
+	diesel_dg *my = /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -5143,7 +5143,7 @@ EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_ti
 
 EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
-	diesel_dg *my = OBJECTDATA(obj,diesel_dg);
+	diesel_dg* my = /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj);
 	STATUS status = FAILED;
 	try
 	{
@@ -5163,7 +5163,7 @@ EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_
 	STATUS temp_status;
 
 	//Map the node
-	diesel_dg *my = OBJECTDATA(obj,diesel_dg);
+	diesel_dg *my = /*OBJECTDATA(obj, diesel_dg)*/  object_data<diesel_dg>(obj);
 
 	//Call the function, where we can update the IGenerated injection
 	temp_status = my->updateCurrInjection(iteration_count,converged_failure);

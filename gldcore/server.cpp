@@ -129,7 +129,12 @@ static void *server_routine(void *arg)
 		return nullptr;
 	}
 	started = 1;
-	sockfd = *reinterpret_cast<SOCKET*>(arg);
+	
+	//sockfd = *reinterpret_cast<SOCKET*>(arg);
+	SOCKET sockfd = *reinterpret_cast<SOCKET*>(arg);
+	delete reinterpret_cast<SOCKET*>(arg);  // clean up
+
+
 	// repeat forever..
 	static int active = 0;
 	void *result = nullptr;
@@ -166,7 +171,9 @@ static void *server_routine(void *arg)
 			IN_MYCONTEXT output_verbose("accepting connection from %s on port %d",saddr, cli_addr.sin_port);
 			if ( active )
 				pthread_join(thread_id,&result);
-			if ( pthread_create(&thread_id,nullptr, http_response,reinterpret_cast<int*>(newsockfd))!=0 )
+			
+			SOCKET* sock_arg = new SOCKET(sockfd);  // dynamically allocate
+			if ( pthread_create(&thread_id,nullptr, http_response, sock_arg)!=0 )
 				output_error("unable to start http response thread");
 			if (global_server_quit_on_close)
 				shutdown_now();
@@ -274,7 +281,8 @@ Retry:
 	}
 
 	/* start the new thread */
-	if (pthread_create(&startup_thread,nullptr,server_routine, reinterpret_cast<int*>(sockfd)))
+	SOCKET* sock_arg = new SOCKET(sockfd);  // dynamically allocate
+	if (pthread_create(&startup_thread,nullptr,server_routine, sock_arg))
 	{
 		output_error("server thread startup failed: %s",strerror(GetLastError()));
 		return FAILED;
@@ -1892,7 +1900,11 @@ int http_favicon(HTTPCNX *http)
  **/
 void *http_response(void *ptr)
 {
-	SOCKET fd = *static_cast<SOCKET*>(ptr);
+	int sockfd = *reinterpret_cast<int*>(ptr);
+	delete reinterpret_cast<int*>(ptr);  // Free the allocated memory
+	SOCKET fd = sockfd;  // Safe reuse
+
+	/*SOCKET fd = *static_cast<SOCKET*>(ptr);*/
 	HTTPCNX *http = http_create(fd);
 	size_t len;
 	int content_length = 0;

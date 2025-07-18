@@ -408,7 +408,7 @@ int node::create(void)
 
 int node::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	OBJECT *tmp_obj, *tmp_subnode_parent;
 	node *tmp_node, *tmp_par_node;
 	int index_loop_val;
@@ -597,7 +597,7 @@ int node::init(OBJECT *parent)
 				powerflow module for this connection to be successful.
 				*/
 
-			node *parNode = OBJECTDATA(obj->parent,node);
+			node *parNode = object_data<node>(obj->parent);
 
 			//See if it is a swing, just to toss a warning
 			if ((parNode->bustype==SWING) || (parNode->bustype==SWING_PQ))
@@ -627,7 +627,7 @@ int node::init(OBJECT *parent)
 				tmp_subnode_parent = tmp_obj;
 
 				//Get node reference to pull phases
-				tmp_node = OBJECTDATA(tmp_obj,node);
+				tmp_node = object_data<node>(tmp_obj);
 
 				//See if our parent is already initialized (e.g., we are a lower child)
 				if (tmp_node->SubNodeParent == nullptr)
@@ -654,7 +654,7 @@ int node::init(OBJECT *parent)
 			}
 
 			//Pull the node pointer real quick
-			tmp_par_node = OBJECTDATA(tmp_subnode_parent,node);
+			tmp_par_node = object_data<node>(tmp_subnode_parent);
 
 			//Update our count
 			tmp_par_node->NR_number_child_nodes[0]++;	//Increment the counter of child nodes - we'll alloc and link them later
@@ -670,7 +670,7 @@ int node::init(OBJECT *parent)
 			while (tmp_obj != tmp_subnode_parent)
 			{
 				//Pull the reference
-				tmp_node = OBJECTDATA(tmp_obj,node);
+				tmp_node = object_data<node>(tmp_obj);
 
 				//See if the SubNodeParent is set
 				if (tmp_node->SubNodeParent == nullptr)
@@ -1078,7 +1078,7 @@ int node::init(OBJECT *parent)
 		{
 			if((gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow") | gl_object_isa(obj->parent,"substation","powerflow")))	//Parent is another node
 			{
-				node *parNode = OBJECTDATA(obj->parent,node);
+				node *parNode = object_data<node>(obj->parent);
 
 				//Phase variable
 				gld::set p_phase_to_check, c_phase_to_check;
@@ -1130,7 +1130,7 @@ int node::init(OBJECT *parent)
 	/* unspecified phase inherits from parent, if any */
 	if (nominal_voltage==0 && parent)
 	{
-		powerflow_object *pParent = OBJECTDATA(parent,powerflow_object);
+		powerflow_object *pParent = object_data<powerflow_object>(parent);
 		if (gl_object_isa(parent,"transformer"))
 		{
 			PROPERTY *transformer_config,*transformer_secondary_voltage;
@@ -1154,7 +1154,7 @@ int node::init(OBJECT *parent)
 			}
 
 			//Pull the object pointer
-			offset_val = gl_get_value(parent, GETADDR(parent, transformer_config), buffer, 127, transformer_config);
+			offset_val = gl_get_value(parent, get_addr(parent, transformer_config), buffer, 127, transformer_config);
 
 			//Make sure it worked
 			if (offset_val == 0)
@@ -1500,7 +1500,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 {
 	unsigned int index_val;
 	FILE *NRFileDump;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP t1 = powerflow_object::presync(t0);
 	TIMESTAMP temp_time_value, temp_t1_value;
 	node *temp_par_node = nullptr;
@@ -1671,7 +1671,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0)
 			{
 				//Link the parental
-				node *parNode = OBJECTDATA(SubNodeParent,node);
+				node *parNode = object_data<node>(SubNodeParent);
 
 				WRITELOCK_OBJECT(SubNodeParent);	//Lock
 
@@ -1697,7 +1697,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				else	//There's space
 				{
 					//Link us
-					parNode->NR_child_nodes[parNode->NR_number_child_nodes[1]] = OBJECTDATA(obj,node);
+					parNode->NR_child_nodes[parNode->NR_number_child_nodes[1]] = object_data<node>(obj);
 
 					//Accumulate the index
 					parNode->NR_number_child_nodes[1]++;
@@ -1980,7 +1980,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		/* get frequency from reference bus */
 		if (reference_bus!=nullptr)
 		{
-			node *pRef = OBJECTDATA(reference_bus,node);
+			node *pRef = object_data<node>(reference_bus);
 			frequency = pRef->frequency;
 		}
 	}
@@ -2149,7 +2149,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 		if ((SubNode & SNT_CHILD)==SNT_CHILD)
 		{
 			//Post our loads up to our parent
-			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
+			node *ParToLoad = object_data<node>(SubNodeParent);
 
 			//Lock the parent for accumulation
 			LOCK_OBJECT(SubNodeParent);
@@ -2239,7 +2239,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 		if ((SubNode & SNT_DIFF_CHILD)==SNT_DIFF_CHILD)
 		{
 			//Post our loads up to our parent - in the appropriate fashion
-			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
+			node *ParToLoad = object_data<node>(SubNodeParent);
 
 			//Lock the parent for accumulation
 			LOCK_OBJECT(SubNodeParent);
@@ -2321,7 +2321,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 TIMESTAMP node::sync(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = powerflow_object::sync(t0);
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	gld::complex delta_current[3];
 	gld::complex power_current[3];
 	gld::complex delta_shunt[3];
@@ -2715,7 +2715,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		// if the parent object is another node
 		if (obj->parent!=nullptr && gl_object_isa(obj->parent,"node","powerflow"))
 		{
-			node *pNode = OBJECTDATA(obj->parent,node);
+			node *pNode = object_data<node>(obj->parent);
 
 			//Check to make sure phases are correct - ignore Deltas and neutrals (load changes take care of those)
 			if (((pNode->phases & phases) & (!(PHASE_D | PHASE_N))) == (phases & (!(PHASE_D | PHASE_N))))
@@ -3177,7 +3177,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = powerflow_object::postsync(t0);
 	TIMESTAMP RetValue=t1;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 #ifdef SUPPORT_OUTAGES
 	if (condition!=OC_NORMAL)	//Zero all the voltages, just in case
@@ -3226,7 +3226,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 		if (obj->parent!=nullptr && (gl_object_isa(obj->parent,"node","powerflow")))
 		{
 			// copy the voltage from the parent - check for mismatch handled earlier
-			node *pNode = OBJECTDATA(obj->parent,node);
+			node *pNode = object_data<node>(obj->parent);
 			voltage[0] = pNode->voltage[0];
 			voltage[1] = pNode->voltage[1];
 			voltage[2] = pNode->voltage[2];
@@ -3308,7 +3308,7 @@ int node::kmlinit(int (*stream)(const char*,...))
 }
 int node::kmldump(int (*stream)(const char*,...))
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	FUNCTIONADDR temp_funadd = nullptr;
 
 	if (isnan(get_latitude()) || isnan(get_longitude()))
@@ -3525,7 +3525,7 @@ EXPORT int create_node(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(node::oclass);
 		if (*obj!=nullptr)
 		{
-			node *my = OBJECTDATA(*obj,node);
+			node *my = object_data<node>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -3538,7 +3538,7 @@ EXPORT int create_node(OBJECT **obj, OBJECT *parent)
 // Commit function
 EXPORT TIMESTAMP commit_node(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
-	node *pNode = OBJECTDATA(obj,node);
+	node *pNode = object_data<node>(obj);
 	try {
 		// This zeroes out all of the unused phases at each node in the FBS method
 		if (solver_method==SM_FBS)
@@ -3581,7 +3581,7 @@ EXPORT TIMESTAMP commit_node(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 EXPORT int init_node(OBJECT *obj)
 {
 	try {
-		node *my = OBJECTDATA(obj,node);
+		node *my = object_data<node>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(node);
@@ -3598,7 +3598,7 @@ EXPORT int init_node(OBJECT *obj)
 EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		node *pObj = OBJECTDATA(obj,node);
+		node *pObj = object_data<node>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -3632,7 +3632,7 @@ OBJECT *node::NR_master_swing_search(const char *node_type_value,bool main_swing
 	//Parse the findlist
 	while(temp_obj=gl_find_next(bus_list,temp_obj))
 	{
-		list_node = OBJECTDATA(temp_obj,node);
+		list_node = object_data<node>(temp_obj);
 
 		//See which kind we are looking for
 		if (main_swing)
@@ -3669,7 +3669,7 @@ OBJECT *node::NR_master_swing_search(const char *node_type_value,bool main_swing
 int node::NR_populate(void)
 {
 	//Object header for names
-	OBJECT *me = OBJECTHDR(this);
+	OBJECT *me = object_header(this);
 	node *temp_par_node = nullptr;
 	gld_property *temp_bool_property = nullptr;
 	gld_wlock *test_rlock = nullptr;
@@ -4067,7 +4067,7 @@ int node::NR_current_update(bool parentcall)
 	unsigned int table_index;
 	FUNCTIONADDR temp_funadd = nullptr;
 	int temp_result, loop_index;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	OBJECT *tmp_obj;
 	gld::complex temp_current_inj[3];
 	gld::complex temp_current_val[3];
@@ -4166,7 +4166,7 @@ int node::NR_current_update(bool parentcall)
 
 		if ((SubNode & SNT_CHILD)==SNT_CHILD)	//Remove child contributions
 		{
-			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
+			node *ParToLoad = object_data<node>(SubNodeParent);
 
 			if (!parentcall)	//We weren't called by our parent, so lock us to create sibling rivalry!
 			{
@@ -4247,7 +4247,7 @@ int node::NR_current_update(bool parentcall)
 		}
 		else if ((SubNode & SNT_DIFF_CHILD)==SNT_DIFF_CHILD)	//Differently connected
 		{
-			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
+			node *ParToLoad = object_data<node>(SubNodeParent);
 
 			if (!parentcall)	//We weren't called by our parent, so lock us to create sibling rivalry!
 			{
@@ -4559,7 +4559,7 @@ int node::NR_current_update(bool parentcall)
 		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0)
 		{
 			//Link to our parent
-			node *ParLoadObj=OBJECTDATA(obj->parent,node);
+			node *ParLoadObj=object_data<node>(obj->parent);
 
 			if (!(ParLoadObj->current_accumulated))	//Locking not needed here - if parent hasn't accumulated yet, it is the one that called us (rank split)
 			{
@@ -4594,7 +4594,7 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 {
 	//unsigned char pass_mod;
 	double deltat;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	STATUS return_status_val;
 
 	////See what we're on, for tracking
@@ -5091,7 +5091,7 @@ double node::perform_GFA_checks(double timestepvalue)
 	double return_time_freq, return_time_volt, return_value;
 	char indexval;
 	unsigned char phasevals;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	//By default, we're subject to the whims of deltamode
 	return_time_freq = -1.0;
@@ -5370,7 +5370,7 @@ double node::perform_GFA_checks(double timestepvalue)
 //Function to set a node's SWING status mid-simulation, without the SWING_PQ functionality
 STATUS node::NR_swap_swing_status(bool desired_status)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	//See if we're a child or not
 	if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
@@ -5464,7 +5464,7 @@ void node::NR_swing_status_check(bool *swing_status_check_value, bool *swing_pq_
 //Function to reset the "disabled state" of the node, if called (re-enable an island, basically)
 STATUS node::reset_node_island_condition(void)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	STATUS temp_status;
 	FUNCTIONADDR temp_fxn_val;
 	int node_calling_reference;
@@ -5550,7 +5550,7 @@ STATUS node::reset_node_island_condition(void)
 //Primarily used for deltamode and voltage-source inverters, but could be used in other places
 STATUS node::NR_map_current_update_function(OBJECT *callObj)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	OBJECT *phdr = nullptr;
 
 	//Do a simple check -- if we're not in NR, this won't do anything anyways
@@ -5647,7 +5647,7 @@ STATUS node::NR_map_current_update_function(OBJECT *callObj)
 //VFD linking/mapping function
 STATUS node::link_VFD_functions(OBJECT *linkVFD)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Set the VFD object
 	VFD_object = linkVFD;
@@ -5914,14 +5914,14 @@ STATUS node::shunt_update_fxn(void)
 EXPORT int isa_node(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,node)->isa(classname);
+		return object_data<node>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
 }
 
 EXPORT int notify_node(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
-	node *n = OBJECTDATA(obj, node);
+	node *n = object_data<node>(obj);
 	int rv = 1;
 
 	rv = n->notify(update_mode, prop, value);
@@ -5932,7 +5932,7 @@ EXPORT int notify_node(OBJECT *obj, int update_mode, PROPERTY *prop, char *value
 //Exported function for attaching this to a VFD - basically sets a flag and maps a function
 EXPORT STATUS attach_vfd_to_node(OBJECT *obj,OBJECT *calledVFD)
 {
-	node *nodeObj = OBJECTDATA(obj,node);
+	node *nodeObj = object_data<node>(obj);
 
 	//Call the function
 	return nodeObj->link_VFD_functions(calledVFD);
@@ -5941,7 +5941,7 @@ EXPORT STATUS attach_vfd_to_node(OBJECT *obj,OBJECT *calledVFD)
 //Deltamode export
 EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	node *my = OBJECTDATA(obj,node);
+	node *my = object_data<node>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -5961,7 +5961,7 @@ EXPORT STATUS swap_node_swing_status(OBJECT *obj, bool desired_status)
 	STATUS temp_status;
 
 	//Map the node
-	node *my = OBJECTDATA(obj,node);
+	node *my = object_data<node>(obj);
 
 	//Call the function, where we can see our internals
 	temp_status = my->NR_swap_swing_status(desired_status);
@@ -5974,7 +5974,7 @@ EXPORT STATUS swap_node_swing_status(OBJECT *obj, bool desired_status)
 EXPORT STATUS node_swing_status(OBJECT *this_obj, bool *swing_status_check_value, bool *swing_pq_status_value)
 {
 	//Map ourselves
-	node *my = OBJECTDATA(this_obj,node);
+	node *my = object_data<node>(this_obj);
 
 	//Run the query
 	my->NR_swing_status_check(swing_status_check_value,swing_pq_status_value);
@@ -5990,7 +5990,7 @@ EXPORT STATUS node_map_current_update_function(OBJECT *nodeObj, OBJECT *callObj)
 	STATUS temp_status;
 
 	//Map the node
-	node *my = OBJECTDATA(nodeObj,node);
+	node *my = object_data<node>(nodeObj);
 
 	//Call the mapping function
 	temp_status = my->NR_map_current_update_function(callObj);
@@ -6005,7 +6005,7 @@ EXPORT STATUS node_reset_disabled_status(OBJECT *nodeObj)
 	STATUS temp_status;
 
 	//Map the node
-	node *my = OBJECTDATA(nodeObj,node);
+	node *my = object_data<node>(nodeObj);
 
 	//Call our local function
 	temp_status = my->reset_node_island_condition();
@@ -6020,7 +6020,7 @@ EXPORT STATUS node_update_shunt_values(OBJECT *obj)
 	STATUS temp_status;
 
 	//Map the node
-	node *my = OBJECTDATA(obj,node);
+	node *my = object_data<node>(obj);
 
 	//Call the update
 	temp_status = my->shunt_update_fxn();

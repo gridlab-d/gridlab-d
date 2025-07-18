@@ -406,7 +406,7 @@ EXPORT int calc_pfmetrics(OBJECT *callobj, OBJECT *calcobj, int number_int, int 
 {
 	//Link to it
 	power_metrics *pmetrics_obj;
-	pmetrics_obj = OBJECTDATA(calcobj,power_metrics);
+	pmetrics_obj = object_data<power_metrics>(calcobj);
 
 	//Perform the calculation - pass into a class function so variables can be written willy-nilly
 	pmetrics_obj->perform_rel_calcs(number_int, number_int_secondary, total_customers, rest_time_val, base_time_val);
@@ -419,7 +419,7 @@ EXPORT int reset_pfinterval_metrics(OBJECT *callobj, OBJECT *calcobj)
 {
 	//Link to us
 	power_metrics *pmetrics_obj;
-	pmetrics_obj = OBJECTDATA(calcobj,power_metrics);
+	pmetrics_obj = object_data<power_metrics>(calcobj);
 
 	//Make sure fault_check is present and in a viable mode
 	pmetrics_obj->check_fault_check();
@@ -435,7 +435,7 @@ EXPORT int reset_pfannual_metrics(OBJECT *callobj, OBJECT *calcobj)
 {
 	//Link to us
 	power_metrics *pmetrics_obj;
-	pmetrics_obj = OBJECTDATA(calcobj,power_metrics);
+	pmetrics_obj = object_data<power_metrics>(calcobj);
 
 	//Perform the calculation - class function for ease
 	pmetrics_obj->reset_metrics_variables(true);
@@ -450,7 +450,7 @@ EXPORT STATUS init_pf_reliability_extra(OBJECT *myhdr, OBJECT *callhdr)
 {
 	//Link to us
 	power_metrics *pmetrics_obj;
-	pmetrics_obj = OBJECTDATA(myhdr,power_metrics);
+	pmetrics_obj = object_data<power_metrics>(myhdr);
 
 	//Map calling object
 	pmetrics_obj->rel_metrics = callhdr;
@@ -466,7 +466,7 @@ EXPORT int logfile_extra(OBJECT *myhdr, char *BufferArray)
 
 	//Map us
 	power_metrics *pmetrics_obj;
-	pmetrics_obj = OBJECTDATA(myhdr,power_metrics);
+	pmetrics_obj = object_data<power_metrics>(myhdr);
 
 	//Get the interval data
 	time_interval_val = pmetrics_obj->stat_base_time_value;
@@ -506,7 +506,7 @@ EXPORT int create_power_metrics(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(power_metrics::oclass);
 		if (*obj!=nullptr)
 		{
-			power_metrics *my = OBJECTDATA(*obj,power_metrics);
+			power_metrics *my = object_data<power_metrics>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -519,7 +519,7 @@ EXPORT int create_power_metrics(OBJECT **obj, OBJECT *parent)
 EXPORT int init_power_metrics(OBJECT *obj, OBJECT *parent)
 {
 	try {
-		return OBJECTDATA(obj,power_metrics)->init(parent);
+		return object_data<power_metrics>(obj)->init(parent);
 	}
 	INIT_CATCHALL(power_metrics);
 }
@@ -538,7 +538,7 @@ EXPORT TIMESTAMP sync_power_metrics(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 }
 EXPORT int isa_power_metrics(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,power_metrics)->isa(classname);
+	return object_data<power_metrics>(obj)->isa(classname);
 }
 
 /**@}**/

@@ -41,6 +41,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 		{"set",           "string",  sizeof(int64),         32,                 convert_from_set,            convert_to_set,            nullptr, nullptr, {TCOPS(uint64)},},
 		{"int16",         "integer", sizeof(int16),         6,                  convert_from_int16,          convert_to_int16,          nullptr, nullptr, {TCOPS(uint16)},},
 		{"int32",         "integer", sizeof(int32),         12,                 convert_from_int32,          convert_to_int32,          nullptr, nullptr, {TCOPS(uint32)},},
+		{"uint32",         "integer", sizeof(uint32),       12,                 convert_from_uint32,          convert_to_uint32,          nullptr, nullptr, {TCOPS(uint32)},},
 		{"int64",         "integer", sizeof(int64),         24,                 convert_from_int64,          convert_to_int64,          nullptr, nullptr, {TCOPS(uint64)},},
 		{"char8",         "string",  sizeof(char8),         8,                  convert_from_char8,          convert_to_char8,          nullptr, nullptr, {TCOPS(string)},},
 		{"char32",        "string",  sizeof(char32),        32,                 convert_from_char32,         convert_to_char32,         nullptr, nullptr, {TCOPS(string)},},
@@ -284,7 +285,7 @@ double property_get_part(OBJECT *obj, PROPERTY *prop, const char *part)
 	PROPERTYSPEC *spec = property_getspec(prop->ptype);
 	if ( spec && spec->get_part )
 	{
-		return spec->get_part(GETADDR(obj,prop),part);
+		return spec->get_part(get_addr(obj,prop),part);
 	}
 	else
 		return QNAN;

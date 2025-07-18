@@ -1387,7 +1387,7 @@ char *object_property_to_string(OBJECT *obj, const char *name, char *buffer, int
 		errno = ENOENT;
 		return nullptr;
 	}
-	addr = GETADDR(obj,prop); /* warning: cast from pointer to integer of different size */
+	addr = get_addr(obj,prop); /* warning: cast from pointer to integer of different size */
 	if ( prop->ptype == PT_delegated )
 	{
 		return prop->delegation->to_string(addr,buffer,sz) ? buffer : nullptr;

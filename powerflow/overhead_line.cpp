@@ -93,7 +93,7 @@ int overhead_line::init(OBJECT *parent)
 		*/
 
 	//Test the phases
-	line_configuration *config = OBJECTDATA(configuration, line_configuration);
+	line_configuration *config = object_data<line_configuration>(configuration);
 
 	test_phases(config,'A');
 	test_phases(config,'B');
@@ -254,9 +254,9 @@ int overhead_line::init(OBJECT *parent)
 
 void overhead_line::recalc(void)
 {
-	line_configuration *config = OBJECTDATA(configuration, line_configuration);
+	line_configuration *config = object_data<line_configuration>(configuration);
 	gld::complex Zabc_mat[3][3], Yabc_mat[3][3];
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	// Zero out Zabc_mat and Yabc_mat. Un-needed phases will be left zeroed.
 	for (int i = 0; i < 3; i++) 
@@ -338,13 +338,13 @@ void overhead_line::recalc(void)
 		}
 
 		#define GMR(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
-			OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->geometric_mean_radius : 0.0)
+			object_data<overhead_line_conductor>(config->phase##ph##_conductor)->geometric_mean_radius : 0.0)
 		#define RES(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
-			OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->resistance : 0.0)
+			object_data<overhead_line_conductor>(config->phase##ph##_conductor)->resistance : 0.0)
 		#define DIST(ph1, ph2) (has_phase(PHASE_##ph1) && has_phase(PHASE_##ph2) && config->line_spacing ? \
-			OBJECTDATA(config->line_spacing, line_spacing)->distance_##ph1##to##ph2 : 0.0)
+			object_data<line_spacing>(config->line_spacing)->distance_##ph1##to##ph2 : 0.0)
 		#define DIAM(ph) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
-			OBJECTDATA(config->phase##ph##_conductor, overhead_line_conductor)->cable_diameter : 0.0)
+			object_data<overhead_line_conductor>(config->phase##ph##_conductor)->cable_diameter : 0.0)
 
 		gmr_a = GMR(A);
 		gmr_b = GMR(B);
@@ -391,7 +391,7 @@ void overhead_line::recalc(void)
 			}
 
 			//Extract line spacing (nned for capacitance)
-			spacing_val = OBJECTDATA(config->line_spacing, line_spacing);
+			spacing_val = object_data<line_spacing>(config->line_spacing);
 
 			//Make sure it worked
 			if (spacing_val == nullptr)
@@ -501,7 +501,7 @@ void overhead_line::recalc(void)
 				{
 					valid_capacitance = false;	//Failed one line of it, so don't include capacitance anywhere
 					
-					gl_warning("Shunt capacitance of overhead line:%s not calculated - invalid values",OBJECTHDR(this)->name);
+					gl_warning("Shunt capacitance of overhead line:%s not calculated - invalid values",object_header(this)->name);
 					/*  TROUBLESHOOT
 					While attempting to calculate the shunt capacitance for an overhead line, an invalid parameter was encountered.
 					To calculate shunt capacitance, ensure the condutor to earth distance for each phase is defined, as well as the
@@ -586,7 +586,7 @@ void overhead_line::recalc(void)
 				{
 					valid_capacitance = false;	//Failed one line of it, so don't include capacitance anywhere
 					
-					gl_warning("Shunt capacitance of overhead line:%s not calculated - invalid values",OBJECTHDR(this)->name);
+					gl_warning("Shunt capacitance of overhead line:%s not calculated - invalid values",object_header(this)->name);
 					//Defined above
 
 					p_bb = p_bc = p_bn = 0.0;
@@ -642,7 +642,7 @@ void overhead_line::recalc(void)
 				{
 					valid_capacitance = false;	//Failed one line of it, so don't include capacitance anywhere
 
-					gl_warning("Shunt capacitance of overhead line:%s not calculated - invalid values",OBJECTHDR(this)->name);
+					gl_warning("Shunt capacitance of overhead line:%s not calculated - invalid values",object_header(this)->name);
 					//Defined above
 
 					p_cc = p_cn = 0.0;
@@ -672,7 +672,7 @@ void overhead_line::recalc(void)
 				{
 					valid_capacitance = false;	//Failed one line of it, so don't include capacitance anywhere
 
-					gl_warning("Shunt capacitance of overhead line:%s not calculated - invalid values",OBJECTHDR(this)->name);
+					gl_warning("Shunt capacitance of overhead line:%s not calculated - invalid values",object_header(this)->name);
 					//Defined above
 
 					p_nn = 0.0;
@@ -1002,7 +1002,7 @@ EXPORT TIMESTAMP commit_overhead_line(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 	{
-		overhead_line *plink = OBJECTDATA(obj,overhead_line);
+		overhead_line *plink = object_data<overhead_line>(obj);
 		plink->calculate_power();
 	}
 	return TS_NEVER;
@@ -1015,7 +1015,7 @@ EXPORT int create_overhead_line(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(overhead_line::oclass);
 		if (*obj!=nullptr)
 		{
-			overhead_line *my = OBJECTDATA(*obj,overhead_line);
+			overhead_line *my = object_data<overhead_line>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -1028,7 +1028,7 @@ EXPORT int create_overhead_line(OBJECT **obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_overhead_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		overhead_line *pObj = OBJECTDATA(obj,overhead_line);
+		overhead_line *pObj = object_data<overhead_line>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -1049,7 +1049,7 @@ EXPORT TIMESTAMP sync_overhead_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int init_overhead_line(OBJECT *obj)
 {
 	try {
-		overhead_line *my = OBJECTDATA(obj,overhead_line);
+		overhead_line *my = object_data<overhead_line>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(overhead_line);
@@ -1057,12 +1057,12 @@ EXPORT int init_overhead_line(OBJECT *obj)
 
 EXPORT int isa_overhead_line(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,line)->isa(classname);
+	return /*OBJECTDATA(obj,<>)*/ object_data<line>(obj)->isa(classname);
 }
 
 EXPORT int recalc_overhead_line(OBJECT *obj)
 {
-	OBJECTDATA(obj,overhead_line)->recalc();
+	object_data<overhead_line>(obj)->recalc();
 	return 1;
 }
 EXPORT int create_fault_ohline(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time)
@@ -1070,7 +1070,7 @@ EXPORT int create_fault_ohline(OBJECT *thisobj, OBJECT **protect_obj, char *faul
 	int retval;
 
 	//Link to ourselves
-	overhead_line *thisline = OBJECTDATA(thisobj,overhead_line);
+	overhead_line *thisline = object_data<overhead_line>(thisobj);
 
 	//Try to fault up
 	retval = thisline->link_fault_on(protect_obj, fault_type, implemented_fault, repair_time);
@@ -1082,7 +1082,7 @@ EXPORT int fix_fault_ohline(OBJECT *thisobj, int *implemented_fault, char *imp_f
 	int retval;
 
 	//Link to ourselves
-	overhead_line *thisline = OBJECTDATA(thisobj,overhead_line);
+	overhead_line *thisline = object_data<overhead_line>(thisobj);
 
 	//Clear the fault
 	retval = thisline->link_fault_off(implemented_fault, imp_fault_name);
@@ -1097,7 +1097,7 @@ EXPORT int clear_fault_ohline(OBJECT *thisobj, int *implemented_fault, char *imp
 	int retval;
 
 	//Link to ourselves
-	overhead_line *thisline = OBJECTDATA(thisobj,overhead_line);
+	overhead_line *thisline = object_data<overhead_line>(thisobj);
 
 	//Clear the fault
 	retval = thisline->clear_fault_only(implemented_fault, imp_fault_name);

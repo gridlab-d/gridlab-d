@@ -30,7 +30,7 @@
 // meter reset function
 EXPORT int64 triplex_meter_reset(OBJECT *obj)
 {
-	triplex_meter *pMeter = OBJECTDATA(obj,triplex_meter);
+	triplex_meter *pMeter = object_data<triplex_meter>(obj);
 	pMeter->measured_demand = 0;
 	return 0;
 }
@@ -248,7 +248,7 @@ int triplex_meter::init(OBJECT *parent)
 	pre_load=0;
 #endif
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if(power_market != 0){
 		price_prop = gl_get_property(power_market, market_price_name);
@@ -346,7 +346,7 @@ TIMESTAMP triplex_meter::presync(TIMESTAMP t0)
 TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 {
 	int TempNodeRef;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Check for straggler nodes - fix so segfaults don't occur
 	if ((prev_NTime==0) && (solver_method == SM_NR))
@@ -370,7 +370,7 @@ TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 			if (TempNodeRef == -1)
 			{
 				//Try to initialize it, for giggles
-				node *Temp_Node = OBJECTDATA(SubNodeParent,node);
+				node *Temp_Node = object_data<node>(SubNodeParent);
 
 				//Call the initialization
 				Temp_Node->NR_populate();
@@ -422,7 +422,7 @@ TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 // Synchronize a distribution triplex_meter
 TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP rv = TS_NEVER;
 	TIMESTAMP hr = TS_NEVER;
 
@@ -839,7 +839,7 @@ double triplex_meter::process_bill(TIMESTAMP t1){
 //Module-level call
 SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	int TempNodeRef;
 	double deltat;
 	STATUS return_status_val;
@@ -1002,7 +1002,7 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 
 EXPORT int isa_triplex_meter(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,triplex_meter)->isa(classname);
+	return object_data<triplex_meter>(obj)->isa(classname);
 }
 
 //EXPORT int create_triplex_meter(OBJECT **obj, OBJECT *parent)
@@ -1013,7 +1013,7 @@ EXPORT int isa_triplex_meter(OBJECT *obj, char *classname)
 //		if (*obj!=nullptr)
 //		{
 //
-//			triplex_meter *my = OBJECTDATA(*obj,triplex_meter);
+//			triplex_meter *my = object_data<triplex_meter>(*obj);
 //
 //			gl_set_parent(*obj,parent);
 //			return my->create();
@@ -1035,7 +1035,7 @@ EXPORT int create_triplex_meter(OBJECT** obj, OBJECT* parent) {
 		}
 
 		// Step 2: Access class-specific data using OBJECTDATA
-		triplex_meter* my = OBJECTDATA(*obj, triplex_meter);
+		triplex_meter* my = object_data<triplex_meter>(*obj);
 		if (my == nullptr) {
 			std::cerr << "Error: Failed to access triplex_meter-specific fields via OBJECTDATA!" << std::endl;
 			return 0;
@@ -1074,7 +1074,7 @@ EXPORT int create_triplex_meter(OBJECT** obj, OBJECT* parent) {
 EXPORT int init_triplex_meter(OBJECT *obj)
 {
 	try {
-		triplex_meter *my = OBJECTDATA(obj,triplex_meter);
+		triplex_meter *my = object_data<triplex_meter>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(triplex_meter);
@@ -1083,7 +1083,7 @@ EXPORT int init_triplex_meter(OBJECT *obj)
 EXPORT TIMESTAMP sync_triplex_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		triplex_meter *pObj = OBJECTDATA(obj,triplex_meter);
+		triplex_meter *pObj = object_data<triplex_meter>(obj);
 		TIMESTAMP t1;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -1103,7 +1103,7 @@ EXPORT TIMESTAMP sync_triplex_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 }
 
 EXPORT int notify_triplex_meter(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
-	triplex_meter *n = OBJECTDATA(obj, triplex_meter);
+	triplex_meter *n = object_data<triplex_meter>(obj);
 	int rv = 1;
 
 	rv = n->notify(update_mode, prop, value);
@@ -1114,7 +1114,7 @@ EXPORT int notify_triplex_meter(OBJECT *obj, int update_mode, PROPERTY *prop, ch
 //Deltamode export
 EXPORT SIMULATIONMODE interupdate_triplex_meter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	triplex_meter *my = OBJECTDATA(obj,triplex_meter);
+	triplex_meter *my = object_data<triplex_meter>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -1131,7 +1131,7 @@ EXPORT SIMULATIONMODE interupdate_triplex_meter(OBJECT *obj, unsigned int64 delt
 //KML Export
 EXPORT int triplex_meter_kmldata(OBJECT *obj,int (*stream)(const char*,...))
 {
-	triplex_meter *n = OBJECTDATA(obj, triplex_meter);
+	triplex_meter *n = object_data<triplex_meter>(obj);
 	int rv = 1;
 
 	rv = n->kmldata(stream);

@@ -176,7 +176,7 @@ int pqload::init(OBJECT *parent){
 
 	// init_weather from house_e.cpp:init_weather
 	static FINDLIST *climates = nullptr;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	int not_found = 0;
 	if (climates==nullptr && not_found==0) 
 	{
@@ -354,7 +354,7 @@ EXPORT int create_pqload(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(pqload::oclass);
 		if (*obj!=nullptr)
 		{
-			pqload *my = OBJECTDATA(*obj,pqload);
+			pqload *my = object_data<pqload>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -373,7 +373,7 @@ EXPORT int create_pqload(OBJECT **obj, OBJECT *parent)
 EXPORT int init_pqload(OBJECT *obj)
 {
 	try {
-		pqload *my = OBJECTDATA(obj,pqload);
+		pqload *my = object_data<pqload>(obj);
 		return my->init(obj->parent);
 	} 
 	INIT_CATCHALL(pqload);
@@ -390,7 +390,7 @@ EXPORT int init_pqload(OBJECT *obj)
 EXPORT TIMESTAMP sync_pqload(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		pqload *pObj = OBJECTDATA(obj,pqload);
+		pqload *pObj = object_data<pqload>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -410,7 +410,7 @@ EXPORT TIMESTAMP sync_pqload(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_pqload(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,pqload)->isa(classname);
+	return object_data<pqload>(obj)->isa(classname);
 }
 
 /**@}*/

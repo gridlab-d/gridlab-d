@@ -124,7 +124,7 @@ EXPORT int create_line(OBJECT **obj)
 	{
 		*obj = gl_create_object(line::oclass);
 		if (*obj!=nullptr)
-			return OBJECTDATA(*obj,line)->create();
+			return /*OBJECTDATA(obj,<>)*/ object_data<line>(*obj)->create();
 	}
 	catch (char *msg)
 	{
@@ -138,7 +138,7 @@ EXPORT int init_line(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,line)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<line>(obj)->init(parent);
 	}
 	catch (char *msg)
 	{
@@ -150,7 +150,7 @@ EXPORT int init_line(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_line(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	line *my = OBJECTDATA(obj,line);
+	line *my = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
 	try
 	{
 		switch (pass) {

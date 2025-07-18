@@ -173,7 +173,7 @@ controller::controller(MODULE *module){
 }
 
 int controller::create(){
-	memset(this, 0, sizeof(controller));
+	////memset(this, 0, sizeof(controller));
 	sprintf((char *)(&avg_target), "avg24");
 	sprintf((char *)(&std_target), "std24");
 	slider_setting_heat = -0.001;
@@ -309,7 +309,7 @@ void controller::cheat(){
 /** convenience shorthand
  **/
 int controller::fetch_property(gld_property **prop, const char *propName, OBJECT *obj){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	*prop = new gld_property(obj, propName);
 	if(!(*prop)->is_valid()){
 		gl_error("controller::fetch_property: controller %s can't find property %s in object %s.", hdr->name, propName, obj->name);
@@ -322,7 +322,7 @@ int controller::fetch_property(gld_property **prop, const char *propName, OBJECT
 /** initialization process
  **/
 int controller::init(OBJECT *parent){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	char tname[32];
 	char *namestr = (hdr->name ? hdr->name : tname);
 	gld_property *pInitPrice = nullptr;
@@ -481,7 +481,7 @@ int controller::init(OBJECT *parent){
 		{
 			period = (TIMESTAMP)floor(dPeriod + 0.5);
 		}
-		pMarket = OBJECTHDR(this);
+		pMarket = object_header(this);
 		if(fetch_property(&pAvg, "proxy_average", pMarket) == 0) {
 			return 0;
 		}
@@ -528,7 +528,7 @@ int controller::init(OBJECT *parent){
 			} else {
 				period2 = (TIMESTAMP)floor(dPeriod2 + 0.5);
 			}
-			pMarket2 = OBJECTHDR(this);
+			pMarket2 = object_header(this);
 			if(fetch_property(&pMarketId2, "proxy_market2_id", pMarket2) == 0) {
 				return 0;
 			}
@@ -1130,7 +1130,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	double prediction_range = 0.0;
 	double midpoint = 0.0;
 	TIMESTAMP fast_reg_run;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	char mktname[1024];
 	char ctrname[1024];
 	double avgP = 0.0;
@@ -1442,7 +1442,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 					return TS_INVALID;
 				}
 			}
-			//lastbid_id = market->submit(OBJECTHDR(this), -last_q, last_p, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
+			//lastbid_id = market->submit(object_header(this), -last_q, last_p, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
 			controller_bid.market_id = lastmkt_id;
 			controller_bid.price = last_p;
 			controller_bid.quantity = -last_q;
@@ -2059,7 +2059,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			double b_offset_DP = 1e-9;
 			double demandP = 0.0;
 			enumeration ps = -1; // ps==-1 means the powerstate is not found -- -1 should never be used
-			OBJECT *hdr = OBJECTHDR(this);
+			OBJECT *hdr = object_header(this);
 			char ctrname[1024];
 			double loadP = 0.0;
 
@@ -2227,7 +2227,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 				}
 			}
 
-			//lastbid_id = market->submit(OBJECTHDR(this), -last_q, last_p, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
+			//lastbid_id = market->submit(object_header(this), -last_q, last_p, bid_id, (BIDDERSTATE)(pState != 0 ? *pState : 0));
 			controller_bid.market_id = lastmkt_id;
 			controller_bid.price = last_p;
 			controller_bid.quantity = -last_q;
@@ -2320,7 +2320,7 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1){
 	else
 		is_engaged = 0;
 	
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	double my_id = hdr->id;
 
 	// Not sure if this is needed, but lets clean up the Override signal if we are entering a new market
@@ -2631,7 +2631,7 @@ EXPORT int create_controller(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(controller::oclass);
 		if (*obj!=nullptr)
 		{
-			controller *my = OBJECTDATA(*obj,controller);
+			controller *my = /*OBJECTDATA(*obj,<>)*/ object_data<controller>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -2647,7 +2647,7 @@ EXPORT int init_controller(OBJECT *obj, OBJECT *parent)
 	{
 		if (obj!=nullptr)
 		{
-			return OBJECTDATA(obj,controller)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<controller>(obj)->init(parent);
 		}
 		else
 			return 0;
@@ -2658,7 +2658,7 @@ EXPORT int init_controller(OBJECT *obj, OBJECT *parent)
 EXPORT int isa_controller(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,controller)->isa(classname);
+		return /*OBJECTDATA(obj,<>)*/ object_data<controller>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -2667,7 +2667,7 @@ EXPORT int isa_controller(OBJECT *obj, char *classname)
 EXPORT TIMESTAMP sync_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	controller *my = OBJECTDATA(obj,controller);
+	controller *my = /*OBJECTDATA(obj,<>)*/ object_data<controller>(obj);
 	try
 	{
 		switch (pass) {

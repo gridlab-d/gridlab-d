@@ -42,6 +42,9 @@
 
 #include "recorder.h"
 
+template<typename T, typename U>
+constexpr T* object_data(U* obj);
+
 CLASS *multi_recorder_class = nullptr;
 static OBJECT *last_recorder = nullptr;
 
@@ -50,7 +53,8 @@ EXPORT int create_multi_recorder(OBJECT **obj, OBJECT *parent)
 	*obj = gl_create_object(multi_recorder_class);
 	if (*obj!=nullptr)
 	{
-		struct recorder *my = OBJECTDATA(*obj,struct recorder);
+		//struct recorder *my = object_data<struct recorder>(*obj);
+		struct recorder* my = object_data< recorder>(*obj);
 		last_recorder = *obj;
 		gl_set_parent(*obj,parent);
 		strcpy(my->file,"");
@@ -82,7 +86,7 @@ static int multi_recorder_open(OBJECT *obj)
 	char32 type="file";
 	char1024 fname="";
 	char32 flags="w";
-	struct recorder *my = OBJECTDATA(obj,struct recorder);
+	struct recorder *my = object_data<struct recorder>(obj);
 	TAPEFUNCS *tf = 0;
 
 	my->interval = (int64)(my->dInterval/TS_SECOND);
@@ -447,7 +451,7 @@ static void close_multi_recorder(struct recorder *my)
 
 static TIMESTAMP multi_recorder_write(OBJECT *obj)
 {
-	struct recorder *my = OBJECTDATA(obj,struct recorder);
+	struct recorder *my = object_data<struct recorder>(obj);
 	char ts[64]="0"; /* 0 = INIT */
 	if (my->format==0)
 	{
@@ -658,7 +662,7 @@ int read_multi_properties(struct recorder *my, OBJECT *obj, RECORDER_MAP *rmap, 
 				case LU_ALL:
 					// cascade into 'default', as prop->unit should've been set, if there's a unit available.
 				case LU_DEFAULT:
-					offset+=gl_get_value(r->obj,GETADDR(r->obj,&(r->prop)),buffer+offset,size-offset-1,&(r->prop)); /* pointer => int64 */
+					offset+=gl_get_value(r->obj, get_addr(r->obj,&(r->prop)),buffer+offset,size-offset-1,&(r->prop)); /* pointer => int64 */
 					break;
 				case LU_NONE:
 					// copy value into local value, use fake PROP, feed into gl_get_vaule
@@ -675,7 +679,7 @@ int read_multi_properties(struct recorder *my, OBJECT *obj, RECORDER_MAP *rmap, 
 							offset+=gl_get_value(r->obj,&value,buffer+offset,size-offset-1,&fake); /* pointer => int64 */;
 						}
 					} else {
-						offset+=gl_get_value(r->obj,GETADDR(r->obj,&(r->prop)),buffer+offset,size-offset-1,&(r->prop)); /* pointer => int64 */;
+						offset+=gl_get_value(r->obj, get_addr(r->obj,&(r->prop)),buffer+offset,size-offset-1,&(r->prop)); /* pointer => int64 */;
 					}
 					break;
 				default:
@@ -683,7 +687,7 @@ int read_multi_properties(struct recorder *my, OBJECT *obj, RECORDER_MAP *rmap, 
 			}
 		} else {
 		  //offset += gl_get_value(obj,    GETADDR(obj,    p),          buffer+offset, size-offset-1, p); /* pointer => int64 */
-			offset += gl_get_value(r->obj, GETADDR(r->obj, &(r->prop)), buffer+offset, size-offset-1, &(r->prop)); /* pointer => int64 */
+			offset += gl_get_value(r->obj, get_addr(r->obj, &(r->prop)), buffer+offset, size-offset-1, &(r->prop)); /* pointer => int64 */
 		}
 		buffer[offset] = '\0';
 		count++;
@@ -692,7 +696,7 @@ int read_multi_properties(struct recorder *my, OBJECT *obj, RECORDER_MAP *rmap, 
 }
 
 TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
-	struct recorder *my = OBJECTDATA(obj, struct recorder);
+	struct recorder *my = object_data<struct recorder>(obj);
 	typedef enum {
 		NONE = '\0', LT = '<', EQ = '=', GT = '>'
 	} COMPAREOP;

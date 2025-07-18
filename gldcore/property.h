@@ -1232,6 +1232,7 @@ typedef enum {
     PT_set, /**< the data is a set */
     PT_int16, /**< the data is a 16-bit integer */
     PT_int32, /**< the data is a 32-bit integer */
+    PT_uint32, /**< the data is a 32-bit integer */
     PT_int64, /**< the data is a 64-bit integer */
     PT_char8, /**< the data is \p NULL -terminated string up to 8 characters in length */
     PT_char32, /**< the data is \p NULL -terminated string up to 32 characters in length */

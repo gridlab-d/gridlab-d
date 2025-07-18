@@ -184,7 +184,7 @@ EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned i
 	char dateformat[16]="";
 	char error_output_buff[2028];
 	char datebuff[128];
-	double_assert *da = OBJECTDATA(obj,double_assert);
+	double_assert *da = object_data<double_assert>(obj);
 	DATETIME delta_dt_val;
 	double del_clock;
 	TIMESTAMP del_clock_int;

@@ -49,7 +49,7 @@ int metrics_collector_writer::create() {
 }
 
 int metrics_collector_writer::init(OBJECT *parent) {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	FILE *fn = nullptr;
 	int index = 0;
 	char time_str[64];
@@ -149,7 +149,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
 			break;
 		}
 		// Obtain the object data
-		metrics_collector *temp_metrics_collector = OBJECTDATA(obj, metrics_collector);
+		metrics_collector *temp_metrics_collector = object_data<metrics_collector>(obj);
 		if (temp_metrics_collector == nullptr) {
 			gl_error("metrics_collector_writer::init(): unable to map object as metrics_collector object.");
 			return 0;
@@ -483,7 +483,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 		}
 
 		// Obtain the object data
-		metrics_collector *temp_metrics_collector = OBJECTDATA(obj, metrics_collector);
+		metrics_collector *temp_metrics_collector = object_data<metrics_collector>(obj);
 		if (temp_metrics_collector == nullptr) {
 			gl_error("Unable to map object as metrics_collector object.");
 			return 0;
@@ -1485,8 +1485,7 @@ EXPORT int create_metrics_collector_writer(OBJECT **obj, OBJECT *parent) {
 	try {
 		*obj = gl_create_object(metrics_collector_writer::oclass);
 		if (*obj != nullptr) {
-			metrics_collector_writer *my = OBJECTDATA(*obj,
-					metrics_collector_writer);
+			metrics_collector_writer *my = object_data<metrics_collector_writer>(*obj);
 			gl_set_parent(*obj, parent);
 			rv = my->create();
 		}
@@ -1501,7 +1500,7 @@ EXPORT int create_metrics_collector_writer(OBJECT **obj, OBJECT *parent) {
 }
 
 EXPORT int init_metrics_collector_writer(OBJECT *obj) {
-	metrics_collector_writer *my = OBJECTDATA(obj, metrics_collector_writer);
+	metrics_collector_writer *my = object_data<metrics_collector_writer>(obj);
 	int rv = 0;
 	try {
 		rv = my->init(obj->parent);
@@ -1514,7 +1513,7 @@ EXPORT int init_metrics_collector_writer(OBJECT *obj) {
 }
 
 EXPORT TIMESTAMP sync_metrics_collector_writer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
-	metrics_collector_writer *my = OBJECTDATA(obj, metrics_collector_writer);
+	metrics_collector_writer *my = object_data<metrics_collector_writer>(obj);
 	TIMESTAMP rv = 0;
 	try {
 		switch (pass) {
@@ -1541,7 +1540,7 @@ EXPORT TIMESTAMP sync_metrics_collector_writer(OBJECT *obj, TIMESTAMP t0, PASSCO
 
 EXPORT int commit_metrics_collector_writer(OBJECT *obj) {
 	int rv = 0;
-	metrics_collector_writer *my = OBJECTDATA(obj, metrics_collector_writer);
+	metrics_collector_writer *my = object_data<metrics_collector_writer>(obj);
 	try {
 		rv = my->commit(obj->clock);
 	} catch (char *msg) {
@@ -1553,7 +1552,7 @@ EXPORT int commit_metrics_collector_writer(OBJECT *obj) {
 }
 
 EXPORT int isa_metrics_collector_writer(OBJECT *obj, char *classname) {
-	return OBJECTDATA(obj, metrics_collector_writer)->isa(classname);
+	return object_data<metrics_collector_writer>(obj)->isa(classname);
 }
 
 // EOF

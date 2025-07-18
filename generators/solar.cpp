@@ -140,7 +140,7 @@ solar::solar(MODULE *module)
 			GL_THROW("Unable to publish solar DC object update function");
 
 		defaults = this;
-		memset(this, 0, sizeof(solar));
+		//memset(this, 0, sizeof(solar));
 	}
 }
 
@@ -241,7 +241,7 @@ then Tout will be set to 59 degF, RHout is set to 75% and solar flux will be set
 **/
 int solar::init_climate()
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	OBJECT *obj = nullptr;
 
 	// link to climate data
@@ -516,7 +516,7 @@ int solar::init_climate()
 /* Object initialization is called once after all object have been created */
 int solar::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	int climate_result;
 	gld_property *temp_property_pointer = nullptr;
 	gld_wlock *test_rlock = nullptr;
@@ -1120,7 +1120,7 @@ TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	int64 ret_value;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double insolwmsq, corrwindspeed, Tback, Ftempcorr;
 	gld_wlock *test_rlock = nullptr;
 
@@ -1395,7 +1395,7 @@ STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 /* Utility Funcs */
 void solar::init_pub_vars_pvcurve_mode()
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	// Init with Reference Temperature & Insolation
 	pvc_cur_S_wpm2 = pvc_S_ref_wpm2;
@@ -1658,7 +1658,7 @@ EXPORT int create_solar(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(solar::oclass);
 		if (*obj != nullptr)
 		{
-			solar *my = OBJECTDATA(*obj, solar);
+			solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(*obj);
 			gl_set_parent(*obj, parent);
 			return my->create();
 		}
@@ -1673,7 +1673,7 @@ EXPORT int init_solar(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj != nullptr)
-			return OBJECTDATA(obj, solar)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<solar>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -1683,7 +1683,7 @@ EXPORT int init_solar(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	solar *my = OBJECTDATA(obj, solar);
+	solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(obj);
 	try
 	{
 		switch (pass)
@@ -1711,7 +1711,7 @@ EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 //DELTAMODE Linkage
 EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	solar *my = OBJECTDATA(obj, solar);
+	solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -1728,7 +1728,7 @@ EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, 
 //DC Object calls from inverter linkage
 EXPORT STATUS dc_object_update_solar(OBJECT *us_obj, OBJECT *calling_obj, bool init_mode)
 {
-	solar *me_solar = OBJECTDATA(us_obj, solar);
+	solar *me_solar = /*OBJECTDATA(us_obj,<>)*/ object_data<solar>(us_obj);
 	STATUS temp_status;
 
 	//Call our update function

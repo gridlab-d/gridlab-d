@@ -249,7 +249,7 @@ int windturb_dg::create(void)
 If no climate object is linked, then default pressure, temperature, and wind speed will be used. */
 int windturb_dg::init_climate()
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	// link to climate data
 	FINDLIST *climates = nullptr;
@@ -314,7 +314,7 @@ int windturb_dg::init_climate()
 
 int windturb_dg::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double temp_double_value;
 	gld_property *temp_property_pointer;
 	enumeration temp_enum;
@@ -1214,7 +1214,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double matCp[2][3];
 	double store_current_current, store_last_current;
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	FUNCTIONADDR test_fxn;
 	STATUS fxn_return_status;
 
@@ -1556,7 +1556,7 @@ void windturb_dg::compute_current_injection(void)
 						temp_ind += 1;
 						if (temp_ind > 100)
 						{
-							OBJECT *obj = OBJECTHDR(this);
+							OBJECT *obj = object_header(this);
 
 							gl_warning("windturb_dg (id:%d,name:%s): internal iteration limit reached, breaking out of loop.  Injected current may not be solved sufficiently.",obj->id,obj->name);
 							/* TROUBLESHOOT
@@ -1674,7 +1674,7 @@ void windturb_dg::compute_current_injection(void)
 
 						if ( temp_count > 100 )
 						{
-							OBJECT *obj = OBJECTHDR(this);
+							OBJECT *obj = object_header(this);
 
 							gl_warning("windturb_dg (id:%d,name:%s): internal iteration limit reached, breaking out of loop.  Injected current may not be solved sufficiently.",obj->id,obj->name);
 							/* TROUBLESHOOT
@@ -1905,7 +1905,7 @@ void windturb_dg::compute_power_injection_pc(void){
 gld_property *windturb_dg::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -1928,7 +1928,7 @@ gld_property *windturb_dg::map_complex_value(OBJECT *obj, const char *name)
 gld_property *windturb_dg::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -2081,7 +2081,7 @@ EXPORT int create_windturb_dg(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(windturb_dg::oclass);
 		if (*obj!=nullptr)
 		{
-			windturb_dg *my = OBJECTDATA(*obj,windturb_dg);
+			windturb_dg *my = /*OBJECTDATA(*obj,<>)*/ object_data<windturb_dg>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -2098,7 +2098,7 @@ EXPORT int init_windturb_dg(OBJECT *obj, OBJECT *parent)
 	try 
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,windturb_dg)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<windturb_dg>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -2108,7 +2108,7 @@ EXPORT int init_windturb_dg(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP t1 = TS_NEVER;
-	windturb_dg *my = OBJECTDATA(obj,windturb_dg);
+	windturb_dg *my = /*OBJECTDATA(obj,<>)*/ object_data<windturb_dg>(obj);
 	try
 	{
 		switch (pass) {
@@ -2136,7 +2136,7 @@ EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iterati
 	STATUS temp_status;
 
 	//Map the node
-	windturb_dg *my = OBJECTDATA(obj, windturb_dg);
+	windturb_dg *my = /*OBJECTDATA(obj,<>)*/ object_data<windturb_dg>(obj);
 
 	//Call the function, where we can update the current injection
 	temp_status = my->updateCurrInjection(iteration_count,converged_failure);

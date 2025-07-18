@@ -13,11 +13,8 @@
 #include "weather.h"
 #include "csv_reader.h"
 
-template <typename T> //arun
-void register_object(MODULE* module) {
-	static std::unique_ptr<T> instance = std::make_unique<T>(module);
-	std::cout << "Registered object: " << typeid(T).name() << std::endl;
-}
+
+
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -27,13 +24,12 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		return nullptr;
 	}
 
-	//new climate(module);
-	//new weather(module);
-	//new csv_reader(module);
+	new climate(module);
+	new weather(module);
+	new csv_reader(module);
 
-	register_object<climate>(module);
-	register_object<weather>(module);
-	register_object<csv_reader>(module);
+
+
 
 
 	/* always return the first class registered */

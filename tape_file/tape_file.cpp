@@ -330,7 +330,7 @@ EXPORT void close_shaper(struct shaper *my)
 EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 {
 	time_t now=time(nullptr);
-	OBJECT *obj=OBJECTHDR(my);
+	OBJECT *obj=object_header(my);
 	
 	my->fp = (strcmp(fname,"-")==0?stdout:fopen(fname,flags));
 	if (my->fp==nullptr)
@@ -398,7 +398,7 @@ EXPORT void close_recorder(struct recorder *my)
 EXPORT int open_histogram(histogram *my, char *fname, char *flags)
 {
 	time_t now=time(nullptr);
-	OBJECT *obj=OBJECTHDR(my);
+	OBJECT *obj=object_header(my);
 	
 	my->fp = (strcmp(fname,"-")==0?stdout:fopen(fname,"w"));
 	if (my->fp==nullptr)
