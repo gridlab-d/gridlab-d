@@ -470,14 +470,16 @@ int csv_reader::read_line(char* line, int linenum) {
 					sample->temperature = value;
 				else if (name == "humidity")
 					sample->humidity = value;
-				else if (name == "solar_direct")
+				else if (name == "solar_direct" || name == "solar_dir")
 					sample->solar_dir = value;
-				else if (name == "solar_diffuse")
+				else if (name == "solar_diffuse" || name == "solar_diff")
 					sample->solar_diff = value;
 				else if (name == "pressure")
 					sample->pressure = value;
 				else if (name == "wind_speed")
 					sample->wind_speed = value;
+				else if (name == "solar_global")
+					sample->solar_global = value;
 				else {
 					gl_error("Unknown property name '%s'", name.c_str());
 					//delete sample;  // Clean up on error.  Important to handle this correctly.
