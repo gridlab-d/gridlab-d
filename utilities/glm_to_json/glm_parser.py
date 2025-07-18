@@ -678,6 +678,9 @@ class GLMModel:
                     name = self.glm_module("date", line, itr)
                 elif line_type == 'class':
                     name = self.glm_module("class", line, itr)
+                    # Record encountered class types for JSON separation
+                    if name and name not in self.class_types:
+                        self.class_types.append(name)
                 elif line_type == 'module':
                     name = self.glm_module("module", line, itr)
                     if len(self.ifdef_lines) > 0:
