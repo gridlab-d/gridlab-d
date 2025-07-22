@@ -51,15 +51,8 @@ def glm_to_json(glmName="TE_CHALLENGE"):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-        # Extract class blueprints directly from module_entities (class definitions)
-        classes = {}
-        for ctype in getattr(model_file, 'class_types', []):
-            entity = model_file.module_entities.get(ctype)
-            if entity:
-                insts = getattr(entity, 'instances', {})
-                # blueprint is parameters of the single class instance
-                blueprint_params = next(iter(insts.values()), {})
-                classes[ctype] = blueprint_params
+        # Extract class blueprints from parsed GLM definitions
+        classes = getattr(model_file, 'class_definitions', {})
         # Generate full entities JSON and remove class entries to avoid object overrides
         raw = model_file.entities_to_json()
         for ctype in classes:
@@ -86,6 +79,11 @@ def glm_to_json(glmName="TE_CHALLENGE"):
                 # extract the single instance
                 single = next(iter(inst_dict.values()), {})
                 modules[mtype] = single
+            # propagate any conditional-directive lists if present
+            for attr in ('ifdef', 'ifndef', 'ifexist', 'if', 'ifnot'):
+                vals = getattr(entity, attr, None)
+                if vals:
+                    modules[mtype][attr] = vals
         # Separate 'clock' as its own top-level entity
         clock_entity = model_file.module_entities.get('clock')
         clock_data = {}

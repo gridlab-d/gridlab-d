@@ -247,7 +247,7 @@ class Entity:
 
             for attr in params:
                 if attr.startswith(("inline_comment", "inside_comment", 
-                                   "comment", "outside_comments")):
+                                   "comment", "outside_comments", "trigger_error", "outside_trigger_error", "trigger_warning","outside_trigger_warning")):
                     instance[attr] = params[attr]
                     continue
                 item = self.find_item(attr)

@@ -84,12 +84,35 @@ class GLMModel:
         self.object_entities = {}
         self.set_lines = []
         self.define_lines = []
+        self.undef_lines = []
+        self.error_lines = []
+        self.outside_errors = []
         self.include_lines = []
         self.ifdef_lines = []
+        self.class_definitions = {}
         self.configuration = {}
         self.inside_comments = dict()
         self.outside_comments = dict()
         self.inline_comments = dict()
+        self.warning_lines = []
+        self.outside_warnings = []
+        self.print_lines = []
+        self.outside_prints = []
+        # top-level extended directives
+        self.setenv_lines = []
+        self.outside_setenvs = []
+        self.binpath_lines = []
+        self.outside_binpaths = []
+        self.libpath_lines = []
+        self.outside_libpaths = []
+        self.incpath_lines = []
+        self.outside_incpaths = []
+        self.option_lines = []
+        self.outside_options = []
+        self.system_lines = []
+        self.outside_systems = []
+        self.start_lines = []
+        self.outside_starts = []
         
         with open(glm_entities_path, 'r', encoding='utf-8') as json_file:
             self.classes = pyjson5.load(json_file)
@@ -103,6 +126,14 @@ class GLMModel:
             entity.add_attr("TEXTARRAY", "#include", "", "includes", value=[])
             entity.add_attr("TEXTARRAY", "#define", "", "defines", value=[])
             entity.add_attr("TEXTARRAY", "#set", "", "sets", value=[])
+            entity.add_attr("TEXTARRAY", "#undef", "", "undefs", value=[])
+            entity.add_attr("TEXTARRAY", "#setenv", "", "setenvs", value=[])
+            entity.add_attr("TEXTARRAY", "#binpath", "", "binpaths", value=[])
+            entity.add_attr("TEXTARRAY", "#libpath", "", "libpaths", value=[])
+            entity.add_attr("TEXTARRAY", "#incpath", "", "incpaths", value=[])
+            entity.add_attr("TEXTARRAY", "#option", "", "options", value=[])
+            entity.add_attr("TEXTARRAY", "#system", "", "systems", value=[])
+            entity.add_attr("TEXTARRAY", "#start", "", "starts", value=[])
             self.module_entities["_directives"] = entity
             for module_name in self.classes:
                 self.module_types.append(module_name)
@@ -202,6 +233,15 @@ class GLMModel:
             value = self.object_entities[name].to_json()
             if value is not None:
                 diction[name] = self.object_entities[name].to_json()
+        if hasattr(self, 'error_lines') and self.error_lines:
+            # top-level error directives
+            diction['trigger_error'] = list(self.error_lines)
+        if hasattr(self, 'warning_lines') and self.warning_lines:
+            # top-level warning directives
+            diction['trigger_warning'] = list(self.warning_lines)
+        if hasattr(self, 'print_lines') and self.print_lines:
+            # top-level print directives
+            diction['print'] = list(self.print_lines)
         return diction
 
     def entities_to_schema(self):
@@ -319,9 +359,22 @@ class GLMModel:
             inside_comments (list): List of inside comments
             inline_comments (dict): Dictionary of inline comments
         """
-        if len(self.outside_comments) > 0:
+        # attach any preceding // comments
+        if self.outside_comments:
             params['outside_comments'] = self.outside_comments
             self.outside_comments = []
+        # attach any preceding #error directives
+        if hasattr(self, 'outside_errors') and self.outside_errors:
+            params['outside_trigger_error'] = self.outside_errors
+            self.outside_errors = []
+        # attach any preceding #warning directives
+        if hasattr(self, 'outside_warnings') and self.outside_warnings:
+            params['outside_trigger_warning'] = self.outside_warnings
+            self.outside_warnings = []
+        # attach any preceding #print directives
+        if hasattr(self, 'outside_prints') and self.outside_prints:
+            params['outside_print'] = self.outside_prints
+            self.outside_prints = []
         if len(inside_comments) > 0:
             params['inside_comments'] = inside_comments
         if len(inline_comments) > 0:
@@ -342,9 +395,12 @@ class GLMModel:
         # Collect parameters
         _type = ""
         params = {}
-        # Collect comments
+        class_fields = []
         inside_comments = []
         inline_comments = dict()
+        inside_errors = []
+        inside_warnings = []
+        inside_prints = []
         insideIfDefs = []
         # Set the clock to date module
         if mod in ["date"]:
@@ -352,14 +408,27 @@ class GLMModel:
 
         # Identify the object type
         if line.find(";") > 0:
-            # Extract inline comment before returning
+            # handle single-line module declarations
             comment_text, _ = self._extract_inline_comment(line)
             if comment_text:
                 params['inline_comment'] = comment_text
-                inline_comments = dict() 
-            if len(self.outside_comments) > 0:
+                inline_comments = dict()
+            # attach any // comments
+            if self.outside_comments:
                 params['outside_comments'] = self.outside_comments
-                self.outside_comments = []      
+                self.outside_comments = []
+            # attach any #error directives
+            if hasattr(self, 'outside_errors') and self.outside_errors:
+                params['outside_trigger_error'] = self.outside_errors
+                self.outside_errors = []
+            # attach any #warning directives
+            if hasattr(self, 'outside_warnings') and self.outside_warnings:
+                params['outside_trigger_warning'] = self.outside_warnings
+                self.outside_warnings = []
+            # attach any #print directives
+            if hasattr(self, 'outside_prints') and self.outside_prints:
+                params['outside_print'] = self.outside_prints
+                self.outside_prints = []
             m = re.search(mod + r' ([^;\s]+)[;\s]', line, re.IGNORECASE)
             _type = m.group(1)
             self.set_module_instance(_type, params)
@@ -376,6 +445,21 @@ class GLMModel:
         done = False
         line = next(itr).strip()
         while not done:
+            # capture module-level #error directives
+            if re.search(r'#error\b', line):
+                inside_errors.append(self._extract_directive_content(line, 'error'))
+                line = next(itr).strip()
+                continue
+            # capture module-level #warning directives
+            if re.search(r'#warning\b', line):
+                inside_warnings.append(self._extract_directive_content(line, 'warning'))
+                line = next(itr).strip()
+                continue
+            # capture module-level #print directives
+            if re.search(r'#print\b', line):
+                inside_prints.append(self._extract_directive_content(line, 'print'))
+                line = next(itr).strip()
+                continue
             # Process comments and extract inline comments
             comment_text, tokens = self._process_inline_comment(line)
             if comment_text is not None:
@@ -384,25 +468,38 @@ class GLMModel:
                     line = ";"
                 else:  # Line has inline comment
                     inline_comments[tokens[0]] = comment_text
-            # find if defs
-            if re.search('#ifdef', line):
-                # Extract just the condition part without #ifdef
-                condition = self._extract_directive_content(line, 'ifdef')
-                insideIfDefs.append(condition)
+            # find if/ifdef/ifndef/ifexist directives
+            for d in ('ifdef', 'ifndef', 'ifexist', 'if'):
+                if re.search(rf'#{d}\b', line):
+                    # Extract just the condition part without directive
+                    condition = self._extract_directive_content(line, d)
+                    insideIfDefs.append({"type": d, "condition": condition})
+            if re.search(r'#else\b', line):
+                # Convert the else to an ifnot
+                if len(insideIfDefs) > 0:
+                    condition = insideIfDefs[-1]["condition"]
+                    insideIfDefs.pop()
+                    insideIfDefs.append({"type": "ifnot", "condition": condition})
             if re.search('#endif', line) and len(insideIfDefs) > 0:
                 insideIfDefs.pop()
             # find a parameter
             m = re.match(r'\s*(\S+) ([^;]+);', line)
             if m:
+                ptype, pname = m.group(1), m.group(2).strip()
+                # record each field for user-defined classes
+                if mod == 'class':
+                    class_fields.append({'type': ptype, 'name': pname})
                 if len(insideIfDefs) > 0:
-                    param = m.group(1)
-                    val = m.group(2)
-                    if param not in params:
-                        params[param] = {"ifDef": {}}
+                    param = ptype
+                    val = pname
                     localIfDef = insideIfDefs[-1]
-                    params[param]["ifDef"][localIfDef] = val.strip()
+                    if param not in params:
+                        params[param] = {localIfDef["type"]: {}}
+                    if not hasattr(params[param], localIfDef["type"]):
+                        params[param][localIfDef["type"]] = {}
+                    params[param][localIfDef["type"]][localIfDef["condition"]] = val
                 else:
-                    params[m.group(1)] = m.group(2)
+                    params[ptype] = pname
 
             if re.search('}', line):
                 done = 1
@@ -410,7 +507,19 @@ class GLMModel:
                 line = next(itr).strip()
 
         self._finalize_comments_and_params(params, inside_comments, inline_comments)
-
+        # Attach module-level trigger error
+        if inside_errors:
+            params['trigger_error'] = inside_errors
+        # Attach module-level trigger warning
+        if inside_warnings:
+            params['trigger_warning'] = inside_warnings
+        # Attach module-level print
+        if inside_prints:
+            params['print'] = inside_prints
+        # record class blueprint fields for user-defined classes
+        if mod == 'class':
+            # use collected class_fields to capture all defined fields
+            self.class_definitions[_type] = class_fields
         self.set_module_instance(_type, params)
 
         return _type
@@ -451,10 +560,12 @@ class GLMModel:
                 val = gld_strict_name(name_prefix + val)
             
             if len(insideIfDefs) > 0:
-                if param not in params:
-                    params[param] = {"ifDef": {}}
                 localIfDef = insideIfDefs[-1]
-                params[param]["ifDef"][localIfDef] = val.strip()
+                if param not in params:
+                    params[param] = {localIfDef["type"]: {}}
+                if not hasattr(params[param], localIfDef["type"]):
+                    params[param][localIfDef["type"]] = {}
+                params[param][localIfDef["type"]][localIfDef["condition"]] = val.strip()
             else:
                 params[param] = val.strip()
             
@@ -495,6 +606,10 @@ class GLMModel:
         comments = []
         inside_comments = []
         inline_comments = dict()
+        # Collect error, warning, and print directives inside object
+        inside_errors = []
+        inside_warnings = []
+        inside_prints = []
         done = False
         outsideIfDefs = self.ifdef_lines.copy()
         insideIfDefs = []
@@ -504,12 +619,33 @@ class GLMModel:
             substring = line[pos + 2:].strip()
             before_comment = line.split("//", 1)[0].strip()
             inline_comments[before_comment] = substring
-        if len(self.ifdef_lines) > 0:
-            params['ifDef'] = outsideIfDefs
+        # propagate any outer conditional directives into params
+        for cond in outsideIfDefs:
+            t = cond["type"]
+            if t in ("ifdef", "ifndef", "ifexist", "if"):
+                params.setdefault(t, []).append(cond["condition"])
         line = next(itr)
         if len(parent):
             params['parent'] = parent
         while not done:
+            # capture object-level #error directives
+            if re.search(r'#error\b', line):
+                content = self._extract_directive_content(line, 'error')
+                inside_errors.append(content)
+                line = next(itr)
+                continue
+            # capture object-level #warning directives
+            if re.search(r'#warning\b', line):
+                content = self._extract_directive_content(line, 'warning')
+                inside_warnings.append(content)
+                line = next(itr)
+                continue
+            # capture object-level #print directives
+            if re.search(r'#print\b', line):
+                content = self._extract_directive_content(line, 'print')
+                inside_prints.append(content)
+                line = next(itr)
+                continue
             # Process comments and extract inline comments
             comment_text, tokens = self._process_inline_comment(line)
             if comment_text is not None:
@@ -519,11 +655,22 @@ class GLMModel:
                 else:  # Line has inline comment
                     if tokens[0].lower() != 'object':
                         inline_comments[tokens[0]] = comment_text
-            # find if defs
-            if re.search('#ifdef', line):
-                # Extract just the condition part without #ifdef
-                condition = self._extract_directive_content(line, 'ifdef')
-                insideIfDefs.append(condition)
+            # find conditional directives inside object and record
+            for d in ('ifdef', 'ifndef', 'ifexist', 'if'):
+                if re.search(rf'#{d}\b', line):
+                    condition = self._extract_directive_content(line, d)
+                    # track conditional context
+                    insideIfDefs.append({"type": d, "condition": condition})
+                    # record object-level conditional directives for JSON
+                    params.setdefault(d, []).append(condition)
+            # handle else as negation of last condition
+            if re.search(r'#else\b', line) and len(insideIfDefs) > 0:
+                cond = insideIfDefs[-1]["condition"]
+                # switch to ifnot
+                insideIfDefs.pop()
+                insideIfDefs.append({"type": "ifnot", "condition": cond})
+                params.setdefault('ifnot', []).append(cond)
+            # end conditional block
             if re.search('#endif', line) and len(insideIfDefs) > 0:
                 insideIfDefs.pop()
             intobj = 0
@@ -564,6 +711,15 @@ class GLMModel:
         if n:
             oidh[oid] = name
         self._finalize_comments_and_params(params, inside_comments, inline_comments)
+        # attach object-level trigger error
+        if inside_errors:
+            params['trigger_error'] = inside_errors
+        # attach object-level trigger warning
+        if inside_warnings:
+            params['trigger_warning'] = inside_warnings
+        # attach object-level trigger print
+        if inside_prints:
+            params['print'] = inside_prints
         # add the new object type to the model
         self.add_object(_type, name, params)
 
@@ -588,6 +744,10 @@ class GLMModel:
                 return 'comment_include', line
             elif re.search('#define', line):
                 return 'comment_define', line
+            elif re.search('#undef', line):
+                return 'comment_undef', line
+            elif re.search('#error', line):
+                return 'comment_error', line
             else:
                 return 'comment_other', line
         elif re.search('#set', line):
@@ -596,6 +756,10 @@ class GLMModel:
             return 'include', line
         elif re.search('#define', line):
             return 'define', line
+        elif re.search('#undef', line):
+            return 'undef', line
+        elif re.search('#error', line):
+            return 'error', line
         elif re.search('clock', line):
             return 'clock', line
         elif re.search('class', line):
@@ -608,6 +772,14 @@ class GLMModel:
             return 'object', line
         elif re.search('#ifdef', line):
             return 'ifdef', line
+        elif re.search('#ifndef', line):
+            return 'ifndef', line
+        elif re.search('#ifexist', line):
+            return 'ifexist', line
+        elif re.search(r'#if\b', line):
+            return 'if', line
+        elif re.search('#else', line):
+            return 'else', line
         elif re.search('#endif', line):
             return 'endif', line
         else:
@@ -661,6 +833,15 @@ class GLMModel:
         self.include_lines = []
         self.ifdef_lines = []
         self.outside_comments = []
+        self.outside_warnings = []
+        self.outside_prints = []
+        self.outside_setenvs = []
+        self.outside_binpaths = []
+        self.outside_libpaths = []
+        self.outside_incpaths = []
+        self.outside_options = []
+        self.outside_systems = []
+        self.outside_errors = []
         if os.path.isfile(filename):
             lines = self._read_file_lines(filename)
 
@@ -674,6 +855,48 @@ class GLMModel:
                     self.include_lines.append(self._extract_directive_content(processed_line, 'include'))
                 elif line_type == 'comment_define' or line_type == 'define':
                     self.define_lines.append(self._extract_directive_content(processed_line, 'define'))
+                elif line_type == 'comment_undef' or line_type == 'undef':
+                    self.undef_lines.append(self._extract_directive_content(processed_line, 'undef'))
+                elif line_type == 'comment_error' or line_type == 'error':
+                    content = self._extract_directive_content(processed_line, 'error')
+                    self.error_lines.append(content)
+                    self.outside_errors.append(content)
+                elif re.search('#warning', processed_line):
+                    content = self._extract_directive_content(processed_line, 'warning')
+                    self.warning_lines.append(content)
+                    self.outside_warnings.append(content)
+                elif re.search('#print', processed_line):
+                    content = self._extract_directive_content(processed_line, 'print')
+                    self.print_lines.append(content)
+                    self.outside_prints.append(content)
+                elif re.search('#setenv', processed_line):
+                    content = self._extract_directive_content(processed_line, 'setenv')
+                    self.setenv_lines.append(content)
+                    self.outside_setenvs.append(content)
+                elif re.search('#binpath', processed_line):
+                    content = self._extract_directive_content(processed_line, 'binpath')
+                    self.binpath_lines.append(content)
+                    self.outside_binpaths.append(content)
+                elif re.search('#libpath', processed_line):
+                    content = self._extract_directive_content(processed_line, 'libpath')
+                    self.libpath_lines.append(content)
+                    self.outside_libpaths.append(content)
+                elif re.search('#incpath', processed_line):
+                    content = self._extract_directive_content(processed_line, 'incpath')
+                    self.incpath_lines.append(content)
+                    self.outside_incpaths.append(content)
+                elif re.search('#option', processed_line):
+                    content = self._extract_directive_content(processed_line, 'option')
+                    self.option_lines.append(content)
+                    self.outside_options.append(content)
+                elif re.search('#system', processed_line):
+                    content = self._extract_directive_content(processed_line, 'system')
+                    self.system_lines.append(content)
+                    self.outside_systems.append(content)
+                elif re.search('#start', processed_line):
+                    content = self._extract_directive_content(processed_line, 'start')
+                    self.start_lines.append(content)
+                    self.outside_starts.append(content)
                 elif line_type == 'clock':
                     name = self.glm_module("date", line, itr)
                 elif line_type == 'class':
@@ -683,16 +906,33 @@ class GLMModel:
                         self.class_types.append(name)
                 elif line_type == 'module':
                     name = self.glm_module("module", line, itr)
-                    if len(self.ifdef_lines) > 0:
-                        self.module_entities[name].ifDef = self.ifdef_lines
+                    # attach any conditional directives to the module entity
+                    entity = self.module_entities[name]
+                    for if_def in self.ifdef_lines:
+                        t = if_def["type"]
+                        if t in ("ifdef", "ifndef", "ifexist", "if", "ifnot"):
+                            # ensure list exists on entity
+                            if not hasattr(entity, t):
+                                setattr(entity, t, [])
+                            getattr(entity, t).append(if_def["condition"])
                 elif line_type == 'schedule':
                     name = self.glm_schedule(line, itr)
                 elif line_type == 'object':
                     line, counter, name = self.glm_object("", line, itr, h, counter)
-                elif line_type == 'ifdef':
-                    self.ifdef_lines.append(self._extract_directive_content(line, 'ifdef'))
+                elif line_type in ('ifdef', 'ifndef', 'ifexist', 'if'):
+                    # record entering a conditional directive
+                    self.ifdef_lines.append({
+                        "type": line_type,
+                        "condition": self._extract_directive_content(line, line_type)
+                    })
+                elif line_type == 'else':
+                    # Convert else to ifnot
+                    if len(self.ifdef_lines) > 0:
+                        condition = self.ifdef_lines[-1]["condition"]
+                        self.ifdef_lines.pop()
+                        self.ifdef_lines.append({"type": "ifnot", "condition": condition})
                 elif line_type == 'endif':
-                    self.ifdef_lines = []
+                    self.ifdef_lines.pop()
                 elif line_type == 'comment_other':
                     self.outside_comments.append(processed_line)
                 else:
@@ -700,8 +940,17 @@ class GLMModel:
 
             # Put directives into separate object
             self.module_entities['_directives'].sets = self.set_lines
-            self.module_entities['_directives'].defines = self.define_lines
             self.module_entities['_directives'].includes = self.include_lines
+            self.module_entities['_directives'].defines = self.define_lines
+            self.module_entities['_directives'].undefs = self.undef_lines
+            # extended directives
+            self.module_entities['_directives'].setenvs = self.setenv_lines
+            self.module_entities['_directives'].binpaths = self.binpath_lines
+            self.module_entities['_directives'].libpaths = self.libpath_lines
+            self.module_entities['_directives'].incpaths = self.incpath_lines
+            self.module_entities['_directives'].options = self.option_lines
+            self.module_entities['_directives'].systems = self.system_lines
+            self.module_entities['_directives'].starts = self.start_lines
             self.hash = h
             return True
         else:
