@@ -242,6 +242,27 @@ class GLMModel:
         if hasattr(self, 'print_lines') and self.print_lines:
             # top-level print directives
             diction['print'] = list(self.print_lines)
+        # include schedule definitions
+        if hasattr(self, 'schedule_types') and self.schedule_types:
+            schedules = []
+            for sched_name, lines in self.schedule_types.items():
+                text = '\n'.join(lines)
+                # extract content between braces
+                blocks_raw = re.findall(r'\{([^}]*)\}', text, re.DOTALL)
+                blocks = []
+                for raw_block in blocks_raw:
+                    lines_blk = [l.strip().rstrip(';') for l in raw_block.splitlines()]
+                    # derive name from first comment, default empty
+                    name = ""
+                    items = []
+                    for l in lines_blk:
+                        if l.startswith('//'):
+                            name = l[2:].strip()
+                        elif l.startswith('*'):
+                            items.append(l)
+                    blocks.append({'name': name, 'items': items})
+                schedules.append({sched_name: blocks})
+            diction['schedules'] = schedules
         return diction
 
     def entities_to_schema(self):
@@ -832,6 +853,7 @@ class GLMModel:
         self.define_lines = []
         self.include_lines = []
         self.ifdef_lines = []
+        self.schedule_types = {}
         self.outside_comments = []
         self.outside_warnings = []
         self.outside_prints = []
