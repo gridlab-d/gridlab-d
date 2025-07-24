@@ -611,20 +611,37 @@ class GLMModel:
         Returns:
             tuple: (current_line, counter, name) - the current line, counter, and name
         """
-        # Identify the object type
+        # Identify the object type and raw id
         oid = ""
         m = re.search(r'object ([^:{\s]+)[:{\s]', line, re.IGNORECASE)
         _type = m.group(1)
-        # If the object has an id number, store it
+        # If the object has an id qualifier (e.g., ..N), store it
         n = re.search(r'object ([^:]+:[^{\s]+)', line, re.IGNORECASE)
         if n:
             oid = n.group(1)
+        # single-line object (no body) ends with ';'
+        if line.strip().endswith(';') and '{' not in line:
+            # capture multiplicity count if present
+            params = {}
+            qty_match = re.search(r'\.\.(\d+)', oid)
+            if qty_match:
+                params['count'] = int(qty_match.group(1))
+            # default name
+            counter += 1
+            name = f"{_type}_{counter}"
+            oidh[name] = name
+            self.add_object(_type, name, params)
+            return line, counter, name
 
         # Collect parameters
         counter += 1
         name = None
         name_prefix = ''
         params = {}
+        # handle multiplicity syntax (e.g., object house:..28 indicates multiple instances)
+        m_qty = re.search(r'\.\.(\d+)$', oid)
+        if m_qty:
+            params['count'] = int(m_qty.group(1))
         # Collect comments
         comments = []
         inside_comments = []
