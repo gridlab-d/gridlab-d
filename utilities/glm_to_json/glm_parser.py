@@ -422,7 +422,7 @@ class GLMModel:
         inside_errors = []
         inside_warnings = []
         inside_prints = []
-        insideIfDefs = []
+        inside_if_statements = []
         # Set the clock to date module
         if mod in ["date"]:
             line = mod + " " + line
@@ -494,15 +494,15 @@ class GLMModel:
                 if re.search(rf'#{d}\b', line):
                     # Extract just the condition part without directive
                     condition = self._extract_directive_content(line, d)
-                    insideIfDefs.append({"type": d, "condition": condition})
+                    inside_if_statements.append({"type": d, "condition": condition})
             if re.search(r'#else\b', line):
                 # Convert the else to an ifnot
-                if len(insideIfDefs) > 0:
-                    condition = insideIfDefs[-1]["condition"]
-                    insideIfDefs.pop()
-                    insideIfDefs.append({"type": "ifnot", "condition": condition})
-            if re.search('#endif', line) and len(insideIfDefs) > 0:
-                insideIfDefs.pop()
+                if len(inside_if_statements) > 0:
+                    condition = inside_if_statements[-1]["condition"]
+                    inside_if_statements.pop()
+                    inside_if_statements.append({"type": "ifnot", "condition": condition})
+            if re.search('#endif', line) and len(inside_if_statements) > 0:
+                inside_if_statements.pop()
             # find a parameter
             m = re.match(r'\s*(\S+) ([^;]+);', line)
             if m:
@@ -510,15 +510,17 @@ class GLMModel:
                 # record each field for user-defined classes
                 if mod == 'class':
                     class_fields.append({'type': ptype, 'name': pname})
-                if len(insideIfDefs) > 0:
+                if len(inside_if_statements) > 0:
                     param = ptype
                     val = pname
-                    localIfDef = insideIfDefs[-1]
-                    if param not in params:
-                        params[param] = {localIfDef["type"]: {}}
-                    if not hasattr(params[param], localIfDef["type"]):
-                        params[param][localIfDef["type"]] = {}
-                    params[param][localIfDef["type"]][localIfDef["condition"]] = val
+                    for if_statement in inside_if_statements:
+                        if if_statement["type"] in ["ifdef", "ifndef", "ifexist", "if"]:
+                            # propagate conditional directives
+                            if param not in params:
+                                params[param] = {if_statement["type"]: {}}
+                            if 'ifdef' not in params[param]:
+                                params[param][if_statement["type"]] = {}
+                            params[param][if_statement["type"]][if_statement["condition"]] = val.strip()
                 else:
                     params[ptype] = pname
 
