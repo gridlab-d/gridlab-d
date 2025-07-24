@@ -107,7 +107,8 @@ def glm_to_json(glmName="TE_CHALLENGE"):
             'classes': classes,
             'clock': clock_data,
             'modules': modules,
-            'objects': objects
+            'objects': objects,
+            'schedules': raw.get('schedules', [])
         }
 
         # Dump filtered values JSON
