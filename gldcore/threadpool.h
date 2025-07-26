@@ -53,7 +53,7 @@ typedef struct s_mtiteratorlist MTI;
 /** Iterator data */
 typedef void* MTICODE; /* main iterator processor exit code */
 typedef void* MTIITEM; /* item passed to iterator calls */
-typedef void* MTIDATA; /* data returned by iterator calls */
+typedef std::shared_ptr<void> MTIDATA; /* data returned by iterator calls */
 
 typedef struct s_mtifunctions
 {

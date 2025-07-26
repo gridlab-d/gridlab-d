@@ -11,7 +11,7 @@
 template <typename T> //arun
 void register_object(MODULE* module) {
 	static std::unique_ptr<T> instance = std::make_unique<T>(module);
-	std::cout << "Registered object: " << typeid(T).name() << std::endl;
+	//std::cout << "Registered object: " << typeid(T).name() << std::endl;
 }
 
 CLASS *metrics_collector_writer::oclass = nullptr;

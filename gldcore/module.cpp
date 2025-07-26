@@ -223,7 +223,7 @@ s_callbacks::s_callbacks() throw() {
     malloc = module_malloc;
     free = module_free;
     aggregate.create = aggregate_mkgroup;
-    aggregate.refresh = aggregate_value;
+    aggregate.refresh_aggr = aggregate_value;
     module.getvar = module_getvar_addr;
     module.getfirst = module_get_first;
     module.depends = module_depends;

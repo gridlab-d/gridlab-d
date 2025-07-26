@@ -22,14 +22,14 @@ std::vector<std::pair<std::unique_ptr<gld_object>, std::string>> allocated_objec
 template <typename T>
 void register_object(MODULE* module) {
 
-	std::cout << "Attempting to register type: " << typeid(T).name() << std::endl;
+	//std::cout << "Attempting to register type: " << typeid(T).name() << std::endl;
 
 	T* obj = new T(module);
 
 	allocated_objects.emplace_back(std::make_unique<T>(module), typeid(T).name());
 
 
-	std::cout << "Registered object of type: " << typeid(T).name() << ", at: " << obj << std::endl;
+	//std::cout << "Registered object of type: " << typeid(T).name() << ", at: " << obj << std::endl;
 }
 
 

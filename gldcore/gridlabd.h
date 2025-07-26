@@ -52,6 +52,8 @@
 #ifndef _GRIDLABD_H
 #define _GRIDLABD_H
 
+#include <memory>
+
 /* permanently disable use of CPPUNIT */
 #ifndef _NO_CPPUNIT
 #define _NO_CPPUNIT
@@ -89,7 +91,6 @@
 
 #include <cstdarg>
 #include <atomic>
-#include <memory>
 #include <execinfo.h>
 
 
@@ -102,6 +103,10 @@
 #define STREAM_MODULE
 #include "stream.h"
 #include "module.h"
+#include "aggregate.h"
+
+typedef struct s_aggregate AGGREGATION;
+
 
 // Forward declaration of get_addr
 template<typename O, typename P>
@@ -801,7 +806,7 @@ inline bool *gl_get_bool(OBJECT *obj, /**< object to set dependency */
 /** Evaluate an aggregate property
 	@see aggregate_value()
  **/
-#define gl_run_aggregate (*callback->aggregate.refresh)
+#define gl_run_aggregate (*callback->aggregate.refresh_aggr)
 /** @} **/
 
 /******************************************************************************
@@ -1957,11 +1962,11 @@ public:
 	virtual ~gld_object() {
 		mark_deleted();
 		// Log or track destructor calls
-		std::cout << "Destructor called for object at "
-			<< static_cast<void*>(this)
+		//std::cout << "Destructor called for object at "
+			//<< static_cast<void*>(this)
 			//<< ", deletion count: "
 			//<< ++deletion_count
-			<< std::endl;
+			//<< std::endl;
 	}
 
 	// Stack trace printing (requires additional setup)
@@ -2008,7 +2013,7 @@ public:
 	 // Prevent multiple deletions
 	void operator delete(void* ptr) {
 		if (ptr) {
-			std::cout << "Deleting object at " << ptr << std::endl;
+			//std::cout << "Deleting object at " << ptr << std::endl;
 			::operator delete(ptr);
 		}
 	}
@@ -2410,14 +2415,17 @@ public: // iterators
 /// Aggregation container
 class gld_aggregate {
 private:
-	AGGREGATION *aggr;
+	std::shared_ptr<struct s_aggregate> aggr = nullptr;
 public:
-	inline gld_aggregate(void) { aggr=NULL; };
-	inline gld_aggregate(char *spec, char *group) { set_aggregate(spec,group); };
+	//inline gld_aggregate(void) { aggr= nullptr; };
+	inline gld_aggregate(char *spec, char *group) { 
+		//set_aggregate(spec,group);
+		this->aggr = aggregate_mkgroup(spec, group);
+	};
 public:
-	inline bool set_aggregate(char *spec, char *group) { aggr=callback->aggregate.create(spec,group); return aggr!=NULL; };
-	inline bool is_valid(void) { return aggr!=NULL; };
-	inline double get_value(void) { if (!aggr) throw "null aggregate"; return callback->aggregate.refresh(aggr); };
+	//inline bool set_aggregate(char *spec, char *group) { aggr=callback->aggregate.create(spec,group); return aggr!=nullptr; };
+	inline bool is_valid(void) { return aggr!=nullptr; };
+	//inline double get_value(void) const { if (aggr == nullptr) throw std::runtime_error("gld_aggregate: null aggregate access"); return callback->aggregate.refresh_aggr(aggr); };
 };
 
 /// Object list container

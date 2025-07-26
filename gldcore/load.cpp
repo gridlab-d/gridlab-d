@@ -5661,121 +5661,121 @@ static int link_declaration(PARSER)
 		REJECT;
 }
 
-////////////////////////////////////////////////////////////////////////////////////
-static int script_directive(PARSER)
-{
-	START;
-	if ( WHITE,LITERAL("script") )
-	{
-		char command[1024];
-		if WHITE { ACCEPT; }
-		if ( LITERAL("on_create") )
-		{	if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
-			{
-				if ( exec_add_createscript(command)==0 )
-				{
-					output_error_raw("%s(%d): unable to add on_create script '%s'", filename,linenum,command);
-					REJECT;
-				}
-				else
-				{
-					ACCEPT; DONE;
-				}
-			}
-			else
-				REJECT;
-		}
-		if ( LITERAL("on_init") )
-		{	
-			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
-			{
-				if ( exec_add_initscript(command)==0 )
-				{
-					output_error_raw("%s(%d): unable to add on_init script '%s'", filename,linenum,command);
-					REJECT;
-				}
-				else
-				{
-					ACCEPT; DONE;
-				}
-			}
-			else
-				REJECT;
-		}
-		if ( LITERAL("on_sync") )
-		{	
-			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
-			{
-				if ( exec_add_syncscript(command)==0 )
-				{
-					output_error_raw("%s(%d): unable to add on_sync script '%s'", filename,linenum,command);
-					REJECT;
-				}
-				else
-				{
-					ACCEPT; DONE;
-				}
-			}
-			else
-				REJECT;
-		}
-		if ( LITERAL("on_term") )
-		{
-			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
-			{
-				if ( exec_add_termscript(command)==0 )
-				{
-					output_error_raw("%s(%d): unable to add on_term script '%s'", filename,linenum,command);
-					REJECT;
-				}
-				else
-				{
-					ACCEPT; DONE;
-				}
-			}
-			else
-				REJECT;
-		}
-		if ( LITERAL("export") )
-		{
-			if ( WHITE,TERM(name(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
-			{
-				if ( exec_add_scriptexport(command)==0 )
-				{
-					output_error_raw("%s(%d): unable to export '%s'", filename,linenum,command);
-					REJECT;
-				}
-				else
-				{
-					ACCEPT; DONE;
-				}
-			}
-			else
-				REJECT;
-		}
-		if ( TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
-		{
-			int rc;
-			output_verbose("running command [%s]", command);
-			rc = system(command);
-			if ( rc!=0 )
-			{
-				output_error_raw("%s(%d): script failed - return code %d", filename, linenum, rc);
-				REJECT;
-			}
-			else
-			{
-				ACCEPT; DONE;
-			}
-		}
-		else
-		{
-			REJECT;
-		}
-	}
-	else
-		REJECT;
-}
+//////////////////////////////////////////////////////////////////////////////////
+//static int script_directive(PARSER)
+//{
+//	START;
+//	if ( WHITE,LITERAL("script") )
+//	{
+//		char command[1024];
+//		if WHITE { ACCEPT; }
+//		if ( LITERAL("on_create") )
+//		{	if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+//			{
+//				if ( exec_add_createscript(command)==0 )
+//				{
+//					output_error_raw("%s(%d): unable to add on_create script '%s'", filename,linenum,command);
+//					REJECT;
+//				}
+//				else
+//				{
+//					ACCEPT; DONE;
+//				}
+//			}
+//			else
+//				REJECT;
+//		}
+//		if ( LITERAL("on_init") )
+//		{	
+//			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+//			{
+//				if ( exec_add_initscript(command)==0 )
+//				{
+//					output_error_raw("%s(%d): unable to add on_init script '%s'", filename,linenum,command);
+//					REJECT;
+//				}
+//				else
+//				{
+//					ACCEPT; DONE;
+//				}
+//			}
+//			else
+//				REJECT;
+//		}
+//		if ( LITERAL("on_sync") )
+//		{	
+//			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+//			{
+//				if ( exec_add_syncscript(command)==0 )
+//				{
+//					output_error_raw("%s(%d): unable to add on_sync script '%s'", filename,linenum,command);
+//					REJECT;
+//				}
+//				else
+//				{
+//					ACCEPT; DONE;
+//				}
+//			}
+//			else
+//				REJECT;
+//		}
+//		if ( LITERAL("on_term") )
+//		{
+//			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+//			{
+//				if ( exec_add_termscript(command)==0 )
+//				{
+//					output_error_raw("%s(%d): unable to add on_term script '%s'", filename,linenum,command);
+//					REJECT;
+//				}
+//				else
+//				{
+//					ACCEPT; DONE;
+//				}
+//			}
+//			else
+//				REJECT;
+//		}
+//		if ( LITERAL("export") )
+//		{
+//			if ( WHITE,TERM(name(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+//			{
+//				if ( exec_add_scriptexport(command)==0 )
+//				{
+//					output_error_raw("%s(%d): unable to export '%s'", filename,linenum,command);
+//					REJECT;
+//				}
+//				else
+//				{
+//					ACCEPT; DONE;
+//				}
+//			}
+//			else
+//				REJECT;
+//		}
+//		if ( TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+//		{
+//			int rc;
+//			output_verbose("running command [%s]", command);
+//			rc = system(command);
+//			if ( rc!=0 )
+//			{
+//				output_error_raw("%s(%d): script failed - return code %d", filename, linenum, rc);
+//				REJECT;
+//			}
+//			else
+//			{
+//				ACCEPT; DONE;
+//			}
+//		}
+//		else
+//		{
+//			REJECT;
+//		}
+//	}
+//	else
+//		REJECT;
+//}
 
 ////////////////////////////////////////////////////////////////////////////////////
 static int modify_directive(PARSER)
@@ -5833,7 +5833,7 @@ static int gridlabd_file(PARSER)
 	OR if TERM(filter_block(HERE)) {ACCEPT; DONE; }
 	OR if TERM(global_declaration(HERE)) {ACCEPT; DONE; }
 	OR if TERM(link_declaration(HERE)) { ACCEPT; DONE; }
-	OR if TERM(script_directive(HERE)) { ACCEPT; DONE; }
+	//OR if TERM(script_directive(HERE)) { ACCEPT; DONE; }
 	OR if TERM(modify_directive(HERE)) { ACCEPT; DONE; }
 	OR if (*(HERE)=='\0') {ACCEPT; DONE;}
 	else REJECT;

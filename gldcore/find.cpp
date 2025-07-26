@@ -12,6 +12,10 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include <string_view>
+#include <optional>
+#include <memory> 
+
 #include "globals.h"
 
 #if defined(_WIN32) && !defined(__MINGW__)
@@ -1287,6 +1291,9 @@ static int expression_list(PARSER, FINDPGM **pgm)
 	DONE;
 }
 
+
+
+
 /** Constructs a search engine for find_objects **/
 FINDPGM *find_mkpgm(char *search)
 {
@@ -1302,6 +1309,9 @@ FINDPGM *find_mkpgm(char *search)
 	}
 	return pgm;
 }
+
+
+
 
 /** Search for a file in the specified path
 	(or in \p GLPATH environment variable)

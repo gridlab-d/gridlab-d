@@ -1044,10 +1044,10 @@ EXPORT int create_triplex_meter(OBJECT** obj, OBJECT* parent) {
 		// Step 3: Set parent relationship if applicable
 		gl_set_parent(*obj, parent); // Link to parent object
 		if (parent != nullptr) {
-			std::cout << "Parent set for triplex_meter object. Parent address: " << parent << std::endl;
+			//std::cout << "Parent set for triplex_meter object. Parent address: " << parent << std::endl;
 		}
 		else {
-			std::cout << "No parent provided for triplex_meter object." << std::endl;
+			//std::cout << "No parent provided for triplex_meter object." << std::endl;
 		}
 
 		// Step 4: Call the triplex_meter create method for initialization
@@ -1058,7 +1058,7 @@ EXPORT int create_triplex_meter(OBJECT** obj, OBJECT* parent) {
 		}
 
 		// Step 5: Debug successful creation
-		std::cout << "Successfully created triplex_meter object at address: " << my << std::endl;
+		//std::cout << "Successfully created triplex_meter object at address: " << my << std::endl;
 		return 1; // Success
 	}
 	catch (const std::exception& ex) {

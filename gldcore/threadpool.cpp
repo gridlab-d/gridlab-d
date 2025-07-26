@@ -144,11 +144,11 @@ static MTICODE iterator_proc(MTIPROC *tp)
 		pthread_mutex_unlock(mti->stop.lock);
 
 		/* free the itermediate result */
-		free(result);
+		//free(result);
 	}
 
 	/* free the final result */
-	free(final);
+	//free(final);
 
 	/* exit */
 	return (MTICODE)0;

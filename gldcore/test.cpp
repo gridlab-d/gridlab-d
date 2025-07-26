@@ -4,6 +4,7 @@
  */
 
 #include <cstdlib>
+#include<memory>
 
 #include "globals.h"
 #include "cmdarg.h"
@@ -12,7 +13,8 @@
 #include "save.h"
 #include "find.h"
 #include "test.h"
-#include "aggregate.h"
+
+
 
 typedef struct s_testlist {
 	char name[64];

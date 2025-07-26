@@ -30,20 +30,24 @@
 
 #include <cctype>
 #include <cmath>
+#include<memory>
 
 #include "platform.h"
 #include "aggregate.h"
 #include "output.h"
 #include "find.h"
 
+typedef struct s_aggregate AGGREGATION;
+
 /** This function builds an collection of objects into an aggregation.  
 	The aggregation can be run using aggregate_value(AGGREGATION*)
  **/
-AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,std,sum,prod,mbe,mean,var,skew,kur,count,gamma) */
-							   char *group_expression) /**< grouping rule; see find_mkpgm(char *)*/
+std::shared_ptr<struct s_aggregate> aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,std,sum,prod,mbe,mean,var,skew,kur,count,gamma) */
+							    char *group_expression) /**< grouping rule; see find_mkpgm(char *)*/
 {
 	AGGREGATOR op = AGGR_NOP;
-	AGGREGATION *result=nullptr;
+	//AGGREGATION *result=nullptr;
+	std::shared_ptr<struct s_aggregate> result = nullptr;
 	char aggrop[9], aggrval[257], *aggrpart;
 	char aggrprop[33], aggrunit[9];
 	unsigned char flags=0x00;
@@ -299,7 +303,9 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 		}
 
 		/* build aggregation unit */
-		result = (AGGREGATION*)malloc(sizeof(AGGREGATION));
+		/*result = (AGGREGATION*)malloc(sizeof(AGGREGATION));*/
+		result = std::make_shared<struct s_aggregate>();
+
 		if (result!=nullptr)
 		{
 			result->op = op;
@@ -338,7 +344,7 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 
 /** This function performs an aggregate calculation given by the aggregation 
  **/
-double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
+double aggregate_value(std::shared_ptr<struct s_aggregate> aggr) /**< the aggregation to perform */
 {
 	OBJECT *obj;
 	double numerator=0, denominator=0, secondary=0, third=0, fourth=0;

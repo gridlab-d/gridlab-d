@@ -1199,11 +1199,11 @@ static int slave(int argc, char *argv[])
 	output_verbose("slave instance for master '%s' using connection '%" FMT_INT64 "x' started ok", global_master, global_master_port);
 	return 1;
 }
-static int slavenode(int argc, char *argv[])
-{
-	exec_slave_node();
-	return CMDOK;
-}
+//static int slavenode(int argc, char *argv[])
+//{
+//	exec_slave_node();
+//	return CMDOK;
+//}
 static int slave_id(int argc, char *argv[])
 {
 	if(argc < 2){
@@ -1452,9 +1452,9 @@ static CMDARG main_cmd[] = {
 	{"redirect",	nullptr,	redirect,		"<stream>[:<file>]", "Redirects an output to stream to a file (or null)" },
 	{"server_portnum", "P", server_portnum, nullptr, "Sets the server port number (default is 6267)" },
 	{"server_inaddr", nullptr, server_inaddr,	nullptr, "Sets the server interface address (default is INADDR_ANY, any interface)"},
-	{"slave",		nullptr,	slave,			"<master>", "Enables slave mode under master"},
-	{"slavenode",	nullptr,	slavenode,		nullptr, "Sets a listener for a remote GridLAB-D call to run in slave mode"},
-	{"id",			nullptr,	slave_id,		"<idnum>", "Sets the ID number for the slave to inform its using to the master"},
+	//{"slave",		nullptr,	slave,			"<master>", "Enables slave mode under master"},
+	//{"slavenode",	nullptr,	slavenode,		nullptr, "Sets a listener for a remote GridLAB-D call to run in slave mode"},
+	//{"id",			nullptr,	slave_id,		"<idnum>", "Sets the ID number for the slave to inform its using to the master"},
 };
 
 int cmdarg_runoption(const char *value)

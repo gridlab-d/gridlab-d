@@ -10,6 +10,8 @@
 //#pragma GCC push_options
 //#pragma GCC optimize ("O0")
 
+#include<memory>
+
 #include "gld_complex.h"
 #include "timestamp.h"
 #include "class.h"
@@ -27,6 +29,9 @@ typedef unsigned short OBJECTSIZE; /** Object data size */
 typedef unsigned int OBJECTNUM; /** Object id number */
 typedef char* OBJECTNAME; /** Object name */
 typedef char FULLNAME[1024]; /** Full object name (including space name) */
+
+typedef struct s_aggregate AGGREGATION; 
+
 
 /* object flags */
 #define OF_NONE		0x0000	/**< Object flag; none set */
@@ -168,8 +173,8 @@ public:
 	void *(*malloc)(size_t);
 	void (*free)(void*);
 	struct {
-		struct s_aggregate *(*create)(char *aggregator, char *group_expression);
-		double (*refresh)(struct s_aggregate *aggregate);
+		std::shared_ptr<struct s_aggregate> (*create)(char *aggregator, char *group_expression);
+		double (*refresh_aggr)(std::shared_ptr<struct s_aggregate>  aggregate);
 	} aggregate;
 	struct {
 		double *(*getvar)(MODULE *module, const char *varname);

@@ -483,9 +483,14 @@ void *instance_slaveproc(void *ptr)
 		/* resume the main loop */
 		// note, if TS_NEVER, we want the slave's exec loop to end normally
 		//output_debug("slave %d controller resuming exec with %lli", slave_id, local_inst.cache->ts);
+		std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
 		output_debug("slave %d controller resuming exec with %lli", local_inst.cache->id, local_inst.cache->ts);
-		output_debug("slave %d controller setting step_to %lli to cache->ts %lli", local_inst.cache->id, exec_sync_get(nullptr), local_inst.cache->ts);
-		exec_sync_merge(nullptr, reinterpret_cast<struct sync_data *>(&local_inst.cache));
+		output_debug("slave %d controller setting step_to %lli to cache->ts %lli", local_inst.cache->id, exec_sync_get(sync_data_nullptr), local_inst.cache->ts);
+
+		//exec_sync_merge(sync_data_nullptr, reinterpret_cast<struct sync_data *>(&local_inst.cache));
+		std::shared_ptr<sync_data> temp_from = std::make_shared<sync_data>(reinterpret_cast<sync_data&>(local_inst.cache));
+
+		exec_sync_merge(sync_data_nullptr, temp_from);
 
 		pthread_cond_broadcast(&mls_inst_signal);
 
@@ -513,8 +518,11 @@ void *instance_slaveproc(void *ptr)
 
 		/* copy the next time stamp */
 		/* how about we copy the time we want to step to and see what the master says, instead? -MH */
-		exec_sync_reset(reinterpret_cast<struct sync_data *>(&local_inst.cache));
-		exec_sync_set(reinterpret_cast<struct sync_data *>(&local_inst.cache),0,false);
+
+		std::shared_ptr<sync_data> d = std::make_shared<sync_data>(reinterpret_cast<sync_data&>(local_inst.cache));
+
+		exec_sync_reset(d);
+		exec_sync_set(d,0,false);
 
 		instance_slave_done();
 	} while (global_clock != TS_NEVER && rv == SUCCESS);
@@ -723,8 +731,12 @@ STATUS instance_slave_init_socket(){
 	local_inst.cache->id = local_inst.id;
 
 	// FIXME: the next two lines compile, but the types are disparate enough that the reinterpret cast could be a problem going forward.
-	exec_sync_set(reinterpret_cast<sync_data*>(&local_inst.cache),pickle.ts,false);
-	exec_sync_merge(nullptr,reinterpret_cast<sync_data*>(&local_inst.cache));
+	std::shared_ptr<sync_data> d = std::make_shared<sync_data>(reinterpret_cast<sync_data&>(local_inst.cache));
+
+	exec_sync_set(d,pickle.ts,false);
+	std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
+
+	exec_sync_merge(sync_data_nullptr,d);
 	if(0 == local_inst.buffer){
 		output_error("malloc() error with li.buffer");
 		return FAILED;
@@ -904,7 +916,9 @@ STATUS instance_slave_init(void)
 //	output_debug("slave %" FMT_INT64 " exited init_pthreads()", local_inst.cacheid);
 //	output_debug("li: %" FMT_INT64 " %d %d %d %d", local_inst.cacheid, local_inst.cachesize, local_inst.name_size, local_inst.prop_size, local_inst.id);
 	
-	global_clock = exec_sync_get(nullptr); // copy time signal to gc, legit since it's from msg
+	std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
+
+	global_clock = exec_sync_get(sync_data_nullptr); // copy time signal to gc, legit since it's from msg
 	output_debug("inst_slave_init(): gc = %lli", global_clock);
 
 	// signal master that slave init is done

@@ -56,31 +56,31 @@ template <typename T>
 void register_object(MODULE* module) {
 
 	//static_assert(std::is_base_of<powerflow_object, T>::value, "T must derive from powerflow_object");
-	std::cout << "Attempting to register type: " << typeid(T).name() << std::endl;
+	//std::cout << "Attempting to register type: " << typeid(T).name() << std::endl;
 
 	T* obj = new T(module);
 	allocated_objects.push_back(std::make_pair(static_cast<gld_object*>(obj), typeid(T).name()));
 
-	std::cout << "Registered object of type: " << typeid(T).name() << ", at: " << obj << std::endl;
+	//std::cout << "Registered object of type: " << typeid(T).name() << ", at: " << obj << std::endl;
 
 }
 
 
 
 void cleanup_tracked_objects() {
-	std::cout << "=== CLEANUP CALLED ===" << std::endl;
-	std::cout << "Number of tracked objects: " << allocated_objects.size() << std::endl;
+	//std::cout << "=== CLEANUP CALLED ===" << std::endl;
+	//std::cout << "Number of tracked objects: " << allocated_objects.size() << std::endl;
 
 	for (const auto& obj_pair : allocated_objects) {
-		std::cout << "Deleting object of type: " << obj_pair.second
-			<< " at: " << obj_pair.first << std::endl;
+		//std::cout << "Deleting object of type: " << obj_pair.second
+			//<< " at: " << obj_pair.first << std::endl;
 
 		try {
 			// Dynamically cast to the base type
 			gld_object* obj = dynamic_cast<gld_object*>(static_cast<gld_object*>(obj_pair.first));
 			if (obj) {
 				delete obj; // Safe deletion
-				std::cout << "Object deleted successfully." << std::endl;
+				//std::cout << "Object deleted successfully." << std::endl;
 			}
 			else {
 				std::cerr << "Failed to match type for object deletion!" << std::endl;
@@ -92,7 +92,7 @@ void cleanup_tracked_objects() {
 		}
 	}
 	allocated_objects.clear();
-	std::cout << "Cleanup completed!" << std::endl;
+	//std::cout << "Cleanup completed!" << std::endl;
 }
 
 

@@ -18,6 +18,8 @@
 #include <string.h>
 #include <math.h>
 
+typedef struct s_aggregate AGGREGATION; /**< forward declaration of the aggregation type */
+
 #ifdef _WINDOWS
 #define isfinite _finite
 #endif
@@ -536,6 +538,7 @@ typedef enum {
 } NOTIFYMODULE; /**< notification message types */
 
 #include "setjmp.h"
+#include<memory>
 typedef struct s_exception_handler {
 	int id; /**< the exception handler id */
 	jmp_buf buf; /**< the \p jmpbuf containing the context for the exception handler */
@@ -1168,8 +1171,8 @@ public:
     void *(*malloc)(size_t);
     void (*free)(void*);
     struct {
-        struct s_aggregate *(*create)(char *aggregator, char *group_expression);
-        double (*refresh)(struct s_aggregate *aggregate);
+        std::shared_ptr<struct s_aggregate> (*create)(char *aggregator, char *group_expression);
+        double (*refresh)(std::shared_ptr<struct s_aggregate> aggregate);
     } aggregate;
     struct {
         double *(*getvar)(MODULE *module, const char *varname);

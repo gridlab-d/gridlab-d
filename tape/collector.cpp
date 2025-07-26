@@ -25,6 +25,8 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
+#include <vector>
+#include<memory>
 
 #include "gridlabd.h"
 #include "object.h"
@@ -63,7 +65,7 @@ EXPORT int create_collector(OBJECT **obj, OBJECT *parent)
 		my->status = TS_INIT;
 		my->trigger[0]='\0';
 		my->format = 0;
-		my->aggr = nullptr;
+		my->aggr = {};
 		return 1;
 	}
 	return 0;
@@ -158,43 +160,83 @@ static TIMESTAMP collector_write(OBJECT *obj)
 	return TS_NEVER;
 }
 
-AGGREGATION *link_aggregates(char *aggregate_list, char *group)
-{
-	char *item;
-	AGGREGATION *first=nullptr, *last=nullptr;
+//AGGREGATION *link_aggregates(char *aggregate_list, char *group)
+//{
+//	char *item;
+//	AGGREGATION *first=nullptr, *last=nullptr;
+//	char1024 list;
+//	strcpy(list,aggregate_list); /* avoid destroying orginal list */
+//	for (item=strtok(list,","); item!=nullptr; item=strtok(nullptr,","))
+//	{
+//		AGGREGATION *aggr = gl_create_aggregate(item,group);
+//		if (aggr!=nullptr)
+//		{
+//			/* TODO: ideally the aggregation group program from the previous should be reused */
+//			if (first==nullptr) first=aggr; else last->next=aggr;
+//			last=aggr;
+//			aggr->next = nullptr;
+//		}
+//		else
+//			return nullptr; // allowable to have null (zero-length) aggrs, but only give time-varying aggregates
+//	}
+//	return first;
+//}
+//
+//int read_aggregates(AGGREGATION *aggr, char *buffer, int size)
+//{
+//	AGGREGATION *p;
+//	int offset=0;
+//	int count=0;
+//	char32 fmt;
+//
+//	gl_global_getvar(const_cast<char *>("double_format"), fmt, 32);
+//	for (p=aggr; p!=nullptr && offset<size-33; p=p->next)
+//	{
+//		if (offset>0) strcpy(buffer+offset++,",");
+//		offset+=sprintf(buffer+offset,fmt,gl_run_aggregate(p));
+//		buffer[offset]='\0';
+//		count++;
+//	}
+//	return count;
+//}
+
+
+std::vector<std::shared_ptr<struct s_aggregate>> link_aggregates(const char* aggregate_list, char* group) {
+	std::vector<std::shared_ptr<struct s_aggregate>> aggregates;
 	char1024 list;
-	strcpy(list,aggregate_list); /* avoid destroying orginal list */
-	for (item=strtok(list,","); item!=nullptr; item=strtok(nullptr,","))
-	{
-		AGGREGATION *aggr = gl_create_aggregate(item,group);
-		if (aggr!=nullptr)
-		{
-			/* TODO: ideally the aggregation group program from the previous should be reused */
-			if (first==nullptr) first=aggr; else last->next=aggr;
-			last=aggr;
-			aggr->next = nullptr;
+	strcpy(list, aggregate_list); // Avoid destroying the original list.
+	char* item = strtok(list, ",");
+
+	while (item != nullptr) {
+		std::shared_ptr<struct s_aggregate> aggr = gl_create_aggregate(item, group);
+		if (aggr != nullptr) {
+			aggregates.push_back(aggr); // Add to the vector.
 		}
-		else
-			return nullptr; // allowable to have null (zero-length) aggrs, but only give time-varying aggregates
+		else {
+			return {}; // Return an empty vector on failure.
+		}
+		item = strtok(nullptr, ",");
 	}
-	return first;
+	return aggregates;
 }
 
-int read_aggregates(AGGREGATION *aggr, char *buffer, int size)
-{
-	AGGREGATION *p;
-	int offset=0;
-	int count=0;
+int read_aggregates(std::vector<std::shared_ptr<struct s_aggregate>>& aggregates, char* buffer, int size) {
+	int offset = 0;
+	int count = 0;
 	char32 fmt;
+	gl_global_getvar("double_format", fmt, 32);
 
-	gl_global_getvar(const_cast<char *>("double_format"), fmt, 32);
-	for (p=aggr; p!=nullptr && offset<size-33; p=p->next)
-	{
-		if (offset>0) strcpy(buffer+offset++,",");
-		offset+=sprintf(buffer+offset,fmt,gl_run_aggregate(p));
-		buffer[offset]='\0';
+	for ( auto& aggr : aggregates) {
+		if (offset > 0) {
+			strcpy(buffer + offset++, ",");
+		}
+		offset += sprintf(buffer + offset, fmt, gl_run_aggregate(aggr));
+		if (offset >= size - 33) {
+			break; // Avoid buffer overflow.
+		}
 		count++;
 	}
+	buffer[offset] = '\0';
 	return count;
 }
 
@@ -211,11 +253,11 @@ TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 
 	/* connect to property */
-	if (my->aggr==nullptr)
+	if (my->aggr.empty())
 		my->aggr = link_aggregates(my->property,my->group);
 
 	/* read property */
-	if (my->aggr==nullptr)
+	if (my->aggr.empty())
 	{
 		sprintf(buffer,"'%s' contains an aggregate that is not found in the group '%s'", (char*)my->property, (char*)my->group);
 		my->status = TS_ERROR;
@@ -232,7 +274,7 @@ TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 
 	//if(my->aggr != nullptr && (my->aggr = link_aggregates(my->property,my->group)),read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
-	if(my->aggr != nullptr && (my->interval == 0 || my->interval == -1)){
+	if(!my->aggr.empty() && (my->interval == 0 || my->interval == -1)) {
 		if(read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
 		{
 			sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property.get_string(), my->group.get_string());
@@ -241,7 +283,7 @@ TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		}
 	}
 
-	if(my->aggr != nullptr && my->interval > 0){
+	if(!my->aggr.empty() && my->interval > 0) {
 		if((t0 >= my->last.ts + my->interval) || (t0 == my->last.ts)){
 			if(read_aggregates(my->aggr,buffer,sizeof(buffer))==0){
 				sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property.get_string(), my->group.get_string());
