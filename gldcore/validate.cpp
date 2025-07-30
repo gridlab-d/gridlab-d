@@ -702,7 +702,7 @@ static size_t process_dir(const char *path, bool runglms=false)
 		else if ( dp->d_type==DT_DIR )
 #endif
 			count+=process_dir(item);
-		else if ( runglms==true && strstr(item,"/test_")!=0 && ext!=NULL && strcmp(ext,".glm")==0 )
+		else if ( runglms==true && strstr(item,"/test_")!=0 && strcmp(ext,".glm")==0 )
 		{
 			pushdir(item);
 			count++;
