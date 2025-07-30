@@ -31,7 +31,8 @@ protected:
 	int read_line(char *, int);
 
 	int column_ct;
-	PROPERTY **columns;
+	//PROPERTY **columns;
+	std::vector<PROPERTY*> columns;
 	TIMESTAMP last_ts; /* time on the last read line */
 
 	weather::unique_ptr_type weather_root; // Using unique_ptr for automatic memory management

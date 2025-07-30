@@ -273,14 +273,17 @@ int csv_reader::read_header(char *line){
 	struct cmnlist {
 		char *name;
 		PROPERTY *column;
-		struct cmnlist *next;
+		//struct cmnlist *next;
+		std::unique_ptr<cmnlist> next; // Use unique_ptr for automatic memory management
 	};
 	char buffer[1024];
 	int index = 0, start_idx = 0;
 	int done = 0;
 	int i = 0;
-	PROPERTY *prop = 0;
-	struct cmnlist *first = 0, *last = 0, *temp = 0;
+	PROPERTY* prop = 0;
+	std::unique_ptr<struct cmnlist> first = nullptr;
+	struct cmnlist *last = nullptr;  //, * temp = 0;
+	std::unique_ptr<cmnlist> temp; // Use unique_ptr for automatic memory management
 
 	// expected format: x,y,z\n
 
@@ -300,7 +303,8 @@ int csv_reader::read_header(char *line){
 			buffer[index] = 0;
 		}
 
-		temp = (struct cmnlist *)malloc(sizeof(struct cmnlist));
+		//temp = (struct cmnlist *)malloc(sizeof(struct cmnlist));
+		temp = std::make_unique<cmnlist>(); // Use unique_ptr for automatic memory management
 		temp->name = buffer+start_idx;
 		temp->column = prop;
 		temp->next = 0;
@@ -309,10 +313,10 @@ int csv_reader::read_header(char *line){
 		++column_ct;
 
 		if(first == 0){
-			first = last = temp;
+			first = last = temp.get();
 		} else {
-			last->next = temp;
-			last = temp;
+			last->next = std::move(temp);
+			last = temp.get();
 		}
 
 		if(buffer[index] == 0 || buffer[index] == '\n' || buffer[index] == '\r'){
@@ -322,8 +326,10 @@ int csv_reader::read_header(char *line){
 	}
 
 	//	find properties for each column header
-	temp = first;
-	columns = (PROPERTY **)malloc(sizeof(PROPERTY *) * (size_t)column_ct);
+	temp = std::move(first);
+	//columns = (PROPERTY **)malloc(sizeof(PROPERTY *) * (size_t)column_ct);
+	columns.resize(column_ct);
+
 	while(temp != 0 && i < column_ct){
 		temp->column = gl_find_property(weather::oclass, temp->name);
 		if(temp->column == 0){
@@ -334,8 +340,9 @@ int csv_reader::read_header(char *line){
 			*/
 			return 0;
 		}
-		columns[i] = temp->column;
-		temp = temp->next;
+		columns[i] = temp->column; // Move ownership to the vector
+		//columns[i] = temp->column;
+		temp = std::move(temp->next);
 		++i;
 	}
 	return 1;
