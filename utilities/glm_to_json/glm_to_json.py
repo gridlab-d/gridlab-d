@@ -67,6 +67,16 @@ def glm_to_json(glmName="TE_CHALLENGE"):
                     (isinstance(field_value, str) and not field_value))
                and field_key not in ['item_cnt', 'entity', 'instances']
         }
+        # Add preamble comments if available
+        preamble = raw.get('__preamble', {})
+        filtered_preamble = {
+            field_key: field_value
+            for field_key, field_value in preamble.items()
+            if not ((isinstance(field_value, list) and not field_value) or
+                    (isinstance(field_value, dict) and not field_value) or
+                    (isinstance(field_value, str) and not field_value))
+               and field_key not in ['item_cnt', 'entity', 'instances']
+        }
         # Build modules and objects using parsed data
         # Modules: from module_entities.instances (single-instance)
         modules = {}
@@ -104,6 +114,7 @@ def glm_to_json(glmName="TE_CHALLENGE"):
         # Compose final JSON structure
         jsonEntity = {
             '_directives': filtered_directives,
+            '__preamble': filtered_preamble,
             'classes': classes,
             'clock': clock_data,
             'modules': modules,
