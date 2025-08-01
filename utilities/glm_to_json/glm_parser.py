@@ -715,10 +715,18 @@ class GLMModel:
                 insideIfDefs.pop()
             intobj = 0
             m = re.match(r'\s*(\S+) ([^;{]+)[;{]', line)
-            if m:
+            if '${' in line and line.strip().endswith(';'):
+                # Split into parameter and value parts
+                tokens = line.split(None, 1)
+                if len(tokens) > 1:
+                    param = tokens[0]
+                    # Remove the trailing semicolon from the remainder
+                    val = tokens[1].rsplit(";", 1)[0].strip()
+                    processed_name, updated_line = self._process_object_parameter(param, val, name_prefix,
+                             insideIfDefs, params, comments, inside_comments, line)
+            elif m:
                 param = m.group(1)
                 val = m.group(2)
-                
                 if param == 'object':
                     # found a nested object
                     intobj += 1
@@ -735,7 +743,7 @@ class GLMModel:
                     if updated_line != line:
                         line = updated_line
 
-            if re.search('}', line):
+            if line.count('}') > line.count('{'):
                 if intobj:
                     intobj -= 1
                     line = next(itr)
@@ -1024,3 +1032,4 @@ class GLMModel:
         
         # If no match found, return original line
         return line
+
