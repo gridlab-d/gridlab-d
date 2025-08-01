@@ -135,6 +135,9 @@ class GLMModel:
             entity.add_attr("TEXTARRAY", "#system", "", "systems", value=[])
             entity.add_attr("TEXTARRAY", "#start", "", "starts", value=[])
             self.module_entities["_directives"] = entity
+            entity = Entity("__preamble", None)
+            entity.add_attr("TEXTARRAY", "Preamble comments", "", "comments", value=[])
+            self.module_entities["__preamble"] = entity
             for module_name in self.classes:
                 self.module_types.append(module_name)
                 for object_name in self.classes[module_name]:
@@ -893,7 +896,14 @@ class GLMModel:
         self.outside_errors = []
         if os.path.isfile(filename):
             lines = self._read_file_lines(filename)
-
+            
+            # New preamble processing:
+            preamble_lines = []
+            while lines and lines[0].startswith("//"):
+                preamble_lines.append(lines.pop(0))
+            # Save the preamble as its own object in the model
+            self.module_entities['__preamble'].comments = preamble_lines
+            
             itr = iter(lines)
 
             for line in itr:
