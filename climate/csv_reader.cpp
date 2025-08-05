@@ -313,7 +313,8 @@ int csv_reader::read_header(char *line){
 		++column_ct;
 
 		if(first == 0){
-			first = last = temp.get();
+			first = std::move(temp);
+			last = first.get();
 		} else {
 			last->next = std::move(temp);
 			last = temp.get();
