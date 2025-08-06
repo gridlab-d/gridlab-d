@@ -42,43 +42,37 @@ The factors listed below indicate the data needed to calculate the indices. All 
 
 SAIFI, the system average interruption frequency index, shows how often the average customer experiences a sustained interruption over a period of time. In GridLAB-D that period of time is a year. The equation below is used to calculate SAIFI. 
 
-$$SAIFI = \frac{\sum N_i}{N_T} 
-$$
+$$SAIFI = \frac{\sum N_i}{N_T}$$
 
 #### SAIDI
 
 SAIDI, the system average interruption duration index, shows the average duration of a sustained interruption for a customer during the reporting period. In GridLAB-D this index is given in minutes. The equation below is used to calculate SAIDI. 
 
-$$SAIDI = \frac{\sum r_i N_i}{N_T} 
-$$
+$$SAIDI = \frac{\sum r_i N_i}{N_T}$$
 
 #### CAIDI
 
 CAIDI, the customer average interruption duration index, shows average time needed to restore service. This index is given in minutes in GridLAB-D. The equation below is used to calculate CAIDI. 
 
-$$CAIDI = \frac{SAIDI}{SAIFI} 
-$$
+$$CAIDI = \frac{SAIDI}{SAIFI}$$
 
 #### CTAIDI
 
 CTAIDI, the customer total average interruption duration index, shows the total average time that customers who experienced an interruption were without power. This index is given in minutes in GridLAB-D. The equation below is used to calculate CTAIDI. 
 
-$$CTAIDI = \frac{\sum r_i N_i}{CN} 
-$$
+$$CTAIDI = \frac{\sum r_i N_i}{CN}$$
 
 #### CAIFI
 
 CAIFI, the customer average interruption frequency index, shows average frequency of sustained interruptions experienced for customers who actually experienced a sustained interruption. The equation below is used to calculate CAIFI. 
 
-$$CAIFI = \frac{\sum N_i}{CN} 
-$$
+$$CAIFI = \frac{\sum N_i}{CN}$$
 
 #### ASAI
 
 ASAI, the average service availability index, shows the fraction of time that a customer has received power during the reporting period. This index is given as a percentage within GridLAB-D. The equation below is used to calculate ASAI 
 
-$$ASAI = \frac{N_T * (Number of hours / year) - \sum r_i N_i}{N_T * (Number of hours / year)} 
-$$
+$$ASAI = \frac{N_T * (Number of hours / year) - \sum r_i N_i}{N_T * (Number of hours / year)}$$
 
 _NOTE: There is no specification between regular years and leap years when calculating this index in GridLAB-D. The regular 8760 hours/year is used when calculated this index._
 
@@ -86,8 +80,7 @@ _NOTE: There is no specification between regular years and leap years when calcu
 
 $CEMI_n$, the customers experiencing multiple interruptions index, shows the fraction of individual customers experiencing more than $n$ sustained interruptions over the total number of customers served. The equation below is used to calculate the index. 
 
-$$CEMI_n = \frac{\sum CN_{(k>n)}}{N_T} 
-$$
+$$CEMI_n = \frac{\sum CN_{(k>n)}}{N_T}$$
 
 ### Load Based Indices
 
@@ -95,15 +88,13 @@ $$
 
 ASIFI, the average system interruption frequency index, is based on load instead of number of customers interrupted. This index is useful analyzing distribution systems made up primarily of industrial and commercial customers. If the system being analyzed had a homogeneous load distribution, then ASIFI would be the same as SAIFI. Also this index includes only interrupted load from sustained interruption events. The equation below is used to calculate the index. 
 
-$$ASIFI = \frac{\sum L_i}{L_T} 
-$$
+$$ASIFI = \frac{\sum L_i}{L_T}$$
 
 #### ASIDI
 
 ASIDI, the average system interruption duration index, is based on load instead of number of customers interrupted. Its use is the same a previously discussed in the section above. The equation below is used to calculate the index. 
 
-$$ASIFI = \frac{\sum r_i L_i}{L_T} 
-$$
+$$ASIFI = \frac{\sum r_i L_i}{L_T}$$
 
 ### Momentary Interruption Indices
 
@@ -112,22 +103,19 @@ $$
 MAIFI, the momentary average interruption frequency index, shows the average frequency of momentary interruption. The equation below is used to calculate the index. 
 
 
-$$MAIFI = \frac{\sum IM_i N_{mi}}{N_T} 
-$$
+$$MAIFI = \frac{\sum IM_i N_{mi}}{N_T}$$
 
 #### MAIFI$_E$$
 
 MAIFI$_E$, the momentary average interruption event frequency index, shows the average frequency of momentary interruption events. The equation below is used to calculate the index. 
 
-$$MAIFI_E = \frac{\sum IM_E N_{mi}}{N_T} 
-$$
+$$MAIFI_E = \frac{\sum IM_E N_{mi}}{N_T}$$
 
 #### $CEMSMI_n$
 
 $CEMSMI_n$, customers experiencing multiple sustained interruption and momentary interruption events, shows the fraction of individual customers who experienced more than $n$ interruption events of any kind over the total customers served. This index looks a how many events a customer experienced, regardless of whether they are sustained or momentary. The equation below is used to calculate the index. 
 
-$$CEMSMI_n = \frac{\sum CNT_{(k>n)}}{N_T} 
-$$
+$$CEMSMI_n = \frac{\sum CNT_{(k>n)}}{N_T}$$
 
 ### References
 
@@ -340,6 +328,7 @@ The reliability module must be able to perform the following tasks:
 
 
 $$PDF : f(t) = (\gamma/t)(t/\alpha)^\gamma e^{-(t/\alpha)^\gamma}$$ 
+
 $\lambda = \frac{\gamma}{\alpha}(\frac{t}{\alpha})^{\gamma -1}$
 
 when, $\gamma =1$,$\alpha = \frac{1}{\lambda}$
@@ -356,6 +345,7 @@ where,
   * MTTR = time to diagnose a problem + time to get repair technician on-site + time to physically repair a system. As an example , Pareto distribution to obtain MTTR is described below.
 
 $$PDF: f(t) = \frac{C \alpha m^ \alpha}{t^ \alpha+1}, m<=t<=n$$
+
 $C = \frac {1} {1-(n/m)^\alpha}$
 
 where 

@@ -13,7 +13,7 @@ Implementation details
 
 The GridLAB-D dynamic simulations represent electro-mechanic transients of unbalanced micro grid operation. The synchronous machines models are in fundamental frequency phasor representation considering unbalanced operation. The network and loads are represented with a full abc model. Additionally, diesel governor control and automatic voltage regulators are modeled. Figure 1 briefly presents the overall algorithm. Each model in the algorithm is explained in detail below. 
 
-![Figure 1](../../../images/Sub-second_algorithm.png)
+![Figure 1](../../../../images/Sub-second_algorithm.png)
 
 Figure 1. Overall algorithm of sub-second implementation
 
@@ -23,54 +23,54 @@ The following variables and parameters are used in the dynamic model equations b
 
 Table 1 - Equation Notation  
 
-| Variable                          | Definition                                                                                       
+| Variable                          | Definition                           
 |-|-|
-| $i$                               | Generator connected to bus i                                                                    
-| $E^\prime_{d,qi}$                 | Transient voltages for direct and quadrature axis                                               
-| $E^{\prime\prime}_{d,qi}$         | Subtransient voltages for direct and quadrature axis                                            
-| $\psi_{1d,2qi}$                   | Flux linkages of direct and quadrature axis dampers                                             
+| $i$ | Generator connected to bus i
+| $E^\prime_{d,qi}$                 | Transient voltages for direct and quadrature axis
+| $E^{\prime\prime}_{d,qi}$         | Subtransient voltages for direct and quadrature axis              
+| $\psi_{1d,2qi}$                   | Flux linkages of direct and quadrature axis dampers               
 | $T^\prime_{do,qoi}$               | Open circuit transient time constants for direct and quadrature axis                           
 | $T^{\prime\prime}_{do,qoi}$       | Open circuit subtransient time constants for direct and quadrature axis                        
-| $x^\prime_{d,qi}$                 | Transient reactances for direct and quadrature axis                                             
-| $x^{\prime\prime}_{d,qi}$         | Subtransient reactances for direct and quadrature axis                                          
-| $x_{li}$                          | Leakage reactance                                                                               
-| $R_{0,1,2i}$                      | Zero, positive, and negative sequence resistances                                              
-| $I_{d,qi}$                        | Currents for direct and quadrature axis                                                        
-| $I_{0,1,2i}$                      | Zero, positive, and negative sequence stator currents                                          
-| $E_{fd}$                          | Field voltage                                                                                  
-| $\omega_{i}$                      | Rotor mechanical speed                                                                         
-| $\omega_{s}$                      | Rated rotor mechanical speed                                                                   
-| $\delta_i$                        | Rotor angular position                                                                         
-| $T_{mechi}$                       | Mechanical torque                                                                              
-| $H_{i}$                           | Inertia constant                                                                               
-| $D_{i}$                           | Machine damping                                                                                
+| $x^\prime_{d,qi}$                 | Transient reactances for direct and quadrature axis               
+| $x^{\prime\prime}_{d,qi}$         | Subtransient reactances for direct and quadrature axis            
+| $x_{li}$                          | Leakage reactance                   
+| $R_{0,1,2i}$                      | Zero, positive, and negative sequence resistances                
+| $I_{d,qi}$                        | Currents for direct and quadrature axis                          
+| $I_{0,1,2i}$                      | Zero, positive, and negative sequence stator currents            
+| $E_{fd}$                          | Field voltage                      
+| $\omega_{i}$                      | Rotor mechanical speed             
+| $\omega_{s}$                      | Rated rotor mechanical speed       
+| $\delta_i$                        | Rotor angular position             
+| $T_{mechi}$                       | Mechanical torque                  
+| $H_{i}$                           | Inertia constant                   
+| $D_{i}$                           | Machine damping                    
 | $\left[ E^{\prime\prime}_{a,b,c} \right]$ | Vector of internal machine subtransient voltages in abc coordinates                           
-| $V_{a,b,c}$                       | Network bus voltages in abc coordinates                                                       
-| $I_{a,b,c}$                       | Network bus current injections in abc coordinates                                             
-| $\left[ Jac \right]$              | Jacobian matrix of three-phase power flow solution                                            
-| $\left[ Y_{Ga,b,ci} \right]$      | Matrix of machine subtransient admittances in abc coordinates                                 
+| $V_{a,b,c}$                       | Network bus voltages in abc coordinates                         
+| $I_{a,b,c}$                       | Network bus current injections in abc coordinates               
+| $\left[ Jac \right]$              | Jacobian matrix of three-phase power flow solution              
+| $\left[ Y_{Ga,b,ci} \right]$      | Matrix of machine subtransient admittances in abc coordinates   
 | $Y_{G0,1,2i}$                     | Machine subtransient admittances in symmetrical components coordinates                        
-| $\left[ I_{GSa,b,ci} \right]$     | Vector of machine Norton current sources in abc coordinates                                   
-| $P_{T}, Q_{T}$                    | Total terminal active and reactive generated power                                            
+| $\left[ I_{GSa,b,ci} \right]$     | Vector of machine Norton current sources in abc coordinates     
+| $P_{T}, Q_{T}$                    | Total terminal active and reactive generated power              
 | $I_{GS 0,1,2}$                    | Machine Norton current sources in symmetrical component coordinates                           
-| $\left[ V_{Ga,b,c} \right]$       | Vector of generator phase terminal voltages                                                   
-| $V_{R}$                           | Regulator voltage                                                                              
-| $V_{set}$                         | Voltage setting of automatic voltage regulator (AVR)                                          
-| $V_{err}$                         | Control error for AVR                                                                         
-| $x_{b}$                           | State variable of AVR transient gain reduction                                                
-| $T_{B}$                           | Time constant of AVR transient gain reduction                                                 
-| $T_{C}$                           | Time constant of AVR transient gain reduction                                                 
-| $T_{A}$                           | Exciter time constant                                                                          
-| $K_{A}$                           | Exciter gain                                                                                  
-| $E_{MAX,MIN}$                     | Exciter limits                                                                                
-| $\omega_{set}$                    | Governor speed setting                                                                        
-| $R$                               | Governor droop                                                                                
-| $x_{1,2}$                         | Governor electric control box state variables                                                
-| $T_{1,2,3}$                       | Governor electric control box time constants                                                 
-| $y_{gov}$                         | Governor electric control box output                                                         
-| $K$                               | Governor actuator gain                                                                       
-| $x_{4,5,6}$                       | Governor actuator state variables                                                            
-| $T_{4,5,6}$                       | Governor actuator time constants                                                             
+| $\left[ V_{Ga,b,c} \right]$       | Vector of generator phase terminal voltages                     
+| $V_{R}$                           | Regulator voltage                  
+| $V_{set}$                         | Voltage setting of automatic voltage regulator (AVR)            
+| $V_{err}$                         | Control error for AVR             
+| $x_{b}$                           | State variable of AVR transient gain reduction                  
+| $T_{B}$                           | Time constant of AVR transient gain reduction                   
+| $T_{C}$                           | Time constant of AVR transient gain reduction                   
+| $T_{A}$                           | Exciter time constant              
+| $K_{A}$                           | Exciter gain                      
+| $E_{MAX,MIN}$                     | Exciter limits                    
+| $\omega_{set}$                    | Governor speed setting            
+| $R$                               | Governor droop                    
+| $x_{1,2}$                         | Governor electric control box state variables                  
+| $T_{1,2,3}$                       | Governor electric control box time constants                   
+| $y_{gov}$                         | Governor electric control box output                           
+| $K$                               | Governor actuator gain           
+| $x_{4,5,6}$                       | Governor actuator state variables
+| $T_{4,5,6}$                       | Governor actuator time constants 
 | $y_{throttle}$                    | Governor actuator output (throttle)      
 
 

@@ -52,27 +52,27 @@ $$J \frac{\mathrm{d} }{\mathrm{d} t} \Omega_{r,2} = \frac{\mathrm{P}}{4} \cdot L
 Case 1 simulates a step change in mechanical torque at constant grid voltage. A torque step is applied at time t=10 sec. Fig 1. demonstrates constant quadrature axis voltage. Fig.2 indicates step change in torque. Following are the simulation results. Fig. 3 shows the impact of a step change in torque on direct axis current. Fig. 4 shows the impact of a step change in torque on quadrature axis current. Fig. 5 and Fig.6 show dc and second harmonic component of speed respectively. 
 
 
-![Q axis voltage](../../images//300px-Q_axisvotage_Tstep.png)
+![Q axis voltage](../../../../../images//300px-Q_axisvotage_Tstep.png)
 
 Figure 2. Q axis voltage
 
-![Step change in torque](../../images//300px-Torque_Tstep.png)
+![Step change in torque](../../../../../images//300px-Torque_Tstep.png)
 
 Figure 2. Step change in torque
 
-![Direct axis current](../../images//300px-Ids_Tstep.png)
+![Direct axis current](../../../../../images//300px-Ids_Tstep.png)
 
 Figure 3. Direct axis current
 
-![Quadrature axis current](../../images//300px-Iqs_Tstep.png)
+![Quadrature axis current](../../../../../images//300px-Iqs_Tstep.png)
 
 Figure 4. Quadrature axis current
 
-![Speed](../../images//300px-Wrze_Tstep.png)
+![Speed](../../../../../images//300px-Wrze_Tstep.png)
 
 Figure 5. Speed
 
-![Second harmonic component of Speed](../../images//300px-Wrtw_Tstep.png)
+![Second harmonic component of Speed](../../../../../images//300px-Wrtw_Tstep.png)
 
 Figure 6. Second harmonic component of Speed
 
@@ -81,27 +81,27 @@ Figure 6. Second harmonic component of Speed
 Case 2 simulates a step change in grid voltage. A constant load torque is considered. Following are the simulation results. Fig. 9 shows impact of step change in voltage on direct axis current. Fig. 10 shows impact of step change in voltage on quadrature axis current. Fig.11 and Fig.12 shows dc and second harmonic component of speed respectively. 
 
 
-![Q axis voltage](../../images//300px-Q_axisvotage_Vstep.png)
+![Q axis voltage](../../../../../images//300px-Q_axisvotage_Vstep.png)
 
 Figure 7. Q axis voltage
 
-![Step change in torque](../../images//300px-Torque_Vstep.png)
+![Step change in torque](../../../../../images//300px-Torque_Vstep.png)
 
 Figure 8. Step change in torque
 
-![Direct axis current](../../images//300px-Ids_Vstep.png)
+![Direct axis current](../../../../../images//300px-Ids_Vstep.png)
 
 Figure 9. Direct axis current
 
-![Quadrature axis current](../../images//300px-Iqs_Vstep.png)
+![Quadrature axis current](../../../../../images//300px-Iqs_Vstep.png)
 
 Figure 10. Quadrature axis current
 
-![Speed](../../images//300px-Wrze_Vstep.png)
+![Speed](../../../../../images//300px-Wrze_Vstep.png)
 
 Figure 11. Speed
 
-![Second harmonic component of Speed](../../images//300px-Wrtw_Vstep.png)
+![Second harmonic component of Speed](../../../../../images//300px-Wrtw_Vstep.png)
 
 Figure 12. Second harmonic component of Speed
 

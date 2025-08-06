@@ -2,137 +2,136 @@
 
 The following is a conversion of the outline originally written by Trevor Hardy and serves as a proposed table of contents for the final documentation. Feel free to edit and add details as needed.
 
-## 0.0 GridLAB-D
-
-### Splash or Landing Page (Not gridlabd.org)
+## Home
+Splash or Landing Page (Not gridlabd.org)
  A few paragraphs and/or a few-minute introductory video describing what GLD is and what people use it for. Lots of pictures, easy to digest, accessible to as broad an audience as possible while answering the question “Is GLD useful for me? Should I keep reading?” 
 
-### Quickstart Guide
+ - What is GLD?
+ - Who should use GLD?
+ - How do I cite GLD?
 
-#### Installing pre-build binaries 
-
-#### Running existing example 
-
-#### Link to support pages 
-
-### Installation and Compliation Guide
-
-#### Installing and Validating Pre-Built Binaries
-
-#### Building from Source
-
-### Support Page
-- Email address 
-- Github discussions
-- Chat-with-GLD-experts server (Discord, Gittr) 
-- Link to example suite
-- Link to GLD autotests 
-- Link to source code repo
-
-
-### Publications
-- Citing GLD
-  - Current preferred citation
-  - Historical citations
+## 0.0 GridLAB-D
+- **Contact**
+- **Version History**
+- **Projects**
+- **Publications**
+- **Resources & Support**
+  - Email address 
+  - Github discussions
+  - Chat-with-GLD-experts server (Discord, Gittr) 
+  - Link to example suite
+  - Link to GLD autotests 
+  - Link to source code repo
+- **Style Guide**
 
 ## 1.0 Prospective Users
+- **Key Attributes of GLD**
+- ***Technical Overview*** -
+A few pages, describing what GLD can do in more detail. This section is for those that are pretty sure GLD can do something they want and they want to make sure. Still lots of graphics but meant to be browsed and read in 15 minutes or less. Probably each of the sections below has one or more links to dedicated content elsewhere if the reader wants to know more. *Consider this as an executive summary of our documentation work, revisit when the bulk of the docs/our narrative plan are complete*
 
-### Technical Overview
-A few pages, describing what GLD can do in more detail. This section is for those that are pretty sure GLD can do something they want and they want to make sure. Still lots of graphics but meant to be browsed and read in 15 minutes or less.
-
-Probably each of the sections below has one or more links to dedicated content elsewhere if the reader wants to know more.
-
-#### How GLD models the power system and how that’s expressed in a .glm 
-- Object definition through parameters 
-- Object synchronization through time 
-- Quasi-static time series (not true dynamics)
-
-#### Commonly Used Functionality
+  - How GLD models the power system and how that’s expressed in a .glm 
+  - Object definition through parameters 
+  - Object synchronization through time 
+  - Quasi-static time series (not true dynamics)
+  - Commonly Used Functionality -
 Showing off the popular integrated models and the interaction between the devices that makes GLD a great platform for doing this kind of modeling.
+  - Powerflow
+  - Single-zone Structure Model (House)
+  - Smart Grid Devices
+    - Single-zone structure with HVAC (nominally residential home) 
+    - Rooftop solar 
+    - Battery 
+    - EV 
+  - Three-Phase Unbalanced Transients (Deltamode)
+  - Co-Simulation with HELICS
+  - libgld - 
+  Using GLD as an engine in a larger application. Make your own GUI, make a purpose-built script that runs your analysis, use other models as part of the GLD simulation.
 
-##### Powerflow
+## New Users
 
-##### Single-zone Structure Model (House)
-
-##### Smart Grid Devices
-- Single-zone structure with HVAC (nominally residential home) 
-- Rooftop solar 
-- Battery 
-- EV 
-
-##### Three-Phase Unbalanced Transients (Deltamode)
-
-##### Co-Simulation with HELICS
-
-##### libgld
-Using GLD as an engine in a larger application. Make your own GUI, make a purpose-built script that runs your analysis, use other models as part of the GLD simulation.
-
-## 2.0 New Users
-- Start with installation instructions
-  - make sure to include the .exe easy installto get people up and running quickly
-  - also include full install
-  - link to build instructions, but those live in dev section
-- Demo that starts with quick install and running a small, simple model
-- Simpler theory of operation doc--existing one seems more like a dev page
-
-
+- **Getting Started**
+- ***Installation*** - This page needs work/creation
+  - installing and validating pre-built binaries, 
+  - exe
+  - building from source
+- **Theory of Operation** - most of this page seems like dev theory, might make sense to move most of if there and the first few sections to *Prospective Users/Technical Overview*
+- ***Running existing example*** - this page needs to be created. Something very simple that serves as a test of the installation and produces some plots to look at for verification.
 
 ## 3.0 Modeler Guide
-Where does delta mode fit? Where is it first introduced, where is the bulk of the content?
-- consult with dev team about role of delta mode
+- Who is a “modeler” and what does this guide intends to provide?
+    - By the time folks have gotten to this section, we assume they have reviewed the installation instructions and the key attributes of GLD (Chapters 1-2 in original wiki tutorial)
+  - Where does delta mode fit? Where is it first introduced, where is the bulk of the content?
+    - consult with dev team about role of delta mode
 
+### Intro to Modeling
+ - 3.1.1 Basic Distribution System Modeling
+ - 3.1.2 GLM Models
+    - GLD model file formats
+ - 3.1.3 Modules
+    - Class hierarchy and property inheretance
+    - Tape
+    - Clock
+    - Message
+    - Market
+    - Verifying of Debugging a Model
+      - What are the red flags?
+      - Common warnings that can be avoided
+      - If we make validation scripts, how to use them
+ - 3.1.4 Recorders and Players
+ - 3.1.5 Schedules and Loadshapes
+ - 3.1.6 Distributed Generation
+    - Device models - One page for each model listing all properties and what they do. Often there are multiple properties that are related so we might want to create sub-sections around functionality and describe the related parameters there.
+    - Non-Device models
+ - 3.1.7 Advanced Distribution Models
+ - 3.1.8 Built-In Distribution Models
 
-### Who is a “modeler” and what does this guide intends to provide? 
+### Modules
+- Climate
+- Commercial
+- Connection
+- Market
+- mysql
+- Network
+- Objects (doesn't really fit)
+- Powerflow
+- Residential
+- *Assert*
+- *Module Functions*
+- *Module Globals*
+- *Tape*
 
-### Class hieararcy and property inheritance
+### Metrics & Recorders
 
-### GLD Model File Formats
+### Loads
 
-### Device models
-One page for each model listing all properties and what they do. Often there are multiple properties that are related so we might want to create sub-sections around functionality and describe the related parameters there.
+### MISC
 
-Link to any related examples in "6.0 Examples"
-
-### Non-device models
-
-#### Tape Module objects
-
-#### Clock
-
-#### Message
-
-#### Market objects
-
-#### Other Objects Trevor is forgetting
-
-### Verifying or Debugging a Model
-- What are the red flags?
-- Common warnings that can be avoided
-- If we make validation scripts, how to use them
-
+### Modeling Reference
+- Debugging and Validation
+- Delta Mode and Timing
 
 ## 4.0 Developer 
+Who is a “developer” and what this guide intends to provide 
 
-### Who is a “developer” and what this guide intends to provide 
-
-### GLD object synchronization process
+### 4.1 Introduction
+### 4.2 Building from Source
+### 4.3 Software Architecture & Design
+### 4.4 Developer Fundamentals
+### 4.5 Deltamode Development
+- GLD object synchronization process
 - UML sequence diagram?
+### 4.6 Debugging
 
-### Parallelization implementation 
+### Other
+- Parallelization implementation 
+- Loader 
+- Device Model Structure
+- libgld
+- Contributing
+- Running and Adding tests
+- Submitting a PR
 
-### Loader 
-
-### Device Model Structure
-
-### libgld
-
-### Contributing
-
-#### Style Guide
-
-#### Running and Adding tests
-
-#### Submitting a PR
+#### 4.7 Style Guide
 
 #### Doxygen API documentation (largely auto-generated) 
 Does this make a class hierarchy diagram automatically or do we need to add one in separately?
@@ -140,23 +139,17 @@ Does this make a class hierarchy diagram automatically or do we need to add one 
 
 ## 5.0 Integrator Guide
 
-### Who is an “integrator” and what this guide intends to provide 
+Who is an “integrator” and what this guide intends to provide 
 
-### Overview of libgld
-
-### Common APIs
-
-#### Loading and running a model, pausing execution
-
-#### Setting a property value 
-
-#### Getting a value out from the model (APIs to make your own Tape module)
-
-### Common Applications of libgld
-Just links to things in "6.0 Examples"?
-
-### Doxygen API reference?
-Somewhere we need to have a comprehensive list of the APIs Integrators can use 
+- Overview of libgld
+- Common APIs
+- Loading and running a model, pausing execution
+- Setting a property value 
+- Getting a value out from the model (APIs to make your own Tape module)
+- Common Applications of libgld
+    - Just links to things in "6.0 Examples"?
+- Doxygen API reference?
+    - Somewhere we need to have a comprehensive list of the APIs Integrators can use 
 
 
 

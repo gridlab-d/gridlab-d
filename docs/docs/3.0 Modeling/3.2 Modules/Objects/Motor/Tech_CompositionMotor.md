@@ -29,7 +29,7 @@ Although there are many variables associated with the mechanical components of a
 
 The mechanical torque τm is related to the motor electric torque τe via the shaft speed ωr as τe \- τm=J(dωr)/dt+Kωr, (1.3 2) where J is the rotational inertia and K is the friction constant of the shaft, respectively. The second quantity is the compressor thermal capacity Qcomp supplied into the interior environment of the building. The thermal capacity required by the interior environment is driven by the thermal preferences of building occupants as specified through the indoor air temperature set point Tset and affected by the current indoor air temperature Tin and outdoor air temperatures Tout, respectively. Take the heating for example. The higher Tset or the lower Tin and Tout will lead to higher Qcomp. Although Qcomp still depends on those inherent attributes of the given heat pump, only Tset, Tin and Tout are practically available to the building occupants. 
 
-[![Basic diagram of the motor load model.](../../images/300px-Picture1.png)](/wiki/File:Picture1.png)
+[![Basic diagram of the motor load model.](../../../../../images/300px-Picture1.png)](/wiki/File:Picture1.png)
 
 Figure 1. Basic diagram of the motor load model.
 

@@ -1,12 +1,10 @@
-# Tech:Commercial
-
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Tech:Commercial
+# Commercial Module
 
 The Commercial Module implements commercial building models. Version 1.0 of this module only supports single-zone office buildings. Support for additional commercial buildings types is planned, including multi-zone office, schools, stores, and refrigerated warehouses. 
 
 ## Small Office Building
 
-![The Equivalent Thermal Parameters (ETP) model](../../../images/300px-Commercial_Module_Guide_Figure_1.png)
+![The Equivalent Thermal Parameters (ETP) model](../../../../../images/300px-Commercial_Module_Guide_Figure_1.png)
 
 Figure 1 - The Equivalent Thermal Parameters (ETP) model
 
@@ -265,7 +263,7 @@ Tech:Commercial \- Linearized solution of the Equivalent Thermal Parameters meth
 
 ## Methodology
 
-![6-Node Thermal Network](../../../images/300px-Tech-Multizone_ETP_Linearization_Figure_1.png)
+![6-Node Thermal Network](../../../../../images/300px-Tech-Multizone_ETP_Linearization_Figure_1.png)
 
 Figure 1. 6-Node Thermal Network
 
@@ -329,7 +327,7 @@ Solving for the temperature of the node at time t+Δt:
 
 $$T_n(t+\Delta t)=\frac{Q_n(t)+\sum_{m=1}^M U_{mn}T_m(t+\Delta t)}{\sum_{m=1}^M U_{mn}} \tag{9}$$
 
-![Reduced equivalent of 6-node thermal network](../../../images/300px-Tech-Multizone_ETP_Linearization_Figure_2.png)
+![Reduced equivalent of 6-node thermal network](../../../../../images/300px-Tech-Multizone_ETP_Linearization_Figure_2.png)
 
 Figure 2. Reduced equivalent of 6-node thermal network
 
@@ -339,7 +337,7 @@ The simplest way to resolve this is to reduce the network to an equivalent netwo
 
 #### Series massless nodes configurations
 
-![Series massless node reduction](../../../images/Tech-Multizone_ETP_Linearization_Figure_3a.png)
+![Series massless node reduction](../../../../../images/Tech-Multizone_ETP_Linearization_Figure_3a.png)
 
 Figure 3a - Series massless node reduction
 
@@ -349,7 +347,7 @@ $$U_{xy} = \frac{U_{xw} + U_{wy}}{U_{xw} U_{wy}} \tag{10}$$
 
 #### Parallel massless nodes configurations
 
-![Parallel thermal path reduction](../../../images/Tech-Multizone_ETP_Linearization_Figure_3b.png)
+![Parallel thermal path reduction](../../../../../images/Tech-Multizone_ETP_Linearization_Figure_3b.png)
 
 Figure 3b - Parallel thermal path reduction
 
@@ -454,31 +452,9 @@ In general, it may be best to assume that if the user specified “unneeded” n
 
 This method was developed by Robert G. Pratt and Lucy Huang at Pacific Northwest National Laboratory 
 
-## See also
-
-  * [User's manuals]
-    * [Commercial module]
-    * Building types 
-      * [Office]
-      * [Large office] **TODO**: 
-      * [Small office] **TODO**: 
-      * [Retail] **TODO**: 
-      * [Grocery] **TODO**: 
-      * [Food_service] **TODO**: 
-      * [Lodging] **TODO**: 
-      * [School] **TODO**: 
-      * [Health] **TODO**: 
-  * Technical documents 
-    * [Requirements]
-    * [Specifications]
-    * Technical support document
-    * [Developer's guide]
-    * [Validation]
-  * [Residential]
-  * [Modules]
 # ETP Equation Solution Algorithm
 
-![The general ETP equation](../../../images/300px-Commercial_Module_Guide_Figure_2.png)
+![The general ETP equation](../../../../../images/300px-Commercial_Module_Guide_Figure_2.png)
 
 Figure 2 - The general ETP equation
 
@@ -511,13 +487,3 @@ When a solution exists the starting point $t_0$ of the numerical solution must b
 * * *
 
 Authors: David Chassin and Ross Guttromson, Pacific Northwest National Laboratory, Richland Washington (USA), PNNL 17615, May 2008. 
-
-# See also
-
-  * [User's manual]
-  * [Requirements]
-  * [Specifications]
-  * [Implementation]
-  * [Hassayampa (Version 3.0)]
-  1. ↑ Seem 1989
-

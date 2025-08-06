@@ -1,4 +1,5 @@
 # Running Simulations
+TODO: Turn this into a new-user example of how to run a simple simulation. Move more in-depth content to later sections where appropriate.
 
 ## Installation Notes
 

@@ -24,13 +24,11 @@ Each load type has a contribution from residential, commercial, industrial and a
 
 Taken together the combined power factor of the constant loads is 
 
-$$PF = \begin{cases} P_q + I_q + Z_q = 0 & 1 \\\ P_q + I_q + Z_q > 0 & \frac{P_p+I_p+Z_p}{\sqrt{(P_p+I_p+Z_p)^2+(P_q+I_q+Z_q)^2}} \\\ P_q + I_q + Z_q < 0 & -\frac{P_p+I_p+Z_p}{\sqrt{(P_p+I_p+Z_p)^2+(P_q+I_q+Z_q)^2}} \end{cases} 
-$$
+$$PF = \begin{cases} P_q + I_q + Z_q = 0 & 1 \\\ P_q + I_q + Z_q > 0 & \frac{P_p+I_p+Z_p}{\sqrt{(P_p+I_p+Z_p)^2+(P_q+I_q+Z_q)^2}} \\\ P_q + I_q + Z_q < 0 & -\frac{P_p+I_p+Z_p}{\sqrt{(P_p+I_p+Z_p)^2+(P_q+I_q+Z_q)^2}} \end{cases}$$
 
 The total power (magnitude) $P_{total}$ of the composite load is 
 
-$$P_{total} \approx |P_E| + |P_A| + |P_B| + |P_C| + |P_D| + \sqrt{(P_p+I_p+Z_p)^2+(P_q+I_q+Z_q)^2} 
-$$
+$$P_{total} \approx |P_E| + |P_A| + |P_B| + |P_C| + |P_D| + \sqrt{(P_p+I_p+Z_p)^2+(P_q+I_q+Z_q)^2}$$
 
 # Climate
 
@@ -160,26 +158,19 @@ $$
 
 The final diversified end-use load is computed by looking up the rescaled ELCAP demand for the season (winter/summer) and day type (weekday/weekend), multiplying by the power density and the floor area. The final diversified load is weighted between the winter and summer values based on the day of year. 
 
-$$Q_{winter} = Q_{ELCAP_{winter}}\frac{E_{daily_{winter}}}{E_{ELCAP_{winter}}} \times PD_x \times Floorarea/1000 
-$$
+$$Q_{winter} = Q_{ELCAP_{winter}}\frac{E_{daily_{winter}}}{E_{ELCAP_{winter}}} \times PD_x \times Floorarea/1000$$
 
   
 
 
-$$Q_{summer} = Q_{ELCAP_{summer}}\frac{E_{daily_{summer}}}{E_{ELCAP_{summer}}} \times PD_x \times Floorarea/1000 
-$$
+$$Q_{summer} = Q_{ELCAP_{summer}}\frac{E_{daily_{summer}}}{E_{ELCAP_{summer}}} \times PD_x \times Floorarea/1000$$
 
   
 
 
-$$\begin{align} Q_{diversified}& = Q_{winter}(1-|\sin(\frac{3.14}{12}(month-1.5))|) \\\ 
-    
-    
+$$\begin{align} Q_{diversified}& = Q_{winter}(1-|\sin(\frac{3.14}{12}(month-1.5))|) \\\    
     & + Q_{summer}|\sin(\frac{3.14}{12}(month-1.5))|
-    
-
-\end{align} 
-$$
+\end{align}$$
 
 Finally, the end-use load composition is determined by multiplying by the end-use composition matrix for single-family residential dwellings: 
 
@@ -245,11 +236,11 @@ The basic method for determining commercial load composition is to estimate the 
 
 The heating and cooling loads are interpolated based on the building's **balance temperature**. The heating load is multiplied by the heating duty cycle 
 
-$$\rho_{heating} = \begin{cases} T_{out}< T_{balance}& : \frac{T_{balance}-T_{out}}{T_{balance}-T_{design_{heating}}} \\\ T_{out}\ge T_{balance}& : 0 \end{cases} $$
+$$\rho_{heating} = \begin{cases} T_{out}< T_{balance}& : \frac{T_{balance}-T_{out}}{T_{balance}-T_{design_{heating}}} \\\ T_{out}\ge T_{balance}& : 0 \end{cases}$$
 
 and similarly the cooling load is multiplied by the cooling duty cycle 
 
-$$\rho_{cooling} = \begin{cases} T_{out}> T_{balance}& : \frac{T_{out}-T_{balance}}{T_{design_{cooling}}-T_{balance}} \\\ T_{out}\le T_{balance}& : 0 \end{cases} $$
+$$\rho_{cooling} = \begin{cases} T_{out}> T_{balance}& : \frac{T_{out}-T_{balance}}{T_{design_{cooling}}-T_{balance}} \\\ T_{out}\le T_{balance}& : 0 \end{cases}$$
 
 ## Small office
 
