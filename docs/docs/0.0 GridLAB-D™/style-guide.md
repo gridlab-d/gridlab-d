@@ -23,7 +23,7 @@ Before you build, re-generate the navigation list/table of contents to tell `mkd
 
 Things to keep in mind when updating the nav: list
 - "docs/" needs to be at the start of each path
-- Docs will not build if there are empty folders in the nav. If it's a placeholder folder, remove it from the nav list until something is in it.
+- Docs **will not build** if there are **empty folders in the nav**. If it's a placeholder folder, remove it from the nav list until something is in it.
 - Make sure the indentention follows the folder hierarchy
 - Don't put special characters in title pages (first headers), ex: no "&"
 - The order they are listed is the order they will display. Rearrange as needed.
