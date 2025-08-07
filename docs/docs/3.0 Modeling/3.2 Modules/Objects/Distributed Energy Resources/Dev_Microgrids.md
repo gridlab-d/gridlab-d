@@ -13,7 +13,7 @@ Implementation details
 
 The GridLAB-D dynamic simulations represent electro-mechanic transients of unbalanced micro grid operation. The synchronous machines models are in fundamental frequency phasor representation considering unbalanced operation. The network and loads are represented with a full abc model. Additionally, diesel governor control and automatic voltage regulators are modeled. Figure 1 briefly presents the overall algorithm. Each model in the algorithm is explained in detail below. 
 
-![Figure 1](../../../../images/Sub-second_algorithm.png)
+![Figure 1](../../../../../images/Sub-second_algorithm.png)
 
 Figure 1. Overall algorithm of sub-second implementation
 

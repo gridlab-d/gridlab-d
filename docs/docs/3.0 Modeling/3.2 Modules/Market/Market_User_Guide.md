@@ -562,7 +562,7 @@ A _passive_controller_ , modifying the behavior of an analog _ZIPload_ by using 
 
 The same _passive_controller_ , again in ELASTICITY_MODEL modifying a _ZIPload_ , in a situation with TOU and CPP (price pattern shown in the following figure) would be: 
 
-![Two-tier TOU and CPP](../../images/300px-TOU1.png)
+![Two-tier TOU and CPP](../../../../images/300px-TOU1.png)
 
 Two-tier TOU and CPP, where 2nd tier TOU is replaced by CPP.
     

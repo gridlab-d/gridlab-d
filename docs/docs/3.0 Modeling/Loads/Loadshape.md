@@ -19,7 +19,7 @@ The loadshape [built-in data type] is used to represent a finite-state machine t
 
 ## Analog
 
-![Example of an analog loadshape](../../images/300px-Analog_loadshape.png)
+![Example of an analog loadshape](../../../images/300px-Analog_loadshape.png)
 
 Figure 1 - Example of an analog loadshape
 
@@ -61,7 +61,7 @@ The _stdev_ term can be given units and it will be scaled accordingly, e.g.,
 
 ## Pulsed
 
-![Example of a pulsed loadshape](../../images/300px-Pulsed_loadshape.png)
+![Example of a pulsed loadshape](../../../images/300px-Pulsed_loadshape.png)
 
 Figure 2 - Example of a pulsed loadshape
 
@@ -116,15 +116,15 @@ or
 
 ## Modulated
 
-![Example of a amplitude modulated loadshapes](../../images//300px-Modulated_loadshape.png)
+![Example of a amplitude modulated loadshapes](../../../images//300px-Modulated_loadshape.png)
 
 Figure 2a - Example of a amplitude modulated loadshapes
 
-![Example of a pulse-width modulated loadshapes](../../images//300px-Pw_modulated_loadshape.png)
+![Example of a pulse-width modulated loadshapes](../../../images//300px-Pw_modulated_loadshape.png)
 
 Figure 2b - Example of a pulse-width modulated loadshapes
 
-![Example of a frequency modulated loadshapes](../../images//300px-F_modulated_loadshape.png)
+![Example of a frequency modulated loadshapes](../../../images//300px-F_modulated_loadshape.png)
 
 Figure 2c - Example of a frequency modulated loadshapes
 
@@ -164,7 +164,7 @@ The _stdev_ term can be given units and it will be scaled accordingly, e.g.,
 
 ## Queued
 
-[![Example of a queued loadshape](../../images//300px-Queued_loadshape.png)]
+[![Example of a queued loadshape](../../../images//300px-Queued_loadshape.png)]
 
 Figure 2 - Example of a queued loadshape
 
@@ -206,7 +206,7 @@ The _stdev_ term can be given units and it will be scaled accordingly, e.g.,
 
 ## Scheduled
 
-![Simple Schedule](../../images/300px-Simple_schedule.png)
+![Simple Schedule](../../../images/300px-Simple_schedule.png)
 
 Scheduled loadshapes control the diversity of a population of objects and affect the aggregate value (heavy black).
 

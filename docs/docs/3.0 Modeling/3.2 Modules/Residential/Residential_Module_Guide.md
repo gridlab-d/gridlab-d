@@ -2,7 +2,7 @@
 
 The thermal performance of a home in the House_e module is based on a simple thermal heat flow circuit, shown in Figure 1. Here, the complexity of much more detailed thermal models, as used in most building simulations, is reduced to an equivalent thermal parameter (ETP) model in which parallel or nearly parallel heat flow paths and series thermal mass elements are lumped into a few parameters and portrayed as a simple DC electric circuit. This reduces the number of details of the building design that must be specified by the user of House_e , greatly reduces memory requirements, and speeds execution (all critical when simulating populations of buildings, especially relevant where the thermal details of the population are somewhat uncertain in any event). 
 
-[![Equivalent Thermal Parameters Circuit Modeled by House-e.](../../../../../images/300px-Residential_module_users_guide_figure_1.png)](/wiki/File:Residential_module_users_guide_figure_1.png)
+[![Equivalent Thermal Parameters Circuit Modeled by House-e.](../../../../images/300px-Residential_module_users_guide_figure_1.png)](/wiki/File:Residential_module_users_guide_figure_1.png)
 
 Figure 1. Equivalent Thermal Parameters Circuit Modeled by House-e.
 

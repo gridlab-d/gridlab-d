@@ -123,19 +123,19 @@ Heating | $\frac{Heatingcapacity}{3.412 Floorarea \times Heatingefficiency}$
 Cooling | $\frac{Coolingcapacity}{Floorarea \times Coolingefficiency}$  
 Refrigeration | 0.20   
   
-![ELCAP winter/weekday end-use load shapes](../../images/300px-ELCAP_end-use_loadshape_1.PNG)
+![ELCAP winter/weekday end-use load shapes](../../../images/300px-ELCAP_end-use_loadshape_1.PNG)
 
 Figure 1 - ELCAP winter/weekday end-use load shapes
 
-![ELCAP winter/weekend end-use load shapes](../../images/300px-ELCAP_end-use_loadshape_2.PNG)
+![ELCAP winter/weekend end-use load shapes](../../../images/300px-ELCAP_end-use_loadshape_2.PNG)
 
 Figure 2 - ELCAP winter/weekend end-use load shapes
 
-![ELCAP summer/weekday end-use load shapes](../../images/300px-ELCAP_end-use_loadshape_3.PNG)
+![ELCAP summer/weekday end-use load shapes](../../../images/300px-ELCAP_end-use_loadshape_3.PNG)
 
 Figure 3 - ELCAP summer/weekday end-use load shapes
 
-![ELCAP summer/weekend end-use load shapes](../../images/300px-ELCAP_end-use_loadshape_4.PNG)
+![ELCAP summer/weekend end-use load shapes](../../../images/300px-ELCAP_end-use_loadshape_4.PNG)
 
 Figure 4 - ELCAP summer/weekend end-use load shapes
 
@@ -586,17 +586,17 @@ Yakima WA | 10.2% | 13.0% | 29.5% | 17.0% | 4.9% | 26.1% | -0.964
   
 ## Load component shapes
 
-![Figure 1 - Daily clustomer type shape \(Portland OR, weekday, summer peak\)](../../images/Loadshape1.gif)
+![Figure 1 - Daily clustomer type shape \(Portland OR, weekday, summer peak\)](../../../images/Loadshape1.gif)
 
 Figure 1 - Daily clustomer type shape (Portland OR, weekday, summer peak) 
 
-![Figure 2 - Daily customer type composition \(Portland OR, weekday, summer peak\)](../../images/Loadshape2.gif)
+![Figure 2 - Daily customer type composition \(Portland OR, weekday, summer peak\)](../../../images/Loadshape2.gif)
 Figure 2 - Daily customer type composition (Portland OR, weekday, summer peak) 
 
-![Figure 3 - Daily load component shape \(Portland OR, weekday, summer peak\)](../../images/Loadshape3.gif)
+![Figure 3 - Daily load component shape \(Portland OR, weekday, summer peak\)](../../../images/Loadshape3.gif)
 Figure 3 - Daily load component shape (Portland OR, weekday, summer peak) 
 
-![Figure 4 - Daily Customer component composition \(Portland OR, weekday, summer peak\)](../../images/Loadshape4.gif) 
+![Figure 4 - Daily Customer component composition \(Portland OR, weekday, summer peak\)](../../../images/Loadshape4.gif) 
 Figure 4 - Daily Customer component composition (Portland OR, weekday, summer peak) 
 
 ## Sensitivities analysis

@@ -2,13 +2,13 @@
 
 This document describes GridLAB-D implementation of the CONSTANT_PQ mode inverter with droops. The implementation is based on the existing inverter CONSTANT_PQ mode source codes. In the original CONSTANT_PQ mode inverter, during event mode simulation, the inverter current outputs are computed based on the reference power values and the terminal voltage values; During delta mode simulation, the inverter real and reactive power outputs are compared with the reference values in each delta time step, and a PI controller is connected after the comparison, for the calculation of the updated current injection _Iout_ from inverter. 
 
-![caption](../../../images/Inverter_PI_control_original.png)
+![caption](../../../../../images/Inverter_PI_control_original.png)
 
 With the droop mode inverter implemented inside the CONSTANT_PQ mode inverter, the reference power values will be updated by checking the measured feeder frequency and the inverter terminal voltage with the droop curve setpoints. 
 
 
-![caption](../../../images/Inverter_p_f_droop.png)
-![caption](../../../images/Inverter_q_v_droop.png)
+![caption](../../../../../images/Inverter_p_f_droop.png)
+![caption](../../../../../images/Inverter_q_v_droop.png)
 
 
 The capability to run in delta mode is implemented in battery object. The battery can be attached to the droop inverter. 
@@ -97,7 +97,7 @@ In IEEE 123-bus feeder, one diesel generator of isochronous mode is placed at th
 
 At 2001-08-01 12:00:10.001 PST, three-phase load 49 increases based on the given players. The diesel generator increases its power to maintain the feeder frequency. Although there is f/p droop enabled in the inverter, since no speed change is detected, inverter real power outputs are kept the same as the reference value after transient.   
 
-![caption](../../../images/InverterDroop.png)
+![caption](../../../../../images/InverterDroop.png)
 
 To run this case, please find in the autotest in GridLAB-D generator module. 
 

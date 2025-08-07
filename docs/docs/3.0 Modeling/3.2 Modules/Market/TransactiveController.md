@@ -49,7 +49,7 @@ range_high  | 5.00
 base_setpoint (cooling)  | 72.0   
 air_temperature  | 75.1   
   
-![Illustration of Bid and Response of Transactive Controller](../../../../../images/Figure_1.png)
+![Illustration of Bid and Response of Transactive Controller](../../../../images/Figure_1.png)
 
 Figure 1: Illustration of Bid and Response of Transactive Controller.
 
@@ -99,18 +99,18 @@ Deadband operation resolves the set point conflict by taking the average of the 
   
 
 
-![Normal operation with overlapping pre-heat and pre-cool settings](../../../../../images/Figure_2.png)
+![Normal operation with overlapping pre-heat and pre-cool settings](../../../../images/Figure_2.png)
 
 Figure 2: Normal operation with overlapping pre-heat and pre-cool settings.
 
-![Deadband resolve_mode](../../../../../images/Figure_3.png)
+![Deadband resolve_mode](../../../../images/Figure_3.png)
 
 Figure 3: Deadband resolve_mode.
 
   
 Sliding mode tries to maximize the amount of pre-cooling and pre-heating performed, while still resolving the collision. In sliding mode, the previous active mode of the HVAC system is stored. The active modes include heating or cooling, and not on or off. If the previous HVAC mode were to be cooling, then the pre-cooling mode would dominate the pre-heating mode. This assumes that if the HVAC were previously cooling, then the user would desire it to continue cooling and not switch to a heating mode. The pre-cooling region will extend to its defined range, while the pre-heating range will be reduced to the pre-cooling range minus the deadband. This operation is shown in Figure 4. If the previous HVAC mode were to be heating, then the pre-heating range would dominate and pre-cooling range would be reduced. Again, the bid price is determined by the regime in which the current air temperature falls and follows equations 1 and 2. Additionally, a time delay setting should be included. This time delay lets the user specify how long the "last mode" is stored before it re-checks the current operational mode - this only applies when moving between COOL and OFF or HEAT and OFF. If the HVAC system transitions from COOL to HEAT (this may be in the series of COOL to OFF to HEAT), this should reset the time delay. Time delay should default to 0 seconds (no time delay and the controller perfectly tracks the HVAC system mode in real time). 
 
-![Sliding resolve_mode.](../../../../../images/Figure_4.png)
+![Sliding resolve_mode.](../../../../images/Figure_4.png)
 
 Figure 4: Sliding resolve_mode.
 

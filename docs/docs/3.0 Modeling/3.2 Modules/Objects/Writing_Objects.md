@@ -1,15 +1,8 @@
 # Object (directive)
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Writing_Objects
-# Object (directive)
+The object directive is used to define one or more objects in the model. 
 
-
-
-object \- The object directive is used to define one or more objects in the model. 
-
-# 
-
-Synopsis
+# Synopsis
     
     
     object _class_ {
@@ -31,9 +24,7 @@ Synopsis
     object _class_ :.._count_ { ... }
     
 
-# 
-
-GLM
+# GLM
 
 ## Common properties
 

@@ -18,7 +18,7 @@ This document describes GridLAB-D implementation of metrics_collector. Metrics_c
 
 ## Attached objects and collected values
 
-![Metrics Collector](../../images/500px-GLDMetricsClasses.png)
+![Metrics Collector](../../../images/500px-GLDMetricsClasses.png)
   
 There are 8 types of objects that metrics_collector can be attached to:  
   

@@ -8,7 +8,7 @@ Note, this documentation was converted from a Word document and Excel spreadshee
 
 The solution for the indoor air temperature and mass temperatures of the ETP model shown in Figure 1 is given. 
 
-[![Equivalent Thermal Parameters Circuit Modeled by House-e](../../../images/300px-Residential_module_users_guide_figure_1.png) ](/wiki/File:Residential_module_users_guide_figure_1.png)
+[![Equivalent Thermal Parameters Circuit Modeled by House-e](../../../../images/300px-Residential_module_users_guide_figure_1.png) ](/wiki/File:Residential_module_users_guide_figure_1.png)
 
 Figure 1. Equivalent Thermal Parameters Circuit Modeled by House-e.
 
