@@ -104,7 +104,7 @@ $$\begin{bmatrix}
     S_d \\
     S_q \\
     S_0 
-\end{bmatrix} = \frac{2}{3} \begin{bmatrix} \cos(\theta) & \cos(\theta - 120^\circ{}) & \cos(\theta + 120^\circ)\\\ -\sin(\theta) & -\sin(\theta - 120^\circ{}) & -\sin(\theta + 120^\circ)\\\ \frac{1}{2} & \frac{1}{2} & \frac{1}{2} \end{bmatrix} \begin{bmatrix} S_a\\\ S_b\\\ S_c \end{bmatrix}$$
+\end{bmatrix} = \frac{2}{3} \begin{bmatrix} \cos(\theta) & \cos(\theta - 120^\circ{}) & \cos(\theta + 120^\circ)\\ -\sin(\theta) & -\sin(\theta - 120^\circ{}) & -\sin(\theta + 120^\circ)\\ \frac{1}{2} & \frac{1}{2} & \frac{1}{2} \end{bmatrix} \begin{bmatrix} S_a\\ S_b\\ S_c \end{bmatrix}$$
 
 with an inverse transform of 
 
@@ -112,7 +112,7 @@ $$\begin{bmatrix}
     S_a \\
     S_b \\
     S_c 
-\end{bmatrix} = \begin{bmatrix} \cos(\theta) & -\sin(\theta) & 1\\\ \cos(\theta - 120^\circ) & -\sin(\theta - 120^\circ{}) & 1\\\ \cos(\theta + 120^\circ) & -\sin(\theta + 120^\circ{}) & 1 \end{bmatrix} \begin{bmatrix} S_d\\\ S_q\\\ S_0 \end{bmatrix}$$
+\end{bmatrix} = \begin{bmatrix} \cos(\theta) & -\sin(\theta) & 1\\ \cos(\theta - 120^\circ) & -\sin(\theta - 120^\circ{}) & 1\\ \cos(\theta + 120^\circ) & -\sin(\theta + 120^\circ{}) & 1 \end{bmatrix} \begin{bmatrix} S_d\\ S_q\\ S_0 \end{bmatrix}$$
 
 This transformation is also useful for voltages and currents on the machine. For traditional, transmission-level synchronous machine modeling, the $S_0$ terms are assumed zero (balanced condition). For the unbalanced microgrid scenarios, all three components of the transformation will need to be kept. 
 
@@ -120,27 +120,27 @@ Despite the inclusion of the $0$ terms, many assumptions go into the typical $dq
 
 The equations for the three stator voltages are given by: [R1.2.1]
 
-$$\begin{align}e_a&=p\psi_a-R_ai_a\\\
+$$\begin{align}e_a&=p\psi_a-R_ai_a\\
 
-e_b&=p\psi_b-R_bi_b\\\ e_c&=p\psi_c-R_ci_c\end{align}$$
+e_b&=p\psi_b-R_bi_b\\ e_c&=p\psi_c-R_ci_c\end{align}$$
 
 where the individual fluxes are defined as 
 
-$$\begin{align}\psi_a=&-i_aL_{aa0}+L_{aa2}\cos(2\theta{})+i_bL_{ab0}+L_{ab2}\cos(2\theta{}+\frac{\pi{}}{3})\\\
+$$\begin{align}\psi_a=&-i_aL_{aa0}+L_{aa2}\cos(2\theta{})+i_bL_{ab0}+L_{ab2}\cos(2\theta{}+\frac{\pi{}}{3})\\
 
-&+i_cL_{ac0}+L_{ac2}\cos(2\theta{}-\frac{\pi{}}{3})+i_{fd}L_{afd}\cos(\theta{})\\\ &+i_{kd}L_{akd}\cos(\theta{})-i_{kq}L_{akq}\sin(\theta{})\\\ \psi_b=&i_aL_{ba0}+L_{ba2}\cos(2\theta{}+\frac{\pi{}}{3})-i_bL_{bb0}+L_{bb2}\cos(2\theta{}+\frac{2\pi{}}{3})\\\ &+i_cL_{cb0}+L_{cb2}\cos(2\theta{}-\pi{})+i_{fd}L_{bfd}\cos(\theta{}-\frac{2\pi{}}{3})\\\ &+i_{kd}L_{bkd}\cos(\theta{}-\frac{2\pi{}}{3})-i_{kq}L_{bkq}\sin(\theta{}-\frac{2\pi{}}{3})\\\ \psi_c=&i_aL_{ca0}+L_{ca2}\cos(2\theta{}-\frac{\pi{}}{3})+i_bL_{cb0}+L_{cb2}\cos(2\theta{}-\pi{})\\\ &-i_cL_{cc0}+L_{cc2}\cos(2\theta{}+\frac{2\pi{}}{3})+i_{fd}L_{cfd}\cos(\theta{}+\frac{2\pi{}}{3})\\\ &+i_{kd}L_{ckd}\cos(\theta{}+\frac{2\pi{}}{3})-i_{kq}L_{ckq}\sin(\theta{}+\frac{2\pi{}}{3})\end{align}$$ 
+&+i_cL_{ac0}+L_{ac2}\cos(2\theta{}-\frac{\pi{}}{3})+i_{fd}L_{afd}\cos(\theta{})\\ &+i_{kd}L_{akd}\cos(\theta{})-i_{kq}L_{akq}\sin(\theta{})\\ \psi_b=&i_aL_{ba0}+L_{ba2}\cos(2\theta{}+\frac{\pi{}}{3})-i_bL_{bb0}+L_{bb2}\cos(2\theta{}+\frac{2\pi{}}{3})\\ &+i_cL_{cb0}+L_{cb2}\cos(2\theta{}-\pi{})+i_{fd}L_{bfd}\cos(\theta{}-\frac{2\pi{}}{3})\\ &+i_{kd}L_{bkd}\cos(\theta{}-\frac{2\pi{}}{3})-i_{kq}L_{bkq}\sin(\theta{}-\frac{2\pi{}}{3})\\ \psi_c=&i_aL_{ca0}+L_{ca2}\cos(2\theta{}-\frac{\pi{}}{3})+i_bL_{cb0}+L_{cb2}\cos(2\theta{}-\pi{})\\ &-i_cL_{cc0}+L_{cc2}\cos(2\theta{}+\frac{2\pi{}}{3})+i_{fd}L_{cfd}\cos(\theta{}+\frac{2\pi{}}{3})\\ &+i_{kd}L_{ckd}\cos(\theta{}+\frac{2\pi{}}{3})-i_{kq}L_{ckq}\sin(\theta{}+\frac{2\pi{}}{3})\end{align}$$ 
 
 The rotor voltage equations are governed by: 
 
-$$\begin{align}e_{fd}&=p\psi_{fd}+R_{fd}i_{fd}\\\
+$$\begin{align}e_{fd}&=p\psi_{fd}+R_{fd}i_{fd}\\
 
-0&=p\psi_{kd}+R_{kd}i_{kd}\\\ 0&=p\psi_{kq}+R_{kq}i_{kq}\end{align}$$
+0&=p\psi_{kd}+R_{kd}i_{kd}\\ 0&=p\psi_{kq}+R_{kq}i_{kq}\end{align}$$
 
 where the individual fluxes are defined as 
 
-$$\begin{align}\psi_{fd}&=L_{ffd}i_{fd}+L_{fkd}i_{kd}-L_{afd}i_a\cos(\theta{})-L_{bfd}i_b\cos(\theta{}-\frac{2\pi{}}{3})-L_{cfd}i_c\cos(\theta{}+\frac{2\pi{}}{3})\\\
+$$\begin{align}\psi_{fd}&=L_{ffd}i_{fd}+L_{fkd}i_{kd}-L_{afd}i_a\cos(\theta{})-L_{bfd}i_b\cos(\theta{}-\frac{2\pi{}}{3})-L_{cfd}i_c\cos(\theta{}+\frac{2\pi{}}{3})\\
 
-\psi_{kd}&=L_{fkd}i_{fd}+L_{kkd}i_{kd}-L_{akd}i_a\cos(\theta{})-L_{bkd}i_b\cos(\theta{}-\frac{2\pi{}}{3})-L_{ckd}i_c\cos(\theta{}+\frac{2\pi{}}{3})\\\ \psi_{kq}&=L_{kkq}i_{kq}+L_{akq}i_a\cos(\theta{})+L_{bkq}i_b\cos(\theta{}-\frac{2\pi{}}{3})+L_{ckq}i_c\cos(\theta{}+\frac{2\pi{}}{3})\end{align}$$
+\psi_{kd}&=L_{fkd}i_{fd}+L_{kkd}i_{kd}-L_{akd}i_a\cos(\theta{})-L_{bkd}i_b\cos(\theta{}-\frac{2\pi{}}{3})-L_{ckd}i_c\cos(\theta{}+\frac{2\pi{}}{3})\\ \psi_{kq}&=L_{kkq}i_{kq}+L_{akq}i_a\cos(\theta{})+L_{bkq}i_b\cos(\theta{}-\frac{2\pi{}}{3})+L_{ckq}i_c\cos(\theta{}+\frac{2\pi{}}{3})\end{align}$$
 
 Various components of these terms may be zeroed out, or omitted, for different models of the synchronous generator. These terms will need to be handled appropriately to ensure the solver is stable. 
 
@@ -168,12 +168,12 @@ With the ability to collapse the equations to balanced forms, and as a result ig
 
 Table 2 - Traditional vs. unbalanced implementation  Quantity | Traditional | Unbalanced   
 ---|---|---  
-Voltages at terminal | $\begin{align}e_d &= p\psi_d - \psi_q p\theta - R_a i_d \\e_q &= p\psi_q + \psi_d p\theta - R_a i_q \\e_0 &= 0\end{align}$ | $\begin{align}e_a&=p\psi_a-R_ai_a\\\ e_b&=p\psi_b-R_bi_b\\\ e_c&=p\psi_c-R_ci_c\end{align}$  
-Field and rotor voltages | $\begin{align}e_{fd}&=p\psi_{fd}+R_{fd}i_{fd}\\\ 0&=p\psi_{kd}+R_{kd}i_{kd}\\\ 0&=p\psi_{kq}+R_{kq}i_{kq} \end{align}$ | $\begin{align}e_{fd}&=p\psi_{fd}+R_{fd}i_{fd}\\\ 0&=p\psi_{kd}+R_{kd}i_{kd}\\\ 0&=p\psi_{kq}+R_{kq}i_{kq}\end{align}$  
-Flux calculations - terminal | $\begin{align}\psi_d&=-L_di_d+L_{afd}i_{fd}+L_{akd}i_{kd}\\\ \psi_q&=-L_qi_q+L_{akq}i_{kq} \end{align}$ | $\begin{align}\psi_a=&-i_al_{aa}+i_bl_{ab}+i_cl_{ac}+i_{fd}L_{afd}\cos(\theta{}) \\\ &+i_{kd}L_{akd}\cos(\theta{})-i_{kq}L_{akq}\sin(\theta{})\\\ \psi_b=&i_al_{ba}-i_bl_{bb}+i_cl_{bc}+i_{fd}L_{bfd}\cos(\theta{}-\frac{2\pi{}}{3})\\\ &+i_{kd}L_{bkd}\cos(\theta{}-\frac{2\pi{}}{3})-i_{kq}L_{bkq}\sin(\theta{}-\frac{2\pi{}}{3})\\\ \psi_c=&i_al_{ca}+i_bl_{cb}-i_cl_{cc}+i_{fd}L_{cfd}\cos(\theta{}+\frac{2\pi{}}{3})\\\ &+i_{kd}L_{ckd}\cos(\theta{}+\frac{2\pi{}}{3})-i_{kq}L_{ckq}\sin(\theta{}+\frac{2\pi{}}{3})\end{align}$  
-Flux calculations - rotor | $\begin{align}\psi_{fd}&=L_{ffd}i_{fd}+L_{fkd}i_{kd}-\frac{3}{2}L_{afd}i_d\\\ \psi_{kd}&=L_{fkd}i_{fd}+L_{kkd}i_{kd}-\frac{3}{2}L_{akd}i_d\\\ \psi_{kq}&=L_{kkq}i_{kq}-\frac{3}{2}L_{akq}i_q\end{align}$ | $\begin{align}\psi_{fd}=&L_{ffd}i_{fd}+L_{fkd}i_{kd}-L_{afd}i_a\cos(\theta{})\\\ &-L_{bfd}i_b\cos(\theta{}-\frac{2\pi{}}{3})-L_{cfd}i_c\cos(\theta{}+\frac{2\pi{}}{3})\\\ \psi_{kd}=&L_{fkd}i_{fd}+L_{kkd}i_{kd}-L_{akd}i_a\cos(\theta{})\\\ &-L_{bkd}i_b\cos(\theta{}-\frac{2\pi{}}{3})-L_{ckd}i_c\cos(\theta{}+\frac{2\pi{}}{3})\\\ \psi_{kq}=&L_{kkq}i_{kq}+L_{akq}i_a\cos(\theta{})+L_{bkq}i_b\cos(\theta{}-\frac{2\pi{}}{3})\\\ &+L_{ckq}i_c\cos(\theta{}+\frac{2\pi{}}{3})\end{align}$  
-Torque equations | $\begin{align}T_e&=\frac{3}{2}(\psi_di_q-\psi_qi_d)\frac{\omega_{elec}}{\omega_{mech}}\\\ &=\frac{3}{2}(\psi_di_q-\psi_qi_d)\frac{pf}{2}\end{align}$ | $T_e=\frac{P_{mech}}{\omega_{mech}}-J\frac{d\omega_{mech}}{dt}$  
-Power equations | $\begin{align}P_t=\frac{3}{2}&(i_dp\psi_d+i_qp\psi_q+2i_0p\psi_0)\\\ &+(\psi_di_q-\psi_qi_d)\omega_{elec}\\\ &-(i_d^2+i_q^2+2i_0^2)R_a\end{align}$ | $\displaystyle{}P_t=e_ai_a + e_bi_b + e_ci_c$  
+Voltages at terminal | $\begin{align}e_d &= p\psi_d - \psi_q p\theta - R_a i_d \\e_q &= p\psi_q + \psi_d p\theta - R_a i_q \\e_0 &= 0\end{align}$ | $\begin{align}e_a&=p\psi_a-R_ai_a\\ e_b&=p\psi_b-R_bi_b\\ e_c&=p\psi_c-R_ci_c\end{align}$  
+Field and rotor voltages | $\begin{align}e_{fd}&=p\psi_{fd}+R_{fd}i_{fd}\\ 0&=p\psi_{kd}+R_{kd}i_{kd}\\ 0&=p\psi_{kq}+R_{kq}i_{kq} \end{align}$ | $\begin{align}e_{fd}&=p\psi_{fd}+R_{fd}i_{fd}\\ 0&=p\psi_{kd}+R_{kd}i_{kd}\\ 0&=p\psi_{kq}+R_{kq}i_{kq}\end{align}$  
+Flux calculations - terminal | $\begin{align}\psi_d&=-L_di_d+L_{afd}i_{fd}+L_{akd}i_{kd}\\ \psi_q&=-L_qi_q+L_{akq}i_{kq} \end{align}$ | $\begin{align}\psi_a=&-i_al_{aa}+i_bl_{ab}+i_cl_{ac}+i_{fd}L_{afd}\cos(\theta{}) \\ &+i_{kd}L_{akd}\cos(\theta{})-i_{kq}L_{akq}\sin(\theta{})\\ \psi_b=&i_al_{ba}-i_bl_{bb}+i_cl_{bc}+i_{fd}L_{bfd}\cos(\theta{}-\frac{2\pi{}}{3})\\ &+i_{kd}L_{bkd}\cos(\theta{}-\frac{2\pi{}}{3})-i_{kq}L_{bkq}\sin(\theta{}-\frac{2\pi{}}{3})\\ \psi_c=&i_al_{ca}+i_bl_{cb}-i_cl_{cc}+i_{fd}L_{cfd}\cos(\theta{}+\frac{2\pi{}}{3})\\ &+i_{kd}L_{ckd}\cos(\theta{}+\frac{2\pi{}}{3})-i_{kq}L_{ckq}\sin(\theta{}+\frac{2\pi{}}{3})\end{align}$  
+Flux calculations - rotor | $\begin{align}\psi_{fd}&=L_{ffd}i_{fd}+L_{fkd}i_{kd}-\frac{3}{2}L_{afd}i_d\\ \psi_{kd}&=L_{fkd}i_{fd}+L_{kkd}i_{kd}-\frac{3}{2}L_{akd}i_d\\ \psi_{kq}&=L_{kkq}i_{kq}-\frac{3}{2}L_{akq}i_q\end{align}$ | $\begin{align}\psi_{fd}=&L_{ffd}i_{fd}+L_{fkd}i_{kd}-L_{afd}i_a\cos(\theta{})\\ &-L_{bfd}i_b\cos(\theta{}-\frac{2\pi{}}{3})-L_{cfd}i_c\cos(\theta{}+\frac{2\pi{}}{3})\\ \psi_{kd}=&L_{fkd}i_{fd}+L_{kkd}i_{kd}-L_{akd}i_a\cos(\theta{})\\ &-L_{bkd}i_b\cos(\theta{}-\frac{2\pi{}}{3})-L_{ckd}i_c\cos(\theta{}+\frac{2\pi{}}{3})\\ \psi_{kq}=&L_{kkq}i_{kq}+L_{akq}i_a\cos(\theta{})+L_{bkq}i_b\cos(\theta{}-\frac{2\pi{}}{3})\\ &+L_{ckq}i_c\cos(\theta{}+\frac{2\pi{}}{3})\end{align}$  
+Torque equations | $\begin{align}T_e&=\frac{3}{2}(\psi_di_q-\psi_qi_d)\frac{\omega_{elec}}{\omega_{mech}}\\ &=\frac{3}{2}(\psi_di_q-\psi_qi_d)\frac{pf}{2}\end{align}$ | $T_e=\frac{P_{mech}}{\omega_{mech}}-J\frac{d\omega_{mech}}{dt}$  
+Power equations | $\begin{align}P_t=\frac{3}{2}&(i_dp\psi_d+i_qp\psi_q+2i_0p\psi_0)\\ &+(\psi_di_q-\psi_qi_d)\omega_{elec}\\ &-(i_d^2+i_q^2+2i_0^2)R_a\end{align}$ | $\displaystyle{}P_t=e_ai_a + e_bi_b + e_ci_c$  
   
 From the table, it is clear the unbalanced equations end up being a little more complicated. Simplifications and reductions associated with the $dq0$ space and balanced voltage and current values allow the traditional model to collapse significantly. It is unclear at this time what the additional benefit the full three-phase unbalanced model brings over the assumed balanced model, so implementations may be altered to fit the "assumed balanced" model to reduce computational burdens. 
 
@@ -193,7 +193,7 @@ where $K$ is an appropriate scalar between frequency deviation and power output.
 
 Speed-droop controls are necessary when more than one generator needs to correct for load changes. Each generator responds in a proportional manner to the frequency shift and adjusts its output. As a result, all generators (with the droop control) pick up a portion of the power output change. A simple droop governor equation is given by 
 
-$$ \displaystyle{}P_{mech}=P_{prev\_mech}+\Delta{}y$$
+$$\displaystyle{}P_{mech}=P_{prev\_mech}+\Delta{}y$$
 
 $$\Delta{}y=-\frac{1}{R}\left(\omega_{elec}-\omega_{ref}+\frac{1}{K}\frac{d\Delta{}y}{dt}\right) \tag{R1.2.2}$$ 
 
@@ -201,9 +201,10 @@ As with the isochronous governor control, $K$ is the scalar between frequency de
 
 ## Exciters
 
-The requirements call for the implementation of a simple DC exciter [R1.2.3]. A simple thyristor-rectifier exciter will also be implemented to enable more feasible modeling of lower cost, modern diesel generators. Both exciter types support load compensation inputs through the voltage $V_{Comp}$1. In both cases, this is defined as: 
+The requirements call for the implementation of a simple DC exciter [R1.2.3]. A simple thyristor-rectifier exciter will also be implemented to enable more feasible modeling of lower cost, modern diesel generators. Both exciter types support load compensation inputs through the voltage $V_{Comp}$
+1. In both cases, this is defined as: 
 
-    $V_{Comp}=\left|\tilde{E}_{t}+(R_{Comp}+jX_{Comp})\tilde{I}_{t}\right|$
+$$V_{Comp}=\left|\tilde{E}_{t}+(R_{Comp}+jX_{Comp})\tilde{I}_{t}\right|$$
 
 where $\tilde{E}_{t}$ and $\tilde{I}_{t}$ are the positive-sequence terminal voltage and current, respectively. The positive-sequence version is used as a rough indication for the excitation field adjustment since only one field exists for all three phases (only one rotor per generator). 
 

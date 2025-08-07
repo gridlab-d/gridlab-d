@@ -47,13 +47,13 @@ $$\frac{2H}{\omega_{b}} \frac{d}{dt} \omega_{r} = \frac{X_{m}}{X_{r}} ({I_{f}^{I
 
 $$I_{S} = ( (I_{ds}^{R} + jI_{ds}^{I}) + (I_{qs}^{R} + jI_{qs}^{I}) ) e^{j \phi }$$
 
-$$\begin{bmatrix} \psi_{f}^{R} + j \psi_{f}^{I} \\\\\ psi_{b}^{R} + j \psi_{b}^{I} \end{bmatrix} = \frac{1}{2} \begin{bmatrix}1 & -j \\\ 1 & j \end{bmatrix} \begin{bmatrix}\psi_{dr}^{R} + j \psi_{dr}^{I} \\\ \psi_{qr}^{R} + j \psi _{qr}^{I} \\\\\end{bmatrix}$$
+$$\begin{bmatrix} \psi_{f}^{R} + j \psi_{f}^{I} \\\ psi_{b}^{R} + j \psi_{b}^{I} \end{bmatrix} = \frac{1}{2} \begin{bmatrix}1 & -j \\ 1 & j \end{bmatrix} \begin{bmatrix}\psi_{dr}^{R} + j \psi_{dr}^{I} \\ \psi_{qr}^{R} + j \psi _{qr}^{I} \\\end{bmatrix}$$
 
-$$\begin{bmatrix} \psi_{dr}^{R} + j \psi_{dr}^{I} \\\\\ psi_{qr}^{R} + j \psi_{qr}^{I} \end{bmatrix} = \begin{bmatrix}1 & 1 \\\ j & -j \end{bmatrix} \begin{bmatrix}\psi_{f}^{R} + j \psi_{f}^{I} \\\ \psi_{b}^{R} + j \psi _{b}^{I} \\\\\end{bmatrix}$$
+$$\begin{bmatrix} \psi_{dr}^{R} + j \psi_{dr}^{I} \\\ psi_{qr}^{R} + j \psi_{qr}^{I} \end{bmatrix} = \begin{bmatrix}1 & 1 \\ j & -j \end{bmatrix} \begin{bmatrix}\psi_{f}^{R} + j \psi_{f}^{I} \\ \psi_{b}^{R} + j \psi _{b}^{I} \\\end{bmatrix}$$
 
-$$\begin{bmatrix}I_{f}^{R} + j I_{f}^{I} \\\ I_{b}^{R} + j I_{b}^{I} \end{bmatrix} = \frac{1}{2} \begin{bmatrix} 1 & -jn \\\ 1 & jn \end{bmatrix} \begin{bmatrix} I_{ds}^{R} + j I_{ds}^{I} \\\ I_{qs}^{R} + j I_{qs}^{I} \\\\\end{bmatrix}$$
+$$\begin{bmatrix}I_{f}^{R} + j I_{f}^{I} \\ I_{b}^{R} + j I_{b}^{I} \end{bmatrix} = \frac{1}{2} \begin{bmatrix} 1 & -jn \\ 1 & jn \end{bmatrix} \begin{bmatrix} I_{ds}^{R} + j I_{ds}^{I} \\ I_{qs}^{R} + j I_{qs}^{I} \\\end{bmatrix}$$
 
-$$\begin{bmatrix}I_{ds}^{R} + j I_{ds}^{I} \\\ I_{qs}^{R} + j I_{qs}^{I} \end{bmatrix} = \begin{bmatrix} 1 & 1 \\\ \frac{j}{n} & -\frac{j}{n} \end{bmatrix} \begin{bmatrix} I_{f}^{R} + j I_{f}^{I} \\\ I_{f}^{R} + j I_{f}^{I} \\\\\end{bmatrix}$$
+$$\begin{bmatrix}I_{ds}^{R} + j I_{ds}^{I} \\ I_{qs}^{R} + j I_{qs}^{I} \end{bmatrix} = \begin{bmatrix} 1 & 1 \\ \frac{j}{n} & -\frac{j}{n} \end{bmatrix} \begin{bmatrix} I_{f}^{R} + j I_{f}^{I} \\ I_{f}^{R} + j I_{f}^{I} \\\end{bmatrix}$$
 
 # GridLAB-D Implementation
 

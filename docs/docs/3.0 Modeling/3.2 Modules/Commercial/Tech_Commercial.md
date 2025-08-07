@@ -10,7 +10,7 @@ Figure 1 - The Equivalent Thermal Parameters (ETP) model
 
 The Commercial Module uses a simple Equivalent Thermal Parameters (ETP) model for small single-zone office buildings (Taylor and Pratt 1988), shown in Figure 1, with first-order ordinary differential equations (ODEs): 
 
-$$\begin{align} T_i' & = \frac{1}{C_a} \left [ T_m H_m - T_i \left ( U_a - H_m \right ) + \sum_{end\ uses}Q_x + T_o U_a \right ] \\\ T_m' & = \frac{1}{C_m} \left [ H_m \left ( T_i - T_m \right ) + Q_m \right ] \end{align}$$
+$$\begin{align} T_i' & = \frac{1}{C_a} \left [ T_m H_m - T_i \left ( U_a - H_m \right ) + \sum_{end\ uses}Q_x + T_o U_a \right ] \\ T_m' & = \frac{1}{C_m} \left [ H_m \left ( T_i - T_m \right ) + Q_m \right ] \end{align}$$
 
 where 
 
@@ -29,7 +29,7 @@ where
   * $Q_m$ = the heat rate direct to the mass (e.g, solar radiation direct to mass)
 The general first order ODEs ($c_1 - c_5$  defined by inspection above) is 
 
-$$\begin{align} T_i' & = c_1 T_i + c_2 T_m + c_3 \\\ T_m' & = c_4 T_i + c_5 T_m + c_6 \end{align}$$
+$$\begin{align} T_i' & = c_1 T_i + c_2 T_m + c_3 \\ T_m' & = c_4 T_i + c_5 T_m + c_6 \end{align}$$
 
 with the constants $c_1$ through $c_6$ defined as 
 
@@ -42,7 +42,7 @@ with the constants $c_1$ through $c_6$ defined as
 
 The general form of the second-order ODE is $p_1 T_i + p_2 T_i' + p_3 T_i = p_4$. The solutions to the second-order ODEs for indoor and mass temperatures are:
 
-$$\begin{align} T_i(t) & = k_1 e^{r_1 t} + k_2 e^{r_2 t} + \frac{p_4}{p_3} \\\ T_m(t) & = \frac{T_i'(t) - c_1 T_i(t) - c_3}{c_2} \end{align}$$
+$$\begin{align} T_i(t) & = k_1 e^{r_1 t} + k_2 e^{r_2 t} + \frac{p_4}{p_3} \\ T_m(t) & = \frac{T_i'(t) - c_1 T_i(t) - c_3}{c_2} \end{align}$$
 
 where: 
 
@@ -361,7 +361,7 @@ A "delta" configuration of 3 nodes $(x, y, z)$ can be transformed to a "wye" con
 
 $$\begin{align}
 
-U_{xw} &= U_{xy}U_{xz}\left[ \frac{1}{U_{xy}} + \frac{1}{U_{yz}} + \frac{1}{U_{xz}} \right] \\\ U_{yw} &= U_{xy}U_{yz}\left[ \frac{1}{U_{xy}} + \frac{1}{U_{yz}} + \frac{1}{U_{xz}} \right] \\\ U_{zw} &= U_{xz}U_{yz}\left[ \frac{1}{U_{xy}} + \frac{1}{U_{yz}} + \frac{1}{U_{xz}} \right]
+U_{xw} &= U_{xy}U_{xz}\left[ \frac{1}{U_{xy}} + \frac{1}{U_{yz}} + \frac{1}{U_{xz}} \right] \\ U_{yw} &= U_{xy}U_{yz}\left[ \frac{1}{U_{xy}} + \frac{1}{U_{yz}} + \frac{1}{U_{xz}} \right] \\ U_{zw} &= U_{xz}U_{yz}\left[ \frac{1}{U_{xy}} + \frac{1}{U_{yz}} + \frac{1}{U_{xz}} \right]
 
 \end{align}$$
 

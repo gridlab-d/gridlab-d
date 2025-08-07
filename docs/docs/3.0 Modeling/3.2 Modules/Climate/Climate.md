@@ -31,8 +31,7 @@ TMY is an acronym for typical meteorological year. In a TMY file, weather data f
 
 In the climate module, calculations are performed for solar radiation on a surface facing each of the eight major compass points (N, S, E, W, NE, NW, SE, SW) and a horizontal surface. For each surface, the total incident solar radiation is calculated by the following equation: 
 
-$$Q_{solar} = Q_{direct} \cos \left ( \alpha_{incident} \right ) + Q_{diffuse} 
-$$
+$$Q_{solar} = Q_{direct} \cos \left ( \alpha_{incident} \right ) + Q_{diffuse}$$
 
 where 
 
@@ -42,35 +41,19 @@ where
 
 The incident angle is calculated by first calculating the solar time, which accounts for the change in the tilt of the earth polar axis with respect to the plane of the orbit around the sun through the year. The solar time is combined with the latitude of the surface, the slope of the surface relative to the horizontal (90° for all surfaces except the horizontal surface), and the azimuth angle relative to south (+ east of south, - west of south), and the day of the year (which is used in a calculation of the solar declination angle) to produce the cosine of the incident angle as follows. 
 
-$$\begin{align} D_{solar} & = 23.45 \deg \frac{2 \pi}{360} \sin \left ( \frac{2 \pi 284 + D_{year}}{365} \right ) \\\ 
-    
-    
+$$\begin{align} D_{solar} & = 23.45 \deg \frac{2 \pi}{360} \sin \left ( \frac{2 \pi 284 + D_{year}}{365} \right ) \\ 
     & = 0.409280 \sin \left ( \frac{2 \pi 284 + D_{year}}{365}  \right )
-    
-
-\end{align} 
-$$
-
-  
+\end{align}$$
 
 
-$$A_{hour} = - \frac{15 \pi}{180} \left ( H_{solar} - 12 \right ) 
-$$
+$$A_{hour} = - \frac{15 \pi}{180} \left ( H_{solar} - 12 \right )$$
 
-  
-
-
-$$\begin{align} \cos(A_{incident}) & = \sin(D_{solar}) \sin(L) cos(S) \\\ 
-    
-    
+$$\begin{align} \cos(A_{incident}) & = \sin(D_{solar}) \sin(L) cos(S) \\     
     & - \sin(D_{solar}) \cos(L) \sin(S) \cos(Z) \\
     & + \cos(D_{solar}) \cos(L) \cos(S) \cos(A_{hour}) \\
     & + \cos(D_{solar}) \sin(L) \sin(S) \cos(Z) \cos(A_{hour}) \\
     & + \cos(D_{solar}) \sin(S) \sin(Z) \sin(A_{hour})
-    
-
-\end{align} 
-$$
+\end{align}$$
 
 where: 
 
@@ -79,13 +62,12 @@ where:
   * $L$ is the latitude (north is positive);
   * $A_{hour}$ is hour angle, solar noon is zero, and each hour represents 15° of longitude with mornings positive and afternoons negative;
   * $D_{solar}$ is the declination of the sun (the angular position of the sun at solar noon with respect to the plane of the equator).
+
 Leap years are handled by the fact that an hour of year calculation on February 29 would result in the same hour of year as March 1 on a normal year. March 1 would be used twice in a simulation involving a leap year. 
 
 #### References
 
 John A Duffie and William A Beckman, "Solar Energy Thermal Processes," John Wiley & Sons, 1974 
-
-
 
 Author: Nathan Tenney, Pacific Northwest National Laboratory, Richland, Washington (USA), PNNL-17615, May 2008 
 

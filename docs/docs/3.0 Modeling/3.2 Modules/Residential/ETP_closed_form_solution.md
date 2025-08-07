@@ -267,7 +267,14 @@ $$ \begin{alignat}{2}a x_0 &= A + C a & \qquad (9.1a) \\b x_0 + a \dot x_0 + \fr
 
 Solve for $A$, $B$, $C$, and $D$
 
-$$\begin{alignat}{2}   (9.1a) & \rarr A = a x_0 - C a \\(9.1d) & \rarr D = \Delta g / c \\(9.1b) & \rarr B = b x_0 + a \dot x_0 + \frac{C_M}{H_M} - C b - a \Delta g / c \\(9.1c) & \rarr C = \Delta h / c - b \Delta g / c^2 \\       & \rarr A = a x_0 - a \Delta h / c + a b / c^2 \Delta g \\       & \rarr B = b x_0 + a \dot x_0 + \frac{C_M}{H_M} - b \Delta h / c + (b^2/c^2-a/c) \Delta g\end{alignat}$$
+$$\begin{alignat}{2}   
+(9.1a) & \rightarrow A = a x_0 - C a \\
+(9.1d) & \rightarrow D = \Delta g / c \\
+(9.1b) & \rightarrow B = b x_0 + a \dot x_0 + \frac{C_M}{H_M} - C b - a \Delta g / c \\
+(9.1c) & \rightarrow C = \Delta h / c - b \Delta g / c^2 \\
+& \rightarrow A = a x_0 - a \Delta h / c + a b / c^2 \Delta g \\
+& \rightarrow B = b x_0 + a \dot x_0 + \frac{C_M}{H_M} - b \Delta h / c + (b^2/c^2-a/c) \Delta g
+\end{alignat}$$
 
 So we have 
 
@@ -353,6 +360,7 @@ $$ \begin{alignat}{2}T_M(t) &= \left ( \frac{U_A+H_M}{H_M} - p \frac{C_A}{C_M} \
 The initial indoor air temperature condition $T_A(0)$ is available from the initial values given in the GLM model. However, the initial derivative of the indoor air temperature is not usually given. The value of $dT_A/dt(0)$ can be computed based on the initial state of the HVAC system by solving the equation (1.3) for $dT_A/dt$ at time $t=0$: 
 
 $$\frac{d}{dt} T_A(0) = \frac{H_M}{C_A}T_M(0) + \frac{U_A}{C_A}T_O(0) + \frac{1}{C_A}Q_A(0) - \frac{U_A+H_M}{C_A} T_A(0)$$
+
 where the conditions $T_M(0)$, $T_O(0)$, and $Q_A(0)$ are all known states of the ETP model at the end of the last time increment. 
 
 ### Solving for time

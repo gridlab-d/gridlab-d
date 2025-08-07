@@ -113,13 +113,13 @@ $$\left[ \Delta I_{a,b,c} \right] = \left[ Jac \right] \left[ \Delta V_{a,b,c} \
 
 Where the matrix $\left[ Jac \right]$ is equal to the bus admittance matrix, except for the diagonal elements that have additional terms to represent ZIP loads [8]. The full generator admittances are incorporated to the bus admittance matrices to represent the machine characteristics. The generator admittance matrices are, according to [9]: 
 
- $$\left[ Y_{Ga,b,ci} \right] = \frac{1}{3}\begin{bmatrix} 1 & 1 & 1 \\\ 1 & e^{j 4\pi /3} & e^{j 2\pi /3} \\\ 1 & e^{j 2\pi /3} & e^{j 4\pi /3} \\\ \end{bmatrix} \begin{bmatrix} Y_{G0i} & 0 & 0 \\\ 0 & Y_{G1i} & 0 \\\ 0 & 0 & Y_{G2i} \\\ \end{bmatrix} \begin{bmatrix} 1 & 1 & 1 \\\ 1 & e^{j 2\pi /3} & e^{j 4\pi /3} \\\ 1 & e^{j 4\pi /3} & e^{j 2\pi /3} \\\ \end{bmatrix}$$ 
+ $$\left[ Y_{Ga,b,ci} \right] = \frac{1}{3}\begin{bmatrix} 1 & 1 & 1 \\ 1 & e^{j 4\pi /3} & e^{j 2\pi /3} \\ 1 & e^{j 2\pi /3} & e^{j 4\pi /3} \\ \end{bmatrix} \begin{bmatrix} Y_{G0i} & 0 & 0 \\ 0 & Y_{G1i} & 0 \\ 0 & 0 & Y_{G2i} \\ \end{bmatrix} \begin{bmatrix} 1 & 1 & 1 \\ 1 & e^{j 2\pi /3} & e^{j 4\pi /3} \\ 1 & e^{j 4\pi /3} & e^{j 2\pi /3} \\ \end{bmatrix}$$ 
  
  The symmetry constraint applied to generator buses in the initial static power flow solution is given by [9]: 
 
 $$I_{GS1}= \frac{P_{T}+jQ_{T} + \left[ V_{Ga,b,c} \right]^{*T} \left[ Y_{Ga,b,ci} \right] \left[ V_{Ga,b,ci} \right]} {V_{Ga}^{*}+ e^{j 4\pi /3} V_{Gb}^{*}+ e^{j 2\pi /3} V_{Gc}^{*}}$$
 
-$$\left[ I_{GSa,b,ci} \right] = \frac{1}{3}\begin{bmatrix} 1 \\\ e^{j 4\pi /3} \\\ e^{j 2\pi /3} \\\ \end{bmatrix} I_{GS1}$$ 
+$$\left[ I_{GSa,b,ci} \right] = \frac{1}{3}\begin{bmatrix} 1 \\ e^{j 4\pi /3} \\ e^{j 2\pi /3} \\ \end{bmatrix} I_{GS1}$$ 
 
 Due to generator symmetry built, there are no negative and zero sequence current sources [9]: 
 
@@ -159,18 +159,27 @@ $$E_{MIN} \leq E_{fd} \leq E_{MAX}$$
 The diesel governor DGOV1 equations are: 
 
   * Electric control box
+
   $$T_{1} T_{2} \frac{d x_{2}}{dt} = \omega_{set}- \omega_{i}- R \cdot y_{throttle}- x_{1}- x_{2}$$
+
   $$ \frac{d x_{1}}{dt} = x_{2}$$
+
   $$\displaystyle{} y_{gov} = T_{3} x_{2}+ x_{1}$$
 
   * Actuator
+
   $$T_{5} \frac{d x_{5}}{dt} = K \cdot y_{gov}- x_{5}$$
+
   $$T_{6} \frac{d x_{6}}{dt} = x_{5}- x_{6}$$
+
   $$\frac{d x_{4}}{dt} = x_{6}$$
+
   $$T_{MIN} \leq x_{4} \leq T_{MAX}$$
+
   $$\displaystyle{} y_{throttle}= T_{4} x_{6}+ x_{4}$$
 
   * Diesel engine
+  
   $$T_{mechi} = delay \left( y_{t}, T_{D} \right)$$
 
 ### References

@@ -18,13 +18,11 @@ The basic ETP parameters are
   
 The solution to the ETP model is based on the two ordinary differential equations (ODEs) 
 
-$$\begin{align} \frac{d T_i}{d t} & = \frac{1}{C_a} \left [ T_m U_m - T_i \left ( U_a + U_m \right ) +Q_a +T_0 U_a \right ] \\\ \frac{d T_m}{d t} & = \frac{1}{C_m} \left [ U_m \left ( T_i - T_m \right ) + Q_m \right ] \end{align} 
-$$
+$$\begin{align} \frac{d T_i}{d t} & = \frac{1}{C_a} \left [ T_m U_m - T_i \left ( U_a + U_m \right ) +Q_a +T_0 U_a \right ] \\\ \frac{d T_m}{d t} & = \frac{1}{C_m} \left [ U_m \left ( T_i - T_m \right ) + Q_m \right ] \end{align}$$
 
 The general first-order ODEs are found by inspection: 
 
-$$\begin{align} \dot T_i & = c_1 T_i + c_2 T_m + c_3 \\\ \dot T_m & = c_4 T_i + c_5 T_m + c_6 \end{align} 
-$$
+$$\begin{align} \dot T_i & = c_1 T_i + c_2 T_m + c_3 \\\ \dot T_m & = c_4 T_i + c_5 T_m + c_6 \end{align}$$
 
 where the constants $c_1$ through $c_6$ are 
 
@@ -37,8 +35,7 @@ where the constants $c_1$ through $c_6$ are
 
 The general form of the second-order ODE is given by 
 
-$$p_1 \ddot T_i + p_2 \dot T_i + p_3 T_i + p_4 = 0 
-$$
+$$p_1 \ddot T_i + p_2 \dot T_i + p_3 T_i + p_4 = 0$$
 
 where 
 
@@ -88,8 +85,7 @@ where,
   * $Q_{solar}$ – heat gain from solar (Btu/h or W)
 A state space description of the ETP model is: 
 
-$$\begin{align} \frac{dx}{dt} & = A x + B u \\\ y & = C x + D u \end{align} 
-$$
+$$\begin{align} \frac{dx}{dt} & = A x + B u \\\ y & = C x + D u \end{align}$$
 
 where (**there's something important missing here: A, B, C, D are not described**) 
 
@@ -222,8 +218,7 @@ Figure 2: Water heater model schematic representation
 
 Considering Figure 2 and treating the water heater as a single node with thermal capacitance $C_w$, a conductance $UA$ to ambient conditions, with mass flow rate and heat input rate of $Q_{elec}$, a heat balance on the water node is as follows: 
 
-$$Q_{elec} - \dot m C_p \left ( T_w - T_{inlet} \right ) + UA \left ( T_{amb} - T_w \right ) = C_w \frac{dT_w}{dt} 
-$$
+$$Q_{elec} - \dot m C_p \left ( T_w - T_{inlet} \right ) + UA \left ( T_{amb} - T_w \right ) = C_w \frac{dT_w}{dt}$$
 
 or, 
 
@@ -236,8 +231,7 @@ $$dt = \frac{C_w}{
      + Q_{elec}
     
 
-} dT_w 
-$$
+} dT_w$$
 
   
 The time required to change the tank’s temperature from an initial temperature $T_0$ to a new temperature $T_1$ is given by integrating that equation. 
@@ -251,22 +245,19 @@ $$t_1 - t_0 = \int_{T_0}^{T_1} \frac{1}{
      - \frac{ U A + \dot m C_p }{C_w} T_w
     
 
-} dT_w 
-$$
+} dT_w$$
 
 That is an integral of the form $dx/(a+bx)$, which has solution $\log(a+bx)/b$ . Therefore, the final model of the time required to raise (or lower) the tank’s temperature is 
 
-$$t_1 - t_0 = \frac{1}{b} \log \left ( a + b T_w \right ) \bigg|_{T_0}^{T_1} 
-$$
+$$t_1 - t_0 = \frac{1}{b} \log \left ( a + b T_w \right ) \bigg|_{T_0}^{T_1}$$
 
 Where 
 
-  * $ a = \frac{\dot m C_p T_{inlet} + U A T_{amb} + Q_{elec}}{C_w}$
-  * $ b = \frac{ U A + \dot m C_p }{C_w}$
+  * $a = \frac{\dot m C_p T_{inlet} + U A T_{amb} + Q_{elec}}{C_w}$
+  * $b = \frac{ U A + \dot m C_p }{C_w}$
 The reverse problem of calculating the new temperature of the tank from a known initial temperature and time difference, $t1-t0$, follows directly: 
 
-$$T_1 = -\frac{a}{b} + \left ( \frac{a}{b} + T_0 \right ) e^{b \left( t_1 - t_0 \right ) } 
-$$
+$$T_1 = -\frac{a}{b} + \left ( \frac{a}{b} + T_0 \right ) e^{b \left( t_1 - t_0 \right ) }$$
 
 #### Two-Node temperature model
 
@@ -274,8 +265,7 @@ $$
 
 This model, which applies when the heater is in a state of partial depletion, considers the heater to consist of two slugs of water, each at a uniform temperature. The upper “hot” node is near the heater’s setpoint temperature, while the lower “cold” node is near the inlet water temperature. The time required to change the tank’s hot water column from an initial height of $h_0$ to a final height of $h_1$ is given by the following equation: 
 
-$$t_1 - t_0 = \frac{1}{b} \log \left ( \frac{dh_w}{dt}\right ) \bigg |_{h_0}^{h_1} 
-$$
+$$t_1 - t_0 = \frac{1}{b} \log \left ( \frac{dh_w}{dt}\right ) \bigg |_{h_0}^{h_1}$$
 
   
 Where $dh/dt$ is the location of temperature boundary along the height of the water column. This is calculated as a function of mass flow rate and the temperature difference across between the upper and lower interface layers of the water column, as given by the following: 
@@ -284,13 +274,12 @@ $$\frac{dh}{dt} = a + b h$$
 
 where 
 
-  * $ a = \frac{Q_{elec}+U A T_{amb}}{C_w T_lower} - \frac{\dot m C_p}{C_w}$
-  * $ b = \frac{U A}{C_w}$
+  * $a = \frac{Q_{elec}+U A T_{amb}}{C_w T_lower} - \frac{\dot m C_p}{C_w}$
+  * $b = \frac{U A}{C_w}$
 
 In the two-node model, during each synchronization cycle, the height the hot water column is calculated based on the mass flow rate, using the following equation: 
 
-$$h_1 = \frac{e^{b T_w} \left ( a + b h_0 \right ) - a}{b} 
-$$
+$$h_1 = \frac{e^{b T_w} \left ( a + b h_0 \right ) - a}{b}$$
 
 ### Simulation Sequence
 

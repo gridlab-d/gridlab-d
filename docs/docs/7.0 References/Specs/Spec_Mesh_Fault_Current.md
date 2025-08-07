@@ -7,22 +7,6 @@ TODO: The numbering on this page is all out of sorts
 
 Approval item:  When approved remove this tag. 
 
-## Contents
-
-  * 1 Overview
-  * 2 Variable Definitions and Equations
-    * 2.1 Equations
-  * 3 Methodology
-    * 3.1 Instructions
-    * 3.2 Flow Chart
-    * 3.3 Example
-  * 4 Validation
-  * 5 References
-  * 6 See also
-# 
-
-Overview
-
 Mesh Fault analysis (zFault method) capability in GridLAB-D will be implemented to perform fault studies for unbalanced mesh systems. These simulations will calculate Fault current and Fault voltage at a particular node where a certain type of fault is introduced at a node or a line. 
 
 # Variable Definitions and Equations
@@ -62,41 +46,41 @@ This section describes some of the important equations used in drafting out this
 1. Three Phase ($\displaystyle{}Y_{ph_3}$): 
 
 $$\begin{bmatrix}
-\displaystyle{}Y_s & \displaystyle{}Y_m & \displaystyle{}Y_m\\\ \displaystyle{}Y_m & \displaystyle{}Y_s & \displaystyle{}Y_m\\\ \displaystyle{}Y_m & \displaystyle{}Y_m & \displaystyle{}Y_s \end{bmatrix} $$
+\displaystyle{}Y_s & \displaystyle{}Y_m & \displaystyle{}Y_m\\\ \displaystyle{}Y_m & \displaystyle{}Y_s & \displaystyle{}Y_m\\\ \displaystyle{}Y_m & \displaystyle{}Y_m & \displaystyle{}Y_s \end{bmatrix}$$
 
 1. Two Phase ($\displaystyle{}Y_{ph_2}$): 
 
 $$\begin{bmatrix}
-\displaystyle{}Y_s & \displaystyle{}Y_m\\\ \displaystyle{}Y_m & \displaystyle{}Y_s \end{bmatrix} $$
+\displaystyle{}Y_s & \displaystyle{}Y_m\\\ \displaystyle{}Y_m & \displaystyle{}Y_s \end{bmatrix}$$
 
 1. One Phase ($\displaystyle{}Y_{ph_1}$): 
 
 $$\begin{bmatrix}
-\displaystyle{}Y_s \end{bmatrix} $$
+\displaystyle{}Y_s \end{bmatrix}$$
 
 1.Y-Bus: 
 
 $$\begin{bmatrix}
-\displaystyle{}Y_{11} & \displaystyle{}Y_{12} & \cdots & \displaystyle{}Y_{1M}\\\ \displaystyle{}Y_{12} & \displaystyle{}Y_{22} & \cdots & \displaystyle{}Y_{2M}\\\ \vdots & \vdots & & \vdots\\\ \displaystyle{}Y_{M1} & \displaystyle{}Y_{M2} & \cdots & \displaystyle{}Y_{MM} \end{bmatrix} $$
+\displaystyle{}Y_{11} & \displaystyle{}Y_{12} & \cdots & \displaystyle{}Y_{1M}\\\ \displaystyle{}Y_{12} & \displaystyle{}Y_{22} & \cdots & \displaystyle{}Y_{2M}\\\ \vdots & \vdots & & \vdots\\\ \displaystyle{}Y_{M1} & \displaystyle{}Y_{M2} & \cdots & \displaystyle{}Y_{MM} \end{bmatrix}$$
 
 1.Invert Y-bus to get Z-bus: 
 
-$$ \displaystyle{}Z=(Y^{-1})$$
+$$\displaystyle{}Z=(Y^{-1})$$
   2. Fault Equations: 
    1.Three phase fault at node-N: 
 
 $$\begin{bmatrix}
-\displaystyle{}Z{^N_{Th}} & \displaystyle{}I_{3x3}\\\ \displaystyle{}C_{I3\phi} & \displaystyle{}C_{V3\phi} \end{bmatrix} \begin{bmatrix} \displaystyle{}I{^N_{Fault}}\\\ \displaystyle{}V{^N_{Fault}} \end{bmatrix} = \begin{bmatrix} \displaystyle{}V{^S_{Th}}\\\ 0 \end{bmatrix} $$
+\displaystyle{}Z{^N_{Th}} & \displaystyle{}I_{3x3}\\\ \displaystyle{}C_{I3\phi} & \displaystyle{}C_{V3\phi} \end{bmatrix} \begin{bmatrix} \displaystyle{}I{^N_{Fault}}\\\ \displaystyle{}V{^N_{Fault}} \end{bmatrix} = \begin{bmatrix} \displaystyle{}V{^S_{Th}}\\\ 0 \end{bmatrix}$$
 
 1. Two phase fault at node-N: 
 
 $$\begin{bmatrix}
-\displaystyle{}Z{^N_{Th}} & \displaystyle{}I_{2x2}\\\ \displaystyle{}C_{I2\phi} & \displaystyle{}C_{V2\phi} \end{bmatrix} \begin{bmatrix} \displaystyle{}I{^N_{Fault}}\\\ \displaystyle{}V{^N_{Fault}} \end{bmatrix} = \begin{bmatrix} \displaystyle{}V{^S_{Th}}\\\ 0 \end{bmatrix} $$
+\displaystyle{}Z{^N_{Th}} & \displaystyle{}I_{2x2}\\\ \displaystyle{}C_{I2\phi} & \displaystyle{}C_{V2\phi} \end{bmatrix} \begin{bmatrix} \displaystyle{}I{^N_{Fault}}\\\ \displaystyle{}V{^N_{Fault}} \end{bmatrix} = \begin{bmatrix} \displaystyle{}V{^S_{Th}}\\\ 0 \end{bmatrix}$$
 
 1. One phase fault at node-N: 
 
 $$\begin{bmatrix}
-\displaystyle{}Z{^N_{Th}} & 1\\\ \displaystyle{}C_{I1\phi} & \displaystyle{}C_{V1\phi} \end{bmatrix} \begin{bmatrix} \displaystyle{}I{^N_{Fault}}\\\ \displaystyle{}V{^N_{Fault}} \end{bmatrix} = \begin{bmatrix} \displaystyle{}V{^S_{Th}}\\\ 0 \end{bmatrix} $$
+\displaystyle{}Z{^N_{Th}} & 1\\\ \displaystyle{}C_{I1\phi} & \displaystyle{}C_{V1\phi} \end{bmatrix} \begin{bmatrix} \displaystyle{}I{^N_{Fault}}\\\ \displaystyle{}V{^N_{Fault}} \end{bmatrix} = \begin{bmatrix} \displaystyle{}V{^S_{Th}}\\\ 0 \end{bmatrix}$$
 
 1. Refer below for $\displaystyle{}C_{I_{phase}\phi}$ and $\displaystyle{}C_{V_{phase}\phi}$matrices: 
 
@@ -114,15 +98,15 @@ The step-by-step description below can be used a pseudo-code while implementing 
      2. Replace $\displaystyle{}1^{st}$ element of the matrix i.e., Row-1, Column-1 with identity matrix (I). It can be 3x3 or 2x2 or 1x1 depending up on the phase of swing node)
      3. Replace remaining elements of Row-1 with zero matrices with the same order of above identity matrix. 
 
-    After the above modifications, for a 3-phase swing node the Y-bus looks like:
+After the above modifications, for a 3-phase swing node the Y-bus looks like:
 
 $$\begin{bmatrix}
-\displaystyle{}I_{3x3} & \displaystyle{}0_{3x3} & \cdots & \displaystyle{}0_{3x3}\\\ \displaystyle{}Y_{12} & \displaystyle{}Y_{22} & \cdots & \displaystyle{}Y_{2M}\\\ \vdots & \vdots & & \vdots\\\ \displaystyle{}Y_{M1} & \displaystyle{}Y_{M2} & \cdots & \displaystyle{}Y_{MM} \end{bmatrix} $$
+\displaystyle{}I_{3x3} & \displaystyle{}0_{3x3} & \cdots & \displaystyle{}0_{3x3}\\\ \displaystyle{}Y_{12} & \displaystyle{}Y_{22} & \cdots & \displaystyle{}Y_{2M}\\\ \vdots & \vdots & & \vdots\\\ \displaystyle{}Y_{M1} & \displaystyle{}Y_{M2} & \cdots & \displaystyle{}Y_{MM} \end{bmatrix}$$
 
 1. Invert Y-bus to get Z-bus
      2. Extract Thevenin's impedance matrix at node-N: 
 
-$$ \displaystyle{}Z{^N_{Th}}=Z(\displaystyle{}N{^{start}_{row}}:\displaystyle{}N{^{end}_{row}},\displaystyle{}N{^{start}_{column}}:\displaystyle{}N{^{end}_{column}})$$
+$$\displaystyle{}Z{^N_{Th}}=Z(\displaystyle{}N{^{start}_{row}}:\displaystyle{}N{^{end}_{row}},\displaystyle{}N{^{start}_{column}}:\displaystyle{}N{^{end}_{column}})$$
 
 3. Use the above $\displaystyle{}Z{^N_{Th}}$ in "4. Fault Equations" in Equations section
   2. Extract the phase information of the node where the fault is to be introduced. Based on that information, introduce fault boundary conditions in “4. Fault Equations” based on the table in Equations section
@@ -166,9 +150,9 @@ $$\displaystyle{}z_{12}=\begin{bmatrix}
 
 1.Invert the above line impedance matrices to primitive admittance matrices ($\displaystyle{}y_{12},\displaystyle{}y_{23},\displaystyle{}y_{13}$): 
 
-$$ \displaystyle{}y_{12}=inv(\displaystyle{}z_{12})$$
-$$ \displaystyle{}y_{23}=inv(\displaystyle{}z_{23})$$
-$$ \displaystyle{}y_{13}=inv(\displaystyle{}z_{13})$$
+$$\displaystyle{}y_{12}=inv(\displaystyle{}z_{12})$$
+$$\displaystyle{}y_{23}=inv(\displaystyle{}z_{23})$$
+$$\displaystyle{}y_{13}=inv(\displaystyle{}z_{13})$$
   2. Obtain Y-bus (see Figure.3 for Mesh system): 
 
 $$\displaystyle{}Y=\begin{bmatrix}
@@ -187,7 +171,7 @@ $$\displaystyle{}Y=\begin{bmatrix}
 
 1.Obtain pre-fault voltage at swing node from GridLAB-D. For the sake of this example, we are defining the voltage as 4160V: 
 
-$$ \theta=\frac{2\pi{}}{3}$$
+$$\theta=\frac{2\pi{}}{3}$$
 
 $$\displaystyle{}V{^s_{Th}}=\begin{bmatrix}
 4160\\\ 4160\cos(-\theta)+4160\sin(-\theta)\\\ 4160\cos(\theta)+4160\sin(\theta) \end{bmatrix}$$
@@ -196,44 +180,46 @@ $$\displaystyle{}V{^s_{Th}}=\begin{bmatrix}
    1.Invert Y-bus to find Z-bus: 
 
 $$Z=inv(Y)$$
-     2. Extract the impedance matrix at node-3 i.e., Z(7:9,7:9) which is self-impedance matrix at node-3: 
 
-$$ \displaystyle{}Z{^3_{Th}}=Z(7:9,7:9)$$
+2. Extract the impedance matrix at node-3 i.e., Z(7:9,7:9) which is self-impedance matrix at node-3: 
+
+$$\displaystyle{}Z{^3_{Th}}=Z(7:9,7:9)$$
 
   2. Set the fault impedance ($\displaystyle{}Z_f$) and find Fault current at node-3 ($\displaystyle{}I{^3_{Fault}}$); Fault voltage at node-3 ($\displaystyle{}V{^3_{Fault}}$). 
    1.Set the fault impedance ($\displaystyle{}Z_f$), swing bus voltage ($\displaystyle{}V{^s_{Th}}$), "Fault-boundary conditions" in “4. Fault Equations” in Equations section. In this example, we introduce Single Line to Ground (SLG) fault at node-3 at phase-C: 
       1.Define Fault impedance ($\displaystyle{}Z_f$): 
 
-$$ \displaystyle{}Z_f=0$$
+$$\displaystyle{}Z_f=0$$
+
 2. Define Fault-boundary conditions matrices: 
 
 $$\displaystyle{}C_{I3\phi}=\begin{bmatrix}
-1 & 0 & 0\\\ 0 & 1 & 0\\\ 0 & 0 & \displaystyle{}-Z_f \end{bmatrix} $$
+1 & 0 & 0\\\ 0 & 1 & 0\\\ 0 & 0 & \displaystyle{}-Z_f \end{bmatrix}$$
 
 $$\displaystyle{}C_{V3\phi}=\begin{bmatrix}
-0 & 0 & 0\\\ 0 & 0 & 0\\\ 0 & 0 & 1 \end{bmatrix} $$
+0 & 0 & 0\\\ 0 & 0 & 0\\\ 0 & 0 & 1 \end{bmatrix}$$
 
 1.Compute the first matrix on LHS of "4. Fault Equations" in Equations section: 
 
 $$\displaystyle{}C_F=\begin{bmatrix}
-\displaystyle{}Z{^3_{Th}} & \displaystyle{}I_{3x3}\\\ \displaystyle{}C_{I3\phi} & \displaystyle{}C_{V3\phi} \end{bmatrix} $$
+\displaystyle{}Z{^3_{Th}} & \displaystyle{}I_{3x3}\\\ \displaystyle{}C_{I3\phi} & \displaystyle{}C_{V3\phi} \end{bmatrix}$$
 
 1.Compute RHS of "4. Fault Equations" in Equations section: 
 
 $$\displaystyle{}V{^F_{RHS}}=\begin{bmatrix}
-\displaystyle{}V{^s_{Th}}\\\ \displaystyle{}0_{3x1} \end{bmatrix} $$
+\displaystyle{}V{^s_{Th}}\\\ \displaystyle{}0_{3x1} \end{bmatrix}$$
 
 1.Multiply the inverse of $\displaystyle{}C_F$ with $\displaystyle{}V{^F_{RHS}}$: 
 
-$$ \displaystyle{}currIvoltV_{Fault}=inv(\displaystyle{}C_F)*\displaystyle{}V{^F_{RHS}}$$
+$$\displaystyle{}currIvoltV_{Fault}=inv(\displaystyle{}C_F)*\displaystyle{}V{^F_{RHS}}$$
 
 2. Obtain Fault current at node-3 ($\displaystyle{}I{^3_{Fault}}$): 
 
-$$ \displaystyle{}I{^3_{Fault}}=\displaystyle{}currIvoltV_{Fault}(1:3)$$
+$$\displaystyle{}I{^3_{Fault}}=\displaystyle{}currIvoltV_{Fault}(1:3)$$
 
 3. Obtain Fault voltage at node-3 ($\displaystyle{}V{^3_{Fault}}$): 
 
-$$ \displaystyle{}V{^3_{Fault}}=\displaystyle{}currIvoltV_{Fault}(4:6)$$
+$$\displaystyle{}V{^3_{Fault}}=\displaystyle{}currIvoltV_{Fault}(4:6)$$
 
 # Validation
 

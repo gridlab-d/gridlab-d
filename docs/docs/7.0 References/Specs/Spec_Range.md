@@ -1,38 +1,9 @@
 # Spec:Range
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:Range
-# Spec:Range
 
 ![Workinprogress.jpg](../../../images/Workinprogress.jpg)
 
 EDITING IN PROGRESS
-
-
-
-## Contents
-
-  * 1 General Description
-    * 1.1 Oven
-    * 1.2 Cooktop
-  * 2 Modeling Assumptions
-  * 3 Equations
-    * 3.1 Oven Equations
-      * 3.1.1 Total Power Calculation
-      * 3.1.2 Thermostat Setpoint Temperatures
-      * 3.1.3 New Time Calculation
-  * 4 Solver
-    * 4.1 Interfacing Overview
-      * 4.1.1 Object Inclusion
-      * 4.1.2 Published Inputs
-      * 4.1.3 Published Outputs
-      * 4.1.4 Data Structure
-    * 4.2 Solver Timing
-      * 4.2.1 Solver Passes
-      * 4.2.2 Solution Timesteps
-      * 4.2.3 Solver Call Timing
-  * 5 Testing And Validation
-  * 6 References
-  * 7 See Also
   
 The purpose of the [range] model in GridLAB-D is to facilitate the real representation of the oven and cooktop energy consumptions profile. 
 
@@ -50,63 +21,57 @@ The oven GridLAB-D model is similar to that of GridLAB-D [waterheater] one-node 
 
 The cooktop has burners on the top and is usually installed into a countertop. These are essentially perfectly resistive loads. Each burner on a cooktop can be controlled by the user-controlled knob settings. 
 
-# 
-
-Modeling Assumptions
+# Modeling Assumptions
 
   * The temperature inside the oven is considered to be uniform throughout.
   * Three cooktop settings are considered for the cooktop model.
   * The cooktop is a timer-based model. This implies that the operating time of the cooktop depends on time settings rather than on system voltage.
-# 
 
-Equations
+# Equations
 
 ## Oven Equations
 
 Table 1: Equation Notation  Variable | Definition   
 ---|---  
-$$T_{on}$ | Lower setpoint temperature of oven ([degF])   
-$$T_{off}$ | Upper setpoint temperature of oven ([degF])   
-$$\dot{m}$ | mass flow ([lb/hr])   
-$$T_{amb}$ | Ambient temperature ([degF])   
-$$GALPCF$ | Gallons to cubic foot conversion factor   
-$$BTUPHPKW$ | [Btu/hr] to [kw] conversion factor   
-$$\Delta_{t}$ | The time required to change the oven's temperature from an intial temperature ($T_0$) to a new temperature ($T_1$)   
-$$C_w$ | Thermal capacitance   
+$T_{on}$ | Lower setpoint temperature of oven ([degF])   
+$T_{off}$ | Upper setpoint temperature of oven ([degF])   
+$\dot{m}$ | mass flow ([lb/hr])   
+$T_{amb}$ | Ambient temperature ([degF])   
+$GALPCF$ | Gallons to cubic foot conversion factor   
+$BTUPHPKW$ | [Btu/hr] to [kw] conversion factor   
+$\Delta_{t}$ | The time required to change the oven's temperature from an intial temperature ($T_0$) to a new temperature ($T_1$)   
+$C_w$ | Thermal capacitance   
 ovenUA | Thermal Conductance   
-$$P_l$ | Load power   
-$$I_l$ | Load current   
-$$Z_l$ | Load admittance   
-$$V_l$ | Load voltage factor   
-$$ C_{heat}$ | Heating element capacity   
-$$p_l$ | Load power fraction   
-$$i_l$ | Load current fraction   
-$$z_l$ | Load impedance fraction   
-$$P_{total}$ | Total power   
-$$E_{total}$ | Energy used   
-$$T_{set}$ | Oven setpoint   
-$$db$ | Thermostat deadband   
+$P_l$ | Load power   
+$I_l$ | Load current   
+$Z_l$ | Load admittance   
+$V_l$ | Load voltage factor   
+$ C_{heat}$ | Heating element capacity   
+$p_l$ | Load power fraction   
+$i_l$ | Load current fraction   
+$z_l$ | Load impedance fraction   
+$P_{total}$ | Total power   
+$E_{total}$ | Energy used   
+$T_{set}$ | Oven setpoint   
+$db$ | Thermostat deadband   
 ovenDemand | oven demand in [gal/min]  
-$$\rho$ | density of food in pounds per cubic feet ([lb/cf])   
-$$C_p$ |   
-$$c_{food}$ | Specific heat of the food   
+$\rho$ | density of food in pounds per cubic feet ([lb/cf])   
+$C_p$ |   
+$c_{food}$ | Specific heat of the food   
   
 ### Total Power Calculation
 
-    $\begin{align}P_l &= C_{heat} \cdot p_l\\\
+$$\begin{align}P_l &= C_{heat} \cdot p_l\\
 
-I_l &= C_{heat} \cdot i_l\\\ Z_l &= C_{heat} \cdot z_l\end{align}$$
+I_l &= C_{heat} \cdot i_l\\ Z_l &= C_{heat} \cdot z_l\end{align}$$
 
-  
+$$ P_{total} = (P_l + (I_l + Z_lV_l) \cdot V_l) \cdot 1000$$
 
-
-    $ P_{total} = (P_l + (I_l + Z_lV_l) \cdot V_l) \cdot 1000$
-
-    $ E_{total} = \frac{P_{total}}{1000} \cdot \frac{\Delta t}{3600}$
+$$ E_{total} = \frac{P_{total}}{1000} \cdot \frac{\Delta t}{3600}$$
 
 ### Thermostat Setpoint Temperatures
 
-    $\begin{align}T_{on}&=T_{set}-\frac{db}{2}\\\
+$$\begin{align}T_{on}&=T_{set}-\frac{db}{2}\\
 
 T_{off}&=T_{set}-\frac{db}{2}\end{align}$$
 
@@ -114,23 +79,21 @@ T_{off}&=T_{set}-\frac{db}{2}\end{align}$$
 
 Estimate mass flow: 
 
-    $ \dot{m}= \text{ovenDemand} \cdot 60 \cdot \frac{\rho}{GALPCF}$
+$$ \dot{m}= \text{ovenDemand} \cdot 60 \cdot \frac{\rho}{GALPCF}$$
 
 Calculate new time 
 
-    $\begin{align}\Delta t &= \frac{\text{log}(c_1+c_2T_1)-\text{log}(c_1+c_2T_0)}{c_2}\\\
+$$\begin{align}\Delta t &= \frac{\text{log}(c_1+c_2T_1)-\text{log}(c_1+c_2T_0)}{c_2}\\
 
-c_{11}&=\frac{\text{ovenUA} + \dot{m}_{C_p}}{C_w}\\\ c_{22}&=\frac{(P_{total}\cdot BTUPHPKW) + (\dot{m}\cdot c_{food})+(\text{ovenUA} \cdot T_{amb})}{\text{ovenUA}+(\dot{m} \cdot c_{food})}\\\ T_{new}&=c_{22}-(c_{22}-T_0) \cdot exp(-c_{11} \cdot \Delta t)\end{align}$$
+c_{11}&=\frac{\text{ovenUA} + \dot{m}_{C_p}}{C_w}\\ c_{22}&=\frac{(P_{total}\cdot BTUPHPKW) + (\dot{m}\cdot c_{food})+(\text{ovenUA} \cdot T_{amb})}{\text{ovenUA}+(\dot{m} \cdot c_{food})}\\ T_{new}&=c_{22}-(c_{22}-T_0) \cdot exp(-c_{11} \cdot \Delta t)\end{align}$$
 
 where 
 
-    $\begin{align}c_1 &= \frac{(P_{total} \cdot BTUPHPKW + ovenUA \cdot T_{amb} + \dot{m} \cdot C_p \cdot T_{inlet})}{C_w}\\\
+$$\begin{align}c_1 &= \frac{(P_{total} \cdot BTUPHPKW + ovenUA \cdot T_{amb} + \dot{m} \cdot C_p \cdot T_{inlet})}{C_w}\\
 
-c_2&=\frac{-(ovenUA+\dot{m}\cdot c_{food})}{C_w}\\\ C_w &= \frac{v_{oven}}{GALPCF} \cdot \rho \cdot c_{food}\end{align}$$
+c_2&=\frac{-(ovenUA+\dot{m}\cdot c_{food})}{C_w}\\ C_w &= \frac{v_{oven}}{GALPCF} \cdot \rho \cdot c_{food}\end{align}$$
 
-# 
-
-Solver
+# Solver
 
 ## Interfacing Overview
 
@@ -198,9 +161,6 @@ voltage | Pointer to complex voltage values of the object
 current | Pointer to complex current values of the object  
 power | Pointer to complex power contributions of the object  
 impedance | Pointer to complex impedance contributions of the object  
-  
-  
-
 
 ## Solver Timing
 
@@ -213,12 +173,14 @@ The oven model follows these steps:
   1. Solve the time required to change the oven's temperature if the oven's inside temperature is lower than the lower setpoint temperature.
   2. Solve the oven interface components based on its settings.
   3. Update the energy calculation.
+
 After these steps are complete, the simulation advances to the next [timestamp]. This sequence will repeat until the next GridLAB-D overall [timestamp] is encountered. At that point, the changes will be reflected into the quasi-steady state [powerflow] solution, and the process will repeat until the given energy consumption is elapsed. 
 
 The cooktop model follows these steps: 
 
   1. Solve the cooktop interface conponents based on its settings.
   2. Update energy calculation.
+
 ### Solution Timesteps
 
 **TODO**: Add description like in [Spec:Microgrids]. 
@@ -227,20 +189,15 @@ The cooktop model follows these steps:
 
 **TODO**: Add description like in [Spec:Microgrids]. 
 
-# 
-
-Testing And Validation
+# Testing And Validation
 
 **TODO**: Include finalized testing and validation. 
 
-# 
-
-References
+# References
 
   1. _IEEE power & energy magazine_; May/June 2010
-# 
-
-See Also
+  
+# See Also
 
   * [Range User Manual]
   * [Residential Module]

@@ -1,31 +1,6 @@
 # Spec:NEVArray
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:NEVArray
 SPECIFICATION Approval item: 
-
-## Contents
-
-  * 1 Overview
-  * 2 GLM Array Input Example
-  * 3 Array Input Syntax
-  * 4 Array Input Parsing
-    * 4.1 Integer array
-    * 4.2 Double array
-      * 4.2.1 Full matrix specification
-      * 4.2.2 Upper triangular matrix specification
-    * 4.3 Complex array
-    * 4.4 Object array
-    * 4.5 Terminal bridging array
-  * 5 Time-varying data I/O
-    * 5.1 Class property syntax
-    * 5.2 Valid property prefixes
-      * 5.2.1 Node property prefixes
-      * 5.2.2 Load property prefixes
-      * 5.2.3 Meter property prefixes
-      * 5.2.4 Link property prefixes
-    * 5.3 Class property timing
-  * 6 See also
-# Overview
 
 This specification page outlines the formatting for array input data (GLM-based) for NEV objects in explicit detail. This will include the syntax flags and the approach for implementation within GridLAB-D. 
 
@@ -91,7 +66,7 @@ A full matrix specification for a $3\times{}3$ matrix could look like:
      link_impedance "1,2,3; 4,5,6; 7,8,9";
     
 
-which would be read in to represent a matrix of $ \begin{bmatrix} 1 & 2 & 3\\\ 4 & 5 & 6\\\ 7 & 8 & 9 \end{bmatrix}$
+which would be read in to represent a matrix of $\begin{bmatrix} 1 & 2 & 3\\ 4 & 5 & 6\\ 7 & 8 & 9 \end{bmatrix}$
 
 ### Upper triangular matrix specification
 
@@ -101,7 +76,7 @@ All upper triangular specifications for line spacing are expected to be strictly
      link_distance "1,2,3; 4,5; 6";
     
 
-which would be read in to represent a matrix of $ \begin{bmatrix} 1 & 2 & 3\\\ 0 &4 & 5 \\\ 0 & 0 & 6 \end{bmatrix}$
+which would be read in to represent a matrix of $\begin{bmatrix} 1 & 2 & 3\\ 0 &4 & 5 \\ 0 & 0 & 6 \end{bmatrix}$
 
 It is important to note that the interpretation of this as upper triangular or strictly upper triangular will be left to the object utilizing the array. 
 

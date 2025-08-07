@@ -1,21 +1,5 @@
 # Spec:Dishwasher
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:Dishwasher
-SPECIFICATION Approval item: 
-
-## Contents
-
-  * 1 Modeling Assumptions
-  * 2 Governing equations
-  * 3 User options
-    * 3.1 Specifications
-  * 4 S1
-  * 5 S2
-    * 5.1 S3
-    * 5.2 S4
-    * 5.3 S5
-  * 6 References
-    * 6.1 See also
 The purpose of this document is to describe the specifications of the [dishwasher] class in the [residential] module. 
 
 ## Modeling Assumptions
@@ -64,35 +48,35 @@ A common way to model the voltage response of a device is to model it as a colle
 
 If motor is only running (i.e., State 3): 
 
-$$\begin{align} \mathrm{Load\ power\ [kW]} &= \mathrm{motor\ power\ [VA]}\cdot \mathrm{power\ factor\_motor}/1000\\\
+$$\begin{align} \mathrm{Load\ power\ [kW]} &= \mathrm{motor\ power\ [VA]}\cdot \mathrm{power\ factor\_motor}/1000\\
 
-\mathrm{Load\ current\ [kW]} = 0\\\ 
+\mathrm{Load\ current\ [kW]} = 0\\ 
 
-\mathrm{Load\ impedance\ [kW]} =0\\\ \end{align}$$
+\mathrm{Load\ impedance\ [kW]} =0\\ \end{align}$$
 
 If heating coil is only ON (i.e., State 2 and State 5): 
 
-$$\begin{align} \mathrm{Load\ power\ [kW]} =0\\\
+$$\begin{align} \mathrm{Load\ power\ [kW]} =0\\
 
-\mathrm{Load\ current\ [kW]}=0\\\ \mathrm{Load\ impedance\ [kW]} &= \mathrm{heating\_element\_capacity\ [W]}/1000\\\ \end{align}$$
+\mathrm{Load\ current\ [kW]}=0\\ \mathrm{Load\ impedance\ [kW]} &= \mathrm{heating\_element\_capacity\ [W]}/1000\\ \end{align}$$
 
 If heating coil and motor are ON (i.e., State 4): 
 
-$$\begin{align} \mathrm{Load\ power\ [kW]} &= \mathrm{motor\ power\ [VA]}\cdot \mathrm{power\ factor\_motor}/1000\\\
+$$\begin{align} \mathrm{Load\ power\ [kW]} &= \mathrm{motor\ power\ [VA]}\cdot \mathrm{power\ factor\_motor}/1000\\
 
-\mathrm{Load\ current\ [kW]}=0\\\ 
+\mathrm{Load\ current\ [kW]}=0\\ 
 
-\mathrm{Load\ impedance\ [kW]} &= \mathrm{heating\_element\_capacity\ [W]}/1000\\\ 
+\mathrm{Load\ impedance\ [kW]} &= \mathrm{heating\_element\_capacity\ [W]}/1000\\ 
 
 \end{align}$$
 
 Energy calculation: 
 
-$$\begin{align}\mathrm{Total\ power\ [kW]} &= \mathrm{Load\ power\ [kW]}+ \mathrm{Load\ current\ [kW]} + \mathrm{Load\ impedance\ [kW]} \\\
+$$\begin{align}\mathrm{Total\ power\ [kW]} &= \mathrm{Load\ power\ [kW]}+ \mathrm{Load\ current\ [kW]} + \mathrm{Load\ impedance\ [kW]} \\
 
 \end{align}$$
 
-$$\begin{align}\mathrm{Energy\ used\ [kWh]} &= \mathrm{Total\ power\ [kW]}\cdot \Delta t\mathrm{[ sec]}/3600\\\
+$$\begin{align}\mathrm{Energy\ used\ [kWh]} &= \mathrm{Total\ power\ [kW]}\cdot \Delta t\mathrm{[ sec]}/3600\\
 
 \end{align}$$
 
@@ -136,6 +120,7 @@ duration_control only_after heated dry | double | sec | 550 | Value > 0 | Contro
 ## S3
 
 Outputs ([R3])
+
 Table 3: Dishwasher outputs  Variable | Type | Units | Definition   
 ---|---|---|---  
 total_power | double | kW | Total power required during the dishwasher cycle   
@@ -157,8 +142,8 @@ For a dishwasher, and each simulation time step $kT$, $k = 1, 2, 3,...,$ where $
 
 Table 4: Equations  Equation | Number   
 ---|---  
-$$\begin{align} queue(k) &= queue (k-1) + D (E_k/E_{tot})), k = 1,2,3, ...\end{align}$ | 1.1   
-$$\begin{align} queue(0) &= q _0\end{align}$ | 1.2   
+$\begin{align} queue(k) &= queue (k-1) + D (E_k/E_{tot})), k = 1,2,3, ...\end{align}$ | 1.1   
+$\begin{align} queue(0) &= q _0\end{align}$ | 1.2   
   
 where $E_k$ denotes the energy consumed by the dishwasher over the $k^{th}$ time step as specified by ELCAP(integral of an ELCAP curve such as the one shown in Figure 4 between $(k-1)T$ )$kT$) and $E_{tot}$ denotes the total energy consumed by the appliance over the course of a day as specified by ELCAP. The ratio $Ek/E_{tot}$ gives a measure of the percentage of daily appliance consumption over the $k^{th}$ time step, and a plot of $E_k/E_{tot}$ as a function of $kT$ gives the normalized ELCAP dishwasher load shape. The difference Equation (1.1) is initialized to a random number $q_o$ (1.2). 
 
@@ -169,8 +154,7 @@ Figure 4. ELCAP Dishwasher Load Shape
 Note that there is an interesting physical interpretation of $queue(k)$. Basically, dishwasher is placed in its 'queue', and waiting its turn to be turned on. And after each simulation time step of duration $T$, $queue(k)$ is incremented by an amount that is proportional to its daily demand. In other words, each appliance’s ‘queue’ is being built up or accumulated. And the rate at which the ‘queue’ is accumulated depends on the normalized load shape $Ek/E_{tot}$. Thus higher value of $Ek/E_{tot}$ would result in a higher rate at which an dishwasher’s ‘queue’ is accumulated, and the following logic is utilized to determine when to turn on a particular appliance 
 
   * If fore some $k$ = $k^*$, $queue(k^*)>\displaystyle{}\delta$ for some threshold $\displaystyle{}\delta > 0$, dishwasher is turned on. And once turned on, its 'queue' is re-set as follows
-  * $\begin{align}
-queue(k^*+1) &= queue(k^*) - \displaystyle{}\delta\end{align}$$
+  * $\begin{align}queue(k^*+1) &= queue(k^*) - \displaystyle{}\delta\end{align}$
 
 and accumulated again in accordance with Equation (1.1) to be turned on again at some later time. Intuitively, it is clear that the probability that a given appliance i is turned on depends on its daily demand $D$, and the value of the normalized appliance load shape $Ek/E_{tot}$ at any given time $kT$. The higher these quantities are, the higher is the probability of the given appliance turning on. 
 
@@ -189,12 +173,14 @@ queue(k+1) &= queue(k) - \displaystyle{}\delta\end{align}$. This is calculated i
 
   * Once dishwasher is turned on, it goes from one state to another (sync()). The sequence of intermediate states is determined by the transition times between the states (Transition Rules in Table 1).
   * Update energy consumption each simulation time step $T$ (sync())as long as energy consumption of dishwasher is lower than the given base line energy (dishwasher stops whenever total energy consumption exceeds the baseline energy)
+
 # References
 
   * 1\. Source: IEEE power & energy magazine; May/June 2010.
   * 2\. K. P. Schneider and J. C. Fuller, “Detailed end-use models for distribution system analysis,” in Proc. 2010 IEEE PES General Meeting, pp. 1-7.
   * 3\. J. C. Fuller, B. Vyakaranam, N. Prakash Kumar, S.M. Leistritz, and GB Parker, “Modeling of GE Appliances in GridLAB-D: Peak Demand Reduction,” PNNL-XXXXX, Pacific Northwest National Laboratory, Richland, WA, 2012.
   * 4\. Pratt, R.G., et al., 1989. “Description of Electric Energy Use in Single-Family Residences in the Pacific Northwest," End-Use Load and Consumer Assessment Program (ELCAP),” Pacific Northwest Laboratory, DOE/BP-13795-21, Richland, WA, April 1989
+
 ## See also
 
   * [dishwasher]

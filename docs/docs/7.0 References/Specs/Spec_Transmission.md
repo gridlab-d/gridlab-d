@@ -1,31 +1,6 @@
 # Spec:Transmission
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:Transmission
-## Contents
-
-  * 1 Module Overview
-    * 1.1 Operation Sequence
-      * 1.1.1 Init
-      * 1.1.2 Precommit
-      * 1.1.3 Presync
-      * 1.1.4 Sync
-      * 1.1.5 Postsync
-      * 1.1.6 Commit
-      * 1.1.7 Finalize
-  * 2 Inputs and Outputs
-    * 2.1 GridLAB-D
-      * 2.1.1 pw_model class
-      * 2.1.2 pw_load class
-      * 2.1.3 Substation Property Hooks
-      * 2.1.4 pw_recorder class
-    * 2.2 PowerWorld Interface
-      * 2.2.1 COM Interface
-  * 3 Testing
-    * 3.1 Unit Tests
-  * 4 Future Functionality
-    * 4.1 Networked Gobo
-    * 4.2 See also
-# Module Overview
+## Module Overview
 
 The network module shall include three classes: pw_model, pw_load, and pw_recorder. These are all base GridLAB-D and C++ classes, without any additional inheritance. 
 
@@ -141,7 +116,7 @@ Equations:
 
 Substation will use the following equation to convert the positive sequence value from its pw_load connection (load_voltage) to the three phase balanced voltages used as the swing bus voltage solution. 
 
-$$\begin{bmatrix} \displaystyle V_{A}\\\ & \\\ \displaystyle V_{B}\\\ & \\\ \displaystyle V_{C} \end{bmatrix} = \begin{bmatrix} \displaystyle 1 & \displaystyle 1 & \displaystyle 1 \\\ & \\\ \displaystyle 1 & \displaystyle a^2 & \displaystyle a \\\ & \\\ \displaystyle 1 & \displaystyle a & \displaystyle a^2 \end{bmatrix}*\begin{bmatrix} \displaystyle 0\\\ & \\\ \displaystyle V_{positive sequence}\\\ & \\\ \displaystyle 0 \end{bmatrix}*b $. 
+$$\begin{bmatrix} \displaystyle V_{A}\\ & \\ \displaystyle V_{B}\\ & \\ \displaystyle V_{C} \end{bmatrix} = \begin{bmatrix} \displaystyle 1 & \displaystyle 1 & \displaystyle 1 \\ & \\ \displaystyle 1 & \displaystyle a^2 & \displaystyle a \\ & \\ \displaystyle 1 & \displaystyle a & \displaystyle a^2 \end{bmatrix}*\begin{bmatrix} \displaystyle 0\\ & \\ \displaystyle V_{positive sequence}\\ & \\ \displaystyle 0 \end{bmatrix}*b$$
 
 Where $b$ is conditional upon which phase is chosen as the reference phase, $a$ is the complex number $1\angle120^\circ$, and all other variables are complex. The values of $b$ for each of the possible reference phases are shown below. 
 
@@ -160,13 +135,7 @@ Published Inputs:
 Input Name  | Quantity type  | Description   
 ---|---|---  
 positive_sequence_voltage  | complex Volts  | The positive sequence voltage given from the PowerWorld bus model.   
-reference_phase  | enumeration  | The phase that will be used as the reference angle for the powerflow solution. 
-
-  * PHASE_A(Default)
-  * PHASE_B
-  * PHASE_C
-
-  
+reference_phase  | enumeration  | The phase that will be used as the reference angle for the powerflow solution. <br/> - PHASE_A(Default)<br/> - PHASE_B<br/> - PHASE_C  
 transmission_level_constant_power_load  | complex Volt-Amperes  | the positive-sequence constant power load to be posted directly to the pw_load object ([powerflow] solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
 transmission_level_constant_impedance_load  | complex Ohms  | the positive-sequence constant impedance load to be posted directly to the pw_load object ([powerflow] solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
 transmission_level_constant_current_load  | complex Amperes  | the positive-sequence constant current load to be posted directly to the pw_load object ([powerflow] solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
@@ -209,8 +178,6 @@ During commit, the pw_recorder writes a line into a file on fixed intervals. Thi
 
 The primary method for GridLAB-D to communicate with PowerWorld shall be through the PowerWorld SIMAuto COM interface, making direct C/C++ function calls. The SIMAuto interface is described in the PowerWorld online help files. 
 
-  
-
 
 # Testing
 
@@ -222,6 +189,7 @@ The basic unit tests will include, in order:
   * connecting GridLAB-D pw_load objects to the corresponding targets in a PowerWorld model
   * exchanging values between pw_load and PowerWorld bus/node objects
   * updating the PowerWorld powerflow solution via SimAuto
+  
 # Future Functionality
 
 ## Networked Gobo

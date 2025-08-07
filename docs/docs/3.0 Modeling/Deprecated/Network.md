@@ -68,15 +68,15 @@ $$\overline Y_c \gets c \overline Y_{k_{eff}}$$
 
 Add the self-admittance and the shunt admittances to the busses (Kundur 1993): 
 
-$$\begin{alignat}{2} \sum \overline Y_{from} & \gets \sum \overline Y_{from} + \overline Y_c + (c-1) \overline Y_c \\\ \sum \overline Y_{to} & \gets \sum \overline Y_{to} + \overline Y_c + (1-c) \overline Y_{eff} \\\ \end{alignat}$$
+$$\begin{alignat}{2} \sum \overline Y_{from} & \gets \sum \overline Y_{from} + \overline Y_c + (c-1) \overline Y_c \\ \sum \overline Y_{to} & \gets \sum \overline Y_{to} + \overline Y_c + (1-c) \overline Y_{eff} \\ \end{alignat}$$
 
 Compute the line current injections on the busses: 
 
-$$\begin{alignat}{2} \sum \overline I_{from} & \gets \sum \overline V_{to} \overline Y_c \\\ \sum \overline I_{to} & \gets \sum \overline V_{from} \overline Y_c \\\ \end{alignat}$$
+$$\begin{alignat}{2} \sum \overline I_{from} & \gets \sum \overline V_{to} \overline Y_c \\ \sum \overline I_{to} & \gets \sum \overline V_{from} \overline Y_c \\ \end{alignat}$$
 
 Add the current injections to the busses: 
 
-$$\begin{alignat}{2} \sum \overline {YV}_{from} & \gets \sum \overline {YV}_{from} + \overline I_{from} \\\ \sum \overline {YV}_{to} & \gets \sum \overline {YV}_{to} + \overline I_{to} \\\ \end{alignat}$$
+$$\begin{alignat}{2} \sum \overline {YV}_{from} & \gets \sum \overline {YV}_{from} + \overline I_{from} \\ \sum \overline {YV}_{to} & \gets \sum \overline {YV}_{to} + \overline I_{to} \\ \end{alignat}$$
 
 # Network module implementation
 

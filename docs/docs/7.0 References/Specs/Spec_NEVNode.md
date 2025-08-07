@@ -1,32 +1,6 @@
 # Spec:NEVNode
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:NEVNode
 SPECIFICATION Approval item: 
-
-## Contents
-
-  * 1 Overview
-    * 1.1 Node/Meter
-      * 1.1.1 Infinite Children
-        * 1.1.1.1 Connector Object
-        * 1.1.1.2 Ranking
-      * 1.1.2 NEV Voltages
-      * 1.1.3 NEV Current, Shunt, and Power
-      * 1.1.4 Order of operations
-        * 1.1.4.1 Init()
-        * 1.1.4.2 Presync()
-        * 1.1.4.3 Sync()
-        * 1.1.4.4 Postsync()
-    * 1.2 Loads
-      * 1.2.1 Order of operations
-        * 1.2.1.1 Init()
-        * 1.2.1.2 Presync()
-        * 1.2.1.3 Sync()
-        * 1.2.1.4 Postsync()
-      * 1.2.2 Load Convention
-    * 1.3 Multiple Swing Nodes
-  * 2 See also
-# Overview
 
 The NEV implementation of node-based objects will describe what additional or new information is needed to model the NEV behavior on powerflow. All previous functionality of nodes, meters, loads, triplex_nodes, triplex_meters, triplex_meters will stay the same. 
 
@@ -103,21 +77,18 @@ The `NEV_current`, `NEV_shunt`, and `NEV_power` arrays get instantiated in init(
 
 `NEV_power`[N][N] 
 
-    $\displaystyle{}\begin{bmatrix}
-
-S_{terminal_1-Ground}&S_{terminal_1-terminal_2}&\rightarrow &S_{terminal_1-termianl_N}\\\ S_{terminal_2-terminal_1}&S_{terminal_2-Ground}&\rightarrow &S_{terminal_2-termianl_N}\\\ \downarrow &\downarrow &\downarrow &\downarrow \\\ S_{terminal_N-terminal_1}&S_{terminal_N-terminal_2}&\rightarrow &S_{terminal_N-Ground} \end{bmatrix}$$
+$$\displaystyle{}\begin{bmatrix}
+S_{terminal_1-Ground}&S_{terminal_1-terminal_2}&\rightarrow &S_{terminal_1-termianl_N}\\ S_{terminal_2-terminal_1}&S_{terminal_2-Ground}&\rightarrow &S_{terminal_2-termianl_N}\\ \downarrow &\downarrow &\downarrow &\downarrow \\ S_{terminal_N-terminal_1}&S_{terminal_N-terminal_2}&\rightarrow &S_{terminal_N-Ground} \end{bmatrix}$$
 
 `NEV_current`[N][N] 
 
-    $\displaystyle{}\begin{bmatrix}
-
-I_{terminal_1-Ground}&I_{terminal_1-terminal_2}&\rightarrow &I_{terminal_1-termianl_N}\\\ I_{terminal_2-terminal_1}&I_{terminal_2-Ground}&\rightarrow &I_{terminal_2-termianl_N}\\\ \downarrow &\downarrow &\downarrow &\downarrow \\\ I_{terminal_N-terminal_1}&I_{terminal_N-terminal_2}&\rightarrow &I_{terminal_N-Ground} \end{bmatrix}$$
+$$\displaystyle{}\begin{bmatrix}
+I_{terminal_1-Ground}&I_{terminal_1-terminal_2}&\rightarrow &I_{terminal_1-termianl_N}\\ I_{terminal_2-terminal_1}&I_{terminal_2-Ground}&\rightarrow &I_{terminal_2-termianl_N}\\ \downarrow &\downarrow &\downarrow &\downarrow \\ I_{terminal_N-terminal_1}&I_{terminal_N-terminal_2}&\rightarrow &I_{terminal_N-Ground} \end{bmatrix}$$
 
 `NEV_shunt`[N][N] 
 
-    $\displaystyle{}\begin{bmatrix}
-
-Y_{terminal_1-Ground}&Y_{terminal_1-terminal_2}&\rightarrow &Y_{terminal_1-termianl_N}\\\ Y_{terminal_2-terminal_1}&Y_{terminal_2-Ground}&\rightarrow &Y_{terminal_2-termianl_N}\\\ \downarrow &\downarrow &\downarrow &\downarrow \\\ Y_{terminal_N-terminal_1}&Y_{terminal_N-terminal_2}&\rightarrow &Y_{terminal_N-Ground} \end{bmatrix}$$
+$$\displaystyle{}\begin{bmatrix}
+Y_{terminal_1-Ground}&Y_{terminal_1-terminal_2}&\rightarrow &Y_{terminal_1-termianl_N}\\ Y_{terminal_2-terminal_1}&Y_{terminal_2-Ground}&\rightarrow &Y_{terminal_2-termianl_N}\\ \downarrow &\downarrow &\downarrow &\downarrow \\ Y_{terminal_N-terminal_1}&Y_{terminal_N-terminal_2}&\rightarrow &Y_{terminal_N-Ground} \end{bmatrix}$$
 
 ### Order of operations
 
@@ -277,19 +248,17 @@ As was seen from the load example specific terminal connections are given when c
 
 This load's `NEV_current` array would look like this. 
 
-    $\displaystyle{}\begin{bmatrix}
-
-0+j0&I_{12}&I_{13}&0+j0\\\ -I_{12}&0+j0&I_{23}&0+j0\\\ -I_{13}&-I_{23}&0+j0&0+j0\\\ 0+j0&0+j0&0+j0&0+j0 \end{bmatrix}$$
+$$\displaystyle{}\begin{bmatrix}
+0+j0&I_{12}&I_{13}&0+j0\\ -I_{12}&0+j0&I_{23}&0+j0\\ -I_{13}&-I_{23}&0+j0&0+j0\\ 0+j0&0+j0&0+j0&0+j0 \end{bmatrix}$$
 
 Converting all the loads to a Wye configuration would result in a `NEV_current` that looks like 
 
-    $\displaystyle{}\begin{bmatrix}
-
-0+j0&0+j0&0+j0&I_{12}+I_{13}\\\ 0+j0&0+j0&0+j0&I_{23}-I_{12}\\\ 0+j0&0+j0&0+j0&-I_{13}-I_{23}\\\ -I_{12}-I_{13}&-I_{23}+I_{12}&I_{13}+I_{23}&0+j0 \end{bmatrix}$$
+$$\displaystyle{}\begin{bmatrix}
+0+j0&0+j0&0+j0&I_{12}+I_{13}\\ 0+j0&0+j0&0+j0&I_{23}-I_{12}\\ 0+j0&0+j0&0+j0&-I_{13}-I_{23}\\ -I_{12}-I_{13}&-I_{23}+I_{12}&I_{13}+I_{23}&0+j0 \end{bmatrix}$$
 
 The Equations for determining Wye equivalent currents from delta configured constant current loads and constant power loads can be found below 
 
-    $ \displaystyle{}I_{terminal_i-terminal_{neutral}}=\Sigma I_{terminal_i-terminal_j} + \Sigma [\frac{S_{terminal_i-termianl_j}}{V_{terminal_i}-V_{terminal_j}}]^*$
+$$ \displaystyle{}I_{terminal_i-terminal_{neutral}}=\Sigma I_{terminal_i-terminal_j} + \Sigma [\frac{S_{terminal_i-termianl_j}}{V_{terminal_i}-V_{terminal_j}}]^*$$
 
 ## Multiple Swing Nodes
 

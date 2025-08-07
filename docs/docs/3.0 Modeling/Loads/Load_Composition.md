@@ -68,13 +68,13 @@ Window R-value | °F.h/Btu.sf | 3.5 | From local building code
 Window-wall ratio | % | 15% | From local building code   
 Ventilation rate | puV/h | $\dot V_{thermal} + \dot V_{wind}$ (see Notes 1 & 2) | Typically between 0.5 and 5 air-changes per hour   
 Balance temperature | °F | $T_{setpoint} - \frac{Heatgains}{UA}$ | Temperature at which neither heating nor cooling is required   
-Heating design temperature | °F | $T_{min}\,\\!$ | Usually set to the lowest dry-bulb temperature in the TMY data, but can be adjusted to oversize equipment or account for TMY's lack of extremes   
-Cooling design temperature | °F | $T_{max}\,\\!$ | Usually set to the highest dry-bulb temperature in the TMY data, but can be adjusted to oversize equipment or account for TMY's lack of extremes   
+Heating design temperature | °F | $T_{min}$ | Usually set to the lowest dry-bulb temperature in the TMY data, but can be adjusted to oversize equipment or account for TMY's lack of extremes   
+Cooling design temperature | °F | $T_{max}$ | Usually set to the highest dry-bulb temperature in the TMY data, but can be adjusted to oversize equipment or account for TMY's lack of extremes   
 Heating capacity | Btu/h | $UA \left ( T_{setpoint} - T_{heatingdesign} \right )$ | Oversizing of heating can also be done here   
 Cooling capacity | Btu/h | $UA \left ( T_{setpoint} - T_{coolingdesign} \right ) + Q_{peaksolar} $ (see Note 3) | Oversizing of cooling can also be done here   
 Thermostat setpoint | °F | 72 | Typically between 68°F and 72°F in the winter and between 72°F and 78°F in summer   
-Building UA | Btu/°F.h | $H_{vent} + UA_{wall} + UA_{window} + UA_{roof}\,\\!$ (see Notes 4,5,6,7) | Typically around 500 Btu/°F.h   
-Internal heat gains | Btu/h | $\sum_{x=enduse}{r_x Q_x}\,\\!$ | $r_x\,\\!$ is the fraction of heat from all fuel sources that goes to indoor air   
+Building UA | Btu/°F.h | $H_{vent} + UA_{wall} + UA_{window} + UA_{roof}$ (see Notes 4,5,6,7) | Typically around 500 Btu/°F.h   
+Internal heat gains | Btu/h | $\sum_{x=enduse}{r_x Q_x}$ | $r_x$ is the fraction of heat from all fuel sources that goes to indoor air   
 External shading | % | 20% | Fraction of solar radiation that is blocked by external shading (tree, overhangs, etc.)   
 Solar gains | Btu/h | $Directnormal \times Solarexposure$ (see Note 8) | Directnormal include atmospheric losses (clouds, haze, etc.)   
 Latent load | Btu/h | $0.3 \frac{Internalheatgains + Solargains}{1+e^{4-10RH}}$ | Latent gains account for humidity effect on cooling coils   
@@ -88,10 +88,10 @@ Notes
   2. $\dot V_{wind} \approx Floorarea \times Windspeed \times 10^{-5}$ in puV/h
   3. $Q_{peaksolar} = Peaksolar \times Windowarea \times Shading \times Exposurefraction/8$ in Btu/h with $Exposurefraction = \begin{cases} Solarelevation > 0 & : \sqrt{2} \cos(Solarelevation) \sin(Solarelevation) \\\ Solarelevation \le 0 & : 0 \end{cases}$
   4. $H_{vent} = 0.182 Ventilationrate \times Airvolume$
-  5. $UA_{wall} = Wallarea(1-Windowwallratio)/Wallrvalue\,\\!$
-  6. $UA_{roof} = Flooarea/Roofrvalue\,\\!$
+  5. $UA_{wall} = Wallarea(1-Windowwallratio)/Wallrvalue$
+  6. $UA_{roof} = Flooarea/Roofrvalue$
   7. $UA_{window} = Wallarea \times Windowallratio \times Windowrvalue$
-  8. $Solarexposure = Windowarea (1-Externalshading)Exposurefraction/8 \,\\!$
+  8. $Solarexposure = Windowarea (1-Externalshading)Exposurefraction/8$ 
 
 The end-use electricity is used to determine what fraction of the end-use load ends up as electric load, as shown in Table 2. 
 
@@ -609,6 +609,7 @@ The following load sensitivities were calculated with Version 1.6.2 using a –1
 
 Notation
     The value 0 indicates that no change was detected. The value 0.000 indicates the change was less than 0.0005. The value - indicates that the difference is between two very small or zero values.
+
 Table 1 - Single-family residential temperature sensitivities  Output | Summer peak   
 ---|---  
 Phoenix AZ | San Francisco CA | Portland OR   
@@ -626,8 +627,6 @@ ZIP (G) | 0 | -0.02% | 0 | -0.03% | 0 | -0.03%
 ZIP (B) | 0 | -0.01% | 0 | -0.01% | 0 | -0.01%   
 ZIP PF | 0 | (na) | 0 | (na) | 0 | (na)   
 Total | +0.0526 | 0% | +0.0507 | 0% | +0.0486 | 0%   
-  
-  
 
 
 Table 2 - Multi-family residential temperature sensitivities  Output | Summer peak   

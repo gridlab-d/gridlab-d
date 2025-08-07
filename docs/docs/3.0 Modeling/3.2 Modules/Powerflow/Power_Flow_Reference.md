@@ -424,18 +424,18 @@ If in service, _Z_ = 0.0001
 
 If out of service, _Z_ = ∞ 
 
-$$[a] = \left [ \begin{matrix} 1 & 0 & 0 \\\ 0 & 1 & 0 \\\ 0 & 0 & 1 \end{matrix} \right ] 
+$$[a] = \left [ \begin{matrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{matrix} \right ] 
 
 [b] = \left [ Z_{abc} \right ] 
 
-[c] = \left [ \begin{matrix} 0 & 0 & 0 \\\ 0 & 0 & 0 \\\ 0 & 0 & 0 \end{matrix} \right ] 
+[c] = \left [ \begin{matrix} 0 & 0 & 0 \\ 0 & 0 & 0 \\ 0 & 0 & 0 \end{matrix} \right ] 
 
-[d] = \left [ \begin{matrix} 1 & 0 & 0 \\\ 0 & 1 & 0 \\\ 0 & 0 & 1 \end{matrix} \right ]$$
+[d] = \left [ \begin{matrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{matrix} \right ]$$
 
   
 
 
-$$[A] = \left [ \begin{matrix} 1 & 0 & 0 \\\ 0 & 1 & 0 \\\ 0 & 0 & 1 \end{matrix} \right ] 
+$$[A] = \left [ \begin{matrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{matrix} \right ] 
 
 [B] = \left [ Z_{abc} \right ]$$
 
@@ -447,16 +447,16 @@ If in service, _Z_ = 0.0001
 
 If out of service, _Z_ = ∞ 
 
-$$[a] = \left [ \begin{matrix} 1 & 0 & 0 \\\ 0 & 1 & 0 \\\ 0 & 0 & 1 \end{matrix} \right ] 
+$$[a] = \left [ \begin{matrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{matrix} \right ] 
 
 [b] = \left [ Z_{abc} \right ] 
 
-[c] = \left [ \begin{matrix} 0 & 0 & 0 \\\ 0 & 0 & 0 \\\ 0 & 0 & 0 \end{matrix} \right ] 
+[c] = \left [ \begin{matrix} 0 & 0 & 0 \\ 0 & 0 & 0 \\ 0 & 0 & 0 \end{matrix} \right ] 
 
-[d] = \left [ \begin{matrix} 1 & 0 & 0 \\\ 0 & 1 & 0 \\\ 0 & 0 & 1 \end{matrix} \right ]$$
+[d] = \left [ \begin{matrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{matrix} \right ]$$
 
 
-$$[A] = \left [ \begin{matrix} 1 & 0 & 0 \\\ 0 & 1 & 0 \\\ 0 & 0 & 1 \end{matrix} \right ] 
+$$[A] = \left [ \begin{matrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{matrix} \right ] 
 
 [B] = \left [ Z_{abc} \right ]$$
 
