@@ -154,4 +154,5 @@ Who is an “integrator” and what this guide intends to provide
 
 
 ## 6.0 Examples
+
 Collection of examples each with their own documentation page and supporting files (.glms, weather, etc). Ideally these are tested as part of some kind of CI/CD thing so we can know they always work. Ideally we have one dedicated example for each feature.
