@@ -1,6 +1,6 @@
 # Database
 
-MySQL database connection
+MySQL database connection ... Scott made this edit with intent to delete.
 
 ## Synopsis
     
