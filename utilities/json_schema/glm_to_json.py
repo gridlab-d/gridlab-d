@@ -29,7 +29,7 @@ def glm_to_json(glmName="TE_CHALLENGE"):
     
     Reads a GridLAB-D model file and converts it to two JSON files:
     - A values file containing the actual model data and instances
-    - A schema file containing the structure and metadata (TODO: needs work)
+    - A schema file containing the structure and metadata
     
     Args:
         glmName (str): Name of the GLM file (without .glm extension).
@@ -67,6 +67,16 @@ def glm_to_json(glmName="TE_CHALLENGE"):
                     (isinstance(field_value, str) and not field_value))
                and field_key not in ['item_cnt', 'entity', 'instances']
         }
+        # Legacy filtering
+        directives = raw.get('_legacy', {})
+        filtered_legacy = {
+            field_key: field_value
+            for field_key, field_value in directives.items()
+            if not ((isinstance(field_value, list) and not field_value) or
+                    (isinstance(field_value, dict) and not field_value) or
+                    (isinstance(field_value, str) and not field_value))
+               and field_key not in ['item_cnt', 'entity', 'instances']
+        }        
         # Add preamble comments if available
         preamble = raw.get('__preamble', {})
         filtered_preamble = {
@@ -77,8 +87,33 @@ def glm_to_json(glmName="TE_CHALLENGE"):
                     (isinstance(field_value, str) and not field_value))
                and field_key not in ['item_cnt', 'entity', 'instances']
         }
+
+        # TODO: Come back to this when schema v1 is ready and check against it for which fields to do number conversion
+        def try_number_conversion(value):
+            """
+            Try to convert a string to a number type (int or float).
+            """
+            if isinstance(value, str):
+                try:
+                    # Try converting to an integer first
+                    return int(value)
+                except ValueError:
+                    try:
+                        # Try converting to a float if integer conversion fails
+                        return float(value)
+                    except ValueError:
+                        # Return the original string if neither conversion is possible
+                        return value
+            elif isinstance(value, dict):
+                # Recursively convert values in a dictionary
+                return {k: try_number_conversion(v) for k, v in value.items()}
+            elif isinstance(value, list):
+                # Recursively convert values in a list
+                return [try_number_conversion(v) for v in value]
+            return value  # Return the original value if not a string
+
+
         # Build modules and objects using parsed data
-        # Modules: from module_entities.instances (single-instance)
         modules = {}
         for mtype, entity in model_file.module_entities.items():
             # Skip 'clock' and class definitions
@@ -86,35 +121,40 @@ def glm_to_json(glmName="TE_CHALLENGE"):
                 continue
             inst_dict = getattr(entity, 'instances', {})
             if inst_dict:
-                # extract the single instance
+                # Extract the single instance and ensure numeric conversion in its values
                 single = next(iter(inst_dict.values()), {})
-                modules[mtype] = single
-            # propagate any conditional-directive lists if present
-            for attr in ('ifdef', 'ifndef', 'ifexist', 'if', 'ifnot'):
-                vals = getattr(entity, attr, None)
-                if vals:
-                    modules[mtype][attr] = vals
+                modules[mtype] = try_number_conversion(single)
+                #check if there are conditionals and add them
+                if entity._conditionals:
+                    modules[mtype]["_conditionals"] = entity._conditionals
+
         # Separate 'clock' as its own top-level entity
         clock_entity = model_file.module_entities.get('clock')
         clock_data = {}
         if clock_entity:
             insts = getattr(clock_entity, 'instances', {})
             if insts:
-                clock_data = next(iter(insts.values()), {})
-        # Objects: from model_file.model (type -> name -> params)
+                clock_data = try_number_conversion(next(iter(insts.values()), {}))
+
+        # Build objects using parsed data
         objects = {}
         for otype, insts in model_file.model.items():
             obj_list = []
             for name, params in insts.items():
                 entry = {'name': name}
-                entry.update(params)
+                try:
+                    entry.update(try_number_conversion(params))  # Ensure numeric conversion for params
+                except Exception as e:
+                    print(f"Error processing {name}: {e}")  
                 obj_list.append(entry)
             if obj_list:
                 objects[otype] = {'instances': obj_list}
+
         # Compose final JSON structure
         jsonEntity = {
-            '_directives': filtered_directives,
             '__preamble': filtered_preamble,
+            '_directives': filtered_directives,
+            '_legacy': filtered_legacy,
             'classes': classes,
             'clock': clock_data,
             'modules': modules,

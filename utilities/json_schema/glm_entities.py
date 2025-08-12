@@ -67,22 +67,6 @@ class Item:
         """
         return str(self.value)
 
-    def to_json(self):
-        """Stringify the attribute in the Items to JSON.
-
-        Returns:
-            str: JSON string with label, unit, datatype, value
-        """
-        tmp = ('{ ' + self.item + ': {' +
-               '"label": "' + self.label + ', ' +
-               '"unit": "' + self.unit + ', ' +
-               '"datatype": "' + self.datatype + ', ' +
-               '"value": ')
-        if self.datatype in ["TEXT"]:
-            tmp = tmp + '"' + self.value + '"}'
-        else:  # self.datatype in ["REAL", "INTEGER"]:
-            tmp = tmp + self.value + '}'
-        return tmp
 
     
 class Entity:
@@ -108,6 +92,7 @@ class Entity:
         self.item_cnt = 0
         self.entity = entity
         self.instances = {}
+        self._conditionals = {} # List to hold conditional directives
         try:
             if isinstance(config, list) and len(config) > 0:
                 for attr in config:
@@ -168,8 +153,25 @@ class Entity:
             dict: A dictionary representation suitable for JSON serialization
         """
         def serialize(value):
-            if isinstance(value, (str, int, float, bool)) or value is None:
-                return value  # Keep primitive types as-is
+            """
+            Serialize the value, trying to convert strings that represent numbers
+            back to numeric types.
+            """
+            # If the value is a string, attempt to convert it to a number
+            if isinstance(value, str):
+                try:
+                    # Attempt to convert to an integer first
+                    return int(value)
+                except ValueError:
+                    try:
+                        # If not an integer, attempt to convert to a float
+                        return float(value)
+                    except ValueError:
+                        # If neither, return the original string
+                        return value
+            elif isinstance(value, (int, float, bool)) or value is None:
+                # Keep primitive types as-is
+                return value
             elif isinstance(value, dict):
                 # Recursively serialize dictionaries
                 return {k: serialize(v) for k, v in value.items()}
@@ -184,49 +186,162 @@ class Entity:
                           for key, value in self.__dict__.items()}
         return serialized_dict        
         
-    def to_schema(self):
-        """Generate a JSON object with the item types listed (schema/model).
-        
-        Including nested structures.
+    def to_schema(self, isObject = False):
+        """
+        Generate a JSON Schema object representing the Entity.
+
+        Ensures `$schema` is not included in nested objects, while including "required" fields.
 
         Returns:
-            dict: A dictionary representing the schema of the Entity.
+            dict: A JSON Schema dictionary describing the structure and constraints of the Entity.
         """
         exclude_keys = {"item_cnt", "entity", "_m", "instances"}
 
         def map_type(value):
+            # Map Python types to JSON Schema types
             type_mapping = {
-                str: "TEXT",
-                int: "INTEGER",
-                float: "REAL",
-                dict: "OBJECT",
-                list: "ARRAY",
-                bool: "BOOLEAN",
-                type(None): "NULL"
+                str: "string",
+                int: "integer",
+                float: "number",
+                dict: "object",
+                list: "array",
+                bool: "boolean",
+                type(None): "null"
             }
-            return type_mapping.get(type(value), "UNKNOWN")
+            return type_mapping.get(type(value), "unknown")
 
         def serialize_schema(value):
-            if isinstance(value, Item):
-                if value.unit is not None and value.unit != "":
-                    return {"dataType": value.datatype,
-                            "unit": value.unit}
-                else:   
-                    return {"dataType": value.datatype}
+            # Handle lists (arrays)
+            if isinstance(value, list):
+                if len(value) > 0:
+                    first = value[0]
+                    if isinstance(first, Item):
+                        # Map Item properties to JSON Schema
+                        datatype_map = {
+                            "TEXT": "string",
+                            "INTEGER": "integer",
+                            "REAL": "number",
+                            "OBJECT": "object",
+                            "ARRAY": "array"
+                        }
+                        schema = {"type": datatype_map.get(first.datatype, "string")}
+                        if first.unit and first.unit != "":
+                            schema["unit"] = first.unit
+                        return {
+                            "type": "array",
+                            "items": schema
+                        }
+                    else:
+                        # Map first element type
+                        return {
+                            "type": "array",
+                            "items": serialize_schema(first)
+                        }
+                else:
+                    # Handle empty lists (default to string type)
+                    return {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    }
+
+            # Handle Items (custom types with specific datatypes)
+            elif isinstance(value, Item):
+                datatype_map = {
+                    "TEXT": "string",
+                    "INTEGER": "integer",
+                    "REAL": "number",
+                    "OBJECT": "object",
+                    "ARRAY": "array"
+                }
+                schema = {
+                    "anyOf": 
+                        [
+                            {"type": datatype_map.get(value.datatype, "string")},
+                            {"$ref": "#/definitions/itemConditionals"}
+                        ]
+                    
+                }
+                if value.unit and value.unit != "":
+                    # Check if `unit` looks like an enum (contains | characters)
+                    if "|" in value.unit:
+                        # Split by | and clean up empty strings
+                        enum_values = [v.strip() for v in value.unit.split("|") if v.strip()]
+                        schema["anyOf"][0]["enum"] = enum_values
+                    else:
+                        # Otherwise, treat as descriptive metadata
+                        schema["unit"] = value.unit
+                
+                return schema
+
+            # Handle dictionaries (objects)
             elif isinstance(value, dict):
-                return value
+                return {
+                            "type": "object",
+                            "properties": {
+                                **{k: serialize_schema(v) for k, v in value.items()}
+                            },
+                            "required": [],
+                            "additionalProperties": False
+                        }
+
+            # Handle nested Entities (custom structure handling)
             elif isinstance(value, Entity):
                 return value.to_schema()
-            else:
-                return map_type(value)
 
-        schema = {}
-        for attr in self.__dict__:
+            # Handle primitive types
+            else:
+                return {"type": map_type(value)}
+
+        schema = {
+            "type": "object",
+            "properties": {
+               "_conditionals": {
+                    "$ref": "#/definitions/entityConditionals"
+                },
+            },
+
+            "required": [],
+            "additionalProperties": False
+        }
+
+        
+        if isObject:
+            # If this is an object entity, add the "instances" property
+            schema["properties"]["instances"] = {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": False
+                }
+            }
+
+        for attr, item in self.__dict__.items():
             if attr in exclude_keys:
                 continue
-            item = getattr(self, attr)
-            schema[attr] = serialize_schema(item)
+            if attr == "_conditionals":
+                # Special handling for conditionals
+                schema["properties"]["_conditionals"] = {
+                    "$ref": "#/definitions/entityConditionals"
+                }
+            elif isObject:
+                # Handle instances
+                schema["properties"]["instances"]["items"]["properties"][attr] = serialize_schema(item)
+                schema["properties"]["instances"]["items"]["properties"]["name"] = {
+                    "type": "string",
+                    "description": "Name of the instance"
+                }
+                schema["properties"]["instances"]["items"]["properties"]["parent"] = {
+                    "type": "string",
+                    "description": "Name of the parent instance"
+                }
+
+            else:
+                schema["properties"][attr] = serialize_schema(item)
+
         return schema
+
         
     def set_instance(self, object_name, params):
         """Set the Entity instance the given set of parameters.

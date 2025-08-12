@@ -36,30 +36,6 @@ class GLMModel:
     It maintains collections of modules, objects, schedules, and various
     directives found in GLM files.
     
-    Attributes:
-        hash (dict): Hash of object identifiers to names
-        root: Root node reference
-        in_file (str): Input file path
-        out_file (str): Output file path  
-        model (dict): Parsed model data
-        glm (GLM): GLM namespace object
-        conn: Connection reference
-        modules: Module references
-        objects: Object references
-        schedule_types (dict): Schedule definitions
-        module_types (list): List of module type names
-        class_types (list): List of class type names
-        module_entities (dict): Module entity definitions
-        object_entities (dict): Object entity definitions
-        set_lines (list): #set directive lines
-        define_lines (list): #define directive lines
-        include_lines (list): #include directive lines
-        ifdef_lines (list): #ifdef directive lines
-        configuration (dict): Configuration settings
-        inside_comments (dict): Comments found inside blocks
-        outside_comments (dict): Comments found outside blocks
-        inline_comments (dict): Inline comments
-        classes (dict): Loaded class definitions from JSON
     """
     
     def __init__(self):
@@ -127,6 +103,8 @@ class GLMModel:
             entity.add_attr("TEXTARRAY", "#define", "", "defines", value=[])
             entity.add_attr("TEXTARRAY", "#set", "", "sets", value=[])
             entity.add_attr("TEXTARRAY", "#undef", "", "undefs", value=[])
+            self.module_entities["_directives"] = entity
+            entity = Entity("_legacy", None)
             entity.add_attr("TEXTARRAY", "#setenv", "", "setenvs", value=[])
             entity.add_attr("TEXTARRAY", "#binpath", "", "binpaths", value=[])
             entity.add_attr("TEXTARRAY", "#libpath", "", "libpaths", value=[])
@@ -134,7 +112,7 @@ class GLMModel:
             entity.add_attr("TEXTARRAY", "#option", "", "options", value=[])
             entity.add_attr("TEXTARRAY", "#system", "", "systems", value=[])
             entity.add_attr("TEXTARRAY", "#start", "", "starts", value=[])
-            self.module_entities["_directives"] = entity
+            self.module_entities["_legacy"] = entity
             entity = Entity("__preamble", None)
             entity.add_attr("TEXTARRAY", "Preamble comments", "", "comments", value=[])
             self.module_entities["__preamble"] = entity
@@ -269,17 +247,181 @@ class GLMModel:
         return diction
 
     def entities_to_schema(self):
-        """Convert all entities to schema format.
-        
-        Returns:
-            dict: Dictionary containing schema representations of all entities
         """
-        diction = {}
+        Convert all entities to a JSON Schema format, properly nesting `modules` and `objects`.
+
+        Creates top-level categories (like `modules` and `objects`) in the schema to group related data.
+
+        Returns:
+            dict: A single JSON Schema object describing all entities.
+        """
+        schema = {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",  # Declaration ONLY at the top-level
+            "type": "object",
+            "properties": {
+                "modules": {  # Group all `modules` in a single object
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": True
+                },
+                "objects": {  # Group all `objects` in a single object
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": False
+                },
+                "clock": {  # clock object
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": True
+                },
+                "_directives": {  # directives object
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": True
+                },
+                "_preamble": {  # preamble object
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": True
+                },
+                "classes": {  # classes object
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": True
+                },
+                "schedules": {  # schedules object
+                    "type": "array",
+                    "properties": {},
+                    "required": [],
+                    "additionalProperties": True
+                },
+            },
+            "definitions": {
+                "itemConditionals": {
+                    "type": "object",
+                    "properties": {
+                        "ifdef": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "anyOf": [
+                            { "type": "number" },
+                            { "type": "string" }
+                            ]
+                        }
+                        },
+                        "ifndef": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "anyOf": [
+                            { "type": "number" },
+                            { "type": "string" }
+                            ]
+                        }
+                        },
+                        "ifexist": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "anyOf": [
+                            { "type": "number" },
+                            { "type": "string" }
+                            ]
+                        }
+                        },
+                        "if": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "anyOf": [
+                            { "type": "number" },
+                            { "type": "string" }
+                            ]
+                        }
+                        },
+                    },
+                    "additionalProperties": False,
+                    "required": []
+                },
+                "entityConditionals": {
+                    "type": "object",
+                    "properties": {
+                        "ifdef": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                        },
+                        "ifndef": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                        },
+                        "ifexist": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                        },
+                        "if": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                        },                            
+                        "print": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                        },
+                        "error": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                        },
+                        "warning": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                        }
+                    },
+                    "additionalProperties": False
+                },        
+            },
+            "required": [],  # Add required fields dynamically if needed
+            "additionalProperties": True  # Allow additional properties globally
+        }
+
+        # Add `module_entities` into the `modules` section
         for name in self.module_entities:
-            diction[name] = self.module_entities[name].to_schema()
+            if name == "_legacy":
+                continue
+            if hasattr(self.module_entities[name], "to_schema"):  # Ensure `to_schema` exists
+                module_schema = self.module_entities[name].to_schema()
+                if name in ['clock', '_directives', '__preamble', '_legacy', 'classes', 'schedules']:
+                    schema["properties"][name] = module_schema
+                else:
+                    schema["properties"]["modules"]["properties"][name] = module_schema
+            else:
+                raise AttributeError(f"Entity '{name}' in `module_entities` does not implement `to_schema()`.")
+
+        # Add `object_entities` into the `objects` section
         for name in self.object_entities:
-            diction[name] = self.object_entities[name].to_schema()
-        return diction
+            if hasattr(self.object_entities[name], "to_schema"):  # Ensure `to_schema` exists
+                object_schema = self.object_entities[name].to_schema(True)
+                schema["properties"]["objects"]["properties"][name] = object_schema
+            else:
+                raise AttributeError(f"Entity '{name}' in `object_entities` does not implement `to_schema()`.")
+
+        return schema
+
 
     def add_object(self, _type, name, params):
         """Add a new object to the model.
@@ -513,20 +655,14 @@ class GLMModel:
                 # record each field for user-defined classes
                 if mod == 'class':
                     class_fields.append({'type': ptype, 'name': pname})
-                if len(inside_if_statements) > 0:
-                    param = ptype
-                    val = pname
-                    for if_statement in inside_if_statements:
-                        if if_statement["type"] in ["ifdef", "ifndef", "ifexist", "if"]:
-                            # propagate conditional directives
-                            if param not in params:
-                                params[param] = {if_statement["type"]: {}}
-                            if 'ifdef' not in params[param]:
-                                params[param][if_statement["type"]] = {}
-                            params[param][if_statement["type"]][if_statement["condition"]] = val.strip()
+                if (inside_if_statements):
+                    #check if params[ptype] exists
+                    if ptype not in params:
+                        params[ptype] = {}
+                    self.add_conditionals_to_item(params[ptype], pname, inside_if_statements)
                 else:
                     params[ptype] = pname
-
+            
             if re.search('}', line):
                 done = 1
             else:
@@ -586,12 +722,9 @@ class GLMModel:
                 val = gld_strict_name(name_prefix + val)
             
             if len(insideIfDefs) > 0:
-                localIfDef = insideIfDefs[-1]
-                if param not in params:
-                    params[param] = {localIfDef["type"]: {}}
-                if not hasattr(params[param], localIfDef["type"]):
-                    params[param][localIfDef["type"]] = {}
-                params[param][localIfDef["type"]][localIfDef["condition"]] = val.strip()
+                if( param not in params):
+                    params[param] = {}
+                self.add_conditionals_to_item(params[param], val.strip(), insideIfDefs)
             else:
                 params[param] = val.strip()
             
@@ -628,7 +761,7 @@ class GLMModel:
             params = {}
             qty_match = re.search(r'\.\.(\d+)', oid)
             if qty_match:
-                params['count'] = int(qty_match.group(1))
+                params['object_count'] = int(qty_match.group(1))
             # default name
             counter += 1
             name = f"{_type}_{counter}"
@@ -644,7 +777,7 @@ class GLMModel:
         # handle multiplicity syntax (e.g., object house:..28 indicates multiple instances)
         m_qty = re.search(r'\.\.(\d+)$', oid)
         if m_qty:
-            params['count'] = int(m_qty.group(1))
+            params['object_count'] = int(m_qty.group(1))
         # Collect comments
         comments = []
         inside_comments = []
@@ -662,11 +795,7 @@ class GLMModel:
             substring = line[pos + 2:].strip()
             before_comment = line.split("//", 1)[0].strip()
             inline_comments[before_comment] = substring
-        # propagate any outer conditional directives into params
-        for cond in outsideIfDefs:
-            t = cond["type"]
-            if t in ("ifdef", "ifndef", "ifexist", "if"):
-                params.setdefault(t, []).append(cond["condition"])
+        self.add_conditionals_to_dict(params, outsideIfDefs)
         line = next(itr)
         if len(parent):
             params['parent'] = parent
@@ -700,12 +829,9 @@ class GLMModel:
                         inline_comments[tokens[0]] = comment_text
             # find conditional directives inside object and record
             for d in ('ifdef', 'ifndef', 'ifexist', 'if'):
-                if re.search(rf'#{d}\b', line):
+                if re.search(rf"#{d}\b", line):
                     condition = self._extract_directive_content(line, d)
-                    # track conditional context
                     insideIfDefs.append({"type": d, "condition": condition})
-                    # record object-level conditional directives for JSON
-                    params.setdefault(d, []).append(condition)
             # handle else as negation of last condition
             if re.search(r'#else\b', line) and len(insideIfDefs) > 0:
                 cond = insideIfDefs[-1]["condition"]
@@ -770,12 +896,39 @@ class GLMModel:
             params['trigger_warning'] = inside_warnings
         # attach object-level trigger print
         if inside_prints:
-            params['print'] = inside_prints
+            params['print'] = inside_prints          
         # add the new object type to the model
         self.add_object(_type, name, params)
 
         return line, counter, name
     
+    def add_conditionals_to_item(self, item, value, conditionals):
+        for cond in conditionals:
+            t = cond["type"]
+            if t in ("ifdef", "ifndef", "ifexist", "if"):
+                # If the conditionals are not already present, initialize them
+                if t not in item:
+                    item.setdefault(t, {})
+                condition = cond["condition"] # Use value if condition is not specified
+                item[t][condition] = value  # Use `cond.get` for safety
+
+    def add_conditionals_to_entity(self, entity, conditionals):
+        for cond in conditionals:
+            t = cond["type"]
+            if t in ("ifdef", "ifndef", "ifexist", "if"):
+                entity._conditionals.setdefault(t, []).append(cond["condition"])
+
+    def add_conditionals_to_dict(self, obj, conditionals):
+        for cond in conditionals:
+            t = cond["type"]
+            if t in ("ifdef", "ifndef", "ifexist", "if"):
+                # Check if '_conditionals' is a key in the dictionary and initialize if missing
+                if "_conditionals" not in obj or not isinstance(obj["_conditionals"], dict):
+                    obj["_conditionals"] = {}  # Initialize '_conditionals' as a dictionary
+                if t not in obj["_conditionals"]:
+                    obj["_conditionals"][t] = []  # Initialize the type-specific conditional list
+                obj["_conditionals"][t].append(cond["condition"])  # Safely append condition
+
     def _classify_line(self, line):
         """Classify a line based on its content and return line type and processed line.
         
@@ -967,13 +1120,7 @@ class GLMModel:
                     name = self.glm_module("module", line, itr)
                     # attach any conditional directives to the module entity
                     entity = self.module_entities[name]
-                    for if_def in self.ifdef_lines:
-                        t = if_def["type"]
-                        if t in ("ifdef", "ifndef", "ifexist", "if", "ifnot"):
-                            # ensure list exists on entity
-                            if not hasattr(entity, t):
-                                setattr(entity, t, [])
-                            getattr(entity, t).append(if_def["condition"])
+                    self.add_conditionals_to_entity(entity, self.ifdef_lines)
                 elif line_type == 'schedule':
                     name = self.glm_schedule(line, itr)
                 elif line_type == 'object':
@@ -1003,13 +1150,13 @@ class GLMModel:
             self.module_entities['_directives'].defines = self.define_lines
             self.module_entities['_directives'].undefs = self.undef_lines
             # extended directives
-            self.module_entities['_directives'].setenvs = self.setenv_lines
-            self.module_entities['_directives'].binpaths = self.binpath_lines
-            self.module_entities['_directives'].libpaths = self.libpath_lines
-            self.module_entities['_directives'].incpaths = self.incpath_lines
-            self.module_entities['_directives'].options = self.option_lines
-            self.module_entities['_directives'].systems = self.system_lines
-            self.module_entities['_directives'].starts = self.start_lines
+            self.module_entities['_legacy'].setenvs = self.setenv_lines
+            self.module_entities['_legacy'].binpaths = self.binpath_lines
+            self.module_entities['_legacy'].libpaths = self.libpath_lines
+            self.module_entities['_legacy'].incpaths = self.incpath_lines
+            self.module_entities['_legacy'].options = self.option_lines
+            self.module_entities['_legacy'].systems = self.system_lines
+            self.module_entities['_legacy'].starts = self.start_lines
             self.hash = h
             return True
         else:
