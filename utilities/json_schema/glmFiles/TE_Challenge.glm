@@ -49,12 +49,14 @@ module generators;
 // winter
 //#define FIXED_PRICE=0.088
 
+#ifexist thisthingdontexist
 object metrics_collector_writer {
      interval 300;
      filename ${METRICS_FILE}; // TE_Challenge_metrics.json
 //     extension json;
      extension h5;
 };
+#endif
 
 object climate {
   name localWeather;
@@ -64,9 +66,8 @@ object climate {
 	latitude 32.133;
 	longitude -111.95;
 	#endif
-  tz_meridian -105.0;
+  tz_meridian 3 * pi * ${VSOURCE};
 };
-
 class player {
       double value;
 }
@@ -87,6 +88,7 @@ object player {
     loop 1;
 }
 
+#if thisistrue
 object transformer_configuration {
 	name substation_config;
 	connect_type WYE_WYE;
@@ -99,14 +101,14 @@ object transformer_configuration {
 	secondary_voltage 7200;
 	impedance +0.0015+0.00675j;
 }
-
+#endif
 object transformer_configuration {
 	name default_transformer_A;
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
 	install_type PADMOUNT;
 	power_rating 150;
 	powerA_rating 150 kVA;
-	primary_voltage 7200;
+	primary_voltage 3 * pi * ${VSOURCE};
 	secondary_voltage 120;
 	impedance +0.015+0.0675j;
 }
@@ -153,7 +155,7 @@ object substation {
 	name network_node;
 	phases ABCN;
 	nominal_voltage 133000;
-	positive_sequence_voltage 133000;
+	positive_sequence_voltage 3 * pi * ${VSOURCE};
 	bustype SWING;
   base_power 12MVA;
   power_convergence_value 100VA;
@@ -170,11 +172,6 @@ object fncs_msg {
      configure other_file.txt;
      option "port 55320";
 #endif	 
-#ifdef OTHER_TEST_THING
-     parent network_node;
-     configure TE_Challenge_gridlabd.txt;
-     option "transport:hostname localhost, port 5570";
-#endif
      aggregate_subscriptions true;
      aggregate_publications true;
 }
