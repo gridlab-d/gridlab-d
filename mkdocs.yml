@@ -2,6 +2,9 @@ site_name: GridLAB-D Documentation
 theme:
   name: readthedocs
   highlightjs: true
+  display_version: false
+  style_external_links: true
+  html_logo: docs/images/logo.png
 plugins:
   - search
   - mkdocstrings:
@@ -236,7 +239,6 @@ nav:
       - Spec:switch object: docs/7.0 References/Specs/Spec_switch_object.md
       - Spec:sync check: docs/7.0 References/Specs/Spec_sync_check.md
       - Spec:sync ctrl: docs/7.0 References/Specs/Spec_sync_ctrl.md
-  - GridLAB-D Documentation Outline: docs/outline.md
   - reference:
     - ReadMeConfig:
       - authentication: reference/ReadMeConfig/authentication.md

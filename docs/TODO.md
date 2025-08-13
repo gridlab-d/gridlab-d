@@ -37,6 +37,8 @@
 
 # Miscellaneous Notes
 - [ ] Branding, logo
+- [ ] Math doesn't display on search, can we fix that?
+- [ ] Search in general is not great, what can we do
 - [x] Get images from wiki (urls to wiki pages will no longer work)
 - [ ] Remove "History" sections from docs, irrelevant 
 - [ ] Visual navigation:
