@@ -3,7 +3,7 @@
 During command line processing, GridLAB-D™ loads one or more GLM files listed and uses the directives in those files to set global variables, run scripts, load modules, define classes, create objects, and link to external applications. Once all the objects are created and initialized, the main exec loop is started and the global clock begins to advance.
 
 ### Clock operation
-GridLAB-D's main processing loop advances the global clock by varying time steps depending on the pending state changes of the object's defined in the model until no object reports that is has a pending state change.
+GridLAB-D™'s main processing loop advances the global clock by varying time steps depending on the pending state changes of the object's defined in the model until no object reports that is has a pending state change.
 
 Pending state state changes are called sync events. There are two types of sync event:
 
@@ -59,6 +59,7 @@ There are a number of internal synchronization events that take place while the 
 ### Before commit
 - Transforms - Non-schedule transforms are updated.
 - Instances - Slave instances are waited on
+
 ### After commit
 - Scripts - Script sync events are run.
 

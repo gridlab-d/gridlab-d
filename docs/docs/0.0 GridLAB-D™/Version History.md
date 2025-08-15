@@ -1,17 +1,11 @@
 # Version History
 This page provides an archive of GridLAB-D version announcements.
 
-## Announcements
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Announcements
-
-
-_**Announcements**_
+_**Previous Announcements**_
 
 GridLAB-D v4.3 ([Navajo (Version 4.3)]) is now available!
     Windows and Linux builds can be found at [GridLAB-D downloads](https://www.gridlabd.org/downloads.stm//). The Mac release is coming soon. In the mean time, GridLAB-D v4.3 can be built from the source code at [GridLAB-D GitHub Repository](https://github.com/gridlab-d/gridlab-d//).
-
-_**Previous Announcements**_
 
 * GridLAB-D v3.2 ([Jojoba (Version 3.2)]) is now available!
 
