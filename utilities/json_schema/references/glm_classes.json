@@ -15345,4 +15345,287 @@
 		}
 	}
 }
+,
+"assert": {
+  "assert" : 
+  {
+    "lower" : 
+    {
+      "description" : "the lower bound to compare with for interval tests",
+      "type" : "char1024"
+    },
+    "part" : 
+    {
+      "description" : "the target property part to test",
+      "type" : "char32"
+    },
+    "relation" : 
+    {
+      "description" : "the relation to use for the test",
+      "keywords" : 
+      {
+        "!=" : 3,
+        "<" : 4,
+        "<=" : 1,
+        "==" : 0,
+        ">" : 5,
+        ">=" : 2,
+        "inside" : 6,
+        "outside" : 7
+      },
+      "type" : "enumeration"
+    },
+    "status" : 
+    {
+      "description" : "desired outcome of assert test",
+      "keywords" : 
+      {
+        "FALSE" : 2,
+        "INIT" : 0,
+        "NONE" : 3,
+        "TRUE" : 1
+      },
+      "type" : "enumeration"
+    },
+    "target" : 
+    {
+      "description" : "the target property to test",
+      "type" : "char1024"
+    },
+    "upper" : 
+    {
+      "description" : "the upper bound to compare with for interval tests",
+      "type" : "char1024"
+    },
+    "value" : 
+    {
+      "description" : "the value to compare with for binary tests",
+      "type" : "char1024"
+    },
+    "within" : 
+    {
+      "description" : "the bounds within which the value must bed compared",
+      "type" : "char1024"
+    }
+  },
+  "complex_assert" : 
+  {
+    "once" : 
+    {
+      "description" : "Conditions for a single assert check",
+      "keywords" : 
+      {
+        "ONCE_DONE" : 2,
+        "ONCE_FALSE" : 0,
+        "ONCE_TRUE" : 1
+      },
+      "type" : "enumeration"
+    },
+    "operation" : 
+    {
+      "description" : "Complex operation for the comparison",
+      "keywords" : 
+      {
+        "ANGLE" : 4,
+        "FULL" : 0,
+        "IMAGINARY" : 2,
+        "MAGNITUDE" : 3,
+        "REAL" : 1
+      },
+      "type" : "enumeration"
+    },
+    "status" : 
+    {
+      "description" : "Conditions for the assert checks",
+      "keywords" : 
+      {
+        "ASSERT_FALSE" : 2,
+        "ASSERT_NONE" : 3,
+        "ASSERT_TRUE" : 1
+      },
+      "type" : "enumeration"
+    },
+    "target" : 
+    {
+      "description" : "Property to perform the assert upon",
+      "type" : "char1024"
+    },
+    "value" : 
+    {
+      "description" : "Value to assert",
+      "type" : "complex"
+    },
+    "within" : 
+    {
+      "description" : "Tolerance for a successful assert",
+      "type" : "double"
+    }
+  },
+  "double_assert" : 
+  {
+    "once" : 
+    {
+      "description" : "Conditions for a single assert check",
+      "keywords" : 
+      {
+        "ONCE_DONE" : 2,
+        "ONCE_FALSE" : 0,
+        "ONCE_TRUE" : 1
+      },
+      "type" : "enumeration"
+    },
+    "status" : 
+    {
+      "description" : "Conditions for the assert checks",
+      "keywords" : 
+      {
+        "ASSERT_FALSE" : 2,
+        "ASSERT_NONE" : 3,
+        "ASSERT_TRUE" : 1
+      },
+      "type" : "enumeration"
+    },
+    "target" : 
+    {
+      "description" : "Property to perform the assert upon",
+      "type" : "char1024"
+    },
+    "value" : 
+    {
+      "description" : "Value to assert",
+      "type" : "double"
+    },
+    "within" : 
+    {
+      "description" : "Tolerance for a successful assert",
+      "type" : "double"
+    },
+    "within_mode" : 
+    {
+      "description" : "Method of applying tolerance",
+      "keywords" : 
+      {
+        "WITHIN_RATIO" : 1,
+        "WITHIN_VALUE" : 0
+      },
+      "type" : "enumeration"
+    }
+  },
+  "enum_assert" : 
+  {
+    "status" : 
+    {
+      "description" : "Conditions for the assert checks",
+      "keywords" : 
+      {
+        "ASSERT_FALSE" : 2,
+        "ASSERT_NONE" : 3,
+        "ASSERT_TRUE" : 1
+      },
+      "type" : "enumeration"
+    },
+    "target" : 
+    {
+      "description" : "Property to perform the assert upon",
+      "type" : "char1024"
+    },
+    "value" : 
+    {
+      "description" : "Value to assert",
+      "type" : "int32"
+    }
+  },
+  "global_attributes" : null,
+  "int_assert" : 
+  {
+    "once" : 
+    {
+      "keywords" : 
+      {
+        "ONCE_DONE" : 2,
+        "ONCE_FALSE" : 0,
+        "ONCE_TRUE" : 1
+      },
+      "type" : "enumeration"
+    },
+    "status" : 
+    {
+      "keywords" : 
+      {
+        "ASSERT_FALSE" : 2,
+        "ASSERT_NONE" : 3,
+        "ASSERT_TRUE" : 1
+      },
+      "type" : "enumeration"
+    },
+    "target" : 
+    {
+      "type" : "char1024"
+    },
+    "value" : 
+    {
+      "type" : "int32"
+    },
+    "within" : 
+    {
+      "type" : "int32"
+    },
+    "within_mode" : 
+    {
+      "keywords" : 
+      {
+        "WITHIN_RATIO" : 1,
+        "WITHIN_VALUE" : 0
+      },
+      "type" : "enumeration"
+    }
+  }
 }
+,
+"optimize": {
+  "global_attributes" : null,
+  "simple" : 
+  {
+    "constraint" : 
+    {
+      "description" : "Optimization constraints",
+      "type" : "char1024"
+    },
+    "delta" : 
+    {
+      "description" : "Change applied to decision variable",
+      "type" : "double"
+    },
+    "epsilon" : 
+    {
+      "description" : "Precision of objective value",
+      "type" : "double"
+    },
+    "goal" : 
+    {
+      "description" : "Optimization objective goal",
+      "keywords" : 
+      {
+        "EXTREMUM" : 0,
+        "MAXIMUM" : 2,
+        "MINIMUM" : 1
+      },
+      "type" : "enumeration"
+    },
+    "objective" : 
+    {
+      "description" : "Optimization objective value",
+      "type" : "char1024"
+    },
+    "trials" : 
+    {
+      "description" : "Limits on number of trials",
+      "type" : "int32"
+    },
+    "variable" : 
+    {
+      "description" : "Optimization decision variables",
+      "type" : "char1024"
+    }
+  }
+}}

@@ -119,8 +119,11 @@ class GLMModel:
             for module_name in self.classes:
                 self.module_types.append(module_name)
                 for object_name in self.classes[module_name]:
+                    obj = self.classes[module_name][object_name]
+                    if obj is None:
+                        self.classes[module_name][object_name] = {}
+                        continue
                     if object_name == "global_attributes":
-                        obj = self.classes[module_name][object_name]
                         entity = Entity(module_name, None)
                         for attr in obj:
                             add_attr_to_entity(entity, attr, obj[attr])
