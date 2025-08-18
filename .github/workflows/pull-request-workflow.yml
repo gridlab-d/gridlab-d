@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - 'release/*'
-      - 'feature/1478'
     tags:
       - '*-v*'
   workflow_dispatch:
