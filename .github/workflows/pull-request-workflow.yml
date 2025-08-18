@@ -138,7 +138,7 @@ jobs:
     steps:
       - name: Install Homebrew dependencies
         run: |
-          brew update --preinstall
+          brew update
           env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost
 
       - name: Build HELICS Cache
