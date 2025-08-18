@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'release/*'
+      - 'feature/1478' # Temporary remove after GDO work closes
     tags:
       - '*-v*'
   workflow_dispatch:
@@ -39,7 +40,7 @@ jobs:
 
       - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
         name: Checkout HELICS
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: 'GMLC-TDC/HELICS'
           ref: ${{ env.helics-ref }}
@@ -58,7 +59,7 @@ jobs:
           cmake --install ${{github.workspace}}/helics-build/build
 
       - name: Checkout GridLAB-D
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -104,7 +105,7 @@ jobs:
             mingw-w64-x86_64-helics
 
       - name: Checkout GridLAB-D
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
           path: gridlab-build
@@ -152,7 +153,7 @@ jobs:
 
       - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
         name: Checkout HELICS
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: 'GMLC-TDC/HELICS'
           ref: ${{ env.helics-ref }}
@@ -172,7 +173,7 @@ jobs:
           cmake --install ${{github.workspace}}/helics-build/build
 
       - name: Checkout GridLAB-D
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
