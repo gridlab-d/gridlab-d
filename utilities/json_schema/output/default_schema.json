@@ -39418,6 +39418,605 @@
           },
           "required": [],
           "additionalProperties": false
+        },
+        "assert": {
+          "type": "object",
+          "properties": {
+            "_conditionals": {
+              "$ref": "#/definitions/entityConditionals"
+            },
+            "instances": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "parent": {
+                    "type": "string",
+                    "description": "Name of the parent instance"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the instance"
+                  },
+                  "lower": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "part": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "relation": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "!=",
+                          "<",
+                          "<=",
+                          "==",
+                          ">",
+                          ">=",
+                          "inside",
+                          "outside"
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "FALSE",
+                          "INIT",
+                          "NONE",
+                          "TRUE"
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "target": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "upper": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "within": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "complex_assert": {
+          "type": "object",
+          "properties": {
+            "_conditionals": {
+              "$ref": "#/definitions/entityConditionals"
+            },
+            "instances": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "parent": {
+                    "type": "string",
+                    "description": "Name of the parent instance"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the instance"
+                  },
+                  "once": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ONCE_DONE",
+                          "ONCE_FALSE",
+                          "ONCE_TRUE"
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "operation": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ANGLE",
+                          "FULL",
+                          "IMAGINARY",
+                          "MAGNITUDE",
+                          "REAL"
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ASSERT_FALSE",
+                          "ASSERT_NONE",
+                          "ASSERT_TRUE"
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "target": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "within": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "double_assert": {
+          "type": "object",
+          "properties": {
+            "_conditionals": {
+              "$ref": "#/definitions/entityConditionals"
+            },
+            "instances": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "parent": {
+                    "type": "string",
+                    "description": "Name of the parent instance"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the instance"
+                  },
+                  "once": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ONCE_DONE",
+                          "ONCE_FALSE",
+                          "ONCE_TRUE"
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ASSERT_FALSE",
+                          "ASSERT_NONE",
+                          "ASSERT_TRUE"
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "target": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "within": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "within_mode": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "WITHIN_RATIO",
+                          "WITHIN_VALUE"
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "enum_assert": {
+          "type": "object",
+          "properties": {
+            "_conditionals": {
+              "$ref": "#/definitions/entityConditionals"
+            },
+            "instances": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "parent": {
+                    "type": "string",
+                    "description": "Name of the parent instance"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the instance"
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ASSERT_FALSE",
+                          "ASSERT_NONE",
+                          "ASSERT_TRUE"
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "target": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "int_assert": {
+          "type": "object",
+          "properties": {
+            "_conditionals": {
+              "$ref": "#/definitions/entityConditionals"
+            },
+            "instances": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "parent": {
+                    "type": "string",
+                    "description": "Name of the parent instance"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the instance"
+                  },
+                  "once": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ONCE_DONE",
+                          "ONCE_FALSE",
+                          "ONCE_TRUE"
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ASSERT_FALSE",
+                          "ASSERT_NONE",
+                          "ASSERT_TRUE"
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "target": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "within": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "within_mode": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "WITHIN_RATIO",
+                          "WITHIN_VALUE"
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "simple": {
+          "type": "object",
+          "properties": {
+            "_conditionals": {
+              "$ref": "#/definitions/entityConditionals"
+            },
+            "instances": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "parent": {
+                    "type": "string",
+                    "description": "Name of the parent instance"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the instance"
+                  },
+                  "constraint": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "delta": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "epsilon": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "goal": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "EXTREMUM",
+                          "MAXIMUM",
+                          "MINIMUM"
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "objective": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "trials": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  },
+                  "variable": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/definitions/itemConditionals"
+                      }
+                    ]
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [],
+          "additionalProperties": false
         }
       },
       "required": [],

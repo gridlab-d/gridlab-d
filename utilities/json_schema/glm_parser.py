@@ -189,7 +189,7 @@ class GLMModel:
                 print(f"Unrecognized GRIDLABD object and id: {obj_type} "
                       f"{object_name}, must be a new object")
                 if obj_type in self.class_types:
-                    entity = O_Entity(obj_type, self.objects[obj_type])
+                    entity = O_Entity(obj_type, object_name, None)
                     self.object_entities[obj_type] = entity
                     for items in params:
                         entity.add_attr('TEXT', items[0], "", items[0], "")
