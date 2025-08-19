@@ -1,6 +1,12 @@
-name: pull request action yaml
+name: pull request validation
 
 on:
+  pull_request:
+    branches:
+      - 'main'
+      - 'master'
+      - 'develop'
+      - 'release/*'
   push:
     branches:
       - 'release/*'
