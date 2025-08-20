@@ -689,7 +689,7 @@ class GLMModel:
 
         return _type
 
-    def _process_object_parameter(self, param, val, name_prefix, insideIfDefs, params, comments, inside_comments, line=None):
+    def _process_object_parameter(self, param, val, name_prefix, insideIfDefs, params, comments, inside_comments, line=None, name=None):
         """Process a single object parameter and handle special cases.
         
         Args:
@@ -708,7 +708,9 @@ class GLMModel:
         """
         if param == 'name':
             # found a parameter name
-            return gld_strict_name(name_prefix + val), line
+            if name is None:
+                name = gld_strict_name(name_prefix + val)
+            return name, line
         elif param == 'object':
             # This case should be handled separately for nested objects
             return None, line
@@ -781,6 +783,10 @@ class GLMModel:
         m_qty = re.search(r'\.\.(\d+)$', oid)
         if m_qty:
             params['object_count'] = int(m_qty.group(1))
+        # handle assigned object ids
+        m_id = re.search(r":([^{}]+)\{", line)
+        if m_id:
+            name = _type + ":" + m_id.group(1).strip()
         # Collect comments
         comments = []
         inside_comments = []
@@ -855,7 +861,7 @@ class GLMModel:
                     # Remove the trailing semicolon from the remainder
                     val = tokens[1].rsplit(";", 1)[0].strip()
                     processed_name, updated_line = self._process_object_parameter(param, val, name_prefix,
-                             insideIfDefs, params, comments, inside_comments, line)
+                             insideIfDefs, params, comments, inside_comments, line, name)
             elif m:
                 param = m.group(1)
                 val = m.group(2)
@@ -863,12 +869,13 @@ class GLMModel:
                     # found a nested object
                     intobj += 1
                     if name is None:
-                        raise RuntimeError("nested object defined before parent name")
+                        name = name_prefix + _type + "_" + str(counter)
+                        oidh[name] = name
                     line, counter, lname = self.glm_object(name, line, itr, oidh, counter)
                 else:
                     # Process parameter using helper method
                     processed_name, updated_line = self._process_object_parameter(
-                        param, val, name_prefix, insideIfDefs, params, comments, inside_comments, line
+                        param, val, name_prefix, insideIfDefs, params, comments, inside_comments, line, name
                     )
                     if processed_name is not None:
                         name = processed_name
