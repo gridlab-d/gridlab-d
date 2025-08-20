@@ -1,7 +1,7 @@
 /* enum_assert
 
    Very simple test that compares either integers or can be used to compare enumerated values
-   to their corresponding integer values.  If the test fails at any time, it throws a 'zero' to
+   to their corresponding integer values.  If the test fails at any time, it t.rows() a 'zero' to
    the commit function and breaks the simulator out with a failure code.
 */
 

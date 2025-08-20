@@ -263,15 +263,17 @@ char *object_get_unit(OBJECT *obj, const char *name)
 		 */
 	}
 
-	rlock(&unitlock);
-	if(dimless == nullptr){
-		runlock(&unitlock);
+	auto v = rlock(&unitlock);
+	if (dimless == nullptr) {
+		//runlock(&unitlock);
+		v.unlock();
 		wlock(&unitlock);
-		dimless=unit_find("1");
+		dimless = unit_find("1");
 		wunlock(&unitlock);
 	}
 	else
-		runlock(&unitlock);
+		v.unlock();
+		//runlock(&unitlock);
 
 	if(prop->unit != nullptr){
 		return prop->unit->name;
@@ -1154,7 +1156,7 @@ int object_get_value_by_addr(OBJECT *obj, /**< the object from which to get the 
  **/
 int object_get_value_by_name(OBJECT *obj, const PROPERTYNAME name, char *value, int size)
 {
-	char temp[1024];
+	char temp[4096];
 	char *buffer;
 	if(value == 0){
 		output_error("object_get_value_by_name: 'value' is a null pointer");
@@ -1164,7 +1166,7 @@ int object_get_value_by_name(OBJECT *obj, const PROPERTYNAME name, char *value, 
 		output_error("object_get_value_by_name: invalid buffer size of %i", size);
 		return 0;
 	}
-	buffer = object_property_to_string(obj,name, temp, 1023);
+	buffer = object_property_to_string(obj,name, temp, 4096);
 	if(buffer==nullptr)
 		return 0;
 
@@ -2230,7 +2232,7 @@ static int addto_tree(OBJECTTREE **tree, OBJECTTREE *item){
 	return tree_get_height(*tree); /* verify after rotations */
 }
 
-/*	Add an object to the object tree.  Throws exceptions on memory errors.
+/*	Add an object to the object tree.  T.rows() exceptions on memory errors.
 	Returns a pointer to the object tree item if successful, nullptr on failure (usually because name already used)
  */
 static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name){
@@ -2390,7 +2392,7 @@ int object_build_name(OBJECT *obj, char *buffer, int len){
 
 /** Sets the name of an object.  This is useful if the internal name cannot be relied upon,
 	as when multiple modules are being used.
-	Throws an exception when a memory error occurs or when the name is already taken by another object.
+	T.rows() an exception when a memory error occurs or when the name is already taken by another object.
  **/
 OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name){
 	OBJECTTREE *item = nullptr;
@@ -2705,9 +2707,9 @@ void *object_remote_read(void *local, /**< local memory for data (must be correc
 		/* multithread */
 		else
 		{
-			rlock(&obj->lock);
+			auto v = rlock(&obj->lock);
 			memcpy(local,addr,size);
-			runlock(&obj->lock);
+			runlock();
 			return local;
 		}
 	}

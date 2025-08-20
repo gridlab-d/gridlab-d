@@ -131,8 +131,8 @@ private:
 	double GFA_Update_time;
 
 	//Deltamode interfacing matrices
-	GL_STRUCT(complex_array,full_Y_matrix);
-	GL_STRUCT(complex_array,full_Y_all_matrix);
+	GL_STRUCT(Eigen::MatrixXcd,full_Y_matrix);
+	GL_STRUCT(Eigen::MatrixXcd,full_Y_all_matrix);
 
 	//Swing designation
 	bool swing_functions_enabled;			//Flag to indicate if a bus is behaving as a swing

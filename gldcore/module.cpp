@@ -29,6 +29,8 @@
 #include <dirent.h>
 #endif
 #include <cmath>
+#include<mutex>
+#include<shared_mutex>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

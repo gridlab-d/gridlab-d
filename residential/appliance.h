@@ -10,12 +10,12 @@
 class appliance : public residential_enduse
 {
 private:
-	GL_STRUCT(complex_array,power);
-	GL_STRUCT(complex_array,impedance);
-	GL_STRUCT(complex_array,current);
-	GL_STRUCT(double_array,duration);
-	GL_STRUCT(double_array,transition);
-	GL_STRUCT(double_array,heatgain);
+	GL_STRUCT(Eigen::MatrixXcd,power);
+	GL_STRUCT(Eigen::MatrixXcd,impedance);
+	GL_STRUCT(Eigen::MatrixXcd,current);
+	GL_STRUCT(Eigen::MatrixXd,duration);
+	GL_STRUCT(Eigen::MatrixXd,transition);
+	GL_STRUCT(Eigen::MatrixXd,heatgain);
 private:
 	TIMESTAMP next_t;
 	unsigned int n_states;

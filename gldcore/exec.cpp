@@ -89,6 +89,12 @@
 #include <cstring>
 #include <memory>
 #include <thread>
+#include <algorithm> // Add this include for std::ranges
+#include <ranges>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+
 #ifdef _WIN32
 #include <winsock2.h>
 #include <winbase.h>
@@ -710,7 +716,7 @@ static int init_by_deferral_retry(std::vector<OBJECT*>& def_array, int def_ct)
 	OBJECT *obj;
 	int ct = 0, i = 0, obj_rv = 0;
 	//OBJECT **next_arr, **tarray;
-	std::vector<OBJECT*> next_arr(def_ct);
+	std::vector<OBJECT*> next_arr(def_ct, nullptr);
 	std::vector<OBJECT*> tarray = {};
 	int rv = SUCCESS;
 	char b[64];
@@ -737,7 +743,8 @@ static int init_by_deferral_retry(std::vector<OBJECT*>& def_array, int def_ct)
 
 		//Zero the temp array AND its tracking variable
 		//memset(next_arr, 0, def_ct * sizeof(OBJECT *));
-		std::ranges::fill(next_arr, nullptr);  // Fill with nullptr
+		//std::ranges::fill(next_arr, nullptr);  // Fill with nullptr
+		//std::fill(next_arr, next_arr + size, nullptr);
 		ct = 0;
 
 		// initialize each object in def_array

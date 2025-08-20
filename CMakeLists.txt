@@ -3,11 +3,18 @@ project(GridLAB-D)
 
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0") 
 
+# Add debug symbols and sanitizer support
+#set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=address -fno-omit-frame-pointer")
+#set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
+#set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address")
 
-# Enforce C++23 globally
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Find Eigen
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
+# Include Eigen
+include_directories(${EIGEN3_INCLUDE_DIR})
+
 
 include(cmake/Warnings.cmake)
 OPTION(GLD_EXTRA_WARNINGS "Make warnings more pedantic" OFF)
@@ -26,7 +33,7 @@ else ()
     endif ()
 endif ()
 
-#set(CMAKE_CXX_STANDARD 17)
+#set(CMAKE_CXX_STANDARD 17) 
 #set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(GLD_PACKAGE gridlabd)

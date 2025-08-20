@@ -1219,8 +1219,8 @@ static const char *helpdata[] = {
 	// page 4
 	"Window Setup\n"
 	"\n"
-	" H      Toggles horizontal bar position control (using Up/Down arrows)\n"
-	" V      Toggles vertical bar position control (using Up/Down arrows)\n",
+	" H      Toggles horizontal bar position control (using Up/Down a.rows())\n"
+	" V      Toggles vertical bar position control (using Up/Down a.rows())\n",
 };
 
 void g_debug::console_help(unsigned int page, unsigned int row)

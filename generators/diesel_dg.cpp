@@ -11,7 +11,9 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <Eigen/Dense>
 
+#include "property.h"
 #include "diesel_dg.h"
 
 CLASS *diesel_dg::oclass = nullptr;
@@ -689,7 +691,8 @@ int diesel_dg::init(OBJECT *parent)
 	bool temp_bool_value;
 	double temp_voltage_magnitude;
 	gld::complex temp_complex_value;
-	complex_array temp_complex_array, temp_child_complex_array;
+	//complex_array temp_complex_array, temp_child_complex_array;
+	Eigen::MatrixXcd temp_complex_array, temp_child_complex_array;
 	gld_property *pNominal_Voltage;
 	double nominal_voltage_value, nom_test_val;
 	gld::set temp_phases;
@@ -1190,26 +1193,26 @@ int diesel_dg::init(OBJECT *parent)
 			}
 
 			//Pull down the variable
-			pbus_full_Y_mat->getp<complex_array>(temp_complex_array,*test_rlock);
+			pbus_full_Y_mat->getp<Eigen::MatrixXcd>(temp_complex_array,*test_rlock);
 
 			//See if it is valid
-			if (!temp_complex_array.is_valid(0, 0))
+			if (!emh::is_element_valid(temp_complex_array,0, 0))
 			{
 				//Create it
-				temp_complex_array.grow_to(3,3);
+				temp_complex_array.resize(3,3);
 
 				//Zero it, by default
 				for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
 				{
 					for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 					{
-						temp_complex_array.set_at(temp_idx_x,temp_idx_y,gld::complex(0.0,0.0));
+						temp_complex_array(temp_idx_x,temp_idx_y) = gld::complex(0.0,0.0);
 					}
 				}
 			}
 			else	//Already populated, make sure it is the right size!
 			{
-				if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
+				if ((temp_complex_array.rows() != 3) && (temp_complex_array.cols() != 3))
 				{
 					GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
 					/*  TROUBLESHOOT
@@ -1233,26 +1236,26 @@ int diesel_dg::init(OBJECT *parent)
 				}
 
 				//Pull down the variable
-				temp_property_pointer->getp<complex_array>(temp_child_complex_array,*test_rlock);
+				temp_property_pointer->getp<Eigen::MatrixXcd>(temp_child_complex_array,*test_rlock);
 
 				//See if it is valid
-				if (!temp_child_complex_array.is_valid(0,0))
+				if (!emh::is_element_valid(temp_child_complex_array,0,0))
 				{
 					//Create it
-					temp_child_complex_array.grow_to(3,3);
+					temp_child_complex_array.resize(3,3);
 
 					//Zero it, by default
 					for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
 					{
 						for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 						{
-							temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,complex(0.0,0.0));
+							temp_child_complex_array(temp_idx_x,temp_idx_y) = 0.0;
 						}
 					}
 				}
 				else	//Already populated, make sure it is the right size!
 				{
-					if ((temp_child_complex_array.get_rows() != 3) && (temp_child_complex_array.get_cols() != 3))
+					if ((temp_child_complex_array.rows() != 3) && (temp_child_complex_array.cols() != 3))
 					{
 						GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
 						//Defined above
@@ -1267,36 +1270,36 @@ int diesel_dg::init(OBJECT *parent)
 				for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 				{
 					//Read the existing value
-					temp_complex_value = temp_complex_array.get_at(temp_idx_x,temp_idx_y);
-
+					temp_complex_value = gld::complex(temp_complex_array(temp_idx_x,temp_idx_y));
+					
 					//Accumulate into it
 					temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
 
 					//Store it
-					temp_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+					temp_complex_array(temp_idx_x,temp_idx_y) = temp_complex_value;
 
 					//Do the childed object, if exists
 					if (childed_connection)
 					{
 						//Read the existing value
-						temp_complex_value = temp_child_complex_array.get_at(temp_idx_x,temp_idx_y);
+						temp_complex_value = temp_child_complex_array(temp_idx_x,temp_idx_y);
 
 						//Accumulate into it
 						temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
 
 						//Store it
-						temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+						temp_child_complex_array(temp_idx_x,temp_idx_y) = temp_complex_value;
 					}
 				}
 			}
 
 			//Push it back up
-			pbus_full_Y_mat->setp<complex_array>(temp_complex_array,*test_rlock);
+			pbus_full_Y_mat->setp<Eigen::MatrixXcd>(temp_complex_array,*test_rlock);
 
 			//See if the childed powerflow exists
 			if (childed_connection)
 			{
-				temp_property_pointer->setp<complex_array>(temp_child_complex_array,*test_rlock);
+				temp_property_pointer->setp<Eigen::MatrixXcd>(temp_child_complex_array,*test_rlock);
 
 				//Clear it
 				delete temp_property_pointer;
@@ -1979,7 +1982,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = object_header(this);
 	gld::complex aval, avalsq;
 	TIMESTAMP dt;
-	complex_array temp_complex_array;
+	Eigen::MatrixXcd temp_complex_array;
 	int index_x, index_y;
 	gld_wlock *test_rlock = nullptr;
 
@@ -2071,17 +2074,17 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			avalsq = aval*aval;
 
 			//Pull in the current version of full_Y_all
-			pbus_full_Y_all_mat->getp<complex_array>(temp_complex_array,*test_rlock);
+			pbus_full_Y_all_mat->getp<Eigen::MatrixXcd>(temp_complex_array,*test_rlock);
 
 			//Make sure it is the right size -- if so, pull it
-			if ((temp_complex_array.get_rows() == 3) && (temp_complex_array.get_cols() == 3))
+			if ((temp_complex_array.rows() == 3) && (temp_complex_array.cols() == 3))
 			{
 				//Push it into the matrix for "ease of access"
 				for (index_x=0; index_x<3; index_x++)
 				{
 					for (index_y=0; index_y<3; index_y++)
 					{
-						full_bus_admittance_mat[index_x][index_y] = temp_complex_array.get_at(index_x,index_y);
+						full_bus_admittance_mat[index_x][index_y] = temp_complex_array(index_x,index_y);
 					}
 				}
 			}

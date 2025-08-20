@@ -70,8 +70,8 @@ private:
 private:
 	void wlock(void) { ::wlock(&_lock); };
 	void wunlock(void) { ::wunlock(&_lock); };
-	void rlock(void) { ::rlock(&_lock); };
-	void runlock(void) { ::runlock(&_lock); };
+	std::shared_lock<std::shared_mutex> rlock(void) { return ::rlock(&_lock); };
+	void runlock(void) { ::runlock(); };
 public:
 public:
 	unsigned int get_nfiles(void) { return n_files; };
@@ -611,10 +611,10 @@ static void sortlist(void)
 /* popped item must be freed after no longer needed */
 static DIRLIST *popdir(void)
 {
-	rlock(&dirlock);
+	auto v = rlock(&dirlock);
 	DIRLIST *item = dirstack;
 	if ( dirstack ) dirstack = dirstack->next;
-	runlock(&dirlock);
+	runlock();
 	output_debug("pulling %s from process stack", item->name);
 	return item;
 }

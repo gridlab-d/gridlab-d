@@ -1073,9 +1073,9 @@ void *global_remote_read(void *local, /** local memory for data (must be correct
 		/* multithread */
 		else 
 		{
-			rlock(&var->lock);
+			auto v = rlock(&var->lock);
 			memcpy(local,addr,size);
-			runlock(&var->lock);
+			runlock();
 			return local;
 		}
 	}

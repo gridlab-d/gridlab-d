@@ -91,6 +91,8 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <array>
+
 
 #include "link.h"
 #include "node.h"
@@ -3021,9 +3023,12 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 			tNode->condition=fNode->condition;
 #endif
 			/* compute currents */
-			READLOCK_OBJECT(to);
-			gld::complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-			READUNLOCK_OBJECT(to);
+			std::array<gld::complex, 3> tc;
+			{
+				READLOCK_OBJECT(to);
+				tc = { t->current_inj[0], t->current_inj[1], t->current_inj[2] };
+				//READUNLOCK_OBJECT(to);
+			}
 
 			gld::complex i0, i1, i2;
 
@@ -3392,9 +3397,12 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 		gld::set reverse = get_flow(&f,&t);
 
 		// update published current_out values;
-		READLOCK_OBJECT(to);
-		gld::complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-		READUNLOCK_OBJECT(to);
+		std::array<gld::complex, 3> tc;
+		{
+			auto v = READLOCK_OBJECT(to);
+			tc = { t->current_inj[0], t->current_inj[1], t->current_inj[2] };
+			//READUNLOCK_OBJECT(to);
+		}
 
 		read_I_out[0] = tc[0];
 		read_I_out[1] = tc[1];
@@ -4851,9 +4859,12 @@ void link_object::calculate_power_splitphase()
 	}
 	else
 	{
-		READLOCK_OBJECT(to);
-		gld::complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-		READUNLOCK_OBJECT(to);
+		std::array<gld::complex, 3> tc;
+		{
+			auto v = READLOCK_OBJECT(to);
+			tc = { t->current_inj[0], t->current_inj[1], t->current_inj[2] };
+			//READUNLOCK_OBJECT(to);
+		}
 
 		if (SpecialLnk!=SPLITPHASE)
 		{
@@ -4990,9 +5001,12 @@ void link_object::calculate_power()
 			indiv_power_in[1] = f->voltage[1]*~current_in[1];
 			indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
-			READLOCK_OBJECT(to);
-			gld::complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-			READUNLOCK_OBJECT(to);
+			std::array< gld::complex, 3> tc;
+			{
+				auto v = READLOCK_OBJECT(to);
+				tc= { t->current_inj[0], t->current_inj[1], t->current_inj[2] };
+				//READUNLOCK_OBJECT(to);
+			}
 
 			indiv_power_out[0] = t->voltage[0]*~tc[0];
 			indiv_power_out[1] = t->voltage[1]*~tc[1];
@@ -14928,7 +14942,7 @@ void link_object::lmatrix_vmult(gld::complex *matrix_in, gld::complex *vector_in
 		//Zero the entry, since we'll accumulate into it
 		vector_out[jindex] = gld::complex(0.0,0.0);
 
-		//Multiply across the columns/rows
+		//Multiply across the columns.rows()
 		for (kindex=0; kindex<matsize; kindex++)
 		{
 			vector_out[jindex] += matrix_in[jindex*matsize+kindex] * vector_in[kindex];

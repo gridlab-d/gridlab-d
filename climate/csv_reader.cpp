@@ -317,7 +317,7 @@ int csv_reader::read_header(char *line){
 			last = first.get();
 		} else {
 			last->next = std::move(temp);
-			last = temp.get();
+			last = last->next.get();
 		}
 
 		if(buffer[index] == 0 || buffer[index] == '\n' || buffer[index] == '\r'){

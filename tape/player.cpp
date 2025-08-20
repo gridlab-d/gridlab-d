@@ -314,7 +314,8 @@ TIMESTAMP player_read(OBJECT *obj) {
         if (result[0] == '#' || result[0] == '\n') /* ignore comments and blank lines */
             continue;
 
-        if (sscanf(result, "%64[^,],%1024[^\n\r;]", tbuf, valbuf) == 2) {
+        //if (sscanf(result, "%64[^,],%1024[^\n\r;]", tbuf, valbuf) == 2) {
+        if (sscanf(result, "%63[^,],%1023[^\n\r;]", tbuf, valbuf) == 2) {
             trim(tbuf, timebuf);
             trim(valbuf, value);
             if (sscanf(timebuf, "%d-%d-%d %d:%d:%lf %4s", &Y, &m, &d, &H, &M, &S, tz) == 7) {

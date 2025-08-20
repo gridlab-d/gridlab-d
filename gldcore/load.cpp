@@ -3488,6 +3488,13 @@ static int class_block(PARSER)
 			if (WHITE,LITERAL(":"))
 			{
 				if WHITE ACCEPT;
+
+				if (std::string(classname) != "auction" && std::string(classname) != "player")
+				{
+					REJECT;
+					DONE;
+				}
+
 				if (LITERAL("public") && WHITE && TERM(name(HERE,parent,sizeof(parent))) )
 				{
 					inherit = PUBLIC;
@@ -3725,7 +3732,7 @@ int is_int(PROPERTYTYPE pt){
 	}
 }
 
-static int schedule_ref(PARSER, SCHEDULE **sch)
+static int schedule_ref(PARSER, SCHEDULE** sch)
 {
 	char name[64];
 	START;
@@ -5229,7 +5236,7 @@ static int gui_entity_type(PARSER, GUIENTITYTYPE *type)
 	if LITERAL("radio") { ACCEPT; *type = GUI_RADIO; DONE; };
 	if LITERAL("select") { ACCEPT; *type = GUI_SELECT; DONE; };
 	// output entities
-	if LITERAL("browse") { ACCEPT; *type = GUI_BROWSE; DONE; };
+	if LITERAL("browse") { ACCEPT; *type = GUI_ROW; DONE; };
 	if LITERAL("table") { ACCEPT; *type = GUI_TABLE; DONE; };
 	if LITERAL("graph") { ACCEPT; *type = GUI_GRAPH; DONE; };
 	// grouping entities

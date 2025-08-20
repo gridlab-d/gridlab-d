@@ -1196,7 +1196,7 @@ int violation_recorder::fails_dynamic_condition (vobjlist *curr, int i, char *pr
 	// we've exceeded the limit and we did
 	if (pct > upper_bound || pct < lower_bound) {
 		// the elapsed time has exceeded the interval
-		// this throws the violation flag and updates
+		// this t.rows() the violation flag and updates
 		// time and value
 		s_prev = sign(curr->last_s[i]);
 		s_curr = sign(pct);
@@ -1240,7 +1240,7 @@ int violation_recorder::fails_continuous_condition (vobjlist *curr, int i, const
 	// we've exceeded the limit
 	if (pu > upper_bound || pu < lower_bound) {
 		// the elapsed time has exceeded the interval
-		// this throws the violation flag and updates
+		// this t.rows() the violation flag and updates
 		// time and value
 		s_prev = sign(curr->last_s[i]);
 		s_curr = sign(pu);

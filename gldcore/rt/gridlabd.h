@@ -1590,7 +1590,7 @@ public:
 };
 class double_array {
 private:
-	size_t n, m; /** n rows, m cols */
+	size_t n, m; /** n.rows(), m cols */
 	size_t max; /** current allocation size max x max */
 	unsigned int *refs; /** reference count **/
 	double ***x; /** pointer to 2D array of pointers to double values */
@@ -1608,7 +1608,7 @@ private:
 		throw (const char*)buf;
 		va_end(ptr);
 	};
-	inline void set_rows(const size_t i) { n=i; };
+	inline void set.rows()(const size_t i) { n=i; };
 	inline void set_cols(const size_t i) { m=i; };
 	inline void set_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]|=b;};
 	inline void clr_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]&=~b;};
@@ -1621,16 +1621,16 @@ private:
 public:
 	inline double_vector operator[] (const size_t n) { return double_vector(x[n]); }
 	inline const double_vector operator[] (const size_t n) const { return double_vector(x[n]); }
-	double_array(const size_t rows=0, const size_t cols=0, double **data=NULL)
+	double_array(const size_t.rows()=0, const size_t cols=0, double **data=NULL)
 	{
 		refs = new unsigned int;
 		*refs = 0;
 		m = n = max = 0;
 		x = NULL;
 		f = NULL;
-		if ( rows>0 )
-			grow_to(rows,cols);
-		for ( size_t r=0 ; r<rows ; r++ )
+		if (.rows()>0 )
+			grow_to.rows(),cols);
+		for ( size_t r=0 ; r.rows() ; r++ )
 		{
 			for ( size_t c=0 ; c<cols ; c++ )
 			{
@@ -1671,7 +1671,7 @@ public:
 	void set_name(const char *v) { name = v; }; 
 	inline const char *get_name(void) const { return name; };
 	void copy_name(const char *v) { char *s=(char*)malloc(strlen(v)+1); strcpy(s,v); name=(const char*)s; };
-	inline const size_t get_rows(void) const { return n; };
+	inline const size_t.rows()(void) const { return n; };
 	inline const size_t get_cols(void) const { return m; };
 	inline const size_t get_max(void) const { return max; };
 	void set_max(const size_t size) 
@@ -1679,7 +1679,7 @@ public:
 		if ( size<=max ) exception(".set_max(%u): cannot shrink double_array",size);
 		size_t r;
 		double ***z = (double***)malloc(sizeof(double**)*size);
-		// create new rows
+		// create new.rows()
 		for ( r=0 ; r<max ; r++ )
 		{
 			if ( x[r]!=NULL )
@@ -1715,7 +1715,7 @@ public:
 		while ( c>=s || r>=s ) s*=2; 
 		if ( s>max ) set_max(s);
 
-		// add rows
+		// add.rows()
 		while ( n<r ) 
 		{
 			if ( x[n]==NULL ) 
@@ -1745,7 +1745,7 @@ public:
 		}
 	};
 	void grow_to(const size_t c) { grow_to(n>0?n:1,c); };
-	void grow_to(const double_array &y) { grow_to(y.get_rows(),y.get_cols()); };
+	void grow_to(const double_array &y) { grow_to(y.rows(),y.cols()); };
 	void check_valid(const size_t r, const size_t c) const { if ( !is_valid(r,c) ) exception(".check_value(%u,%u): invalid (r,c)",r,c); };
 	inline void check_valid(const size_t c) const { check_valid(0,c); };
 	bool is_valid(const size_t r, const size_t c) const { return r<n && c<m; };
@@ -1848,7 +1848,7 @@ public:
 	void set_ident(void)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) = (r==c) ? 1 : 0;
@@ -1872,7 +1872,7 @@ public:
 	void operator= (const double y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) = y;
@@ -1882,9 +1882,9 @@ public:
 	{
 		size_t r,c;
 		grow_to(y);
-		for ( r=0 ; r<y.get_rows() ; r++ )
+		for ( r=0 ; r<y.rows() ; r++ )
 		{
-			for ( c=0 ; c<y.get_cols() ; c++ )
+			for ( c=0 ; c<y.cols() ; c++ )
 				my(r,c) = y[r][c];
 		}
 		return *this;
@@ -1892,7 +1892,7 @@ public:
 	double_array &operator+= (const double &y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) += y;
@@ -1902,7 +1902,7 @@ public:
 	double_array &operator+= (const double_array &y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) += y[r][c];
@@ -1912,7 +1912,7 @@ public:
 	double_array &operator-= (const double &y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) -= y;
@@ -1922,7 +1922,7 @@ public:
 	double_array &operator-= (const double_array &y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) -= y[r][c];
@@ -1932,7 +1932,7 @@ public:
 	double_array &operator *= (const double y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) *= y;
@@ -1942,7 +1942,7 @@ public:
 	double_array &operator /= (const double y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) /= y;
@@ -1952,36 +1952,36 @@ public:
 	// binary operators
 	double_array operator+ (const double y)
 	{
-		double_array a(get_rows(),get_cols());
+		double_array a.rows(),get_cols());
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 			for ( c=0 ; c<get_cols() ; c++ )
 				a[r][c] = my(r,c) + y;
 		return a;
 	}
 	double_array operator- (const double y)
 	{
-		double_array a(get_rows(),get_cols());
+		double_array a.rows(),get_cols());
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 			for ( c=0 ; c<get_cols() ; c++ )
 				a[r][c] = my(r,c) - y;
 		return a;
 	}
 	double_array operator* (const double y)
 	{
-		double_array a(get_rows(),get_cols());
+		double_array a.rows(),get_cols());
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 			for ( c=0 ; c<get_cols() ; c++ )
 				a[r][c] = my(r,c) * y;
 		return a;
 	}
 	double_array operator/ (const double y)
 	{
-		double_array a(get_rows(),get_cols());
+		double_array a.rows(),get_cols());
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 			for ( c=0 ; c<get_cols() ; c++ )
 				a[r][c] = my(r,c) / y;
 		return a;
@@ -1989,37 +1989,37 @@ public:
 	double_array operator + (const double_array &y)
 	{
 		size_t r,c;
-		if ( get_rows()!=y.get_rows() || get_cols()!=y.get_cols() )
+		if (.rows()!=y.rows() || get_cols()!=y.cols() )
 			exception("+%s: size mismatch",y.get_name());
-		double_array a(get_rows(),get_cols());
+		double_array a.rows(),get_cols());
 		a.set_name("(?+?)");
-		for ( r=0 ; r<get_rows() ; r++ )
-			for ( c=0 ; c<y.get_cols() ; c++ )
+		for ( r=0 ; r.rows() ; r++ )
+			for ( c=0 ; c<y.cols() ; c++ )
 				a[r][c] = my(r,c) + y[r][c];
 		return a;
 	};
 	double_array operator - (const double_array &y)
 	{
 		size_t r,c;
-		if ( get_rows()!=y.get_rows() || get_cols()!=y.get_cols() )
+		if (.rows()!=y.rows() || get_cols()!=y.cols() )
 			exception("-%s: size mismatch",y.get_name());
-		double_array a(get_rows(),get_cols());
+		double_array a.rows(),get_cols());
 		a.set_name("(?-?)");
-		for ( r=0 ; r<get_rows() ; r++ )
-			for ( c=0 ; c<y.get_cols() ; c++ )
+		for ( r=0 ; r.rows() ; r++ )
+			for ( c=0 ; c<y.cols() ; c++ )
 				a[r][c] = my(r,c) - y[r][c];
 		return a;
 	};
 	double_array operator * (const double_array &y)
 	{
 		size_t r,c,k;
-		if ( get_cols()!=y.get_rows() )
+		if ( get_cols()!=y.rows() )
 			exception("*%s: size mismatch",y.get_name());
-		double_array a(get_rows(),y.get_cols());
+		double_array a.rows(),y.cols());
 		a.set_name("(?*?)");
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
-			for ( c=0 ; c<y.get_cols() ; c++ )
+			for ( c=0 ; c<y.cols() ; c++ )
 			{	
 				double b = 0;
 				for ( k=0 ; k<get_cols() ; k++ )

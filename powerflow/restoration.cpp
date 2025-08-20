@@ -3000,7 +3000,7 @@ void restoration::CHORDSETintersect(CHORDSET *set_1, CHORDSET *set_2, CHORDSET *
 				intersect->currSize++;
 
 				//Break out of inner loop
-				//Idea is rows are all unique, so once you match one, just go to next
+				//Idea is.rows() are all unique, so once you match one, just go to next
 				break;
 			}
 			//Default else, next set
@@ -3297,7 +3297,7 @@ int restoration::runPowerFlow(void)
 		powerflow_type = PF_NORMAL;
 	}
 
-	//Put the powerflow call in a try/catch, since GL_THROWs may occur
+	//Put the powerflow call in a try/catch, since GL_T.rows() may occur
 	try {
 
 		//Copied, more or less, from node.cpp call to solver_nr

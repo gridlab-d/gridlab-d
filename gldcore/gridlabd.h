@@ -53,6 +53,8 @@
 #define _GRIDLABD_H
 
 #include <memory>
+#include<mutex>
+#include<shared_mutex>
 
 /* permanently disable use of CPPUNIT */
 #ifndef _NO_CPPUNIT
@@ -1307,12 +1309,12 @@ inline void gl_write(void *local, /** local memory for data */
 #ifdef __cplusplus
 #define READLOCK(X) gld_core::rlock(X); /**< Locks an item for reading (allows other reads but blocks write) */
 #define WRITELOCK(X) gld_core::wlock(X); /**< Locks an item for writing (blocks all operations) */
-#define READUNLOCK(X) gld_core::runlock(X); /**< Unlocks an read lock */
+#define READUNLOCK() gld_core::runlock(); /**< Unlocks an read lock */
 #define WRITEUNLOCK(X) gld_core::wunlock(X); /**< Unlocks a write lock */
 namespace gld_core {
-inline void rlock(unsigned int* lock) { callback->lock.read(lock); }
+inline std::shared_lock<std::shared_mutex> rlock(unsigned int* lock) { return callback->lock.read(lock); }
 inline void wlock(unsigned int* lock) { callback->lock.write(lock); }
-inline void runlock(unsigned int* lock) { callback->unlock.read(lock); }
+inline void runlock() { callback->unlock.read(); }
 inline void wunlock(unsigned int* lock) { callback->unlock.write(lock); }
 }
 // TODO: locking templates
@@ -1329,7 +1331,7 @@ inline void wunlock(unsigned int* lock) { callback->unlock.write(lock); }
 
 #define READLOCK_OBJECT(X) READLOCK(&((X)->lock)) /**< Locks an object for reading */
 #define WRITELOCK_OBJECT(X) WRITELOCK(&((X)->lock)) /**< Locks an object for writing */
-#define READUNLOCK_OBJECT(X) READUNLOCK(&((X)->lock)) /**< Unlocks an object */
+#define READUNLOCK_OBJECT() READUNLOCK() /**< Unlocks an object */
 #define WRITEUNLOCK_OBJECT(X) WRITEUNLOCK(&((X)->lock)) /**< Unlocks an object */
 #define LOCK_OBJECT(X) WRITELOCK_OBJECT(X); /**< @todo this is deprecated and should not be used anymore */
 #define UNLOCK_OBJECT(X) WRITEUNLOCK_OBJECT(X); /**< @todo this is deprecated and should not be used anymore */
@@ -1607,10 +1609,16 @@ public: // special functions
 /// Read lock container
 class gld_rlock {
 private: OBJECT *my;
+	   std::shared_lock<std::shared_mutex> lock;
 	/// Constructor
-public: inline gld_rlock(OBJECT *obj) : my(obj) {gld_core::rlock(&my->lock);};
+public: inline gld_rlock(OBJECT *obj) : my(obj) {
+	lock = gld_core::rlock(&my->lock);
+};
 	/// Destructor
-public: inline ~gld_rlock(void) {gld_core::runlock(&my->lock);};
+public: inline ~gld_rlock(void) {
+	//gld_core::runlock(&my->lock);
+	lock.unlock();
+};
 };
 /// Write lock container
 class gld_wlock {
@@ -2097,13 +2105,18 @@ protected: // header write accessors (no locking)
 	inline void unset_flags_bits(unsigned long bits) { my()->flags&=~bits; };
 
 protected: // locking (self)
-	inline void rlock(void) { gld_core::rlock(&my()->lock); };
-	inline void runlock(void) { gld_core::runlock(&my()->lock); };
+
+	/*inline void rlock(void) { 
+		gld_core::rlock(&my()->lock); 
+	};
+	inline void runlock(void) { 
+		gld_core::runlock(&my()->lock); 
+	};*/
 	inline void wlock(void) { gld_core::wlock(&my()->lock); };
 	inline void wunlock(void) { gld_core::wunlock(&my()->lock); };
 protected: // locking (others)
-	inline void rlock(OBJECT *obj) { gld_core::rlock(&obj->lock); };
-	inline void runlock(OBJECT *obj) { gld_core::runlock(&obj->lock); };
+	/*inline void rlock(OBJECT *obj) { gld_core::rlock(&obj->lock); };
+	inline void runlock(OBJECT *obj) { gld_core::runlock(&obj->lock); };*/
 	inline void wlock(OBJECT *obj) { gld_core::wlock(&obj->lock); };
 	inline void wunlock(OBJECT *obj) { gld_core::wunlock(&obj->lock); };
 
@@ -2116,7 +2129,12 @@ public: // member lookup functions
 	inline FUNCTIONADDR get_function(const char *name) { return (*callback->function.get)(my()->oclass->name,name); };
 
 public: // external accessors
-	template <class T> inline void getp(PROPERTY &prop, T &value) { rlock(); value=*(T*)(get_addr(my(),&prop)); wunlock(); };
+	template <class T> inline void getp(PROPERTY &prop, T &value) { 
+		//rlock(); 
+		wlock();
+		value=*(T*)(get_addr(my(),&prop)); 
+		wunlock(); 
+	};
 	template <class T> inline void setp(PROPERTY &prop, T &value) { wlock(); *(T*)(get_addr(my(),&prop)   /*GETADDR(my(), &prop)*/) = value; wunlock(); };
 	template <class T> inline void getp(PROPERTY &prop, T &value, gld_rlock&) { value=*(T*)(get_addr(my(),&prop)); };
 	template <class T> inline void getp(PROPERTY &prop, T &value, gld_wlock&) { value=*(T*)(get_addr(my(),&prop)); };
@@ -2303,7 +2321,11 @@ public: // special operations
 	inline enumeration get_enumeration(void) { if (pstruct.prop->ptype != PT_enumeration ) exception("get_enumeration() called on a property that is not an enumeration"); return *(enumeration*)get_addr(); };
 	inline gld::set get_set(void) { if (pstruct.prop->ptype != PT_set ) exception("get_set() called on a property that is not a set"); return *(gld::set*)get_addr(); };
 	inline gld_object* get_objectref(void) { if ( is_objectref() ) return ::get_object(*(OBJECT**)get_addr()); else return NULL; };
-	template <class T> inline void getp(T &value) { gld_core::rlock(&obj->lock); value = *(T*)get_addr(); gld_core::runlock(&obj->lock); };
+	template <class T> inline void getp(T &value) { 
+		auto v = gld_core::rlock(&obj->lock); 
+		value = *(T*)get_addr(); 
+		//gld_core::runlock(&obj->lock); 
+	};
 	template <class T> inline void setp(T &value) { gld_core::wlock(&obj->lock); *(T*)get_addr()=value; gld_core::wunlock(&obj->lock); };
 	template <class T> inline void getp(T &value, gld_rlock&) { value = *(T*)get_addr(); };
 	template <class T> inline void getp(T &value, gld_wlock&) { value = *(T*)get_addr(); };

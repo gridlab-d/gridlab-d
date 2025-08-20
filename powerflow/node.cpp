@@ -52,6 +52,7 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include "property.h"
 #include "solver_nr.h"
 #include "node.h"
 
@@ -1507,7 +1508,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	gld_property *temp_complex_property = nullptr;
 	gld_wlock *test_rlock = nullptr;
 	gld::complex temp_complex_value;
-	complex_array temp_complex_array;
+	Eigen::MatrixXcd temp_complex_array;
 	int temp_idx_x, temp_idx_y;
 
 	//Determine the flag state - see if a schedule is overriding us
@@ -2365,19 +2366,19 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 						}
 
 						//See if our published matrix has anything in it
-						if ((full_Y_matrix.get_rows() == 3) && (full_Y_matrix.get_cols() == 3))
+						if ((full_Y_matrix.rows() == 3) && (full_Y_matrix.cols() == 3))
 						{
-							full_Y[0] = full_Y_matrix.get_at(0,0);
-							full_Y[1] = full_Y_matrix.get_at(0,1);
-							full_Y[2] = full_Y_matrix.get_at(0,2);
+							full_Y[0] = full_Y_matrix(0,0);
+							full_Y[1] = full_Y_matrix(0,1);
+							full_Y[2] = full_Y_matrix(0,2);
 
-							full_Y[3] = full_Y_matrix.get_at(1,0);
-							full_Y[4] = full_Y_matrix.get_at(1,1);
-							full_Y[5] = full_Y_matrix.get_at(1,2);
+							full_Y[3] = full_Y_matrix(1,0);
+							full_Y[4] = full_Y_matrix(1,1);
+							full_Y[5] = full_Y_matrix(1,2);
 
-							full_Y[6] = full_Y_matrix.get_at(2,0);
-							full_Y[7] = full_Y_matrix.get_at(2,1);
-							full_Y[8] = full_Y_matrix.get_at(2,2);
+							full_Y[6] = full_Y_matrix(2,0);
+							full_Y[7] = full_Y_matrix(2,1);
+							full_Y[8] = full_Y_matrix(2,2);
 						}
 						else
 						{
@@ -2879,7 +2880,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 void node::BOTH_node_postsync_fxn(OBJECT *obj)
 {
 	double curr_delta_time;
-	complex_array temp_complex_array;
+	Eigen::MatrixXcd temp_complex_array;
 	int index_x_val, index_y_val;
 	gld_property *temp_property = nullptr;
 	gld_wlock *test_rlock = nullptr;
@@ -3048,10 +3049,10 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 			}
 
 			//Pull down the value
-			temp_property->getp<complex_array>(temp_complex_array,*test_rlock);
+			temp_property->getp<Eigen::MatrixXcd>(temp_complex_array,*test_rlock);
 
 			//See if it is the right size
-			if ((temp_complex_array.get_rows() == 3) && (temp_complex_array.get_cols() == 3))
+			if ((temp_complex_array.rows() == 3) && (temp_complex_array.cols() == 3))
 			{
 				//Store it directly into ours
 				full_Y_all_matrix = temp_complex_array;
@@ -3064,18 +3065,18 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 		else	//Parent or stand-alone
 		{
 			//Make sure we're valid and a right size
-			if (full_Y_all_matrix.is_valid(0,0))
+			if (emh::is_element_valid(full_Y_all_matrix,0,0))
 			{
 				//Make sure it is the right size
-				if ((full_Y_all_matrix.get_rows() != 3) || (full_Y_matrix.get_cols() != 3))
+				if ((full_Y_all_matrix.rows() != 3) || (full_Y_matrix.cols() != 3))
 				{
 					//Try forcing to be 3x3
-					full_Y_all_matrix.grow_to(3,3);
+					full_Y_all_matrix.resize(3,3);
 				}
 			}
 			else	//Not allocated yet -- allocate it
 			{
-				full_Y_all_matrix.grow_to(3,3);
+				full_Y_all_matrix.resize(3,3);
 			}
 
 			//Make sure it valid, just for giggles
@@ -3086,7 +3087,7 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 				{
 					for (index_y_val=0; index_y_val<3; index_y_val++)
 					{
-						full_Y_all_matrix.set_at(index_x_val,index_y_val,full_Y_all[index_x_val*3+index_y_val]);
+						full_Y_all_matrix(index_x_val,index_y_val) = full_Y_all[index_x_val*3+index_y_val];
 					}
 				}
 			}
@@ -3970,19 +3971,19 @@ int node::NR_populate(void)
 					}
 
 					//See if our published matrix has anything in it
-					if ((full_Y_matrix.get_rows() == 3) && (full_Y_matrix.get_cols() == 3))
+					if ((full_Y_matrix.rows() == 3) && (full_Y_matrix.cols() == 3))
 					{
-						full_Y[0] = full_Y_matrix.get_at(0,0);
-						full_Y[1] = full_Y_matrix.get_at(0,1);
-						full_Y[2] = full_Y_matrix.get_at(0,2);
+						full_Y[0] = full_Y_matrix(0,0);
+						full_Y[1] = full_Y_matrix(0,1);
+						full_Y[2] = full_Y_matrix(0,2);
 
-						full_Y[3] = full_Y_matrix.get_at(1,0);
-						full_Y[4] = full_Y_matrix.get_at(1,1);
-						full_Y[5] = full_Y_matrix.get_at(1,2);
+						full_Y[3] = full_Y_matrix(1,0);
+						full_Y[4] = full_Y_matrix(1,1);
+						full_Y[5] = full_Y_matrix(1,2);
 
-						full_Y[6] = full_Y_matrix.get_at(2,0);
-						full_Y[7] = full_Y_matrix.get_at(2,1);
-						full_Y[8] = full_Y_matrix.get_at(2,2);
+						full_Y[6] = full_Y_matrix(2,0);
+						full_Y[7] = full_Y_matrix(2,1);
+						full_Y[8] = full_Y_matrix(2,2);
 					}
 					else
 					{
@@ -4003,24 +4004,24 @@ int node::NR_populate(void)
 					}
 
 					//See if our published matrix has anything in it
-					if ((full_Y_all_matrix.get_rows() == 3) && (full_Y_all_matrix.get_cols() == 3))
+					if ((full_Y_all_matrix.rows() == 3) && (full_Y_all_matrix.cols() == 3))
 					{
-						full_Y_all[0] = full_Y_all_matrix.get_at(0,0);
-						full_Y_all[1] = full_Y_all_matrix.get_at(0,1);
-						full_Y_all[2] = full_Y_all_matrix.get_at(0,2);
+						full_Y_all[0] = full_Y_all_matrix(0,0);
+						full_Y_all[1] = full_Y_all_matrix(0,1);
+						full_Y_all[2] = full_Y_all_matrix(0,2);
 
-						full_Y_all[3] = full_Y_all_matrix.get_at(1,0);
-						full_Y_all[4] = full_Y_all_matrix.get_at(1,1);
-						full_Y_all[5] = full_Y_all_matrix.get_at(1,2);
+						full_Y_all[3] = full_Y_all_matrix(1,0);
+						full_Y_all[4] = full_Y_all_matrix(1,1);
+						full_Y_all[5] = full_Y_all_matrix(1,2);
 
-						full_Y_all[6] = full_Y_all_matrix.get_at(2,0);
-						full_Y_all[7] = full_Y_all_matrix.get_at(2,1);
-						full_Y_all[8] = full_Y_all_matrix.get_at(2,2);
+						full_Y_all[6] = full_Y_all_matrix(2,0);
+						full_Y_all[7] = full_Y_all_matrix(2,1);
+						full_Y_all[8] = full_Y_all_matrix(2,2);
 					}
 					else
 					{
 						//Try growing it to the proper size
-						full_Y_all_matrix.grow_to(3,3);
+						full_Y_all_matrix.resize(3,3);
 
 						//Zero it, just to be safe (gens will accumulate into it)
 						full_Y_all[0] = full_Y_all[1] = full_Y_all[2] = gld::complex(0.0,0.0);

@@ -1305,7 +1305,7 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 
 	retvalue = cap_prePost_fxn(t0_dbl);
 
-	//Check it	-- gl_errors inside (unsure why aren't throws)
+	//Check it	-- gl_errors inside (unsure why aren't t.rows())
 	if (retvalue != 1)
 	{
 		return TS_INVALID;
@@ -1457,16 +1457,20 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 
 	if ((control==VAR) || (control==VARVOLT))	//Grab the power values from remote link
 	{
-		READLOCK_OBJECT(RLink);
+		
+		{
+			auto v = READLOCK_OBJECT(RLink);
 
-		//Force the link to do an update (will be ignored first run anyways (zero))
-		if (RLink_calculate_power_fxn != nullptr) {
-			return_status = ((int (*)(OBJECT *))(*RLink_calculate_power_fxn))(RLink);
-		} else {
-			return_status = 1;
+			//Force the link to do an update (will be ignored first run anyways (zero))
+			if (RLink_calculate_power_fxn != nullptr) {
+				return_status = ((int (*)(OBJECT*))(*RLink_calculate_power_fxn))(RLink);
+			}
+			else {
+				return_status = 1;
+			}
+
+			//READUNLOCK_OBJECT(RLink);
 		}
-
-		READUNLOCK_OBJECT(RLink);
 
 		//Make sure it worked
 		if (return_status != 1)
@@ -1970,7 +1974,7 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 		//Perform the pre-postsync portions of the capacitor
 		retvalue = cap_prePost_fxn(curr_time_value);
 
-		//Check it	-- gl_errors inside (unsure why aren't throws)
+		//Check it	-- gl_errors inside (unsure why aren't t.rows())
 		if (retvalue != 1)
 		{
 			//Error returned, so exit us out

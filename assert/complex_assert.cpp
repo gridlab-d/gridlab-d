@@ -2,7 +2,7 @@
 
    Very simple test that compares complex values to any corresponding complex value.  It breaks the
    tests down into a test for the real value and a test for the imagniary portion.  If either test 
-   fails at any time, it throws a 'zero' to the commit function and breaks the simulator out with 
+   fails at any time, it t.rows() a 'zero' to the commit function and breaks the simulator out with 
    a failure code.
 */
 

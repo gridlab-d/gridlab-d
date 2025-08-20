@@ -273,10 +273,10 @@ static void pushjob(char *dir)
 /* popped item must be freed after no longer needed */
 static JOBLIST *popjob(void)
 {
-	rlock(&joblock);
+	auto v = rlock(&joblock);
 	JOBLIST *item = jobstack;
 	if ( jobstack ) jobstack = jobstack->next;
-	runlock(&joblock);
+	runlock();
 	output_debug("pulling %s from job list", item->name);
 	return item;
 }

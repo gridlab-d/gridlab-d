@@ -60,7 +60,7 @@ g_assert::g_assert(MODULE *module)
 				throw msg;
 		}
 
-		memset(this,0,sizeof(g_assert));
+		//memset(this,0,sizeof(g_assert));
 		status = AS_INIT;
 		relation=TCOP_EQ;
 	}

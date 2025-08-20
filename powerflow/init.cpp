@@ -418,7 +418,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				{
 					if (delta_functions[curr_object_number] != nullptr)
 					{
-						//Try/catch for any GL_THROWs that may be called
+						//Try/catch for any GL_T.rows() that may be called
 						try {
 							//Call the actual function
 							function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,false);
@@ -466,7 +466,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			//Call dynamic powerflow (start of either predictor or correct set)
 			powerflow_type = PF_DYNCALC;
 
-			//Put in try/catch, since GL_THROWs inside solver_nr tend to be a little upsetting
+			//Put in try/catch, since GL_T.rows() inside solver_nr tend to be a little upsetting
 			try {
                 //Call solver_nr
 #ifndef GLD_USE_EIGEN
@@ -529,7 +529,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				{
 					if (delta_functions[curr_object_number] != nullptr)
 					{
-						//Try/catch for any GL_THROWs that may be called
+						//Try/catch for any GL_T.rows() that may be called
 						try {
 							//Call the actual function
 							function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,true);
@@ -669,7 +669,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 				//See if we're in service or not
 				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 				{
-					//Try/catch for any GL_THROWs that may be called
+					//Try/catch for any GL_T.rows() that may be called
 					try {
 						//Call the actual function
 						function_status = ((STATUS (*)(OBJECT *))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number]);

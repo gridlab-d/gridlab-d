@@ -4,10 +4,12 @@
 
  **/
 
-#ifndef _ASSERT_H
-#define _ASSERT_H
+#ifndef _GLD_ASSERT_H
+#define _GLD_ASSERT_H
 
 #include "gridlabd.h"
+
+#undef g_assert
 
 class g_assert : public gld_object {
 public:
@@ -37,4 +39,4 @@ public:
 	static g_assert *defaults;
 };
 
-#endif // _ASSERT_H
+#endif // _GLD_ASSERT_H

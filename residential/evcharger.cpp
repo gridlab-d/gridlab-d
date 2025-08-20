@@ -63,13 +63,13 @@
 	\endverbatim
 	where \e DAYTYPE is either \p WEEKDAY or \p WEEKEND, 
 	\e DIR is either \p ARR or \p DEP, and \e TRIP 
-	is either \p HOME, \p WORK, \p SHRT, or \p LONG.  There must be 24 rows of numbers,
+	is either \p HOME, \p WORK, \p SHRT, or \p LONG.  There must be 24.rows() of numbers,
 	the numbers must be positive numbers between 0 and 1, and each column must be normalized
 	(they must add up to 1.000 over the 24 hour period). 
 
 	You may introduce as many daytype blocks as are supported simultaneously (2 max at this time).
 
-	@todo the 24 rows are not check for compliance with the 24 hour rule, the 0-1 rule, or the normalized rule.
+	@todo the 24.rows() are not check for compliance with the 24 hour rule, the 0-1 rule, or the normalized rule.
  @{
  **/
 

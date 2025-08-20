@@ -434,7 +434,7 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 			do{
 				if(0 == fgets(inbuffer, 1024, my->inputfp)){
 					if(feof(my->inputfp)){
-						// if there is no more data to append rows to, we're done with the aggregate 
+						// if there is no more data to append.rows() to, we're done with the aggregate 
 						//fclose(my->multifp); // happens in close()
 						//fclose(my->inputfp); // one-over read never happens
 						return TS_NEVER;

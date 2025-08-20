@@ -162,11 +162,11 @@ int test_lock(void)
 			int c[256], t, s=0;
 			exec_sleep(100000);
 			output_raw("\r");
-			rlock(&key);
+			auto v = rlock(&key);
 			for ( n=0 ; n<global_threadcount ; n++ )
 				s += (c[n]=count[n]);
 			t = total;
-			runlock(&key);
+			runlock();
 			for ( n=0 ; n<global_threadcount ; n++ )
 				output_raw("%10d ",c[n]);
 			output_raw("%10d %8d",t,t-s);

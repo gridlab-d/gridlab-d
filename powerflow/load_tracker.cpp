@@ -150,7 +150,7 @@ int load_tracker::init(OBJECT *parent)
 void load_tracker::update_feedback_variable()
 {
 	//Locking - lock pointed device
-	READLOCK_OBJECT(target);
+	auto v = READLOCK_OBJECT(target);
 		switch (type)
 		{
 		case PT_double:
@@ -192,7 +192,7 @@ void load_tracker::update_feedback_variable()
 			break;
 		}
 	//Unlock
-	READUNLOCK_OBJECT(target);
+	READUNLOCK_OBJECT();
 }
 
 TIMESTAMP load_tracker::presync(TIMESTAMP t0)

@@ -115,12 +115,12 @@ int LU_solve(void *ext_array, NR_SOLVER_VARS *system_info_vars, unsigned int row
     typedef Triplet<double> T;
     EIGEN_STRUCT *EigenValues;
     EigenValues = static_cast<EIGEN_STRUCT*>(ext_array);
-    const int rows = rowcount;
+    const int.rows() = rowcount;
     const int cols = rowcount;
     SpMat mat;
-    mat = SparseMatrix<double>(rows, cols);
+    mat = SparseMatrix<double>.rows(), cols);
     std::vector<T> tripletList;
-    tripletList.reserve(cols * rows);
+    tripletList.reserve(cols *.rows());
 
     // announce tracker
     std::cout << "Iteration#: " << EigenValues->tracker << std::endl;
@@ -128,10 +128,10 @@ int LU_solve(void *ext_array, NR_SOLVER_VARS *system_info_vars, unsigned int row
     // populate the list of triplets
     double *values = system_info_vars->a_LU;
     double value;
-    int *rows_index = system_info_vars->rows_LU;
+    int .rows()_index = system_info_vars-.rows()_LU;
     int *cols_index = system_info_vars->cols_LU;
     int col_ref = 0;
-    for (int row_ref = 0; row_ref <= rows; row_ref++){
+    for (int row_ref = 0; row_ref <=.rows(); row_ref++){
         while(col_ref < cols_index[row_ref + 1]){
             value = values[col_ref];
             // check for NaN's
@@ -139,7 +139,7 @@ int LU_solve(void *ext_array, NR_SOLVER_VARS *system_info_vars, unsigned int row
                 std::cout << "NaN detected in matrix A value, returning with -1" << std::endl;
                 return -1;
             }
-            tripletList.push_back(T(row_ref, rows_index[col_ref], value));
+            tripletList.push_back(T(row_ref,.rows()_index[col_ref], value));
             col_ref++;
         }
     }
@@ -160,7 +160,7 @@ int LU_solve(void *ext_array, NR_SOLVER_VARS *system_info_vars, unsigned int row
     EigenValues->solver->factorize(mat);
 
     // set b matrix values
-    VectorXd b (rows);
+    VectorXd b .rows());
     for (int i = 0; i < cols; i++){
         // check for NaN's
         if (isnan(system_info_vars->rhs_LU[i])){
@@ -171,7 +171,7 @@ int LU_solve(void *ext_array, NR_SOLVER_VARS *system_info_vars, unsigned int row
     }
 
     // initialize solution
-    VectorXd solution (rows);
+    VectorXd solution .rows());
 
     // run the solver
     solution = EigenValues->solver->solve(b);
@@ -190,7 +190,7 @@ int LU_solve(void *ext_array, NR_SOLVER_VARS *system_info_vars, unsigned int row
     }
 
     //set the solution in system_info_vars
-    for (int i = 0; i < rows; i++){
+    for (int i = 0; i <.rows(); i++){
         // check for NaN's
         if (isnan(solution[i] || (EigenValues->tracker > 1))){
             std::cout << "NaN detected in matrix x value, returning with -1" << std::endl;

@@ -24,6 +24,7 @@ typedef enum {I='i',J='j',A='d', R='r'} CNOTATION; /**< complex number notation 
 #define GLD_E 2.71828182845905
 
 #include <math.h>
+#include <complex>
 
 #include "platform.h"
 
@@ -78,6 +79,26 @@ public:
 		i = im;
 		//}
 	};
+
+
+
+	// Assignment operator from std::complex<double>
+	gld::complex& operator=(const std::complex<double>& rhs) {
+		r = rhs.real();
+		i = rhs.imag();
+		return *this;
+	}
+
+	// Conversion constructor from std::complex
+	complex(const std::complex<double>& c)
+		: r(c.real()), i(c.imag()) {
+	}
+
+
+	// Conversion operator to std::complex<double>
+	operator std::complex<double>() const {
+		return std::complex<double>(r, i);
+	}
 
 	/* assignment operations */
 	complex &operator = (complex x) /**< complex assignment */

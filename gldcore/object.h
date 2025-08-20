@@ -11,6 +11,9 @@
 //#pragma GCC optimize ("O0")
 
 #include<memory>
+#include<mutex>
+#include<shared_mutex>
+#include<unordered_map>
 
 #include "gld_complex.h"
 #include "timestamp.h"
@@ -45,6 +48,31 @@ typedef struct s_aggregate AGGREGATION;
 #define OF_DEFERRED	0x0080	/**< Object flag; indicates that the object started to be initialized, but requested deferral */
 #define OF_INIT		0x0100	/**< Object flag; indicates that the object has been successfully initialized */
 #define OF_RERANK	0x4000	/**< Internal use only */
+
+
+// Header-only thread-safe implementation
+class SharedMutexManager {
+private:
+	// Use a function-local static to ensure single instance
+	static std::shared_mutex& get_registry_mutex() {
+		static std::shared_mutex mutex;
+		return mutex;
+	}
+
+	static std::unordered_map<void*, std::shared_mutex>& get_instance_mutexes() {
+		static std::unordered_map<void*, std::shared_mutex> mutexes;
+		return mutexes;
+	}
+
+public:
+	static std::shared_mutex& get_mutex(void* instance_ptr) {
+		std::unique_lock<std::shared_mutex> registry_lock(get_registry_mutex());
+
+		auto& instance_mutexes = get_instance_mutexes();
+		auto [iter, inserted] = instance_mutexes.try_emplace(instance_ptr);
+		return iter->second;
+	}
+};
 
 typedef struct s_namespace {
 	FULLNAME name;
@@ -232,9 +260,14 @@ public:
 		GLOBALVAR *(*find)(std::string_view name);
 	} global;
 	struct {
-		void (*read)(unsigned int *);
+		std::shared_lock<std::shared_mutex> (*read)(unsigned int *);
 		void (*write)(unsigned int *);
-	} lock, unlock;
+	} lock;
+	struct {
+		void (*read)(void);
+		void (*write)(unsigned int*);
+	} unlock;
+
 	struct {
 		char *(*find_file)(const char *name, const char *path, int mode, char *buffer, int len);
 	} file;

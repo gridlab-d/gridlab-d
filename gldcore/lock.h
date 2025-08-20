@@ -5,20 +5,23 @@
 #ifndef _LOCK_H
 #define _LOCK_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include<mutex>
+#include<shared_mutex>
 
-void rlock(unsigned int *lock);
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
+
+std::shared_lock<std::shared_mutex>  rlock(unsigned int *lock);
 void wlock(unsigned int *lock);
-void runlock(unsigned int *lock);
+void runlock();
 void wunlock(unsigned int *lock);
 
 void register_lock(const char *name, unsigned int *lock);
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 #endif /* _LOCK_H */
 

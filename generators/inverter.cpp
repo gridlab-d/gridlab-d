@@ -11,7 +11,9 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <Eigen/Dense>
 
+#include "gld_complex.h"
 #include "inverter.h"
 
 //CLASS *inverter::plcass = power_electronics;
@@ -646,7 +648,8 @@ int inverter::init(OBJECT *parent)
 	bool temp_bool_value;
 	int temp_idx_x, temp_idx_y;
 	gld::complex temp_complex_value;
-	complex_array temp_complex_array, temp_child_complex_array;;
+	//complex_array temp_complex_array, temp_child_complex_array;;
+	Eigen::MatrixXcd temp_complex_array, temp_child_complex_array;
 	gld::set parent_phases;
 	OBJECT *tmp_obj = nullptr;
 	gld_object *tmp_gld_obj = nullptr;
@@ -976,26 +979,26 @@ int inverter::init(OBJECT *parent)
 				}
 
 				//Pull down the variable
-				pbus_full_Y_mat->getp<complex_array>(temp_complex_array,*test_rlock);
+				pbus_full_Y_mat->getp<Eigen::MatrixXcd>(temp_complex_array,*test_rlock);
 
 				//See if it is valid
-				if (!temp_complex_array.is_valid(0, 0))
+				if (!emh::is_element_valid(temp_complex_array,0, 0))
 				{
 					//Create it
-					temp_complex_array.grow_to(3,3);
+					temp_complex_array.resize(3,3);
 
 					//Zero it, by default
 					for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
 					{
 						for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 						{
-							temp_complex_array.set_at(temp_idx_x,temp_idx_y,gld::complex(0.0,0.0));
+							temp_complex_array(temp_idx_x,temp_idx_y) = gld::complex(0.0,0.0);
 						}
 					}
 				}
 				else	//Already populated, make sure it is the right size!
 				{
-					if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
+					if ((temp_complex_array.rows() != 3) && (temp_complex_array.cols() != 3))
 					{
 						GL_THROW("inverter:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
 						/*  TROUBLESHOOT
@@ -1019,26 +1022,26 @@ int inverter::init(OBJECT *parent)
 					}
 
 					//Pull down the variable
-					temp_property_pointer->getp<complex_array>(temp_child_complex_array,*test_rlock);
+					temp_property_pointer->getp<Eigen::MatrixXcd>(temp_child_complex_array,*test_rlock);
 
 					//See if it is valid
-					if (!temp_child_complex_array.is_valid(0,0))
+					if (!emh::is_element_valid(temp_child_complex_array,0,0))
 					{
 						//Create it
-						temp_child_complex_array.grow_to(3,3);
+						temp_child_complex_array.resize(3,3);
 
 						//Zero it, by default
 						for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
 						{
 							for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 							{
-								temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,gld::complex(0.0,0.0));
+								temp_child_complex_array(temp_idx_x,temp_idx_y) = gld::complex(0.0,0.0);
 							}
 						}
 					}
 					else	//Already populated, make sure it is the right size!
 					{
-						if ((temp_child_complex_array.get_rows() != 3) && (temp_child_complex_array.get_cols() != 3))
+						if ((temp_child_complex_array.rows() != 3) && (temp_child_complex_array.cols() != 3))
 						{
 							GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
 							//Defined above
@@ -1053,36 +1056,36 @@ int inverter::init(OBJECT *parent)
 					for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 					{
 						//Read the existing value
-						temp_complex_value = temp_complex_array.get_at(temp_idx_x,temp_idx_y);
+						temp_complex_value = temp_complex_array(temp_idx_x,temp_idx_y);
 
 						//Accumulate into it
 						temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
 
 						//Store it
-						temp_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+						temp_complex_array(temp_idx_x,temp_idx_y) = temp_complex_value;
 
 						//Do the childed object, if exists
 						if (childed_connection)
 						{
 							//Read the existing value
-							temp_complex_value = temp_child_complex_array.get_at(temp_idx_x,temp_idx_y);
+							temp_complex_value = temp_child_complex_array(temp_idx_x,temp_idx_y);
 
 							//Accumulate into it
 							temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
 
 							//Store it
-							temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+							temp_child_complex_array(temp_idx_x,temp_idx_y) = temp_complex_value;
 						}
 					}
 				}
 
 				//Push it back up
-				pbus_full_Y_mat->setp<complex_array>(temp_complex_array,*test_rlock);
+				pbus_full_Y_mat->setp<Eigen::MatrixXcd>(temp_complex_array,*test_rlock);
 
 				//See if the childed powerflow exists
 				if (childed_connection)
 				{
-					temp_property_pointer->setp<complex_array>(temp_child_complex_array,*test_rlock);
+					temp_property_pointer->setp<Eigen::MatrixXcd>(temp_child_complex_array,*test_rlock);
 
 					//Clear it
 					delete temp_property_pointer;

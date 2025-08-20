@@ -17,7 +17,7 @@
 
 #ifdef _MAIN_C
 #define GLOBAL 
-#define INIT(A) = A
+#define INIT(A) =A
 #else
 #define GLOBAL extern
 #define INIT(A)

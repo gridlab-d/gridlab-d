@@ -11,6 +11,7 @@
  **/
 
 #include <cmath>
+//#include<Eigen/Dense>
 
 #include "class.h"
 #include "output.h"
@@ -26,6 +27,9 @@
 #include "compare.h"
 #include "stream.h"
 #include "exec.h"
+
+
+
 
 /* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
 /* TODO: Fix "method" - was missing from list and causing segfaults, so populated.  No idea if it works or what it does */
@@ -51,10 +55,8 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 		{"delegated",     "string",  (unsigned int) -1,     0,                  convert_from_delegated,      convert_to_delegated},
 		{"bool",          "string",  sizeof(bool),          6,                  convert_from_boolean,        convert_to_boolean,        nullptr, nullptr, {TCOPB(bool)},},
 		{"timestamp",     "string",  sizeof(int64),         24,                 convert_from_timestamp_stub, convert_to_timestamp_stub, nullptr, nullptr, {TCOPS(uint64)}, timestamp_get_part},
-		{"double_array",  "string",  sizeof(double_array),  0,                  convert_from_double_array,   convert_to_double_array,  reinterpret_cast<int (*)(
-				void *)>(double_array_create),                                                                                                nullptr, {TCNONE},        double_array_get_part},
-		{"complex_array", "string",  sizeof(complex_array), 0,                  convert_from_complex_array,  convert_to_complex_array, reinterpret_cast<int (*)(
-				void *)>(complex_array_create),                                                                                               nullptr, {TCNONE},        complex_array_get_part},
+		{"double_array",  "string",  0,  0,                  nullptr,   nullptr,  nullptr,                                                                                                nullptr, {TCNONE},        nullptr},
+		{"complex_array", "string",  sizeof(Eigen::MatrixXcd), 0,                  convert_from_complex_array,  convert_to_complex_array, nullptr,                                                                                               nullptr, {TCNONE},        nullptr},
 		{"real",          "decimal", sizeof(real),          24,                 convert_from_real,           convert_to_real},
 		{"float",         "decimal", sizeof(float),         24,                 convert_from_float,          convert_to_float},
 		{"loadshape",     "string",  sizeof(loadshape),     0,                  convert_from_loadshape,      reinterpret_cast<int (*)(
@@ -104,8 +106,8 @@ int property_check(void)
 		case PT_object: sz = sizeof(OBJECT*); break;
 		case PT_bool: sz = sizeof(bool); break;
 		case PT_timestamp: sz = sizeof(TIMESTAMP); break;
-		case PT_double_array: sz = sizeof(double_array); break;
-		case PT_complex_array: sz = sizeof(complex_array); break;
+		case PT_double_array: sz = sizeof(Eigen::MatrixXd); break;
+		case PT_complex_array: sz = sizeof(Eigen::MatrixXcd); break;
 		case PT_real: sz = sizeof(real); break;
 		case PT_float: sz = sizeof(float); break;
 		case PT_loadshape: sz = sizeof(loadshape); break;
@@ -308,51 +310,51 @@ double complex_get_part(void *x, const char *name)
 /*********************************************************
  * DOUBLE ARRAYS
  *********************************************************/
-int double_array_create(double_array &a)
-{
-	a = double_array();
+//int double_array_create(double_array &a)
+//{
+//	a = double_array();
+//
+//	return 1;
+//}
 
-	return 1;
-}
-
-double double_array_get_part(void *x, const char *name)
-{
-	unsigned int n,m;
-	if (sscanf(name,"%d.%d",&n,&m)==2)
-	{
-		double_array *a = (double_array*)x;
-		if ( n<a->get_rows() && m<a->get_cols() && a->get_addr(n,m)!=nullptr )
-			return *(a->get_addr(n,m));
-	}
-	return QNAN;
-}
+//double double_array_get_part(void *x, const char *name)
+//{
+//	unsigned int n,m;
+//	if (sscanf(name,"%d.%d",&n,&m)==2)
+//	{
+//		double_array *a = (double_array*)x;
+//		if ( n<a-.rows() && m<a->get_cols() && a->get_addr(n,m)!=nullptr )
+//			return *(a->get_addr(n,m));
+//	}
+//	return QNAN;
+//}
 
 /*********************************************************
  * COMPLEX ARRAYS
  *********************************************************/
-int complex_array_create(complex_array &a)
-{
-    a = complex_array();
-
-	return 1;
-}
-
-double complex_array_get_part(void *x, const char *name)
-{
-	int n,m;
-	char subpart[32];
-	if (sscanf(name,"%d.%d.%31s",&n,&m,subpart)==2)
-	{
-		complex_array *a = (complex_array*)x;
-		if ( n<a->get_rows() && m<a->get_cols() && a->get_addr(n,m)!=nullptr )
-		{
-			if ( strcmp(subpart,"real")==0 ) return a->get_addr(n,m)->Re();
-			else if ( strcmp(subpart,"imag")==0 ) return a->get_addr(n,m)->Im();
-			else return QNAN;
-		}
-	}
-	return QNAN;
-}
+//int complex_array_create(complex_array &a)
+//{
+//    a = complex_array();
+//
+//	return 1;
+//}
+//
+//double complex_array_get_part(void *x, const char *name)
+//{
+//	int n,m;
+//	char subpart[32];
+//	if (sscanf(name,"%d.%d.%31s",&n,&m,subpart)==2)
+//	{
+//		complex_array *a = (complex_array*)x;
+//		if ( n<a-.rows() && m<a->get_cols() && a->get_addr(n,m)!=nullptr )
+//		{
+//			if ( strcmp(subpart,"real")==0 ) return a->get_addr(n,m)->Re();
+//			else if ( strcmp(subpart,"imag")==0 ) return a->get_addr(n,m)->Im();
+//			else return QNAN;
+//		}
+//	}
+//	return QNAN;
+//}
 
 
 
