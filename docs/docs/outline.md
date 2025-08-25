@@ -27,7 +27,9 @@ Splash or Landing Page (Not gridlabd.org)
 ## 1.0 Prospective Users
 - **Key Attributes of GLD**
 - ***Technical Overview*** -
-A few pages, describing what GLD can do in more detail. This section is for those that are pretty sure GLD can do something they want and they want to make sure. Still lots of graphics but meant to be browsed and read in 15 minutes or less. Probably each of the sections below has one or more links to dedicated content elsewhere if the reader wants to know more. *Consider this as an executive summary of our documentation work, revisit when the bulk of the docs/our narrative plan are complete*
+A few pages, describing what GLD can do in more detail. This section is for those that are pretty sure GLD can do something they want and they want to make sure. Still lots of graphics but meant to be browsed and read in 15 minutes or less. Probably each of the sections below has one or more links to dedicated content elsewhere if the reader wants to know more.
+
+ *Consider this as an executive summary of our documentation work, revisit when the bulk of the docs/our narrative plan are complete*
 
   - How GLD models the power system and how that’s expressed in a .glm 
   - Object definition through parameters 
@@ -44,8 +46,7 @@ Showing off the popular integrated models and the interaction between the device
     - EV 
   - Three-Phase Unbalanced Transients (Deltamode)
   - Co-Simulation with HELICS
-  - libgld - 
-  Using GLD as an engine in a larger application. Make your own GUI, make a purpose-built script that runs your analysis, use other models as part of the GLD simulation.
+  - libgld - Using GLD as an engine in a larger application. Make your own GUI, make a purpose-built script that runs your analysis, use other models as part of the GLD simulation.
 
 ## New Users
 
@@ -104,7 +105,6 @@ Showing off the popular integrated models and the interaction between the device
 
 ### Loads
 
-### MISC
 
 ### Modeling Reference
 - Debugging and Validation

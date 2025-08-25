@@ -8,7 +8,7 @@ Required functions
     
     
     
-    EXPORT CLASS *init(CALLBACKS *_fntable_ , MODULE *_module_ , int _argc_ , char *[argv][]);
+    EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[]);
     EXPORT void term(void);
     CDECL int do_kill();
     
@@ -16,23 +16,20 @@ Required functions
 Optional functions
     
     
-    
     EXPORT int check();
-    EXPORT int export(const char *_file_);
-    EXPORT int import(const char *_file_);
-    EXPORT int kmldump( int(*)(const char *_file_ ,...), OBJECT *_obj_);
-    EXPORT void test(int _argc_ , const char *_argv_[]);
-    EXPORT size_t stream(void *_ptr_ , size_t _len_ , bool is_str=**false** , void *_match_ ==**NULL**);
+    EXPORT int export(const char *file);
+    EXPORT int import(const char *file);
+    EXPORT int kmldump( int(*)(const char *file,...), OBJECT *obj);
+    EXPORT void test(int argc, const char *argv[]);
+    EXPORT size_t stream(void *ptr, size_t len, bool is_str=false, void *match==NULL);
     
 
 Subsecond functions
     
-    
-    
-    EXPORT unsigned long [deltamode_desired](int *_flags_);
-    EXPORT unsigned long [preupdate](module *_module_ , [TIMESTAMP] _t0_ , unsigned int64 _dt_);
-    EXPORT [SIMULATIONMODE] [interupdate](module *_module_ , [TIMESTAMP] _t0_ , unsigned int64 _delta_time_ , unsigned long _dt_ , unsigned int _iteration_count_val_);
-    EXPORT [STATUS] [postupdate](module *_module_ , [TIMESTAMP] _t0_ , unsigned int64 _dt_);
+    EXPORT unsigned long deltamode_desired(int *flags);
+    EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt);
+    EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+    EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt);ed int64 _dt_);
     
 
 ## Required functions
@@ -46,16 +43,16 @@ The init function is required for all GridLAB-D™ modules. It is called once wh
     #define DLMAIN
     #include <stdlib.h>
     #include "gridlabd.h"
-    EXPORT class *init([CALLBACKS] *fntable, module *module, int argc, char *argv[])
+    EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
     {
       if (set_callback(fntable)==NULL)
       {
         errno = EINVAL;
         return NULL;
       }
-      // **TODO**: add gl_global_create() calls here (see [module globals] for details)
-      // **TODO**: call new for each class here (see [create class] for details)
-      return NULL; // **TODO**: return **oclass** member of first new class
+      // TODO: add gl_global_create() calls here (see module globals for details)
+      // TODO: call new for each class here (see create class for details)
+      return NULL; // TODO: return oclass member of first new class
     }
     
 
@@ -70,7 +67,7 @@ The do_kill function is required for all GridLAB-D™ modules. It is called when
     #include "gridlabd.h"
     CDECL int do_kill()
     {
-      // **TODO**: perform cleanup actions if needed
+      // TODO: perform cleanup actions if needed
       return 0;
     }
     
@@ -88,7 +85,7 @@ The term function is called when the simulation stop (normally or on error).
     #include "gridlabd.h"
     EXPORT void term(void)
     {
-      // **TODO**: perform simulation end operations
+      // TODO: perform simulation end operations
     }
     
 
@@ -103,17 +100,16 @@ The check function is used to allow user to perform module checks before running
     #include "gridlabd.h"
     CDECL int check()
     {
-      // **TODO**: perform check operations and report issues
+      // TODO: perform check operations and report issues
       return 0;
-    }
+    } 
     
 
 ### export
 
 The export function allows a module to define a method for exporting a GridLAB-D™ to an arbitrary file format. If defined, the export routine is called after the simulation is completed. 
 
-_module_ /main.cpp
-    
+`module/main.cpp`
     
     EXPORT int (*export)(const char *file)
     {
@@ -127,25 +123,23 @@ _module_ /main.cpp
 The import function is used to load a model from an arbitrary file format. The [import] GLM directive is used to initiative the import process. 
     
     
-    EXPORT int import(const char *_file_)
+    EXPORT int import(const char *file)
     {
       // import processing code
       return n; // n=0: failed; n<0: error after loading n entities; n>0: successfully loaded n entities
     }
-    
 
 ### kmldump
 
 The kmldump function is used to output KML (Google Earth) data. 
     
     
-    typedef int (*KMLOUT)(const char *_format_ , ...);
-    EXPORT int kmldump(KMLOUT _kmlout_ , OBJECT *_obj_)
+    typedef int (*KMLOUT)(const char *format, ...);
+    EXPORT int kmldump(KMLOUT kmlout, OBJECT *obj)
     {
-      kmlout("_kml data_ ");
+      kmlout("kml data");
       return 0; // return value is ignored
     }
-    
 
 See [Google KML Documentation](https://developers.google.com/kml/documentation/) for details on the KML format. 
 
@@ -167,33 +161,30 @@ See [Dev:Subsecond] for details.
 
 Modules may have runtime functionalities that are not always available, e.g., when an external application is not installed. In such cases, it is highly recommended that the module create a global flag variable only when the functionality is available. You can create a [global variable] in init, for example: 
     
-    
+        
     bool mytool_ok = false;
     if ( load_mytool() )
     {
       mytool_ok = true;
-      gl_create_global("_module-name_ ",PT_bool, &mytool,NULL);
+      gl_create_global("module-name",PT_bool, &mytool,NULL);
     }
     
 
 This will allow users to create GLM files that have contingent models depending on the presence of the external tools: 
     
     
-    #ifdef _module-name_
+    #ifdef module-name
     class ...
     object ...
     #endif
     
 
-Some examples of contingent functionalities are [MATLAB] and [MYSQL]. 
+Some examples of contingent functionalities are MATLAB and MYSQL. 
 
-[VS2005]
-    Often these functionalities are only supported when the proper libraries are installed on the build machine. These modules usually have a special flag set, e.g., HAVE_MYSQL or HAVE_MATLAB so that Linux/Mac machine can automatically build the proper code based on what is installed. In Windows this is not possible. If the libraries are not available, we recommend you unload the project and not build it rather than changing the flag.
+VS2005 -
 
-## Version
+  Often these functionalities are only supported when the proper libraries are installed on the build machine. These modules usually have a special flag set, e.g., HAVE_MYSQL or HAVE_MATLAB so that Linux/Mac machine can automatically build the proper code based on what is installed. In Windows this is not possible. If the libraries are not available, we recommend you unload the project and not build it rather than changing the flag.
 
-Prior to [Hassayampa (Version 3.0)]
-    The implementation functions and file structures are different and deprecated.
 
 ## See also
 

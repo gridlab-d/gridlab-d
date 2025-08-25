@@ -55,21 +55,21 @@ nav:
       - Gridlab-D™ Overview: docs/2.0 New Users/2.2 Getting Started/2.2.1 Overview.md
       - What is a GridLAB-D™ model?: docs/2.0 New Users/2.2 Getting Started/2.2.2 Models.md
       - Running GridLAB-D™: docs/2.0 New Users/2.2 Getting Started/2.2.3 Running a Model.md
-      - The Clock: docs/2.0 New Users/2.2 Getting Started/2.2.4 Simulation Time.md
+      - Simulation Time: docs/2.0 New Users/2.2 Getting Started/2.2.4 Simulation Time.md
       - Generating populations: docs/2.0 New Users/2.2 Getting Started/2.2.5 Model Options.md
       - Generating output: docs/2.0 New Users/2.2 Getting Started/2.2.6 Output.md
     - Running Simulations: docs/2.0 New Users/Running_Simulations.md
     - Theory of Operation: docs/2.0 New Users/theory-of-operation.md
   - 3.0 Modeling:
     - 3.1 Intro to Modeling:
-      - 3.1.1 Basic Distribution System Modeling: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.1 - Basic Distribution System Modeling.md
-      - 3.1.2 GLM Models: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.2 - GLM Models.md
-      - 3.1.3 Modules: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.3 - Modules.md
-      - 3.1.4 Recorders and Players: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.4 - Recorders and Players.md
-      - 3.1.5 Built-in Schedules and Loadshapes: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.5 - Schedules and Loadshapes.md
-      - 3.1.6 Distributed Generation: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.6 - Distributed_Generation.md
-      - 3.1.7 Advanced Distribution Models: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.7 - Advanced_Distribution_Models.md
-      - 3.1.8 Built-In Distribution Models: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.8 - Built-In Distribution Models.md
+      - Basic Distribution System Modeling: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.1 Basic Distribution System Modeling.md
+      - GLM Models: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.2 GLM Models.md
+      - Modules: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.3 Modules.md
+      - Recorders and Players: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.4 Recorders and Players.md
+      - Built-in Schedules and Loadshapes: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.5 Schedules and Loadshapes.md
+      - Distributed Generation: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.6 Distributed_Generation.md
+      - Advanced Distribution Models: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.7 Advanced_Distribution_Models.md
+      - Built-In Distribution Models: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.8 Built-In Distribution Models.md
       - index: docs/3.0 Modeling/3.1 Intro to Modeling/index.md
     - 3.2 Modules:
       - Assert (module): docs/3.0 Modeling/3.2 Modules/Assert.md
@@ -205,6 +205,18 @@ nav:
       - Command options: docs/4.0 Developing/4.6 - Debugging/4.6.1 - Command_line_arguments.md
       - Performance Profiling: docs/4.0 Developing/4.6 - Debugging/4.6.2 - performance-profiling.md
     - 4.7 - Style Guide: docs/4.0 Developing/4.7 - Style_guide.md
+    - API:
+    - Build_Installation:
+    - Debugging:
+    - Deltamode:
+    - Fundamentals:
+    - Modules:
+      - autotest:
+      - connections:
+      - gldcore:
+      - optimization:
+      - powerflow:
+      - residential:
     - undecided:
       - Dev:mysql: docs/4.0 Developing/undecided/Dev_mysql.md
       - HowTo:Create a solver: docs/4.0 Developing/undecided/HowTo_Create_a_solver.md

@@ -8,9 +8,9 @@ C
     
     
      gl_global_create("_#Module name|module-name_ ::_variable-name_ ", 
-      PT__[built-in_type],_variable-address _,_
+      PT__built-in_type,_variable-address _,_
       PT_SIZE,_array-size_ ,
-      PT_UNITS,_[units]_ ,
+      PT_UNITS,_units_ ,
       PT_ACCESS,_access-control-flags_ ,
       PT_DESCRIPTION,_brief-description_ ,
       NULL);
@@ -19,8 +19,8 @@ C
 C++
     
     
-     class [gld_global] {
-       [gld_global](const char *name, [PROPERTYTYPE] t, void *p);
+     class gld_global {
+       gld_global(const char *name, PROPERTYTYPE t, void *p);
      }
     
 
@@ -34,27 +34,27 @@ The follow parameter may be used to define a module or class global variable.
 
 ### Access control flags
 
-    This identifies how the global may be accessed by other modules and object. See [PT_ACCESS] for details. If omitted, the variable is assumed to be [public].
+This identifies how the global may be accessed by other modules and object. See PT_ACCESS for details. If omitted, the variable is assumed to be public.
 
 ### Array size
 
-    Identifies the array size, which is optional. If omitted it is assumed to be 1.
+Identifies the array size, which is optional. If omitted it is assumed to be 1.
 
 ### Brief description
 
-    This identifies a string constant that provide a brief synopsis of the variable. This description is displayed by --[modhelp] and [XML] output.
+This identifies a string constant that provide a brief synopsis of the variable. This description is displayed by --modhelp and XML output.
 
-### [Built-in type]
+### Built-in type
 
-    This identifies what [built-in type] the variable is. This option is required.
+This identifies what built-in type the variable is. This option is required.
 
 ### Module name
 
     This identifies the module name. The module name is optional, and when omitted causes the variable to become a core global.
 
-### [Units]
+### Units
 
-    This identifies the [units] for double and complex variables. The units are optional and if omitted, the variable is considered unitless.
+    This identifies the units for double and complex variables. The units are optional and if omitted, the variable is considered unitless.
 
 ### Variable name
 
@@ -64,10 +64,10 @@ The follow parameter may be used to define a module or class global variable.
 
 ### Module globals
 
-Module globals are created whenever a module is loaded. These must be placed in the module [init] function to ensure that they are always created when modules are loaded. 
+Module globals are created whenever a module is loaded. These must be placed in the module init function to ensure that they are always created when modules are loaded. 
 
 Note
-    Most module implementation is a callback function table to define **gl_create_global**. Therefore calls to this function cannot be completed until the callback table is built using the **set_callback** function. See [source documentation] on **set_callback** for details.
+    Most module implementation is a callback function table to define **gl_create_global**. Therefore calls to this function cannot be completed until the callback table is built using the **set_callback** function. See source documentation on **set_callback** for details.
 
 Example (main.cpp)
     
@@ -96,12 +96,10 @@ Example (main.cpp)
 
 Class global are created whenever a class is referenced. These must be placed in the class constructor, which is called only when the class is first referenced. 
 
-Note
-    It is unusual to have class globals because they are only created when the class is referenced, but there are cases where this may be preferred to a module global. An example would be a situation in which all object of a given class must share a variable that may be altered by the user but would not be available to the user if the class when the class is not used.
+Note -
+  It is unusual to have class globals because they are only created when the class is referenced, but there are cases where this may be preferred to a module global. An example would be a situation in which all object of a given class must share a variable that may be altered by the user but would not be available to the user if the class when the class is not used.
 
-Example (my_class.cpp)
-    
-    
+Example (my_class.cpp):   
     
      class my_class {
      public:  my_class(MODULE *);
@@ -130,49 +128,49 @@ Example (my_class.cpp)
 
 ## See also
 
-  * [Guide to Programming GridLAB-D]
+  * Guide to Programming GridLAB-D
     * Introduction 
-      * [Developer prerequisites]
-      * [Programming conventions]
-      * [Build/release process]
-      * [Documentation Guide]
-      * [Theory of operation]
-    * [Creating a module]
+      * Developer prerequisites
+      * Programming conventions
+      * Build/release process
+      * Documentation Guide
+      * Theory of operation
+    * Creating a module
       * Module globals
-      * [Module functions]
-      * [Subsecond processing]
-      * [Import/export]
-      * [Check]
-      * [KML output]
-      * [Example 1]
-    * [Creating a class]
-      * [Class functions]
-      * [Class globals]
-      * [Publishing properties]
-      * [Publishing methods]
-      * [Notifications]
-      * [Load methods] 
-      * [Example 2]
+      * Module functions
+      * Subsecond processing
+      * Import/export
+      * Check
+      * KML output
+      * Example 1
+    * Creating a class
+      * Class functions
+      * Class globals
+      * Publishing properties
+      * Publishing methods
+      * Notifications
+      * Load methods 
+      * Example 2
     * Special Topics 
-      * [Data types]
-      * [Multithreading]
-      * [Application links]
-      * [Realtime server]
-      * [Graphical user interfaces]
-      * [Troubleshooting messages]
-      * [Example 3]
-    * [Source documentation]
-      * [C/C++ Module API documentation (trunk)](http://GridLAB-D™.sourceforge.net/doxygen/trunk/group__module__api.html)
-      * [C/C++ Module API Guide]
-      * [Example 4]
-    * [Validation]
-      * [Example 5]
+      * Data types
+      * Multithreading
+      * Application links
+      * Realtime server
+      * Graphical user interfaces
+      * Troubleshooting messages
+      * Example 3
+    * Source documentation
+      * C/C++ Module API documentation (trunk)(http://GridLAB-D™.sourceforge.net/doxygen/trunk/group__module__api.html)
+      * C/C++ Module API Guide
+      * Example 4
+    * Validation
+      * Example 5
     * Debugging 
-      * [Debug option]
-      * [VS2005 (MS Windows)]
-        * [use_msvc]
-      * [gdb option (linux/mac)]
-        * [gdb_window]
-      * [Runtime Class Debugging]
-        * [compile_once]
-    * [Code templates]
+      * Debug option
+      * VS2005 (MS Windows)
+        * use_msvc
+      * gdb option (linux/mac)
+        * gdb_window
+      * Runtime Class Debugging
+        * compile_once
+    * Code templates

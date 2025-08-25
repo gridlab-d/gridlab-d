@@ -4,7 +4,7 @@
 
 ## ZIP Loads
 
-Thus far the loads on the systems we’ve been modeling have been fairly abstract and quite simple with only a constant power load on a single phase being specified. A more general form of this type of load is often referred to as a ZIP load which is represented as a load with three distinct part: a constant impedance portion <Latex>{`$Z$`}</Latex>, a constant current portion <Latex>{`$I$`}</Latex> and a constant power portion <Latex>{`$P$`}</Latex>. Each of these portions respond differently to changes in load voltage based on their first-principles models: <Latex>{`$P=I^2Z$`}</Latex>, <Latex>{`$P = IV$`}</Latex>, and <Latex>{`$P = P$`}</Latex>. For a reduction in system voltage, we would expect the following:
+Thus far the loads on the systems we’ve been modeling have been fairly abstract and quite simple with only a constant power load on a single phase being specified. A more general form of this type of load is often referred to as a ZIP load which is represented as a load with three distinct part: a constant impedance portion $Z$, a constant current portion $I$ and a constant power portion $P$. Each of these portions respond differently to changes in load voltage based on their first-principles models: $P=I^2Z$, $P = IV$, and $P = P$. For a reduction in system voltage, we would expect the following:
 
 * For constant impedance, the power to be reduced as the square of the voltage change and current to reduce linearly to the voltage change.
 
@@ -22,7 +22,7 @@ Open the model [zip_loads.glm](https://github.com/gridlab-d/course/blob/master/T
 
 Looking at the two loads, you'll see that `b1m1_load_a` is defined in terms of the `constant_power`, `constant_current`, and `constant_voltage`. The ["/wiki/Power_Flow_User_Guide#Loads"]documentation on the wiki shows us that the default units for these value are W, A, and Ohms, respectively. Load `b1m1_load_b` has a very similar composite load but it is defined in the alternative style mentioned above. Running a simulation using this model and opening "meter_powers.csv" reveals that both of these loads have similar power over the duration of the simulation, at least to the precision of the values entered.
 
-![Zip load comparison scaled.png](/images\Zip_load_comparison_scaled.png)
+![Zip load comparison scaled.png](../../../..//images\Zip_load_comparison_scaled.png)
 
 ## Loads and Weather
 
@@ -162,7 +162,7 @@ Continuing the search we see the same assignment of `pWindSpeed` we saw previous
 And that’s it. The only remaining mystery, then, is statement we’ve been ignoring this whole time:
 
 ```
-        pWindSpeed = (double*)GETADDR(obj,gl_get_property(obj,"wind_speed"));
+pWindSpeed = (double*)GETADDR(obj,gl_get_property(obj,"wind_speed"));
 ```
 
 This statement is clearly not precisely understandable without some additional effort but thinking through what GridLAB-D™generally needs to do might give us enough understanding to be satisfied. Jumping ahead just a little bit, GridLAB-D™reads in the weather data from an external file to define the climate object, kind of like a player file. And the exploration we’ve done in "solar.cpp" is sufficient to tell that this reading in of the weather data is not happening here. This is “solar.cpp”, after all, and we would hope that such functionality would be in another file, maybe “climate.cpp” or something like that. This means that for the solar class to use the wind data that some other function has read in, it needs a way to access it and our mystery statement here is doing something related to getting the address of the wind speed object. Again, we don’t know exactly what this means but it is highly suggestive. Furthermore, we know that if this statement fails to change the value being pointed at, then the default value of the pointer will still be `NULL` and we’ll get an error about failing to map to the windspeed, further verifying our theory about the nature of our mystery statement.
@@ -171,13 +171,13 @@ So we don’t have proof, just a theory that fits the facts as presented in this
 
 ### TMY Datasets
 
-Getting back to where we started, weather data is not typically defined by hand but instead is played into the model using a special player-like function of the climate class. The input file typically used to define all of these weather parameters is the commonly available TMY2 and TMY3 data files. TMY stands for “typical meteorological year” and these collections of data files define a comprehensive set of weather parameters for a given geographic location. The data in these files has been assembled from multiple years of data with each month being actual recorded hourly data from the year deemed to be most typical for the dataset. (A little bit of smoothing is applied at the month boundaries to make the dataset continuous). TMY2 is the slightly older set of files with more limited geographic coverage and a somewhat cryptic file format that is technically human readable but not easily so. TMY3 is the latest version of the data files which provides a much broader range of geographic locations and is in the more conventional CSV format. Further documentation is available on the (http://rredc.nrel.gov/solar/old_data/nsrdb/1961-1990/tmy2/">TMY2] and (http://rredc.nrel.gov/solar/old_data/nsrdb/1991-2005/tmy3/">TMY3] datasets are available from (http://www.nrel.gov/">NREL]. (One additional note on the TMY3 datasets: the file extension of an TMY3 data files must be changed to .tmy3 otherwise GridLAB-D™assumes it is a normal CSV file and won't read in all the values correctly.)
+Getting back to where we started, weather data is not typically defined by hand but instead is played into the model using a special player-like function of the climate class. The input file typically used to define all of these weather parameters is the commonly available TMY2 and TMY3 data files. TMY stands for “typical meteorological year” and these collections of data files define a comprehensive set of weather parameters for a given geographic location. The data in these files has been assembled from multiple years of data with each month being actual recorded hourly data from the year deemed to be most typical for the dataset. (A little bit of smoothing is applied at the month boundaries to make the dataset continuous). TMY2 is the slightly older set of files with more limited geographic coverage and a somewhat cryptic file format that is technically human readable but not easily so. TMY3 is the latest version of the data files which provides a much broader range of geographic locations and is in the more conventional CSV format. Further documentation is available on the [TMY2](http://rredc.nrel.gov/solar/old_data/nsrdb/1961-1990/tmy2/) and [TMY3](http://rredc.nrel.gov/solar/old_data/nsrdb/1991-2005/tmy3/) datasets are available from [NREL](http://www.nrel.gov/). (One additional note on the TMY3 datasets: the file extension of an TMY3 data files must be changed to .tmy3 otherwise GridLAB-D™assumes it is a normal CSV file and won't read in all the values correctly.)
 
 Though the number of weather stations supported in the TMY3 dataset is drastically enlarged as compared to the TMY2 dataset, there may arise situations where more customized weather data needs to be used than what TMY3 supports. Because the TMY3 data files are CSV formatted, altering their contents is simply a matter of finding the correct parameter and/or date-range and pasting in the new weather data. (A similar edit can be made to the TMY2 datasets but with much more difficulty. The TMY2 datasets are not delimited which means, on a practical level, a script to parse and edit the files will be necessary. Using the TMY2 documentation this is not difficult but certainly more complicated than pasting values into a spreadsheet. Extra care should be taken as the smallest error will likely result in an improperly formatted file.)
 
 Though all the TMY datasets contain hourly values for a whole year, GridLAB-D™allows users to interpolate between these hourly data points; both linear and quadratic interpolation are supported. The interpolation function is useful as it can prevent large step changes in climate from occurring at the top of each hour, particularly in models that are running a finer time step than hourly. Depending on the other types of objects included in a model and their settings, having large step changes in things like solar radiation or temperature can create a ringing response throughout the system as a while that are not reflective of reality. The environment being modeled by the climate class does not contain step changes every sixty minutes.
 
-And to be clear, interpolation is not creating detail at this finer time scale. Some climate variables, such as the solar radiation parameters, may change frequently and widely between the stated hourly values in the TMY data; clouds being the biggest cause of such variation. Turning on GridLAB-D's interpolation function does not generate these more frequent variations, it simply provides a smooth transition between the given hourly data points. If these frequent changes in solar radiation parameters are needed and (http://www.nrel.gov/midc/oahu_archive/">such data is available], using player files to play this data in is a good option.
+And to be clear, interpolation is not creating detail at this finer time scale. Some climate variables, such as the solar radiation parameters, may change frequently and widely between the stated hourly values in the TMY data; clouds being the biggest cause of such variation. Turning on GridLAB-D's interpolation function does not generate these more frequent variations, it simply provides a smooth transition between the given hourly data points. If these frequent changes in solar radiation parameters are needed and [such data is available](http://www.nrel.gov/midc/oahu_archive/), using player files to play this data in is a good option.
 
 ## Residential Loads
 
@@ -207,13 +207,13 @@ Open up [residential_load_basics.glm](https://github.com/gridlab-d/course/blob/m
 
 The inclusion of these modules ties-in the GridLAB-D™functionality for a number of classes in each of these modules. Without these declarations, running this model in GridLAB-D™will through an error the first time it finds an object that is an instantiation of one of the classes defined in those modules.
 
-["/wiki/File:Residential_basics.png" >![Residential basics.png" src="/image/Residential_basics.png">]
+![Residential basics](../../../../images/Residential_basics.png)
   Looking at the rest of the model file, find one of the definitions of a `house` object. All the house objects in this file have been defined using a variety of parameters to describe the thermal characteristics of the building. The diversity of parameters provides a variety of ways to describe a house; use whichever ones are most useful to describe the particular residence you are trying to model. 
 
 
 Running a simulation using this model file generates several output files (generated by `recorder` objects in the model) including two house-specific files and one all-house temperature file. Looking at the "b1m1_house_data.csv" shows data for several different thermal parameters for that residence.  The model file shows that we are running this model using Spokane's weather on Aug. 8th so we would expect the air-conditioner to run some of the time but not necessarily continuously; looking at the `is_COOL_on` parameter we can see that this is the case, particularly in the afternoon.
 
-![Residential air conditioner](/images\Residential_air_conditioner.png)
+![Residential air conditioner](../../../../images/Residential_air_conditioner.png)
 
 The model file also shows that the air temperature of the house was set to 72.5 'F. This parameter is technically an output parameter; that is, the thermodynamic model of the system will calculate the indoor air temperature and we shouldn't be able to externally define it to a fixed value. Though this is generally the case, the equations of the residential thermodynamic model need an initial condition and this statement is used to provide this. Looking at the data file for that house, we see that the indoor air temperature does indeed start at the specified value.
 
@@ -229,7 +229,7 @@ module residential {
 
 The differences a given house's load with and without the use of `implicit_enduse` is very clear:
 
-["/wiki/File:Implicit_enduse_comparison.png" >![Implicit enduse comparison.png" src="/image/Implicit_enduse_comparison.png">]
+![Implicit enduse comparison](../../../../images/Implicit_enduse_comparison.png)
 
 ### Example - Thermostat Settings
 
@@ -264,11 +264,11 @@ object house {
 
 Running the simulation and comparing the results to those from the "residential_load_basic.glm" model confirms an intuitive understanding of these two parameters. The thermostat setpoint parameter defines the center of the deadband of the thermostat. When the temperature rises above the upper limit of the deadband the air-conditioner engages and begins cooling the house until the indoor temperature reaches the lower end of the deadbad, at which point the air-conditioner shuts off. Comparing a change in set-point (while keeping the deadband constant) shows the air conditioner operating over the same temperature range (the two degree deadband) just at a higher temperature.
 
-["/wiki/File:Cooling_setpoint_comparison.png" >![Cooling setpoint comparison.png" src="/image/Cooling_setpoint_comparison.png">]
+![Cooling setpoint comparison](../../../../images/Cooling_setpoint_comparison.png)
 
 The second change in the model increases the deadband size while keeping the setpoint constant. We can see from the simulation results that, indeed, the indoor temperature is centered about 73.5 degrees but under the basic model the range for the temperature is 74.25 to 72.75 'F (total deadband size of 1.5 'F); in the model we just modified the temperature ranges from 72 to 75 'F.
 
-["/wiki/File:Thermostat_deadband_comparison.png" >![Thermostat deadband comparison.png" src="/image/Thermostat_deadband_comparison.png">]
+![Thermostat deadband comparison.png](../../../../images/Thermostat_deadband_comparison.png)
 
 We can also see the effect that changing these two parameters has on total energy consumption of the house for the day. Comparing the data  for the two cases, there is a column in the data file showing the total energy consumption and the last entry in each column will be the total for the day.
 
@@ -323,11 +323,11 @@ Opening up [appliance_schedules.glm](https://github.com/gridlab-d/course/blob/ma
 
 Having these definitions for appliance usage patterns is great but we still have to put them to use in the main model file; here is where ZIP loads come in handy. In "residential_load_other_loads.glm" jump down to where the first house (`b1m1_house`) is defined and you'll see after all the statements you've seen before describing the thermodynamic properties of the house is a list of `ZIPload`s parented to the house object. Each of these `ZIPload`s references one of the schedules defined for a given load type (`PLUGS`, `CLOTHESWASHER` `REFRIGERATOR`, etc) and then multiples that referenced value by a specific factor. In this way, a common hourly time-series of values can be scaled in magnitude for each particular residence.
 
-The other way these common schedules can be customized for each residence is through the use of ["/wiki/Object_(directive)#schedule_skew">schedule_skew]. The `schedule_skew` statement, as the name implies, allows the pre-defined timing of a schedule to be shifted in time so that the object takes on the specified value but does so some amount of time earlier or later than defined in the schedule. For examples, we can see in `b1m1_house`, all the `ZIPload`s that use the schedules have a `schedule_skew` of -685, indicating they will take on the scheduled values 685 seconds (about 11.5 minutes) earlier than is indicated in the "appliance_schedules.glm" file. 
+The other way these common schedules can be customized for each residence is through the use of `schedule_skew`. The `schedule_skew` statement, as the name implies, allows the pre-defined timing of a schedule to be shifted in time so that the object takes on the specified value but does so some amount of time earlier or later than defined in the schedule. For examples, we can see in `b1m1_house`, all the `ZIPload`s that use the schedules have a `schedule_skew` of -685, indicating they will take on the scheduled values 685 seconds (about 11.5 minutes) earlier than is indicated in the "appliance_schedules.glm" file. 
 
 With all the `implcit_enduses` loads in the model now defined uniquely, both respective to the amount of energy and the timing of the energy, we would expect the total load of the feeder to look more diversified and smoothed out in time. In fact, you may have noticed that we have taken out the HVAC system in all the residences of this model so we can more clearly see the difference. Running the model with and without the `implicit_enduses NONE;` and `ZIPload`s in all the houses commented out shows us just the difference in these methods of modeling these types of loads.
 
-["/wiki/File:Residential_load_comparison.png" >![Residential load comparison.png" src="/image/Residential_load_comparison.png">]
+![Residential load comparison](../../../../images/Residential_load_comparison.png)
 
 Using the  `ZIPload`s and `schedule_skew` results in a much smoother load shape, even when only running a system with six houses. The difference in magnitude may or may not be appropriate; it would be up to the modeler to determine if the factors used when scaling the base values define the in "appliance_schedules.glm" are realistic or not.
 

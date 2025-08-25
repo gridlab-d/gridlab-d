@@ -138,7 +138,7 @@ This will sample all of the houses in a model once an hour and write the accumul
     Used for a combination of defining the name of the output file, and for specifying the output mode. Read as either _fname_ or _ftype_ :_fname_ , where valid values of _ftype_ are **file** , **memory** , or **odbc**.
 
 * **group** (char1024) -
-    Defines the group that the histogram should collect values for, see [Finding objects] for more details.
+    Defines the group that the histogram should collect values for, see [Finding objects]() for more details.
 
 * **bins** (char1024) -
     If nonempty, the string to parse to define the histogram bins. Only used if input bin_count is non-positive or not inititalized, or if min < max or not defined.
@@ -159,7 +159,7 @@ This will sample all of the houses in a model once an hour and write the accumul
     The interval for writing histogram counts to the output stream, in seconds. -1 means "every iteration", 0 means "every timestep".
 
 * **bin_count** (int32) -
-    [input] the number of uniform bins to create. [output] the number of bins used by the histogram.
+    input the number of uniform bins to create. output the number of bins used by the histogram.
 
 * **limit** (int32) -
     The maximum number of lines to write to the output stream.

@@ -145,7 +145,7 @@ $$T_A = (T_A)_C + (T_A)_P = A_1 e^{r_1 t} + A_2 e^{r_2 t} + (T_A)_P\qquad (3.6)$
 
 $$\frac{d}{dt}T_A = A_1 r_1 e^{r_1 t} + A_2 r_2 e^{r_2 t}\qquad (3.6.1)$$
 
-$$\frac{d^2}{dt^2}T_A = A_1 r_1^2 e^{r_1 t} + A_2 r_2^2 e^{r_2 t}\qquad (3.6.2)$$ 
+$$\frac{d^2}{dt^2}T_A = A_1 r_1^2 e^{r_1 t} + A_2 r_2^2 e^{r_2 t} \qquad (3.6.2)$$
 
 Substituting into (3.2) 
 
@@ -329,7 +329,7 @@ where
 
 $$A_3 \equiv \frac{C_A}{H_M}r_1 + \frac{U_A+H_M}{H_M}\qquad (1.5.3a)$$
 
-$$A_4 \equiv \frac{C_A}{H_M}r_2 + \frac{U_A+H_M}{H_M}\qquad (1.5.3b)$$    
+$$A_4 \equiv \frac{C_A}{H_M}r_2 + \frac{U_A+H_M}{H_M}\qquad (1.5.3b)$$
 
 (1.5.2) gives $T_M$ for the next time step, i.e., at $t = t_0 + \Delta t$. Note the solution is discontinuous at any time $t_s$ when $Q_M$, $Q_A$ or $T_O$ change. So at the time $t_s^+$ immediately after a change (1.3) must be solved for 
 

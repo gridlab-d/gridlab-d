@@ -1,6 +1,5 @@
 # Introduction
-Whether you're new to GridLAB-D™ or a seasoned developer, you're in the right
-  place.
+Whether you're new to GridLAB-D™ or a seasoned developer, you're in the right place.
 
 # Prospective Users
 
@@ -21,17 +20,16 @@ At its simplest GridLAB-D™ can examine in detail the interplay of every part o
 
 This guide to using GridLAB-D™ is intended to help those who are at least slightly familiar with distribution systems to establish a foundation that will allow them to use GridLAB-D™ in their work. It is not intended to be comprehensive as GridLAB-D™ contains many models with many parameters, but rather to address some of the more important and popular features. The guide will not only address practical issues such as how certain models function but also more general topics exploring the architecture of GridLAB-D™. 
 
-* To orient yourself, check out our **HOME(https://GridLAB-D™.readme.io/#/)** page.
-* To see what projects use GridLAB-D™, and what tools complement it, check out our **[Projects](doc:projects)** page.
-* To read about how GridLAB-D™ has been used in various studies, peruse our **[Publications](doc:publications)** page.
-* Check out our **[Technical Overview](doc:Technical_Overview)** to see if GridLAB-D™ is right for your work.
-* To interact with the GridLAB-D™ community, head over to the **[Discussions](doc:discussions)** page. 
+* To see what projects use GridLAB-D™, and what tools complement it, check out our **[Projects](../0.0%20GridLAB-D™/0.4%20projects.md)** page.
+* To read about how GridLAB-D™ has been used in various studies, peruse our **[Publications](../0.0%20GridLAB-D™/0.3%20publications.md)** page.
+* Check out our **[Technical Overview](../1.0%20Prospective%20Users/Technical_Overview.md)** to see if GridLAB-D™ is right for your work.
+* To interact with the GridLAB-D™ community, head over to the **[Discussions](TODO)** page. 
   * If you are unable to answer your question on the discussion forum or feel an issue is more appropriate, feel free to post a new issue on our **[GitHub issue tracker](https://github.com/gridlab-d/gridlab-d/issues)**. We will try to respond as soon as possible.
   * An archive of the **[SourceForge](https://sourceforge.net/p/gridlab-d/discussion/)** discussion is preserved for users working with previous versions of GridLAB-D™. Note that the SourceForge forum is preserved in archival state and users can no longer interact with or create new discussions. 
 
 # New Users
 
-We have a number of resources for getting new users onboarded, depending on what is best for you. Visit our **[Resources](doc:resources)** page for even more content.
+We have a number of resources for getting new users onboarded, depending on what is best for you. Visit our **[Resources](../0.0%20GridLAB-D™/0.2%20resources.md)** page for even more content.
 
 * **Walkthrough**: This guide to using GridLAB-D™ is intended to help those who are at least slightly familiar with distribution systems to establish a foundation that will allow them to use GridLAB-D™ in their work. It is not intended to be comprehensive as GridLAB-D™ contains many models with many parameters, but rather to address some of the more important and popular features. The guide will not only address practical issues such as how certain models function but also more general topics exploring the architecture of GridLAB-D™.
 * **Online Webinars**: This is a series of webinar tutorials that were developed to describe the principles and standard usage of the major modules in GridLAB-D™. While the material is a bit out-of-date (2012), it is still mostly applicable as we try to maintain backwards compatibility. The material includes YouTube videos, along with PowerPoint presentations, demonstration models, and example cases.

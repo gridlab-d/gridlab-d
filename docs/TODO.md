@@ -10,8 +10,8 @@
     file (or delete if not kept) 
     - [ ] Intro to Programming needs to be re-written to not use metronome
 - [ ] Definitive installation instructions
-    - [ ] add the "easy" or "light" executable install option
-- [ ] Pair down Getting Started Using GLD to be more approachable, noting that much of what's in there is already/can be moved to the Modeling 101 section of Modeling
+    - [x] add the "easy" or "light" executable install option
+- [x] Pair down Getting Started Using GLD to be more approachable, noting that much of what's in there is already/can be moved to the Modeling 101 section of Modeling
 
 # 3.0 Modeling
 - [ ] XML files. Still supported? Keep documentation?
