@@ -1,6 +1,6 @@
 # Communications
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Communications
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Communications
 ## Contents
 
   * 1 Communications Module

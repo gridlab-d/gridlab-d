@@ -27,13 +27,13 @@ If `runtime classes` are being used, please observe the following.
 
 The GridLAB-D™ software can be run using the _command-line_ or the _server mode_. 
 
-### **GridLAB-D Command-Line Tool**
+### **GridLAB-D™ Command-Line Tool**
 
 GridLAB-D™ takes the path to a GridLAB-D™ model file (GLM file) as input. For more information about creating GLM files refer to the guide to [Creating GLM Files](../3.0%20Modeling/3.1%20Intro%20to%20Modeling/3.1.2%20-%20GLM%20Models.md). 
 
 **Syntax Highlighting**
 
-The syntax highlighting rules for C++ work well for GLM files. To set the syntax highlighting language, click `Language` -> `C` -> `C++`. The current syntax highlighting rules are available in the [SourceForge repository](http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/) for the file [gridlabd.syn](http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/rt/gridlabd.syn). A more complete, custom set of syntax highlighting rules is being developed and will be available soon. To import these settings, click `View` - > `User-Defined Dialogue...` In the Window that pops up, click `Import...` and select the file from above. To apply these settings to a file click `Language` -> `GLM`. Note that for files with the ".glm" extension, these syntax highlighting rules will be applied automatically. 
+The syntax highlighting rules for C++ work well for GLM files. To set the syntax highlighting language, click `Language` -> `C` -> `C++`. The current syntax highlighting rules are available in the [SourceForge repository](http://GridLAB-D™.svn.sourceforge.net/viewvc/gridlab-d/) for the file [gridlabd.syn](http://GridLAB-D™.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/rt/gridlabd.syn). A more complete, custom set of syntax highlighting rules is being developed and will be available soon. To import these settings, click `View` - > `User-Defined Dialogue...` In the Window that pops up, click `Import...` and select the file from above. To apply these settings to a file click `Language` -> `GLM`. Note that for files with the ".glm" extension, these syntax highlighting rules will be applied automatically. 
 
 **NppExec**
 
@@ -43,9 +43,9 @@ The plug-in NppExec allows the user to run console commands from within Notepad+
     cmd /c cd "$(CURRENT_DIRECTORY)" && "gridlabd.exe" "$(FULL_CURRENT_PATH)" 
 
 
-This command will change to the directory of the currently opened file, then run GridLAB-D™ with the current file as input. Next, click `Save...`, type in `GridLAB-D` as the script name, and click `Save` again. To run the command on the currently opened file click `OK`. To subsequently run this command, simply click `F6` , select the correct script, and click `OK`. To run the same script that was previously run, simply click `Ctrl + F6`. GridLAB-D will be executed, with the current file as input and the output will be shown on a console window at the bottom of the Notepad++ window. 
+This command will change to the directory of the currently opened file, then run GridLAB-D™ with the current file as input. Next, click `Save...`, type in `GridLAB-D` as the script name, and click `Save` again. To run the command on the currently opened file click `OK`. To subsequently run this command, simply click `F6` , select the correct script, and click `OK`. To run the same script that was previously run, simply click `Ctrl + F6`. GridLAB-D™ will be executed, with the current file as input and the output will be shown on a console window at the bottom of the Notepad++ window. 
 
-It is useful to define several such scripts, for example, to run GridLAB-D with verbose output:   
+It is useful to define several such scripts, for example, to run GridLAB-D™ with verbose output:   
 
 
     cmd /c cd "$(CURRENT_DIRECTORY)" && "gridlabd.exe" -v "$(FULL_CURRENT_PATH)"
@@ -95,7 +95,7 @@ The following command-line processes can be called
   * **\--kml=_file_** output kml (Google Earth) file of model
   * **\--modhelp _module_[:_class_]** output definition of _class_ from _module_. All the classes from the specified module will be listed in alphabetical order if no class is given
   * **\--server** runs in server mode (uses **pidfile** and redirects all output)
-  * **\--pidfile[=_filename_]** creates a process id file while GridLAB-D is running (default is gridlabd.pid)
+  * **\--pidfile[=_filename_]** creates a process id file while GridLAB-D™ is running (default is gridlabd.pid)
   * **\--redirect _stream_[:_file_]** redirects output stream to file
 The following system options may be changed 
 
@@ -105,13 +105,13 @@ The following system options may be changed
   * **\--xmlencoding _num_** sets the XML encoding (8, 16, or 32)
   * **\--xmlstrict** toggles XML to be strict
   * **\--relax** allows implicit variable definition when assignments made
-### **GridLAB-D Server Mode**
+### **GridLAB-D™ Server Mode**
 
 The server mode was introduced in version 2.0 as a supporting feature of the Realtime server. Currently, the server mode is used in the gui development work. The implementation of server mode is done in ` core/server.c ` file. 
 
 The server mode allows a web-based application to access the global variable and properties of named objects. 
 
-To start GridLAB-D in server mode, simply include the command line argument `--server`, e.g., 
+To start GridLAB-D™ in server mode, simply include the command line argument `--server`, e.g., 
 
     host% gridlabd _modelname_.glm --server
 
@@ -133,7 +133,7 @@ To set the value of an object property, use the following query
 
 The value can include units (separate by a space) and they will be converted automatically. The value is read back after it is set to confirm that it was accepted (including unit conversion). 
 
-When server mode is used for running GridLAB-D, the following steps are performed: 
+When server mode is used for running GridLAB-D™, the following steps are performed: 
 
   * start up server environment and the server
   * create a new socket
@@ -161,7 +161,7 @@ For instance, read and write any global or object property can be done as follow
 
 Running server-side scripts of various types is also an available feature of GRIDLAB-D™ server mode. The general syntax is <http://localhost/language/script-name>, where language is r (extension `.r`), scilab (extension `.sce`), perl (extension `.pl`), python (extension `.py`), octave (extension `.m`), java (extension `.jar`), gnuplot(extension `.plt`). The set of available languages will be soon expended even more.   
 
-Retrieve output files, such as CSV files, is also available in GRIDLAB-D server mode by using the syntax <http://localhost/output/filename.ext>.   
+Retrieve output files, such as CSV files, is also available in GridLAB-D™ server mode by using the syntax <http://localhost/output/filename.ext>.   
 
 The work done for the gui capability enables generation of HTML code by using the syntax <http://localhost/gui/pagename.ext>. 
 

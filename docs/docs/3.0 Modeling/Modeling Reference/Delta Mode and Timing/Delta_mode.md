@@ -1,6 +1,6 @@
 # Subsecond
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Delta_mode
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Delta_mode
 
 ---
  
@@ -9,7 +9,7 @@ Approval item:
 
 Subsecond \- Subsecond simulation mode (_delta mode_) 
 
-Modelers may simulate certain kinds of systems at subsecond resolution. Normally GridLAB-D runs in an event-driven mode. In _event mode_ the clock is driven by the schedule of events in the objects defined in the model. Events may only be scheduled to a precision of 1 second. 
+Modelers may simulate certain kinds of systems at subsecond resolution. Normally GridLAB-D™ runs in an event-driven mode. In _event mode_ the clock is driven by the schedule of events in the objects defined in the model. Events may only be scheduled to a precision of 1 second. 
 
 If subsecond behavior must be modeled, the event-driven simulation must be stopped while the subsecond behavior is simulated using a fixed time-step clock. This mode is called _delta mode_. When delta mode is operating, events are ignored and the simulation advances in very small time steps. 
 

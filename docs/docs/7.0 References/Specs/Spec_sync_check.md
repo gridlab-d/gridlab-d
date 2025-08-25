@@ -1,6 +1,6 @@
 # Spec:sync check
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:sync_check
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:sync_check
 # Spec:sync check
 
 Approval item:  When approved remove this tag. 
@@ -19,7 +19,7 @@ Approval item:  When approved remove this tag.
 
 Overview
 
-The synchronization check capability in GridLAB-D will be implemented to perform paralleling for two independent power grids. This could be used to parallel two separate power systems, or to reconnect a microgrid to the bulk power system. In the simulation, the frequency and voltage metrics are checked. When conditions are satisfied, the [sync_check] object sends a closure command to its parent [switch_object]. 
+The synchronization check capability in GridLAB-D™ will be implemented to perform paralleling for two independent power grids. This could be used to parallel two separate power systems, or to reconnect a microgrid to the bulk power system. In the simulation, the frequency and voltage metrics are checked. When conditions are satisfied, the [sync_check] object sends a closure command to its parent [switch_object]. 
 
 # 
 

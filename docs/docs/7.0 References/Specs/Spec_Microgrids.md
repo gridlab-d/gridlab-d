@@ -2,7 +2,7 @@
 
 TODO: Approval item:  When approved remove this tag. 
 
-The microgrids capability in GridLAB-D will be implemented to allow islanded, smaller power system simulations. These simulations will examine sub-second influences on parameters like frequency and voltage. The final capability will allow the examination of transients in the voltage and frequency associated with microgrid operations. 
+The microgrids capability in GridLAB-D™ will be implemented to allow islanded, smaller power system simulations. These simulations will examine sub-second influences on parameters like frequency and voltage. The final capability will allow the examination of transients in the voltage and frequency associated with microgrid operations. 
 
 # Equations
 
@@ -248,7 +248,7 @@ The value of $V_{in}$ can be constrained by limiting values of $V_{IMIN}$ and $V
 
 # Solver
 
-The key development for the microgrids capability in GridLAB-D is the inclusion of a power system dynamic solver that interfaces with the appropriate objects within the GridLAB-D environment. Initially, this is expected to be predominately the powerflow module. 
+The key development for the microgrids capability in GridLAB-D™ is the inclusion of a power system dynamic solver that interfaces with the appropriate objects within the GridLAB-D™ environment. Initially, this is expected to be predominately the powerflow module. 
 
 Updates to voltage and frequency values should be made apparent for the next "quasi-steady-state" powerflow iteration. These values should be implemented in such a way that powerflow will not significantly override the control actions from the generator or load, with regards to voltage or frequency. An incremental powerflow solution is required at all dynamic timesteps to ensure the system is properly responding, so this incremental powerflow solution should coincide with the static solution at "quasi-steady-state" points.[R3.4][R3.5]
 
@@ -285,7 +285,7 @@ Table 4 - Solver outputs  Variable | Type | Units | Definition
 `observed_generation` | double | Watts | Total power into the system observed   
 `observed_load` | double | Watts | Total load power observed on the system   
   
-These values are published mainly for recorder objects to capture them for overall GridLAB-D data output. The nature of the dynamic solver will require the creation of a new, frequency-capable recorder-like capability to capture the transient effects on the system. These properties will be among those recorded. 
+These values are published mainly for recorder objects to capture them for overall GridLAB-D™ data output. The nature of the dynamic solver will require the creation of a new, frequency-capable recorder-like capability to capture the transient effects on the system. These properties will be among those recorded. 
 
 ### Solver data structure
 
@@ -316,7 +316,7 @@ The nature of the microgrid capability and the dynamic solver will not initially
 
 ## Solver timing
 
-The actual execution of the solver and how often it is called are key aspects of the proper integration of the dynamic solution capabilities within GridLAB-D. Solver calls will need to be properly timed with the powerflow solution, as well as the requirements of the individual dynamic components. To ensure proper dynamic transitions, a form of the steady state powerflow will be resolved at each timestep of the dynamic simulation for the "non-contributing" objects. Loads and devices not directly participating in the dynamic solver are assumed to maintain fixed load values over the sub-GridLAB-D-standard timesteps. These devices may influence the magnitude and duration of the dynamic response, so they must be included in some form. Functionality for faster, dynamic loads will be in place for future implementations of microgrid devices. Through the continuous updates of the quasi-static powerflow, transitions at normal GridLAB-D timesteps should be minimized to be predominately non-dynamic state changes. 
+The actual execution of the solver and how often it is called are key aspects of the proper integration of the dynamic solution capabilities within GridLAB-D™. Solver calls will need to be properly timed with the powerflow solution, as well as the requirements of the individual dynamic components. To ensure proper dynamic transitions, a form of the steady state powerflow will be resolved at each timestep of the dynamic simulation for the "non-contributing" objects. Loads and devices not directly participating in the dynamic solver are assumed to maintain fixed load values over the sub-GridLAB-D-standard timesteps. These devices may influence the magnitude and duration of the dynamic response, so they must be included in some form. Functionality for faster, dynamic loads will be in place for future implementations of microgrid devices. Through the continuous updates of the quasi-static powerflow, transitions at normal GridLAB-D™ timesteps should be minimized to be predominately non-dynamic state changes. 
 
 ### Solver Passes
 
@@ -351,7 +351,7 @@ After all "machine values" have been updated, a global frequency is estimated
 
   1. Update frequency calculation
 
-After these two steps complete, the simulation advances to the next timestep. This sequence will repeat until the next GridLAB-D overall timestep is encountered. At that point, the changes will be reflected into the quasi-steady state powerflow solution, and the process will repeat. 
+After these two steps complete, the simulation advances to the next timestep. This sequence will repeat until the next GridLAB-D™ overall timestep is encountered. At that point, the changes will be reflected into the quasi-steady state powerflow solution, and the process will repeat. 
 
 ### Solution Timesteps
 
@@ -365,7 +365,7 @@ Actual execution of the solver will rely heavily on the interactions with the po
 
 # Testing and Validation
 
-Testing and validation will be conducted at various points along the programming to ensure the implementation is producing the correct results. Testing and validation will also be performed against known IEEE test systems and against simple systems in other software packages. Due to the nature of the three-phase unbalanced powerflow, fully testing the system will be difficult. The DigSilent Powerfactory software 4 will be used as the primary validation software suite for the GridLAB-D microgrids capability. 
+Testing and validation will be conducted at various points along the programming to ensure the implementation is producing the correct results. Testing and validation will also be performed against known IEEE test systems and against simple systems in other software packages. Due to the nature of the three-phase unbalanced powerflow, fully testing the system will be difficult. The DigSilent Powerfactory software 4 will be used as the primary validation software suite for the GridLAB-D™ microgrids capability. 
 
 A variety of test systems are needed to test the functionality of the microgrids capabilities. The expected models will be: 
 

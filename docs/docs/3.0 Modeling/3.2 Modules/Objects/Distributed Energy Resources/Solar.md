@@ -1,6 +1,6 @@
 # Solar - Solar Panel
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Solar
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Solar
 
 ## Synopsis
     
@@ -215,7 +215,7 @@ $\displaystyle{}I_{sc}$ | A | 100
 $\displaystyle{}U_{m}$ | V | 750   
 $\displaystyle{}I_{m}$ | A | 84   
   
-In GridLAB-D simulation, the PV panel is modeled as a controllable current source, with the light intensity ($S$), temperature ($t$) and voltage of PV panel as inputs. The output of the model is the current of PV panel. 
+In GridLAB-D™ simulation, the PV panel is modeled as a controllable current source, with the light intensity ($S$), temperature ($t$) and voltage of PV panel as inputs. The output of the model is the current of PV panel. 
 
 The P-V curve of this PV panel is given in Figure 1, the maximum power is about 1400kW and the voltage at maximum power point is 850V. ($t=25^{\circ}C, S=600\frac{w}{m^2}$). 
 

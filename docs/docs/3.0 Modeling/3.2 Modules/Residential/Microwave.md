@@ -1,6 +1,6 @@
 # Microwave
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Microwave
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Microwave
 **TODO**:  This page needs to be completed. 
 
 Microwave \- Residential Microwave (explicit model) 

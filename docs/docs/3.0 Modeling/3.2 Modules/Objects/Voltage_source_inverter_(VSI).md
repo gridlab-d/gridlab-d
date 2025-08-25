@@ -1,10 +1,10 @@
 # Voltage source inverter (VSI)
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Voltage_source_inverter_(VSI)
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Voltage_source_inverter_(VSI)
 
 ## Overview
 
-This document describes GridLAB-D implementation of voltage source inverter (VSI). VSI is implemented in a similar way as the [diesel_dg]. A Norton current source behind an admittance is used to represent the VSI. A Thevenin voltage source is then converted from the Norton source for the calculation of voltage source _e_source_ magnitude and angle. 
+This document describes GridLAB-D™ implementation of voltage source inverter (VSI). VSI is implemented in a similar way as the [diesel_dg]. A Norton current source behind an admittance is used to represent the VSI. A Thevenin voltage source is then converted from the Norton source for the calculation of voltage source _e_source_ magnitude and angle. 
 
 ![VSI Norton to Thevenin](../../../../images/500px-VSI_Norton_to_Thevenin.png)
 
@@ -36,7 +36,7 @@ To be noticed, both real and reactive power slew rate check cannot be enabled in
 
 Battery is required to be attached to VSI with enough energy stored. Simulations of VSI can still be run without the attachment of battery, but battery is added if taking into account the reality. The battery is working through the inverter object, with the state-of-charge updated in the battery object, and power outputs calculated from the inverter object. Currently if there is no Battery attached to VSI, a warning will be given, and the VSI is assumed to be attached to an infinite power input. 
 
-## GridLAB-D implementation
+## GridLAB-D™ implementation
 
 ### Isochronous mode VSI object example
 
@@ -193,7 +193,7 @@ Part of the feeder is disconnected at 12:00:05.0001 PST. As seem from the real p
 ![Frequency](../../../../images/700px-Frequency.png)
 
   
-To run these cases, please find in the autotest in GridLAB-D generator module. 
+To run these cases, please find in the autotest in GridLAB-D™ generator module. 
 
 ## See Also
 

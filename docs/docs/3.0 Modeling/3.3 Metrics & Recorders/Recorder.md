@@ -165,7 +165,7 @@ A recorder that prints the real and imaginary components of a node's voltage eve
 
 The recorder attempts to read the value from the last iteration of a timestep, rather than the first iteration of a timestep. Normally the final value is more important than the initial or the intermediate values, for iterative solvers, but an interval of -1 can be used if necessary to record the value of a property with greater resolution. 
 
-The recorder cannot currently record the final value into a file, even though that value will be present in the output or dump XML file. This is a known quirk that cannot be resolved with the current structure of GridLAB-D, but is being worked on. All values written by various recorders at the same timestamp will be consistent between each other, however. 
+The recorder cannot currently record the final value into a file, even though that value will be present in the output or dump XML file. This is a known quirk that cannot be resolved with the current structure of GridLAB-D™, but is being worked on. All values written by various recorders at the same timestamp will be consistent between each other, however. 
 
 ## See also
 

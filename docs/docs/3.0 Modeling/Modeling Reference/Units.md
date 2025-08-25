@@ -1,6 +1,6 @@
 # Units
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Units
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Units
 ## Contents
 
   * 1 Scalars

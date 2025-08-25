@@ -226,7 +226,7 @@ class WebCrawler:
 def main():
     """Main function with example usage"""
     # Configuration
-    BASE_URL = "https://gridlab-d.shoutwiki.com/wiki/Index"
+    BASE_URL = "https://GridLAB-D™.shoutwiki.com/wiki/Index"
     OUTPUT_DIR = "scraped_pages"
     MAX_PAGES = 2000
     DELAY = 10

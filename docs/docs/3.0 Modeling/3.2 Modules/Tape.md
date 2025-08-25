@@ -37,9 +37,9 @@ The default tape output mode is to write to CSV files. In the absence of a speci
 
 ### ODBC
 
-GridLAB-D is able to write to an SQL database by means of ODBC. The current implementation supports two string formats, one for anonymous connections and one that includes login credentials. The string 'file "odbc:DSN:object name";' will write to the database specified with the name in DSN, and will reference lines for that tape with object name. The string 'file "odbc:DSN:username:password:object name";' will attempt to log in to the data source with the specified username and password. Note that the double-quotes are required in both cases. 
+GridLAB-D™ is able to write to an SQL database by means of ODBC. The current implementation supports two string formats, one for anonymous connections and one that includes login credentials. The string 'file "odbc:DSN:object name";' will write to the database specified with the name in DSN, and will reference lines for that tape with object name. The string 'file "odbc:DSN:username:password:object name";' will attempt to log in to the data source with the specified username and password. Note that the double-quotes are required in both cases. 
 
-The specified database needs to have three tables for GridLAB-D to properly communicate with it. 'HEADER_TABLE' contains the information for an output tape's run, including who ran the file and when. 'OBJECT_TABLE' contains the output lines from recorders and collectors. 'EVENT_TABLE' has the same format as 'OBJECT_TABLE', but is specifically read in by player objects. 
+The specified database needs to have three tables for GridLAB-D™ to properly communicate with it. 'HEADER_TABLE' contains the information for an output tape's run, including who ran the file and when. 'OBJECT_TABLE' contains the output lines from recorders and collectors. 'EVENT_TABLE' has the same format as 'OBJECT_TABLE', but is specifically read in by player objects. 
 
 ### HEADER_TABLE
     

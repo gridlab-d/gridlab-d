@@ -1,6 +1,6 @@
 # Windturb dg
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Windturb_dg
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Windturb_dg
 # Windturb dg
 
 ## Contents

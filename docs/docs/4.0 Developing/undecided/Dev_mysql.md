@@ -1,6 +1,6 @@
 # Dev:mysql
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Dev:mysql
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Dev:mysql
 Dev:mysql \- MySQL Programmer's Manual 
 
 The [mysql] module is designed to be compatible with the [tape] module such that any definition of an object created for the [tape] module will work when using the [mysql] module. 
@@ -14,7 +14,7 @@ However, a number of important assumptions are made when using the default behav
   5. Only one instance of the class [database] is created.
 ## Prerequisites
 
-To build GridLAB-D with the [mysql] module, you must install the [MySQL Connector C](http://www.mysql.com/downloads/connector/c/) library. The [mysql] module was developed using Version 6.0 of the library. 
+To build GridLAB-D™ with the [mysql] module, you must install the [MySQL Connector C](http://www.mysql.com/downloads/connector/c/) library. The [mysql] module was developed using Version 6.0 of the library. 
 
 Linux and Mac OSX builds
     The MySQL libraries must be installed prior to running `./configure` and the libraries must be installed in `/usr/local/mysql-connector-c`. Because the downloaded files usually include the version number, you should create a symbolic link to the download folder:

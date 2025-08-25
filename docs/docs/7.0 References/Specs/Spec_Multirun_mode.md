@@ -1,6 +1,6 @@
 # Spec:Multirun mode
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:Multirun_mode
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:Multirun_mode
 Approval item:  \--[Dchassin] 16:29, 9 October 2011 (UTC) 
 
 ## Contents
@@ -14,7 +14,7 @@ This document describes the specifications for implementation of [multirun mode]
 
 ## Theory of operation
 
-[Multirun mode] operates by creating and coordinating multiple [instances] of GridLAB-D. The originating [instance] is called the [master] and the dependent instances are called the [slaves]. 
+[Multirun mode] operates by creating and coordinating multiple [instances] of GridLAB-D™. The originating [instance] is called the [master] and the dependent instances are called the [slaves]. 
 
 The overall process is as follows: 
 

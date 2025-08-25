@@ -1,6 +1,6 @@
 # Performance profiling
 
-GridLAB-D has a performance profiler built into the core that allows users to generate an analysis of the simulation performance. Additional measurements on class and module performance are collected to perform module/class performance analysis. The performance analysis is based on the quantitative measurements collected while the simulation is running. These measurements are then used to estimate the overall performance metrics for both the core and the modules. 
+GridLAB-D™ has a performance profiler built into the core that allows users to generate an analysis of the simulation performance. Additional measurements on class and module performance are collected to perform module/class performance analysis. The performance analysis is based on the quantitative measurements collected while the simulation is running. These measurements are then used to estimate the overall performance metrics for both the core and the modules. 
 
 ## Core profiles
 

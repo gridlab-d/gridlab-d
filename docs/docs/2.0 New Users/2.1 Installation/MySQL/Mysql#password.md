@@ -1,6 +1,6 @@
 # Mysql
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Mysql#default_schema
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Mysql#password
 # Mysql
 
 mysql \- MySQL module [Template:NEW30]
@@ -53,23 +53,23 @@ The default client flags to use for a connection. See [database] [clientflags] f
 
 ## Classes
 
-* [database]
+[database]
     Implements a connection to a MySQL server. There must be at least one defined in a model in order to use the recorder, player, or collector objects.
-* recorder
+[ recorder]
     Implements a property recorder using the specified (or last) database connection.
-* [player]
+[ player]
     Implements a property player using the specified (or last) database connection.
-* [collector]
+[ collector]
     Implements a property aggregate collector using the specified (or last) database connection.
 
 ## Prerequisites
 
 If you are using your local host as the MySQL server, you must install [MySQL Server](http://www.mysql.com/downloads/mysql/). After you have set up the server, you should create the user **gridlabd** and grant that user permission to create databases if you intend to use the default connection parameters. 
 
-* Windows Systems
+Windows Systems
     You must include the MySQL client library in the **PATH** environment variable.
 
-* Linux/MacOSX Systems
+Linux/MacOSX Systems
     
     You must include the MySQL client library in the **(DY)LD_LIBRARY_PATH** environment variable.
 
@@ -77,7 +77,7 @@ Although it is not required, use of the [MySQL Workbench](http://www.mysql.com/d
 
 ## Bugs
 
-On Windows 7 it is a common problem that GridLAB-D cannot find `libmysql.dll` when the `module mysql` directive is parsed in a GLM file, regardless of the `PATH` environment variable. The only solution seems to be to include the MySQL Connector library folder in `GLPATH` or to copy the file `libmysql.dll` to the GridLAB-D library folder. 
+On Windows 7 it is a common problem that GridLAB-D™ cannot find `libmysql.dll` when the `module mysql` directive is parsed in a GLM file, regardless of the `PATH` environment variable. The only solution seems to be to include the MySQL Connector library folder in `GLPATH` or to copy the file `libmysql.dll` to the GridLAB-D™ library folder. 
 
 ## Version
 

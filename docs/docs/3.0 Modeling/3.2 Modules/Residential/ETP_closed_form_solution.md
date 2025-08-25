@@ -2,7 +2,7 @@
 # ETP closed form solution
 TODO: Check equation numbering for consistency
 
-Note, this documentation was converted from a Word document and Excel spreadsheet implementation. The methodology described is the same as used in the GridLAB-D code base (see [Caveats] below), although, over time additions have been made to allow for greater flexibility. Additionally modifications have been made to speed up the solution process as implemented in code. The solution methodology, as described here and implemented in GridLAB-D was validated against the referenced spreadsheet. 
+Note, this documentation was converted from a Word document and Excel spreadsheet implementation. The methodology described is the same as used in the GridLAB-D™ code base (see [Caveats] below), although, over time additions have been made to allow for greater flexibility. Additionally modifications have been made to speed up the solution process as implemented in code. The solution methodology, as described here and implemented in GridLAB-D™ was validated against the referenced spreadsheet. 
 
 ## Synopsis
 
@@ -365,11 +365,11 @@ where the conditions $T_M(0)$, $T_O(0)$, and $Q_A(0)$ are all known states of th
 
 ### Solving for time
 
-Solving equation (10) for time must be done using a numerical solver that implements Newton's method. GridLAB-D has an ETP solver function built-in for this purpose. See [Solvers API] for details. 
+Solving equation (10) for time must be done using a numerical solver that implements Newton's method. GridLAB-D™ has an ETP solver function built-in for this purpose. See [Solvers API] for details. 
 
 ## Caveats
 
-Only the indoor air and mass temperature solution for fixed outdoor air and heat gain condition is currently implemented in GridLAB-D. This requires that outdoor condition and heat gain conditions be linearized for each solution and can lead to small errors when integrating over variable timesteps (which GridLAB-D does quite often). This can introduce discrepancies when comparing simulations where the timing of solution updates differ for otherwise identical temperature and heat gain conditions. This problem could be largely remedied by using the forced condition solution, but as noted above the derivation of this solution appears to be incorrect and cannot be implemented at this time. 
+Only the indoor air and mass temperature solution for fixed outdoor air and heat gain condition is currently implemented in GridLAB-D™. This requires that outdoor condition and heat gain conditions be linearized for each solution and can lead to small errors when integrating over variable timesteps (which GridLAB-D™ does quite often). This can introduce discrepancies when comparing simulations where the timing of solution updates differ for otherwise identical temperature and heat gain conditions. This problem could be largely remedied by using the forced condition solution, but as noted above the derivation of this solution appears to be incorrect and cannot be implemented at this time. 
 
 ## Sources
 

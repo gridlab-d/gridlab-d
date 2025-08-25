@@ -1,6 +1,6 @@
 # Spec:sync ctrl
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:sync_ctrl
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:sync_ctrl
 # Spec:sync ctrl
 
 Approval item:  When approved remove this tag. 
@@ -27,7 +27,7 @@ Approval item:  When approved remove this tag.
 
 Overview
 
-The synchronization control capability in GridLAB-D is implemented to adjust the frequency and voltage differences via a controlled generation unit for the synchronization check capability of the [sync_ctrl] object, which performs paralleling for two independent power grids. The controlled generation unit is either a [diesel generator] or a [grid-forming inverter]. This could be used to help with paralleling two separate power systems, or reconnecting a microgrid to the bulk power system. In the simulation, the frequency and voltage magnitude differences are checked. When conditions are satisfied, the [sync_check] object will be armed by the [sync_ctrl] object. Otherwise, the generation unit is controlled for achieving these conditions. 
+The synchronization control capability in GridLAB-D™ is implemented to adjust the frequency and voltage differences via a controlled generation unit for the synchronization check capability of the [sync_ctrl] object, which performs paralleling for two independent power grids. The controlled generation unit is either a [diesel generator] or a [grid-forming inverter]. This could be used to help with paralleling two separate power systems, or reconnecting a microgrid to the bulk power system. In the simulation, the frequency and voltage magnitude differences are checked. When conditions are satisfied, the [sync_check] object will be armed by the [sync_ctrl] object. Otherwise, the generation unit is controlled for achieving these conditions. 
 
 # 
 
@@ -59,7 +59,7 @@ One sample [sync_ctrl] object defined in the glm file is show as follows.
         // **controlled_generation_unit** Inverter_1;
     
         //About the modes: 1) 'Mode A' is the controlling mode, in which the PI controllers of the [sync_ctrl] object send commands to the controlled generation unit. 2) In 'Mode B', the [sync_ctrl] object monitors the voltage magnitude and frequency differences, but its PI controllers are not used and there is no signal sent to the controlled generation unit.
-        //Details of the modes and control flow are shown in this figure: <http://gridlab-d.shoutwiki.com/wiki/File:Sync_ctrl_flowchart.png>
+        //Details of the modes and control flow are shown in this figure: <http://GridLAB-D™.shoutwiki.com/wiki/File:Sync_ctrl_flowchart.png>
         **controlling_period** 2; //the user-defined period when both metrics are satisfied and this sync_ctrl object works in mode A
         **monitoring_period** 15; //the user-defined period when this sync_ctrl object keeps on monitoring in mode B, if both metrics are not violated and the switch object is not closed
     

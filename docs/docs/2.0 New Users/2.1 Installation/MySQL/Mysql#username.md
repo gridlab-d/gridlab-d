@@ -1,6 +1,6 @@
 # Mysql
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Mysql#hostname
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Mysql#username
 # Mysql
 
 mysql \- MySQL module [Template:NEW30]
@@ -77,7 +77,7 @@ Although it is not required, use of the [MySQL Workbench](http://www.mysql.com/d
 
 ## Bugs
 
-On Windows 7 it is a common problem that GridLAB-D cannot find `libmysql.dll` when the `module mysql` directive is parsed in a GLM file, regardless of the `PATH` environment variable. The only solution seems to be to include the MySQL Connector library folder in `GLPATH` or to copy the file `libmysql.dll` to the GridLAB-D library folder. 
+On Windows 7 it is a common problem that GridLAB-D™ cannot find `libmysql.dll` when the `module mysql` directive is parsed in a GLM file, regardless of the `PATH` environment variable. The only solution seems to be to include the MySQL Connector library folder in `GLPATH` or to copy the file `libmysql.dll` to the GridLAB-D™ library folder. 
 
 ## Version
 

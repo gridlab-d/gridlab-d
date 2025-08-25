@@ -171,7 +171,7 @@ Most heaters are shipped with both the upper and lower thermostats set to the sa
 
 ### Modeling Assumptions
 
-The GridLAB-D approach to modeling electric water heaters is designed to be computationally fast yet reasonably accurate. It accommodates the common two-element design and the possibility for “inverted” thermostat settings, wherein the upper element maintains a higher temperature than the lower element. 
+The GridLAB-D™ approach to modeling electric water heaters is designed to be computationally fast yet reasonably accurate. It accommodates the common two-element design and the possibility for “inverted” thermostat settings, wherein the upper element maintains a higher temperature than the lower element. 
 
 To achieve the necessary computational speed, we make the following assumptions: 
 
@@ -196,7 +196,7 @@ For example, if the tank begins near the **FULL** state and hot water is drawn f
 
 This **STABLE** state is illustrated in Figure 1. For an example water heater, the figure shows the time required to deplete an initially full tank (“time to transition”) at various hot water flow rates. Note that flow rates above roughly 0.45 gpm result in positive and finite times to transition. Flow rates below about 0.44 gpm are finite and negative, meaning the tank is not depleting at all, but is actually recovering (i.e., the heating element can more than keep up with the heat removed by the water draw). In between those two points—between the positive and negative spikes to infinity—the tank is in the **STABLE** state that will never reach either the **FULL** or the **EMPTY** state. 
 
-These two critical flow rates depend on many factors, including the tank size and shape, tank $UA$, heating element capacity, and the hot and cold layer temperatures. They are identified in the GridLAB-D water heater model by calculating the rate of change of the hot/cold boundary position $h$ with respect to time $(dh/dt)$. Note in the lower graphic of Figure 1 that the time to transition is positive when $dh/dt$, calculated at the **FULL** starting point $h0$, is negative (meaning the tank is depleting). Also note that the time to transition is negative (meaning the tank is really recovering and will remain **FULL**) when $dh/dt$, calculated at the target **EMPTY** state, is positive. The area between the two critical flow rates is identified by differing signs between $dh/dt$ calculated at **FULL** and $dh/dt$ calculated at **EMPTY**. 
+These two critical flow rates depend on many factors, including the tank size and shape, tank $UA$, heating element capacity, and the hot and cold layer temperatures. They are identified in the GridLAB-D™ water heater model by calculating the rate of change of the hot/cold boundary position $h$ with respect to time $(dh/dt)$. Note in the lower graphic of Figure 1 that the time to transition is positive when $dh/dt$, calculated at the **FULL** starting point $h0$, is negative (meaning the tank is depleting). Also note that the time to transition is negative (meaning the tank is really recovering and will remain **FULL**) when $dh/dt$, calculated at the target **EMPTY** state, is positive. The area between the two critical flow rates is identified by differing signs between $dh/dt$ calculated at **FULL** and $dh/dt$ calculated at **EMPTY**. 
 
 ![Illustration of using dh/dt to identify the **STABLE** state](../../../../images/300px-Residential_Module_Guide_Figure_1.png)
 
@@ -371,7 +371,7 @@ $$internal\_heat(kW) = power \times heat\_fraction$$
 
 Electric ranges are essentially perfectly resistive loads. Each “burner” on a range top may be controlled by cycling the power on and off or by a “triac” device that regulates the on time at very high frequency. The user may reset the knob setting multiple times during a cooking event. Thus, range loads vary with the number of active burners, the user-controlled knob settings, and possibly the cycling behavior. 
 
-The GridLAB-D range model greatly simplified. It works in a manner essentially identical to the way plug loads are modeled—a demand (0 to 1) is read from a tape and multiplied by a range object-specific capacity (installed_power). 
+The GridLAB-D™ range model greatly simplified. It works in a manner essentially identical to the way plug loads are modeled—a demand (0 to 1) is read from a tape and multiplied by a range object-specific capacity (installed_power). 
 
 ### Modeling Assumptions
 
@@ -466,7 +466,7 @@ During each synchronization cycle, the refrigerator model calculates the interna
 
 ## Internal Gains
 
-Each house modeled in GridLAB-D has two primary sources of internally generated heat. First, is the “waste” heat given off by other devices in the house that are modeled by GridLAB-D. For example, a refrigerator located inside the house is modeled primarily for its thermal behavior regarding cooling and freezing food, with its primary output being the impact (energy and peak) on the grid. However, the refrigerator also gives off heat that must be accounted for in the simulation of the house itself. Second, there are devices in the home that are not explicitly modeled by GridLAB-D, but that have sufficient aggregate impact that their heat contribution to the house and their aggregate impact on the home’s electricity must be accounted for. Examples are TV sets, vacuum cleaners, hand-held hair dryers, and other miscellaneous equipment generally plugged into wall outlets. 
+Each house modeled in GridLAB-D™ has two primary sources of internally generated heat. First, is the “waste” heat given off by other devices in the house that are modeled by GridLAB-D™. For example, a refrigerator located inside the house is modeled primarily for its thermal behavior regarding cooling and freezing food, with its primary output being the impact (energy and peak) on the grid. However, the refrigerator also gives off heat that must be accounted for in the simulation of the house itself. Second, there are devices in the home that are not explicitly modeled by GridLAB-D™, but that have sufficient aggregate impact that their heat contribution to the house and their aggregate impact on the home’s electricity must be accounted for. Examples are TV sets, vacuum cleaners, hand-held hair dryers, and other miscellaneous equipment generally plugged into wall outlets. 
 
 ### Modeling Assumptions
 

@@ -1,7 +1,7 @@
 <img   src=./images/Gdlogo.jpg width="750">
 
 # GridLAB-D: A Unique Tool to Design the Smart Grid
-GridLAB-D™ is an open source project to develop the next generation power system simulation technology. GridLAB-D™ is a power distribution system simulation and analysis tool that provides valuable information to users who design and operate distribution systems, and to utilities that wish to take advantage of the latest energy technologies. GridLAB-D incorporates advanced load modeling techniques, with high-performance solution algorithms to deliver end-use load modeling, coupled with power system models, market models, distribution automation models, and software integration tools for users of many power system analysis tools. 
+GridLAB-D™ is an open source project to develop the next generation power system simulation technology. GridLAB-D™ is a power distribution system simulation and analysis tool that provides valuable information to users who design and operate distribution systems, and to utilities that wish to take advantage of the latest energy technologies. GridLAB-D™ incorporates advanced load modeling techniques, with high-performance solution algorithms to deliver end-use load modeling, coupled with power system models, market models, distribution automation models, and software integration tools for users of many power system analysis tools. 
 
 GridLAB-D™ was developed by the U.S. Department of Energy (DOE) at Pacific Northwest National Laboratory (PNNL) under funding for Office of Electricity and has been continued since in collaboration with industry and academia. 
 

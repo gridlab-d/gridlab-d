@@ -1,6 +1,6 @@
 # Spec:NEV
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:NEV
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:NEV
 SPECIFICATION Approval item: 
 
 ## Contents
@@ -11,7 +11,7 @@ SPECIFICATION Approval item:
   * 4 See also
 # Overview
 
-The Neutral-Earth Voltage implementation of GridLAB-D will require many changes to the underlying [powerflow] source code. These specifications outline the expected implementation and hope to resolve any conflicts prior to actual coding. 
+The Neutral-Earth Voltage implementation of GridLAB-D™ will require many changes to the underlying [powerflow] source code. These specifications outline the expected implementation and hope to resolve any conflicts prior to actual coding. 
 
 # Terminology
 

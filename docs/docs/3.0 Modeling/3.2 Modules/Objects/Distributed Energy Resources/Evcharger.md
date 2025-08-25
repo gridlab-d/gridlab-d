@@ -2,7 +2,7 @@
 TODO: FT: Document in a manner consistent with other residential devices.  Old/deprecated model that has low trust
 
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Evcharger
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Evcharger
 # Evcharger
 
 **evcharger** \- Electric or hybrid vehicles 

@@ -149,7 +149,7 @@ Climate data is obtained from the National Renewable Energy Laboratory ([NREL](h
 
 #### United States
 
-GridLAB-D supports reading [TMY2](https://www.nrel.gov/docs/legosti/old/7668.pdf) or [TMY3](https://www.nrel.gov/docs/fy08osti/43156.pdf) formats. Sample TMY2 and TMY3 data for U.S. locations is available on the GridLAB-D repository at [Climate module TMY repository](https://github.com/gridlab-d/data/). US Data files are named with a two digit state designation followed by the city name, e.g., 
+GridLAB-D™ supports reading [TMY2](https://www.nrel.gov/docs/legosti/old/7668.pdf) or [TMY3](https://www.nrel.gov/docs/fy08osti/43156.pdf) formats. Sample TMY2 and TMY3 data for U.S. locations is available on the GridLAB-D™ repository at [Climate module TMY repository](https://github.com/gridlab-d/data/). US Data files are named with a two digit state designation followed by the city name, e.g., 
     
     
      OR-Astoria.tmy2

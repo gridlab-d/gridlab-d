@@ -1,6 +1,6 @@
 # Matlab link
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Matlab_link
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Matlab_link
 matlab link \- Matlab link target control file Template:NEW30
 
 ## Synopsis
@@ -43,17 +43,17 @@ Specifies the command used to start matlab. If omitted, the default **matlab** c
 
 ### global
 
-Exports a GridLAB-D global variable to the **global** structure in the Matlab workspace. Exported variables are members of the **global** structure. For example
+Exports a GridLAB-D™ global variable to the **global** structure in the Matlab workspace. Exported variables are members of the **global** structure. For example
 
 
     global clock
 
 
-exports the **clock** global structure and can be accessed by evaluating **global.clock** in Matlab. Note that globals are **not** copied back to GridLAB-D.
+exports the **clock** global structure and can be accessed by evaluating **global.clock** in Matlab. Note that globals are **not** copied back to GridLAB-D™.
 
 ### on_init
 
-Specifies the command-list to execute in Matlab when GridLAB-D initializes. This initialization command is executed after all the GridLAB-D objects have been initialized and exported to Matlab. You must set **ans** to the return value **GLD_OK** to indicate the initialization command completed successfully.
+Specifies the command-list to execute in Matlab when GridLAB-D™ initializes. This initialization command is executed after all the GridLAB-D™ objects have been initialized and exported to Matlab. You must set **ans** to the return value **GLD_OK** to indicate the initialization command completed successfully.
 
 ### on_sync
 
@@ -61,7 +61,7 @@ Specifies the command-list to execute in Matlab prior to the standard sync funct
 
 ### on_term
 
-Specifies the command-list to execute in Matlab when GridLAB-D terminates. You must set **ans** to **GLD_OK** to indicate success.
+Specifies the command-list to execute in Matlab when GridLAB-D™ terminates. You must set **ans** to **GLD_OK** to indicate success.
 
 ### output
 
@@ -69,7 +69,7 @@ Specifies the size (in bytes) of the output buffer to use when reading back resp
 
 ### root
 
-Specifies the root variable name to use when publishing the GridLAB-D model.
+Specifies the root variable name to use when publishing the GridLAB-D™ model.
 
 ### target
 
@@ -89,7 +89,7 @@ Use the window show parameter option is show the Matlab window while running.
 
 #### keep
 
-Use the window keep parameter option is keep the Matlab window open after GridLAB-D exits.
+Use the window keep parameter option is keep the Matlab window open after GridLAB-D™ exits.
 
 ### workdir
 
@@ -157,7 +157,7 @@ Per the [forum post here](https://sourceforge.net/p/gridlab-d/discussion/842562/
 
 **NOTE** : The instructions here are basically a duplicate of the versions on the MSYS2 compiling page. While the paths below are all given for a Windows-based system, the same idea applies to Linux and MacOS compiling -- find the MATLAB folder/library/binary and include it where appropriate. 
 
-In order to build the MATLAB link inside of GridLAB-D a version of MATLAB must be installed on the system. The following option must be added to your `./configure` command during compiling: 
+In order to build the MATLAB link inside of GridLAB-D™ a version of MATLAB must be installed on the system. The following option must be added to your `./configure` command during compiling: 
     
     
     --with-matlab=<path to MATLAB install>
@@ -168,9 +168,9 @@ It is important to note that the MATLAB installation path contain no spaces. If 
   * Install path on the windows explorer: `C:\Program Files\MATLAB\R2017A`
   * Option set with the short names: `--with-matlab=c:/PROGRA~1/MATLAB/R2017A`
 
-**Attention** : before running a simulation with MATLAB, the environment variable `PATH` must contain the path to the MATLAB DLLs, e.g., `MATLAB_DIR\bin\win64` or `MATLAB_DIR\bin\win32`. For more information on the MATLAB functionality within GridLAB-D see MATLAB link. 
+**Attention** : before running a simulation with MATLAB, the environment variable `PATH` must contain the path to the MATLAB DLLs, e.g., `MATLAB_DIR\bin\win64` or `MATLAB_DIR\bin\win32`. For more information on the MATLAB functionality within GridLAB-D™ see MATLAB link. 
 
-**NOTE** : with MATLAB r2018a and newer, there has been a slight change to external interfaces for complex numbers. You need to tell GridLAB-D to use the older/legacy interface via the compiler definition `MATLAB_DEFAULT_RELEASE=R2017b`. An example configuration command would be: 
+**NOTE** : with MATLAB r2018a and newer, there has been a slight change to external interfaces for complex numbers. You need to tell GridLAB-D™ to use the older/legacy interface via the compiler definition `MATLAB_DEFAULT_RELEASE=R2017b`. An example configuration command would be: 
     
     
     ./configure --prefix=$PWD/install64 --with-xerces=/mingw64/lib --with-matlab=C:/PROGRA~1/MATLAB/R2018a  --enable-silent-rules 'CFLAGS=-O2 -w -DMATLAB_DEFAULT_RELEASE=R2017b' 'CXXFLAGS=-O2 -w -DMATLAB_DEFAULT_RELEASE=R2017b' 'LDFLAGS=-O2 -w'
@@ -178,7 +178,7 @@ It is important to note that the MATLAB installation path contain no spaces. If 
 
 ### Legacy instructions for Visual Studio 2005
 
-By default, the MATLAB link is not built by the normal Hassayampa (Version 3.0) Visual Studio GridLAB-D solution. Linux compilers will attempt to locate MATLAB installs and enable all proper variables. If it fails to find the link, the same requirements outlined for the Visual Studio build below will need to be manually implemented. Note that most of these are handled automatically by _configure.bat_ inside Visual Studio, but if manual configuration is required, these steps can still be used. 
+By default, the MATLAB link is not built by the normal Hassayampa (Version 3.0) Visual Studio GridLAB-D™ solution. Linux compilers will attempt to locate MATLAB installs and enable all proper variables. If it fails to find the link, the same requirements outlined for the Visual Studio build below will need to be manually implemented. Note that most of these are handled automatically by _configure.bat_ inside Visual Studio, but if manual configuration is required, these steps can still be used. 
 
 To get the MATLAB link working under a Visual Studio-compiled build, a few changes must be made to the glxmatlab project. 
 
@@ -187,9 +187,9 @@ To get the MATLAB link working under a Visual Studio-compiled build, a few chang
   3. The Linker Additional Library Directories must point to the proper folder of the MATLAB install. This should be similar to `C:\Program Files\MATLAB\R2011a\extern\lib\win64\microsoft`
   4. The Linker Input Additional Dependencies must include _libmx.lib_ and _libeng.lib_ to properly build.
 
-After these changes are accomplished, Visual Studio will be able to compile a GridLAB-D version with the MATLAB link interface. 
+After these changes are accomplished, Visual Studio will be able to compile a GridLAB-D™ version with the MATLAB link interface. 
 
-Note: MATLAB appears to have some sensitivity to the architecture of the version compiled into GridLAB-D. For example, if it was built to an x64 version of MATLAB, but the .link file points to a 32-bit version, sometimes it fails. Furthermore, if multiple installations exist, you may need to register the appropriate version with _matlab /regserver_ on the command line before using it with GridLAB-D (not always necessary). 
+Note: MATLAB appears to have some sensitivity to the architecture of the version compiled into GridLAB-D™. For example, if it was built to an x64 version of MATLAB, but the .link file points to a 32-bit version, sometimes it fails. Furthermore, if multiple installations exist, you may need to register the appropriate version with _matlab /regserver_ on the command line before using it with GridLAB-D™ (not always necessary). 
 
 Developer's Note (9/16/2013): 
 

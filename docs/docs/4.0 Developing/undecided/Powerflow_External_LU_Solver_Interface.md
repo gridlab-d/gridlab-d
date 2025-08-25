@@ -1,13 +1,13 @@
 # Powerflow External LU Solver Interface
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Powerflow_External_LU_Solver_Interface
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Powerflow_External_LU_Solver_Interface
 # Powerflow External LU Solver Interface
 
 ## Contents
 
   * 1 Powerflow Module External LU Matrix Solver Overview
   * 2 General Specifications
-  * 3 GridLAB-D Implementation
+  * 3 GridLAB-D™ Implementation
   * 4 Functional Interface
     * 4.1 LU_init
     * 4.2 LU_alloc
@@ -16,7 +16,7 @@
   * 5 Linux Build
 ## Powerflow Module External LU Matrix Solver Overview
 
-The `powerflow` module has the option to utilize a Newton-Raphson-based solver to obtaine the final system values. As part of this algorithm, a matrix inversion and the solving of a system of equations must occur ($Ax=b \to x=A^{-1}b$). By default, GridLAB-D uses the SuperLU package to perform these operations. However, other solvers may offer faster computations, or be better suited for a particular system being examined. As such, the ability to interface with an external solver is included in the GridLAB-D `powerflow` module. 
+The `powerflow` module has the option to utilize a Newton-Raphson-based solver to obtaine the final system values. As part of this algorithm, a matrix inversion and the solving of a system of equations must occur ($Ax=b \to x=A^{-1}b$). By default, GridLAB-D™ uses the SuperLU package to perform these operations. However, other solvers may offer faster computations, or be better suited for a particular system being examined. As such, the ability to interface with an external solver is included in the GridLAB-D™ `powerflow` module. 
 
 ## General Specifications
 
@@ -38,11 +38,11 @@ $$Columns = \begin{bmatrix} 0 & 2 & 4 & 7 & 8 \end{bmatrix}$$
 
 The specific arrays that contain the $Data$, $Rows$, and $Columns$ information are outlined below. As long as the information is passed in this format and in a double-precision number, it will interface with the `powerflow` module. 
 
-## GridLAB-D Implementation
+## GridLAB-D™ Implementation
 
-To utilize an appropriate external matrix solver with the `powerflow` module, two steps must occur. First, the appropriate library file (.dll file in windows or .so file in Linux) must be located in a place where GridLAB-D can access it. This is typically in the same folder all of the module library files are located. If the file is not located in an accessible location, GridLAB-D will fail to load it and continue utilizing the internal superLU solver for the Newton-Raphson powerflow. 
+To utilize an appropriate external matrix solver with the `powerflow` module, two steps must occur. First, the appropriate library file (.dll file in windows or .so file in Linux) must be located in a place where GridLAB-D™ can access it. This is typically in the same folder all of the module library files are located. If the file is not located in an accessible location, GridLAB-D™ will fail to load it and continue utilizing the internal superLU solver for the Newton-Raphson powerflow. 
 
-In addition to being accessible, GridLAB-D must also know to look for the solver. This is done with a `powerflow` module-level variable `lu_solver`. If a compiled version of the KLU solver were utilized, it would be implemented with 
+In addition to being accessible, GridLAB-D™ must also know to look for the solver. This is done with a `powerflow` module-level variable `lu_solver`. If a compiled version of the KLU solver were utilized, it would be implemented with 
     
     
     module powerflow {

@@ -2,7 +2,7 @@
 - [x] GLD Association? Is that still a thing? --> it is not, removed from repo.
 
 # 1.0 Prospective Users
-- [ ] 
+- [ ] Technical Overview needs rework
 
 # New Users
 - [x] Keep metronome example? --> No, delete.

@@ -1,6 +1,6 @@
 # Spec:NEVModules
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:NEVModules
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:NEVModules
 SPECIFICATION Approval item: 
 
 ## Contents
@@ -19,7 +19,7 @@ This specification page outlines the interfacing with existing modules and devic
 
 # Legacy Implementation
 
-Existing powerflow interfaces occur via pointers to the voltage properties of GridLAB-D (`voltage_A` ... `voltage_C` or `voltage_1` ... `voltage_12`) and some form of load interface. This load interface varies between contributions to the direct postings to the `current_x`, `shunt_x`, and `power_x` fields. Unless explicitly tied into the newer implementation method specified below, the existing external objects will be ignorant of the NEV implementation and continue to post load contributions in the traditional manner. 
+Existing powerflow interfaces occur via pointers to the voltage properties of GridLAB-D™ (`voltage_A` ... `voltage_C` or `voltage_1` ... `voltage_12`) and some form of load interface. This load interface varies between contributions to the direct postings to the `current_x`, `shunt_x`, and `power_x` fields. Unless explicitly tied into the newer implementation method specified below, the existing external objects will be ignorant of the NEV implementation and continue to post load contributions in the traditional manner. 
 
 `DELTAMODE`-enabled objects will also utilize the legacy notation, even though the values are posted through the separate `DynCurrent` variable. The notation outlined below will be used to define the traditional phase A, B, and C connection terminals for `DELTAMODE` objects. 
 
@@ -69,7 +69,7 @@ Individual objects tying into the new NEV-solver method will need to explicitly 
      }
     
 
-For a delta, or phase-to-phase, connected load, the connection terminals need to be specified in pairs. Suppose a three-phase motor is delta-connected and requires posting its contributions in the delta or phase-to-phase sense. An example implementation (not implemented in GridLAB-D, only as an example here) could be in the form shown below. Much like the last example, this motor is connecting to terminals 1, 5, and 9 on the node. However, contributions will be posted in the phase-to-phase portions of the node's loading, not in the phase-to-earth portions. This will allow the values to be properly updated as the NEV solver iterates, rather than having "Wye-equivalent posted values" that will change on each GridLAB-D timestep. 
+For a delta, or phase-to-phase, connected load, the connection terminals need to be specified in pairs. Suppose a three-phase motor is delta-connected and requires posting its contributions in the delta or phase-to-phase sense. An example implementation (not implemented in GridLAB-D™, only as an example here) could be in the form shown below. Much like the last example, this motor is connecting to terminals 1, 5, and 9 on the node. However, contributions will be posted in the phase-to-phase portions of the node's loading, not in the phase-to-earth portions. This will allow the values to be properly updated as the NEV solver iterates, rather than having "Wye-equivalent posted values" that will change on each GridLAB-D™ timestep. 
     
     
      object motor {

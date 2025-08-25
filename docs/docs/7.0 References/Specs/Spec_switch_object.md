@@ -1,6 +1,6 @@
 # Spec:switch object
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:switch_object
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:switch_object
 # Spec:switch object
 
 SPECIFICATION Approval item: 

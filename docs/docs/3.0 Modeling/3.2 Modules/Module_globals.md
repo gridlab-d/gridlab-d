@@ -162,7 +162,7 @@ Example (my_class.cpp)
       * [Troubleshooting messages]
       * [Example 3]
     * [Source documentation]
-      * [C/C++ Module API documentation (trunk)](http://gridlab-d.sourceforge.net/doxygen/trunk/group__module__api.html)
+      * [C/C++ Module API documentation (trunk)](http://GridLAB-D™.sourceforge.net/doxygen/trunk/group__module__api.html)
       * [C/C++ Module API Guide]
       * [Example 4]
     * [Validation]

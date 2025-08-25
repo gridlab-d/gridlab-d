@@ -75,7 +75,7 @@ def main(start_url, folder):
 
 if __name__ == "__main__":
     # URL of the webpage to start from
-    start_url = "https://gridlab-d.shoutwiki.com/wiki/Index"
+    start_url = "https://GridLAB-D™.shoutwiki.com/wiki/Index"
 
     # Folder to save images
     folder = "docs\images"

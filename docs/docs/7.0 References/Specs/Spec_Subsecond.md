@@ -1,6 +1,6 @@
 # Spec:Subsecond
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:Subsecond
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:Subsecond
 Approval item:  SPECIFICATION [Grizzly (Version 2.3)]
 
 ## Contents
@@ -17,7 +17,7 @@ Approval item:  SPECIFICATION [Grizzly (Version 2.3)]
   * 2 Test plan
     * 2.1 See also
   
-This document provides the specifications for the subsecond simulation capability for GridLAB-D. 
+This document provides the specifications for the subsecond simulation capability for GridLAB-D™. 
 
 # Specifications
 
@@ -67,7 +67,7 @@ Object update order
 ## S5
 
 Class export function
-    To enable [DELTA] mode updates a GridLAB-D class shall export the "C" function ([R5])
+    To enable [DELTA] mode updates a GridLAB-D™ class shall export the "C" function ([R5])
     
     
      extern "C" int _class_ _deltaupdate(OBJECT *, unsigned long dt)

@@ -1,6 +1,6 @@
 # Metrics collector
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Metrics_collector
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Metrics_collector
 # Metrics collector
 
 ## Contents
@@ -14,7 +14,7 @@
 
 Overview
 
-This document describes GridLAB-D implementation of metrics_collector. Metrics_collector class is created as part of the project [Transactive Energy Simulation Platform](http://tesp.readthedocs.io/en/latest/index.html). During the simulation, this class collects the properties of the attached objects, and aggregate the values over predefined time interval (e.g. 5 minutes, 1 hour). Another class [metrics_collector_writer] loops through each metrics_collector at predefined time interval, and writes the intermediate metrics to Javascript Object Notation (JSON) files during the simulation.This saves considerable disk space and processing time over the handling of multiple CSV files. Python, and other languages, have library functions optimized to quickly load JSON files. 
+This document describes GridLAB-D™ implementation of metrics_collector. Metrics_collector class is created as part of the project [Transactive Energy Simulation Platform](http://tesp.readthedocs.io/en/latest/index.html). During the simulation, this class collects the properties of the attached objects, and aggregate the values over predefined time interval (e.g. 5 minutes, 1 hour). Another class [metrics_collector_writer] loops through each metrics_collector at predefined time interval, and writes the intermediate metrics to Javascript Object Notation (JSON) files during the simulation.This saves considerable disk space and processing time over the handling of multiple CSV files. Python, and other languages, have library functions optimized to quickly load JSON files. 
 
 ## Attached objects and collected values
 

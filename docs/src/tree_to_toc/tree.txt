@@ -1,21 +1,28 @@
 - 0.0 GridLAB-D™:
-  - Contact: docs/0.0 GridLAB-D™/Contacts_list.md
-  - Version History: docs/0.0 GridLAB-D™/Version History.md
-  - Projects: docs/0.0 GridLAB-D™/projects.md
-  - Publications: docs/0.0 GridLAB-D™/publications.md
-  - Resources & Support: docs/0.0 GridLAB-D™/resources.md
+  - Resources & Support: docs/0.0 GridLAB-D™/0.2 resources.md
+  - Publications: docs/0.0 GridLAB-D™/0.3 publications.md
+  - Projects: docs/0.0 GridLAB-D™/0.4 projects.md
+  - Version History: docs/0.0 GridLAB-D™/0.5 Version History.md
+  - Contact: docs/0.0 GridLAB-D™/0.6 Contacts_list.md
   - Style Guide: docs/0.0 GridLAB-D™/style-guide.md
 - 1.0 Prospective Users:
   - Key Attributes of GridLAB-D™: docs/1.0 Prospective Users/GridLAB-D_Key_Attributes.md
   - Technical Overview: docs/1.0 Prospective Users/Technical_Overview.md
 - 2.0 New Users:
-  - Getting Started: docs/2.0 New Users/Getting_Started_Using_GridLAB-D.md
-  - Installation:
+  - 2.1 Installation:
     - MySQL:
-      - Database: docs/2.0 New Users/Installation/MySQL/Database.md
-      - HowTo:mysql: docs/2.0 New Users/Installation/MySQL/HowTo_mysql.md
-      - MySQL Import/Export: docs/2.0 New Users/Installation/MySQL/MySQL_Import_Export.md
-      - Mysql: docs/2.0 New Users/Installation/MySQL/Mysql.md
+      - Database: docs/2.0 New Users/2.1 Installation/MySQL/Database.md
+      - HowTo:mysql: docs/2.0 New Users/2.1 Installation/MySQL/HowTo_mysql.md
+      - MySQL Import/Export: docs/2.0 New Users/2.1 Installation/MySQL/MySQL_Import_Export.md
+      - Mysql: docs/2.0 New Users/2.1 Installation/MySQL/Mysql.md
+    - Quick Install: docs/2.0 New Users/2.1 Installation/Quick Installation.md
+  - 2.2 Getting Started:
+    - Gridlab-D™ Overview: docs/2.0 New Users/2.2 Getting Started/2.2.1 Overview.md
+    - What is a GridLAB-D™ model?: docs/2.0 New Users/2.2 Getting Started/2.2.2 Models.md
+    - Running GridLAB-D™: docs/2.0 New Users/2.2 Getting Started/2.2.3 Running a Model.md
+    - The Clock: docs/2.0 New Users/2.2 Getting Started/2.2.4 Simulation Time.md
+    - Generating populations: docs/2.0 New Users/2.2 Getting Started/2.2.5 Model Options.md
+    - Generating output: docs/2.0 New Users/2.2 Getting Started/2.2.6 Output.md
   - Running Simulations: docs/2.0 New Users/Running_Simulations.md
   - Theory of Operation: docs/2.0 New Users/theory-of-operation.md
 - 3.0 Modeling:
@@ -28,6 +35,7 @@
     - 3.1.6 Distributed Generation: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.6 - Distributed_Generation.md
     - 3.1.7 Advanced Distribution Models: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.7 - Advanced_Distribution_Models.md
     - 3.1.8 Built-In Distribution Models: docs/3.0 Modeling/3.1 Intro to Modeling/3.1.8 - Built-In Distribution Models.md
+    - index: docs/3.0 Modeling/3.1 Intro to Modeling/index.md
   - 3.2 Modules:
     - Assert (module): docs/3.0 Modeling/3.2 Modules/Assert.md
     - Climate:
@@ -115,8 +123,6 @@
     - Industrial and agricultural loads: docs/3.0 Modeling/Loads/Industrial_and_agricultural_loads.md
     - Load Composition: docs/3.0 Modeling/Loads/Load_Composition.md
     - Loadshape: docs/3.0 Modeling/Loads/Loadshape.md
-  - Miscellaneous:
-    - HowTo:Create a movie: docs/3.0 Modeling/Miscellaneous/HowTo_Create_a_movie.md
   - Modeling Reference:
     - Checkpoints: docs/3.0 Modeling/Modeling Reference/Checkpoints.md
     - Command Options: docs/3.0 Modeling/Modeling Reference/Command_options.md
@@ -139,22 +145,22 @@
     - Finding Objects: docs/3.0 Modeling/Modeling Reference/finding-objects.md
 - 4.0 Developing:
   - 4.1 - Introduction: docs/4.0 Developing/4.1 - Introduction.md
-  - 4.2 - Building GridLAB-D from Source: docs/4.0 Developing/4.2 - Building from Source.md
+  - 4.2 - Building GridLAB-D™ from Source: docs/4.0 Developing/4.2 - Building from Source.md
   - 4.3 - Software Architecture and Design:
     - Introduction: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.0 - Introduction.md
     - GLDCore: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.1 - gldcore.md
-    - GridLAB-D Modules: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.2 - Modules.md
-    - GridLAB-D Objects: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.3 - Objects.md
+    - GridLAB-D™ Modules: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.2 - Modules.md
+    - GridLAB-D™ Objects: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.3 - Objects.md
     - Object Synchronization Process: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.4 - Object Synchronization Process.md
-    - GridLAB-D Parallelization: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.6 - Parallelization.md
-    - GridLAB-D Loader: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.7 - Loader.md
-    - GridLAB-D Data Transforms: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.8 - Transforms.md
+    - GridLAB-D™ Parallelization: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.6 - Parallelization.md
+    - GridLAB-D™ Loader: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.7 - Loader.md
+    - GridLAB-D™ Data Transforms: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.8 - Transforms.md
     - libgld: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.9 - libgld.md
   - 4.4 - Development Fundamentals:
     - Programming conventions: docs/4.0 Developing/4.4 - Development Fundamentals/4.4.1 - Programming_conventions.md
     - Creating a module - v1: docs/4.0 Developing/4.4 - Development Fundamentals/4.4.2 - Creating_a_module.md
     - Creating a class: docs/4.0 Developing/4.4 - Development Fundamentals/4.4.3 - Creating_a_class.md
-    - GridLAB-D Device Modeling: docs/4.0 Developing/4.4 - Development Fundamentals/4.4.4 - GridLAB-D Device Modeling.md
+    - GridLAB-D™ Device Modeling: docs/4.0 Developing/4.4 - Development Fundamentals/4.4.4 - GridLAB-D Device Modeling.md
     - Integrated Testing: docs/4.0 Developing/4.4 - Development Fundamentals/4.4.5 - Integrated_Testing.md
   - 4.5 - Deltamode Development:
     - Introduction to Deltamode Development: docs/4.0 Developing/4.5 - Deltamode Development/4.5.0 - Introduction to Deltamode Development.md
@@ -217,4 +223,4 @@
     - Spec:switch object: docs/7.0 References/Specs/Spec_switch_object.md
     - Spec:sync check: docs/7.0 References/Specs/Spec_sync_check.md
     - Spec:sync ctrl: docs/7.0 References/Specs/Spec_sync_ctrl.md
-- GridLAB-D Documentation Outline: docs/outline.md
+- GridLAB-D™ Documentation Outline: docs/outline.md

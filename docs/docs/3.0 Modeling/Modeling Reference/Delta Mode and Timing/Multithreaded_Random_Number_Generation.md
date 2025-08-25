@@ -66,7 +66,7 @@ The initial state of each sequence must itself be randomized using a global seed
 
 # Implementation
 
-Depending on the version of GridLAB-D, the following limitation exist. 
+Depending on the version of GridLAB-D™, the following limitation exist. 
 
 ## R2678 (3 July 2011 - Navajo (trunk))
 

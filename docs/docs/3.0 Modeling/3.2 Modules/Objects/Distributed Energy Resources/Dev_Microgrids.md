@@ -11,7 +11,7 @@ Implementation details
 
 ## Sub-second Implementation (Dynamic)
 
-The GridLAB-D dynamic simulations represent electro-mechanic transients of unbalanced micro grid operation. The synchronous machines models are in fundamental frequency phasor representation considering unbalanced operation. The network and loads are represented with a full abc model. Additionally, diesel governor control and automatic voltage regulators are modeled. Figure 1 briefly presents the overall algorithm. Each model in the algorithm is explained in detail below. 
+The GridLAB-D™ dynamic simulations represent electro-mechanic transients of unbalanced micro grid operation. The synchronous machines models are in fundamental frequency phasor representation considering unbalanced operation. The network and loads are represented with a full abc model. Additionally, diesel governor control and automatic voltage regulators are modeled. Figure 1 briefly presents the overall algorithm. Each model in the algorithm is explained in detail below. 
 
 ![Figure 1](../../../../../images/Sub-second_algorithm.png)
 
@@ -137,7 +137,7 @@ Where $\left[ E^{\prime\prime}_{a,b,c} \right]$ is a balanced voltage calculated
 
 ### Synchronous machine controllers: governor and automatic voltage regulator
 
-Generator control models are also defined in the GridLAB-D dynamic simulations. The generator control models are: 
+Generator control models are also defined in the GridLAB-D™ dynamic simulations. The generator control models are: 
 
   * Woodward diesel governor (DEGOV1) that modifies the mechanical power of the diesel generator proportionally to the generator speed deviation
   * Simplified exciter system (SEXS) that modifies the generator field voltage (and hence its reactive power) to control the generator^\prime s terminal voltage (average voltage magnitude of all phases)

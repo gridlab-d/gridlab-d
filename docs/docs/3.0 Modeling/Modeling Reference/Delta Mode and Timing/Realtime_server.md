@@ -87,13 +87,13 @@ Optionally, units may be appended, e.g., `http://_servername_ /_objectname_ /_pr
   
 ## Realtime mode
 
-GridLAB-D can be run as realtime system emulator by setting the global variable [run_realtime] to a non-zero value, e.g., 
+GridLAB-D™ can be run as realtime system emulator by setting the global variable [run_realtime] to a non-zero value, e.g., 
     
     
      host% **gridlabd[-D] [run_realtime]=1 _modelname_.glm**
     
 
-In realtime mode, GridLAB-D will attach the internal simulation clock to the system clock. GridLAB-D will update the model at most once per second. 
+In realtime mode, GridLAB-D™ will attach the internal simulation clock to the system clock. GridLAB-D™ will update the model at most once per second. 
 
 While running in realtime mode, the stop time is used to stop the simulation. If the stop time is not set or it was set to a time before the start time (in real time), then the simulation will run indefinitely until it receives a signal to stop. 
 
@@ -101,7 +101,7 @@ While running in realtime mode, the stop time is used to stop the simulation. If
 
 [Server] mode is essential to the realtime mode and allows a web-based application to access the global variable and properties of named objects. 
 
-To start GridLAB-D in [server] mode, simply include the command line argument `--[server]`, e.g., 
+To start GridLAB-D™ in [server] mode, simply include the command line argument `--[server]`, e.g., 
     
     
      host% **gridlabd _modelname_.glm --[server]**

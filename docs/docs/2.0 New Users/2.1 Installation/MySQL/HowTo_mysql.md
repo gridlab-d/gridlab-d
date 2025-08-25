@@ -1,6 +1,6 @@
 # HowTo:mysql
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/HowTo:mysql
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/HowTo:mysql
 *** WORKING DRAFT ***   
 **Please review, edit andcomment as necessary**.
 

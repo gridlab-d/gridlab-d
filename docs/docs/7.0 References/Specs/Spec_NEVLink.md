@@ -1,6 +1,6 @@
 # Spec:NEVLink
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:NEVLink
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:NEVLink
 SPECIFICATION Approval item: 
 
 ## Contents
@@ -89,7 +89,7 @@ Table 1 - Link properties  Property | Definition
 `from_terminal` | Terminal connection on the from side for each cable/connection. If an "implied neutral" is present (concentric neutral or tape shielded), this must be specified in pairs.   
 `to_terminal` | Terminal connection on the to side for each cable/connection. If an "implied neutral" is present (concentric neutral or tape shielded), this must be specified in pairs.   
   
-The `line_config` object will take the place of the specific [overhead_line_configuration] and [underground_line_configuration] objects that exist in GridLAB-D for the NEV implementation. Definitions are expected to match the existing configurations, but will be put into the array notation outlined earlier. The explicit property definitions are listed in Table 2. 
+The `line_config` object will take the place of the specific [overhead_line_configuration] and [underground_line_configuration] objects that exist in GridLAB-D™ for the NEV implementation. Definitions are expected to match the existing configurations, but will be put into the array notation outlined earlier. The explicit property definitions are listed in Table 2. 
 
 Table 2 - Line_config properties  Property | Definition   
 ---|---  
@@ -252,7 +252,7 @@ Current ratings can also be included in this object as described in the [Power F
 
 #### Primitive Matrices
 
-As in the current implementation, each of the described objects above will be rendered during runtime as a C++ object of the corresponding class. The overhead_line object's line_configuration variable will contain an address to the correct line-configuration object, which in turn will contain a pointer array with addresses of each conductor's conductor object, as well as the address of the correct spacing object. Since the NEV power flow implementation will solely support the Newton-Raphson method, the overhead lines are incorporated in the solver by constructing primitive series and shunt admittance matrices to be inserted in the larger system nodal admittance matrices. With all the data necessary data assembled in the aforementioned GridLAB-D objects, the primitive admittance matrices are constructed as described in detail on the [Overhead Line Equations] page. The primitive series impedance matrix is an $n\times n$ matrix where n is the number of phases present. For example, for a line with 6 phases (including one neutral denoted 'n'), the matrix will be of form: 
+As in the current implementation, each of the described objects above will be rendered during runtime as a C++ object of the corresponding class. The overhead_line object's line_configuration variable will contain an address to the correct line-configuration object, which in turn will contain a pointer array with addresses of each conductor's conductor object, as well as the address of the correct spacing object. Since the NEV power flow implementation will solely support the Newton-Raphson method, the overhead lines are incorporated in the solver by constructing primitive series and shunt admittance matrices to be inserted in the larger system nodal admittance matrices. With all the data necessary data assembled in the aforementioned GridLAB-D™ objects, the primitive admittance matrices are constructed as described in detail on the [Overhead Line Equations] page. The primitive series impedance matrix is an $n\times n$ matrix where n is the number of phases present. For example, for a line with 6 phases (including one neutral denoted 'n'), the matrix will be of form: 
 
 $$
 \displaystyle
@@ -329,7 +329,7 @@ The class line_configuration provides information on which cables are connected 
 
 From the example above along with the underground_line example, it can be determined that the underground line is made up of 3 cables. Two of the cables have the properties specified by underground_line_conductor, ulc1. The phase conductor of the first cable in the conductor property, ulc1, is connected to terminal 1 of node1 and terminal 1 of node2. The neutral conductor of the first cable in the conductor property, ulc1, is connected to terminal 4 of node1 and terminal 4 of node2. The phase conductor of the second cable in the conductor property, ulc2, is connected to terminal 2 of node1 and terminal 2 of node2. The neutral conductor of the first cable in the conductor property, ulc2, is connected to terminal 4 of node1 and terminal 4 of node2. The phase conductor of the first cable in the conductor property, ulc1, is connected to terminal 3 of node1 and terminal 3 of node2. The neutral conductor of the first cable in the conductor property, ulc1, is connected to terminal 4 of node1 and terminal 4 of node2. 
 
-Take special note! GridLAB-D must be able to read in an array of strings as is indicated by the conductor property of line_configuration. 
+Take special note! GridLAB-D™ must be able to read in an array of strings as is indicated by the conductor property of line_configuration. 
 
 ### Class: line_spacing
 

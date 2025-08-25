@@ -47,7 +47,7 @@ Additionally, other operating modes may be used:
   * _once_ (not used with _enum_assert_) - This allows the user to specify that a test be run only once during a simulation. Used in conjunction with _in_. 
     * ONCE_FALSE (default) - In this mode, the assert value will be tested continuously at all times during the simulation.
     * ONCE_TRUE - When used, this tells the assert to only test the given _value_ against the _target_ value at the time specified by _in_.
-  * _in_ \- Specifies the time at which a test is to be performed. Uses standard GridLAB-D time formats with single quotes around it (e.g. '2001-01-02 00:00:00 CST').
+  * _in_ \- Specifies the time at which a test is to be performed. Uses standard GridLAB-D™ time formats with single quotes around it (e.g. '2001-01-02 00:00:00 CST').
 
 
 If the assert fails, the simulation halts. 

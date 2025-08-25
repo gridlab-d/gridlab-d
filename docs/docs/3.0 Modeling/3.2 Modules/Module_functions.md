@@ -39,7 +39,7 @@ Subsecond functions
 
 ### init
 
-The init function is required for all GridLAB-D modules. It is called once when the module is loaded. The init should use this opportunity to register all [classes] and [module globals]. The template for this function as of [Hassayampa (Version 3.0)] is: 
+The init function is required for all GridLAB-D™ modules. It is called once when the module is loaded. The init should use this opportunity to register all [classes] and [module globals]. The template for this function as of [Hassayampa (Version 3.0)] is: 
     
     
     // module/main.cpp (init template)
@@ -61,7 +61,7 @@ The init function is required for all GridLAB-D modules. It is called once when 
 
 ### do_kill
 
-The do_kill function is required for all GridLAB-D modules. It is called when GridLAB-D terminates. The do_kill function should be used only to cleanup temporary files and memory allocation used by the module. 
+The do_kill function is required for all GridLAB-D™ modules. It is called when GridLAB-D™ terminates. The do_kill function should be used only to cleanup temporary files and memory allocation used by the module. 
     
     
     // module/main.cpp (do_kill template)
@@ -110,7 +110,7 @@ The check function is used to allow user to perform module checks before running
 
 ### export
 
-The export function allows a module to define a method for exporting a GridLAB-D to an arbitrary file format. If defined, the export routine is called after the simulation is completed. 
+The export function allows a module to define a method for exporting a GridLAB-D™ to an arbitrary file format. If defined, the export routine is called after the simulation is completed. 
 
 _module_ /main.cpp
     
@@ -229,7 +229,7 @@ Prior to [Hassayampa (Version 3.0)]
       * [Troubleshooting messages]
       * [Example 3]
     * [Source documentation]
-      * [C/C++ Module API documentation (trunk)](http://gridlab-d.sourceforge.net/doxygen/trunk/group__module__api.html)
+      * [C/C++ Module API documentation (trunk)](http://GridLAB-D™.sourceforge.net/doxygen/trunk/group__module__api.html)
       * [C/C++ Module API Guide]
       * [Example 4]
     * [Validation]

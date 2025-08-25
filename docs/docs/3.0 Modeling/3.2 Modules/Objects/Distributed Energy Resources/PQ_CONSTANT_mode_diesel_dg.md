@@ -1,6 +1,6 @@
 # PQ CONSTANT mode diesel dg
 
-This document describes GridLAB-D implementation of diesel generator in PQ constant mode.   
+This document describes GridLAB-D™ implementation of diesel generator in PQ constant mode.   
   
 A constant_P mode is implemented in the governor type P_CONSTANT: 
 
@@ -12,7 +12,7 @@ The constant_Q mode is implemented based on the existing exciter SEX_PTI:
 
 ![caption](../../../../../images//500px-Diesel_dg_Q_constant.png)
 
-## GridLAB-D Implementation
+## GridLAB-D™ Implementation
 
 ### Diesel Generator in PQ Constant mode example
 
@@ -98,7 +98,7 @@ In order to verify the implementation of PQ_CONSTANT mode diesel generator, a te
 
 ![PQ_CONSTANT mode diesel generator result](../../../../../images/700px-Diesel_dg_PQ_constant_simulation_result.png)
 
-To run this case, please find in the autotest in GridLAB-D generator module. 
+To run this case, please find in the autotest in GridLAB-D™ generator module. 
 
 ## See Also
 

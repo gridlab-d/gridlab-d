@@ -1,4 +1,4 @@
-# GridLAB-D Documentation Outline
+# GridLAB-D™ Documentation Outline
 
 The following is a conversion of the outline originally written by Trevor Hardy and serves as a proposed table of contents for the final documentation. Feel free to edit and add details as needed.
 

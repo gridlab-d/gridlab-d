@@ -1,6 +1,6 @@
 # link
 
-The **link** pseudo-property allow one or more variables to be mapped to and from a remote system during various events in GridLAB-D. 
+The **link** pseudo-property allow one or more variables to be mapped to and from a remote system during various events in GridLAB-D™. 
 
 ## Synopsis
     
@@ -43,9 +43,9 @@ The _direction_ may be specified as one of the following
 
 The _remote_ variable is specified as a string of arbitrary structure terminated by a semicolon or white space. The following special characters will be substituted if encountered 
 
-  * \\# : GridLAB-D object number
-  * \@ : GridLAB-D object name
-  * \$ : GridLAB-D object class
+  * \\# : GridLAB-D™ object number
+  * \@ : GridLAB-D™ object name
+  * \$ : GridLAB-D™ object class
   * \\\ : A single backslash
   * \\! : Lookup _local_ in the link file index
 

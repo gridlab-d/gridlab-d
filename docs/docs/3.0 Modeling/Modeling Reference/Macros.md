@@ -1,6 +1,6 @@
 # Macros
 
-Macros are used by the GridLAB-D GLM loader to control how the GLM is interpreted. All macros are introduced by a hash mark, e.g., 
+Macros are used by the GridLAB-D™ GLM loader to control how the GLM is interpreted. All macros are introduced by a hash mark, e.g., 
     
     
     #if _test_

@@ -1,6 +1,6 @@
 # Spec:particle swarm optimizer
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:particle_swarm_optimizer
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:particle_swarm_optimizer
 **TODO**:  Complete missing sections 
 
 ## Contents
@@ -21,7 +21,7 @@
   * 8 See also
 # Overview
 
-The purpose of developing Particle Swam Optimization (PSO) in GridLAB-D is to determine the tuning parameters of Proportional Integral Derivative (PID) controller based price control mechanisms with energy resources on a power system. This model has a lot of flexibility and can easily be applied for single and multi-object optimization problems. 
+The purpose of developing Particle Swam Optimization (PSO) in GridLAB-D™ is to determine the tuning parameters of Proportional Integral Derivative (PID) controller based price control mechanisms with energy resources on a power system. This model has a lot of flexibility and can easily be applied for single and multi-object optimization problems. 
 
 ## General Description
 

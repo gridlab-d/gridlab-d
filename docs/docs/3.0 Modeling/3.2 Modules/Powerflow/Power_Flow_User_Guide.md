@@ -108,7 +108,7 @@ shunt_C  | complex  | Siemens (mhos)  | The shunt admittance load on phase `C` (
 bustype  | enumeration  | N/A  | The type of bus the node represents. The different bus distinctions are only valid for the Gauss-Seidel and Newton-Raphson solver methods. The Forward-Back Sweep method (Kersting's method) does not presently incorporate anything other than the `PQ` bus. Valid choices are <br/> - `PQ` for a constant power bus (default) <br/> - `PV` for a voltage-controlled (magnitude) bus <br/> - `SWING` for the infinite bus of a system. 
 maximum_voltage_error  | double  | Volts  | The maximum voltage error for convergence checks in the different powerflow solvers. If left blank, it is derived from the `nominal_voltage` parameter.   
 busflags  | enumeration  | N/A  | A flag to indicate if the current bus has a source or not. Mainly used for `PV` implementations. The only valid entries are `HASSOURCE` to indicate it is a supported bus, or an empty value indicating it is not. Unused at this time.   
-reference_bus  | object  | N/A  | A reference node elsewhere in the system that the `node` will use to obtain frequency information if necessary (unimplemented in GridLAB-D at this point).   
+reference_bus  | object  | N/A  | A reference node elsewhere in the system that the `node` will use to obtain frequency information if necessary (unimplemented in GridLAB-D™ at this point).   
 mean_repair_time  | double  | seconds  | Time after a fault clears for the object to be considered back in service. Mainly used for `reliability` module interactions at this time.   
   
 ### Node State of Development
@@ -359,10 +359,10 @@ Property Name  | Type  | Unit  | Description
 geometric_mean_radius  | double  | feet  | The GMR of the wire.   
 resistance  | double  | Ohm/mile  | The resistance of the particular conductor, incorporating size and material effects.   
 diameter  | double  | inches  | Diameter of the conductor - used for capacitance calculations.   
-rating.summer.continuous  | double  | Amperes  | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D may implement this functionality**  
-rating.summer.emergency  | double  | Amperes  | The emergency (short time) rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D may implement this functionality**  
-rating.winter.continuous  | double  | Amperes  | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D may implement this functionality**  
-rating.winter.emergency  | double  | Amperes  | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D may implement this functionality**  
+rating.summer.continuous  | double  | Amperes  | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality**  
+rating.summer.emergency  | double  | Amperes  | The emergency (short time) rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality**  
+rating.winter.continuous  | double  | Amperes  | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality**  
+rating.winter.emergency  | double  | Amperes  | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality**  
   
 ### Overhead Line Conductor State of Development
 
@@ -370,7 +370,7 @@ Overhead Line Conductor is considered a highly developed and validated model.
 
 ## Underground Line
 
-Underground lines represent burial distribution cables in a powerflow system. In terms of GridLAB-D implementation, they are nearly identical to the `overhead_line` objects. A typical `underground_line` object would be written as 
+Underground lines represent burial distribution cables in a powerflow system. In terms of GridLAB-D™ implementation, they are nearly identical to the `overhead_line` objects. A typical `underground_line` object would be written as 
     
     
     object underground_line {
@@ -424,10 +424,10 @@ neutral_strands  | integer  | N/A  | Number of strands composing the concentric 
 insultation_relative_permitivitty  | double  | N/A (scalar)  | Relative permitivitty of the insulation in a concentric neutral cable - relative to air - used for capacitance calculations.   
 shield_gmr  | double  | feet  | Geometric mean radius of the shielding of the cable.   
 shield_resistance  | double  | Ohm/mile  | Resistance of the cable shielding.   
-rating.summer.continuous  | double  | Amperes  | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D may implement this functionality**  
-rating.summer.emergency  | double  | Amperes  | The emergency (short time) rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D may implement this functionality**  
-rating.winter.continuous  | double  | Amperes  | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D may implement this functionality**  
-rating.winter.emergency  | double  | Amperes  | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D may implement this functionality**  
+rating.summer.continuous  | double  | Amperes  | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality**  
+rating.summer.emergency  | double  | Amperes  | The emergency (short time) rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality**  
+rating.winter.continuous  | double  | Amperes  | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality**  
+rating.winter.emergency  | double  | Amperes  | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality**  
   
 ### Underground Line Conductor State of Development
 
@@ -489,7 +489,7 @@ conductor_2  | object  | N/A  | `triplex_conductor` object that represents the p
 conductor_N  | object  | N/A  | `triplex_conductor` object that represents the physical wire of the neutral phase.   
 insulation_thickness  | double  | inches  | Thickness of the insulation around the phase 1 and phase 2 conductors   
 diameter  | double  | inches  | Diameter of the conductor   
-spacing  | object  | N/A  | `line_spacing` object with information on the physical layout of the conductors. **This parameter is unused at this point. Future versions of GridLAB-D may implement this functionality**  
+spacing  | object  | N/A  | `line_spacing` object with information on the physical layout of the conductors. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality**  
 z11-z22  | complex  | Ohm/mile  | Describes the z-matrix explicitly as opposed to using geometric configurations. Using this will over-write the geometric configurations.   
   
 ### Triplex Line Configuration State of Development
@@ -807,7 +807,7 @@ Property Name  | Type  | Unit  | Description
 ---|---|---|---  
 bustype  | enumeration  | N/A  | The type of bus the node represents. The different bus distinctions are only valid for the Gauss-Seidel and Newton-Raphson solver methods. The Forward-Back Sweep method (Kersting's method) does not presently incorporate anything other than the `PQ` bus. Valid choices are <br/> - `PQ` for a constant power bus (default) <br/> - `PV` for a voltage-controlled (magnitude) bus <br/> - `SWING` for the infinite bus of a system.  
 busflags  | enumeration  | N/A  | A flag to indicate if the current bus has a source or not. Mainly used for `PV` implementations. The only valid entries are `HASSOURCE` to indicate it is a supported bus, or an empty value indicating it is not.   
-reference_bus  | object  | N/A  | A reference node elsewhere in the system that the `triplex_node` will use to obtain frequency information if necessary (unimplemented in GridLAB-D at this point).   
+reference_bus  | object  | N/A  | A reference node elsewhere in the system that the `triplex_node` will use to obtain frequency information if necessary (unimplemented in GridLAB-D™ at this point).   
 maximum_voltage_error  | double  | Volts  | The maximum voltage error for convergence checks in the different powerflow solvers. If left blank, it is derived from the `nominal_voltage` parameter.   
 voltage_1  | complex  | Volts  | The voltage on phase 1 of a split-phase or triplex system. This may be specified in rectangular (7200.0+0.0j) or polar (7200.0+0.0d) formats.   
 voltage_2  | complex  | Volts  | The voltage on phase 2 of a split-phase or triplex system. This may be specified in rectangular (7200.0+0.0j) or polar (7200.0+0.0d) formats.   

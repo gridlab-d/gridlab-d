@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# GridLAB-D documentation build configuration file; based on HELICS conf.py
+# GridLAB-D™ documentation build configuration file; based on HELICS conf.py
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.

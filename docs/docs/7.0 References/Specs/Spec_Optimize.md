@@ -1,6 +1,6 @@
 # Spec:Optimize
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:Optimize
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:Optimize
 ## Contents
 
   * 1 S1
@@ -25,21 +25,21 @@ Module scope
 ### S1.1
 
 Name
-    ([R1.1]) The module implementation folder shall be named **optimize** and the function shall be named according to the [GridLAB-D module implementation standards].
+    ([R1.1]) The module implementation folder shall be named **optimize** and the function shall be named according to the [GridLAB-D™ module implementation standards].
 
 ### S1.2
 
 Core scope
-    ([R1.2]) The module core linkage shall conform to the [GridLAB-D module implementation standards].
+    ([R1.2]) The module core linkage shall conform to the [GridLAB-D™ module implementation standards].
 
 ### S1.3
 
 Class scope
-    ([R1.3]) The class **objective** shall conform to the [GridLAB-D class implementation standards].
+    ([R1.3]) The class **objective** shall conform to the [GridLAB-D™ class implementation standards].
 
 ### S2
 
-([R2]) The **objective** class properties shall conform to the [GridLAB-D property naming standards]
+([R2]) The **objective** class properties shall conform to the [GridLAB-D™ property naming standards]
 
 #### S2.1
 

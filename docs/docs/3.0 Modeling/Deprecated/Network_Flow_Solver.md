@@ -6,14 +6,14 @@ The **network** module implements a balanced three-phase positive sequence power
 
 # Balanced Three-Phase Steady-state Transmission Network Flow Solution Using Gauss-Seidel Method
 
-The Gauss-Seidel (GS) method is a linear iterative method (as opposed to the Newton-Raphson (NR) method, which uses a quadratic iterative method). The only differences between the two methods are the rate of convergence and the robustness of convergence when the starting state is bad. Because GridLAB-D is a quasi-steady time-series simulation, most state changes are small and result in only one or two iterations in either method. However, the GS method can be more easily implemented using parallel processing systems (such as multicore systems). In addition, the GS method is more likely to solve for new conditions that are far from the current solution. However, the GS method can have difficulty computing flows under high-transfer conditions. 
+The Gauss-Seidel (GS) method is a linear iterative method (as opposed to the Newton-Raphson (NR) method, which uses a quadratic iterative method). The only differences between the two methods are the rate of convergence and the robustness of convergence when the starting state is bad. Because GridLAB-D™ is a quasi-steady time-series simulation, most state changes are small and result in only one or two iterations in either method. However, the GS method can be more easily implemented using parallel processing systems (such as multicore systems). In addition, the GS method is more likely to solve for new conditions that are far from the current solution. However, the GS method can have difficulty computing flows under high-transfer conditions. 
 
 The GS method uses an iterative approach proposed by von Seidel (1874). The GS method iterates using the first-order approximation of the Taylor expansion, and the NR method uses a second-order approximation. In the GS method the fundamental equation for the kth node can written as 
 
 $$\frac{P_k + \jmath Q_k}{\overline V_K^*} = Y_{kk} \overline V_k + \sum\limits_{i=1,i\neq k}^n{\overline Y_{ki} \overline V_i} 
 $$
 
-The GS method is often criticized as inferior. This is categorically not true. The GS method has strengths and weaknesses when compared to the NR method. Depending on the circumstances, one method may be preferred over the other. But both, indeed all, valid methods produce the same answers. In fact, many commercial power flow solvers implement both methods concurrently, recognizing the necessity to exploit the appropriate method under any given circumstance. Hence, the implementation of the GS method does not make GridLAB-D's solution method inferior. It is simply a recognition that the circumstances of the power flow solution needed in GridLAB-D led to the choice of GS as the default power flow solver. Other power flow solvers can and should be implemented to address different circumstances. We encourage users and developers to consider doing so. 
+The GS method is often criticized as inferior. This is categorically not true. The GS method has strengths and weaknesses when compared to the NR method. Depending on the circumstances, one method may be preferred over the other. But both, indeed all, valid methods produce the same answers. In fact, many commercial power flow solvers implement both methods concurrently, recognizing the necessity to exploit the appropriate method under any given circumstance. Hence, the implementation of the GS method does not make GridLAB-D's solution method inferior. It is simply a recognition that the circumstances of the power flow solution needed in GridLAB-D™ led to the choice of GS as the default power flow solver. Other power flow solvers can and should be implemented to address different circumstances. We encourage users and developers to consider doing so. 
 
 **Important note** : The solution method requires that the best known voltage be used at all times. This means that each time a voltage is updated, all the branch _YV_ contributions to adjacent busses must be immediately updated. 
 
@@ -210,7 +210,7 @@ If each of these can be confirmed for the entire model, then the check is succes
 
 ## CDF Files
 
-The CDF import routine reads an IEEE CDF file and loads the model into GridLAB-D. 
+The CDF import routine reads an IEEE CDF file and loads the model into GridLAB-D™. 
 
 The IEEE CDF file format is documented at <http://www.ee.washington.edu/research/pstca/formats/cdf.txt>. Additional information and sample data files are also available at <http://www.ee.washington.edu/research/pstca/>. For more information on IEEE CDF files, see [http://www.google.com/search?hl=en&q=IEEE%20power%20flow%20file%20format%20CDF](http://www.google.com/search?hl=en&q=IEEE%20power%20flow%20file%20format%20CDF). 
 

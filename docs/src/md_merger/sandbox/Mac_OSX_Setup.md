@@ -1,6 +1,6 @@
 # Mac OSX/Setup
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Mac_OSX/Setup
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Mac_OSX/Setup
 
 ---
  
@@ -26,11 +26,11 @@ _Out of Date:_ This page has been tagged as out of date and may contain data whi
   * 3 El Capitan debugging using gdb
   * 4 Bugs
   * 5 See also
-**Mac OSX Setup** \-- Building GridLAB-D on a Mac 
+**Mac OSX Setup** \-- Building GridLAB-D™ on a Mac 
 
 ## Overview
 
-Building GridLAB-D on a Mac uses much the same process as on Linux/Unix. We recommend that you use Xcode and homebrew to install GridLAB-D's dependencies on your system. 
+Building GridLAB-D™ on a Mac uses much the same process as on Linux/Unix. We recommend that you use Xcode and homebrew to install GridLAB-D's dependencies on your system. 
 
 ## Build Environment Setup Procedure
 
@@ -72,7 +72,7 @@ A dialog box will pop-up asking to confirm the installation of the command line 
 
 ### Install xerces-c
 
-This is a required package for GridLAB-D. 
+This is a required package for GridLAB-D™. 
     
     
     brew install xerces-c
@@ -123,7 +123,7 @@ The above commands should create symlinks in /usr/local/bin to each of these too
     brew ln --force libtool
     
 
-You should now be prepared to [build GridLAB-D on your Mac]. 
+You should now be prepared to [build GridLAB-D™ on your Mac]. 
 
 ## El Capitan debugging using `gdb`
 

@@ -1,6 +1,6 @@
 # HowTo:Create a solver
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/HowTo:Create_a_solver
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/HowTo:Create_a_solver
 [Template:NEW30]
 
 ## Contents
@@ -15,7 +15,7 @@
   * 8 Tips and Tricks
   * 9 Version
   * 10 See also
-This **[How To]** describes the procedure for implementing a solver in GridLAB-D. The example used here illustrates a Newton's Method solver that solver N independent single variable equations. 
+This **[How To]** describes the procedure for implementing a solver in GridLAB-D™. The example used here illustrates a Newton's Method solver that solver N independent single variable equations. 
 
 ## Step 1 - Stub in the implementation file
 

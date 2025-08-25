@@ -55,7 +55,7 @@ $$\begin{bmatrix}I_{f}^{R} + j I_{f}^{I} \\ I_{b}^{R} + j I_{b}^{I} \end{bmatrix
 
 $$\begin{bmatrix}I_{ds}^{R} + j I_{ds}^{I} \\ I_{qs}^{R} + j I_{qs}^{I} \end{bmatrix} = \begin{bmatrix} 1 & 1 \\ \frac{j}{n} & -\frac{j}{n} \end{bmatrix} \begin{bmatrix} I_{f}^{R} + j I_{f}^{I} \\ I_{f}^{R} + j I_{f}^{I} \\\end{bmatrix}$$
 
-# GridLAB-D Implementation
+# GridLAB-D™ Implementation
 
 ## motor object
 

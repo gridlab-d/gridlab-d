@@ -1,6 +1,6 @@
 # Spec:ibr blackboxmodels
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:ibr_blackboxmodels
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:ibr_blackboxmodels
 # Spec:ibr blackboxmodels
 
 ## Contents
@@ -34,11 +34,11 @@ As part of the DistribuDyn project funded by the U.S. Department of Energy Solar
 
 ## Introduction
 
-Inverter-based resource (IBR) models are necessary to analyze modern power system stability and create effective control strategies. Modeling IBRs in converter-rich power systems is crucial yet challenging due to the lack of commercial information on converter topologies and control parameters. This guide provides a step-by-step process for developing a black-box model of inverter-based resources (IBRs) or distributed energy resources (DERs) using a Convolutional Neural Network (CNN). The goal is to learn the input-output behavior of an IBR/DER without needing detailed physics-based equations, addressing adaptability and proprietary concerns without requiring internal system physics knowledge. This document will also provide guides on the integration and implementation in the open-source power distribution simulation and analysis tool, GridLAB-D. 
+Inverter-based resource (IBR) models are necessary to analyze modern power system stability and create effective control strategies. Modeling IBRs in converter-rich power systems is crucial yet challenging due to the lack of commercial information on converter topologies and control parameters. This guide provides a step-by-step process for developing a black-box model of inverter-based resources (IBRs) or distributed energy resources (DERs) using a Convolutional Neural Network (CNN). The goal is to learn the input-output behavior of an IBR/DER without needing detailed physics-based equations, addressing adaptability and proprietary concerns without requiring internal system physics knowledge. This document will also provide guides on the integration and implementation in the open-source power distribution simulation and analysis tool, GridLAB-D™. 
 
 ## Grid-Following Inveter
 
-A Grid-Following Inverter relies on Phase-Locked Loop (PLL) technology to track the phase and frequency of the grid voltage. Based on the measured grid parameters, it generates an output current waveform that is synchronized with the grid voltage. The inverter does not have the capability to regulate grid voltage or frequency; instead, it adjusts its operation to follow the grid’s existing conditions. The details of the grid-following inverter can be found here [[[1]](https://gridlab-d.shoutwiki.com/wiki/Spec:inverter_dyn#google_vignette)]. 
+A Grid-Following Inverter relies on Phase-Locked Loop (PLL) technology to track the phase and frequency of the grid voltage. Based on the measured grid parameters, it generates an output current waveform that is synchronized with the grid voltage. The inverter does not have the capability to regulate grid voltage or frequency; instead, it adjusts its operation to follow the grid’s existing conditions. The details of the grid-following inverter can be found here [[[1]](https://GridLAB-D™.shoutwiki.com/wiki/Spec:inverter_dyn#google_vignette)]. 
 
 ## CNN-Based Black-Box Modeling Framework
 
@@ -167,7 +167,7 @@ Pseudocode for the CNN model training and testing:
 
 ## Open-Source Integration: Prediction with CNN
 
-A Keras model saved in the .keras format includes everything needed to reload and continue using the model. It stores the model architecture, trained weights, optimizer state, training configuration, and any custom objects. This format ensures seamless reloading without needing extra code to reconstruct the model. The saved model is then translated into the C++ programming language in the form of a JSON file. To streamline the model conversion process, a third-party C++ library was utilized, Frugally-deep. This library facilitated the conversion of the black-box model into the Frugally-deep file format (.json), allowing for its subsequent loading and execution within a C++ environment. The details of the header library that uses keras models in C++ can be found here [[[2]](https://github.com/Dobiasd/frugally-deep)]. Code below provides the general instructions how the trained model can be translated to C++ code for to integrate into a opensource like GridLAB-D. 
+A Keras model saved in the .keras format includes everything needed to reload and continue using the model. It stores the model architecture, trained weights, optimizer state, training configuration, and any custom objects. This format ensures seamless reloading without needing extra code to reconstruct the model. The saved model is then translated into the C++ programming language in the form of a JSON file. To streamline the model conversion process, a third-party C++ library was utilized, Frugally-deep. This library facilitated the conversion of the black-box model into the Frugally-deep file format (.json), allowing for its subsequent loading and execution within a C++ environment. The details of the header library that uses keras models in C++ can be found here [[[2]](https://github.com/Dobiasd/frugally-deep)]. Code below provides the general instructions how the trained model can be translated to C++ code for to integrate into a opensource like GridLAB-D™. 
 
   
 

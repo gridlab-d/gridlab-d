@@ -10,7 +10,7 @@ Command line option to run model validation test suite [Template:NEW30]
 
 ## Description
 
-The validate command line option initiates the standard model validation process for GridLAB-D. The process functions as follows: 
+The validate command line option initiates the standard model validation process for GridLAB-D™. The process functions as follows: 
 
   1. Recursively scan the [working directory] for directories called `autotest`, ignoring any directory that contains a file named `validate.no`.
   2. For each GLM files found in an `autotest` directory: 
@@ -19,7 +19,7 @@ The validate command line option initiates the standard model validation process
      3. Run `gridlabd` on the GLM file with all the _run-options_
      4. Time and observe results (success, fail, exception)
   3. Report total time and results
-The _test-options_ are applied to the validation instance of GridLAB-D, while the _run-options_ are applied to the test instance of GridLAB-D. For example, 
+The _test-options_ are applied to the validation instance of GridLAB-D™, while the _run-options_ are applied to the test instance of GridLAB-D™. For example, 
     
     
     host% **gridlabd --[threadcount] 2 --validate** 
@@ -109,7 +109,7 @@ Linux/Mac only
 Will email the validation report in to _user_ on the local machine. 
 
 Note -
-    Your local mail server must be configured properly to deliver email to remote hosts and your mail client must be configured properly to read mail on the local mail server. GridLAB-D cannot detect either mail server or mail client configuration errors. Thus problems with either of these can cause mailed report delivery errors to occur with an error being reported in GridLAB-D.
+    Your local mail server must be configured properly to deliver email to remote hosts and your mail client must be configured properly to read mail on the local mail server. GridLAB-D™ cannot detect either mail server or mail client configuration errors. Thus problems with either of these can cause mailed report delivery errors to occur with an error being reported in GridLAB-D™.
 
 ## Caveats
 

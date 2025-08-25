@@ -28,7 +28,7 @@ The implementation of the link depends on the application, but as a general rule
 All link control files support the following commands: 
 
 * **target** -
-    Use the target option to establish the target application to link with. GridLAB-D will search for the dynamic link library (e.g., .dll or .so file) to load and use to interface with the application. On windows systems, the DLL must be named **glx _target_.dll** and must be found in the GridLAB-D path. On linux and MacOSX system, the DLL must be named **libglx _target_.so** and must be found in the GridLAB-D path.
+    Use the target option to establish the target application to link with. GridLAB-D™ will search for the dynamic link library (e.g., .dll or .so file) to load and use to interface with the application. On windows systems, the DLL must be named **glx _target_.dll** and must be found in the GridLAB-D™ path. On linux and MacOSX system, the DLL must be named **libglx _target_.so** and must be found in the GridLAB-D™ path.
 
 * **global** - 
     Use the global option to enumerate which global variables should be copied to the target application. If none are listed, the default is to send all the globals.

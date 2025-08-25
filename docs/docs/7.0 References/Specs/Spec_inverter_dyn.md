@@ -1,6 +1,6 @@
 # Spec:inverter dyn
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:inverter_dyn
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:inverter_dyn
 ## Contents
 
   * 1 Overview
@@ -12,7 +12,7 @@
       * 2.3.2 Transition from delta mode to QSTS
     * 2.4 Initialization
     * 2.5 Definition of Parameters
-    * 2.6 GridLAB-D Model Example
+    * 2.6 GridLAB-D™ Model Example
   * 3 Grid-Following Inverter
     * 3.1 Equivalent Circuit of a Detailed Grid-Following Inverter
     * 3.2 Detailed Grid-Following Controller
@@ -24,18 +24,18 @@
       * 3.4.2 QSTS start
     * 3.5 External Controls
     * 3.6 Definition of Parameters
-    * 3.7 GridLAB-D Model Example
+    * 3.7 GridLAB-D™ Model Example
   * 4 Current Source Representation of Grid-Following Inverter
     * 4.1 Current Source Representation of Grid-Following
     * 4.2 Simplification of Grid-Following Controller
-    * 4.3 GridLAB-D Example Model
+    * 4.3 GridLAB-D™ Example Model
   * 5 Grid-Forming with Updated DC Bus Model
     * 5.1 PV Inverter Interface Modeling
     * 5.2 Controller Modelling
-    * 5.3 GridLAB-D Example Model
+    * 5.3 GridLAB-D™ Example Model
   * 6 Virtual Synchronous Machine (VSM) Control Model
     * 6.1 Virtual Synchronous Machine Mode
-    * 6.2 GridLAB-D Model Example
+    * 6.2 GridLAB-D™ Model Example
   * 7 References
   * 8 See also
 ## Overview
@@ -46,7 +46,7 @@ These represent the specifications and some examples for the [inverter_dyn] obje
 
 ### Equivalent Circuit of a Grid-Forming Inverter and Its Interface to the Network
 
-The equivalent circuits of three-phased and single-phased grid-forming inverters are shown in Figure 1 (a) and (b). The grid-forming controller can be a CERTS droop controller or isochronous controller[1]. When implemented in GridLAB-D, these voltage sources behind coupling reactance are converted to the Norton equivalent circuits for power flow calculation. The following assumptions are made when implementing the grid-forming inverters: 
+The equivalent circuits of three-phased and single-phased grid-forming inverters are shown in Figure 1 (a) and (b). The grid-forming controller can be a CERTS droop controller or isochronous controller[1]. When implemented in GridLAB-D™, these voltage sources behind coupling reactance are converted to the Norton equivalent circuits for power flow calculation. The following assumptions are made when implementing the grid-forming inverters: 
 
   * When the inverter is three-phased, the internal voltages should be three-phase balanced.
   * The dynamics of the dc bus voltage of inverters are not considered. The dc bus voltage is assumed to be constant during any load changes. In future work the dynamics of the dc side such as the PV panels, energy storage, and dc capacitors will be studied. The internal voltage E will be decided by both the Q-V droop control and the dc bus voltage.
@@ -148,7 +148,7 @@ Table 2 - P-f Droop Controller Parameters  $m_p$ [rad/s] | $k_{ppmax}$ [rad/s] |
 ---|---|---|---|---|---  
 3.77 | 3.0 | 30.0 | Normal inverter: 1, Energy storage: -1 to 1 | 1.0 | Nomral inverter: 0, Energy storage: -1   
   
-### GridLAB-D Model Example
+### GridLAB-D™ Model Example
 
 This is an example that effectively has an infinite DC bus 
     
@@ -186,7 +186,7 @@ For a practical grid-following inverter, it also uses a voltage source converter
 
 ### Equivalent Circuit of a Detailed Grid-Following Inverter
 
-Figure 4 (a) and (b) show the equivalent circuits of three-phased and single-phased grid-following inverters respectively. It can be seen that the main circuit of a grid-following inverter is fundamentally either a three-phased or single-phased voltage source. This is because the inverter itself is a voltage source converter. The grid-following controller makes the inverter behaves as a current source. When implemented in GridLAB-D, these voltage sources behind coupling reactance are converted to the Norton equivalent circuits for power flow calculation. The following assumptions are made when implementing grid-following inverter in GridLAB-D: 
+Figure 4 (a) and (b) show the equivalent circuits of three-phased and single-phased grid-following inverters respectively. It can be seen that the main circuit of a grid-following inverter is fundamentally either a three-phased or single-phased voltage source. This is because the inverter itself is a voltage source converter. The grid-following controller makes the inverter behaves as a current source. When implemented in GridLAB-D™, these voltage sources behind coupling reactance are converted to the Norton equivalent circuits for power flow calculation. The following assumptions are made when implementing grid-following inverter in GridLAB-D: 
 
   * For simplicity, the grid-following controller is modeled per phase. This means each phase has its own PLL and current control loop.
   * We assume each phase injects the same amount of P and Q into the grid.
@@ -329,7 +329,7 @@ $\displaystyle{}\omega_0$ | The rated grid angular frequency, usually 376.99 rad
 $\displaystyle{}m_p$ | The P-f droop coefficient. The slope is usually set as 3.77 rad/s, which means the frequency drops 1% as the real power spans from 0 pu to 1 pu.   
 $\displaystyle{}m_q$ | The Q-V droop coefficient. The slope is usually set as 0.05pu.   
   
-### GridLAB-D Model Example
+### GridLAB-D™ Model Example
     
     
     object inverter_dyn {
@@ -395,7 +395,7 @@ Figure 14 - Simplified control block of the current control loop: (a) current lo
 
 Figure 15 - Phase Lock Loop: (a) control block and (b) xy and dq frame coordinate systems.
 
-### GridLAB-D Example Model
+### GridLAB-D™ Example Model
 
 The following is a current-source representation of the grid-following inverter: 
     
@@ -481,9 +481,9 @@ To model the dc bus of PV inverter, the controller also needs to be appropriatel
 
 Figure 18 - Modified controller for PV grid-forming inverters
 
-### GridLAB-D Example Model
+### GridLAB-D™ Example Model
 
-Example GridLAB-D model for a PV-DC bus grid forming inverter 
+Example GridLAB-D™ model for a PV-DC bus grid forming inverter 
     
     
     object inverter_dyn {
@@ -546,7 +546,7 @@ For the reactive power ($Q$) and voltage ($V$) control in the VSM mode Q-V droop
 
 Figure 19 - Active power ($P$) - frequency ($f$) control in VSM mode
 
-### GridLAB-D Model Example
+### GridLAB-D™ Model Example
     
     
     object inverter_dyn {

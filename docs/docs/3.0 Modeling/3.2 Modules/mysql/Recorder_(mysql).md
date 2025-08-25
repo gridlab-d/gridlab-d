@@ -1,6 +1,6 @@
 # Recorder (mysql)
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Recorder_(mysql)
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Recorder_(mysql)
 recorder (mysql) \- MySQL recorder class [Template:NEW30]
 
 ## Synopsis

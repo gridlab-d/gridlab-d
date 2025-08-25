@@ -14,7 +14,7 @@ In its essence, the thermal envelope of the home has a conductance ($U_A$) throu
 
 The bulk of the mass in the home is summed to form the lumped mass $C_M$, which is coupled to the room air through a conductance that represents the sum of the products of the mass surface area and the heat transfer coefficient. The mass of the air in the interior volume of the house is represented by the much smaller mass $C_A$, which is directly couple to the room air. The primary effect of $C_A$ is to realistically dampen the effect of heat delivered to the air ($Q_A$) from the heating/cooling (HVAC) system turning on and off, which would otherwise result in an instantaneous change in room air temperature. 
 
-Heat gains from solar radiation and from appliances are combined with that from the heating/cooling system to form the heat gains to the air, $Q_A$. The House_e model allows a specified fraction for each of the heat gains from heating/cooling, solar radiation, and internal appliances to allow them to bypass the air node and be delivered directly to the mass to form $Q_M$. This can be used to represent solid interior objects absorbing heat from solar radiation shining through windows, for example. This is a reasonable approximation for the wood frame construction predominant in U.S. homes. It becomes an increasingly poor assumption for buildings with massive masonry or brick exterior. Future versions of GridLab-D will have the capability to model these effects explicitly with a modified approach. 
+Heat gains from solar radiation and from appliances are combined with that from the heating/cooling system to form the heat gains to the air, $Q_A$. The House_e model allows a specified fraction for each of the heat gains from heating/cooling, solar radiation, and internal appliances to allow them to bypass the air node and be delivered directly to the mass to form $Q_M$. This can be used to represent solid interior objects absorbing heat from solar radiation shining through windows, for example. This is a reasonable approximation for the wood frame construction predominant in U.S. homes. It becomes an increasingly poor assumption for buildings with massive masonry or brick exterior. Future versions of GridLAB-D™ will have the capability to model these effects explicitly with a modified approach. 
 
 Finally, a time-series solution of the ETP circuit must be solved, with a thermostat controlling the HVAC system to maintain heating and cooling setpoints specified by the occupants. This requires modeling the output of the HVAC system, and the electric input to it, as a function of the type, capacity, and efficiency of the equipment under varying conditions such as the outdoor temperature. 
 
@@ -432,7 +432,7 @@ If auxiliary heat is specified (the default), then a control strategy for it mus
     
 
   * If a _value_ is provided for the Auxiliary_heat_lockout_temperature input parameter, then the auxiliary heat comes "on" whenever the thermostat calls for heating and the outdoor air temperature is below _value_. It remains "on" until the thermostat is satisfied (i.e.,when the heating system would normally go "off"). The default _value_ = _none_. This is an older control strategy particularly common to early heat pump systems in the U.S.
-(NOTE: If used, this parameter should be diversified to represent a realistic range of values in the population by using a distribution as the input. Otherwise an entire population of homes will shift to auxilairy heat at the same time in a GridLAB-D simulation) 
+(NOTE: If used, this parameter should be diversified to represent a realistic range of values in the population by using a distribution as the input. Otherwise an entire population of homes will shift to auxilairy heat at the same time in a GridLAB-D™ simulation) 
 
     
 
@@ -652,9 +652,9 @@ House_e does not explicitly model moisture in the home, so the Twb is assumed to
 
   F_Capacity_Tout = CAP-FT = $K_{0} + K_{1} * T_{out} + K_{2} * T_{out}^{2} + K_{3} * T_{out}^{3}$
 
-The resulting coefficients used by GridLAB-D are shown in the Table 6, below. 
+The resulting coefficients used by GridLAB-D™ are shown in the Table 6, below. 
 
-**Table 6. GridLAB-D Equipment COP Factors**
+**Table 6. GridLAB-D™ Equipment COP Factors**
 
 **HVAC Equipment COP Factors**  
 ---  

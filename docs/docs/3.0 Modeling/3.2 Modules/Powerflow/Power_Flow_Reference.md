@@ -1,10 +1,10 @@
 # Powerflow Tehnical Reference
 
-This documentation explains the technical aspects of the distribution power flow computations as implemented for GridLAB-D. The power flow module provides electrical distribution system modeling for power flow solutions. A power flow calculation is performed to determine what the steady state node voltages and line currents are at each point of the system, given the system model, electrical loads connected at each node, and voltage at the substation. The power flow problem is solved using a three-phase unbalanced flow solver. When the topology is strictly radial from the feeder to the loads, the forward-back sweep method is used, which is the default method. When the topology is non-radial a three-phase unbalanced Gauss-Seidel or Newton-Raphson methods are used. The specific methodology and equations of the forward-back sweep method are described in Kersting (2007). The Gauss-Seidel implementation is described in Grainger and Stevenson (1994). The Newton-Raphson method is described in Garcia, et al. (2000). 
+This documentation explains the technical aspects of the distribution power flow computations as implemented for GridLAB-D™. The power flow module provides electrical distribution system modeling for power flow solutions. A power flow calculation is performed to determine what the steady state node voltages and line currents are at each point of the system, given the system model, electrical loads connected at each node, and voltage at the substation. The power flow problem is solved using a three-phase unbalanced flow solver. When the topology is strictly radial from the feeder to the loads, the forward-back sweep method is used, which is the default method. When the topology is non-radial a three-phase unbalanced Gauss-Seidel or Newton-Raphson methods are used. The specific methodology and equations of the forward-back sweep method are described in Kersting (2007). The Gauss-Seidel implementation is described in Grainger and Stevenson (1994). The Newton-Raphson method is described in Garcia, et al. (2000). 
 
 ## Algorithm Selection
 
-By default, the forward-back sweep algorithm is used to solve powerflow models in GridLAB-D. To change the solver method, a `solver_method` switch must be passed in your .GLM file. When calling the powerflow module, specify `FBS` for the forward-back sweep method , `GS` for the Gauss-Seidel method, or `NR` for the Newton-Raphson method. For example, 
+By default, the forward-back sweep algorithm is used to solve powerflow models in GridLAB-D™. To change the solver method, a `solver_method` switch must be passed in your .GLM file. When calling the powerflow module, specify `FBS` for the forward-back sweep method , `GS` for the Gauss-Seidel method, or `NR` for the Newton-Raphson method. For example, 
     
     
     module powerflow{
@@ -91,7 +91,7 @@ The method used for modeling components in the power flow module is consistent w
 
 ## Node
 
-Nodes represent busses or junctions in the distribution topology. The unbalanced three-phase voltage is calculated for each node and is available via the various output methods of GridLAB-D. The different solvers utilize nodes differently and support different node types. 
+Nodes represent busses or junctions in the distribution topology. The unbalanced three-phase voltage is calculated for each node and is available via the various output methods of GridLAB-D™. The different solvers utilize nodes differently and support different node types. 
 
 The Forward-Back Sweep method (Kersting's method) treats all nodes as the same. Every node is treated as a connection point for lines and provides voltage levels at various points in the system. Loads on the system are handled explicitly in the load object. 
 
@@ -462,7 +462,7 @@ $$[A] = \left [ \begin{matrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{matrix} 
 
 ## Substation
 
-The substation object in the GridLAB-D powerflow module performs two objectives. The substation reads the load_voltage property from the pw_load parent, if present, and converts this positive sequence value to the equivalent balanced three-phase voltages to act as the swing bus voltages for the powerflow solution. The substation takes the three phase unbalanced power solution seen at the substation node, calculates the average power on the phases, and writes this average to the load_power property in the pw_load parent, if present. The substation node also passes positive sequence ZIP components, explicitly set at the substation, to the pw_load parent. In addition, there is a property that allows the user to specify which phase at the substation is the reference phase for the GridLAB-D powerflow solution. The substation object is updated to keep track of the three phase power solution. 
+The substation object in the GridLAB-D™ powerflow module performs two objectives. The substation reads the load_voltage property from the pw_load parent, if present, and converts this positive sequence value to the equivalent balanced three-phase voltages to act as the swing bus voltages for the powerflow solution. The substation takes the three phase unbalanced power solution seen at the substation node, calculates the average power on the phases, and writes this average to the load_power property in the pw_load parent, if present. The substation node also passes positive sequence ZIP components, explicitly set at the substation, to the pw_load parent. In addition, there is a property that allows the user to specify which phase at the substation is the reference phase for the GridLAB-D™ powerflow solution. The substation object is updated to keep track of the three phase power solution. 
 
 Substation is a child class of the node object inside the powerflow module. 
 

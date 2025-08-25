@@ -6,14 +6,14 @@ The Network Module implements a balanced three-phase positive sequence power flo
 
 # Balanced Three-Phase Using Gauss-Seidel
 
-The Gauss-Seidel (GS) method is a linear iterative method (as opposed to the Newton-Raphson (NR) method, which uses a quadratic iterative method). The only differences between the two methods are the rate of convergence and the robustness of convergence when the starting state is bad. Because GridLAB-D is a quasi-steady time-series simulation, most state changes are small and result in few iterations in either method. However, the GS method can be more easily implemented using parallel processing systems (such as multicore and shared-memory systems). In addition, the GS method is more likely to solve for new conditions that are far from the current solution. However, the GS method can have difficulty computing flows under high-transfer conditions. 
+The Gauss-Seidel (GS) method is a linear iterative method (as opposed to the Newton-Raphson (NR) method, which uses a quadratic iterative method). The only differences between the two methods are the rate of convergence and the robustness of convergence when the starting state is bad. Because GridLAB-D™ is a quasi-steady time-series simulation, most state changes are small and result in few iterations in either method. However, the GS method can be more easily implemented using parallel processing systems (such as multicore and shared-memory systems). In addition, the GS method is more likely to solve for new conditions that are far from the current solution. However, the GS method can have difficulty computing flows under high-transfer conditions. 
 
 The GS method uses an iterative approach proposed by von Seidel (1874). The GS method iterates using the first-order approximation of the Taylor expansion, and the NR method uses a second-order approximation. In the GS method the fundamental equation for the $k$th node can written as 
 
 $$\frac{P_k - j Q_k}{V_k^*} = Y_{kk} \bar V_k + \sum_{i=1,i\ne k}^n{Y_{ki} \bar V_i} \qquad(1) 
 $$
 
-The GS method is often criticized as inferior. This is categorically not true. The GS method has strengths and weaknesses when compared to the NR method. Depending on the circumstances, one method may be preferred over the other. But both, indeed all, valid methods produce the same answers. In fact, many commercial power flow solvers implement both methods concurrently, recognizing the necessity to exploit the appropriate method under any given circumstance. Hence, the implementation of the GS method does not make GridLAB-D's solution method inferior. It is simply a recognition that the circumstances of the power flow solution needed in GridLAB-D led to the choice of GS as the default power flow solver. Other power flow solvers can and should be implemented to address different circumstances. We encourage users and developers to consider doing so. 
+The GS method is often criticized as inferior. This is categorically not true. The GS method has strengths and weaknesses when compared to the NR method. Depending on the circumstances, one method may be preferred over the other. But both, indeed all, valid methods produce the same answers. In fact, many commercial power flow solvers implement both methods concurrently, recognizing the necessity to exploit the appropriate method under any given circumstance. Hence, the implementation of the GS method does not make GridLAB-D's solution method inferior. It is simply a recognition that the circumstances of the power flow solution needed in GridLAB-D™ led to the choice of GS as the default power flow solver. Other power flow solvers can and should be implemented to address different circumstances. We encourage users and developers to consider doing so. 
 
 # Node Solution
 
@@ -93,6 +93,6 @@ Gauss CF. 1809. Theoria motus corporum coelestium in sectionibus conicis solem a
 
 Kundur, P. 1993. Power System Stability and Control. McGraw Hill, New York. von Seidel, P.L. 1874. Über ein Verfahren, die Gleichungen, auf welche die Methode der kleinsten Quadrate führt, sowie lineare Gleichungen überhaupt, durch successive Annäherung aufzulösen. Abh. bayer Akad. Wiss, Germany. 
 
-D. P. Chassin., "GridLAB-D Technical Support Document: Network Module Version 1.0", PNNL-17616, Pacific Northwest National Laboratory, Richland WA, USA May 2008.
+D. P. Chassin., "GridLAB-D™ Technical Support Document: Network Module Version 1.0", PNNL-17616, Pacific Northwest National Laboratory, Richland WA, USA May 2008.
 
 

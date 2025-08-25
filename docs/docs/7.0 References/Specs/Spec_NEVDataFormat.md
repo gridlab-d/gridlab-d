@@ -1,6 +1,6 @@
 # Spec:NEVDataFormat
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:NEVDataFormat
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:NEVDataFormat
 SPECIFICATION Approval item: 
 
 ## Contents

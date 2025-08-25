@@ -1,6 +1,6 @@
 # Introduction to Programming GridLAB-D
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Introduction_to_Programming_GridLAB-D
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Introduction_to_Programming_GridLAB-D
 
 ---
 
@@ -92,45 +92,45 @@ Sections in `Courier` represent literal code snippets, whether inline function n
 
 Introduction
 
-This document is meant to explain some of the inner workings of GridLAB-D to those who have recently started working with it, and have not discovered the myriad quirky behaviors that make the simulator work. The “Beginner’s Guide” set is not meant to provide a rigorous explanation of the core and the released modules, but instead is to facilitate understanding of what’s in the core, how it behaves, how the released modules work, and how to write new modules that interface with existing modules. 
+This document is meant to explain some of the inner workings of GridLAB-D™ to those who have recently started working with it, and have not discovered the myriad quirky behaviors that make the simulator work. The “Beginner’s Guide” set is not meant to provide a rigorous explanation of the core and the released modules, but instead is to facilitate understanding of what’s in the core, how it behaves, how the released modules work, and how to write new modules that interface with existing modules. 
 
-The author has a background in computer science, rather than power systems. The focus will be weighted towards how the system works as a piece of software, rather than how power systems are modeled. “It’s the engineer’s job to figure out how it’s supposed to work; it’s the developer’s job to make it work.” Even if the engineer is often also the developer, in context, understanding how a model is supposed to work does not convey understanding of how to implement it within GridLAB-D. 
+The author has a background in computer science, rather than power systems. The focus will be weighted towards how the system works as a piece of software, rather than how power systems are modeled. “It’s the engineer’s job to figure out how it’s supposed to work; it’s the developer’s job to make it work.” Even if the engineer is often also the developer, in context, understanding how a model is supposed to work does not convey understanding of how to implement it within GridLAB-D™. 
 
 # 
 
 Running Example
 
-Throughout the guide, a Metronome class will be referred to. There is no Metronome module or class defined in GridLAB-D (yet!), but it is used as a simple device that can be readily modeled. All mention of the Metronome class will attempt to remain internally consistent as additional concepts and properties about GridLAB-D are introduced to the reader. Another class and module will likely be added to better explain how objects communicate between modules. 
+Throughout the guide, a Metronome class will be referred to. There is no Metronome module or class defined in GridLAB-D™ (yet!), but it is used as a simple device that can be readily modeled. All mention of the Metronome class will attempt to remain internally consistent as additional concepts and properties about GridLAB-D™ are introduced to the reader. Another class and module will likely be added to better explain how objects communicate between modules. 
 
-There is a separate document that only concerns itself with the MetronomeExample, and is recommended either as a jump-start for writing GridLAB-D classes, or if the examples in this guide are discontinuous to the reader. 
+There is a separate document that only concerns itself with the MetronomeExample, and is recommended either as a jump-start for writing GridLAB-D™ classes, or if the examples in this guide are discontinuous to the reader. 
 
 # 
 
 Objects, Classes, Modules
 
-GridLAB-D, in practice, concerns itself with objects, the class of each of those objects, and the DLL modules that registered those classes. 
+GridLAB-D™, in practice, concerns itself with objects, the class of each of those objects, and the DLL modules that registered those classes. 
 
-The largest building block for GridLAB-D is the module. These are DLLs that are loaded by the GridLAB-D core that use the core functions to register a set of classes, and a set of properties for each of those classes. The core has a small structure with handles to various parts for that DLL, including its name, the module interface functions such as init and check, and the classes registered with that module. 
+The largest building block for GridLAB-D™ is the module. These are DLLs that are loaded by the GridLAB-D™ core that use the core functions to register a set of classes, and a set of properties for each of those classes. The core has a small structure with handles to various parts for that DLL, including its name, the module interface functions such as init and check, and the classes registered with that module. 
 
-GridLAB-D classes are similar to, but not the C++ classes that are coded for them. The core sees a class as a structure with a set of published properties, with some function pointers to the common routines, such as create, init, sync, and isa, then stores the name and instance size (in bytes) of the class. 
+GridLAB-D™ classes are similar to, but not the C++ classes that are coded for them. The core sees a class as a structure with a set of published properties, with some function pointers to the common routines, such as create, init, sync, and isa, then stores the name and instance size (in bytes) of the class. 
 
-GridLAB-D objects are malloc’ed structures that include enough space for a GridLAB-D object header and an instance of the class. In practice, the C++ classes are created using malloc() in the core, rather than using new() in the modules. Using the properties defined for the GridLAB-D class, it is possible for modules with no definition for an object’s C++ class to access any published variable in that foreign class. 
+GridLAB-D™ objects are malloc’ed structures that include enough space for a GridLAB-D™ object header and an instance of the class. In practice, the C++ classes are created using malloc() in the core, rather than using new() in the modules. Using the properties defined for the GridLAB-D™ class, it is possible for modules with no definition for an object’s C++ class to access any published variable in that foreign class. 
 
-A published variable is one that is explicitly registered with the GridLAB-D core from within a class’s registration process. The property structure holds only the name of the property, its type, and an offset pointer to find the variable from the start of the object’s class block. 
+A published variable is one that is explicitly registered with the GridLAB-D™ core from within a class’s registration process. The property structure holds only the name of the property, its type, and an offset pointer to find the variable from the start of the object’s class block. 
 
 Graphically, objects in memory look like ` [[struct OBJECT][class Metronome-----]] [[struct OBJECT][class Link]] [[struct OBJECT][class Metronome-----]] [[struct OBJECT][class Light--]] ` The contents of the Object struct are always at the start of the allocated memory block, and the entire object is allocated as one block. 
 
 ## The Core
 
-The first thing to recognize is that GridLAB-D functions much like a combination of a compiler and an operating system. It defines modules, classes, objects, inheritance hierarchy, and named variable types, loads in DLLs to extend its capabilities, links various objects together by name instead of address, contains PATH information, and handles object processing distribution and order. Though incomplete as an operating system, and unable to write programs or scripted instructions, many similarities exist at the deeper levels. 
+The first thing to recognize is that GridLAB-D™ functions much like a combination of a compiler and an operating system. It defines modules, classes, objects, inheritance hierarchy, and named variable types, loads in DLLs to extend its capabilities, links various objects together by name instead of address, contains PATH information, and handles object processing distribution and order. Though incomplete as an operating system, and unable to write programs or scripted instructions, many similarities exist at the deeper levels. 
 
 The second thing to recognize is that GridLAB-D’s simulation model is event-driven, instead of time-driven. Every object reports the time it will next change state. The clock will then advance to the time of the next state change, and process the new states for all the objects in the model for that time step. 
 
-The third thing to observe is that GridLAB-D doesn’t do a great deal by itself. Without a model file or any modules, it becomes a big “Hello World!” exercise. If a model file includes, but does not use, objects of a particular type, that functionality is never realized. Without some sort of action from GridLAB-D, it looks much like a large black monolith. 
+The third thing to observe is that GridLAB-D™ doesn’t do a great deal by itself. Without a model file or any modules, it becomes a big “Hello World!” exercise. If a model file includes, but does not use, objects of a particular type, that functionality is never realized. Without some sort of action from GridLAB-D™, it looks much like a large black monolith. 
 
 ## GL_* Global Functions
 
-A great deal of the consternation with the core, when developing modules, is that there is no direct access to the core. There are instead a set of callbacks that are exported to modules through inclusion of gridlabd.h. The callback structure, defined in module.c, near line 500, and in object.h, near line 50, is a large group of function pointers that are populated when the core starts up, and is passed to each DLL as they are loaded. This structure is available within modules developed from the GridLAB-D basecode, and allows the functions below to be used transparently. 
+A great deal of the consternation with the core, when developing modules, is that there is no direct access to the core. There are instead a set of callbacks that are exported to modules through inclusion of gridlabd.h. The callback structure, defined in module.c, near line 500, and in object.h, near line 50, is a large group of function pointers that are populated when the core starts up, and is passed to each DLL as they are loaded. This structure is available within modules developed from the GridLAB-D™ basecode, and allows the functions below to be used transparently. 
 
 The bulk of this section has been moved to [wiki:globalvar] and [wiki:outputfuncs]. 
 
@@ -138,7 +138,7 @@ The bulk of this section has been moved to [wiki:globalvar] and [wiki:outputfunc
 
 Runtime Organization
 
-The breakdown of the various steps when running GridLAB-D includes the whole simulation run, the timesteps, the iterations, and the passes. The whole of the simulation is composed of a number of arbitrarily long time steps. The length is calculated based on which object will change state the soonest. This may be as short as one second away, or it may be several days until an object changes state. At the end of a time step, all the objects will have advanced to the same time and will have converged to an answer. During each time step, the core iterates through until all the objects converge to an answer. With each iteration of the core, every object will attempt to sync to the next time stamp as instructed by the core. If any object does not converge, it should return a timestamp equal to the time being advanced to, as an indication that it is waiting for other objects to perform an iterative process. If a number of iterations pass without converging to a solution -- 100 iterations by default -- the simulation will abort. This prevents the simulation from infinitely looping, such as when a transformer in the simulation is unknowingly overloading and starts to swing. Every iteration of the core calls three sync passes: pre-top-down, bottom-up, and post-top-down. “Bottom-up” and “top-down” both refer to the object ranks, with the root objects having the lowest rank, and the child nodes being the higher ranks. Think of rank as the height of a leaf on a tree. Each iteration calls the sync function for every object that participates in that pass. If an object is out of service (defined by in_svc and out_svc in the model file), it will be skipped and implicitly return TS_NEVER, its in_svc time, or its out_svc time, whichever is sooner. 
+The breakdown of the various steps when running GridLAB-D™ includes the whole simulation run, the timesteps, the iterations, and the passes. The whole of the simulation is composed of a number of arbitrarily long time steps. The length is calculated based on which object will change state the soonest. This may be as short as one second away, or it may be several days until an object changes state. At the end of a time step, all the objects will have advanced to the same time and will have converged to an answer. During each time step, the core iterates through until all the objects converge to an answer. With each iteration of the core, every object will attempt to sync to the next time stamp as instructed by the core. If any object does not converge, it should return a timestamp equal to the time being advanced to, as an indication that it is waiting for other objects to perform an iterative process. If a number of iterations pass without converging to a solution -- 100 iterations by default -- the simulation will abort. This prevents the simulation from infinitely looping, such as when a transformer in the simulation is unknowingly overloading and starts to swing. Every iteration of the core calls three sync passes: pre-top-down, bottom-up, and post-top-down. “Bottom-up” and “top-down” both refer to the object ranks, with the root objects having the lowest rank, and the child nodes being the higher ranks. Think of rank as the height of a leaf on a tree. Each iteration calls the sync function for every object that participates in that pass. If an object is out of service (defined by in_svc and out_svc in the model file), it will be skipped and implicitly return TS_NEVER, its in_svc time, or its out_svc time, whichever is sooner. 
 
 Each sync pass involves calling presync(), sync(), or postsync() for every object. The sync() family calls have two arguments, the time that they are supposed to sync from and the time they are supposed to sync to. The function also returns the time at which its internal state will next change. 
 
@@ -146,7 +146,7 @@ Each sync pass involves calling presync(), sync(), or postsync() for every objec
 
 ## On Sync()
 
-One frequently asked question is “Why is my object running until the 31st century?” The sync() call seems to be the least understood and most unpredictable part of the GridLAB-D model. 
+One frequently asked question is “Why is my object running until the 31st century?” The sync() call seems to be the least understood and most unpredictable part of the GridLAB-D™ model. 
 
 The inline, doxygen-base documentation for the sync call is: 
 
@@ -164,13 +164,13 @@ An important point comes up: the sync function needs to return only when an obje
 
 ## The Clock
 
-The GridLAB-D clock is one of the simplest and most frequently confused pieces of the system. During each sync pass, every object returns a timestamp “at which its internal state will next change”. As each object is processed, a quick comparison is made between the time the object’s sync() returns, and the lowest timestamp that has been returned by the other objects that iteration. At the end of the iteration, the core checks to see that every object is able to progress to a later timestamp, ie, that it has converged and returned a timestamp in the future. If any object returns a time that is not in the future, either an error is reported, or it is assumed that another simulator iteration is required. 
+The GridLAB-D™ clock is one of the simplest and most frequently confused pieces of the system. During each sync pass, every object returns a timestamp “at which its internal state will next change”. As each object is processed, a quick comparison is made between the time the object’s sync() returns, and the lowest timestamp that has been returned by the other objects that iteration. At the end of the iteration, the core checks to see that every object is able to progress to a later timestamp, ie, that it has converged and returned a timestamp in the future. If any object returns a time that is not in the future, either an error is reported, or it is assumed that another simulator iteration is required. 
 
 Example: Consider a model with two metronomes. One has a rate of 20 seconds, and the other has a rate of 25 seconds. Both metronomes will run five times. The first metronome will tick at 20, 40, 60, 80, and 100. The second metronome will tick at 25, 50, 75, 100, and 125. When this model runs, the clock will advance through 20, 25, 40, 50, 60, 75, 80, 100, and 125 seconds. Both metronomes will have their sync() called every time the clock advances, resulting in m1->sync(0, 20), m2->sync(0, 20), m1->sync(20, 25), m2->sync(20, 25), m1->sync(25, 40), m2->sync(25, 40), etc. Any other objects in the simulation will also be called at these time steps. 
 
 ## AGGREGATION
 
->reorganize and clarify Aggregations are a combination of a GridLAB-D find operation and a mathematical function performed for each object found. 
+>reorganize and clarify Aggregations are a combination of a GridLAB-D™ find operation and a mathematical function performed for each object found. 
 
 The valid aggregation groups include: min Minimum value max Maximum value avg Average value std Standard deviation sum Sum of all values prod Product of all values mbe =sum(abs(value – avg(value))) mean Average value (like avg) var Variance kur Kurtosis (in development) ~ “a measure of the ‘peaked-ness’ of the probability distribution” count Size of the set gamma =1 + sum(log(value)) / (n–sum(log(value))*log(max(value)) 
 
@@ -194,7 +194,7 @@ Modules and Dealing With the Core
 
 ## Fetching Objects in the core
 
-GridLAB-D is able to dynamically access foreign objects at run-time, with only an interface of the class and variable names. An object find capability is built in the core that allows modules to search the object list for objects that meet specified criteria. For the following examples, assume that we are using an input file with the following directives: 
+GridLAB-D™ is able to dynamically access foreign objects at run-time, with only an interface of the class and variable names. An object find capability is built in the core that allows modules to search the object list for objects that meet specified criteria. For the following examples, assume that we are using an input file with the following directives: 
     
     
     class example {
@@ -206,7 +206,7 @@ GridLAB-D is able to dynamically access foreign objects at run-time, with only a
     }
     
 
-For details on the implementation in each version of GridLAB-D see the [Source documentation]. 
+For details on the implementation in each version of GridLAB-D™ see the [Source documentation]. 
 
 ### OBJECT *gl_get_object(char *objname)
 
@@ -300,7 +300,7 @@ The `enumeration` property allows the core to create a variable that associates 
 
 The set variable is similar to the enumeration variable, but behaves like a bitfield instead of an enumeration. Setting a color set to “RED|GREEN” is legitimate, as would “RED”, “GREEN”, “RED|GREEN|YELLOW”. Whitespace between the pipe and a keyword is counted as part of the keyword. The integer representations, defined when the set variable is published by the class, must use values that conform to bitwise operations (powers of 2). If a particular state conforms with more than one other state, that state will be printed first. IE, if “PURPLE” has the same value as “RED|BLUE”, the value “RED|WHITE|BLUE” would be printed as “PURPLE|WHITE”. If a particular set is composed of only single letter characters, the pipe may be omitted, making “ABCD” and “A|B|C|D” equivalent statements. This exception concerns the published keywords, rather than the keywords used in the set, such that if “R” and “RED” were equivalent keywords, and “B” and “BLUE” were equivalent keywords, “R|B” would be a valid set definition, while “RB” was not. 
 
-Unlike `enum` types in C and Java, the keywords registered for an enumeration or a set in GridLAB-D only applies to the published variable they are created with. Where we could define an enum Shape {Box, Circle, Triangle}; and declare Shape S1, S2, S3; to use all three keywords, we would need to define Box, Circle, and Triangle for S1, S2, and S3 in the published property list if we wanted uniform keywords between those published properties.. While this is an observed limitation of the core, this is not considered to be a bug. 
+Unlike `enum` types in C and Java, the keywords registered for an enumeration or a set in GridLAB-D™ only applies to the published variable they are created with. Where we could define an enum Shape {Box, Circle, Triangle}; and declare Shape S1, S2, S3; to use all three keywords, we would need to define Box, Circle, and Triangle for S1, S2, and S3 in the published property list if we wanted uniform keywords between those published properties.. While this is an observed limitation of the core, this is not considered to be a bug. 
 
 The `void` type stores no values. It can provide a pointer to something in memory, but will not access that particular handle in practice. Attempts to set the property in a model file will have no effect, and output files will simply print “(void)”. 
 
@@ -308,7 +308,7 @@ These properties will come up later when we explain how to publish class propert
 
 ## Registering classes with the core
 
-Writing classes and filling in the sync functions becomes the staple activity for developing GridLAB-D modules, but to be useful, every class has to be registered with the core. This requires only two function calls. 
+Writing classes and filling in the sync functions becomes the staple activity for developing GridLAB-D™ modules, but to be useful, every class has to be registered with the core. This requires only two function calls. 
 
 The first step is to construct and register the module itself. The basecode for the module interface can be found in the init.cpp file that each module has. 
 
@@ -362,11 +362,11 @@ In short, the objects form a directed graph with the parent property, and object
 
 Model Initialization
 
-Quite a few things happen in GridLAB-D when it runs with an input file. The first noteworthy event is when the core begins parsing the command line arguments. They are processed immediately as they are encountered, working from left to right. This can be used to override global values defined in model files, to silence only the model loader, or other small things. 
+Quite a few things happen in GridLAB-D™ when it runs with an input file. The first noteworthy event is when the core begins parsing the command line arguments. They are processed immediately as they are encountered, working from left to right. This can be used to override global values defined in model files, to silence only the model loader, or other small things. 
 
 What we really care about at runtime is loading the model file into the simulation. There are both GLM and XML parsers, which are sensitive to the file extension. The core will default to GLM parsing for .txt files, and refuse to process unrecognized file types. 
 
-The general structure of a GLM file is to start with a commented-out header that explains the purpose of the model, what it models, the author, and the version of GridLAB-D and the associated modules that it was written for. Comments are statements that begin with the pound sign. 
+The general structure of a GLM file is to start with a commented-out header that explains the purpose of the model, what it models, the author, and the version of GridLAB-D™ and the associated modules that it was written for. Comments are statements that begin with the pound sign. 
 
 Frequently, a clock block is included first, to provide a zero point for the model. Using a clock is recommended for consistency. The typical clock used is: ` clock { timestamp '2000-01-01 0:00:00'; timezone EST+5EDT; } ` The third segment of most models is the module list, which will load in the named module. For example, “module powerflow;” will look for the powerflow module DLL, load it into memory, and call the init() routine in init.cpp. By convention, modules will register their classes at this point, running the code typically found in the C++ class constructors. This is the point at which a module will fail to load. The progress of module loading can be followed using the –verbose flag. 
 
@@ -418,17 +418,17 @@ Converts a Unix timestamp into a DATETIME struct, adjusting the timezone if nece
 
 COMMAND LINE ARGUMENTS
 
-The overarching control of GridLAB-D is provided with command line arguments, which stems from a heavy Linux background for all of the core developers. The following list includes the documented and the undocumented command line arguments, in order of perceived importance. 
+The overarching control of GridLAB-D™ is provided with command line arguments, which stems from a heavy Linux background for all of the core developers. The following list includes the documented and the undocumented command line arguments, in order of perceived importance. 
 
 ### [filename]
 
-The inclusion of “just” a filename, relative or absolute, will cause GridLAB-D to use that file as an input model file. GridLAB-D only supports one model file at a time, and will abort if more than one model file is found on the command line. 
+The inclusion of “just” a filename, relative or absolute, will cause GridLAB-D™ to use that file as an input model file. GridLAB-D™ only supports one model file at a time, and will abort if more than one model file is found on the command line. 
 
 ### -o [filename]
 
 ### \--output [filename]
 
-Output the model solution to a file. GridLAB-D is sensitive to the file extension, and will use either GLM or XML format based on .txt, .glm, or .xml extensions. Only the last output file on the command line will be used. 
+Output the model solution to a file. GridLAB-D™ is sensitive to the file extension, and will use either GLM or XML format based on .txt, .glm, or .xml extensions. Only the last output file on the command line will be used. 
 
 ### \--kml[=filename]
 
@@ -452,7 +452,7 @@ Runs the model in the debugger, rather than the normal simulator loop, providing
 
 ### \--version
 
-Displays the current version of GridLAB-D on stdout. 
+Displays the current version of GridLAB-D™ on stdout. 
 
 ### \--xmlencoding {0, 1}
 

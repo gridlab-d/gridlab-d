@@ -1,6 +1,6 @@
 # CMake Build
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/CMake_Build
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/CMake_Build
 
 ---
  
@@ -30,7 +30,7 @@
       * 1.4.2 Install HomeBrew
       * 1.4.3 Install build dependencies
       * 1.4.4 (HELICS-only) Find the location of the HELICS library file libhelics.dylib
-      * 1.4.5 Clone in the GridLAB-D repo and set up the build directory (as in above instructions)
+      * 1.4.5 Clone in the GridLAB-D™ repo and set up the build directory (as in above instructions)
       * 1.4.6 Configure the build
       * 1.4.7 Build and install (as in above instructions)
 # Building GridLAB-D
@@ -55,10 +55,10 @@ If you have an Apple-ARM-based Mac, be sure to skip to the [ARM-Based Section] f
 
 ### Git
 
-Clone the git repository for GridLAB-D and update submodules: 
+Clone the git repository for GridLAB-D™ and update submodules: 
     
     
-    git clone <https://github.com/gridlab-d/gridlab-d.git>
+    git clone <https://github.com/gridlab-d/GridLAB-D™.git>
     cd gridlab-d
     git submodule update --init
     
@@ -85,7 +85,7 @@ Below is a general format guide, and an actual viable build command for most pla
     
     
     # Full Example: 
-    cmake -DCMAKE_INSTALL_PREFIX=~/software/GridLAB-D -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - Unix Makefiles" ..
+    cmake -DCMAKE_INSTALL_PREFIX=~/software/GridLAB-D™ -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - Unix Makefiles" ..
     
 
 ### Build and install the application
@@ -133,7 +133,7 @@ To output all build commands during build, set following flag to `ON`
 
 ### Developer Build Flags
 
-GridLAB-D Developers may want to enable additional C++ code style and bugprone checks, which have been made available through the use of the clang-tidy tool at compile time. To enable these build-time checks, a flag to enable these checks is provided 
+GridLAB-D™ Developers may want to enable additional C++ code style and bugprone checks, which have been made available through the use of the clang-tidy tool at compile time. To enable these build-time checks, a flag to enable these checks is provided 
     
     
     GLD_USE_CLANG_TIDY=ON
@@ -143,7 +143,7 @@ WARNING: Enabling clang-tidy checks will significantly increase the number of bu
 
 ## Building on ARM-Based macOS (M1, M2, M3....)
 
-As of this writing (Sept 2024), GridLAB-D functions best when built as a x86-64 (Intel-chip) binary where macOS can use [Rosetta 2](https://support.apple.com/en-us/102527) to translate the machine code to run on an ARM-based processor. 
+As of this writing (Sept 2024), GridLAB-D™ functions best when built as a x86-64 (Intel-chip) binary where macOS can use [Rosetta 2](https://support.apple.com/en-us/102527) to translate the machine code to run on an ARM-based processor. 
 
 ### Switch the architecture of the Terminal shell
     
@@ -167,7 +167,7 @@ This launches a new zsh shell as an x86-64 process so the compilation/build run 
     brew install cmake # installs cmake and ccmake
     
 
-Optionally, if you plan on including HELICS compatibility in GridLAB-D, install the ZeroMQ library 
+Optionally, if you plan on including HELICS compatibility in GridLAB-D™, install the ZeroMQ library 
     
     
     brew install zeromq
@@ -185,7 +185,7 @@ as a starting point for your search. Other good places to look include `/usr/lib
 
 Once you find libhelics.dylib, copy the path to the folder containing it as it will be needed in configuring the build. 
 
-### Clone in the GridLAB-D repo and set up the build directory (as in above instructions)
+### Clone in the GridLAB-D™ repo and set up the build directory (as in above instructions)
 
 No special macOS instructions, here. The next step comes when configuring the build by running 
     

@@ -1,19 +1,19 @@
 # Transmission
 
-The transmission and distribution integration framework provides a means for GridLAB-D's distribution-level powerflow results to interact with a transmission-level model. This allows modeling the impact of aggregating control effects and demand response on the transmission grid, as well as the transmission-level impact of distribution-side resources. GridLAB-D interfaces with the commercially available [PowerWorld Corporation's Simulator](http://www.powerworld.com/products/simulator.asp) program, which handles the model and the transmission solver, while providing both transmission-level powerflow and dynamics simulation. 
+The transmission and distribution integration framework provides a means for GridLAB-D's distribution-level powerflow results to interact with a transmission-level model. This allows modeling the impact of aggregating control effects and demand response on the transmission grid, as well as the transmission-level impact of distribution-side resources. GridLAB-D™ interfaces with the commercially available [PowerWorld Corporation's Simulator](http://www.powerworld.com/products/simulator.asp) program, which handles the model and the transmission solver, while providing both transmission-level powerflow and dynamics simulation. 
 
 # Classes
 
 All T&D  classes will reside inside a network module. This module will provide classes that connect to PowerWorld, that pass values from powerflow  objects to a PowerWorld model, and record the behavior of the module and its instantiated objects. 
 
-Currently, all the GridLAB-D classes are loaded with 
+Currently, all the GridLAB-D™ classes are loaded with 
     
     module network;
     
 
 ## pw_model
 
-The pw_model class represents an individual PowerWorld model that GridLAB-D is communicating with via a [SimAuto](http://www.powerworld.com/products/simulator/add-ons-2/simauto) link. It will identify, load, and recalculate the model based on GLM inputs and GridLAB-D simulation updates. 
+The pw_model class represents an individual PowerWorld model that GridLAB-D™ is communicating with via a [SimAuto](http://www.powerworld.com/products/simulator/add-ons-2/simauto) link. It will identify, load, and recalculate the model based on GLM inputs and GridLAB-D™ simulation updates. 
 
 ### Prerequisites
 
@@ -39,7 +39,7 @@ An example pw_model definition:
       }
     
 
-The only required field is the model_name, which must point to a file. This file is loaded by SimAuto, so is not validated until the COM calls are made. Note that any backslashes in the path (\\) must be duplicated. This ensures GridLAB-D passes the proper path to the PowerWorld Simulator. 
+The only required field is the model_name, which must point to a file. This file is loaded by SimAuto, so is not validated until the COM calls are made. Note that any backslashes in the path (\\) must be duplicated. This ensures GridLAB-D™ passes the proper path to the PowerWorld Simulator. 
 
 The properties "update_flag", "exchange_count", and "valid_flag" are recordable reference properties that may be of interest during troubleshooting. 
 
@@ -49,17 +49,17 @@ Input Name  | Quantity type  | Description
 ---|---|---  
 model_name  | string  | The file path for the PowerWorld model to run. If the path is blank, or the file cannot be opened by PowerWorld, the run will stop.   
 update_flag  | bool  | A flag set by the pw_load objects that are attached to the specific pw_model, and reset by the model when it calls for a PowerWorld update.   
-valid_flag  | bool  | A flag set by the pw_model if the underlying PowerWorld model is in a valid state. Should this flag be set to 'false', the GridLAB-D powerflow solution will use the last good voltage value and will abort should GridLAB-D converge while PowerWorld remains divergent.   
+valid_flag  | bool  | A flag set by the pw_model if the underlying PowerWorld model is in a valid state. Should this flag be set to 'false', the GridLAB-D™ powerflow solution will use the last good voltage value and will abort should GridLAB-D™ converge while PowerWorld remains divergent.   
   
 ### Published Outputs
 
 Output Name  | Quantity type  | Description   
 ---|---|---  
-exchange_count  | int32  | The number of times PowerWorld and GridLAB-D have exchanged voltage and load information.   
+exchange_count  | int32  | The number of times PowerWorld and GridLAB-D™ have exchanged voltage and load information.   
   
 ## pw_load
 
-pw_load objects correspond with loads in PowerWorld. When PowerWorld updates, the positive sequence voltage is read in and applied to the GridLAB-D object, which is later converted to balanced three-phase by a substation object. When the GridLAB-D pw_load's present load changes by more than a certain threshold, the pw_load will set a flag in its corresponding pw_model indicating that the PowerWorld loads need to be updated, that PowerWorld needs to recalculate at the end of the iteration, and that GridLAB-D will need to reiterate with new values from PowerWorld. 
+pw_load objects correspond with loads in PowerWorld. When PowerWorld updates, the positive sequence voltage is read in and applied to the GridLAB-D™ object, which is later converted to balanced three-phase by a substation object. When the GridLAB-D™ pw_load's present load changes by more than a certain threshold, the pw_load will set a flag in its corresponding pw_model indicating that the PowerWorld loads need to be updated, that PowerWorld needs to recalculate at the end of the iteration, and that GridLAB-D™ will need to reiterate with new values from PowerWorld. 
 
 ### Usage
 
@@ -84,7 +84,7 @@ A typical pw_load looks like:
       }
     
 
-A Substation object must be used to connect a pw_load to the GridLAB-D Powerflow solver. 
+A Substation object must be used to connect a pw_load to the GridLAB-D™ Powerflow solver. 
 
 ### Published Inputs
 
@@ -107,7 +107,7 @@ load_voltage  | complex Volts  | The voltage as dictated by the PowerWorld bus i
   
 ## pw_recorder
 
-The pw_recorder is a special-purpose recording device that directly accesses PowerWorld objects through the API, which cannot be done using a traditional recorder. This gives visibility into objects on the 'other side of the fence' from GridLAB-D. 
+The pw_recorder is a special-purpose recording device that directly accesses PowerWorld objects through the API, which cannot be done using a traditional recorder. This gives visibility into objects on the 'other side of the fence' from GridLAB-D™. 
 
 The pw_recorder's interface is a cross between the recorder's and a pw_load object. The outfile, properties, interval, and limit parameters mirror the recorder. The obj_class, key_strings, and key_value describe what object is to be recorded from PowerWorld. The model property, or the parent object, must be the pw_model that the desired object can be found in. 
 
@@ -137,7 +137,7 @@ A pw_recorder that measures the voltage and power from a load:
 Input Name  | Quantity type  | Description   
 ---|---|---  
 model  | pw_model object  | The PowerWorld model object to monitor. If no model is specified, the pw_recorder will check if there is a parent object that is a pw_model, and will fill 'model' with the parent. If a model has not been selected by sync time, the pw_recorder will remain inactive.   
-outfile_name  | string  | The file path to use for the output file. If blank, a name will be automatically generated from the pw_recorder's model and GridLAB-D ID number.   
+outfile_name  | string  | The file path to use for the output file. If blank, a name will be automatically generated from the pw_recorder's model and GridLAB-D™ ID number.   
 obj_class  | string  | The name of the class of the PowerWorld object that will be recorded.   
 key_strings  | string  | A comma-delimited list of key fields required to identify the PowerWorld target object.   
 key_values  | string  | A comma-delimited list of key field values that uniquely identify the PowerWorld target object.   
@@ -147,7 +147,7 @@ limit  | integer  | The maximum number of lines to write to a file.
   
 ## Substation Property Hooks
 
-The substation object in the GridLAB-D powerflow module performs two objectives. The substation reads the load_voltage property from the pw_load parent, if present, and converts this positive sequence value to the equivalent balanced three-phase voltages to act as the swing bus voltages for the powerflow solution. The substation takes the three phase unbalanced power solution seen at the substation node, calculates the average power on the phases, and writes this average to the load_power property in the pw_load parent, if present. The substation node also passes positive sequence ZIP components, explicitly set at the substation, to the pw_load parent. In addition, there is a property that allows the user to specify which phase at the substation is the reference phase for the GridLAB-D powerflow solution. The substation object is updated to keep track of the three phase power solution. 
+The substation object in the GridLAB-D™ powerflow module performs two objectives. The substation reads the load_voltage property from the pw_load parent, if present, and converts this positive sequence value to the equivalent balanced three-phase voltages to act as the swing bus voltages for the powerflow solution. The substation takes the three phase unbalanced power solution seen at the substation node, calculates the average power on the phases, and writes this average to the load_power property in the pw_load parent, if present. The substation node also passes positive sequence ZIP components, explicitly set at the substation, to the pw_load parent. In addition, there is a property that allows the user to specify which phase at the substation is the reference phase for the GridLAB-D™ powerflow solution. The substation object is updated to keep track of the three phase power solution. 
 
 Substation continues to be a child class of the node object inside the powerflow module. A typical substation implementation is 
     

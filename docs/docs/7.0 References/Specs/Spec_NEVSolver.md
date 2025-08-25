@@ -1,6 +1,6 @@
 # Spec:NEVSolver
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:NEVSolver
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:NEVSolver
 SPECIFICATION Approval item: 
 
 ## Contents
@@ -18,11 +18,11 @@ SPECIFICATION Approval item:
   * 7 See also
 # Overview
 
-The NEV solver will utilize the current injection method outlined in [1]. The underlying algorithm is utilized in the existing Newton-Raphson (NR) solver inside GridLAB-D as TCIM-NR. The Neutral Earth Voltage (NEV) solver will use the same TCIM-NR approach, but will expand the solution to support more than three phases. superLU will continue to be the default LU decomposition solver for the NEV solver, but support for external LU solvers (such as KLU) will be incorporated in a manner similar to the existing Newton-Raphson solver. 
+The NEV solver will utilize the current injection method outlined in [1]. The underlying algorithm is utilized in the existing Newton-Raphson (NR) solver inside GridLAB-D™ as TCIM-NR. The Neutral Earth Voltage (NEV) solver will use the same TCIM-NR approach, but will expand the solution to support more than three phases. superLU will continue to be the default LU decomposition solver for the NEV solver, but support for external LU solvers (such as KLU) will be incorporated in a manner similar to the existing Newton-Raphson solver. 
 
 # Process
 
-While the details of the algorithm are found in [1], the basic process for implementation within GridLAB-D will occur in the following steps: 
+While the details of the algorithm are found in [1], the basic process for implementation within GridLAB-D™ will occur in the following steps: 
 
   1. `link` objects will compute their static base admittance matrix contributions. This occurs as part of the normal exec loop process, likely during `presync` calls. 
      1. `link` objects will post their "off-block", "transfer admittance" diagonal matrix elements to the overall system admittance matrix, in `Y_NEV` format. This will be the portions associated with the current transfers between nodes.
@@ -50,14 +50,14 @@ While the details of the algorithm are found in [1], the basic process for imple
   6. Reiterate from step 2, as necessary until convergence or a convergence limit is reached.
 # Solution Timing
 
-As with many items within GridLAB-D, timing of the various steps in the NEV solver process will be a key concern. Pieces of information must fully pass between dependent components before certain steps, such as the LU decomposition, can occur. Current implementations of GridLAB-D impose the following restriction on the dependency of steps above: 
+As with many items within GridLAB-D™, timing of the various steps in the NEV solver process will be a key concern. Pieces of information must fully pass between dependent components before certain steps, such as the LU decomposition, can occur. Current implementations of GridLAB-D™ impose the following restriction on the dependency of steps above: 
 
   * All admittance changes must be done and in the overall matrix format before the LU decomposition can occur.
   * All load contributions must be finalized before the nodal admittance contributions are computed.
   * All line contributions to nodal admittance portions must be finalized before the final nodal admittance contributions are computed.
   * Load contributions are typically included by other objects in sync or presync at this time.
   * Current and power calculations in individual objects will rely on the solved voltage values, so they must occur after the LU decomposition.
-Based on these restrictions, the following execution order is proposed within the GridLAB-D framework. Note that the order of "intra-pass" operations will need to rely on object ranking or a similar mechanism to ensure operations occur in the proper order. 
+Based on these restrictions, the following execution order is proposed within the GridLAB-D™ framework. Note that the order of "intra-pass" operations will need to rely on object ranking or a similar mechanism to ensure operations occur in the proper order. 
 
   1. **Presync**
      1. Link objects post admittance contributions to nodes and overall admittance matrix
@@ -78,11 +78,11 @@ The NEV solver will include the capability to have multiple islanded systems wit
     * Distributed generation, especially in deltamode+. This will be determined with the `HAS_SOURCE` flag that already exists within `node` objects.
   * Pure support checks will be conducted via the `fault_check` object to see which objects have a connection to at least one source. This will require a slight modification to the connection determination inside ticket 767.
   * Unsupported objects will be placed into a state where they are excluded from current powerflow values. This will be indicated by a lack of information in the `terminals` field in NEVBUSDATA and `terminals_from` and `terminals_to` fields in the NEVBRANCHDATA structures.
-+Note that while islands will solve individual powerflow sets, the current implementation of "failure to converge results in a failed simulation" will still apply to the whole system/set of system. i.e., if two islands are present and one fails to converge, the entire GridLAB-D instance will terminate, not just the divergent island. This condition is expected to be mitigated through object-level and user-level controls. 
++Note that while islands will solve individual powerflow sets, the current implementation of "failure to converge results in a failed simulation" will still apply to the whole system/set of system. i.e., if two islands are present and one fails to converge, the entire GridLAB-D™ instance will terminate, not just the divergent island. This condition is expected to be mitigated through object-level and user-level controls. 
 
 # Functions
 
-To implement the NEV solver in GridLAB-D, some support functions are required. 
+To implement the NEV solver in GridLAB-D™, some support functions are required. 
 
 ## Merge Sort Function
 

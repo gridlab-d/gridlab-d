@@ -1,6 +1,6 @@
 # Spec:ibr grayboxmodels
 
-**Source URL:** https://gridlab-d.shoutwiki.com/wiki/Spec:ibr_grayboxmodels
+**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:ibr_grayboxmodels
 ## Contents
 
   * 1 Overview
@@ -8,7 +8,7 @@
   * 3 Gray-Box Modeling
     * 3.1 Introduction
     * 3.2 Gray-Box Modeling Algorithm
-    * 3.3 GridLAB-D Model Example
+    * 3.3 GridLAB-D™ Model Example
   * 4 Optimization-Based Model Section
     * 4.1 Droop Control
     * 4.2 Definition of Parameters
@@ -46,7 +46,7 @@ The framework of the gray-box modeling algorithm is implemented as
   * Estimate parameters in the optimization-based model using the training dataset
   * Embed the output of the optimization-based model as an additional input of the data-driven model (represented using a neural network) and train the neural network with the training dataset
   * Test performance of the gray-box model using the validation dataset
-### GridLAB-D Model Example
+### GridLAB-D™ Model Example
 
 Below is an example for a graybox IBR model in GridLAB-D
     
@@ -77,7 +77,7 @@ Below is an example for a graybox IBR model in GridLAB-D
 
 ### Droop Control
 
-The droop control is implemented for the optimization-based model section. The droop gains are selected as the unknown parameters. Furthermore, the values of the droop gains are estimated by using an optimization algorithm to minimize the error between the training data and the estimated data. The corresponding values will be updated in the GridLAB-D model file. 
+The droop control is implemented for the optimization-based model section. The droop gains are selected as the unknown parameters. Furthermore, the values of the droop gains are estimated by using an optimization algorithm to minimize the error between the training data and the estimated data. The corresponding values will be updated in the GridLAB-D™ model file. 
 
 ### Definition of Parameters
 

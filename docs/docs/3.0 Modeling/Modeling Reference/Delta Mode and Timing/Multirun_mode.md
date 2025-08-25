@@ -2,15 +2,15 @@
 
 Approval item:  \--Dchassin 16:48, 9 October 2011 (UTC) 
 
-Multirun mode is used to run multiple models simultaneously with linked objects. Multirun mode is automatically enabled when an instance directive is used. One additional slave instance of GridLAB-D is started for each block defined in the master instance. Using an instance directive in a slave instance will result in unspecified and undefined behavior. 
+Multirun mode is used to run multiple models simultaneously with linked objects. Multirun mode is automatically enabled when an instance directive is used. One additional slave instance of GridLAB-D™ is started for each block defined in the master instance. Using an instance directive in a slave instance will result in unspecified and undefined behavior. 
 
 # Overview
 
-Multirun mode allows a GridLAB-D user to partition a large model as they see fit, splitting dependent groups of objects into smaller groups. This allows the individual models to be simpler, and for the individual runs to operate on smaller data sets. Instances can communicate over shared memory or though network APIs. There is the limitation that the slave instances cannot communicate with each other, and that function calls cannot be directly made between objects in different instances. 
+Multirun mode allows a GridLAB-D™ user to partition a large model as they see fit, splitting dependent groups of objects into smaller groups. This allows the individual models to be simpler, and for the individual runs to operate on smaller data sets. Instances can communicate over shared memory or though network APIs. There is the limitation that the slave instances cannot communicate with each other, and that function calls cannot be directly made between objects in different instances. 
 
 # Behavior
 
-In Multirun mode, GridLAB-D is called normally with a GLM file. If the slaves are to be run on foreign nodes, instances of GridLAB-D must be running on those systems with the "--slavenode" parameter, which will leave them running as servers for the instancing model. 
+In Multirun mode, GridLAB-D™ is called normally with a GLM file. If the slaves are to be run on foreign nodes, instances of GridLAB-D™ must be running on those systems with the "--slavenode" parameter, which will leave them running as servers for the instancing model. 
 
 ## Master Load-time
 
@@ -30,17 +30,17 @@ Having set the ground work for the slavenode to run, the master starts a thread 
 
 ## Slave Node
 
-GridLAB-D is able to start runs on remote hosts, should an instance be running with the "--slavenode" parameter. By default, this will use port 6267, but can be changed by setting the "slave_port" value. A copy of GridLAB-D running as a slave node will not shut down until it fails to spawn a slave instance, or until forcefully stopped. 
+GridLAB-D™ is able to start runs on remote hosts, should an instance be running with the "--slavenode" parameter. By default, this will use port 6267, but can be changed by setting the "slave_port" value. A copy of GridLAB-D™ running as a slave node will not shut down until it fails to spawn a slave instance, or until forcefully stopped. 
 
-One slave node is able to handle any number of GridLAB-D node requests. 
+One slave node is able to handle any number of GridLAB-D™ node requests. 
 
 ## Slave Load-Time
 
-The slave instances are started by another instance of GridLAB-D and include the "--slave" parameter. The GLM and input files must be located locally to the GridLAB-D instance that will run the model, and any output files will be written to that system. 
+The slave instances are started by another instance of GridLAB-D™ and include the "--slave" parameter. The GLM and input files must be located locally to the GridLAB-D™ instance that will run the model, and any output files will be written to that system. 
 
 ### Parameters
 
-The --slave parameter's input token is a string with a "host:port" syntax. If this string is "localhost:resource name", GridLAB-D will start in shared memory mode and look for the specified shared memory resource. Otherwise, it will attempt to open a TCP socket to the specified host. By default, the 'resource name' is internally generated, and the socket port randomly selected by the OS. 
+The --slave parameter's input token is a string with a "host:port" syntax. If this string is "localhost:resource name", GridLAB-D™ will start in shared memory mode and look for the specified shared memory resource. Otherwise, it will attempt to open a TCP socket to the specified host. By default, the 'resource name' is internally generated, and the socket port randomly selected by the OS. 
 
 # See Also
 

@@ -2,7 +2,7 @@
 
 Implement neutral earth voltage and generic capabilities into the powerflow module. 
 
-This work will incorporate the ability to model neutral-earth voltages and other more advanced powerflow capabilities into GridLAB-D. Expected release is in Keeler (Version 4.0). 
+This work will incorporate the ability to model neutral-earth voltages and other more advanced powerflow capabilities into GridLAB-D™. Expected release is in Keeler (Version 4.0). 
 
 # Classes
 

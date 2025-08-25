@@ -2,7 +2,7 @@
 
 SPECIFICATION Approval item: 
 
-This specification page outlines the formatting for array input data (GLM-based) for NEV objects in explicit detail. This will include the syntax flags and the approach for implementation within GridLAB-D. 
+This specification page outlines the formatting for array input data (GLM-based) for NEV objects in explicit detail. This will include the syntax flags and the approach for implementation within GridLAB-D™. 
 
 # GLM Array Input Example
 
@@ -175,7 +175,7 @@ All class-level definitions of properties are expected to follow the format of:
      type property_terminal_terminal;
     
 
-where the typing is the overall C++/GridLAB-D data type, and the terminals represent the connecting point of the properties. All class-property declarations are expected to propogate into derived classes. For example, `voltage_2_1` declared in the `node` class should also be available to `load` objects. 
+where the typing is the overall C++/GridLAB-D™ data type, and the terminals represent the connecting point of the properties. All class-property declarations are expected to propogate into derived classes. For example, `voltage_2_1` declared in the `node` class should also be available to `load` objects. 
 
 Complex-valued properties will also support `_real`, `_reac`, and `_imag` designations to capture the real or imaginary portions of the fields. These values will be appended after the terminal designation, with an example mapping to the reactive portion of the voltage between terminals 1 and 2 looking like: 
     

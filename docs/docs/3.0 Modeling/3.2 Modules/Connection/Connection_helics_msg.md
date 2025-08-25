@@ -1,10 +1,10 @@
 # helics msg
 
-The helics_msg object is part of the `connection` module. It allows GridLAB-D models to be run as federates in a HELICS co-simulation. In 4.1 the helics_msg object is available by default. 
+The helics_msg object is part of the `connection` module. It allows GridLAB-D™ models to be run as federates in a HELICS co-simulation. In 4.1 the helics_msg object is available by default. 
 
 ### Enabling the helics_msg object
 
-When building from source. HELICS is a third party library that can be downloaded and built from [here](https://github.com/GMLC-TDC/HELICS-src//). Once HELICS and its third party libraries, ZeroMQ and boost, have been built, please follow the [cmake build](http://gridlab-d.shoutwiki.com/wiki/CMake_Build//) instructions for enabling HELICS in GridLAB-D. 
+When building from source. HELICS is a third party library that can be downloaded and built from [here](https://github.com/GMLC-TDC/HELICS-src//). Once HELICS and its third party libraries, ZeroMQ and boost, have been built, please follow the [cmake build](http://GridLAB-D™.shoutwiki.com/wiki/CMake_Build//) instructions for enabling HELICS in GridLAB-D™. 
 
 ### Environment Considerations
 
@@ -18,7 +18,7 @@ Linux  | LD_LIBRARY_PATH
   
 ## Helics_msg
 
-The helics_msg object implements the HELICS library such that a single GridLAB-D model acts as a single HELICS federate. There can only be one instance of a helics_msg object per GridLAB-D model. 
+The helics_msg object implements the HELICS library such that a single GridLAB-D™ model acts as a single HELICS federate. There can only be one instance of a helics_msg object per GridLAB-D™ model. 
 
 ### Default Helics_msg
 
@@ -36,7 +36,7 @@ A minimalist helics_msg could be created with
 
 Property Name  | Type  | Unit  | Description   
 ---|---|---|---  
-name  | string  | none  | This is the name of the object in the GridLAB-D context. It is also the name of the HELICS federate. This means that all published property topics get prepended with this name like so: name/publish_topic   
+name  | string  | none  | This is the name of the object in the GridLAB-D™ context. It is also the name of the HELICS federate. This means that all published property topics get prepended with this name like so: name/publish_topic   
 configure  | string  | none  | The name of the file used to configure the HELICS federate.   
   
 ### Configuration File Syntax
@@ -181,8 +181,8 @@ The configuration file defines the publication and subscription topics as well a
                    "name" : string, //The name of the endpoint
                    "type" : string //The data type this endpoint sends and recieves.
                    "info" : "{
-                        \"object\" : <object_name> or \"global\", //Can contain a specific GridLAB-D object instance name or global if you want to publish a GridLAB-D global property.
-                        \"property\" : <object_property_name> or <global_property_name>, //Contains the name of the GridLAB-D object property or GridLAB-D global property
+                        \"object\" : <object_name> or \"global\", //Can contain a specific GridLAB-D™ object instance name or global if you want to publish a GridLAB-D™ global property.
+                        \"property\" : <object_property_name> or <global_property_name>, //Contains the name of the GridLAB-D™ object property or GridLAB-D™ global property
                    }",
               },
               ...
@@ -194,8 +194,8 @@ The configuration file defines the publication and subscription topics as well a
                    "type" : string, //the data type this publication publishes.
                    "unit" : string //The units associated with the data.
                    "info" : "{
-                        \"object\" : <object_name> or \"global\", //Can contain a specific GridLAB-D object instance name or global if you want to publish a GridLAB-D global property.
-                        \"property\" : <object_property_name> or <global_property_name>, //Contains the name of the GridLAB-D object property or GridLAB-D global property
+                        \"object\" : <object_name> or \"global\", //Can contain a specific GridLAB-D™ object instance name or global if you want to publish a GridLAB-D™ global property.
+                        \"property\" : <object_property_name> or <global_property_name>, //Contains the name of the GridLAB-D™ object property or GridLAB-D™ global property
                    }",
               },
               ...
@@ -206,8 +206,8 @@ The configuration file defines the publication and subscription topics as well a
                    "required" : bool, //Flag that if set the federate will throw an error is the publication doesn't exist.
                    "type" : string //The data type this subscription holds.
                    "info" : "{
-                        \"object\" : <object_name> or \"global\", //Can contain a specific GridLAB-D object instance name or global if you want to publish a GridLAB-D global property.
-                        \"property\" : <object_property_name> or <global_property_name>, //Contains the name of the GridLAB-D object property or GridLAB-D global property
+                        \"object\" : <object_name> or \"global\", //Can contain a specific GridLAB-D™ object instance name or global if you want to publish a GridLAB-D™ global property.
+                        \"property\" : <object_property_name> or <global_property_name>, //Contains the name of the GridLAB-D™ object property or GridLAB-D™ global property
                    }",
               },
               ...
@@ -258,7 +258,7 @@ All of the keys found in the json schema are optional. The example below shows f
     }
     
 
-#### HELICS 3.X and GridLAB-D 5.X
+#### HELICS 3.X and GridLAB-D™ 5.X
 
 The configuration file defines the publication and subscription topics as well as the broker location helics federate options. The file is a json file with the following schema 
     
@@ -299,8 +299,8 @@ The configuration file defines the publication and subscription topics as well a
                    "name" : string, //The name of the endpoint
                    "type"h: string //The data type this endpoint sends and recieves.
                    "info"n: {
-                        "object"o: <object_name> or "global", //Can contain a specific GridLAB-D object instance name or global if you want to send/recieve a GridLAB-D global property.
-                        "property" : <object_property_name> or <global_property_name>, //Contains the name of the GridLAB-D object property or GridLAB-D global property
+                        "object"o: <object_name> or "global", //Can contain a specific GridLAB-D™ object instance name or global if you want to send/recieve a GridLAB-D™ global property.
+                        "property" : <object_property_name> or <global_property_name>, //Contains the name of the GridLAB-D™ object property or GridLAB-D™ global property
                    },
               },
               ...
@@ -312,8 +312,8 @@ The configuration file defines the publication and subscription topics as well a
                    "type" : string, //the data type this publication publishes.
                    "unit" : string //The units associated with the data.
                    "info" : {
-                        "object" : <object_name> or "global", //Can contain a specific GridLAB-D object instance name or global if you want to publish a GridLAB-D global property.
-                        "property"D: <object_property_name> or <global_property_name>, //Contains the name of the GridLAB-D object property or GridLAB-D global property
+                        "object" : <object_name> or "global", //Can contain a specific GridLAB-D™ object instance name or global if you want to publish a GridLAB-D™ global property.
+                        "property"D: <object_property_name> or <global_property_name>, //Contains the name of the GridLAB-D™ object property or GridLAB-D™ global property
                    },
               },
               ...
@@ -325,8 +325,8 @@ The configuration file defines the publication and subscription topics as well a
                    "required"l: bool, //Flag that if set the federate will throw an error is the publication doesn't exist.
                    "type"o: string //The data type this subscription holds.
                    "info"h: {
-                        "object"l: <object_name> or "global", //Can contain a specific GridLAB-D object instance name or global if you want to write to a GridLAB-D global property.
-                        "property"h: <object_property_name> or <global_property_name>, //Contains the name of the GridLAB-D object property or GridLAB-D global property
+                        "object"l: <object_name> or "global", //Can contain a specific GridLAB-D™ object instance name or global if you want to write to a GridLAB-D™ global property.
+                        "property"h: <object_property_name> or <global_property_name>, //Contains the name of the GridLAB-D™ object property or GridLAB-D™ global property
                    },
               },
               ...
@@ -377,7 +377,7 @@ All of the keys found in the json schema are optional. The example below shows f
     }
     
 
-All configuration examples thus far have created HELICS publications, inputs, and endpoints that are tied to a single internal GridLAB-D object instance's property. It is now possible to configure a HELICS publication such that it publishes multiple objects' properties. The HELICS publication type must be a string and GridLAB-D will publish a JSON serialized string of specifed objects' properties. for example, let's create a single HELICS publication that will publish a triplex_meter's measured_power and measured_real_power properties as well as a house's heating_setpoint, cooling_setpoint, thermostat_cycle_time, and heating_system_type properties. The HELICS configuration file's publication instance would look something like this: 
+All configuration examples thus far have created HELICS publications, inputs, and endpoints that are tied to a single internal GridLAB-D™ object instance's property. It is now possible to configure a HELICS publication such that it publishes multiple objects' properties. The HELICS publication type must be a string and GridLAB-D™ will publish a JSON serialized string of specifed objects' properties. for example, let's create a single HELICS publication that will publish a triplex_meter's measured_power and measured_real_power properties as well as a house's heating_setpoint, cooling_setpoint, thermostat_cycle_time, and heating_system_type properties. The HELICS configuration file's publication instance would look something like this: 
     
     
     {
@@ -402,7 +402,7 @@ All configuration examples thus far have created HELICS publications, inputs, an
     }
     
 
-Something similar can be done for a HELICS input. It is possible to create a HELICS input that could write to multiple objects' properties in the GridLAB-D model. The message it expects is a JSON serialized string containing the object names and properties as well as the values of those properties. First let's look at how to set up the HELICS input instance in the configuration file. 
+Something similar can be done for a HELICS input. It is possible to create a HELICS input that could write to multiple objects' properties in the GridLAB-D™ model. The message it expects is a JSON serialized string containing the object names and properties as well as the values of those properties. First let's look at how to set up the HELICS input instance in the configuration file. 
     
     
     {
@@ -430,7 +430,7 @@ In another federate named "python_federate" it's now possible to set the constan
     }"
     
 
-Also, with endpoints it possible to create an endpoint that will send a message containing a single GridLAB-D object instance's property and to write received messages to a different object instance's property. The HELICS endpoint configuration instance would look something like this: 
+Also, with endpoints it possible to create an endpoint that will send a message containing a single GridLAB-D™ object instance's property and to write received messages to a different object instance's property. The HELICS endpoint configuration instance would look something like this: 
     
     
     {

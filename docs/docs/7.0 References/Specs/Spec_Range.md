@@ -5,7 +5,7 @@
 
 EDITING IN PROGRESS
   
-The purpose of the [range] model in GridLAB-D is to facilitate the real representation of the oven and cooktop energy consumptions profile. 
+The purpose of the [range] model in GridLAB-D™ is to facilitate the real representation of the oven and cooktop energy consumptions profile. 
 
 ## General Description
 
@@ -15,7 +15,7 @@ Electric [range] has oven and an electronic control for the cooktop. It converts
 
 The food in the oven is heated by an electrical element and is controlled by a thermostat. Oven element capacity (wattage) ranges from about 500[[Units|W] to 2500[W], with 1000[W] being common. It heats to the temperature that the user sets it to. Thermostatic controls have a deadband associated with the setpoint to prevent rapid cycling of power to the elements, which would result if the turn-on temperature equaled the turn-off temperature. The deadband is typically a few degrees above and below the nominal setpoint. 
 
-The oven GridLAB-D model is similar to that of GridLAB-D [waterheater] one-node model. 
+The oven GridLAB-D™ model is similar to that of GridLAB-D™ [waterheater] one-node model. 
 
 ### Cooktop
 
@@ -174,7 +174,7 @@ The oven model follows these steps:
   2. Solve the oven interface components based on its settings.
   3. Update the energy calculation.
 
-After these steps are complete, the simulation advances to the next [timestamp]. This sequence will repeat until the next GridLAB-D overall [timestamp] is encountered. At that point, the changes will be reflected into the quasi-steady state [powerflow] solution, and the process will repeat until the given energy consumption is elapsed. 
+After these steps are complete, the simulation advances to the next [timestamp]. This sequence will repeat until the next GridLAB-D™ overall [timestamp] is encountered. At that point, the changes will be reflected into the quasi-steady state [powerflow] solution, and the process will repeat until the given energy consumption is elapsed. 
 
 The cooktop model follows these steps: 
 

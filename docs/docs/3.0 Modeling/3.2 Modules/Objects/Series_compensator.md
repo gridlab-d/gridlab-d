@@ -27,7 +27,7 @@ Figure 3 Control range of the series compensator
 
 ## Modeling of the Series Compensator in GridLAB-D
 
-Figure 4 and Figure 5 show the main circuit and controller of the series compensator modeled in GridLAB-D, respectively. As shown in Figure 4, the main circuit of the compensator is modeled as a regulator with a controllable turn ratio, n. By changing the turns ratio n quickly, the output voltage can be maintained constant when there is a disturbance at the input voltage. 
+Figure 4 and Figure 5 show the main circuit and controller of the series compensator modeled in GridLAB-D™, respectively. As shown in Figure 4, the main circuit of the compensator is modeled as a regulator with a controllable turn ratio, n. By changing the turns ratio n quickly, the output voltage can be maintained constant when there is a disturbance at the input voltage. 
 
 [![Modeling of the main circuit of the series compensator in GridLAB-D](../../../../images/300px-Transformer.png)](/wiki/File:Transformer.png)
 
@@ -82,7 +82,7 @@ Figure 11 System frequency and the output power from the diesel generators and P
 
 Figure 12 System frequency and the output power from the diesel generators and PV inverters (frequency control enabled)
 
-## GridLAB-D Model Example
+## GridLAB-D™ Model Example
     
     
     object series_compensator {	

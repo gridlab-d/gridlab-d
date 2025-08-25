@@ -8,7 +8,7 @@ The Ice Bear® system is designed to be used in conjunction with existing buildi
 
 # Model
 
-The Ice Bear® system is a 5 Ton unit with 30 Ton-hours of storage and is designed to be used on commercial systems. For the purposes of GridLab-d, thermal storage is scaled based on the size of each house. Several houses can be put together, simulating a commercial building, so forcing a 5 Ton sizing on each house is not practical for simulating a commercial configuration. This model is not designed to model the Ice Bear® unit, but to model the effects of the technology based on the Ice Bear® unit's specifications. 
+The Ice Bear® system is a 5 Ton unit with 30 Ton-hours of storage and is designed to be used on commercial systems. For the purposes of GridLAB-D™, thermal storage is scaled based on the size of each house. Several houses can be put together, simulating a commercial building, so forcing a 5 Ton sizing on each house is not practical for simulating a commercial configuration. This model is not designed to model the Ice Bear® unit, but to model the effects of the technology based on the Ice Bear® unit's specifications. 
 
 ## Sizing
 
@@ -36,7 +36,7 @@ The ice block being used to store thermal energy will lose stored capacity when 
 
     $ Rate = \frac{kA\Delta{T}}{d}$
 
-where k is the coefficient of thermal conductivity (W/M/°C) of the material insulating the ice block, A is the surface area (m2), ΔT is t1 \- t2 (t1 being the ice temperature in °F and t2 being the outside temperature in °F), d is the thickness of the material insulating the ice block and the Rate is in Joules per second or Watts. k is converted from the more common found form of W/m/°C to Btu/m/sec/°F to match the common variables in the GridLab-D, where 1 W/M/°C = 0.00052667 Btu/m/sec/°F. 
+where k is the coefficient of thermal conductivity (W/M/°C) of the material insulating the ice block, A is the surface area (m2), ΔT is t1 \- t2 (t1 being the ice temperature in °F and t2 being the outside temperature in °F), d is the thickness of the material insulating the ice block and the Rate is in Joules per second or Watts. k is converted from the more common found form of W/m/°C to Btu/m/sec/°F to match the common variables in the GridLAB-D™, where 1 W/M/°C = 0.00052667 Btu/m/sec/°F. 
 
 The Ice Bear® unit stores 460 gallons of water for 360,000 Btu thermal energy storage. The volume of water is scaled linearly with the amount of required thermal energy storage. Converting gallons to m3 (460 U.S. Gallons = 1.7413 m3) and then converting volume to surface area with the assumption that the water is stored in a cube. 
 
