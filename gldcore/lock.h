@@ -13,6 +13,8 @@
 //#endif
 
 std::shared_lock<std::shared_mutex>  rlock(unsigned int *lock);
+//void rlock(unsigned int* lock);
+
 void wlock(unsigned int *lock);
 void runlock();
 void wunlock(unsigned int *lock);

@@ -847,7 +847,8 @@ void metrics::event_ended_sec(OBJECT *event_obj, OBJECT *fault_obj, OBJECT *faul
 int metrics::get_interrupted_count(void)
 {
 	int index, in_outage;
-	gld_rlock *test_rlock;
+	//gld_rlock *test_rlock;
+	unsigned int test_rlock = 0;
 	bool temp_bool;
 
 	//Reset counter
@@ -857,7 +858,7 @@ int metrics::get_interrupted_count(void)
 	for (index=0; index<CustomerCount; index++)
 	{
 		//Pull the flag
-		Customers[index].CustInterrupted->getp<bool>(temp_bool,*test_rlock);
+		Customers[index].CustInterrupted->getp<bool>(temp_bool,test_rlock);
 		
 		//Check it
 		if (temp_bool == true)
@@ -872,7 +873,8 @@ int metrics::get_interrupted_count(void)
 void metrics::get_interrupted_count_secondary(int *in_outage, int *in_outage_secondary)
 {
 	int index, in_outage_temp, in_outage_temp_sec;
-	gld_rlock *test_rlock;
+	//gld_rlock *test_rlock;
+	unsigned int test_rlock = 0;
 	bool temp_bool;
 
 	//Reset counter
@@ -883,14 +885,14 @@ void metrics::get_interrupted_count_secondary(int *in_outage, int *in_outage_sec
 	for (index=0; index<CustomerCount; index++)
 	{
 		//Pull the flag
-		Customers[index].CustInterrupted->getp<bool>(temp_bool,*test_rlock);
+		Customers[index].CustInterrupted->getp<bool>(temp_bool,test_rlock);
 		
 		//Check it
 		if (temp_bool == true)
 			in_outage_temp++;
 
 		//Assumes secondary metric exists, otherwise we shouldn't be here
-		Customers[index].CustInterrupted_Secondary->getp<bool>(temp_bool,*test_rlock);
+		Customers[index].CustInterrupted_Secondary->getp<bool>(temp_bool,test_rlock);
 		
 		//Check it
 		if (temp_bool == true)

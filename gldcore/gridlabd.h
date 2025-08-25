@@ -1935,12 +1935,7 @@ public: // iterators
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T get_##X(T mask=-1) { return X&mask; }; \
 	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
-	inline T get_##X(gld_rlock&) { return X; }; \
-	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { X=p; }; \
-	inline void set_##X##_bits(T p) { gld_rlock _lock(my()); (X)|=(p); }; \
-	inline void clr_##X##_bits(T p) { gld_rlock _lock(my()); (X)&=~(p); }; \
-	inline void set_##X(T p, gld_wlock&) { X=p; }; \
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
 
@@ -2136,7 +2131,7 @@ public: // external accessors
 		wunlock(); 
 	};
 	template <class T> inline void setp(PROPERTY &prop, T &value) { wlock(); *(T*)(get_addr(my(),&prop)   /*GETADDR(my(), &prop)*/) = value; wunlock(); };
-	template <class T> inline void getp(PROPERTY &prop, T &value, gld_rlock&) { value=*(T*)(get_addr(my(),&prop)); };
+	/*template <class T> inline void getp(PROPERTY& prop, T& value, gld_rlock&) { value = *(T*)(get_addr(my(), &prop)); };*/
 	template <class T> inline void getp(PROPERTY &prop, T &value, gld_wlock&) { value=*(T*)(get_addr(my(),&prop)); };
 	template <class T> inline void setp(PROPERTY &prop, T &value, gld_wlock&) { *(T*)(get_addr(my(),&prop))=value; };
 
@@ -2327,7 +2322,12 @@ public: // special operations
 		//gld_core::runlock(&obj->lock); 
 	};
 	template <class T> inline void setp(T &value) { gld_core::wlock(&obj->lock); *(T*)get_addr()=value; gld_core::wunlock(&obj->lock); };
-	template <class T> inline void getp(T &value, gld_rlock&) { value = *(T*)get_addr(); };
+	//template <class T> inline void getp(T& value, gld_rlock&) { value = *(T*)get_addr(); };
+	template <class T> inline void getp(T& value, unsigned int&  gld_rlock) 
+	{   
+		auto v = gld_core::rlock(&gld_rlock);
+		value = *(T*)get_addr(); 
+	};
 	template <class T> inline void getp(T &value, gld_wlock&) { value = *(T*)get_addr(); };
 	template <class T> inline void setp(T &value, gld_wlock&) { *(T*)get_addr()=value; };
 	inline void setp(enumeration value) { gld_core::wlock(&obj->lock); *(enumeration*)get_addr()=value; gld_core::wunlock(&obj->lock); };

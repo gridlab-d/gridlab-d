@@ -80,7 +80,9 @@ public:
 		//}
 	};
 
-
+	std::string to_string() const {
+		return std::to_string(r) + " + " + std::to_string(i) + "i";
+	}
 
 	// Assignment operator from std::complex<double>
 	gld::complex& operator=(const std::complex<double>& rhs) {

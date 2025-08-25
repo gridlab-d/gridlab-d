@@ -3971,7 +3971,8 @@ enumeration jsondump::get_enum_value(OBJECT *obj, const char *name)
 OBJECT *jsondump::get_object_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	gld_rlock *test_rlock;
+	//gld_rlock *test_rlock;
+	unsigned int test_rlock = 0;
 	OBJECT *output_value;
 	OBJECT *objhdr = object_header(this);
 
@@ -3986,7 +3987,7 @@ OBJECT *jsondump::get_object_value(OBJECT *obj, const char *name)
 	}
 
 	//Pull the voltage base value
-	pQuantity->getp<OBJECT*>(output_value,*test_rlock);
+	pQuantity->getp<OBJECT*>(output_value,test_rlock);
 
 	//Now get rid of the item
 	delete pQuantity;

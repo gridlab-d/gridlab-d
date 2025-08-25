@@ -12,7 +12,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 # Find Eigen
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# Include Eigen
+# Include Eigen 
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 

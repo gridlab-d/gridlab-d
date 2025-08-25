@@ -974,7 +974,8 @@ TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	int after_count, after_count_sec, differential_count, differential_count_sec, index;
 	RELEVANTSTRUCT *temp_struct;
 	bool temp_bool;
-	gld_rlock *test_rlock;
+	//gld_rlock *test_rlock;
+	unsigned int test_rlock = 0;
 	STATUS temp_status;
 	OBJECT *hdr = object_header(this);
 
@@ -982,7 +983,7 @@ TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	if ((diff_count_needed == true) && (metrics_obj_hdr != nullptr))
 	{
 		//Read the boolean
-		secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
+		secondary_interruption_cnt->getp<bool>(temp_bool,test_rlock);
 
 		if (temp_bool == true)
 		{
@@ -1577,7 +1578,8 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 	char impl_fault[257];
 	RELEVANTSTRUCT *temp_struct, *temp_struct_b;
 	bool temp_bool;
-	gld_rlock *test_rlock;
+	//gld_rlock *test_rlock;
+	unsigned int test_rlock = 0;
 	STATUS temp_status;
 
 	//Reset next event time - we'll find the new one in here
@@ -1597,7 +1599,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				if ((diff_count_needed == false) && (metrics_obj_hdr != nullptr))
 				{
 					//Read the boolean
-					secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
+					secondary_interruption_cnt->getp<bool>(temp_bool,test_rlock);
 
 					if (temp_bool == true)
 					{
@@ -1821,7 +1823,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 			if (metrics_obj_hdr != nullptr)
 			{
 				//Read the boolean
-				secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
+				secondary_interruption_cnt->getp<bool>(temp_bool,test_rlock);
 
 				//Lock metrics event
 				wlock(metrics_obj_hdr);
@@ -1984,7 +1986,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				if ((diff_count_needed == false) && (metrics_obj_hdr != nullptr))
 				{
 					//Read the boolean
-					secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
+					secondary_interruption_cnt->getp<bool>(temp_bool,test_rlock);
 
 					if (temp_bool == true)
 					{
@@ -2148,7 +2150,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				if (metrics_obj_hdr != nullptr)
 				{
 					//Read the boolean
-					secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
+					secondary_interruption_cnt->getp<bool>(temp_bool,test_rlock);
 
 					//Lock metrics event
 					wlock(metrics_obj_hdr);

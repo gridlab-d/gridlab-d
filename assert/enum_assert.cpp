@@ -68,7 +68,7 @@ int enum_assert::init(OBJECT *parent)
 TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 {
 
-	gld_property target_prop(get_parent(),get_target());
+	gld_property target_prop(get_parent(),get_target().c_str());
 	if ( !target_prop.is_valid() || target_prop.get_type()!=PT_enumeration ) 
 	{
 		gl_error("Specified target %s for %s is not valid.",get_target(),get_parent()->get_name());
@@ -138,7 +138,7 @@ EXPORT SIMULATIONMODE update_enum_assert(OBJECT *obj, TIMESTAMP t0, unsigned int
 		if (delta_time>=dt)
 		{
 			//Get the value
-			x = (int32*)gl_get_enum_by_name(obj->parent,da->get_target());
+			x = (int32*)gl_get_enum_by_name(obj->parent,da->get_target().c_str());
 
 			if (x==nullptr)
 			{
