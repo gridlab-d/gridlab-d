@@ -21,21 +21,36 @@
     - [ ] Talk with dev team to build out the built-in documentation within the code itself
 
 # 4.0 Developing
-- [ ] 4.1 Write intro for developer documentation (who is this section of the documentation for and what is the content)
-- [ ] 4.2.1 Update and verify pre-requisite installation command list for each build platform
-- [ ] 4.2.3 Describe how to update the PATH variable for WSL
-- [ ] 4.3.0 Write introduction to GridLAB-D Software Architecture and Design
-- [ ] 4.3.0 Update outline for Software Architecture and Design section
-- [ ] 4.3.0 Write content for Software Architecture and Design section
-- [ ] 4.3.1 Write brief over of the functionality provided by gldcore
-- [ ] 4.3.1 Update outline for gldcore section
-- [ ] 4.3.1 Write content for gldcore section
-- [ ] 4.3.4 Update outline for object synchronization process section
-- [ ] 4.3.4 Write content for object synchronization process section
-- [ ] 4.3.7 Update outline for loader section
-- [ ] 4.3.7 Write content for loader section
-- [ ] 4.7 Update outline for release process section
-- [ ] 4.7 Write content for release process section
+- [ ] Waiting on development to document
+  - [ ] 4.3.7 loader
+  - [ ] 4.3.9 libgld
+- [ ] Determine if section is needed
+  - [ ] 4.3.2 Modules
+  - [ ] 4.3.3 Objects
+  - [ ] 4.3.6 Parallelization
+  - [ ] 4.3.8 Transforms
+  - [ ] 4.4.1 Programming conventions
+  - [ ] 4.4.2 Creating a module
+  - [ ] 4.4.3 Creating a class
+  - [ ] 4.4.4 Device modeling
+  - [ ] 4.4.5 Integrated testing
+  - [ ] 4.5 Deltamode development
+  - [ ] 4.6 Debugging
+- [ ] Identify missing sections
+- [ ] Update outline
+  - [ ] 4.1 Write intro for developer documentation (who is this section of the documentation for and what is the content)
+  - [ ] 4.3.0 Software Architecture and Design
+  - [ ] 4.3.1 gldcore
+  - [ ] 4.3.4 object synchronization process
+  - [ ] 4.7 Style guide
+  - [ ] 4.8 release process
+- [ ] Writing 
+- [ ] Reviewing
+  - [ ] 4.2 Building from Source
+- [ ] Clean-up
+  
+
+
 - [ ] Spec pages: planning document written pre-implementation -- is it actually implemented?
 - [ ] Missing or needing updated: style guide
 - [ ] Missing or needing updated: comprehensive developer API reference
