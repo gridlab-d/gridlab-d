@@ -21,6 +21,9 @@
     - [ ] Talk with dev team to build out the built-in documentation within the code itself
 
 # 4.0 Developing
+- [ ] 4.1 Write intro for developer documentation (who is this section of the documentation for and what is the content)
+- [ ] 4.2.1 Update and verify pre-requisite installation command list for each build platform
+- [ ] 4.2.3 Describe how to update the PATH variable for WSL
 - [ ] Spec pages: planning document written pre-implementation -- is it actually implemented?
 - [ ] Missing or needing updated: release process
 - [ ] Missing or needing updated: build process

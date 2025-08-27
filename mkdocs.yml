@@ -180,7 +180,10 @@ nav:
       - Finding Objects: docs/3.0 Modeling/Modeling Reference/finding-objects.md
   - 4.0 Developing:
     - 4.1 - Introduction: docs/4.0 Developing/4.1 - Introduction.md
-    - 4.2 - Building GridLAB-D™ from Source: docs/4.0 Developing/4.2 - Building from Source.md
+    - 4.2 - Building GridLAB-D™ from Source: docs/4.0 Developing/4.2 Building from Source/4.2.1-Building_from_Source.md
+      - Setting-Up MSYS2 for Windows: docs/4.0 Developing/4.2 Building from Source/4.2.2-Setting-Up_MSYS2_for_Windows.md
+      - Setting-Up WSL for Windows: docs/4.0 Developing/4.2 Building from Source/4.2.3-Setting-Up_WSL_for_Windows.md
+      - Setting-Up the VS Code IDE: docs/4.0 Developing/4.2 Building from Source/4.2.4-Setting-Up_VS_Code.md
     - 4.3 - Software Architecture and Design:
       - Introduction: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.0 - Introduction.md
       - GLDCore: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.1 - gldcore.md
