@@ -24,14 +24,22 @@
 - [ ] 4.1 Write intro for developer documentation (who is this section of the documentation for and what is the content)
 - [ ] 4.2.1 Update and verify pre-requisite installation command list for each build platform
 - [ ] 4.2.3 Describe how to update the PATH variable for WSL
+- [ ] 4.3.0 Write introduction to GridLAB-D Software Architecture and Design
+- [ ] 4.3.0 Update outline for Software Architecture and Design section
+- [ ] 4.3.0 Write content for Software Architecture and Design section
+- [ ] 4.3.1 Write brief over of the functionality provided by gldcore
+- [ ] 4.3.1 Update outline for gldcore section
+- [ ] 4.3.1 Write content for gldcore section
+- [ ] 4.3.4 Update outline for object synchronization process section
+- [ ] 4.3.4 Write content for object synchronization process section
+- [ ] 4.3.7 Update outline for loader section
+- [ ] 4.3.7 Write content for loader section
+- [ ] 4.7 Update outline for release process section
+- [ ] 4.7 Write content for release process section
 - [ ] Spec pages: planning document written pre-implementation -- is it actually implemented?
-- [ ] Missing or needing updated: release process
-- [ ] Missing or needing updated: build process
 - [ ] Missing or needing updated: style guide
 - [ ] Missing or needing updated: comprehensive developer API reference
 - [ ] Missing or needing updated: code templates (maybe just delete?)
-- [ ] Missing or needing updated: developer guide
-- [ ] Missing or needing updated: disccusion of t0, t1, t2 for object model updates
 - [ ] Missing or needing updated: disccusion of the various stages of object model update (pre-commit, commit, pre-sync, sync...)
 
 
@@ -67,7 +75,11 @@ to
     
     host% gridlabd -[D] [validate_report]=validate.txt --validate
   
-
+# Candidate Long-Form Paper Topics
+- GridLAB-D object synchronization process
+- Device model development process
+- GridLAB-D deltamode
+- GridLAB-D loader and JSON file format
 
 ## Definition Plan
 - Open Index Tracker excel sheet on shareopint --> filter `Page Type` by `Definition`
