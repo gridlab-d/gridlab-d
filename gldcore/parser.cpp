@@ -1095,6 +1095,7 @@ int parser::time_value(PARSER, TIMESTAMP *t) {
 	else REJECT;
 	DONE;
 }
+
 int parser::expanded_value(char *line, char *result, int size, const char *delims) {
 
 	string text = line;
@@ -1154,6 +1155,7 @@ int parser::expanded_value(char *line, char *result, int size, const char *delim
 /** alternate_value allows the use of ternary operations, e.g.,
 		 property (expression) ? negzero_value : positive_value ;
  **/
+ 
 int parser::alternate_value(PARSER, char *value, int size) {
 	double test;
 	char value1[1024];
