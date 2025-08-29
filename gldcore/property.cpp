@@ -248,7 +248,7 @@ PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr)
 }
 
 
-bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b, char *part)
+bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b, const char *part)
 {
 	if ( part==nullptr && property_type[ptype].compare[op].fn!=nullptr )
 		return property_type[ptype].compare[op].fn(x,a,b);

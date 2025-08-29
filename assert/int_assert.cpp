@@ -106,7 +106,7 @@ TIMESTAMP int_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	}
     
 	// get the target property
-	gld_property target_prop(get_parent(),get_target());
+	gld_property target_prop(get_parent(),get_target().c_str());
 	if ( !target_prop.is_valid() || !(target_prop.get_type()==PT_int16 || target_prop.get_type()==PT_int32 || target_prop.get_type()==PT_int64))
 	{
 		gl_error("Specified target %s for %s is not valid.",get_target(),get_parent()->get_name());

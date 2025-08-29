@@ -175,8 +175,54 @@ typedef enum {
 
 class helics_msg : public gld_object {
 public:
-	GL_ATOMIC(double,version);
+	//GL_ATOMIC(double,version);
 	// TODO add published properties here
+
+protected:
+	double version;  // Member variable of type `double`.
+
+public:
+	static inline helics_msg* get_defaults() {
+		if (!defaults) {
+			defaults = new helics_msg(); // Initialize lazily
+		}
+		return defaults;
+	}
+
+	helics_msg() {}
+	~helics_msg() { if (defaults) delete defaults; }
+
+public:
+	// Static inline method to get the byte offset of the member `version`.
+	static inline size_t get_version_offset(void) {
+		helics_msg* current_defaults = get_defaults();
+		return reinterpret_cast<const char*>(&(current_defaults->version)) - reinterpret_cast<const char*>(current_defaults);
+	}
+
+	// Inline function to get the value of `version`.
+	inline double get_version(void) {
+		return version;
+	}
+
+	// Inline method to return a gld_property object for `version`.
+	inline gld_property get_version_property(void) {
+		return gld_property(my(), std::string("version").c_str());
+	}
+
+	// Inline method to set the value of `version`.
+	inline void set_version(double p) {
+		version = p;
+	}
+
+	// Inline method to get the string representation of the `version` property.
+	inline gld_string get_version_string(void) {
+		return get_version_property().get_string();
+	}
+
+	// Inline method to set the `version` property from a provided string.
+	inline void set_version(char* str) {
+		get_version_property().from_string(str);
+	}
 
 private:
 #if HAVE_HELICS

@@ -661,49 +661,138 @@ Unlock:
 	output_message() will produce output to the standard output stream only when the
 	\p global_quiet_mode variable is not \b 0.  A newline is always appended to the message.
  **/
-int output_message(const char *format,...) /**< \bprintf style argument list */
-{
-	if (!global_quiet_mode)
-	{
-		/* check for repeated message */
+int output_message(const char* format, ...) {
+	if (!global_quiet_mode) {
+		// Variables for repeated message handling
 		static char lastfmt[4096] = "";
-		static int count=0;
-		size_t sz = strlen(format?format:"");
+		static int count = 0;
+
+		// Static buffer for message formatting
+		static char buffer[65536];
+		size_t len = 0;
 		int result = 0;
-		wlock(&output_lock);
-		if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
-		{
-			count++;
+		size_t remaining_space = 0;
+
+		// Validate format string
+		if (!format) {
+			//fprintf(stderr, "Error: format is NULL.\n");
+			result = 0;
 			goto Unlock;
 		}
-		else
-		{
-			va_list ptr;
-			int len=0;
-			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
-			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
-			{
-				len = sprintf(buffer,"%slast message was repeated %d times\n", prefix, count);
-				count = 0;
-				if(format == nullptr) goto Output;
-			}
-			if (format==nullptr)
-				goto Unlock;
-			va_start(ptr,format);
-			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
-			va_end(ptr);
+
+		wlock(&output_lock);  // Acquire lock for thread-safety
+
+		// Check for repeated message suppression
+		if (strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode) {
+			count++;
+			goto Unlock; // Skip output formatting
 		}
-Output:
-		if (redirect.output)
-			result = fprintf(redirect.output,"%s%s\n", prefix, buffer);
-		else
+
+		// Variadic argument handling and message formatting
+		va_list ptr;
+		len = 0;
+
+		// Update `lastfmt` with the current format
+		strncpy(lastfmt, format, sizeof(lastfmt) - 1);
+		lastfmt[sizeof(lastfmt) - 1] = '\0';
+
+		// Handle repeated message count
+		if (count > 0 && global_suppress_repeat_messages && !global_verbose_mode) {
+			len = snprintf(buffer, sizeof(buffer), "%sLast message was repeated %d times\n", prefix, count);
+			count = 0;
+			if (len < 0 || len >= sizeof(buffer)) {
+				fprintf(stderr, "Error: Buffer overflow in repeated message formatting.\n");
+				result = -1;
+				goto Unlock;
+			}
+		}
+
+		// Check buffer size for remaining space
+		remaining_space = sizeof(buffer) - len;
+		if (remaining_space <= 0) {
+			fprintf(stderr, "Error: No space left in buffer.\n");
+			result = -1;
+			goto Unlock;
+		}
+
+		// Format the new message
+		va_start(ptr, format);
+		result = vsnprintf(buffer + len, remaining_space, format, ptr);
+		if (result < 0) {
+			fprintf(stderr, "vsnprintf failed.\n");
+			va_end(ptr);
+			goto Unlock;
+		}
+		va_end(ptr);
+
+		// Validate `vsnprintf` result
+		if ((size_t)(len + result) >= sizeof(buffer)) {
+			fprintf(stderr, "Warning: Message truncated.\n");
+		}
+
+		// Output the message to the specified target
+		if (redirect.output) {
+			result = fprintf(redirect.output, "%s%s\n", prefix, buffer);
+		}
+		else if (printstd) {
 			result = (*printstd)("%s%s\n", prefix, buffer);
-Unlock:
-		wunlock(&output_lock);
-		return result;
+		}
+		else {
+			fprintf(stderr, "Error: No output target defined.\n");
+			result = -1;
+		}
+
+	Unlock:
+		wunlock(&output_lock);  // Release lock
+		return result;          // Return the number of characters written
 	}
-	return 0;
+	return 0; // Return 0 if `global_quiet_mode` is enabled
 }
+
+//int output_message(const char *format,...) /**< \bprintf style argument list */
+//{
+//	if (!global_quiet_mode)
+//	{
+//		/* check for repeated message */
+//		static char lastfmt[4096] = "";
+//		static int count=0;
+//		size_t sz = strlen(format?format:"");
+//		int result = 0;
+//		wlock(&output_lock);
+//		if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+//		{
+//			count++;
+//			goto Unlock;
+//		}
+//		else
+//		{
+//			va_list ptr;
+//			int len=0;
+//			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
+//			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
+//			{
+//				len = sprintf(buffer,"%slast message was repeated %d times\n", prefix, count);
+//				count = 0;
+//				if(format == nullptr) goto Output;
+//			}
+//			if (format==nullptr)
+//				goto Unlock;
+//			va_start(ptr,format);
+//			int result = vsnprintf(buffer + len, sizeof(buffer) - len, format, ptr);
+//			//vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
+//			va_end(ptr);
+//		}
+//Output:
+//		if (redirect.output)
+//			result = fprintf(redirect.output,"%s%s\n", prefix, buffer);
+//		else
+//			result = (*printstd)("%s%s\n", prefix, buffer);
+//Unlock:
+//		wunlock(&output_lock);
+//		return result;
+//	}
+//	return 0;
+//}
 
 /** Output a profiler message
  **/

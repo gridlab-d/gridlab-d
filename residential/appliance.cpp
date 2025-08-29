@@ -35,9 +35,6 @@ appliance::appliance(MODULE *module) : residential_enduse(module)
 	}
 }  
 
-appliance::~appliance()
-{
-}
 
 int appliance::create()
 {

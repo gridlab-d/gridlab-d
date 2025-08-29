@@ -106,7 +106,7 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	}
 		
 	// get the target property
-	gld_property target_prop(get_parent(),get_target());
+	gld_property target_prop(get_parent(),get_target().c_str());
 	if ( !target_prop.is_valid() || target_prop.get_type()!=PT_double ) 
 	{
 		gl_error("Specified target %s for %s is not valid.",get_target(),get_parent()->get_name());
@@ -226,7 +226,7 @@ EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned i
 		if (delta_time>=dt)
 		{
 			//Get value
-			x = (double*)gl_get_double_by_name(obj->parent,da->get_target());
+			x = (double*)gl_get_double_by_name(obj->parent,da->get_target().c_str());
 
 			if (x==nullptr)
 			{

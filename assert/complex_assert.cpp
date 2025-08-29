@@ -21,7 +21,6 @@ EXPORT_NOTIFY(complex_assert);
 
 CLASS *complex_assert::oclass = nullptr;
 complex_assert* complex_assert::defaults = nullptr;
-//std::shared_ptr<complex_assert> complex_assert::defaults = nullptr;
 
 complex_assert::complex_assert(MODULE *module)
 {

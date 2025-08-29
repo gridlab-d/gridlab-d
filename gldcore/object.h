@@ -184,7 +184,7 @@ public:
 		char *(*get_unit)(OBJECT *, const char *);
 		void *(*get_addr)(OBJECT *, const char *);
 		int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
-		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, char *part);
+		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, const char *part);
 		PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, char *opstr);
 		double (*get_part)(OBJECT*,PROPERTY*,const char*);
 		PROPERTYSPEC *(*get_spec)(PROPERTYTYPE);
@@ -296,7 +296,7 @@ public:
 		OBJECT **(*object_var)(OBJECT *obj, const char *name);
 	} objvarname;
 	struct {
-		int (*string_to_property)(PROPERTY *prop, void *addr, char *value);
+		int (*string_to_property)(PROPERTY *prop, void *addr, const char *value);
 		int (*property_to_string)(PROPERTY *prop, void *addr, char *value, int size);
 	} convert;
 	MODULE *(*module_find)(const char *name);

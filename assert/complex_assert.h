@@ -41,9 +41,15 @@ public:
         return defaults;
     }
     
-    
 protected:
     enumeration status;  // Member variable of type `enumeration`.
+    enumeration operation;  // Member variable of type `enumeration`.
+    enumeration once;  // Member variable of type `enumeration`.
+    double within;  // Member variable of type `double`.
+    complex value;  // Member variable of type `complex`.
+    complex once_value; // Member variable of type `complex`.
+    char1024 target; // Protected member variable
+
 
 public:
 
@@ -79,8 +85,6 @@ public:
         get_status_property().from_string(str);
     }
     
-protected:
-    enumeration operation;  // Member variable of type `enumeration`.
 
 public:
     // Static inline method to get the byte offset of the member `operation`.
@@ -114,8 +118,6 @@ public:
         get_operation_property().from_string(str);
     }
     
-protected:
-    enumeration once;  // Member variable of type `enumeration`.
 
 public:
     // Static inline method to get the byte offset of the member `once`.
@@ -149,8 +151,6 @@ public:
         get_once_property().from_string(str);
     }
     
-protected:
-    double within;  // Member variable of type `double`.
 
 public:
     // Static inline method to get the byte offset of the member `within`.
@@ -185,8 +185,6 @@ public:
     }
 
     
-protected:
-    complex value;  // Member variable of type `complex`.
 
 public:
 
@@ -222,12 +220,8 @@ public:
         get_value_property().from_string(str);
     }
     
-protected:
-    complex once_value; // Member variable of type `complex`.
 
 public:
-    
-
 
     // Static inline method to get the byte offset of the member 
     static inline size_t get_once_value_offset(void) {
@@ -271,8 +265,6 @@ public:
     }
     
 
-protected:
-    char1024 target; // Protected member variable
 
 public:
 

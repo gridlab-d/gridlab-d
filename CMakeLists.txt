@@ -3,7 +3,7 @@ project(GridLAB-D)
 
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0") 
 
-# Add debug symbols and sanitizer support
+#Add debug symbols and sanitizer support
 #set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=address -fno-omit-frame-pointer")
 #set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
 #set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address")

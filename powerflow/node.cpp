@@ -89,6 +89,8 @@
 CLASS *node::oclass = nullptr;
 CLASS *node::pclass = nullptr;
 
+node* node::defaults = nullptr;
+
 unsigned int node::n = 0; 
 
 node::node(MODULE *mod) : powerflow_object(mod)

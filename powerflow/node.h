@@ -131,8 +131,12 @@ private:
 	double GFA_Update_time;
 
 	//Deltamode interfacing matrices
-	GL_STRUCT(Eigen::MatrixXcd,full_Y_matrix);
-	GL_STRUCT(Eigen::MatrixXcd,full_Y_all_matrix);
+	Eigen::MatrixXcd full_Y_matrix;
+	Eigen::MatrixXcd full_Y_all_matrix;
+
+	//GL_STRUCT(Eigen::MatrixXcd,full_Y_matrix);
+	//GL_STRUCT(Eigen::MatrixXcd,full_Y_all_matrix);
+
 
 	//Swing designation
 	bool swing_functions_enabled;			//Flag to indicate if a bus is behaving as a swing
@@ -143,6 +147,8 @@ private:
 	OBJECT *VFD_object;						///< Object pointer for the VFD - for later function calls
 
 	gld::complex *tn_values;		//Variable (mostly for FBS) to map triplex multipliers for neutral current.  Mostly so saves API calls.
+
+public:
 
 	double compute_angle_diff(double angle_B, double angle_A);	//Function to do differences, but handle the phase wrap/jump
 	STATUS shunt_update_fxn(void);	//Function to do shunt update for FPI, so sequencing happens correctly
@@ -249,6 +255,82 @@ public:
 	unsigned char prev_phases;	/// Phase tracking variable for use in reliability calls
 
 	inline bool is_split() {return (phases&PHASE_S)!=0;};
+
+	//node() {}
+	~node() { if (defaults) delete defaults; }
+
+	static inline node* get_defaults() {
+		if (!defaults) {
+			defaults = new node(); // Initialize lazily
+		}
+		return defaults;
+	}
+
+
+public:
+	// Static inline method to get the byte offset of the member `full_Y_matrix`.
+	static inline size_t get_full_Y_matrix_offset(void) {
+		node* current_defaults = get_defaults();
+		return reinterpret_cast<const char*>(&(current_defaults->full_Y_matrix)) - reinterpret_cast<const char*>(current_defaults);
+	}
+
+	// Inline function to get the value of `full_Y_matrix`.
+	inline Eigen::MatrixXcd get_full_Y_matrix(void) {
+		return full_Y_matrix;
+	}
+
+	// Inline method to return a `gld_property` object for `full_Y_matrix`.
+	inline gld_property get_full_Y_matrix_property(void) {
+		return gld_property(my(), std::string("full_Y_matrix").c_str());
+	}
+
+	// Inline method to set the value of `full_Y_matrix`.
+	inline void set_full_Y_matrix(const Eigen::MatrixXcd& matrix) {
+		full_Y_matrix = matrix;
+	}
+
+	// Inline method to get the string representation of the `full_Y_matrix` property.
+	inline gld_string get_full_Y_matrix_string(void) {
+		return get_full_Y_matrix_property().get_string();
+	}
+
+	// Inline method to set the `full_Y_matrix` property from a provided string.
+	inline void set_full_Y_matrix(char* str) {
+		get_full_Y_matrix_property().from_string(str);
+	}
+
+public:
+	// Static inline method to get the byte offset of the member `full_Y_all_matrix`.
+	static inline size_t get_full_Y_all_matrix_offset(void) {
+		node* current_defaults = get_defaults();
+		return reinterpret_cast<const char*>(&(current_defaults->full_Y_all_matrix)) - reinterpret_cast<const char*>(current_defaults);
+	}
+
+	// Inline function to get the value of `full_Y_all_matrix`.
+	inline Eigen::MatrixXcd get_full_Y_all_matrix(void) {
+		return full_Y_all_matrix;
+	}
+
+	// Inline method to return a `gld_property` object for `full_Y_all_matrix`.
+	inline gld_property get_full_Y_all_matrix_property(void) {
+		return gld_property(my(), std::string("full_Y_all_matrix").c_str());
+	}
+
+	// Inline method to set the value of `full_Y_all_matrix`.
+	inline void set_full_Y_all_matrix(const Eigen::MatrixXcd& matrix) {
+		full_Y_all_matrix = matrix;
+	}
+
+	// Inline method to get the string representation of the `full_Y_all_matrix` property.
+	inline gld_string get_full_Y_all_matrix_string(void) {
+		return get_full_Y_all_matrix_property().get_string();
+	}
+
+	// Inline method to set the `full_Y_all_matrix` property from a provided string.
+	inline void set_full_Y_all_matrix(char* str) {
+		get_full_Y_all_matrix_property().from_string(str);
+	}
+
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;

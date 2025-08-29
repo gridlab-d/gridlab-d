@@ -373,7 +373,7 @@ int class_string_to_propertytype(PROPERTYTYPE type,
  **/
 int class_string_to_property(PROPERTY *prop, /**< the type of the property at the \p addr */
                              void *addr,     /**< the address of the property's data */
-                             char *value)    /**< the string from which the data is read */
+                             const char *value)    /**< the string from which the data is read */
 {
 	if (prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
 		return (*property_type[prop->ptype].string_to_data)(value,addr,prop);

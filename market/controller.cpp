@@ -7,8 +7,11 @@
  **/
 
 #include "controller.h"
+#include "auction.h"
 
 CLASS* controller::oclass = nullptr;
+controller* controller::defaults = nullptr;
+
 
 controller::controller(MODULE *module){
 	if (oclass==nullptr)

@@ -55,6 +55,7 @@
 #include <memory>
 #include<mutex>
 #include<shared_mutex>
+#include <string>
 
 /* permanently disable use of CPPUNIT */
 #ifndef _NO_CPPUNIT
@@ -1607,19 +1608,19 @@ public: // special functions
 };
 
 /// Read lock container
-class gld_rlock {
-private: OBJECT *my;
-	   std::shared_lock<std::shared_mutex> lock;
-	/// Constructor
-public: inline gld_rlock(OBJECT *obj) : my(obj) {
-	lock = gld_core::rlock(&my->lock);
-};
-	/// Destructor
-public: inline ~gld_rlock(void) {
-	//gld_core::runlock(&my->lock);
-	lock.unlock();
-};
-};
+//class gld_rlock {
+//private: OBJECT *my;
+//	   std::shared_lock<std::shared_mutex> lock;
+//	/// Constructor
+//public: inline gld_rlock(OBJECT *obj) : my(obj) {
+//	lock = gld_core::rlock(&my->lock);
+//};
+//	/// Destructor
+//public: inline ~gld_rlock(void) {
+//	//gld_core::runlock(&my->lock);
+//	lock.unlock();
+//};
+//};
 /// Write lock container
 class gld_wlock {
 private: OBJECT *my;
@@ -1877,58 +1878,58 @@ public: // iterators
 
 // object data declaration/accessors
 /// Define an atomic property
-#define GL_ATOMIC(T,X) protected: T X; public: \
-	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
-	inline T get_##X(void) { return X; }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
-	inline T get_##X(gld_rlock&) { return X; }; \
-	inline T get_##X(gld_wlock&) { return X; }; \
-	inline void set_##X(T p) { X=p; }; \
-	inline void set_##X(T p, gld_wlock&) { X=p; }; \
-	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
-	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
-
-/// Define a structured property
-#define GL_STRUCT(T,X) protected: T X; public: \
-	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
-	inline T get_##X(void) { gld_rlock _lock(my()); return X; }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
-	inline T get_##X(gld_rlock&) { return X; }; \
-	inline T get_##X(gld_wlock&) { return X; }; \
-	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; \
-	inline void set_##X(T p, gld_wlock&) { X=p; }; \
-	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
-	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
-
-/// Define a string property
-#define GL_STRING(T,X) 	protected: T X; public: \
-	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
-	inline char* get_##X(void) { gld_rlock _lock(my()); return X.get_string(); }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
-	inline char* get_##X(gld_rlock&) { return X.get_string(); }; \
-	inline char* get_##X(gld_wlock&) { return X.get_string(); }; \
-	inline char get_##X(size_t n) { gld_rlock _lock(my()); return (char)X; }; \
-	inline char get_##X(size_t n, gld_rlock&) { return (char)X; }; \
-	inline char get_##X(size_t n, gld_wlock&) { return (char)X; }; \
-	inline void set_##X(char *p) { gld_wlock _lock(my()); strncpy(X,p,sizeof(X)); }; \
-	inline void set_##X(char *p, gld_wlock&) { strncpy(X,p,sizeof(X)); }; \
-	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; \
-	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; };  \
-
-/// Define an array property
-#define GL_ARRAY(T,X,S) protected: T X[S]; public: \
-	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
-	inline T* get_##X(void) { gld_rlock _lock(my()); return X; }; \
-	inline T* get_##X(gld_rlock&) { return X; }; \
-	inline T* get_##X(gld_wlock&) { return X; }; \
-	inline T get_##X(size_t n) { gld_rlock _lock(my()); return X[n]; }; \
-	inline T get_##X(size_t n, gld_rlock&) { return X[n]; }; \
-	inline T get_##X(size_t n, gld_wlock&) { return X[n]; }; \
-	inline void set_##X(T* p) { gld_wlock _lock(my()); memcpy(X,p,sizeof(X)); }; \
-	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
-	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
-	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; };  \
+//#define GL_ATOMIC(T,X) protected: T X; public: \
+//	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
+//	inline T get_##X(void) { return X; }; \
+//	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
+//	inline T get_##X(gld_rlock&) { return X; }; \
+//	inline T get_##X(gld_wlock&) { return X; }; \
+//	inline void set_##X(T p) { X=p; }; \
+//	inline void set_##X(T p, gld_wlock&) { X=p; }; \
+//	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
+//	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
+//
+///// Define a structured property
+//#define GL_STRUCT(T,X) protected: T X; public: \
+//	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
+//	inline T get_##X(void) { gld_rlock _lock(my()); return X; }; \
+//	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
+//	inline T get_##X(gld_rlock&) { return X; }; \
+//	inline T get_##X(gld_wlock&) { return X; }; \
+//	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; \
+//	inline void set_##X(T p, gld_wlock&) { X=p; }; \
+//	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
+//	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
+//
+///// Define a string property
+//#define GL_STRING(T,X) 	protected: T X; public: \
+//	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
+//	inline char* get_##X(void) { gld_rlock _lock(my()); return X.get_string(); }; \
+//	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
+//	inline char* get_##X(gld_rlock&) { return X.get_string(); }; \
+//	inline char* get_##X(gld_wlock&) { return X.get_string(); }; \
+//	inline char get_##X(size_t n) { gld_rlock _lock(my()); return (char)X; }; \
+//	inline char get_##X(size_t n, gld_rlock&) { return (char)X; }; \
+//	inline char get_##X(size_t n, gld_wlock&) { return (char)X; }; \
+//	inline void set_##X(char *p) { gld_wlock _lock(my()); strncpy(X,p,sizeof(X)); }; \
+//	inline void set_##X(char *p, gld_wlock&) { strncpy(X,p,sizeof(X)); }; \
+//	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; \
+//	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; };  \
+//
+///// Define an array property
+//#define GL_ARRAY(T,X,S) protected: T X[S]; public: \
+//	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
+//	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
+//	inline T* get_##X(void) { gld_rlock _lock(my()); return X; }; \
+//	inline T* get_##X(gld_rlock&) { return X; }; \
+//	inline T* get_##X(gld_wlock&) { return X; }; \
+//	inline T get_##X(size_t n) { gld_rlock _lock(my()); return X[n]; }; \
+//	inline T get_##X(size_t n, gld_rlock&) { return X[n]; }; \
+//	inline T get_##X(size_t n, gld_wlock&) { return X[n]; }; \
+//	inline void set_##X(T* p) { gld_wlock _lock(my()); memcpy(X,p,sizeof(X)); }; \
+//	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
+//	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
+//	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; };  \
 
 /// Define a bitflag property
 #define GL_BITFLAGS(T,X) protected: T X; public: \
@@ -2340,12 +2341,39 @@ public: // special operations
 		if (n==TCOP_ERR) throw "invalid property compare operation";
 		return compare((enumeration)n, a, b, p);
 	};
-	inline bool compare(enumeration op, char *a, char *b=NULL)
+	/*inline bool compare(enumeration op, char *a, char *b=NULL)
 	{ 
 		char v1[1024], v2[1024]; 
 		return callback->convert.string_to_property(pstruct.prop,(void*)v1,a)>0 && callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),(void*)v1,(b&&callback->convert.string_to_property(pstruct.prop,(void*)v2,b)>0)?(void*)v2:NULL, NULL);
-	};
-	inline bool compare(enumeration op, char *a, char *b, char *p)
+	};*/
+
+
+	inline bool compare(enumeration op, const char* _a, const char* _b = nullptr) {
+		// Allocate dynamic strings for conversions
+		char v1[1024], v2[1024];
+
+		// Convert the first property
+		bool success_a = callback->convert.string_to_property(pstruct.prop, (void*)v1, _a) > 0;
+
+		// Convert the second property if _b is not null
+		bool success_b = (_b && callback->convert.string_to_property(pstruct.prop, (void*)v2, _b) > 0);
+
+		// Perform the comparison
+		if (success_a) {
+			return callback->properties.compare_basic(
+				pstruct.prop->ptype,
+				(PROPERTYCOMPAREOP)op,
+				get_addr(),               // Comparison usually requires an address
+				(void*)v1,                // Value 1
+				success_b ? (void*)v2 : NULL, // Value 2, or NULL if conversion failed
+				NULL                      // Possibly additional parameters? Pass NULL for now
+			);
+		}
+
+		// Return false if the first conversion fails
+		return false;
+	}
+	inline bool compare(enumeration op, const char *a, const char *b, const char *p)
 	{
 		double v1, v2; v1=atof(a); v2=b?atof(b):0;
 		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),(void*)&v1,b?(void*)&v2:NULL, p);
