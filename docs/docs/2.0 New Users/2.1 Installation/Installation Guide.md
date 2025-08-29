@@ -1,0 +1,106 @@
+# Installation Guide
+
+TODO: Is this still accurate? Should instead point to dev build instructions?
+
+**TODO - AI Insight: Installation and Setup Issues:**
+   Users frequently encounter challenges during setup, particularly around dependencies, operating system compatibility, and configuration.
+
+# Download
+The latest source code is available via [SVN](https://sourceforge.net/projects/gridlab-d/). For details on how to build the GridLAB-D, see Builds.
+
+## Windows
+GridLAB-D has been prepared and tested for Windows XP, Vista, and 7. All daily build tests are performed on Windows 7. Although it hasn't been tested extensively, Windows 8 and 10 have shown no issues with backwards compatibility.
+
+Installation is from an executable, with a name of the form `gridlabd-system-major_minor_build.exe`. The current values are:
+
+- `system` represents the machine architecture, which can be
+    - `win32` for 32 bit Intel 686-based systems, or
+    - `x64` for 64 bit Intel Itanium-based systems.
+- `major` represents the major release number, which is currently *2*.
+- `minor` represents the minor release number, which is currently *1*.
+- `build` represents the build release number, which changes with each build and usually in the 100s or 1000s.
+
+## File locations
+The default directory tree for GridLAB-D on Windows is as follows:
+
+- `c:\Program Files\GridLAB-D` - 
+This is the main GridLAB-D directory. It contains all the subdirectories as well as the readme and uninstall files.
+- `c:\Program Files\GridLAB-D\bin` -
+This contains all the executables. The PATH environment variable should include this directory.
+- `c:\Program Files\GridLAB-D\etc` -
+This contains all the runtime files. The GLPATH environment variable should include this directory.
+- `c:\Program Files\GridLAB-D\lib` -
+This contains all the module files. Both the PATH and GLPATH environment variables should include this directory.
+- `c:\Program Files\GridLAB-D\samples` -
+This contains sample data files.
+
+## Environment variables
+Only two environment variables must be set for GridLAB-D to function properly.
+
+### PATH
+The Windows `PATH` environment must include both the bin and lib directories. Users who want to include their own modules should add the directory that contains them as well, e.g., `C:\Documents and Settings\user\My Documents\path`, where `user` is the user's login name, and `path` is the path to their own modules.
+### GRIDLABD
+This should contain the path where GridLAB-D is installed.
+### GLPATH
+GridLAB-D uses the GLPATH environment to find runtime files and module files. It should include at least the etc and lib directories. Users who want to include their own modules or runtime files should add the directory that contains them as well, e.g., `C:\Documents and Settings\user\My Documents\path`, where `user` is the user's login name, and `path` is the path to their own modules.
+### GLTEMP
+(optional) Set to the path where temporary files will be stored. If `GLTEMP` is not set, it will be automatically set depending on the environment variables defined in the following order:
+1. `%HOMEDRIVE%%HOMEPATH%\Local Settings\Temp\gridlabd` if both `HOMEDRIVE` and `HOMEPATH` are defined.
+2. `%TMP%\%USERNAME%\gridlabd`. If `TMP` is not defined, then `TEMP` will be tried in its place. If both `TMP` and `TEMP` are undefined, then `C:\Windows\Temp` will be used for `%TMP%`.
+
+Note: If the `GLTEMP` directory does not exist and it is required, it and all its parent directories will be created.
+
+## Search Order
+Searches for GridLAB-D files on GLPATH will be performed using the following order:
+
+1. Current working directory
+2. Directories in `GLPATH` environment variable in the order listed
+3. `GridLAB-D` installation directory (usually `C:\Program Files\GridLAB-D`)
+4. `etc` subdirectory of GridLAB-D install directory (`C:\Program Files\GridLAB-D\etc`)
+5. `lib` subdirectory of GridLAB-D install directory (`C:\Program Files\GridLAB-D\lib`)
+
+# Linux and OS-X
+
+## File locations
+Prior to Hassayampa (Version 3.0) installation on Mac OS/X could only be performed using the build process. Since Hassayampa (Version 3.0) a DMG build is available, but the installation file structure is different when using the DMG.
+
+## Build Installation
+These folders are created by the build process. There is no official DMG installer before Hassayampa (Version 3.0).
+
+- `/usr/bin/gridlabd` - 
+A symbolic link to `/usr/lib/gridlabd/gridlabd`, a bash script that sets up an appropriate environment to run gridlabd. `/usr/lib/gridlabd/gridlabd` is itself a soft link to `gridlab.bin`, the actual GridLAB-D binary.
+- `/usr/lib/gridlabd` - 
+Contains all runtime files.
+- `/usr/share/doc/gridlabd`- 
+Contains copyright notice and other documentation.
+
+## DMG Installation
+- `/usr/local/bin` - 
+Executable folder contains the command line script and the main executable binary image.
+- `/usr/local/lib/gridlabd` -
+Library folder the modules and basic support files.
+
+Note that the `DMG` installer does not alter you profile, so you may need to add the path to `/usr/local/bin` if it is not already included in your command shell path.
+
+## Environment variables
+### GRIDLABD
+This should contain the path where GridLAB-D is installed. The `gridlabd` script sets this variable before calling gridlabd.bin.
+### GLPATH
+A set of colon-separated paths used for searching for GridLAB-D configuration files, modules, and runtime files. At a minimum, this variable should contain the path to the directory where GridLAB-D is installed (`/usr/lib/gridlabd`). It may also be used to add additional search paths.
+### GLTEMP
+(optional) Set to the path where temporary files will be stored. If GLTEMP is not set, it will be automatically set depending on the environment variables defined in the following order:
+
+1. `$HOME/.gridlabd/tmp` if `HOME` is defined.
+2. `$TMP/$USER/gridlabd`. If `TMP` is not defined, then `TEMP` will be tried in its place. If both `TMP` and `TEMP` are undefined, then /tmp will be used for `$TMP`.
+
+Note: If the `GLTEMP` directory does not exist and it is required, it and all its parent directories will be created.
+
+## Search Order
+Searches for GridLAB-D files on `GLPATH` will be performed using the following order:
+
+1. Current working directory
+2. Directories in `GLPATH` environment variable in the order listed
+3. `/usr/lib/gridlabd` or `/usr/local/lib/gridlabd
+4. `/usr/etc/gridlabd` (not used after Grizzly (Version 2.3))
+
+Note: The last two hard-coded paths should probably not be hard-coded or at least should be set using the install prefix.
