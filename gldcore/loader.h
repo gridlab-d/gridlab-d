@@ -22,7 +22,7 @@ using json = nlohmann::json;
 class loader {
 
 private:
-	parser parse;
+	parser parse = parser();
 
     json jsn;
     json property;

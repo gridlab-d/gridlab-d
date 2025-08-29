@@ -43,9 +43,10 @@ private:
 
 public:
 
-	int findLastIndex(string& str, char x);
+	int findLastIndex(string str, char x);
     int replaceAll(string& s, string const& toReplace, string const& replaceWith);
 	string extractBetween(string str, char startChar, char endChar);
+	string extractBetweenEnd(string str, char startChar, char endChar);
 	void forward_slashes(string& str);
 	void filename_parts(string filename, string& path, string& name, string& ext);
     
@@ -132,7 +133,7 @@ public:
 		op_stk[++op_i] = (T);							\
 		++rpn_sz;							
 		
-	int expression(PARSER, double *pValue, UNIT **unit, OBJECT *obj);
+	int expression(string text, double *pValue, UNIT **unit, OBJECT *obj);
 	int functional_unit(PARSER, double *pValue, UNIT **unit);
 	int complex_value(PARSER, gld::complex *pValue);
 	int complex_unit(PARSER, gld::complex *pValue, UNIT **unit);
@@ -144,8 +145,8 @@ public:
 	int time_value_datetimezone(PARSER, TIMESTAMP *t);
 	int time_value(PARSER, TIMESTAMP *t);
 
-	int expanded_value(char *line, char *result, int size, const char *delims);
-	int alternate_value(char *_p, char *value, int size);
+	string expanded_value(string text);
+	bool alternate_value(string& text);
 };
 
 #endif // C++

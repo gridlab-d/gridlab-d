@@ -12,7 +12,7 @@
 using namespace std;
 
 bool loader::open_file(string file_name) {
-	
+
 	ifstream file(file_name, std::ios::in);
     if (!file.is_open()) {
 		output_error("%s: unable to read stream", file_name.c_str());
@@ -104,8 +104,8 @@ bool loader::module_properties(MODULE *mod) {
 			current_module = mod; /* module context */
 			string propvalue = value.get<std::string>();
 			if (propvalue != "_conditional")
-				if (this->parse.alternate_value((char*)propvalue.c_str())) {
-					if (module_setvar(mod, (const char*)name.c_str(), (char*)propvalue.c_str()) > 0)
+				if (this->parse.alternate_value(propvalue)) {
+					if (module_setvar(mod, (const char*)name.c_str(), propvalue.data()) > 0)
 						output_error_raw("invalid '%s' property for module %s, ", (const char*)name.c_str(), mod->name);
 				}
 		}
@@ -153,11 +153,11 @@ void loader::loadModules() {
 		if (property.contains("_conditional") && property.is_object())
 			load = module_conditionals();
 		if (load) {
-			module = module_load((const char*)name.c_str(),0,nullptr);
+			module = module_load(name.data(),0,nullptr);
 			if (module != nullptr)
 				module_properties(module);
 			else
-				output_error_raw("%s: module load failed", (const char*)name.c_str(), "(no details)");
+				output_error_raw("%s: module load failed", name.data(), "(no details)");
 		}
 	}
 }

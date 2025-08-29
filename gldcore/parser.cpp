@@ -9,8 +9,7 @@
 //#include "module.h"
 #include "parser.h"
 
-
-int parser::findLastIndex(string& str, char x) {
+int parser::findLastIndex(string str, char x) {
     int index = -1;
     for (int i = 0; i < str.length(); i++)
         if (str[i] == x)
@@ -44,6 +43,16 @@ int parser::replaceAll(string& s, string const& toReplace, string const& replace
 }
 
 string parser::extractBetween(string str, char startChar, char endChar) {
+    size_t startPos = str.find(startChar);
+    size_t endPos = str.find(startPos + 1);
+
+    if (startPos != string::npos && endPos != string::npos) {
+        return str.substr(startPos + 1, endPos);
+    }
+    return ""; // Return empty string if characters not found
+}
+
+string parser::extractBetweenEnd(string str, char startChar, char endChar) {
     size_t startPos = str.find(startChar);
     size_t endPos = str.find(endChar, startPos + 1);
     
@@ -667,7 +676,8 @@ int parser::rpnfunc(PARSER, int *val) {
 	return 0;
 }
 	
-int parser::expression(PARSER, double *pValue, UNIT **unit, OBJECT *obj) {
+int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj) {
+    char *_p = text.data();
 	double val_q[128], tVal;
 	char tname[128]; /* type name for this.prop */
 	char oname[128], pname[128];
@@ -1096,9 +1106,8 @@ int parser::time_value(PARSER, TIMESTAMP *t) {
 	DONE;
 }
 
-int parser::expanded_value(char *line, char *result, int size, const char *delims) {
+string parser::expanded_value(string text) {
 
-	string text = line;
 	string varname = extractBetween(text, '`', '`');
 	if (varname.length() > 0) {
 		char val[1024];
@@ -1128,7 +1137,7 @@ int parser::expanded_value(char *line, char *result, int size, const char *delim
 		replaceAll(text, "{masteraddr}", "127.0.0.1"); /* @todo copy actual master addr */
 		replaceAll(text, "{masterport}", "6267");      /* @todo copy actual master port */
 		if (current_object)
-			sprintf(val,"%d",current_object->id);
+			sprintf(val, "%d", current_object->id);
 		else
 			strcpy(val, "");
 		replaceAll(text, "{id}", val);
@@ -1143,70 +1152,36 @@ int parser::expanded_value(char *line, char *result, int size, const char *delim
 			else
 				break;
 		}
-		strcpy(line, text.c_str()); 
-		return 1;
 	}
-	else if (delims==nullptr)
-		return value(line, result, size);
-	else
-		return delim_value(line, result, size, delims);
+	return text;
 }
 
 /** alternate_value allows the use of ternary operations, e.g.,
 		 property (expression) ? negzero_value : positive_value ;
  **/
- 
-int parser::alternate_value(PARSER, char *value, int size) {
+bool parser::alternate_value(string& text) {
 	double test;
-	char value1[1024];
-	char value2[1024];
-	START;
-	if (WHITE) ACCEPT;
-	if (TERM(expression(HERE,&test,nullptr,current_object)) && (WHITE,LITERAL("?")))
-	{
-		if ((WHITE,TERM(expanded_value(HERE,value1,sizeof(value1), " \t\n:"))) && (WHITE,LITERAL(":")) && (WHITE,TERM(expanded_value(HERE,value2,sizeof(value2), " \n\t;"))))
-		{
-			ACCEPT;
-			if (test>0)
-			{
-				if ((int)strlen(value1)>size)
-				{
-					output_error_raw("%s(%d): alternate value 1 is too large ;", filename, linenum);
-					REJECT;
-				}
-				else
-				{
-					strcpy(value,value1);
-					ACCEPT;
-				}
+	
+    size_t found_q = text.find("?");
+    size_t found_c = text.find(":");
+	if (found_q != string::npos && found_c != string::npos) {
+		string exp = text.substr(0, found_q);
+		if (expression(exp, &test, NULL, current_object)) {
+			if (test > 0) {
+				text = text.substr(found_q + 1, (found_c-found_q));
+				text = expanded_value(text);
+				return true;
 			}
-			else
-			{
-				if ((int)strlen(value2)>size)
-				{
-					output_error_raw("%s(%d): alternate value 2 is too large ;", filename, linenum);
-					REJECT;
-				}
-				else
-				{
-					strcpy(value,value2);
-					ACCEPT;
-				}
+			else {
+				text = text.substr(found_c + 1);
+				text = expanded_value(text);
+				return true;
 			}
 		}
-		else
-		{
-			output_error_raw("%s(%d): missing or invalid alternate values;", filename, linenum);
-			REJECT;
-		}
-		DONE;
 	}
-	OR if (TERM(expanded_value(HERE,value,size,nullptr)))
-	{
-		ACCEPT;
-		DONE
+	else {
+		text = expanded_value(text);
+		return true;
 	}
-	REJECT;
-	DONE;
+	return false;
 }
-
