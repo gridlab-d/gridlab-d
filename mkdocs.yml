@@ -45,6 +45,7 @@ nav:
     - Technical Overview: docs/1.0 Prospective Users/Technical_Overview.md
   - 2.0 New Users:
     - 2.1 Installation:
+      - Installation Guide: docs/2.0 New Users/2.1 Installation/Installation Guide.md
       - MySQL:
         - Database: docs/2.0 New Users/2.1 Installation/MySQL/Database.md
         - HowTo:mysql: docs/2.0 New Users/2.1 Installation/MySQL/HowTo_mysql.md
@@ -106,6 +107,7 @@ nav:
           - Microgrids: docs/3.0 Modeling/3.2 Modules/Objects/Distributed Energy Resources/Dev_Microgrids.md
           - Diesel dg: docs/3.0 Modeling/3.2 Modules/Objects/Distributed Energy Resources/Diesel_dg.md
           - Droop inverter: docs/3.0 Modeling/3.2 Modules/Objects/Distributed Energy Resources/Droop_inverter.md
+          - Energy storage: docs/3.0 Modeling/3.2 Modules/Objects/Distributed Energy Resources/Energy_storage.md
           - Evcharger: docs/3.0 Modeling/3.2 Modules/Objects/Distributed Energy Resources/Evcharger.md
           - Evcharger det: docs/3.0 Modeling/3.2 Modules/Objects/Distributed Energy Resources/Evcharger_det.md
           - Hybrid Electric Vehicle Chargers: docs/3.0 Modeling/3.2 Modules/Objects/Distributed Energy Resources/Hybrid_Electric_Vehicle_Chargers.md
@@ -180,13 +182,14 @@ nav:
       - Finding Objects: docs/3.0 Modeling/Modeling Reference/finding-objects.md
   - 4.0 Developing:
     - 4.1 - Introduction: docs/4.0 Developing/4.1 - Introduction.md
-    - 4.2 - Building GridLAB-D™ from Source: docs/4.0 Developing/4.2 Building from Source/4.2.1-Building_from_Source.md
+    - 4.2 Building from Source:
+      - 4.2 - Building GridLAB-D™ from Source: docs/4.0 Developing/4.2 Building from Source/4.2.1-Building_from_Source.md
       - Setting-Up MSYS2 for Windows: docs/4.0 Developing/4.2 Building from Source/4.2.2-Setting-Up_MSYS2_for_Windows.md
       - Setting-Up WSL for Windows: docs/4.0 Developing/4.2 Building from Source/4.2.3-Setting-Up_WSL_for_Windows.md
       - Setting-Up the VS Code IDE: docs/4.0 Developing/4.2 Building from Source/4.2.4-Setting-Up_VS_Code.md
     - 4.3 - Software Architecture and Design:
       - Introduction: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.0 - Introduction.md
-      - GLDCore: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.1 - gldcore.md
+      - gldcore: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.1 - gldcore.md
       - GridLAB-D™ Modules: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.2 - Modules.md
       - GridLAB-D™ Objects: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.3 - Objects.md
       - Object Synchronization Process: docs/4.0 Developing/4.3 - Software Architecture and Design/4.3.4 - Object Synchronization Process.md
@@ -208,18 +211,7 @@ nav:
       - Command options: docs/4.0 Developing/4.6 - Debugging/4.6.1 - Command_line_arguments.md
       - Performance Profiling: docs/4.0 Developing/4.6 - Debugging/4.6.2 - performance-profiling.md
     - 4.7 - Style Guide: docs/4.0 Developing/4.7 - Style_guide.md
-    - API:
-    - Build_Installation:
-    - Debugging:
-    - Deltamode:
-    - Fundamentals:
-    - Modules:
-      - autotest:
-      - connections:
-      - gldcore:
-      - optimization:
-      - powerflow:
-      - residential:
+    - GridLAB-D Release Process: docs/4.0 Developing/4.8-Release_Process.md
     - undecided:
       - Dev:mysql: docs/4.0 Developing/undecided/Dev_mysql.md
       - HowTo:Create a solver: docs/4.0 Developing/undecided/HowTo_Create_a_solver.md

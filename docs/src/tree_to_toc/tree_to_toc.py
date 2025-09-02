@@ -84,6 +84,10 @@ nav_list = generate_nav_list(docs_directory)
 print("nav:")
 print(nav_list)
 
+print('-------------------------------------------------------------------')
+print('Docs will not build with empty pages! Remove placeholders from TOC.')
+print('-------------------------------------------------------------------')
+
 # Save the output to `tree.txt`
 with open("tree.txt", "w", encoding="utf-8") as txt_file:
     txt_file.write(nav_list)
