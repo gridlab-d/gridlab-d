@@ -99,19 +99,19 @@ class GLMModel:
             entity.add_attr("TEXT", "Stop time", "", "stoptime", value=None)
             self.module_entities["clock"] = entity
             entity = Entity("_directives", None)
-            entity.add_attr("TEXTARRAY", "#include", "", "includes", value=[])
-            entity.add_attr("TEXTARRAY", "#define", "", "defines", value=[])
-            entity.add_attr("TEXTARRAY", "#set", "", "sets", value=[])
-            entity.add_attr("TEXTARRAY", "#undef", "", "undefs", value=[])
+            entity.add_attr("TEXTARRAY", "#include", "", "#include", value=[])
+            entity.add_attr("TEXTARRAY", "#define", "", "#define", value=[])
+            entity.add_attr("TEXTARRAY", "#set", "", "#set", value=[])
+            entity.add_attr("TEXTARRAY", "#undef", "", "#undef", value=[])
             self.module_entities["_directives"] = entity
             entity = Entity("_legacy", None)
-            entity.add_attr("TEXTARRAY", "#setenv", "", "setenvs", value=[])
-            entity.add_attr("TEXTARRAY", "#binpath", "", "binpaths", value=[])
-            entity.add_attr("TEXTARRAY", "#libpath", "", "libpaths", value=[])
-            entity.add_attr("TEXTARRAY", "#incpath", "", "incpaths", value=[])
-            entity.add_attr("TEXTARRAY", "#option", "", "options", value=[])
-            entity.add_attr("TEXTARRAY", "#system", "", "systems", value=[])
-            entity.add_attr("TEXTARRAY", "#start", "", "starts", value=[])
+            entity.add_attr("TEXTARRAY", "#setenv", "", "#setenv", value=[])
+            entity.add_attr("TEXTARRAY", "#binpath", "", "#binpath", value=[])
+            entity.add_attr("TEXTARRAY", "#libpath", "", "#libpath", value=[])
+            entity.add_attr("TEXTARRAY", "#incpath", "", "#incpath", value=[])
+            entity.add_attr("TEXTARRAY", "#option", "", "#option", value=[])
+            entity.add_attr("TEXTARRAY", "#system", "", "#system", value=[])
+            entity.add_attr("TEXTARRAY", "#start", "", "#start", value=[])
             self.module_entities["_legacy"] = entity
             entity = Entity("__preamble", None)
             entity.add_attr("TEXTARRAY", "Preamble comments", "", "comments", value=[])
@@ -239,12 +239,17 @@ class GLMModel:
                     # derive name from first comment, default empty
                     name = ""
                     items = []
-                    for l in lines_blk:
-                        if l.startswith('//'):
-                            name = l[2:].strip()
-                        elif l.startswith('*'):
-                            items.append(l)
-                    blocks.append({'name': name, 'items': items})
+                for l in lines_blk:
+                    stripped_line = l.strip()  # Remove leading and trailing whitespace
+                    if stripped_line.startswith('//'):
+                        if name != "" and name != stripped_line[2:].strip():
+                            blocks.append({'name': name, 'items': items})
+                            items = []
+                        name = stripped_line[2:].strip()  # Extract everything after '//' and remove extra spaces
+                        
+                    elif stripped_line and not stripped_line.startswith('//'): 
+                        items.append(stripped_line)  
+                blocks.append({'name': name, 'items': items})
                 schedules.append({sched_name: blocks})
             diction['schedules'] = schedules
         return diction
@@ -497,13 +502,13 @@ class GLMModel:
         Returns:
             str: The schedule name/identifier
         """
-        # This only grab the lines, real parsing of the schedule
+
         m_sched = re.search(r'schedule\W+(\w+)\s*([;{])', line, re.IGNORECASE)
         if m_sched:
             # schedule found
             self.schedule_types[m_sched.group(1)] = []
             self.schedule_types[m_sched.group(1)].append(line)
-            if m_sched.group(2) == '{':
+            if m_sched.group(2) == '{' and not line.strip().startswith("//"):
                 # multi-line schedule
                 oend = 1
                 tab = ["  "]
@@ -514,10 +519,10 @@ class GLMModel:
                         tab.remove("  ")
                         oend -= 1
                     self.schedule_types[m_sched.group(1)].append(''.join(tab) + line)
-                    if re.search('{', line):
-                        # start of the sub schedule
-                        tab.append("  ")
-                        oend += 1
+                if re.search(r'{\s*$', line) and not line.strip().startswith("//"):
+                    # start of the sub schedule
+                    tab.append("  ")
+                    oend += 1
         return m_sched.group(1)
 
     def _finalize_comments_and_params(self, params, inside_comments, inline_comments):
@@ -715,7 +720,11 @@ class GLMModel:
             # This case should be handled separately for nested objects
             return None, line
         else:
-            # found a parameter val
+            # Found a parameter val
+            # Remove quotes around the string
+            if isinstance(val, str) and val.startswith('"') and val.endswith('"'):
+                val = val[1:-1]
+                
             if val == "$" and line is not None:
                 # found $ command
                 pos = line.find("{")
@@ -732,7 +741,7 @@ class GLMModel:
                 self.add_conditionals_to_item(params[param], val.strip(), insideIfDefs)
             else:
                 params[param] = val.strip()
-            
+
             if len(comments) > 0:
                 inside_comments[param] = comments
                 comments.clear()
@@ -754,7 +763,7 @@ class GLMModel:
         """
         # Identify the object type and raw id
         oid = ""
-        m = re.search(r'object ([^:{\s]+)[:{\s]', line, re.IGNORECASE)
+        m = re.search(r'object ([^:{\s]+)(?=[:{\s]|$)', line, re.IGNORECASE)
         _type = m.group(1)
         # If the object has an id qualifier (e.g., ..N), store it
         n = re.search(r'object ([^:]+:[^{\s]+)', line, re.IGNORECASE)
@@ -1154,19 +1163,44 @@ class GLMModel:
                 else:
                     print('Un-parsed line "' + line + '"')
 
-            # Put directives into separate object
-            self.module_entities['_directives'].sets = self.set_lines
-            self.module_entities['_directives'].includes = self.include_lines
-            self.module_entities['_directives'].defines = self.define_lines
-            self.module_entities['_directives'].undefs = self.undef_lines
-            # extended directives
-            self.module_entities['_legacy'].setenvs = self.setenv_lines
-            self.module_entities['_legacy'].binpaths = self.binpath_lines
-            self.module_entities['_legacy'].libpaths = self.libpath_lines
-            self.module_entities['_legacy'].incpaths = self.incpath_lines
-            self.module_entities['_legacy'].options = self.option_lines
-            self.module_entities['_legacy'].systems = self.system_lines
-            self.module_entities['_legacy'].starts = self.start_lines
+            def append_lines(module_entities, entity_key, lines_dict):
+                """
+                Append values to attributes of the specified entity in module_entities.
+
+                Args:
+                    module_entities (dict): The dictionary containing module entities.
+                    entity_key (str): The key of the entity in module_entities.
+                    lines_dict (dict): A dictionary mapping attribute names to the lines to append.
+                """
+                entity = module_entities[entity_key]
+                for attr, lines in lines_dict.items():
+                    setattr(entity, attr, lines)
+
+            # Define the lines to append for '_directives'
+            directives_lines = {
+                "#set": self.set_lines,
+                "#include": self.include_lines,
+                "#define": self.define_lines,
+                "#undef": self.undef_lines,
+            }
+
+            # Define the lines to append for '_legacy'
+            legacy_lines = {
+                "#setenv": self.setenv_lines,
+                "#binpath": self.binpath_lines,
+                "#libpath": self.libpath_lines,
+                "#incpath": self.incpath_lines,
+                "#option": self.option_lines,
+                "#system": self.system_lines,
+                "#start": self.start_lines,
+            }
+
+            # Append lines to '_directives'
+            append_lines(self.module_entities, "_directives", directives_lines)
+
+            # Append lines to '_legacy'
+            append_lines(self.module_entities, "_legacy", legacy_lines)
+                         
             self.hash = h
             return True
         else:
