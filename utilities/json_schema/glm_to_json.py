@@ -57,26 +57,27 @@ def glm_to_json(glmName="TE_CHALLENGE"):
         raw = model_file.entities_to_json()
         for ctype in classes:
             raw.pop(ctype, None)
-        # Directives filtering
+
+        def filter_and_transform(directives, excluded_keys):
+            # Filter and transform the directives dictionary
+            filtered = {
+                field_key: field_value
+                for field_key, field_value in directives.items()
+                if field_key not in excluded_keys and field_value
+            }
+            return filtered
+
+        # Keys to exclude during filtering
+        excluded_keys = ['item_cnt', 'entity', 'instances']
+
+        # Process '_directives'
         directives = raw.get('_directives', {})
-        filtered_directives = {
-            field_key: field_value
-            for field_key, field_value in directives.items()
-            if not ((isinstance(field_value, list) and not field_value) or
-                    (isinstance(field_value, dict) and not field_value) or
-                    (isinstance(field_value, str) and not field_value))
-               and field_key not in ['item_cnt', 'entity', 'instances']
-        }
-        # Legacy filtering
-        directives = raw.get('_legacy', {})
-        filtered_legacy = {
-            field_key: field_value
-            for field_key, field_value in directives.items()
-            if not ((isinstance(field_value, list) and not field_value) or
-                    (isinstance(field_value, dict) and not field_value) or
-                    (isinstance(field_value, str) and not field_value))
-               and field_key not in ['item_cnt', 'entity', 'instances']
-        }        
+        filtered_directives = filter_and_transform(directives, excluded_keys)
+
+        # Process '_legacy'
+        legacy_directives = raw.get('_legacy', {})
+        filtered_legacy = filter_and_transform(legacy_directives, excluded_keys)
+
         # Add preamble comments if available
         preamble = raw.get('__preamble', {})
         filtered_preamble = {
@@ -89,11 +90,15 @@ def glm_to_json(glmName="TE_CHALLENGE"):
         }
 
         # TODO: Come back to this when schema v1 is ready and check against it for which fields to do number conversion
-        def try_number_conversion(value):
+        def try_conversion(value):
             """
-            Try to convert a string to a number type (int or float).
+            Try to convert a string to a number type (int or float) or boolean.
             """
             if isinstance(value, str):
+                if value.lower() == "true":
+                    return True
+                elif value.lower() == "false":
+                    return False
                 try:
                     # Try converting to an integer first
                     return int(value)
@@ -106,10 +111,10 @@ def glm_to_json(glmName="TE_CHALLENGE"):
                         return value
             elif isinstance(value, dict):
                 # Recursively convert values in a dictionary
-                return {k: try_number_conversion(v) for k, v in value.items()}
+                return {k: try_conversion(v) for k, v in value.items()}
             elif isinstance(value, list):
                 # Recursively convert values in a list
-                return [try_number_conversion(v) for v in value]
+                return [try_conversion(v) for v in value]
             return value  # Return the original value if not a string
 
 
@@ -123,7 +128,7 @@ def glm_to_json(glmName="TE_CHALLENGE"):
             if inst_dict:
                 # Extract the single instance and ensure numeric conversion in its values
                 single = next(iter(inst_dict.values()), {})
-                modules[mtype] = try_number_conversion(single)
+                modules[mtype] = try_conversion(single)
                 #check if there are conditionals and add them
                 if entity._conditionals:
                     modules[mtype]["_conditionals"] = entity._conditionals
@@ -134,7 +139,7 @@ def glm_to_json(glmName="TE_CHALLENGE"):
         if clock_entity:
             insts = getattr(clock_entity, 'instances', {})
             if insts:
-                clock_data = try_number_conversion(next(iter(insts.values()), {}))
+                clock_data = try_conversion(next(iter(insts.values()), {}))
 
         # Build objects using parsed data
         objects = {}
@@ -143,7 +148,7 @@ def glm_to_json(glmName="TE_CHALLENGE"):
             for name, params in insts.items():
                 entry = {'name': name}
                 try:
-                    entry.update(try_number_conversion(params))  # Ensure numeric conversion for params
+                    entry.update(try_conversion(params))
                 except Exception as e:
                     print(f"Error processing {name}: {e}")  
                 obj_list.append(entry)
@@ -161,6 +166,9 @@ def glm_to_json(glmName="TE_CHALLENGE"):
             'objects': objects,
             'schedules': raw.get('schedules', [])
         }
+
+        # Remove empty blocks
+        jsonEntity = {k: v for k, v in jsonEntity.items() if v}
 
         # Dump filtered values JSON
         with open(output_file_path, 'w', encoding='utf-8') as op:
