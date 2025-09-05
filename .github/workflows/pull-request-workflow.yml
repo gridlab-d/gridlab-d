@@ -83,7 +83,7 @@ jobs:
           # Future Catch2 unit tests (placeholder):
           # ./build/tests/unit_tests --reporter junit --out unit-tests-linux.xml
           # Current ctest invocation (unit + any ctest-based tests)
-          ctest --test-dir build --verbose
+          ctest --verbose
 
   win-build:
     strategy:
@@ -138,7 +138,7 @@ jobs:
           gridlabd -T 0 --validate
           # Future Catch2 unit tests (placeholder):
           # ./build/tests/unit_tests --reporter junit --out unit-tests-windows.xml
-          ctest --test-dir build --verbose
+          ctest --verbose
 
   mac-build:
     strategy:
@@ -208,4 +208,4 @@ jobs:
           gridlabd -T 0 --validate
           # Future Catch2 unit tests (placeholder):
           # ./build-${{matrix.arch}}/tests/unit_tests --reporter junit --out unit-tests-macos.xml
-          ctest --test-dir build-${{matrix.arch}} --verbose
+          ctest --verbose
