@@ -516,15 +516,17 @@ void sync_ctrl::init_vars() // Init local variables with default settings
 template <class T>
 void sync_ctrl::set_prop(gld_property *prop_ptr, T prop_value)
 {
-    gld_wlock *rlock = nullptr;
-    prop_ptr->setp<T>(prop_value, *rlock);
+    
+    prop_ptr->setp<T>(prop_value, rlock);
 }
 /* Get */
 template <class T>
 void sync_ctrl::get_prop(gld_property *prop_ptr, T prop_value)
 {
-    gld_wlock *rlock = nullptr;
-    prop_ptr->getp<T>(prop_value, *rlock);
+    //gld_wlock *rlock = nullptr;
+    //replace the above with SharedMutexManager
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&rlock));
+    prop_ptr->getp<T>(prop_value, rlock);
 }
 
 /* Get Prop Value*/

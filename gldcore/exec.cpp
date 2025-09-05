@@ -760,11 +760,17 @@ static int init_by_deferral_retry(std::vector<OBJECT*>& def_array, int def_ct)
 					output_error("init_by_deferral_retry(): object %s initialization failed", object_name(obj, b, 63));
 					break;
 				case 1:
-					wlock(&obj->lock);
+				{
+					//wlock(&obj->lock);
+					//replace the above with SharedMutexManager
+					std::unique_lock<std::shared_mutex> write_lock(SharedMutexManager::get_mutex(&obj->lock));
+
 					obj->flags |= OF_INIT;
 					obj->flags -= OF_DEFERRED;
-					wunlock(&obj->lock);
+					//wunlock(&obj->lock);
+					write_lock.unlock();
 					break;
+				}
 				case 2:
 					next_arr[ct] = obj;
 					++ct;
@@ -859,17 +865,27 @@ static int init_by_deferral()
 				output_error("init_by_deferral(): object %s initialization failed", object_name(obj, b, 63));
 				break;
 			case 1:
-				wlock(&obj->lock);
+			{
+				//wlock(&obj->lock);
+				//replace the above with SharedMutexManager
+				std::unique_lock<std::shared_mutex> write_lock(SharedMutexManager::get_mutex(&obj->lock));
 				obj->flags |= OF_INIT;
-				wunlock(&obj->lock);
+				//wunlock(&obj->lock);
+				write_lock.unlock();
 				break;
+			}
 			case 2:
+			{
 				def_array[def_ct] = obj;
 				++def_ct;
-				wlock(&obj->lock);
+				//wlock(&obj->lock);
+				//replace the above with SharedMutexManager
+				std::unique_lock<std::shared_mutex> write_lock2(SharedMutexManager::get_mutex(&obj->lock));
 				obj->flags |= OF_DEFERRED;
-				wunlock(&obj->lock);
+				//wunlock(&obj->lock);
+				write_lock2.unlock();
 				break;
+			}
 			// no default
 		}
 

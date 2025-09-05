@@ -519,7 +519,7 @@ int solar::init(OBJECT *parent)
 	OBJECT *obj = object_header(this);
 	int climate_result;
 	gld_property *temp_property_pointer = nullptr;
-	gld_wlock *test_rlock = nullptr;
+	unsigned test_rlock = 0;
 	bool temp_bool_val;
 	double temp_double_val, temp_inv_p_rated, temp_p_efficiency, temp_p_eta;
 	double temp_double_div_value_eta, temp_double_div_value_eff;
@@ -692,7 +692,7 @@ int solar::init(OBJECT *parent)
 			}
 
 			//Pull the property
-			temp_property_pointer->getp<bool>(temp_bool_val, *test_rlock);
+			temp_property_pointer->getp<bool>(temp_bool_val, test_rlock);
 
 			//Remove the property
 			delete temp_property_pointer;
@@ -1122,7 +1122,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	int64 ret_value;
 	OBJECT *obj = object_header(this);
 	double insolwmsq, corrwindspeed, Tback, Ftempcorr;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	//Check the shading factor
 	if ((shading_factor < 0) || (shading_factor > 1))
@@ -1263,7 +1263,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 			pvc_Pmax = get_p_max(pvc_U_m_V);
 		}
 
-		inverter_pvc_Pmax_property->setp<double>(pvc_Pmax, *test_rlock);
+		inverter_pvc_Pmax_property->setp<double>(pvc_Pmax, test_rlock);
 
 		if (pvc_Pmax > Max_P)
 		{
@@ -1287,8 +1287,8 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	I_Out = (P_Out / V_Out);
 
 	//Export the values
-	inverter_voltage_property->setp<double>(V_Out, *test_rlock);
-	inverter_current_property->setp<double>(I_Out, *test_rlock);
+	inverter_voltage_property->setp<double>(V_Out, test_rlock);
+	inverter_current_property->setp<double>(I_Out, test_rlock);
 
 	return TS_NEVER;
 }
@@ -1334,7 +1334,7 @@ SIMULATIONMODE solar::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 //DC update function
 STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 {
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	STATUS temp_status = SUCCESS;
 	double inv_I, inv_P;
 
@@ -1358,7 +1358,7 @@ STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 		V_Out = get_u_from_p(pvc_U_m_V, eps_nr_ite, inv_P);
 
 		//Push the voltage back out to the inverter - this may need different logic when there are multiple objects
-		inverter_voltage_property->setp<double>(V_Out, *test_rlock);
+		inverter_voltage_property->setp<double>(V_Out, test_rlock);
 
 		//Initialize our tracking variables - since we're likely to go to normal code after this
 		last_DC_current = 0.0;
@@ -1380,8 +1380,8 @@ STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 		inv_P += P_Out - last_DC_power;
 
 		//Push the changes
-		inverter_current_property->setp<double>(inv_I, *test_rlock);
-		inverter_power_property->setp<double>(inv_P, *test_rlock);
+		inverter_current_property->setp<double>(inv_I, test_rlock);
+		inverter_power_property->setp<double>(inv_P, test_rlock);
 
 		//Update trackers
 		last_DC_current = I_Out;

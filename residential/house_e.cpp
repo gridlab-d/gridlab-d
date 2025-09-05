@@ -1339,7 +1339,7 @@ and internal gain variables.
 int house_e::init(OBJECT *parent)
 {
 	gld_property *temp_gld_property;
-	gld_wlock *test_rlock;
+	unsigned int test_rlock = 0;
 	bool temp_bool_val;
 
 	if(parent != nullptr){
@@ -1376,7 +1376,7 @@ int house_e::init(OBJECT *parent)
 
 		//Set the value
 		temp_bool_val = true;
-		temp_gld_property->setp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->setp<bool>(temp_bool_val,test_rlock);
 
 		//Remove the temp property
 		delete temp_gld_property;
@@ -1442,7 +1442,7 @@ int house_e::init(OBJECT *parent)
 		}
 
 		//Pull the value to a temporary
-		temp_gld_property->getp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->getp<bool>(temp_bool_val,test_rlock);
 
 		//Delete the link
 		delete temp_gld_property;
@@ -1461,7 +1461,7 @@ int house_e::init(OBJECT *parent)
 		}
 
 		//Pull the value to a temporary
-		temp_gld_property->getp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->getp<bool>(temp_bool_val,test_rlock);
 
 		//Delete the link
 		delete temp_gld_property;
@@ -1480,7 +1480,7 @@ int house_e::init(OBJECT *parent)
 		}
 
 		//Pull the value to a temporary
-		temp_gld_property->getp<double>(powerflow_impedance_conversion_level,*test_rlock);
+		temp_gld_property->getp<double>(powerflow_impedance_conversion_level,test_rlock);
 
 		//Delete the link
 		delete temp_gld_property;
@@ -1500,7 +1500,7 @@ int house_e::init(OBJECT *parent)
 
 		//Set the value
 		temp_bool_val = true;
-		temp_gld_property->setp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->setp<bool>(temp_bool_val,test_rlock);
 
 		//Remove the temp property
 		delete temp_gld_property;
@@ -1589,7 +1589,7 @@ int house_e::init(OBJECT *parent)
 		}
 
 		//Pull the value to a temporary
-		temp_gld_property->getp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->getp<bool>(temp_bool_val,test_rlock);
 
 		//Delete the link
 		delete temp_gld_property;
@@ -1608,7 +1608,7 @@ int house_e::init(OBJECT *parent)
 		}
 
 		//Pull the value to a temporary
-		temp_gld_property->getp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->getp<bool>(temp_bool_val,test_rlock);
 
 		//Delete the link
 		delete temp_gld_property;
@@ -1627,7 +1627,7 @@ int house_e::init(OBJECT *parent)
 		}
 
 		//Pull the value to a temporary
-		temp_gld_property->getp<double>(powerflow_impedance_conversion_level,*test_rlock);
+		temp_gld_property->getp<double>(powerflow_impedance_conversion_level,test_rlock);
 
 		//Delete the link
 		delete temp_gld_property;
@@ -3751,7 +3751,7 @@ void house_e::pull_complex_powerflow_values()
 void house_e::push_complex_powerflow_values()
 {
 	gld::complex temp_complex_val;
-	gld_wlock *test_rlock;
+	unsigned int test_rlock = 0;
 	int indexval;
 
 	if (commercial_load_parent == true) {
@@ -3811,7 +3811,7 @@ void house_e::push_complex_powerflow_values()
 //					gl_output ("  adding P to [%g +j%g] on phase mask %d",
 //										 temp_complex_val.Re(), temp_complex_val.Im(), mask);
 					temp_complex_val += balPower;
-					pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+					pPower[indexval]->setp<complex>(temp_complex_val,test_rlock);
 				}
 				if (insertS > 0) {
 					temp_complex_val = pShunt[indexval]->get_complex();
@@ -3820,7 +3820,7 @@ void house_e::push_complex_powerflow_values()
 					temp_complex_val += balShunt;
 
 					//Push it back up
-					pShunt[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+					pShunt[indexval]->setp<complex>(temp_complex_val,test_rlock);
 				}
 				if (insertI > 0) {
 					temp_complex_val = pLine_I[indexval]->get_complex();
@@ -3829,7 +3829,7 @@ void house_e::push_complex_powerflow_values()
 					temp_complex_val += balCurrent;
 
 					//Push the value back up
-					pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+					pLine_I[indexval]->setp<complex>(temp_complex_val,test_rlock);
 				}
 			}
 			mask *= 2;
@@ -3844,7 +3844,7 @@ void house_e::push_complex_powerflow_values()
             temp_complex_val += value_Line_I[indexval];
 
             //Push it back up
-            pLine_I[indexval]->setp<gld::complex>(temp_complex_val, *test_rlock);
+            pLine_I[indexval]->setp<gld::complex>(temp_complex_val, test_rlock);
 
             //**** shunt value ***/
             //Pull current value again, just in case
@@ -3854,7 +3854,7 @@ void house_e::push_complex_powerflow_values()
             temp_complex_val += value_Shunt[indexval];
 
             //Push it back up
-            pShunt[indexval]->setp<gld::complex>(temp_complex_val, *test_rlock);
+            pShunt[indexval]->setp<gld::complex>(temp_complex_val, test_rlock);
 
             //**** Power value ***/
             //Pull current value again, just in case
@@ -3864,7 +3864,7 @@ void house_e::push_complex_powerflow_values()
             temp_complex_val += value_Power[indexval];
 
             //Push it back up
-            pPower[indexval]->setp<gld::complex>(temp_complex_val, *test_rlock);
+            pPower[indexval]->setp<gld::complex>(temp_complex_val, test_rlock);
         }
 	}
 }

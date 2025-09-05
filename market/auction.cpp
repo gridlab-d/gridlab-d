@@ -1269,7 +1269,7 @@ void auction::clear_market(void)
 					{
 						// C. Now it is safe to use the 'bid' pointer.
 						// We also continue to guard against other potentially null pointers.
-						const char* safe_from_str = bid->from ? bid->from : "unknown_seller";
+						const char* safe_from_str = "unknown_seller"; //bid->from ? bid->from : "unknown_seller";
 						const char* safe_unit_str = unit ? unit : "N/A";
 
 						gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",
@@ -1666,7 +1666,9 @@ void auction::record_bid(char *from, double quantity, double real_price, BIDDERS
 
 int auction::submit(char *from, double quantity, double real_price, KEY key, BIDDERSTATE state, bool rebid, int64 mkt_id)
 {
-	gld_wlock lock(my());
+	//gld_wlock lock(my());
+	//replace the above with SharedMutexManager
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(my())); // exclusive lock for writing
 	return submit_nolock(from,quantity,real_price,key,state, rebid, mkt_id);
 }
 int auction::submit_nolock(char *from, double quantity, double real_price, KEY key, BIDDERSTATE state, bool rebid, int64 mkt_id)

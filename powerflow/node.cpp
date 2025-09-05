@@ -1508,7 +1508,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	TIMESTAMP temp_time_value, temp_t1_value;
 	node *temp_par_node = nullptr;
 	gld_property *temp_complex_property = nullptr;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	gld::complex temp_complex_value;
 	Eigen::MatrixXcd temp_complex_array;
 	int temp_idx_x, temp_idx_y;
@@ -1676,7 +1676,8 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				//Link the parental
 				node *parNode = object_data<node>(SubNodeParent);
 
-				WRITELOCK_OBJECT(SubNodeParent);	//Lock
+				//WRITELOCK_OBJECT(SubNodeParent);	//Lock
+				std::unique_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(SubNodeParent));
 
 				//Check and see if we're a house-triplex.  If so, flag our parent so NR works - just draconian write (won't hurt anything)
 				if (house_present)
@@ -1693,7 +1694,8 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					again.  If the error persists, please submit you code and a bug report via the trac website.
 					*/
 
-					WRITEUNLOCK_OBJECT(SubNodeParent);	//Unlock
+					//WRITEUNLOCK_OBJECT(SubNodeParent);	//Unlock
+					//subnode_lock.unlock();
 
 					return TS_INVALID;
 				}
@@ -1706,13 +1708,17 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					parNode->NR_number_child_nodes[1]++;
 				}
 
-				WRITEUNLOCK_OBJECT(SubNodeParent);	//Unlock
+				//WRITEUNLOCK_OBJECT(SubNodeParent);	//Unlock
 			}
 		}
 
 		if (NR_busdata==nullptr || NR_branchdata==nullptr)	//First time any NR in (this should be the swing bus doing this)
 		{
-			if ( NR_swing_bus!=obj) WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+			std::unique_lock<std::shared_mutex> subnode_lock;
+			if (NR_swing_bus != obj) {
+				//WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+				subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(NR_swing_bus));
+			}
 
 			NR_busdata = (BUSDATA *)gl_malloc(NR_bus_count * sizeof(BUSDATA));
 			if (NR_busdata==nullptr)
@@ -1724,7 +1730,9 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				*/
 
 				//Unlock the swing bus
-				if ( NR_swing_bus!=obj) WRITEUNLOCK_OBJECT(NR_swing_bus);
+				if ( NR_swing_bus!=obj) 
+					subnode_lock.unlock();
+					//WRITEUNLOCK_OBJECT(NR_swing_bus);
 
 				return TS_INVALID;
 			}
@@ -1744,7 +1752,9 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				*/
 
 				//Unlock the swing bus
-				if ( NR_swing_bus!=obj) WRITEUNLOCK_OBJECT(NR_swing_bus);
+				if ( NR_swing_bus!=obj) 
+					//WRITEUNLOCK_OBJECT(NR_swing_bus);
+					subnode_lock.unlock();
 
 				return TS_INVALID;
 			}
@@ -1845,7 +1855,9 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			//Default else - no file output desired, so don't make one
 
 			//Unlock the swing bus
-			if ( NR_swing_bus!=obj) WRITEUNLOCK_OBJECT(NR_swing_bus);
+			if ( NR_swing_bus!=obj) 
+				//WRITEUNLOCK_OBJECT(NR_swing_bus);
+				subnode_lock.unlock();
 
 			if (obj == NR_swing_bus)	//Make sure we're the great MASTER SWING, as a final check
 			{
@@ -1882,8 +1894,10 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			}
 
 			//Lock the SWING bus and get us a value
-			if ( NR_swing_bus!=obj) WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
-
+			std::unique_lock<std::shared_mutex> subnode_lock;
+			if ( NR_swing_bus!=obj) 
+				//WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+				subnode_lock =  std::unique_lock<std::shared_mutex> (SharedMutexManager::get_mutex(NR_swing_bus));
 				//Get the value
 				temp_pwr_object_current = pwr_object_current;
 
@@ -1891,7 +1905,9 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				pwr_object_current++;
 
 			//Unlock
-			if ( NR_swing_bus!=obj) WRITEUNLOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+			if ( NR_swing_bus!=obj) 
+				//WRITEUNLOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+				subnode_lock.unlock();
 
 			//Add us into the list
 			delta_objects[temp_pwr_object_current] = obj;
@@ -2155,7 +2171,8 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			node *ParToLoad = object_data<node>(SubNodeParent);
 
 			//Lock the parent for accumulation
-			LOCK_OBJECT(SubNodeParent);
+			//LOCK_OBJECT(SubNodeParent);
+			std::unique_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(SubNodeParent));
 
 			//Import power and "load" characteristics
 			ParToLoad->power[0]+=power[0]-last_child_power[0][0];
@@ -2207,7 +2224,8 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			}
 
 			//Unlock the parent now that we are done
-			UNLOCK_OBJECT(SubNodeParent);
+			//UNLOCK_OBJECT(SubNodeParent);
+			subnode_lock.unlock();
 
 			//Update previous power tracker
 			last_child_power[0][0] = power[0];
@@ -2245,7 +2263,8 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			node *ParToLoad = object_data<node>(SubNodeParent);
 
 			//Lock the parent for accumulation
-			LOCK_OBJECT(SubNodeParent);
+			//LOCK_OBJECT(SubNodeParent);
+			std::unique_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(SubNodeParent));
 
 			//Update post them.  Row 1 is power, row 2 is admittance, row 3 is current
 			ParToLoad->Extra_Data[0] += power[0];
@@ -2285,7 +2304,8 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			}
 
 			//Finished, unlock parent
-			UNLOCK_OBJECT(SubNodeParent);
+			//UNLOCK_OBJECT(SubNodeParent);
+			subnode_lock.unlock();
 
 			//Update our tracking variable
 			for (loop_index_var=0; loop_index_var<6; loop_index_var++)
@@ -2724,11 +2744,12 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			if (((pNode->phases & phases) & (!(PHASE_D | PHASE_N))) == (phases & (!(PHASE_D | PHASE_N))))
 			{
 				// add the injections on this node to the parent
-				WRITELOCK_OBJECT(obj->parent);
+				//WRITELOCK_OBJECT(obj->parent);
+				std::unique_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(obj->parent));
 				pNode->current_inj[0] += current_inj[0];
 				pNode->current_inj[1] += current_inj[1];
 				pNode->current_inj[2] += current_inj[2];
-				WRITEUNLOCK_OBJECT(obj->parent);
+				//WRITEUNLOCK_OBJECT(obj->parent);
 			}
 			else
 				GL_THROW("Node:%d's parent does not have the proper phase connection to be a parent.",obj->id);
@@ -2885,7 +2906,7 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 	Eigen::MatrixXcd temp_complex_array;
 	int index_x_val, index_y_val;
 	gld_property *temp_property = nullptr;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	unsigned char phase_checks_var;
 
 	//NR-related updates for reliability and making sure "removed" objects have zero voltage
@@ -3051,7 +3072,7 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 			}
 
 			//Pull down the value
-			temp_property->getp<Eigen::MatrixXcd>(temp_complex_array,*test_rlock);
+			temp_property->getp<Eigen::MatrixXcd>(temp_complex_array,test_rlock);
 
 			//See if it is the right size
 			if ((temp_complex_array.rows() == 3) && (temp_complex_array.cols() == 3))
@@ -3675,15 +3696,20 @@ int node::NR_populate(void)
 	OBJECT *me = object_header(this);
 	node *temp_par_node = nullptr;
 	gld_property *temp_bool_property = nullptr;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	bool temp_bool_val;
 
+	std::unique_lock<std::shared_mutex> nr_lock;
 	//Lock the SWING for global operations
-	if ( NR_swing_bus!=me ) LOCK_OBJECT(NR_swing_bus);
+	if ( NR_swing_bus!=me ) 
+		nr_lock = std::unique_lock<std::shared_mutex>( SharedMutexManager::get_mutex(NR_swing_bus));	//LOCK_OBJECT(NR_swing_bus);
+		//LOCK_OBJECT(NR_swing_bus);
 
 	NR_node_reference = NR_curr_bus;	//Grab the current location and keep it as our own
 	NR_curr_bus++;					//Increment the current bus pointer for next variable
-	if ( NR_swing_bus!=me ) UNLOCK_OBJECT(NR_swing_bus);	//All done playing with globals, unlock the swing so others can proceed
+	if ( NR_swing_bus!=me ) 
+		nr_lock.unlock();	//UNLOCK_OBJECT(NR_swing_bus);
+		//UNLOCK_OBJECT(NR_swing_bus);	//All done playing with globals, unlock the swing so others can proceed
 
 	//Quick check to see if there problems
 	if (NR_node_reference == -1)
@@ -3741,7 +3767,7 @@ int node::NR_populate(void)
 				}
 
 				//Pull the value
-				temp_bool_property->getp<bool>(temp_bool_val,*test_rlock);
+				temp_bool_property->getp<bool>(temp_bool_val,test_rlock);
 
 				//Clear the property
 				delete temp_bool_property;
@@ -4126,13 +4152,15 @@ int node::NR_current_update(bool parentcall)
 				}
 
 				//Call a lock on that link - just in case multiple nodes call it at once
-				WRITELOCK_OBJECT(tmp_obj);
+				//WRITELOCK_OBJECT(tmp_obj);
+				std::unique_lock<std::shared_mutex> link_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(tmp_obj));
 
 				//Call its update - tell it who is asking so it knows what to lock
 				temp_result = ((int (*)(OBJECT *,int, bool))(*temp_funadd))(tmp_obj,NR_node_reference,false);
 
 				//Unlock the link
-				WRITEUNLOCK_OBJECT(tmp_obj);
+				//WRITEUNLOCK_OBJECT(tmp_obj);
+				link_lock.unlock();
 
 				//See if it worked, just in case this gets added in the future
 				if (temp_result != 1)
@@ -4171,10 +4199,12 @@ int node::NR_current_update(bool parentcall)
 		{
 			node *ParToLoad = object_data<node>(SubNodeParent);
 
+			std::unique_lock<std::shared_mutex> parent_lock;
 			if (!parentcall)	//We weren't called by our parent, so lock us to create sibling rivalry!
 			{
 				//Lock the parent for writing
-				LOCK_OBJECT(SubNodeParent);
+				//LOCK_OBJECT(SubNodeParent);
+				parent_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(SubNodeParent));
 			}
 
 			//Remove power and "load" characteristics
@@ -4220,7 +4250,8 @@ int node::NR_current_update(bool parentcall)
 			if (!parentcall)	//Wasn't a parent call - unlock us so our siblings get a shot
 			{
 				//Unlock the parent now that it is done
-				UNLOCK_OBJECT(SubNodeParent);
+				//UNLOCK_OBJECT(SubNodeParent);
+				parent_lock.unlock();
 			}
 
 			//Update previous power tracker - if we haven't really converged, things will mess up without this
@@ -4252,10 +4283,12 @@ int node::NR_current_update(bool parentcall)
 		{
 			node *ParToLoad = object_data<node>(SubNodeParent);
 
+			std::unique_lock<std::shared_mutex> parent_lock;
 			if (!parentcall)	//We weren't called by our parent, so lock us to create sibling rivalry!
 			{
 				//Lock the parent for writing
-				LOCK_OBJECT(SubNodeParent);
+				//LOCK_OBJECT(SubNodeParent);
+				parent_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(SubNodeParent));
 			}
 
 			//Remove power and "load" characteristics for explicit delta/wye values
@@ -4274,7 +4307,8 @@ int node::NR_current_update(bool parentcall)
 			if (!parentcall)	//Wasn't a parent call - unlock us so our siblings get a shot
 			{
 				//Unlock the parent now that it is done
-				UNLOCK_OBJECT(SubNodeParent);
+				//UNLOCK_OBJECT(SubNodeParent);
+				parent_lock.unlock();
 			}
 
 			//Zero the last power accumulators

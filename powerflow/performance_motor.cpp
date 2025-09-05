@@ -137,7 +137,7 @@ int performance_motor::init(OBJECT *parent)
 	int result;
     double Z_base;
 	gld_property *temp_gld_property;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	//Now run node init, as necessary
 	result = node::init(parent);
@@ -239,7 +239,7 @@ SIMULATIONMODE performance_motor::inter_deltaupdate(unsigned int64 delta_time, u
 	OBJECT *hdr = object_header(this);
 	STATUS return_status_val;
 	bool temp_house_motor_state;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	// make sure to capture the current time
 	curr_time_val = gl_globaldeltaclock;

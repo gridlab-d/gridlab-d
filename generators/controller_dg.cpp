@@ -492,7 +492,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 	double nominal_voltage;
 	FUNCTIONADDR funadd = nullptr;
 	int return_val;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	unsigned char openPhases[] = {0x04, 0x02, 0x01};
 
 	// Control of the generator switch
@@ -629,14 +629,14 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 
 			//Set value
 			pDG[index].Pref = ctrlGen[index]->next_state->Pref_ctrl;
-			pDG[index].Pref_prop->setp<double>(pDG[index].Pref,*test_rlock);
+			pDG[index].Pref_prop->setp<double>(pDG[index].Pref,test_rlock);
 
 			// Apply prediction update
 			ctrlGen[index]->next_state->x_QV = ctrlGen[index]->curr_state->x_QV + predictor_vals.x_QV*deltat;
 			ctrlGen[index]->next_state->Vset_ctrl = ctrlGen[index]->next_state->x_QV + predictor_vals.x_QV*(kp_QV/ki_QV);
 
 			pDG[index].Vset = ctrlGen[index]->next_state->Vset_ctrl;
-			pDG[index].Vset_prop->setp<double>(pDG[index].Vset,*test_rlock);
+			pDG[index].Vset_prop->setp<double>(pDG[index].Vset,test_rlock);
 		}
 
 		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
@@ -656,14 +656,14 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 
 			//Set value
 			pDG[index].Pref = ctrlGen[index]->next_state->Pref_ctrl;
-			pDG[index].Pref_prop->setp<double>(pDG[index].Pref,*test_rlock);
+			pDG[index].Pref_prop->setp<double>(pDG[index].Pref,test_rlock);
 
 			// Apply prediction update
 			ctrlGen[index]->next_state->x_QV = ctrlGen[index]->curr_state->x_QV + (predictor_vals.x_QV + corrector_vals.x_QV)*deltat;
 			ctrlGen[index]->next_state->Vset_ctrl = ctrlGen[index]->next_state->x_QV + (predictor_vals.x_QV + corrector_vals.x_QV)*0.5*(kp_QV/ki_QV);
 
 			pDG[index].Vset = ctrlGen[index]->next_state->Vset_ctrl;
-			pDG[index].Vset_prop->setp<double>(pDG[index].Vset,*test_rlock);
+			pDG[index].Vset_prop->setp<double>(pDG[index].Vset,test_rlock);
 
 			// Copy everything back into curr_state, since we'll be back there
 			memcpy(ctrlGen[index]->curr_state,ctrlGen[index]->next_state,sizeof(CTRL_VARS));

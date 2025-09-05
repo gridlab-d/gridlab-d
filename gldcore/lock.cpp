@@ -183,22 +183,22 @@ std::shared_lock<std::shared_mutex> rlock(unsigned int *obj_ptr)
 /** Write lock 
  **/
 //extern "C" 
-void wlock(unsigned int *lock)
-{
-	if(global_lock_enabled){
-		unsigned int timeout = MAXSPIN;
-		unsigned int value;
-		extern unsigned int wlock_count, wlock_spin;
-		check_lock(lock,true,false);
-		atomic_increment(&wlock_count);
-		do {
-			value = (*lock);
-			atomic_increment(&wlock_spin);
-			if ( timeout--==0 )
-				throw_exception("write lock timeout");
-		} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
-	}
-}
+//void wlock(unsigned int *lock)
+//{
+//	if(global_lock_enabled){
+//		unsigned int timeout = MAXSPIN;
+//		unsigned int value;
+//		extern unsigned int wlock_count, wlock_spin;
+//		check_lock(lock,true,false);
+//		atomic_increment(&wlock_count);
+//		do {
+//			value = (*lock);
+//			atomic_increment(&wlock_spin);
+//			if ( timeout--==0 )
+//				throw_exception("write lock timeout");
+//		} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
+//	}
+//}
 /** Read unlock
  **/
 //extern "C" 

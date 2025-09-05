@@ -622,7 +622,7 @@ void sec_control::update_pdisp(SEC_CNTRL_PARTICIPANT & obj, double val)
 	
 	if (val != 0)
 	{
-		gld_wlock *test_rlock;
+		unsigned int test_rlock = 0;
 		double pdisp = obj.pdisp->get_double();
 		double poffset = obj.poffset->get_double();
 
@@ -655,7 +655,7 @@ void sec_control::update_pdisp(SEC_CNTRL_PARTICIPANT & obj, double val)
 		
 		// ========== Perform update
 		poffset += val/obj.rate; // increment offset in p.u.
-		obj.poffset->setp<double>(poffset,*test_rlock);
+		obj.poffset->setp<double>(poffset,test_rlock);
 	}
 	else{
 		// make sure the value is stored for collector pass

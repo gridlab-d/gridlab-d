@@ -28,6 +28,7 @@
 #include "exec.h"
 #include "lock.h"
 #include "threadpool.h"
+#include "object.h"
 
 /** validating result counter */
 class counters {
@@ -35,7 +36,8 @@ public:
 	counters(void) { _lock=0; n_scanned=n_tested=n_passed=n_files=n_success=n_failed=n_exceptions=n_access=0; };
 	counters operator+(counters a) 
 	{ 
-		wlock(); 
+		//wlock(); 
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&_lock));
 		n_scanned += a.get_scanned();
 		n_tested += a.get_tested();
 		n_passed += a.get_passed();
@@ -43,7 +45,7 @@ public:
 		n_success += a.get_nsuccess(); 
 		n_failed += a.get_nfailed(); 
 		n_exceptions += a.get_nexceptions(); 
-		wunlock(); 
+		//wunlock(); 
 		return *this;
 	};
 	counters operator+=(counters a) { *this = *this+a; return *this; };
@@ -57,9 +59,25 @@ public:
 	unsigned int get_scanned() { return n_scanned; };
 	unsigned int get_tested() { return n_tested; };
 	unsigned int get_passed() { return n_passed; };
-	void inc_scanned() { wlock(); n_scanned++; wunlock(); };
-	void inc_tested() { wlock(); n_tested++; wunlock(); };
-	void inc_passed() { wlock(); n_passed++; wunlock(); };
+	void inc_scanned() 
+	{ 
+		//wlock(); 
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&_lock));
+		n_scanned++; 
+		//wunlock(); 
+	};
+	void inc_tested() { 
+		//wlock(); 
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&_lock));
+		n_tested++; 
+		//wunlock();
+	};
+	void inc_passed() { 
+		//wlock(); 
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&_lock));
+		n_passed++; 
+		//wunlock(); 
+	};
 private:
 	// files
 	unsigned int n_files; // number of tests completed
@@ -68,10 +86,10 @@ private:
 	unsigned int n_exceptions; // unexpected exceptions
 	unsigned int n_access; // folder access failure
 private:
-	void wlock(void) { ::wlock(&_lock); };
-	void wunlock(void) { ::wunlock(&_lock); };
-	std::shared_lock<std::shared_mutex> rlock(void) { return ::rlock(&_lock); };
-	void runlock(void) { ::runlock(); };
+	//void wlock(void) { ::wlock(&_lock); };
+	//void wunlock(void) { ::wunlock(&_lock); };
+	//std::shared_lock<std::shared_mutex> rlock(void) { return ::rlock(&_lock); };
+	//void runlock(void) { ::runlock(); };
 public:
 public:
 	unsigned int get_nfiles(void) { return n_files; };
@@ -92,17 +110,43 @@ public:
 			blank[len]='\0';
 			len = static_cast<size_t>(output_raw("\r%s\rProcessing %s...", blank, name) - len);
 		}
-		wlock(); 
+		//wlock(); 
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&_lock));
 		n_files++;
-		wunlock(); 
+		//wunlock(); 
 	};
-	void inc_access(const char *name) { output_debug("%s folder access failure", name); wlock(); n_access++; wunlock(); };
-	void inc_success(const char *name, int code, double t) { output_error("%s success unexpected, code %d in %.1f seconds",name, code, t); wlock(); n_success++; wunlock(); };
-	void inc_failed(const char *name, int code, double t) { output_error("%s error unexpected, code %d (%s) in %.1f seconds",name, code, exec_getexitcodestr(code), t); wlock(); n_failed++; wunlock(); };
-	void inc_exceptions(const char *name, int code, double t) { output_error("%s exception unexpected, code %d (%s) in %.1f seconds",name, code, exec_getexitcodestr(code), t); wlock(); n_exceptions++; wunlock(); };
+	void inc_access(const char *name) { 
+		output_debug("%s folder access failure", name); 
+		//wlock(); 
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&_lock));
+		n_access++; 
+		//wunlock(); 
+	};
+	void inc_success(const char *name, int code, double t) { 
+		output_error("%s success unexpected, code %d in %.1f seconds",name, code, t); 
+		//wlock(); 
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&_lock));
+		n_success++; 
+		//wunlock(); 
+	};
+	void inc_failed(const char *name, int code, double t) { 
+		output_error("%s error unexpected, code %d (%s) in %.1f seconds",name, code, exec_getexitcodestr(code), t); 
+		//wlock(); 
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&_lock));
+		n_failed++; 
+		//wunlock(); 
+	};
+	void inc_exceptions(const char *name, int code, double t) { 
+		output_error("%s exception unexpected, code %d (%s) in %.1f seconds",name, code, exec_getexitcodestr(code), t); 
+		//wlock(); 
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&_lock));
+		n_exceptions++;
+		//wunlock(); 
+	};
 	void print(void) 
 	{
-		rlock();
+		//rlock();
+		std::shared_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&_lock));
 		unsigned int n_ok = n_files-n_success-n_failed-n_exceptions;
 		output_message("\nValidation report:");
 		if ( n_access ) output_message("%d directory access failures", n_access);
@@ -115,7 +159,7 @@ public:
 			output_message("%d tests succeeded",n_ok);
 				output_message("%.0f%% success rate", 100.0*n_ok/n_files);
 		}
-		runlock();
+		//runlock();
 	};
 	unsigned int get_nerrors(void) { return n_success+n_failed+n_exceptions+n_access; };
 };
@@ -135,7 +179,10 @@ static unsigned int report_rows=0;
 static unsigned int report_lock=0;
 static bool report_open(void)
 {
-	wlock(&report_lock);
+	//wlock(&report_lock);
+	// replace the above with SharedMutexManager
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&report_lock));
+
 
 	global_getvar("validate_report",report_file,sizeof(report_file));
 	if ( report_fp==nullptr )
@@ -153,7 +200,7 @@ static bool report_open(void)
 		}
 		report_fp = fopen(report_file,"w");
 	}
-	wunlock(&report_lock);
+	//wunlock(&report_lock);
 	return report_fp!=nullptr;
 }
 static int report_title(const char *fmt,...)
@@ -161,7 +208,9 @@ static int report_title(const char *fmt,...)
 	int len = 0;
 	if ( report_fp )
 	{
-		wlock(&report_lock);
+		//wlock(&report_lock);
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&report_lock));
+
 		if ( report_cols++>0 )
 			len = fprintf(report_fp,"%s",report_eol);
 		va_list ptr;
@@ -169,7 +218,7 @@ static int report_title(const char *fmt,...)
 		len = +vfprintf(report_fp,fmt,ptr);
 		va_end(ptr);
 		fflush(report_fp);
-		wunlock(&report_lock);
+		//wunlock(&report_lock);
 	}
 	return len;
 }
@@ -178,14 +227,16 @@ static int report_data(const char *fmt="",...)
 	int len = 0;
 	if ( report_fp )
 	{
-		wlock(&report_lock);
+		//wlock(&report_lock);
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&report_lock));
+
 		if ( report_cols++>0 )
 			len = fprintf(report_fp,"%s",report_col);
 		va_list ptr;
 		va_start(ptr,fmt);
 		len = +vfprintf(report_fp,fmt,ptr);
 		va_end(ptr);
-		wunlock(&report_lock);
+		//wunlock(&report_lock);
 	}
 	return len;
 }
@@ -194,12 +245,14 @@ static int report_newrow(void)
 	int len = 0;
 	if ( report_fp )
 	{
-		wlock(&report_lock);
+		//wlock(&report_lock);
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&report_lock));
+
 		report_cols=0;
 		report_rows++;
 		len = fprintf(report_fp,"%s",report_eol);
 		fflush(report_fp);
-		wunlock(&report_lock);
+		//wunlock(&report_lock);
 	}
 	return len;
 }
@@ -208,22 +261,26 @@ static int report_newtable(const char *table)
 	int len = 0;
 	if ( report_fp )
 	{
-		wlock(&report_lock);
+		//wlock(&report_lock);
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&report_lock));
+
 		report_rows++;
 		if ( report_cols>0 ) len += fprintf(report_fp,"%s",report_eol);
 		report_cols=0;
 		len = fprintf(report_fp,"%s%s%s",report_eot,table,report_eol);
 		fflush(report_fp);
-		wunlock(&report_lock);
+		//wunlock(&report_lock);
 	}
 	return len;
 }
 static int report_close(void)
 {
-	wlock(&report_lock);
+	//wlock(&report_lock);
+	// replace the above with SharedMutexManager
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&report_lock));
 	if ( report_fp ) fclose(report_fp);
 	report_fp = nullptr;
-	wunlock(&report_lock);
+	//wunlock(&report_lock);
 	return report_rows;
 }
 
@@ -577,11 +634,12 @@ static void pushdir(char *dir)
 	output_debug("adding %s to process stack", dir);
 	DIRLIST *item = (DIRLIST*)malloc(sizeof(DIRLIST));
 	strncpy(item->name,dir,sizeof(item->name)-1);
-	wlock(&dirlock);
+	//wlock(&dirlock);
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&dirlock));
 	item->next = dirstack;
 	item->id = next_id++;
 	dirstack = item;
-	wunlock(&dirlock);
+	//wunlock(&dirlock);
 }
 static void sortlist(void)
 {
@@ -611,10 +669,13 @@ static void sortlist(void)
 /* popped item must be freed after no longer needed */
 static DIRLIST *popdir(void)
 {
-	auto v = rlock(&dirlock);
+	//auto v = rlock(&dirlock);
+	// replace the above with SharedMutexManager
+	std::shared_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&dirlock));
 	DIRLIST *item = dirstack;
 	if ( dirstack ) dirstack = dirstack->next;
-	runlock();
+	//runlock();
+	lock.unlock();
 	output_debug("pulling %s from process stack", item->name);
 	return item;
 }

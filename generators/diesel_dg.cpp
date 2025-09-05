@@ -687,7 +687,7 @@ int diesel_dg::init(OBJECT *parent)
 	double test_pf;
 	gld_property *Frequency_mapped = nullptr;
 	gld_property *temp_property_pointer = nullptr;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	bool temp_bool_value;
 	double temp_voltage_magnitude;
 	gld::complex temp_complex_value;
@@ -784,7 +784,7 @@ int diesel_dg::init(OBJECT *parent)
 
 							//Flag it to true
 							temp_bool_value = true;
-							temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+							temp_property_pointer->setp<bool>(temp_bool_value,test_rlock);
 
 							//Remove it
 							delete temp_property_pointer;
@@ -801,7 +801,7 @@ int diesel_dg::init(OBJECT *parent)
 
 							//Flag it to true
 							temp_bool_value = true;
-							temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+							temp_property_pointer->setp<bool>(temp_bool_value,test_rlock);
 
 							//Remove it
 							delete temp_property_pointer;
@@ -934,7 +934,7 @@ int diesel_dg::init(OBJECT *parent)
 
 				//Flag it to true
 				temp_bool_value = true;
-				temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+				temp_property_pointer->setp<bool>(temp_bool_value,test_rlock);
 
 				//Remove it
 				delete temp_property_pointer;
@@ -1193,7 +1193,7 @@ int diesel_dg::init(OBJECT *parent)
 			}
 
 			//Pull down the variable
-			pbus_full_Y_mat->getp<Eigen::MatrixXcd>(temp_complex_array,*test_rlock);
+			pbus_full_Y_mat->getp<Eigen::MatrixXcd>(temp_complex_array,test_rlock);
 
 			//See if it is valid
 			if (!emh::is_element_valid(temp_complex_array,0, 0))
@@ -1236,7 +1236,7 @@ int diesel_dg::init(OBJECT *parent)
 				}
 
 				//Pull down the variable
-				temp_property_pointer->getp<Eigen::MatrixXcd>(temp_child_complex_array,*test_rlock);
+				temp_property_pointer->getp<Eigen::MatrixXcd>(temp_child_complex_array,test_rlock);
 
 				//See if it is valid
 				if (!emh::is_element_valid(temp_child_complex_array,0,0))
@@ -1294,12 +1294,12 @@ int diesel_dg::init(OBJECT *parent)
 			}
 
 			//Push it back up
-			pbus_full_Y_mat->setp<Eigen::MatrixXcd>(temp_complex_array,*test_rlock);
+			pbus_full_Y_mat->setp<Eigen::MatrixXcd>(temp_complex_array,test_rlock);
 
 			//See if the childed powerflow exists
 			if (childed_connection)
 			{
-				temp_property_pointer->setp<Eigen::MatrixXcd>(temp_child_complex_array,*test_rlock);
+				temp_property_pointer->setp<Eigen::MatrixXcd>(temp_child_complex_array,test_rlock);
 
 				//Clear it
 				delete temp_property_pointer;
@@ -1592,7 +1592,7 @@ int diesel_dg::init(OBJECT *parent)
 			}
 
 			//Pull the value
-			Frequency_mapped->getp<bool>(temp_bool_value,*test_rlock);
+			Frequency_mapped->getp<bool>(temp_bool_value,test_rlock);
 
 			//Check the value - and make sure we're active (don't let the passive generator dictate it)
 			if ((temp_bool_value == false) && (Governor_type != NO_GOV))	//No one has mapped yet, we are volunteered
@@ -1609,7 +1609,7 @@ int diesel_dg::init(OBJECT *parent)
 
 				//Flag the frequency mapping as having occurred
 				temp_bool_value = true;
-				Frequency_mapped->setp<bool>(temp_bool_value,*test_rlock);
+				Frequency_mapped->setp<bool>(temp_bool_value,test_rlock);
 			}
 			//Default else -- someone else is already mapped, just continue onward
 
@@ -1704,7 +1704,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double reactive_diff; // Temporary variable representing difference between reference reactive power and actual reactive power output
 	gld::complex temp_power_val[3];
 	gld::complex temp_complex_value_power;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	FUNCTIONADDR test_fxn = nullptr;
 	STATUS fxn_return_status;
 
@@ -1735,7 +1735,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					temp_complex_value_power = power_val[0] + power_val[1] + power_val[2];
 
 					//Push it up
-					pPGenerated->setp<gld::complex>(temp_complex_value_power,*test_rlock);
+					pPGenerated->setp<gld::complex>(temp_complex_value_power,test_rlock);
 
 					//Map the current injection function
 					test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_current_injection_update_map"));
@@ -1984,7 +1984,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP dt;
 	Eigen::MatrixXcd temp_complex_array;
 	int index_x, index_y;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	TIMESTAMP t2 = TS_NEVER;
 
@@ -2074,7 +2074,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			avalsq = aval*aval;
 
 			//Pull in the current version of full_Y_all
-			pbus_full_Y_all_mat->getp<Eigen::MatrixXcd>(temp_complex_array,*test_rlock);
+			pbus_full_Y_all_mat->getp<Eigen::MatrixXcd>(temp_complex_array,test_rlock);
 
 			//Make sure it is the right size -- if so, pull it
 			if ((temp_complex_array.rows() == 3) && (temp_complex_array.cols() == 3))
@@ -2181,7 +2181,7 @@ void diesel_dg::pull_powerflow_values(void)
 void diesel_dg::push_powerflow_values(bool update_voltage)
 {
 	gld::complex temp_complex_val;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	int indexval;
 
 	//See if we're proper first
@@ -2201,7 +2201,7 @@ void diesel_dg::push_powerflow_values(bool update_voltage)
 				temp_complex_val += value_Power[indexval];
 
 				//Push it back up
-				pPower[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
+				pPower[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 			}
 		}
 		else if (Gen_type == DYNAMIC)
@@ -2212,7 +2212,7 @@ void diesel_dg::push_powerflow_values(bool update_voltage)
 				for (indexval=0; indexval<3; indexval++)
 				{
 					//**** push voltage value -- not an accumulator, just force ****/
-					pCircuit_V[indexval]->setp<gld::complex>(value_Circuit_V[indexval],*test_rlock);
+					pCircuit_V[indexval]->setp<gld::complex>(value_Circuit_V[indexval],test_rlock);
 				}
 			}
 			else	//Standard update
@@ -2228,14 +2228,14 @@ void diesel_dg::push_powerflow_values(bool update_voltage)
 					temp_complex_val += value_Line_I[indexval];
 
 					//Push it back up
-					pLine_I[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
+					pLine_I[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 
 					//Update dynamic variables
 					if (deltamode_inclusive)
 					{
 						//**** Pre-rotated current injection value ***/
 						//This is a direct write - not an accumulator
-						pIGenerated[indexval]->setp<gld::complex>(value_IGenerated[indexval],*test_rlock);
+						pIGenerated[indexval]->setp<gld::complex>(value_IGenerated[indexval],test_rlock);
 					}
 				}
 			}
@@ -2342,7 +2342,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	gld::complex temp_rotation;
 	gld::complex temp_complex[3];
 	gld::complex temp_current_val[3];
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	//Create delta_t variable
 	deltat = (double)dt/(double)DT_SECOND;
@@ -3443,7 +3443,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			temp_double_freq_val = curr_state.omega/(2.0*PI);
 
 			//Push it up
-			mapped_freq_variable->setp<double>(temp_double_freq_val,*test_rlock);
+			mapped_freq_variable->setp<double>(temp_double_freq_val,test_rlock);
 		}
 
 		//Resync power variables

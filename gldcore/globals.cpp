@@ -604,9 +604,12 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
 				return FAILED;
 			}
 		}
-		wlock(&globalvar_lock);
+		//wlock(&globalvar_lock);
+		//replace the above with SharedMutexManager
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&globalvar_lock));
 		retval = class_string_to_property(var->prop,(void*)var->prop->addr,value);
-		wunlock(&globalvar_lock);
+		//wunlock(&globalvar_lock);
+		lock.unlock();
 		if (retval==0){
 			output_error("global_setvar(): unable to set %s to %s",name,value);
 			/* TROUBLESHOOT
@@ -1073,9 +1076,11 @@ void *global_remote_read(void *local, /** local memory for data (must be correct
 		/* multithread */
 		else 
 		{
-			auto v = rlock(&var->lock);
+			//auto v = rlock(&var->lock);
+			//replace the above with SharedMutexManager
+			std::shared_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&var->lock));
 			memcpy(local,addr,size);
-			runlock();
+			//runlock();
 			return local;
 		}
 	}
@@ -1105,9 +1110,11 @@ void global_remote_write(void *local, /** local memory for data */
 		/* multithread */
 		else 
 		{
-			wlock(&var->lock);
+			//wlock(&var->lock);
+			//replace the above with SharedMutexManager
+			std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&var->lock));
 			memcpy(addr,local,size);
-			wunlock(&var->lock);
+			//wunlock(&var->lock);
 		}
 	}
 	else

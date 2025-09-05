@@ -794,7 +794,7 @@ double battery::calculate_efficiency(gld::complex voltage, gld::complex current)
 /* Presync is called when the clock needs to advance on the first top-down pass */
 TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	if(use_internal_battery_model){
 			double dt;
@@ -822,7 +822,7 @@ TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		//Push the SOC up
-		pSoc->setp<double>(soc,*test_rlock);
+		pSoc->setp<double>(soc,test_rlock);
 	}
 	TIMESTAMP t2 = TS_NEVER;
 	/* TODO: implement pre-topdown behavior */
@@ -2220,7 +2220,7 @@ gld_property *battery::map_double_value(OBJECT *obj, const char *name)
 void battery::push_powerflow_currents(void)
 {
 	gld::complex temp_complex_val;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	int indexval;
 
 	if (parent_is_meter)
@@ -2239,7 +2239,7 @@ void battery::push_powerflow_currents(void)
 				temp_complex_val += value_Line12;
 
 				//Push it back up
-				pLine12->setp<gld::complex>(temp_complex_val,*test_rlock);
+				pLine12->setp<gld::complex>(temp_complex_val,test_rlock);
 			}//End pLine_I valid
 			//Default else -- it's null, so skip it
 		}//End is triplex
@@ -2258,7 +2258,7 @@ void battery::push_powerflow_currents(void)
 					temp_complex_val += value_Line_I[indexval];
 
 					//Push it back up
-					pLine_I[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
+					pLine_I[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 				}//End pLine_I valid
 				//Default else -- it's null, so skip it
 			}
@@ -2336,7 +2336,7 @@ SIMULATIONMODE battery::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 
 void battery::update_soc(unsigned int64 delta_time)
 {
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	b_soc_reserve = pSocReserve->get_double();
 	if(battery_state == BS_DISCHARGING || battery_state == BS_CHARGING){
@@ -2357,8 +2357,9 @@ void battery::update_soc(unsigned int64 delta_time)
 	}
 	pre_soc = soc;
 	//Push the SOC up
-	pSoc->setp<double>(soc,*test_rlock);
+	pSoc->setp<double>(soc,test_rlock);
 }
+
 
 double battery::check_state_change_time_delta(unsigned int64 delta_time, unsigned long dt)
 {

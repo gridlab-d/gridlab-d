@@ -156,16 +156,19 @@ static unsigned int malloc_lock = 0;
 void *module_malloc(size_t size)
 {
 	void *ptr;
-	wlock(&malloc_lock);
+	//wlock(&malloc_lock);
+	//replace the above with SharedMutexManager
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&malloc_lock));
 	ptr = (void*)malloc(size);
-	wunlock(&malloc_lock);
+	//wunlock(&malloc_lock);
 	return ptr;
 }
 void module_free(void *ptr)
 {
-	wlock(&malloc_lock);
+	//wlock(&malloc_lock);
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&malloc_lock));
 	free(ptr);
-	wunlock(&malloc_lock);
+	//wunlock(&malloc_lock);
 }
 
 /* these are the core functions available to loadable modules
@@ -271,10 +274,10 @@ s_callbacks::s_callbacks() throw() {
     global.setvar = global_setvar;
     global.getvar = global_getvar;
     global.find = global_find;
-    lock.read = rlock;
-    lock.write = wlock;
-    unlock.read = runlock;
-    unlock.write = wunlock;
+    //lock.read = rlock;
+    //lock.write = wlock;
+    //unlock.read = runlock;
+    //unlock.write = wunlock;
     file.find_file = find_file;
     objvar.bool_var = object_get_bool;
     objvar.complex_var = object_get_complex;
@@ -1693,17 +1696,17 @@ pid_t sched_get_procid()
 	return process_map[cpuid].pid;
 }
 
-void sched_lock(unsigned short proc)
-{
-	if ( process_map )
-		wlock(&process_map[proc].lock);
-}
-
-void sched_unlock(unsigned short proc)
-{
-	if ( process_map )
-		wunlock(&process_map[proc].lock);
-}
+//void sched_lock(unsigned short proc)
+//{
+//	if ( process_map )
+//		wlock(&process_map[proc].lock);
+//}
+//
+//void sched_unlock(unsigned short proc)
+//{
+//	if ( process_map )
+//		wunlock(&process_map[proc].lock);
+//}
 
 /** update the process info **/
 void sched_update(TIMESTAMP clock, enumeration status)
@@ -1713,12 +1716,14 @@ void sched_update(TIMESTAMP clock, enumeration status)
 	for ( t=0 ; t<my_proc->n_procs ; t++ )
 	{
 		int n = my_proc->list[t];
-		sched_lock(n);
+		//sched_lock(n);
+		//replace the above with SharedMutexManager
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&process_map[n].lock));
 		process_map[n].status = status;
 		process_map[n].progress = clock;
 		process_map[n].starttime = global_starttime;
 		process_map[n].stoptime = global_stoptime;
-		sched_unlock(n);
+		//sched_unlock(n);
 	}
 }
 int sched_isdefunct(pid_t pid)
@@ -1739,9 +1744,10 @@ void sched_finish(void)
 	for ( t=0 ; t<my_proc->n_procs ; t++ )
 	{
 		int n = my_proc->list[t];
-		sched_lock(n);
+		//sched_lock(n);
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&process_map[n].lock));
 		process_map[n].status = MLS_DONE;
-		sched_unlock(n);
+		//sched_unlock(n);
 	}
 }
 
@@ -1756,9 +1762,10 @@ void sched_clear(void)
 		{
 			if (sched_isdefunct(process_map[n].pid) )
 			{
-				sched_lock(n);
+				//sched_lock(n);
+				std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&process_map[n].lock));
 				process_map[n].pid = 0;
-				sched_unlock(n);
+				//sched_unlock(n);
 			}
 		}
 	}
@@ -1829,7 +1836,8 @@ int sched_getinfo(int n,char *buf, size_t sz)
 	if ( process_map==nullptr )
 		return -1;
 
-	sched_lock(n);
+	//sched_lock(n);
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&process_map[n].lock));
 	ptime = (time_t)process_map[n].progress;
 	tm = gmtime(&ptime);
 	switch ( process_map[n].status ) {
@@ -1846,9 +1854,10 @@ int sched_getinfo(int n,char *buf, size_t sz)
 		int len;
 		char t[64]=" - ";
 		int is_defunct = 0;
-		sched_unlock(n);
+		lock.unlock();
 		is_defunct = sched_isdefunct(process_map[n].pid);
-		sched_lock(n);
+		//sched_lock(n);
+		lock.lock();
 		if ( process_map[n].start>0 && process_map[n].status!=MLS_DONE && !is_defunct )
 		{
 			if ( !show_progress )
@@ -1902,7 +1911,8 @@ int sched_getinfo(int n,char *buf, size_t sz)
 	}
 	else
 		sz = sprintf(buf,"%4d   -", n);
-	sched_unlock(n);
+	//sched_unlock(n);
+	lock.unlock();
 	return (int)sz;
 }
 
@@ -1987,10 +1997,11 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 		int n;
 		for ( n=0 ; n<n_procs ; n++ )
 		{
-			sched_lock(n);
+			//sched_lock(n);
+			std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&process_map[n].lock));
 			if ( process_map[n].pid==0 )
 				break;
-			sched_unlock(n);
+			//sched_unlock(n);
 		}
 		if ( n==n_procs )
 		{
@@ -2001,7 +2012,7 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 		process_map[n].pid = pid;
 		strncpy(process_map[n].model,global_modelname,sizeof(process_map[n].model)-1);
 		process_map[n].start = time(nullptr);
-		sched_unlock(n);
+		//sched_unlock(n);
 
 #ifdef _WIN32
 		// TODO add this cpu to affinity

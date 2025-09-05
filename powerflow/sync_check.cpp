@@ -953,9 +953,9 @@ void sync_check::check_excitation(unsigned long dt)
 
 	if (t_sat >= metrics_period_sec)
 	{
-		gld_wlock *test_rlock = nullptr;
+		unsigned int test_rlock = 0;
 		enumeration swt_cmd = LS_CLOSED;
-		swt_prop_status->setp<enumeration>(swt_cmd, *test_rlock); // Close the switch for parallelling
+		swt_prop_status->setp<enumeration>(swt_cmd, test_rlock); // Close the switch for parallelling
 		reset_after_excitation();
 	}
 }

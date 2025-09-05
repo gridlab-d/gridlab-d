@@ -2411,7 +2411,8 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 			if ((NR_curr_bus!=-1) && (NR_curr_branch!=-1))	//Ensure we've been initialized
 			{
 				//Lock fnode so multi-links don't have issues
-				LOCK_OBJECT(from);
+				//LOCK_OBJECT(from);
+				std::unique_lock<std::shared_mutex> lock_from(SharedMutexManager::get_mutex(from));
 
 				//Check our end nodes first - update them if necessary
 				if (fnode->NR_node_reference==-1)	//Uninitialized node
@@ -2429,10 +2430,12 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				}
 
 				//Unlock the from node
-				UNLOCK_OBJECT(from);
+				//UNLOCK_OBJECT(from);
+				lock_from.unlock();
 
 				//Lock To object for multi-links
-				LOCK_OBJECT(to);
+				//LOCK_OBJECT(to);
+				std::unique_lock<std::shared_mutex> lock_to(SharedMutexManager::get_mutex(to));
 
 				if (tnode->NR_node_reference==-1)	//Unitialized node
 				{
@@ -2449,16 +2452,19 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				}
 
 				//Unlock to node
-				UNLOCK_OBJECT(to);
+				//UNLOCK_OBJECT(to);
+				lock_to.unlock();
 
 				//Now populate the link's information
 				//Lock the Swing bus and get us a unique array location
-				LOCK_OBJECT(NR_swing_bus);
+				//LOCK_OBJECT(NR_swing_bus);
+				std::unique_lock<std::shared_mutex> lock_nr(SharedMutexManager::get_mutex(NR_swing_bus));
 
 				NR_branch_reference = NR_curr_branch;	//Get an index and store it as our own
 				NR_curr_branch++;					//Increment it for next one
 
-				UNLOCK_OBJECT(NR_swing_bus);	//Release the swing bus for others
+				//UNLOCK_OBJECT(NR_swing_bus);	//Release the swing bus for others
+				lock_nr.unlock();
 
 				//See if we worked - not sure how it would get here otherwise, but meh
 				if (NR_branch_reference == -1)
@@ -2640,26 +2646,28 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					{
 						//Set the To node phases
 						//Lock the to node
-						LOCK_OBJECT(tnode->SubNodeParent);
+						//LOCK_OBJECT(tnode->SubNodeParent);
+						std::unique_lock<std::shared_mutex> lock_tnode(SharedMutexManager::get_mutex(tnode->SubNodeParent));
 
 						NR_busdata[*tnode->NR_subnode_reference].phases |= 0x20;
 						NR_busdata[*tnode->NR_subnode_reference].origphases |= 0x20;	//Make sure reliability gets updated right too!
 
 						//Unlock to node
-						UNLOCK_OBJECT(tnode->SubNodeParent);
+						//UNLOCK_OBJECT(tnode->SubNodeParent);
 
 					}
 					else	//Must be a "normal" node
 					{
 						//Set the To node phases
 						//Lock the to node
-						LOCK_OBJECT(to);
+						//LOCK_OBJECT(to);
+						std::unique_lock<std::shared_mutex> lock_to(SharedMutexManager::get_mutex(to));
 
 						NR_busdata[tnode->NR_node_reference].phases |= 0x20;
 						NR_busdata[tnode->NR_node_reference].origphases |= 0x20;	//Make sure reliability gets updated right too!
 
 						//Unlock to node
-						UNLOCK_OBJECT(to);
+						//UNLOCK_OBJECT(to);
 					}
 				}
 
@@ -2676,13 +2684,14 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					LinkTableLoc = parFnode->NR_connected_links;
 
 					//Lock the parent object while we steal location information, and give ourselves a unique value
-					LOCK_OBJECT(fnode->SubNodeParent);
+					//LOCK_OBJECT(fnode->SubNodeParent);
+					std::unique_lock<std::shared_mutex> lock_fnode(SharedMutexManager::get_mutex(fnode->SubNodeParent));
 
 					TempTableIndex = LinkTableLoc[1];	//Get our index in the table
 					LinkTableLoc[1]++;					//Increment the index for the next guy
 
 					//Unlock us now
-					UNLOCK_OBJECT(fnode->SubNodeParent);
+					//UNLOCK_OBJECT(fnode->SubNodeParent);
 				}
 				else
 				{
@@ -2691,13 +2700,15 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					LinkTableLoc = fnode->NR_connected_links;						//Locate the counter table
 
 					//Lock the from object while we steal location information, and give ourselves a unique value
-					LOCK_OBJECT(from);
+					//LOCK_OBJECT(from);
+					std::unique_lock<std::shared_mutex> lock_from(SharedMutexManager::get_mutex(from));
+
 
 					TempTableIndex = LinkTableLoc[1];	//Get our index in the table
 					LinkTableLoc[1]++;					//Increment the index for the next guy
 
 					//Unlock us now
-					UNLOCK_OBJECT(from);
+					//UNLOCK_OBJECT(from);
 				}
 
 				//If we are OK, populate the list entry
@@ -2727,13 +2738,14 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					LinkTableLoc = parTnode->NR_connected_links;
 
 					//Lock the parent object while we steal location information, and give ourselves a unique value
-					LOCK_OBJECT(tnode->SubNodeParent);
+					//LOCK_OBJECT(tnode->SubNodeParent);
+					std::unique_lock<std::shared_mutex> lock_tnode(SharedMutexManager::get_mutex(tnode->SubNodeParent));
 
 					TempTableIndex = LinkTableLoc[1];	//Get our index in the table
 					LinkTableLoc[1]++;					//Increment the index for the next guy
 
 					//Unlock us now
-					UNLOCK_OBJECT(tnode->SubNodeParent);
+					//UNLOCK_OBJECT(tnode->SubNodeParent);
 				}
 				else
 				{
@@ -2742,13 +2754,14 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					LinkTableLoc = tnode->NR_connected_links;						//Locate the counter table
 
 					//Lock the to object while we steal location information, and give ourselves a unique value
-					LOCK_OBJECT(to);
+					//LOCK_OBJECT(to);
+					std::unique_lock<std::shared_mutex> lock_to(SharedMutexManager::get_mutex(to));
 
 					TempTableIndex = LinkTableLoc[1];	//Get our index in the table
 					LinkTableLoc[1]++;					//Increment the index for the next guy
 
 					//Unlock us now
-					UNLOCK_OBJECT(to);
+					//UNLOCK_OBJECT(to);
 				}
 
 				//If we are OK, populate the list entry
@@ -2838,7 +2851,10 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				}
 
 				//Lock the SWING bus and get us a value
-				if ( NR_swing_bus!=obj) WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+				std::unique_lock<std::shared_mutex> lock_nr;
+				if (NR_swing_bus != obj)
+					lock_nr = std::unique_lock<std::shared_mutex> (  SharedMutexManager::get_mutex(NR_swing_bus) );
+					//WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
 
 					//Get the value
 					temp_pwr_object_current = pwr_object_current;
@@ -2847,7 +2863,9 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					pwr_object_current++;
 
 				//Unlock
-				if ( NR_swing_bus!=obj) WRITEUNLOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+				if ( NR_swing_bus!=obj) 
+					lock_nr.unlock();
+					//WRITEUNLOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
 
 				//Add us into the list
 				delta_objects[temp_pwr_object_current] = obj;
@@ -3025,7 +3043,8 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 			/* compute currents */
 			std::array<gld::complex, 3> tc;
 			{
-				READLOCK_OBJECT(to);
+				//READLOCK_OBJECT(to);
+				std::shared_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(to));
 				tc = { t->current_inj[0], t->current_inj[1], t->current_inj[2] };
 				//READUNLOCK_OBJECT(to);
 			}
@@ -3054,11 +3073,13 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 				d_mat[2][1] * tc[1] +
 				d_mat[2][2] * tc[2];
 
-			WRITELOCK_OBJECT(from);
+			//WRITELOCK_OBJECT(from);
+			std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(from));
+
 			f->current_inj[0] += i0;
 			f->current_inj[1] += i1;
 			f->current_inj[2] += i2;
-			WRITEUNLOCK_OBJECT(from);
+			//WRITEUNLOCK_OBJECT(from);
 		}
 	}
 #ifdef SUPPORT_OUTAGES
@@ -3399,7 +3420,8 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 		// update published current_out values;
 		std::array<gld::complex, 3> tc;
 		{
-			auto v = READLOCK_OBJECT(to);
+			//auto v = READLOCK_OBJECT(to);
+			std::shared_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(to));
 			tc = { t->current_inj[0], t->current_inj[1], t->current_inj[2] };
 			//READUNLOCK_OBJECT(to);
 		}
@@ -3437,11 +3459,13 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 				B_mat[2][1] * tc[1] -
 				B_mat[2][2] * tc[2];
 
-			WRITELOCK_OBJECT(to);
+			//WRITELOCK_OBJECT(to);
+			std::unique_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(to));
 			t->voltage[0] = v0;
 			t->voltage[1] = v1;
 			t->voltage[2] = v2;
-			WRITEUNLOCK_OBJECT(to);
+			//WRITEUNLOCK_OBJECT(to);
+			subnode_lock.unlock();
 
 #ifdef SUPPORT_OUTAGES
 			t->condition=f->condition;
@@ -4127,10 +4151,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						current_pointer_out[2] = 0.0;
 
 					//See if our nature requires a lock
+					std::unique_lock<std::shared_mutex> subnode_lock;
 					if (flock)
 					{
 						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(from);
+						//WRITELOCK_OBJECT(from);
+						subnode_lock =  std::unique_lock<std::shared_mutex> (SharedMutexManager::get_mutex(from));
 					}
 
 					//Check to see which mode we're in
@@ -4146,7 +4172,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					if (flock)
 					{
 						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(from);
+						//WRITEUNLOCK_OBJECT(from);
+						subnode_lock.unlock();
 					}
 				}//End not in-rush calculations (normal)
 			}//end normal transformers
@@ -4224,10 +4251,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					current_pointer_in[2] = 0.0;
 
 				//See if our nature requires a lock
+				std::unique_lock<std::shared_mutex> subnode_lock;
 				if (flock)
 				{
 					//Lock the from side for current dispersion
-					WRITELOCK_OBJECT(from);
+					//WRITELOCK_OBJECT(from);
+					subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(from));
 				}
 
 				//Check to see which mode we're in
@@ -4243,7 +4272,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				if (flock)
 				{
 					//Unlock the from side so others can play
-					WRITEUNLOCK_OBJECT(from);
+					//WRITEUNLOCK_OBJECT(from);
+					subnode_lock.unlock();
 				}
 			}//End regulators
 			else if (SpecialLnk == DELTAGWYE)
@@ -4295,10 +4325,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				}
 
 				//See if our nature requires a lock
+				std::unique_lock<std::shared_mutex> subnode_lock;
 				if (flock)
 				{
 					//Lock the from side for current dispersion
-					WRITELOCK_OBJECT(from);
+					//WRITELOCK_OBJECT(from);
+					subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(from));
 				}
 
 				//Check to see which mode we're in
@@ -4314,7 +4346,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				if (flock)
 				{
 					//Unlock the from side so others can play
-					WRITEUNLOCK_OBJECT(from);
+					//WRITEUNLOCK_OBJECT(from);
+					subnode_lock.unlock();
 				}
 			}//end delta-GWYE
 			else if (SpecialLnk == SPLITPHASE)	//Split phase, center tapped xformer
@@ -4327,10 +4360,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 											tnode->voltage[1]*base_admittance_mat[2][1];
 
 					//See if our nature requires a lock
+					std::unique_lock<std::shared_mutex> subnode_lock;
 					if (flock)
 					{
 						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(from);
+						//WRITELOCK_OBJECT(from);
+						subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(from));
 					}
 
 					//Check to see which mode we're in
@@ -4344,7 +4379,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					if (flock)
 					{
 						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(from);
+						//WRITEUNLOCK_OBJECT(from);
+						subnode_lock.unlock();
 					}
 
 					//calculate current out
@@ -4364,10 +4400,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 											tnode->voltage[1]*base_admittance_mat[2][1];
 
 					//See if our nature requires a lock
+					std::unique_lock<std::shared_mutex> subnode_lock;
 					if (flock)
 					{
 						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(from);
+						//WRITELOCK_OBJECT(from);
+						subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(from));
 					}
 
 					//Check to see which mode we're in
@@ -4381,7 +4419,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					if (flock)
 					{
 						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(from);
+						//WRITEUNLOCK_OBJECT(from);
+						subnode_lock.unlock();
 					}
 
 					//calculate current out
@@ -4402,10 +4441,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 											tnode->voltage[1]*base_admittance_mat[2][1];
 
 					//See if our nature requires a lock
+					std::unique_lock<std::shared_mutex> subnode_lock;
 					if (flock)
 					{
 						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(from);
+						//WRITELOCK_OBJECT(from);
+						subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(from));
 					}
 
 					//Check to see which mode we're in
@@ -4419,7 +4460,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					if (flock)
 					{
 						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(from);
+						//WRITEUNLOCK_OBJECT(from);
+						subnode_lock.unlock();
 					}
 
 					//calculate current out
@@ -4480,10 +4522,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				current_pointer_out[2] = current_pointer_in[2];
 
 				//See if our nature requires a lock
+				std::unique_lock<std::shared_mutex> subnode_lock;
 				if (flock)
 				{
 					//Lock the from side for current dispersion
-					WRITELOCK_OBJECT(from);
+					//WRITELOCK_OBJECT(from);
+					subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(from));
 				}
 
 				//Check to see which mode we're in
@@ -4498,7 +4542,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				if (flock)
 				{
 					//Unlock the from side so others can play
-					WRITEUNLOCK_OBJECT(from);
+					//WRITEUNLOCK_OBJECT(from);
+					subnode_lock.unlock();
 				}
 			}//End split phase line
 			else
@@ -4734,11 +4779,14 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 											d_mat[2][2]*current_pointer_out[2];
 				}//End "normal" calculation
 
+
 				//See if our nature requires a lock
+				std::unique_lock<std::shared_mutex> subnode_lock;
 				if (flock)
 				{
 					//Lock the from side for current dispersion
-					WRITELOCK_OBJECT(from);
+					//WRITELOCK_OBJECT(from);
+					subnode_lock =  std::unique_lock<std::shared_mutex> (SharedMutexManager::get_mutex(from));
 				}
 
 				//Check to see which mode we're in
@@ -4754,7 +4802,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				if (flock)
 				{
 					//Unlock the from side so others can play
-					WRITEUNLOCK_OBJECT(from);
+					//WRITEUNLOCK_OBJECT(from);
+					subnode_lock.unlock();
 				}
 			}//End "normal" lines
 		}//End is closed
@@ -4861,7 +4910,8 @@ void link_object::calculate_power_splitphase()
 	{
 		std::array<gld::complex, 3> tc;
 		{
-			auto v = READLOCK_OBJECT(to);
+			//auto v = READLOCK_OBJECT(to);
+			std::shared_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(to));
 			tc = { t->current_inj[0], t->current_inj[1], t->current_inj[2] };
 			//READUNLOCK_OBJECT(to);
 		}
@@ -5003,7 +5053,8 @@ void link_object::calculate_power()
 
 			std::array< gld::complex, 3> tc;
 			{
-				auto v = READLOCK_OBJECT(to);
+				//auto v = READLOCK_OBJECT(to);
+				std::shared_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(to));
 				tc= { t->current_inj[0], t->current_inj[1], t->current_inj[2] };
 				//READUNLOCK_OBJECT(to);
 			}
@@ -7220,11 +7271,14 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		//See if we actually did anything - if we were already in a fault, we don't care
 		if (*implemented_fault != 0)
 		{
-			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			//LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			std::unique_lock<std::shared_mutex> nr_lock(SharedMutexManager::get_mutex(NR_swing_bus));
+
 
 			NR_admit_change = true;		//Flag an admittance update - this should trigger fault_check
 
-			UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			//UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			nr_lock.unlock();
 
 			//set up the remaining 4 fault specific equations in C_mat before calculating the fault current
 			if(*implemented_fault == 1){ //SLG-A -> Ifb=Ifc=Vax=Vxg=0
@@ -9892,11 +9946,14 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		//See if we actually did anything - if we were already in a fault, we don't care
 		if (*implemented_fault != 0)
 		{
-			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			//LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			std::unique_lock<std::shared_mutex> lock_nr(SharedMutexManager::get_mutex(NR_swing_bus));
+
 
 			NR_admit_change = true;		//Flag an admittance update - this should trigger fault_check
 
-			UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			//UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			lock_nr.unlock();
 
 			//See which fault current mode we are leveraging
 			if (enable_mesh_fault_current)	//Mesh fault current
@@ -11938,9 +11995,11 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				//defined above
 			}
 
-			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			//LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			std::unique_lock<std::shared_mutex> lock_nr(SharedMutexManager::get_mutex(NR_swing_bus));
 			NR_admit_change = true;
-			UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			//UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			lock_nr.unlock();
 
 			if (temp_node == -99)
 				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_busdata[0].name);
@@ -12867,9 +12926,11 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				//defined above
 			}
 
-			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			//LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			std::unique_lock<std::shared_mutex> lock_nr(SharedMutexManager::get_mutex(NR_swing_bus));
 			NR_admit_change = true;
-			UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			//UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			lock_nr.unlock();
 
 			if (temp_node == -99)
 				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_busdata[0].name);

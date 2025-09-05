@@ -150,7 +150,8 @@ int load_tracker::init(OBJECT *parent)
 void load_tracker::update_feedback_variable()
 {
 	//Locking - lock pointed device
-	auto v = READLOCK_OBJECT(target);
+	//auto v = READLOCK_OBJECT(target);
+	std::shared_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(target));
 		switch (type)
 		{
 		case PT_double:
@@ -192,7 +193,7 @@ void load_tracker::update_feedback_variable()
 			break;
 		}
 	//Unlock
-	READUNLOCK_OBJECT();
+	//READUNLOCK_OBJECT();
 }
 
 TIMESTAMP load_tracker::presync(TIMESTAMP t0)

@@ -180,7 +180,7 @@ int capacitor::create()
 int capacitor::init(OBJECT *parent)
 {
 	gld_property *pTempProperty = nullptr;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	gld::set temp_phases;
 	OBJECT *temp_obj_link = nullptr;
 	int result = node::init();
@@ -286,7 +286,7 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Pull the object
-		pTempProperty->getp<OBJECT*>(temp_obj_link,*test_rlock);
+		pTempProperty->getp<OBJECT*>(temp_obj_link,test_rlock);
 
 		//Delete the property
 		delete pTempProperty;
@@ -1459,7 +1459,8 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 	{
 		
 		{
-			auto v = READLOCK_OBJECT(RLink);
+			//auto v = READLOCK_OBJECT(RLink);
+			std::shared_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(RLink));
 
 			//Force the link to do an update (will be ignored first run anyways (zero))
 			if (RLink_calculate_power_fxn != nullptr) {

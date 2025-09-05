@@ -212,7 +212,7 @@ int evcharger_det::init(OBJECT *parent)
 	TIMESTAMP temp_time, temp_time_dbl, prev_temp_time;
 	DATETIME temp_date;
 	gld_property *temp_property;
-	gld_wlock *test_rlock;
+	unsigned int test_rlock = 0;
 	int32 temp_int_val;
 
 	//Map the minimum timestep
@@ -233,7 +233,7 @@ int evcharger_det::init(OBJECT *parent)
 	}
 
 	//Pull the value
-	temp_property->getp<int32>(temp_int_val,*test_rlock);
+	temp_property->getp<int32>(temp_int_val,test_rlock);
 
 	//remove the mapping
 	delete temp_property;

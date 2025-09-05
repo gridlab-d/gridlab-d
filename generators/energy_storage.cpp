@@ -378,7 +378,7 @@ SIMULATIONMODE energy_storage::inter_deltaupdate(unsigned int64 delta_time, unsi
 //DC update function
 STATUS energy_storage::energy_storage_dc_update(OBJECT *calling_obj, bool init_mode)
 {
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	STATUS temp_status = SUCCESS;
 	//double  P_ES_pu;
 
@@ -402,8 +402,8 @@ STATUS energy_storage::energy_storage_dc_update(OBJECT *calling_obj, bool init_m
 
 		//Push the voltage back out to the inverter - this may need different logic when there are multiple objects
 		//******* Just an example - may not be needed *******//
-		inverter_voltage_property->setp<double>(ES_DC_Voltage, *test_rlock);
-		inverter_current_property->setp<double>(ES_DC_Current, *test_rlock);
+		inverter_voltage_property->setp<double>(ES_DC_Voltage, test_rlock);
+		inverter_current_property->setp<double>(ES_DC_Current, test_rlock);
 
 	}
 	else //Standard runs
@@ -427,7 +427,7 @@ STATUS energy_storage::energy_storage_dc_update(OBJECT *calling_obj, bool init_m
 
 
 		//Push the changes
-		inverter_current_property->setp<double>(ES_DC_Current, *test_rlock);
+		inverter_current_property->setp<double>(ES_DC_Current, test_rlock);
 		//inverter_power_property->setp<double>(inv_P, *test_rlock);
 	}
 

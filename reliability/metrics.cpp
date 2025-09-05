@@ -619,13 +619,17 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			next_metric_interval = t0 + metric_interval;
 
 			//Lock the remote object
-			wlock(module_metrics_obj);
+			//wlock(module_metrics_obj);
+			auto& v = SharedMutexManager::get_mutex(module_metrics_obj);
+			std::unique_lock<std::shared_mutex> lock(v);
+
 
 			//Reset the stat variables
 			returnval = ((int (*)(OBJECT *, OBJECT *))(*reset_interval_func))(hdr,module_metrics_obj);
 
 			//Unlock it
-			wunlock(module_metrics_obj);
+			//wunlock(module_metrics_obj);
+			lock.unlock();
 
 			if (returnval != 1)	//See if it failed
 			{
@@ -664,13 +668,16 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			next_annual_interval = t0 + 31536000;	//t0 + 365 days of seconds
 
 			//Lock the remote metrics object
-			wlock(module_metrics_obj);
+			//wlock(module_metrics_obj);
+			auto& v = SharedMutexManager::get_mutex(module_metrics_obj);
+			std::unique_lock<std::shared_mutex> lock(v);
 
 			//Reset the stats
 			returnval = ((int (*)(OBJECT *, OBJECT *))(*reset_annual_func))(hdr,module_metrics_obj);
 
 			//Unlock it
-			wunlock(module_metrics_obj);
+			//wunlock(module_metrics_obj);
+			lock.unlock();
 
 			if (returnval != 1)	//See if it failed
 			{
@@ -732,13 +739,16 @@ void metrics::event_ended(OBJECT *event_obj, OBJECT *fault_obj, OBJECT *faulting
 	outage_length = event_end_time - event_start_time;
 
 	//Lock the remote object
-	wlock(module_metrics_obj);
+	//wlock(module_metrics_obj);
+	auto& v = SharedMutexManager::get_mutex(module_metrics_obj);
+	std::unique_lock<std::shared_mutex> lock(v);
 
 	//Perform the calculation
 	returnval = ((int (*)(OBJECT *, OBJECT *, int, int, TIMESTAMP, TIMESTAMP))(*compute_metrics))(hdr,module_metrics_obj,number_customers_int,CustomerCount,outage_length,metric_interval);
 
 	//Unlock it
-	wunlock(module_metrics_obj);
+	//wunlock(module_metrics_obj);
+	lock.unlock();
 
 	//Make sure it worked
 	if (returnval != 1)
@@ -795,13 +805,16 @@ void metrics::event_ended_sec(OBJECT *event_obj, OBJECT *fault_obj, OBJECT *faul
 	outage_length = event_end_time - event_start_time;
 
 	//Lock the remote object
-	wlock(module_metrics_obj);
+	//wlock(module_metrics_obj);
+	auto& v = SharedMutexManager::get_mutex(module_metrics_obj);
+	std::unique_lock<std::shared_mutex> lock(v);
 
 	//Perform the calculation
 	returnval = ((int (*)(OBJECT *, OBJECT *, int, int, int, TIMESTAMP, TIMESTAMP))(*compute_metrics))(hdr,module_metrics_obj,number_customers_int,number_customers_int_secondary,CustomerCount,outage_length,metric_interval);
 
 	//Unlock it
-	wunlock(module_metrics_obj);
+	//wunlock(module_metrics_obj);
+	lock.unlock();
 
 	//Make sure it worked
 	if (returnval != 1)

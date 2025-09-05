@@ -1951,7 +1951,7 @@ gld_property *windturb_dg::map_double_value(OBJECT *obj, const char *name)
 void windturb_dg::push_complex_powerflow_values(void)
 {
 	gld::complex temp_complex_val;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	int indexval;
 
 	if (parent_is_triplex)
@@ -1967,7 +1967,7 @@ void windturb_dg::push_complex_powerflow_values(void)
 			temp_complex_val += value_Line12 - prev_current12;
 
 			//Push it back up
-			pLine12->setp<complex>(temp_complex_val,*test_rlock);
+			pLine12->setp<complex>(temp_complex_val,test_rlock);
 
 			//Store the update value
 			prev_current12 = value_Line12;
@@ -1986,7 +1986,7 @@ void windturb_dg::push_complex_powerflow_values(void)
 			temp_complex_val += value_Line_I[indexval] - prev_current[indexval];
 
 			//Push it back up
-			pLine_I[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
+			pLine_I[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 
 			//Store the update value
 			prev_current[indexval] = value_Line_I[indexval];
@@ -1997,14 +1997,14 @@ void windturb_dg::push_complex_powerflow_values(void)
 void windturb_dg::push_complex_power_values(complex inv_P)
 {
 	//complex temp_complex_val;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	bool WT_conn_flag = true;
 	//int indexval;
 	
 	if (parent_is_inverter) {
 		//Push the changes
-		inverter_power_property->setp<complex>(inv_P, *test_rlock);
-		inverter_flag_property->setp<bool>(WT_conn_flag, *test_rlock);
+		inverter_power_property->setp<complex>(inv_P, test_rlock);
+		inverter_flag_property->setp<bool>(WT_conn_flag, test_rlock);
 	}
 }
 

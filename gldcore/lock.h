@@ -12,14 +12,14 @@
 //extern "C" {
 //#endif
 
-std::shared_lock<std::shared_mutex>  rlock(unsigned int *lock);
+//std::shared_lock<std::shared_mutex>  rlock(unsigned int *lock);
 //void rlock(unsigned int* lock);
 
-void wlock(unsigned int *lock);
-void runlock();
-void wunlock(unsigned int *lock);
+//void wlock(unsigned int *lock);
+//void runlock();
+//void wunlock(unsigned int *lock);
 
-void register_lock(const char *name, unsigned int *lock);
+//void register_lock(const char *name, unsigned int *lock);
 
 //#ifdef __cplusplus
 //}

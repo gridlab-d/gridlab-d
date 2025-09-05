@@ -52,7 +52,7 @@ stubauction::stubauction(MODULE *module)
 				PT_KEYWORD,"DISABLED",(enumeration)CON_DISABLED,
 			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
-		memset(this,0,sizeof(stubauction));
+		//memset(this,0,sizeof(stubauction));
 	}
 }
 

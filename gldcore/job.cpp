@@ -23,6 +23,7 @@
 #include "exec.h"
 #include "lock.h"
 #include "threadpool.h"
+#include "object.h"
 
 
 static bool clean = false; // set to true to force purge of test directories
@@ -265,18 +266,23 @@ static void pushjob(char *dir)
 	output_debug("adding %s to job list", dir);
 	JOBLIST *item = (JOBLIST*)malloc(sizeof(JOBLIST));
 	strncpy(item->name,dir,sizeof(item->name)-1);
-	wlock(&joblock);
+	//wlock(&joblock);
+	//replace the above with SharedMutexManager
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&joblock));
 	item->next = jobstack;
 	jobstack = item;
-	wunlock(&joblock);
+	//wunlock(&joblock);
 }
 /* popped item must be freed after no longer needed */
 static JOBLIST *popjob(void)
 {
-	auto v = rlock(&joblock);
+	//auto v = rlock(&joblock);
+	//replace the above with SharedMutexManager
+	std::shared_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&joblock));
 	JOBLIST *item = jobstack;
 	if ( jobstack ) jobstack = jobstack->next;
-	runlock();
+	//runlock();
+	lock.unlock();
 	output_debug("pulling %s from job list", item->name);
 	return item;
 }

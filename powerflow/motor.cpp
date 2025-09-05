@@ -302,7 +302,7 @@ int motor::init(OBJECT *parent)
 	double temp_house_capacity_info, temp_house_cop;
 	enumeration temp_house_type;
 	gld_property *temp_gld_property;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	//See if we have a house connection defined -- if so, do this after that initializes (to get data)
 	if (mtr_house_pointer != nullptr)
@@ -419,7 +419,7 @@ int motor::init(OBJECT *parent)
 			}
 
 			//Pull the value
-			temp_gld_property->getp<enumeration>(temp_house_type, *test_rlock);
+			temp_gld_property->getp<enumeration>(temp_house_type, test_rlock);
 
 			//Delete the connection
 			delete temp_gld_property;
@@ -480,7 +480,7 @@ int motor::init(OBJECT *parent)
 			}
 
 			//Pull the value
-			temp_gld_property->getp<enumeration>(temp_house_type, *test_rlock);
+			temp_gld_property->getp<enumeration>(temp_house_type, test_rlock);
 
 			//Delete the connection
 			delete temp_gld_property;
@@ -545,7 +545,7 @@ int motor::init(OBJECT *parent)
 
 		//Set the flag and push it
 		temp_house_motor_state = true;
-		temp_gld_property->setp<bool>(temp_house_motor_state,*test_rlock);
+		temp_gld_property->setp<bool>(temp_house_motor_state,test_rlock);
 
 		//Now that it is done, kill it
 		delete temp_gld_property;
@@ -564,7 +564,7 @@ int motor::init(OBJECT *parent)
 		}
 
 		//Check the initial state - pull the value (not sure it is actually set yet)
-		mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+		mtr_house_state_pointer->getp<bool>(temp_house_motor_state,test_rlock);
 
 		//Determine our state
 		if (temp_house_motor_state)
@@ -793,7 +793,7 @@ TIMESTAMP motor::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	bool temp_house_motor_state;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	// update voltage and frequency
 	updateFreqVolt();
@@ -804,7 +804,7 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (mtr_house_state_pointer != nullptr)
 		{
 			//Pull the updated state
-			mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+			mtr_house_state_pointer->getp<bool>(temp_house_motor_state,test_rlock);
 
 			//Set the motor state
 			if (temp_house_motor_state)
@@ -992,7 +992,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 	OBJECT *hdr = object_header(this);
 	STATUS return_status_val;
 	bool temp_house_motor_state;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int  test_rlock = 0;
 	double deltat, deltat_ndiv;
 
 	// make sure to capture the current time
@@ -1039,7 +1039,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			if (mtr_house_state_pointer != nullptr)
 			{
 				//Pull the updated state
-				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,test_rlock);
 
 				//Set the motor state
 				if (temp_house_motor_state)
@@ -1095,7 +1095,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			if (mtr_house_state_pointer != nullptr)
 			{
 				//Pull the updated state
-				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,test_rlock);
 
 				//Set the motor state
 				if (temp_house_motor_state)

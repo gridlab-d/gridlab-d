@@ -263,13 +263,15 @@ char *object_get_unit(OBJECT *obj, const char *name)
 		 */
 	}
 
-	auto v = rlock(&unitlock);
+	//auto v = rlock(&unitlock);
+	std::shared_lock<std::shared_mutex> v(SharedMutexManager::get_mutex(&unitlock));
 	if (dimless == nullptr) {
 		//runlock(&unitlock);
 		v.unlock();
-		wlock(&unitlock);
+		//wlock(&unitlock);
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&unitlock));
 		dimless = unit_find("1");
-		wunlock(&unitlock);
+		//wunlock(&unitlock);
 	}
 	else
 		v.unlock();
@@ -1409,10 +1411,11 @@ void object_profile(OBJECT *obj, OBJECTPROFILEITEM pass, clock_t t)
 	{
 		clock_t dt = (clock_t)exec_clock()-t;
 		obj->synctime[pass] += dt;
-		wlock(&obj->oclass->profiler.lock);
+		//wlock(&obj->oclass->profiler.lock);
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&obj->oclass->profiler.lock));
 		obj->oclass->profiler.count++;
 		obj->oclass->profiler.clocks += dt;
-		wunlock(&obj->oclass->profiler.lock);
+		//wunlock(&obj->oclass->profiler.lock);
 	}
 }
 
@@ -1456,24 +1459,44 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 	/* call recalc if recalc bit is set */
 	if( (obj->flags&OF_RECALC) && obj->oclass->recalc!=nullptr)
 	{
-		if (autolock) wlock(&obj->lock);
-		oclass->recalc(obj);
-		if (autolock) wunlock(&obj->lock);
+		if (autolock)
+		{
+			//wlock(&obj->lock);
+			//replace the above with SharedMutexManager
+			std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&obj->lock));
+			oclass->recalc(obj);
+			//if (autolock) wunlock(&obj->lock);
+		}
+		else
+			oclass->recalc(obj);
+		
 		obj->flags &= ~OF_RECALC;
 	}
 
 	/* call PLC code on bottom-up, if any */
 	if( !(obj->flags&OF_HASPLC) && oclass->plc!=nullptr && pass==PC_BOTTOMUP )
 	{
-		if (autolock) wlock(&obj->lock);
-		plc_time = oclass->plc(obj,ts);
-		if (autolock) wunlock(&obj->lock);
+		if (autolock)
+		{
+			//wlock(&obj->lock);
+			std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&obj->lock));
+			plc_time = oclass->plc(obj, ts);
+		}
+		else
+			plc_time = oclass->plc(obj, ts);
+
+		//if (autolock) wunlock(&obj->lock);
 	}
 
 	/* call sync */
-	if (autolock) wlock(&obj->lock);
-	sync_time = (*obj->oclass->sync)(obj,ts,pass);
-	if (autolock) wunlock(&obj->lock);
+	if (autolock) {
+		//wlock(&obj->lock);
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&obj->lock));
+		sync_time = (*obj->oclass->sync)(obj, ts, pass);
+		//if (autolock) wunlock(&obj->lock);
+	} else {
+		sync_time = (*obj->oclass->sync)(obj,ts,pass);
+	}
 	if(absolute_timestamp(plc_time)<absolute_timestamp(sync_time))
 		sync_time = plc_time;
 
@@ -2707,9 +2730,12 @@ void *object_remote_read(void *local, /**< local memory for data (must be correc
 		/* multithread */
 		else
 		{
-			auto v = rlock(&obj->lock);
+			//auto v = rlock(&obj->lock);
+			//replace with SharedMutexManager
+			std::shared_lock<std::shared_mutex> runlock(SharedMutexManager::get_mutex(&obj->lock));
 			memcpy(local,addr,size);
-			runlock();
+			//runlock();
+			runlock.unlock();
 			return local;
 		}
 	}
@@ -2741,9 +2767,10 @@ void object_remote_write(void *local, /** local memory for data */
 		/* multithread */
 		else
 		{
-			wlock(&obj->lock);
+			//wlock(&obj->lock);
+			std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&obj->lock));
 			memcpy(addr,local,size);
-			wunlock(&obj->lock);
+			//wunlock(&obj->lock);
 		}
 	}
 	else

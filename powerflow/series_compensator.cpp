@@ -834,9 +834,11 @@ void series_compensator::sercom_postPre_fxn(void)
 			}
 
 			//Flag an update
-			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			//LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			std::unique_lock<std::shared_mutex> nr_lock(SharedMutexManager::get_mutex(NR_swing_bus));
 			NR_admit_change = true;
-			UNLOCK_OBJECT(NR_swing_bus);	//Unlock
+			//UNLOCK_OBJECT(NR_swing_bus);	//Unlock
+			nr_lock.unlock();
 
 			//Update our previous turns ratio - for tracking
 			prev_turns_ratio[0] = turns_ratio[0];

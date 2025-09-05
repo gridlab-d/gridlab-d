@@ -298,7 +298,7 @@ void power_metrics::check_fault_check(void)
 	enumeration temp_enum_value;
 	bool temp_bool_value;
 	gld_object *temp_object_value;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	if (!is_fault_check_tested)
 	{
@@ -362,7 +362,7 @@ void power_metrics::check_fault_check(void)
 
 			//Set the value to true
 			temp_bool_value = true;
-			temporary_property->setp<bool>(temp_bool_value,*test_rlock);
+			temporary_property->setp<bool>(temp_bool_value,test_rlock);
 
 			//And clear it
 			delete temporary_property;
