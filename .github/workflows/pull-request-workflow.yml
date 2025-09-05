@@ -74,8 +74,16 @@ jobs:
         run: cmake --install . --config ${{env.BUILD_TYPE}}
 
       - name: Run GridLAB-D autotests
-        working-directory: ${{github.workspace}}/build
-        run: ctest --verbose
+        working-directory: ${{github.workspace}}
+        run: |
+          # Add installed GridLAB-D binaries to PATH
+          export PATH=$PATH:~/.temp/GridLAB-D/bin
+          # Run integration validation from repository root
+          gridlabd -T 0 --validate
+          # Future Catch2 unit tests (placeholder):
+          # ./build/tests/unit_tests --reporter junit --out unit-tests-linux.xml
+          # Current ctest invocation (unit + any ctest-based tests)
+          ctest --test-dir build --verbose
 
   win-build:
     strategy:
@@ -123,8 +131,14 @@ jobs:
         run: cmake --install . --config ${{env.BUILD_TYPE}}
 
       - name: Run GridLAB-D autotests
-        working-directory: ${{github.workspace}}/gridlab-build/build
-        run: ctest --verbose
+        working-directory: ${{github.workspace}}/gridlab-build
+        run: |
+          workspace="$(cygpath -u '${{github.workspace}}')"
+          export PATH=$PATH:"$workspace/.temp/GridLAB-D/bin"
+          gridlabd -T 0 --validate
+          # Future Catch2 unit tests (placeholder):
+          # ./build/tests/unit_tests --reporter junit --out unit-tests-windows.xml
+          ctest --test-dir build --verbose
 
   mac-build:
     strategy:
@@ -188,5 +202,10 @@ jobs:
         run: cmake --install . --config ${{env.BUILD_TYPE}}
 
       - name: Run GridLAB-D autotests
-        working-directory: ${{github.workspace}}/build-${{matrix.arch}}
-        run: ctest --verbose
+        working-directory: ${{github.workspace}}
+        run: |
+          export PATH=$PATH:~/.temp/GridLAB-D/bin
+          gridlabd -T 0 --validate
+          # Future Catch2 unit tests (placeholder):
+          # ./build-${{matrix.arch}}/tests/unit_tests --reporter junit --out unit-tests-macos.xml
+          ctest --test-dir build-${{matrix.arch}} --verbose
