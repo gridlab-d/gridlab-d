@@ -130,7 +130,6 @@ LIST(APPEND cleanup_list
         third_party/superLU_MT/libsuperlu_la-superlu_timer.lo
         third_party/superLU_MT/libsuperlu_la-util.lo
         third_party/superLU_MT/libsuperlu_la-xerbla.lo
-        third_party/jsonCpp/libjsoncpp_la-jsoncpp.lo
         assert/assert_la-assert.lo
         assert/assert_la-complex_assert.lo
         assert/assert_la-double_assert.lo
@@ -305,7 +304,6 @@ LIST(APPEND cleanup_list
         tape_plot/tape_plot_la-tape_plot.lo
         third_party/superLU_MT/libsuperlu.la
         gridlabd
-        third_party/jsonCpp/libjsoncpp.la
         assert/assert.la
         climate/climate.la
         commercial/commercial.la

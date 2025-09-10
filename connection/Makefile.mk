@@ -22,7 +22,6 @@ connection_connection_la_LDFLAGS += $(HELICS_LDFLAGS)
 endif
 
 connection_connection_la_LIBADD = 
-connection_connection_la_LIBADD += third_party/jsonCpp/libjsoncpp.la
 if HAVE_FNCS
 connection_connection_la_LIBADD += $(FNCS_LIBS)
 endif

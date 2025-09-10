@@ -16,6 +16,5 @@
 
     target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 #    target_include_directories(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
-    #target_link_libraries(${PROJECT_NAME} libjsoncpp libsuperlu)
 
     #target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})
