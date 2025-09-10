@@ -29,7 +29,8 @@
 #include <sstream>
 #include <iostream>
 #include <complex>
-#include <json/json.h>
+//#include <json/json.h>
+#include <nlohmann/json.hpp>
 using std::string;
 using std::vector;
 
@@ -134,7 +135,7 @@ class json_helics_value_publication {
 public:
 	json_helics_value_publication(){
 	}
-	Json::Value objectPropertyBundle;
+	nlohmann::json objectPropertyBundle;
 	vector<json_publication*> jsonPublications;
 	string name;
 	helicscpp::Publication HelicsPublication;
@@ -152,7 +153,7 @@ class json_helics_endpoint_publication {
 public:
 	json_helics_endpoint_publication(){
 	}
-	Json::Value objectPropertyBundle;
+	nlohmann::json objectPropertyBundle;
 	vector<json_publication*> jsonPublications;
 	string name;
 	string destination;

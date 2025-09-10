@@ -236,9 +236,9 @@ int metrics_collector_writer::init(OBJECT *parent) {
 #endif
 
 	// Write metadata for each file; these indices MUST match assignments below
-	Json::Value jsn;
-	Json::Value meta;
-	Json::Value metadata;
+	nlohmann::json jsn;
+	nlohmann::json meta;
+	nlohmann::json metadata;
 
 	int idx = 0;
 	jsn[m_index] = idx++;	jsn[m_units] = "W";		meta[m_real_power_min] = jsn;
@@ -271,7 +271,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	jsn[m_index] = idx++;	jsn[m_units] = "s";		meta[m_below_10_percent_NormVol_Duration] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "";		meta[m_below_10_percent_NormVol_Count] = jsn;
 #endif
-	ary_billing_meters.resize(idx);
+	ary_billing_meters.clear();
 	writeMetadata(meta, metadata, time_str, filename_billing_meter);
 
 	idx = 0;
@@ -315,7 +315,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	jsn[m_index] = idx++;	jsn[m_units] = "";		meta[m_wh_lower_elem_state] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "";		meta[m_wh_upper_elem_state] = jsn;
 
-	ary_houses.resize(idx);
+	ary_houses.clear();
 	writeMetadata(meta, metadata, time_str, filename_house);
 
 	idx = 0;
@@ -325,27 +325,27 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	jsn[m_index] = idx++;	jsn[m_units] = "VAR";	meta[m_reactive_power_min] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "VAR";	meta[m_reactive_power_max] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "VAR";	meta[m_reactive_power_avg] = jsn;
-	ary_inverters.resize(idx);
+	ary_inverters.clear();
 	writeMetadata(meta, metadata, time_str, filename_inverter);
 
 	idx = 0;
 	jsn[m_index] = idx++;	jsn[m_units] = "";		meta[m_operation_count] = jsn;
-	ary_capacitors.resize(idx);
+	ary_capacitors.clear();
 	writeMetadata(meta, metadata, time_str, filename_capacitor);
 
 	idx = 0;
 	jsn[m_index] = idx++;	jsn[m_units] = "";		meta[m_operation_count] = jsn;
-	ary_regulators.resize(idx);
+	ary_regulators.clear();
 	writeMetadata(meta, metadata, time_str, filename_regulator);
 
 	idx = 0;
 	jsn[m_index] = idx++;	jsn[m_units] = "%";		meta[m_trans_overload_perc] = jsn;
-	ary_transformers.resize(idx);
+	ary_transformers.clear();
 	writeMetadata(meta, metadata, time_str, filename_transformer);
 
 	idx = 0;
 	jsn[m_index] = idx++;	jsn[m_units] = "%";		meta[m_line_overload_perc] = jsn;
-	ary_lines.resize(idx);
+	ary_lines.clear();
 	writeMetadata(meta, metadata, time_str, filename_line);
 
 	idx = 0;
@@ -367,7 +367,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	jsn[m_index] = idx++;	jsn[m_units] = "VAR";	meta[m_reactive_power_losses_max] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "VAR";	meta[m_reactive_power_losses_avg] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "VAR";	meta[m_reactive_power_losses_median] = jsn;
-	ary_feeders.resize(idx);
+	ary_feeders.clear();
 	writeMetadata(meta, metadata, time_str, filename_feeder);
 
 	idx = 0;
@@ -377,17 +377,15 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	jsn[m_index] = idx++;	jsn[m_units] = "%";	meta[m_battery_SOC_min] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "%";	meta[m_battery_SOC_max] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "%";	meta[m_battery_SOC_avg] = jsn;
-	ary_evchargerdets.resize(idx);
+	ary_evchargerdets.clear();
 	writeMetadata(meta, metadata, time_str, filename_evchargerdet);
 
 	return 1;
 }
 
-void metrics_collector_writer::writeMetadata(Json::Value &meta,
-		Json::Value &metadata, char *time_str, char256 filename) {
+void metrics_collector_writer::writeMetadata(nlohmann::json &meta,
+		nlohmann::json &metadata, char *time_str, char256 filename) {
 	if (strcmp(extension, m_json.c_str()) == 0) {
-		Json::StreamWriterBuilder builder;
-		builder["indentation"] = "";
 		ofstream out_file;
 
 		metadata[m_starttime] = time_str;
@@ -396,7 +394,7 @@ void metrics_collector_writer::writeMetadata(Json::Value &meta,
 		if (strcmp(alternate, "yes") == 0)
 			FileName.append("." + m_json);
 		out_file.open (FileName);
-		out_file << Json::writeString(builder, metadata);
+		out_file << metadata.dump();
 		out_file.close();
 #ifdef HAVE_HDF5
 		if (both) {
@@ -451,15 +449,15 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 
 	double *metrics;
 	// metrics JSON value
-	Json::Value billing_meter_objects;
-	Json::Value house_objects;
-	Json::Value inverter_objects;
-	Json::Value capacitor_objects;
-	Json::Value regulator_objects;
-	Json::Value feeder_objects;
-	Json::Value transformer_objects;
-	Json::Value line_objects;
-	Json::Value evchargerdet_objects;
+	nlohmann::json billing_meter_objects;
+	nlohmann::json house_objects;
+	nlohmann::json inverter_objects;
+	nlohmann::json capacitor_objects;
+	nlohmann::json regulator_objects;
+	nlohmann::json feeder_objects;
+	nlohmann::json transformer_objects;
+	nlohmann::json line_objects;
+	nlohmann::json evchargerdet_objects;
 
 	// Write Time -> represents the time from the StartTime
 	writeTime = t1 - startTime; // in seconds
@@ -536,7 +534,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 			ary_houses[idx++] = metrics[HSE_AVG_DEV_COOLING];
 			ary_houses[idx++] = metrics[HSE_AVG_DEV_HEATING];
 			ary_houses[idx++] = metrics[HSE_SYSTEM_MODE];
-			if (!house_objects.isMember(key)) { // already made this house
+			if (!house_objects.contains(key)) { // already made this house
 				for (int j = 0; j < WH_ARRAY_SIZE; j++) {
 					ary_houses[idx++] = 0.0;
 				}
@@ -547,7 +545,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 			metrics = temp_metrics_collector->metrics;
 			string key = temp_metrics_collector->parent_name;
 			int idx = 0;
-			if (house_objects.isMember(key)) { // already made this house
+			if (house_objects.contains(key)) { // already made this house
 				idx = HSE_ARRAY_SIZE; // start of the waterheater metrics
 			} else {
 				for (int j = 0; j < HSE_ARRAY_SIZE; j++) {
@@ -732,9 +730,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 }
 
 // Write seperate JSON files for each object
-void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& metrics) {
-	Json::StreamWriterBuilder builder;
-	builder["indentation"] = "";
+void metrics_collector_writer::writeJsonFile (char256 filename, nlohmann::json& metrics) {
 	long pos = 0;
 	long offset = 1;
 	ofstream out_file;
@@ -744,7 +740,7 @@ void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& met
 		FileName.append("." + m_json);
 	out_file.open (FileName, ofstream::in | ofstream::ate);
 	pos = out_file.tellp();
-	out_file << Json::writeString(builder, metrics);
+	out_file << metrics.dump();
 	out_file.seekp(pos-offset);
 	out_file << ", ";
 	out_file.close();
@@ -1125,17 +1121,17 @@ void metrics_collector_writer::hdfWrite(char256 filename, const std::unique_ptr<
 	cout << " Done" << endl;
 }
 
-void metrics_collector_writer::hdfMetadataWrite(Json::Value& meta, char* time_str, char256 filename) {
+void metrics_collector_writer::hdfMetadataWrite(nlohmann::json& meta, char* time_str, char256 filename) {
 	H5::Exception::dontPrint();
 	try {
 		hMetadata tbl[meta.size() + 1];
 		int idx = 0;
 		strncpy(tbl[idx].name, m_starttime.c_str(), MAX_METRIC_NAME_LENGTH);
 		strncpy(tbl[idx].value, time_str, MAX_METRIC_VALUE_LENGTH);
-		for (auto const& id : meta.getMemberNames()) {
+		for (auto const& id : meta.items()) {
 			idx++;
-			strncpy(tbl[idx].name, id.c_str(), MAX_METRIC_NAME_LENGTH);
-			string value = meta[id][m_units].asString();
+			strncpy(tbl[idx].name, id.key().c_str(), MAX_METRIC_NAME_LENGTH);
+			string value = meta[id.key()][m_units].template get<string>();
 			strncpy(tbl[idx].value, value.c_str(), MAX_METRIC_VALUE_LENGTH);
 		}
 
@@ -1192,18 +1188,22 @@ void metrics_collector_writer::maketime(double time, char *buffer, int size) {
 	gl_strtime(&new_dt, buffer, size);
 }
 
-void metrics_collector_writer::hdfBillingMeterWrite (size_t objs, Json::Value& metrics) {
+void metrics_collector_writer::hdfBillingMeterWrite (size_t objs, nlohmann::json& metrics) {
 	std::vector <BillingMeter> tbl;
 	tbl.reserve(line_cnt*objs);
 	int idx = 0;
-	for (auto const& id : sortIds(metrics.getMemberNames())) {
-		Json::Value name = metrics[id];
-		for (auto const& uid : name.getMemberNames()) {
+	std::vector<std::string> jsonKeys;
+	for(auto& el : metrics.items()){
+		jsonKeys.push_back(el.key())
+	}
+	for (auto const& id : sortIds(jsonKeys)) {
+		nlohmann::json name = metrics[id];
+		for (auto const& uid : name.items()) {
 			tbl.push_back(BillingMeter());
-			Json::Value mtr = name[uid];
+			nlohmann::json mtr = name[uid.key()];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);
+			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);
 			tbl[idx].real_power_min = mtr[MTR_MIN_REAL_POWER].asDouble();
 			tbl[idx].real_power_max = mtr[MTR_MAX_REAL_POWER].asDouble();
 			tbl[idx].real_power_avg = mtr[MTR_AVG_REAL_POWER].asDouble();
@@ -1241,18 +1241,22 @@ void metrics_collector_writer::hdfBillingMeterWrite (size_t objs, Json::Value& m
 	metrics.clear();
 }
 
-void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics) {
+void metrics_collector_writer::hdfHouseWrite (size_t objs, nlohmann::json& metrics) {
 	std::vector <House> tbl;
+	std::vector <std::string> jsonKeys;
 	tbl.reserve(line_cnt*objs);
 	int idx = 0;
-	for (auto const& id : sortIds(metrics.getMemberNames())) {
-		Json::Value name = metrics[id];
-		for (auto const& uid : name.getMemberNames()) {
+	for (auto& el : metrics.items()) {
+		jsonKeys.push_back(el.key());
+	}
+	for (auto const& id : sortIds(jsonKeys)) {
+		nlohmann::json name = metrics[id];
+		for (auto const& uid : name.items()) {
 			tbl.push_back(House());
-			Json::Value mtr = name[uid];
+			nlohmann::json mtr = name[uid.key()];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
 			tbl[idx].total_load_min = mtr[HSE_MIN_TOTAL_LOAD].asDouble();
 			tbl[idx].total_load_max = mtr[HSE_MAX_TOTAL_LOAD].asDouble();
 			tbl[idx].total_load_avg = mtr[HSE_AVG_TOTAL_LOAD].asDouble();
@@ -1304,18 +1308,22 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 	metrics.clear();
 }
 
-void metrics_collector_writer::hdfInverterWrite (size_t objs, Json::Value& metrics) {
+void metrics_collector_writer::hdfInverterWrite (size_t objs, nlohmann::json& metrics) {
 	std::vector <Inverter> tbl;
+	std::vector<std::string> jsonKeys;
 	tbl.reserve(line_cnt*objs);
 	int idx = 0;
-	for (auto const& id : sortIds(metrics.getMemberNames())) {
-		Json::Value name = metrics[id];
-		for (auto const& uid : name.getMemberNames()) {
+	for (auto& el : metrics.items()) {
+		jsonKeys.push_back(el.key());
+	}
+	for (auto const& id : sortIds(jsonKeys)) {
+		nlohmann::json name = metrics[id];
+		for (auto const& uid : name.items()) {
 			tbl.push_back(Inverter());
-			Json::Value mtr = name[uid];
+			nlohmann::json mtr = name[uid.key()];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
 			tbl[idx].real_power_min = mtr[INV_MIN_REAL_POWER].asDouble();
 			tbl[idx].real_power_max = mtr[INV_MAX_REAL_POWER].asDouble();
 			tbl[idx].real_power_avg = mtr[INV_AVG_REAL_POWER].asDouble();
@@ -1329,18 +1337,22 @@ void metrics_collector_writer::hdfInverterWrite (size_t objs, Json::Value& metri
 	metrics.clear();
 }
 
-void metrics_collector_writer::hdfCapacitorWrite (size_t objs, Json::Value& metrics) {
+void metrics_collector_writer::hdfCapacitorWrite (size_t objs, nlohmann::json& metrics) {
 	std::vector <Capacitor> tbl;
+	std::vector <std::string> jsonKeys;
 	tbl.reserve(line_cnt*objs);
 	int idx = 0;
-	for (auto const& id : sortIds(metrics.getMemberNames())) {
-		Json::Value name = metrics[id];
-		for (auto const& uid : name.getMemberNames()) {
+	for (auto& el : metrics.items()) {
+		jsonKeys.push_back(el.key());
+	}
+	for (auto const& id : sortIds(jsonKeys)) {
+		nlohmann::json name = metrics[id];
+		for (auto const& uid : name.items()) {
 			tbl.push_back(Capacitor());
-			Json::Value mtr = name[uid];
+			nlohmann::json mtr = name[uid.key()];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
 			tbl[idx].operation_count = mtr[CAP_OPERATION_CNT].asDouble();
 			idx++;
 		}
@@ -1349,18 +1361,22 @@ void metrics_collector_writer::hdfCapacitorWrite (size_t objs, Json::Value& metr
 	metrics.clear();
 }
 
-void metrics_collector_writer::hdfRegulatorWrite (size_t objs, Json::Value& metrics) {
+void metrics_collector_writer::hdfRegulatorWrite (size_t objs, nlohmann::json& metrics) {
 	std::vector <Regulator> tbl;
+	std::vector <std::string> jsonKeys;
 	tbl.reserve(line_cnt*objs);
 	int idx = 0;
-	for (auto const& id : sortIds(metrics.getMemberNames())) {
-		Json::Value name = metrics[id];
-		for (auto const& uid : name.getMemberNames()) {
+	for (auto& el : metrics.items()) {
+		jsonKeys.push_back(el.key());
+	}
+	for (auto const& id : sortIds(jsonKeys)) {
+		nlohmann::json name = metrics[id];
+		for (auto const& uid : name.items()) {
 			tbl.push_back(Regulator());
-			Json::Value mtr = name[uid];
+			nlohmann::json mtr = name[uid.key()];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
 			tbl[idx].operation_count = mtr[REG_OPERATION_CNT].asDouble();
 			idx++;
 		}
@@ -1369,18 +1385,22 @@ void metrics_collector_writer::hdfRegulatorWrite (size_t objs, Json::Value& metr
 	metrics.clear();
 }
 
-void metrics_collector_writer::hdfFeederWrite (size_t objs, Json::Value& metrics) {
+void metrics_collector_writer::hdfFeederWrite (size_t objs, nlohmann::json& metrics) {
 	std::vector <Feeder> tbl;
+	std::vector <std::string> jsonKeys;
 	tbl.reserve(line_cnt*objs);
 	int idx = 0;
-	for (auto const& id : sortIds(metrics.getMemberNames())) {
-		Json::Value name = metrics[id];
-		for (auto const& uid : name.getMemberNames()) {
+	for (auto& el : metrics.items()) {
+		jsonKeys.push_back(el.key());
+	}
+	for (auto const& id : sortIds(jsonKeys)) {
+		nlohmann::json name = metrics[id];
+		for (auto const& uid : name.items()) {
 			tbl.push_back(Feeder());
-			Json::Value mtr = name[uid];
+			nlohmann::json mtr = name[uid.key()];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
 			tbl[idx].real_power_min = mtr[FDR_MIN_REAL_POWER].asDouble();
 			tbl[idx].real_power_max = mtr[FDR_MAX_REAL_POWER].asDouble();
 			tbl[idx].real_power_avg = mtr[FDR_AVG_REAL_POWER].asDouble();
@@ -1406,18 +1426,22 @@ void metrics_collector_writer::hdfFeederWrite (size_t objs, Json::Value& metrics
 	metrics.clear();
 }
 
-void metrics_collector_writer::hdfTransformerWrite (size_t objs, Json::Value& metrics) {
+void metrics_collector_writer::hdfTransformerWrite (size_t objs, nlohmann::json& metrics) {
 	std::vector <Transformer> tbl;
+	std::vector <std::string> jsonKeys;
 	tbl.reserve(line_cnt*objs);
 	int idx = 0;
-	for (auto const& id : sortIds(metrics.getMemberNames())) {
-		Json::Value name = metrics[id];
-		for (auto const& uid : name.getMemberNames()) {
+	for (auto& el : metrics.items()) {
+		jsonKeys.push_back(el.key());
+	}
+	for (auto const& id : sortIds(jsonKeys)) {
+		nlohmann::json name = metrics[id];
+		for (auto const& uid : name.items()) {
 			tbl.push_back(Transformer());
-			Json::Value mtr = name[uid];
+			nlohmann::json mtr = name[uid.key()];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
 			tbl[idx].trans_overload_perc = mtr[TRANS_OVERLOAD_PERC].asDouble();
 			idx++;
 		}
@@ -1426,18 +1450,22 @@ void metrics_collector_writer::hdfTransformerWrite (size_t objs, Json::Value& me
 	metrics.clear();
 }
 
-void metrics_collector_writer::hdfLineWrite (size_t objs, Json::Value& metrics) {
+void metrics_collector_writer::hdfLineWrite (size_t objs, nlohmann::json& metrics) {
 	std::vector <Line> tbl;
+	std::vector <std::string> jsonKeys;
 	tbl.reserve(line_cnt*objs);
 	int idx = 0;
-	for (auto const& id : sortIds(metrics.getMemberNames())) {
-		Json::Value name = metrics[id];
-		for (auto const& uid : name.getMemberNames()) {
+	for (auto& el : metrics.items()) {
+		jsonKeys.push_back(el.key());
+	}
+	for (auto const& id : sortIds(jsonKeys)) {
+		nlohmann::json name = metrics[id];
+		for (auto const& uid : name.items()) {
 			tbl.push_back(Line());
-			Json::Value mtr = name[uid];
+			nlohmann::json mtr = name[uid.key()];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
 			tbl[idx].line_overload_perc = mtr[LINE_OVERLOAD_PERC].asDouble();
 			idx++;
 		}
@@ -1446,18 +1474,22 @@ void metrics_collector_writer::hdfLineWrite (size_t objs, Json::Value& metrics) 
 	metrics.clear();
 }
 
-void metrics_collector_writer::hdfEvChargerDetWrite (size_t objs, Json::Value& metrics) {
+void metrics_collector_writer::hdfEvChargerDetWrite (size_t objs, nlohmann::json& metrics) {
 	std::vector <EVChargerDet> tbl;
+	std::vector <std::string> jsonKeys;
 	tbl.reserve(line_cnt*objs);
 	int idx = 0;
-	for (auto const& id : sortIds(metrics.getMemberNames())) {
-		Json::Value name = metrics[id];
-		for (auto const& uid : name.getMemberNames()) {
+	for (auto& el : metrics.items()) {
+		jsonKeys.push_back(el.key());
+	}
+	for (auto const& id : sortIds(jsonKeys)) {
+		nlohmann::json name = metrics[id];
+		for (auto const& uid : name.items()) {
 			tbl.push_back(EVChargerDet());
-			Json::Value mtr = name[uid];
+			nlohmann::json mtr = name[uid.key()];
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
-			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
 			tbl[idx].charge_rate_min = mtr[EV_MIN_CHARGE_RATE].asDouble();
 			tbl[idx].charge_rate_max = mtr[EV_MAX_CHARGE_RATE].asDouble();
 			tbl[idx].charge_rate_avg = mtr[EV_AVG_CHARGE_RATE].asDouble();

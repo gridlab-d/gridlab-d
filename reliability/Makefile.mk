@@ -8,7 +8,6 @@ reliability_reliability_la_LDFLAGS =
 reliability_reliability_la_LDFLAGS += $(AM_LDFLAGS)
 
 reliability_reliability_la_LIBADD =
-reliability_reliability_la_LIBADD += third_party/jsonCpp/libjsoncpp.la
 
 reliability_reliability_la_SOURCES =
 reliability_reliability_la_SOURCES += reliability/eventgen.cpp

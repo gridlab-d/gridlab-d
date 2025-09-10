@@ -10,7 +10,6 @@ powerflow_powerflow_la_LDFLAGS += $(AM_LDFLAGS)
 powerflow_powerflow_la_LDFLAGS += -ldl
 
 powerflow_powerflow_la_LIBADD =
-powerflow_powerflow_la_LIBADD += third_party/jsonCpp/libjsoncpp.la
 powerflow_powerflow_la_LIBADD += third_party/superLU_MT/libsuperlu.la
 powerflow_powerflow_la_LIBADD += $(PTHREAD_CFLAGS)
 powerflow_powerflow_la_LIBADD += $(PTHREAD_LIBS)
