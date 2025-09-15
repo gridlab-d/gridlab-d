@@ -34,6 +34,7 @@ extra_javascript:
 nav:
   - Home: index.md
   - 0.0 GridLAB-D™:
+    - Introduction: docs/0.0 GridLAB-D™/0.1 Introduction.md
     - Resources & Support: docs/0.0 GridLAB-D™/0.2 resources.md
     - Publications: docs/0.0 GridLAB-D™/0.3 publications.md
     - Projects: docs/0.0 GridLAB-D™/0.4 projects.md

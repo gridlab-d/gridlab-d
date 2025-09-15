@@ -58,7 +58,7 @@ $$\begin{align} \cos(A_{incident}) & = \sin(D_{solar}) \sin(L) cos(S) \\
 where: 
 
   * $S$ is the slope of the incident surface (90° is vertical);
-  * $Z$ is the surface azimuth angle (angle between the incident surface's origanization (zero is true south, east is positive, west is negative);
+  * $Z$ is the surface azimuth angle (angle between the incident surface's origanization (zero is true south, east is positive, west is negative));
   * $L$ is the latitude (north is positive);
   * $A_{hour}$ is hour angle, solar noon is zero, and each hour represents 15° of longitude with mornings positive and afternoons negative;
   * $D_{solar}$ is the declination of the sun (the angular position of the sun at solar noon with respect to the plane of the equator).

@@ -12,6 +12,8 @@
 - [ ] Definitive installation instructions
     - [x] add the "easy" or "light" executable install option
 - [x] Pair down Getting Started Using GLD to be more approachable, noting that much of what's in there is already/can be moved to the Modeling 101 section of Modeling
+- [ ] MySQL instructions - keep? If so, most content is unfinished. Needs robust introduction explaining what it is and why it is useful.
+
 
 # 3.0 Modeling
 - [ ] XML files. Still supported? Keep documentation?
@@ -19,6 +21,7 @@
     - [ ] How does Mkdocs handle linking/interactive display elements? 
         (built-in or scripted?)
     - [ ] Talk with dev team to build out the built-in documentation within the code itself
+- [ ] MySQL player and recorder - keep? If so, needs better intro.
 
 # 4.0 Developing
 - [ ] Waiting on development to document

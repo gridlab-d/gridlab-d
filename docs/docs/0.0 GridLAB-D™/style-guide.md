@@ -249,6 +249,14 @@ Mention of variables or code-snippbits within documentation text should contain 
 
 Note that "house_e" is the name of the model, but not a variable. To avoid confusion, it is placed in double-quotes. The parameters described in the model, `heating_setpoint` and `cooling_setpoint` are both in back-ticks. It is also acceptable to refer to the heating and cooling setpoint as you would in prose text; in that case, because the parameters are not referenced directly using their variable names, they do not get back-ticks.
 
+# Context
+
+Release | Effort | Status | Date
+| - | - | - | - |
+Hassayampa | As part of major DER dev project | Complete | 2015
+| | | In Progress | 
+| | | Needs Review | 
+
 
 # Build Instructions
 

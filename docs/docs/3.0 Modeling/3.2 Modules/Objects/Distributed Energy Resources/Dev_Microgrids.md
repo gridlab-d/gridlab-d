@@ -1,5 +1,9 @@
 # Microgrids
 
+Release | Effort | Status | Date
+| - | - | - | - |
+Hassayampa | As part of major DER dev project | Complete | 2015
+
 **TODO**: 
 This was a "Dev_" page. Review and rework to update
 
