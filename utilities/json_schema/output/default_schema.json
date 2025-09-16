@@ -40078,25 +40078,25 @@
         "_conditionals": {
           "$ref": "#/definitions/entityConditionals"
         },
-        "includes": {
+        "#include": {
           "type": "array",
           "items": {
             "type": "string"
           }
         },
-        "defines": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+        "#define": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
         },
-        "sets": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+        "#set": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
         },
-        "undefs": {
+        "#undef": {
           "type": "array",
           "items": {
             "type": "string"

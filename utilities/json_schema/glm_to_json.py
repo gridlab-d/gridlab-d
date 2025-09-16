@@ -63,10 +63,10 @@ def glm_to_json(glmName="TE_CHALLENGE"):
             filtered = {
                 field_key: field_value
                 for field_key, field_value in directives.items()
-                if field_key not in excluded_keys and field_value
+                if field_key not in excluded_keys and field_value and (not isinstance(field_value, dict) or field_value)
             }
-            return filtered
 
+            return filtered
         # Keys to exclude during filtering
         excluded_keys = ['item_cnt', 'entity', 'instances']
 
