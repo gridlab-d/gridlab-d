@@ -184,23 +184,23 @@ class GLMModel:
         """
         if isinstance(obj_type, str) and isinstance(object_name, str):
             try:
+                # Try to retrieve the existing entity
                 entity = self.object_entities[obj_type]
             except KeyError:
-                print(f"Unrecognized GRIDLABD object and id: {obj_type} "
-                      f"{object_name}, must be a new object")
-                if obj_type in self.class_types:
-                    entity = O_Entity(obj_type, object_name, None)
-                    self.object_entities[obj_type] = entity
-                    for items in params:
-                        entity.add_attr('TEXT', items[0], "", items[0], "")
-                else:
+                # Handle unrecognized object types
+                print(f"Unrecognized GRIDLABD object and id: {obj_type} {object_name}, must be a new object")
+                if not obj_type in self.class_types:
                     print(f"Unrecognized user class/object and id: "
                           f"{obj_type} {object_name}")
-                    return None
+                # Create a new entity for the unrecognized object
+                entity = O_Entity(obj_type, object_name, None)
+                self.object_entities[obj_type] = entity
+                # Add all parameters to the new entity
+                for param, value in params.items():
+                    entity.add_attr('TEXT', param, "", param, value)
             return entity.set_instance(object_name, params)
         else:
-            raise TypeError(f"GRIDLABD object type and/or object name "
-                           f"{obj_type} must be a string and is not.")
+            raise TypeError(f"GRIDLABD object type and/or object name {obj_type} must be a string and is not.")
 
     def entities_to_json(self):
         """Convert all entities to JSON format.
@@ -246,7 +246,6 @@ class GLMModel:
                             blocks.append({'name': name, 'items': items})
                             items = []
                         name = stripped_line[2:].strip()  # Extract everything after '//' and remove extra spaces
-                        
                     elif stripped_line and not stripped_line.startswith('//'): 
                         items.append(stripped_line)  
                 blocks.append({'name': name, 'items': items})
@@ -514,10 +513,17 @@ class GLMModel:
                 tab = ["  "]
                 while oend:
                     line = next(itr)
-                    if re.search('}', line):
-                        # end of the schedule
+                    if re.search('{', line) and not line.strip().startswith("//"):
+                        # Optional brackets surrounding the schedule data
+                        oend += 1
+                        continue
+                    if re.search('}', line) and not line.strip().startswith("//"):
+                        oend -= 1 
+                        if oend > 0:
+                              
+                            # schedule still going   
+                            continue
                         tab.remove("  ")
-                        oend -= 1
                     self.schedule_types[m_sched.group(1)].append(''.join(tab) + line)
                 if re.search(r'{\s*$', line) and not line.strip().startswith("//"):
                     # start of the sub schedule
@@ -608,9 +614,17 @@ class GLMModel:
             self.set_module_instance(_type, params)
             return _type
 
-        if line.find("{") > 0:
-            m = re.search(mod + r' ([^{\s]+)[{\s]', line, re.IGNORECASE)
+        if "{" in line:
+            # Match the module name before the opening brace
+            m = re.search(mod + r'\s+([^{\s]+)', line, re.IGNORECASE)
             _type = m.group(1)
+        else:
+            # Continue reading lines until '{' is found
+            while "{" not in line:
+                m = re.search(mod + r'\s+([^\s]+)', line, re.IGNORECASE)
+                if m:
+                    _type = m.group(1)  # Capture the module name
+                line = next(itr).strip()  # Read the next line and strip whitespace
 
         comment_text, line_without_comment = self._extract_inline_comment(line)
         if comment_text:
@@ -973,7 +987,7 @@ class GLMModel:
                 return 'comment_error', line
             else:
                 return 'comment_other', line
-        elif re.search('#set', line):
+        elif re.search('#set', line) and not re.search('#setenv', line):
             return 'set', line
         elif re.search('#include', line):
             return 'include', line
@@ -985,6 +999,10 @@ class GLMModel:
             return 'error', line
         elif re.search('clock', line):
             return 'clock', line
+        elif re.search('extern', line):
+            return 'extern', line         
+        elif re.search('intrinsic', line):
+            return 'intrinsic', line      
         elif re.search('class', line):
             return 'class', line
         elif re.search('module', line):
@@ -1157,11 +1175,33 @@ class GLMModel:
                         self.ifdef_lines.pop()
                         self.ifdef_lines.append({"type": "ifnot", "condition": condition})
                 elif line_type == 'endif':
-                    self.ifdef_lines.pop()
+                    try:
+                        self.ifdef_lines.pop()
+                    except:
+                        print("Unbalanced #endif, no preceeding #ifdef.")
                 elif line_type == 'comment_other':
                     self.outside_comments.append(processed_line)
+                elif line_type == 'intrinsic':
+                    print(f"Skipping inline code block: {line.strip()}")
+                    # Initialize the brace count with the current line
+                    brace_count = line.count("{") - line.count("}")
+                    # If no opening brace found, check next lines until found
+                    while brace_count == 0:
+                        try:
+                            next_line = next(itr)
+                        except StopIteration:
+                            break
+                        brace_count += next_line.count("{") - next_line.count("}")
+                        line = next_line
+                    # Continue advancing until all opened braces are closed
+                    while brace_count > 0:
+                        try:
+                            line = next(itr)
+                        except StopIteration:
+                            break
+                        brace_count += line.count("{") - line.count("}")
                 else:
-                    print('Un-parsed line "' + line + '"')
+                    print('Un-parsed line "' + line + '" with line_type ' + line_type)
 
             def append_lines(module_entities, entity_key, lines_dict):
                 """
@@ -1178,11 +1218,43 @@ class GLMModel:
 
             # Define the lines to append for '_directives'
             directives_lines = {
-                "#set": self.set_lines,
-                "#include": self.include_lines,
-                "#define": self.define_lines,
-                "#undef": self.undef_lines,
+                "#set": {},
+                "#include": [],
+                "#define": {},
+                "#undef": []
             }
+
+            for line in self.set_lines:
+                try:
+                    if "=" in line:
+                        key, value = line.split("=", 1)
+                        directives_lines["#set"][key.strip()] = value.strip().replace('\\"', '').strip('"')
+                    else:
+                        print(f"Failed to parse #set line: {line}")
+                except Exception as e:
+                    print(f"Failed to parse #set line: {line} - {e}")
+
+            for line in self.include_lines:
+                try:
+                    directives_lines["#include"].append(line.strip().replace('\\"', '').strip('"'))
+                except Exception as e:
+                    print(f"Failed to parse #include line: {line} - {e}")
+
+            for line in self.define_lines:
+                try:
+                    if "=" in line:
+                        key, value = line.split("=", 1)
+                        directives_lines["#define"][key.strip()] = value.strip().replace('\\"', '').strip('"')
+                    else:
+                        print(f"Failed to parse #define line: {line}")
+                except Exception as e:
+                    print(f"Failed to parse #define line: {line} - {e}")
+
+            for line in self.undef_lines:
+                try:
+                    directives_lines["#undef"].append(line.strip().replace('\\"', '').strip('"'))
+                except Exception as e:
+                    print(f"Failed to parse #undef line: {line} - {e}")
 
             # Define the lines to append for '_legacy'
             legacy_lines = {
