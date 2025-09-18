@@ -173,7 +173,7 @@ def glm_to_json(glmName="TE_CHALLENGE"):
         # Dump filtered values JSON
         with open(output_file_path, 'w', encoding='utf-8') as op:
             json.dump(jsonEntity, op, ensure_ascii=False, indent=2)
-
+        return # Disable schema creation for now
         # Define the output directory and file path
         output_dir = os.path.join(os.getcwd(), 'output')
         output_file_path = os.path.join(output_dir, glmName + '_schema.json')
