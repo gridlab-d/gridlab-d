@@ -513,15 +513,23 @@ class GLMModel:
                 tab = ["  "]
                 while oend:
                     line = next(itr)
-                    if re.search('{', line) and not line.strip().startswith("//"):
+                    if '{' in line and not line.strip().startswith("//"):
+                        # If there's a name before the '{', pick it up as a separate line
+                        before_brace = line.split('{', 1)[0].strip()  # Extract text before '{'
+                        if before_brace:  # Check if there's any text before '{'
+                            # Adding comments because that's what indicates the schedule's name
+                            self.schedule_types[m_sched.group(1)].append(''.join(tab) + '// ' + before_brace)
+                        # Count the occurrences of '{'
+                        count_opening_brackets = line.count('{')
                         # Optional brackets surrounding the schedule data
-                        oend += 1
+                        oend += count_opening_brackets
                         continue
+                    
                     if re.search('}', line) and not line.strip().startswith("//"):
-                        oend -= 1 
+                        count_closing_brackets = line.count('}')
+                        oend -= count_closing_brackets
                         if oend > 0:
-                              
-                            # schedule still going   
+                            # schedule still going
                             continue
                         tab.remove("  ")
                     self.schedule_types[m_sched.group(1)].append(''.join(tab) + line)
@@ -975,7 +983,7 @@ class GLMModel:
                    'object', 'ifdef', 'endif', 'unknown'
         """
         if re.match('^//', line):
-            if re.search('#set', line):
+            if re.search('#set', line) and not re.search('#setenv', line):
                 return 'comment_set', line
             elif re.search('#include', line):
                 return 'comment_include', line
@@ -1036,7 +1044,7 @@ class GLMModel:
             list: List of processed lines (stripped and non-empty)
         """
         lines = []
-        with open(filename, 'r') as file:
+        with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
             line = file.readline()
             while line:
                 line = line.replace("\t", " ")
