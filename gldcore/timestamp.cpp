@@ -53,6 +53,18 @@
 #define MICROSECOND (TS_SECOND/1000000) /**< the number of ticks in one microsecond */
 #define NANOSECOND (TS_SECOND/1000000000) /**< the number of ticks in one nanosecond */
 
+#ifndef X_OK
+#define X_OK 0x01
+#endif
+
+#ifndef R_OK
+#define R_OK 0x02
+#endif
+
+#ifndef F_OK
+#define F_OK 0  // Define F_OK to represent file existence checks
+#endif
+
 typedef struct{
 	int month, nth, day, hour, minute;
 } SPEC; /**< the specification of a DST event */

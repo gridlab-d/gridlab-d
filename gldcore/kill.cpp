@@ -9,7 +9,9 @@
 
 #ifdef _WIN32
 #include "errno.h"
-#include "windows.h"
+#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
+#include <winsock2.h>
+#include <windows.h>
 #include "output.h"
 #include "signal.h"
 #include "process.h"

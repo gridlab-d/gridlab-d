@@ -3,8 +3,12 @@
 //
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
+#include <winsock2.h>
 #include <windows.h>
 #include <direct.h>
+#undef min
+#undef max
 #else
 #include <unistd.h>
 #include <dirent.h>
@@ -16,6 +20,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <sys/stat.h>
+#include <algorithm>
 
 #include "globals.h"
 #include "output.h"
@@ -288,7 +293,7 @@ static JOBLIST *popjob(void)
 }
 
 static int final_result = true;
-void *(run_job_proc)(void *arg)
+void *(run_job_proc)(int arg) //void *arg)
 {
 	size_t id = (size_t)arg;
 	output_debug("starting run_test_proc id %d", id);
@@ -358,7 +363,7 @@ extern "C" int job(int argc, char *argv[])
 		exit(XC_RUNERR);
 	}
 	
-	unsigned int n_procs = global_threadcount;
+	/*unsigned int n_procs = global_threadcount;
 	if ( n_procs==0 ) n_procs = processor_count();
 	pthread_t *pid = new pthread_t[n_procs];
 	output_debug("starting job with cmdargs '%s' using %d threads", job_cmdargs, n_procs);
@@ -371,7 +376,35 @@ extern "C" int job(int argc, char *argv[])
 		pthread_join(pid[i],&rc);
 		output_debug("process %d done", i);
 	}
-	delete [] pid;
+	delete [] pid;*/
+
+	unsigned int n_procs = global_threadcount;
+	if (n_procs == 0) n_procs = processor_count();
+
+	// Use a vector of threads to manage `std::thread` objects
+	std::vector<std::thread> threads;
+	// Create threads to process jobs
+	for (size_t i = 0; i < std::min(count, n_procs); ++i) {
+		// Start threads, passing thread ID as task argument
+		threads.emplace_back([i]() {
+			// Cast run_job_proc to the appropriate type and convert i to void*
+			using FuncType = void* (*)(int);
+			FuncType func = run_job_proc;
+			func(static_cast<int>(i)); // Convert size_t to void*
+			});
+	}
+
+	output_debug("begin waiting process");
+
+	// Join threads to ensure they complete their work
+	for (size_t i = 0; i < threads.size(); ++i) {
+		if (threads[i].joinable()) {
+			threads[i].join();
+			output_debug("process %zu done", i);
+		}
+	}
+
+	output_debug("All threads completed.");
 
 	double dt = (double)exec_clock()/(double)global_ms_per_second;
 	output_message("Total job elapsed time: %.1f seconds", dt);

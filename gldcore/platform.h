@@ -30,7 +30,12 @@
 	#else
 		#define __WORDSIZE__ __WORDSIZE
 	#endif
+	//#include <sys/unistd.h>
+	#if defined(__unix__) || defined(__APPLE__)
 	#include <sys/unistd.h>
+	#endif
+
+
 	#if __WORDSIZE__ == 64
 		#define X64
 		#define int64 long long /**< standard 64-bit integers on 64-bit machines */
@@ -42,7 +47,7 @@
 	#define atoi64 atoll	/**< standard version of 64-bit atoi */
 	#define stricmp strcasecmp	/**< deprecated stricmp */
 	#define strnicmp strncasecmp /**< deprecated strnicmp */
-	#define strtok_s strtok_r
+	//#define strtok_s strtok_r
 	#ifdef X64
 		#define NATIVE int64	/**< native integer size */
 	#else

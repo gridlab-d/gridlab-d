@@ -25,7 +25,7 @@
 #include <cerrno>
 #include <cstring>
 #include <memory.h>
-#include <pthread.h>
+//#include <pthread.h>
 #include <unistd.h>
 
 #include "server.h"

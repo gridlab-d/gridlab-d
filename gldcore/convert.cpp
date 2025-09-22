@@ -41,6 +41,18 @@ typedef uint32_t  uint32;   /* unsigned 32-bit integers */
 typedef unsigned int uint32;
 #endif
 
+#undef min
+#undef max
+
+#if defined(_WIN32) || defined(_MSC_VER)
+// Windows already has strtok_s
+// Nothing to do as strtok_s is already defined in string.h
+#else
+// For Linux/POSIX systems, define strtok_s to use strtok_r
+#define strtok_s(str, delimiters, context) strtok_r(str, delimiters, context)
+#endif
+
+
 // we're not really using these yet... -MH
 int convert_from_real(char *a, int b, void *c, PROPERTY *d){return 0;}
 int convert_to_real(const char *a, void *b, PROPERTY *c){return 0;}

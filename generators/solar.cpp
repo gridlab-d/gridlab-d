@@ -29,6 +29,10 @@ using namespace std;
 
 #define PV_CURVE_PARAM_RATIO 1.2
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 /* Framework */
 CLASS *solar::oclass = nullptr;
 solar *solar::defaults = nullptr;

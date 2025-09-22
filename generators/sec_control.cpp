@@ -1,5 +1,8 @@
 #include "sec_control.h"
 
+#undef min
+#undef max
+
 CLASS *sec_control::oclass = NULL;
 sec_control *sec_control::defaults = NULL;
 

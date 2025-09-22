@@ -25,6 +25,7 @@
 #include "threadpool.h"
 #include "output.h"
 #include "exec.h"
+#include "object.h"
 
 //// should include output.h, but this causes a conflict with int64
 //int output_error(const char *format,...);
@@ -95,15 +96,21 @@ static MTICODE iterator_proc(MTIPROC *tp)
 		MTIDATA result = mti->fn->set(nullptr,nullptr);
 		
 		/* lock access to the start condition */
-		pthread_mutex_lock(mti->start.lock);
+		//pthread_mutex_lock(mti->start.lock);
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&mti->start.lock));
 
 		/* wait for the start condition to be satisfied */
 		mti_debug(mti,"iterator %d waiting for start condition",tp->id);
-		while ( mti->fn->compare(tp->data,mti->input)==0 )
+		/*while (mti->fn->compare(tp->data, mti->input) == 0) {
 			pthread_cond_wait(mti->start.cond,mti->start.lock);
+		}*/
+		while (mti->fn->compare(tp->data, mti->input) == 0) {
+			mti->start.cond.wait(lock);  // Wait for notification
+		}
 
 		/* unlock access to the start condition */
-		pthread_mutex_unlock(mti->start.lock);
+		//pthread_mutex_unlock(mti->start.lock);
+		lock.unlock();
 
 		/* reset the final result */
 		mti->fn->set(final,nullptr);
@@ -129,7 +136,9 @@ static MTICODE iterator_proc(MTIPROC *tp)
 		mti->fn->set(tp->data,mti->input);
 
 		/* lock the stop condition */
-		pthread_mutex_lock(mti->stop.lock);
+		//pthread_mutex_lock(mti->stop.lock);
+		//replace the above with SharedMutexManager
+		std::unique_lock<std::shared_mutex> lock2(SharedMutexManager::get_mutex(&mti->stop.lock));
 
 		/* decrement the stop counter */
 		mti->stop.count--;
@@ -138,10 +147,11 @@ static MTICODE iterator_proc(MTIPROC *tp)
 		mti->fn->gather(mti->output,final);
 
 		/* notify all of stop condition */
-		pthread_cond_broadcast(mti->stop.cond);
+		//pthread_cond_broadcast(mti->stop.cond);
+		mti->stop.cond.notify_all();  // Notify all threads waiting on the condition
 
 		/* unlock stop condition */
-		pthread_mutex_unlock(mti->stop.lock);
+		//pthread_mutex_unlock(mti->stop.lock);
 
 		/* free the itermediate result */
 		//free(result);
@@ -156,8 +166,8 @@ static MTICODE iterator_proc(MTIPROC *tp)
 
 MTI *mti_init(const char *name, MTIFUNCTIONS *fn, size_t minitems)
 {
-	pthread_cond_t new_cond = PTHREAD_COND_INITIALIZER;
-	pthread_mutex_t new_mutex = PTHREAD_MUTEX_INITIALIZER;
+	//pthread_cond_t new_cond = PTHREAD_COND_INITIALIZER;
+	//pthread_mutex_t new_mutex = PTHREAD_MUTEX_INITIALIZER;
 	MTI *mti = nullptr;
 	size_t nitems=0, items_per_process=0;
 	MTIITEM item = nullptr;
@@ -179,15 +189,16 @@ MTI *mti_init(const char *name, MTIFUNCTIONS *fn, size_t minitems)
 	mti = (MTI*)malloc(sizeof(MTI));
 	if ( mti==nullptr ) return nullptr;
 	mti->name = name;
-	mti->start.cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
-	memcpy(mti->start.cond,&new_cond,sizeof(new_cond));
-	mti->start.lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
-	memcpy(mti->start.lock,&new_mutex,sizeof(new_mutex));
+	//mti->start.cond =  (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
+	//memcpy(mti->start.cond,&new_cond,sizeof(new_cond));
+	//mti->start.cond = std::condition_variable_any();
+	//mti->start.lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+	//memcpy(mti->start.lock,&new_mutex,sizeof(new_mutex));
 	mti->start.count = 0;
-	mti->stop.cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
-	memcpy(mti->stop.cond,&new_cond,sizeof(new_cond));
-	mti->stop.lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
-	memcpy(mti->stop.lock,&new_mutex,sizeof(new_mutex));
+	//mti->stop.cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
+	//memcpy(mti->stop.cond,&new_cond,sizeof(new_cond));
+	//mti->stop.lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+	//memcpy(mti->stop.lock,&new_mutex,sizeof(new_mutex));
 	mti->stop.count = 0;
 	mti->input = fn->set(nullptr,nullptr);
 	mti->output = fn->set(nullptr,nullptr);
@@ -247,8 +258,25 @@ MTI *mti_init(const char *name, MTIFUNCTIONS *fn, size_t minitems)
 			}
 
 			/* create thread to handle the list */
-			proc->enabled  = ( pthread_create(&proc->thread_id,nullptr,(void*(*)(void*))iterator_proc,proc)==0 );
-			mti_debug(mti,"proc=%d; enabled=%d, nitems=%d", p, proc->enabled, proc->n_items);
+			/*proc->enabled  = ( pthread_create(&proc->thread_id,nullptr,(void*(*)(void*))iterator_proc,proc)==0 );*/
+
+			/*proc->thread = std::thread({
+				(void)((MTICODE(*)(MTIPROC*))iterator_proc)(p);
+			}, proc);*/
+
+			try {
+				proc->thread = std::thread([proc]() {
+					((MTICODE(*)(MTIPROC*))iterator_proc)(proc);
+					});
+				proc->enabled = true; // Set enabled to true if thread creation succeeds
+			}
+			catch (const std::system_error& e) {
+				proc->enabled = false; // Set enabled to false if thread creation fails
+				// Optionally log the error: std::cerr << "Thread creation failed: " << e.what() << std::endl;
+			}
+
+
+			mti_debug(mti,"proc=%d; enabled=%d, nitems=%d", p, proc->enabled.load(), proc->n_items);
 		}
 	}
 	else
@@ -283,30 +311,41 @@ int mti_run(MTIDATA result, MTI *mti, MTIDATA input)
 		mti_debug(mti,"starting %d iterators", mti->n_processes);
 
 		/* lock access to stop condition */
-		pthread_mutex_lock(mti->stop.lock);
+		//pthread_mutex_lock(mti->stop.lock);
+		{
+			std::unique_lock<std::shared_mutex> stop_lock(SharedMutexManager::get_mutex(&mti->stop.lock));
 
-		/* reset the stop condition */
-		mti->stop.count = mti->n_processes;
+			/* reset the stop condition */
+			mti->stop.count = mti->n_processes;
 
-		/* lock access to the start condition */
-		pthread_mutex_lock(mti->start.lock);
+			/* lock access to the start condition */
+			//pthread_mutex_lock(mti->start.lock);
+			{
+				std::unique_lock<std::shared_mutex> start_lock(SharedMutexManager::get_mutex(&mti->start.lock));
 
-		/* set start condition */
-		mti->fn->set(mti->input,input);
-		mti->fn->set(mti->output,nullptr);
+				/* set start condition */
+				mti->fn->set(mti->input, input);
+				mti->fn->set(mti->output, nullptr);
 
-		/* broadcast start condition */
-		pthread_cond_broadcast(mti->start.cond);
+				/* broadcast start condition */
+				//pthread_cond_broadcast(mti->start.cond);
+				mti->start.cond.notify_all();  // Notify all threads waiting on the condition
 
-		/* unlock access to start condition */
-		pthread_mutex_unlock(mti->start.lock);
+				/* unlock access to start condition */
+				//pthread_mutex_unlock(mti->start.lock);
+			}
 
-		/* wait for stop condition */
-		while ( mti->stop.count>0 )
-			pthread_cond_wait(mti->stop.cond,mti->stop.lock);
+			/* wait for stop condition */
+			//while ( mti->stop.count>0 )
+				//pthread_cond_wait(mti->stop.cond,mti->stop.lock);
+			// Wait for stop condition using a predicate
+			mti->stop.cond.wait(stop_lock, [mti]() { return mti->stop.count <= 0; });
 
-		/* unlock access to stop condition */
-		pthread_mutex_unlock(mti->stop.lock);
+
+			/* unlock access to stop condition */
+			//pthread_mutex_unlock(mti->stop.lock);
+			//mti->stop_lock.unlock();
+		}
 
 		/* gather result */
 		mti->fn->gather(result,mti->output);

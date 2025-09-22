@@ -4,6 +4,13 @@
 #include "gld_complex.h"
 #include "inverter_dyn.h"
 
+#undef min
+#undef max
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 CLASS *inverter_dyn::oclass = nullptr;
 inverter_dyn *inverter_dyn::defaults = nullptr;
 

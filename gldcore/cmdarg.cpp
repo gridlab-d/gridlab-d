@@ -37,6 +37,19 @@
 #include "exec.h"
 #include "module.h"
 
+
+#ifndef X_OK
+#define X_OK 0x01
+#endif
+
+#ifndef R_OK
+#define R_OK 0x02
+#endif
+
+#ifndef F_OK
+#define F_OK 0  // Define F_OK to represent file existence checks
+#endif
+
 clock_t loader_time = 0;
 
 STATUS load_module_list(FILE *fd,int* test_mod_num)
@@ -1163,42 +1176,42 @@ static int info(int argc, char *argv[])
 		return CMDERR;
 	}
 }
-static int slave(int argc, char *argv[])
-{
-	char host[256], port[256];
-
-	if ( argc < 2 )
-	{
-		output_error("slave connection parameters are missing");
-		return CMDERR;
-	}
-
-	output_debug("slave()");
-	if(2 != sscanf(argv[1],"%255[^:]:%255s",host,port))
-	{
-		output_error("unable to parse slave parameters");
-	}
-
-	strncpy(global_master,host,sizeof(global_master)-1);
-	if ( strcmp(global_master,"localhost")==0 ){
-		sscanf(port,"%" FMT_INT64 "x",&global_master_port); /* port is actual mmap/shmem */
-		global_multirun_connection = MRC_MEM;
-	}
-	else
-	{
-		global_master_port = atoi(port);
-		global_multirun_connection = MRC_SOCKET;
-	}
-
-	if ( FAILED == instance_slave_init() )
-	{
-		output_error("slave instance init failed for master '%s' connection '%" FMT_INT64 "x'", global_master, global_master_port);
-		return CMDERR;
-	}
-
-	output_verbose("slave instance for master '%s' using connection '%" FMT_INT64 "x' started ok", global_master, global_master_port);
-	return 1;
-}
+//static int slave(int argc, char *argv[])
+//{
+//	char host[256], port[256];
+//
+//	if ( argc < 2 )
+//	{
+//		output_error("slave connection parameters are missing");
+//		return CMDERR;
+//	}
+//
+//	output_debug("slave()");
+//	if(2 != sscanf(argv[1],"%255[^:]:%255s",host,port))
+//	{
+//		output_error("unable to parse slave parameters");
+//	}
+//
+//	strncpy(global_master,host,sizeof(global_master)-1);
+//	if ( strcmp(global_master,"localhost")==0 ){
+//		sscanf(port,"%" FMT_INT64 "x",&global_master_port); /* port is actual mmap/shmem */
+//		global_multirun_connection = MRC_MEM;
+//	}
+//	else
+//	{
+//		global_master_port = atoi(port);
+//		global_multirun_connection = MRC_SOCKET;
+//	}
+//
+//	if ( FAILED == instance_slave_init() )
+//	{
+//		output_error("slave instance init failed for master '%s' connection '%" FMT_INT64 "x'", global_master, global_master_port);
+//		return CMDERR;
+//	}
+//
+//	output_verbose("slave instance for master '%s' using connection '%" FMT_INT64 "x' started ok", global_master, global_master_port);
+//	return 1;
+//}
 //static int slavenode(int argc, char *argv[])
 //{
 //	exec_slave_node();

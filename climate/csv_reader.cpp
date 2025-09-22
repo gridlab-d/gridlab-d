@@ -11,6 +11,12 @@
 
 #include "csv_reader.h"
 
+#ifdef _WIN32
+#include <direct.h>  // Required for getcwd() on Windows
+#else
+#include <unistd.h>  // Required for getcwd() on POSIX systems
+#endif
+
 CLASS *csv_reader::oclass = 0;
 
 EXPORT int create_csv_reader(OBJECT **obj, OBJECT *parent){

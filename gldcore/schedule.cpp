@@ -11,7 +11,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <pthread.h>
+//#include <pthread.h>
 #include<fstream>
 
 #include "platform.h"
@@ -1524,70 +1524,134 @@ TIMESTAMP schedule_sync(SCHEDULE* sch, /**< the schedule that is to be synchroni
 
 typedef struct s_schedulesyncdata {
 	unsigned int n;
-	pthread_t pt;
+	//pthread_t pt;
+	std::thread thread;
 	bool ok;
 	SCHEDULE* sch;
 	unsigned int nsch;
 	TIMESTAMP t0;
 } SCHEDULESYNCDATA;
 
-static pthread_cond_t start_sch = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t startlock_sch = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t done_sch = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t donelock_sch = PTHREAD_MUTEX_INITIALIZER;
+//static pthread_cond_t start_sch = PTHREAD_COND_INITIALIZER;
+//static pthread_mutex_t startlock_sch = PTHREAD_MUTEX_INITIALIZER;
+//static pthread_cond_t done_sch = PTHREAD_COND_INITIALIZER;
+//static pthread_mutex_t donelock_sch = PTHREAD_MUTEX_INITIALIZER;
+//static TIMESTAMP next_t1_sch;
+//static TIMESTAMP next_t2_sch = TS_ZERO;
+//static unsigned int donecount_sch;
+//clock_t schedule_synctime = 0;
+
+// Replace pthread synchronization primitives with C++17 equivalents
+static std::condition_variable_any start_sch;
+static unsigned int startlock_sch;
+static std::condition_variable_any done_sch;
+static unsigned int donelock_sch;
 static TIMESTAMP next_t1_sch;
 static TIMESTAMP next_t2_sch = TS_ZERO;
 static unsigned int donecount_sch;
+clock_t schedule_synctime = 0;     // Retained as requested
 
-clock_t schedule_synctime = 0;
-
-void* schedule_syncproc(void* ptr)
-{
-	SCHEDULESYNCDATA* data = (SCHEDULESYNCDATA*)ptr;
+// Modernized thread function
+void schedule_syncproc(SCHEDULESYNCDATA* data) {
 	SCHEDULE* sch;
 	unsigned int n;
 	TIMESTAMP t2;
 
-	// begin processing loop
-	while (data->ok)
-	{
-		// lock access to start condition
-		pthread_mutex_lock(&startlock_sch);
-
-		// wait for thread start condition
-		while (data->t0 == next_t1_sch)
-			pthread_cond_wait(&start_sch, &startlock_sch);
-
-		// unlock access to start count
-		pthread_mutex_unlock(&startlock_sch);
-
-		// process the list for this thread
-		t2 = TS_NEVER;
-		for (sch = data->sch, n = 0; sch != nullptr, n < data->nsch; sch = sch->next, n++)
+	// Processing loop
+	while (data->ok) {
+		// Lock access to start condition using RAII
 		{
+			std::unique_lock<std::shared_mutex> start_lock(SharedMutexManager::get_mutex(&startlock_sch));
+
+			// Wait for thread start condition with predicate
+			start_sch.wait(start_lock, [data]() {
+				return data->t0 != next_t1_sch;
+				});
+
+			// Lock automatically released at the end of the scope
+		}
+
+		// Process the list for this thread
+		t2 = TS_NEVER;
+
+		// Fixed the loop condition: replaced comma with logical AND
+		for (sch = data->sch, n = 0; sch != nullptr && n < data->nsch; sch = sch->next, n++) {
 			TIMESTAMP t = schedule_sync(sch, next_t1_sch);
 			if (t < t2) t2 = t;
 		}
 
-		// signal completed condition
+		// Signal completed condition
 		data->t0 = next_t1_sch;
 
-		// lock access to done condition
-		pthread_mutex_lock(&donelock_sch);
+		// Lock access to done condition using RAII
+		{
+			std::unique_lock<std::shared_mutex> done_lock(SharedMutexManager::get_mutex(&donelock_sch));
 
-		// signal thread is done for now
-		donecount_sch--;
-		if (t2 < next_t2_sch) next_t2_sch = t2;
+			// Signal thread is done for now
+			donecount_sch--;
+			if (t2 < next_t2_sch) next_t2_sch = t2;
 
-		// signal change in done condition
-		pthread_cond_broadcast(&done_sch);
+			// Signal change in done condition
+			done_sch.notify_all();  // Equivalent to pthread_cond_broadcast
 
-		// unlock access to done count
-		pthread_mutex_unlock(&donelock_sch);
+			// Lock automatically released at the end of the scope
+		}
 	}
-	pthread_exit((void*)0);
-	return (void*)0;
+
+	// No need for pthread_exit - function return handles cleanup
 }
+
+
+
+
+
+//void* schedule_syncproc(void* ptr)
+//{
+//	SCHEDULESYNCDATA* data = (SCHEDULESYNCDATA*)ptr;
+//	SCHEDULE* sch;
+//	unsigned int n;
+//	TIMESTAMP t2;
+//
+//	// begin processing loop
+//	while (data->ok)
+//	{
+//		// lock access to start condition
+//		pthread_mutex_lock(&startlock_sch);
+//
+//		// wait for thread start condition
+//		while (data->t0 == next_t1_sch)
+//			pthread_cond_wait(&start_sch, &startlock_sch);
+//
+//		// unlock access to start count
+//		pthread_mutex_unlock(&startlock_sch);
+//
+//		// process the list for this thread
+//		t2 = TS_NEVER;
+//		for (sch = data->sch, n = 0; sch != nullptr, n < data->nsch; sch = sch->next, n++)
+//		{
+//			TIMESTAMP t = schedule_sync(sch, next_t1_sch);
+//			if (t < t2) t2 = t;
+//		}
+//
+//		// signal completed condition
+//		data->t0 = next_t1_sch;
+//
+//		// lock access to done condition
+//		pthread_mutex_lock(&donelock_sch);
+//
+//		// signal thread is done for now
+//		donecount_sch--;
+//		if (t2 < next_t2_sch) next_t2_sch = t2;
+//
+//		// signal change in done condition
+//		pthread_cond_broadcast(&done_sch);
+//
+//		// unlock access to done count
+//		pthread_mutex_unlock(&donelock_sch);
+//	}
+//	pthread_exit((void*)0);
+//	return (void*)0;
+//}
 
 /** synchronized all the schedules to the time given
 	@return the time of the next schedule change
@@ -1651,13 +1715,14 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 			for (n = 0; n < n_threads_sch; n++)
 			{
 				thread_sch[n].ok = true;
-				if (pthread_create(&(thread_sch[n].pt), nullptr, schedule_syncproc, &(thread_sch[n])) != 0)
+				/*if (pthread_create(&(thread_sch[n].pt), nullptr, schedule_syncproc, &(thread_sch[n])) != 0)
 				{
 					output_fatal("loadshape_sync thread creation failed");
 					thread_sch[n].ok = false;
 				}
-				else
-					thread_sch[n].n = n;
+				else*/
+				thread_sch[n].thread = std::thread(schedule_syncproc, &(thread_sch[n]));
+				thread_sch[n].n = n;
 			}
 		}
 	}
@@ -1684,34 +1749,64 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 	}
 	else
 	{
-		// lock access to done count
-		pthread_mutex_lock(&donelock_sch);
+		//// lock access to done count
+		//pthread_mutex_lock(&donelock_sch);
 
-		// initialize wait count
+		//// initialize wait count
+		//donecount_sch = n_threads_sch;
+
+		//// lock access to start condition
+		//pthread_mutex_lock(&startlock_sch);
+
+		//// update start condition
+		//next_t1_sch = t1;
+		//next_t2_sch = TS_NEVER;
+
+		//// signal all the threads
+		//pthread_cond_broadcast(&start_sch);
+
+		//// unlock access to start count
+		//pthread_mutex_unlock(&startlock_sch);
+
+		//// begin wait
+		//while (donecount_sch > 0)
+		//	pthread_cond_wait(&done_sch, &donelock_sch);
+		//output_debug("passed donecount==0 condition");
+
+		//// unlock done count
+		//pthread_mutex_unlock(&donelock_sch);
+
+		//// process results from all threads
+		//if (next_t2_sch < t2) t2 = next_t2_sch;
+
+		// Lock access to done count using std::mutex
+		std::unique_lock<std::shared_mutex> doneLock( SharedMutexManager::get_mutex(&donelock_sch));
+
+		// Initialize wait count
 		donecount_sch = n_threads_sch;
 
-		// lock access to start condition
-		pthread_mutex_lock(&startlock_sch);
+		// Lock access to start condition using another std::mutex
+		{
+			std::unique_lock<std::shared_mutex> startLock( SharedMutexManager::get_mutex(&startlock_sch));
 
-		// update start condition
-		next_t1_sch = t1;
-		next_t2_sch = TS_NEVER;
+			// Update start condition
+			next_t1_sch = t1;
+			next_t2_sch = TS_NEVER;
 
-		// signal all the threads
-		pthread_cond_broadcast(&start_sch);
+			// Signal all threads - unlock after notifying to ensure all threads receive notification
+			start_sch.notify_all();
+		}  // startLock is automatically released here
 
-		// unlock access to start count
-		pthread_mutex_unlock(&startlock_sch);
+		// Begin wait with the condition variable
+		// This waits until donecount_sch reaches 0
+		done_sch.wait(doneLock, [&]() { return donecount_sch <= 0; });
 
-		// begin wait
-		while (donecount_sch > 0)
-			pthread_cond_wait(&done_sch, &donelock_sch);
 		output_debug("passed donecount==0 condition");
 
-		// unlock done count
-		pthread_mutex_unlock(&donelock_sch);
+		// doneLock is automatically released when it goes out of scope
+		// No explicit unlock needed with std::unique_lock
 
-		// process results from all threads
+		// Process results from all threads
 		if (next_t2_sch < t2) t2 = next_t2_sch;
 	}
 

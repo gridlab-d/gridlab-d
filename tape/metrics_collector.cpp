@@ -15,6 +15,9 @@
 #include <iostream>
 #include <vector>
 
+#undef min
+#undef max
+
 CLASS *metrics_collector::oclass = nullptr;
 CLASS *metrics_collector::pclass = nullptr;
 metrics_collector *metrics_collector::defaults = nullptr;

@@ -38,6 +38,10 @@
 #include "player.h"
 #include "recorder.h"
 
+#ifndef F_OK
+#define F_OK 0  // Define F_OK to represent file existence checks
+#endif
+
 #define MAP_DOUBLE(X,LO,HI) {#X,VT_DOUBLE,&X,LO,HI}
 #define MAP_INTEGER(X,LO,HI) {#X,VT_INTEGER,&X,LO,HI}
 #define MAP_STRING(X) {#X,VT_STRING,X,sizeof(X),0}

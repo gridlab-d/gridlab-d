@@ -43,10 +43,14 @@ An example of how this is done is implemented in exec.c for commit_all().
 #ifndef _THREADPOOL_H
 #define _THREADPOOL_H
 
+#include <atomic>
+#include <thread>
+#include <condition_variable>
+
 #include "platform.h"
 #include "timestamp.h"
 
-#include <pthread.h>
+//#include <pthread.h>
 
 typedef struct s_mtiteratorlist MTI;
 
@@ -104,9 +108,10 @@ typedef struct s_mtifunctions
 typedef struct s_mtiterator {
     unsigned int id;            /**< id given to iterator */
     MTI *mti;                   /**< pointer to MTI that controls this iterator */
-    pthread_t thread_id;        /**< pthread handle/id */
-    int enabled;                /**< flag indicating thread is enabled */
-    int active;                 /**< flag indicating thread is active */
+    //pthread_t thread_id;        /**< pthread handle/id */
+	std::thread thread;
+    std::atomic<bool> enabled;                /**< flag indicating thread is enabled */
+    std::atomic<bool> active;                 /**< flag indicating thread is active */
     MTIITEM *item;              /**< pointer to array of items */
     unsigned int n_items  ;     /**< number of items */
     MTIDATA data;               /**< iterator data */
@@ -116,9 +121,14 @@ typedef struct s_mtiterator {
 struct s_mtiteratorlist {
     const char *name;           /**< name given to iterator */
     struct {
-        pthread_cond_t *cond;   /**< condition variable */    
-        pthread_mutex_t *lock;  /**< mutex object */
-        unsigned int count;     /**< start/stop counter */
+        //pthread_cond_t *cond;   /**< condition variable */    
+        //pthread_mutex_t *lock;  /**< mutex object */
+        //unsigned int count;     /**< start/stop counter */
+
+		std::condition_variable_any cond;  // Condition variable for signaling
+		unsigned int lock;               // Mutex for synchronizing access
+		std::atomic<unsigned int> count{ 0 };  // Atomic counter for start/stop
+
     } start, stop;              /**< start and stop cond/mutex */
     MTIDATA input;              /**< iterator input data */
     MTIDATA output;             /**< iterator output data */

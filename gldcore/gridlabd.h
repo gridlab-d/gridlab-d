@@ -74,13 +74,31 @@
 #define HAVE_LIBCPPUNIT
 #endif
 
+//#ifdef __cplusplus
+//	#ifndef CDECL
+//		/** Defines a function as a C-type function **/
+//		#define CDECL extern "C"
+//	#endif
+//#else
+//	#define CDECL
+//#endif
+//
+//#ifdef _WIN32
+//#ifndef EXPORT
+///** Defines a function as exported to core **/
+//#define EXPORT CDECL __declspec(dllexport)
+//#endif
+//#else
+//#define EXPORT CDECL
+//#endif
+
 #ifdef __cplusplus
-	#ifndef CDECL
-		/** Defines a function as a C-type function **/
-		#define CDECL extern "C"
-	#endif
+#ifndef CDECL
+	/** Defines a function as a C-type function **/
+#define CDECL extern "C"
+#endif
 #else
-	#define CDECL
+#define CDECL
 #endif
 
 #ifdef _WIN32
@@ -92,9 +110,16 @@
 #define EXPORT CDECL
 #endif
 
+
+
 #include <cstdarg>
 #include <atomic>
+//#include <execinfo.h>
+
+#if defined(__unix__) || defined(__APPLE__)
 #include <execinfo.h>
+#endif
+
 
 
 #include "platform.h"
@@ -107,6 +132,19 @@
 #include "stream.h"
 #include "module.h"
 #include "aggregate.h"
+
+
+#ifndef X_OK
+#define X_OK 0x01
+#endif
+
+#ifndef R_OK
+#define R_OK 0x02
+#endif
+
+#ifndef F_OK
+#define F_OK 0  // Define F_OK to represent file existence checks
+#endif
 
 typedef struct s_aggregate AGGREGATION;
 
@@ -1232,7 +1270,25 @@ inline size_t nextpow2(size_t x)
 ///
 /// Catchall for create
 ///
-#define CREATE_CATCHALL(C) catch (char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (const char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (const std::exception& ex) { gl_error("create_" #C ": unhandled exception - %s", ex.what()); return 0; }
+//#define CREATE_CATCHALL(C) catch (char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (const char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (const std::exception& ex) { gl_error("create_" #C ": unhandled exception - %s", ex.what()); return 0; }
+
+
+#define CREATE_CATCHALL(C)                                                  \
+    catch (char* msg) {                                                     \
+        gl_error("create_" #C ": %s", msg);                                \
+        return 0;                                                           \
+    }                                                                       \
+    catch (const char* msg) {                                               \
+        gl_error("create_" #C ": %s", msg);                                 \
+        return 0;                                                           \
+    }                                                                       \
+    catch (const std::exception& ex) {                                      \
+        gl_error("create_" #C ": unhandled exception - %s", ex.what());     \
+        return 0;                                                           \
+    }
+
+
+
 #define I_CATCHALL(T,C) catch (char *msg) { gl_error(#T "_" #C ": %s", msg); return 0; } catch (const char *msg) { gl_error(#T "_" #C ": %s", msg); return 0; } catch (const std::exception& ex) { gl_error(#T "_" #C ": unhandled exception - %s", ex.what()); return 0; }
 #define T_CATCHALL(T,C) catch (char *msg) { gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (const char *msg) { gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (const std::exception& ex) { gl_error(#T "_" #C "(obj=%d;%s): unhandled exception - %s", obj->id, obj->name?obj->name:"unnamed", ex.what()); return TS_INVALID; }
 /**@}*/
@@ -1973,7 +2029,12 @@ public:
 			//<< std::endl;
 	}
 
-	// Stack trace printing (requires additional setup)
+
+#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+#include <execinfo.h>
+#include <iostream>
+#include <cstdlib>
+
 	void print_stack_trace() {
 		void* array[10];
 		size_t size;
@@ -1985,11 +2046,18 @@ public:
 
 		std::cerr << "Obtained " << size << " stack frames:" << std::endl;
 
-		for (i = 0; i < size; i++)
+		for (i = 0; i < size; i++) {
 			std::cerr << strings[i] << std::endl;
+		}
 
 		free(strings);
 	}
+#else
+	// Windows does not support POSIX-style stack trace printing
+	void print_stack_trace() {
+		std::cerr << "Stack trace functionality not available on this platform." << std::endl;
+	}
+#endif
 
 	void mark_deleted() {
 		if (is_deleted.exchange(true)) {
@@ -2581,8 +2649,11 @@ public:
 #ifdef DLMAIN
 EXPORT int do_kill(void*);
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
+#include <winsock2.h>
 #include <windows.h>
+
+
 EXPORT int gld_major=MAJOR, gld_minor=MINOR; 
 BOOL APIENTRY DllMain(HANDLE h, DWORD r) { if (r==DLL_PROCESS_DETACH) do_kill(h); return TRUE; }
 #else // !WIN32
@@ -2596,7 +2667,8 @@ CDECL int dllkill() { return do_kill(NULL); }
 #endif // !WIN32
 #elif defined CONSOLE
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
+#include <winsock2.h>
 #include <windows.h>
 #endif
 #include "console.h"
@@ -2604,7 +2676,7 @@ CDECL int dllkill() { return do_kill(NULL); }
 
 #define EXPORT_CREATE_C(X,C) EXPORT int create_##X(OBJECT **obj, OBJECT *parent) \
 {	try { *obj = gl_create_object(C::oclass); \
-	if ( *obj != NULL ) { C *my = /*OBJECTDATA(*obj,C);*/  object_data<C>(*obj);   \
+	if ( *obj != NULL ) { C *my = object_data<C>(*obj);   \
 		gl_set_parent(*obj,parent); return my->create(); \
 	} else return 0; } CREATE_CATCHALL(X); }
 /// Implement class create export
@@ -2706,6 +2778,8 @@ CDECL int dllkill() { return do_kill(NULL); }
 #if defined WIN32 && ! defined __MINGW32__
 	#define _WIN32_WINNT 0x0400
 	#undef int64 // wtypes.h also used int64
+	#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
+	#include <winsock2.h>
 	#include <windows.h>
 	#define int64 _int64
 	#define PREFIX ""
@@ -2714,7 +2788,7 @@ CDECL int dllkill() { return do_kill(NULL); }
 	#endif
 	#define DLLOAD(P) LoadLibrary(P)
 	#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
-	#define snprintf _snprintf
+	//#define snprintf _snprintf
 #else /* ANSI */
 #ifndef __MINGW32__
 	#include "dlfcn.h"

@@ -17,6 +17,9 @@ using namespace std;
 
 #define FLAG_VAL -1.0
 
+#undef max
+#undef min
+
 static PASSCONFIG clockpass = PC_BOTTOMUP;
 
 /* Comp func for max() */
@@ -391,14 +394,29 @@ EXPORT int create_sync_ctrl(OBJECT **obj, OBJECT *parent)
         *obj = gl_create_object(sync_ctrl::oclass);
         if (*obj != nullptr)
         {
-            sync_ctrl *my = /*OBJECTDATA(*obj,<>)*/ object_data<sync_ctrl>(*obj);
+            sync_ctrl *my = object_data<sync_ctrl>(*obj);
             gl_set_parent(*obj, parent);
             return my->create();
         }
         else
             return 0;
     }
-    CREATE_CATCHALL(sync_ctrl);
+    //CREATE_CATCHALL(sync_ctrl);
+    catch (char* msg)
+    {
+        gl_error("create_sync_ctrl: %s", msg);
+        return 0;
+    }
+    catch (const char* msg)
+    {
+        gl_error("create_sync_ctrl: %s", msg);
+        return 0;
+    }
+    catch (const std::exception& ex)
+    {
+        gl_error("create_sync_ctrl: unhandled exception - %s", ex.what());
+        return 0;
+    }
 }
 
 EXPORT int init_sync_ctrl(OBJECT *obj)

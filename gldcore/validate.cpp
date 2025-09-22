@@ -3,6 +3,8 @@
 //
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
+#include <winsock2.h>
 #include <windows.h>
 #include <direct.h>
 #include <io.h>
@@ -680,7 +682,7 @@ static DIRLIST *popdir(void)
 	return item;
 }
 
-void *(run_test_proc)(void *arg)
+void *(run_test_proc)(int arg) // *arg)
 {
 	size_t id = (size_t)arg;
 	output_debug("starting run_test_proc id %d", id);
@@ -904,18 +906,52 @@ int validate(int argc, char *argv[])
 	int n_procs = global_threadcount;
 	if ( n_procs==0 ) n_procs = processor_count();
 	n_procs = fmin(final.get_tested(),(unsigned)n_procs);
-	pthread_t *pid = new pthread_t[n_procs];
-	output_debug("starting validation with cmdargs '%s' using %d threads", validate_cmdargs, n_procs);
-	for ( i=0 ; i<n_procs ; i++ )
-		pthread_create(&pid[i],nullptr,run_test_proc,(void*)i);
-	void *rc;
-	output_debug("begin waiting process");
-	for ( i=0 ; i<n_procs ; i++ )
-	{
-		pthread_join(pid[i],&rc);
-		output_debug("process %d done", i);
+
+	//pthread_t *pid = new pthread_t[n_procs];
+	//output_debug("starting validation with cmdargs '%s' using %d threads", validate_cmdargs, n_procs);
+	//for ( i=0 ; i<n_procs ; i++ )
+	//	pthread_create(&pid[i],nullptr,run_test_proc,(void*)i);
+	//void *rc;
+	//output_debug("begin waiting process");
+	//for ( i=0 ; i<n_procs ; i++ )
+	//{
+	//	pthread_join(pid[i],&rc);
+	//	output_debug("process %d done", i);
+	//}
+	//delete [] pid;
+
+	   // Use a vector to store threads
+	std::vector<std::thread> threads;
+
+	// Debug message: starting validation
+	std::cout << "Starting validation with cmdargs '" << validate_cmdargs << "' using "
+		<< n_procs << " threads." << std::endl;
+
+	// Start threads
+	for (unsigned int i = 0; i < n_procs; ++i) {
+		threads.emplace_back([i]() {
+
+			// Cast run_job_proc to the appropriate type and convert i to int
+			using FuncType = void* (*)(int);
+			FuncType func = run_test_proc;
+			func(static_cast<int>(i)); // Convert size_t to int
+
+		});
 	}
-	delete [] pid;
+
+	// Debug message: waiting for threads
+	std::cout << "Begin waiting for threads to complete." << std::endl;
+
+	// Wait for all threads to complete
+	for (unsigned int i = 0; i < n_procs; ++i) {
+		if (threads[i].joinable()) {
+			threads[i].join();  // Join the thread
+			std::cout << "Thread " << i << " is done." << std::endl;
+		}
+	}
+
+	std::cout << "Validation complete.\n";
+
 	final.print();
 	double dt = (double)exec_clock()/global_ms_per_second;
 	output_message("Total validation elapsed time: %.1f seconds", dt);

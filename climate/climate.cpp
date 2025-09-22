@@ -29,7 +29,8 @@ EXPORT_ISA(climate)
 
 #define RAD(x) (x*PI)/180
 
-
+#undef max
+#undef min
 
 double surface_angles[] = {
 	360,	// H

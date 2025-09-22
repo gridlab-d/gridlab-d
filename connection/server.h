@@ -6,20 +6,24 @@
 #ifndef _SERVER_H
 #define _SERVER_H
 
+#include <thread>
+
 #include "gridlabd.h"
 #include "connection.h"
 
-#include <pthread.h>
+//#include <pthread.h>
 
 class RemoteSocket : public Socket {
 private:
 	class server *svr;
-	pthread_t proc;
+	//pthread_t proc;
 public:
 	inline RemoteSocket(class server*s) : svr(s) { };
 	inline class server *get_server(void) { return svr; };
-	inline void set_proc(pthread_t p) { proc=p;};
-	inline pthread_t *get_proc(void) { return &proc; };
+	//inline void set_proc(pthread_t p) { proc=p;};
+	//inline pthread_t *get_proc(void) { return &proc; };
+	std::thread proc;  // Thread object holding the handler thread
+	std::thread* get_proc() { return &proc; }  //  return a thread pointer
 };
 
 class server : public connection_mode {
@@ -31,7 +35,7 @@ private:
 	int type; ///< socket type (SOCK_DGRAM or SOCK_STREAM)
 	int maxclients; ///< maximum clients allowed
 	int numactive; ///< number of active clients
-	pthread_t handler;
+	//pthread_t handler;
 
 public:
 	/* required implementations */
@@ -56,6 +60,12 @@ public:
 	inline int get_maxbacklog() { return maxclients-numactive; };
 public:
 	void set_type(int);
+public:
+	void tcp_handler();
+	void udp_handler();
+	void msg_handler(RemoteSocket* client);
+
+
 };
 
 #endif /// @} _SERVER_H

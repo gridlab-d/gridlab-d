@@ -37,6 +37,14 @@
 #include <cstdio>
 #include <cstdlib>
 
+#if defined(_WIN32) || defined(_MSC_VER)
+ // Windows already has strtok_s
+ // Nothing to do as strtok_s is already defined in string.h
+#else
+ // For Linux/POSIX systems, define strtok_s to use strtok_r
+#define strtok_s(str, delimiters, context) strtok_r(str, delimiters, context)
+#endif
+
 #include "gridlabd.h"
 #include "object.h"
 #include "aggregate.h"

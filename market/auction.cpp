@@ -979,7 +979,8 @@ void auction::clear_market(void)
 					{
 						// 3. It's now safe to access the members of the 'offer' object.
 						// Also, continue to apply defensive checks for other pointers like 'unit' and 'from'.
-						const char* safe_unit_str = unit ? unit : "N/A";
+						//const char* safe_unit_str = unit ? unit : "N/A";
+						const char* safe_unit_str = unit ? static_cast<const char*>(unit) : "N/A";
 						const char* safe_from_str = offer->from ? offer->from : "unknown_source";
 
 						gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",
@@ -1060,7 +1061,8 @@ void auction::clear_market(void)
 					{
 						// 3. Now that we know 'bid' is a valid pointer, it is safe to access its members.
 						// We should also continue to apply the lessons from before and check other pointers like 'unit'.
-						const char* safe_unit_str = unit ? unit : "N/A";
+						//const char* safe_unit_str = unit ? unit : "N/A";
+						const char* safe_unit_str = unit ? static_cast<const char*>(unit) : "N/A";
 						const char* safe_from_str = bid->from ? bid->from : "unknown_source";
 
 						gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",
@@ -1228,7 +1230,8 @@ void auction::clear_market(void)
 					{
 						// 3. Now it is safe to access the members of the 'offer' object.
 						// As a best practice, also guard any other pointers that could be null.
-						const char* safe_unit_str = unit ? unit : "N/A";
+						//const char* safe_unit_str = unit ? unit : "N/A";
+						const char* safe_unit_str = unit ? static_cast<const char*>(unit) : "N/A";
 						const char* safe_from_str = offer->from ? offer->from : "unknown_source";
 
 						gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",
@@ -1270,7 +1273,9 @@ void auction::clear_market(void)
 						// C. Now it is safe to use the 'bid' pointer.
 						// We also continue to guard against other potentially null pointers.
 						const char* safe_from_str = "unknown_seller"; //bid->from ? bid->from : "unknown_seller";
-						const char* safe_unit_str = unit ? unit : "N/A";
+
+						//const char* safe_unit_str = unit ? unit : "N/A";
+						const char* safe_unit_str = unit ? static_cast<const char*>(unit) : "N/A";
 
 						gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",
 							i,
@@ -1475,7 +1480,8 @@ void auction::clear_market(void)
 				: "unknown time";
 
 			// 3. Guard against a potentially null 'unit' pointer.
-			const char* safe_unit_str = unit ? unit : "N/A";
+			//const char* safe_unit_str = unit ? unit : "N/A";
+			const char* safe_unit_str = unit ? static_cast<const char*>(unit) : "N/A";
 
 			// 4. Now make the final call with safe, validated variables.
 			gl_output("   ...  %s clears %.2f %s at $%.2f/%s at %s",
@@ -1737,7 +1743,8 @@ int auction::submit_nolock(char *from, double quantity, double real_price, KEY k
 			// 3. Use the ternary operator to GUARD AGAINST NULL POINTERS for all string arguments.
 			const char* safe_name_str = name_str ? name_str : "unknown_object";
 			const char* safe_from_str = from ? from : "unknown_source";
-			const char* safe_unit_str = unit ? unit : "N/A";
+			//const char* safe_unit_str = unit ? unit : "N/A";
+			const char* safe_unit_str = unit ? static_cast<const char*>(unit) : "N/A";
 
 			// 4. Now make the final, safe call with validated local variables.
 			gl_output("   ...  %s resubmits %s from object %s for %.2f %s at $%.2f/%s at %s",

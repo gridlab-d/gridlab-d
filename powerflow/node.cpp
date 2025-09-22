@@ -60,13 +60,14 @@
 #if defined(_WIN32) && !defined(__MINGW32__)
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
+#include <winsock2.h>
 #include <windows.h>
 #ifndef DLEXT
 #define DLEXT ".dll"
 #endif
 #define DLLOAD(P) LoadLibrary(P)
 #define DLSYM(H,S) (void *)GetProcAddress((HINSTANCE)H,S)
-#define snprintf _snprintf
+//#define snprintf _snprintf
 #else /* ANSI */
 #include "dlfcn.h"
 #ifndef DLEXT

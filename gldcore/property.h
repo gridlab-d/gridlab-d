@@ -120,7 +120,19 @@ public:
 
     inline char *findrev(const char c) { return strrchr(buffer, c); };
 
-    inline char *token(char *from, const char *delim, char **context) { return strtok_s(from, delim, context); };
+    //inline char *token(char *from, const char *delim, char **context) { return strtok_s(from, delim, context); };
+
+    #if defined(_WIN32) || defined(_WIN64) // For Windows
+    #include <string.h>
+        inline char* _token(char* from, const char* delim, char** context) {
+            return strtok_s(from, delim, context);
+        }
+    #else // For POSIX systems
+    #include <string.h>
+        inline char* _token(char* from, const char* delim, char** context) {
+            return strtok_r(from, delim, context);
+        }
+    #endif
 
     inline size_t format(char *fmt, ...) {
         va_list ptr;

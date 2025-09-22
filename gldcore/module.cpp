@@ -41,13 +41,14 @@
 #if defined(_WIN32) && !defined(__MINGW32__)
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
+#include <winsock2.h>
 #include <windows.h>
 #ifndef DLEXT
 #define DLEXT ".dll"
 #endif
 #define DLLOAD(P) LoadLibrary(P)
 #define DLSYM(H,S) (void *)GetProcAddress((HINSTANCE)H,S)
-#define snprintf _snprintf
+//#define snprintf _snprintf
 #else /* ANSI */
 #include "dlfcn.h"
 #ifndef DLEXT
@@ -90,6 +91,18 @@
 #include "console.h"
 
 #include "matlab.h"
+
+#ifndef X_OK
+#define X_OK 0x01
+#endif
+
+#ifndef R_OK
+#define R_OK 0x02
+#endif
+
+#ifndef F_OK
+#define F_OK 0  // Define F_OK to represent file existence checks
+#endif
 
 int get_exe_path(char *buf, int len, void *mod){	/* void for GetModuleFileName, a windows func */
 	int rv = 0, i = 0;
@@ -134,7 +147,7 @@ void dlload_error(const char *filename)
 				nullptr, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 				(LPTSTR) &error, 0, nullptr);
 	if (!result)
-		error = TEXT("[FormatMessage failed]");
+		error = (LPTSTR)TEXT("[FormatMessage failed]");
 	else for (end = error + strlen(error) - 1; end >= error && isspace(*end); end--)
 		*end = 0;
 #else

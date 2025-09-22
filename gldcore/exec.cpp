@@ -944,8 +944,8 @@ static STATUS init_all()
 	output_verbose("initializing objects...");
 
 	/* initialize instances */
-	if ( instance_initall()==FAILED )
-		return FAILED;
+	//if ( instance_initall()==FAILED )
+		//return FAILED;
 
 	/* initialize loadshapes */
 	if (loadshape_initall()==FAILED || enduse_initall()==FAILED)
@@ -1587,7 +1587,7 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 	h1 = link_syncall(t1);
 
 	/* @todo add other internal syncs here */
-	h2 = instance_syncall(t1);
+	//h2 = instance_syncall(t1);
 	s1 = randomvar_syncall(t1);
 	s2 = schedule_syncall(t1);
 	s3 = loadshape_syncall(t1);
@@ -1601,7 +1601,8 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 	se = absolute_timestamp(earliest_timestamp(s1,s2,s3,s4,s5,s6,TS_ZERO));
 
 	/* final event */
-	sa = earliest_timestamp(h1,h2,se!=TS_NEVER?-se:TS_NEVER,TS_ZERO);
+	//sa = earliest_timestamp(h1, h2, se != TS_NEVER ? -se : TS_NEVER, TS_ZERO);
+	sa = earliest_timestamp(h1,se!=TS_NEVER?-se:TS_NEVER,TS_ZERO);
 
 		// Round off to the minimum timestep
 	if (global_minimum_timestep>1 && absolute_timestamp(sa)>global_clock && sa<TS_NEVER)
@@ -1625,7 +1626,7 @@ void exec_sleep(unsigned int usec)
 
 typedef struct s_objsyncdata {
 	unsigned int n; // thread id 0~n_threads for this object rank list
-	pthread_t pt;
+	//pthread_t pt;
 	bool ok;
 	//void *item;
 	LISTITEM *ls;

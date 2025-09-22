@@ -21,12 +21,13 @@
 	#undef int64 // wtypes.h uses the term int64
 	#endif
 	#define socklen_t int
-	#define snprintf _snprintf
+	//#define snprintf _snprintf
 	#ifndef int64
 	#define int64 _int64
 	#endif
 	#define int64_t _int64
-	#define WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
+	#include <winsock2.h>
 	#include <windows.h>
 #else
 	#include <sys/types.h>

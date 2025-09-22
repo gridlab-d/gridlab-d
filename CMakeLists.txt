@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0") 
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 
 #Add debug symbols and sanitizer support
 #set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=address -fno-omit-frame-pointer")
@@ -33,8 +33,8 @@ else ()
     endif ()
 endif ()
 
-#set(CMAKE_CXX_STANDARD 17) 
-#set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 23) 
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(GLD_PACKAGE gridlabd)
 set(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION OFF) # This shouldn't be needed, but seems to fix issues

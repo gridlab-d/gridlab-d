@@ -7,35 +7,43 @@
 #ifndef _UDP_H
 #define _UDP_H
 
-#include "gridlabd.h"
-#include "connection.h"
+
+
 
 #ifdef _WIN32
 #ifdef int64
 #undef int64 // wtypes.h uses the term int64
 #endif
-	#include <winsock2.h>
-#define snprintf _snprintf
+#include <winsock2.h>
+//#define snprintf _snprintf
 #ifndef int64
 #define int64 __int64
 #endif
 #else
-	#include <sys/types.h>
-	#include <sys/socket.h>
-	#include <netinet/in.h>
-	#include <arpa/inet.h>
-	#include <unistd.h>
-	#include <sys/errno.h>
-	#include <netdb.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <sys/errno.h>
+#include <netdb.h>
 
-	#ifdef INVALID_SOCKET
-	#undef INVALID_SOCKET
-	#endif
-
-	#define INVALID_SOCKET (-1)
-	#define SOCKET_ERROR (-1)
-	#define int64 long long
+#ifdef INVALID_SOCKET
+#undef INVALID_SOCKET
 #endif
+
+#define INVALID_SOCKET (-1)
+#define SOCKET_ERROR (-1)
+#define int64 long long
+#endif
+
+
+
+#include "gridlabd.h"
+#include "connection.h"
+
+
+
 
 class udp : public connection_transport {
 public:
