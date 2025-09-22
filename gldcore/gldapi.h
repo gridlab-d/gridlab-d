@@ -44,6 +44,9 @@ public:
         // Initialization code goes here
     }
 
+     // constructor
+    GridLabD(int argc, char* argv[]);
+
     ~GridLabD() {
         // Cleanup code goes here
     }
@@ -54,6 +57,12 @@ public:
 
     // Load a GLM and return an error code
     GLDErrorCode load_glm(const std::string& filepath);
+
+    // Setup GLD and return an error code
+    GLDErrorCode GridLabD::setup_before_load(const std::string& filepath) ;
+
+    // Setup GLD and return an error code
+    GLDErrorCode GridLabD::setup_after_load(const std::string& filepath) ;
 
     // Get the GLM data based on a query
     GLDErrorCode get_glm_data(const std::string& query, GLDData& result);
