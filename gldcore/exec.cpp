@@ -1884,31 +1884,16 @@ void exec_clock_update_modules()
  *  MAIN EXEC LOOP
  ******************************************************************/
 
-/** This is the main simulation loop
-	@return STATUS is SUCCESS if the simulation reached equilibrium,
-	and FAILED if a problem was encountered.
- **/
-STATUS exec_start()
-{
+ STATUS run_preparation() {
+		// Only setup threadpool for each object rank list at the first iteration;
 	cpp_threadpool* threadpool = new cpp_threadpool(global_threadcount);
-	int64 passes = 0, tsteps = 0;
-	int ptc_rv = 0; // unused
-	int ptj_rv = 0; // unused
-	int pc_rv = 0; // precommit return value
-	STATUS fnl_rv = static_cast<STATUS>(0); // finalize all return value
-	time_t started_at = realtime_now(); // for profiler
-	int j, k;
-	LISTITEM *ptr;
-	int incr;
-	struct arg_data *arg_data_array;
-
-	// Only setup threadpool for each object rank list at the first iteration;
-	// After the first iteration, setTP = false;
+		// After the first iteration, setTP = false;
 	bool setTP = true;
 	//int n_threads; //number of thread used in the threadpool of an object rank list
 	OBJSYNCDATA *thread = nullptr;
 
 	int nObjRankList, iObjRankList;
+	int k;
 
 	/* run create scripts, if any */
 	if ( exec_run_createscripts()!=XC_SUCCESS )
@@ -2089,16 +2074,8 @@ STATUS exec_start()
 //	n_threads = new unsigned int[nObjRankList]{0};
 
 	// allocation and nitialize mutex and cond for object rank lists
-//	startlock = static_cast<pthread_mutex_t *>(malloc(sizeof(startlock[0]) * nObjRankList));
-//	donelock = static_cast<pthread_mutex_t *>(malloc(sizeof(donelock[0]) * nObjRankList));
-//	start = static_cast<pthread_cond_t *>(malloc(sizeof(start[0]) * nObjRankList));
-//	done = static_cast<pthread_cond_t *>(malloc(sizeof(done[0]) * nObjRankList));
 	for(k=0;k<nObjRankList;k++)
 	{
-//		pthread_mutex_init(&startlock[k], nullptr);
-//		pthread_mutex_init(&donelock[k], nullptr);
-//		pthread_cond_init(&start[k], nullptr);
-//		pthread_cond_init(&done[k], nullptr);
         startlock.push_back(std::make_unique<std::mutex>());
         donelock.push_back(std::make_unique<std::mutex>());
         start.push_back(std::make_unique<std::condition_variable>());
@@ -2117,6 +2094,27 @@ STATUS exec_start()
 
 	//sjin: GetMachineCycleCount
 	cstart = (clock_t)exec_clock();
+
+ }
+
+
+/** This is the main simulation loop
+	@return STATUS is SUCCESS if the simulation reached equilibrium,
+	and FAILED if a problem was encountered.
+ **/
+STATUS exec_start()
+{
+	cpp_threadpool* threadpool = new cpp_threadpool(global_threadcount);
+	int64 passes = 0, tsteps = 0;
+	int ptc_rv = 0; // unused
+	int ptj_rv = 0; // unused
+	int pc_rv = 0; // precommit return value
+	STATUS fnl_rv = static_cast<STATUS>(0); // finalize all return value
+	time_t started_at = realtime_now(); // for profiler
+	int j, k;
+	LISTITEM *ptr;
+	int incr;
+	struct arg_data *arg_data_array;
 
 	/* main loop exception handler */
 	TRY {
@@ -2677,11 +2675,21 @@ STATUS exec_start()
 //		pthread_cond_destroy(&done[k]);
 //	}
 
+	report_performance_after_run(started_at);
+
+	sched_update(global_clock,MLS_DONE);
+
+	/* terminate links */
+	delete threadpool;
+	return exec_sync_getstatus(nullptr);
+}
+
+void report_performance_after_run(time_t start_time) {
 	/* report performance */
 	if (global_profiler && !exec_sync_isinvalid(nullptr) )
 	{
 		double elapsed_sim = timestamp_to_hours(global_clock)-timestamp_to_hours(global_starttime);
-		double elapsed_wall = (double)(realtime_now()-started_at+1);
+		double elapsed_wall = (double)(realtime_now()-start_time+1);
 		double sync_time = 0;
 		double sim_speed = object_get_count()/1000.0*elapsed_sim/elapsed_wall;
 
@@ -2756,12 +2764,6 @@ STATUS exec_start()
 		}
 		output_profile("\n");
 	}
-
-	sched_update(global_clock,MLS_DONE);
-
-	/* terminate links */
-	delete threadpool;
-	return exec_sync_getstatus(nullptr);
 }
 
 /** Starts the executive test loop
