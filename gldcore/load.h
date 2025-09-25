@@ -69,7 +69,6 @@ int load_resolve_all();
 OBJECT *load_get_current_object(void);
 MODULE *load_get_current_module(void);
 
-static void filename_parts(char *fullname, char *path, char *name, char *ext);
 static OBJECT *current_object = nullptr; /* context object */
 static MODULE *current_module = nullptr; /* context module */
 
