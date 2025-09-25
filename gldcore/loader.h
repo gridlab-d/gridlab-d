@@ -23,7 +23,6 @@ class loader {
 
 private:
 	parser parse = parser();
-
     json jsn;
     json property;
     string filename;
