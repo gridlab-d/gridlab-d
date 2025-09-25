@@ -175,11 +175,11 @@ int helics_msg::init(OBJECT *parent){
 				for( idx = 0; idx < pub_count; idx++ ) {
 					helicscpp::Publication pub = gld_helics_federate->getPublication(idx);
 					if( pub.isValid() ) {
-						config_info_temp = string(pub.getInfo());;
+						config_info_temp = string(pub.getInfo());
 						try {
 							config_info = nlohmann::json::parse(config_info_temp);
 							if( config_info.contains("message_type") ){
-								individual_message_type = config_info["message_type"].template get<string>();
+								individual_message_type = config_info["message_type"].get<string>();
 								if( individual_message_type.compare("JSON") == 0 ) {
 									json_gld_pub = new json_helics_value_publication();
 									json_gld_pub->name = string(pub.getName());
@@ -190,7 +190,7 @@ int helics_msg::init(OBJECT *parent){
 										string gldPropName;
 										int n = json_gld_pub->objectPropertyBundle[gldObjName].size();
 										for(int i = 0; i < n; i++){
-											gldPropName = json_gld_pub->objectPropertyBundle[gldObjName][i].template get<string>();
+											gldPropName = json_gld_pub->objectPropertyBundle[gldObjName][i].get<string>();
 											gldProperty = new json_publication(gldObjName, gldPropName);
 											json_gld_pub->jsonPublications.push_back(gldProperty);
 										}
@@ -200,8 +200,8 @@ int helics_msg::init(OBJECT *parent){
 								} else if( individual_message_type.compare("GENERAL") == 0 ){
 									gld_pub = new helics_value_publication();
 									gld_pub->name = string(pub.getName());
-									gld_pub->objectName = config_info["object"].template get<string>();
-									gld_pub->propertyName = config_info["property"].template get<string>();
+									gld_pub->objectName = config_info["object"].get<string>();
+									gld_pub->propertyName = config_info["property"].get<string>();
 									gld_pub->HelicsPublication = pub;
 									helics_value_publications.push_back(gld_pub);
 								} else {
@@ -210,8 +210,8 @@ int helics_msg::init(OBJECT *parent){
 							} else {
 								gld_pub = new helics_value_publication();
 								gld_pub->name = string(pub.getName());
-								gld_pub->objectName = config_info["object"].template get<string>();
-								gld_pub->propertyName = config_info["property"].template get<string>();
+								gld_pub->objectName = config_info["object"].get<string>();
+								gld_pub->propertyName = config_info["property"].get<string>();
 								gld_pub->HelicsPublication = pub;
 								helics_value_publications.push_back(gld_pub);
 							}
@@ -228,7 +228,7 @@ int helics_msg::init(OBJECT *parent){
 						try {
 							config_info = config_info = nlohmann::json::parse(config_info_temp);
 							if( config_info.contains("message_type")) {
-								individual_message_type = config_info["message_type"].template get<string>();
+								individual_message_type = config_info["message_type"].get<string>();
 								if( individual_message_type.compare("JSON") == 0 ) {
 									json_gld_sub = new json_helics_value_subscription();
 									json_gld_sub->target = string(sub.getTarget());
@@ -237,8 +237,8 @@ int helics_msg::init(OBJECT *parent){
 								} else if( individual_message_type.compare("GENERAL") == 0 ){
 									gld_sub = new helics_value_subscription();
 									gld_sub->target = string(sub.getTarget());
-									gld_sub->objectName = config_info["object"].template get<string>();
-									gld_sub->propertyName = config_info["property"].template get<string>();
+									gld_sub->objectName = config_info["object"].get<string>();
+									gld_sub->propertyName = config_info["property"].get<string>();
 									gld_sub->HelicsSubscription = sub;
 									helics_value_subscriptions.push_back(gld_sub);
 								} else {
@@ -247,8 +247,8 @@ int helics_msg::init(OBJECT *parent){
 							} else {
 								gld_sub = new helics_value_subscription();
 								gld_sub->target = string(sub.getTarget());
-								gld_sub->objectName = config_info["object"].template get<string>();
-								gld_sub->propertyName = config_info["property"].template get<string>();
+								gld_sub->objectName = config_info["object"].get<string>();
+								gld_sub->propertyName = config_info["property"].get<string>();
 								gld_sub->HelicsSubscription = sub;
 								helics_value_subscriptions.push_back(gld_sub);
 							}
@@ -266,7 +266,7 @@ int helics_msg::init(OBJECT *parent){
 						try {
 							config_info = config_info = nlohmann::json::parse(config_info_temp);
 							if( config_info.contains("message_type")) {
-								individual_message_type = config_info["message_type"].template get<string>();
+								individual_message_type = config_info["message_type"].get<string>();
 								if( individual_message_type.compare("JSON") == 0 ) {
 									if( !dest.empty() ){
 										json_gld_ep_pub = new json_helics_endpoint_publication();
@@ -279,7 +279,7 @@ int helics_msg::init(OBJECT *parent){
 											string gldPropName;
 											int n = json_gld_ep_pub->objectPropertyBundle[gldObjName].size();
 											for(int i = 0; i < n; i++){
-												gldPropName = json_gld_ep_pub->objectPropertyBundle[gldObjName][i].template get<string>();
+												gldPropName = json_gld_ep_pub->objectPropertyBundle[gldObjName][i].get<string>();
 												gldProperty = new json_publication(gldObjName, gldPropName);
 												json_gld_ep_pub->jsonPublications.push_back(gldProperty);
 											}
@@ -288,7 +288,7 @@ int helics_msg::init(OBJECT *parent){
 										json_helics_endpoint_publications.push_back(json_gld_ep_pub);
 										gl_verbose("helics_msg::init(): registering publishing endpoint: %s", json_gld_ep_pub->name.c_str());
 										if( config_info.contains("receives_messages") ) {
-											if( config_info["receives_messages"].template get<bool>() ) {
+											if( config_info["receives_messages"].get<bool>() ) {
 												json_gld_ep_sub = new json_helics_endpoint_subscription();
 												json_gld_ep_sub->name = ep.getName();
 												json_gld_ep_sub->HelicsSubscriptionEndpoint = ep;
@@ -309,16 +309,16 @@ int helics_msg::init(OBJECT *parent){
 											gld_ep_pub = new helics_endpoint_publication();
 											gld_ep_pub->name = string(ep.getName());
 											gld_ep_pub->destination = dest;
-											gld_ep_pub->objectName = config_info["object"].template get<string>();
-											gld_ep_pub->propertyName = config_info["property"].template get<string>();
+											gld_ep_pub->objectName = config_info["object"].get<string>();
+											gld_ep_pub->propertyName = config_info["property"].get<string>();
 											gld_ep_pub->HelicsPublicationEndpoint = ep;
 											helics_endpoint_publications.push_back(gld_ep_pub);
 											gl_verbose("helics_msg::init(): registering publishing endpoint: %s", gld_ep_pub->name.c_str());
 										} else {
 											gld_ep_sub = new helics_endpoint_subscription();
 											gld_ep_sub->name = string(ep.getName());
-											gld_ep_sub->objectName = config_info["object"].template get<string>();
-											gld_ep_sub->propertyName = config_info["property"].template get<string>();
+											gld_ep_sub->objectName = config_info["object"].get<string>();
+											gld_ep_sub->propertyName = config_info["property"].get<string>();
 											gld_ep_sub->HelicsSubscriptionEndpoint = ep;
 											helics_endpoint_subscriptions.push_back(gld_ep_sub);
 											gl_verbose("helics_msg::init(): registering subscribing endpoint: %s", gld_ep_sub->name.c_str());
@@ -328,8 +328,8 @@ int helics_msg::init(OBJECT *parent){
 										gld_ep_pub = new helics_endpoint_publication();
 										gld_ep_pub->name = string(ep.getName());
 										gld_ep_pub->destination = dest;
-										gld_ep_pub->objectName = config_info["publication_info"]["object"].template get<string>();
-										gld_ep_pub->propertyName = config_info["publication_info"]["property"].template get<string>();
+										gld_ep_pub->objectName = config_info["publication_info"]["object"].get<string>();
+										gld_ep_pub->propertyName = config_info["publication_info"]["property"].get<string>();
 										gld_ep_pub->HelicsPublicationEndpoint = ep;
 										helics_endpoint_publications.push_back(gld_ep_pub);
 										gl_verbose("helics_msg::init(): registering publishing endpoint: %s", gld_ep_pub->name.c_str());
@@ -337,8 +337,8 @@ int helics_msg::init(OBJECT *parent){
 									if( config_info.contains("subscription_info") ) {
 										gld_ep_sub = new helics_endpoint_subscription();
 										gld_ep_sub->name = string(ep.getName());
-										gld_ep_sub->objectName = config_info["subscription_info"]["object"].template get<string>();
-										gld_ep_sub->propertyName = config_info["subscription_info"]["property"].template get<string>();
+										gld_ep_sub->objectName = config_info["subscription_info"]["object"].get<string>();
+										gld_ep_sub->propertyName = config_info["subscription_info"]["property"].get<string>();
 										gld_ep_sub->HelicsSubscriptionEndpoint = ep;
 										helics_endpoint_subscriptions.push_back(gld_ep_sub);
 										gl_verbose("helics_msg::init(): registering subscribing endpoint: %s", gld_ep_sub->name.c_str());
@@ -350,16 +350,16 @@ int helics_msg::init(OBJECT *parent){
 										gld_ep_pub = new helics_endpoint_publication();
 										gld_ep_pub->name = string(ep.getName());
 										gld_ep_pub->destination = dest;
-										gld_ep_pub->objectName = config_info["object"].template get<string>();
-										gld_ep_pub->propertyName = config_info["property"].template get<string>();
+										gld_ep_pub->objectName = config_info["object"].get<string>();
+										gld_ep_pub->propertyName = config_info["property"].get<string>();
 										gld_ep_pub->HelicsPublicationEndpoint = ep;
 										helics_endpoint_publications.push_back(gld_ep_pub);
 										gl_verbose("helics_msg::init(): registering publishing endpoint: %s", gld_ep_pub->name.c_str());
 									} else {
 										gld_ep_sub = new helics_endpoint_subscription();
 										gld_ep_sub->name = string(ep.getName());
-										gld_ep_sub->objectName = config_info["object"].template get<string>();
-										gld_ep_sub->propertyName = config_info["property"].template get<string>();
+										gld_ep_sub->objectName = config_info["object"].get<string>();
+										gld_ep_sub->propertyName = config_info["property"].get<string>();
 										gld_ep_sub->HelicsSubscriptionEndpoint = ep;
 										helics_endpoint_subscriptions.push_back(gld_ep_sub);
 										gl_verbose("helics_msg::init(): registering subscribing endpoint: %s", gld_ep_sub->name.c_str());
@@ -369,8 +369,8 @@ int helics_msg::init(OBJECT *parent){
 									gld_ep_pub = new helics_endpoint_publication();
 									gld_ep_pub->name = string(ep.getName());
 									gld_ep_pub->destination = dest;
-									gld_ep_pub->objectName = config_info["publication_info"]["object"].template get<string>();
-									gld_ep_pub->propertyName = config_info["publication_info"]["property"].template get<string>();
+									gld_ep_pub->objectName = config_info["publication_info"]["object"].get<string>();
+									gld_ep_pub->propertyName = config_info["publication_info"]["property"].get<string>();
 									gld_ep_pub->HelicsPublicationEndpoint = ep;
 									helics_endpoint_publications.push_back(gld_ep_pub);
 									gl_verbose("helics_msg::init(): registering publishing endpoint: %s", gld_ep_pub->name.c_str());
@@ -378,8 +378,8 @@ int helics_msg::init(OBJECT *parent){
 								if( config_info.contains("subscription_info") ) {
 									gld_ep_sub = new helics_endpoint_subscription();
 									gld_ep_sub->name = string(ep.getName());
-									gld_ep_sub->objectName = config_info["subscription_info"]["object"].template get<string>();
-									gld_ep_sub->propertyName = config_info["subscription_info"]["property"].template get<string>();
+									gld_ep_sub->objectName = config_info["subscription_info"]["object"].get<string>();
+									gld_ep_sub->propertyName = config_info["subscription_info"]["property"].get<string>();
 									gld_ep_sub->HelicsSubscriptionEndpoint = ep;
 									helics_endpoint_subscriptions.push_back(gld_ep_sub);
 									gl_verbose("helics_msg::init(): registering subscribing endpoint: %s", gld_ep_sub->name.c_str());
@@ -405,7 +405,7 @@ int helics_msg::init(OBJECT *parent){
 								string gldPropName;
 								int n = json_gld_pub->objectPropertyBundle[gldObjName].size();
 								for(int i = 0; i < n; i++){
-									gldPropName = json_gld_pub->objectPropertyBundle[gldObjName][i].template get<string>();
+									gldPropName = json_gld_pub->objectPropertyBundle[gldObjName][i].get<string>();
 									gldProperty = new json_publication(gldObjName, gldPropName);
 									json_gld_pub->jsonPublications.push_back(gldProperty);
 								}
@@ -443,7 +443,7 @@ int helics_msg::init(OBJECT *parent){
 									string gldPropName;
 									int n = json_gld_ep_pub->objectPropertyBundle[gldObjName].size();
 									for(int i = 0; i < n; i++){
-										gldPropName = json_gld_ep_pub->objectPropertyBundle[gldObjName][i].template get<string>();
+										gldPropName = json_gld_ep_pub->objectPropertyBundle[gldObjName][i].get<string>();
 										gldProperty = new json_publication(gldObjName, gldPropName);
 										json_gld_ep_pub->jsonPublications.push_back(gldProperty);
 									}
@@ -1175,7 +1175,7 @@ int helics_msg::subscribeVariables(){
 						gldProperty = new gld_property(bufObj, bufProp);
 						if(gldProperty->is_valid()){
 							if(gldProperty->is_integer()){
-								int64_t itmp = jsonMessage[objectName][propertyName].template get<int64_t>();
+								int64_t itmp = jsonMessage[objectName][propertyName].get<int64_t>();
 								gld_type property_type = gldProperty->get_type();
 								if(property_type == PT_int64){
 									gldProperty->setp(itmp);
@@ -1187,10 +1187,10 @@ int helics_msg::subscribeVariables(){
 									gldProperty->setp(int16_temp);
 								}
 							} else if(gldProperty->is_double()){
-								double dtmp = jsonMessage[objectName][propertyName].template get<double>();
+								double dtmp = jsonMessage[objectName][propertyName].get<double>();
 								gldProperty->setp(dtmp);
 							} else {
-								string stmp = jsonMessage[objectName][propertyName].template get<string>();
+								string stmp = jsonMessage[objectName][propertyName].get<string>();
 								char sbuf[1024] = "";
 								strncpy(sbuf, stmp.c_str(), 1023);
 								gldProperty->from_string(sbuf);
@@ -1232,7 +1232,7 @@ int helics_msg::subscribeVariables(){
 						gldProperty = new gld_property(bufObj, bufProp);
 						if(gldProperty->is_valid()){
 							if(gldProperty->is_integer()){
-								int64_t itmp = jsonMessage[objectName][propertyName].template get<int64_t>();
+								int64_t itmp = jsonMessage[objectName][propertyName].get<int64_t>();
 								gld_type property_type = gldProperty->get_type();
 								if(property_type == PT_int64){
 									gldProperty->setp(itmp);
@@ -1244,10 +1244,10 @@ int helics_msg::subscribeVariables(){
 									gldProperty->setp(int16_temp);
 								}
 							} else if(gldProperty->is_double()){
-								double dtmp = jsonMessage[objectName][propertyName].template get<double>();
+								double dtmp = jsonMessage[objectName][propertyName].get<double>();
 								gldProperty->setp(dtmp);
 							} else {
-								string stmp = jsonMessage[objectName][propertyName].template get<string>();
+								string stmp = jsonMessage[objectName][propertyName].get<string>();
 								char sbuf[1024] = "";
 								strncpy(sbuf, stmp.c_str(), 1023);
 								gldProperty->from_string(sbuf);
@@ -1391,7 +1391,7 @@ int helics_msg::subscribeJsonVariables(){
 							gldProperty = new gld_property(bufObj, bufProp);
 							if(gldProperty->is_valid()){
 								if(gldProperty->is_integer()){
-									int64_t itmp = jsonData[objectName][propertyName].template get<int64_t>();
+									int64_t itmp = jsonData[objectName][propertyName].get<int64_t>();
 									gld_type property_type = gldProperty->get_type();
 									if(property_type == PT_int64){
 										gldProperty->setp(itmp);
@@ -1403,10 +1403,10 @@ int helics_msg::subscribeJsonVariables(){
 										gldProperty->setp(int16_temp);
 									}
 								} else if(gldProperty->is_double()){
-									double dtmp = jsonData[objectName][propertyName].template get<double>();
+									double dtmp = jsonData[objectName][propertyName].get<double>();
 									gldProperty->setp(dtmp);
 								} else {
-									string stmp = jsonData[objectName][propertyName].template get<string>();
+									string stmp = jsonData[objectName][propertyName].get<string>();
 									char sbuf[1024] = "";
 									strncpy(sbuf, stmp.c_str(), 1023);
 									gldProperty->from_string(sbuf);
@@ -1430,7 +1430,7 @@ int helics_msg::subscribeJsonVariables(){
 							gldProperty = new gld_property(bufObj, bufProp);
 							if(gldProperty->is_valid()){
 								if(gldProperty->is_integer()){
-									int64_t itmp = jsonData[objectName][propertyName].template get<int64_t>();
+									int64_t itmp = jsonData[objectName][propertyName].get<int64_t>();
 									gld_type property_type = gldProperty->get_type();
 									if(property_type == PT_int64){
 										gldProperty->setp(itmp);
@@ -1442,10 +1442,10 @@ int helics_msg::subscribeJsonVariables(){
 										gldProperty->setp(int16_temp);
 									}
 								} else if(gldProperty->is_double()){
-									double dtmp = jsonData[objectName][propertyName].template get<double>();
+									double dtmp = jsonData[objectName][propertyName].get<double>();
 									gldProperty->setp(dtmp);
 								} else {
-									string stmp = jsonData[objectName][propertyName].template get<string>();
+									string stmp = jsonData[objectName][propertyName].get<string>();
 									char sbuf[1024] = "";
 									strncpy(sbuf, stmp.c_str(), 1023);
 									gldProperty->from_string(sbuf);
@@ -1486,7 +1486,7 @@ int helics_msg::subscribeJsonVariables(){
 							gldProperty = new gld_property(bufObj, bufProp);
 							if(gldProperty->is_valid()){
 								if(gldProperty->is_integer()){
-									int64_t itmp = jsonData[objectName][propertyName].template get<int64_t>();
+									int64_t itmp = jsonData[objectName][propertyName].get<int64_t>();
 									gld_type property_type = gldProperty->get_type();
 									if(property_type == PT_int64){
 										gldProperty->setp(itmp);
@@ -1498,10 +1498,10 @@ int helics_msg::subscribeJsonVariables(){
 										gldProperty->setp(int16_temp);
 									}
 								} else if(gldProperty->is_double()){
-									double dtmp = jsonData[objectName][propertyName].template get<double>();
+									double dtmp = jsonData[objectName][propertyName].get<double>();
 									gldProperty->setp(dtmp);
 								} else {
-									string stmp = jsonData[objectName][propertyName].template get<string>();
+									string stmp = jsonData[objectName][propertyName].get<string>();
 									char sbuf[1024] = "";
 									strncpy(sbuf, stmp.c_str(), 1023);
 									gldProperty->from_string(sbuf);
@@ -1525,7 +1525,7 @@ int helics_msg::subscribeJsonVariables(){
 							gldProperty = new gld_property(bufObj, bufProp);
 							if(gldProperty->is_valid()){
 								if(gldProperty->is_integer()){
-									int64_t itmp = jsonData[objectName][propertyName].template get<int64_t>();
+									int64_t itmp = jsonData[objectName][propertyName].get<int64_t>();
 									gld_type property_type = gldProperty->get_type();
 									if(property_type == PT_int64){
 										gldProperty->setp(itmp);
@@ -1537,10 +1537,10 @@ int helics_msg::subscribeJsonVariables(){
 										gldProperty->setp(int16_temp);
 									}
 								} else if(gldProperty->is_double()){
-									double dtmp = jsonData[objectName][propertyName].template get<double>();
+									double dtmp = jsonData[objectName][propertyName].get<double>();
 									gldProperty->setp(dtmp);
 								} else {
-									string stmp = jsonData[objectName][propertyName].template get<string>();
+									string stmp = jsonData[objectName][propertyName].get<string>();
 									char sbuf[1024] = "";
 									strncpy(sbuf, stmp.c_str(), 1023);
 									gldProperty->from_string(sbuf);

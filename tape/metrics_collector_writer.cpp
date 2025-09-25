@@ -271,7 +271,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	jsn[m_index] = idx++;	jsn[m_units] = "s";		meta[m_below_10_percent_NormVol_Duration] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "";		meta[m_below_10_percent_NormVol_Count] = jsn;
 #endif
-	ary_billing_meters.clear();
+	ary_billing_meters = nlohmann::json::array();
 	writeMetadata(meta, metadata, time_str, filename_billing_meter);
 
 	idx = 0;
@@ -315,7 +315,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	jsn[m_index] = idx++;	jsn[m_units] = "";		meta[m_wh_lower_elem_state] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "";		meta[m_wh_upper_elem_state] = jsn;
 
-	ary_houses.clear();
+	ary_houses = nlohmann::json::array();
 	writeMetadata(meta, metadata, time_str, filename_house);
 
 	idx = 0;
@@ -325,27 +325,27 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	jsn[m_index] = idx++;	jsn[m_units] = "VAR";	meta[m_reactive_power_min] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "VAR";	meta[m_reactive_power_max] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "VAR";	meta[m_reactive_power_avg] = jsn;
-	ary_inverters.clear();
+	ary_inverters = nlohmann::json::array();
 	writeMetadata(meta, metadata, time_str, filename_inverter);
 
 	idx = 0;
 	jsn[m_index] = idx++;	jsn[m_units] = "";		meta[m_operation_count] = jsn;
-	ary_capacitors.clear();
+	ary_capacitors = nlohmann::json::array();
 	writeMetadata(meta, metadata, time_str, filename_capacitor);
 
 	idx = 0;
 	jsn[m_index] = idx++;	jsn[m_units] = "";		meta[m_operation_count] = jsn;
-	ary_regulators.clear();
+	ary_regulators = nlohmann::json::array();
 	writeMetadata(meta, metadata, time_str, filename_regulator);
 
 	idx = 0;
 	jsn[m_index] = idx++;	jsn[m_units] = "%";		meta[m_trans_overload_perc] = jsn;
-	ary_transformers.clear();
+	ary_transformers = nlohmann::json::array();
 	writeMetadata(meta, metadata, time_str, filename_transformer);
 
 	idx = 0;
 	jsn[m_index] = idx++;	jsn[m_units] = "%";		meta[m_line_overload_perc] = jsn;
-	ary_lines.clear();
+	ary_lines = nlohmann::json::array();
 	writeMetadata(meta, metadata, time_str, filename_line);
 
 	idx = 0;
@@ -367,7 +367,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	jsn[m_index] = idx++;	jsn[m_units] = "VAR";	meta[m_reactive_power_losses_max] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "VAR";	meta[m_reactive_power_losses_avg] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "VAR";	meta[m_reactive_power_losses_median] = jsn;
-	ary_feeders.clear();
+	ary_feeders = nlohmann::json::array();
 	writeMetadata(meta, metadata, time_str, filename_feeder);
 
 	idx = 0;
@@ -377,7 +377,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	jsn[m_index] = idx++;	jsn[m_units] = "%";	meta[m_battery_SOC_min] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "%";	meta[m_battery_SOC_max] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "%";	meta[m_battery_SOC_avg] = jsn;
-	ary_evchargerdets.clear();
+	ary_evchargerdets = nlohmann::json::array();
 	writeMetadata(meta, metadata, time_str, filename_evchargerdet);
 
 	return 1;
@@ -1131,7 +1131,7 @@ void metrics_collector_writer::hdfMetadataWrite(nlohmann::json& meta, char* time
 		for (auto const& id : meta.items()) {
 			idx++;
 			strncpy(tbl[idx].name, id.key().c_str(), MAX_METRIC_NAME_LENGTH);
-			string value = meta[id.key()][m_units].template get<string>();
+			string value = meta[id.key()][m_units].get<string>();
 			strncpy(tbl[idx].value, value.c_str(), MAX_METRIC_VALUE_LENGTH);
 		}
 
@@ -1193,8 +1193,8 @@ void metrics_collector_writer::hdfBillingMeterWrite (size_t objs, nlohmann::json
 	tbl.reserve(line_cnt*objs);
 	int idx = 0;
 	std::vector<std::string> jsonKeys;
-	for(auto& el : metrics.items()){
-		jsonKeys.push_back(el.key())
+	for(auto& el : metrics.items()) {
+		jsonKeys.push_back(el.key());
 	}
 	for (auto const& id : sortIds(jsonKeys)) {
 		nlohmann::json name = metrics[id];
@@ -1204,35 +1204,35 @@ void metrics_collector_writer::hdfBillingMeterWrite (size_t objs, nlohmann::json
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);
-			tbl[idx].real_power_min = mtr[MTR_MIN_REAL_POWER].asDouble();
-			tbl[idx].real_power_max = mtr[MTR_MAX_REAL_POWER].asDouble();
-			tbl[idx].real_power_avg = mtr[MTR_AVG_REAL_POWER].asDouble();
-			tbl[idx].reactive_power_min = mtr[MTR_MIN_REAC_POWER].asDouble();
-			tbl[idx].reactive_power_max = mtr[MTR_MAX_REAC_POWER].asDouble();
-			tbl[idx].reactive_power_avg = mtr[MTR_AVG_REAC_POWER].asDouble();
-			tbl[idx].real_energy = mtr[MTR_REAL_ENERGY].asDouble();
-			tbl[idx].reactive_energy = mtr[MTR_REAC_ENERGY].asDouble();
-			tbl[idx].bill = mtr[MTR_BILL].asDouble();
-			tbl[idx].voltage12_min = mtr[MTR_MIN_VLL].asDouble();
-			tbl[idx].voltage12_max = mtr[MTR_MAX_VLL].asDouble();
-			tbl[idx].voltage12_avg = mtr[MTR_AVG_VLL].asDouble();
-			tbl[idx].above_RangeA_Duration = mtr[MTR_ABOVE_A_DUR].asDouble();
-			tbl[idx].below_RangeA_Duration = mtr[MTR_BELOW_A_DUR].asDouble();
-			tbl[idx].above_RangeB_Duration = mtr[MTR_ABOVE_B_DUR].asDouble();
-			tbl[idx].below_RangeB_Duration = mtr[MTR_BELOW_B_DUR].asDouble();
+			tbl[idx].real_power_min = mtr[MTR_MIN_REAL_POWER].get<double>();
+			tbl[idx].real_power_max = mtr[MTR_MAX_REAL_POWER].get<double>();
+			tbl[idx].real_power_avg = mtr[MTR_AVG_REAL_POWER].get<double>();
+			tbl[idx].reactive_power_min = mtr[MTR_MIN_REAC_POWER].get<double>();
+			tbl[idx].reactive_power_max = mtr[MTR_MAX_REAC_POWER].get<double>();
+			tbl[idx].reactive_power_avg = mtr[MTR_AVG_REAC_POWER].get<double>();
+			tbl[idx].real_energy = mtr[MTR_REAL_ENERGY].get<double>();
+			tbl[idx].reactive_energy = mtr[MTR_REAC_ENERGY].get<double>();
+			tbl[idx].bill = mtr[MTR_BILL].get<double>();
+			tbl[idx].voltage12_min = mtr[MTR_MIN_VLL].get<double>();
+			tbl[idx].voltage12_max = mtr[MTR_MAX_VLL].get<double>();
+			tbl[idx].voltage12_avg = mtr[MTR_AVG_VLL].get<double>();
+			tbl[idx].above_RangeA_Duration = mtr[MTR_ABOVE_A_DUR].get<double>();
+			tbl[idx].below_RangeA_Duration = mtr[MTR_BELOW_A_DUR].get<double>();
+			tbl[idx].above_RangeB_Duration = mtr[MTR_ABOVE_B_DUR].get<double>();
+			tbl[idx].below_RangeB_Duration = mtr[MTR_BELOW_B_DUR].get<double>();
 #ifdef ALL_MTR_METRICS
-			tbl[idx].voltage_min = mtr[MTR_MIN_VLN].asDouble();
-			tbl[idx].voltage_max = mtr[MTR_MAX_VLN].asDouble();
-			tbl[idx].voltage_avg = mtr[MTR_AVG_VLN].asDouble();
-			tbl[idx].voltage_unbalance_min = mtr[MTR_MIN_VUNB].asDouble();
-			tbl[idx].voltage_unbalance_max = mtr[MTR_MAX_VUNB].asDouble();
-			tbl[idx].voltage_unbalance_avg = mtr[MTR_AVG_VUNB].asDouble();
-			tbl[idx].above_RangeA_Count = mtr[MTR_ABOVE_A_CNT].asDouble();
-			tbl[idx].below_RangeA_Count = mtr[MTR_BELOW_A_CNT].asDouble();
-			tbl[idx].above_RangeB_Count = mtr[MTR_ABOVE_B_CNT].asDouble();
-			tbl[idx].below_RangeB_Count = mtr[MTR_BELOW_B_CNT].asDouble();
-			tbl[idx].below_10_percent_NormVol_Duration = mtr[MTR_BELOW_10_DUR].asDouble();
-			tbl[idx].below_10_percent_NormVol_Count = mtr[MTR_BELOW_10_CNT].asDouble();
+			tbl[idx].voltage_min = mtr[MTR_MIN_VLN].get<double>();
+			tbl[idx].voltage_max = mtr[MTR_MAX_VLN].get<double>();
+			tbl[idx].voltage_avg = mtr[MTR_AVG_VLN].get<double>();
+			tbl[idx].voltage_unbalance_min = mtr[MTR_MIN_VUNB].get<double>();
+			tbl[idx].voltage_unbalance_max = mtr[MTR_MAX_VUNB].get<double>();
+			tbl[idx].voltage_unbalance_avg = mtr[MTR_AVG_VUNB].get<double>();
+			tbl[idx].above_RangeA_Count = mtr[MTR_ABOVE_A_CNT].get<double>();
+			tbl[idx].below_RangeA_Count = mtr[MTR_BELOW_A_CNT].get<double>();
+			tbl[idx].above_RangeB_Count = mtr[MTR_ABOVE_B_CNT].get<double>();
+			tbl[idx].below_RangeB_Count = mtr[MTR_BELOW_B_CNT].get<double>();
+			tbl[idx].below_10_percent_NormVol_Duration = mtr[MTR_BELOW_10_DUR].get<double>();
+			tbl[idx].below_10_percent_NormVol_Count = mtr[MTR_BELOW_10_CNT].get<double>();
 #endif
 			idx++;
 		}
@@ -1257,50 +1257,46 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, nlohmann::json& metri
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
-			tbl[idx].total_load_min = mtr[HSE_MIN_TOTAL_LOAD].asDouble();
-			tbl[idx].total_load_max = mtr[HSE_MAX_TOTAL_LOAD].asDouble();
-			tbl[idx].total_load_avg = mtr[HSE_AVG_TOTAL_LOAD].asDouble();
-			tbl[idx].hvac_load_min = mtr[HSE_MIN_HVAC_LOAD].asDouble();
-			tbl[idx].hvac_load_max = mtr[HSE_MAX_HVAC_LOAD].asDouble();
-			tbl[idx].hvac_load_avg = mtr[HSE_AVG_HVAC_LOAD].asDouble();
-			tbl[idx].air_temperature_min = mtr[HSE_MIN_AIR_TEMP].asDouble();
-			tbl[idx].air_temperature_max = mtr[HSE_MAX_AIR_TEMP].asDouble();
-			tbl[idx].air_temperature_avg = mtr[HSE_AVG_AIR_TEMP].asDouble();
-			tbl[idx].air_temperature_setpoint_cooling = mtr[HSE_AVG_DEV_COOLING].asDouble();
-			tbl[idx].air_temperature_setpoint_heating = mtr[HSE_AVG_DEV_HEATING].asDouble();
-			tbl[idx].system_mode = mtr[HSE_SYSTEM_MODE].asInt();
-			tbl[idx].waterheater_load_min = mtr[HSE_SYSTEM_MODE + 1].asDouble();
-			tbl[idx].waterheater_load_max = mtr[HSE_SYSTEM_MODE + 2].asDouble();
-			tbl[idx].waterheater_load_avg = mtr[HSE_SYSTEM_MODE + 3].asDouble();
-			tbl[idx].waterheater_setpoint_min = mtr[HSE_SYSTEM_MODE + 4].asDouble();
-			tbl[idx].waterheater_setpoint_max = mtr[HSE_SYSTEM_MODE + 5].asDouble();
-			tbl[idx].waterheater_setpoint_avg = mtr[HSE_SYSTEM_MODE + 6].asDouble();
-			tbl[idx].waterheater_demand_min = mtr[HSE_SYSTEM_MODE + 7].asDouble();
-			tbl[idx].waterheater_demand_max = mtr[HSE_SYSTEM_MODE + 8].asDouble();
-			tbl[idx].waterheater_demand_avg = mtr[HSE_SYSTEM_MODE + 9].asDouble();
-			tbl[idx].waterheater_temp_min = mtr[HSE_SYSTEM_MODE + 10].asDouble();
-			tbl[idx].waterheater_temp_max = mtr[HSE_SYSTEM_MODE + 11].asDouble();
-			tbl[idx].waterheater_temp_avg = mtr[HSE_SYSTEM_MODE + 12].asDouble();
+			tbl[idx].total_load_min = mtr[HSE_MIN_TOTAL_LOAD].get<double>();
+			tbl[idx].total_load_max = mtr[HSE_MAX_TOTAL_LOAD].get<double>();
+			tbl[idx].total_load_avg = mtr[HSE_AVG_TOTAL_LOAD].get<double>();
+			tbl[idx].hvac_load_min = mtr[HSE_MIN_HVAC_LOAD].get<double>();
+			tbl[idx].hvac_load_max = mtr[HSE_MAX_HVAC_LOAD].get<double>();
+			tbl[idx].hvac_load_avg = mtr[HSE_AVG_HVAC_LOAD].get<double>();
+			tbl[idx].air_temperature_min = mtr[HSE_MIN_AIR_TEMP].get<double>();
+			tbl[idx].air_temperature_max = mtr[HSE_MAX_AIR_TEMP].get<double>();
+			tbl[idx].air_temperature_avg = mtr[HSE_AVG_AIR_TEMP].get<double>();
+			tbl[idx].air_temperature_setpoint_cooling = mtr[HSE_AVG_DEV_COOLING].get<double>();
+			tbl[idx].air_temperature_setpoint_heating = mtr[HSE_AVG_DEV_HEATING].get<double>();
+			tbl[idx].system_mode = mtr[HSE_SYSTEM_MODE].get<int>();
+			tbl[idx].waterheater_load_min = mtr[HSE_SYSTEM_MODE + 1].get<double>();
+			tbl[idx].waterheater_load_max = mtr[HSE_SYSTEM_MODE + 2].get<double>();
+			tbl[idx].waterheater_load_avg = mtr[HSE_SYSTEM_MODE + 3].get<double>();
+			tbl[idx].waterheater_setpoint_min = mtr[HSE_SYSTEM_MODE + 4].get<double>();
+			tbl[idx].waterheater_setpoint_max = mtr[HSE_SYSTEM_MODE + 5].get<double>();
+			tbl[idx].waterheater_setpoint_avg = mtr[HSE_SYSTEM_MODE + 6].get<double>();
+			tbl[idx].waterheater_demand_min = mtr[HSE_SYSTEM_MODE + 7].get<double>();
+			tbl[idx].waterheater_demand_max = mtr[HSE_SYSTEM_MODE + 8].get<double>();
+			tbl[idx].waterheater_demand_avg = mtr[HSE_SYSTEM_MODE + 9].get<double>();
+			tbl[idx].waterheater_temp_min = mtr[HSE_SYSTEM_MODE + 10].get<double>();
+			tbl[idx].waterheater_temp_max = mtr[HSE_SYSTEM_MODE + 11].get<double>();
+			tbl[idx].waterheater_temp_avg = mtr[HSE_SYSTEM_MODE + 12].get<double>();
 
 
-			tbl[idx].wh_lower_setpoint_min = mtr[HSE_SYSTEM_MODE + 13].asDouble();
-			tbl[idx].wh_lower_setpoint_max = mtr[HSE_SYSTEM_MODE + 14].asDouble();
-			tbl[idx].wh_lower_setpoint_avg = mtr[HSE_SYSTEM_MODE + 15].asDouble();
-			tbl[idx].wh_upper_setpoint_min = mtr[HSE_SYSTEM_MODE + 16].asDouble();
-			tbl[idx].wh_upper_setpoint_max = mtr[HSE_SYSTEM_MODE + 17].asDouble();
-			tbl[idx].wh_upper_setpoint_avg = mtr[HSE_SYSTEM_MODE + 18].asDouble();
-			tbl[idx].wh_lower_temp_min = mtr[HSE_SYSTEM_MODE + 19].asDouble();
-			tbl[idx].wh_lower_temp_max = mtr[HSE_SYSTEM_MODE + 20].asDouble();
-			tbl[idx].wh_lower_temp_avg = mtr[HSE_SYSTEM_MODE + 21].asDouble();
-			tbl[idx].wh_upper_temp_min = mtr[HSE_SYSTEM_MODE + 22].asDouble();
-			tbl[idx].wh_upper_temp_max = mtr[HSE_SYSTEM_MODE + 23].asDouble();
-			tbl[idx].wh_upper_temp_avg = mtr[HSE_SYSTEM_MODE + 24].asDouble();
-			tbl[idx].wh_lower_elem_state = mtr[HSE_SYSTEM_MODE + 25].asInt();
-			tbl[idx].wh_upper_elem_state = mtr[HSE_SYSTEM_MODE + 26].asInt();
-
-
-
-
+			tbl[idx].wh_lower_setpoint_min = mtr[HSE_SYSTEM_MODE + 13].get<double>();
+			tbl[idx].wh_lower_setpoint_max = mtr[HSE_SYSTEM_MODE + 14].get<double>();
+			tbl[idx].wh_lower_setpoint_avg = mtr[HSE_SYSTEM_MODE + 15].get<double>();
+			tbl[idx].wh_upper_setpoint_min = mtr[HSE_SYSTEM_MODE + 16].get<double>();
+			tbl[idx].wh_upper_setpoint_max = mtr[HSE_SYSTEM_MODE + 17].get<double>();
+			tbl[idx].wh_upper_setpoint_avg = mtr[HSE_SYSTEM_MODE + 18].get<double>();
+			tbl[idx].wh_lower_temp_min = mtr[HSE_SYSTEM_MODE + 19].get<double>();
+			tbl[idx].wh_lower_temp_max = mtr[HSE_SYSTEM_MODE + 20].get<double>();
+			tbl[idx].wh_lower_temp_avg = mtr[HSE_SYSTEM_MODE + 21].get<double>();
+			tbl[idx].wh_upper_temp_min = mtr[HSE_SYSTEM_MODE + 22].get<double>();
+			tbl[idx].wh_upper_temp_max = mtr[HSE_SYSTEM_MODE + 23].get<double>();
+			tbl[idx].wh_upper_temp_avg = mtr[HSE_SYSTEM_MODE + 24].get<double>();
+			tbl[idx].wh_lower_elem_state = mtr[HSE_SYSTEM_MODE + 25].get<int>();
+			tbl[idx].wh_upper_elem_state = mtr[HSE_SYSTEM_MODE + 26].get<int>();
 			idx++;
 		}
 	}
@@ -1324,12 +1320,12 @@ void metrics_collector_writer::hdfInverterWrite (size_t objs, nlohmann::json& me
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
-			tbl[idx].real_power_min = mtr[INV_MIN_REAL_POWER].asDouble();
-			tbl[idx].real_power_max = mtr[INV_MAX_REAL_POWER].asDouble();
-			tbl[idx].real_power_avg = mtr[INV_AVG_REAL_POWER].asDouble();
-			tbl[idx].reactive_power_min = mtr[INV_MIN_REAC_POWER].asDouble();
-			tbl[idx].reactive_power_max = mtr[INV_MAX_REAC_POWER].asDouble();
-			tbl[idx].reactive_power_avg = mtr[INV_AVG_REAC_POWER].asDouble();
+			tbl[idx].real_power_min = mtr[INV_MIN_REAL_POWER].get<double>();
+			tbl[idx].real_power_max = mtr[INV_MAX_REAL_POWER].get<double>();
+			tbl[idx].real_power_avg = mtr[INV_AVG_REAL_POWER].get<double>();
+			tbl[idx].reactive_power_min = mtr[INV_MIN_REAC_POWER].get<double>();
+			tbl[idx].reactive_power_max = mtr[INV_MAX_REAC_POWER].get<double>();
+			tbl[idx].reactive_power_avg = mtr[INV_AVG_REAC_POWER].get<double>();
 			idx++;
 		}
 	}
@@ -1353,7 +1349,7 @@ void metrics_collector_writer::hdfCapacitorWrite (size_t objs, nlohmann::json& m
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
-			tbl[idx].operation_count = mtr[CAP_OPERATION_CNT].asDouble();
+			tbl[idx].operation_count = mtr[CAP_OPERATION_CNT].get<double>();
 			idx++;
 		}
 	}
@@ -1377,7 +1373,7 @@ void metrics_collector_writer::hdfRegulatorWrite (size_t objs, nlohmann::json& m
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
-			tbl[idx].operation_count = mtr[REG_OPERATION_CNT].asDouble();
+			tbl[idx].operation_count = mtr[REG_OPERATION_CNT].get<double>();
 			idx++;
 		}
 	}
@@ -1401,24 +1397,24 @@ void metrics_collector_writer::hdfFeederWrite (size_t objs, nlohmann::json& metr
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
-			tbl[idx].real_power_min = mtr[FDR_MIN_REAL_POWER].asDouble();
-			tbl[idx].real_power_max = mtr[FDR_MAX_REAL_POWER].asDouble();
-			tbl[idx].real_power_avg = mtr[FDR_AVG_REAL_POWER].asDouble();
-			tbl[idx].real_power_median = mtr[FDR_MED_REAL_POWER].asDouble();
-			tbl[idx].reactive_power_min = mtr[FDR_MIN_REAC_POWER].asDouble();
-			tbl[idx].reactive_power_max = mtr[FDR_MAX_REAC_POWER].asDouble();
-			tbl[idx].reactive_power_avg = mtr[FDR_AVG_REAC_POWER].asDouble();
-			tbl[idx].reactive_power_median = mtr[FDR_MED_REAC_POWER].asDouble();
-			tbl[idx].real_energy = mtr[FDR_REAL_ENERGY].asDouble();
-			tbl[idx].reactive_energy = mtr[FDR_REAC_ENERGY].asDouble();
-			tbl[idx].real_power_losses_min = mtr[FDR_MIN_REAL_LOSS].asDouble();
-			tbl[idx].real_power_losses_max = mtr[FDR_MAX_REAL_LOSS].asDouble();
-			tbl[idx].real_power_losses_avg = mtr[FDR_AVG_REAL_LOSS].asDouble();
-			tbl[idx].real_power_losses_median = mtr[FDR_MED_REAL_LOSS].asDouble();
-			tbl[idx].reactive_power_losses_min = mtr[FDR_MIN_REAC_LOSS].asDouble();
-			tbl[idx].reactive_power_losses_max = mtr[FDR_MAX_REAC_LOSS].asDouble();
-			tbl[idx].reactive_power_losses_avg = mtr[FDR_AVG_REAC_LOSS].asDouble();
-			tbl[idx].reactive_power_losses_median = mtr[FDR_MED_REAC_LOSS].asDouble();
+			tbl[idx].real_power_min = mtr[FDR_MIN_REAL_POWER].get<double>();
+			tbl[idx].real_power_max = mtr[FDR_MAX_REAL_POWER].get<double>();
+			tbl[idx].real_power_avg = mtr[FDR_AVG_REAL_POWER].get<double>();
+			tbl[idx].real_power_median = mtr[FDR_MED_REAL_POWER].get<double>();
+			tbl[idx].reactive_power_min = mtr[FDR_MIN_REAC_POWER].get<double>();
+			tbl[idx].reactive_power_max = mtr[FDR_MAX_REAC_POWER].get<double>();
+			tbl[idx].reactive_power_avg = mtr[FDR_AVG_REAC_POWER].get<double>();
+			tbl[idx].reactive_power_median = mtr[FDR_MED_REAC_POWER].get<double>();
+			tbl[idx].real_energy = mtr[FDR_REAL_ENERGY].get<double>();
+			tbl[idx].reactive_energy = mtr[FDR_REAC_ENERGY].get<double>();
+			tbl[idx].real_power_losses_min = mtr[FDR_MIN_REAL_LOSS].get<double>();
+			tbl[idx].real_power_losses_max = mtr[FDR_MAX_REAL_LOSS].get<double>();
+			tbl[idx].real_power_losses_avg = mtr[FDR_AVG_REAL_LOSS].get<double>();
+			tbl[idx].real_power_losses_median = mtr[FDR_MED_REAL_LOSS].get<double>();
+			tbl[idx].reactive_power_losses_min = mtr[FDR_MIN_REAC_LOSS].get<double>();
+			tbl[idx].reactive_power_losses_max = mtr[FDR_MAX_REAC_LOSS].get<double>();
+			tbl[idx].reactive_power_losses_avg = mtr[FDR_AVG_REAC_LOSS].get<double>();
+			tbl[idx].reactive_power_losses_median = mtr[FDR_MED_REAC_LOSS].get<double>();
 			idx++;
 		}
 	}
@@ -1442,7 +1438,7 @@ void metrics_collector_writer::hdfTransformerWrite (size_t objs, nlohmann::json&
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
-			tbl[idx].trans_overload_perc = mtr[TRANS_OVERLOAD_PERC].asDouble();
+			tbl[idx].trans_overload_perc = mtr[TRANS_OVERLOAD_PERC].get<double>();
 			idx++;
 		}
 	}
@@ -1466,7 +1462,7 @@ void metrics_collector_writer::hdfLineWrite (size_t objs, nlohmann::json& metric
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
-			tbl[idx].line_overload_perc = mtr[LINE_OVERLOAD_PERC].asDouble();
+			tbl[idx].line_overload_perc = mtr[LINE_OVERLOAD_PERC].get<double>();
 			idx++;
 		}
 	}
@@ -1490,12 +1486,12 @@ void metrics_collector_writer::hdfEvChargerDetWrite (size_t objs, nlohmann::json
 			tbl[idx].time = stol(id);
 			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 			strncpy(tbl[idx].name, uid.key().c_str(), MAX_METRIC_NAME_LENGTH);;
-			tbl[idx].charge_rate_min = mtr[EV_MIN_CHARGE_RATE].asDouble();
-			tbl[idx].charge_rate_max = mtr[EV_MAX_CHARGE_RATE].asDouble();
-			tbl[idx].charge_rate_avg = mtr[EV_AVG_CHARGE_RATE].asDouble();
-			tbl[idx].battery_SOC_min = mtr[EV_MIN_BATTERY_SOC].asDouble();
-			tbl[idx].battery_SOC_max = mtr[EV_MAX_BATTERY_SOC].asDouble();
-			tbl[idx].battery_SOC_avg = mtr[EV_AVG_BATTERY_SOC].asDouble();
+			tbl[idx].charge_rate_min = mtr[EV_MIN_CHARGE_RATE].get<double>();
+			tbl[idx].charge_rate_max = mtr[EV_MAX_CHARGE_RATE].get<double>();
+			tbl[idx].charge_rate_avg = mtr[EV_AVG_CHARGE_RATE].get<double>();
+			tbl[idx].battery_SOC_min = mtr[EV_MIN_BATTERY_SOC].get<double>();
+			tbl[idx].battery_SOC_max = mtr[EV_MAX_BATTERY_SOC].get<double>();
+			tbl[idx].battery_SOC_avg = mtr[EV_AVG_BATTERY_SOC].get<double>();
 			idx++;
 		}
 	}

@@ -198,7 +198,7 @@ set(HEADER_FILE_NAMES
         ${CMAKE_SOURCE_DIR}/gldcore/property.h
         ${CMAKE_SOURCE_DIR}/gldcore/schedule.h
         ${CMAKE_SOURCE_DIR}/gldcore/test.h
-	${CMAKE_SOURCE_DIR}/gldcore/gldapi.h
+        ${CMAKE_SOURCE_DIR}/gldcore/gldapi.h
 )
 
 file(COPY ${HEADER_FILE_NAMES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/headers)
@@ -352,7 +352,7 @@ set(GLD_LIBS
         climate
         commercial
         connection
-	gldapi
+	    gldapi
         generators
         market
         mysql

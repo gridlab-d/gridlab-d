@@ -1,7 +1,6 @@
 pkglib_LTLIBRARIES += reliability/reliability.la
 
 reliability_reliability_la_CPPFLAGS =
-reliability_reliability_la_CPPFLAGS += -I$(top_srcdir)/third_party/jsonCpp
 reliability_reliability_la_CPPFLAGS += $(AM_CPPFLAGS)
 
 reliability_reliability_la_LDFLAGS =

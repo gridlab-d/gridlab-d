@@ -1345,13 +1345,11 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 			try {
 				subscribe_json_data_full = nlohmann::json::parse(value);
 			} catch (...) {
-				gl_warning("fncs_msg::subscribeJsonVariables(), failed to parse the recieved json string! Ignoring 
-					message.");
+				gl_warning("fncs_msg::subscribeJsonVariables(), failed to parse the received json string! Ignoring message.");
 				return 1;
 			}
 			if(!subscribe_json_data_full.contains(simName)) {
-				gl_warning("fncs_msg::subscribeJsonVariables(), Message doesn't contain the name of this federate. 
-					Ignoring message.");
+				gl_warning("fncs_msg::subscribeJsonVariables(), Message doesn't contain the name of this federate. Ignoring message.");
 				return 1;
 			}
 			subscribe_json_data = subscribe_json_data_full[simName];
@@ -1383,13 +1381,13 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 						nlohmann::json sub_value = subscribe_json_data[gldObjectName][gldPropertyName];
 						//check the type of property and json value need to be the same
 						if ( sub_value.is_number_integer() && gldpro_obj->is_integer() ){
-							itmp = sub_value.template get<int>();
+							itmp = sub_value.get<int>();
 							gldpro_obj->setp(itmp);
 							gl_verbose("fncs_msg::subscribeJsonVariables(): %s is set value with int: %d \n",
 									gldObjpropertyName.c_str(), itmp);
 						}
 						else if ( sub_value.is_number_float()&& gldpro_obj->is_double()){
-							dtmp = sub_value.template get<double>();
+							dtmp = sub_value.get<double>();
 							gldpro_obj->setp(dtmp);
 							gl_verbose("fncs_msg::subscribeJsonVariables(): %s is set value with double: %f \n",
 									gldObjpropertyName.c_str(), dtmp);
@@ -1399,7 +1397,7 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 								(gldpro_obj->is_complex() || gldpro_obj->is_character() || gldpro_obj->is_enumeration()) ){
 
 							char valueBuf[1024] = "";
-							string subvaluestring = sub_value.template get<string>();
+							string subvaluestring = sub_value.get<string>();
 
 							if(subvaluestring.empty() == false){
 								strncpy(valueBuf, subvaluestring.c_str(), 1023);
@@ -1448,7 +1446,7 @@ int fncs_msg::publish_fncsjson_link()  //Renke add
 		//gl_verbose("fncs_msg.publish_fncsjson_link(): gldObjectName: %s, nsize: %d . \n", gldObjectName.c_str(), nsize); //renke debug
 
 		for (int isize=0; isize<nsize ; isize++) {
-			gldPropertyName = publish_json_config[gldObjectName][isize].template get<string>();
+			gldPropertyName = publish_json_config[gldObjectName][isize].get<string>();
 			gldProperty = new JsonProperty(gldObjectName, gldPropertyName);
 			//gldObjpropertyName = gldObjectName + ".";
 			//gldObjpropertyName = gldObjpropertyName + gldPropertyName;
@@ -1499,9 +1497,9 @@ static size_t fncs_to_hex(char *out, size_t max, const char *in, size_t len)
 extern "C" size_t fncs_from_hex(void *buf, size_t len, const char *hex, size_t hexlen)
 {
 	char *p = (char*)buf;
-	char lo = (char)nullptr;
-	char hi = (char)nullptr;
-	char c = (char)nullptr;
+	char lo = (char) 0;
+	char hi = (char) 0;
+	char c = (char) 0;
 	size_t n = 0;
 	for(n = 0; n < hexlen && *hex != '\0'; n += 2)
 	{
