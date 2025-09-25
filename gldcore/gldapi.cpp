@@ -6,12 +6,66 @@
 #include "output.h"
 #include "threadpool.h"
 #include "cmdarg.h"
-#include <module.h>
+#include "legal.h"
+#include "gldrandom.h"
+#include "module.h"
+#include "environment.h"
+#include "save.h"
+#include "kml.h"
+#include "local.h"
+//#include <module.h>
+//#include <module.h>
 
- // Default constructor
-GridLabD::GridLabD() {
-        // Initialization code goes here
+namespace fs = std::filesystem;
+
+
+std::vector<std::string> split_path_x(const std::string& path, char sep){
+    std::vector<std::string> tokens;
+    std::size_t start = 0, end;
+    while ((end = path.find(sep, start)) != std::string::npos) {
+        tokens.push_back(path.substr(start, end - start));
+        start = end + 1;
+    }
+    tokens.push_back(path.substr(start));
+    return tokens;
 }
+
+
+fs::path
+findExecutable_x(const std::string &name, const std::string &execName, const std::string &pathString) {
+    fs::path execPath(execName);
+    if (execPath.is_absolute()) {
+        return execPath;
+    } else if (execPath.is_relative() && execName.front() == '.') {
+        return fs::absolute(execPath);
+    } else {
+        auto sys_path = pathString;
+        size_t pos;
+        std::string path_token;
+
+        auto check_exists = [](fs::path gldpath, fs::path gldpath_exe) {
+            if (fs::exists(gldpath)) {
+                return gldpath;
+            } else if (fs::exists(gldpath_exe)) {
+                return gldpath_exe;
+            }
+            return fs::path();
+        };
+
+        auto splitPath = split_path_x(sys_path, env_delim_char);
+
+        for(const auto& path : splitPath){
+            auto gldpath = fs::path(path) / name;
+            auto gldpath_exe = fs::path(path) / (name + ".exe");
+            auto check_path = check_exists(gldpath, gldpath_exe);
+            if (!check_path.empty()) {
+                return check_path;
+            }
+        }
+    }
+    throw std::runtime_error("Unable to determine GridLAB-D executable path");
+}
+
 
  // constructor
 GridLabD::GridLabD(int argc, char* argv[]) {
@@ -19,7 +73,7 @@ GridLabD::GridLabD(int argc, char* argv[]) {
         char *pd1, *pd2;
     int i, pos = 0;
 
-    global_gl_executable = findExecutable("gridlabd", argv[0], getenv("PATH"));
+    global_gl_executable = findExecutable_x("gridlabd", argv[0], getenv("PATH"));
     auto root_path = global_gl_executable.parent_path().parent_path();
     global_gl_share = root_path / "share";
     global_gl_include = root_path / "include";
@@ -72,8 +126,16 @@ GridLabD::GridLabD(int argc, char* argv[]) {
         if (pos < (int) (sizeof(global_command_line) - strlen(argv[i])))
             pos += sprintf(global_command_line + pos, "%s%s", pos > 0 ? " " : "", argv[i]);
     }
-    setup_before_load(argc, argv);
-    
+    if(setup_before_load(argc, argv) == GLD_OPERATION_FAILED)
+    {
+        exit(XC_INIERR);
+    }
+    /* see if newer version is available */
+    if (global_check_version)
+        check_version(1);
+
+    /* setup the random number generator */
+    random_init();
 }
 
 // Set configuration file
@@ -83,7 +145,7 @@ GLDErrorCode GridLabD::set_config_file(const std::string& config_file) {
 }
 
 // Load a GLM file
-GLDErrorCode GridLabD::load_glm(const std::string& filepath) {
+GLDErrorCode GridLabD::load_glm(const std::string& filepath, int argc, char* argv[]) {
     glm_file_path = filepath;
     printf("Loading GLM file: %s\n", filepath.c_str());
     // load_all()
@@ -103,10 +165,7 @@ GLDErrorCode GridLabD::load_glm(const std::string& filepath) {
 }
 
 // Load a GLM file
-GLDErrorCode GridLabD::setup_before_load(const std::string& filepath) {
-    glm_file_path = filepath;
-    printf("Setup GLD %s\n", filepath.c_str());
-    // load_all()
+GLDErrorCode GridLabD::setup_before_load(int argc, char* argv[]) {
     
     /* set the default timezone */
     timestamp_set_tz(nullptr);
@@ -116,25 +175,15 @@ GLDErrorCode GridLabD::setup_before_load(const std::string& filepath) {
     
     /* main initialization */
     if (!output_init(argc, argv) || !exec_init())
-        exit(XC_INIERR);
+        return GLD_OPERATION_FAILED;
 
     /* set thread count equal to processor count if not passed on command-line */
     if (global_threadcount == 0)
         global_threadcount = processor_count();
     output_verbose("detected %d processor(s)", processor_count());
     output_verbose("using %d helper thread(s)", global_threadcount);
-
-
-    return GLD_SUCCESS;
-}
-
-// Load a GLM file
-GLDErrorCode GridLabD::setup_after_load(const std::string& filepath) {
-    glm_file_path = filepath;
-    printf("Loading GLM file: %s\n", filepath.c_str());
-    // load_all()
     
-        /* stitch clock */
+    /* stitch clock */
     global_clock = global_starttime;
 
     /* Check to see if stoptime is set - if not, set to 1-year later */
@@ -142,14 +191,22 @@ GLDErrorCode GridLabD::setup_after_load(const std::string& filepath) {
         global_stoptime = global_starttime + 31536000;
     }
 
-    /* initialize scheduler */
-    sched_init(0);
-
     /* recheck threadcount in case user set it 0 */
     if (global_threadcount == 0) {
         global_threadcount = processor_count();
         output_verbose("using %d helper thread(s)", global_threadcount);
     }
+
+    return GLD_SUCCESS;
+}
+
+// Load a GLM file
+GLDErrorCode GridLabD::setup_after_load(const std::string& filepath) {
+   
+
+    /* initialize scheduler */
+    sched_init(0);
+
     return GLD_SUCCESS;
 }
 
@@ -162,20 +219,6 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
     if (strcmp(global_pidfile,"")==0 && legal_notice()==FAILED)
         exit(XC_USRERR);
 #endif
-
-    /* start the processing environment */
-    output_verbose("load time: %d sec", realtime_runtime());
-    output_verbose("starting up %s environment", global_environment);
-    if (environment_start(argc, argv) == FAILED) {
-        output_fatal("environment startup failed: %s", strerror(errno));
-        /*	TROUBLESHOOT
-            The requested environment could not be started.  This usually
-            follows a more specific message regarding the startup problem.
-            Follow the recommendation for the indicated problem.
-         */
-        if (exec_getexitcode() == XC_SUCCESS)
-            exec_setexitcode(XC_ENVERR);
-    }
 
     /* save the model */
     if (strcmp(global_savefile, "") != 0) {
@@ -277,7 +320,7 @@ GLDErrorCode GridLabD::edit_object(const std::string& name, const GLDData& updat
 }
 
 // Run simulation from start to end
-GLDErrorCode GridLabD::run(double start_time, double end_time, double& simulation_time) {
+GLDErrorCode GridLabD::run(double start_time, double end_time, double& simulation_time, int argc, char* argv[]) {
     printf("Running simulation from %.2f to %.2f\n", start_time, end_time);
     simulation_time = end_time;
 
