@@ -56,13 +56,14 @@ public:
 
 
     // Load a GLM and return an error code
-    GLDErrorCode load_glm(const std::string& filepath);
+    GLDErrorCode load_glm(const std::string& filepath, int argc, char* argv[]);
 
     // Setup GLD and return an error code
-    GLDErrorCode GridLabD::setup_before_load(const std::string& filepath) ;
+    //GLDErrorCode setup_before_load(const std::string& filepath) ;
+    GLDErrorCode setup_before_load(int argc, char* argv[]);
 
     // Setup GLD and return an error code
-    GLDErrorCode GridLabD::setup_after_load(const std::string& filepath) ;
+    GLDErrorCode setup_after_load(const std::string& filepath) ;
 
     // Get the GLM data based on a query
     GLDErrorCode get_glm_data(const std::string& query, GLDData& result);
@@ -86,7 +87,7 @@ public:
     GLDErrorCode edit_object(const std::string& name, const GLDData& updated_data);
 
     // Run the simulation for a specified time range and return the simulation time
-    GLDErrorCode run(double start_time, double end_time, double& simulation_time);
+    GLDErrorCode run(double start_time, double end_time, double& simulation_time, int argc, char* argv[]);
 
     // Run the simulation by one time step and return the simulation time
     GLDErrorCode step(double& simulation_time);
@@ -107,10 +108,13 @@ public:
     GLDErrorCode get_time(std::string& current_time);
 
     // Set the application mode (e.g., POWERFLOW, TIMESERIES, VVO)
-    GLDErrorCode set_application_mode(GLDApplicationType mode);
+    GLDErrorCode set_application_mode(GLDApplicationType mode); //Not needed anymore
 
     // Set the time step for the simulation
     GLDErrorCode set_time_step(double time_step);
+
+    //Exit simulation
+    GLDErrorCode exit_gld(const std::string& filepath);
 
     private:
         std::string glm_file_path;  // Path to the GLM file

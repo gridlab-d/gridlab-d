@@ -1880,10 +1880,131 @@ void exec_clock_update_modules()
 	exec_sync_set(nullptr,t1,false);
 }
 
+STATUS multi_thread_init() 
+{
+	// Only setup threadpool for each object rank list at the first iteration;
+	cpp_threadpool* threadpool = new cpp_threadpool(global_threadcount);
+	//int n_threads; //number of thread used in the threadpool of an object rank list
+	OBJSYNCDATA *thread = nullptr;
+	struct arg_data *arg_data_array;
+	int j;
+		/* set thread count equal to processor count if not passed on command-line */
+	if (global_threadcount == 0)
+	{
+		global_threadcount = processor_count();
+		output_verbose("using %d helper thread(s)", global_threadcount);
+	}
+
+	//sjin: allocate arg_data_array to store pthreads creation argument
+	arg_data_array = (struct arg_data *) malloc(sizeof(struct arg_data)
+						* global_threadcount);
+
+	/* allocate thread synchronization data */
+	thread_data = (struct thread_data *) malloc(sizeof(struct thread_data) +
+					sizeof(struct sync_data) * global_threadcount);
+	threadpool_data = new threadpool_thread_data(global_threadcount, threadpool);
+	if (!thread_data) {
+		output_error("thread memory allocation failed");
+		/* TROUBLESHOOT
+			A thread memory allocation failed.
+			Follow the standard process for freeing up memory ang try again.
+			*/
+		return FAILED;
+	}
+	thread_data->count = global_threadcount;
+	thread_data->data = (struct sync_data *) (thread_data + 1);
+	for (j = 0; j < thread_data->count; j++)
+		thread_data->data[j].status = SUCCESS;
+	
+	return SUCCESS;
+}
+
+void multithread_stuff(int iObjRankList, cpp_threadpool* threadpool, int i) {
+	unsigned int n_items, objn = 0, n;
+	unsigned int n_obj = ranks[pass]->ordinal[i]->size;
+	LISTITEM *ptr;
+	int incr;
+	int j=0;
+	OBJSYNCDATA *thread = nullptr;
+
+	// Only create threadpool for each object rank list at the first iteration.
+	// Reuse the threadppol of each object rank list at all other iterations.
+//  if (setTP) {
+		incr = (int) ceil((float) n_obj / global_threadcount);
+		// if the number of objects is less than or equal to the number of threads, each thread process one object
+		if (incr <= 1) {
+			n_threads[iObjRankList] = n_obj;
+			n_items = 1;
+			// if the number of objects is greater than the number of threads, each thread process the same number of
+			// objects (incr), except that the last thread may process less objects
+		} else {
+			n_threads[iObjRankList] = (int) ceil((float) n_obj / incr);
+			n_items = incr;
+		}
+		if ((int) n_threads[iObjRankList] > global_threadcount) {
+			output_error("Running threads > global_threadcount");
+			exit(0);
+		}
+
+		// allocate thread list
+		thread = (OBJSYNCDATA *) malloc(sizeof(OBJSYNCDATA) * n_threads[iObjRankList]);
+		memset(thread, 0, sizeof(OBJSYNCDATA) * n_threads[iObjRankList]);
+		// assign starting obj for each thread
+		for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next) {
+			if (thread[objn].nObj == n_items)
+				objn++;
+			if (thread[objn].nObj == 0) {
+				thread[objn].ls = ptr;
+			}
+			thread[objn].nObj++;
+		}
+
+	// lock access to done count
+	std::unique_lock<std::mutex> lock_done(*donelock[iObjRankList]);
+//							pthread_mutex_lock(&donelock[iObjRankList]);
+
+	// initialize wait count
+	donecount[iObjRankList] = n_threads[iObjRankList];
+
+	// lock access to start condition
+	std::unique_lock<std::mutex> lock_start(*startlock[iObjRankList]);
+//							pthread_mutex_lock(&startlock[iObjRankList]);
+
+	// update start condition
+	next_t1[iObjRankList]++;
+
+	// signal all the threads
+	start[iObjRankList]->notify_all();
+
+//                            pthread_cond_broadcast(&start[iObjRankList]);
+	// unlock access to start count
+//							pthread_mutex_unlock(&startlock[iObjRankList]);
+	startlock[iObjRankList]->unlock();
+
+	// begin wait
+	while (donecount[iObjRankList] > 0)
+		done[iObjRankList]->wait_for(lock_done, std::chrono::milliseconds(100));
+//								pthread_cond_wait(&done[iObjRankList],&donelock[iObjRankList]);
+
+	// unlock done count
+//							pthread_mutex_unlock(&donelock[iObjRankList]);
+	donelock[iObjRankList]->unlock();
+	threadpool->await();
+
+
+	for (j = 0; j < thread_data->count; j++) {
+		if (thread_data->data[j].status == FAILED) {
+			exec_sync_set(nullptr,TS_INVALID,false);
+			THROW("synchronization failed");
+		}
+	}
+}
+
+
 /******************************************************************
  *  MAIN EXEC LOOP
  ******************************************************************/
-
+//Commenting everything related to multithreading
  STATUS run_preparation() {
 		// Only setup threadpool for each object rank list at the first iteration;
 	cpp_threadpool* threadpool = new cpp_threadpool(global_threadcount);
@@ -1891,9 +2012,9 @@ void exec_clock_update_modules()
 	bool setTP = true;
 	//int n_threads; //number of thread used in the threadpool of an object rank list
 	OBJSYNCDATA *thread = nullptr;
-
+	struct arg_data *arg_data_array;
 	int nObjRankList, iObjRankList;
-	int k;
+	int j, k;
 
 	/* run create scripts, if any */
 	if ( exec_run_createscripts()!=XC_SUCCESS )
@@ -1949,33 +2070,10 @@ void exec_clock_update_modules()
 			realtime_schedule_event(realtime_now()+1,show_progress);
 		}
 
-		/* set thread count equal to processor count if not passed on command-line */
-		if (global_threadcount == 0)
+		if(multi_thread_init() == FAILED)
 		{
-			global_threadcount = processor_count();
-			output_verbose("using %d helper thread(s)", global_threadcount);
-		}
-
-		//sjin: allocate arg_data_array to store pthreads creation argument
-		arg_data_array = (struct arg_data *) malloc(sizeof(struct arg_data)
-						 * global_threadcount);
-
-		/* allocate thread synchronization data */
-		thread_data = (struct thread_data *) malloc(sizeof(struct thread_data) +
-					  sizeof(struct sync_data) * global_threadcount);
-		threadpool_data = new threadpool_thread_data(global_threadcount, threadpool);
-		if (!thread_data) {
-			output_error("thread memory allocation failed");
-			/* TROUBLESHOOT
-				A thread memory allocation failed.
-				Follow the standard process for freeing up memory ang try again.
-			 */
 			return FAILED;
 		}
-		thread_data->count = global_threadcount;
-		thread_data->data = (struct sync_data *) (thread_data + 1);
-		for (j = 0; j < thread_data->count; j++)
-			thread_data->data[j].status = SUCCESS;
 	}
 	else
 	{
@@ -2002,7 +2100,7 @@ void exec_clock_update_modules()
 			global_stoptime = TS_NEVER;
 	}
 
-	/*** GET FIRST SIGNAL FROM MASTER HERE ****/
+	/*** GET FIRST SIGNAL FROM MASTER HERE ****/ //SN: Is this needed?
 	if (global_multirun_mode == MRM_SLAVE)
 	{
 		pthread_cond_broadcast(&mls_inst_signal); // tell slaveproc() it's time to get rolling
@@ -2094,9 +2192,117 @@ void exec_clock_update_modules()
 
 	//sjin: GetMachineCycleCount
 	cstart = (clock_t)exec_clock();
-
+	return SUCCESS;
  }
 
+
+ int handle_delta_mode_operation() {
+	DT deltatime = delta_update();
+	if ( deltatime==DT_INVALID )
+	{
+		output_error("delta_update() failed, deltamode operation cannot continue");
+		/*  TROUBLESHOOT
+		An error was encountered while trying to perform a deltamode update.  Look for
+		other relevant deltamode messages for indications as to why this may have occurred.
+		If the error persists, please submit your code and a bug report via the trac website.
+		*/
+		global_simulation_mode = SM_ERROR;
+		THROW("Deltamode simulation failure");
+		return -1;	//Just in case, but probably not needed
+	}
+	else if (deltatime > 0)
+	{
+		/* Reset the iteration counter here - if we made it this far, we moved forward */
+		/* If a simulate "stays" in deltamode too long, the periodic checks will still exhaust the iteration limit - this fixes that */
+		iteration_counter = global_iteration_limit;
+		federation_iteration_counter = global_iteration_limit;
+	}
+	exec_sync_set(nullptr,global_clock + deltatime,true);
+	global_simulation_mode = SM_EVENT;
+	return 0;
+}
+
+void report_performance_after_run(time_t start_time, int64 passes, int64 tsteps) {
+	/* report performance */
+	if (global_profiler && !exec_sync_isinvalid(nullptr) )
+	{
+		double elapsed_sim = timestamp_to_hours(global_clock)-timestamp_to_hours(global_starttime);
+		double elapsed_wall = (double)(realtime_now()-start_time+1);
+		double sync_time = 0;
+		double sim_speed = object_get_count()/1000.0*elapsed_sim/elapsed_wall;
+
+		extern clock_t loader_time;
+		extern clock_t instance_synctime;
+		extern clock_t randomvar_synctime;
+		extern clock_t schedule_synctime;
+		extern clock_t loadshape_synctime;
+		extern clock_t enduse_synctime;
+		extern clock_t transform_synctime;
+
+		CLASS *cl;
+		DELTAPROFILE *dp = delta_getprofile();
+		double delta_runtime = 0, delta_simtime = 0;
+		if (global_threadcount==0) global_threadcount=1;
+		for (cl=class_get_first_class(); cl!=nullptr; cl=cl->next)
+			sync_time += ((double)cl->profiler.clocks)/global_ms_per_second;
+		sync_time /= global_threadcount;
+		delta_runtime = dp->t_count>0 ? (dp->t_preupdate+dp->t_update+dp->t_postupdate)/global_ms_per_second : 0;
+		delta_simtime = dp->t_count*(double)dp->t_delta/(double)dp->t_count/1e9;
+
+		output_profile("\nCore profiler results");
+		output_profile("======================\n");
+		output_profile("Total objects           %8d objects", object_get_count());
+		output_profile("Parallelism             %8d thread%s", global_threadcount,global_threadcount>1?"s":"");
+		output_profile("Total time              %8.1f seconds", elapsed_wall);
+		output_profile("  Core time             %8.1f seconds (%.1f%%)", (elapsed_wall-sync_time-delta_runtime),(elapsed_wall-sync_time-delta_runtime)/elapsed_wall*100);
+		output_profile("    Compiler            %8.1f seconds (%.1f%%)", (double)loader_time/global_ms_per_second,((double)loader_time/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Instances           %8.1f seconds (%.1f%%)", (double)instance_synctime/global_ms_per_second,((double)instance_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Random variables    %8.1f seconds (%.1f%%)", (double)randomvar_synctime/global_ms_per_second,((double)randomvar_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Schedules           %8.1f seconds (%.1f%%)", (double)schedule_synctime/global_ms_per_second,((double)schedule_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Loadshapes          %8.1f seconds (%.1f%%)", (double)loadshape_synctime/global_ms_per_second,((double)loadshape_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Enduses             %8.1f seconds (%.1f%%)", (double)enduse_synctime/global_ms_per_second,((double)enduse_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Transforms          %8.1f seconds (%.1f%%)", (double)transform_synctime/global_ms_per_second,((double)transform_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("  Model time            %8.1f seconds/thread (%.1f%%)", sync_time,sync_time/elapsed_wall*100);
+		if ( dp->t_count>0 )
+			output_profile("  Deltamode time        %8.1f seconds/thread (%.1f%%)", delta_runtime,delta_runtime/elapsed_wall*100);
+		output_profile("Simulation time         %8.0f days", elapsed_sim/24);
+		if (sim_speed>10.0)
+			output_profile("Simulation speed         %7.0lfk object.hours/second", sim_speed);
+		else if (sim_speed>1.0)
+			output_profile("Simulation speed         %7.1lfk object.hours/second", sim_speed);
+		else
+			output_profile("Simulation speed         %7.0lf object.hours/second", sim_speed*1000);
+		output_profile("Passes completed        %8d passes", passes);
+		output_profile("Time steps completed    %8d timesteps", tsteps);
+		output_profile("Convergence efficiency  %8.02lf passes/timestep", (double)passes/tsteps);
+#ifndef NOLOCKS
+		output_profile("Read lock contention    %7.01lf%%", (rlock_spin>0 ? (1-(double)rlock_count/(double)rlock_spin)*100 : 0));
+		output_profile("Write lock contention   %7.01lf%%", (wlock_spin>0 ? (1-(double)wlock_count/(double)wlock_spin)*100 : 0));
+#endif
+		output_profile("Average timestep        %7.0lf seconds/timestep", (double)(global_clock-global_starttime)/tsteps);
+		output_profile("Simulation rate         %7.0lf x realtime", (double)(global_clock-global_starttime)/elapsed_wall);
+		if ( dp->t_count>0 )
+		{
+			double total = dp->t_preupdate + dp->t_update + dp->t_interupdate + dp->t_postupdate;
+			output_profile("\nDelta mode profiler results");
+			output_profile("===========================\n");
+			output_profile("Active modules          %s", dp->module_list);
+			output_profile("Initialization time     %8.1lf seconds", (double)(dp->t_init)/(double)global_ms_per_second);
+			output_profile("Number of updates       %8" FMT_INT64 "u", dp->t_count);
+			output_profile("Average update timestep %8.4lf ms", (double)dp->t_delta/(double)dp->t_count/1e6);
+			output_profile("Minumum update timestep %8.4lf ms", dp->t_min/1e6);
+			output_profile("Maximum update timestep %8.4lf ms", dp->t_max/1e6);
+			output_profile("Total deltamode simtime %8.1lf s", delta_simtime/1000);
+			output_profile("Preupdate time          %8.1lf s (%.1f%%)", (double)(dp->t_preupdate)/(double)global_ms_per_second, (double)(dp->t_preupdate)/total*100);
+			output_profile("Object update time      %8.1lf s (%.1f%%)", (double)(dp->t_update)/(double)global_ms_per_second, (double)(dp->t_update)/total*100);
+			output_profile("Interupdate time        %8.1lf s (%.1f%%)", (double)(dp->t_interupdate)/(double)global_ms_per_second, (double)(dp->t_interupdate)/total*100);
+			output_profile("Postupdate time         %8.1lf s (%.1f%%)", (double)(dp->t_postupdate)/(double)global_ms_per_second, (double)(dp->t_postupdate)/total*100);
+			output_profile("Total deltamode runtime %8.1lf s (100%%)", delta_runtime);
+			output_profile("Simulation rate         %8.1lf x realtime", delta_simtime/delta_runtime/1000);
+		}
+		output_profile("\n");
+	}
+}
 
 /** This is the main simulation loop
 	@return STATUS is SUCCESS if the simulation reached equilibrium,
@@ -2113,8 +2319,11 @@ STATUS exec_start()
 	time_t started_at = realtime_now(); // for profiler
 	int j, k;
 	LISTITEM *ptr;
-	int incr;
-	struct arg_data *arg_data_array;
+	int incr, iObjRankList;
+	
+	if(run_preparation() == FAILED) {
+		return FAILED;
+	}
 
 	/* main loop exception handler */
 	TRY {
@@ -2317,53 +2526,6 @@ STATUS exec_start()
 						}
 
 					}
-				/*  Add/Remove first slash to toggle commented area
-					else {
-                        for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next) {
-                            auto *obj = static_cast<OBJECT *>(ptr->data);
-
-                            if (obj->oclass->threadsafe) {
-                                threadpool->add_job([=]() {
-//                                    ss_do_object_sync(0, ptr->data);
-                                    tp_do_object_sync(obj);
-                                });
-                            }
-//                            ss_do_object_sync(0, ptr->data);
-
-                            if (obj->valid_to == TS_INVALID) {
-                                //Get us out of the loop so others don't exec on bad status
-                                break;
-                            }
-                        }
-                        //printf("\n");
-                        threadpool->await();
-                        threadpool->set_sync_mode(true); // Force single thread mode for incompatible modules.
-                        for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next) {
-                            OBJECT *obj = static_cast<OBJECT *>(ptr->data);
-
-                            if (!obj->oclass->threadsafe) {
-                                threadpool->add_job([=]() {
-//                                    ss_do_object_sync(0, ptr->data);
-                                    tp_do_object_sync(obj);
-                                });
-                            }
-                            if (obj->valid_to == TS_INVALID) {
-                                //Get us out of the loop so others don't exec on bad status
-                                break;
-                            }
-                        }
-                        //printf("\n");
-                        threadpool->await();
-                        threadpool->set_sync_mode(false);
-
-                        for (j = 0; j < threadpool_data->get_count(); j++) {
-                            if (threadpool_data->get_data(j)->status == FAILED) {
-                                exec_sync_set(nullptr, TS_INVALID, false);
-                                THROW("synchronization failed");
-                            }
-                        }
-                    }
-                    /*/
 					else
 					{
 						//sjin: if global_threadcount == 1, no pthread multhreading
@@ -2382,97 +2544,10 @@ STATUS exec_start()
 							}
 							//printf("\n");
 						}
-
 						else { //sjin: implement pthreads
-                            unsigned int n_items, objn = 0, n;
-                            unsigned int n_obj = ranks[pass]->ordinal[i]->size;
-
-                            // Only create threadpool for each object rank list at the first iteration.
-                            // Reuse the threadppol of each object rank list at all other iterations.
-//                            if (setTP) {
-                                incr = (int) ceil((float) n_obj / global_threadcount);
-                                // if the number of objects is less than or equal to the number of threads, each thread process one object
-                                if (incr <= 1) {
-                                    n_threads[iObjRankList] = n_obj;
-                                    n_items = 1;
-                                    // if the number of objects is greater than the number of threads, each thread process the same number of
-                                    // objects (incr), except that the last thread may process less objects
-                                } else {
-                                    n_threads[iObjRankList] = (int) ceil((float) n_obj / incr);
-                                    n_items = incr;
-                                }
-                                if ((int) n_threads[iObjRankList] > global_threadcount) {
-                                    output_error("Running threads > global_threadcount");
-                                    exit(0);
-                                }
-
-                                // allocate thread list
-                                thread = (OBJSYNCDATA *) malloc(sizeof(OBJSYNCDATA) * n_threads[iObjRankList]);
-                                memset(thread, 0, sizeof(OBJSYNCDATA) * n_threads[iObjRankList]);
-                                // assign starting obj for each thread
-                                for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next) {
-                                    if (thread[objn].nObj == n_items)
-                                        objn++;
-                                    if (thread[objn].nObj == 0) {
-                                        thread[objn].ls = ptr;
-                                    }
-                                    thread[objn].nObj++;
-                                }
-                                // create threads
-//                                for (n = 0; n < n_threads[iObjRankList]; n++) {
-//                                    thread[n].ok = true;
-//                                    thread[n].i = iObjRankList;
-//                                    if(!threadpool->add_job([=] { obj_syncproc(&(thread[n])); })) {
-////									if (pthread_create(&(thread[n].pt),nullptr,obj_syncproc,&(thread[n]))!=0) {
-//										output_fatal("obj_sync thread creation failed");
-//                                        thread[n].ok = false;
-//									} else
-//										thread[n].n = n;
-//                                }
-//                            }
-
-                            // lock access to done count
-                            std::unique_lock<std::mutex> lock_done(*donelock[iObjRankList]);
-//							pthread_mutex_lock(&donelock[iObjRankList]);
-
-                            // initialize wait count
-                            donecount[iObjRankList] = n_threads[iObjRankList];
-
-                            // lock access to start condition
-                            std::unique_lock<std::mutex> lock_start(*startlock[iObjRankList]);
-//							pthread_mutex_lock(&startlock[iObjRankList]);
-
-                            // update start condition
-                            next_t1[iObjRankList]++;
-
-                            // signal all the threads
-                            start[iObjRankList]->notify_all();
-
-//                            pthread_cond_broadcast(&start[iObjRankList]);
-                            // unlock access to start count
-//							pthread_mutex_unlock(&startlock[iObjRankList]);
-                            startlock[iObjRankList]->unlock();
-
-                            // begin wait
-                            while (donecount[iObjRankList] > 0)
-                                done[iObjRankList]->wait_for(lock_done, std::chrono::milliseconds(100));
-//								pthread_cond_wait(&done[iObjRankList],&donelock[iObjRankList]);
-
-                            // unlock done count
-//							pthread_mutex_unlock(&donelock[iObjRankList]);
-                            donelock[iObjRankList]->unlock();
-                        }
-                        threadpool->await();
-
-
-                        for (j = 0; j < thread_data->count; j++) {
-							if (thread_data->data[j].status == FAILED) {
-								exec_sync_set(nullptr,TS_INVALID,false);
-								THROW("synchronization failed");
-							}
+							multithread_stuff(i, threadpool, iObjRankList);
 						}
 					}
-					//*/
 				}
 
 
@@ -2583,28 +2658,9 @@ STATUS exec_start()
 			/* handle delta mode operation */
 			if ( global_simulation_mode==SM_DELTA && exec_sync_get(nullptr)>=global_clock )
 			{
-				DT deltatime = delta_update();
-				if ( deltatime==DT_INVALID )
-				{
-					output_error("delta_update() failed, deltamode operation cannot continue");
-					/*  TROUBLESHOOT
-					An error was encountered while trying to perform a deltamode update.  Look for
-					other relevant deltamode messages for indications as to why this may have occurred.
-					If the error persists, please submit your code and a bug report via the trac website.
-					*/
-					global_simulation_mode = SM_ERROR;
-					THROW("Deltamode simulation failure");
-					break;	//Just in case, but probably not needed
+				if(handle_delta_mode_operation() == -1) {
+					break; //DELTA MODE FAILURE
 				}
-				else if (deltatime > 0)
-				{
-					/* Reset the iteration counter here - if we made it this far, we moved forward */
-					/* If a simulate "stays" in deltamode too long, the periodic checks will still exhaust the iteration limit - this fixes that */
-					iteration_counter = global_iteration_limit;
-					federation_iteration_counter = global_iteration_limit;
-				}
-				exec_sync_set(nullptr,global_clock + deltatime,true);
-				global_simulation_mode = SM_EVENT;
 			}
 		} // end of while loop
 
@@ -2667,15 +2723,7 @@ STATUS exec_start()
 #endif
 	}
 
-	// Destroy mutex and cond
-//	for(k=0;k<nObjRankList;k++) {
-//		pthread_mutex_destroy(&startlock[k]);
-//		pthread_mutex_destroy(&donelock[k]);
-//		pthread_cond_destroy(&start[k]);
-//		pthread_cond_destroy(&done[k]);
-//	}
-
-	report_performance_after_run(started_at);
+	report_performance_after_run(started_at, passes, tsteps);
 
 	sched_update(global_clock,MLS_DONE);
 
@@ -2684,87 +2732,7 @@ STATUS exec_start()
 	return exec_sync_getstatus(nullptr);
 }
 
-void report_performance_after_run(time_t start_time) {
-	/* report performance */
-	if (global_profiler && !exec_sync_isinvalid(nullptr) )
-	{
-		double elapsed_sim = timestamp_to_hours(global_clock)-timestamp_to_hours(global_starttime);
-		double elapsed_wall = (double)(realtime_now()-start_time+1);
-		double sync_time = 0;
-		double sim_speed = object_get_count()/1000.0*elapsed_sim/elapsed_wall;
 
-		extern clock_t loader_time;
-		extern clock_t instance_synctime;
-		extern clock_t randomvar_synctime;
-		extern clock_t schedule_synctime;
-		extern clock_t loadshape_synctime;
-		extern clock_t enduse_synctime;
-		extern clock_t transform_synctime;
-
-		CLASS *cl;
-		DELTAPROFILE *dp = delta_getprofile();
-		double delta_runtime = 0, delta_simtime = 0;
-		if (global_threadcount==0) global_threadcount=1;
-		for (cl=class_get_first_class(); cl!=nullptr; cl=cl->next)
-			sync_time += ((double)cl->profiler.clocks)/global_ms_per_second;
-		sync_time /= global_threadcount;
-		delta_runtime = dp->t_count>0 ? (dp->t_preupdate+dp->t_update+dp->t_postupdate)/global_ms_per_second : 0;
-		delta_simtime = dp->t_count*(double)dp->t_delta/(double)dp->t_count/1e9;
-
-		output_profile("\nCore profiler results");
-		output_profile("======================\n");
-		output_profile("Total objects           %8d objects", object_get_count());
-		output_profile("Parallelism             %8d thread%s", global_threadcount,global_threadcount>1?"s":"");
-		output_profile("Total time              %8.1f seconds", elapsed_wall);
-		output_profile("  Core time             %8.1f seconds (%.1f%%)", (elapsed_wall-sync_time-delta_runtime),(elapsed_wall-sync_time-delta_runtime)/elapsed_wall*100);
-		output_profile("    Compiler            %8.1f seconds (%.1f%%)", (double)loader_time/global_ms_per_second,((double)loader_time/global_ms_per_second)/elapsed_wall*100);
-		output_profile("    Instances           %8.1f seconds (%.1f%%)", (double)instance_synctime/global_ms_per_second,((double)instance_synctime/global_ms_per_second)/elapsed_wall*100);
-		output_profile("    Random variables    %8.1f seconds (%.1f%%)", (double)randomvar_synctime/global_ms_per_second,((double)randomvar_synctime/global_ms_per_second)/elapsed_wall*100);
-		output_profile("    Schedules           %8.1f seconds (%.1f%%)", (double)schedule_synctime/global_ms_per_second,((double)schedule_synctime/global_ms_per_second)/elapsed_wall*100);
-		output_profile("    Loadshapes          %8.1f seconds (%.1f%%)", (double)loadshape_synctime/global_ms_per_second,((double)loadshape_synctime/global_ms_per_second)/elapsed_wall*100);
-		output_profile("    Enduses             %8.1f seconds (%.1f%%)", (double)enduse_synctime/global_ms_per_second,((double)enduse_synctime/global_ms_per_second)/elapsed_wall*100);
-		output_profile("    Transforms          %8.1f seconds (%.1f%%)", (double)transform_synctime/global_ms_per_second,((double)transform_synctime/global_ms_per_second)/elapsed_wall*100);
-		output_profile("  Model time            %8.1f seconds/thread (%.1f%%)", sync_time,sync_time/elapsed_wall*100);
-		if ( dp->t_count>0 )
-			output_profile("  Deltamode time        %8.1f seconds/thread (%.1f%%)", delta_runtime,delta_runtime/elapsed_wall*100);
-		output_profile("Simulation time         %8.0f days", elapsed_sim/24);
-		if (sim_speed>10.0)
-			output_profile("Simulation speed         %7.0lfk object.hours/second", sim_speed);
-		else if (sim_speed>1.0)
-			output_profile("Simulation speed         %7.1lfk object.hours/second", sim_speed);
-		else
-			output_profile("Simulation speed         %7.0lf object.hours/second", sim_speed*1000);
-		output_profile("Passes completed        %8d passes", passes);
-		output_profile("Time steps completed    %8d timesteps", tsteps);
-		output_profile("Convergence efficiency  %8.02lf passes/timestep", (double)passes/tsteps);
-#ifndef NOLOCKS
-		output_profile("Read lock contention    %7.01lf%%", (rlock_spin>0 ? (1-(double)rlock_count/(double)rlock_spin)*100 : 0));
-		output_profile("Write lock contention   %7.01lf%%", (wlock_spin>0 ? (1-(double)wlock_count/(double)wlock_spin)*100 : 0));
-#endif
-		output_profile("Average timestep        %7.0lf seconds/timestep", (double)(global_clock-global_starttime)/tsteps);
-		output_profile("Simulation rate         %7.0lf x realtime", (double)(global_clock-global_starttime)/elapsed_wall);
-		if ( dp->t_count>0 )
-		{
-			double total = dp->t_preupdate + dp->t_update + dp->t_interupdate + dp->t_postupdate;
-			output_profile("\nDelta mode profiler results");
-			output_profile("===========================\n");
-			output_profile("Active modules          %s", dp->module_list);
-			output_profile("Initialization time     %8.1lf seconds", (double)(dp->t_init)/(double)global_ms_per_second);
-			output_profile("Number of updates       %8" FMT_INT64 "u", dp->t_count);
-			output_profile("Average update timestep %8.4lf ms", (double)dp->t_delta/(double)dp->t_count/1e6);
-			output_profile("Minumum update timestep %8.4lf ms", dp->t_min/1e6);
-			output_profile("Maximum update timestep %8.4lf ms", dp->t_max/1e6);
-			output_profile("Total deltamode simtime %8.1lf s", delta_simtime/1000);
-			output_profile("Preupdate time          %8.1lf s (%.1f%%)", (double)(dp->t_preupdate)/(double)global_ms_per_second, (double)(dp->t_preupdate)/total*100);
-			output_profile("Object update time      %8.1lf s (%.1f%%)", (double)(dp->t_update)/(double)global_ms_per_second, (double)(dp->t_update)/total*100);
-			output_profile("Interupdate time        %8.1lf s (%.1f%%)", (double)(dp->t_interupdate)/(double)global_ms_per_second, (double)(dp->t_interupdate)/total*100);
-			output_profile("Postupdate time         %8.1lf s (%.1f%%)", (double)(dp->t_postupdate)/(double)global_ms_per_second, (double)(dp->t_postupdate)/total*100);
-			output_profile("Total deltamode runtime %8.1lf s (100%%)", delta_runtime);
-			output_profile("Simulation rate         %8.1lf x realtime", delta_simtime/delta_runtime/1000);
-		}
-		output_profile("\n");
-	}
-}
 
 /** Starts the executive test loop
 	@return STATUS is SUCCESS if all test passed, FAILED is any test failed.
