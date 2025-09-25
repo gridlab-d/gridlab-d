@@ -201,7 +201,7 @@ GLDErrorCode GridLabD::setup_before_load(int argc, char* argv[]) {
 }
 
 // Load a GLM file
-GLDErrorCode GridLabD::setup_after_load(const std::string& filepath) {
+GLDErrorCode GridLabD::setup_after_load() {
    
 
     /* initialize scheduler */

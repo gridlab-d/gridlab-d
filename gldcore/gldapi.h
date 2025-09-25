@@ -63,7 +63,7 @@ public:
     GLDErrorCode setup_before_load(int argc, char* argv[]);
 
     // Setup GLD and return an error code
-    GLDErrorCode setup_after_load(const std::string& filepath) ;
+    GLDErrorCode setup_after_load() ;
 
     // Get the GLM data based on a query
     GLDErrorCode get_glm_data(const std::string& query, GLDData& result);
