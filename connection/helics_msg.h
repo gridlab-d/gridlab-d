@@ -29,7 +29,6 @@
 #include <sstream>
 #include <iostream>
 #include <complex>
-//#include <json/json.h>
 #include <nlohmann/json.hpp>
 using std::string;
 using std::vector;
