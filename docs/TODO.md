@@ -75,8 +75,7 @@
 - [ ] Word/page limit of a single doc page?
 - [ ] Consistency of Terms, example blocks `<mymodel>`, for example (maybe standalone page in New Users)
 - [ ] Remove dated clauses, like:
-
-    `"As of Hassayampa (Version 3.0)..."`
+              `"As of Hassayampa (Version 3.0)..."`
 - [ ] Code blocks have embedded wiki links that will no longer work. Code blocks should be reworked to just display the code snippbit. Can be helpful to refer to original wiki page and copy/paste code. Example, change this:
 
 

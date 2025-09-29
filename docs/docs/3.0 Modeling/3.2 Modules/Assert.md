@@ -1,6 +1,6 @@
-# Assert (module)
+# Assert
 
-Assert objects can be used to monitor the properties of other objects. The assert class is used purely for validation purposes. They are used to assert that a given parameter will have a certain value at a certain time. In most case, this is used in conjunction with the auto-validation process performed on the nightly builds. More information on the validation process can be found at: Integrated_Testing
+Assert objects can be used to monitor the properties of other objects. The assert class is used purely for validation purposes. They are used to assert that a given parameter will have a certain value at a certain time. In most case, this is used in conjunction with the auto-validation process performed on the nightly builds. More information on the validation process can be found at: [Integrated Testing](TODO - missing link - add link to Integrated Testing page)
 
 ## Synopsis
 
@@ -12,13 +12,13 @@ Assert objects can be used to monitor the properties of other objects. The asser
     
 # Assert Objects
 
-Assert objects work by taking a user defined value and comparing it against a property that is also specified by the user. There are three different assert objects that may be used, `complex_assert` , `double_assert` , and `enum_assert`. These are used to test against complex numbers $(r + j*x)$, double values (real numbers), and enumerations (strings), respectively. Each object also contains a number of operating modes that will further explained below. 
+Assert objects work by taking a user defined value and comparing it against a property that is also specified by the user. There are three different assert objects that may be used, `complex_assert` , `double_assert` , and `enum_assert`. These are used to test against complex numbers $(r + j*x)$, double values (real numbers), and enumerations (strings), respectively. Each object also contains a number of operating modes that will be further explained below. 
 
 To create an assert test, an assert object is created as a child of the object to be tested. Three inputs must be specified to create the assert: 
 
   * *value* \- This is the "right" answer, or the value to be checked against, that is provide by the user. The type of value used depends on the type of assert used (complex, double, or enumeration). Units are not used in this value, so must be in the same units as the answer to be compared against.
   * *within* \- This allows the user to specify a range of answer. **Not used in enum_assert \- value must be the exact string.**
-  * *target* \- This tells the assert object what value is being tested against. Quotes must encompass the name of the property. Any public variable may be used. The default units of the target property will be used when comparing against value.
+  * *target* \- This tells the assert object what the value is being tested against. Quotes must encompass the name of the property. Any public variable may be used. The default units of the target property will be used when comparing against value.
 Here's an example: 
     
         object node {
@@ -36,24 +36,23 @@ Here's an example:
           }
     
 
-This assert test says that `nominal_voltage` of `test_node_1` must equal 7199 +/- 2 (or be within the range of 7197-7201). Since `nominal_voltage` is 7200, this test would pass. When an assert passes, it will appear nothing happens (unless verbose is set to true). However, when an assert fails, the system will throw an error message and end the simulation. This error throw is what allows the autotest script to know that the test failed and collect the needed information. To actually see what the error was and how far apart the values were, verbose needs to be set to true (#set verbose=1). 
+This assert test says that `nominal_voltage` of `test_node_1` must equal 7199 +/- 2 (or be within the range of 7197-7201). Since `nominal_voltage` is 7200, this test would pass. When an assert passes, it will appear nothing happens (unless verbose is set to true). However, when an assert fails, the system will throw an error message and end the simulation. This error throw is what allows the autotest script to know that the test failed and collect the needed information. To actually see what the error was and how far apart the values were, verbose needs to be set to true (`#set verbose=1`). 
 
 Additionally, other operating modes may be used: 
 
   * *status* \- This allows the user to set whether the assert should test for a true or false value. 
     * ASSERT_TRUE (default) - This test will pass if the value given is within the specified range of the *target* property.
     * ASSERT_FALSE - This test will pass if the *value* given is outside of the specified range of the *target* property.
-    * ASSERT_NONE - This will disengage the assert test and pass every value given. This is useful when fed in via a tape player (e.g. ASSERT_NONE may be played in via a tape player, except at given times where it is switched to ASSERT_TRUE. The test will then only pass/fail when ASSERT_TRUE is used.)
+    * ASSERT_NONE - This will disengage the assert test and pass every value given. This is useful when fed in via a tape player (e.g., ASSERT_NONE may be played in via a tape player, except at given times where it is switched to ASSERT_TRUE. The test will then only pass/fail when ASSERT_TRUE is used.)
   * *once* (not used with `enum_assert`) - This allows the user to specify that a test be run only once during a simulation. Used in conjunction with *in*. 
     * ONCE_FALSE (default) - In this mode, the assert value will be tested continuously at all times during the simulation.
     * ONCE_TRUE - When used, this tells the assert to only test the given *value* against the *target* value at the time specified by *in*.
-  * *in* \- Specifies the time at which a test is to be performed. Uses standard GridLAB-D™ time formats with single quotes around it (e.g. '2001-01-02 00:00:00 CST').
+  * *in* \- Specifies the time at which a test is to be performed. Uses standard GridLAB-D™ time formats with single quotes around it (e.g. `2001-01-02 00:00:00 CST`).
 
 
 If the assert fails, the simulation halts. 
 
 ## Synopsis
-    
     
     module assert;
     class assert {
@@ -67,56 +66,53 @@ If the assert fails, the simulation halts.
     	char1024 upper; 
     }
 
-- lower: `lower "value unit";`
+- **lower**: `lower "value unit";`
     The lower property specifies the lower bound when using the inside or outside relations.
 
--  part:  `part "name";`
+-  **part**:  `part "name";`
     The part property specifies the property part to use when comparing values. All property parts are considered double or complex without units. The following property parts are supported:
-    * complex: real, imag, mag, ang, arg
-    * enduse: total (complex), energy (complex), demand (complex), breaker_amps, admittance (complex), current (complex), power (complex), impedance_fraction, current_fraction, power_fraction, power_factor, voltage_factor, heatgain, heatgain_fraction.
+    * *complex*: real, imag, mag, ang, arg
+    * *enduse*: total (complex), energy (complex), demand (complex), breaker_amps, admittance (complex), current (complex), power (complex), impedance_fraction, current_fraction, power_fraction, power_factor, voltage_factor, heatgain, heatgain_fraction.
     
     Parts noted as (complex) must have the complex part specified, e.g., total.real, current.mag, power.ang.
 
--  relation- `relation "op";`
+-  **relation**- `relation "op";`
     The relation operator specifies the relationship to test.
 
-- inside - Compares the target property to determine whether it is between the lower and upper values (inclusive).
+- **inside** - Compares the target property to determine whether it is between the lower and upper values (inclusive).
 
-- outside - 
+- **outside** - 
     Compares the target property to determine whether it is outside the lower and upper values (exclusive).
 
--  `!=` - Compares the target property to determine whether it is different from the value.
+-  **Comparisons** - Compares the target property to determine whether:
 
--  `>=` - Compares the target property to determine whether it is greater than or equal to the value.
+    - `!=` - it is different from the value.
+    -  `>=` - it is greater than or equal to the value.
+    - `>` - it is greater than the value.
+    - `<=` -  it is less than or equal to the value.
+    - `<` - it is less than the value.
+    - `==` - it is equal to the value.
 
-- `>` - Compares the target property to determine whether it is greater than the value.
-
-- `<=` - Compares the target property to determine whether it is less than or equal to the value.
-
-- `<` - Compares the target property to determine whether it is less than the value.
-
-- `==` -     Compares the target property to determine whether it is equal to the value.
-
-- status - `status NONE|TRUE|FALSE;`
+- **status** - `status NONE|TRUE|FALSE;`
     The status enumeration specifies the desired outcome of the test.
 
-- FALSE - The `FALSE` status is used to specify that the assert test should fail.
+  - **FALSE** - The `FALSE` status is used to specify that the assert test should fail.
 
-- NONE - The `NONE` status is used to specify that the assert test should be ignore.
+  - **NONE** - The `NONE` status is used to specify that the assert test should be ignored.
 
-- TRUE - The `TRUE` status is used to specify that the assert test should succeed.
+  - **TRUE** - The `TRUE` status is used to specify that the assert test should succeed.
 
-- target - `target "property ";`
+- **target** - `target "property ";`
     The target specifies the name of the property to examine.
 
-- upper - `upper "value unit ";`
+- **upper** - `upper "value unit ";`
     The upper property specifies the upper bound when using the inside or outside relation.
 
-- value - `value "value unit ";`
-    The value property specifies the value to compare to when using the !=, >=, >, <=, <, or == relations.
+- **value** - `value "value unit ";`
+    The value property specifies the value to compare to when using the `!=`, `>=`, `>`, `<=`, `<`, or `==` relations.
 
-- within - `within "value unit ";`
-    The within property specifies the accuracy to which == and != comparisons are performed.
+- **within** - `within "value unit ";`
+    The within property specifies the accuracy to which `==` and `!=` comparisons are performed.
     **WARNING:** Units that have an absolute offset (e.g., degC, degF) will convert in absolute value, not relative value. Thus `within 0.01 degF` will not work as expected when compared to a property in degC because 0.01 degF is about -17 degC.
 
 ## Examples
@@ -183,14 +179,14 @@ The fourth example asserts that the real part of the voltage is 120. The fifth e
 
 ## Double Assert
 
-**TODO**: 
+**TODO** - Empty - Double Assert section is 
 
 ## Complex Assert
 
 *complex_assert* has the ability to look at only the real value, the imaginary, the magnitude, or the angle: 
 
   * *operation* \- Allows the user to look at various aspects of the complex number. 
-    * FULL (default) - This compares both the real and imaginary portion of the complex *value*. *within* will be applied to both components ( real(*target*) must be *within* xx of real(*value*) and same applies to the imaginary portion).
+    * FULL (default) - This compares both the real and imaginary portion of the complex *value*. *within* will be applied to both components (real(*target*) must be *within* xx of real(*value*) and same applies to the imaginary portion).
     * REAL - Only compares the real portion of *value* to be *within* xx of *target*. *value* is still specified as a complex number.
     * IMAGINARY - Only compares the imaginary portion of *value* to be *within* xx of *target*.
     * MAGNITUDE - Compares the magnitude of *value* to be *within* xx of *target*.
@@ -220,7 +216,7 @@ For example:
 
 ## Enumeration Assert
 
-**TODO**: 
+**TODO** - Empty - Add content for Enumeration Assert
 
 # See also
 

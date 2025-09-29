@@ -203,7 +203,8 @@ Based on Type = GL & gmt, and on WF, look-up the window U-value ($U_g$) in Table
 
 **Window U-values, AHSRAE Handbook 2005, Table 29.2, Operable**  
 ---  
-**Type** | **Layers** | **Glazing** | **U-value (Btu / hr.°F.ft²) by Frame Type**  
+**Type** | **Layers** | **Glazing** | **U-value (Btu / hr.°F.ft²) by Frame Type** | |
+--- | --- | --- | --- | --- 
 **None** | **Aluminum** | **Tb** | **Wood** | **In**  
 1G  | 1  | Glass  | 1.04  | 1.27  | 1.08  | 0.90  | 0.81   
 2G  | 2  | Glass  | 0.48  | 0.81  | 0.60  | 0.53  | 0.44   
@@ -220,10 +221,11 @@ Based on Type = GL & GT, and on wft, lookup the nominal window SHGC in the Table
 
 **Table 2. Window Solar Heat Gain Coefficients as a Function of Window Characteristics** >
 
-**Window SHGCs, AHSRAE Handbook 2005, Table 29.2, Operable**  
+**Window SHGCs, ASHRAE Handbook 2005, Table 29.2, Operable**  
 ---  
-**Type** | **Layers** | **Glazing  
-Treatment** | **SHGC by Frame Type**  
+
+**Type** | **Layers** | **Glazing  Treatment** | **SHGC by Frame Type**
+--- | --- | --- | -- |
 **None** | **Aluminum/Tb** | **Wood/In**  
 1clear  | 1  | Clear  | 0.86  | 0.75  | 0.64   
 1abs  | 1  | Heat-absorbing  | 0.73  | 0.64  | 0.54   
@@ -239,7 +241,7 @@ Treatment** | **SHGC by Frame Type**
 3low-s  | 3  | Low-solar  | 0.27  | 0.25  | 0.21   
 3high-s  | 3  | High-solar  | 0.62  | 0.55  | 0.46   
   
-    (a) low-e only
+(a) low-e only
 
 The SHGC is the product of the nominal SHGC and the window exterior transmission coefficient 
 
@@ -255,15 +257,8 @@ So, the user is allowed to enter the following primary inputs as a table, of the
 
 **Default Thermal Integrity by Component**  
 ---  
-**Integrity  
-Level** | **Description** | **Ceilings  
-°F.ft².hr/Btu** | **Walls  
-°F.ft².hr/Btu** | **Floors  
-°F.ft².hr/Btu** | **Windows  
-°F.ft².hr/Btu** | **Doors  
-°F.ft².hr/Btu** | **Infiltration Air  
-Exchange Rate (1/hr)**  
-**Layers** | **Glazing** | **Treatment** | **Frame**  
+**Integrity Level** | **Description** | **Ceilings  °F.ft².hr/Btu** | **Walls  °F.ft².hr/Btu** | **Floors  °F.ft².hr/Btu** | **Windows  °F.ft².hr/Btu** | **Doors  °F.ft².hr/Btu** | **Infiltration Air  Exchange Rate (1/hr)**  **Layers** | **Glazing** | **Treatment** | **Frame**  
+-- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | 
 0  | old, uninsulated  | 11  | 4  | 4  | 1  | Glass  | Clear  | Al  | 3  | 1.5   
 1  | old, insulated  | 19  | 11  | 4  | 2  | Glass  | Clear  | Al  | 3  | 1.5   
 2  | old, weatherized  | 19  | 11  | 11  | 2  | Glass  | Clear  | Al  | 3  | 1.0   
@@ -272,6 +267,7 @@ Exchange Rate (1/hr)**
 5  | very well insulated  | 30  | 19  | 22  | 2  | Low-e glass  | Clear  | Tb  | 5  | 0.5   
 6  | extremely well insulated  | 48  | 22  | 30  | 3  | Low-e glass  | Heat-absorbing  | In  | 11  | 0.5   
   
+
 To override the defaults, the user defines a thermal integrity table defining the following primary inputs (see the **Primary Inputs** section above), in the following order: 
 
 **Paramater (symbol)** | **Selections** | **Units**  
@@ -300,32 +296,32 @@ Compute exterior surface areas:
 
 The gross exterior wall area ($A_{wt}$) can be derived by introducing the perimeter (p), as follows: 
 
-$y\ x = A / n$
-$y = R\ x$
-$R\ x^2 = A / n$
-$x^2 = \frac{A}{n R}$
-$x = \sqrt{\frac{A}{nR}}$
-$p\ = 2x + 2y = 2x + 2Rx = 2x (1 + R)$
-$p\ = 2 (1 + R)\sqrt{\frac{A}{nR}} $
-$A_{wt} = n\ h\ p $
+$$y\ x = A / n$$
+
+$$y = R\ x$$
+$$R\ x^2 = A / n$$
+$$x^2 = \frac{A}{n R}$$
+$$x = \sqrt{\frac{A}{nR}}$$
+$$p\ = 2x + 2y = 2x + 2Rx = 2x (1 + R)$$
+$$p\ = 2 (1 + R)\sqrt{\frac{A}{nR}} $$
+$$A_{wt} = n\ h\ p $$
 
 Then   
-  
----  
-| $A_{wt} = 2 n h (1 + R) \sqrt{\frac{A}{nR}} $ | The gross exterior wall area ($A_{wt}$)   
-| $A_g = WWR\ A_{wt}\ EWR$ | The gross window area ($A_g$)   
-| $A_d = n_d\ A_{1d}$ | The total door area ($A_d$)   
-| $A_w = (A_{wt}-(A_g + A_d))\ EWR$ | The net exterior wall area ($A_w$)   
-| $A_c = \frac{A}{n} ECR$ | The net exterior ceiling area ($A_c$)   
-| $A_f = \frac{A}{n} EFR$ | The net exterior floor area ($A_f$)   
+Equation | Explanation  
+---  | -- |
+| $$A_{wt} = 2 n h (1 + R) \sqrt{\frac{A}{nR}} $$ | The gross exterior wall area ($A_{wt}$)   
+| $$A_g = WWR\ A_{wt}\ EWR$$ | The gross window area ($A_g$)   
+| $$A_d = n_d\ A_{1d}$$ | The total door area ($A_d$)   
+| $$A_w = (A_{wt}-(A_g + A_d))\ EWR$$ | The net exterior wall area ($A_w$)   
+| $$A_c = \frac{A}{n} ECR$$ | The net exterior ceiling area ($A_c$)   
+| $$A_f = \frac{A}{n} EFR$$ | The net exterior floor area ($A_f$)   
   
 The total heat loss coefficient (conductance), $U_A$, for the house (the last term is for air infiltration); the defaults produce $U_A$ = 522.1 Btu/°F.hr 
 
 $$U_A = A_g U_g + \frac{A_d}{R_d} + \frac{A_w}{R_w} + \frac{A_c}{R_c} + \frac{A_f}{R_f} + 0.018 A h I $$
 
     
-
-    Note: 0.018 is the volumetric heat capacity of air at standard conditions (Btu/°F.ft³std-air-pressure)
+Note: 0.018 is the volumetric heat capacity of air at standard conditions (Btu/°F.ft³std-air-pressure)
 
 ### **Interior Mass Surface Conductance ( $H_m$)**
 

@@ -360,9 +360,7 @@ $$U_{xy} = U_{A} + U_{B} \\ \tag{11}$$
 A "delta" configuration of 3 nodes $(x, y, z)$ can be transformed to a "wye" configuration of four nodes $(x,y,z,w)$ as follows: 
 
 $$\begin{align}
-
 U_{xw} &= U_{xy}U_{xz}\left[ \frac{1}{U_{xy}} + \frac{1}{U_{yz}} + \frac{1}{U_{xz}} \right] \\ U_{yw} &= U_{xy}U_{yz}\left[ \frac{1}{U_{xy}} + \frac{1}{U_{yz}} + \frac{1}{U_{xz}} \right] \\ U_{zw} &= U_{xz}U_{yz}\left[ \frac{1}{U_{xy}} + \frac{1}{U_{yz}} + \frac{1}{U_{xz}} \right]
-
 \end{align}$$
 
 
@@ -470,11 +468,11 @@ When $a b < 0$, the function always has one extremum and one inflexion point, an
   
 The simplest efficient numerical method is Newton's method, but the method will not converge under certain conditions that depend on when the extremum and the inflexion points occur. The following tests must be made before starting the numerical solution: 
 
-  * for $ _m > 0$, a solution exists when $f_0$×$f_m < 0$ or $c$×$f_m < 0$
+  * for $_m > 0$, a solution exists when $f_0×f_m < 0$ or $c×f_m < 0$
   * for $t_m = 0$ a solution only exists when $f_m = 0$
-  * for $t_m < 0$ ≤ $ti$ a solution only exists when $f_m < 0 < f_i$
+  * for $t_m < 0 ≤ t_i$ a solution only exists when $f_m < 0 < f_i$
   * for $t_i = 0$ a solution only exists when $f_i = 0$
-  * for $t_i < 0$ a solution only exists when $c$×$f_i < 0$
+  * for $t_i < 0$ a solution only exists when $c×f_i < 0$
 
 When a solution exists the starting point $t_0$ of the numerical solution must be chosen based on the values of $t_m$ and $t_i$
 

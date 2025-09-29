@@ -114,32 +114,34 @@ The building class implements that abstract class used to solve all linearized m
 #### Class members
 
 _General Properties_ 
-| Property| Unit | Constraints | Default | Description | Remarks  
+
+Property| Unit | Constraints | Default | Description | Remarks  
 --|--|--|--|--|--|
-T | degF | N×1 ∈ **R** | Ø | Node temperatures |   
+T | degF | N×1 ∈ **R** | Ø | Node temperatures
 N | (int16) | ∈ **N** + | 1 | Number of nodes in model   
 U | Btu/degF/h | N×N symmetric ∈ **R** *2 | Ø | Node conductances   
 C | Btu/degF | N×1 ∈ **R** * | Ø | Node capacitance | NaN indicates outdoor node   
-Q | Btu/h | N×1 ∈ **R** | Ø | Node heat flows |   
-Qs | Btu/h | N×1 ∈ **R *** | Ø | Node solar heat gain |   
-Qi | Btu/h | N×1 ∈ **R *** | Ø | Node internal heat gain |   
+Q | Btu/h | N×1 ∈ **R** | Ø | Node heat flows
+Qs | Btu/h | N×1 ∈ **R *** | Ø | Node solar heat gain
+Qi | Btu/h | N×1 ∈ **R *** | Ø | Node internal heat gain
   
 _Default HVAC properties_ 
-| Property| Unit | Constraints | Default | Description | Remarks  
+
+Property| Unit | Constraints | Default | Description | Remarks  
 --|--|--|--|--|--|
-Qfl | Btu/h | N×1 ∈ **R *** | NaN | Node fan heat gain at low power |   
-Qfh | Btu/h | N×1 ∈ **R *** | NaN | Node fan heat gain at high power |   
-Qf | Btu/h | N×1 ∈ **R *** | NaN | Node heat gain from fans |   
-Qhc | Btu/h | N×1 ∈ **R *** | NaN | Node heating capacity |   
-Qh | Btu/h | N×1 ∈ **R *** | NaN | Node heat gain from heating |   
-Qcc | Btu/h | N×1 ∈ **R *** | NaN | Node cooling capacity |   
-Qc | Btu/h | N×1 ∈ **R *** | NaN | Node heat loss from cooling | 
+Qfl | Btu/h | N×1 ∈ **R *** | NaN | Node fan heat gain at low power 
+Qfh | Btu/h | N×1 ∈ **R *** | NaN | Node fan heat gain at high power
+Qf | Btu/h | N×1 ∈ **R *** | NaN | Node heat gain from fans
+Qhc | Btu/h | N×1 ∈ **R *** | NaN | Node heating capacity
+Qh | Btu/h | N×1 ∈ **R *** | NaN | Node heat gain from heating
+Qcc | Btu/h | N×1 ∈ **R *** | NaN | Node cooling capacity
+Qc | Btu/h | N×1 ∈ **R *** | NaN | Node heat loss from cooling
 
 **Note** : NaN is used to indicate that no default HVAC equipment is associated with the node   
   
 _Default controller properties_ 
 
-| Property| Unit | Constraints | Default | Description | Remarks  
+Property| Unit | Constraints | Default | Description | Remarks  
 --|--|--|--|--|--|
 Ts | (double) | N×1 ∈ {0,1,2,3,4,5} | NaN | HVAC state | 0=OFF, 1=VENT, 2=HEAT, 3=COOL, 4=AUX, 5=ECON   
 Vm | pu/h | N×1 ∈ **R *** | NaN | Minimum ventilation required |   
