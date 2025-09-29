@@ -49,10 +49,7 @@ else ()
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${SUPERLU_LIB})
 endif ()
 
-target_include_directories(${GLD_MODULE_NAME} PRIVATE
-        "${CMAKE_SOURCE_DIR}/third_party/jsonCpp"
-        )
-target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${JSONCPP_LIB})
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE nlohmann_json::nlohmann_json)
 
 if (HDF5_FOUND)
     target_link_libraries(${GLD_MODULE_NAME} PUBLIC ${HDF5_LIBRARIES})

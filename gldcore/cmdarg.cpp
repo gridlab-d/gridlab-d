@@ -11,7 +11,8 @@
  @{
  **/
 
-#include <json/json.h> 
+
+#include <nlohmann/json.hpp>
 #include <cstdio>
 #include <cstring>
 #if defined(_WIN32) && !defined(__MINGW__)
@@ -124,9 +125,9 @@ void set_tabs(char *tabs, int tabdepth){
 	}
 }
 
-void jprint_class_d(CLASS *oclass, int tabdepth, Json::Value& _module){
+void jprint_class_d(CLASS *oclass, int tabdepth, nlohmann::json& _module){
 	PROPERTY *prop;
-	Json::Value _class;
+	nlohmann::json _class;
 
 	if (oclass->parent) {
 		_class[oclass->parent->name]["type"] = "parent";
@@ -137,7 +138,7 @@ void jprint_class_d(CLASS *oclass, int tabdepth, Json::Value& _module){
 			if ( (prop->access&PA_HIDDEN)==PA_HIDDEN )
 				continue;
 
-			Json::Value _property;
+			nlohmann::json _property;
 			if (prop->unit != nullptr) {
 				_property["type"] = propname;
 				_property["unit"] = prop->unit->name;
@@ -161,10 +162,10 @@ void jprint_class_d(CLASS *oclass, int tabdepth, Json::Value& _module){
 	}
 	_module[oclass->name] = _class;
 }
-void jprint_class(CLASS *oclass, Json::Value& _module){
+void jprint_class(CLASS *oclass, nlohmann::json& _module){
 	jprint_class_d(oclass, 0, _module);
 }
-void jprint_modhelp_tree(pntree *ctree, Json::Value& _module){
+void jprint_modhelp_tree(pntree *ctree, nlohmann::json& _module){
 	if(ctree->left != nullptr){
 		jprint_modhelp_tree(ctree->left, _module);
 		free(ctree->left);
@@ -570,8 +571,8 @@ static int modattr(int argc, char *argv[])
 			mod = module_load(strtok(argv[0],":"),0,nullptr);
 		}
 
-		Json::Value _module;
-		Json::Value _global;
+		nlohmann::json _module;
+		nlohmann::json _global;
 		GLOBALVAR *var=nullptr;
 			/* dump module globals */
 		while ((var=global_getnext(var))!=nullptr)
@@ -584,7 +585,7 @@ static int modattr(int argc, char *argv[])
 				continue;
 			if (proptype!=nullptr)
 			{
-				Json::Value _property;
+				nlohmann::json _property;
 				if ( prop->unit!=nullptr )
 				{
 					_property["type"] = proptype;
@@ -643,9 +644,7 @@ static int modattr(int argc, char *argv[])
 
 		/* flatten tree */
 		jprint_modhelp_tree(ctree, _module);
-		Json::StreamWriterBuilder builder;
-		builder["indentation"] = "  ";
-		std::cout << Json::writeString(builder, _module);
+		std::cout << _module.dump(4) << std::endl;
 	}
 	return 1;
 }

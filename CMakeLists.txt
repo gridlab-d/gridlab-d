@@ -198,7 +198,7 @@ set(HEADER_FILE_NAMES
         ${CMAKE_SOURCE_DIR}/gldcore/property.h
         ${CMAKE_SOURCE_DIR}/gldcore/schedule.h
         ${CMAKE_SOURCE_DIR}/gldcore/test.h
-	${CMAKE_SOURCE_DIR}/gldcore/gldapi.h
+        ${CMAKE_SOURCE_DIR}/gldcore/gldapi.h
 )
 
 file(COPY ${HEADER_FILE_NAMES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/headers)
@@ -307,11 +307,9 @@ if (GLD_USE_SUPERLU)
     set(SUPERLU_LIB superlu)
 endif ()
 
-option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
-add_subdirectory(third_party/jsoncpp_lib)
-get_target_property(JSON_INC_PATH jsoncpp_static INTERFACE_INCLUDE_DIRECTORIES)
-include_directories(${JSON_INC_PATH})
-set(JSONCPP_LIB jsoncpp_static)
+
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz DOWNLOAD_EXTRACT_TIMESTAMP 1)
+FetchContent_MakeAvailable(json)
 
 if (GLD_USE_EIGEN)
     message(FATAL_ERROR "Eigen implementation is not complete, and should not be used at this time.")
@@ -354,7 +352,7 @@ set(GLD_LIBS
         climate
         commercial
         connection
-	gldapi
+	    gldapi
         generators
         market
         mysql
