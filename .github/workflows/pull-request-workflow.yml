@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: 'GMLC-TDC/HELICS'
-          ref: 'develop'
+          ref: ${{ env.helics-ref }}
           submodules: 'recursive'
           fetch-depth: 0
           path: helics-build
@@ -168,7 +168,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: 'GMLC-TDC/HELICS'
-          ref: ${{ env.helics-ref }}
+          ref: 'devleop'
           submodules: 'recursive'
           fetch-depth: 0
           path: helics-build
@@ -194,7 +194,7 @@ jobs:
           threads=`sysctl -n hw.logicalcpu`
           cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
-          -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DGLD_CI_BUILD=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DGLD_CI_BUILD=ON
           cmake --build ${{github.workspace}}/build-${{matrix.arch}} --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Install GridLAB-D
