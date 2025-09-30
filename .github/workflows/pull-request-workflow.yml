@@ -1,16 +1,16 @@
-name: GridLAB-D Build
+name: GridLAB-D PR Validation
 
 on:
-  push:
+  workflow_dispatch:
+  pull_request:
     branches:
-      - 'release/*'
-    tags:
-      - 'v*'
+      - feature/1478
+      - develop
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
-  helics-ref: 'v3.6.0'
+  helics-ref: 'develop'
 
 jobs:
   linux-build:
@@ -38,7 +38,7 @@ jobs:
 
       - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
         name: Checkout HELICS
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: 'GMLC-TDC/HELICS'
           ref: ${{ env.helics-ref }}
@@ -57,7 +57,7 @@ jobs:
           cmake --install ${{github.workspace}}/helics-build/build
 
       - name: Checkout GridLAB-D
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -69,17 +69,21 @@ jobs:
           -DGLD_CI_BUILD=ON
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
 
-      - name: Package
+      - name: Install GridLAB-D
         working-directory: ${{github.workspace}}/build
-        run: cpack CPackConfig.cmake
+        run: cmake --install . --config ${{env.BUILD_TYPE}}
 
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Linux Package
-          path: |
-            ${{github.workspace}}/build/packages
-            !${{github.workspace}}/build/packages/_CPack_Packages
+      - name: Run GridLAB-D autotests
+        working-directory: ${{github.workspace}}
+        run: |
+          # Add installed GridLAB-D binaries to PATH
+          export PATH=$PATH:~/.temp/GridLAB-D/bin
+          # Run integration validation from repository root
+          gridlabd -T 0 --validate
+          # Future Catch2 unit tests (placeholder):
+          # ./build/tests/unit_tests --reporter junit --out unit-tests-linux.xml
+          # Current ctest invocation (unit + any ctest-based tests)
+          ctest --verbose
 
   win-build:
     strategy:
@@ -106,39 +110,8 @@ jobs:
             mingw-w64-x86_64-boost
             mingw-w64-x86_64-helics
 
-      # - name: Build HELICS Cache
-      #   id: cache-helics
-      #   uses: actions/cache@v3
-      #   env:
-      #     cache-name: cache-helics
-      #   with:
-      #     path: ${{github.workspace}}/.cache/HELICS
-      #     key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
-      #     restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
-
-      # - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
-      #   name: Checkout HELICS
-      #   uses: actions/checkout@v3
-      #   with:
-      #     repository: 'GMLC-TDC/HELICS'
-      #     ref: ${{ env.helics-ref }}
-      #     submodules: 'recursive'
-      #     fetch-depth: 0
-      #     path: helics-build
-
-      # - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
-      #   name: Build HELICS
-      #   working-directory: ${{github.workspace}}/helics-build
-      #   run: |
-      #     threads=`nproc`
-      #     workspace="$(cygpath -u '${{github.workspace}}')"
-      #     cmake -G "Unix Makefiles" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX="$workspace/.cache/HELICS" \
-      #      -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DHELICS_ZMQ_SUBPROJECT=ON
-      #     cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
-      #     cmake --install ./build
-
       - name: Checkout GridLAB-D
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
           path: gridlab-build
@@ -153,17 +126,19 @@ jobs:
           -DCMAKE_CXX_COMPILER=g++ -DGLD_CI_BUILD=ON
           cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
 
-      - name: Package
+      - name: Install GridLAB-D
         working-directory: ${{github.workspace}}/gridlab-build/build
-        run: cpack CPackConfig.cmake
+        run: cmake --install . --config ${{env.BUILD_TYPE}}
 
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Windows Package
-          path: |
-            ${{github.workspace}}/gridlab-build/build/packages
-            !${{github.workspace}}/gridlab-build/build/packages/_CPack_Packages
+      - name: Run GridLAB-D autotests
+        working-directory: ${{github.workspace}}/gridlab-build
+        run: |
+          workspace="$(cygpath -u '${{github.workspace}}')"
+          export PATH=$PATH:"$workspace/.temp/GridLAB-D/bin"
+          gridlabd -T 0 --validate
+          # Future Catch2 unit tests (placeholder):
+          # ./build/tests/unit_tests --reporter junit --out unit-tests-windows.xml
+          ctest --verbose
 
   mac-build:
     strategy:
@@ -171,8 +146,6 @@ jobs:
         include:
           - os: macos-latest
             arch: x86_64
-#          - os: macos-latest
-#            arch: arm64
     runs-on: ${{matrix.os}}
     steps:
       - name: Install Homebrew dependencies
@@ -192,7 +165,7 @@ jobs:
 
       - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
         name: Checkout HELICS
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: 'GMLC-TDC/HELICS'
           ref: ${{ env.helics-ref }}
@@ -212,7 +185,7 @@ jobs:
           cmake --install ${{github.workspace}}/helics-build/build
 
       - name: Checkout GridLAB-D
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -224,40 +197,15 @@ jobs:
           -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DGLD_CI_BUILD=ON
           cmake --build ${{github.workspace}}/build-${{matrix.arch}} --config ${{env.BUILD_TYPE}} --parallel $threads
 
-      - name: Package
+      - name: Install GridLAB-D
         working-directory: ${{github.workspace}}/build-${{matrix.arch}}
-        run: cpack CPackConfig.cmake
+        run: cmake --install . --config ${{env.BUILD_TYPE}}
 
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Mac ${{matrix.arch}} Package
-          path: |
-            ${{github.workspace}}/build-${{matrix.arch}}/packages
-            !${{github.workspace}}/build-${{matrix.arch}}/packages/_CPack_Packages
-
-
-  create-release:
-    if: github.ref_type == 'tag'
-    runs-on: ubuntu-latest
-    needs: [linux-build, win-build, mac-build]
-    steps:
-      - name: Install Dependencies
+      - name: Run GridLAB-D autotests
+        working-directory: ${{github.workspace}}
         run: |
-          sudo apt update
-          sudo apt install -y jq
-
-      - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
-        with:
-          path: ${{github.workspace}}/artifacts
-
-      - name: "Create Release and Upload Assets"
-        run: bash ../.github/scripts/upload_release_assets.sh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GLD_GITHUB_URL: ${{github.api_url}}/repos/${{ github.repository }}
-          GLD_TAG:  ${{ github.ref_name }}
-        working-directory: ${{github.workspace}}/artifacts
-
+          export PATH=$PATH:~/.temp/GridLAB-D/bin
+          gridlabd -T 0 --validate
+          # Future Catch2 unit tests (placeholder):
+          # ./build-${{matrix.arch}}/tests/unit_tests --reporter junit --out unit-tests-macos.xml
+          ctest --verbose
