@@ -10,7 +10,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
-  helics-ref: 'v3.6.0'
+  helics-ref: 'develop'
 
 jobs:
   linux-build:
@@ -151,7 +151,7 @@ jobs:
       - name: Install Homebrew dependencies
         run: |
           brew update
-          env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost zeromq
+          env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost
 
       - name: Build HELICS Cache
         id: cache-helics
