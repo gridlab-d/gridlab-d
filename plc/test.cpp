@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <memory>
 
 #include "gridlabd.h"
 #include "plc.h"

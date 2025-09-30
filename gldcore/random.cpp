@@ -41,6 +41,14 @@
 #include <unistd.h>
 #endif
 
+#if defined(_WIN32) || defined(_MSC_VER)
+ // Windows already has strtok_s
+ // Nothing to do as strtok_s is already defined in string.h
+#else
+ // For Linux/POSIX systems, define strtok_s to use strtok_r
+#define strtok_s(str, delimiters, context) strtok_r(str, delimiters, context)
+#endif
+
 #ifdef __MINGW32__
 char* strtok_t(char *str, const char *delim, char **nextp)
 {
@@ -214,10 +222,18 @@ double randunit(unsigned int *state)
 	unsigned int ur;
 	static unsigned int random_lock=0;
 
-	if ( state==nullptr || state==ur_state )
+	/*if ( state==nullptr || state==ur_state )
 	{
 		state=ur_state;
 		wlock(&random_lock);
+	}*/
+
+	bool needs_lock = (state == nullptr || state == ur_state);
+	std::unique_lock<std::shared_mutex> lock;
+
+	if (needs_lock) {
+		state = ur_state;
+		lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(&random_lock));
 	}
 
 TryAgain:
@@ -233,8 +249,8 @@ TryAgain:
 		goto TryAgain;
 	}
 
-	if ( state==ur_state )
-		wunlock(&random_lock);
+	//if ( state==ur_state )
+		//wunlock(&random_lock);
 	
 	return u;
 

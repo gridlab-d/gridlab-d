@@ -23,7 +23,7 @@ private:
 	MYSQL *mysql;
 	MYSQL_RES *data;
 	MYSQL_ROW row;
-	unsigned long n_rows;
+	unsigned long n.rows();
 	MYSQL_FIELD *fields;
 	unsigned long n_fields;
 	TIMESTAMP next_t;

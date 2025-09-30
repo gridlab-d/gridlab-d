@@ -11,7 +11,9 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <Eigen/Dense>
 
+#include "property.h"
 #include "diesel_dg.h"
 
 CLASS *diesel_dg::oclass = nullptr;
@@ -676,7 +678,7 @@ int diesel_dg::create(void)
 /* Object initialization is called once after all object have been created */
 int diesel_dg::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	OBJECT *tmp_obj = nullptr;
 	gld_object *tmp_gld_obj = nullptr;
 
@@ -685,11 +687,12 @@ int diesel_dg::init(OBJECT *parent)
 	double test_pf;
 	gld_property *Frequency_mapped = nullptr;
 	gld_property *temp_property_pointer = nullptr;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	bool temp_bool_value;
 	double temp_voltage_magnitude;
 	gld::complex temp_complex_value;
-	complex_array temp_complex_array, temp_child_complex_array;
+	//complex_array temp_complex_array, temp_child_complex_array;
+	Eigen::MatrixXcd temp_complex_array, temp_child_complex_array;
 	gld_property *pNominal_Voltage;
 	double nominal_voltage_value, nom_test_val;
 	gld::set temp_phases;
@@ -781,7 +784,7 @@ int diesel_dg::init(OBJECT *parent)
 
 							//Flag it to true
 							temp_bool_value = true;
-							temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+							temp_property_pointer->setp<bool>(temp_bool_value,test_rlock);
 
 							//Remove it
 							delete temp_property_pointer;
@@ -798,7 +801,7 @@ int diesel_dg::init(OBJECT *parent)
 
 							//Flag it to true
 							temp_bool_value = true;
-							temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+							temp_property_pointer->setp<bool>(temp_bool_value,test_rlock);
 
 							//Remove it
 							delete temp_property_pointer;
@@ -931,7 +934,7 @@ int diesel_dg::init(OBJECT *parent)
 
 				//Flag it to true
 				temp_bool_value = true;
-				temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+				temp_property_pointer->setp<bool>(temp_bool_value,test_rlock);
 
 				//Remove it
 				delete temp_property_pointer;
@@ -1190,26 +1193,26 @@ int diesel_dg::init(OBJECT *parent)
 			}
 
 			//Pull down the variable
-			pbus_full_Y_mat->getp<complex_array>(temp_complex_array,*test_rlock);
+			pbus_full_Y_mat->getp<Eigen::MatrixXcd>(temp_complex_array,test_rlock);
 
 			//See if it is valid
-			if (!temp_complex_array.is_valid(0, 0))
+			if (!emh::is_element_valid(temp_complex_array,0, 0))
 			{
 				//Create it
-				temp_complex_array.grow_to(3,3);
+				temp_complex_array.resize(3,3);
 
 				//Zero it, by default
 				for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
 				{
 					for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 					{
-						temp_complex_array.set_at(temp_idx_x,temp_idx_y,gld::complex(0.0,0.0));
+						temp_complex_array(temp_idx_x,temp_idx_y) = gld::complex(0.0,0.0);
 					}
 				}
 			}
 			else	//Already populated, make sure it is the right size!
 			{
-				if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
+				if ((temp_complex_array.rows() != 3) && (temp_complex_array.cols() != 3))
 				{
 					GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
 					/*  TROUBLESHOOT
@@ -1233,26 +1236,26 @@ int diesel_dg::init(OBJECT *parent)
 				}
 
 				//Pull down the variable
-				temp_property_pointer->getp<complex_array>(temp_child_complex_array,*test_rlock);
+				temp_property_pointer->getp<Eigen::MatrixXcd>(temp_child_complex_array,test_rlock);
 
 				//See if it is valid
-				if (!temp_child_complex_array.is_valid(0,0))
+				if (!emh::is_element_valid(temp_child_complex_array,0,0))
 				{
 					//Create it
-					temp_child_complex_array.grow_to(3,3);
+					temp_child_complex_array.resize(3,3);
 
 					//Zero it, by default
 					for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
 					{
 						for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 						{
-							temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,complex(0.0,0.0));
+							temp_child_complex_array(temp_idx_x,temp_idx_y) = 0.0;
 						}
 					}
 				}
 				else	//Already populated, make sure it is the right size!
 				{
-					if ((temp_child_complex_array.get_rows() != 3) && (temp_child_complex_array.get_cols() != 3))
+					if ((temp_child_complex_array.rows() != 3) && (temp_child_complex_array.cols() != 3))
 					{
 						GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
 						//Defined above
@@ -1267,36 +1270,36 @@ int diesel_dg::init(OBJECT *parent)
 				for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 				{
 					//Read the existing value
-					temp_complex_value = temp_complex_array.get_at(temp_idx_x,temp_idx_y);
-
+					temp_complex_value = gld::complex(temp_complex_array(temp_idx_x,temp_idx_y));
+					
 					//Accumulate into it
 					temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
 
 					//Store it
-					temp_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+					temp_complex_array(temp_idx_x,temp_idx_y) = temp_complex_value;
 
 					//Do the childed object, if exists
 					if (childed_connection)
 					{
 						//Read the existing value
-						temp_complex_value = temp_child_complex_array.get_at(temp_idx_x,temp_idx_y);
+						temp_complex_value = temp_child_complex_array(temp_idx_x,temp_idx_y);
 
 						//Accumulate into it
 						temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
 
 						//Store it
-						temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+						temp_child_complex_array(temp_idx_x,temp_idx_y) = temp_complex_value;
 					}
 				}
 			}
 
 			//Push it back up
-			pbus_full_Y_mat->setp<complex_array>(temp_complex_array,*test_rlock);
+			pbus_full_Y_mat->setp<Eigen::MatrixXcd>(temp_complex_array,test_rlock);
 
 			//See if the childed powerflow exists
 			if (childed_connection)
 			{
-				temp_property_pointer->setp<complex_array>(temp_child_complex_array,*test_rlock);
+				temp_property_pointer->setp<Eigen::MatrixXcd>(temp_child_complex_array,test_rlock);
 
 				//Clear it
 				delete temp_property_pointer;
@@ -1589,7 +1592,7 @@ int diesel_dg::init(OBJECT *parent)
 			}
 
 			//Pull the value
-			Frequency_mapped->getp<bool>(temp_bool_value,*test_rlock);
+			Frequency_mapped->getp<bool>(temp_bool_value,test_rlock);
 
 			//Check the value - and make sure we're active (don't let the passive generator dictate it)
 			if ((temp_bool_value == false) && (Governor_type != NO_GOV))	//No one has mapped yet, we are volunteered
@@ -1606,7 +1609,7 @@ int diesel_dg::init(OBJECT *parent)
 
 				//Flag the frequency mapping as having occurred
 				temp_bool_value = true;
-				Frequency_mapped->setp<bool>(temp_bool_value,*test_rlock);
+				Frequency_mapped->setp<bool>(temp_bool_value,test_rlock);
 			}
 			//Default else -- someone else is already mapped, just continue onward
 
@@ -1689,7 +1692,7 @@ TIMESTAMP diesel_dg::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double tdiff, ang_diff;
 	gld::complex temp_current_val[3];
 	gld::complex temp_voltage_val[3];
@@ -1701,7 +1704,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double reactive_diff; // Temporary variable representing difference between reference reactive power and actual reactive power output
 	gld::complex temp_power_val[3];
 	gld::complex temp_complex_value_power;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	FUNCTIONADDR test_fxn = nullptr;
 	STATUS fxn_return_status;
 
@@ -1732,7 +1735,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					temp_complex_value_power = power_val[0] + power_val[1] + power_val[2];
 
 					//Push it up
-					pPGenerated->setp<gld::complex>(temp_complex_value_power,*test_rlock);
+					pPGenerated->setp<gld::complex>(temp_complex_value_power,test_rlock);
 
 					//Map the current injection function
 					test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_current_injection_update_map"));
@@ -1976,12 +1979,12 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	gld::complex temp_current_val[3];
 	int ret_state;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	gld::complex aval, avalsq;
 	TIMESTAMP dt;
-	complex_array temp_complex_array;
+	Eigen::MatrixXcd temp_complex_array;
 	int index_x, index_y;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	TIMESTAMP t2 = TS_NEVER;
 
@@ -2071,17 +2074,17 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			avalsq = aval*aval;
 
 			//Pull in the current version of full_Y_all
-			pbus_full_Y_all_mat->getp<complex_array>(temp_complex_array,*test_rlock);
+			pbus_full_Y_all_mat->getp<Eigen::MatrixXcd>(temp_complex_array,test_rlock);
 
 			//Make sure it is the right size -- if so, pull it
-			if ((temp_complex_array.get_rows() == 3) && (temp_complex_array.get_cols() == 3))
+			if ((temp_complex_array.rows() == 3) && (temp_complex_array.cols() == 3))
 			{
 				//Push it into the matrix for "ease of access"
 				for (index_x=0; index_x<3; index_x++)
 				{
 					for (index_y=0; index_y<3; index_y++)
 					{
-						full_bus_admittance_mat[index_x][index_y] = temp_complex_array.get_at(index_x,index_y);
+						full_bus_admittance_mat[index_x][index_y] = temp_complex_array(index_x,index_y);
 					}
 				}
 			}
@@ -2107,7 +2110,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 gld_property *diesel_dg::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -2130,7 +2133,7 @@ gld_property *diesel_dg::map_complex_value(OBJECT *obj, const char *name)
 gld_property *diesel_dg::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -2178,7 +2181,7 @@ void diesel_dg::pull_powerflow_values(void)
 void diesel_dg::push_powerflow_values(bool update_voltage)
 {
 	gld::complex temp_complex_val;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	int indexval;
 
 	//See if we're proper first
@@ -2198,7 +2201,7 @@ void diesel_dg::push_powerflow_values(bool update_voltage)
 				temp_complex_val += value_Power[indexval];
 
 				//Push it back up
-				pPower[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
+				pPower[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 			}
 		}
 		else if (Gen_type == DYNAMIC)
@@ -2209,7 +2212,7 @@ void diesel_dg::push_powerflow_values(bool update_voltage)
 				for (indexval=0; indexval<3; indexval++)
 				{
 					//**** push voltage value -- not an accumulator, just force ****/
-					pCircuit_V[indexval]->setp<gld::complex>(value_Circuit_V[indexval],*test_rlock);
+					pCircuit_V[indexval]->setp<gld::complex>(value_Circuit_V[indexval],test_rlock);
 				}
 			}
 			else	//Standard update
@@ -2225,14 +2228,14 @@ void diesel_dg::push_powerflow_values(bool update_voltage)
 					temp_complex_val += value_Line_I[indexval];
 
 					//Push it back up
-					pLine_I[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
+					pLine_I[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 
 					//Update dynamic variables
 					if (deltamode_inclusive)
 					{
 						//**** Pre-rotated current injection value ***/
 						//This is a direct write - not an accumulator
-						pIGenerated[indexval]->setp<gld::complex>(value_IGenerated[indexval],*test_rlock);
+						pIGenerated[indexval]->setp<gld::complex>(value_IGenerated[indexval],test_rlock);
 					}
 				}
 			}
@@ -2339,7 +2342,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	gld::complex temp_rotation;
 	gld::complex temp_complex[3];
 	gld::complex temp_current_val[3];
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	//Create delta_t variable
 	deltat = (double)dt/(double)DT_SECOND;
@@ -3440,7 +3443,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			temp_double_freq_val = curr_state.omega/(2.0*PI);
 
 			//Push it up
-			mapped_freq_variable->setp<double>(temp_double_freq_val,*test_rlock);
+			mapped_freq_variable->setp<double>(temp_double_freq_val,test_rlock);
 		}
 
 		//Resync power variables
@@ -3562,7 +3565,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 //mode_pass 1 is the "update our frequency" call
 STATUS diesel_dg::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if (mode_pass == 0)	//Accumulation pass
 	{
@@ -4672,7 +4675,7 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count, bool *converged_fai
 	bool bus_is_a_swing, bus_is_swing_pq_entry;
 	STATUS temp_status_val;
 	gld_property *temp_property_pointer;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double mag_check_val[3];
 
 	//Start by assuming now convergence failure
@@ -4872,7 +4875,7 @@ gld::complex diesel_dg::complex_exp(double angle)
 void diesel_dg::check_power_output()
 {
 	double test_pf = 0.0;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	//Check specified power against per-phase limit (power_base) - impose that for now
 	for(int i=0; i < 3; i++) {
 		if(real_power_val[i] != -1.0) {
@@ -5052,7 +5055,7 @@ EXPORT int create_diesel_dg(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(diesel_dg::oclass);
 		if (*obj!=nullptr)
 		{
-			diesel_dg *my = OBJECTDATA(*obj,diesel_dg);
+			diesel_dg *my = /*OBJECTDATA(*obj, diesel_dg)*/ object_data<diesel_dg>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -5067,7 +5070,7 @@ EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,diesel_dg)->init(parent);
+			return /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -5077,7 +5080,7 @@ EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP t1 = TS_INVALID;
-	diesel_dg *my = OBJECTDATA(obj,diesel_dg);
+	diesel_dg *my = /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj);
 	try
 	{
 		switch (pass) {
@@ -5122,12 +5125,12 @@ EXPORT STATUS update_diesel_dg(OBJECT *obj, unsigned int64 dt, unsigned int iter
 
 EXPORT int isa_diesel_dg(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,diesel_dg)->isa(classname);
+	return /*OBJECTDATA(obj, diesel_dg)*/  object_data<diesel_dg>(obj)->isa(classname);
 }
 
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	diesel_dg *my = OBJECTDATA(obj,diesel_dg);
+	diesel_dg *my = /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -5143,7 +5146,7 @@ EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_ti
 
 EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
-	diesel_dg *my = OBJECTDATA(obj,diesel_dg);
+	diesel_dg* my = /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj);
 	STATUS status = FAILED;
 	try
 	{
@@ -5163,7 +5166,7 @@ EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_
 	STATUS temp_status;
 
 	//Map the node
-	diesel_dg *my = OBJECTDATA(obj,diesel_dg);
+	diesel_dg *my = /*OBJECTDATA(obj, diesel_dg)*/  object_data<diesel_dg>(obj);
 
 	//Call the function, where we can update the IGenerated injection
 	temp_status = my->updateCurrInjection(iteration_count,converged_failure);

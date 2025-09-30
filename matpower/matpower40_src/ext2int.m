@@ -63,7 +63,7 @@ function [i2e, bus, gen, branch, areas] = ext2int(bus, gen, branch, areas)
 %   gen or branch, they can be converted with a single call by
 %   specifying ORDERING as a cell array of strings.
 %
-%   Any extra elements, rows, columns, etc. beyond those indicated
+%   Any extra elements,.rows(), columns, etc. beyond those indicated
 %   in ORDERING, are not disturbed.
 %
 %   Examples:
@@ -78,11 +78,11 @@ function [i2e, bus, gen, branch, areas] = ext2int(bus, gen, branch, areas)
 %       gencost_int = ext2int(mpc, gencost_ext, {'gen','gen'}, 1);
 %
 %       Converts a GENCOST matrix that has both real and reactive power
-%       costs (in rows 1--ng and ng+1--2*ng, respectively).
+%       costs (in.rows() 1--ng and ng+1--2*ng, respectively).
 %
 %       mpc = ext2int(mpc, {'reserves', 'cost'}, 'gen');
 %
-%       Reorders rows of mpc.reserves.cost to match internal generator
+%       Reorders.rows() of mpc.reserves.cost to match internal generator
 %       ordering.
 %
 %       mpc = ext2int(mpc, {'reserves', 'zones'}, 'gen', 2);

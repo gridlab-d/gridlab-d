@@ -17,7 +17,7 @@
 
 #ifdef _MAIN_C
 #define GLOBAL 
-#define INIT(A) = A
+#define INIT(A) =A
 #else
 #define GLOBAL extern
 #define INIT(A)
@@ -68,7 +68,7 @@ typedef int EXITCODE;
 
 STATUS global_init(void);
 GLOBALVAR *global_getnext(GLOBALVAR *previous);
-GLOBALVAR *global_find(const char *name);
+GLOBALVAR *global_find(std::string_view name);
 GLOBALVAR *global_create(const char *name, ...);
 STATUS global_setvar(const char *def,...);
 char *global_getvar(const char *name, char *buffer, int size);

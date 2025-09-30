@@ -27,6 +27,14 @@
 #include "file.h"
 #include "odbc.h"
 
+#if defined(_WIN32) || defined(_MSC_VER)
+ // Windows already has strtok_s
+ // Nothing to do as strtok_s is already defined in string.h
+#else
+ // For Linux/POSIX systems, define strtok_s to use strtok_r
+#define strtok_s(str, delimiters, context) strtok_r(str, delimiters, context)
+#endif
+
 CLASS *recorder_class = nullptr;
 static OBJECT *last_recorder = nullptr;
 
@@ -35,7 +43,7 @@ EXPORT int create_recorder(OBJECT **obj, OBJECT *parent)
 	*obj = gl_create_object(recorder_class);
 	if (*obj!=nullptr)
 	{
-		struct recorder *my = OBJECTDATA(*obj,struct recorder);
+		struct recorder *my = object_data< recorder>(*obj);
 		last_recorder = *obj;
 		gl_set_parent(*obj,parent);
 		strcpy(my->file,"");
@@ -71,7 +79,7 @@ static int recorder_open(OBJECT *obj)
 	char1024 fname="";
 	char32 flags="w";
 	TAPEFUNCS *f = 0;
-	struct recorder *my = OBJECTDATA(obj,struct recorder);
+	struct recorder *my = object_data< recorder>(obj);
 	int retvalue;
 	
 	error_encountered = false;
@@ -395,7 +403,7 @@ static void close_recorder(struct recorder *my)
 
 static TIMESTAMP recorder_write(OBJECT *obj)
 {
-	struct recorder *my = OBJECTDATA(obj,struct recorder);
+	struct recorder *my = object_data<struct recorder>(obj);
 	char ts[64]="0"; /* 0 = INIT */
 	if (my->format==0)
 	{
@@ -434,7 +442,7 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 			do{
 				if(0 == fgets(inbuffer, 1024, my->inputfp)){
 					if(feof(my->inputfp)){
-						// if there is no more data to append rows to, we're done with the aggregate 
+						// if there is no more data to append.rows() to, we're done with the aggregate 
 						//fclose(my->multifp); // happens in close()
 						//fclose(my->inputfp); // one-over read never happens
 						return TS_NEVER;
@@ -577,7 +585,7 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 				case LU_ALL:
 					// cascade into 'default', as prop->unit should've been set, if there's a unit available.
 				case LU_DEFAULT:
-					offset+=gl_get_value(obj,GETADDR(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */
+					offset+=gl_get_value(obj, get_addr(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */
 					break;
 				case LU_NONE:
 					// copy value into local value, use fake PROP, feed into gl_get_vaule
@@ -595,14 +603,14 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 							offset+=gl_get_value(obj,&value,buffer+offset,size-offset-1,&fake); /* pointer => int64 */;
 						}
 					} else {
-						offset+=gl_get_value(obj,GETADDR(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */;
+						offset+=gl_get_value(obj, get_addr(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */;
 					}
 					break;
 				default:
 					break;
 			}
 		} else {
-			offset+=gl_get_value(obj,GETADDR(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */
+			offset+=gl_get_value(obj, get_addr(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */
 		}
 		buffer[offset]='\0';
 		count++;
@@ -611,7 +619,7 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 }
 
 TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
-    TIMESTAMP return_value;struct recorder *my = OBJECTDATA(obj, struct recorder);
+    TIMESTAMP return_value;struct recorder *my = object_data<struct recorder>(obj);
     typedef enum {
         NONE = '\0', LT = '<', EQ = '=', GT = '>'
     } COMPAREOP;

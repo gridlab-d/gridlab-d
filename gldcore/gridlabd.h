@@ -52,6 +52,11 @@
 #ifndef _GRIDLABD_H
 #define _GRIDLABD_H
 
+#include <memory>
+#include<mutex>
+#include<shared_mutex>
+#include <string>
+
 /* permanently disable use of CPPUNIT */
 #ifndef _NO_CPPUNIT
 #define _NO_CPPUNIT
@@ -69,13 +74,31 @@
 #define HAVE_LIBCPPUNIT
 #endif
 
+//#ifdef __cplusplus
+//	#ifndef CDECL
+//		/** Defines a function as a C-type function **/
+//		#define CDECL extern "C"
+//	#endif
+//#else
+//	#define CDECL
+//#endif
+//
+//#ifdef _WIN32
+//#ifndef EXPORT
+///** Defines a function as exported to core **/
+//#define EXPORT CDECL __declspec(dllexport)
+//#endif
+//#else
+//#define EXPORT CDECL
+//#endif
+
 #ifdef __cplusplus
-	#ifndef CDECL
-		/** Defines a function as a C-type function **/
-		#define CDECL extern "C"
-	#endif
+#ifndef CDECL
+	/** Defines a function as a C-type function **/
+#define CDECL extern "C"
+#endif
 #else
-	#define CDECL
+#define CDECL
 #endif
 
 #ifdef _WIN32
@@ -87,7 +110,17 @@
 #define EXPORT CDECL
 #endif
 
+
+
 #include <cstdarg>
+#include <atomic>
+//#include <execinfo.h>
+
+#if defined(__unix__) || defined(__APPLE__)
+#include <execinfo.h>
+#endif
+
+
 
 #include "platform.h"
 #include "schedule.h"
@@ -98,6 +131,34 @@
 #define STREAM_MODULE
 #include "stream.h"
 #include "module.h"
+#include "aggregate.h"
+
+
+#ifndef X_OK
+#define X_OK 0x01
+#endif
+
+#ifndef R_OK
+#define R_OK 0x02
+#endif
+
+#ifndef F_OK
+#define F_OK 0  // Define F_OK to represent file existence checks
+#endif
+
+typedef struct s_aggregate AGGREGATION;
+
+
+// Forward declaration of get_addr
+template<typename O, typename P>
+constexpr void* get_addr(O* obj, const P* prop);
+
+template<typename T, typename U>
+constexpr T* object_data(U* obj);
+
+template<typename T>
+constexpr OBJECT* object_header(T* data);
+
 
 #ifdef DLMAIN
 #define EXTERN
@@ -786,7 +847,7 @@ inline bool *gl_get_bool(OBJECT *obj, /**< object to set dependency */
 /** Evaluate an aggregate property
 	@see aggregate_value()
  **/
-#define gl_run_aggregate (*callback->aggregate.refresh)
+#define gl_run_aggregate (*callback->aggregate.refresh_aggr)
 /** @} **/
 
 /******************************************************************************
@@ -800,7 +861,8 @@ inline bool *gl_get_bool(OBJECT *obj, /**< object to set dependency */
 	@{
  **/
 
-#define RNGSTATE (&(OBJECTHDR(this))->rng_state)
+#define RNGSTATE (&(object_header(this))->rng_state)
+ /*(&(object_header(this))->rng_state)*/
 
 /** Determine the distribution type to be used from its name
 	@see RANDOMTYPE, random_type()
@@ -1208,7 +1270,25 @@ inline size_t nextpow2(size_t x)
 ///
 /// Catchall for create
 ///
-#define CREATE_CATCHALL(C) catch (char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (const char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (const std::exception& ex) { gl_error("create_" #C ": unhandled exception - %s", ex.what()); return 0; }
+//#define CREATE_CATCHALL(C) catch (char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (const char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (const std::exception& ex) { gl_error("create_" #C ": unhandled exception - %s", ex.what()); return 0; }
+
+
+#define CREATE_CATCHALL(C)                                                  \
+    catch (char* msg) {                                                     \
+        gl_error("create_" #C ": %s", msg);                                \
+        return 0;                                                           \
+    }                                                                       \
+    catch (const char* msg) {                                               \
+        gl_error("create_" #C ": %s", msg);                                 \
+        return 0;                                                           \
+    }                                                                       \
+    catch (const std::exception& ex) {                                      \
+        gl_error("create_" #C ": unhandled exception - %s", ex.what());     \
+        return 0;                                                           \
+    }
+
+
+
 #define I_CATCHALL(T,C) catch (char *msg) { gl_error(#T "_" #C ": %s", msg); return 0; } catch (const char *msg) { gl_error(#T "_" #C ": %s", msg); return 0; } catch (const std::exception& ex) { gl_error(#T "_" #C ": unhandled exception - %s", ex.what()); return 0; }
 #define T_CATCHALL(T,C) catch (char *msg) { gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (const char *msg) { gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg); return TS_INVALID; } catch (const std::exception& ex) { gl_error(#T "_" #C "(obj=%d;%s): unhandled exception - %s", obj->id, obj->name?obj->name:"unnamed", ex.what()); return TS_INVALID; }
 /**@}*/
@@ -1284,15 +1364,15 @@ inline void gl_write(void *local, /** local memory for data */
 
 // locking functions 
 #ifdef __cplusplus
-#define READLOCK(X) gld_core::rlock(X); /**< Locks an item for reading (allows other reads but blocks write) */
-#define WRITELOCK(X) gld_core::wlock(X); /**< Locks an item for writing (blocks all operations) */
-#define READUNLOCK(X) gld_core::runlock(X); /**< Unlocks an read lock */
-#define WRITEUNLOCK(X) gld_core::wunlock(X); /**< Unlocks a write lock */
+//#define READLOCK(X) gld_core::rlock(X); /**< Locks an item for reading (allows other reads but blocks write) */
+//#define WRITELOCK(X) gld_core::wlock(X); /**< Locks an item for writing (blocks all operations) */
+//#define READUNLOCK() gld_core::runlock(); /**< Unlocks an read lock */
+//#define WRITEUNLOCK(X) gld_core::wunlock(X); /**< Unlocks a write lock */
 namespace gld_core {
-inline void rlock(unsigned int* lock) { callback->lock.read(lock); }
-inline void wlock(unsigned int* lock) { callback->lock.write(lock); }
-inline void runlock(unsigned int* lock) { callback->unlock.read(lock); }
-inline void wunlock(unsigned int* lock) { callback->unlock.write(lock); }
+//inline std::shared_lock<std::shared_mutex> rlock(unsigned int* lock) { return callback->lock.read(lock); }
+//inline void wlock(unsigned int* lock) { callback->lock.write(lock); }
+//inline void runlock() { callback->unlock.read(); }
+//inline void wunlock(unsigned int* lock) { callback->unlock.write(lock); }
 }
 // TODO: locking templates
 //template <class T>
@@ -1306,14 +1386,14 @@ inline void wunlock(unsigned int* lock) { callback->unlock.write(lock); }
 #define WRITEUNLOCK(X) wunlock(X); /**< Unlocks a write lock */
 #endif
 
-#define READLOCK_OBJECT(X) READLOCK(&((X)->lock)) /**< Locks an object for reading */
-#define WRITELOCK_OBJECT(X) WRITELOCK(&((X)->lock)) /**< Locks an object for writing */
-#define READUNLOCK_OBJECT(X) READUNLOCK(&((X)->lock)) /**< Unlocks an object */
-#define WRITEUNLOCK_OBJECT(X) WRITEUNLOCK(&((X)->lock)) /**< Unlocks an object */
-#define LOCK_OBJECT(X) WRITELOCK_OBJECT(X); /**< @todo this is deprecated and should not be used anymore */
-#define UNLOCK_OBJECT(X) WRITEUNLOCK_OBJECT(X); /**< @todo this is deprecated and should not be used anymore */
-
-#define LOCKED(X,C) {WRITELOCK_OBJECT(X);(C);WRITEUNLOCK_OBJECT(X);} /**< @todo this is deprecated and should not be used anymore */
+//#define READLOCK_OBJECT(X) READLOCK(&((X)->lock)) /**< Locks an object for reading */
+//#define WRITELOCK_OBJECT(X) WRITELOCK(&((X)->lock)) /**< Locks an object for writing */
+//#define READUNLOCK_OBJECT() READUNLOCK() /**< Unlocks an object */
+//#define WRITEUNLOCK_OBJECT(X) WRITEUNLOCK(&((X)->lock)) /**< Unlocks an object */
+//#define LOCK_OBJECT(X) WRITELOCK_OBJECT(X); /**< @todo this is deprecated and should not be used anymore */
+//#define UNLOCK_OBJECT(X) WRITEUNLOCK_OBJECT(X); /**< @todo this is deprecated and should not be used anymore */
+//
+//#define LOCKED(X,C) {WRITELOCK_OBJECT(X);(C);WRITEUNLOCK_OBJECT(X);} /**< @todo this is deprecated and should not be used anymore */
 
 static unsigned long _nan[] = { 0xffffffff, 0x7fffffff, };
 #ifdef _WIN32
@@ -1373,8 +1453,8 @@ public: // casts
 	inline operator STRBUF *(void) { return buf; };
 private: // internals
 	inline void init(void) { buf=(STRBUF*)malloc(sizeof(STRBUF)); memset(buf,0,sizeof(STRBUF)); }; 
-	inline void lock(void) { if ( buf ) gld_core::wlock(&buf->lock); };
-	inline void unlock(void) { if ( buf ) gld_core::wunlock(&buf->lock); };
+	//inline void lock(void) { if ( buf ) gld_core::wlock(&buf->lock); };
+	//inline void unlock(void) { if ( buf ) gld_core::wunlock(&buf->lock); };
 	inline void fit(size_t n) { if ( buf==NULL || n>buf->len) alloc(n); };
 	inline void alloc(size_t n) 
 	{
@@ -1584,21 +1664,27 @@ public: // special functions
 };
 
 /// Read lock container
-class gld_rlock {
-private: OBJECT *my;
-	/// Constructor
-public: inline gld_rlock(OBJECT *obj) : my(obj) {gld_core::rlock(&my->lock);};
-	/// Destructor
-public: inline ~gld_rlock(void) {gld_core::runlock(&my->lock);};
-};
+//class gld_rlock {
+//private: OBJECT *my;
+//	   std::shared_lock<std::shared_mutex> lock;
+//	/// Constructor
+//public: inline gld_rlock(OBJECT *obj) : my(obj) {
+//	lock = gld_core::rlock(&my->lock);
+//};
+//	/// Destructor
+//public: inline ~gld_rlock(void) {
+//	//gld_core::runlock(&my->lock);
+//	lock.unlock();
+//};
+//};
 /// Write lock container
-class gld_wlock {
-private: OBJECT *my;
-		 /// Constructor
-public: inline gld_wlock(OBJECT *obj) : my(obj) {gld_core::wlock(&my->lock);};
-		/// Destructor
-public: inline ~gld_wlock(void) {gld_core::wunlock(&my->lock);};
-};
+//class gld_wlock {
+//private: OBJECT *my;
+//		 /// Constructor
+//public: inline gld_wlock(OBJECT *obj) : my(obj) {gld_core::wlock(&my->lock);};
+//		/// Destructor
+//public: inline ~gld_wlock(void) {gld_core::wunlock(&my->lock);};
+//};
 
 class gld_class;
 /// Module container
@@ -1848,70 +1934,65 @@ public: // iterators
 
 // object data declaration/accessors
 /// Define an atomic property
-#define GL_ATOMIC(T,X) protected: T X; public: \
-	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
-	inline T get_##X(void) { return X; }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
-	inline T get_##X(gld_rlock&) { return X; }; \
-	inline T get_##X(gld_wlock&) { return X; }; \
-	inline void set_##X(T p) { X=p; }; \
-	inline void set_##X(T p, gld_wlock&) { X=p; }; \
-	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
-	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
-
-/// Define a structured property
-#define GL_STRUCT(T,X) protected: T X; public: \
-	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
-	inline T get_##X(void) { gld_rlock _lock(my()); return X; }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
-	inline T get_##X(gld_rlock&) { return X; }; \
-	inline T get_##X(gld_wlock&) { return X; }; \
-	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; \
-	inline void set_##X(T p, gld_wlock&) { X=p; }; \
-	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
-	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
-
-/// Define a string property
-#define GL_STRING(T,X) 	protected: T X; public: \
-	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
-	inline char* get_##X(void) { gld_rlock _lock(my()); return X.get_string(); }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
-	inline char* get_##X(gld_rlock&) { return X.get_string(); }; \
-	inline char* get_##X(gld_wlock&) { return X.get_string(); }; \
-	inline char get_##X(size_t n) { gld_rlock _lock(my()); return (char)X; }; \
-	inline char get_##X(size_t n, gld_rlock&) { return (char)X; }; \
-	inline char get_##X(size_t n, gld_wlock&) { return (char)X; }; \
-	inline void set_##X(char *p) { gld_wlock _lock(my()); strncpy(X,p,sizeof(X)); }; \
-	inline void set_##X(char *p, gld_wlock&) { strncpy(X,p,sizeof(X)); }; \
-	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; \
-	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; };  \
-
-/// Define an array property
-#define GL_ARRAY(T,X,S) protected: T X[S]; public: \
-	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
-	inline T* get_##X(void) { gld_rlock _lock(my()); return X; }; \
-	inline T* get_##X(gld_rlock&) { return X; }; \
-	inline T* get_##X(gld_wlock&) { return X; }; \
-	inline T get_##X(size_t n) { gld_rlock _lock(my()); return X[n]; }; \
-	inline T get_##X(size_t n, gld_rlock&) { return X[n]; }; \
-	inline T get_##X(size_t n, gld_wlock&) { return X[n]; }; \
-	inline void set_##X(T* p) { gld_wlock _lock(my()); memcpy(X,p,sizeof(X)); }; \
-	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
-	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
-	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; };  \
+//#define GL_ATOMIC(T,X) protected: T X; public: \
+//	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
+//	inline T get_##X(void) { return X; }; \
+//	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
+//	inline T get_##X(gld_rlock&) { return X; }; \
+//	inline T get_##X(gld_wlock&) { return X; }; \
+//	inline void set_##X(T p) { X=p; }; \
+//	inline void set_##X(T p, gld_wlock&) { X=p; }; \
+//	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
+//	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
+//
+///// Define a structured property
+//#define GL_STRUCT(T,X) protected: T X; public: \
+//	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
+//	inline T get_##X(void) { gld_rlock _lock(my()); return X; }; \
+//	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
+//	inline T get_##X(gld_rlock&) { return X; }; \
+//	inline T get_##X(gld_wlock&) { return X; }; \
+//	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; \
+//	inline void set_##X(T p, gld_wlock&) { X=p; }; \
+//	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
+//	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
+//
+///// Define a string property
+//#define GL_STRING(T,X) 	protected: T X; public: \
+//	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
+//	inline char* get_##X(void) { gld_rlock _lock(my()); return X.get_string(); }; \
+//	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
+//	inline char* get_##X(gld_rlock&) { return X.get_string(); }; \
+//	inline char* get_##X(gld_wlock&) { return X.get_string(); }; \
+//	inline char get_##X(size_t n) { gld_rlock _lock(my()); return (char)X; }; \
+//	inline char get_##X(size_t n, gld_rlock&) { return (char)X; }; \
+//	inline char get_##X(size_t n, gld_wlock&) { return (char)X; }; \
+//	inline void set_##X(char *p) { gld_wlock _lock(my()); strncpy(X,p,sizeof(X)); }; \
+//	inline void set_##X(char *p, gld_wlock&) { strncpy(X,p,sizeof(X)); }; \
+//	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; \
+//	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; };  \
+//
+///// Define an array property
+//#define GL_ARRAY(T,X,S) protected: T X[S]; public: \
+//	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
+//	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
+//	inline T* get_##X(void) { gld_rlock _lock(my()); return X; }; \
+//	inline T* get_##X(gld_rlock&) { return X; }; \
+//	inline T* get_##X(gld_wlock&) { return X; }; \
+//	inline T get_##X(size_t n) { gld_rlock _lock(my()); return X[n]; }; \
+//	inline T get_##X(size_t n, gld_rlock&) { return X[n]; }; \
+//	inline T get_##X(size_t n, gld_wlock&) { return X[n]; }; \
+//	inline void set_##X(T* p) { gld_wlock _lock(my()); memcpy(X,p,sizeof(X)); }; \
+//	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
+//	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
+//	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; };  \
 
 /// Define a bitflag property
 #define GL_BITFLAGS(T,X) protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T get_##X(T mask=-1) { return X&mask; }; \
 	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
-	inline T get_##X(gld_rlock&) { return X; }; \
-	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { X=p; }; \
-	inline void set_##X##_bits(T p) { gld_rlock _lock(my()); (X)|=(p); }; \
-	inline void clr_##X##_bits(T p) { gld_rlock _lock(my()); (X)&=~(p); }; \
-	inline void set_##X(T p, gld_wlock&) { X=p; }; \
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
 
@@ -1931,7 +2012,111 @@ inline bool hasbits(unsigned long flags, unsigned int bits) { return (flags&bits
 
 /// Object container
 class gld_object {
+private:
+	//static std::atomic<int> deletion_count;
+	mutable std::atomic<bool> is_deleted{ false };
+
+
 public:
+
+	virtual ~gld_object() {
+		mark_deleted();
+		// Log or track destructor calls
+		//std::cout << "Destructor called for object at "
+			//<< static_cast<void*>(this)
+			//<< ", deletion count: "
+			//<< ++deletion_count
+			//<< std::endl;
+	}
+
+
+#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+#include <execinfo.h>
+#include <iostream>
+#include <cstdlib>
+
+	void print_stack_trace() {
+		void* array[10];
+		size_t size;
+		char** strings;
+		size_t i;
+
+		size = backtrace(array, 10);
+		strings = backtrace_symbols(array, size);
+
+		std::cerr << "Obtained " << size << " stack frames:" << std::endl;
+
+		for (i = 0; i < size; i++) {
+			std::cerr << strings[i] << std::endl;
+		}
+
+		free(strings);
+	}
+#else
+	// Windows does not support POSIX-style stack trace printing
+	void print_stack_trace() {
+		std::cerr << "Stack trace functionality not available on this platform." << std::endl;
+	}
+#endif
+
+	void mark_deleted() {
+		if (is_deleted.exchange(true)) {
+			// Object was already deleted
+			std::cerr << "WARNING: Attempted to delete already deleted object at "
+				<< static_cast<void*>(this)
+				<< std::endl;
+			// Optional: print stack trace
+			print_stack_trace();
+		}
+	}
+
+
+
+	// Virtual cleanup method
+	virtual void destroy() {
+		// Default no-op cleanup
+	}
+
+	//// Placement new and delete
+	//static void* operator new(size_t size, void* ptr) noexcept {
+	//	return ::operator new(size, ptr);
+	//}
+
+	 // Prevent multiple deletions
+	void operator delete(void* ptr) {
+		if (ptr) {
+			//std::cout << "Deleting object at " << ptr << std::endl;
+			::operator delete(ptr);
+		}
+	}
+
+	//static void operator delete(void* ptr) noexcept {
+	//	if (ptr) {
+	//		// Cast to base class and call destroy before deleting
+	//		static_cast<gld_object*>(ptr)->destroy();
+	//		::operator delete(ptr);
+	//	}
+	//}
+
+	// Virtual method for cleanup
+	virtual void release() {
+		// Default implementation does nothing
+	}
+
+	// Static method to safely delete an object
+	static void safe_delete(gld_object* ptr) {
+		if (ptr) {
+			try {
+				ptr->release();
+				delete ptr;
+			}
+			catch (const std::exception& e) {
+				// Log the error
+				fprintf(stderr, "Error during object deletion: %s\n", e.what());
+			}
+		}
+	}
+
 	inline OBJECT *my() { return this?(((OBJECT*)this)-1):NULL; }
 private:
 	// Make gld_object not copy-constructable.
@@ -1944,7 +2129,7 @@ public: // header read accessors (no locking)
 	inline OBJECTNUM get_id(void) { return my()->id; };
 	inline char* get_groupid(void) { return my()->groupid.get_string(); };
 	inline gld_class* get_oclass(void) { return (gld_class*)my()->oclass; };
-	inline gld_object* get_parent(void) { return my()->parent?OBJECTDATA(my()->parent,gld_object):NULL; };
+	inline gld_object* get_parent(void) { return my()->parent? object_data<gld_object>(my()->parent) /*OBJECTDATA(my()->parent, gld_object)*/ : NULL; };
 	inline OBJECTRANK get_rank(void) { return my()->rank; };
 	inline TIMESTAMP get_clock(void) { return my()->clock; };
 	inline TIMESTAMP get_valid_to(void) { return my()->valid_to; };
@@ -1984,15 +2169,20 @@ protected: // header write accessors (no locking)
 	inline void unset_flags_bits(unsigned long bits) { my()->flags&=~bits; };
 
 protected: // locking (self)
-	inline void rlock(void) { gld_core::rlock(&my()->lock); };
-	inline void runlock(void) { gld_core::runlock(&my()->lock); };
-	inline void wlock(void) { gld_core::wlock(&my()->lock); };
-	inline void wunlock(void) { gld_core::wunlock(&my()->lock); };
+
+	/*inline void rlock(void) { 
+		gld_core::rlock(&my()->lock); 
+	};
+	inline void runlock(void) { 
+		gld_core::runlock(&my()->lock); 
+	};*/
+	//inline void wlock(void) { gld_core::wlock(&my()->lock); };
+	//inline void wunlock(void) { gld_core::wunlock(&my()->lock); };
 protected: // locking (others)
-	inline void rlock(OBJECT *obj) { gld_core::rlock(&obj->lock); };
-	inline void runlock(OBJECT *obj) { gld_core::runlock(&obj->lock); };
-	inline void wlock(OBJECT *obj) { gld_core::wlock(&obj->lock); };
-	inline void wunlock(OBJECT *obj) { gld_core::wunlock(&obj->lock); };
+	/*inline void rlock(OBJECT *obj) { gld_core::rlock(&obj->lock); };
+	inline void runlock(OBJECT *obj) { gld_core::runlock(&obj->lock); };*/
+	//inline void wlock(OBJECT *obj) { gld_core::wlock(&obj->lock); };
+	//inline void wunlock(OBJECT *obj) { gld_core::wunlock(&obj->lock); };
 
 protected: // special functions
 	inline bool operator == (gld_object *o) { return o!=NULL && my()==o->my(); };
@@ -2003,23 +2193,28 @@ public: // member lookup functions
 	inline FUNCTIONADDR get_function(const char *name) { return (*callback->function.get)(my()->oclass->name,name); };
 
 public: // external accessors
-	template <class T> inline void getp(PROPERTY &prop, T &value) { rlock(); value=*(T*)(GETADDR(my(),&prop)); wunlock(); };
-	template <class T> inline void setp(PROPERTY &prop, T &value) { wlock(); *(T*)(GETADDR(my(),&prop))=value; wunlock(); };
-	template <class T> inline void getp(PROPERTY &prop, T &value, gld_rlock&) { value=*(T*)(GETADDR(my(),&prop)); };
-	template <class T> inline void getp(PROPERTY &prop, T &value, gld_wlock&) { value=*(T*)(GETADDR(my(),&prop)); };
-	template <class T> inline void setp(PROPERTY &prop, T &value, gld_wlock&) { *(T*)(GETADDR(my(),&prop))=value; };
+	//template <class T> inline void getp(PROPERTY &prop, T &value) { 
+	//	//rlock(); 
+	//	wlock();
+	//	value=*(T*)(get_addr(my(),&prop)); 
+	//	wunlock(); 
+	//};
+	//template <class T> inline void setp(PROPERTY &prop, T &value) { wlock(); *(T*)(get_addr(my(),&prop)   /*GETADDR(my(), &prop)*/) = value; wunlock(); };
+	/*template <class T> inline void getp(PROPERTY& prop, T& value, gld_rlock&) { value = *(T*)(get_addr(my(), &prop)); };*/
+	//template <class T> inline void getp(PROPERTY &prop, T &value, gld_wlock&) { value=*(T*)(get_addr(my(),&prop)); };
+	//template <class T> inline void setp(PROPERTY &prop, T &value, gld_wlock&) { *(T*)(get_addr(my(),&prop))=value; };
 
 public: // core interface
 	inline int set_dependent(OBJECT *obj) { return callback->object.set_dependent(my(),obj); };
 	inline int set_parent(OBJECT *obj) { return callback->object.set_parent(my(),obj); };
 	inline int set_rank(unsigned int r) { return callback->object.set_rank(my(),r); };
 	inline bool isa(char *type) { return callback->object_isa(my(),type) ? true : false; };
-	inline bool is_valid(void) { return my()!=NULL && my()==OBJECTHDR(this); };
+	inline bool is_valid(void) { return my() != NULL && my() == object_header(this);    /*object_header(this);*/ };
 
 public: // iterators
 	inline bool is_last(void) { return my()->next==NULL; };
-	inline static gld_object *get_first(void) { OBJECT *o=callback->object.get_first(); return OBJECTDATA(o,gld_object);};
-	inline gld_object* get_next(void) { return OBJECTDATA(my()->next,gld_object); };
+	inline static gld_object* get_first(void) { OBJECT* o = callback->object.get_first(); return object_data<gld_object>(o);  /*OBJECTDATA(o, gld_object);*/ };
+	inline gld_object* get_next(void) { return  object_data<gld_object>(my()->next);  /*OBJECTDATA(my()->next, gld_object);*/ };
 
 public: // exceptions
 	inline void exception(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); throw (const char*)buf;};
@@ -2031,6 +2226,14 @@ public:
 	bool threadsafe {false};
 	inline bool is_threadsafe(){return threadsafe;}
 };
+
+// Custom deleter for gld_object
+struct gld_object_deleter {
+	void operator()(gld_object* ptr) const {
+		gld_object::safe_delete(ptr);
+	}
+};
+
 /// Create a gld_object from an OBJECT
 static inline gld_object* get_object(OBJECT*obj)
 {
@@ -2101,7 +2304,7 @@ public: // constructors/casts
 		} 
 		char1024 vn; 
 		sprintf(vn,"%s::%s",m,n); 
-		GLOBALVAR *v=callback->global.find(vn); 
+		GLOBALVAR *v=callback->global.find(vn.get_string()); 
 		pstruct.prop= (v?v->prop:NULL);  
 	};
 	inline operator PROPERTY*(void) { return pstruct.prop; };
@@ -2182,13 +2385,53 @@ public: // special operations
 	inline enumeration get_enumeration(void) { if (pstruct.prop->ptype != PT_enumeration ) exception("get_enumeration() called on a property that is not an enumeration"); return *(enumeration*)get_addr(); };
 	inline gld::set get_set(void) { if (pstruct.prop->ptype != PT_set ) exception("get_set() called on a property that is not a set"); return *(gld::set*)get_addr(); };
 	inline gld_object* get_objectref(void) { if ( is_objectref() ) return ::get_object(*(OBJECT**)get_addr()); else return NULL; };
-	template <class T> inline void getp(T &value) { gld_core::rlock(&obj->lock); value = *(T*)get_addr(); gld_core::runlock(&obj->lock); };
-	template <class T> inline void setp(T &value) { gld_core::wlock(&obj->lock); *(T*)get_addr()=value; gld_core::wunlock(&obj->lock); };
-	template <class T> inline void getp(T &value, gld_rlock&) { value = *(T*)get_addr(); };
-	template <class T> inline void getp(T &value, gld_wlock&) { value = *(T*)get_addr(); };
-	template <class T> inline void setp(T &value, gld_wlock&) { *(T*)get_addr()=value; };
-	inline void setp(enumeration value) { gld_core::wlock(&obj->lock); *(enumeration*)get_addr()=value; gld_core::wunlock(&obj->lock); };
-	inline void setp(gld::set value) { gld_core::wlock(&obj->lock); *(gld::set*)get_addr()=value; gld_core::wunlock(&obj->lock); };
+	template <class T> inline void getp(T &value) { 
+		//auto v = gld_core::rlock(&obj->lock); 
+		//replace gld_rlock with SharedMutexManager
+		auto& v = SharedMutexManager::get_mutex(&obj->lock);
+		std::shared_lock<std::shared_mutex> lock(v);
+
+		value = *(T*)get_addr(); 
+		//gld_core::runlock(&obj->lock); 
+	};
+	template <class T> inline void setp(T &value) { 
+		//gld_core::wlock(&obj->lock); 
+		//replace wlock with SharedMutexManager
+		auto& v = SharedMutexManager::get_mutex(&obj->lock);
+		std::unique_lock<std::shared_mutex> lock(v);
+
+		*(T*)get_addr()=value; 
+		//gld_core::wunlock(&obj->lock); 
+	};
+	//template <class T> inline void getp(T& value, gld_rlock&) { value = *(T*)get_addr(); };
+	template <class T> inline void getp(T& value, unsigned int&  gld_rlock) 
+	{   
+		//auto v = gld_core::rlock(&gld_rlock);
+		//replace gld_rlock with SharedMutexManager
+		auto& v = SharedMutexManager::get_mutex(&gld_rlock);
+		std::shared_lock<std::shared_mutex> lock(v);
+		value = *(T*)get_addr(); 
+	};
+	//template <class T> inline void getp(T &value, gld_wlock&) { value = *(T*)get_addr(); };
+	template <class T> inline void setp(T &value, unsigned int& wl) 
+	{ 
+		auto& v = SharedMutexManager::get_mutex(&wl);
+		std::unique_lock<std::shared_mutex> lock(v);
+		
+		*(T*)get_addr()=value; 
+	};
+	inline void setp(enumeration value) { 
+		//gld_core::wlock(&obj->lock); 
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&obj->lock));
+		*(enumeration*)get_addr()=value; 
+		//gld_core::wunlock(&obj->lock); 
+	};
+	inline void setp(gld::set value) { 
+		//gld_core::wlock(&obj->lock); 
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&obj->lock));
+		*(gld::set*)get_addr()=value; 
+		//gld_core::wunlock(&obj->lock); 
+	};
 	inline gld_keyword* find_keyword(unsigned long value) { return get_first_keyword()->find(value); };
 	inline gld_keyword* find_keyword(const char *name) { return get_first_keyword()->find(name); };
 	inline bool compare(char *op, char *a, char *b=NULL, char *p=NULL) 
@@ -2197,12 +2440,39 @@ public: // special operations
 		if (n==TCOP_ERR) throw "invalid property compare operation";
 		return compare((enumeration)n, a, b, p);
 	};
-	inline bool compare(enumeration op, char *a, char *b=NULL)
+	/*inline bool compare(enumeration op, char *a, char *b=NULL)
 	{ 
 		char v1[1024], v2[1024]; 
 		return callback->convert.string_to_property(pstruct.prop,(void*)v1,a)>0 && callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),(void*)v1,(b&&callback->convert.string_to_property(pstruct.prop,(void*)v2,b)>0)?(void*)v2:NULL, NULL);
-	};
-	inline bool compare(enumeration op, char *a, char *b, char *p)
+	};*/
+
+
+	inline bool compare(enumeration op, const char* _a, const char* _b = nullptr) {
+		// Allocate dynamic strings for conversions
+		char v1[1024], v2[1024];
+
+		// Convert the first property
+		bool success_a = callback->convert.string_to_property(pstruct.prop, (void*)v1, _a) > 0;
+
+		// Convert the second property if _b is not null
+		bool success_b = (_b && callback->convert.string_to_property(pstruct.prop, (void*)v2, _b) > 0);
+
+		// Perform the comparison
+		if (success_a) {
+			return callback->properties.compare_basic(
+				pstruct.prop->ptype,
+				(PROPERTYCOMPAREOP)op,
+				get_addr(),               // Comparison usually requires an address
+				(void*)v1,                // Value 1
+				success_b ? (void*)v2 : NULL, // Value 2, or NULL if conversion failed
+				NULL                      // Possibly additional parameters? Pass NULL for now
+			);
+		}
+
+		// Return false if the first conversion fails
+		return false;
+	}
+	inline bool compare(enumeration op, const char *a, const char *b, const char *p)
 	{
 		double v1, v2; v1=atof(a); v2=b?atof(b):0;
 		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),(void*)&v1,b?(void*)&v2:NULL, p);
@@ -2236,7 +2506,7 @@ private: // exceptions
 		static char buf[1024]; 
 		va_list ptr; 
 		va_start(ptr,msg); 
-		vsprintf(buf+sprintf(buf,"%s.%s: ",OBJECTDATA(obj,gld_object)->get_name(),pstruct.prop->name),msg,ptr); 
+		vsprintf(buf+sprintf(buf,"%s.%s: ",/*OBJECTDATA(obj, gld_object)*/  object_data<gld_object>(obj)->get_name(), pstruct.prop->name), msg, ptr);
 		va_end(ptr); 
 		throw (const char*)buf;
 	};
@@ -2249,7 +2519,7 @@ private: // data
 	GLOBALVAR *var;
 
 public: // constructors
-	inline gld_global(void) { var=callback->global.find(NULL); };
+	inline gld_global(void) { var=callback->global.find(""); };
 	inline gld_global(GLOBALVAR *v) : var(v) {};
 	inline gld_global(const char *n) { var=callback->global.find(n); };
 	inline gld_global(const char *n, PROPERTYTYPE t, void *p) { var=callback->global.create(n,t,p,NULL); };
@@ -2286,7 +2556,7 @@ public: // external accessors
 	// TODO
 
 public: // iterators
-	inline GLOBALVAR* get_first(void) { return callback->global.find(NULL); };
+	inline GLOBALVAR* get_first(void) { return callback->global.find(""); };
 	inline bool is_last(void) { if (!var) return false; else return (var->next==NULL); };
 	inline GLOBALVAR* get_next(void) { if (!var) return NULL; else return var->next; };
 };
@@ -2294,14 +2564,17 @@ public: // iterators
 /// Aggregation container
 class gld_aggregate {
 private:
-	AGGREGATION *aggr;
+	std::shared_ptr<struct s_aggregate> aggr = nullptr;
 public:
-	inline gld_aggregate(void) { aggr=NULL; };
-	inline gld_aggregate(char *spec, char *group) { set_aggregate(spec,group); };
+	//inline gld_aggregate(void) { aggr= nullptr; };
+	inline gld_aggregate(char *spec, char *group) { 
+		//set_aggregate(spec,group);
+		this->aggr = aggregate_mkgroup(spec, group);
+	};
 public:
-	inline bool set_aggregate(char *spec, char *group) { aggr=callback->aggregate.create(spec,group); return aggr!=NULL; };
-	inline bool is_valid(void) { return aggr!=NULL; };
-	inline double get_value(void) { if (!aggr) throw "null aggregate"; return callback->aggregate.refresh(aggr); };
+	//inline bool set_aggregate(char *spec, char *group) { aggr=callback->aggregate.create(spec,group); return aggr!=nullptr; };
+	inline bool is_valid(void) { return aggr!=nullptr; };
+	//inline double get_value(void) const { if (aggr == nullptr) throw std::runtime_error("gld_aggregate: null aggregate access"); return callback->aggregate.refresh_aggr(aggr); };
 };
 
 /// Object list container
@@ -2376,8 +2649,11 @@ public:
 #ifdef DLMAIN
 EXPORT int do_kill(void*);
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
+#include <winsock2.h>
 #include <windows.h>
+
+
 EXPORT int gld_major=MAJOR, gld_minor=MINOR; 
 BOOL APIENTRY DllMain(HANDLE h, DWORD r) { if (r==DLL_PROCESS_DETACH) do_kill(h); return TRUE; }
 #else // !WIN32
@@ -2391,7 +2667,8 @@ CDECL int dllkill() { return do_kill(NULL); }
 #endif // !WIN32
 #elif defined CONSOLE
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
+#include <winsock2.h>
 #include <windows.h>
 #endif
 #include "console.h"
@@ -2399,26 +2676,27 @@ CDECL int dllkill() { return do_kill(NULL); }
 
 #define EXPORT_CREATE_C(X,C) EXPORT int create_##X(OBJECT **obj, OBJECT *parent) \
 {	try { *obj = gl_create_object(C::oclass); \
-	if ( *obj != NULL ) { C *my = OBJECTDATA(*obj,C); \
+	if ( *obj != NULL ) { C *my = object_data<C>(*obj);   \
 		gl_set_parent(*obj,parent); return my->create(); \
 	} else return 0; } CREATE_CATCHALL(X); }
 /// Implement class create export
 #define EXPORT_CREATE(X) EXPORT_CREATE_C(X,X)
 
 #define EXPORT_INIT_C(X,C) EXPORT int init_##X(OBJECT *obj, OBJECT *parent) \
-{	try { if (obj!=NULL) return OBJECTDATA(obj,C)->init(parent); else return 0; } \
+{	try { if (obj!=NULL) return /*OBJECTDATA(obj,C)*/ object_data<C>(obj)->init(parent); else return 0; } \
 	INIT_CATCHALL(X); }
 /// Implement class init export
 #define EXPORT_INIT(X) EXPORT_INIT_C(X,X)
 
 #define EXPORT_COMMIT_C(X,C) EXPORT TIMESTAMP commit_##X(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2) \
-{	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->commit(t1,t2) : TS_NEVER; } \
+{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj);  try { return obj!=NULL ? my->commit(t1,t2) : TS_NEVER; } \
 	T_CATCHALL(C,commit); }
 /// Implement class commit export
 #define EXPORT_COMMIT(X) EXPORT_COMMIT_C(X,X)
 
 #define EXPORT_NOTIFY_C(X,C) EXPORT int notify_##X(OBJECT *obj, int notice, PROPERTY *prop, char *value) \
-{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj); \
+	try { if ( obj!=NULL ) { \
 	switch (notice) { \
 	case NM_POSTUPDATE: return my->postnotify(prop,value); \
 	case NM_PREUPDATE: return my->prenotify(prop,value); \
@@ -2428,7 +2706,8 @@ CDECL int dllkill() { return do_kill(NULL); }
 #define EXPORT_NOTIFY(X) EXPORT_NOTIFY_C(X,X)
 
 #define EXPORT_SYNC_C(X,C) EXPORT TIMESTAMP sync_##X(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) { \
-	try { TIMESTAMP t1=TS_NEVER; C *p=OBJECTDATA(obj,C); \
+	try { TIMESTAMP t1=TS_NEVER; /*C *p=OBJECTDATA(obj,C);*/ \
+    C *p = object_data<C>(obj); \
 	switch (pass) { \
 	case PC_PRETOPDOWN: t1 = p->presync(t0); break; \
 	case PC_BOTTOMUP: t1 = p->sync(t0); break; \
@@ -2441,31 +2720,32 @@ CDECL int dllkill() { return do_kill(NULL); }
 #define EXPORT_SYNC(X) EXPORT_SYNC_C(X,X)
 
 #define EXPORT_ISA_C(X,C) EXPORT int isa_##X(OBJECT *obj, char *name) { \
-	return ( obj!=0 && name!=0 ) ? OBJECTDATA(obj,C)->isa(name) : 0; }
+	return ( obj!=0 && name!=0 ) ? /*OBJECTDATA(obj,C)*/  object_data<C>(obj)->isa(name) : 0; }
 /// Implement class isa export
 #define EXPORT_ISA(X) EXPORT_ISA_C(X,X)
 
 #define EXPORT_PLC_C(X,C) EXPORT TIMESTAMP plc_##X(OBJECT *obj, TIMESTAMP t1) { \
-	try { return OBJECTDATA(obj,C)->plc(t1); } \
+	try { return object_data<C>(obj)->plc(t1);  /*OBJECTDATA(obj,C)->plc(t1);*/ } \
 	T_CATCHALL(plc,X); }
 /// Implement class plc export
 #define EXPORT_PLC(X) EXPORT_PLC_C(X,X)
 
 // TODO add other linkages as needed
 #define EXPORT_PRECOMMIT_C(X,C) EXPORT int precommit_##X(OBJECT *obj, TIMESTAMP t1) \
-{	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->precommit(t1) : 0; } \
+{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj);   \
+    try { return obj!=NULL ? my->precommit(t1) : 0; } \
 	T_CATCHALL(C,precommit); }
 /// Implement class precommit export
 #define EXPORT_PRECOMMIT(X) EXPORT_PRECOMMIT_C(X,X)
 
 #define EXPORT_FINALIZE_C(X,C) EXPORT int finalize_##X(OBJECT *obj) \
-{	C *my = OBJECTDATA(obj,C); try { return obj!=NULL ? my->finalize() : 0; } \
+{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj);  try { return obj!=NULL ? my->finalize() : 0; } \
 	T_CATCHALL(C,finalize); }
 /// Implement class finalize export
 #define EXPORT_FINALIZE(X) EXPORT_FINALIZE_C(X,X)
 
 #define EXPORT_NOTIFY_C_P(X,C,P) EXPORT int notify_##X##_##P(OBJECT *obj, char *value) \
-{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj);  try { if ( obj!=NULL ) { \
 	return my->notify_##P(value); \
 	} else return 0; } \
 	T_CATCHALL(X,notify_##P); return 1; }
@@ -2473,7 +2753,7 @@ CDECL int dllkill() { return do_kill(NULL); }
 #define EXPORT_NOTIFY_PROP(X,P) EXPORT_NOTIFY_C_P(X,X,P)
 
 #define EXPORT_LOADMETHOD_C(X,C,N) EXPORT int loadmethod_##X##_##N(OBJECT *obj, char *value) \
-{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj);  try { if ( obj!=NULL ) { \
 	return my->N(value); \
 	} else return 0; } \
 	T_CATCHALL(X,loadmethod); }
@@ -2482,7 +2762,7 @@ CDECL int dllkill() { return do_kill(NULL); }
 
 #define DECL_METHOD(X,N) EXPORT int method_##X##_##N(OBJECT *obj, char *value, size_t size)
 #define EXPORT_METHOD_C(X,C,N) DECL_METHOD(X,N) \
-		{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+		{	/*C *my = OBJECTDATA(obj,C);*/ C *my = object_data<C>(obj);  try { if ( obj!=NULL ) { \
 			return my->N(value,size); \
 			} else return 0; } \
 			T_CATCHALL(X,method); }
@@ -2498,6 +2778,8 @@ CDECL int dllkill() { return do_kill(NULL); }
 #if defined WIN32 && ! defined __MINGW32__
 	#define _WIN32_WINNT 0x0400
 	#undef int64 // wtypes.h also used int64
+	#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
+	#include <winsock2.h>
 	#include <windows.h>
 	#define int64 _int64
 	#define PREFIX ""
@@ -2506,7 +2788,7 @@ CDECL int dllkill() { return do_kill(NULL); }
 	#endif
 	#define DLLOAD(P) LoadLibrary(P)
 	#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
-	#define snprintf _snprintf
+	//#define snprintf _snprintf
 #else /* ANSI */
 #ifndef __MINGW32__
 	#include "dlfcn.h"

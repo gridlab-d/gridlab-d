@@ -29,6 +29,9 @@ EXPORT_ISA(climate)
 
 #define RAD(x) (x*PI)/180
 
+#undef max
+#undef min
+
 double surface_angles[] = {
 	360,	// H
 	180,	// N
@@ -102,7 +105,7 @@ EXPORT int64 calculate_solar_radiation_shading_position_radians(OBJECT *obj, dou
 		//throw "climate/calc_solar: null object pointer in argument";
 		return 0;
 	}
-	cli = OBJECTDATA(obj, climate);
+	cli = /*OBJECTDATA(obj, climate)*/     object_data<climate>(obj);
 	if(gl_object_isa(obj, "climate", "climate") == 0){
 		//throw "climate/calc_solar: input object is not a climate object";
 		return 0;
@@ -146,7 +149,7 @@ EXPORT int64 calc_solar_solpos_shading_position_rad(OBJECT *obj, double tilt, do
 	if(obj == 0 || value == 0){
 		return 0;
 	}
-	cli = OBJECTDATA(obj, climate);
+	cli = /*OBJECTDATA(obj, climate)*/   object_data<climate>(obj);
 	if(gl_object_isa(obj, "climate", "climate") == 0){
 		return 0;
 	}
@@ -225,7 +228,7 @@ EXPORT int64 calc_solar_ideal_shading_position_radians(OBJECT *obj, double tilt,
 	if(obj == 0 || value == 0){
 		return 0;
 	}
-	cli = OBJECTDATA(obj, climate);
+	cli = /*OBJECTDATA(obj, climate)*/   object_data<climate>(obj);
 	if(gl_object_isa(obj, "climate", "climate") == 0){
 		return 0;
 	}
@@ -523,7 +526,7 @@ climate *climate::defaults = nullptr;
 
 climate::climate(MODULE *module)
 {
-	memset(this, 0, sizeof(climate));
+	/*//memset(this, 0, sizeof(climate));*/
 	if (oclass==nullptr)
 	{
 		oclass = gld_class::create(module,"climate",sizeof(climate),PC_PRETOPDOWN|PC_AUTOLOCK);
@@ -585,7 +588,7 @@ climate::climate(MODULE *module)
 			PT_double,"cloud_aerosol_transmissivity[pu]",PADDR(cloud_aerosol_transmissivity),
             PT_double,"update_time",PADDR(update_time),
 			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
-		memset(this,0,sizeof(climate));
+		//memset(this,0,sizeof(climate));
 		sa = new SolarAngles();
 		defaults = this;
 		gl_publish_function(oclass,	"calculate_solar_radiation_degrees", (FUNCTIONADDR)calculate_solar_radiation_degrees);
@@ -637,7 +640,7 @@ int climate::isa(char *classname)
 int climate::init(OBJECT *parent)
 {
 	char *dot = 0;
-	OBJECT *obj=OBJECTHDR(this);
+	OBJECT *obj=object_header(this);
 	TIMESTAMP t0 = obj->clock;
 	double meter_to_feet = 1.0;
 	double tz_num_offset;
@@ -731,7 +734,7 @@ int climate::init(OBJECT *parent)
 				gl_verbose("climate::init(): deferring initialization on %s", gl_name(reader, objname, 255));
 				return 2; // defer
 			}
-			csv_reader *my = OBJECTDATA(reader,csv_reader);
+			csv_reader *my = /*OBJECTDATA(reader, csv_reader)*/   object_data<csv_reader>(reader);
 			reader_hndl = my;
 			rv = my->open(my->filename);
 //			my->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &wind_speed, &rainfall, &snowdepth);
@@ -979,7 +982,7 @@ int climate::get_solar_for_location(double latitude, double longitude, double *d
 	double ETR;
 	double ETRN;
 	double sol_z;
-	OBJECT *obj=OBJECTHDR(this);
+	OBJECT *obj=object_header(this);
 	DATETIME dt;
 	gl_localtime(obj->clock, &dt);
 
@@ -1358,7 +1361,7 @@ double climate::convert_to_binary_cloud(){
 
 
 	double search_tolerance = 0.005; //Defines how close is close enough when dialing in the binary cloud pattern.
-	//OBJECT *obj=OBJECTHDR(this);
+	//OBJECT *obj=object_header(this);
 	//TIMESTAMP t1 = obj->clock;
 
 
@@ -1998,7 +2001,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
     if(t0 > TS_ZERO && tmy==nullptr && reader_type != RT_CSV) { // no file was read, so it's probably manual, FNCS or HELICS control
         gld_clock now(t0);
         //calculate the solar radiation
-        OBJECT *obj=OBJECTHDR(this);
+        OBJECT *obj=object_header(this);
         double longitude = obj->longitude;
         double sol_time =
             sa->solar_time((double)now.get_hour()+(now.get_minute()/60.0)+(now.get_second()/3600.0)+(now.get_is_dst()
@@ -2025,7 +2028,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 	// changes appear to be limited to weather.h, weather.cpp, csv_reader.h, csv_reader.cpp
 	if(t0 > TS_ZERO && reader_type == RT_CSV){
 		gld_clock now(t0);
-		csv_reader *cr = OBJECTDATA(reader,csv_reader);
+		csv_reader *cr = /*OBJECTDATA(reader, csv_reader)*/    object_data<csv_reader>(reader);
 		csv_rv = cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &global_horizontal_extra, &wind_speed,&wind_dir, &opq_sky_cov, &tot_sky_cov, &rainfall, &snowdepth, &pressure);
 		// calculate the solar radiation
 		double sol_time = sa->solar_time((double)now.get_hour()+now.get_minute()/60.0+now.get_second()/3600.0 + (now.get_is_dst() ? -1:0),now.get_yearday(),RAD(tz_meridian),RAD(reader->longitude));

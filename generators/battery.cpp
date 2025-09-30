@@ -221,7 +221,7 @@ int battery::create(void)
 /* Object initialization is called once after all object have been created */
 int battery::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	gld_property *temp_property_pointer;
 	double temp_value_SocReserve;
 	enumeration temp_value_control_mode;
@@ -519,7 +519,7 @@ int battery::init(OBJECT *parent)
 
 		if (gen_status_v == OFFLINE)
 		{
-			//OBJECT *obj = OBJECTHDR(this);
+			//OBJECT *obj = object_header(this);
 			gl_warning("Generator (id:%d) is out of service!",obj->id);
 		}
 		else
@@ -794,7 +794,7 @@ double battery::calculate_efficiency(gld::complex voltage, gld::complex current)
 /* Presync is called when the clock needs to advance on the first top-down pass */
 TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	if(use_internal_battery_model){
 			double dt;
@@ -822,7 +822,7 @@ TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		//Push the SOC up
-		pSoc->setp<double>(soc,*test_rlock);
+		pSoc->setp<double>(soc,test_rlock);
 	}
 	TIMESTAMP t2 = TS_NEVER;
 	/* TODO: implement pre-topdown behavior */
@@ -833,7 +833,7 @@ TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	gld::complex temp_complex_value;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if(!use_internal_battery_model){
 		if (gen_mode_v == GM_POWER_DRIVEN || gen_mode_v == GM_POWER_VOLTAGE_HYBRID) 
@@ -2173,7 +2173,7 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 gld_property *battery::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -2196,7 +2196,7 @@ gld_property *battery::map_complex_value(OBJECT *obj, const char *name)
 gld_property *battery::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -2220,7 +2220,7 @@ gld_property *battery::map_double_value(OBJECT *obj, const char *name)
 void battery::push_powerflow_currents(void)
 {
 	gld::complex temp_complex_val;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	int indexval;
 
 	if (parent_is_meter)
@@ -2239,7 +2239,7 @@ void battery::push_powerflow_currents(void)
 				temp_complex_val += value_Line12;
 
 				//Push it back up
-				pLine12->setp<gld::complex>(temp_complex_val,*test_rlock);
+				pLine12->setp<gld::complex>(temp_complex_val,test_rlock);
 			}//End pLine_I valid
 			//Default else -- it's null, so skip it
 		}//End is triplex
@@ -2258,7 +2258,7 @@ void battery::push_powerflow_currents(void)
 					temp_complex_val += value_Line_I[indexval];
 
 					//Push it back up
-					pLine_I[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
+					pLine_I[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 				}//End pLine_I valid
 				//Default else -- it's null, so skip it
 			}
@@ -2274,7 +2274,7 @@ void battery::push_powerflow_currents(void)
 STATUS battery::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 {
 	STATUS stat_val;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	// Battery delta mode operation is only when enableDelta is true
 	if (!enableDelta) {
@@ -2336,7 +2336,7 @@ SIMULATIONMODE battery::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 
 void battery::update_soc(unsigned int64 delta_time)
 {
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	b_soc_reserve = pSocReserve->get_double();
 	if(battery_state == BS_DISCHARGING || battery_state == BS_CHARGING){
@@ -2357,8 +2357,9 @@ void battery::update_soc(unsigned int64 delta_time)
 	}
 	pre_soc = soc;
 	//Push the SOC up
-	pSoc->setp<double>(soc,*test_rlock);
+	pSoc->setp<double>(soc,test_rlock);
 }
+
 
 double battery::check_state_change_time_delta(unsigned int64 delta_time, unsigned long dt)
 {
@@ -2452,7 +2453,7 @@ EXPORT int create_battery(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(battery::oclass);
 		if (*obj!=nullptr)
 		{
-			battery *my = OBJECTDATA(*obj,battery);
+			battery *my = /*OBJECTDATA(*obj, battery)*/  object_data<battery>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -2467,7 +2468,7 @@ EXPORT int init_battery(OBJECT *obj, OBJECT *parent)
 	try 
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,battery)->init(parent);
+			return /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -2477,7 +2478,7 @@ EXPORT int init_battery(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	battery *my = OBJECTDATA(obj,battery);
+	battery *my = /*OBJECTDATA(obj, battery)*/  object_data<battery>(obj);
 	try
 	{
 		switch (pass) {
@@ -2503,7 +2504,7 @@ EXPORT TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 
 EXPORT STATUS preupdate_battery(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)
 {
-	battery *my = OBJECTDATA(obj,battery);
+	battery *my = /*OBJECTDATA(obj, battery)*/   object_data<battery>(obj);
 	STATUS status_output = FAILED;
 
 	try
@@ -2520,7 +2521,7 @@ EXPORT STATUS preupdate_battery(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_
 
 EXPORT SIMULATIONMODE interupdate_battery(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	battery *my = OBJECTDATA(obj,battery);
+	battery *my = /*OBJECTDATA(obj, battery)*/  object_data<battery>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -2536,7 +2537,7 @@ EXPORT SIMULATIONMODE interupdate_battery(OBJECT *obj, unsigned int64 delta_time
 
 EXPORT STATUS postupdate_battery(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
-	battery *my = OBJECTDATA(obj,battery);
+	battery *my = /*OBJECTDATA(obj, battery)*/   object_data<battery>(obj);
 	STATUS status = FAILED;
 	try
 	{

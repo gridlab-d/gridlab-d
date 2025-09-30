@@ -29,6 +29,10 @@ using namespace std;
 
 #define PV_CURVE_PARAM_RATIO 1.2
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 /* Framework */
 CLASS *solar::oclass = nullptr;
 solar *solar::defaults = nullptr;
@@ -140,7 +144,7 @@ solar::solar(MODULE *module)
 			GL_THROW("Unable to publish solar DC object update function");
 
 		defaults = this;
-		memset(this, 0, sizeof(solar));
+		//memset(this, 0, sizeof(solar));
 	}
 }
 
@@ -241,7 +245,7 @@ then Tout will be set to 59 degF, RHout is set to 75% and solar flux will be set
 **/
 int solar::init_climate()
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	OBJECT *obj = nullptr;
 
 	// link to climate data
@@ -516,10 +520,10 @@ int solar::init_climate()
 /* Object initialization is called once after all object have been created */
 int solar::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	int climate_result;
 	gld_property *temp_property_pointer = nullptr;
-	gld_wlock *test_rlock = nullptr;
+	unsigned test_rlock = 0;
 	bool temp_bool_val;
 	double temp_double_val, temp_inv_p_rated, temp_p_efficiency, temp_p_eta;
 	double temp_double_div_value_eta, temp_double_div_value_eff;
@@ -692,7 +696,7 @@ int solar::init(OBJECT *parent)
 			}
 
 			//Pull the property
-			temp_property_pointer->getp<bool>(temp_bool_val, *test_rlock);
+			temp_property_pointer->getp<bool>(temp_bool_val, test_rlock);
 
 			//Remove the property
 			delete temp_property_pointer;
@@ -1120,9 +1124,9 @@ TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	int64 ret_value;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double insolwmsq, corrwindspeed, Tback, Ftempcorr;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	//Check the shading factor
 	if ((shading_factor < 0) || (shading_factor > 1))
@@ -1263,7 +1267,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 			pvc_Pmax = get_p_max(pvc_U_m_V);
 		}
 
-		inverter_pvc_Pmax_property->setp<double>(pvc_Pmax, *test_rlock);
+		inverter_pvc_Pmax_property->setp<double>(pvc_Pmax, test_rlock);
 
 		if (pvc_Pmax > Max_P)
 		{
@@ -1287,8 +1291,8 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	I_Out = (P_Out / V_Out);
 
 	//Export the values
-	inverter_voltage_property->setp<double>(V_Out, *test_rlock);
-	inverter_current_property->setp<double>(I_Out, *test_rlock);
+	inverter_voltage_property->setp<double>(V_Out, test_rlock);
+	inverter_current_property->setp<double>(I_Out, test_rlock);
 
 	return TS_NEVER;
 }
@@ -1334,7 +1338,7 @@ SIMULATIONMODE solar::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 //DC update function
 STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 {
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	STATUS temp_status = SUCCESS;
 	double inv_I, inv_P;
 
@@ -1358,7 +1362,7 @@ STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 		V_Out = get_u_from_p(pvc_U_m_V, eps_nr_ite, inv_P);
 
 		//Push the voltage back out to the inverter - this may need different logic when there are multiple objects
-		inverter_voltage_property->setp<double>(V_Out, *test_rlock);
+		inverter_voltage_property->setp<double>(V_Out, test_rlock);
 
 		//Initialize our tracking variables - since we're likely to go to normal code after this
 		last_DC_current = 0.0;
@@ -1380,8 +1384,8 @@ STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 		inv_P += P_Out - last_DC_power;
 
 		//Push the changes
-		inverter_current_property->setp<double>(inv_I, *test_rlock);
-		inverter_power_property->setp<double>(inv_P, *test_rlock);
+		inverter_current_property->setp<double>(inv_I, test_rlock);
+		inverter_power_property->setp<double>(inv_P, test_rlock);
 
 		//Update trackers
 		last_DC_current = I_Out;
@@ -1395,7 +1399,7 @@ STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 /* Utility Funcs */
 void solar::init_pub_vars_pvcurve_mode()
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	// Init with Reference Temperature & Insolation
 	pvc_cur_S_wpm2 = pvc_S_ref_wpm2;
@@ -1658,7 +1662,7 @@ EXPORT int create_solar(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(solar::oclass);
 		if (*obj != nullptr)
 		{
-			solar *my = OBJECTDATA(*obj, solar);
+			solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(*obj);
 			gl_set_parent(*obj, parent);
 			return my->create();
 		}
@@ -1673,7 +1677,7 @@ EXPORT int init_solar(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj != nullptr)
-			return OBJECTDATA(obj, solar)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<solar>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -1683,7 +1687,7 @@ EXPORT int init_solar(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	solar *my = OBJECTDATA(obj, solar);
+	solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(obj);
 	try
 	{
 		switch (pass)
@@ -1711,7 +1715,7 @@ EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 //DELTAMODE Linkage
 EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	solar *my = OBJECTDATA(obj, solar);
+	solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -1728,7 +1732,7 @@ EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, 
 //DC Object calls from inverter linkage
 EXPORT STATUS dc_object_update_solar(OBJECT *us_obj, OBJECT *calling_obj, bool init_mode)
 {
-	solar *me_solar = OBJECTDATA(us_obj, solar);
+	solar *me_solar = /*OBJECTDATA(us_obj,<>)*/ object_data<solar>(us_obj);
 	STATUS temp_status;
 
 	//Call our update function

@@ -91,6 +91,8 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <array>
+
 
 #include "link.h"
 #include "node.h"
@@ -351,8 +353,8 @@ int link_object::init(OBJECT *parent)
 	powerflow_object::init(parent);
 
 	gld::set phase_f_test, phase_t_test, phases_test;
-	node *fNode = OBJECTDATA(from,node);
-	node *tNode = OBJECTDATA(to,node);
+	node *fNode = /*OBJECTDATA(obj,<>)*/ object_data<node>(from);
+	node *tNode = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
 
 	if (mean_repair_time < 0.0)
 	{
@@ -468,7 +470,7 @@ int link_object::init(OBJECT *parent)
 		//Also link other end of line to from, so we can steal its currents later
 		if (gl_object_isa(obj,"triplex_line","powerflow"))
 		{
-			node *tnode = OBJECTDATA(to,node);
+			node *tnode = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
 
 			tnode->Triplex_Data=&tn[0];
 		}
@@ -477,7 +479,7 @@ int link_object::init(OBJECT *parent)
 		if ((fNode->SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0)
 		{
 			//Parent/child connected node, so increment our parent's counter
-			node *pfNode = OBJECTDATA(fNode->SubNodeParent,node);
+			node *pfNode = object_data<node>(fNode->SubNodeParent);
 			pfNode->NR_connected_links[0]++;
 		}
 		else
@@ -488,7 +490,7 @@ int link_object::init(OBJECT *parent)
 		if ((tNode->SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0)
 		{
 			//Parent/child connected node, so increment our parent's counter
-			node *ptNode = OBJECTDATA(tNode->SubNodeParent,node);
+			node *ptNode = object_data<node>(tNode->SubNodeParent);
 			ptNode->NR_connected_links[0]++;
 		}
 		else
@@ -583,8 +585,8 @@ int link_object::init(OBJECT *parent)
 	}
 
 	/* record this link on the nodes' incidence counts */
-	OBJECTDATA(from,node)->k++;
-	OBJECTDATA(to,node)->k++;
+	/*OBJECTDATA(obj,<>)*/ object_data<node>(from)->k++;
+	/*OBJECTDATA(obj,<>)*/ object_data<node>(to)->k++;
 
 	//See if limits are enabled - if so, populate them
 	if (use_link_limits)
@@ -962,8 +964,8 @@ node *link_object::get_to(void) const
 }
 gld::set link_object::get_flow(node **fn, node **tn) const
 {
-	node *f = OBJECTDATA(from, node);
-	node *t = OBJECTDATA(to, node);
+	node *f = object_data<node>(from);
+	node *t = object_data<node>(to);
 	gld::set reverse = 0;
 	reverse |= (f->voltage[0].Mag()<t->voltage[0].Mag())?PHASE_A:0;
 	reverse |= (f->voltage[1].Mag()<t->voltage[1].Mag())?PHASE_B:0;
@@ -977,7 +979,7 @@ gld::set link_object::get_flow(node **fn, node **tn) const
 //Presync portion of NR code - functionalized for deltamode
 void link_object::NR_link_sync_fxn(void)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	int ret_value;
 	bool force_link_update;
 	double curr_delta_time;
@@ -2392,8 +2394,8 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 	{
 		if (prev_LTime==0)	//First run, build up the pointer matrices
 		{
-			node *fnode = OBJECTDATA(from,node);
-			node *tnode = OBJECTDATA(to,node);
+			node *fnode = /*OBJECTDATA(obj,<>)*/ object_data<node>(from);
+			node *tnode = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
 			unsigned int *LinkTableLoc = nullptr;
 			unsigned int TempTableIndex;
 			unsigned char working_phase;
@@ -2401,7 +2403,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 			int IndVal = 0;
 			int resultval;
 			bool *temp_empty;
-			OBJECT *obj = OBJECTHDR(this);
+			OBJECT *obj = object_header(this);
 
 			if (fnode==nullptr || tnode==nullptr)
 				return TS_NEVER;
@@ -2409,7 +2411,8 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 			if ((NR_curr_bus!=-1) && (NR_curr_branch!=-1))	//Ensure we've been initialized
 			{
 				//Lock fnode so multi-links don't have issues
-				LOCK_OBJECT(from);
+				//LOCK_OBJECT(from);
+				std::unique_lock<std::shared_mutex> lock_from(SharedMutexManager::get_mutex(from));
 
 				//Check our end nodes first - update them if necessary
 				if (fnode->NR_node_reference==-1)	//Uninitialized node
@@ -2418,7 +2421,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				}
 				else if (fnode->NR_node_reference==-99)	//Child node
 				{
-					node *ParFromNode = OBJECTDATA(fnode->SubNodeParent,node);
+					node *ParFromNode = object_data<node>(fnode->SubNodeParent);
 
 					if (ParFromNode->NR_node_reference==-1)	//Uninitialized node
 					{
@@ -2427,10 +2430,12 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				}
 
 				//Unlock the from node
-				UNLOCK_OBJECT(from);
+				//UNLOCK_OBJECT(from);
+				lock_from.unlock();
 
 				//Lock To object for multi-links
-				LOCK_OBJECT(to);
+				//LOCK_OBJECT(to);
+				std::unique_lock<std::shared_mutex> lock_to(SharedMutexManager::get_mutex(to));
 
 				if (tnode->NR_node_reference==-1)	//Unitialized node
 				{
@@ -2438,7 +2443,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				}
 				else if (tnode->NR_node_reference==-99)	//Child node
 				{
-					node *ParToNode = OBJECTDATA(tnode->SubNodeParent,node);
+					node *ParToNode = object_data<node>(tnode->SubNodeParent);
 
 					if (ParToNode->NR_node_reference==-1)	//Uninitialized node
 					{
@@ -2447,16 +2452,19 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				}
 
 				//Unlock to node
-				UNLOCK_OBJECT(to);
+				//UNLOCK_OBJECT(to);
+				lock_to.unlock();
 
 				//Now populate the link's information
 				//Lock the Swing bus and get us a unique array location
-				LOCK_OBJECT(NR_swing_bus);
+				//LOCK_OBJECT(NR_swing_bus);
+				std::unique_lock<std::shared_mutex> lock_nr(SharedMutexManager::get_mutex(NR_swing_bus));
 
 				NR_branch_reference = NR_curr_branch;	//Get an index and store it as our own
 				NR_curr_branch++;					//Increment it for next one
 
-				UNLOCK_OBJECT(NR_swing_bus);	//Release the swing bus for others
+				//UNLOCK_OBJECT(NR_swing_bus);	//Release the swing bus for others
+				lock_nr.unlock();
 
 				//See if we worked - not sure how it would get here otherwise, but meh
 				if (NR_branch_reference == -1)
@@ -2589,34 +2597,34 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					//Update initial stati as necessary as well - do for fuses and switches (both encoded the same SpecialLnk)
 					if (gl_object_isa(obj,"switch","powerflow"))
 					{
-						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_A_state"));
+						temp_phase = (char*)get_addr(obj,gl_get_property(obj,"phase_A_state"));
 
 						if (*temp_phase == 1)
 							working_phase |= 0x04;
 
-						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_B_state"));
+						temp_phase = (char*)get_addr(obj,gl_get_property(obj,"phase_B_state"));
 
 						if (*temp_phase == 1)
 							working_phase |= 0x02;
 
-						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_C_state"));
+						temp_phase = (char*)get_addr(obj,gl_get_property(obj,"phase_C_state"));
 
 						if (*temp_phase == 1)
 							working_phase |= 0x01;
 					}
 					else if (gl_object_isa(obj,"fuse","powerflow"))
 					{
-						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_A_status"));
+						temp_phase = (char*)get_addr(obj,gl_get_property(obj,"phase_A_status"));
 
 						if (*temp_phase == 1)
 							working_phase |= 0x04;
 
-						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_B_status"));
+						temp_phase = (char*)get_addr(obj,gl_get_property(obj,"phase_B_status"));
 
 						if (*temp_phase == 1)
 							working_phase |= 0x02;
 
-						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_C_status"));
+						temp_phase = (char*)get_addr(obj,gl_get_property(obj,"phase_C_status"));
 
 						if (*temp_phase == 1)
 							working_phase |= 0x01;
@@ -2638,26 +2646,28 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					{
 						//Set the To node phases
 						//Lock the to node
-						LOCK_OBJECT(tnode->SubNodeParent);
+						//LOCK_OBJECT(tnode->SubNodeParent);
+						std::unique_lock<std::shared_mutex> lock_tnode(SharedMutexManager::get_mutex(tnode->SubNodeParent));
 
 						NR_busdata[*tnode->NR_subnode_reference].phases |= 0x20;
 						NR_busdata[*tnode->NR_subnode_reference].origphases |= 0x20;	//Make sure reliability gets updated right too!
 
 						//Unlock to node
-						UNLOCK_OBJECT(tnode->SubNodeParent);
+						//UNLOCK_OBJECT(tnode->SubNodeParent);
 
 					}
 					else	//Must be a "normal" node
 					{
 						//Set the To node phases
 						//Lock the to node
-						LOCK_OBJECT(to);
+						//LOCK_OBJECT(to);
+						std::unique_lock<std::shared_mutex> lock_to(SharedMutexManager::get_mutex(to));
 
 						NR_busdata[tnode->NR_node_reference].phases |= 0x20;
 						NR_busdata[tnode->NR_node_reference].origphases |= 0x20;	//Make sure reliability gets updated right too!
 
 						//Unlock to node
-						UNLOCK_OBJECT(to);
+						//UNLOCK_OBJECT(to);
 					}
 				}
 
@@ -2670,17 +2680,18 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					IndVal = *fnode->NR_subnode_reference;
 
 					//Get the parent information
-					node *parFnode = OBJECTDATA(fnode->SubNodeParent,node);
+					node *parFnode = object_data<node>(fnode->SubNodeParent);
 					LinkTableLoc = parFnode->NR_connected_links;
 
 					//Lock the parent object while we steal location information, and give ourselves a unique value
-					LOCK_OBJECT(fnode->SubNodeParent);
+					//LOCK_OBJECT(fnode->SubNodeParent);
+					std::unique_lock<std::shared_mutex> lock_fnode(SharedMutexManager::get_mutex(fnode->SubNodeParent));
 
 					TempTableIndex = LinkTableLoc[1];	//Get our index in the table
 					LinkTableLoc[1]++;					//Increment the index for the next guy
 
 					//Unlock us now
-					UNLOCK_OBJECT(fnode->SubNodeParent);
+					//UNLOCK_OBJECT(fnode->SubNodeParent);
 				}
 				else
 				{
@@ -2689,13 +2700,15 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					LinkTableLoc = fnode->NR_connected_links;						//Locate the counter table
 
 					//Lock the from object while we steal location information, and give ourselves a unique value
-					LOCK_OBJECT(from);
+					//LOCK_OBJECT(from);
+					std::unique_lock<std::shared_mutex> lock_from(SharedMutexManager::get_mutex(from));
+
 
 					TempTableIndex = LinkTableLoc[1];	//Get our index in the table
 					LinkTableLoc[1]++;					//Increment the index for the next guy
 
 					//Unlock us now
-					UNLOCK_OBJECT(from);
+					//UNLOCK_OBJECT(from);
 				}
 
 				//If we are OK, populate the list entry
@@ -2721,17 +2734,18 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					IndVal = *tnode->NR_subnode_reference;
 
 					//Get the parent information
-					node *parTnode = OBJECTDATA(tnode->SubNodeParent,node);
+					node *parTnode = object_data<node>(tnode->SubNodeParent);
 					LinkTableLoc = parTnode->NR_connected_links;
 
 					//Lock the parent object while we steal location information, and give ourselves a unique value
-					LOCK_OBJECT(tnode->SubNodeParent);
+					//LOCK_OBJECT(tnode->SubNodeParent);
+					std::unique_lock<std::shared_mutex> lock_tnode(SharedMutexManager::get_mutex(tnode->SubNodeParent));
 
 					TempTableIndex = LinkTableLoc[1];	//Get our index in the table
 					LinkTableLoc[1]++;					//Increment the index for the next guy
 
 					//Unlock us now
-					UNLOCK_OBJECT(tnode->SubNodeParent);
+					//UNLOCK_OBJECT(tnode->SubNodeParent);
 				}
 				else
 				{
@@ -2740,13 +2754,14 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					LinkTableLoc = tnode->NR_connected_links;						//Locate the counter table
 
 					//Lock the to object while we steal location information, and give ourselves a unique value
-					LOCK_OBJECT(to);
+					//LOCK_OBJECT(to);
+					std::unique_lock<std::shared_mutex> lock_to(SharedMutexManager::get_mutex(to));
 
 					TempTableIndex = LinkTableLoc[1];	//Get our index in the table
 					LinkTableLoc[1]++;					//Increment the index for the next guy
 
 					//Unlock us now
-					UNLOCK_OBJECT(to);
+					//UNLOCK_OBJECT(to);
 				}
 
 				//If we are OK, populate the list entry
@@ -2836,7 +2851,10 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				}
 
 				//Lock the SWING bus and get us a value
-				if ( NR_swing_bus!=obj) WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+				std::unique_lock<std::shared_mutex> lock_nr;
+				if (NR_swing_bus != obj)
+					lock_nr = std::unique_lock<std::shared_mutex> (  SharedMutexManager::get_mutex(NR_swing_bus) );
+					//WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
 
 					//Get the value
 					temp_pwr_object_current = pwr_object_current;
@@ -2845,7 +2863,9 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					pwr_object_current++;
 
 				//Unlock
-				if ( NR_swing_bus!=obj) WRITEUNLOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
+				if ( NR_swing_bus!=obj) 
+					lock_nr.unlock();
+					//WRITEUNLOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
 
 				//Add us into the list
 				delta_objects[temp_pwr_object_current] = obj;
@@ -3004,10 +3024,10 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 #ifdef SUPPORT_OUTAGES
 	node *fNode;
 	node *tNode;
-	fNode=OBJECTDATA(from,node);
-	tNode=OBJECTDATA(to,node);
+	fNode=/*OBJECTDATA(obj,<>)*/ object_data<node>(from);
+	tNode=/*OBJECTDATA(obj,<>)*/ object_data<node>(to);
 #endif
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if (is_closed())
 	{
@@ -3021,9 +3041,13 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 			tNode->condition=fNode->condition;
 #endif
 			/* compute currents */
-			READLOCK_OBJECT(to);
-			gld::complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-			READUNLOCK_OBJECT(to);
+			std::array<gld::complex, 3> tc;
+			{
+				//READLOCK_OBJECT(to);
+				std::shared_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(to));
+				tc = { t->current_inj[0], t->current_inj[1], t->current_inj[2] };
+				//READUNLOCK_OBJECT(to);
+			}
 
 			gld::complex i0, i1, i2;
 
@@ -3049,11 +3073,13 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 				d_mat[2][1] * tc[1] +
 				d_mat[2][2] * tc[2];
 
-			WRITELOCK_OBJECT(from);
+			//WRITELOCK_OBJECT(from);
+			std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(from));
+
 			f->current_inj[0] += i0;
 			f->current_inj[1] += i1;
 			f->current_inj[2] += i2;
-			WRITEUNLOCK_OBJECT(from);
+			//WRITEUNLOCK_OBJECT(from);
 		}
 	}
 #ifdef SUPPORT_OUTAGES
@@ -3159,7 +3185,7 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 			if (temp_power_check > *link_limits[0][0])
 			{
 				//Exceeded rating - no emergency ratings for transformers, at this time
-				gl_warning("transformer:%s is at %.2f%% of its rated power value",OBJECTHDR(this)->name,(temp_power_check/(*link_limits[0][0])*100.0));
+				gl_warning("transformer:%s is at %.2f%% of its rated power value",object_header(this)->name,(temp_power_check/(*link_limits[0][0])*100.0));
 				/*  TROUBLESHOOT
 				The total power passing through a transformer is above its kVA rating.
 				*/
@@ -3183,21 +3209,21 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 					if (read_I_out[0].Mag() > *link_limits[1][0])
 					{
 						//Exceeded emergency
-						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase 1!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[1][0])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase 1!",object_header(this)->name,(read_I_out[0].Mag()/(*link_limits[1][0])*100.0));
 						/*  TROUBLESHOOT
 						Phase 1 on the line has exceeded the emergency rating associated with it.
 						*/
 					}
 					else	//Just continuous exceed
 					{
-						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase 1!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[0][0])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase 1!",object_header(this)->name,(read_I_out[0].Mag()/(*link_limits[0][0])*100.0));
 						/*  TROUBLESHOOT
 						Phase 1 on the line has exceeded the continuous rating associated with it.
 						*/
 					}
 
 					//Get this as a power value, for accumulation
-					nTo = OBJECTDATA(to,node);
+					nTo = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
 
 					//Find "overcurrent"
 					temp_current_diff = read_I_out[0].Mag() - *link_limits[0][0];
@@ -3220,21 +3246,21 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 					if (read_I_out[1].Mag() > *link_limits[1][1])
 					{
 						//Exceeded emergency
-						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase 2!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[1][1])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its emergency rating on phase 2!",object_header(this)->name,(read_I_out[1].Mag()/(*link_limits[1][1])*100.0));
 						/*  TROUBLESHOOT
 						Phase 1 on the line has exceeded the emergency rating associated with it.
 						*/
 					}
 					else	//Just continuous exceed
 					{
-						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase 2!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[0][1])*100.0));
+						gl_warning("Line:%s is at %.2f%% of its continuous rating on phase 2!",object_header(this)->name,(read_I_out[1].Mag()/(*link_limits[0][1])*100.0));
 						/*  TROUBLESHOOT
 						Phase 1 on the line has exceeded the continuous rating associated with it.
 						*/
 					}
 
 					//Get this as a power value, for accumulation
-					nTo = OBJECTDATA(to,node);
+					nTo = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
 
 					//Find "overcurrent"
 					temp_current_diff = read_I_out[1].Mag() - *link_limits[0][1];
@@ -3262,21 +3288,21 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 						if (read_I_out[0].Mag() > *link_limits[1][0])
 						{
 							//Exceeded emergency
-							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[1][0])*100.0));
+							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase A!",object_header(this)->name,(read_I_out[0].Mag()/(*link_limits[1][0])*100.0));
 							/*  TROUBLESHOOT
 							Phase A on the line has exceeded the emergency rating associated with it.
 							*/
 						}
 						else	//Just continuous exceed
 						{
-							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase A!",OBJECTHDR(this)->name,(read_I_out[0].Mag()/(*link_limits[0][0])*100.0));
+							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase A!",object_header(this)->name,(read_I_out[0].Mag()/(*link_limits[0][0])*100.0));
 							/*  TROUBLESHOOT
 							Phase A on the line has exceeded the continuous rating associated with it.
 							*/
 						}
 
 						//Get this as a power value, for accumulation
-						nTo = OBJECTDATA(to,node);
+						nTo = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
 
 						//Find "overcurrent"
 						temp_current_diff = read_I_out[0].Mag() - *link_limits[0][0];
@@ -3302,21 +3328,21 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 						if (read_I_out[1].Mag() > *link_limits[1][1])
 						{
 							//Exceeded emergency
-							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[1][1])*100.0));
+							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase B!",object_header(this)->name,(read_I_out[1].Mag()/(*link_limits[1][1])*100.0));
 							/*  TROUBLESHOOT
 							Phase B on the line has exceeded the emergency rating associated with it.
 							*/
 						}
 						else	//Just continuous exceed
 						{
-							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase B!",OBJECTHDR(this)->name,(read_I_out[1].Mag()/(*link_limits[0][1])*100.0));
+							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase B!",object_header(this)->name,(read_I_out[1].Mag()/(*link_limits[0][1])*100.0));
 							/*  TROUBLESHOOT
 							Phase B on the line has exceeded the continuous rating associated with it.
 							*/
 						}
 
 						//Get this as a power value, for accumulation
-						nTo = OBJECTDATA(to,node);
+						nTo = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
 
 						//Find "overcurrent"
 						temp_current_diff = read_I_out[1].Mag() - *link_limits[0][1];
@@ -3342,21 +3368,21 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 						if (read_I_out[2].Mag() > *link_limits[1][2])
 						{
 							//Exceeded emergency
-							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[1][2])*100.0));
+							gl_warning("Line:%s is at %.2f%% of its emergency rating on phase C!",object_header(this)->name,(read_I_out[2].Mag()/(*link_limits[1][2])*100.0));
 							/*  TROUBLESHOOT
 							Phase C on the line has exceeded the emergency rating associated with it.
 							*/
 						}
 						else	//Just continuous exceed
 						{
-							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase C!",OBJECTHDR(this)->name,(read_I_out[2].Mag()/(*link_limits[0][2])*100.0));
+							gl_warning("Line:%s is at %.2f%% of its continuous rating on phase C!",object_header(this)->name,(read_I_out[2].Mag()/(*link_limits[0][2])*100.0));
 							/*  TROUBLESHOOT
 							Phase C on the line has exceeded the continuous rating associated with it.
 							*/
 						}
 
 						//Get this as a power value, for accumulation
-						nTo = OBJECTDATA(to,node);
+						nTo = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
 
 						//Find "overcurrent"
 						temp_current_diff = read_I_out[2].Mag() - *link_limits[0][2];
@@ -3392,9 +3418,13 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 		gld::set reverse = get_flow(&f,&t);
 
 		// update published current_out values;
-		READLOCK_OBJECT(to);
-		gld::complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-		READUNLOCK_OBJECT(to);
+		std::array<gld::complex, 3> tc;
+		{
+			//auto v = READLOCK_OBJECT(to);
+			std::shared_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(to));
+			tc = { t->current_inj[0], t->current_inj[1], t->current_inj[2] };
+			//READUNLOCK_OBJECT(to);
+		}
 
 		read_I_out[0] = tc[0];
 		read_I_out[1] = tc[1];
@@ -3429,11 +3459,13 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 				B_mat[2][1] * tc[1] -
 				B_mat[2][2] * tc[2];
 
-			WRITELOCK_OBJECT(to);
+			//WRITELOCK_OBJECT(to);
+			std::unique_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(to));
 			t->voltage[0] = v0;
 			t->voltage[1] = v1;
 			t->voltage[2] = v2;
-			WRITEUNLOCK_OBJECT(to);
+			//WRITEUNLOCK_OBJECT(to);
+			subnode_lock.unlock();
 
 #ifdef SUPPORT_OUTAGES
 			t->condition=f->condition;
@@ -3519,7 +3551,7 @@ int link_object::kmlinit(int (*stream)(const char*,...))
 
 int link_object::kmldump(int (*stream)(const char*,...))
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	FUNCTIONADDR temp_funadd = nullptr;
 
 	stream("    <Placemark>\n");
@@ -3562,8 +3594,8 @@ int link_object::kmldump(int (*stream)(const char*,...))
 	else
 	{
 		// values
-		node *pFrom = OBJECTDATA(from,node);
-		node *pTo = OBJECTDATA(to,node);
+		node *pFrom = /*OBJECTDATA(obj,<>)*/ object_data<node>(from);
+		node *pTo = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
 		int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
 		gld::complex flow[3];
 		gld::complex current[3];
@@ -3688,7 +3720,7 @@ EXPORT int create_link(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(link_object::oclass);
 		if (*obj!=nullptr)
 		{
-			link_object *my = OBJECTDATA(*obj,link_object);
+			link_object *my = object_data<link_object>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -3707,7 +3739,7 @@ EXPORT int create_link(OBJECT **obj, OBJECT *parent)
 EXPORT int init_link(OBJECT *obj)
 {
 	try {
-		link_object *my = OBJECTDATA(obj,link_object);
+		link_object *my = object_data<link_object>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(link);
@@ -3725,7 +3757,7 @@ EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try
 	{
-		link_object *pObj = OBJECTDATA(obj,link_object);
+		link_object *pObj = object_data<link_object>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -3745,13 +3777,13 @@ EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_link(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,link_object)->isa(classname);
+	return object_data<link_object>(obj)->isa(classname);
 }
 
 //Deltamode export
 EXPORT SIMULATIONMODE interupdate_link(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	link_object *my = OBJECTDATA(obj,link_object);
+	link_object *my = object_data<link_object>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -3768,7 +3800,7 @@ EXPORT SIMULATIONMODE interupdate_link(OBJECT *obj, unsigned int64 delta_time, u
 //Externally callable power update -- for restoration code, primarily
 EXPORT int updatepowercalc_link(OBJECT *obj)
 {
-	link_object *my = OBJECTDATA(obj,link_object);
+	link_object *my = object_data<link_object>(obj);
 
 	//Call the current update -- do it as a "self call"
 	my->CurrentCalculation(-1,false);
@@ -3784,7 +3816,7 @@ EXPORT int updatepowercalc_link(OBJECT *obj)
 //Basically does the same thing as updatepowercalc_link, but then checks it too
 EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *overloaded)
 {
-	link_object *my = OBJECTDATA(obj,link_object);
+	link_object *my = object_data<link_object>(obj);
 
 	//Set some default values - assume we start "not loaded"
 	*overload_value = 0.0;
@@ -3811,7 +3843,7 @@ EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *o
 EXPORT int currentcalculation_link(OBJECT *obj, int nodecall, bool link_fault_mode)
 {
 	int status_rv;
-	link_object *my = OBJECTDATA(obj,link_object);
+	link_object *my = object_data<link_object>(obj);
 
 	//Call the current update -- do it as a "self call"
 	status_rv = my->CurrentCalculation(nodecall,link_fault_mode);
@@ -3903,11 +3935,11 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 			tobjval = NR_busdata[NR_branchdata[NR_branch_reference].to].obj;
 
 			//Map these into the old framework - will bypass childed objects this way
-			fnode = OBJECTDATA(fobjval,node);
-			tnode = OBJECTDATA(tobjval,node);
+			fnode = object_data<node>(fobjval);
+			tnode = object_data<node>(tobjval);
 
 			//Childed or not - reference the "actual from" node (not powerflow from)
-			ofnode = OBJECTDATA(from,node);
+			ofnode = /*OBJECTDATA(obj,<>)*/ object_data<node>(from);
 
 			if (SpecialLnk == VFD)
 			{
@@ -4119,10 +4151,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						current_pointer_out[2] = 0.0;
 
 					//See if our nature requires a lock
+					std::unique_lock<std::shared_mutex> subnode_lock;
 					if (flock)
 					{
 						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(from);
+						//WRITELOCK_OBJECT(from);
+						subnode_lock =  std::unique_lock<std::shared_mutex> (SharedMutexManager::get_mutex(from));
 					}
 
 					//Check to see which mode we're in
@@ -4138,7 +4172,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					if (flock)
 					{
 						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(from);
+						//WRITEUNLOCK_OBJECT(from);
+						subnode_lock.unlock();
 					}
 				}//End not in-rush calculations (normal)
 			}//end normal transformers
@@ -4216,10 +4251,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					current_pointer_in[2] = 0.0;
 
 				//See if our nature requires a lock
+				std::unique_lock<std::shared_mutex> subnode_lock;
 				if (flock)
 				{
 					//Lock the from side for current dispersion
-					WRITELOCK_OBJECT(from);
+					//WRITELOCK_OBJECT(from);
+					subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(from));
 				}
 
 				//Check to see which mode we're in
@@ -4235,7 +4272,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				if (flock)
 				{
 					//Unlock the from side so others can play
-					WRITEUNLOCK_OBJECT(from);
+					//WRITEUNLOCK_OBJECT(from);
+					subnode_lock.unlock();
 				}
 			}//End regulators
 			else if (SpecialLnk == DELTAGWYE)
@@ -4287,10 +4325,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				}
 
 				//See if our nature requires a lock
+				std::unique_lock<std::shared_mutex> subnode_lock;
 				if (flock)
 				{
 					//Lock the from side for current dispersion
-					WRITELOCK_OBJECT(from);
+					//WRITELOCK_OBJECT(from);
+					subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(from));
 				}
 
 				//Check to see which mode we're in
@@ -4306,7 +4346,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				if (flock)
 				{
 					//Unlock the from side so others can play
-					WRITEUNLOCK_OBJECT(from);
+					//WRITEUNLOCK_OBJECT(from);
+					subnode_lock.unlock();
 				}
 			}//end delta-GWYE
 			else if (SpecialLnk == SPLITPHASE)	//Split phase, center tapped xformer
@@ -4319,10 +4360,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 											tnode->voltage[1]*base_admittance_mat[2][1];
 
 					//See if our nature requires a lock
+					std::unique_lock<std::shared_mutex> subnode_lock;
 					if (flock)
 					{
 						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(from);
+						//WRITELOCK_OBJECT(from);
+						subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(from));
 					}
 
 					//Check to see which mode we're in
@@ -4336,7 +4379,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					if (flock)
 					{
 						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(from);
+						//WRITEUNLOCK_OBJECT(from);
+						subnode_lock.unlock();
 					}
 
 					//calculate current out
@@ -4356,10 +4400,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 											tnode->voltage[1]*base_admittance_mat[2][1];
 
 					//See if our nature requires a lock
+					std::unique_lock<std::shared_mutex> subnode_lock;
 					if (flock)
 					{
 						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(from);
+						//WRITELOCK_OBJECT(from);
+						subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(from));
 					}
 
 					//Check to see which mode we're in
@@ -4373,7 +4419,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					if (flock)
 					{
 						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(from);
+						//WRITEUNLOCK_OBJECT(from);
+						subnode_lock.unlock();
 					}
 
 					//calculate current out
@@ -4394,10 +4441,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 											tnode->voltage[1]*base_admittance_mat[2][1];
 
 					//See if our nature requires a lock
+					std::unique_lock<std::shared_mutex> subnode_lock;
 					if (flock)
 					{
 						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(from);
+						//WRITELOCK_OBJECT(from);
+						subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(from));
 					}
 
 					//Check to see which mode we're in
@@ -4411,7 +4460,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					if (flock)
 					{
 						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(from);
+						//WRITEUNLOCK_OBJECT(from);
+						subnode_lock.unlock();
 					}
 
 					//calculate current out
@@ -4472,10 +4522,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				current_pointer_out[2] = current_pointer_in[2];
 
 				//See if our nature requires a lock
+				std::unique_lock<std::shared_mutex> subnode_lock;
 				if (flock)
 				{
 					//Lock the from side for current dispersion
-					WRITELOCK_OBJECT(from);
+					//WRITELOCK_OBJECT(from);
+					subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(from));
 				}
 
 				//Check to see which mode we're in
@@ -4490,7 +4542,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				if (flock)
 				{
 					//Unlock the from side so others can play
-					WRITEUNLOCK_OBJECT(from);
+					//WRITEUNLOCK_OBJECT(from);
+					subnode_lock.unlock();
 				}
 			}//End split phase line
 			else
@@ -4726,11 +4779,14 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 											d_mat[2][2]*current_pointer_out[2];
 				}//End "normal" calculation
 
+
 				//See if our nature requires a lock
+				std::unique_lock<std::shared_mutex> subnode_lock;
 				if (flock)
 				{
 					//Lock the from side for current dispersion
-					WRITELOCK_OBJECT(from);
+					//WRITELOCK_OBJECT(from);
+					subnode_lock =  std::unique_lock<std::shared_mutex> (SharedMutexManager::get_mutex(from));
 				}
 
 				//Check to see which mode we're in
@@ -4746,7 +4802,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				if (flock)
 				{
 					//Unlock the from side so others can play
-					WRITEUNLOCK_OBJECT(from);
+					//WRITEUNLOCK_OBJECT(from);
+					subnode_lock.unlock();
 				}
 			}//End "normal" lines
 		}//End is closed
@@ -4775,7 +4832,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 //Module-level deltamode call
 SIMULATIONMODE link_object::inter_deltaupdate_link(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	//OBJECT *hdr = OBJECTHDR(this);
+	//OBJECT *hdr = object_header(this);
 
 	if (!interupdate_pos)	//Before powerflow call
 	{
@@ -4813,8 +4870,8 @@ SIMULATIONMODE link_object::inter_deltaupdate_link(unsigned int64 delta_time, un
 void link_object::calculate_power_splitphase()
 {
 
-	node *f = OBJECTDATA(from, node);
-	node *t = OBJECTDATA(to, node);
+	node *f = object_data<node>(from);
+	node *t = object_data<node>(to);
 
 	if (solver_method == SM_NR)
 	{
@@ -4851,9 +4908,13 @@ void link_object::calculate_power_splitphase()
 	}
 	else
 	{
-		READLOCK_OBJECT(to);
-		gld::complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-		READUNLOCK_OBJECT(to);
+		std::array<gld::complex, 3> tc;
+		{
+			//auto v = READLOCK_OBJECT(to);
+			std::shared_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(to));
+			tc = { t->current_inj[0], t->current_inj[1], t->current_inj[2] };
+			//READUNLOCK_OBJECT(to);
+		}
 
 		if (SpecialLnk!=SPLITPHASE)
 		{
@@ -4947,8 +5008,8 @@ void link_object::set_flow_directions(void)
 
 void link_object::calculate_power()
 {
-		node *f = OBJECTDATA(from, node);
-		node *t = OBJECTDATA(to, node);
+		node *f = object_data<node>(from);
+		node *t = object_data<node>(to);
 
 		//Extra catch here, in case something calls the wrong one
 		if (has_phase(PHASE_S))
@@ -4990,9 +5051,13 @@ void link_object::calculate_power()
 			indiv_power_in[1] = f->voltage[1]*~current_in[1];
 			indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
-			READLOCK_OBJECT(to);
-			gld::complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-			READUNLOCK_OBJECT(to);
+			std::array< gld::complex, 3> tc;
+			{
+				//auto v = READLOCK_OBJECT(to);
+				std::shared_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(to));
+				tc= { t->current_inj[0], t->current_inj[1], t->current_inj[2] };
+				//READUNLOCK_OBJECT(to);
+			}
 
 			indiv_power_out[0] = t->voltage[0]*~tc[0];
 			indiv_power_out[1] = t->voltage[1]*~tc[1];
@@ -5036,7 +5101,7 @@ double *link_object::get_double(OBJECT *obj, const char *name)
 	PROPERTY *p = gl_get_property(obj,name);
 	if (p==nullptr || p->ptype!=PT_double)
 		return nullptr;
-	return (double*)GETADDR(obj,p);
+	return (double*)get_addr(obj,p);
 }
 
 //Function to create faults on link
@@ -5085,7 +5150,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 	bool safety_hit;
 	int temp_branch, temp_node, ext_result;
 	unsigned int temp_table_loc;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 	OBJECT *tmpobj;
 	FUNCTIONADDR funadd = nullptr;
 	double type_fault;
@@ -5188,7 +5253,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_A
 				else
 				{
-					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase A to fault!",object_header(this)->name);
 					/*  TROUBLESHOOT
 					A fault event was attempted on phase A of the link object. This object
 					does not have a valid phase A to fault.
@@ -5217,7 +5282,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_B
 				else
 				{
-					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase B to fault!",object_header(this)->name);
 					/*  TROUBLESHOOT
 					A fault event was attempted on phase B of the link object. This object
 					does not have a valid phase B to fault.
@@ -5246,7 +5311,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_C
 				else
 				{
-					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase C to fault!",object_header(this)->name);
 					/*  TROUBLESHOOT
 					A fault event was attempted on phase C of the link object. This object
 					does not have a valid phase C to fault.
@@ -5865,7 +5930,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_A
 				else
 				{
-					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase A to fault!",object_header(this)->name);
 					//Defined above
 				}
 			}//End A fault
@@ -5891,7 +5956,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_B
 				else
 				{
-					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase B to fault!",object_header(this)->name);
 					//Defined above
 				}
 			}
@@ -5917,7 +5982,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_C
 				else
 				{
-					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase C to fault!",object_header(this)->name);
 					//defined above
 				}
 			}
@@ -6217,7 +6282,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}//end has PHASE_A
 					else
 					{
-						gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+						gl_warning("%s does not have a phase A to fault!",object_header(this)->name);
 						//Defined above
 					}
 				}
@@ -6242,7 +6307,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}//end has PHASE_B
 					else
 					{
-						gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+						gl_warning("%s does not have a phase B to fault!",object_header(this)->name);
 						//Defined above
 					}
 				}
@@ -6267,7 +6332,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}//end has PHASE_C
 					else
 					{
-						gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+						gl_warning("%s does not have a phase C to fault!",object_header(this)->name);
 						//Defined above
 					}
 				}
@@ -6509,7 +6574,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}//end has PHASE_A
 					else
 					{
-						gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+						gl_warning("%s does not have a phase A to fault!",object_header(this)->name);
 						//Defined above
 					}
 				}
@@ -6534,7 +6599,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}//end has PHASE_B
 					else
 					{
-						gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+						gl_warning("%s does not have a phase B to fault!",object_header(this)->name);
 						//Defined above
 					}
 				}
@@ -6559,7 +6624,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}//end has PHASE_C
 					else
 					{
-						gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+						gl_warning("%s does not have a phase C to fault!",object_header(this)->name);
 						//Defined above
 					}
 				}
@@ -6839,7 +6904,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_A
 				else
 				{
-					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase A to fault!",object_header(this)->name);
 					//Defined above
 				}
 			}//End A fault
@@ -6865,7 +6930,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_B
 				else
 				{
-					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase B to fault!",object_header(this)->name);
 					//Defined above
 				}
 			}
@@ -6891,7 +6956,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_C
 				else
 				{
-					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase C to fault!",object_header(this)->name);
 					//defined above
 				}
 			}
@@ -7206,11 +7271,14 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		//See if we actually did anything - if we were already in a fault, we don't care
 		if (*implemented_fault != 0)
 		{
-			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			//LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			std::unique_lock<std::shared_mutex> nr_lock(SharedMutexManager::get_mutex(NR_swing_bus));
+
 
 			NR_admit_change = true;		//Flag an admittance update - this should trigger fault_check
 
-			UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			//UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			nr_lock.unlock();
 
 			//set up the remaining 4 fault specific equations in C_mat before calculating the fault current
 			if(*implemented_fault == 1){ //SLG-A -> Ifb=Ifc=Vax=Vxg=0
@@ -8156,7 +8224,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_A
 				else
 				{
-					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase A to fault!",object_header(this)->name);
 					/*  TROUBLESHOOT
 					A fault event was attempted on phase A of the link object. This object
 					does not have a valid phase A to fault.
@@ -8185,7 +8253,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_B
 				else
 				{
-					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase B to fault!",object_header(this)->name);
 					/*  TROUBLESHOOT
 					A fault event was attempted on phase B of the link object. This object
 					does not have a valid phase B to fault.
@@ -8214,7 +8282,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_C
 				else
 				{
-					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase C to fault!",object_header(this)->name);
 					/*  TROUBLESHOOT
 					A fault event was attempted on phase C of the link object. This object
 					does not have a valid phase C to fault.
@@ -8833,7 +8901,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_A
 				else
 				{
-					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase A to fault!",object_header(this)->name);
 					//Defined above
 				}
 			}//End A fault
@@ -8859,7 +8927,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_B
 				else
 				{
-					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase B to fault!",object_header(this)->name);
 					//Defined above
 				}
 			}
@@ -8885,7 +8953,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_C
 				else
 				{
-					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase C to fault!",object_header(this)->name);
 					//defined above
 				}
 			}
@@ -9182,7 +9250,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_A
 				else
 				{
-					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase A to fault!",object_header(this)->name);
 					//Defined above
 				}
 			}
@@ -9207,7 +9275,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_B
 				else
 				{
-					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase B to fault!",object_header(this)->name);
 					//Defined above
 				}
 			}
@@ -9232,7 +9300,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_C
 				else
 				{
-					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase C to fault!",object_header(this)->name);
 					//Defined above
 				}
 			}
@@ -9511,7 +9579,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_A
 				else
 				{
-					gl_warning("%s does not have a phase A to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase A to fault!",object_header(this)->name);
 					//Defined above
 				}
 			}//End A fault
@@ -9537,7 +9605,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_B
 				else
 				{
-					gl_warning("%s does not have a phase B to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase B to fault!",object_header(this)->name);
 					//Defined above
 				}
 			}
@@ -9563,7 +9631,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end has PHASE_C
 				else
 				{
-					gl_warning("%s does not have a phase C to fault!",OBJECTHDR(this)->name);
+					gl_warning("%s does not have a phase C to fault!",object_header(this)->name);
 					//defined above
 				}
 			}
@@ -9878,11 +9946,14 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		//See if we actually did anything - if we were already in a fault, we don't care
 		if (*implemented_fault != 0)
 		{
-			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			//LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			std::unique_lock<std::shared_mutex> lock_nr(SharedMutexManager::get_mutex(NR_swing_bus));
+
 
 			NR_admit_change = true;		//Flag an admittance update - this should trigger fault_check
 
-			UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			//UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			lock_nr.unlock();
 
 			//See which fault current mode we are leveraging
 			if (enable_mesh_fault_current)	//Mesh fault current
@@ -10922,7 +10993,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 	char phaseidx, indexval;
 	int temp_node, ext_result;
 	double ext_result_dbl;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 	OBJECT *tmpobj;
 	FUNCTIONADDR funadd = nullptr;
 	bool switch_val;
@@ -11924,9 +11995,11 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				//defined above
 			}
 
-			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			//LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			std::unique_lock<std::shared_mutex> lock_nr(SharedMutexManager::get_mutex(NR_swing_bus));
 			NR_admit_change = true;
-			UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			//UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			lock_nr.unlock();
 
 			if (temp_node == -99)
 				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_busdata[0].name);
@@ -12853,9 +12926,11 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				//defined above
 			}
 
-			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			//LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			std::unique_lock<std::shared_mutex> lock_nr(SharedMutexManager::get_mutex(NR_swing_bus));
 			NR_admit_change = true;
-			UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			//UNLOCK_OBJECT(NR_swing_bus);	//Release us
+			lock_nr.unlock();
 
 			if (temp_node == -99)
 				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_busdata[0].name);
@@ -12874,7 +12949,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 	char phaseidx, indexval;
 	int temp_node, ext_result;
 	double ext_result_dbl;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 	OBJECT *tmpobj;
 	FUNCTIONADDR funadd = nullptr;
 	bool switch_val;
@@ -14828,7 +14903,7 @@ void link_object::lmatrix_add(gld::complex *matrix_in_A, gld::complex *matrix_in
 {
 	//Variables
 	int jindex, kindex;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Initial check - make sure nothing nullptr has been passed
 	if ((matrix_in_A == nullptr) || (matrix_in_B == nullptr) || (matrix_out == nullptr))
@@ -14864,7 +14939,7 @@ void link_object::lmatrix_mult(gld::complex *matrix_in_A, gld::complex *matrix_i
 {
 	//Variables
 	int jindex, kindex, lindex;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Initial check - make sure nothing nullptr has been passed
 	if ((matrix_in_A == nullptr) || (matrix_in_B == nullptr) || (matrix_out == nullptr))
@@ -14906,7 +14981,7 @@ void link_object::lmatrix_vmult(gld::complex *matrix_in, gld::complex *vector_in
 {
 	//Variables
 	int jindex, kindex;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Initial check - make sure nothing nullptr has been passed
 	if ((matrix_in == nullptr) || (vector_in == nullptr) || (vector_out == nullptr))
@@ -14928,7 +15003,7 @@ void link_object::lmatrix_vmult(gld::complex *matrix_in, gld::complex *vector_in
 		//Zero the entry, since we'll accumulate into it
 		vector_out[jindex] = gld::complex(0.0,0.0);
 
-		//Multiply across the columns/rows
+		//Multiply across the columns.rows()
 		for (kindex=0; kindex<matsize; kindex++)
 		{
 			vector_out[jindex] += matrix_in[jindex*matsize+kindex] * vector_in[kindex];

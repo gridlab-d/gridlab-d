@@ -135,7 +135,7 @@ range::~range()
 int range::create() 
 {
 
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	int res = residential_enduse::create();
 
 	// initialize public values
@@ -234,7 +234,7 @@ int range::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	static double sTair = 74;
@@ -395,7 +395,7 @@ int range::isa(char *classname)
 void range::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 	Ton  = oven_setpoint - thermostat_deadband/2;
 	Toff = oven_setpoint + thermostat_deadband/2;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	switch(range_state()){
 
@@ -459,7 +459,7 @@ void range::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 TIMESTAMP range::presync(TIMESTAMP t0, TIMESTAMP t1){
 	/* time has passed ~ calculate internal gains, height change, temperature change */
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
-	OBJECT *my = OBJECTHDR(this);
+	OBJECT *my = object_header(this);
 
 	// update temperature and height
 	update_T_and_or_h(nHours);
@@ -643,7 +643,7 @@ TIMESTAMP range::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 double range::update_state(double dt1,TIMESTAMP t1)
 {	
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	cooktop_energy_used += total_power_cooktop* dt1/3600;
 	double temp_voltage_magnitude;
 
@@ -1133,7 +1133,7 @@ double range::dhdt(double h)
 
 double range::actual_kW(void)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
     static int trip_counter = 0;
 	double actual_voltage;
 
@@ -1209,7 +1209,7 @@ inline double range::new_temp_1node(double T0, double delta_t)
 double range::get_Tambient(enumeration loc)
 {
 	double ratio;
-	OBJECT *parent = OBJECTHDR(this)->parent;
+	OBJECT *parent = object_header(this)->parent;
 
 	switch (loc) {
 	case GARAGE: // temperature is about 1/2 way between indoor and outdoor
@@ -1222,7 +1222,7 @@ double range::get_Tambient(enumeration loc)
 	}
 
 	// return temperature of location
-	//house *pHouse = OBJECTDATA(OBJECTHDR(this)->parent,house);
+	//house *pHouse = OBJECTDATA(object_header(this)->parent,house);
 	//return pHouse->get_Tair()*ratio + pHouse->get_Tout()*(1-ratio);
 	return *pTair * ratio + *pTout *(1-ratio);
 }
@@ -1230,7 +1230,7 @@ double range::get_Tambient(enumeration loc)
 //void range::wrong_model(enumeration msg)
 //{
 //	char *errtxt[] = {"model is not one-zone","model is not two-zone"};
-//	OBJECT *obj = OBJECTHDR(this);
+//	OBJECT *obj = object_header(this);
 //	gl_warning("%s (range:%d): %s", obj->name?obj->name:"(anonymous object)", obj->id, errtxt[msg]);
 //	throw msg; // this must be caught by the range code, not by the core
 //}
@@ -1244,7 +1244,7 @@ EXPORT int create_range(OBJECT **obj, OBJECT *parent)
 	*obj = gl_create_object(range::oclass);
 	if (*obj!=nullptr)
 	{
-		range *my = OBJECTDATA(*obj,range);;
+		range *my = object_data<range>(*obj);;
 		gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
@@ -1254,14 +1254,14 @@ EXPORT int create_range(OBJECT **obj, OBJECT *parent)
 
 EXPORT int init_range(OBJECT *obj)
 {
-	range *my = OBJECTDATA(obj,range);
+	range *my = object_data<range>(obj);
 	return my->init(obj->parent);
 }
 
 EXPORT int isa_range(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,range)->isa(classname);
+		return object_data<range>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -1270,7 +1270,7 @@ EXPORT int isa_range(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_range(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	range *my = OBJECTDATA(obj, range);
+	range *my = object_data<range>(obj);
 	if (obj->clock <= ROUNDOFF)
 		obj->clock = t0;  //set the object clock if it has not been set yet
 	try {
@@ -1301,7 +1301,7 @@ EXPORT TIMESTAMP sync_range(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int commit_range(OBJECT *obj)
 {
-	range *my = OBJECTDATA(obj,range);
+	range *my = object_data<range>(obj);
 	return my->commit();
 }
 
@@ -1311,7 +1311,7 @@ EXPORT TIMESTAMP plc_range(OBJECT *obj, TIMESTAMP t0)
 	if (obj->clock <= ROUNDOFF)
 		obj->clock = t0;  //set the clock if it has not been set yet
 
-	range *my = OBJECTDATA(obj,range);
+	range *my = object_data<range>(obj);
 	my->thermostat(obj->clock, t0);
 	
 	// no changes to timestamp will be made by the internal oven thermostat

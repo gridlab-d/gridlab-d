@@ -1,10 +1,10 @@
 /** $Id$
- 	Copyright (C) 2008 Battelle Memorial Institute
+	Copyright (C) 2008 Battelle Memorial Institute
 	@file schedule.h
 	@addtogroup schedule Schedules
 
 	Schedules are defined as a multiline string
-	
+
 	@par Schedule syntax
 	<code>
 	// comments are ignored until and end-of-line
@@ -62,15 +62,16 @@ struct s_schedule {
 #ifdef _DEBUG
 	unsigned int magic1;	/* values between magic1 and magic2 should never change once compiled */
 #endif
-	const char *name;							/**< the name of the schedule */
-	const char *definition;					/**< the definition string of the schedule */
-	char *blockname[MAXBLOCKS];			/**< the name of each block */
-	char *blockdef[MAXBLOCKS];			/**< the definition of each block */
+	std::string name;							/**< the name of the schedule */
+	//const char* definition;					/**< the definition string of the schedule */
+	std::string definition;
+	char* blockname[MAXBLOCKS];			/**< the name of each block */
+	char* blockdef[MAXBLOCKS];			/**< the definition of each block */
 	unsigned char block;				/**< the last block used (4 max) */
-	unsigned char *index[MAXCALENDARS];	/**< the schedule index (enough room for all 14 annual calendars to 1 minute resolution) */
-	unsigned char *dtnext[MAXCALENDARS];/**< the time until the next schedule change (in minutes) */
-	double data[MAXBLOCKS*MAXVALUES];	/**< the list of values used in each block */
-	unsigned int weight[MAXBLOCKS*MAXVALUES];	/**< the weight (in minutes) associate with each value */
+	unsigned char* index[MAXCALENDARS];	/**< the schedule index (enough room for all 14 annual calendars to 1 minute resolution) */
+	unsigned char* dtnext[MAXCALENDARS];/**< the time until the next schedule change (in minutes) */
+	double data[MAXBLOCKS * MAXVALUES];	/**< the list of values used in each block */
+	unsigned int weight[MAXBLOCKS * MAXVALUES];	/**< the weight (in minutes) associate with each value */
 	double sum[MAXBLOCKS];				/**< the sum of values for each block -- used to normalize */
 	double abs[MAXBLOCKS];				/**< the sum of the absolute values for each block -- used to normalize */
 	unsigned int count[MAXBLOCKS];		/**< the number of values given in each block */
@@ -84,7 +85,7 @@ struct s_schedule {
 	double duration;					/**< the duration of the current scheduled value (in hours) */
 	double fraction;					/**< the fractional weight of the block of the current value (pu time) */
 	int flags;							/**< the schedule flags (see SN_*) */
-	SCHEDULE *next;	/* next schedule in list */
+	SCHEDULE* next;	/* next schedule in list */
 };
 
 
@@ -101,25 +102,25 @@ struct s_schedule {
 extern "C" {
 #endif
 
-SCHEDULE *schedule_getnext(SCHEDULE *sch);
-SCHEDULE *schedule_find_byname(const char *name);
-SCHEDULE *schedule_create(const char *name, const char *definition);
-SCHEDULE *schedule_new(void);
-void schedule_free(SCHEDULE *sch);
-void schedule_add(SCHEDULE *sch);
-int schedule_validate(SCHEDULE *sch, int flags);
-int schedule_normalize(SCHEDULE *sch, int flags);
-SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts);
-double schedule_value(SCHEDULE *sch, SCHEDULEINDEX index);
-int32 schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index);
-TIMESTAMP schedule_sync(SCHEDULE *sch, TIMESTAMP t);
-TIMESTAMP schedule_syncall(TIMESTAMP t);
-int schedule_test(void);
-void schedule_dump(SCHEDULE *sch, char *file, char *mode);
-void schedule_dumpall(char *file);
-int schedule_createwait(void);
-SCHEDULE *schedule_getfirst(void);
-int schedule_saveall(FILE *fp);
+	SCHEDULE* schedule_getnext(SCHEDULE* sch);
+	SCHEDULE* schedule_find_byname(const char* name);
+	SCHEDULE* schedule_create(const char* name, const char* definition);
+	SCHEDULE* schedule_new(void);
+	void schedule_free(SCHEDULE* sch);
+	void schedule_add(SCHEDULE* sch);
+	int schedule_validate(SCHEDULE* sch, int flags);
+	int schedule_normalize(SCHEDULE* sch, int flags);
+	SCHEDULEINDEX schedule_index(SCHEDULE* sch, TIMESTAMP ts);
+	double schedule_value(SCHEDULE* sch, SCHEDULEINDEX index);
+	int32 schedule_dtnext(SCHEDULE* sch, SCHEDULEINDEX index);
+	TIMESTAMP schedule_sync(SCHEDULE* sch, TIMESTAMP t);
+	TIMESTAMP schedule_syncall(TIMESTAMP t);
+	int schedule_test(void);
+	void schedule_dump(SCHEDULE* sch, char* file, char* mode);
+	void schedule_dumpall(char* file);
+	int schedule_createwait(void);
+	SCHEDULE* schedule_getfirst(void);
+	int schedule_saveall(FILE* fp);
 
 #ifdef __cplusplus
 }

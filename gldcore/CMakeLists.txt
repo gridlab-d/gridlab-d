@@ -1,10 +1,13 @@
 SET(GLD_MODULE_NAME gridlabd)
 
-# Load and link C/C++ files for the executeable
+
+
+
+# Load and link C/C++ files for the executable
 set(SOURCE_LIST
         gridlabd.h
-	gldapi.h
-	gldapi.cpp
+	#gldapi.h
+	#gldapi.cpp
         globals.cpp
         globals.h
         object.cpp
@@ -133,6 +136,8 @@ set(SOURCE_LIST
 
 #if(NOT APPLE)
 add_executable(${GLD_MODULE_NAME} ${SOURCE_LIST})
+
+
 #else()
 #    add_executable(${GLD_MODULE_NAME} MACOSX_BUNDLE ${SOURCE_LIST})
 #    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
@@ -142,21 +147,21 @@ add_executable(${GLD_MODULE_NAME} ${SOURCE_LIST})
 #            )
 #endif()
 
-add_library(gldapi ${SOURCE_LIST})
+#add_library(gldapi ${SOURCE_LIST})
 target_link_libraries(${GLD_MODULE_NAME} PUBLIC ${GL_MODULES})
 target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 if (CURSES_FOUND)
-    target_link_libraries(gldapi PRIVATE ${CURSES_LIBRARIES})
+    #target_link_libraries(gldapi PRIVATE ${CURSES_LIBRARIES})
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CURSES_LIBRARIES})
 endif ()
 if (XercesC_FOUND)
-    target_link_libraries(gldapi PRIVATE ${XercesC_LIBRARIES})
+    #target_link_libraries(gldapi PRIVATE ${XercesC_LIBRARIES})
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${XercesC_LIBRARIES})
 endif ()
 
-target_link_libraries(gldapi PRIVATE nlohmann_json::nlohmann_json)
+#target_link_libraries(gldapi PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(${GLD_MODULE_NAME} PRIVATE nlohmann_json::nlohmann_json)
-target_link_libraries(gldapi PRIVATE ${OS_SPECIFIC_LIBRARIES})
+#target_link_libraries(gldapi PRIVATE ${OS_SPECIFIC_LIBRARIES})
 
 target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
 set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")

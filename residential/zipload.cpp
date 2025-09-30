@@ -134,7 +134,7 @@ int ZIPload::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	if (demand_response_mode == true)
@@ -599,7 +599,7 @@ EXPORT int create_ZIPload(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(ZIPload::oclass);
 		if (*obj!=nullptr)
 		{
-			ZIPload *my = OBJECTDATA(*obj,ZIPload);;
+			ZIPload *my = object_data<ZIPload>(*obj);;
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
@@ -614,7 +614,7 @@ EXPORT int init_ZIPload(OBJECT *obj)
 {
 	try
 	{
-		ZIPload *my = OBJECTDATA(obj,ZIPload);
+		ZIPload *my = object_data<ZIPload>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(ZIPload);
@@ -623,7 +623,7 @@ EXPORT int init_ZIPload(OBJECT *obj)
 EXPORT int isa_ZIPload(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,ZIPload)->isa(classname);
+		return object_data<ZIPload>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -634,7 +634,7 @@ EXPORT TIMESTAMP sync_ZIPload(OBJECT *obj, TIMESTAMP t0)
 {
 	try
 	{
-		ZIPload *my = OBJECTDATA(obj, ZIPload);
+		ZIPload *my = object_data<ZIPload>(obj);
 		TIMESTAMP t1 = my->sync(obj->clock, t0);
 		obj->clock = t0;
 		return t1;

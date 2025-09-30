@@ -12,6 +12,10 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include <string_view>
+#include <optional>
+#include <memory> 
+
 #include "globals.h"
 
 #if defined(_WIN32) && !defined(__MINGW__)
@@ -1287,6 +1291,9 @@ static int expression_list(PARSER, FINDPGM **pgm)
 	DONE;
 }
 
+
+
+
 /** Constructs a search engine for find_objects **/
 FINDPGM *find_mkpgm(char *search)
 {
@@ -1302,6 +1309,9 @@ FINDPGM *find_mkpgm(char *search)
 	}
 	return pgm;
 }
+
+
+
 
 /** Search for a file in the specified path
 	(or in \p GLPATH environment variable)
@@ -1462,7 +1472,7 @@ size_t objlist_add(OBJLIST *list, PROPERTY *match, char *match_part, char *match
 	PROPERTYCOMPAREOP op = property_compare_op(match->ptype, match_op);
 	for ( obj=object_get_first() ; obj!=nullptr ; obj=object_get_next(obj) )
 	{
-		void *x = GETADDR(obj,match);
+		void *x = get_addr(obj,match);
 		if ( obj->oclass!=list->oclass ) continue;
 		if ( property_compare_basic(match->ptype,op,x,match_value1,match_value2,match_part) )
 		{

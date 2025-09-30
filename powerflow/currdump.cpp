@@ -194,7 +194,7 @@ EXPORT int create_currdump(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(currdump::oclass);
 		if (*obj!=nullptr)
 		{
-			currdump *my = OBJECTDATA(*obj,currdump);
+			currdump *my = /*OBJECTDATA(obj,<>)*/ object_data<currdump>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -208,7 +208,7 @@ EXPORT int create_currdump(OBJECT **obj, OBJECT *parent)
 
 EXPORT int init_currdump(OBJECT *obj)
 {
-	currdump *my = OBJECTDATA(obj,currdump);
+	currdump *my = /*OBJECTDATA(obj,<>)*/ object_data<currdump>(obj);
 	try {
 		return my->init(obj->parent);
 	}
@@ -221,7 +221,7 @@ EXPORT int init_currdump(OBJECT *obj)
 
 EXPORT TIMESTAMP sync_currdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
-	currdump *my = OBJECTDATA(obj,currdump);
+	currdump *my = /*OBJECTDATA(obj,<>)*/ object_data<currdump>(obj);
 	TIMESTAMP rv;
 	obj->clock = t1;
 	rv = my->runtime > t1 ? my->runtime : TS_NEVER;
@@ -229,7 +229,7 @@ EXPORT TIMESTAMP sync_currdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 }
 
 EXPORT TIMESTAMP commit_currdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
-	currdump *my = OBJECTDATA(obj,currdump);
+	currdump *my = /*OBJECTDATA(obj,<>)*/ object_data<currdump>(obj);
 	try {
 		return my->commit(t1);
 	} catch(const char *msg){
@@ -240,7 +240,7 @@ EXPORT TIMESTAMP commit_currdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 
 EXPORT int isa_currdump(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,currdump)->isa(classname);
+	return /*OBJECTDATA(obj,<>)*/ object_data<currdump>(obj)->isa(classname);
 }
 
 /**@}*/

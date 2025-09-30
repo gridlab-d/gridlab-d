@@ -152,7 +152,7 @@ int clotheswasher::create()
 	load.power_factor = 0.95;
 	load.power_fraction = 1.0;
 
-	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
+	gl_warning("explicit %s model is experimental", object_header(this)->oclass->name);
 	/* TROUBLESHOOT
 		The clothes washer explicit model has some serious issues and should be considered for complete
 		removal.  It is highly suggested that this model NOT be used.
@@ -163,7 +163,7 @@ int clotheswasher::create()
 
 int clotheswasher::init(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -289,7 +289,7 @@ TIMESTAMP clotheswasher::sync(TIMESTAMP t0, TIMESTAMP t1)
 double clotheswasher::update_state(double dt)
 {
 
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	// accumulating units in the queue no matter what happens
 	enduse_queue += enduse_demand * dt/3600/24;
@@ -767,7 +767,7 @@ EXPORT int create_clotheswasher(OBJECT **obj, OBJECT *parent)
 	*obj = gl_create_object(clotheswasher::oclass);
 	if (*obj!=nullptr)
 	{
-		clotheswasher *my = OBJECTDATA(*obj,clotheswasher);
+		clotheswasher *my = object_data<clotheswasher>(*obj);
 		gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
@@ -777,14 +777,14 @@ EXPORT int create_clotheswasher(OBJECT **obj, OBJECT *parent)
 
 EXPORT int init_clotheswasher(OBJECT *obj)
 {
-	clotheswasher *my = OBJECTDATA(obj,clotheswasher);
+	clotheswasher *my = object_data<clotheswasher>(obj);
 	return my->init(obj->parent);
 }
 
 EXPORT int isa_clotheswasher(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,clotheswasher)->isa(classname);
+		return object_data<clotheswasher>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -792,7 +792,7 @@ EXPORT int isa_clotheswasher(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_clotheswasher(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	clotheswasher *my = OBJECTDATA(obj, clotheswasher);
+	clotheswasher *my = object_data<clotheswasher>(obj);
 	if (obj->clock <= ROUNDOFF)
 		obj->clock = t0;  //set the object clock if it has not been set yet
 	try {

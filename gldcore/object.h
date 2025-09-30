@@ -10,6 +10,11 @@
 //#pragma GCC push_options
 //#pragma GCC optimize ("O0")
 
+#include<memory>
+#include<mutex>
+#include<shared_mutex>
+#include<unordered_map>
+
 #include "gld_complex.h"
 #include "timestamp.h"
 #include "class.h"
@@ -28,6 +33,9 @@ typedef unsigned int OBJECTNUM; /** Object id number */
 typedef char* OBJECTNAME; /** Object name */
 typedef char FULLNAME[1024]; /** Full object name (including space name) */
 
+typedef struct s_aggregate AGGREGATION; 
+
+
 /* object flags */
 #define OF_NONE		0x0000	/**< Object flag; none set */
 #define OF_HASPLC	0x0001	/**< Object flag; external PLC is attached, disables local PLC */
@@ -40,6 +48,31 @@ typedef char FULLNAME[1024]; /** Full object name (including space name) */
 #define OF_DEFERRED	0x0080	/**< Object flag; indicates that the object started to be initialized, but requested deferral */
 #define OF_INIT		0x0100	/**< Object flag; indicates that the object has been successfully initialized */
 #define OF_RERANK	0x4000	/**< Internal use only */
+
+
+// Header-only thread-safe implementation
+class SharedMutexManager {
+private:
+	// Use a function-local static to ensure single instance
+	static std::shared_mutex& get_registry_mutex() {
+		static std::shared_mutex mutex;
+		return mutex;
+	}
+
+	static std::unordered_map<void*, std::shared_mutex>& get_instance_mutexes() {
+		static std::unordered_map<void*, std::shared_mutex> mutexes;
+		return mutexes;
+	}
+
+public:
+	static std::shared_mutex& get_mutex(void* instance_ptr) {
+		std::unique_lock<std::shared_mutex> registry_lock(get_registry_mutex());
+
+		auto& instance_mutexes = get_instance_mutexes();
+		auto [iter, inserted] = instance_mutexes.try_emplace(instance_ptr);
+		return iter->second;
+	}
+};
 
 typedef struct s_namespace {
 	FULLNAME name;
@@ -151,7 +184,7 @@ public:
 		char *(*get_unit)(OBJECT *, const char *);
 		void *(*get_addr)(OBJECT *, const char *);
 		int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
-		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, char *part);
+		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, const char *part);
 		PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, char *opstr);
 		double (*get_part)(OBJECT*,PROPERTY*,const char*);
 		PROPERTYSPEC *(*get_spec)(PROPERTYTYPE);
@@ -168,8 +201,8 @@ public:
 	void *(*malloc)(size_t);
 	void (*free)(void*);
 	struct {
-		struct s_aggregate *(*create)(char *aggregator, char *group_expression);
-		double (*refresh)(struct s_aggregate *aggregate);
+		std::shared_ptr<struct s_aggregate> (*create)(char *aggregator, char *group_expression);
+		double (*refresh_aggr)(std::shared_ptr<struct s_aggregate>  aggregate);
 	} aggregate;
 	struct {
 		double *(*getvar)(MODULE *module, const char *varname);
@@ -224,12 +257,17 @@ public:
 		GLOBALVAR *(*create)(const char *name, ...);
 		STATUS (*setvar)(const char *def,...);
 		char *(*getvar)(const char *name, char *buffer, int size);
-		GLOBALVAR *(*find)(const char *name);
+		GLOBALVAR *(*find)(std::string_view name);
 	} global;
 	struct {
-		void (*read)(unsigned int *);
+		std::shared_lock<std::shared_mutex> (*read)(unsigned int *);
 		void (*write)(unsigned int *);
-	} lock, unlock;
+	} lock;
+	struct {
+		void (*read)(void);
+		void (*write)(unsigned int*);
+	} unlock;
+
 	struct {
 		char *(*find_file)(const char *name, const char *path, int mode, char *buffer, int len);
 	} file;
@@ -258,7 +296,7 @@ public:
 		OBJECT **(*object_var)(OBJECT *obj, const char *name);
 	} objvarname;
 	struct {
-		int (*string_to_property)(PROPERTY *prop, void *addr, char *value);
+		int (*string_to_property)(PROPERTY *prop, void *addr, const char *value);
 		int (*property_to_string)(PROPERTY *prop, void *addr, char *value, int size);
 	} convert;
 	MODULE *(*module_find)(const char *name);
@@ -451,19 +489,97 @@ int object_loadmethod(OBJECT *obj, char *name, char *value);
 }
 #endif
 
-#define object_size(X) ((X)?(X)->size:-1) /**< get the size of the object X */
-#define object_id(X) ((X)?(X)->id:-1) /**< get the id of the object X */
-#define object_parent(X) ((X)?(X)->parent:nullptr) /**< get the parent of the object */
-#define object_rank(X) ((X)?(X)->name:-1) /**< get the rank of the object */
+//#define object_size(X) ((X)?(X)->size:-1) /**< get the size of the object X */
+//#define object_id(X) ((X)?(X)->id:-1) /**< get the id of the object X */
+//#define object_parent(X) ((X)?(X)->parent:nullptr) /**< get the parent of the object */
+//#define object_rank(X) ((X)?(X)->name:-1) /**< get the rank of the object */
+//
+//#define OBJECTDATA(X,T) ((T*)((X)?((X)+1):nullptr)) /**< get the object data structure */
+//#define GETADDR(O,P) ((O)?((void*)((char*)((O)+1)+(unsigned int64)((P)->addr))):nullptr) /**< get the addr of an object's property */
+//#define OBJECTHDR(X) ((X)?(((OBJECT*)X)-1):nullptr) /**< get the header from the object's data structure */
+//
+//#define MY (((OBJECT*)this)-1)
+//#define MYPARENT (MY->parent) /**< get the parent from the object's data structure */
+//#define MYCLOCK (MY->clock) /**< get an object's own clock */
+//#define MYRANK (MY->rank) /**< get an object's own rank */
 
-#define OBJECTDATA(X,T) ((T*)((X)?((X)+1):nullptr)) /**< get the object data structure */
-#define GETADDR(O,P) ((O)?((void*)((char*)((O)+1)+(unsigned int64)((P)->addr))):nullptr) /**< get the addr of an object's property */
-#define OBJECTHDR(X) ((X)?(((OBJECT*)X)-1):nullptr) /**< get the header from the object's data structure */
 
-#define MY (((OBJECT*)this)-1)
-#define MYPARENT (MY->parent) /**< get the parent from the object's data structure */
-#define MYCLOCK (MY->clock) /**< get an object's own clock */
-#define MYRANK (MY->rank) /**< get an object's own rank */
+//OBJECT ACCESSORS
+template<typename T>
+constexpr int object_size(const T* obj) {
+	return obj ? obj->size : -1;
+}
+
+template<typename T>
+constexpr int object_id(const T* obj) {
+	return obj ? obj->id : -1;
+}
+
+template<typename T>
+constexpr auto object_parent(const T* obj) -> decltype(obj->parent) {
+	return obj ? obj->parent : nullptr;
+}
+
+template<typename T>
+constexpr int object_rank(const T* obj) {
+	return obj ? obj->name : -1; // Note: 'name' used as rank? Double check that field!
+}
+
+
+//OBJECT LAYOUT HELPERS
+//template<typename T, typename U>
+//constexpr T* object_data(U* obj) {
+//	return obj ? reinterpret_cast<T*>(obj + 1) : nullptr;
+//}
+
+template<typename T, typename U>
+constexpr T* object_data(U* obj) {
+	static_assert(alignof(U) >= alignof(T), "U does not meet alignment requirements for T");
+	return obj ? reinterpret_cast<T*>(obj + 1) : nullptr;
+}
+
+//template<typename T>
+//constexpr OBJECT* object_header(T* data) {
+//	return data ? static_cast<OBJECT*>(reinterpret_cast<OBJECT*>(data) - 1) : nullptr;
+//}
+
+template<typename T>
+constexpr OBJECT* object_header(T* data) {
+	return data ? const_cast<OBJECT*>(reinterpret_cast<const OBJECT*>(data) - 1) : nullptr;
+}
+
+template<typename O, typename P>
+constexpr void* get_addr(O* obj, const P* prop) {
+	return obj ? static_cast<void*>(
+		reinterpret_cast<char*>(obj + 1) + reinterpret_cast<std::uintptr_t>(prop->addr)
+		) : nullptr;
+}
+
+
+//INTERNAL this ACCESSORS
+template<typename T>
+constexpr OBJECT* MY(T* ptr) {
+	static_assert(std::is_pointer_v<T>, "MY() requires a pointer type");
+	return reinterpret_cast<OBJECT*>(ptr) - 1;
+}
+
+template<typename T>
+constexpr auto MYPARENT(T* ptr) -> decltype(MY(ptr)->parent) {
+	return MY(ptr)->parent;
+}
+
+template<typename T>
+constexpr auto MYCLOCK(T* ptr) -> decltype(MY(ptr)->clock) {
+	return MY(ptr)->clock;
+}
+
+template<typename T>
+constexpr auto MYRANK(T* ptr) -> decltype(MY(ptr)->rank) {
+	return MY(ptr)->rank;
+}
+
+
+
 
 
 //#pragma GCC pop_options

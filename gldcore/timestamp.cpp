@@ -53,6 +53,18 @@
 #define MICROSECOND (TS_SECOND/1000000) /**< the number of ticks in one microsecond */
 #define NANOSECOND (TS_SECOND/1000000000) /**< the number of ticks in one nanosecond */
 
+#ifndef X_OK
+#define X_OK 0x01
+#endif
+
+#ifndef R_OK
+#define R_OK 0x02
+#endif
+
+#ifndef F_OK
+#define F_OK 0  // Define F_OK to represent file existence checks
+#endif
+
 typedef struct{
 	int month, nth, day, hour, minute;
 } SPEC; /**< the specification of a DST event */
@@ -606,8 +618,12 @@ int strdatetime(DATETIME *t, char *buffer, int size){
 	Offset indicates the time offset to include
  **/
 TIMESTAMP compute_dstevent(int year, SPEC *spec, time_t offset){
-	TIMESTAMP t = TS_INVALID;
-	int y, m, d, ndays = 0, day1;
+	//TIMESTAMP t = TS_INVALID;
+	int y, m, d,  day1;
+
+	int64_t ndays = 0;
+	int64_t t = TS_INVALID;  
+
 
 	if(spec == nullptr){
 		output_error("compute_dstevent: null SPEC* pointer passed in");
@@ -915,12 +931,23 @@ void load_tzspecs(char *tz){
 			*p = '\0';
 		}
 
-		/* remove trailing whitespace */
-		p = buffer + strlen(buffer) - 1;
+		///* remove trailing whitespace */
+		//p = buffer + strlen(buffer) - 1;
+		//while (iswspace(*p) && p > buffer){
+		//	*p-- = '\0';
+		//}
 
-		while (iswspace(*p) && p > buffer){
-			*p-- = '\0';
+
+		/* remove trailing whitespace */
+		size_t len = strlen(buffer);
+		if (len > 0) {
+			p = buffer + strlen(buffer) - 1;
+
+			while (iswspace(*p) && p > buffer) {
+				*p-- = '\0';
+			}
 		}
+
 
 		/* ignore blank lines or lines starting with white space*/
 		if (buffer[0] == '\0' || iswspace(buffer[0])){

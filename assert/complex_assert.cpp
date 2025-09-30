@@ -2,7 +2,7 @@
 
    Very simple test that compares complex values to any corresponding complex value.  It breaks the
    tests down into a test for the real value and a test for the imagniary portion.  If either test 
-   fails at any time, it throws a 'zero' to the commit function and breaks the simulator out with 
+   fails at any time, it t.rows() a 'zero' to the commit function and breaks the simulator out with 
    a failure code.
 */
 
@@ -10,7 +10,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <gld_complex.h>
+#include "gld_complex.h"
 
 #include "complex_assert.h"
 
@@ -20,7 +20,7 @@ EXPORT_COMMIT(complex_assert);
 EXPORT_NOTIFY(complex_assert);
 
 CLASS *complex_assert::oclass = nullptr;
-complex_assert *complex_assert::defaults = nullptr;
+complex_assert* complex_assert::defaults = nullptr;
 
 complex_assert::complex_assert(MODULE *module)
 {
@@ -58,7 +58,7 @@ complex_assert::complex_assert(MODULE *module)
 				throw msg;
 		}
 
-		defaults = this;
+		//defaults = *this;
 		status = ASSERT_TRUE;
 		within = 0.0;
 		value = 0.0;
@@ -71,7 +71,17 @@ complex_assert::complex_assert(MODULE *module)
 /* Object creation is called once for each object that is created by the core */
 int complex_assert::create(void) 
 {
-	memcpy(this,defaults,sizeof(*this));
+	//memcpy(this,defaults, sizeof(*this));
+	//memcpy(this,defaults.get(), sizeof(*this));
+
+	status = ASSERT_TRUE;
+	within = 0.0;
+	value = 0.0;
+	once = ONCE_FALSE;
+	once_value = 0;
+	operation = FULL;
+
+
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -110,7 +120,8 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	}
 
 	// get the target property
-	gld_property target_prop(get_parent(),get_target());
+	//gld_property target_prop(get_parent(),get_target());
+	gld_property target_prop(get_parent(),get_target().c_str());
 	if ( !target_prop.is_valid() || target_prop.get_type()!=PT_complex ) {
 		gl_error("Specified target %s for %s is not valid.",get_target(),get_parent()->get_name());
 		/*  TROUBLESHOOT
@@ -240,7 +251,9 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 	char dateformat[16]="";
 	char error_output_buff[2048];
 	char datebuff[128];
-	complex_assert *da = OBJECTDATA(obj,complex_assert);
+	/*complex_assert *da = OBJECTDATA(obj,complex_assert);*/
+	complex_assert* da = object_data<complex_assert>(obj);
+
 	DATETIME delta_dt_val;
 	double del_clock;
 	TIMESTAMP del_clock_int;
@@ -266,7 +279,8 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 		if (delta_time>=dt)
 		{
 			//Get value
-			x = (complex*)gl_get_complex_by_name(obj->parent,da->get_target());
+			//x = (complex*)gl_get_complex_by_name(obj->parent,da->get_target());
+			x = (complex*)gl_get_complex_by_name(obj->parent,da->get_target().c_str());
 
 			if (x==nullptr)
 			{

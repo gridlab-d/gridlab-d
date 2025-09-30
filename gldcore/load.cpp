@@ -168,7 +168,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 typedef struct _stat STAT;
 #define FSTAT _fstat
 #define tzset _tzset
-#define snprintf _snprintf
+//#define snprintf _snprintf
 #else
 #include <unistd.h>
 typedef struct stat STAT;
@@ -187,6 +187,20 @@ typedef struct stat STAT;
 #include "instance.h"
 #include "linkage.h"
 #include "gui.h"
+
+#ifndef X_OK
+#define X_OK 0x01
+#endif
+
+#ifndef R_OK
+#define R_OK 0x02
+#endif
+
+#ifndef F_OK
+#define F_OK 0  // Define F_OK to represent file existence checks
+#endif
+
+
 
 static unsigned int linenum=1;
 static int include_fail = 0;
@@ -3488,6 +3502,13 @@ static int class_block(PARSER)
 			if (WHITE,LITERAL(":"))
 			{
 				if WHITE ACCEPT;
+
+				if (std::string(classname) != "auction" && std::string(classname) != "player")
+				{
+					REJECT;
+					DONE;
+				}
+
 				if (LITERAL("public") && WHITE && TERM(name(HERE,parent,sizeof(parent))) )
 				{
 					inherit = PUBLIC;
@@ -3725,7 +3746,7 @@ int is_int(PROPERTYTYPE pt){
 	}
 }
 
-static int schedule_ref(PARSER, SCHEDULE **sch)
+static int schedule_ref(PARSER, SCHEDULE** sch)
 {
 	char name[64];
 	START;
@@ -5229,7 +5250,7 @@ static int gui_entity_type(PARSER, GUIENTITYTYPE *type)
 	if LITERAL("radio") { ACCEPT; *type = GUI_RADIO; DONE; };
 	if LITERAL("select") { ACCEPT; *type = GUI_SELECT; DONE; };
 	// output entities
-	if LITERAL("browse") { ACCEPT; *type = GUI_BROWSE; DONE; };
+	if LITERAL("browse") { ACCEPT; *type = GUI_ROW; DONE; };
 	if LITERAL("table") { ACCEPT; *type = GUI_TABLE; DONE; };
 	if LITERAL("graph") { ACCEPT; *type = GUI_GRAPH; DONE; };
 	// grouping entities
@@ -5661,121 +5682,121 @@ static int link_declaration(PARSER)
 		REJECT;
 }
 
-////////////////////////////////////////////////////////////////////////////////////
-static int script_directive(PARSER)
-{
-	START;
-	if ( WHITE,LITERAL("script") )
-	{
-		char command[1024];
-		if WHITE { ACCEPT; }
-		if ( LITERAL("on_create") )
-		{	if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
-			{
-				if ( exec_add_createscript(command)==0 )
-				{
-					output_error_raw("%s(%d): unable to add on_create script '%s'", filename,linenum,command);
-					REJECT;
-				}
-				else
-				{
-					ACCEPT; DONE;
-				}
-			}
-			else
-				REJECT;
-		}
-		if ( LITERAL("on_init") )
-		{	
-			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
-			{
-				if ( exec_add_initscript(command)==0 )
-				{
-					output_error_raw("%s(%d): unable to add on_init script '%s'", filename,linenum,command);
-					REJECT;
-				}
-				else
-				{
-					ACCEPT; DONE;
-				}
-			}
-			else
-				REJECT;
-		}
-		if ( LITERAL("on_sync") )
-		{	
-			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
-			{
-				if ( exec_add_syncscript(command)==0 )
-				{
-					output_error_raw("%s(%d): unable to add on_sync script '%s'", filename,linenum,command);
-					REJECT;
-				}
-				else
-				{
-					ACCEPT; DONE;
-				}
-			}
-			else
-				REJECT;
-		}
-		if ( LITERAL("on_term") )
-		{
-			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
-			{
-				if ( exec_add_termscript(command)==0 )
-				{
-					output_error_raw("%s(%d): unable to add on_term script '%s'", filename,linenum,command);
-					REJECT;
-				}
-				else
-				{
-					ACCEPT; DONE;
-				}
-			}
-			else
-				REJECT;
-		}
-		if ( LITERAL("export") )
-		{
-			if ( WHITE,TERM(name(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
-			{
-				if ( exec_add_scriptexport(command)==0 )
-				{
-					output_error_raw("%s(%d): unable to export '%s'", filename,linenum,command);
-					REJECT;
-				}
-				else
-				{
-					ACCEPT; DONE;
-				}
-			}
-			else
-				REJECT;
-		}
-		if ( TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
-		{
-			int rc;
-			output_verbose("running command [%s]", command);
-			rc = system(command);
-			if ( rc!=0 )
-			{
-				output_error_raw("%s(%d): script failed - return code %d", filename, linenum, rc);
-				REJECT;
-			}
-			else
-			{
-				ACCEPT; DONE;
-			}
-		}
-		else
-		{
-			REJECT;
-		}
-	}
-	else
-		REJECT;
-}
+//////////////////////////////////////////////////////////////////////////////////
+//static int script_directive(PARSER)
+//{
+//	START;
+//	if ( WHITE,LITERAL("script") )
+//	{
+//		char command[1024];
+//		if WHITE { ACCEPT; }
+//		if ( LITERAL("on_create") )
+//		{	if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+//			{
+//				if ( exec_add_createscript(command)==0 )
+//				{
+//					output_error_raw("%s(%d): unable to add on_create script '%s'", filename,linenum,command);
+//					REJECT;
+//				}
+//				else
+//				{
+//					ACCEPT; DONE;
+//				}
+//			}
+//			else
+//				REJECT;
+//		}
+//		if ( LITERAL("on_init") )
+//		{	
+//			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+//			{
+//				if ( exec_add_initscript(command)==0 )
+//				{
+//					output_error_raw("%s(%d): unable to add on_init script '%s'", filename,linenum,command);
+//					REJECT;
+//				}
+//				else
+//				{
+//					ACCEPT; DONE;
+//				}
+//			}
+//			else
+//				REJECT;
+//		}
+//		if ( LITERAL("on_sync") )
+//		{	
+//			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+//			{
+//				if ( exec_add_syncscript(command)==0 )
+//				{
+//					output_error_raw("%s(%d): unable to add on_sync script '%s'", filename,linenum,command);
+//					REJECT;
+//				}
+//				else
+//				{
+//					ACCEPT; DONE;
+//				}
+//			}
+//			else
+//				REJECT;
+//		}
+//		if ( LITERAL("on_term") )
+//		{
+//			if ( WHITE,TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+//			{
+//				if ( exec_add_termscript(command)==0 )
+//				{
+//					output_error_raw("%s(%d): unable to add on_term script '%s'", filename,linenum,command);
+//					REJECT;
+//				}
+//				else
+//				{
+//					ACCEPT; DONE;
+//				}
+//			}
+//			else
+//				REJECT;
+//		}
+//		if ( LITERAL("export") )
+//		{
+//			if ( WHITE,TERM(name(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+//			{
+//				if ( exec_add_scriptexport(command)==0 )
+//				{
+//					output_error_raw("%s(%d): unable to export '%s'", filename,linenum,command);
+//					REJECT;
+//				}
+//				else
+//				{
+//					ACCEPT; DONE;
+//				}
+//			}
+//			else
+//				REJECT;
+//		}
+//		if ( TERM(value(HERE,command,sizeof(command))) && WHITE,LITERAL(";") )
+//		{
+//			int rc;
+//			output_verbose("running command [%s]", command);
+//			rc = system(command);
+//			if ( rc!=0 )
+//			{
+//				output_error_raw("%s(%d): script failed - return code %d", filename, linenum, rc);
+//				REJECT;
+//			}
+//			else
+//			{
+//				ACCEPT; DONE;
+//			}
+//		}
+//		else
+//		{
+//			REJECT;
+//		}
+//	}
+//	else
+//		REJECT;
+//}
 
 ////////////////////////////////////////////////////////////////////////////////////
 static int modify_directive(PARSER)
@@ -5833,7 +5854,7 @@ static int gridlabd_file(PARSER)
 	OR if TERM(filter_block(HERE)) {ACCEPT; DONE; }
 	OR if TERM(global_declaration(HERE)) {ACCEPT; DONE; }
 	OR if TERM(link_declaration(HERE)) { ACCEPT; DONE; }
-	OR if TERM(script_directive(HERE)) { ACCEPT; DONE; }
+	//OR if TERM(script_directive(HERE)) { ACCEPT; DONE; }
 	OR if TERM(modify_directive(HERE)) { ACCEPT; DONE; }
 	OR if (*(HERE)=='\0') {ACCEPT; DONE;}
 	else REJECT;
@@ -5846,8 +5867,8 @@ int replace_variables(char *to,char *from,int len,int warn)
 	int n = 0;
 	while ((p=strstr(e,"${"))!=nullptr)
 	{
-		char varname[1024];
-		if (sscanf(p+2,"%1024[^}]",varname)==1)
+		char varname[4096];
+		if (sscanf(p+2,"%4095[^}]",varname)==1)
 		{
 			char *env = getenv(varname);
 			char *var;
@@ -6266,13 +6287,112 @@ int is_autodef(char *value)
 /* started processes */
 #include "threadpool.h"
 #include <csignal>
-struct s_threadlist {
-	pthread_t *data;
-	struct s_threadlist *next;
-} *threadlist = nullptr;
+//struct s_threadlist {
+//	pthread_t *data;
+//	struct s_threadlist *next;
+//} *threadlist = nullptr;
+
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <functional>
+#include <atomic>
+#include <algorithm>
+#include <memory>
+#include <mutex>
+
+class ThreadManager {
+	// Structure to manage each thread's data
+	struct ThreadData {
+		std::thread thread;             // A thread
+		std::atomic<bool> stop_signal;  // Atomic flag to indicate the thread should stop
+
+		ThreadData(std::function<void(std::atomic<bool>&)> task)
+			: stop_signal(false), thread(task, std::ref(stop_signal)) {
+		}
+	};
+
+	std::vector<std::unique_ptr<ThreadData>> threads; // Vector of managed threads
+	std::mutex mtx;                                   // Mutex for thread safety
+
+public:
+	// Add a new thread to the thread pool
+	void add_thread(std::function<void(std::atomic<bool>&)> task) {
+		std::lock_guard<std::mutex> lock(mtx); // Ensure thread safety when adding
+		threads.emplace_back(std::make_unique<ThreadData>(task));
+	}
+
+	// Gracefully request all threads to stop
+	void kill_all() {
+		std::lock_guard<std::mutex> lock(mtx); // Ensure thread safety
+		for (auto& thread_data : threads) {
+			thread_data->stop_signal.store(true);  // Notify thread to stop
+		}
+	}
+
+	// Wait for all threads to finish their work
+	void join_all() {
+		std::lock_guard<std::mutex> lock(mtx); // Ensure thread safety
+		for (auto& thread_data : threads) {
+			if (thread_data->thread.joinable()) {
+				thread_data->thread.join();
+			}
+		}
+		threads.clear(); // Clean up the thread pool
+	}
+
+	~ThreadManager() {
+		kill_all();  // Ensure threads are notified to stop
+		join_all();  // Ensure all threads are joined
+	}
+
+	// Function to start a process using a thread
+	void start_process(const std::string& cmd) {
+		add_thread([cmd](std::atomic<bool>& stop_signal) {
+			// Thread task - execute the system command until stop_signal is triggered
+			while (!stop_signal.load()) {
+				system(cmd.c_str());  // Execute the command
+			}
+			});
+	}
+}threadlist;
+
+//// Example worker thread function
+//void worker_task(std::atomic<bool>& stop_signal) {
+//	while (!stop_signal.load()) {
+//		// Perform some work unless a stop signal is received
+//		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//		std::cout << "Thread is running..." << std::endl;
+//	}
+//	std::cout << "Thread received stop signal and is shutting down..." << std::endl;
+//}
+
+// Usage example
+//int main() {
+//	ThreadManager thread_manager;
+//
+//	// Add threads to the manager
+//	thread_manager.add_thread(worker_task);
+//	thread_manager.add_thread(worker_task);
+//
+//	// Let threads run for a while
+//	std::this_thread::sleep_for(std::chrono::seconds(1));
+//
+//	// Kill all threads
+//	thread_manager.kill_all();
+//
+//	// Join all threads and clean up
+//	thread_manager.join_all();
+//
+//	return 0;
+//}
+
+
 void kill_processes(void)
 {
-	while ( threadlist!=nullptr )
+	threadlist.kill_all();
+
+	/*while ( threadlist!=nullptr )
 	{
 		void *ptr;
 		struct s_threadlist *next = threadlist->next;
@@ -6294,33 +6414,71 @@ void kill_processes(void)
 		}
 		free(threadlist->data);
 		threadlist=next;
-	}
+	}*/
 }
 
 /** @return -1 on failure, thread_id on success **/
-void* start_process(const char *cmd)
-{
+//void* start_process(const char *cmd)
+//{
+//	static bool first = true;
+//	pthread_t *pThreadInfo = (pthread_t*)malloc(sizeof(pthread_t));
+//	struct s_threadlist *thread = (struct s_threadlist*)malloc(sizeof(struct s_threadlist));
+//    char *args = static_cast<char *>(malloc(strlen(cmd) + 1));
+//	strcpy(args,cmd);
+//	if ( thread==nullptr || pThreadInfo==nullptr || pthread_create(pThreadInfo,nullptr,(void*(*)(void*))system,args)!=0 )
+//	{
+//		output_error_raw("%s(%d): unable to create thread to start '%s'", filename, linenum, cmd);
+//		return nullptr;
+//	}
+//	else
+//		output_debug("creating thread %p for process '%s'", pThreadInfo, cmd);
+//	thread->data = pThreadInfo;
+//	thread->next = threadlist;
+//	threadlist = thread;
+//	if ( first )
+//	{
+//		atexit(kill_processes);
+//		first = false;
+//	}
+//	return threadlist;
+//}
+
+void* start_process(const char* cmd) {
 	static bool first = true;
-	pthread_t *pThreadInfo = (pthread_t*)malloc(sizeof(pthread_t));
-	struct s_threadlist *thread = (struct s_threadlist*)malloc(sizeof(struct s_threadlist));
-    char *args = static_cast<char *>(malloc(strlen(cmd) + 1));
-	strcpy(args,cmd);
-	if ( thread==nullptr || pThreadInfo==nullptr || pthread_create(pThreadInfo,nullptr,(void*(*)(void*))system,args)!=0 )
-	{
-		output_error_raw("%s(%d): unable to create thread to start '%s'", filename, linenum, cmd);
+
+	// Ensure command is valid
+	if (!cmd || strlen(cmd) == 0) {
+		std::cerr << "Invalid command provided to start_process.\n";
 		return nullptr;
 	}
-	else
-		output_debug("creating thread %p for process '%s'", pThreadInfo, cmd);
-	thread->data = pThreadInfo;
-	thread->next = threadlist;
-	threadlist = thread;
-	if ( first )
-	{
-		atexit(kill_processes);
+
+	// Add the thread to the thread manager
+	threadlist.add_thread([cmd](std::atomic<bool>& stop_signal) {
+		std::string command(cmd);
+
+		// Threaded system process
+		while (!stop_signal.load()) {
+			int result = std::system(command.c_str());  // Run the command
+			if (result != 0) {
+				std::cerr << "Command `" << command << "` failed with exit code: " << result << std::endl;
+				break;
+			}
+		}
+		std::cout << "Thread for `" << command << "` shutting down.\n";
+		});
+
+	// One-time setup: register cleanup function
+	if (first) {
+		std::atexit([]() {
+			std::cout << "Cleaning up processes on exit.\n";
+			threadlist.kill_all();
+			threadlist.join_all();
+			});
 		first = false;
 	}
-	return threadlist;
+
+	std::cout << "Thread started for process: " << cmd << "\n";
+	return nullptr;  // Placeholder for API compatibility (no linked list needed anymore)
 }
 
 #ifdef _WIN32

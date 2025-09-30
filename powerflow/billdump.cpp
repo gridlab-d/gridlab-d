@@ -239,7 +239,7 @@ EXPORT int create_billdump(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(billdump::oclass);
 		if (*obj!=nullptr)
 		{
-			billdump *my = OBJECTDATA(*obj,billdump);
+			billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -252,7 +252,7 @@ EXPORT int create_billdump(OBJECT **obj, OBJECT *parent)
 EXPORT int init_billdump(OBJECT *obj)
 {
 	try {
-		billdump *my = OBJECTDATA(obj,billdump);
+		billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(billdump);
@@ -262,7 +262,7 @@ EXPORT TIMESTAMP sync_billdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	try
 	{
-		billdump *my = OBJECTDATA(obj,billdump);
+		billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj);
 		TIMESTAMP rv;
 		obj->clock = t1;
 		rv = my->runtime > t1 ? my->runtime : TS_NEVER;
@@ -273,7 +273,7 @@ EXPORT TIMESTAMP sync_billdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 
 EXPORT TIMESTAMP commit_billdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 	try {
-		billdump *my = OBJECTDATA(obj,billdump);
+		billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj);
 		return my->commit(t1);
 	}
 	I_CATCHALL(commit,billdump);
@@ -281,7 +281,7 @@ EXPORT TIMESTAMP commit_billdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 
 EXPORT int isa_billdump(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,billdump)->isa(classname);
+	return /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj)->isa(classname);
 }
 
 /**@}*/

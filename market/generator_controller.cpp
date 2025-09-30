@@ -163,7 +163,7 @@ int generator_controller::create(void)
 
 int generator_controller::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	PROPERTY *ptemp;
 	gld::set *temp_set;
 	int index;
@@ -194,7 +194,7 @@ int generator_controller::init(OBJECT *parent)
 		}
 
 		//Get the address
-		power_link = (gld::complex *)GETADDR(parent,ptemp);
+		power_link = (gld::complex *)get_addr(parent,ptemp);
 
 		//Check this as well
 		if (power_link == nullptr)
@@ -214,7 +214,7 @@ int generator_controller::init(OBJECT *parent)
 		}
 
 		//Get the address
-		temp_set = (gld::set *)GETADDR(parent, ptemp);
+		temp_set = (gld::set *)get_addr(parent, ptemp);
 
 		//Check this as well
 		if (temp_set == nullptr)
@@ -261,7 +261,7 @@ int generator_controller::init(OBJECT *parent)
 		}
 
 		//Get the address
-		power_link = (gld::complex *)GETADDR(parent,ptemp);
+		power_link = (gld::complex *)get_addr(parent,ptemp);
 
 		//Check this as well
 		if (power_link == nullptr)
@@ -300,7 +300,7 @@ int generator_controller::init(OBJECT *parent)
 		return 2; // defer
 	}
 	//Get this object
-	auction_object = OBJECTDATA(market_object,auction);
+	auction_object = /*OBJECTDATA(obj,<>)*/ object_data<auction>(market_object);
 
 	//Pull the market information
 	market_period = (TIMESTAMP)(auction_object->dPeriod);
@@ -662,7 +662,7 @@ int generator_controller::init(OBJECT *parent)
 
 TIMESTAMP generator_controller::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	int index;
 	int64 bidID_val;
 	double per_phase_power, per_phase_old_power, shutdown_cost_temp, prev_section_power, prev_section_price, temp_time_var, temp_power_value;
@@ -1922,7 +1922,7 @@ EXPORT int create_generator_controller(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(generator_controller::oclass);
 		if (*obj!=nullptr)
 		{
-			generator_controller *my = OBJECTDATA(*obj,generator_controller);
+			generator_controller *my = /*OBJECTDATA(obj,<>)*/ object_data<generator_controller>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -1938,7 +1938,7 @@ EXPORT int create_generator_controller(OBJECT **obj, OBJECT *parent)
 EXPORT int init_generator_controller(OBJECT *obj, OBJECT *parent)
 {
 	try {
-			return OBJECTDATA(obj,generator_controller)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<generator_controller>(obj)->init(parent);
 	}
 	catch (const char *msg)
 	{
@@ -1959,7 +1959,7 @@ EXPORT int init_generator_controller(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_generator_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	generator_controller *my = OBJECTDATA(obj,generator_controller);
+	generator_controller *my = /*OBJECTDATA(obj,<>)*/ object_data<generator_controller>(obj);
 	try
 	{
 		switch (pass) {
@@ -1991,7 +1991,7 @@ EXPORT TIMESTAMP sync_generator_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG
 
 EXPORT int isa_generator_controller(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,generator_controller)->isa(classname);
+	return /*OBJECTDATA(obj,<>)*/ object_data<generator_controller>(obj)->isa(classname);
 }
 
 

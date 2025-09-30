@@ -14,6 +14,19 @@
 #include "stream.h"
 #include "test_callbacks.h"
 
+#ifdef _WIN32
+//#include <windows.h>
+
+#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
+#include <winsock2.h>
+#include <windows.h>
+
+typedef int pid_t;  // or DWORD if you want to match Windows process IDs
+#else
+#include <sys/types.h>
+#endif
+
+
 struct s_module_list {
 	void *hLib;
 	unsigned int id;

@@ -60,7 +60,7 @@ g_assert::g_assert(MODULE *module)
 				throw msg;
 		}
 
-		memset(this,0,sizeof(g_assert));
+		//memset(this,0,sizeof(g_assert));
 		status = AS_INIT;
 		relation=TCOP_EQ;
 	}
@@ -75,7 +75,7 @@ int g_assert::create(void)
 
 int g_assert::init(OBJECT *parent)
 {
-	gld_property target(get_parent(),get_target());
+	gld_property target(get_parent(),get_target().c_str());
 	if ( !target.is_valid() )
 		exception("target '%s' property '%s' does not exist", get_parent()?get_parent()->get_name():"global",get_target());
 
@@ -86,7 +86,7 @@ int g_assert::init(OBJECT *parent)
 TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 {
 	// get the target property
-	gld_property target_prop(get_parent(),get_target());
+	gld_property target_prop(get_parent(),get_target().c_str());
 	if ( !target_prop.is_valid() ) 
 	{
 		gl_error("%s: target %s is not valid",get_target(),get_name());
@@ -112,7 +112,7 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 			gld_property relation_prop(my(),"relation");
 			gld_keyword *pKeyword = relation_prop.find_keyword(relation);
 			char buf[1024];
-			char *p = get_part();
+			//char *p = get_part();
 			gl_error("%s: assert failed on %s %s.%s.%s %s %s %s %s", get_name(), status==AS_TRUE?"":"NOT",
 				get_parent()?get_parent()->get_name():"global variable", get_target(), get_part(), target_prop.to_string(buf,sizeof(buf))?buf:"(void)", pKeyword->get_name(), get_value(), get_value2());
 			return 0;
@@ -128,11 +128,11 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 
 g_assert::ASSERTSTATUS g_assert::evaluate_status(void)
 {
-	gld_property target_prop(get_parent(),get_target());
-	if ( strcmp(get_part(),"")==0 )
-		return target_prop.compare(relation,get_value(),get_value2()) ? AS_TRUE : AS_FALSE ;
+	gld_property target_prop(get_parent(),get_target().c_str());
+	if ( get_part() == "" )
+		return target_prop.compare(relation,get_value().c_str(), get_value2().c_str()) ? AS_TRUE : AS_FALSE;
 	else
-		return target_prop.compare(relation,get_value(),get_value2(),get_part()) ? AS_TRUE : AS_FALSE ;
+		return target_prop.compare(relation,get_value().c_str(), get_value2().c_str(), get_part().c_str()) ? AS_TRUE : AS_FALSE;
 }
 
 int g_assert::postnotify(PROPERTY *prop, char *value)

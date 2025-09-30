@@ -17,6 +17,9 @@ using namespace std;
 
 #define FLAG_VAL -1.0
 
+#undef max
+#undef min
+
 static PASSCONFIG clockpass = PC_BOTTOMUP;
 
 /* Comp func for max() */
@@ -245,7 +248,7 @@ void sync_ctrl::mode_transition(SCT_MODE_ENUM sct_mode, bool sck_armed_flag)
     //==Sanity Check
     if (mode_status == sct_mode)
     {
-        OBJECT *obj = OBJECTHDR(this);
+        OBJECT *obj = object_header(this);
         gl_warning("%s:%d %s - Invalid mode transition (target mode is the same to the current mode)!",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"));
     }
@@ -355,7 +358,7 @@ void sync_ctrl::dm_reset_after_disarmed()
 /* parameter/data sanity check */
 void sync_ctrl::dm_data_sanity_check()
 {
-    OBJECT *obj = OBJECTHDR(this);
+    OBJECT *obj = object_header(this);
 
     double sck_metrics_period_sec = get_prop_value<double, OBJECT>(sck_obj_ptr, "metrics_period",
                                                                    &gld_property::is_valid,
@@ -391,21 +394,36 @@ EXPORT int create_sync_ctrl(OBJECT **obj, OBJECT *parent)
         *obj = gl_create_object(sync_ctrl::oclass);
         if (*obj != nullptr)
         {
-            sync_ctrl *my = OBJECTDATA(*obj, sync_ctrl);
+            sync_ctrl *my = object_data<sync_ctrl>(*obj);
             gl_set_parent(*obj, parent);
             return my->create();
         }
         else
             return 0;
     }
-    CREATE_CATCHALL(sync_ctrl);
+    //CREATE_CATCHALL(sync_ctrl);
+    catch (char* msg)
+    {
+        gl_error("create_sync_ctrl: %s", msg);
+        return 0;
+    }
+    catch (const char* msg)
+    {
+        gl_error("create_sync_ctrl: %s", msg);
+        return 0;
+    }
+    catch (const std::exception& ex)
+    {
+        gl_error("create_sync_ctrl: unhandled exception - %s", ex.what());
+        return 0;
+    }
 }
 
 EXPORT int init_sync_ctrl(OBJECT *obj)
 {
     try
     {
-        sync_ctrl *my = OBJECTDATA(obj, sync_ctrl);
+        sync_ctrl *my = /*OBJECTDATA(obj,<>)*/ object_data<sync_ctrl>(obj);
         return my->init(obj->parent);
     }
     INIT_CATCHALL(sync_ctrl);
@@ -421,7 +439,7 @@ EXPORT int init_sync_ctrl(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_sync_ctrl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-    sync_ctrl *pObj = OBJECTDATA(obj, sync_ctrl);
+    sync_ctrl *pObj = /*OBJECTDATA(obj,<>)*/ object_data<sync_ctrl>(obj);
     TIMESTAMP t1 = TS_INVALID;
 
     try
@@ -450,13 +468,13 @@ EXPORT TIMESTAMP sync_sync_ctrl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_sync_ctrl(OBJECT *obj, char *classname)
 {
-    return OBJECTDATA(obj, sync_ctrl)->isa(classname);
+    return /*OBJECTDATA(obj,<>)*/ object_data<sync_ctrl>(obj)->isa(classname);
 }
 
 // Deltamode export
 EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-    sync_ctrl *my = OBJECTDATA(obj, sync_ctrl);
+    sync_ctrl *my = /*OBJECTDATA(obj,<>)*/ object_data<sync_ctrl>(obj);
     SIMULATIONMODE status = SM_ERROR;
     try
     {
@@ -516,15 +534,17 @@ void sync_ctrl::init_vars() // Init local variables with default settings
 template <class T>
 void sync_ctrl::set_prop(gld_property *prop_ptr, T prop_value)
 {
-    gld_wlock *rlock = nullptr;
-    prop_ptr->setp<T>(prop_value, *rlock);
+    
+    prop_ptr->setp<T>(prop_value, rlock);
 }
 /* Get */
 template <class T>
 void sync_ctrl::get_prop(gld_property *prop_ptr, T prop_value)
 {
-    gld_wlock *rlock = nullptr;
-    prop_ptr->getp<T>(prop_value, *rlock);
+    //gld_wlock *rlock = nullptr;
+    //replace the above with SharedMutexManager
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&rlock));
+    prop_ptr->getp<T>(prop_value, rlock);
 }
 
 /* Get Prop Value*/
@@ -586,7 +606,7 @@ T *sync_ctrl::get_prop_value(gld_property *prop_ptr, T *(gld_property::*fp_get_t
 template <class T>
 gld_property *sync_ctrl::get_prop_ptr(T *obj_ptr, const char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)())
 {
-    OBJECT *obj = OBJECTHDR(this);
+    OBJECT *obj = object_header(this);
 
     // Get property pointer
     gld_property *temp_prop_ptr;
@@ -667,7 +687,7 @@ void sync_ctrl::init_hidden_prop_controllers(double flag_val)
 
 void sync_ctrl::init_data_sanity_check()
 {
-    OBJECT *obj = OBJECTHDR(this);
+    OBJECT *obj = object_header(this);
 
     //==Flag
     // sct_armed_flag does not need a sanity check at this stage
@@ -781,7 +801,7 @@ void sync_ctrl::init_data_sanity_check()
 
 void sync_ctrl::init_deltamode_check()
 {
-    OBJECT *obj = OBJECTHDR(this);
+    OBJECT *obj = object_header(this);
     STATUS fxn_return_status;
 
     //==Set the deltamode flag, if desired

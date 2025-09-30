@@ -83,7 +83,7 @@ void network::update_latency(){
 
 int network::init(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	// input validation checks
 	if(latency_mode[0] != 0){
 		random_type = gl_randomtype(latency_mode);
@@ -135,7 +135,7 @@ int network::isa(char *classname){
 
 TIMESTAMP network::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	// update latency?
 	if(latency_last_update + latency_period <= t1){
 		update_latency();
@@ -167,7 +167,7 @@ int network::attach(network_interface *nif){
 
 //EXPORT int commit_network(OBJECT *obj){
 TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP t0 = obj->clock;
 	double net_bw = 0.0;
 	double nif_bw = 0.0;
@@ -423,7 +423,7 @@ TIMESTAMP network::commit(TIMESTAMP t1, TIMESTAMP t2){
 
 //return my->notify(update_mode, prop);
 int network::notify(int update_mode, PROPERTY *prop){
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	return 1;
 }
 
