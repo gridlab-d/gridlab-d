@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: 'GMLC-TDC/HELICS'
-          ref: ${{ env.helics-ref }}
+          ref: 'develop'
           submodules: 'recursive'
           fetch-depth: 0
           path: helics-build
