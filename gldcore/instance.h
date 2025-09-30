@@ -76,7 +76,8 @@ typedef struct s_instance {
 	unsigned int id;
 	char model[1024];
 	char execdir[1024];
-	pthread_t threadid;
+	//pthread_t threadid;
+	//std::thread threadid;
 
 	/* linkage information */
 	linkage *read;	///< link read from slave

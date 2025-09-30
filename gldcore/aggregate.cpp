@@ -48,7 +48,7 @@ std::shared_ptr<struct s_aggregate> aggregate_mkgroup(char *aggregator, /**< agg
 	AGGREGATOR op = AGGR_NOP;
 	//AGGREGATION *result=nullptr;
 	std::shared_ptr<struct s_aggregate> result = nullptr;
-	char aggrop[9], aggrval[257], *aggrpart;
+	char aggrop[9]="", aggrval[257], * aggrpart;
 	char aggrprop[33], aggrunit[9];
 	unsigned char flags=0x00;
 
@@ -113,19 +113,19 @@ std::shared_ptr<struct s_aggregate> aggregate_mkgroup(char *aggregator, /**< agg
 		strcpy(aggrval, aggrprop); // write property back into value, sans unit
 	}
 
-	if (stricmp(aggrop,"min")==0) op=AGGR_MIN;
-	else if (stricmp(aggrop,"max")==0) op=AGGR_MAX;
-	else if (stricmp(aggrop,"avg")==0) op=AGGR_AVG;
-	else if (stricmp(aggrop,"std")==0) op=AGGR_STD;
-	else if (stricmp(aggrop,"sum")==0) op=AGGR_SUM;
-	else if (stricmp(aggrop,"prod")==0) op=AGGR_SUM;
-	else if (stricmp(aggrop,"mbe")==0) op=AGGR_MBE;
-	else if (stricmp(aggrop,"mean")==0) op=AGGR_MEAN;
-	else if (stricmp(aggrop,"var")==0) op=AGGR_VAR;
-	else if (stricmp(aggrop,"skew")==0) op=AGGR_SKEW;
-	else if (stricmp(aggrop,"kur")==0) op=AGGR_KUR;
-	else if (stricmp(aggrop,"count")==0) op=AGGR_COUNT;
-	else if (stricmp(aggrop,"gamma")==0) op=AGGR_GAMMA;
+	if (stricmp_portable(aggrop,"min")==0) op=AGGR_MIN;
+	else if (stricmp_portable(aggrop,"max")==0) op=AGGR_MAX;
+	else if (stricmp_portable(aggrop,"avg")==0) op=AGGR_AVG;
+	else if (stricmp_portable(aggrop,"std")==0) op=AGGR_STD;
+	else if (stricmp_portable(aggrop,"sum")==0) op=AGGR_SUM;
+	else if (stricmp_portable(aggrop,"prod")==0) op=AGGR_SUM;
+	else if (stricmp_portable(aggrop,"mbe")==0) op=AGGR_MBE;
+	else if (stricmp_portable(aggrop,"mean")==0) op=AGGR_MEAN;
+	else if (stricmp_portable(aggrop,"var")==0) op=AGGR_VAR;
+	else if (stricmp_portable(aggrop,"skew")==0) op=AGGR_SKEW;
+	else if (stricmp_portable(aggrop,"kur")==0) op=AGGR_KUR;
+	else if (stricmp_portable(aggrop,"count")==0) op=AGGR_COUNT;
+	else if (stricmp_portable(aggrop,"gamma")==0) op=AGGR_GAMMA;
 	else
 	{
 		output_error("aggregate group '%s' does not use a known aggregator", aggregator);

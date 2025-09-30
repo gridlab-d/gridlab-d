@@ -873,95 +873,188 @@ int schedule_compile(SCHEDULE* sch)
 	return 1;
 }
 
-static pthread_cond_t sc_active = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t sc_activelock = PTHREAD_MUTEX_INITIALIZER;
+//static pthread_cond_t sc_active = PTHREAD_COND_INITIALIZER;
+static std::condition_variable_any sc_active_cv;
+//static pthread_mutex_t sc_activelock = PTHREAD_MUTEX_INITIALIZER;
+static unsigned int sc_activelock = 0;
 static STATUS sc_status = SUCCESS;
 static int sc_running = 0, sc_started = 0, sc_done = 0;
 
-STATUS schedule_createproc(void* args)
-{
-	STATUS status = SUCCESS;
-	void* rv = 0;
-	SCHEDULE* sch = (SCHEDULE*)args;
+//STATUS schedule_createproc(void* args)
+//{
+//	STATUS status = SUCCESS;
+//	void* rv = 0;
+//	SCHEDULE* sch = (SCHEDULE*)args;
+//
+//	pthread_mutex_lock(&sc_activelock);
+//	while (sc_running >= global_threadcount)
+//	{
+//		output_debug("schedule '%s' creation waiting (%d of %d active)", sch->name, sc_running, global_threadcount);
+//		pthread_cond_wait(&sc_active, &sc_activelock);
+//	}
+//	sc_running++;
+//	output_debug("deferred schedule '%s' creation starting (%d of %d active)", sch->name, sc_running, global_threadcount);
+//	pthread_cond_broadcast(&sc_active);
+//	pthread_mutex_unlock(&sc_activelock);
+//
+//	/* compile the schedule */
+//	if (schedule_compile(sch))
+//	{
+//		unsigned char calendar;
+//		/* construct the dtnext array for valid calendars */
+//		for (calendar = 0; calendar < MAXCALENDARS; calendar++)
+//		{
+//			if (sch->dtnext[calendar] != 0) schedule_compile_dtnext(sch, calendar);
+//		}
+//
+//		/* normalize */
+//		if ((sch->flags & SN_NORMAL) == SN_NORMAL || (sch->flags & SN_ABSOLUTE) == SN_ABSOLUTE || (sch->flags & SN_WEIGHTED) == SN_WEIGHTED)
+//			schedule_normalize(sch, SN_IS_NORMALIZED);
+//
+//		/* validate */
+//		if ((sch->flags & (SN_POSITIVE | SN_NONZERO | SN_BOOLEAN)) != 0 && !schedule_validate(sch, sch->flags))
+//		{
+//			status = FAILED;
+//			goto Done;
+//		}
+//
+//#ifdef _DEBUG
+//		/* calculate checksum */
+//		sch->checksum = schedule_checksum(sch);
+//		output_debug("schedule '%s' checksum is %0x08d", sch->name, sch->checksum);
+//#endif
+//		status = SUCCESS;
+//	}
+//	else
+//		status = FAILED;
+//Done:
+//	pthread_mutex_lock(&sc_activelock);
+//	sc_running--;
+//	sc_done++;
+//	if (status == FAILED) sc_status = status;
+//	pthread_cond_broadcast(&sc_active);
+//	pthread_mutex_unlock(&sc_activelock);
+//	if (status == SUCCESS)
+//	{
+//		output_debug("deferred creation of schedule '%s' completed", sch->name);
+//	}
+//	else
+//	{
+//		output_error("deferred creation of schedule '%s' failed", sch->name);
+//	}
+//	//	rv = (void *)status;
+//	//	return rv;
+//	return status;
+//}
 
-	pthread_mutex_lock(&sc_activelock);
-	while (sc_running >= global_threadcount)
-	{
-		output_debug("schedule '%s' creation waiting (%d of %d active)", sch->name, sc_running, global_threadcount);
-		pthread_cond_wait(&sc_active, &sc_activelock);
-	}
-	sc_running++;
-	output_debug("deferred schedule '%s' creation starting (%d of %d active)", sch->name, sc_running, global_threadcount);
-	pthread_cond_broadcast(&sc_active);
-	pthread_mutex_unlock(&sc_activelock);
 
-	/* compile the schedule */
-	if (schedule_compile(sch))
+STATUS schedule_createproc(void* args) {
+	STATUS status = STATUS::SUCCESS;
+	SCHEDULE* sch = static_cast<SCHEDULE*>(args);
+
 	{
-		unsigned char calendar;
-		/* construct the dtnext array for valid calendars */
-		for (calendar = 0; calendar < MAXCALENDARS; calendar++)
-		{
-			if (sch->dtnext[calendar] != 0) schedule_compile_dtnext(sch, calendar);
+		std::unique_lock<std::shared_mutex> lock( SharedMutexManager::get_mutex(&sc_activelock));
+		while (sc_running >= global_threadcount) {
+			output_debug("schedule '%s' creation waiting (%d of %d active)",
+				sch->name.c_str(), sc_running, global_threadcount);
+			sc_active_cv.wait(lock);
+		}
+		sc_running++;
+		output_debug("deferred schedule '%s' creation starting (%d of %d active)",
+			sch->name.c_str(), sc_running, global_threadcount);
+		sc_active_cv.notify_all();
+	} // Lock automatically released here
+
+	// Compile the schedule
+	if (schedule_compile(sch)) {
+		// Construct the dtnext array for valid calendars
+		for (unsigned char calendar = 0; calendar < MAXCALENDARS; ++calendar) {
+			if (sch->dtnext[calendar] != 0) {
+				schedule_compile_dtnext(sch, calendar);
+			}
 		}
 
-		/* normalize */
-		if ((sch->flags & SN_NORMAL) == SN_NORMAL || (sch->flags & SN_ABSOLUTE) == SN_ABSOLUTE || (sch->flags & SN_WEIGHTED) == SN_WEIGHTED)
+		// Normalize
+		if ((sch->flags & SN_NORMAL) == SN_NORMAL ||
+			(sch->flags & SN_ABSOLUTE) == SN_ABSOLUTE ||
+			(sch->flags & SN_WEIGHTED) == SN_WEIGHTED) {
 			schedule_normalize(sch, SN_IS_NORMALIZED);
+		}
 
-		/* validate */
-		if ((sch->flags & (SN_POSITIVE | SN_NONZERO | SN_BOOLEAN)) != 0 && !schedule_validate(sch, sch->flags))
-		{
-			status = FAILED;
+		// Validate
+		if ((sch->flags & (SN_POSITIVE | SN_NONZERO | SN_BOOLEAN)) != 0 &&
+			!schedule_validate(sch, sch->flags)) {
+			status = STATUS::FAILED;
 			goto Done;
 		}
 
 #ifdef _DEBUG
-		/* calculate checksum */
+		// Calculate checksum
 		sch->checksum = schedule_checksum(sch);
-		output_debug("schedule '%s' checksum is %0x08d", sch->name, sch->checksum);
+		output_debug("schedule '%s' checksum is %0x08lld",
+			sch->name.c_str(), static_cast<long long>(sch->checksum));
 #endif
-		status = SUCCESS;
+		status = STATUS::SUCCESS;
 	}
-	else
-		status = FAILED;
+	else {
+		status = STATUS::FAILED;
+	}
+
 Done:
-	pthread_mutex_lock(&sc_activelock);
-	sc_running--;
-	sc_done++;
-	if (status == FAILED) sc_status = status;
-	pthread_cond_broadcast(&sc_active);
-	pthread_mutex_unlock(&sc_activelock);
-	if (status == SUCCESS)
 	{
-		output_debug("deferred creation of schedule '%s' completed", sch->name);
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&sc_activelock));
+		sc_running--;
+		sc_done++;
+		if (status == STATUS::FAILED) {
+			sc_status = status;
+		}
+		sc_active_cv.notify_all();
+	} // Lock automatically released here
+
+	if (status == STATUS::SUCCESS) {
+		output_debug("deferred creation of schedule '%s' completed", sch->name.c_str());
 	}
-	else
-	{
-		output_error("deferred creation of schedule '%s' failed", sch->name);
+	else {
+		output_error("deferred creation of schedule '%s' failed", sch->name.c_str());
 	}
-	//	rv = (void *)status;
-	//	return rv;
+
 	return status;
 }
-
 /** Wait for deferred schedule creations to finish
 	@return the global status of schedule creation
  **/
-int schedule_createwait(void)
-{
-	if (sc_running == 0 && sc_done == sc_started) return sc_status;
-	pthread_mutex_lock(&sc_activelock);
-	while (sc_running > 0 || sc_done < sc_started)
-	{
-		output_debug("waiting for deferred schedule creations to complete (%d of %d active)", sc_running, global_threadcount);
-		pthread_cond_wait(&sc_active, &sc_activelock);
+//int schedule_createwait(void)
+//{
+//	if (sc_running == 0 && sc_done == sc_started) return sc_status;
+//	pthread_mutex_lock(&sc_activelock);
+//	while (sc_running > 0 || sc_done < sc_started)
+//	{
+//		output_debug("waiting for deferred schedule creations to complete (%d of %d active)", sc_running, global_threadcount);
+//		pthread_cond_wait(&sc_active, &sc_activelock);
+//	}
+//	output_debug("all deferred schedule creations completed %s", sc_status == SUCCESS ? "successfully" : "with at least one failure");
+//	pthread_mutex_unlock(&sc_activelock);
+//	return sc_status;
+//}
+
+int schedule_createwait() {
+	if (sc_running == 0 && sc_done == sc_started) {
+		return sc_status;
 	}
-	output_debug("all deferred schedule creations completed %s", sc_status == SUCCESS ? "successfully" : "with at least one failure");
-	pthread_mutex_unlock(&sc_activelock);
+
+	{
+		std::unique_lock<std::shared_mutex> lock( SharedMutexManager::get_mutex(&sc_activelock));
+		while (sc_running > 0 || sc_done < sc_started) {
+			output_debug("waiting for deferred schedule creations to complete (%d of %d active)",
+				sc_running, global_threadcount);
+			sc_active_cv.wait(lock);
+		}
+		output_debug("all deferred schedule creations completed %s",
+			sc_status == STATUS::SUCCESS ? "successfully" : "with at least one failure");
+	} // Lock automatically released here due to RAII
+
 	return sc_status;
 }
-
 
 // Verify string contents
 void validate_schedule_definition(const char* definition) {
@@ -1121,13 +1214,25 @@ SCHEDULE* schedule_create(const char* name,		/**< the name of the schedule */
 	else
 	{
 		static unsigned int n_threads = 0;
-		static pthread_t thread_id;
-		if (pthread_create(&thread_id, nullptr, reinterpret_cast<void* (*)(void*)>(schedule_createproc), (void*)sch) != 0)
-		{
-			/* fails so do it inline */
-			output_warning("schedule_createproc failed, schedule '%s' created inline instead", sch->name);
-			return schedule_createproc(sch) ? sch : nullptr;
+		//static pthread_t thread_id;
+		//if (pthread_create(&thread_id, nullptr, reinterpret_cast<void* (*)(void*)>(schedule_createproc), (void*)sch) != 0)
+		//{
+		//	/* fails so do it inline */
+		//	output_warning("schedule_createproc failed, schedule '%s' created inline instead", sch->name);
+		//	return schedule_createproc(sch) ? sch : nullptr;
+		//}
+
+
+		try {
+			std::thread thread_handle(schedule_createproc, static_cast<void*>(sch));
+			thread_handle.detach(); // Detach thread if it should run independently (similar to original behavior)
 		}
+		catch (const std::system_error& e) {
+			// Fails, so do it inline
+			output_warning("schedule_createproc failed, schedule '%s' created inline instead", sch->name.c_str());
+			return schedule_createproc(static_cast<void*>(sch)) == STATUS::SUCCESS ? sch : nullptr;
+		}
+
 		sc_started++;
 		return sch;
 	}

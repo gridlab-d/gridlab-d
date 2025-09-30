@@ -25,7 +25,7 @@
 #define closesocket close
 #endif
 
-#include <pthread.h>
+//#include <pthread.h>
 
 #include "instance.h"
 #include "instance_cnx.h"

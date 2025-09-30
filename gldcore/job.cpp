@@ -48,7 +48,9 @@ typedef struct {
 static const char *GetLastErrorMsg(void)
 {
 	static unsigned int lock = 0;
-	wlock(&lock);
+	//wlock(&lock);
+	//replace the above with SharedMutexManager
+	std::unique_lock<std::shared_mutex> wlock(SharedMutexManager::get_mutex(&lock));
     static TCHAR szBuf[256]; 
     LPVOID lpMsgBuf;
     DWORD dw = GetLastError(); 
@@ -68,7 +70,7 @@ static const char *GetLastErrorMsg(void)
     sprintf(szBuf, "%s (error code %d)", lpMsgBuf, dw); 
  
     LocalFree(lpMsgBuf);
-	wunlock(&lock);
+	//wunlock(&lock);
 	return szBuf;
 }
 static DIR *opendir(const char *dirname)

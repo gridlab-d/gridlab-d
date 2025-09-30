@@ -1,7 +1,8 @@
 #include "instance_cnx.h"
 
 //extern pthread_mutex_t inst_sock_lock;
-extern pthread_cond_t inst_sock_signal;
+//extern pthread_cond_t inst_sock_signal;
+
 extern int sock_created;
 
 STATUS instance_cnx_mmap(instance *inst){

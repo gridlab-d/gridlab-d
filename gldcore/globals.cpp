@@ -1123,4 +1123,39 @@ void global_remote_write(void *local, /** local memory for data */
 	}
 }
 
+int stricmp_portable(const char* str1, const char* str2) {
+	while (*str1 && *str2) {
+		int c1 = std::tolower(static_cast<unsigned char>(*str1));
+		int c2 = std::tolower(static_cast<unsigned char>(*str2));
+		if (c1 != c2) {
+			return c1 - c2;
+		}
+		++str1;
+		++str2;
+	}
+	// Handle differing lengths
+	int c1 = std::tolower(static_cast<unsigned char>(*str1));
+	int c2 = std::tolower(static_cast<unsigned char>(*str2));
+	return c1 - c2;
+}
+
+int strnicmp_portable(const char* str1, const char* str2, size_t n) {
+	for (size_t i = 0; i < n; ++i) {
+		// Stop if we reach the end of either string
+		if (str1[i] == '\0' || str2[i] == '\0') {
+			int c1 = std::tolower(static_cast<unsigned char>(str1[i]));
+			int c2 = std::tolower(static_cast<unsigned char>(str2[i]));
+			return c1 - c2;
+		}
+		// Compare characters case-insensitively
+		int c1 = std::tolower(static_cast<unsigned char>(str1[i]));
+		int c2 = std::tolower(static_cast<unsigned char>(str2[i]));
+		if (c1 != c2) {
+			return c1 - c2;
+		}
+	}
+	return 0; // Equal up to n characters
+}
+
+
 /**@}**/

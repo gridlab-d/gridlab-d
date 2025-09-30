@@ -1,6 +1,6 @@
 SET(GLD_MODULE_NAME gridlabd)
 
-
+set(CMAKE_BUILD_TYPE Debug) # Add this near the top if not using multi-config generator
 
 
 # Load and link C/C++ files for the executable
@@ -136,6 +136,16 @@ set(SOURCE_LIST
 
 #if(NOT APPLE)
 add_executable(${GLD_MODULE_NAME} ${SOURCE_LIST})
+
+
+
+if(MSVC)
+    target_compile_options(gridlabd PRIVATE $<$<CONFIG:Debug>:/Zi /Od>)
+    set_property(TARGET ${GLD_MODULE_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+   
+else()
+    target_compile_options(gridlabd PRIVATE $<$<CONFIG:Debug>:-g -O0>)
+endif()
 
 
 #else()

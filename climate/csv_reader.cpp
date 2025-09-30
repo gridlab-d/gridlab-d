@@ -10,12 +10,16 @@
 #include <sstream> // For safer string tokenization
 
 #include "csv_reader.h"
+#include "gldrandom.h"
 
 #ifdef _WIN32
 #include <direct.h>  // Required for getcwd() on Windows
 #else
 #include <unistd.h>  // Required for getcwd() on POSIX systems
 #endif
+
+//extern enum class RANDOMTYPE;
+
 
 CLASS *csv_reader::oclass = 0;
 

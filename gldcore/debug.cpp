@@ -873,9 +873,9 @@ Retry:
 			else if (strncmp(bptype,"pass",strlen(bptype))==0)
 			{	/* create pass breakpoint */
 				int pass;
-				if (strnicmp(bpval,"pretopdown",std::max<unsigned long>(2,strlen(bpval)))==0) pass=PC_PRETOPDOWN;
-				else if (strnicmp(bpval,"bottomup",strlen(bpval))==0) pass=PC_BOTTOMUP;
-				else if (strnicmp(bpval,"posttopdown",std::max<unsigned long>(2,strlen(bpval)))==0) pass=PC_POSTTOPDOWN;
+				if (strnicmp_portable(bpval,"pretopdown",std::max<unsigned long>(2,strlen(bpval)))==0) pass=PC_PRETOPDOWN;
+				else if (strnicmp_portable(bpval,"bottomup",strlen(bpval))==0) pass=PC_BOTTOMUP;
+				else if (strnicmp_portable(bpval,"posttopdown",std::max<unsigned long>(2,strlen(bpval)))==0) pass=PC_POSTTOPDOWN;
 				else
 				{
 					output_error("undefined pass type for add breakpoint");

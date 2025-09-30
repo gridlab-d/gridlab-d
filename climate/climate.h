@@ -39,20 +39,20 @@ typedef enum{
 	CP_LAST = 9
 } COMPASS_PTS;
 
-enum{
+enum class CI {
 	CI_NONE = 0,
 	CI_LINEAR,
 	CI_QUADRATIC
-} CI;
+}; // CI;
 
 #ifdef CM_NONE
 #undef CM_NONE
 #endif
 
-enum{
+enum class CLOUDMODEL {
 	CM_NONE = 0,
 	CM_CUMULUS = 1
-} CLOUDMODEL;
+}; // CLOUDMODEL;
 
 
 typedef struct s_tmy {
@@ -182,11 +182,11 @@ typedef struct {
 	double solar;
 } CLIMATERECORD;
 
-enum {
-		RT_NONE,
-		RT_TMY2,
-		RT_CSV,
-} RT;
+enum class RT {
+	RT_NONE,
+	RT_TMY2,
+	RT_CSV,
+}; // RT;
 
 class climate : public gld_object {
 	

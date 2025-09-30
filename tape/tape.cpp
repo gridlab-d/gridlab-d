@@ -47,7 +47,7 @@
 #define MAP_STRING(X) {#X,VT_STRING,X,sizeof(X),0}
 #define MAP_END {nullptr}
 
-VARMAP varmap[] = {
+extern "C" VARMAP varmap[] = {
 	/* add module variables you want to be available using module_setvar in core */
 	MAP_STRING(timestamp_format),
 	MAP_END

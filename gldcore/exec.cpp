@@ -264,7 +264,7 @@ static std::shared_ptr<struct thread_data> thread_data = nullptr;
 
 static threadpool_thread_data *threadpool_data = nullptr;
 static INDEX **ranks = nullptr;
-extern PASSCONFIG passtype[] = {PC_PRETOPDOWN, PC_BOTTOMUP, PC_POSTTOPDOWN};
+const PASSCONFIG passtype[] = {PC_PRETOPDOWN, PC_BOTTOMUP, PC_POSTTOPDOWN};
 static unsigned int pass;
 int iteration_counter = 0;   /* number of redos completed */
 int federation_iteration_counter = 0; /* number of federate redos completed */
@@ -274,8 +274,11 @@ int64 rlock_count = 0, rlock_spin = 0;
 int64 wlock_count = 0, wlock_spin = 0;
 #endif
 
-extern pthread_mutex_t mls_inst_lock;
-extern pthread_cond_t mls_inst_signal;
+//extern pthread_mutex_t mls_inst_lock;
+//extern pthread_cond_t mls_inst_signal;
+
+extern unsigned int mls_inst_lock;
+extern std::condition_variable_any mls_inst_signal;
 
 //sjin: struct for pthread_create arguments
 struct arg_data {
@@ -571,7 +574,7 @@ static void ss_do_object_sync(int thread, void *item)
 				static int64 lasttime = 0;
 				static char lastdate[64]="";
 				char syncdate[64]="";
-				static char *passname;
+				static std::string passname;
 				static int lastpass = -1;
 				char objname[1024];
 				if (lastpass!=passtype[pass])
@@ -1703,8 +1706,12 @@ static std::vector<std::unique_ptr<unsigned int>> donecount;
 
 /** MAIN LOOP CONTROL ******************************************************************/
 
-/*static*/ pthread_mutex_t mls_svr_lock;
-/*static*/ pthread_cond_t mls_svr_signal;
+///*static*/ pthread_mutex_t mls_svr_lock;
+///*static*/ pthread_cond_t mls_svr_signal;
+
+unsigned int mls_svr_lock;
+std::condition_variable_any mls_svr_signal;
+
 int mls_created = 0;
 
 void exec_mls_create()
@@ -1714,16 +1721,16 @@ void exec_mls_create()
 	mls_created = 1;
 
 	output_debug("exec_mls_create()");
-	rv = pthread_mutex_init(&mls_svr_lock,nullptr);
-	if (rv != 0)
-	{
-		output_error("error with pthread_mutex_init() in exec_mls_init()");
-	}
-	rv = pthread_cond_init(&mls_svr_signal,nullptr);
-	if (rv != 0)
-	{
-		output_error("error with pthread_cond_init() in exec_mls_init()");
-	}
+	//rv = pthread_mutex_init(&mls_svr_lock,nullptr);
+	//if (rv != 0)
+	//{
+	//	output_error("error with pthread_mutex_init() in exec_mls_init()");
+	//}
+	//rv = pthread_cond_init(&mls_svr_signal,nullptr);
+	//if (rv != 0)
+	//{
+	//	output_error("error with pthread_cond_init() in exec_mls_init()");
+	//}
 }
 
 void exec_mls_init()
@@ -1746,11 +1753,14 @@ void exec_mls_suspend()
 	if ( global_multirun_mode==MRM_STANDALONE && strcmp(global_environment,"server")!=0 )
 		output_warning("suspending simulation with no server/multirun active to control mainloop state");
 	output_debug("lock_ (%x->%x)", &mls_svr_lock, mls_svr_lock);
-	rv = pthread_mutex_lock(&mls_svr_lock);
+	/*rv = pthread_mutex_lock(&mls_svr_lock);
 	if (0 != rv)
 	{
 		output_error("error with pthread_mutex_lock() in exec_mls_suspend()");
-	}
+	}*/
+
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&mls_svr_lock));
+
 	output_debug("sched update_");
 	sched_update(global_clock,global_mainloopstate=MLS_PAUSED);
 	output_debug("wait loop_");
@@ -1759,56 +1769,65 @@ void exec_mls_suspend()
 		{
 			output_debug(" * tick (%i)", --loopctr);
 		}
-		rv = pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
-		if (rv != 0)
-		{
-			output_error("error with pthread_cond_wait() in exec_mls_suspend()");
-		}
+		//rv = pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
+		//if (rv != 0)
+		//{
+		//	output_error("error with pthread_cond_wait() in exec_mls_suspend()");
+		//}
+		mls_svr_signal.wait(lock);
 	}
 	output_debug("sched update_");
 	sched_update(global_clock,global_mainloopstate=MLS_RUNNING);
 	output_debug("unlock_");
-	rv = pthread_mutex_unlock(&mls_svr_lock);
+	/*rv = pthread_mutex_unlock(&mls_svr_lock);
 	if (rv != 0)
 	{
 		output_error("error with pthread_mutex_unlock() in exec_mls_suspend()");
-	}
+	}*/
 }
 
 void exec_mls_resume(TIMESTAMP ts)
 {
 	int rv = 0;
-	rv = pthread_mutex_lock(&mls_svr_lock);
-	if (rv != 0)
+	//rv = pthread_mutex_lock(&mls_svr_lock);
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&mls_svr_lock));
+	/*if (rv != 0)
 	{
 		output_error("error in pthread_mutex_lock() in exec_mls_resume() (error %i)", rv);
-	}
+	}*/
 	global_mainlooppauseat = ts;
-	rv = pthread_mutex_unlock(&mls_svr_lock);
+	/*rv = pthread_mutex_unlock(&mls_svr_lock);
 	if (rv != 0)
 	{
 		output_error("error in pthread_mutex_unlock() in exec_mls_resume()");
-	}
-	rv = pthread_cond_broadcast(&mls_svr_signal);
+	}*/
+
+	lock.unlock();
+
+	/*rv = pthread_cond_broadcast(&mls_svr_signal);
 	if (rv != 0)
 	{
 		output_error("error in pthread_cond_broadcast() in exec_mls_resume()");
-	}
+	}*/
+
+	mls_svr_signal.notify_all();
 }
 
 void exec_mls_statewait(unsigned states)
 {
-	pthread_mutex_lock(&mls_svr_lock);
+	//pthread_mutex_lock(&mls_svr_lock);
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&mls_svr_lock));
 	while ( ((global_mainloopstate&states)|states)==0 )
-		pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
-	pthread_mutex_unlock(&mls_svr_lock);
+		//pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
+		mls_svr_signal.wait(lock);
+	//pthread_mutex_unlock(&mls_svr_lock);
 }
 
 void exec_mls_done()
 {
 	sched_update(global_clock,global_mainloopstate=MLS_DONE);
-	pthread_mutex_destroy(&mls_svr_lock);
-	pthread_cond_destroy(&mls_svr_signal);
+	//pthread_mutex_destroy(&mls_svr_lock);
+	//pthread_cond_destroy(&mls_svr_signal);
 }
 
 /******************************************************************

@@ -38,6 +38,22 @@ extern "C" {
 #define env_pathsep "/"
 #endif
 
+
+#include <cctype>
+#include <cstring>
+
+#ifdef _WIN32
+	// Windows-specific: Use strtok_s (secure version of strtok)
+#define strtok_r strtok_s
+#else
+	// Unix-like systems: Use strtok_r
+#include <string.h>
+#endif
+
+	int stricmp_portable(const char* str1, const char* str2);
+
+	int strnicmp_portable(const char* str1, const char* str2, size_t n);
+
 typedef enum {FAILED=false, SUCCESS=true} STATUS;
 
 typedef struct s_globalvar {
