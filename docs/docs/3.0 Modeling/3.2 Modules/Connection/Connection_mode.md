@@ -1,8 +1,8 @@
 # mode
-
+TODO - Useful - Does mode need its own page? This is more of a definition.
 
     module connection;
-    class [xml]|[json] {
+    class xml|json {
       mode CLIENT|SERVER;
     }
     

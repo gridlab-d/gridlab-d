@@ -1,4 +1,5 @@
-#lockout
+# lockout
+TODO - Useful - Does lockout need its own page? This is more of a definition.
 
 Client/server connection module security lockout time control property 
 

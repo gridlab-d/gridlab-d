@@ -212,14 +212,15 @@ S_n & = CR_{n-1} (\Gamma_1 -\Gamma_2 ) + e_n D
 
 ## Caveat
 
-Prior to [Hassayampa (Version 3.0)] Multizone offices are created by connecting several single-zone objects with a **multizone** object linking them together with a user-defined _UA_. Unfortunately, this _UA_ is not integrated into the thermal solution but used to add or remove heat from the zones based on the temperature difference. This method works fine as long as the temperature difference between the two zones remains relatively constant. The **multizone** object limits the time step to avoid problem with excessive changes in the heat transfer rate. Nevertheless, this method is only an approximation and can introduce some error when large temperature fluctuations occur. 
+Prior to Hassayampa (Version 3.0) Multizone offices are created by connecting several single-zone objects with a **multizone** object linking them together with a user-defined _UA_. Unfortunately, this _UA_ is not integrated into the thermal solution but used to add or remove heat from the zones based on the temperature difference. This method works fine as long as the temperature difference between the two zones remains relatively constant. The **multizone** object limits the time step to avoid problem with excessive changes in the heat transfer rate. Nevertheless, this method is only an approximation and can introduce some error when large temperature fluctuations occur. 
 
 At this time, the multizone offices only support unitary HVAC. There is no support for central/VAV HVAC systems. 
 
 ## [Multizone ETP Linearization]
 
 *** WORKING DRAFT ***   
-**Please review, edit and[comment] as necessary**.
+TODO - Incomplete - Working draft for Multizone ETP Linearization
+**Please review, edit and as necessary**.
 
 * * *
 

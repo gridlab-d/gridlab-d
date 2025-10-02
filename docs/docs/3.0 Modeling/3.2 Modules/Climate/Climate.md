@@ -1,6 +1,6 @@
 # Climate Module 
 
-**TODO**:  Update for [Hassayampa (Version 3.0)]
+**TODO** - Update - Update for [Hassayampa (Version 3.0)]
 
 The climate module provides an interface that other objects may use to include weather data in their calculations. Objects such as houses and buildings rely on this data to factor outdoor weather into their calculations for internal temperature. The climate data includes temperature, humidity, and solar radiation, which is used to calculate temperature gain that is the result of heat gained from direct exposure of a surface to sunlight. The Climate Module Version 1.0 retrieves climate data from TMY2 files, created and maintained by the National Renewable Energy Laboratory (NREL). 
 
@@ -74,7 +74,7 @@ Author: Nathan Tenney, Pacific Northwest National Laboratory, Richland, Washingt
 
 # Climate (class) 
 
-**TODO: _This page is imcomplete_**  
+**TODO** - Incomplete - Climate (class) page is imcomplete  
 
 The Climate class is the top-level object for weather data storage, retrieval, and parsing. It can be controlled manually, can parse TMY2 or CSV files, and interpolate data points. The climate object reads a specified file at init-time, if one is provided. During the sync steps, the current weather data is posted based on the current data sample and, if it is being interpolated, the next data sample. Solar data is calculated from the location of the city and the time of the year to determine the appropriate azimuth and incident angle of the direct solar radiation, plus the diffuse solar radiation. Solar input is calculated for each of the cardinal and intercardinal directions is calculated, as well as the horizontal direction. 
 

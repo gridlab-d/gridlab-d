@@ -1,6 +1,6 @@
 # CSV reader
 
-The CSV reader class is a helper object for the [ climate class] in the [Climate module]. It is used to override the normal file-parsing behavior, which reads the input file in as a TMY2 file, and instead reads its file in as a series of comma-separated values. 
+The CSV reader class is a helper object for the **climate** class in the **climate module**. It is used to override the normal file-parsing behavior, which reads the input file in as a TMY2 file, and instead reads its file in as a series of comma-separated values. 
 
 ## CSV reader behavior
 
@@ -36,77 +36,28 @@ If the CSV reader has not yet found or not pre-defined the column header, the fi
 
 ##### Weather Data
 
-When the parser has a column header, any line that is not a comment or a class property is read as weather data. The first value is a timestamp, and any following values fill in the column that corresponds with the names provided in the header. The timestamp format can be manually set with a formatted scan string (see [scanf()](http://en.wikipedia.org/wiki/Scanf)), otherwise will default to "%d:%d:%d:%d:%d". The input timestamp will read as many tokens as it is able, and will taken them in order as the month, day, hour, minute, and second of a year to fill in the associated values as the current weather data. Lines of weather data should be chronologically sequential; if the data's timestamp is earlier than the previous timestamp, it will be ignored and discarded. 
+When the parser has a column header, any line that is not a comment or a class property is read as weather data. The first value is a timestamp, and any following values fill in the column that corresponds with the names provided in the header. The timestamp format can be manually set with a formatted scan string (see [scanf()](http://en.wikipedia.org/wiki/Scanf)), otherwise will default to `%d:%d:%d:%d:%d`. The input timestamp will read as many tokens as it is able, and will taken them in order as the month, day, hour, minute, and second of a year to fill in the associated values as the current weather data. Lines of weather data should be chronologically sequential; if the data's timestamp is earlier than the previous timestamp, it will be ignored and discarded. 
 
 ## Properties
 
-### index
-
-The entry index number that the reader is using for the current weather values. 
-
-### city_name
-
-The name of the city the weather data is associated with. 
-
-### state_name
-
-The name of the state that the city is in for the associated weather data. 
-
-### lat_deg
-
-The whole degree latitude for the location that this weather data was recorded. North values are positive, south values are negative. 
-
-### lat_min
-
-The sub-degree minutes of latitude for the location that this weather data was recorded. 
-
-### long_deg
-
-The whole degree longitude for the location that this weather data was recorded. West values are negative, east values are positive. 
-
-### long_min
-
-The sub-degree minutes of longitude for the location that this weather data was recorded. 
-
-### high_temp
-
-The highest observed temperature in the data set. 
-
-### peak_solar
-
-The highest observed solar input recorded in the data set. 
-
-### status
-
-The current state of the weather reader. 
-
-#### INIT
-
-The file has not been opened and no data has been read. 
-
-#### OPEN
-
-The file has been opened and the data is either in the process of being read and processed, or is currently being used by the parent climate object. 
-
-#### ERROR
-
-The file was opened, but an error occurred while reading and parsing the file. The file has been closed and the reader is not usable by the system. 
-
-### timefmt
-
-The string format to use for reading in timestamps from the file. By default, the format is "%d:%d:%d:%d:%d". The order of the values is the month, day, hour, minute, then second that the associated weather data will be used. The same dates are used for multiple years; individual years cannot be specified. Any value that is omitted defaults to zero, thus applying the value to the entirety of the omitted interval. Alternate formats must preserve the interval ordering, but may alter the format so long as up to five integers are read in. 
-
-### timezone
-
-The timezone the weather data's source city is in. Should be a three-letter code, akin to "GMT", "PST", or "EDT". 
-
-### columns
-
-A list of headers for the columns. Each column name must match a property name in the [weather] object, else an error will occur. If this property is omitted, the parser will use the first line that is not a property definition and is not a comment as the column headers. 
-
-### filename
-
-The name of the CSV file to read weather data from. 
+Property | Description 
+| - | - |
+**index** | The entry index number that the reader is using for the current weather values. |
+**city_name** | The name of the city the weather data is associated with. 
+**state_name** | The name of the state that the city is in for the associated weather data. **lat_deg** | The whole degree latitude for the location that this weather data was recorded. North values are positive, south values are negative. 
+**lat_min** | The sub-degree minutes of latitude for the location that this weather data was recorded. 
+**ong_deg** | The whole degree longitude for the location that this weather data was recorded. West values are negative, east values are positive. 
+**long_min** | The sub-degree minutes of longitude for the location that this weather data was recorded. 
+**high_temp** | The highest observed temperature in the data set. 
+peak_solar | The highest observed solar input recorded in the data set. 
+**status** | The current state of the weather reader. 
+**INIT** | The file has not been opened and no data has been read. 
+**OPEN** | The file has been opened and the data is either in the process of being read and processed, or is currently being used by the parent climate object. 
+**ERROR** | The file was opened, but an error occurred while reading and parsing the file. The file has been closed and the reader is not usable by the system. 
+**timefmt** | The string format to use for reading in timestamps from the file. By default, the format is `%d:%d:%d:%d:%d`. The order of the values is the month, day, hour, minute, then second that the associated weather data will be used. The same dates are used for multiple years; individual years cannot be specified. Any value that is omitted defaults to zero, thus applying the value to the entirety of the omitted interval. Alternate formats must preserve the interval ordering, but may alter the format so long as up to five integers are read in. 
+**timezone** | The timezone the weather data's source city is in. Should be a three-letter code, akin to "GMT", "PST", or "EDT". 
+columns | A list of headers for the columns. Each column name must match a property name in the **weather** object, else an error will occur. If this property is omitted, the parser will use the first line that is not a property definition and is not a comment as the column headers. 
+**filename** | The name of the CSV file to read weather data from. 
 
 ## Functions
 

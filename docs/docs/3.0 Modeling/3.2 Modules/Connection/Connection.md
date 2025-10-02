@@ -1,9 +1,8 @@
 # Connection
 
-The client/server connection module implements a common set of data exchange and co-simulation links for both clients and servers. Various underlying transport protocols are supported and various data format protocols are implemented by the classes of objects. A common security model is shared by all the interfaces ensuring that all external interaction are managed consistently across all the various connection types. 
+The client/server connection module implements a common set of data exchange and co-simulation links for both clients and servers. Various underlying transport protocols are supported and various data format protocols are implemented by the classes of objects. A common security model is shared by all the interfaces ensuring that all external interactions are managed consistently across all the various connection types. 
 
 ## Synopsis
-    
     
     module connection {
       security NONE|LOW|NORMAL|HIGH|EXTREME;
@@ -14,11 +13,13 @@ The client/server connection module implements a common set of data exchange and
 
 Each class joins three basic characteristics of a connection: 
 
-  * whether the connection mode is SERVER or CLIENT,
-  * whether the connection transport is UDP or TCP, and
+  * whether the connection mode is `SERVER` or `CLIENT`,
+  * whether the connection transport is `UDP` or `TCP`, and
   * the data exchange protocol supported by the connection.
 
-The data exchange protocol determines the name of the class. The follow classes (hence protocols) are proposed (red) or supported (blue): 
+The data exchange protocol determines the name of the class. The follow classes (hence protocols) are proposed (italics) or supported (bold): 
+
+TODO - Update - Check that proposed vs supported connections list is still accurate
 
 - **xml**:
     implements XML links
@@ -28,11 +29,11 @@ The data exchange protocol determines the name of the class. The follow classes 
     implements FNCS library for FNCS co-simulations.
 - **helics_msg**:
     implements the HELICS library for HELICS co-simulations.
-- **gridlabd**:
+- *gridlabd*:
     implements gridlabd links
-- **volttron**:
+- *volttron*:
     implements volttron links
-- **matlab**:
+- *matlab*:
     implements matlab links
 
 The connection mode and transport are properties of the underlying class from which all connection classes are derived. 

@@ -1,10 +1,10 @@
 # helics msg
 
-The helics_msg object is part of the `connection` module. It allows GridLAB-D™ models to be run as federates in a HELICS co-simulation. In 4.1 the helics_msg object is available by default. 
+The **helics_msg** object is part of the `connection` module. It allows GridLAB-D™ models to be run as federates in a HELICS co-simulation. In 4.1 the **helics_msg** object is available by default. 
 
-### Enabling the helics_msg object
+### Enabling the **helics_msg** object
 
-When building from source. HELICS is a third party library that can be downloaded and built from [here](https://github.com/GMLC-TDC/HELICS-src//). Once HELICS and its third party libraries, ZeroMQ and boost, have been built, please follow the [cmake build](http://GridLAB-D™.shoutwiki.com/wiki/CMake_Build//) instructions for enabling HELICS in GridLAB-D™. 
+When building from source: HELICS is a third party library that can be downloaded and built from [here](https://github.com/GMLC-TDC/HELICS-src//). Once HELICS and its third party libraries, ZeroMQ and boost, have been built, please follow the [cmake build](http://GridLAB-D™.shoutwiki.com/wiki/CMake_Build//) instructions for enabling HELICS in GridLAB-D™. 
 
 ### Environment Considerations
 
@@ -16,13 +16,13 @@ Windows  | PATH
 Mac  | DYLD_LIBRARY_PATH   
 Linux  | LD_LIBRARY_PATH   
   
-## Helics_msg
+## **helics_msg**
 
-The helics_msg object implements the HELICS library such that a single GridLAB-D™ model acts as a single HELICS federate. There can only be one instance of a helics_msg object per GridLAB-D™ model. 
+The **helics_msg** object implements the HELICS library such that a single GridLAB-D™ model acts as a single HELICS federate. There can only be one instance of a **helics_msg** object per GridLAB-D™ model. 
 
-### Default Helics_msg
+### Default **helics_msg**
 
-A minimalist helics_msg could be created with 
+A minimalist **helics_msg** could be created with 
     
     
     module connection;
@@ -32,11 +32,11 @@ A minimalist helics_msg could be created with
     }
     
 
-### Helics_msg Parameters
+### **helics_msg** Parameters
 
 Property Name  | Type  | Unit  | Description   
 ---|---|---|---  
-name  | string  | none  | This is the name of the object in the GridLAB-D™ context. It is also the name of the HELICS federate. This means that all published property topics get prepended with this name like so: name/publish_topic   
+name  | string  | none  | This is the name of the object in the GridLAB-D™ context. It is also the name of the HELICS federate. This means that all published property topics get prepended with this name like so: `name/publish_topic`
 configure  | string  | none  | The name of the file used to configure the HELICS federate.   
   
 ### Configuration File Syntax
@@ -334,7 +334,7 @@ The configuration file defines the publication and subscription topics as well a
     }
     
 
-All of the keys found in the json schema are optional. The example below shows federate configuration that creates a HELICS publication for a substation object's distribution_load property, ties a HELICS input to a substation object's positive_sequence_voltage property, and creates a HELICS endpoint for the fixed_price property of a market object for other federates to write to. 
+All of the keys found in the json schema are optional. The example below shows federate configuration that creates a HELICS publication for a substation object's `distribution_load` property, ties a HELICS input to a substation object's `positive_sequence_voltage` property, and creates a HELICS endpoint for the `fixed_price` property of a market object for other federates to write to. 
     
     
     {
@@ -377,7 +377,7 @@ All of the keys found in the json schema are optional. The example below shows f
     }
     
 
-All configuration examples thus far have created HELICS publications, inputs, and endpoints that are tied to a single internal GridLAB-D™ object instance's property. It is now possible to configure a HELICS publication such that it publishes multiple objects' properties. The HELICS publication type must be a string and GridLAB-D™ will publish a JSON serialized string of specifed objects' properties. for example, let's create a single HELICS publication that will publish a triplex_meter's measured_power and measured_real_power properties as well as a house's heating_setpoint, cooling_setpoint, thermostat_cycle_time, and heating_system_type properties. The HELICS configuration file's publication instance would look something like this: 
+All configuration examples thus far have created HELICS publications, inputs, and endpoints that are tied to a single internal GridLAB-D™ object instance's property. It is now possible to configure a HELICS publication such that it publishes multiple objects' properties. The HELICS publication type must be a string and GridLAB-D™ will publish a JSON serialized string of specifed objects' properties. For example, let's create a single HELICS publication that will publish a `triplex_meter`'s `measured_power` and `measured_real_power` properties as well as a house's `heating_setpoint`, `cooling_setpoint`, `thermostat_cycle_time`, and `heating_system_type` properties. The HELICS configuration file's publication instance would look something like this: 
     
     
     {
@@ -415,7 +415,7 @@ Something similar can be done for a HELICS input. It is possible to create a HEL
     }
     
 
-In another federate named "python_federate" it's now possible to set the constant_power_12 property of a triplex_load named "tpxl" and the heating_setpoint, thermostat_cycle_time, and heating_system_type properties of a house named house1 publishing the following string in a publication named "json_pub": 
+In another federate named `python_federate` it's now possible to set the `constant_power_12` property of a triplex_load named `tpxl` and the `heating_setpoint`, `thermostat_cycle_time`, and `heating_system_type` properties of a house named `house1` publishing the following string in a publication named `json_pub`: 
     
     
     "{
@@ -451,7 +451,7 @@ Also, with endpoints it possible to create an endpoint that will send a message 
     }
     
 
-It's also possible to create an endpoint that will send a message containing multiple objects' properties and receive a message to write to any existing objects' properties. The example below shows a endpoint configuration instance that sends the measured_power and measured_real_power properties of a triplex_meter named tpxm, the heating_setpoint, cooling_setpoint, thermostat_cycle_time, and heating_system_type properties of a house named house1, and the global property, clock. 
+It's also possible to create an endpoint that will send a message containing multiple objects' properties and receive a message to write to any existing objects' properties. The example below shows a endpoint configuration instance that sends the `measured_power` and `measured_real_power` properties of a `triplex_meter` named `tpxm`, the `heating_setpoint`, `cooling_setpoint`, `thermostat_cycle_time`, and `heating_system_type` properties of a house named `house1`, and the global property, `clock`. 
     
     
     {

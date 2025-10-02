@@ -1,11 +1,11 @@
 # Commercial User Guide 
 ## Commercial Overview
 
-TODO
+TODO - Empty - Commercial Overiew
 
 ## Using the Office
 
-TODO
+TODO - Empty - Using the Office
 
 ### Default Office
 
@@ -22,43 +22,125 @@ The "default office" is an incomplete construct. The minimum definition for an o
        hvac.heating.capacity 4500;
     }
     
+# Office
+
+Single-zone commercial office building with rooftop package unit 
+
+## Synopsis
+    
+    
+    class office {
+    	double floor_area[sf];
+    	double floor_height[ft];
+    	double exterior_ua[Btu/degF/h];
+    	double interior_ua[Btu/degF/h];
+    	double interior_mass[Btu/degF];
+    	double glazing[sf];
+    	double glazing.north[sf];
+    	double glazing.northeast[sf];
+    	double glazing.east[sf];
+    	double glazing.southeast[sf];
+    	double glazing.south[sf];
+    	double glazing.southwest[sf];
+    	double glazing.west[sf];
+    	double glazing.northwest[sf];
+    	double glazing.horizontal[sf];
+    	double glazing.coefficient[pu];
+    	double occupancy;
+    	double occupants;
+    	char256 schedule;
+    	double air_temperature[degF];
+    	double mass_temperature[degF];
+    	double temperature_change[degF/h];
+    	double outdoor_temperature[degF];
+    	double Qh[Btu/h];
+    	double Qs[Btu/h];
+    	double Qi[Btu/h];
+    	double Qz[Btu/h];
+    	enumeration {OFF=0, VENT=5, ECON=4, COOL=3, AUX=2, HEAT=1} hvac_mode;
+    	double hvac.cooling.balance_temperature[degF];
+    	double hvac.cooling.capacity[Btu/h];
+    	double hvac.cooling.capacity_perF[Btu/degF/h];
+    	double hvac.cooling.design_temperature[degF];
+    	double hvac.cooling.efficiency[pu];
+    	double hvac.cooling.cop[pu];
+    	double hvac.heating.balance_temperature[degF];
+    	double hvac.heating.capacity[Btu/h];
+    	double hvac.heating.capacity_perF[Btu/degF/h];
+    	double hvac.heating.design_temperature[degF];
+    	double hvac.heating.efficiency[pu];
+    	double hvac.heating.cop[pu];
+    	double lights.capacity[kW];
+    	double lights.fraction[pu];
+    	double plugs.capacity[kW];
+    	double plugs.fraction[pu];
+    	complex demand[kW];
+    	complex total_load[kW];
+    	complex energykWh;
+    	double power_factor;
+    	complex power[kW];
+    	complex current[A];
+    	complex admittance[1/Ohm];
+    	complex hvac.demand[kW];
+    	complex hvac.load[kW];
+    	complex hvac.energykWh;
+    	double hvac.power_factor;
+    	complex lights.demand[kW];
+    	complex lights.load[kW];
+    	complex lights.energykWh;
+    	double lights.power_factor;
+    	double lights.heatgain_fraction;
+    	double lights.heatgain[Units|kW];
+    	complex plugs.demand[Units|kW];
+    	complex plugs.load[Units|kW];
+    	complex plugs.energy[Units|kWh];
+    	double plugs.power_factor;
+    	double plugs.heatgain_fraction;
+    	double plugs.heatgain[kW];
+    	double cooling_setpoint[degF];
+    	double heating_setpoint[degF];
+    	double thermostat_deadband[degF];
+    	double control.ventilation_fraction;
+    	double control.lighting_fraction;
+    	double ACH;
+    }
 
 ### Office Schedule
 
 The office has a built-in occupancy schedule subsystem that is used to determine the minimum air change coefficient. This subsystem parses a string and constructs a bitfield for the hours of each day that the building should be occupied. By default, office buildings are occupied from 8am to 5pm local time, Monday through Friday. 
 
-The format for the office schedule consists of two parts, the day and the hours, in a semicolon delimited list. The default string is "1-5 8-17". The first part is the range for the days of the week, with 0 being Sunday, 1 for Monday, etc. The hours are numbered 0-23 and reflect a 24 hour clock. Multiple schedule elements can be aggregated with an OR operation by seperating them with semicolons. For example, "1-4 8-17; 5 8-20; 6 8-23; 0 8-20" would define an 8-5 schedule Mon-Thur, 8-8 on Friday, 8am-11pm on Saturday, and 8-8 on Sunday. 
+The format for the office schedule consists of two parts, the day and the hours, in a semicolon delimited list. The default string is `1-5 8-17`. The first part is the range for the days of the week, with 0 being Sunday, 1 for Monday, etc. The hours are numbered 0-23 and reflect a 24 hour clock. Multiple schedule elements can be aggregated with an OR operation by seperating them with semicolons. For example, `1-4 8-17; 5 8-20; 6 8-23; 0 8-20` would define an 8-5 schedule Mon-Thur, 8-8 on Friday, 8am-11pm on Saturday, and 8-8 on Sunday. 
 
 ### Properties
 
-Property Name | Type | Unit | Description   
+Property name | Type | Unit | Description   
 ---|---|---|---  
-floor_area | double | ft^2 | Floor area of the office (presuming one floor)   
+floor_area | double | ft^2 | Floor area of the office (presuming one floor).   
 floor_height | double | ft | Ceiling height within the office interior   
 exterior_ua | double | BTU/degF/hr | Exterior thermal resistance   
 interior_ua | double | BTU/degF/hr | Interior thermal resistance   
-interior_mass | double | BTU/degF | ...   
-glazing | double | ft^2 | ...   
-glazing.north | double | ft^2 | ...   
-glazing.northeast | double | ft^2 | ...   
-glazing.east | double | ft^2 | ...   
-glazing.southeast | double | ft^2 | ...   
-glazing.south | double | ft^2 | ...   
-glazing.southwest | double | ft^2 | ...   
-glazing.west | double | ft^2 | ...   
-glazing.northwest | double | ft^2 | ...   
-glazing.horizontal | double | ft^2 | ...   
-glazing.coefficient | double | per unit | ...   
+interior_mass | double | BTU/degF | The thermal mass of the interior finishing and building materials   
+glazing | double | ft^2 | The external glazing area (total area)   
+glazing.north | double | ft^2 | The external glazing area facing north   
+glazing.northeast | double | ft^2 | The external glazing area facing north-east   
+glazing.east | double | ft^2 | The external glazing area facing east   
+glazing.southeast | double | ft^2 | The external glazing area facing south-east   
+glazing.south | double | ft^2 | The external glazing area facing south   
+glazing.southwest | double | ft^2 | The external glazing area facing south-west   
+glazing.west | double | ft^2 | The external glazing area facing west   
+glazing.northwest | double | ft^2 | The external glazing area facing north-west   
+glazing.horizontal | double | ft^2 | The external glazing area facing up (skyward)   
+glazing.coefficient | double | per unit | The fraction of solar radiation that is transmitted by the glazing.   
 occupancy | double | - | Current occupancy ratio   
 occupants | double | people | Total occupants for the office   
 schedule | char256 | - | Schedule string. Semicolon delimited cron-style schedule definition.   
 air_temperature | double | degF | Office interior air temperature   
 mass_temperature | double | degF | Office interior mass temperature   
-temperature_change | double | degF/hr | ...   
-Qh | double | BTU/hr | ...   
-Qs | double | BTU/hr | ...   
-Qi | double | BTU/hr | ...   
-Qz | double | BTU/hr | ...   
+temperature_change | double | degF/hr | The rate of change of temperature since the last update   
+Qh | double | BTU/hr | The HVAC gain/loss since the last update   
+Qs | double | BTU/hr | The solar heat gain since the last update   
+Qi | double | BTU/hr | The internal heat gains since the last update   
+Qz | double | BTU/hr | The inter-zonal heat gain/loss since the last update   
 hvac_mode | enumeration | - | Current mode of the HVAC system. HEAT, AUX, COOL, ECON, VENT, or OFF.   
 hvac.cooling.balance_temperature | double | degF | The balance temperature of the HVAC cooler   
 hvac.cooling.capacity | double | BTU/hr | The constant heat output capacity of the HVAC cooler (should be negative)   
@@ -73,39 +155,42 @@ hvac.heating.design_temperature | double | degF | The design temperature of the 
 hvac.heating.efficiency | double | BTU/W | The heating efficiency of the HVAC heater   
 hvac.heating.cop | double | - | Coefficient of performance of the HVAC heater   
 lights.capacity | double | kW | Total power of the lights installed in the office   
-lights.fraction | double | - | The fraction of the installed lights that are turned on   
+lights.fraction | double | pu | The fraction of the installed lights that are turned on   
 plugs.capacity | double | kW | Total power of the devices plugged into wall sockets   
-plugs.fraction | double | - | The current fraction of the total power draw from the various devices   
+plugs.fraction | double | pu | The current fraction of the total power draw from the various devices   
 demand | complex | kW | Aggregate peak power draw from the office   
 total_load | complex | kW | Current aggregate power draw from the office   
 energy | complex | kWh | Accumulated energy consumed by the office   
-power_factor | complex | - | ...   
+power_factor | complex | - | The power factor of the house load   
 power | complex | kW | Constant power component of the office load   
 current | complex | A | Constant current component of the office load   
 admittance | complex | 1/Ohm | Constant resistance component of the office load   
-hvac.demandkW | complex | kW | ...   
-hvac.loadkW | complex | kW | ...   
-hvac.energy | double | kWh | ...   
-hvac.power_factor | complex | - | ...   
-lights.demandkW | complex | kW | ...   
-lights.loadkW | complex | kW | ...   
-lights.energy | complex | kWh | ...   
-lights.power_factor | double | - | ...   
-plugs.demandkW | complex | - | ...   
-plugs.loadkW | complex | - | ...   
-plugs.energy | complex | - | ...   
-plugs.power_factor | double | - | ...   
-cooling_setpoint | double | - | ...   
-heating_setpoint | double | - | ...   
-thermostat_deadband" | double | - | ...   
-control.ventilation_fraction | double | - | ...   
-control.lighting_fraction | double | - | ...   
+hvac.demand[kW] | complex | kW | The HVAC load   
+hvac.load[kW] | complex | kW | The HVAC load   
+hvac.energy | double | kWh | The HVAC energy use   
+hvac.power_factor | complex | - | The HVAC power factor   
+lights.demand[kW] | complex | kW | The lighting load   
+lights.load | complex | kW | The lighting load   
+lights.energy | complex | kWh | The lighting energy use   
+lights.power_factor | double | - | The lighting power factor   
+plugs.demand | complex | kW | The plug load   
+plugs.load | complex | kW | The plug load   
+plugs.energy | complex | kWh | The plug energy use   
+plugs.power_factor | double | - | The plug power factor   
+cooling_setpoint | double | degF | The cooling thermostat set-point   
+heating_setpoint | double | degF | The heating thermostat set-point   
+thermostat_deadband" | double | degF | The thermostat deadband (hysteresis)   
+control.ventilation_fraction | double | pu | The current outside air fraction for ventilation   
+control.lighting_fraction | double | pu | The current lighting fraction in effect   
   
 
 ## Commercial \- Commercial building developer's guide 
 
-Note
-    The small office building is part of the original implementation of the commercial module and is expected to be deprecated when the full commercial building implementation is completed. This will include deprecation of the multizone class. Small office buildings will be derived from the building implementation when that is validated and released.
+Note: TODO - Deprecated - *The small office building is part of the original implementation of the commercial module and is expected to be deprecated when the full commercial building implementation is completed. This will include deprecation of the multizone class. Small office buildings will be derived from the building implementation when that is validated and released.*
+
+## Bugs
+
+As of Navajo (Version 4.3) the office building class has not been validated. Use of the residential house class is recommended with appropriate adjustments to parameters until validation is completed. 
 
 ### Building
 
@@ -115,6 +200,8 @@ The building class implements that abstract class used to solve all linearized m
 
 _General Properties_ 
 
+TODO - Formatting - Not sure what's going on here, are we trying to bold these 'R's?
+
 Property| Unit | Constraints | Default | Description | Remarks  
 --|--|--|--|--|--|
 T | degF | N×1 ∈ **R** | Ø | Node temperatures
@@ -122,20 +209,20 @@ N | (int16) | ∈ **N** + | 1 | Number of nodes in model
 U | Btu/degF/h | N×N symmetric ∈ **R** *2 | Ø | Node conductances   
 C | Btu/degF | N×1 ∈ **R** * | Ø | Node capacitance | NaN indicates outdoor node   
 Q | Btu/h | N×1 ∈ **R** | Ø | Node heat flows
-Qs | Btu/h | N×1 ∈ **R *** | Ø | Node solar heat gain
-Qi | Btu/h | N×1 ∈ **R *** | Ø | Node internal heat gain
+$Q_s$ | Btu/h | N×1 ∈ **R *** | Ø | Node solar heat gain
+$Q_i$ | Btu/h | N×1 ∈ **R *** | Ø | Node internal heat gain
   
 _Default HVAC properties_ 
 
 Property| Unit | Constraints | Default | Description | Remarks  
 --|--|--|--|--|--|
-Qfl | Btu/h | N×1 ∈ **R *** | NaN | Node fan heat gain at low power 
-Qfh | Btu/h | N×1 ∈ **R *** | NaN | Node fan heat gain at high power
-Qf | Btu/h | N×1 ∈ **R *** | NaN | Node heat gain from fans
-Qhc | Btu/h | N×1 ∈ **R *** | NaN | Node heating capacity
-Qh | Btu/h | N×1 ∈ **R *** | NaN | Node heat gain from heating
-Qcc | Btu/h | N×1 ∈ **R *** | NaN | Node cooling capacity
-Qc | Btu/h | N×1 ∈ **R *** | NaN | Node heat loss from cooling
+$Q_{fl}$ | Btu/h | N×1 ∈ **R *** | NaN | Node fan heat gain at low power 
+$Q_{fh}$ | Btu/h | N×1 ∈ **R *** | NaN | Node fan heat gain at high power
+$Q_f$ | Btu/h | N×1 ∈ **R *** | NaN | Node heat gain from fans
+$Q_{hc}$ | Btu/h | N×1 ∈ **R *** | NaN | Node heating capacity
+$Q_h$ | Btu/h | N×1 ∈ **R *** | NaN | Node heat gain from heating
+$Q_{cc}$ | Btu/h | N×1 ∈ **R *** | NaN | Node cooling capacity
+$Q_c$ | Btu/h | N×1 ∈ **R *** | NaN | Node heat loss from cooling
 
 **Note** : NaN is used to indicate that no default HVAC equipment is associated with the node   
   
@@ -143,12 +230,12 @@ _Default controller properties_
 
 Property| Unit | Constraints | Default | Description | Remarks  
 --|--|--|--|--|--|
-Ts | (double) | N×1 ∈ {0,1,2,3,4,5} | NaN | HVAC state | 0=OFF, 1=VENT, 2=HEAT, 3=COOL, 4=AUX, 5=ECON   
-Vm | pu/h | N×1 ∈ **R *** | NaN | Minimum ventilation required |   
-Th | degF | N×1 ∈ **R +** | NaN | Heating set-point | Must be less than $Tc-2Td$  
-Tc | degF | N×1 ∈ **R +** | NaN | Cooling set-point | Must be greater than $Th+2Td$  
-Td | degF | N×1 ∈ **R +** | NaN | Set-point deadband |   
-tl | s | N×1 ∈ **N** + | 300 | Control lockout time | Must be less than or equal to maximum_timestep   
+$T_s$ | (double) | N×1 ∈ {0,1,2,3,4,5} | NaN | HVAC state | 0=OFF, 1=VENT, 2=HEAT, 3=COOL, 4=AUX, 5=ECON   
+$V_m$ | pu/h | N×1 ∈ **R *** | NaN | Minimum ventilation required |   
+$T_h$ | degF | N×1 ∈ **R +** | NaN | Heating set-point | Must be less than $Tc-2Td$  
+$T_c$ | degF | N×1 ∈ **R +** | NaN | Cooling set-point | Must be greater than $Th+2Td$  
+$T_d$ | degF | N×1 ∈ **R +** | NaN | Set-point deadband |   
+$t_l$ | s | N×1 ∈ **N** + | 300 | Control lockout time | Must be less than or equal to maximum_timestep   
 
 
 **Note** : NaN is used to indicate that no default control equipment is associated with the node   
@@ -163,7 +250,7 @@ load | (enduse) |  |  | Electric end use load composition
   
 ### Default HVAC Controller
 
-The default controller implements a simple single zone vent/heat/cool/aux control. To override the default controller you must implement the _plc_() function is the derived class. 
+The default controller implements a simple single zone vent/heat/cool/aux control. To override the default controller you must implement the `plc()` function is the derived class. 
 
 The default control strategy for node _n_ is as follows: 
     
@@ -205,4 +292,4 @@ The default control strategy for node _n_ is as follows:
     
 
 Note - 
-    Implementing the _plc_() function for a building means that the default controller is disabled for all nodes in the building. This means that if you want to continue using the default controller for some nodes you must call the building::plc() function directly for that node.  
+    *Implementing the `plc()` function for a building means that the default controller is disabled for all nodes in the building. This means that if you want to continue using the default controller for some nodes you must call the `building::plc()` function directly for that node.*
