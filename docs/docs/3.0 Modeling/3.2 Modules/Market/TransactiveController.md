@@ -57,7 +57,7 @@ Figure 1 provides an example of cooling set points with the transactive controll
 
 The current bid of the controller object is determined by where the current air temperature falls upon the bid curve, and is determined by 
 
-$$bid price = avg price + \frac{(T_{current} - T_{desired})*ramp_{high/low}*standard deviation}{|range_{high/low}|}\tag{1}$$ 
+$$bid price = avg price + \frac{(T_{current} - T_{desired})*ramp_{high/low}*standard deviation}{|range_{high/low}|}\tag{1}$$
 
 Average price and standard deviation are determined by the auction object associated with the controller; current temperature is a property of the house object imported by the controller; and ramp_high or ramp_low, range_high or range_low, and base set point are controller inputs. Ramp and range values are determined by which side of the base set point the current temperature presides during the bidding phase. If the current temperature is outside of the maximum or minimum range of the controller, the controller returns an “infinite” bid ($9999/kWh). After the controller object’s bid is determined, it is posted to the auction object, where in conjunction with all other market objects in the system the final cleared price is determined. How this price is determined is described in the auction object. 
 
@@ -79,9 +79,9 @@ Any thermostatic set point should be controllable by this object. This can be ap
 
 Simple settings will also be developed for easy connections to standard objects. This is loosely described as _simple_mode_ in Table 1, and as more objects are added with connections to the transactive controller, additional pre-built connections should be created. Additionally, a simple user interface for the _ramp_high_ , _ramp_low_ , _range_high_ , and _range_low_ settings will be included. This will be based on a simple slider setting that varies between 0% and 100%, where 100% represents maximum participation in the market ("save money"), while 0% represents no participation ("keep my temperature"). Heating and cooling sliders will be set independently, and will default to cooling ranges of -3 to 5 and heating ranges of -5 to 3, unless a _simple_mode_ is chosen which limits those ranges or a range_high or range_low is chosen by the user. The range and ramp settings are given by Table 3. 
 
-**Table 3: Easy to use slider settings.
+**Table 3: Easy to use slider settings. Range_low/high-limit is not a new variable, but is the maximum range defined by the user (or default) if slider were at 100%.** 
 
-  Range_low/high-limit is not a new variable, but is the maximum range defined by the user (or default) if slider were at 100%.** | **Cooling Settings** (x = _slider_setting_cool_)  | **Heating Settings** (y = _slider_setting_heat_)   
+Parameter | **Cooling Settings** (x = _slider_setting_cool_)  | **Heating Settings** (y = _slider_setting_heat_)   
 ---|---|---  
 | $range_{high}$          | $= range_{high-limit} - range_{high-limit} \cdot (1 - x)$                 | $= \begin{cases} \text{range}_{high-limit} - \text{range}_{high-limit} \cdot (1 - y), & \text{if pre-heating is desired} \\ 0, & \text{if a mode without pre-heating is chosen} \end{cases}$ |
 | $range_{low}$           | $= \begin{cases} \text{range}_{low-limit} - \text{range}_{low-limit} \cdot (1 - x), & \text{if pre-cooling is desired} \\ 0, & \text{if a mode without pre-cooling is chosen} \end{cases}$ | $= \text{range}_{low-limit} - \text{range}_{low-limit} \cdot (1 - y)$ |
@@ -96,23 +96,19 @@ There are two specified modes within double_ramp which resolves clashes between 
 
 Deadband operation resolves the set point conflict by taking the average of the base cooling and base heating set points to determine a midpoint and then sets the cooling and heating set points equidistant from the midpoint. The distance from the midpoint is equal to one-half the deadband setting. This operation is shown in Figure 3. This guarantees that there is no overlap of the deadbands between the cooling and heating set points; however, maximum pre-cooling and pre-heating will not be achieved if the set points are too close together, so some benefits are lost. Bids to the auction object are determined by which regime the current air temperature falls within, and follow equations 1 and 2. 
 
-  
-
-
 ![Normal operation with overlapping pre-heat and pre-cool settings](../../../../images/Figure_2.png)
 
-Figure 2: Normal operation with overlapping pre-heat and pre-cool settings.
+**Figure 2: Normal operation with overlapping pre-heat and pre-cool settings.**
 
 ![Deadband resolve_mode](../../../../images/Figure_3.png)
 
-Figure 3: Deadband resolve_mode.
-
+**Figure 3: Deadband resolve_mode.**
   
 Sliding mode tries to maximize the amount of pre-cooling and pre-heating performed, while still resolving the collision. In sliding mode, the previous active mode of the HVAC system is stored. The active modes include heating or cooling, and not on or off. If the previous HVAC mode were to be cooling, then the pre-cooling mode would dominate the pre-heating mode. This assumes that if the HVAC were previously cooling, then the user would desire it to continue cooling and not switch to a heating mode. The pre-cooling region will extend to its defined range, while the pre-heating range will be reduced to the pre-cooling range minus the deadband. This operation is shown in Figure 4. If the previous HVAC mode were to be heating, then the pre-heating range would dominate and pre-cooling range would be reduced. Again, the bid price is determined by the regime in which the current air temperature falls and follows equations 1 and 2. Additionally, a time delay setting should be included. This time delay lets the user specify how long the "last mode" is stored before it re-checks the current operational mode - this only applies when moving between COOL and OFF or HEAT and OFF. If the HVAC system transitions from COOL to HEAT (this may be in the series of COOL to OFF to HEAT), this should reset the time delay. Time delay should default to 0 seconds (no time delay and the controller perfectly tracks the HVAC system mode in real time). 
 
 ![Sliding resolve_mode.](../../../../images/Figure_4.png)
 
-Figure 4: Sliding resolve_mode.
+**Figure 4: Sliding resolve_mode.**
 
 ## Testing Specifications
 
@@ -136,14 +132,14 @@ Specific tests must be designed to ensure that the operation of the controller i
 
 # Passive Controller (non-bidding controller)
 
-This controller is similar to the transactive controller, except without the capability to bid back into the auction object. It is designed as a passive demand response controller, which only receives price signals from the market and responds accordingly. Additionally, it is used as a test bed for future transactive controller strategies, as it is easier to implement a passive response than an active bidding market. This style of controller is more likely to be used with Time-of-Use (TOU) or Critical Peak Price (CPP) market, rather than a Real Time Price (RTP) market. The passive_controller object will be able to attach to either an auction or stubauction object, where the stubauction allows the user to create a market that is not capable of receiving bids and only delivers a taped average and standard deviation. While a number of strategies exist within passive_controller, only the major modes will be defined here and are selected with the variable `_control_mode_`. 
+This controller is similar to the transactive controller, except without the capability to bid back into the auction object. It is designed as a passive demand response controller, which only receives price signals from the market and responds accordingly. Additionally, it is used as a test bed for future transactive controller strategies, as it is easier to implement a passive response than an active bidding market. This style of controller is more likely to be used with Time-of-Use (TOU) or Critical Peak Price (CPP) market, rather than a Real Time Price (RTP) market. The passive_controller object will be able to attach to either an auction or stubauction object, where the stubauction allows the user to create a market that is not capable of receiving bids and only delivers a taped average and standard deviation. While a number of strategies exist within passive_controller, only the major modes will be defined here and are selected with the variable `control_mode`. 
 
 
 ## Description of Operation
 
 ### Ramp
 
-The _RAMP_ control_mode is similar in action to the original Olympic Peninsula transactive controller, minus the ability to bid into the market. It is also a generic version of the transactive controller, allowing the user to control the set point using parameters other than average price or temperature, such as frequency or an artificial demand signal. It uses a piece-wise linear function to adjust the set point as a function of a defined parameter and standard deviation from the defined parameter. Required variables are shown in Table 3. 
+The `RAMP` control_mode is similar in action to the original Olympic Peninsula transactive controller, minus the ability to bid into the market. It is also a generic version of the transactive controller, allowing the user to control the set point using parameters other than average price or temperature, such as frequency or an artificial demand signal. It uses a piece-wise linear function to adjust the set point as a function of a defined parameter and standard deviation from the defined parameter. Required variables are shown in Table 3. 
 
 **Table 3: Ramp control mode required parameters.**
 
@@ -158,9 +154,6 @@ _base_setpoint_ | value | This is the value of the set point were the controller
 _expectation_object_ _expectation_property_ | name property | This is the property of the defined object that the observed property is compared against. In the transactive controller, this would be the average price of the market, while for a frequency control this might be 60 Hz.   
 _observation_object_ _observation_property_ _stdev_observation_property_ | name property property | The observed object requires that a current value and a standard deviation from the expected value be compared. Observation property is the value compared against the expected value, while the standard deviation is the number of deviations away from the expectation property the observation property is currently. This would be the cleared price and the standard deviation of price in the transactive controller.   
 _state_property_ | property | Tracks the current state of the object that is being affected.   
-  
-  
-
 
 ### Probabilistic Off (prob_off)
 
@@ -193,10 +186,16 @@ _state_property_ | property | Tracks the current state of the object that is bei
 Additional cumulative distribution functions: 
 
 Exponential: 
-$$r = k_w * (1-e^{-\frac{P_{clear}}{P_{avg}}}) , r \ge 0 \tag{4}$$ 
+
+$$
+r = k_w \cdot \left( 1 - e^{-\frac{P_{clear}}{P_{avg}}} \right), \, r \geq 0 \tag{4}
+$$
 
 Uniform: 
-$$r = k_w * ( \frac{P_{clear}-P_{avg}}{P_{avg}}) , r \ge 0 \tag{5}$$
+
+$$
+r = k_w \cdot \frac{P_{clear} - P_{avg}}{P_{avg}}, \, r \geq 0 \tag{5}
+$$
 
 ### Duty Cycle (duty_cycle)
 

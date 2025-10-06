@@ -1,8 +1,5 @@
 # Tech:Optimize
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Tech:Optimize
-# Tech:Optimize
-
 GridLAB-D™ Optimization Module Documentation 
 
 Amelia Musselman 
@@ -11,62 +8,6 @@ Amelia Musselman
 
 Note: This form of "simple.cpp" has not been added to the baseline code of GridLAB-D™. Contact Jason Fuller (jason.fuller@pnnl.gov) for more information. 
 
-## Contents
-
-  * 1 Document Structure
-  * 2 General Variables
-  * 3 DISCRETE and DISCRETE_ITERATE
-    * 3.1 Variables
-    * 3.2 Presync
-      * 3.2.1 Case 0:
-      * 3.2.2 Case 1 to Case 26:
-      * 3.2.3 Case 27:
-    * 3.3 Postsync
-      * 3.3.1 Case 0:
-      * 3.3.2 Case 1 to Case 26:
-      * 3.3.3 Case 27:
-  * 4 CONTINUOUS
-    * 4.1 Variables
-    * 4.2 Presync
-      * 4.2.1 Case 0 and Case 1:
-      * 4.2.2 Cases 2 - 3 and Cases 4 - 5:
-      * 4.2.3 Case 6:
-    * 4.3 Postsync
-      * 4.3.1 Case 0:
-      * 4.3.2 Case 1:
-      * 4.3.3 Cases 2 - 3 and Cases 4 - 5:
-      * 4.3.4 Case 6:
-  * 5 CONTINUOUS_LS
-    * 5.1 Variables
-    * 5.2 Presync
-      * 5.2.1 Case 0:
-      * 5.2.2 Case 1 - 6:
-      * 5.2.3 Case 7:
-      * 5.2.4 Case 8 & 9:
-    * 5.3 Postsync
-      * 5.3.1 Case 0:
-      * 5.3.2 Case 1 - 6:
-      * 5.3.3 Case 7:
-      * 5.3.4 Case 8:
-      * 5.3.5 Case 9:
-  * 6 CONTINUOUS_NMCD
-    * 6.1 Variables
-    * 6.2 Presync
-      * 6.2.1 Case 0:
-      * 6.2.2 Case 1 - 6:
-      * 6.2.3 Case 7:
-      * 6.2.4 Case 8:
-      * 6.2.5 Case 9:
-    * 6.3 Postsync
-      * 6.3.1 Case 0:
-      * 6.3.2 Case 1:
-      * 6.3.3 Case 2:
-      * 6.3.4 Cases 3 - 4 and Cases 5 - 6:
-      * 6.3.5 Case 7:
-      * 6.3.6 Case 8:
-      * 6.3.7 Case 9:
-  * 7 Constraint Checking
-  * 8 Notes
 ## Document Structure
 
 This document describes each of the 5 optimization routines that have been developed for the GridLAB-D™ Optimization Module. The optimizer types are DISCRETE, DISCRETE_ITERATE, CONTINUOUS, CONTINUOUS_LS, and CONTINUOUS_NMCD. The DISCRETE optimizer is a specific case of the DISCRETE_ITERATE optimizer, and so is no longer necessary, but it was initially left in for testing purposes. In fact, the only difference between the DISCRETE and DISCRETE_ITERATE optimizers is that the DISCRETE_ITERATE optimizer stays at the same point until the objective function converges or until some trial limit, so we describe the two together. CONTINUOUS and CONTINUOUS_LS both use a gradient descent method. The difference between the two is that CONTINUOUS uses a simple decreasing step size with user input initial step size and percent to reduce by and CONTINUOUS_LS uses a line search based on Armijo’s rule to determine the step size. CONTINUOUS_NMCD is a coordinate descent that uses Newton’s method on the partial derivative of the objective function to optimize one variable at a time. Thus we have three main optimizer types: a discrete optimizer, a continuous optimizer using gradient descent, and a continuous optimizer using coordinate descent with Newton’s method. 

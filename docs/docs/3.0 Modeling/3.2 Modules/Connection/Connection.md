@@ -19,7 +19,7 @@ Each class joins three basic characteristics of a connection:
 
 The data exchange protocol determines the name of the class. The follow classes (hence protocols) are proposed (italics) or supported (bold): 
 
-TODO - Update - Check that proposed vs supported connections list is still accurate
+**TODO - Update - Check that proposed vs supported connections list is still accurate**
 
 - **xml**:
     implements XML links

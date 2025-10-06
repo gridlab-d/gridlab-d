@@ -1,29 +1,48 @@
 # 0.0 GridLAB-D
+### Dev Questions
 - [x] GLD Association? Is that still a thing? --> it is not, removed from repo.
+### Docs Questions
+- [ ]
 
 # 1.0 Prospective Users
+### Dev Questions
+- [ ]
+### Docs Questions
 - [ ] Technical Overview needs rework
 
 # New Users
+### Dev Questions
+
 - [x] Keep metronome example? --> No, delete.
     - [x] Pull metronome mentions out of Getting Started and into a single metronome example 
     file (or delete if not kept) 
-    - [ ] Intro to Programming needs to be re-written to not use metronome
 - [ ] Definitive installation instructions
     - [x] add the "easy" or "light" executable install option
-- [x] Pair down Getting Started Using GLD to be more approachable, noting that much of what's in there is already/can be moved to the Modeling 101 section of Modeling
 - [ ] MySQL instructions - keep? If so, most content is unfinished. Needs robust introduction explaining what it is and why it is useful.
+    - propose to Dev team to get rid of MySQL integration in leiu of python interface with new api (same for Matlab, HELICS, any other external integration)
+
+### Docs Questions
+- [ ] Intro to Programming needs to be re-written to not use metronome
+- [x] Pair down Getting Started Using GLD to be more approachable, noting that much of what's in there is already/can be moved to the Modeling 101 section of Modeling
 
 
 # 3.0 Modeling
+### Dev Questions
 - [ ] XML files. Still supported? Keep documentation?
+- [ ] Talk with dev team to build out the built-in documentation within the code itself
+- [ ] MySQL player and recorder - keep? If so, needs better intro.
+
+### Docs Questions
 - [ ] How do we handle objects? Source code integration/conversion/hybrid?
     - [ ] How does Mkdocs handle linking/interactive display elements? 
         (built-in or scripted?)
-    - [ ] Talk with dev team to build out the built-in documentation within the code itself
-- [ ] MySQL player and recorder - keep? If so, needs better intro.
-
+- [ ] Usability and Usefulness
+  - [ ] New examples
+  - [ ] Additional content/features covered
+- [ ] Modules - Connection - Does this need individual pages for each type? Or can we merge into one connection page? Existing individual connection pages are very brief/ more like definitions.
+ 
 # 4.0 Developing
+### Dev Questions
 - [ ] Waiting on development to document
   - [ ] 4.3.7 loader
   - [ ] 4.3.9 libgld

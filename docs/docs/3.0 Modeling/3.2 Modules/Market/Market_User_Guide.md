@@ -1,8 +1,6 @@
 # Market User Guide 
 
-## Market Overview
-
-**TODO**: 
+**TODO** - Introduction - Market User Guide
 
 ## Market Objects
 
@@ -30,35 +28,35 @@ Current market objects (non-deprecated) include:
     * Bid
     * Curve
 
-## defs from Market (module) marked deprecated. Keep?
+TODO - Deprecated? - defs from Market (module) marked deprecated. Keep?
 
-    ### Classes
+### Classes
 
-    #### Auction
+#### Auction
 
-    The [auction class], usually referred to as a market, is the primary class in the Market module. It provides a double-auction for producers and consumers to establish auction clearing prices and quantities, along with calculating average and standard deviation for the clearing prices. 
+The auction class, usually referred to as a market, is the primary class in the Market module. It provides a double-auction for producers and consumers to establish auction clearing prices and quantities, along with calculating average and standard deviation for the clearing prices. 
 
-    #### Auction Stub (stubauction)
+#### Auction Stub (stubauction)
 
-    The [stubauction class] is similar to the Auction class, but has been stripped of the market-clearing and bidding logic. It is used to provide a controllable framework for situations in which there is already market price information to be fed into a simulation verbatim. 
+The **stubauction class** is similar to the Auction class, but has been stripped of the market-clearing and bidding logic. It is used to provide a controllable framework for situations in which there is already market price information to be fed into a simulation verbatim. 
 
-    #### Controller
+#### Controller
 
-    The [controller class] is a basic price-responsive, finite-output appliance controller. It adjusts a set point in order to optimize the cost of energy consumption against the energy needs of the appliance and the price of energy. 
+The **controller class** is a basic price-responsive, finite-output appliance controller. It adjusts a set point in order to optimize the cost of energy consumption against the energy needs of the appliance and the price of energy. 
 
-    #### Controller2
+#### Controller2
 
-    The secondary controller provides more generic appliance responsiveness, allowing for devices to either be finitely controlled or forced into an on or off state. The controller is not currently expected to be an active power bidder, but is being designed to be responsive to uncontrollable input, whether price, frequency, voltage, water pressure, or other published properties. 
+The secondary controller provides more generic appliance responsiveness, allowing for devices to either be finitely controlled or forced into an on or off state. The controller is not currently expected to be an active power bidder, but is being designed to be responsive to uncontrollable input, whether price, frequency, voltage, water pressure, or other published properties. 
 
-    #### Double_Controller
+#### Double_Controller
 
-    The [double-setpoint controller] is designed primarily to control thermostats that have demand responsive cooling and heating on the same device. It is specifically able to properly bid up the energy demand and the price for the proper mode of the thermostat at a given time, and manages the setpoints to prevent overlap and optimize use of heating or cooling under typical conditions. 
+The **double-setpoint controller** is designed primarily to control thermostats that have demand responsive cooling and heating on the same device. It is specifically able to properly bid up the energy demand and the price for the proper mode of the thermostat at a given time, and manages the setpoints to prevent overlap and optimize use of heating or cooling under typical conditions. 
 
 ## Auction Object
 
 The auction provides a means for different objects within the GridLAB-D™ program to base their supply or demand on a dynamic or real time price. The market implemented in the auction object is implemented as a double-auction market. A double-auction market is one where suppliers and demanders (sellers and bidders) submit their bids of desired price for a set quantity simultaneously. Once the bidding submission period ends, the market "clears" by selecting the intersection point of the supply and demand curves. After the market clears and the relevant latency interval expires, the market price becomes active. At this point, devices that bid into the market will respond appropriately based on internal logic comparing their bid price to the market clearing price. The auction object does not provide any book-keeping or enforcement of the market, it simply provides a central market for buyers and sellers to bid their respective prices and quantities. 
 
-Further information describing clearing mechanisms and basic operation can be found at [Market_module]. 
+Further information describing clearing mechanisms and basic operation can be found at **Market_module**. 
 
 ### Auction Parameters
 
@@ -214,9 +212,9 @@ This model has been well tested and validated, however, as it is used for curren
 
 ## Controller Object
 
-The _controller_ is loosely based upon the design used in the Olympic Peninsula Project. This controller provides price-responsive controls (or other control inputs) to individual objects, typically appliances, within GridLAB-D™. The controller compares the current price signal to the average market price, each delivered by the auction object, and bids the appliance’s current demand as a function of price back into the auction. After the market clears all bids within the system and determines the next market price, the controller modifies the appliance’s set points to reflect operation at the new current price, often related to the standard deviation from the average set point. The set point that is modified depends upon the object to which the controller is modifying. At this time, only devices with continuous temperature set points may be used with the _controller_ object. As this object is expanded, additional controls may added that align with the general design principles. 
+The `controller` is loosely based upon the design used in the Olympic Peninsula Project. This controller provides price-responsive controls (or other control inputs) to individual objects, typically appliances, within GridLAB-D™. The controller compares the current price signal to the average market price, each delivered by the auction object, and bids the appliance’s current demand as a function of price back into the auction. After the market clears all bids within the system and determines the next market price, the controller modifies the appliance’s set points to reflect operation at the new current price, often related to the standard deviation from the average set point. The set point that is modified depends upon the object to which the controller is modifying. At this time, only devices with continuous temperature set points may be used with the `controller` object. As this object is expanded, additional controls may added that align with the general design principles. 
 
-Further information describing bidding mechanisms and basic operation can be found at [Transactive Control Specifications]. 
+Further information describing bidding mechanisms and basic operation can be found at **Transactive Control Specifications**. 
 
 ### Controller Parameters
 
@@ -274,7 +272,7 @@ _override_ | property | Used in conjunction with OVERRIDE mode, and assigns a pr
   
 ### Examples of Controller Use
 
-Assume an _auction_ setup of: 
+Assume an `auction` setup of: 
     
     class auction {
         double current_price_mean_24h;
@@ -303,7 +301,7 @@ Assume an _auction_ setup of:
     }
     
 
-Then, a bidding _controller_ for an HVAC system in DOUBLE_RAMP and SLIDING modes, which bids 60 seconds prior to the market closing and uses the previous 24 hours of cleared prices to determine that statistics for responsiveness, could be setup as: 
+Then, a bidding `controller` for an HVAC system in `DOUBLE_RAMP` and `SLIDING` modes, which bids 60 seconds prior to the market closing and uses the previous 24 hours of cleared prices to determine that statistics for responsiveness, could be setup as: 
     
     
     object controller {
@@ -339,7 +337,7 @@ Then, a bidding _controller_ for an HVAC system in DOUBLE_RAMP and SLIDING modes
     };
     
 
-A similar HVAC _controller_ for RAMP mode, controlling only the cooling load and bidding immediately prior to market closing, but uses predefined values for average and standard deviation, would be: 
+A similar HVAC `controller` for `RAMP` mode, controlling only the cooling load and bidding immediately prior to market closing, but uses predefined values for average and standard deviation, would be: 
     
     
     object controller {
@@ -360,7 +358,7 @@ A similar HVAC _controller_ for RAMP mode, controlling only the cooling load and
         range_low -0.258;
         ramp_high 2.828;
         ramp_low 2.828;
-        //slider_setting 0.2; //This could replace _range_high_ ,_range_low_ , _ramp_high_ , and _ramp_low_.
+        //slider_setting 0.2; //This could replace range_high, range_low, ramp_high, and ramp_low.
         total total_load;
         load hvac_load;
         state power_state;
@@ -373,33 +371,33 @@ This model has been well tested and validated, however, as it is used for curren
 
 ## Controller2 Object
 
-Deprecated to [Passive Controller]. 
+Deprecated to **Passive Controller**. 
 
 ## Double Controller Object
 
-Deprecated to [Controller]. 
+Deprecated to **Controller**. 
 
 ## Generator Controller Object
 
-In development. 
+TODO - Status? - Generator Controller Object In development. 
 
 ### Generator Controller Parameters
 
-In development. 
+TODO - Status? - Generator Controller Parameters In development. 
 
 ### Examples of Generator Controller Use
 
-**TODO**. 
+**TODO** - Empty - Examples of generator controller use
 
 ### Generator Controller State of Development
 
-In development. 
+TODO - Status? - Generator Controller State of Development In development. 
 
 ## Passive Controller Object
 
-This controller is similar to the _controller_ object, except without the capability to bid back into an auction. It is designed as a passive demand response controller, which only receives price (or other) signals, generally from an _auction_ or _stubauction_ object, and responds accordingly. Additionally, it is used as a test bed for future transactive controller strategies, as it is easier to implement a passive response than an active bidding market. 
+This controller is similar to the _controller_ object, except without the capability to bid back into an auction. It is designed as a passive demand response controller, which only receives price (or other) signals, generally from an `auction` or `stubauction` object, and responds accordingly. Additionally, it is used as a test bed for future transactive controller strategies, as it is easier to implement a passive response than an active bidding market. 
 
-Further information describing bidding mechanisms and basic operation can be found at [Transactive Control Specifications]. 
+Further information describing bidding mechanisms and basic operation can be found at **Transactive Control Specifications**. 
 
 ### Passive Controller Parameters
 
@@ -445,7 +443,7 @@ _ramp_low_  <br/> _ramp_high_  | - | This specifies the slope of the linear cont
 
 
 
-The following parameters are used in conjunction with DUTYCYCLE and ELASTICITY_MODEL modes, control modes designed for the FY2011 SGIG analysis. 
+The following parameters are used in conjunction with `DUTYCYCLE` and `ELASTICITY_MODEL` modes, control modes designed for the FY2011 SGIG analysis. 
 
 
 
@@ -480,7 +478,7 @@ _cycle_length_ | int32 | Not used at this time.
   
 ### Examples of Passive Controller Use
 
-Assume an _auction_ setup of: 
+Assume an `auction` setup of: 
     
     
     class auction {
@@ -512,7 +510,7 @@ Assume an _auction_ setup of:
     }
     
 
-To create an HVAC _passive_controller_ , similar to a _controller_ in RAMP mode that does not bid: 
+To create an HVAC `passive_controller`, similar to a `controller` in RAMP mode that does not bid: 
     
     
     object passive_controller {
@@ -534,7 +532,7 @@ To create an HVAC _passive_controller_ , similar to a _controller_ in RAMP mode 
     };
     
 
-A _passive_controller_ , modifying the behavior of an analog _ZIPload_ by using the ELASTICITY_MODEL with a 2-tier TOU and no CPP, would look like: 
+A `passive_controller`, modifying the behavior of an analog **ZIPload** by using the `ELASTICITY_MODEL` with a 2-tier TOU and no CPP, would look like: 
     
     
     object passive_controller {
@@ -560,7 +558,7 @@ A _passive_controller_ , modifying the behavior of an analog _ZIPload_ by using 
     };
     
 
-The same _passive_controller_ , again in ELASTICITY_MODEL modifying a _ZIPload_ , in a situation with TOU and CPP (price pattern shown in the following figure) would be: 
+The same `passive_controller`, again in `ELASTICITY_MODEL` modifying a **ZIPload****, in a situation with TOU and CPP (price pattern shown in the following figure) would be: 
 
 ![Two-tier TOU and CPP](../../../../images/300px-TOU1.png)
 
@@ -593,7 +591,7 @@ Two-tier TOU and CPP, where 2nd tier TOU is replaced by CPP.
     };
     
 
-A _passive_controller_ modifying the behavior of a _waterheater_ in a manner similar to the Olympic Peninsula Demonstration project, using PROBABILITY_OFF, would look like: 
+A `passive_controller` modifying the behavior of a `waterheater` in a manner similar to the Olympic Peninsula Demonstration project, using `PROBABILITY_OFF`, would look like: 
     
     
     object passive_controller {
@@ -611,7 +609,7 @@ A _passive_controller_ modifying the behavior of a _waterheater_ in a manner sim
     };
     
 
-A _passive_controller_ in DUTYCYCLE mode, modifying the behavior of a _ZIPload_ (which has a duty_cycle defined), would look like: 
+A `passive_controller` in `DUTYCYCLE` mode, modifying the behavior of a **ZIPload** (which has a `duty_cycle` defined), would look like: 
     
     
     object ZIPload {
@@ -674,7 +672,7 @@ _control_mode_ | enumeration | Turns the statistic calculations on and off (NORM
   
 ### Examples of Stubauction Use
 
-**TODO**. 
+**TODO** - Empty - Examples of Stubauction Use
 
 ### Stubauction State of Development
 
@@ -697,7 +695,7 @@ _quantity_ | units | This specifies the amount of power demanded by the object a
   
 ### Examples of Stub Bidder Use
 
-**TODO**. 
+**TODO** - Empty - Examples of Stub Bidder Use 
 
 ### Stub Bidder State of Development
 
