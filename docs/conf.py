@@ -39,12 +39,10 @@ import zipfile
 
 current_directory = os.path.dirname(os.path.realpath(__file__))
 
-# Updating definitions so that add-ons load correctly. These changes will
-# be required by Oct 7, 2024
 # See https://about.readthedocs.com/blog/2024/07/addons-by-default/
 # Define the canonical URL if you are using a custom domain on Read the Docs
 html_context = {}
-html_baseurl = "https://tesp.readthedocs.io/"
+html_baseurl = "https://gridlab-d.readthedocs.io/"
 # Tell Jinja2 templates the build is running on Read the Docs
 if os.environ.get("READTHEDOCS", "") == "True":
     html_context["READTHEDOCS"] = True
@@ -89,6 +87,7 @@ extensions = [
     "sphinxcontrib.rsvgconverter",
     "IPython.sphinxext.ipython_console_highlighting",
     "sphinxcontrib.mermaid",
+    "sphinx_rtd_theme"
 ]
 
 myst_enable_extensions = [
@@ -178,15 +177,15 @@ html_static_path = ["_static"]
 #
 # This is required for the alabaster theme
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
-html_sidebars = {
-    "**": [
-        "about.html",
-        "navigation.html",
-        "relations.html",  # needs 'show_related': True theme option to display
-        "searchbox.html",
-        "donate.html",
-    ]
-}
+# html_sidebars = {
+#     "**": [
+#         "about.html",
+#         "navigation.html",
+#         "relations.html",  # needs 'show_related': True theme option to display
+#         "searchbox.html",
+#         "donate.html",
+#     ]
+# }
 
 
 # Adding last updated timestamp at the bottom of every page
@@ -232,7 +231,7 @@ latex_elements = {
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "helics", "HELICS Documentation", [author], 1)]
+#man_pages = [(master_doc, "helics", "HELICS Documentation", [author], 1)]
 
 # -- Options for Texinfo output -------------------------------------------
 

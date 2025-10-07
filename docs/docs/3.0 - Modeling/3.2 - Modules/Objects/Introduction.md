@@ -1,0 +1,144 @@
+# Introduction
+
+TODO - Introduction - Objects
+
+Objects describe specific instances of a thing that can respond to and/or act on other objects. A simulation can contain very many objects. It is not uncommon to see a model that contains thousands of objects. Some of the large GridLAB-D™ models have been built that contain well over 100,000 objects.
+
+## Object (property)
+
+Object references allow a property to describe a reference to another object in the model. These are often used to access variables or functions in other objects. 
+
+### Synopsis
+    
+    class name {object variable;}
+    object name {variable reference;}
+    
+### Example
+
+To declare an object reference use the syntax:
+    
+    
+    class name {
+      object variable;
+    }
+    
+
+where `name` is the name of the class, and `variable` is the name of the object reference. 
+
+To define an object reference use the syntax:
+    
+    
+    object name {
+      variable reference;
+    }
+    
+
+where `name` is the name of the class, `variable` is the name of the object reference, and `reference` is the name of the object being referred to. Object names can either be a `<defined name>` or a `<canonical name>`.
+
+## Object (directive)
+
+The object directive is used to define one or more objects in the model. 
+
+## Synopsis
+    
+    
+    object class {
+      name object-name;
+      id object-id;
+      groupid group-id;
+      parent parent-name;
+      rank rank;
+      schedule_skew schedule_skew;
+      latitude degrees-minutes-seconds;
+      longitude degrees-minutes-seconds;
+      in date-time;
+      out date-time;
+      heartbeat seconds; // Template:NEW30
+      flags NONE|HASPLC|LOCKED|RECALC|FOREIGN|SKIPSAVE|RERANK|DELTAMODE;
+    }
+    object class:id { ... }
+    object class:from-id..to-id { ... }
+    object class:..count { ... }
+    
+### Common properties
+
+All objects share common properties that can be defined. 
+
+Property | Description
+-- | --
+**name** | Specifies the unique name used to reference this object from other objects. Object names must only contain letters, numbers, and underscores. By default, object names cannot start with a number, but the global property `relax_naming_rules` can be set to a nonzero value to work around this. Starting an object name with a number can lead to parsing errors when linking objects at load time. 
+**id** | Specifies the unique id number used to reference this object when no name is given. 
+**groupid** | Specifies a group number to which this object belongs. This is used to help find objects that are aggregated using **collectors**. 
+**parent** | Specifies the parent object in the object ranks. `parent string;` will set an object's parent as the specifically named object. If an object is nested within another object, it will automatically use the object that it is defined within as the parent object. Entering `root;` into the object's property block will set an object to explicitly not have a parent. 
+**rank** | The rank of the object determines its order of execution. An object's parent will always have a numerically greater rank than its children. Object ranks can be increased, but not decreased from within a model file. Increasing an object's rank will cause it to be called later in the pre-top down and post-top down passes, and earlier in the bottom-up pass. 
+**schedule_skew** | The number of seconds to offset any input schedule signals by, used to smooth out the otherwise lock-step behavior when changing parameters. Positive and negative integers are equally valid, telling the object to use the value later or sooner, respectively. 
+**latitude** | Specifies the latitude of the object's geo-coordinates. It is valid to use decimal numbers with an N, S, E, or W to indicate the hemisphere. **Note:** only the formats `12N34.56` or `12N34:56` are valid. 
+**longitude** | Specifies the longitude of the object's geo-coordinates. See latitude
+**in** | Specifies the date and time at which the object becomes active in the simulation. The default is `INIT`. Objects that are not in service for the entirety of a given run should not parent any objects. 
+**out** | Specifies the date and time at which the object becomes inactive in the simulation. The default is `NEVER`. See in. 
+**heartbeat** | The object heartbeat determines the number of seconds that elapse between calls to the **heartbeat__classname_()** export function. If the object heartbeat is zero or if the object's class does not export the heartbeat function, the heartbeat is not called. By default the object heartbeat is zero. 
+**flags** | Specifies the flags for special object behavior. See below for the specific meanings of the various flags <br/> * NONE: Indicates that no flags are set (default). <br/> * HASPLC: Indicates that the object has active PLC code. Deprecated as of Hassayampa (Version 3.0) <br/> * LOCKED: Indicates that the object is current locked against concurrent memory access control. <br/> * RECALC: Indicates that the object is in an inconsistent state and needs an internal recalculation to be performed at the earliest opportunity. <br/> * FOREIGN: Indicates that the object was created by a DLL and its memory cannot be freed by the core. <br/> * SKIPSAFE: Indicates that the object sync functions can be safely skipped. <br/> * RERANK: Reserved for internal use only. <br/> * DELTAMODE: Indicates that the object should be included in any **subsecond** processing. 
+
+### Single objects
+
+To create a single object use the syntax: 
+    
+    object class {
+      property value ;
+      // ...
+    } 
+
+### Numbered objects
+
+To create an object with a specific identification number use the syntax: 
+    
+    object class :id {
+      property value ;
+      // ...
+    }
+
+Note:
+    There is no guarantee that the object will keep the assigned id number once loaded in memory. However, the number given will be used to ensure a unique identity for that object.
+
+### Multiple numbered objects
+
+To define multiple objects with identification numbers in a range use the syntax: 
+    
+    object class :from..to {
+      property value ;
+      // ...
+    }
+
+### Multiple objects
+
+To define multiples objects use the syntax: 
+    
+    
+     object class :..count {
+      property value ;
+      // ...
+    }
+  
+### Expansions
+
+There are a number of intrinsic expansions available while an object is being defined: 
+
+  * **{file}** embeds the current file (full path,name,extension)
+  * **{filename}** embeds the name of the file (no path, no extension)
+  * **{fileext}** embeds the extension of the file (no path, no name)
+  * **{filepath}** embeds the path of the file (no name, no extension)
+  * **{line}** embeds the current line number
+  * **{namespace}** embeds the name of the current namespace
+  * **{class}** embeds the classname of the current object
+  * **{id}** embeds the id of the current object
+  * **{var}** embeds the current value of the current object's variable `var`
+
+Expansions are embedded using the syntax: 
+
+    object class {
+      property `value{expansion}value `;
+    }
+  
+For example, the following property assignment will embed the object id in the property my_string : 
+    
+    my_string `object_{id}`;

@@ -455,7 +455,7 @@ will be constructed into a semi-consistant state. The "default waterheater" ends
        tank_setpoint random.normal(130,10); // bound [100, 160]
        thermostat_deadband (1 + random.normal(2,1)); // bound [1, 10]
        tank_UA random.normal(2.0, 0.2); // bound (1, inf)
-       heating_element_capacity 4500 W;
+       heating_element_capacity 4.5 kW;
     }
     
 
@@ -465,26 +465,26 @@ Any properties that are not set explicitly will carry these default values.
 
 Property Name  | Type  | Unit  | Description   
 ---|---|---|---  
-tank_volume  | double  | gallons  | The water volume of the water tank.   
-tank_UA  | double  | BTU/hour  | The product of the U-value of the tank's insulation and the surface area of the tank, assuming R values of about 13.   
+**tank_volume**  | double  | gallons  | The water volume of the water tank.   
+**tank_UA**  | double  | BTU/hour  | The product of the U-value of the tank's insulation and the surface area of the tank, assuming R values of about 13.   
 tank_diameter  | double  | feet  | The diameter of the water tank, influences heat loss calculations.   
-water_demand  | double  | gallons/minute  | Hot water consumption. Constant unless controlled by a [Player] object.   
-heating_element_capacity  | double  | Watts  | The rate at which the waterheater heating element will dump thermal energy into the water tank.   
-inlet_water_temperature  | double  | degF  | The temperature of the cold water entering the bottom of the waterheater to replace any hot water drawn out the top of the tank.   
-heat_mode  | enumeration  |  | "ELECTRIC" or "GASHEAT". Determines the method that heat is added to the water tank.   
-location  | enumeration  |  | "INSIDE" or "GARAGE". Placement determines if thermal losses from the water heater wind up heating up the house, and if the outside temperature influences the effective temperature for heat loss.   
-tank_setpoint  | double  | degF  | The target temperature at which the heating elements will click on and off in the waterheater.   
+**water_demand**  | double  | gallons/minute  | Hot water consumption. Constant unless controlled by a [Player] object.   
+**heating_element_capacity**  | double  | kW  | The rate at which the waterheater heating element will dump thermal energy into the water tank in kilowatts.   
+**inlet_water_temperature**  | double  | degF  | The temperature of the cold water entering the bottom of the waterheater to replace any hot water drawn out the top of the tank.   
+**heat_mode**  | enumeration  |  | "ELECTRIC" or "GASHEAT". Determines the method that heat is added to the water tank.   
+**location**  | enumeration  |  | "INSIDE" or "GARAGE". Placement determines if thermal losses from the water heater wind up heating up the house, and if the outside temperature influences the effective temperature for heat loss.   
+**tank_setpoint**  | double  | degF  | The target temperature at which the heating elements will click on and off in the waterheater.   
 thermostat_deadband  | double  | degF  | The number of degrees to heat the water when needed. Influences when the water heating element will turn on and turn off.   
 meter  | double  | kilowatt-hours  | The total power consumed by the water heater during the simulation.   
-temperature  | double  | degF  | The temperature of the hot water in the tank.   
+**temperature**  | double  | degF  | The temperature of the hot water in the tank.   
 height  | double  | feet  | The height of the hot water tank.   
-enduse_load  | complex  | kilowatts  | The current power draw of the water heater. Required by the house to attach the water heater to the circuit panel.   
-constant_power  | complex  | kilowatts  | The constant power draw of the water heater. No effect ~ modify the heating_element_capacity.   
-constant_current  | complex  | amps  | The constant current draw of the water heater. No effect.   
+**enduse_load**  | complex  | kilowatts  | The current power draw of the water heater. Required by the house to attach the water heater to the circuit panel.   
+**constant_power**  | complex  | kilowatts  | The constant power draw of the water heater. No effect ~ modify the heating_element_capacity.   
+**constant_current**  | complex  | amps  | The constant current draw of the water heater. No effect.   
 constant_admittance  | complex  | 1/Ohm  | The constant admittance of power across the water heater. No effect.   
-internal_gains  | double  | kilowatts  | The heat loss for the current timestep from the water heater to the water tank's location.   
-gas_fan_power  | double  | kW  | The load of a running gas waterheater, primarily from any venting fan.   
-gas_standby_power  | double  | kW  | The load of a gas waterheater in standby mode ~ digital logic attached to the thermostat, etc.   
+**internal_gains**  | double  | kilowatts  | The heat loss for the current timestep from the water heater to the water tank's location.   
+**gas_fan_power**  | double  | kW  | The load of a running gas waterheater, primarily from any venting fan.   
+**gas_standby_power**  | double  | kW  | The load of a gas waterheater in standby mode ~ digital logic attached to the thermostat, etc.   
   
 ### Waterheater State of Development
 
