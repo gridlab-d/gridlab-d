@@ -1,0 +1,96 @@
+{
+  "name": "charge_manager",
+  "log_level": "warning",
+  "period": 60,
+  "terminate_on_error": true,
+  "uninterruptible": false,
+  "publications": [
+    {
+      "global": true,
+      "key": "charge_manager/EV_1/maximum_charge_rate",
+      "type": "double",
+      "unit": "W",
+      "required": true
+    },
+    {
+      "global": true,
+      "key": "charge_manager/EV_2/maximum_charge_rate",
+      "type": "double",
+      "unit": "W",
+      "required": true
+    },
+    {
+      "global": true,
+      "key": "charge_manager/EV_3/maximum_charge_rate",
+      "type": "double",
+      "unit": "W",
+      "required": true
+    },
+    {
+      "global": true,
+      "key": "charge_manager/EV_4/maximum_charge_rate",
+      "type": "double",
+      "unit": "W",
+      "required": true
+    },
+    {
+      "global": true,
+      "key": "charge_manager/EV_5/maximum_charge_rate",
+      "type": "double",
+      "unit": "W",
+      "required": true
+    }
+  ],
+  "subscriptions": [
+    {
+      "global": true,
+      "key": "gld/EV_1/battery_SOC",
+      "type": "double"
+    },
+    {
+      "global": true,
+      "key": "gld/EV_2/battery_SOC",
+      "type": "double"
+    },
+    {
+      "global": true,
+      "key": "gld/EV_3/battery_SOC",
+      "type": "double"
+    },
+    {
+      "global": true,
+      "key": "gld/EV_4/battery_SOC",
+      "type": "double"
+    },
+    {
+      "global": true,
+      "key": "gld/EV_5/battery_SOC",
+      "type": "double"
+    },
+    {
+      "global": true,
+      "key": "gld/EV_1/vehicle_location",
+      "type": "string"
+    },
+    {
+      "global": true,
+      "key": "gld/EV_2/vehicle_location",
+      "type": "string"
+    },
+    {
+      "global": true,
+      "key": "gld/EV_3/vehicle_location",
+      "type": "string"
+    },
+    {
+      "global": true,
+      "key": "gld/EV_4/vehicle_location",
+      "type": "string"
+    },
+    {
+      "global": true,
+      "key": "gld/EV_5/vehicle_location",
+      "type": "string"
+    }
+  ]
+}

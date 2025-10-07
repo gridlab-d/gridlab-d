@@ -1,0 +1,111 @@
+{
+  "name": "gld",
+  "log_level": "warning",
+  "period": 60,
+  "terminate_on_error": true,
+  "uninterruptible": false,
+  "publications": [
+    {
+      "global": false,
+      "key": "EV_1/battery_SOC",
+      "type": "double",
+      "required": true,
+      "info": {"object": "EV_1", "property": "battery_SOC"}
+    },
+    {
+      "global": false,
+      "key": "EV_1/vehicle_location",
+      "type": "string",
+      "required": true,
+      "info": {"object": "EV_1", "property": "vehicle_location"}
+    },
+    {
+      "global": false,
+      "key": "EV_2/battery_SOC",
+      "type": "double",
+      "required": true,
+      "info": {"object": "EV_2", "property": "battery_SOC"}
+    },
+    {
+      "global": false,
+      "key": "EV_2/vehicle_location",
+      "type": "string",
+      "required": true,
+      "info": {"object": "EV_2", "property": "vehicle_location"}
+    },
+    {
+      "global": false,
+      "key": "EV_3/battery_SOC",
+      "type": "double",
+      "required": true,
+      "info": {"object": "EV_3", "property": "battery_SOC"}
+    },
+    {
+      "global": false,
+      "key": "EV_3/vehicle_location",
+      "type": "string",
+      "required": true,
+      "info": {"object": "EV_3", "property": "vehicle_location"}
+    },
+    {
+      "global": false,
+      "key": "EV_4/battery_SOC",
+      "type": "double",
+      "required": true,
+      "info": {"object": "EV_4", "property": "battery_SOC"}
+    },
+    {
+      "global": false,
+      "key": "EV_4/vehicle_location",
+      "type": "string",
+      "required": true,
+      "info": {"object": "EV_4", "property": "vehicle_location"}
+    },
+    {
+      "global": false,
+      "key": "EV_5/battery_SOC",
+      "type": "double",
+      "required": true,
+      "info": {"object": "EV_5", "property": "battery_SOC"}
+    },
+    {
+      "global": false,
+      "key": "EV_5/vehicle_location",
+      "type": "string",
+      "required": true,
+      "info": {"object": "EV_5", "property": "vehicle_location"}
+    }
+  ],
+  "subscriptions": [
+    {
+      "global": true,
+      "key": "charge_manager/EV_1/maximum_charge_rate",
+      "type": "double",
+      "info": {"object": "EV_1", "property": "maximum_charge_rate"}
+    },
+    {
+      "global": true,
+      "key": "charge_manager/EV_2/maximum_charge_rate",
+      "type": "double",
+      "info": {"object": "EV_2", "property": "maximum_charge_rate"}
+    },
+    {
+      "global": true,
+      "key": "charge_manager/EV_3/maximum_charge_rate",
+      "type": "double",
+      "info": {"object": "EV_3", "property": "maximum_charge_rate"}
+    },
+    {
+      "global": true,
+      "key": "charge_manager/EV_4/maximum_charge_rate",
+      "type": "double",
+      "info": {"object": "EV_4", "property": "maximum_charge_rate"}
+    },
+    {
+      "global": true,
+      "key": "charge_manager/EV_5/maximum_charge_rate",
+      "type": "double",
+      "info": {"object": "EV_5", "property": "maximum_charge_rate"}
+    }
+  ]
+}

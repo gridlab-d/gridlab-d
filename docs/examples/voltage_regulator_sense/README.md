@@ -1,0 +1,4 @@
+- Model name: dist_sys_voltage_regulator_sense.glm
+- Model source: [GLD Tutorial Chapter 7](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%207%20-%20Advanced%20Distribution%20Systems/Distribution%20Systems%20-%20Voltage%20Regulators/dist_sys_voltage_regulator_sense.glm)
+- Supporting narrative source: [GLD Tutorial Chapter 7](https://gridlab-d.shoutwiki.com/wiki/GridLAB-D_Wiki:GridLAB-D_Tutorial_Chapter_7_-_Advanced_Distribution_Models)
+- Example purpose: Demonstrates the functionality of a voltage regulator using remote voltage sensing.

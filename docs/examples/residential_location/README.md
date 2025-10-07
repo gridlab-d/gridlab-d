@@ -1,0 +1,4 @@
+- Model name: residential_load_location.glm
+- Model source: [GLD Tutorial Chapter 5](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%205%20-%20Loads/Residential%20Loads%20-%20Location/residential_load_location.glm)
+- Supporting narrative source: [GLD Tutorial Chapter 5](https://gridlab-d.shoutwiki.com/wiki/GridLAB-D_Wiki:GridLAB-D_Tutorial_Chapter_5_-_Loads)
+- Example purpose: Demonstrates the impact of outdoor weather (determined by recorded data in TMY file for various locations) on total HVAC equipment run-time.

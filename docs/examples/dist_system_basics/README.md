@@ -1,0 +1,4 @@
+- Model name: distribution_system_basics.glm
+- Model source: [GLD Tutorial Chapter 3](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%203%20-%20Basic%20Electrical%20Distribution%20Systems/Distribution%20system%20basics/distribution_system_basics.glm)
+- Supporting narrative source: [GLD Tutorial Chapter 3](https://gridlab-d.shoutwiki.com/wiki/GridLAB-D_Wiki:GridLAB-D_Tutorial_Chapter_3_-_Basic_Distribution_System_Modeling)
+- Example purpose: Provides an example of a small, simple model in GridLAB-D and allows the user to simulate powerflow.

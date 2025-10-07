@@ -1,0 +1,1319 @@
+#set profiler=1
+#set threadcount=1;
+#set randomseed=1;
+#set relax_naming_rules=1;
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+clock {
+	timezone HST+10;
+	timestamp '2000-05-05 05:00:00';
+	stoptime '2000-05-05 20:00:00';
+}
+
+module tape;
+module generators;
+
+module powerflow{
+	solver_method FBS;
+	default_maximum_voltage_error 1e-9;
+	line_limits FALSE;
+};
+
+module climate;
+
+module residential {
+	implicit_enduses NONE;
+	ANSI_voltage_check FALSE;
+};
+
+module powerflow {
+     solver_method FBS;
+     NR_iteration_limit 100;
+};
+
+object csv_reader{
+	name CSVREADER;
+	filename weather.csv;
+};
+object climate{
+	name NREL_climate;
+	tmyfile weather.csv;
+	reader CSVREADER;
+};
+
+
+module powerflow {
+     solver_method NR;
+     NR_iteration_limit 50;
+};
+
+
+
+object triplex_line_configuration {     
+      name triplex_line_configuration_1;     
+      conductor_1 triplex_4/0 AA;    
+      conductor_2 triplex_4/0 AA;    
+      conductor_N triplex_4/0 AA;    
+      insulation_thickness 0.08;     
+      diameter 0.522;     
+} 
+object transformer_configuration {     
+      name transformer_configuration_3084;     
+      connect_type SINGLE_PHASE_CENTER_TAPPED;     
+      install_type PADMOUNT;     
+      primary_voltage 7216.88 V;    
+      secondary_voltage 120 V;    
+      power_rating 30.0;     
+      powerA_rating 30.0;     
+      resistance 0.00500;     
+      reactance 0.00333;     
+      shunt_impedance 350.040+295.721j;     
+}  
+object line_configuration {     
+      name line_configuration_16;     
+      conductor_A underground_line_conductor_2;     
+      conductor_N underground_line_conductor_2;     
+      spacing line_spacing_11;     
+} 
+object line_configuration {     
+      name line_configuration_18;     
+      conductor_A overhead_line_conductor_3;     
+      conductor_N overhead_line_conductor_3;     
+      spacing line_spacing_11;     
+}
+object line_spacing {     
+      name line_spacing_11;     
+      distance_AN 51.6 in;    
+} 
+object line_configuration {     
+      name line_configuration_22;     
+      conductor_A overhead_line_conductor_4;     
+      conductor_B overhead_line_conductor_4;     
+      conductor_C overhead_line_conductor_4;     
+      conductor_N overhead_line_conductor_4;     
+      spacing line_spacing_13;     
+}     
+object line_spacing {     
+      name line_spacing_13;     
+      distance_AB 57.6 in;    
+      distance_BC 57.6 in;    
+      distance_AC 57.6 in;    
+      distance_AN 51.6 in;    
+      distance_BN 51.6 in;    
+      distance_CN 51.6 in;    
+}  
+object overhead_line_conductor {     
+      name overhead_line_conductor_4;     
+      //name 336 ACSR;    
+      rating.summer.continuous 530.0;     
+      geometric_mean_radius 0.02300 ft;    
+      resistance 0.30300;     
+}   
+object overhead_line_conductor {     
+      name overhead_line_conductor_3;     
+      //name 123.3 AAAC;    
+      rating.summer.continuous 256.0;     
+      geometric_mean_radius 0.01200 ft;    
+      resistance 0.16600;     
+}
+object underground_line_conductor {     
+      name underground_line_conductor_2;     
+      //name 1/0 AAC (Conc);   
+      rating.summer.continuous 142.0;     
+      outer_diameter 1.27;     
+      conductor_gmr 0.01142 ft;    
+      conductor_diameter 0.362;     
+      conductor_resistance 0.88704;     
+      neutral_gmr 0.0489686771417213 ft;    
+      neutral_resistance 13.86528;     
+      neutral_diameter 0.0641;     
+      neutral_strands 16.0;     
+      shield_gmr 0.00;     
+      shield_resistance 0.00;     
+} 
+object triplex_line_conductor {     
+      name triplex_4/0 AA;    
+      resistance 0.48;     
+      geometric_mean_radius 0.0158;     
+} 
+
+
+
+
+
+object regulator:4383 { 
+     name R1-12-47-1_reg_1; 
+     from R1-12-47-1_node_617; 
+     to R1-12-47-1_meter_21; 
+     phases ABCN; 
+     configuration feeder_reg_cfg; 
+} 
+
+object regulator_configuration:4384 { 
+     name feeder_reg_cfg; 
+     Control OUTPUT_VOLTAGE; 
+     band_center 7520.0; 
+     band_width 120; 
+     connect_type WYE_WYE; 
+     time_delay 30; 
+     raise_taps 16; 
+     lower_taps 16; 
+     regulation 0.10; 
+     tap_pos_A 0; 
+     tap_pos_B 0; 
+     tap_pos_C 0; 
+} 
+
+object node:4385 { 
+     name R1-12-47-1_node_617; 
+     bustype SWING; 
+     phases ABCN; 
+     nominal_voltage 7216.88; 
+     voltage_A 7216.88+0.0j; 
+     voltage_B -3608.44-6250j; 
+     voltage_C -3608.44+6250j; 
+} 
+
+object meter:4382 { 
+     name R1-12-47-1_meter_21; 
+     phases ABCN; 
+     nominal_voltage 7216.88; 
+     voltage_A 7216.88+0.0j; 
+     voltage_B -3608.44-6250j; 
+     voltage_C -3608.44+6250j; 
+} 
+
+object node {     
+      name R1-12-47-1_node_613;     
+      parent R1-12-47-1_meter_21;     
+      phases ABCN;     
+      voltage_A 7216.88+0.0j;     
+      voltage_B -3608.44-6250j;     
+      voltage_C -3608.44+6250j;     
+      nominal_voltage 7216.88;     
+} 
+object switch {     
+      name R1-12-47-1_switch_9;     
+      phases ABCN;     
+      from R1-12-47-1_node_613;     
+      to R1-12-47-1_node_612;     
+      status CLOSED;     
+}  
+object node {     
+      name R1-12-47-1_node_612;     
+      phases ABCN;     
+      voltage_A 7216.88+0.0j;     
+      voltage_B -3608.44-6250j;     
+      voltage_C -3608.44+6250j;     
+      nominal_voltage 7216.88;     
+}   
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_301;     
+       phases ABCN;     
+       from R1-12-47-1_node_612;     
+       to R1-12-47-1_node_3;     
+       length 458.063;     
+       configuration line_configuration_22;     
+ }  
+object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_301;     
+       phases ABCN;     
+       from R1-12-47-1_node_612;     
+       to R1-12-47-1_node_3;     
+       length 458.063;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_3;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_298;     
+       phases ABCN;     
+       from R1-12-47-1_node_3;     
+       to R1-12-47-1_node_21;     
+       length 167.609;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_21;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_300;     
+       phases ABCN;     
+       from R1-12-47-1_node_21;     
+       to R1-12-47-1_node_4;     
+       length 142.189;     
+       configuration line_configuration_22;     
+ }  
+ object node {     
+       name R1-12-47-1_node_4;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }  
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_299;     
+       phases ABCN;     
+       from R1-12-47-1_node_4;     
+       to R1-12-47-1_node_25;     
+       length 487.200;     
+       configuration line_configuration_22;     
+ }  
+ object node {     
+       name R1-12-47-1_node_25;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }  
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_297;     
+       phases ABCN;     
+       from R1-12-47-1_node_25;     
+       to R1-12-47-1_node_5;     
+       length 408.623;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_5;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_295;     
+       phases ABCN;     
+       from R1-12-47-1_node_5;     
+       to R1-12-47-1_node_6;     
+       length 115.345;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_6;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_296;     
+       phases ABCN;     
+       from R1-12-47-1_node_6;     
+       to R1-12-47-1_node_7;     
+       length 187.936;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_7;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_293;     
+       phases ABCN;     
+       from R1-12-47-1_node_7;     
+       to R1-12-47-1_node_8;     
+       length 281.853;     
+       configuration line_configuration_22;     
+ }   
+ object node {     
+       name R1-12-47-1_node_8;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_294;     
+       phases ABCN;     
+       from R1-12-47-1_node_8;     
+       to R1-12-47-1_node_9;     
+       length 275.842;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_9;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_292;     
+       phases ABCN;     
+       from R1-12-47-1_node_9;     
+       to R1-12-47-1_node_10;     
+       length 303.045;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_10;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }  
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_291;     
+       phases ABCN;     
+       from R1-12-47-1_node_10;     
+       to R1-12-47-1_node_11;     
+       length 248.282;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_11;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_290;     
+       phases ABCN;     
+       from R1-12-47-1_node_11;     
+       to R1-12-47-1_node_12;     
+       length 283.154;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_12;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_289;     
+       phases ABCN;     
+       from R1-12-47-1_node_12;     
+       to R1-12-47-1_node_13;     
+       length 150.180;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_13;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_288;     
+       phases ABCN;     
+       from R1-12-47-1_node_13;     
+       to R1-12-47-1_node_14;     
+       length 313.906;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_14;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_286;     
+       phases ABCN;     
+       from R1-12-47-1_node_14;     
+       to R1-12-47-1_node_15;     
+       length 197.482;     
+       configuration line_configuration_22;     
+ }  
+ object node {     
+       name R1-12-47-1_node_15;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_287;     
+       phases ABCN;     
+       from R1-12-47-1_node_15;     
+       to R1-12-47-1_node_16;     
+       length 228.462;     
+       configuration line_configuration_22;     
+ }   
+ object node {     
+       name R1-12-47-1_node_16;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_285;     
+       phases ABCN;     
+       from R1-12-47-1_node_16;     
+       to R1-12-47-1_node_17;     
+       length 414.813;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_17;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object switch {     
+       name R1-12-47-1_switch_7;     
+       phases ABCN;     
+       from R1-12-47-1_node_17;     
+       to R1-12-47-1_node_43;     
+       status CLOSED;     
+ }
+ object node {     
+       name R1-12-47-1_node_43;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_261;     
+       phases ABCN;     
+       from R1-12-47-1_node_43;     
+       to R1-12-47-1_node_44;     
+       length 602.269;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_44;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }  
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_256;     
+       phases ABCN;     
+       from R1-12-47-1_node_44;     
+       to R1-12-47-1_node_130;     
+       length 200.088;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_130;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_252;     
+       phases ABCN;     
+       from R1-12-47-1_node_130;     
+       to R1-12-47-1_node_131;     
+       length 279.785;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_131;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_248;     
+       phases ABCN;     
+       from R1-12-47-1_node_131;     
+       to R1-12-47-1_node_134;     
+       length 325.098;     
+       configuration line_configuration_22;     
+ }  
+ object node {     
+       name R1-12-47-1_node_134;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_236;     
+       phases ABCN;     
+       from R1-12-47-1_node_134;     
+       to R1-12-47-1_node_132;     
+       length 310.693;     
+       configuration line_configuration_22;     
+ }  
+ object node {     
+       name R1-12-47-1_node_132;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_234;     
+       phases ABCN;     
+       from R1-12-47-1_node_132;     
+       to R1-12-47-1_node_133;     
+       length 96.881;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_133;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_224;     
+       phases ABCN;     
+       from R1-12-47-1_node_133;     
+       to R1-12-47-1_node_139;     
+       length 283.386;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_139;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }  
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_218;     
+       phases ABCN;     
+       from R1-12-47-1_node_139;     
+       to R1-12-47-1_node_140;     
+       length 112.123;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_140;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_200;     
+       phases ABCN;     
+       from R1-12-47-1_node_140;     
+       to R1-12-47-1_node_174;     
+       length 185.396;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_174;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_199;     
+       phases ABCN;     
+       from R1-12-47-1_node_174;     
+       to R1-12-47-1_node_175;     
+       length 161.413;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_175;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_188;     
+       phases ABCN;     
+       from R1-12-47-1_node_175;     
+       to R1-12-47-1_node_202;     
+       length 827.015;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_202;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_182;     
+       phases ABCN;     
+       from R1-12-47-1_node_202;     
+       to R1-12-47-1_node_203;     
+       length 148.948;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_203;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }  
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_4;     
+       phases ABCN;     
+       from R1-12-47-1_node_203;     
+       to R1-12-47-1_node_204;     
+       length 341.187;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_204;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }  
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_174;     
+       phases ABCN;     
+       from R1-12-47-1_node_204;     
+       to R1-12-47-1_node_215;     
+       length 261.737;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_215;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_166;     
+       phases ABCN;     
+       from R1-12-47-1_node_215;     
+       to R1-12-47-1_node_216;     
+       length 348.295;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_216;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }
+ object switch {     
+       name R1-12-47-1_switch_4;     
+       phases ABCN;     
+       from R1-12-47-1_node_216;     
+       to R1-12-47-1_node_217;     
+       status CLOSED;     
+ } 
+ object node {     
+       name R1-12-47-1_node_217;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }  
+ object switch {     
+       name R1-12-47-1_switch_1;     
+       phases ABCN;     
+       from R1-12-47-1_node_217;     
+       to R1-12-47-1_node_535;     
+       status CLOSED;     
+ } 
+ object node {     
+       name R1-12-47-1_node_535;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_133;     
+       phases ABCN;     
+       from R1-12-47-1_node_535;     
+       to R1-12-47-1_node_536;     
+       length 130.221;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_536;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_128;     
+       phases ABCN;     
+       from R1-12-47-1_node_536;     
+       to R1-12-47-1_node_538;     
+       length 161.480;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_538;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_123;     
+       phases ABCN;     
+       from R1-12-47-1_node_538;     
+       to R1-12-47-1_node_539;     
+       length 205.755;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_539;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_115;     
+       phases ABCN;     
+       from R1-12-47-1_node_539;     
+       to R1-12-47-1_node_540;     
+       length 118.915;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_540;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_107;     
+       phases ABCN;     
+       from R1-12-47-1_node_540;     
+       to R1-12-47-1_node_546;     
+       length 263.933;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_546;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }  
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_103;     
+       phases ABCN;     
+       from R1-12-47-1_node_546;     
+       to R1-12-47-1_node_547;     
+       length 97.213;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_547;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_97;     
+       phases ABCN;     
+       from R1-12-47-1_node_547;     
+       to R1-12-47-1_node_550;     
+       length 173.700;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_550;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }  
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_95;     
+       phases ABCN;     
+       from R1-12-47-1_node_550;     
+       to R1-12-47-1_node_551;     
+       length 127.665;     
+       configuration line_configuration_22;     
+ }  
+ object node {     
+       name R1-12-47-1_node_551;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_85;     
+       phases ABCN;     
+       from R1-12-47-1_node_551;     
+       to R1-12-47-1_node_552;     
+       length 150.282;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_552;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_77;     
+       phases ABCN;     
+       from R1-12-47-1_node_552;     
+       to R1-12-47-1_node_559;     
+       length 230.890;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_559;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_11;     
+       phases ABCN;     
+       from R1-12-47-1_node_559;     
+       to R1-12-47-1_node_560;     
+       length 223.978;     
+       configuration line_configuration_22;     
+ }  
+ object node {     
+       name R1-12-47-1_node_560;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }       
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_64;     
+       phases ABCN;     
+       from R1-12-47-1_node_560;     
+       to R1-12-47-1_node_561;     
+       length 138.878;     
+       configuration line_configuration_22;     
+ }
+ object node {     
+       name R1-12-47-1_node_561;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_59;     
+       phases ABCN;     
+       from R1-12-47-1_node_561;     
+       to R1-12-47-1_node_562;     
+       length 156.295;     
+       configuration line_configuration_22;     
+ }   
+ object node {     
+       name R1-12-47-1_node_562;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }   
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_49;     
+       phases ABCN;     
+       from R1-12-47-1_node_562;     
+       to R1-12-47-1_node_576;     
+       length 362.210;     
+       configuration line_configuration_22;     
+ }   
+ object node {     
+       name R1-12-47-1_node_576;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }   
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_27;     
+       phases ABCN;     
+       from R1-12-47-1_node_576;     
+       to R1-12-47-1_node_590;     
+       length 421.091;     
+       configuration line_configuration_22;     
+ }  
+ object node {     
+       name R1-12-47-1_node_590;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ }   
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_23;     
+       phases ABCN;     
+       from R1-12-47-1_node_590;     
+       to R1-12-47-1_node_591;     
+       length 356.862;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_591;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_20;     
+       phases ABCN;     
+       from R1-12-47-1_node_591;     
+       to R1-12-47-1_node_592;     
+       length 184.623;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_592;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_17;     
+       phases ABCN;     
+       from R1-12-47-1_node_592;     
+       to R1-12-47-1_node_593;     
+       length 171.388;     
+       configuration line_configuration_22;     
+ } 
+ object node {     
+       name R1-12-47-1_node_593;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+  object overhead_line {     
+        groupid Distribution_Line;
+        name R1-12-47-1_ol_16;     
+        phases ABCN;     
+        from R1-12-47-1_node_593;     
+        to R1-12-47-1_node_594;     
+        length 185.398;     
+        configuration line_configuration_22;     
+  }  
+ object node {     
+       name R1-12-47-1_node_594;     
+       phases ABCN;     
+       voltage_A 7216.88+0.0j;     
+       voltage_B -3608.44-6250j;     
+       voltage_C -3608.44+6250j;     
+       nominal_voltage 7216.88;     
+ } 
+ object fuse {     
+       name R1-12-47-1_fuse_2;     
+       phases AN;     
+       from R1-12-47-1_node_594;     
+       to R1-12-47-1_node_604;     
+       current_limit 50000; 65;    
+       status CLOSED;     
+ } 
+Original
+object fuse {     
+      name R1-12-47-1_fuse_2;     
+      phases AN;     
+       from R1-12-47-1_node_594;     
+       to R1-12-47-1_node_595;     
+       current_limit 50000; 65;    
+       status CLOSED;     
+ } 
+ object node {     
+       name R1-12-47-1_node_595;     
+       phases AN;     
+       voltage_A 7216.88+0.0j;     
+       nominal_voltage 7216.88;     
+ }  
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_12;     
+       phases AN;     
+       from R1-12-47-1_node_595;     
+       to R1-12-47-1_node_596;     
+       length 666.009;     
+       configuration line_configuration_18;     
+ } 
+ object node {     
+       name R1-12-47-1_node_596;     
+       phases AN;     
+       voltage_A 7216.88+0.0j;     
+       nominal_voltage 7216.88;     
+ } 
+ object overhead_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ol_13;     
+       phases AN;     
+       from R1-12-47-1_node_596;     
+       to R1-12-47-1_node_597;     
+       length 200.721;     
+       configuration line_configuration_18;     
+ }
+ object node {     
+       name R1-12-47-1_node_597;     
+       phases AN;     
+       voltage_A 7216.88+0.0j;     
+       nominal_voltage 7216.88;     
+ }  
+ object underground_line {     
+       groupid Distribution_Line;
+       name R1-12-47-1_ul_25;     
+       phases AN;     
+       from R1-12-47-1_node_597;     
+       to R1-12-47-1_node_604;     
+       length 288.179;     
+       configuration line_configuration_16;     
+ } 
+object node {     
+      name R1-12-47-1_node_604;     
+      phases AN;     
+      voltage_A 7216.88+0.0j;     
+      nominal_voltage 7216.88;     
+} 
+object underground_line {     
+      groupid Distribution_Line;
+      name R1-12-47-1_ul_27;     
+      phases AN;     
+      from R1-12-47-1_node_604;     
+      to R1-12-47-1_node_605;     
+      length 354.342;     
+      configuration line_configuration_16;     
+}    
+object node {     
+      name R1-12-47-1_node_605;     
+      phases AN;     
+      voltage_A 7216.88+0.0j;     
+      nominal_voltage 7216.88;     
+} 
+object transformer {     
+      groupid Distribution_Trans;
+      name R1-12-47-1_xfmr_21;     
+      phases AS;     
+      from R1-12-47-1_node_605;     
+      to R1-12-47-1_tn_21;     
+      configuration transformer_configuration_3084;     
+}    
+object triplex_node {     
+      name R1-12-47-1_tn_21;     
+      phases AS;     
+      voltage_1 120;     
+      voltage_2 120;     
+      voltage_N 0;     
+      nominal_voltage 120;     
+} 
+object triplex_line {     
+      groupid Triplex_Line;
+      name R1-12-47-1_tl_21;     
+      phases AS;     
+      from R1-12-47-1_tn_21;     
+      to R1-12-47-1_tm_21;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+}
+object triplex_meter {     
+      name R1-12-47-1_tm_21;     
+      phases AS;     
+      voltage_1 120;     
+      voltage_2 120;     
+      voltage_N 0;     
+      nominal_voltage 120;     
+} 
+object triplex_node {     
+      name R1-12-47-1_tn_619;     
+      phases AS;     
+      parent R1-12-47-1_tm_21;     
+      voltage_1 120;     
+      voltage_2 120;     
+      voltage_N 0;     
+      nominal_voltage 120;     
+} 
+object triplex_meter {
+      phases AS;
+      name tpm2_R1-12-47-1_tm_21;
+      parent R1-12-47-1_tm_21;
+      nominal_voltage 120;
+}
+
+object house {
+	name myHouse;
+	parent tpm2_R1-12-47-1_tm_21;
+	floor_area random.normal(1750,400);
+	heating_setpoint 70;
+	cooling_setpoint 78;
+	air_temperature 79;
+}
+
+object inverter {
+	name DHHL_3_inv;
+	phases CS;
+	parent tpm2_R1-12-47-1_tm_21;
+	rated_power 2500000;
+}
+object solar {
+	name DHHL_3_PV;
+	phases CS;
+	parent DHHL_3_inv;
+	area 141.76 ft^2;
+	tilt_angle 90.0;
+	efficiency 0.05;
+	orientation_azimuth 180; //equator-facing (South)
+	orientation DEFAULT;
+	SOLAR_TILT_MODEL SOLPOS;
+	SOLAR_POWER_MODEL FLATPLATE;
+	latitude 21.31236;
+	longitude -158.08463;
+}
+
+
+
+
+
+object recorder {
+	parent DHHL_3_PV;
+	property VA_Out.real, Insolation, area;
+	file DHHL_3_PV.csv;
+	interval 3;
+	limit 6000000;
+}
+
+object recorder {
+	parent DHHL_3_inv;
+	property P_Out, Q_Out; 
+	file DHHL_3_inv.csv;
+	interval 3;
+	limit 6000000;
+}
+
+object recorder {
+	parent NREL_climate;
+	property solar_global, solar_diffuse, solar_direct;
+	file climate.csv;
+	interval 3;
+	limit 6000000;
+}

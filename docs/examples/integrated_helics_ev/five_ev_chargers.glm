@@ -1,0 +1,516 @@
+clock {
+     timezone EST+5EDT;
+     starttime '2008-01-01 00:00:00';
+     stoptime '2008-01-08 00:00:00';
+}
+#set minimum_timestep=1;
+#set profiler=1;  
+#set relax_naming_rules=1;
+#set double_format=%+.12lg
+
+module tape;
+module powerflow {
+     solver_method NR;
+     NR_iteration_limit 50;
+     lu_solver "KLU_x64";
+};
+module residential {
+  implicit_enduses NONE;
+}
+module connection;
+class player {
+  double value; // must defined the filed "value"
+}
+
+object helics_msg{
+     name gld;
+     configure gld_config.json;
+}
+
+//Configs
+object regulator_configuration {     
+      name regulator_configuration_3887;     
+      name feeder_reg_cfg;     
+      Control OUTPUT_VOLTAGE;     
+      band_center 8000.0;     
+      band_width 133;     
+      connect_type WYE_WYE;     
+      time_delay 30;     
+      raise_taps 16;     
+      lower_taps 16;     
+      regulation 0.10;     
+      tap_pos_A 0;     
+      tap_pos_B 0;     
+      tap_pos_C 0;     
+}    
+object transformer_configuration {
+     name trans_config_to_feeder;
+     connect_type WYE_WYE;
+     install_type PADMOUNT;
+     primary_voltage 230000;
+     secondary_voltage 7967.43;
+     power_rating 6.4 MVA;
+     impedance 0.00033+0.0022j;
+}
+object line_configuration {     
+      name line_configuration_21;     
+      conductor_A overhead_line_conductor_2;
+      conductor_B overhead_line_conductor_2;
+      conductor_C overhead_line_conductor_2;     
+      conductor_N overhead_line_conductor_2;     
+      spacing line_spacing_8;     
+}     
+object transformer_configuration {
+     name CTTF_config_A_R4-12-47-1_load_2;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type POLETOP;
+     impedance 0.00033+0.0022j;
+     shunt_impedance 100000+100000j;
+     primary_voltage 7967.43;
+     secondary_voltage 120;
+     powerA_rating 500 kVA;
+}
+object transformer_configuration {
+     name CTTF_config_B_R4-12-47-1_load_2;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type POLETOP;
+     impedance 0.00033+0.0022j;
+     shunt_impedance 100000+100000j;
+     primary_voltage 7967.43;
+     secondary_voltage 120;
+     powerB_rating 500 kVA;
+}
+object transformer_configuration {
+     name CTTF_config_C_R4-12-47-1_load_2;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type POLETOP;
+     impedance 0.00033+0.0022j;
+     shunt_impedance 100000+100000j;
+     primary_voltage 7967.43;
+     secondary_voltage 120;
+     powerC_rating 500 kVA;
+}
+object triplex_line_configuration {     
+      name triplex_line_configuration_1;     
+      conductor_1 triplex_4/0 AA;    
+      conductor_2 triplex_4/0 AA;    
+      conductor_N triplex_4/0 AA;    
+      insulation_thickness 0.08;     
+      diameter 0.522;     
+}   
+object triplex_line_conductor {     
+      name triplex_4/0 AA;    
+      resistance 0.48;     
+      geometric_mean_radius 0.0158;     
+}     
+object overhead_line_conductor {     
+      name overhead_line_conductor_2;     
+      //name 4 CU;    
+      rating.summer.continuous 149.0;     
+      geometric_mean_radius 0.00663 ft;    
+      resistance 1.50000;     
+}       
+object line_spacing {     
+      name line_spacing_8;     
+      distance_BN 69.99999999996 in;    
+}
+
+// Feeder
+object meter {
+     name network_node;
+     bustype SWING;
+     nominal_voltage 230000;
+     voltage_A 230000;
+     voltage_B 230000;
+     voltage_C 230000;
+     phases ABCN;
+}
+object transformer {
+     name substation_transformer;
+     from network_node;
+     to R4-12-47-1_node_572;
+     phases ABCN;
+     configuration trans_config_to_feeder;
+}
+object node {     
+      name R4-12-47-1_node_572;     
+      phases ABCN;     
+      nominal_voltage 7967.43;     
+      voltage_A 7967.43+0.0j;     
+      voltage_B -3983.72-6900j;     
+      voltage_C -3983.72+6900j;     
+}  
+//object regulator {     
+//      name R4-12-47-1_reg_1;     
+//      from R4-12-47-1_node_572;     
+//      to R4-12-47-1_meter_76;     
+//      phases ABCN;     
+//      configuration feeder_reg_cfg;     
+//}   
+object meter {     
+      name R4-12-47-1_meter_76; 
+      parent R4-12-47-1_node_572;
+      phases ABCN;     
+      nominal_voltage 7967.43;     
+      voltage_A 7967.43+0.0j;     
+      voltage_B -3983.72-6900j;     
+      voltage_C -3983.72+6900j;     
+}  
+object overhead_line {     
+     groupid Distribution_Line;
+     name R4-12-47-1_ol_1;     
+     phases AN;     
+     from R4-12-47-1_meter_76;     
+     to R4-12-47-1_node_1;     
+     length 19.000;     
+     configuration line_configuration_21;     
+}   
+object overhead_line {     
+     groupid Distribution_Line;
+     name R4-12-47-1_ol_1b;     
+     phases BN;     
+     from R4-12-47-1_meter_76;     
+     to R4-12-47-1_node_1b;     
+     length 19.000;     
+     configuration line_configuration_21;     
+} 
+object overhead_line {     
+     groupid Distribution_Line;
+     name R4-12-47-1_ol_1c;     
+     phases CN;     
+     from R4-12-47-1_meter_76;     
+     to R4-12-47-1_node_1c;     
+     length 19.000;     
+     configuration line_configuration_21;     
+} 
+
+object node {     
+      name R4-12-47-1_node_1;     
+      phases AN;     
+      voltage_A 7967.43+0.0j;     
+      nominal_voltage 7967.43;     
+}  
+object node {     
+      name R4-12-47-1_node_1b;     
+      phases BN;     
+      voltage_A 7967.43+0.0j;     
+      nominal_voltage 7967.43;     
+}
+object node {     
+      name R4-12-47-1_node_1c;     
+      phases CN;     
+      voltage_A 7967.43+0.0j;     
+      nominal_voltage 7967.43;     
+} 
+object transformer {
+     name R4-12-47-1_load_2_CTTF_A_1;
+     phases AS;
+     from R4-12-47-1_node_1;
+     to R4-12-47-1_tn_153;
+     groupid Distribution_Trans;
+     configuration CTTF_config_A_R4-12-47-1_load_2;
+}
+object transformer {
+     name R4-12-47-1_load_2_CTTF_B_1;
+     phases BS;
+     from R4-12-47-1_node_1b;
+     to R4-12-47-1_tn_153b;
+     groupid Distribution_Trans;
+     configuration CTTF_config_B_R4-12-47-1_load_2;
+}
+object transformer {
+     name R4-12-47-1_load_2_CTTF_C_1;
+     phases CS;
+     from R4-12-47-1_node_1c;
+     to R4-12-47-1_tn_153c;
+     groupid Distribution_Trans;
+     configuration CTTF_config_C_R4-12-47-1_load_2;
+}
+object triplex_node {     
+      name R4-12-47-1_tn_153;     
+      phases AS;     
+      voltage_1 -60-103.92j;     
+      voltage_2 -60-103.92j;     
+      voltage_N 0;     
+      nominal_voltage 120;     
+}
+object triplex_node {     
+      name R4-12-47-1_tn_153b;     
+      phases BS;     
+      voltage_1 -60-103.92j;     
+      voltage_2 -60-103.92j;     
+      voltage_N 0;     
+      nominal_voltage 120;     
+}   
+object triplex_node {     
+      name R4-12-47-1_tn_153c;     
+      phases CS;     
+      voltage_1 -60-103.92j;     
+      voltage_2 -60-103.92j;     
+      voltage_N 0;     
+      nominal_voltage 120;     
+}   
+
+
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_154;     
+      phases AS;     
+      from R4-12-47-1_tn_153;     
+      to tpm2_R4-12-47-1_tm_15;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+}     
+object triplex_meter {
+      phases AS;
+      name tpm2_R4-12-47-1_tm_15;
+      groupid Customer_Meter;
+      meter_power_consumption 1+7j;
+      bill_mode UNIFORM;
+      price 0.10640;
+      monthly_fee 10.00;
+      bill_day 1;
+      nominal_voltage 120;
+}
+object house {
+    name house_1;
+    parent tpm2_R4-12-47-1_tm_15;
+    system_type NONE;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	fan_type NONE;
+}
+object evcharger_det {
+   name EV_1;
+   parent house_1;
+   configuration IS220;
+   breaker_amps 1000;
+   battery_SOC 100.0; // initial soc
+   travel_distance 44.0;
+   arrival_at_work 830;
+   duration_at_work 19200.0; // (secs)
+   arrival_at_home 1620;
+   duration_at_home 63600.0; // (secs)
+   work_charging_available FALSE;
+   maximum_charge_rate 15000; //(watts)
+   mileage_efficiency 2; // miles per kWh
+   mileage_classification 220.000; // range in miles
+   charging_efficiency 0.900;
+
+}
+
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_157;     
+      phases AS;     
+      from R4-12-47-1_tn_153;     
+      to tpm1_R4-12-47-1_tm_17;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+}
+object triplex_meter {
+      phases AS;
+      name tpm1_R4-12-47-1_tm_17;
+      groupid Customer_Meter;
+      meter_power_consumption 1+7j;
+      bill_mode UNIFORM;
+      price 0.10640;
+      monthly_fee 10.00;
+      bill_day 1;
+      nominal_voltage 120;
+}
+object house {
+    name house_2;
+    parent tpm1_R4-12-47-1_tm_17;
+    system_type NONE;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	fan_type NONE;
+}
+object evcharger_det {
+   name EV_2;
+   parent house_2;
+   configuration IS220;
+   breaker_amps 1000;
+   battery_SOC 100.0; // initial soc
+   travel_distance 57.0;
+   arrival_at_work 1600;
+   duration_at_work 10200.0; // (secs)
+   arrival_at_home 1920;
+   duration_at_home 72600.0; // (secs)
+   work_charging_available FALSE;
+   maximum_charge_rate 15000; //(watts)
+   mileage_efficiency 2; // miles per kWh
+   mileage_classification 285.000; // range in miles
+   charging_efficiency 0.900;
+}
+
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_155;     
+      phases BS;     
+      from R4-12-47-1_tn_153b;     
+      to tpm1_R4-12-47-1_tm_19;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+}
+object triplex_meter {
+      phases BS;
+      name tpm1_R4-12-47-1_tm_19;
+      groupid Customer_Meter;
+      meter_power_consumption 1+7j;
+      bill_mode UNIFORM;
+      price 0.10640;
+      monthly_fee 10.00;
+      bill_day 1;
+      nominal_voltage 120;
+}
+object house {
+    name house_3;
+    parent tpm1_R4-12-47-1_tm_19;
+    system_type NONE;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	fan_type NONE;
+}
+object evcharger_det {
+   name EV_3;
+   parent house_3;
+   configuration IS220;
+   breaker_amps 1000;
+   battery_SOC 100.0; // initial soc
+   travel_distance 53.584999999999994;
+   arrival_at_work 920;
+   duration_at_work 28800.0; // (secs)
+   arrival_at_home 1750;
+   duration_at_home 54000.0; // (secs)
+   work_charging_available FALSE;
+   maximum_charge_rate 15000; //(watts)
+   mileage_efficiency 2; // miles per kWh
+   mileage_classification 151.000; // range in miles
+   charging_efficiency 0.900;
+}
+
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_158;     
+      phases BS;     
+      from R4-12-47-1_tn_153b;     
+      to tpm1_R4-12-47-1_tm_21;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+}
+object triplex_meter {
+      phases BS;
+      name tpm1_R4-12-47-1_tm_21;
+      groupid Customer_Meter;
+      meter_power_consumption 1+7j;
+      bill_mode UNIFORM;
+      price 0.10640;
+      monthly_fee 10.00;
+      bill_day 1;
+      nominal_voltage 120;
+}
+object house {
+    name house_4;
+    parent tpm1_R4-12-47-1_tm_21;
+    system_type NONE;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	fan_type NONE;
+}
+object evcharger_det {
+   name EV_4;
+   parent house_4;
+   configuration IS220;
+   breaker_amps 1000;
+   battery_SOC 100.0; // initial soc
+   travel_distance 58.992999999999995;
+   arrival_at_work 915;
+   duration_at_work 30780.0; // (secs)
+   arrival_at_home 1818;
+   duration_at_home 52020.0; // (secs)
+   work_charging_available FALSE;
+   maximum_charge_rate 15000; //(watts)
+   mileage_efficiency 2; // miles per kWh
+   mileage_classification 220.000; // range in miles
+   charging_efficiency 0.900;
+}
+
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_159;     
+      phases CS;     
+      from R4-12-47-1_tn_153c;     
+      to tpm1_R4-12-47-1_tm_23;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+}
+object triplex_meter {
+      phases CS;
+      name tpm1_R4-12-47-1_tm_23;
+      groupid Customer_Meter;
+      meter_power_consumption 1+7j;
+      bill_mode UNIFORM;
+      price 0.10640;
+      monthly_fee 10.00;
+      bill_day 1;
+      nominal_voltage 120;
+}
+object house {
+    name house_5;
+    parent tpm1_R4-12-47-1_tm_23;
+    system_type NONE;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	fan_type NONE;
+}
+object evcharger_det {
+   name EV_5;
+   parent house_5;
+   configuration IS220;
+   breaker_amps 1000;
+   battery_SOC 100.0; // initial soc
+   travel_distance 44.0;
+   arrival_at_work 830;
+   duration_at_work 19200.0; // (secs)
+   arrival_at_home 1420;
+   duration_at_home 63600.0; // (secs)
+   work_charging_available FALSE;
+   maximum_charge_rate 15000; //(watts)
+   mileage_efficiency 2; // miles per kWh
+   mileage_classification 220.000; // range in miles
+   charging_efficiency 0.900;
+}
+
+
+
+
+object group_recorder {
+    name EV_charger;
+    group "class=evcharger_det";
+    file "EV_charging_power.csv";
+    interval 600;
+    property actual_charge_rate;
+}
+
+object collector {
+    name EV_charger_total;
+    group "class=evcharger_det";
+    file "EV_charging_total.csv";
+    interval 600;
+    property sum(actual_charge_rate);
+}
+
+object group_recorder {
+    name EVSOC;
+    group "class=evcharger_det";
+    file "EV_SOC.csv";
+    interval 600;
+    property battery_SOC;
+}

@@ -1,0 +1,18 @@
+{
+    "name": "EV Charge Management - 5EV",
+    "broker": true,
+    "federates": [
+      {
+        "directory": ".",
+        "exec": "python -u EV_charge_manager_5ev.py",
+        "host": "localhost",
+        "name": "charger manager"
+      },
+      {
+        "directory": ".",
+        "exec": "gridlabd five_ev_chargers.glm",
+        "host": "localhost",
+        "name": "gld"
+      }
+    ]
+  }
