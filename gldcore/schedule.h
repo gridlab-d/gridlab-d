@@ -38,17 +38,17 @@
 #define MAXNAME 64
 #define MAXDEFINITION 65536
 #define MAXCALENDARS 14
-#define MAXMINUTES (366*24*60)
+#define MAXMINUTES (366 * 24 * 60)
 #define MAXBLOCKS 4
 #define MAXVALUES 64
 #define GET_BLOCK(I) ((I)>>6)&0x02)
-#define GET_VALUE(I) ((I)&0x3f)
+#define GET_VALUE(I) ((I) & 0x3f)
 
 typedef uint32 SCHEDULEINDEX;
-#define GET_CALENDAR(N) (((N)>>20)&0x0f)
-#define GET_MINUTE(N) ((N)&0x0fffff)
-#define SET_CALENDAR(N,X) (N)|=(((X)&0x0f)<<20)
-#define SET_MINUTE(N,X) (N)|=((X)&0x0fffff)
+#define GET_CALENDAR(N) (((N) >> 20) & 0x0f)
+#define GET_MINUTE(N) ((N) & 0x0fffff)
+#define SET_CALENDAR(N, X) (N) |= (((X) & 0x0f) << 20)
+#define SET_MINUTE(N, X) (N) |= ((X) & 0x0fffff)
 
 #ifdef _DEBUG
 #define SCHEDULE_MAGIC 0x47ab617e
@@ -56,71 +56,74 @@ typedef uint32 SCHEDULEINDEX;
 
 /** The SCHEDULE structure defines POSIX style schedules */
 typedef struct s_schedule SCHEDULE;
-struct s_schedule {
+struct s_schedule
+{
 	/* the output value must be first for transform to stream */
-	double value;						/**< the current scheduled value */
+	double value; /**< the current scheduled value */
 #ifdef _DEBUG
-	unsigned int magic1;	/* values between magic1 and magic2 should never change once compiled */
+	unsigned int magic1; /* values between magic1 and magic2 should never change once compiled */
 #endif
-	std::string name;							/**< the name of the schedule */
-	//const char* definition;					/**< the definition string of the schedule */
-	std::string definition;
-	char* blockname[MAXBLOCKS];			/**< the name of each block */
-	char* blockdef[MAXBLOCKS];			/**< the definition of each block */
-	unsigned char block;				/**< the last block used (4 max) */
-	unsigned char* index[MAXCALENDARS];	/**< the schedule index (enough room for all 14 annual calendars to 1 minute resolution) */
-	unsigned char* dtnext[MAXCALENDARS];/**< the time until the next schedule change (in minutes) */
-	double data[MAXBLOCKS * MAXVALUES];	/**< the list of values used in each block */
-	unsigned int weight[MAXBLOCKS * MAXVALUES];	/**< the weight (in minutes) associate with each value */
-	double sum[MAXBLOCKS];				/**< the sum of values for each block -- used to normalize */
-	double abs[MAXBLOCKS];				/**< the sum of the absolute values for each block -- used to normalize */
-	unsigned int count[MAXBLOCKS];		/**< the number of values given in each block */
-	unsigned int minutes[MAXBLOCKS];	/**< the total number of minutes associate with each block */
+	const char *name;							/**< the name of the schedule */
+	const char *definition;						/**< the definition string of the schedule */
+	char *blockname[MAXBLOCKS];					/**< the name of each block */
+	char *blockdef[MAXBLOCKS];					/**< the definition of each block */
+	unsigned char block;						/**< the last block used (4 max) */
+	unsigned char *index[MAXCALENDARS];			/**< the schedule index (enough room for all 14 annual calendars to 1 minute resolution) */
+	unsigned char *dtnext[MAXCALENDARS];		/**< the time until the next schedule change (in minutes) */
+	double data[MAXBLOCKS * MAXVALUES];			/**< the list of values used in each block */
+	unsigned int weight[MAXBLOCKS * MAXVALUES]; /**< the weight (in minutes) associate with each value */
+	double sum[MAXBLOCKS];						/**< the sum of values for each block -- used to normalize */
+	double abs[MAXBLOCKS];						/**< the sum of the absolute values for each block -- used to normalize */
+	unsigned int count[MAXBLOCKS];				/**< the number of values given in each block */
+	unsigned int minutes[MAXBLOCKS];			/**< the total number of minutes associate with each block */
 #ifdef _DEBUG
 	unsigned int magic2;
 	unsigned int checksum;
 #endif
-	TIMESTAMP next_t;					/**< the time of the next schedule event */
+	TIMESTAMP next_t; /**< the time of the next schedule event */
 	TIMESTAMP since;
-	double duration;					/**< the duration of the current scheduled value (in hours) */
-	double fraction;					/**< the fractional weight of the block of the current value (pu time) */
-	int flags;							/**< the schedule flags (see SN_*) */
-	SCHEDULE* next;	/* next schedule in list */
+	double duration; /**< the duration of the current scheduled value (in hours) */
+	double fraction; /**< the fractional weight of the block of the current value (pu time) */
+	int flags;		 /**< the schedule flags (see SN_*) */
+	SCHEDULE *next;	 /* next schedule in list */
 };
 
-
-#define SN_NORMAL   0x0001	/**< schedule normalization flag - normalize enabled */
-#define SN_ABSOLUTE 0x0002	/**< schedule normalization flag - use absolute values */
-#define SN_WEIGHTED 0x0004	/**< schedule normalization flag - use weighted values */
+#define SN_NORMAL 0x0001		/**< schedule normalization flag - normalize enabled */
+#define SN_ABSOLUTE 0x0002		/**< schedule normalization flag - use absolute values */
+#define SN_WEIGHTED 0x0004		/**< schedule normalization flag - use weighted values */
 #define SN_INTERPOLATED 0x0008	/**< schedule values are interpolated between defined values */
-#define SN_BOOLEAN 0x8000 /**< schedule is boolean (only one/zero values are expected) */
-#define SN_NONZERO 0x4000 /**< schedule is non-zero (no zero values are expected) */
-#define SN_POSITIVE 0x2000 /**< schedule is positive (no negative values are expected) */
-#define SN_IS_NORMALIZED 0x0020	/**< schedule normalization flag - indicates that the schedule has been nomalized already */
+#define SN_BOOLEAN 0x8000		/**< schedule is boolean (only one/zero values are expected) */
+#define SN_NONZERO 0x4000		/**< schedule is non-zero (no zero values are expected) */
+#define SN_POSITIVE 0x2000		/**< schedule is positive (no negative values are expected) */
+#define SN_IS_NORMALIZED 0x0020 /**< schedule normalization flag - indicates that the schedule has been nomalized already */
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-	SCHEDULE* schedule_getnext(SCHEDULE* sch);
-	SCHEDULE* schedule_find_byname(const char* name);
-	SCHEDULE* schedule_create(const char* name, const char* definition);
-	SCHEDULE* schedule_new(void);
-	void schedule_free(SCHEDULE* sch);
-	void schedule_add(SCHEDULE* sch);
-	int schedule_validate(SCHEDULE* sch, int flags);
-	int schedule_normalize(SCHEDULE* sch, int flags);
-	SCHEDULEINDEX schedule_index(SCHEDULE* sch, TIMESTAMP ts);
-	double schedule_value(SCHEDULE* sch, SCHEDULEINDEX index);
-	int32 schedule_dtnext(SCHEDULE* sch, SCHEDULEINDEX index);
-	TIMESTAMP schedule_sync(SCHEDULE* sch, TIMESTAMP t);
+	SCHEDULE *schedule_getnext(SCHEDULE *sch);
+	SCHEDULE *schedule_find_byname(const char *name);
+	SCHEDULE *find_schedule_robust(const char *name);
+	bool parse_schedule_expression(const char *expression, char *schedule_name, size_t name_size,
+								   double *scale, double *bias);
+	SCHEDULE *schedule_create(const char *name, const char *definition);
+	SCHEDULE *schedule_new(void);
+	void schedule_free(SCHEDULE *sch);
+	void schedule_add(SCHEDULE *sch);
+	int schedule_validate(SCHEDULE *sch, int flags);
+	int schedule_normalize(SCHEDULE *sch, int flags);
+	SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts);
+	double schedule_value(SCHEDULE *sch, SCHEDULEINDEX index);
+	int32 schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index);
+	TIMESTAMP schedule_sync(SCHEDULE *sch, TIMESTAMP t);
 	TIMESTAMP schedule_syncall(TIMESTAMP t);
 	int schedule_test(void);
-	void schedule_dump(SCHEDULE* sch, char* file, char* mode);
-	void schedule_dumpall(char* file);
+	void schedule_dump(SCHEDULE *sch, char *file, char *mode);
+	void schedule_dumpall(char *file);
 	int schedule_createwait(void);
-	SCHEDULE* schedule_getfirst(void);
-	int schedule_saveall(FILE* fp);
+	SCHEDULE *schedule_getfirst(void);
+	int schedule_saveall(FILE *fp);
 
 #ifdef __cplusplus
 }

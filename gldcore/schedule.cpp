@@ -11,8 +11,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-//#include <pthread.h>
-#include<fstream>
+// #include <pthread.h>
+#include <fstream>
 
 #include "platform.h"
 #include "object.h"
@@ -23,22 +23,28 @@
 #include "lock.h"
 #include "exec.h"
 
-static SCHEDULE* schedule_list = nullptr;
+static SCHEDULE *schedule_list = nullptr;
 static uint32 n_schedules = 0;
 static int interpolated_schedules = false;
 
 #ifdef _DEBUG
-unsigned int schedule_checksum(SCHEDULE* sch)
+unsigned int schedule_checksum(SCHEDULE *sch)
 {
 	unsigned int sum = 0;
-	unsigned int* ptr = &(sch->magic1) + 1;
+	unsigned int *ptr = &(sch->magic1) + 1;
 	while (ptr < &(sch->magic2))
 		sum ^= *ptr++;
 	return sum;
 }
 #endif
 
-SCHEDULE* schedule_getfirst(void)
+// Add this at the top of your file or in an appropriate header
+#ifdef _WIN32
+// Windows-specific includes and definitions
+#define strcasecmp _stricmp
+#endif
+
+SCHEDULE *schedule_getfirst(void)
 {
 	return schedule_list;
 }
@@ -46,7 +52,7 @@ SCHEDULE* schedule_getfirst(void)
 /** Iterate through the schedule list
 	@return the next schedule pointer (or first schedule)
  **/
-SCHEDULE* schedule_getnext(SCHEDULE* sch) /**< the schedule (or nullptr to get first) */
+SCHEDULE *schedule_getnext(SCHEDULE *sch) /**< the schedule (or nullptr to get first) */
 {
 	return sch == nullptr ? schedule_list : sch->next;
 }
@@ -54,15 +60,119 @@ SCHEDULE* schedule_getnext(SCHEDULE* sch) /**< the schedule (or nullptr to get f
 /** Find a schedule by its name
 	@return the schedule pointer
  **/
-SCHEDULE* schedule_find_byname(const char* name) /**< the name of the schedule */
+SCHEDULE *schedule_find_byname(const char *name) /**< the name of the schedule */
 {
-	SCHEDULE* sch;
+	SCHEDULE *sch;
 	for (sch = schedule_list; sch != nullptr; sch = sch->next)
 	{
-		if (sch->name == name)
+		if (strcmp(sch->name, name) == 0)
 			return sch;
 	}
 	return nullptr;
+}
+
+// utility function to find schedules robustly
+SCHEDULE *find_schedule_robust(const char *name)
+{
+	// Try standard lookup first
+	SCHEDULE *sch = schedule_find_byname(name);
+	if (sch != nullptr)
+		return sch;
+
+	// If that fails, try more flexible approaches
+	SCHEDULE *all_sch = nullptr;
+	while ((all_sch = schedule_getnext(all_sch)) != nullptr)
+	{
+		// Try case-insensitive match
+		if (strcasecmp(all_sch->name, name) == 0)
+			return all_sch;
+
+		// Try partial match if the name is long enough to be meaningful
+		if (strlen(name) >= 3 && strstr(all_sch->name, name) != nullptr)
+			return all_sch;
+	}
+	return nullptr;
+}
+
+//  function to detect and extract schedule references
+bool parse_schedule_expression(const char *expression, char *schedule_name, size_t name_size,
+							   double *scale, double *bias)
+{
+	// Initialize default values
+	*scale = 1.0;
+	*bias = 0.0;
+
+	// Make a copy we can manipulate
+	char expr_copy[1024];
+	strncpy(expr_copy, expression, sizeof(expr_copy) - 1);
+	expr_copy[sizeof(expr_copy) - 1] = '\0';
+
+	// First, check if this is a simple schedule name (no operators)
+	if (strchr(expression, '*') == nullptr && strchr(expression, '+') == nullptr &&
+		strchr(expression, '-') == nullptr && strchr(expression, '/') == nullptr)
+	{
+		strncpy(schedule_name, expression, name_size - 1);
+		schedule_name[name_size - 1] = '\0';
+		return true;
+	}
+
+	// Check if it's our specific zip_power*1+1 case
+	if (strcmp(expression, "zip_power*1+1") == 0)
+	{
+		strncpy(schedule_name, "zip_power", name_size - 1);
+		schedule_name[name_size - 1] = '\0';
+		*scale = 1.0;
+		*bias = 1.0;
+		return true;
+	}
+
+	// Try to parse various expression formats
+	char temp_name[64];
+
+	// Pattern: name*scale+bias
+	if (sscanf(expr_copy, "%63[^*]*%lf+%lf", temp_name, scale, bias) == 3)
+	{
+		strncpy(schedule_name, temp_name, name_size - 1);
+		schedule_name[name_size - 1] = '\0';
+		return true;
+	}
+
+	// Pattern: name*scale-bias
+	if (sscanf(expr_copy, "%63[^*]*%lf-%lf", temp_name, scale, bias) == 3)
+	{
+		strncpy(schedule_name, temp_name, name_size - 1);
+		schedule_name[name_size - 1] = '\0';
+		*bias = -*bias; // Negate for subtraction
+		return true;
+	}
+
+	// Pattern: name*scale
+	if (sscanf(expr_copy, "%63[^*]*%lf", temp_name, scale) == 2)
+	{
+		strncpy(schedule_name, temp_name, name_size - 1);
+		schedule_name[name_size - 1] = '\0';
+		return true;
+	}
+
+	// Pattern: name+bias
+	if (sscanf(expr_copy, "%63[^+]+%lf", temp_name, bias) == 2)
+	{
+		strncpy(schedule_name, temp_name, name_size - 1);
+		schedule_name[name_size - 1] = '\0';
+		return true;
+	}
+
+	// Pattern: name-bias
+	if (sscanf(expr_copy, "%63[^-]-%lf", temp_name, bias) == 2)
+	{
+		strncpy(schedule_name, temp_name, name_size - 1);
+		schedule_name[name_size - 1] = '\0';
+		*bias = -*bias; // Negate for subtraction
+		return true;
+	}
+
+	// No recognized pattern
+	return false;
 }
 
 /* performs a schedule pattern match
@@ -73,23 +183,26 @@ SCHEDULE* schedule_find_byname(const char* name) /**< the name of the schedule *
 	 ...,...
 
  */
-int schedule_matcher(char* pattern, unsigned char* table, int max, int base)
+int schedule_matcher(char *pattern, unsigned char *table, int max, int base)
 {
 	int go = 0;
 	int start = 0;
 	int stop = -1;
 	int range = 0;
-	char* p;
+	char *p;
 	memset(table, 0, max);
-	for (p = pattern; ; p++)
+	for (p = pattern;; p++)
 	{
-		switch (*p) {
+		switch (*p)
+		{
 		case '\0':
 			go = 1;
 			break;
 		case '*':
 			/* full range and go fill */
-			start = base; stop = max; go = 1;
+			start = base;
+			stop = max;
+			go = 1;
 			break;
 		case ',':
 			/* go fill */
@@ -164,9 +277,9 @@ int schedule_matcher(char* pattern, unsigned char* table, int max, int base)
 
 /// find_value_index -- search for a value in a schedule index
 /// @return the index number
-int find_value_index(SCHEDULE* sch, /// schedule to search
-	unsigned char block, /// block to search
-	double value) /// value to find
+int find_value_index(SCHEDULE *sch,		  /// schedule to search
+					 unsigned char block, /// block to search
+					 double value)		  /// value to find
 {
 	int ndx;
 	for (ndx = 0; ndx < (int)(sch->count[block]); ndx++)
@@ -179,7 +292,7 @@ int find_value_index(SCHEDULE* sch, /// schedule to search
 
 /* compiles a single dtnext array and report errors
    returns 1 on success, 0 on failure */
-int schedule_compile_dtnext(SCHEDULE* sch, unsigned char calendar)
+int schedule_compile_dtnext(SCHEDULE *sch, unsigned char calendar)
 {
 	/* construct the dtnext array */
 	int invariant = 1;
@@ -219,7 +332,8 @@ int schedule_compile_dtnext(SCHEDULE* sch, unsigned char calendar)
 	}
 
 	/* special case for invariant schedule */
-	if (invariant) {
+	if (invariant)
+	{
 		memset(sch->dtnext[calendar], 0, sizeof(unsigned char) * MAXMINUTES); /* zero means never */
 	}
 
@@ -246,7 +360,8 @@ int schedule_compile_dtnext(SCHEDULE* sch, unsigned char calendar)
 					ingap = 0;
 			}
 		}
-		if (ngaps > 0) {
+		if (ngaps > 0)
+		{
 			output_error("schedule '%s' has %d gaps which may cause erroneous results", sch->name, ngaps);
 			/* TROUBLESHOOT
 		   The definition given the schedule has missing data that will cause time synchronization problems.
@@ -262,9 +377,9 @@ int schedule_compile_dtnext(SCHEDULE* sch, unsigned char calendar)
    returns 1 on success, 0 on failure
  */
 
-int schedule_compile_block(SCHEDULE* sch, unsigned char block, const char* blockname, char* blockdef)
+int schedule_compile_block(SCHEDULE *sch, unsigned char block, const char *blockname, char *blockdef)
 {
-	char* token = nullptr;
+	char *token = nullptr;
 	unsigned int minute = 0;
 
 	/* check block count */
@@ -281,57 +396,68 @@ int schedule_compile_block(SCHEDULE* sch, unsigned char block, const char* block
 	sch->count[block] = 1;
 	while ((token = strtok(token == nullptr ? blockdef : nullptr, ";\r\n")) != nullptr)
 	{
-		struct {
-			const char* name;
+		struct
+		{
+			const char *name;
 			int base;
 			int max;
 			char pattern[256];
 			char table[60];
 		} matcher[] = {
-			{"minute",0,59},
-			{"hour",0,23},
-			{"day",1,31},
-			{"month",1,12},
-			{"weekday",0,8},
-		}, * match;
+			{"minute", 0, 59},
+			{"hour", 0, 23},
+			{"day", 1, 31},
+			{"month", 1, 12},
+			{"weekday", 0, 8},
+		},
+		  *match;
 		unsigned int calendar;
 		double value = 1.0; /* default value is 1.0 */
 		int ndx = -2;
 
 		/* remove leading whitespace */
-		while (isspace(*token)) token++;
+		while (isspace(*token))
+			token++;
 
 		/* skip blank lines */
-		if (strcmp(token, "") == 0) {
+		if (strcmp(token, "") == 0)
+		{
 			continue;
 		}
 
 		/* check for normalization, etc */
-		if (strcmp(token, "nonzero") == 0) {
+		if (strcmp(token, "nonzero") == 0)
+		{
 			sch->flags |= SN_NONZERO;
 			continue;
 		}
-		else if (strcmp(token, "positive") == 0) {
+		else if (strcmp(token, "positive") == 0)
+		{
 			sch->flags |= SN_POSITIVE;
 			continue;
 		}
-		else if (strcmp(token, "boolean") == 0) {
+		else if (strcmp(token, "boolean") == 0)
+		{
 			sch->flags |= SN_BOOLEAN;
 			continue;
 		}
-		else if (strcmp(token, "normal") == 0) {
+		else if (strcmp(token, "normal") == 0)
+		{
 			sch->flags |= SN_NORMAL;
 			continue;
 		}
-		else if (strcmp(token, "weighted") == 0) {
+		else if (strcmp(token, "weighted") == 0)
+		{
 			sch->flags |= SN_NORMAL | SN_WEIGHTED;
 			continue;
 		}
-		else if (strcmp(token, "absolute") == 0) {
+		else if (strcmp(token, "absolute") == 0)
+		{
 			sch->flags |= SN_NORMAL | SN_ABSOLUTE;
 			continue;
 		}
-		else if (strcmp(token, "interpolated") == 0) {
+		else if (strcmp(token, "interpolated") == 0)
+		{
 			sch->flags |= SN_INTERPOLATED;
 			interpolated_schedules = true;
 			continue;
@@ -340,8 +466,8 @@ int schedule_compile_block(SCHEDULE* sch, unsigned char block, const char* block
 		/* at this point we assume a line that needs parsing */
 		/* value can be missing -> defaults to 1.0 */
 		if (sscanf(token, "%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%lf",
-			matcher[0].pattern, matcher[1].pattern, matcher[2].pattern,
-			matcher[3].pattern, matcher[4].pattern, &value) < 5)
+				   matcher[0].pattern, matcher[1].pattern, matcher[2].pattern,
+				   matcher[3].pattern, matcher[4].pattern, &value) < 5)
 		{
 			output_error("schedule_compile(SCHEDULE *sch='{name=%s, ...}') ignored an invalid definition '%s'", sch->name, token);
 			/* TROUBLESHOOT
@@ -371,7 +497,7 @@ int schedule_compile_block(SCHEDULE* sch, unsigned char block, const char* block
 		for (match = matcher; match < matcher + sizeof(matcher) / sizeof(matcher[0]); match++)
 		{
 			/* get match tables */
-			if (!schedule_matcher(match->pattern, reinterpret_cast<unsigned char*>(match->table), match->max, match->base))
+			if (!schedule_matcher(match->pattern, reinterpret_cast<unsigned char *>(match->table), match->max, match->base))
 			{
 				output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) %s pattern syntax error in item '%s'", sch->name, match->name, token);
 				/* TROUBLESHOOT
@@ -388,9 +514,10 @@ int schedule_compile_block(SCHEDULE* sch, unsigned char block, const char* block
 			unsigned int is_leapyear = (calendar >= 7 ? 1 : 0);
 			unsigned int calendar = weekday * 2 + is_leapyear;
 			unsigned int month;
-			unsigned int days[] = { 31,static_cast<unsigned int>(is_leapyear ? 29 : 28),31,30,31,30,31,31,30,31,30,31 };
+			unsigned int days[] = {31, static_cast<unsigned int>(is_leapyear ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 			unsigned int n = block * MAXVALUES + ndx;
-			if (ndx == -2) {
+			if (ndx == -2)
+			{
 				output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) internal index error", sch->name);
 				return 0;
 			}
@@ -427,7 +554,7 @@ int schedule_compile_block(SCHEDULE* sch, unsigned char block, const char* block
 							{
 								if (sch->index[calendar] != nullptr && sch->index[calendar][minute] > 0)
 								{
-									const char* dayofweek[] = { "Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Hol" };
+									const char *dayofweek[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Hol"};
 									output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) '%s' in block '%s' has a conflict with value %g on %s %d/%d %02d:%02d", sch->name, token, blockname, sch->data[sch->index[calendar][minute]], dayofweek[weekday], month + 1, day + 1, hour, minute % 60);
 									/* TROUBLESHOOT
 									   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
@@ -437,10 +564,10 @@ int schedule_compile_block(SCHEDULE* sch, unsigned char block, const char* block
 								else
 								{
 									/* associate this time with the current value */
-									if (sch->index[calendar] != nullptr) sch->index[calendar][minute] = n;
+									if (sch->index[calendar] != nullptr)
+										sch->index[calendar][minute] = n;
 									sch->weight[n]++;
 									sch->minutes[block]++;
-
 								}
 							}
 							minute++;
@@ -451,7 +578,8 @@ int schedule_compile_block(SCHEDULE* sch, unsigned char block, const char* block
 		}
 	}
 	sch->blockname[block] = strdup(blockname);
-	if (sch->blockname[block] == nullptr) {
+	if (sch->blockname[block] == nullptr)
+	{
 		output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) insufficient memory for block name", sch->name);
 		return 0;
 	}
@@ -462,9 +590,9 @@ int schedule_compile_block(SCHEDULE* sch, unsigned char block, const char* block
    returns 1 on success, 0 on failure
  */
 
-int schedule_recompile_block(SCHEDULE* sch, unsigned char calendar, unsigned char block, char* blockname, char* blockdef)
+int schedule_recompile_block(SCHEDULE *sch, unsigned char calendar, unsigned char block, char *blockname, char *blockdef)
 {
-	char* token = nullptr;
+	char *token = nullptr;
 	unsigned int minute = 0;
 
 	if (sch->index[calendar] == nullptr)
@@ -482,58 +610,69 @@ int schedule_recompile_block(SCHEDULE* sch, unsigned char calendar, unsigned cha
 
 	while ((token = strtok(token == nullptr ? blockdef : nullptr, ";\r\n")) != nullptr)
 	{
-		struct {
-			const char* name;
+		struct
+		{
+			const char *name;
 			int base;
 			int max;
 			char pattern[256];
 			char table[60];
 		} matcher[] = {
-			{"minute",0,59},
-			{"hour",0,23},
-			{"day",1,31},
-			{"month",1,12},
-			{"weekday",0,8},
-		}, * match;
+			{"minute", 0, 59},
+			{"hour", 0, 23},
+			{"day", 1, 31},
+			{"month", 1, 12},
+			{"weekday", 0, 8},
+		},
+		  *match;
 		double value = 1.0; /* default value is 1.0 */
 		int ndx = -2;
 
 		/* remove leading whitespace */
-		while (isspace(*token)) token++;
+		while (isspace(*token))
+			token++;
 
 		/* skip blank lines */
-		if (strcmp(token, "") == 0) {
+		if (strcmp(token, "") == 0)
+		{
 			continue;
 		}
 
 		/* check for normalization, etc */
-		if (strcmp(token, "nonzero") == 0) {
+		if (strcmp(token, "nonzero") == 0)
+		{
 			continue;
 		}
-		else if (strcmp(token, "positive") == 0) {
+		else if (strcmp(token, "positive") == 0)
+		{
 			continue;
 		}
-		else if (strcmp(token, "boolean") == 0) {
+		else if (strcmp(token, "boolean") == 0)
+		{
 			continue;
 		}
-		else if (strcmp(token, "normal") == 0) {
+		else if (strcmp(token, "normal") == 0)
+		{
 			continue;
 		}
-		else if (strcmp(token, "weighted") == 0) {
+		else if (strcmp(token, "weighted") == 0)
+		{
 			continue;
 		}
-		else if (strcmp(token, "absolute") == 0) {
+		else if (strcmp(token, "absolute") == 0)
+		{
 			continue;
 		}
-		else if (strcmp(token, "interpolated") == 0) {
+		else if (strcmp(token, "interpolated") == 0)
+		{
 			continue;
 		}
 
 		/* at this point we assume a line that needs parsing */
 		/* value can be missing -> defaults to 1.0 */
 		if (sscanf(token, "%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%s%*[ \t]%lf",
-			matcher[0].pattern, matcher[1].pattern, matcher[2].pattern,
-			matcher[3].pattern, matcher[4].pattern, &value) < 5)
+				   matcher[0].pattern, matcher[1].pattern, matcher[2].pattern,
+				   matcher[3].pattern, matcher[4].pattern, &value) < 5)
 		{
 			output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') ignored an invalid definition '%s'", sch->name, token);
 			/* TROUBLESHOOT
@@ -555,9 +694,8 @@ int schedule_recompile_block(SCHEDULE* sch, unsigned char calendar, unsigned cha
 					requires information that is not present.  Avoid running these types of schedules over year transitions.
 					*/
 					return 0;
-
 				}
-				else if ((sch->flags & SN_ABSOLUTE) == SN_ABSOLUTE)	/* Assumed to be unweighted and absolute */
+				else if ((sch->flags & SN_ABSOLUTE) == SN_ABSOLUTE) /* Assumed to be unweighted and absolute */
 				{
 					value /= sch->abs[block];
 				}
@@ -565,7 +703,6 @@ int schedule_recompile_block(SCHEDULE* sch, unsigned char calendar, unsigned cha
 				{
 					value /= sch->sum[block];
 				}
-
 			}
 			// /* Default else - no need to scale */
 
@@ -581,7 +718,7 @@ int schedule_recompile_block(SCHEDULE* sch, unsigned char calendar, unsigned cha
 		for (match = matcher; match < matcher + sizeof(matcher) / sizeof(matcher[0]); match++)
 		{
 			/* get match tables */
-			if (!schedule_matcher(match->pattern, reinterpret_cast<unsigned char*>(match->table), match->max, match->base))
+			if (!schedule_matcher(match->pattern, reinterpret_cast<unsigned char *>(match->table), match->max, match->base))
 			{
 				output_error("schedule_recompile(SCHEDULE *sch={name='%s', ...}) %s pattern syntax error in item '%s'", sch->name, match->name, token);
 				/* TROUBLESHOOT
@@ -596,9 +733,10 @@ int schedule_recompile_block(SCHEDULE* sch, unsigned char calendar, unsigned cha
 			unsigned int is_leapyear = calendar % 2;
 			unsigned int weekday = calendar / 2;
 			unsigned int month;
-			unsigned int days[] = { 31,static_cast<unsigned int>(is_leapyear ? 29 : 28),31,30,31,30,31,31,30,31,30,31 };
+			unsigned int days[] = {31, static_cast<unsigned int>(is_leapyear ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 			unsigned int n = block * MAXVALUES + ndx;
-			if (ndx == -2) {
+			if (ndx == -2)
+			{
 				output_error("schedule_recompile(SCHEDULE *sch={name='%s', ...}) internal index error", sch->name);
 				return 0;
 			}
@@ -635,7 +773,7 @@ int schedule_recompile_block(SCHEDULE* sch, unsigned char calendar, unsigned cha
 							{
 								if (sch->index[calendar][minute] > 0)
 								{
-									const char* dayofweek[] = { "Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Hol" };
+									const char *dayofweek[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Hol"};
 									output_error("schedule_recompile(SCHEDULE *sch={name='%s', ...}) '%s' in block '%s' has a conflict with value %g on %s %d/%d %02d:%02d", sch->name, token, blockname, sch->data[sch->index[calendar][minute]], dayofweek[weekday], month + 1, day + 1, hour, minute % 60);
 									/* TROUBLESHOOT
 									   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
@@ -661,30 +799,36 @@ int schedule_recompile_block(SCHEDULE* sch, unsigned char calendar, unsigned cha
 /* compiles the index for a multi-block schedule and report errors
    returns 1 on success, 0 on failure
  */
-int schedule_recompile(SCHEDULE* sch, unsigned char calendar)
+int schedule_recompile(SCHEDULE *sch, unsigned char calendar)
 {
 	unsigned char block;
-	if (sch->index[calendar] == 0) {
-		sch->index[calendar] = static_cast<unsigned char*>(malloc(sizeof(unsigned char) * MAXMINUTES));
-		if (sch->index[calendar] == nullptr) {
+	if (sch->index[calendar] == 0)
+	{
+		sch->index[calendar] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
+		if (sch->index[calendar] == nullptr)
+		{
 			output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') insufficient memory for index", sch->name);
 			return 0;
 		}
 		memset(sch->index[calendar], 0, sizeof(unsigned char) * MAXMINUTES);
 	}
-	if (sch->dtnext[calendar] == 0) {
-		sch->dtnext[calendar] = static_cast<unsigned char*>(malloc(sizeof(unsigned char) * MAXMINUTES));
-		if (sch->dtnext[calendar] == nullptr) {
+	if (sch->dtnext[calendar] == 0)
+	{
+		sch->dtnext[calendar] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
+		if (sch->dtnext[calendar] == nullptr)
+		{
 			output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') insufficient memory for dtnext", sch->name);
 			return 0;
 		}
 		memset(sch->dtnext[calendar], 0, sizeof(unsigned char) * MAXMINUTES);
 	}
-	for (block = 0; block < sch->block; block++) {
+	for (block = 0; block < sch->block; block++)
+	{
 		/* schedule_recompile_block uses strtok and corrupts our stored blockdef, use a copy */
 		char blockdef[MAXDEFINITION];
 		strcpy(blockdef, sch->blockdef[block]);
-		if (schedule_recompile_block(sch, calendar, block, sch->blockname[block], blockdef) == 0) {
+		if (schedule_recompile_block(sch, calendar, block, sch->blockname[block], blockdef) == 0)
+		{
 			output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') error recomputing index", sch->name);
 			return 0;
 		}
@@ -695,14 +839,21 @@ int schedule_recompile(SCHEDULE* sch, unsigned char calendar)
 /* compiles a multi-block schedule and report errors
    returns 1 on success, 0 on failure
  */
-int schedule_compile(SCHEDULE* sch)
+int schedule_compile(SCHEDULE *sch)
 {
-	//char* p = const_cast<char*>(sch->definition), 
-	char* q = nullptr;
-	char* p = const_cast<char*>(sch->definition.data());
+	// char* p = const_cast<char*>(sch->definition),
+	char *q = nullptr;
+	char *p = const_cast<char *>(sch->definition);
 	char blockdef[MAXDEFINITION];
 	char blockname[MAXNAME];
-	enum { INIT, NAME, OPEN, BLOCK, CLOSE } state = INIT;
+	enum
+	{
+		INIT,
+		NAME,
+		OPEN,
+		BLOCK,
+		CLOSE
+	} state = INIT;
 	int comment = 0;
 
 	/* check to see no blocks are defined */
@@ -710,10 +861,12 @@ int schedule_compile(SCHEDULE* sch)
 	{
 		/* this is single block unnamed schedule */
 		/* remove leading whitespace */
-		while (isspace(*p)) p++;
+		while (isspace(*p))
+			p++;
 		strcpy(blockdef, p);
 		sch->blockdef[sch->block] = strdup(p);
-		if (sch->blockdef[sch->block] == nullptr) {
+		if (sch->blockdef[sch->block] == nullptr)
+		{
 			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) insufficient memory for block definition", sch->name);
 			return 0;
 		}
@@ -744,7 +897,8 @@ int schedule_compile(SCHEDULE* sch)
 			continue;
 		}
 
-		switch (state) {
+		switch (state)
+		{
 		case INIT:
 		case CLOSE:
 			if (!isspace(*p) && !iscntrl(*p))
@@ -835,12 +989,13 @@ int schedule_compile(SCHEDULE* sch)
 			break;
 		case BLOCK:
 			if (*p == '}')
-			{	/* end block */
+			{ /* end block */
 				state = CLOSE;
 				q = nullptr;
 				p++;
 				sch->blockdef[sch->block] = strdup(blockdef);
-				if (sch->blockdef[sch->block] == nullptr) {
+				if (sch->blockdef[sch->block] == nullptr)
+				{
 					output_error("schedule %s: block %s insufficient memory for block definition", sch->name, blockname);
 					return 0;
 				}
@@ -873,14 +1028,14 @@ int schedule_compile(SCHEDULE* sch)
 	return 1;
 }
 
-//static pthread_cond_t sc_active = PTHREAD_COND_INITIALIZER;
+// static pthread_cond_t sc_active = PTHREAD_COND_INITIALIZER;
 static std::condition_variable_any sc_active_cv;
-//static pthread_mutex_t sc_activelock = PTHREAD_MUTEX_INITIALIZER;
+// static pthread_mutex_t sc_activelock = PTHREAD_MUTEX_INITIALIZER;
 static unsigned int sc_activelock = 0;
 static STATUS sc_status = SUCCESS;
 static int sc_running = 0, sc_started = 0, sc_done = 0;
 
-//STATUS schedule_createproc(void* args)
+// STATUS schedule_createproc(void* args)
 //{
 //	STATUS status = SUCCESS;
 //	void* rv = 0;
@@ -918,16 +1073,16 @@ static int sc_running = 0, sc_started = 0, sc_done = 0;
 //			goto Done;
 //		}
 //
-//#ifdef _DEBUG
+// #ifdef _DEBUG
 //		/* calculate checksum */
 //		sch->checksum = schedule_checksum(sch);
 //		output_debug("schedule '%s' checksum is %0x08d", sch->name, sch->checksum);
-//#endif
+// #endif
 //		status = SUCCESS;
 //	}
 //	else
 //		status = FAILED;
-//Done:
+// Done:
 //	pthread_mutex_lock(&sc_activelock);
 //	sc_running--;
 //	sc_done++;
@@ -945,31 +1100,35 @@ static int sc_running = 0, sc_started = 0, sc_done = 0;
 //	//	rv = (void *)status;
 //	//	return rv;
 //	return status;
-//}
+// }
 
-
-STATUS schedule_createproc(void* args) {
+STATUS schedule_createproc(void *args)
+{
 	STATUS status = STATUS::SUCCESS;
-	SCHEDULE* sch = static_cast<SCHEDULE*>(args);
+	SCHEDULE *sch = static_cast<SCHEDULE *>(args);
 
 	{
-		std::unique_lock<std::shared_mutex> lock( SharedMutexManager::get_mutex(&sc_activelock));
-		while (sc_running >= global_threadcount) {
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&sc_activelock));
+		while (sc_running >= global_threadcount)
+		{
 			output_debug("schedule '%s' creation waiting (%d of %d active)",
-				sch->name.c_str(), sc_running, global_threadcount);
+						 sch->name, sc_running, global_threadcount);
 			sc_active_cv.wait(lock);
 		}
 		sc_running++;
 		output_debug("deferred schedule '%s' creation starting (%d of %d active)",
-			sch->name.c_str(), sc_running, global_threadcount);
+					 sch->name, sc_running, global_threadcount);
 		sc_active_cv.notify_all();
 	} // Lock automatically released here
 
 	// Compile the schedule
-	if (schedule_compile(sch)) {
+	if (schedule_compile(sch))
+	{
 		// Construct the dtnext array for valid calendars
-		for (unsigned char calendar = 0; calendar < MAXCALENDARS; ++calendar) {
-			if (sch->dtnext[calendar] != 0) {
+		for (unsigned char calendar = 0; calendar < MAXCALENDARS; ++calendar)
+		{
+			if (sch->dtnext[calendar] != 0)
+			{
 				schedule_compile_dtnext(sch, calendar);
 			}
 		}
@@ -977,13 +1136,15 @@ STATUS schedule_createproc(void* args) {
 		// Normalize
 		if ((sch->flags & SN_NORMAL) == SN_NORMAL ||
 			(sch->flags & SN_ABSOLUTE) == SN_ABSOLUTE ||
-			(sch->flags & SN_WEIGHTED) == SN_WEIGHTED) {
+			(sch->flags & SN_WEIGHTED) == SN_WEIGHTED)
+		{
 			schedule_normalize(sch, SN_IS_NORMALIZED);
 		}
 
 		// Validate
 		if ((sch->flags & (SN_POSITIVE | SN_NONZERO | SN_BOOLEAN)) != 0 &&
-			!schedule_validate(sch, sch->flags)) {
+			!schedule_validate(sch, sch->flags))
+		{
 			status = STATUS::FAILED;
 			goto Done;
 		}
@@ -992,30 +1153,34 @@ STATUS schedule_createproc(void* args) {
 		// Calculate checksum
 		sch->checksum = schedule_checksum(sch);
 		output_debug("schedule '%s' checksum is %0x08lld",
-			sch->name.c_str(), static_cast<long long>(sch->checksum));
+					 sch->name, static_cast<long long>(sch->checksum));
 #endif
 		status = STATUS::SUCCESS;
 	}
-	else {
+	else
+	{
 		status = STATUS::FAILED;
 	}
 
 Done:
+{
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&sc_activelock));
+	sc_running--;
+	sc_done++;
+	if (status == STATUS::FAILED)
 	{
-		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&sc_activelock));
-		sc_running--;
-		sc_done++;
-		if (status == STATUS::FAILED) {
-			sc_status = status;
-		}
-		sc_active_cv.notify_all();
-	} // Lock automatically released here
-
-	if (status == STATUS::SUCCESS) {
-		output_debug("deferred creation of schedule '%s' completed", sch->name.c_str());
+		sc_status = status;
 	}
-	else {
-		output_error("deferred creation of schedule '%s' failed", sch->name.c_str());
+	sc_active_cv.notify_all();
+} // Lock automatically released here
+
+	if (status == STATUS::SUCCESS)
+	{
+		output_debug("deferred creation of schedule '%s' completed", sch->name);
+	}
+	else
+	{
+		output_error("deferred creation of schedule '%s' failed", sch->name);
 	}
 
 	return status;
@@ -1023,7 +1188,7 @@ Done:
 /** Wait for deferred schedule creations to finish
 	@return the global status of schedule creation
  **/
-//int schedule_createwait(void)
+// int schedule_createwait(void)
 //{
 //	if (sc_running == 0 && sc_done == sc_started) return sc_status;
 //	pthread_mutex_lock(&sc_activelock);
@@ -1035,56 +1200,62 @@ Done:
 //	output_debug("all deferred schedule creations completed %s", sc_status == SUCCESS ? "successfully" : "with at least one failure");
 //	pthread_mutex_unlock(&sc_activelock);
 //	return sc_status;
-//}
+// }
 
-int schedule_createwait() {
-	if (sc_running == 0 && sc_done == sc_started) {
+int schedule_createwait()
+{
+	if (sc_running == 0 && sc_done == sc_started)
+	{
 		return sc_status;
 	}
 
 	{
-		std::unique_lock<std::shared_mutex> lock( SharedMutexManager::get_mutex(&sc_activelock));
-		while (sc_running > 0 || sc_done < sc_started) {
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&sc_activelock));
+		while (sc_running > 0 || sc_done < sc_started)
+		{
 			output_debug("waiting for deferred schedule creations to complete (%d of %d active)",
-				sc_running, global_threadcount);
+						 sc_running, global_threadcount);
 			sc_active_cv.wait(lock);
 		}
 		output_debug("all deferred schedule creations completed %s",
-			sc_status == STATUS::SUCCESS ? "successfully" : "with at least one failure");
+					 sc_status == STATUS::SUCCESS ? "successfully" : "with at least one failure");
 	} // Lock automatically released here due to RAII
 
 	return sc_status;
 }
 
 // Verify string contents
-void validate_schedule_definition(const char* definition) {
+void validate_schedule_definition(const char *definition)
+{
 	std::cerr << "String length: " << strlen(definition) << std::endl;
 	std::cerr << "First 10 bytes: ";
-	for (int i = 0; i < 10; ++i) {
+	for (int i = 0; i < 10; ++i)
+	{
 		std::cerr << "0x" << std::hex
-			<< static_cast<int>(static_cast<unsigned char>(definition[i]))
-			<< " ";
+				  << static_cast<int>(static_cast<unsigned char>(definition[i]))
+				  << " ";
 	}
 	std::cerr << std::dec << std::endl;
 
 	// Check for unexpected characters
 	bool has_unexpected_chars = false;
-	for (size_t i = 0; definition[i]; ++i) {
-		if (!std::isprint(definition[i]) && !std::isspace(definition[i])) {
+	for (size_t i = 0; definition[i]; ++i)
+	{
+		if (!std::isprint(definition[i]) && !std::isspace(definition[i]))
+		{
 			std::cerr << "Unexpected char at " << i
-				<< ": 0x" << std::hex
-				<< static_cast<int>(static_cast<unsigned char>(definition[i]))
-				<< std::dec << std::endl;
+					  << ": 0x" << std::hex
+					  << static_cast<int>(static_cast<unsigned char>(definition[i]))
+					  << std::dec << std::endl;
 			has_unexpected_chars = true;
 		}
 	}
 
-	if (has_unexpected_chars) {
+	if (has_unexpected_chars)
+	{
 		std::cerr << "Warning: String contains non-printable characters" << std::endl;
 	}
 }
-
-
 
 /** Create a schedule.
 	If the schedule has already been defined, the existing structure is returned, otherwise a new one is created.
@@ -1095,15 +1266,15 @@ void validate_schedule_definition(const char* definition) {
 
 	@return a pointer to the new schedule, nullptr if failed
  **/
-SCHEDULE* schedule_create(const char* name,		/**< the name of the schedule */
-	const char* definition)	/**< the definition of the schedule (using crontab format with semicolon delimiters), nullptr is only a search */
+SCHEDULE *schedule_create(const char *name,		  /**< the name of the schedule */
+						  const char *definition) /**< the definition of the schedule (using crontab format with semicolon delimiters), nullptr is only a search */
 {
 	/* find the schedule is already defined (by name) */
-	SCHEDULE* sch = schedule_find_byname(name);
+	SCHEDULE *sch = schedule_find_byname(name);
 	STATUS result;
 	if (sch != nullptr)
 	{
-		if (definition != nullptr && sch->definition!= definition) 
+		if (definition != nullptr && strcmp(sch->definition, definition) != 0)
 		{
 			output_error("schedule_create(char *name='%s', char *definition='%s') definition does not match previous definition of schedule '%s')", name, definition, name);
 			/* TROUBLESHOOT
@@ -1140,15 +1311,11 @@ SCHEDULE* schedule_create(const char* name,		/**< the name of the schedule */
 		schedule_free(sch);
 		return nullptr;
 	}
-	//sch->name = std::string(name);
 
+	sch->name = strdup(name);
 
-	sch->name.assign(name);
-
-	
-
-
-	if (sch->name == "") {
+	if (sch->name == nullptr)
+	{
 		output_error("schedule_create(char *name='%s', char *definition='%s') insufficient memory for name)", name, definition);
 		schedule_free(sch);
 		return nullptr;
@@ -1162,29 +1329,10 @@ SCHEDULE* schedule_create(const char* name,		/**< the name of the schedule */
 		schedule_free(sch);
 		return nullptr;
 	}
-	//sch->definition = definition;
 
-	size_t maxlen = MAXDEFINITION - 1;           // whatever your upper bound is
-	//size_t actual = strnlen(definition, maxlen);
-	//sch->definition.assign(definition, actual);
-	//sch->definition = definition;
-
-	try {
-		size_t maxlen = MAXDEFINITION - 1;
-
-
-		// Safe assignment with diagnostic capabilities
-		sch->definition.assign( definition);
-	}
-	catch (const std::exception& e) {
-		
-
-		// Handle or rethrow as needed
-		sch->definition.clear();
-	}
-
-
-	if (sch->definition == "") {
+	sch->definition = strdup(definition);
+	if (sch->definition == nullptr)
+	{
 		output_error("schedule_create(char *name='%s', char *definition='%s') insufficient memory for definition)", name, definition);
 		schedule_free(sch);
 		return nullptr;
@@ -1214,23 +1362,24 @@ SCHEDULE* schedule_create(const char* name,		/**< the name of the schedule */
 	else
 	{
 		static unsigned int n_threads = 0;
-		//static pthread_t thread_id;
-		//if (pthread_create(&thread_id, nullptr, reinterpret_cast<void* (*)(void*)>(schedule_createproc), (void*)sch) != 0)
+		// static pthread_t thread_id;
+		// if (pthread_create(&thread_id, nullptr, reinterpret_cast<void* (*)(void*)>(schedule_createproc), (void*)sch) != 0)
 		//{
 		//	/* fails so do it inline */
 		//	output_warning("schedule_createproc failed, schedule '%s' created inline instead", sch->name);
 		//	return schedule_createproc(sch) ? sch : nullptr;
-		//}
+		// }
 
-
-		try {
-			std::thread thread_handle(schedule_createproc, static_cast<void*>(sch));
+		try
+		{
+			std::thread thread_handle(schedule_createproc, static_cast<void *>(sch));
 			thread_handle.detach(); // Detach thread if it should run independently (similar to original behavior)
 		}
-		catch (const std::system_error& e) {
+		catch (const std::system_error &e)
+		{
 			// Fails, so do it inline
-			output_warning("schedule_createproc failed, schedule '%s' created inline instead", sch->name.c_str());
-			return schedule_createproc(static_cast<void*>(sch)) == STATUS::SUCCESS ? sch : nullptr;
+			output_warning("schedule_createproc failed, schedule '%s' created inline instead", sch->name);
+			return schedule_createproc(static_cast<void *>(sch)) == STATUS::SUCCESS ? sch : nullptr;
 		}
 
 		sc_started++;
@@ -1238,7 +1387,7 @@ SCHEDULE* schedule_create(const char* name,		/**< the name of the schedule */
 	}
 }
 
-SCHEDULE* schedule_new(void)
+SCHEDULE *schedule_new(void)
 {
 	unsigned int cal;
 	unsigned int cal_lo;
@@ -1248,21 +1397,25 @@ SCHEDULE* schedule_new(void)
 	DATETIME dt_starttime_hi;
 
 	/* create the schedule */
-	SCHEDULE* sch = (SCHEDULE*)malloc(sizeof(SCHEDULE));
-	//std::shared_ptr<SCHEDULE> shared_sch(new SCHEDULE);
-	//SCHEDULE* sch = shared_sch.get();
-	if (sch == nullptr) return nullptr;
+	SCHEDULE *sch = (SCHEDULE *)malloc(sizeof(SCHEDULE));
+	// std::shared_ptr<SCHEDULE> shared_sch(new SCHEDULE);
+	// SCHEDULE* sch = shared_sch.get();
+	if (sch == nullptr)
+		return nullptr;
 	memset(sch, 0, sizeof(SCHEDULE));
 
 	/* only allocate the initial calendar(s) */
 	TIMESTAMP ONE_WEEK = 604800;
-	if (!local_datetime(global_starttime, &dt_starttime)) {
+	if (!local_datetime(global_starttime, &dt_starttime))
+	{
 		throw_exception("schedule_new() unable to determine local starttime", global_starttime);
 	}
-	if (!local_datetime(global_starttime - ONE_WEEK, &dt_starttime_lo)) {
+	if (!local_datetime(global_starttime - ONE_WEEK, &dt_starttime_lo))
+	{
 		throw_exception("schedule_new() unable to determine local starttime left skewed", global_starttime);
 	}
-	if (!local_datetime(global_starttime + ONE_WEEK, &dt_starttime_hi)) {
+	if (!local_datetime(global_starttime + ONE_WEEK, &dt_starttime_hi))
+	{
 		throw_exception("schedule_new() unable to determine local starttime right skewed", global_starttime);
 	}
 	cal = ((dt_starttime.weekday - dt_starttime.yearday + 53 * 7) % 7) * 2 + ISLEAPYEAR(dt_starttime.year);
@@ -1270,28 +1423,36 @@ SCHEDULE* schedule_new(void)
 	cal_hi = ((dt_starttime_hi.weekday - dt_starttime_hi.yearday + 53 * 7) % 7) * 2 + ISLEAPYEAR(dt_starttime_hi.year);
 
 	/* create the first calendar needed */
-	sch->index[cal] = static_cast<unsigned char*>(malloc(sizeof(unsigned char) * MAXMINUTES));
-	if (sch->index[cal] == nullptr) return nullptr;
+	sch->index[cal] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
+	if (sch->index[cal] == nullptr)
+		return nullptr;
 	memset(sch->index[cal], 0, sizeof(unsigned char) * MAXMINUTES);
-	sch->dtnext[cal] = static_cast<unsigned char*>(malloc(sizeof(unsigned char) * MAXMINUTES));
-	if (sch->dtnext[cal] == nullptr) return nullptr;
+	sch->dtnext[cal] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
+	if (sch->dtnext[cal] == nullptr)
+		return nullptr;
 	memset(sch->dtnext[cal], 0, sizeof(unsigned char) * MAXMINUTES);
 	/* create left skewed calendar, if needed */
-	if (cal_lo != cal) {
-		sch->index[cal_lo] = static_cast<unsigned char*>(malloc(sizeof(unsigned char) * MAXMINUTES));
-		if (sch->index[cal_lo] == nullptr) return nullptr;
+	if (cal_lo != cal)
+	{
+		sch->index[cal_lo] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
+		if (sch->index[cal_lo] == nullptr)
+			return nullptr;
 		memset(sch->index[cal_lo], 0, sizeof(unsigned char) * MAXMINUTES);
-		sch->dtnext[cal_lo] = static_cast<unsigned char*>(malloc(sizeof(unsigned char) * MAXMINUTES));
-		if (sch->dtnext[cal_lo] == nullptr) return nullptr;
+		sch->dtnext[cal_lo] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
+		if (sch->dtnext[cal_lo] == nullptr)
+			return nullptr;
 		memset(sch->dtnext[cal_lo], 0, sizeof(unsigned char) * MAXMINUTES);
 	}
 	/* create right skewed calendar, if needed */
-	if (cal_hi != cal) {
-		sch->index[cal_hi] = static_cast<unsigned char*>(malloc(sizeof(unsigned char) * MAXMINUTES));
-		if (sch->index[cal_hi] == nullptr) return nullptr;
+	if (cal_hi != cal)
+	{
+		sch->index[cal_hi] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
+		if (sch->index[cal_hi] == nullptr)
+			return nullptr;
 		memset(sch->index[cal_hi], 0, sizeof(unsigned char) * MAXMINUTES);
-		sch->dtnext[cal_hi] = static_cast<unsigned char*>(malloc(sizeof(unsigned char) * MAXMINUTES));
-		if (sch->dtnext[cal_hi] == nullptr) return nullptr;
+		sch->dtnext[cal_hi] = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * MAXMINUTES));
+		if (sch->dtnext[cal_hi] == nullptr)
+			return nullptr;
 		memset(sch->dtnext[cal_hi], 0, sizeof(unsigned char) * MAXMINUTES);
 	}
 
@@ -1303,23 +1464,29 @@ SCHEDULE* schedule_new(void)
 	return sch;
 }
 
-void schedule_free(SCHEDULE* sch)
+void schedule_free(SCHEDULE *sch)
 {
 	unsigned char i;
-	//if (sch->name) free(const_cast<char*>(sch->name));
-	//if (sch->definition) free(const_cast<char*>(sch->definition));
-	for (i = 0; i < MAXBLOCKS; i++) {
-		if (sch->blockname[i]) free(sch->blockname[i]);
-		if (sch->blockdef[i]) free(sch->blockdef[i]);
+	// if (sch->name) free(const_cast<char*>(sch->name));
+	// if (sch->definition) free(const_cast<char*>(sch->definition));
+	for (i = 0; i < MAXBLOCKS; i++)
+	{
+		if (sch->blockname[i])
+			free(sch->blockname[i]);
+		if (sch->blockdef[i])
+			free(sch->blockdef[i]);
 	}
-	for (i = 0; i < MAXCALENDARS; i++) {
-		if (sch->index[i]) free(sch->index[i]);
-		if (sch->dtnext[i]) free(sch->dtnext[i]);
+	for (i = 0; i < MAXCALENDARS; i++)
+	{
+		if (sch->index[i])
+			free(sch->index[i]);
+		if (sch->dtnext[i])
+			free(sch->dtnext[i]);
 	}
 	free(sch);
 }
 
-void schedule_add(SCHEDULE* sch)
+void schedule_add(SCHEDULE *sch)
 {
 	sch->next = schedule_list;
 	schedule_list = sch;
@@ -1329,12 +1496,13 @@ void schedule_add(SCHEDULE* sch)
 /** validate a schedule, if desired
 	See SN_* flags for validation options
  **/
-int schedule_validate(SCHEDULE* sch, int flags)
+int schedule_validate(SCHEDULE *sch, int flags)
 {
 	unsigned int b, i;
 	uint32 nzct = 0; // nonzero count
 	int failed = 0;
-	for (b = 0; b < MAXBLOCKS; b++) {
+	for (b = 0; b < MAXBLOCKS; b++)
+	{
 		i = (flags & SN_NONZERO ? 0 : 1);
 		for (; i <= sch->count[b]; i++)
 		{
@@ -1343,7 +1511,8 @@ int schedule_validate(SCHEDULE* sch, int flags)
 			int nonzero = (weight > 0 && value != 0.0);
 			int boolean = (weight > 0 && (value == 0.0 || value == 1.0));
 			int positive = (weight > 0 && value > 0.0);
-			if (weight == 0) continue;
+			if (weight == 0)
+				continue;
 			if (value != 0.0)
 				nzct += weight;
 			if ((flags & SN_BOOLEAN) && !boolean)
@@ -1363,7 +1532,8 @@ int schedule_validate(SCHEDULE* sch, int flags)
 			}
 		}
 	}
-	if ((flags & SN_NONZERO) && (nzct != (7 * (365 + 366) * 24 * 60))) {
+	if ((flags & SN_NONZERO) && (nzct != (7 * (365 + 366) * 24 * 60)))
+	{
 		output_error("schedule %s fails 'nonzero' validation with unfilled entries", sch->name);
 		failed = 1;
 	}
@@ -1374,8 +1544,8 @@ int schedule_validate(SCHEDULE* sch, int flags)
 	@note the sum of the values is equal to 1.0, not the sum of the absolute values
 	@return number of block that could be normalized, 0 if none, -1 if already normalized
  **/
-int schedule_normalize(SCHEDULE* sch,	/**< the schedule to normalize */
-	int flags)		/**< schedule normalization flag (see #SN_WEIGHTED and #SN_ABSOLUTE) */
+int schedule_normalize(SCHEDULE *sch, /**< the schedule to normalize */
+					   int flags)	  /**< schedule normalization flag (see #SN_WEIGHTED and #SN_ABSOLUTE) */
 {
 	unsigned int b, i;
 	int count = 0;
@@ -1438,7 +1608,7 @@ int schedule_normalize(SCHEDULE* sch,	/**< the schedule to normalize */
 /** get the index value for the given timestamp
 	@return negative on error, 0 or positive on success
  **/
-SCHEDULEINDEX schedule_index(SCHEDULE* sch, TIMESTAMP ts)
+SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 {
 	SCHEDULEINDEX ref = 0;
 	DATETIME dt;
@@ -1470,7 +1640,8 @@ SCHEDULEINDEX schedule_index(SCHEDULE* sch, TIMESTAMP ts)
 	SET_CALENDAR(ref, cal);
 	SET_MINUTE(ref, min);
 
-	if (sch->index[cal] == 0) {
+	if (sch->index[cal] == 0)
+	{
 		return_value = schedule_recompile(sch, cal);
 
 		/* Check the return value - if it is 0, pass us as a failure 9no new message, done inside the subfunction) */
@@ -1491,8 +1662,8 @@ SCHEDULEINDEX schedule_index(SCHEDULE* sch, TIMESTAMP ts)
 /** reads the value on the schedule
 	@return current value on schedule
  **/
-double schedule_value(SCHEDULE* sch,		/**< the schedule to read */
-	SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
+double schedule_value(SCHEDULE *sch,	   /**< the schedule to read */
+					  SCHEDULEINDEX index) /**< the index of the value to read (see schedule_index) */
 {
 	int32 cal = GET_CALENDAR(index);
 	int32 min = GET_MINUTE(index);
@@ -1504,8 +1675,8 @@ double schedule_value(SCHEDULE* sch,		/**< the schedule to read */
 /** reads the time until the next change in the schedule
 	@return time until next value change (in minutes)
  **/
-int32 schedule_dtnext(SCHEDULE* sch,			/**< the schedule to read */
-	SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
+int32 schedule_dtnext(SCHEDULE *sch,	   /**< the schedule to read */
+					  SCHEDULEINDEX index) /**< the index of the value to read (see schedule_index) */
 {
 	int32 cal = GET_CALENDAR(index);
 	int32 min = GET_MINUTE(index);
@@ -1514,8 +1685,8 @@ int32 schedule_dtnext(SCHEDULE* sch,			/**< the schedule to read */
 	return sch->dtnext[cal][min];
 }
 
-int32 schedule_duration(SCHEDULE* sch,			/**< the schedule to read */
-	SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
+int32 schedule_duration(SCHEDULE *sch,		 /**< the schedule to read */
+						SCHEDULEINDEX index) /**< the index of the value to read (see schedule_index) */
 {
 	int32 cal = GET_CALENDAR(index);
 	int32 min = GET_MINUTE(index);
@@ -1526,8 +1697,8 @@ int32 schedule_duration(SCHEDULE* sch,			/**< the schedule to read */
 	return sch->minutes[block];
 }
 
-double schedule_weight(SCHEDULE* sch,			/**< the schedule to read */
-	SCHEDULEINDEX index)	/**< the index of the value to read (see schedule_index) */
+double schedule_weight(SCHEDULE *sch,		/**< the schedule to read */
+					   SCHEDULEINDEX index) /**< the index of the value to read (see schedule_index) */
 {
 	int32 cal = GET_CALENDAR(index);
 	int32 min = GET_MINUTE(index);
@@ -1539,8 +1710,8 @@ double schedule_weight(SCHEDULE* sch,			/**< the schedule to read */
 /** synchronize the schedule to the time given
 	@return the time of the next schedule change
  **/
-TIMESTAMP schedule_sync(SCHEDULE* sch, /**< the schedule that is to be synchronized */
-	TIMESTAMP t)	/**< the time to which the schedule is to be synchronized */
+TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchronized */
+						TIMESTAMP t)   /**< the time to which the schedule is to be synchronized */
 {
 #ifdef _DEBUG
 	if (sch->magic1 != SCHEDULE_MAGIC || sch->magic2 != SCHEDULE_MAGIC) // || sch->checksum!=schedule_checksum(sch) )
@@ -1607,10 +1778,12 @@ TIMESTAMP schedule_sync(SCHEDULE* sch, /**< the schedule that is to be synchroni
 			if (dtnext == 0)
 				output_debug("schedule_sync(SCHEDULE *sch={name: '%s',...}, TIMESTAMP t=%" FMT_INT64 "d) has a dtnext==0", sch->name, t);
 #endif
-			if (sch->value != value) {//This will not update sch->since to the starttime if value == 0 at the starttime.
+			if (sch->value != value)
+			{ // This will not update sch->since to the starttime if value == 0 at the starttime.
 				sch->since = t;
 			}
-			if (sch->since == TS_ZERO) {//This is the value of sch->since at starttime so we should update it to starttime.
+			if (sch->since == TS_ZERO)
+			{ // This is the value of sch->since at starttime so we should update it to starttime.
 				sch->since = t;
 			}
 			sch->value = value;
@@ -1618,7 +1791,7 @@ TIMESTAMP schedule_sync(SCHEDULE* sch, /**< the schedule that is to be synchroni
 			sch->next_t = (dtnext == 0 ? TS_NEVER : t + dtnext - t % 60);
 #ifdef _DEBUG
 			output_test("time %" FMT_INT64 "d: schedule '%s', value %g, duration %g, dt_next %d, next_t %" FMT_INT64 "d",
-				t, sch->name, sch->value, sch->duration, dtnext, sch->next_t);
+						t, sch->name, sch->value, sch->duration, dtnext, sch->next_t);
 #endif
 		}
 	}
@@ -1627,24 +1800,25 @@ TIMESTAMP schedule_sync(SCHEDULE* sch, /**< the schedule that is to be synchroni
 	return sch->next_t;
 }
 
-typedef struct s_schedulesyncdata {
+typedef struct s_schedulesyncdata
+{
 	unsigned int n;
-	//pthread_t pt;
+	// pthread_t pt;
 	std::thread thread;
 	bool ok;
-	SCHEDULE* sch;
+	SCHEDULE *sch;
 	unsigned int nsch;
 	TIMESTAMP t0;
 } SCHEDULESYNCDATA;
 
-//static pthread_cond_t start_sch = PTHREAD_COND_INITIALIZER;
-//static pthread_mutex_t startlock_sch = PTHREAD_MUTEX_INITIALIZER;
-//static pthread_cond_t done_sch = PTHREAD_COND_INITIALIZER;
-//static pthread_mutex_t donelock_sch = PTHREAD_MUTEX_INITIALIZER;
-//static TIMESTAMP next_t1_sch;
-//static TIMESTAMP next_t2_sch = TS_ZERO;
-//static unsigned int donecount_sch;
-//clock_t schedule_synctime = 0;
+// static pthread_cond_t start_sch = PTHREAD_COND_INITIALIZER;
+// static pthread_mutex_t startlock_sch = PTHREAD_MUTEX_INITIALIZER;
+// static pthread_cond_t done_sch = PTHREAD_COND_INITIALIZER;
+// static pthread_mutex_t donelock_sch = PTHREAD_MUTEX_INITIALIZER;
+// static TIMESTAMP next_t1_sch;
+// static TIMESTAMP next_t2_sch = TS_ZERO;
+// static unsigned int donecount_sch;
+// clock_t schedule_synctime = 0;
 
 // Replace pthread synchronization primitives with C++17 equivalents
 static std::condition_variable_any start_sch;
@@ -1654,24 +1828,25 @@ static unsigned int donelock_sch;
 static TIMESTAMP next_t1_sch;
 static TIMESTAMP next_t2_sch = TS_ZERO;
 static unsigned int donecount_sch;
-clock_t schedule_synctime = 0;     // Retained as requested
+clock_t schedule_synctime = 0; // Retained as requested
 
 // Modernized thread function
-void schedule_syncproc(SCHEDULESYNCDATA* data) {
-	SCHEDULE* sch;
+void schedule_syncproc(SCHEDULESYNCDATA *data)
+{
+	SCHEDULE *sch;
 	unsigned int n;
 	TIMESTAMP t2;
 
 	// Processing loop
-	while (data->ok) {
+	while (data->ok)
+	{
 		// Lock access to start condition using RAII
 		{
 			std::unique_lock<std::shared_mutex> start_lock(SharedMutexManager::get_mutex(&startlock_sch));
 
 			// Wait for thread start condition with predicate
-			start_sch.wait(start_lock, [data]() {
-				return data->t0 != next_t1_sch;
-				});
+			start_sch.wait(start_lock, [data]()
+						   { return data->t0 != next_t1_sch; });
 
 			// Lock automatically released at the end of the scope
 		}
@@ -1680,9 +1855,11 @@ void schedule_syncproc(SCHEDULESYNCDATA* data) {
 		t2 = TS_NEVER;
 
 		// Fixed the loop condition: replaced comma with logical AND
-		for (sch = data->sch, n = 0; sch != nullptr && n < data->nsch; sch = sch->next, n++) {
+		for (sch = data->sch, n = 0; sch != nullptr && n < data->nsch; sch = sch->next, n++)
+		{
 			TIMESTAMP t = schedule_sync(sch, next_t1_sch);
-			if (t < t2) t2 = t;
+			if (t < t2)
+				t2 = t;
 		}
 
 		// Signal completed condition
@@ -1694,10 +1871,11 @@ void schedule_syncproc(SCHEDULESYNCDATA* data) {
 
 			// Signal thread is done for now
 			donecount_sch--;
-			if (t2 < next_t2_sch) next_t2_sch = t2;
+			if (t2 < next_t2_sch)
+				next_t2_sch = t2;
 
 			// Signal change in done condition
-			done_sch.notify_all();  // Equivalent to pthread_cond_broadcast
+			done_sch.notify_all(); // Equivalent to pthread_cond_broadcast
 
 			// Lock automatically released at the end of the scope
 		}
@@ -1706,11 +1884,7 @@ void schedule_syncproc(SCHEDULESYNCDATA* data) {
 	// No need for pthread_exit - function return handles cleanup
 }
 
-
-
-
-
-//void* schedule_syncproc(void* ptr)
+// void* schedule_syncproc(void* ptr)
 //{
 //	SCHEDULESYNCDATA* data = (SCHEDULESYNCDATA*)ptr;
 //	SCHEDULE* sch;
@@ -1756,7 +1930,7 @@ void schedule_syncproc(SCHEDULESYNCDATA* data) {
 //	}
 //	pthread_exit((void*)0);
 //	return (void*)0;
-//}
+// }
 
 /** synchronized all the schedules to the time given
 	@return the time of the next schedule change
@@ -1764,7 +1938,7 @@ void schedule_syncproc(SCHEDULESYNCDATA* data) {
 TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is synchronized */
 {
 	static unsigned int n_threads_sch = 0;
-	static SCHEDULESYNCDATA* thread_sch = nullptr;
+	static SCHEDULESYNCDATA *thread_sch = nullptr;
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t ts = (clock_t)exec_clock();
 
@@ -1772,11 +1946,10 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 	if (n_schedules == 0)
 		return TS_NEVER;
 
-
 	// number of threads desired
 	if (n_threads_sch == 0)
 	{
-		SCHEDULE* sch;
+		SCHEDULE *sch;
 		int n_items, schn = 0;
 
 		output_debug("loadshape_syncall setting up for %d shapes", n_schedules);
@@ -1797,13 +1970,13 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 			n_items = n_schedules / n_threads_sch;
 			n_threads_sch = n_schedules / n_items;
 			if (n_threads_sch * n_items < n_schedules) // not enough slots yet
-				n_threads_sch++; // add one underused threads
+				n_threads_sch++;					   // add one underused threads
 
 			output_debug("schedule_syncall is using %d of %d available threads", n_threads_sch, global_threadcount);
 			output_debug("schedule_syncall is assigning %d shapes per thread", n_items);
 
 			// allocate thread list
-			thread_sch = (SCHEDULESYNCDATA*)malloc(sizeof(SCHEDULESYNCDATA) * n_threads_sch);
+			thread_sch = (SCHEDULESYNCDATA *)malloc(sizeof(SCHEDULESYNCDATA) * n_threads_sch);
 			memset(thread_sch, 0, sizeof(SCHEDULESYNCDATA) * n_threads_sch);
 
 			// assign starting shape for each thread
@@ -1844,55 +2017,56 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 	if (n_threads_sch < 2)
 	{
 		// process list directly
-		SCHEDULE* sch;
+		SCHEDULE *sch;
 		for (sch = schedule_list; sch != nullptr; sch = sch->next)
 		{
 			TIMESTAMP t3 = schedule_sync(sch, t1);
-			if (t3 < t2) t2 = t3;
+			if (t3 < t2)
+				t2 = t3;
 		}
 		next_t2_sch = t2;
 	}
 	else
 	{
 		//// lock access to done count
-		//pthread_mutex_lock(&donelock_sch);
+		// pthread_mutex_lock(&donelock_sch);
 
 		//// initialize wait count
-		//donecount_sch = n_threads_sch;
+		// donecount_sch = n_threads_sch;
 
 		//// lock access to start condition
-		//pthread_mutex_lock(&startlock_sch);
+		// pthread_mutex_lock(&startlock_sch);
 
 		//// update start condition
-		//next_t1_sch = t1;
-		//next_t2_sch = TS_NEVER;
+		// next_t1_sch = t1;
+		// next_t2_sch = TS_NEVER;
 
 		//// signal all the threads
-		//pthread_cond_broadcast(&start_sch);
+		// pthread_cond_broadcast(&start_sch);
 
 		//// unlock access to start count
-		//pthread_mutex_unlock(&startlock_sch);
+		// pthread_mutex_unlock(&startlock_sch);
 
 		//// begin wait
-		//while (donecount_sch > 0)
+		// while (donecount_sch > 0)
 		//	pthread_cond_wait(&done_sch, &donelock_sch);
-		//output_debug("passed donecount==0 condition");
+		// output_debug("passed donecount==0 condition");
 
 		//// unlock done count
-		//pthread_mutex_unlock(&donelock_sch);
+		// pthread_mutex_unlock(&donelock_sch);
 
 		//// process results from all threads
-		//if (next_t2_sch < t2) t2 = next_t2_sch;
+		// if (next_t2_sch < t2) t2 = next_t2_sch;
 
 		// Lock access to done count using std::mutex
-		std::unique_lock<std::shared_mutex> doneLock( SharedMutexManager::get_mutex(&donelock_sch));
+		std::unique_lock<std::shared_mutex> doneLock(SharedMutexManager::get_mutex(&donelock_sch));
 
 		// Initialize wait count
 		donecount_sch = n_threads_sch;
 
 		// Lock access to start condition using another std::mutex
 		{
-			std::unique_lock<std::shared_mutex> startLock( SharedMutexManager::get_mutex(&startlock_sch));
+			std::unique_lock<std::shared_mutex> startLock(SharedMutexManager::get_mutex(&startlock_sch));
 
 			// Update start condition
 			next_t1_sch = t1;
@@ -1900,11 +2074,12 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 
 			// Signal all threads - unlock after notifying to ensure all threads receive notification
 			start_sch.notify_all();
-		}  // startLock is automatically released here
+		} // startLock is automatically released here
 
 		// Begin wait with the condition variable
 		// This waits until donecount_sch reaches 0
-		done_sch.wait(doneLock, [&]() { return donecount_sch <= 0; });
+		done_sch.wait(doneLock, [&]()
+					  { return donecount_sch <= 0; });
 
 		output_debug("passed donecount==0 condition");
 
@@ -1912,7 +2087,8 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 		// No explicit unlock needed with std::unique_lock
 
 		// Process results from all threads
-		if (next_t2_sch < t2) t2 = next_t2_sch;
+		if (next_t2_sch < t2)
+			t2 = next_t2_sch;
 	}
 
 	schedule_synctime += (clock_t)exec_clock() - ts;
@@ -1927,33 +2103,34 @@ int schedule_test(void)
 	char ts[64];
 
 	/* tests */
-	struct s_test {
-		const char* name, * def;
-		const char* t1, * t2;
+	struct s_test
+	{
+		const char *name, *def;
+		const char *t1, *t2;
 		int normalize;
 		double value;
 	} *p, test[] = {
-		/* schedule name	schedule definition							sync time				next time expected		normalize	value expected */
-		{"empty",			"", 										"2000/01/01 00:00:00",	"NEVER",				0,			 0.0},
-		{"halfday-binary",	"* 12-23 * * *",							"2001/02/03 01:30:00",	"2001/02/03 12:00:00",	0,			 0.0},
-		{"halfday-binary",	nullptr,										"2002/03/05 13:45:00",	"2002/03/06 00:00:00",	0,			 1.0},
-		{"halfday-bimodal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2003/04/07 01:15:00",	"2003/04/07 12:00:00",	0,			 0.25},
-		{"halfday-bimodal",	"* 0-11 * * * 0.25; * 12-23 * * * 0.75;",	"2004/05/09 00:00:00",	"2004/05/09 12:00:00",	0,			 0.25},
-		{"halfday-bimodal",	nullptr,										"2005/06/11 13:20:00",	"2005/06/12 00:00:00",	0,			 0.75},
-		{"halfday-bimodal",	nullptr,										"2006/07/13 12:00:00",	"2006/07/14 00:00:00",	0,			 0.75},
-		{"halfday-bimodal",	nullptr,										"2007/08/15 00:00:00",	"2007/08/15 12:00:00",	0,			 0.25},
-		{"quarterday-normal", "* 0-5 * * *; * 12-17 * * *;",			"2008/09/17 00:00:00",	"2008/09/17 06:00:00",	SN_WEIGHTED, 0.5},
-		{"quarterday-normal", nullptr,										"2009/10/19 06:00:00",	"2009/10/19 12:00:00",	SN_WEIGHTED, 0.0},
-		{"quarterday-normal", nullptr,										"2010/11/21 12:00:00",	"2010/11/21 18:00:00",	SN_WEIGHTED, 0.5},
-		{"quarterday-normal", nullptr,										"2011/12/23 18:00:00",	"2011/12/24 00:00:00",	SN_WEIGHTED, 0.0},
-	};
+			  /* schedule name	schedule definition							sync time				next time expected		normalize	value expected */
+			  {"empty", "", "2000/01/01 00:00:00", "NEVER", 0, 0.0},
+			  {"halfday-binary", "* 12-23 * * *", "2001/02/03 01:30:00", "2001/02/03 12:00:00", 0, 0.0},
+			  {"halfday-binary", nullptr, "2002/03/05 13:45:00", "2002/03/06 00:00:00", 0, 1.0},
+			  {"halfday-bimodal", "* 0-11 * * * 0.25; * 12-23 * * * 0.75;", "2003/04/07 01:15:00", "2003/04/07 12:00:00", 0, 0.25},
+			  {"halfday-bimodal", "* 0-11 * * * 0.25; * 12-23 * * * 0.75;", "2004/05/09 00:00:00", "2004/05/09 12:00:00", 0, 0.25},
+			  {"halfday-bimodal", nullptr, "2005/06/11 13:20:00", "2005/06/12 00:00:00", 0, 0.75},
+			  {"halfday-bimodal", nullptr, "2006/07/13 12:00:00", "2006/07/14 00:00:00", 0, 0.75},
+			  {"halfday-bimodal", nullptr, "2007/08/15 00:00:00", "2007/08/15 12:00:00", 0, 0.25},
+			  {"quarterday-normal", "* 0-5 * * *; * 12-17 * * *;", "2008/09/17 00:00:00", "2008/09/17 06:00:00", SN_WEIGHTED, 0.5},
+			  {"quarterday-normal", nullptr, "2009/10/19 06:00:00", "2009/10/19 12:00:00", SN_WEIGHTED, 0.0},
+			  {"quarterday-normal", nullptr, "2010/11/21 12:00:00", "2010/11/21 18:00:00", SN_WEIGHTED, 0.5},
+			  {"quarterday-normal", nullptr, "2011/12/23 18:00:00", "2011/12/24 00:00:00", SN_WEIGHTED, 0.0},
+		  };
 
 	output_test("\nBEGIN: schedule tests");
 	for (p = test; p < test + sizeof(test) / sizeof(test[0]); p++)
 	{
 		TIMESTAMP t1 = convert_to_timestamp(p->t1);
 		int errors = 0;
-		SCHEDULE* s = schedule_create(p->name, p->def);
+		SCHEDULE *s = schedule_create(p->name, p->def);
 		output_test("Schedule %s { %s } sync to %s...", p->name, p->def ? p->def : (s ? s->definition : "???"), convert_from_timestamp(t1, ts, sizeof(ts)) ? ts : "???");
 		if (s == nullptr)
 		{
@@ -2002,16 +2179,16 @@ int schedule_test(void)
 	return failed;
 }
 
-void schedule_dumpall(char* file)
+void schedule_dumpall(char *file)
 {
-	SCHEDULE* sch;
+	SCHEDULE *sch;
 	for (sch = schedule_list; sch != nullptr; sch = sch->next)
-		schedule_dump(sch, file, const_cast<char*>(sch == schedule_list ? "w" : "a"));
+		schedule_dump(sch, file, const_cast<char *>(sch == schedule_list ? "w" : "a"));
 }
 
-void schedule_dump(SCHEDULE* sch, char* file, char* mode)
+void schedule_dump(SCHEDULE *sch, char *file, char *mode)
 {
-	FILE* fp = fopen(file, mode);
+	FILE *fp = fopen(file, mode);
 	int calendar;
 
 	fprintf(fp, "schedule %s { %s }\n", sch->name, sch->definition);
@@ -2019,19 +2196,20 @@ void schedule_dump(SCHEDULE* sch, char* file, char* mode)
 	for (calendar = 0; calendar < MAXCALENDARS; calendar++)
 	{
 		short year = 0, month, y;
-		int daysinmonth[] = { 31,((calendar & 1) ? 29 : 28),31,30,31,30,31,31,30,31,30,31 };
-		const char* monthname[] = { "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec" };
+		int daysinmonth[] = {31, ((calendar & 1) ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+		const char *monthname[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 		fprintf(fp, "\nYears:");
 		for (y = 1970; y < 2039; y++)
 		{
-			DATETIME dt = { y,0,1,0,0,0 };
+			DATETIME dt = {y, 0, 1, 0, 0, 0};
 			TIMESTAMP ts = mkdatetime(&dt);
 			SCHEDULEINDEX ndx = schedule_index(sch, ts);
 			/* Should error check here - since it is a dump, hopefully someone is watching the console */
 			if (GET_CALENDAR(ndx) == calendar)
 			{
 				fprintf(fp, " %d", y);
-				if (year == 0) year = y;
+				if (year == 0)
+					year = y;
 			}
 		}
 		fprintf(fp, " (calendar %d)\n", calendar);
@@ -2049,14 +2227,14 @@ void schedule_dump(SCHEDULE* sch, char* file, char* mode)
 			{
 				short hour;
 				char wd[] = "SMTWTFSH";
-				DATETIME dt = { year,month,day,0,0,0,0,0,"" };
+				DATETIME dt = {year, month, day, 0, 0, 0, 0, 0, ""};
 				TIMESTAMP ts = mkdatetime(&dt);
 				local_datetime(ts, &dt);
 				fprintf(fp, "      %c %2d", wd[dt.weekday], day + 1);
 				for (hour = 0; hour < 24; hour++)
 				{
 					int minute = 0;
-					DATETIME dt = { year,static_cast<short>(month + 1),static_cast<short>(day + 1),hour,0,0 };
+					DATETIME dt = {year, static_cast<short>(month + 1), static_cast<short>(day + 1), hour, 0, 0};
 					TIMESTAMP ts = mkdatetime(&dt);
 					SCHEDULEINDEX ndx = schedule_index(sch, ts);
 					/* Should error check here - since it is a dump, hopefully someone is watching the console */
@@ -2080,10 +2258,10 @@ void schedule_dump(SCHEDULE* sch, char* file, char* mode)
 	fclose(fp);
 }
 
-int schedule_saveall(FILE* fp)
+int schedule_saveall(FILE *fp)
 {
 	int count = fprintf(fp, "%s\n", "// schedules");
-	SCHEDULE* sch;
+	SCHEDULE *sch;
 	for (sch = schedule_list; sch != nullptr; sch = sch->next)
 		count += fprintf(fp, "schedule %s {\n%s\n}\n", sch->name, sch->definition);
 	return count;

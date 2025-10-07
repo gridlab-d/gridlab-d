@@ -10,6 +10,7 @@ if(WIN32)
 endif()
 
 
+
 set(CMAKE_CXX_STANDARD 23) # Or 14, 11 if 17 is not supported
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

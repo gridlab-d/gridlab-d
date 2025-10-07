@@ -41,10 +41,12 @@
 #include "lock.h"
 #include "threadpool.h"
 #include "exec.h"
+#include "platform.h"
 
 #ifdef _WIN32
 // Windows-specific includes or alternatives
 // #include <windows.h> // For Win32 API functions if needed
+
 #undef min
 #else
 // Unix-like systems
@@ -1110,6 +1112,12 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 	/* should never get here */
 }
 
+// Add this at the top of your file or in an appropriate header
+#ifdef _WIN32
+// Windows-specific includes and definitions
+#define strcasecmp _stricmp
+#endif
+
 /** Set a property value by reference to its name
 	@return the number of characters written to the buffer
  **/
@@ -1117,6 +1125,136 @@ int object_set_value_by_name(OBJECT *obj,		/**< the object to change */
 							 PROPERTYNAME name, /**< the name of the property to change */
 							 char *value)		/**< the value to set */
 {
+	if (global_verbose_mode)
+		std::cerr << "Setting property " << name
+				  << " to value " << value
+				  << " on object type " << obj->oclass->name
+				  << " with id " << obj->id
+				  << std::endl;
+
+	// Step 1: Check if value could be a schedule reference
+	bool might_be_schedule = false;
+	SCHEDULE *sch = nullptr;
+	char schedule_name[64] = "";
+	double scale = 1.0, bias = 0.0;
+
+	// Try to find as direct schedule first
+	sch = schedule_find_byname(value);
+	if (sch != nullptr)
+	{
+		might_be_schedule = true;
+		strncpy(schedule_name, value, sizeof(schedule_name) - 1);
+		schedule_name[sizeof(schedule_name) - 1] = '\0';
+	}
+	// If not found directly, try to parse as an expression
+	else if (parse_schedule_expression(value, schedule_name, sizeof(schedule_name), &scale, &bias))
+	{
+		might_be_schedule = true;
+		// Try to find the schedule by name
+		sch = schedule_find_byname(schedule_name);
+	}
+
+	// Step 2: If it might be a schedule, try to handle it
+	if (might_be_schedule)
+	{
+		// If not found directly, try alternative matching methods
+		if (sch == nullptr && schedule_name[0] != '\0')
+		{
+			// Try to find via alternative methods
+			SCHEDULE *all_sch = nullptr;
+			while ((all_sch = schedule_getnext(all_sch)) != nullptr)
+			{
+				// Case-insensitive compare (cross-platform implementation)
+				const char *s1 = all_sch->name;
+				const char *s2 = schedule_name;
+				bool case_match = true;
+
+				while (*s1 && *s2)
+				{
+					if (tolower((unsigned char)*s1) != tolower((unsigned char)*s2))
+					{
+						case_match = false;
+						break;
+					}
+					s1++;
+					s2++;
+				}
+
+				if ((case_match && *s1 == *s2) || strstr(all_sch->name, schedule_name) != nullptr)
+				{
+					sch = all_sch;
+					if (global_verbose_mode)
+					{
+						std::cerr << "Found schedule via alternative matching: " << all_sch->name << std::endl;
+					}
+					break;
+				}
+			}
+		}
+
+		// If we found a schedule, try to set up a transform
+		if (sch != nullptr)
+		{
+			PROPERTY *prop = class_find_property(obj->oclass, name);
+			if (prop != nullptr)
+			{
+				// Check if property type is compatible with schedules
+				if (prop->ptype == PT_double || prop->ptype == PT_complex ||
+					prop->ptype == PT_loadshape || prop->ptype == PT_enduse)
+				{
+
+					void *target = object_get_addr(obj, name);
+					if (target != nullptr)
+					{
+						// Set up transform
+						int result = transform_add_linear(
+							XS_SCHEDULE,
+							&(sch->value),
+							target,
+							scale,
+							bias,
+							obj,
+							prop,
+							sch);
+
+						if (result)
+						{
+							if (global_verbose_mode)
+							{
+								std::cerr << "Successfully set up schedule transform with scale="
+										  << scale << ", bias=" << bias << std::endl;
+							}
+							return 1; // Success
+						}
+					}
+				}
+			}
+		}
+
+		// If transform setup failed, try manual property setting as fallback
+		if (sch != nullptr)
+		{
+			PROPERTY *prop = class_find_property(obj->oclass, name);
+			if (prop != nullptr && prop->ptype == PT_double)
+			{
+				double init_value = sch->value * scale + bias;
+				char value_str[64];
+				sprintf(value_str, "%f", init_value);
+
+				if (global_verbose_mode)
+				{
+					std::cerr << "Setting " << name << " directly to " << value_str
+							  << " (schedule=" << sch->value
+							  << ", scale=" << scale
+							  << ", bias=" << bias << ")" << std::endl;
+				}
+
+				// Call with numeric value instead of schedule name
+				return object_set_value_by_name(obj, name, value_str);
+			}
+		}
+	}
+
 	void *addr;
 	PROPERTY *prop = class_find_property(obj->oclass, name);
 	if (prop == nullptr)

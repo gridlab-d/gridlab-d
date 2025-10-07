@@ -138,6 +138,15 @@ set(SOURCE_LIST
 add_executable(${GLD_MODULE_NAME} ${SOURCE_LIST})
 
 
+# Place this after your add_executable(gridlabd ...) command
+if(MSVC)
+    # Set the stack size for the gridlabd executable to 16MB.
+    # This is not a hack; it's the proper way to configure an executable
+    # that is known to have deep recursion or large stack-based allocations.
+    target_link_options(gridlabd PRIVATE /STACK:16777216)
+    message(STATUS "MSVC build detected: Increasing stack size for 'gridlabd' to 16MB to support complex models.")
+endif()
+
 
 if(MSVC)
     target_compile_options(gridlabd PRIVATE $<$<CONFIG:Debug>:/Zi /Od>)

@@ -7,16 +7,17 @@
             "request": "launch",
             "program": "${workspaceFolder}/out/build/wsl2-native/bin/gridlabd",
             "args": [
-                "test_double_assert_err",
+                "test_seccntrl_t2IEEE-123_Dynamic.glm",
                 "--verbose"
             ],
-            "cwd": "${workspaceFolder}/assert/autotest/test_double_assert_err",
+            "cwd": "${workspaceFolder}/generators/autotest/test_seccntrl_t2IEEE-123_Dynamic",
             "environment": [
                 {
                     "name": "GLPATH",
                     "value": "${workspaceFolder}/modules/powerflow:${workspaceFolder}/out/build/wsl2-native:${workspaceFolder}/gldcore"
                 }
             ],
+            "MIMode": "gdb",
             "miDebuggerPath": "/usr/bin/gdb",
             "setupCommands": [
                 {
@@ -26,7 +27,7 @@
                 }
             ],
             "stopAtEntry": false,
-            "externalConsole": false
+            "externalConsole": false,
         },
         {
             "name": "Attach to gridlabd",
@@ -40,10 +41,10 @@
             "request": "launch",
             "program": "${workspaceFolder}/out/build/vs-generate-project-files/bin/Debug/gridlabd.exe",
             "args": [
-                "--validate",
+                "test_seccntrl_t2IEEE-123_Dynamic.glm",
                 "--verbose"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/generators/autotest/test_seccntrl_t2IEEE-123_Dynamic",
             "environment": [
                 {
                     "name": "GLPATH",
