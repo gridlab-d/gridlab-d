@@ -1,6 +1,16 @@
 # Transactive Controller
 
-The transactive controller is based upon the design used in the Olympic Peninsula Project1. This controller provides price-responsive controls to individual objects, typically appliances, within GridLAB-D™. The controller compares the current price signal to the average market price, each delivered by the auction object, and bids the appliance’s current demand as a function of price back into the auction. After the market clears all bids within the system and determines the next market price, the controller modifies the appliance’s set points to reflect operation at the new current price, often related to the standard deviation from the average set point. The set point that is modified depends upon the object to which the controller is modifying. At this time, only devices with continuous temperature set points may be used with the controller object. 
+A member of the **Market** module, the Transactive Controller provides price-responsive appliance controls to individual objects, typically appliances, within GridLAB-D™. The transactive controller is based upon the design used in the Olympic Peninsula Project1. The controller compares the current price signal to the average market price, each delivered by the auction object, and bids the appliance’s current demand as a function of price back into the auction. After the market clears all bids within the system and determines the next market price, the controller modifies the appliance’s set points to reflect operation at the new current price, often related to the standard deviation from the average set point. The set point that is modified depends upon the object to which the controller is modifying. At this time, only devices with continuous temperature set points may be used with the controller object. 
+
+## Behavior
+
+The transactive controller is designed to modify a specific set point property based on a combination of ramp settings and the difference between the current and average price of (generally) energy. 
+
+When the simulation starts, the controller first identifies five properties: the set point property, the observation property, the power demand property, the load power property, and the total power property. The set point property is used as the finite output component from the controller's bid strategy, which is controlled with the T and ramp properties. 
+
+The basic strategy of the transactive controller is to allow the setpoint to be automatically increased or decreased by a specified range, in degrees Fahrenheit, based on the controller's input average market price and current market price. As the current price increases in comparison to the average price, the controller will adjust the setpoint to use less power. As the price decreases compared to the average price, the controller will adjust the setpoint to use more power. The propensity of the controller to increase or decrease the setpoint is based on the ramp values, and can be different between the rate at which the setpoint will change as the price goes above the average, and the rate at which the setpoint will change as the price goes below the average. 
+
+Under no circumstances will the setpoint stray outside the boundary ranges imposed with Tmin and Tmax. If the observation extents above or below these values, the system will either shut off or turn on, regardless of the current price of power. 
 
 ## Controller Inputs
 
@@ -15,19 +25,29 @@ _base_setpoint_ | - | This is the temperature set point of the system were there
 _control_mode_ | name | This specifies between the various control modes available. These will be further described later. Available controls are _ramp_ and _double_ramp_.   
 _resolve_mode_ | name | In certain control modes, multiple set points are controlled simultaneously. This specifies how to resolve a conflict between multiple control modes. This will be described in more detail, but will include _deadband_ and _sliding_ resolution modes. When multiple control set points are controlled, typically variables such as range and ramp will need to be specified multiple times, independent of each other.   
 _range_low_ _range_high_ | - | These are the maximum bounds of variability allowed by the controller. For example, the heating_setpoint may vary +/- 5 degrees, but no more. These are relative to the base_setpoint (+5 F), not absolute (72 F). Range_high must be zero or greater and range_low must be zero or less.   
-_ramp_low_ _ramp_high_ | - | This specifies the slope of the linear control algorithm as a function of the average price, the current price, and the standard deviation from the average, and determines the controllers operation and bid. This will be further discussed later. No limit to value.   
+_ramp_low_ _ramp_high_ | - | The ramp value represents the number of standard deviations that the controller will vary its bids by to reach its maximum and minimum bid points, with the 'low' ramp being the limit as the thermostat pushes the setpoint below its base temperature, and the 'high' ramp as the base thermostat setpoint goes up. This specifies the slope of the linear control algorithm as a function of the average price, the current price, and the standard deviation from the average, and determines the controllers operation and bid. This will be further discussed later. No limit to value.   
 _demand_ | property | The property name within the parent object that specifies the amount of power demanded by the controllable object at that time. For HVAC systems, this is heating_demand or cooling_demand.   
 _load_ | property | The property name within the parent object that specifies the amount of power actually being used by the controllable object at the specified time. For HVAC systems, this is hvac_load.   
 _state_ | property | The property name within the parent object that specifies the current conditional state of the controllable object. For the HVAC system, this signifies on or off, however, future implementations may include multi-state objects.   
 _total_ | property | The property name within the parent object that specifies, if any, all uncontrollable loads within that object in addition to the controllable load. For the HVAC model, this includes such things as circulation fan power or standby power settings, and is specified with total_load. It does not include additional panel demand from other appliances.   
 _bid_price_ | $/kWh | This specifies the bidding price for the controller at the given operating points. Must be between negative and positive price cap.   
 _bid_quantity_ | kW | This specifies the amount of power demanded by the object at the determined bid_price. Must be a non-zero positive number.   
-_set_temperature_ | F | This specifies the final determined temperature of the controlled set point after the market has been cleared. Future implementations will allow for multi-state objects to be controlled.   
+_set_temperature_ | F | This specifies the final determined temperature of the controlled set point after the market has been cleared. Future implementations will allow for multi-state objects to be controlled.  
+Tmin & Tmax | The absolute values for the temperature variability from the base setpoint, in degrees. Tmin must be negative and Tmax must be positive. 
 _average_target_ | property | This value points to the property within the auction object which will be used to provide the rolling average price. This is usually determined by a rolling 24 hour average (avg24), a rolling 3-day (avg72), or a rolling week (avg168). Future implementations will allow this rolling average to be determined at any window length. Future implementations will also include the ability to look at variables other than average price and standard deviation.   
-_standard_deviation_target_ | property | Similar to average_target, but specifies the rolling standard deviation.   
-_simple_mode_ | name | This will set all of the default parameters for the controller object to automatically control certain pre-defined objects (HOUSE_HEAT, HOUSE_COOL, HOUSE_PREHEAT, HOUSE_PRECOOL, WATERHEATER). When using this function, only the properties pertaining to the auction object will need to be set.   
-_slider_setting_heat_ _slider_setting_cool_ | double | This is a pre-set slider setting, that allows the user to set all of the range and ramp settings with a single setting. The equations governing this are shown in Table 3. This value ranges between (and includes) 0 - 1, where 1 signifies greater participation, while 0 indicates no participation in the market. Heating and cooling ramps may be set independently.   
+_standard_deviation_target_ | property | Similar to average_target, but specifies the rolling standard deviation.     
+_slider_setting_heat_ _slider_setting_cool_ | double | This is a pre-set slider setting, that allows the user to set all of the range and ramp settings with a single setting. The equations governing this are shown in Table 3. This value ranges between (and includes) 0 - 1, where 1 signifies greater participation, while 0 indicates no participation in the market. Heating and cooling ramps may be set independently.  
 _time_delay_ | seconds | This value will allow the user to set a time delay within the sliding resolution mode. It will determine how long the controller stores the previous state when transitions only occur between HEAT/COOL and OFF. At the end of the time delay, the controller will update to the current system mode. If a transition occurs between HEAT <-> COOL (directly or indirectly), then the resolution should be updated to the current state and the time delay re-set.   
+_simple_mode_ | name | This will set all of the default parameters for the controller object to automatically control certain pre-defined objects (HOUSE_HEAT, HOUSE_COOL, HOUSE_PREHEAT, HOUSE_PRECOOL, WATERHEATER). When using this function, only the properties pertaining to the auction object will need to be set.
+
+Simple Mode pre-defined objects | Description
+--|--
+NONE | This instructs the controller to use the values read in from the model file. This is the default value, since 'simple mode' is meant to be easily overridden. 
+HOUSE_HEAT | This will point the components of the controller to the air heating properties of a house and allow the thermostat to slip up to five degrees cooler until the price reaches two standard deviations above average. 
+HOUSE_COOL | Similar to the house heating mode, this will connect the controller to the air cooling properties and allow the thermostat to slip up to five degrees warmer over two standard deviations. 
+HOUSE_PREHEAT | The house preheat mode observes the heating system of the house, and will adjust the thermostat three degrees warmer or five degrees cooler as the price signal fluctuates across two standard deviations above or below the average price. 
+HOUSE_PRECOOL | The house precool mode will move the thermostat setpoint to cool three degrees lower or to five degrees warmer as the current price varies from two standard deviations below average to two standard deviations above. 
+
   
 ## Description of Operation
 
@@ -278,53 +298,3 @@ Smith, R. G., "The Contract Net Protocol: High-Level Communication and Control i
 [Market Specifications]
 
 [Wholesale_Markets]
-
-
-
-
-# Transactive Controller 
-A member of the Market module, the Transactive Controller provides price-responsive appliance control within GridLAB-D™. By comparing the current price against the average daily price, the controller determines the current monetary demand by the appliance for power to run. The controller bids this value to an [ auction] object, waits for the market to clear, retrieves the current price of power, and updates the appliance's setpoint using that price. 
-
-## Controller Actors
-Parent Appliance
-
-The parent object of the transactive controller is the object where the setpoint, demand, and target properties will be found. Any control actions will be done to the properties pointed at in the parent object. 
-Associated Market
-
-The market referenced by the 'market' property is where the price signals are taken from, for the set point calculations, and is the destination for any energy purchase bids. 
-
-## Behavior
-
-The transactive controller is designed to modify a specific set point property based on a combination of ramp settings and the difference between the current and average price of (generally) energy. 
-
-When the simulation starts, the controller first identifies five properties: the set point property, the observation property, the power demand property, the load power property, and the total power property. The set point property is used as the finite output component from the controller's bid strategy, which is controlled with the T and ramp properties. 
-
-The basic strategy of the transactive controller is to allow the setpoint to be automatically increased or decreased by a specified range, in degrees Fahrenheit, based on the controller's input average market price and current market price. As the current price increases in comparison to the average price, the controller will adjust the setpoint to use less power. As the price decreases compared to the average price, the controller will adjust the setpoint to use more power. The propensity of the controller to increase or decrease the setpoint is based on the ramp values, and can be different between the rate at which the setpoint will change as the price goes above the average, and the rate at which the setpoint will change as the price goes below the average. 
-
-Under no circumstances will the setpoint stray outside the boundary ranges imposed with Tmin and Tmax. If the observation extents above or below these values, the system will either shut off or turn on, regardless of the current price of power. 
-
-## Properties
-
-Property Name | Description   
----|---|
-ramp_low & ramp_high | The ramp value represents the number of standard deviations that the controller will vary its bids by to reach its maximum and minimum bid points, with the 'low' ramp being the limit as the thermostat pushes the setpoint below its base temperature, and the 'high' ramp as the base thermostat setpoint goes up. 
-Tmin & Tmax | The absolute values for the temperature variability from the base setpoint, in degrees. Tmin must be negative and Tmax must be positive. 
-target | The name of the property in the parent to observe and use with the setpoint property to determine appropriate bid prices. 
-setpoint | The name of the property that both contains the base setpoint and should be used to update the thermostat's current, controlled set point. 
-demand | The name of the property that contains the power load currently demanded by the controlled appliance. 
-load | The name of the property with the currently controllable power load within the parent. 
-total | The name of the property with the currently uncontrollable power load within the parent. Needed for bidding reasons. 
-market | The market object the controller uses for price signals and energy market bids. 
-bid_price | Output value. The bidding price used by this controller in the last timestep. 
-bid_quant | Output value. The bidding quantity used by this controller in the last timestep. 
-set_temp | Output value. The current result for the finite output calculation. 
-base_setpoint | The base setpoint to use for the controller. Effectively overrides the use of the property pointed to with "setpoint". Players should point to this value instead of the parent's setpoint. 
-simple_mode | "Simple mode" is meant to provide a quick way to set up the transactive controller for particular applications when attached to the HVAC system of a house object. 
-NONE | This instructs the controller to use the values read in from the model file. This is the default value, since 'simple mode' is meant to be easily overridden. 
-HOUSE_HEAT | This will point the components of the controller to the air heating properties of a house and allow the thermostat to slip up to five degrees cooler until the price reaches two standard deviations above average. 
-HOUSE_COOL | Similar to the house heating mode, this will connect the controller to the air cooling properties and allow the thermostat to slip up to five degrees warmer over two standard deviations. 
-HOUSE_PREHEAT | The house preheat mode observes the heating system of the house, and will adjust the thermostat three degrees warmer or five degrees cooler as the price signal fluctuates across two standard deviations above or below the average price. 
-HOUSE_PRECOOL | The house precool mode will move the thermostat setpoint to cool three degrees lower or to five degrees warmer as the current price varies from two standard deviations below average to two standard deviations above. 
-
-
-  
