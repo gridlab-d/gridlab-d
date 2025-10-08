@@ -220,7 +220,7 @@ nav:
     - Placeholder: docs/6.0 Examples/placeholder.md
   - 7.0 References:
     - Specs:
-      - Communications: docs/7.0 References/Specs/Spec-Communicatins.md
+      - Spec:Communications: docs/7.0 References/Specs/Spec-Communicatins.md
       - Spec:Commercial: docs/7.0 References/Specs/Spec_Commercial.md
       - Spec:Dishwasher: docs/7.0 References/Specs/Spec_Dishwasher.md
       - Spec:GUI: docs/7.0 References/Specs/Spec_GUI.md
