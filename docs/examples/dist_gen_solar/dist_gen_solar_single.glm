@@ -1,0 +1,965 @@
+module powerflow {
+     solver_method NR;
+     NR_iteration_limit 50;
+};
+
+
+clock {
+     timezone PST+8PDT;
+     starttime '2009-08-08 04:30:00';
+     stoptime '2009-08-09 04:30:00';
+}
+
+module tape;
+module climate;
+module residential{
+	implicit_enduses NONE;
+};
+module generators;
+
+#include "../../Shared Model Files/appliance_schedules.glm";
+
+object climate {
+	name "Spokane WA";
+	tmyfile "../../Shared Model Files/WA-Spokane-24157.tmy2";
+	interpolate LINEAR;
+}
+
+//Configurations
+object line_configuration {     
+      name line_configuration_1;     
+      conductor_A overhead_line_conductor_1;     
+      conductor_B overhead_line_conductor_1;     
+      conductor_C overhead_line_conductor_1;     
+      conductor_N overhead_line_conductor_1;     
+      spacing line_spacing_1;     
+} 
+object line_configuration {     
+      name line_configuration_2;     
+      conductor_A underground_line_conductor_1;     
+      conductor_B underground_line_conductor_1;     
+      conductor_C underground_line_conductor_1;     
+      conductor_N underground_line_conductor_1;     
+      spacing line_spacing_2;     
+} 
+object line_spacing {     
+      name line_spacing_1;     
+      distance_AB 57.6 in;    
+      distance_BC 57.6 in;    
+      distance_AC 57.6 in;    
+      distance_AN 51.6 in;    
+      distance_BN 51.6 in;    
+      distance_CN 51.6 in;    
+}  
+object line_spacing {     
+      name line_spacing_2;     
+      distance_AB 24 in;    
+      distance_BC 24 in;    
+      distance_AC 48 in;    
+      distance_AN 60 in;    
+      distance_BN 48 in;    
+      distance_CN 24 in;    
+} 
+object overhead_line_conductor {     
+      name overhead_line_conductor_1;      
+      rating.summer.continuous 256.0;     
+      geometric_mean_radius 0.01200 ft;    
+      resistance 0.1;     
+}  
+object underground_line_conductor {     
+    name underground_line_conductor_1;      
+	outer_diameter 2.20;
+	conductor_gmr 0.04;
+	conductor_diameter 1.2500;
+	conductor_resistance 0.109;
+	neutral_gmr 0.005;
+	neutral_resistance 9.6;
+	neutral_diameter 0.19;
+	neutral_strands 20;
+	shield_gmr 0;
+	shield_resistance 0;    
+} 
+object overhead_line_conductor {     
+      name overhead_line_conductor_2;      
+  	  rating.summer.continuous 150.0;     
+      geometric_mean_radius 0.02200 ft;    
+      resistance 0.2;     
+}
+object transformer_configuration {
+    	name substation_transformer_config;
+    	connect_type WYE_WYE;
+     	install_type PADMOUNT;
+     	primary_voltage 132790;
+     	secondary_voltage 7216;
+     	power_rating 8.4 MVA;
+     	impedance 0.00033+0.0022j;
+}
+object transformer_configuration {
+     name house_transformer;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type PADMOUNT;
+     primary_voltage 7200 V;
+     secondary_voltage 124 V;
+     power_rating 250;
+     powerA_rating 250;
+     impedance 0.015+0.0675j;
+}
+object triplex_line_configuration {
+      name triplex_line_config;
+      conductor_1 Name_1_0_AA_triplex;
+      conductor_2 Name_1_0_AA_triplex;
+      conductor_N Name_1_0_AA_triplex;
+      insulation_thickness 0.1;
+      diameter 0.4;
+}
+object triplex_line_conductor {
+      name Name_1_0_AA_triplex;
+      resistance 0.57;
+      geometric_mean_radius 0.0111;
+}
+
+
+//Feeder head
+object node {
+	name feeder_head;
+	bustype SWING;
+	phases ABCN;
+    nominal_voltage 132790;
+}
+object transformer {
+     name substation_transformer;
+     from feeder_head;
+     to substation_meter;
+     phases ABCN;
+     configuration substation_transformer_config;
+}
+
+object meter {     
+      name substation_meter;     
+      phases ABCN;     
+      nominal_voltage 7216.88;         
+} 
+
+
+//Branch 1
+object overhead_line {     
+      name branch_1_line_1;     
+      phases ABCN;     
+      from substation_meter;     
+      to branch_1_meter_1;     
+      length 10000;     
+      configuration line_configuration_1;     
+} 
+object meter {     
+      name branch_1_meter_1; 
+      groupid branch_1_meter;    
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+}
+
+// Branch 1 house 1 
+object transformer {
+     name b1m1_house_trans;
+     phases AS;
+     from branch_1_meter_1;
+     to b1m1_house_node;
+     configuration house_transformer;
+}
+object triplex_meter {     
+     name b1m1_house_node;
+     phases AS;
+     nominal_voltage 124.00;     
+} 
+object triplex_line {
+     name b1m1_tl;
+     from b1m1_house_node;
+     to b1m1_house_meter;
+     phases AS;
+     length 10;
+     configuration triplex_line_config;
+}
+object triplex_meter {     
+     name b1m1_house_meter;
+     phases AS;
+     nominal_voltage 124.00;     
+} 
+object house {
+     name b1m1_house;
+     parent b1m1_house_meter;
+     thermal_integrity_level LITTLE;
+     hvac_power_factor 0.97;
+     cooling_COP 3.90;
+     floor_area 1040;
+	 cooling_setpoint 75;
+	 thermostat_deadband 2;
+	 air_temperature 72.5;
+	 object ZIPload {
+          schedule_skew -685;
+          base_power LIGHTS*1.8752;
+          power_fraction 0.600000;
+          impedance_fraction 0.400000;
+          current_fraction 0.000000;
+          power_pf -0.780;
+          current_pf 0.420;
+          impedance_pf -0.880;
+          heat_fraction 0.91;
+     };
+     object ZIPload {
+          schedule_skew -685;
+          base_power CLOTHESWASHER*0.4354;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.70;
+     };
+     object ZIPload {
+          schedule_skew -685;
+          base_power REFRIGERATOR*0.7763;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.86;
+     };
+     object ZIPload {
+          schedule_skew -685;
+          base_power DRYER*1.0019;
+          power_fraction 0.100000;
+          impedance_fraction 0.800000;
+          current_fraction 0.100000;
+          power_pf 0.900;
+          current_pf 0.900;
+          impedance_pf 1.000;
+          heat_fraction 0.77;
+     };
+     object ZIPload {
+          schedule_skew -685;
+          base_power FREEZER*0.9110;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.80;
+     };
+     object ZIPload {
+          schedule_skew -685;
+          base_power RANGE*1.0590;
+          power_fraction 0.000000;
+          impedance_fraction 1.000000;
+          current_fraction 0.000000;
+          power_pf 0.000;
+          current_pf 0.000;
+          impedance_pf 1.000;
+          heat_fraction 0.86;
+     };
+     object ZIPload {
+          schedule_skew -685;
+          base_power MICROWAVE*0.6381;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.94;
+     };
+}
+//Distributed generation connection
+object triplex_line {
+     name b1m1_tl_solar;
+     from b1m1_house_node;
+     to b1m1_solar_meter;
+     phases AS;
+     length 10;
+     configuration triplex_line_config;
+}
+object triplex_meter {     
+     name b1m1_solar_meter;
+     phases AS;
+     nominal_voltage 124.00;     
+} 
+object inverter {
+	name b1m1_solar_inv;
+	phases AS;
+	parent b1m1_solar_meter;
+	generator_status ONLINE;
+	inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PF;
+    generator_mode SUPPLY_DRIVEN;
+    inverter_efficiency .95;
+	rated_power 6000;
+}
+object solar {
+	name b1m1_solar;
+	phases AS;
+	parent b1m1_solar_inv;
+	generator_status ONLINE;
+	generator_mode SUPPLY_DRIVEN;
+	panel_type SINGLE_CRYSTAL_SILICON;
+	area 250 ft^2;
+	tilt_angle 47.0;
+	efficiency 0.135;
+	orientation_azimuth 180; //equator-facing (South)
+	orientation FIXED_AXIS;
+	SOLAR_TILT_MODEL SOLPOS;
+	SOLAR_POWER_MODEL FLATPLATE;
+}
+
+	 
+object overhead_line {     
+      name branch_1_line_2;     
+      phases ABCN;     
+      from branch_1_meter_1;     
+      to branch_1_meter_2;     
+      length 5000;     
+      configuration line_configuration_1;     
+} 
+object meter {     
+      name branch_1_meter_2;  
+      groupid branch_1_meter;   
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+} 
+
+// Branch 1 house 2
+object transformer {
+     name b1m2_house_trans;
+     phases AS;
+     from branch_1_meter_2;
+     to b1m2_house_node;
+     configuration house_transformer;
+}
+object triplex_meter {     
+     name b1m2_house_node;
+     phases AS;
+     nominal_voltage 124.00;     
+} 
+object triplex_line {
+	 name b1m2_tl;
+     from b1m2_house_node;
+     to b1m2_house_meter;
+     phases AS;
+     length 10;
+     configuration triplex_line_config;
+}
+object triplex_meter {     
+     name b1m2_house_meter;
+     phases AS;
+     nominal_voltage 124.00;     
+} 
+object house {
+     name b1m2_house;
+     parent b1m2_house_meter;
+	 Rroof 40;
+	 window_wall_ratio 0.5;
+	 over_sizing_factor 1.3;
+	 cooling_setpoint 73;
+	 thermostat_deadband 2.5;
+	 air_temperature 72;
+	 object ZIPload {
+          schedule_skew 35;
+          base_power LIGHTS*1.9408;
+          power_fraction 0.600000;
+          impedance_fraction 0.400000;
+          current_fraction 0.000000;
+          power_pf -0.780;
+          current_pf 0.420;
+          impedance_pf -0.880;
+          heat_fraction 0.88;
+     };
+     object ZIPload {
+          schedule_skew 35;
+          base_power CLOTHESWASHER*0.8239;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.81;
+     };
+     object ZIPload {
+          schedule_skew 35;
+          base_power REFRIGERATOR*0.4240;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.93;
+     };
+     object ZIPload {
+          schedule_skew 35;
+          base_power DRYER*0.8937;
+          power_fraction 0.100000;
+          impedance_fraction 0.800000;
+          current_fraction 0.100000;
+          power_pf 0.900;
+          current_pf 0.900;
+          impedance_pf 1.000;
+          heat_fraction 0.93;
+     };
+     object ZIPload {
+          schedule_skew 35;
+          base_power FREEZER*0.3775;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.65;
+     };
+     object ZIPload {
+          schedule_skew 35;
+          base_power RANGE*0.7730;
+          power_fraction 0.000000;
+          impedance_fraction 1.000000;
+          current_fraction 0.000000;
+          power_pf 0.000;
+          current_pf 0.000;
+          impedance_pf 1.000;
+          heat_fraction 0.79;
+     };
+     object ZIPload {
+          schedule_skew 35;
+          base_power MICROWAVE*0.3543;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.80;
+     };
+}
+
+
+object overhead_line {     
+      name branch_1_line_3;     
+      phases ABCN;     
+      from branch_1_meter_2;     
+      to branch_1_meter_3;     
+      length 15000;     
+      configuration line_configuration_1;     
+} 
+object meter {     
+      name branch_1_meter_3;  
+      groupid branch_1_meter;   
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+} 
+
+//Branch 1 house 3
+object transformer {
+     name b1m3_house_trans;
+     phases AS;
+     from branch_1_meter_3;
+     to b1m3_house_meter;
+     configuration house_transformer;
+}
+object triplex_meter {   
+     name b1m3_house_meter;
+     phases AS;
+     nominal_voltage 124.00;     
+} 
+object house {
+     name b1m3_house;
+     parent b1m3_house_meter;
+	 hvac_motor_efficiency 0.3;
+	 Rwall 20;
+	 glass_type GLASS;
+	 ceiling_height 12;
+	 cooling_setpoint 73;
+	 thermostat_deadband 2.5;
+	 air_temperature 72;
+	 object ZIPload {
+          schedule_skew 260;
+          base_power LIGHTS*2.2355;
+          power_fraction 0.600000;
+          impedance_fraction 0.400000;
+          current_fraction 0.000000;
+          power_pf -0.780;
+          current_pf 0.420;
+          impedance_pf -0.880;
+          heat_fraction 0.76;
+     };
+     object ZIPload {
+          schedule_skew 260;
+          base_power CLOTHESWASHER*0.8669;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.66;
+     };
+     object ZIPload {
+          schedule_skew 260;
+          base_power REFRIGERATOR*1.2708;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.79;
+     };
+     object ZIPload {
+          schedule_skew 260;
+          base_power DRYER*1.0217;
+          power_fraction 0.100000;
+          impedance_fraction 0.800000;
+          current_fraction 0.100000;
+          power_pf 0.900;
+          current_pf 0.900;
+          impedance_pf 1.000;
+          heat_fraction 0.93;
+     };
+     object ZIPload {
+          schedule_skew 260;
+          base_power FREEZER*1.3624;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.94;
+     };
+     object ZIPload {
+          schedule_skew 260;
+          base_power RANGE*0.8736;
+          power_fraction 0.000000;
+          impedance_fraction 1.000000;
+          current_fraction 0.000000;
+          power_pf 0.000;
+          current_pf 0.000;
+          impedance_pf 1.000;
+          heat_fraction 0.86;
+     };
+     object ZIPload {
+          schedule_skew 260;
+          base_power MICROWAVE*2.0009;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.90;
+     };
+}
+
+
+//Branch 2
+object overhead_line {     
+      name branch_2_line_1;     
+      phases ABCN;     
+      from substation_meter;     
+      to branch_2_meter_1;     
+      length 10000;     
+      configuration line_configuration_1;     
+} 
+object meter {     
+      name branch_2_meter_1; 
+      groupid branch_2_meter;    
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+} 
+
+//Branch 2 house 1
+object transformer {
+     name b2m1_house_trans;
+     phases AS;
+     from branch_2_meter_1;
+     to b2m1_house_meter;
+     configuration house_transformer;
+}
+object triplex_meter {     
+     name b2m1_house_meter;
+     phases AS;
+     nominal_voltage 124.00;     
+} 
+object house {
+     name b2m1_house;
+     parent b2m1_house_meter;
+	 latent_load_fraction 0.45;
+	 duct_pressure_drop 0.7;
+	 number_of_stories 3;
+	 cooling_setpoint 72;
+	 thermostat_deadband 2.5;
+	 air_temperature 71.5;
+	 object ZIPload {
+          schedule_skew 434;
+          base_power LIGHTS*4.1069;
+          power_fraction 0.000000;
+          impedance_fraction 1.000000;
+          current_fraction 0.000000;
+          power_pf 0.000;
+          current_pf 0.000;
+          impedance_pf 1.000;
+          heat_fraction 0.67;
+     };
+     object ZIPload {
+          schedule_skew 434;
+          base_power CLOTHESWASHER*1.3204;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.80;
+     };
+     object ZIPload {
+          schedule_skew 434;
+          base_power REFRIGERATOR*1.4569;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.82;
+     };
+     object ZIPload {
+          schedule_skew 434;
+          base_power DRYER*1.0100;
+          power_fraction 0.100000;
+          impedance_fraction 0.800000;
+          current_fraction 0.100000;
+          power_pf 0.900;
+          current_pf 0.900;
+          impedance_pf 1.000;
+          heat_fraction 0.65;
+     };
+     object ZIPload {
+          schedule_skew 434;
+          base_power FREEZER*0.9152;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.72;
+     };
+     object ZIPload {
+          schedule_skew 434;
+          base_power RANGE*1.0532;
+          power_fraction 0.000000;
+          impedance_fraction 1.000000;
+          current_fraction 0.000000;
+          power_pf 0.000;
+          current_pf 0.000;
+          impedance_pf 1.000;
+          heat_fraction 0.87;
+     };
+     object ZIPload {
+          schedule_skew 434;
+          base_power MICROWAVE*1.3023;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.92;
+     };
+}
+
+object overhead_line {     
+      name branch_2_line_2;     
+      phases ABCN;     
+      from branch_2_meter_1;     
+      to branch_2_meter_2;     
+      length 5000;     
+      configuration line_configuration_1;     
+} 
+object meter {     
+      name branch_2_meter_2;
+      groupid branch_2_meter;    
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+} 
+
+//Branch 2 house 2
+object transformer {
+     name b122_house_trans;
+     phases AS;
+     from branch_2_meter_2;
+     to b2m2_house_node;
+     configuration house_transformer;
+}
+object triplex_meter {     
+     name b2m2_house_node;
+     phases AS;
+     nominal_voltage 124.00;     
+} 
+object triplex_line {
+     name b2m2_tl;
+     from b2m2_house_node;
+     to b2m2_house_meter;
+     phases AS;
+     length 10;
+     configuration triplex_line_config;
+}
+object triplex_meter {     
+     name b2m2_house_meter;
+     phases AS;
+     nominal_voltage 124.00;     
+} 
+object house {
+     name b2m2_house;
+     parent b2m2_house_meter;
+	 total_thermal_mass_per_floor_area 2.7;
+	 Rwall 13.5;
+	 cooling_setpoint 74;
+	 thermostat_deadband 2;
+	 air_temperature 73;
+	 object ZIPload {
+          schedule_skew -748;
+          base_power LIGHTS*1.7590;
+          power_fraction 0.000000;
+          impedance_fraction 1.000000;
+          current_fraction 0.000000;
+          power_pf 0.000;
+          current_pf 0.000;
+          impedance_pf 1.000;
+          heat_fraction 0.65;
+     };
+     object ZIPload {
+          schedule_skew -748;
+          base_power CLOTHESWASHER*0.5772;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.87;
+     };
+     object ZIPload {
+          schedule_skew -748;
+          base_power REFRIGERATOR*0.6797;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.80;
+     };
+     object ZIPload {
+          schedule_skew -748;
+          base_power DRYER*0.7914;
+          power_fraction 0.100000;
+          impedance_fraction 0.800000;
+          current_fraction 0.100000;
+          power_pf 0.900;
+          current_pf 0.900;
+          impedance_pf 1.000;
+          heat_fraction 0.66;
+     };
+     object ZIPload {
+          schedule_skew -748;
+          base_power FREEZER*0.4258;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.75;
+     };
+     object ZIPload {
+          schedule_skew -748;
+          base_power RANGE*0.6813;
+          power_fraction 0.000000;
+          impedance_fraction 1.000000;
+          current_fraction 0.000000;
+          power_pf 0.000;
+          current_pf 0.000;
+          impedance_pf 1.000;
+          heat_fraction 0.78;
+     };
+     object ZIPload {
+          schedule_skew -748;
+          base_power MICROWAVE*0.7537;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.81;
+     };
+}
+
+
+object overhead_line {     
+      name branch_2_line_3;     
+      phases ABCN;     
+      from branch_2_meter_2;     
+      to branch_2_meter_3;     
+      length 15000;     
+      configuration line_configuration_1;     
+} 
+object meter {     
+      name branch_2_meter_3; 
+      groupid branch_2_meter;    
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+} 
+
+//Branch 2 house 3
+object transformer {
+     name b2m3_house_trans;
+     phases AS;
+     from branch_2_meter_3;
+     to b2m3_house_meter;
+     configuration house_transformer;
+}
+object triplex_meter {     
+     name b2m3_house_meter;
+     phases AS;
+     nominal_voltage 124.00;     
+} 
+object house {
+     name b2m3_house;
+     parent b2m3_house_meter;
+	 window_frame ALUMINUM;
+	 aspect_ratio 3;
+	 airchange_per_hour 0.8;
+	 cooling_setpoint 73.5;
+	 thermostat_deadband 1.5;
+	 air_temperature 73;
+	 object ZIPload {
+          schedule_skew -1557;
+          base_power LIGHTS*1.5860;
+          power_fraction 0.000000;
+          impedance_fraction 1.000000;
+          current_fraction 0.000000;
+          power_pf 0.000;
+          current_pf 0.000;
+          impedance_pf 1.000;
+          heat_fraction 0.88;
+     };
+     object ZIPload {
+          schedule_skew -1557;
+          base_power CLOTHESWASHER*1.0618;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.77;
+     };
+     object ZIPload {
+          schedule_skew -1557;
+          base_power REFRIGERATOR*0.8285;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.86;
+     };
+     object ZIPload {
+          schedule_skew -1557;
+          base_power DRYER*0.8905;
+          power_fraction 0.100000;
+          impedance_fraction 0.800000;
+          current_fraction 0.100000;
+          power_pf 0.900;
+          current_pf 0.900;
+          impedance_pf 1.000;
+          heat_fraction 0.72;
+     };
+     object ZIPload {
+          schedule_skew -1557;
+          base_power FREEZER*0.8028;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.78;
+     };
+     object ZIPload {
+          schedule_skew -1557;
+          base_power RANGE*0.3977;
+          power_fraction 0.000000;
+          impedance_fraction 1.000000;
+          current_fraction 0.000000;
+          power_pf 0.000;
+          current_pf 0.000;
+          impedance_pf 1.000;
+          heat_fraction 0.65;
+     };
+     object ZIPload {
+          schedule_skew -1557;
+          base_power MICROWAVE*0.5787;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.77;
+     };
+}
+
+
+//Recorders
+object recorder {
+	name substation_recorder;
+	parent substation_meter;
+     file substation_data.csv;
+     interval 5;
+     property measured_voltage_A, measured_current_A, measured_power_A.real, measured_power_A.imag;
+} 
+object multi_recorder{
+	name house_load;
+	file house_load.csv;
+	interval 5;
+	property b1m1_house_meter:measured_real_power, b1m2_house_meter:measured_real_power;
+}
+object multi_recorder{
+	name house_temperatures;
+	file house_temperatures.csv;
+	interval 5;
+	property b1m1_house:air_temperature, b1m2_house:air_temperature, b1m3_house:air_temperature, b2m1_house:air_temperature, b2m2_house:air_temperature, b2m3_house:air_temperature;
+}
+object multi_recorder{
+	name b1m1_house_data;
+	file b1m1_house_data.csv;
+	interval 5;
+	property b1m1_house:air_temperature, b1m1_house:outdoor_temperature, b1m1_house:is_COOL_on, b1m1_house:cooling_setpoint, b1m1_house_node:measured_real_power, b1m1_house_node:measured_real_energy, b1m1_solar_inv:VA_Out.real, b1m1_solar_meter:measured_real_energy;
+}
+object multi_recorder{
+	name b2m3_house_data;
+	file b2m3_house_data.csv;
+	interval 5;
+	property b2m3_house:air_temperature, b2m3_house:outdoor_temperature, b2m3_house:is_COOL_on, b2m3_house:cooling_setpoint, b2m3_house_meter:measured_real_power, b2m3_house_meter:measured_real_energy;
+}
+object recorder {
+	name climate_recorder;
+	parent "Spokane WA";
+     file climate_data.csv;
+     interval 5;
+     property temperature, humidity, solar_direct, extraterrestrial_direct_normal;
+} 

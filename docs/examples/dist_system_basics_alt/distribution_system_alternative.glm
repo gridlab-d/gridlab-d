@@ -1,0 +1,106 @@
+module powerflow {
+     solver_method NR;
+     NR_iteration_limit 50;
+};
+module tape;
+
+
+clock {
+     timezone PST+8PDT;
+     starttime '2009-01-01 00:00:00';
+     stoptime '2009-01-01 01:00:00';
+}
+
+object node {
+	name feeder_head;
+	bustype SWING;
+	phases A|B|C|N;
+    nominal_voltage 132790;
+}
+
+object transformer {
+     name substation_transformer;
+     from feeder_head;
+     to "substation meter";
+     phases ABCN;
+     configuration substation_transformer_config;
+}
+
+object transformer_configuration {
+    	name substation_transformer_config;
+    	connect_type WYE_WYE;
+     	install_type PADMOUNT;
+     	primary_voltage 132790;
+     	secondary_voltage 7216;
+     	power_rating 8.4 MVA;
+     	impedance 0.00033+0.0022j;
+     }
+
+object meter {     
+      name "substation meter";     
+      phases ABCN;     
+      nominal_voltage 7.21688 kV;       
+} 
+
+object recorder {
+     	name substation_recorder;
+     	parent "substation meter";
+     	file "substation data alt.csv";
+     	interval 60;
+     	property measured_voltage_A.real, measured_voltage_A.imag, measured_current_A.real, measured_current_A.imag, measured_power_A.real, measured_power_A.imag;
+}
+
+object overhead_line {     
+      name feeder_backbone;     
+      phases ABCN;     
+      from "substation meter";     
+      to load_meter;     
+      length 3.048 km;   
+      configuration "line configuration 1";     
+} 
+
+object line_configuration {     
+      name "line configuration 1";     
+      conductor_A overhead_line_conductor_1;     
+      conductor_B overhead_line_conductor_1;     
+      conductor_C overhead_line_conductor_1;     
+      conductor_N overhead_line_conductor_1;     
+      spacing line_spacing_1;     
+} 
+
+object line_spacing {     
+      name line_spacing_1;     
+      distance_AB 57.6 in;    
+      distance_BC 57.6 in;    
+      distance_AC 57.6 in;    
+      distance_AN 51.6 in;    
+      distance_BN 51.6 in;    
+      distance_CN 51.6 in;    
+}  
+
+object overhead_line_conductor {     
+      name overhead_line_conductor_1;      
+      rating.summer.continuous 256.0;     
+      geometric_mean_radius 0.01200 ft;    
+      resistance 0.1;     
+}  
+
+object meter {     
+      name load_meter;     
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+      object recorder {
+     	name load_recorder;
+     	file "load data alt.csv";
+     	interval 60;
+     	property measured_voltage_A.real, measured_voltage_A.imag, measured_current_A.real, measured_current_A.imag, measured_power_A.real, measured_power_A.imag;
+	};
+} 
+
+object load {
+     parent load_meter;
+     name feeder_load;
+     nominal_voltage 7216.88;
+     phases ABC;
+	constant_power_A 345.481+158.342j kVA;
+}

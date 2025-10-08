@@ -1,0 +1,4 @@
+- Model name: two_house.glm
+- Model source: Trevor's computer (I used it at some point for an unknown reason)
+- Supporting narrative source: none
+- Example purpose: Demonstrates unpowering houses by deactivating meters and allowing the thermodynamics of the house to continue.

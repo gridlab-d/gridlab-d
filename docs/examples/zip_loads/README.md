@@ -1,0 +1,4 @@
+- Model name: zip_loads.glm
+- Model source: [GLD Tutorial Chapter 5](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%205%20-%20Loads/ZIP%20Loads/zip_loads.glm)
+- Supporting narrative source: [GLD Tutorial Chapter 5](https://gridlab-d.shoutwiki.com/wiki/GridLAB-D_Wiki:GridLAB-D_Tutorial_Chapter_5_-_Loads)
+- Example purpose: Demonstrates the use of ZIP loads.
