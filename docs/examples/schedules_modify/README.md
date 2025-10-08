@@ -1,0 +1,4 @@
+- Model name: schedules_modify.glm
+- Model source: [GLD Tutorial Chapter 4](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%204%20-%20Recorders%20and%20Players/Schedules/Modify/schedules-modify.glm)
+- Supporting narrative source: [GLD Tutorial Chapter 4](https://gridlab-d.shoutwiki.com/wiki/GridLAB-D_Wiki:GridLAB-D_Tutorial_Chapter_4_-_Data_Input_and_Output)
+- Example purpose: Demonstrates the use of a schedule to modify a parameters value such that it changes in time.

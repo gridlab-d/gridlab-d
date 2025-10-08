@@ -1,0 +1,4 @@
+- Model name: distribution_system_alternative.glm
+- Model source: [GLD Tutorial Chapter 3](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%203%20-%20Basic%20Electrical%20Distribution%20Systems/Distribution%20system%20basics/distribution_system_basics.glm)
+- Supporting narrative source: [GLD Tutorial Chapter 3](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%203%20-%20Basic%20Electrical%20Distribution%20Systems/Distribution%20systems%20alternative%20forms/distribution_system_alternative.glm)
+- Example purpose: Shows supported alternative forms of representing objects in a .glm, such as quoting strings, embedding objects instead of their own object, recording real and imaginary parts of a measurement separately, and alternative phase notation.

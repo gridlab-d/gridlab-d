@@ -1,0 +1,4 @@
+- Model name: dist_gen_solar_single.glm
+- Model source: [GLD Tutorial Chapter 6](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%206%20-%20Distributed%20Generation/Distributed%20Generation%20-%20Load-Following/dist_gen_load_following.glm)
+- Supporting narrative source: [GLD Tutorial Chapter 6](https://gridlab-d.shoutwiki.com/wiki/GridLAB-D_Wiki:GridLAB-D_Tutorial_Chapter_6_-_Distributed_Generation)
+- Example purpose: Demonstrates the inverter load-following controls using a battery.

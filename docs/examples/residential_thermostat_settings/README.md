@@ -1,0 +1,4 @@
+- Model name: residential_load_thermostats.glm
+- Model source: [GLD Tutorial Chapter 5](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%205%20-%20Loads/Residential%20Loads%20-%20Location/residential_load_location.glm)
+- Supporting narrative source: [GLD Tutorial Chapter 5](https://gridlab-d.shoutwiki.com/wiki/GridLAB-D_Wiki:GridLAB-D_Tutorial_Chapter_5_-_Loads)
+- Example purpose: Demonstrates the impact of thermostat setting on indoor air temperature (doesn't close the loop, though, to energy consumption, which would be good.)

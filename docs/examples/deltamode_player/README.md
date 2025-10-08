@@ -1,0 +1,4 @@
+- Model name: simple_system_Motors.glm
+- Model source: Trevor's computer
+- Supporting narrative source: none
+- Example purpose: Shows how to trigger deltamode through the use of a player file.

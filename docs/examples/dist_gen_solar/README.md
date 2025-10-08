@@ -1,0 +1,4 @@
+- Model name: dist_gen_solar_single.glm and dist_gen_solar_all.glm
+- Model source: [GLD Tutorial Chapter 6](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%206%20-%20Distributed%20Generation/Distributed%20Generation%20-%20Solar/dist_gen_solar_single.glm) and [GLD Tutorial Chapter 6](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%206%20-%20Distributed%20Generation/Distributed%20Generation%20-%20Solar/dist_gen_solar_all.glm)
+- Supporting narrative source: [GLD Tutorial Chapter 6](https://gridlab-d.shoutwiki.com/wiki/GridLAB-D_Wiki:GridLAB-D_Tutorial_Chapter_6_-_Distributed_Generation)
+- Example purpose: Demonstrates the of solar generation model installed on a single house and on a set of houses.

@@ -1,0 +1,207 @@
+//Simple test system
+#set profiler=1
+//#set pauseatexit=1
+#set randomseed=39;
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-08-01 12:00:00 PDT';
+	//stoptime '2001-08-01 12:00:03 PDT';
+	stoptime '2001-08-01 12:00:05 PDT';
+}
+
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+
+//Deltamode declarations - global values
+#set deltamode_maximumtime=5000000000000
+#set deltamode_iteration_limit=10
+
+#define recorder_filename="MotorLoad.csv"
+
+module tape;
+module reliability {
+	enable_subsecond_models true;
+	maximum_event_length 1800000;
+	report_event_log false;
+}
+module powerflow {
+	solver_method NR;
+	enable_subsecond_models true;
+	all_powerflow_delta true;
+	enable_frequency_dependence true;
+	deltamode_timestep 0.2000 ms;
+	maximum_voltage_error 1e-9;
+	lu_solver KLU_x64;
+	//enable_inrush true;
+}
+
+//include configurations
+#include "data_configurations_delta_123node.glm";
+
+//Fault check object
+object fault_check {
+	name base_fault_check_object;
+	check_mode ONCHANGE;
+	strictly_radial false;
+	eventgen_object eventgenObj1;
+	grid_association true;
+}
+
+object eventgen {
+	flags DELTAMODE;
+	name eventgenObj1;
+	fault_type "SW-ABC";
+	manual_outages "InRushSwitch,2001-08-01 12:00:00 PDT,2001-08-01 12:00:00.315 PDT";
+}
+
+object motor {
+name TPIM;
+parent LoadNode;
+phases ABCN;
+frequency_measure_type PLL;
+base_power 35000.0;
+motor_trip true;
+reconnect_time 100 s;
+trip_time 0.5;
+nominal_voltage 2401.777;
+uv_relay_install UNINSTALLED;
+contactor_open_Vmin 0.6;
+contactor_close_Vmax 0.9;
+
+}
+
+//object motor {
+//name SPIM;
+//parent LoadNode;
+//phases AN;
+//frequency_measure_type PLL;
+//base_power 35000.0;
+//motor_trip true;
+//reconnect_time 100 s;
+//trip_time 0.5;
+//nominal_voltage 2401.777;
+//uv_relay_install INSTALLED;
+//uv_relay_trip_time 0.02;
+//uv_relay_trip_V 0.6;
+//}
+
+
+//Base system objects -- nodes
+object meter {
+	phases ABCN;
+	name SwingNode;
+	bustype SWING;
+	nominal_voltage 2401.777;
+}
+
+object meter {
+	phases ABCN;
+	name TopSwitchNode;
+	nominal_voltage 2401.777;
+}
+
+object meter {
+	phases ABCN;
+	name BottomSwitchNode;
+	nominal_voltage 2401.777;
+}
+
+object meter {
+	phases ABCN;
+	name LoadNode;
+	frequency_measure_type PLL;
+	nominal_voltage 2401.777;
+}
+
+//Base system objects -- lines
+object overhead_line {
+	phases ABCN;
+	from SwingNode;
+	to TopSwitchNode;
+	configuration lc303;
+	length 25.0 ft;
+}
+
+object overhead_line {
+	phases ABCN;
+	from BottomSwitchNode;
+	to LoadNode;
+	configuration lc303;
+	length 150.0 ft;
+}
+
+//Base system objects - switch
+object switch {
+	phases ABC;
+	name InRushSwitch;
+	from TopSwitchNode;
+	to BottomSwitchNode;
+	status CLOSED;
+}
+
+//Recorders
+object recorder {
+	parent BottomSwitchNode;
+	flags DELTAMODE;
+	interval 1;
+	property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag,measured_power.real,measured_power.imag,measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag,measured_frequency";
+	file ${recorder_filename};
+}
+
+object player {
+	flags DELTAMODE;
+	parent SwingNode;
+	property voltage_A;
+	file "data_simple_voltage_player_up_down_A.csv";
+}
+
+object player {
+	flags DELTAMODE;
+	parent SwingNode;
+	property voltage_B;
+	file "data_simple_voltage_player_up_down_B.csv";
+}
+
+object player {
+	flags DELTAMODE;
+	parent SwingNode;
+	property voltage_C;
+	file "data_simple_voltage_player_up_down_C.csv";
+}
+
+object group_recorder {
+	name induct_group_rec;
+	flags DELTAMODE;
+	file induction_motor_status.csv;
+	group "class=motor";
+	interval 1;
+	property motor_status;
+}
+
+object group_recorder {
+	name induct_group_rotor;
+	flags DELTAMODE;
+	file induction_motor_rotorspeed.csv;
+	group "class=motor";
+	interval 1;
+	property rotor_speed;
+}
+
+object group_recorder {
+    name induct_group_contactor_state;
+    flags DELTAMODE;
+    file induction_motor_contactor_state.csv;
+    group "class=motor";
+    interval 1;
+    property contactor_state;
+}
+
+object group_recorder {
+    name induct_group_desire_motor_state;
+    flags DELTAMODE;
+    file induction_motor_desired_state.csv;
+    group "class=motor";
+    interval 1;
+    property desired_motor_state;
+}

@@ -1,0 +1,4 @@
+- Model name: residential_load_basics.glm
+- Model source: [GLD Tutorial Chapter 5](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%205%20-%20Loads/Residential%20Loads%20-%20Basics/residential_load_basics.glm)
+- Supporting narrative source: [GLD Tutorial Chapter 5](https://gridlab-d.shoutwiki.com/wiki/GridLAB-D_Wiki:GridLAB-D_Tutorial_Chapter_5_-_Loads)
+- Example purpose: Initial demonstration of the house model and the impact of weather on HVAC system performance.
