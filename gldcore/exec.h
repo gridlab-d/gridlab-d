@@ -17,6 +17,7 @@
 #include "globals.h"
 #include "index.h"
 #include "cpp_threadpool.h"
+#include <json/json.h>
 
 struct sync_data {
 	TIMESTAMP step_to; /**< time to advance to */
@@ -83,6 +84,7 @@ int exec_add_scriptexport(const char *file);
 EXITCODE exec_run_initscripts(void);
 EXITCODE exec_run_syncscripts(void);
 EXITCODE exec_run_termscripts(void);
+Json::Value do_checkpoint(const char* output_directory = nullptr);
 
 //#ifdef __cplusplus
 //}

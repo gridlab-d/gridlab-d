@@ -102,6 +102,8 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			oclass->trl = TRL_PROVEN;
 
 		if(gl_publish_variable(oclass,
+							   // Example of how to publish a private variable.
+							   // PT_double, "freq_violation_time_total[s]", PADDR(freq_violation_time_total), PT_DESCRIPTION, "keeps track of how long the device has been in a frequency violation, to see if it needs to disconnect or not",
                                PT_INHERIT, "powerflow_object",
                                PT_enumeration, "bustype", PADDR(bustype), PT_DESCRIPTION, "defines whether the node is a PQ, PV, or SWING node",
                                PT_KEYWORD, "PQ", (enumeration)PQ,

@@ -13,6 +13,8 @@
 #include "save.h"
 #include "kml.h"
 #include "local.h"
+#include "exec.h"
+#include <json/json.h>
 //#include <module.h>
 //#include <module.h>
 
@@ -68,12 +70,13 @@ findExecutable_x(const std::string &name, const std::string &execName, const std
 
 
  // constructor
-GridLabD::GridLabD(int argc, char* argv[]) {
+GridLabD::GridLabD() {
     // Initialization code goes here
         char *pd1, *pd2;
     int i, pos = 0;
 
-    global_gl_executable = findExecutable_x("gridlabd", argv[0], getenv("PATH"));
+    std::string exec_name = "gridlabd";
+    global_gl_executable = findExecutable_x("gridlabd", exec_name, getenv("PATH"));
     auto root_path = global_gl_executable.parent_path().parent_path();
     global_gl_share = root_path / "share";
     global_gl_include = root_path / "include";
@@ -111,8 +114,8 @@ GridLabD::GridLabD(int argc, char* argv[]) {
 #endif
 
     /* capture the execdir */
-    strcpy(global_execname, argv[0]);
-    strcpy(global_execdir, argv[0]);
+    strcpy(global_execname, exec_name.c_str());
+    strcpy(global_execdir, exec_name.c_str());
     pd1 = strrchr(global_execdir, '/');
     pd2 = strrchr(global_execdir, '\\');
     if (pd1 > pd2) *pd1 = '\0';
@@ -121,12 +124,7 @@ GridLabD::GridLabD(int argc, char* argv[]) {
     /* determine current working directory */
     char *result = getcwd(global_workdir, 1024);
 
-    /* capture the command line */
-    for (i = 0; i < argc; i++) {
-        if (pos < (int) (sizeof(global_command_line) - strlen(argv[i])))
-            pos += sprintf(global_command_line + pos, "%s%s", pos > 0 ? " " : "", argv[i]);
-    }
-    if(setup_before_load(argc, argv) == GLD_OPERATION_FAILED)
+    if(setup_before_load() == GLD_OPERATION_FAILED)
     {
         exit(XC_INIERR);
     }
@@ -145,9 +143,7 @@ GLDErrorCode GridLabD::set_config_file(const std::string& config_file) {
 }
 
 // Load a GLM file
-GLDErrorCode GridLabD::load_glm(const std::string& filepath, int argc, char* argv[]) {
-    glm_file_path = filepath;
-    printf("Loading GLM file: %s\n", filepath.c_str());
+GLDErrorCode GridLabD::load_glm(int argc, char* argv[]) {
     // load_all()
 
     /* process command line arguments */
@@ -165,7 +161,7 @@ GLDErrorCode GridLabD::load_glm(const std::string& filepath, int argc, char* arg
 }
 
 // Load a GLM file
-GLDErrorCode GridLabD::setup_before_load(int argc, char* argv[]) {
+GLDErrorCode GridLabD::setup_before_load() {
     
     /* set the default timezone */
     timestamp_set_tz(nullptr);
@@ -174,7 +170,7 @@ GLDErrorCode GridLabD::setup_before_load(int argc, char* argv[]) {
     realtime_starttime(); /* mark start */
     
     /* main initialization */
-    if (!output_init(argc, argv) || !exec_init())
+    if (!output_init() || !exec_init())
         return GLD_OPERATION_FAILED;
 
     /* set thread count equal to processor count if not passed on command-line */
@@ -277,10 +273,9 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
 }
 
 // Retrieve GLM data based on a query
-GLDErrorCode GridLabD::get_glm_data(const std::string& query, GLDData& result) {
-    printf("Getting GLM data for query: %s\n", query.c_str());
-    result["status"] = std::string("mocked_result");
-    return GLD_SUCCESS;
+Json::Value GridLabD::get_glm_data() {
+    Json::Value checkpoint = do_checkpoint(nullptr); // Use default directory
+    return checkpoint;
 }
 
 // Set the GLM model with provided data
@@ -292,6 +287,7 @@ GLDErrorCode GridLabD::set_glm_data(const GLDData& data) {
 // Save simulation checkpoint
 GLDErrorCode GridLabD::save_checkpoint(const std::string& save_path, GLDCheckPointMode mode) {
     printf("Saving checkpoint to %s with mode %d\n", save_path.c_str(), static_cast<int>(mode));
+    Json::Value checkpoint = do_checkpoint(save_path.c_str()); // Use provided directory
     return GLD_SUCCESS;
 }
 
@@ -320,21 +316,59 @@ GLDErrorCode GridLabD::edit_object(const std::string& name, const GLDData& updat
 }
 
 // Run simulation from start to end
-GLDErrorCode GridLabD::run(double start_time, double end_time, double& simulation_time, int argc, char* argv[]) {
+GLDErrorCode GridLabD::run(double start_time, double end_time) {
     printf("Running simulation from %.2f to %.2f\n", start_time, end_time);
-    simulation_time = end_time;
+    // Override the global clock if values are provided.
+    /* setup clocks */
+	if (start_time != 0.0) {
+        global_starttime = start_time;
+        global_clock = global_starttime;
 
-
-    if (environment_start(argc, argv) == FAILED) {
-        output_fatal("environment startup failed: %s", strerror(errno));
-        /*	TROUBLESHOOT
-            The requested environment could not be started.  This usually
-            follows a more specific message regarding the startup problem.
-            Follow the recommendation for the indicated problem.
-         */
-        if (exec_getexitcode() == XC_SUCCESS)
-            exec_setexitcode(XC_ENVERR);
     }
+    if (end_time != 0.0){
+        global_stoptime = end_time;
+    }
+
+	if (strcmp(global_environment,"batch")==0)
+	{
+		/* do the run */
+		if (exec_start()==FAILED)
+		{
+			output_fatal("shutdown after simulation stopped prematurely");
+			/*	TROUBLESHOOT
+				The simulation stopped because an unexpected condition was encountered.
+				This can be caused by a wide variety of things, but most often it is
+				because one of the objects in the model could not be synchronized 
+				propertly and its clock stopped.  This message usually follows a
+				more specific message that indicates what caused the simulation to
+				stop.
+				*/
+			if (global_dumpfile[0]!='\0')
+			{
+				if (!saveall(global_dumpfile))
+					output_error("dump to '%s' failed", global_dumpfile);
+					/* TROUBLESHOOT
+						An attempt to create a dump file failed.  This message should be
+						preceded by a more detailed message explaining why if failed.
+						Follow the guidance for that message and try again.
+						*/
+				else
+					output_debug("dump to '%s' complete", global_dumpfile);
+			}
+			return GLD_FAILED_TO_START;
+		}
+		return GLD_SUCCESS;
+	}
+	else
+	{
+		output_fatal("%s environment not recognized or supported",global_environment);
+		/*	TROUBLESHOOT
+			The environment specified isn't supported. Currently only
+			the <b>batch</b> environment is normally supported, although 
+			some builds can support other environments, such as <b>matlab</b>.
+		*/
+		return GLD_FAILED_TO_START;
+	}
 
     return GLD_SUCCESS;
 }

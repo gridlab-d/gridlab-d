@@ -5,6 +5,8 @@
 #include <map>
 #include <any>
 #include <memory>
+#include <vector>
+#include <json/json.h> //jsoncpp library
 
 // typedefs for GLD data types
 typedef std::map<std::string, std::any> GLDData;
@@ -16,7 +18,8 @@ enum GLDErrorCode {
     GLD_INVALID_FORMAT = 2,
     GLD_OPERATION_FAILED = 3,
     GLD_OBJECT_NOT_FOUND = 4,
-    GLD_TIME_STEP_ERROR = 5
+    GLD_TIME_STEP_ERROR = 5,
+    GLD_FAILED_TO_START = 6
 };
 
 enum GLDApplicationType {
@@ -40,12 +43,7 @@ typedef GLDErrorCode (*GLDCallback)(GridLabD* gld);
 class GridLabD {
 public:
      // Default constructor
-    GridLabD() {
-        // Initialization code goes here
-    }
-
-     // constructor
-    GridLabD(int argc, char* argv[]);
+    GridLabD();
 
     ~GridLabD() {
         // Cleanup code goes here
@@ -56,17 +54,17 @@ public:
 
 
     // Load a GLM and return an error code
-    GLDErrorCode load_glm(const std::string& filepath, int argc, char* argv[]);
+    GLDErrorCode load_glm(int argc, char* argv[]);
 
     // Setup GLD and return an error code
     //GLDErrorCode setup_before_load(const std::string& filepath) ;
-    GLDErrorCode setup_before_load(int argc, char* argv[]);
+    GLDErrorCode setup_before_load();
 
     // Setup GLD and return an error code
     GLDErrorCode setup_after_load() ;
 
     // Get the GLM data based on a query
-    GLDErrorCode get_glm_data(const std::string& query, GLDData& result);
+    Json::Value get_glm_data();
 
     // Set the GLM based on input data
     GLDErrorCode set_glm_data(const GLDData& data);
@@ -87,7 +85,7 @@ public:
     GLDErrorCode edit_object(const std::string& name, const GLDData& updated_data);
 
     // Run the simulation for a specified time range and return the simulation time
-    GLDErrorCode run(double start_time, double end_time, double& simulation_time, int argc, char* argv[]);
+    GLDErrorCode run(double start_time, double end_time);
 
     // Run the simulation by one time step and return the simulation time
     GLDErrorCode step(double& simulation_time);

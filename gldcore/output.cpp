@@ -200,7 +200,7 @@ static void prep_stream(){
 	return;
 }
 
-int output_init(int argc,char *argv[])
+int output_init()
 {
 	atexit(output_cleanup);
 	return 1;
