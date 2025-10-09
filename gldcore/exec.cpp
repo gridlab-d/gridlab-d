@@ -92,6 +92,7 @@
 #ifdef _WIN32
 #include <winsock2.h>
 #include <winbase.h>
+#include <direct.h>
 #else
 #include <unistd.h>
 #include <sys/types.h>
@@ -99,7 +100,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <cerrno>
+#include <sys/stat.h>
 #include <list>
+#include <set>
 #include <cmath>
 #include <chrono>
 #include <ratio>
@@ -118,6 +121,12 @@
 #include "index.h"
 #include "realtime.h"
 #include "module.h"
+#include <map>
+#include <string>
+#include <vector>
+#include <json/json.h>
+#include <fstream>
+#include <sstream>
 #include "threadpool.h"
 #include "debug.h"
 #include "exception.h"
@@ -339,95 +348,279 @@ static STATUS show_progress()
 }
 
 /***********************************************************************/
-/* CHECKPOINTS (DPC Apr 2011) */
+/* CHECKPOINTS */
 
-void do_checkpoint()
-{
-	/* last checkpoint value */
-	static TIMESTAMP last_checkpoint = 0;
-	TIMESTAMP now = 0;
-
-	/* check point type selection */
-	switch (global_checkpoint_type) {
-
-	/* wallclock checkpoint interval */
-	case CPT_WALL:
-
-		/* checkpoint based on wall time */
-		now = time(nullptr);
-
-		/* default checkpoint for WALL */
-		if ( global_checkpoint_interval==0 )
-			global_checkpoint_interval = 3600;
-
-		break;
-
-		/* simulation checkpoint interval */
-	case CPT_SIM:
-
-		/* checkpoint based on sim time */
-		now = global_clock;
-
-		/* default checkpoint for SIM */
-		if ( global_checkpoint_interval==0 )
-			global_checkpoint_interval = 86400;
-
-		break;
-
-	/* no checkpoints used */
-	case CPT_NONE:
-		now = 0;
-		break;
-	}
-
-	/* checkpoint may be needed */
-	if ( now > 0 )
-	{
-		/* initial value of last checkpoint */
-		if ( last_checkpoint==0 )
-			last_checkpoint = now;
-
-		/* checkpoint time lapsed */
-		if ( last_checkpoint + global_checkpoint_interval <= now )
-		{
-			static char fn[1024] = "";
-			FILE *fp = nullptr;
-
-			/* default checkpoint filename */
-			if ( strcmp(global_checkpoint_file,"")==0 )
-			{
-				char *ext;
-
-				/* use the model name by default */
-				strcpy(global_checkpoint_file, global_modelname);
-				ext = strrchr(global_checkpoint_file,'.');
-
-				/* trim off the extension, if any */
-				if ( ext!=nullptr && ( strcmp(ext,".glm")==0 || strcmp(ext,".xml")==0 ) )
-					*ext = '\0';
-			}
-
-			/* delete old checkpoint file if not desired */
-			if ( global_checkpoint_keepall==0 && strcmp(fn,"")!=0 )
-				unlink(fn);
-
-			/* create current checkpoint save filename */
-			sprintf(fn,"%s.%d",global_checkpoint_file,global_checkpoint_seqnum++);
-			fp = fopen(fn,"w");
-			if ( fp==nullptr )
-				output_error("unable to open checkpoint file '%s' for writing");
-			else
-			{
-				if ( stream(fp,SF_OUT)<=0 )
-					output_error("checkpoint failure (stream context is %s)",stream_context());
-				fclose(fp);
-				last_checkpoint = now;
-			}
-		}
-	}
-
+// Helper function to check if directory exists
+static bool directory_exists(const char* path) {
+    if (!path || strlen(path) == 0) return false;
+    
+    struct stat info;
+    if (stat(path, &info) != 0) {
+        return false; // Path doesn't exist or can't be accessed
+    }
+    return (info.st_mode & S_IFDIR) != 0; // Check if it's a directory
 }
 
+// Do Checkpoint
+Json::Value do_checkpoint(const char* output_directory)
+{
+    /* last checkpoint value */
+    static TIMESTAMP last_checkpoint = 0;
+    TIMESTAMP now = 0;
+
+    /* check point type selection */
+    switch (global_checkpoint_type) {
+    /* wallclock checkpoint interval */
+    case CPT_WALL:
+        /* checkpoint based on wall time */
+        now = time(nullptr);
+        /* default checkpoint for WALL */
+        if ( global_checkpoint_interval==0 )
+            global_checkpoint_interval = 3600;
+        break;
+
+    /* simulation checkpoint interval */
+    case CPT_SIM:
+        /* checkpoint based on sim time */
+        now = global_clock;
+        /* default checkpoint for SIM */
+        if ( global_checkpoint_interval==0 )
+            global_checkpoint_interval = 86400;
+        break;
+
+    /* no checkpoints used */
+    case CPT_NONE:
+        now = 0;
+        break;
+    }
+	Json::Value checkpoint;
+    /* checkpoint may be needed */
+    if ( now > 0 )
+    {
+
+        /* checkpoint time lapsed */
+        if ( last_checkpoint + global_checkpoint_interval <= now )
+        {
+            static char fn[1024] = "";
+            static char json_fn[1024] = "";
+            FILE *fp = nullptr;
+            FILE *json_fp = nullptr;
+
+            /* default checkpoint filename */
+            if ( strcmp(global_checkpoint_file,"")==0 )
+            {
+                char *ext;
+                /* use the model name by default */
+                strcpy(global_checkpoint_file, global_modelname);
+                ext = strrchr(global_checkpoint_file,'.');
+                /* trim off the extension, if any */
+                if ( ext!=nullptr && ( strcmp(ext,".glm")==0 || strcmp(ext,".xml")==0 ) )
+                    *ext = '\0';
+            }
+
+            /* delete old checkpoint file if not desired */
+            if ( global_checkpoint_keepall==0 && strcmp(fn,"")!=0 )
+            {
+                unlink(fn);
+                if ( strcmp(json_fn,"")!=0 )
+                    unlink(json_fn);
+            }
+
+            /* create current checkpoint save filename */
+            sprintf(fn,"%s.%d",global_checkpoint_file,global_checkpoint_seqnum);
+            
+            /* set default output directory if none provided or empty string */
+            const char* json_dir = (output_directory && strlen(output_directory) > 0) ? output_directory : "../../_test_results";
+            sprintf(json_fn,"%s/%s.%d.json", json_dir, global_checkpoint_file, global_checkpoint_seqnum++);
+            
+            /* check if output directory exists */
+            if (!directory_exists(json_dir)) {
+                output_error("directory '%s' does not exist for JSON checkpoint files", json_dir);
+                return Json::Value(); // Return empty JSON value on error
+            }
+            
+            fp = fopen(fn,"w");
+            json_fp = fopen(json_fn,"w");
+            
+            if ( fp==nullptr )
+                output_error("unable to open checkpoint file '%s' for writing");
+            else
+            {
+                if ( stream(fp,SF_OUT)<=0 )
+                    output_error("checkpoint failure (stream context is %s)",stream_context());
+                fclose(fp);
+                last_checkpoint = now;
+            }
+			/* initial value of last checkpoint */
+			if ( last_checkpoint==0 )
+				last_checkpoint = now;
+            /* Write JSON data using JsonCpp */
+            if ( json_fp!=nullptr )
+            {
+                fclose(json_fp); // Close the FILE* since we'll use ofstream
+                
+                // Create JSON structure using JsonCpp
+                // Add preamble
+                checkpoint["__preamble"]["comments"].append("// GridLAB-D checkpoint data export");
+                std::string timestamp_comment = "// Generated at timestamp: " + std::to_string(global_clock);
+                checkpoint["__preamble"]["comments"].append(timestamp_comment);
+                std::string seq_comment = "// Checkpoint sequence: " + std::to_string(global_checkpoint_seqnum-1);
+                checkpoint["__preamble"]["comments"].append(seq_comment);
+                
+                // Add clock info
+                checkpoint["clock"]["timestamp"] = (Json::Int64)global_clock;
+                checkpoint["clock"]["stoptime"] = (Json::Int64)global_stoptime;
+                checkpoint["clock"]["timezone"] = timestamp_current_timezone();
+
+                
+                // First, collect objects by class name
+                std::map<std::string, std::vector<OBJECT*>> objects_by_class;
+                std::set<OBJECT*> processed_objects; // Track processed objects to prevent duplicates
+                
+                /* Traverse all objects to group by class */
+                for (int pass = 0; ranks[pass] != nullptr; pass++)
+                {
+                    for (int i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
+                    {
+                        if (ranks[pass]->ordinal[i] == nullptr)
+                            continue;
+
+                        for (LISTITEM *ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next)
+                        {
+                            OBJECT *obj = static_cast<OBJECT *>(ptr->data);
+                            
+                            // Skip if we've already processed this object
+                            if (processed_objects.find(obj) != processed_objects.end())
+                                continue;
+                                
+                            std::string class_name = obj->oclass->name;
+                            objects_by_class[class_name].push_back(obj);
+                            processed_objects.insert(obj); // Mark as processed
+                        }
+                    }
+                }
+
+                // Build objects section grouped by class
+				int classnameCounter = 0;
+                for (auto& class_pair : objects_by_class)
+                {
+                    Json::Value instances(Json::arrayValue);
+                    
+                    for (OBJECT* obj : class_pair.second)
+                    {
+                        Json::Value instance;
+                        
+                        // Add object name if it exists
+                        if (obj->name && strlen(obj->name) > 0)
+                            instance["name"] = obj->name;
+						else {
+							instance["name"] = std::string(obj->oclass->name) + std::to_string(classnameCounter);
+                            classnameCounter++;
+						}
+                        
+                        // Add all properties for this object's class
+                        for (PROPERTY *pmap = obj->oclass->pmap; pmap != nullptr; pmap = pmap->next)
+                        {
+                            // Skip if this is the name property and we already added it
+                            if (strcmp(pmap->name, "name") == 0)
+                                continue;
+                            
+                            /* Get property value based on type */
+                            void *addr = (char*)obj + (ptrdiff_t)pmap->addr;
+                            char value_str[1024] = "";
+                            
+                            // Use object_get_value_by_name for all property types to ensure proper access
+                            if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0)
+                            {
+                                // Parse the string value based on property type
+                                switch (pmap->ptype)
+                                {
+                                case PT_double:
+                                    {
+                                        double val = strtod(value_str, nullptr);
+                                        instance[pmap->name] = val;
+                                    }
+                                    break;
+                                case PT_int32:
+                                    {
+                                        int32 val = (int32)strtol(value_str, nullptr, 10);
+                                        instance[pmap->name] = val;
+                                    }
+                                    break;
+                                case PT_int64:
+                                    {
+                                        int64 val = strtoll(value_str, nullptr, 10);
+                                        instance[pmap->name] = (Json::Int64)val;
+                                    }
+                                    break;
+                                case PT_bool:
+                                    {
+                                        bool val = (strcmp(value_str, "TRUE") == 0 || strcmp(value_str, "1") == 0);
+                                        instance[pmap->name] = val;
+                                    }
+                                    break;
+                                case PT_timestamp:
+                                    {
+                                        TIMESTAMP val = strtoll(value_str, nullptr, 10);
+                                        instance[pmap->name] = (Json::Int64)val;
+                                    }
+                                    break;
+                                case PT_char8:
+                                case PT_char32:
+                                case PT_char256:
+                                case PT_char1024:
+                                    instance[pmap->name] = std::string(value_str);
+                                    break;
+                                case PT_complex:
+                                    // Complex values are already formatted as strings by object_get_value_by_name
+                                    instance[pmap->name] = std::string(value_str);
+                                    break;
+                                default:
+                                    // For all other types, store as string
+                                    instance[pmap->name] = std::string(value_str);
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                // Property value could not be retrieved, set to null
+                                instance[pmap->name] = Json::Value::nullSingleton();
+                            }
+                        }
+                        
+                        instances.append(instance);
+                    }
+                    
+                    checkpoint["objects"][class_pair.first]["instances"] = instances;
+                }
+                
+                // Write JSON to file with pretty formatting
+                std::ofstream json_file(json_fn);
+                if (json_file.is_open())
+                {
+                    Json::StreamWriterBuilder builder;
+                    builder["indentation"] = "  "; // 2-space indentation
+                    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+                    writer->write(checkpoint, &json_file);
+                    json_file.close();
+                    
+                    output_verbose("JSON checkpoint written to '%s'", json_fn);
+                }
+                else
+                {
+                    output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
+                }
+				return checkpoint;
+            }
+            else if ( json_fp==nullptr )
+            {
+                output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
+            }
+			
+        }
+    }
+	return checkpoint;
+}
 /***********************************************************************/
 
 threadpool_thread_data::threadpool_thread_data(int size, cpp_threadpool* threadpool){
@@ -2340,8 +2533,6 @@ STATUS exec_start()
 			/* main loop control */
 			if ( global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER )
 				exec_mls_suspend();
-
-			do_checkpoint();
 
 			/* realtime control of global clock */
 			if (global_run_realtime==0 && global_clock >= global_enter_realtime)
