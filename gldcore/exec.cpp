@@ -2498,6 +2498,454 @@ void report_performance_after_run(time_t start_time, int64 passes, int64 tsteps)
 	}
 }
 
+/** Execute a single simulation iteration
+	This function executes one iteration of the simulation loop, handling
+	realtime control, delta mode, object synchronization, and event processing.
+	
+	@param threadpool pointer to the thread pool for multithreading
+	@param passes reference to pass counter
+	@param tsteps reference to timestep counter  
+	@param j reference to loop variable used for thread data
+	@param ptr reference to list item pointer
+	@param pc_rv reference to precommit return value
+	@param iObjRankList reference to object rank list index
+	@return true if simulation should continue, false if it should stop
+ **/
+static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int64& passes, int64& tsteps, 
+												int& j, LISTITEM*& ptr, int& pc_rv, int& iObjRankList)
+{
+	TIMESTAMP internal_synctime;
+	output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(nullptr), global_stoptime, exec_sync_getevents(nullptr), exec_getexitcode());
+
+	/* update the process table info */
+	sched_update(global_clock,MLS_RUNNING);
+
+	/* main loop control */
+	if ( global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER )
+		exec_mls_suspend();
+
+	/* realtime control of global clock */
+	if (global_run_realtime==0 && global_clock >= global_enter_realtime)
+		global_run_realtime = 1;
+
+	if (global_run_realtime>0 && iteration_counter>0)
+	{
+		double metric=0.;
+        short fall_behind=0;
+        using std::chrono::system_clock;
+        static bool initialized = false;
+        static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t1;
+        static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t2;
+        if (!initialized) { //[[unlikely]] {
+            t1 = system_clock::now();
+            t2 = t1 + 1s;
+            initialized = true;
+        } else { //[[likely]] {
+            t1 = t2;
+            t2 += 1s; // One second from last time step
+        }
+
+        if (system_clock::now() < t2) {
+            output_verbose("waiting %d nsec", std::chrono::nanoseconds(t2-system_clock::now()).count());
+            std::this_thread::sleep_until(t2);
+            global_clock += global_run_realtime;
+            metric = (1.0 * (t2 - t1)) / std::chrono::seconds(1);
+            fall_behind=0;
+        } else {
+            output_error("simulation failed to keep up with real time");
+            fall_behind++;
+        }
+
+        if (fall_behind > 5) {// [[unlikely]] {
+            output_fatal("simulation fell behind realtime for more than 5 consecutive cycles");
+        }
+
+#define IIR 0.9 /* about 30s for 95% unit step response */
+		global_realtime_metric = global_realtime_metric*IIR + metric*(1-IIR);
+		exec_sync_reset(nullptr);
+		exec_sync_set(nullptr,global_clock,false);
+		output_verbose("realtime clock advancing to %d", (int)global_clock);
+	}
+
+	/* internal control of global clock */
+	else
+		global_clock = exec_sync_get(nullptr);
+
+	/* operate delta mode if necessary (but only when event mode is active, e.g., not right after init) */
+	/* note that delta mode cannot be supported for realtime simulation */
+	global_deltaclock = 0;
+
+	/* Update the "double-precision" clock (usually for deltamode) for consistency */
+	global_delta_curr_clock = (double)global_clock;
+
+	/* determine whether any modules seek delta mode */
+	DELTAMODEFLAGS flags=DMF_NONE;
+	DT delta_dt = delta_modedesired(&flags);
+	TIMESTAMP t = TS_NEVER;
+	output_debug("delta_dt is %d", (int)delta_dt);
+	switch ( delta_dt ) {
+	case DT_INFINITY: /* no dt -> event mode */
+		global_simulation_mode = SM_EVENT;
+		t = TS_NEVER;
+		break;
+	case DT_INVALID: /* error dt  */
+		global_simulation_mode = SM_ERROR;
+		t = TS_INVALID;
+		break; /* simulation mode error */
+	default: /* valid dt */
+		if ( global_minimum_timestep>1 )
+		{
+			global_simulation_mode = SM_ERROR;
+			output_error("minimum_timestep must be 1 second to operate in deltamode");
+			t = TS_INVALID;
+			break;
+		}
+		else
+		{
+			if (delta_dt==0)	/* Delta mode now */
+			{
+				global_simulation_mode = SM_DELTA;
+				t = global_clock;
+			}
+			else	/* Normal sync - get us to delta point */
+			{
+				global_simulation_mode = SM_EVENT;
+				t = global_clock + delta_dt;
+			}
+		}
+		break;
+	}
+	if ( global_simulation_mode==SM_ERROR )
+	{
+		output_error("a simulation mode error has occurred");
+		return false; /* terminate main loop immediately */
+	}
+	exec_sync_set(nullptr,t,false);
+
+
+	/* synchronize all internal schedules */
+	if ( global_clock < 0 )
+		throw_exception("clock time is negative (global_clock=%lli)", global_clock);
+	else if ( global_debug_output )
+	{
+		char dt[64]="(invalid)"; convert_from_timestamp(global_clock,dt,sizeof(dt));
+		output_debug("global_clock -> %s\n",dt);
+	}
+	/* set time context */
+	output_set_time_context(global_clock);
+
+	/* reset for a new sync event */
+	exec_sync_reset(nullptr);
+
+	/* account for stoptime only if global clock is not already at stoptime */
+	if ( global_clock<=global_stoptime && global_stoptime!=TS_NEVER )
+		exec_sync_set(nullptr,global_stoptime+1,false);
+
+	/* synchronize all internal schedules */
+	internal_synctime = syncall_internals(global_clock);
+	if( internal_synctime!=TS_NEVER && absolute_timestamp(internal_synctime)<global_clock )
+	{
+		// must be able to force reiterations for m/s mode.
+		THROW("internal property sync failure");
+		/* TROUBLESHOOT
+			An internal property such as schedule, enduse or loadshape has failed to synchronize and the simulation aborted.
+			This message should be preceded by a more informative message that explains which element failed and why.
+			Follow the troubleshooting recommendations for that message and try again.
+		 */
+	}
+	exec_sync_set(nullptr,internal_synctime,false);
+
+	/* prepare multithreading */
+	if (!global_debug_mode)
+	{
+		for (j = 0; j < thread_data->count; j++) {
+			thread_data->data[j].hard_event = 0;
+			thread_data->data[j].step_to = TS_NEVER;
+		}
+	}
+#ifdef _DEBUG
+	if ( global_clock>=global_runaway_time )
+		throw_exception("running clock detected");
+#endif
+
+	/* run precommit only on first iteration */
+	if (iteration_counter == global_iteration_limit)
+	{
+		pc_rv = precommit_all(global_clock);
+		if(SUCCESS != pc_rv)
+		{
+			THROW("precommit failure");
+		}
+	}
+	iObjRankList = -1;
+
+	/* scan the ranks of objects for each pass */
+	for (pass = 0; ranks[pass] != nullptr; pass++)
+	{
+		int i;
+
+		/* process object in order of rank using index */
+		for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
+		{
+			/* skip empty lists */
+			if (ranks[pass]->ordinal[i] == nullptr)
+				continue;
+
+			iObjRankList ++;
+
+			if (global_debug_mode)
+			{
+				LISTITEM *item;
+				for (item=ranks[pass]->ordinal[i]->first; item!=nullptr; item=item->next)
+				{
+					OBJECT *obj = static_cast<OBJECT *>(item->data);
+					// @todo change debug so it uses sync API
+					if (exec_debug(&main_sync,pass,i,obj)==FAILED)
+					{
+						THROW("debugger quit");
+					}
+				}
+
+			}
+			else
+			{
+				//sjin: if global_threadcount == 1, no pthread multhreading
+				if (global_threadcount == 1)
+				{
+					for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr=ptr->next) {
+						OBJECT *obj = static_cast<OBJECT *>(ptr->data);
+						ss_do_object_sync(0, ptr->data);
+
+						if (obj->valid_to == TS_INVALID)
+						{
+							//Get us out of the loop so others don't exec on bad status
+							break;
+						}
+						///printf("%d %s %d\n", obj->id, obj->name, obj->rank);
+					}
+					//printf("\n");
+				}
+				else { //sjin: implement pthreads
+					multithread_stuff(i, threadpool, iObjRankList);
+				}
+			}
+		}
+
+
+		/* run all non-schedule transforms */
+		{
+			TIMESTAMP st = transform_syncall(global_clock,static_cast<TRANSFORMSOURCE>(XS_DOUBLE|XS_COMPLEX|XS_ENDUSE),nullptr);// if (abs(t)<t2) t2=t;
+			exec_sync_set(nullptr,st,false);
+		}
+	}
+//	setTP = false;
+
+	if (!global_debug_mode)
+	{
+		for (j = 0; j < thread_data->count; j++)
+		{
+			exec_sync_merge(nullptr,&thread_data->data[j]);
+		}
+
+		/* report progress */
+		realtime_run_schedule();
+	}
+
+	/* count number of passes */
+	passes++;
+
+	/**** LOOPED SLAVE PAUSE HERE ****/
+	if(global_multirun_mode == MRM_SLAVE)
+	{
+		output_debug("step_to = %lli", exec_sync_get(nullptr));
+		output_debug("exec_start(), slave waiting for looped time signal");
+
+		pthread_cond_broadcast(&mls_inst_signal);
+
+		pthread_mutex_lock(&mls_inst_lock);
+		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
+		pthread_mutex_unlock(&mls_inst_lock);
+
+		output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(nullptr));
+	}
+
+	/* run sync scripts, if any */
+	if ( exec_run_syncscripts()!=XC_SUCCESS )
+	{
+		output_error("sync script(s) failed");
+		THROW("script synchronization failure");
+	}
+
+	/* check for clock advance (indicating last pass) */
+	if ( exec_sync_get(nullptr)!=global_clock && global_simulation_mode == SM_EVENT)
+	{
+		/* clock update is the very last chance to change the next time */
+		exec_clock_update_modules();
+		if(exec_sync_get(nullptr) > global_clock) {
+			global_federation_reiteration = false;
+		TIMESTAMP commit_time = TS_NEVER;
+		commit_time = commit_all(global_clock, exec_sync_get(nullptr));
+//		commit_time = tp_commit_all(global_clock, exec_sync_get(nullptr), threadpool);
+		if ( absolute_timestamp(commit_time) <= global_clock)
+		{
+			// commit cannot force reiterations, and any event where the time is less than the global clock
+			//  indicates that the object is reporting a failure
+			output_error("model commit failed");
+			/* TROUBLESHOOT
+				The commit procedure failed.  This is usually preceded
+				by a more detailed message that explains why it failed.  Follow
+				the guidance for that message and try again.
+			 */
+			THROW("commit failure");
+		} else if( absolute_timestamp(commit_time) < exec_sync_get(nullptr) )
+		{
+			exec_sync_set(nullptr,commit_time,false);
+		}
+		/* reset iteration count */
+		iteration_counter = global_iteration_limit;
+			federation_iteration_counter = global_iteration_limit;
+
+			/* count number of timesteps */
+			tsteps++;
+		} else if(exec_sync_get(nullptr) == global_clock) {
+			iteration_counter = global_iteration_limit;
+			global_federation_reiteration = true;
+			if (--federation_iteration_counter == 0) {
+				output_error("federation convergence iteration limit reached at %s (exec)", simtime());
+				/* TROUBLESHOOT
+					This indicates that the federation that this gridlab-d model a part of
+					was unable to determine a steady state any time horizon.
+				 */
+				exec_sync_set(nullptr,TS_INVALID,false);
+				THROW("convergence failure");
+			}
+		}
+	}
+
+	/* check iteration limit */
+	else if (--iteration_counter == 0)
+	{
+		output_error("convergence iteration limit reached at %s (exec)", simtime());
+		/* TROUBLESHOOT
+			This indicates that the core's solver was unable to determine
+			a steady state for all objects for any time horizon.  Identify
+			the object that is causing the convergence problem and contact
+			the developer of the module that implements that object's class.
+		 */
+		exec_sync_set(nullptr,TS_INVALID,false);
+		THROW("convergence failure");
+	}
+
+	/* handle delta mode operation */
+	if ( global_simulation_mode==SM_DELTA && exec_sync_get(nullptr)>=global_clock )
+	{
+		if(handle_delta_mode_operation() == -1) {
+			return false; //DELTA MODE FAILURE
+		}
+	}
+	
+	/* Check if simulation should continue */
+	return (iteration_counter>0 && exec_sync_isrunning(nullptr) && exec_getexitcode()==XC_SUCCESS);
+}
+
+/** Main simulation loop function
+	This function encapsulates the main simulation loop that was previously 
+	embedded in exec_start(). It handles all simulation processing including
+	realtime control, delta mode, object synchronization, and event processing.
+	
+	@param threadpool pointer to the thread pool for multithreading
+	@param passes reference to pass counter
+	@param tsteps reference to timestep counter  
+	@param j reference to loop variable used for thread data
+	@param ptr reference to list item pointer
+	@param pc_rv reference to precommit return value
+	@param iObjRankList reference to object rank list index
+ **/
+static void run_main_simulation_loop(cpp_threadpool* threadpool, int64& passes, int64& tsteps, 
+									int& j, LISTITEM*& ptr, int& pc_rv, int& iObjRankList)
+{
+	/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
+	while ( execute_single_simulation_iteration(threadpool, passes, tsteps, j, ptr, pc_rv, iObjRankList) )
+	{
+		// Continue executing iterations until simulation should stop
+	}
+}
+
+/** Single step simulation function
+	This function executes one iteration of the main simulation loop using the
+	extracted iteration function to eliminate code duplication.
+	
+	@param threadpool pointer to the thread pool for multithreading
+	@param passes reference to pass counter
+	@param tsteps reference to timestep counter  
+	@param j reference to loop variable used for thread data
+	@param ptr reference to list item pointer
+	@param pc_rv reference to precommit return value
+	@param iObjRankList reference to object rank list index
+ **/
+static void run_single_simulation_step(cpp_threadpool* threadpool, int64& passes, int64& tsteps, 
+									  int& j, LISTITEM*& ptr, int& pc_rv, int& iObjRankList)
+{
+	/* Execute one iteration using the shared iteration function */
+	execute_single_simulation_iteration(threadpool, passes, tsteps, j, ptr, pc_rv, iObjRankList);
+}
+
+/** Check if the simulation has been properly initialized
+	@return TRUE if simulation is initialized and ready to step, FALSE otherwise.
+ **/
+bool exec_is_initialized(void)
+{
+	// Check if ranks have been set up - this indicates proper initialization
+	return (ranks != nullptr);
+}
+
+/** Execute a single simulation step
+	This is the public interface for single-step simulation execution.
+	@return STATUS is SUCCESS if the step completed successfully, FAILED otherwise.
+ **/
+STATUS exec_step(void)
+{
+	// Setup variables needed for the step (similar to exec_start)
+	cpp_threadpool* threadpool = new cpp_threadpool(global_threadcount);
+	int64 passes = 0, tsteps = 0;
+	int j = 0, pc_rv = 0, iObjRankList = 0;
+	LISTITEM *ptr = nullptr;
+	
+	STATUS result = SUCCESS;
+	
+	// Check if simulation has been properly initialized
+	// exec_step should only be used after exec_start has been called or simulation is initialized
+	if (ranks == nullptr) {
+		output_error("exec_step: simulation not properly initialized - ranks not set up");
+		delete threadpool;
+		return FAILED;
+	}
+	
+	// Check if we're in a valid state to step
+	if (iteration_counter <= 0) {
+		output_verbose("exec_step: simulation has completed or iteration limit reached");
+		delete threadpool;
+		return SUCCESS; // Not an error, just nothing to do
+	}
+	
+	/* main step exception handler */
+	TRY {
+		/* Run a single step of the simulation loop */
+		run_single_simulation_step(threadpool, passes, tsteps, j, ptr, pc_rv, iObjRankList);
+	}
+	CATCH (const char *msg)
+	{
+		output_error("exec_step halted: %s", msg);
+		result = FAILED;
+	}
+	ENDCATCH
+	
+	/* deallocate threadpool */
+	delete threadpool;
+	
+	return result;
+}
+
 /** This is the main simulation loop
 	@return STATUS is SUCCESS if the simulation reached equilibrium,
 	and FAILED if a problem was encountered.
@@ -2521,340 +2969,8 @@ STATUS exec_start()
 
 	/* main loop exception handler */
 	TRY {
-
-		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
-		while ( iteration_counter>0 && exec_sync_isrunning(nullptr) && exec_getexitcode()==XC_SUCCESS )
-		{
-			TIMESTAMP internal_synctime;
-			output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(nullptr), global_stoptime, exec_sync_getevents(nullptr), exec_getexitcode());
-
-			/* update the process table info */
-			sched_update(global_clock,MLS_RUNNING);
-
-			/* main loop control */
-			if ( global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER )
-				exec_mls_suspend();
-
-			/* realtime control of global clock */
-			if (global_run_realtime==0 && global_clock >= global_enter_realtime)
-				global_run_realtime = 1;
-
-			if (global_run_realtime>0 && iteration_counter>0)
-			{
-				double metric=0.;
-                short fall_behind=0;
-                using std::chrono::system_clock;
-                static bool initialized = false;
-                static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t1;
-                static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t2;
-                if (!initialized) { //[[unlikely]] {
-                    t1 = system_clock::now();
-                    t2 = t1 + 1s;
-                    initialized = true;
-                } else { //[[likely]] {
-                    t1 = t2;
-                    t2 += 1s; // One second from last time step
-                }
-
-                if (system_clock::now() < t2) {
-                    output_verbose("waiting %d nsec", std::chrono::nanoseconds(t2-system_clock::now()).count());
-                    std::this_thread::sleep_until(t2);
-                    global_clock += global_run_realtime;
-                    metric = (1.0 * (t2 - t1)) / std::chrono::seconds(1);
-                    fall_behind=0;
-                } else {
-                    output_error("simulation failed to keep up with real time");
-                    fall_behind++;
-                }
-
-                if (fall_behind > 5) {// [[unlikely]] {
-                    output_fatal("simulation fell behind realtime for more than 5 consecutive cycles");
-                }
-
-#define IIR 0.9 /* about 30s for 95% unit step response */
-				global_realtime_metric = global_realtime_metric*IIR + metric*(1-IIR);
-				exec_sync_reset(nullptr);
-				exec_sync_set(nullptr,global_clock,false);
-				output_verbose("realtime clock advancing to %d", (int)global_clock);
-			}
-
-			/* internal control of global clock */
-			else
-				global_clock = exec_sync_get(nullptr);
-
-			/* operate delta mode if necessary (but only when event mode is active, e.g., not right after init) */
-			/* note that delta mode cannot be supported for realtime simulation */
-			global_deltaclock = 0;
-
-			/* Update the "double-precision" clock (usually for deltamode) for consistency */
-			global_delta_curr_clock = (double)global_clock;
-
-			/* determine whether any modules seek delta mode */
-			DELTAMODEFLAGS flags=DMF_NONE;
-			DT delta_dt = delta_modedesired(&flags);
-			TIMESTAMP t = TS_NEVER;
-			output_debug("delta_dt is %d", (int)delta_dt);
-			switch ( delta_dt ) {
-			case DT_INFINITY: /* no dt -> event mode */
-				global_simulation_mode = SM_EVENT;
-				t = TS_NEVER;
-				break;
-			case DT_INVALID: /* error dt  */
-				global_simulation_mode = SM_ERROR;
-				t = TS_INVALID;
-				break; /* simulation mode error */
-			default: /* valid dt */
-				if ( global_minimum_timestep>1 )
-				{
-					global_simulation_mode = SM_ERROR;
-					output_error("minimum_timestep must be 1 second to operate in deltamode");
-					t = TS_INVALID;
-					break;
-				}
-				else
-				{
-					if (delta_dt==0)	/* Delta mode now */
-					{
-						global_simulation_mode = SM_DELTA;
-						t = global_clock;
-					}
-					else	/* Normal sync - get us to delta point */
-					{
-						global_simulation_mode = SM_EVENT;
-						t = global_clock + delta_dt;
-					}
-				}
-				break;
-			}
-			if ( global_simulation_mode==SM_ERROR )
-			{
-				output_error("a simulation mode error has occurred");
-				break; /* terminate main loop immediately */
-			}
-			exec_sync_set(nullptr,t,false);
-
-
-			/* synchronize all internal schedules */
-			if ( global_clock < 0 )
-				throw_exception("clock time is negative (global_clock=%lli)", global_clock);
-			else if ( global_debug_output )
-			{
-				char dt[64]="(invalid)"; convert_from_timestamp(global_clock,dt,sizeof(dt));
-				output_debug("global_clock -> %s\n",dt);
-			}
-			/* set time context */
-			output_set_time_context(global_clock);
-
-			/* reset for a new sync event */
-			exec_sync_reset(nullptr);
-
-			/* account for stoptime only if global clock is not already at stoptime */
-			if ( global_clock<=global_stoptime && global_stoptime!=TS_NEVER )
-				exec_sync_set(nullptr,global_stoptime+1,false);
-
-			/* synchronize all internal schedules */
-			internal_synctime = syncall_internals(global_clock);
-			if( internal_synctime!=TS_NEVER && absolute_timestamp(internal_synctime)<global_clock )
-			{
-				// must be able to force reiterations for m/s mode.
-				THROW("internal property sync failure");
-				/* TROUBLESHOOT
-					An internal property such as schedule, enduse or loadshape has failed to synchronize and the simulation aborted.
-					This message should be preceded by a more informative message that explains which element failed and why.
-					Follow the troubleshooting recommendations for that message and try again.
-				 */
-			}
-			exec_sync_set(nullptr,internal_synctime,false);
-
-			/* prepare multithreading */
-			if (!global_debug_mode)
-			{
-				for (j = 0; j < thread_data->count; j++) {
-					thread_data->data[j].hard_event = 0;
-					thread_data->data[j].step_to = TS_NEVER;
-				}
-			}
-#ifdef _DEBUG
-			if ( global_clock>=global_runaway_time )
-				throw_exception("running clock detected");
-#endif
-
-			/* run precommit only on first iteration */
-			if (iteration_counter == global_iteration_limit)
-			{
-				pc_rv = precommit_all(global_clock);
-				if(SUCCESS != pc_rv)
-				{
-					THROW("precommit failure");
-				}
-			}
-			iObjRankList = -1;
-
-			/* scan the ranks of objects for each pass */
-			for (pass = 0; ranks[pass] != nullptr; pass++)
-			{
-				int i;
-
-				/* process object in order of rank using index */
-				for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
-				{
-					/* skip empty lists */
-					if (ranks[pass]->ordinal[i] == nullptr)
-						continue;
-
-					iObjRankList ++;
-
-					if (global_debug_mode)
-					{
-						LISTITEM *item;
-						for (item=ranks[pass]->ordinal[i]->first; item!=nullptr; item=item->next)
-						{
-							OBJECT *obj = static_cast<OBJECT *>(item->data);
-							// @todo change debug so it uses sync API
-							if (exec_debug(&main_sync,pass,i,obj)==FAILED)
-							{
-								THROW("debugger quit");
-							}
-						}
-
-					}
-					else
-					{
-						//sjin: if global_threadcount == 1, no pthread multhreading
-						if (global_threadcount == 1)
-						{
-							for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr=ptr->next) {
-								OBJECT *obj = static_cast<OBJECT *>(ptr->data);
-								ss_do_object_sync(0, ptr->data);
-
-								if (obj->valid_to == TS_INVALID)
-								{
-									//Get us out of the loop so others don't exec on bad status
-									break;
-								}
-								///printf("%d %s %d\n", obj->id, obj->name, obj->rank);
-							}
-							//printf("\n");
-						}
-						else { //sjin: implement pthreads
-							multithread_stuff(i, threadpool, iObjRankList);
-						}
-					}
-				}
-
-
-				/* run all non-schedule transforms */
-				{
-					TIMESTAMP st = transform_syncall(global_clock,static_cast<TRANSFORMSOURCE>(XS_DOUBLE|XS_COMPLEX|XS_ENDUSE),nullptr);// if (abs(t)<t2) t2=t;
-					exec_sync_set(nullptr,st,false);
-				}
-			}
-//			setTP = false;
-
-			if (!global_debug_mode)
-			{
-				for (j = 0; j < thread_data->count; j++)
-				{
-					exec_sync_merge(nullptr,&thread_data->data[j]);
-				}
-
-				/* report progress */
-				realtime_run_schedule();
-			}
-
-			/* count number of passes */
-			passes++;
-
-			/**** LOOPED SLAVE PAUSE HERE ****/
-			if(global_multirun_mode == MRM_SLAVE)
-			{
-				output_debug("step_to = %lli", exec_sync_get(nullptr));
-				output_debug("exec_start(), slave waiting for looped time signal");
-
-				pthread_cond_broadcast(&mls_inst_signal);
-
-				pthread_mutex_lock(&mls_inst_lock);
-				pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
-				pthread_mutex_unlock(&mls_inst_lock);
-
-				output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(nullptr));
-			}
-
-			/* run sync scripts, if any */
-			if ( exec_run_syncscripts()!=XC_SUCCESS )
-			{
-				output_error("sync script(s) failed");
-				THROW("script synchronization failure");
-			}
-
-			/* check for clock advance (indicating last pass) */
-			if ( exec_sync_get(nullptr)!=global_clock && global_simulation_mode == SM_EVENT)
-			{
-				/* clock update is the very last chance to change the next time */
-				exec_clock_update_modules();
-				if(exec_sync_get(nullptr) > global_clock) {
-					global_federation_reiteration = false;
-				TIMESTAMP commit_time = TS_NEVER;
-				commit_time = commit_all(global_clock, exec_sync_get(nullptr));
-//				commit_time = tp_commit_all(global_clock, exec_sync_get(nullptr), threadpool);
-				if ( absolute_timestamp(commit_time) <= global_clock)
-				{
-					// commit cannot force reiterations, and any event where the time is less than the global clock
-					//  indicates that the object is reporting a failure
-					output_error("model commit failed");
-					/* TROUBLESHOOT
-						The commit procedure failed.  This is usually preceded
-						by a more detailed message that explains why it failed.  Follow
-						the guidance for that message and try again.
-					 */
-					THROW("commit failure");
-				} else if( absolute_timestamp(commit_time) < exec_sync_get(nullptr) )
-				{
-					exec_sync_set(nullptr,commit_time,false);
-				}
-				/* reset iteration count */
-				iteration_counter = global_iteration_limit;
-					federation_iteration_counter = global_iteration_limit;
-
-					/* count number of timesteps */
-					tsteps++;
-				} else if(exec_sync_get(nullptr) == global_clock) {
-					iteration_counter = global_iteration_limit;
-					global_federation_reiteration = true;
-					if (--federation_iteration_counter == 0) {
-						output_error("federation convergence iteration limit reached at %s (exec)", simtime());
-						/* TROUBLESHOOT
-							This indicates that the federation that this gridlab-d model a part of
-							was unable to determine a steady state any time horizon.
-						 */
-						exec_sync_set(nullptr,TS_INVALID,false);
-						THROW("convergence failure");
-					}
-				}
-			}
-
-			/* check iteration limit */
-			else if (--iteration_counter == 0)
-			{
-				output_error("convergence iteration limit reached at %s (exec)", simtime());
-				/* TROUBLESHOOT
-					This indicates that the core's solver was unable to determine
-					a steady state for all objects for any time horizon.  Identify
-					the object that is causing the convergence problem and contact
-					the developer of the module that implements that object's class.
-				 */
-				exec_sync_set(nullptr,TS_INVALID,false);
-				THROW("convergence failure");
-			}
-
-			/* handle delta mode operation */
-			if ( global_simulation_mode==SM_DELTA && exec_sync_get(nullptr)>=global_clock )
-			{
-				if(handle_delta_mode_operation() == -1) {
-					break; //DELTA MODE FAILURE
-				}
-			}
-		} // end of while loop
+		/* Run the main simulation loop */
+		run_main_simulation_loop(threadpool, passes, tsteps, j, ptr, pc_rv, iObjRankList);
 
 		/* disable signal handler */
 		signal(SIGINT,nullptr);
