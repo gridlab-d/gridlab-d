@@ -470,6 +470,7 @@ Json::Value do_checkpoint(const char* output_directory)
                 // Add clock info
                 checkpoint["clock"]["timestamp"] = (Json::Int64)global_clock;
                 checkpoint["clock"]["stoptime"] = (Json::Int64)global_stoptime;
+                checkpoint["clock"]["starttime"] = (Json::Int64)global_starttime;
                 checkpoint["clock"]["timezone"] = timestamp_current_timezone();
 
                 

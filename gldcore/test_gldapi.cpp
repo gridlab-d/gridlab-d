@@ -114,40 +114,6 @@ std::vector<ObjectInfo> getAllObjectNames(const Json::Value& checkpoint) {
     return allObjects;
 }
 
-// Print summary of all objects
-void printObjectSummary(const Json::Value& checkpoint) {
-    std::cout << "\n=== Object Summary ===" << std::endl;
-    
-    std::vector<std::string> classNames = getClassNames(checkpoint);
-    std::cout << "Total classes: " << classNames.size() << std::endl;
-    
-    int totalObjects = 0;
-    for (const std::string& className : classNames) {
-        Json::Value objects = getObjectsOfClass(checkpoint, className);
-        int count = objects.isArray() ? objects.size() : 0;
-        totalObjects += count;
-        
-        std::cout << "  " << className << ": " << count << " objects" << std::endl;
-        
-        // Show first few object names
-        if (objects.isArray() && count > 0) {
-            for (int i = 0; i < std::min(3, count); i++) {
-                Json::Value obj = objects[i];
-                std::string name = "unnamed";
-                if (obj.isMember("name") && obj["name"].isString()) {
-                    name = obj["name"].asString();
-                }
-                std::cout << "    [" << i << "] " << name << std::endl;
-            }
-            if (count > 3) {
-                std::cout << "    ... and " << (count - 3) << " more" << std::endl;
-            }
-        }
-    }
-    
-    std::cout << "Total objects: " << totalObjects << std::endl;
-}
-
 // Safe value extraction with type conversion
 template<typename T>
 T safeGetValue(const Json::Value& value, const T& defaultValue) {
@@ -173,15 +139,14 @@ T safeGetValue(const Json::Value& value, const T& defaultValue) {
 }
 
 int main(int argc, char* argv[]) {
-    const char* fileName = "test_unbalanced_stepdown_D-grY_NR.glm";
+    const char* fileName = "test_HVAC_balance.glm";
     // Instantiate GridLabD via exectuable path
     GridLabD gld;
 
     // Test set_config_file
-    gld.set_config_file("config.cfg");
+    // gld.set_config_file("config.cfg");
     
     // Test load_glm
-    // Dummy command line arguments
     std::vector<const char*> args = {"gridlabd", fileName, "--verbose"};
     int test_argc = static_cast<int>(args.size());
     char* test_argv[] = { const_cast<char*>(args[0]), const_cast<char*>(args[1]), const_cast<char*>(args[2])};
@@ -189,15 +154,13 @@ int main(int argc, char* argv[]) {
 
     gld.setup_after_load();
 
-    TIMESTAMP start_time = convert_to_timestamp("2000-01-01 0:00:00");
-    TIMESTAMP stop_time = convert_to_timestamp("2000-04-01 0:00:00");
+    TIMESTAMP start_time = convert_to_timestamp("2000-04-01 0:00:00");
+    TIMESTAMP stop_time = convert_to_timestamp("2000-06-01 0:00:00");
     gld.run(start_time, stop_time);
+    // gld.run();
     
     // Get all info for GLD
-    Json::Value checkpoint = gld.get_glm_data();
-    
-    // Print object summary
-    printObjectSummary(checkpoint);
+    Json::Value checkpoint = gld.get_checkpoint_json("/mnt/c/dev/gridlab-d_fork/_test_results/");
     
     std::cout << "\n=== Example Property Access ===" << std::endl;
     
