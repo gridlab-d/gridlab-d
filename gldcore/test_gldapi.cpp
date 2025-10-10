@@ -151,13 +151,23 @@ int main(int argc, char* argv[]) {
     int test_argc = static_cast<int>(args.size());
     char* test_argv[] = { const_cast<char*>(args[0]), const_cast<char*>(args[1]), const_cast<char*>(args[2])};
     gld.load_glm(test_argc, test_argv);
-
+    
     gld.setup_after_load();
 
     TIMESTAMP start_time = convert_to_timestamp("2000-04-01 0:00:00");
     TIMESTAMP stop_time = convert_to_timestamp("2000-06-01 0:00:00");
-    gld.run(start_time, stop_time);
+    
+    // Test run examples
+    // gld.run(start_time, stop_time);
     // gld.run();
+
+    // Stepping through the simulation examples, check sim_time for each step if needed. 
+    double sim_time;
+    for (int i = 0; i < 5; i++) {
+        gld.step(sim_time);
+        std::cout << "Simulation time after step " << (i+1) << ": " << sim_time << std::endl;
+    }
+
     
     // Get all info for GLD
     Json::Value checkpoint = gld.get_checkpoint_json("/mnt/c/dev/gridlab-d_fork/_test_results/");
