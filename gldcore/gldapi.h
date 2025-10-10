@@ -6,6 +6,7 @@
 #include <any>
 #include <memory>
 #include <vector>
+#include <optional>
 #include <json/json.h> //jsoncpp library
 
 // typedefs for GLD data types
@@ -63,8 +64,8 @@ public:
     // Setup GLD and return an error code
     GLDErrorCode setup_after_load() ;
 
-    // Get the GLM data based on a query
-    Json::Value get_glm_data();
+    // Get the GLM data based on a query, optionally save to filepath
+    Json::Value get_checkpoint_json(const std::string& filepath = "");
 
     // Set the GLM based on input data
     GLDErrorCode set_glm_data(const GLDData& data);
@@ -84,8 +85,8 @@ public:
     // Edit an object in the model
     GLDErrorCode edit_object(const std::string& name, const GLDData& updated_data);
 
-    // Run the simulation for a specified time range and return the simulation time
-    GLDErrorCode run(double start_time, double end_time);
+    // Run the simulation for a specified time range (optional). If not provided, previous values are used.
+    GLDErrorCode run(std::optional<double> start_time = std::nullopt, std::optional<double> stop_time = std::nullopt);
 
     // Run the simulation by one time step and return the simulation time
     GLDErrorCode step(double& simulation_time);

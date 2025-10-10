@@ -1,5 +1,6 @@
 #include "gldapi.h"
 #include <cstdio>
+#include <fstream>
 #include "timestamp.h"
 #include "realtime.h"
 #include "exec.h"
@@ -272,9 +273,43 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
     return GLD_SUCCESS;
 }
 
-// Retrieve GLM data based on a query
-Json::Value GridLabD::get_glm_data() {
-    Json::Value checkpoint = do_checkpoint(nullptr); // Use default directory
+// Retrieve GLM data based on a query, optionally save to filepath
+Json::Value GridLabD::get_checkpoint_json(const std::string& filepath) {
+    Json::Value checkpoint;
+    
+    if (filepath.empty()) {
+        // If no filepath provided, just return the JSON without saving
+        checkpoint = do_checkpoint(nullptr);
+    } else {
+        // Extract directory from filepath for do_checkpoint
+        size_t last_slash = filepath.find_last_of("/\\");
+        std::string directory;
+        
+        if (last_slash != std::string::npos) {
+            directory = filepath.substr(0, last_slash);
+        } else {
+            directory = "."; // Current directory if no path separators found
+        }
+        
+        // Get checkpoint JSON with directory specified
+        checkpoint = do_checkpoint(directory.c_str());
+        
+        // Additionally save the JSON directly to the specified filepath
+        if (!checkpoint.empty()) {
+            std::ofstream json_file(filepath);
+            if (json_file.is_open()) {
+                Json::StreamWriterBuilder builder;
+                builder["indentation"] = "  "; // 2-space indentation
+                std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+                writer->write(checkpoint, &json_file);
+                json_file.close();
+                printf("Checkpoint JSON saved to: %s\n", filepath.c_str());
+            } else {
+                printf("Error: Unable to open file '%s' for writing\n", filepath.c_str());
+            }
+        }
+    }
+    
     return checkpoint;
 }
 
@@ -316,19 +351,22 @@ GLDErrorCode GridLabD::edit_object(const std::string& name, const GLDData& updat
 }
 
 // Run simulation from start to end
-GLDErrorCode GridLabD::run(double start_time, double end_time) {
-    printf("Running simulation from %.2f to %.2f\n", start_time, end_time);
+GLDErrorCode GridLabD::run(std::optional<double> start_time, std::optional<double> stop_time) {
     // Override the global clock if values are provided.
     /* setup clocks */
-	if (start_time != 0.0) {
-        global_starttime = start_time;
-        global_clock = global_starttime;
-
+    if (start_time.has_value()) {
+        printf("Setting start_time: %.2f\n", start_time.value());
+        global_starttime = start_time.value();
+    } else {
+        printf("Using previous start_time: %.2f\n", global_starttime);
     }
-    if (end_time != 0.0){
-        global_stoptime = end_time;
+    if (stop_time.has_value()) {
+        printf("Setting stop_time: %.2f\n", stop_time.value());
+        global_stoptime = stop_time.value();
+    } else {
+        printf("Using previous stop_time: %.2f\n", global_stoptime);
     }
-
+    global_clock = global_starttime;
 	if (strcmp(global_environment,"batch")==0)
 	{
 		/* do the run */
