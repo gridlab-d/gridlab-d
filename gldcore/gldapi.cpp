@@ -250,6 +250,12 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
     if (strcmp(global_kmlfile, "") != 0)
         kml_dump(global_kmlfile);
 
+    /* finalize all objects */
+    output_verbose("finalizing all objects");
+    if (exec_finalize_all() == FAILED) {
+        output_error("object finalization failed");
+    }
+
     /* terminate */
     module_termall();
 
