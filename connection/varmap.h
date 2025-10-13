@@ -85,11 +85,11 @@ public:
 	void set(Ti in) { last_value = in; }
 
 	// These can be removed and refactored to use the templated getter above once C++17 is adopted.
-	std::string getString() {return std::get<std::string>(last_value); }
-	gld::complex getComplex() {return std::get<gld::complex>(last_value); }
-	int64 getInt() {return std::get<int64>(last_value); }
-	bool getBool() {return std::get<bool>(last_value); }
-	double getDouble() {return std::get<double>(last_value); }
+	std::string getString() {return std::get_if<std::string>(&last_value); }
+	gld::complex getComplex() {return std::get_if<gld::complex>(&last_value); }
+	int64 getInt() {return std::get_if<int64>(&last_value); }
+	bool getBool() {return std::get_if<bool>(&last_value); }
+	double getDouble() {return std::get_if<double>(&last_value); }
 
 #endif
 };
