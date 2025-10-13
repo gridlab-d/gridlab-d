@@ -151,12 +151,12 @@ int main(int argc, char* argv[]) {
     int test_argc = static_cast<int>(args.size());
     char* test_argv[] = { const_cast<char*>(args[0]), const_cast<char*>(args[1]), const_cast<char*>(args[2])};
     gld.load_glm(test_argc, test_argv);
-    
-    gld.setup_after_load();
+
 
     TIMESTAMP start_time = convert_to_timestamp("2000-04-01 0:00:00");
     TIMESTAMP stop_time = convert_to_timestamp("2000-06-01 0:00:00");
     
+    // gld.set_time_step(900); // 15 minutes in seconds
     // Test run examples
     // gld.run(start_time, stop_time);
     // gld.run();

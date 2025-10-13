@@ -8,6 +8,7 @@
 #include "threadpool.h"
 #include "cmdarg.h"
 #include "legal.h"
+#include "globals.h"
 #include "gldrandom.h"
 #include "module.h"
 #include "environment.h"
@@ -157,10 +158,26 @@ GLDErrorCode GridLabD::load_glm(int argc, char* argv[]) {
          */
         exit(XC_ARGERR);
     }
+    setup_after_load();
 
     return GLD_SUCCESS;
 }
 
+void set_clocks(std::optional<double> start_time, std::optional<double> stop_time) {
+    if (start_time.has_value()) {
+        printf("Setting start_time: %.2f\n", start_time.value());
+        global_starttime = start_time.value();
+    } else {
+        printf("Using previous start_time: %.2f\n", global_starttime);
+    }
+    if (stop_time.has_value()) {
+        printf("Setting stop_time: %.2f\n", stop_time.value());
+        global_stoptime = stop_time.value();
+    } else {
+        printf("Using previous stop_time: %.2f\n", global_stoptime);
+    }
+    global_clock = global_starttime;
+}
 // Load a GLM file
 GLDErrorCode GridLabD::setup_before_load() {
     
@@ -199,7 +216,7 @@ GLDErrorCode GridLabD::setup_before_load() {
 
 // Load a GLM file
 GLDErrorCode GridLabD::setup_after_load() {
-   /* ensure clocks are synced */
+    /* ensure clocks are synced */
     global_clock = global_starttime;
     /* initialize scheduler */
     sched_init(0);
@@ -350,23 +367,6 @@ GLDErrorCode GridLabD::edit_object(const std::string& name, const GLDData& updat
     return GLD_SUCCESS;
 }
 
-
-void set_clocks(std::optional<double> start_time, std::optional<double> stop_time) {
-    if (start_time.has_value()) {
-        printf("Setting start_time: %.2f\n", start_time.value());
-        global_starttime = start_time.value();
-    } else {
-        printf("Using previous start_time: %.2f\n", global_starttime);
-    }
-    if (stop_time.has_value()) {
-        printf("Setting stop_time: %.2f\n", stop_time.value());
-        global_stoptime = stop_time.value();
-    } else {
-        printf("Using previous stop_time: %.2f\n", global_stoptime);
-    }
-    global_clock = global_starttime;
-}
-
 // Common helper to check environment and handle failures
 GLDErrorCode check_environment_and_handle_failure() {
     if (strcmp(global_environment, "batch") != 0) {
@@ -514,7 +514,16 @@ GLDErrorCode GridLabD::set_application_mode(GLDApplicationType mode) {
 
 // Set timestep
 GLDErrorCode GridLabD::set_time_step(double time_step) {
-    printf("Setting simulation time step to: %.2f\n", time_step);
+    if (time_step <= 0) {
+        printf("Error: Time step must be positive, got: %.2f\n", time_step);
+        return GLD_OPERATION_FAILED;
+    }
+    
+    // Convert to TIMESTAMP units (seconds to internal time units)
+    // GridLAB-D uses integer TIMESTAMP, so convert double seconds to integer
+    global_minimum_timestep = static_cast<int>(time_step);
+    
+    printf("Setting minimum simulation time step to: %d seconds\n", global_minimum_timestep);
     return GLD_SUCCESS;
 }
 
