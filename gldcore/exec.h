@@ -49,6 +49,7 @@ int exec_init(void);
 STATUS exec_start(void);
 STATUS exec_step(void);
 STATUS run_preparation(void);
+STATUS exec_finalize_all(void);
 bool exec_is_initialized(void);
 const char *simtime(void);
 STATUS t_setup_ranks(void);

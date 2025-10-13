@@ -2899,6 +2899,15 @@ bool exec_is_initialized(void)
 	return (ranks != nullptr);
 }
 
+/** Finalize all objects in the simulation
+	This is the public interface to finalize_all() for external use.
+	@return STATUS is SUCCESS if finalization completed successfully, FAILED otherwise.
+ **/
+STATUS exec_finalize_all(void)
+{
+	return finalize_all();
+}
+
 /** Execute a single simulation step
 	This is the public interface for single-step simulation execution.
 	@return STATUS is SUCCESS if the step completed successfully, FAILED otherwise.
