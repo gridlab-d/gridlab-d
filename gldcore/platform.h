@@ -30,7 +30,7 @@
 	#else
 		#define __WORDSIZE__ __WORDSIZE
 	#endif
-	#include <sys/unistd.h>
+	#include <unistd.h>
 	#if __WORDSIZE__ == 64
 		#define X64
 		#define int64 long long /**< standard 64-bit integers on 64-bit machines */
