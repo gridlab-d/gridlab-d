@@ -2930,8 +2930,17 @@ STATUS exec_step(void)
 	
 	/* main step exception handler */
 	TRY {
-		/* Run a single step of the simulation loop */
-		run_single_simulation_step(threadpool, passes, tsteps, j, ptr, pc_rv, iObjRankList);
+		/* Store the current clock to detect when it advances */
+		TIMESTAMP start_clock = global_clock;
+		
+		/* Keep running iterations until the clock advances or simulation should stop */
+		while ( execute_single_simulation_iteration(threadpool, passes, tsteps, j, ptr, pc_rv, iObjRankList) )
+		{
+			/* Check if the clock has advanced - if so, we've completed one step */
+			if (global_clock > start_clock) {
+				break;
+			}
+		}
 	}
 	CATCH (const char *msg)
 	{
