@@ -48,17 +48,17 @@ class GLDCheckpoint():
         # only one climate object allowed
         self.climate = cp["objects"]["climate"]["instances"][0] 
 
-        self.house = {}
+        self.houses = {}
         for idx, house_dict in enumerate(cp["objects"]["house"]["instances"]):
-            self.house[house_dict["name"]] = cp["objects"]["house"]["instances"][idx]
+            self.houses[house_dict["name"]] = cp["objects"]["house"]["instances"][idx]
 
-        self.recorder = {}
+        self.recorders = {}
         for idx, recorder_dict in enumerate(cp["objects"]["recorder"]["instances"]):
-            self.recorder[recorder_dict["name"]] = cp["objects"]["recorder"]["instances"][idx]
+            self.recorders[recorder_dict["name"]] = cp["objects"]["recorder"]["instances"][idx]
 
-        self.triplex_meter = {}
+        self.triplex_meters = {}
         for idx, triplex_meter_dict in enumerate(cp["objects"]["triplex_meter"]["instances"]):
-            self.triplex_meter[triplex_meter_dict["name"]] = cp["objects"]["triplex_meter"]["instances"][idx]
+            self.triplex_meters[triplex_meter_dict["name"]] = cp["objects"]["triplex_meter"]["instances"][idx]
         
         # etc; I'm not going to do these all until we're sure this is the right
         # way to do things
