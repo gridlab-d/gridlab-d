@@ -11,13 +11,13 @@ The source table must have a sequence field, `id` , and a time field, `t`, to fu
     
     module mysql;
     object player {
-      property _property-name_ ;
-      table|file _source-table_ ;
+      property property-name;
+      table|file source-table;
       mode {"r","r+"};
       filetype {"CSV"};
-      connection _database-object-name_ ;
+      connection database-object-name;
       options 0;
-      loop _number-of-loops_ ;
+      loop number-of-loops;
     }
     
 

@@ -2,7 +2,7 @@
 
 Converts direct current (DC) (e.g. from solar panels or batteries) to alternating current (AC). 
 
-TODO: The inverter object has been under active development recently and this material is out of date or incomplete
+TODO - Deprecated? - The inverter object has been under active development recently and this material is out of date or incomplete
 
 ## Synopsis
     

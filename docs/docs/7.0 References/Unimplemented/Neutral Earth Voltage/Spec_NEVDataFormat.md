@@ -1,21 +1,5 @@
 # Spec:NEVDataFormat
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:NEVDataFormat
-SPECIFICATION Approval item: 
-
-## Contents
-
-  * 1 Overview
-  * 2 GLM Array Inputs
-  * 3 Powerflow Data Structure
-    * 3.1 Node/bus Structure
-      * 3.1.1 Update Functions
-    * 3.2 Link/branch structure
-  * 4 Data population
-  * 5 References
-  * 6 See also
-# Overview
-
 This specification page outlines the formatting for array input data (GLM-based) for NEV objects, as well as the internal common programming structure. Input changes will require implementation of new functionality for interpreting GLM inputs. Note that the NEV solver methods and inputs will be exclusive to a Newton-Raphson solver implementation. While the Forward-Backward Sweep method could also be used for NEV solutions, it is not planned to be implemented at this time. 
 
 # GLM Array Inputs

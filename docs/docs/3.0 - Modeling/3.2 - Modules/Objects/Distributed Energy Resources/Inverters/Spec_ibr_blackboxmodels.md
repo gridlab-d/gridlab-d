@@ -1,36 +1,6 @@
-# Spec:ibr blackboxmodels
+# ibr blackboxmodels
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:ibr_blackboxmodels
-# Spec:ibr blackboxmodels
-
-## Contents
-
-  * 1 Overview
-  * 2 Introduction
-  * 3 Grid-Following Inveter
-  * 4 CNN-Based Black-Box Modeling Framework
-    * 4.1 Data Pre-Processing
-      * 4.1.1 Remove Startup Data
-      * 4.1.2 Downsample the Data
-      * 4.1.3 Normalize the Data
-      * 4.1.4 Reshape Data into a Tensor Structure
-    * 4.2 CNN Architecture
-      * 4.2.1 1\. Data Preprocessing
-      * 4.2.2 2\. CNN Layer Design
-      * 4.2.3 3\. Training
-      * 4.2.4 4\. Model Evaluation
-      * 4.2.5 5\. Model Deployment
-  * 5 Open-Source Integration: Prediction with CNN
-  * 6 Requirement and Installations
-  * 7 Pros, Cons, and Limitations
-    * 7.1 Pros
-    * 7.2 Cons
-    * 7.3 Limitations
-  * 8 References
-  * 9 See also
-## Overview
-
-As part of the DistribuDyn project funded by the U.S. Department of Energy Solar Energy Technology Office (SETO), advanced inverter-based-resource models were created to represent devices being deployed on the modern power system. The model in [inverter_dyn] represents a generalized inverter. This page represents blackbox models generalized from hardware tests and measurements of commercial hardware. The ``ibr_blackbox`` model is produced by the Oak Ridge National Laboratory as part of the DistribuDyn project. 
+As part of the DistribuDyn project funded by the U.S. Department of Energy Solar Energy Technology Office (SETO), advanced inverter-based-resource models were created to represent devices being deployed on the modern power system. The model in **inverter_dyn** represents a generalized inverter. This page represents blackbox models generalized from hardware tests and measurements of commercial hardware. The ``ibr_blackbox`` model is produced by the Oak Ridge National Laboratory as part of the DistribuDyn project. 
 
 ## Introduction
 
@@ -69,25 +39,18 @@ Since time-series data requires structured input for deep learning models:
 The pseudocode for the data preprocessing is given as below example. 
     
     
-    def reshape_data(data, window_size):
-       x_data = []  # Input data (sequences of past observations)
-       y_data = []  # Output data (future observations or averages)
-       # Add zeros at the beginning for the initial conditions
-       data_with_zeros = prepend_zeros(data, window_size)
-       # Reshape input data
-       x_data = create_input_windows(data_with_zeros, window_size)
-       # Reshape output data and take the average for each window
-       y_data = create_output_windows(data_with_zeros, window_size)
-       return x_data, y_data
-    
-
-  
-
-
+        def reshape_data(data, window_size):
+          x_data = []  # Input data (sequences of past observations)
+          y_data = []  # Output data (future observations or averages)
+          # Add zeros at the beginning for the initial conditions
+          data_with_zeros = prepend_zeros(data, window_size)
+          # Reshape input data
+          x_data = create_input_windows(data_with_zeros, window_size)
+          # Reshape output data and take the average for each window
+          y_data = create_output_windows(data_with_zeros, window_size)
+          return x_data, y_data
+        
 By leveraging the divided dataset into training and testing representing empirical input-output responses, the CNN-based black-box model can effectively learn and replicate the nonlinear behavior of IBRs, making it a valuable tool for power system analysis and control. 
-
-  
-
 
 ### CNN Architecture
 

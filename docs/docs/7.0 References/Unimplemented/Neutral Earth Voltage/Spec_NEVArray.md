@@ -1,7 +1,5 @@
 # Spec:NEVArray
 
-SPECIFICATION Approval item: 
-
 This specification page outlines the formatting for array input data (GLM-based) for NEV objects in explicit detail. This will include the syntax flags and the approach for implementation within GridLAB-D™. 
 
 # GLM Array Input Example

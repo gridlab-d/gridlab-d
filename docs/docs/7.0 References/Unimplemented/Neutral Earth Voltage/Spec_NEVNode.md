@@ -1,7 +1,5 @@
 # Spec:NEVNode
 
-SPECIFICATION Approval item: 
-
 The NEV implementation of node-based objects will describe what additional or new information is needed to model the NEV behavior on powerflow. All previous functionality of nodes, meters, loads, triplex_nodes, triplex_meters, triplex_meters will stay the same. 
 
 ## Node/Meter

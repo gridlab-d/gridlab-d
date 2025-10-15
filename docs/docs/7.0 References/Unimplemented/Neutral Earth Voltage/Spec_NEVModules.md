@@ -1,20 +1,5 @@
 # Spec:NEVModules
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:NEVModules
-SPECIFICATION Approval item: 
-
-## Contents
-
-  * 1 Overview
-  * 2 Legacy Implementation
-    * 2.1 GLM Inputs
-    * 2.2 Programming Considerations
-  * 3 NEV-native Implementation
-    * 3.1 GLM Inputs
-    * 3.2 Programming Considerations
-  * 4 See also
-# Overview
-
 This specification page outlines the interfacing with existing modules and devices external to the powerflow module. Examples include inverters in the generators module and houses in the residential module. Eventually, these devices will explicitly interface with the NEV capabilities. This specification details how both legacy compatibility/interfacing will occur, as well as interface points for new, "NEV-native" devices will work. 
 
 # Legacy Implementation

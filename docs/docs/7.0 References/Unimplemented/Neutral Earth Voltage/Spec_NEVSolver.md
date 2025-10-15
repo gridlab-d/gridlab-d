@@ -1,23 +1,5 @@
 # Spec:NEVSolver
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:NEVSolver
-SPECIFICATION Approval item: 
-
-## Contents
-
-  * 1 Overview
-  * 2 Process
-  * 3 Solution Timing
-  * 4 Islanding/reconfiguration
-  * 5 Functions
-    * 5.1 Merge Sort Function
-    * 5.2 Node functions
-      * 5.2.1 Y_update_fxn
-      * 5.2.2 V_update_fxn
-  * 6 References
-  * 7 See also
-# Overview
-
 The NEV solver will utilize the current injection method outlined in [1]. The underlying algorithm is utilized in the existing Newton-Raphson (NR) solver inside GridLAB-D™ as TCIM-NR. The Neutral Earth Voltage (NEV) solver will use the same TCIM-NR approach, but will expand the solution to support more than three phases. superLU will continue to be the default LU decomposition solver for the NEV solver, but support for external LU solvers (such as KLU) will be incorporated in a manner similar to the existing Newton-Raphson solver. 
 
 # Process

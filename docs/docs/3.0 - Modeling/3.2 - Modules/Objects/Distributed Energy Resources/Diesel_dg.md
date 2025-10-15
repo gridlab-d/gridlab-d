@@ -1,6 +1,6 @@
 # Diesel dg
 
-The diesel_dg object represents a synchronous distributed generation. The model supports both a QSTS-only model and subsecond (deltamode) modes of operation. 
+The **diesel_dg** object represents a synchronous distributed generation. The model supports both a QSTS-only model and subsecond (deltamode) modes of operation. 
 
 # Properties
 
@@ -8,15 +8,116 @@ It is important to note that the parameter tables below represent variables that
 
 The properties are divided into the QSTS and subsecond sets. This mode of operation is determined by the `Gen_type`: 
 
-Table 1 - Mode Select  Property  | Type  | Unit  | Description   
+Table 1 - Mode Select  
+Property  | Type  | Unit  | Description   
 ---|---|---|---  
-Gen_type  | enumeration  | none  | Selects the overall mode of operation for the diesel_dg object. Valid selections include: 
+Gen_type  | enumeration  | none  | Selects the overall mode of operation for the **diesel_dg** object. Valid selections include: 
 
   * `CONSTANT_PQ` \- QSTS-only mode diesel generator
   * `DYN_SYNCHRONOUS` \- QSTS and deltamode-compatible diesel generator
 
+# PQ CONSTANT mode diesel dg
+
+This section describes GridLAB-D™ implementation of diesel generator in PQ constant mode.   
   
+A constant_P mode is implemented in the governor type P_CONSTANT: 
+
+![caption](../../../../../images/700px-Diesel_dg_P_constant_with_actuator_and_time_delay.png)
+
+In the constant_P mode, a time delay is applied to the electric power output from the diesel generator. The delayed electric power output is compared with the constant real power reference, then applied to a PI controller, to get the actuator input. The actuator part and time delay part of the GGOV01 governor is used in constant_P mode. Output of the constant_P mode is the mechanical power of the diesel generator.   
   
+The constant_Q mode is implemented based on the existing exciter SEX_PTI: 
+
+![caption](../../../../../images//500px-Diesel_dg_Q_constant.png)
+
+## GridLAB-D™ Implementation
+
+### Diesel Generator in PQ Constant mode example
+
+This diesel generator object is implemented in both constant P and constant Q mode.   
+  
+By selecting _Governor_type_ as P_CONSTANT, the constant P mode is selected. This example sets ''Pref'' value as 0.5 p.u. The PI controller settings for the constant Pref mode are 0 for proportional control, and 0.05 for integral control. In addition, parameters of the actuator and time delay part of the P_CONSTANT are also defined in the example.   
+  
+By selecting _Exciter_Q_constant_mode_ as true, the constant Q mode is selected. This example sets ''Qref'' value as 0.6 p.u.. The PI controller settings for the constant Q mode are 0.01 for proportional control, and 0.05 for integral control. 
+
+### Example of Diesel Generator in PQ Constant mode
+    
+    
+    module generators;
+    object diesel_dg {
+         flags DELTAMODE;
+         parent 8;
+         name Gen2;
+         Rated_V 4156; //Line-to-Line value
+         Rated_VA 1000000; // Defaults to 10 MVA
+         Gen_type DYN_SYNCHRONOUS;
+         rotor_speed_convergence ${rotor_convergence};
+         Exciter_type SEXS;
+         Governor_type P_CONSTANT;
+         // Actuator and time delay parameters for P_CONSTANT mode
+         P_CONSTANT_Tpelec 1.0; // Electrical power transducer time constant, sec. (>0.)
+         P_CONSTANT_Tact 0.05; //0.5; // Actuator time constant
+         P_CONSTANT_Kturb 1.5; // Turbine gain (>0.)
+         P_CONSTANT_wfnl 0.2; //0.2; // No load fuel flow, p.u
+         P_CONSTANT_Tb 0.01;//0.1; // Turbine lag time constant, sec. (>0.)
+         P_CONSTANT_Tc 0.2; // Turbine lead time constant, sec.
+         P_CONSTANT_Teng 0.0; // Transport lag time constant for diesel engine
+         P_CONSTANT_ropen 050; // Maximum valve opening rate, p.u./sec.
+         P_CONSTANT_rclose -050; // Minimum valve closing rate, p.u./sec.
+         P_CONSTANT_Kimw 0.0;//0.002; // Power controller (reset) gain 
+         inertia 2.5;
+         // PI controller parameters of P_CONSTANT mode
+         P_CONSTANT_Pref 0.5; // Set P reference, p.u. 
+         P_CONSTANT_kp 0;  // ki for the PI controller implemented in P constant delta mode
+         P_CONSTANT_ki 0.05;  // kp for the PI controller implemented in P constant delta mode
+         Exciter_Q_constant_Qref 0.6; // Set Q reference, p.u. 
+         Exciter_Q_constant_mode true; // Flag indicating whether the diesel generator exciter is operating based on Qref given
+         Exciter_Q_constant_kp 0.01;  // ki for the PI controller implemented in Q constant delta mode
+    
+
+} 
+
+## Properties
+
+This table lists the properties related to diesel generator in PQ constant mode. Some parameters used by diesel_dg can be found in the diesel_dg wiki page. 
+
+Property name | Type | Unit | Description   
+---|---|---|---  
+Gen_type | enumeration | none | Defines type of diesel generator (INDUCTION  , SYNCHRONOUS, DYN_SYNCHRONOUS).   
+Should choose DYN_SYNCHRONOUS for diesel generator in PQ constant mode.   
+rotor_speed_convergence | double | rad | Convergence criterion on rotor speed used to determine when to exit deltamode   
+Exciter_type | enumeration | none | Exciter model for dynamics-capable implementation (NO_EXC , SEXS).   
+Should choose diesel_dg_type|SEXS for this diesel generator in PQ constant mode.   
+Governor_type | enumeration | none | Governor model for dynamics-capable implementation (NO_GOV , DEGOV1, GAST, GGOV1_OLD, GGOV1, P_CONSTANT).   
+Should choose P_CONSTANTfor this diesel generator in PQ constant mode.   
+Parameters related to P constant mode   
+P_CONSTANT_Pref | double | none | Pref value for P constant mode   
+P_CONSTANT_kp | double | none | Parameter of the proportional control for constant P mode   
+P_CONSTANT_ki | double | none | Parameter of the integration control for constant P mode   
+P_CONSTANT_Tpelec | double | s | Electrical power transducer time constant   
+P_CONSTANT_Tact | double | s | Actuator time constant   
+P_CONSTANT_Kturb | double | none | Turbine gain   
+P_CONSTANT_wfnl | double | none | No load fuel flow   
+P_CONSTANT_Tb | double | s | Turbine lag time constant   
+P_CONSTANT_Tc | double | s | Turbine lead time constant   
+P_CONSTANT_Teng | double | s | Transport lag time constant for diesel engine   
+P_CONSTANT_ropen | double | /s | Maximum valve opening rate   
+P_CONSTANT_rclose | double | /s | Minimum valve closing rate   
+P_CONSTANT_Kimw | double | /s | Power controller (reset) gain   
+Parameters related to Q constant mode   
+Exciter_Q_constant_Qref | double | none | Qref value for Q constant mode   
+Exciter_Q_constant_mode | double | none | True if the generator is operating under constant Q mode   
+Exciter_Q_constant_kp | double | none | Parameter of the proportional control for constant Q mode   
+Exciter_Q_constant_ki | double | none | Parameter of the integration control for constant Q mode   
+  
+## Test cases
+
+In order to verify the implementation of PQ_CONSTANT mode diesel generator, a test case in 123-bus feeder with one isochronous mode diesel_dg Gen 1, and one PQ_CONSTANT mode diesel_dg Gen 2is applied. At 5.001 second, part of the feeder is disconnected. Gen 1 will reduce its generation, and Gen 2 will maintain its generation after the transient. Below diagram shows the generation from the two generators before and after the transient. 
+
+![PQ_CONSTANT mode diesel generator result](../../../../../images/700px-Diesel_dg_PQ_constant_simulation_result.png)
+
+To run this case, please find in the autotest in GridLAB-D™ generator module. 
+
 ## QSTS Mode
 
 For QSTS mode, the follow properties are valid: 
@@ -57,36 +158,16 @@ rotor_speed_convergence_enabled  | bool  | N/A  | Enables the checking of the `r
 voltage_convergence  | double  | V  | Convergence criterion on terminal voltage magnitude between deltamode timesteps - must be satisfied (if enabled) to return to QSTS   
 voltage_magnitude_convergence_enabled  | bool  | N/A  | Enables the checking of the `voltage_convergence` variable   
 **General governor variables**  
-Governor_type  | enumeration  | N/A  | Selects the governor control model applied to the diesel generator. Valid options are: 
-
-  * `NO_GOV` \- No governor
-  * `DEGOV1` \- DEGOV1 Woodward Diesel Governor
-  * `GAST` \- GAST Gas Turbine Governor
-  * `GGOV1` \- GGOV1 Governor Model
-  * `P_CONSTANT` \- P_CONSTANT mode Governor Model
-
-  
-P_f_droop_setting_mode  | enumeration  | N/A  | Defines what variable sets the bias/offset for the P-f droop curve (when enabled). Available choices are: 
-
-  * `FSET_MODE` \- `fset` defines the curve offset/bias
-  * `PSET_MODE` \- `Pset` or `Pref` defines the curve offset/bias
-
-  
+Governor_type  | enumeration  | N/A  | Selects the governor control model applied to the diesel generator. Valid options are: <br/> - `NO_GOV` \- No governor <br/> -  `DEGOV1` \- DEGOV1 Woodward Diesel Governor <br/> - `GAST` \- GAST Gas Turbine Governor <br/> - `GGOV1` \- GGOV1 Governor Model <br/> - `P_CONSTANT` \- P_CONSTANT mode Governor Model 
+P_f_droop_setting_mode  | enumeration  | N/A  | Defines what variable sets the bias/offset for the P-f droop curve (when enabled). Available choices are: <br/> - `FSET_MODE` \- `fset` defines the curve offset/bias <br/> - `PSET_MODE` \- `Pset` or `Pref` defines the curve offset/bias 
 **General exciter variables**  
-Exciter_type  | enumeration  | N/A  | Selects the exciter/AVR control model applied to the diesel generator. Valid options are: 
-
-  * `NO_EXC` \- No exciter installed
-  * `SEXS` \- Simplified Excitation System installed
-
-  
-SEXS_mode  | enumeration  | N/A  | Selects the mode of operation for the simple exciter model. Valid options are: 
-
-  * `CONSTANT_VOLTAGE` \- Maintains a voltage set point
-  * `CONSTANT_Q` \- Maintains a desired reactive power set point
-  * `Q_V_DROOP` \- Implements a Q-V droop functionality
-
+Exciter_type  | enumeration  | N/A  | Selects the exciter/AVR control model applied to the diesel generator. Valid options are: <br/> -`NO_EXC` \- No exciter installed <br/> - `SEXS` \- Simplified Excitation System installed  
+SEXS_mode  | enumeration  | N/A  | Selects the mode of operation for the simple exciter model. Valid options are: <br/> - `CONSTANT_VOLTAGE` \- Maintains a voltage set point <br/> - `CONSTANT_Q` \- Maintains a desired reactive power set point <br/> - `Q_V_DROOP` \- Implements a Q-V droop functionality
   
 **General set-points/inputs for controls**  
+
+Parameter | Type | Unit | Description
+-- | -- | -- | --| 
 wref  | double  | pu  | Reference/setpoint frequency for governor controls   
 w_ref  | double  | rad/s  | Reference/setpoint frequency for governor controls - takes priority over `wref`  
 vset  | double  | pu  | Input voltage set-point to AVR controls   
@@ -98,7 +179,7 @@ Qref  | double  | pu  | Input reactive power set point for AVR controls (when su
   
 Note that individual categories below also each have their own variables. Not all of the input variables are accepted at all times -- certain ones are only enabled with specific control types (exciter or governor). 
 
-The `power_out_A`, `power_out_B`, and `power_out_C` variables are typically output variables. They can be an initial value for the start of the simulation, but if the diesel_dg object is attached to a SWING node, it will be initialized by the system powerflow. 
+The `power_out_A`, `power_out_B`, and `power_out_C` variables are typically output variables. They can be an initial value for the start of the simulation, but if the **diesel_dg** object is attached to a SWING node, it will be initialized by the system powerflow. 
 
 ### Base Machine
 
@@ -106,7 +187,9 @@ The underlying synchronous machine dynamics are modeled as a subtransient round-
 
 Parameters specific to the underlying machine model are: 
 
-Table 4 - Machine model parameters  Property  | Type  | Unit  | Description   
+Table 4 - Machine model parameters  
+
+Property  | Type  | Unit  | Description   
 ---|---|---|---  
 **Machine properties**  
 Rated_VA  | double  | VA  | Nominal power rating of generator   
@@ -150,7 +233,7 @@ torque_elec  | double  | N*m  | Current electrical torque output of machine
   
 ### Governor Models
 
-To control the mechanical power and rotor speeds of the diesel_dg object, several governor types have been implemented. Note that most of these have roots in transmission-level models, though can work on distribution-level devices with appropriate parameters. 
+To control the mechanical power and rotor speeds of the **diesel_dg** object, several governor types have been implemented. Note that most of these have roots in transmission-level models, though can work on distribution-level devices with appropriate parameters. 
 
 #### DEGOV1
 
@@ -218,14 +301,7 @@ GGOV1_PID_enable  | bool  | N/A  | Enables/disables PID controller (fsrn) of low
 GGOV1_Pset  | double  | pu  | GGOV1_Pset input to governor controls - overloaded with Pref   
 GGOV1_fset  | double  | Hz  | fset input to governor controls - overloaded with fset   
 GGOV1_R  | double  | pu  | Permanent droop   
-GGOV1_Rselect  | int32  | N/A  | Feedback signal for droop. Options are: 
-
-  * 1 - selected electrical power
-  * 0 - none (isochronous governor)
-  * -1 - fuel valve stroke ( true stroke)
-  * -2 - governor output ( requested stroke)
-
-  
+GGOV1_Rselect  | int32  | N/A  | Feedback signal for droop. Options are: <br/> - 1 - selected electrical power <br/> - 0 - none (isochronous governor) <br/> - -1 - fuel valve stroke ( true stroke) <br/> - 2 - governor output ( requested stroke) 
 GGOV1_Tpelec  | double  | s  | Electrical power transducer time constant   
 GGOV1_maxerr  | double  | pu  | Maximum value for speed error signal   
 GGOV1_minerr  | double  | pu  | Minimum value for speed error signal   
@@ -240,12 +316,7 @@ GGOV1_Kturb  | double  |  | Turbine gain
 GGOV1_wfnl  | double  | pu  | No load fuel flow   
 GGOV1_Tb  | double  | s  | Turbine lag time constant   
 GGOV1_Tc  | double  | s  | Turbine lead time constant   
-GGOV1_Fuel_lag  | int32  | N/A  | Switch for fuel source characteristic. Options are: 
-
-  * 0 - fuel flow independent of speed
-  * 1- fuel flow proportional to speed
-
-  
+GGOV1_Fuel_lag  | int32  | N/A  | Switch for fuel source characteristic. Options are: <br/> - 0 - fuel flow independent of speed <br/> - 1- fuel flow proportional to speed  
 GGOV1_Teng  | double  | s  | Transport lag time constant for diesel engine   
 GGOV1_Tfload  | double  | s  | Load Limiter time constant   
 GGOV1_Kpload  | double  |  | Load limiter proportional gain for PI controller   
@@ -338,7 +409,7 @@ P_CONSTANT_GovOutPut  | double  | pu  | Current mechanical power output
   
 ### Exciter Models
 
-Output voltage/reactive power on the diesel_dg object is controlled via a simple exciter (SEXS) model. Unlike the governor controls, with distinct governor operations for each model, all voltage/reactive power modes are built on top of the simple exciter. As such, the parameters below are generally utilized by every operating mode listed in this section. 
+Output voltage/reactive power on the **diesel_dg** object is controlled via a simple exciter (SEXS) model. Unlike the governor controls, with distinct governor operations for each model, all voltage/reactive power modes are built on top of the simple exciter. As such, the parameters below are generally utilized by every operating mode listed in this section. 
 
 Parameters specific to the SEXS model are: 
 
@@ -358,7 +429,7 @@ xb  | double  | pu  | Exciter state variable
   
 #### CONSTANT_VOLTAGE
 
-By default, the simple exciter is in `CONSTANT_VOLTAGE` operation mode, which regulates the positive-sequence terminal voltage of the diesel_dg (note the positive sequence measure there - massive unbalance can occur, but still be "regulated on average" to the proper value). 
+By default, the simple exciter is in `CONSTANT_VOLTAGE` operation mode, which regulates the positive-sequence terminal voltage of the **diesel_dg** (note the positive sequence measure there - massive unbalance can occur, but still be "regulated on average" to the proper value). 
 
 Parameters specific to the CONSTANT_VOLTAGE operation mode are: 
 
@@ -371,7 +442,7 @@ The voltage reference is set through the common property of `vset` or `Vset`, de
 
 #### CONSTANT_Q
 
-The `CONSTANT_Q` mode of operation allows the diesel_dg object to maintain a set reactive power output. This is accomplished through a simple PI controller that adjusts the exciter set points. 
+The `CONSTANT_Q` mode of operation allows the **diesel_dg** object to maintain a set reactive power output. This is accomplished through a simple PI controller that adjusts the exciter set points. 
 
 Parameters specific to the CONSTANT_Q operation mode are: 
 
@@ -397,7 +468,7 @@ Vref_SEXS  | double  | pu  | Voltage reference for SEXS exciter - overload of `v
   
 ### Other Operations/Operating modes
 
-There are a couple supplementary modes of operation or outputs for the diesel_dg object. 
+There are a couple supplementary modes of operation or outputs for the **diesel_dg** object. 
 
 #### CVR Operations
 
@@ -409,12 +480,7 @@ Table 13 - CVR mode parameters  Property  | Type  | Unit  | Description
 ---|---|---|---  
 **Exciter properties**  
 Vref  | double  | pu  | Exciter CVR control voltage reference value   
-CVR_mode  | enumeration  | N/A  | Determines the CVR mode in Exciter model. Valid options are: 
-
-  * `HighOrder` \- High order control mode
-  * `Feedback` \- First order control mode with feedback loop
-
-  
+CVR_mode  | enumeration  | N/A  | Determines the CVR mode in Exciter model. Valid options are: <br/> - `HighOrder` \- High order control mode <br/> - `Feedback` \- First order control mode with feedback loop  
 CVR_enabled  | bool  | N/A  | True to enable CVR control in the exciter   
 CVR_ki_cvr  | double  | pu  | parameter of the integration control for CVR control   
 CVR_kp_cvr  | double  | pu  | parameter of the proportional control for CVR control   
@@ -438,7 +504,7 @@ x_cvr2  | double  | pu  | Exciter state variable - CVR mode
   
 #### Fuel Emissions Calculation
 
-The diesel_dg model has some very simple fuel, emissions, and "frequency metrics" calculations. The frequency deviation and frequency-related metrics in Table 14 aren't really emissions-related, but are only computed when emissions capabilities are activated. 
+The **diesel_dg** model has some very simple fuel, emissions, and "frequency metrics" calculations. The frequency deviation and frequency-related metrics in Table 14 aren't really emissions-related, but are only computed when emissions capabilities are activated. 
 
 Parameters specific to the fuel emissions capabilities are: 
 
@@ -452,11 +518,11 @@ CO2_emission  | double  | lb  | Total CO2 emissions based on fuel usage
 SOx_emission  | double  | lb  | Total SOx emissions based on fuel usage   
 NOx_emission  | double  | lb  | Total NOx emissions based on fuel usage   
 PM10_emission  | double  | lb  | Total PM-10 emissions based on fuel usage   
-frequency_deviation  | double  | pu  | Frequency deviation of diesel_dg   
-frequency_deviation_energy  | double  | pu  | Frequency deviation accumulation of diesel_dg   
-frequency_deviation_max  | double  | pu  | Frequency deviation of diesel_dg   
-realPowerChange  | double  | W  | Real power output change of diesel_dg   
-ratio_f_p  | double  | pu  | Ratio of frequency deviation to real power output change of diesel_dg   
+frequency_deviation  | double  | pu  | Frequency deviation of **diesel_dg**   
+frequency_deviation_energy  | double  | pu  | Frequency deviation accumulation of **diesel_dg**   
+frequency_deviation_max  | double  | pu  | Frequency deviation of **diesel_dg**   
+realPowerChange  | double  | W  | Real power output change of **diesel_dg**   
+ratio_f_p  | double  | pu  | Ratio of frequency deviation to real power output change of **diesel_dg**   
   
 # References
 

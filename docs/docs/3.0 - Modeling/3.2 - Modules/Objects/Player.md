@@ -1,24 +1,22 @@
 # Player
 
-Play data into the model 
-
+A player provides the ability to update a single object variable at specified times. The values are read from a file formatted like comma-separated value (CSV) files or other sources (for example, open database connectivity ODBC or Matlab). The source data must have timestamps (or time changes) in the first column, and the values to be posted in the second column. 
 
 ## Synopsis
-    
-    
+        
     module tape;
     object player {
-      name _player-name_ ;
-      parent _target-object-name_ ;
-      property _target-property-name_ ;
-      file _output-file-name_ ;
-      flags DELTAMODE; // 
+    name player-name;
+    parent target-object-name;
+    property target-property-name;
+    file output-file-name;
+    flags DELTAMODE; 
     }
     
 
 ## Remarks
 
-A player provides the ability to update a single object variable at specified times. The values are read from a file formatted like comma-separated value (CSV) files or other sources (for example, open database connectivity ODBC or Matlab). The source data must have timestamps (or time changes) in the first column, and the values to be posted in the second column. 
+
 
 In specifying a player in a model input **file** , the **property** to which the value is written must be specified. The variable to be updated must exist in the player’s **parent** , which must also be specified in the input model. A **loop** count can also be specified that will allow the source to be played more than once. For example, the following lines in a model input file will use the player in a file named **lightingDemand.txt** to update the demand variable in the **lights** object. 
 

@@ -1,15 +1,4 @@
-# Spec:NEV
-
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:NEV
-SPECIFICATION Approval item: 
-
-## Contents
-
-  * 1 Overview
-  * 2 Terminology
-  * 3 Sections
-  * 4 See also
-# Overview
+# Introduction
 
 The Neutral-Earth Voltage implementation of GridLAB-D™ will require many changes to the underlying [powerflow] source code. These specifications outline the expected implementation and hope to resolve any conflicts prior to actual coding. 
 
@@ -31,15 +20,15 @@ Terminal | A generalized, individual voltage potential specification on a node o
 
 The following pages will contain specifications for individual aspects of the NEV solver implementation. Note that these pages are not stand-alone and a significant amount of overlap is expected. Please be sure to review all specifications pages. 
 
-[NEV Data Formatting]
+[NEV Data Formatting](./Spec_NEVDataFormat.md)
 
-[NEV Link Objects]
+[NEV Link Objects](./Spec_NEVLink.md)
 
-[NEV Node Objects]
+[NEV Node Objects](./Spec_NEVNode.md)
 
-[NEV Solver Implementation]
+[NEV Solver Implementation](./Spec_NEVSolver.md)
 
-[Other Module Interactions]
+[Other Module Interactions](./Spec_NEVModules.md)
 
 # See also
 

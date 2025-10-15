@@ -1,53 +1,5 @@
 # Spec:NEVLink
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:NEVLink
-SPECIFICATION Approval item: 
-
-## Contents
-
-  * 1 Overview
-    * 1.1 GLM Inputs
-    * 1.2 General Link
-      * 1.2.1 Programming Considerations
-        * 1.2.1.1 Current & Power Calculations
-    * 1.3 Overhead Lines
-      * 1.3.1 Class:overhead_line
-      * 1.3.2 Class: line_configuration
-      * 1.3.3 Class: line_spacing
-      * 1.3.4 Class: overhead_line_conductor
-      * 1.3.5 Model Implementation
-        * 1.3.5.1 Primitive Matrices
-        * 1.3.5.2 Newton-Raphson Power Flow
-    * 1.4 Underground Lines
-      * 1.4.1 Class:underground_line
-      * 1.4.2 Class: line_configuration
-      * 1.4.3 Class: line_spacing
-      * 1.4.4 Class: underground_line_conductor
-      * 1.4.5 The Init, Presync, Sync, and Postsync Functions
-        * 1.4.5.1 General
-        * 1.4.5.2 Init
-        * 1.4.5.3 Presync
-        * 1.4.5.4 Sync
-        * 1.4.5.5 Postsync
-      * 1.4.6 Needed Equations
-        * 1.4.6.1 Series Impedance
-        * 1.4.6.2 Concentric Neutral
-        * 1.4.6.3 Tape-Shielded
-        * 1.4.6.4 Shunt Admittance
-        * 1.4.6.5 Concentric Neutral
-        * 1.4.6.6 Tape-Shield
-        * 1.4.6.7 Solid Underground Conductors
-    * 1.5 Transformers
-      * 1.5.1 Class:transformer
-      * 1.5.2 Class: transformer_configuration
-      * 1.5.3 Model Implementation
-        * 1.5.3.1 Newton-Raphson Power Flow
-    * 1.6 Connector
-      * 1.6.1 Switch devices
-      * 1.6.2 Implementation
-  * 2 See also
-# Overview
-
 `link` objects represent one of the two fundamental object types within the powerflow module. `link` objects are typically any object connecting two different nodes or buses on the system. This includes items like overhead lines, underground lines, triplex lines, transformers, switch devices, fuses, and regulators. Many of these items will include new functionality and updated calculations associated with the Neutral Earth Voltage (NEV) functionality. 
 
 ## GLM Inputs
@@ -97,7 +49,7 @@ Table 2 - Line_config properties  Property | Definition
 `spacing` | The physical position of different conductors between the two nodes. This can either be specified as a distance array (with diagonal elements ignored), or as a physical coordinate space for each conductor. See the example given following the table.   
 `length` | Physical length of the connection between the two [node] objects. Only one length entry is permitted.   
   
-![Line Spacing Example](../../../images/300px-Line_spacing.png)
+![Line Spacing Example](../../../../images/300px-Line_spacing.png)
 
 Figure 1. Line Spacing Example
 
@@ -798,7 +750,7 @@ The transformer_configuration class specifies the connection type for the transf
         }
     
 
-![CUSTOM transformer configuration](../../../images/300px-CustomXfmr.JPG)
+![CUSTOM transformer configuration](../../../../images/300px-CustomXfmr.JPG)
 
 Figure 2. CUSTOM transformer configuration
 

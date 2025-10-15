@@ -1,26 +1,6 @@
-# Spec:ibr grayboxmodels
+# ibr grayboxmodels
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:ibr_grayboxmodels
-## Contents
-
-  * 1 Overview
-  * 2 Background
-  * 3 Gray-Box Modeling
-    * 3.1 Introduction
-    * 3.2 Gray-Box Modeling Algorithm
-    * 3.3 GridLAB-D™ Model Example
-  * 4 Optimization-Based Model Section
-    * 4.1 Droop Control
-    * 4.2 Definition of Parameters
-  * 5 Data-Driven Section
-    * 5.1 Normalization and Reverse Normalization for the Neural Network
-    * 5.2 Neural Network
-    * 5.3 Parameters
-  * 6 References
-  * 7 See also
-## Overview
-
-As part of the DistribuDyn project funded by the U.S. Department of Energy Solar Energy Technology Office (SETO), advanced inverter-based-resource models were created to represent devices being deployed on the modern power system. The model in [inverter_dyn] represents a generalized inverter. This page represents graybox models generalized from hardware tests and measurements of commercial hardware. The ``ibr_graybox`` model is produced by Purdue University as part of the DistribuDyn. project. 
+As part of the DistribuDyn project funded by the U.S. Department of Energy Solar Energy Technology Office (SETO), advanced inverter-based-resource models were created to represent devices being deployed on the modern power system. The model in **inverter_dyn** represents a generalized inverter. This page represents graybox models generalized from hardware tests and measurements of commercial hardware. The ``ibr_graybox`` model is produced by Purdue University as part of the DistribuDyn. project. 
 
 ## Background
 
@@ -32,7 +12,7 @@ In real-world scenarios, the full-spectrum dynamics of distribution systems with
 
 Figure 1 shows the structure of the IBR gray-box model. It is used to represent the behind-the-meter (BTM) dynamics, and it consists of two sections: an optimization-based model and a data-driven section. The optimization-based model section is used to estimate the parameters for a given control IBR control structure and generate the estimated output of a selected IBR. The estimated output current from the first section and the voltage at the point of the interconnection (POI) serve as an augmented input for the data-driven section, which includes an offline-trained neural network. Finally, the gray-box model of the IBR is represented as a Norton equivalent circuit, with the current output from the data-driven section fed back into the external power network. 
 
-![The structure of the IBR gray-box model](../../../images/300px-GrayBoxModel.png)
+![The structure of the IBR gray-box model](../../../../../../images/300px-GrayBoxModel.png)
 
 Figure 1. The structure of the IBR gray-box model
 
@@ -46,6 +26,7 @@ The framework of the gray-box modeling algorithm is implemented as
   * Estimate parameters in the optimization-based model using the training dataset
   * Embed the output of the optimization-based model as an additional input of the data-driven model (represented using a neural network) and train the neural network with the training dataset
   * Test performance of the gray-box model using the validation dataset
+
 ### GridLAB-D™ Model Example
 
 Below is an example for a graybox IBR model in GridLAB-D
@@ -159,9 +140,6 @@ The neural network is trained offline, after which the weight and bias matrices 
     }
     
 
-  
-
-
 ### Parameters
 
 Parameter | Definition   
@@ -197,6 +175,7 @@ physical_output_i_C_arg | Phase angle of phase C current from the optimization-b
 
   1. [J. Zhang, Y. Men, L. Ding, X. Lu and W. Du, "Gray-Box Modeling for Distribution Systems With Inverter-Based Resources: Integrating Physics-Based and Data-Driven Approaches," in IEEE Transactions on Industry Applications, vol. 60, no. 4, pp. 5490-5498, July-Aug. 2024.](https://ieeexplore.ieee.org/document/10507020)
   2. [J. Zhang, Y. Men, L. Ding, X. Lu and W. Du, "Gray-Box Modeling for Distribution Systems with Inverter-Based Resources," 2023 IEEE Energy Conversion Congress and Exposition (ECCE), Nashville, TN, USA, 2023, pp. 3124-3130.](https://ieeexplore.ieee.org/abstract/document/10362847)
+  
 ## See also
 
   * [Inverter_dyn Main Page]

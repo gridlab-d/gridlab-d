@@ -109,7 +109,7 @@ Output Name  | Quantity type  | Description
 
 The **pw_recorder** is a special-purpose recording device that directly accesses PowerWorld objects through the API, which cannot be done using a traditional recorder. This gives visibility into objects on the 'other side of the fence' from GridLAB-D™. 
 
-The **pw_recorder**'s interface is a cross between the recorder's and a **pw_load** object. The outfile, properties, interval, and limit parameters mirror the recorder. The obj_class, key_strings, and key_value describe what object is to be recorded from PowerWorld. The model property, or the parent object, must be the pw_model that the desired object can be found in. 
+The **pw_recorder**'s interface is a cross between the recorder's and a **pw_load** object. The outfile, properties, interval, and limit parameters mirror the recorder. The `obj_class`, `key_strings`, and `key_value` describe what object is to be recorded from PowerWorld. The model property, or the parent object, must be the pw_model that the desired object can be found in. 
 
 `Key_strings` and `key_values` are iterated as a pair: the strings must be the PowerWorld key fields, and the values provide the uniquely identifying information for which PowerWorld object is to be read from the model. 
 
@@ -136,8 +136,8 @@ A **pw_recorder** that measures the voltage and power from a load:
 
 Input Name  | Quantity type  | Description   
 ---|---|---  
-**model**  | pw_model object  | The PowerWorld model object to monitor. If no model is specified, the pw_recorder will check if there is a parent object that is a pw_model, and will fill `model` with the parent. If a model has not been selected by sync time, the pw_recorder will remain inactive.   
-**outfile_name**  | string  | The file path to use for the output file. If blank, a name will be automatically generated from the pw_recorder's model and GridLAB-D™ ID number.   
+**model**  | pw_model object  | The PowerWorld model object to monitor. If no model is specified, the `pw_recorder` will check if there is a parent object that is a pw_model, and will fill `model` with the parent. If a model has not been selected by sync time, the `pw_recorder` will remain inactive.   
+**outfile_name**  | string  | The file path to use for the output file. If blank, a name will be automatically generated from the `pw_recorder`'s model and GridLAB-D™ ID number.   
 **obj_class**  | string  | The name of the class of the PowerWorld object that will be recorded.   
 **key_strings**  | string  | A comma-delimited list of key fields required to identify the PowerWorld target object.   
 **key_values**  | string  | A comma-delimited list of key field values that uniquely identify the PowerWorld target object.   
@@ -168,7 +168,7 @@ Listed below are the additional properties that interact with the pw_load object
 Input Name  | Quantity type  | Description   
 ---|---|---  
 **positive_sequence_voltage**  | complex Volts  | The positive sequence voltage given from the PowerWorld bus model.   
-**reference_phase**  | enumeration  | The phase that will be used as the reference angle for the powerflow solution. <br/> - PHASE_A(Default) <br/> -PHASE_B <br/> -PHASE_C  
+**reference_phase**  | enumeration  | The phase that will be used as the reference angle for the powerflow solution. <br/> - PHASE_A(Default) <br/> - PHASE_B <br/> - PHASE_C  
 **transmission_level_constant_power_load**  | complex Volt-Amperes  | the positive-sequence constant power load to be posted directly to the pw_load object (powerflow solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
 **transmission_level_constant_impedance_load**  | complex Ohms  | the positive-sequence constant impedance load to be posted directly to the pw_load object (powerflow solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
 **transmission_level_constant_current_load**  | complex Amperes  | the positive-sequence constant current load to be posted directly to the pw_load object (powerflow solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
