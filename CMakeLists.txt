@@ -110,8 +110,22 @@ endif ()
 # Compiler/Linker flags for all build types
 add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
 
-## Set up platform specific library linking and platform identification
+# Detect Windows
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
+    set(WINDOWS TRUE)
+else ()
+    set(WINDOWS FALSE)
+endif()
+
+# Detect MacOSX
+if (APPLE OR "${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
+    set(MACOSX TRUE)
+else ()
+    set(MACOSX FALSE)
+endif ()
+
+## Set up platform specific library linking and platform identification
+if (WINDOWS)
     FetchContent_Declare(
             dlfcn-win32
             GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
@@ -127,9 +141,11 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     add_compile_options(-static-libgcc -static-libstdc++ -static)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
-elseif (APPLE)
+elseif (MACOSX)
     set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
     set(FOUND_MACOS yes CACHE INTERNAL "Tell script generator we're MacOS")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++fs")
+    string(REPLACE "-soname" "-install_name" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 else ()
     set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
 endif ()
@@ -392,7 +408,7 @@ install(FILES
         DESTINATION bin
         COMPONENT Runtime
 )
-if (WIN32 OR MSYS OR MINGW OR CYGWIN)
+if (WINDOWS)
     install(FILES
             ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.bat
             ${FILE_PERMISSIONS}
