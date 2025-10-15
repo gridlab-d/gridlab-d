@@ -1,7 +1,9 @@
 """
 Created on 10/9/2026
 
-
+This example shows how to use the async call to GridLAB-D when advancing
+simulation time. Specific data is collected from the house objects at each
+time step and shoved into a Pandas DataFrame.
 
 @author: Trevor Hardy
 trevor.hardy@pnnl.gov
@@ -9,7 +11,6 @@ trevor.hardy@pnnl.gov
 
 
 import libgld
-import time
 import pandas as pd
 
 gld = libgld.GLD()
