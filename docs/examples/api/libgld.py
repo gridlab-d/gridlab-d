@@ -173,6 +173,19 @@ class GLD():
         """
         pass
 
+    def sim_register_time(self, step_size: float) -> GLDSimMessages:
+        """Registers a simulation time step size with the gldcore to ensure
+        that GridLAB-D will stop the simulation no later than the
+        simulation step size indicated. GridLAB-D may stop earlier than 
+        the given step size depending on the other objects in the model.
+
+        Args:
+            time (float): simulation time 
+
+        Returns:
+            GLDSimMessages: Error/warning messages from running the model
+        """
+
     def sim_run(self) -> GLDSimMessages:
         """Runs the model currently in the gldcore.
 
