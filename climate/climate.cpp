@@ -22,6 +22,9 @@
 #include "gridlabd.h"
 #include "climate.h"
 #include "timestamp.h"
+#include "gldrandom.h"
+
+
 EXPORT_CREATE(climate)
 EXPORT_INIT(climate)
 EXPORT_SYNC(climate)
@@ -31,6 +34,8 @@ EXPORT_ISA(climate)
 
 #undef max
 #undef min
+
+//extern enum class RANDOMTYPE;
 
 double surface_angles[] = {
 	360,	// H
@@ -557,9 +562,9 @@ climate::climate(MODULE *module)
 			PT_double,"rainfall[in/h]",PADDR(rainfall),
 			PT_double,"snowdepth[in]",PADDR(snowdepth),
 			PT_enumeration,"interpolate",PADDR(interpolate),PT_DESCRIPTION,"the interpolation mode used on the climate data",
-				PT_KEYWORD,"NONE",(enumeration)CI_NONE,
-				PT_KEYWORD,"LINEAR",(enumeration)CI_LINEAR,
-				PT_KEYWORD,"QUADRATIC",(enumeration)CI_QUADRATIC,
+				PT_KEYWORD,"NONE",(enumeration)CI::CI_NONE,
+				PT_KEYWORD,"LINEAR",(enumeration)CI::CI_LINEAR,
+				PT_KEYWORD,"QUADRATIC",(enumeration)CI::CI_QUADRATIC,
 			PT_double,"solar_horiz",PADDR(solar_flux[CP_H]),
 			PT_double,"solar_north",PADDR(solar_flux[CP_N]),
 			PT_double,"solar_northeast",PADDR(solar_flux[CP_NE]),
@@ -574,8 +579,8 @@ climate::climate(MODULE *module)
 			PT_object,"reader",PADDR(reader),
 			PT_char1024,"forecast",PADDR(forecast_spec),PT_DESCRIPTION,"forecasting specifications",
 			PT_enumeration,"cloud_model",PADDR(cloud_model),PT_DESCRIPTION,"the cloud model to use",
-				PT_KEYWORD,"NONE",(enumeration)CM_NONE,
-				PT_KEYWORD,"CUMULUS",(enumeration)CM_CUMULUS,
+				PT_KEYWORD,"NONE",(enumeration)CLOUDMODEL::CM_NONE,
+				PT_KEYWORD,"CUMULUS",(enumeration)CLOUDMODEL::CM_CUMULUS,
 			PT_double,"cloud_opacity[pu]",PADDR(cloud_opacity),
 			PT_double,"opq_sky_cov[pu]",PADDR(opq_sky_cov),
 			//PT_double,"cloud_reflectivity[pu]",PADDR(cloud_reflectivity), //Unused in the cloud model at this time.
@@ -622,7 +627,7 @@ int climate::create(void)
 	cloud_speed_factor = 1;
 	//cloud_reflectivity = 1.0; // very reflective!
 	tmy = nullptr;
-	cloud_model = CM_NONE;
+	cloud_model = (enumeration) CLOUDMODEL::CM_NONE;
 	cloud_num_layers = 40;
 	cloud_alpha = 400;
 	cloud_aerosol_transmissivity = 0.95;
@@ -645,7 +650,7 @@ int climate::init(OBJECT *parent)
 	double meter_to_feet = 1.0;
 	double tz_num_offset;
 
-	reader_type = RT_NONE;
+	reader_type = (enumeration)RT::RT_NONE;
 
 	// ignore "" files ~ manual climate control is a feature
 	if (strcmp(tmyfile,"")==0) {
@@ -663,7 +668,7 @@ int climate::init(OBJECT *parent)
 	}
 
 
-	if (cloud_model != CM_NONE) {
+	if (cloud_model != (enumeration)CLOUDMODEL::CM_NONE) {
 		//Cloud model input error checking.
 		if (cloud_opacity > 1){
 			gl_warning("climate:%s - Cloud opacity must be no greater than 1.0, setting to 1.0",obj->name);
@@ -709,14 +714,14 @@ int climate::init(OBJECT *parent)
 	}
 	
 	if(strstr(tmyfile, ".tmy2") || strstr(tmyfile,".tmy")){
-		reader_type = RT_TMY2;
+		reader_type = (enumeration)RT::RT_TMY2;
 	} else if(strstr(tmyfile, ".csv")){
-		reader_type = RT_CSV;
+		reader_type = (enumeration)RT::RT_CSV;
 	} else {
 		gl_warning("climate: unrecognized filetype, assuming TMY2");
 	}
 
-	if(reader_type == RT_CSV){
+	if(reader_type == (enumeration)RT::RT_CSV){
 		// may or may not have an object,
 		// have not called open()
 		int rv = 0;
@@ -988,7 +993,7 @@ int climate::get_solar_for_location(double latitude, double longitude, double *d
 
 
 	switch (get_cloud_model()) {
-		case CM_CUMULUS:
+		case (enumeration)CLOUDMODEL::CM_CUMULUS:
 			// cloud = 0 -> clear view of sun
 			// cloud = 1 -> very dark cloud blocking sun
 			retval = get_fuzzy_cloud_value_for_location(latitude, longitude, &cloud); //Fuzzy cloud pattern evaluation
@@ -1998,7 +2003,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
     // establish the current time
     update_time = t0;
     // %%%%% 20170224 MJB Stub in solar computation
-    if(t0 > TS_ZERO && tmy==nullptr && reader_type != RT_CSV) { // no file was read, so it's probably manual, FNCS or HELICS control
+    if(t0 > TS_ZERO && tmy==nullptr && reader_type != (enumeration)RT::RT_CSV) { // no file was read, so it's probably manual, FNCS or HELICS control
         gld_clock now(t0);
         //calculate the solar radiation
         OBJECT *obj=object_header(this);
@@ -2026,7 +2031,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
     } 
 	// TODO: need to read the cloud stuff from the csv file
 	// changes appear to be limited to weather.h, weather.cpp, csv_reader.h, csv_reader.cpp
-	if(t0 > TS_ZERO && reader_type == RT_CSV){
+	if(t0 > TS_ZERO && reader_type == (enumeration)RT::RT_CSV){
 		gld_clock now(t0);
 		csv_reader *cr = /*OBJECTDATA(reader, csv_reader)*/    object_data<csv_reader>(reader);
 		csv_rv = cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &global_horizontal_extra, &wind_speed,&wind_dir, &opq_sky_cov, &tot_sky_cov, &rainfall, &snowdepth, &pressure);
@@ -2076,7 +2081,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 			hoy = hoy + 8760;
 		}
 		switch(interpolate){
-			case CI_NONE:
+		case (enumeration)CI::CI_NONE:
 				temperature = (tmy[hoy].temp);
 				humidity = (tmy[hoy].rh);
 				solar_direct = (tmy[hoy].dnr);
@@ -2099,7 +2104,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 				if ( memcmp(solar_flux,tmy[hoy].solar,CP_LAST*sizeof(double))!=0 )
 					memcpy(solar_flux,tmy[hoy].solar,sizeof(solar_flux));
 				break;
-			case CI_LINEAR:
+			case (enumeration)CI::CI_LINEAR:
 				now = hoy+ts.minute/60.0;
 				hoy0 = hoy;
 				hoy1 = hoy+1.0;
@@ -2127,7 +2132,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 					solar_flux[pt] = gl_lerp(now, hoy0, tmy[hoy].solar[pt], hoy1, tmy[hoy+1%8760].solar[pt]);
 				}
 				break;
-			case CI_QUADRATIC:
+			case (enumeration)CI::CI_QUADRATIC:
 				now = hoy+ts.minute/60.0;
 				hoy0 = hoy;
 				hoy1 = hoy+1.0;
@@ -2230,7 +2235,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 		update_forecasts(t0);
 		tmy_rv = -(t0+(3600*TS_SECOND-t0%(3600 *TS_SECOND))); /// negative means soft event
 	}
-	if (cloud_model == CM_CUMULUS) {
+	if (cloud_model == (enumeration)CLOUDMODEL::CM_CUMULUS) {
 		if (prev_NTime != t0 ){
 			double p = pressure*0.1; // in millibars, convert to kPa
 			double Z = solar_zenith;
@@ -2251,15 +2256,15 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 	//Extra logic to return the correct timestamp based on the weather data source and the use of the cloud model.
 	if (t0 <= TS_ZERO)
 		return TS_NEVER;
-	else if (cloud_model == CM_NONE)
-		if (reader_type == RT_CSV)
+	else if (cloud_model == (enumeration) CLOUDMODEL::CM_NONE)
+		if (reader_type == (enumeration)RT::RT_CSV)
 			return csv_rv;
 		else if (tmy!=nullptr)
 			return tmy_rv;
 		else
 			return TS_NEVER;
 	else
-		if (reader_type == RT_CSV)
+		if (reader_type == (enumeration)RT::RT_CSV)
 			if (cloud_rv <= fabs(csv_rv))
 				return cloud_rv;
 			else

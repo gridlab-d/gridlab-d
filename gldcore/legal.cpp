@@ -192,7 +192,8 @@ STATUS legal_license(void)
 
 #include "http_client.h"
 
-static pthread_t check_version_thread_id;
+//static pthread_t check_version_thread_id;
+static std::thread check_version_thread_id; // Changed from pthread_t to std::thread
 
 #define CV_NOINFO 0x0001
 #define CV_BADURL 0x0002

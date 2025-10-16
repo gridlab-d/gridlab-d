@@ -333,7 +333,7 @@ int unit_derived(const char *name,const char *derivation)
 	while (*p != '\0')
 	{
 		char term[32];
-		UNIT *pUnit;
+		UNIT *pUnit = NULL;
 
 		/* extract operation */
 		if (sscanf(p,"%[^-*/^+]",term)!=1){

@@ -1,0 +1,7614 @@
+// $Id: R3-12.47-2.glm 
+// 12.47 kV feeder
+//*********************************************
+// validates voltages with FBS at selected load, node, meter, and triplex_node/meter
+// objects
+//
+// also validates power_in,power_out and power losses at selected
+// underground lines
+// written by alek332
+clock{
+	timezone EST+8EDT;
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-01-01 1:00:00';
+}
+
+#set profiler=1 
+//********************************************* 
+// modules 
+module assert;
+module tape; 
+module powerflow{ 
+     solver_method NR; 
+      default_maximum_voltage_error 1e-6;
+}; 
+
+//********************************************* 
+object regulator:785 { 
+     name R3-12-47-2_reg_1; 
+     from R3-12-47-2_node_267; 
+     to R3-12-47-2_meter_63; 
+     phases ABCN; 
+     configuration regulator_configuration:786; 
+     object recorder { 
+          property tap_A,tap_B,tap_C,power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_in.real,power_in.imag; 
+          limit 1440; 
+          interval 60; 
+          file "R3-12.27-2_reg_output.csv"; 
+     }; 
+} 
+
+object regulator_configuration:786 { 
+     name feeder_reg_cfg; 
+     Control OUTPUT_VOLTAGE; 
+     band_center 7500.0; 
+     band_width 120; 
+     connect_type WYE_WYE; 
+     time_delay 30; 
+     raise_taps 16; 
+     lower_taps 16; 
+     regulation 0.10; 
+     tap_pos_A 0; 
+     tap_pos_B 0; 
+     tap_pos_C 0; 
+} 
+
+object fuse:724 { 
+     name R3-12-47-2_fuse_1; 
+     phases ABCN; 
+     from R3-12-47-2_node_105; 
+     to R3-12-47-2_node_88; 
+     current_limit 100; 
+     status CLOSED; 
+} 
+
+object fuse:725 { 
+     name R3-12-47-2_fuse_2; 
+     phases ABCN; 
+     from R3-12-47-2_node_88; 
+     to R3-12-47-2_node_87; 
+     current_limit 200; 
+     status CLOSED; 
+} 
+
+object fuse:726 { 
+     name R3-12-47-2_fuse_3; 
+     phases BN; 
+     from R3-12-47-2_node_196; 
+     to R3-12-47-2_node_90; 
+     current_limit 40; 
+     status CLOSED; 
+} 
+
+object fuse:727 { 
+     name R3-12-47-2_fuse_4; 
+     phases ABCN; 
+     from R3-12-47-2_node_201; 
+     to R3-12-47-2_node_81; 
+     current_limit 25; 
+     status CLOSED; 
+} 
+
+object fuse:728 { 
+     name R3-12-47-2_fuse_5; 
+     phases ABCN; 
+     from R3-12-47-2_node_202; 
+     to R3-12-47-2_node_82; 
+     current_limit 25; 
+     status CLOSED; 
+} 
+
+object fuse:729 { 
+     name R3-12-47-2_fuse_6; 
+     phases ABCN; 
+     from R3-12-47-2_node_227; 
+     to R3-12-47-2_node_84; 
+     current_limit 65; 
+     status CLOSED; 
+} 
+
+object fuse:730 { 
+     name R3-12-47-2_fuse_7; 
+     phases BN; 
+     from R3-12-47-2_node_217; 
+     to R3-12-47-2_node_95; 
+     current_limit 25; 
+     status CLOSED; 
+} 
+
+object fuse:731 { 
+     name R3-12-47-2_fuse_8; 
+     phases ABCN; 
+     from R3-12-47-2_node_198; 
+     to R3-12-47-2_node_91; 
+     current_limit 40; 
+     status CLOSED; 
+} 
+
+object fuse:732 { 
+     name R3-12-47-2_fuse_9; 
+     phases ABCN; 
+     from R3-12-47-2_node_198; 
+     to R3-12-47-2_node_83; 
+     current_limit 80; 
+     status CLOSED; 
+} 
+
+object fuse:733 { 
+     name R3-12-47-2_fuse_10; 
+     phases ABCN; 
+     from R3-12-47-2_node_209; 
+     to R3-12-47-2_node_85; 
+     current_limit 65; 
+     status CLOSED; 
+} 
+
+object fuse:734 { 
+     name R3-12-47-2_fuse_11; 
+     phases ABCN; 
+     from R3-12-47-2_node_211; 
+     to R3-12-47-2_node_93; 
+     current_limit 100; 
+     status CLOSED; 
+} 
+
+object fuse:735 { 
+     name R3-12-47-2_fuse_12; 
+     phases ABCN; 
+     from R3-12-47-2_node_184; 
+     to R3-12-47-2_node_89; 
+     current_limit 65; 
+     status CLOSED; 
+} 
+
+object fuse:736 { 
+     name R3-12-47-2_fuse_13; 
+     phases ABCN; 
+     from R3-12-47-2_node_210; 
+     to R3-12-47-2_node_92; 
+     current_limit 65; 
+     status CLOSED; 
+} 
+
+object fuse:737 { 
+     name R3-12-47-2_fuse_14; 
+     phases ABCN; 
+     from R3-12-47-2_node_213; 
+     to R3-12-47-2_node_94; 
+     current_limit 65; 
+     status CLOSED; 
+} 
+
+object fuse:738 { 
+     name R3-12-47-2_fuse_15; 
+     phases ABCN; 
+     from R3-12-47-2_node_215; 
+     to R3-12-47-2_node_86; 
+     current_limit 65; 
+     status CLOSED; 
+} 
+
+object fuse:739 { 
+     name R3-12-47-2_fuse_16; 
+     phases BN; 
+     from R3-12-47-2_node_115; 
+     to R3-12-47-2_node_80; 
+     current_limit 118; 
+     status CLOSED; 
+} 
+
+object fuse:740 { 
+     name R3-12-47-2_fuse_17; 
+     phases ABCN; 
+     from R3-12-47-2_node_128; 
+     to R3-12-47-2_node_73; 
+     current_limit 300; 
+     status CLOSED; 
+} 
+
+object fuse:741 { 
+     name R3-12-47-2_fuse_18; 
+     phases ABCN; 
+     from R3-12-47-2_node_3; 
+     to R3-12-47-2_node_78; 
+     current_limit 90; 
+     status CLOSED; 
+} 
+
+object fuse:742 { 
+     name R3-12-47-2_fuse_19; 
+     phases ABCN; 
+     from R3-12-47-2_node_2; 
+     to R3-12-47-2_node_79; 
+     current_limit 18; 
+     status CLOSED; 
+} 
+
+object fuse:743 { 
+     name R3-12-47-2_fuse_20; 
+     phases ABCN; 
+     from R3-12-47-2_node_6; 
+     to R3-12-47-2_node_72; 
+     current_limit 300; 
+     status CLOSED; 
+} 
+
+object fuse:744 { 
+     name R3-12-47-2_fuse_21; 
+     phases ABCN; 
+     from R3-12-47-2_node_8; 
+     to R3-12-47-2_node_76; 
+     current_limit 300; 
+     status CLOSED; 
+} 
+
+object line_configuration:21 { 
+     conductor_B overhead_line_conductor:2; 
+     conductor_N overhead_line_conductor:2; 
+     spacing line_spacing:16; 
+} 
+
+object line_configuration:22 { 
+     conductor_A overhead_line_conductor:3; 
+     conductor_B overhead_line_conductor:3; 
+     conductor_C overhead_line_conductor:3; 
+     conductor_N overhead_line_conductor:3; 
+     spacing line_spacing:17; 
+} 
+
+object line_configuration:23 { 
+     conductor_A overhead_line_conductor:2; 
+     conductor_B overhead_line_conductor:2; 
+     conductor_C overhead_line_conductor:2; 
+     conductor_N overhead_line_conductor:2; 
+     spacing line_spacing:17; 
+} 
+
+object line_configuration:24 { 
+     conductor_A overhead_line_conductor:2; 
+     conductor_N overhead_line_conductor:2; 
+     spacing line_spacing:18; 
+} 
+
+object line_configuration:25 { 
+     conductor_B overhead_line_conductor:4; 
+     conductor_N overhead_line_conductor:4; 
+     spacing line_spacing:16; 
+} 
+
+object line_configuration:26 { 
+     conductor_B overhead_line_conductor:5; 
+     conductor_N overhead_line_conductor:5; 
+     spacing line_spacing:16; 
+} 
+
+object line_configuration:27 { 
+     conductor_A overhead_line_conductor:3; 
+     conductor_N overhead_line_conductor:3; 
+     spacing line_spacing:18; 
+} 
+
+object line_configuration:28 { 
+     conductor_A overhead_line_conductor:3; 
+     conductor_B overhead_line_conductor:3; 
+     conductor_N overhead_line_conductor:3; 
+     spacing line_spacing:19; 
+} 
+
+object line_configuration:29 { 
+     conductor_A overhead_line_conductor:3; 
+     conductor_N overhead_line_conductor:3; 
+     spacing line_spacing:18; 
+} 
+
+object line_configuration:30 { 
+     conductor_A overhead_line_conductor:5; 
+     conductor_B overhead_line_conductor:5; 
+     conductor_C overhead_line_conductor:5; 
+     conductor_N overhead_line_conductor:5; 
+     spacing line_spacing:17; 
+} 
+
+object line_configuration:31 { 
+     conductor_B overhead_line_conductor:6; 
+     conductor_N overhead_line_conductor:6; 
+     spacing line_spacing:16; 
+} 
+
+object line_configuration:32 { 
+     conductor_A overhead_line_conductor:3; 
+     conductor_B overhead_line_conductor:3; 
+     conductor_C overhead_line_conductor:3; 
+     conductor_N overhead_line_conductor:3; 
+     spacing line_spacing:17; 
+} 
+
+object line_configuration:33 { 
+     conductor_C overhead_line_conductor:7; 
+     conductor_N overhead_line_conductor:7; 
+     spacing line_spacing:20; 
+} 
+
+object line_configuration:34 { 
+     conductor_A overhead_line_conductor:6; 
+     conductor_B overhead_line_conductor:6; 
+     conductor_C overhead_line_conductor:6; 
+     conductor_N overhead_line_conductor:6; 
+     spacing line_spacing:17; 
+} 
+
+object line_configuration:35 { 
+     conductor_A overhead_line_conductor:8; 
+     conductor_B overhead_line_conductor:8; 
+     conductor_C overhead_line_conductor:8; 
+     conductor_N overhead_line_conductor:8; 
+     spacing line_spacing:17; 
+} 
+
+object line_configuration:36 { 
+     conductor_A overhead_line_conductor:9; 
+     conductor_B overhead_line_conductor:9; 
+     conductor_C overhead_line_conductor:9; 
+     conductor_N overhead_line_conductor:9; 
+     spacing line_spacing:17; 
+} 
+
+object line_configuration:37 { 
+     conductor_A overhead_line_conductor:3; 
+     conductor_B overhead_line_conductor:3; 
+     conductor_C overhead_line_conductor:3; 
+     conductor_N overhead_line_conductor:3; 
+     spacing line_spacing:17; 
+} 
+
+object line_configuration:38 { 
+     conductor_C underground_line_conductor:10; 
+     conductor_N underground_line_conductor:10; 
+     spacing line_spacing:20; 
+} 
+
+object line_configuration:39 { 
+     conductor_A underground_line_conductor:10; 
+     conductor_B underground_line_conductor:10; 
+     conductor_C underground_line_conductor:10; 
+     conductor_N underground_line_conductor:10; 
+     spacing line_spacing:17; 
+} 
+
+object line_configuration:40 { 
+     conductor_A underground_line_conductor:10; 
+     conductor_N underground_line_conductor:10; 
+     spacing line_spacing:18; 
+} 
+
+object line_configuration:41 { 
+     conductor_A underground_line_conductor:11; 
+     conductor_B underground_line_conductor:11; 
+     conductor_C underground_line_conductor:11; 
+     conductor_N underground_line_conductor:11; 
+     spacing line_spacing:17; 
+} 
+
+object line_configuration:42 { 
+     conductor_A underground_line_conductor:12; 
+     conductor_B underground_line_conductor:12; 
+     conductor_C underground_line_conductor:12; 
+     conductor_N underground_line_conductor:12; 
+     spacing line_spacing:17; 
+} 
+
+object line_configuration:43 { 
+     conductor_A underground_line_conductor:13; 
+     conductor_B underground_line_conductor:13; 
+     conductor_C underground_line_conductor:13; 
+     conductor_N underground_line_conductor:13; 
+     spacing line_spacing:17; 
+} 
+
+object line_configuration:44 { 
+     conductor_B underground_line_conductor:10; 
+     conductor_N underground_line_conductor:10; 
+     spacing line_spacing:16; 
+} 
+
+object line_configuration:45 { 
+     conductor_C underground_line_conductor:11; 
+     conductor_N underground_line_conductor:11; 
+     spacing line_spacing:20; 
+} 
+
+object line_configuration:46 { 
+     conductor_A overhead_line_conductor:14; 
+     conductor_B overhead_line_conductor:14; 
+     conductor_C overhead_line_conductor:14; 
+     conductor_N overhead_line_conductor:14; 
+     spacing line_spacing:17; 
+} 
+
+object line_configuration:47 { 
+     conductor_B overhead_line_conductor:14; 
+     conductor_N overhead_line_conductor:14; 
+     spacing line_spacing:16; 
+} 
+
+object line_spacing:16 { 
+     distance_BN 36.0 in; 
+} 
+
+object line_spacing:17 { 
+     distance_AB 48.0 in; 
+     distance_BC 48.0 in; 
+     distance_AC 48.0 in; 
+     distance_AN 36.0 in; 
+     distance_BN 36.0 in; 
+     distance_CN 36.0 in; 
+} 
+
+object line_spacing:18 { 
+     distance_AN 36.0 in; 
+} 
+
+object line_spacing:19 { 
+     distance_AB 48.0 in; 
+     distance_AN 36.0 in; 
+     distance_BN 36.0 in; 
+} 
+
+object line_spacing:20 { 
+     distance_CN 36.0 in; 
+} 
+
+object load:314 { 
+     name R3-12-47-2_load_1; 
+     parent R3-12-47-2_meter_1; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     constant_power_B 6435.223+1906.9363j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:315 { 
+     name R3-12-47-2_load_2; 
+     parent R3-12-47-2_meter_2; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     constant_power_A 6156.2257+1836.7523j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:316 { 
+     name R3-12-47-2_load_3; 
+     parent R3-12-47-2_meter_3; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     constant_power_A 10260.3762+3061.2538j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:317 { 
+     name R3-12-47-2_load_4; 
+     parent R3-12-47-2_meter_4; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     constant_power_B 429.0149+127.1291j; 
+     nominal_voltage 7200; 
+     load_class I; 
+} 
+
+object load:318 { 
+     name R3-12-47-2_load_5; 
+     parent R3-12-47-2_meter_5; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     constant_power_B 10725.3717+3178.2272j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:319 { 
+     name R3-12-47-2_load_6; 
+     parent R3-12-47-2_meter_6; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     constant_power_A 6156.2257+1836.7523j; 
+     nominal_voltage 7200; 
+     // load_class C; 
+	  	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "319.csv";
+	// };
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_A;
+		value +277.802-2.83292d;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_B;
+		value  +0+0j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_C;
+		value +0+0j;
+		within 1;
+	}; 
+} 
+
+object load:320 { 
+     name R3-12-47-2_load_7; 
+     parent R3-12-47-2_meter_7; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     constant_power_A 6156.2257+1836.7523j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:321 { 
+     name R3-12-47-2_load_8; 
+     parent R3-12-47-2_meter_8; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     constant_power_B 4290.1487+1271.2909j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:322 { 
+     name R3-12-47-2_load_9; 
+     parent R3-12-47-2_meter_9; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 10260.3762+3061.2538j; 
+     constant_power_B 10725.3717+3178.2272j; 
+     constant_power_C 10432.0447+3103.7766j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:323 { 
+     name R3-12-47-2_load_10; 
+     parent R3-12-47-2_meter_10; 
+     phases ABN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     constant_power_A 8208.3009+2449.0031j; 
+     constant_power_B 8580.2974+2542.5817j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:324 { 
+     name R3-12-47-2_load_11; 
+     parent R3-12-47-2_meter_11; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     constant_power_A 6156.2257+1836.7523j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:325 { 
+     name R3-12-47-2_load_12; 
+     parent R3-12-47-2_meter_12; 
+     phases ABN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     constant_power_A 8208.3009+2449.0031j; 
+     constant_power_B 8580.2974+2542.5817j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:326 { 
+     name R3-12-47-2_load_13; 
+     parent R3-12-47-2_meter_13; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     constant_power_A 2052.0752+612.2508j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:327 { 
+     name R3-12-47-2_load_14; 
+     parent R3-12-47-2_meter_14; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 6156.2257+1836.7523j; 
+     constant_power_B 6435.223+1906.9363j; 
+     constant_power_C 6259.2268+1862.266j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:328 { 
+     name R3-12-47-2_load_15; 
+     parent R3-12-47-2_meter_15; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 20520.7523+6122.5077j; 
+     constant_power_B 21450.7435+6356.4543j; 
+     constant_power_C 20864.0894+6207.5532j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:329 { 
+     name R3-12-47-2_load_16; 
+     parent R3-12-47-2_meter_16; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     constant_power_B 6435.223+1906.9363j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:330 { 
+     name R3-12-47-2_load_17; 
+     parent R3-12-47-2_meter_17; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 20520.7523+6122.5077j; 
+     constant_power_B 21450.7435+6356.4543j; 
+     constant_power_C 20864.0894+6207.5532j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:331 { 
+     name R3-12-47-2_load_18; 
+     parent R3-12-47-2_meter_18; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 10260.3762+3061.2538j; 
+     constant_power_B 10725.3717+3178.2272j; 
+     constant_power_C 10432.0447+3103.7766j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:332 { 
+     name R3-12-47-2_load_19; 
+     parent R3-12-47-2_meter_19; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 20520.7523+6122.5077j; 
+     constant_power_B 21450.7435+6356.4543j; 
+     constant_power_C 20864.0894+6207.5532j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:333 { 
+     name R3-12-47-2_load_20; 
+     parent R3-12-47-2_meter_20; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 6156.2257+1836.7523j; 
+     constant_power_B 6435.223+1906.9363j; 
+     constant_power_C 6259.2268+1862.266j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:334 { 
+     name R3-12-47-2_load_21; 
+     parent R3-12-47-2_meter_21; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     constant_power_B 6435.223+1906.9363j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:335 { 
+     name R3-12-47-2_load_22; 
+     parent R3-12-47-2_meter_22; 
+     phases CN; 
+     voltage_C -3600+6235j; 
+     constant_power_C 10432.0447+3103.7766j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:336 { 
+     name R3-12-47-2_load_23; 
+     parent R3-12-47-2_meter_23; 
+     phases CN; 
+     voltage_C -3600+6235j; 
+     constant_power_C 10432.0447+3103.7766j; 
+     nominal_voltage 7200; 
+     load_class I; 
+} 
+
+object load:337 { 
+     name R3-12-47-2_load_24; 
+     parent R3-12-47-2_meter_24; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 6156.2257+1836.7523j; 
+     constant_power_B 6435.223+1906.9363j; 
+     constant_power_C 6259.2268+1862.266j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:338 { 
+     name R3-12-47-2_load_25; 
+     parent R3-12-47-2_meter_25; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 20520.7523+6122.5077j; 
+     constant_power_B 21450.7435+6356.4543j; 
+     constant_power_C 20864.0894+6207.5532j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:339 { 
+     name R3-12-47-2_load_26; 
+     parent R3-12-47-2_meter_26; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     constant_power_A 10260.3762+3061.2538j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:340 { 
+     name R3-12-47-2_load_27; 
+     parent R3-12-47-2_meter_27; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 41041.5046+12245.0154j; 
+     constant_power_B 42901.487+12712.9087j; 
+     constant_power_C 41728.1788+12415.1064j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:341 { 
+     name R3-12-47-2_load_28; 
+     parent R3-12-47-2_meter_28; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 136668.2104+40775.9011j; 
+     constant_power_B 142861.9516+42333.9859j; 
+     constant_power_C 138954.8355+41342.3042j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:342 { 
+     name R3-12-47-2_load_29; 
+     parent R3-12-47-2_meter_29; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 41041.5046+12245.0154j; 
+     constant_power_B 42901.487+12712.9087j; 
+     constant_power_C 41728.1788+12415.1064j; 
+     nominal_voltage 7200; 
+     load_class I; 
+} 
+
+object load:343 { 
+     name R3-12-47-2_load_30; 
+     parent R3-12-47-2_meter_30; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     constant_power_A 10260.3762+3061.2538j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:344 { 
+     name R3-12-47-2_load_31; 
+     parent R3-12-47-2_meter_31; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 10260.3762+3061.2538j; 
+     constant_power_B 10725.3717+3178.2272j; 
+     constant_power_C 10432.0447+3103.7766j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:345 { 
+     name R3-12-47-2_load_32; 
+     parent R3-12-47-2_meter_32; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 10260.3762+3061.2538j; 
+     constant_power_B 10725.3717+3178.2272j; 
+     constant_power_C 10432.0447+3103.7766j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:346 { 
+     name R3-12-47-2_load_33; 
+     parent R3-12-47-2_meter_33; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     constant_power_A 10260.3762+3061.2538j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:347 { 
+     name R3-12-47-2_load_34; 
+     parent R3-12-47-2_meter_34; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 20520.7523+6122.5077j; 
+     constant_power_B 21450.7435+6356.4543j; 
+     constant_power_C 20864.0894+6207.5532j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:348 { 
+     name R3-12-47-2_load_35; 
+     parent R3-12-47-2_meter_35; 
+     phases CN; 
+     voltage_C -3600+6235j; 
+     constant_power_C 6259.2268+1862.266j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:349 { 
+     name R3-12-47-2_load_36; 
+     parent R3-12-47-2_meter_36; 
+     phases CN; 
+     voltage_C -3600+6235j; 
+     constant_power_C 6259.2268+1862.266j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:350 { 
+     name R3-12-47-2_load_37; 
+     parent R3-12-47-2_meter_37; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 10260.3762+3061.2538j; 
+     constant_power_B 10725.3717+3178.2272j; 
+     constant_power_C 10432.0447+3103.7766j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:351 { 
+     name R3-12-47-2_load_38; 
+     parent R3-12-47-2_meter_38; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     constant_power_B 10725.3717+3178.2272j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:352 { 
+     name R3-12-47-2_load_39; 
+     parent R3-12-47-2_meter_39; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 20520.7523+6122.5077j; 
+     constant_power_B 21450.7435+6356.4543j; 
+     constant_power_C 20864.0894+6207.5532j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:353 { 
+     name R3-12-47-2_load_40; 
+     parent R3-12-47-2_meter_40; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     constant_power_B 10725.3717+3178.2272j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:354 { 
+     name R3-12-47-2_load_41; 
+     parent R3-12-47-2_meter_41; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 20520.7523+6122.5077j; 
+     constant_power_B 21450.7435+6356.4543j; 
+     constant_power_C 20864.0894+6207.5532j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:355 { 
+     name R3-12-47-2_load_42; 
+     parent R3-12-47-2_meter_42; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     constant_power_B 4290.1487+1271.2909j; 
+     nominal_voltage 7200; 
+     load_class C;
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "355.csv";
+	// };
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_A;
+		value +0+0j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_B;
+		value  -152.929-228.122j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_C;
+		value +0+0j;
+		within 1;
+	};	 
+} 
+
+object load:356 { 
+     name R3-12-47-2_load_43; 
+     parent R3-12-47-2_meter_43; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 6156.2257+1836.7523j; 
+     constant_power_B 6435.223+1906.9363j; 
+     constant_power_C 6259.2268+1862.266j; 
+     nominal_voltage 7200; 
+     load_class C;
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "356.csv";
+	// };
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_A;
+		value +285.431-2.29404j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_B;
+		value  -144.749-245.876j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_C;
+		value -140.729+248.389j;
+		within 1;
+	};	 
+} 
+
+object load:357 { 
+     name R3-12-47-2_load_44; 
+     parent R3-12-47-2_meter_44; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     constant_power_B 4290.1487+1271.2909j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:358 { 
+     name R3-12-47-2_load_45; 
+     parent R3-12-47-2_meter_45; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 68402.5077+20408.3589j; 
+     constant_power_B 71502.4783+21188.1812j; 
+     constant_power_C 69546.9647+20691.8439j; 
+     nominal_voltage 7200; 
+     load_class I; 
+} 
+
+object load:359 { 
+     name R3-12-47-2_load_46; 
+     parent R3-12-47-2_meter_46; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 6200+1800j; 
+     constant_power_B 6400+1900j; 
+     constant_power_C 6300+1900j; 
+     nominal_voltage 7200; 
+     load_class I; 
+} 
+
+object load:360 { 
+     name R3-12-47-2_load_47; 
+     parent R3-12-47-2_meter_47; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 41041.5046+12245.0154j; 
+     constant_power_B 42901.487+12712.9087j; 
+     constant_power_C 41728.1788+12415.1064j; 
+     nominal_voltage 7200; 
+     load_class C;
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "360.csv";
+	// };
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_A;
+		value +282.519-5.75152j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_B;
+		value  -146.538-241.337j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_C;
+		value -136.319+247.841j;
+		within 1;
+	};	 
+} 
+
+object load:361 { 
+     name R3-12-47-2_load_48; 
+     parent R3-12-47-2_meter_48; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     constant_power_A 10260.3762+3061.2538j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:362 { 
+     name R3-12-47-2_load_49; 
+     parent R3-12-47-2_meter_49; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 0+0j; 
+     constant_power_B 0+0j; 
+     constant_power_C 4172.8179+1241.5106j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:363 { 
+     name R3-12-47-2_load_50; 
+     parent R3-12-47-2_meter_50; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 20520.7523+6122.5077j; 
+     constant_power_B 21450.7435+6356.4543j; 
+     constant_power_C 20864.0894+6207.5532j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:364 { 
+     name R3-12-47-2_load_51; 
+     parent R3-12-47-2_meter_51; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 6156.2257+1836.7523j; 
+     constant_power_B 6435.223+1906.9363j; 
+     constant_power_C 6259.2268+1862.266j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:365 { 
+     name R3-12-47-2_load_52; 
+     parent R3-12-47-2_meter_52; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 10260.3762+3061.2538j; 
+     constant_power_B 10725.3717+3178.2272j; 
+     constant_power_C 10432.0447+3103.7766j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:366 { 
+     name R3-12-47-2_load_53; 
+     parent R3-12-47-2_meter_53; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 20520.7523+6122.5077j; 
+     constant_power_B 21450.7435+6356.4543j; 
+     constant_power_C 20864.0894+6207.5532j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:367 { 
+     name R3-12-47-2_load_54; 
+     parent R3-12-47-2_meter_54; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 6156.2257+1836.7523j; 
+     constant_power_B 6435.223+1906.9363j; 
+     constant_power_C 6259.2268+1862.266j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:368 { 
+     name R3-12-47-2_load_55; 
+     parent R3-12-47-2_meter_55; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 68402.5077+20408.3589j; 
+     constant_power_B 71502.4783+21188.1812j; 
+     constant_power_C 69546.9647+20691.8439j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:369 { 
+     name R3-12-47-2_load_56; 
+     parent R3-12-47-2_meter_56; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 68402.5077+20408.3589j; 
+     constant_power_B 71502.4783+21188.1812j; 
+     constant_power_C 69546.9647+20691.8439j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:370 { 
+     name R3-12-47-2_load_57; 
+     parent R3-12-47-2_meter_57; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 205207.5232+61225.0768j; 
+     constant_power_B 214507.4348+63564.5435j; 
+     constant_power_C 208640.8941+62075.5318j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:371 { 
+     name R3-12-47-2_load_58; 
+     parent R3-12-47-2_meter_58; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 205207.5232+61225.0768j; 
+     constant_power_B 214507.4348+63564.5435j; 
+     constant_power_C 208640.8941+62075.5318j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:372 { 
+     name R3-12-47-2_load_59; 
+     parent R3-12-47-2_meter_59; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 10260.3762+3061.2538j; 
+     constant_power_B 10725.3717+3178.2272j; 
+     constant_power_C 10432.0447+3103.7766j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:373 { 
+     name R3-12-47-2_load_60; 
+     parent R3-12-47-2_meter_60; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 102603.7616+30612.5384j; 
+     constant_power_B 107253.7174+31782.2717j; 
+     constant_power_C 104320.4471+31037.7659j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:374 { 
+     name R3-12-47-2_load_61; 
+     parent R3-12-47-2_meter_61; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 68402.5077+20408.3589j; 
+     constant_power_B 71502.4783+21188.1812j; 
+     constant_power_C 69546.9647+20691.8439j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object load:375 { 
+     name R3-12-47-2_load_62; 
+     parent R3-12-47-2_meter_62; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 10260.3762+3061.2538j; 
+     constant_power_B 10725.3717+3178.2272j; 
+     constant_power_C 10432.0447+3103.7766j; 
+     nominal_voltage 7200; 
+     load_class C; 
+} 
+
+object meter:376 { 
+     name R3-12-47-2_meter_1; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:377 { 
+     name R3-12-47-2_meter_2; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:378 { 
+     name R3-12-47-2_meter_3; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:379 { 
+     name R3-12-47-2_meter_4; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:380 { 
+     name R3-12-47-2_meter_5; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:381 { 
+     name R3-12-47-2_meter_6; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:382 { 
+     name R3-12-47-2_meter_7; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:383 { 
+     name R3-12-47-2_meter_8; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:384 { 
+     name R3-12-47-2_meter_9; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:385 { 
+     name R3-12-47-2_meter_10; 
+     phases ABN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:386 { 
+     name R3-12-47-2_meter_11; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:387 { 
+     name R3-12-47-2_meter_12; 
+     phases ABN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:388 { 
+     name R3-12-47-2_meter_13; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:389 { 
+     name R3-12-47-2_meter_14; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200;
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "389.csv";
+	// };
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_A;
+		value +282.359-5.99962j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_B;
+		value  -146.636-241.077j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_C;
+		value -136+247.773j;
+		within 1;
+	};	 
+} 
+
+object meter:390 { 
+     name R3-12-47-2_meter_15; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:391 { 
+     name R3-12-47-2_meter_16; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:392 { 
+     name R3-12-47-2_meter_17; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:393 { 
+     name R3-12-47-2_meter_18; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:394 { 
+     name R3-12-47-2_meter_19; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:395 { 
+     name R3-12-47-2_meter_20; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:396 { 
+     name R3-12-47-2_meter_21; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:397 { 
+     name R3-12-47-2_meter_22; 
+     phases CN; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:398 { 
+     name R3-12-47-2_meter_23; 
+     phases CN; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:399 { 
+     name R3-12-47-2_meter_24; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:400 { 
+     name R3-12-47-2_meter_25; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:401 { 
+     name R3-12-47-2_meter_26; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:402 { 
+     name R3-12-47-2_meter_27; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:403 { 
+     name R3-12-47-2_meter_28; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:404 { 
+     name R3-12-47-2_meter_29; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:405 { 
+     name R3-12-47-2_meter_30; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:406 { 
+     name R3-12-47-2_meter_31; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:407 { 
+     name R3-12-47-2_meter_32; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:408 { 
+     name R3-12-47-2_meter_33; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:409 { 
+     name R3-12-47-2_meter_34; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:410 { 
+     name R3-12-47-2_meter_35; 
+     phases CN; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:411 { 
+     name R3-12-47-2_meter_36; 
+     phases CN; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200;
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "411.csv";
+	// };
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_A;
+		value +0+0j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_B;
+		value  +0+0j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_C;
+		value +281.92+117.85d;
+		within 1;
+	};	 
+} 
+
+object meter:412 { 
+     name R3-12-47-2_meter_37; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:413 { 
+     name R3-12-47-2_meter_38; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:414 { 
+     name R3-12-47-2_meter_39; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:415 { 
+     name R3-12-47-2_meter_40; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:416 { 
+     name R3-12-47-2_meter_41; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:417 { 
+     name R3-12-47-2_meter_42; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:418 { 
+     name R3-12-47-2_meter_43; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:419 { 
+     name R3-12-47-2_meter_44; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:420 { 
+     name R3-12-47-2_meter_45; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:421 { 
+     name R3-12-47-2_meter_46; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:422 { 
+     name R3-12-47-2_meter_47; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:423 { 
+     name R3-12-47-2_meter_48; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:424 { 
+     name R3-12-47-2_meter_49; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:425 { 
+     name R3-12-47-2_meter_50; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:426 { 
+     name R3-12-47-2_meter_51; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:427 { 
+     name R3-12-47-2_meter_52; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:428 { 
+     name R3-12-47-2_meter_53; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:429 { 
+     name R3-12-47-2_meter_54; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:430 { 
+     name R3-12-47-2_meter_55; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:431 { 
+     name R3-12-47-2_meter_56; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:432 { 
+     name R3-12-47-2_meter_57; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:433 { 
+     name R3-12-47-2_meter_58; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:434 { 
+     name R3-12-47-2_meter_59; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:435 { 
+     name R3-12-47-2_meter_60; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200;
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "435.csv";
+	// };
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_A;
+		value +284.606-1.83586j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_B;
+		value  -143.912-245.356j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_C;
+		value -140.737+247.497j;
+		within 1;
+	};	 
+} 
+
+object meter:436 { 
+     name R3-12-47-2_meter_61; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object meter:437 { 
+     name R3-12-47-2_meter_62; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+// Meter at feeder 
+object meter:784 { 
+     name R3-12-47-2_meter_63; 
+     phases ABCN; 
+     nominal_voltage 7200; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+} 
+
+object node:48 { 
+     name R3-12-47-2_node_1; 
+     parent R3-12-47-2_meter_63; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:49 { 
+     name R3-12-47-2_node_2; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:50 { 
+     name R3-12-47-2_node_3; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:51 { 
+     name R3-12-47-2_node_4; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:52 { 
+     name R3-12-47-2_node_5; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:53 { 
+     name R3-12-47-2_node_6; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:54 { 
+     name R3-12-47-2_node_7; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:55 { 
+     name R3-12-47-2_node_8; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:56 { 
+     name R3-12-47-2_node_9; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:57 { 
+     name R3-12-47-2_node_10; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:58 { 
+     name R3-12-47-2_node_11; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object node:59 { 
+     name R3-12-47-2_node_12; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:60 { 
+     name R3-12-47-2_node_13; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:61 { 
+     name R3-12-47-2_node_14; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:62 { 
+     name R3-12-47-2_node_15; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object node:63 { 
+     name R3-12-47-2_node_16; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:64 { 
+     name R3-12-47-2_node_17; 
+     phases CN; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:65 { 
+     name R3-12-47-2_node_18; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:66 { 
+     name R3-12-47-2_node_19; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:67 { 
+     name R3-12-47-2_node_20; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:68 { 
+     name R3-12-47-2_node_21; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:69 { 
+     name R3-12-47-2_node_22; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:70 { 
+     name R3-12-47-2_node_23; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:71 { 
+     name R3-12-47-2_node_24; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:72 { 
+     name R3-12-47-2_node_25; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:73 { 
+     name R3-12-47-2_node_26; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:74 { 
+     name R3-12-47-2_node_27; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:75 { 
+     name R3-12-47-2_node_28; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object node:76 { 
+     name R3-12-47-2_node_29; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:77 { 
+     name R3-12-47-2_node_30; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:78 { 
+     name R3-12-47-2_node_31; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:79 { 
+     name R3-12-47-2_node_32; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:80 { 
+     name R3-12-47-2_node_33; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:81 { 
+     name R3-12-47-2_node_34; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:82 { 
+     name R3-12-47-2_node_35; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:83 { 
+     name R3-12-47-2_node_36; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:84 { 
+     name R3-12-47-2_node_37; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:85 { 
+     name R3-12-47-2_node_38; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:86 { 
+     name R3-12-47-2_node_39; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:87 { 
+     name R3-12-47-2_node_40; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object node:88 { 
+     name R3-12-47-2_node_41; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object node:89 { 
+     name R3-12-47-2_node_42; 
+     phases CN; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:90 { 
+     name R3-12-47-2_node_43; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:91 { 
+     name R3-12-47-2_node_44; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:92 { 
+     name R3-12-47-2_node_45; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:93 { 
+     name R3-12-47-2_node_46; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:94 { 
+     name R3-12-47-2_node_47; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:95 { 
+     name R3-12-47-2_node_48; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:96 { 
+     name R3-12-47-2_node_49; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:97 { 
+     name R3-12-47-2_node_50; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object node:98 { 
+     name R3-12-47-2_node_51; 
+     phases CN; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:99 { 
+     name R3-12-47-2_node_52; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object node:100 { 
+     name R3-12-47-2_node_53; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object node:101 { 
+     name R3-12-47-2_node_54; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:102 { 
+     name R3-12-47-2_node_55; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:103 { 
+     name R3-12-47-2_node_56; 
+     phases ABN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:104 { 
+     name R3-12-47-2_node_57; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object node:105 { 
+     name R3-12-47-2_node_58; 
+     phases ABN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:106 { 
+     name R3-12-47-2_node_59; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:107 { 
+     name R3-12-47-2_node_60; 
+     phases CN; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:108 { 
+     name R3-12-47-2_node_61; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:109 { 
+     name R3-12-47-2_node_62; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:110 { 
+     name R3-12-47-2_node_63; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:111 { 
+     name R3-12-47-2_node_64; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:112 { 
+     name R3-12-47-2_node_65; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:113 { 
+     name R3-12-47-2_node_66; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:114 { 
+     name R3-12-47-2_node_67; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:115 { 
+     name R3-12-47-2_node_68; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:116 { 
+     name R3-12-47-2_node_69; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:117 { 
+     name R3-12-47-2_node_70; 
+     phases AN; 
+     voltage_A 7200+0.0j; 
+     nominal_voltage 7200; 
+} 
+
+object node:118 { 
+     name R3-12-47-2_node_71; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:119 { 
+     name R3-12-47-2_node_72; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:120 { 
+     name R3-12-47-2_node_73; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:121 { 
+     name R3-12-47-2_node_74; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:122 { 
+     name R3-12-47-2_node_75; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:123 { 
+     name R3-12-47-2_node_76; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:124 { 
+     name R3-12-47-2_node_77; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:125 { 
+     name R3-12-47-2_node_78; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:126 { 
+     name R3-12-47-2_node_79; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:127 { 
+     name R3-12-47-2_node_80; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:128 { 
+     name R3-12-47-2_node_81; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200;
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "128.csv";
+	// };
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_A;
+		value +7342.24-144.89j;
+		value +7342.24-144.89j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_B;
+		value -3804.22-6274.48j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_C;
+		value -3546.78+6438.72j;
+		within 1;
+	};	 
+} 
+
+object node:129 { 
+     name R3-12-47-2_node_82; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:130 { 
+     name R3-12-47-2_node_83; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:131 { 
+     name R3-12-47-2_node_84; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:132 { 
+     name R3-12-47-2_node_85; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:133 { 
+     name R3-12-47-2_node_86; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:134 { 
+     name R3-12-47-2_node_87; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:135 { 
+     name R3-12-47-2_node_88; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:136 { 
+     name R3-12-47-2_node_89; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:137 { 
+     name R3-12-47-2_node_90; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:138 { 
+     name R3-12-47-2_node_91; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:139 { 
+     name R3-12-47-2_node_92; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:140 { 
+     name R3-12-47-2_node_93; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:141 { 
+     name R3-12-47-2_node_94; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:142 { 
+     name R3-12-47-2_node_95; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:143 { 
+     name R3-12-47-2_node_96; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:144 { 
+     name R3-12-47-2_node_97; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:145 { 
+     name R3-12-47-2_node_98; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:146 { 
+     name R3-12-47-2_node_99; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:147 { 
+     name R3-12-47-2_node_100; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:148 { 
+     name R3-12-47-2_node_101; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:149 { 
+     name R3-12-47-2_node_102; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:150 { 
+     name R3-12-47-2_node_103; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:151 { 
+     name R3-12-47-2_node_104; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:152 { 
+     name R3-12-47-2_node_105; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:153 { 
+     name R3-12-47-2_node_106; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:154 { 
+     name R3-12-47-2_node_107; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:155 { 
+     name R3-12-47-2_node_108; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:156 { 
+     name R3-12-47-2_node_109; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:157 { 
+     name R3-12-47-2_node_110; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:158 { 
+     name R3-12-47-2_node_111; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:159 { 
+     name R3-12-47-2_node_112; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:160 { 
+     name R3-12-47-2_node_113; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:161 { 
+     name R3-12-47-2_node_114; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:162 { 
+     name R3-12-47-2_node_115; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:163 { 
+     name R3-12-47-2_node_116; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:164 { 
+     name R3-12-47-2_node_117; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:165 { 
+     name R3-12-47-2_node_118; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:166 { 
+     name R3-12-47-2_node_119; 
+     phases CN; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:167 { 
+     name R3-12-47-2_node_120; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:168 { 
+     name R3-12-47-2_node_121; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:169 { 
+     name R3-12-47-2_node_122; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:170 { 
+     name R3-12-47-2_node_123; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:171 { 
+     name R3-12-47-2_node_124; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:172 { 
+     name R3-12-47-2_node_125; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:173 { 
+     name R3-12-47-2_node_126; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:174 { 
+     name R3-12-47-2_node_127; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:175 { 
+     name R3-12-47-2_node_128; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:176 { 
+     name R3-12-47-2_node_129; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:177 { 
+     name R3-12-47-2_node_130; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:178 { 
+     name R3-12-47-2_node_131; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:179 { 
+     name R3-12-47-2_node_132; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:180 { 
+     name R3-12-47-2_node_133; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:181 { 
+     name R3-12-47-2_node_134; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:182 { 
+     name R3-12-47-2_node_135; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:183 { 
+     name R3-12-47-2_node_136; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:184 { 
+     name R3-12-47-2_node_137; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:185 { 
+     name R3-12-47-2_node_138; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:186 { 
+     name R3-12-47-2_node_139; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:187 { 
+     name R3-12-47-2_node_140; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:188 { 
+     name R3-12-47-2_node_141; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:189 { 
+     name R3-12-47-2_node_142; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:190 { 
+     name R3-12-47-2_node_143; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:191 { 
+     name R3-12-47-2_node_144; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200;
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "191.csv";
+	// };
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_A;
+		value +7344.69-143.881j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_B;
+		value  -3804.49-6277.05j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_C;
+		value -3548.74+6440.18j;
+		within 1;
+	};	 
+} 
+
+object node:192 { 
+     name R3-12-47-2_node_145; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:193 { 
+     name R3-12-47-2_node_146; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:194 { 
+     name R3-12-47-2_node_147; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:195 { 
+     name R3-12-47-2_node_148; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:196 { 
+     name R3-12-47-2_node_149; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:197 { 
+     name R3-12-47-2_node_150; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:198 { 
+     name R3-12-47-2_node_151; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:199 { 
+     name R3-12-47-2_node_152; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:200 { 
+     name R3-12-47-2_node_153; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:201 { 
+     name R3-12-47-2_node_154; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:202 { 
+     name R3-12-47-2_node_155; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:203 { 
+     name R3-12-47-2_node_156; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:204 { 
+     name R3-12-47-2_node_157; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:205 { 
+     name R3-12-47-2_node_158; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:206 { 
+     name R3-12-47-2_node_159; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:207 { 
+     name R3-12-47-2_node_160; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:208 { 
+     name R3-12-47-2_node_161; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:209 { 
+     name R3-12-47-2_node_162; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:210 { 
+     name R3-12-47-2_node_163; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:211 { 
+     name R3-12-47-2_node_164; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:212 { 
+     name R3-12-47-2_node_165; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:213 { 
+     name R3-12-47-2_node_166; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:214 { 
+     name R3-12-47-2_node_167; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:215 { 
+     name R3-12-47-2_node_168; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:216 { 
+     name R3-12-47-2_node_169; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:217 { 
+     name R3-12-47-2_node_170; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:218 { 
+     name R3-12-47-2_node_171; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:219 { 
+     name R3-12-47-2_node_172; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:220 { 
+     name R3-12-47-2_node_173; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:221 { 
+     name R3-12-47-2_node_174; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:222 { 
+     name R3-12-47-2_node_175; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:223 { 
+     name R3-12-47-2_node_176; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:224 { 
+     name R3-12-47-2_node_177; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:225 { 
+     name R3-12-47-2_node_178; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:226 { 
+     name R3-12-47-2_node_179; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:227 { 
+     name R3-12-47-2_node_180; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:228 { 
+     name R3-12-47-2_node_181; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:229 { 
+     name R3-12-47-2_node_182; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:230 { 
+     name R3-12-47-2_node_183; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:231 { 
+     name R3-12-47-2_node_184; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:232 { 
+     name R3-12-47-2_node_185; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:233 { 
+     name R3-12-47-2_node_186; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:234 { 
+     name R3-12-47-2_node_187; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:235 { 
+     name R3-12-47-2_node_188; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:236 { 
+     name R3-12-47-2_node_189; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:237 { 
+     name R3-12-47-2_node_190; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:238 { 
+     name R3-12-47-2_node_191; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:239 { 
+     name R3-12-47-2_node_192; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:240 { 
+     name R3-12-47-2_node_193; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:241 { 
+     name R3-12-47-2_node_194; 
+     phases BN; 
+     voltage_B -3600-6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:242 { 
+     name R3-12-47-2_node_195; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:243 { 
+     name R3-12-47-2_node_196; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:244 { 
+     name R3-12-47-2_node_197; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:245 { 
+     name R3-12-47-2_node_198; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:246 { 
+     name R3-12-47-2_node_199; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:247 { 
+     name R3-12-47-2_node_200; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:248 { 
+     name R3-12-47-2_node_201; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:249 { 
+     name R3-12-47-2_node_202; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:250 { 
+     name R3-12-47-2_node_203; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:251 { 
+     name R3-12-47-2_node_204; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:252 { 
+     name R3-12-47-2_node_205; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:253 { 
+     name R3-12-47-2_node_206; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:254 { 
+     name R3-12-47-2_node_207; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:255 { 
+     name R3-12-47-2_node_208; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:256 { 
+     name R3-12-47-2_node_209; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:257 { 
+     name R3-12-47-2_node_210; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:258 { 
+     name R3-12-47-2_node_211; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:259 { 
+     name R3-12-47-2_node_212; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:260 { 
+     name R3-12-47-2_node_213; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:261 { 
+     name R3-12-47-2_node_214; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:262 { 
+     name R3-12-47-2_node_215; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:263 { 
+     name R3-12-47-2_node_216; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:264 { 
+     name R3-12-47-2_node_217; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:265 { 
+     name R3-12-47-2_node_218; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:266 { 
+     name R3-12-47-2_node_219; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:267 { 
+     name R3-12-47-2_node_220; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200;
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "267.csv";
+	// };
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_A;
+		value +7342.62-150.164j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_B;
+		value -3809.4-6271.51j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_C;
+		value -3542.02+6441.83j;
+		within 1;
+	};	 
+} 
+
+object node:268 { 
+     name R3-12-47-2_node_221; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:269 { 
+     name R3-12-47-2_node_222; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:270 { 
+     name R3-12-47-2_node_223; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:271 { 
+     name R3-12-47-2_node_224; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:272 { 
+     name R3-12-47-2_node_225; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:273 { 
+     name R3-12-47-2_node_226; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:274 { 
+     name R3-12-47-2_node_227; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:275 { 
+     name R3-12-47-2_node_228; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:276 { 
+     name R3-12-47-2_node_229; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:277 { 
+     name R3-12-47-2_node_230; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:278 { 
+     name R3-12-47-2_node_231; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:279 { 
+     name R3-12-47-2_node_232; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:280 { 
+     name R3-12-47-2_node_233; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:281 { 
+     name R3-12-47-2_node_234; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:282 { 
+     name R3-12-47-2_node_235; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:283 { 
+     name R3-12-47-2_node_236; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:284 { 
+     name R3-12-47-2_node_237; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:285 { 
+     name R3-12-47-2_node_238; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:286 { 
+     name R3-12-47-2_node_239; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:287 { 
+     name R3-12-47-2_node_240; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:288 { 
+     name R3-12-47-2_node_241; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:289 { 
+     name R3-12-47-2_node_242; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:290 { 
+     name R3-12-47-2_node_243; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:291 { 
+     name R3-12-47-2_node_244; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:292 { 
+     name R3-12-47-2_node_245; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:293 { 
+     name R3-12-47-2_node_246; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:294 { 
+     name R3-12-47-2_node_247; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:295 { 
+     name R3-12-47-2_node_248; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:296 { 
+     name R3-12-47-2_node_249; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:297 { 
+     name R3-12-47-2_node_250; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:298 { 
+     name R3-12-47-2_node_251; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:299 { 
+     name R3-12-47-2_node_252; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:300 { 
+     name R3-12-47-2_node_253; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:301 { 
+     name R3-12-47-2_node_254; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:302 { 
+     name R3-12-47-2_node_255; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:303 { 
+     name R3-12-47-2_node_256; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:304 { 
+     name R3-12-47-2_node_257; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:305 { 
+     name R3-12-47-2_node_258; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:306 { 
+     name R3-12-47-2_node_259; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:307 { 
+     name R3-12-47-2_node_260; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:308 { 
+     name R3-12-47-2_node_261; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:309 { 
+     name R3-12-47-2_node_262; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:310 { 
+     name R3-12-47-2_node_263; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:311 { 
+     name R3-12-47-2_node_264; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:312 { 
+     name R3-12-47-2_node_265; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:313 { 
+     name R3-12-47-2_node_266; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     nominal_voltage 7200; 
+} 
+
+object node:787 { 
+     name R3-12-47-2_node_267; 
+     phases ABCN; 
+     bustype SWING; 
+     nominal_voltage 7200; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j;
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 60;
+		// limit 1440;
+		// file "787.csv";
+	// };
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_A;
+		value +7200+0j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_B;
+		value  -3600-6235j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target voltage_C;
+		value -3600+6235j;
+		within 1;
+	};	 
+} 
+
+object overhead_line:519 { 
+     name R3-12-47-2_ol_1; 
+     phases BN; 
+     from R3-12-47-2_node_103; 
+     to R3-12-47-2_node_71; 
+     length 25.994; 
+     configuration line_configuration:21; 
+} 
+
+object overhead_line:520 { 
+     name R3-12-47-2_ol_2; 
+     phases BN; 
+     from R3-12-47-2_node_103; 
+     to R3-12-47-2_node_166; 
+     length 285.282; 
+     configuration line_configuration:21; 
+} 
+
+object overhead_line:521 { 
+     name R3-12-47-2_ol_3; 
+     phases BN; 
+     from R3-12-47-2_node_194; 
+     to R3-12-47-2_node_103; 
+     length 937.674; 
+     configuration line_configuration:21; 
+} 
+
+object overhead_line:522 { 
+     name R3-12-47-2_ol_4; 
+     phases ABCN; 
+     from R3-12-47-2_node_261; 
+     to R3-12-47-2_node_105; 
+     length 38.064; 
+     configuration line_configuration:22; 
+} 
+
+object overhead_line:523 { 
+     name R3-12-47-2_ol_5; 
+     phases ABCN; 
+     from R3-12-47-2_node_105; 
+     to R3-12-47-2_node_191; 
+     length 120.922; 
+     configuration line_configuration:22; 
+} 
+
+object overhead_line:524 { 
+     name R3-12-47-2_ol_6; 
+     phases ABCN; 
+     from R3-12-47-2_node_87; 
+     to R3-12-47-2_node_106; 
+     length 16.468; 
+     configuration line_configuration:23; 
+} 
+
+object overhead_line:525 { 
+     name R3-12-47-2_ol_7; 
+     phases AN; 
+     from R3-12-47-2_node_187; 
+     to R3-12-47-2_node_50; 
+     length 42.258; 
+     configuration line_configuration:24; 
+} 
+
+object overhead_line:526 { 
+     name R3-12-47-2_ol_8; 
+     phases AN; 
+     from R3-12-47-2_node_188; 
+     to R3-12-47-2_node_52; 
+     length 36.973; 
+     configuration line_configuration:24; 
+} 
+
+object overhead_line:527 { 
+     name R3-12-47-2_ol_9; 
+     phases BN; 
+     from R3-12-47-2_node_109; 
+     to R3-12-47-2_node_104; 
+     length 153.784; 
+     configuration line_configuration:25; 
+} 
+
+object overhead_line:528 { 
+     name R3-12-47-2_ol_10; 
+     phases BN; 
+     from R3-12-47-2_node_190; 
+     to R3-12-47-2_node_109; 
+     length 558.400; 
+     configuration line_configuration:25; 
+} 
+
+object overhead_line:529 { 
+     name R3-12-47-2_ol_11; 
+     phases BN; 
+     from R3-12-47-2_node_109; 
+     to R3-12-47-2_node_12; 
+     length 20.258; 
+     configuration line_configuration:26; 
+} 
+
+object overhead_line:530 { 
+     name R3-12-47-2_ol_12; 
+     phases BN; 
+     from R3-12-47-2_node_190; 
+     to R3-12-47-2_node_39; 
+     length 37.479; 
+     configuration line_configuration:25; 
+} 
+
+object overhead_line:531 { 
+     name R3-12-47-2_ol_13; 
+     phases BN; 
+     from R3-12-47-2_node_166; 
+     to R3-12-47-2_node_190; 
+     length 360.665; 
+     configuration line_configuration:25; 
+} 
+
+object overhead_line:532 { 
+     name R3-12-47-2_ol_14; 
+     phases AN; 
+     from R3-12-47-2_node_191; 
+     to R3-12-47-2_node_40; 
+     length 30.421; 
+     configuration line_configuration:27; 
+} 
+
+object overhead_line:533 { 
+     name R3-12-47-2_ol_15; 
+     phases AN; 
+     from R3-12-47-2_node_193; 
+     to R3-12-47-2_node_53; 
+     length 27.536; 
+     configuration line_configuration:27; 
+} 
+
+object overhead_line:534 { 
+     name R3-12-47-2_ol_16; 
+     phases BN; 
+     from R3-12-47-2_node_194; 
+     to R3-12-47-2_node_54; 
+     length 39.715; 
+     configuration line_configuration:21; 
+} 
+
+object overhead_line:535 { 
+     name R3-12-47-2_ol_17; 
+     phases ABCN; 
+     from R3-12-47-2_node_195; 
+     to R3-12-47-2_node_55; 
+     length 26.074; 
+     configuration line_configuration:22; 
+} 
+
+object overhead_line:536 { 
+     name R3-12-47-2_ol_18; 
+     phases BN; 
+     from R3-12-47-2_node_90; 
+     to R3-12-47-2_node_194; 
+     length 461.911; 
+     configuration line_configuration:21; 
+} 
+
+object overhead_line:537 { 
+     name R3-12-47-2_ol_19; 
+     phases ABN; 
+     from R3-12-47-2_node_197; 
+     to R3-12-47-2_node_56; 
+     length 29.182; 
+     configuration line_configuration:28; 
+} 
+
+object overhead_line:538 { 
+     name R3-12-47-2_ol_20; 
+     phases ABCN; 
+     from R3-12-47-2_node_81; 
+     to R3-12-47-2_node_225; 
+     length 12.500; 
+     configuration line_configuration:23; 
+} 
+
+object overhead_line:539 { 
+     name R3-12-47-2_ol_21; 
+     phases AN; 
+     from R3-12-47-2_node_200; 
+     to R3-12-47-2_node_57; 
+     length 46.779; 
+     configuration line_configuration:29; 
+} 
+
+object overhead_line:540 { 
+     name R3-12-47-2_ol_22; 
+     phases ABN; 
+     from R3-12-47-2_node_199; 
+     to R3-12-47-2_node_58; 
+     length 29.025; 
+     configuration line_configuration:28; 
+} 
+
+object overhead_line:541 { 
+     name R3-12-47-2_ol_23; 
+     phases AN; 
+     from R3-12-47-2_node_201; 
+     to R3-12-47-2_node_41; 
+     length 41.460; 
+     configuration line_configuration:24; 
+} 
+
+object overhead_line:542 { 
+     name R3-12-47-2_ol_24; 
+     phases ABCN; 
+     from R3-12-47-2_node_202; 
+     to R3-12-47-2_node_201; 
+     length 130.832; 
+     configuration line_configuration:23; 
+} 
+
+object overhead_line:543 { 
+     name R3-12-47-2_ol_25; 
+     phases ABCN; 
+     from R3-12-47-2_node_203; 
+     to R3-12-47-2_node_59; 
+     length 30.822; 
+     configuration line_configuration:30; 
+} 
+
+object overhead_line:544 { 
+     name R3-12-47-2_ol_26; 
+     phases ABCN; 
+     from R3-12-47-2_node_82; 
+     to R3-12-47-2_node_226; 
+     length 12.500; 
+     configuration line_configuration:23; 
+} 
+
+object overhead_line:545 { 
+     name R3-12-47-2_ol_27; 
+     phases ABCN; 
+     from R3-12-47-2_node_84; 
+     to R3-12-47-2_node_202; 
+     length 81.944; 
+     configuration line_configuration:23; 
+} 
+
+object overhead_line:546 { 
+     name R3-12-47-2_ol_28; 
+     phases ABCN; 
+     from R3-12-47-2_node_204; 
+     to R3-12-47-2_node_203; 
+     length 126.574; 
+     configuration line_configuration:30; 
+} 
+
+object overhead_line:547 { 
+     name R3-12-47-2_ol_29; 
+     phases ABCN; 
+     from R3-12-47-2_node_204; 
+     to R3-12-47-2_node_61; 
+     length 30.169; 
+     configuration line_configuration:30; 
+} 
+
+object overhead_line:548 { 
+     name R3-12-47-2_ol_30; 
+     phases BN; 
+     from R3-12-47-2_node_205; 
+     to R3-12-47-2_node_62; 
+     length 34.785; 
+     configuration line_configuration:31; 
+} 
+
+object overhead_line:549 { 
+     name R3-12-47-2_ol_31; 
+     phases ABCN; 
+     from R3-12-47-2_node_206; 
+     to R3-12-47-2_node_204; 
+     length 171.756; 
+     configuration line_configuration:30; 
+} 
+
+object overhead_line:550 { 
+     name R3-12-47-2_ol_32; 
+     phases ABCN; 
+     from R3-12-47-2_node_206; 
+     to R3-12-47-2_node_63; 
+     length 30.399; 
+     configuration line_configuration:30; 
+} 
+
+object overhead_line:551 { 
+     name R3-12-47-2_ol_33; 
+     phases ABCN; 
+     from R3-12-47-2_node_207; 
+     to R3-12-47-2_node_64; 
+     length 29.581; 
+     configuration line_configuration:23; 
+} 
+
+object overhead_line:552 { 
+     name R3-12-47-2_ol_34; 
+     phases ABCN; 
+     from R3-12-47-2_node_209; 
+     to R3-12-47-2_node_102; 
+     length 155.863; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:553 { 
+     name R3-12-47-2_ol_35; 
+     phases ABCN; 
+     from R3-12-47-2_node_92; 
+     to R3-12-47-2_node_206; 
+     length 168.252; 
+     configuration line_configuration:30; 
+} 
+
+object overhead_line:554 { 
+     name R3-12-47-2_ol_36; 
+     phases ABCN; 
+     from R3-12-47-2_node_214; 
+     to R3-12-47-2_node_65; 
+     length 35.295; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:555 { 
+     name R3-12-47-2_ol_37; 
+     phases ABCN; 
+     from R3-12-47-2_node_216; 
+     to R3-12-47-2_node_66; 
+     length 30.076; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:556 { 
+     name R3-12-47-2_ol_38; 
+     phases BN; 
+     from R3-12-47-2_node_95; 
+     to R3-12-47-2_node_67; 
+     length 339.084; 
+     configuration line_configuration:26; 
+} 
+
+object overhead_line:557 { 
+     name R3-12-47-2_ol_39; 
+     phases CN; 
+     from R3-12-47-2_node_203; 
+     to R3-12-47-2_node_60; 
+     length 321.665; 
+     configuration line_configuration:33; 
+} 
+
+object overhead_line:558 { 
+     name R3-12-47-2_ol_40; 
+     phases ABCN; 
+     from R3-12-47-2_node_259; 
+     to R3-12-47-2_node_163; 
+     length 12.500; 
+     configuration line_configuration:22; 
+} 
+
+object overhead_line:559 { 
+     name R3-12-47-2_ol_41; 
+     phases ABCN; 
+     from R3-12-47-2_node_91; 
+     to R3-12-47-2_node_224; 
+     length 12.120; 
+     configuration line_configuration:34; 
+} 
+
+object overhead_line:560 { 
+     name R3-12-47-2_ol_42; 
+     phases ABCN; 
+     from R3-12-47-2_node_196; 
+     to R3-12-47-2_node_198; 
+     length 186.190; 
+     configuration line_configuration:35; 
+} 
+
+object overhead_line:561 { 
+     name R3-12-47-2_ol_43; 
+     phases ABCN; 
+     from R3-12-47-2_node_200; 
+     to R3-12-47-2_node_196; 
+     length 577.319; 
+     configuration line_configuration:23; 
+} 
+
+object overhead_line:562 { 
+     name R3-12-47-2_ol_44; 
+     phases ABCN; 
+     from R3-12-47-2_node_83; 
+     to R3-12-47-2_node_165; 
+     length 13.823; 
+     configuration line_configuration:35; 
+} 
+
+object overhead_line:563 { 
+     name R3-12-47-2_ol_45; 
+     phases ABCN; 
+     from R3-12-47-2_node_205; 
+     to R3-12-47-2_node_200; 
+     length 279.715; 
+     configuration line_configuration:23; 
+} 
+
+object overhead_line:564 { 
+     name R3-12-47-2_ol_46; 
+     phases ABCN; 
+     from R3-12-47-2_node_207; 
+     to R3-12-47-2_node_205; 
+     length 178.841; 
+     configuration line_configuration:23; 
+} 
+
+object overhead_line:565 { 
+     name R3-12-47-2_ol_47; 
+     phases ABCN; 
+     from R3-12-47-2_node_85; 
+     to R3-12-47-2_node_207; 
+     length 115.104; 
+     configuration line_configuration:23; 
+} 
+
+object overhead_line:566 { 
+     name R3-12-47-2_ol_48; 
+     phases ABCN; 
+     from R3-12-47-2_node_93; 
+     to R3-12-47-2_node_209; 
+     length 167.932; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:567 { 
+     name R3-12-47-2_ol_49; 
+     phases ABCN; 
+     from R3-12-47-2_node_184; 
+     to R3-12-47-2_node_185; 
+     length 109.840; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:568 { 
+     name R3-12-47-2_ol_50; 
+     phases ABCN; 
+     from R3-12-47-2_node_185; 
+     to R3-12-47-2_node_101; 
+     length 455.693; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:569 { 
+     name R3-12-47-2_ol_51; 
+     phases ABCN; 
+     from R3-12-47-2_node_249; 
+     to R3-12-47-2_node_184; 
+     length 198.377; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:570 { 
+     name R3-12-47-2_ol_52; 
+     phases ABCN; 
+     from R3-12-47-2_node_186; 
+     to R3-12-47-2_node_187; 
+     length 193.753; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:571 { 
+     name R3-12-47-2_ol_53; 
+     phases ABCN; 
+     from R3-12-47-2_node_187; 
+     to R3-12-47-2_node_188; 
+     length 1080.546; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:572 { 
+     name R3-12-47-2_ol_54; 
+     phases ABCN; 
+     from R3-12-47-2_node_260; 
+     to R3-12-47-2_node_218; 
+     length 12.500; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:573 { 
+     name R3-12-47-2_ol_55; 
+     phases ABCN; 
+     from R3-12-47-2_node_191; 
+     to R3-12-47-2_node_193; 
+     length 589.858; 
+     configuration line_configuration:22; 
+} 
+
+object overhead_line:574 { 
+     name R3-12-47-2_ol_56; 
+     phases ABCN; 
+     from R3-12-47-2_node_193; 
+     to R3-12-47-2_node_195; 
+     length 436.671; 
+     configuration line_configuration:22; 
+} 
+
+object overhead_line:575 { 
+     name R3-12-47-2_ol_57; 
+     phases ABCN; 
+     from R3-12-47-2_node_256; 
+     to R3-12-47-2_node_197; 
+     length 208.867; 
+     configuration line_configuration:22; 
+} 
+
+object overhead_line:576 { 
+     name R3-12-47-2_ol_58; 
+     phases ABCN; 
+     from R3-12-47-2_node_197; 
+     to R3-12-47-2_node_199; 
+     length 452.186; 
+     configuration line_configuration:22; 
+} 
+
+object overhead_line:577 { 
+     name R3-12-47-2_ol_59; 
+     phases ABCN; 
+     from R3-12-47-2_node_199; 
+     to R3-12-47-2_node_210; 
+     length 678.426; 
+     configuration line_configuration:22; 
+} 
+
+object overhead_line:578 { 
+     name R3-12-47-2_ol_60; 
+     phases ABCN; 
+     from R3-12-47-2_node_86; 
+     to R3-12-47-2_node_97; 
+     length 12.476; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:579 { 
+     name R3-12-47-2_ol_61; 
+     phases ABCN; 
+     from R3-12-47-2_node_213; 
+     to R3-12-47-2_node_211; 
+     length 313.916; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:580 { 
+     name R3-12-47-2_ol_62; 
+     phases ABCN; 
+     from R3-12-47-2_node_215; 
+     to R3-12-47-2_node_213; 
+     length 377.562; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:581 { 
+     name R3-12-47-2_ol_63; 
+     phases ABCN; 
+     from R3-12-47-2_node_214; 
+     to R3-12-47-2_node_215; 
+     length 50.699; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:582 { 
+     name R3-12-47-2_ol_64; 
+     phases ABCN; 
+     from R3-12-47-2_node_216; 
+     to R3-12-47-2_node_214; 
+     length 223.552; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:583 { 
+     name R3-12-47-2_ol_65; 
+     phases ABCN; 
+     from R3-12-47-2_node_210; 
+     to R3-12-47-2_node_217; 
+     length 220.248; 
+     configuration line_configuration:22; 
+} 
+
+object overhead_line:584 { 
+     name R3-12-47-2_ol_66; 
+     phases ABCN; 
+     from R3-12-47-2_node_211; 
+     to R3-12-47-2_node_219; 
+     length 191.025; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:585 { 
+     name R3-12-47-2_ol_67; 
+     phases ABCN; 
+     from R3-12-47-2_node_74; 
+     to R3-12-47-2_node_98; 
+     length 13.885; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:586 { 
+     name R3-12-47-2_ol_68; 
+     phases ABCN; 
+     from R3-12-47-2_node_219; 
+     to R3-12-47-2_node_220; 
+     length 60.596; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:587 { 
+     name R3-12-47-2_ol_69; 
+     phases ABCN; 
+     from R3-12-47-2_node_77; 
+     to R3-12-47-2_node_99; 
+     length 13.339; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:588 { 
+     name R3-12-47-2_ol_70; 
+     phases ABCN; 
+     from R3-12-47-2_node_75; 
+     to R3-12-47-2_node_100; 
+     length 11.751; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:589 { 
+     name R3-12-47-2_ol_71; 
+     phases ABCN; 
+     from R3-12-47-2_node_254; 
+     to R3-12-47-2_node_222; 
+     length 175.871; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:590 { 
+     name R3-12-47-2_ol_72; 
+     phases ABCN; 
+     from R3-12-47-2_node_251; 
+     to R3-12-47-2_node_189; 
+     length 296.257; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:591 { 
+     name R3-12-47-2_ol_73; 
+     phases ABCN; 
+     from R3-12-47-2_node_217; 
+     to R3-12-47-2_node_216; 
+     length 304.754; 
+     configuration line_configuration:22; 
+} 
+
+object overhead_line:592 { 
+     name R3-12-47-2_ol_74; 
+     phases ABCN; 
+     from R3-12-47-2_node_252; 
+     to R3-12-47-2_node_212; 
+     length 14.459; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:593 { 
+     name R3-12-47-2_ol_75; 
+     phases ABCN; 
+     from R3-12-47-2_node_89; 
+     to R3-12-47-2_node_192; 
+     length 12.178; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:594 { 
+     name R3-12-47-2_ol_76; 
+     phases ABCN; 
+     from R3-12-47-2_node_253; 
+     to R3-12-47-2_node_181; 
+     length 13.728; 
+     configuration line_configuration:37; 
+} 
+
+object overhead_line:595 { 
+     name R3-12-47-2_ol_77; 
+     phases ABCN; 
+     from R3-12-47-2_node_181; 
+     to R3-12-47-2_node_182; 
+     length 9.327; 
+     configuration line_configuration:22; 
+} 
+
+object overhead_line:596 { 
+     name R3-12-47-2_ol_78; 
+     phases ABCN; 
+     from R3-12-47-2_node_250; 
+     to R3-12-47-2_node_186; 
+     length 161.084; 
+     configuration line_configuration:32; 
+} 
+
+object overhead_line:711 { 
+     name R3-12-47-2_ol_79; 
+     phases ABCN; 
+     from R3-12-47-2_node_178; 
+     to R3-12-47-2_node_3; 
+     length 12.500; 
+     configuration line_configuration:46; 
+} 
+
+object overhead_line:712 { 
+     name R3-12-47-2_ol_80; 
+     phases ABCN; 
+     from R3-12-47-2_node_179; 
+     to R3-12-47-2_node_2; 
+     length 12.500; 
+     configuration line_configuration:46; 
+} 
+
+object overhead_line:714 { 
+     name R3-12-47-2_ol_81; 
+     phases ABCN; 
+     from R3-12-47-2_node_231; 
+     to R3-12-47-2_node_4; 
+     length 12.500; 
+     configuration line_configuration:46; 
+} 
+
+object overhead_line:715 { 
+     name R3-12-47-2_ol_82; 
+     phases ABCN; 
+     from R3-12-47-2_node_236; 
+     to R3-12-47-2_node_5; 
+     length 12.500; 
+     configuration line_configuration:46; 
+} 
+
+object overhead_line:716 { 
+     name R3-12-47-2_ol_83; 
+     phases ABCN; 
+     from R3-12-47-2_node_240; 
+     to R3-12-47-2_node_6; 
+     length 12.499; 
+     configuration line_configuration:46; 
+} 
+
+object overhead_line:717 { 
+     name R3-12-47-2_ol_84; 
+     phases ABCN; 
+     from R3-12-47-2_node_7; 
+     to R3-12-47-2_node_242; 
+     length 11.996; 
+     configuration line_configuration:46; 
+} 
+
+object overhead_line:718 { 
+     name R3-12-47-2_ol_85; 
+     phases ABCN; 
+     from R3-12-47-2_node_73; 
+     to R3-12-47-2_node_7; 
+     length 12.500; 
+     configuration line_configuration:46; 
+} 
+
+object overhead_line:719 { 
+     name R3-12-47-2_ol_86; 
+     phases ABCN; 
+     from R3-12-47-2_node_244; 
+     to R3-12-47-2_node_8; 
+     length 12.973; 
+     configuration line_configuration:46; 
+} 
+
+object overhead_line:720 { 
+     name R3-12-47-2_ol_87; 
+     phases BN; 
+     from R3-12-47-2_node_80; 
+     to R3-12-47-2_node_9; 
+     length 12.500; 
+     configuration line_configuration:47; 
+} 
+
+object overhead_line:721 { 
+     name R3-12-47-2_ol_88; 
+     phases BN; 
+     from R3-12-47-2_node_9; 
+     to R3-12-47-2_node_180; 
+     length 12.500; 
+     configuration line_configuration:47; 
+} 
+
+object overhead_line_conductor:2 { 
+     //name 123.3 AAAC; 
+     rating.summer.continuous 256.0; 
+     geometric_mean_radius 0.01200 ft; 
+     resistance 0.16600; 
+} 
+
+object overhead_line_conductor:3 { 
+     //name 559.5 AAAC; 
+     rating.summer.continuous 663.0; 
+     geometric_mean_radius 0.02710 ft; 
+     resistance 0.03690; 
+} 
+
+object overhead_line_conductor:4 { 
+     //name 4 CW; 
+     rating.summer.continuous 180.0; 
+     geometric_mean_radius 0.00340 ft; 
+     resistance 0.28600; 
+} 
+
+object overhead_line_conductor:5 { 
+     //name 4 CU; 
+     rating.summer.continuous 149.0; 
+     geometric_mean_radius 0.00663 ft; 
+     resistance 1.50000; 
+} 
+
+object overhead_line_conductor:6 { 
+     //name 1/0 AAAC; 
+     rating.summer.continuous 266.0; 
+     geometric_mean_radius 0.01142 ft; 
+     resistance 0.95300; 
+} 
+
+object overhead_line_conductor:7 { 
+     //name 2 CU; 
+     rating.summer.continuous 204.0; 
+     geometric_mean_radius 0.00836 ft; 
+     resistance 0.94500; 
+} 
+
+object overhead_line_conductor:8 { 
+     //name 312.8 AAAC; 
+     rating.summer.continuous 460.0; 
+     geometric_mean_radius 0.02020 ft; 
+     resistance 0.06570; 
+} 
+
+object overhead_line_conductor:9 { 
+     //name 336.4 AAC; 
+     rating.summer.continuous 443.0; 
+     geometric_mean_radius 0.02270 ft; 
+     resistance 0.05230; 
+} 
+
+object overhead_line_conductor:14 { 
+     //name 556.5 AAC; 
+     rating.summer.continuous 605.0; 
+     geometric_mean_radius 0.02920 ft; 
+     resistance 0.03180; 
+} 
+
+object overhead_line_conductor:15 { 
+     //name Busbar; 
+     rating.summer.continuous 600.0; 
+     geometric_mean_radius 0.00801 ft; 
+     resistance 0.30590; 
+} 
+
+object switch:745 { 
+     name R3-12-47-2_switch_1; 
+     phases ABCN; 
+     from R3-12-47-2_node_186; 
+     to R3-12-47-2_node_263; 
+     status CLOSED; 
+} 
+
+object switch:746 { 
+     name R3-12-47-2_switch_2; 
+     phases ABCN; 
+     from R3-12-47-2_node_188; 
+     to R3-12-47-2_node_252; 
+     status CLOSED; 
+} 
+
+object switch:747 { 
+     name R3-12-47-2_switch_3; 
+     phases ABCN; 
+     from R3-12-47-2_node_189; 
+     to R3-12-47-2_node_260; 
+     status CLOSED; 
+} 
+
+object switch:748 { 
+     name R3-12-47-2_switch_4; 
+     phases ABCN; 
+     from R3-12-47-2_node_223; 
+     to R3-12-47-2_node_261; 
+     status CLOSED; 
+} 
+
+object switch:749 { 
+     name R3-12-47-2_switch_5; 
+     phases ABCN; 
+     from R3-12-47-2_node_195; 
+     to R3-12-47-2_node_256; 
+     status CLOSED; 
+} 
+
+object switch:750 { 
+     name R3-12-47-2_switch_6; 
+     phases ABCN; 
+     from R3-12-47-2_node_189; 
+     to R3-12-47-2_node_229; 
+     status CLOSED; 
+} 
+
+object switch:751 { 
+     name R3-12-47-2_switch_7; 
+     phases ABCN; 
+     from R3-12-47-2_node_220; 
+     to R3-12-47-2_node_254; 
+     status CLOSED; 
+} 
+
+object switch:752 { 
+     name R3-12-47-2_switch_8; 
+     phases ABCN; 
+     from R3-12-47-2_node_222; 
+     to R3-12-47-2_node_228; 
+     status CLOSED; 
+} 
+
+object switch:753 { 
+     name R3-12-47-2_switch_9; 
+     phases ABCN; 
+     from R3-12-47-2_node_164; 
+     to R3-12-47-2_node_249; 
+     status CLOSED; 
+} 
+
+object switch:754 { 
+     name R3-12-47-2_switch_10; 
+     phases ABCN; 
+     from R3-12-47-2_node_162; 
+     to R3-12-47-2_node_262; 
+     status CLOSED; 
+} 
+
+object switch:755 { 
+     name R3-12-47-2_switch_11; 
+     phases ABCN; 
+     from R3-12-47-2_node_208; 
+     to R3-12-47-2_node_251; 
+     status CLOSED; 
+} 
+
+object switch:756 { 
+     name R3-12-47-2_switch_12; 
+     phases ABCN; 
+     from R3-12-47-2_node_1; 
+     to R3-12-47-2_node_253; 
+     status CLOSED; 
+} 
+
+object switch:757 { 
+     name R3-12-47-2_switch_13; 
+     phases ABCN; 
+     from R3-12-47-2_node_181; 
+     to R3-12-47-2_node_255; 
+     status CLOSED; 
+} 
+
+object switch:758 { 
+     name R3-12-47-2_switch_14; 
+     phases ABCN; 
+     from R3-12-47-2_node_182; 
+     to R3-12-47-2_node_259; 
+     status CLOSED; 
+} 
+
+object switch:759 { 
+     name R3-12-47-2_switch_15; 
+     phases ABCN; 
+     from R3-12-47-2_node_185; 
+     to R3-12-47-2_node_250; 
+     status CLOSED; 
+} 
+
+object switch:760 { 
+     name R3-12-47-2_switch_16; 
+     phases ABCN; 
+     from R3-12-47-2_node_163; 
+     to R3-12-47-2_node_231; 
+     status CLOSED; 
+} 
+
+object switch:761 { 
+     name R3-12-47-2_switch_17; 
+     phases ABCN; 
+     from R3-12-47-2_node_242; 
+     to R3-12-47-2_node_264; 
+     status CLOSED; 
+} 
+
+object switch:762 { 
+     name R3-12-47-2_switch_18; 
+     phases ABCN; 
+     from R3-12-47-2_node_177; 
+     to R3-12-47-2_node_240; 
+     status CLOSED; 
+} 
+
+object switch:763 { 
+     name R3-12-47-2_switch_19; 
+     phases ABCN; 
+     from R3-12-47-2_node_176; 
+     to R3-12-47-2_node_236; 
+     status CLOSED; 
+} 
+
+object switch:764 { 
+     name R3-12-47-2_switch_20; 
+     phases ABCN; 
+     from R3-12-47-2_node_221; 
+     to R3-12-47-2_node_230; 
+     status CLOSED; 
+} 
+
+object switch:765 { 
+     name R3-12-47-2_switch_21; 
+     phases ABCN; 
+     from R3-12-47-2_node_232; 
+     to R3-12-47-2_node_244; 
+     status CLOSED; 
+} 
+
+object switch:766 { 
+     name R3-12-47-2_switch_22; 
+     phases ABCN; 
+     from R3-12-47-2_node_118; 
+     to R3-12-47-2_node_257; 
+     status CLOSED; 
+} 
+
+object switch:767 { 
+     name R3-12-47-2_switch_23; 
+     phases ABCN; 
+     from R3-12-47-2_node_126; 
+     to R3-12-47-2_node_258; 
+     status CLOSED; 
+} 
+
+object switch:768 { 
+     name R3-12-47-2_switch_24; 
+     phases ABCN; 
+     from R3-12-47-2_node_136; 
+     to R3-12-47-2_node_245; 
+     status CLOSED; 
+} 
+
+object switch:769 { 
+     name R3-12-47-2_switch_25; 
+     phases ABCN; 
+     from R3-12-47-2_node_247; 
+     to R3-12-47-2_node_266; 
+     status CLOSED; 
+} 
+
+object switch:770 { 
+     name R3-12-47-2_switch_26; 
+     phases ABCN; 
+     from R3-12-47-2_node_97; 
+     to R3-12-47-2_node_246; 
+     status CLOSED; 
+} 
+
+object switch:771 { 
+     name R3-12-47-2_switch_27; 
+     phases ABCN; 
+     from R3-12-47-2_node_151; 
+     to R3-12-47-2_node_248; 
+     status CLOSED; 
+} 
+
+object switch:772 { 
+     name R3-12-47-2_switch_28; 
+     phases ABCN; 
+     from R3-12-47-2_node_4; 
+     to R3-12-47-2_node_234; 
+     status CLOSED; 
+} 
+
+object switch:773 { 
+     name R3-12-47-2_switch_29; 
+     phases ABCN; 
+     from R3-12-47-2_node_4; 
+     to R3-12-47-2_node_232; 
+     status CLOSED; 
+} 
+
+object switch:774 { 
+     name R3-12-47-2_switch_30; 
+     phases ABCN; 
+     from R3-12-47-2_node_5; 
+     to R3-12-47-2_node_238; 
+     status CLOSED; 
+} 
+
+object switch:775 { 
+     name R3-12-47-2_switch_31; 
+     phases ABCN; 
+     from R3-12-47-2_node_5; 
+     to R3-12-47-2_node_235; 
+     status CLOSED; 
+} 
+
+object switch:776 { 
+     name R3-12-47-2_switch_32; 
+     phases ABCN; 
+     from R3-12-47-2_node_5; 
+     to R3-12-47-2_node_237; 
+     status CLOSED; 
+} 
+
+object switch:777 { 
+     name R3-12-47-2_switch_33; 
+     phases ABCN; 
+     from R3-12-47-2_node_6; 
+     to R3-12-47-2_node_239; 
+     status CLOSED; 
+} 
+
+object switch:778 { 
+     name R3-12-47-2_switch_34; 
+     phases ABCN; 
+     from R3-12-47-2_node_7; 
+     to R3-12-47-2_node_241; 
+     status CLOSED; 
+} 
+
+object switch:779 { 
+     name R3-12-47-2_switch_35; 
+     phases ABCN; 
+     from R3-12-47-2_node_8; 
+     to R3-12-47-2_node_243; 
+     status CLOSED; 
+} 
+
+object switch:780 { 
+     name R3-12-47-2_switch_36; 
+     phases ABCN; 
+     from R3-12-47-2_node_4; 
+     to R3-12-47-2_node_233; 
+     status CLOSED; 
+} 
+
+//Recloser, used as switch for now 
+object switch:781 { 
+     name R3-12-47-2_switch_37; 
+     phases ABCN; 
+     from R3-12-47-2_node_219; 
+     to R3-12-47-2_node_74; 
+     status CLOSED; 
+} 
+
+//Recloser, used as switch for now 
+object switch:782 { 
+     name R3-12-47-2_switch_38; 
+     phases ABCN; 
+     from R3-12-47-2_node_220; 
+     to R3-12-47-2_node_77; 
+     status CLOSED; 
+} 
+
+//Recloser, used as switch for now 
+object switch:783 { 
+     name R3-12-47-2_switch_39; 
+     phases ABCN; 
+     from R3-12-47-2_node_222; 
+     to R3-12-47-2_node_75; 
+     status CLOSED; 
+} 
+
+object transformer:457 { 
+     name R3-12-47-2_xfmr_1; 
+     phases BN; 
+     from R3-12-47-2_node_71; 
+     to R3-12-47-2_meter_1; 
+     configuration transformer_configuration:438; 
+} 
+
+object transformer:458 { 
+     name R3-12-47-2_xfmr_2; 
+     phases AN; 
+     from R3-12-47-2_node_50; 
+     to R3-12-47-2_meter_2; 
+     configuration transformer_configuration:439; 
+} 
+
+object transformer:459 { 
+     name R3-12-47-2_xfmr_3; 
+     phases AN; 
+     from R3-12-47-2_node_52; 
+     to R3-12-47-2_meter_3; 
+     configuration transformer_configuration:440; 
+} 
+
+object transformer:460 { 
+     name R3-12-47-2_xfmr_4; 
+     phases BN; 
+     from R3-12-47-2_node_12; 
+     to R3-12-47-2_meter_4; 
+     configuration transformer_configuration:441; 
+} 
+
+object transformer:461 { 
+     name R3-12-47-2_xfmr_5; 
+     phases BN; 
+     from R3-12-47-2_node_39; 
+     to R3-12-47-2_meter_5; 
+     configuration transformer_configuration:442; 
+} 
+
+object transformer:462 { 
+     name R3-12-47-2_xfmr_6; 
+     phases AN; 
+     from R3-12-47-2_node_40; 
+     to R3-12-47-2_meter_6; 
+     configuration transformer_configuration:439; 
+} 
+
+object transformer:463 { 
+     name R3-12-47-2_xfmr_7; 
+     phases AN; 
+     from R3-12-47-2_node_53; 
+     to R3-12-47-2_meter_7; 
+     configuration transformer_configuration:439; 
+} 
+
+object transformer:464 { 
+     name R3-12-47-2_xfmr_8; 
+     phases BN; 
+     from R3-12-47-2_node_54; 
+     to R3-12-47-2_meter_8; 
+     configuration transformer_configuration:443; 
+} 
+
+object transformer:465 { 
+     name R3-12-47-2_xfmr_9; 
+     phases ABCN; 
+     from R3-12-47-2_node_55; 
+     to R3-12-47-2_meter_9; 
+     configuration transformer_configuration:444; 
+} 
+
+object transformer:466 { 
+     name R3-12-47-2_xfmr_10; 
+     phases ABN; 
+     from R3-12-47-2_node_56; 
+     to R3-12-47-2_meter_10; 
+     configuration transformer_configuration:445; 
+} 
+
+object transformer:467 { 
+     name R3-12-47-2_xfmr_11; 
+     phases AN; 
+     from R3-12-47-2_node_57; 
+     to R3-12-47-2_meter_11; 
+     configuration transformer_configuration:439; 
+} 
+
+object transformer:468 { 
+     name R3-12-47-2_xfmr_12; 
+     phases ABN; 
+     from R3-12-47-2_node_58; 
+     to R3-12-47-2_meter_12; 
+     configuration transformer_configuration:445; 
+} 
+
+object transformer:469 { 
+     name R3-12-47-2_xfmr_13; 
+     phases AN; 
+     from R3-12-47-2_node_41; 
+     to R3-12-47-2_meter_13; 
+     configuration transformer_configuration:446; 
+} 
+
+object transformer:470 { 
+     name R3-12-47-2_xfmr_14; 
+     phases ABCN; 
+     from R3-12-47-2_node_59; 
+     to R3-12-47-2_meter_14; 
+     configuration transformer_configuration:447; 
+} 
+
+object transformer:471 { 
+     name R3-12-47-2_xfmr_15; 
+     phases ABCN; 
+     from R3-12-47-2_node_61; 
+     to R3-12-47-2_meter_15; 
+     configuration transformer_configuration:448; 
+} 
+
+object transformer:472 { 
+     name R3-12-47-2_xfmr_16; 
+     phases BN; 
+     from R3-12-47-2_node_62; 
+     to R3-12-47-2_meter_16; 
+     configuration transformer_configuration:438; 
+} 
+
+object transformer:473 { 
+     name R3-12-47-2_xfmr_17; 
+     phases ABCN; 
+     from R3-12-47-2_node_63; 
+     to R3-12-47-2_meter_17; 
+     configuration transformer_configuration:448; 
+} 
+
+object transformer:474 { 
+     name R3-12-47-2_xfmr_18; 
+     phases ABCN; 
+     from R3-12-47-2_node_64; 
+     to R3-12-47-2_meter_18; 
+     configuration transformer_configuration:444; 
+} 
+
+object transformer:475 { 
+     name R3-12-47-2_xfmr_19; 
+     phases ABCN; 
+     from R3-12-47-2_node_65; 
+     to R3-12-47-2_meter_19; 
+     configuration transformer_configuration:448; 
+} 
+
+object transformer:476 { 
+     name R3-12-47-2_xfmr_20; 
+     phases ABCN; 
+     from R3-12-47-2_node_66; 
+     to R3-12-47-2_meter_20; 
+     configuration transformer_configuration:447; 
+} 
+
+object transformer:477 { 
+     name R3-12-47-2_xfmr_21; 
+     phases BN; 
+     from R3-12-47-2_node_67; 
+     to R3-12-47-2_meter_21; 
+     configuration transformer_configuration:438; 
+} 
+
+object transformer:478 { 
+     name R3-12-47-2_xfmr_22; 
+     phases CN; 
+     from R3-12-47-2_node_60; 
+     to R3-12-47-2_meter_22; 
+     configuration transformer_configuration:449; 
+} 
+
+object transformer:479 { 
+     name R3-12-47-2_xfmr_23; 
+     phases CN; 
+     from R3-12-47-2_node_51; 
+     to R3-12-47-2_meter_23; 
+     configuration transformer_configuration:449; 
+} 
+
+object transformer:480 { 
+     name R3-12-47-2_xfmr_24; 
+     phases ABCN; 
+     from R3-12-47-2_node_68; 
+     to R3-12-47-2_meter_24; 
+     configuration transformer_configuration:447; 
+} 
+
+object transformer:481 { 
+     name R3-12-47-2_xfmr_25; 
+     phases ABCN; 
+     from R3-12-47-2_node_69; 
+     to R3-12-47-2_meter_25; 
+     configuration transformer_configuration:448; 
+} 
+
+object transformer:482 { 
+     name R3-12-47-2_xfmr_26; 
+     phases AN; 
+     from R3-12-47-2_node_70; 
+     to R3-12-47-2_meter_26; 
+     configuration transformer_configuration:440; 
+} 
+
+object transformer:483 { 
+     name R3-12-47-2_xfmr_27; 
+     phases ABCN; 
+     from R3-12-47-2_node_45; 
+     to R3-12-47-2_meter_27; 
+     configuration transformer_configuration:450; 
+} 
+
+object transformer:484 { 
+     name R3-12-47-2_xfmr_28; 
+     phases ABCN; 
+     from R3-12-47-2_node_48; 
+     to R3-12-47-2_meter_28; 
+     configuration transformer_configuration:451; 
+} 
+
+object transformer:485 { 
+     name R3-12-47-2_xfmr_29; 
+     phases ABCN; 
+     from R3-12-47-2_node_10; 
+     to R3-12-47-2_meter_29; 
+     configuration transformer_configuration:450; 
+} 
+
+object transformer:486 { 
+     name R3-12-47-2_xfmr_30; 
+     phases AN; 
+     from R3-12-47-2_node_11; 
+     to R3-12-47-2_meter_30; 
+     configuration transformer_configuration:440; 
+} 
+
+object transformer:487 { 
+     name R3-12-47-2_xfmr_31; 
+     phases ABCN; 
+     from R3-12-47-2_node_14; 
+     to R3-12-47-2_meter_31; 
+     configuration transformer_configuration:444; 
+} 
+
+object transformer:488 { 
+     name R3-12-47-2_xfmr_32; 
+     phases ABCN; 
+     from R3-12-47-2_node_13; 
+     to R3-12-47-2_meter_32; 
+     configuration transformer_configuration:444; 
+} 
+
+object transformer:489 { 
+     name R3-12-47-2_xfmr_33; 
+     phases AN; 
+     from R3-12-47-2_node_15; 
+     to R3-12-47-2_meter_33; 
+     configuration transformer_configuration:440; 
+} 
+
+object transformer:490 { 
+     name R3-12-47-2_xfmr_34; 
+     phases ABCN; 
+     from R3-12-47-2_node_16; 
+     to R3-12-47-2_meter_34; 
+     configuration transformer_configuration:448; 
+} 
+
+object transformer:491 { 
+     name R3-12-47-2_xfmr_35; 
+     phases CN; 
+     from R3-12-47-2_node_42; 
+     to R3-12-47-2_meter_35; 
+     configuration transformer_configuration:452; 
+} 
+
+object transformer:492 { 
+     name R3-12-47-2_xfmr_36; 
+     phases CN; 
+     from R3-12-47-2_node_17; 
+     to R3-12-47-2_meter_36; 
+     configuration transformer_configuration:452; 
+} 
+
+object transformer:493 { 
+     name R3-12-47-2_xfmr_37; 
+     phases ABCN; 
+     from R3-12-47-2_node_18; 
+     to R3-12-47-2_meter_37; 
+     configuration transformer_configuration:444; 
+} 
+
+object transformer:494 { 
+     name R3-12-47-2_xfmr_38; 
+     phases BN; 
+     from R3-12-47-2_node_19; 
+     to R3-12-47-2_meter_38; 
+     configuration transformer_configuration:442; 
+} 
+
+object transformer:495 { 
+     name R3-12-47-2_xfmr_39; 
+     phases ABCN; 
+     from R3-12-47-2_node_20; 
+     to R3-12-47-2_meter_39; 
+     configuration transformer_configuration:448; 
+} 
+
+object transformer:496 { 
+     name R3-12-47-2_xfmr_40; 
+     phases BN; 
+     from R3-12-47-2_node_21; 
+     to R3-12-47-2_meter_40; 
+     configuration transformer_configuration:442; 
+} 
+
+object transformer:497 { 
+     name R3-12-47-2_xfmr_41; 
+     phases ABCN; 
+     from R3-12-47-2_node_22; 
+     to R3-12-47-2_meter_41; 
+     configuration transformer_configuration:448; 
+} 
+
+object transformer:498 { 
+     name R3-12-47-2_xfmr_42; 
+     phases BN; 
+     from R3-12-47-2_node_23; 
+     to R3-12-47-2_meter_42; 
+     configuration transformer_configuration:443; 
+} 
+
+object transformer:499 { 
+     name R3-12-47-2_xfmr_43; 
+     phases ABCN; 
+     from R3-12-47-2_node_25; 
+     to R3-12-47-2_meter_43; 
+     configuration transformer_configuration:447; 
+} 
+
+object transformer:500 { 
+     name R3-12-47-2_xfmr_44; 
+     phases BN; 
+     from R3-12-47-2_node_26; 
+     to R3-12-47-2_meter_44; 
+     configuration transformer_configuration:443; 
+} 
+
+object transformer:501 { 
+     name R3-12-47-2_xfmr_45; 
+     phases ABCN; 
+     from R3-12-47-2_node_43; 
+     to R3-12-47-2_meter_45; 
+     configuration transformer_configuration:453; 
+} 
+
+object transformer:502 { 
+     name R3-12-47-2_xfmr_46; 
+     phases ABCN; 
+     from R3-12-47-2_node_27; 
+     to R3-12-47-2_meter_46; 
+     configuration transformer_configuration:447; 
+} 
+
+object transformer:503 { 
+     name R3-12-47-2_xfmr_47; 
+     phases ABCN; 
+     from R3-12-47-2_node_44; 
+     to R3-12-47-2_meter_47; 
+     configuration transformer_configuration:450; 
+} 
+
+object transformer:504 { 
+     name R3-12-47-2_xfmr_48; 
+     phases AN; 
+     from R3-12-47-2_node_28; 
+     to R3-12-47-2_meter_48; 
+     configuration transformer_configuration:440; 
+} 
+
+object transformer:505 { 
+     name R3-12-47-2_xfmr_49; 
+     phases ABCN; 
+     from R3-12-47-2_node_29; 
+     to R3-12-47-2_meter_49; 
+     configuration transformer_configuration:454; 
+} 
+
+object transformer:506 { 
+     name R3-12-47-2_xfmr_50; 
+     phases ABCN; 
+     from R3-12-47-2_node_30; 
+     to R3-12-47-2_meter_50; 
+     configuration transformer_configuration:448; 
+} 
+
+object transformer:507 { 
+     name R3-12-47-2_xfmr_51; 
+     phases ABCN; 
+     from R3-12-47-2_node_31; 
+     to R3-12-47-2_meter_51; 
+     configuration transformer_configuration:447; 
+} 
+
+object transformer:508 { 
+     name R3-12-47-2_xfmr_52; 
+     phases ABCN; 
+     from R3-12-47-2_node_32; 
+     to R3-12-47-2_meter_52; 
+     configuration transformer_configuration:444; 
+} 
+
+object transformer:509 { 
+     name R3-12-47-2_xfmr_53; 
+     phases ABCN; 
+     from R3-12-47-2_node_46; 
+     to R3-12-47-2_meter_53; 
+     configuration transformer_configuration:448; 
+} 
+
+object transformer:510 { 
+     name R3-12-47-2_xfmr_54; 
+     phases ABCN; 
+     from R3-12-47-2_node_33; 
+     to R3-12-47-2_meter_54; 
+     configuration transformer_configuration:447; 
+} 
+
+object transformer:511 { 
+     name R3-12-47-2_xfmr_55; 
+     phases ABCN; 
+     from R3-12-47-2_node_34; 
+     to R3-12-47-2_meter_55; 
+     configuration transformer_configuration:453; 
+} 
+
+object transformer:512 { 
+     name R3-12-47-2_xfmr_56; 
+     phases ABCN; 
+     from R3-12-47-2_node_35; 
+     to R3-12-47-2_meter_56; 
+     configuration transformer_configuration:453; 
+} 
+
+object transformer:513 { 
+     name R3-12-47-2_xfmr_57; 
+     phases ABCN; 
+     from R3-12-47-2_node_36; 
+     to R3-12-47-2_meter_57; 
+     configuration transformer_configuration:455; 
+} 
+
+object transformer:514 { 
+     name R3-12-47-2_xfmr_58; 
+     phases ABCN; 
+     from R3-12-47-2_node_37; 
+     to R3-12-47-2_meter_58; 
+     configuration transformer_configuration:455; 
+} 
+
+object transformer:515 { 
+     name R3-12-47-2_xfmr_59; 
+     phases ABCN; 
+     from R3-12-47-2_node_38; 
+     to R3-12-47-2_meter_59; 
+     configuration transformer_configuration:444; 
+} 
+
+object transformer:516 { 
+     name R3-12-47-2_xfmr_60; 
+     phases ABCN; 
+     from R3-12-47-2_node_24; 
+     to R3-12-47-2_meter_60; 
+     configuration transformer_configuration:456; 
+} 
+
+object transformer:517 { 
+     name R3-12-47-2_xfmr_61; 
+     phases ABCN; 
+     from R3-12-47-2_node_47; 
+     to R3-12-47-2_meter_61; 
+     configuration transformer_configuration:453; 
+} 
+
+object transformer:518 { 
+     name R3-12-47-2_xfmr_62; 
+     phases ABCN; 
+     from R3-12-47-2_node_49; 
+     to R3-12-47-2_meter_62; 
+     configuration transformer_configuration:444; 
+} 
+
+object transformer_configuration:438 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 15.0; 
+     powerB_rating 15.0; 
+     resistance 0.00667; 
+     reactance 0.03333; 
+      shunt_impedance 318.750+333.355j;
+} 
+
+object transformer_configuration:439 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 15.0; 
+     powerA_rating 15.0; 
+     resistance 0.00667; 
+     reactance 0.03333; 
+      shunt_impedance 318.750+304.680j;
+} 
+
+object transformer_configuration:440 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 25.0; 
+     powerA_rating 25.0; 
+     resistance 0.00400; 
+     reactance 0.02000; 
+      shunt_impedance 339.610+303.783j;
+} 
+
+object transformer_configuration:441 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 5.0; 
+     powerB_rating 5.0; 
+     resistance 0.01; 
+     reactance 0.05; 
+      shunt_impedance 297.890+293.255j;
+} 
+
+object transformer_configuration:442 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 25.0; 
+     powerB_rating 25.0; 
+     resistance 0.00400; 
+     reactance 0.02000; 
+      shunt_impedance 339.610+343.996j;
+} 
+
+object transformer_configuration:443 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 10.0; 
+     powerB_rating 10.0; 
+     resistance 0.01; 
+     reactance 0.05; 
+      shunt_impedance 308.320+324.027j;
+} 
+
+object transformer_configuration:444 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 75.0; 
+     powerA_rating 25.0; 
+     powerB_rating 25.0; 
+     powerC_rating 25.0; 
+     resistance 0.00133; 
+     reactance 0.00667; 
+      shunt_impedance 443.910+442.573j;
+} 
+
+object transformer_configuration:445 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 50.0; 
+     powerA_rating 25.0; 
+     powerB_rating 25.0; 
+     resistance 0.00200; 
+     reactance 0.01000; 
+      shunt_impedance 391.760+373.842j;
+} 
+
+object transformer_configuration:446 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 5.0; 
+     powerA_rating 5.0; 
+     resistance 0.01; 
+     reactance 0.05; 
+      shunt_impedance 297.890+315.654j;
+} 
+
+object transformer_configuration:447 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 45.0; 
+     powerA_rating 15.0; 
+     powerB_rating 15.0; 
+     powerC_rating 15.0; 
+     resistance 0.00222; 
+     reactance 0.01111; 
+      shunt_impedance 381.330+377.001j;
+} 
+
+object transformer_configuration:448 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 150.0; 
+     powerA_rating 50.0; 
+     powerB_rating 50.0; 
+     powerC_rating 50.0; 
+     resistance 0.00067; 
+     reactance 0.00333; 
+      shunt_impedance 600.360+648.811j;
+} 
+
+object transformer_configuration:449 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 25.0; 
+     powerC_rating 25.0; 
+     resistance 0.00400; 
+     reactance 0.02000; 
+      shunt_impedance 339.610+336.560j;
+} 
+
+object transformer_configuration:450 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 300.0; 
+     powerA_rating 100.0; 
+     powerB_rating 100.0; 
+     powerC_rating 100.0; 
+     resistance 0.00033; 
+     reactance 0.00167; 
+      shunt_impedance 913.260+912.685j;
+} 
+
+object transformer_configuration:451 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 1012.5; 
+     powerA_rating 337.5; 
+     powerB_rating 337.5; 
+     powerC_rating 337.5; 
+     resistance 0.00010; 
+     reactance 0.00049; 
+      shunt_impedance 2399.535+2377.493j;
+} 
+
+object transformer_configuration:452 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 15.0; 
+     powerC_rating 15.0; 
+     resistance 0.00667; 
+     reactance 0.03333; 
+      shunt_impedance 318.750+289.386j;
+} 
+
+object transformer_configuration:453 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 525.0; 
+     powerA_rating 175.0; 
+     powerB_rating 175.0; 
+     powerC_rating 175.0; 
+     resistance 0.00019; 
+     reactance 0.00095; 
+      shunt_impedance 1382.610+1254.449j;
+} 
+
+object transformer_configuration:454 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 10.0; 
+     powerA_rating 0.0; 
+     powerB_rating 0.0; 
+     powerC_rating 10.0; 
+     resistance 0.01; 
+     reactance 0.05; 
+      shunt_impedance 308.320+278.684j;
+} 
+
+object transformer_configuration:455 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 1500.0; 
+     powerA_rating 500.0; 
+     powerB_rating 500.0; 
+     powerC_rating 500.0; 
+     resistance 0.00007; 
+     reactance 0.00033; 
+      shunt_impedance 3416.460+4026.240j;
+} 
+
+object transformer_configuration:456 { 
+     connect_type WYE_WYE; 
+     install_type POLETOP; 
+     primary_voltage 12470.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 750.0; 
+     powerA_rating 250.0; 
+     powerB_rating 250.0; 
+     powerC_rating 250.0; 
+     resistance 0.00013; 
+     reactance 0.00067; 
+      shunt_impedance 1851.960+1814.886j;
+} 
+
+object triplex_line_conductor {
+     name TLC 1/0 AA triplex; 
+     resistance 0.97; 
+     geometric_mean_radius 0.0111; 
+} 
+
+object triplex_line_configuration:1 { 
+     conductor_1 TLC 1/0 AA triplex; 
+     conductor_2 TLC 1/0 AA triplex; 
+     conductor_N TLC 1/0 AA triplex; 
+     insulation_thickness 0.08; 
+     diameter 0.368; 
+} 
+
+object underground_line:597 { 
+     name R3-12-47-2_ul_1; 
+     phases CN; 
+     from R3-12-47-2_node_183; 
+     to R3-12-47-2_node_51; 
+     length 321.180; 
+     configuration line_configuration:38; 
+} 
+
+object underground_line:598 { 
+     name R3-12-47-2_ul_2; 
+     phases ABCN; 
+     from R3-12-47-2_node_135; 
+     to R3-12-47-2_node_68; 
+     length 269.966; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:599 { 
+     name R3-12-47-2_ul_3; 
+     phases ABCN; 
+     from R3-12-47-2_node_130; 
+     to R3-12-47-2_node_69; 
+     length 141.727; 
+     configuration line_configuration:39;
+		// object recorder {
+		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
+		// interval 60;
+		// limit 1440;
+		// file "UL599.csv";
+	// }; // @off by 100
+	 object complex_assert{	// NR +20526.8+6151.41j	+21457.3+6388.02j	+20870.3+6237.4j	+20526.5+6151.28j	+21457.1+6387.88j	+20870.1+6237.27j
+		once ONCE_TRUE;		// FBS +20615.3+6233.5j	+21545.7+6470.06j	+20958.8+6319.54j	+20615+6233.37j	+21545.5+6469.92j	+20958.6+6319.4j
+		in '2000-01-01 00:04:00 EST';
+		target power_in_A;
+		value +20526.8+6151.41j;
+		within 90;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_in_B;
+		value +21457.4+6388.44j;
+		within 90;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_in_C;
+		value +20870.3+6237.4j;
+		within 90;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_out_A;
+		value +20526.5+6151.28j;
+		within 90;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_out_B;
+		value +21457.1+6387.88j;
+		within 90;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_out_C;
+		value +20870.1+6237.27j;
+		within 90;
+	}; 
+} 
+
+object underground_line:600 { 
+     name R3-12-47-2_ul_4; 
+     phases AN; 
+     from R3-12-47-2_node_129; 
+     to R3-12-47-2_node_70; 
+     length 38.371; 
+     configuration line_configuration:40; 
+} 
+
+object underground_line:601 { 
+     name R3-12-47-2_ul_5; 
+     phases ABCN; 
+     from R3-12-47-2_node_226; 
+     to R3-12-47-2_node_45; 
+     length 84.624; 
+     configuration line_configuration:41; 
+} 
+
+object underground_line:602 { 
+     name R3-12-47-2_ul_6; 
+     phases ABCN; 
+     from R3-12-47-2_node_78; 
+     to R3-12-47-2_node_48; 
+     length 58.263; 
+     configuration line_configuration:41; 
+} 
+
+object underground_line:603 { 
+     name R3-12-47-2_ul_7; 
+     phases ABCN; 
+     from R3-12-47-2_node_106; 
+     to R3-12-47-2_node_108; 
+     length 37.481; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:604 { 
+     name R3-12-47-2_ul_8; 
+     phases ABCN; 
+     from R3-12-47-2_node_108; 
+     to R3-12-47-2_node_107; 
+     length 675.315; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:605 { 
+     name R3-12-47-2_ul_9; 
+     phases ABCN; 
+     from R3-12-47-2_node_107; 
+     to R3-12-47-2_node_10; 
+     length 32.855; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:606 { 
+     name R3-12-47-2_ul_10; 
+     phases ABCN; 
+     from R3-12-47-2_node_233; 
+     to R3-12-47-2_node_162; 
+     length 120.805; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:607 { 
+     name R3-12-47-2_ul_11; 
+     phases ABCN; 
+     from R3-12-47-2_node_243; 
+     to R3-12-47-2_node_168; 
+     length 743.354; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:608 { 
+     name R3-12-47-2_ul_12; 
+     phases ABCN; 
+     from R3-12-47-2_node_168; 
+     to R3-12-47-2_node_169; 
+     length 704.286; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:609 { 
+     name R3-12-47-2_ul_13; 
+     phases ABCN; 
+     from R3-12-47-2_node_169; 
+     to R3-12-47-2_node_158; 
+     length 290.080; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:610 { 
+     name R3-12-47-2_ul_14; 
+     phases ABCN; 
+     from R3-12-47-2_node_158; 
+     to R3-12-47-2_node_170; 
+     length 640.203; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:611 { 
+     name R3-12-47-2_ul_15; 
+     phases ABCN; 
+     from R3-12-47-2_node_170; 
+     to R3-12-47-2_node_171; 
+     length 811.148; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:612 { 
+     name R3-12-47-2_ul_16; 
+     phases ABCN; 
+     from R3-12-47-2_node_241; 
+     to R3-12-47-2_node_159; 
+     length 45.815; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:613 { 
+     name R3-12-47-2_ul_17; 
+     phases ABCN; 
+     from R3-12-47-2_node_159; 
+     to R3-12-47-2_node_164; 
+     length 655.081; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:614 { 
+     name R3-12-47-2_ul_18; 
+     phases ABCN; 
+     from R3-12-47-2_node_171; 
+     to R3-12-47-2_node_173; 
+     length 565.359; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:615 { 
+     name R3-12-47-2_ul_19; 
+     phases ABCN; 
+     from R3-12-47-2_node_175; 
+     to R3-12-47-2_node_172; 
+     length 949.649; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:616 { 
+     name R3-12-47-2_ul_20; 
+     phases ABCN; 
+     from R3-12-47-2_node_173; 
+     to R3-12-47-2_node_176; 
+     length 426.443; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:617 { 
+     name R3-12-47-2_ul_21; 
+     phases ABCN; 
+     from R3-12-47-2_node_239; 
+     to R3-12-47-2_node_160; 
+     length 30.097; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:618 { 
+     name R3-12-47-2_ul_22; 
+     phases ABCN; 
+     from R3-12-47-2_node_237; 
+     to R3-12-47-2_node_177; 
+     length 732.101; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:619 { 
+     name R3-12-47-2_ul_23; 
+     phases ABCN; 
+     from R3-12-47-2_node_160; 
+     to R3-12-47-2_node_167; 
+     length 304.118; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:620 { 
+     name R3-12-47-2_ul_24; 
+     phases AN; 
+     from R3-12-47-2_node_128; 
+     to R3-12-47-2_node_11; 
+     length 26.917; 
+     configuration line_configuration:40; 
+} 
+
+object underground_line:621 { 
+     name R3-12-47-2_ul_25; 
+     phases ABCN; 
+     from R3-12-47-2_node_167; 
+     to R3-12-47-2_node_208; 
+     length 154.665; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:622 { 
+     name R3-12-47-2_ul_26; 
+     phases ABCN; 
+     from R3-12-47-2_node_153; 
+     to R3-12-47-2_node_152; 
+     length 629.714; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:623 { 
+     name R3-12-47-2_ul_27; 
+     phases ABCN; 
+     from R3-12-47-2_node_212; 
+     to R3-12-47-2_node_154; 
+     length 55.974; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:624 { 
+     name R3-12-47-2_ul_28; 
+     phases ABCN; 
+     from R3-12-47-2_node_155; 
+     to R3-12-47-2_node_161; 
+     length 593.170; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:625 { 
+     name R3-12-47-2_ul_29; 
+     phases ABCN; 
+     from R3-12-47-2_node_112; 
+     to R3-12-47-2_node_14; 
+     length 302.215; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:626 { 
+     name R3-12-47-2_ul_30; 
+     phases ABCN; 
+     from R3-12-47-2_node_113; 
+     to R3-12-47-2_node_13; 
+     length 128.005; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:627 { 
+     name R3-12-47-2_ul_31; 
+     phases AN; 
+     from R3-12-47-2_node_114; 
+     to R3-12-47-2_node_15; 
+     length 73.810; 
+     configuration line_configuration:40;
+	// object recorder {
+		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
+		// interval 60;
+		// limit 1440;
+		// file "UL627.csv";
+	// }; // @off by  50
+	 object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_in_A;
+		value +10312.6+3322.34j;
+		within 50;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_in_B;
+		value +0+0j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_in_C;
+		value +0+0j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_out_A;
+		value +10834.5+17.8569d;
+		within 50;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_out_B;
+		value +0+0j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_out_C;
+		value +0+0j;
+		within 1;
+	}; 
+} 
+
+object underground_line:628 { 
+     name R3-12-47-2_ul_32; 
+     phases ABCN; 
+     from R3-12-47-2_node_116; 
+     to R3-12-47-2_node_16; 
+     length 41.949; 
+     configuration line_configuration:41; 
+} 
+
+object underground_line:629 { 
+     name R3-12-47-2_ul_33; 
+     phases ABCN; 
+     from R3-12-47-2_node_117; 
+     to R3-12-47-2_node_116; 
+     length 238.002; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:630 { 
+     name R3-12-47-2_ul_34; 
+     phases CN; 
+     from R3-12-47-2_node_118; 
+     to R3-12-47-2_node_119; 
+     length 30.897; 
+     configuration line_configuration:45; 
+} 
+
+object underground_line:631 { 
+     name R3-12-47-2_ul_35; 
+     phases CN; 
+     from R3-12-47-2_node_119; 
+     to R3-12-47-2_node_42; 
+     length 32.873; 
+     configuration line_configuration:45; 
+} 
+
+object underground_line:632 { 
+     name R3-12-47-2_ul_36; 
+     phases CN; 
+     from R3-12-47-2_node_122; 
+     to R3-12-47-2_node_17; 
+     length 62.848; 
+     configuration line_configuration:38; 
+} 
+
+object underground_line:633 { 
+     name R3-12-47-2_ul_37; 
+     phases ABCN; 
+     from R3-12-47-2_node_120; 
+     to R3-12-47-2_node_18; 
+     length 189.201; 
+     configuration line_configuration:41; 
+} 
+
+object underground_line:634 { 
+     name R3-12-47-2_ul_38; 
+     phases BN; 
+     from R3-12-47-2_node_125; 
+     to R3-12-47-2_node_19; 
+     length 54.555; 
+     configuration line_configuration:44; 
+} 
+
+object underground_line:635 { 
+     name R3-12-47-2_ul_39; 
+     phases ABCN; 
+     from R3-12-47-2_node_122; 
+     to R3-12-47-2_node_20; 
+     length 289.929; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:636 { 
+     name R3-12-47-2_ul_40; 
+     phases BN; 
+     from R3-12-47-2_node_180; 
+     to R3-12-47-2_node_21; 
+     length 478.189; 
+     configuration line_configuration:44; 
+} 
+
+object underground_line:637 { 
+     name R3-12-47-2_ul_41; 
+     phases ABCN; 
+     from R3-12-47-2_node_192; 
+     to R3-12-47-2_node_127; 
+     length 207.073; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:638 { 
+     name R3-12-47-2_ul_42; 
+     phases ABCN; 
+     from R3-12-47-2_node_127; 
+     to R3-12-47-2_node_179; 
+     length 28.313; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:639 { 
+     name R3-12-47-2_ul_43; 
+     phases ABCN; 
+     from R3-12-47-2_node_79; 
+     to R3-12-47-2_node_22; 
+     length 308.227; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:640 { 
+     name R3-12-47-2_ul_44; 
+     phases BN; 
+     from R3-12-47-2_node_131; 
+     to R3-12-47-2_node_23; 
+     length 40.881; 
+     configuration line_configuration:44; 
+} 
+
+object underground_line:641 { 
+     name R3-12-47-2_ul_45; 
+     phases ABCN; 
+     from R3-12-47-2_node_132; 
+     to R3-12-47-2_node_25; 
+     length 46.907; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:642 { 
+     name R3-12-47-2_ul_46; 
+     phases BN; 
+     from R3-12-47-2_node_137; 
+     to R3-12-47-2_node_26; 
+     length 44.209; 
+     configuration line_configuration:44; 
+} 
+
+object underground_line:643 { 
+     name R3-12-47-2_ul_47; 
+     phases ABCN; 
+     from R3-12-47-2_node_183; 
+     to R3-12-47-2_node_43; 
+     length 63.671; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:644 { 
+     name R3-12-47-2_ul_48; 
+     phases ABCN; 
+     from R3-12-47-2_node_139; 
+     to R3-12-47-2_node_27; 
+     length 271.100; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:645 { 
+     name R3-12-47-2_ul_49; 
+     phases ABCN; 
+     from R3-12-47-2_node_225; 
+     to R3-12-47-2_node_44; 
+     length 73.474; 
+     configuration line_configuration:41; 
+} 
+
+object underground_line:646 { 
+     name R3-12-47-2_ul_50; 
+     phases AN; 
+     from R3-12-47-2_node_140; 
+     to R3-12-47-2_node_28; 
+     length 165.193; 
+     configuration line_configuration:40; 
+} 
+
+object underground_line:647 { 
+     name R3-12-47-2_ul_51; 
+     phases ABCN; 
+     from R3-12-47-2_node_141; 
+     to R3-12-47-2_node_29; 
+     length 22.232; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:648 { 
+     name R3-12-47-2_ul_52; 
+     phases ABCN; 
+     from R3-12-47-2_node_142; 
+     to R3-12-47-2_node_227; 
+     length 265.297; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:649 { 
+     name R3-12-47-2_ul_53; 
+     phases ABCN; 
+     from R3-12-47-2_node_142; 
+     to R3-12-47-2_node_30; 
+     length 336.150; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:650 { 
+     name R3-12-47-2_ul_54; 
+     phases ABCN; 
+     from R3-12-47-2_node_143; 
+     to R3-12-47-2_node_31; 
+     length 245.422; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:651 { 
+     name R3-12-47-2_ul_55; 
+     phases ABCN; 
+     from R3-12-47-2_node_144; 
+     to R3-12-47-2_node_32; 
+     length 131.627; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:652 { 
+     name R3-12-47-2_ul_56; 
+     phases ABCN; 
+     from R3-12-47-2_node_145; 
+     to R3-12-47-2_node_46; 
+     length 168.109; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:653 { 
+     name R3-12-47-2_ul_57; 
+     phases ABCN; 
+     from R3-12-47-2_node_146; 
+     to R3-12-47-2_node_33; 
+     length 200.871; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:654 { 
+     name R3-12-47-2_ul_58; 
+     phases ABCN; 
+     from R3-12-47-2_node_147; 
+     to R3-12-47-2_node_34; 
+     length 292.759; 
+     configuration line_configuration:41; 
+} 
+
+object underground_line:655 { 
+     name R3-12-47-2_ul_59; 
+     phases ABCN; 
+     from R3-12-47-2_node_147; 
+     to R3-12-47-2_node_35; 
+     length 214.050; 
+     configuration line_configuration:41; 
+} 
+
+object underground_line:656 { 
+     name R3-12-47-2_ul_60; 
+     phases ABCN; 
+     from R3-12-47-2_node_150; 
+     to R3-12-47-2_node_36; 
+     length 89.824; 
+     configuration line_configuration:41; 
+} 
+
+object underground_line:657 { 
+     name R3-12-47-2_ul_61; 
+     phases ABCN; 
+     from R3-12-47-2_node_149; 
+     to R3-12-47-2_node_37; 
+     length 92.398; 
+     configuration line_configuration:41; 
+} 
+
+object underground_line:658 { 
+     name R3-12-47-2_ul_62; 
+     phases ABCN; 
+     from R3-12-47-2_node_151; 
+     to R3-12-47-2_node_38; 
+     length 158.999; 
+     configuration line_configuration:41; 
+} 
+
+object underground_line:659 { 
+     name R3-12-47-2_ul_63; 
+     phases ABCN; 
+     from R3-12-47-2_node_151; 
+     to R3-12-47-2_node_178; 
+     length 27.837; 
+     configuration line_configuration:41; 
+} 
+
+object underground_line:660 { 
+     name R3-12-47-2_ul_64; 
+     phases ABCN; 
+     from R3-12-47-2_node_129; 
+     to R3-12-47-2_node_24; 
+     length 457.875; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line:661 { 
+     name R3-12-47-2_ul_65; 
+     phases ABCN; 
+     from R3-12-47-2_node_152; 
+     to R3-12-47-2_node_175; 
+     length 948.841; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:662 { 
+     name R3-12-47-2_ul_66; 
+     phases ABCN; 
+     from R3-12-47-2_node_154; 
+     to R3-12-47-2_node_156; 
+     length 521.321; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:663 { 
+     name R3-12-47-2_ul_67; 
+     phases ABCN; 
+     from R3-12-47-2_node_218; 
+     to R3-12-47-2_node_153; 
+     length 44.027; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:664 { 
+     name R3-12-47-2_ul_68; 
+     phases ABCN; 
+     from R3-12-47-2_node_235; 
+     to R3-12-47-2_node_155; 
+     length 966.305; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:665 { 
+     name R3-12-47-2_ul_69; 
+     phases ABCN; 
+     from R3-12-47-2_node_76; 
+     to R3-12-47-2_node_110; 
+     length 21.037; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:666 { 
+     name R3-12-47-2_ul_70; 
+     phases ABCN; 
+     from R3-12-47-2_node_113; 
+     to R3-12-47-2_node_111; 
+     length 337.082; 
+     configuration line_configuration:42;
+	// object recorder {
+		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
+		// interval 60;
+		// limit 1440;
+		// file "UL666.csv";
+	// };
+	 object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_in_A;
+		value +0+0j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_in_B;
+		value +0+0j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_in_C;
+		value +0+0j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_out_A;
+		value +0+0j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_out_B;
+		value +0+0j;
+		within 1;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_out_C;
+		value +0+0j;
+		within 1;
+	};	 
+} 
+
+object underground_line:667 { 
+     name R3-12-47-2_ul_71; 
+     phases ABCN; 
+     from R3-12-47-2_node_114; 
+     to R3-12-47-2_node_112; 
+     length 120.288; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:668 { 
+     name R3-12-47-2_ul_72; 
+     phases ABCN; 
+     from R3-12-47-2_node_110; 
+     to R3-12-47-2_node_114; 
+     length 497.083; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:669 { 
+     name R3-12-47-2_ul_73; 
+     phases ABCN; 
+     from R3-12-47-2_node_114; 
+     to R3-12-47-2_node_115; 
+     length 336.606; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:670 { 
+     name R3-12-47-2_ul_74; 
+     phases ABCN; 
+     from R3-12-47-2_node_117; 
+     to R3-12-47-2_node_113; 
+     length 253.496; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:671 { 
+     name R3-12-47-2_ul_75; 
+     phases ABCN; 
+     from R3-12-47-2_node_120; 
+     to R3-12-47-2_node_118; 
+     length 350.101; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:672 { 
+     name R3-12-47-2_ul_76; 
+     phases ABCN; 
+     from R3-12-47-2_node_122; 
+     to R3-12-47-2_node_121; 
+     length 820.380; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:673 { 
+     name R3-12-47-2_ul_77; 
+     phases ABCN; 
+     from R3-12-47-2_node_123; 
+     to R3-12-47-2_node_122; 
+     length 212.221; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:674 { 
+     name R3-12-47-2_ul_78; 
+     phases ABCN; 
+     from R3-12-47-2_node_115; 
+     to R3-12-47-2_node_124; 
+     length 574.753; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:675 { 
+     name R3-12-47-2_ul_79; 
+     phases ABCN; 
+     from R3-12-47-2_node_125; 
+     to R3-12-47-2_node_123; 
+     length 694.121; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:676 { 
+     name R3-12-47-2_ul_80; 
+     phases ABCN; 
+     from R3-12-47-2_node_125; 
+     to R3-12-47-2_node_117; 
+     length 148.131; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:677 { 
+     name R3-12-47-2_ul_81; 
+     phases ABCN; 
+     from R3-12-47-2_node_124; 
+     to R3-12-47-2_node_125; 
+     length 134.783; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:678 { 
+     name R3-12-47-2_ul_82; 
+     phases ABCN; 
+     from R3-12-47-2_node_124; 
+     to R3-12-47-2_node_157; 
+     length 169.878; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:679 { 
+     name R3-12-47-2_ul_83; 
+     phases ABCN; 
+     from R3-12-47-2_node_157; 
+     to R3-12-47-2_node_126; 
+     length 763.592; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:680 { 
+     name R3-12-47-2_ul_84; 
+     phases ABCN; 
+     from R3-12-47-2_node_129; 
+     to R3-12-47-2_node_128; 
+     length 461.550; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:681 { 
+     name R3-12-47-2_ul_85; 
+     phases ABCN; 
+     from R3-12-47-2_node_128; 
+     to R3-12-47-2_node_131; 
+     length 231.598; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:682 { 
+     name R3-12-47-2_ul_86; 
+     phases ABCN; 
+     from R3-12-47-2_node_132; 
+     to R3-12-47-2_node_130; 
+     length 320.243; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:683 { 
+     name R3-12-47-2_ul_87; 
+     phases ABCN; 
+     from R3-12-47-2_node_131; 
+     to R3-12-47-2_node_133; 
+     length 934.196; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:684 { 
+     name R3-12-47-2_ul_88; 
+     phases ABCN; 
+     from R3-12-47-2_node_135; 
+     to R3-12-47-2_node_132; 
+     length 448.789; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:685 { 
+     name R3-12-47-2_ul_89; 
+     phases ABCN; 
+     from R3-12-47-2_node_174; 
+     to R3-12-47-2_node_134; 
+     length 385.914; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:686 { 
+     name R3-12-47-2_ul_90; 
+     phases ABCN; 
+     from R3-12-47-2_node_245; 
+     to R3-12-47-2_node_135; 
+     length 25.844; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:687 { 
+     name R3-12-47-2_ul_91; 
+     phases ABCN; 
+     from R3-12-47-2_node_72; 
+     to R3-12-47-2_node_174; 
+     length 280.266; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:688 { 
+     name R3-12-47-2_ul_92; 
+     phases ABCN; 
+     from R3-12-47-2_node_134; 
+     to R3-12-47-2_node_136; 
+     length 293.412; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:689 { 
+     name R3-12-47-2_ul_93; 
+     phases ABCN; 
+     from R3-12-47-2_node_138; 
+     to R3-12-47-2_node_183; 
+     length 236.226; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:690 { 
+     name R3-12-47-2_ul_94; 
+     phases ABCN; 
+     from R3-12-47-2_node_224; 
+     to R3-12-47-2_node_139; 
+     length 52.243; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:691 { 
+     name R3-12-47-2_ul_95; 
+     phases ABCN; 
+     from R3-12-47-2_node_165; 
+     to R3-12-47-2_node_138; 
+     length 307.637; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:692 { 
+     name R3-12-47-2_ul_96; 
+     phases ABCN; 
+     from R3-12-47-2_node_141; 
+     to R3-12-47-2_node_265; 
+     length 189.055; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:693 { 
+     name R3-12-47-2_ul_97; 
+     phases ABCN; 
+     from R3-12-47-2_node_140; 
+     to R3-12-47-2_node_142; 
+     length 111.915; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:694 { 
+     name R3-12-47-2_ul_98; 
+     phases ABCN; 
+     from R3-12-47-2_node_143; 
+     to R3-12-47-2_node_141; 
+     length 90.737; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:695 { 
+     name R3-12-47-2_ul_99; 
+     phases ABCN; 
+     from R3-12-47-2_node_144; 
+     to R3-12-47-2_node_140; 
+     length 540.963; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:696 { 
+     name R3-12-47-2_ul_100; 
+     phases ABCN; 
+     from R3-12-47-2_node_145; 
+     to R3-12-47-2_node_143; 
+     length 413.060; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:697 { 
+     name R3-12-47-2_ul_101; 
+     phases ABCN; 
+     from R3-12-47-2_node_246; 
+     to R3-12-47-2_node_145; 
+     length 17.271; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:698 { 
+     name R3-12-47-2_ul_102; 
+     phases ABCN; 
+     from R3-12-47-2_node_94; 
+     to R3-12-47-2_node_96; 
+     length 13.087; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:699 { 
+     name R3-12-47-2_ul_103; 
+     phases ABCN; 
+     from R3-12-47-2_node_146; 
+     to R3-12-47-2_node_144; 
+     length 155.969; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:700 { 
+     name R3-12-47-2_ul_104; 
+     phases ABCN; 
+     from R3-12-47-2_node_96; 
+     to R3-12-47-2_node_146; 
+     length 61.072; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:701 { 
+     name R3-12-47-2_ul_105; 
+     phases ABCN; 
+     from R3-12-47-2_node_98; 
+     to R3-12-47-2_node_147; 
+     length 207.332; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:702 { 
+     name R3-12-47-2_ul_106; 
+     phases ABCN; 
+     from R3-12-47-2_node_99; 
+     to R3-12-47-2_node_47; 
+     length 436.721; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:703 { 
+     name R3-12-47-2_ul_107; 
+     phases ABCN; 
+     from R3-12-47-2_node_148; 
+     to R3-12-47-2_node_149; 
+     length 189.044; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:704 { 
+     name R3-12-47-2_ul_108; 
+     phases ABCN; 
+     from R3-12-47-2_node_150; 
+     to R3-12-47-2_node_247; 
+     length 32.500; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:705 { 
+     name R3-12-47-2_ul_109; 
+     phases ABCN; 
+     from R3-12-47-2_node_47; 
+     to R3-12-47-2_node_150; 
+     length 63.788; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:706 { 
+     name R3-12-47-2_ul_110; 
+     phases ABCN; 
+     from R3-12-47-2_node_100; 
+     to R3-12-47-2_node_148; 
+     length 108.032; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:707 { 
+     name R3-12-47-2_ul_111; 
+     phases ABCN; 
+     from R3-12-47-2_node_147; 
+     to R3-12-47-2_node_151; 
+     length 556.194; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:708 { 
+     name R3-12-47-2_ul_112; 
+     phases ABCN; 
+     from R3-12-47-2_node_121; 
+     to R3-12-47-2_node_120; 
+     length 861.349; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:709 { 
+     name R3-12-47-2_ul_113; 
+     phases ABCN; 
+     from R3-12-47-2_node_130; 
+     to R3-12-47-2_node_129; 
+     length 952.351; 
+     configuration line_configuration:42;
+	object recorder {
+		property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
+		interval 60;
+		limit 1440;
+		file "UL709.csv";
+	}; // @off by ~3000; see comparison of values below:
+	 object complex_assert{ 	// NR  +1.33367e+006+420710j	+1.36649e+006+430556j	+1.2939e+006+406805j	+1.32966e+006+417087j	+1.36221e+006+426615j	+1.29021e+006+403273j
+		once ONCE_TRUE;	   	// FBS +1.336390e+006+423535j	+1.36915e+006+433306j	+1.29641e+006+409391j	+1.33236e+006+419893j	+1.36484e+006+429346j	+1.2927e+006+405842j
+		in '2000-01-01 00:04:00 EST';
+		target power_in_A; 
+		value +1.33367e+006+420710j;
+		within 3000;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_in_B;
+		value +1.36649e+006+430556j;
+		within 3000;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_in_C;
+		value +1.2939e+006+406805j;
+		within 3000;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_out_A;
+		value +1.32966e+006+417087j;
+		within 3000;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_out_B;
+		value +1.36221e+006+426615j;
+		within 3000;
+	};
+	object complex_assert{
+		once ONCE_TRUE;
+		in '2000-01-01 00:04:00 EST';
+		target power_out_C;
+		value +1.29021e+006+403273j;
+		within 3000;
+	};	 
+} 
+
+object underground_line:710 { 
+     name R3-12-47-2_ul_114; 
+     phases ABCN; 
+     from R3-12-47-2_node_133; 
+     to R3-12-47-2_node_137; 
+     length 787.927; 
+     configuration line_configuration:42; 
+} 
+
+object underground_line:713 { 
+     name R3-12-47-2_ul_115; 
+     phases ABCN; 
+     from R3-12-47-2_node_156; 
+     to R3-12-47-2_node_223; 
+     length 79.620; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:722 { 
+     name R3-12-47-2_ul_116; 
+     phases ABCN; 
+     from R3-12-47-2_node_161; 
+     to R3-12-47-2_node_221; 
+     length 720.998; 
+     configuration line_configuration:43; 
+} 
+
+object underground_line:723 { 
+     name R3-12-47-2_ul_117; 
+     phases ABCN; 
+     from R3-12-47-2_node_135; 
+     to R3-12-47-2_node_49; 
+     length 32.837; 
+     configuration line_configuration:39; 
+} 
+
+object underground_line_conductor:10 { 
+     //name 1/0 AAC (Conc); 
+     rating.summer.continuous 142.0; 
+     outer_diameter 1.27; 
+     conductor_gmr 0.01142 ft; 
+     conductor_diameter 0.362; 
+     conductor_resistance 0.88704; 
+     neutral_gmr 0.0489686771417213 ft; 
+     neutral_resistance 13.86528; 
+     neutral_diameter 0.0641; 
+     neutral_strands 16.0; 
+     shield_gmr 0.00; 
+     shield_resistance 0.00; 
+} 
+
+object underground_line_conductor:11 { 
+     //name 2 AL (Conc); 
+     rating.summer.continuous 112.0; 
+     outer_diameter 1.09; 
+     conductor_gmr 0.0088 ft; 
+     conductor_diameter 0.292; 
+     conductor_resistance 1.38336; 
+     neutral_gmr 0.0348162687755351 ft; 
+     neutral_resistance 13.5696; 
+     neutral_diameter 0.0641; 
+     neutral_strands 6.0; 
+     shield_gmr 0.00; 
+     shield_resistance 0.00; 
+} 
+
+object underground_line_conductor:12 { 
+     //name 4/0 AAC (Conc); 
+     rating.summer.continuous 214.0; 
+     outer_diameter 1.32; 
+     conductor_gmr 0.0177 ft; 
+     conductor_diameter 0.528; 
+     conductor_resistance 0.433488; 
+     neutral_gmr 0.0485380344339232 ft; 
+     neutral_resistance 13.5696; 
+     neutral_diameter 0.0641; 
+     neutral_strands 11.0; 
+     shield_gmr 0.00; 
+     shield_resistance 0.00; 
+} 
+
+object underground_line_conductor:13 { 
+     //name 1000 AAC (Tape); 
+     rating.summer.continuous 775.0; 
+     outer_diameter 1.87; 
+     conductor_gmr 0.0371 ft; 
+     conductor_diameter 1.15; 
+     conductor_resistance 0.0222; 
+     neutral_gmr 0.0732739718442675 ft; 
+     neutral_resistance 0.05; 
+     neutral_diameter 0.102; 
+     neutral_strands 20.0; 
+     shield_gmr 0.00; 
+     shield_resistance 0.00; 
+} 
+

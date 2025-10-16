@@ -1900,7 +1900,7 @@ int sched_getinfo(int n,char *buf, size_t sz)
 		strftime(ts,sizeof(ts),"%Y-%m-%d %H:%M:%S UTC",tm);
 
 		/* truncate path if match with cwd */
-		if ( strnicmp(global_workdir,modelname,strlen(global_workdir))==0 )
+		if (strnicmp_portable(global_workdir,modelname,strlen(global_workdir))==0 )
 		{
 			modelname+=strlen(global_workdir);
 			if ( modelname[0]=='/' || modelname[0]=='\\' ) modelname++; /* truncate remaining / */
@@ -2482,24 +2482,24 @@ void sched_controller(void)
 			char *cmd = args->arg[0];
 			size_t argc = args->n - 1;
 			char **argv = args->arg + 1;
-			if ( strnicmp(cmd,"quit",strlen(cmd))==0 )
+			if (strnicmp_portable(cmd,"quit",strlen(cmd))==0 )
 				exit(XC_SUCCESS);
-			else if ( strnicmp(cmd,"exit",strlen(cmd))==0 )
+			else if (strnicmp_portable(cmd,"exit",strlen(cmd))==0 )
 				exit(argc>0 ? atoi(argv[0]) : 0);
-			else if ( strnicmp(cmd,"list",strlen(cmd))==0 )
+			else if (strnicmp_portable(cmd,"list",strlen(cmd))==0 )
 				sched_print(0);
-			else if ( strnicmp(cmd,"continuous",strlen(cmd))==0)
+			else if (strnicmp_portable(cmd,"continuous",strlen(cmd))==0)
 				sched_continuous();
-			else if ( strnicmp(cmd,"clear",strlen(cmd))==0 )
+			else if (strnicmp_portable(cmd,"clear",strlen(cmd))==0 )
 				sched_clear();
-			else if ( strnicmp(cmd,"kill",strlen(cmd))==0 )
+			else if (strnicmp_portable(cmd,"kill",strlen(cmd))==0 )
 			{
 				if ( argc>0 )
 					sched_pkill(atoi(argv[0]));
 				else
 					output_error("missing process id");
 			}
-			else if ( strnicmp(cmd,"help",strlen(cmd))==0 )
+			else if (strnicmp_portable(cmd,"help",strlen(cmd))==0 )
 			{
 				printf("Process controller help:\n");
 				printf("  clear     clear process map\n");

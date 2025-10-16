@@ -759,7 +759,7 @@ char *tz_locale(char *country, char *province, char *city)
 		if ( iswspace(locale[0]) )
 		{
 			while ( iswspace(locale[0]) && locale[0]!='\0' ) locale++; /* trim left white */
-			if ( strnicmp(locale,target,len)==0 )
+			if ( strnicmp_portable(locale,target,len)==0 )
 			{
 				fclose(fp);
 				return tz_name(tzname);

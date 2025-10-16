@@ -150,12 +150,22 @@ int test_lock(void)
 
 		for ( n=0 ; n<global_threadcount ; n++ )
 		{
-			pthread_t pt;
-			count[n] = 0;
-			if ( pthread_create(&pt,nullptr,test_lock_proc,(void*)&n)!=0 )
-			{
-				output_test("thread creation failed");
-				return FAILED;
+			//pthread_t pt;
+			//count[n] = 0;
+			//if ( pthread_create(&pt,nullptr,test_lock_proc,(void*)&n)!=0 )
+			//{
+			//	output_test("thread creation failed");
+			//	return FAILED;
+			//}
+
+			try {
+				count[n] = 0;
+				std::thread t(test_lock_proc, &n); // Create thread with n as argument
+				t.detach(); // Detach thread if it should run independently (similar to original behavior)
+			}
+			catch (const std::system_error& e) {
+				output_test("thread creation failed: %s", e.what());
+				return STATUS::FAILED;
 			}
 		}
 		//wunlock(&key);

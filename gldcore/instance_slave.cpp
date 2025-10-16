@@ -535,92 +535,92 @@ STATUS instance_slave_parse_prop_list(char *line, linkage **root, LINKAGETYPE ty
 
 /** do docx here
  **/
-STATUS instance_slave_init_mem(){
-#ifdef _WIN32
-	MESSAGE tmsg;
-	char eventName[256];
-	char cacheName[256];
-	int64 rv = 0;
-	size_t sz = sizeof(MESSAGE);
-	size_t cacheSize;
-
-	output_debug("instance_slave_init_mem()");
-	/* @todo open cache */
-	local_inst.cacheid = global_master_port;
-	sprintf(cacheName,"GLD-%" FMT_INT64 "x",global_master_port);
-	local_inst.hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,cacheName);
-	if ( 0 == local_inst.hMap )
-	{
-		output_error("unable to open cache '%s' for slave (error code %d)", cacheName, GetLastError());
-		return FAILED;
-	}
-	else
-	{
-		output_debug("cache '%s' opened for slave", cacheName);
-	}
-	local_inst.filemap = static_cast<char *>(MapViewOfFile(local_inst.hMap, FILE_MAP_ALL_ACCESS, 0, 0, (DWORD)0)); // not sure how big it is, so grab it all
-	output_debug("MapViewOfFile returned");
-	output_debug("resulting handle is %x", local_inst.filemap);
-	rv = (int64)local_inst.filemap;
-
-	output_debug("copying %d bytes from map %x to local message", sz, local_inst.filemap);
-	memcpy(&tmsg, local_inst.filemap, sz);
-	
-	output_debug("data copied");
-	output_debug("namesz %d, datesz %d", tmsg.name_size, tmsg.data_size);
-	output_debug("TMSG: usize %d, asize %d, id %x, nsz %d, psz %d", tmsg.usize, tmsg.asize, tmsg.id, tmsg.name_size, tmsg.data_size);
-	if(tmsg.name_size < 0){
-		return FAILED;
-	}
-	if(tmsg.data_size < 0){
-		return FAILED;
-	}
-	
-	// initialize buffer/cache
-	local_inst.buffer_size = local_inst.cachesize = cacheSize = tmsg.asize;
-	local_inst.buffer = (char *)malloc(local_inst.cachesize);
-	local_inst.cache = (MESSAGE *)malloc(local_inst.cachesize);
-	local_inst.id = slave_id = tmsg.id;
-
-	// THIS COPIES THE DATA
-	memcpy(local_inst.cache, local_inst.filemap, local_inst.cachesize);
-	messagewrapper_init(&(local_inst.message), local_inst.cache);
-	
-	local_inst.name_size = *(local_inst.message->name_size);
-	local_inst.prop_size = *(local_inst.message->data_size);
-	exec_sync_merge(nullptr,reinterpret_cast<sync_data*>(&local_inst.cache));
-
-	/* open slave signalling event */
-	sprintf(eventName,"GLD-%" FMT_INT64 "x-S", global_master_port);
-	local_inst.hSlave = OpenEvent(EVENT_ALL_ACCESS,FALSE,eventName);
-	if ( !local_inst.hSlave )
-	{
-		output_error("unable to open event signal '%s' for slave %d", eventName, slave_id);
-		return static_cast<STATUS>(0);
-	}
-	else
-	{
-		output_debug("opened event signal '%s' for slave %d", eventName, slave_id);
-	}
-
-	/* open master signalling event */
-	sprintf(eventName,"GLD-%" FMT_INT64 "x-M", global_master_port);
-	local_inst.hMaster = OpenEvent(EVENT_ALL_ACCESS,FALSE,eventName);
-	if ( !local_inst.hMaster )
-	{
-		output_error("unable to open event signal '%s' for slave %d", eventName, slave_id);
-		return FAILED;
-	}
-	else
-	{
-		output_debug("opened event signal '%s' for slave %d ", eventName, slave_id);
-	}
-	return SUCCESS;
-#else
-	// @todo linux/unix slave signalling
-	return FAILED; // default to resolve return-value undefined value.
-#endif
-}
+//STATUS instance_slave_init_mem(){
+//#ifdef _WIN32
+//	MESSAGE tmsg;
+//	char eventName[256];
+//	char cacheName[256];
+//	int64 rv = 0;
+//	size_t sz = sizeof(MESSAGE);
+//	size_t cacheSize;
+//
+//	output_debug("instance_slave_init_mem()");
+//	/* @todo open cache */
+//	local_inst.cacheid = global_master_port;
+//	sprintf(cacheName,"GLD-%" FMT_INT64 "x",global_master_port);
+//	local_inst.hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,cacheName);
+//	if ( 0 == local_inst.hMap )
+//	{
+//		output_error("unable to open cache '%s' for slave (error code %d)", cacheName, GetLastError());
+//		return FAILED;
+//	}
+//	else
+//	{
+//		output_debug("cache '%s' opened for slave", cacheName);
+//	}
+//	local_inst.filemap = static_cast<char *>(MapViewOfFile(local_inst.hMap, FILE_MAP_ALL_ACCESS, 0, 0, (DWORD)0)); // not sure how big it is, so grab it all
+//	output_debug("MapViewOfFile returned");
+//	output_debug("resulting handle is %x", local_inst.filemap);
+//	rv = (int64)local_inst.filemap;
+//
+//	output_debug("copying %d bytes from map %x to local message", sz, local_inst.filemap);
+//	memcpy(&tmsg, local_inst.filemap, sz);
+//	
+//	output_debug("data copied");
+//	output_debug("namesz %d, datesz %d", tmsg.name_size, tmsg.data_size);
+//	output_debug("TMSG: usize %d, asize %d, id %x, nsz %d, psz %d", tmsg.usize, tmsg.asize, tmsg.id, tmsg.name_size, tmsg.data_size);
+//	if(tmsg.name_size < 0){
+//		return FAILED;
+//	}
+//	if(tmsg.data_size < 0){
+//		return FAILED;
+//	}
+//	
+//	// initialize buffer/cache
+//	local_inst.buffer_size = local_inst.cachesize = cacheSize = tmsg.asize;
+//	local_inst.buffer = (char *)malloc(local_inst.cachesize);
+//	local_inst.cache = (MESSAGE *)malloc(local_inst.cachesize);
+//	local_inst.id = slave_id = tmsg.id;
+//
+//	// THIS COPIES THE DATA
+//	memcpy(local_inst.cache, local_inst.filemap, local_inst.cachesize);
+//	messagewrapper_init(&(local_inst.message), local_inst.cache);
+//	
+//	local_inst.name_size = *(local_inst.message->name_size);
+//	local_inst.prop_size = *(local_inst.message->data_size);
+//	exec_sync_merge(nullptr,reinterpret_cast<sync_data*>(&local_inst.cache));
+//
+//	/* open slave signalling event */
+//	sprintf(eventName,"GLD-%" FMT_INT64 "x-S", global_master_port);
+//	local_inst.hSlave = OpenEvent(EVENT_ALL_ACCESS,FALSE,eventName);
+//	if ( !local_inst.hSlave )
+//	{
+//		output_error("unable to open event signal '%s' for slave %d", eventName, slave_id);
+//		return static_cast<STATUS>(0);
+//	}
+//	else
+//	{
+//		output_debug("opened event signal '%s' for slave %d", eventName, slave_id);
+//	}
+//
+//	/* open master signalling event */
+//	sprintf(eventName,"GLD-%" FMT_INT64 "x-M", global_master_port);
+//	local_inst.hMaster = OpenEvent(EVENT_ALL_ACCESS,FALSE,eventName);
+//	if ( !local_inst.hMaster )
+//	{
+//		output_error("unable to open event signal '%s' for slave %d", eventName, slave_id);
+//		return FAILED;
+//	}
+//	else
+//	{
+//		output_debug("opened event signal '%s' for slave %d ", eventName, slave_id);
+//	}
+//	return SUCCESS;
+//#else
+//	// @todo linux/unix slave signalling
+//	return FAILED; // default to resolve return-value undefined value.
+//#endif
+//}
 
 /**	must handshake by connecting and sending 'just' a message
  **	 struct.  proper response is a message struct with the same ID

@@ -79,7 +79,6 @@ gldcore/gridlabd.sh
 .cproject
 .project
 .settings/
-.vscode
 Makefile
 */.deps/
 */*/*/.deps/

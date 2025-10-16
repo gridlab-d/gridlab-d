@@ -1,7 +1,18 @@
 cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+
+if(WIN32)
+    add_compile_options(
+        $<$<CONFIG:Debug>:/MDd>
+        $<$<CONFIG:Release>:/MD>
+    )
+endif()
+
+
+
+set(CMAKE_CXX_STANDARD 23) # Or 14, 11 if 17 is not supported
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #Add debug symbols and sanitizer support
 #set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=address -fno-omit-frame-pointer")
@@ -127,17 +138,25 @@ add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
 
 ## Set up platform specific library linking and platform identification
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
-    FetchContent_Declare(
-            dlfcn-win32
-            GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
-            GIT_TAG v1.4.2
-    )
-    FetchContent_MakeAvailable(dlfcn-win32)
-    include_directories(${dlfcn-win32_SOURCE_DIR}/src)
-    set(DL_NAME dl)
-    set(DL_LIB dl)
+    # FetchContent_Declare(
+    #         dlfcn-win32
+    #         GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
+    #         GIT_TAG v1.4.2
+    # )
+    # FetchContent_MakeAvailable(dlfcn-win32)
+    # include_directories(${dlfcn-win32_SOURCE_DIR}/src)
+    # set(DL_NAME dl)
+    # set(DL_LIB dl)
 
-    set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
+    #set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
+
+
+    if(WIN32)
+        set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME})
+    else()
+        set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
+    endif()
+
     set(FOUND_WINDOWS yes CACHE INTERNAL "Tell script generator we're Windows")
     add_compile_options(-static-libgcc -static-libstdc++ -static)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")

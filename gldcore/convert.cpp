@@ -463,7 +463,7 @@ int convert_to_set(const char *buffer, /**< a pointer to the string buffer */
 	int count=0;
 
 	/* directly convert numeric strings */
-	if (strnicmp(buffer,"0x",2)==0)
+	if (strnicmp_portable(buffer,"0x",2)==0)
 		return sscanf(buffer,"0x%x",(uint32*)data);
 	else if (isdigit(buffer[0]))
 		return sscanf(buffer,"%d",(uint32*)data);
@@ -1157,12 +1157,12 @@ int convert_to_boolean(const char *buffer, void *data, PROPERTY *prop)
 	char str[32];
 	if ( sscanf(buffer,"%31[A-Za-z]",str)==1 )
 	{
-		if ( stricmp(str, "TRUE")==0 )
+		if ( stricmp_portable(str, "TRUE")==0 )
 		{
 			*(bool *)data = 1;
 			return 1;
 		}
-		if ( stricmp(str, "FALSE")==0 )
+		if ( stricmp_portable(str, "FALSE")==0 )
 		{
 			*(bool *)data = 0;
 			return 1;
@@ -1531,7 +1531,7 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop)
 				p++;
 				continue;
 			}
-			else if ( strnicmp(p,"NAN",3)==0 ) /* nullptr value */
+			else if ( strnicmp_portable(p,"NAN",3)==0 ) /* nullptr value */
 			{
 				a->resize(row,col);
 				(*a)(row,col)=0.0;

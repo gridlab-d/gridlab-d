@@ -18,6 +18,10 @@
 #include "index.h"
 #include "cpp_threadpool.h"
 
+ // In a header file
+extern const PASSCONFIG passtype[];
+
+
 struct sync_data {
 	TIMESTAMP step_to; /**< time to advance to */
 	unsigned int hard_event; /**< non-zero for hard events that can effect the advance step-to */

@@ -255,7 +255,7 @@ void print_modhelp_tree(pntree *ctree){
 
 int compare(const void *a, const void *b)
 {
-	return stricmp(*(char**)a,*(char**)b);
+	return stricmp_portable(*(char**)a,*(char**)b);
 }
 
 typedef struct s_cmdarg {
