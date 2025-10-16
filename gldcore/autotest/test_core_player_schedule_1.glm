@@ -1,0 +1,46 @@
+// test_core_player_schedule_1.glm makes sure an unparented player
+// can serve as a schedule and work with transforms. the schedule is used
+// in a house object
+
+#set minimum_timestep=1;
+
+module residential{
+	implicit_enduses NONE;
+}
+module tape;
+class player{
+	double value;	
+}
+module assert;
+
+clock{
+	timezone PST+8PDT;
+	starttime '2000-01-01 00:00:00';
+	stoptime '2000-01-03 02:00:00';
+}
+object player{
+	name cool_stp;
+	file "../test_core_player_schedule_1.player";
+	loop 2;
+};
+object house{
+	heating_setpoint 60;
+	cooling_setpoint cool_stp.value*1+3.572;
+	object recorder{
+		property heating_setpoint;
+		file "transform_check.csv";
+		interval -1;
+		limit 55;
+	};
+	object double_assert{
+		target cooling_setpoint;
+		status ASSERT_TRUE;
+		within 1e-6;
+		object player{
+			property value;
+			file "../test_core_player_schedule_2.player";
+			loop 2;
+		};
+	};
+}
+

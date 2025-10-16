@@ -1,0 +1,98 @@
+//test_market_quantity_conversion.glm tests to make sure bid quantity units are properly converted in controller
+
+#set tmp=../test_market_quantity_conversion.glm
+#setenv GRIDLABD=../../../core
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-02 00:00:00';
+}
+
+module market;
+module tape;
+module assert;
+module residential{
+	implicit_enduses NONE;
+}
+module climate;
+
+object climate {
+	tmyfile "../WA-Yakima.tmy2";
+}
+
+class auction {
+	double current_price_mean_2h;
+	double current_price_stdev_2h;
+}
+
+object auction {
+	name auction1;
+	unit "W";
+	period 300;
+
+	warmup 0;
+	latency 0;
+	verbose TRUE;
+	price_cap 9999;
+	special_mode BUYERS_ONLY;
+	fixed_price 10;
+	init_price 13;
+	init_stdev 1.5;
+}
+
+
+object house {
+	name house1;
+	system_mode OFF;
+	auxiliary_strategy DEADBAND;
+	auxiliary_system_type ELECTRIC;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	air_temperature 69;
+	mass_temperature 69;
+	thermostat_deadband 2;
+	heating_setpoint 60;
+	cooling_setpoint 70;
+	number_of_stories 1;
+	window_wall_ratio 0.07;
+	heating_COP 1.00;
+	cooling_COP 3.00;
+	object controller {
+		name buyer;
+		simple_mode NONE;
+		control_mode RAMP;
+		bid_mode ON;
+		setpoint heating_setpoint;
+		target air_temperature;
+		market auction1;
+		average_target current_price_mean_2h;
+		standard_deviation_target current_price_stdev_2h;
+		ramp_high -5;
+		ramp_low -2;
+		range_low -5;
+		range_high 2;
+		period 300;
+		base_setpoint 60;
+		slider_setting 1;
+		demand heating_demand;
+		total total_load;
+		load hvac_load;
+		state power_state;
+		object double_assert {
+			target bid_quantity;
+			in '2001-01-01 01:50:00';
+			once ONCE_TRUE;
+			value 9211.24;
+			within 0.01;
+		};
+	};
+}
+
+object multi_recorder {
+	parent house1;
+	property air_temperature,heating_setpoint,heating_demand,buyer:bid_price,buyer:bid_quantity,auction1:current_market.clearing_price,auction1:current_market.clearing_quantity,auction1:current_price_mean_2h,auction1:current_price_stdev_2h;
+	file test_market_quantity_conversion.csv;
+	interval 300;
+	limit 8760;
+}

@@ -1,0 +1,172 @@
+//	Test the volt var mode for four quadrant inverter.
+
+clock {
+	timezone PST+8PDT;
+	starttime '2015-01-01 00:00:00';
+	stoptime '2015-01-01 00:25:00'; 
+}
+
+module assert;
+module tape;
+module generators;
+module powerflow {
+	solver_method NR;
+};
+
+class player {
+	complex value;
+}
+
+object player {
+	parent swingbus;
+	property voltage_A;
+	file ../test_generators_inverter_volt_var_voltageA.player;
+	loop 0;
+}
+
+object player {
+	parent swingbus;
+	property voltage_B;
+	file ../test_generators_inverter_volt_var_voltageB.player;
+	loop 0;
+}
+
+object player {
+	parent swingbus;
+	property voltage_C;
+	file ../test_generators_inverter_volt_var_voltageC.player;
+	loop 0;
+}
+
+// Phase Conductor for 601: 556,500 26/7 ACSR
+object overhead_line_conductor {
+	name olc6010;
+	geometric_mean_radius 0.031300;
+	diameter 0.927 in;
+	resistance 0.185900;
+}
+
+// Phase Conductor for 602: 4/0 6/1 ACSR
+object overhead_line_conductor {
+	name olc6020;
+	geometric_mean_radius 0.00814;
+	diameter 0.56 in;
+	resistance 0.592000;
+}
+
+// Phase Conductor for 603, 604, 605: 1/0 ACSR
+object overhead_line_conductor {
+	name olc6030;
+	geometric_mean_radius 0.004460;
+	diameter 0.4 in;
+	resistance 1.120000;
+}
+
+
+// Phase Conductor for 606: 250,000 AA,CN
+object underground_line_conductor { 
+	 name ulc6060;
+	 outer_diameter 1.290000;
+	 conductor_gmr 0.017100;
+	 conductor_diameter 0.567000;
+	 conductor_resistance 0.410000;
+	 neutral_gmr 0.0020800; 
+	 neutral_resistance 14.87200;  
+	 neutral_diameter 0.0640837;
+	 neutral_strands 13.000000;
+	 insulation_relative_permitivitty 2.3;
+	 shield_gmr 0.000000;
+	 shield_resistance 0.000000;
+}
+
+// Phase Conductor for 607: 1/0 AA,TS N: 1/0 Cu
+object underground_line_conductor { 
+	 name ulc6070;
+	 outer_diameter 1.060000;
+	 conductor_gmr 0.011100;
+	 conductor_diameter 0.368000;
+	 conductor_resistance 0.970000;
+	 neutral_gmr 0.011100;
+	 neutral_resistance 0.970000; // Unsure whether this is correct
+	 neutral_diameter 0.0640837;
+	 neutral_strands 6.000000;
+	 insulation_relative_permitivitty 2.3;
+	 shield_gmr 0.000000;
+	 shield_resistance 0.000000;
+}
+
+
+object meter {
+	name swingbus;
+	phases ABCN;
+	bustype SWING;
+	nominal_voltage 7200;
+}
+
+object meter {
+	name inv_meter;
+	phases ABC;
+	parent swingbus;
+	nominal_voltage 7200;
+	object complex_assert {
+		target measured_power_A;
+		object player {
+			property value;
+			file ../test_generators_inverter_vv_output_A.player;
+			loop 0;
+		};
+		within 0.1;
+	};
+	object complex_assert {
+		target measured_power_B;
+		object player {
+			property value;
+			file ../test_generators_inverter_vv_output_B.player;
+			loop 0;
+		};
+		within 0.1;
+	};
+	object complex_assert {
+		target measured_power_C;
+		object player {
+			property value;
+			file ../test_generators_inverter_vv_output_C.player;
+			loop 0;
+		};
+		within 0.1;
+	};
+}
+
+object inverter {
+	name volt_var_inv;
+	parent inv_meter;
+	inverter_type FOUR_QUADRANT;
+	four_quadrant_control_mode VOLT_VAR;
+	generator_status ONLINE;
+	generator_mode SUPPLY_DRIVEN;
+	phases ABC;
+	rated_power 70 kVA;// per phase;
+	inverter_efficiency 0.87;
+	//Volt Var parameters;
+	V_base 7200;
+	V1 0.90;
+	Q1 0.7;
+	V2 0.95;
+	Q2 0.0;
+	V3 1.05;
+	Q3 0.0;
+	V4 1.10;
+	Q4 -0.8;
+	V_In 200.0;
+	I_In 200.0;
+}
+
+object load {
+	name load;
+	phases ABCN;
+	parent swingbus;
+	constant_power_A 12000+5600j;
+	constant_power_B 46000-2300j;
+	constant_power_C 68000+9000j;
+	nominal_voltage 7200;
+}

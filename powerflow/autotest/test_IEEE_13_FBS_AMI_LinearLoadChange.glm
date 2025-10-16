@@ -1,0 +1,852 @@
+// $Id: IEEE13-Feb27.glm
+//	Copyright (C) 2011 Battelle Memorial Institute
+
+#set iteration_limit=100000;
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:11';
+}
+
+module powerflow {
+	solver_method FBS;
+	line_capacitance true;
+	}
+module tape;
+
+class player {
+	double value;
+}
+object player {
+	name loadChange;
+	file ../linearLoadIncrease.player;
+	loop 1;
+}
+// Phase Conductor for 601: 556,500 26/7 ACSR
+object overhead_line_conductor {
+	name olc6010;
+	geometric_mean_radius 0.031300;
+	diameter 0.927 in;
+	resistance 0.185900;
+}
+
+// Phase Conductor for 602: 4/0 6/1 ACSR
+object overhead_line_conductor {
+	name olc6020;
+	geometric_mean_radius 0.00814;
+	diameter 0.56 in;
+	resistance 0.592000;
+}
+
+// Phase Conductor for 603, 604, 605: 1/0 ACSR
+object overhead_line_conductor {
+	name olc6030;
+	geometric_mean_radius 0.004460;
+	diameter 0.4 in;
+	resistance 1.120000;
+}
+
+
+// Phase Conductor for 606: 250,000 AA,CN
+object underground_line_conductor { 
+	 name ulc6060;
+	 outer_diameter 1.290000;
+	 conductor_gmr 0.017100;
+	 conductor_diameter 0.567000;
+	 conductor_resistance 0.410000;
+	 neutral_gmr 0.0020800; 
+	 neutral_resistance 14.87200;  
+	 neutral_diameter 0.0640837;
+	 neutral_strands 13.000000;
+	 insulation_relative_permitivitty 2.3;
+	 shield_gmr 0.000000;
+	 shield_resistance 0.000000;
+}
+
+// Phase Conductor for 607: 1/0 AA,TS N: 1/0 Cu
+object underground_line_conductor { 
+	 name ulc6070;
+	 outer_diameter 1.060000;
+	 conductor_gmr 0.011100;
+	 conductor_diameter 0.368000;
+	 conductor_resistance 0.970000;
+	 neutral_gmr 0.011100;
+	 neutral_resistance 0.970000; // Unsure whether this is correct
+	 neutral_diameter 0.0640837;
+	 neutral_strands 6.000000;
+	 insulation_relative_permitivitty 2.3;
+	 shield_gmr 0.000000;
+	 shield_resistance 0.000000;
+}
+
+// Overhead line configurations
+object line_spacing {
+	name ls500601;
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_BN 5.656854;
+	distance_AN 4.272002;
+	distance_CN 5.0;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+// Overhead line configurations
+object line_spacing {
+	name ls500602;
+	distance_AC 2.5;
+	distance_AB 4.5;
+	distance_BC 7.0;
+	distance_CN 5.656854;
+	distance_AN 4.272002;
+	distance_BN 5.0;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+object line_spacing {
+	name ls505603;
+	distance_BC 7.0;
+	distance_CN 5.656854;
+	distance_BN 5.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+object line_spacing {
+	name ls505604;
+	distance_AC 7.0;
+	distance_AN 5.656854;
+	distance_CN 5.0;
+	distance_AE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+object line_spacing {
+	name ls510;
+	distance_CN 5.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+object line_configuration {
+	name lc601;
+	conductor_A olc6010;
+	conductor_B olc6010;
+	conductor_C olc6010;
+	conductor_N olc6020;
+	spacing ls500601;
+}
+
+object line_configuration {
+	name lc602;
+	conductor_A olc6020;
+	conductor_B olc6020;
+	conductor_C olc6020;
+	conductor_N olc6020;
+	spacing ls500602;
+}
+
+object line_configuration {
+	name lc603;
+	conductor_B olc6030;
+	conductor_C olc6030;
+	conductor_N olc6030;
+	spacing ls505603;
+}
+
+object line_configuration {
+	name lc604;
+	conductor_A olc6030;
+	conductor_C olc6030;
+	conductor_N olc6030;
+	spacing ls505604;
+}
+
+object line_configuration {
+	name lc605;
+	conductor_C olc6030;
+	conductor_N olc6030;
+	spacing ls510;
+}
+
+//Underground line configuration
+object line_spacing {
+	 name ls515;
+	 distance_AB 0.500000;
+	 distance_BC 0.500000;
+	 distance_AC 1.000000;
+}
+
+object line_spacing {
+	 name ls520;
+	 distance_AN 0.083333;
+}
+
+object line_configuration {
+	 name lc606;
+	 conductor_A ulc6060;
+	 conductor_B ulc6060;
+	 conductor_C ulc6060;
+	 spacing ls515;
+}
+
+object line_configuration {
+	 name lc607;
+	 conductor_A ulc6070;
+	 conductor_N ulc6070;
+	 spacing ls520;
+}
+
+// Define line objects
+object overhead_line {
+     phases "BCN";
+     name line_632-645;
+     from n632;
+     to n645;
+     length 500;
+     configuration lc603;
+}
+
+object overhead_line {
+     phases "BCN";
+     name line_645-646;
+    from n645;
+     to n646;
+     length 300;
+     configuration lc603;
+}
+
+object overhead_line { //630632 {
+     phases "ABCN";
+     name line_630-632;
+     from n630;
+     to n632;
+     length 2000;
+     configuration lc601;
+}
+
+//Split line for distributed load
+object overhead_line { //6326321 {
+     phases "ABCN";
+     name line_632-6321;
+     from n632;
+     to n6321;
+     length 500;
+     configuration lc601;
+}
+
+object overhead_line { //6321671 {
+     phases "ABCN";
+     name line_6321-671;
+    from n6321;
+     to n671;
+     length 1500;
+     configuration lc601;
+}
+//End split line
+
+object overhead_line { //671680 {
+     phases "ABCN";
+     name line_671-680;
+    from n671;
+     to n680;
+     length 1000;
+     configuration lc601;
+}
+
+object overhead_line { //671684 {
+     phases "ACN";
+     name line_671-684;
+    from n671;
+     to n684;
+     length 300;
+     configuration lc604;
+}
+
+ object overhead_line { //684611 {
+      phases "CN";
+      name line_684-611;
+      from n684;
+      to n611;
+      length 300;
+      configuration lc605;
+}
+
+object underground_line { //684652 {
+      phases "AN";
+      name line_684-652;
+      from n684;
+      to n652;
+      length 800;
+      configuration lc607;
+}
+
+object underground_line { //692675 {
+     phases "ABC";
+     name line_692-675;
+    from n692;
+     to n675;
+     length 500;
+     configuration lc606;
+}
+
+object overhead_line { //632633 {
+     phases "ABCN";
+     name line_632-633;
+     from n632;
+     to n633;
+     length 500;
+     configuration lc602;
+}
+
+// Create node objects
+object node { //633 {
+     name n633;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+	
+
+}
+object meter { //633 {
+     name m633;
+	 parent n633;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object load { //633 {
+     name l633;
+	 parent m633;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+	 constant_power_A_real 0; 
+	 constant_power_B_real 0;
+	 constant_power_C_real 0;
+	 constant_power_A_reac 0;
+	 constant_power_B_reac 0;
+	 constant_power_C_reac 0;
+}
+object multi_recorder {
+	property m634:measured_voltage_A,m634:measured_voltage_B,m634:measured_voltage_C,m645:measured_voltage_A,m645:measured_voltage_B,m645:measured_voltage_C,m646:measured_voltage_A,m646:measured_voltage_B,m646:measured_voltage_C,m652:measured_voltage_A,m652:measured_voltage_B,m652:measured_voltage_C,m671:measured_voltage_A,m671:measured_voltage_B,m671:measured_voltage_C,m675:measured_voltage_A,m675:measured_voltage_B,m675:measured_voltage_C,m692:measured_voltage_A,m692:measured_voltage_B,m692:measured_voltage_C,m611:measured_voltage_A,m611:measured_voltage_B,m611:measured_voltage_C,m6321:measured_voltage_A,m6321:measured_voltage_B,m6321:measured_voltage_C;
+	limit 0;
+	interval 1;
+	file IEEE13AMIVoltages.csv;
+};
+object multi_recorder {
+	property m634:measured_power_A,m634:measured_power_B,m634:measured_power_C,m645:measured_power_A,m645:measured_power_B,m645:measured_power_C,m646:measured_power_A,m646:measured_power_B,m646:measured_power_C,m652:measured_power_A,m652:measured_power_B,m652:measured_power_C,m671:measured_power_A,m671:measured_power_B,m671:measured_power_C,m675:measured_power_A,m675:measured_power_B,m675:measured_power_C,m692:measured_power_A,m692:measured_power_B,m692:measured_power_C,m611:measured_power_A,m611:measured_power_B,m611:measured_power_C,m6321:measured_power_A,m6321:measured_power_B,m6321:measured_power_C;
+	limit 0;
+	interval 1;
+	file IEEE13AMIPowers.csv;
+};
+object multi_recorder {
+	property m650:voltage_A,m650:voltage_B,m650:voltage_C;
+	limit 0;
+	interval 1;
+	file IEEE13SubVoltages.csv;
+};
+object multi_recorder {
+	property m650:measured_power_A,m650:measured_power_B,m650:measured_power_C;
+	limit 0;
+	interval 1;
+	file IEEE13SubPowers.csv;
+};
+object multi_recorder {
+	property m630:voltage_A,m630:voltage_B,m630:voltage_C,m632:voltage_A,m632:voltage_B,m632:voltage_C,m633:voltage_A,m633:voltage_B,m633:voltage_C,m680:voltage_A,m680:voltage_B,m680:voltage_C,m684:voltage_A,m684:voltage_B,m684:voltage_C;
+	limit 0;
+	interval 1;
+	file IEEE13PseudoVoltages.csv;
+};
+object multi_recorder {
+	property m630:measured_power_A,m630:measured_power_B,m630:measured_power_C,m632:measured_power_A,m632:measured_power_B,m632:measured_power_C,m633:measured_power_A,m633:measured_power_B,m633:measured_power_C,m680:measured_power_A,m680:measured_power_B,m680:measured_power_C,m684:measured_power_A,m684:measured_power_B,m684:measured_power_C;
+	limit 0;
+	interval 1;
+	file IEEE13PseudoPowers.csv;
+};
+object voltdump {
+       filename output_voltage.csv;
+       }
+object node { //630 {
+     name n630;
+     phases "ABCN";
+     voltage_A 2401.7771+0j;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object meter { //630 {
+     name m630;
+     parent n630;
+	 phases "ABCN";
+     voltage_A 2401.7771+0j;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object load { //630 {
+     name l630;
+	 parent m630;
+     phases "ABCN";
+     voltage_A 2401.7771+0j;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+	 constant_power_A_real 0; 
+	 constant_power_B_real 0;
+	 constant_power_C_real 0;
+	 constant_power_A_reac 0;
+	 constant_power_B_reac 0;
+	 constant_power_C_reac 0;
+}
+ 
+object node { //632 {
+     name n632;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object meter { //632 {
+     name m632;
+	 parent n632;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+object load { //632 {
+     name l632;
+	 parent m632;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+	 constant_power_A_real 0; 
+	 constant_power_B_real 0;
+	 constant_power_C_real 0;
+	 constant_power_A_reac 0;
+	 constant_power_B_reac 0;
+	 constant_power_C_reac 0;
+}
+
+object node { //650 {
+      name n650;
+      phases "ABCN";
+      voltage_A 2401.7771;
+      voltage_B -1200.8886-2080.000j;
+      voltage_C -1200.8886+2080.000j;
+      nominal_voltage 2401.7771;
+} 
+object meter { //650 {
+      name m650;
+	  parent n650;
+	  bustype SWING;
+      phases "ABCN";
+      voltage_A 2401.7771;
+      voltage_B -1200.8886-2080.000j;
+      voltage_C -1200.8886+2080.000j;
+      nominal_voltage 2401.7771;
+} 
+
+ 
+object node { //680 {
+       name n680;
+       phases "ABCN";
+       voltage_A 2401.7771;
+       voltage_B -1200.8886-2080.000j;
+       voltage_C -1200.8886+2080.000j;
+       nominal_voltage 2401.7771;
+}
+object meter { //680 {
+       name m680;
+	   parent n680;
+       phases "ABCN";
+       voltage_A 2401.7771;
+       voltage_B -1200.8886-2080.000j;
+       voltage_C -1200.8886+2080.000j;
+       nominal_voltage 2401.7771;
+}
+object load { //680 {
+       name l680;
+	   parent m680;
+       phases "ABCN";
+       voltage_A 2401.7771;
+       voltage_B -1200.8886-2080.000j;
+       voltage_C -1200.8886+2080.000j;
+       nominal_voltage 2401.7771;
+	   constant_power_A_real 0; 
+	 constant_power_B_real 0;
+	 constant_power_C_real 0;
+	 constant_power_A_reac 0;
+	 constant_power_B_reac 0;
+	 constant_power_C_reac 0;
+}
+ 
+ 
+object node { //684 {
+      name n684;
+      phases "ACN";
+      voltage_A 2401.7771;
+      voltage_B -1200.8886-2080.000j;
+      voltage_C -1200.8886+2080.000j;
+      nominal_voltage 2401.7771;
+} 
+ object meter { //684 {
+      name m684;
+	  parent n684;
+      phases "ACN";
+      voltage_A 2401.7771;
+      voltage_B -1200.8886-2080.000j;
+      voltage_C -1200.8886+2080.000j;
+      nominal_voltage 2401.7771;
+} 
+ object load { //684 {
+      name l684;
+	  parent m684;
+      phases "ACN";
+      voltage_A 2401.7771;
+      voltage_B -1200.8886-2080.000j;
+      voltage_C -1200.8886+2080.000j;
+      nominal_voltage 2401.7771;
+	  constant_power_A_real 0; 
+	 constant_power_C_real 0;
+	 constant_power_A_reac 0;
+	 constant_power_C_reac 0;
+} 
+ 
+// Create load objects 
+object node {
+	name n634;
+	phases "ABCN";
+	nominal_voltage 480.000;
+}
+object meter {
+	name m634;
+	parent n634;
+	phases "ABCN";
+	nominal_voltage 480.000;
+}
+object load { //634 {
+     name l634;
+	 parent m634;
+     phases "ABCN";
+     voltage_A 480.000+0j;
+     voltage_B -240.000-415.6922j;
+     voltage_C -240.000+415.6922j;
+     constant_power_A_real loadChange.value*160000;
+     constant_power_B_real loadChange.value*120000;
+     constant_power_C_real loadChange.value*120000;
+	 constant_power_A_reac loadChange.value*110000;
+     constant_power_B_reac loadChange.value*90000;
+     constant_power_C_reac loadChange.value*90000;
+     nominal_voltage 480.000;
+
+}
+object node {
+	name n645;
+	phases "BCN";
+	nominal_voltage 2401.7771;
+}	
+object meter {
+	name m645;
+	parent n645;
+	phases "BCN";
+	nominal_voltage 2401.7771;
+}	
+object load { //645 {
+     name l645;
+	 parent m645;
+     phases "BCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     constant_power_B_real loadChange.value*170000;
+	 constant_power_B_reac loadChange.value*125000;
+     nominal_voltage 2401.7771;
+
+}
+object node {
+	name n646;
+	phases "BCD";
+	nominal_voltage 2401.7771;
+}
+object meter {
+	name m646;
+	parent n646;
+	phases "BCD";
+	nominal_voltage 2401.7771;
+}
+object load { //646 {
+     name l646;
+	 parent m646;
+     phases "BCD";
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     constant_impedance_B 56.5993+32.4831j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	name n652;
+	phases "AN";
+	nominal_voltage 2401.7771;
+}
+object meter {
+	name m652;
+	parent n652;
+	phases "AN";
+	nominal_voltage 2401.7771;
+}
+object load { //652 {
+     name l652;
+	 parent m652;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     constant_impedance_A 31.0501+20.8618j;
+	 nominal_voltage 2401.7771;
+}
+
+object node {
+	name n671;
+	phases "ABCD";
+	nominal_voltage 2401.7771;
+}
+object meter {
+	name m671;
+	parent n671;
+	phases "ABCD";
+	nominal_voltage 2401.7771;
+}
+object load { //671 {
+     name l671;
+	 parent m671;
+     phases "ABCD";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     constant_power_A_real loadChange.value*385000;
+     constant_power_B_real loadChange.value*385000;
+     constant_power_C_real loadChange.value*385000;
+	 constant_power_A_reac loadChange.value*220000;
+     constant_power_B_reac loadChange.value*220000;
+     constant_power_C_reac loadChange.value*220000;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	name n675;
+	phases "ABC";
+	nominal_voltage 2401.7771;
+	
+}
+ object meter {
+	name m675;
+	parent n675;
+	phases "ABC";
+	nominal_voltage 2401.7771;
+	
+}
+object load { //675 {
+     name l675;
+	 parent m675;
+     phases "ABC";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     constant_power_A_real loadChange.value*485000;
+     constant_power_B_real loadChange.value*68000;
+     constant_power_C_real loadChange.value*290000;
+	 constant_power_A_reac loadChange.value*190000;
+     constant_power_B_reac loadChange.value*60000;
+     constant_power_C_reac loadChange.value*212000;
+     constant_impedance_A 0.00-28.8427j;          //Shunt Capacitors
+     constant_impedance_B 0.00-28.8427j;
+     constant_impedance_C 0.00-28.8427j;
+     nominal_voltage 2401.7771;
+
+}
+object node {
+	name n692;
+	phases "ABCD";
+	nominal_voltage 2401.7771;
+}
+object meter {
+	name m692;
+	parent n692;
+	phases "ABCD";
+	nominal_voltage 2401.7771;
+}
+object load { //692 {
+     name l692;
+	 parent m692;
+     phases "ABCD";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     constant_current_A 0+0j;
+     constant_current_B 0+0j;
+     constant_current_C_real loadChange.value*-17.2414;
+	 constant_current_C_reac loadChange.value*51.8677;
+     nominal_voltage 2401.7771;
+
+}
+ object node {
+	name n611;
+	phases "CN";
+    nominal_voltage 2401.7771;
+}
+ object meter {
+	name m611;
+	parent n611;
+	phases "CN";
+    nominal_voltage 2401.7771;
+}
+object load { //611 {
+     name l611;
+	 parent m611;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     constant_current_C_real loadChange.value*6.5443;
+     constant_current_C_reac loadChange.value*77.9524;
+     constant_impedance_C 0.00-57.6854j;         //Shunt Capacitor
+     nominal_voltage 2401.7771;
+
+}
+ 
+// distributed load between node 632 and 671
+// 2/3 of load 1/4 of length down line: Kersting p.56
+object load { //6711 {
+     name l6711;
+     parent l671;
+     phases "ABC";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     constant_power_A_real loadChange.value*5666.6667;
+     constant_power_B_real loadChange.value*22000;
+     constant_power_C_real loadChange.value*39000;
+	 constant_power_A_reac loadChange.value*3333.3333;
+     constant_power_B_reac loadChange.value*12666.6667;
+     constant_power_C_reac loadChange.value*22666.6667;
+     nominal_voltage 2401.7771;
+}
+object node {
+	name n6321;
+	phases "ABCN";
+	nominal_voltage 2401.7771;
+}
+object meter {
+	name m6321;
+	parent n6321;
+	phases "ABCN";
+	nominal_voltage 2401.7771;
+}
+object load { //6321 {
+     name l6321;
+	 parent m6321;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     constant_power_A_real loadChange.value*11333.333;
+     constant_power_B_real loadChange.value*44000;
+     constant_power_C_real loadChange.value*78000;
+	 constant_power_A_reac loadChange.value*6666.6667;
+     constant_power_B_reac loadChange.value*25333.3333;
+     constant_power_C_reac loadChange.value*45333.3333;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+// Switch
+object switch {
+     phases "ABCN";
+     name switch_671-692;
+    from n671;
+     to n692;
+     status CLOSED;
+}
+ 
+// Transformer
+object transformer_configuration {
+	name tc400;
+	connect_type WYE_WYE;
+  	install_type PADMOUNT;
+  	power_rating 500;
+  	primary_voltage 4160;
+  	secondary_voltage 480;
+  	resistance 0.011;
+  	reactance 0.02;
+}
+  
+object transformer {
+  	phases "ABCN";
+  	name transformer_633-634;
+  	from n633;
+  	to n634;
+  	configuration tc400;
+}
+  
+ 
+// Regulator
+object regulator_configuration {
+	name regconfig6506321;
+	connect_type 1;
+	band_center 122.000;
+	band_width 2.0;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 700;
+	power_transducer_ratio 20;
+	compensator_r_setting_A 3.0;
+	compensator_r_setting_B 3.0;
+	compensator_r_setting_C 3.0;
+	compensator_x_setting_A 9.0;
+	compensator_x_setting_B 9.0;
+	compensator_x_setting_C 9.0;
+	CT_phase "ABC";
+	PT_phase "ABC";
+	regulation 0.10;
+	Control MANUAL;
+	Type A;
+	tap_pos_A 10;
+	tap_pos_B 8;
+	tap_pos_C 11;
+}
+  
+object regulator {
+	 name fregm650m630;
+	 phases "ABC";
+	 from n650;
+	 to n630;
+	 configuration regconfig6506321;
+}
+object impedance_dump {
+	filename IEEE_13_node_impedance_dump.xml;
+}
+

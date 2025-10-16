@@ -1,0 +1,62 @@
+// test of the PW objects alone. Checks if interface to PW opens correctly and grabs information from PW correctly
+
+#set relax_naming_rules=1
+#set init_sequence=DEFERRED
+#set suppress_repeat_messages=FALSE
+
+module tape;
+module assert;
+module powerflow {
+	solver_method FBS;
+}
+
+clock{
+	timezone PST+8PDT;
+	starttime '2001-07-25 01:00:00';
+	stoptime '2001-07-25 01:05:00';
+}
+
+#if run_powerworld==TRUE
+#define powerworld=true;
+#endif
+
+#ifdef powerworld
+
+module network;
+
+//Copy the model into the specific autotest folder
+#system copy /y ..\TS9Bus.PWB .\TS9Bus.PWB
+
+object pw_model {
+	name MyPwModel;
+	model_name `${workdir}\TS9Bus.PWB`;
+}
+
+object pw_load {
+	name MyPwLoad;
+	parent MyPwModel;
+	powerworld_bus_num 5;
+	powerworld_load_id 1;
+	power_threshold 1;
+	object assert {
+		target pw_load_mva;
+		value 125 MVA;
+		within .01;
+	};
+}
+
+object pw_recorder {
+	name MyPwRec;
+	model MyPwModel;
+	obj_class load;
+	key_strings BusNum,LoadID;
+	key_values 5,1;
+	properties LoadSMW;
+	interval 60;
+	limit 100;
+	outfile PwRec_out.csv;
+}
+
+#else
+#warning No PowerWorld
+#endif
