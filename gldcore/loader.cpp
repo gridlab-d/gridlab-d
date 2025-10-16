@@ -20,19 +20,47 @@ bool loader::open_file(string file_name) {
         return false;
     }
     file >> this->jsn;
-    file.close(); 
+    file.close();
     std::cout << "-|- Parsing done -|-" << std::endl;
 	return true;
 }
 
-void loader::loadDirective() {
+void loader::loadDirectives() {
     auto j_obj = this->jsn["_directives"];
-	
+	STATUS result;
+	char * propvalue;
+
+	for (auto& [name, property] : j_obj.items()) {
+		this->property = property;
+		if (property.is_object()) {
+			for (auto& [key, value] : property.items()) {
+				int oldstrict = global_strictnames;
+				if (name == "#set")
+					global_strictnames = true;
+				else if (name == "#define")
+					global_strictnames = false;
+				if (value.is_number()) {
+					short numvalue = (short)value.get<int>();
+					sprintf(propvalue, "%d", numvalue);
+				}
+				else if (value.is_string())
+					propvalue = value.get<std::string>().data();
+				result = global_setvar((const char*)key.c_str(), propvalue);
+				global_strictnames = strncmp(key.c_str(),"strictnames",12)==0 ? global_strictnames : oldstrict;
+				if (result==FAILED)
+					if (name == "#set")
+						output_error_raw("%s: %s set term not found",filename,key);
+					else if (name == "#define")
+						output_error_raw("%s: %s define term not found",filename,key);
+			}
+		}
+	}
+
 }
 
 void loader::loadClasses() {
     auto j_obj = this->jsn["classes"];
-	
+
 }
 
 void loader::loadClock() {
@@ -55,7 +83,7 @@ void loader::loadClock() {
             const char* ts = value.get_ref<const std::string&>().c_str();
 			TIMESTAMP tsval = convert_to_timestamp(ts);
 			if (tsval == TS_NEVER)
-				output_error_raw("%s: expected time value in the clock", ts);				
+				output_error_raw("%s: expected time value in the clock", ts);
 			else
 				global_starttime = tsval;
         }
@@ -75,7 +103,7 @@ void loader::loadClock() {
 			else
 				output_error_raw("%s: expected time zone specification in the clock", tz);
         }
-    }	
+    }
 }
 
 
@@ -117,14 +145,14 @@ bool loader::module_conditionals() {
 	bool load = false;
 	for (auto& [name, value] : property.items()) {
 		if (name == "if" && value.is_array()) {
-			for (auto& element : value) 
+			for (auto& element : value)
 			// todo: expession
 				if (element.is_string()) {
 					load = true;
 				}
 		}
 		else if (name == "ifdef" && value.is_array()) {
-			for (auto& element : value) 
+			for (auto& element : value)
 				if (element.is_string()) {
 					const char* env_name = element.get_ref<const std::string&>().c_str();
 					if (getenv(env_name))
@@ -132,7 +160,7 @@ bool loader::module_conditionals() {
 				}
 		}
 		else if (name == "ifndef" && value.is_array()) {
-			for (auto& element : value) 
+			for (auto& element : value)
 				if (element.is_string()) {
 					const char* env_name = element.get_ref<const std::string&>().c_str();
 					if (!getenv(env_name))
@@ -181,7 +209,7 @@ STATUS loader::loadall_glm_roll(char *file_name) {
 	this->filename = file_name;
 	std::string name(file_name);
 	if (this->open_file(name)) {
-//		this->loadDirectives();
+		this->loadDirectives();
 		this->loadClock();
 //		this->loadClasses();
 		this->loadModules();

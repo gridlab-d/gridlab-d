@@ -38,6 +38,7 @@ public:
     void loadModules();
     void loadObjects();
     void loadSchedules();
+    void loadDirectives();
     STATUS loadall_glm_roll(char *file_name);
 };
 
