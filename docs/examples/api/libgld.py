@@ -59,6 +59,10 @@ class GLDCheckpoint():
         self.triplex_meters = {}
         for idx, triplex_meter_dict in enumerate(cp["objects"]["triplex_meter"]["instances"]):
             self.triplex_meters[triplex_meter_dict["name"]] = cp["objects"]["triplex_meter"]["instances"][idx]
+
+        self.substations = {}
+        for idx, substations_dict in enumerate(cp["objects"]["substations"]["instances"]):
+            self.substations[substations_dict["name"]] = cp["objects"]["substations"]["instances"][idx]
         
         # etc; I'm not going to do these all until we're sure this is the right
         # way to do things
