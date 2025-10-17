@@ -1,0 +1,103 @@
+module assert;
+
+//#define RECORD 1
+
+//#ifdef RECORD
+module tape;
+//#endif
+
+#include "../WA-Yakima.glm"
+#set tmp="../test_solar_opt"
+#setenv GRIDLABD=../../../core
+#set force_compile=1
+
+clock {
+	timezone PST+8PDT;
+	starttime '2009-01-01 0:00:00 PST';
+	stoptime '2010-01-01 0:00:00 PST';
+}
+
+class solar {
+	object weather;
+	double power[kW];
+	double energy[MWh];
+	double efficiency[pu];
+	double area[sf];
+	enumeration {FIXED=0, TRACKING=1} type;
+	enumeration {HORIZONTAL=0, NORTH=1, NORTHEAST=2, EAST=3, SOUTHEAST=4, SOUTH=5, SOUTHWEST=6, WEST=7, NORTHWEST=8} orientation;
+	public double *flux;
+	intrinsic create(object parent) {
+		return SUCCESS;
+	};
+	intrinsic init(object parent) {
+		if (efficiency==0) efficiency = 0.85;
+		else if (efficiency<0){
+			gl_error("efficiency must be positive");
+			return FAILED;
+		}
+		if (area<=0){
+			gl_error("area must be positive");
+			return FAILED;
+		}
+		flux = (double*)gl_get_addr(weather,"solar_flux");
+		if (type==FIXED && flux==NULL){
+			gl_error("solar flux data not available");
+			return FAILED;
+		}
+		return SUCCESS;
+	};
+	intrinsic presync(TIMESTAMP t0, TIMESTAMP t1) {
+		energy += power*(t1-t0)/3600.0/1000;
+		return TS_NEVER;
+	};
+	intrinsic sync(TIMESTAMP t0, TIMESTAMP t1) {
+		double solar=0;
+		if (type==FIXED)
+			solar = flux[orientation];
+		else
+			gl_get_value(weather,"solar_direct",solar);
+		power = solar*area/1000*efficiency;
+		return TS_NEVER;
+	};
+}
+
+object solar {
+	weather "Yakima WA";
+	area 1000;
+	type TRACKING;
+	object double_assert {
+		in '2009-12-31 23:00:00 PST';
+		status ASSERT_TRUE;
+		target energy;
+		value 135.2;
+		within 0.1;
+	};
+//#ifdef RECORD
+	object recorder {
+		property power,energy;
+		file `{filename}_tracking_power_energy.csv`;
+		interval 3600;
+	};
+//#endif
+}
+
+object solar {
+	weather "Yakima WA";
+	area 1000;
+	type FIXED;
+	orientation SOUTHWEST;
+	object double_assert {
+		in '2009-12-31 23:00:00 PST';
+		status ASSERT_TRUE;
+		target energy;
+		value 99.2;
+		within 0.1;
+	};
+//#ifdef RECORD
+	object recorder {
+		property power,energy;
+		file `{filename}_fixed_power_energy.csv`;
+		interval 3600;
+	};
+//#endif
+}

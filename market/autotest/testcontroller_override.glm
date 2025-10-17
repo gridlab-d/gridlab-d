@@ -1,0 +1,140 @@
+clock {
+     timezone EST+5EDT;
+     timestamp '2010-08-01 00:00:00';
+     stoptime '2010-08-02 00:01:00';
+}
+
+#set profiler=1;
+#set double_format=%+.12lg
+#set randomseed=10;
+#set relax_naming_rules=1;
+
+module assert;
+module market;
+module tape;
+module climate;
+module residential {
+     implicit_enduses NONE;
+};
+module powerflow {
+     solver_method FBS;
+     NR_iteration_limit 100;
+};
+
+schedule clear_price {
+	* 0-15 * * * 0.5;
+	* 16-19 * * * 2;
+	* 20-23 * * * 0.5;
+};
+object climate {
+     name "weather";
+     tmyfile "../WA-Yakima.tmy2";
+};
+
+class auction {
+ 	 double current_price_mean_24h;
+     double current_price_stdev_24h;
+}
+object auction {
+     name Market1;
+     unit kW;
+     period 300;
+     price_cap 3.78;
+     special_mode BUYERS_ONLY;
+	 fixed_price clear_price*1;
+     init_price 0.042676;
+     init_stdev 0.02;
+     use_future_mean_price FALSE;
+     warmup 0;
+}
+
+object triplex_meter {
+	bustype SWING;
+     nominal_voltage 124;
+     phases AS;
+     name _tpm_rt_A1;
+     groupid _rt_meter;
+}
+
+object house {
+     name H_1;
+     //Residential_2
+     parent _tpm_rt_A1;
+     schedule_skew -685;
+     Rroof 33.69;
+     Rwall 17.71;
+     Rfloor 17.02;
+     Rdoors 5;
+     Rwindows 1.81;
+     airchange_per_hour 0.80;
+     hvac_power_factor 0.97;
+     cooling_system_type ELECTRIC;
+     heating_system_type RESISTANCE;
+     fan_type ONE_SPEED;
+     hvac_breaker_rating 200;
+     total_thermal_mass_per_floor_area 3.01;
+     motor_efficiency AVERAGE;
+     motor_model BASIC;
+     cooling_COP 3.90;
+     floor_area 1040;
+     number_of_doors 2;
+     air_temperature 71.9;
+     mass_temperature 71.9;
+	 thermostat_deadband 0.001;
+	 dlc_offset 100;
+
+     object controller {
+          name DC_1;
+		  use_override ON;
+		  override override;
+          market Market1;
+          control_mode DOUBLE_RAMP;
+          schedule_skew -685;
+          bid_mode ON;
+          heating_base_setpoint 60;
+          cooling_base_setpoint 80;
+          target air_temperature;
+          deadband thermostat_deadband;
+          use_predictive_bidding true;
+          average_target current_price_mean_24h;
+          standard_deviation_target current_price_stdev_24h;
+          period 300;
+          cooling_setpoint cooling_setpoint;
+          heating_setpoint heating_setpoint;
+          heating_demand heating_demand;
+          cooling_demand cooling_demand;
+          bid_delay 1;
+          heating_range_high 3.000;
+          cooling_range_high 2.000;
+          heating_range_low -2.000;
+          cooling_range_low -3.000;
+          heating_ramp_high -2.400;
+          cooling_ramp_high 2.400;
+          heating_ramp_low -2.400;
+          cooling_ramp_low 2.400;
+          total total_load;
+          load hvac_load;
+          state power_state;
+      };
+	   object multi_recorder {
+			property is_COOL_on,Market1:current_market.clearing_price,override,DC_1:bid_price;
+			file test_controller_override.csv;
+			interval 300;
+	   };
+	   object enum_assert {
+			target override;
+			object player {
+				property value;
+				file ../test_controller_override_value.player;
+			};
+	   };
+	   
+	   object double_assert {
+			target is_COOL_on;
+			object player {
+				property value;
+				file ../test_controller_override_is_COOL_on.player;
+			};
+			within 0.01;
+	   };
+}

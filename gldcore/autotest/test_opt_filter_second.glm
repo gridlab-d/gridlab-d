@@ -1,0 +1,49 @@
+// Filter test second-order filter
+//
+#set randomseed=1;
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 00:00:00 PST';
+	stoptime '2000-01-01 01:00:00 PST';
+}
+
+// discrete zoh equivalent of (s-0.1)/(s+0.05)(s+0.02)
+filter Gd(z) = ( 0.9168 z - 1.013 ) / ( z^2 - 1.931 z + 0.9324 );
+
+class from {
+	randomvar noise; // noise input
+	double step; // step input
+}
+class to {
+	double value;
+}
+object from {
+	name from;
+	noise "type:normal(0,1); min:-3.0; max:+3.0; refresh:10min";
+	step 1.0;
+}
+object to {
+	name to;
+	value Gd(from:noise);
+}
+object to {
+	name fvt;
+	value Gd(from:step);
+}
+
+module tape;
+object multi_recorder {
+	file output.csv;
+	interval 1;
+	property "from:noise,to:value,from:step,fvt:value";
+}
+
+module assert;
+object assert {
+	parent fvt;
+		in '2000-01-01 01:00:00 PST';
+	target value;
+	relation ==;
+	value -68.7143; // continuous FV is -100 final value but rounding on Gd makes it -68.7
+	within 1e-4;
+}

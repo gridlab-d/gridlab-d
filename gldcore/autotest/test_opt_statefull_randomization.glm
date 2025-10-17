@@ -1,0 +1,24 @@
+// test of ticket:496
+module tape;
+
+clock {
+	starttime '2000-01-01 00:00:00';
+	stoptime '2000-01-01 00:01:00';
+}
+
+class my_test {
+	randomvar x;
+	randomvar y;
+}
+
+object my_test:..2 {
+	x "type:uniform(0,1); refresh:1s";
+	y "type:uniform(0,1); refresh:1s";
+	object recorder {
+		property x,y;
+		file `my_test_{id}.csv`;
+		interval -1;
+	};
+}
+
+// TODO: use diff to compare the output files

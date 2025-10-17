@@ -1,0 +1,188 @@
+//This file tests the operation of multiple heating controllers
+//in ramp mode in an inelastic market with a matching period
+//Since the averages and standard deviations in the controller
+//are not published properties, the only way to check if these
+//values are correct is to check whether the calculated bidding
+//prices are correct (this calculation uses these values)
+
+#set tmp=../test_markets_controller_heating_inelastic_double
+#setenv GRIDLABD=../../../core
+
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+#set minimum_timestep=1
+
+module market;
+module tape;
+module assert;
+module climate;
+module powerflow;
+module residential {
+	implicit_enduses NONE;
+	default_outdoor_temperature 0;
+}
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-06 04:00:00';
+	stoptime '2001-01-06 04:08:00';
+}
+
+schedule fixed_prices {
+	0 4 * * * 100;
+	1 4 * * * 10;
+	2 4 * * * 25;
+	3 4 * * * 112;
+	4 4 * * * 49.5;
+	5 4 * * * 49.8;
+	6 4 * * * 50.2;
+	7 4 * * * 77;
+	8-59 4 * * * 82;
+}
+
+schedule controller_bids {
+	0 4 * * * 100;
+	1 4 * * * 55;
+	2 4 * * * 27.4777;
+	3 4 * * * 123.6530;
+	4 4 * * * 118.7040;
+	5 4 * * * 49.8253;
+	6 4 * * * 50.2259;
+	7 4 * * * 78.2742;
+	8 4 * * * 82.1630;
+}
+
+schedule clearing_quantities {
+	0 4 * * * 0;
+	1 4 * * * 9.05248;
+	2 4 * * * 9.05248;
+	3 4 * * * 0;
+	4 4 * * * 23.4466;
+	5 4 * * * 23.4466;
+	6 4 * * * 0;
+	7 4 * * * 0;
+	8 4 * * * 0;
+}
+
+object climate {
+	name "Yakima WA";
+	tmyfile "../WA-Yakima.tmy2";
+}
+
+class auction {
+	double current_price_mean_2min;
+	double current_price_stdev_2min;
+}
+
+object auction {
+	name Market_1;
+	unit kW;
+	period 60;
+	verbose TRUE;
+	special_mode BUYERS_ONLY;
+	fixed_price fixed_prices*1;
+	warmup 0;
+	init_price 100;
+	init_stdev 0;
+	object multi_recorder {
+		property heat_control:bid_price,current_market.clearing_price,current_market.clearing_quantity,current_market.clearing_type,current_market.marginal_quantity,current_price_mean_2min,current_price_stdev_2min,house1:air_temperature,house1:system_mode,house1:heating_setpoint;
+		file "test_markets_controller_heating_inelastic_double_output.csv";
+		interval 60;
+		limit 168;
+	};
+	//put the following into cell K10 into the calculate_bid_price file and drag down to check if bid prices are calculated correctly:
+	//=IF(OR(C10<D10+H10,C10>D10+I10),IF(C10<D10+H10,9999,IF(C10>D10+I10,0,INVALID)),IF(C10<D10,IF(H10=0,0,B10+((C10-D10)*E10*G10)/ABS(H10)),IF(I10=0,0,B10+((C10-D10)*F10*G10)/ABS(I10))))
+	object multi_recorder {
+		property current_price_mean_2min,house1:air_temperature,heat_control:base_setpoint,heat_control:ramp_low,heat_control:ramp_high,current_price_stdev_2min,heat_control:range_low,heat_control:range_high,heat_control:bid_price;
+		file "test_markets_controller_heating_inelastic_double_calculate_bid_price.csv";
+		interval 60;
+		limit 4320;
+	};
+	//recorder to fix the timestep so values will stay constant
+	object recorder {
+		interval 1;
+		property period;
+	};
+	object double_assert {
+		value clearing_quantities*1;
+		target "current_market.clearing_quantity";
+		within 1e-3;
+	};
+}
+
+object triplex_meter {
+	phases AS;
+	nominal_voltage 120;
+	object house {
+		name house1;
+		weather "Yakima WA";
+		air_temperature 62;
+		heating_setpoint 65;
+		object controller {
+			name heat_control;			
+			market Market_1;
+			bid_mode ON;			
+			period 60;
+			average_target current_price_mean_2min;
+			standard_deviation_target current_price_stdev_2min;		
+			control_mode RAMP;
+			target air_temperature;
+			setpoint heating_setpoint;
+			demand heating_demand;
+			total total_load;
+			load hvac_load;
+			//slider_setting 0; //set to 0 or ramps will be overwritten
+			ramp_low -2;
+			ramp_high -2;
+			range_low -5;
+			range_high 0;
+			object multi_recorder {
+				property simple_mode,period,setpoint,target,base_setpoint,control_mode,resolve_mode,demand,load,total,range_low,range_high,ramp_low,ramp_high,bid_mode,bid_price,bid_quantity,set_temp,house1:power_state,house1:heating_demand,house1:heating_setpoint,house1:air_temperature,house1:system_mode,average_target,standard_deviation_target,house1:hvac_load,house1:outdoor_temperature;
+				file "check_defaults_output1.csv";
+				interval 60;
+				limit 4320;
+			};
+			object double_assert {
+				target "bid_price";
+				value controller_bids*1;
+				within 1e-3;
+			};
+		};
+	};
+	object house {
+		name house2;
+		weather "Yakima WA";
+		air_temperature 62;
+		heating_setpoint 65;
+		object controller {
+			name heat_control2;			
+			market Market_1;
+			bid_mode ON;			
+			period 60;
+			average_target current_price_mean_2min;
+			standard_deviation_target current_price_stdev_2min;		
+			control_mode RAMP;
+			target air_temperature;
+			setpoint heating_setpoint;
+			demand heating_demand;
+			total total_load;
+			load hvac_load;
+			//slider_setting 0; //set to 0 or ramps will be overwritten
+			ramp_low -2;
+			ramp_high -2;
+			range_low -5;
+			range_high 0;
+			object multi_recorder {
+				property simple_mode,period,setpoint,target,base_setpoint,control_mode,resolve_mode,demand,load,total,range_low,range_high,ramp_low,ramp_high,bid_mode,bid_price,bid_quantity,set_temp,house2:power_state,house2:heating_demand,house2:heating_setpoint,house2:air_temperature,house2:system_mode,average_target,standard_deviation_target,house2:hvac_load,house1:outdoor_temperature;
+				file "check_defaults_output2.csv";
+				interval 60;
+				limit 4320;
+			};
+			object double_assert {
+				target "bid_price";
+				value controller_bids*1;
+				within 1e-3;
+			};
+		};
+	};
+}

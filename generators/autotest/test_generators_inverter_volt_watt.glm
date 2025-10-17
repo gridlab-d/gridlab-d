@@ -1,0 +1,126 @@
+//	Test the volt_watt mode for four quadrant inverter.
+
+clock {
+	timezone PST+8PDT;
+	starttime '2015-01-01 00:00:00';
+	stoptime '2015-01-01 00:25:00'; 
+}
+
+module assert;
+module tape;
+module generators;
+module powerflow {
+	solver_method NR;
+};
+
+class player {
+	complex value;
+}
+
+// using same voltages as the VOLT_VAR test
+object player {
+	parent swingbus;
+	property voltage_A;
+	file ../test_generators_inverter_volt_var_voltageA.player;
+	loop 0;
+}
+
+object player {
+	parent swingbus;
+	property voltage_B;
+	file ../test_generators_inverter_volt_var_voltageB.player;
+	loop 0;
+}
+
+object player {
+	parent swingbus;
+	property voltage_C;
+	file ../test_generators_inverter_volt_var_voltageC.player;
+	loop 0;
+}
+
+object meter {
+	name swingbus;
+	phases ABCN;
+	bustype SWING;
+	nominal_voltage 7200;
+}
+
+object meter {
+	name inv_meter;
+	phases ABC;
+	parent swingbus;
+	nominal_voltage 7200;
+	object complex_assert {
+		target measured_power_A;
+		object player {
+			property value;
+			file ../test_generators_inverter_vw_output_A.player;
+			loop 0;
+		};
+		within 0.1;
+	};
+	object complex_assert {
+		target measured_power_B;
+		object player {
+			property value;
+			file ../test_generators_inverter_vw_output_B.player;
+			loop 0;
+		};
+		within 0.1;
+	};
+	object complex_assert {
+		target measured_power_C;
+		object player {
+			property value;
+			file ../test_generators_inverter_vw_output_C.player;
+			loop 0;
+		};
+		within 0.1;
+	};
+}
+
+object inverter {
+	name volt_watt_inv;
+	parent inv_meter;
+	inverter_type FOUR_QUADRANT;
+	four_quadrant_control_mode VOLT_WATT;
+	generator_status ONLINE;
+	generator_mode SUPPLY_DRIVEN;
+	phases ABC;
+	rated_power 11.6 kVA; // per phase
+	inverter_efficiency 0.87;
+	//VOLT_WATT parameters;
+	V_base 7200; // shared with VOLT_VAR
+	VW_V1 1.05833;
+	VW_P1 1.0;
+	VW_V2 1.1;
+	VW_P2 0.0;
+//	volt_var_control_lockout 10.0; // shared with VOLT_VAR
+	V_In 200.0;
+	I_In 200.0;
+}
+
+object recorder {
+	parent volt_watt_inv;
+	property power_A,power_B,power_C,VA_Out;
+	interval 60;
+	file vwinv.csv;
+};
+
+object recorder {
+	parent inv_meter;
+	property measured_power_A,measured_power_B,measured_power_C;
+	interval 60;
+	file vwmtr.csv;
+};
+
+object load {
+	name load;
+	phases ABCN;
+	parent swingbus;
+	constant_power_A 12000+5600j;
+	constant_power_B 46000-2300j;
+	constant_power_C 68000+9000j;
+	nominal_voltage 7200;
+}

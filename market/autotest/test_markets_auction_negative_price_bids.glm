@@ -1,0 +1,1062 @@
+//This file tests that the appropriate variables
+//are set correctly when there are negative price bids
+
+//Bidding period: 1800 s
+
+//case 2, clearing price: 22, clearing quantity: 8
+//negative seller bid, 0:00-0:29
+//Buyer1: bid 26, quantity: 5
+//Buyer2: bid 22, quantity: 5
+//Buyer3: bid 12, quantity: 5
+//Seller1: bid -5, quantity: 8
+//Seller2: bid 27, quantity: 5
+//Seller3: bid 31, quantity: 5
+
+//case 2, clearing price: -5, clearing quantity: 8
+//multiple negative bids, 0:30-0:59
+//Buyer1: bid 5, quantity: 5
+//Buyer2: bid -5, quantity: 5
+//Buyer3: bid -17, quantity: 5
+//Seller1: bid -20, quantity: 8
+//Seller2: bid 3, quantity: 5
+//Seller3: bid 9, quantity: 5
+
+//case 1, clearing price: 36, clearing quantity: 8
+//negative seller bid, 1:00-1:29
+//Buyer1: bid 45, quantity: 8
+//Buyer2: bid 36, quantity: 5
+//Buyer3: bid 29, quantity: 5
+//Seller1: bid -27, quantity: 5
+//Seller2: bid 36, quantity: 5
+//Seller3: bid 47, quantity: 5
+
+//case 1, clearing price: -12, clearing quantity: 8
+//multiple negative bids, 1:30-1:59
+//Buyer1: bid 3, quantity: 8
+//Buyer2: bid -17, quantity: 5
+//Buyer3: bid -32, quantity: 5
+//Seller1: bid -30, quantity: 5
+//Seller2: bid -12, quantity: 5
+//Seller3: bid 7, quantity: 5
+
+//case 3, clearing price: 19, clearing quantity: 10
+//negative seller bid, 2:00-2:29
+//Buyer1: bid 36, quantity: 5
+//Buyer2: bid 24, quantity: 5
+//Buyer3: bid 8, quantity: 5
+//Seller1: bid -5, quantity: 5
+//Seller2: bid 14, quantity: 5
+//Seller3: bid 43, quantity: 5
+
+//case 3, clearing price: -2, clearing quantity: 10
+//multiple negative bids, 2:30-2:59
+//Buyer1: bid 8, quantity: 5
+//Buyer2: bid 3, quantity: 5
+//Buyer3: bid -15, quantity: 5
+//Seller1: bid -13, quantity: 5
+//Seller2: bid -7, quantity: 5
+//Seller3: bid 14, quantity: 5
+
+//case 4, clearing price: 15.99, clearing quantity: 10
+//negative seller bid, 3:00-3:29
+//Buyer1: bid 27, quantity: 5
+//Buyer2: bid 21, quantity: 5
+//Buyer3: bid 3, quantity: 5
+//Seller1: bid -37, quantity: 5
+//Seller2: bid 14, quantity: 5
+//Seller3: bid 16, quantity: 5
+
+//case 4, clearing price: -14.01, clearing quantity: 10
+//multiple negative bids, 3:30-3:59
+//Buyer1: bid 4, quantity: 5
+//Buyer2: bid -3, quantity: 5
+//Buyer3: bid -22, quantity: 5
+//Seller1: bid -24, quantity: 5
+//Seller2: bid -17, quantity: 5
+//Seller3: bid -14, quantity: 5
+
+//case 5, clearing price: 11.01, clearing quantity: 5
+//negative seller bid, 4:00-4:29
+//Buyer1: bid 19, quantity: 5
+//Buyer2: bid 11, quantity: 5
+//Buyer3: bid 3, quantity: 5
+//Seller1: bid -17, quantity: 5
+//Seller2: bid 23, quantity: 5
+//Seller3: bid 27, quantity: 5
+
+//case 5, clearing price: -15.99, clearing quantity: 5
+//multiple negative bids, 4:30-4:59
+//Buyer1: bid -11, quantity: 5
+//Buyer2: bid -16, quantity: 5
+//Buyer3: bid -27, quantity: 5
+//Seller1: bid -30, quantity: 5
+//Seller2: bid -8, quantity: 5
+//Seller3: bid -3, quantity: 5
+
+//case 6, clearing price: 13, clearing quantity: 10
+//negative seller bid, 5:00-5:29
+//Buyer1: bid 27, quantity: 5
+//Buyer2: bid 13, quantity: 5
+//Buyer3: bid 2, quantity: 5
+//Seller1: bid -3, quantity: 5
+//Seller2: bid 13, quantity: 5
+//Seller3: bid 30, quantity: 5
+
+//case 6, clearing price: 11, clearing quantity: 10
+//multiple negative bids, 5:30-5:59
+//Buyer1: bid 27, quantity: 5
+//Buyer2: bid 11, quantity: 5
+//Buyer3: bid -7, quantity: 5
+//Seller1: bid -3, quantity: 5
+//Seller2: bid 11, quantity: 5
+//Seller3: bid 23, quantity: 5
+
+//case 7, clearing price: 9999, clearing quantity: 15
+//negative seller bid, 6:00-6:29
+//Buyer1: bid 9999, quantity: 50
+//Buyer2: bid 20, quantity: 5
+//Buyer3: bid 11, quantity: 5
+//Seller1: bid -30, quantity: 5
+//Seller2: bid 17, quantity: 5
+//Seller3: bid 28, quantity: 5
+
+//case 7, clearing price: 11, clearing quantity: 15
+//negative buyer bid, 6:30-6:59
+//Buyer1: bid 9999, quantity: 50
+//Buyer2: bid 27, quantity: 5
+//Buyer3: bid -13, quantity: 5
+//Seller1: bid 11, quantity: 5
+//Seller2: bid 20, quantity: 5
+//Seller3: bid 29, quantity: 5
+
+//case 7, clearing price: 9999, clearing quantity: 15
+//multiple negative bids, 7:00-7:29
+//Buyer1: bid 9999, quantity: 50
+//Buyer2: bid 75, quantity: 5
+//Buyer3: bid -3, quantity: 5
+//Seller1: bid -40, quantity: 5
+//Seller2: bid -30, quantity: 5
+//Seller3: bid -20, quantity: 5
+
+//case 8, clearing price: 31, clearing quantity: 0
+//negative buyer bid, 7:30-7:59
+//Buyer1: bid 27, quantity: 5
+//Buyer2: bid 13, quantity: 5
+//Buyer3: bid -5, quantity: 5
+//Seller1: bid 35, quantity: 5
+//Seller2: bid 48, quantity: 5
+//Seller3: bid 53, quantity: 5
+
+//case 8, clearing price: -5, clearing quantity: 0
+//multiple negative bids, 8:00-8:29
+//Buyer1: bid -7, quantity: 5
+//Buyer2: bid -13, quantity: 5
+//Buyer3: bid -24, quantity: 5
+//Seller1: bid -3, quantity: 5
+//Seller2: bid 14, quantity: 5
+//Seller3: bid 27, quantity: 5
+
+//case 9, clearing price: 10, clearing quantity: 10
+//negative buyer bid, 8:30-8:59
+//Buyer1: bid 17, quantity: 5
+//Buyer2: bid 10, quantity: 5
+//Buyer3: bid 3, quantity: 5
+//Seller1: bid -32, quantity: 8
+//Seller2: bid 10, quantity: 5
+//Seller3: bid 15, quantity: 5
+
+//case 9, clearing price: 32, clearing quantity: 10
+//negative seller bid, 9:00-9:29
+//Buyer1: bid 48, quantity: 5
+//Buyer2: bid 32, quantity: 5
+//Buyer3: bid -12, quantity: 5
+//Seller1: bid 17, quantity: 8
+//Seller2: bid 32, quantity: 5
+//Seller3: bid 67, quantity: 5
+
+//case 9, clearing price: -20, clearing quantity: 10
+//multiple negative bids, 9:30-9:59
+//Buyer1: bid 32, quantity: 5
+//Buyer2: bid -20, quantity: 5
+//Buyer3: bid -26, quantity: 5
+//Seller1: bid -30, quantity: 8
+//Seller2: bid -20, quantity: 5
+//Seller3: bid -18, quantity: 5
+
+//case 10, clearing price: 27, clearing quantity: 10
+//negative seller bid, 10:00-10:29
+//Buyer1: bid 45, quantity: 8
+//Buyer2: bid 27, quantity: 5
+//Buyer3: bid 16, quantity: 5
+//Seller1: bid -32, quantity: 5
+//Seller2: bid 27, quantity: 5
+//Seller3: bid 49, quantity: 5
+
+//case 10, clearing price: -41, clearing quantity: 10
+//multiple negative bids, 10:30-10:59
+//Buyer1: bid -20, quantity: 8
+//Buyer2: bid -41, quantity: 5
+//Buyer3: bid -63, quantity: 5
+//Seller1: bid -57, quantity: 5
+//Seller2: bid -41, quantity: 5
+//Seller3: bid -11, quantity: 5
+
+//case 10, clearing price: 17, clearing quantity: 10
+//negative buyer bid, 11:00-11:29
+//Buyer1: bid 27, quantity: 5
+//Buyer2: bid 17, quantity: 8
+//Buyer3: bid -12, quantity: 5
+//Seller1: bid 3, quantity: 5
+//Seller2: bid 17, quantity: 5
+//Seller3: bid 24, quantity: 5
+
+//case 11, clearing price: 23, clearing quantity: 8
+//negative seller bid, 11:30-11:59
+//Buyer1: bid 9999, quantity: 3
+//Buyer2: bid 42, quantity: 5
+//Buyer3: bid 13, quantity: 5
+//Seller1: bid -10, quantity: 5
+//Seller2: bid 23, quantity: 5
+//Seller3: bid 78, quantity: 5
+
+//case 11, clearing price: 18, clearing quantity: 9
+//negative buyer bid, 12:00-12:29
+//Buyer1: bid 9999, quantity: 7
+//Buyer2: bid 23, quantity: 2
+//Buyer3: bid -17, quantity: 5
+//Seller1: bid 3, quantity: 5
+//Seller2: bid 18, quantity: 5
+//Seller3: bid 26, quantity: 5
+
+//case 11, clearing price: -13, clearing quantity: 10
+//multiple negative bids, 12:30-12:59
+//Buyer1: bid 9999, quantity: 8
+//Buyer2: bid -13, quantity: 5
+//Buyer3: bid -48, quantity: 5
+//Seller1: bid -73, quantity: 5
+//Seller2: bid -35, quantity: 5
+//Seller3: bid 7, quantity: 5
+
+//case 12, clearing price: 18.01, clearing quantity: 15
+//negative seller bid, 13:00-13:29
+//Buyer1: bid 9999, quantity: 15
+//Buyer2: bid 12, quantity: 5
+//Buyer3: bid 6, quantity: 5
+//Seller1: bid -3, quantity: 5
+//Seller2: bid 13, quantity: 5
+//Seller3: bid 18, quantity: 5
+
+//case 12, clearing price: 32.01, clearing quantity: 15
+//negative buyer, 13:30-13:59
+//Buyer1: bid 9999, quantity: 15
+//Buyer2: bid 32, quantity: 5
+//Buyer3: bid -13, quantity: 5
+//Seller1: bid 7, quantity: 5
+//Seller2: bid 13, quantity: 5
+//Seller3: bid 27, quantity: 5
+
+//case 12, clearing price: 18.01, clearing quantity: 15
+//multiple negative bids, 14:00-14:29
+//Buyer1: bid 9999, quantity: 15
+//Buyer2: bid -3, quantity: 5
+//Buyer3: bid -32, quantity: 5
+//Seller1: bid -45, quantity: 5
+//Seller2: bid -27, quantity: 5
+//Seller3: bid -18, quantity: 5
+
+#set tmp=../test_markets_auction_negative_price_bids
+#setenv GRIDLABD=../../../core
+
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+module market;
+module tape;
+module assert;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-01 23:59:59';
+}
+
+schedule buyer1_prices {
+	0-29 0 * * * 26;
+	30-59 0 * * * 5;
+	0-29 1 * * * 45;
+	30-59 1 * * * 3;
+	0-29 2 * * * 36;
+	30-59 2 * * * 8;
+	
+	0-29 3 * * * 27;
+	30-59 3 * * * 4;
+	0-29 4 * * * 19;
+	30-59 4 * * * -11;
+	0-29 5 * * * 27;
+	30-59 5 * * * 17;
+	
+	0-29 6 * * * 9999;
+	30-59 6 * * * 9999;
+	0-29 7 * * * 9999;
+	30-59 7 * * * 27;
+	0-29 8 * * * -7;
+	30-59 8 * * * 17;
+	
+	0-29 9 * * * 48;
+	30-59 9 * * * 32;
+	0-29 10 * * * 45;
+	30-59 10 * * * -20;
+	0-29 11 * * * 27;
+	30-59 11 * * * 9999;
+	
+	0-29 12 * * * 9999;
+	30-59 12 * * * 9999;
+	0-29 13 * * * 9999;
+	30-59 13 * * * 9999;
+	* 14-23 * * * 9999;
+}
+
+schedule buyer2_prices {
+	0-29 0 * * * 22;
+	30-59 0 * * * -5;
+	0-29 1 * * * 32;
+	30-59 1 * * * -17;
+	0-29 2 * * * 24;
+	30-59 2 * * * 3;
+	
+	0-29 3 * * * 21;
+	30-59 3 * * * -3;
+	0-29 4 * * * 11;
+	30-59 4 * * * -16;
+	0-29 5 * * * 13;
+	30-59 5 * * * 11;
+	
+	0-29 6 * * * 20;
+	30-59 6 * * * 27;
+	0-29 7 * * * 75;
+	30-59 7 * * * 13;
+	0-29 8 * * * -13;
+	30-59 8 * * * 10;
+	
+	0-29 9 * * * 32;
+	30-59 9 * * * -20;
+	0-29 10 * * * 27;
+	30-59 10 * * * -41;
+	0-29 11 * * * 17;
+	30-59 11 * * * 42;
+	
+	0-29 12 * * * 23;
+	30-59 12 * * * -13;
+	0-29 13 * * * 12;
+	30-59 13 * * * 32;
+	* 14-23 * * * -3;
+}
+
+schedule buyer3_prices {
+	0-29 0 * * * 12;
+	30-59 0 * * * -17;
+	0-29 1 * * * 29;
+	30-59 1 * * * -32;
+	0-29 2 * * * 8;
+	30-59 2 * * * -15;
+	
+	0-29 3 * * * 3;
+	30-59 3 * * * -22;
+	0-29 4 * * * 3;
+	30-59 4 * * * -27;
+	0-29 5 * * * 2;
+	30-59 5 * * * -7;
+	
+	0-29 6 * * * 11;
+	30-59 6 * * * -13;
+	0-29 7 * * * -3;
+	30-59 7 * * * -5;
+	0-29 8 * * * -24;
+	30-59 8 * * * 3;
+	
+	0-29 9 * * * -12;
+	30-59 9 * * * -26;
+	0-29 10 * * * 16;
+	30-59 10 * * * -63;
+	0-29 11 * * * -12;
+	30-59 11 * * * 13;
+	
+	0-29 12 * * * -17;
+	30-59 12 * * * -48;
+	0-29 13 * * * 6;
+	30-59 13 * * * -13;
+	* 14-23 * * * -32;
+}
+
+schedule seller1_prices {
+	0-29 0 * * * -5;
+	30-59 0 * * * -20;
+	0-29 1 * * * -27;
+	30-59 1 * * * -30;
+	0-29 2 * * * -5;
+	30-59 2 * * * -13;
+	
+	0-29 3 * * * -37;
+	30-59 3 * * * -24;
+	0-29 4 * * * -17;
+	30-59 4 * * * -30;
+	0-29 5 * * * -3;
+	30-59 5 * * * -3;
+	
+	0-29 6 * * * -30;
+	30-59 6 * * * 11;
+	0-29 7 * * * -40;
+	30-59 7 * * * 35;
+	0-29 8 * * * -3;
+	30-59 8 * * * -32;
+	
+	0-29 9 * * * 17;
+	30-59 9 * * * -30;
+	0-29 10 * * * -32;
+	30-59 10 * * * -57;
+	0-29 11 * * * 3;
+	30-59 11 * * * -10
+	
+	0-29 12 * * * 3;
+	30-59 12 * * * -73;
+	0-29 13 * * * -3;
+	30-59 13 * * * 7;
+	* 14-23 * * * -45;
+}
+
+schedule seller2_prices {
+	0-29 0 * * * 27;
+	30-59 0 * * * 3;
+	0-29 1 * * * 36;
+	30-59 1 * * * -12;
+	0-29 2 * * * 14;
+	30-59 2 * * * -7;
+	
+	0-29 3 * * * 14;
+	30-59 3 * * * -17;
+	0-29 4 * * * 23;
+	30-59 4 * * * -8;
+	0-29 5 * * * 13;
+	30-59 5 * * * 11;
+	
+	0-29 6 * * * 17;
+	30-59 6 * * * 20;
+	0-29 7 * * * -30;
+	30-59 7 * * * 48;
+	0-29 8 * * * 14;
+	30-59 8 * * * 10;
+	
+	0-29 9 * * * 32;
+	30-59 9 * * * -20;
+	0-29 10 * * * 27;
+	30-59 10 * * * -41;
+	0-29 11 * * * 17;
+	30-59 11 * * * 23;
+	
+	0-29 12 * * * 18;
+	30-59 12 * * * -35;
+	0-29 13 * * * 13;
+	30-59 13 * * * 13;
+	* 14-23 * * * -27;
+}
+
+schedule seller3_prices {
+	0-29 0 * * * 31;
+	30-59 0 * * * 9;
+	0-29 1 * * * 47;
+	30-59 1 * * * 7;
+	0-29 2 * * * 43;
+	30-59 2 * * * 14;
+	
+	0-29 3 * * * 16;
+	30-59 3 * * * -14;
+	0-29 4 * * * 27;
+	30-59 4 * * * -3;
+	0-29 5 * * * 30;
+	30-59 5 * * * 23;
+	
+	0-29 6 * * * 28;
+	30-59 6 * * * 29;
+	0-29 7 * * * -20;
+	30-59 7 * * * 53;
+	0-29 8 * * * 27;
+	30-59 8 * * * 15;
+	
+	0-29 9 * * * 67;
+	30-59 9 * * * -18;
+	0-29 10 * * * 49;
+	30-59 10 * * * -11;
+	0-29 11 * * * 24;
+	30-59 11 * * * 78;
+	
+	0-29 12 * * * 26;
+	30-59 12 * * * 7;
+	0-29 13 * * * 18;
+	30-59 13 * * * 27;
+	* 14-23 * * * -18;
+}
+
+schedule buyer1_quantities {
+	0-29 0 * * * 5;
+	30-59 0 * * * 5;
+	0-29 1 * * * 8;
+	30-59 1 * * * 8;
+	0-29 2 * * * 5;
+	30-59 2 * * * 5;
+	
+	0-29 3 * * * 5;
+	30-59 3 * * * 5;
+	0-29 4 * * * 5;
+	30-59 4 * * * 5;
+	0-29 5 * * * 5;
+	30-59 5 * * * 5;
+	
+	0-29 6 * * * 50;
+	30-59 6 * * * 50;
+	0-29 7 * * * 50;
+	30-59 7 * * * 5;
+	0-29 8 * * * 5;
+	30-59 8 * * * 5;
+	
+	0-29 9 * * * 5;
+	30-59 9 * * * 5;
+	0-29 10 * * * 8;
+	30-59 10 * * * 8;
+	0-29 11 * * * 5;
+	30-59 11 * * * 3;
+	
+	0-29 12 * * * 7;
+	30-59 12 * * * 8;
+	0-29 13 * * * 15;
+	30-59 13 * * * 15;
+	* 14-23 * * * 15;
+}
+
+schedule buyer2_quantities {
+	0-29 0 * * * 5;
+	30-59 0 * * * 5;
+	0-29 1 * * * 5;
+	30-59 1 * * * 5;
+	0-29 2 * * * 5;
+	30-59 2 * * * 5;
+	
+	0-29 3 * * * 5;
+	30-59 3 * * * 5;
+	0-29 4 * * * 5;
+	30-59 4 * * * 5;
+	0-29 5 * * * 5;
+	30-59 5 * * * 5;
+	
+	0-29 6 * * * 5;
+	30-59 6 * * * 5;
+	0-29 7 * * * 5;
+	30-59 7 * * * 5;
+	0-29 8 * * * 5;
+	30-59 8 * * * 5;
+	
+	0-29 9 * * * 5;
+	30-59 9 * * * 5;
+	0-29 10 * * * 5;
+	30-59 10 * * * 5;
+	0-29 11 * * * 8;
+	30-59 11 * * * 5;
+	
+	0-29 12 * * * 2;
+	30-59 12 * * * 5;
+	0-29 13 * * * 5;
+	30-59 13 * * * 5;
+	* 14-23 * * * 5;
+}
+
+schedule buyer3_quantities {
+	0-29 0 * * * 5;
+	30-59 0 * * * 5;
+	0-29 1 * * * 5;
+	30-59 1 * * * 5;
+	0-29 2 * * * 5;
+	30-59 2 * * * 5;
+	
+	0-29 3 * * * 5;
+	30-59 3 * * * 5;
+	0-29 4 * * * 5;
+	30-59 4 * * * 5;
+	0-29 5 * * * 5;
+	30-59 5 * * * 5;
+	
+	0-29 6 * * * 5;
+	30-59 6 * * * 5;
+	0-29 7 * * * 5;
+	30-59 7 * * * 5;
+	0-29 8 * * * 5;
+	30-59 8 * * * 5;
+	
+	0-29 9 * * * 5;
+	30-59 9 * * * 5;
+	0-29 10 * * * 5;
+	30-59 10 * * * 5;
+	0-29 11 * * * 5;
+	30-59 11 * * * 5;
+	
+	0-29 12 * * * 5;
+	30-59 12 * * * 5;
+	0-29 13 * * * 5;
+	30-59 13 * * * 5;
+	* 14-23 * * * 5;
+}
+
+schedule seller1_quantities {
+	0-29 0 * * * 8;
+	30-59 0 * * * 8;
+	0-29 1 * * * 5;
+	30-59 1 * * * 5;
+	0-29 2 * * * 5;
+	30-59 2 * * * 5;
+	
+	0-29 3 * * * 5;
+	30-59 3 * * * 5;
+	0-29 4 * * * 5;
+	30-59 4 * * * 5;
+	0-29 5 * * * 5;
+	30-59 5 * * * 5;
+	
+	0-29 6 * * * 5;
+	30-59 6 * * * 5;
+	0-29 7 * * * 5;
+	30-59 7 * * * 5;
+	0-29 8 * * * 5;
+	30-59 8 * * * 8;
+	
+	0-29 9 * * * 8;
+	30-59 9 * * * 8;
+	0-29 10 * * * 5;
+	30-59 10 * * * 5;
+	0-29 11 * * * 5;
+	30-59 11 * * * 5;
+	
+	0-29 12 * * * 5;
+	30-59 12 * * * 5;
+	0-29 13 * * * 5;
+	30-59 13 * * * 5;
+	* 14-23 * * * 5;
+}
+
+schedule seller2_quantities {
+	0-29 0 * * * 5;
+	30-59 0 * * * 5;
+	0-29 1 * * * 5;
+	30-59 1 * * * 5;
+	0-29 2 * * * 5;
+	30-59 2 * * * 5;
+	
+	0-29 3 * * * 5;
+	30-59 3 * * * 5;
+	0-29 4 * * * 5;
+	30-59 4 * * * 5;
+	0-29 5 * * * 5;
+	30-59 5 * * * 5;
+	
+	0-29 6 * * * 5;
+	30-59 6 * * * 5;
+	0-29 7 * * * 5;
+	30-59 7 * * * 5;
+	0-29 8 * * * 5;
+	30-59 8 * * * 5;
+	
+	0-29 9 * * * 5;
+	30-59 9 * * * 5;
+	0-29 10 * * * 5;
+	30-59 10 * * * 5;
+	0-29 11 * * * 5;
+	30-59 11 * * * 5;
+	
+	0-29 12 * * * 5;
+	30-59 12 * * * 5;
+	0-29 13 * * * 5;
+	30-59 13 * * * 5;
+	* 14-23 * * * 5;
+}
+
+schedule seller3_quantities {
+	0-29 0 * * * 5;
+	30-59 0 * * * 5;
+	0-29 1 * * * 5;
+	30-59 1 * * * 5;
+	0-29 2 * * * 5;
+	30-59 2 * * * 5;
+	
+	0-29 3 * * * 5;
+	30-59 3 * * * 5;
+	0-29 4 * * * 5;
+	30-59 4 * * * 5;
+	0-29 5 * * * 5;
+	30-59 5 * * * 5;
+	
+	0-29 6 * * * 5;
+	30-59 6 * * * 5;
+	0-29 7 * * * 5;
+	30-59 7 * * * 5;
+	0-29 8 * * * 5;
+	30-59 8 * * * 5;
+	
+	0-29 9 * * * 5;
+	30-59 9 * * * 5;
+	0-29 10 * * * 5;
+	30-59 10 * * * 5;
+	0-29 11 * * * 5;
+	30-59 11 * * * 5;
+	
+	0-29 12 * * * 5;
+	30-59 12 * * * 5;
+	0-29 13 * * * 5;
+	30-59 13 * * * 5;
+	* 14-23 * * * 5;
+}
+
+schedule clearing_prices {
+	0-29 0 * * * 0;
+	30-59 0 * * * 22;
+	0-29 1 * * * -5;
+	30-59 1 * * * 36;
+	0-29 2 * * * -12;
+	30-59 2 * * * 19;
+	0-29 3 * * * -2;
+	
+	30-59 3 * * * 15.9999; //is 13.9999 instead
+	0-29 4 * * * -14.0001; //is -17.0001 instead
+	30-59 4 * * * 11.0001; //is 19.0001 instead
+	0-29 5 * * * -15.9999; //is 10.9999 instead
+	30-59 5 * * * 13;
+	0-29 6 * * * 11;
+	
+	30-59 6 * * * 9999;
+	0-29 7 * * * 9999;
+	30-59 7 * * * 9999;
+	0-29 8 * * * 31;
+	30-59 8 * * * -5;
+	0-29 9 * * * 10;
+	
+	30-59 9 * * * 32;
+	0-29 10 * * * -20;
+	30-59 10 * * * 27;
+	0-29 11 * * * -41;
+	30-59 11 * * * 17;
+	0-29 12 * * * 23;
+	
+	30-59 12 * * * 18;
+	0-29 13 * * * -13;
+	30-59 13 * * * 18.0001;
+	0-29 14 * * * 32.0001;
+	30-59 14 * * * -2.9999;
+	* 15-23 * * * -2.9999;
+}
+
+schedule clearing_quantities {
+	0-29 0 * * * 0;
+	30-59 0 * * * 8;
+	0-29 1 * * * 8;
+	30-59 1 * * * 8;
+	0-29 2 * * * 8;
+	30-59 2 * * * 10;
+	
+	0-29 3 * * * 10;
+	30-59 3 * * * 10;
+	0-29 4 * * * 10;
+	30-59 4 * * * 5;
+	0-29 5 * * * 5;
+	30-59 5 * * * 10;
+	
+	0-29 6 * * * 10;
+	30-59 6 * * * 15;
+	0-29 7 * * * 15;
+	30-59 7 * * * 15;
+	0-29 8 * * * 0;
+	30-59 8 * * * 0;
+	
+	0-29 9 * * * 10;
+	30-59 9 * * * 10;
+	0-29 10 * * * 10;
+	30-59 10 * * * 10;
+	0-29 11 * * * 10;
+	30-59 11 * * * 10;
+	
+	0-29 12 * * * 8;
+	30-59 12 * * * 9;
+	0-29 13 * * * 10;
+	30-59 13 * * * 15;
+	0-29 14 * * * 15;
+	30-59 14 * * * 15;
+	* 15-23 * * * 15;
+}
+
+schedule marginal_quantities {
+	0-29 0 * * * 0;
+	30-59 0 * * * 3;
+	0-29 1 * * * 3;
+	30-59 1 * * * 3;
+	0-29 2 * * * 3;
+	30-59 2 * * * 0;
+	
+	0-29 3 * * * 0;
+	30-59 3 * * * 0;
+	0-29 4 * * * 0;
+	30-59 4 * * * 0;
+	0-29 5 * * * 0;
+	30-59 5 * * * 0;
+	
+	0-29 6 * * * 0;
+	30-59 6 * * * 0;
+	0-29 7 * * * 0;
+	30-59 7 * * * 0;
+	0-29 8 * * * 0;
+	30-59 8 * * * 0;
+	
+	0-29 9 * * * 2;
+	30-59 9 * * * 2;
+	0-29 10 * * * 2;
+	30-59 10 * * * 2;
+	0-29 11 * * * 2;
+	30-59 11 * * * 5;
+	
+	0-29 12 * * * 3;
+	30-59 12 * * * 4;
+	0-29 13 * * * 2;
+	30-59 13 * * * 0;
+	* 14-23 * * * 0;
+}
+
+schedule seller_totals {
+	0-29 0 * * * 0;
+	30-59 0 * * * 18;
+	0-29 1 * * * 18;
+	30-59 1 * * * 15;
+	0-29 2 * * * 15;
+	30-59 2 * * * 15;
+	
+	0-29 3 * * * 15;
+	30-59 3 * * * 15;
+	0-29 4 * * * 15;
+	30-59 4 * * * 15;
+	0-29 5 * * * 15;
+	30-59 5 * * * 15;
+	
+	0-29 6 * * * 15;
+	30-59 6 * * * 15;
+	0-29 7 * * * 15;
+	30-59 7 * * * 15;
+	0-29 8 * * * 15;
+	30-59 8 * * * 15;
+	
+	0-29 9 * * * 18;
+	30-59 9 * * * 18;
+	0-29 10 * * * 18;
+	30-59 10 * * * 15;
+	0-29 11 * * * 15;
+	30-59 11 * * * 15;
+	
+	0-29 12 * * * 15;
+	30-59 12 * * * 15;
+	0-29 13 * * * 15;
+	30-59 13 * * * 15;
+	0-29 14 * * * 15;
+	30-59 14 * * * 15;
+	* 15-23 * * * 15;
+}
+
+schedule buyer_totals {
+	0-29 0 * * * 0;
+	30-59 0 * * * 15;
+	0-29 1 * * * 15;
+	30-59 1 * * * 18;
+	0-29 2 * * * 18;
+	30-59 2 * * * 15;
+	
+	0-29 3 * * * 15;
+	30-59 3 * * * 15;
+	0-29 4 * * * 15;
+	30-59 4 * * * 15;
+	0-29 5 * * * 15;
+	30-59 5 * * * 15;
+	
+	0-29 6 * * * 15;
+	30-59 6 * * * 60;
+	0-29 7 * * * 60;
+	30-59 7 * * * 60;
+	0-29 8 * * * 15;
+	30-59 8 * * * 15;
+	
+	0-29 9 * * * 15;
+	30-59 9 * * * 15;
+	0-29 10 * * * 15;
+	30-59 10 * * * 18;
+	0-29 11 * * * 18;
+	30-59 11 * * * 18;
+	
+	0-29 12 * * * 13;
+	30-59 12 * * * 14;
+	0-29 13 * * * 18;
+	30-59 13 * * * 25;
+	0-29 14 * * * 25;
+	30-59 14 * * * 25;
+	* 15-23 * * * 25;
+}
+
+schedule seller_mins {
+	0-29 0 * * * 0;
+	30-59 0 * * * -5;
+	0-29 1 * * * -20;
+	30-59 1 * * * -27;
+	0-29 2 * * * -30;
+	30-59 2 * * * -5;
+	
+	0-29 3 * * * -13;
+	30-59 3 * * * -37;
+	0-29 4 * * * -24;
+	30-59 4 * * * -17;
+	0-29 5 * * * -30;
+	30-59 5 * * * -3;
+	
+	0-29 6 * * * -3;
+	30-59 6 * * * -30;
+	0-29 7 * * * 11;
+	30-59 7 * * * -40;
+	0-29 8 * * * 35;
+	30-59 8 * * * -3;
+	
+	0-29 9 * * * -32;
+	30-59 9 * * * 17;
+	0-29 10 * * * -30;
+	30-59 10 * * * -32;
+	0-29 11 * * * -57;
+	30-59 11 * * * 3;
+	
+	0-29 12 * * * -10;
+	30-59 12 * * * 3;
+	0-29 13 * * * -73;
+	30-59 13 * * * -3;
+	0-29 14 * * * 7;
+	30-59 14 * * * -45;
+	* 15-23 * * * -45;
+}
+
+class auction {
+    double current_price_mean_24h;
+	double current_price_stdev_24h;
+}
+
+object auction {
+	name Market_1;
+
+	unit MWh;
+	period 1800;
+	verbose TRUE;
+	special_mode NONE;
+	warmup 0;
+	init_price 0;
+	init_stdev 1e-6;
+	price_cap 9999;
+	object multi_recorder {
+		property current_market.clearing_price,current_market.clearing_quantity,current_market.clearing_type,current_price_mean_24h,current_price_stdev_24h,buyer1:price,buyer1:quantity,buyer2:price,buyer2:quantity,buyer3:price,buyer3:quantity,seller1:price,seller1:quantity,seller2:price,seller2:quantity,seller3:price,seller3:quantity,price_cap,current_market.marginal_quantity;
+		file "test_markets_auction_negative_price_bids_output.csv";
+		interval 1800;
+		limit 168;
+	};
+	object double_assert {
+		value clearing_prices*1;
+		within 1e-4;
+		target "current_market.clearing_price";
+	};
+	object double_assert {
+		value clearing_quantities*1;
+		within 1e-5;
+		target "current_market.clearing_quantity";
+	};
+	object enum_assert {
+		target "current_market.clearing_type";
+		object player {
+			property value;
+			file ../negative_price_bids.player;	//negative_price_bids.player;
+			loop 1;
+		};
+	};
+	object double_assert {
+		in '2001-01-01 00:30:00';
+		value marginal_quantities*1;
+		target "current_market.marginal_quantity";
+		within 1e-5;
+	};
+	object double_assert {
+		value seller_totals*1;
+		target "current_market.seller_total_quantity";
+		within 1e-5;
+	};
+	object double_assert {
+		value buyer_totals*1;
+		target "current_market.buyer_total_quantity";
+		within 1e-5;
+	};
+	object double_assert {
+		value seller_mins*1;
+		target "current_market.seller_min_price";
+		within 1e-5;
+	};
+}
+
+object stub_bidder {
+	name buyer1;
+	role BUYER;
+	bid_period 1800;
+	market Market_1;
+	price buyer1_prices*1;
+	quantity buyer1_quantities*1;
+	count 10000;
+};
+
+object stub_bidder {
+	name buyer2;
+	role BUYER;
+	bid_period 1800;
+	market Market_1;
+	price buyer2_prices*1;
+	quantity buyer2_quantities*1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer3;
+	role BUYER;
+	bid_period 1800;
+	market Market_1;
+	price buyer3_prices*1;
+	quantity buyer3_quantities*1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller1;
+	role SELLER;
+	bid_period 1800;
+	market Market_1;
+	price seller1_prices*1;
+	quantity seller1_quantities*1;
+	count 10000;
+};
+
+object stub_bidder {
+	name seller2;
+	role SELLER;
+	bid_period 1800;
+	market Market_1;
+	price seller2_prices*1;
+	quantity seller2_quantities*1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller3;
+	role SELLER;
+	bid_period 1800;
+	market Market_1;
+	price seller3_prices*1;
+	quantity seller3_quantities*1;
+	count 10000;
+}
+

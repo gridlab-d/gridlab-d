@@ -1,0 +1,109 @@
+//This file tests that the appropriate variables
+//are set correctly when the market fails to clear
+//because there are no sellers (NULL clearing type)
+
+//Bidding period: 3600 s
+//Buyer1: bid 31, quantity: 5, period: 3600 s
+//Buyer2: bid 47, quantity: 5, period: 3600 s
+//Buyer3: bid 63, quantity: 5, period: 3600 s
+
+//Expected clearing price: 63.0001
+//Expected clearing quantity: 0
+
+//There are no sellers so clearing price will be
+//set 1 cent above the highest buyer bid
+
+#set tmp=../test_markets_auction_no_sellers
+#setenv GRIDLABD=../../../core
+
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+module market;
+module tape;
+module assert;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-03 00:00:00';
+}
+
+class auction {
+    double current_price_mean_24h;
+	double current_price_stdev_24h;
+}
+
+object auction {
+	name Market_1;
+
+	unit MWh;
+	period 3600;
+	verbose TRUE;
+	special_mode NONE;
+	warmup 0;
+	init_price 63.0001;
+	init_stdev 1e-6;
+	object multi_recorder {
+		property current_market.clearing_price,current_market.clearing_quantity,current_market.clearing_type,current_price_mean_24h,current_price_stdev_24h,buyer1:price,buyer1:quantity,buyer2:price,buyer2:quantity,buyer3:price,buyer3:quantity;
+		file "test_markets_auction_no_sellers_output.csv";
+		interval 3600;
+		limit 168;
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 63.0001;
+		within 1e-4;
+		target "current_market.clearing_price";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 0;
+		within 1e-5;
+		target "current_market.clearing_quantity";
+	};
+	object double_assert {
+		value 63.0001;
+		within 1e-4;
+		target "current_price_mean_24h";
+	};
+	object double_assert {
+		value 0;
+		within 1e-5;
+		target "current_price_stdev_24h";
+	};
+	object enum_assert {
+		in '2001-01-01 01:00:00';
+		value 0;	//NULL type
+		target "current_market.clearing_type";
+	};
+}
+
+object stub_bidder {
+	name buyer1;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 31;
+	quantity 5;
+	count 10000;
+};
+
+object stub_bidder {
+	name buyer2;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 63;
+	quantity 5;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer3;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 47;
+	quantity 5;
+	count 10000;
+}

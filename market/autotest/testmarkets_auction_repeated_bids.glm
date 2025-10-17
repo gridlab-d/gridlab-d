@@ -1,0 +1,415 @@
+//This file tests that the clearing prices are valid when
+//two buyers (first 12 hours) and two sellers (last 12 hours)
+//submit same price bids
+
+//repeated buyers
+
+//marginal price
+//clearing price: 25, clearing quantity: 15
+//Buyer1: bid 30, quantity: 5
+//Buyer2: bid 30, quantity: 5
+//Buyer3: bid 40, quantity: 5
+//Seller1: bid 20, quantity: 10
+//Seller2: bid 10, quantity: 5
+//Seller3: bid 50, quantity: 5
+
+//exact
+//clearing price: 20, clearing quantity: 15
+//Buyer1: bid 20, quantity: 5
+//Buyer2: bid 20, quantity: 5
+//Buyer3: bid 30, quantity: 5
+//Seller1: bid 20, quantity: 10
+//Seller2: bid 10, quantity: 5
+//Seller3: bid 40, quantity: 5
+
+//marginal buyer, exactly 1 buyer quantity
+//clearing price: 30, clearing quantity: 5
+//Buyer1: bid 30, quantity: 5
+//Buyer2: bid 30, quantity: 5
+//Buyer3: bid 20, quantity: 5
+//Seller1: bid 40, quantity: 5
+//Seller2: bid 10, quantity: 5
+//Seller3: bid 50, quantity: 5
+
+//marginal buyer, less than 1 buyer quantity
+//clearing price: 30, clearing quantity: 8
+//Buyer1: bid 30, quantity: 5
+//Buyer2: bid 30, quantity: 5
+//Buyer3: bid 50, quantity: 5
+//Seller1: bid 20, quantity: 3
+//Seller2: bid 10, quantity: 5
+//Seller3: bid 40, quantity: 5
+
+//marginal buyer, more than 1 buyer quantity
+//clearing price: 30, clearing quantity: 12
+//Buyer1: bid 30, quantity: 5
+//Buyer2: bid 30, quantity: 5
+//Buyer3: bid 50, quantity: 5
+//Seller1: bid 20, quantity: 7
+//Seller2: bid 10, quantity: 5
+//Seller3: bid 40, quantity: 5
+
+//marginal seller
+//clearing price: 30, clearing quantity: 10
+//Buyer1: bid 40, quantity: 5
+//Buyer2: bid 40, quantity: 5
+//Buyer3: bid 20, quantity: 5
+//Seller1: bid 10, quantity: 7
+//Seller2: bid 30, quantity: 5
+//Seller3: bid 50, quantity: 5
+
+//repeated sellers
+
+//marginal price
+//clearing price: 25, clearing quantity: 15
+//Buyer1: bid 30, quantity: 10
+//Buyer2: bid 40, quantity: 5
+//Buyer3: bid 5, quantity: 5
+//Seller1: bid 10, quantity: 5
+//Seller2: bid 20, quantity: 5
+//Seller3: bid 20, quantity: 5
+
+//exact
+//clearing price: 20, clearing quantity: 15
+//Buyer1: bid 20, quantity: 10
+//Buyer2: bid 30, quantity: 5
+//Buyer3: bid 5, quantity: 5
+//Seller1: bid 10, quantity: 5
+//Seller2: bid 20, quantity: 5
+//Seller3: bid 20, quantity: 5
+
+//marginal seller, exactly 1 buyer quantity
+//clearing price: 30, clearing quantity: 10
+//Buyer1: bid 40, quantity: 5
+//Buyer2: bid 50, quantity: 5
+//Buyer3: bid 20, quantity: 5
+//Seller1: bid 10, quantity: 5
+//Seller2: bid 30, quantity: 5
+//Seller3: bid 30, quantity: 5
+
+//marginal seller, less than 1 buyer quantity
+//clearing price: 30, clearing quantity: 8
+//Buyer1: bid 40, quantity: 3
+//Buyer2: bid 50, quantity: 5
+//Buyer3: bid 20, quantity: 5
+//Seller1: bid 10, quantity: 5
+//Seller2: bid 30, quantity: 5
+//Seller3: bid 30, quantity: 5
+
+//marginal seller, more than 1 buyer quantity
+//clearing price: 30, clearing quantity: 12
+//Buyer1: bid 40, quantity: 7
+//Buyer2: bid 50, quantity: 5
+//Buyer3: bid 20, quantity: 5
+//Seller1: bid 10, quantity: 5
+//Seller2: bid 30, quantity: 5
+//Seller3: bid 30, quantity: 5
+
+//marginal buyer
+//clearing price: 30, clearing quantity: 5
+//Buyer1: bid 50, quantity: 3
+//Buyer2: bid 30, quantity: 5
+//Buyer3: bid 20, quantity: 5
+//Seller1: bid 10, quantity: 5
+//Seller2: bid 40, quantity: 5
+//Seller3: bid 40, quantity: 5
+
+#set tmp=../test_markets_auction_repeated_bids
+#setenv GRIDLABD=../../../core
+
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+module market;
+module tape;
+module assert;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-01 23:00:00';
+}
+
+schedule buyer1_bids {
+	* 0 * * * 30;
+	* 1-2 * * * 20;
+	* 3-4 * * * 30;
+	* 5-6 * * * 30;
+	* 7-8 * * * 30;
+	* 9-10 * * * 40;
+	* 11-12 * * * 30;
+	* 13-14 * * * 20;
+	* 15-16 * * * 40;
+	* 17-18 * * * 40;
+	* 19-20 * * * 40;
+	* 21-23 * * * 50;
+}
+
+schedule buyer1_quantities {
+	* 0 * * * 5;
+	* 1-2 * * * 5;
+	* 3-4 * * * 5;
+	* 5-6 * * * 5;
+	* 7-8 * * * 5;
+	* 9-10 * * * 5;
+	* 11-12 * * * 10;
+	* 13-14 * * * 10;
+	* 15-16 * * * 5;
+	* 17-18 * * * 3;
+	* 19-20 * * * 7;
+	* 21-23 * * * 3;
+}
+
+schedule buyer2_bids {
+	* 0 * * * 30;
+	* 1-2 * * * 20;
+	* 3-4 * * * 30;
+	* 5-6 * * * 30;
+	* 7-8 * * * 30;
+	* 9-10 * * * 40;
+	* 11-12 * * * 40;
+	* 13-14 * * * 30;
+	* 15-16 * * * 50;
+	* 17-18 * * * 50;
+	* 19-20 * * * 50;
+	* 21-23 * * * 30;
+}
+
+schedule buyer3_bids {
+	* 0 * * * 40;
+	* 1-2 * * * 30;
+	* 3-4 * * * 20;
+	* 5-6 * * * 50;
+	* 7-8 * * * 50;
+	* 9-10 * * * 20;
+	* 11-12 * * * 5;
+	* 13-14 * * * 5;
+	* 15-16 * * * 20;
+	* 17-18 * * * 20;
+	* 19-20 * * * 20;
+	* 21-23 * * * 20;
+}
+
+schedule seller1_bids {
+	* 0 * * * 20;
+	* 1-2 * * * 20;
+	* 3-4 * * * 40;
+	* 5-6 * * * 20;
+	* 7-8 * * * 20;
+	* 9-10 * * * 10;
+	* 11-12 * * * 10;
+	* 13-14 * * * 10;
+	* 15-16 * * * 10;
+	* 17-18 * * * 10;
+	* 19-20 * * * 10;
+	* 21-23 * * * 10;
+}
+
+schedule seller1_quantities {
+	* 0 * * * 10;
+	* 1-2 * * * 10;
+	* 3-4 * * * 5;
+	* 5-6 * * * 3;
+	* 7-8 * * * 7;
+	* 9-10 * * * 7;
+	* 11-12 * * * 5;
+	* 13-14 * * * 5;
+	* 15-16 * * * 5;
+	* 17-18 * * * 5;
+	* 19-20 * * * 5;
+	* 21-23 * * * 5;
+}
+
+schedule seller2_bids {
+	* 0 * * * 10;
+	* 1-2 * * * 10;
+	* 3-4 * * * 10;
+	* 5-6 * * * 10;
+	* 7-8 * * * 10;
+	* 9-10 * * * 30;
+	* 11-12 * * * 20;
+	* 13-14 * * * 20;
+	* 15-16 * * * 30;
+	* 17-18 * * * 30;
+	* 19-20 * * * 30;
+	* 21-23 * * * 40;
+}
+
+schedule seller3_bids {
+	* 0 * * * 50;
+	* 1-2 * * * 40;
+	* 3-4 * * * 50;
+	* 5-6 * * * 40;
+	* 7-8 * * * 40;
+	* 9-10 * * * 50;
+	* 11-12 * * * 20;
+	* 13-14 * * * 20;
+	* 15-16 * * * 30;
+	* 17-18 * * * 30;
+	* 19-20 * * * 30;
+	* 21-23 * * * 40;
+}
+
+schedule clearing_prices {
+	* 0-1 * * * 25;
+	* 2-3 * * * 20;
+	* 4-5 * * * 30;
+	* 6-7 * * * 30;
+	* 8-9 * * * 30;
+	* 10-11 * * * 30;
+	* 12-13 * * * 25;
+	* 14-15 * * * 20;
+	* 16-17 * * * 30;
+	* 18-19 * * * 30;
+	* 20-21 * * * 30;
+	* 22-23 * * * 30;
+}
+
+schedule clearing_quantities {
+	* 0-1 * * * 15;
+	* 2-3 * * * 15;
+	* 4-5 * * * 5;
+	* 6-7 * * * 8;
+	* 8-9 * * * 12;
+	* 10-11 * * * 10;
+	* 12-13 * * * 15;
+	* 14-15 * * * 15;
+	* 16-17 * * * 10;
+	* 18-19 * * * 8;
+	* 20-21 * * * 12;
+	* 22-23 * * * 5;
+}
+
+schedule marginal_quantities {
+	* 0-1 * * * 0;
+	* 2-3 * * * 0;
+	* 4-5 * * * 5;
+	* 6-7 * * * 3;
+	* 8-9 * * * 7;
+	* 10-11 * * * 3;
+	* 12-13 * * * 0;
+	* 14-15 * * * 0;
+	* 16-17 * * * 5;
+	* 18-19 * * * 3;
+	* 20-21 * * * 7;
+	* 22-23 * * * 2;
+}
+
+class auction {
+    double current_price_mean_60min;
+	double current_price_stdev_60min;
+}
+
+object auction {
+	name Market_1;
+
+	unit MWh;
+	period 60min;
+	verbose TRUE;
+	special_mode NONE;
+	warmup 0;
+	init_price 25;
+	init_stdev 0;
+	object multi_recorder {
+		property current_market.clearing_price,current_market.clearing_quantity,current_price_mean_60min,current_price_stdev_60min,buyer1:price,buyer1:quantity,buyer2:price,buyer2:quantity,buyer3:price,buyer3:quantity,seller1:price,seller1:quantity,seller2:price,seller2:quantity,seller3:price,seller3:quantity;
+		//property current_market.clearing_price,current_market.clearing_quantity,current_price_mean_60min,current_price_stdev_60min,buyer1:price,buyer2:price,buyer3:price,seller1:price,seller2:price,seller3:price;
+		file "test_markets_auction_repeated_bids_output.csv";
+		interval 60min;
+		limit 168;
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value clearing_prices*1;
+		within 1e-5;
+		target "current_market.clearing_price";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value clearing_quantities*1;
+		within 1e-5;
+		target "current_market.clearing_quantity";
+	};
+	object double_assert {
+		value clearing_prices*1;
+		within 1e-5;
+		target "current_price_mean_60min";
+	};
+	object double_assert {
+		value 0;
+		within 1e-5;
+		target "current_price_stdev_60min";
+	};
+	object enum_assert {
+		target "current_market.clearing_type";
+		object player {
+			property value;
+			file ../repeated_bids.player;	//repeated_bids.player;
+			loop 1;
+		};
+	};
+	object double_assert {
+		value marginal_quantities*1;
+		target "current_market.marginal_quantity";
+		within 1e-5;
+	};
+}
+
+object stub_bidder {
+	name buyer1;
+	role BUYER;
+	bid_period 60min;
+	market Market_1;
+	price buyer1_bids*1;
+	quantity buyer1_quantities*1;
+	count 10000;
+};
+
+object stub_bidder {
+	name buyer2;
+	role BUYER;
+	bid_period 60min;
+	market Market_1;
+	price buyer2_bids*1;
+	quantity 5;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer3;
+	role BUYER;
+	bid_period 60min;
+	market Market_1;
+	price buyer3_bids*1;
+	quantity 5;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller1;
+	role SELLER;
+	bid_period 60min;
+	market Market_1;
+	price seller1_bids*1;
+	quantity seller1_quantities*1;
+	count 10000;
+};
+
+object stub_bidder {
+	name seller2;
+	role SELLER;
+	bid_period 60min;
+	market Market_1;
+	price seller2_bids*1;
+	quantity 5;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller3;
+	role SELLER;
+	bid_period 60min;
+	market Market_1;
+	price seller3_bids*1;
+	quantity 5;
+	count 10000;
+}
+

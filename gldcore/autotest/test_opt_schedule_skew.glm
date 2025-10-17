@@ -1,0 +1,55 @@
+clock {
+	timezone PST+8PDT;
+	starttime '2016-01-01 00:00:00';
+	stoptime '2016-01-02 00:00:00';
+}
+
+module tape;
+module assert;
+
+class test{
+	double x;
+}
+
+schedule skewed_schedule{
+	0-29 * * * * 0.0;
+	30-59 * * * * 1.0;
+}
+
+object test {
+	name runTimeClass;
+	schedule_skew -12;
+	x skewed_schedule*1+0.0;
+//	object recorder{
+//		property x;
+//		file test_schedule_skew_1.player;
+//		interval -1;
+//	};
+	object double_assert {
+		target x;
+		object player {
+			property value;
+			file ../test_schedule_skew_1.player;
+		};
+		within 0.00001;
+	};
+}
+
+object test {
+	name runTimeClass2;
+	schedule_skew 25;
+	x skewed_schedule*1.0+0.0;
+//	object recorder{
+//		property x;
+//		file test_schedule_skew_2.player;
+//		interval -1;
+//	};
+	object double_assert {
+		target x;
+		object player {
+			property value;
+			file ../test_schedule_skew_2.player;
+		};
+		within 0.00001;
+	};
+}

@@ -53,6 +53,14 @@
 
 static FINDTYPE invar_types[] = {FT_ID, FT_SIZE, FT_CLASS, FT_PARENT, FT_RANK, FT_NAME, FT_LAT, FT_LONG, FT_INSVC, FT_OUTSVC, FT_MODULE, FT_ISA, static_cast<FINDTYPE>(0)};
 
+void findlist_destroy(FINDLIST *fl)
+{
+	if (!fl)
+		return;
+	// free any internal nodes if allocated, then:
+	module_free((void **)&fl); // use module_free since allocation used module_malloc
+}
+
 static int compare_int(int64 a, FINDOP op, int64 b)
 {
 	switch (op)
@@ -556,7 +564,7 @@ FINDLIST *find_objects(FINDLIST *volatile start, ...)
 					problem.
 				 */
 				if (start == FL_NEW)
-					module_free(result);
+					module_free((void **)&result);
 				return nullptr;
 			}
 

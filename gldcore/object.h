@@ -212,7 +212,7 @@ public:
 	} find;
 	PROPERTY *(*find_property)(CLASS *, const PROPERTYNAME);
 	void *(*malloc)(size_t);
-	void (*free)(void *);
+	void (*free)(void **);
 	struct
 	{
 		std::shared_ptr<struct s_aggregate> (*create)(char *aggregator, char *group_expression);

@@ -1,0 +1,38 @@
+// Exercise 2.3.3;
+module residential {
+	implicit_enduses NONE;
+}
+module tape;
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2001-01-03 00:00:00 PST';
+}
+
+schedule waterheater_demand_prob {
+	* 5-21 * * * 0.99;
+	* 22-4 * * * 0.01;
+}
+
+class waterheater{
+	loadshape myshape;
+}
+
+object house {
+	object waterheater {
+		myshape "type: pulsed; schedule: waterheater_demand_prob; energy: 1 kWh; count: 6; power: 1.1 kW";
+		impedance_fraction 1.0;
+		water_demand this.myshape;
+		heating_element_capacity 4500;
+		object recorder {
+			file exerces_2_3_3.csv;
+			property power,water_demand,energy;
+			interval 1;
+			limit 86400;
+		};
+		power_factor 0.0;
+		power_fraction 0.0;
+		current_fraction 0.0;
+	};
+}

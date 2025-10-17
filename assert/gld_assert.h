@@ -28,14 +28,19 @@ public:
     GL_ATOMIC(enumeration, relation);
     GL_STRING(char1024,value);
     GL_STRING(char1024,value2);*/
-    g_assert() {}
+    g_assert()
+    {
+        status = g_assert::AS_INIT; // status
+        strcpy(target, "");         // target
+        strcpy(part, "");           // part
+        relation = TCOP_EQ;         // relation
+        strcpy(value, "");          // value
+        strcpy(value2, "");         // value2
+    }
 
     static inline g_assert *get_defaults()
     {
-        if (!defaults)
-        {
-            defaults = new g_assert(); // Initialize lazily
-        }
+
         return defaults;
     }
 
@@ -64,11 +69,14 @@ public:
     // Inline method to return a gld_property object for `status`.
     inline gld_property get_status_property(void)
     {
-        return gld_property(my(), std::string("status").c_str());
+        if (!my())
+            throw std::runtime_error("Invalid object context for retrieving gld_property.");
+        return gld_property(my(), "status");
     }
 
     // Inline method to set the value of `status`.
-    inline void set_status(enumeration p)
+    inline void
+    set_status(enumeration p)
     {
         status = p;
     }
@@ -102,7 +110,9 @@ public:
     // Inline method to return a gld_property object for `relation`.
     inline gld_property get_relation_property(void)
     {
-        return gld_property(my(), std::string("relation").c_str());
+        if (!my())
+            throw std::runtime_error("Invalid object context for retrieving gld_property.");
+        return gld_property(my(), "relation");
     }
 
     // Inline method to set the value of `relation`.
@@ -144,7 +154,7 @@ public:
         { // Check if `my()` returns a valid object
             throw std::runtime_error("Invalid object context for retrieving gld_property.");
         }
-        return gld_property(my(), std::string("value").c_str()); // Duplicate string literal `target`
+        return gld_property(my(), "value"); // Duplicate string literal `target`
     }
 
     // Inline method to set the value of `value`.
@@ -199,7 +209,7 @@ public:
         { // Check if `my()` returns a valid object
             throw std::runtime_error("Invalid object context for retrieving gld_property.");
         }
-        return gld_property(my(), std::string("part").c_str()); // Duplicate string literal `part`
+        return gld_property(my(), "part"); // Duplicate string literal `part`
     }
 
 public:
@@ -233,7 +243,7 @@ public:
         { // Check if `my()` returns a valid object
             throw std::runtime_error("Invalid object context for retrieving gld_property.");
         }
-        return gld_property(my(), std::string("target").c_str()); // Duplicate string literal `target`
+        return gld_property(my(), "target"); // Duplicate string literal `target`
     }
 
 public:
@@ -267,7 +277,7 @@ public:
         { // Check if `my()` returns a valid object
             throw std::runtime_error("Invalid object context for retrieving gld_property.");
         }
-        return gld_property(my(), std::string("value2").c_str()); // Duplicate string literal `value2`
+        return gld_property(my(), "value2"); // Duplicate string literal `value2`
     }
 
 private:

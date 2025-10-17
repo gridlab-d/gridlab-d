@@ -1,0 +1,52 @@
+// $Id$
+//
+// Test of mysql module recorder class
+//
+// This test is design to test the following mysql::recorder functionalities
+// 1) property and unit conversion
+// 2) trigger
+// 3) limit
+// 4) interval
+//
+// In addition, this test verifies the on_init, on_sync and on_term SQL scripts.
+//
+
+#ifdef MYSQL
+
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 00:00:00 PST';
+	stoptime '2000-01-02 00:00:00 PST';
+}
+
+module mysql;
+object database {
+	// use defaults as though replacing a tape module
+	on_init "../test_mysql_recorder_init.sql";
+	on_sync "../test_mysql_recorder_sync.sql";
+	on_term "../test_mysql_recorder_term.sql";
+	sync_interval 1 day; 
+   hostname "localhost";
+   username "gridlabd";
+   password "";
+   schema "gridlabd";
+   port 3306;
+   tz_offset 0;
+}
+
+class test {
+	randomvar x[h];
+}
+
+object test:..2 {
+	x "type:normal(0,1); refresh:1min";
+	object recorder {
+		file `test_recorder_{id}.csv`;
+		property x[min];
+		interval 30s;
+		limit 1000;
+		trigger >50;
+	};
+}
+
+#endif

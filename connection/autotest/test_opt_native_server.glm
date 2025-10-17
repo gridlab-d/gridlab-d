@@ -1,0 +1,27 @@
+// $Id$
+
+module connection
+{
+	security STANDARD;
+	lockout 1 min;
+}
+class test {
+  double x;
+  double y;  
+}
+object test {
+  x 1.23;
+  y 3.45;
+}
+object native {
+	mode SERVER;
+	transport TCP;
+	link "allow:x->var1";
+	link "allow:y<-var2";
+	link "presync:x->var1";
+	link "sync:y<-var2";
+}
+object native {
+	mode SERVER;
+	transport UDP;
+}

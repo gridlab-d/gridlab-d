@@ -1,0 +1,145 @@
+// $Id$
+//
+// This test can be started either from the client or the server script.
+// Each will automatically start the other to provide the other side of
+// the test.  
+//
+
+// specify how long to wait after server start (in seconds)
+#define wait=1
+
+// #ifdef PYTHON
+// // use python server
+// #print Starting pything server...
+// #system start python json_link_demo.py --udp --port=39036
+// #sleep ${wait}000
+// #print Server started...
+// #else
+
+// #ifndef NOSERVER
+// // use gridlabd server
+// #print Starting gridlabd server...
+// #ifdef WINDOWS
+// #system "start ${exename} -D verbose=${verbose} -D debug=${debug} -D NOCLIENT=1 test_json_server.glm"
+// #else
+// #system "${exename} -D verbose=${verbose} -D debug=${debug} -D NOCLIENT=1 test_json_server.glm &"
+// #endif
+// #print Waiting ${wait} seconds...
+// #sleep ${wait}000
+// #print Server started...
+// #endif
+
+// #endif
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-06-25 14:00:00';
+	stoptime '2001-06-25 16:00:00';
+}
+
+#set maximum_synctime=3600;
+module market;
+module climate;
+module tape;
+module connection
+{
+	security STANDARD;
+	lockout 1 min;
+}
+module powerflow;
+module residential {
+	implicit_enduses NONE;
+}
+
+class auction {
+	double current_price_mean_1h;
+	double current_price_stdev_1h;
+}
+
+schedule fixed_prices {
+	0-14 * * * * 100;
+	15-29 * * * * 10;
+	30-44 * * * * 25;
+	45-59 * * * * 112;
+}
+
+object climate {
+	name "Yakima WA";
+	tmyfile "WA-Yakima.tmy2";
+}
+
+object auction {
+	name Market_1;
+	unit MW;
+	period 300;
+	special_mode BUYERS_ONLY;
+	fixed_price fixed_prices*1;
+	warmup 0;
+	init_price 50;
+	init_stdev 15;
+	price_cap 110;
+	object recorder {
+		property current_price_mean_1h,current_price_stdev_1h,market_id,current_market.clearing_price;
+		file test_fncs_msg_client_auction.csv;
+		interval -1;
+	};
+}
+
+object fncs_msg {
+	parent Market_1;
+	name GLD1;
+	publish "presync:Market_1.current_market.clearing_price -> var1; 0";
+	publish "presync:Market_1.market_id -> var2; 0";
+	publish "presync:Market_1.current_price_mean_1h -> var3; 0";
+	publish "presync:Market_1.current_price_stdev_1h -> var4; 0";
+	publish "function:controller/submit_bid_state -> auction/submit_bid_state";
+	subscribe "function:auction/submit_bid_state <- GLD1/submit_bid_state";
+	subscribe "presync:C_1.proxy_clear_price <- GLD1/var1";
+	subscribe "presync:C_1.proxy_market_id <- GLD1/var2";
+	subscribe "presync:C_1.proxy_average <- GLD1/var3";
+	subscribe "presync:C_1.proxy_standard_deviation <- GLD1/var4";
+	option "transport:hostname localhost, port 5570";
+}
+
+object triplex_meter {
+	phases AS;
+	nominal_voltage 120;
+	bustype SWING;
+	object house {
+		name house1;
+		cooling_setpoint 70;
+		heating_setpoint 55;
+		air_temperature 72;
+		object controller {
+			name C_1;
+			bid_id 13;
+			market Market_1;
+			bid_mode PROXY;
+			period 300;
+			average_target current_price_mean_1h;
+			standard_deviation_target current_price_stdev_1h;	
+			control_mode RAMP;
+			target air_temperature;
+			setpoint cooling_setpoint;
+			demand cooling_demand;
+			total total_load;
+			load hvac_load;
+			ramp_low 2;
+			ramp_high 2;
+			range_low -3;
+			range_high 5;
+			proxy_average 50;
+			proxy_standard_deviation 15;
+			proxy_market_id 1;
+			proxy_clear_price 50;
+			proxy_price_cap 110;
+			proxy_market_unit MW;
+			proxy_initial_price 50;
+			object recorder {
+				property proxy_average,proxy_standard_deviation,proxy_market_id,proxy_clear_price;
+				file test_fncs_msg_client_proxy.csv;
+				interval 0;
+			};
+		};
+	};
+}

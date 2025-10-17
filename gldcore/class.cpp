@@ -19,7 +19,7 @@
 #include "gldrandom.h"
 
 #if defined(_WIN32) && !defined(__MINGW32__)
-#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
 #include <winsock2.h>
 #include <windows.h>
@@ -27,8 +27,8 @@
 #define DLEXT ".dll"
 #endif
 #define DLLOAD(P) LoadLibrary(P)
-#define DLSYM(H,S) (void *)GetProcAddress((HINSTANCE)H,S)
-//#define snprintf _snprintf
+#define DLSYM(H, S) (void *)GetProcAddress((HINSTANCE)H, S)
+// #define snprintf _snprintf
 #else /* ANSI */
 #include "dlfcn.h"
 #ifndef DLEXT
@@ -38,8 +38,8 @@
 #define DLEXT ".so"
 #endif
 #endif
-#define DLLOAD(P) dlopen(P,RTLD_LAZY)
-#define DLSYM(H,S) dlsym(H,S)
+#define DLLOAD(P) dlopen(P, RTLD_LAZY)
+#define DLSYM(H, S) dlsym(H, S)
 #endif
 static unsigned int class_count = 0;
 
@@ -48,7 +48,7 @@ extern struct s_property_specs property_type[_PT_LAST];
 
 /* object class list */
 static CLASS *first_class = nullptr; /**< first class in class list */
-static CLASS *last_class = nullptr; /**< last class in class list */
+static CLASS *last_class = nullptr;	 /**< last class in class list */
 
 /** Get the first property in a class's property list.
 	All subsequent properties that have the same class
@@ -71,12 +71,12 @@ static CLASS *last_class = nullptr; /**< last class in class list */
  **/
 PROPERTY *class_get_first_property(CLASS *oclass) /**< the object class */
 {
-	if (oclass==nullptr)
+	if (oclass == nullptr)
 		throw_exception("class_get_first_property(CLASS *oclass=nullptr): oclass is nullptr");
-		/* TROUBLESHOOT
-			A call to <code>class_get_first_property()</code> was made with a nullptr pointer.
-			This is a bug and should be reported.
-		 */
+	/* TROUBLESHOOT
+		A call to <code>class_get_first_property()</code> was made with a nullptr pointer.
+		This is a bug and should be reported.
+	 */
 	return oclass->pmap;
 }
 
@@ -85,7 +85,7 @@ PROPERTY *class_get_first_property(CLASS *oclass) /**< the object class */
  **/
 PROPERTY *class_get_next_property(PROPERTY *prop)
 {
-	if (prop->next && prop->oclass==prop->next->oclass)
+	if (prop->next && prop->oclass == prop->next->oclass)
 		return prop->next;
 	else
 		return nullptr;
@@ -95,15 +95,15 @@ PROPERTY *class_get_next_property(PROPERTY *prop)
 	@return property pointer if found, nullptr if not in class hierarchy
  **/
 const PROPERTY *class_prop_in_class(CLASS *oclass, const PROPERTY *prop)
-//PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop)
+// PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop)
 {
-	if(oclass == prop->oclass)
+	if (oclass == prop->oclass)
 	{
 		return prop;
 	}
 	else
 	{
-		if(oclass->parent != nullptr)
+		if (oclass->parent != nullptr)
 		{
 			return class_prop_in_class(oclass->parent, prop);
 		}
@@ -149,17 +149,17 @@ int property_create(PROPERTY *prop, void *addr)
 /* though improbable, this is to prevent more complicated, specifically crafted
 	inheritence loops.  these should be impossible if a class_register call is
 	immediately followed by a class_define_map call. -d3p988 */
-PROPERTY *class_find_property_rec(CLASS *oclass, 
-                                  const PROPERTYNAME name,
-                                  CLASS *pclass)
+PROPERTY *class_find_property_rec(CLASS *oclass,
+								  const PROPERTYNAME name,
+								  CLASS *pclass)
 {
 	PROPERTY *prop;
-	for (prop=oclass->pmap; prop!=nullptr && prop->oclass==oclass; prop=prop->next)
+	for (prop = oclass->pmap; prop != nullptr && prop->oclass == oclass; prop = prop->next)
 	{
-		if (strcmp(name,prop->name)==0)
+		if (strcmp(name, prop->name) == 0)
 			return prop;
 	}
-	if (oclass->parent==pclass)
+	if (oclass->parent == pclass)
 	{
 		output_error("class_find_property_rec(CLASS *oclass='%s', PROPERTYNAME name='%s', CLASS *pclass='%s') causes an infinite class inheritance loop", oclass->name, name, pclass->name);
 		/*	TROUBLESHOOT
@@ -168,15 +168,14 @@ PROPERTY *class_find_property_rec(CLASS *oclass,
 		 */
 		return nullptr;
 	}
-	else if (oclass->parent!=nullptr)
-		return class_find_property_rec(oclass->parent,name, pclass);
+	else if (oclass->parent != nullptr)
+		return class_find_property_rec(oclass->parent, name, pclass);
 	else
 		return nullptr;
-
 }
 // FIXME: this this supposed to do anything other than return nullptr?
-static PROPERTY *find_header_property(CLASS *oclass, 
-                                      const PROPERTYNAME name)
+static PROPERTY *find_header_property(CLASS *oclass,
+									  const PROPERTYNAME name)
 {
 	PROPERTY *prop = nullptr;
 	return prop;
@@ -186,20 +185,21 @@ static PROPERTY *find_header_property(CLASS *oclass,
 
 	@return a pointer to the PROPERTY, or \p nullptr if the property is not found.
  **/
-PROPERTY *class_find_property(CLASS *oclass,     /**< the object class */
-                              const PROPERTYNAME name) /**< the property name */
+PROPERTY *class_find_property(CLASS *oclass,		   /**< the object class */
+							  const PROPERTYNAME name) /**< the property name */
 {
-	PROPERTY *prop = find_header_property(oclass,name);
-	if ( prop ) return prop;
+	PROPERTY *prop = find_header_property(oclass, name);
+	if (prop)
+		return prop;
 
-	if(oclass == nullptr)
+	if (oclass == nullptr)
 		return nullptr;
 
-	for (prop=oclass->pmap; prop!=nullptr && prop->oclass==oclass; prop=prop->next)
+	for (prop = oclass->pmap; prop != nullptr && prop->oclass == oclass; prop = prop->next)
 	{
-		if (strcmp(name,prop->name)==0)
+		if (strcmp(name, prop->name) == 0)
 		{
-			if (prop->flags&PF_DEPRECATED && !(prop->flags&PF_DEPRECATED_NONOTICE) && !global_suppress_deprecated_messages)
+			if (prop->flags & PF_DEPRECATED && !(prop->flags & PF_DEPRECATED_NONOTICE) && !global_suppress_deprecated_messages)
 			{
 				output_warning("class_find_property(CLASS *oclass='%s', PROPERTYNAME name='%s': property is deprecated", oclass->name, name);
 				/* TROUBLESHOOT
@@ -212,7 +212,7 @@ PROPERTY *class_find_property(CLASS *oclass,     /**< the object class */
 			return prop;
 		}
 	}
-	if (oclass->parent==oclass)
+	if (oclass->parent == oclass)
 	{
 		output_error("class_find_property(oclass='%s', name='%s') causes an infinite class inheritance loop", oclass->name, name);
 		/*	TROUBLESHOOT
@@ -221,77 +221,80 @@ PROPERTY *class_find_property(CLASS *oclass,     /**< the object class */
 		 */
 		return nullptr;
 	}
-	else if (oclass->parent!=nullptr)
-		return class_find_property_rec(oclass->parent,name, oclass);
+	else if (oclass->parent != nullptr)
+		return class_find_property_rec(oclass->parent, name, oclass);
 	else
 		return nullptr;
 }
 
 /** Add a property to a class
  **/
-void class_add_property(CLASS *oclass,  /**< the class to which the property is to be added */
-                        PROPERTY *prop) /**< the property to be added */
+void class_add_property(CLASS *oclass,	/**< the class to which the property is to be added */
+						PROPERTY *prop) /**< the property to be added */
 {
 	PROPERTY *last = oclass->pmap;
-	while (last!=nullptr && last->next!=nullptr)
+	while (last != nullptr && last->next != nullptr)
 		last = last->next;
-	if (last==nullptr)
+	if (last == nullptr)
 		oclass->pmap = prop;
 	else
 		last->next = prop;
 }
 
-/** Add an extended property to a class 
-    @return the property pointer
+/** Add an extended property to a class
+	@return the property pointer
  **/
-PROPERTY *class_add_extended_property(CLASS *oclass,      /**< the class to which the property is to be added */
-                                      char *name,         /**< the name of the property */
-                                      PROPERTYTYPE ptype, /**< the type of the property */
-                                      char *unit)         /**< the unit of the property */
+PROPERTY *class_add_extended_property(CLASS *oclass,	  /**< the class to which the property is to be added */
+									  char *name,		  /**< the name of the property */
+									  PROPERTYTYPE ptype, /**< the type of the property */
+									  char *unit)		  /**< the unit of the property */
 {
-	PROPERTY *prop = (PROPERTY*) malloc(sizeof(PROPERTY));
+	PROPERTY *prop = (PROPERTY *)malloc(sizeof(PROPERTY));
 	UNIT *pUnit = nullptr;
 
-//	TRY {
-//		if (unit)
-//			pUnit = unit_find(unit);
-//	} CATCH (char *msg) {
-//		// will get picked up later
-//	} ENDCATCH;
+	//	TRY {
+	//		if (unit)
+	//			pUnit = unit_find(unit);
+	//	} CATCH (char *msg) {
+	//		// will get picked up later
+	//	} ENDCATCH;
 
-	try {
+	try
+	{
 		if (unit)
 			pUnit = unit_find(unit);
-	} catch (char *msg) {
+	}
+	catch (char *msg)
+	{
 		// will get picked up later
 	};
 
-	if (prop==nullptr)
+	if (prop == nullptr)
 		throw_exception("class_add_extended_property(oclass='%s', name='%s', ...): memory allocation failed", oclass->name, name);
-		/* TROUBLESHOOT
-			The system has run out of memory.  Try making the model smaller and trying again.
-		 */
-	if (ptype<=_PT_FIRST || ptype>=_PT_LAST)
+	/* TROUBLESHOOT
+		The system has run out of memory.  Try making the model smaller and trying again.
+	 */
+	if (ptype <= _PT_FIRST || ptype >= _PT_LAST)
 		throw_exception("class_add_extended_property(oclass='%s', name='%s', ...): property type is invalid", oclass->name, name);
-		/* TROUBLESHOOT
-			The function was called with a property type that is not recognized.  This is a bug that should be reported.
-		 */
-	if (unit!=nullptr && pUnit==nullptr)
+	/* TROUBLESHOOT
+		The function was called with a property type that is not recognized.  This is a bug that should be reported.
+	 */
+	if (unit != nullptr && pUnit == nullptr)
 		throw_exception("class_add_extended_property(oclass='%s', name='%s', ...): unit '%s' is not found", oclass->name, name, unit);
-		/* TROUBLESHOOT
-			The function was called with unit that is defined in units file <code>.../etc/unitfile.txt</code>.  Try using a defined unit or adding
-			the desired unit to the units file and try again.
-		 */
+	/* TROUBLESHOOT
+		The function was called with unit that is defined in units file <code>.../etc/unitfile.txt</code>.  Try using a defined unit or adding
+		the desired unit to the units file and try again.
+	 */
 	memset(prop, 0, sizeof(PROPERTY));
 	prop->access = PA_PUBLIC;
-	prop->addr = (void*)(int64)oclass->size;
+	prop->addr = (void *)(int64)oclass->size;
 	prop->size = 0;
 	prop->delegation = nullptr;
 	prop->flags = PF_EXTENDED;
 	prop->keywords = nullptr;
 	prop->description = nullptr;
 	prop->unit = pUnit;
-	strncpy(prop->name,name,sizeof(prop->name));
+	strncpy(prop->name, name, sizeof(prop->name));
 	prop->next = nullptr;
 	prop->oclass = oclass;
 	prop->ptype = ptype;
@@ -299,12 +302,12 @@ PROPERTY *class_add_extended_property(CLASS *oclass,      /**< the class to whic
 
 	oclass->size += property_type[ptype].size;
 
-	class_add_property(oclass,prop);
+	class_add_property(oclass, prop);
 	return prop;
 }
 
 /** Get the last registered class
-    @return the last class registered
+	@return the last class registered
  **/
 CLASS *class_get_last_class(void)
 {
@@ -324,7 +327,7 @@ unsigned int class_get_count(void)
  **/
 const char *class_get_property_typename(PROPERTYTYPE type) /**< the property type */
 {
-	if (type<=_PT_FIRST || type>=_PT_LAST)
+	if (type <= _PT_FIRST || type >= _PT_LAST)
 		return "//UNDEF//";
 	else
 		return property_type[type].name;
@@ -335,12 +338,11 @@ const char *class_get_property_typename(PROPERTYTYPE type) /**< the property typ
  **/
 const char *class_get_property_typexsdname(PROPERTYTYPE type) /**< the property type */
 {
-	if (type<=_PT_FIRST || type>=_PT_LAST)
+	if (type <= _PT_FIRST || type >= _PT_LAST)
 		return "//UNDEF//";
 	else
 		return property_type[type].xsdname;
 }
-
 
 /** Get the type of a property from its \p name
 	@return the property type
@@ -348,23 +350,23 @@ const char *class_get_property_typexsdname(PROPERTYTYPE type) /**< the property 
 PROPERTYTYPE class_get_propertytype_from_typename(char *name) /**< a string containing the name of the property type */
 {
 	int i;
-	for (i=0; i<sizeof(property_type)/sizeof(property_type[0]); i++)
+	for (i = 0; i < sizeof(property_type) / sizeof(property_type[0]); i++)
 	{
-		if (strcmp(property_type[i].name,name)==0)
+		if (strcmp(property_type[i].name, name) == 0)
 			return static_cast<PROPERTYTYPE>(i);
 	}
 	return PT_void;
 }
 
 /** Convert a string to a property of the given type
-    @return non-zero on success, 0 on failure
+	@return non-zero on success, 0 on failure
  **/
-int class_string_to_propertytype(PROPERTYTYPE type, 
-                                 void *addr, 
-                                 char *value)
+int class_string_to_propertytype(PROPERTYTYPE type,
+								 void *addr,
+								 char *value)
 {
 	if (type > _PT_FIRST && type < _PT_LAST)
-		return (*property_type[type].string_to_data)(value,addr,nullptr);
+		return (*property_type[type].string_to_data)(value, addr, nullptr);
 	else
 		return 0;
 }
@@ -372,12 +374,12 @@ int class_string_to_propertytype(PROPERTYTYPE type,
 	The \p addr must be the physical address in memory.
 	@return the number of value read from the \p value string; 0 on failure
  **/
-int class_string_to_property(PROPERTY *prop, /**< the type of the property at the \p addr */
-                             void *addr,     /**< the address of the property's data */
-                             const char *value)    /**< the string from which the data is read */
+int class_string_to_property(PROPERTY *prop,	/**< the type of the property at the \p addr */
+							 void *addr,		/**< the address of the property's data */
+							 const char *value) /**< the string from which the data is read */
 {
 	if (prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
-		return (*property_type[prop->ptype].string_to_data)(value,addr,prop);
+		return (*property_type[prop->ptype].string_to_data)(value, addr, prop);
 	else
 		return 0;
 }
@@ -387,12 +389,12 @@ int class_string_to_property(PROPERTY *prop, /**< the type of the property at th
 	@return the number character written to \p value
  **/
 int class_property_to_string(PROPERTY *prop, /**< the property type */
-                             void *addr,     /**< the address of the property's data */
-                             char *value,    /**< the value buffer to which the string is to be written */
-                             int size)       /**< the maximum number of characters that can be written to the \p value buffer*/
+							 void *addr,	 /**< the address of the property's data */
+							 char *value,	 /**< the value buffer to which the string is to be written */
+							 int size)		 /**< the maximum number of characters that can be written to the \p value buffer*/
 {
 	int rv = 0;
-	if (prop->ptype==PT_delegated)
+	if (prop->ptype == PT_delegated)
 	{
 		output_error("unable to convert from delegated property value");
 		/*	TROUBLESHOOT
@@ -401,14 +403,15 @@ int class_property_to_string(PROPERTY *prop, /**< the property type */
 		 */
 		return 0;
 	}
-	else if (prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST){
+	else if (prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
+	{
 		// note, need to append unit type
-		rv = (*property_type[prop->ptype].data_to_string)(value,size,addr,prop);
-		if(rv > 0 && prop->unit != 0)
+		rv = (*property_type[prop->ptype].data_to_string)(value, size, addr, prop);
+		if (rv > 0 && prop->unit != 0)
 		{
-			strcat(value+rv," ");
-			strcat(value+rv+1,prop->unit->name);
-			rv += (int)(1+strlen(prop->unit->name));
+			strcat(value + rv, " ");
+			strcat(value + rv + 1, prop->unit->name);
+			rv += (int)(1 + strlen(prop->unit->name));
 		}
 	}
 	else
@@ -418,17 +421,16 @@ int class_property_to_string(PROPERTY *prop, /**< the property type */
 	return rv;
 }
 
-
 /** Register an object class
 	@return the object class; \p nullptr on error \p errno:
 	- \p E2BIG: class name too long
 	- \p ENOMEM: memory allocation failed
 
  **/
-CLASS *class_register(MODULE *module,        /**< the module that implements the class */
-                      const CLASSNAME name,  /**< the class name */
-                      unsigned int size,     /**< the size of the data block */
-                      PASSCONFIG passconfig) /**< the passes for which \p sync should be called */
+CLASS *class_register(MODULE *module,		 /**< the module that implements the class */
+					  const CLASSNAME name,	 /**< the class name */
+					  unsigned int size,	 /**< the size of the data block */
+					  PASSCONFIG passconfig) /**< the passes for which \p sync should be called */
 {
 	CLASS *oclass = class_get_class_from_classname(name);
 
@@ -437,9 +439,9 @@ CLASS *class_register(MODULE *module,        /**< the module that implements the
 	int b = sizeof(property_type[0]);
 	int c = _PT_LAST - _PT_FIRST - 1;
 
-	if (_PT_LAST-_PT_FIRST-1!=sizeof(property_type)/sizeof(property_type[0])) // This is always false.
+	if (_PT_LAST - _PT_FIRST - 1 != sizeof(property_type) / sizeof(property_type[0])) // This is always false.
 	{
-		output_fatal("property_type[] in class.c has an incorrect number of members (%i vs %i)", a/b, c);
+		output_fatal("property_type[] in class.c has an incorrect number of members (%i vs %i)", a / b, c);
 		/* TROUBLESHOOT
 			This error occurs when an improper definition of a class is used.  This is not usually
 			caused by an error in a GLM file but is most likely caused by a bug in a module
@@ -447,42 +449,46 @@ CLASS *class_register(MODULE *module,        /**< the module that implements the
 		 */
 		exit(XC_EXCEPTION);
 	}
-	if (oclass!=nullptr)
+	if (oclass != nullptr)
 	{
-		if(strcmp(oclass->module->name, module->name) == 0){
-			output_error("module %s cannot register class %s, it is already registered by module %s", module->name,name,oclass->module->name);
+		if (strcmp(oclass->module->name, module->name) == 0)
+		{
+			output_error("module %s cannot register class %s, it is already registered by module %s", module->name, name, oclass->module->name);
 			/*	TROUBLESHOOT
 				This error is caused by an attempt to define a new class which is already
 				defined in the module or namespace given.  This is generally caused by
 				bug in a module or an incorrectly defined class.
 			 */
 			return nullptr;
-		} else {
+		}
+		else
+		{
 			output_verbose("module %s is registering a 2nd class %s, previous one in module %s", module->name, name, oclass->module->name);
 		}
 	}
-	if (strlen(name)>=sizeof(oclass->name) )
+	if (strlen(name) >= sizeof(oclass->name))
 	{
 		errno = E2BIG;
 		return 0;
 	}
-	oclass = (CLASS*)malloc(sizeof(CLASS));
-	if (oclass==nullptr)
+	oclass = (CLASS *)malloc(sizeof(CLASS));
+	if (oclass == nullptr)
 	{
 		errno = ENOMEM;
 		return 0;
 	}
-	memset(oclass,0,sizeof(CLASS));
+	memset(oclass, 0, sizeof(CLASS));
 	oclass->magic = CLASSVALID;
-	oclass->id = 	class_count++;
+	oclass->id = class_count++;
 	oclass->module = module;
-	strncpy(oclass->name,name,sizeof(oclass->name));
+	strncpy(oclass->name, name, sizeof(oclass->name));
+	oclass->name[sizeof(oclass->name) - 1] = '\0';
 	oclass->size = size;
 	oclass->passconfig = passconfig;
-	oclass->profiler.numobjs=0;
-	oclass->profiler.count=0;
-	oclass->profiler.clocks=0;
-	if (first_class==nullptr)
+	oclass->profiler.numobjs = 0;
+	oclass->profiler.count = 0;
+	oclass->profiler.clocks = 0;
+	if (first_class == nullptr)
 		first_class = oclass;
 	else
 		last_class->next = oclass;
@@ -504,59 +510,62 @@ CLASS *class_get_first_class(void)
 	@return a pointer to the class registered to that module
 	having that \p name, or \p nullptr if no match found.
  **/
-CLASS *class_get_class_from_classname_in_module(const char *name, MODULE *mod){
+CLASS *class_get_class_from_classname_in_module(const char *name, MODULE *mod)
+{
 	CLASS *oclass = nullptr;
-	if(name == nullptr) return nullptr;
-	if(mod == nullptr) return nullptr;
-	for (oclass=first_class; oclass!=nullptr; oclass=oclass->next)
+	if (name == nullptr)
+		return nullptr;
+	if (mod == nullptr)
+		return nullptr;
+	for (oclass = first_class; oclass != nullptr; oclass = oclass->next)
 	{
-		if(oclass->module == (MODULE *)mod)
-			if(strcmp(oclass->name,name)==0)
+		if (oclass->module == (MODULE *)mod)
+			if (strcmp(oclass->name, name) == 0)
 				return oclass;
 	}
 	return nullptr;
 }
 
 /** Get the number of runtime classes defined
-    @return the number of runtime classes defined
+	@return the number of runtime classes defined
  **/
 size_t class_get_runtimecount(void)
 {
 	CLASS *oclass;
 	size_t count = 0;
-	for ( oclass=first_class ; oclass!=nullptr ; oclass=oclass->next )
+	for (oclass = first_class; oclass != nullptr; oclass = oclass->next)
 	{
-		if ( oclass->has_runtime )
+		if (oclass->has_runtime)
 			count++;
 	}
 	return count;
 }
 
 /** Get the first runtime class defined
-    @return the pointer to the first runtime class
+	@return the pointer to the first runtime class
  **/
 CLASS *class_get_first_runtime(void)
 {
 	CLASS *oclass;
-	for ( oclass=first_class ; oclass!=nullptr ; oclass=oclass->next )
+	for (oclass = first_class; oclass != nullptr; oclass = oclass->next)
 	{
-		if ( oclass->has_runtime )
+		if (oclass->has_runtime)
 			return oclass;
 	}
 	return nullptr;
 }
 
 /** Get the next runtime class defined
-    @return the point to the next runtime class
+	@return the point to the next runtime class
  **/
 CLASS *class_get_next_runtime(CLASS *oclass) /**< the class to search from */
 {
-	oclass=oclass->next;
-	while ( oclass!=nullptr )
+	oclass = oclass->next;
+	while (oclass != nullptr)
 	{
-		if ( oclass->has_runtime )
+		if (oclass->has_runtime)
 			return oclass;
-		oclass=oclass->next;
+		oclass = oclass->next;
 	}
 	return nullptr;
 }
@@ -565,9 +574,10 @@ size_t class_get_extendedcount(CLASS *oclass)
 {
 	PROPERTY *prop;
 	size_t count = 0;
-	for ( prop=oclass->pmap ; prop!=nullptr ; prop=prop->next )
+	for (prop = oclass->pmap; prop != nullptr; prop = prop->next)
 	{
-		if ( prop->flags&PF_EXTENDED ) count++;
+		if (prop->flags & PF_EXTENDED)
+			count++;
 	}
 	return count;
 }
@@ -578,31 +588,40 @@ size_t class_get_extendedcount(CLASS *oclass)
  **/
 CLASS *class_get_class_from_classname(const char *name) /**< a pointer to a \p nullptr -terminated string containing the class name */
 {
+	// fprintf(stderr, "Resolving class for classname=%s\n", name);
+	if (!name)
+	{
+		fprintf(stderr, "Error: classname is NULL\n");
+		return nullptr;
+	}
+
 	CLASS *oclass = nullptr;
 	MODULE *mod = nullptr;
 	char *ptr = nullptr;
 	char temp[1024]; /* we get access violations when name is from another DLL. -mh */
 	strcpy(temp, name);
 	ptr = strchr(temp, '.');
-	if(ptr != nullptr){	/* check module for the class */
+	if (ptr != nullptr)
+	{ /* check module for the class */
 		ptr[0] = 0;
 		++ptr;
 		mod = module_find(temp);
-		if(mod == nullptr){
+		if (mod == nullptr)
+		{
 			output_verbose("could not search for '%s.%s', module not loaded", name, ptr);
 			return nullptr;
 		}
-		for (oclass=first_class; oclass!=nullptr; oclass=oclass->next)
+		for (oclass = first_class; oclass != nullptr; oclass = oclass->next)
 		{
-			if(oclass->module == mod)
-				if(strcmp(oclass->name,ptr)==0)
+			if (oclass->module == mod)
+				if (strcmp(oclass->name, ptr) == 0)
 					return oclass;
 		}
 		return nullptr;
 	}
-	for (oclass=first_class; oclass!=nullptr; oclass=oclass->next)
+	for (oclass = first_class; oclass != nullptr; oclass = oclass->next)
 	{
-		if (strcmp(oclass->name,name)==0)
+		if (strcmp(oclass->name, name) == 0)
 			return oclass;
 	}
 	return nullptr;
@@ -644,23 +663,23 @@ CLASS *class_get_class_from_classname(const char *name) /**< a pointer to a \p n
 	- \p EINVAL: keyword is invalid
  **/
 int class_define_map(CLASS *oclass, /**< the object class */
-                     ...) /**< definition arguments (see remarks) */
+					 ...)			/**< definition arguments (see remarks) */
 {
 	va_list arg;
 	PROPERTYTYPE proptype;
-	int count=0;
-	PROPERTY *prop=nullptr;
-	va_start(arg,oclass);
+	int count = 0;
+	PROPERTY *prop = nullptr;
+	va_start(arg, oclass);
 	errno = 0;
 	int prop_buffer;
-	while ((prop_buffer=va_arg(arg,int))!=0)
+	while ((prop_buffer = va_arg(arg, int)) != 0)
 	{
-	    proptype = static_cast<PROPERTYTYPE>(prop_buffer);
-		if (proptype>_PT_LAST)
+		proptype = static_cast<PROPERTYTYPE>(prop_buffer);
+		if (proptype > _PT_LAST)
 		{
-			if (proptype==PT_INHERIT)
+			if (proptype == PT_INHERIT)
 			{
-				if (oclass->parent!=nullptr)
+				if (oclass->parent != nullptr)
 				{
 					errno = EINVAL;
 					output_error("class_define_map(oclass='%s',...): PT_INHERIT unexpected; class already inherits properties from class %s", oclass->name, oclass->parent);
@@ -673,10 +692,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				}
 				else
 				{
-					char *classname = va_arg(arg,char*);
+					char *classname = va_arg(arg, char *);
 					PASSCONFIG no_override;
-					oclass->parent = class_get_class_from_classname_in_module(classname,oclass->module);
-					if (oclass->parent==nullptr)
+					oclass->parent = class_get_class_from_classname_in_module(classname, oclass->module);
+					if (oclass->parent == nullptr)
 					{
 						errno = EINVAL;
 						output_error("class_define_map(oclass='%s',...): parent property class name '%s' is not defined", oclass->name, classname);
@@ -690,7 +709,8 @@ int class_define_map(CLASS *oclass, /**< the object class */
 						 */
 						goto Error;
 					}
-					if (oclass->parent == oclass){
+					if (oclass->parent == oclass)
+					{
 						errno = EINVAL;
 						output_error("class_define_map(oclass='%s',...): parent property class name '%s' attempting to inherit from self!", oclass->name, classname);
 						/*	TROUBLESHOOT
@@ -699,50 +719,42 @@ int class_define_map(CLASS *oclass, /**< the object class */
 						 */
 						goto Error;
 					}
-					no_override = ~(~oclass->parent->passconfig|oclass->passconfig); /* parent bool-implies child (p->q=~p|q) */
-					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT
-							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT)
-							&& no_override&PC_PRETOPDOWN)
+					no_override = ~(~oclass->parent->passconfig | oclass->passconfig); /* parent bool-implies child (p->q=~p|q) */
+					if (oclass->parent->passconfig & PC_UNSAFE_OVERRIDE_OMIT && !(oclass->passconfig & PC_PARENT_OVERRIDE_OMIT) && no_override & PC_PRETOPDOWN)
 						output_warning("class_define_map(oclass='%s',...): class '%s' suppresses parent class '%s' PRETOPDOWN sync behavior by omitting override", oclass->name, oclass->name, oclass->parent->name);
-						/*	TROUBLESHOOT
-							A class is suppressing the <i>presync</i> event implemented by its parent
-							even though the parent is published with a flag that indicates this is unsafe.  Presumably
-							this is deliberate, but the warning is given just in case it's not intended.
-						 */
-					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT
-							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT)
-							&& no_override&PC_BOTTOMUP)
+					/*	TROUBLESHOOT
+						A class is suppressing the <i>presync</i> event implemented by its parent
+						even though the parent is published with a flag that indicates this is unsafe.  Presumably
+						this is deliberate, but the warning is given just in case it's not intended.
+					 */
+					if (oclass->parent->passconfig & PC_UNSAFE_OVERRIDE_OMIT && !(oclass->passconfig & PC_PARENT_OVERRIDE_OMIT) && no_override & PC_BOTTOMUP)
 						output_warning("class_define_map(oclass='%s',...): class '%s' suppresses parent class '%s' BOTTOMUP sync behavior by omitting override", oclass->name, oclass->name, oclass->parent->name);
-						/*	TROUBLESHOOT
-							A class is suppressing the <i>sync</i> event implemented by its parent
-							even though the parent is published with a flag that indicates this is unsafe.  Presumably
-							this is deliberate, but the warning is given just in case it's not intended.
-						 */
-					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT
-							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT)
-							&& no_override&PC_POSTTOPDOWN)
+					/*	TROUBLESHOOT
+						A class is suppressing the <i>sync</i> event implemented by its parent
+						even though the parent is published with a flag that indicates this is unsafe.  Presumably
+						this is deliberate, but the warning is given just in case it's not intended.
+					 */
+					if (oclass->parent->passconfig & PC_UNSAFE_OVERRIDE_OMIT && !(oclass->passconfig & PC_PARENT_OVERRIDE_OMIT) && no_override & PC_POSTTOPDOWN)
 						output_warning("class_define_map(oclass='%s',...): class '%s' suppresses parent class '%s' POSTTOPDOWN sync behavior by omitting override", oclass->name, oclass->name, oclass->parent->name);
-						/*	TROUBLESHOOT
-							A class is suppressing the <i>postsync</i> event implemented by its parent
-							even though the parent is published with a flag that indicates this is unsafe.  Presumably
-							this is deliberate, but the warning is given just in case it's not intended.
-						 */
-					if (oclass->parent->passconfig&PC_UNSAFE_OVERRIDE_OMIT
-							&& !(oclass->passconfig&PC_PARENT_OVERRIDE_OMIT)
-							&& no_override&PC_UNSAFE_OVERRIDE_OMIT)
+					/*	TROUBLESHOOT
+						A class is suppressing the <i>postsync</i> event implemented by its parent
+						even though the parent is published with a flag that indicates this is unsafe.  Presumably
+						this is deliberate, but the warning is given just in case it's not intended.
+					 */
+					if (oclass->parent->passconfig & PC_UNSAFE_OVERRIDE_OMIT && !(oclass->passconfig & PC_PARENT_OVERRIDE_OMIT) && no_override & PC_UNSAFE_OVERRIDE_OMIT)
 						output_warning("class_define_map(oclass='%s',...): class '%s' does not assert UNSAFE_OVERRIDE_OMIT when parent class '%s' does", oclass->name, oclass->name, oclass->parent->name);
-						/*	TROUBLESHOOT
-							A class is not asserting that it is unsafe to suppress synchronization behavior
-							but its parent does assert that this is unsafe.  This permits stealth omission
-							by any classes that inherits behavior from this class and the warning is given
-							in case this is not intended.
-						 */
+					/*	TROUBLESHOOT
+						A class is not asserting that it is unsafe to suppress synchronization behavior
+						but its parent does assert that this is unsafe.  This permits stealth omission
+						by any classes that inherits behavior from this class and the warning is given
+						in case this is not intended.
+					 */
 					count++;
 				}
 			}
 
 			/* this test will catch use of PT_? tokens outside the context of a property */
-			else if (prop==nullptr)
+			else if (prop == nullptr)
 			{
 				errno = EINVAL;
 				output_error("class_define_map(oclass='%s',...): expected keyword missing after '%s'", oclass->name, class_get_property_typename(proptype));
@@ -752,14 +764,14 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				 */
 				goto Error;
 			}
-			else if (proptype==PT_KEYWORD && prop->ptype==PT_enumeration)
+			else if (proptype == PT_KEYWORD && prop->ptype == PT_enumeration)
 			{
-				char *keyword = va_arg(arg,char*);
-				int32 keyvalue = va_arg(arg,int32);
-				if (!class_define_enumeration_member(oclass,prop->name,keyword,keyvalue))
+				char *keyword = va_arg(arg, char *);
+				int32 keyvalue = va_arg(arg, int32);
+				if (!class_define_enumeration_member(oclass, prop->name, keyword, keyvalue))
 				{
 					errno = EINVAL;
-					output_error("class_define_map(oclass='%s',...): property keyword '%s' could not be defined as value %d", oclass->name, keyword,keyvalue);
+					output_error("class_define_map(oclass='%s',...): property keyword '%s' could not be defined as value %d", oclass->name, keyword, keyvalue);
 					/*	TROUBLESHOOT
 						An attempt to define an <i>enumeration</i> property is using a value that cannot be used, either because it is
 						already being used, or because it is outside of range of allowed values for that property.  That is caused
@@ -768,14 +780,14 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					goto Error;
 				}
 			}
-			else if (proptype==PT_KEYWORD && prop->ptype==PT_set)
+			else if (proptype == PT_KEYWORD && prop->ptype == PT_set)
 			{
-				char *keyword = va_arg(arg,char*);
+				char *keyword = va_arg(arg, char *);
 				unsigned int64 keyvalue = va_arg(arg, uint64);
-				if (!class_define_set_member(oclass,prop->name,keyword,keyvalue))
+				if (!class_define_set_member(oclass, prop->name, keyword, keyvalue))
 				{
 					errno = EINVAL;
-					output_error("class_define_map(oclass='%s',...): property keyword '%s' could not be defined as value %d", oclass->name, keyword,keyvalue);
+					output_error("class_define_map(oclass='%s',...): property keyword '%s' could not be defined as value %d", oclass->name, keyword, keyvalue);
 					/*	TROUBLESHOOT
 						An attempt to define an <i>set</i> property is using a value that cannot be used, either because it is
 						already being used, or because it is outside of range of allowed values for that property.  That is caused
@@ -784,11 +796,12 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					goto Error;
 				}
 			}
-			else if (proptype==PT_ACCESS)
+			else if (proptype == PT_ACCESS)
 			{
-                int prop_buffer = va_arg(arg,int);
+				int prop_buffer = va_arg(arg, int);
 				PROPERTYACCESS pa = PROPERTYACCESS(prop_buffer);
-				switch (pa) {
+				switch (pa)
+				{
 				case PA_PUBLIC:
 				case PA_PROTECTED:
 				case PA_PRIVATE:
@@ -807,10 +820,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					break;
 				}
 			}
-			else if (proptype==PT_SIZE)
+			else if (proptype == PT_SIZE)
 			{
-				prop->size = va_arg(arg,uint32);
-				if (prop->size<1)
+				prop->size = va_arg(arg, uint32);
+				if (prop->size < 1)
 				{
 					errno = EINVAL;
 					output_error("class_define_map(oclass='%s',...): property size must be greater than 0", oclass->name, proptype);
@@ -821,80 +834,87 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					goto Error;
 				}
 			}
-			else if (proptype==PT_EXTEND)
+			else if (proptype == PT_EXTEND)
 			{
 				oclass->size += property_type[prop->ptype].size;
 			}
-			else if (proptype==PT_EXTENDBY)
+			else if (proptype == PT_EXTENDBY)
 			{
-				oclass->size += va_arg(arg,unsigned int);
+				oclass->size += va_arg(arg, unsigned int);
 			}
-			else if (proptype==PT_FLAGS)
+			else if (proptype == PT_FLAGS)
 			{
-				prop->flags |= va_arg(arg,unsigned int);
+				prop->flags |= va_arg(arg, unsigned int);
 			}
-			else if (proptype==PT_DEPRECATED)
+			else if (proptype == PT_DEPRECATED)
 			{
 				prop->flags |= PF_DEPRECATED;
 			}
-			else if (proptype==PT_UNITS)
+			else if (proptype == PT_UNITS)
 			{
-				char *unitspec = va_arg(arg,char*);
-//				TRY {
-//					if ((prop->unit = unit_find(unitspec))==nullptr)
-//						throw_exception("unable to define unit '%s'", unitspec);
-//				} CATCH (const char *msg) {
-//						output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized: %s",oclass->name, prop->name,unitspec,msg);
-//						/*	TROUBLESHOOT
-//							A class is attempting to publish a variable using a unit that is not defined.
-//							This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-//							Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
-//							This error immediately follows a throw event with the same message.
-//						 */
-//				} ENDCATCH;
+				char *unitspec = va_arg(arg, char *);
+				//				TRY {
+				//					if ((prop->unit = unit_find(unitspec))==nullptr)
+				//						throw_exception("unable to define unit '%s'", unitspec);
+				//				} CATCH (const char *msg) {
+				//						output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized: %s",oclass->name, prop->name,unitspec,msg);
+				//						/*	TROUBLESHOOT
+				//							A class is attempting to publish a variable using a unit that is not defined.
+				//							This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
+				//							Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
+				//							This error immediately follows a throw event with the same message.
+				//						 */
+				//				} ENDCATCH;
 
-				try {
-					if ((prop->unit = unit_find(unitspec))==nullptr)
+				try
+				{
+					if ((prop->unit = unit_find(unitspec)) == nullptr)
 						throw_exception("unable to define unit '%s'", unitspec);
-				} catch (const char *msg) {
-						output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized: %s",oclass->name, prop->name,unitspec,msg);
-						/*	TROUBLESHOOT
-							A class is attempting to publish a variable using a unit that is not defined.
-							This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-							Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
-							This error immediately follows a throw event with the same message.
-						 */
+				}
+				catch (const char *msg)
+				{
+					output_error("class_define_map(oclass='%s',...): property %s unit '%s' is not recognized: %s", oclass->name, prop->name, unitspec, msg);
+					/*	TROUBLESHOOT
+						A class is attempting to publish a variable using a unit that is not defined.
+						This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
+						Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
+						This error immediately follows a throw event with the same message.
+					 */
 				};
 			}
-			else if (proptype==PT_DESCRIPTION)
+			else if (proptype == PT_DESCRIPTION)
 			{
-				prop->description = va_arg(arg,char*);
+				prop->description = va_arg(arg, char *);
 			}
-			else if(proptype == PT_HAS_NOTIFY || proptype == PT_HAS_NOTIFY_OVERRIDE)
+			else if (proptype == PT_HAS_NOTIFY || proptype == PT_HAS_NOTIFY_OVERRIDE)
 			{
 				char notify_fname[256];
 				sprintf(notify_fname, "notify_%s_%s", prop->oclass->name, prop->name);
 				prop->notify = (FUNCTIONADDR)DLSYM(prop->oclass->module->hLib, notify_fname);
-				if(prop->notify == 0){
+				if (prop->notify == 0)
+				{
 					errno = EINVAL;
 					output_error("Unable to find function '%s' in %s module", notify_fname, prop->oclass->module->name);
 					goto Error;
 				}
-				if(proptype == PT_HAS_NOTIFY_OVERRIDE){
+				if (proptype == PT_HAS_NOTIFY_OVERRIDE)
+				{
 					prop->notify_override = true;
-				} else {
+				}
+				else
+				{
 					prop->notify_override = false;
 				}
 			}
 			else
 			{
 				char tcode[32];
-				const char *ptypestr=class_get_property_typename(proptype);
-				sprintf(tcode,"%d",proptype);
-				if (strcmp(ptypestr,"//UNDEF//")==0)
+				const char *ptypestr = class_get_property_typename(proptype);
+				sprintf(tcode, "%d", proptype);
+				if (strcmp(ptypestr, "//UNDEF//") == 0)
 					ptypestr = tcode;
 				errno = EINVAL;
-				output_error("class_define_map(oclass='%s',...): unrecognized extended property (PROPERTYTYPE=%s)", oclass->name, ptypestr?ptypestr:tcode);
+				output_error("class_define_map(oclass='%s',...): unrecognized extended property (PROPERTYTYPE=%s)", oclass->name, ptypestr ? ptypestr : tcode);
 				/*	TROUBLESHOOT
 					A property extension given in a published class specification uses a property type (PT_*) is that not valid.
 					This is caused by a problem in the module that publishes the class.
@@ -902,11 +922,11 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				goto Error;
 			}
 		}
-		else if (proptype==PT_enduse) /// @todo class_define_map support for enduse has to be done explicitly until structures are supported
+		else if (proptype == PT_enduse) /// @todo class_define_map support for enduse has to be done explicitly until structures are supported
 		{
-			char *name = va_arg(arg,char*);
-			PROPERTYADDR addr = va_arg(arg,PROPERTYADDR);
-			if (enduse_publish(oclass,addr,name)<=0)
+			char *name = va_arg(arg, char *);
+			PROPERTYADDR addr = va_arg(arg, PROPERTYADDR);
+			if (enduse_publish(oclass, addr, name) <= 0)
 			{
 				output_error("class_define_map(oclass='%s',...): substructure of property '%s' substructure could not be published", oclass->name, prop->name);
 				/*	TROUBLESHOOT
@@ -919,10 +939,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 		}
 		else
 		{
-			DELEGATEDTYPE *delegation=(proptype==PT_delegated?va_arg(arg,DELEGATEDTYPE*):nullptr);
-			char *name = va_arg(arg,char*);
-			PROPERTYADDR addr = va_arg(arg,PROPERTYADDR);
-			if (prop!=nullptr && strlen(name)>=sizeof(prop->name))
+			DELEGATEDTYPE *delegation = (proptype == PT_delegated ? va_arg(arg, DELEGATEDTYPE *) : nullptr);
+			char *name = va_arg(arg, char *);
+			PROPERTYADDR addr = va_arg(arg, PROPERTYADDR);
+			if (prop != nullptr && strlen(name) >= sizeof(prop->name))
 			{
 				output_error("class_define_map(oclass='%s',...): property name '%s' is too big", oclass->name, name);
 				/*	TROUBLESHOOT
@@ -933,7 +953,8 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				errno = E2BIG;
 				goto Error;
 			}
-			if (strcmp(name,"parent")==0){
+			if (strcmp(name, "parent") == 0)
+			{
 				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
 				/*	TROUBLESHOOT
 					A class is attempting to publish a variable with a name normally reserved for object headers.
@@ -942,66 +963,84 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					simulation behavior.
 				 */
 				goto Error;
-			} else if (strcmp(name,"rank")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
-				/* no need to repeat troubleshoot message */
-				goto Error;
-			} else if (strcmp(name,"clock")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
-				/* no need to repeat troubleshoot message */
-				goto Error;
-			} else if (strcmp(name,"valid_to")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
-				/* no need to repeat troubleshoot message */
-				goto Error;
-			} else if (strcmp(name,"latitude")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
-				/* no need to repeat troubleshoot message */
-				goto Error;
-			} else if (strcmp(name,"longitude")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
-				/* no need to repeat troubleshoot message */
-				goto Error;
-			} else if (strcmp(name,"in_svc")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
-				/* no need to repeat troubleshoot message */
-				goto Error;
-			} else if (strcmp(name,"out_svc")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
-				/* no need to repeat troubleshoot message */
-				goto Error;
-			} else if (strcmp(name,"name")==0) {
-				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
-				/* no need to repeat troubleshoot message */
-				goto Error;
-			} else if (strcmp(name,"flags")==0) {
+			}
+			else if (strcmp(name, "rank") == 0)
+			{
 				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
 				/* no need to repeat troubleshoot message */
 				goto Error;
 			}
-			prop = property_malloc(proptype,oclass,name,addr,delegation);
-			if (prop==nullptr)
+			else if (strcmp(name, "clock") == 0)
+			{
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
+				/* no need to repeat troubleshoot message */
+				goto Error;
+			}
+			else if (strcmp(name, "valid_to") == 0)
+			{
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
+				/* no need to repeat troubleshoot message */
+				goto Error;
+			}
+			else if (strcmp(name, "latitude") == 0)
+			{
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
+				/* no need to repeat troubleshoot message */
+				goto Error;
+			}
+			else if (strcmp(name, "longitude") == 0)
+			{
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
+				/* no need to repeat troubleshoot message */
+				goto Error;
+			}
+			else if (strcmp(name, "in_svc") == 0)
+			{
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
+				/* no need to repeat troubleshoot message */
+				goto Error;
+			}
+			else if (strcmp(name, "out_svc") == 0)
+			{
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
+				/* no need to repeat troubleshoot message */
+				goto Error;
+			}
+			else if (strcmp(name, "name") == 0)
+			{
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
+				/* no need to repeat troubleshoot message */
+				goto Error;
+			}
+			else if (strcmp(name, "flags") == 0)
+			{
+				output_error("class_define_map(oclass='%s',...): property name '%s' conflicts with built-in property", oclass->name, name);
+				/* no need to repeat troubleshoot message */
+				goto Error;
+			}
+			prop = property_malloc(proptype, oclass, name, addr, delegation);
+			if (prop == nullptr)
 				goto Error;
 
-			if ( proptype==PT_method )
+			if (proptype == PT_method)
 			{
 				prop->addr = 0;
 				prop->method = reinterpret_cast<METHODCALL>(addr);
 			}
 
 			/* attach to property list */
-			class_add_property(oclass,prop);
+			class_add_property(oclass, prop);
 			count++;
 
 			/* save property types in case extended property comes up */
-			if (prop->ptype>_PT_LAST)
+			if (prop->ptype > _PT_LAST)
 				prop = nullptr;
 		}
 	}
 	va_end(arg);
 	return count;
 Error:
-	if (prop!=nullptr)
+	if (prop != nullptr)
 		output_error("class_define_map(oclass='%s',...): processed up to '%s' before encountering error", oclass->name, prop->name);
 	return -count;
 }
@@ -1009,16 +1048,17 @@ Error:
 /** Define an enumeration member
 	@return 0 on failure, 1 on success
  **/
-int class_define_enumeration_member(CLASS *oclass, /**< pointer to the class which implements the enumeration */
-                                    const char *property_name, /**< property name of the enumeration */
-                                    const char *member, /**< member name to define */
-                                    enumeration value) /**< enum value to associate with the name */
+int class_define_enumeration_member(CLASS *oclass,			   /**< pointer to the class which implements the enumeration */
+									const char *property_name, /**< property name of the enumeration */
+									const char *member,		   /**< member name to define */
+									enumeration value)		   /**< enum value to associate with the name */
 {
 	PROPERTY *prop = class_find_property(oclass, property_name);
-	KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
-	if (prop==nullptr || key==nullptr) return 0;
+	KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
+	if (prop == nullptr || key == nullptr)
+		return 0;
 	key->next = prop->keywords;
-	strncpy(key->name,member,sizeof(key->name));
+	strncpy(key->name, member, sizeof(key->name));
 	key->value = value;
 	prop->keywords = key;
 	return 1;
@@ -1026,24 +1066,25 @@ int class_define_enumeration_member(CLASS *oclass, /**< pointer to the class whi
 
 /** Define a set member
  **/
-int class_define_set_member(CLASS *oclass, /**< pointer to the class which implements the set */
-                            const char *property_name, /**< property name of the set */
-                            const char *member, /**< member name to define */
-                            unsigned int64 value) /**< set value to associate with the name */
+int class_define_set_member(CLASS *oclass,			   /**< pointer to the class which implements the set */
+							const char *property_name, /**< property name of the set */
+							const char *member,		   /**< member name to define */
+							unsigned int64 value)	   /**< set value to associate with the name */
 {
 	PROPERTY *prop = class_find_property(oclass, property_name);
-	KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
-	if (prop==nullptr || key==nullptr) {
-        delete key;
-        return 0;
-    }
-	if (prop->keywords==nullptr)
+	KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
+	if (prop == nullptr || key == nullptr)
+	{
+		delete key;
+		return 0;
+	}
+	if (prop->keywords == nullptr)
 		prop->flags |= PF_CHARSET; /* enable single character keywords until a long keyword is defined */
 	key->next = prop->keywords;
-	strncpy(key->name,member,sizeof(key->name));
-	key->name[sizeof(key->name)-1]='\0'; /* null terminate name in case is was too long for strncpy */
-	if (strlen(key->name)>1 && (prop->flags&PF_CHARSET)) /* long keyword detected */
-		prop->flags ^= PF_CHARSET; /* disable single character keywords */
+	strncpy(key->name, member, sizeof(key->name));
+	key->name[sizeof(key->name) - 1] = '\0';				 /* null terminate name in case is was too long for strncpy */
+	if (strlen(key->name) > 1 && (prop->flags & PF_CHARSET)) /* long keyword detected */
+		prop->flags ^= PF_CHARSET;							 /* disable single character keywords */
 	key->value = value;
 	prop->keywords = key;
 	return 1;
@@ -1055,7 +1096,20 @@ int class_define_set_member(CLASS *oclass, /**< pointer to the class which imple
 FUNCTION *class_define_function(CLASS *oclass, const FUNCTIONNAME functionname, FUNCTIONADDR call)
 {
 	FUNCTION *func, *tempfunc;
-	if (class_get_function(oclass->name,functionname)!=nullptr)
+
+	// DEBUG: Log the inputs
+	// fprintf(stderr, "class_define_function called with oclass: %s, functionname: %s\n",
+	// 		oclass ? oclass->name : "nullptr", functionname ? functionname : "nullptr");
+
+	// Check if `oclass` is null
+	if (!oclass)
+	{
+		output_error("class_define_function: oclass is nullptr. Ensure class is registered before adding functions.");
+		errno = EINVAL;
+		return nullptr;
+	}
+
+	if (class_get_function(oclass->name, functionname) != nullptr)
 	{
 		output_error("class_define_function(CLASS *class={name='%s',...}, FUNCTIONNAME functionname='%s', ...) the function name has already been defined", oclass->name, functionname);
 		/* TROUBLESHOOT
@@ -1067,28 +1121,49 @@ FUNCTION *class_define_function(CLASS *oclass, const FUNCTIONNAME functionname, 
 		return nullptr;
 	}
 
-	func = (FUNCTION*)malloc(sizeof(FUNCTION));
-	if (func==nullptr)
+	func = (FUNCTION *)malloc(sizeof(FUNCTION));
+	if (func == nullptr)
 	{
 		errno = ENOMEM;
 		return nullptr;
 	}
 	func->addr = call;
-	strcpy(func->name,functionname);
+	strcpy(func->name, functionname);
 	func->next = nullptr;
 	func->oclass = oclass;
-	if (oclass->fmap==nullptr)
+
+	// DEBUG: Log initialization
+	// fprintf(stderr, "Defining function '%s' for class '%s'\n", functionname, oclass->name);
+
+	if (oclass->fmap == nullptr)
+	{
+		// fprintf(stderr, "Initializing fmap for class: %s\n", oclass->name);
+
 		oclass->fmap = func;
+	}
 	else if (oclass->fmap->next == nullptr)
 		oclass->fmap->next = func;
-	else	//More than one attached
+	else // More than one attached
 	{
 		tempfunc = oclass->fmap;
 		while (tempfunc->next != nullptr)
+		{
+			// fprintf(stderr, "Traversing fmap for class '%s': current function: %s\n",
+			// 		oclass->name, tempfunc->name ? tempfunc->name : "nullptr");
 			tempfunc = tempfunc->next;
-
+			if (!tempfunc) // Validate that we don’t hit a corrupted pointer
+			{
+				output_error("class_define_function: Detected corrupted function map (fmap) during traversal for class '%s'", oclass->name);
+				abort(); // Exit immediately if fmap is corrupted
+			}
+		}
+		// Link the new function to the end of the list
+		// fprintf(stderr, "Adding function '%s' to fmap of class '%s'\n", functionname, oclass->name);
 		tempfunc->next = func;
 	}
+
+	// DEBUG: Confirm function added successfully
+	// fprintf(stderr, "Function '%s' successfully added to class '%s'\n", functionname, oclass->name);
 
 	return func;
 }
@@ -1097,13 +1172,38 @@ FUNCTION *class_define_function(CLASS *oclass, const FUNCTIONNAME functionname, 
  */
 FUNCTIONADDR class_get_function(char *classname, const char *functionname)
 {
-	CLASS *oclass = class_get_class_from_classname(classname);
-	FUNCTION *func;
-	for (func=oclass->fmap; func!=nullptr && func->oclass==oclass; func=func->next)
+	// fprintf(stderr, "class_get_function called with classname: %s, functionname: %s\n", classname, functionname);
+
+	if (!classname || !functionname)
 	{
-		if (strcmp(functionname,func->name)==0)
+		return nullptr;
+	}
+
+	if (!functionname)
+	{
+		fprintf(stderr, "Error: functionname is nullptr\n");
+		return nullptr;
+	}
+
+	CLASS *oclass = class_get_class_from_classname(classname);
+	if (!oclass)
+	{
+		return nullptr;
+	}
+	FUNCTION *func = oclass->fmap;
+	if (func == nullptr)
+	{
+		// First function publish for this class — no duplicates yet
+		errno = ENOENT;
+		return nullptr;
+	}
+	for (func = oclass->fmap; func != nullptr && func->oclass == oclass; func = func->next)
+	{
+		if (func->name && strcmp(functionname, func->name) == 0)
 			return func->addr;
 	}
+	// fprintf(stderr, "Function '%s' not found in class '%s'.\n", functionname, classname);
+
 	errno = ENOENT;
 	return nullptr;
 }
@@ -1113,31 +1213,32 @@ FUNCTIONADDR class_get_function(char *classname, const char *functionname)
  **/
 int class_saveall(FILE *fp) /**< a pointer to the stream FILE structure */
 {
-	unsigned count=0;
-	count += fprintf(fp,"\n////////////////////////////////////////////////////////\n");
-	count += fprintf(fp,"// classes\n");
-	{	CLASS	*oclass;
-		for (oclass=class_get_first_class(); oclass!=nullptr; oclass=oclass->next)
+	unsigned count = 0;
+	count += fprintf(fp, "\n////////////////////////////////////////////////////////\n");
+	count += fprintf(fp, "// classes\n");
+	{
+		CLASS *oclass;
+		for (oclass = class_get_first_class(); oclass != nullptr; oclass = oclass->next)
 		{
 			PROPERTY *prop;
 			FUNCTION *func;
-			count += fprintf(fp,"class %s {\n",oclass->name);
+			count += fprintf(fp, "class %s {\n", oclass->name);
 			if (oclass->parent)
-				count += fprintf(fp,"#ifdef INCLUDE_PARENT_CLASS\n\tparent %s;\n#endif\n", oclass->parent->name);
-			for (func=oclass->fmap; func!=nullptr && func->oclass==oclass; func=func->next)
+				count += fprintf(fp, "#ifdef INCLUDE_PARENT_CLASS\n\tparent %s;\n#endif\n", oclass->parent->name);
+			for (func = oclass->fmap; func != nullptr && func->oclass == oclass; func = func->next)
 				count += fprintf(fp, "#ifdef INCLUDE_FUNCTIONS\n\tfunction %s();\n#endif\n", func->name);
-			for (prop=oclass->pmap; prop!=nullptr && prop->oclass==oclass; prop=prop->next)
+			for (prop = oclass->pmap; prop != nullptr && prop->oclass == oclass; prop = prop->next)
 			{
 				const char *ptype = class_get_property_typename(prop->ptype);
-				if ( ptype != nullptr )
+				if (ptype != nullptr)
 				{
-					if ( strchr(prop->name,'.') == nullptr )
-						count += fprintf(fp,"\t%s %s;\n", ptype, prop->name);
+					if (strchr(prop->name, '.') == nullptr)
+						count += fprintf(fp, "\t%s %s;\n", ptype, prop->name);
 					else
-						count += fprintf(fp,"#ifdef INCLUDE_DOTTED_PROPERTIES\t%s %s;\n#endif\n", ptype, prop->name);
+						count += fprintf(fp, "#ifdef INCLUDE_DOTTED_PROPERTIES\t%s %s;\n#endif\n", ptype, prop->name);
 				}
 			}
-			count += fprintf(fp,"}\n");
+			count += fprintf(fp, "}\n");
 		}
 	}
 	return count;
@@ -1148,28 +1249,29 @@ int class_saveall(FILE *fp) /**< a pointer to the stream FILE structure */
  **/
 int class_saveall_xml(FILE *fp) /**< a pointer to the stream FILE structure */
 {
-	unsigned count=0;
-	count += fprintf(fp,"\t<classes>\n");
-	{	CLASS	*oclass;
-		for (oclass=class_get_first_class(); oclass!=nullptr; oclass=oclass->next)
+	unsigned count = 0;
+	count += fprintf(fp, "\t<classes>\n");
+	{
+		CLASS *oclass;
+		for (oclass = class_get_first_class(); oclass != nullptr; oclass = oclass->next)
 		{
 			PROPERTY *prop;
 			FUNCTION *func;
-			count += fprintf(fp,"\t\t<class name=\"%s\">\n",oclass->name);
+			count += fprintf(fp, "\t\t<class name=\"%s\">\n", oclass->name);
 			if (oclass->parent)
-				count += fprintf(fp,"\t\t<parent>%s</parent>\n", oclass->parent->name);
-			for (func=oclass->fmap; func!=nullptr && func->oclass==oclass; func=func->next)
+				count += fprintf(fp, "\t\t<parent>%s</parent>\n", oclass->parent->name);
+			for (func = oclass->fmap; func != nullptr && func->oclass == oclass; func = func->next)
 				count += fprintf(fp, "\t\t<function>%s</function>\n", func->name);
-			for (prop=oclass->pmap; prop!=nullptr && prop->oclass==oclass; prop=prop->next)
+			for (prop = oclass->pmap; prop != nullptr && prop->oclass == oclass; prop = prop->next)
 			{
 				const char *propname = class_get_property_typename(prop->ptype);
-				if (propname!=nullptr)
-					count += fprintf(fp,"\t\t\t<property type=\"%s\">%s</property>\n", propname, prop->name);
+				if (propname != nullptr)
+					count += fprintf(fp, "\t\t\t<property type=\"%s\">%s</property>\n", propname, prop->name);
 			}
-			count += fprintf(fp,"\t\t</class>\n");
+			count += fprintf(fp, "\t\t</class>\n");
 		}
 	}
-	count += fprintf(fp,"\t</classes>\n");
+	count += fprintf(fp, "\t</classes>\n");
 	return count;
 }
 
@@ -1178,52 +1280,54 @@ int class_saveall_xml(FILE *fp) /**< a pointer to the stream FILE structure */
 void class_profiles(void)
 {
 	CLASS *cl;
-	int64 total=0;
-	int count=0, i=0, hits;
+	int64 total = 0;
+	int count = 0, i = 0, hits;
 	CLASS **index;
 	output_profile("Model profiler results");
 	output_profile("======================\n");
 	output_profile("Class            Time (s) Time (%%) msec/obj");
 	output_profile("---------------- -------- -------- --------");
-	for (cl=first_class; cl!=nullptr; cl=cl->next)
+	for (cl = first_class; cl != nullptr; cl = cl->next)
 	{
-		total+=cl->profiler.clocks;
+		total += cl->profiler.clocks;
 		count++;
 	}
-	if(0 == count){
-		return;	// short-circuit
+	if (0 == count)
+	{
+		return; // short-circuit
 	}
-	index = (CLASS**)malloc(sizeof(CLASS*)*count);
-	if(0 == index){
+	index = (CLASS **)malloc(sizeof(CLASS *) * count);
+	if (0 == index)
+	{
 		// error
 		return;
 	}
-	for (cl=first_class; cl!=nullptr; cl=cl->next)
-		index[i++]=cl;
-	hits=-1;
-	while (hits!=0)
+	for (cl = first_class; cl != nullptr; cl = cl->next)
+		index[i++] = cl;
+	hits = -1;
+	while (hits != 0)
 	{
-		hits=0;
-		for (i=0; i<count-1; i++)
+		hits = 0;
+		for (i = 0; i < count - 1; i++)
 		{
-			if (index[i]->profiler.clocks<index[i+1]->profiler.clocks)
+			if (index[i]->profiler.clocks < index[i + 1]->profiler.clocks)
 			{
 				CLASS *tmp = index[i];
-				index[i]=index[i+1];
-				index[i+1]=tmp;
+				index[i] = index[i + 1];
+				index[i + 1] = tmp;
 				hits++;
 			}
 		}
 	}
-	for (i=0; i<count; i++)
+	for (i = 0; i < count; i++)
 	{
 		cl = index[i];
-		if (cl->profiler.clocks>0)
+		if (cl->profiler.clocks > 0)
 		{
-			double ts = (double)cl->profiler.clocks/global_ms_per_second;
-			double tp = (double)cl->profiler.clocks/total*100;
-			double mt = ts/cl->profiler.numobjs*1000;
-			output_profile("%-16.16s %7.3f %8.1f%% %8.1f", cl->name, ts,tp,mt);
+			double ts = (double)cl->profiler.clocks / global_ms_per_second;
+			double tp = (double)cl->profiler.clocks / total * 100;
+			double mt = ts / cl->profiler.numobjs * 1000;
+			output_profile("%-16.16s %7.3f %8.1f%% %8.1f", cl->name, ts, tp, mt);
 		}
 		else
 			break;
@@ -1232,8 +1336,7 @@ void class_profiles(void)
 	index = nullptr;
 	output_profile("================ ======== ======== ========");
 	output_profile("%-16.16s %7.3f %8.1f%% %8.1f\n",
-		"Total", (double)total/global_ms_per_second,100.0,1000*(double)total/global_ms_per_second/object_get_count());
-
+				   "Total", (double)total / global_ms_per_second, 100.0, 1000 * (double)total / global_ms_per_second / object_get_count());
 }
 
 /** Register a type delegation for a property
@@ -1243,31 +1346,31 @@ void class_profiles(void)
 	to routines implemented in a module, instead of in the core.   This allows custom
 	data type to be implemented, including enumerations, sets, and special objects.
  **/
-DELEGATEDTYPE *class_register_type(CLASS *oclass, /**< the object class */
-                                   char *type, /**< the property type */
-                                   int (*from_string)(void*,char*), /**< the converter from string to data */
-                                   int (*to_string)(void*,char*,int)) /**< the converter from data to string */
+DELEGATEDTYPE *class_register_type(CLASS *oclass,						  /**< the object class */
+								   char *type,							  /**< the property type */
+								   int (*from_string)(void *, char *),	  /**< the converter from string to data */
+								   int (*to_string)(void *, char *, int)) /**< the converter from data to string */
 {
-	DELEGATEDTYPE *dt = (DELEGATEDTYPE*)malloc(sizeof(DELEGATEDTYPE));
-	if (dt!=nullptr)
+	DELEGATEDTYPE *dt = (DELEGATEDTYPE *)malloc(sizeof(DELEGATEDTYPE));
+	if (dt != nullptr)
 	{
 		dt->oclass = oclass;
-		strncpy(dt->type,type,sizeof(dt->type));
-		dt->from_string = (int (*)(void*,const char*))from_string;
+		strncpy(dt->type, type, sizeof(dt->type));
+		dt->from_string = (int (*)(void *, const char *))from_string;
 		dt->to_string = to_string;
 	}
 	else
 		output_error("unable to register delegated type (memory allocation failed)");
-		/*	TROUBLESHOOT
-			Property delegation is not supported yet so this should never happen.
-			This is most likely caused by a lack of memory or an unstable system.
-		 */
+	/*	TROUBLESHOOT
+		Property delegation is not supported yet so this should never happen.
+		This is most likely caused by a lack of memory or an unstable system.
+	 */
 	return dt;
 }
 
-int class_add_loadmethod(CLASS *oclass, const char *name, int (*call)(void*,char*))
+int class_add_loadmethod(CLASS *oclass, const char *name, int (*call)(void *, char *))
 {
-	LOADMETHOD *method = (LOADMETHOD*)malloc(sizeof(LOADMETHOD));
+	LOADMETHOD *method = (LOADMETHOD *)malloc(sizeof(LOADMETHOD));
 	method->name = name;
 	method->call = call;
 	method->next = oclass->loadmethods;
@@ -1278,9 +1381,9 @@ int class_add_loadmethod(CLASS *oclass, const char *name, int (*call)(void*,char
 LOADMETHOD *class_get_loadmethod(CLASS *oclass, const char *name)
 {
 	LOADMETHOD *method;
-	for ( method=oclass->loadmethods ; method!=nullptr ; method=method->next )
+	for (method = oclass->loadmethods; method != nullptr; method = method->next)
 	{
-		if ( strcmp(method->name,name)==0 )
+		if (strcmp(method->name, name) == 0)
 			return method;
 	}
 	return nullptr;
@@ -1297,35 +1400,38 @@ int class_define_type(CLASS *oclass, DELEGATEDTYPE *delegation, ...)
 	return 0;
 }
 
-static int check = 0;  /* there must be a better way to do this, but this works. -MH */
+static int check = 0; /* there must be a better way to do this, but this works. -MH */
 
 /**	Writes a formatted string into a temporary buffer prior and verifies that enough space exists prior to writing to the destination.
 	@return the number of characters written to the buffer
  **/
-static int buffer_write(char *buffer, /**< buffer into which string is written */
-                        size_t len,   /**< size of the buffer into which the string is written */
-                        const char *format, /**< format of string to write into buffer, followed by the variable arguments */
-                        ...)
+static int buffer_write(char *buffer,		/**< buffer into which string is written */
+						size_t len,			/**< size of the buffer into which the string is written */
+						const char *format, /**< format of string to write into buffer, followed by the variable arguments */
+						...)
 {
 	char temp[1025];
 	unsigned int count = 0;
 	va_list ptr;
 
-	if(buffer == nullptr)
+	if (buffer == nullptr)
 		return 0;
-	if(len < 1)
+	if (len < 1)
 		return 0;
-	if(check == 0)
+	if (check == 0)
 		return 0;
 
-	va_start(ptr,format);
+	va_start(ptr, format);
 	count = vsprintf(temp, format, ptr);
 	va_end(ptr);
 
-	if(count < len){
+	if (count < len)
+	{
 		strncpy(buffer, temp, count);
 		return count;
-	} else {
+	}
+	else
+	{
 		check = 0;
 		return 0;
 	}
@@ -1335,91 +1441,99 @@ static int buffer_write(char *buffer, /**< buffer into which string is written *
 	@return the number of characters written to the buffer
  **/
 int class_get_xsd(CLASS *oclass, /**< a pointer to the class to convert to XSD */
-				  char *buffer, /**< a pointer to the first character in the buffer */
-				  size_t len) /**< the size of the buffer */
+				  char *buffer,	 /**< a pointer to the first character in the buffer */
+				  size_t len)	 /**< the size of the buffer */
 {
-	size_t n=0;
+	size_t n = 0;
 	PROPERTY *prop;
 	int i;
 	CLASS *oc = oclass;
 	extern KEYWORD oflags[];
-	struct {
+	struct
+	{
 		const char *name;
 		const char *type;
 		KEYWORD *keys;
-	} attribute[]={
-		{"id", "integer",nullptr},
-		{"parent", "string",nullptr},
-		{"rank", "integer",nullptr},
-		{"clock", "string",nullptr},
-		{"valid_to", "string",nullptr},
-		{"latitude", "string",nullptr},
-		{"longitude", "string",nullptr},
-		{"in_svc", "string",nullptr},
-		{"out_svc", "string",nullptr},
-		{"flags", "string",oflags},
+	} attribute[] = {
+		{"id", "integer", nullptr},
+		{"parent", "string", nullptr},
+		{"rank", "integer", nullptr},
+		{"clock", "string", nullptr},
+		{"valid_to", "string", nullptr},
+		{"latitude", "string", nullptr},
+		{"longitude", "string", nullptr},
+		{"in_svc", "string", nullptr},
+		{"out_svc", "string", nullptr},
+		{"flags", "string", oflags},
 	};
 	check = 1;
-	n += buffer_write(buffer+n, len-n, "<xs:element name=\"%s\">\n", oclass->name);
-	n += buffer_write(buffer+n, len-n, "\t<xs:complexType>\n");
-	n += buffer_write(buffer+n, len-n, "\t\t<xs:all>\n");
-	for (i=0; i < sizeof(attribute) / sizeof(attribute[0]); i++)
+	n += buffer_write(buffer + n, len - n, "<xs:element name=\"%s\">\n", oclass->name);
+	n += buffer_write(buffer + n, len - n, "\t<xs:complexType>\n");
+	n += buffer_write(buffer + n, len - n, "\t\t<xs:all>\n");
+	for (i = 0; i < sizeof(attribute) / sizeof(attribute[0]); i++)
 	{
-		n += buffer_write(buffer+n, len-n, "\t\t\t<xs:element name=\"%s\">\n", attribute[i].name);
-		n += buffer_write(buffer+n, len-n, "\t\t\t\t<xs:simpleType>\n");
-		if (attribute[i].keys==nullptr){
-			n += buffer_write(buffer+n, len-n, "\t\t\t\t\t<xs:restriction base=\"xs:%s\"/>\n", attribute[i].type);
+		n += buffer_write(buffer + n, len - n, "\t\t\t<xs:element name=\"%s\">\n", attribute[i].name);
+		n += buffer_write(buffer + n, len - n, "\t\t\t\t<xs:simpleType>\n");
+		if (attribute[i].keys == nullptr)
+		{
+			n += buffer_write(buffer + n, len - n, "\t\t\t\t\t<xs:restriction base=\"xs:%s\"/>\n", attribute[i].type);
 		}
 		else
 		{
 			KEYWORD *key;
-			n += buffer_write(buffer+n, len-n, "\t\t\t\t\t<xs:restriction base=\"xs:string\">\n");
-			n += buffer_write(buffer+n, len-n, "\t\t\t\t\t\t<xs:pattern value=\"");
-			for (key=attribute[i].keys; key!=nullptr; key=key->next){
-				n += buffer_write(buffer+n, len-n, "%s%s", key==attribute[i].keys?"":"|", key->name);
+			n += buffer_write(buffer + n, len - n, "\t\t\t\t\t<xs:restriction base=\"xs:string\">\n");
+			n += buffer_write(buffer + n, len - n, "\t\t\t\t\t\t<xs:pattern value=\"");
+			for (key = attribute[i].keys; key != nullptr; key = key->next)
+			{
+				n += buffer_write(buffer + n, len - n, "%s%s", key == attribute[i].keys ? "" : "|", key->name);
 			}
-			n += buffer_write(buffer+n, len-n, "\"/>\n");
-			n += buffer_write(buffer+n, len-n, "\t\t\t\t\t</xs:restriction>\n");
+			n += buffer_write(buffer + n, len - n, "\"/>\n");
+			n += buffer_write(buffer + n, len - n, "\t\t\t\t\t</xs:restriction>\n");
 		}
-		n += buffer_write(buffer+n, len-n, "\t\t\t\t</xs:simpleType>\n");
-		n += buffer_write(buffer+n, len-n, "\t\t\t</xs:element>\n");
+		n += buffer_write(buffer + n, len - n, "\t\t\t\t</xs:simpleType>\n");
+		n += buffer_write(buffer + n, len - n, "\t\t\t</xs:element>\n");
 	}
-	for(; oc != 0; oc = oc->parent){
-		for (prop=oc->pmap; prop!=nullptr && prop->oclass==oc; prop=prop->next)
+	for (; oc != 0; oc = oc->parent)
+	{
+		for (prop = oc->pmap; prop != nullptr && prop->oclass == oc; prop = prop->next)
 		{
-			const char *proptype=class_get_property_typexsdname(prop->ptype);
-			if (prop->unit!=nullptr){
-				n += buffer_write(buffer+n, len-n, "\t\t\t\t<xs:element name=\"%s\" type=\"xs:string\"/>\n", prop->name);
-			} else {
-				n += buffer_write(buffer+n, len-n, "\t\t\t<xs:element name=\"%s\">\n", prop->name);
-				n += buffer_write(buffer+n, len-n, "\t\t\t\t<xs:simpleType>\n");
-				n += buffer_write(buffer+n, len-n, "\t\t\t\t\t<xs:restriction base=\"xs:%s\">\n", proptype==nullptr?"string":proptype);
-				if (prop->keywords!=nullptr)
+			const char *proptype = class_get_property_typexsdname(prop->ptype);
+			if (prop->unit != nullptr)
+			{
+				n += buffer_write(buffer + n, len - n, "\t\t\t\t<xs:element name=\"%s\" type=\"xs:string\"/>\n", prop->name);
+			}
+			else
+			{
+				n += buffer_write(buffer + n, len - n, "\t\t\t<xs:element name=\"%s\">\n", prop->name);
+				n += buffer_write(buffer + n, len - n, "\t\t\t\t<xs:simpleType>\n");
+				n += buffer_write(buffer + n, len - n, "\t\t\t\t\t<xs:restriction base=\"xs:%s\">\n", proptype == nullptr ? "string" : proptype);
+				if (prop->keywords != nullptr)
 				{
 					KEYWORD *key;
-					n += buffer_write(buffer+n, len-n, "\t\t\t\t\t<xs:pattern value=\"");
-					for (key=prop->keywords; key!=nullptr; key=key->next){
-						n += buffer_write(buffer+n, len-n, "%s%s", key==prop->keywords?"":"|", key->name);
+					n += buffer_write(buffer + n, len - n, "\t\t\t\t\t<xs:pattern value=\"");
+					for (key = prop->keywords; key != nullptr; key = key->next)
+					{
+						n += buffer_write(buffer + n, len - n, "%s%s", key == prop->keywords ? "" : "|", key->name);
 					}
-					n += buffer_write(buffer+n, len-n, "\"/>\n");
+					n += buffer_write(buffer + n, len - n, "\"/>\n");
 				}
-				n += buffer_write(buffer+n, len-n, "\t\t\t\t\t</xs:restriction>\n");
-				n += buffer_write(buffer+n, len-n, "\t\t\t\t</xs:simpleType>\n");
-				n += buffer_write(buffer+n, len-n, "\t\t\t</xs:element>\n");
+				n += buffer_write(buffer + n, len - n, "\t\t\t\t\t</xs:restriction>\n");
+				n += buffer_write(buffer + n, len - n, "\t\t\t\t</xs:simpleType>\n");
+				n += buffer_write(buffer + n, len - n, "\t\t\t</xs:element>\n");
 			}
 		}
 	}
-	n += buffer_write(buffer+n, len-n, "\t\t</xs:all>\n");
-	n += buffer_write(buffer+n, len-n, "\t</xs:complexType>\n");
-	n += buffer_write(buffer+n, len-n, "</xs:element>\n");
+	n += buffer_write(buffer + n, len - n, "\t\t</xs:all>\n");
+	n += buffer_write(buffer + n, len - n, "\t</xs:complexType>\n");
+	n += buffer_write(buffer + n, len - n, "</xs:element>\n");
 	buffer[n] = 0;
-	if(check == 0){
+	if (check == 0)
+	{
 		printf("class_get_xsd() overflowed.\n");
 		buffer[0] = 0;
 		return 0;
 	}
 	return (int)n;
 }
-
 
 /**@}**/

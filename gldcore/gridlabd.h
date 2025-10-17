@@ -560,6 +560,7 @@ inline FUNCTION *gl_publish_function(CLASS *oclass,					  /**< class to which fu
 									 const FUNCTIONNAME functionname, /**< name of function */
 									 FUNCTIONADDR call)				  /**< address of function entry */
 {
+
 	return (*callback->function.define)(oclass, functionname, call);
 }
 inline FUNCTIONADDR gl_get_function(OBJECT *obj, const char *name)
@@ -2577,12 +2578,12 @@ protected: // locking (self)
 			   gld_core::runlock(&my()->lock);
 		   };*/
 		   // inline void wlock(void) { gld_core::wlock(&my()->lock); };
-	// inline void wunlock(void) { gld_core::wunlock(&my()->lock); };
+		   // inline void wunlock(void) { gld_core::wunlock(&my()->lock); };
 protected: // locking (others)
 		   /*inline void rlock(OBJECT *obj) { gld_core::rlock(&obj->lock); };
 		   inline void runlock(OBJECT *obj) { gld_core::runlock(&obj->lock); };*/
 		   // inline void wlock(OBJECT *obj) { gld_core::wlock(&obj->lock); };
-	// inline void wunlock(OBJECT *obj) { gld_core::wunlock(&obj->lock); };
+		   // inline void wunlock(OBJECT *obj) { gld_core::wunlock(&obj->lock); };
 
 protected: // special functions
 	inline bool operator==(gld_object *o) { return o != NULL && my() == o->my(); };
@@ -2600,9 +2601,9 @@ public: // external accessors
 		//	wunlock();
 		//};
 		// template <class T> inline void setp(PROPERTY &prop, T &value) { wlock(); *(T*)(get_addr(my(),&prop)   /*GETADDR(my(), &prop)*/) = value; wunlock(); };
-	/*template <class T> inline void getp(PROPERTY& prop, T& value, gld_rlock&) { value = *(T*)(get_addr(my(), &prop)); };*/
-	// template <class T> inline void getp(PROPERTY &prop, T &value, gld_wlock&) { value=*(T*)(get_addr(my(),&prop)); };
-	// template <class T> inline void setp(PROPERTY &prop, T &value, gld_wlock&) { *(T*)(get_addr(my(),&prop))=value; };
+		/*template <class T> inline void getp(PROPERTY& prop, T& value, gld_rlock&) { value = *(T*)(get_addr(my(), &prop)); };*/
+		// template <class T> inline void getp(PROPERTY &prop, T &value, gld_wlock&) { value=*(T*)(get_addr(my(),&prop)); };
+		// template <class T> inline void setp(PROPERTY &prop, T &value, gld_wlock&) { *(T*)(get_addr(my(),&prop))=value; };
 
 public: // core interface
 	inline int set_dependent(OBJECT *obj) { return callback->object.set_dependent(my(), obj); };

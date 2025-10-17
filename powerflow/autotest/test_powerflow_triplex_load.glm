@@ -1,0 +1,145 @@
+//test_powerflow_triplex_load.glm tests the ZIP load capabilities of triplex_load.
+
+clock {
+	timezone PST+8PDT;
+	starttime '2012-01-01 0:00:00';
+	stoptime '2012-01-01 0:05:00';
+}
+
+module powerflow {
+	solver_method NR;
+};
+module tape;
+module assert;
+
+class player {
+	double value;
+}
+
+object overhead_line_conductor {
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+	name ohlc_100;
+};
+
+object overhead_line_conductor {
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+	name ohlc_101;
+};
+
+object line_spacing {
+	distance_BC 4.5;
+	name ls_200;
+	distance_CN 5.0;
+	distance_AN 5.656854;
+	distance_AB 2.5;
+	distance_BN 4.272002;
+	distance_AC 7.0;
+};
+
+object line_configuration {
+	name lc_300;
+	spacing ls_200;
+	conductor_N ohlc_101;
+	conductor_A ohlc_100;
+	conductor_C ohlc_100;
+	conductor_B ohlc_100;
+};
+
+object triplex_meter {
+	name tpm;
+	phases AS;
+	bustype SWING;
+	voltage_1 124.0+0j;
+	voltage_2 116.0+0j;
+	nominal_voltage 120;
+	object complex_assert {
+		target measured_power;
+		value 3443.480+369.529j;
+		within 0.01;
+	};
+}
+
+object triplex_load {
+	name tpl;
+	phases AS;
+	parent tpm;
+	//circuit 1
+	base_power_1 1000;
+	power_fraction_1 0.625;
+	power_pf_1 0.95;
+	current_fraction_1 0.25;
+	current_pf_1 -0.9;
+	impedance_fraction_1 0.125;
+	impedance_pf_1 1;
+	//circuit 2
+	base_power_2 1000;
+	power_fraction_2 0.2;
+	power_pf_2 0.0;
+	current_fraction_2 0.4;
+	current_pf_2 0.85;
+	impedance_fraction_2 0.4;
+	impedance_pf_2 -0.95;
+	//circuit 12
+	base_power_12 2000;
+	power_fraction_12 0.5;
+	power_pf_12 -0.9;
+	current_fraction_12 0;
+	current_pf_12 0.85;
+	impedance_fraction_12 0.5;
+	impedance_pf_12 0.9;
+	object complex_assert {
+		target constant_power_1;
+		value 593.750+195.156j;
+		within 0.01;
+	};
+	object complex_assert {
+		target constant_power_2;
+		value 0.000+200.000j;
+		within 0.01;
+	};
+	object complex_assert {
+		target constant_power_12;
+		value 900.000-435.890j;
+		within 0.01;
+	};
+	object complex_assert {
+		target constant_current_1;
+		value 1.875+0.908j;
+		within 0.01;
+	};
+	object complex_assert {
+		target constant_current_2;
+		value 2.833-1.756j;
+		within 0.01;
+	};
+	object complex_assert {
+		target constant_current_12;
+		value 0.000+0.000j;
+		within 0.01;
+	};
+	object complex_assert {
+		target constant_impedance_1;
+		value 115.200+0.000j;
+		within 0.01;
+	};
+	object complex_assert {
+		target constant_impedance_2;
+		value 34.200-11.241j;
+		within 0.01;
+	};
+	object complex_assert {
+		target constant_impedance_12;
+		value 51.840+25.107j;
+		within 0.01;
+	};
+}
+
+object multi_recorder {
+	parent tpl;
+	property constant_power_1,constant_power_2,constant_power_12,constant_current_1,constant_current_2,constant_current_12,constant_impedance_1,constant_impedance_2,constant_impedance_12,tpm:measured_power;
+	file test_powerflow_triplex_load.csv;
+	interval 300;
+	limit 13;
+}

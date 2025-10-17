@@ -1,0 +1,27 @@
+// $Id: test_exec_mainloop.glm 4738 2014-07-03 00:55:39Z dchassin $
+//
+// Test to verify that main loop actually ran to completion
+//
+
+module assert;
+
+clock {
+	timezone UTC0;
+	starttime '2000-01-01 00:00:00';
+	stoptime '2000-01-02 00:00:00';
+}
+
+class test {
+	randomvar x;
+}
+
+object test {
+	x "type:normal(1,0); refresh:1h";
+}
+
+script export clock;
+#ifdef WINDOWS
+script on_term if %clock: =_% == 2000-01-02_00:00:00_UTC ( exit 0 ) else ( exit 1 );
+#else
+script on_term "if [ \"$clock\" = \"2000-01-02 00:00:00 UTC\" ]\; then exit 0\; else exit 1\; fi";
+#endif

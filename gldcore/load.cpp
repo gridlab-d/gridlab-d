@@ -5938,7 +5938,7 @@ static int gui(PARSER)
 	{
 		while
 			TERM(gui_entity(HERE, nullptr))
-			ACCEPT;
+		ACCEPT;
 		if (WHITE, LITERAL("}"))
 		{
 			if (gui_wait() == 0)
