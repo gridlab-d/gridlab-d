@@ -120,6 +120,8 @@ def _auto_run(args):
             time_step = args.time_step
             collect_meter_data = True
 
+        sim_time += time_step
+
         # Advance rows through the CSVs to get us set up to read the correct
         # next row. CSVs are one minute (60 seconds) per row and we're advancing
         # one row less than required as we read in the next row at the top of 
