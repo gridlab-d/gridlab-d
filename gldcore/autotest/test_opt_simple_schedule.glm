@@ -1,0 +1,23 @@
+// test schedule transforms
+
+module residential {
+	default_outdoor_temperature 70.5;
+	implicit_enduses NONE;
+}
+module assert;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2009-01-01 0:00:00 PST';
+	stoptime '2009-01-08 0:00:00 PST';
+}
+
+class house {
+	loadshape occupancy;
+}
+
+object house {
+	occupancy "type: scheduled; weekdays: MTWRF; on-time: 7<8~1<9; off-time: 17";
+	// don't really have an idea about an assert to use here
+}
+

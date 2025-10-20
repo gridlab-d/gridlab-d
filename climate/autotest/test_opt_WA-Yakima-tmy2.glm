@@ -1,0 +1,130 @@
+// $Id$
+// automatically generated Thu May  7 09:19:15 PDT 2009 from 24243.tm2
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-01-01 00:00:00';
+	stoptime '2002-01-01 00:00:00';
+}
+module climate;
+module tape;
+module assert;
+class climate {
+	double elevation[m];
+	double tzoffset[h];
+}
+object climate {
+	name "Yakima WA";
+	tmyfile "../WA-Yakima.tmy2"; 
+	tzoffset -8;
+	elevation 325;
+	object double_assert {
+		target "solar_elevation";
+		in '2001-01-01 18:00:00';
+		out '2001-01-01 18:59:00';
+		status ASSERT_TRUE;
+		value -0.448805;
+		within 0.001;
+	};
+	object double_assert {
+		target "solar_zenith";
+		in '2001-06-01 18:00:00';
+		out '2001-06-01 18:59:00';
+		status ASSERT_TRUE;
+		value 1.46326;
+		within 0.001;
+	};
+	object double_assert {
+		target "temperature";
+		in '2001-02-20 23:00:00';
+		out '2001-02-20 23:59:00';
+		status ASSERT_TRUE;
+		value 33.262;
+		within 0.001;
+	};
+	object double_assert {
+		target "humidity";
+		in '2001-01-10 02:00:00';
+		out '2001-01-10 02:59:00';
+		status ASSERT_TRUE;
+		value 0.48;
+		within 0.001;
+	};
+	object double_assert {
+		target "solar_flux";
+		in '2001-01-12 15:00:00';
+		out '2001-01-12 15:59:00';
+		status ASSERT_TRUE;
+		value 4.85153;
+		within 0.001;
+	};
+	object double_assert {
+		target "solar_diffuse";
+		in '2001-05-03 10:00:00';
+		out '2001-05-03 10:59:00';
+		status ASSERT_TRUE;
+		value 29.8219;
+		within 0.001;
+	};
+	object double_assert {
+		target "solar_global";
+		in '2001-03-30 11:00:00';
+		out '2001-03-30 11:59:00';
+		status ASSERT_TRUE;
+		value 63.9173;
+		within 0.001;
+	};
+	object double_assert {
+		target "extraterrestrial_direct_normal";
+		in '2001-05-04 17:00:00';
+		out '2001-05-04 17:59:00';
+		status ASSERT_TRUE;
+		value 124.862;
+		within 0.001;
+	};
+	object double_assert {
+		target "pressure";
+		in '2001-07-27 01:00:00';
+		out '2001-07-27 01:59:00';
+		status ASSERT_TRUE;
+		value 977;
+		within 0.001;
+	};
+	object double_assert {
+		target "wind_speed";
+		in '2001-10-31 03:00:00';
+		out '2001-10-31 03:59:00';
+		status ASSERT_TRUE;
+		value 3.3554;
+		within 0.001;
+	};
+	object double_assert {
+		target "wind_dir";
+		in '2001-04-26 20:00:00';
+		out '2001-04-26 20:59:00';
+		status ASSERT_TRUE;
+		value 250; 
+		within 0.001;
+	};
+	object double_assert {
+		target "solar_horiz";
+		in '2001-06-09 05:00:00';
+		out '2001-06-09 05:59:00';
+		status ASSERT_TRUE;
+		value 16.2855;
+		within 0.001;
+	};
+	object double_assert {
+		target "record.low";
+		status ASSERT_TRUE;
+		value 1.042;
+		within 0.001;
+	};
+	object double_assert {
+		target "rainfall";
+		in '2001-02-19 03:00:00';
+		out '2001-02-19 03:59:00';
+		status ASSERT_TRUE;
+		value 0.23622;
+		within 0.001;
+	};
+}

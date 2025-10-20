@@ -1,0 +1,402 @@
+// test_assert
+
+// set the clock
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00 PST';
+}
+
+// create the test class
+class test {
+	double double_value;
+	complex complex_value;
+	enumeration {EV0=0, EV1=1} enumeration_value;
+	set {SV0=0, SV1=1 } set_value;
+	int16 int16_value;
+	int32 int32_value;
+	int64 int64_value;
+	char8 char8_value;
+	char32 char32_value;
+	char256 char256_value;
+	char1024 char1024_value;
+	object object_value;
+	bool bool_value;
+	timestamp timestamp_value; 
+	enduse enduse_value;
+}
+
+object test {
+	name ref_test;
+	double_value 8.2;
+}
+object test {
+	name ref_none;
+}
+
+module assert;
+
+// double target
+object test {
+	double_value 50;
+	object assert {
+		target "double_value";
+		relation "==";
+		value 50;
+	};
+	object assert {
+		target "double_value";
+		relation "<";
+		value 51;
+	};
+	object assert {
+		target "double_value";
+		relation ">";
+		value 49;
+	};
+	object assert {
+		target "double_value";
+		relation "<=";
+		value 51;
+	};
+	object assert {
+		target "double_value";
+		relation "<=";
+		value 50;
+	};
+	object assert {
+		target "double_value";
+		relation ">=";
+		value 49;
+	};
+	object assert {
+		target "double_value";
+		relation ">=";
+		value 50;
+	};
+	object assert {
+		target "double_value";
+		relation "inside";
+		lower 49;
+		upper 51;
+	};
+	object assert {
+		target "double_value";
+		relation "outside";
+		lower 47;
+		upper 49;
+	};
+	object assert {
+		target "double_value";
+		relation "outside";
+		lower 51;
+		upper 53;
+	};
+}
+
+// complex target
+object test {
+	complex_value 120.0+1j;
+	object assert {
+		target "complex_value";
+		part "real";
+		relation "==";
+		value 120.0;
+	};
+	object assert {
+		target "complex_value";
+		part "imag";
+		relation "==";
+		value 1.0;
+	};
+	object assert {
+		target "complex_value";
+		part "mag";
+		relation ">";
+		value 120.0;
+	};
+	object assert {
+		target "complex_value";
+		part "ang";
+		relation "inside";
+		lower 0.0;
+		upper 2.0;
+	};
+}
+
+// enumeration target
+object test {
+	enumeration_value EV1;
+	object assert {
+		target "enumeration_value";
+		relation "==";
+		value EV1;
+	};
+	object assert {
+		target "enumeration_value";
+		relation "!=";
+		value EV0;
+	};
+}
+
+// set target
+object test {
+	set_value SV1;
+	object assert {
+		target "set_value";
+		relation "==";
+		value SV1;
+	};
+	object assert {
+		target "set_value";
+		relation "!=";
+		value SV0;
+	};
+}
+
+// int16 target
+object test {
+	int16_value 3723;
+	object assert {
+		target "int16_value";
+		relation "==";
+		value 3723;
+	};
+	object assert {
+		target "int16_value";
+		relation "!=";
+		value 3724;
+	};
+}
+
+// int32 target
+object test {
+	int32_value 3723347;
+	object assert {
+		target "int32_value";
+		relation "==";
+		value 3723347;
+	};
+	object assert {
+		target "int32_value";
+		relation "!=";
+		value 3723348;
+	};
+}
+
+// int64 target
+object test {
+	int64_value 37233473424;
+	object assert {
+		target "int64_value";
+		relation "==";
+		value 37233473424;
+	};
+	object assert {
+		target "int64_value";
+		relation "!=";
+		value 37233473425;
+	};
+}
+
+// char8 target
+object test {
+	char8_value "abcdefg";
+	object assert {
+		target "char8_value";
+		relation "==";
+		value "abcdefg";
+	};
+	object assert {
+		target "char8_value";
+		relation "!=";
+		value "abcdefgh";
+	};
+}
+
+// char32 target
+object test {
+	char32_value "abcdefg";
+	object assert {
+		target "char32_value";
+		relation "==";
+		value "abcdefg";
+	};
+	object assert {
+		target "char32_value";
+		relation "!=";
+		value "abcdefgh";
+	};
+}
+
+// char256 target
+object test {
+	char256_value "abcdefg";
+	object assert {
+		target "char256_value";
+		relation "==";
+		value "abcdefg";
+	};
+	object assert {
+		target "char256_value";
+		relation "!=";
+		value "abcdefgh";
+	};
+}
+
+// char1024 target
+object test {
+	char1024_value "abcdefg";
+	object assert {
+		target "char1024_value";
+		relation "==";
+		value "abcdefg";
+	};
+	object assert {
+		target "char1024_value";
+		relation "!=";
+		value "abcdefgh";
+	};
+}
+
+// object target
+object test {
+	object_value ref_test;
+	object assert {
+		target "object_value";
+		relation "==";
+		value ref_test;
+	};
+	object assert {
+		target "object_value";
+		relation "!=";
+		value ref_none;
+	};
+	object assert {
+		target "object_value";
+		part "clock.days";
+		relation "==";
+		value 0;
+	};
+}
+
+// bool target
+object test {
+	bool_value TRUE;
+	object assert {
+		target "bool_value";
+		relation "==";
+		value TRUE;
+	};
+	object assert {
+		target "bool_value";
+		relation "!=";
+		value FALSE;
+	};
+}
+
+// timestamp target
+object test {
+	timestamp_value '2001-02-03 04:56:27 PST';
+	object assert {
+		target "timestamp_value";
+		relation "==";
+		value '2001-02-03 04:56:27 PST';
+	};
+	object assert {
+		target "timestamp_value";
+		relation "!=";
+		value '2001-02-03 04:56:28 PST';
+	};
+	object assert {
+		target "timestamp_value";
+		part "year";
+		relation "==";
+		value 2001;
+	};
+	object assert {
+		target "timestamp_value";
+		part "month";
+		relation "==";
+		value 2;
+	};
+	object assert {
+		target "timestamp_value";
+		part "day";
+		relation "==";
+		value 3;
+	};
+	object assert {
+		target "timestamp_value";
+		part "hour";
+		relation "==";
+		value 4;
+	};
+	object assert {
+		target "timestamp_value";
+		part "minute";
+		relation "==";
+		value 56;
+	};
+	object assert {
+		target "timestamp_value";
+		part "second";
+		relation "==";
+		value 27;
+	};
+}
+
+// enduse target
+object test {
+	object assert {
+		target "enduse_value";
+		part "energy.real";
+		relation "==";
+		value "0.0";
+	};
+	object assert {
+		target "enduse_value";
+		part "energy.real";
+		relation "<=";
+		value "0.0";
+	};
+	object assert {
+		target "enduse_value";
+		part "energy.real";
+		relation "<=";
+		value "1.0";
+	};
+	object assert {
+		target "enduse_value";
+		part "energy.real";
+		relation ">=";
+		value "0.0";
+	};
+	object assert {
+		target "enduse_value";
+		part "energy.real";
+		relation ">";
+		value "-1.0";
+	};
+	object assert {
+		target "enduse_value";
+		part "energy.real";
+		relation "!=";
+		value "1.0";
+	};
+	object assert {
+		target "enduse_value";
+		part "energy.real";
+		relation "inside";
+		lower "0.0";
+		upper "1.0";
+	};
+	object assert {
+		target "enduse_value";
+		part "energy.real";
+		relation "outside";
+		lower "1.0";
+		upper "2.0";
+	};
+}
+		
+// todo int16,int32,int64,string targets

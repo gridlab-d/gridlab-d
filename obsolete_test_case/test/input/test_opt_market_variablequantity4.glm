@@ -1,0 +1,151 @@
+// $Id: test_market_variablequantity4.glm 4738 2014-07-03 00:55:39Z dchassin $
+//	Copyright (C) 2008 Battelle Memorial Institute
+//
+// Variable quantity between 1.5kwh and 2kwh. Price is set at $2/kwh Should clear at (2kwh,$2). 
+
+#set pauseatexit=1
+#define include="C:/Documents and Settings/D3P706/My Documents/GridLab-D/trunk/core"
+
+module market;
+module tape;
+
+clock {
+	timezone "CST+6CDT";
+	timestamp '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:30:00';
+}
+
+object auction {
+	name Market;
+	type DOUBLE;
+	unit "MWh";
+	period 300;
+	latency 86400;
+	object recorder {
+		file "test_market_initial2.csv";
+		property "last.Q,last.P,next.Q,next.P";
+		limit 8760;
+		interval 300;
+	};
+};
+
+class test {
+	int16 count;
+	object market;
+	enumeration {BUYER=0, SELLER=1} role;
+	int32 lastbid_id;
+	int64 lastmkt_id;
+	double price;		//Added in so price can be specified
+	double quantity;	//Added in so quantity can be specified
+	public int64 *thismkt_id;
+	bool flag;
+	function auction::submit_bid;
+	intrinsic create (object parent)
+	{
+		return SUCCESS;
+	};
+	intrinsic init (object parent)
+	{
+		flag = true;
+		lastbid_id = -1;
+		lastmkt_id = -1;
+		if (market==NULL)
+			throw "market is not defined";
+		thismkt_id = (int64*)gl_get_addr(market,"market_id");
+		if (thismkt_id==NULL)
+			throw "market does not define market_id";
+		return SUCCESS;
+	};
+	intrinsic sync (TIMESTAMP t0, TIMESTAMP t1)
+	{
+		//double quantity = gl_random_lognormal(3,1); - specified externally now
+		//double price = gl_random_lognormal(2,1);
+		lastbid_id = (int32)submit_bid(market,my,role==BUYER?-quantity:quantity,price,*thismkt_id!=lastmkt_id?-1:lastbid_id); //if current market id != last market id, submit different bid
+		count--;
+		//if(flag) {
+		//	price -= .05;
+		//	quantity -= .25;
+		//	flag = false;
+		//
+		//};
+		lastmkt_id = *thismkt_id;
+		if (count>0)
+			return t1+300;
+		else
+			return TS_NEVER;
+	};
+}
+
+//Put bidding and selling objects here
+object test {
+	name Bidder1;
+	role BUYER;
+	count 2;
+	market Market;
+	price 1;
+	quantity 1.5;
+}
+
+object test {
+	name Bidder2;
+	role BUYER;
+	count 2;
+	market Market;
+	price 2;
+	quantity 1;
+}
+
+object test {
+	name Bidder3;
+	role BUYER;
+	count 2;
+	market Market;
+	price 3;
+	quantity .5;
+}
+
+object test {
+	name Bidder4;
+	role BUYER;
+	count 2;
+	market Market;
+	price 4;
+	quantity 1;
+}
+
+
+object test {
+	name Seller1;
+	role SELLER;
+	count 2;
+	market Market;
+	price 1;
+	quantity 1;
+}
+
+object test {
+	name Seller2;
+	role SELLER;
+	count 2;
+	market Market;
+	price 2;
+	quantity 1;
+}
+
+object test {
+	name Seller3;
+	role SELLER;
+	count 2;
+	market Market;
+	price 3;
+	quantity 1;
+}
+
+object test {
+	name Seller4;
+	role SELLER;
+	count 2;
+	market Market;
+	price 4;
+	quantity 1;
+}

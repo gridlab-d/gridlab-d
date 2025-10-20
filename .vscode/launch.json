@@ -7,10 +7,10 @@
             "request": "launch",
             "program": "${workspaceFolder}/out/build/wsl2-native/bin/gridlabd",
             "args": [
-                "test_seccntrl_t2IEEE-123_Dynamic.glm",
+                "test_cloud_tmy2.glm",
                 "--verbose"
             ],
-            "cwd": "${workspaceFolder}/generators/autotest/test_seccntrl_t2IEEE-123_Dynamic",
+            "cwd": "${workspaceFolder}/climate/autotest/test_cloud_tmy2",
             "environment": [
                 {
                     "name": "GLPATH",
@@ -41,10 +41,10 @@
             "request": "launch",
             "program": "${workspaceFolder}/out/build/vs-generate-project-files/bin/Debug/gridlabd.exe",
             "args": [
-                "test_seccntrl_t2IEEE-123_Dynamic.glm",
+                "test_inverter_dyn_Imax_PAC.glm",
                 "--verbose"
             ],
-            "cwd": "${workspaceFolder}/generators/autotest/test_seccntrl_t2IEEE-123_Dynamic",
+            "cwd": "${workspaceFolder}/generators/autotest/test_inverter_dyn_Imax_PAC",
             "environment": [
                 {
                     "name": "GLPATH",

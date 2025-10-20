@@ -1,0 +1,22 @@
+clock {
+	starttime '2000-01-01 00:00:00';
+	stoptime '2000-01-01 01:00:00';
+}
+schedule test_normal {
+	normal;
+	0-29 * * * * 0;
+	30-59 * * * * 2;
+}
+class test {
+	double value;
+}
+module assert;
+object test {
+	value test_normal;
+	object assert {
+		target value;
+		relation inside;
+		lower 0;
+		upper +1;
+	};
+}

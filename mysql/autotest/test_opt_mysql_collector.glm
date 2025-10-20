@@ -1,0 +1,47 @@
+// $Id$
+//
+// Test of mysql module collector class
+//
+// This test is design to test the following mysql::collector functionalities
+// 1) property and aggregations
+// 2) group
+// 3) limit
+// 4) interval
+//
+
+#ifdef MYSQL
+
+clock {
+	timezone PST+8PDT;
+	starttime '2000-01-01 00:00:00 PST';
+	stoptime '2000-01-02 00:00:00 PST';
+}
+
+module mysql;
+object database {   
+   hostname "localhost";
+   username "gridlabd";
+   password "";
+   schema "gridlabd";
+   port 3306;
+   tz_offset 0;
+}
+
+class test {
+	randomvar x[h];
+}
+
+object test:..10 {
+	x "type:normal(0,1); refresh:1min";
+}
+
+object collector {
+	property "mean(x),sum(x),count(x),std(x),min(x),max(x)";
+	group "class=test";
+	mode "w";
+	file "test_collector";
+	interval 1min;
+	limit 1000;
+}
+
+#endif

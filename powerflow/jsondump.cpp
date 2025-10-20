@@ -1,6 +1,6 @@
 // $Id: jsondump.cpp
 /**	Copyright (C) 2017 Battelle Memorial Institute
-*/
+ */
 
 #include <cerrno>
 #include <cmath>
@@ -22,34 +22,34 @@ using namespace std;
 // jsondump CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* jsondump::oclass = nullptr;
-
+CLASS *jsondump::oclass = nullptr;
 
 jsondump::jsondump(MODULE *mod)
 {
-	if (oclass==nullptr)
+	if (oclass == nullptr)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"jsondump",sizeof(jsondump),PC_AUTOLOCK);
+		oclass = gl_register_class(mod, "jsondump", sizeof(jsondump), PC_AUTOLOCK);
 
 		if (oclass == nullptr)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_char32,"group",PADDR(group),PT_DESCRIPTION,"the group ID to output data for (all objects if empty)",
-			PT_char256,"filename_dump_system",PADDR(filename_dump_system),PT_DESCRIPTION,"the file to dump the current data into",
-			PT_char256,"filename_dump_reliability",PADDR(filename_dump_reliability),PT_DESCRIPTION,"the file to dump the current data into",
-			PT_timestamp,"runtime",PADDR(runtime),PT_DESCRIPTION,"the time to check voltage data",
-			PT_int32,"runcount",PADDR(runcount),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the number of times the file has been written to",
-			PT_bool,"write_system_info",PADDR(write_system),PT_DESCRIPTION,"Flag indicating whether system information will be written into JSON file or not",
-			PT_bool,"write_reliability",PADDR(write_reliability),PT_DESCRIPTION,"Flag indicating whether reliabililty information will be written into JSON file or not",
-			PT_bool,"write_per_unit",PADDR(write_per_unit),PT_DESCRIPTION,"Output the quantities as per-unit values",
-			PT_double,"system_base[VA]",PADDR(system_VA_base),PT_DESCRIPTION,"System base power rating for per-unit calculations",
-			PT_double,"min_node_voltage[pu]",PADDR(min_volt_value),PT_DESCRIPTION,"Per-unit minimum voltage level allowed for nodes",
-			PT_double,"max_node_voltage[pu]",PADDR(max_volt_value),PT_DESCRIPTION,"Per-unit maximum voltage level allowed for nodes",
+								PT_char32, "group", PADDR(group), PT_DESCRIPTION, "the group ID to output data for (all objects if empty)",
+								PT_char256, "filename_dump_system", PADDR(filename_dump_system), PT_DESCRIPTION, "the file to dump the current data into",
+								PT_char256, "filename_dump_reliability", PADDR(filename_dump_reliability), PT_DESCRIPTION, "the file to dump the current data into",
+								PT_timestamp, "runtime", PADDR(runtime), PT_DESCRIPTION, "the time to check voltage data",
+								PT_int32, "runcount", PADDR(runcount), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the number of times the file has been written to",
+								PT_bool, "write_system_info", PADDR(write_system), PT_DESCRIPTION, "Flag indicating whether system information will be written into JSON file or not",
+								PT_bool, "write_reliability", PADDR(write_reliability), PT_DESCRIPTION, "Flag indicating whether reliabililty information will be written into JSON file or not",
+								PT_bool, "write_per_unit", PADDR(write_per_unit), PT_DESCRIPTION, "Output the quantities as per-unit values",
+								PT_double, "system_base[VA]", PADDR(system_VA_base), PT_DESCRIPTION, "System base power rating for per-unit calculations",
+								PT_double, "min_node_voltage[pu]", PADDR(min_volt_value), PT_DESCRIPTION, "Per-unit minimum voltage level allowed for nodes",
+								PT_double, "max_node_voltage[pu]", PADDR(max_volt_value), PT_DESCRIPTION, "Per-unit maximum voltage level allowed for nodes",
 
-			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+								nullptr) < 1)
+			GL_THROW("unable to publish properties in %s", __FILE__);
 	}
 }
 
@@ -58,8 +58,8 @@ int jsondump::create(void)
 	// Set write flag default as false
 	write_system = false;
 	write_reliability = false;
-	write_per_unit = false;	//By default, do full values
-	system_VA_base = -1.0;		//Flag value
+	write_per_unit = false; // By default, do full values
+	system_VA_base = -1.0;	// Flag value
 
 	group.erase();
 	runcount = 0;
@@ -75,22 +75,24 @@ int jsondump::init(OBJECT *parent)
 	OBJECT *hdr = object_header(this);
 
 	// Check if we need to dump line and line configuration to JSON file
-	if ((filename_dump_system[0] == '\0') && write_system){
+	if ((filename_dump_system[0] == '\0') && write_system)
+	{
 		filename_dump_system = "JSON_dump_line.json";
 	}
 
 	// Check if we need to dump reliability to JSON file
-	if ((filename_dump_reliability[0] == '\0') && write_reliability){
+	if ((filename_dump_reliability[0] == '\0') && write_reliability)
+	{
 		filename_dump_reliability = "JSON_dump_reliability.json";
 	}
 
-	//Check per-unitization
+	// Check per-unitization
 	if ((filename_dump_system[0] != '\0') && write_system && write_per_unit)
 	{
-		//Make sure the base value is proper
+		// Make sure the base value is proper
 		if (system_VA_base <= 0.0)
 		{
-			gl_warning("jsondump:%d-%s -- If per-unit impedance is desired, a valid system_base must be specified - defaulting to 100 MVA",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+			gl_warning("jsondump:%d-%s -- If per-unit impedance is desired, a valid system_base must be specified - defaulting to 100 MVA", hdr->id, (hdr->name ? hdr->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			To use the per-unit functionality of the jsdondump object, a valid system base must be specified (>0.0).  Either none was specified, or an invalid one was specified.
 			As such, the base is adjusted to an assumed base of 100 MVA.  If this is not a valid base, please specify the proper value.
@@ -106,7 +108,7 @@ int jsondump::init(OBJECT *parent)
 
 STATUS jsondump::dump_system(void)
 {
-	//TODO: See if the object arrays need to be maintained/are even needed!
+	// TODO: See if the object arrays need to be maintained/are even needed!
 
 	FINDLIST *ohlines, *tplines, *uglines, *switches, *regulators, *regConfs, *lineConfs, *tpLineConfs, *TransformerList, *TransConfsList, *nodes, *meters, *loads, *inverters, *diesels, *fuses;
 	FINDLIST *reclosers, *sectionalizers;
@@ -126,7 +128,7 @@ STATUS jsondump::dump_system(void)
 	gld::complex *b_mat_pu;
 	bool *b_mat_defined;
 	gld::complex *b_mat_tp_pu;
-	bool  *b_mat_tp_defined;
+	bool *b_mat_tp_defined;
 	gld::complex *b_mat_trans_pu;
 	bool *b_mat_trans_defined;
 	int *trans_phase_count;
@@ -157,50 +159,53 @@ STATUS jsondump::dump_system(void)
 	// Open file for writing
 	ofstream out_file;
 
-	//find the link objects
-	if(group[0] == '\0'){
-		ohlines = gl_find_objects(FL_NEW,FT_CLASS,SAME,"overhead_line",AND,FT_MODULE,SAME,"powerflow",FT_END);				//find all overhead_lines
-		tplines = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_line",AND,FT_MODULE,SAME,"powerflow",FT_END);				//find all triplex_lines
-		uglines = gl_find_objects(FL_NEW,FT_CLASS,SAME,"underground_line",AND,FT_MODULE,SAME,"powerflow",FT_END);			//find all underground_lines
-		switches = gl_find_objects(FL_NEW,FT_CLASS,SAME,"switch",AND,FT_MODULE,SAME,"powerflow",FT_END);					//find all switches
-		sectionalizers = gl_find_objects(FL_NEW,FT_CLASS,SAME,"sectionalizer",AND,FT_MODULE,SAME,"powerflow",FT_END);		//find all sectionalizer
-		reclosers = gl_find_objects(FL_NEW,FT_CLASS,SAME,"recloser",AND,FT_MODULE,SAME,"powerflow",FT_END);					//find all recloser
-		fuses = gl_find_objects(FL_NEW,FT_CLASS,SAME,"fuse",AND,FT_MODULE,SAME,"powerflow",FT_END);							//Find all fuses
-		regulators = gl_find_objects(FL_NEW,FT_CLASS,SAME,"regulator",AND,FT_MODULE,SAME,"powerflow",FT_END);				//find all regulators
-		regConfs = gl_find_objects(FL_NEW,FT_CLASS,SAME,"regulator_configuration",AND,FT_MODULE,SAME,"powerflow",FT_END);	//find all regulator configurations
-		lineConfs = gl_find_objects(FL_NEW,FT_CLASS,SAME,"line_configuration",AND,FT_MODULE,SAME,"powerflow",FT_END);			//find all line configurations
-		tpLineConfs = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_line_configuration",AND,FT_MODULE,SAME,"powerflow",FT_END);//find all triplex line configurations
-		TransConfsList = gl_find_objects(FL_NEW,FT_CLASS,SAME,"transformer_configuration",AND,FT_MODULE,SAME,"powerflow",FT_END);//find all transformer configurations
-		TransformerList = gl_find_objects(FL_NEW,FT_CLASS,SAME,"transformer",AND,FT_MODULE,SAME,"powerflow",FT_END);			//find all transformers
-		nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",AND,FT_MODULE,SAME,"powerflow",FT_END);								//Find all nodes
-		meters = gl_find_objects(FL_NEW,FT_CLASS,SAME,"meter",AND,FT_MODULE,SAME,"powerflow",FT_END);							//Find all meters
-		loads = gl_find_objects(FL_NEW,FT_CLASS,SAME,"load",AND,FT_MODULE,SAME,"powerflow",FT_END);								//Find all loads
+	// find the link objects
+	if (group[0] == '\0')
+	{
+		ohlines = gl_find_objects(FL_NEW, FT_CLASS, SAME, "overhead_line", AND, FT_MODULE, SAME, "powerflow", FT_END);					  // find all overhead_lines
+		tplines = gl_find_objects(FL_NEW, FT_CLASS, SAME, "triplex_line", AND, FT_MODULE, SAME, "powerflow", FT_END);					  // find all triplex_lines
+		uglines = gl_find_objects(FL_NEW, FT_CLASS, SAME, "underground_line", AND, FT_MODULE, SAME, "powerflow", FT_END);				  // find all underground_lines
+		switches = gl_find_objects(FL_NEW, FT_CLASS, SAME, "switch", AND, FT_MODULE, SAME, "powerflow", FT_END);						  // find all switches
+		sectionalizers = gl_find_objects(FL_NEW, FT_CLASS, SAME, "sectionalizer", AND, FT_MODULE, SAME, "powerflow", FT_END);			  // find all sectionalizer
+		reclosers = gl_find_objects(FL_NEW, FT_CLASS, SAME, "recloser", AND, FT_MODULE, SAME, "powerflow", FT_END);						  // find all recloser
+		fuses = gl_find_objects(FL_NEW, FT_CLASS, SAME, "fuse", AND, FT_MODULE, SAME, "powerflow", FT_END);								  // Find all fuses
+		regulators = gl_find_objects(FL_NEW, FT_CLASS, SAME, "regulator", AND, FT_MODULE, SAME, "powerflow", FT_END);					  // find all regulators
+		regConfs = gl_find_objects(FL_NEW, FT_CLASS, SAME, "regulator_configuration", AND, FT_MODULE, SAME, "powerflow", FT_END);		  // find all regulator configurations
+		lineConfs = gl_find_objects(FL_NEW, FT_CLASS, SAME, "line_configuration", AND, FT_MODULE, SAME, "powerflow", FT_END);			  // find all line configurations
+		tpLineConfs = gl_find_objects(FL_NEW, FT_CLASS, SAME, "triplex_line_configuration", AND, FT_MODULE, SAME, "powerflow", FT_END);	  // find all triplex line configurations
+		TransConfsList = gl_find_objects(FL_NEW, FT_CLASS, SAME, "transformer_configuration", AND, FT_MODULE, SAME, "powerflow", FT_END); // find all transformer configurations
+		TransformerList = gl_find_objects(FL_NEW, FT_CLASS, SAME, "transformer", AND, FT_MODULE, SAME, "powerflow", FT_END);			  // find all transformers
+		nodes = gl_find_objects(FL_NEW, FT_CLASS, SAME, "node", AND, FT_MODULE, SAME, "powerflow", FT_END);								  // Find all nodes
+		meters = gl_find_objects(FL_NEW, FT_CLASS, SAME, "meter", AND, FT_MODULE, SAME, "powerflow", FT_END);							  // Find all meters
+		loads = gl_find_objects(FL_NEW, FT_CLASS, SAME, "load", AND, FT_MODULE, SAME, "powerflow", FT_END);								  // Find all loads
 
-		inverters = gl_find_objects(FL_NEW,FT_CLASS,SAME,"inverter",AND,FT_MODULE,SAME,"generators",FT_END);					//Find all inverters
-		diesels = gl_find_objects(FL_NEW,FT_CLASS,SAME,"diesel_dg",AND,FT_MODULE,SAME,"generators",FT_END);						//Find all diesels
-	} else {
-		ohlines = gl_find_objects(FL_NEW,FT_CLASS,SAME,"overhead_line",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		tplines = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_line",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		uglines = gl_find_objects(FL_NEW,FT_CLASS,SAME,"underground_line",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		switches = gl_find_objects(FL_NEW,FT_CLASS,SAME,"switch",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		sectionalizers = gl_find_objects(FL_NEW,FT_CLASS,SAME,"sectionalizer",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		reclosers = gl_find_objects(FL_NEW,FT_CLASS,SAME,"recloser",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		fuses = gl_find_objects(FL_NEW,FT_CLASS,SAME,"fuse",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		regulators = gl_find_objects(FL_NEW,FT_CLASS,SAME,"regulator",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		regConfs = gl_find_objects(FL_NEW,FT_CLASS,SAME,"regulator_configuration",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		lineConfs = gl_find_objects(FL_NEW,FT_CLASS,SAME,"line_configuration",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		tpLineConfs = gl_find_objects(FL_NEW,FT_CLASS,SAME,"triplex_line_configuration",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		TransConfsList = gl_find_objects(FL_NEW,FT_CLASS,SAME,"transformer_configuration",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		TransformerList = gl_find_objects(FL_NEW,FT_CLASS,SAME,"transformer",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		meters = gl_find_objects(FL_NEW,FT_CLASS,SAME,"meter",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
-		loads = gl_find_objects(FL_NEW,FT_CLASS,SAME,"load",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"powerflow",FT_END);
+		inverters = gl_find_objects(FL_NEW, FT_CLASS, SAME, "inverter", AND, FT_MODULE, SAME, "generators", FT_END); // Find all inverters
+		diesels = gl_find_objects(FL_NEW, FT_CLASS, SAME, "diesel_dg", AND, FT_MODULE, SAME, "generators", FT_END);	 // Find all diesels
+	}
+	else
+	{
+		ohlines = gl_find_objects(FL_NEW, FT_CLASS, SAME, "overhead_line", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		tplines = gl_find_objects(FL_NEW, FT_CLASS, SAME, "triplex_line", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		uglines = gl_find_objects(FL_NEW, FT_CLASS, SAME, "underground_line", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		switches = gl_find_objects(FL_NEW, FT_CLASS, SAME, "switch", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		sectionalizers = gl_find_objects(FL_NEW, FT_CLASS, SAME, "sectionalizer", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		reclosers = gl_find_objects(FL_NEW, FT_CLASS, SAME, "recloser", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		fuses = gl_find_objects(FL_NEW, FT_CLASS, SAME, "fuse", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		regulators = gl_find_objects(FL_NEW, FT_CLASS, SAME, "regulator", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		regConfs = gl_find_objects(FL_NEW, FT_CLASS, SAME, "regulator_configuration", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		lineConfs = gl_find_objects(FL_NEW, FT_CLASS, SAME, "line_configuration", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		tpLineConfs = gl_find_objects(FL_NEW, FT_CLASS, SAME, "triplex_line_configuration", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		TransConfsList = gl_find_objects(FL_NEW, FT_CLASS, SAME, "transformer_configuration", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		TransformerList = gl_find_objects(FL_NEW, FT_CLASS, SAME, "transformer", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		nodes = gl_find_objects(FL_NEW, FT_CLASS, SAME, "node", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		meters = gl_find_objects(FL_NEW, FT_CLASS, SAME, "meter", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
+		loads = gl_find_objects(FL_NEW, FT_CLASS, SAME, "load", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "powerflow", FT_END);
 
-		inverters = gl_find_objects(FL_NEW,FT_CLASS,SAME,"inverter",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"generators",FT_END);
-		diesels = gl_find_objects(FL_NEW,FT_CLASS,SAME,"diesel_dg",AND,FT_GROUPID,SAME,group.get_string(),AND,FT_MODULE,SAME,"generators",FT_END);
+		inverters = gl_find_objects(FL_NEW, FT_CLASS, SAME, "inverter", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "generators", FT_END);
+		diesels = gl_find_objects(FL_NEW, FT_CLASS, SAME, "diesel_dg", AND, FT_GROUPID, SAME, group.get_string(), AND, FT_MODULE, SAME, "generators", FT_END);
 	}
 
-	if ((ohlines->hit_count==0) && (tplines->hit_count==0) && (uglines->hit_count==0) && (nodes->hit_count==0) && (meters->hit_count==0) && (loads->hit_count==0))
+	if ((ohlines->hit_count == 0) && (tplines->hit_count == 0) && (uglines->hit_count == 0) && (nodes->hit_count == 0) && (meters->hit_count == 0) && (loads->hit_count == 0))
 	{
 		gl_error("No line or bus objects were found.");
 		/* TROUBLESHOOT
@@ -210,7 +215,7 @@ STATUS jsondump::dump_system(void)
 		return FAILED;
 	}
 
-	//write style sheet info
+	// write style sheet info
 	metrics_lines["$schema"] = "http://json-schema.org/draft-04/schema#";
 	metrics_lines["description"] = "This file describes the system topology information (bus and lines) and line configuration data";
 
@@ -218,12 +223,12 @@ STATUS jsondump::dump_system(void)
 	if (lineConfs->hit_count > 0)
 	{
 		// Overhead and underground line configurations
-		pLineConf = (OBJECT **)gl_malloc((lineConfs->hit_count)*sizeof(OBJECT*));
+		pLineConf = (OBJECT **)gl_malloc((lineConfs->hit_count) * sizeof(OBJECT *));
 
-		//Check it
+		// Check it
 		if (pLineConf == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			While attempting to allocate memory for one of the search and output arrays, an error was
 			encountered.  Please try again.  If the error persists, please submit your code and a bug
@@ -231,55 +236,54 @@ STATUS jsondump::dump_system(void)
 			*/
 		}
 
+		// Define b_mat_pu
+		b_mat_pu = (gld::complex *)gl_malloc((lineConfs->hit_count) * 9 * sizeof(gld::complex));
 
-		//Define b_mat_pu
-		b_mat_pu = (gld::complex *)gl_malloc((lineConfs->hit_count)*9*sizeof(gld::complex));
-
-		//Check it
+		// Check it
 		if (b_mat_pu == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Define b_mat_defined
-		b_mat_defined = (bool *)gl_malloc((lineConfs->hit_count)*sizeof(bool));
+		// Define b_mat_defined
+		b_mat_defined = (bool *)gl_malloc((lineConfs->hit_count) * sizeof(bool));
 
-		//Check it
+		// Check it
 		if (b_mat_defined == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Loop through and zero everything, just because
-		for (indexA=0; indexA < (lineConfs->hit_count); indexA++)
+		// Loop through and zero everything, just because
+		for (indexA = 0; indexA < (lineConfs->hit_count); indexA++)
 		{
 			pLineConf[indexA] = nullptr;
 			b_mat_defined[indexA] = false;
 
-			for (indexB=0; indexB<9; indexB++)
+			for (indexB = 0; indexB < 9; indexB++)
 			{
-				b_mat_pu[indexA*9+indexB] = gld::complex(0.0,0.0);
+				b_mat_pu[indexA * 9 + indexB] = gld::complex(0.0, 0.0);
 			}
 		}
 
-		//Pull the first line config
-		obj_lineConf = gl_find_next(lineConfs,nullptr);
-		
-		//Zero the index
+		// Pull the first line config
+		obj_lineConf = gl_find_next(lineConfs, nullptr);
+
+		// Zero the index
 		index = 0;
-		
-		//Loop
+
+		// Loop
 		while (obj_lineConf != nullptr)
 		{
 			pLineConf[index] = obj_lineConf;
 
-			//increment
+			// increment
 			index++;
 
-			//Next object
-			obj_lineConf = gl_find_next(lineConfs,obj_lineConf);
+			// Next object
+			obj_lineConf = gl_find_next(lineConfs, obj_lineConf);
 		}
 	}
 	else
@@ -292,64 +296,63 @@ STATUS jsondump::dump_system(void)
 	// Triplex line configurations
 	if (tpLineConfs->hit_count > 0)
 	{
-		pTpLineConf = (OBJECT **)gl_malloc((tpLineConfs->hit_count)*sizeof(OBJECT*));
+		pTpLineConf = (OBJECT **)gl_malloc((tpLineConfs->hit_count) * sizeof(OBJECT *));
 
-		//Check it
+		// Check it
 		if (pTpLineConf == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Define b_mat_tp_pu
-		b_mat_tp_pu = (gld::complex *)gl_malloc((tpLineConfs->hit_count)*9*sizeof(gld::complex));
+		// Define b_mat_tp_pu
+		b_mat_tp_pu = (gld::complex *)gl_malloc((tpLineConfs->hit_count) * 9 * sizeof(gld::complex));
 
-		//Check it
+		// Check it
 		if (b_mat_tp_pu == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Define b_mat_tp_defined
-		b_mat_tp_defined = (bool *)gl_malloc((tpLineConfs->hit_count)*sizeof(bool));
+		// Define b_mat_tp_defined
+		b_mat_tp_defined = (bool *)gl_malloc((tpLineConfs->hit_count) * sizeof(bool));
 
-		//Check it
+		// Check it
 		if (b_mat_tp_defined == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-
-		//Loop through and zero everything, just because
-		for (indexA=0; indexA < (tpLineConfs->hit_count); indexA++)
+		// Loop through and zero everything, just because
+		for (indexA = 0; indexA < (tpLineConfs->hit_count); indexA++)
 		{
 			pTpLineConf[indexA] = nullptr;
 			b_mat_tp_defined[indexA] = false;
 
-			for (indexB=0; indexB<9; indexB++)
+			for (indexB = 0; indexB < 9; indexB++)
 			{
-				b_mat_tp_pu[indexA*9+indexB] = gld::complex(0.0,0.0);
+				b_mat_tp_pu[indexA * 9 + indexB] = gld::complex(0.0, 0.0);
 			}
 		}
 
-		//Pull the first line config
-		obj_lineConf = gl_find_next(tpLineConfs,nullptr);
-		
-		//Zero the index
+		// Pull the first line config
+		obj_lineConf = gl_find_next(tpLineConfs, nullptr);
+
+		// Zero the index
 		index = 0;
-		
-		//Loop
+
+		// Loop
 		while (obj_lineConf != nullptr)
 		{
 			pTpLineConf[index] = obj_lineConf;
 
-			//increment
+			// increment
 			index++;
 
-			//Next object
-			obj_lineConf = gl_find_next(tpLineConfs,obj_lineConf);
+			// Next object
+			obj_lineConf = gl_find_next(tpLineConfs, obj_lineConf);
 		}
 	}
 	else
@@ -359,82 +362,82 @@ STATUS jsondump::dump_system(void)
 		b_mat_tp_pu = nullptr;
 	}
 
-	//Transformer configurations
+	// Transformer configurations
 	if (TransConfsList->hit_count > 0)
 	{
 		// Define b_mat_pu and b_mat_tp_pu to store per unit bmatrix values
-		// 
-		pTransConf = (OBJECT **)gl_malloc((TransConfsList->hit_count)*sizeof(OBJECT*));
+		//
+		pTransConf = (OBJECT **)gl_malloc((TransConfsList->hit_count) * sizeof(OBJECT *));
 
-		//Check it
+		// Check it
 		if (pTransConf == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Define b_mat_trans_pu
-		b_mat_trans_pu = (gld::complex *)gl_malloc((TransConfsList->hit_count)*9*sizeof(gld::complex));
+		// Define b_mat_trans_pu
+		b_mat_trans_pu = (gld::complex *)gl_malloc((TransConfsList->hit_count) * 9 * sizeof(gld::complex));
 
-		//Check it
+		// Check it
 		if (b_mat_trans_pu == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Zero it, to be safe
-		for (indexA=0; indexA < (TransConfsList->hit_count*9); indexA++)
+		// Zero it, to be safe
+		for (indexA = 0; indexA < (TransConfsList->hit_count * 9); indexA++)
 		{
-			b_mat_trans_pu[indexA] = gld::complex(0.0,0.0);
+			b_mat_trans_pu[indexA] = gld::complex(0.0, 0.0);
 		}
 
-		//Define b_mat_trans_defined
-		b_mat_trans_defined = (bool *)gl_malloc((TransConfsList->hit_count)*sizeof(bool));
+		// Define b_mat_trans_defined
+		b_mat_trans_defined = (bool *)gl_malloc((TransConfsList->hit_count) * sizeof(bool));
 
-		//Check it
+		// Check it
 		if (b_mat_trans_defined == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Zero it, to be safe
-		for (indexA=0; indexA < (TransConfsList->hit_count); indexA++)
+		// Zero it, to be safe
+		for (indexA = 0; indexA < (TransConfsList->hit_count); indexA++)
 		{
 			b_mat_trans_defined[indexA] = false;
 		}
 
-		//Allocate the phase count matrix
-		trans_phase_count = (int *)gl_malloc((TransConfsList->hit_count)*sizeof(int));
+		// Allocate the phase count matrix
+		trans_phase_count = (int *)gl_malloc((TransConfsList->hit_count) * sizeof(int));
 
-		//Make sure it worked
+		// Make sure it worked
 		if (trans_phase_count == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Zero it
-		for (indexA=0; indexA < (TransConfsList->hit_count); indexA++)
+		// Zero it
+		for (indexA = 0; indexA < (TransConfsList->hit_count); indexA++)
 		{
 			trans_phase_count[indexA] = 0;
 		}
 
-		//Grab the first object
-		obj_lineConf = gl_find_next(TransConfsList,nullptr);
+		// Grab the first object
+		obj_lineConf = gl_find_next(TransConfsList, nullptr);
 
-		index=0;
-		while(obj_lineConf != nullptr)
+		index = 0;
+		while (obj_lineConf != nullptr)
 		{
 			pTransConf[index] = obj_lineConf;
 			index++;
 
-			//Grab the next one
-			obj_lineConf = gl_find_next(TransConfsList,obj_lineConf);
+			// Grab the next one
+			obj_lineConf = gl_find_next(TransConfsList, obj_lineConf);
 		}
 	}
-	else //No transformers, just nullptr everything
+	else // No transformers, just nullptr everything
 	{
 		pTransConf = nullptr;
 		b_mat_trans_pu = nullptr;
@@ -442,82 +445,82 @@ STATUS jsondump::dump_system(void)
 		trans_phase_count = nullptr;
 	}
 
-	//Regulator configurations
+	// Regulator configurations
 	if (regConfs->hit_count > 0)
 	{
 		// Define b_mat_pu and b_mat_tp_pu to store per unit bmatrix values
-		// 
-		pRegConf = (OBJECT **)gl_malloc((regConfs->hit_count)*sizeof(OBJECT*));
+		//
+		pRegConf = (OBJECT **)gl_malloc((regConfs->hit_count) * sizeof(OBJECT *));
 
-		//Check it
+		// Check it
 		if (pRegConf == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Define b_mat_trans_pu
-		b_mat_reg_pu = (gld::complex *)gl_malloc((regConfs->hit_count)*9*sizeof(gld::complex));
+		// Define b_mat_trans_pu
+		b_mat_reg_pu = (gld::complex *)gl_malloc((regConfs->hit_count) * 9 * sizeof(gld::complex));
 
-		//Check it
+		// Check it
 		if (b_mat_reg_pu == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Zero it, to be safe
-		for (indexA=0; indexA < (regConfs->hit_count*9); indexA++)
+		// Zero it, to be safe
+		for (indexA = 0; indexA < (regConfs->hit_count * 9); indexA++)
 		{
-			b_mat_reg_pu[indexA] = gld::complex(0.0,0.0);
+			b_mat_reg_pu[indexA] = gld::complex(0.0, 0.0);
 		}
 
-		//Define b_mat_trans_defined
-		b_mat_reg_defined = (bool *)gl_malloc((regConfs->hit_count)*sizeof(bool));
+		// Define b_mat_trans_defined
+		b_mat_reg_defined = (bool *)gl_malloc((regConfs->hit_count) * sizeof(bool));
 
-		//Check it
+		// Check it
 		if (b_mat_reg_defined == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Zero it, to be safe
-		for (indexA=0; indexA < (regConfs->hit_count); indexA++)
+		// Zero it, to be safe
+		for (indexA = 0; indexA < (regConfs->hit_count); indexA++)
 		{
 			b_mat_reg_defined[indexA] = false;
 		}
 
-		//Allocate the phase count matrix
-		reg_phase_count = (int *)gl_malloc((regConfs->hit_count)*sizeof(int));
+		// Allocate the phase count matrix
+		reg_phase_count = (int *)gl_malloc((regConfs->hit_count) * sizeof(int));
 
-		//Make sure it worked
+		// Make sure it worked
 		if (reg_phase_count == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Zero it
-		for (indexA=0; indexA < (regConfs->hit_count); indexA++)
+		// Zero it
+		for (indexA = 0; indexA < (regConfs->hit_count); indexA++)
 		{
 			reg_phase_count[indexA] = 0;
 		}
 
-		//Grab the first object
-		obj_lineConf = gl_find_next(regConfs,nullptr);
+		// Grab the first object
+		obj_lineConf = gl_find_next(regConfs, nullptr);
 
-		index=0;
-		while(obj_lineConf != nullptr)
+		index = 0;
+		while (obj_lineConf != nullptr)
 		{
 			pRegConf[index] = obj_lineConf;
 			index++;
 
-			//Grab the next one
-			obj_lineConf = gl_find_next(regConfs,obj_lineConf);
+			// Grab the next one
+			obj_lineConf = gl_find_next(regConfs, obj_lineConf);
 		}
 	}
-	else //No transformers, just nullptr everything
+	else // No transformers, just nullptr everything
 	{
 		pRegConf = nullptr;
 		b_mat_reg_pu = nullptr;
@@ -528,19 +531,19 @@ STATUS jsondump::dump_system(void)
 	// clear jsonArray - just in case
 	jsonArray.clear();
 
-	//Clear the node array too -- just in case
+	// Clear the node array too -- just in case
 	node_object.clear();
 
-	//Do generators - start with inverters
+	// Do generators - start with inverters
 	if (inverters->hit_count > 0)
 	{
-		//Get the first one
-		obj = gl_find_next(inverters,nullptr);
+		// Get the first one
+		obj = gl_find_next(inverters, nullptr);
 
-		//Loop until done
+		// Loop until done
 		while (obj != nullptr)
 		{
-			//Write out the name
+			// Write out the name
 			if (obj->name != nullptr)
 			{
 				node_object["id"] = obj->name;
@@ -548,11 +551,11 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"inverter:%d",obj->id);
+				sprintf(buffer, "inverter:%d", obj->id);
 				node_object["id"] = buffer;
 			}
 
-			//Write out our connection's name
+			// Write out our connection's name
 			if (obj->parent->name != nullptr)
 			{
 				node_object["node_id"] = obj->parent->name;
@@ -560,18 +563,18 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"%s:%d",obj->parent->oclass->name,obj->parent->id);
+				sprintf(buffer, "%s:%d", obj->parent->oclass->name, obj->parent->id);
 				node_object["node_id"] = buffer;
 			}
 
-			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
-			
-			//Clear the output array
+			// Pull the phases and figure out those
+			temp_set_value = get_set_value(obj, "phases");
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Phase A
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -580,8 +583,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -591,7 +594,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -601,16 +604,16 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			node_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
 
-			//Extract the power values
-			temp_complex_power_value[0] = get_complex_value(obj,"power_A");
-			temp_complex_power_value[1] = get_complex_value(obj,"power_B");
-			temp_complex_power_value[2] = get_complex_value(obj,"power_C");
+			// Extract the power values
+			temp_complex_power_value[0] = get_complex_value(obj, "power_A");
+			temp_complex_power_value[1] = get_complex_value(obj, "power_B");
+			temp_complex_power_value[2] = get_complex_value(obj, "power_C");
 
-			//See if we need to be per-unitized
+			// See if we need to be per-unitized
 			if (write_per_unit)
 			{
 				temp_complex_power_value[0] /= (system_VA_base / 3.0);
@@ -618,56 +621,56 @@ STATUS jsondump::dump_system(void)
 				temp_complex_power_value[2] /= (system_VA_base / 3.0);
 			}
 
-			//Write out the real value
+			// Write out the real value
 			jsonArray2.push_back(temp_complex_power_value[0].Re());
 			jsonArray2.push_back(temp_complex_power_value[1].Re());
 			jsonArray2.push_back(temp_complex_power_value[2].Re());
 
-			//Write it
+			// Write it
 			node_object["max_real_phase"] = jsonArray2;
 
-			//clear it
+			// clear it
 			jsonArray2.clear();
 
-			//Now do reactive power
-			//Write out the real value
+			// Now do reactive power
+			// Write out the real value
 			jsonArray2.push_back(temp_complex_power_value[0].Im());
 			jsonArray2.push_back(temp_complex_power_value[1].Im());
 			jsonArray2.push_back(temp_complex_power_value[2].Im());
 
-			//Write it
+			// Write it
 			node_object["max_reactive_phase"] = jsonArray2;
 
-			//clear it
+			// clear it
 			jsonArray2.clear();
 
-			//Default values that may be read in later (if populated)
+			// Default values that may be read in later (if populated)
 			node_object["microgrid_cost"] = 1.0e30;
-      		node_object["microgrid_fixed_cost"] = 0.0;
-      		node_object["max_microgrid"] = 0.0;
-      		node_object["is_new"] = false;
+			node_object["microgrid_fixed_cost"] = 0.0;
+			node_object["max_microgrid"] = 0.0;
+			node_object["is_new"] = false;
 
-			//Add the object to the array
+			// Add the object to the array
 			jsonArray.push_back(node_object);
 
-			//Clear the node
+			// Clear the node
 			node_object.clear();
 
-			//Get the next one
-			obj = gl_find_next(inverters,obj);
-		}//End inverter findlist search
-	}//End Inverters
+			// Get the next one
+			obj = gl_find_next(inverters, obj);
+		} // End inverter findlist search
+	} // End Inverters
 
-	//Do diesels now too
+	// Do diesels now too
 	if (diesels->hit_count > 0)
 	{
-		//Get the first one
-		obj = gl_find_next(diesels,nullptr);
+		// Get the first one
+		obj = gl_find_next(diesels, nullptr);
 
-		//Loop until done
+		// Loop until done
 		while (obj != nullptr)
 		{
-			//Write out the name
+			// Write out the name
 			if (obj->name != nullptr)
 			{
 				node_object["id"] = obj->name;
@@ -675,11 +678,11 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"diesel_dg:%d",obj->id);
+				sprintf(buffer, "diesel_dg:%d", obj->id);
 				node_object["id"] = buffer;
 			}
 
-			//Write out our connection's name
+			// Write out our connection's name
 			if (obj->parent->name != nullptr)
 			{
 				node_object["node_id"] = obj->parent->name;
@@ -687,18 +690,18 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"%s:%d",obj->parent->oclass->name,obj->parent->id);
+				sprintf(buffer, "%s:%d", obj->parent->oclass->name, obj->parent->id);
 				node_object["node_id"] = buffer;
 			}
 
-			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
-			
-			//Clear the output array
+			// Pull the phases and figure out those
+			temp_set_value = get_set_value(obj, "phases");
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Phase A
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -707,8 +710,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -718,7 +721,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -728,16 +731,16 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			node_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
 
-			//Extract the power values
-			temp_complex_power_value[0] = get_complex_value(obj,"power_out_A");
-			temp_complex_power_value[1] = get_complex_value(obj,"power_out_B");
-			temp_complex_power_value[2] = get_complex_value(obj,"power_out_C");
+			// Extract the power values
+			temp_complex_power_value[0] = get_complex_value(obj, "power_out_A");
+			temp_complex_power_value[1] = get_complex_value(obj, "power_out_B");
+			temp_complex_power_value[2] = get_complex_value(obj, "power_out_C");
 
-			//See if we need to be per-unitized
+			// See if we need to be per-unitized
 			if (write_per_unit)
 			{
 				temp_complex_power_value[0] /= (system_VA_base / 3.0);
@@ -745,75 +748,75 @@ STATUS jsondump::dump_system(void)
 				temp_complex_power_value[2] /= (system_VA_base / 3.0);
 			}
 
-			//Write out the real value
+			// Write out the real value
 			jsonArray2.push_back(temp_complex_power_value[0].Re());
 			jsonArray2.push_back(temp_complex_power_value[1].Re());
 			jsonArray2.push_back(temp_complex_power_value[2].Re());
 
-			//Write it
+			// Write it
 			node_object["max_real_phase"] = jsonArray2;
 
-			//clear it
+			// clear it
 			jsonArray2.clear();
 
-			//Now do reactive power
-			//Write out the real value
+			// Now do reactive power
+			// Write out the real value
 			jsonArray2.push_back(temp_complex_power_value[0].Im());
 			jsonArray2.push_back(temp_complex_power_value[1].Im());
 			jsonArray2.push_back(temp_complex_power_value[2].Im());
 
-			//Write it
+			// Write it
 			node_object["max_reactive_phase"] = jsonArray2;
 
-			//clear it
+			// clear it
 			jsonArray2.clear();
 
-			//Default values that may be read in later (if populated)
+			// Default values that may be read in later (if populated)
 			node_object["microgrid_cost"] = 1.0e30;
-      		node_object["microgrid_fixed_cost"] = 0.0;
-      		node_object["max_microgrid"] = 0.0;
-      		node_object["is_new"] = false;
+			node_object["microgrid_fixed_cost"] = 0.0;
+			node_object["max_microgrid"] = 0.0;
+			node_object["is_new"] = false;
 
-			//Add the object to the array
+			// Add the object to the array
 			jsonArray.push_back(node_object);
 
-			//Clear the node
+			// Clear the node
 			node_object.clear();
 
-			//Get the next one
-			obj = gl_find_next(diesels,obj);
-		}//End diesel findlist search
-	}//End diesels
+			// Get the next one
+			obj = gl_find_next(diesels, obj);
+		} // End diesel findlist search
+	} // End diesels
 
-	//Write the values to the overall JSON
+	// Write the values to the overall JSON
 	metrics_lines["properties"]["generators"] = jsonArray;
 
-	//Clear the array and object
+	// Clear the array and object
 	node_object.clear();
 	jsonArray.clear();
 
-	//Write nodes
+	// Write nodes
 	if (nodes->hit_count > 0)
 	{
-		//Find the first one
-		obj = gl_find_next(nodes,nullptr);
+		// Find the first one
+		obj = gl_find_next(nodes, nullptr);
 
-		//Loop through nodes list
+		// Loop through nodes list
 		while (obj != nullptr)
 		{
-			//If per-unit - adjust the values
+			// If per-unit - adjust the values
 			if (write_per_unit)
 			{
-				temp_voltage_base = get_double_value(obj,"nominal_voltage");
-				temp_de_pu_base = 1.0;	//Don't need to "de-per-unit it"
-			}//End per-unit
-			else	//No per-unit desired
+				temp_voltage_base = get_double_value(obj, "nominal_voltage");
+				temp_de_pu_base = 1.0; // Don't need to "de-per-unit it"
+			} // End per-unit
+			else // No per-unit desired
 			{
-				temp_voltage_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
-				temp_de_pu_base = get_double_value(obj,"nominal_voltage");	//But we do need to get the "real value"
+				temp_voltage_base = 1.0;									// Divide by unity - does nothing really, but easier to code this way
+				temp_de_pu_base = get_double_value(obj, "nominal_voltage"); // But we do need to get the "real value"
 			}
 
-			//Write out the name
+			// Write out the name
 			if (obj->name != nullptr)
 			{
 				node_object["id"] = obj->name;
@@ -821,43 +824,43 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"node:%d",obj->id);
+				sprintf(buffer, "node:%d", obj->id);
 				node_object["id"] = buffer;
 			}
 
-			//Write min and max voltage values
+			// Write min and max voltage values
 			node_object["min_voltage"] = min_volt_value * temp_de_pu_base;
 			node_object["max_voltage"] = max_volt_value * temp_de_pu_base;
 
-			//Obtain current voltage - assume that's the reference - per-unitize, if necessary
-			temp_complex_voltage_value[0] = get_complex_value(obj,"voltage_A");
-			temp_complex_voltage_value[1] = get_complex_value(obj,"voltage_B");
-			temp_complex_voltage_value[2] = get_complex_value(obj,"voltage_C");
+			// Obtain current voltage - assume that's the reference - per-unitize, if necessary
+			temp_complex_voltage_value[0] = get_complex_value(obj, "voltage_A");
+			temp_complex_voltage_value[1] = get_complex_value(obj, "voltage_B");
+			temp_complex_voltage_value[2] = get_complex_value(obj, "voltage_C");
 
-			//Now write it
+			// Now write it
 			jsonArray2.clear();
 
-			for (indexA=0; indexA<3; indexA++)
+			for (indexA = 0; indexA < 3; indexA++)
 			{
-				//Magnitude and "per-unitize" it, as necessary
+				// Magnitude and "per-unitize" it, as necessary
 				temp_voltage_output_value = temp_complex_voltage_value[indexA].Mag() / temp_voltage_base;
 
-				//Append to the JSON array
+				// Append to the JSON array
 				jsonArray2.push_back(temp_voltage_output_value);
 			}
-			
-			//Actually output it
+
+			// Actually output it
 			node_object["ref_voltage"] = jsonArray2;
 			jsonArray2.clear();
 
-			//Check phases
-			temp_set_value = get_set_value(obj,"phases");
-			
-			//Clear the output array
+			// Check phases
+			temp_set_value = get_set_value(obj, "phases");
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Phase A
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -866,8 +869,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -877,7 +880,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -887,44 +890,44 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			node_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
-			
+
 			// Append to node array
 			jsonArray.push_back(node_object);
 
 			// clear JSON value
 			node_object.clear();
 
-			//Get the next object in the list
-			obj = gl_find_next(nodes,obj);
-			
-		}//End of node list traversion
-	}//End of nodes non-empty
+			// Get the next object in the list
+			obj = gl_find_next(nodes, obj);
 
-	//Search for meters too - replicate the nodes list, since we'll just leave them the same way
+		} // End of node list traversion
+	} // End of nodes non-empty
+
+	// Search for meters too - replicate the nodes list, since we'll just leave them the same way
 	if (meters->hit_count > 0)
 	{
-		//Find the first one
-		obj = gl_find_next(meters,nullptr);
+		// Find the first one
+		obj = gl_find_next(meters, nullptr);
 
-		//Loop through meters list
+		// Loop through meters list
 		while (obj != nullptr)
 		{
-			//If per-unit - adjust the values
+			// If per-unit - adjust the values
 			if (write_per_unit)
 			{
-				temp_voltage_base = get_double_value(obj,"nominal_voltage");
-				temp_de_pu_base = 1.0;	//Don't need to "de-per-unit it"
-			}//End per-unit
-			else	//No per-unit desired
+				temp_voltage_base = get_double_value(obj, "nominal_voltage");
+				temp_de_pu_base = 1.0; // Don't need to "de-per-unit it"
+			} // End per-unit
+			else // No per-unit desired
 			{
-				temp_voltage_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
-				temp_de_pu_base = get_double_value(obj,"nominal_voltage");	//But we do need to get the "real value"
+				temp_voltage_base = 1.0;									// Divide by unity - does nothing really, but easier to code this way
+				temp_de_pu_base = get_double_value(obj, "nominal_voltage"); // But we do need to get the "real value"
 			}
 
-			//Write out the name
+			// Write out the name
 			if (obj->name != nullptr)
 			{
 				node_object["id"] = obj->name;
@@ -932,43 +935,43 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"meter:%d",obj->id);
+				sprintf(buffer, "meter:%d", obj->id);
 				node_object["id"] = buffer;
 			}
 
-			//Write min and max voltage values
+			// Write min and max voltage values
 			node_object["min_voltage"] = min_volt_value * temp_de_pu_base;
 			node_object["max_voltage"] = max_volt_value * temp_de_pu_base;
 
-			//Obtain current voltage - assume that's the reference - per-unitize, if necessary
-			temp_complex_voltage_value[0] = get_complex_value(obj,"voltage_A");
-			temp_complex_voltage_value[1] = get_complex_value(obj,"voltage_B");
-			temp_complex_voltage_value[2] = get_complex_value(obj,"voltage_C");
+			// Obtain current voltage - assume that's the reference - per-unitize, if necessary
+			temp_complex_voltage_value[0] = get_complex_value(obj, "voltage_A");
+			temp_complex_voltage_value[1] = get_complex_value(obj, "voltage_B");
+			temp_complex_voltage_value[2] = get_complex_value(obj, "voltage_C");
 
-			//Now write it
+			// Now write it
 			jsonArray2.clear();
 
-			for (indexA=0; indexA<3; indexA++)
+			for (indexA = 0; indexA < 3; indexA++)
 			{
-				//Magnitude and "per-unitize" it, as necessary
+				// Magnitude and "per-unitize" it, as necessary
 				temp_voltage_output_value = temp_complex_voltage_value[indexA].Mag() / temp_voltage_base;
 
-				//Append to the JSON array
+				// Append to the JSON array
 				jsonArray2.push_back(temp_voltage_output_value);
 			}
-			
-			//Actually output it
+
+			// Actually output it
 			node_object["ref_voltage"] = jsonArray2;
 			jsonArray2.clear();
 
-			//Check phases
-			temp_set_value = get_set_value(obj,"phases");
-			
-			//Clear the output array
+			// Check phases
+			temp_set_value = get_set_value(obj, "phases");
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Phase A
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -977,8 +980,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -988,7 +991,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -998,75 +1001,75 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			node_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
-			
+
 			// Append to node array
 			jsonArray.push_back(node_object);
 
 			// clear JSON value
 			node_object.clear();
 
-			//Get the next object in the list
-			obj = gl_find_next(meters,obj);
-			
-		}//End of meter list traversion
-	}//End of meters non-empty
+			// Get the next object in the list
+			obj = gl_find_next(meters, obj);
 
-	//Clear load-related arrays and objects
+		} // End of meter list traversion
+	} // End of meters non-empty
+
+	// Clear load-related arrays and objects
 	load_object.clear();
 	jsonSecondArray.clear();
 
-	//Search for loads too - replicate the nodes list, since we'll just leave them the same way
+	// Search for loads too - replicate the nodes list, since we'll just leave them the same way
 	if (loads->hit_count > 0)
 	{
-		//Find the first one
-		obj = gl_find_next(loads,nullptr);
+		// Find the first one
+		obj = gl_find_next(loads, nullptr);
 
-		//Loop through loads list
+		// Loop through loads list
 		while (obj != nullptr)
 		{
-			//If per-unit - adjust the values
+			// If per-unit - adjust the values
 			if (write_per_unit)
 			{
-				temp_voltage_base = get_double_value(obj,"nominal_voltage");
-				temp_de_pu_base = 1.0;	//Don't need to "de-per-unit it"
-			}//End per-unit
-			else	//No per-unit desired
+				temp_voltage_base = get_double_value(obj, "nominal_voltage");
+				temp_de_pu_base = 1.0; // Don't need to "de-per-unit it"
+			} // End per-unit
+			else // No per-unit desired
 			{
-				temp_voltage_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
-				temp_de_pu_base = get_double_value(obj,"nominal_voltage");	//But we do need to get the "real value"
+				temp_voltage_base = 1.0;									// Divide by unity - does nothing really, but easier to code this way
+				temp_de_pu_base = get_double_value(obj, "nominal_voltage"); // But we do need to get the "real value"
 			}
 
-			//Write out the name
+			// Write out the name
 			if (obj->name != nullptr)
 			{
 				node_object["id"] = obj->name;
 
-				//Load array portions
+				// Load array portions
 				load_object["node_id"] = obj->name;
 
-				sprintf(buffer,"load_%s",obj->name);
+				sprintf(buffer, "load_%s", obj->name);
 				load_object["id"] = buffer;
 			}
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"load:%d",obj->id);
+				sprintf(buffer, "load:%d", obj->id);
 				node_object["id"] = buffer;
 
-				//Load array portions
+				// Load array portions
 				load_object["node_id"] = buffer;
 
-				sprintf(buffer,"load_object_%d",obj->id);
+				sprintf(buffer, "load_object_%d", obj->id);
 				load_object["id"] = buffer;
 			}
 
-			//Pull the enumeration value for the load - see if we're critical or not
-			temp_enum_value = get_enum_value(obj,"load_priority");
+			// Pull the enumeration value for the load - see if we're critical or not
+			temp_enum_value = get_enum_value(obj, "load_priority");
 
-			//See if we're "appropriately critical"
+			// See if we're "appropriately critical"
 			if (temp_enum_value == 2)
 			{
 				load_object["is_critical"] = true;
@@ -1076,39 +1079,39 @@ STATUS jsondump::dump_system(void)
 				load_object["is_critical"] = false;
 			}
 
-			//Write min and max voltage values
+			// Write min and max voltage values
 			node_object["min_voltage"] = min_volt_value * temp_de_pu_base;
 			node_object["max_voltage"] = max_volt_value * temp_de_pu_base;
 
-			//Obtain current voltage - assume that's the reference - per-unitize, if necessary
-			temp_complex_voltage_value[0] = get_complex_value(obj,"voltage_A");
-			temp_complex_voltage_value[1] = get_complex_value(obj,"voltage_B");
-			temp_complex_voltage_value[2] = get_complex_value(obj,"voltage_C");
+			// Obtain current voltage - assume that's the reference - per-unitize, if necessary
+			temp_complex_voltage_value[0] = get_complex_value(obj, "voltage_A");
+			temp_complex_voltage_value[1] = get_complex_value(obj, "voltage_B");
+			temp_complex_voltage_value[2] = get_complex_value(obj, "voltage_C");
 
-			//Now write it
+			// Now write it
 			jsonArray2.clear();
 
-			for (indexA=0; indexA<3; indexA++)
+			for (indexA = 0; indexA < 3; indexA++)
 			{
-				//Magnitude and "per-unitize" it, as necessary
+				// Magnitude and "per-unitize" it, as necessary
 				temp_voltage_output_value = temp_complex_voltage_value[indexA].Mag() / temp_voltage_base;
 
-				//Append to the JSON array
+				// Append to the JSON array
 				jsonArray2.push_back(temp_voltage_output_value);
 			}
-			
-			//Actually output it
+
+			// Actually output it
 			node_object["ref_voltage"] = jsonArray2;
 			jsonArray2.clear();
 
-			//Check phases
-			temp_set_value = get_set_value(obj,"phases");
-			
-			//Clear the output array
+			// Check phases
+			temp_set_value = get_set_value(obj, "phases");
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Phase A
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -1117,8 +1120,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -1128,7 +1131,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -1138,17 +1141,17 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			node_object["has_phase"] = jsonArray2;
 			load_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
-			
-			//Now pull the load values - only constant power for now
-			temp_complex_power_value[0] = get_complex_value(obj,"constant_power_A");
-			temp_complex_power_value[1] = get_complex_value(obj,"constant_power_B");
-			temp_complex_power_value[2] = get_complex_value(obj,"constant_power_C");
 
-			//See if we need to be per-unitized
+			// Now pull the load values - only constant power for now
+			temp_complex_power_value[0] = get_complex_value(obj, "constant_power_A");
+			temp_complex_power_value[1] = get_complex_value(obj, "constant_power_B");
+			temp_complex_power_value[2] = get_complex_value(obj, "constant_power_C");
+
+			// See if we need to be per-unitized
 			if (write_per_unit)
 			{
 				temp_complex_power_value[0] /= (system_VA_base / 3.0);
@@ -1156,27 +1159,27 @@ STATUS jsondump::dump_system(void)
 				temp_complex_power_value[2] /= (system_VA_base / 3.0);
 			}
 
-			//Write out the real value
+			// Write out the real value
 			jsonArray2.push_back(temp_complex_power_value[0].Re());
 			jsonArray2.push_back(temp_complex_power_value[1].Re());
 			jsonArray2.push_back(temp_complex_power_value[2].Re());
 
-			//Write it
+			// Write it
 			load_object["max_real_phase"] = jsonArray2;
 
-			//clear it
+			// clear it
 			jsonArray2.clear();
 
-			//Now do reactive power
-			//Write out the real value
+			// Now do reactive power
+			// Write out the real value
 			jsonArray2.push_back(temp_complex_power_value[0].Im());
 			jsonArray2.push_back(temp_complex_power_value[1].Im());
 			jsonArray2.push_back(temp_complex_power_value[2].Im());
 
-			//Write it
+			// Write it
 			load_object["max_reactive_phase"] = jsonArray2;
 
-			//clear it
+			// clear it
 			jsonArray2.clear();
 
 			// Append to node array
@@ -1185,17 +1188,17 @@ STATUS jsondump::dump_system(void)
 			// clear JSON value
 			node_object.clear();
 
-			//Do the same for the load value
+			// Do the same for the load value
 			jsonSecondArray.push_back(load_object);
 
-			//Clear the JSON value
+			// Clear the JSON value
 			load_object.clear();
 
-			//Get the next object in the list
-			obj = gl_find_next(loads,obj);
-			
-		}//End of load list traversion
-	}//End of loads non-empty
+			// Get the next object in the list
+			obj = gl_find_next(loads, obj);
+
+		} // End of load list traversion
+	} // End of loads non-empty
 
 	// Write bus quantities metrics_lines dictionary
 	metrics_lines["properties"]["buses"] = jsonArray;
@@ -1203,44 +1206,46 @@ STATUS jsondump::dump_system(void)
 	// clear jsonArray
 	jsonArray.clear();
 
-	//Now do loads -- print out their special properties
+	// Now do loads -- print out their special properties
 
 	// Write bus quantities metrics_lines dictionary
 	metrics_lines["properties"]["loads"] = jsonSecondArray;
 
 	// clear jsonSecondArray
 	jsonSecondArray.clear();
-	
-	//write transformers
+
+	// write transformers
 	index = 0;
 	line_object.clear();
 
-	if(TransformerList->hit_count > 0)
+	if (TransformerList->hit_count > 0)
 	{
-		//Allocate the master array
-		pTransformer = (transformer **)gl_malloc(TransformerList->hit_count*sizeof(transformer*));
+		// Allocate the master array
+		pTransformer = (transformer **)gl_malloc(TransformerList->hit_count * sizeof(transformer *));
 
-		//Check it
+		// Check it
 		if (pTransformer == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Grab the first object
-		obj = gl_find_next(TransformerList,nullptr);
+		// Grab the first object
+		obj = gl_find_next(TransformerList, nullptr);
 
-		//Zero the index
+		// Zero the index
 		index = 0;
 
-		while(obj != nullptr)
+		while (obj != nullptr)
 		{
-			if(index >= TransformerList->hit_count){
+			if (index >= TransformerList->hit_count)
+			{
 				break;
 			}
 
 			pTransformer[index] = /*OBJECTDATA(obj,<>)*/ object_data<transformer>(obj);
-			if(pTransformer[index] == nullptr){
+			if (pTransformer[index] == nullptr)
+			{
 				gl_error("Unable to map object as transformer object.");
 				return FAILED;
 			}
@@ -1254,44 +1259,44 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"transformer:%d",obj->id);
+				sprintf(buffer, "transformer:%d", obj->id);
 				line_object["id"] = buffer;
 			}
 
-			//write from node name
+			// write from node name
 			if (pTransformer[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pTransformer[index]->from->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pTransformer[index]->from->oclass->name,pTransformer[index]->from->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pTransformer[index]->from->oclass->name, pTransformer[index]->from->id);
 				line_object["node1_id"] = buffer;
 			}
 
-			//write to node name
+			// write to node name
 			if (pTransformer[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pTransformer[index]->to->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pTransformer[index]->to->oclass->name,pTransformer[index]->to->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pTransformer[index]->to->oclass->name, pTransformer[index]->to->id);
 				line_object["node2_id"] = buffer;
 			}
 
-			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
-			
-			//Clear the output array
+			// Pull the phases and figure out those
+			temp_set_value = get_set_value(obj, "phases");
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Get phase count too
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Get phase count too
 			phaseCount = 0;
-			//Phase A
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -1301,8 +1306,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -1313,7 +1318,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -1324,41 +1329,41 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			line_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
 
-			//write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
+			// write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
 			line_object["capacity"] = 1e30;
-			
-			//write the length
+
+			// write the length
 			line_object["length"] = 1.0;
 
-			//write the num_phases
+			// write the num_phases
 			line_object["num_phases"] = phaseCount;
 
-			//write is_transformer
+			// write is_transformer
 			line_object["is_transformer"] = true;
 
-			//If per-unit - adjust the values
+			// If per-unit - adjust the values
 			if (write_per_unit)
 			{
-				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pTransformer[index]->to,"nominal_voltage");
+				// Compute the per-unit base - use the nominal value off of the secondary
+				per_unit_base = get_double_value(pTransformer[index]->to, "nominal_voltage");
 
-				//Calculate the base impedance
+				// Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
-			}//End per-unit
-			else	//No per-unit desired
+			} // End per-unit
+			else // No per-unit desired
 			{
-				temp_impedance_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
+				temp_impedance_base = 1.0; // Divide by unity - does nothing really, but easier to code this way
 			}
 
-			//write line configuration, if we're unique
+			// write line configuration, if we're unique
 			found_match_config = false;
-			for (indexA=0; indexA<TransConfsList->hit_count; indexA++)
+			for (indexA = 0; indexA < TransConfsList->hit_count; indexA++)
 			{
-				//Just see if we're a match
+				// Just see if we're a match
 				if (pTransformer[index]->configuration == pTransConf[indexA])
 				{
 					found_match_config = true;
@@ -1366,7 +1371,7 @@ STATUS jsondump::dump_system(void)
 				}
 			}
 
-			//See if it worked - if so, store us
+			// See if it worked - if so, store us
 			if (found_match_config)
 			{
 				if (!b_mat_trans_defined[indexA])
@@ -1375,7 +1380,7 @@ STATUS jsondump::dump_system(void)
 					{
 						for (indexC = 0; indexC < 3; indexC++)
 						{
-							b_mat_trans_pu[indexA*9+indexB*3+indexC] = pTransformer[index]->b_mat[indexB][indexC]/temp_impedance_base;
+							b_mat_trans_pu[indexA * 9 + indexB * 3 + indexC] = pTransformer[index]->b_mat[indexB][indexC] / temp_impedance_base;
 						}
 					}
 					trans_phase_count[indexA] = phaseCount;
@@ -1383,10 +1388,10 @@ STATUS jsondump::dump_system(void)
 				}
 			}
 
-			//write line_code
+			// write line_code
 			if (pTransformer[index]->configuration->name == nullptr)
 			{
-				sprintf(buffer,"trans_config:%d",pTransformer[index]->configuration->id);
+				sprintf(buffer, "trans_config:%d", pTransformer[index]->configuration->id);
 				line_object["line_code"] = buffer;
 			}
 			else
@@ -1394,19 +1399,19 @@ STATUS jsondump::dump_system(void)
 				line_object["line_code"] = pTransformer[index]->configuration->name;
 			}
 
-			//write construction cost - only default value
+			// write construction cost - only default value
 			line_object["construction_cost"] = 1e30;
-			//write hardening cost - only default cost
+			// write hardening cost - only default cost
 			line_object["harden_cost"] = 1e30;
-			//write switch cost - only default cost
+			// write switch cost - only default cost
 			line_object["switch_cost"] = 1e30;
-			//write flag of new construction - only default cost
+			// write flag of new construction - only default cost
 			line_object["is_new"] = false;
-			//write flag of harden - only default cost
+			// write flag of harden - only default cost
 			line_object["can_harden"] = false;
-			//write flag of add switch - only default cost
+			// write flag of add switch - only default cost
 			line_object["can_add_switch"] = false;
-			//write flag of switch existence - only default cost
+			// write flag of switch existence - only default cost
 			line_object["has_switch"] = false;
 			// End of line codes
 
@@ -1416,40 +1421,42 @@ STATUS jsondump::dump_system(void)
 			// clear JSON value
 			line_object.clear();
 
-			//Get next value
-			obj = gl_find_next(TransformerList,obj);
+			// Get next value
+			obj = gl_find_next(TransformerList, obj);
 
 			index++;
-		}//End of transformer
+		} // End of transformer
 	}
 
-	//Regulators
-	if(regulators->hit_count > 0)
+	// Regulators
+	if (regulators->hit_count > 0)
 	{
-		//Allocate the master array
-		pRegulator = (regulator **)gl_malloc(regulators->hit_count*sizeof(regulator*));
+		// Allocate the master array
+		pRegulator = (regulator **)gl_malloc(regulators->hit_count * sizeof(regulator *));
 
-		//Check it
+		// Check it
 		if (pRegulator == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Grab the first object
-		obj = gl_find_next(regulators,nullptr);
+		// Grab the first object
+		obj = gl_find_next(regulators, nullptr);
 
-		//Zero the index
+		// Zero the index
 		index = 0;
 
-		while(obj != nullptr)
+		while (obj != nullptr)
 		{
-			if(index >= regulators->hit_count){
+			if (index >= regulators->hit_count)
+			{
 				break;
 			}
 
 			pRegulator[index] = /*OBJECTDATA(obj,<>)*/ object_data<regulator>(obj);
-			if(pRegulator[index] == nullptr){
+			if (pRegulator[index] == nullptr)
+			{
 				gl_error("Unable to map object as regulator object.");
 				return FAILED;
 			}
@@ -1463,44 +1470,44 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"regulator:%d",obj->id);
+				sprintf(buffer, "regulator:%d", obj->id);
 				line_object["id"] = buffer;
 			}
 
-			//write from node name
+			// write from node name
 			if (pRegulator[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pRegulator[index]->from->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pRegulator[index]->from->oclass->name,pRegulator[index]->from->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pRegulator[index]->from->oclass->name, pRegulator[index]->from->id);
 				line_object["node1_id"] = buffer;
 			}
 
-			//write to node name
+			// write to node name
 			if (pRegulator[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pRegulator[index]->to->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pRegulator[index]->to->oclass->name,pRegulator[index]->to->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pRegulator[index]->to->oclass->name, pRegulator[index]->to->id);
 				line_object["node2_id"] = buffer;
 			}
 
-			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
-			
-			//Clear the output array
+			// Pull the phases and figure out those
+			temp_set_value = get_set_value(obj, "phases");
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Get phase count too
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Get phase count too
 			phaseCount = 0;
-			//Phase A
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -1510,8 +1517,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -1522,7 +1529,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -1533,41 +1540,41 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			line_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
 
-			//write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
+			// write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
 			line_object["capacity"] = 1e30;
-			
-			//write the length
+
+			// write the length
 			line_object["length"] = 1.0;
 
-			//write the num_phases
+			// write the num_phases
 			line_object["num_phases"] = phaseCount;
 
-			//write is_transformer
+			// write is_transformer
 			line_object["is_transformer"] = true;
 
-			//If per-unit - adjust the values
+			// If per-unit - adjust the values
 			if (write_per_unit)
 			{
-				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pRegulator[index]->to,"nominal_voltage");
+				// Compute the per-unit base - use the nominal value off of the secondary
+				per_unit_base = get_double_value(pRegulator[index]->to, "nominal_voltage");
 
-				//Calculate the base impedance
+				// Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
-			}//End per-unit
-			else	//No per-unit desired
+			} // End per-unit
+			else // No per-unit desired
 			{
-				temp_impedance_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
+				temp_impedance_base = 1.0; // Divide by unity - does nothing really, but easier to code this way
 			}
 
-			//write line configuration, if we're unique
+			// write line configuration, if we're unique
 			found_match_config = false;
-			for (indexA=0; indexA<regConfs->hit_count; indexA++)
+			for (indexA = 0; indexA < regConfs->hit_count; indexA++)
 			{
-				//Just see if we're a match
+				// Just see if we're a match
 				if (pRegulator[index]->configuration == pRegConf[indexA])
 				{
 					found_match_config = true;
@@ -1575,7 +1582,7 @@ STATUS jsondump::dump_system(void)
 				}
 			}
 
-			//See if it worked - if so, store us
+			// See if it worked - if so, store us
 			if (found_match_config)
 			{
 				if (!b_mat_reg_defined[indexA])
@@ -1584,7 +1591,7 @@ STATUS jsondump::dump_system(void)
 					{
 						for (indexC = 0; indexC < 3; indexC++)
 						{
-							b_mat_reg_pu[indexA*9+indexB*3+indexC] = pRegulator[index]->b_mat[indexB][indexC]/temp_impedance_base;
+							b_mat_reg_pu[indexA * 9 + indexB * 3 + indexC] = pRegulator[index]->b_mat[indexB][indexC] / temp_impedance_base;
 						}
 					}
 					reg_phase_count[indexA] = phaseCount;
@@ -1592,10 +1599,10 @@ STATUS jsondump::dump_system(void)
 				}
 			}
 
-			//write line_code
+			// write line_code
 			if (pRegulator[index]->configuration->name == nullptr)
 			{
-				sprintf(buffer,"reg_config:%d",pRegulator[index]->configuration->id);
+				sprintf(buffer, "reg_config:%d", pRegulator[index]->configuration->id);
 				line_object["line_code"] = buffer;
 			}
 			else
@@ -1603,19 +1610,19 @@ STATUS jsondump::dump_system(void)
 				line_object["line_code"] = pRegulator[index]->configuration->name;
 			}
 
-			//write construction cost - only default value
+			// write construction cost - only default value
 			line_object["construction_cost"] = 1e30;
-			//write hardening cost - only default cost
+			// write hardening cost - only default cost
 			line_object["harden_cost"] = 1e30;
-			//write switch cost - only default cost
+			// write switch cost - only default cost
 			line_object["switch_cost"] = 1e30;
-			//write flag of new construction - only default cost
+			// write flag of new construction - only default cost
 			line_object["is_new"] = false;
-			//write flag of harden - only default cost
+			// write flag of harden - only default cost
 			line_object["can_harden"] = false;
-			//write flag of add switch - only default cost
+			// write flag of add switch - only default cost
 			line_object["can_add_switch"] = false;
-			//write flag of switch existence - only default cost
+			// write flag of switch existence - only default cost
 			line_object["has_switch"] = false;
 			// End of line codes
 
@@ -1625,39 +1632,41 @@ STATUS jsondump::dump_system(void)
 			// clear JSON value
 			line_object.clear();
 
-			//Get next value
-			obj = gl_find_next(regulators,obj);
+			// Get next value
+			obj = gl_find_next(regulators, obj);
 
 			index++;
-		}//End of regulator
+		} // End of regulator
 	}
 
-	//write the overhead_lines
-	if(ohlines->hit_count > 0)
+	// write the overhead_lines
+	if (ohlines->hit_count > 0)
 	{
-		pOhLine = (line **)gl_malloc(ohlines->hit_count*sizeof(line*));
+		pOhLine = (line **)gl_malloc(ohlines->hit_count * sizeof(line *));
 
-		//Check it
+		// Check it
 		if (pOhLine == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Grab the first object
-		obj = gl_find_next(ohlines,nullptr);
+		// Grab the first object
+		obj = gl_find_next(ohlines, nullptr);
 
-		//Zero the index
+		// Zero the index
 		index = 0;
 
-		while(obj != nullptr)
+		while (obj != nullptr)
 		{
-			if(index >= ohlines->hit_count){
+			if (index >= ohlines->hit_count)
+			{
 				break;
 			}
 
 			pOhLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
-			if(pOhLine[index] == nullptr){
+			if (pOhLine[index] == nullptr)
+			{
 				gl_error("Unable to map object as overhead_line object.");
 				return FAILED;
 			}
@@ -1671,44 +1680,44 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"overhead_line:%d",obj->id);
+				sprintf(buffer, "overhead_line:%d", obj->id);
 				line_object["id"] = buffer;
 			}
 
-			//write from node name
+			// write from node name
 			if (pOhLine[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pOhLine[index]->from->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pOhLine[index]->from->oclass->name,pOhLine[index]->from->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pOhLine[index]->from->oclass->name, pOhLine[index]->from->id);
 				line_object["node1_id"] = buffer;
 			}
 
-			//write to node name
+			// write to node name
 			if (pOhLine[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pOhLine[index]->to->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pOhLine[index]->to->oclass->name,pOhLine[index]->to->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pOhLine[index]->to->oclass->name, pOhLine[index]->to->id);
 				line_object["node2_id"] = buffer;
 			}
 
-			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
-			
-			//Clear the output array
+			// Pull the phases and figure out those
+			temp_set_value = get_set_value(obj, "phases");
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Get phase count too
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Get phase count too
 			phaseCount = 0;
-			//Phase A
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -1718,8 +1727,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -1730,7 +1739,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -1741,41 +1750,41 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			line_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
 
-			//write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
+			// write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
 			line_object["capacity"] = 1e30;
-			
-			//write the length
+
+			// write the length
 			line_object["length"] = pOhLine[index]->length;
-			
-			//write the num_phases
+
+			// write the num_phases
 			line_object["num_phases"] = phaseCount;
 
-			//write is_transformer (now only write line object, so will only be false)
+			// write is_transformer (now only write line object, so will only be false)
 			line_object["is_transformer"] = false;
 
-			//If per-unit - adjust the values
+			// If per-unit - adjust the values
 			if (write_per_unit)
 			{
-				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pOhLine[index]->to,"nominal_voltage");
+				// Compute the per-unit base - use the nominal value off of the secondary
+				per_unit_base = get_double_value(pOhLine[index]->to, "nominal_voltage");
 
-				//Calculate the base impedance
+				// Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
-			}//End per-unit
-			else	//No per-unit desired
+			} // End per-unit
+			else // No per-unit desired
 			{
-				temp_impedance_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
+				temp_impedance_base = 1.0; // Divide by unity - does nothing really, but easier to code this way
 			}
 
-			//write line configuration, if we're unique
+			// write line configuration, if we're unique
 			found_match_config = false;
-			for (indexA=0; indexA<lineConfs->hit_count; indexA++)
+			for (indexA = 0; indexA < lineConfs->hit_count; indexA++)
 			{
-				//Just see if we're a match
+				// Just see if we're a match
 				if (pOhLine[index]->configuration == pLineConf[indexA])
 				{
 					found_match_config = true;
@@ -1783,7 +1792,7 @@ STATUS jsondump::dump_system(void)
 				}
 			}
 
-			//See if it worked - if so, store us
+			// See if it worked - if so, store us
 			if (found_match_config)
 			{
 				if (!b_mat_defined[indexA])
@@ -1792,17 +1801,17 @@ STATUS jsondump::dump_system(void)
 					{
 						for (indexC = 0; indexC < 3; indexC++)
 						{
-							b_mat_pu[indexA*9+indexB*3+indexC] = (pOhLine[index]->b_mat[indexB][indexC])/(((pOhLine[index]->length)/5280.0)/temp_impedance_base);
+							b_mat_pu[indexA * 9 + indexB * 3 + indexC] = (pOhLine[index]->b_mat[indexB][indexC]) / (((pOhLine[index]->length) / 5280.0) / temp_impedance_base);
 						}
 					}
 					b_mat_defined[indexA] = true;
 				}
 			}
 
-			//write line_code
+			// write line_code
 			if (pOhLine[index]->configuration->name == nullptr)
 			{
-				sprintf(buffer,"line_config:%d",pOhLine[index]->configuration->id);
+				sprintf(buffer, "line_config:%d", pOhLine[index]->configuration->id);
 				line_object["line_code"] = buffer;
 			}
 			else
@@ -1810,19 +1819,19 @@ STATUS jsondump::dump_system(void)
 				line_object["line_code"] = pOhLine[index]->configuration->name;
 			}
 
-			//write construction cost - only default value
+			// write construction cost - only default value
 			line_object["construction_cost"] = 1e30;
-			//write hardening cost - only default cost
+			// write hardening cost - only default cost
 			line_object["harden_cost"] = 1e30;
-			//write switch cost - only default cost
+			// write switch cost - only default cost
 			line_object["switch_cost"] = 1e30;
-			//write flag of new construction - only default cost
+			// write flag of new construction - only default cost
 			line_object["is_new"] = false;
-			//write flag of harden - only default cost
+			// write flag of harden - only default cost
 			line_object["can_harden"] = false;
-			//write flag of add switch - only default cost
+			// write flag of add switch - only default cost
 			line_object["can_add_switch"] = false;
-			//write flag of switch existence - only default cost
+			// write flag of switch existence - only default cost
 			line_object["has_switch"] = false;
 			// End of line codes
 
@@ -1832,39 +1841,41 @@ STATUS jsondump::dump_system(void)
 			// clear JSON value
 			line_object.clear();
 
-			//Get next value
-			obj = gl_find_next(ohlines,obj);
+			// Get next value
+			obj = gl_find_next(ohlines, obj);
 
 			index++;
 		}
 	}
 
-	//write the underground lines
-	if(uglines->hit_count > 0)
+	// write the underground lines
+	if (uglines->hit_count > 0)
 	{
-		pUgLine = (line **)gl_malloc(uglines->hit_count*sizeof(line*));
+		pUgLine = (line **)gl_malloc(uglines->hit_count * sizeof(line *));
 
-		//Check it
+		// Check it
 		if (pUgLine == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Grab the first object
-		obj = gl_find_next(uglines,nullptr);
+		// Grab the first object
+		obj = gl_find_next(uglines, nullptr);
 
-		//Zero the index
+		// Zero the index
 		index = 0;
 
-		while(obj != nullptr)
+		while (obj != nullptr)
 		{
-			if(index >= uglines->hit_count){
+			if (index >= uglines->hit_count)
+			{
 				break;
 			}
 
 			pUgLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
-			if(pUgLine[index] == nullptr){
+			if (pUgLine[index] == nullptr)
+			{
 				gl_error("Unable to map object as underground_line object.");
 				return FAILED;
 			}
@@ -1878,44 +1889,44 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"underground_line:%d",obj->id);
+				sprintf(buffer, "underground_line:%d", obj->id);
 				line_object["id"] = buffer;
 			}
 
-			//write from node name
+			// write from node name
 			if (pUgLine[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pUgLine[index]->from->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pUgLine[index]->from->oclass->name,pUgLine[index]->from->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pUgLine[index]->from->oclass->name, pUgLine[index]->from->id);
 				line_object["node1_id"] = buffer;
 			}
 
-			//write to node name
+			// write to node name
 			if (pUgLine[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pUgLine[index]->to->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pUgLine[index]->to->oclass->name,pUgLine[index]->to->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pUgLine[index]->to->oclass->name, pUgLine[index]->to->id);
 				line_object["node2_id"] = buffer;
 			}
 
-			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
-			
-			//Clear the output array
+			// Pull the phases and figure out those
+			temp_set_value = get_set_value(obj, "phases");
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Get phase count too
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Get phase count too
 			phaseCount = 0;
-			//Phase A
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -1925,8 +1936,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -1937,7 +1948,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -1948,41 +1959,41 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			line_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
 
-			//write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
+			// write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
 			line_object["capacity"] = 1e30;
-			
-			//write the length
+
+			// write the length
 			line_object["length"] = pUgLine[index]->length;
-			
-			//write the num_phases
+
+			// write the num_phases
 			line_object["num_phases"] = phaseCount;
 
-			//write is_transformer (now only write line object, so will only be false)
+			// write is_transformer (now only write line object, so will only be false)
 			line_object["is_transformer"] = false;
 
-			//If per-unit - adjust the values
+			// If per-unit - adjust the values
 			if (write_per_unit)
 			{
-				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pUgLine[index]->to,"nominal_voltage");
+				// Compute the per-unit base - use the nominal value off of the secondary
+				per_unit_base = get_double_value(pUgLine[index]->to, "nominal_voltage");
 
-				//Calculate the base impedance
+				// Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
-			}//End per-unit
-			else	//No per-unit desired
+			} // End per-unit
+			else // No per-unit desired
 			{
-				temp_impedance_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
+				temp_impedance_base = 1.0; // Divide by unity - does nothing really, but easier to code this way
 			}
 
-			//write line configuration, if we're unique
+			// write line configuration, if we're unique
 			found_match_config = false;
-			for (indexA=0; indexA<lineConfs->hit_count; indexA++)
+			for (indexA = 0; indexA < lineConfs->hit_count; indexA++)
 			{
-				//Just see if we're a match
+				// Just see if we're a match
 				if (pUgLine[index]->configuration == pLineConf[indexA])
 				{
 					found_match_config = true;
@@ -1990,7 +2001,7 @@ STATUS jsondump::dump_system(void)
 				}
 			}
 
-			//See if it worked - if so, store us
+			// See if it worked - if so, store us
 			if (found_match_config)
 			{
 				if (!b_mat_defined[indexA])
@@ -1999,17 +2010,17 @@ STATUS jsondump::dump_system(void)
 					{
 						for (indexC = 0; indexC < 3; indexC++)
 						{
-							b_mat_pu[indexA*9+indexB*3+indexC] = (pUgLine[index]->b_mat[indexB][indexC])/(((pUgLine[index]->length)/5280.0)/temp_impedance_base);
+							b_mat_pu[indexA * 9 + indexB * 3 + indexC] = (pUgLine[index]->b_mat[indexB][indexC]) / (((pUgLine[index]->length) / 5280.0) / temp_impedance_base);
 						}
 					}
 					b_mat_defined[indexA] = true;
 				}
 			}
 
-			//write line_code
+			// write line_code
 			if (pUgLine[index]->configuration->name == nullptr)
 			{
-				sprintf(buffer,"line_config:%d",pUgLine[index]->configuration->id);
+				sprintf(buffer, "line_config:%d", pUgLine[index]->configuration->id);
 				line_object["line_code"] = buffer;
 			}
 			else
@@ -2017,19 +2028,19 @@ STATUS jsondump::dump_system(void)
 				line_object["line_code"] = pUgLine[index]->configuration->name;
 			}
 
-			//write construction cost - only default value
+			// write construction cost - only default value
 			line_object["construction_cost"] = 1e30;
-			//write hardening cost - only default cost
+			// write hardening cost - only default cost
 			line_object["harden_cost"] = 1e30;
-			//write switch cost - only default cost
+			// write switch cost - only default cost
 			line_object["switch_cost"] = 1e30;
-			//write flag of new construction - only default cost
+			// write flag of new construction - only default cost
 			line_object["is_new"] = false;
-			//write flag of harden - only default cost
+			// write flag of harden - only default cost
 			line_object["can_harden"] = false;
-			//write flag of add switch - only default cost
+			// write flag of add switch - only default cost
 			line_object["can_add_switch"] = false;
-			//write flag of switch existence - only default cost
+			// write flag of switch existence - only default cost
 			line_object["has_switch"] = false;
 			// End of line codes
 
@@ -2039,39 +2050,41 @@ STATUS jsondump::dump_system(void)
 			// clear JSON value
 			line_object.clear();
 
-			//Get next value
-			obj = gl_find_next(uglines,obj);
+			// Get next value
+			obj = gl_find_next(uglines, obj);
 
 			index++;
 		}
-	}//End UgLines traversion
+	} // End UgLines traversion
 
-	//write the triplex lines
-	if(tplines->hit_count > 0)
+	// write the triplex lines
+	if (tplines->hit_count > 0)
 	{
-		pTpLine = (line **)gl_malloc(tplines->hit_count*sizeof(line*));
+		pTpLine = (line **)gl_malloc(tplines->hit_count * sizeof(line *));
 
-		//Check it
+		// Check it
 		if (pTpLine == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Grab the first object
-		obj = gl_find_next(tplines,nullptr);
+		// Grab the first object
+		obj = gl_find_next(tplines, nullptr);
 
-		//Zero the index
+		// Zero the index
 		index = 0;
 
-		while(obj != nullptr)
+		while (obj != nullptr)
 		{
-			if(index >= tplines->hit_count){
+			if (index >= tplines->hit_count)
+			{
 				break;
 			}
 
 			pTpLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
-			if(pTpLine[index] == nullptr){
+			if (pTpLine[index] == nullptr)
+			{
 				gl_error("Unable to map object as triplex_line object.");
 				return FAILED;
 			}
@@ -2085,44 +2098,44 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"triplex_line:%d",obj->id);
+				sprintf(buffer, "triplex_line:%d", obj->id);
 				line_object["id"] = buffer;
 			}
 
-			//write from node name
+			// write from node name
 			if (pTpLine[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pTpLine[index]->from->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pTpLine[index]->from->oclass->name,pTpLine[index]->from->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pTpLine[index]->from->oclass->name, pTpLine[index]->from->id);
 				line_object["node1_id"] = buffer;
 			}
 
-			//write to node name
+			// write to node name
 			if (pTpLine[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pTpLine[index]->to->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pTpLine[index]->to->oclass->name,pTpLine[index]->to->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pTpLine[index]->to->oclass->name, pTpLine[index]->to->id);
 				line_object["node2_id"] = buffer;
 			}
 
-			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
-			
-			//Clear the output array
+			// Pull the phases and figure out those
+			temp_set_value = get_set_value(obj, "phases");
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Get phase count too
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Get phase count too
 			phaseCount = 0;
-			//Phase A
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -2132,8 +2145,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -2144,7 +2157,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -2155,41 +2168,41 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			line_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
 
-			//write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
+			// write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
 			line_object["capacity"] = 1e30;
-			
-			//write the length
+
+			// write the length
 			line_object["length"] = pTpLine[index]->length;
-			
-			//write the num_phases
+
+			// write the num_phases
 			line_object["num_phases"] = phaseCount;
 
-			//write is_transformer (now only write line object, so will only be false)
+			// write is_transformer (now only write line object, so will only be false)
 			line_object["is_transformer"] = false;
 
-			//If per-unit - adjust the values
+			// If per-unit - adjust the values
 			if (write_per_unit)
 			{
-				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pTpLine[index]->to,"nominal_voltage");
+				// Compute the per-unit base - use the nominal value off of the secondary
+				per_unit_base = get_double_value(pTpLine[index]->to, "nominal_voltage");
 
-				//Calculate the base impedance
+				// Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
-			}//End per-unit
-			else	//No per-unit desired
+			} // End per-unit
+			else // No per-unit desired
 			{
-				temp_impedance_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
+				temp_impedance_base = 1.0; // Divide by unity - does nothing really, but easier to code this way
 			}
 
-			//write line configuration, if we're unique
+			// write line configuration, if we're unique
 			found_match_config = false;
-			for (indexA=0; indexA<lineConfs->hit_count; indexA++)
+			for (indexA = 0; indexA < lineConfs->hit_count; indexA++)
 			{
-				//Just see if we're a match
+				// Just see if we're a match
 				if (pTpLine[index]->configuration == pTpLineConf[indexA])
 				{
 					found_match_config = true;
@@ -2197,7 +2210,7 @@ STATUS jsondump::dump_system(void)
 				}
 			}
 
-			//See if it worked - if so, store us
+			// See if it worked - if so, store us
 			if (found_match_config)
 			{
 				if (!b_mat_tp_defined[indexA])
@@ -2206,17 +2219,17 @@ STATUS jsondump::dump_system(void)
 					{
 						for (indexC = 0; indexC < 3; indexC++)
 						{
-							b_mat_tp_pu[indexA*9+indexB*3+indexC] = (pTpLine[index]->b_mat[indexB][indexC])/(((pTpLine[index]->length)/5280.0)/temp_impedance_base);
+							b_mat_tp_pu[indexA * 9 + indexB * 3 + indexC] = (pTpLine[index]->b_mat[indexB][indexC]) / (((pTpLine[index]->length) / 5280.0) / temp_impedance_base);
 						}
 					}
 					b_mat_tp_defined[indexA] = true;
 				}
 			}
 
-			//write line_code
+			// write line_code
 			if (pTpLine[index]->configuration->name == nullptr)
 			{
-				sprintf(buffer,"line_config:%d",pTpLine[index]->configuration->id);
+				sprintf(buffer, "line_config:%d", pTpLine[index]->configuration->id);
 				line_object["line_code"] = buffer;
 			}
 			else
@@ -2224,19 +2237,19 @@ STATUS jsondump::dump_system(void)
 				line_object["line_code"] = pTpLine[index]->configuration->name;
 			}
 
-			//write construction cost - only default value
+			// write construction cost - only default value
 			line_object["construction_cost"] = 1e30;
-			//write hardening cost - only default cost
+			// write hardening cost - only default cost
 			line_object["harden_cost"] = 1e30;
-			//write switch cost - only default cost
+			// write switch cost - only default cost
 			line_object["switch_cost"] = 1e30;
-			//write flag of new construction - only default cost
+			// write flag of new construction - only default cost
 			line_object["is_new"] = false;
-			//write flag of harden - only default cost
+			// write flag of harden - only default cost
 			line_object["can_harden"] = false;
-			//write flag of add switch - only default cost
+			// write flag of add switch - only default cost
 			line_object["can_add_switch"] = false;
-			//write flag of switch existence - only default cost
+			// write flag of switch existence - only default cost
 			line_object["has_switch"] = false;
 			// End of line codes
 
@@ -2246,44 +2259,46 @@ STATUS jsondump::dump_system(void)
 			// clear JSON value
 			line_object.clear();
 
-			//Get next value
-			obj = gl_find_next(tplines,obj);
+			// Get next value
+			obj = gl_find_next(tplines, obj);
 
 			index++;
 		}
 	}
 
-	//Initial value for swtiches
+	// Initial value for swtiches
 	b_mat_switch_defined = false;
 
-	//Write switches
-	if(switches->hit_count > 0)
+	// Write switches
+	if (switches->hit_count > 0)
 	{
 
-		//Allocate the master array
-		pSwitch = (switch_object **)gl_malloc(switches->hit_count*sizeof(switch_object*));
+		// Allocate the master array
+		pSwitch = (switch_object **)gl_malloc(switches->hit_count * sizeof(switch_object *));
 
-		//Check it
+		// Check it
 		if (pSwitch == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Grab the first object
-		obj = gl_find_next(switches,nullptr);
+		// Grab the first object
+		obj = gl_find_next(switches, nullptr);
 
-		//Zero the index
+		// Zero the index
 		index = 0;
 
-		while(obj != nullptr)
+		while (obj != nullptr)
 		{
-			if(index >= switches->hit_count){
+			if (index >= switches->hit_count)
+			{
 				break;
 			}
 
 			pSwitch[index] = /*OBJECTDATA(obj,<>)*/ object_data<switch_object>(obj);
-			if(pSwitch[index] == nullptr){
+			if (pSwitch[index] == nullptr)
+			{
 				gl_error("Unable to map object as switch object.");
 				return FAILED;
 			}
@@ -2297,44 +2312,44 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"switch:%d",obj->id);
+				sprintf(buffer, "switch:%d", obj->id);
 				line_object["id"] = buffer;
 			}
 
-			//write from node name
+			// write from node name
 			if (pSwitch[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pSwitch[index]->from->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pSwitch[index]->from->oclass->name,pSwitch[index]->from->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pSwitch[index]->from->oclass->name, pSwitch[index]->from->id);
 				line_object["node1_id"] = buffer;
 			}
 
-			//write to node name
+			// write to node name
 			if (pSwitch[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pSwitch[index]->to->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pSwitch[index]->to->oclass->name,pSwitch[index]->to->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pSwitch[index]->to->oclass->name, pSwitch[index]->to->id);
 				line_object["node2_id"] = buffer;
 			}
 
-			//Pull the phases and figure out those
+			// Pull the phases and figure out those
 			temp_set_value = get_set_value(obj, "phases");
-			
-			//Clear the output array
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Get phase count too
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Get phase count too
 			phaseCount = 0;
-			//Phase A
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -2344,8 +2359,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -2356,7 +2371,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -2367,66 +2382,66 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			line_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
 
-			//write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
+			// write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
 			line_object["capacity"] = 1e30;
-			
-			//write the length
+
+			// write the length
 			line_object["length"] = 1.0;
 
-			//write the num_phases
+			// write the num_phases
 			line_object["num_phases"] = phaseCount;
 
-			//write is_transformer
+			// write is_transformer
 			line_object["is_transformer"] = false;
 
-			//If per-unit - adjust the values
+			// If per-unit - adjust the values
 			if (write_per_unit)
 			{
-				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pSwitch[index]->to,"nominal_voltage");
+				// Compute the per-unit base - use the nominal value off of the secondary
+				per_unit_base = get_double_value(pSwitch[index]->to, "nominal_voltage");
 
-				//Calculate the base impedance
+				// Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
-			}//End per-unit
-			else	//No per-unit desired
+			} // End per-unit
+			else // No per-unit desired
 			{
-				temp_impedance_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
+				temp_impedance_base = 1.0; // Divide by unity - does nothing really, but easier to code this way
 			}
 
-			//write line configuration, if we're unique
+			// write line configuration, if we're unique
 			if (!b_mat_switch_defined)
 			{
 				for (indexB = 0; indexB < 3; indexB++)
 				{
 					for (indexC = 0; indexC < 3; indexC++)
 					{
-						b_mat_switch_pu[indexB*3+indexC] = pSwitch[index]->b_mat[indexB][indexC]/temp_impedance_base;
+						b_mat_switch_pu[indexB * 3 + indexC] = pSwitch[index]->b_mat[indexB][indexC] / temp_impedance_base;
 					}
 				}
 				b_mat_switch_defined = true;
-				switch_phase_count = phaseCount;	//Just store the first one
+				switch_phase_count = phaseCount; // Just store the first one
 			}
 
-			//write line_code
+			// write line_code
 			line_object["line_code"] = "switch_config";
 
-			//write construction cost - only default value
+			// write construction cost - only default value
 			line_object["construction_cost"] = 1e30;
-			//write hardening cost - only default cost
+			// write hardening cost - only default cost
 			line_object["harden_cost"] = 1e30;
-			//write switch cost - only default cost
+			// write switch cost - only default cost
 			line_object["switch_cost"] = 1e30;
-			//write flag of new construction - only default cost
+			// write flag of new construction - only default cost
 			line_object["is_new"] = false;
-			//write flag of harden - only default cost
+			// write flag of harden - only default cost
 			line_object["can_harden"] = false;
-			//write flag of add switch - only default cost
+			// write flag of add switch - only default cost
 			line_object["can_add_switch"] = false;
-			//write flag of switch existence - only default cost
+			// write flag of switch existence - only default cost
 			line_object["has_switch"] = true;
 			// End of line codes
 
@@ -2436,40 +2451,42 @@ STATUS jsondump::dump_system(void)
 			// clear JSON value
 			line_object.clear();
 
-			//Get next value
-			obj = gl_find_next(switches,obj);
+			// Get next value
+			obj = gl_find_next(switches, obj);
 
 			index++;
-		}//End of switches
+		} // End of switches
 	}
 
-	//Write sectionalizers
-	if(sectionalizers->hit_count > 0)
+	// Write sectionalizers
+	if (sectionalizers->hit_count > 0)
 	{
-		//Allocate the master array
-		pSectionalizer = (sectionalizer **)gl_malloc(sectionalizers->hit_count*sizeof(sectionalizer*));
+		// Allocate the master array
+		pSectionalizer = (sectionalizer **)gl_malloc(sectionalizers->hit_count * sizeof(sectionalizer *));
 
-		//Check it
+		// Check it
 		if (pSectionalizer == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Grab the first object
-		obj = gl_find_next(sectionalizers,nullptr);
+		// Grab the first object
+		obj = gl_find_next(sectionalizers, nullptr);
 
-		//Zero the index
+		// Zero the index
 		index = 0;
 
-		while(obj != nullptr)
+		while (obj != nullptr)
 		{
-			if(index >= sectionalizers->hit_count){
+			if (index >= sectionalizers->hit_count)
+			{
 				break;
 			}
 
 			pSectionalizer[index] = /*OBJECTDATA(obj,<>)*/ object_data<sectionalizer>(obj);
-			if(pSectionalizer[index] == nullptr){
+			if (pSectionalizer[index] == nullptr)
+			{
 				gl_error("Unable to map object as sectionalizer object.");
 				return FAILED;
 			}
@@ -2483,44 +2500,44 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"sectionalizer:%d",obj->id);
+				sprintf(buffer, "sectionalizer:%d", obj->id);
 				line_object["id"] = buffer;
 			}
 
-			//write from node name
+			// write from node name
 			if (pSectionalizer[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pSectionalizer[index]->from->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pSectionalizer[index]->from->oclass->name,pSectionalizer[index]->from->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pSectionalizer[index]->from->oclass->name, pSectionalizer[index]->from->id);
 				line_object["node1_id"] = buffer;
 			}
 
-			//write to node name
+			// write to node name
 			if (pSectionalizer[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pSectionalizer[index]->to->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pSectionalizer[index]->to->oclass->name,pSectionalizer[index]->to->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pSectionalizer[index]->to->oclass->name, pSectionalizer[index]->to->id);
 				line_object["node2_id"] = buffer;
 			}
 
-			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
-			
-			//Clear the output array
+			// Pull the phases and figure out those
+			temp_set_value = get_set_value(obj, "phases");
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Get phase count too
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Get phase count too
 			phaseCount = 0;
-			//Phase A
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -2530,8 +2547,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -2542,7 +2559,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -2553,66 +2570,66 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			line_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
 
-			//write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
+			// write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
 			line_object["capacity"] = 1e30;
-			
-			//write the length
+
+			// write the length
 			line_object["length"] = 1.0;
 
-			//write the num_phases
+			// write the num_phases
 			line_object["num_phases"] = phaseCount;
 
-			//write is_transformer
+			// write is_transformer
 			line_object["is_transformer"] = false;
 
-			//If per-unit - adjust the values
+			// If per-unit - adjust the values
 			if (write_per_unit)
 			{
-				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pSectionalizer[index]->to,"nominal_voltage");
+				// Compute the per-unit base - use the nominal value off of the secondary
+				per_unit_base = get_double_value(pSectionalizer[index]->to, "nominal_voltage");
 
-				//Calculate the base impedance
+				// Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
-			}//End per-unit
-			else	//No per-unit desired
+			} // End per-unit
+			else // No per-unit desired
 			{
-				temp_impedance_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
+				temp_impedance_base = 1.0; // Divide by unity - does nothing really, but easier to code this way
 			}
 
-			//write line configuration, if we're unique
+			// write line configuration, if we're unique
 			if (!b_mat_switch_defined)
 			{
 				for (indexB = 0; indexB < 3; indexB++)
 				{
 					for (indexC = 0; indexC < 3; indexC++)
 					{
-						b_mat_switch_pu[indexB*3+indexC] = pSectionalizer[index]->b_mat[indexB][indexC]/temp_impedance_base;
+						b_mat_switch_pu[indexB * 3 + indexC] = pSectionalizer[index]->b_mat[indexB][indexC] / temp_impedance_base;
 					}
 				}
 				b_mat_switch_defined = true;
-				switch_phase_count = phaseCount;	//Just store the first one
+				switch_phase_count = phaseCount; // Just store the first one
 			}
 
-			//write line_code
+			// write line_code
 			line_object["line_code"] = "switch_config";
 
-			//write construction cost - only default value
+			// write construction cost - only default value
 			line_object["construction_cost"] = 1e30;
-			//write hardening cost - only default cost
+			// write hardening cost - only default cost
 			line_object["harden_cost"] = 1e30;
-			//write switch cost - only default cost
+			// write switch cost - only default cost
 			line_object["switch_cost"] = 1e30;
-			//write flag of new construction - only default cost
+			// write flag of new construction - only default cost
 			line_object["is_new"] = false;
-			//write flag of harden - only default cost
+			// write flag of harden - only default cost
 			line_object["can_harden"] = false;
-			//write flag of add switch - only default cost
+			// write flag of add switch - only default cost
 			line_object["can_add_switch"] = false;
-			//write flag of switch existence - only default cost
+			// write flag of switch existence - only default cost
 			line_object["has_switch"] = true;
 			// End of line codes
 
@@ -2622,41 +2639,43 @@ STATUS jsondump::dump_system(void)
 			// clear JSON value
 			line_object.clear();
 
-			//Get next value
-			obj = gl_find_next(sectionalizers,obj);
+			// Get next value
+			obj = gl_find_next(sectionalizers, obj);
 
 			index++;
-		}//End of sectionalizers
+		} // End of sectionalizers
 	}
 
-	//Write reclosers
-	if(reclosers->hit_count > 0)
+	// Write reclosers
+	if (reclosers->hit_count > 0)
 	{
 
-		//Allocate the master array
-		pRecloser = (recloser **)gl_malloc(reclosers->hit_count*sizeof(recloser*));
+		// Allocate the master array
+		pRecloser = (recloser **)gl_malloc(reclosers->hit_count * sizeof(recloser *));
 
-		//Check it
+		// Check it
 		if (pRecloser == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Grab the first object
-		obj = gl_find_next(reclosers,nullptr);
+		// Grab the first object
+		obj = gl_find_next(reclosers, nullptr);
 
-		//Zero the index
+		// Zero the index
 		index = 0;
 
-		while(obj != nullptr)
+		while (obj != nullptr)
 		{
-			if(index >= reclosers->hit_count){
+			if (index >= reclosers->hit_count)
+			{
 				break;
 			}
 
 			pRecloser[index] = /*OBJECTDATA(obj,<>)*/ object_data<recloser>(obj);
-			if(pRecloser[index] == nullptr){
+			if (pRecloser[index] == nullptr)
+			{
 				gl_error("Unable to map object as recloser object.");
 				return FAILED;
 			}
@@ -2670,44 +2689,44 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"recloser:%d",obj->id);
+				sprintf(buffer, "recloser:%d", obj->id);
 				line_object["id"] = buffer;
 			}
 
-			//write from node name
+			// write from node name
 			if (pRecloser[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pRecloser[index]->from->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pRecloser[index]->from->oclass->name,pRecloser[index]->from->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pRecloser[index]->from->oclass->name, pRecloser[index]->from->id);
 				line_object["node1_id"] = buffer;
 			}
 
-			//write to node name
+			// write to node name
 			if (pRecloser[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pRecloser[index]->to->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pRecloser[index]->to->oclass->name,pRecloser[index]->to->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pRecloser[index]->to->oclass->name, pRecloser[index]->to->id);
 				line_object["node2_id"] = buffer;
 			}
 
-			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
-			
-			//Clear the output array
+			// Pull the phases and figure out those
+			temp_set_value = get_set_value(obj, "phases");
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Get phase count too
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Get phase count too
 			phaseCount = 0;
-			//Phase A
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -2717,8 +2736,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -2729,7 +2748,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -2740,66 +2759,66 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			line_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
 
-			//write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
+			// write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
 			line_object["capacity"] = 1e30;
-			
-			//write the length
+
+			// write the length
 			line_object["length"] = 1.0;
 
-			//write the num_phases
+			// write the num_phases
 			line_object["num_phases"] = phaseCount;
 
-			//write is_transformer
+			// write is_transformer
 			line_object["is_transformer"] = false;
 
-			//If per-unit - adjust the values
+			// If per-unit - adjust the values
 			if (write_per_unit)
 			{
-				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pRecloser[index]->to,"nominal_voltage");
+				// Compute the per-unit base - use the nominal value off of the secondary
+				per_unit_base = get_double_value(pRecloser[index]->to, "nominal_voltage");
 
-				//Calculate the base impedance
+				// Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
-			}//End per-unit
-			else	//No per-unit desired
+			} // End per-unit
+			else // No per-unit desired
 			{
-				temp_impedance_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
+				temp_impedance_base = 1.0; // Divide by unity - does nothing really, but easier to code this way
 			}
 
-			//write line configuration, if we're unique
+			// write line configuration, if we're unique
 			if (!b_mat_switch_defined)
 			{
 				for (indexB = 0; indexB < 3; indexB++)
 				{
 					for (indexC = 0; indexC < 3; indexC++)
 					{
-						b_mat_switch_pu[indexB*3+indexC] = pRecloser[index]->b_mat[indexB][indexC]/temp_impedance_base;
+						b_mat_switch_pu[indexB * 3 + indexC] = pRecloser[index]->b_mat[indexB][indexC] / temp_impedance_base;
 					}
 				}
 				b_mat_switch_defined = true;
-				switch_phase_count = phaseCount;	//Just store the first one
+				switch_phase_count = phaseCount; // Just store the first one
 			}
 
-			//write line_code
+			// write line_code
 			line_object["line_code"] = "switch_config";
 
-			//write construction cost - only default value
+			// write construction cost - only default value
 			line_object["construction_cost"] = 1e30;
-			//write hardening cost - only default cost
+			// write hardening cost - only default cost
 			line_object["harden_cost"] = 1e30;
-			//write switch cost - only default cost
+			// write switch cost - only default cost
 			line_object["switch_cost"] = 1e30;
-			//write flag of new construction - only default cost
+			// write flag of new construction - only default cost
 			line_object["is_new"] = false;
-			//write flag of harden - only default cost
+			// write flag of harden - only default cost
 			line_object["can_harden"] = false;
-			//write flag of add switch - only default cost
+			// write flag of add switch - only default cost
 			line_object["can_add_switch"] = false;
-			//write flag of switch existence - only default cost
+			// write flag of switch existence - only default cost
 			line_object["has_switch"] = true;
 			// End of line codes
 
@@ -2809,44 +2828,46 @@ STATUS jsondump::dump_system(void)
 			// clear JSON value
 			line_object.clear();
 
-			//Get next value
-			obj = gl_find_next(reclosers,obj);
+			// Get next value
+			obj = gl_find_next(reclosers, obj);
 
 			index++;
-		}//End of reclosers
+		} // End of reclosers
 	}
 
-	//Initial value for fuses
+	// Initial value for fuses
 	b_mat_fuse_defined = false;
 
-	//Write fuses
-	if(fuses->hit_count > 0)
+	// Write fuses
+	if (fuses->hit_count > 0)
 	{
 
-		//Allocate the master array
-		pFuse = (fuse **)gl_malloc(fuses->hit_count*sizeof(fuse*));
+		// Allocate the master array
+		pFuse = (fuse **)gl_malloc(fuses->hit_count * sizeof(fuse *));
 
-		//Check it
+		// Check it
 		if (pFuse == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
-			//Defined above
+			GL_THROW("jsdondump:%d %s - Unable to allocate memory", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"));
+			// Defined above
 		}
 
-		//Grab the first object
-		obj = gl_find_next(fuses,nullptr);
+		// Grab the first object
+		obj = gl_find_next(fuses, nullptr);
 
-		//Zero the index
+		// Zero the index
 		index = 0;
 
-		while(obj != nullptr)
+		while (obj != nullptr)
 		{
-			if(index >= fuses->hit_count){
+			if (index >= fuses->hit_count)
+			{
 				break;
 			}
 
 			pFuse[index] = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(obj);
-			if(pFuse[index] == nullptr){
+			if (pFuse[index] == nullptr)
+			{
 				gl_error("Unable to map object as fuse object.");
 				return FAILED;
 			}
@@ -2860,44 +2881,44 @@ STATUS jsondump::dump_system(void)
 			else
 			{
 				//"Make" a value
-				sprintf(buffer,"fuse:%d",obj->id);
+				sprintf(buffer, "fuse:%d", obj->id);
 				line_object["id"] = buffer;
 			}
 
-			//write from node name
+			// write from node name
 			if (pFuse[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pFuse[index]->from->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pFuse[index]->from->oclass->name,pFuse[index]->from->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pFuse[index]->from->oclass->name, pFuse[index]->from->id);
 				line_object["node1_id"] = buffer;
 			}
 
-			//write to node name
+			// write to node name
 			if (pFuse[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pFuse[index]->to->name;
 			}
 			else
 			{
-				//Make value
-				sprintf(buffer,"%s:%d",pFuse[index]->to->oclass->name,pFuse[index]->to->id);
+				// Make value
+				sprintf(buffer, "%s:%d", pFuse[index]->to->oclass->name, pFuse[index]->to->id);
 				line_object["node2_id"] = buffer;
 			}
 
-			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
-			
-			//Clear the output array
+			// Pull the phases and figure out those
+			temp_set_value = get_set_value(obj, "phases");
+
+			// Clear the output array
 			jsonArray2.clear();
 
-			//Do the tests -- we're in powerflow, so the master definitions still work
-			//Get phase count too
+			// Do the tests -- we're in powerflow, so the master definitions still work
+			// Get phase count too
 			phaseCount = 0;
-			//Phase A
+			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
 				jsonArray2.push_back(true);
@@ -2907,8 +2928,8 @@ STATUS jsondump::dump_system(void)
 			{
 				jsonArray2.push_back(false);
 			}
-				
-			//Phase B
+
+			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
 				jsonArray2.push_back(true);
@@ -2919,7 +2940,7 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Phase C
+			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
 				jsonArray2.push_back(true);
@@ -2930,66 +2951,66 @@ STATUS jsondump::dump_system(void)
 				jsonArray2.push_back(false);
 			}
 
-			//Append it in
+			// Append it in
 			line_object["has_phase"] = jsonArray2;
 			jsonArray2.clear();
 
-			//write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
+			// write capacity - I wanted to use link emergency limit (A), but its private field, write only default value
 			line_object["capacity"] = 1e30;
-			
-			//write the length
+
+			// write the length
 			line_object["length"] = 1.0;
 
-			//write the num_phases
+			// write the num_phases
 			line_object["num_phases"] = phaseCount;
 
-			//write is_transformer
+			// write is_transformer
 			line_object["is_transformer"] = false;
 
-			//If per-unit - adjust the values
+			// If per-unit - adjust the values
 			if (write_per_unit)
 			{
-				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pFuse[index]->to,"nominal_voltage");
+				// Compute the per-unit base - use the nominal value off of the secondary
+				per_unit_base = get_double_value(pFuse[index]->to, "nominal_voltage");
 
-				//Calculate the base impedance
+				// Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
-			}//End per-unit
-			else	//No per-unit desired
+			} // End per-unit
+			else // No per-unit desired
 			{
-				temp_impedance_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
+				temp_impedance_base = 1.0; // Divide by unity - does nothing really, but easier to code this way
 			}
 
-			//write line configuration, if we're unique
+			// write line configuration, if we're unique
 			if (!b_mat_fuse_defined)
 			{
 				for (indexB = 0; indexB < 3; indexB++)
 				{
 					for (indexC = 0; indexC < 3; indexC++)
 					{
-						b_mat_fuse_pu[indexB*3+indexC] = pFuse[index]->b_mat[indexB][indexC]/temp_impedance_base;
+						b_mat_fuse_pu[indexB * 3 + indexC] = pFuse[index]->b_mat[indexB][indexC] / temp_impedance_base;
 					}
 				}
 				b_mat_fuse_defined = true;
-				fuse_phase_count = phaseCount;	//Just store the first one
+				fuse_phase_count = phaseCount; // Just store the first one
 			}
 
-			//write line_code
+			// write line_code
 			line_object["line_code"] = "fuse_config";
 
-			//write construction cost - only default value
+			// write construction cost - only default value
 			line_object["construction_cost"] = 1e30;
-			//write hardening cost - only default cost
+			// write hardening cost - only default cost
 			line_object["harden_cost"] = 1e30;
-			//write switch cost - only default cost
+			// write switch cost - only default cost
 			line_object["switch_cost"] = 1e30;
-			//write flag of new construction - only default cost
+			// write flag of new construction - only default cost
 			line_object["is_new"] = false;
-			//write flag of harden - only default cost
+			// write flag of harden - only default cost
 			line_object["can_harden"] = false;
-			//write flag of add switch - only default cost
+			// write flag of add switch - only default cost
 			line_object["can_add_switch"] = false;
-			//write flag of switch existence - only default cost
+			// write flag of switch existence - only default cost
 			line_object["has_switch"] = true;
 			// End of line codes
 
@@ -2999,11 +3020,11 @@ STATUS jsondump::dump_system(void)
 			// clear JSON value
 			line_object.clear();
 
-			//Get next value
-			obj = gl_find_next(fuses,obj);
+			// Get next value
+			obj = gl_find_next(fuses, obj);
 
 			index++;
-		}//End of fuses
+		} // End of fuses
 	}
 
 	// Write line metrics into metrics_lines dictionary
@@ -3012,15 +3033,15 @@ STATUS jsondump::dump_system(void)
 	// clear jsonArray
 	jsonArray.clear();
 
-	//Write a "fuse config", if it exists - assume that if one exists, this needs written
+	// Write a "fuse config", if it exists - assume that if one exists, this needs written
 	if (fuses->hit_count > 0)
 	{
 		line_configuration_object["line_code"] = "fuse_config";
 
-		//write num_phases
+		// write num_phases
 		line_configuration_object["num_phases"] = fuse_phase_count;
 
-		//Clear the arrays, just to be safe
+		// Clear the arrays, just to be safe
 		jsonArray1.clear();
 		jsonArray2.clear();
 
@@ -3029,7 +3050,7 @@ STATUS jsondump::dump_system(void)
 		{
 			for (indexB = 0; indexB < 3; indexB++)
 			{
-				jsonArray1.push_back(b_mat_fuse_pu[indexA*3+indexB].Re());
+				jsonArray1.push_back(b_mat_fuse_pu[indexA * 3 + indexB].Re());
 			}
 			jsonArray2.push_back(jsonArray1);
 			jsonArray1.clear();
@@ -3037,12 +3058,12 @@ STATUS jsondump::dump_system(void)
 		line_configuration_object["rmatrix"] = jsonArray2;
 		jsonArray2.clear();
 
-		//write xmatrix
+		// write xmatrix
 		for (indexA = 0; indexA < 3; indexA++)
 		{
 			for (indexB = 0; indexB < 3; indexB++)
 			{
-				jsonArray1.push_back(b_mat_fuse_pu[indexA*3+indexB].Im());
+				jsonArray1.push_back(b_mat_fuse_pu[indexA * 3 + indexB].Im());
 			}
 			jsonArray2.push_back(jsonArray1);
 			jsonArray1.clear();
@@ -3056,17 +3077,17 @@ STATUS jsondump::dump_system(void)
 
 		// clear JSON value
 		line_configuration_object.clear();
-	}//End fuses "configuration"
+	} // End fuses "configuration"
 
-	//Write a "switch config", if it exists - assume that if one exists, this needs written
+	// Write a "switch config", if it exists - assume that if one exists, this needs written
 	if ((switches->hit_count > 0) || (reclosers->hit_count > 0) || (sectionalizers->hit_count > 0))
 	{
 		line_configuration_object["line_code"] = "switch_config";
 
-		//write num_phases -- always three
+		// write num_phases -- always three
 		line_configuration_object["num_phases"] = switch_phase_count;
 
-		//Clear the arrays, just to be safe
+		// Clear the arrays, just to be safe
 		jsonArray1.clear();
 		jsonArray2.clear();
 
@@ -3075,7 +3096,7 @@ STATUS jsondump::dump_system(void)
 		{
 			for (indexB = 0; indexB < 3; indexB++)
 			{
-				jsonArray1.push_back(b_mat_switch_pu[indexA*3+indexB].Re());
+				jsonArray1.push_back(b_mat_switch_pu[indexA * 3 + indexB].Re());
 			}
 			jsonArray2.push_back(jsonArray1);
 			jsonArray1.clear();
@@ -3083,12 +3104,12 @@ STATUS jsondump::dump_system(void)
 		line_configuration_object["rmatrix"] = jsonArray2;
 		jsonArray2.clear();
 
-		//write xmatrix
+		// write xmatrix
 		for (indexA = 0; indexA < 3; indexA++)
 		{
 			for (indexB = 0; indexB < 3; indexB++)
 			{
-				jsonArray1.push_back(b_mat_switch_pu[indexA*3+indexB].Im());
+				jsonArray1.push_back(b_mat_switch_pu[indexA * 3 + indexB].Im());
 			}
 			jsonArray2.push_back(jsonArray1);
 			jsonArray1.clear();
@@ -3102,23 +3123,23 @@ STATUS jsondump::dump_system(void)
 
 		// clear JSON value
 		line_configuration_object.clear();
-	}//End switches "configuration"
+	} // End switches "configuration"
 
-	//write all line configurations
-	//overhead and underground line configurations
-	if(lineConfs->hit_count > 0)
+	// write all line configurations
+	// overhead and underground line configurations
+	if (lineConfs->hit_count > 0)
 	{
-		//Loop through the array - we know how many we should have
-		for (index=0; index<lineConfs->hit_count; index++)
+		// Loop through the array - we know how many we should have
+		for (index = 0; index < lineConfs->hit_count; index++)
 		{
-			//See if it is valid - just ignore the ones that aren't
+			// See if it is valid - just ignore the ones that aren't
 			if (b_mat_defined[index])
 			{
-				//write each line configuration data
-				// write line_code
+				// write each line configuration data
+				//  write line_code
 				if (pLineConf[index]->name == nullptr)
 				{
-					sprintf(buffer,"line_config:%d",pLineConf[index]->id);
+					sprintf(buffer, "line_config:%d", pLineConf[index]->id);
 					line_configuration_object["line_code"] = buffer;
 				}
 				else
@@ -3126,24 +3147,24 @@ STATUS jsondump::dump_system(void)
 					line_configuration_object["line_code"] = pLineConf[index]->name;
 				}
 
-				//write num_phases
+				// write num_phases
 				phaseCount = 0;
 
-				obj = get_object_value(pLineConf[index],"conductor_A");
+				obj = get_object_value(pLineConf[index], "conductor_A");
 
 				if (obj != nullptr)
 				{
 					phaseCount++;
 				}
 
-				obj = get_object_value(pLineConf[index],"conductor_B");
+				obj = get_object_value(pLineConf[index], "conductor_B");
 
 				if (obj != nullptr)
 				{
 					phaseCount++;
 				}
 
-				obj = get_object_value(pLineConf[index],"conductor_C");
+				obj = get_object_value(pLineConf[index], "conductor_C");
 
 				if (obj != nullptr)
 				{
@@ -3152,7 +3173,7 @@ STATUS jsondump::dump_system(void)
 
 				line_configuration_object["num_phases"] = phaseCount;
 
-				//Clear the arrays, just to be safe
+				// Clear the arrays, just to be safe
 				jsonArray1.clear();
 				jsonArray2.clear();
 
@@ -3161,7 +3182,7 @@ STATUS jsondump::dump_system(void)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.push_back(b_mat_pu[index*9+indexA*3+indexB].Re());
+						jsonArray1.push_back(b_mat_pu[index * 9 + indexA * 3 + indexB].Re());
 					}
 					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
@@ -3169,12 +3190,12 @@ STATUS jsondump::dump_system(void)
 				line_configuration_object["rmatrix"] = jsonArray2;
 				jsonArray2.clear();
 
-				//write xmatrix
+				// write xmatrix
 				for (indexA = 0; indexA < 3; indexA++)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.push_back(b_mat_pu[index*9+indexA*3+indexB].Im());
+						jsonArray1.push_back(b_mat_pu[index * 9 + indexA * 3 + indexB].Im());
 					}
 					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
@@ -3188,24 +3209,24 @@ STATUS jsondump::dump_system(void)
 
 				// clear JSON value
 				line_configuration_object.clear();
-			}//End valid item
-		}//End normal loop
+			} // End valid item
+		} // End normal loop
 	}
 
-	//write the triplex line configurations
-	if(tpLineConfs->hit_count > 0 )
+	// write the triplex line configurations
+	if (tpLineConfs->hit_count > 0)
 	{
-		//Loop through the array - we know how many we should have
-		for (index=0; index<tpLineConfs->hit_count; index++)
+		// Loop through the array - we know how many we should have
+		for (index = 0; index < tpLineConfs->hit_count; index++)
 		{
-			//See if it is valid - just ignore the ones that aren't
+			// See if it is valid - just ignore the ones that aren't
 			if (b_mat_tp_defined[index])
 			{
-				//write each line configuration data
-				// write line_code
+				// write each line configuration data
+				//  write line_code
 				if (pTpLineConf[index]->name == nullptr)
 				{
-					sprintf(buffer,"line_config:%d",pTpLineConf[index]->id);
+					sprintf(buffer, "line_config:%d", pTpLineConf[index]->id);
 					line_configuration_object["line_code"] = buffer;
 				}
 				else
@@ -3213,17 +3234,17 @@ STATUS jsondump::dump_system(void)
 					line_configuration_object["line_code"] = pTpLineConf[index]->name;
 				}
 
-				//write num_phases - should always be two, but we'll let it count
+				// write num_phases - should always be two, but we'll let it count
 				phaseCount = 0;
 
-				obj = get_object_value(pTpLineConf[index],"conductor_1");
+				obj = get_object_value(pTpLineConf[index], "conductor_1");
 
 				if (obj != nullptr)
 				{
 					phaseCount++;
 				}
 
-				obj = get_object_value(pTpLineConf[index],"conductor_2");
+				obj = get_object_value(pTpLineConf[index], "conductor_2");
 
 				if (obj != nullptr)
 				{
@@ -3232,7 +3253,7 @@ STATUS jsondump::dump_system(void)
 
 				line_configuration_object["num_phases"] = phaseCount;
 
-				//Clear the arrays, just to be safe
+				// Clear the arrays, just to be safe
 				jsonArray1.clear();
 				jsonArray2.clear();
 
@@ -3241,7 +3262,7 @@ STATUS jsondump::dump_system(void)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.push_back(b_mat_tp_pu[index*9+indexA*3+indexB].Re());
+						jsonArray1.push_back(b_mat_tp_pu[index * 9 + indexA * 3 + indexB].Re());
 					}
 					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
@@ -3249,12 +3270,12 @@ STATUS jsondump::dump_system(void)
 				line_configuration_object["rmatrix"] = jsonArray2;
 				jsonArray2.clear();
 
-				//write xmatrix
+				// write xmatrix
 				for (indexA = 0; indexA < 3; indexA++)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.push_back(b_mat_tp_pu[index*9+indexA*3+indexB].Im());
+						jsonArray1.push_back(b_mat_tp_pu[index * 9 + indexA * 3 + indexB].Im());
 					}
 					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
@@ -3268,24 +3289,24 @@ STATUS jsondump::dump_system(void)
 
 				// clear JSON value
 				line_configuration_object.clear();
-			}//End valid item
-		}//End triplex loop
-	}//End of triplex line configuration steps
+			} // End valid item
+		} // End triplex loop
+	} // End of triplex line configuration steps
 
-	//Write the transformer configurations
-	if(TransConfsList->hit_count > 0 )
+	// Write the transformer configurations
+	if (TransConfsList->hit_count > 0)
 	{
-		//Loop through the array - we know how many we should have
-		for (index=0; index<TransConfsList->hit_count; index++)
+		// Loop through the array - we know how many we should have
+		for (index = 0; index < TransConfsList->hit_count; index++)
 		{
-			//See if it is valid - just ignore the ones that aren't
+			// See if it is valid - just ignore the ones that aren't
 			if (b_mat_trans_defined[index])
 			{
 				// write each line configuration data
 				// write line_code
 				if (pTransConf[index]->name == nullptr)
 				{
-					sprintf(buffer,"trans_config:%d",pTransConf[index]->id);
+					sprintf(buffer, "trans_config:%d", pTransConf[index]->id);
 					line_configuration_object["line_code"] = buffer;
 				}
 				else
@@ -3296,7 +3317,7 @@ STATUS jsondump::dump_system(void)
 				// write num_phases
 				line_configuration_object["num_phases"] = trans_phase_count[index];
 
-				//Clear the arrays, just to be safe
+				// Clear the arrays, just to be safe
 				jsonArray1.clear();
 				jsonArray2.clear();
 
@@ -3305,7 +3326,7 @@ STATUS jsondump::dump_system(void)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.push_back(b_mat_trans_pu[index*9+indexA*3+indexB].Re());
+						jsonArray1.push_back(b_mat_trans_pu[index * 9 + indexA * 3 + indexB].Re());
 					}
 					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
@@ -3313,12 +3334,12 @@ STATUS jsondump::dump_system(void)
 				line_configuration_object["rmatrix"] = jsonArray2;
 				jsonArray2.clear();
 
-				//write xmatrix
+				// write xmatrix
 				for (indexA = 0; indexA < 3; indexA++)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.push_back(b_mat_trans_pu[index*9+indexA*3+indexB].Im());
+						jsonArray1.push_back(b_mat_trans_pu[index * 9 + indexA * 3 + indexB].Im());
 					}
 					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
@@ -3332,24 +3353,24 @@ STATUS jsondump::dump_system(void)
 
 				// clear JSON value
 				line_configuration_object.clear();
-			}//End valid configuration
-		}//End loop of configurations
-	}//End Transformer configurations
+			} // End valid configuration
+		} // End loop of configurations
+	} // End Transformer configurations
 
-	//Write the regulator configurations
-	if(regConfs->hit_count > 0 )
+	// Write the regulator configurations
+	if (regConfs->hit_count > 0)
 	{
-		//Loop through the array - we know how many we should have
-		for (index=0; index<regConfs->hit_count; index++)
+		// Loop through the array - we know how many we should have
+		for (index = 0; index < regConfs->hit_count; index++)
 		{
-			//See if it is valid - just ignore the ones that aren't
+			// See if it is valid - just ignore the ones that aren't
 			if (b_mat_reg_defined[index])
 			{
 				// write each line configuration data
 				// write line_code
 				if (pRegConf[index]->name == nullptr)
 				{
-					sprintf(buffer,"reg_config:%d",pRegConf[index]->id);
+					sprintf(buffer, "reg_config:%d", pRegConf[index]->id);
 					line_configuration_object["line_code"] = buffer;
 				}
 				else
@@ -3360,7 +3381,7 @@ STATUS jsondump::dump_system(void)
 				// write num_phases
 				line_configuration_object["num_phases"] = reg_phase_count[index];
 
-				//Clear the arrays, just to be safe
+				// Clear the arrays, just to be safe
 				jsonArray1.clear();
 				jsonArray2.clear();
 
@@ -3369,7 +3390,7 @@ STATUS jsondump::dump_system(void)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.push_back(b_mat_reg_pu[index*9+indexA*3+indexB].Re());
+						jsonArray1.push_back(b_mat_reg_pu[index * 9 + indexA * 3 + indexB].Re());
 					}
 					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
@@ -3377,12 +3398,12 @@ STATUS jsondump::dump_system(void)
 				line_configuration_object["rmatrix"] = jsonArray2;
 				jsonArray2.clear();
 
-				//write xmatrix
+				// write xmatrix
 				for (indexA = 0; indexA < 3; indexA++)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.push_back(b_mat_reg_pu[index*9+indexA*3+indexB].Im());
+						jsonArray1.push_back(b_mat_reg_pu[index * 9 + indexA * 3 + indexB].Im());
 					}
 					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
@@ -3396,9 +3417,9 @@ STATUS jsondump::dump_system(void)
 
 				// clear JSON value
 				line_configuration_object.clear();
-			}//End valid configuration
-		}//End loop of configurations
-	}//End regulator configurations
+			} // End valid configuration
+		} // End loop of configurations
+	} // End regulator configurations
 
 	// Write line metrics into metrics_lines dictionary
 	metrics_lines["properties"]["line_codes"] = jsonArray;
@@ -3407,56 +3428,56 @@ STATUS jsondump::dump_system(void)
 	jsonArray.clear();
 
 	// Write JSON files for line and line_codes
-	out_file.open (filename_dump_system);
+	out_file.open(filename_dump_system);
 	out_file << metrics_lines.dump() << endl;
 	out_file.close();
 
-	//Clean up the mallocs
+	// Clean up the mallocs
 	if (lineConfs->hit_count > 0)
 	{
-		gl_free(b_mat_pu);
-		gl_free(b_mat_defined);
+		gl_free((void **)&b_mat_pu);
+		gl_free((void **)&b_mat_defined);
 	}
 
 	if (tpLineConfs->hit_count > 0)
 	{
-		gl_free(b_mat_tp_pu);
-		gl_free(b_mat_tp_defined);
+		gl_free((void **)&b_mat_tp_pu);
+		gl_free((void **)&b_mat_tp_defined);
 	}
 
 	if (TransConfsList->hit_count > 0)
 	{
-		gl_free(b_mat_trans_pu);
-		gl_free(b_mat_trans_defined);
-		gl_free(trans_phase_count);
+		gl_free((void **)&b_mat_trans_pu);
+		gl_free((void **)&b_mat_trans_defined);
+		gl_free((void **)&trans_phase_count);
 	}
 
 	if (regConfs->hit_count > 0)
 	{
-		gl_free(b_mat_reg_pu);
-		gl_free(b_mat_reg_defined);
-		gl_free(reg_phase_count);
+		gl_free((void **)&b_mat_reg_pu);
+		gl_free((void **)&b_mat_reg_defined);
+		gl_free((void **)&reg_phase_count);
 	}
 
-	//Clean up the findlists
-	gl_free(ohlines);
-	gl_free(tplines);
-	gl_free(uglines);
-	gl_free(switches);
-	gl_free(regulators);
-	gl_free(regConfs);
-	gl_free(lineConfs);
-	gl_free(tpLineConfs);
-	gl_free(TransformerList);
-	gl_free(TransConfsList);
-	gl_free(nodes);
-	gl_free(meters);
-	gl_free(loads);
-	gl_free(fuses);
-	gl_free(reclosers);
-	gl_free(sectionalizers);
-	gl_free(inverters);
-	gl_free(diesels);
+	// Clean up the findlists
+	gl_free((void **)&ohlines);
+	gl_free((void **)&tplines);
+	gl_free((void **)&uglines);
+	gl_free((void **)&switches);
+	gl_free((void **)&regulators);
+	gl_free((void **)&regConfs);
+	gl_free((void **)&lineConfs);
+	gl_free((void **)&tpLineConfs);
+	gl_free((void **)&TransformerList);
+	gl_free((void **)&TransConfsList);
+	gl_free((void **)&nodes);
+	gl_free((void **)&meters);
+	gl_free((void **)&loads);
+	gl_free((void **)&fuses);
+	gl_free((void **)&reclosers);
+	gl_free((void **)&sectionalizers);
+	gl_free((void **)&inverters);
+	gl_free((void **)&diesels);
 
 	return SUCCESS;
 }
@@ -3469,11 +3490,11 @@ STATUS jsondump::dump_reliability(void)
 	sectionalizer *secData;
 	capacitor *capData;
 	regulator *regData;
-	char* indices1366[] = {const_cast<char*>("SAIFI"),
-						const_cast<char*>("SAIDI"),
-						const_cast<char*>("CAIDI"),
-						const_cast<char*>("ASAI"),
-						const_cast<char*>("MAIFI"), nullptr};
+	char *indices1366[] = {const_cast<char *>("SAIFI"),
+						   const_cast<char *>("SAIDI"),
+						   const_cast<char *>("CAIDI"),
+						   const_cast<char *>("ASAI"),
+						   const_cast<char *>("MAIFI"), nullptr};
 	int index1366;
 	double *temp_double;
 	enumeration *temp_emu;
@@ -3483,7 +3504,7 @@ STATUS jsondump::dump_reliability(void)
 	int index = 0;
 
 	// metrics JSON value
-	nlohmann::json metrics_reliability;	// Output dictionary for line and line configuration metrics
+	nlohmann::json metrics_reliability; // Output dictionary for line and line configuration metrics
 	nlohmann::json metrics_1366;
 	nlohmann::json metrics_protection;
 	nlohmann::json metrics_others;
@@ -3497,39 +3518,43 @@ STATUS jsondump::dump_reliability(void)
 	ofstream out_file;
 
 	// Find the objects to be written in
-	powermetrics = gl_find_objects(FL_NEW,FT_CLASS,SAME,"power_metrics",FT_END);	//find all power_metrics
-	fuses = gl_find_objects(FL_NEW,FT_CLASS,SAME,"fuse",FT_END);					//find all fuses
-	reclosers = gl_find_objects(FL_NEW,FT_CLASS,SAME,"recloser",FT_END);			//find all reclosers
-	sectionalizers = gl_find_objects(FL_NEW,FT_CLASS,SAME,"sectionalizer",FT_END);	//find all sectionalizers
-//	relays = gl_find_objects(FL_NEW,FT_CLASS,SAME,"relay",FT_END);					//find all relays
-	capacitors = gl_find_objects(FL_NEW,FT_CLASS,SAME,"capacitor",FT_END);	//find all capacitors
-	regulators = gl_find_objects(FL_NEW,FT_CLASS,SAME,"regulator",FT_END);	//find all regulators
+	powermetrics = gl_find_objects(FL_NEW, FT_CLASS, SAME, "power_metrics", FT_END);   // find all power_metrics
+	fuses = gl_find_objects(FL_NEW, FT_CLASS, SAME, "fuse", FT_END);				   // find all fuses
+	reclosers = gl_find_objects(FL_NEW, FT_CLASS, SAME, "recloser", FT_END);		   // find all reclosers
+	sectionalizers = gl_find_objects(FL_NEW, FT_CLASS, SAME, "sectionalizer", FT_END); // find all sectionalizers
+	//	relays = gl_find_objects(FL_NEW,FT_CLASS,SAME,"relay",FT_END);					//find all relays
+	capacitors = gl_find_objects(FL_NEW, FT_CLASS, SAME, "capacitor", FT_END); // find all capacitors
+	regulators = gl_find_objects(FL_NEW, FT_CLASS, SAME, "regulator", FT_END); // find all regulators
 
 	// Write powermetrics data
 	index = 0;
-	if(powermetrics != nullptr){
+	if (powermetrics != nullptr)
+	{
 
-		while(obj = gl_find_next(powermetrics,obj)){
+		while (obj = gl_find_next(powermetrics, obj))
+		{
 
 			// Allow only one power metrics
-			if(index > 1){
+			if (index > 1)
+			{
 				gl_error("There are more than 1 power metrics defined");
 				return FAILED;
 			}
 
 			// Loop through the reliability indices to find the value and put into JSON variable
 			index1366 = -1;
-			while (indices1366[++index1366] != nullptr) {
+			while (indices1366[++index1366] != nullptr)
+			{
 
 				temp_double = gl_get_double_by_name(obj, indices1366[index1366]);
 
-				if(temp_double == nullptr){
+				if (temp_double == nullptr)
+				{
 					gl_error("Unable to to find property for %s: %s is nullptr", obj->name, indices1366[index1366]);
 					return FAILED;
 				}
 
 				metrics_1366[indices1366[index1366]] = *temp_double;
-
 			}
 
 			index++;
@@ -3542,10 +3567,13 @@ STATUS jsondump::dump_reliability(void)
 	// Write the protective device data
 	// Fuses
 	index = 0;
-	if(fuses != nullptr){
+	if (fuses != nullptr)
+	{
 
-		while(obj = gl_find_next(fuses,obj)){
-			if(index >= fuses->hit_count){
+		while (obj = gl_find_next(fuses, obj))
+		{
+			if (index >= fuses->hit_count)
+			{
 				break;
 			}
 
@@ -3588,10 +3616,13 @@ STATUS jsondump::dump_reliability(void)
 
 	// Reclosers
 	index = 0;
-	if(reclosers != nullptr){
+	if (reclosers != nullptr)
+	{
 
-		while(obj = gl_find_next(reclosers,obj)){
-			if(index >= reclosers->hit_count){
+		while (obj = gl_find_next(reclosers, obj))
+		{
+			if (index >= reclosers->hit_count)
+			{
 				break;
 			}
 
@@ -3634,10 +3665,13 @@ STATUS jsondump::dump_reliability(void)
 
 	// Sectionalizer
 	index = 0;
-	if(sectionalizers != nullptr){
+	if (sectionalizers != nullptr)
+	{
 
-		while(obj = gl_find_next(sectionalizers,obj)){
-			if(index >= sectionalizers->hit_count){
+		while (obj = gl_find_next(sectionalizers, obj))
+		{
+			if (index >= sectionalizers->hit_count)
+			{
 				break;
 			}
 
@@ -3687,10 +3721,13 @@ STATUS jsondump::dump_reliability(void)
 	// Write the capacitor and regulator device data
 	// Capacitors
 	index = 0;
-	if(capacitors != nullptr){
+	if (capacitors != nullptr)
+	{
 
-		while(obj = gl_find_next(capacitors,obj)){
-			if(index >= capacitors->hit_count){
+		while (obj = gl_find_next(capacitors, obj))
+		{
+			if (index >= capacitors->hit_count)
+			{
 				break;
 			}
 
@@ -3733,10 +3770,13 @@ STATUS jsondump::dump_reliability(void)
 
 	// Regulators
 	index = 0;
-	if(regulators != nullptr){
+	if (regulators != nullptr)
+	{
 
-		while(obj = gl_find_next(regulators,obj)){
-			if(index >= regulators->hit_count){
+		while (obj = gl_find_next(regulators, obj))
+		{
+			if (index >= regulators->hit_count)
+			{
 				break;
 			}
 
@@ -3781,230 +3821,238 @@ STATUS jsondump::dump_reliability(void)
 	metrics_others.clear();
 
 	// Write JSON files for line and line_codes
-	out_file.open (filename_dump_reliability);
+	out_file.open(filename_dump_reliability);
 	out_file << metrics_reliability.dump() << endl;
 	out_file.close();
 
-	//Remove the various mallocs/findlists
-	gl_free(powermetrics);
-	gl_free(fuses);
-	gl_free(reclosers);
-	gl_free(sectionalizers);
-	gl_free(relays);
-	gl_free(capacitors);
-	gl_free(regulators);
+	// Remove the various mallocs/findlists
+	gl_free((void **)&powermetrics);
+	gl_free((void **)&fuses);
+	gl_free((void **)&reclosers);
+	gl_free((void **)&sectionalizers);
+	gl_free((void **)&relays);
+	gl_free((void **)&capacitors);
+	gl_free((void **)&regulators);
 
 	return SUCCESS;
-
 }
 
-TIMESTAMP jsondump::commit(TIMESTAMP t){
+TIMESTAMP jsondump::commit(TIMESTAMP t)
+{
 	STATUS rv;
 
-	if(runtime == 0){
+	if (runtime == 0)
+	{
 		runtime = t;
 	}
-	if(write_system && ((t == runtime) || (runtime == TS_NEVER)) && (runcount < 1)){
+	if (write_system && ((t == runtime) || (runtime == TS_NEVER)) && (runcount < 1))
+	{
 		/* dump */
 		rv = dump_system();
 		++runcount;
-		if(rv == FAILED){
+		if (rv == FAILED)
+		{
 			return TS_INVALID;
 		}
 		return TS_NEVER;
-	} else {
-		if(t < runtime){
+	}
+	else
+	{
+		if (t < runtime)
+		{
 			return runtime;
-		} else {
+		}
+		else
+		{
 			return TS_NEVER;
 		}
 	}
 }
 
-STATUS jsondump::finalize(){
+STATUS jsondump::finalize()
+{
 	STATUS rv;
 
-	if (write_reliability) {
+	if (write_reliability)
+	{
 
 		rv = dump_reliability();
 
-		if(rv != SUCCESS){
+		if (rv != SUCCESS)
+		{
 			return FAILED;
 		}
-
 	}
 
 	return SUCCESS;
 }
 
-
 int jsondump::isa(char *classname)
 {
-	return strcmp(classname,"jsondump")==0;
+	return strcmp(classname, "jsondump") == 0;
 }
 
-//New API value pulls -- functionalized to make it easier to use
-//Double value
+// New API value pulls -- functionalized to make it easier to use
+// Double value
 double jsondump::get_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	double output_value;
 	OBJECT *objhdr = object_header(this);
 
-	//Map to the property of interest
-	pQuantity = new gld_property(obj,name);
+	// Map to the property of interest
+	pQuantity = new gld_property(obj, name);
 
-	//Make sure it worked
+	// Make sure it worked
 	if (!pQuantity->is_valid() || !pQuantity->is_double())
 	{
-		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		While attempting to map a quantity from another object, an error occurred.  Please try again.
 		If the error persists, please submit your system and a bug report via the ticketing system.
 		*/
 	}
 
-	//Pull the voltage base value
+	// Pull the voltage base value
 	output_value = pQuantity->get_double();
 
-	//Now get rid of the item
+	// Now get rid of the item
 	delete pQuantity;
 
-	//return it
+	// return it
 	return output_value;
 }
 
-//Complex value
+// Complex value
 gld::complex jsondump::get_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	gld::complex output_value;
 	OBJECT *objhdr = object_header(this);
 
-	//Map to the property of interest
-	pQuantity = new gld_property(obj,name);
+	// Map to the property of interest
+	pQuantity = new gld_property(obj, name);
 
-	//Make sure it worked
+	// Make sure it worked
 	if (!pQuantity->is_valid() || !pQuantity->is_complex())
 	{
-		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
-		//Defined above
+		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
+		// Defined above
 	}
 
-	//Pull the voltage base value
+	// Pull the voltage base value
 	output_value = pQuantity->get_complex();
 
-	//Now get rid of the item
+	// Now get rid of the item
 	delete pQuantity;
 
-	//return it
+	// return it
 	return output_value;
 }
 
-//Sets value
+// Sets value
 gld::set jsondump::get_set_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	gld::set output_value;
 	OBJECT *objhdr = object_header(this);
 
-	//Map to the property of interest
-	pQuantity = new gld_property(obj,name);
+	// Map to the property of interest
+	pQuantity = new gld_property(obj, name);
 
-	//Make sure it worked
+	// Make sure it worked
 	if (!pQuantity->is_valid() || !pQuantity->is_set())
 	{
-		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
-		//Defined above
+		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
+		// Defined above
 	}
 
-	//Pull the voltage base value
+	// Pull the voltage base value
 	output_value = pQuantity->get_set();
 
-	//Now get rid of the item
+	// Now get rid of the item
 	delete pQuantity;
 
-	//return it
+	// return it
 	return output_value;
 }
 
-//Enumeration value
+// Enumeration value
 enumeration jsondump::get_enum_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	enumeration output_value;
 	OBJECT *objhdr = object_header(this);
 
-	//Map to the property of interest
-	pQuantity = new gld_property(obj,name);
+	// Map to the property of interest
+	pQuantity = new gld_property(obj, name);
 
-	//Make sure it worked
+	// Make sure it worked
 	if (!pQuantity->is_valid() || !pQuantity->is_enumeration())
 	{
-		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
-		//Defined above
+		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
+		// Defined above
 	}
 
-	//Pull the voltage base value
+	// Pull the voltage base value
 	output_value = pQuantity->get_enumeration();
 
-	//Now get rid of the item
+	// Now get rid of the item
 	delete pQuantity;
 
-	//return it
+	// return it
 	return output_value;
 }
 
-//Object pointers
+// Object pointers
 OBJECT *jsondump::get_object_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	//gld_rlock *test_rlock;
+	// gld_rlock *test_rlock;
 	unsigned int test_rlock = 0;
 	OBJECT *output_value;
 	OBJECT *objhdr = object_header(this);
 
-	//Map to the property of interest
-	pQuantity = new gld_property(obj,name);
+	// Map to the property of interest
+	pQuantity = new gld_property(obj, name);
 
-	//Make sure it worked
+	// Make sure it worked
 	if (!pQuantity->is_valid() || !pQuantity->is_objectref())
 	{
-		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
-		//Defined above
+		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
+		// Defined above
 	}
 
-	//Pull the voltage base value
-	pQuantity->getp<OBJECT*>(output_value,test_rlock);
+	// Pull the voltage base value
+	pQuantity->getp<OBJECT *>(output_value, test_rlock);
 
-	//Now get rid of the item
+	// Now get rid of the item
 	delete pQuantity;
 
-	//return it
+	// return it
 	return output_value;
 }
-
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: jsondump
 //////////////////////////////////////////////////////////////////////////
 
 /**
-* REQUIRED: allocate and initialize an object.
-*
-* @param obj a pointer to a pointer of the last object in the list
-* @param parent a pointer to the parent of this object
-* @return 1 for a successfully created object, 0 for error
-*/
+ * REQUIRED: allocate and initialize an object.
+ *
+ * @param obj a pointer to a pointer of the last object in the list
+ * @param parent a pointer to the parent of this object
+ * @return 1 for a successfully created object, 0 for error
+ */
 EXPORT int create_jsondump(OBJECT **obj, OBJECT *parent)
 {
 	try
 	{
 		*obj = gl_create_object(jsondump::oclass);
-		if (*obj!=nullptr)
+		if (*obj != nullptr)
 		{
 			jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(*obj);
-			gl_set_parent(*obj,parent);
+			gl_set_parent(*obj, parent);
 			return my->create();
 		}
 	}
@@ -4018,7 +4066,8 @@ EXPORT int create_jsondump(OBJECT **obj, OBJECT *parent)
 EXPORT int init_jsondump(OBJECT *obj)
 {
 	jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(obj);
-	try {
+	try
+	{
 		return my->init(obj->parent);
 	}
 	catch (const char *msg)
@@ -4041,12 +4090,14 @@ EXPORT TIMESTAMP sync_jsondump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	SYNC_CATCHALL(jsondump);
 }
 
-EXPORT TIMESTAMP commit_jsondump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
-	try {
+EXPORT TIMESTAMP commit_jsondump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
+{
+	try
+	{
 		jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(obj);
 		return my->commit(t1);
 	}
-	I_CATCHALL(commit,jsondump);
+	I_CATCHALL(commit, jsondump);
 }
 
 EXPORT STATUS finalize_jsondump(OBJECT *obj)
@@ -4054,21 +4105,31 @@ EXPORT STATUS finalize_jsondump(OBJECT *obj)
 
 	jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(obj);
 
-	try {
-			return obj!=nullptr ? my->finalize() : FAILED;
-		}
-		catch (char *msg) {
-			gl_error("finalize_jsondump" "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-			return FAILED;
-		}
-		catch (const char *msg) {
-			gl_error("finalize_jsondump" "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-			return FAILED;
-		}
-		catch (...) {
-			gl_error("finalize_jsondump" "(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed");
-			return FAILED;
-		}
+	try
+	{
+		return obj != nullptr ? my->finalize() : FAILED;
+	}
+	catch (char *msg)
+	{
+		gl_error("finalize_jsondump"
+				 "(obj=%d;%s): %s",
+				 obj->id, obj->name ? obj->name : "unnamed", msg);
+		return FAILED;
+	}
+	catch (const char *msg)
+	{
+		gl_error("finalize_jsondump"
+				 "(obj=%d;%s): %s",
+				 obj->id, obj->name ? obj->name : "unnamed", msg);
+		return FAILED;
+	}
+	catch (...)
+	{
+		gl_error("finalize_jsondump"
+				 "(obj=%d;%s): unhandled exception",
+				 obj->id, obj->name ? obj->name : "unnamed");
+		return FAILED;
+	}
 }
 
 EXPORT int isa_jsondump(OBJECT *obj, char *classname)

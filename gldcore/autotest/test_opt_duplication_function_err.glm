@@ -1,0 +1,27 @@
+// $Id: test_duplication_function_err.glm 4738 2014-07-03 00:55:39Z dchassin $
+//
+// Test to verify that duplicate function names can be detected
+
+#define force_compile=1
+#set tmp=../test_exc_duplicate_function
+#setenv GLPATH=../../../core;../../core/etc
+#setenv GRIDLABD=../../../core
+#set include=../../../core
+
+class mytest {
+	// create the first exported function
+	export test1(void *my, ...)
+	{
+		return 0;
+	};
+	// create a second exported function to doesn't duplicate first
+	export test2(void *my, ...)
+	{
+		return 0;
+	};
+	// create a duplicate of the first exported function
+	export test1(void *my, int overload, ...)
+	{
+		return 0;
+	};
+}

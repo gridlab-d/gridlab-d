@@ -1,0 +1,213 @@
+// Design a market to test the simple statistics functionality. Utilize 
+// combinations of the prior markets and different statistic intervals. 
+// Ensure the mean and standard deviation are correct for the statistic 
+// interval. Adjust the statistic interval to be non-integer multiples of 
+// market period and latencies, and ensure the expected behavior is 
+// occurring. Vary the number of statistics being calculated and ensure 
+// "active" statistic values are properly computed. If a cap on the 
+// number of statistics is enacted, ensure this cap is enforced and an 
+// appropriate error/warning is generated when it is exceeded. 
+
+#set tmp=../test_market_auction_timing_5
+#setenv GRIDLABD=../../../core
+
+module tape;
+module market;
+module assert;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-07 00:00:00';
+}
+
+schedule buyer_price {
+	* * * * * 10;
+}
+
+schedule seller_1_price {
+	* 0-5 * * * 10;
+	* 6-8 * * * 30;
+	* 9-17 * * * 15;
+	* 18-21 * * * 20;
+	* 22-23 * * * 70;
+}
+
+schedule seller_2_price {
+	* 0-5 * * * 20;
+	* 6-8 * * * 40;
+	* 9-17 * * * 20;
+	* 18-21 * * * 30;
+	* 22-23 * * * 80;
+}
+
+schedule seller_3_price {
+	* 0-5 * * * 40;
+	* 6-8 * * * 60;
+	* 9-17 * * * 40;
+	* 18-21 * * * 50;
+	* 22-23 * * * 100;
+}
+
+schedule buyer_quantity {
+	* 0-5 * * * 1;
+	* 6-8 * * * 5;
+	* 9-17 * * * 2;
+	* 18-21 * * * 10;
+	* 22-23 * * * 3;
+}
+
+schedule seller_quantity {
+	* 0-5 * * * 3;
+	* 6-8 * * * 7;
+	* 9-17 * * * 2;
+	* 18-21 * * * 15;
+	* 22-23 * * * 3;
+}
+
+class auction{
+	double current_price_mean_1d;
+	double current_price_stdev_1d;
+	double past_price_mean_1d;
+	double past_price_stdev_1d;
+	
+	double past_price_stdev_3d;
+	double current_price_stdev_3d;
+	double past_price_mean_3d;
+	double current_price_mean_3d;
+}
+
+object auction {
+	name Market_1;
+	latency 24h;
+	warmup 0;
+	init_stdev .001;
+
+	unit MWh;
+	period 3600;
+	init_price 0;
+	verbose TRUE;
+	special_mode NONE;
+	object recorder {
+		property past_price_stdev_1d,current_price_stdev_1d,past_price_stdev_3d,current_price_stdev_3d,current_price_mean_1d,past_price_mean_1d,past_price_mean_3d,current_price_mean_3d;
+		file "test_market_timing_5.csv";
+		interval 3600;
+		limit 10000;
+	};
+	object double_assert{
+		target "current_price_mean_1d";
+		in '2001-01-03 00:00:00';
+		status ASSERT_TRUE;
+		value 25.625;
+		within 0.001; // asserting clearing price within 1 percent of result
+	};
+	object double_assert{
+		target "current_price_stdev_1d";
+		in '2001-01-03 00:00:00';
+		status ASSERT_TRUE;
+		value 12.8544;
+		within 0.001; // asserting clearing price within 1 percent of result
+	};
+	object double_assert{
+		target "past_price_mean_1d";
+		in '2001-01-03 1:00:00';
+		status ASSERT_TRUE;
+		value 25.625;
+		within 0.001; // asserting clearing price within 1 percent of result
+	};
+	object double_assert{
+		target "past_price_stdev_1d";
+		in '2001-01-03 1:00:00';
+		status ASSERT_TRUE;
+		value 12.8544;
+		within 0.001; // asserting clearing price within 1 percent of result
+	};
+	object double_assert{
+		target "past_price_stdev_3d";
+		in '2001-01-05 1:00:00';
+		status ASSERT_TRUE;
+		value 12.8544;
+		within 0.001; // asserting clearing price within 1 percent of result
+	};
+	object double_assert{
+		target "current_price_stdev_3d";
+		in '2001-01-05 00:00:00';
+		status ASSERT_TRUE;
+		value 12.8544;
+		within 0.001; // asserting clearing price within 1 percent of result
+	};
+	object double_assert{
+		target "past_price_mean_3d";
+		in '2001-01-05 1:00:00';
+		status ASSERT_TRUE;
+		value 25.625;
+		within 0.001; // asserting clearing price within 1 percent of result
+	};
+	object double_assert{
+		target "current_price_mean_3d";
+		in '2001-01-05 00:00:00';
+		status ASSERT_TRUE;
+		value 25.625;
+		within 0.001; // asserting clearing price within 1 percent of result
+	};
+}
+
+object stub_bidder {
+	name buyer_1;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price buyer_price*1;
+	quantity buyer_quantity*1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer_2;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price buyer_price*3;
+	quantity buyer_quantity*1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer_3;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price buyer_price*5;
+	quantity buyer_quantity*1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller_1;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price seller_1_price*1;
+	quantity seller_quantity*1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller_2;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price seller_2_price*1;
+	quantity seller_quantity*1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller_3;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price seller_3_price*1;
+	quantity seller_quantity*1;
+	count 10000;
+}

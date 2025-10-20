@@ -1,0 +1,326 @@
+// $Id: test_market_transactive1.glm 4738 2014-07-03 00:55:39Z dchassin $
+//	Copyright (C) 2008 Battelle Memorial Institute
+//
+// Variable price between $3/kwh and $2/kwh. Should clear at (2kwh,$2). 
+
+#set pauseatexit=1
+#define include="C:/Documents and Settings/D3P706/My Documents/GridLab-D/trunk/core"
+//#include <cmath>
+
+module market;
+module tape;
+module assert;
+module residential;
+
+
+clock {
+	timezone "CST+6CDT";
+	timestamp '2000-01-01 00:00:00';
+	stoptime '2000-01-01 00:20:00';
+}
+
+object auction {
+	name Market;
+	type DOUBLE;
+	unit "MWh";
+	period 300;
+	latency 86400;
+	object recorder {
+		file "test_market_transactive1.csv";
+		property "last.Q,last.P,next.Q,next.P";
+		limit 8760;
+		interval 300;
+	};
+};
+
+class TransactiveController {
+	int16 count;
+	object market;
+	enumeration {BUYER=0, SELLER=1} role;
+	int32 lastbid_id;
+	int64 lastmkt_id;
+	double price;		//Added in so price can be specified
+	public double* quantity;	//Added in so quantity can be specified
+	public int64 *thismkt_id;
+	bool flag;
+	public double *previousClearingPrices; //I wish we could make real arrays...
+	int64 index;
+	int64 RESOLUTION; //For now, always use 288 because the market always clears every 5 minutes.
+	double Pavg;
+	double Pstd;
+	double Pbid;
+	double Tset;
+	double TsetA;
+	public double *Tcurrent;
+	double kTH;
+	double kTL;
+	double Tmin;
+	double Tmax;
+	
+	function auction::submit_bid;
+	
+	intrinsic create (object parent)
+	{
+		return SUCCESS;
+	};
+	
+	intrinsic init (object parent)
+	{
+		if(parent == NULL) {
+			gl_error("TransactiveController needs an attached unit (house or appliance).");
+		};
+		
+		flag = true;
+		//Create an array of 24 doubles (length 8 bytes)
+		previousClearingPrices = (double*) gl_malloc(RESOLUTION*sizeof(double));
+		
+		//Set all initial clears to 0
+		for(int i = 0; i < RESOLUTION; i++) {
+			previousClearingPrices[i] = 0;
+		};
+		
+		double *TempMin = (double*) gl_get_addr(parent,"heating_setpoint");
+		double *TempMax = (double*) gl_get_addr(parent,"cooling_setpoint");
+		Tmin = *TempMin;
+		Tmax = *TempMax;
+		printf("\nTMIN is: %.2f   TMAX is:  %.2f\n ",Tmin,Tmax);
+		
+		price = gl_random_lognormal(2,1);
+		quantity = (double*) gl_get_addr(my->parent,"heat_cool_gain");
+		*quantity *= 2.9307107 * pow(10,-7) * .083333;
+		lastbid_id = -1;
+		lastmkt_id = -1;
+		index = 0;
+		if (market==NULL)
+			throw "market is not defined";
+		thismkt_id = (int64*)gl_get_addr(market,"market_id");
+		if (thismkt_id==NULL)
+			throw "market does not define market_id";
+		return SUCCESS;
+	};
+	
+	intrinsic sync (TIMESTAMP t0, TIMESTAMP t1)
+	{
+		
+		//price = gl_random_lognormal(2,1);
+		
+		lastbid_id = (int32)submit_bid(market,my,role==BUYER?-*quantity:*quantity,price,*thismkt_id!=lastmkt_id?-1:lastbid_id); //if current market id != last market id, submit different bid
+		count--;
+		lastmkt_id = *thismkt_id;
+	
+		Tcurrent = (double*) gl_get_addr(my->parent,"air_temperature"); //Current temperature
+		printf("\nTemperature is: %.3f\n",*Tcurrent);
+		
+		double* Pclear = (double*) gl_get_addr(market,"next.P"); //Next clearing price
+		
+		//Only add the price into the array if the market cleared 
+		if(*Pclear > 0.0){
+			previousClearingPrices[index] = *Pclear;
+			index++;
+		};
+		
+		//Cycle prices once you get the end
+		if(index == RESOLUTION)
+			index = 0;
+		
+		
+		//Sum the prices and find the average
+		double sum = 0;
+		int c = 0;
+		for(int i = 0; i < RESOLUTION; i++) {
+			//Don't count 0's because they are non-cleared markets
+			if(!(previousClearingPrices[i] == 0)) {
+				c++;
+				sum+= previousClearingPrices[i];
+			};
+		};
+		
+		//Make sure not to divide by 0 for end calculation of average;
+		if(c != 0) {
+			Pavg = sum/c;
+		} else {
+			Pavg = 0;
+		};
+		
+		//Find the standard deviation
+		sum = 0;
+		for(int j = 0; j < RESOLUTION; j++) {
+			if(!(previousClearingPrices[j] == 0)) {
+				sum+= pow((previousClearingPrices[j] - Pavg),2); //Deviance squared
+			};
+			
+		};
+		
+		//Make sure not to divide by 0 for end calculation of standard deviation;
+		if(c != 0) {
+			sum /= c;
+			Pstd = pow(sum,.5);
+		} else {
+			Pstd = 0;
+		};
+		
+		//Choose between kTH, kTL and Tmax, Tmin for the equations that follow.
+		double kT;
+		double Tlimit;
+		if(*Tcurrent > Tset) {
+			kT = kTH;
+			Tlimit = Tmax;
+		} else {
+			kT = kTL;
+			Tlimit = Tmin;
+		};
+		
+		//Calculate Pbid and TsetA from OlyPen equations
+		Pbid = Pavg + (*Tcurrent - Tset) * ((kT * Pstd)/fabs(Tlimit - Tset));
+		TsetA = Tset + (*Pclear - Pavg) * (fabs(Tlimit - Tset)/(kT * Pstd));
+		
+		price = Pbid;
+		
+		quantity = (double*) gl_get_addr(my->parent,"heat_cool_gain");
+		*quantity *= 2.9307107 * pow(10,-7) * .083333;
+		
+		//Depending on where TsetA is compared to Tset, this will change the heating or cooling setpoint
+		if(TsetA < *Tcurrent){
+			gl_set_value(my->parent,"heating_setpoint",TsetA);
+		} else{
+			gl_set_value(my->parent,"cooling_setpoint",TsetA);
+		};
+		
+		printf("\nAvg is: %.2f   Dev is:  %.2f\n Quantity is: %.2f \nPbid is: %.2f   TsetA is:  %.2f\n ",Pavg,Pstd,*quantity,Pbid,TsetA); //Print some stuff.
+		printf("\nPclear is: %.2f   Tlimit is:  %.2f\n Tmax is: %.2f   Tmin is:  %.2f\n\n",*Pclear,Tlimit,Tmax,Tmin);
+		count--;
+		//Next Sync time
+		if (count>0)
+			return t1+300;
+		else
+			return TS_NEVER;
+	};
+}
+
+
+class test {
+	int16 count;
+	object market;
+	enumeration {BUYER=0, SELLER=1} role;
+	int32 lastbid_id;
+	int64 lastmkt_id;
+	double price;		//Added in so price can be specified
+	double quantity;	//Added in so quantity can be specified
+	public int64 *thismkt_id;
+	bool flag;
+	function auction::submit_bid;
+	intrinsic create (object parent)
+	{
+		return SUCCESS;
+	};
+	intrinsic init (object parent)
+	{
+		flag = true;
+		lastbid_id = -1;
+		lastmkt_id = -1;
+		if (market==NULL)
+			throw "market is not defined";
+		thismkt_id = (int64*)gl_get_addr(market,"market_id");
+		if (thismkt_id==NULL)
+			throw "market does not define market_id";
+		return SUCCESS;
+	};
+	intrinsic sync (TIMESTAMP t0, TIMESTAMP t1)
+	{
+		quantity = gl_random_lognormal(3,1);
+		price = gl_random_lognormal(2,1);
+		lastbid_id = (int32)submit_bid(market,my,role==BUYER?-quantity:quantity,price,*thismkt_id!=lastmkt_id?-1:lastbid_id); //if current market id != last market id, submit different bid
+		count--;
+		lastmkt_id = *thismkt_id;
+		if (count>0)
+			return t1+300;
+		else
+			return TS_NEVER;
+	};
+}
+
+//Put bidding and selling objects here
+
+
+
+
+object TransactiveController {
+	parent house:1;
+	name TransB1;
+	role BUYER;
+	count 3;
+	market Market;
+	RESOLUTION 288;
+	Tset 74;
+	//price 1;
+	//quantity 1;
+	kTH 2;
+	kTL 2;
+}
+
+object house:1 {
+	floor_area random.normal(1500,300) sf;
+	heating_setpoint 69;
+	cooling_setpoint 78;
+	air_temperature 71;
+	mass_temperature 71;
+	thermostat_deadband .5;
+	object recorder {
+			file "test_market_transactive1_house1.csv";
+			property "heat_cool_gain,enduse_load,hc_mode,heating_setpoint,cooling_setpoint";
+			limit 8760;
+			interval 300;
+	};
+}
+
+object microwave:2 {
+	parent house:1;
+	installed_power 2000;
+	standby_power 10;
+}
+
+
+object test {
+	name Bidder2;
+	role BUYER;
+	count 2;
+	market Market;
+	price 2.5;
+	quantity .75;
+}
+
+object test {
+	name Seller1;
+	role SELLER;
+	count 2;
+	market Market;
+	price 1;
+	quantity 1;
+}
+
+object test {
+	name Seller2;
+	role SELLER;
+	count 2;
+	market Market;
+	price 1.5;
+	quantity 1;
+}
+
+object test {
+	name Bidder3;
+	role BUYER;
+	count 2;
+	market Market;
+	price 1.75;
+	quantity .25;
+}
+
+object test {
+	name Seller3;
+	role SELLER;
+	count 2.35;
+	market Market;
+	price 1;
+	quantity .5;
+}

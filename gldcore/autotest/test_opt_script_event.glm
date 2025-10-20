@@ -1,0 +1,23 @@
+script export clock;
+
+script on_create "echo create done >script.out";
+script on_init "echo init done >>script.out";
+#ifdef WINDOWS
+script on_sync "echo sync done at %clock% >>script.out";
+#else
+script on_sync "echo sync done at $clock >>script.out";
+#endif
+script on_term "echo term done >>script.out";
+
+clock {
+	starttime '2000-01-01 00:00:00';
+	stoptime '2000-01-01 00:01:00';
+}
+class test {
+	randomvar x;
+}
+object test {
+	name test1;
+	x "type:normal(0,1); refresh:1h";
+}
+	

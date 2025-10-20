@@ -1,0 +1,85 @@
+// $Id: test_dishwasher.glm 4738 2014-07-03 00:55:39Z dchassin $
+// Test standalone waterheater objects
+
+
+clock {
+	timezone PST+8PDT;
+	starttime '2009-01-02 00:00:00 PST';
+	stoptime '2009-01-02 03:00:00 PST';
+}
+
+#include "../Dishwasher.glm";
+
+#set profiler=1;
+#set relax_naming_rules=1;
+
+#set randomseed=20;
+
+module residential {
+	implicit_enduses NONE;
+};
+module assert;
+module tape;
+module powerflow;
+
+// Test 1
+// Verify that the values given in the schedule are directly copied
+// to the enduse and that they accrue properly to the metered energy
+
+
+class dishwasher {
+     loadshape myshape;
+}
+
+module powerflow {
+     solver_method NR;
+     NR_iteration_limit 50;
+     //lu_solver "KLU_x64";
+};
+
+	object house {
+		floor_area 2000;
+		heating_setpoint 1;
+		cooling_setpoint 165;
+		
+     object dishwasher {
+
+          energy_baseline 0.9kWh;
+	  Heateddry_option_check true;
+	
+ 	  control_power 10W;
+          motor_power 250W;
+	  
+	  dishwasher_coil_power_1 580W;
+          dishwasher_coil_power_2 695W;
+	  dishwasher_coil_power_3 950W;
+
+	//myshape "type: modulated; schedule: DRYER; energy: 2.8890 kWh; period: 60.000 s; count: 12; modulation: amplitude";
+	//name direct-gpm1_R1-12-47-2_tn_252;
+		  
+	//dishwasher_demand this.myshape;
+		  
+	  daily_dishwasher_demand DISHWASHER*11.1;	 
+	  queue 1;
+	  queue_min 0;
+	  queue_max 2;
+		  
+	          object double_assert {
+	  	   	      	target "total_power";
+	  	   	      	within 0.1;
+	  	   	      	object player {
+	  	   	      		property value;
+	  	   	      		file ../dishwasher_output.player;
+	  	   	      		};
+	  		};
+		  
+		  
+		  object recorder {
+			
+			property total_power,energy_used,energy_needed,queue,dishwasher_run_prob,daily_dishwasher_demand;
+			interval 1;
+			limit 1296020;
+			file Dishwasher_output.csv;
+			};
+     };
+    };

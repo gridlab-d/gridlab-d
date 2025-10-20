@@ -1,0 +1,17 @@
+clock {
+	starttime '2001-01-01 0:00:00';
+	stoptime '2001-01-02 0:00:00';
+}
+
+class test {
+	randomvar x;
+}
+module tape;
+object test {
+	x "type:normal(0,1); refresh:60";
+	object recorder {
+		property x;
+		interval 1h;
+		file test_x.csv;
+	};
+}

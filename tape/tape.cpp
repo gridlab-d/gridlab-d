@@ -278,11 +278,20 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 
 	/* register the first class implemented, use SHARE to reveal variables */
 	player_class = gl_register_class(module, const_cast<char *>("player"), sizeof(struct player), PC_PRETOPDOWN);
+	if (!player_class)
+	{
+		gl_error("Failed to register 'player_class'.");
+		return nullptr;
+	}
+	// fprintf(stderr, "Player class registered successfully with name=%s and size=%u\n", player_class->name, player_class->size);
 	player_class->trl = TRL_PROVEN;
 	// player_class->create = (FUNCTIONADDR)create_player;
 	// player_class->sync = (FUNCTIONADDR)sync_player;
 	if (gl_publish_function(player_class, "create", (FUNCTIONADDR)create_player) == NULL)
+	{
+		gl_error("publish_function: Failed to publish 'create_player' for 'player_class'. Exiting...");
 		GL_THROW("Could not publish create_player function for player class");
+	}
 	PUBLISH_STRUCT(player, char256, property);
 	PUBLISH_STRUCT(player, char1024, file);
 	PUBLISH_STRUCT(player, char8, filetype);
@@ -436,6 +445,7 @@ EXPORT int check(void)
 				gl_error("player %s (id=%d) uses the file '%s', which cannot be found", obj->name ? obj->name : "(unnamed)", obj->id, pData->file.get_string());
 			}
 		}
+		gl_free((void **)&players);
 	}
 
 	/* check shapers */
@@ -451,6 +461,7 @@ EXPORT int check(void)
 				gl_error("shaper %s (id=%d) uses the file '%s', which cannot be found", obj->name ? obj->name : "(unnamed)", obj->id, pData->file.get_string());
 			}
 		}
+		gl_free((void **)&shapers);
 	}
 
 	return errcount;

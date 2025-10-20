@@ -1,0 +1,145 @@
+//This file tests that the clearing prices are valid when
+//the clearing quantities are equal and close to either the
+//next seller bid or the next buyer bid
+
+#set tmp=../test_markets_auction_cases_4_and_5
+#setenv GRIDLABD=../../../core
+
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+module market;
+module tape;
+module assert;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-03 00:00:00';
+}
+
+schedule buyer_price {
+    * 0-12 * * * 25;
+    * 13-23 * * * 30;
+}
+
+schedule buyer_2_price {
+    * 0-12 * * * 20;
+    * 13-23 * * * 10;
+}
+
+schedule seller_1_price {
+    * 0-12 * * * 10;
+    * 13-23 * * * 15;
+}
+
+schedule seller_2_price {
+    * 0-12 * * * 30;
+    * 13-23 * * * 20;
+}
+
+schedule buyer_quantity {
+    * * * * * 1;
+}
+
+schedule seller_quantity {
+    * * * * * 1;
+}
+
+schedule assert_schedule {
+    30-59 0 * * * 20.0001;
+    * 1-12 * * * 20.0001;
+    0-29 13 * * * 20.0001;
+    30-59 13 * * * 19.9999;
+    * 14-23 * * * 19.9999;
+    0-29 0 * * * 19.9999;
+}
+
+class auction {
+    double current_price_mean_24h;
+	double current_price_stdev_24h;
+}
+
+object auction {
+	name Market_1;
+
+	unit MWh;
+	period 1800;
+	verbose TRUE;
+	special_mode NONE;
+	warmup 0;
+	init_price 20.0001;
+	init_stdev 1e-6;
+	object multi_recorder {
+		property current_market.clearing_price,current_market.clearing_quantity,buyer_1:price,buyer_1:quantity,buyer_2:price,buyer_2:quantity,seller_1:price,seller_1:quantity,seller_2:price,seller_2:quantity,current_price_mean_24h,current_price_stdev_24h;
+		file "test_markets_auction_cases_4_and_5_output.csv";
+		interval 1800;
+		limit 168;
+	};
+	object double_assert {
+		in '2001-01-01 00:30:00';
+		value assert_schedule;
+		within 1e-5;
+		target "current_market.clearing_price";
+	};
+	object double_assert {
+		value 20;
+		within 1e-4;
+		target "current_price_mean_24h";
+	};
+	object double_assert {
+		value 0;
+		within 1e-4;
+		target "current_price_stdev_24h";
+	};
+	object enum_assert {
+		in '2001-01-01 00:30:00';
+		value 3;
+		target "current_market.clearing_type";
+	};
+	object double_assert {
+		value 0;
+		target "current_market.marginal_quantity";
+		within 1e-5;
+	};
+}
+
+object stub_bidder {
+	name buyer_1;
+	role BUYER;
+	bid_period 300;
+	market Market_1;
+	price buyer_price*1;
+	quantity buyer_quantity*1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer_2;
+	role BUYER;
+	bid_period 1800;
+	market Market_1;
+	price buyer_2_price*1;
+	quantity buyer_quantity*1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller_1;
+	role SELLER;
+	bid_period 1800;
+	market Market_1;
+	price seller_1_price*1;
+	quantity seller_quantity*1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller_2;
+	role SELLER;
+	bid_period 1800;
+	market Market_1;
+	price seller_2_price*1;
+	quantity seller_quantity*1;
+	count 10000;
+}
+
