@@ -1,5 +1,10 @@
 # Introduction
 
+!!! warning
+
+	This page contains features that are unfinished, were never implemented, or have since been deprecated. We preserve these pages for archival purposes, and also as a foundational resource for prospective developers who may wish to implement the same or similar feature. Many of these pages provide robust explanations of the theory behind a particular module or feature that we hope readers will find useful. 
+	**This page does not reflect the current state of GridLAB-D™**
+
 The Neutral-Earth Voltage implementation of GridLAB-D™ will require many changes to the underlying [powerflow] source code. These specifications outline the expected implementation and hope to resolve any conflicts prior to actual coding. 
 
 # Terminology

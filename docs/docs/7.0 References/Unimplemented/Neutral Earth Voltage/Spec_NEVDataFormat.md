@@ -1,5 +1,10 @@
 # Spec:NEVDataFormat
 
+!!! warning
+
+	This page contains features that are unfinished, were never implemented, or have since been deprecated. We preserve these pages for archival purposes, and also as a foundational resource for prospective developers who may wish to implement the same or similar feature. Many of these pages provide robust explanations of the theory behind a particular module or feature that we hope readers will find useful. 
+	**This page does not reflect the current state of GridLAB-D™**
+
 This specification page outlines the formatting for array input data (GLM-based) for NEV objects, as well as the internal common programming structure. Input changes will require implementation of new functionality for interpreting GLM inputs. Note that the NEV solver methods and inputs will be exclusive to a Newton-Raphson solver implementation. While the Forward-Backward Sweep method could also be used for NEV solutions, it is not planned to be implemented at this time. 
 
 # GLM Array Inputs
