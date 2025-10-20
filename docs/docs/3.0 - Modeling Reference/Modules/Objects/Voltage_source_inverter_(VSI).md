@@ -1,9 +1,5 @@
 # Voltage source inverter (VSI)
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Voltage_source_inverter_(VSI)
-
-## Overview
-
 This document describes GridLAB-D™ implementation of voltage source inverter (VSI). VSI is implemented in a similar way as the [diesel_dg]. A Norton current source behind an admittance is used to represent the VSI. A Thevenin voltage source is then converted from the Norton source for the calculation of voltage source _e_source_ magnitude and angle. 
 
 ![VSI Norton to Thevenin](../../../../images/500px-VSI_Norton_to_Thevenin.png)

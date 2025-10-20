@@ -48,7 +48,8 @@ GridLAB-D uses the GLPATH environment to find runtime files and module files. It
 1. `%HOMEDRIVE%%HOMEPATH%\Local Settings\Temp\gridlabd` if both `HOMEDRIVE` and `HOMEPATH` are defined.
 2. `%TMP%\%USERNAME%\gridlabd`. If `TMP` is not defined, then `TEMP` will be tried in its place. If both `TMP` and `TEMP` are undefined, then `C:\Windows\Temp` will be used for `%TMP%`.
 
-Note: If the `GLTEMP` directory does not exist and it is required, it and all its parent directories will be created.
+!!! note 
+    If the `GLTEMP` directory does not exist and it is required, it and all its parent directories will be created.
 
 ## Search Order
 Searches for GridLAB-D files on GLPATH will be performed using the following order:
@@ -93,7 +94,8 @@ A set of colon-separated paths used for searching for GridLAB-D configuration fi
 1. `$HOME/.gridlabd/tmp` if `HOME` is defined.
 2. `$TMP/$USER/gridlabd`. If `TMP` is not defined, then `TEMP` will be tried in its place. If both `TMP` and `TEMP` are undefined, then /tmp will be used for `$TMP`.
 
-Note: If the `GLTEMP` directory does not exist and it is required, it and all its parent directories will be created.
+!!! note 
+    If the `GLTEMP` directory does not exist and it is required, it and all its parent directories will be created.
 
 ## Search Order
 Searches for GridLAB-D files on `GLPATH` will be performed using the following order:
@@ -103,4 +105,5 @@ Searches for GridLAB-D files on `GLPATH` will be performed using the following o
 3. `/usr/lib/gridlabd` or `/usr/local/lib/gridlabd
 4. `/usr/etc/gridlabd` (not used after Grizzly (Version 2.3))
 
-Note: The last two hard-coded paths should probably not be hard-coded or at least should be set using the install prefix.
+!!! note 
+    The last two hard-coded paths should probably not be hard-coded or at least should be set using the install prefix.

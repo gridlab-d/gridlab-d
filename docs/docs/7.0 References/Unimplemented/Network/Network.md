@@ -1,6 +1,10 @@
 # Network
 
-DEPRECATED  This module is not supported as of [Hassayampa (Version 3.0)]
+!!! warning
+
+	This page contains features that are unfinished, were never implemented, or have since been deprecated. We preserve these pages for archival purposes, and also as a foundational resource for prospective developers who may wish to implement the same or similar feature. Many of these pages provide robust explanations of the theory behind a particular module or feature that we hope readers will find useful. 
+	
+	**This page does not reflect the current state of GridLAB-D™**
 
 The **network** module implements a balanced three-phase positive sequence power flow solver using the Gauss-Seidel method (Gauss 1809), as described by Kundur (1993). 
 
@@ -10,8 +14,7 @@ The Gauss-Seidel (GS) method is a linear iterative method (as opposed to the New
 
 The GS method uses an iterative approach proposed by von Seidel (1874). The GS method iterates using the first-order approximation of the Taylor expansion, and the NR method uses a second-order approximation. In the GS method the fundamental equation for the kth node can written as 
 
-$$\frac{P_k + \jmath Q_k}{\overline V_K^*} = Y_{kk} \overline V_k + \sum\limits_{i=1,i\neq k}^n{\overline Y_{ki} \overline V_i} 
-$$
+$$\frac{P_k + \jmath Q_k}{\overline V_K^*} = Y_{kk} \overline V_k + \sum\limits_{i=1,i\neq k}^n{\overline Y_{ki} \overline V_i}$$
 
 The GS method is often criticized as inferior. This is categorically not true. The GS method has strengths and weaknesses when compared to the NR method. Depending on the circumstances, one method may be preferred over the other. But both, indeed all, valid methods produce the same answers. In fact, many commercial power flow solvers implement both methods concurrently, recognizing the necessity to exploit the appropriate method under any given circumstance. Hence, the implementation of the GS method does not make GridLAB-D's solution method inferior. It is simply a recognition that the circumstances of the power flow solution needed in GridLAB-D™ led to the choice of GS as the default power flow solver. Other power flow solvers can and should be implemented to address different circumstances. We encourage users and developers to consider doing so. 
 
@@ -28,6 +31,7 @@ The types of nodes that are supported are the following:
   * PQ buses are nodes that have both constant real and reactive power injections.
   * PV buses are for nodes that have constant real power injection but can control reactive power injection.
   * SWING buses are nodes that are designated to absorb the residual error and are also used for generators that can control both real and reactive power injections.
+  
 ### PQ Bus
 
 The PQ bus is the most commonly found bus type in electric network models. PQ buses are nodes where both the real power (P) and reactive power (Q) are given. In these cases, the updated voltage at a node is found from an existing (non-zero) voltage using 
@@ -68,15 +72,15 @@ $$\overline Y_c \gets c \overline Y_{k_{eff}}$$
 
 Add the self-admittance and the shunt admittances to the busses (Kundur 1993): 
 
-$$\begin{alignat}{2} \sum \overline Y_{from} & \gets \sum \overline Y_{from} + \overline Y_c + (c-1) \overline Y_c \\\ \sum \overline Y_{to} & \gets \sum \overline Y_{to} + \overline Y_c + (1-c) \overline Y_{eff} \\\ \end{alignat}$$
+$$\begin{alignat}{2} \sum \overline Y_{from} & \gets \sum \overline Y_{from} + \overline Y_c + (c-1) \overline Y_c \\ \sum \overline Y_{to} & \gets \sum \overline Y_{to} + \overline Y_c + (1-c) \overline Y_{eff} \\ \end{alignat}$$
 
 Compute the line current injections on the busses: 
 
-$$\begin{alignat}{2} \begin{alignat}{2} \sum \overline I_{from} & \gets \sum \overline V_{to} \overline Y_c \\\ \sum \overline I_{to} & \gets \sum \overline V_{from} \overline Y_c \\\ \end{alignat} \end{alignat}$$
+$$\begin{alignat}{2} \sum \overline I_{from} & \gets \sum \overline V_{to} \overline Y_c \\ \sum \overline I_{to} & \gets \sum \overline V_{from} \overline Y_c \\ \end{alignat}$$
 
 Add the current injections to the busses: 
 
-$$\begin{alignat}{2} \sum \overline {YV}_{from} & \gets \sum \overline {YV}_{from} + \overline I_{from} \\\ \sum \overline {YV}_{to} & \gets \sum \overline {YV}_{to} + \overline I_{to} \\\ \end{alignat}$$
+$$\begin{alignat}{2} \sum \overline {YV}_{from} & \gets \sum \overline {YV}_{from} + \overline I_{from} \\ \sum \overline {YV}_{to} & \gets \sum \overline {YV}_{to} + \overline I_{to} \\ \end{alignat}$$
 
 # Network module implementation
 
@@ -84,9 +88,8 @@ The **network** module implements the Gauss-Seidel solution method for balanced 
 
 The module global variables are shown in Table 1. 
 
-Table 1. Network module properties  
-
-_Property_ | _Type_  | _Default_  | _Unit_  | _Description_    
+Table 1. Network module properties 
+ _Property_ | _Type_ | _Default_ | _Unit_ | _Description_   
 ---|---|---|---|---  
 acceleration_factor  | double | 1.4 | pu | The voltage update gain factor (usually between 1.4 and 1.7)   
 convergence_limit  | double | 0.001 | V | The maximum allowable voltage change for iteration to halt   
@@ -94,7 +97,7 @@ mvabase  | double | 1.0 | MVA | The megaVolt-Amp basis to use in calculating pow
 kvbase  | double | 12.5 | kV | The kiloVolt basis to use calculating voltages   
 model_year  | int16 | 2000 | CE | The basis year of the model   
 model_case  | char8 | "S" | WSF | The basis of the case (e.g., winter, summer, fall)   
-model_name  | char32 | (unnamed) | * | The name of the model   
+model_name  | char32 | "(unnamed)" | * | The name of the model   
   
 ## Node class
 
@@ -104,8 +107,8 @@ Network **node** objects represent busses in the transmission network. Three typ
   2. **PV** busses are busses that have constant real power, but reactive power must be computed; and
   3. **SWING** busses are busses for which both real and reactive power must be computed and there must be at least one **SWING** bus per network _island_.
 
-The **node** class must clear the admittance and current injection accumulators on the pre-topdown pass and compute the new voltage on the bottom-up pass of synchronization. The voltage update pseudo code is as follows:     
-    
+The **node** class must clear the admittance and current injection accumulators on the pre-topdown pass and compute the new voltage on the bottom-up pass of synchronization. The voltage update pseudo code is as follows: ` `
+
     self-admittance <- admittance-accumulator + complex (conductance + j susceptance)
        if type is SWING 
            power <= conjugate ( conjugate voltage x ( self-admittance x voltage + current-injection-accumulator ) )
@@ -150,19 +153,19 @@ The **node** class must clear the admittance and current injection accumulators 
        end
     
 
-
 ## Link class
 
 The network **link** object represents branches in the transmission network. The **link** class must compute the initial voltage estimates for the solution during the first bottom-up synchronization pass. The **link** need not update the voltage in subsequent iterations for the same time-step unless the admittance or turns-ratio has changed. Changes to the current-injection-accumulators resulting from bus voltage changes are handled by the **node'** s bottom-up pass. The code for the **link** bottom-up synchronization is as follows: 
 
-      effective-admittance <= admittance + j line-susceptance / 2 
-      admittance-contribution <= effective-admittance / turns-ratio
-      from-bus.self-admittance-accumulator <+ admittance-contribution + admittance-contribution x ( 1/turns-ratio - 1 )
-      from-bus.current-injection-accumulator <+ to-bus.voltage x admittance / turns-ratio
-      to-bus.self-admittance-accumulator <+ admittance-contribution + effective-admittance x ( 1 - 1/turns-ratio )
-      to-bus.current-injection-accumulator <+ from-bus.voltage x admittance / turns-ratio
-      net-current-flow <= ( from-bus.voltage - to-bus.voltage ) x admittance / turns-ratio
+       effective-admittance <= admittance + j line-susceptance / 2 
+       admittance-contribution <= effective-admittance / turns-ratio
+       from-bus.self-admittance-accumulator <+ admittance-contribution + admittance-contribution x ( 1/turns-ratio - 1 )
+       from-bus.current-injection-accumulator <+ to-bus.voltage x admittance / turns-ratio
+       to-bus.self-admittance-accumulator <+ admittance-contribution + effective-admittance x ( 1 - 1/turns-ratio )
+       to-bus.current-injection-accumulator <+ from-bus.voltage x admittance / turns-ratio
+       net-current-flow <= ( from-bus.voltage - to-bus.voltage ) x admittance / turns-ratio
     
+
 
 # Derived Classes
 
@@ -221,5 +224,3 @@ Gauss CF. 1809. Theoria motus corporum coelestium in sectionibus conicis solem a
 Kundur, P. 1993. Power System Stability and Control. McGraw Hill, New York. 
 
 Von Seidel, P.L. 1874. Über ein Verfahren, die Gleichungen, auf welche die Methode der kleinsten Quadrate führt, sowie lineare Gleichungen überhaupt, durch successive Annäherung aufzulösen. Abh. bayer Akad. Wiss, Germany. 
-
-

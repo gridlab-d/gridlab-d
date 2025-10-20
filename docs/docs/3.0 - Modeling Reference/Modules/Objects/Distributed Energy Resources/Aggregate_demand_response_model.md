@@ -15,7 +15,7 @@ The DR model is based on two state queues of size $L$, one for those devices in 
 
 The duty cycle $\varphi$ is the fraction of the time at a device is on with respect to the total time $T$ it takes for the device to complete a cycle. If all the devices have the same load $q$, then this is also the fraction of devices that are $on$ at any given time as well as the fraction $Q=N_{on}q$ of the maximum load $\hat Q = Nq$. Thus, nominally 
 
-$$\varphi = \frac{t_{on}}{T} = \frac{r_{off}}{r_{on}+r_{off}} = \frac{Q}{\hat Q} = \frac{N_{on}}{N}$$ 
+$$\varphi = \frac{t_{on}}{T} = \frac{r_{off}}{r_{on}+r_{off}} = \frac{Q}{\hat Q} = \frac{N_{on}}{N}$$
 
 We will see that this is true only if all the devices are identical, and there are no devices that are "short cycling", i.e., changing state from $on$ to $off$ or from $off$ to $on$ at any point other than the control band limits $0$ and $L$. 
 
@@ -25,7 +25,7 @@ If there is a non-zero probably $\eta$ that a device turns $on$ arbitrarily, reg
 
 The key to the behavior of a population of $N$ devices is to recognize that any change in the values $L$, $\varphi$, or $\eta$ will disturb the distribution of devices at the various temperatures $x$. The effective value of $r_{off}$ in the case that devices are turned $on$ permaturely (when $\eta \ge 0$) has been shown to be 
 
-$$\rho(\eta) = (1-\eta)r_{off} + \eta$$ 
+$$\rho(\eta) = (1-\eta)r_{off} + \eta$$
 
 The natural distribution of devices is given by the density functions 
 
@@ -69,7 +69,8 @@ $$\Delta n_{off}(0,t+\Delta t) = -r_{off} n_{off}(0,t) - \eta n_{on}(0,t) + r_{o
 
 $$\Delta n_{off}(x,t+\Delta t) = -r_{off} n_{off}(x,t) - \eta n_{on}(x,t) + r_{off} n_{off}(x-\Delta x,t)$$
 
-Note that to guarantee the stability of the numerical solution, we must have $r_{on} + r_{off} \le 1$, so that we always have at least 
-$r_{on} = \varphi$ and $r_{off} = 1- \varphi$.
+!!! note
+
+    to guarantee the stability of the numerical solution, we must have $r_{on} + r_{off} \le 1$, so that we always have at least $r_{on} = \varphi$ and $r_{off} = 1- \varphi$.
 
 

@@ -37,7 +37,11 @@
 
 ## Prerequisites
 
-These instructions should be executed in your terminal of choice. This may be MSYS2, a WSL instance, or the built-in terminal for your OS of choice (note: Windows CMD does not work). 
+These instructions should be executed in your terminal of choice. This may be MSYS2, a WSL instance, or the built-in terminal for your OS of choice 
+
+!!! note
+
+    Windows CMD does not work
 
 If you are on Windows and are using MSYS2, see [this page for setting up MSYS2] to run the commands below. 
 

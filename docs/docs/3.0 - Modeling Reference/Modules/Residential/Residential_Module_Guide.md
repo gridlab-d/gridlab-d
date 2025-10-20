@@ -282,7 +282,9 @@ Window frame (WF) | (none,aluminium,thermal break,wood,insulated) | \-
 R-value, doors ($R_d$) | (value) | °F.ft².hr/Btu   
 Infiltration volumetric air exchange rate (I) | (value) | 1/hr   
   
-    _Note: Any set of (column-wise) values in an integrity table will be overridden by entry of a primary input._
+!!! note
+
+  Any set of (column-wise) values in an integrity table will be overridden by entry of a primary input._
 
 ### **Heat Loss Coefficient ( $U_A$)**
 
@@ -321,7 +323,9 @@ The total heat loss coefficient (conductance), $U_A$, for the house (the last te
 $$U_A = A_g U_g + \frac{A_d}{R_d} + \frac{A_w}{R_w} + \frac{A_c}{R_c} + \frac{A_f}{R_f} + 0.018 A h I $$
 
     
-Note: 0.018 is the volumetric heat capacity of air at standard conditions (Btu/°F.ft³std-air-pressure)
+!!! note
+
+  0.018 is the volumetric heat capacity of air at standard conditions (Btu/°F.ft³std-air-pressure)
 
 ### **Interior Mass Surface Conductance ( $H_m$)**
 
@@ -428,9 +432,10 @@ If auxiliary heat is specified (the default), then a control strategy for it mus
     
 
   * If a _value_ is provided for the Auxiliary_heat_lockout_temperature input parameter, then the auxiliary heat comes "on" whenever the thermostat calls for heating and the outdoor air temperature is below _value_. It remains "on" until the thermostat is satisfied (i.e.,when the heating system would normally go "off"). The default _value_ = _none_. This is an older control strategy particularly common to early heat pump systems in the U.S.
-(NOTE: If used, this parameter should be diversified to represent a realistic range of values in the population by using a distribution as the input. Otherwise an entire population of homes will shift to auxilairy heat at the same time in a GridLAB-D™ simulation) 
 
-    
+!!! note
+
+  If used, this parameter should be diversified to represent a realistic range of values in the population by using a distribution as the input. Otherwise an entire population of homes will shift to auxilairy heat at the same time in a GridLAB-D™ simulation    
 
   * If a _value_ is provided for the Auxiliary_time_delay input parameter, then the auxiliary heat comes "on" whenever the heating system has been "on" for more than _value_ minutes but the heating thermostat remains unsatisfied. The auxilairy heat remains "on" until the thermostat is satisfied (i.e.,when the heating system would normally go "off"). The default _value_ is _none_. This is the most advanced control strategy and is designed to minimize auxiliary heating by giving the heat pump a chance to satisfy the heating requirement before turning to auxiliary heat.
   

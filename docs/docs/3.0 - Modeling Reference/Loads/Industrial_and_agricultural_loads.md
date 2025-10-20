@@ -1,10 +1,10 @@
-# Industrial and agricultural loads
+# Industrial and Agricultural Loads
 
 Industrial and agricultural loads are implemented using a parametric load model, calculating the real and imaginary current, power, and resistance load components based on the time and existing weather data. 
 
 # Parametric Loads
 
-Parametric loads can be defined using the **pqload** object, which is derived from **powerflow::load**. A **pqload** object has varying contributions to constant impedance, current, and power depending on prevailing time and weather conditions, such as sunlight, temperature, humidity, wind speed, and rainfall. Each load component (Z, I, P) is nominally computed based on the prevailing weather and adjusted based on the time. 
+Parametric loads can be defined using the **pqload** object, which is derived from `powerflow::load`. A **pqload** object has varying contributions to constant impedance, current, and power depending on prevailing time and weather conditions, such as sunlight, temperature, humidity, wind speed, and rainfall. Each load component (Z, I, P) is nominally computed based on the prevailing weather and adjusted based on the time. 
 
 The weather load is computed from a linear transformation as a function of weather as follows: 
 
@@ -19,11 +19,14 @@ where
   * $S$ is the solar gains at the time $t$ in Btu/h;
   * $W$ is the wind speed at the time $t$ in mph;
   * $R$ is the rainfall at the time $t$ in inch/h;
+
 ## Properties
 
 The **pqload** object publishes the following variables, in addition to those published by **powerflow::load**. 
 
-Table 1 - _pqload_ properties  Property | Type | Unit | Default | Description   
+Table 1 - _pqload_ properties  
+
+Property | Type | Unit | Default | Description   
 ---|---|---|---|---  
 schedule | char1024 | - | * * * * *:1.0; | The load schedule (default is always 1.0)   
 weather | object | - | NULL | The climate object to use for this load. If NULL, the temperature coefficients will be ignored.   

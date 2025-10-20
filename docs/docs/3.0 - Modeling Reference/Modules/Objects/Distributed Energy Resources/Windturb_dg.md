@@ -1,20 +1,96 @@
 # Windturb dg
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Windturb_dg
-# Windturb dg
+## Power Curve Based Implementation
 
-## Contents
+Note that the power curve-based implementation is not included in the v4.2. It is planned to be released in v4.3. 
 
-  * 1 Synopsis
-  * 2 Power Curve Based Implementation
-  * 3 Coefficient of Performance Based Implementation
-  * 4 Properties
-  * 5 Defaults
-  * 6 Example
-## Synopsis
-    
-    
-    module generators;
+The power curve-based wind turbine implementation uses the power curves that translate the wind speed directly into output power. Power curves are often available from manufacturers through marketing materials and/or owner documentation. Their use simplifies the wind turbine modeling since they skip the internal details of the wind turbine and instead focus on the input/output characteristics. The implementation uses a default power curve or one of the power curves provided by the user. Examples of commercial and generic power curves can be found at: <https://github.com/NREL/turbine-models>
+
+The power curve-based implementation replaces the coefficient of performance-based implementation. In future versions starting from v4.3, it will be the default implementation. 
+
+## Coefficient of Performance Based Implementation
+
+The coefficient of performance-based implementation was the original wind turbine implementation. It includes an explicit model of the wind turbine and the electrical machine/generator parameters. The implementation contains highly granular models of the synchronous and induction generators with their respective impedances. It uses the wind turbine coefficient of performance data to generate the output for a given wind speed input. The coefficient of performance is defined as the ratio of the power captured by the rotor of the wind turbine divided by the total power available in the wind just before it interacts with the turbine. 
+
+TODO - Check Status - This model remains in the experimental level of development. 
+
+## Properties
+
+Property Name  | Type  | Unit  | Description   
+---|---|---|---  
+air_density  |  double  |  kg/m^3  |  Estimated air density. Used in COEFF_OF_PERFORMANCE implementation.   
+avg_ws  |  double  |  m/s  |  Default value for wind speed   
+blade_diam  |  double  |  meters  |  Specifies the diameter of the blades. Used in COEFF_OF_PERFORMANCE implementation.   
+current_A  |  complex  |  A  |  Terminal current on phase A   
+current_B  |  complex  |  A  |  Terminal current on phase B   
+current_C  |  complex  |  A  |  Terminal current on phase C   
+cut_in_ws  |  double  |  m/sec  |  Minimum wind speed for generator operation. Used in COEFF_OF_PERFORMANCE implementation.   
+cut_out_ws  |  double  |  m/sec  |  Maximum wind speed for generator operation. Used in COEFF_OF_PERFORMANCE implementation.   
+Cp_max  |  double  |  p.u.  |  Maximum coefficient of performance. Used in COEFF_OF_PERFORMANCE implementation.   
+Cp_rated  |  double  |  p.u.  |  Rated coefficient of performance. Used in COEFF_OF_PERFORMANCE implementation.   
+Cp  |  double  |  p.u.  |  Calculated coefficient of performance. Used in COEFF_OF_PERFORMANCE implementation.   
+CP_Data  |  enumeration  |  N/A  |  Data set for Coefficient of performance. Used in COEFF_OF_PERFORMANCE implementation. Default is CALCULATED. <br/> - GENERAL_LARGE <br/> -  GENERAL_MID <br/> - GENERAL_SMALL <br/> - MANUF_TABLE <br/> - CALCULATED <br/> - USER_SPECIFY 
+EfA  |  complex  |  V  |  Synchronous Generator induced voltage on phase A in V   
+EfB  |  complex  |  V  |  Synchronous Generator induced voltage on phase B in V   
+EfC  |  complex  |  V  |  Synchronous Generator induced voltage on phase C in V   
+Gen_mode  |  enumeration  |  N/A  |  Control mode that is used for the generator output. Used in COEFF_OF_PERFORMANCE implementation. Default is CONSTANTP. <br/> - CONSTANTE <br/> - CONSTANTP <br/> - CONSTANTPQ   
+Gen_status  |  enumeration  |  N/A  |  Allows a user to dropout a generator. Default is ONLINE. <br/> -  OFFLINE <br/> - ONLINE
+Gen_type  |  enumeration  |  N/A  |  Allows the user to specify the type of generator. Used in COEFF_OF_PERFORMANCE based implementation. <br/> - INDUCTION <br/> - SYNCHRONOUS 
+GenElecEff  |  double  |  N/A  |  Generator electrical efficiency used for testing   
+Irotor_A  |  complex  |  p.u.  |  Induction Generator "rotor" current generated in pu on phase A   
+Irotor_B  |  complex  |  p.u.  |  Induction Generator "rotor" current generated in pu on phase B   
+Irotor_C  |  complex  |  p.u.  |  Induction Generator "rotor" current generated in pu on phase C   
+Max_Vrotor  |  double  |  (p.u.)*V  |  Induction generator maximum induced rotor voltage in p.u., e.g. 1.2. Used in COEFF_OF_PERFORMANCE based implementation.   
+Min_Vrotor  |  double  |  (p.u.)*V  |  Induction generator minimum induced rotor voltage in p.u., e.g. 0.8. Used in COEFF_OF_PERFORMANCE based implementation.   
+Max_Ef  |  double  |  (p.u.)*V  |  Synchronous generator maximum induced rotor voltage in p.u., e.g. 1.2. Used in COEFF_OF_PERFORMANCE based implementation.   
+Min_Ef  |  double  |  (p.u.)*V  |  Synchronous generator minimum induced rotor voltage in p.u., e.g. 0.8. Used in COEFF_OF_PERFORMANCE based implementation.   
+Max_P  |  double  |  kW  |  maximum real power capacity in kW   
+Min_P  |  double  |  kW  |  minimum real power capacity in kW   
+Max_Q  |  double  |  kVar  |  maximum reactive power capacity in kVar   
+Min_Q  |  double  |  kVar  |  minimum reactive power capacity in kVar   
+power_curve_csv  |  string  |  N/A  |  Specifies the name of .csv file containing user defined power curve   
+power_curve_pu  |  Boolean  |  N/A  |  A Boolean when set to TRUE indicates that the user provided power curve has power values in p.u. Default is FALSE.   
+pf  |  double  |  p.u.  |  Desired power factor in CONSTANTP mode. Used in COEFF_OF_PERFORMANCE based implementation.   
+phases  |  set  |  N/A  |  Specifies which phases to connect to. Triplex mode is only supported for the POWER_CURVE implementation. <br/> - ABCN <br/> - AS <br/> - BS <br/> - CS   
+Pconv  |  double  |  kW  |  Power converted from mechanical to electrical before electrical losses   
+power_A  |  complex  |  kVA  |  Complex power on phase A   
+power_B  |  complex  |  kVA  |  Complex power on phase B   
+power_C  |  complex  |  kVA  |  Complex power on phase C   
+q  |  double  |  N/A  |  Number of gearboxes. Used in COEFF_OF_PERFORMANCE based implementation.   
+Rst  |  double  |  (p.u.)*Ohm  |  Induction generator primary stator resistance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
+Rr  |  double  |  (p.u.)*Ohm  |  Induction generator primary rotor resistance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
+Rc  |  double  |  (p.u.)*Ohm  |  Induction generator primary core resistance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
+Rated_V  |  double  |  V  |  Rated generator terminal voltage. Used in COEFF_OF_PERFORMANCE based implementation.   
+Rated_VA  |  double  |  VA  |  Rated wind turbine generator power output. Default is 100 kW.   
+roughness_l  |  double  |  N/A  |  European Wind Atlas unitless correction factor for adjusting wind speed at various heights above ground and terrain types, default=0.055.   
+Rs  |  double  |  (p.u.)*Ohm  |  Synchronous generator primary stator resistance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
+Rg  |  double  |  (p.u.)*Ohm  |  Synchronous generator grounding resistance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
+ref_height  |  double  |  m  |  height wind data was measured. Default is 10 m.   
+turbine_height  |  double  |  meters  |  Specifies the height of the wind turbine hub above the ground. Default is 37 m.   
+Turbine_Model  |  enumeration  |  N/A  |  Allows the use of one of the pre-defined generic turbines. Default is GENERIC_DEFAULT. <br/> - GENERIC_DEFAULT <br/> - GENERIC_SYNCH_SMALL <br/> - GENERIC_SYNCH_MID <br/> - GENERIC_SYNCH_LARGE <br/> - GENERIC_IND_SMALL <br/> - GENERIC_IND_MID <br/> - GENERIC_IND_LARGE <br/> - VESTAS_V82 <br/> - GE_25MW <br/> - BERGEY_10kW <br/> - GEN_TURB_POW_CURVE_2_4KW <br/> - GEN_TURB_POW_CURVE_10KW <br/> - GEN_TURB_POW_CURVE_100KW <br/> - GEN_TURB_POW_CURVE_1_5MW 
+Turbine_implementation  |  enumeration  |  N/A  |  Allows the user to specify the type of implementation for the wind turbine model. Default is POWER_CURVE. <br/> - POWER_CURVE <br/> - COEFF_OF_PERFORMANCE  
+TotalRealPow  |  double  |  kW  |  Total Real power supplied by the generator   
+TotalReacPow  |  double  |  kVar  |  Total Reactive power supplied by the generator   
+time_advance  |  int  |  sec  |  Amount of time to advance for wind speed data import   
+voltage_A  |  complex  |  V  |  Synchronous Generator Terminal voltage on phase A   
+voltage_B  |  complex  |  V  |  Synchronous Generator Terminal voltage on phase B   
+voltage_C  |  complex  |  V  |  Synchronous Generator Terminal voltage on phase C   
+Vrotor_A  |  complex  |  p.u.  |  Induction Generator induced "rotor" voltage in pu on phase A   
+Vrotor_B  |  complex  |  p.u.  |  Induction Generator induced "rotor" voltage in pu on phase B   
+Vrotor_C  |  complex  |  p.u.  |  Induction Generator induced "rotor" voltage in pu on phase C   
+WSadj  |  double  |  m/sec  |  Speed of wind at hub height.   
+Wind_Speed  |  double  |  m/sec  |  Wind speed at 5-15m level (typical measurement height).   
+ws_rated  |  double  |  m/sec  |  Rated wind speed for generator operation. Used in COEFF_OF_PERFORMANCE implementation.   
+ws_maxcp  |  double  |  m/sec  |  Wind speed at which generator reaches maximum Cp. Used in COEFF_OF_PERFORMANCE implementation.   
+Xst  |  double  |  (p.u.)*Ohm  |  Induction generator primary stator reactance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
+Xr  |  double  |  (p.u.)*Ohm  |  Induction generator primary rotor reactance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
+Xm  |  double  |  (p.u.)*Ohm  |  Induction generator primary core reactance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
+Xs  |  double  |  (p.u.)*Ohm  |  Synchronous generator primary stator reactance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
+Xg  |  double  |  (p.u.)*Ohm  |  Synchronous generator grounding reactance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
+
+## Example
+
+module generators;
     class windturb_dg
     {
     	set phases;	/**< device phases (see PHASE codes) */
@@ -109,149 +185,6 @@
     	char power_curve_csv[1024]; // name of csv file containing the power curve
     	bool power_curve_pu;		// Flag when set indicates that user provided power curve has power values in pu. Defaults to false in .cpp
     };
-    
-
-## Power Curve Based Implementation
-
-Note that the power curve-based implementation is not included in the v4.2. It is planned to be released in v4.3. 
-
-The power curve-based wind turbine implementation uses the power curves that translate the wind speed directly into output power. Power curves are often available from manufacturers through marketing materials and/or owner documentation. Their use simplifies the wind turbine modeling since they skip the internal details of the wind turbine and instead focus on the input/output characteristics. The implementation uses a default power curve or one of the power curves provided by the user. Examples of commercial and generic power curves can be found at: <https://github.com/NREL/turbine-models>
-
-The power curve-based implementation replaces the coefficient of performance-based implementation. In future versions starting from v4.3, it will be the default implementation. 
-
-## Coefficient of Performance Based Implementation
-
-The coefficient of performance-based implementation was the original wind turbine implementation. It includes an explicit model of the wind turbine and the electrical machine/generator parameters. The implementation contains highly granular models of the synchronous and induction generators with their respective impedances. It uses the wind turbine coefficient of performance data to generate the output for a given wind speed input. The coefficient of performance is defined as the ratio of the power captured by the rotor of the wind turbine divided by the total power available in the wind just before it interacts with the turbine. 
-
-This model remains in the experimental level of development. 
-
-## Properties
-
-Property Name  | Type  | Unit  | Description   
----|---|---|---  
-air_density  |  double  |  kg/m^3  |  Estimated air density. Used in COEFF_OF_PERFORMANCE implementation.   
-avg_ws  |  double  |  m/s  |  Default value for wind speed   
-blade_diam  |  double  |  meters  |  Specifies the diameter of the blades. Used in COEFF_OF_PERFORMANCE implementation.   
-current_A  |  complex  |  A  |  Terminal current on phase A   
-current_B  |  complex  |  A  |  Terminal current on phase B   
-current_C  |  complex  |  A  |  Terminal current on phase C   
-cut_in_ws  |  double  |  m/sec  |  Minimum wind speed for generator operation. Used in COEFF_OF_PERFORMANCE implementation.   
-cut_out_ws  |  double  |  m/sec  |  Maximum wind speed for generator operation. Used in COEFF_OF_PERFORMANCE implementation.   
-Cp_max  |  double  |  p.u.  |  Maximum coefficient of performance. Used in COEFF_OF_PERFORMANCE implementation.   
-Cp_rated  |  double  |  p.u.  |  Rated coefficient of performance. Used in COEFF_OF_PERFORMANCE implementation.   
-Cp  |  double  |  p.u.  |  Calculated coefficient of performance. Used in COEFF_OF_PERFORMANCE implementation.   
-CP_Data  |  enumeration  |  N/A  |  Data set for Coefficient of performance. Used in COEFF_OF_PERFORMANCE implementation. Default is CALCULATED. 
-
-  * GENERAL_LARGE
-  * GENERAL_MID
-  * GENERAL_SMALL
-  * MANUF_TABLE
-  * CALCULATED
-  * USER_SPECIFY
-
-  
-EfA  |  complex  |  V  |  Synchronous Generator induced voltage on phase A in V   
-EfB  |  complex  |  V  |  Synchronous Generator induced voltage on phase B in V   
-EfC  |  complex  |  V  |  Synchronous Generator induced voltage on phase C in V   
-Gen_mode  |  enumeration  |  N/A  |  Control mode that is used for the generator output. Used in COEFF_OF_PERFORMANCE implementation. Default is CONSTANTP. 
-
-  * CONSTANTE
-  * CONSTANTP
-  * CONSTANTPQ
-
-  
-Gen_status  |  enumeration  |  N/A  |  Allows a user to dropout a generator. Default is ONLINE. 
-
-  * OFFLINE
-  * ONLINE
-
-  
-Gen_type  |  enumeration  |  N/A  |  Allows the user to specify the type of generator. Used in COEFF_OF_PERFORMANCE based implementation. 
-
-  * INDUCTION
-  * SYNCHRONOUS
-
-  
-GenElecEff  |  double  |  N/A  |  Generator electrical efficiency used for testing   
-Irotor_A  |  complex  |  p.u.  |  Induction Generator "rotor" current generated in pu on phase A   
-Irotor_B  |  complex  |  p.u.  |  Induction Generator "rotor" current generated in pu on phase B   
-Irotor_C  |  complex  |  p.u.  |  Induction Generator "rotor" current generated in pu on phase C   
-Max_Vrotor  |  double  |  (p.u.)*V  |  Induction generator maximum induced rotor voltage in p.u., e.g. 1.2. Used in COEFF_OF_PERFORMANCE based implementation.   
-Min_Vrotor  |  double  |  (p.u.)*V  |  Induction generator minimum induced rotor voltage in p.u., e.g. 0.8. Used in COEFF_OF_PERFORMANCE based implementation.   
-Max_Ef  |  double  |  (p.u.)*V  |  Synchronous generator maximum induced rotor voltage in p.u., e.g. 1.2. Used in COEFF_OF_PERFORMANCE based implementation.   
-Min_Ef  |  double  |  (p.u.)*V  |  Synchronous generator minimum induced rotor voltage in p.u., e.g. 0.8. Used in COEFF_OF_PERFORMANCE based implementation.   
-Max_P  |  double  |  kW  |  maximum real power capacity in kW   
-Min_P  |  double  |  kW  |  minimum real power capacity in kW   
-Max_Q  |  double  |  kVar  |  maximum reactive power capacity in kVar   
-Min_Q  |  double  |  kVar  |  minimum reactive power capacity in kVar   
-power_curve_csv  |  string  |  N/A  |  Specifies the name of .csv file containing user defined power curve   
-power_curve_pu  |  Boolean  |  N/A  |  A Boolean when set to TRUE indicates that the user provided power curve has power values in p.u. Default is FALSE.   
-pf  |  double  |  p.u.  |  Desired power factor in CONSTANTP mode. Used in COEFF_OF_PERFORMANCE based implementation.   
-phases  |  set  |  N/A  |  Specifies which phases to connect to. Triplex mode is only supported for the POWER_CURVE implementation. 
-
-  * ABCN
-  * AS
-  * BS
-  * CS
-
-  
-Pconv  |  double  |  kW  |  Power converted from mechanical to electrical before electrical losses   
-power_A  |  complex  |  kVA  |  Complex power on phase A   
-power_B  |  complex  |  kVA  |  Complex power on phase B   
-power_C  |  complex  |  kVA  |  Complex power on phase C   
-q  |  double  |  N/A  |  Number of gearboxes. Used in COEFF_OF_PERFORMANCE based implementation.   
-Rst  |  double  |  (p.u.)*Ohm  |  Induction generator primary stator resistance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
-Rr  |  double  |  (p.u.)*Ohm  |  Induction generator primary rotor resistance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
-Rc  |  double  |  (p.u.)*Ohm  |  Induction generator primary core resistance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
-Rated_V  |  double  |  V  |  Rated generator terminal voltage. Used in COEFF_OF_PERFORMANCE based implementation.   
-Rated_VA  |  double  |  VA  |  Rated wind turbine generator power output. Default is 100 kW.   
-roughness_l  |  double  |  N/A  |  European Wind Atlas unitless correction factor for adjusting wind speed at various heights above ground and terrain types, default=0.055.   
-Rs  |  double  |  (p.u.)*Ohm  |  Synchronous generator primary stator resistance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
-Rg  |  double  |  (p.u.)*Ohm  |  Synchronous generator grounding resistance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
-ref_height  |  double  |  m  |  height wind data was measured. Default is 10 m.   
-turbine_height  |  double  |  meters  |  Specifies the height of the wind turbine hub above the ground. Default is 37 m.   
-Turbine_Model  |  enumeration  |  N/A  |  Allows the use of one of the pre-defined generic turbines. Default is GENERIC_DEFAULT. 
-
-  * GENERIC_DEFAULT
-  * GENERIC_SYNCH_SMALL
-  * GENERIC_SYNCH_MID
-  * GENERIC_SYNCH_LARGE
-  * GENERIC_IND_SMALL
-  * GENERIC_IND_MID
-  * GENERIC_IND_LARGE
-  * VESTAS_V82
-  * GE_25MW
-  * BERGEY_10kW
-  * GEN_TURB_POW_CURVE_2_4KW
-  * GEN_TURB_POW_CURVE_10KW
-  * GEN_TURB_POW_CURVE_100KW
-  * GEN_TURB_POW_CURVE_1_5MW
-
-  
-Turbine_implementation  |  enumeration  |  N/A  |  Allows the user to specify the type of implementation for the wind turbine model. Default is POWER_CURVE. 
-
-  * POWER_CURVE
-  * COEFF_OF_PERFORMANCE
-
-  
-TotalRealPow  |  double  |  kW  |  Total Real power supplied by the generator   
-TotalReacPow  |  double  |  kVar  |  Total Reactive power supplied by the generator   
-time_advance  |  int  |  sec  |  Amount of time to advance for wind speed data import   
-voltage_A  |  complex  |  V  |  Synchronous Generator Terminal voltage on phase A   
-voltage_B  |  complex  |  V  |  Synchronous Generator Terminal voltage on phase B   
-voltage_C  |  complex  |  V  |  Synchronous Generator Terminal voltage on phase C   
-Vrotor_A  |  complex  |  p.u.  |  Induction Generator induced "rotor" voltage in pu on phase A   
-Vrotor_B  |  complex  |  p.u.  |  Induction Generator induced "rotor" voltage in pu on phase B   
-Vrotor_C  |  complex  |  p.u.  |  Induction Generator induced "rotor" voltage in pu on phase C   
-WSadj  |  double  |  m/sec  |  Speed of wind at hub height.   
-Wind_Speed  |  double  |  m/sec  |  Wind speed at 5-15m level (typical measurement height).   
-ws_rated  |  double  |  m/sec  |  Rated wind speed for generator operation. Used in COEFF_OF_PERFORMANCE implementation.   
-ws_maxcp  |  double  |  m/sec  |  Wind speed at which generator reaches maximum Cp. Used in COEFF_OF_PERFORMANCE implementation.   
-Xst  |  double  |  (p.u.)*Ohm  |  Induction generator primary stator reactance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
-Xr  |  double  |  (p.u.)*Ohm  |  Induction generator primary rotor reactance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
-Xm  |  double  |  (p.u.)*Ohm  |  Induction generator primary core reactance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
-Xs  |  double  |  (p.u.)*Ohm  |  Synchronous generator primary stator reactance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
-Xg  |  double  |  (p.u.)*Ohm  |  Synchronous generator grounding reactance in p.u. Used in COEFF_OF_PERFORMANCE based implementation.   
   
 ## Defaults
 

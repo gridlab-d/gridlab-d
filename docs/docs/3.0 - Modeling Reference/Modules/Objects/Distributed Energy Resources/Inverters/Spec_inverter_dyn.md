@@ -23,7 +23,7 @@ Figure 2 shows the Q-V droop control, Figure 3 shows the P-f droop control and o
 
 Figure 2 - Q-V Droop Control
 
-![P-f Droop Control and Overload Mitigation Control](../../../../../images/300px-Inv_dyn_fig3.png)
+![P-f Droop Control and Overload Mitigation Control](../../../../../../images/300px-Inv_dyn_fig3.png)
 
 Figure 3 - P-f Droop Control and Overload Mitigation Control
 

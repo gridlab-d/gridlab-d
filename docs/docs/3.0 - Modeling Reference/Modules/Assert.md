@@ -19,6 +19,7 @@ To create an assert test, an assert object is created as a child of the object t
   * *value* \- This is the "right" answer, or the value to be checked against, that is provide by the user. The type of value used depends on the type of assert used (complex, double, or enumeration). Units are not used in this value, so must be in the same units as the answer to be compared against.
   * *within* \- This allows the user to specify a range of answer. **Not used in enum_assert \- value must be the exact string.**
   * *target* \- This tells the assert object what the value is being tested against. Quotes must encompass the name of the property. Any public variable may be used. The default units of the target property will be used when comparing against value.
+
 Here's an example: 
     
         object node {
@@ -52,7 +53,7 @@ Additionally, other operating modes may be used:
 
 If the assert fails, the simulation halts. 
 
-## Synopsis
+## Example
     
     module assert;
     class assert {
@@ -66,54 +67,29 @@ If the assert fails, the simulation halts.
     	char1024 upper; 
     }
 
-- **lower**: `lower "value unit";`
-    The lower property specifies the lower bound when using the inside or outside relations.
+  Property | Syntax | Description
+  -- | -- | --
+**lower** |  `lower "value unit";` | The lower property specifies the lower bound when using the inside or outside relations.
+ **part** |  `part "name";` | The part property specifies the property part to use when comparing values. All property parts are considered double or complex without units. The following property parts are supported: <br/> - *complex*: real, imag, mag, ang, arg <br/> - *enduse*: total (complex), energy (complex), demand (complex), breaker_amps, admittance (complex), current (complex), power (complex), impedance_fraction, current_fraction, power_fraction, power_factor, voltage_factor, heatgain, heatgain_fraction. <br/> Parts noted as (complex) must have the complex part specified, e.g., total.real, current.mag, power.ang.
+ **relation** | `relation "op";` |     The relation operator specifies the relationship to test.
+**inside** | |  Compares the target property to determine whether it is between the lower and upper values (inclusive).
+**outside** | | Compares the target property to determine whether it is outside the lower and upper values (exclusive).
+**Comparisons** | |  Compares the target property to determine whether:
+ | | `!=` | it is different from the value.
+ | |  `>=` | it is greater than or equal to the value.
+ | | `>` | it is greater than the value.
+ | | `<=` |  it is less than or equal to the value.
+ | | `<` | it is less than the value.
+ | | `==` | it is equal to the value.
+**status** | `status NONE\|TRUE\|FALSE;` | The status enumeration specifies the desired outcome of the test. <br/> - **FALSE** - The `FALSE` status is used to specify that the assert test should fail. <br/> - **NONE** - The `NONE` status is used to specify that the assert test should be ignored. <br/> - **TRUE** - The `TRUE` status is used to specify that the assert test should succeed.
+**target** | `target "property ";` | The target specifies the name of the property to examine.
+**upper** | `upper "value unit ";` | The upper property specifies the upper bound when using the inside or outside relation.
+**value** | `value "value unit ";` | The value property specifies the value to compare to when using the `!=`, `>=`, `>`, `<=`, `<`, or `==` relations.
+**within** | `within "value unit ";` | The within property specifies the accuracy to which `==` and `!=` comparisons are performed.
 
--  **part**:  `part "name";`
-    The part property specifies the property part to use when comparing values. All property parts are considered double or complex without units. The following property parts are supported:
-    * *complex*: real, imag, mag, ang, arg
-    * *enduse*: total (complex), energy (complex), demand (complex), breaker_amps, admittance (complex), current (complex), power (complex), impedance_fraction, current_fraction, power_fraction, power_factor, voltage_factor, heatgain, heatgain_fraction.
-    
-    Parts noted as (complex) must have the complex part specified, e.g., total.real, current.mag, power.ang.
+!!! warning
 
--  **relation**- `relation "op";`
-    The relation operator specifies the relationship to test.
-
-- **inside** - Compares the target property to determine whether it is between the lower and upper values (inclusive).
-
-- **outside** - 
-    Compares the target property to determine whether it is outside the lower and upper values (exclusive).
-
--  **Comparisons** - Compares the target property to determine whether:
-
-    - `!=` - it is different from the value.
-    -  `>=` - it is greater than or equal to the value.
-    - `>` - it is greater than the value.
-    - `<=` -  it is less than or equal to the value.
-    - `<` - it is less than the value.
-    - `==` - it is equal to the value.
-
-- **status** - `status NONE|TRUE|FALSE;`
-    The status enumeration specifies the desired outcome of the test.
-
-  - **FALSE** - The `FALSE` status is used to specify that the assert test should fail.
-
-  - **NONE** - The `NONE` status is used to specify that the assert test should be ignored.
-
-  - **TRUE** - The `TRUE` status is used to specify that the assert test should succeed.
-
-- **target** - `target "property ";`
-    The target specifies the name of the property to examine.
-
-- **upper** - `upper "value unit ";`
-    The upper property specifies the upper bound when using the inside or outside relation.
-
-- **value** - `value "value unit ";`
-    The value property specifies the value to compare to when using the `!=`, `>=`, `>`, `<=`, `<`, or `==` relations.
-
-- **within** - `within "value unit ";`
-    The within property specifies the accuracy to which `==` and `!=` comparisons are performed.
-    **WARNING:** Units that have an absolute offset (e.g., degC, degF) will convert in absolute value, not relative value. Thus `within 0.01 degF` will not work as expected when compared to a property in degC because 0.01 degF is about -17 degC.
+    Units that have an absolute offset (e.g., degC, degF) will convert in absolute value, not relative value. Thus `within 0.01 degF` will not work as expected when compared to a property in degC because 0.01 degF is about -17 degC.
 
 ## Examples
 

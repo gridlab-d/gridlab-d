@@ -1,34 +1,29 @@
 # Validate
 
-Command line option to run model validation test suite [Template:NEW30]
-
-## Synopsis
-    
-    
-    host% **gridlabd _test-options_ --validate _run-options_**
-    
-
-## Description
-
 The validate command line option initiates the standard model validation process for GridLAB-D™. The process functions as follows: 
 
-  1. Recursively scan the [working directory] for directories called `autotest`, ignoring any directory that contains a file named `validate.no`.
+  1. Recursively scan the working directory for directories called `autotest`, ignoring any directory that contains a file named `validate.no`.
   2. For each GLM files found in an `autotest` directory: 
      1. Create a folder by the same name (or purge existing folder if the `clean` global variable is defined)
      2. Copy the GLM file into the folder
-     3. Run `gridlabd` on the GLM file with all the _run-options_
+     3. Run `gridlabd` on the GLM file with all the `run-options`
      4. Time and observe results (success, fail, exception)
   3. Report total time and results
-The _test-options_ are applied to the validation instance of GridLAB-D™, while the _run-options_ are applied to the test instance of GridLAB-D™. For example, 
+
+Example: 
+
+    host% gridlabd test-options --validate run-options
+
+The `test-options` are applied to the validation instance of GridLAB-D™, while the `run-options` are applied to the test instance of GridLAB-D™. For example, 
     
     
-    host% **gridlabd --[threadcount] 2 --validate** 
+    host% gridlabd --[threadcount] 2 --validate 
     
 
 will run two validation tests simultaneously, while 
     
     
-    host% **gridlabd --validate --[threadcount] 2**
+    host% gridlabd --validate --[threadcount] 2
     
 
 will run a single two-threaded validation test at a time. 
@@ -41,12 +36,12 @@ By default all output is redirected to the default output streams (see [redirect
 
 ### Options
 
-The validate procedure is controlled using the following [global variables]. 
+The validate procedure is controlled using the following **global variables**. 
 
-`--define|-[D] [clean]=1`
+`--define|-[D] [clean]=1`: 
     If the `clean` variable is defined, the directories used to run each test are purged before the test is started.
 
-`--define|-[D] [validate]=NONE|TRUN|TERR|TEXC|TOPT|TSTD|TALL|RDIR|RGLD|RALL`
+`--define|-[D] [validate]=NONE|TRUN|TERR|TEXC|TOPT|TSTD|TALL|RDIR|RGLD|RALL`:
     Controls which validation tests are performed. 
 
 * **NONE** -
@@ -70,7 +65,7 @@ The validate procedure is controlled using the following [global variables].
 * **RALL** -
     Includes both directory and file results in output report
 
-`--define|-[D] [force_validate]=1` :
+`--define|-[D] [force_validate]=1`:
 Overrides the effect of the `validate.no` file if found in a folder. Normally, validate does not process folders that contain the file `validate.no`.
 
 
@@ -108,7 +103,8 @@ Linux/Mac only
 
 Will email the validation report in to _user_ on the local machine. 
 
-Note -
+!!! note
+
     Your local mail server must be configured properly to deliver email to remote hosts and your mail client must be configured properly to read mail on the local mail server. GridLAB-D™ cannot detect either mail server or mail client configuration errors. Thus problems with either of these can cause mailed report delivery errors to occur with an error being reported in GridLAB-D™.
 
 ## Caveats
@@ -119,11 +115,7 @@ Some output from gridlabd runs cannot be redirected and will always be displayed
 
 ## Bugs
 
-Unhandled exceptions in Windows can cause modal dialogs to pop up that block the process. This behavior appears to be impossible to suppress. See <http://sourceforge.net/p/gridlab-d/tickets/606> for details. 
-
-## Version
-
-The built-in validate option was introduced in [Hassayampa (Version 3.0)]. 
+Unhandled exceptions in Windows can cause modal dialogs to pop up that block the process. This behavior appears to be impossible to suppress. See [ticket 606](http://sourceforge.net/p/gridlab-d/tickets/606) for details. 
 
 ## See also
 

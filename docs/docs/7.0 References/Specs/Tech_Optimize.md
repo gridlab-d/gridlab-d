@@ -6,7 +6,9 @@ Amelia Musselman
 
 6/26/2012 
 
-Note: This form of "simple.cpp" has not been added to the baseline code of GridLAB-D™. Contact Jason Fuller (jason.fuller@pnnl.gov) for more information. 
+!!! note
+
+  This form of "simple.cpp" has not been added to the baseline code of GridLAB-D™. Contact Jason Fuller (jason.fuller@pnnl.gov) for more information. 
 
 ## Document Structure
 

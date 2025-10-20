@@ -4,7 +4,9 @@
 
 This section provides the definitions for the 12 indices used in the reliability analysis of a distribution system. This guide also identifies the factors that go into the calculations for each reliability index. It is important to note that these indices are used to analyze distribution systems only. Generation and transmission systems are not looked at in this type of study.
 
-_NOTE: All names, factors, equations, definitions, and applications discussed in this guide were taken from the IEEE Std 1366 2003 Edition._
+!!! note
+
+  All names, factors, equations, definitions, and applications discussed in this guide were taken from the IEEE Std 1366 2003 Edition._
 
 ## Definitions
 
@@ -74,7 +76,9 @@ ASAI, the average service availability index, shows the fraction of time that a 
 
 $$ASAI = \frac{N_T * (Number of hours / year) - \sum r_i N_i}{N_T * (Number of hours / year)}$$
 
-_NOTE: There is no specification between regular years and leap years when calculating this index in GridLAB-D™. The regular 8760 hours/year is used when calculated this index._
+!!! note
+
+  There is no specification between regular years and leap years when calculating this index in GridLAB-D™. The regular 8760 hours/year is used when calculated this index._
 
 #### $CEMI_n$
 
@@ -407,7 +411,9 @@ where,
 
   $N_T$ = Total number of customers in the area of interest
 
-_NOTE: There is no specification between regular years and leap years when calculating this index in GridLAB-D™. The regular 8760 hours/year is used when calculated this index._
+!!! note
+
+  There is no specification between regular years and leap years when calculating this index in GridLAB-D™. The regular 8760 hours/year is used when calculated this index._
 
 #### Data acquisition for metrics calculation
 

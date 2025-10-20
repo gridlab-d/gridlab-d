@@ -1,24 +1,22 @@
 # Model Debugging
 
-The debugger is started when the **\--debugger** command-line option is used. It can also be started by including the line 
-    
+The debugger is started when the `-debugger` command-line option is used. It can also be started by including the line:
     
     #set debugger=1
     
-
 in the GLM file. The debugger supports two methods of interrupting the simulation. 
 
   1. **Breakpoints** halt the simulator and start the debugger whenever a situation arises that matches the breakpoint criterion. For example, a breakpoint on the bottom-up pass will stop the simulation every time an object sync is called during a bottom-up pass.
 
+  2. **Watchpoints** are different from breakpoints in that the debugger is only stopped when the value being watched changes. For example, a watchpoint on node:12 voltage would only stop the simulation when the voltage of node:12 is changed. In contrast, a breakpoint on node:12 would stop each time node:12 is sync'd.
 
-  1. **Watchpoints** are different from breakpoints in that the debugger is only stopped when the value being watched changes. For example, a watchpoint on node:12 voltage would only stop the simulation when the voltage of node:12 is changed. In contrast, a breakpoint on node:12 would stop each time node:12 is sync'd.
-While the debugger is running **help** will print a list of all the available commands. 
+While the debugger is running `help` will print a list of all the available commands. 
 
 # Getting started
 
-To start the debugger you must include the **\--debugger** option on the command-line. Note that while the debugger is running, the system will only operate in single-threaded mode. 
+To start the debugger you must include the `-debugger`  option on the command-line. Note that while the debugger is running, the system will only operate in single-threaded mode. 
 
-Each time the debugger stops to prompt for input, it displays the current simulation time and simulator status. The status include which pass is currently running (see PASSCONFIG), which rank is being processed, which object is about to be updated, and which iteration is being run (if the time has not advanced yet). 
+Each time the debugger stops to prompt for input, it displays the current simulation time and simulator status. The status include which pass is currently running (see `PASSCONFIG`), which rank is being processed, which object is about to be updated, and which iteration is being run (if the time has not advanced yet). 
     
     
     DEBUG: time 2000-01-01 00:00:00 PST
@@ -58,26 +56,31 @@ You may limit the list to only the object of a particular class:
     
 
   1. The first column contains flags indicating the status of the object. In the first character: 
-     * A indicates the object is active (operating)
-     * P indicates the object is planned (not yet operating)
-     * R indicates the object is retired (no longer operating) In the second character:
-     * \- indicates that the object is not called on the PRETOPDOWN pass
-     * t indicates that the object has yet to be called on the PRETOPDOWN pass
-     * T indicates that the object has already been called on the PRETOPDOWN pass In the third character:
-     * \- indicates that the object is not called on the BOTTOMUP pass
-     * b indicates that the object has yet to be called on the BOTTOMUP pass
-     * B indicates that the object has already been called on the BOTTOMUP pass In the fourth character:
-     * \- indicates that the object is not called on the POSTTOPDOWN pass
-     * t indicates that the object has yet to be called on the POSTTOPDOWN pass
-     * T indicates that the object has already been called on the POSTTOPDOWN pass In the fifth character:
-     * \- indicates the object is unlocked
-     * l indicates the object is locked In the sixth character:
-     * \- indicates the object's native PLC code is enabled
-     * x indicates the object's native PLC code is disabled
+
+First Character | Indicates that the object...
+-- | --
+A |  is active (operating)
+P |  is planned (not yet operating)
+R |  is retired (no longer operating) In the second character:
+\- |  is not called on the PRETOPDOWN pass
+t |  has yet to be called on the PRETOPDOWN pass
+T |  has already been called on the PRETOPDOWN pass In the third character:
+\- |  is not called on the BOTTOMUP pass
+b |  has yet to be called on the BOTTOMUP pass
+B |  has already been called on the BOTTOMUP pass In the fourth character:
+\- |  is not called on the POSTTOPDOWN pass
+t |  that has yet to be called on the POSTTOPDOWN pass
+T |  that has already been called on the POSTTOPDOWN pass In the fifth character:
+\- |  is unlocked
+l |  is locked In the sixth character:
+\- |  the object's native PLC code is enabled
+x |  the object's native PLC code is disabled
+
   2. The second field is the object's rank.
   3. The third field is the object's internal clock (or INIT) if the object has not yet been sync'd.
   4. The fourth field is the name (class:id) of the object.
   5. The fifth field is the name of the object's parent (or ROOT) if is has none.
+  
 # Printing values
 
 To inspect the properties of an object, you can use the print command. With no option, the current object is printed: 

@@ -1,111 +1,48 @@
 # Matlab link
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Matlab_link
-matlab link \- Matlab link target control file Template:NEW30
-
-## Synopsis
-
+The matlab link control file is used establish a connection to an external Matlab instance. It is always referenced by a link directive in a GLM file, i.e., 
+    
+    link control-file;
+    
 **GLM file** : 
     
-    
-    link _target-control-file_ ;
+    link target-control-file;
     
 
 **Target control file** : 
     
-    
     target matlab
-    command _start-cmd_
-    workdir _folder-path_
-    output _buffer-size_
+    command start-cmd
+    workdir folder-path
+    output buffer-size
     window hide|show|keep
-    global _variable_
-    on_init _command-list_
-    on_sync _command-list_
-    on_term _command-list_
-    root _root-variable-name_
+    global variable
+    on_init command-list
+    on_sync command-list
+    on_term command-list
+    root root-variable-name
     skipsafe yes|no
-    
 
-## Description
-
-The matlab link control file is used establish a connection to an external Matlab instance. It is always referenced by a link directive in a GLM file, i.e., 
-    
-    
-    link _control-file_ ;
-    
 
 The link control file may contain one or more of the following commands. 
 
-### command
+Command | Description
+-- | --
+command | Specifies the command used to start matlab. If omitted, the default **matlab** command is used.
+global | Exports a GridLAB-D™ global variable to the **global** structure in the Matlab workspace. Exported variables are members of the **global** structure. For example:     `global clock` exports the **clock** global structure and can be accessed by evaluating **global.clock** in Matlab. Note that globals are **not** copied back to GridLAB-D™.
+on_init | Specifies the command-list to execute in Matlab when GridLAB-D™ initializes. This initialization command is executed after all the GridLAB-D™ objects have been initialized and exported to Matlab. You must set **ans** to the return value **GLD_OK** to indicate the initialization command completed successfully.
+on_sync | Specifies the command-list to execute in Matlab prior to the standard sync function call. You must set **ans** to the clock time of the next required call of **on_sync** or **TS_NEVER** if none is required. Note that subsequent calls to **on_sync** may occur before the specified next time, and may even be repeated for the current time. See Theory of operation for details.
+on_term | Specifies the command-list to execute in Matlab when GridLAB-D™ terminates. You must set **ans** to **GLD_OK** to indicate success.
+output | Specifies the size (in bytes) of the output buffer to use when reading back responses from matlab. Responses are displayed when verbose is enabled.
+root | Specifies the root variable name to use when publishing the GridLAB-D™ model.
+target | Use the target parameter to select the matlab link target.
+window | Use the window parameter to specify whether and when the Matlab command window is visible. When the command window is visible, you may interact with Matlab using Matlab commands. <br/> - `hide`: Use the window hide parameter option is hide the Matlab window while running. <br/> - `show`: Use the window show parameter option is show the Matlab window while running. <br/> - `keep`: Use the window keep parameter option is keep the Matlab window open after GridLAB-D™ exits.
+workdir | Use the workdir parameter to specify the work directory for matlab. Note that matlab uses its own working folder and by default this is usually not the current gridlabd folder. If the work directory does not exist, it is automatically created.
+skipsafe | Use the skipsafe parameter to toggle control of mandatory evaluation of scheduled on_sync execution. <br/> - `yes`: Use the skipsafe yes parameter option to enable scheduled on_sync execution. <br/> - `no`: Use the skipsafe no parameter option to disable scheduled on_sync execution.
 
-Specifies the command used to start matlab. If omitted, the default **matlab** command is used.
+!!! warning
 
-### global
-
-Exports a GridLAB-D™ global variable to the **global** structure in the Matlab workspace. Exported variables are members of the **global** structure. For example
-
-
-    global clock
-
-
-exports the **clock** global structure and can be accessed by evaluating **global.clock** in Matlab. Note that globals are **not** copied back to GridLAB-D™.
-
-### on_init
-
-Specifies the command-list to execute in Matlab when GridLAB-D™ initializes. This initialization command is executed after all the GridLAB-D™ objects have been initialized and exported to Matlab. You must set **ans** to the return value **GLD_OK** to indicate the initialization command completed successfully.
-
-### on_sync
-
-Specifies the command-list to execute in Matlab prior to the standard sync function call. You must set **ans** to the clock time of the next required call of **on_sync** or **TS_NEVER** if none is required. Note that subsequent calls to **on_sync** may occur before the specified next time, and may even be repeated for the current time. See Theory of operation for details.
-
-### on_term
-
-Specifies the command-list to execute in Matlab when GridLAB-D™ terminates. You must set **ans** to **GLD_OK** to indicate success.
-
-### output
-
-Specifies the size (in bytes) of the output buffer to use when reading back responses from matlab. Responses are displayed when verbose is enabled.
-
-### root
-
-Specifies the root variable name to use when publishing the GridLAB-D™ model.
-
-### target
-
-Use the target parameter to select the matlab link target.
-
-### window
-
-Use the window parameter to specify whether and when the Matlab command window is visible. When the command window is visible, you may interact with Matlab using Matlab commands.
-
-#### hide
-
-Use the window hide parameter option is hide the Matlab window while running.
-
-#### show
-
-Use the window show parameter option is show the Matlab window while running.
-
-#### keep
-
-Use the window keep parameter option is keep the Matlab window open after GridLAB-D™ exits.
-
-### workdir
-
-Use the workdir parameter to specify the work directory for matlab. Note that matlab uses its own working folder and by default this is usually not the current gridlabd folder. If the work directory does not exist, it is automatically created.
-
-### skipsafe
-
-Use the skipsafe parameter to toggle control of mandatory evaluation of scheduled on_sync execution.
-
-#### yes
-
-Use the skipsafe yes parameter option to enable scheduled on_sync execution. Warning! if skipsafe is enabled and on_sync returns TS_NEVER then on_sync will not be executed for the rest of the simulation.
-
-#### no
-
-Use the skipsafe no parameter option to disable scheduled on_sync execution.
+    If skipsafe is enabled and `on_sync` returns `TS_NEVER` then `on_sync` will not be executed for the rest of the simulation.
 
 ## Example
 
@@ -155,22 +92,26 @@ Per the [forum post here](https://sourceforge.net/p/gridlab-d/discussion/842562/
 
 ## Compiling
 
-**NOTE** : The instructions here are basically a duplicate of the versions on the MSYS2 compiling page. While the paths below are all given for a Windows-based system, the same idea applies to Linux and MacOS compiling -- find the MATLAB folder/library/binary and include it where appropriate. 
+!!! note
+
+    The instructions here are basically a duplicate of the versions on the MSYS2 compiling page. While the paths below are all given for a Windows-based system, the same idea applies to Linux and MacOS compiling -- find the MATLAB folder/library/binary and include it where appropriate. 
 
 In order to build the MATLAB link inside of GridLAB-D™ a version of MATLAB must be installed on the system. The following option must be added to your `./configure` command during compiling: 
     
-    
     --with-matlab=<path to MATLAB install>
-    
 
-It is important to note that the MATLAB installation path contain no spaces. If there are spaces in the paths you can find the short name windows uses for the directory by opening up a command window and typing dir /X one directory above the directory with the spaces. An example of what `--with-matlab` might look like is below. 
+It is important to note that the MATLAB installation path contain no spaces. If there are spaces in the paths you can find the short name windows uses for the directory by opening up a command window and typing `dir /X` one directory above the directory with the spaces. An example of what `--with-matlab` might look like is below. 
 
   * Install path on the windows explorer: `C:\Program Files\MATLAB\R2017A`
   * Option set with the short names: `--with-matlab=c:/PROGRA~1/MATLAB/R2017A`
 
-**Attention** : before running a simulation with MATLAB, the environment variable `PATH` must contain the path to the MATLAB DLLs, e.g., `MATLAB_DIR\bin\win64` or `MATLAB_DIR\bin\win32`. For more information on the MATLAB functionality within GridLAB-D™ see MATLAB link. 
+!!! attention
 
-**NOTE** : with MATLAB r2018a and newer, there has been a slight change to external interfaces for complex numbers. You need to tell GridLAB-D™ to use the older/legacy interface via the compiler definition `MATLAB_DEFAULT_RELEASE=R2017b`. An example configuration command would be: 
+    Before running a simulation with MATLAB, the environment variable `PATH` must contain the path to the MATLAB DLLs, e.g., `MATLAB_DIR\bin\win64` or `MATLAB_DIR\bin\win32`. For more information on the MATLAB functionality within GridLAB-D™ see MATLAB link. 
+
+!!! note
+
+    With MATLAB r2018a and newer, there has been a slight change to external interfaces for complex numbers. You need to tell GridLAB-D™ to use the older/legacy interface via the compiler definition `MATLAB_DEFAULT_RELEASE=R2017b`. An example configuration command would be: 
     
     
     ./configure --prefix=$PWD/install64 --with-xerces=/mingw64/lib --with-matlab=C:/PROGRA~1/MATLAB/R2018a  --enable-silent-rules 'CFLAGS=-O2 -w -DMATLAB_DEFAULT_RELEASE=R2017b' 'CXXFLAGS=-O2 -w -DMATLAB_DEFAULT_RELEASE=R2017b' 'LDFLAGS=-O2 -w'
@@ -189,7 +130,9 @@ To get the MATLAB link working under a Visual Studio-compiled build, a few chang
 
 After these changes are accomplished, Visual Studio will be able to compile a GridLAB-D™ version with the MATLAB link interface. 
 
-Note: MATLAB appears to have some sensitivity to the architecture of the version compiled into GridLAB-D™. For example, if it was built to an x64 version of MATLAB, but the .link file points to a 32-bit version, sometimes it fails. Furthermore, if multiple installations exist, you may need to register the appropriate version with _matlab /regserver_ on the command line before using it with GridLAB-D™ (not always necessary). 
+!!! note
+
+    MATLAB appears to have some sensitivity to the architecture of the version compiled into GridLAB-D™. For example, if it was built to an x64 version of MATLAB, but the .link file points to a 32-bit version, sometimes it fails. Furthermore, if multiple installations exist, you may need to register the appropriate version with _matlab /regserver_ on the command line before using it with GridLAB-D™ (not always necessary). 
 
 Developer's Note (9/16/2013): 
 

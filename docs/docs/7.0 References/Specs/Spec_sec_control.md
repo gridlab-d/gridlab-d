@@ -217,7 +217,10 @@ The player would then have contain:
 ### Generator Properties
 
 The following properties are implemented in the  inverter_dyn and  diesel_dg models to allow interaction with the secondary controller.  
-**Note:** Any future object that should also be capable of interaction with the secondary object will likely need these properties. 
+
+!!! note
+
+  Any future object that should also be capable of interaction with the secondary object will likely need these properties. 
 
 Object | Parameter | glm | units | Default | Description   
 ---|---|---|---|---|---  

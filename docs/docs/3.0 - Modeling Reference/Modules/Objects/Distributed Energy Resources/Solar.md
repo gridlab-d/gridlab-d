@@ -1,56 +1,5 @@
 # Solar - Solar Panel
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Solar
-
-## Synopsis
-    
-    module generators;
-    class solar {
-        enumeration {SUPPLY_DRIVEN=5, CONSTANT_PF=4, CONSTANT_PQ=2, CONSTANT_V=1, UNKNOWN=0} generator_mode;
-        enumeration {ONLINE=2, OFFLINE=1} generator_status;
-        enumeration {CONCENTRATOR=5, THIN_FILM_GA_AS=4, AMORPHOUS_SILICON=3, MULTI_CRYSTAL_SILICON=2, SINGLE_CRYSTAL_SILICON=1} panel_type;
-        enumeration {DC=1, AC=2} power_type;
-        enumeration {GROUND_MOUNTED=2, ROOF_MOUNTED=1} INSTALLATION_TYPE;
-        enumeration {DEFAULT=1, SOLPOS=2} SOLAR_TILT_MODEL; 
-        enumeration {DEFAULT=1, FLATPLATE=2} SOLAR_POWER_MODEL; 
-        double a_coeff; 
-        double b_coeff; 
-        double dT_coeff; 
-        double T_coeff[%/degC]; 
-        double NOCT[degF];
-        double Tmodule[degF];
-        double Tambient[degF];
-        double wind_speed[mph];
-        double ambient_temeprature[degF];
-        double Insolation[W/sf];
-        double Rinternal[Ohm];
-        double Rated_Insolation[W/sf];
-        double Pmax_temp_coeff;
-        double Voc_temp_coeff;
-        complex V_Max[V];
-        complex Voc_Max[V];
-        complex Voc[V];
-        double efficiency[unit];
-        double area[sf];
-        double soiling[pu]; 
-        double derating[pu]; 
-        double rated_power[W];
-        complex P_Out[kW];
-        complex V_Out[V];
-        complex I_Out[A];
-        complex VA_Out[VA];
-        object weather;
-        double shading_factor[pu];  
-        double tilt_angle[deg]; 
-        double orientation_azimuth[deg]; 
-        bool latitude_angle_fix; 
-        enumeration {DEFAULT=0,FIXED_AXIS=1,ONE_AXIS=2,TWO_AXIS=3,AZIMUTH_AXIS=4}orientation; 
-        set {S=5, N=4, C=3, B=2, A=1} phases;
-    }
-    
-
-## Remarks
-
 A solar panel (also known as solar module or photovoltaic module/panel) is an assembly of solar cells. Solar panels must be connected via a parent inverter. 
 
 ## Properties
@@ -101,6 +50,52 @@ pvc_U_oc_V | double | V | Open circuit voltage
 pvc_I_sc_A | double | A | Short circuit current   
 pvc_U_m_V | double | V | Voltage at maximum power point   
 pvc_I_m_A | double | A | Current at maximum power point   
+
+## Example
+
+    module generators;
+    class solar {
+        enumeration {SUPPLY_DRIVEN=5, CONSTANT_PF=4, CONSTANT_PQ=2, CONSTANT_V=1, UNKNOWN=0} generator_mode;
+        enumeration {ONLINE=2, OFFLINE=1} generator_status;
+        enumeration {CONCENTRATOR=5, THIN_FILM_GA_AS=4, AMORPHOUS_SILICON=3, MULTI_CRYSTAL_SILICON=2, SINGLE_CRYSTAL_SILICON=1} panel_type;
+        enumeration {DC=1, AC=2} power_type;
+        enumeration {GROUND_MOUNTED=2, ROOF_MOUNTED=1} INSTALLATION_TYPE;
+        enumeration {DEFAULT=1, SOLPOS=2} SOLAR_TILT_MODEL; 
+        enumeration {DEFAULT=1, FLATPLATE=2} SOLAR_POWER_MODEL; 
+        double a_coeff; 
+        double b_coeff; 
+        double dT_coeff; 
+        double T_coeff[%/degC]; 
+        double NOCT[degF];
+        double Tmodule[degF];
+        double Tambient[degF];
+        double wind_speed[mph];
+        double ambient_temeprature[degF];
+        double Insolation[W/sf];
+        double Rinternal[Ohm];
+        double Rated_Insolation[W/sf];
+        double Pmax_temp_coeff;
+        double Voc_temp_coeff;
+        complex V_Max[V];
+        complex Voc_Max[V];
+        complex Voc[V];
+        double efficiency[unit];
+        double area[sf];
+        double soiling[pu]; 
+        double derating[pu]; 
+        double rated_power[W];
+        complex P_Out[kW];
+        complex V_Out[V];
+        complex I_Out[A];
+        complex VA_Out[VA];
+        object weather;
+        double shading_factor[pu];  
+        double tilt_angle[deg]; 
+        double orientation_azimuth[deg]; 
+        bool latitude_angle_fix; 
+        enumeration {DEFAULT=0,FIXED_AXIS=1,ONE_AXIS=2,TWO_AXIS=3,AZIMUTH_AXIS=4}orientation; 
+        set {S=5, N=4, C=3, B=2, A=1} phases;
+    }
   
 ## Default
 
@@ -146,7 +141,7 @@ Type of panel orientation
          enumeration {DEFAULT=0, FIXED_AXIS=1, ONE_AXIS=2, TWO_AXIS=3, AZIMUTH_AXIS=4} orientation;
     }
     object solar {
-         orientation _value_ ;
+         orientation value ;
     }
     
 

@@ -28,58 +28,36 @@
   - 2.3 - Running Simulations: docs/2.0 - New Users/2.3 - Running_Simulations.md
   - 2.4 - Theory of Operation: docs/2.0 - New Users/2.4 - theory-of-operation.md
   - 2.5 - Intro to Modeling:
-    - Basic Distribution System Modeling: docs/2.0 - New Users/2.5 - Intro to Modeling/3.1.1 - Basic Distribution System Modeling.md
-    - GLM Models: docs/2.0 - New Users/2.5 - Intro to Modeling/3.1.2 - GLM Models.md
-    - Modules: docs/2.0 - New Users/2.5 - Intro to Modeling/3.1.3 - Modules.md
-    - Recorders and Players: docs/2.0 - New Users/2.5 - Intro to Modeling/3.1.4 - Recorders and Players.md
-    - Built-in Schedules and Loadshapes: docs/2.0 - New Users/2.5 - Intro to Modeling/3.1.5 - Schedules and Loadshapes.md
-    - Distributed Generation: docs/2.0 - New Users/2.5 - Intro to Modeling/3.1.6 - Distributed_Generation.md
-    - Advanced Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/3.1.7 - Advanced_Distribution_Models.md
-    - Built-In Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/3.1.8 - Built-In Distribution Models.md
+    - Basic Distribution System Modeling: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.1 - Basic Distribution System Modeling.md
+    - GLM Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.2 - GLM Models.md
+    - Modules: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.3 - Modules.md
+    - Recorders and Players: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.4 - Recorders and Players.md
+    - Built-in Schedules and Loadshapes: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.5 - Schedules and Loadshapes.md
+    - Distributed Generation: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.6 - Distributed_Generation.md
+    - Advanced Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.7 - Advanced_Distribution_Models.md
+    - Built-In Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.8 - Built-In Distribution Models.md
 - 3.0 - Modeling Reference:
-  - Deprecated:
-    - Network: docs/3.0 - Modeling Reference/Deprecated/Network_Flow_Solver.md
-    - Network Flow Guide: docs/3.0 - Modeling Reference/Deprecated/Network_Flow_Guide.md
   - Loads:
-    - Industrial and agricultural loads: docs/3.0 - Modeling Reference/Loads/Industrial_and_agricultural_loads.md
+    - Industrial and Agricultural Loads: docs/3.0 - Modeling Reference/Loads/Industrial_and_agricultural_loads.md
     - Load Composition: docs/3.0 - Modeling Reference/Loads/Load_Composition.md
     - Loadshape: docs/3.0 - Modeling Reference/Loads/Loadshape.md
   - Metrics & Recorders:
-    - Metrics collector: docs/3.0 - Modeling Reference/Metrics & Recorders/Metrics_collector.md
-    - Metrics collector writer: docs/3.0 - Modeling Reference/Metrics & Recorders/Metrics_collector_writer.md
-    - Multi recorder: docs/3.0 - Modeling Reference/Metrics & Recorders/Multi_recorder.md
-    - Recorder: docs/3.0 - Modeling Reference/Metrics & Recorders/Recorder.md
+    - Recorder: docs/3.0 - Modeling Reference/Metrics & Recorders/1.0 - Recorder.md
+    - Multi recorder: docs/3.0 - Modeling Reference/Metrics & Recorders/2.0 - Multi_recorder.md
+    - Metrics collector: docs/3.0 - Modeling Reference/Metrics & Recorders/3.0 - Metrics_collector.md
+    - Metrics collector writer: docs/3.0 - Modeling Reference/Metrics & Recorders/4.0 - Metrics_collector_writer.md
     - Plotting Output: docs/3.0 - Modeling Reference/Metrics & Recorders/plotting-output.md
-  - Modeling Reference:
-    - Checkpoints: docs/3.0 - Modeling Reference/Modeling Reference/Checkpoints.md
-    - Command Options: docs/3.0 - Modeling Reference/Modeling Reference/Command_options.md
-    - Debugging and Validation:
-      - Model Debugging: docs/3.0 - Modeling Reference/Modeling Reference/Debugging and Validation/Model_Debugging.md
-      - Validate: docs/3.0 - Modeling Reference/Modeling Reference/Debugging and Validation/Validate.md
-    - Delta Mode and Timing:
-      - Subsecond: docs/3.0 - Modeling Reference/Modeling Reference/Delta Mode and Timing/Delta_mode.md
-      - Model Initialization: docs/3.0 - Modeling Reference/Modeling Reference/Delta Mode and Timing/Initialization.md
-      - Multirun mode: docs/3.0 - Modeling Reference/Modeling Reference/Delta Mode and Timing/Multirun_mode.md
-      - Multithreaded Random Number Generation: docs/3.0 - Modeling Reference/Modeling Reference/Delta Mode and Timing/Multithreaded_Random_Number_Generation.md
-      - Pauseat: docs/3.0 - Modeling Reference/Modeling Reference/Delta Mode and Timing/Pauseat.md
-      - Realtime server: docs/3.0 - Modeling Reference/Modeling Reference/Delta Mode and Timing/Realtime_server.md
-    - Link (directive): docs/3.0 - Modeling Reference/Modeling Reference/Link_(directive).md
-    - Macros: docs/3.0 - Modeling Reference/Modeling Reference/Macros.md
-    - Matlab link: docs/3.0 - Modeling Reference/Modeling Reference/Matlab_link.md
-    - Parameter expansion: docs/3.0 - Modeling Reference/Modeling Reference/Parameter_expansion.md
-    - Performance profiling: docs/3.0 - Modeling Reference/Modeling Reference/Performance_profiling.md
-    - Units: docs/3.0 - Modeling Reference/Modeling Reference/Units.md
-    - Finding Objects: docs/3.0 - Modeling Reference/Modeling Reference/finding-objects.md
   - Modules:
+    - Introduction: docs/3.0 - Modeling Reference/Modules/1.0 - Introduction.md
     - Assert: docs/3.0 - Modeling Reference/Modules/Assert.md
     - Climate:
+      - Climate Module: docs/3.0 - Modeling Reference/Modules/Climate/1.0 - Climate.md
       - CSV reader: docs/3.0 - Modeling Reference/Modules/Climate/CSV_reader_(climate_class).md
-      - Climate Module: docs/3.0 - Modeling Reference/Modules/Climate/Climate.md
     - Commercial:
-      - Commercial User Guide: docs/3.0 - Modeling Reference/Modules/Commercial/Commercial_User_Guide.md
+      - Commercial User Guide: docs/3.0 - Modeling Reference/Modules/Commercial/1.0 - Commercial_User_Guide.md
       - Commercial Module: docs/3.0 - Modeling Reference/Modules/Commercial/Tech_Commercial.md
     - Connection:
-      - Connection: docs/3.0 - Modeling Reference/Modules/Connection/Connection.md
+      - Connection: docs/3.0 - Modeling Reference/Modules/Connection/1.0 - Connection.md
       - fncs msg: docs/3.0 - Modeling Reference/Modules/Connection/Connection_fncs_msg.md
       - helics msg: docs/3.0 - Modeling Reference/Modules/Connection/Connection_helics_msg.md
       - json: docs/3.0 - Modeling Reference/Modules/Connection/Connection_json.md
@@ -90,14 +68,12 @@
       - security: docs/3.0 - Modeling Reference/Modules/Connection/Connection_security.md
       - transport: docs/3.0 - Modeling Reference/Modules/Connection/Connection_transport.md
       - xml: docs/3.0 - Modeling Reference/Modules/Connection/Connection_xml.md
-    - Introduction: docs/3.0 - Modeling Reference/Modules/Introduction.md
     - Market:
+      - Market User Guide: docs/3.0 - Modeling Reference/Modules/Market/1.0 - Market_User_Guide.md
       - Market Auction: docs/3.0 - Modeling Reference/Modules/Market/Market_Auction.md
-      - Market User Guide: docs/3.0 - Modeling Reference/Modules/Market/Market_User_Guide.md
       - Transactive Controller: docs/3.0 - Modeling Reference/Modules/Market/TransactiveController.md
-    - Network:
-      - Transmission: docs/3.0 - Modeling Reference/Modules/Network/TDIntegration.md
     - Objects:
+      - Introduction: docs/3.0 - Modeling Reference/Modules/Objects/1.0 - Introduction.md
       - Distributed Energy Resources:
         - Aggregate Demand Response Model: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Aggregate_demand_response_model.md
         - Microgrids: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Dev_Microgrids.md
@@ -114,7 +90,6 @@
           - inverter_dyn: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Spec_inverter_dyn.md
         - Solar - Solar Panel: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Solar.md
         - Windturb dg: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Windturb_dg.md
-      - Introduction: docs/3.0 - Modeling Reference/Modules/Objects/Introduction.md
       - Motor:
         - Tech:CompositionMotor: docs/3.0 - Modeling Reference/Modules/Objects/Motor/Tech_CompositionMotor.md
         - Tech:DeltaSPIM: docs/3.0 - Modeling Reference/Modules/Objects/Motor/Tech_DeltaSPIM.md
@@ -143,6 +118,26 @@
     - mysql:
       - Player (mysql): docs/3.0 - Modeling Reference/Modules/mysql/Player_(mysql).md
       - Recorder (mysql): docs/3.0 - Modeling Reference/Modules/mysql/Recorder_(mysql).md
+  - Other Features:
+    - Checkpoints: docs/3.0 - Modeling Reference/Other Features/Checkpoints.md
+    - Command Options: docs/3.0 - Modeling Reference/Other Features/Command_options.md
+    - Debugging and Validation:
+      - Model Debugging: docs/3.0 - Modeling Reference/Other Features/Debugging and Validation/Model_Debugging.md
+      - Validate: docs/3.0 - Modeling Reference/Other Features/Debugging and Validation/Validate.md
+    - Delta Mode and Timing:
+      - Subsecond: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Delta_mode.md
+      - Model Initialization: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Initialization.md
+      - Multirun mode: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Multirun_mode.md
+      - Multithreaded Random Number Generation: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Multithreaded_Random_Number_Generation.md
+      - Pauseat: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Pauseat.md
+      - Realtime server: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Realtime_server.md
+    - Link (directive): docs/3.0 - Modeling Reference/Other Features/Link_(directive).md
+    - Macros: docs/3.0 - Modeling Reference/Other Features/Macros.md
+    - Matlab link: docs/3.0 - Modeling Reference/Other Features/Matlab_link.md
+    - Parameter expansion: docs/3.0 - Modeling Reference/Other Features/Parameter_expansion.md
+    - Performance profiling: docs/3.0 - Modeling Reference/Other Features/Performance_profiling.md
+    - Units: docs/3.0 - Modeling Reference/Other Features/Units.md
+    - Finding Objects: docs/3.0 - Modeling Reference/Other Features/finding-objects.md
 - 4.0 Developing Reference:
   - 4.1 - Introduction - TBD: docs/4.0 Developing Reference/4.1 - Introduction.md
   - 4.2 - Building from Source:
@@ -195,6 +190,7 @@
     - Spec:sync ctrl: docs/7.0 References/Specs/Spec_sync_ctrl.md
     - Tech:Optimize: docs/7.0 References/Specs/Tech_Optimize.md
   - Unimplemented:
+    - Introduction: docs/7.0 References/Unimplemented/1.0 - Introduction.md
     - End Use Loads:
       - Lights: docs/7.0 References/Unimplemented/End Use Loads/Lights.md
       - Microwave: docs/7.0 References/Unimplemented/End Use Loads/Microwave.md
@@ -202,7 +198,10 @@
       - Refrigerator: docs/7.0 References/Unimplemented/End Use Loads/Refrigerator.md
       - Spec:Dishwasher: docs/7.0 References/Unimplemented/End Use Loads/Spec_Dishwasher.md
       - Spec:Range: docs/7.0 References/Unimplemented/End Use Loads/Spec_Range.md
-    - Introduction: docs/7.0 References/Unimplemented/Introduction.md
+    - Network:
+      - Network: docs/7.0 References/Unimplemented/Network/Network_Flow_Solver.md
+      - Network Flow Guide: docs/7.0 References/Unimplemented/Network/Network_Flow_Guide.md
+      - Transmission: docs/7.0 References/Unimplemented/Network/TDIntegration.md
     - Neutral Earth Voltage:
       - Introduction: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEV.md
       - Spec:NEVArray: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVArray.md

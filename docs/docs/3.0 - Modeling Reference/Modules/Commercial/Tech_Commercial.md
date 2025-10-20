@@ -119,69 +119,47 @@ The heating COP is given by $COP_{heat} = Dist_{triangle}(1,2)$ and the cooling 
 
 The HVAC system has 6 control modes: 
 
-- **OFF** -
-    In the **OFF** mode, the HVAC system is completely off. No ventilation and no heating or cooling of any kind of performed. This mode is engaged whenever $T_{off_{heat}} < T_{air} < T_{off_{cool}}$ and $occupancy = 0$. 
-
-- **VENT** -
-    In the **VENT** mode, the HVAC system is ventilating the zone at the **minimum_ach** rate. This mode is engaged whenever $T_{off_{heat}} < T_{air} < T_{off_{cool}}$ and $occupancy > 0$. 
-
-- **HEAT** -
-    In the **HEAT** mode, the primary heating (COP>1) system is on and the building is ventilating at the **minimum_ach** rate only if **occupancy** is non-zero. This mode is engaged whenever $T_{cutin_{aux}} < T_{air} \le T_{on_{heat}}$. 
-
-- **AUX** - 
-    In the **AUX** mode, the secondary heating (COP=1) system is on and the building is ventilating at the **minimum_ach** rate only if **occupancy** is non-zero. This mode is engaged whenever $T_{air} \le T_{cutin_{aux}}$. 
-
-- **COOL** - 
-    In the **COOL** mode, the active cooling (COP>1) system is on and the building ventilating at the **minimum_ach** rate only if **occupancy** is non-zero. This mode is engaged whenever $T_{air} \ge T_{on_{cool}} and T_{out} > T_{cutin_{econ}}$. 
-
-- **ECON** -
-    In the **ECON** mode, the passive cooling (COP=$\infty$;) system is on and the building is ventilating using the rate required to cool using outdoor air only. This mode is engaged whenever $T_{air} \ge T_{on_{cool}}$ and $T_{out} \le T_{cutin_{econ}}$. 
+Mode | Description
+-- | --
+**OFF** | In the **OFF** mode, the HVAC system is completely off. No ventilation and no heating or cooling of any kind of performed. This mode is engaged whenever $T_{off_{heat}} < T_{air} < T_{off_{cool}}$ and $occupancy = 0$. 
+**VENT** | In the **VENT** mode, the HVAC system is ventilating the zone at the **minimum_ach** rate. This mode is engaged whenever $T_{off_{heat}} < T_{air} < T_{off_{cool}}$ and $occupancy > 0$. 
+**HEAT** | In the **HEAT** mode, the primary heating (COP>1) system is on and the building is ventilating at the **minimum_ach** rate only if **occupancy** is non-zero. This mode is engaged whenever $T_{cutin_{aux}} < T_{air} \le T_{on_{heat}}$. 
+**AUX** | In the **AUX** mode, the secondary heating (COP=1) system is on and the building is ventilating at the **minimum_ach** rate only if **occupancy** is non-zero. This mode is engaged whenever $T_{air} \le T_{cutin_{aux}}$. 
+**COOL** | In the **COOL** mode, the active cooling (COP>1) system is on and the building ventilating at the **minimum_ach** rate only if **occupancy** is non-zero. This mode is engaged whenever $T_{air} \ge T_{on_{cool}} and T_{out} > T_{cutin_{econ}}$. 
+**ECON** | In the **ECON** mode, the passive cooling (COP=$\infty$;) system is on and the building is ventilating using the rate required to cool using outdoor air only. This mode is engaged whenever $T_{air} \ge T_{on_{cool}}$ and $T_{out} \le T_{cutin_{econ}}$. 
 
 ## Power calculations
 
-Except as noted below, when ventilation is required, $P_{vent} = floor\_area (0.1 - 0.01\imath)$ VA/sf, and $Q_{vent}=0.2402 \times 0.0735 (T_{out}-T_{air}) V_{air} \times ventilation\_rate$. 
+Except as noted below, when ventilation is required, $P_{vent} = floor\_area (0.1 - 0.01\imath)VA/sf$, and $Q_{vent}=0.2402 \times 0.0735 (T_{out}-T_{air}) V_{air} \times ventilation\_rate$. 
 
 ### HVAC
 
-* OFF:
-        
-        COP = 0, Qactive = Qpassive = 0, Pvent = 0
-
-* VENT:
-    
-        COP = 0, Qactive = 0, Qpassive = Qvent
-
-* HEAT:
-    
-        COP = 1.0 + (COP_{heating}-1) (T_{out} - T_{aux}) / Trange, zone.hvac.heating.capacity + zone.hvac.heating.capacity_perF*(zone.hvac.heating.balance_temperature-Tout), Qpassive = Qvent
-
-* AUX:
-    
-        COP = 1.0, Qactive = COP * heating_capacity, Qpassive = Qvent
-
-* COOL:
-            
-        COP = -1.0 - (zone.hvac.cooling.cop+1)*(Tout-TmaxCool)/(TmaxCool-Tecon), zone.hvac.cooling.capacity - zone.hvac.cooling.capacity_perF*(Tout-zone.hvac.cooling.balance_temperature), Qpassive = Qvent
-        
-* ECON:
-    
-        COP = 0, Qactive = 0, Qpassive = Qvent
+Setting | Description 
+-- | --
+OFF | `COP = 0, Qactive = Qpassive = 0, Pvent = 0`
+VENT| `COP = 0, Qactive = 0, Qpassive = Qvent`
+HEAT | <pre><code>COP = 1.0 + (COP_{heating}-1) (T_{out} - T_{aux}) / Trange, zone.hvac.heating.capacity + zone.hvac.heating.capacity_perF*(zone.hvac.heating.balance_temperature-Tout), Qpassive = Qvent</code></pre>
+AUX | <pre><code>COP = 1.0, Qactive = COP * heating_capacity, Qpassive = Qvent</code></pre>
+COOL |  <pre><code>COP = -1.0 - (zone.hvac.cooling.cop+1)*(Tout-TmaxCool)/(TmaxCool-Tecon), zone.hvac.cooling.capacity - zone.hvac.cooling.capacity_perF*(Tout-zone.hvac.cooling.balance_temperature), Qpassive = Qvent</code></pre>
+ECON | `COP = 0, Qactive = 0, Qpassive = Qvent`
 
 ### Lighting
 
-    lights.load = lights.fraction*(lights.capacity + (lights.capacity/lights.power_factor)*(sin(arccos(lights.power_factor)))_J_) (kW) 
-    
-    lights.heatgain = lights.load*lights.heatgain_fraction (kW) 
+Setting | Description 
+-- | --
+lights.load | <pre><code>lights.fraction*(lights.capacity + (lights.capacity/lights.power_factor)*(sin(arccos(lights.power_factor)))_J_) (kW) </code></pre>
+lights.heatgain | <pre><code>lights.load*lights.heatgain_fraction (kW) </code></pre>
 
 ### Plugs
 
-    plugs.load = plugs.fraction*(plugs.capacity + (plugs.capacity/plugs.power_factor)*(sin(arccos(plugs.power_factor)))_J_) (kW) 
-
-    plugs.heatgain = plugs.load * plugs.heatgain_fraction (kW) 
+Setting | Description 
+-- | --
+plugs.load | <pre><code> plugs.fraction*(plugs.capacity + (plugs.capacity/plugs.power_factor)*(sin(arccos(plugs.power_factor)))_J_) (kW) </code></pre>
+plugs.heatgain | <pre><code> plugs.load * plugs.heatgain_fraction (kW) </code></pre>
 
 ### Other loads
 
-    TODO
+TODO - Empty - Other loads
 
 ## Large Office Buildings
 
@@ -216,9 +194,10 @@ Prior to Hassayampa (Version 3.0) Multizone offices are created by connecting se
 
 At this time, the multizone offices only support unitary HVAC. There is no support for central/VAV HVAC systems. 
 
-## [Multizone ETP Linearization]
+## Multizone ETP Linearization
 
 *** WORKING DRAFT ***   
+
 TODO - Incomplete - Working draft for Multizone ETP Linearization
 **Please review, edit and as necessary**.
 

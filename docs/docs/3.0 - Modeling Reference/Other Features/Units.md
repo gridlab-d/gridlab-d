@@ -1,34 +1,5 @@
 # Units
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Units
-## Contents
-
-  * 1 Scalars
-  * 2 Fundamental units
-    * 2.1 Dimensionless units
-    * 2.2 SI Units
-    * 2.3 Angular measures
-    * 2.4 Derived SI
-    * 2.5 Currency
-    * 2.6 Time
-    * 2.7 Length
-    * 2.8 Area
-    * 2.9 Volume
-    * 2.10 Mass
-    * 2.11 Velocity
-    * 2.12 Flow rates
-    * 2.13 Frequency
-    * 2.14 EM units
-    * 2.15 Data
-    * 2.16 Custom
-    * 2.17 Bad usage
-  * 3 Derived units
-  * 4 Caveats
-    * 4.1 Unexpected Unit Names
-    * 4.2 Operator precedence
-    * 4.3 Improper Syntax
-  * 5 Wish list
-  * 6 See also
 Units are used to automatically convert double to and from the internal representation declared in a class and the definition or output (see [tape]). All units have two parts, the scalar and the fundamental unit. 
 
 ## Scalars
@@ -55,6 +26,7 @@ The following scalars are supported
   * a = 10^-18
   * z = 10^-21
   * y = 10^-24
+
 ## Fundamental units
 
 ### Dimensionless units
@@ -83,6 +55,7 @@ The basic SI units are defined as follows:
   * K = _c_ ^2 * _k_ ^-1 * _m_ * 1.686358
   * cd = _c_ ^4 * _h_ ^-1 * _m_ ^2 * 1.447328
   * 1990$ = _m_ * _s_ * 1.097751*10^30
+
 ### Angular measures
 
   * pi = 3.1415926536
@@ -91,6 +64,7 @@ The basic SI units are defined as follows:
   * grad = 0.0025 unit
   * quad = 0.25 unit
   * sr = 0.5 rad
+
 ### Derived SI
 
   * R = 0.55555556 K
@@ -108,6 +82,7 @@ The basic SI units are defined as follows:
   * 1996$ = 1.01 1990$$
   * $  = 1.00 1996$
   * CA$ = 0.85 $$
+
 ### Time
 
   * min = 60 s
@@ -116,32 +91,38 @@ The basic SI units are defined as follows:
   * wk = 7 day
   * yr = 365 day
   * syr = 365.24 day
+
 ### Length
 
   * in = 0.0254 m
   * ft = 12 in
   * yd = 3 ft
   * mile = 5280 ft
+
 ### Area
 
   * sf = ft^2
   * sy = yd^2
+
 ### Volume
 
   * cf = ft^3
   * cy = yd^3
   * gal = 0.0037854118 m^3
   * l = 0.001 m^3
+
 ### Mass
 
   * lb = 0.453592909436 kg
   * tonne = 1000 kg
+
 ### Velocity
 
   * mph = 1 mile/h
   * fps = 1 ft/s
   * fpm = 1 ft/min
   * mps = 1 m/s
+
 ### Flow rates
 
   * gps = 1 gal/s
@@ -149,9 +130,11 @@ The basic SI units are defined as follows:
   * gph = 1 gal/h
   * cfm = 1 ft^3/min
   * ach = 1/h
+
 ### Frequency
 
   * Hz = 1/s
+
 ### EM units
 
   * W = J/s
@@ -176,15 +159,18 @@ The basic SI units are defined as follows:
   * Gy = J/kg ; Grey
   * Sv = J/kg ; Sievert
   * S = 1/Ohm ; Siemens
+
 ### Data
 
   * b = 1 unit ; 1 bit
   * B = 8 b ; 1 byte
+
 ### Custom
 
   * EER = Btu/Wh
   * ccf = 1000 Btu ; this conflict with centi-cubic-feet (ccf)
   * therm = 100000 Btu
+
 ### Bad usage
 
 ohm=Ohm ; should be capitalized but often isn't 
@@ -235,7 +221,7 @@ The only valid unit product syntax is an asterisk. In the past users and program
 
 ## Wish list
 
-Although the '.' syntax is not valid now, it should be acceptable as a multiplication on the appropriate side of the '/'. For example `a.b/c.d` should be the same as `a*b/c/d`. This would be very much more user friendly and quite easy to implement. 
+TODO - Check status - Although the `.` syntax is not valid now, it should be acceptable as a multiplication on the appropriate side of the `/`. For example `a.b/c.d` should be the same as `a*b/c/d`. This would be very much more user friendly and quite easy to implement. 
 
 ## See also
 

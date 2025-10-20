@@ -1,24 +1,26 @@
 # Load Composition
 
-This document describes the load composition methodology for estimating the load on a feeder. This methodology is important to identifying the response of the feeder to voltage changes. 
+This page describes the load composition methodology for estimating the load on a feeder. This methodology is important to identifying the response of the feeder to voltage changes. 
 
-The methodology is implemented **Load composition.xls** spreadsheet locating in the [Load Composition download](http://sourceforge.net/project/showfiles.php?group_id=233096&package_id=309739). If you want to load different TMY data files, you will also need to extract the TMY files from the TMY folders using the **Load TMY Data** button on the **Conditions** worksheet. 
+The methodology is implemented in the [Load composition.xls](http://sourceforge.net/project/showfiles.php?group_id=233096&package_id=309739) spreadsheet. If you want to load different TMY data files, you will also need to extract the TMY files from the TMY folders using the **Load TMY Data** button on the **Conditions** worksheet. 
 
 # Aggregation method
 
 Load composition is the term used to describe the breakdown of end-use load according to the nature of the load. The current load composition breakdown is as follows. 
 
-  1. **Electronic $P_E$** loads are those that use power electronics. These loads typically have constant power requirements, but often have adverse harmonic characteristics that make them appear to have poor power factors.
-  2. **Motor A $P_A$** are three-phase induction motors that drive constant torque loads, such as industrial and commercial compressors and refrigerators.
-  3. **Motor B $P_B$** are three-phase induction motors that drive speed-squared loads with high inertia, such as fans.
-  4. **Motor C $P_C$** are three-phase induction motors that drive speed-squared loads with low inertia, such as pumps.
-  5. **Motor D $P_D$** are single-phase induction motors that drive constant torque load such as residential A/C compressors, refrigerators and heat-pumps.
-  6. **ZIP $I_p$** is the real part of constant current loads.
-  7. **ZIP $I_q$** is the reactive part of the constant current loads.
-  8. **ZIP $P_p$** is the real part of constant power loads (often denoted as _P_).
-  9. **ZIP $P_q$** is the reactive part of constant power loads (often denoted as _Q_).
-  10. **ZIP $Z_p$** is the resistance part of constant impedance loads (often denoted as _G_)
-  11. **ZIP $Z_q$** is the reactance part of constant impedance loads (often denoted as _B_)
+Load Type | Load Component | Description
+-- | -- | --
+**Electronic** | $P_E$ |  those that use power electronics. These loads typically have constant power requirements, but often have adverse harmonic characteristics that make them appear to have poor power factors.
+**Motor A**| $P_A$ |  three-phase induction motors that drive constant torque loads, such as industrial and commercial compressors and refrigerators.
+**Motor B** | $P_B$ | three-phase induction motors that drive speed-squared loads with high inertia, such as fans.
+**Motor C** | $P_C$ | three-phase induction motors that drive speed-squared loads with low inertia, such as pumps.
+**Motor D** | $P_D$ | single-phase induction motors that drive constant torque load such as residential A/C compressors, refrigerators and heat-pumps.
+**ZIP** | $I_p$ | the real part of constant current loads.
+**ZIP** | $I_q$ | the reactive part of the constant current loads.
+**ZIP** | $P_p$ | the real part of constant power loads (often denoted as _P_).
+**ZIP** | $P_q$ | the reactive part of constant power loads (often denoted as _Q_).
+**ZIP** | $Z_p$ | the resistance part of constant impedance loads (often denoted as _G_)
+**ZIP** | $Z_q$ | the reactance part of constant impedance loads (often denoted as _B_)
 
 Each load type has a contribution from residential, commercial, industrial and agricultural components. The residential includes single-family homes and multi-family buildings. Commercial loads include small and large offices, small and large retail, hotels, and motels. Industrial and agricultural loads are idiosyncratic and are not modeled in detail. 
 
@@ -57,7 +59,9 @@ Single and multi family dwellings are represented by typical loads, which are us
 
 The basic characteristics of single-family residences are shown in Table 1. 
 
-Table 1 - Single-family residential model  Parameter | Unit | Default | Description   
+Table 1 - Single-family residential model  
+
+Parameter | Unit | Default | Description   
 ---|---|---|---  
 Floor area | sf | 2200 | The total conditioned floor area of the dwelling   
 Building height | ft | 10 | The exterior wall height   
@@ -95,7 +99,9 @@ Notes
 
 The end-use electricity is used to determine what fraction of the end-use load ends up as electric load, as shown in Table 2. 
 
-Table 2 - Single-family residential end-use electrification  End-use | Default   
+Table 2 - Single-family residential end-use electrification  
+
+End-use | Default   
 ---|---  
 Resistive heating | 20%   
 Heat-pump | 40%   
@@ -105,14 +111,18 @@ Clothesdrying | 50%
   
 The system efficiency is used to determine that operating load of the end-uses, as shown in Table 3. 
 
-Table 3 - Single-family residential end-use efficiency  End-use | Default   
+Table 3 - Single-family residential end-use efficiency  
+
+End-use | Default   
 ---|---  
 Heating efficiency | 4.6 (COP)   
 Cooling efficiency | 10.0 (SEER)   
   
 The installed capacity is used to determine the total end-use load capacity per unit floor area, as shown in Table 4. 
 
-Table 4 - Single-family residential end-use installed capacity (W/sf)  End-use | Default   
+Table 4 - Single-family residential end-use installed capacity (W/sf)  
+
+End-use | Default   
 ---|---  
 Cooking | 3.00   
 Hotwater | 2.50   
@@ -143,7 +153,9 @@ Before computing the diversified load, the end-use load shapes for the 5 demand-
 
 The ELCAP end-use load shape are rescaled according to the daily energy use estimates, as shown in Table 5. The estimates used a approximately 50% of the original daily ELCAP consumption. 
 
-Table 5 - Single-family residential daily end-use energy demand (kWh/day)  End-use | Winter weekday | Winter weekend | Summer weekday | Summer weekend   
+Table 5 - Single-family residential daily end-use energy demand (kWh/day)  
+
+End-use | Winter weekday | Winter weekend | Summer weekday | Summer weekend   
 ---|---|---|---|---  
 Cooking | 0.67 | 0.82 | 0.56 | 0.59   
 Hotwater | 7.08 | 7.40 | 5.64 | 5.52   
@@ -153,20 +165,13 @@ Washing | 1.66 | 2.02 | 1.66 | 1.99
   
 The non-demand end-uses (heating, cooling and refrigeration) are computed directly from the power density and the end-use duty-cycle (if any) 
 
-$$Q_x = DC_x \times PD_x \times Floorarea/1000 
-$$
+$$Q_x = DC_x \times PD_x \times Floorarea/1000$$
 
 The final diversified end-use load is computed by looking up the rescaled ELCAP demand for the season (winter/summer) and day type (weekday/weekend), multiplying by the power density and the floor area. The final diversified load is weighted between the winter and summer values based on the day of year. 
 
 $$Q_{winter} = Q_{ELCAP_{winter}}\frac{E_{daily_{winter}}}{E_{ELCAP_{winter}}} \times PD_x \times Floorarea/1000$$
 
-  
-
-
 $$Q_{summer} = Q_{ELCAP_{summer}}\frac{E_{daily_{summer}}}{E_{ELCAP_{summer}}} \times PD_x \times Floorarea/1000$$
-
-  
-
 
 $$\begin{align} Q_{diversified}& = Q_{winter}(1-|\sin(\frac{3.14}{12}(month-1.5))|) \\\    
     & + Q_{summer}|\sin(\frac{3.14}{12}(month-1.5))|
@@ -174,7 +179,9 @@ $$\begin{align} Q_{diversified}& = Q_{winter}(1-|\sin(\frac{3.14}{12}(month-1.5)
 
 Finally, the end-use load composition is determined by multiplying by the end-use composition matrix for single-family residential dwellings: 
 
-Table 5 - Single-family residential load composition matrix  End-use | Electronic | Motor-D | Ip (Iq) | Pp (Pq) | Zp (Zq)   
+Table 5 - Single-family residential load composition matrix  
+
+End-use | Electronic | Motor-D | Ip (Iq) | Pp (Pq) | Zp (Zq)   
 ---|---|---|---|---|---  
 Cooking | 0.25 |  |  | 0.25 |   
 Hotwater |  |  |  | 0.50 |   
@@ -189,14 +196,17 @@ Refrigeration |  | 0.80 |  | 0.20 |
 
 Multi-family buildings are very similar to single family dwellings, except that some of the default parameters are different or calculated differently. Specifically 
 
-Floor area
+**Floor area** -
     The floor area per dwelling unit is used as the basic parameter. When combined with the **floors per building'_and_ units per floor** this give a rough approximation of the total building floor area (excluding conditioned circulation space).
-Floor to floor height
+
+**Floor to floor height** -
     The floor height is used to compute the total building height and air volume.
 
 The load composition matrix for multi-family buildings is shown in Table 6. 
 
-Table 6 - Multi-family residential load composition matrix  End-use | Electronic | Motor-D | Ip (Iq) | Pp (Pq) | Zp (Zq)   
+Table 6 - Multi-family residential load composition matrix  
+
+End-use | Electronic | Motor-D | Ip (Iq) | Pp (Pq) | Zp (Zq)   
 ---|---|---|---|---|---  
 Cooking | 0.40 |  |  | 0.40 |   
 Hotwater |  |  |  | 0.80 |   
@@ -211,7 +221,8 @@ Refrigeration |  | 0.80 |  | 0.20 |
 
 All commercial load composition models are developed using the [California End-Use Survey (CEUS)](http://www.energy.ca.gov/ceus/) results. These results are largely valid for the WECC, but care should be take to account to differences in construction types and building codes in regions not covered by the survey. 
 
-Note
+!!! note
+
     The CEUS data used is for the whole state of California. There is CEUS data available for specific utilities, but that was not deemed helpful for load compositions that would apply WECC-wide.
 
 The CEUS data from the the [Itron CEUS results website](http://capabilities.itron.com/CeusWeb/Chart.aspx) was used to obtain the commercial load tables. The _exp16day_ data set is used because it is more compact than the 8760 data set, but provides end-use load shapes for each season, day type, and hour. 
@@ -246,7 +257,9 @@ $$\rho_{cooling} = \begin{cases} T_{out}> T_{balance}& : \frac{T_{out}-T_{balanc
 
 Each small office load vector is multiplied by the small office end-use composition map to determine the end-use load composition for small offices, as shown in Table 7. 
 
-Table 7 - Small office end-use composition map  End-use | Load component   
+Table 7 - Small office end-use composition map  
+
+End-use | Load component   
 ---|---  
 Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP Ip | ZIP Iq | ZIP (P) | ZIP (Q) | ZIP (G) | ZIP (B)   
 Heating |  | 0.40 |  |  | 0.50 |  |  |  |  | 0.10 | 0.02   
@@ -267,7 +280,9 @@ Air compression |  | 1.00 |  |  |  |  |  |  |  |  |
 
 Each large office load vector is multiplied by the large office end-use composition map to determine the end-use load composition for large offices, as shown in Table 8. 
 
-Table 8 - Large office end-use composition map  End-use | Load component   
+Table 8 - Large office end-use composition map  
+
+End-use | Load component   
 ---|---  
 Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP Ip | ZIP Iq | ZIP (P) | ZIP (Q) | ZIP (G) | ZIP (B)   
 Heating |  |  |  |  |  |  |  |  |  | 0.50 |   
@@ -288,7 +303,9 @@ Air compression |  | 1.00 |  |  |  |  |  |  |  |  |
 
 Each retail load vector is multiplied by the retail end-use composition map to determine the end-use load composition for retail buildings, as shown in Table 9. 
 
-Table 9 - Retail end-use composition map  End-use | Load component   
+Table 9 - Retail end-use composition map  
+
+End-use | Load component   
 ---|---  
 Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP Ip | ZIP Iq | ZIP (P) | ZIP (Q) | ZIP (G) | ZIP (B)   
 Heating |  | 0.40 |  |  | 0.50 |  |  |  |  | 0.10 | 0.02   
@@ -309,7 +326,9 @@ Air compression |  | 1.00 |  |  |  |  |  |  |  |  |
 
 Each lodging load vector is multiplied by the lodging end-use composition map to determine the end-use load composition for lodging buildings, as shown in Table 10. 
 
-Table 10 - Lodging end-use composition map  End-use | Load component   
+Table 10 - Lodging end-use composition map  
+
+End-use | Load component   
 ---|---  
 Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP Ip | ZIP Iq | ZIP (P) | ZIP (Q) | ZIP (G) | ZIP (B)   
 Heating |  | 0.40 |  |  | 0.50 |  |  |  |  | 0.10 | 0.02   
@@ -330,7 +349,9 @@ Air compression |  | 1.00 |  |  |  |  |  |  |  |  |
 
 Each grocery load vector is multiplied by the grocery end-use composition map to determine the end-use load composition for grocery stores, as shown in Table 11. 
 
-Table 11 - Grocery store end-use composition map  End-use | Load component   
+Table 11 - Grocery store end-use composition map  
+
+End-use | Load component   
 ---|---  
 Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP Ip | ZIP Iq | ZIP (P) | ZIP (Q) | ZIP (G) | ZIP (B)   
 Heating |  | 0.40 |  |  | 0.50 |  |  |  |  | 0.10 | 0.02   
@@ -372,7 +393,9 @@ Air compression |  | 1.00 |  |  |  |  |  |  |  |  |
 
 Each school load vector is multiplied by the school end-use composition map to determine the end-use load composition for schools, as shown in Table 13. 
 
-Table 13 - School end-use composition map  End-use | Load component   
+Table 13 - School end-use composition map  
+
+End-use | Load component   
 ---|---  
 Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP Ip | ZIP Iq | ZIP (P) | ZIP (Q) | ZIP (G) | ZIP (B)   
 Heating |  | 0.40 |  |  | 0.50 |  |  |  |  | 0.10 | 0.02   
@@ -393,7 +416,9 @@ Air compression |  | 1.00 |  |  |  |  |  |  |  |  |
 
 Each health load vector is multiplied by the health end-use composition map to determine the end-use load composition for health care facilities, as shown in Table 14. 
 
-Table 14 - Health end-use composition map  End-use | Load component   
+Table 14 - Health end-use composition map  
+
+End-use | Load component   
 ---|---  
 Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP Ip | ZIP Iq | ZIP (P) | ZIP (Q) | ZIP (G) | ZIP (B)   
 Heating |  | 0.40 |  |  | 0.50 |  |  |  |  | 0.10 | 0.02   
@@ -412,7 +437,7 @@ Air compression |  | 1.00 |  |  |  |  |  |  |  |  |
   
 # Industrial and agricultural loads
 
-Industrial and agricultural loads are considered idiosynchratic and must be entered directly as an end-use load composition on their respective worksheets. 
+Industrial and agricultural loads are considered idiosynchratic and must be entered directly as an end-use load composition on their respective worksheets. See [Industrial and Agricultural Loads](./Industrial_and_agricultural_loads.md) for more information.
 
 # Analysis results
 
@@ -424,7 +449,9 @@ The feeder component compositons were computed for winter peak, typical shoulder
 
 ### Winter peak (6:00) component compositions
 
-Table 1 - Winter peak 6:00 residential feeder load composition  City ST | Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP | PF   
+Table 1 - Winter peak 6:00 residential feeder load composition  
+
+City ST | Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP | PF   
 ---|---|---|---|---|---|---|---  
 Albuquerque NM | 6.4% | 0.0% | 0.0% | 0.0% | 38.7% | 54.9% | 1.000   
 Bakersfield CA | 11.5% | 0.0% | 0.0% | 0.0% | 32.8% | 55.8% | 1.000   
@@ -452,7 +479,9 @@ Yakima WA | 7.3% | 0.0% | 0.0% | 0.0% | 37.1% | 55.5% | 1.000
   
 
 
-Table 2 - Winter peak 6:00 residential feeder load composition  City ST | Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP | PF   
+Table 2 - Winter peak 6:00 residential feeder load composition  
+
+City ST | Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP | PF   
 ---|---|---|---|---|---|---|---  
 Albuquerque NM | 8.2% | 1.5% | 7.2% | 4.9% | 29.1% | 49.1% | -0.999   
 Bakersfield CA | 11.7% | 2.2% | 8.6% | 5.9% | 23.1% | 48.5% | -0.998   
@@ -480,7 +509,9 @@ Yakima WA | 8.7% | 1.6% | 6.4% | 4.4% | 28.7% | 50.2% | -0.999
   
 
 
-Table 3 - Winter peak 6:00 commercial feeder load composition  City ST | Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP | PF   
+Table 3 - Winter peak 6:00 commercial feeder load composition  
+
+City ST | Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP | PF   
 ---|---|---|---|---|---|---|---  
 Albuquerque NM | 12.3% | 4.8% | 23.3% | 16.1% | 7.3% | 36.8% | -0.971   
 Bakersfield CA | 12.1% | 5.6% | 22.3% | 15.2% | 7.7% | 37.8% | -0.971   
@@ -507,7 +538,9 @@ Yakima WA | 12.1% | 5.6% | 22.3% | 15.2% | 7.7% | 37.8% | -0.971
   
 ### Summer peak (15:00) component compositions
 
-Table 4 - Summer peak 15:00 residential feeder load composition  City ST | Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP | PF   
+Table 4 - Summer peak 15:00 residential feeder load composition  
+
+City ST | Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP | PF   
 ---|---|---|---|---|---|---|---  
 Albuquerque NM | 17.5% | 0.0% | 0.0% | 0.0% | 60.7% | 21.9% | 0.999   
 Bakersfield CA | 15.1% | 0.0% | 0.0% | 0.0% | 65.8% | 19.1% | 0.999   
@@ -530,8 +563,11 @@ San Francisco CA | 16.9% | 0.0% | 0.0% | 0.0% | 61.8% | 21.4% | 0.999
 Santa Maria CA | 16.6% | 0.0% | 0.0% | 0.0% | 62.6% | 20.9% | 0.999   
 Seattle WA | 16.6% | 0.0% | 0.0% | 0.0% | 62.5% | 21.0% | 0.999   
 Spokane WA | 16.1% | 0.0% | 0.0% | 0.0% | 63.6% | 20.4% | 0.999   
-Yakima WA | 16.1% | 0.0% | 0.0% | 0.0% | 63.6% | 20.4% | 0.999   
-Table 5 - Summer peak 15:00 mixed residential/commercial feeder load composition  City ST | Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP | PF   
+Yakima WA | 16.1% | 0.0% | 0.0% | 0.0% | 63.6% | 20.4% | 0.999 
+
+Table 5 - Summer peak 15:00 mixed residential/commercial feeder load composition 
+
+City ST | Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP | PF   
 ---|---|---|---|---|---|---|---  
 Albuquerque NM | 13.1% | 8.1% | 15.1% | 8.9% | 33.4% | 21.4% | -0.995   
 Bakersfield CA | 12.9% | 5.0% | 16.8% | 10.6% | 30.8% | 24.2% | -0.987   
@@ -556,10 +592,10 @@ Seattle WA | 12.8% | 7.7% | 17.5% | 10.1% | 28.4% | 23.8% | -0.988
 Spokane WA | 12.6% | 7.6% | 17.3% | 9.9% | 29.3% | 23.5% | -0.988   
 Yakima WA | 12.6% | 7.6% | 17.3% | 9.9% | 29.3% | 23.5% | -0.988   
   
-  
 
+Table 6 - Summer peak 15:00 commercial feeder load composition  
 
-Table 6 - Summer peak 15:00 commercial feeder load composition  City ST | Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP | PF   
+City ST | Electronic | Motor-A | Motor-B | Motor-C | Motor-D | ZIP | PF   
 ---|---|---|---|---|---|---|---  
 Albuquerque NM | 8.8% | 16.1% | 29.9% | 17.6% | 6.7% | 21.5% | -0.967   
 Bakersfield CA | 11.1% | 8.8% | 29.8% | 18.8% | 3.6% | 28.5% | -0.965   
@@ -607,10 +643,13 @@ In the spreadsheet, the sensitivity analysis is performed only when the **Update
 
 The following load sensitivities were calculated with Version 1.6.2 using a –1 °F perturbation on peak cooling conditions. 
 
-Notation
+!!! Note:
+    
     The value 0 indicates that no change was detected. The value 0.000 indicates the change was less than 0.0005. The value - indicates that the difference is between two very small or zero values.
 
-Table 1 - Single-family residential temperature sensitivities  Output | Summer peak   
+Table 1 - Single-family residential temperature sensitivities  
+
+Output | Summer peak   
 ---|---  
 Phoenix AZ | San Francisco CA | Portland OR   
 Load type | Load (kW/F) | Comp. (%/F) | Load (kW/F) | Comp. (%/F) | Load (kW/F) | Comp. (%/F)   
@@ -629,7 +668,9 @@ ZIP PF | 0 | (na) | 0 | (na) | 0 | (na)
 Total | +0.0526 | 0% | +0.0507 | 0% | +0.0486 | 0%   
 
 
-Table 2 - Multi-family residential temperature sensitivities  Output | Summer peak   
+Table 2 - Multi-family residential temperature sensitivities  
+
+Output | Summer peak   
 ---|---  
 Phoenix AZ | San Francisco CA | Portland OR   
 Load type | Load (kW/F) | Comp. (%/F) | Load (kW/F) | Comp. (%/F) | Load (kW/F) | Comp. (%/F)   
@@ -647,10 +688,10 @@ ZIP (B) | 0 | -0.01% | 0 | -0.01% | 0 | -0.01%
 ZIP PF | 0 | (na) | 0 | (na) | 0 | (na)   
 Total | +0.9444 | 0% | +0.9948 | 0% | +0.9685 | 0%   
   
-  
 
+Table 3 - Small-office commercial temperature sensitivities  
 
-Table 3 - Small-office commercial temperature sensitivities  Output | Summer peak   
+Output | Summer peak   
 ---|---  
 Phoenix AZ | San Francisco CA | Portland OR   
 Load type | Load (kW/F) | Comp. (%/F) | Load (kW/F) | Comp. (%/F) | Load (kW/F) | Comp. (%/F)   
@@ -668,10 +709,10 @@ ZIP (B) | 0 | -0.01% | 0 | -0.04% | 0 | -0.03%
 ZIP PF | 0 | (na) | 0 | (na) | 0 | (na)   
 Total | +0.0295 | 0% | +0.1469 | 0% | +0.0508 | 0%   
   
-  
 
+Table 4 - Large-office commercial temperature sensitivities  
 
-Table 4 - Large-office commercial temperature sensitivities  Output | Summer peak   
+Output | Summer peak   
 ---|---  
 Phoenix AZ | San Francisco CA | Portland OR   
 Load type | Load (kW/F) | Comp. (%/F) | Load (kW/F) | Comp. (%/F) | Load (kW/F) | Comp. (%/F)   

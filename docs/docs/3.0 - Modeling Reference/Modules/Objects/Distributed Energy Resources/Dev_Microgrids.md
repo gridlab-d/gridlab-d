@@ -19,7 +19,9 @@ The primary basis for the implementation of the microgrids capability will invol
 
 Equations are taken from Reference 1 and 2 below. Equation notation will follow: 
 
-Table 1 - Equation Notation  Variable | Definition   
+Table 1 - Equation Notation  
+
+Variable | Definition   
 ---|---  
 $\displaystyle{}\Delta{}P$ | Imbalance between generation and load of the system   
 $\displaystyle{}\omega{}$ | Synchronous frequency of the system   
@@ -321,7 +323,9 @@ Under traditional, positive-sequence, balanced implementation, the positive-sequ
 
 With the ability to collapse the equations to balanced forms, and as a result ignore the $i_0$ term of the $dq0$ transformation, the equations for implementation become significantly reduced. Since everything is transferred to the $dq0$ plane, much of the formulation occurs in that notation. Table 2 will show the positive-sequence version compared to the unbalanced three-phase version above. Equations may be simplified for space using notation from 1. 
 
-Table 2 - Traditional vs. unbalanced implementation  Quantity | Traditional | Unbalanced   
+Table 2 - Traditional vs. unbalanced implementation  
+
+Quantity | Traditional | Unbalanced   
 ---|---|---  
 Voltages at terminal | $\begin{align}e_d &= p\psi_d - \psi_q p\theta - R_a i_d \\e_q &= p\psi_q + \psi_d p\theta - R_a i_q \\e_0 &= 0\end{align}$ | $\begin{align}e_a&=p\psi_a-R_ai_a\\ e_b&=p\psi_b-R_bi_b\\ e_c&=p\psi_c-R_ci_c\end{align}$  
 Field and rotor voltages | $\begin{align}e_{fd}&=p\psi_{fd}+R_{fd}i_{fd}\\ 0&=p\psi_{kd}+R_{kd}i_{kd}\\ 0&=p\psi_{kq}+R_{kq}i_{kq} \end{align}$ | $\begin{align}e_{fd}&=p\psi_{fd}+R_{fd}i_{fd}\\ 0&=p\psi_{kd}+R_{kd}i_{kd}\\ 0&=p\psi_{kq}+R_{kq}i_{kq}\end{align}$  
@@ -421,7 +425,9 @@ Inclusion in the microgrids-enabled dynamic solver capability will be handled du
 
 Most of the inputs to the microgrids capability will be handled by the solver directly, with links to appropriate objects. One "extraneous" situation will require an external input into the dynamic solver. This inputs is: 
 
-Table 3 - Solver inputs  Variable | Type | Units | Definition   
+Table 3 - Solver inputs  
+
+Variable | Type | Units | Definition   
 ---|---|---|---  
 `external_frequency` | double | Hz | Externally driven frequency of the system   
   
@@ -433,7 +439,9 @@ In cases of just being attached to a larger system, it is recommended than an ov
 
 Most of the added capabilities will be handled at the specific objects. However, a few global outputs will be available from the dynamic solver. These will include: 
 
-Table 4 - Solver outputs  Variable | Type | Units | Definition   
+Table 4 - Solver outputs  
+
+Variable | Type | Units | Definition   
 ---|---|---|---  
 `frequency` | double | Hz | Current estimated synchronous frequency of the system   
 `frequency_change` | double | Hz/sec | Change in frequency per second   
@@ -446,7 +454,9 @@ These values are published mainly for recorder objects to capture them for overa
 
 To facilitate data operations between the individual objects and the dynamic solver capability, a common data structure will be used to pass information back and forth. This data structure should contain information and pointers to the following elements: 
 
-Table 5 - Solver interface elements  Variable | Definition   
+Table 5 - Solver interface elements  
+
+Variable | Definition   
 ---|---  
 `central_frequency` | Pointer to the central synchronous frequency solution of the system   
 `central_frequency_change` | Pointer to central frequency change between previous and current timestep   
@@ -553,7 +563,9 @@ The two machine, single line (TWSL) system (Figure 1) will be used to test the s
 
 The two machine, single line system will be used in a variety of ways to test and validate the results. For all of the testing scenarios, Gen 1 and Gen 2 are assumed to be 100 MVA diesel generators. Unless otherwise specified, both generators are identical. Both incorporate DC exciters and droop-control governors with the following parameters: 
 
-Table 6 - Two machine, single line system parameters  Variable | Value   
+Table 6 - Two machine, single line system parameters  
+
+Variable | Value   
 ---|---  
 $H$ | 10.0   
 $\omega_{ref}$ | $120\pi{}$ radians/second   
@@ -572,15 +584,17 @@ $B_{EX}$ | 1.55
   
 The actual tests are defined as: 
 
-Table 7 - Two machine, single line scenarios  Scenario | Testing | Description   
+Table 7 - Two machine, single line scenarios  
+
+Scenario | Testing | Description   
 ---|---|---  
-Sinusoidal Balanced Power | Frequency updates, solver interactions, governor response, exciter response | A time-varying, balanced "power" value will be played into the load portion of the system. The power will be slow moving with a time period of 10 seconds. The amplitude of this variation should be large enough to encourage governor action and to examine frequency updates. Throughout the variation, exciter actions are expected to vary the voltage on the generator terminals.   
-Sinusoidal Unbalanced Power | Frequency updates, solver interactions, governor response, exciter response | A time-varying, unbalanced "power" value will be played into the load portion of the system. The power will be slow moving with a time period of 10 seconds. The amplitude of this variation should be large enough to encourage governor action and to examine frequency updates. Throughout the variation, exciter actions are expected to vary the voltage on the generator terminals.   
-Step-up Balanced Power | Frequency updates, solver interactions, governor response, exciter response | A balanced step increase in the "power" value will be implemented after running the system for several seconds of "steady state" conditions. The amplitude of the step should be sufficient to encourage governor response. The variation is expected to cause exciter action and vary the voltage at the generator terminals.   
-Step-up Unbalanced Power | Frequency updates, solver interactions, governor response, exciter response | An unbalanced step increase (with different step values at every phase) in the "power" value will be implemented after running the system for several seconds of "steady state" conditions. The amplitude of the step should be sufficient to encourage governor response. The variation is expected to cause exciter action and vary the voltage at the generator terminals.   
-Step-down Balanced Power | Frequency updates, solver interactions, governor response, exciter response | A balanced step decrease in the "power" value will be implemented after running the system for several seconds of "steady state" conditions. The amplitude of the step should be sufficient to encourage governor response. The variation is expected to cause exciter action and vary the voltage at the generator terminals.   
-Step-down Unbalanced Power | Frequency updates, solver interactions, governor response, exciter response | An unbalanced step decrease (with different step values at every phase) in the "power" value will be implemented after running the system for several seconds of "steady state" conditions. The amplitude of the step should be sufficient to encourage governor response. The variation is expected to cause exciter action and vary the voltage at the generator terminals.   
-Isochronous Governor Test | Frequency updates, solver interactions, governor response, exciter response | Replicate all of the above tests with one generator set as an isochronous generator running at 60 Hz   
+**Sinusoidal Balanced Power** | Frequency updates, solver interactions, governor response, exciter response | A time-varying, balanced "power" value will be played into the load portion of the system. The power will be slow moving with a time period of 10 seconds. The amplitude of this variation should be large enough to encourage governor action and to examine frequency updates. Throughout the variation, exciter actions are expected to vary the voltage on the generator terminals.   
+**Sinusoidal Unbalanced Power** | Frequency updates, solver interactions, governor response, exciter response | A time-varying, unbalanced "power" value will be played into the load portion of the system. The power will be slow moving with a time period of 10 seconds. The amplitude of this variation should be large enough to encourage governor action and to examine frequency updates. Throughout the variation, exciter actions are expected to vary the voltage on the generator terminals.   
+**Step-up Balanced Power** | Frequency updates, solver interactions, governor response, exciter response | A balanced step increase in the "power" value will be implemented after running the system for several seconds of "steady state" conditions. The amplitude of the step should be sufficient to encourage governor response. The variation is expected to cause exciter action and vary the voltage at the generator terminals.   
+**Step-up Unbalanced Power** | Frequency updates, solver interactions, governor response, exciter response | An unbalanced step increase (with different step values at every phase) in the "power" value will be implemented after running the system for several seconds of "steady state" conditions. The amplitude of the step should be sufficient to encourage governor response. The variation is expected to cause exciter action and vary the voltage at the generator terminals.   
+**Step-down Balanced Power**| Frequency updates, solver interactions, governor response, exciter response | A balanced step decrease in the "power" value will be implemented after running the system for several seconds of "steady state" conditions. The amplitude of the step should be sufficient to encourage governor response. The variation is expected to cause exciter action and vary the voltage at the generator terminals.   
+**Step-down Unbalanced Power** | Frequency updates, solver interactions, governor response, exciter response | An unbalanced step decrease (with different step values at every phase) in the "power" value will be implemented after running the system for several seconds of "steady state" conditions. The amplitude of the step should be sufficient to encourage governor response. The variation is expected to cause exciter action and vary the voltage at the generator terminals.   
+**Isochronous Governor Test** | Frequency updates, solver interactions, governor response, exciter response | Replicate all of the above tests with one generator set as an isochronous generator running at 60 Hz   
   
 Successful completion of these tests, as well as the successful validation against DigSilent results, are required before attempting the Adapted 34-bus test feeder. 
 
@@ -598,7 +612,7 @@ The actual tests for the two machine, three line system will be identical to tho
 
 ## Adapted IEEE 34-bus test feeder
 
-![Adapted IEEE 34-bus Test System](../../../images/300px-IEEE34Modified.png)
+![Adapted IEEE 34-bus Test System](../../../../../images/300px-IEEE34Modified.png)
 
 Figure 3. Adapted IEEE 34-bus Test System 6
 
@@ -626,9 +640,7 @@ The adapted 34-bus test feeder (Figure 3) will serve as the overall test and val
 
 ## Super-second Implementation
 
-Super-second implementation details will go here - AVR and Drooping 
-
-  
+TODO - Incomplete - Super-second implementation details will go here - AVR and Drooping 
 
 
 # See also

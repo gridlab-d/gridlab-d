@@ -1,39 +1,34 @@
 # Loadshape
 
-The loadshape [built-in data type] is used to represent a finite-state machine that takes on the value of a complex power when synchronized. A loadshape is associated with a [schedule], and requires a number of parameters to define its behavior. There are five types of loadshapes, and each has a difference set of parameters that define it: 
+The loadshape built-in data type is used to represent a finite-state machine that takes on the value of a complex power when synchronized. A loadshape is associated with a schedule, and requires a number of parameters to define its behavior. There are five types of loadshapes, and each has a difference set of parameters that define it: 
 
-* **Analog** -
-    Analog load shapes directly compute the power from the values in the [schedule].
-
-* **Pulsed** -
-    Pulsed load shapes emit one or more pulses at random such that the specified energy is accumulated over the period of the load shape.
-
-* **Modulated** -
-    Modulated load shapes emit a sequence of modulated pulses of either constant period and duty-cycle (amplitude) or constant power and off-time (pulse width) or constant power and on-time (frequency).
-
-* **Queued** -
-    Queued load shapes emit random pulses whenever a queue accrued from the load shape reaches an on threshold and continues emitting pulses until the queue reaches an off threshold.
-
-* **Scheduled** -
-    Scheduled load shapes emit values based on a [schedule] in a way that incorporates diversity.
+ Type | Description
+-- | --
+**Analog** | Analog load shapes directly compute the power from the values in the schedule.
+**Pulsed** | Pulsed load shapes emit one or more pulses at random such that the specified energy is accumulated over the period of the load shape.
+**Modulated** | Modulated load shapes emit a sequence of modulated pulses of either constant period and duty-cycle (amplitude) or constant power and off-time (pulse width) or constant power and on-time (frequency).
+**Queued** | Queued load shapes emit random pulses whenever a queue accrued from the load shape reaches an on threshold and continues emitting pulses until the queue reaches an off threshold.
+**Scheduled** | Scheduled load shapes emit values based on a schedule in a way that incorporates diversity.
 
 ## Analog
+
+Analog loadshapes directly compute the power from the values in the schedule.
 
 ![Example of an analog loadshape](../../../images/300px-Analog_loadshape.png)
 
 Figure 1 - Example of an analog loadshape
 
-Analog loadshapes directly compute the power from the values in the schedule. An analog loadshape is defined using the following terms: 
+ An analog loadshape is defined using the following terms: 
     
     
      class example {
        loadshape myshape;
      }
      object fixed-energy {
-       myshape "type: analog; schedule: _schedule-name_ ; energy: _value_ kWh";
+       myshape "type: analog; schedule: _schedule-name_ ; energy: value kWh";
      }
      object scaled-power {
-       myshape "type: analog; schedule: _schedule-name_ ; power: _value_ kW";
+       myshape "type: analog; schedule: _schedule-name_ ; power: value kW";
      }
      object unscaled {
        myshape "type: analog; schedule: _schedule-name_ ";
@@ -55,24 +50,26 @@ The _stdev_ term can be given units and it will be scaled accordingly, e.g.,
     
     
      object stdev-power {
-       myshape "type: analog; schedule: _schedule-name_ ; power: _value_ kW; stdev _error_ W";
+       myshape "type: analog; schedule: schedule-name; power: value kW; stdev error W";
      }
     
 
 ## Pulsed
 
+Pulsed loadshapes emit 1 or more pulses at random times such that the total energy specified is accumulated over the period of the loadshape.
+
 ![Example of a pulsed loadshape](../../../images/300px-Pulsed_loadshape.png)
 
 Figure 2 - Example of a pulsed loadshape
 
-Pulsed loadshapes emit 1 or more pulses at random times such that the total energy specified is accumulated over the period of the loadshape. A pulsed loadshape is defined using the following terms: 
+ A pulsed loadshape is defined using the following terms: 
     
     
      class example {
        loadshape myshape;
      }
      object sample {
-       myshape "type: pulsed; schedule: _schedule-name_ ; energy: _value_ kWh; count: _value_ ; duration: _value_ s";
+       myshape "type: pulsed; schedule: schedule-name; energy: value kWh; count: value; duration: value s";
      }
     
 
@@ -83,7 +80,7 @@ or
        loadshape myshape;
      }
      object sample {
-       myshape "type: pulsed; schedule: _schedule-name_ ; energy: _value_ kWh; count: _value_ ; power: _value_ kW";
+       myshape "type: pulsed; schedule: schedule-name; energy: value kWh; count: value ; power: value kW";
      }
     
 
@@ -99,7 +96,7 @@ The _stdev_ term can be given units and it will be scaled accordingly, e.g.,
     
     
      object stdev-power {
-       myshape "type: analog; schedule: _schedule-name_ ; power: _value_ kW; stdev _error_ W";
+       myshape "type: analog; schedule: schedule-name; power: value kW; stdev error W";
      }
     
 
@@ -107,14 +104,15 @@ or
     
     
      object stdev-power {
-       myshape "type: analog; schedule: _schedule-name_ ; power: _value_ kW; stdev _error_ s";
+       myshape "type: analog; schedule: schedule-name ; power: value kW; stdev error s";
      }
     
 
-  
 
 
 ## Modulated
+
+Modulated loadshapes emit a continuous sequence of modulated pulses with either constant period and duty-cycle (**amplitude**), constant power and off-time (**pulsewidth**), or constant power and on-time (**frequency**).
 
 ![Example of a amplitude modulated loadshapes](../../../images//300px-Modulated_loadshape.png)
 
@@ -128,14 +126,14 @@ Figure 2b - Example of a pulse-width modulated loadshapes
 
 Figure 2c - Example of a frequency modulated loadshapes
 
-Modulated loadshapes emit a continuous sequence of modulated pulses with either constant period and duty-cycle (**amplitude**), constant power and off-time (**pulsewidth**), or constant power and on-time (**frequency**). A modulated loadshape is defined using the following terms: 
+ A modulated loadshape is defined using the following terms: 
     
     
      class example {
        loadshape myshape;
      }
      object sample {
-       myshape "type: modulated; modulation: _modulation_ ; schedule: _schedule-name_ ; energy: _value_ kWh; count: _value_ ; period: _value_ s";
+       myshape "type: modulated; modulation: modulation ; schedule: _schedule-name_ ; energy: value kWh; count: value ; period: value s";
      }
     
 
@@ -146,7 +144,7 @@ or
        loadshape myshape;
      }
      object sample {
-       myshape  "type: modulated; modulation: _modulation_ ; schedule: _schedule-name_ ; energy: _value_ kWh; count: _value_ ; power: _value_ kW";
+       myshape  "type: modulated; modulation: modulation ; schedule: _schedule-name_ ; energy: value kWh; count: value ; power: value kW";
      }
     
 
@@ -158,7 +156,7 @@ The _stdev_ term can be given units and it will be scaled accordingly, e.g.,
     
     
      object stdev-power {
-       myshape "type: analog; schedule: _schedule-name_ ; power: _value_ kW; stdev _error_ W";
+       myshape "type: analog; schedule: _schedule-name_ ; power: value kW; stdev error W";
      }
     
 
@@ -175,7 +173,7 @@ Queued loadshapes emit random pulses whenever a queue accrued from the loadshape
        loadshape myshape;
      }
      object sample {
-       myshape  "type: pulsed; schedule: _schedule-name_ ; energy: _value_ kWh; count: _value_ ; duration: _value_ s; q_on: _value_ ; q_off: _value_ ";
+       myshape  "type: pulsed; schedule: _schedule-name_ ; energy: value kWh; count: value ; duration: value s; q_on: value ; q_off: value ";
      }
     
 
@@ -186,7 +184,7 @@ or
        loadshape myshape;
      }
      object sample {
-       myshape  "type: pulsed; schedule: _schedule-name_ ; energy: _value_ kWh; count: _value_ ; power: _value_ kW; q_on: _value_ ; q_off: _value_ ";
+       myshape  "type: pulsed; schedule: _schedule-name_ ; energy: value kWh; count: value ; power: value kW; q_on: value ; q_off: value ";
      }
     
 
@@ -200,7 +198,7 @@ The _stdev_ term can be given units and it will be scaled accordingly, e.g.,
     
     
      object stdev-power {
-       myshape "type: analog; schedule: _schedule-name_ ; power: _value_ kW; stdev _error_ W";
+       myshape "type: analog; schedule: _schedule-name_ ; power: value kW; stdev error W";
      }
     
 
@@ -231,8 +229,8 @@ will generate a randomized ramped 8-hour pulse at roughly 10 kW Monday through F
   * F=friday,
   * S=saturday, and
   * H=holiday.
-Values are provided in the format 
-    
+
+Values are provided in the format   
     
      _min_ <_mean_ ~_stdev_ <_max_
     

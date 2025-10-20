@@ -159,11 +159,15 @@ The house object is a dual purpose class. It first operates to aggregate and con
 
 ### Default House
 
-PLEASE NOTE: This section on the default house parameters will be deprecated or updated in the near future. Please go to <http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Residential_module_user%27s_guide> for a further, more complete description of the house model. All other information on this page should be up-to-date. 
+!!! note
+
+  This section on the default house parameters will be deprecated or updated in the near future. Please go to <http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Residential_module_user%27s_guide> for a further, more complete description of the house model. All other information on this page should be up-to-date. 
 
 ### House Properties
 
-PLEASE NOTE: This section on the default house parameters will be deprecated or updated in the near future. Please go to <http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Residential_module_user%27s_guide> for a further, more complete description of the house model. All other information on this page should be up-to-date. 
+!!! note
+
+  This section on the default house parameters will be deprecated or updated in the near future. Please go to <http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Residential_module_user%27s_guide> for a further, more complete description of the house model. All other information on this page should be up-to-date. 
 
 ### House State of Development
 

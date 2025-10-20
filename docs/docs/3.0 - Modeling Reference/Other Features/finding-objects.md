@@ -15,37 +15,27 @@ where class is the class of object that uses the group property (e.g., collector
 
 The following properties are always recognized, in addition to all the properties defined by the class:
 
-- **class**
-    the name of class which implements the object
-- **module**
-    the name of the module which implements the class
-- **id**
-    the id number of the object
-- **name**
-    the name of the object
-- **parent**
-    the parent of the object (matches the name of the parent)
-- **rank**
-    the object's rank
-- **latitude**
-    the object's latitude
-- **longitude**
-    the object's longitude
-- **clock**
-    the object's clock
-- **in_svc**
-    the object's in-service date/time
-- **out_svc**
-    the object's out-of-service date.time
-- **flags**
-    the object's flags (see Object header properties )
+Property | Description
+-- | --
+**class** | the name of class which implements the object
+**module** | the name of the module which implements the class
+**id** | the id number of the object
+**name** | the name of the object
+**parent** | the parent of the object (matches the name of the parent)
+**rank** | the object's rank
+**latitude** | the object's latitude
+**longitude** | the object's longitude
+**clock** | the object's clock
+**in_svc** | the object's in-service date/time
+**out_svc** | the object's out-of-service date.time
+**flags** | the object's flags (see Object header properties )
 
 ## Compound criteria
 Multiple search criteria can be indicated using and/or as appropriate. Parenthetical operators are not supported.
 
-**Caveat**
+!!! bug
     
-See http://sourceforge.net/p/gridlab-d/tickets/668 regarding the OR functionality which is not implemented prior to Hassayampa (Version 3.0). Resolution is planned in Hassayampa (Version 3.0).
+    See [ticket 668](http://sourceforge.net/p/gridlab-d/tickets/668) regarding the OR functionality which is not implemented prior to Hassayampa (Version 3.0). Resolution is planned in Hassayampa (Version 3.0).
 
 The implementation of the and and or operators is incomplete and not mathematically correct. Any logical statement joined with an and will remove all objects not identified with that operation from the working set. Any logical statement joined with an or will add all objects that match that operation to the working set. There is no sense of operator precedence, and operators are processed from left to right.
 
@@ -55,17 +45,19 @@ The set 'all triplex_meters with groupid blue, plus all meters with groupid red'
 
 
 ### Date/time values
+
 Date and time values must be fully qualified absolute date/time stamps using the appropriate timezone. Relative time can also be given using s, m, h, d, or w suffixes as desired, e.g., 1800s to indicate 30 minutes.
 
 
 ## Operators
-```
-!= Not equal, e.g., property!=number
-<= Less than or equal, e.g., property<=number
->= Greater than or equal, e.g., property>=number
-!~ Not like, e.g., property<=string
-= Equal, e.g., property=number
-< Less than, e.g., property<=number
-> Greater than, e.g., property>=number
-~ Like, e.g., property<=string
-```
+
+Operator | Description | Example 
+-- | -- | ---
+`!=` | Not equal | `property!=number`
+`<=`| Less than or equal | `property<=number`
+`>=` | Greater than or equal | `property>=number`
+`!~` | Not like | `property<=string`
+`=`| Equal | `property=number`
+`<` | Less than | `property<=number`
+`>` | Greater than | `property>=number`
+`~` | Like | `property<=string`
