@@ -398,8 +398,10 @@ Json::Value do_checkpoint(const char* output_directory)
     if ( now > 0 )
     {
 
+		// TODO: Take a look at global_checkpoint_interval and if we want to keep it
         /* checkpoint time lapsed */
-        if ( last_checkpoint + global_checkpoint_interval <= now )
+        // if ( last_checkpoint + global_checkpoint_interval <= now )
+        if ( last_checkpoint <= now )
         {
             static char fn[1024] = "";
             static char json_fn[1024] = "";
@@ -464,8 +466,6 @@ Json::Value do_checkpoint(const char* output_directory)
                 checkpoint["__preamble"]["comments"].append("// GridLAB-D checkpoint data export");
                 std::string timestamp_comment = "// Generated at timestamp: " + std::to_string(global_clock);
                 checkpoint["__preamble"]["comments"].append(timestamp_comment);
-                std::string seq_comment = "// Checkpoint sequence: " + std::to_string(global_checkpoint_seqnum-1);
-                checkpoint["__preamble"]["comments"].append(seq_comment);
                 
                 // Add clock info
                 checkpoint["clock"]["timestamp"] = (Json::Int64)global_clock;
@@ -518,75 +518,93 @@ Json::Value do_checkpoint(const char* output_directory)
 							instance["name"] = std::string(obj->oclass->name) + std::to_string(classnameCounter);
                             classnameCounter++;
 						}
+                        // Add all properties from this object's class and all parent classes
+                        std::set<std::string> processed_properties; // Track processed properties to avoid duplicates
                         
-                        // Add all properties for this object's class
-                        for (PROPERTY *pmap = obj->oclass->pmap; pmap != nullptr; pmap = pmap->next)
+                        // Traverse the entire class hierarchy (class and all parents)
+                        CLASS *current_class = obj->oclass;
+                        while (current_class != nullptr)
                         {
-                            // Skip if this is the name property and we already added it
-                            if (strcmp(pmap->name, "name") == 0)
-                                continue;
-                            
-                            /* Get property value based on type */
-                            void *addr = (char*)obj + (ptrdiff_t)pmap->addr;
-                            char value_str[1024] = "";
-                            
-                            // Use object_get_value_by_name for all property types to ensure proper access
-                            if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0)
+                            PROPERTY *pmap = current_class->pmap;
+                            for (; pmap != nullptr; pmap = pmap->next)
                             {
-                                // Parse the string value based on property type
-                                switch (pmap->ptype)
+                                // Skip if this is the name property and we already added it
+                                if (strcmp(pmap->name, "name") == 0)
+                                    continue;
+                                
+                                // Skip if we've already processed this property (from a derived class)
+                                std::string prop_name(pmap->name);
+                                if (processed_properties.find(prop_name) != processed_properties.end())
+                                    continue;
+                                
+                                // Mark this property as processed
+                                processed_properties.insert(prop_name);
+                                
+                                /* Get property value based on type */
+                                void *addr = (char*)obj + (ptrdiff_t)pmap->addr;
+                                char value_str[1024] = "";
+                                
+                                // Use object_get_value_by_name for all property types to ensure proper access
+                                if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0)
                                 {
-                                case PT_double:
+                                    // Parse the string value based on property type
+                                    switch (pmap->ptype)
                                     {
-                                        double val = strtod(value_str, nullptr);
-                                        instance[pmap->name] = val;
+                                    case PT_double:
+                                        {
+                                            double val = strtod(value_str, nullptr);
+                                            instance[pmap->name] = val;
+                                        }
+                                        break;
+                                    case PT_int32:
+                                        {
+                                            int32 val = (int32)strtol(value_str, nullptr, 10);
+                                            instance[pmap->name] = val;
+                                        }
+                                        break;
+                                    case PT_int64:
+                                        {
+                                            int64 val = strtoll(value_str, nullptr, 10);
+                                            instance[pmap->name] = (Json::Int64)val;
+                                        }
+                                        break;
+                                    case PT_bool:
+                                        {
+                                            bool val = (strcmp(value_str, "TRUE") == 0 || strcmp(value_str, "1") == 0);
+                                            instance[pmap->name] = val;
+                                        }
+                                        break;
+                                    case PT_timestamp:
+                                        {
+                                            TIMESTAMP val = strtoll(value_str, nullptr, 10);
+                                            instance[pmap->name] = (Json::Int64)val;
+                                        }
+                                        break;
+                                    case PT_char8:
+                                    case PT_char32:
+                                    case PT_char256:
+                                    case PT_char1024:
+                                        instance[pmap->name] = std::string(value_str);
+                                        break;
+                                    case PT_complex:
+                                        // Complex values are already formatted as strings by object_get_value_by_name
+                                        instance[pmap->name] = std::string(value_str);
+                                        break;
+                                    default:
+                                        // For all other types, store as string
+                                        instance[pmap->name] = std::string(value_str);
+                                        break;
                                     }
-                                    break;
-                                case PT_int32:
-                                    {
-                                        int32 val = (int32)strtol(value_str, nullptr, 10);
-                                        instance[pmap->name] = val;
-                                    }
-                                    break;
-                                case PT_int64:
-                                    {
-                                        int64 val = strtoll(value_str, nullptr, 10);
-                                        instance[pmap->name] = (Json::Int64)val;
-                                    }
-                                    break;
-                                case PT_bool:
-                                    {
-                                        bool val = (strcmp(value_str, "TRUE") == 0 || strcmp(value_str, "1") == 0);
-                                        instance[pmap->name] = val;
-                                    }
-                                    break;
-                                case PT_timestamp:
-                                    {
-                                        TIMESTAMP val = strtoll(value_str, nullptr, 10);
-                                        instance[pmap->name] = (Json::Int64)val;
-                                    }
-                                    break;
-                                case PT_char8:
-                                case PT_char32:
-                                case PT_char256:
-                                case PT_char1024:
-                                    instance[pmap->name] = std::string(value_str);
-                                    break;
-                                case PT_complex:
-                                    // Complex values are already formatted as strings by object_get_value_by_name
-                                    instance[pmap->name] = std::string(value_str);
-                                    break;
-                                default:
-                                    // For all other types, store as string
-                                    instance[pmap->name] = std::string(value_str);
-                                    break;
+                                }
+                                else
+                                {
+                                    // Property value could not be retrieved, set to null
+                                    instance[pmap->name] = Json::Value::nullSingleton();
                                 }
                             }
-                            else
-                            {
-                                // Property value could not be retrieved, set to null
-                                instance[pmap->name] = Json::Value::nullSingleton();
-                            }
+                            
+                            // Move to parent class
+                            current_class = current_class->parent;
                         }
                         
                         instances.append(instance);
@@ -594,6 +612,9 @@ Json::Value do_checkpoint(const char* output_directory)
                     
                     checkpoint["objects"][class_pair.first]["instances"] = instances;
                 }
+
+				// Get modules data!
+
                 
                 // Write JSON to file with pretty formatting
                 std::ofstream json_file(json_fn);
@@ -2912,13 +2933,16 @@ STATUS exec_finalize_all(void)
 	This is the public interface for single-step simulation execution.
 	@return STATUS is SUCCESS if the step completed successfully, FAILED otherwise.
  **/
-STATUS exec_step(void)
+STATUS exec_step(int64* passes, int64* tsteps)
 {
 	// Setup variables needed for the step (similar to exec_start)
 	cpp_threadpool* threadpool = new cpp_threadpool(global_threadcount);
-	int64 passes = 0, tsteps = 0;
 	int j = 0, pc_rv = 0, iObjRankList = 0;
 	LISTITEM *ptr = nullptr;
+	
+	// Create local variables for internal use (use provided values or defaults)
+	int64 local_passes = (passes != nullptr) ? *passes : 0;
+	int64 local_tsteps = (tsteps != nullptr) ? *tsteps : 0;
 	
 	STATUS result = SUCCESS;
 	
@@ -2943,7 +2967,7 @@ STATUS exec_step(void)
 		TIMESTAMP start_clock = global_clock;
 		
 		/* Keep running iterations until the clock advances or simulation should stop */
-		while ( execute_single_simulation_iteration(threadpool, passes, tsteps, j, ptr, pc_rv, iObjRankList) )
+		while ( execute_single_simulation_iteration(threadpool, local_passes, local_tsteps, j, ptr, pc_rv, iObjRankList) )
 		{
 			/* Check if the clock has advanced - if so, we've completed one step */
 			if (global_clock > start_clock) {
@@ -2958,20 +2982,23 @@ STATUS exec_step(void)
 	}
 	ENDCATCH
 	
+	/* Copy final values back to caller's variables if provided */
+	if (passes != nullptr) *passes = local_passes;
+	if (tsteps != nullptr) *tsteps = local_tsteps;
+	
 	/* deallocate threadpool */
 	delete threadpool;
 	
 	return result;
 }
 
-/** This is the main simulation loop
+/** This is the main simulation loop with optional parameters
 	@return STATUS is SUCCESS if the simulation reached equilibrium,
 	and FAILED if a problem was encountered.
  **/
-STATUS exec_start()
+STATUS exec_start(int64* passes, int64* tsteps)
 {
 	cpp_threadpool* threadpool = new cpp_threadpool(global_threadcount);
-	int64 passes = 0, tsteps = 0;
 	int ptc_rv = 0; // unused
 	int ptj_rv = 0; // unused
 	int pc_rv = 0; // precommit return value
@@ -2981,6 +3008,10 @@ STATUS exec_start()
 	LISTITEM *ptr;
 	int incr, iObjRankList;
 	
+	// Create local variables for internal use (use provided values or defaults)
+	int64 local_passes = (passes != nullptr) ? *passes : 0;
+	int64 local_tsteps = (tsteps != nullptr) ? *tsteps : 0;
+	
 	if(run_preparation() == FAILED) {
 		return FAILED;
 	}
@@ -2988,7 +3019,7 @@ STATUS exec_start()
 	/* main loop exception handler */
 	TRY {
 		/* Run the main simulation loop */
-		run_main_simulation_loop(threadpool, passes, tsteps, j, ptr, pc_rv, iObjRankList);
+		run_main_simulation_loop(threadpool, local_passes, local_tsteps, j, ptr, pc_rv, iObjRankList);
 
 		/* disable signal handler */
 		signal(SIGINT,nullptr);
@@ -3049,7 +3080,11 @@ STATUS exec_start()
 #endif
 	}
 
-	report_performance_after_run(started_at, passes, tsteps);
+	// Copy final values back to caller's variables if provided
+	if (passes != nullptr) *passes = local_passes;
+	if (tsteps != nullptr) *tsteps = local_tsteps;
+
+	report_performance_after_run(started_at, local_passes, local_tsteps);
 
 	sched_update(global_clock,MLS_DONE);
 
@@ -3057,7 +3092,6 @@ STATUS exec_start()
 	delete threadpool;
 	return exec_sync_getstatus(nullptr);
 }
-
 
 
 /** Starts the executive test loop

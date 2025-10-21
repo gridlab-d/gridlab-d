@@ -16,6 +16,7 @@
 #include "kml.h"
 #include "local.h"
 #include "exec.h"
+#include "object.h"
 #include <json/json.h>
 //#include <module.h>
 //#include <module.h>
@@ -97,7 +98,7 @@ GridLabD::GridLabD() {
     timestamp_set_tz(nullptr);
 
     exec_clock(); /* initialize the wall clock */
-    realtime_starttime(); /* mark start */
+    started_at = realtime_starttime(); /* mark start */
 
     /* set the process info */
     global_process_id = getpid();
@@ -134,6 +135,10 @@ GridLabD::GridLabD() {
     if (global_check_version)
         check_version(1);
 
+    /* enable profiling for performance analysis */
+    global_profiler = 1;
+    global_mt_analysis = 1;
+
     /* setup the random number generator */
     random_init();
 }
@@ -168,16 +173,17 @@ void set_clocks(std::optional<double> start_time, std::optional<double> stop_tim
         printf("Setting start_time: %.2f\n", start_time.value());
         global_starttime = start_time.value();
     } else {
-        printf("Using previous start_time: %.2f\n", global_starttime);
+        printf("Using previous start_time: %lld\n", (long long)global_starttime);
     }
     if (stop_time.has_value()) {
         printf("Setting stop_time: %.2f\n", stop_time.value());
         global_stoptime = stop_time.value();
     } else {
-        printf("Using previous stop_time: %.2f\n", global_stoptime);
+        printf("Using previous stop_time: %lld\n", (long long)global_stoptime);
     }
     global_clock = global_starttime;
 }
+
 // Load a GLM file
 GLDErrorCode GridLabD::setup_before_load() {
     
@@ -227,6 +233,7 @@ GLDErrorCode GridLabD::setup_after_load() {
 // Exit GLD
 GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
     glm_file_path = filepath;
+    global_profiler = 1;
     printf("Exit GLD: %s\n", filepath.c_str());
     /* do legal stuff */
 #ifdef LEGAL_NOTICE
@@ -249,6 +256,8 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
     /* KML output */
     if (strcmp(global_kmlfile, "") != 0)
         kml_dump(global_kmlfile);
+
+    // Put reporting stuff here, probably not the xml dump
 
     /* finalize all objects */
     output_verbose("finalizing all objects");
@@ -289,6 +298,8 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
 #endif
 #endif
 
+    report_performance_after_run(started_at, passes, tsteps);
+
     /* compute elapsed runtime */
     output_verbose("elapsed runtime %d seconds", realtime_runtime());
     output_verbose("exit code %d", exec_getexitcode());
@@ -316,22 +327,10 @@ Json::Value GridLabD::get_checkpoint_json(const std::string& filepath) {
         
         // Get checkpoint JSON with directory specified
         checkpoint = do_checkpoint(directory.c_str());
-        
-        // Additionally save the JSON directly to the specified filepath
-        if (!checkpoint.empty()) {
-            std::ofstream json_file(filepath);
-            if (json_file.is_open()) {
-                Json::StreamWriterBuilder builder;
-                builder["indentation"] = "  "; // 2-space indentation
-                std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
-                writer->write(checkpoint, &json_file);
-                json_file.close();
-                printf("Checkpoint JSON saved to: %s\n", filepath.c_str());
-            } else {
-                printf("Error: Unable to open file '%s' for writing\n", filepath.c_str());
-            }
-        }
     }
+    
+    // Set the internal gld_model representation to be equal to checkpoint
+    gld_model = Json::Value(checkpoint);
     
     return checkpoint;
 }
@@ -346,6 +345,9 @@ GLDErrorCode GridLabD::set_glm_data(const GLDData& data) {
 GLDErrorCode GridLabD::save_checkpoint(const std::string& save_path, GLDCheckPointMode mode) {
     printf("Saving checkpoint to %s with mode %d\n", save_path.c_str(), static_cast<int>(mode));
     Json::Value checkpoint = do_checkpoint(save_path.c_str()); // Use provided directory
+    
+    // Set the internal gld_model representation to be equal to checkpoint
+    gld_model = Json::Value(checkpoint);
     return GLD_SUCCESS;
 }
 
@@ -442,10 +444,12 @@ GLDErrorCode GridLabD::run(std::optional<double> start_time, std::optional<doubl
         return env_check;
     }
     
-    if (exec_start() == FAILED) {
+    if (exec_start(&passes, &tsteps) == FAILED) {
         return handle_simulation_failure("exec_start failed");
     }
     
+    gld_model = get_checkpoint_json();
+
     return GLD_SUCCESS;
 }
 
@@ -463,8 +467,7 @@ GLDErrorCode GridLabD::step(double& simulation_time) {
     // Store the current global clock before stepping
     TIMESTAMP prev_clock = global_clock;
     
-    // Execute a single simulation step
-    STATUS result = exec_step();
+    STATUS result = exec_step(&passes, &tsteps);
     
     if (result == FAILED) {
         printf("Error occurred during simulation step\n");
@@ -475,7 +478,11 @@ GLDErrorCode GridLabD::step(double& simulation_time) {
     // Update the simulation time
     simulation_time = (double)global_clock;
     
-    printf("Stepped from time %.2f to %.2f\n", (double)prev_clock, simulation_time);
+    printf("Stepped from time %.2f to %.2f (total passes: %lld, total tsteps: %lld)\n", 
+           (double)prev_clock, simulation_time, passes, tsteps);
+    
+    // Not creating the checkpoint after every step, user can do that manually.
+    // gld_model = get_checkpoint_json();
     
     return GLD_SUCCESS;
 }
@@ -531,5 +538,66 @@ GLDErrorCode GridLabD::set_time_step(double time_step) {
     
     printf("Setting minimum simulation time step to: %d seconds\n", global_minimum_timestep);
     return GLD_SUCCESS;
+}
+
+// Simple object finding method implementation
+
+void* GridLabD::find_object_by_name(const std::string& object_name) {
+    // Traverse the object list directly using the safe object_get_first() function
+    OBJECT* obj = object_get_first();
+    while (obj != nullptr) {
+        // Check if this object has the name we're looking for
+        if (obj->name && std::string(obj->name) == object_name) {
+            return static_cast<void*>(obj);
+        }
+        obj = obj->next;
+    }
+    
+    return nullptr; // Object not found
+}
+
+// Property access methods implementation
+
+GLDErrorCode GridLabD::get_property_value(void* object_ptr, const std::string& property_name, std::string& value) {
+    if (!object_ptr) {
+        return GLD_OBJECT_NOT_FOUND;
+    }
+    
+    OBJECT* obj = static_cast<OBJECT*>(object_ptr);
+    char buffer[1024];
+    
+    // Use the safe object_get_value_by_name function
+    int result = object_get_value_by_name(obj, property_name.c_str(), buffer, sizeof(buffer));
+    if (result >= 0) {
+        value = std::string(buffer);
+        return GLD_SUCCESS;
+    }
+    
+    return GLD_OPERATION_FAILED;
+}
+
+GLDErrorCode GridLabD::set_property_value(void* object_ptr, const std::string& property_name, const std::string& value) {
+    if (!object_ptr) {
+        printf("set_property_value: object_ptr is null\n");
+        return GLD_OBJECT_NOT_FOUND;
+    }
+    
+    OBJECT* obj = static_cast<OBJECT*>(object_ptr);
+    printf("set_property_value: Setting %s.%s = %s\n", obj->name ? obj->name : "unnamed", property_name.c_str(), value.c_str());
+    
+    // Create a non-const copy for the GridLAB-D API
+    std::string val_copy = value;
+    
+    // Use the safe object_set_value_by_name function
+    int result = object_set_value_by_name(obj, const_cast<char*>(property_name.c_str()), const_cast<char*>(val_copy.c_str()));
+    printf("set_property_value: object_set_value_by_name returned %d\n", result);
+    
+    if (result > 0) {
+        printf("set_property_value: SUCCESS - Property set successfully\n");
+        return GLD_SUCCESS;
+    }
+    
+    printf("set_property_value: FAILED - Property not set (result=%d)\n", result);
+    return GLD_OPERATION_FAILED;
 }
 

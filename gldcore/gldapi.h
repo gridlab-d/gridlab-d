@@ -8,6 +8,7 @@
 #include <vector>
 #include <optional>
 #include <json/json.h> //jsoncpp library
+#include "platform.h"
 
 // typedefs for GLD data types
 typedef std::map<std::string, std::any> GLDData;
@@ -49,10 +50,11 @@ public:
     ~GridLabD() {
         // Cleanup code goes here
     }
-
+    Json::Value gld_model;
+    time_t started_at;
+    int64 passes = 0, tsteps = 0;
     // Set the configuration file path
     GLDErrorCode set_config_file(const std::string& config_file);
-
 
     // Load a GLM and return an error code
     GLDErrorCode load_glm(int argc, char* argv[]);
@@ -114,6 +116,13 @@ public:
 
     //Exit simulation
     GLDErrorCode exit_gld(const std::string& filepath);
+
+    // Simple object finding method
+    void* find_object_by_name(const std::string& object_name);
+    
+    // Property access methods
+    GLDErrorCode get_property_value(void* object_ptr, const std::string& property_name, std::string& value);
+    GLDErrorCode set_property_value(void* object_ptr, const std::string& property_name, const std::string& value);
 
     private:
         std::string glm_file_path;  // Path to the GLM file

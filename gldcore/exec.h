@@ -46,8 +46,8 @@ public:
 //extern "C" {
 //#endif
 int exec_init(void);
-STATUS exec_start(void);
-STATUS exec_step(void);
+STATUS exec_start(int64* passes = nullptr, int64* tsteps = nullptr);
+STATUS exec_step(int64* passes = nullptr, int64* tsteps = nullptr);
 STATUS run_preparation(void);
 STATUS exec_finalize_all(void);
 bool exec_is_initialized(void);
@@ -88,6 +88,7 @@ int exec_add_scriptexport(const char *file);
 EXITCODE exec_run_initscripts(void);
 EXITCODE exec_run_syncscripts(void);
 EXITCODE exec_run_termscripts(void);
+void report_performance_after_run(time_t start_time, int64 passes, int64 tsteps);
 Json::Value do_checkpoint(const char* output_directory = nullptr);
 
 //#ifdef __cplusplus
