@@ -149,17 +149,17 @@ add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
 
 ## Set up platform specific library linking and platform identification
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
-    # FetchContent_Declare(
-    #         dlfcn-win32
-    #         GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
-    #         GIT_TAG v1.4.2
-    # )
-    # FetchContent_MakeAvailable(dlfcn-win32)
-    # include_directories(${dlfcn-win32_SOURCE_DIR}/src)
-    # set(DL_NAME dl)
-    # set(DL_LIB dl)
+    FetchContent_Declare(
+             dlfcn-win32
+             GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
+             GIT_TAG v1.4.2
+     )
+     FetchContent_MakeAvailable(dlfcn-win32)
+     include_directories(${dlfcn-win32_SOURCE_DIR}/src)
+     set(DL_NAME dl)
+     set(DL_LIB dl)
 
-    #set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
+     set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
 
 
     if(WIN32)

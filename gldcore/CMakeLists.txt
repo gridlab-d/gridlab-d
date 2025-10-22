@@ -1,6 +1,6 @@
 SET(GLD_MODULE_NAME gridlabd)
 
-set(CMAKE_BUILD_TYPE Debug) # Add this near the top if not using multi-config generator
+#set(CMAKE_BUILD_TYPE Debug) # Add this near the top if not using multi-config generator
 
 
 # Load and link C/C++ files for the executable
