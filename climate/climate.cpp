@@ -572,11 +572,15 @@ void tmy2_reader::close()
  @{
  **/
 CLASS *climate::oclass = nullptr;
-climate *climate::defaults = nullptr;
+climate defaults_storage;
+climate *climate::defaults = &defaults_storage;
+
+// In climate.cpp:
+std::atomic_flag climate::city_lock = ATOMIC_FLAG_INIT;
 
 climate::climate(MODULE *module)
 {
-	/*//memset(this, 0, sizeof(climate));*/
+	// memset(this, 0, sizeof(climate));
 	if (oclass == nullptr)
 	{
 		oclass = gld_class::create(module, "climate", sizeof(climate), PC_PRETOPDOWN | PC_AUTOLOCK);
@@ -639,9 +643,34 @@ climate::climate(MODULE *module)
 								PT_double, "update_time", PADDR(update_time),
 								nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
-		// memset(this,0,sizeof(climate));
+		// memset(this, 0, sizeof(climate));
 		sa = new SolarAngles();
-		defaults = this;
+		// defaults = this;
+
+		std::strcpy(defaults_storage.city, "");
+		std::strcpy(defaults_storage.tmyfile, "");
+		defaults_storage.temperature = 59.0;
+		defaults_storage.temperature_raw = 15.0;
+		defaults_storage.humidity = 0.75;
+		defaults_storage.rainfall = 0.0;
+		defaults_storage.snowdepth = 0.0;
+		defaults_storage.ground_reflectivity = 0.3;
+		defaults_storage.direct_normal_extra = 126.998456; // W/ft^2
+		defaults_storage.pressure = 1000.0;
+
+		for (int i = 0; i < CP_LAST; ++i)
+		{
+			defaults_storage.solar_flux[i] = 0.0;
+		}
+
+		defaults_storage.cloud_opacity = 1.0;
+		defaults_storage.cloud_speed_factor = 1;
+		defaults_storage.tmy = nullptr;
+		defaults_storage.cloud_model = (enumeration)CLOUDMODEL::CM_NONE;
+		defaults_storage.cloud_num_layers = 40;
+		defaults_storage.cloud_alpha = 400;
+		defaults_storage.cloud_aerosol_transmissivity = 0.95;
+
 		gl_publish_function(oclass, "calculate_solar_radiation_degrees", (FUNCTIONADDR)calculate_solar_radiation_degrees);
 		gl_publish_function(oclass, "calculate_solar_radiation_radians", (FUNCTIONADDR)calculate_solar_radiation_radians);
 		gl_publish_function(oclass, "calculate_solar_radiation_shading_degrees", (FUNCTIONADDR)calculate_solar_radiation_shading_degrees);
@@ -655,28 +684,53 @@ climate::climate(MODULE *module)
 
 int climate::create(void)
 {
-	memcpy(this, defaults, sizeof(climate));
-	strcpy(city, "");
-	strcpy(tmyfile, "");
-	temperature = 59.0;
-	temperature_raw = 15.0;
-	humidity = 0.75;
-	rainfall = 0.0;
-	snowdepth = 0.0;
-	ground_reflectivity = 0.3;
-	direct_normal_extra = 126.998456; // 1367 W/m^2 constant in W/ft^2
-	pressure = 1000;				  // Sea level assumption
-	// solar_flux = malloc(8 * sizeof(double));
-	solar_flux[0] = solar_flux[1] = solar_flux[2] = solar_flux[3] = solar_flux[4] = solar_flux[5] = solar_flux[6] = solar_flux[7] = solar_flux[8] = 0.0; // W/sf normal
-	// solar_flux_S = solar_flux_SE = solar_flux_SW = solar_flux_E = solar_flux_W = solar_flux_NE = solar_flux_NW = solar_flux_N = 0.0; // W/sf normal
-	cloud_opacity = 1.0;
-	cloud_speed_factor = 1;
-	// cloud_reflectivity = 1.0; // very reflective!
-	tmy = nullptr;
-	cloud_model = (enumeration)CLOUDMODEL::CM_NONE;
-	cloud_num_layers = 40;
-	cloud_alpha = 400;
-	cloud_aerosol_transmissivity = 0.95;
+	// memcpy(this, defaults, sizeof(climate));
+	// strcpy(city, "");
+	// strcpy(tmyfile, "");
+	// temperature = 59.0;
+	// temperature_raw = 15.0;
+	// humidity = 0.75;
+	// rainfall = 0.0;
+	// snowdepth = 0.0;
+	// ground_reflectivity = 0.3;
+	// direct_normal_extra = 126.998456; // 1367 W/m^2 constant in W/ft^2
+	// pressure = 1000;				  // Sea level assumption
+	// // solar_flux = malloc(8 * sizeof(double));
+	// solar_flux[0] = solar_flux[1] = solar_flux[2] = solar_flux[3] = solar_flux[4] = solar_flux[5] = solar_flux[6] = solar_flux[7] = solar_flux[8] = 0.0; // W/sf normal
+	// // solar_flux_S = solar_flux_SE = solar_flux_SW = solar_flux_E = solar_flux_W = solar_flux_NE = solar_flux_NW = solar_flux_N = 0.0; // W/sf normal
+	// cloud_opacity = 1.0;
+	// cloud_speed_factor = 1;
+	// // cloud_reflectivity = 1.0; // very reflective!
+	// tmy = nullptr;
+	// cloud_model = (enumeration)CLOUDMODEL::CM_NONE;
+	// cloud_num_layers = 40;
+	// cloud_alpha = 400;
+	// cloud_aerosol_transmissivity = 0.95;
+
+	std::strcpy(this->city, defaults_storage.city);
+	std::strcpy(this->tmyfile, defaults_storage.tmyfile);
+	this->temperature = defaults_storage.temperature;
+	this->temperature_raw = defaults_storage.temperature_raw;
+	this->humidity = defaults_storage.humidity;
+	this->rainfall = defaults_storage.rainfall;
+	this->snowdepth = defaults_storage.snowdepth;
+	this->ground_reflectivity = defaults_storage.ground_reflectivity;
+	this->direct_normal_extra = defaults_storage.direct_normal_extra;
+	this->pressure = defaults_storage.pressure;
+
+	for (int i = 0; i < CP_LAST; ++i)
+	{
+		this->solar_flux[i] = defaults_storage.solar_flux[i];
+	}
+
+	this->cloud_opacity = defaults_storage.cloud_opacity;
+	this->cloud_speed_factor = defaults_storage.cloud_speed_factor;
+	this->tmy = defaults_storage.tmy;
+	this->cloud_model = defaults_storage.cloud_model;
+	this->cloud_num_layers = defaults_storage.cloud_num_layers;
+	this->cloud_alpha = defaults_storage.cloud_alpha;
+	this->cloud_aerosol_transmissivity = defaults_storage.cloud_aerosol_transmissivity;
+
 	return 1;
 }
 

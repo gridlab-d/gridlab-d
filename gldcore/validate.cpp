@@ -1050,26 +1050,27 @@ int validate(int argc, char *argv[])
 	// Start threads
 	for (unsigned int i = 0; i < n_procs; ++i)
 	{
-		// threads.emplace_back([i]() {
-
-		// Cast run_job_proc to the appropriate type and convert i to int
-		using FuncType = void *(*)(int);
-		FuncType func = run_test_proc;
-		func(static_cast<int>(i)); // Convert size_t to int
-
-		// });
+		threads.emplace_back([i]()
+							 {
+								 // Cast run_job_proc to the appropriate type and convert i to int
+								 using FuncType = void *(*)(int);
+								 FuncType func = run_test_proc;
+								 func(static_cast<int>(i)); // Convert size_t to int
+							 });
 	}
 
 	// Debug message: waiting for threads
-	// std::cout << "Begin waiting for threads to complete." << std::endl;
+	std::cout << "Begin waiting for threads to complete." << std::endl;
 
 	// Wait for all threads to complete
-	// for (unsigned int i = 0; i < n_procs; ++i) {
-	// 	if (threads[i].joinable()) {
-	// 		threads[i].join();  // Join the thread
-	// 		std::cout << "Thread " << i << " is done." << std::endl;
-	// 	}
-	// }
+	for (unsigned int i = 0; i < n_procs; ++i)
+	{
+		if (threads[i].joinable())
+		{
+			threads[i].join(); // Join the thread
+			std::cout << "Thread " << i << " is done." << std::endl;
+		}
+	}
 
 	std::cout << "Validation complete.\n";
 

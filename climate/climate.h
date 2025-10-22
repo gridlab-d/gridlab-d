@@ -286,16 +286,16 @@ public:
 	climate() {}
 	~climate()
 	{
-		if (defaults)
-			delete defaults;
+		// if (defaults)
+		// 	delete defaults;
 	}
 
 	static inline climate *get_defaults()
 	{
-		if (!defaults)
-		{
-			defaults = new climate(); // Initialize lazily
-		}
+		// if (!defaults)
+		// {
+		// 	defaults = new climate(); // Initialize lazily
+		// }
 		return defaults;
 	}
 
@@ -318,7 +318,7 @@ public:
 	}
 	inline gld_property get_solar_direct_property(void)
 	{
-		return gld_property(my(), std::string("solar_direct").c_str());
+		return gld_property(my(), "solar_direct");
 	}
 	inline std::string get_solar_direct_string(void)
 	{
@@ -347,7 +347,7 @@ public:
 	}
 	inline gld_property get_tz_meridian_property(void)
 	{
-		return gld_property(my(), std::string("tz_meridian").c_str());
+		return gld_property(my(), "tz_meridian");
 	}
 	inline std::string get_tz_meridian_string(void)
 	{
@@ -376,7 +376,7 @@ public:
 	}
 	inline gld_property get_solar_diffuse_property(void)
 	{
-		return gld_property(my(), std::string("solar_diffuse").c_str());
+		return gld_property(my(), "solar_diffuse");
 	}
 	inline std::string get_solar_diffuse_string(void)
 	{
@@ -405,7 +405,7 @@ public:
 	}
 	inline gld_property get_solar_cloud_global_property(void)
 	{
-		return gld_property(my(), std::string("solar_cloud_global").c_str());
+		return gld_property(my(), "solar_cloud_global");
 	}
 	inline std::string get_solar_cloud_global_string(void)
 	{
@@ -434,7 +434,7 @@ public:
 	}
 	inline gld_property get_solar_cloud_direct_property(void)
 	{
-		return gld_property(my(), std::string("solar_cloud_direct").c_str());
+		return gld_property(my(), "solar_cloud_direct");
 	}
 	inline std::string get_solar_cloud_direct_string(void)
 	{
@@ -463,7 +463,7 @@ public:
 	}
 	inline gld_property get_solar_cloud_diffuse_property(void)
 	{
-		return gld_property(my(), std::string("solar_cloud_diffuse").c_str());
+		return gld_property(my(), "solar_cloud_diffuse");
 	}
 	inline std::string get_solar_cloud_diffuse_string(void)
 	{
@@ -492,7 +492,7 @@ public:
 	}
 	inline gld_property get_cloud_alpha_property(void)
 	{
-		return gld_property(my(), std::string("cloud_alpha").c_str());
+		return gld_property(my(), "cloud_alpha");
 	}
 	inline std::string get_cloud_alpha_string(void)
 	{
@@ -521,7 +521,7 @@ public:
 	}
 	inline gld_property get_cloud_num_layers_property(void)
 	{
-		return gld_property(my(), std::string("cloud_num_layers").c_str());
+		return gld_property(my(), "cloud_num_layers");
 	}
 	inline std::string get_cloud_num_layers_string(void)
 	{
@@ -550,7 +550,7 @@ public:
 	}
 	inline gld_property get_cloud_aerosol_transmissivity_property(void)
 	{
-		return gld_property(my(), std::string("cloud_aerosol_transmissivity").c_str());
+		return gld_property(my(), "cloud_aerosol_transmissivity");
 	}
 	inline std::string get_cloud_aerosol_transmissivity_string(void)
 	{
@@ -579,7 +579,7 @@ public:
 	}
 	inline gld_property get_ground_reflectivity_property(void)
 	{
-		return gld_property(my(), std::string("ground_reflectivity").c_str());
+		return gld_property(my(), "ground_reflectivity");
 	}
 	inline std::string get_ground_reflectivity_string(void)
 	{
@@ -599,22 +599,32 @@ public:
 		climate *current_defaults = get_defaults();
 		return reinterpret_cast<const char *>(&current_defaults->city) - reinterpret_cast<const char *>(current_defaults);
 	}
-	inline std::string get_city(void)
-	{
-		auto &mtx = SharedMutexManager::get_mutex(my());
-		std::shared_lock<std::shared_mutex> lock(mtx);
-		return std::string(city);
-	}
+	// inline std::string get_city(void)
+	// {
+	// 	auto &mtx = SharedMutexManager::get_mutex(my());
+	// 	std::shared_lock<std::shared_mutex> lock(mtx);
+	// 	return std::string(city);
+	// }
+
+	// Lightweight spinlock for string operations
+	static std::atomic_flag city_lock;
+
 	inline void set_city(const char *str)
 	{
-		auto &mtx = SharedMutexManager::get_mutex(my());
-		std::unique_lock<std::shared_mutex> lock(mtx);
+		// Acquire spinlock
+		while (city_lock.test_and_set(std::memory_order_acquire))
+			; // Spin
+
+		// Critical section - copy the string
 		strncpy(city, str, sizeof(city) - 1);
-		city[sizeof(city) - 1] = '\0'; // Ensure null termination.
+		city[sizeof(city) - 1] = '\0'; // Ensure null termination
+
+		// Release spinlock
+		city_lock.clear(std::memory_order_release);
 	}
 	inline gld_property get_city_property(void)
 	{
-		return gld_property(my(), std::string("city").c_str());
+		return gld_property(my(), "city");
 	}
 	inline void set_city(char *str)
 	{
@@ -639,7 +649,7 @@ public:
 	}
 	inline gld_property get_temperature_property(void)
 	{
-		return gld_property(my(), std::string("temperature").c_str());
+		return gld_property(my(), "temperature");
 	}
 	inline std::string get_temperature_string(void)
 	{
@@ -668,7 +678,7 @@ public:
 	}
 	inline gld_property get_humidity_property(void)
 	{
-		return gld_property(my(), std::string("humidity").c_str());
+		return gld_property(my(), "humidity");
 	}
 	inline std::string get_humidity_string(void)
 	{
@@ -697,7 +707,7 @@ public:
 	}
 	inline gld_property get_wind_speed_property(void)
 	{
-		return gld_property(my(), std::string("wind_speed").c_str());
+		return gld_property(my(), "wind_speed");
 	}
 	inline std::string get_wind_speed_string(void)
 	{
@@ -726,7 +736,7 @@ public:
 	}
 	inline gld_property get_solar_global_property(void)
 	{
-		return gld_property(my(), std::string("solar_global").c_str());
+		return gld_property(my(), "solar_global");
 	}
 	inline std::string get_solar_global_string(void)
 	{
@@ -756,7 +766,7 @@ public:
 	}
 	inline gld_property get_temperature_raw_property(void)
 	{
-		return gld_property(my(), std::string("temperature_raw").c_str());
+		return gld_property(my(), "temperature_raw");
 	}
 	inline std::string get_temperature_raw_string(void)
 	{
@@ -785,7 +795,7 @@ public:
 	}
 	inline gld_property get_solar_raw_property(void)
 	{
-		return gld_property(my(), std::string("solar_raw").c_str());
+		return gld_property(my(), "solar_raw");
 	}
 	inline std::string get_solar_raw_string(void)
 	{
@@ -814,7 +824,7 @@ public:
 	}
 	inline gld_property get_wind_dir_property(void)
 	{
-		return gld_property(my(), std::string("wind_dir").c_str());
+		return gld_property(my(), "wind_dir");
 	}
 	inline std::string get_wind_dir_string(void)
 	{
@@ -843,7 +853,7 @@ public:
 	}
 	inline gld_property get_wind_gust_property(void)
 	{
-		return gld_property(my(), std::string("wind_gust").c_str());
+		return gld_property(my(), "wind_gust");
 	}
 	inline std::string get_wind_gust_string(void)
 	{
@@ -872,7 +882,7 @@ public:
 	}
 	inline gld_property get_interpolate_property(void)
 	{
-		return gld_property(my(), std::string("interpolate").c_str());
+		return gld_property(my(), "interpolate");
 	}
 	inline std::string get_interpolate_string(void)
 	{
@@ -901,7 +911,7 @@ public:
 	}
 	inline gld_property get_solar_elevation_property(void)
 	{
-		return gld_property(my(), std::string("solar_elevation").c_str());
+		return gld_property(my(), "solar_elevation");
 	}
 	inline std::string get_solar_elevation_string(void)
 	{
@@ -930,7 +940,7 @@ public:
 	}
 	inline gld_property get_solar_azimuth_property(void)
 	{
-		return gld_property(my(), std::string("solar_azimuth").c_str());
+		return gld_property(my(), "solar_azimuth");
 	}
 	inline std::string get_solar_azimuth_string(void)
 	{
@@ -959,7 +969,7 @@ public:
 	}
 	inline gld_property get_solar_zenith_property(void)
 	{
-		return gld_property(my(), std::string("solar_zenith").c_str());
+		return gld_property(my(), "solar_zenith");
 	}
 	inline std::string get_solar_zenith_string(void)
 	{
@@ -988,7 +998,7 @@ public:
 	}
 	inline gld_property get_direct_normal_extra_property(void)
 	{
-		return gld_property(my(), std::string("direct_normal_extra").c_str());
+		return gld_property(my(), "direct_normal_extra");
 	}
 	inline std::string get_direct_normal_extra_string(void)
 	{
@@ -1017,7 +1027,7 @@ public:
 	}
 	inline gld_property get_pressure_property(void)
 	{
-		return gld_property(my(), std::string("pressure").c_str());
+		return gld_property(my(), "pressure");
 	}
 	inline std::string get_pressure_string(void)
 	{
@@ -1046,7 +1056,7 @@ public:
 	}
 	inline gld_property get_tz_offset_val_property(void)
 	{
-		return gld_property(my(), std::string("tz_offset_val").c_str());
+		return gld_property(my(), "tz_offset_val");
 	}
 	inline std::string get_tz_offset_val_string(void)
 	{
@@ -1075,7 +1085,7 @@ public:
 	}
 	inline gld_property get_global_horizontal_extra_property(void)
 	{
-		return gld_property(my(), std::string("global_horizontal_extra").c_str());
+		return gld_property(my(), "global_horizontal_extra");
 	}
 	inline std::string get_global_horizontal_extra_string(void)
 	{
@@ -1104,7 +1114,7 @@ public:
 	}
 	inline gld_property get_tot_sky_cov_property(void)
 	{
-		return gld_property(my(), std::string("tot_sky_cov").c_str());
+		return gld_property(my(), "tot_sky_cov");
 	}
 	inline std::string get_tot_sky_cov_string(void)
 	{
@@ -1133,7 +1143,7 @@ public:
 	}
 	inline gld_property get_opq_sky_cov_property(void)
 	{
-		return gld_property(my(), std::string("opq_sky_cov").c_str());
+		return gld_property(my(), "opq_sky_cov");
 	}
 	inline std::string get_opq_sky_cov_string(void)
 	{
@@ -1162,7 +1172,7 @@ public:
 	}
 	inline gld_property get_cloud_opacity_property(void)
 	{
-		return gld_property(my(), std::string("cloud_opacity").c_str());
+		return gld_property(my(), "cloud_opacity");
 	}
 	inline std::string get_cloud_opacity_string(void)
 	{
@@ -1191,7 +1201,7 @@ public:
 	}
 	inline gld_property get_cloud_reflectivity_property(void)
 	{
-		return gld_property(my(), std::string("cloud_reflectivity").c_str());
+		return gld_property(my(), "cloud_reflectivity");
 	}
 	inline std::string get_cloud_reflectivity_string(void)
 	{
@@ -1220,7 +1230,7 @@ public:
 	}
 	inline gld_property get_cloud_speed_factor_property(void)
 	{
-		return gld_property(my(), std::string("cloud_speed_factor").c_str());
+		return gld_property(my(), "cloud_speed_factor");
 	}
 	inline std::string get_cloud_speed_factor_string(void)
 	{
@@ -1249,7 +1259,7 @@ public:
 	}
 	inline gld_property get_cloud_model_property(void)
 	{
-		return gld_property(my(), std::string("cloud_model").c_str());
+		return gld_property(my(), "cloud_model");
 	}
 	inline std::string get_cloud_model_string(void)
 	{
@@ -1278,7 +1288,7 @@ public:
 	}
 	inline gld_property get_update_time_property(void)
 	{
-		return gld_property(my(), std::string("update_time").c_str());
+		return gld_property(my(), "update_time");
 	}
 	inline std::string get_update_time_string(void)
 	{
@@ -1308,7 +1318,7 @@ public:
 	}
 	inline gld_property get_record_property(void)
 	{
-		return gld_property(my(), std::string("record").c_str());
+		return gld_property(my(), "record");
 	}
 	inline std::string get_record_string(void)
 	{
@@ -1337,7 +1347,7 @@ public:
 	}
 	inline gld_property get_rainfall_property(void)
 	{
-		return gld_property(my(), std::string("rainfall").c_str());
+		return gld_property(my(), "rainfall");
 	}
 	inline std::string get_rainfall_string(void)
 	{
@@ -1366,7 +1376,7 @@ public:
 	}
 	inline gld_property get_snowdepth_property(void)
 	{
-		return gld_property(my(), std::string("snowdepth").c_str());
+		return gld_property(my(), "snowdepth");
 	}
 	inline std::string get_snowdepth_string(void)
 	{
@@ -1385,22 +1395,22 @@ public:
 		climate *current_defaults = get_defaults();
 		return reinterpret_cast<const char *>(&current_defaults->forecast_spec) - reinterpret_cast<const char *>(current_defaults);
 	}
-	inline std::string get_forecast_spec(void)
-	{
-		auto &mtx = SharedMutexManager::get_mutex(my());
-		std::shared_lock<std::shared_mutex> lock(mtx);
-		return std::string(forecast_spec);
-	}
-	inline void set_forecast_spec(const char *str)
-	{
-		auto &mtx = SharedMutexManager::get_mutex(my());
-		std::unique_lock<std::shared_mutex> lock(mtx);
-		strncpy(forecast_spec, str, sizeof(forecast_spec) - 1);
-		forecast_spec[sizeof(forecast_spec) - 1] = '\0'; // Ensure null termination.
-	}
+	// inline std::string get_forecast_spec(void)
+	// {
+	// 	auto &mtx = SharedMutexManager::get_mutex(my());
+	// 	std::shared_lock<std::shared_mutex> lock(mtx);
+	// 	return std::string(forecast_spec);
+	// }
+	// inline void set_forecast_spec(const char *str)
+	// {
+	// 	auto &mtx = SharedMutexManager::get_mutex(my());
+	// 	std::unique_lock<std::shared_mutex> lock(mtx);
+	// 	strncpy(forecast_spec, str, sizeof(forecast_spec) - 1);
+	// 	forecast_spec[sizeof(forecast_spec) - 1] = '\0'; // Ensure null termination.
+	// }
 	inline gld_property get_forecast_spec_property(void)
 	{
-		return gld_property(my(), std::string("forecast_spec").c_str());
+		return gld_property(my(), "forecast_spec");
 	}
 	inline void set_forecast_spec(char *str)
 	{
@@ -1415,22 +1425,22 @@ public:
 		climate *current_defaults = get_defaults();
 		return reinterpret_cast<const char *>(&current_defaults->tmyfile) - reinterpret_cast<const char *>(current_defaults);
 	}
-	inline std::string get_tmyfile(void)
-	{
-		auto &mtx = SharedMutexManager::get_mutex(my());
-		std::shared_lock<std::shared_mutex> lock(mtx);
-		return std::string(tmyfile);
-	}
-	inline void set_tmyfile(const char *str)
-	{
-		auto &mtx = SharedMutexManager::get_mutex(my());
-		std::unique_lock<std::shared_mutex> lock(mtx);
-		strncpy(tmyfile, str, sizeof(tmyfile) - 1);
-		tmyfile[sizeof(tmyfile) - 1] = '\0'; // Ensure null termination.
-	}
+	// inline std::string get_tmyfile(void)
+	// {
+	// 	auto &mtx = SharedMutexManager::get_mutex(my());
+	// 	std::shared_lock<std::shared_mutex> lock(mtx);
+	// 	return std::string(tmyfile);
+	// }
+	// inline void set_tmyfile(const char *str)
+	// {
+	// 	auto &mtx = SharedMutexManager::get_mutex(my());
+	// 	std::unique_lock<std::shared_mutex> lock(mtx);
+	// 	strncpy(tmyfile, str, sizeof(tmyfile) - 1);
+	// 	tmyfile[sizeof(tmyfile) - 1] = '\0'; // Ensure null termination.
+	// }
 	inline gld_property get_tmyfile_property(void)
 	{
-		return gld_property(my(), std::string("tmyfile").c_str());
+		return gld_property(my(), "tmyfile");
 	}
 	inline void set_tmyfile(char *str)
 	{
@@ -1455,7 +1465,7 @@ public:
 	}
 	inline gld_property get_reader_property(void)
 	{
-		return gld_property(my(), std::string("reader").c_str());
+		return gld_property(my(), "reader");
 	}
 	inline std::string get_reader_string(void)
 	{
@@ -1493,55 +1503,55 @@ public:
 	 * Get the pointer to the `solar_flux` array (thread-safe read lock included).
 	 * @return Pointer to the `solar_flux` array.
 	 */
-	inline double *get_solar_flux(void)
-	{
-		auto &mtx = SharedMutexManager::get_mutex(my());
-		std::shared_lock<std::shared_mutex> lock(mtx); // Read lock ensures thread-safe access.
-		return solar_flux;
-	}
+	// inline double *get_solar_flux(void)
+	// {
+	// 	auto &mtx = SharedMutexManager::get_mutex(my());
+	// 	std::shared_lock<std::shared_mutex> lock(mtx); // Read lock ensures thread-safe access.
+	// 	return solar_flux;
+	// }
 
 	/**
 	 * Get an individual element of the `solar_flux` array by index (thread-safe read lock included).
 	 * @param n Index of the array element to retrieve.
 	 * @return The value of the array element at index `n`.
 	 */
-	inline double get_solar_flux(size_t n)
-	{
-		if (n >= CP_LAST)
-		{
-			throw std::out_of_range("Index exceeds solar_flux array bounds.");
-		}
-		auto &mtx = SharedMutexManager::get_mutex(my());
-		std::shared_lock<std::shared_mutex> lock(mtx); // Read lock ensures thread-safe access.
-		return solar_flux[n];
-	}
+	// inline double get_solar_flux(size_t n)
+	// {
+	// 	if (n >= CP_LAST)
+	// 	{
+	// 		throw std::out_of_range("Index exceeds solar_flux array bounds.");
+	// 	}
+	// 	auto &mtx = SharedMutexManager::get_mutex(my());
+	// 	std::shared_lock<std::shared_mutex> lock(mtx); // Read lock ensures thread-safe access.
+	// 	return solar_flux[n];
+	// }
 
 	/**
 	 * Set the entire `solar_flux` array (thread-safe write lock included).
 	 * @param p Pointer to an array of doubles to copy into `solar_flux`.
 	 */
-	inline void set_solar_flux(double *p)
-	{
-		auto &mtx = SharedMutexManager::get_mutex(my());
-		std::unique_lock<std::shared_mutex> lock(mtx); // Write lock ensures thread-safe modification.
-		memcpy(solar_flux, p, sizeof(solar_flux));
-	}
+	// inline void set_solar_flux(double *p)
+	// {
+	// 	auto &mtx = SharedMutexManager::get_mutex(my());
+	// 	std::unique_lock<std::shared_mutex> lock(mtx); // Write lock ensures thread-safe modification.
+	// 	memcpy(solar_flux, p, sizeof(solar_flux));
+	// }
 
 	/**
 	 * Set an individual element of the `solar_flux` array by index (thread-safe write lock included).
 	 * @param n Index of the array element to modify.
 	 * @param m Value to set at index `n`.
 	 */
-	inline void set_solar_flux(size_t n, double m)
-	{
-		if (n >= CP_LAST)
-		{
-			throw std::out_of_range("Index exceeds solar_flux array bounds.");
-		}
-		auto &mtx = SharedMutexManager::get_mutex(my());
-		std::unique_lock<std::shared_mutex> lock(mtx); // Write lock ensures thread-safe modification.
-		solar_flux[n] = m;
-	}
+	// inline void set_solar_flux(size_t n, double m)
+	// {
+	// 	if (n >= CP_LAST)
+	// 	{
+	// 		throw std::out_of_range("Index exceeds solar_flux array bounds.");
+	// 	}
+	// 	auto &mtx = SharedMutexManager::get_mutex(my());
+	// 	std::unique_lock<std::shared_mutex> lock(mtx); // Write lock ensures thread-safe modification.
+	// 	solar_flux[n] = m;
+	// }
 
 	// data not shared with classes in this module (no locks needed)
 private:

@@ -7,10 +7,11 @@
             "request": "launch",
             "program": "${workspaceFolder}/out/build/wsl2-native/bin/gridlabd",
             "args": [
-                "test_cloud_tmy2.glm",
-                "--verbose"
+                "--validate",
+                "--threadcount",
+                " 2"
             ],
-            "cwd": "${workspaceFolder}/climate/autotest/test_cloud_tmy2",
+            "cwd": "${workspaceFolder}/climate",
             "environment": [
                 {
                     "name": "GLPATH",
