@@ -2384,24 +2384,16 @@ SIMULATIONMODE eventgen::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 void eventgen::parse_external_fault_events(char *events_char)
 {
 	std::string events_str((const char *)events_char);
-	Json::CharReaderBuilder builder{};
-	Json::Value json_events;
-	std::string errors{};
+	nlohmann::json json_events;
+	std::string errors {};
 
-	auto reader = std::unique_ptr<Json::CharReader>(builder.newCharReader());
-	const auto parse_successful = reader->parse(events_str.c_str(),
-												events_str.c_str() + events_str.length(),
-												&json_events,
-												&errors);
-	if (parse_successful)
-	{
-		for (Json::ValueIterator i = json_events.begin(); i != json_events.end(); i++)
-		{
-			Json::Value json_event = *i;
+	try {	
+		json_events = nlohmann::json::parse(events_str);
+		for (auto& i : json_events.items()) {
+			nlohmann::json json_event = i.value();
 			std::string event_name = "";
-			if (json_event.isMember("name"))
-			{
-				event_name = json_event["name"].asString();
+			if (json_event.contains("name")) {
+				event_name = json_event["name"].template get<std::string>();
 			}
 
 			bool event_exists = false;
@@ -2419,7 +2411,7 @@ void eventgen::parse_external_fault_events(char *events_char)
 			{
 				external_event *new_event = new external_event;
 				new_event->name = event_name;
-				std::string type_cc = json_event["type"].asCString();
+				std::string type_cc = json_event["type"].template get<std::string>();
 				new_event->type = new char[type_cc.size()];
 				strcpy(new_event->type, type_cc.c_str());
 				new_event->enable_event = true;
@@ -2427,7 +2419,7 @@ void eventgen::parse_external_fault_events(char *events_char)
 				new_event->event_enabled = false;
 				new_event->effected_safety_device = nullptr;
 				new_event->implemented_fault = 0;
-				std::string obj_name_str = json_event["fault_object"].asString();
+				std::string obj_name_str = json_event["fault_object"].template get<std::string>();
 				char *name_c = new char[obj_name_str.length() + 1];
 				strcpy(name_c, obj_name_str.c_str());
 				new_event->fault_object = gl_get_object(name_c);
@@ -2441,9 +2433,7 @@ void eventgen::parse_external_fault_events(char *events_char)
 				}
 			}
 		}
-	}
-	else
-	{
+	} catch (...) {
 		GL_THROW("eventgent::parse_external_fault_events():Json parse failed to parse string = %s", events_char);
 	}
 }

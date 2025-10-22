@@ -273,17 +273,6 @@ int fncs_msg::configure(char *value)
 				json_config_string = json_config_stream.str();
 				gl_verbose("fncs_msg::configure(): json string read from configure file: %s .\n", json_config_string.c_str()); //renke debug
 
-				//test code start
-
-				//Json::Reader json_reader;
-				//json_reader.parse(json_config_string, publish_json_config);
-				//Json::FastWriter jsonwriter;
-				//string pubjsonstr;
-				//pubjsonstr = jsonwriter.write(publish_json_config);
-				//gl_verbose("fncs_msg::configure(): string from publish_json_config: %s .\n", pubjsonstr.c_str()); //renke debug
-
-				//test code end
-
 				rv = publish_fncsjson_link();
 				if (rv == 0) {
 					return 0;
@@ -1270,9 +1259,6 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 	publish_json_data[simName];
 	stringstream complex_val;
 	for(int isize=0; isize<nsize; isize++) {
-		if(!publish_json_data[simName].isMember(vjson_publish_gld_property_name[isize]->object_name) && vjson_publish_gld_property_name[isize]->prop->is_valid()){
-			publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name];
-		}
 		if(!vjson_publish_gld_property_name[isize]->is_header) {
 			gldpro_obj = vjson_publish_gld_property_name[isize]->prop;
 			if(gldpro_obj->is_valid()) {
@@ -1295,13 +1281,13 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 					}
 					publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = complex_val.str();
 				} else if (gldpro_obj->is_integer()) {
-					publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = (Json::Value::Int64)gldpro_obj->get_integer();
+					publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = gldpro_obj->get_integer();
 				} else if (gldpro_obj->is_character() || gldpro_obj->is_enumeration() || gldpro_obj->is_complex() || gldpro_obj->is_objectref() || gldpro_obj->is_set()) {
 					char chtmp[1024];
 					gldpro_obj->to_string(chtmp, 1024);
 					publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = string((char *)chtmp);
 				} else if (gldpro_obj->is_timestamp()) {
-					publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = (Json::Value::Int64)gldpro_obj->get_timestamp();
+					publish_json_data[simName][vjson_publish_gld_property_name[isize]->object_name][vjson_publish_gld_property_name[isize]->object_property] = gldpro_obj->get_timestamp();
 				} else {
 					gl_error("fncs_msg::publishJsonVariables(): the type of the gld_property: %s.%s is not a recognized type! \n",vjson_publish_gld_property_name[isize]->object_name.c_str(), vjson_publish_gld_property_name[isize]->object_property.c_str() );
 					return 0;
@@ -1313,7 +1299,7 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 	}
 	// write publish_json_data to a string and publish it through fncs API
 	string pubjsonstr;
-	pubjsonstr = publish_json_data.toStyledString();
+	pubjsonstr = publish_json_data.dump(4);
 	string skey = "";
 	skey = "fncs_output";
 
@@ -1351,37 +1337,30 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 		}
 	}
 	valStream << endl;
-	gl_verbose("fncs_msg::subscribeJsonVariables(), skey: %s, reading json data as string: %s", skey.c_str(), valStream.str().c_str());
+	gl_verbose("fncs_msg::subscribeJsonVariables(), skey: %s, reading json data as string: %s", skey.c_str(), 
+		valStream.str().c_str());
 	for(string & value : values) {
 		if(value.empty() == false){
-			Json::Value subscribe_json_data_full;
-
-			Json::CharReaderBuilder builder {};
-			// Don't leak memory! Use std::unique_ptr!
-			auto reader = std::unique_ptr<Json::CharReader>( builder.newCharReader() );
-			std::string errors {};
-			const auto is_parsed = reader->parse( value.c_str(),
-			                                     value.c_str() + value.length(),
-			                                     &subscribe_json_data_full,
-			                                     &errors );
-			if (!is_parsed ) {
-			//used to use isMember to check the simName is in the subscribe_json_data_full
-//			if (!subscribe_json_data_full.isMember(simName.c_str())){
-				gl_warning("fncs_msg::subscribeJsonVariables(), the simName: %s is not a member in the subscribed json data!! \n",
-						simName.c_str());
+			nlohmann::json subscribe_json_data_full;
+			try {
+				subscribe_json_data_full = nlohmann::json::parse(value);
+			} catch (...) {
+				gl_warning("fncs_msg::subscribeJsonVariables(), failed to parse the received json string! Ignoring message.");
 				return 1;
-			}else {
-				subscribe_json_data = subscribe_json_data_full[simName];
 			}
-			for (Json::ValueIterator it = subscribe_json_data.begin(); it != subscribe_json_data.end(); it++) {
-				const string gldObjectName = it.name();
+			if(!subscribe_json_data_full.contains(simName)) {
+				gl_warning("fncs_msg::subscribeJsonVariables(), Message doesn't contain the name of this federate. Ignoring message.");
+				return 1;
+			}
+			subscribe_json_data = subscribe_json_data_full[simName];
+			for (auto& it : subscribe_json_data.items()) {
+				const string gldObjectName = it.key();
 				double dtmp;
 				int itmp;
 				string stmp;
 				const char * cstmp;
-				for (Json::ValueIterator it1 = subscribe_json_data[it.name()].begin();
-						it1 != subscribe_json_data[it.name()].end(); it1++){
-					const string gldPropertyName = it1.name();
+				for (auto& it1 : it.value().items()){
+					const string gldPropertyName = it1.key();
 					string gldObjpropertyName = gldObjectName + ".";
 					gldObjpropertyName = gldObjpropertyName + gldPropertyName;
 					gld_property *gldpro_obj;
@@ -1399,26 +1378,26 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 						//gl_verbose("connection: local variable '%s' resolved OK, object id %d",
 								//gldObjpropertyName.c_str(), gldpro_obj->get_object()->id);
 						//get the value of the property
-						Json::Value sub_value = subscribe_json_data[gldObjectName][gldPropertyName];
+						nlohmann::json sub_value = subscribe_json_data[gldObjectName][gldPropertyName];
 						//check the type of property and json value need to be the same
-						if ( sub_value.isInt() && gldpro_obj->is_integer() ){
-							itmp = sub_value.asInt();
+						if ( sub_value.is_number_integer() && gldpro_obj->is_integer() ){
+							itmp = sub_value.get<int>();
 							gldpro_obj->setp(itmp);
 							gl_verbose("fncs_msg::subscribeJsonVariables(): %s is set value with int: %d \n",
 									gldObjpropertyName.c_str(), itmp);
 						}
-						else if ( sub_value.isDouble()&& gldpro_obj->is_double()){
-							dtmp = sub_value.asDouble();
+						else if ( sub_value.is_number_float()&& gldpro_obj->is_double()){
+							dtmp = sub_value.get<double>();
 							gldpro_obj->setp(dtmp);
 							gl_verbose("fncs_msg::subscribeJsonVariables(): %s is set value with double: %f \n",
 									gldObjpropertyName.c_str(), dtmp);
 						}
 						//if the gl_property type is char*, enumeration, or complex number
-						else if ( sub_value.isString() &&
+						else if ( sub_value.is_string() &&
 								(gldpro_obj->is_complex() || gldpro_obj->is_character() || gldpro_obj->is_enumeration()) ){
 
 							char valueBuf[1024] = "";
-							string subvaluestring = sub_value.asString();
+							string subvaluestring = sub_value.get<string>();
 
 							if(subvaluestring.empty() == false){
 								strncpy(valueBuf, subvaluestring.c_str(), 1023);
@@ -1449,25 +1428,25 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 int fncs_msg::publish_fncsjson_link()  //Renke add
 {
 	// check whether the json configure has content
-	if (publish_json_config.isNull()) {
+	if (publish_json_config.empty()) {
 		gl_warning(" publish json configure is empty!!! \n");
 		return 1;
 	}
 
 	vjson_publish_gld_property_name.clear();
 	JsonProperty *gldProperty = nullptr;
-	for (Json::ValueIterator it = publish_json_config.begin(); it != publish_json_config.end(); it++) {
+	for (auto& it : publish_json_config.items()) {
 
-		const string gldObjectName = it.name();
+		const string gldObjectName = it.key();
 		string gldPropertyName;
 		string gldObjpropertyName;
 
 
-		int nsize = publish_json_config[gldObjectName].size();
+		int nsize = it.value().size();
 		//gl_verbose("fncs_msg.publish_fncsjson_link(): gldObjectName: %s, nsize: %d . \n", gldObjectName.c_str(), nsize); //renke debug
 
 		for (int isize=0; isize<nsize ; isize++) {
-			gldPropertyName = publish_json_config[gldObjectName][isize].asString();
+			gldPropertyName = publish_json_config[gldObjectName][isize].get<string>();
 			gldProperty = new JsonProperty(gldObjectName, gldPropertyName);
 			//gldObjpropertyName = gldObjectName + ".";
 			//gldObjpropertyName = gldObjpropertyName + gldPropertyName;
@@ -1518,9 +1497,9 @@ static size_t fncs_to_hex(char *out, size_t max, const char *in, size_t len)
 extern "C" size_t fncs_from_hex(void *buf, size_t len, const char *hex, size_t hexlen)
 {
 	char *p = (char*)buf;
-	char lo = (char)nullptr;
-	char hi = (char)nullptr;
-	char c = (char)nullptr;
+	char lo = (char) 0;
+	char hi = (char) 0;
+	char c = (char) 0;
 	size_t n = 0;
 	for(n = 0; n < hexlen && *hex != '\0'; n += 2)
 	{

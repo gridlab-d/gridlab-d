@@ -17,9 +17,9 @@
 #include "transport.h"
 #include "varmap.h"
 
-#ifdef _WIN32
-//#define snprintf _snprintf
-#endif
+// #ifdef _WIN32
+// #define snprintf _snprintf
+// #endif
 
 typedef int (EXCHANGETRANSLATOR)(connection_transport*, const char *tag, char *v, size_t vlen, int options);
 #define ET_MATCHONLY 0

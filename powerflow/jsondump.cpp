@@ -11,7 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
-#include <json/json.h> //jsoncpp library
+#include <nlohmann/json.hpp>
 #include <string>
 #include <sstream>
 using namespace std;
@@ -146,19 +146,15 @@ STATUS jsondump::dump_system(void)
 	bool found_match_config;
 
 	// metrics JSON value
-	Json::Value metrics_lines; // Output dictionary for line and line configuration metrics
-	Json::Value node_object;
-	Json::Value load_object;
-	Json::Value line_object;
-	Json::Value line_configuration_object;
-	Json::Value jsonArray;
-	Json::Value jsonSecondArray;
-	Json::Value jsonArray1; // for storing rmatrix and xmatrix
-	Json::Value jsonArray2; // for storing rmatrix and xmatrix
-	// Start write to file
-	Json::StreamWriterBuilder builder;
-	builder["commentStyle"] = "None";
-	builder["indentation"] = "";
+	nlohmann::json metrics_lines;	// Output dictionary for line and line configuration metrics
+	nlohmann::json node_object;
+	nlohmann::json load_object;
+	nlohmann::json line_object;
+	nlohmann::json line_configuration_object;
+	nlohmann::json jsonArray;
+	nlohmann::json jsonSecondArray;
+	nlohmann::json jsonArray1; // for storing rmatrix and xmatrix
+	nlohmann::json jsonArray2; // for storing rmatrix and xmatrix
 
 	// Open file for writing
 	ofstream out_file;
@@ -581,31 +577,31 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -626,9 +622,9 @@ STATUS jsondump::dump_system(void)
 			}
 
 			// Write out the real value
-			jsonArray2.append(temp_complex_power_value[0].Re());
-			jsonArray2.append(temp_complex_power_value[1].Re());
-			jsonArray2.append(temp_complex_power_value[2].Re());
+			jsonArray2.push_back(temp_complex_power_value[0].Re());
+			jsonArray2.push_back(temp_complex_power_value[1].Re());
+			jsonArray2.push_back(temp_complex_power_value[2].Re());
 
 			// Write it
 			node_object["max_real_phase"] = jsonArray2;
@@ -638,9 +634,9 @@ STATUS jsondump::dump_system(void)
 
 			// Now do reactive power
 			// Write out the real value
-			jsonArray2.append(temp_complex_power_value[0].Im());
-			jsonArray2.append(temp_complex_power_value[1].Im());
-			jsonArray2.append(temp_complex_power_value[2].Im());
+			jsonArray2.push_back(temp_complex_power_value[0].Im());
+			jsonArray2.push_back(temp_complex_power_value[1].Im());
+			jsonArray2.push_back(temp_complex_power_value[2].Im());
 
 			// Write it
 			node_object["max_reactive_phase"] = jsonArray2;
@@ -655,7 +651,7 @@ STATUS jsondump::dump_system(void)
 			node_object["is_new"] = false;
 
 			// Add the object to the array
-			jsonArray.append(node_object);
+			jsonArray.push_back(node_object);
 
 			// Clear the node
 			node_object.clear();
@@ -708,31 +704,31 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -753,9 +749,9 @@ STATUS jsondump::dump_system(void)
 			}
 
 			// Write out the real value
-			jsonArray2.append(temp_complex_power_value[0].Re());
-			jsonArray2.append(temp_complex_power_value[1].Re());
-			jsonArray2.append(temp_complex_power_value[2].Re());
+			jsonArray2.push_back(temp_complex_power_value[0].Re());
+			jsonArray2.push_back(temp_complex_power_value[1].Re());
+			jsonArray2.push_back(temp_complex_power_value[2].Re());
 
 			// Write it
 			node_object["max_real_phase"] = jsonArray2;
@@ -765,9 +761,9 @@ STATUS jsondump::dump_system(void)
 
 			// Now do reactive power
 			// Write out the real value
-			jsonArray2.append(temp_complex_power_value[0].Im());
-			jsonArray2.append(temp_complex_power_value[1].Im());
-			jsonArray2.append(temp_complex_power_value[2].Im());
+			jsonArray2.push_back(temp_complex_power_value[0].Im());
+			jsonArray2.push_back(temp_complex_power_value[1].Im());
+			jsonArray2.push_back(temp_complex_power_value[2].Im());
 
 			// Write it
 			node_object["max_reactive_phase"] = jsonArray2;
@@ -782,7 +778,7 @@ STATUS jsondump::dump_system(void)
 			node_object["is_new"] = false;
 
 			// Add the object to the array
-			jsonArray.append(node_object);
+			jsonArray.push_back(node_object);
 
 			// Clear the node
 			node_object.clear();
@@ -850,7 +846,7 @@ STATUS jsondump::dump_system(void)
 				temp_voltage_output_value = temp_complex_voltage_value[indexA].Mag() / temp_voltage_base;
 
 				// Append to the JSON array
-				jsonArray2.append(temp_voltage_output_value);
+				jsonArray2.push_back(temp_voltage_output_value);
 			}
 
 			// Actually output it
@@ -867,31 +863,31 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -899,7 +895,7 @@ STATUS jsondump::dump_system(void)
 			jsonArray2.clear();
 
 			// Append to node array
-			jsonArray.append(node_object);
+			jsonArray.push_back(node_object);
 
 			// clear JSON value
 			node_object.clear();
@@ -961,7 +957,7 @@ STATUS jsondump::dump_system(void)
 				temp_voltage_output_value = temp_complex_voltage_value[indexA].Mag() / temp_voltage_base;
 
 				// Append to the JSON array
-				jsonArray2.append(temp_voltage_output_value);
+				jsonArray2.push_back(temp_voltage_output_value);
 			}
 
 			// Actually output it
@@ -978,31 +974,31 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -1010,7 +1006,7 @@ STATUS jsondump::dump_system(void)
 			jsonArray2.clear();
 
 			// Append to node array
-			jsonArray.append(node_object);
+			jsonArray.push_back(node_object);
 
 			// clear JSON value
 			node_object.clear();
@@ -1101,7 +1097,7 @@ STATUS jsondump::dump_system(void)
 				temp_voltage_output_value = temp_complex_voltage_value[indexA].Mag() / temp_voltage_base;
 
 				// Append to the JSON array
-				jsonArray2.append(temp_voltage_output_value);
+				jsonArray2.push_back(temp_voltage_output_value);
 			}
 
 			// Actually output it
@@ -1118,31 +1114,31 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -1164,9 +1160,9 @@ STATUS jsondump::dump_system(void)
 			}
 
 			// Write out the real value
-			jsonArray2.append(temp_complex_power_value[0].Re());
-			jsonArray2.append(temp_complex_power_value[1].Re());
-			jsonArray2.append(temp_complex_power_value[2].Re());
+			jsonArray2.push_back(temp_complex_power_value[0].Re());
+			jsonArray2.push_back(temp_complex_power_value[1].Re());
+			jsonArray2.push_back(temp_complex_power_value[2].Re());
 
 			// Write it
 			load_object["max_real_phase"] = jsonArray2;
@@ -1176,9 +1172,9 @@ STATUS jsondump::dump_system(void)
 
 			// Now do reactive power
 			// Write out the real value
-			jsonArray2.append(temp_complex_power_value[0].Im());
-			jsonArray2.append(temp_complex_power_value[1].Im());
-			jsonArray2.append(temp_complex_power_value[2].Im());
+			jsonArray2.push_back(temp_complex_power_value[0].Im());
+			jsonArray2.push_back(temp_complex_power_value[1].Im());
+			jsonArray2.push_back(temp_complex_power_value[2].Im());
 
 			// Write it
 			load_object["max_reactive_phase"] = jsonArray2;
@@ -1187,13 +1183,13 @@ STATUS jsondump::dump_system(void)
 			jsonArray2.clear();
 
 			// Append to node array
-			jsonArray.append(node_object);
+			jsonArray.push_back(node_object);
 
 			// clear JSON value
 			node_object.clear();
 
 			// Do the same for the load value
-			jsonSecondArray.append(load_object);
+			jsonSecondArray.push_back(load_object);
 
 			// Clear the JSON value
 			load_object.clear();
@@ -1303,34 +1299,34 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -1420,7 +1416,7 @@ STATUS jsondump::dump_system(void)
 			// End of line codes
 
 			// Append to line array
-			jsonArray.append(line_object);
+			jsonArray.push_back(line_object);
 
 			// clear JSON value
 			line_object.clear();
@@ -1514,34 +1510,34 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -1631,7 +1627,7 @@ STATUS jsondump::dump_system(void)
 			// End of line codes
 
 			// Append to line array
-			jsonArray.append(line_object);
+			jsonArray.push_back(line_object);
 
 			// clear JSON value
 			line_object.clear();
@@ -1724,34 +1720,34 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -1840,7 +1836,7 @@ STATUS jsondump::dump_system(void)
 			// End of line codes
 
 			// Append to line array
-			jsonArray.append(line_object);
+			jsonArray.push_back(line_object);
 
 			// clear JSON value
 			line_object.clear();
@@ -1933,34 +1929,34 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -2049,7 +2045,7 @@ STATUS jsondump::dump_system(void)
 			// End of line codes
 
 			// Append to line array
-			jsonArray.append(line_object);
+			jsonArray.push_back(line_object);
 
 			// clear JSON value
 			line_object.clear();
@@ -2142,34 +2138,34 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -2258,7 +2254,7 @@ STATUS jsondump::dump_system(void)
 			// End of line codes
 
 			// Append to line array
-			jsonArray.append(line_object);
+			jsonArray.push_back(line_object);
 
 			// clear JSON value
 			line_object.clear();
@@ -2356,34 +2352,34 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -2450,7 +2446,7 @@ STATUS jsondump::dump_system(void)
 			// End of line codes
 
 			// Append to line array
-			jsonArray.append(line_object);
+			jsonArray.push_back(line_object);
 
 			// clear JSON value
 			line_object.clear();
@@ -2544,34 +2540,34 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -2638,7 +2634,7 @@ STATUS jsondump::dump_system(void)
 			// End of line codes
 
 			// Append to line array
-			jsonArray.append(line_object);
+			jsonArray.push_back(line_object);
 
 			// clear JSON value
 			line_object.clear();
@@ -2733,34 +2729,34 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -2827,7 +2823,7 @@ STATUS jsondump::dump_system(void)
 			// End of line codes
 
 			// Append to line array
-			jsonArray.append(line_object);
+			jsonArray.push_back(line_object);
 
 			// clear JSON value
 			line_object.clear();
@@ -2925,34 +2921,34 @@ STATUS jsondump::dump_system(void)
 			// Phase A
 			if ((temp_set_value & PHASE_A) == PHASE_A)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase B
 			if ((temp_set_value & PHASE_B) == PHASE_B)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Phase C
 			if ((temp_set_value & PHASE_C) == PHASE_C)
 			{
-				jsonArray2.append(true);
+				jsonArray2.push_back(true);
 				phaseCount++;
 			}
 			else
 			{
-				jsonArray2.append(false);
+				jsonArray2.push_back(false);
 			}
 
 			// Append it in
@@ -3019,7 +3015,7 @@ STATUS jsondump::dump_system(void)
 			// End of line codes
 
 			// Append to line array
-			jsonArray.append(line_object);
+			jsonArray.push_back(line_object);
 
 			// clear JSON value
 			line_object.clear();
@@ -3054,9 +3050,9 @@ STATUS jsondump::dump_system(void)
 		{
 			for (indexB = 0; indexB < 3; indexB++)
 			{
-				jsonArray1.append(b_mat_fuse_pu[indexA * 3 + indexB].Re());
+				jsonArray1.push_back(b_mat_fuse_pu[indexA * 3 + indexB].Re());
 			}
-			jsonArray2.append(jsonArray1);
+			jsonArray2.push_back(jsonArray1);
 			jsonArray1.clear();
 		}
 		line_configuration_object["rmatrix"] = jsonArray2;
@@ -3067,9 +3063,9 @@ STATUS jsondump::dump_system(void)
 		{
 			for (indexB = 0; indexB < 3; indexB++)
 			{
-				jsonArray1.append(b_mat_fuse_pu[indexA * 3 + indexB].Im());
+				jsonArray1.push_back(b_mat_fuse_pu[indexA * 3 + indexB].Im());
 			}
-			jsonArray2.append(jsonArray1);
+			jsonArray2.push_back(jsonArray1);
 			jsonArray1.clear();
 		}
 		line_configuration_object["xmatrix"] = jsonArray2;
@@ -3077,7 +3073,7 @@ STATUS jsondump::dump_system(void)
 		// end this line configuration
 
 		// Append to line array
-		jsonArray.append(line_configuration_object);
+		jsonArray.push_back(line_configuration_object);
 
 		// clear JSON value
 		line_configuration_object.clear();
@@ -3100,9 +3096,9 @@ STATUS jsondump::dump_system(void)
 		{
 			for (indexB = 0; indexB < 3; indexB++)
 			{
-				jsonArray1.append(b_mat_switch_pu[indexA * 3 + indexB].Re());
+				jsonArray1.push_back(b_mat_switch_pu[indexA * 3 + indexB].Re());
 			}
-			jsonArray2.append(jsonArray1);
+			jsonArray2.push_back(jsonArray1);
 			jsonArray1.clear();
 		}
 		line_configuration_object["rmatrix"] = jsonArray2;
@@ -3113,9 +3109,9 @@ STATUS jsondump::dump_system(void)
 		{
 			for (indexB = 0; indexB < 3; indexB++)
 			{
-				jsonArray1.append(b_mat_switch_pu[indexA * 3 + indexB].Im());
+				jsonArray1.push_back(b_mat_switch_pu[indexA * 3 + indexB].Im());
 			}
-			jsonArray2.append(jsonArray1);
+			jsonArray2.push_back(jsonArray1);
 			jsonArray1.clear();
 		}
 		line_configuration_object["xmatrix"] = jsonArray2;
@@ -3123,7 +3119,7 @@ STATUS jsondump::dump_system(void)
 		// end this line configuration
 
 		// Append to line array
-		jsonArray.append(line_configuration_object);
+		jsonArray.push_back(line_configuration_object);
 
 		// clear JSON value
 		line_configuration_object.clear();
@@ -3186,9 +3182,9 @@ STATUS jsondump::dump_system(void)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.append(b_mat_pu[index * 9 + indexA * 3 + indexB].Re());
+						jsonArray1.push_back(b_mat_pu[index * 9 + indexA * 3 + indexB].Re());
 					}
-					jsonArray2.append(jsonArray1);
+					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
 				}
 				line_configuration_object["rmatrix"] = jsonArray2;
@@ -3199,9 +3195,9 @@ STATUS jsondump::dump_system(void)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.append(b_mat_pu[index * 9 + indexA * 3 + indexB].Im());
+						jsonArray1.push_back(b_mat_pu[index * 9 + indexA * 3 + indexB].Im());
 					}
-					jsonArray2.append(jsonArray1);
+					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
 				}
 				line_configuration_object["xmatrix"] = jsonArray2;
@@ -3209,7 +3205,7 @@ STATUS jsondump::dump_system(void)
 				// end this line configuration
 
 				// Append to line array
-				jsonArray.append(line_configuration_object);
+				jsonArray.push_back(line_configuration_object);
 
 				// clear JSON value
 				line_configuration_object.clear();
@@ -3266,9 +3262,9 @@ STATUS jsondump::dump_system(void)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.append(b_mat_tp_pu[index * 9 + indexA * 3 + indexB].Re());
+						jsonArray1.push_back(b_mat_tp_pu[index * 9 + indexA * 3 + indexB].Re());
 					}
-					jsonArray2.append(jsonArray1);
+					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
 				}
 				line_configuration_object["rmatrix"] = jsonArray2;
@@ -3279,9 +3275,9 @@ STATUS jsondump::dump_system(void)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.append(b_mat_tp_pu[index * 9 + indexA * 3 + indexB].Im());
+						jsonArray1.push_back(b_mat_tp_pu[index * 9 + indexA * 3 + indexB].Im());
 					}
-					jsonArray2.append(jsonArray1);
+					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
 				}
 				line_configuration_object["xmatrix"] = jsonArray2;
@@ -3289,7 +3285,7 @@ STATUS jsondump::dump_system(void)
 				// end this line configuration
 
 				// Append to line array
-				jsonArray.append(line_configuration_object);
+				jsonArray.push_back(line_configuration_object);
 
 				// clear JSON value
 				line_configuration_object.clear();
@@ -3330,9 +3326,9 @@ STATUS jsondump::dump_system(void)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.append(b_mat_trans_pu[index * 9 + indexA * 3 + indexB].Re());
+						jsonArray1.push_back(b_mat_trans_pu[index * 9 + indexA * 3 + indexB].Re());
 					}
-					jsonArray2.append(jsonArray1);
+					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
 				}
 				line_configuration_object["rmatrix"] = jsonArray2;
@@ -3343,9 +3339,9 @@ STATUS jsondump::dump_system(void)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.append(b_mat_trans_pu[index * 9 + indexA * 3 + indexB].Im());
+						jsonArray1.push_back(b_mat_trans_pu[index * 9 + indexA * 3 + indexB].Im());
 					}
-					jsonArray2.append(jsonArray1);
+					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
 				}
 				line_configuration_object["xmatrix"] = jsonArray2;
@@ -3353,7 +3349,7 @@ STATUS jsondump::dump_system(void)
 				// end this line configuration
 
 				// Append to line array
-				jsonArray.append(line_configuration_object);
+				jsonArray.push_back(line_configuration_object);
 
 				// clear JSON value
 				line_configuration_object.clear();
@@ -3394,9 +3390,9 @@ STATUS jsondump::dump_system(void)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.append(b_mat_reg_pu[index * 9 + indexA * 3 + indexB].Re());
+						jsonArray1.push_back(b_mat_reg_pu[index * 9 + indexA * 3 + indexB].Re());
 					}
-					jsonArray2.append(jsonArray1);
+					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
 				}
 				line_configuration_object["rmatrix"] = jsonArray2;
@@ -3407,9 +3403,9 @@ STATUS jsondump::dump_system(void)
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
-						jsonArray1.append(b_mat_reg_pu[index * 9 + indexA * 3 + indexB].Im());
+						jsonArray1.push_back(b_mat_reg_pu[index * 9 + indexA * 3 + indexB].Im());
 					}
-					jsonArray2.append(jsonArray1);
+					jsonArray2.push_back(jsonArray1);
 					jsonArray1.clear();
 				}
 				line_configuration_object["xmatrix"] = jsonArray2;
@@ -3417,7 +3413,7 @@ STATUS jsondump::dump_system(void)
 				// end this line configuration
 
 				// Append to line array
-				jsonArray.append(line_configuration_object);
+				jsonArray.push_back(line_configuration_object);
 
 				// clear JSON value
 				line_configuration_object.clear();
@@ -3433,9 +3429,7 @@ STATUS jsondump::dump_system(void)
 
 	// Write JSON files for line and line_codes
 	out_file.open(filename_dump_system);
-	std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
-	writer->write(metrics_lines, &out_file);
-	out_file << endl;
+	out_file << metrics_lines.dump() << endl;
 	out_file.close();
 
 	// Clean up the mallocs
@@ -3510,19 +3504,15 @@ STATUS jsondump::dump_reliability(void)
 	int index = 0;
 
 	// metrics JSON value
-	Json::Value metrics_reliability; // Output dictionary for line and line configuration metrics
-	Json::Value metrics_1366;
-	Json::Value metrics_protection;
-	Json::Value metrics_others;
-	Json::Value protectionArray; // for storing array of each type of protective device
-	Json::Value protect_obj;
-	Json::Value otherArray; // for storing array of each type of capacitor and regulator devices
-	Json::Value other_obj;
-	Json::Value jsonArray; // for storing temperary opening status of devices
-	// Start write to file
-	Json::StreamWriterBuilder builder;
-	builder["commentStyle"] = "None";
-	builder["indentation"] = "";
+	nlohmann::json metrics_reliability; // Output dictionary for line and line configuration metrics
+	nlohmann::json metrics_1366;
+	nlohmann::json metrics_protection;
+	nlohmann::json metrics_others;
+	nlohmann::json protectionArray; // for storing array of each type of protective device
+	nlohmann::json protect_obj;
+	nlohmann::json otherArray; // for storing array of each type of capacitor and regulator devices
+	nlohmann::json other_obj;
+	nlohmann::json jsonArray; // for storing temperary opening status of devices
 
 	// Open file for writing
 	ofstream out_file;
@@ -3595,20 +3585,17 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append opening status to array
-			if ((fuseData->phases & 0x04) == 0x04)
-			{
-				sprintf(buffer, "%d", (fuseData->phase_A_state == 1) ? true : false);
-				jsonArray.append(buffer);
+			if ((fuseData->phases & 0x04) == 0x04) {
+				sprintf(buffer, "%d", (fuseData->phase_A_state == 1)? true:false);
+				jsonArray.push_back(buffer);
 			}
-			if ((fuseData->phases & 0x02) == 0x02)
-			{
-				sprintf(buffer, "%d", ((fuseData->phase_B_state == 1) ? true : false));
-				jsonArray.append(buffer);
+			if ((fuseData->phases & 0x02) == 0x02) {
+				sprintf(buffer, "%d", ((fuseData->phase_B_state == 1)? true:false));
+				jsonArray.push_back(buffer);
 			}
-			if ((fuseData->phases & 0x01) == 0x01)
-			{
-				sprintf(buffer, "%d", ((fuseData->phase_C_state == 1) ? true : false));
-				jsonArray.append(buffer);
+			if ((fuseData->phases & 0x01) == 0x01) {
+				sprintf(buffer, "%d", ((fuseData->phase_C_state == 1)? true:false));
+				jsonArray.push_back(buffer);
 			}
 
 			// Put array to the fuse dictionary
@@ -3616,7 +3603,7 @@ STATUS jsondump::dump_reliability(void)
 			jsonArray.clear();
 
 			// Append fuse to the fuse array
-			protectionArray.append(protect_obj);
+			protectionArray.push_back(protect_obj);
 			protect_obj.clear();
 
 			index++;
@@ -3647,20 +3634,17 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append opening status to array
-			if ((reclData->phases & 0x04) == 0x04)
-			{
-				sprintf(buffer, "%d", ((reclData->phase_A_state == 1) ? true : false));
-				jsonArray.append(buffer);
+			if ((reclData->phases & 0x04) == 0x04) {
+				sprintf(buffer, "%d", ((reclData->phase_A_state == 1)? true:false));
+				jsonArray.push_back(buffer);
 			}
-			if ((reclData->phases & 0x02) == 0x02)
-			{
-				sprintf(buffer, "%d", ((reclData->phase_B_state == 1) ? true : false));
-				jsonArray.append(buffer);
+			if ((reclData->phases & 0x02) == 0x02) {
+				sprintf(buffer, "%d", ((reclData->phase_B_state == 1)? true:false));
+				jsonArray.push_back(buffer);
 			}
-			if ((reclData->phases & 0x01) == 0x01)
-			{
-				sprintf(buffer, "%d", ((reclData->phase_C_state == 1) ? true : false));
-				jsonArray.append(buffer);
+			if ((reclData->phases & 0x01) == 0x01) {
+				sprintf(buffer, "%d", ((reclData->phase_C_state == 1)? true:false));
+				jsonArray.push_back(buffer);
 			}
 
 			// Put array to the recloser dictionary
@@ -3668,7 +3652,7 @@ STATUS jsondump::dump_reliability(void)
 			jsonArray.clear();
 
 			// Append recloser to the recloser array
-			protectionArray.append(protect_obj);
+			protectionArray.push_back(protect_obj);
 			protect_obj.clear();
 
 			index++;
@@ -3699,20 +3683,17 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append opening status to array
-			if ((secData->phases & 0x04) == 0x04)
-			{
-				sprintf(buffer, "%d", ((secData->phase_A_state == 1) ? true : false));
-				jsonArray.append(buffer);
+			if ((secData->phases & 0x04) == 0x04) {
+				sprintf(buffer, "%d", ((secData->phase_A_state == 1)? true:false));
+				jsonArray.push_back(buffer);
 			}
-			if ((secData->phases & 0x02) == 0x02)
-			{
-				sprintf(buffer, "%d", ((secData->phase_B_state == 1) ? true : false));
-				jsonArray.append(buffer);
+			if ((secData->phases & 0x02) == 0x02) {
+				sprintf(buffer, "%d", ((secData->phase_B_state == 1)? true:false));
+				jsonArray.push_back(buffer);
 			}
-			if ((secData->phases & 0x01) == 0x01)
-			{
-				sprintf(buffer, "%d", ((secData->phase_C_state == 1) ? true : false));
-				jsonArray.append(buffer);
+			if ((secData->phases & 0x01) == 0x01) {
+				sprintf(buffer, "%d", ((secData->phase_C_state == 1)? true:false));
+				jsonArray.push_back(buffer);
 			}
 
 			// Put array to the sectionalizer dictionary
@@ -3720,7 +3701,7 @@ STATUS jsondump::dump_reliability(void)
 			jsonArray.clear();
 
 			// Append sectionalizer to the sectionalizer array
-			protectionArray.append(protect_obj);
+			protectionArray.push_back(protect_obj);
 			protect_obj.clear();
 
 			index++;
@@ -3758,20 +3739,17 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append opening status to array
-			if ((capData->pt_phase & 0x04) == 0x04)
-			{
-				sprintf(buffer, "%d", ((capData->switchA_state == 1) ? true : false));
-				jsonArray.append(buffer);
+			if ((capData->pt_phase & 0x04) == 0x04) {
+				sprintf(buffer, "%d", ((capData->switchA_state == 1)? true:false));
+				jsonArray.push_back(buffer);
 			}
-			if ((capData->pt_phase & 0x02) == 0x02)
-			{
-				sprintf(buffer, "%d", ((capData->switchB_state == 1) ? true : false));
-				jsonArray.append(buffer);
+			if ((capData->pt_phase & 0x02) == 0x02) {
+				sprintf(buffer, "%d", ((capData->switchB_state == 1)? true:false));
+				jsonArray.push_back(buffer);
 			}
-			if ((capData->pt_phase & 0x01) == 0x01)
-			{
-				sprintf(buffer, "%d", ((capData->switchC_state == 1) ? true : false));
-				jsonArray.append(buffer);
+			if ((capData->pt_phase & 0x01) == 0x01) {
+				sprintf(buffer, "%d", ((capData->switchC_state == 1)? true:false));
+				jsonArray.push_back(buffer);
 			}
 
 			// Put array to the dictionary
@@ -3779,7 +3757,7 @@ STATUS jsondump::dump_reliability(void)
 			jsonArray.clear();
 
 			// Append capacitor to the capacitor array
-			otherArray.append(other_obj);
+			otherArray.push_back(other_obj);
 			other_obj.clear();
 
 			index++;
@@ -3810,17 +3788,14 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append tap positions to array
-			if ((regData->phases & 0x04) == 0x04)
-			{
-				jsonArray.append(regData->tap[0]);
+			if ((regData->phases & 0x04) == 0x04) {
+				jsonArray.push_back(regData->tap[0]);
 			}
-			if ((regData->phases & 0x02) == 0x02)
-			{
-				jsonArray.append(regData->tap[1]);
+			if ((regData->phases & 0x02) == 0x02) {
+				jsonArray.push_back(regData->tap[1]);
 			}
-			if ((regData->phases & 0x01) == 0x01)
-			{
-				jsonArray.append(regData->tap[2]);
+			if ((regData->phases & 0x01) == 0x01) {
+				jsonArray.push_back(regData->tap[2]);
 			}
 
 			// Put array to the dictionary
@@ -3828,7 +3803,7 @@ STATUS jsondump::dump_reliability(void)
 			jsonArray.clear();
 
 			// Append capacitor to the regulator array
-			otherArray.append(other_obj);
+			otherArray.push_back(other_obj);
 			other_obj.clear();
 
 			index++;
@@ -3847,9 +3822,7 @@ STATUS jsondump::dump_reliability(void)
 
 	// Write JSON files for line and line_codes
 	out_file.open(filename_dump_reliability);
-	std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
-	writer->write(metrics_reliability, &out_file);
-	out_file << endl;
+	out_file << metrics_reliability.dump() << endl;
 	out_file.close();
 
 	// Remove the various mallocs/findlists

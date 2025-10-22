@@ -264,7 +264,7 @@ int metrics_collector::init(OBJECT *parent){
 		if (propLineOverloaded == nullptr) propLineOverloaded = gl_get_property (parent, "overloaded_status");
 	} else if (gl_object_isa(parent, "evcharger_det")) {
 		parent_string = const_cast<char*>("evcharger_det");
-		if (propChargeRate == nullptr) propChargeRate = gl_get_property (parent, "charge_rate");
+		if (propChargeRate == nullptr) propChargeRate = gl_get_property (parent, "actual_charge_rate");
 		if (propBatterySOC == nullptr) propBatterySOC = gl_get_property (parent, "battery_SOC");
 	}
 	else {
