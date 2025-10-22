@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <json/json.h> //jsoncpp library
+#include <nlohmann/json.hpp>
 #include "timestamp.h"
 
 int main(int argc, char* argv[]) {
@@ -44,14 +44,14 @@ int main(int argc, char* argv[]) {
 
         gld.step(sim_time);
         
-        Json::Value checkpoint = gld.get_checkpoint_json("/mnt/c/dev/gridlab-d_fork/_test_results/");
+    nlohmann::json checkpoint = gld.get_checkpoint_json("/mnt/c/dev/gridlab-d_fork/_test_results/");
     }
     
     // Get all info for GLD
-    Json::Value checkpoint = gld.get_checkpoint_json("/mnt/c/dev/gridlab-d_fork/_test_results/");
+    nlohmann::json checkpoint = gld.get_checkpoint_json("/mnt/c/dev/gridlab-d_fork/_test_results/");
     // OR access it directly
     // gld.get_checkpoint_json();
-    // Json::Value checkpoint = gld.gld_model;
+    // nlohmann::json checkpoint = gld.gld_model; // use nlohmann::json (JsonCpp removed)
 
     // Test exit_gld
     gld.exit_gld(fileName);

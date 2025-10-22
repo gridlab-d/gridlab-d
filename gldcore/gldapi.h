@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 #include <optional>
-#include <json/json.h> //jsoncpp library
+#include <nlohmann/json.hpp>
 #include "platform.h"
 
 // typedefs for GLD data types
@@ -50,7 +50,7 @@ public:
     ~GridLabD() {
         // Cleanup code goes here
     }
-    Json::Value gld_model;
+    nlohmann::json gld_model;
     time_t started_at;
     int64 passes = 0, tsteps = 0;
     // Set the configuration file path
@@ -67,7 +67,7 @@ public:
     GLDErrorCode setup_after_load() ;
 
     // Get the GLM data based on a query, optionally save to filepath
-    Json::Value get_checkpoint_json(const std::string& filepath = "");
+    nlohmann::json get_checkpoint_json(const std::string& filepath = "");
 
     // Set the GLM based on input data
     GLDErrorCode set_glm_data(const GLDData& data);

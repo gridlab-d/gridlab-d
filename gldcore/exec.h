@@ -17,7 +17,7 @@
 #include "globals.h"
 #include "index.h"
 #include "cpp_threadpool.h"
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 
 struct sync_data {
 	TIMESTAMP step_to; /**< time to advance to */
@@ -89,7 +89,7 @@ EXITCODE exec_run_initscripts(void);
 EXITCODE exec_run_syncscripts(void);
 EXITCODE exec_run_termscripts(void);
 void report_performance_after_run(time_t start_time, int64 passes, int64 tsteps);
-Json::Value do_checkpoint(const char* output_directory = nullptr);
+nlohmann::json do_checkpoint(const char* output_directory = nullptr);
 
 //#ifdef __cplusplus
 //}

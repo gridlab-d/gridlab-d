@@ -17,7 +17,7 @@
 #include "local.h"
 #include "exec.h"
 #include "object.h"
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 //#include <module.h>
 //#include <module.h>
 
@@ -308,8 +308,8 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
 }
 
 // Retrieve GLM data based on a query, optionally save to filepath
-Json::Value GridLabD::get_checkpoint_json(const std::string& filepath) {
-    Json::Value checkpoint;
+nlohmann::json GridLabD::get_checkpoint_json(const std::string& filepath) {
+    nlohmann::json checkpoint;
     
     if (filepath.empty()) {
         // If no filepath provided, just return the JSON without saving
@@ -330,7 +330,7 @@ Json::Value GridLabD::get_checkpoint_json(const std::string& filepath) {
     }
     
     // Set the internal gld_model representation to be equal to checkpoint
-    gld_model = Json::Value(checkpoint);
+    gld_model = nlohmann::json(checkpoint);
     
     return checkpoint;
 }
@@ -344,10 +344,10 @@ GLDErrorCode GridLabD::set_glm_data(const GLDData& data) {
 // Save simulation checkpoint
 GLDErrorCode GridLabD::save_checkpoint(const std::string& save_path, GLDCheckPointMode mode) {
     printf("Saving checkpoint to %s with mode %d\n", save_path.c_str(), static_cast<int>(mode));
-    Json::Value checkpoint = do_checkpoint(save_path.c_str()); // Use provided directory
+    nlohmann::json checkpoint = do_checkpoint(save_path.c_str()); // Use provided directory
     
     // Set the internal gld_model representation to be equal to checkpoint
-    gld_model = Json::Value(checkpoint);
+    gld_model = nlohmann::json(checkpoint);
     return GLD_SUCCESS;
 }
 

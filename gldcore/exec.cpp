@@ -124,7 +124,7 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 #include <fstream>
 #include <sstream>
 #include "threadpool.h"
@@ -362,7 +362,7 @@ static bool directory_exists(const char* path) {
 }
 
 // Do Checkpoint
-Json::Value do_checkpoint(const char* output_directory)
+nlohmann::json do_checkpoint(const char* output_directory)
 {
     /* last checkpoint value */
     static TIMESTAMP last_checkpoint = 0;
@@ -393,7 +393,7 @@ Json::Value do_checkpoint(const char* output_directory)
         now = 0;
         break;
     }
-	Json::Value checkpoint;
+	 nlohmann::json checkpoint;
     /* checkpoint may be needed */
     if ( now > 0 )
     {
@@ -437,8 +437,8 @@ Json::Value do_checkpoint(const char* output_directory)
             
             /* check if output directory exists */
             if (!directory_exists(json_dir)) {
-                output_error("directory '%s' does not exist for JSON checkpoint files", json_dir);
-                return Json::Value(); // Return empty JSON value on error
+				output_error("directory '%s' does not exist for JSON checkpoint files", json_dir);
+				return nlohmann::json(); // Return empty JSON value on error
             }
             
             fp = fopen(fn,"w");
@@ -461,17 +461,20 @@ Json::Value do_checkpoint(const char* output_directory)
             {
                 fclose(json_fp); // Close the FILE* since we'll use ofstream
                 
-                // Create JSON structure using JsonCpp
-                // Add preamble
-                checkpoint["__preamble"]["comments"].append("// GridLAB-D checkpoint data export");
-                std::string timestamp_comment = "// Generated at timestamp: " + std::to_string(global_clock);
-                checkpoint["__preamble"]["comments"].append(timestamp_comment);
-                
-                // Add clock info
-                checkpoint["clock"]["timestamp"] = (Json::Int64)global_clock;
-                checkpoint["clock"]["stoptime"] = (Json::Int64)global_stoptime;
-                checkpoint["clock"]["starttime"] = (Json::Int64)global_starttime;
-                checkpoint["clock"]["timezone"] = timestamp_current_timezone();
+				// Create JSON structure using nlohmann::json
+				// Add preamble (ensure comments is an array)
+				if (!checkpoint.contains("__preamble")) checkpoint["__preamble"] = nlohmann::json::object();
+				if (!checkpoint["__preamble"].contains("comments") || !checkpoint["__preamble"]["comments"].is_array())
+					checkpoint["__preamble"]["comments"] = nlohmann::json::array();
+				checkpoint["__preamble"]["comments"].push_back("// GridLAB-D checkpoint data export");
+				std::string timestamp_comment = "// Generated at timestamp: " + std::to_string(global_clock);
+				checkpoint["__preamble"]["comments"].push_back(timestamp_comment);
+
+				// Add clock info (use int64_t for timestamps)
+				checkpoint["clock"]["timestamp"] = static_cast<int64_t>(global_clock);
+				checkpoint["clock"]["stoptime"] = static_cast<int64_t>(global_stoptime);
+				checkpoint["clock"]["starttime"] = static_cast<int64_t>(global_starttime);
+				checkpoint["clock"]["timezone"] = timestamp_current_timezone();
 
                 
                 // First, collect objects by class name
@@ -503,13 +506,13 @@ Json::Value do_checkpoint(const char* output_directory)
 
                 // Build objects section grouped by class
 				int classnameCounter = 0;
-                for (auto& class_pair : objects_by_class)
-                {
-                    Json::Value instances(Json::arrayValue);
+				for (auto& class_pair : objects_by_class)
+				{
+					nlohmann::json instances = nlohmann::json::array();
                     
-                    for (OBJECT* obj : class_pair.second)
-                    {
-                        Json::Value instance;
+					for (OBJECT* obj : class_pair.second)
+					{
+						nlohmann::json instance = nlohmann::json::object();
                         
                         // Add object name if it exists
                         if (obj->name && strlen(obj->name) > 0)
@@ -562,11 +565,11 @@ Json::Value do_checkpoint(const char* output_directory)
                                             instance[pmap->name] = val;
                                         }
                                         break;
-                                    case PT_int64:
-                                        {
-                                            int64 val = strtoll(value_str, nullptr, 10);
-                                            instance[pmap->name] = (Json::Int64)val;
-                                        }
+									case PT_int64:
+										{
+											int64 val = strtoll(value_str, nullptr, 10);
+											instance[pmap->name] = static_cast<int64_t>(val);
+										}
                                         break;
                                     case PT_bool:
                                         {
@@ -574,11 +577,11 @@ Json::Value do_checkpoint(const char* output_directory)
                                             instance[pmap->name] = val;
                                         }
                                         break;
-                                    case PT_timestamp:
-                                        {
-                                            TIMESTAMP val = strtoll(value_str, nullptr, 10);
-                                            instance[pmap->name] = (Json::Int64)val;
-                                        }
+									case PT_timestamp:
+										{
+											TIMESTAMP val = strtoll(value_str, nullptr, 10);
+											instance[pmap->name] = static_cast<int64_t>(val);
+										}
                                         break;
                                     case PT_char8:
                                     case PT_char32:
@@ -596,18 +599,18 @@ Json::Value do_checkpoint(const char* output_directory)
                                         break;
                                     }
                                 }
-                                else
-                                {
-                                    // Property value could not be retrieved, set to null
-                                    instance[pmap->name] = Json::Value::nullSingleton();
-                                }
+								else
+								{
+									// Property value could not be retrieved, set to null
+									instance[pmap->name] = nullptr;
+								}
                             }
                             
                             // Move to parent class
                             current_class = current_class->parent;
                         }
                         
-                        instances.append(instance);
+						instances.push_back(instance);
                     }
                     
                     checkpoint["objects"][class_pair.first]["instances"] = instances;
@@ -617,21 +620,19 @@ Json::Value do_checkpoint(const char* output_directory)
 
                 
                 // Write JSON to file with pretty formatting
-                std::ofstream json_file(json_fn);
-                if (json_file.is_open())
-                {
-                    Json::StreamWriterBuilder builder;
-                    builder["indentation"] = "  "; // 2-space indentation
-                    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
-                    writer->write(checkpoint, &json_file);
-                    json_file.close();
-                    
-                    output_verbose("JSON checkpoint written to '%s'", json_fn);
-                }
-                else
-                {
-                    output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
-                }
+				std::ofstream json_file(json_fn);
+				if (json_file.is_open())
+				{
+					// pretty print with 2-space indentation
+					std::string out = checkpoint.dump(2);
+					json_file << out;
+					json_file.close();
+					output_verbose("JSON checkpoint written to '%s'", json_fn);
+				}
+				else
+				{
+					output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
+				}
 				return checkpoint;
             }
             else if ( json_fp==nullptr )

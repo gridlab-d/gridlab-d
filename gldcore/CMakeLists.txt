@@ -154,8 +154,9 @@ if (XercesC_FOUND)
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${XercesC_LIBRARIES})
 endif ()
 
-target_link_libraries(gldapi PRIVATE nlohmann_json::nlohmann_json)
-target_link_libraries(${GLD_MODULE_NAME} PRIVATE nlohmann_json::nlohmann_json)
+## Ensure nlohmann_json include directories propagate to consumers (e.g., test targets)
+target_link_libraries(gldapi PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(${GLD_MODULE_NAME} PUBLIC nlohmann_json::nlohmann_json)
 target_link_libraries(gldapi PRIVATE ${OS_SPECIFIC_LIBRARIES})
 
 target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
