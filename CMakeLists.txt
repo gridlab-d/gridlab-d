@@ -1,11 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
-# Set default build type to Debug if not specified
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build: Debug Release RelWithDebInfo MinSizeRel" FORCE)
-endif()
-
 include(cmake/Warnings.cmake)
 OPTION(GLD_EXTRA_WARNINGS "Make warnings more pedantic" OFF)
 if (GLD_EXTRA_WARNINGS)
