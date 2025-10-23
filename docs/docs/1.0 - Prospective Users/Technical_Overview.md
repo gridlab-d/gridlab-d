@@ -32,7 +32,7 @@ The following power distribution system components are implemented and available
   * Switches
   * Shunt capacitor banks
 
-# Thermal Modelling - Buildings
+# Thermal Modeling - Buildings
 
 Commercial and residential buildings are implemented using the Equivalent Thermal Parameters model. These are differential models solved for both time as a function of state and state as a function of time. Currently implemented residential end-uses are: 
 
@@ -57,15 +57,15 @@ Today's power systems simulation tools don't provide the analysis capabilities n
 
 Multiple differentiated energy products based on new rate structure offerings to consumers is very attractive to utilities because it creates the opportunity to reveal demand elasticity and gives utilities the ability to balance supplier market power in the wholesale markets. The challenge is designing rate structures that are both profitable and attractive to consumers. GridLAB-D™ will provide the ability to model consumer choice behavior in response to multiple rate offerings (including fixed rates, demand rates, time-of-day rates, and real-time rates) to determine whether a suite of rate offerings is likely to succeed. 
 
-## Physical and Economic Boundary Conditions - Distributed resources
+## Physical and Economic Boundary Conditions - Distributed Resources
 
 The advent of new distributed energy resource (DER) technologies, such as on-site distributed generation, BCHP and Grid-Friendly™ appliance controls creates a number of technology opportunities and challenges. GridLAB-D™ will permit utility managers to better evaluate the cost/benefit trade-off between infrastructure expansion investments and distributed resources investments by including the other economic benefits of DER (e.g., increase wholesale purchasing elasticity, improved reliability metrics, ancillary services products to sell in wholesale markets). 
 
-## Peak load management
+## Peak Load Management
 
 Many peak-shaving programs and emergency curtailment programs have failed to deliver the expected benefits. GridLAB-D™ can be calibrated to observe consumer behavior to understand its interaction with various peak shaving strategies. The impact of consumer satisfaction on the available of peak-shaving resources can be evaluated and a more accurate forecast of the true available resources can be determined. GridLAB-D™ will even be able to evaluate the consumer rebound effect following one or more curtailment or load-shed events in a single day. 
 
-## Distribution automation design
+## Distribution Automation Design
 
 GridLAB-D™ can support some aspects of the design and analysis of distribution automation technology, allowing utilities to offer heterogeneous reliability within the same system but managing power closer to the point of use. 
 

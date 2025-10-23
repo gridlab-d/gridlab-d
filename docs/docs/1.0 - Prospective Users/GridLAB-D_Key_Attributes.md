@@ -40,4 +40,3 @@ For example, in GridLAB-D™ there are classes that define the operation of capa
 * “Module” - A collection of related classes typically defined in the same source code file. Modules will often need to be explicitly included in a model file to give GridLAB-D™ access to their functionality.
 
 When looking at a GridLAB-D™ model file (“.glm”), almost all the text in the file is devoted to defining objects. All of these objects are specific instances of classes (models) and their parameter definitions and relationships between each other constitute the system as a whole that is being modeled.
-
