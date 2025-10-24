@@ -129,8 +129,9 @@ def glm_to_json(glmName="TE_CHALLENGE"):
                 # Extract the single instance and ensure numeric conversion in its values
                 single = next(iter(inst_dict.values()), {})
                 modules[mtype] = try_conversion(single)
-                #check if there are conditionals and add them
-                if entity._conditionals:
+                # Add entity-level conditionals only if instance doesn't already have them
+                # (instance-level conditionals are more accurate after merging)
+                if entity._conditionals and '_conditionals' not in modules[mtype]:
                     modules[mtype]["_conditionals"] = entity._conditionals
 
         # Separate 'clock' as its own top-level entity
