@@ -1042,7 +1042,7 @@ int validate(int argc, char *argv[])
 
 	// Use a vector to store threads
 	std::vector<std::thread> threads;
-
+	n_procs = global_threadcount;
 	// Debug message: starting validation
 	std::cout << "Starting validation with cmdargs '" << validate_cmdargs << "' using "
 			  << n_procs << " threads." << std::endl;
