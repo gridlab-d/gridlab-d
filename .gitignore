@@ -24,6 +24,8 @@ gridlabd
 gldcore/gridlabd.sh
 .pydevproject
 .idea
+utilities/json_schema/glmFiles/
+utilities/json_schema/output/
 
 # Prerequisites
 *.d
