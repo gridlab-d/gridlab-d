@@ -34,6 +34,7 @@ public:
     void loadClock();
 
     bool module_properties(MODULE *mod);
+    string module_ifdirectives(json directives);
     bool module_conditionals();
     void loadModules();
     void loadObjects();
