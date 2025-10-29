@@ -1,7 +1,4 @@
-# Spec:sec control
-TODO: SPECIFICATION *** WORKING DRAFT ***   
-
-## Overview
+# Sec control
 
 The secondary controller object has a structure illustrated in Figure 1, and is very similar to textbook examples like Figure 2. 
 

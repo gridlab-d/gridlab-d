@@ -18,7 +18,7 @@
     file (or delete if not kept) 
 - [ ] Definitive installation instructions
     - [x] add the "easy" or "light" executable install option
-- [ ] MySQL instructions - keep? If so, most content is unfinished. Needs robust introduction explaining what it is and why it is useful.
+- [X] MySQL instructions - DEPRECATE/Unimplemented? If so, most content is unfinished. Needs robust introduction explaining what it is and why it is useful.
     - propose to Dev team to get rid of MySQL integration in leiu of python interface with new api (same for Matlab, HELICS, any other external integration)
 
 ### Docs Questions
@@ -28,7 +28,7 @@
 
 # 3.0 Modeling
 ### Dev Questions
-- [ ] XML files. Still supported? Keep documentation?
+- [X] XML files. Still supported? Keep documentation? --> remove ref, "soft keep", switch to JSON as default
 - [ ] Talk with dev team to build out the built-in documentation within the code itself
 - [ ] MySQL player and recorder - keep? If so, needs better intro.
 
@@ -65,6 +65,9 @@
     * Running validation scripts – Something that post-processes results and looks for modeling abnormalities
  
 # 4.0 Developing
+
+**Purpose**: part walkthrough, part dictionary/reference
+
 ### Dev Questions
 - [ ] Waiting on development to document
   - [ ] 4.3.7 loader
@@ -98,7 +101,7 @@
 
 - [ ] Spec pages: planning document written pre-implementation -- is it actually implemented?
 - [ ] Missing or needing updated: style guide
-- [ ] Missing or needing updated: comprehensive developer API reference
+- [ ] **Missing or needing updated: comprehensive developer API reference**
 - [ ] Missing or needing updated: code templates (maybe just delete?)
 - [ ] Missing or needing updated: disccusion of the various stages of object model update (pre-commit, commit, pre-sync, sync...)
 

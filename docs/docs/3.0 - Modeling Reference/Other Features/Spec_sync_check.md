@@ -1,46 +1,17 @@
-# Spec:sync check
-
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:sync_check
-# Spec:sync check
-
-Approval item:  When approved remove this tag. 
-
-## Contents
-
-  * 1 Overview
-  * 2 Published properties (i.e., GLM inputs)
-  * 3 Variable definitions
-  * 4 Methodology
-    * 4.1 Quasi-Steady State Time Series (QSTS)
-    * 4.2 Deltamode
-  * 5 Validation
-  * 6 See also
-# 
-
-Overview
+# Sync Check
 
 The synchronization check capability in GridLAB-D™ will be implemented to perform paralleling for two independent power grids. This could be used to parallel two separate power systems, or to reconnect a microgrid to the bulk power system. In the simulation, the frequency and voltage metrics are checked. When conditions are satisfied, the [sync_check] object sends a closure command to its parent [switch_object]. 
 
-# 
-
-Published properties (i.e., GLM inputs)
+# Published properties (i.e., GLM inputs)
 
 The mapping between the properties and variables is listed in Table 1. The [sync_check] object will inherit all standard [Object_(directive)] values as well. The variable definitions are presented in Table 2 of the next section ["Variable definitions"]. Note that the properties listed here represent two different modes for calculating the from/to voltage conditions - `MAG_DIFF` and `SEP_DIFF`. Notes are included as to which property is used for which mode. 
 
-Table 1 - Mapping between Properties and Variables  Property  | Mapped Variable  | Data Type  | Descriptions   
+Table 1 - Mapping between Properties and Variables  
+
+Property  | Mapped Variable  | Data Type  | Descriptions   
 ---|---|---|---  
-armed  | sc_flag  | Boolean  | Turns on/off the action functionality 
-
-  * `True` \- This object is functional
-  * `False` \- This object is disabled
-
-  
-volt_compare_mode  | volt_compare_mode  | Enumeration  | Determines which voltage difference calculation approach is used. This determines how the difference between `from` and `to` node voltages are compared. Two entries are supported: 
-
-  * `MAG_DIFF` \- consider only the magnitude of the overall complex difference between the from and to voltage. e.g., abs(F-T). This is the default mode.
-  * `SEP_DIFF` \- consider the difference of voltage magnitude and difference of voltage angle separately. e.g., abs(|F|-|T|) and abs(angle(F)-angle(T)).
-
-  
+armed  | sc_flag  | Boolean  | Turns on/off the action functionality <br/> * `True` \- This object is functional <br/> * `False` \- This object is disabled 
+volt_compare_mode  | volt_compare_mode  | Enumeration  | Determines which voltage difference calculation approach is used. This determines how the difference between `from` and `to` node voltages are compared. Two entries are supported: <br/> * `MAG_DIFF` \- consider only the magnitude of the overall complex difference between the from and to voltage. e.g., abs(F-T). This is the default mode. <br/> * `SEP_DIFF` \- consider the difference of voltage magnitude and difference of voltage angle separately. e.g., abs(|F|-|T|) and abs(angle(F)-angle(T)). 
 frequency_tolerance  | eps_freq  | Double  | The user-specified tolerance in Hz for checking the frequency metric. Used by both `volt_compare_mode` types.   
 voltage_tolerance  | eps_volt  | Double  | The user-specified tolerance in per unit for checking the voltage metric. Used only by the `MAG_DIFF` mode of `volt_compare_mode`.   
 voltage_magnitude_tolerance  | eps_mag_volt  | Double  | The user-specified tolerance in per unit for the difference in voltage magnitudes for checking the voltage metric. Used only by the `SEP_DIFF` mode of `volt_compare_mode`.   
@@ -83,33 +54,18 @@ Using the difference of the voltage magnitudes and angles separately:
     }
     
 
-# 
-
-Variable definitions
+# Variable definitions
 
 Variables of the [sync_check] functionality are defined as follows: 
 
-Table 2 - Variable Definitions  Variable  | Data Type  | Unit  | Definition   
+Table 2 - Variable Definitions  
+
+Variable  | Data Type  | Unit  | Definition   
 ---|---|---|---  
 Flag   
-sc_flag  | Boolean  | N/A  | Turns on/off the action functionality 
-
-  * `True` \- This object is functional
-  * `False` \- This object is disabled
-
-  
-volt_compare_mode  | Enumeration  | N/A  | Determines the algorithm to use for comparing the voltages of the `from` and `to` nodes of the `switch_object`
-
-  * `MAG_DIFF` \- Use only the magnitude of the difference - e.g., abs(F-T)
-  * `SEP_DIFF` \- Use the difference of the magnitude and angle separately - e.g., abs(|F|-|T|) and abs(angle(F)-angle(T))
-
-  
-swt_status  | Enumeration  | N/A  | Status of the parent switch object. Valid states are: 
-
-  * `OPEN` \- Its parent `switch object` is open and no current can flow
-  * `CLOSED` \- Its parent `switch object` is closed and conducting
-
-  
+sc_flag  | Boolean  | N/A  | Turns on/off the action functionality <br/> * `True` \- This object is functional <br/> * `False` \- This object is disabled
+volt_compare_mode  | Enumeration  | N/A  | Determines the algorithm to use for comparing the voltages of the `from` and `to` nodes of the `switch_object` <br/> * `MAG_DIFF` \- Use only the magnitude of the difference - e.g., abs(F-T) <br/> * `SEP_DIFF` \- Use the difference of the magnitude and angle separately - e.g., abs(|F|-|T|) and abs(angle(F)-angle(T)) 
+swt_status  | Enumeration  | N/A  | Status of the parent switch object. Valid states are: <br/> * `OPEN` \- Its parent `switch object` is open and no current can flow <br/> * `CLOSED` \- Its parent `switch object` is closed and conducting  
 Voltage   
 volt_m1  | Complex  | V  | The voltage phasor measured at the 'from' node of its parent switch   
 volt_m2  | Complex  | V  | The voltage phasor measured at the 'to' node of its parent switch   
@@ -135,9 +91,7 @@ Timer
 t_sat  | Double  | sec  | The total period (initialized as 0) during which both metrics have been satisfied continuously   
 dt_dm  | Double  | sec  | Current deltamode timestep   
   
-# 
-
-Methodology
+# Methodology
 
 ### Quasi-Steady State Time Series (QSTS)
 
@@ -147,51 +101,11 @@ In QSTS mode, the sync_check object will check current voltage and frequency met
 
 Paralleling will only occur when the grid-alignment conditions are met. While the voltage and frequency metrics are within the multiple of `deltamode_trigger_mult` and the appropriate tolerances, deltamode will continue to be requested (`SM_DELTA`). e.g., if in `MAG_DIFF` mode, the sync_check is armed, and the magnitude of the voltage difference is less than `deltamode_trigger_mult` * `eps_volt`, a request to stay in deltamode will be sent. 
 
-The pseudocode of the sync_check method is shown as follows. It is run in each step of the deltamode. 
-    
-    
-    **algorithm** [sync_check] **is**
-        **input:** _freq_m1_ , _freq_m2_ , _volt_m1_ , _volt_m2_ 
-        **output:** Flag _swt_cmd_ such that _swt_cmd_ is true for sending the closure command, false for monitoring
-        _freq_diff_ ← abs(_freq_m1_ - _freq_m2_)
-        
-        **if** (_volt_comare_mode_ == _MAG_DIFF_) **do**
-             _volt_diff_ ← abs(_volt_m1_ - _volt_m2_)
-             _volt_diff_pu_ ← _volt_diff_ /_volt_norm_
-             
-             **if** (_freq_diff_pu_ <= _eps_freq_) **and** (_volt_diff_pu_ <= _eps_volt_) **do**
-                  _t_sat_ ← _t_sat_ + _dt_dm_
-             **else** **do**
-                  _t_sat_ ← 0
-             
-        **else** **do**
-             _volt_diff_mag_ ← abs(abs(_volt_m1_) - abs(_volt_m2_))
-             _volt_diff_mag_pu_ ← _volt_diff_mag_ /_volt_norm_
-             
-             _volt_diff_ang_ ← abs(angle(_volt_m1_) - angle(_volt_m2_))
-             
-             **if** (_freq_diff_pu_ <= _eps_freq_) **and** (_volt_diff_mag_pu_ <= _eps_mag_volt_) **and** (_volt_diff_ang_ <= _eps_ang_volt_) **do**
-                  _t_sat_ ← _t_sat_ + _dt_dm_
-             **else** **do**
-                  _t_sat_ ← 0
-             
-        **if** (_t_sat_ >= _t_ud_) **do**
-             _swt_cmd_ ← **true**
-        **else** **do**
-             _swt_cmd_ ← **false**
-    
-        **return** _swt_cmd_
-    
-
-# 
-
-Validation
+# Validation
 
 This subsection provides an outline on how the [sync_check] object will be tested to ensure its functionality. The current plan is to use two 4-node test systems interconnected through a [sync_check] object, which is open initially. The frequency and voltage values measured at the 'from' and 'to' nodes of the [sync_check] object are initialized in different values. The deviations must be larger than the user defined tolerances. The frequency and voltage of the 'from' node of its parent [switch] object are manipulated by a player towards the measurements of the 'to' node. Once the deviations are both within the tolerance longer than the user defined period, a 'closure' command should be sent to close its parent [switch] object. This sample use case will be included in the autotest for the [sync_check] object. 
 
-# 
-
-See also
+# See also
 
   * [Requirements]
   * [Implementation]

@@ -1,22 +1,7 @@
 # Spec:Subsecond
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:Subsecond
-Approval item:  SPECIFICATION [Grizzly (Version 2.3)]
+TODO - Simplify - Simplify this for integration with deltamode docs
 
-## Contents
-
-  * 1 Specifications
-    * 1.1 S1
-    * 1.2 S2
-    * 1.3 S3
-    * 1.4 S4
-    * 1.5 S5
-    * 1.6 S6
-    * 1.7 S7
-    * 1.8 S8
-  * 2 Test plan
-    * 2.1 See also
-  
 This document provides the specifications for the subsecond simulation capability for GridLAB-D™. 
 
 # Specifications
