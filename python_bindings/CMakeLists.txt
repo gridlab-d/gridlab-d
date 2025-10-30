@@ -20,18 +20,13 @@ if(NOT EXISTS ${GRIDLABD_LIB_DIR}/libgldapi.so)
     message(FATAL_ERROR "GridLAB-D API library not found at ${GRIDLABD_LIB_DIR}/libgldapi.so. Please build GridLAB-D first.")
 endif()
 
-# Check if jsoncpp library exists
-if(NOT EXISTS ${GRIDLABD_LIB_DIR}/static/libjsoncpp.a)
-    message(FATAL_ERROR "jsoncpp library not found at ${GRIDLABD_LIB_DIR}/static/libjsoncpp.a. Please build GridLAB-D first.")
-endif()
-
-# Create the Python module with GridLAB-D integration
+# Create the Python module
 nanobind_add_module(
     gridlabd_core
     src_cpp/gld_nanobind.cpp
 )
 
-# Add include directories for GridLAB-D headers
+# Add include directories
 target_include_directories(gridlabd_core PRIVATE 
     ${GRIDLABD_INCLUDE_DIR}
     ${GRIDLABD_ROOT}/third_party
@@ -44,10 +39,37 @@ target_link_libraries(gridlabd_core PRIVATE
     ${GRIDLABD_LIB_DIR}/static/libjsoncpp.a
 )
 
+# Set RPATH for the module to find the shared library
+set_target_properties(gridlabd_core PROPERTIES
+    INSTALL_RPATH_USE_LINK_PATH FALSE
+    INSTALL_RPATH "\$ORIGIN"
+    BUILD_WITH_INSTALL_RPATH TRUE
+)
+
 # Set module properties
 target_compile_definitions(gridlabd_core PRIVATE VERSION_INFO=${SKBUILD_PROJECT_VERSION})
 
-# Install the module to the gridlabd package directory
+# Install the module and the shared library to the same directory
 install(TARGETS gridlabd_core
     LIBRARY DESTINATION gridlabd
     RUNTIME DESTINATION gridlabd)
+
+# Install the shared library alongside the module
+install(FILES ${GRIDLABD_LIB_DIR}/libgldapi.so
+        DESTINATION gridlabd)
+
+# Create bundle directories
+install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/gridlabd_bundle/bin)")
+install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/gridlabd_bundle/lib)")
+
+# Install additional libraries to bundle
+set(ADDITIONAL_LIBS
+    libgldcore.so
+)
+
+foreach(lib ${ADDITIONAL_LIBS})
+    if(EXISTS "${GRIDLABD_LIB_DIR}/${lib}")
+        install(FILES "${GRIDLABD_LIB_DIR}/${lib}"
+                DESTINATION gridlabd_bundle/lib)
+    endif()
+endforeach()

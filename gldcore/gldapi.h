@@ -50,12 +50,23 @@ public:
         // Cleanup code goes here
     }
 
+    // Explicitly set the GridLAB-D installation root (directory or executable)
+    static void set_install_root(const std::string& install_root);
+
+    // Retrieve the resolved installation root directory
+    static std::string get_install_root();
+
+    // Retrieve the resolved GridLAB-D executable path
+    static std::string get_executable_path();
+
     // Set the configuration file path
     GLDErrorCode set_config_file(const std::string& config_file);
 
-
     // Load a GLM and return an error code
     GLDErrorCode load_glm(int argc, char* argv[]);
+
+    // Load a GLM from a file path
+    GLDErrorCode load_glm(const std::string& filepath);
 
     // Setup GLD and return an error code
     //GLDErrorCode setup_before_load(const std::string& filepath) ;

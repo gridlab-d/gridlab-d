@@ -20,8 +20,183 @@
 //#include <module.h>
 //#include <module.h>
 
+#include <array>
+#include <cstdlib>
+#include <cstring>
+#include <filesystem>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <system_error>
+#include <vector>
+
 namespace fs = std::filesystem;
 
+fs::path findExecutable_x(const std::string &name, const std::string &execName, const std::string &pathString);
+
+namespace {
+
+std::optional<fs::path> g_install_root_override;
+std::optional<fs::path> g_executable_override;
+
+fs::path weakly_canonical_or_self(const fs::path& candidate) {
+    std::error_code ec;
+    auto canonical = fs::weakly_canonical(candidate, ec);
+    return ec ? candidate : canonical;
+}
+
+fs::path locate_exec_from_root(const fs::path& root) {
+    const std::array<fs::path, 4> candidates = {
+        root / "bin" / "gridlabd",
+        root / "bin" / "gridlabd.exe",
+        root / "gridlabd",
+        root / "gridlabd.exe"
+    };
+    for (const auto& candidate : candidates) {
+        if (!candidate.empty() && fs::exists(candidate)) {
+            return weakly_canonical_or_self(candidate);
+        }
+    }
+    return {};
+}
+
+fs::path discover_executable() {
+    if (g_executable_override) {
+        return weakly_canonical_or_self(*g_executable_override);
+    }
+    if (g_install_root_override) {
+        auto candidate = locate_exec_from_root(*g_install_root_override);
+        if (!candidate.empty()) {
+            return candidate;
+        }
+    }
+    if (const char* env_exec = std::getenv("GRIDLABD_EXECUTABLE")) {
+        fs::path candidate(env_exec);
+        if (fs::exists(candidate)) {
+            return weakly_canonical_or_self(candidate);
+        }
+    }
+    if (const char* env_root = std::getenv("GRIDLABD_ROOT")) {
+        auto candidate = locate_exec_from_root(fs::path(env_root));
+        if (!candidate.empty()) {
+            return candidate;
+        }
+    }
+    const char* path_env = std::getenv("PATH");
+    std::string path_string = path_env ? path_env : std::string();
+    fs::path exec = findExecutable_x("gridlabd", "gridlabd", path_string);
+    return weakly_canonical_or_self(exec);
+}
+
+void apply_runtime_paths(const fs::path& exec_path) {
+    fs::path exec = weakly_canonical_or_self(exec_path);
+    fs::path bin_dir = exec.parent_path();
+    fs::path root = bin_dir.parent_path();
+    if (root.empty()) {
+        root = bin_dir;
+    }
+
+    global_gl_executable = exec;
+    global_gl_bin = bin_dir;
+    global_gl_share = root / "share";
+    global_gl_include = root / "include";
+    global_gl_lib = root / "lib";
+
+    std::vector<std::string> segments;
+    if (const char* env_glpath = std::getenv("GLPATH")) {
+        if (*env_glpath != '\0') {
+            segments.emplace_back(env_glpath);
+        }
+    }
+    for (const auto& p : {global_gl_lib, global_gl_share, global_gl_include, global_gl_bin}) {
+        std::string s = p.string();
+        if (!s.empty()) {
+            segments.emplace_back(s);
+        }
+    }
+
+    std::string combined;
+    for (size_t i = 0; i < segments.size(); ++i) {
+        if (i > 0) combined += env_delim;
+        combined += segments[i];
+    }
+    global_gl_path = combined;
+
+    std::string exec_str = exec.string();
+    strncpy(global_execname, exec_str.c_str(), sizeof(global_execname) - 1);
+    global_execname[sizeof(global_execname) - 1] = '\0';
+
+    std::string exec_dir_str = bin_dir.string();
+    strncpy(global_execdir, exec_dir_str.c_str(), sizeof(global_execdir) - 1);
+    global_execdir[sizeof(global_execdir) - 1] = '\0';
+}
+
+void initialize_runtime_paths(bool force = false) {
+    static bool initialized = false;
+    if (!force && initialized) {
+        return;
+    }
+    fs::path exec = discover_executable();
+    apply_runtime_paths(exec);
+    initialized = true;
+}
+
+} // namespace
+
+void GridLabD::set_install_root(const std::string& install_root) {
+    if (install_root.empty()) {
+        g_install_root_override.reset();
+        g_executable_override.reset();
+        initialize_runtime_paths(true);
+        return;
+    }
+
+    fs::path candidate(install_root);
+    fs::path resolved = weakly_canonical_or_self(candidate);
+    std::error_code ec;
+    if (fs::exists(resolved, ec)) {
+        if (fs::is_regular_file(resolved, ec)) {
+            g_executable_override = resolved;
+            fs::path bin_dir = resolved.parent_path();
+            fs::path root_dir = bin_dir.parent_path();
+            if (root_dir.empty()) {
+                root_dir = bin_dir;
+            }
+            g_install_root_override = weakly_canonical_or_self(root_dir);
+        } else if (fs::is_directory(resolved, ec)) {
+            g_install_root_override = resolved;
+            g_executable_override.reset();
+        } else {
+            g_install_root_override = resolved;
+            g_executable_override.reset();
+        }
+    } else {
+        g_install_root_override = resolved;
+        g_executable_override.reset();
+    }
+
+    initialize_runtime_paths(true);
+}
+
+std::string GridLabD::get_install_root() {
+    initialize_runtime_paths();
+    if (global_gl_bin.empty()) {
+        return std::string();
+    }
+    fs::path root = global_gl_bin.parent_path();
+    if (root.empty()) {
+        root = global_gl_bin;
+    }
+    return weakly_canonical_or_self(root).string();
+}
+
+std::string GridLabD::get_executable_path() {
+    initialize_runtime_paths();
+    if (global_gl_executable.empty()) {
+        return std::string();
+    }
+    return weakly_canonical_or_self(global_gl_executable).string();
+}
 
 std::vector<std::string> split_path_x(const std::string& path, char sep){
     std::vector<std::string> tokens;
@@ -73,23 +248,12 @@ findExecutable_x(const std::string &name, const std::string &execName, const std
 
  // constructor
 GridLabD::GridLabD() {
-    // Initialization code goes here
-        char *pd1, *pd2;
-    int i, pos = 0;
-
-    std::string exec_name = "gridlabd";
-    global_gl_executable = findExecutable_x("gridlabd", exec_name, getenv("PATH"));
-    auto root_path = global_gl_executable.parent_path().parent_path();
-    global_gl_share = root_path / "share";
-    global_gl_include = root_path / "include";
-    global_gl_lib = root_path / "lib";
-    global_gl_bin = root_path / "bin";
-
-    global_gl_path = std::string((getenv("GLPATH") != nullptr ? std::string(getenv("GLPATH")) + env_delim : "") +
-                                 global_gl_lib.string() + env_delim +
-                                 global_gl_share.string() + env_delim +
-                                 global_gl_include.string() + env_delim +
-                                 global_gl_bin.string());
+    try {
+        initialize_runtime_paths();
+    } catch (const std::exception& ex) {
+        fprintf(stderr, "GridLAB-D initialization failed: %s\n", ex.what());
+        throw;
+    }
 
     char *browser = getenv("GLBROWSER");
 
@@ -115,18 +279,12 @@ GridLabD::GridLabD() {
     atexit(kill_stophandler);
 #endif
 
-    /* capture the execdir */
-    strcpy(global_execname, exec_name.c_str());
-    strcpy(global_execdir, exec_name.c_str());
-    pd1 = strrchr(global_execdir, '/');
-    pd2 = strrchr(global_execdir, '\\');
-    if (pd1 > pd2) *pd1 = '\0';
-    else if (pd2 > pd1) *pd2 = '\0';
-
     /* determine current working directory */
-    char *result = getcwd(global_workdir, 1024);
+    if (!getcwd(global_workdir, 1024)) {
+        global_workdir[0] = 0;
+    }
 
-    if(setup_before_load() == GLD_OPERATION_FAILED)
+    if (setup_before_load() == GLD_OPERATION_FAILED)
     {
         exit(XC_INIERR);
     }
@@ -137,6 +295,8 @@ GridLabD::GridLabD() {
     /* setup the random number generator */
     random_init();
 }
+
+
 
 // Set configuration file
 GLDErrorCode GridLabD::set_config_file(const std::string& config_file) {
@@ -161,6 +321,29 @@ GLDErrorCode GridLabD::load_glm(int argc, char* argv[]) {
     setup_after_load();
 
     return GLD_SUCCESS;
+}
+
+GLDErrorCode GridLabD::load_glm(const std::string& filepath) {
+    if (filepath.empty()) {
+        return GLD_INVALID_FORMAT;
+    }
+
+    fs::path glm_path(filepath);
+    if (!fs::exists(glm_path)) {
+        return GLD_FILE_NOT_FOUND;
+    }
+
+    std::vector<std::string> argument_storage;
+    argument_storage.emplace_back("gridlabd");
+    argument_storage.emplace_back(glm_path.string());
+
+    std::vector<char*> argv;
+    argv.reserve(argument_storage.size());
+    for (auto& arg : argument_storage) {
+        argv.push_back(arg.data());
+    }
+
+    return load_glm(static_cast<int>(argv.size()), argv.data());
 }
 
 void set_clocks(std::optional<double> start_time, std::optional<double> stop_time) {
