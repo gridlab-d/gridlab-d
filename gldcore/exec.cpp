@@ -430,7 +430,7 @@ Json::Value do_checkpoint(const char* output_directory)
             sprintf(fn,"%s.%d",global_checkpoint_file,global_checkpoint_seqnum);
             
             /* set default output directory if none provided or empty string */
-            const char* json_dir = (output_directory && strlen(output_directory) > 0) ? output_directory : "../../_test_results";
+            const char* json_dir = (output_directory && strlen(output_directory) > 0) ? output_directory : "./";
             sprintf(json_fn,"%s/%s.%d.json", json_dir, global_checkpoint_file, global_checkpoint_seqnum++);
             
             /* check if output directory exists */

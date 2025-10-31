@@ -62,6 +62,9 @@ public:
     // Set the configuration file path
     GLDErrorCode set_config_file(const std::string& config_file);
 
+    // Set working directory (for resolving relative paths in GLM files)
+    GLDErrorCode set_working_directory(const std::string& dir);
+
     // Load a GLM and return an error code
     GLDErrorCode load_glm(int argc, char* argv[]);
 

@@ -11,7 +11,7 @@ find_package(nanobind CONFIG REQUIRED)
 
 # Find and link GridLAB-D libraries
 set(GRIDLABD_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)
-set(GRIDLABD_LIB_DIR ${GRIDLABD_ROOT}/cmake-build/lib)
+set(GRIDLABD_LIB_DIR ${GRIDLABD_ROOT}/build/lib)
 set(GRIDLABD_INCLUDE_DIR ${GRIDLABD_ROOT}/gldcore)
 set(JSONCPP_INCLUDE_DIR ${GRIDLABD_ROOT}/third_party/jsoncpp_lib/include)
 
@@ -58,18 +58,26 @@ install(TARGETS gridlabd_core
 install(FILES ${GRIDLABD_LIB_DIR}/libgldapi.so
         DESTINATION gridlabd)
 
-# Create bundle directories
-install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/gridlabd_bundle/bin)")
-install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/gridlabd_bundle/lib)")
-
-# Install additional libraries to bundle
-set(ADDITIONAL_LIBS
-    libgldcore.so
+# Install essential data files (tzinfo.txt, unitfile.txt) alongside the Python package
+set(GRIDLABD_DATA_FILES
+    ${GRIDLABD_ROOT}/gldcore/tzinfo.txt
+    ${GRIDLABD_ROOT}/gldcore/unitfile.txt
 )
 
-foreach(lib ${ADDITIONAL_LIBS})
-    if(EXISTS "${GRIDLABD_LIB_DIR}/${lib}")
-        install(FILES "${GRIDLABD_LIB_DIR}/${lib}"
-                DESTINATION gridlabd_bundle/lib)
-    endif()
-endforeach()
+install(FILES ${GRIDLABD_DATA_FILES}
+        DESTINATION gridlabd/share)
+
+# Install all GridLAB-D module libraries (.so files) so users can load modules
+# These are needed for simulations (residential, climate, powerflow, etc.)
+file(GLOB GRIDLABD_MODULES "${GRIDLABD_LIB_DIR}/*.so")
+if(GRIDLABD_MODULES)
+    install(FILES ${GRIDLABD_MODULES}
+            DESTINATION gridlabd/lib)
+endif()
+
+# Also create a modules directory as an alias (GridLAB-D may look in multiple places)
+install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/gridlabd/lib)")
+
+# Create bundle directories (for future use)
+install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/gridlabd_bundle/bin)")
+install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/gridlabd_bundle/lib)")

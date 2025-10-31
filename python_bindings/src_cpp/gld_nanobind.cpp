@@ -35,13 +35,6 @@ GLDErrorCode load_glm_with_arguments(GridLabD& instance, const std::vector<std::
     return instance.load_glm(static_cast<int>(argv.size()), argv.data());
 }
 
-nb::dict runtime_info() {
-    nb::dict info;
-    info["install_root"] = GridLabD::get_install_root();
-    info["executable_path"] = GridLabD::get_executable_path();
-    return info;
-}
-
 } // namespace
 
 NB_MODULE(gridlabd_core, m) {
@@ -50,20 +43,6 @@ NB_MODULE(gridlabd_core, m) {
     m.def("hello", []() {
         return "Hello from GridLAB-D Python bindings!";
     }, "Quick sanity check helper");
-
-    m.def("set_install_root", [](std::optional<std::string> install_root) {
-        GridLabD::set_install_root(install_root.value_or(std::string()));
-    }, nb::arg("install_root") = nb::none(), "Override the GridLAB-D installation root or executable path");
-
-    m.def("get_install_root", []() {
-        return GridLabD::get_install_root();
-    }, "Resolved GridLAB-D installation root");
-
-    m.def("get_executable_path", []() {
-        return GridLabD::get_executable_path();
-    }, "Resolved GridLAB-D executable path");
-
-    m.def("runtime_info", runtime_info, "Return runtime path information as a dictionary");
 
     nb::enum_<GLDErrorCode>(m, "GLDErrorCode")
         .value("SUCCESS", GLD_SUCCESS)
@@ -89,20 +68,19 @@ NB_MODULE(gridlabd_core, m) {
 
     nb::class_<GridLabD>(m, "GridLabD")
         .def(nb::init<>(), "Create a GridLAB-D runtime instance")
-        .def_static("set_install_root", [](std::optional<std::string> install_root) {
-            GridLabD::set_install_root(install_root.value_or(std::string()));
-        }, nb::arg("install_root") = nb::none(), "Override the GridLAB-D installation root or executable path")
-        .def_static("get_install_root", &GridLabD::get_install_root, "Resolved GridLAB-D installation root")
-        .def_static("get_executable_path", &GridLabD::get_executable_path, "Resolved GridLAB-D executable path")
+        .def_static("set_install_root", &GridLabD::set_install_root, nb::arg("install_root"), 
+                   "Set the GridLAB-D installation root directory (should contain share/ with tzinfo.txt)")
+        .def_static("get_install_root", &GridLabD::get_install_root, "Get the GridLAB-D installation root directory")
+        .def_static("get_executable_path", &GridLabD::get_executable_path, "Get the GridLAB-D executable path")
         .def("set_config_file", &GridLabD::set_config_file, nb::arg("config_file"), "Set the configuration file path")
+        .def("set_working_directory", &GridLabD::set_working_directory, nb::arg("dir"), 
+             "Set working directory for resolving relative paths in GLM files")
         .def("setup_before_load", &GridLabD::setup_before_load, "Initialise modules prior to loading a model")
         .def("setup_after_load", &GridLabD::setup_after_load, "Finalise setup after model loading")
-        .def("load_glm", [](GridLabD& self, const std::string& filepath) {
-            return self.load_glm(filepath);
-        }, nb::arg("filepath"), "Load a GridLAB-D model (.glm) file")
-        .def("load_glm_with_arguments", [](GridLabD& self, const std::vector<std::string>& arguments) {
+        .def("load_glm", [](GridLabD& self, const std::vector<std::string>& arguments) {
             return load_glm_with_arguments(self, arguments);
-        }, nb::arg("arguments"), "Load a model using argv-style arguments")
+        }, nb::arg("arguments"), "Load a model using argv-style arguments (list of strings)")
+        .def("run_test", &GridLabD::run, "Run the simulation")
         .def("run", [](GridLabD& self, std::optional<double> start_time, std::optional<double> stop_time) {
             return self.run(start_time, stop_time);
         }, nb::arg("start_time") = nb::none(), nb::arg("stop_time") = nb::none(), "Run the simulation optionally bounding time interval")
