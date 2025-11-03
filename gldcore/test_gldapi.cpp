@@ -32,7 +32,6 @@ T safeGetValue(const Json::Value& value, const T& defaultValue) {
 
 int main(int argc, char* argv[]) {
     const char* fileName = "test_HVAC_balance.glm";
-    // Instantiate GridLabD via exectuable path
     GridLabD gld;
 
     // Test set_config_file

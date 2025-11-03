@@ -20,7 +20,7 @@ build-aux/install-sh
 build-aux/ltmain.sh
 build-aux/missing
 gldcore/stamp-h1
-gridlabd
+#gridlabd
 gldcore/gridlabd.sh
 .pydevproject
 .idea
