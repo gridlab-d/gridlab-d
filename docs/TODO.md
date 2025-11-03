@@ -16,7 +16,7 @@
 - [x] Keep metronome example? --> No, delete.
     - [x] Pull metronome mentions out of Getting Started and into a single metronome example 
     file (or delete if not kept) 
-- [ ] Definitive installation instructions
+- [] Definitive installation instructions
     - [x] add the "easy" or "light" executable install option
 - [X] MySQL instructions - DEPRECATE/Unimplemented? If so, most content is unfinished. Needs robust introduction explaining what it is and why it is useful.
     - propose to Dev team to get rid of MySQL integration in leiu of python interface with new api (same for Matlab, HELICS, any other external integration)
@@ -28,9 +28,13 @@
 
 # 3.0 Modeling
 ### Dev Questions
-- [X] XML files. Still supported? Keep documentation? --> remove ref, "soft keep", switch to JSON as default
+- [X] **XML** files. Still supported? Keep documentation? --> remove ref, "soft keep", switch to JSON as default
 - [ ] Talk with dev team to build out the built-in documentation within the code itself
-- [ ] MySQL player and recorder - keep? If so, needs better intro.
+- [X] **MySQL** player and recorder - keep? If so, needs better intro. --> move to unimplemented
+- [ ] **Aggregate Demand Response Model** - this is a theory page, unclear what part of the GLD code it's actually referring to. Is this implemented? 
+- [ ] **Microgrids** and **Diesel_dg** - review for accuracy (esp frequency bit) and potentially merge?
+- [ ] **Energy storage** - page is essentially empty. Should be the battery object?
+- [ ] **Power Flow User Guide** - this page has a LOT in it, with a fair amount I've never heard of, with various stages of "this has been partially validated and is considered experimental at this time" : need to review and update/deprecate.
 
 ### Docs Questions
 - [ ] How do we handle objects? Source code integration/conversion/hybrid?
@@ -99,7 +103,7 @@
   
 
 
-- [ ] Spec pages: planning document written pre-implementation -- is it actually implemented?
+- [x] Spec pages: planning document written pre-implementation -- is it actually implemented?
 - [ ] Missing or needing updated: style guide
 - [ ] **Missing or needing updated: comprehensive developer API reference**
 - [ ] Missing or needing updated: code templates (maybe just delete?)

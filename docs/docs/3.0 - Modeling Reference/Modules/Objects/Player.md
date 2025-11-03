@@ -5,18 +5,17 @@ A player provides the ability to update a single object variable at specified ti
 ## Synopsis
         
     module tape;
+
     object player {
-    name player-name;
-    parent target-object-name;
-    property target-property-name;
-    file output-file-name;
-    flags DELTAMODE; 
+        name player-name;
+        parent target-object-name;
+        property target-property-name;
+        file output-file-name;
+        flags DELTAMODE; 
     }
     
 
 ## Remarks
-
-
 
 In specifying a player in a model input **file** , the **property** to which the value is written must be specified. The variable to be updated must exist in the player’s **parent** , which must also be specified in the input model. A **loop** count can also be specified that will allow the source to be played more than once. For example, the following lines in a model input file will use the player in a file named **lightingDemand.txt** to update the demand variable in the **lights** object. 
 
@@ -65,30 +64,13 @@ When simulation_mode is set to DELTA the player processes records using subsecon
 
 ## Properties
 
-### parent
-
-* **object** -
-    Built-in property that specifies the object that the player will attempt to write values to.
-
-### property
-
-* **string** -
-    The object properties that will be updated based on value in the player's input file. Property names are case sensitive, and whitespace between properties is verboten. Properties with units may be converted to compatible internal units, if necessary. Complex properties may be written as their individual real and imaginary parts by appending ".real" or ".imag" to the property name, such as "power.real", but those parts cannot convert their units, if the associated complex property has an internal unit specified.
-
-### file
-
-* **string** -
-    By default, the name of the file from which the reads input. If left empty, the player will use a file name based on the target object's name. Input streams may be specified using the "stream:path", where stream may be "file", "odbc", or "memory". The path for file refer to a file name, to a global variable name for memory, and to a server login string for odbc. See the Tape Database Input and Tape Memory Input sections for more details.
-
-### loop
-
-* **double** -
-    By default, this value is zero. When using relative time in the player file, this determines the number of times the values with should "loop". The first timestamp in the file should designate the initial start time of the player, then all subsequent relative times will be "looped" the number of times defined by the loop variable. Note, the initial timestamp will be ignored on all subsequent loops.
-
-### flags
-
-* **enumeration** -
-    Use DELTAMODE to enable subsecond operation when processing data. Some features of player do not work the same when operation in DELTAMODE is enabled. This includes timezone processing (see <http://sourceforge.net/p/gridlab-d/tickets/563>).
+Property | Type |  Description
+-- | -- | --
+**parent** | object | Built-in property that specifies the object that the player will attempt to write values to.
+**property** | string | The object properties that will be updated based on value in the player's input file. Property names are case sensitive, and whitespace between properties is verboten. Properties with units may be converted to compatible internal units, if necessary. Complex properties may be written as their individual real and imaginary parts by appending ".real" or ".imag" to the property name, such as "power.real", but those parts cannot convert their units, if the associated complex property has an internal unit specified.
+**file**  | string | By default, the name of the file from which the reads input. If left empty, the player will use a file name based on the target object's name. Input streams may be specified using the "stream:path", where stream may be "file", "odbc", or "memory". The path for file refer to a file name, to a global variable name for memory, and to a server login string for odbc. See the Tape Database Input and Tape Memory Input sections for more details.
+**loop** | double | By default, this value is zero. When using relative time in the player file, this determines the number of times the values with should "loop". The first timestamp in the file should designate the initial start time of the player, then all subsequent relative times will be "looped" the number of times defined by the loop variable. Note, the initial timestamp will be ignored on all subsequent loops.
+**flags** | enumeration | Use DELTAMODE to enable subsecond operation when processing data. Some features of player do not work the same when operation in DELTAMODE is enabled. This includes timezone processing (see <http://sourceforge.net/p/gridlab-d/tickets/563>).
 
 ## See also
 

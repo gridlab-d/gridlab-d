@@ -6,7 +6,7 @@ The synchronization control capability in GridLAB-D™ is implemented to adjust 
 
 The inputs and outputs of the [switch], [sync_check], [sync_ctrl], and controlled generation unit (i.e., [diesel_dg]/[inverter_dyn]) objects are shown in the following figure, together with the dataflow. 
 
-![Sync ctrl dataflow.png](../../../images/700px-Sync_ctrl_dataflow.png) 
+![Sync ctrl dataflow.png](../../../../../../images/700px-Sync_ctrl_dataflow.png) 
 
 # Published properties
 
@@ -128,7 +128,7 @@ TODO - Update - Review flowchart for accuracy and update
 
 The flowchart for [sync_ctrl] in deltamode is shown as follows. In mode A, the [sync_ctrl] adjusts the voltage and frequency settings of the controlled generation unit actively. In mode B, it monitors the voltage magnitudes and frequency and counts a timer, determining to switch to mode A if needed. 
 
-![Sync ctrl flowchart.png](../../../images/700px-Sync_ctrl_flowchart.png) 
+![Sync ctrl flowchart.png](../../../../../../images/700px-Sync_ctrl_flowchart.png) 
 
 ## PI Controllers
 

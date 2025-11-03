@@ -199,7 +199,7 @@ $$\displaystyle{}u_{gqi}=\sin{\delta_{gi}-\delta{PLLi}}\frac{U_{gi}}{U_B}\tag{14
   
 Figure 7 shows the current control loop. The outputs of the current control loop are the internal voltages $e_{di}$ and $e_{qi}$ for each phase. 
 
-![Current Control Loop](../../../images/300px-Inv_dyn_fig7.png)
+![Current Control Loop](../../../../../../images/300px-Inv_dyn_fig7.png)
 
 Figure 7 - Current Control Loop
 

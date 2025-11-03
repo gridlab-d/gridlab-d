@@ -1,5 +1,10 @@
 # Commercial User Guide 
-## Commercial Overview
+
+!!! warning
+
+	This page contains features that are unfinished, were never implemented, or have since been deprecated. We preserve these pages for archival purposes, and also as a foundational resource for prospective developers who may wish to implement the same or similar feature. Many of these pages provide robust explanations of the theory behind a particular module or feature that we hope readers will find useful. 
+	
+	**This page does not reflect the current state of GridLAB-D™**
 
 TODO - Empty - Commercial Overiew
 
