@@ -165,7 +165,7 @@ def glm_to_json(glmName="TE_CHALLENGE"):
             'clock': clock_data,
             'modules': modules,
             'objects': objects,
-            'schedules': raw.get('schedules', [])
+            'schedules': raw.get('schedules', {})
         }
 
         # Remove empty blocks
