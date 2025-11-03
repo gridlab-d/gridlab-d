@@ -244,7 +244,7 @@ class GLMModel:
             diction['print'] = list(self.print_lines)
         # include schedule definitions
         if hasattr(self, 'schedule_types') and self.schedule_types:
-            schedules = []
+            schedules = {}
             for sched_name, lines in self.schedule_types.items():
                 text = '\n'.join(lines)
                 # extract content between braces
@@ -265,7 +265,7 @@ class GLMModel:
                     elif stripped_line and not stripped_line.startswith('//'): 
                         items.append(stripped_line)  
                 blocks.append({'name': name, 'items': items})
-                schedules.append({sched_name: blocks})
+                schedules[sched_name] = blocks
             diction['schedules'] = schedules
         return diction
 
