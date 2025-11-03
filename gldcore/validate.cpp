@@ -1022,7 +1022,7 @@ int validate(int argc, char *argv[])
 
 	if (global_validateoptions & VO_RPTGLM)
 		report_newtable("FILE TEST RESULTS");
-	int n_procs = global_threadcount;
+	// int n_procs = global_threadcount;
 	if (n_procs == 0)
 		n_procs = processor_count();
 	n_procs = fmin(final.get_tested(), (unsigned)n_procs);
