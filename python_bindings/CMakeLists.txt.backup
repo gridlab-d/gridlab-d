@@ -92,7 +92,7 @@ install(TARGETS gridlabd_core
     RUNTIME DESTINATION gridlabd)
 
 # Install the shared library alongside the module
-install(PROGRAMS ${GRIDLABD_LIB_DIR}/libgldapi.so
+install(FILES ${GRIDLABD_LIB_DIR}/libgldapi.so
         DESTINATION gridlabd)
 
 # Install essential data files (tzinfo.txt, unitfile.txt) alongside the Python package
@@ -108,7 +108,7 @@ install(FILES ${GRIDLABD_DATA_FILES}
 # These are needed for simulations (residential, climate, powerflow, etc.)
 file(GLOB GRIDLABD_MODULES "${GRIDLABD_LIB_DIR}/*.so")
 if(GRIDLABD_MODULES)
-    install(PROGRAMS ${GRIDLABD_MODULES}
+    install(FILES ${GRIDLABD_MODULES}
             DESTINATION gridlabd/lib)
 endif()
 

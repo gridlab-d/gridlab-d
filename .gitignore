@@ -122,3 +122,4 @@ scratch/*
 reference/*
 third_party/*
 .venv
+testenv
