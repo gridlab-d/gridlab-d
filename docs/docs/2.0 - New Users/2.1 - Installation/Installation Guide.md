@@ -13,7 +13,7 @@ GridLAB-D has been prepared and tested for Windows XP, Vista, and 7. All daily b
 
 Installation is from an executable, with a name of the form `gridlabd-system-major_minor_build.exe`. The current values are:
 
-- `system` represents the machine architecture, which can be
+- `system` represents the machine architecture, which can be:
     - `win32` for 32 bit Intel 686-based systems, or
     - `x64` for 64 bit Intel Itanium-based systems.
 - `major` represents the major release number, which is currently *2*.
@@ -34,8 +34,8 @@ This contains all the module files. Both the PATH and GLPATH environment variabl
 - `c:\Program Files\GridLAB-D\samples` -
 This contains sample data files.
 
-## Environment variables
-Only two environment variables must be set for GridLAB-D to function properly.
+## Environment Variables
+Only two environment variables must be set for GridLAB-D to function properly. Some examples of environment variables include PATH, GRIDLABD, GLPATH, and GLTEMP.
 
 ### PATH
 The Windows `PATH` environment must include both the bin and lib directories. Users who want to include their own modules should add the directory that contains them as well, e.g., `C:\Documents and Settings\user\My Documents\path`, where `user` is the user's login name, and `path` is the path to their own modules.
@@ -48,17 +48,17 @@ GridLAB-D uses the GLPATH environment to find runtime files and module files. It
 1. `%HOMEDRIVE%%HOMEPATH%\Local Settings\Temp\gridlabd` if both `HOMEDRIVE` and `HOMEPATH` are defined.
 2. `%TMP%\%USERNAME%\gridlabd`. If `TMP` is not defined, then `TEMP` will be tried in its place. If both `TMP` and `TEMP` are undefined, then `C:\Windows\Temp` will be used for `%TMP%`.
 
-!!! note 
+Note: 
     If the `GLTEMP` directory does not exist and it is required, it and all its parent directories will be created.
 
 ## Search Order
 Searches for GridLAB-D files on GLPATH will be performed using the following order:
 
-1. Current working directory
-2. Directories in `GLPATH` environment variable in the order listed
-3. `GridLAB-D` installation directory (usually `C:\Program Files\GridLAB-D`)
-4. `etc` subdirectory of GridLAB-D install directory (`C:\Program Files\GridLAB-D\etc`)
-5. `lib` subdirectory of GridLAB-D install directory (`C:\Program Files\GridLAB-D\lib`)
+1. Current working directory.
+2. Directories in `GLPATH` environment variable in the order listed.
+3. `GridLAB-D` installation directory (usually `C:\Program Files\GridLAB-D`).
+4. `etc` subdirectory of GridLAB-D install directory (`C:\Program Files\GridLAB-D\etc`).
+5. `lib` subdirectory of GridLAB-D install directory (`C:\Program Files\GridLAB-D\lib`).
 
 # Linux and OS-X
 
@@ -83,7 +83,7 @@ Library folder the modules and basic support files.
 
 Note that the `DMG` installer does not alter you profile, so you may need to add the path to `/usr/local/bin` if it is not already included in your command shell path.
 
-## Environment variables
+## Environment Variables
 ### GRIDLABD
 This should contain the path where GridLAB-D is installed. The `gridlabd` script sets this variable before calling gridlabd.bin.
 ### GLPATH
