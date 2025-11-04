@@ -616,7 +616,7 @@ class GLMModel:
             # handle single-line module declarations
             comment_text, _ = self._extract_inline_comment(line)
             if comment_text:
-                params['inline_comment'] = comment_text
+                params['inline_comments'] = comment_text
                 inline_comments = dict()
             # attach any // comments
             if self.outside_comments:
