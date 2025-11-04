@@ -34,7 +34,7 @@ if __name__ == "__main__":
         # 1. Create instance (calls constructor which internally does setup_before_load)
         gld = gridlabd.GridLabD()
 
-        model_dir = Path("/mnt/c/dev/gridlab-d_fork/python_bindings/tests/test_HVAC_balance.glm").parent
+        model_dir = Path("/mnt/c/Projects/Gridlab-d/gridlab-d/python_bindings/tests/test_HVAC_balance.glm").parent
         gld.set_working_directory(str(model_dir))
 
         # 2. Optionally set config file
