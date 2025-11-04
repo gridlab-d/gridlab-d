@@ -21,7 +21,7 @@
 #include <sstream>
 #include <iostream>
 #include <memory>
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 //#include "../third_party/jsonCpp/json/json.h"
 using namespace std;
 //using namespace Json;
@@ -152,9 +152,9 @@ public:
 	static FNCSLIST *find(FNCSLIST *list, const char *tag);
 	static char *get(FNCSLIST *list, const char *tag);
 	static void destroy(FNCSLIST *list);
-	Json::Value publish_json_config;  //add by Renke
-	Json::Value publish_json_data;    //add by Renke
-	Json::Value subscribe_json_data;  //add by Renke
+	nlohmann::json publish_json_config;
+	nlohmann::json publish_json_data;
+	nlohmann::json subscribe_json_data;
 	string publish_json_key; //add by Renke
 	string subscribe_json_key; //add by Renke
 	vector <JsonProperty*> vjson_publish_gld_property_name;

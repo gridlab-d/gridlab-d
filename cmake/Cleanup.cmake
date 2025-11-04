@@ -130,7 +130,6 @@ LIST(APPEND cleanup_list
         third_party/superLU_MT/libsuperlu_la-superlu_timer.lo
         third_party/superLU_MT/libsuperlu_la-util.lo
         third_party/superLU_MT/libsuperlu_la-xerbla.lo
-        third_party/jsonCpp/libjsoncpp_la-jsoncpp.lo
         assert/assert_la-assert.lo
         assert/assert_la-complex_assert.lo
         assert/assert_la-double_assert.lo
