@@ -476,7 +476,7 @@ class GLMModel:
         """
         comment_pos = line.find("//")
         if comment_pos > 0:
-            comment_text = line[comment_pos + 2:].strip()
+            comment_text = line[comment_pos:].strip()
             line_without_comment = line[:comment_pos].strip()
             return comment_text, line_without_comment
         else:
@@ -494,11 +494,11 @@ class GLMModel:
         comment_pos = line.find("//")
         if comment_pos == 0:
             # Line starts with comment
-            comment_text = line[comment_pos + 2:].strip()
+            comment_text = line[comment_pos:].strip()
             return comment_text, []
         elif comment_pos > 0:
             # Line has inline comment
-            comment_text = line[comment_pos + 2:].strip()
+            comment_text = line[comment_pos:].strip()
             tokens = line.split(" ")
             return comment_text, tokens
         else:
