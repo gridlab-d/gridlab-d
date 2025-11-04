@@ -361,7 +361,7 @@ class Entity:
                 instance = self.instances[object_name]
 
             for attr in params:
-                if attr.startswith(("inline_comment", "inside_comment", 
+                if attr.startswith(("inline_comments", "inside_comments", 
                                    "comment", "outside_comments", "trigger_error", "outside_trigger_error", "trigger_warning","outside_trigger_warning")):
                     instance[attr] = params[attr]
                     continue
@@ -451,7 +451,7 @@ class Entity:
         # Merge each parameter from params into the instance
         for attr in params:
             # Handle comments and directives - append them to lists
-            if attr.startswith(("inline_comment", "inside_comment", "comment", 
+            if attr.startswith(("inline_comments", "inside_comments", "comment", 
                               "outside_comments", "trigger_error", "outside_trigger_error", 
                               "trigger_warning", "outside_trigger_warning", "print", "outside_print")):
                 if attr in instance:
@@ -527,7 +527,7 @@ class Entity:
         if prev_conditionals and current_cond_dict:
             for attr in list(instance.keys()):
                 # Skip special keys
-                if attr.startswith(("inline_comment", "inside_comment", "comment",
+                if attr.startswith(("inline_comments", "inside_comments", "comment",
                                    "outside_comments", "trigger_error", "outside_trigger_error",
                                    "trigger_warning", "outside_trigger_warning", "print", "outside_print",
                                    "_conditionals")):
