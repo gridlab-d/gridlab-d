@@ -20,19 +20,51 @@ bool loader::open_file(string file_name) {
         return false;
     }
     file >> this->jsn;
-    file.close(); 
+    file.close();
     std::cout << "-|- Parsing done -|-" << std::endl;
 	return true;
 }
 
-void loader::loadDirective() {
+void loader::loadDirectives() {
     auto j_obj = this->jsn["_directives"];
-	
+	STATUS result;
+	string propvalue;
+
+	for (auto& [name, property] : j_obj.items()) {
+		this->property = property;
+		if (property.is_object()) {
+			for (auto& [key, value] : property.items()) {
+				bool oldstrict = global_strictnames;
+				if (name == "#set")
+					global_strictnames = true;
+				else if (name == "#define")
+					global_strictnames = false;
+				if (value.is_number_float()) {
+					double dblvalue = value.get<double>();
+					propvalue = std::to_string(dblvalue);
+				}
+				else if (value.is_number_integer()) {
+					int intvalue = value.get<int>();
+					propvalue = std::to_string(intvalue);
+				}
+				else if (value.is_string())
+					propvalue = value.get<std::string>();
+				result = global_setvar((const char*)key.c_str(), propvalue.data());
+				global_strictnames = strncmp(key.c_str(), "strictnames", 12)==0 ? global_strictnames : oldstrict;
+				if (result==FAILED)
+					if (name == "#set")
+						output_error_raw("%s: %s set term not found",filename,key);
+					else if (name == "#define")
+						output_error_raw("%s: %s define term not found",filename,key);
+			}
+		}
+	}
+
 }
 
 void loader::loadClasses() {
     auto j_obj = this->jsn["classes"];
-	
+
 }
 
 void loader::loadClock() {
@@ -55,7 +87,7 @@ void loader::loadClock() {
             const char* ts = value.get_ref<const std::string&>().c_str();
 			TIMESTAMP tsval = convert_to_timestamp(ts);
 			if (tsval == TS_NEVER)
-				output_error_raw("%s: expected time value in the clock", ts);				
+				output_error_raw("%s: expected time value in the clock", ts);
 			else
 				global_starttime = tsval;
         }
@@ -75,7 +107,7 @@ void loader::loadClock() {
 			else
 				output_error_raw("%s: expected time zone specification in the clock", tz);
         }
-    }	
+    }
 }
 
 
@@ -103,40 +135,96 @@ bool loader::module_properties(MODULE *mod) {
 			current_object = nullptr; /* object context */
 			current_module = mod; /* module context */
 			string propvalue = value.get<std::string>();
-			if (propvalue != "_conditional")
+			if (propvalue != "_conditional") {
 				if (this->parse.alternate_value(propvalue)) {
 					if (module_setvar(mod, (const char*)name.c_str(), propvalue.data()) > 0)
 						output_error_raw("invalid '%s' property for module %s, ", (const char*)name.c_str(), mod->name);
 				}
+			}
+		}
+		// Must be a directive
+		else if (value.is_object()) {
+			current_object = nullptr; /* object context */
+			current_module = mod; /* module context */
+			string propvalue = "";
+			// string propvalue = module_ifdirectives(value);
+			if (propvalue != "") {
+				if (module_setvar(mod, (const char*)name.c_str(), propvalue.data()) > 0)
+					output_error_raw("invalid '%s' property for module %s, ", (const char*)name.c_str(), mod->name);
+			}
 		}
 	}
 	return true;
 }
 
+string loader::module_ifdirectives(json directives) {
+	double **pValue;
+	string property_value = "";
+	for (auto& [name, value] : directives.items()) {
+		if (name == "if" && value.is_object()) {
+			for (auto& [test, test_value] : value.items()) {
+				// todo: expession
+				property_value = test.data();
+				if (this->parse.alternate_value(property_value)) 
+					if (parse.expression("("+property_value+")", *pValue, nullptr, nullptr))
+						property_value = test_value.get_ref<const std::string&>();
+			}
+		}
+		else if (name == "ifnot" && value.is_object()) {
+			for (auto& [test, test_value] : value.items()) {
+				// todo: expession
+				if (parse.expression("("+test+")", *pValue, nullptr, current_object))
+					property_value = test_value.get_ref<const std::string&>();
+			}
+		}
+		else if (name == "ifdef" && value.is_object()) {
+			for (auto& [test, test_value] : value.items()) {
+				if (getenv(test.data()))
+					property_value = test_value.get_ref<const std::string&>();
+			}
+		}
+		else if (name == "ifndef" && value.is_object()) {
+			for (auto& [test, test_value] : value.items()) {
+				if (!getenv(test.data()))
+					property_value = test_value.get_ref<const std::string&>();
+			}
+		}
+	}
+	return property_value;
+}
+
+
 bool loader::module_conditionals() {
-	bool load = false;
+	bool load = true;
 	for (auto& [name, value] : property.items()) {
 		if (name == "if" && value.is_array()) {
-			for (auto& element : value) 
+			for (auto& element : value)
 			// todo: expession
 				if (element.is_string()) {
-					load = true;
+					load = load && true;
+				}
+		}
+		else if (name == "ifnot" && value.is_array()) {
+			for (auto& element : value)
+			// todo: expession
+				if (element.is_string()) {
+					load = load && true;
 				}
 		}
 		else if (name == "ifdef" && value.is_array()) {
-			for (auto& element : value) 
+			for (auto& element : value)
 				if (element.is_string()) {
 					const char* env_name = element.get_ref<const std::string&>().c_str();
 					if (getenv(env_name))
-						load = true;
+						load = load && true;
 				}
 		}
 		else if (name == "ifndef" && value.is_array()) {
-			for (auto& element : value) 
+			for (auto& element : value)
 				if (element.is_string()) {
 					const char* env_name = element.get_ref<const std::string&>().c_str();
 					if (!getenv(env_name))
-						load = true;
+						load = load && true;
 				}
 		}
 	}
@@ -168,8 +256,36 @@ void loader::loadObjects() {
 }
 
 void loader::loadSchedules() {
-    auto propeties = this->jsn["schedules"];
+    auto j_obj = this->jsn["schedules"];
+	std::string cron_schedule;
+	std::string	sub_schedule;
 
+	for (auto& [name, schedule] : j_obj.items()) {
+		if (schedule.is_array()) {
+			cron_schedule = "";
+			for (auto& element : schedule) {
+				sub_schedule = "";
+				if (element.is_object() && element.contains("items")) {
+					if (element["items"].is_array()) {
+						if (element.contains("name") && element["name"].is_string())
+							sub_schedule = element["name"].get_ref<const std::string&>();
+						for (auto& item : element["items"]) 
+							cron_schedule += item.get_ref<const std::string&>() + ";\n";
+					}
+					else
+						output_error_raw("%s: schedule '%s' items is not an array", filename, name.data());
+				}
+				else
+					output_error_raw("%s: schedule '%s' is not valid or does not have an items array", filename, name.data());
+			}
+			if (cron_schedule != "")
+				schedule_create(name.data(), cron_schedule.data());
+			else
+				output_error_raw("%s: schedule '%s' is blank", filename, name.data());
+		}
+		else
+			output_error_raw("%s: schedule '%s' is not valid array", filename, name.data());
+	}
 }
 
 STATUS loader::loadall_glm_roll(char *file_name) {
@@ -181,12 +297,12 @@ STATUS loader::loadall_glm_roll(char *file_name) {
 	this->filename = file_name;
 	std::string name(file_name);
 	if (this->open_file(name)) {
-//		this->loadDirectives();
+		this->loadDirectives();
 		this->loadClock();
 //		this->loadClasses();
 		this->loadModules();
 //		this->loadObjects();
-//		this->loadSchedules();
+		this->loadSchedules();
 	}
 
  	/* establish ranks */
