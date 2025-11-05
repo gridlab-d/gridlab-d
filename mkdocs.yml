@@ -67,7 +67,6 @@ nav:
       - Gridlab-D™ Overview: docs/2.0 - New Users/2.2 - Getting Started/2.2.1 - Overview.md
       - What is a GridLAB-D™ model?: docs/2.0 - New Users/2.2 - Getting Started/2.2.2 - Models.md
       - Running GridLAB-D™: docs/2.0 - New Users/2.2 - Getting Started/2.2.3 - Running a Model.md
-      - Simulation Time: docs/2.0 - New Users/2.2 - Getting Started/2.2.4 - Simulation Time.md
       - Generating populations: docs/2.0 - New Users/2.2 - Getting Started/2.2.5 - Model Options.md
       - Generating output: docs/2.0 - New Users/2.2 - Getting Started/2.2.6 - Output.md
     - 2.3 - Running Simulations: docs/2.0 - New Users/2.3 - Running_Simulations.md
@@ -81,6 +80,7 @@ nav:
       - Distributed Generation: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.6 - Distributed_Generation.md
       - Advanced Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.7 - Advanced_Distribution_Models.md
       - Built-In Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.8 - Built-In Distribution Models.md
+    - Simulation Time: docs/2.0 - New Users/2.5 - Simulation Time.md
   - 3.0 - Modeling Reference:
     - Loads:
       - Loadshape: docs/3.0 - Modeling Reference/Loads/1.0 - Loadshape.md
@@ -152,6 +152,7 @@ nav:
         - ZIPload: docs/3.0 - Modeling Reference/Modules/Residential/ZIPload.md
         - House E: docs/3.0 - Modeling Reference/Modules/Residential/house-e.md
       - Tape: docs/3.0 - Modeling Reference/Modules/Tape.md
+      - Delta Mode: docs/3.0 - Modeling Reference/Modules/delta_mode.md
     - Other Features:
       - Checkpoints: docs/3.0 - Modeling Reference/Other Features/Checkpoints.md
       - Command Options: docs/3.0 - Modeling Reference/Other Features/Command_options.md
@@ -159,13 +160,6 @@ nav:
         - Model Debugging: docs/3.0 - Modeling Reference/Other Features/Debugging and Validation/Model_Debugging.md
         - Validate: docs/3.0 - Modeling Reference/Other Features/Debugging and Validation/Validate.md
       - Delta Mode and Timing:
-        - Subsecond: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Delta_mode.md
-        - Model Initialization: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Initialization.md
-        - Multirun mode: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Multirun_mode.md
-        - Multithreaded Random Number Generation: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Multithreaded_Random_Number_Generation.md
-        - Pauseat: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Pauseat.md
-        - Realtime server: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Realtime_server.md
-        - Spec:Subsecond: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Spec_Subsecond.md
       - Link (directive): docs/3.0 - Modeling Reference/Other Features/Link_(directive).md
       - Macros: docs/3.0 - Modeling Reference/Other Features/Macros.md
       - Matlab link: docs/3.0 - Modeling Reference/Other Features/Matlab_link.md
@@ -203,6 +197,13 @@ nav:
     - 4.5 - Deltamode Development:
       - Introduction to Deltamode Development - TBD: docs/4.0 Developing Reference/4.5 - Deltamode Development/4.5.0 - Introduction to Deltamode Development.md
       - Dev:Subsecond: docs/4.0 Developing Reference/4.5 - Deltamode Development/4.5.1 - Dev_Subsecond.md
+      - Subsecond: docs/4.0 Developing Reference/4.5 - Deltamode Development/Delta_mode.md
+      - Model Initialization: docs/4.0 Developing Reference/4.5 - Deltamode Development/Initialization.md
+      - Multirun mode: docs/4.0 Developing Reference/4.5 - Deltamode Development/Multirun_mode.md
+      - Multithreaded Random Number Generation: docs/4.0 Developing Reference/4.5 - Deltamode Development/Multithreaded_Random_Number_Generation.md
+      - Pauseat: docs/4.0 Developing Reference/4.5 - Deltamode Development/Pauseat.md
+      - Realtime server: docs/4.0 Developing Reference/4.5 - Deltamode Development/Realtime_server.md
+      - Spec:Subsecond: docs/4.0 Developing Reference/4.5 - Deltamode Development/Spec_Subsecond.md
     - 4.6 - Debugging:
       - Introduction to Debugging when Developing GridLAB-Debugging: docs/4.0 Developing Reference/4.6 - Debugging/4.6.0 - Introduction.md
       - Command options: docs/4.0 Developing Reference/4.6 - Debugging/4.6.1 - Command_line_arguments.md
