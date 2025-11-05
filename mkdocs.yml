@@ -159,7 +159,6 @@ nav:
       - Debugging and Validation:
         - Model Debugging: docs/3.0 - Modeling Reference/Other Features/Debugging and Validation/Model_Debugging.md
         - Validate: docs/3.0 - Modeling Reference/Other Features/Debugging and Validation/Validate.md
-      - Delta Mode and Timing:
       - Link (directive): docs/3.0 - Modeling Reference/Other Features/Link_(directive).md
       - Macros: docs/3.0 - Modeling Reference/Other Features/Macros.md
       - Matlab link: docs/3.0 - Modeling Reference/Other Features/Matlab_link.md
