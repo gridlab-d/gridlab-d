@@ -1,14 +1,5 @@
 # Mysql
 
-!!! warning
-
-	This page contains features that are unfinished, were never implemented, or have since been deprecated. We preserve these pages for archival purposes, and also as a foundational resource for prospective developers who may wish to implement the same or similar feature. Many of these pages provide robust explanations of the theory behind a particular module or feature that we hope readers will find useful. 
-  
-	**This page does not reflect the current state of GridLAB-D™**
-
-  
-The mysql module implements the principal [tape](/wiki/Tape "Tape") module classes [recorder](/wiki/Recorder "Recorder"), [player](/wiki/Player "Player"), and [collector](/wiki/Collector "Collector") in a property-compatible manner. For details on the functionality of these classes, see the [tape](/wiki/Tape "Tape") module. The main difference between the [tape](/wiki/Tape "Tape") implementation and the mysql implementation is that these classes can refer to a [database](/wiki/Database "Database") connection if there is more than one connection in the GLM file. 
-
 ## Synopsis
     
     
@@ -21,6 +12,11 @@ The mysql module implements the principal [tape](/wiki/Tape "Tape") module class
       socketname "/tmp/mysql.sock";
       clientflags [COMPRESS](/wiki/Database#COMPRESS "Database")|[FOUND_ROWS](/wiki/Database#FOUND_ROWS "Database")|[IGNORE_SIGPIPE](/wiki/Database#IGNORE_SIGPIPE "Database")|[INTERACTIVE](/wiki/Database#INTERACTIVE "Database")|[LOCAL_FILES](/wiki/Database#LOCAL_FILES "Database")|[MULTI_RESULTS](/wiki/Database#MULTI_RESULTS "Database")|[MULTI_STATEMENTS](/wiki/Database#MULTI_STATEMENTS "Database")|[NO_SCHEMA](/wiki/Database#NO_SCHEMA "Database")|[ODBC](/wiki/Database#ODBC "Database")|[SSL](/wiki/Database#SSL "Database")|[REMEMBER_OPTIONS](/wiki/Database#REMEMBER_OPTIONS "Database");
     }
+    
+
+## Description
+
+The mysql module implements the principal [tape](/wiki/Tape "Tape") module classes [recorder](/wiki/Recorder "Recorder"), [player](/wiki/Player "Player"), and [collector](/wiki/Collector "Collector") in a property-compatible manner. For details on the functionality of these classes, see the [tape](/wiki/Tape "Tape") module. The main difference between the [tape](/wiki/Tape "Tape") implementation and the mysql implementation is that these classes can refer to a [database](/wiki/Database "Database") connection if there is more than one connection in the GLM file. 
 
 ### hostname
 

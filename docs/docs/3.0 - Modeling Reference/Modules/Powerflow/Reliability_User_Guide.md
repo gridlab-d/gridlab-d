@@ -6,7 +6,7 @@ This section provides the definitions for the 12 indices used in the reliability
 
 !!! note
 
-    All names, factors, equations, definitions, and applications discussed in this guide were taken from the IEEE Std 1366 2003 Edition.
+  All names, factors, equations, definitions, and applications discussed in this guide were taken from the IEEE Std 1366 2003 Edition._
 
 ## Definitions
 
@@ -127,11 +127,11 @@ IEEE Std 1366-2003. IEEE Guide for Electric Power Distribution Reliability Indic
 
 ## Reliability Module 
 
-The **reliability** module provides the ability to induce events on a system and evaluate their impacts. The **reliability** module collects and outputs module-appropriate metrics to a log file for user evaluation. **reliability** is only an event-inducing and metrics-recording module and requires specific interfaces to different modules of interest. At this time, the only module interface that exists is with the **powerflow** module (see the [Power Flow User Guide]). 
+The `reliability` module provides the ability to induce events on a system and evaluate their impacts. The `reliability` module collects and outputs module-appropriate metrics to a log file for user evaluation. `reliability` is only an event-inducing and metrics-recording module and requires specific interfaces to different modules of interest. At this time, the only module interface that exists is with the `powerflow` module (see the [Power Flow User Guide]). 
 
 ### Overall settings
 
-The **reliability** module has two module-level settings that a user can specify. These two settings influence all reliability-related items in the system, regardless of the module. The two parameters are `maximum_event_length` and `report_event_log`, which would be implemented as 
+The `reliability` module has two module-level settings that a user can specify. These two settings influence all reliability-related items in the system, regardless of the module. The two parameters are `maximum_event_length` and `report_event_log`, which would be implemented as 
     
     
     module reliability {
@@ -142,17 +142,17 @@ The **reliability** module has two module-level settings that a user can specify
 
 The `maximum_event_length` specifies the maximum duration any object may be in a fault condition on the system. If a randomly-generated fault exceeds this time limit, it will be thresholded to the value of `maximum_event_length`. However, manual faulting scenarios do not check this limit, and can produce longer fault condition. 
 
-The `report_event_log` property defines whether the **metrics** object will include a list of induced events, or just the output statistics. If enabled, the output file will include when an event started, when it ended, the desired fault, the implemented fault, and some customer information. 
+The `report_event_log` property defines whether the `metrics` object will include a list of induced events, or just the output statistics. If enabled, the output file will include when an event started, when it ended, the desired fault, the implemented fault, and some customer information. 
 
 ### Reliability Objects
 
-There are two object within the **reliability** module. These two objects will interact with specific module classes to generate the events and record module-appropriate metrics. 
+There are two object within the `reliability` module. These two objects will interact with specific module classes to generate the events and record module-appropriate metrics. 
 
 ### Metrics
 
-The **metrics** object collects and outputs any of the measurements associated with reliability in a specific module. The actual metrics are computed by module-specific objects, such as the **power_metrics** object in the **powerflow** module. The output file containing the event information and reliability calculations is output by the **metrics** object. 
+The `metrics` object collects and outputs any of the measurements associated with reliability in a specific module. The actual metrics are computed by module-specific objects, such as the `power_metrics` object in the `powerflow` module. The output file containing the event information and reliability calculations is output by the `metrics` object. 
 
-A minimal **metrics** object would be implemented as 
+A minimal `metrics` object would be implemented as 
     
     
     object metrics {
@@ -181,17 +181,17 @@ with an equivalent implementation of
 Property Name  | Type  | Unit  | Description   
 ---|---|---|---  
 report_file  | char1024  | N/A  | File name where the event log (if desired) and metric calculations are written.   
-customer_group  | char1024  | N/A  | Defines the criterion for an object to be considered a customer. Uses specifications similar to **collector** objects with `class=` and `groupid=` being valid keywords.   
-module_metrics_object  | object  | N/A  | Link to the module-specific metrics device to compute reliability indices related to that module. An example would be the **power_metrics** object in the **powerflow** module.   
+customer_group  | char1024  | N/A  | Defines the criterion for an object to be considered a customer. Uses specifications similar to `collector` objects with `class=` and `groupid=` being valid keywords.   
+module_metrics_object  | object  | N/A  | Link to the module-specific metrics device to compute reliability indices related to that module. An example would be the `power_metrics` object in the `powerflow` module.   
 metrics_of_interest  | char1024  | N/A  | Comma-separated list of metrics to output into the `report_file`. Values desired must be published by the module-specific metrics object.   
 metric_interval  | double  | seconds  | Intermediate interval over which to calculate reliability indices. Interval metrics will be reset every `metric_interval` seconds. Simulation-long metric calculations are unaffected by this value. Defaults to 0 seconds, so intermediate values are not output.   
 report_interval  | double  | seconds  | Time period between writes to the `report_file`, unless prompted to do so earlier by `metric_interval`. Drives the output of overall simulation-long metric calculations. Defaults to 1 year.   
   
 ## Eventgen
 
-The `eventgen` object creates events on objects in the GLM file to test the reliability of the system. Such induced events often produce a relevant result in the **metrics** object, or in some output of the system. The `eventgen` object allows both manually specified, deterministic events, or randomly-generated, stochastic events. 
+The `eventgen` object creates events on objects in the GLM file to test the reliability of the system. Such induced events often produce a relevant result in the `metrics` object, or in some output of the system. The `eventgen` object allows both manually specified, deterministic events, or randomly-generated, stochastic events. 
 
-`eventgen` objects must be parented to an appropriate **metrics** object to function. This allows the reliability indices to be calculated appropriately when an event is induced. 
+`eventgen` objects must be parented to an appropriate `metrics` object to function. This allows the reliability indices to be calculated appropriately when an event is induced. 
 
 The minimal setup required for a randomly-induced event would be 
     
@@ -267,25 +267,23 @@ where the `name` field is a unique identifier for the fault event, `type` is the
 
 Property Name  | Type  | Unit  | Description   
 ---|---|---|---  
-**target_group**  | char1024  | N/A  | Defines the criterion for the objects to induce faults upon. Uses specifications similar to **collector** objects with `class=` and `groupid=` being valid keywords. Note that stochastically specified `eventgen` objects will induce faults on all objects in the `target_group` field independently, with only consideration for the `max_simultaneous_faults` field. This field must be empty for `manual_outages` to work.   
-**fault_type**  | char1024  | N/A  | Describes the type of faults/events to induce on the specified objects. This is specific to the module the faults/events are being induced upon, or the reliability metrics are measuring.   
-**failure_dist**  | enumeration  | N/A  | Distribution type used to generate times to random "failure" event on the system. Valid distributions are `UNIFORM`, `NORMAL`, `LOGNORMAL`, `BERNOULLI`, `PARETO`, `EXPONENTIAL`, `RAYLEIGH`, `WEIBULL`, `GAMMA`, `BETA`, and `TRIANGLE`.   
-**restoration_dist**  | enumeration  | N/A  | Distribution type used to determine time to restoration on faulted/evented objects. Valid distributions are `UNIFORM`, `NORMAL`, `LOGNORMAL`, `BERNOULLI`, `PARETO`, `EXPONENTIAL`, `RAYLEIGH`, `WEIBULL`, `GAMMA`, `BETA`, and `TRIANGLE`.   
-**failure_dist_param_1**  | double  | Varies  | Parameter 1 for the distribution selected in `failure_dist`. Specifies the following for the distributions listed: <br/> - `UNIFORM` \- lower range of the uniform distribution <br/> - `NORMAL` \- mean of the distribution <br/> - `LOGNORMAL` \- geometric mean of the distribution <br/> - `BERNOULLI` \- probability of the distribution <br/> - `PARETO` \- minimum value of the distribution <br/> - `EXPONENTIAL` \- coefficient of the distribution <br/> - `RAYLEIGH` \- _sigma_ of the distribution <br/> - `WEIBULL` \- _lambda_ of the distribution <br/> - `GAMMA` \- _alpha_ of the distribution <br/> - `BETA` \- _alpha_ of the distribution <br/> - `TRIANGLE` \- _a_ of the distribution 
-**failure_dist_param_2**  | double  | Varies  | Parameter 2 for the distribution selected in `failure_dist`. If a distribution is not listed below, it does not need the second parameter. Specifies the following for the distributions listed: <br/> - `UNIFORM` \- upper range of the uniform distribution <br/> - `NORMAL` \- standard deviation of the distribution <br/> - `LOGNORMAL` \- geometric standard deviation of the distribution <br/> - `PARETO` \- gamma scale of the distribution <br/> - `EXPONENTIAL` \- _k_scale_ of the distribution <br/> - `WEIBULL` \- _k_ of the distribution <br/> - `GAMMA` \- _beta_ of the distribution <br/> - `BETA` \- _beta_ of the distribution <br/> - `TRIANGLE` \- _b_ of the distribution  
-**restoration_dist_param_1**  | double  | Varies  | Parameter 1 for the distribution selected in `restoration_dist`. Specifies the following for the distributions listed: <br/> - `UNIFORM` \- lower range of the uniform distribution <br/> - `NORMAL` \- mean of the distribution <br/> - `LOGNORMAL` \- geometric mean of the distribution <br/> - `BERNOULLI` \- probability of the distribution <br/> - `PARETO` \- minimum value of the distribution <br/> - `EXPONENTIAL` \- coefficient of the distribution <br/> - `RAYLEIGH` \- _sigma_ of the distribution <br/> - `WEIBULL` \- _lambda_ of the distribution <br/> - `GAMMA` \- _alpha_ of the distribution <br/> - `BETA` \- _alpha_ of the distribution <br/> - `TRIANGLE` \- _a_ of the distribution  
-**restoration_dist_param_2**  | double  | Varies  | Parameter 2 for the distribution selected in `restoration_dist`. If a distribution is not listed below, it does not need the second parameter. Specifies the following for the distributions listed: <br/> - `UNIFORM` \- upper range of the uniform distribution <br/> - `NORMAL` \- standard deviation of the distribution <br/> - `LOGNORMAL` \- geometric standard deviation of the distribution <br/> - `PARETO` \- gamma scale of the distribution <br/> - `EXPONENTIAL` \- _k_scale_ of the distribution <br/> - `WEIBULL` \- _k_ of the distribution <br/> - `GAMMA` \- _beta_ of the distribution <br/> - `BETA` \- _beta_ of the distribution <br/> - `TRIANGLE` \- _b_ of the distribution  
-**manual_outages**  | char1024  | N/A  | Manual input describing which object to fault, when to fault it, and when to restore it. In the syntax above, `nodeB,2000-01-01 5:00:00,2000-01-01 6:00:00` would fault the object nodeB from 5 AM on January 1, 2000 to 6 AM on January 2, 2000. All times must follow the _yyyy-mm-dd HH:MM:SS_ format. The fault induced is determined by the `fault_type` field. `target_group` must be empty for this field and implementation type to be considered. Subsequent faults may be specified in the same format (_name, time start, time end_).   
-**max_outage_length**  | double  | seconds  | Defines the maximum time an object is allowed be out of service after faulted/evented. Serves as an upper limit to the value produced by the `restoration_dist` function. This parameter is ignored when a fault is specifed by the `manual_outages` field.   
-**max_simultaneous_faults**  | double  | N/A  | Defines the maximum number of faults a particular `eventgen` object can create at once. If more faults are requested by the `fault_dist` property, they will be ignored. This parameter is ignored when a fault is specified by the `manual_outages` field.   
-**use_external_faults**  | bool  | N/A  | If set to true, expects externally-defined events to come through the `external_fault_event` field in the JSON syntax noted above.   
-**external_fault_event**  | char1024  | N/A  | Input field for externally-defined/populated events. Must be in the JSON format described in Eventgen external event mode  
+target_group  | char1024  | N/A  | Defines the criterion for the objects to induce faults upon. Uses specifications similar to `collector` objects with `class=` and `groupid=` being valid keywords. Note that stochastically specified `eventgen` objects will induce faults on all objects in the `target_group` field independently, with only consideration for the `max_simultaneous_faults` field. This field must be empty for `manual_outages` to work.   
+fault_type  | char1024  | N/A  | Describes the type of faults/events to induce on the specified objects. This is specific to the module the faults/events are being induced upon, or the reliability metrics are measuring.   
+failure_dist  | enumeration  | N/A  | Distribution type used to generate times to random "failure" event on the system. Valid distributions are `UNIFORM`, `NORMAL`, `LOGNORMAL`, `BERNOULLI`, `PARETO`, `EXPONENTIAL`, `RAYLEIGH`, `WEIBULL`, `GAMMA`, `BETA`, and `TRIANGLE`.   
+restoration_dist  | enumeration  | N/A  | Distribution type used to determine time to restoration on faulted/evented objects. Valid distributions are `UNIFORM`, `NORMAL`, `LOGNORMAL`, `BERNOULLI`, `PARETO`, `EXPONENTIAL`, `RAYLEIGH`, `WEIBULL`, `GAMMA`, `BETA`, and `TRIANGLE`.   
+failure_dist_param_1  | double  | Varies  | Parameter 1 for the distribution selected in `failure_dist`. Specifies the following for the distributions listed: <br/> - `UNIFORM` \- lower range of the uniform distribution <br/> - `NORMAL` \- mean of the distribution <br/> - `LOGNORMAL` \- geometric mean of the distribution <br/> - `BERNOULLI` \- probability of the distribution <br/> - `PARETO` \- minimum value of the distribution <br/> - `EXPONENTIAL` \- coefficient of the distribution <br/> - `RAYLEIGH` \- _sigma_ of the distribution <br/> - `WEIBULL` \- _lambda_ of the distribution <br/> - `GAMMA` \- _alpha_ of the distribution <br/> - `BETA` \- _alpha_ of the distribution <br/> - `TRIANGLE` \- _a_ of the distribution 
+failure_dist_param_2  | double  | Varies  | Parameter 2 for the distribution selected in `failure_dist`. If a distribution is not listed below, it does not need the second parameter. Specifies the following for the distributions listed: <br/> - `UNIFORM` \- upper range of the uniform distribution <br/> - `NORMAL` \- standard deviation of the distribution <br/> - `LOGNORMAL` \- geometric standard deviation of the distribution <br/> - `PARETO` \- gamma scale of the distribution <br/> - `EXPONENTIAL` \- _k_scale_ of the distribution <br/> - `WEIBULL` \- _k_ of the distribution <br/> - `GAMMA` \- _beta_ of the distribution <br/> - `BETA` \- _beta_ of the distribution <br/> - `TRIANGLE` \- _b_ of the distribution  
+restoration_dist_param_1  | double  | Varies  | Parameter 1 for the distribution selected in `restoration_dist`. Specifies the following for the distributions listed: <br/> - `UNIFORM` \- lower range of the uniform distribution <br/> - `NORMAL` \- mean of the distribution <br/> - `LOGNORMAL` \- geometric mean of the distribution <br/> - `BERNOULLI` \- probability of the distribution <br/> - `PARETO` \- minimum value of the distribution <br/> - `EXPONENTIAL` \- coefficient of the distribution <br/> - `RAYLEIGH` \- _sigma_ of the distribution <br/> - `WEIBULL` \- _lambda_ of the distribution <br/> - `GAMMA` \- _alpha_ of the distribution <br/> - `BETA` \- _alpha_ of the distribution <br/> - `TRIANGLE` \- _a_ of the distribution  
+restoration_dist_param_2  | double  | Varies  | Parameter 2 for the distribution selected in `restoration_dist`. If a distribution is not listed below, it does not need the second parameter. Specifies the following for the distributions listed: <br/> - `UNIFORM` \- upper range of the uniform distribution <br/> - `NORMAL` \- standard deviation of the distribution <br/> - `LOGNORMAL` \- geometric standard deviation of the distribution <br/> - `PARETO` \- gamma scale of the distribution <br/> - `EXPONENTIAL` \- _k_scale_ of the distribution <br/> - `WEIBULL` \- _k_ of the distribution <br/> - `GAMMA` \- _beta_ of the distribution <br/> - `BETA` \- _beta_ of the distribution <br/> - `TRIANGLE` \- _b_ of the distribution  
+manual_outages  | char1024  | N/A  | Manual input describing which object to fault, when to fault it, and when to restore it. In the syntax above, `nodeB,2000-01-01 5:00:00,2000-01-01 6:00:00` would fault the object nodeB from 5 AM on January 1, 2000 to 6 AM on January 2, 2000. All times must follow the _yyyy-mm-dd HH:MM:SS_ format. The fault induced is determined by the `fault_type` field. `target_group` must be empty for this field and implementation type to be considered. Subsequent faults may be specified in the same format (_name, time start, time end_).   
+max_outage_length  | double  | seconds  | Defines the maximum time an object is allowed be out of service after faulted/evented. Serves as an upper limit to the value produced by the `restoration_dist` function. This parameter is ignored when a fault is specifed by the `manual_outages` field.   
+max_simultaneous_faults  | double  | N/A  | Defines the maximum number of faults a particular `eventgen` object can create at once. If more faults are requested by the `fault_dist` property, they will be ignored. This parameter is ignored when a fault is specified by the `manual_outages` field.   
+use_external_faults  | bool  | N/A  | If set to true, expects externally-defined events to come through the `external_fault_event` field in the JSON syntax noted above.   
+external_fault_event  | char1024  | N/A  | Input field for externally-defined/populated events. Must be in the JSON format described in Eventgen external event mode  
   
 ## Powerflow implementation
 
-TODO - Status - is this still true?
-
-At this time, the **reliability** module only interfaces with the **powerflow** module. Faults can currently only be induced on **link** objects within the **powerflow** module. Faults available are: 
+At this time, the `reliability` module only interfaces with the `powerflow` module. Faults can currently only be induced on `link` objects within the `powerflow` module. Faults available are: 
 
   * SLG-A, SLG-B, SLG-C, SLG-X -> single-line-ground A, B, C, or random
   * DLG-AB, DLG-BC, DLG-CA, DLG-X -> double-line-ground AB, BC, CA, or random
@@ -295,7 +293,7 @@ At this time, the **reliability** module only interfaces with the **powerflow** 
   * OC2-AB, OC2-BC, OC2-CA, OC2-X -> double open conductor AB, BC, CA, or random
   * OC3 -> triple open circuit - ABC
 
-The following fault types are valid events in **reliability** calls, but should not be explicitly induced. These events are induced by **switch** or **fuse** objects when specific actions occur. They may show up in the output log of **powerflow** **reliability** calls, but should not be explicitly specified as a fault. 
+The following fault types are valid events in `reliability` calls, but should not be explicitly induced. These events are induced by `switch` or `fuse` objects when specific actions occur. They may show up in the output log of `powerflow` `reliability` calls, but should not be explicitly specified as a fault. 
 
   * SW-A, SW-B, SW-C -> open switch phase A, B, or C
   * SW-AB, SW-BC, SW-CA -> open switch phases AB, BC, or CA
@@ -306,7 +304,7 @@ The following fault types are valid events in **reliability** calls, but should 
 
 In order for GridLAB-D™ to effectively model the effects of distribution feeder reconfiguration, it is necessary to calculate the metrics of IEEE-1366. Distribution reconfiguration is designed to reconfigure the distribution system following a system fault in an attempt to minimize the impact on the end use customers. To properly model this in GridLAB-D™, it is necessary for the reliability module to interface with the power flow model in order to insert faults, call the restoration object, restore faulted sections, and to calculate the metrics of IEEE-1366 for the duration of the simulation period. This document outlines the requirements of the GridLAB-D™ reliability module, for use with power system analysis. 
 
-## Power System Faults
+## **Power System Faults**
 
   * All asymmetrical short-circuit faults such as Single-Line-Ground (L-G), Line-Line (L-L), Double-Line-Ground (L-L-G); symmetrical Three-Line-Ground (3-L-G) fault; one open conductor line faults, two open conductor line fault, three conductor open line faults will be enumerated in the reliability module.
 
@@ -321,10 +319,9 @@ In order for GridLAB-D™ to effectively model the effects of distribution feede
 
 
   * Simultaneous line faults capability will be present inside the reliability module. All the customers affected will be treated equally.
-
 GridLAB-D™ is not designed to perform detailed fault analysis. For the purpose of reconfiguration, when a fault occurs, the first upstream protective device (fuse, switch etc)is assumed to operate, islanding the downstream loads if the system is radial. No reclosing action will be incorporated in this module. 
 
-## Requirements of the Reliability Module
+## **Requirements of the Reliability Module**
 
 The reliability module must be able to perform the following tasks: 
 
@@ -334,7 +331,7 @@ The reliability module must be able to perform the following tasks:
   * As an example, the data to obtain Mean Time To Failure (MTTF)calculated by Weibull Distribution is described below. Weibull distribution has become increasingly popular because the three parameters associated with it scale(alpha),shape(gamma)and location can be easily changed to obtain different characteristics. For this module gamma=1(exponential distribution).
 
 
-$$PDF : f(t) = (\gamma/t)(t/\alpha)^\gamma e^{-(t/\alpha)^\gamma}$$
+$$PDF : f(t) = (\gamma/t)(t/\alpha)^\gamma e^{-(t/\alpha)^\gamma}$$ 
 
 $\lambda = \frac{\gamma}{\alpha}(\frac{t}{\alpha})^{\gamma -1}$
 
@@ -411,11 +408,12 @@ $$ASAI = \frac{N_T * (Number of hours / year) - \sum r_i N_i}{N_T * (Number of h
 
 where, 
 
+
   $N_T$ = Total number of customers in the area of interest
 
 !!! note
 
-    There is no specification between regular years and leap years when calculating this index in GridLAB-D™. The regular 8760 hours/year is used when calculated this index._
+  There is no specification between regular years and leap years when calculating this index in GridLAB-D™. The regular 8760 hours/year is used when calculated this index._
 
 #### Data acquisition for metrics calculation
 
@@ -426,7 +424,7 @@ In order to calculate the reliability indices metrics various system data needs 
 
   * Number of customers can be caluculated by the amount of triplex meters, meters present on the feeder.
 
-## Reliability Module Validation
+## **Reliability Module Validation**
 
 Initial testing of the reliability module will be done on IEEE 13-node system for various relaibility indices check. It will be further expanded to evaluate the reliability module and feeder reconfiguration performance on two taxonomy feeders. 
 
@@ -436,7 +434,7 @@ Initial testing of the reliability module will be done on IEEE 13-node system fo
 
   * The IEEE 13-node system will be populated with majorly residential/commercial customers. One open conductor fault on the _underground line_ will be simulated. The mean time to restoration for one conductor of a line is considered and the SAIFI,SAIDI,CAIDI,ASAI indices are calculated. The tests can be repeated for two open conductor and three open conductor faults and L-G, L-L-G, L-L, 3-L-G faults.
   
-### Simultaneous faults
+### **Simultaneous faults**
 
 The reliability indices will be verified for simultaneous faults scenario. The IEEE 13-node system will be populated with residential/commercial loads. A line fault (one open conductor) and a three -phase-ground fault (3-L-G) will be applied on the feeder. The reliability indices SAIFI, SAIDI, CAIDI and ASAI will be calculated. 
 

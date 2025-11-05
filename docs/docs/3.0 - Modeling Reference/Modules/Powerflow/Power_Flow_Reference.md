@@ -293,7 +293,7 @@ $$[b] = \left [ \begin{matrix} Z_{eq} n_t Z_1 + \frac{Z_0}{n_t} & -\frac{Z_0}{n_
 $$[c] = \left [ \begin{matrix} \frac{n_t}{Z_c} & 0 & 0 \\\ 0 & 0 & 0 \\\ 0 & 0 & 0 \end{matrix} \right ]$$
 
 
-$$[d] = \left [ \begin{matrix} \frac{Z_1 n_t}{Z_c} + \frac{1}{n_t} & \frac{-1}{n_t} & 0 \\\ 0 & 0 & 0 \\\ 0 & 0 & 0 \end{matrix} \right ]$$
+$$[d] = \left [ \begin{matrix} \frac{Z_1 n_t}{Z_c} + \frac{1}{n_t} & \frac{-1}{n_t} & 0 \\\ 0 & 0 & 0 \\\ 0 & 0 & 0 \end{matrix} \right ]$$ 
 
 
 $$[A] = \left [ \begin{matrix} \frac{1}{n_t} & 0 & 0 \\\ \frac{1}{n_t} & 0 & 0 \\\ 0 & 0 & 0 \end{matrix} \right ]$$
@@ -323,7 +323,7 @@ $$[B] = \left [ \begin{matrix} Z_1 + \frac{Z_0}{Z_{eq} n_t^2} & -\frac{Z_0}{Z_{e
 $$[a] = \left [ \begin{matrix} 0 & 0 & Z_{eq} n_t \\\ 0 & 0 & Z_{eq} n_t \\\ 0 & 0 & 0 \end{matrix} \right ]$$
 
 
-$$[b] = \left [ \begin{matrix} Z_{eq} n_t Z_1 + \frac{Z_0}{n_t} & -\frac{Z_0}{n_t} & 0 \\\ \frac{Z_0}{n_t} & -\left ( Z_{eq} n_t Z_2 + \frac{Z_0}{n_t} \right ) & 0 \\\ 0 & 0 & 0 \end{matrix} \right ]$$
+$$[b] = \left [ \begin{matrix} Z_{eq} n_t Z_1 + \frac{Z_0}{n_t} & -\frac{Z_0}{n_t} & 0 \\\ \frac{Z_0}{n_t} & -\left ( Z_{eq} n_t Z_2 + \frac{Z_0}{n_t} \right ) & 0 \\\ 0 & 0 & 0 \end{matrix} \right ]$$  
 
 
 $$[c] = \left [ \begin{matrix} 0 & 0 & 0 \\\ 0 & 0 & 0 \\\ \frac{n_t}{Z_c} & 0 & 0 \end{matrix} \right ]$$
@@ -432,6 +432,8 @@ $$[a] = \left [ \begin{matrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{matrix} 
 
 [d] = \left [ \begin{matrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{matrix} \right ]$$
 
+  
+
 
 $$[A] = \left [ \begin{matrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{matrix} \right ] 
 
@@ -468,7 +470,7 @@ Substation is a child class of the node object inside the powerflow module.
 
 Substation uses the following equation to convert the positive sequence value from its pw_load connection (load_voltage) to the three phase balanced voltages used as the swing bus voltage solution. 
 
-$$\begin{bmatrix} \displaystyle V_{A}\\\ & \\\ \displaystyle V_{B}\\\ & \\\ \displaystyle V_{C} \end{bmatrix} = \begin{bmatrix} \displaystyle 1 & \displaystyle 1 & \displaystyle 1 \\\ & \\\ \displaystyle 1 & \displaystyle a^2 & \displaystyle a \\\ & \\\ \displaystyle 1 & \displaystyle a & \displaystyle a^2 \end{bmatrix}*\begin{bmatrix} \displaystyle 0\\\ & \\\ \displaystyle V_{positive sequence}\\\ & \\\ \displaystyle 0 \end{bmatrix}*b$$
+$$\begin{bmatrix} \displaystyle V_{A}\\\ & \\\ \displaystyle V_{B}\\\ & \\\ \displaystyle V_{C} \end{bmatrix} = \begin{bmatrix} \displaystyle 1 & \displaystyle 1 & \displaystyle 1 \\\ & \\\ \displaystyle 1 & \displaystyle a^2 & \displaystyle a \\\ & \\\ \displaystyle 1 & \displaystyle a & \displaystyle a^2 \end{bmatrix}*\begin{bmatrix} \displaystyle 0\\\ & \\\ \displaystyle V_{positive sequence}\\\ & \\\ \displaystyle 0 \end{bmatrix}*b$$ 
 
 Where $b$ is conditional upon which phase is chosen as the reference phase, $a$ is the complex number $1\angle120^\circ$, and all other variables are complex. The values of $b$ for each of the possible reference phases are shown below. 
 

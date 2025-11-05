@@ -62,7 +62,14 @@ nav:
     - Key Attributes of GridLAB-D™: docs/1.0 - Prospective Users/GridLAB-D_Key_Attributes.md
     - Technical Overview: docs/1.0 - Prospective Users/Technical_Overview.md
   - 2.0 - New Users:
-    - Quick Install: docs/2.0 - New Users/2.1 - Installation Guide.md
+    - 2.1 - Installation:
+      - Installation Guide: docs/2.0 - New Users/2.1 - Installation/Installation Guide.md
+      - MySQL:
+        - Database: docs/2.0 - New Users/2.1 - Installation/MySQL/Database.md
+        - HowTo:mysql: docs/2.0 - New Users/2.1 - Installation/MySQL/HowTo_mysql.md
+        - MySQL Import/Export: docs/2.0 - New Users/2.1 - Installation/MySQL/MySQL_Import_Export.md
+        - Mysql: docs/2.0 - New Users/2.1 - Installation/MySQL/Mysql.md
+      - Quick Install: docs/2.0 - New Users/2.1 - Installation/Quick Installation.md
     - 2.2 - Getting Started:
       - Gridlab-D™ Overview: docs/2.0 - New Users/2.2 - Getting Started/2.2.1 - Overview.md
       - What is a GridLAB-D™ model?: docs/2.0 - New Users/2.2 - Getting Started/2.2.2 - Models.md
@@ -83,9 +90,9 @@ nav:
       - Built-In Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.8 - Built-In Distribution Models.md
   - 3.0 - Modeling Reference:
     - Loads:
-      - Loadshape: docs/3.0 - Modeling Reference/Loads/1.0 - Loadshape.md
-      - Load Composition: docs/3.0 - Modeling Reference/Loads/2.0 - Load_Composition.md
-      - Industrial and Agricultural Loads: docs/3.0 - Modeling Reference/Loads/3.0 - Industrial_and_agricultural_loads.md
+      - Industrial and Agricultural Loads: docs/3.0 - Modeling Reference/Loads/Industrial_and_agricultural_loads.md
+      - Load Composition: docs/3.0 - Modeling Reference/Loads/Load_Composition.md
+      - Loadshape: docs/3.0 - Modeling Reference/Loads/Loadshape.md
     - Metrics & Recorders:
       - Recorder: docs/3.0 - Modeling Reference/Metrics & Recorders/1.0 - Recorder.md
       - Multi recorder: docs/3.0 - Modeling Reference/Metrics & Recorders/2.0 - Multi_recorder.md
@@ -98,6 +105,9 @@ nav:
       - Climate:
         - Climate Module: docs/3.0 - Modeling Reference/Modules/Climate/1.0 - Climate.md
         - CSV reader: docs/3.0 - Modeling Reference/Modules/Climate/CSV_reader_(climate_class).md
+      - Commercial:
+        - Commercial User Guide: docs/3.0 - Modeling Reference/Modules/Commercial/1.0 - Commercial_User_Guide.md
+        - Commercial Module: docs/3.0 - Modeling Reference/Modules/Commercial/Tech_Commercial.md
       - Connection:
         - Connection: docs/3.0 - Modeling Reference/Modules/Connection/1.0 - Connection.md
         - fncs msg: docs/3.0 - Modeling Reference/Modules/Connection/Connection_fncs_msg.md
@@ -110,6 +120,10 @@ nav:
         - security: docs/3.0 - Modeling Reference/Modules/Connection/Connection_security.md
         - transport: docs/3.0 - Modeling Reference/Modules/Connection/Connection_transport.md
         - xml: docs/3.0 - Modeling Reference/Modules/Connection/Connection_xml.md
+      - Market:
+        - Market User Guide: docs/3.0 - Modeling Reference/Modules/Market/1.0 - Market_User_Guide.md
+        - Market Auction: docs/3.0 - Modeling Reference/Modules/Market/Market_Auction.md
+        - Transactive Controller: docs/3.0 - Modeling Reference/Modules/Market/TransactiveController.md
       - Objects:
         - Introduction: docs/3.0 - Modeling Reference/Modules/Objects/1.0 - Introduction.md
         - Distributed Energy Resources:
@@ -117,31 +131,32 @@ nav:
           - Microgrids: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Dev_Microgrids.md
           - Diesel dg: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Diesel_dg.md
           - Energy storage: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Energy_storage.md
+          - Evcharger: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Evcharger.md
           - Evcharger det: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Evcharger_det.md
+          - Hybrid Electric Vehicle Chargers: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Hybrid_Electric_Vehicle_Chargers.md
           - Inverters:
             - Droop inverter: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Droop_inverter.md
             - Inverter: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Inverter.md
             - ibr blackboxmodels: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Spec_ibr_blackboxmodels.md
             - ibr grayboxmodels: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Spec_ibr_grayboxmodels.md
             - inverter_dyn: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Spec_inverter_dyn.md
-            - Sec control: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Spec_sec_control.md
-            - Sync Ctrl: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Spec_sync_ctrl.md
           - Solar - Solar Panel: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Solar.md
           - Windturb dg: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Windturb_dg.md
         - Motor:
-          - Composition Motor: docs/3.0 - Modeling Reference/Modules/Objects/Motor/Tech_CompositionMotor.md
-          - Single Phase Induction Motors: docs/3.0 - Modeling Reference/Modules/Objects/Motor/Tech_DeltaSPIM.md
+          - Tech:CompositionMotor: docs/3.0 - Modeling Reference/Modules/Objects/Motor/Tech_CompositionMotor.md
+          - Tech:DeltaSPIM: docs/3.0 - Modeling Reference/Modules/Objects/Motor/Tech_DeltaSPIM.md
           - Three Phase Induction Motors: docs/3.0 - Modeling Reference/Modules/Objects/Motor/Tech_DeltaTPIM.md
         - Player: docs/3.0 - Modeling Reference/Modules/Objects/Player.md
         - Series compensator: docs/3.0 - Modeling Reference/Modules/Objects/Series_compensator.md
-        - Switch: docs/3.0 - Modeling Reference/Modules/Objects/Spec_switch_object.md
         - Voltage source inverter (VSI): docs/3.0 - Modeling Reference/Modules/Objects/Voltage_source_inverter_(VSI).md
+        - Object (directive): docs/3.0 - Modeling Reference/Modules/Objects/Writing_Objects.md
       - Powerflow:
-        - Power Flow User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/1.0 - Power_Flow_User_Guide.md
-        - Powerflow (module): docs/3.0 - Modeling Reference/Modules/Powerflow/2.0 - Powerflow_(module).md
-        - Powerflow Tehnical Reference: docs/3.0 - Modeling Reference/Modules/Powerflow/3.0 - Power_Flow_Reference.md
-        - Reliability User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/4.0 - Reliability_User_Guide.md
-        - Newton-Raphson Distribution Powerflow Solver: docs/3.0 - Modeling Reference/Modules/Powerflow/5.0 - Newton-Raphson_Distribution_Powerflow_Solver.md
+        - Neutral Earth Voltage (NEV): docs/3.0 - Modeling Reference/Modules/Powerflow/NEV.md
+        - Newton-Raphson Distribution Powerflow Solver: docs/3.0 - Modeling Reference/Modules/Powerflow/Newton-Raphson_Distribution_Powerflow_Solver.md
+        - Powerflow Tehnical Reference: docs/3.0 - Modeling Reference/Modules/Powerflow/Power_Flow_Reference.md
+        - Power Flow User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/Power_Flow_User_Guide.md
+        - Powerflow (module): docs/3.0 - Modeling Reference/Modules/Powerflow/Powerflow_(module).md
+        - Reliability User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/Reliability_User_Guide.md
       - Residential:
         - ETP closed form solution: docs/3.0 - Modeling Reference/Modules/Residential/ETP_closed_form_solution.md
         - Loads: docs/3.0 - Modeling Reference/Modules/Residential/Loads.md
@@ -152,6 +167,9 @@ nav:
         - ZIPload: docs/3.0 - Modeling Reference/Modules/Residential/ZIPload.md
         - House E: docs/3.0 - Modeling Reference/Modules/Residential/house-e.md
       - Tape: docs/3.0 - Modeling Reference/Modules/Tape.md
+      - mysql:
+        - Player (mysql): docs/3.0 - Modeling Reference/Modules/mysql/Player_(mysql).md
+        - Recorder (mysql): docs/3.0 - Modeling Reference/Modules/mysql/Recorder_(mysql).md
     - Other Features:
       - Checkpoints: docs/3.0 - Modeling Reference/Other Features/Checkpoints.md
       - Command Options: docs/3.0 - Modeling Reference/Other Features/Command_options.md
@@ -165,14 +183,13 @@ nav:
         - Multithreaded Random Number Generation: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Multithreaded_Random_Number_Generation.md
         - Pauseat: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Pauseat.md
         - Realtime server: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Realtime_server.md
-        - Spec:Subsecond: docs/3.0 - Modeling Reference/Other Features/Delta Mode and Timing/Spec_Subsecond.md
       - Link (directive): docs/3.0 - Modeling Reference/Other Features/Link_(directive).md
       - Macros: docs/3.0 - Modeling Reference/Other Features/Macros.md
       - Matlab link: docs/3.0 - Modeling Reference/Other Features/Matlab_link.md
       - Parameter expansion: docs/3.0 - Modeling Reference/Other Features/Parameter_expansion.md
       - Performance profiling: docs/3.0 - Modeling Reference/Other Features/Performance_profiling.md
-      - Sync Check: docs/3.0 - Modeling Reference/Other Features/Spec_sync_check.md
       - Units: docs/3.0 - Modeling Reference/Other Features/Units.md
+      - Finding Objects: docs/3.0 - Modeling Reference/Other Features/finding-objects.md
   - 4.0 Developing Reference:
     - 4.1 - Introduction - TBD: docs/4.0 Developing Reference/4.1 - Introduction.md
     - 4.2 - Building from Source:
@@ -215,36 +232,29 @@ nav:
   - 6.0 Examples:
     - Placeholder: docs/6.0 Examples/placeholder.md
   - 7.0 References:
+    - Specs:
+      - Spec:Communications: docs/7.0 References/Specs/Spec-Communications.md
+      - Spec:Subsecond: docs/7.0 References/Specs/Spec_Subsecond.md
+      - Spec:Transmission: docs/7.0 References/Specs/Spec_Transmission.md
+      - Spec:sec control: docs/7.0 References/Specs/Spec_sec_control.md
+      - Spec:switch object: docs/7.0 References/Specs/Spec_switch_object.md
+      - Spec:sync check: docs/7.0 References/Specs/Spec_sync_check.md
+      - Spec:sync ctrl: docs/7.0 References/Specs/Spec_sync_ctrl.md
+      - Tech:Optimize: docs/7.0 References/Specs/Tech_Optimize.md
     - Unimplemented:
       - Introduction: docs/7.0 References/Unimplemented/1.0 - Introduction.md
-      - Commercial:
-        - Commercial Module: docs/7.0 References/Unimplemented/Commercial/1.0 - Tech_Commercial.md
-        - Commercial User Guide: docs/7.0 References/Unimplemented/Commercial/Commercial_User_Guide.md
       - End Use Loads:
-        - Hybrid Electric Vehicle Chargers: docs/7.0 References/Unimplemented/End Use Loads/Hybrid_Electric_Vehicle_Chargers.md
         - Lights: docs/7.0 References/Unimplemented/End Use Loads/Lights.md
         - Microwave: docs/7.0 References/Unimplemented/End Use Loads/Microwave.md
         - Range: docs/7.0 References/Unimplemented/End Use Loads/Range.md
         - Refrigerator: docs/7.0 References/Unimplemented/End Use Loads/Refrigerator.md
         - Spec:Dishwasher: docs/7.0 References/Unimplemented/End Use Loads/Spec_Dishwasher.md
         - Spec:Range: docs/7.0 References/Unimplemented/End Use Loads/Spec_Range.md
-      - Market:
-        - Market User Guide: docs/7.0 References/Unimplemented/Market/1.0 - Market_User_Guide.md
-        - Market Auction: docs/7.0 References/Unimplemented/Market/Market_Auction.md
-        - Transactive Controller: docs/7.0 References/Unimplemented/Market/TransactiveController.md
-      - MySQL:
-        - Mysql: docs/7.0 References/Unimplemented/MySQL/Mysql#username.md
-        - Database: docs/7.0 References/Unimplemented/MySQL/Database.md
-        - HowTo:mysql: docs/7.0 References/Unimplemented/MySQL/HowTo_mysql.md
-        - MySQL Import/Export: docs/7.0 References/Unimplemented/MySQL/MySQL_Import_Export.md
-        - Player (mysql): docs/7.0 References/Unimplemented/MySQL/Player_(mysql).md
-        - Recorder (mysql): docs/7.0 References/Unimplemented/MySQL/Recorder_(mysql).md
       - Network:
         - Network: docs/7.0 References/Unimplemented/Network/Network_Flow_Solver.md
         - Network Flow Guide: docs/7.0 References/Unimplemented/Network/Network_Flow_Guide.md
         - Transmission: docs/7.0 References/Unimplemented/Network/TDIntegration.md
       - Neutral Earth Voltage:
-        - Neutral Earth Voltage (NEV): docs/7.0 References/Unimplemented/Neutral Earth Voltage/NEV.md
         - Introduction: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEV.md
         - Spec:NEVArray: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVArray.md
         - Spec:NEVDataFormat: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVDataFormat.md
@@ -252,7 +262,6 @@ nav:
         - Spec:NEVModules: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVModules.md
         - Spec:NEVNode: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVNode.md
         - Spec:NEVSolver: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVSolver.md
-      - Transmission: docs/7.0 References/Unimplemented/Transmission.md
   - reference:
     - ReadMeConfig:
       - authentication: reference/ReadMeConfig/authentication.md

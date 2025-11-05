@@ -1,10 +1,9 @@
-# Single Phase Induction Motors
+# Tech:DeltaSPIM
 
 This page describes the implementation of a single phase induction motor model using dynamic phasors. The model was first presented in [1]. The model is created to represents the impact of residential single phase induction motor, (air-conditioners, compressors, etc.) on power system dynamic performance. Our particular interest is in modeling the impact on dynamic voltage stability and oscillation damping. The model is expected to: 
 
   * Accurately capture the sensitivities of motor real and reactive power requirements as a function of its voltage and frequency
   * Reasonably predict the stalling phenomenon, as well as accurately represent motor current, real and reactive power during the stalled state
-
 # Dynamic Phasor Model
 
 Variable | Unit | Definition   
@@ -56,8 +55,9 @@ $$\begin{bmatrix}I_{f}^{R} + j I_{f}^{I} \\ I_{b}^{R} + j I_{b}^{I} \end{bmatrix
 
 $$\begin{bmatrix}I_{ds}^{R} + j I_{ds}^{I} \\ I_{qs}^{R} + j I_{qs}^{I} \end{bmatrix} = \begin{bmatrix} 1 & 1 \\ \frac{j}{n} & -\frac{j}{n} \end{bmatrix} \begin{bmatrix} I_{f}^{R} + j I_{f}^{I} \\ I_{f}^{R} + j I_{f}^{I} \\\end{bmatrix}$$
 
+# GridLAB-D™ Implementation
 
-# Motor Object
+## motor object
 
 The motor model is divided into two portions, a steady state model and a delta mode model. Both models are obtained from the above mentioned equations. The steady state model is an iterative model solving the dynamic phasor equation at each time step. This model is valid for time steps greater than 0.3 milliseconds. The delta mode model also uses the dynamic phasor equations and is valid for time steps below 0.3 milliseconds. Switching between the model is handled by user specified settings for the speed and voltage of the motor. These properties can be found below. A minimalist motor could be created with 
     

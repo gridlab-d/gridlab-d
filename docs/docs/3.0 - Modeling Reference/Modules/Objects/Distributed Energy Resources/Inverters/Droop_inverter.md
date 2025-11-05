@@ -2,13 +2,13 @@
 
 This document describes GridLAB-D™ implementation of the CONSTANT_PQ mode inverter with droops. The implementation is based on the existing inverter CONSTANT_PQ mode source codes. In the original CONSTANT_PQ mode inverter, during event mode simulation, the inverter current outputs are computed based on the reference power values and the terminal voltage values; During delta mode simulation, the inverter real and reactive power outputs are compared with the reference values in each delta time step, and a PI controller is connected after the comparison, for the calculation of the updated current injection _Iout_ from inverter. 
 
-![caption](../../../../../../images/Inverter_PI_control_original.png)
+![caption](../../../../../images/Inverter_PI_control_original.png)
 
 With the droop mode inverter implemented inside the CONSTANT_PQ mode inverter, the reference power values will be updated by checking the measured feeder frequency and the inverter terminal voltage with the droop curve setpoints. 
 
 
-![caption](../../../../../../images/Inverter_p_f_droop.png)
-![caption](../../../../../../images/Inverter_q_v_droop.png)
+![caption](../../../../../images/Inverter_p_f_droop.png)
+![caption](../../../../../images/Inverter_q_v_droop.png)
 
 
 The capability to run in delta mode is implemented in battery object. The battery can be attached to the droop inverter. 

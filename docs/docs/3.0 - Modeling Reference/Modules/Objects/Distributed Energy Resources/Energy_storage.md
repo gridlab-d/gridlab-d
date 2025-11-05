@@ -1,6 +1,6 @@
 # Energy storage
 
-TODO - Empty - This page is essentially empty. Should it be a page for the battery object instead?
+TODO: This page is essentially empty
 
 energy_storage – generic? distributed storage 
 

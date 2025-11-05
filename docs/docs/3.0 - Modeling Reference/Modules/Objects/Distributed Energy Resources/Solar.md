@@ -4,51 +4,52 @@ A solar panel (also known as solar module or photovoltaic module/panel) is an as
 
 ## Properties
 
-Property name | Type | Unit | Description | Default  
----|---|---|---|---  
-**generator_mode** | enumeration | none | (UNKNOWN,CONSTANT_V,CONSTANT_PQ,CONSTANT_PF,SUPPLY_DRIVEN) Currently solar must operate in SUPPLY_DRIVEN. | SUPPLY_DRIVEN
-**generator_status** | enumeration | none | (ONLINE, OFFLINE) | ONLINE
-**panel_type** | enumeration | none | Uses pre-defined panel technologies.(SINGLE_CRYSTAL_SILICON, MULTI_CRYSTAL_SILICON, AMORPHOUS_SILICON, THIN_FILM_GA_AS, CONCENTRATOR) | SINGLE_CRYSTAL_SILICON  
-**power_type** | enumeration | none | Defines whether the connection is AC or DC. _Currently not used._  
-**INSTALLATION_TYPE** | enumeration | none | (ROOF_MOUNTED, GROUND_MOUNTED) _Currently not used._  
-**SOLAR_TILT_MODEL** | enumeration | none | (DEFAULT, SOLPOS) Defines the tilt model to utilize for tilted array calculations. | DEFAULT  
-**SOLAR_POWER_MODEL** | enumeration | none | (DEFAULT, FLATPLATE,PV_CURVE) Defines if the PV array output efficiency should be adjusted for temperatures of the cells using a simple efficiency method, or the SAM simple flat plate efficiency model, or use the PV Curve (DC bus) model. | DEFAULT
-**a_coeff** | double | none | _a_ coefficient for temperature correction forumula | -2.81   
-**b_coeff** | double | none | _b_ coefficient for temperature correction forumula  | -0.0455
-**dT_coeff** | double | %/degC | Temperature difference coefficient for temperature correction forumula | 0.0
-**T_coeff** | double | none | Maximum power temperature coefficient for temperature correction forumula | -0.5 [%/degC]   
-**NOCT** | double | degF | Nominal operating cell temperature. | 118.4 [degF]    
-**Tcell** | double | degF | TODO - Description | 69.8 [degF] 
+Property name | Type | Unit | Description   
+---|---|---|---  
+generator_mode | enumeration | none | (UNKNOWN,CONSTANT_V,CONSTANT_PQ,CONSTANT_PF,SUPPLY_DRIVEN) Currently solar must operate in SUPPLY_DRIVEN.   
+generator_status | enumeration | none | (ONLINE, OFFLINE)   
+panel_type | enumeration | none | Uses pre-defined panel technologies.(SINGLE_CRYSTAL_SILICON, MULTI_CRYSTAL_SILICON, AMORPHOUS_SILICON, THIN_FILM_GA_AS, CONCENTRATOR)   
+power_type | enumeration | none | Defines whether the connection is AC or DC. _Currently not used._  
+INSTALLATION_TYPE | enumeration | none | (ROOF_MOUNTED, GROUND_MOUNTED) _Currently not used._  
+SOLAR_TILT_MODEL | enumeration | none | (DEFAULT, SOLPOS) Defines the tilt model to utilize for tilted array calculations.   
+SOLAR_POWER_MODEL | enumeration | none | (DEFAULT, FLATPLATE,PV_CURVE) Defines if the PV array output efficiency should be adjusted for temperatures of the cells using a simple efficiency method, or the SAM simple flat plate efficiency model, or use the PV Curve (DC bus) model.   
+a_coeff | double | none | _a_ coefficient for temperature correction forumula   
+b_coeff | double | none | _b_ coefficient for temperature correction forumula   
+dT_coeff | double | %/degC | Temperature difference coefficient for temperature correction forumula   
+T_coeff | double | none | Maximum power temperature coefficient for temperature correction forumula   
+NOCT | double | degF | Nominal operating cell temperature.   
 Tmodule | double | degF | Calculated internal temperature of the PV module.   
-**Tambient** | double | degF | Outside air temperature. | 77 [degF]   
-**wind_speed** | double | mph | Outside wind speed. Currently not used.   
-**ambient_temperature** | double | degF | Current ambient temperature of air   
-**Insolation** | double | W/sf | Solar radiation incident upon the solar panel. | 0  
-**Rinternal** | double | Ohm | _Currently not used._ | 0.05    
-**Rated_Insolation** | double | W/sf | Insolation level that the cell is rated for. | 92.902    
-**Pmax_temp_coeff** | double |  | Coefficient for the effects of temperature changes on the actual power output.   
-**Voc_temp_coeff** | double |  | Coefficient for the effects of temperature changes on the DC terminal voltage.   
-**V_Max** | complex | V | Defines the maximum operating voltage of the PV module. | 79.34     
-**Voc_Max** | complex | V | Voc max of the solar module | 91.22   
-**Voc** | complex | V | Defines the open circuit voltage as specified by the PV manufacturer. | 91.22     
-**efficiency** | double | unit | Defines the efficiency of power conversion from the solar insolation to DC power. | 0.10  
-**area** | double | sf | Defines the surface area of the solar module. | 323 [sf]    
-**soiling** | double | pu | Soiling of the array factor - representing dirt on the array. | 0.95
-**derating** | double | pu | Panel derating to account for manufacturing variances. | 0.95   
-**P_Out** | complex | kW | _Currently not used._  
-**V_Out** | complex | V | DC voltage passed to the inverter object   
-**I_Out** | complex | A | DC current passed to the inverter object   
-**VA_Out** | complex | VA | Actual power delivered to the inverter   
-**weather** | object | n/a | Reference to a climate object from which temperature, humidity, and solar flux are collected   
-**shading_factor** | double | pu | Shading factor for scaling solar power to the array | 1 (no shading)   
-**tilt_angle** | double | deg | Tilt angle of PV array | 45 [deg] 
-**orientation_azimuth** | double | deg | Facing direction of the PV array | 0 (equator facing) 
-**latitude_angle_fix** | bool | n/a | Fix tilt angle to installation latitude value (latitude comes from climate data) | FALSE  
-**orientation** | enumeration | n/a | Type of panel orientation. Types DEFAULT and FIXED_AXIS are currently implemented | DEFAULT   
-**pvc_U_oc_V** | double | V | Open circuit voltage   
-**pvc_I_sc_A** | double | A | Short circuit current   
-**pvc_U_m_V** | double | V | Voltage at maximum power point   
-**pvc_I_m_A** | double | A | Current at maximum power point   
+Tambient | double | degF | Outside air temperature.   
+wind_speed | double | mph | Outside wind speed. Currently not used.   
+ambient_temperature | double | degF | Current ambient temperature of air   
+Insolation | double | W/sf | Solar radiation incident upon the solar panel.   
+Rinternal | double | Ohm | _Currently not used._  
+Rated_Insolation | double | W/sf | Insolation level that the cell is rated for.   
+Pmax_temp_coeff | double |  | Coefficient for the effects of temperature changes on the actual power output.   
+Voc_temp_coeff | double |  | Coefficient for the effects of temperature changes on the DC terminal voltage.   
+V_Max | complex | V | Defines the maximum operating voltage of the PV module.   
+Voc_Max | complex | V | Voc max of the solar module   
+Voc | complex | V | Defines the open circuit voltage as specified by the PV manufacturer.   
+efficiency | double | unit | Defines the efficiency of power conversion from the solar insolation to DC power.   
+area | double | sf | Defines the surface area of the solar module.   
+soiling | double | pu | Soiling of the array factor - representing dirt on the array.   
+derating | double | pu | Panel derating to account for manufacturing variances.   
+Rated kVA | double | kVA | _Currently not used._  
+P_Out | complex | kW | _Currently not used._  
+V_Out | complex | V | DC voltage passed to the inverter object   
+I_Out | complex | A | DC current passed to the inverter object   
+VA_Out | complex | VA | Actual power delivered to the inverter   
+weather | object | n/a | Reference to a climate object from which temperature, humidity, and solar flux are collected   
+shading_factor | double | pu | Shading factor for scaling solar power to the array   
+tilt_angle | double | deg | Tilt angle of PV array   
+orientation_azimuth | double | deg | Facing direction of the PV array   
+latitude_angle_fix | bool | n/a | Fix tilt angle to installation latitude value (latitude comes from climate data)  
+orientation | enumeration | n/a | Type of panel orientation. Types DEFAULT and FIXED_AXIS are currently implemented   
+phases | set | n/a | (A,B,C,N,S) _Currently not used._  
+pvc_U_oc_V | double | V | Open circuit voltage   
+pvc_I_sc_A | double | A | Short circuit current   
+pvc_U_m_V | double | V | Voltage at maximum power point   
+pvc_I_m_A | double | A | Current at maximum power point   
 
 ## Example
 
@@ -96,6 +97,38 @@ Tmodule | double | degF | Calculated internal temperature of the PV module.
         set {S=5, N=4, C=3, B=2, A=1} phases;
     }
   
+## Default
+
+Default Parameter Values  Parameter | Default value   
+---|---  
+NOTOC | 118.4 [degF]  
+Tcell | 69.8 [degF]  
+Tambient | 77 [degF]  
+Insolation | 0   
+Rinternal | 0.05   
+Rated_Insolation | 92.902   
+V_Max | 79.34   
+Voc | 91.22   
+Voc_Max | 91.22   
+area | 323 [sf]  
+soiling_factor | 0.95   
+derating_factor | 0.95   
+a_coeff | -2.81   
+b_coeff | -0.0455   
+dT_coeff | 0.0   
+T_coeff | -0.5 [%/degC]  
+efficiency | 0.10   
+generator_mode | SUPPLY_DRIVEN  
+generator_status | ONLINE  
+panel_type | SINGLE_CRYSTAL_SILICON  
+shading_factor | 1 (no shading)   
+tilt_angle | 45 [deg] 
+orientation_azimuth | 0 (equator facing)   
+latitude_angle_fix | FALSE   
+orientation | DEFAULT  
+SOLAR_TILT_MODEL | DEFAULT  
+SOLAR_POWER_MODEL | DEFAULT  
+
 ## Orientation
 
 Type of panel orientation 

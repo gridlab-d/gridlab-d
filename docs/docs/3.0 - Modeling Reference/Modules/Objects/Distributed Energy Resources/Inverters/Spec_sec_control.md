@@ -2,11 +2,11 @@
 
 The secondary controller object has a structure illustrated in Figure 1, and is very similar to textbook examples like Figure 2. 
 
-![Secondary controller structure](../../../../../../images/300px-SecondaryControlChart.png)
+![Secondary controller structure](../../../images/300px-SecondaryControlChart.png)
 
 Figure 1: Secondary controller structure
 
-![AGC Control Structure](../../../../../../images/300px-AGC_WW.png)
+![AGC Control Structure](../../../images/300px-AGC_WW.png)
 
 Figure 2 - AGC Control Structure. Source: [1]
 
@@ -38,7 +38,7 @@ Link _to_ end
 (Microgrid B) | Desired | $P_{\text{err}}\downarrow$ | $P_{\text{err}}\uparrow$  
 $c_i$ | 1 | 1   
   
-!Illustration of inter-tie incorporation into the secondary controller via the unit error, $\epsilon_{text{unit}}$ ![input](../../../../../../images/300px-SecondaryControlIntertie.png)
+!Illustration of inter-tie incorporation into the secondary controller via the unit error, $\epsilon_{text{unit}}$ ![input](../../../images/300px-SecondaryControlIntertie.png)
 
 Figure 3: Illustration of inter-tie incorporation into the secondary controller via the unit error, $\epsilon_{text{unit}}$ input
 
@@ -352,7 +352,7 @@ Main `.glm`:
     Inv3, 0.3
     
 
-![Secondary controller setup on the IEEE 123 Bus case for illustration purposes](../../../../../../images/300px-Sec_cntrl_IEEE_123.png)
+![Secondary controller setup on the IEEE 123 Bus case for illustration purposes](../../../images/300px-Sec_cntrl_IEEE_123.png)
 
 Figure 4: Secondary controller setup on the IEEE 123 Bus case for illustration purposes.
 
