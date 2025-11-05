@@ -12,7 +12,6 @@
 using namespace std;
 
 bool loader::open_file(string file_name) {
-
 	ifstream file(file_name, std::ios::in);
     if (!file.is_open()) {
 		output_error("%s: unable to read stream", file_name.c_str());
@@ -25,30 +24,34 @@ bool loader::open_file(string file_name) {
 	return true;
 }
 
+string loader::convert(json value) {
+	if (value.is_number_float()) {
+		double dblvalue = value.get<double>();
+		return std::to_string(dblvalue);
+	}
+	else if (value.is_number_integer()) {
+		int intvalue = value.get<int>();
+		return std::to_string(intvalue);
+	}
+	else if (value.is_string())
+		return value.get<std::string>();
+	return "";
+}
+
 void loader::loadDirectives() {
     auto j_obj = this->jsn["_directives"];
 	STATUS result;
 	string propvalue;
 
-	for (auto& [name, property] : j_obj.items()) {
-		this->property = property;
-		if (property.is_object()) {
-			for (auto& [key, value] : property.items()) {
+	for (auto& [name, directive] : j_obj.items()) {
+		if (directive.is_object()) {
+			for (auto& [key, value] : directive.items()) {
 				bool oldstrict = global_strictnames;
 				if (name == "#set")
 					global_strictnames = true;
 				else if (name == "#define")
 					global_strictnames = false;
-				if (value.is_number_float()) {
-					double dblvalue = value.get<double>();
-					propvalue = std::to_string(dblvalue);
-				}
-				else if (value.is_number_integer()) {
-					int intvalue = value.get<int>();
-					propvalue = std::to_string(intvalue);
-				}
-				else if (value.is_string())
-					propvalue = value.get<std::string>();
+				propvalue = convert(value);	
 				result = global_setvar((const char*)key.c_str(), propvalue.data());
 				global_strictnames = strncmp(key.c_str(), "strictnames", 12)==0 ? global_strictnames : oldstrict;
 				if (result==FAILED)
@@ -110,11 +113,10 @@ void loader::loadClock() {
     }
 }
 
-
-bool loader::module_properties(MODULE *mod) {
+bool loader::module_properties(MODULE *mod, json properties) {
 	CLASS *oclass;
 
-	for (auto& [name, value] : property.items()) {
+	for (auto& [name, value] : properties.items()) {
 		if (name == "major" && value.is_number()) {
 			//not used?
 			short major = (short)value.get<int>();
@@ -131,122 +133,33 @@ bool loader::module_properties(MODULE *mod) {
 					output_error_raw("%s: module does not implement class '%s'", mod->name, classname);
 			}
 		}
+		// Must be property
 		else if (value.is_string()) {
 			current_object = nullptr; /* object context */
 			current_module = mod; /* module context */
 			string propvalue = value.get<std::string>();
-			if (propvalue != "_conditional") {
+			if (name != "inline_comments") {
 				if (this->parse.alternate_value(propvalue)) {
-					if (module_setvar(mod, (const char*)name.c_str(), propvalue.data()) > 0)
+					if (!module_setvar(mod, (const char*)name.c_str(), propvalue.data()))
 						output_error_raw("invalid '%s' property for module %s, ", (const char*)name.c_str(), mod->name);
 				}
-			}
-		}
-		// Must be a directive
-		else if (value.is_object()) {
-			current_object = nullptr; /* object context */
-			current_module = mod; /* module context */
-			string propvalue = "";
-			// string propvalue = module_ifdirectives(value);
-			if (propvalue != "") {
-				if (module_setvar(mod, (const char*)name.c_str(), propvalue.data()) > 0)
-					output_error_raw("invalid '%s' property for module %s, ", (const char*)name.c_str(), mod->name);
 			}
 		}
 	}
 	return true;
 }
 
-string loader::module_ifdirectives(json directives) {
-	double **pValue;
-	string property_value = "";
-	for (auto& [name, value] : directives.items()) {
-		if (name == "if" && value.is_object()) {
-			for (auto& [test, test_value] : value.items()) {
-				// todo: expession
-				property_value = test.data();
-				if (this->parse.alternate_value(property_value)) 
-					if (parse.expression("("+property_value+")", *pValue, nullptr, nullptr))
-						property_value = test_value.get_ref<const std::string&>();
-			}
-		}
-		else if (name == "ifnot" && value.is_object()) {
-			for (auto& [test, test_value] : value.items()) {
-				// todo: expession
-				if (parse.expression("("+test+")", *pValue, nullptr, current_object))
-					property_value = test_value.get_ref<const std::string&>();
-			}
-		}
-		else if (name == "ifdef" && value.is_object()) {
-			for (auto& [test, test_value] : value.items()) {
-				if (getenv(test.data()))
-					property_value = test_value.get_ref<const std::string&>();
-			}
-		}
-		else if (name == "ifndef" && value.is_object()) {
-			for (auto& [test, test_value] : value.items()) {
-				if (!getenv(test.data()))
-					property_value = test_value.get_ref<const std::string&>();
-			}
-		}
-	}
-	return property_value;
-}
-
-
-bool loader::module_conditionals() {
-	bool load = true;
-	for (auto& [name, value] : property.items()) {
-		if (name == "if" && value.is_array()) {
-			for (auto& element : value)
-			// todo: expession
-				if (element.is_string()) {
-					load = load && true;
-				}
-		}
-		else if (name == "ifnot" && value.is_array()) {
-			for (auto& element : value)
-			// todo: expession
-				if (element.is_string()) {
-					load = load && true;
-				}
-		}
-		else if (name == "ifdef" && value.is_array()) {
-			for (auto& element : value)
-				if (element.is_string()) {
-					const char* env_name = element.get_ref<const std::string&>().c_str();
-					if (getenv(env_name))
-						load = load && true;
-				}
-		}
-		else if (name == "ifndef" && value.is_array()) {
-			for (auto& element : value)
-				if (element.is_string()) {
-					const char* env_name = element.get_ref<const std::string&>().c_str();
-					if (!getenv(env_name))
-						load = load && true;
-				}
-		}
-	}
-	return load;
-}
-
 void loader::loadModules() {
 	MODULE *module;
-	bool load = true;
-    auto j_obj = this->jsn["modules"];
+	bool load;
+    json j_obj = this->jsn["modules"];
 
-	for (auto& [name, property] : j_obj.items()) {
-		this->property = property;
-		if (property.contains("_conditional") && property.is_object())
-			load = module_conditionals();
-		if (load) {
-			module = module_load(name.data(),0,nullptr);
-			if (module != nullptr)
-				module_properties(module);
-			else
-				output_error_raw("%s: module load failed", name.data(), "(no details)");
-		}
+	for (auto& [name, value] : j_obj.items()) {
+		module = module_load(name.data(),0,nullptr);
+		if (module != nullptr)
+			module_properties(module, value);
+		else
+			output_error_raw("%s: module load failed", name.data(), "(no details)");
 	}
 }
 
@@ -297,6 +210,7 @@ STATUS loader::loadall_glm_roll(char *file_name) {
 	this->filename = file_name;
 	std::string name(file_name);
 	if (this->open_file(name)) {
+//		this->loadIncludes();
 		this->loadDirectives();
 		this->loadClock();
 //		this->loadClasses();
