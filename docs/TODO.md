@@ -118,6 +118,7 @@
 - [ ] Math doesn't display on search, can we fix that?
 - [ ] Search in general is not great, what can we do
 - [x] Get images from wiki (urls to wiki pages will no longer work)
+- [ ] Find a way to set default width of images to fill the ReadTheDocs window
 - [ ] Remove "History" sections from docs, irrelevant 
 - [ ] Visual navigation:
     - [ ] Pages with subpages should be more visually distinct, bold, underilned, something. The [+] left of the header that is just barely visible until you hover over it is not very helpful.

@@ -69,6 +69,8 @@ We added an image in the chunking example, but here are a few more options for h
 
 Another image (local) and resized
 
+![Here's an image| ,150%](https://images.shoutwiki.com/gridlab-d/e/e6/Gdlogo.jpg)
+
 <img   src=../../images/Gdlogo.jpg width="750">
 
 Not edited

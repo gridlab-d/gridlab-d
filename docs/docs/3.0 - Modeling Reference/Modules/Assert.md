@@ -74,13 +74,7 @@ If the assert fails, the simulation halts.
  **relation** | `relation "op";` |     The relation operator specifies the relationship to test.
 **inside** | |  Compares the target property to determine whether it is between the lower and upper values (inclusive).
 **outside** | | Compares the target property to determine whether it is outside the lower and upper values (exclusive).
-**Comparisons** | |  Compares the target property to determine whether:
- | | `!=` | it is different from the value.
- | |  `>=` | it is greater than or equal to the value.
- | | `>` | it is greater than the value.
- | | `<=` |  it is less than or equal to the value.
- | | `<` | it is less than the value.
- | | `==` | it is equal to the value.
+**Comparisons** | |  Compares the target property to determine whether: <br/> `!=` : it is different from the value. <br/>  `>=` : it is greater than or equal to the value. <br/> `>` : it is greater than the value. <br/> `<=` : it is less than or equal to the value. <br/> `<` : it is less than the value. <br/>  `==` : it is equal to the value.
 **status** | `status NONE\|TRUE\|FALSE;` | The status enumeration specifies the desired outcome of the test. <br/> - **FALSE** - The `FALSE` status is used to specify that the assert test should fail. <br/> - **NONE** - The `NONE` status is used to specify that the assert test should be ignored. <br/> - **TRUE** - The `TRUE` status is used to specify that the assert test should succeed.
 **target** | `target "property ";` | The target specifies the name of the property to examine.
 **upper** | `upper "value unit ";` | The upper property specifies the upper bound when using the inside or outside relation.

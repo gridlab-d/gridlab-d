@@ -41,7 +41,7 @@ When the parser has a column header, any line that is not a comment or a class p
 ## Properties
 
 Property | Description 
-| - | - |
+-- | -- 
 **index** | The entry index number that the reader is using for the current weather values. |
 **city_name** | The name of the city the weather data is associated with. 
 **state_name** | The name of the state that the city is in for the associated weather data. **lat_deg** | The whole degree latitude for the location that this weather data was recorded. North values are positive, south values are negative. 
