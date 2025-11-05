@@ -1,14 +1,7 @@
 # Three Phase Induction Motors
 
-Implement three phase induction motor dynamic phasor model into GridLAB-D™. 
+Implement three phase induction motor dynamic phasor model and other more advanced power flow capabilities into GridLAB-D™.
 
-## Synopsis
-
-This work will incorporate the ability to model three phase induction motor and other more advanced power flow capabilities into GridLAB-D™. 
-
-## Classes
-
-## Variables
 
 Variable | Definition   
 ---|---  

@@ -1,5 +1,11 @@
 # Transactive Controller
 
+!!! warning
+
+	This page contains features that are unfinished, were never implemented, or have since been deprecated. We preserve these pages for archival purposes, and also as a foundational resource for prospective developers who may wish to implement the same or similar feature. Many of these pages provide robust explanations of the theory behind a particular module or feature that we hope readers will find useful. 
+  
+	**This page does not reflect the current state of GridLAB-D™**
+
 A member of the **Market** module, the Transactive Controller provides price-responsive appliance controls to individual objects, typically appliances, within GridLAB-D™. The transactive controller is based upon the design used in the Olympic Peninsula Project1. The controller compares the current price signal to the average market price, each delivered by the auction object, and bids the appliance’s current demand as a function of price back into the auction. After the market clears all bids within the system and determines the next market price, the controller modifies the appliance’s set points to reflect operation at the new current price, often related to the standard deviation from the average set point. The set point that is modified depends upon the object to which the controller is modifying. At this time, only devices with continuous temperature set points may be used with the controller object. 
 
 ## Behavior
