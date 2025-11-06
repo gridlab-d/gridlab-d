@@ -123,3 +123,16 @@ reference/*
 third_party/*
 .venv
 testenv
+
+# Python bindings build artifacts
+python_bindings/prebuilt/
+python_bindings/gldcore/
+python_bindings/third_party/
+python_bindings/dist/
+python_bindings/build/
+python_bindings/*.egg-info/
+python_bindings/.eggs/
+python_bindings/wheels/
+
+# Virtual env
+python_bindings/env

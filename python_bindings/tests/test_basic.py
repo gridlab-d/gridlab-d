@@ -14,13 +14,8 @@ limitation of the current GridLAB-D architecture.
 """
 
 import pytest
-import sys
-import os
 import json
 from pathlib import Path
-
-# Add the src directory to the path for testing
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 if __name__ == "__main__":
     # Run basic tests manually
@@ -34,14 +29,15 @@ if __name__ == "__main__":
         # 1. Create instance (calls constructor which internally does setup_before_load)
         gld = gridlabd.GridLabD()
 
-        model_dir = Path("/mnt/c/Projects/Gridlab-d/gridlab-d/python_bindings/tests/test_HVAC_balance.glm").parent
-        gld.set_working_directory(str(model_dir))
+        # Set working directory to the tests directory (where the GLM file is located)
+        test_dir = Path(__file__).parent
+        gld.set_working_directory(str(test_dir))
 
         # 2. Optionally set config file
         # gld.set_config_file("config.cfg")
 
-        # 3. Load model
-        gld.load_glm(["gridlabd", "./test_HVAC_balance.glm", "--verbose"])
+        # 3. Load model (using relative path since we set the working directory)
+        gld.load_glm(["gridlabd", "test_HVAC_balance.glm", "--verbose"])
 
         # 4. Setup after load (if needed, though usually automatic)
         # gld.setup_after_load()

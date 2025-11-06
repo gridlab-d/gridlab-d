@@ -10,7 +10,7 @@
 
 #include <json/json.h>
 
-#include "../../gldcore/gldapi.h"
+#include "gldapi.h"
 
 #define NB_STRINGIFY_HELPER(x) #x
 #define NB_STRINGIFY(x) NB_STRINGIFY_HELPER(x)

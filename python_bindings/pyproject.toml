@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "gridlabd"
-version = "5.0.0"
+version = "1.0.0"
 description = "Python bindings for GridLAB-D power system simulation"
 readme = "README.md"
 license = {text = "Battelle Open Source License"}
@@ -35,7 +35,12 @@ Documentation = "https://gridlab-d.shoutwiki.com/wiki/Main_Page"
 wheel.expand-macos-universal-tags = true
 cmake.version = ">=3.15"
 cmake.build-type = "Release"
-sdist.include = ["CMakeLists.txt", "src_cpp/*", "MANIFEST.in"]
+sdist.include = [
+    "CMakeLists.txt", 
+    "src_cpp/*", 
+    "src/**",
+    "prebuilt/**"
+]
 sdist.exclude = [".git*", "*.pyc", "__pycache__", "build", "dist", ".venv"]
 
 
