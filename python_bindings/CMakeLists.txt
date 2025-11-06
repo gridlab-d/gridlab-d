@@ -85,10 +85,30 @@ target_include_directories(gridlabd_core PRIVATE
     ${JSONCPP_INCLUDE_DIR}
 )
 
+# Find jsoncpp library (could be in different locations)
+set(JSONCPP_SEARCH_PATHS
+    ${GRIDLABD_LIB_DIR}/static/libjsoncpp.a
+    ${GRIDLABD_BUILD_DIR}/third_party/jsoncpp_lib/src/lib_json/libjsoncpp.a
+    ${GRIDLABD_BUILD_DIR}/lib/libjsoncpp.a
+)
+
+set(JSONCPP_LIB_PATH "")
+foreach(SEARCH_PATH ${JSONCPP_SEARCH_PATHS})
+    if(EXISTS ${SEARCH_PATH})
+        set(JSONCPP_LIB_PATH ${SEARCH_PATH})
+        message(STATUS "Found jsoncpp at: ${JSONCPP_LIB_PATH}")
+        break()
+    endif()
+endforeach()
+
+if(NOT JSONCPP_LIB_PATH)
+    message(FATAL_ERROR "Could not find libjsoncpp.a. Searched in: ${JSONCPP_SEARCH_PATHS}")
+endif()
+
 # Link against GridLAB-D API library and dependencies
 target_link_libraries(gridlabd_core PRIVATE 
     ${GRIDLABD_LIB_DIR}/libgldapi.${LIB_EXT}
-    ${GRIDLABD_LIB_DIR}/static/libjsoncpp.a
+    ${JSONCPP_LIB_PATH}
 )
 
 # Set RPATH for the module to find the shared library
