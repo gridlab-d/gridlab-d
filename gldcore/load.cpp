@@ -3143,6 +3143,7 @@ Next:
 
 static int module_block(PARSER)
 {
+
 	char module_name[64];
 	char fmod[8], mod[54];
 	MODULE *module;
@@ -7246,30 +7247,33 @@ void *start_process(const char *cmd)
 	// Add the thread to the thread manager
 	threadlist.add_thread([cmd](std::atomic<bool> &stop_signal)
 						  {
-		std::string command(cmd);
+							  std::string command(cmd);
 
-		// Threaded system process
-		while (!stop_signal.load()) {
-			int result = std::system(command.c_str());  // Run the command
-			if (result != 0) {
-				std::cerr << "Command `" << command << "` failed with exit code: " << result << std::endl;
-				break;
-			}
-		}
-		std::cout << "Thread for `" << command << "` shutting down.\n"; });
+							  // Threaded system process
+							  while (!stop_signal.load())
+							  {
+								  int result = std::system(command.c_str()); // Run the command
+								  if (result != 0)
+								  {
+									  std::cerr << "Command `" << command << "` failed with exit code: " << result << std::endl;
+									  break;
+								  }
+							  }
+							  // std::cout << "Thread for `" << command << "` shutting down.\n"; });
 
-	// One-time setup: register cleanup function
-	if (first)
-	{
-		std::atexit([]()
-					{
+							  // One-time setup: register cleanup function
+							  if (first)
+							  {
+								  std::atexit([]()
+											  {
 			std::cout << "Cleaning up processes on exit.\n";
 			threadlist.kill_all();
 			threadlist.join_all(); });
-		first = false;
-	}
+								  first = false;
+							  }
 
-	std::cout << "Thread started for process: " << cmd << "\n";
+							  // std::cout << "Thread started for process: " << cmd << "\n";
+						  });
 	return nullptr; // Placeholder for API compatibility (no linked list needed anymore)
 }
 
@@ -8061,7 +8065,7 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 	FILE *fp;
 	int move = 0;
 	errno = 0;
-
+	output_debug("loadall_glm_roll loading ... %s ", file);
 	fp = fopen(file, "rt");
 	if (fp == nullptr)
 		goto Failed;
@@ -8108,6 +8112,7 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 	{
 		status = FAILED;
 	}
+
 	if (status == FAILED)
 	{
 		char *eol = nullptr;
@@ -8128,8 +8133,11 @@ STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the
 			output_error("%s doesn't appear to be a GLM file", file);
 		goto Failed;
 	}
-	else if ((status = static_cast<STATUS>(load_resolve_all())) == FAILED)
-		goto Failed;
+	else
+	{
+		if ((status = static_cast<STATUS>(load_resolve_all())) == FAILED)
+			goto Failed;
+	}
 
 	/* establish ranks */
 	for (obj = first ? first : object_get_first(); obj != nullptr; obj = obj->next)
@@ -8235,8 +8243,8 @@ STATUS loadall(char *file)
 				This file is loaded when the debugger is enabled.
 				Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
 			 */
-			else if (loadall_glm_roll(dbg) == FAILED)
-				return FAILED;
+			// else if (loadall_glm_roll(dbg) == FAILED)
+			// return FAILED;
 		}
 	}
 

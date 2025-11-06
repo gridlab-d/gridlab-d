@@ -576,7 +576,7 @@ climate defaults_storage;
 climate *climate::defaults = &defaults_storage;
 
 // In climate.cpp:
-std::atomic_flag climate::city_lock = ATOMIC_FLAG_INIT;
+// std::atomic_flag climate::city_lock = ATOMIC_FLAG_INIT;
 
 climate::climate(MODULE *module)
 {

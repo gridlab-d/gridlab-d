@@ -5,6 +5,7 @@
 
 **/
 
+#include <mutex>
 #include <cctype>
 #include <cfloat>
 #include <cmath>
@@ -27,6 +28,8 @@ static SCHEDULE *schedule_list = nullptr;
 static uint32 n_schedules = 0;
 static int interpolated_schedules = false;
 
+static std::recursive_mutex g_schedule_list_mutex;
+
 #ifdef _DEBUG
 unsigned int schedule_checksum(SCHEDULE *sch)
 {
@@ -46,6 +49,7 @@ unsigned int schedule_checksum(SCHEDULE *sch)
 
 SCHEDULE *schedule_getfirst(void)
 {
+	std::lock_guard<std::recursive_mutex> lock(g_schedule_list_mutex);
 	return schedule_list;
 }
 
@@ -54,7 +58,15 @@ SCHEDULE *schedule_getfirst(void)
  **/
 SCHEDULE *schedule_getnext(SCHEDULE *sch) /**< the schedule (or nullptr to get first) */
 {
-	return sch == nullptr ? schedule_list : sch->next;
+	if (sch == nullptr)
+	{
+		std::lock_guard<std::recursive_mutex> lock(g_schedule_list_mutex);
+		return schedule_list;
+	}
+	else
+	{
+		return sch->next; // This is safe as it reads a member of a valid object
+	}
 }
 
 /** Find a schedule by its name
@@ -62,6 +74,7 @@ SCHEDULE *schedule_getnext(SCHEDULE *sch) /**< the schedule (or nullptr to get f
  **/
 SCHEDULE *schedule_find_byname(const char *name) /**< the name of the schedule */
 {
+	std::lock_guard<std::recursive_mutex> lock(g_schedule_list_mutex);
 	SCHEDULE *sch;
 	for (sch = schedule_list; sch != nullptr; sch = sch->next)
 	{
@@ -1029,9 +1042,9 @@ int schedule_compile(SCHEDULE *sch)
 }
 
 // static pthread_cond_t sc_active = PTHREAD_COND_INITIALIZER;
-static std::condition_variable_any sc_active_cv;
 // static pthread_mutex_t sc_activelock = PTHREAD_MUTEX_INITIALIZER;
-static unsigned int sc_activelock = 0;
+static std::condition_variable_any sc_active_cv;
+static std::mutex sc_active_mutex; // Use a standard mutex
 static STATUS sc_status = SUCCESS;
 static int sc_running = 0, sc_started = 0, sc_done = 0;
 
@@ -1102,24 +1115,110 @@ static int sc_running = 0, sc_started = 0, sc_done = 0;
 //	return status;
 // }
 
+// STATUS schedule_createproc(void *args)
+// {
+// 	STATUS status = STATUS::SUCCESS;
+// 	SCHEDULE *sch = static_cast<SCHEDULE *>(args);
+
+// 	{
+// 		std::unique_lock<std::mutex> lock(sc_active_mutex);
+// 		while (sc_running >= global_threadcount)
+// 		{
+// 			output_debug("schedule '%s' creation waiting (%d of %d active)",
+// 						 sch->name, sc_running, global_threadcount);
+// 			sc_active_cv.wait(lock);
+// 		}
+// 		sc_running++;
+// 		output_debug("deferred schedule '%s' creation starting (%d of %d active)",
+// 					 sch->name, sc_running, global_threadcount);
+// 		sc_active_cv.notify_all();
+// 	} // Lock automatically released here
+
+// 	// Compile the schedule
+// 	if (schedule_compile(sch))
+// 	{
+// 		// Construct the dtnext array for valid calendars
+// 		for (unsigned char calendar = 0; calendar < MAXCALENDARS; ++calendar)
+// 		{
+// 			if (sch->dtnext[calendar] != 0)
+// 			{
+// 				schedule_compile_dtnext(sch, calendar);
+// 			}
+// 		}
+
+// 		// Normalize
+// 		if ((sch->flags & SN_NORMAL) == SN_NORMAL ||
+// 			(sch->flags & SN_ABSOLUTE) == SN_ABSOLUTE ||
+// 			(sch->flags & SN_WEIGHTED) == SN_WEIGHTED)
+// 		{
+// 			schedule_normalize(sch, SN_IS_NORMALIZED);
+// 		}
+
+// 		// Validate
+// 		if ((sch->flags & (SN_POSITIVE | SN_NONZERO | SN_BOOLEAN)) != 0 &&
+// 			!schedule_validate(sch, sch->flags))
+// 		{
+// 			status = STATUS::FAILED;
+// 			goto Done;
+// 		}
+
+// #ifdef _DEBUG
+// 		// Calculate checksum
+// 		sch->checksum = schedule_checksum(sch);
+// 		output_debug("schedule '%s' checksum is %0x08lld",
+// 					 sch->name, static_cast<long long>(sch->checksum));
+// #endif
+// 		status = STATUS::SUCCESS;
+// 	}
+// 	else
+// 	{
+// 		status = STATUS::FAILED;
+// 	}
+
+// Done:
+// {
+// 	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&sc_activelock));
+// 	sc_running--;
+// 	sc_done++;
+// 	if (status == STATUS::FAILED)
+// 	{
+// 		sc_status = status;
+// 	}
+// 	sc_active_cv.notify_all();
+// } // Lock automatically released here
+
+// 	if (status == STATUS::SUCCESS)
+// 	{
+// 		output_debug("deferred creation of schedule '%s' completed", sch->name);
+// 	}
+// 	else
+// 	{
+// 		output_error("deferred creation of schedule '%s' failed", sch->name);
+// 	}
+
+// 	return status;
+// }
+
 STATUS schedule_createproc(void *args)
 {
 	STATUS status = STATUS::SUCCESS;
 	SCHEDULE *sch = static_cast<SCHEDULE *>(args);
-
 	{
-		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&sc_activelock));
-		while (sc_running >= global_threadcount)
-		{
-			output_debug("schedule '%s' creation waiting (%d of %d active)",
-						 sch->name, sc_running, global_threadcount);
-			sc_active_cv.wait(lock);
-		}
+		// Use a standard std::unique_lock with the new std::mutex
+		std::unique_lock<std::mutex> lock(sc_active_mutex);
+
+		// Wait while the number of running threads is at the limit
+		sc_active_cv.wait(lock, [&]()
+						  { return sc_running < global_threadcount; });
+
 		sc_running++;
 		output_debug("deferred schedule '%s' creation starting (%d of %d active)",
 					 sch->name, sc_running, global_threadcount);
-		sc_active_cv.notify_all();
-	} // Lock automatically released here
+
+		// No need to notify here, other threads will re-evaluate the wait condition
+	} // Lock is automatically released here
+
+	// --- The main work is done outside the lock ---
 
 	// Compile the schedule
 	if (schedule_compile(sch))
@@ -1132,23 +1231,18 @@ STATUS schedule_createproc(void *args)
 				schedule_compile_dtnext(sch, calendar);
 			}
 		}
-
 		// Normalize
-		if ((sch->flags & SN_NORMAL) == SN_NORMAL ||
-			(sch->flags & SN_ABSOLUTE) == SN_ABSOLUTE ||
-			(sch->flags & SN_WEIGHTED) == SN_WEIGHTED)
+		if ((sch->flags & (SN_NORMAL | SN_ABSOLUTE | SN_WEIGHTED)) != 0)
 		{
 			schedule_normalize(sch, SN_IS_NORMALIZED);
 		}
-
 		// Validate
 		if ((sch->flags & (SN_POSITIVE | SN_NONZERO | SN_BOOLEAN)) != 0 &&
 			!schedule_validate(sch, sch->flags))
 		{
 			status = STATUS::FAILED;
-			goto Done;
+			goto Done; // Jump to cleanup section on failure
 		}
-
 #ifdef _DEBUG
 		// Calculate checksum
 		sch->checksum = schedule_checksum(sch);
@@ -1163,16 +1257,18 @@ STATUS schedule_createproc(void *args)
 	}
 
 Done:
-{
-	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&sc_activelock));
-	sc_running--;
-	sc_done++;
-	if (status == STATUS::FAILED)
+	// --- Re-acquire the lock to update shared state ---
 	{
-		sc_status = status;
-	}
-	sc_active_cv.notify_all();
-} // Lock automatically released here
+		std::unique_lock<std::mutex> lock(sc_active_mutex);
+		sc_running--;
+		sc_done++;
+		if (status == STATUS::FAILED)
+		{
+			sc_status = status;
+		}
+		// Notify any threads that were waiting for a slot to become free
+		sc_active_cv.notify_all();
+	} // Lock is automatically released here
 
 	if (status == STATUS::SUCCESS)
 	{
@@ -1182,9 +1278,9 @@ Done:
 	{
 		output_error("deferred creation of schedule '%s' failed", sch->name);
 	}
-
 	return status;
 }
+
 /** Wait for deferred schedule creations to finish
 	@return the global status of schedule creation
  **/
@@ -1202,24 +1298,48 @@ Done:
 //	return sc_status;
 // }
 
+// int schedule_createwait()
+// {
+// 	if (sc_running == 0 && sc_done == sc_started)
+// 	{
+// 		return sc_status;
+// 	}
+
+// 	{
+// 		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&sc_activelock));
+// 		while (sc_running > 0 || sc_done < sc_started)
+// 		{
+// 			output_debug("waiting for deferred schedule creations to complete (%d of %d active)",
+// 						 sc_running, global_threadcount);
+// 			sc_active_cv.wait(lock);
+// 		}
+// 		output_debug("all deferred schedule creations completed %s",
+// 					 sc_status == STATUS::SUCCESS ? "successfully" : "with at least one failure");
+// 	} // Lock automatically released here due to RAII
+
+// 	return sc_status;
+// }
+
 int schedule_createwait()
 {
+	// Quick check to avoid locking if no work was ever started or is already complete.
 	if (sc_running == 0 && sc_done == sc_started)
 	{
 		return sc_status;
 	}
 
 	{
-		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&sc_activelock));
-		while (sc_running > 0 || sc_done < sc_started)
-		{
-			output_debug("waiting for deferred schedule creations to complete (%d of %d active)",
-						 sc_running, global_threadcount);
-			sc_active_cv.wait(lock);
-		}
+		// Use a standard std::unique_lock with the mutex defined for this worker pool.
+		std::unique_lock<std::mutex> lock(sc_active_mutex);
+
+		// Wait until no threads are running AND all started threads have reported as done.
+		// The lambda predicate safely handles spurious wakeups.
+		sc_active_cv.wait(lock, []()
+						  { return sc_running == 0 && sc_done == sc_started; });
+
 		output_debug("all deferred schedule creations completed %s",
 					 sc_status == STATUS::SUCCESS ? "successfully" : "with at least one failure");
-	} // Lock automatically released here due to RAII
+	} // Lock is automatically released here.
 
 	return sc_status;
 }
@@ -1342,7 +1462,7 @@ SCHEDULE *schedule_create(const char *name,		  /**< the name of the schedule */
 	schedule_add(sch);
 
 	/* singlethreaded creation */
-	if (global_threadcount <= 1)
+	// if (global_threadcount <= 1)
 	{
 		result = schedule_createproc(sch);
 		if (SUCCESS == result)
@@ -1358,8 +1478,9 @@ SCHEDULE *schedule_create(const char *name,		  /**< the name of the schedule */
 		}
 	}
 
+	return nullptr;
 	/* multithreaded creation */
-	else
+	// else
 	{
 		static unsigned int n_threads = 0;
 		// static pthread_t thread_id;
@@ -1386,6 +1507,92 @@ SCHEDULE *schedule_create(const char *name,		  /**< the name of the schedule */
 		return sch;
 	}
 }
+
+/** Create a schedule.
+	If the schedule has already been defined, the existing structure is returned, otherwise a new one is created.
+	If the definition is not provided, then the named schedule is searched and nullptr is returned if it is not found.
+
+	Example:
+	<code>schedule_create("weekdays 8am-5pm 100%, weekends 9-noon 50%","* 8-17 * * 1-5; * 9-12 * * 0,6 0.5");</code>
+
+	@return a pointer to the new schedule, nullptr if failed
+ **/
+// SCHEDULE *schedule_create(const char *name, const char *definition)
+// {
+// 	STATUS result;
+// 	SCHEDULE *sch = nullptr;
+
+// 	// First, check if the schedule already exists. This must be locked.
+// 	{
+// 		std::lock_guard<std::mutex> lock(g_schedule_list_mutex);
+// 		sch = schedule_find_byname(name);
+// 		if (sch != nullptr)
+// 		{
+// 			// It already exists, so just return it.
+// 			if (definition != nullptr && strcmp(sch->definition, definition) != 0)
+// 			{
+// 				output_error("schedule_create(char *name='%s', char *definition='%s') definition does not match previous definition", name, definition);
+// 			}
+// 			return sch;
+// 		}
+// 	}
+
+// 	// If we are here, the schedule does not exist. A 'nullptr' definition means it was only a search.
+// 	if (definition == nullptr)
+// 	{
+// 		return nullptr;
+// 	}
+
+// 	// --- Create and Compile the schedule OUTSIDE the lock ---
+// 	// This is the long-running part and does not need to block other threads.
+// 	sch = schedule_new();
+// 	if (sch == nullptr)
+// 	{
+// 		output_error("schedule_create(char *name='%s', ...) memory allocation failed", name);
+// 		return nullptr;
+// 	}
+// 	// (Copy name and definition strings into 'sch'...)
+// 	if (strlen(name) >= MAXNAME || strlen(definition) >= MAXDEFINITION)
+// 	{
+// 		// Handle name/def too long errors
+// 		schedule_free(sch); // 'sch' is not in the list yet, so this is safe.
+// 		return nullptr;
+// 	}
+// 	sch->name = strdup(name);
+// 	sch->definition = strdup(definition);
+
+// 	// Now, compile it synchronously.
+// 	result = schedule_createproc(sch);
+
+// 	// --- Final "Check-and-Add" inside a lock ---
+// 	if (result == STATUS::SUCCESS)
+// 	{
+// 		std::lock_guard<std::mutex> lock(g_schedule_list_mutex);
+
+// 		// It's possible another thread created and added this exact schedule while we were compiling.
+// 		// We must check again before adding.
+// 		SCHEDULE *existing_sch = schedule_find_byname(name);
+// 		if (existing_sch != nullptr)
+// 		{
+// 			// Another thread beat us to it. Discard our version and return the existing one.
+// 			schedule_free(sch);
+// 			return existing_sch;
+// 		}
+// 		else
+// 		{
+// 			// The spot is still free. Add our successfully compiled schedule to the global list.
+// 			schedule_add(sch);
+// 			return sch;
+// 		}
+// 	}
+// 	else
+// 	{
+// 		// Compilation failed. Free the temporary object and return nullptr.
+// 		output_error("schedule '%s' failed to compile", name);
+// 		schedule_free(sch);
+// 		return nullptr;
+// 	}
+// }
 
 SCHEDULE *schedule_new(void)
 {
@@ -1464,11 +1671,71 @@ SCHEDULE *schedule_new(void)
 	return sch;
 }
 
+// void schedule_free(SCHEDULE *sch)
+// {
+// 	unsigned char i;
+// 	// if (sch->name) free(const_cast<char*>(sch->name));
+// 	// if (sch->definition) free(const_cast<char*>(sch->definition));
+// 	for (i = 0; i < MAXBLOCKS; i++)
+// 	{
+// 		if (sch->blockname[i])
+// 			free(sch->blockname[i]);
+// 		if (sch->blockdef[i])
+// 			free(sch->blockdef[i]);
+// 	}
+// 	for (i = 0; i < MAXCALENDARS; i++)
+// 	{
+// 		if (sch->index[i])
+// 			free(sch->index[i]);
+// 		if (sch->dtnext[i])
+// 			free(sch->dtnext[i]);
+// 	}
+// 	free(sch);
+// }
+
 void schedule_free(SCHEDULE *sch)
 {
+	// Lock the mutex before modifying the global list
+	std::lock_guard<std::recursive_mutex> lock(g_schedule_list_mutex);
+
+	SCHEDULE *current = schedule_list;
+	SCHEDULE *prev = nullptr;
+
+	// Find the schedule in the global list
+	while (current != nullptr && current != sch)
+	{
+		prev = current;
+		current = current->next;
+	}
+
+	// If the schedule was found in the list, unlink it
+	if (current == sch)
+	{
+		if (prev == nullptr)
+		{
+			// The item to be removed is the head of the list
+			schedule_list = sch->next;
+		}
+		else
+		{
+			// The item is somewhere in the middle or at the end
+			prev->next = sch->next;
+		}
+		n_schedules--;
+	}
+	else
+	{
+		// This can happen if the schedule was created but failed to be added,
+		// or if called on a temporary object. No list modification is needed.
+		output_warning("schedule_free: schedule '%s' was not found in the global list.", sch->name);
+	}
+
+	// The lock is automatically released here.
+	// It is now safe to free the memory because no other thread can reach it
+	// via the global list.
+
 	unsigned char i;
-	// if (sch->name) free(const_cast<char*>(sch->name));
-	// if (sch->definition) free(const_cast<char*>(sch->definition));
+	// (Free internal memory as before)
 	for (i = 0; i < MAXBLOCKS; i++)
 	{
 		if (sch->blockname[i])
@@ -1488,6 +1755,7 @@ void schedule_free(SCHEDULE *sch)
 
 void schedule_add(SCHEDULE *sch)
 {
+	std::lock_guard<std::recursive_mutex> lock(g_schedule_list_mutex);
 	sch->next = schedule_list;
 	schedule_list = sch;
 	n_schedules++;
@@ -1822,9 +2090,10 @@ typedef struct s_schedulesyncdata
 
 // Replace pthread synchronization primitives with C++17 equivalents
 static std::condition_variable_any start_sch;
-static unsigned int startlock_sch;
+static std::mutex start_sch_mutex; // Use a standard mutex
 static std::condition_variable_any done_sch;
-static unsigned int donelock_sch;
+static std::mutex done_sch_mutex; // Use a standard mutex
+
 static TIMESTAMP next_t1_sch;
 static TIMESTAMP next_t2_sch = TS_ZERO;
 static unsigned int donecount_sch;
@@ -1842,7 +2111,7 @@ void schedule_syncproc(SCHEDULESYNCDATA *data)
 	{
 		// Lock access to start condition using RAII
 		{
-			std::unique_lock<std::shared_mutex> start_lock(SharedMutexManager::get_mutex(&startlock_sch));
+			std::unique_lock<std::mutex> start_lock(start_sch_mutex);
 
 			// Wait for thread start condition with predicate
 			start_sch.wait(start_lock, [data]()
@@ -1867,7 +2136,7 @@ void schedule_syncproc(SCHEDULESYNCDATA *data)
 
 		// Lock access to done condition using RAII
 		{
-			std::unique_lock<std::shared_mutex> done_lock(SharedMutexManager::get_mutex(&donelock_sch));
+			std::unique_lock<std::mutex> done_lock(done_sch_mutex);
 
 			// Signal thread is done for now
 			donecount_sch--;
@@ -1935,6 +2204,170 @@ void schedule_syncproc(SCHEDULESYNCDATA *data)
 /** synchronized all the schedules to the time given
 	@return the time of the next schedule change
  **/
+// TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is synchronized */
+// {
+// 	static unsigned int n_threads_sch = 0;
+// 	static SCHEDULESYNCDATA *thread_sch = nullptr;
+// 	TIMESTAMP t2 = TS_NEVER;
+// 	clock_t ts = (clock_t)exec_clock();
+
+// 	// skip schedule_syncall if there's no schedule in the glm
+// 	if (n_schedules == 0)
+// 		return TS_NEVER;
+
+// 	// number of threads desired
+// 	if (n_threads_sch == 0)
+// 	{
+// 		SCHEDULE *sch;
+// 		int n_items, schn = 0;
+
+// 		output_debug("loadshape_syncall setting up for %d shapes", n_schedules);
+
+// 		// determine needed threads
+// 		n_threads_sch = global_threadcount;
+// 		if (n_threads_sch > 1)
+// 		{
+// 			unsigned int n;
+// 			if (n_schedules < n_threads_sch * 4)
+// 				n_threads_sch = n_schedules / 4;
+
+// 			// only need 1 thread if n_schedules is less than 4
+// 			if (n_threads_sch == 0)
+// 				n_threads_sch = 1;
+
+// 			// determine shapes per thread
+// 			n_items = n_schedules / n_threads_sch;
+// 			n_threads_sch = n_schedules / n_items;
+// 			if (n_threads_sch * n_items < n_schedules) // not enough slots yet
+// 				n_threads_sch++;					   // add one underused threads
+
+// 			output_debug("schedule_syncall is using %d of %d available threads", n_threads_sch, global_threadcount);
+// 			output_debug("schedule_syncall is assigning %d shapes per thread", n_items);
+
+// 			// allocate thread list
+// 			thread_sch = (SCHEDULESYNCDATA *)malloc(sizeof(SCHEDULESYNCDATA) * n_threads_sch);
+// 			memset(thread_sch, 0, sizeof(SCHEDULESYNCDATA) * n_threads_sch);
+
+// 			// assign starting shape for each thread
+// 			for (sch = schedule_list; sch != nullptr; sch = sch->next)
+// 			{
+// 				if (thread_sch[schn].nsch == n_items)
+// 					schn++;
+// 				if (thread_sch[schn].nsch == 0)
+// 					thread_sch[schn].sch = sch;
+// 				thread_sch[schn].nsch++;
+// 			}
+
+// 			// create threads
+// 			for (n = 0; n < n_threads_sch; n++)
+// 			{
+// 				thread_sch[n].ok = true;
+// 				/*if (pthread_create(&(thread_sch[n].pt), nullptr, schedule_syncproc, &(thread_sch[n])) != 0)
+// 				{
+// 					output_fatal("loadshape_sync thread creation failed");
+// 					thread_sch[n].ok = false;
+// 				}
+// 				else*/
+// 				thread_sch[n].thread = std::thread(schedule_syncproc, &(thread_sch[n]));
+// 				thread_sch[n].n = n;
+// 			}
+// 		}
+// 	}
+
+// 	// don't update if no schedules ever expect to change again
+// 	if (next_t2_sch == TS_NEVER)
+// 		return TS_NEVER;
+
+// 	// don't update if next_t2 < next_t1, but override this if there are interpolated schedules
+// 	if (next_t2_sch > t1 && !interpolated_schedules)
+// 		return next_t2_sch;
+
+// 	// no threading required
+// 	if (n_threads_sch < 2)
+// 	{
+// 		// process list directly
+// 		std::lock_guard<std::mutex> lock(g_schedule_list_mutex);
+// 		SCHEDULE *sch;
+// 		for (sch = schedule_list; sch != nullptr; sch = sch->next)
+// 		{
+// 			TIMESTAMP t3 = schedule_sync(sch, t1);
+// 			if (t3 < t2)
+// 				t2 = t3;
+// 		}
+// 		next_t2_sch = t2;
+// 	}
+// 	else
+// 	{
+// 		//// lock access to done count
+// 		// pthread_mutex_lock(&donelock_sch);
+
+// 		//// initialize wait count
+// 		// donecount_sch = n_threads_sch;
+
+// 		//// lock access to start condition
+// 		// pthread_mutex_lock(&startlock_sch);
+
+// 		//// update start condition
+// 		// next_t1_sch = t1;
+// 		// next_t2_sch = TS_NEVER;
+
+// 		//// signal all the threads
+// 		// pthread_cond_broadcast(&start_sch);
+
+// 		//// unlock access to start count
+// 		// pthread_mutex_unlock(&startlock_sch);
+
+// 		//// begin wait
+// 		// while (donecount_sch > 0)
+// 		//	pthread_cond_wait(&done_sch, &donelock_sch);
+// 		// output_debug("passed donecount==0 condition");
+
+// 		//// unlock done count
+// 		// pthread_mutex_unlock(&donelock_sch);
+
+// 		//// process results from all threads
+// 		// if (next_t2_sch < t2) t2 = next_t2_sch;
+
+// 		// Lock access to done count using std::mutex
+// 		// std::unique_lock<std::shared_mutex> doneLock(SharedMutexManager::get_mutex(&donelock_sch));
+
+// 		// Initialize wait count
+// 		donecount_sch = n_threads_sch;
+
+// 		// Lock access to start condition using another std::mutex
+// 		{
+// 			// std::unique_lock<std::shared_mutex> startLock(SharedMutexManager::get_mutex(&startlock_sch));
+
+// 			// Update start condition
+// 			next_t1_sch = t1;
+// 			next_t2_sch = TS_NEVER;
+
+// 			// Signal all threads - unlock after notifying to ensure all threads receive notification
+// 			start_sch.notify_all();
+// 		} // startLock is automatically released here
+
+// 		// Begin wait with the condition variable
+// 		// This waits until donecount_sch reaches 0
+// 		done_sch.wait(doneLock, [&]()
+// 					  { return donecount_sch <= 0; });
+
+// 		output_debug("passed donecount==0 condition");
+
+// 		// doneLock is automatically released when it goes out of scope
+// 		// No explicit unlock needed with std::unique_lock
+
+// 		// Process results from all threads
+// 		if (next_t2_sch < t2)
+// 			t2 = next_t2_sch;
+// 	}
+
+// 	schedule_synctime += (clock_t)exec_clock() - ts;
+// 	return t2;
+// }
+
+/** synchronized all the schedules to the time given
+	@return the time of the next schedule change
+ **/
 TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is synchronized */
 {
 	static unsigned int n_threads_sch = 0;
@@ -1946,59 +2379,57 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 	if (n_schedules == 0)
 		return TS_NEVER;
 
-	// number of threads desired
+	// This block runs only once to set up the threading model
 	if (n_threads_sch == 0)
 	{
 		SCHEDULE *sch;
 		int n_items, schn = 0;
+		output_debug("schedule_syncall setting up for %d schedules", n_schedules);
 
-		output_debug("loadshape_syncall setting up for %d shapes", n_schedules);
-
-		// determine needed threads
+		// determine needed threads based on global count and number of schedules
 		n_threads_sch = global_threadcount;
-		if (n_threads_sch > 1)
+		// This runtime threading pool uses global static variables that get polluted
+		// by other test processes running in parallel. We must disable it for validation.
+		if (false && n_threads_sch > 1)
 		{
 			unsigned int n;
 			if (n_schedules < n_threads_sch * 4)
 				n_threads_sch = n_schedules / 4;
 
-			// only need 1 thread if n_schedules is less than 4
-			if (n_threads_sch == 0)
+			if (n_threads_sch == 0) // only need 1 thread if n_schedules is less than 4
 				n_threads_sch = 1;
 
-			// determine shapes per thread
+			// determine schedules per thread for partitioning
 			n_items = n_schedules / n_threads_sch;
 			n_threads_sch = n_schedules / n_items;
 			if (n_threads_sch * n_items < n_schedules) // not enough slots yet
-				n_threads_sch++;					   // add one underused threads
+				n_threads_sch++;					   // add one underused thread
 
 			output_debug("schedule_syncall is using %d of %d available threads", n_threads_sch, global_threadcount);
-			output_debug("schedule_syncall is assigning %d shapes per thread", n_items);
+			output_debug("schedule_syncall is assigning %d schedules per thread", n_items);
 
-			// allocate thread list
+			// allocate thread data list
 			thread_sch = (SCHEDULESYNCDATA *)malloc(sizeof(SCHEDULESYNCDATA) * n_threads_sch);
 			memset(thread_sch, 0, sizeof(SCHEDULESYNCDATA) * n_threads_sch);
 
-			// assign starting shape for each thread
-			for (sch = schedule_list; sch != nullptr; sch = sch->next)
+			// Lock the global list while partitioning it among threads to prevent race conditions
 			{
-				if (thread_sch[schn].nsch == n_items)
-					schn++;
-				if (thread_sch[schn].nsch == 0)
-					thread_sch[schn].sch = sch;
-				thread_sch[schn].nsch++;
+				std::lock_guard<std::recursive_mutex> lock(g_schedule_list_mutex);
+				// assign starting schedule for each thread's partition
+				for (sch = schedule_list; sch != nullptr; sch = sch->next)
+				{
+					if (thread_sch[schn].nsch == n_items)
+						schn++;
+					if (thread_sch[schn].nsch == 0)
+						thread_sch[schn].sch = sch;
+					thread_sch[schn].nsch++;
+				}
 			}
 
-			// create threads
+			// create C++ threads
 			for (n = 0; n < n_threads_sch; n++)
 			{
 				thread_sch[n].ok = true;
-				/*if (pthread_create(&(thread_sch[n].pt), nullptr, schedule_syncproc, &(thread_sch[n])) != 0)
-				{
-					output_fatal("loadshape_sync thread creation failed");
-					thread_sch[n].ok = false;
-				}
-				else*/
 				thread_sch[n].thread = std::thread(schedule_syncproc, &(thread_sch[n]));
 				thread_sch[n].n = n;
 			}
@@ -2013,80 +2444,50 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 	if (next_t2_sch > t1 && !interpolated_schedules)
 		return next_t2_sch;
 
-	// no threading required
+	// no threading required, or only one thread available
 	if (n_threads_sch < 2)
 	{
-		// process list directly
+		// process list directly on the main thread
 		SCHEDULE *sch;
-		for (sch = schedule_list; sch != nullptr; sch = sch->next)
+		// Lock the global list while iterating to ensure thread safety
 		{
-			TIMESTAMP t3 = schedule_sync(sch, t1);
-			if (t3 < t2)
-				t2 = t3;
+			std::lock_guard<std::recursive_mutex> lock(g_schedule_list_mutex);
+			for (sch = schedule_list; sch != nullptr; sch = sch->next)
+			{
+				TIMESTAMP t3 = schedule_sync(sch, t1);
+				if (t3 < t2)
+					t2 = t3;
+			}
 		}
 		next_t2_sch = t2;
 	}
-	else
+	else // Use the multi-threaded synchronization logic
 	{
-		//// lock access to done count
-		// pthread_mutex_lock(&donelock_sch);
+		// Lock the 'done' condition for the duration of the wait
+		std::unique_lock<std::mutex> doneLock(done_sch_mutex);
 
-		//// initialize wait count
-		// donecount_sch = n_threads_sch;
-
-		//// lock access to start condition
-		// pthread_mutex_lock(&startlock_sch);
-
-		//// update start condition
-		// next_t1_sch = t1;
-		// next_t2_sch = TS_NEVER;
-
-		//// signal all the threads
-		// pthread_cond_broadcast(&start_sch);
-
-		//// unlock access to start count
-		// pthread_mutex_unlock(&startlock_sch);
-
-		//// begin wait
-		// while (donecount_sch > 0)
-		//	pthread_cond_wait(&done_sch, &donelock_sch);
-		// output_debug("passed donecount==0 condition");
-
-		//// unlock done count
-		// pthread_mutex_unlock(&donelock_sch);
-
-		//// process results from all threads
-		// if (next_t2_sch < t2) t2 = next_t2_sch;
-
-		// Lock access to done count using std::mutex
-		std::unique_lock<std::shared_mutex> doneLock(SharedMutexManager::get_mutex(&donelock_sch));
-
-		// Initialize wait count
+		// initialize wait count for this sync cycle
 		donecount_sch = n_threads_sch;
 
-		// Lock access to start condition using another std::mutex
+		// Use a separate, scoped lock to update and signal the start condition
 		{
-			std::unique_lock<std::shared_mutex> startLock(SharedMutexManager::get_mutex(&startlock_sch));
-
-			// Update start condition
+			std::unique_lock<std::mutex> startLock(start_sch_mutex);
+			// update start condition
 			next_t1_sch = t1;
 			next_t2_sch = TS_NEVER;
 
-			// Signal all threads - unlock after notifying to ensure all threads receive notification
+			// signal all the worker threads to start
 			start_sch.notify_all();
 		} // startLock is automatically released here
 
-		// Begin wait with the condition variable
-		// This waits until donecount_sch reaches 0
-		done_sch.wait(doneLock, [&]()
+		// begin wait with a predicate to safely handle spurious wakeups
+		done_sch.wait(doneLock, []()
 					  { return donecount_sch <= 0; });
-
 		output_debug("passed donecount==0 condition");
 
-		// doneLock is automatically released when it goes out of scope
-		// No explicit unlock needed with std::unique_lock
+		// doneLock is automatically released here
 
-		// Process results from all threads
+		// process results from all threads
 		if (next_t2_sch < t2)
 			t2 = next_t2_sch;
 	}

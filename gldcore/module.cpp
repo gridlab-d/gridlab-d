@@ -392,6 +392,16 @@ static MODULE *last_module = nullptr;
 static size_t module_count = 0;
 size_t module_getcount(void) { return module_count; }
 
+#ifdef _WIN32
+// Define a global/static handle for the mutex (or create/open it locally)
+static HANDLE moduleLoadMutex = nullptr;
+// Choose a unique name for your mutex across all GridLAB-D processes
+const char *mutexName = "Global\\GridLABD_ModuleLoad_Mutex"; // "Global\" prefix for system-wide mutex
+
+// Ensure this is initialized only once (or create/open on each call)
+// For simplicity here, we'll open/create on each call
+#endif
+
 /** Load a runtime module
 	@return a pointer to the MODULE structure
 	\p nullptr on failure, errno set to:
@@ -456,6 +466,49 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		output_verbose("%s(%d): module '%s' not yet loaded", __FILE__, __LINE__, file);
 	}
 
+// --- ACQUIRE MUTEX BEFORE DYNAMIC LOADING ---
+#ifdef _WIN32
+	// Create or open the named mutex. If it exists, OpenMutex returns a handle. If not, CreateMutex creates it.
+	HANDLE hMutex = CreateMutexA(
+		nullptr,	// default security attributes
+		FALSE,		// initially not owned
+		mutexName); // name of mutex
+
+	if (hMutex == nullptr)
+	{
+		output_error("module_load: Failed to create/open module load mutex (error %d)", GetLastError());
+		return nullptr; // Fatal error
+	}
+
+	// Wait for ownership of the mutex
+	DWORD waitResult = WaitForSingleObject(hMutex, INFINITE); // Wait indefinitely
+	if (waitResult != WAIT_OBJECT_0)
+	{
+		output_error("module_load: Failed to acquire module load mutex (error %d)", GetLastError());
+		CloseHandle(hMutex);
+		return nullptr; // Fatal error
+	}
+	output_debug("module_load: Mutex acquired for module '%s'", file);
+#endif
+	// --- END ACQUIRE MUTEX ---
+
+	// --- Helper for releasing mutex and returning ---
+	auto release_and_return = [&](MODULE *result_mod) -> MODULE *
+	{
+#ifdef _WIN32
+		if (hMutex != nullptr)
+		{
+			if (!ReleaseMutex(hMutex))
+			{
+				output_error("module_load: Failed to release module load mutex (error %lu)", GetLastError());
+			}
+			CloseHandle(hMutex);
+		}
+#endif
+		return result_mod;
+	};
+	// --- End Helper ---
+
 	/* check for foreign modules */
 	strcpy(buffer, file);
 	fmod = strstr(buffer, "::");
@@ -479,7 +532,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 				   A module is unable to load a submodule require for operation.
 				   Check that the indicated submodule is installed and try again.
 				 */
-				return nullptr;
+				return release_and_return(nullptr);
 			}
 			if (mod != nullptr)
 			{ /* if we want to register another module */
@@ -487,7 +540,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 				last_module = mod;
 				mod->oclass = previous ? previous->next : class_get_first_class();
 			}
-			return last_module;
+			return release_and_return(last_module); // Release and return
 		}
 		else
 		{
@@ -510,7 +563,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 					isforeign = true;
 					if (p->loader != nullptr)
 						/* use external loader */
-						return p->loader(modname, argc, argv);
+						return release_and_return(p->loader(modname, argc, argv)); // Release and return
 
 					/* use a module with command args */
 					argv = args;
@@ -523,7 +576,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			if (p == nullptr)
 			{
 				output_error("module_load(file='%s',...): foreign module type %s not recognized or supported", fmod);
-				return nullptr;
+				return release_and_return(nullptr); // Release and retur
 			}
 		}
 	}
@@ -534,7 +587,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	{
 		output_verbose("%s(%d): module '%s' memory allocation failed", __FILE__, __LINE__, file);
 		errno = ENOMEM;
-		return nullptr;
+		return release_and_return(nullptr); // Release and retur
 	}
 	else
 		output_verbose("%s(%d): module '%s' memory allocated", __FILE__, __LINE__, file);
@@ -596,7 +649,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		errno = ENOENT;
 		free(mod);
 		mod = nullptr;
-		return nullptr;
+		return release_and_return(nullptr); // Release and retur
 	}
 	else
 	{
@@ -612,7 +665,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		errno = ENOEXEC;
 		free(mod);
 		mod = nullptr;
-		return nullptr;
+		return release_and_return(nullptr); // Release and retur
 	}
 	else
 	{
@@ -652,14 +705,14 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	if (mod->major != REV_MAJOR || mod->minor != REV_MINOR)
 	{
 		output_error("Module version %d.%d mismatch from core version %d.%d", mod->major, mod->minor, REV_MAJOR, REV_MINOR);
-		return nullptr;
+		return release_and_return(nullptr); // Release and retur
 	}
 
 	/* call the initialization function */
 	errno = 0;
 	mod->oclass = (*init)(callbacks, (void *)mod, argc, argv);
 	if (mod->oclass == nullptr && errno != 0)
-		return nullptr;
+		return release_and_return(nullptr); // Release and retur
 
 	/* connect intrinsic functions */
 	for (c = mod->oclass; c != nullptr; c = c->next)
@@ -695,7 +748,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 					A required intrinsic function was not found.  Please review and modify the class definition.
 				 */
 				errno = EINVAL;
-				return nullptr;
+				return release_and_return(nullptr); // Release and retur
 			}
 			else if (!map[i].optional)
 				output_verbose("%s(%d): module '%s' intrinsic %s found", __FILE__, __LINE__, file, fname);
@@ -720,7 +773,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	if (mod->stream != nullptr)
 		stream_register(mod->stream);
 
-	return last_module;
+	return release_and_return(last_module); // Release and return at successful exit
 }
 
 #ifdef _WIN32

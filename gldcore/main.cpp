@@ -7,11 +7,23 @@
  **/
 #define _MAIN_C
 
+#define WIN32_LEAN_AND_MEAN // <--- ADD THIS AT THE VERY TOP OF THE FILE
+
 // #define USE_MPI
 
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+
+#include <iostream>
+#include <thread>
+#include <chrono>
+
+#ifdef _WIN32
+#include <windows.h> // Required for GetCurrentProcessId on Windows
+#else
+#include <unistd.h> // Required for getpid() on non-Windows systems
+#endif
 
 #include "globals.h"
 
@@ -159,14 +171,14 @@ int main(int argc,     /**< the number entries on command-line argument list \p 
     if (browser != nullptr)
         strncpy(global_browser, browser, sizeof(global_browser) - 1);
 
-#if defined WIN32 && _DEBUG
-    atexit(pause_at_exit);
-#endif
+    // #if defined WIN32 && _DEBUG
+    //     atexit(pause_at_exit);
+    // #endif
 
-#ifdef _WIN32
-    kill_starthandler();
-    atexit(kill_stophandler);
-#endif
+    // #ifdef _WIN32
+    //     kill_starthandler();
+    //     atexit(kill_stophandler);
+    // #endif
 
     /* capture the execdir */
     strcpy(global_execname, argv[0]);
@@ -336,6 +348,7 @@ int main(int argc,     /**< the number entries on command-line argument list \p 
     /* compute elapsed runtime */
     output_verbose("elapsed runtime %d seconds", realtime_runtime());
     output_verbose("exit code %d", exec_getexitcode());
+
     exit(exec_getexitcode());
 }
 

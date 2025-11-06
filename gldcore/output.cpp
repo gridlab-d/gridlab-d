@@ -35,6 +35,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <mutex>
+#include <shared_mutex>
 
 #include "output.h"
 #include "globals.h"
@@ -42,7 +44,16 @@
 #include "lock.h"
 #include "module.h"
 
-static unsigned int output_lock = 0;
+std::shared_mutex verbose_lock;
+std::shared_mutex debug_lock;
+std::shared_mutex error_lock;
+std::shared_mutex message_lock;
+std::shared_mutex raw_lock;
+std::shared_mutex fatal_lock;
+std::shared_mutex warning_lock;
+std::shared_mutex test_lock;
+
+// static unsigned int output_lock = 0;
 static char buffer[65536];
 #define CHECK 0xcdcd
 int overflow = CHECK;
@@ -348,8 +359,7 @@ int output_fatal(const char *format, ...) /**< \bprintf style argument list */
 	int result = 0;
 	// wlock(&output_lock);
 	std::unique_lock<std::shared_mutex> lock;
-	if (format != nullptr)
-		lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(&output_lock));
+
 	if (format != nullptr && strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
@@ -376,6 +386,9 @@ int output_fatal(const char *format, ...) /**< \bprintf style argument list */
 		va_end(ptr);
 	}
 Output:
+	if (format != nullptr)
+		lock = std::unique_lock<std::shared_mutex>(fatal_lock);
+
 	if (redirect.error)
 		result = fprintf(redirect.error, "%sFATAL    [%s] : %s\n", prefix, time_context, buffer);
 	else
@@ -393,14 +406,14 @@ Unlock:
  **/
 int output_error(const char *format, ...) /**< \bprintf style argument list */
 {
+	std::unique_lock<std::shared_mutex> lock;
+
 	/* check for repeated message */
 	static char lastfmt[4096] = "";
 	static int count = 0;
 	int result = 0;
 	// wlock(&output_lock);
-	std::unique_lock<std::shared_mutex> lock;
-	if (format != nullptr)
-		lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(&output_lock));
+
 	if (format != nullptr && strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
@@ -431,6 +444,9 @@ Output:
 	if (notify_error != nullptr)
 		(*notify_error)();
 
+	if (format != nullptr)
+		lock = std::unique_lock<std::shared_mutex>(error_lock);
+
 	if (redirect.error)
 		result = fprintf(redirect.error, "%sERROR    [%s] : %s\n", prefix, time_context, buffer);
 	else
@@ -453,7 +469,7 @@ int output_error_raw(const char *format, ...) /**< \bprintf style argument list 
 	static int count = 0;
 	int result = 0;
 	// wlock(&output_lock);
-	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&output_lock));
+	std::unique_lock<std::shared_mutex> lock;
 	if (format != nullptr && strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
@@ -484,6 +500,9 @@ Output:
 	if (notify_error != nullptr)
 		(*notify_error)();
 
+	if (format != nullptr)
+		lock = std::unique_lock<std::shared_mutex>(raw_lock);
+
 	if (redirect.error)
 		result = fprintf(redirect.error, "%s%s\n", prefix, buffer);
 	else
@@ -506,10 +525,10 @@ int output_test(const char *format, ...) /**< \bprintf style argument list */
 	char testoutputfilename[1024];
 	char commandline[256];
 	va_list ptr;
+	std::unique_lock<std::shared_mutex> lock;
 
 	int result = 0;
 	// wlock(&output_lock);
-	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&output_lock));
 
 	if (format == nullptr)
 	{
@@ -519,6 +538,9 @@ int output_test(const char *format, ...) /**< \bprintf style argument list */
 	va_start(ptr, format);
 	vsprintf(buffer, format, ptr); /* note the lack of check on buffer overrun */
 	va_end(ptr);
+
+	if (format != nullptr)
+		lock = std::unique_lock<std::shared_mutex>(test_lock);
 
 	if (fp == nullptr)
 	{
@@ -558,8 +580,6 @@ int output_warning(const char *format, ...) /**< \bprintf style argument list */
 		int result = 0;
 		// wlock(&output_lock);
 		std::unique_lock<std::shared_mutex> lock;
-		if (format != nullptr)
-			lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(&output_lock));
 
 		if (format != nullptr && strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
@@ -587,6 +607,9 @@ int output_warning(const char *format, ...) /**< \bprintf style argument list */
 			va_end(ptr);
 		}
 	Output:
+		if (format != nullptr)
+			lock = std::unique_lock<std::shared_mutex>(warning_lock);
+
 		if (redirect.warning)
 			result = fprintf(redirect.warning, "%sWARNING  [%s] : %s\n", prefix, time_context, buffer);
 		else
@@ -606,6 +629,8 @@ int output_warning(const char *format, ...) /**< \bprintf style argument list */
  **/
 int output_debug(const char *format, ...) /**< \bprintf style argument list */
 {
+	std::unique_lock<std::shared_mutex> lock;
+
 	if (global_debug_output)
 	{
 		/* check for repeated message */
@@ -613,9 +638,6 @@ int output_debug(const char *format, ...) /**< \bprintf style argument list */
 		static int count = 0;
 		int result = 0;
 		// wlock(&output_lock);
-		std::unique_lock<std::shared_mutex> lock;
-		if (format != nullptr)
-			lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(&output_lock));
 		if (format != nullptr && strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
@@ -642,6 +664,10 @@ int output_debug(const char *format, ...) /**< \bprintf style argument list */
 			va_end(ptr);
 		}
 	Output:
+
+		if (format != nullptr)
+			lock = std::unique_lock<std::shared_mutex>(debug_lock);
+
 		if (redirect.debug)
 			result = fprintf(redirect.debug, "%sDEBUG [%s] : %s\n", prefix, time_context, buffer);
 		else
@@ -662,6 +688,8 @@ int output_debug(const char *format, ...) /**< \bprintf style argument list */
  **/
 int output_verbose(const char *format, ...) /**< \bprintf style argument list */
 {
+	std::unique_lock<std::shared_mutex> lock;
+
 	if (global_verbose_mode)
 	{
 		/* check for repeated message */
@@ -669,9 +697,6 @@ int output_verbose(const char *format, ...) /**< \bprintf style argument list */
 		static int count = 0;
 		int result = 0;
 		// wlock(&output_lock);
-		std::unique_lock<std::shared_mutex> lock;
-		if (format != nullptr)
-			lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(&output_lock));
 
 		if (format != nullptr && strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
@@ -697,6 +722,10 @@ int output_verbose(const char *format, ...) /**< \bprintf style argument list */
 			va_end(ptr);
 		}
 	Output:
+
+		if (format != nullptr)
+			lock = std::unique_lock<std::shared_mutex>(verbose_lock);
+
 		if (redirect.verbose)
 			result = fprintf(redirect.verbose, "%s%s\n", prefix, buffer);
 		else
@@ -714,6 +743,8 @@ int output_verbose(const char *format, ...) /**< \bprintf style argument list */
  **/
 int output_message(const char *format, ...)
 {
+	std::unique_lock<std::shared_mutex> lock;
+
 	if (!global_quiet_mode)
 	{
 		// Variables for repeated message handling
@@ -727,10 +758,6 @@ int output_message(const char *format, ...)
 		size_t remaining_space = 0;
 
 		const char *pfx = prefix ? prefix : "";
-
-		std::unique_lock<std::shared_mutex> lock;
-		if (format != nullptr)
-			lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(&output_lock));
 
 		// Validate format string
 		if (!format)
@@ -789,6 +816,9 @@ int output_message(const char *format, ...)
 			goto Unlock;
 		}
 		va_end(ptr);
+
+		if (format != nullptr)
+			lock = std::unique_lock<std::shared_mutex>(message_lock);
 
 		// Validate `vsnprintf` result
 		if ((size_t)(len + result) >= sizeof(buffer))
@@ -934,11 +964,14 @@ int output_raw(const char *format, ...) /**< \bprintf style argument list */
 		va_list ptr;
 		int result = 0;
 		// wlock(&output_lock);
-		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&output_lock));
 
 		va_start(ptr, format);
 		vsprintf(buffer, format, ptr); /* note the lack of check on buffer overrun */
 		va_end(ptr);
+
+		std::unique_lock<std::shared_mutex> lock;
+		if (format != nullptr)
+			lock = std::unique_lock<std::shared_mutex>(raw_lock);
 
 		if (redirect.output)
 		{

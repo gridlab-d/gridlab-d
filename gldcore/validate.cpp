@@ -24,6 +24,10 @@
 #include <cstring>
 #include <sys/stat.h>
 
+#include <mutex>
+#include <atomic>
+#include <vector>
+
 #include "globals.h"
 #include "output.h"
 #include "validate.h"
@@ -31,6 +35,8 @@
 #include "lock.h"
 #include "threadpool.h"
 #include "object.h"
+
+static std::mutex subprocess_launch_mutex;
 
 /** validating result counter */
 class counters
@@ -433,6 +439,7 @@ int closedir(DIR *dirp)
 
 /** command line arguments that are passed to test runs */
 static char validate_cmdargs[1024];
+static char validate_child_cmdargs[1024];
 
 /** variable arg system call */
 static int vsystem(const char *fmt, ...)
@@ -558,6 +565,7 @@ static counters run_test(char *file, double *elapsed_time = nullptr)
 	}
 #ifdef _WIN32
 	if ((0 != mkdir(dir)) && clean)
+
 #else
 	if ((0 != mkdir(dir, 0750)) && clean)
 #endif
@@ -567,7 +575,10 @@ static counters run_test(char *file, double *elapsed_time = nullptr)
 		return result;
 	}
 	else
+	{
 		output_debug("created test folder '%s'", dir);
+		// std::cerr << "Thread " << std::hash<std::thread::id>{}(std::this_thread::get_id()) << "using directory " << dir << std::endl;
+	}
 	char out[1024];
 	sprintf(out, "%s/%s.glm", dir, name);
 	if (!copyfile(file, out))
@@ -618,17 +629,32 @@ static counters run_test(char *file, double *elapsed_time = nullptr)
 	// 3. Construct the full command string using std::format.
 	// This is type-safe and handles memory automatically.
 	// We explicitly quote the executable path to handle spaces in paths correctly.
+
 	std::string command_line = std::format(
 		"\"{}\" -W {} {} {}.glm",
 		executable_to_run_path.string(), // Get string representation for formatting
 		dir,
-		validate_cmdargs,
+		validate_child_cmdargs,
 		name);
 
 	// 4. Execute the command using your custom vsystem wrapper.
 	// Assuming vsystem expects a C-style string (const char*).
-	unsigned int code = vsystem(command_line.c_str());
-	output_debug("Command '%s' returned code %d", command_line.c_str(), code);
+	// unsigned int code = vsystem(command_line.c_str());
+
+	output_debug("Thread %zu acquiring subprocess launch lock", std::hash<std::thread::id>{}(std::this_thread::get_id()));
+
+	unsigned int code;
+	{
+		std::lock_guard<std::mutex> lock(subprocess_launch_mutex);
+
+		output_debug("Thread %zu launching subprocess: %s", std::hash<std::thread::id>{}(std::this_thread::get_id()), command_line.c_str());
+
+		code = vsystem(command_line.c_str());
+	}
+
+	output_debug("Thread %zu released subprocess launch lock", std::hash<std::thread::id>{}(std::this_thread::get_id()));
+
+	// output_message("Command '%s' returned code %d", command_line.c_str(), code);
 
 	dt = exec_clock() - dt;
 	double t = (double)dt / (double)global_ms_per_second;
@@ -737,7 +763,10 @@ typedef struct s_dirstack
 } DIRLIST;
 static DIRLIST *dirstack = nullptr;
 static unsigned short next_id = 0;
-static char *result_code = nullptr;
+
+// static char *result_code = nullptr;
+static std::unique_ptr<std::atomic<char>[]> result_code;
+
 static unsigned int dirlock = 0;
 static void pushdir(char *dir)
 {
@@ -781,7 +810,7 @@ static DIRLIST *popdir(void)
 {
 	// auto v = rlock(&dirlock);
 	//  replace the above with SharedMutexManager
-	std::shared_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&dirlock));
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&dirlock));
 	DIRLIST *item = dirstack;
 	if (dirstack)
 		dirstack = dirstack->next;
@@ -814,7 +843,9 @@ void *(run_test_proc)(int arg) // *arg)
 				code = 2;
 			if (result.get_nexceptions())
 				code = 3;
-			result_code[item->id] = code;
+			// result_code[item->id] = code;
+			result_code[item->id].store(code);
+
 			char buffer[2048];
 			sprintf(buffer, "%s%s%6.1f%s%s", flags[code], report_col, dt, report_col, item->name);
 			report_data("%s", buffer);
@@ -889,11 +920,16 @@ static size_t process_dir(const char *path, bool runglms = false)
 		}
 	}
 	closedir(dirp);
-	result_code = (char *)malloc(next_id);
+	// result_code = (char *)malloc(next_id);
+	result_code = std::make_unique<std::atomic<char>[]>(next_id);
+	for (size_t i = 0; i < next_id; ++i)
+		result_code[i].store(0);
+
 	return count;
 }
 
-char *encode_result(char *data, size_t sz)
+// char *encode_result(char *data, size_t sz)
+char *encode_result(std::atomic<char> *data, size_t sz)
 {
 	size_t len = (sz + 1) / 2 + 1;
 	char *code = (char *)malloc(len);
@@ -903,7 +939,8 @@ char *encode_result(char *data, size_t sz)
 	{
 		size_t ndx = i / 2;
 		size_t shft = (i % 2) * 2;
-		code[ndx] |= (data[i] << shft);
+		// code[ndx] |= (data[i] << shft);
+		encode_result(result_code.get(), next_id);
 	}
 	for (i = 0; i < len; i++)
 	{
@@ -920,15 +957,46 @@ int validate(int argc, char *argv[])
 	size_t i;
 	int redirect_found = 0;
 	strcpy(validate_cmdargs, "");
-	for (i = 1; i < argc; i++)
+	strcpy(validate_child_cmdargs, ""); // for each validate test
+
+	// STEP 1: Populate validate_cmdargs with ALL original arguments (for logging purposes)
+	for (size_t k = 1; k < argc; k++) // Use 'k' to avoid conflict with 'i' in the next loop
 	{
-		if (strcmp(argv[i], "--redirect") == 0)
-			redirect_found = 1;
-		strcat(validate_cmdargs, argv[i]);
+		strcat(validate_cmdargs, argv[k]);
 		strcat(validate_cmdargs, " ");
 	}
+
+	for (i = 1; i < argc; i++)
+	{
+		// 2. For the 'validate_child_cmdargs' (passed to individual GLM runs)
+		// Filter out --threadcount and its value
+		if (strcmp(argv[i], "--threadcount") == 0)
+		{
+			// Skip the current argument (--threadcount) and the next one (its value)
+			i++;	  // Increment 'i' to skip the value, so next loop iteration starts after it
+			continue; // Do not add --threadcount or its value to child_cmd_args
+		}
+		// Filter out --validate, as it's for the harness, not individual GLM runs
+		if (strcmp(argv[i], "--validate") == 0)
+		{
+			continue;
+		}
+		if (strcmp(argv[i], "--redirect") == 0)
+			redirect_found = 1;
+
+		strcat(validate_child_cmdargs, argv[i]);
+		strcat(validate_child_cmdargs, " ");
+	}
 	if (!redirect_found)
-		strcat(validate_cmdargs, " --redirect all");
+	{
+		strcat(validate_child_cmdargs, " --redirect all");
+	}
+	strcat(validate_child_cmdargs, " --threadcount 1"); // Force single internal thread for each test run
+
+	// In validate(int argc, char *argv[]) after all strcat(validate_child_cmdargs, ...) calls:
+	output_message("Final validate_child_cmdargs for child processes: '%s'", validate_child_cmdargs);
+	// output_message("Length of validate_child_cmdargs: %zu", strlen(validate_child_cmdargs));
+
 	global_suppress_repeat_messages = 0;
 	output_message("Starting validation test in directory '%s'", global_workdir);
 	char var[64];
@@ -1022,7 +1090,7 @@ int validate(int argc, char *argv[])
 
 	if (global_validateoptions & VO_RPTGLM)
 		report_newtable("FILE TEST RESULTS");
-	// int n_procs = global_threadcount;
+	int n_procs = global_threadcount;
 	if (n_procs == 0)
 		n_procs = processor_count();
 	// n_procs = fmin(final.get_tested(), (unsigned)n_procs);
@@ -1042,10 +1110,10 @@ int validate(int argc, char *argv[])
 
 	// Use a vector to store threads
 	std::vector<std::thread> threads;
-	n_procs = global_threadcount;
-	// Debug message: starting validation
-	std::cout << "Starting validation with cmdargs '" << validate_cmdargs << "' using "
-			  << n_procs << " threads." << std::endl;
+	// n_procs = global_threadcount;
+	//  Debug message: starting validation
+	// std::cout << "Starting validation with cmdargs '" << validate_cmdargs << "' using "
+	//   << n_procs << " threads." << std::endl;
 
 	// Start threads
 	for (unsigned int i = 0; i < n_procs; ++i)
@@ -1068,7 +1136,7 @@ int validate(int argc, char *argv[])
 		if (threads[i].joinable())
 		{
 			threads[i].join(); // Join the thread
-			std::cout << "Thread " << i << " is done." << std::endl;
+							   // std::cout << "Thread " << i << " is done." << std::endl;
 		}
 	}
 
@@ -1167,7 +1235,7 @@ int validate(int argc, char *argv[])
 
 	report_data();
 	report_data("Result code");
-	report_data("%s", encode_result(result_code, next_id));
+	report_data("%s", encode_result(result_code.get(), next_id));
 	report_newrow();
 
 	report_newrow();
