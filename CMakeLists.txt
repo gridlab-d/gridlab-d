@@ -387,6 +387,14 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/gldcore/solvers)
 add_subdirectory(${CMAKE_SOURCE_DIR}/gldcore/link/engine)
 add_subdirectory(gldcore)
 
+# Add test_gldapi executable
+add_executable(test_gldapi gldcore/test_gldapi.cpp)
+target_link_libraries(test_gldapi PRIVATE gldapi ${DL_LIB} ${JSONCPP_LIB} ${SUPERLU_LIB} Threads::Threads)
+set_target_properties(test_gldapi PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin
+)
+
+
 get_target_property(GLD_COMPILE_OPTIONS gridlabd COMPILE_OPTIONS)
 string(JOIN " " GLD_COMPILE_OPTIONS ${GLD_COMPILE_OPTIONS})
 configure_file(cmake/gridlabd.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh @ONLY)

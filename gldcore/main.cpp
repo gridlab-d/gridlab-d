@@ -201,7 +201,7 @@ int main(int argc,     /**< the number entries on command-line argument list \p 
     }
 
     /* main initialization */
-    if (!output_init(argc, argv) || !exec_init())
+    if (!output_init() || !exec_init())
         exit(XC_INIERR);
 
     /* set thread count equal to processor count if not passed on command-line */
