@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - develop
-      - pypi_build  # Your current branch
+      - pypi_build
     tags:
       - 'v*'
   pull_request:
@@ -25,6 +25,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          submodules: recursive
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -59,6 +60,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          submodules: recursive
       
       - name: Set up Python
         uses: actions/setup-python@v5
