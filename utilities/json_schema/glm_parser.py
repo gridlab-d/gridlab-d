@@ -9,6 +9,11 @@ directives, and comments.
 The main class GLMModel manages the entire parsing process and maintains
 the parsed model structure with support for JSON serialization and schema
 generation.
+
+Exceptions:
+    GLMConditionalError: Raised when conditional directives (#ifdef, #ifndef, 
+        #ifexist, #if, #else, #endif) are found in GLM files. These must be 
+        removed before conversion to JSON.
 """
 
 import os
@@ -27,6 +32,33 @@ except (ImportError, ValueError):
     from glm_utils import gld_strict_name, add_attr_to_entity
 
 glm_entities_path = files('references').joinpath('glm_classes.json')
+
+def create_conditional_error_message(directive, line, context=""):
+    """Create a standardized error message for conditional directives.
+    
+    Args:
+        directive (str): The conditional directive name (e.g., 'ifdef', 'else', 'endif')
+        line (str): The line content where the directive was found
+        context (str, optional): Additional context like 'inside module/class' or 'inside object'
+        
+    Returns:
+        str: Formatted error message
+    """
+    context_part = f" {context}" if context else ""
+    return (
+        f"Conditional directive '#{directive}' found{context_part} at line: '{line.strip()}'. "
+        f"Please remove all conditional directives (#ifdef, #ifndef, #ifexist, #if, #else, #endif) "
+        f"from the GLM file before conversion to JSON."
+    )
+
+class GLMConditionalError(Exception):
+    """Exception raised when conditional directives are found in GLM files.
+    
+    This exception is raised when #ifdef, #ifndef, #ifexist, #if, or #else 
+    statements are encountered during GLM parsing, as these must be removed
+    before conversion to JSON.
+    """
+    pass
 
 class GLMModel:
     """Main class for parsing and managing GridLAB-D model files.
@@ -681,20 +713,12 @@ class GLMModel:
                     line = ";"
                 else:  # Line has inline comment
                     inline_comments[tokens[0]] = comment_text
-            # find if/ifdef/ifndef/ifexist directives
-            for d in ('ifdef', 'ifndef', 'ifexist', 'if'):
+            # Check for conditional directives and throw error
+            for d in ('ifdef', 'ifndef', 'ifexist', 'if', 'else', 'endif'):
                 if re.search(rf'#{d}\b', line):
-                    # Extract just the condition part without directive
-                    condition = self._extract_directive_content(line, d)
-                    inside_if_statements.append({"type": d, "condition": condition})
-            if re.search(r'#else\b', line):
-                # Convert the else to an ifnot
-                if len(inside_if_statements) > 0:
-                    condition = inside_if_statements[-1]["condition"]
-                    inside_if_statements.pop()
-                    inside_if_statements.append({"type": "ifnot", "condition": condition})
-            if re.search('#endif', line) and len(inside_if_statements) > 0:
-                inside_if_statements.pop()
+                    raise GLMConditionalError(
+                        create_conditional_error_message(d, line, "inside module/class")
+                    )
             # find a parameter
             m = re.match(r'\s*(\S+) ([^;]+);', line)
             if m:
@@ -884,20 +908,12 @@ class GLMModel:
                 else:  # Line has inline comment
                     if tokens[0].lower() != 'object':
                         inline_comments[tokens[0]] = comment_text
-            # find conditional directives inside object and record
-            for d in ('ifdef', 'ifndef', 'ifexist', 'if'):
+            # Check for conditional directives inside object and throw error
+            for d in ('ifdef', 'ifndef', 'ifexist', 'if', 'else', 'endif'):
                 if re.search(rf"#{d}\b", line):
-                    condition = self._extract_directive_content(line, d)
-                    insideIfDefs.append({"type": d, "condition": condition})
-            # handle else as negation of last condition
-            if re.search(r'#else\b', line) and len(insideIfDefs) > 0:
-                cond = insideIfDefs[-1]["condition"]
-                # switch to ifnot
-                insideIfDefs.pop()
-                insideIfDefs.append({"type": "ifnot", "condition": cond})
-            # end conditional block
-            if re.search('#endif', line) and len(insideIfDefs) > 0:
-                insideIfDefs.pop()
+                    raise GLMConditionalError(
+                        create_conditional_error_message(d, line, "inside object")
+                    )
             intobj = 0
             m = re.match(r'\s*(\S+) ([^;{]+)[;{]', line)
             if '${' in line and line.strip().endswith(';'):
@@ -1204,23 +1220,11 @@ class GLMModel:
                     name = self.glm_schedule(line, itr)
                 elif line_type == 'object':
                     line, counter, name = self.glm_object("", line, itr, h, counter)
-                elif line_type in ('ifdef', 'ifndef', 'ifexist', 'if'):
-                    # record entering a conditional directive
-                    self.ifdef_lines.append({
-                        "type": line_type,
-                        "condition": self._extract_directive_content(line, line_type)
-                    })
-                elif line_type == 'else':
-                    # Convert else to ifnot
-                    if len(self.ifdef_lines) > 0:
-                        condition = self.ifdef_lines[-1]["condition"]
-                        self.ifdef_lines.pop()
-                        self.ifdef_lines.append({"type": "ifnot", "condition": condition})
-                elif line_type == 'endif':
-                    try:
-                        self.ifdef_lines.pop()
-                    except:
-                        print("Unbalanced #endif, no preceeding #ifdef.")
+                elif line_type in ('ifdef', 'ifndef', 'ifexist', 'if', 'else', 'endif'):
+                    # Throw error for any conditional directive
+                    raise GLMConditionalError(
+                        create_conditional_error_message(line_type, processed_line, "in GLM file")
+                    )
                 elif line_type == 'comment_other':
                     self.outside_comments.append(processed_line)
                 elif line_type == 'intrinsic':

@@ -19,10 +19,10 @@ if current_dir not in sys.path:
 # Import the modular components
 try:
     # Try relative imports first (for package usage)
-    from .glm_parser import GLMModel
+    from .glm_parser import GLMModel, GLMConditionalError
 except (ImportError, ValueError):
     # Fall back to direct imports (for standalone usage)
-    from glm_parser import GLMModel
+    from glm_parser import GLMModel, GLMConditionalError
 
 def glm_to_json(glmName="TE_CHALLENGE"):
     """Convert a GLM file to JSON format.
@@ -42,7 +42,23 @@ def glm_to_json(glmName="TE_CHALLENGE"):
     """
     model_file = GLMModel()
     filePath = os.path.join(os.getcwd(), 'glmFiles', glmName + ".glm")
-    if model_file.read_model(filePath):
+    
+    try:
+        success = model_file.read_model(filePath)
+    except GLMConditionalError as e:
+        print(f"\nError: {str(e)}")
+        return False
+    except FileNotFoundError:
+        print(f"\n❌ Error: GLM file not found")
+        print(f"📄 Expected location: {filePath}")
+        print(f"💡 Please ensure the GLM file exists in the 'glmFiles/' directory")
+        return False
+    except Exception as e:
+        print(f"\n❌ Error reading GLM file: {str(e)}")
+        print(f"📄 File: {filePath}")
+        return False
+    
+    if success:
         # Define the output directory and file path
         output_dir = os.path.join(os.getcwd(), 'output')
         output_file_path = os.path.join(output_dir, glmName + '_values.json')
@@ -174,7 +190,18 @@ def glm_to_json(glmName="TE_CHALLENGE"):
         # Dump filtered values JSON
         with open(output_file_path, 'w', encoding='utf-8') as op:
             json.dump(jsonEntity, op, ensure_ascii=False, indent=2)
-        return # Disable schema creation for now
+        
+        print(f"✅ Successfully converted GLM to JSON")
+        print(f"📄 Input:  {filePath}")
+        print(f"📄 Output: {output_file_path}")
+        return True
+    else:
+        print(f"\n❌ Error: Failed to read GLM file")
+        print(f"📄 File: {filePath}")
+        print(f"💡 Please check the file format and try again")
+        return False
+        
+        # Disabled schema creation code below
         # Define the output directory and file path
         output_dir = os.path.join(os.getcwd(), 'output')
         output_file_path = os.path.join(output_dir, glmName + '_schema.json')
@@ -194,4 +221,6 @@ if __name__ == '__main__':
                        help='Name of the GLM file (without .glm extension). Default: TE_CHALLENGE')
     
     args = parser.parse_args()
-    glm_to_json(args.glmName)
+    result = glm_to_json(args.glmName)
+    if result is False:
+        sys.exit(1)
