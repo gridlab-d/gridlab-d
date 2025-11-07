@@ -242,9 +242,17 @@ class GLMModel:
         """
         diction = {}
         for name in self.module_entities:
-            value = self.module_entities[name].to_json()
-            if value is not None:
-                diction[name] = self.module_entities[name].to_json()
+            # Special handling for __preamble: only include if it has comments
+            if name == '__preamble':
+                preamble_entity = self.module_entities[name]
+                if hasattr(preamble_entity, 'comments') and preamble_entity.comments:
+                    comments_value = preamble_entity.comments.value if hasattr(preamble_entity.comments, 'value') else preamble_entity.comments
+                    if bool(comments_value) and len(comments_value) > 0:
+                        diction[name] = preamble_entity.to_json()
+            else:
+                value = self.module_entities[name].to_json()
+                if value is not None:
+                    diction[name] = self.module_entities[name].to_json()
         for name in self.object_entities:
             value = self.object_entities[name].to_json()
             if value is not None:
@@ -1036,6 +1044,26 @@ class GLMModel:
                 line = file.readline()
         return lines
 
+    def _finalize_preamble(self, preamble_comments):
+        """Finalize preamble comments by adding them to module_entities.__preamble"""
+        if preamble_comments:
+            # Use the existing __preamble entity from module_entities
+            preamble_entity = self.module_entities.get('__preamble')
+            if preamble_entity and hasattr(preamble_entity, 'comments'):
+                # Set the value of the Item object
+                preamble_entity.comments.value = preamble_comments[:]
+        # If no preamble_comments, leave the entity unchanged (it will return None from to_json())
+
+
+
+    def _check_and_finalize_preamble(self, line_type, first_module_or_object_found, preamble_comments):
+        """Check if this is the first module/object and finalize preamble if needed"""
+        module_object_types = {'module', 'schedule', 'object'}
+        if line_type in module_object_types and not first_module_or_object_found:
+            self._finalize_preamble(preamble_comments)
+            return True
+        return first_module_or_object_found
+
     def read_model(self, filename):
         """Read and parse a GLM model file.
 
@@ -1071,17 +1099,17 @@ class GLMModel:
         if os.path.isfile(filename):
             lines = self._read_file_lines(filename)
             
-            # New preamble processing:
-            preamble_lines = []
-            while lines and lines[0].startswith("//"):
-                preamble_lines.append(lines.pop(0))
-            # Save the preamble as its own object in the model
-            self.module_entities['__preamble'].comments = preamble_lines
+            # Track whether we've encountered the first module/object
+            first_module_or_object_found = False
+            preamble_comments = []
             
             itr = iter(lines)
 
             for line in itr:
                 line_type, processed_line = self._classify_line(line)
+                
+                # Check if this is the first module/object and finalize preamble if needed
+                first_module_or_object_found = self._check_and_finalize_preamble(line_type, first_module_or_object_found, preamble_comments)
                 if line_type == 'comment_set' or line_type == 'set':
                     self.set_lines.append(self._extract_directive_content(processed_line, 'set'))
                 elif line_type == 'comment_include' or line_type == 'include':
@@ -1149,7 +1177,10 @@ class GLMModel:
                         create_conditional_error_message(line_type, processed_line, "in GLM file")
                     )
                 elif line_type == 'comment_other':
-                    self.outside_comments.append(processed_line)
+                    if first_module_or_object_found:
+                        self.outside_comments.append(processed_line)
+                    else:
+                        preamble_comments.append(processed_line)
                 elif line_type == 'intrinsic':
                     print(f"Skipping inline code block: {line.strip()}")
                     # Initialize the brace count with the current line
