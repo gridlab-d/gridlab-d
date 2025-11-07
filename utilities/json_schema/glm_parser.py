@@ -169,13 +169,12 @@ class GLMModel:
                         self.object_entities[object_name] = entity
                         setattr(self.glm, object_name, entity)
 
-    def set_module_instance(self, mod_type, params, current_conditionals=None):
+    def set_module_instance(self, mod_type, params):
         """Create and configure a module instance.
         
         Args:
             mod_type (str): The module type name
             params (dict): Parameters for the module instance
-            current_conditionals (list): Current conditional context (ifdef/ifndef/etc)
             
         Returns:
             Entity instance or None: The created module instance
@@ -186,13 +185,6 @@ class GLMModel:
         if isinstance(mod_type, str):
             try:
                 entity = self.module_entities[mod_type]
-                # Check if instance already exists - merge parameters instead of overwriting
-                if hasattr(entity, 'instances') and mod_type in entity.instances:
-                    print(f"Module instance '{mod_type}' already exists, merging parameters from conditional declaration")
-                    return entity.merge_instance(mod_type, params, current_conditionals or [])
-                # Store conditional context for first instance
-                if current_conditionals:
-                    params['_conditionals'] = self._convert_conditionals_to_dict(current_conditionals)
                 return entity.set_instance(mod_type, params)
             except KeyError:
                 print(f"Unrecognized GRIDLABD module: {mod_type}, "
@@ -208,14 +200,13 @@ class GLMModel:
             raise TypeError(f"{mod_type} must be a string and is not.")
         return None
 
-    def set_object_instance(self, obj_type, object_name, params, current_conditionals=None):
+    def set_object_instance(self, obj_type, object_name, params):
         """Create and configure an object instance.
         
         Args:
             obj_type (str): The object type name
             object_name (str): The name for the object instance
             params (dict): Parameters for the object instance
-            current_conditionals (list): Current conditional context (ifdef/ifndef/etc)
             
         Returns:
             Entity instance or None: The created object instance
@@ -227,13 +218,6 @@ class GLMModel:
             try:
                 # Try to retrieve the existing entity
                 entity = self.object_entities[obj_type]
-                # Check if this specific object instance already exists
-                if hasattr(entity, 'instances') and object_name in entity.instances:
-                    print(f"Object instance '{obj_type}:{object_name}' already exists, merging parameters from conditional declaration")
-                    return entity.merge_instance(object_name, params, current_conditionals or [])
-                # Store conditional context for first instance
-                if current_conditionals:
-                    params['_conditionals'] = self._convert_conditionals_to_dict(current_conditionals)
             except KeyError:
                 # Handle unrecognized object types
                 print(f"Unrecognized GRIDLABD object and id: {obj_type} {object_name}, must be a new object")
@@ -478,14 +462,13 @@ class GLMModel:
         return schema
 
 
-    def add_object(self, _type, name, params, current_conditionals=None):
+    def add_object(self, _type, name, params):
         """Add a new object to the model.
         
         Args:
             _type (str): The object type
             name (str): The object name
             params (dict): Object parameters
-            current_conditionals (list): Current conditional context (ifdef/ifndef/etc)
             
         Returns:
             Entity instance: The created object instance
@@ -494,7 +477,7 @@ class GLMModel:
         if _type not in self.model:
             self.model[_type] = {}
         # add name and set object entity instance to model type
-        self.model[_type][name] = self.set_object_instance(_type, name, params, current_conditionals)
+        self.model[_type][name] = self.set_object_instance(_type, name, params)
         return self.model[_type][name]
 
     def _extract_inline_comment(self, line):
@@ -668,7 +651,7 @@ class GLMModel:
                 self.outside_prints = []
             m = re.search(mod + r' ([^;\s]+)[;\s]', line, re.IGNORECASE)
             _type = m.group(1)
-            self.set_module_instance(_type, params, self.ifdef_lines)
+            self.set_module_instance(_type, params)
             return _type
 
         if "{" in line:
@@ -726,13 +709,7 @@ class GLMModel:
                 # record each field for user-defined classes
                 if mod == 'class':
                     class_fields.append({'type': ptype, 'name': pname})
-                if (inside_if_statements):
-                    #check if params[ptype] exists
-                    if ptype not in params:
-                        params[ptype] = {}
-                    self.add_conditionals_to_item(params[ptype], pname, inside_if_statements)
-                else:
-                    params[ptype] = pname
+                params[ptype] = pname
             
             if re.search('}', line):
                 done = 1
@@ -753,7 +730,7 @@ class GLMModel:
         if mod == 'class':
             # use collected class_fields to capture all defined fields
             self.class_definitions[_type] = class_fields
-        self.set_module_instance(_type, params, self.ifdef_lines)
+        self.set_module_instance(_type, params)
 
         return _type
 
@@ -798,12 +775,7 @@ class GLMModel:
             if param in ["to", "from", "configuration", "parent"]:
                 val = gld_strict_name(name_prefix + val)
             
-            if len(insideIfDefs) > 0:
-                if( param not in params):
-                    params[param] = {}
-                self.add_conditionals_to_item(params[param], val.strip(), insideIfDefs)
-            else:
-                params[param] = val.strip()
+            params[param] = val.strip()
 
             if len(comments) > 0:
                 inside_comments[param] = comments
@@ -843,7 +815,7 @@ class GLMModel:
             counter += 1
             name = f"{_type}_{counter}"
             oidh[name] = name
-            self.add_object(_type, name, params, self.ifdef_lines)
+            self.add_object(_type, name, params)
             return line, counter, name
 
         # Collect parameters
@@ -876,7 +848,6 @@ class GLMModel:
             substring = line[pos + 2:].strip()
             before_comment = line.split("//", 1)[0].strip()
             inline_comments[before_comment] = substring
-        self.add_conditionals_to_dict(params, outsideIfDefs)
         line = next(itr)
         if len(parent):
             params['parent'] = parent
@@ -971,55 +942,10 @@ class GLMModel:
         if inside_prints:
             params['print'] = inside_prints          
         # add the new object type to the model
-        self.add_object(_type, name, params, self.ifdef_lines)
+        self.add_object(_type, name, params)
 
         return line, counter, name
     
-    def add_conditionals_to_item(self, item, value, conditionals):
-        for cond in conditionals:
-            t = cond["type"]
-            if t in ("ifdef", "ifndef", "ifexist", "if", "ifnot"):
-                # If the conditionals are not already present, initialize them
-                if t not in item:
-                    item.setdefault(t, {})
-                condition = cond["condition"] # Use value if condition is not specified
-                item[t][condition] = value  # Use `cond.get` for safety
-
-    def add_conditionals_to_entity(self, entity, conditionals):
-        for cond in conditionals:
-            t = cond["type"]
-            if t in ("ifdef", "ifndef", "ifexist", "if"):
-                entity._conditionals.setdefault(t, []).append(cond["condition"])
-
-    def add_conditionals_to_dict(self, obj, conditionals):
-        for cond in conditionals:
-            t = cond["type"]
-            if t in ("ifdef", "ifndef", "ifexist", "if"):
-                # Check if '_conditionals' is a key in the dictionary and initialize if missing
-                if "_conditionals" not in obj or not isinstance(obj["_conditionals"], dict):
-                    obj["_conditionals"] = {}  # Initialize '_conditionals' as a dictionary
-                if t not in obj["_conditionals"]:
-                    obj["_conditionals"][t] = []  # Initialize the type-specific conditional list
-                obj["_conditionals"][t].append(cond["condition"])  # Safely append condition
-
-    def _convert_conditionals_to_dict(self, conditionals):
-        """Convert a list of conditional dicts to the _conditionals dict format.
-        
-        Args:
-            conditionals (list): List of dicts with 'type' and 'condition' keys
-            
-        Returns:
-            dict: Dictionary with conditional types as keys and lists of conditions as values
-        """
-        result = {}
-        for cond in conditionals:
-            t = cond["type"]
-            if t in ("ifdef", "ifndef", "ifexist", "if", "ifnot"):
-                if t not in result:
-                    result[t] = []
-                result[t].append(cond["condition"])
-        return result
-
     def _classify_line(self, line):
         """Classify a line based on its content and return line type and processed line.
         
@@ -1213,9 +1139,6 @@ class GLMModel:
                         self.class_types.append(name)
                 elif line_type == 'module':
                     name = self.glm_module("module", line, itr)
-                    # attach any conditional directives to the module entity
-                    entity = self.module_entities[name]
-                    self.add_conditionals_to_entity(entity, self.ifdef_lines)
                 elif line_type == 'schedule':
                     name = self.glm_schedule(line, itr)
                 elif line_type == 'object':
