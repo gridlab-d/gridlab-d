@@ -24,18 +24,16 @@ class loader {
 private:
 	parser parse = parser();
     json jsn;
-    json property;
     string filename;
-
+    string convert(json value);
+       
 public:
     bool open_file(string file_name);
     void loadDirective();
     void loadClasses();
     void loadClock();
 
-    bool module_properties(MODULE *mod);
-    string module_ifdirectives(json directives);
-    bool module_conditionals();
+    bool module_properties(MODULE *mod, json properties);
     void loadModules();
     void loadObjects();
     void loadSchedules();
