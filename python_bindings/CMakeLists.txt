@@ -43,6 +43,8 @@ if(NOT EXISTS ${GRIDLABD_LIB_DIR}/libgldapi.so)
     message(FATAL_ERROR "GridLAB-D API library not found at ${GRIDLABD_LIB_DIR}/libgldapi.so. Please build GridLAB-D first or ensure prebuilt libraries are included.")
 endif()
 
+message(STATUS "Found GridLAB-D API library at ${GRIDLABD_LIB_DIR}/libgldapi.${LIB_EXT}")
+
 # Create the Python module
 nanobind_add_module(
     gridlabd_core
@@ -55,6 +57,26 @@ target_include_directories(gridlabd_core PRIVATE
     ${GRIDLABD_ROOT}/third_party
     ${JSONCPP_INCLUDE_DIR}
 )
+
+# Find jsoncpp library (could be in different locations)
+set(JSONCPP_SEARCH_PATHS
+    ${GRIDLABD_LIB_DIR}/static/libjsoncpp.a
+    ${GRIDLABD_BUILD_DIR}/third_party/jsoncpp_lib/src/lib_json/libjsoncpp.a
+    ${GRIDLABD_BUILD_DIR}/lib/libjsoncpp.a
+)
+
+set(JSONCPP_LIB_PATH "")
+foreach(SEARCH_PATH ${JSONCPP_SEARCH_PATHS})
+    if(EXISTS ${SEARCH_PATH})
+        set(JSONCPP_LIB_PATH ${SEARCH_PATH})
+        message(STATUS "Found jsoncpp at: ${JSONCPP_LIB_PATH}")
+        break()
+    endif()
+endforeach()
+
+if(NOT JSONCPP_LIB_PATH)
+    message(FATAL_ERROR "Could not find libjsoncpp.a. Searched in: ${JSONCPP_SEARCH_PATHS}")
+endif()
 
 # Link against GridLAB-D API library and dependencies
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib/libgldapi.so")
@@ -73,21 +95,15 @@ endif()
 
 # Set RPATH for the module to find the shared library
 set_target_properties(gridlabd_core PROPERTIES
-    INSTALL_RPATH_USE_LINK_PATH FALSE
-    INSTALL_RPATH "\$ORIGIN"
+    INSTALL_RPATH "$ORIGIN"
     BUILD_WITH_INSTALL_RPATH TRUE
 )
 
-# Set module properties
-target_compile_definitions(gridlabd_core PRIVATE VERSION_INFO=${SKBUILD_PROJECT_VERSION})
+# Install the module
+install(TARGETS gridlabd_core LIBRARY DESTINATION gridlabd)
 
-# Install the module and the shared library to the same directory
-install(TARGETS gridlabd_core
-    LIBRARY DESTINATION gridlabd
-    RUNTIME DESTINATION gridlabd)
-
-# Install the shared library alongside the module
-install(PROGRAMS ${GRIDLABD_LIB_DIR}/libgldapi.so
+# Install the GridLAB-D shared library alongside the Python module
+install(FILES ${GRIDLABD_LIB_DIR}/libgldapi.${LIB_EXT}
         DESTINATION gridlabd)
 
 # Install essential data files (tzinfo.txt, unitfile.txt) alongside the Python package
@@ -119,88 +135,51 @@ endif()
 # Also create a modules directory as an alias (GridLAB-D may look in multiple places)
 install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/gridlabd/lib)")
 
-# Create bundle directories (for future use)
-install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/gridlabd_bundle/bin)")
-install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/gridlabd_bundle/lib)")
+# Install all GridLAB-D module libraries
+file(GLOB MODULE_LIBS "${GRIDLABD_LIB_DIR}/*.${LIB_EXT}")
+install(FILES ${MODULE_LIBS}
+        DESTINATION gridlabd/lib)
 
-# Fix RPATH for all installed .so files so they can find each other at runtime
-# This is critical for the wheel to work when installed via pip
+# Create a custom target to fix RPATHs after installation
 if(UNIX AND NOT APPLE)
-    # Find patchelf (required for fixing RPATH on Linux)
-    find_program(PATCHELF_EXECUTABLE patchelf)
-    if(PATCHELF_EXECUTABLE)
-        message(STATUS "Found patchelf: ${PATCHELF_EXECUTABLE}")
-        install(CODE "
-            message(STATUS \"Fixing RPATH for all .so files...\")
-            
-            # Fix RPATH for libgldapi.so
+    install(CODE "
+        message(STATUS \"Fixing RPATH for all .so files...\")
+        file(GLOB_RECURSE SO_FILES \"\${CMAKE_INSTALL_PREFIX}/gridlabd/*.so\")
+        foreach(SO_FILE IN LISTS SO_FILES)
+            get_filename_component(SO_NAME \"\${SO_FILE}\" NAME)
             execute_process(
-                COMMAND ${PATCHELF_EXECUTABLE} --set-rpath \"\\\$ORIGIN\" \"\${CMAKE_INSTALL_PREFIX}/gridlabd/libgldapi.so\"
-                RESULT_VARIABLE result
+                COMMAND patchelf --set-rpath \"\$ORIGIN:\$ORIGIN/..:\" \"\${SO_FILE}\"
+                RESULT_VARIABLE PATCHELF_RESULT
+                ERROR_VARIABLE PATCHELF_ERROR
             )
-            if(result EQUAL 0)
-                message(STATUS \"  Fixed RPATH for libgldapi.so\")
+            if(PATCHELF_RESULT EQUAL 0)
+                message(STATUS \"  Fixed RPATH for \${SO_NAME}\")
             else()
-                message(WARNING \"  Failed to fix RPATH for libgldapi.so\")
+                message(WARNING \"  Failed to fix RPATH for \${SO_NAME}: \${PATCHELF_ERROR}\")
             endif()
-            
-            # Fix RPATH for all module libraries in lib/
-            file(GLOB MODULE_LIBS \"\${CMAKE_INSTALL_PREFIX}/gridlabd/lib/*.so\")
-            foreach(lib \${MODULE_LIBS})
-                execute_process(
-                    COMMAND ${PATCHELF_EXECUTABLE} --set-rpath \"\\\$ORIGIN:\\\$ORIGIN/..\" \"\${lib}\"
-                    RESULT_VARIABLE result
-                )
-                if(result EQUAL 0)
-                    get_filename_component(lib_name \"\${lib}\" NAME)
-                    message(STATUS \"  Fixed RPATH for \${lib_name}\")
-                else()
-                    message(WARNING \"  Failed to fix RPATH for \${lib}\")
-                endif()
-            endforeach()
-            
-            message(STATUS \"RPATH fixes complete\")
-        ")
-    else()
-        message(WARNING "patchelf not found. RPATH will not be fixed. Install patchelf: sudo apt-get install patchelf")
-    endif()
-elseif(APPLE)
-    # On macOS, use install_name_tool
-    find_program(INSTALL_NAME_TOOL install_name_tool)
-    if(INSTALL_NAME_TOOL)
-        message(STATUS "Found install_name_tool: ${INSTALL_NAME_TOOL}")
-        install(CODE "
-            message(STATUS \"Fixing RPATH for all .so files (macOS)...\")
-            
-            # Fix RPATH for libgldapi.so
+        endforeach()
+        message(STATUS \"RPATH fixes complete\")
+    ")
+endif()
+
+# macOS-specific RPATH handling
+if(APPLE)
+    install(CODE "
+        message(STATUS \"Fixing install names for all .dylib files...\")
+        file(GLOB_RECURSE DYLIB_FILES \"\${CMAKE_INSTALL_PREFIX}/gridlabd/*.dylib\")
+        foreach(DYLIB_FILE IN LISTS DYLIB_FILES)
+            get_filename_component(DYLIB_NAME \"\${DYLIB_FILE}\" NAME)
             execute_process(
-                COMMAND ${INSTALL_NAME_TOOL} -add_rpath \"@loader_path\" \"\${CMAKE_INSTALL_PREFIX}/gridlabd/libgldapi.so\"
-                RESULT_VARIABLE result
+                COMMAND install_name_tool -add_rpath @loader_path \"\${DYLIB_FILE}\"
+                RESULT_VARIABLE INSTALL_NAME_RESULT
+                ERROR_VARIABLE INSTALL_NAME_ERROR
             )
-            if(result EQUAL 0)
-                message(STATUS \"  Fixed RPATH for libgldapi.so\")
+            if(INSTALL_NAME_RESULT EQUAL 0)
+                message(STATUS \"  Fixed install name for \${DYLIB_NAME}\")
+            else()
+                message(WARNING \"  Failed to fix install name for \${DYLIB_NAME}: \${INSTALL_NAME_ERROR}\")
             endif()
-            
-            # Fix RPATH for all module libraries
-            file(GLOB MODULE_LIBS \"\${CMAKE_INSTALL_PREFIX}/gridlabd/lib/*.so\")
-            foreach(lib \${MODULE_LIBS})
-                execute_process(
-                    COMMAND ${INSTALL_NAME_TOOL} -add_rpath \"@loader_path\" \"\${lib}\"
-                    RESULT_VARIABLE result
-                )
-                execute_process(
-                    COMMAND ${INSTALL_NAME_TOOL} -add_rpath \"@loader_path/..\" \"\${lib}\"
-                    RESULT_VARIABLE result2
-                )
-                if(result EQUAL 0 OR result2 EQUAL 0)
-                    get_filename_component(lib_name \"\${lib}\" NAME)
-                    message(STATUS \"  Fixed RPATH for \${lib_name}\")
-                endif()
-            endforeach()
-            
-            message(STATUS \"RPATH fixes complete\")
-        ")
-    else()
-        message(WARNING "install_name_tool not found")
-    endif()
+        endforeach()
+        message(STATUS \"Install name fixes complete\")
+    ")
 endif()
