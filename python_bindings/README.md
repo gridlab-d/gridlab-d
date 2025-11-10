@@ -267,6 +267,199 @@ cd ../python_bindings
 pip install -e .
 ```
 
+## Building for PyPI Distribution
+
+This section describes how to create distributable packages for uploading to PyPI.
+
+### Overview
+
+The PyPI build process creates self-contained wheels that include all necessary GridLAB-D libraries and modules. Users can install with just `pip install gridlabd` without needing to build GridLAB-D from source.
+
+### Prerequisites
+
+1. **GridLAB-D must be built first**:
+   ```bash
+   cd build
+   cmake --build . --parallel
+   ```
+   This creates `libgldapi.so` and all GridLAB-D modules in `build/lib/`
+
+2. **Install build tools**:
+   ```bash
+   pip install build twine
+   ```
+
+### Build Process
+
+#### Step 1: Prepare Prebuilt Files
+
+Run the preparation script to copy necessary files:
+
+```bash
+cd python_bindings
+./prepare_pypi_build.sh
+```
+
+**What this script does:**
+- Creates `prebuilt/` directory structure
+- Copies `libgldapi.so` and all GridLAB-D module libraries (`.so` files)
+- Copies essential data files (`tzinfo.txt`, `unitfile.txt`)  
+- Copies required header files for compilation
+- Copies jsoncpp include files
+
+**Generated structure:**
+```
+python_bindings/
+├── prebuilt/
+│   ├── lib/
+│   │   ├── libgldapi.so           # Core API library
+│   │   ├── residential.so         # All GridLAB-D modules
+│   │   ├── powerflow.so
+│   │   ├── climate.so
+│   │   └── ... (17 modules total)
+│   └── share/
+│       ├── tzinfo.txt            # Timezone database
+│       └── unitfile.txt          # Units database
+├── gldcore/                      # Copied header files
+└── third_party/jsoncpp_lib/      # Copied jsoncpp headers
+```
+
+#### Step 2: Build the Package
+
+```bash
+python -m build
+```
+
+This creates:
+- **Source distribution** (`.tar.gz`) - Contains source code and prebuilt files
+- **Wheel** (`.whl`) - Binary distribution ready for installation
+
+#### Step 3: Test the Package
+
+```bash
+# Install the wheel locally to test
+pip install --force-reinstall dist/gridlabd-5.0.0-*.whl
+
+# Verify it works
+python -c "import gridlabd; print('Version:', gridlabd.version()); print('Test:', gridlabd.hello())"
+```
+
+#### Step 4: Upload to PyPI
+
+```bash
+# Upload to Test PyPI first (recommended)
+twine upload --repository testpypi dist/*
+
+# Test install from Test PyPI
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ gridlabd
+
+# If everything works, upload to real PyPI
+twine upload dist/*
+```
+
+### Architecture Details
+
+#### Why Pre-build Libraries?
+
+The PyPI approach uses **pre-built libraries** rather than building GridLAB-D during `pip install` because:
+
+1. **Fast installs** - No compilation needed (seconds vs minutes)
+2. **Reliable** - Works consistently across environments  
+3. **User-friendly** - No build dependencies required
+4. **Self-contained** - Everything needed is included
+
+#### Two-Mode CMakeLists.txt
+
+The CMakeLists.txt automatically detects the build context:
+
+```cmake
+# Development mode - uses source tree
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib/libgldapi.so")
+    set(GRIDLABD_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)
+    
+# PyPI mode - uses prebuilt files  
+else()
+    set(GRIDLABD_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+```
+
+#### What Gets Packaged
+
+**Core Components:**
+- Python bindings module (`gridlabd_core.so`)
+- GridLAB-D API library (`libgldapi.so`)
+
+**GridLAB-D Modules (~17 modules):**
+- `residential.so`, `commercial.so`, `powerflow.so`
+- `climate.so`, `tape.so`, `generators.so`
+- `reliability.so`, `market.so`, `optimize.so`
+- And more...
+
+**Data Files:**
+- `tzinfo.txt` - Timezone definitions (600+ timezones)
+- `unitfile.txt` - Unit conversion database
+
+**Total Size:** ~13 MB compressed wheel, ~33 MB installed
+
+### Troubleshooting PyPI Builds
+
+#### GridLAB-D Not Built Error
+```
+GridLAB-D API library not found at build/lib/libgldapi.so
+```
+**Solution:** Build GridLAB-D first: `cd build && cmake --build . --parallel`
+
+#### Missing Prebuilt Files Error
+```
+PyPI mode: using prebuilt GridLAB-D libraries
+CMake Error: libgldapi.so not found
+```
+**Solution:** Run `./prepare_pypi_build.sh` first
+
+#### Import Errors After Install
+```
+ImportError: No module named 'gridlabd.gridlabd_core'
+```
+**Solution:** Check the wheel was built correctly and installed from the right location
+
+### Development vs PyPI Workflow
+
+**Development Workflow:**
+```bash
+# Make changes to source
+# Build and test quickly
+pip install -e .
+```
+
+**PyPI Release Workflow:**
+```bash
+# 1. Ensure GridLAB-D is built
+cd build && cmake --build . --parallel
+
+# 2. Prepare PyPI package
+cd ../python_bindings
+./prepare_pypi_build.sh
+
+# 3. Build distributable package
+python -m build
+
+# 4. Test locally
+pip install --force-reinstall dist/gridlabd-5.0.0-*.whl
+
+# 5. Upload to PyPI
+twine upload dist/*
+```
+
+### File Management
+
+The preparation script and build process create several directories that should **not** be committed to git:
+
+- `prebuilt/` - Copied libraries and data files
+- `gldcore/` - Copied header files  
+- `third_party/` - Copied jsoncpp files
+- `dist/` - Built packages
+
+These are automatically ignored via `.gitignore` entries.
+
 ## Documentation
 
 - **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick start guide and common tasks
