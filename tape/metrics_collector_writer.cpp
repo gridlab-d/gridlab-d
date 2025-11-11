@@ -1264,7 +1264,12 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 			tbl[idx].air_temperature_avg = mtr[HSE_AVG_AIR_TEMP].asDouble();
 			tbl[idx].air_temperature_setpoint_cooling = mtr[HSE_AVG_DEV_COOLING].asDouble();
 			tbl[idx].air_temperature_setpoint_heating = mtr[HSE_AVG_DEV_HEATING].asDouble();
-			tbl[idx].system_mode = mtr[HSE_SYSTEM_MODE].asInt();
+	        try {
+			    tbl[idx].system_mode = mtr[HSE_SYSTEM_MODE].asInt();
+			}
+			catch(...) {
+			    tbl[idx].system_mode = 0;
+			}
 			tbl[idx].waterheater_load_min = mtr[HSE_SYSTEM_MODE + 1].asDouble();
 			tbl[idx].waterheater_load_max = mtr[HSE_SYSTEM_MODE + 2].asDouble();
 			tbl[idx].waterheater_load_avg = mtr[HSE_SYSTEM_MODE + 3].asDouble();
@@ -1278,7 +1283,6 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 			tbl[idx].waterheater_temp_max = mtr[HSE_SYSTEM_MODE + 11].asDouble();
 			tbl[idx].waterheater_temp_avg = mtr[HSE_SYSTEM_MODE + 12].asDouble();
 
-
 			tbl[idx].wh_lower_setpoint_min = mtr[HSE_SYSTEM_MODE + 13].asDouble();
 			tbl[idx].wh_lower_setpoint_max = mtr[HSE_SYSTEM_MODE + 14].asDouble();
 			tbl[idx].wh_lower_setpoint_avg = mtr[HSE_SYSTEM_MODE + 15].asDouble();
@@ -1291,11 +1295,14 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 			tbl[idx].wh_upper_temp_min = mtr[HSE_SYSTEM_MODE + 22].asDouble();
 			tbl[idx].wh_upper_temp_max = mtr[HSE_SYSTEM_MODE + 23].asDouble();
 			tbl[idx].wh_upper_temp_avg = mtr[HSE_SYSTEM_MODE + 24].asDouble();
-			tbl[idx].wh_lower_elem_state = mtr[HSE_SYSTEM_MODE + 25].asInt();
-			tbl[idx].wh_upper_elem_state = mtr[HSE_SYSTEM_MODE + 26].asInt();
-
-
-
+            try {
+                tbl[idx].wh_lower_elem_state = mtr[HSE_SYSTEM_MODE + 25].asInt();
+                tbl[idx].wh_upper_elem_state = mtr[HSE_SYSTEM_MODE + 26].asInt();
+			}
+			catch(...) {
+			    tbl[idx].wh_lower_elem_state = 0;
+    			tbl[idx].wh_upper_elem_state = 0;
+			}
 
 			idx++;
 		}
