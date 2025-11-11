@@ -373,7 +373,7 @@ GLOBALVAR *global_create(const char *name, ...){
 	GLOBALVAR *var = nullptr;
 
 	/* don't create duplicate entries */
-	if(global_find(strdup(name)) != nullptr){
+	if(global_find(name) != nullptr){
 		errno = EINVAL;
 		output_error("tried to create global variable '%s' a second time", name);
 		/* TROUBLESHOOT
@@ -511,7 +511,7 @@ GLOBALVAR *global_create(const char *name, ...){
                     Use a shorter name and try again.
                  */
             }
-            prop = property_malloc(proptype, nullptr, strdup(name), addr, nullptr);
+            prop = property_malloc(proptype, nullptr, name, addr, nullptr);
 
             if (prop == nullptr)
                 throw_exception("global_create(char *name='%s',...): property '%s' could not be stored", name, name);
