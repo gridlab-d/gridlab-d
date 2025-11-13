@@ -1269,7 +1269,8 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 			}
 			catch(...) {
 			    tbl[idx].system_mode = 0;
-			}			tbl[idx].waterheater_load_min = mtr[HSE_SYSTEM_MODE + 1].asDouble();
+			}			
+			tbl[idx].waterheater_load_min = mtr[HSE_SYSTEM_MODE + 1].asDouble();
 			tbl[idx].waterheater_load_max = mtr[HSE_SYSTEM_MODE + 2].asDouble();
 			tbl[idx].waterheater_load_avg = mtr[HSE_SYSTEM_MODE + 3].asDouble();
 			tbl[idx].waterheater_setpoint_min = mtr[HSE_SYSTEM_MODE + 4].asDouble();
@@ -1301,7 +1302,8 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 			catch(...) {
 			    tbl[idx].wh_lower_elem_state = 0;
     			tbl[idx].wh_upper_elem_state = 0;
-			}			idx++;
+			}			
+			idx++;
 		}
 	}
 	hdfWrite(filename_house, mtype_houses, &tbl, 2, idx);
