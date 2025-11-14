@@ -154,9 +154,11 @@ class GLMModel:
                     obj = self.classes[module_name][object_name]
                     if obj is None:
                         self.classes[module_name][object_name] = {}
-                        continue
                     if object_name == "global_attributes":
                         entity = Entity(module_name, None)
+                        if obj == None:
+                            self.module_entities[module_name] = entity
+                            continue
                         for attr in obj:
                             add_attr_to_entity(entity, attr, obj[attr])
                         self.module_entities[module_name] = entity
@@ -167,7 +169,7 @@ class GLMModel:
                         for attr in obj:
                             add_attr_to_entity(entity, attr, obj[attr])
                         self.object_entities[object_name] = entity
-                        setattr(self.glm, object_name, entity)
+                        setattr(self.glm, object_name, entity) 
 
     def set_module_instance(self, mod_type, params):
         """Create and configure a module instance.
@@ -189,6 +191,8 @@ class GLMModel:
             except KeyError:
                 print(f"Unrecognized GRIDLABD module: {mod_type}, "
                       "must be a new class")
+                print(f"Available module_entities keys: {list(self.module_entities.keys())}")
+                print(f"Available classes keys: {list(self.classes.keys()) if hasattr(self, 'classes') else 'No classes loaded'}")
                 self.class_types.append(mod_type)
                 entity = Entity(mod_type, None)
                 self.module_entities[mod_type] = entity
@@ -629,7 +633,6 @@ class GLMModel:
         inside_errors = []
         inside_warnings = []
         inside_prints = []
-        inside_if_statements = []
         # Set the clock to date module
         if mod in ["date"]:
             line = mod + " " + line
@@ -657,10 +660,35 @@ class GLMModel:
             if hasattr(self, 'outside_prints') and self.outside_prints:
                 params['outside_print'] = self.outside_prints
                 self.outside_prints = []
-            m = re.search(mod + r' ([^;\s]+)[;\s]', line, re.IGNORECASE)
-            _type = m.group(1)
-            self.set_module_instance(_type, params)
-            return _type
+            
+            # Check if this is a single-line module with parameters in braces
+            if "{" in line and "}" in line:
+                # Parse: module powerflow { solver_method NR; };
+                match = re.search(mod + r'\s+([^{\s]+)\s*\{\s*([^}]*)\s*\}', line, re.IGNORECASE)
+                if match:
+                    _type = match.group(1)
+                    param_content = match.group(2).strip()
+                    
+                    # Parse parameters within the braces
+                    if param_content:
+                        # Split by semicolon and parse each parameter
+                        param_parts = [p.strip() for p in param_content.split(';') if p.strip()]
+                        for param_part in param_parts:
+                            # Split parameter into name and value
+                            if ' ' in param_part:
+                                tokens = param_part.split(None, 1)
+                                param_name = tokens[0]
+                                param_value = tokens[1] if len(tokens) > 1 else ""
+                                params[param_name] = param_value
+                    
+                    self.set_module_instance(_type, params)
+                    return _type
+            else:
+                # Simple single-line module: module powerflow;
+                match = re.search(mod + r' ([^;\s]+)[;\s]', line, re.IGNORECASE)
+                _type = match.group(1)
+                self.set_module_instance(_type, params)
+                return _type
 
         if "{" in line:
             # Match the module name before the opening brace
@@ -742,14 +770,13 @@ class GLMModel:
 
         return _type
 
-    def _process_object_parameter(self, param, val, name_prefix, insideIfDefs, params, comments, inside_comments, line=None, name=None):
+    def _process_object_parameter(self, param, val, name_prefix, params, comments, inside_comments, line=None, name=None):
         """Process a single object parameter and handle special cases.
         
         Args:
             param (str): Parameter name
             val (str): Parameter value
             name_prefix (str): Prefix for names
-            insideIfDefs (list): List of ifdef conditions
             params (dict): Dictionary to store parameters
             comments (list): List of comments
             inside_comments (list): List of inside comments
@@ -839,6 +866,7 @@ class GLMModel:
         m_id = re.search(r":([^{}]+)\{", line)
         if m_id:
             name = _type + ":" + m_id.group(1).strip()
+            params['id'] = m_id.group(1).strip()
         # Collect comments
         comments = []
         inside_comments = []
@@ -848,8 +876,6 @@ class GLMModel:
         inside_warnings = []
         inside_prints = []
         done = False
-        outsideIfDefs = self.ifdef_lines.copy()
-        insideIfDefs = []
 
         pos = line.find("//")
         if pos > 0:
@@ -903,7 +929,7 @@ class GLMModel:
                     # Remove the trailing semicolon from the remainder
                     val = tokens[1].rsplit(";", 1)[0].strip()
                     processed_name, updated_line = self._process_object_parameter(param, val, name_prefix,
-                             insideIfDefs, params, comments, inside_comments, line, name)
+                             params, comments, inside_comments, line, name)
             elif m:
                 param = m.group(1)
                 val = m.group(2)
@@ -917,7 +943,7 @@ class GLMModel:
                 else:
                     # Process parameter using helper method
                     processed_name, updated_line = self._process_object_parameter(
-                        param, val, name_prefix, insideIfDefs, params, comments, inside_comments, line, name
+                        param, val, name_prefix, params, comments, inside_comments, line, name
                     )
                     if processed_name is not None:
                         name = processed_name
@@ -962,23 +988,11 @@ class GLMModel:
             
         Returns:
             tuple: (line_type, processed_line) where line_type is one of:
-                   'comment_set', 'comment_include', 'comment_define', 'comment_other',
-                   'set', 'include', 'define', 'clock', 'class', 'module', 'schedule', 
+                   'comment_other', 'set', 'include', 'define', 'clock', 'class', 'module', 'schedule', 
                    'object', 'ifdef', 'endif', 'unknown'
         """
         if re.match('^//', line):
-            if re.search('#set', line) and not re.search('#setenv', line):
-                return 'comment_set', line
-            elif re.search('#include', line):
-                return 'comment_include', line
-            elif re.search('#define', line):
-                return 'comment_define', line
-            elif re.search('#undef', line):
-                return 'comment_undef', line
-            elif re.search('#error', line):
-                return 'comment_error', line
-            else:
-                return 'comment_other', line
+            return 'comment_other', line
         elif re.search('#set', line) and not re.search('#setenv', line):
             return 'set', line
         elif re.search('#include', line):
@@ -1110,15 +1124,15 @@ class GLMModel:
                 
                 # Check if this is the first module/object and finalize preamble if needed
                 first_module_or_object_found = self._check_and_finalize_preamble(line_type, first_module_or_object_found, preamble_comments)
-                if line_type == 'comment_set' or line_type == 'set':
+                if line_type == 'set':
                     self.set_lines.append(self._extract_directive_content(processed_line, 'set'))
-                elif line_type == 'comment_include' or line_type == 'include':
+                elif line_type == 'include':
                     self.include_lines.append(self._extract_directive_content(processed_line, 'include'))
-                elif line_type == 'comment_define' or line_type == 'define':
+                elif line_type == 'define':
                     self.define_lines.append(self._extract_directive_content(processed_line, 'define'))
-                elif line_type == 'comment_undef' or line_type == 'undef':
+                elif line_type == 'undef':
                     self.undef_lines.append(self._extract_directive_content(processed_line, 'undef'))
-                elif line_type == 'comment_error' or line_type == 'error':
+                elif line_type == 'error':
                     content = self._extract_directive_content(processed_line, 'error')
                     self.error_lines.append(content)
                     self.outside_errors.append(content)
@@ -1234,11 +1248,26 @@ class GLMModel:
                 except Exception as e:
                     print(f"Failed to parse #set line: {line} - {e}")
 
+            converted_includes = []
             for line in self.include_lines:
                 try:
-                    directives_lines["#include"].append(line.strip().replace('\\"', '').strip('"'))
+                    # Remove quotes, semicolons, and whitespace from the include path
+                    include_path = line.strip().rstrip(';').replace('\\"', '').strip('"').strip("'")
+                    # Convert .glm extensions to .json
+                    if include_path.endswith('.glm'):
+                        original_path = include_path
+                        include_path = include_path[:-4] + '.json'
+                        converted_includes.append((original_path, include_path))
+                    directives_lines["#include"].append(include_path)
                 except Exception as e:
                     print(f"Failed to parse #include line: {line} - {e}")
+            
+            # Inform user about converted include files
+            if converted_includes:
+                print(f"\n📝 Converted {len(converted_includes)} include file(s) from .glm to .json:")
+                for orig, new in converted_includes:
+                    print(f"   {orig} → {new}")
+                print("⚠️  Please ensure these files have been converted to JSON format.\n")
 
             for line in self.define_lines:
                 try:
@@ -1291,17 +1320,9 @@ class GLMModel:
         Returns:
             str: The content without the directive prefix, or the original line if no match
         """
-        # Handle commented directives like "// #set ..."
-        if line.strip().startswith('//'):
-            # For commented lines, keep the comment prefix but extract directive content
-            comment_match = re.search(rf'//\s*#{directive}\s+(.*)', line)
-            if comment_match:
-                return f"// {comment_match.group(1).strip()}"
-        else:
-            # For regular directives, extract just the content
-            directive_match = re.search(rf'#{directive}\s+(.*)', line)
-            if directive_match:
-                return directive_match.group(1).strip()
+        directive_match = re.search(rf'#{directive}\s+(.*)', line)
+        if directive_match:
+            return directive_match.group(1).strip()
         
         # If no match found, return original line
         return line
