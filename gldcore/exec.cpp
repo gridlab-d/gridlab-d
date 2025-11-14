@@ -384,119 +384,125 @@ static STATUS show_progress()
 /* CHECKPOINTS */
 
 // Helper function to check if directory exists
-static bool directory_exists(const char* path) {
-    if (!path || strlen(path) == 0) return false;
-    
-    struct stat info;
-    if (stat(path, &info) != 0) {
-        return false; // Path doesn't exist or can't be accessed
-    }
-    return (info.st_mode & S_IFDIR) != 0; // Check if it's a directory
+static bool directory_exists(const char *path)
+{
+	if (!path || strlen(path) == 0)
+		return false;
+
+	struct stat info;
+	if (stat(path, &info) != 0)
+	{
+		return false; // Path doesn't exist or can't be accessed
+	}
+	return (info.st_mode & S_IFDIR) != 0; // Check if it's a directory
 }
 
 // Do Checkpoint
-nlohmann::json do_checkpoint(const char* output_directory)
+nlohmann::json do_checkpoint(const char *output_directory)
 {
-    /* last checkpoint value */
-    static TIMESTAMP last_checkpoint = 0;
-    TIMESTAMP now = 0;
+	/* last checkpoint value */
+	static TIMESTAMP last_checkpoint = 0;
+	TIMESTAMP now = 0;
 
-    /* check point type selection */
-    switch (global_checkpoint_type) {
-    /* wallclock checkpoint interval */
-    case CPT_WALL:
-        /* checkpoint based on wall time */
-        now = time(nullptr);
-        /* default checkpoint for WALL */
-        if ( global_checkpoint_interval==0 )
-            global_checkpoint_interval = 3600;
-        break;
+	/* check point type selection */
+	switch (global_checkpoint_type)
+	{
+	/* wallclock checkpoint interval */
+	case CPT_WALL:
+		/* checkpoint based on wall time */
+		now = time(nullptr);
+		/* default checkpoint for WALL */
+		if (global_checkpoint_interval == 0)
+			global_checkpoint_interval = 3600;
+		break;
 
-    /* simulation checkpoint interval */
-    case CPT_SIM:
-        /* checkpoint based on sim time */
-        now = global_clock;
-        /* default checkpoint for SIM */
-        if ( global_checkpoint_interval==0 )
-            global_checkpoint_interval = 86400;
-        break;
+	/* simulation checkpoint interval */
+	case CPT_SIM:
+		/* checkpoint based on sim time */
+		now = global_clock;
+		/* default checkpoint for SIM */
+		if (global_checkpoint_interval == 0)
+			global_checkpoint_interval = 86400;
+		break;
 
-    /* no checkpoints used */
-    case CPT_NONE:
-        now = 0;
-        break;
-    }
-	 nlohmann::json checkpoint;
-    /* checkpoint may be needed */
-    if ( now > 0 )
-    {
+	/* no checkpoints used */
+	case CPT_NONE:
+		now = 0;
+		break;
+	}
+	nlohmann::json checkpoint;
+	/* checkpoint may be needed */
+	if (now > 0)
+	{
 
 		// TODO: Take a look at global_checkpoint_interval and if we want to keep it
-        /* checkpoint time lapsed */
-        // if ( last_checkpoint + global_checkpoint_interval <= now )
-        if ( last_checkpoint <= now )
-        {
-            static char fn[1024] = "";
-            static char json_fn[1024] = "";
-            FILE *fp = nullptr;
-            FILE *json_fp = nullptr;
+		/* checkpoint time lapsed */
+		// if ( last_checkpoint + global_checkpoint_interval <= now )
+		if (last_checkpoint <= now)
+		{
+			static char fn[1024] = "";
+			static char json_fn[1024] = "";
+			FILE *fp = nullptr;
+			FILE *json_fp = nullptr;
 
-            /* default checkpoint filename */
-            if ( strcmp(global_checkpoint_file,"")==0 )
-            {
-                char *ext;
-                /* use the model name by default */
-                strcpy(global_checkpoint_file, global_modelname);
-                ext = strrchr(global_checkpoint_file,'.');
-                /* trim off the extension, if any */
-                if ( ext!=nullptr && ( strcmp(ext,".glm")==0 || strcmp(ext,".xml")==0 ) )
-                    *ext = '\0';
-            }
+			/* default checkpoint filename */
+			if (strcmp(global_checkpoint_file, "") == 0)
+			{
+				char *ext;
+				/* use the model name by default */
+				strcpy(global_checkpoint_file, global_modelname);
+				ext = strrchr(global_checkpoint_file, '.');
+				/* trim off the extension, if any */
+				if (ext != nullptr && (strcmp(ext, ".glm") == 0 || strcmp(ext, ".xml") == 0))
+					*ext = '\0';
+			}
 
-            /* delete old checkpoint file if not desired */
-            if ( global_checkpoint_keepall==0 && strcmp(fn,"")!=0 )
-            {
-                unlink(fn);
-                if ( strcmp(json_fn,"")!=0 )
-                    unlink(json_fn);
-            }
+			/* delete old checkpoint file if not desired */
+			if (global_checkpoint_keepall == 0 && strcmp(fn, "") != 0)
+			{
+				unlink(fn);
+				if (strcmp(json_fn, "") != 0)
+					unlink(json_fn);
+			}
 
-            /* create current checkpoint save filename */
-            sprintf(fn,"%s.%d",global_checkpoint_file,global_checkpoint_seqnum);
-            
-            /* set default output directory if none provided or empty string */
-            const char* json_dir = (output_directory && strlen(output_directory) > 0) ? output_directory : "../../_test_results";
-            sprintf(json_fn,"%s/%s.%d.json", json_dir, global_checkpoint_file, global_checkpoint_seqnum++);
-            
-            /* check if output directory exists */
-            if (!directory_exists(json_dir)) {
+			/* create current checkpoint save filename */
+			sprintf(fn, "%s.%d", global_checkpoint_file, global_checkpoint_seqnum);
+
+			/* set default output directory if none provided or empty string */
+			const char *json_dir = (output_directory && strlen(output_directory) > 0) ? output_directory : "../../_test_results";
+			sprintf(json_fn, "%s/%s.%d.json", json_dir, global_checkpoint_file, global_checkpoint_seqnum++);
+
+			/* check if output directory exists */
+			if (!directory_exists(json_dir))
+			{
 				output_error("directory '%s' does not exist for JSON checkpoint files", json_dir);
 				return nlohmann::json(); // Return empty JSON value on error
-            }
-            
-            fp = fopen(fn,"w");
-            json_fp = fopen(json_fn,"w");
-            
-            if ( fp==nullptr )
-                output_error("unable to open checkpoint file '%s' for writing");
-            else
-            {
-                if ( stream(fp,SF_OUT)<=0 )
-                    output_error("checkpoint failure (stream context is %s)",stream_context());
-                fclose(fp);
-                last_checkpoint = now;
-            }
-			/* initial value of last checkpoint */
-			if ( last_checkpoint==0 )
+			}
+
+			fp = fopen(fn, "w");
+			json_fp = fopen(json_fn, "w");
+
+			if (fp == nullptr)
+				output_error("unable to open checkpoint file '%s' for writing");
+			else
+			{
+				if (stream(fp, SF_OUT) <= 0)
+					output_error("checkpoint failure (stream context is %s)", stream_context());
+				fclose(fp);
 				last_checkpoint = now;
-            /* Write JSON data using JsonCpp */
-            if ( json_fp!=nullptr )
-            {
-                fclose(json_fp); // Close the FILE* since we'll use ofstream
-                
+			}
+			/* initial value of last checkpoint */
+			if (last_checkpoint == 0)
+				last_checkpoint = now;
+			/* Write JSON data using JsonCpp */
+			if (json_fp != nullptr)
+			{
+				fclose(json_fp); // Close the FILE* since we'll use ofstream
+
 				// Create JSON structure using nlohmann::json
 				// Add preamble (ensure comments is an array)
-				if (!checkpoint.contains("__preamble")) checkpoint["__preamble"] = nlohmann::json::object();
+				if (!checkpoint.contains("__preamble"))
+					checkpoint["__preamble"] = nlohmann::json::object();
 				if (!checkpoint["__preamble"].contains("comments") || !checkpoint["__preamble"]["comments"].is_array())
 					checkpoint["__preamble"]["comments"] = nlohmann::json::array();
 				checkpoint["__preamble"]["comments"].push_back("// GridLAB-D checkpoint data export");
@@ -509,150 +515,149 @@ nlohmann::json do_checkpoint(const char* output_directory)
 				checkpoint["clock"]["starttime"] = static_cast<int64_t>(global_starttime);
 				checkpoint["clock"]["timezone"] = timestamp_current_timezone();
 
-                
-                // First, collect objects by class name
-                std::map<std::string, std::vector<OBJECT*>> objects_by_class;
-                std::set<OBJECT*> processed_objects; // Track processed objects to prevent duplicates
-                
-                /* Traverse all objects to group by class */
-                for (int pass = 0; ranks[pass] != nullptr; pass++)
-                {
-                    for (int i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
-                    {
-                        if (ranks[pass]->ordinal[i] == nullptr)
-                            continue;
+				// First, collect objects by class name
+				std::map<std::string, std::vector<OBJECT *>> objects_by_class;
+				std::set<OBJECT *> processed_objects; // Track processed objects to prevent duplicates
 
-                        for (LISTITEM *ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next)
-                        {
-                            OBJECT *obj = static_cast<OBJECT *>(ptr->data);
-                            
-                            // Skip if we've already processed this object
-                            if (processed_objects.find(obj) != processed_objects.end())
-                                continue;
-                                
-                            std::string class_name = obj->oclass->name;
-                            objects_by_class[class_name].push_back(obj);
-                            processed_objects.insert(obj); // Mark as processed
-                        }
-                    }
-                }
+				/* Traverse all objects to group by class */
+				for (int pass = 0; ranks[pass] != nullptr; pass++)
+				{
+					for (int i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
+					{
+						if (ranks[pass]->ordinal[i] == nullptr)
+							continue;
 
-                // Build objects section grouped by class
+						for (LISTITEM *ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next)
+						{
+							OBJECT *obj = static_cast<OBJECT *>(ptr->data);
+
+							// Skip if we've already processed this object
+							if (processed_objects.find(obj) != processed_objects.end())
+								continue;
+
+							std::string class_name = obj->oclass->name;
+							objects_by_class[class_name].push_back(obj);
+							processed_objects.insert(obj); // Mark as processed
+						}
+					}
+				}
+
+				// Build objects section grouped by class
 				int classnameCounter = 0;
-				for (auto& class_pair : objects_by_class)
+				for (auto &class_pair : objects_by_class)
 				{
 					nlohmann::json instances = nlohmann::json::array();
-                    
-					for (OBJECT* obj : class_pair.second)
+
+					for (OBJECT *obj : class_pair.second)
 					{
 						nlohmann::json instance = nlohmann::json::object();
-                        
-                        // Add object name if it exists
-                        if (obj->name && strlen(obj->name) > 0)
-                            instance["name"] = obj->name;
-						else {
+
+						// Add object name if it exists
+						if (obj->name && strlen(obj->name) > 0)
+							instance["name"] = obj->name;
+						else
+						{
 							instance["name"] = std::string(obj->oclass->name) + std::to_string(classnameCounter);
-                            classnameCounter++;
+							classnameCounter++;
 						}
-                        // Add all properties from this object's class and all parent classes
-                        std::set<std::string> processed_properties; // Track processed properties to avoid duplicates
-                        
-                        // Traverse the entire class hierarchy (class and all parents)
-                        CLASS *current_class = obj->oclass;
-                        while (current_class != nullptr)
-                        {
-                            PROPERTY *pmap = current_class->pmap;
-                            for (; pmap != nullptr; pmap = pmap->next)
-                            {
-                                // Skip if this is the name property and we already added it
-                                if (strcmp(pmap->name, "name") == 0)
-                                    continue;
-                                
-                                // Skip if we've already processed this property (from a derived class)
-                                std::string prop_name(pmap->name);
-                                if (processed_properties.find(prop_name) != processed_properties.end())
-                                    continue;
-                                
-                                // Mark this property as processed
-                                processed_properties.insert(prop_name);
-                                
-                                /* Get property value based on type */
-                                void *addr = (char*)obj + (ptrdiff_t)pmap->addr;
-                                char value_str[1024] = "";
-                                
-                                // Use object_get_value_by_name for all property types to ensure proper access
-                                if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0)
-                                {
-                                    // Parse the string value based on property type
-                                    switch (pmap->ptype)
-                                    {
-                                    case PT_double:
-                                        {
-                                            double val = strtod(value_str, nullptr);
-                                            instance[pmap->name] = val;
-                                        }
-                                        break;
-                                    case PT_int32:
-                                        {
-                                            int32 val = (int32)strtol(value_str, nullptr, 10);
-                                            instance[pmap->name] = val;
-                                        }
-                                        break;
+						// Add all properties from this object's class and all parent classes
+						std::set<std::string> processed_properties; // Track processed properties to avoid duplicates
+
+						// Traverse the entire class hierarchy (class and all parents)
+						CLASS *current_class = obj->oclass;
+						while (current_class != nullptr)
+						{
+							PROPERTY *pmap = current_class->pmap;
+							for (; pmap != nullptr; pmap = pmap->next)
+							{
+								// Skip if this is the name property and we already added it
+								if (strcmp(pmap->name, "name") == 0)
+									continue;
+
+								// Skip if we've already processed this property (from a derived class)
+								std::string prop_name(pmap->name);
+								if (processed_properties.find(prop_name) != processed_properties.end())
+									continue;
+
+								// Mark this property as processed
+								processed_properties.insert(prop_name);
+
+								/* Get property value based on type */
+								void *addr = (char *)obj + (ptrdiff_t)pmap->addr;
+								char value_str[1024] = "";
+
+								// Use object_get_value_by_name for all property types to ensure proper access
+								if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0)
+								{
+									// Parse the string value based on property type
+									switch (pmap->ptype)
+									{
+									case PT_double:
+									{
+										double val = strtod(value_str, nullptr);
+										instance[pmap->name] = val;
+									}
+									break;
+									case PT_int32:
+									{
+										int32 val = (int32)strtol(value_str, nullptr, 10);
+										instance[pmap->name] = val;
+									}
+									break;
 									case PT_int64:
-										{
-											int64 val = strtoll(value_str, nullptr, 10);
-											instance[pmap->name] = static_cast<int64_t>(val);
-										}
-                                        break;
-                                    case PT_bool:
-                                        {
-                                            bool val = (strcmp(value_str, "TRUE") == 0 || strcmp(value_str, "1") == 0);
-                                            instance[pmap->name] = val;
-                                        }
-                                        break;
+									{
+										int64 val = strtoll(value_str, nullptr, 10);
+										instance[pmap->name] = static_cast<int64_t>(val);
+									}
+									break;
+									case PT_bool:
+									{
+										bool val = (strcmp(value_str, "TRUE") == 0 || strcmp(value_str, "1") == 0);
+										instance[pmap->name] = val;
+									}
+									break;
 									case PT_timestamp:
-										{
-											TIMESTAMP val = strtoll(value_str, nullptr, 10);
-											instance[pmap->name] = static_cast<int64_t>(val);
-										}
-                                        break;
-                                    case PT_char8:
-                                    case PT_char32:
-                                    case PT_char256:
-                                    case PT_char1024:
-                                        instance[pmap->name] = std::string(value_str);
-                                        break;
-                                    case PT_complex:
-                                        // Complex values are already formatted as strings by object_get_value_by_name
-                                        instance[pmap->name] = std::string(value_str);
-                                        break;
-                                    default:
-                                        // For all other types, store as string
-                                        instance[pmap->name] = std::string(value_str);
-                                        break;
-                                    }
-                                }
+									{
+										TIMESTAMP val = strtoll(value_str, nullptr, 10);
+										instance[pmap->name] = static_cast<int64_t>(val);
+									}
+									break;
+									case PT_char8:
+									case PT_char32:
+									case PT_char256:
+									case PT_char1024:
+										instance[pmap->name] = std::string(value_str);
+										break;
+									case PT_complex:
+										// Complex values are already formatted as strings by object_get_value_by_name
+										instance[pmap->name] = std::string(value_str);
+										break;
+									default:
+										// For all other types, store as string
+										instance[pmap->name] = std::string(value_str);
+										break;
+									}
+								}
 								else
 								{
 									// Property value could not be retrieved, set to null
 									instance[pmap->name] = nullptr;
 								}
-                            }
-                            
-                            // Move to parent class
-                            current_class = current_class->parent;
-                        }
-                        
+							}
+
+							// Move to parent class
+							current_class = current_class->parent;
+						}
+
 						instances.push_back(instance);
-                    }
-                    
-                    checkpoint["objects"][class_pair.first]["instances"] = instances;
-                }
+					}
+
+					checkpoint["objects"][class_pair.first]["instances"] = instances;
+				}
 
 				// Get modules data!
 
-                
-                // Write JSON to file with pretty formatting
+				// Write JSON to file with pretty formatting
 				std::ofstream json_file(json_fn);
 				if (json_file.is_open())
 				{
@@ -667,14 +672,13 @@ nlohmann::json do_checkpoint(const char* output_directory)
 					output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
 				}
 				return checkpoint;
-            }
-            else if ( json_fp==nullptr )
-            {
-                output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
-            }
-			
-        }
-    }
+			}
+			else if (json_fp == nullptr)
+			{
+				output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
+			}
+		}
+	}
 	return checkpoint;
 }
 /***********************************************************************/
@@ -2265,30 +2269,32 @@ void exec_clock_update_modules()
 	exec_sync_set(sync_data_nullptr, t1, false);
 }
 
-STATUS multi_thread_init() 
+STATUS multi_thread_init()
 {
 	// Only setup threadpool for each object rank list at the first iteration;
-	cpp_threadpool* threadpool = new cpp_threadpool(global_threadcount);
-	//int n_threads; //number of thread used in the threadpool of an object rank list
+	cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
+	// int n_threads; //number of thread used in the threadpool of an object rank list
 	OBJSYNCDATA *thread = nullptr;
-	struct arg_data *arg_data_array;
+	// struct arg_data *arg_data_array;
+	std::vector<std::shared_ptr<struct arg_data>> arg_data_array = {};
 	int j;
-		/* set thread count equal to processor count if not passed on command-line */
+	/* set thread count equal to processor count if not passed on command-line */
 	if (global_threadcount == 0)
 	{
 		global_threadcount = processor_count();
 		output_verbose("using %d helper thread(s)", global_threadcount);
 	}
 
-	//sjin: allocate arg_data_array to store pthreads creation argument
-	arg_data_array = (struct arg_data *) malloc(sizeof(struct arg_data)
-						* global_threadcount);
+	// sjin: allocate arg_data_array to store pthreads creation argument
+	// arg_data_array = (struct arg_data *)malloc(sizeof(struct arg_data) * global_threadcount);
 
 	/* allocate thread synchronization data */
-	thread_data = (struct thread_data *) malloc(sizeof(struct thread_data) +
-					sizeof(struct sync_data) * global_threadcount);
-	threadpool_data = new threadpool_thread_data(global_threadcount, threadpool);
-	if (!thread_data) {
+	// thread_data = (struct thread_data *)malloc(sizeof(struct thread_data) +
+	//    sizeof(struct sync_data) * global_threadcount);
+	// threadpool_data = new threadpool_thread_data(global_threadcount, threadpool);
+	thread_data = std::make_shared<struct thread_data>();
+	if (!thread_data)
+	{
 		output_error("thread memory allocation failed");
 		/* TROUBLESHOOT
 			A thread memory allocation failed.
@@ -2296,131 +2302,123 @@ STATUS multi_thread_init()
 			*/
 		return FAILED;
 	}
+	thread_data->data.resize(global_threadcount);
 	thread_data->count = global_threadcount;
-	thread_data->data = (struct sync_data *) (thread_data + 1);
+	// thread_data->data = (struct sync_data *)(thread_data + 1);
+	// for (j = 0; j < thread_data->count; j++)
+	// thread_data->data[j].status = SUCCESS;
+
 	for (j = 0; j < thread_data->count; j++)
-		thread_data->data[j].status = SUCCESS;
-	
+	{
+		thread_data->data[j] = std::make_shared<struct sync_data>();
+		thread_data->data[j]->status = SUCCESS;
+	}
+
 	return SUCCESS;
 }
 
-void multithread_stuff(int iObjRankList, cpp_threadpool* threadpool, int i) {
-	unsigned int n_items, objn = 0, n;
-	unsigned int n_obj = ranks[pass]->ordinal[i]->size;
-	LISTITEM *ptr;
-	int incr;
-	int j=0;
-	OBJSYNCDATA *thread = nullptr;
+// void multithread_stuff(int iObjRankList, cpp_threadpool *threadpool, int i)
+// {
+// 	unsigned int n_items, objn = 0, n;
+// 	unsigned int n_obj = ranks[pass]->ordinal[i]->size;
+// 	LISTITEM *ptr;
+// 	int incr;
+// 	int j = 0;
+// 	OBJSYNCDATA *thread = nullptr;
 
-	// Only create threadpool for each object rank list at the first iteration.
-	// Reuse the threadppol of each object rank list at all other iterations.
-//  if (setTP) {
-		incr = (int) ceil((float) n_obj / global_threadcount);
-		// if the number of objects is less than or equal to the number of threads, each thread process one object
-		if (incr <= 1) {
-			n_threads[iObjRankList] = n_obj;
-			n_items = 1;
-			// if the number of objects is greater than the number of threads, each thread process the same number of
-			// objects (incr), except that the last thread may process less objects
-		} else {
-			n_threads[iObjRankList] = (int) ceil((float) n_obj / incr);
-			n_items = incr;
-		}
-		if ((int) n_threads[iObjRankList] > global_threadcount) {
-			output_error("Running threads > global_threadcount");
-			exit(0);
-		}
+// 	// Only create threadpool for each object rank list at the first iteration.
+// 	// Reuse the threadppol of each object rank list at all other iterations.
+// 	//  if (setTP) {
+// 	incr = (int)ceil((float)n_obj / global_threadcount);
+// 	// if the number of objects is less than or equal to the number of threads, each thread process one object
+// 	if (incr <= 1)
+// 	{
+// 		n_threads[iObjRankList] = n_obj;
+// 		n_items = 1;
+// 		// if the number of objects is greater than the number of threads, each thread process the same number of
+// 		// objects (incr), except that the last thread may process less objects
+// 	}
+// 	else
+// 	{
+// 		n_threads[iObjRankList] = (int)ceil((float)n_obj / incr);
+// 		n_items = incr;
+// 	}
+// 	if ((int)n_threads[iObjRankList] > global_threadcount)
+// 	{
+// 		output_error("Running threads > global_threadcount");
+// 		exit(0);
+// 	}
 
-		// allocate thread list
-		thread = (OBJSYNCDATA *) malloc(sizeof(OBJSYNCDATA) * n_threads[iObjRankList]);
-		memset(thread, 0, sizeof(OBJSYNCDATA) * n_threads[iObjRankList]);
-		// assign starting obj for each thread
-		for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next) {
-			if (thread[objn].nObj == n_items)
-				objn++;
-			if (thread[objn].nObj == 0) {
-				thread[objn].ls = ptr;
-			}
-			thread[objn].nObj++;
-		}
+// 	// allocate thread list
+// 	thread = (OBJSYNCDATA *)malloc(sizeof(OBJSYNCDATA) * n_threads[iObjRankList]);
+// 	memset(thread, 0, sizeof(OBJSYNCDATA) * n_threads[iObjRankList]);
+// 	// assign starting obj for each thread
+// 	for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next)
+// 	{
+// 		if (thread[objn].nObj == n_items)
+// 			objn++;
+// 		if (thread[objn].nObj == 0)
+// 		{
+// 			thread[objn].ls = ptr;
+// 		}
+// 		thread[objn].nObj++;
+// 	}
 
-	// lock access to done count
-	std::unique_lock<std::mutex> lock_done(*donelock[iObjRankList]);
-//							pthread_mutex_lock(&donelock[iObjRankList]);
+// 	// lock access to done count
+// 	std::unique_lock<std::mutex> lock_done(*donelock[iObjRankList]);
+// 	//							pthread_mutex_lock(&donelock[iObjRankList]);
 
-	// initialize wait count
-	donecount[iObjRankList] = n_threads[iObjRankList];
+// 	// initialize wait count
+// 	donecount[iObjRankList] = n_threads[iObjRankList];
 
-	// lock access to start condition
-	std::unique_lock<std::mutex> lock_start(*startlock[iObjRankList]);
-//							pthread_mutex_lock(&startlock[iObjRankList]);
+// 	// lock access to start condition
+// 	std::unique_lock<std::mutex> lock_start(*startlock[iObjRankList]);
+// 	//							pthread_mutex_lock(&startlock[iObjRankList]);
 
-	// update start condition
-	next_t1[iObjRankList]++;
+// 	// update start condition
+// 	next_t1[iObjRankList]++;
 
-	// signal all the threads
-	start[iObjRankList]->notify_all();
+// 	// signal all the threads
+// 	start[iObjRankList]->notify_all();
 
-//                            pthread_cond_broadcast(&start[iObjRankList]);
-	// unlock access to start count
-//							pthread_mutex_unlock(&startlock[iObjRankList]);
-	startlock[iObjRankList]->unlock();
+// 	//                            pthread_cond_broadcast(&start[iObjRankList]);
+// 	// unlock access to start count
+// 	//							pthread_mutex_unlock(&startlock[iObjRankList]);
+// 	startlock[iObjRankList]->unlock();
 
-	// begin wait
-	while (donecount[iObjRankList] > 0)
-		done[iObjRankList]->wait_for(lock_done, std::chrono::milliseconds(100));
-//								pthread_cond_wait(&done[iObjRankList],&donelock[iObjRankList]);
+// 	// begin wait
+// 	while (donecount[iObjRankList] > 0)
+// 		done[iObjRankList]->wait_for(lock_done, std::chrono::milliseconds(100));
+// 	//								pthread_cond_wait(&done[iObjRankList],&donelock[iObjRankList]);
 
-	// unlock done count
-//							pthread_mutex_unlock(&donelock[iObjRankList]);
-	donelock[iObjRankList]->unlock();
-	threadpool->await();
+// 	// unlock done count
+// 	//							pthread_mutex_unlock(&donelock[iObjRankList]);
+// 	donelock[iObjRankList]->unlock();
+// 	threadpool->await();
 
-
-	for (j = 0; j < thread_data->count; j++) {
-		if (thread_data->data[j].status == FAILED) {
-			exec_sync_set(nullptr,TS_INVALID,false);
-			THROW("synchronization failed");
-		}
-	}
-}
-
+// 	for (j = 0; j < thread_data->count; j++)
+// 	{
+// 		if (thread_data->data[j].status == FAILED)
+// 		{
+// 			exec_sync_set(nullptr, TS_INVALID, false);
+// 			THROW("synchronization failed");
+// 		}
+// 	}
+// }
 
 /******************************************************************
  *  MAIN EXEC LOOP
  ******************************************************************/
-<<<<<<< HEAD
-
-/** This is the main simulation loop
-	@return STATUS is SUCCESS if the simulation reached equilibrium,
-	and FAILED if a problem was encountered.
- **/
-STATUS exec_start()
+// Commenting everything related to multithreading
+STATUS run_preparation()
 {
-	// cpp_threadpool* threadpool = new cpp_threadpool(global_threadcount);
-	int64 passes = 0, tsteps = 0;
-	int ptc_rv = 0;							// unused
-	int ptj_rv = 0;							// unused
-	int pc_rv = 0;							// precommit return value
-	STATUS fnl_rv = static_cast<STATUS>(0); // finalize all return value
-	time_t started_at = realtime_now();		// for profiler
-	int j, k;
-	LISTITEM *ptr;
-	int incr;
-	// struct arg_data *arg_data_array;
-	std::vector<std::shared_ptr<struct arg_data>> arg_data_array = {};
-
-=======
-//Commenting everything related to multithreading
- STATUS run_preparation() {
-		// Only setup threadpool for each object rank list at the first iteration;
-	cpp_threadpool* threadpool = new cpp_threadpool(global_threadcount);
-		// After the first iteration, setTP = false;
+	// Only setup threadpool for each object rank list at the first iteration;
+	cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
+	// After the first iteration, setTP = false;
 	bool setTP = true;
-	//int n_threads; //number of thread used in the threadpool of an object rank list
+	// int n_threads; //number of thread used in the threadpool of an object rank list
 	OBJSYNCDATA *thread = nullptr;
 	struct arg_data *arg_data_array;
->>>>>>> kevin/feature/1540
 	int nObjRankList, iObjRankList;
 	int j, k;
 
@@ -2479,44 +2477,10 @@ STATUS exec_start()
 			realtime_schedule_event(realtime_now() + 1, show_progress);
 		}
 
-		if(multi_thread_init() == FAILED)
+		if (multi_thread_init() == FAILED)
 		{
-<<<<<<< HEAD
-			global_threadcount = processor_count();
-			output_verbose("using %d helper thread(s)", global_threadcount);
-		}
-
-		// sjin: allocate arg_data_array to store pthreads creation argument
-		/*arg_data_array = (struct arg_data *) malloc(sizeof(struct arg_data)
-		 * global_threadcount);*/
-		// arg_data_array.resize(global_threadcount);
-
-		///* allocate thread synchronization data */
-		////thread_data = (struct thread_data *) malloc(sizeof(struct thread_data) +
-		//			  //sizeof(struct sync_data) * global_threadcount);
-		thread_data = std::make_shared<struct thread_data>();
-		if (thread_data == nullptr)
-		{
-			output_error("thread memory allocation failed");
-			/* TROUBLESHOOT
-				A thread memory allocation failed.
-				Follow the standard process for freeing up memory and try again.
-			 */
 			return FAILED;
 		}
-		thread_data->data.resize(global_threadcount);
-
-		thread_data->count = global_threadcount;
-		// thread_data->data = (struct sync_data *) (thread_data + 1);
-		for (j = 0; j < thread_data->count; j++)
-		{
-			thread_data->data[j] = std::make_shared<struct sync_data>();
-			thread_data->data[j]->status = SUCCESS;
-		}
-=======
-			return FAILED;
-		}
->>>>>>> kevin/feature/1540
 	}
 	else
 	{
@@ -2536,23 +2500,7 @@ STATUS exec_start()
 			global_stoptime = TS_NEVER;
 	}
 
-<<<<<<< HEAD
 	//  maybe that's all we need...
-=======
-	/*** GET FIRST SIGNAL FROM MASTER HERE ****/ //SN: Is this needed?
-	if (global_multirun_mode == MRM_SLAVE)
-	{
-		pthread_cond_broadcast(&mls_inst_signal); // tell slaveproc() it's time to get rolling
-		output_debug("exec_start(), slave waiting for first time signal");
-		pthread_mutex_lock(&mls_inst_lock);
-		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
-		pthread_mutex_unlock(&mls_inst_lock);
-		// will have copied data down and updated step_to with slave_cache
-		//global_clock = exec_sync_get(nullptr); // copy time signal to gc
-		output_debug("exec_start(), slave received first time signal of %lli", global_clock);
-	}
-	// maybe that's all we need...
->>>>>>> kevin/feature/1540
 	iteration_counter = global_iteration_limit;
 	federation_iteration_counter = global_iteration_limit;
 
@@ -2600,7 +2548,18 @@ STATUS exec_start()
 	// next_t1 = static_cast<unsigned int *>(malloc(sizeof(next_t1[0]) * nObjRankList));
 	// memset(next_t1,0,sizeof(next_t1[0])*nObjRankList);
 
-<<<<<<< HEAD
+	//	next_t1 = new unsigned int[nObjRankList]{0};
+
+	// donecount = static_cast<unsigned int *>(malloc(sizeof(donecount[0]) * nObjRankList));
+	// memset(donecount, 0, sizeof(donecount[0]) * nObjRankList);
+
+	//	donecount = new unsigned int[nObjRankList]{0};
+
+	// n_threads = static_cast<unsigned int *>(malloc(sizeof(n_threads[0]) * nObjRankList));
+	// memset(n_threads, 0, sizeof(n_threads[0]) * nObjRankList);
+
+	//	n_threads = new unsigned int[nObjRankList]{0};
+
 	next_t1.resize(nObjRankList);
 	for (iObjRankList = 0; iObjRankList < nObjRankList; iObjRankList++)
 	{
@@ -2611,27 +2570,15 @@ STATUS exec_start()
 	for (iObjRankList = 0; iObjRankList < nObjRankList; iObjRankList++)
 	{
 		donecount[iObjRankList] = std::make_unique<unsigned int>(0);
-=======
-//	next_t1 = new unsigned int[nObjRankList]{0};
-
-	donecount = static_cast<unsigned int *>(malloc(sizeof(donecount[0]) * nObjRankList));
-	memset(donecount,0,sizeof(donecount[0])*nObjRankList);
-
-//	donecount = new unsigned int[nObjRankList]{0};
-
-	n_threads = static_cast<unsigned int *>(malloc(sizeof(n_threads[0]) * nObjRankList));
-	memset(n_threads,0,sizeof(n_threads[0])*nObjRankList);
-
-//	n_threads = new unsigned int[nObjRankList]{0};
+	}
 
 	// allocation and nitialize mutex and cond for object rank lists
-	for(k=0;k<nObjRankList;k++)
+	for (k = 0; k < nObjRankList; k++)
 	{
-        startlock.push_back(std::make_unique<std::mutex>());
-        donelock.push_back(std::make_unique<std::mutex>());
-        start.push_back(std::make_unique<std::condition_variable>());
-        done.push_back(std::make_unique<std::condition_variable>());
->>>>>>> kevin/feature/1540
+		startlock.push_back(std::make_unique<std::mutex>());
+		donelock.push_back(std::make_unique<std::mutex>());
+		start.push_back(std::make_unique<std::condition_variable>());
+		done.push_back(std::make_unique<std::condition_variable>());
 	}
 
 	// global test mode
@@ -2646,490 +2593,13 @@ STATUS exec_start()
 
 	// sjin: GetMachineCycleCount
 	cstart = (clock_t)exec_clock();
-<<<<<<< HEAD
-
-	/* main loop exception handler */
-	TRY
-	{
-		std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
-		/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
-		while (iteration_counter > 0 && exec_sync_isrunning(sync_data_nullptr) && exec_getexitcode() == XC_SUCCESS)
-		{
-			TIMESTAMP internal_synctime;
-			output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(sync_data_nullptr), global_stoptime, exec_sync_getevents(sync_data_nullptr), exec_getexitcode());
-
-			/* update the process table info */
-			sched_update(global_clock, MLS_RUNNING);
-
-			/* main loop control */
-			if (global_clock >= global_mainlooppauseat && global_mainlooppauseat < TS_NEVER)
-				exec_mls_suspend();
-
-			do_checkpoint();
-
-			/* realtime control of global clock */
-			if (global_run_realtime == 0 && global_clock >= global_enter_realtime)
-				global_run_realtime = 1;
-
-			if (global_run_realtime > 0 && iteration_counter > 0)
-			{
-				double metric = 0.;
-				short fall_behind = 0;
-				using std::chrono::system_clock;
-				static bool initialized = false;
-				static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t1;
-				static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t2;
-				if (!initialized)
-				{ //[[unlikely]] {
-					t1 = system_clock::now();
-					t2 = t1 + 1s;
-					initialized = true;
-				}
-				else
-				{ //[[likely]] {
-					t1 = t2;
-					t2 += 1s; // One second from last time step
-				}
-
-				if (system_clock::now() < t2)
-				{
-					output_verbose("waiting %d nsec", std::chrono::nanoseconds(t2 - system_clock::now()).count());
-					std::this_thread::sleep_until(t2);
-					global_clock += global_run_realtime;
-					metric = (1.0 * (t2 - t1)) / std::chrono::seconds(1);
-					fall_behind = 0;
-				}
-				else
-				{
-					output_error("simulation failed to keep up with real time");
-					fall_behind++;
-				}
-
-				if (fall_behind > 5)
-				{ // [[unlikely]] {
-					output_fatal("simulation fell behind realtime for more than 5 consecutive cycles");
-				}
-
-#define IIR 0.9 /* about 30s for 95% unit step response */
-				global_realtime_metric = global_realtime_metric * IIR + metric * (1 - IIR);
-				exec_sync_reset(sync_data_nullptr);
-				exec_sync_set(sync_data_nullptr, global_clock, false);
-				output_verbose("realtime clock advancing to %d", (int)global_clock);
-			}
-
-			/* internal control of global clock */
-			else
-				global_clock = exec_sync_get(sync_data_nullptr);
-
-			/* operate delta mode if necessary (but only when event mode is active, e.g., not right after init) */
-			/* note that delta mode cannot be supported for realtime simulation */
-			global_deltaclock = 0;
-
-			/* Update the "double-precision" clock (usually for deltamode) for consistency */
-			global_delta_curr_clock = (double)global_clock;
-
-			/* determine whether any modules seek delta mode */
-			DELTAMODEFLAGS flags = DMF_NONE;
-			DT delta_dt = delta_modedesired(&flags);
-			TIMESTAMP t = TS_NEVER;
-			output_debug("delta_dt is %d", (int)delta_dt);
-			switch (delta_dt)
-			{
-			case DT_INFINITY: /* no dt -> event mode */
-				global_simulation_mode = SM_EVENT;
-				t = TS_NEVER;
-				break;
-			case DT_INVALID: /* error dt  */
-				global_simulation_mode = SM_ERROR;
-				t = TS_INVALID;
-				break; /* simulation mode error */
-			default:   /* valid dt */
-				if (global_minimum_timestep > 1)
-				{
-					global_simulation_mode = SM_ERROR;
-					output_error("minimum_timestep must be 1 second to operate in deltamode");
-					t = TS_INVALID;
-					break;
-				}
-				else
-				{
-					if (delta_dt == 0) /* Delta mode now */
-					{
-						global_simulation_mode = SM_DELTA;
-						t = global_clock;
-					}
-					else /* Normal sync - get us to delta point */
-					{
-						global_simulation_mode = SM_EVENT;
-						t = global_clock + delta_dt;
-					}
-				}
-				break;
-			}
-			if (global_simulation_mode == SM_ERROR)
-			{
-				output_error("a simulation mode error has occurred");
-				break; /* terminate main loop immediately */
-			}
-			exec_sync_set(sync_data_nullptr, t, false);
-
-			/* synchronize all internal schedules */
-			if (global_clock < 0)
-				throw_exception("clock time is negative (global_clock=%lli)", global_clock);
-			else if (global_debug_output)
-			{
-				char dt[64] = "(invalid)";
-				convert_from_timestamp(global_clock, dt, sizeof(dt));
-				output_debug("global_clock -> %s\n", dt);
-			}
-			/* set time context */
-			output_set_time_context(global_clock);
-
-			/* reset for a new sync event */
-			exec_sync_reset(sync_data_nullptr);
-
-			/* account for stoptime only if global clock is not already at stoptime */
-			if (global_clock <= global_stoptime && global_stoptime != TS_NEVER)
-				exec_sync_set(sync_data_nullptr, global_stoptime + 1, false);
-
-			/* synchronize all internal schedules */
-			internal_synctime = syncall_internals(global_clock);
-			if (internal_synctime != TS_NEVER && absolute_timestamp(internal_synctime) < global_clock)
-			{
-				// must be able to force reiterations for m/s mode.
-				THROW("internal property sync failure");
-				/* TROUBLESHOOT
-					An internal property such as schedule, enduse or loadshape has failed to synchronize and the simulation aborted.
-					This message should be preceded by a more informative message that explains which element failed and why.
-					Follow the troubleshooting recommendations for that message and try again.
-				 */
-			}
-			exec_sync_set(sync_data_nullptr, internal_synctime, false);
-
-			/* prepare multithreading */
-			if (!global_debug_mode)
-			{
-				for (j = 0; j < thread_data->count; j++)
-				{
-					thread_data->data[j]->hard_event = 0;
-					thread_data->data[j]->step_to = TS_NEVER;
-				}
-			}
-#ifdef _DEBUG
-			if (global_clock >= global_runaway_time)
-				throw_exception("running clock detected");
-#endif
-
-			/* run precommit only on first iteration */
-			if (iteration_counter == global_iteration_limit)
-			{
-				pc_rv = precommit_all(global_clock);
-				if (SUCCESS != pc_rv)
-				{
-					THROW("precommit failure");
-				}
-			}
-			iObjRankList = -1;
-
-			/* scan the ranks of objects for each pass */
-			for (pass = 0; ranks[pass] != nullptr; pass++)
-			{
-				int i;
-
-				/* process object in order of rank using index */
-				for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
-				{
-					/* skip empty lists */
-					if (ranks[pass]->ordinal[i] == nullptr)
-						continue;
-
-					iObjRankList++;
-
-					if (global_debug_mode)
-					{
-						LISTITEM *item;
-						for (item = ranks[pass]->ordinal[i]->first; item != nullptr; item = item->next)
-						{
-							OBJECT *obj = static_cast<OBJECT *>(item->data);
-							// @todo change debug so it uses sync API
-							if (exec_debug(main_sync, pass, i, obj) == FAILED)
-							{
-								THROW("debugger quit");
-							}
-						}
-					}
-
-					else
-					{
-						// sjin: if global_threadcount == 1, no pthread multhreading
-						if (global_threadcount == 1)
-						{
-							// Create a sorted vector of objects to process in deterministic order
-							// std::vector<OBJECT *> sorted_objects;
-							// for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next)
-							// {
-							// 	OBJECT *obj = static_cast<OBJECT *>(ptr->data);
-							// 	sorted_objects.push_back(obj);
-							// }
-
-							// // Sort objects by ID for deterministic processing order
-							// std::sort(sorted_objects.begin(), sorted_objects.end(),
-							// 		  [](OBJECT *a, OBJECT *b)
-							// 		  { return a->id < b->id; });
-
-							// // Process objects in sorted order
-							// for (OBJECT *obj : sorted_objects)
-							// {
-							// 	ss_do_object_sync(0, obj);
-							// 	if (obj->valid_to == TS_INVALID)
-							// 	{
-							// 		// Get us out of the loop so others don't exec on bad status
-							// 		break;
-							// 	}
-							// 	/// printf("%d %s %d\n", obj->id, obj->name, obj->rank);
-							// }
-
-							for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next)
-							{
-								OBJECT *obj = static_cast<OBJECT *>(ptr->data);
-								ss_do_object_sync(0, obj);
-								if (obj->valid_to == TS_INVALID)
-									break;
-							}
-						}
-
-						for (j = 0; j < thread_data->count; j++)
-						{
-							if (thread_data->data[j]->status == FAILED)
-							{
-								exec_sync_set(sync_data_nullptr, TS_INVALID, false);
-								THROW("synchronization failed");
-							}
-						}
-					}
-					//*/
-				}
-
-				/* run all non-schedule transforms */
-				{
-					TIMESTAMP st = transform_syncall(global_clock, static_cast<TRANSFORMSOURCE>(XS_DOUBLE | XS_COMPLEX | XS_ENDUSE), nullptr); // if (abs(t)<t2) t2=t;
-					exec_sync_set(sync_data_nullptr, st, false);
-				}
-			}
-			//			setTP = false;
-
-			if (!global_debug_mode)
-			{
-				for (j = 0; j < thread_data->count; j++)
-				{
-					exec_sync_merge(sync_data_nullptr, thread_data->data[j]);
-				}
-
-				/* report progress */
-				realtime_run_schedule();
-			}
-
-			/* count number of passes */
-			passes++;
-
-			/**** LOOPED SLAVE PAUSE HERE ****/
-			/*if(global_multirun_mode == MRM_SLAVE)
-			{
-				output_debug("step_to = %lli", exec_sync_get(sync_data_nullptr));
-				output_debug("exec_start(), slave waiting for looped time signal");
-
-				pthread_cond_broadcast(&mls_inst_signal);
-
-				pthread_mutex_lock(&mls_inst_lock);
-				pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
-				pthread_mutex_unlock(&mls_inst_lock);
-
-				output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(sync_data_nullptr));
-			}*/
-
-			/* run sync scripts, if any */
-			// if ( exec_run_syncscripts()!=XC_SUCCESS )
-			//{
-			//	output_error("sync script(s) failed");
-			//	THROW("script synchronization failure");
-			// }
-
-			/* check for clock advance (indicating last pass) */
-			if (exec_sync_get(sync_data_nullptr) != global_clock && global_simulation_mode == SM_EVENT)
-			{
-				/* clock update is the very last chance to change the next time */
-				exec_clock_update_modules();
-				if (exec_sync_get(sync_data_nullptr) > global_clock)
-				{
-					global_federation_reiteration = false;
-					TIMESTAMP commit_time = TS_NEVER;
-					try
-					{
-						commit_time = commit_all(global_clock, exec_sync_get(sync_data_nullptr));
-						// commit_time = tp_commit_all(global_clock, exec_sync_get(sync_data_nullptr), threadpool);
-						// commit_time = tp_commit_all(global_clock, exec_sync_get(sync_data_nullptr));
-						if (absolute_timestamp(commit_time) <= global_clock)
-						{
-							// 	// commit cannot force reiterations, and any event where the time is less than the global clock
-							// 	//  indicates that the object is reporting a failure
-							// 	output_error("model commit failed");
-							// 	/* TROUBLESHOOT
-							// 		The commit procedure failed.  This is usually preceded
-							// 		by a more detailed message that explains why it failed.  Follow
-							// 		the guidance for that message and try again.
-							// 	 */
-							// 	THROW("commit failure");
-							// }
-							// In exec.cpp - Replace the THROW/CATCH system with standard exceptions
-							if (commit_time == TS_INVALID)
-							{
-								// For error test files, fail with a special code
-								if (strstr(global_modelname, "_err") != nullptr)
-								{
-									output_verbose("This is an error test file %s with TS_INVALID, expected behavior",
-												   global_modelname);
-									exec_setexitcode(XC_TSTERR); // Use test error code
-
-									// For error tests, we'll return FAILED
-									return FAILED;
-								}
-								else
-								{
-									output_error("model commit failed unexpectedly");
-									// throw std::runtime_error("commit failure");
-									// For regular tests, treat this as a real error
-									exec_setexitcode(XC_RUNERR);
-									return FAILED;
-								}
-							}
-							// Other cases where commit_time <= global_clock but not TS_INVALID
-							output_warning("Commit returned time (%lld) not after global clock (%lld)",
-										   commit_time, global_clock);
-						}
-
-						else if (absolute_timestamp(commit_time) < exec_sync_get(sync_data_nullptr))
-						{
-							exec_sync_set(sync_data_nullptr, commit_time, false);
-						}
-					}
-					catch (const std::exception &e)
-					{
-						// Check if this is an error test
-						if (strstr(global_modelname, "_err") != nullptr)
-						{
-							output_verbose("Exception caught in error test %s: %s - this is expected",
-										   global_modelname, e.what());
-							exec_setexitcode(XC_TSTERR);
-							return FAILED;
-						}
-						else
-						{
-							output_error("Exception caught: %s", e.what());
-							exec_setexitcode(XC_EXCEPTION);
-							return FAILED;
-						}
-					}
-
-					/* reset iteration count */
-					iteration_counter = global_iteration_limit;
-					federation_iteration_counter = global_iteration_limit;
-
-					/* count number of timesteps */
-					tsteps++;
-				}
-				else if (exec_sync_get(sync_data_nullptr) == global_clock)
-				{
-					iteration_counter = global_iteration_limit;
-					global_federation_reiteration = true;
-					if (--federation_iteration_counter == 0)
-					{
-						output_error("federation convergence iteration limit reached at %s (exec)", simtime());
-						/* TROUBLESHOOT
-							This indicates that the federation that this gridlab-d model a part of
-							was unable to determine a steady state any time horizon.
-						 */
-						exec_sync_set(sync_data_nullptr, TS_INVALID, false);
-						THROW("convergence failure");
-					}
-				}
-			}
-
-			/* check iteration limit */
-			else if (--iteration_counter == 0)
-			{
-				output_error("convergence iteration limit reached at %s (exec)", simtime());
-				/* TROUBLESHOOT
-					This indicates that the core's solver was unable to determine
-					a steady state for all objects for any time horizon.  Identify
-					the object that is causing the convergence problem and contact
-					the developer of the module that implements that object's class.
-				 */
-				exec_sync_set(sync_data_nullptr, TS_INVALID, false);
-				THROW("convergence failure");
-			}
-
-			/* handle delta mode operation */
-			if (global_simulation_mode == SM_DELTA && exec_sync_get(sync_data_nullptr) >= global_clock)
-			{
-				DT deltatime = delta_update();
-				if (deltatime == DT_INVALID)
-				{
-					output_error("delta_update() failed, deltamode operation cannot continue");
-					/*  TROUBLESHOOT
-					An error was encountered while trying to perform a deltamode update.  Look for
-					other relevant deltamode messages for indications as to why this may have occurred.
-					If the error persists, please submit your code and a bug report via the trac website.
-					*/
-					global_simulation_mode = SM_ERROR;
-					THROW("Deltamode simulation failure");
-					break; // Just in case, but probably not needed
-				}
-				else if (deltatime > 0)
-				{
-					/* Reset the iteration counter here - if we made it this far, we moved forward */
-					/* If a simulate "stays" in deltamode too long, the periodic checks will still exhaust the iteration limit - this fixes that */
-					iteration_counter = global_iteration_limit;
-					federation_iteration_counter = global_iteration_limit;
-				}
-				exec_sync_set(sync_data_nullptr, global_clock + deltatime, true);
-				global_simulation_mode = SM_EVENT;
-			}
-		} // end of while loop
-
-		/* disable signal handler */
-		signal(SIGINT, nullptr);
-
-		/* check end state */
-		if (exec_sync_isnever(sync_data_nullptr))
-		{
-			char buffer[64];
-			output_verbose("simulation at steady state at %s", convert_from_timestamp(global_clock, buffer, sizeof(buffer)) ? buffer : "invalid time");
-		}
-
-		/* terminate main loop state control */
-		exec_mls_done();
-	}
-	CATCH(const char *msg)
-	{
-		output_error("exec halted: %s", msg);
-		exec_sync_set(sync_data_nullptr, TS_INVALID, false);
-		/* TROUBLESHOOT
-			This indicates that the core's solver shut down.  This message
-			is usually preceded by more detailed messages.  Follow the guidance
-			for those messages and try again.
-		 */
-	}
-	ENDCATCH
-	output_debug("*** main loop ended at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(sync_data_nullptr), global_stoptime, exec_sync_getevents(sync_data_nullptr), exec_getexitcode());
-	if (global_multirun_mode == MRM_MASTER)
-=======
 	return SUCCESS;
- }
+}
 
-
- int handle_delta_mode_operation() {
+int handle_delta_mode_operation()
+{
 	DT deltatime = delta_update();
-	if ( deltatime==DT_INVALID )
+	if (deltatime == DT_INVALID)
 	{
 		output_error("delta_update() failed, deltamode operation cannot continue");
 		/*  TROUBLESHOOT
@@ -3139,72 +2609,29 @@ STATUS exec_start()
 		*/
 		global_simulation_mode = SM_ERROR;
 		THROW("Deltamode simulation failure");
-		return -1;	//Just in case, but probably not needed
+		return -1; // Just in case, but probably not needed
 	}
 	else if (deltatime > 0)
->>>>>>> kevin/feature/1540
 	{
 		/* Reset the iteration counter here - if we made it this far, we moved forward */
 		/* If a simulate "stays" in deltamode too long, the periodic checks will still exhaust the iteration limit - this fixes that */
 		iteration_counter = global_iteration_limit;
 		federation_iteration_counter = global_iteration_limit;
 	}
-	exec_sync_set(nullptr,global_clock + deltatime,true);
+	std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
+	exec_sync_set(sync_data_nullptr, global_clock + deltatime, true);
 	global_simulation_mode = SM_EVENT;
 	return 0;
 }
 
-<<<<<<< HEAD
-	// sjin: GetMachineCycleCount
-	cend = (clock_t)exec_clock();
-
-	fnl_rv = finalize_all();
-	if (FAILED == fnl_rv)
-	{
-		output_error("finalize_all() failed");
-	}
-
-	/* run term scripts, if any */
-	// if ( exec_run_termscripts()!=XC_SUCCESS )
-	//{
-	//	output_error("term script(s) failed");
-	//	return FAILED;
-	// }
-
-	/* deallocate threadpool */
-	if (!global_debug_mode)
-	{
-		// free(thread_data);
-		thread_data = nullptr;
-
-#ifdef NEVER
-		/* wipe out progress report */
-		if (!global_keep_progress)
-			output_raw("                                                           \r");
-#endif
-	}
-
-	// Destroy mutex and cond
-	//	for(k=0;k<nObjRankList;k++) {
-	//		pthread_mutex_destroy(&startlock[k]);
-	//		pthread_mutex_destroy(&donelock[k]);
-	//		pthread_cond_destroy(&start[k]);
-	//		pthread_cond_destroy(&done[k]);
-	//	}
-
-=======
-void report_performance_after_run(time_t start_time, int64 passes, int64 tsteps) {
->>>>>>> kevin/feature/1540
+void report_performance_after_run(time_t start_time, int64 passes, int64 tsteps)
+{
+	std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
 	/* report performance */
 	if (global_profiler && !exec_sync_isinvalid(sync_data_nullptr))
 	{
-<<<<<<< HEAD
 		double elapsed_sim = timestamp_to_hours(global_clock) - timestamp_to_hours(global_starttime);
-		double elapsed_wall = (double)(realtime_now() - started_at + 1);
-=======
-		double elapsed_sim = timestamp_to_hours(global_clock)-timestamp_to_hours(global_starttime);
-		double elapsed_wall = (double)(realtime_now()-start_time+1);
->>>>>>> kevin/feature/1540
+		double elapsed_wall = (double)(realtime_now() - start_time + 1);
 		double sync_time = 0;
 		double sim_speed = object_get_count() / 1000.0 * elapsed_sim / elapsed_wall;
 
@@ -3285,75 +2712,83 @@ void report_performance_after_run(time_t start_time, int64 passes, int64 tsteps)
 /** Execute a single simulation iteration
 	This function executes one iteration of the simulation loop, handling
 	realtime control, delta mode, object synchronization, and event processing.
-	
+
 	@param threadpool pointer to the thread pool for multithreading
 	@param passes reference to pass counter
-	@param tsteps reference to timestep counter  
+	@param tsteps reference to timestep counter
 	@param j reference to loop variable used for thread data
 	@param ptr reference to list item pointer
 	@param pc_rv reference to precommit return value
 	@param iObjRankList reference to object rank list index
 	@return true if simulation should continue, false if it should stop
  **/
-static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int64& passes, int64& tsteps, 
-												int& j, LISTITEM*& ptr, int& pc_rv, int& iObjRankList)
+static bool execute_single_simulation_iteration(cpp_threadpool *threadpool, int64 &passes, int64 &tsteps,
+												int &j, LISTITEM *&ptr, int &pc_rv, int &iObjRankList)
 {
+	std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
 	TIMESTAMP internal_synctime;
-	output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(nullptr), global_stoptime, exec_sync_getevents(nullptr), exec_getexitcode());
+	output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(sync_data_nullptr), global_stoptime, exec_sync_getevents(sync_data_nullptr), exec_getexitcode());
 
 	/* update the process table info */
-	sched_update(global_clock,MLS_RUNNING);
+	sched_update(global_clock, MLS_RUNNING);
 
 	/* main loop control */
-	if ( global_clock>=global_mainlooppauseat && global_mainlooppauseat<TS_NEVER )
+	if (global_clock >= global_mainlooppauseat && global_mainlooppauseat < TS_NEVER)
 		exec_mls_suspend();
 
 	/* realtime control of global clock */
-	if (global_run_realtime==0 && global_clock >= global_enter_realtime)
+	if (global_run_realtime == 0 && global_clock >= global_enter_realtime)
 		global_run_realtime = 1;
 
-	if (global_run_realtime>0 && iteration_counter>0)
+	if (global_run_realtime > 0 && iteration_counter > 0)
 	{
-		double metric=0.;
-        short fall_behind=0;
-        using std::chrono::system_clock;
-        static bool initialized = false;
-        static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t1;
-        static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t2;
-        if (!initialized) { //[[unlikely]] {
-            t1 = system_clock::now();
-            t2 = t1 + 1s;
-            initialized = true;
-        } else { //[[likely]] {
-            t1 = t2;
-            t2 += 1s; // One second from last time step
-        }
+		double metric = 0.;
+		short fall_behind = 0;
+		using std::chrono::system_clock;
+		static bool initialized = false;
+		static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t1;
+		static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t2;
+		if (!initialized)
+		{ //[[unlikely]] {
+			t1 = system_clock::now();
+			t2 = t1 + 1s;
+			initialized = true;
+		}
+		else
+		{ //[[likely]] {
+			t1 = t2;
+			t2 += 1s; // One second from last time step
+		}
 
-        if (system_clock::now() < t2) {
-            output_verbose("waiting %d nsec", std::chrono::nanoseconds(t2-system_clock::now()).count());
-            std::this_thread::sleep_until(t2);
-            global_clock += global_run_realtime;
-            metric = (1.0 * (t2 - t1)) / std::chrono::seconds(1);
-            fall_behind=0;
-        } else {
-            output_error("simulation failed to keep up with real time");
-            fall_behind++;
-        }
+		if (system_clock::now() < t2)
+		{
+			output_verbose("waiting %d nsec", std::chrono::nanoseconds(t2 - system_clock::now()).count());
+			std::this_thread::sleep_until(t2);
+			global_clock += global_run_realtime;
+			metric = (1.0 * (t2 - t1)) / std::chrono::seconds(1);
+			fall_behind = 0;
+		}
+		else
+		{
+			output_error("simulation failed to keep up with real time");
+			fall_behind++;
+		}
 
-        if (fall_behind > 5) {// [[unlikely]] {
-            output_fatal("simulation fell behind realtime for more than 5 consecutive cycles");
-        }
+		if (fall_behind > 5)
+		{ // [[unlikely]] {
+			output_fatal("simulation fell behind realtime for more than 5 consecutive cycles");
+		}
 
 #define IIR 0.9 /* about 30s for 95% unit step response */
-		global_realtime_metric = global_realtime_metric*IIR + metric*(1-IIR);
-		exec_sync_reset(nullptr);
-		exec_sync_set(nullptr,global_clock,false);
+		global_realtime_metric = global_realtime_metric * IIR + metric * (1 - IIR);
+		exec_sync_reset(sync_data_nullptr);
+		exec_sync_set(sync_data_nullptr, global_clock, false);
 		output_verbose("realtime clock advancing to %d", (int)global_clock);
 	}
 
 	/* internal control of global clock */
 	else
-		global_clock = exec_sync_get(nullptr);
+		global_clock = exec_sync_get(sync_data_nullptr);
 
 	/* operate delta mode if necessary (but only when event mode is active, e.g., not right after init) */
 	/* note that delta mode cannot be supported for realtime simulation */
@@ -3363,11 +2798,12 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 	global_delta_curr_clock = (double)global_clock;
 
 	/* determine whether any modules seek delta mode */
-	DELTAMODEFLAGS flags=DMF_NONE;
+	DELTAMODEFLAGS flags = DMF_NONE;
 	DT delta_dt = delta_modedesired(&flags);
 	TIMESTAMP t = TS_NEVER;
 	output_debug("delta_dt is %d", (int)delta_dt);
-	switch ( delta_dt ) {
+	switch (delta_dt)
+	{
 	case DT_INFINITY: /* no dt -> event mode */
 		global_simulation_mode = SM_EVENT;
 		t = TS_NEVER;
@@ -3376,8 +2812,8 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 		global_simulation_mode = SM_ERROR;
 		t = TS_INVALID;
 		break; /* simulation mode error */
-	default: /* valid dt */
-		if ( global_minimum_timestep>1 )
+	default:   /* valid dt */
+		if (global_minimum_timestep > 1)
 		{
 			global_simulation_mode = SM_ERROR;
 			output_error("minimum_timestep must be 1 second to operate in deltamode");
@@ -3386,12 +2822,12 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 		}
 		else
 		{
-			if (delta_dt==0)	/* Delta mode now */
+			if (delta_dt == 0) /* Delta mode now */
 			{
 				global_simulation_mode = SM_DELTA;
 				t = global_clock;
 			}
-			else	/* Normal sync - get us to delta point */
+			else /* Normal sync - get us to delta point */
 			{
 				global_simulation_mode = SM_EVENT;
 				t = global_clock + delta_dt;
@@ -3399,35 +2835,35 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 		}
 		break;
 	}
-	if ( global_simulation_mode==SM_ERROR )
+	if (global_simulation_mode == SM_ERROR)
 	{
 		output_error("a simulation mode error has occurred");
 		return false; /* terminate main loop immediately */
 	}
-	exec_sync_set(nullptr,t,false);
-
+	exec_sync_set(sync_data_nullptr, t, false);
 
 	/* synchronize all internal schedules */
-	if ( global_clock < 0 )
+	if (global_clock < 0)
 		throw_exception("clock time is negative (global_clock=%lli)", global_clock);
-	else if ( global_debug_output )
+	else if (global_debug_output)
 	{
-		char dt[64]="(invalid)"; convert_from_timestamp(global_clock,dt,sizeof(dt));
-		output_debug("global_clock -> %s\n",dt);
+		char dt[64] = "(invalid)";
+		convert_from_timestamp(global_clock, dt, sizeof(dt));
+		output_debug("global_clock -> %s\n", dt);
 	}
 	/* set time context */
 	output_set_time_context(global_clock);
 
 	/* reset for a new sync event */
-	exec_sync_reset(nullptr);
+	exec_sync_reset(sync_data_nullptr);
 
 	/* account for stoptime only if global clock is not already at stoptime */
-	if ( global_clock<=global_stoptime && global_stoptime!=TS_NEVER )
-		exec_sync_set(nullptr,global_stoptime+1,false);
+	if (global_clock <= global_stoptime && global_stoptime != TS_NEVER)
+		exec_sync_set(sync_data_nullptr, global_stoptime + 1, false);
 
 	/* synchronize all internal schedules */
 	internal_synctime = syncall_internals(global_clock);
-	if( internal_synctime!=TS_NEVER && absolute_timestamp(internal_synctime)<global_clock )
+	if (internal_synctime != TS_NEVER && absolute_timestamp(internal_synctime) < global_clock)
 	{
 		// must be able to force reiterations for m/s mode.
 		THROW("internal property sync failure");
@@ -3437,18 +2873,19 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 			Follow the troubleshooting recommendations for that message and try again.
 		 */
 	}
-	exec_sync_set(nullptr,internal_synctime,false);
+	exec_sync_set(sync_data_nullptr, internal_synctime, false);
 
 	/* prepare multithreading */
 	if (!global_debug_mode)
 	{
-		for (j = 0; j < thread_data->count; j++) {
-			thread_data->data[j].hard_event = 0;
-			thread_data->data[j].step_to = TS_NEVER;
+		for (j = 0; j < thread_data->count; j++)
+		{
+			thread_data->data[j]->hard_event = 0;
+			thread_data->data[j]->step_to = TS_NEVER;
 		}
 	}
 #ifdef _DEBUG
-	if ( global_clock>=global_runaway_time )
+	if (global_clock >= global_runaway_time)
 		throw_exception("running clock detected");
 #endif
 
@@ -3456,7 +2893,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 	if (iteration_counter == global_iteration_limit)
 	{
 		pc_rv = precommit_all(global_clock);
-		if(SUCCESS != pc_rv)
+		if (SUCCESS != pc_rv)
 		{
 			THROW("precommit failure");
 		}
@@ -3475,60 +2912,60 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 			if (ranks[pass]->ordinal[i] == nullptr)
 				continue;
 
-			iObjRankList ++;
+			iObjRankList++;
 
 			if (global_debug_mode)
 			{
 				LISTITEM *item;
-				for (item=ranks[pass]->ordinal[i]->first; item!=nullptr; item=item->next)
+				for (item = ranks[pass]->ordinal[i]->first; item != nullptr; item = item->next)
 				{
 					OBJECT *obj = static_cast<OBJECT *>(item->data);
 					// @todo change debug so it uses sync API
-					if (exec_debug(&main_sync,pass,i,obj)==FAILED)
+					if (exec_debug(main_sync, pass, i, obj) == FAILED)
 					{
 						THROW("debugger quit");
 					}
 				}
-
 			}
 			else
 			{
-				//sjin: if global_threadcount == 1, no pthread multhreading
+				// sjin: if global_threadcount == 1, no pthread multhreading
 				if (global_threadcount == 1)
 				{
-					for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr=ptr->next) {
+					for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next)
+					{
 						OBJECT *obj = static_cast<OBJECT *>(ptr->data);
 						ss_do_object_sync(0, ptr->data);
 
 						if (obj->valid_to == TS_INVALID)
 						{
-							//Get us out of the loop so others don't exec on bad status
+							// Get us out of the loop so others don't exec on bad status
 							break;
 						}
-						///printf("%d %s %d\n", obj->id, obj->name, obj->rank);
+						/// printf("%d %s %d\n", obj->id, obj->name, obj->rank);
 					}
-					//printf("\n");
+					// printf("\n");
 				}
-				else { //sjin: implement pthreads
-					multithread_stuff(i, threadpool, iObjRankList);
+				else
+				{ // sjin: implement pthreads
+				  // multithread_stuff(i, threadpool, iObjRankList);
 				}
 			}
 		}
 
-
 		/* run all non-schedule transforms */
 		{
-			TIMESTAMP st = transform_syncall(global_clock,static_cast<TRANSFORMSOURCE>(XS_DOUBLE|XS_COMPLEX|XS_ENDUSE),nullptr);// if (abs(t)<t2) t2=t;
-			exec_sync_set(nullptr,st,false);
+			TIMESTAMP st = transform_syncall(global_clock, static_cast<TRANSFORMSOURCE>(XS_DOUBLE | XS_COMPLEX | XS_ENDUSE), nullptr); // if (abs(t)<t2) t2=t;
+			exec_sync_set(sync_data_nullptr, st, false);
 		}
 	}
-//	setTP = false;
+	//	setTP = false;
 
 	if (!global_debug_mode)
 	{
 		for (j = 0; j < thread_data->count; j++)
 		{
-			exec_sync_merge(nullptr,&thread_data->data[j]);
+			exec_sync_merge(sync_data_nullptr, thread_data->data[j]);
 		}
 
 		/* report progress */
@@ -3539,68 +2976,73 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 	passes++;
 
 	/**** LOOPED SLAVE PAUSE HERE ****/
-	if(global_multirun_mode == MRM_SLAVE)
-	{
-		output_debug("step_to = %lli", exec_sync_get(nullptr));
-		output_debug("exec_start(), slave waiting for looped time signal");
+	// if (global_multirun_mode == MRM_SLAVE)
+	// {
+	// 	output_debug("step_to = %lli", exec_sync_get(nullptr));
+	// 	output_debug("exec_start(), slave waiting for looped time signal");
 
-		pthread_cond_broadcast(&mls_inst_signal);
+	// 	pthread_cond_broadcast(&mls_inst_signal);
 
-		pthread_mutex_lock(&mls_inst_lock);
-		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
-		pthread_mutex_unlock(&mls_inst_lock);
+	// 	pthread_mutex_lock(&mls_inst_lock);
+	// 	pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
+	// 	pthread_mutex_unlock(&mls_inst_lock);
 
-		output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(nullptr));
-	}
+	// 	output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(nullptr));
+	// }
 
 	/* run sync scripts, if any */
-	if ( exec_run_syncscripts()!=XC_SUCCESS )
-	{
-		output_error("sync script(s) failed");
-		THROW("script synchronization failure");
-	}
+	// if (exec_run_syncscripts() != XC_SUCCESS)
+	// {
+	// 	output_error("sync script(s) failed");
+	// 	THROW("script synchronization failure");
+	// }
 
 	/* check for clock advance (indicating last pass) */
-	if ( exec_sync_get(nullptr)!=global_clock && global_simulation_mode == SM_EVENT)
+	if (exec_sync_get(sync_data_nullptr) != global_clock && global_simulation_mode == SM_EVENT)
 	{
 		/* clock update is the very last chance to change the next time */
 		exec_clock_update_modules();
-		if(exec_sync_get(nullptr) > global_clock) {
+		if (exec_sync_get(sync_data_nullptr) > global_clock)
+		{
 			global_federation_reiteration = false;
-		TIMESTAMP commit_time = TS_NEVER;
-		commit_time = commit_all(global_clock, exec_sync_get(nullptr));
-//		commit_time = tp_commit_all(global_clock, exec_sync_get(nullptr), threadpool);
-		if ( absolute_timestamp(commit_time) <= global_clock)
-		{
-			// commit cannot force reiterations, and any event where the time is less than the global clock
-			//  indicates that the object is reporting a failure
-			output_error("model commit failed");
-			/* TROUBLESHOOT
-				The commit procedure failed.  This is usually preceded
-				by a more detailed message that explains why it failed.  Follow
-				the guidance for that message and try again.
-			 */
-			THROW("commit failure");
-		} else if( absolute_timestamp(commit_time) < exec_sync_get(nullptr) )
-		{
-			exec_sync_set(nullptr,commit_time,false);
-		}
-		/* reset iteration count */
-		iteration_counter = global_iteration_limit;
+			TIMESTAMP commit_time = TS_NEVER;
+			commit_time = commit_all(global_clock, exec_sync_get(sync_data_nullptr));
+			//		commit_time = tp_commit_all(global_clock, exec_sync_get(nullptr), threadpool);
+			if (absolute_timestamp(commit_time) <= global_clock)
+			{
+				// commit cannot force reiterations, and any event where the time is less than the global clock
+				//  indicates that the object is reporting a failure
+				output_error("model commit failed");
+				/* TROUBLESHOOT
+					The commit procedure failed.  This is usually preceded
+					by a more detailed message that explains why it failed.  Follow
+					the guidance for that message and try again.
+				 */
+				THROW("commit failure");
+			}
+			else if (absolute_timestamp(commit_time) < exec_sync_get(sync_data_nullptr))
+			{
+				exec_sync_set(sync_data_nullptr, commit_time, false);
+			}
+			/* reset iteration count */
+			iteration_counter = global_iteration_limit;
 			federation_iteration_counter = global_iteration_limit;
 
 			/* count number of timesteps */
 			tsteps++;
-		} else if(exec_sync_get(nullptr) == global_clock) {
+		}
+		else if (exec_sync_get(sync_data_nullptr) == global_clock)
+		{
 			iteration_counter = global_iteration_limit;
 			global_federation_reiteration = true;
-			if (--federation_iteration_counter == 0) {
+			if (--federation_iteration_counter == 0)
+			{
 				output_error("federation convergence iteration limit reached at %s (exec)", simtime());
 				/* TROUBLESHOOT
 					This indicates that the federation that this gridlab-d model a part of
 					was unable to determine a steady state any time horizon.
 				 */
-				exec_sync_set(nullptr,TS_INVALID,false);
+				exec_sync_set(sync_data_nullptr, TS_INVALID, false);
 				THROW("convergence failure");
 			}
 		}
@@ -3616,40 +3058,41 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 			the object that is causing the convergence problem and contact
 			the developer of the module that implements that object's class.
 		 */
-		exec_sync_set(nullptr,TS_INVALID,false);
+		exec_sync_set(sync_data_nullptr, TS_INVALID, false);
 		THROW("convergence failure");
 	}
 
 	/* handle delta mode operation */
-	if ( global_simulation_mode==SM_DELTA && exec_sync_get(nullptr)>=global_clock )
+	if (global_simulation_mode == SM_DELTA && exec_sync_get(sync_data_nullptr) >= global_clock)
 	{
-		if(handle_delta_mode_operation() == -1) {
-			return false; //DELTA MODE FAILURE
+		if (handle_delta_mode_operation() == -1)
+		{
+			return false; // DELTA MODE FAILURE
 		}
 	}
-	
+
 	/* Check if simulation should continue */
-	return (iteration_counter>0 && exec_sync_isrunning(nullptr) && exec_getexitcode()==XC_SUCCESS);
+	return (iteration_counter > 0 && exec_sync_isrunning(sync_data_nullptr) && exec_getexitcode() == XC_SUCCESS);
 }
 
 /** Main simulation loop function
-	This function encapsulates the main simulation loop that was previously 
+	This function encapsulates the main simulation loop that was previously
 	embedded in exec_start(). It handles all simulation processing including
 	realtime control, delta mode, object synchronization, and event processing.
-	
+
 	@param threadpool pointer to the thread pool for multithreading
 	@param passes reference to pass counter
-	@param tsteps reference to timestep counter  
+	@param tsteps reference to timestep counter
 	@param j reference to loop variable used for thread data
 	@param ptr reference to list item pointer
 	@param pc_rv reference to precommit return value
 	@param iObjRankList reference to object rank list index
  **/
-static void run_main_simulation_loop(cpp_threadpool* threadpool, int64& passes, int64& tsteps, 
-									int& j, LISTITEM*& ptr, int& pc_rv, int& iObjRankList)
+static void run_main_simulation_loop(cpp_threadpool *threadpool, int64 &passes, int64 &tsteps,
+									 int &j, LISTITEM *&ptr, int &pc_rv, int &iObjRankList)
 {
 	/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
-	while ( execute_single_simulation_iteration(threadpool, passes, tsteps, j, ptr, pc_rv, iObjRankList) )
+	while (execute_single_simulation_iteration(threadpool, passes, tsteps, j, ptr, pc_rv, iObjRankList))
 	{
 		// Continue executing iterations until simulation should stop
 	}
@@ -3658,17 +3101,17 @@ static void run_main_simulation_loop(cpp_threadpool* threadpool, int64& passes, 
 /** Single step simulation function
 	This function executes one iteration of the main simulation loop using the
 	extracted iteration function to eliminate code duplication.
-	
+
 	@param threadpool pointer to the thread pool for multithreading
 	@param passes reference to pass counter
-	@param tsteps reference to timestep counter  
+	@param tsteps reference to timestep counter
 	@param j reference to loop variable used for thread data
 	@param ptr reference to list item pointer
 	@param pc_rv reference to precommit return value
 	@param iObjRankList reference to object rank list index
  **/
-static void run_single_simulation_step(cpp_threadpool* threadpool, int64& passes, int64& tsteps, 
-									  int& j, LISTITEM*& ptr, int& pc_rv, int& iObjRankList)
+static void run_single_simulation_step(cpp_threadpool *threadpool, int64 &passes, int64 &tsteps,
+									   int &j, LISTITEM *&ptr, int &pc_rv, int &iObjRankList)
 {
 	/* Execute one iteration using the shared iteration function */
 	execute_single_simulation_iteration(threadpool, passes, tsteps, j, ptr, pc_rv, iObjRankList);
@@ -3696,62 +3139,68 @@ STATUS exec_finalize_all(void)
 	This is the public interface for single-step simulation execution.
 	@return STATUS is SUCCESS if the step completed successfully, FAILED otherwise.
  **/
-STATUS exec_step(int64* passes, int64* tsteps)
+STATUS exec_step(int64 *passes, int64 *tsteps)
 {
 	// Setup variables needed for the step (similar to exec_start)
-	cpp_threadpool* threadpool = new cpp_threadpool(global_threadcount);
+	cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
 	int j = 0, pc_rv = 0, iObjRankList = 0;
 	LISTITEM *ptr = nullptr;
-	
+
 	// Create local variables for internal use (use provided values or defaults)
 	int64 local_passes = (passes != nullptr) ? *passes : 0;
 	int64 local_tsteps = (tsteps != nullptr) ? *tsteps : 0;
-	
+
 	STATUS result = SUCCESS;
-	
+
 	// Check if simulation has been properly initialized
 	// exec_step should only be used after exec_start has been called or simulation is initialized
-	if (ranks == nullptr) {
+	if (ranks == nullptr)
+	{
 		output_error("exec_step: simulation not properly initialized - ranks not set up");
 		delete threadpool;
 		return FAILED;
 	}
-	
+
 	// Check if we're in a valid state to step
-	if (iteration_counter <= 0) {
+	if (iteration_counter <= 0)
+	{
 		output_verbose("exec_step: simulation has completed or iteration limit reached");
 		delete threadpool;
 		return SUCCESS; // Not an error, just nothing to do
 	}
-	
+
 	/* main step exception handler */
-	TRY {
+	TRY
+	{
 		/* Store the current clock to detect when it advances */
 		TIMESTAMP start_clock = global_clock;
-		
+
 		/* Keep running iterations until the clock advances or simulation should stop */
-		while ( execute_single_simulation_iteration(threadpool, local_passes, local_tsteps, j, ptr, pc_rv, iObjRankList) )
+		while (execute_single_simulation_iteration(threadpool, local_passes, local_tsteps, j, ptr, pc_rv, iObjRankList))
 		{
 			/* Check if the clock has advanced - if so, we've completed one step */
-			if (global_clock > start_clock) {
+			if (global_clock > start_clock)
+			{
 				break;
 			}
 		}
 	}
-	CATCH (const char *msg)
+	CATCH(const char *msg)
 	{
 		output_error("exec_step halted: %s", msg);
 		result = FAILED;
 	}
 	ENDCATCH
-	
+
 	/* Copy final values back to caller's variables if provided */
-	if (passes != nullptr) *passes = local_passes;
-	if (tsteps != nullptr) *tsteps = local_tsteps;
-	
+	if (passes != nullptr)
+		*passes = local_passes;
+	if (tsteps != nullptr)
+		*tsteps = local_tsteps;
+
 	/* deallocate threadpool */
 	delete threadpool;
-	
+
 	return result;
 }
 
@@ -3759,48 +3208,51 @@ STATUS exec_step(int64* passes, int64* tsteps)
 	@return STATUS is SUCCESS if the simulation reached equilibrium,
 	and FAILED if a problem was encountered.
  **/
-STATUS exec_start(int64* passes, int64* tsteps)
+STATUS exec_start(int64 *passes, int64 *tsteps)
 {
-	cpp_threadpool* threadpool = new cpp_threadpool(global_threadcount);
-	int ptc_rv = 0; // unused
-	int ptj_rv = 0; // unused
-	int pc_rv = 0; // precommit return value
+	std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
+	cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
+	int ptc_rv = 0;							// unused
+	int ptj_rv = 0;							// unused
+	int pc_rv = 0;							// precommit return value
 	STATUS fnl_rv = static_cast<STATUS>(0); // finalize all return value
-	time_t started_at = realtime_now(); // for profiler
+	time_t started_at = realtime_now();		// for profiler
 	int j, k;
 	LISTITEM *ptr;
 	int incr, iObjRankList;
-	
+
 	// Create local variables for internal use (use provided values or defaults)
 	int64 local_passes = (passes != nullptr) ? *passes : 0;
 	int64 local_tsteps = (tsteps != nullptr) ? *tsteps : 0;
-	
-	if(run_preparation() == FAILED) {
+
+	if (run_preparation() == FAILED)
+	{
 		return FAILED;
 	}
 
 	/* main loop exception handler */
-	TRY {
+	TRY
+	{
 		/* Run the main simulation loop */
 		run_main_simulation_loop(threadpool, local_passes, local_tsteps, j, ptr, pc_rv, iObjRankList);
 
 		/* disable signal handler */
-		signal(SIGINT,nullptr);
+		signal(SIGINT, nullptr);
 
 		/* check end state */
-		if ( exec_sync_isnever(nullptr) )
+		if (exec_sync_isnever(sync_data_nullptr))
 		{
 			char buffer[64];
-			output_verbose("simulation at steady state at %s", convert_from_timestamp(global_clock,buffer,sizeof(buffer))?buffer:"invalid time");
+			output_verbose("simulation at steady state at %s", convert_from_timestamp(global_clock, buffer, sizeof(buffer)) ? buffer : "invalid time");
 		}
 
 		/* terminate main loop state control */
 		exec_mls_done();
 	}
-	CATCH (const char *msg)
+	CATCH(const char *msg)
 	{
 		output_error("exec halted: %s", msg);
-		exec_sync_set(nullptr,TS_INVALID,false);
+		exec_sync_set(sync_data_nullptr, TS_INVALID, false);
 		/* TROUBLESHOOT
 			This indicates that the core's solver shut down.  This message
 			is usually preceded by more detailed messages.  Follow the guidance
@@ -3808,32 +3260,32 @@ STATUS exec_start(int64* passes, int64* tsteps)
 		 */
 	}
 	ENDCATCH
-	output_debug("*** main loop ended at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(nullptr), global_stoptime, exec_sync_getevents(nullptr), exec_getexitcode());
-	if(global_multirun_mode == MRM_MASTER)
+	output_debug("*** main loop ended at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(sync_data_nullptr), global_stoptime, exec_sync_getevents(sync_data_nullptr), exec_getexitcode());
+	if (global_multirun_mode == MRM_MASTER)
 	{
 		instance_master_done(TS_NEVER); // tell everyone to pack up and go home
 	}
 
-	//sjin: GetMachineCycleCount
+	// sjin: GetMachineCycleCount
 	cend = (clock_t)exec_clock();
 
 	fnl_rv = finalize_all();
-	if(FAILED == fnl_rv)
+	if (FAILED == fnl_rv)
 	{
 		output_error("finalize_all() failed");
 	}
 
 	/* run term scripts, if any */
-	if ( exec_run_termscripts()!=XC_SUCCESS )
-	{
-		output_error("term script(s) failed");
-		return FAILED;
-	}
+	// if (exec_run_termscripts() != XC_SUCCESS)
+	// {
+	// 	output_error("term script(s) failed");
+	// 	return FAILED;
+	// }
 
 	/* deallocate threadpool */
 	if (!global_debug_mode)
 	{
-		free(thread_data);
+		// free(thread_data);
 		thread_data = nullptr;
 
 #ifdef NEVER
@@ -3844,8 +3296,10 @@ STATUS exec_start(int64* passes, int64* tsteps)
 	}
 
 	// Copy final values back to caller's variables if provided
-	if (passes != nullptr) *passes = local_passes;
-	if (tsteps != nullptr) *tsteps = local_tsteps;
+	if (passes != nullptr)
+		*passes = local_passes;
+	if (tsteps != nullptr)
+		*tsteps = local_tsteps;
 
 	report_performance_after_run(started_at, local_passes, local_tsteps);
 
@@ -3853,9 +3307,9 @@ STATUS exec_start(int64* passes, int64* tsteps)
 
 	/* terminate links */
 	// delete threadpool;
+
 	return exec_sync_getstatus(sync_data_nullptr);
 }
-
 
 /** Starts the executive test loop
 	@return STATUS is SUCCESS if all test passed, FAILED is any test failed.

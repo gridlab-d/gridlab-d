@@ -389,7 +389,7 @@ add_subdirectory(gldcore)
 
 # Add test_gldapi executable
 add_executable(test_gldapi gldcore/test_gldapi.cpp)
-target_link_libraries(test_gldapi PRIVATE gldapi ${DL_LIB} ${JSONCPP_LIB} ${SUPERLU_LIB} Threads::Threads)
+target_link_libraries(test_gldapi PRIVATE gldapi ${DL_LIB} ${JSONCPP_LIB} ${SUPERLU_LIB} ${CURSES_LIBRARIES} Threads::Threads)
 set_target_properties(test_gldapi PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin
 )
@@ -408,7 +408,7 @@ set(GLD_LIBS
         climate
         commercial
         connection
-	#gldapi
+	    gldapi
         generators
         market
         mysql

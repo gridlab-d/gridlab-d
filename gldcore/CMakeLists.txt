@@ -6,8 +6,8 @@ SET(GLD_MODULE_NAME gridlabd)
 # Load and link C/C++ files for the executable
 set(SOURCE_LIST
         gridlabd.h
-	#gldapi.h
-	#gldapi.cpp
+	    gldapi.h
+	    gldapi.cpp
         globals.cpp
         globals.h
         object.cpp
@@ -166,7 +166,7 @@ endif()
 #            )
 #endif()
 
-#add_library(gldapi ${SOURCE_LIST})
+add_library(gldapi ${SOURCE_LIST})
 target_link_libraries(${GLD_MODULE_NAME} PUBLIC ${GL_MODULES})
 target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 if (CURSES_FOUND)
