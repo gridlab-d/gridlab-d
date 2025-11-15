@@ -11,6 +11,7 @@
 #include "module.h"
 #include "parser.h"
 
+#include <queue>
 #include <string>
 #include <nlohmann/json.hpp>  // Requires JSON for Modern C++ library
 
@@ -26,6 +27,7 @@ private:
     json jsn;
     json property;
     string filename;
+    queue<string> included_files;
 
 public:
     bool open_file(string file_name);
@@ -38,7 +40,7 @@ public:
     void loadModules();
     void loadObjects();
     void loadSchedules();
-    void loadDirectives();
+    STATUS loadDirectives();
     STATUS loadall_glm_roll(char *file_name);
 };
 

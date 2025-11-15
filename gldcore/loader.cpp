@@ -12,22 +12,29 @@
 using namespace std;
 
 bool loader::open_file(string file_name) {
-
 	ifstream file(file_name, std::ios::in);
-    if (!file.is_open()) {
+
+	std::filesystem::path filePath = file_name;
+	if (filePath.extension() != ".json") {
+		output_error("%s: is not a json file", file_name.c_str());
+        std::cout << "ERROR : File not Opened, non json file!" << std::endl;
+        return false;
+	}
+
+	if (!file.is_open()) {
 		output_error("%s: unable to read stream", file_name.c_str());
         std::cout << "ERROR : File not Opened, Error while opening the file!" << std::endl;
         return false;
     }
-    file >> this->jsn;
-    file.close();
+	file >> this->jsn;
+	file.close();
     std::cout << "-|- Parsing done -|-" << std::endl;
 	return true;
 }
 
-void loader::loadDirectives() {
+STATUS loader::loadDirectives() {
     auto j_obj = this->jsn["_directives"];
-	STATUS result;
+	STATUS result = SUCCESS;
 	char * propvalue;
 
 	for (auto& [name, property] : j_obj.items()) {
@@ -39,9 +46,12 @@ void loader::loadDirectives() {
 					global_strictnames = true;
 				else if (name == "#define")
 					global_strictnames = false;
+				else
+					continue;
 				if (value.is_number()) {
 					short numvalue = (short)value.get<int>();
-					sprintf(propvalue, "%d", numvalue);
+					propvalue = (char *) malloc(7 * sizeof(char));
+					snprintf(propvalue, 7, "%d", numvalue);
 				}
 				else if (value.is_string())
 					propvalue = value.get<std::string>().data();
@@ -52,10 +62,16 @@ void loader::loadDirectives() {
 						output_error_raw("%s: %s set term not found",filename,key);
 					else if (name == "#define")
 						output_error_raw("%s: %s define term not found",filename,key);
+					return result;
+			}
+		}
+		else if (name == "#include" && property.is_array()) {
+			for (string path : property) {
+				this->included_files.push(path);
 			}
 		}
 	}
-
+	return result;
 }
 
 void loader::loadClasses() {
@@ -205,16 +221,24 @@ STATUS loader::loadall_glm_roll(char *file_name) {
  	OBJECT *obj, *first = object_get_first();
  	errno = 0;
 	STATUS status=FAILED;
+	bool file_to_process = true;
 
 	this->filename = file_name;
-	std::string name(file_name);
-	if (this->open_file(name)) {
-		this->loadDirectives();
-		this->loadClock();
-//		this->loadClasses();
-		this->loadModules();
-//		this->loadObjects();
-//		this->loadSchedules();
+	while (file_to_process) {
+		file_to_process = false;
+		if (this->open_file(this->filename)) {
+			this->loadDirectives();
+			this->loadClock();
+	//		this->loadClasses();
+			this->loadModules();
+	//		this->loadObjects();
+	//		this->loadSchedules();
+		}
+		if (this->included_files.empty() == false){
+			this->filename = this->included_files.front();
+			this->included_files.pop();
+			file_to_process = true;
+		}
 	}
 
  	/* establish ranks */
