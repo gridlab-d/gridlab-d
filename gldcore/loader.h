@@ -25,8 +25,8 @@ class loader {
 private:
 	parser parse = parser();
     json jsn;
-    json property;
     string filename;
+    string convert(json value);
     queue<string> included_files;
 
 public:
@@ -35,8 +35,7 @@ public:
     void loadClasses();
     void loadClock();
 
-    bool module_properties(MODULE *mod);
-    bool module_conditionals();
+    bool module_properties(MODULE *mod, json properties);
     void loadModules();
     void loadObjects();
     void loadSchedules();

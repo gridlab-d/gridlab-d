@@ -32,31 +32,36 @@ bool loader::open_file(string file_name) {
 	return true;
 }
 
+string loader::convert(json value) {
+	if (value.is_number_float()) {
+		double dblvalue = value.get<double>();
+		return std::to_string(dblvalue);
+	}
+	else if (value.is_number_integer()) {
+		int intvalue = value.get<int>();
+		return std::to_string(intvalue);
+	}
+	else if (value.is_string())
+		return value.get<std::string>();
+	return "";
+}
+
 STATUS loader::loadDirectives() {
     auto j_obj = this->jsn["_directives"];
 	STATUS result = SUCCESS;
-	char * propvalue;
+	string propvalue;
 
-	for (auto& [name, property] : j_obj.items()) {
-		this->property = property;
-		if (property.is_object()) {
-			for (auto& [key, value] : property.items()) {
-				int oldstrict = global_strictnames;
+	for (auto& [name, directive] : j_obj.items()) {
+		if (directive.is_object()) {
+			for (auto& [key, value] : directive.items()) {
+				bool oldstrict = global_strictnames;
 				if (name == "#set")
 					global_strictnames = true;
 				else if (name == "#define")
 					global_strictnames = false;
-				else
-					continue;
-				if (value.is_number()) {
-					short numvalue = (short)value.get<int>();
-					propvalue = (char *) malloc(7 * sizeof(char));
-					snprintf(propvalue, 7, "%d", numvalue);
-				}
-				else if (value.is_string())
-					propvalue = value.get<std::string>().data();
-				result = global_setvar((const char*)key.c_str(), propvalue);
-				global_strictnames = strncmp(key.c_str(),"strictnames",12)==0 ? global_strictnames : oldstrict;
+				propvalue = convert(value);
+				result = global_setvar((const char*)key.c_str(), propvalue.data());
+				global_strictnames = strncmp(key.c_str(), "strictnames", 12)==0 ? global_strictnames : oldstrict;
 				if (result==FAILED)
 					if (name == "#set")
 						output_error_raw("%s: %s set term not found",filename,key);
@@ -65,8 +70,8 @@ STATUS loader::loadDirectives() {
 					return result;
 			}
 		}
-		else if (name == "#include" && property.is_array()) {
-			for (string path : property) {
+		else if (name == "#include" && directive.is_array()) {
+			for (string path : directive) {
 				this->included_files.push(path);
 			}
 		}
@@ -122,11 +127,10 @@ void loader::loadClock() {
     }
 }
 
-
-bool loader::module_properties(MODULE *mod) {
+bool loader::module_properties(MODULE *mod, json properties) {
 	CLASS *oclass;
 
-	for (auto& [name, value] : property.items()) {
+	for (auto& [name, value] : properties.items()) {
 		if (name == "major" && value.is_number()) {
 			//not used?
 			short major = (short)value.get<int>();
@@ -143,66 +147,33 @@ bool loader::module_properties(MODULE *mod) {
 					output_error_raw("%s: module does not implement class '%s'", mod->name, classname);
 			}
 		}
+		// Must be property
 		else if (value.is_string()) {
 			current_object = nullptr; /* object context */
 			current_module = mod; /* module context */
 			string propvalue = value.get<std::string>();
-			if (propvalue != "_conditional")
+			if (name != "inline_comments") {
 				if (this->parse.alternate_value(propvalue)) {
-					if (module_setvar(mod, (const char*)name.c_str(), propvalue.data()) > 0)
+					if (!module_setvar(mod, (const char*)name.c_str(), propvalue.data()))
 						output_error_raw("invalid '%s' property for module %s, ", (const char*)name.c_str(), mod->name);
 				}
+			}
 		}
 	}
 	return true;
 }
 
-bool loader::module_conditionals() {
-	bool load = false;
-	for (auto& [name, value] : property.items()) {
-		if (name == "if" && value.is_array()) {
-			for (auto& element : value)
-			// todo: expession
-				if (element.is_string()) {
-					load = true;
-				}
-		}
-		else if (name == "ifdef" && value.is_array()) {
-			for (auto& element : value)
-				if (element.is_string()) {
-					const char* env_name = element.get_ref<const std::string&>().c_str();
-					if (getenv(env_name))
-						load = true;
-				}
-		}
-		else if (name == "ifndef" && value.is_array()) {
-			for (auto& element : value)
-				if (element.is_string()) {
-					const char* env_name = element.get_ref<const std::string&>().c_str();
-					if (!getenv(env_name))
-						load = true;
-				}
-		}
-	}
-	return load;
-}
-
 void loader::loadModules() {
 	MODULE *module;
-	bool load = true;
-    auto j_obj = this->jsn["modules"];
+	bool load;
+    json j_obj = this->jsn["modules"];
 
-	for (auto& [name, property] : j_obj.items()) {
-		this->property = property;
-		if (property.contains("_conditional") && property.is_object())
-			load = module_conditionals();
-		if (load) {
-			module = module_load(name.data(),0,nullptr);
-			if (module != nullptr)
-				module_properties(module);
-			else
-				output_error_raw("%s: module load failed", name.data(), "(no details)");
-		}
+	for (auto& [name, value] : j_obj.items()) {
+		module = module_load(name.data(),0,nullptr);
+		if (module != nullptr)
+			module_properties(module, value);
+		else
+			output_error_raw("%s: module load failed", name.data(), "(no details)");
 	}
 }
 
@@ -212,8 +183,36 @@ void loader::loadObjects() {
 }
 
 void loader::loadSchedules() {
-    auto propeties = this->jsn["schedules"];
+    auto j_obj = this->jsn["schedules"];
+	std::string cron_schedule;
+	std::string	sub_schedule;
 
+	for (auto& [name, schedule] : j_obj.items()) {
+		if (schedule.is_array()) {
+			cron_schedule = "";
+			for (auto& element : schedule) {
+				sub_schedule = "";
+				if (element.is_object() && element.contains("items")) {
+					if (element["items"].is_array()) {
+						if (element.contains("name") && element["name"].is_string())
+							sub_schedule = element["name"].get_ref<const std::string&>();
+						for (auto& item : element["items"])
+							cron_schedule += item.get_ref<const std::string&>() + ";\n";
+					}
+					else
+						output_error_raw("%s: schedule '%s' items is not an array", filename, name.data());
+				}
+				else
+					output_error_raw("%s: schedule '%s' is not valid or does not have an items array", filename, name.data());
+			}
+			if (cron_schedule != "")
+				schedule_create(name.data(), cron_schedule.data());
+			else
+				output_error_raw("%s: schedule '%s' is blank", filename, name.data());
+		}
+		else
+			output_error_raw("%s: schedule '%s' is not valid array", filename, name.data());
+	}
 }
 
 STATUS loader::loadall_glm_roll(char *file_name) {
@@ -232,7 +231,7 @@ STATUS loader::loadall_glm_roll(char *file_name) {
 	//		this->loadClasses();
 			this->loadModules();
 	//		this->loadObjects();
-	//		this->loadSchedules();
+			this->loadSchedules();
 		}
 		if (this->included_files.empty() == false){
 			this->filename = this->included_files.front();
