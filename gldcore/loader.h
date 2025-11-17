@@ -6,12 +6,19 @@
 #ifndef _LOADER_H_
 #define _LOADER_H_
 
-
+#include "class.h"
 #include "globals.h"
 #include "module.h"
+#include "output.h"
 #include "parser.h"
+#include "property.h"
 
+#include <format>
+#include <fstream>
+#include <iostream>
 #include <string>
+#include <regex>
+#include <unordered_map>
 #include <nlohmann/json.hpp>  // Requires JSON for Modern C++ library
 
 using namespace std;
@@ -25,19 +32,33 @@ private:
 	parser parse = parser();
     json jsn;
     string filename;
+    unordered_map<size_t, OBJECT*> objectIndex;
+    unordered_map<size_t, bool> objectLinked;
+    bool objectIndexInitialized = false;
+    OBJECT *currentObject = nullptr;
+    MODULE *currentModule = nullptr;
     string convert(json value);
+    STATUS loadObject(const string className, json objInstance);
+    STATUS loadSetIndex(OBJECT *obj, OBJECTNUM id);
+    STATUS objectProperties(CLASS *oClass, OBJECT *obj, const string propName, string propValue);
+    char *format_object(OBJECT *obj);
+    int isInt(PROPERTYTYPE pt);
+    double loadLatitude(char *buffer);
+    double loadLongitude(char *buffer);
+    int set_flags(OBJECT *obj, char *propval);
+    STATUS parseJsonModel(void);
        
 public:
     bool open_file(string file_name);
-    void loadDirective();
-    void loadClasses();
-    void loadClock();
+    STATUS loadDirective();
+    STATUS loadClasses();
+    STATUS loadClock();
 
     bool module_properties(MODULE *mod, json properties);
-    void loadModules();
-    void loadObjects();
-    void loadSchedules();
-    void loadDirectives();
+    STATUS loadModules();
+    STATUS loadObjects();
+    STATUS loadSchedules();
+    STATUS loadDirectives();
     STATUS loadall_glm_roll(char *file_name);
 };
 

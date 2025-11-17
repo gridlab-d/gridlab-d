@@ -9,47 +9,60 @@
 
 #include "globals.h"
 #include "module.h"
-#include "load.h"
+#include "output.h"
 
+#include <nlohmann/json.hpp>
 #include <string>
+#include <vector>
 
 
 using namespace std;
+using json = nlohmann::json;
 
 #ifdef __cplusplus
+typedef struct s_unresolved {
+	OBJECT *by;
+	PROPERTYTYPE ptype;
+	void *ref;
+	int flags;
+	CLASS *oclass;
+	char256 id;
+	char *file;
+	unsigned int line;
+	struct s_unresolved *next;
+} UNRESOLVED;
 
 class parser {
 
 private:
-	char filename[1024];
-	unsigned int linenum=1;
-
 #define PARSER char *_p
-#define START int _mm=0, _m=0, _n=0, _l=linenum;
+#define START int _mm=0, _m=0, _n=0;
 #define ACCEPT { _n+=_m; _p+=_m; _m=0; }
 #define HERE (_p+_m)
 #define OR {_m=0;}
-#define REJECT { linenum=_l; return 0; }
+#define REJECT { return 0; }
 #define WHITE (TERM(white(HERE)))
 #define LITERAL(X) (_mm=literal(HERE,(const_cast<char*>(X))),_m+=_mm,_mm>0)
 #define TERM(X) (_mm=(X),_m+=_mm,_mm>0)
 #define COPY(X) {size--; (X)[_n++]=*_p++;}
 #define DONE return _n;
-#define BEGIN_REPEAT {char *__p=_p; int __mm=_mm, __m=_m, __n=_n, __l=_l; int __ln=linenum;
-#define REPEAT _p=__p;_m=__m; _mm=__mm; _n=__n; _l=__l; linenum=__ln;
+#define BEGIN_REPEAT {char *__p=_p; int __mm=_mm, __m=_m, __n=_n;
+#define REPEAT _p=__p;_m=__m; _mm=__mm; _n=__n;
 #define END_REPEAT }
-
-    //string filename;
+#define UR_TRANSFORM 0x02
+#define UR_RANKS 0x01
+#define UR_NONE 0x00
 
 public:
-
+    string filename = "";
+    OBJECT *current_object = nullptr;
+    UNRESOLVED *first_unresolved = nullptr;
 	int findLastIndex(string str, char x);
     int replaceAll(string& s, string const& toReplace, string const& replaceWith);
 	string extractBetween(string str, char startChar, char endChar);
 	string extractBetweenEnd(string str, char startChar, char endChar);
 	void forward_slashes(string& str);
 	void filename_parts(string filename, string& path, string& name, string& ext);
-    
 	void syntax_error(PARSER);
 	int white(PARSER);
 	int comment(PARSER);
@@ -68,7 +81,7 @@ public:
 	int hostname(PARSER, char *result, int size);
 	int delim_value(PARSER, char *result, int size, const char *delims);
 	int structured_value(PARSER, char *result, int size);
-	int value(PARSER, char *result, int size);
+	int value(string valueString, char *result, int size);
 	#if 0
 	int functional_int(PARSER, int64 *value);
 	#endif
@@ -77,18 +90,15 @@ public:
 	int integer16(PARSER, int16 *value);
 	int real_value(PARSER, double *value);
 	int functional(PARSER, double *pValue);
-
 	struct s_rpn {
 		int op;
 		double val; // if op = 0, check val
 	};
-
 	struct s_rpn_func {
 		const char *name;
 		int args; /* use a mode instead? else assume only doubles */
 		int index;
 		double (*fptr)(double);
-		/* fptr? for now, just to recognize */
 	} rpn_map[12] = {
 		{"sin", 1, -1, sin},
 		{"cos", 1, -2, cos},
@@ -98,15 +108,12 @@ public:
 		{"acos", 1, -6, acos},
 		{"asin", 1, -7, asin},
 		{"atan", 1, -8, atan},
-	//	{"atan2", 2},	/* only one with two inputs? */
 		{"log", 1, -10, log},
 		{"log10", 1, -11, log10},
 		{"floor", 1, -12, floor},
 		{"ceil", 1, -13, ceil}
 	};
-
 	int rpnfunc(PARSER, int *val);
-
 	#define OP_END 0
 	#define OP_OPEN 1
 	#define OP_CLOSE 2
@@ -120,9 +127,7 @@ public:
 	#define OP_COS -2
 	#define OP_TAN -3
 	#define OP_ABS -4
-
 	int op_prec[9] = {0, 0, 0, 3, 2, 2, 2, 1, 1};
-
 	#define PASS_OP(T) \
 		while(op_prec[(T)] <= op_prec[op_stk[op_i]]){	\
 			rpn_stk[rpn_i].op = op_stk[op_i];			\
@@ -132,11 +137,10 @@ public:
 		}												\
 		op_stk[++op_i] = (T);							\
 		++rpn_sz;							
-		
 	int expression(string text, double *pValue, UNIT **unit, OBJECT *obj);
-	int functional_unit(PARSER, double *pValue, UNIT **unit);
+	int functional_unit(string valueString, double *pValue, UNIT **unit);
 	int complex_value(PARSER, gld::complex *pValue);
-	int complex_unit(PARSER, gld::complex *pValue, UNIT **unit);
+	int complex_unit(string valueString, gld::complex *pValue, UNIT **unit);
 	int time_value_seconds(PARSER, TIMESTAMP *t);
 	int time_value_minutes(PARSER, TIMESTAMP *t);
 	int time_value_hours(PARSER, TIMESTAMP *t);
@@ -144,9 +148,13 @@ public:
 	int time_value_datetime(PARSER, TIMESTAMP *t);
 	int time_value_datetimezone(PARSER, TIMESTAMP *t);
 	int time_value(PARSER, TIMESTAMP *t);
-
 	string expanded_value(string text);
 	bool alternate_value(string& text);
+    int linear_transform(string valueString, TRANSFORMSOURCE *xstype, void **source, double *scale, double *bias, OBJECT *from);
+    int transform_source(PARSER, TRANSFORMSOURCE *xstype, void **source, OBJECT *from);
+    int schedule_ref(PARSER, SCHEDULE **sch);
+    int property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *from);
+    UNRESOLVED *add_unresolved(OBJECT *obj, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file, int flags);
 };
 
 #endif // C++

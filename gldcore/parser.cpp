@@ -1,12 +1,3 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <regex>
-
-#include "output.h"
-//#include "property.h"
-//#include "class.h"
-//#include "module.h"
 #include "parser.h"
 
 int parser::findLastIndex(string str, char x) {
@@ -110,16 +101,14 @@ void parser::syntax_error(PARSER) {
 	nl = strchr(context,'\n');
 	if (nl!=nullptr) *nl='\0'; else context[15]='\0';
 	if (strlen(context)>0)
-		output_error_raw("%s(%d): syntax error at '%s...'", filename, linenum, context);
+		output_error_raw("syntax error at '%s...'", context);
 	else
-		output_error_raw("%s(%d): syntax error", filename, linenum);
+		output_error_raw("syntax error");
 }
 
 int parser::white(PARSER) {
 	int len = 0;
 	for(len = 0; *_p != '\0' && isspace((unsigned char)(*_p)); ++_p){
-		if (*_p == '\n')
-			++linenum;
 		++len;
 	}
 	return len;
@@ -131,7 +120,6 @@ int parser::comment(PARSER) {
 	{
 		while (_p[_n]!='\n')
 			_n++;
-		linenum++;
 	}
 	return _n;
 }
@@ -216,14 +204,12 @@ int parser::unitspec(PARSER, UNIT **unit) {
 	result[_n]='\0';
     try {
 		if ((*unit=unit_find(result))==nullptr){
-			linenum=_l;
 			_n = 0;
 		} else {
 			_n = (int)strlen(result);
 		}
 	}
     catch (char *msg) {
-		linenum=_l;
 		_n = 0;
 	}
 	DONE;
@@ -235,12 +221,12 @@ int parser::unitsuffix(PARSER, UNIT **unit) {
 	{
 		if (!TERM(unitspec(HERE,unit)))
 		{
-			output_error_raw("%s(%d): missing valid unit after [", filename, linenum);
+			output_error_raw("missing valid unit after [");
 			REJECT;
 		}
 		if (!LITERAL("]"))
 		{
-			output_error_raw("%s(%d): missing ] after unit '%s'", filename, linenum,(*unit)->name);
+			output_error_raw("missing ] after unit '%s'",(*unit)->name);
 		}
 		ACCEPT;
 		DONE;
@@ -308,8 +294,9 @@ int parser::structured_value(PARSER, char *result, int size) {
 	return (int)(_p - start);
 }
 
-int parser::value(PARSER, char *result, int size) {
+int parser::value(string valueString, char *result, int size) {
 	/* everything to a semicolon */
+    char *_p = valueString.data();
 	char delim=';';
 	char *start=_p;
 	int quote=0;
@@ -333,7 +320,7 @@ int parser::value(PARSER, char *result, int size) {
 	}
 	result[_n]='\0';
 	if (quote&1)
-		output_warning("%s(%d): missing closing double quote", filename, linenum);
+		output_warning("missing closing double quote in value text %s", valueString.c_str());
 	return (int)(_p - start);
 }
 
@@ -517,7 +504,7 @@ int parser::functional(PARSER, double *pValue) {
 		double a;
 		if (rtype==RT_INVALID || nargs==0 || (WHITE,!LITERAL("(")))
 		{
-			output_error_raw("%s(%d): %s is not a valid random distribution", filename,linenum,fname.get_string());
+			output_error_raw("%s is not a valid random distribution", fname.get_string());
 			REJECT;
 		}
 		if (nargs==-1)
@@ -535,7 +522,7 @@ int parser::functional(PARSER, double *pValue) {
 					else
 					{
 						// variable arg list
-						output_error_raw("%s(%d): expected a %s distribution term after ,", filename,linenum, fname.get_string());
+						output_error_raw("expected a %s distribution term after ,", fname.get_string());
 						REJECT;
 					}
 				}
@@ -546,13 +533,13 @@ int parser::functional(PARSER, double *pValue) {
 				}
 				else
 				{
-					output_error_raw("%s(%d): missing ) after %s distribution terms", filename,linenum, fname.get_string());
+					output_error_raw("missing ) after %s distribution terms", fname.get_string());
 					REJECT;
 				}
 			}
 			else
 			{
-				output_error_raw("%s(%d): expected first term of %s distribution", filename,linenum, fname.get_string());
+				output_error_raw("expected first term of %s distribution", fname.get_string());
 				REJECT;
 			}
 		}
@@ -571,7 +558,7 @@ int parser::functional(PARSER, double *pValue) {
 					}
 					else
 					{
-						output_error_raw("%s(%d): expected ) after %s distribution term", filename,linenum, fname.get_string());
+						output_error_raw("expected ) after %s distribution term", fname.get_string());
 						REJECT;
 					}
 				}
@@ -584,7 +571,7 @@ int parser::functional(PARSER, double *pValue) {
 					}
 					else
 					{
-						output_error_raw("%s(%d): missing second %s distribution term and/or )", filename,linenum, fname.get_string());
+						output_error_raw("missing second %s distribution term and/or )", fname.get_string());
 						REJECT;
 					}
 				}
@@ -597,19 +584,19 @@ int parser::functional(PARSER, double *pValue) {
 					}
 					else
 					{
-						output_error_raw("%s(%d): missing terms and/or ) in %s distribution ", filename,linenum, fname.get_string());
+						output_error_raw("missing terms and/or ) in %s distribution", fname.get_string());
 						REJECT;
 					}
 				}
 				else
 				{
-					output_error_raw("%s(%d): %d terms is not supported", filename,linenum, nargs);
+					output_error_raw("%d terms is not supported", nargs);
 					REJECT;
 				}
 			}
 			else
 			{
-				output_error_raw("%s(%d): expected first term of %s distribution", filename,linenum, fname.get_string());
+				output_error_raw("expected first term of %s distribution", fname.get_string());
 				REJECT;
 			}
 		}
@@ -768,7 +755,7 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj) {
 			OBJECT *nobj = object_find_name(oname);
 			if ( nobj == nullptr )
 			{
-				output_error_raw("%s(%d): object not found (object must already exist): %s.%s", filename,linenum, oname, tname);
+				output_error_raw("object not found (object must already exist): %s.%s", oname, tname);
 				REJECT;
 			}
 			double *valptr = object_get_double_by_name(nobj, tname);
@@ -782,7 +769,7 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj) {
 			}
 			else if (valptr == nullptr)
 			{
-				output_error_raw("%s(%d): invalid property: %s.%s", filename,linenum, oname, tname);
+				output_error_raw("invalid property: %s.%s", oname, tname);
 				REJECT;
 			}
 			ACCEPT;
@@ -794,7 +781,7 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj) {
 		} else if ((LITERAL("$") || LITERAL("this.")) && TERM(name(HERE,tname,sizeof(tname)))){
 			double *valptr = object_get_double_by_name(obj, tname);
 			if(valptr == nullptr){
-				output_error_raw("%s(%d): invalid property: %s.%s", filename,linenum, obj->oclass->name, tname);
+				output_error_raw("invalid property: %s.%s", obj->oclass->name, tname);
 				REJECT;
 			}
 			ACCEPT;
@@ -823,13 +810,13 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj) {
 			}
 			if(otarg == nullptr){ // delayed checking
 				// disabled for now
-				output_error_raw("%s(%d): unknown reference: %s.%s", filename, linenum, oname, pname);
+				output_error_raw("unknown reference: %s.%s", oname, pname);
 				output_error("may be an order issue, delayed reference checking is a todo");
 				REJECT;
 			} else {
 				double *valptr = object_get_double_by_name(otarg, pname);
 				if(valptr == nullptr){
-					output_error_raw("%s(%d): invalid property: %s.%s", filename,linenum, oname, pname);
+					output_error_raw("invalid property: %s.%s", oname, pname);
 					REJECT;
 				}
 				rpn_stk[rpn_i].op = 0;
@@ -838,7 +825,7 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj) {
 				++rpn_i;
 			}
 		} else { /* oops */
-			output_error_raw("%s(%d): unrecognized token within: %s9", filename,linenum, HERE-2);
+			output_error_raw("unrecognized token within: %s9", HERE-2);
 			REJECT;
 			/* It looked like an expression.  Give fair warning. */
 		}
@@ -878,7 +865,7 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj) {
 		} else if(rpn_stk[i].op > 0){ /* binary operator */
 			double popval = val_q[--val_i];
 			if(val_i < 0){
-				output_error_raw("%s(%d): insufficient arguments in equation", filename,linenum, rpn_stk[i].op);
+				output_error_raw("insufficient arguments in equation %i", rpn_stk[i].op);
 				REJECT;
 			}
 			switch(rpn_stk[i].op){
@@ -901,7 +888,7 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj) {
 					val_q[val_i-1] -= popval;
 					break;
 				default:
-					output_error_raw("%s(%d): unrecognized operator index %i (bug!)", filename,linenum, rpn_stk[i].op);
+					output_error_raw("unrecognized operator index %i (bug!)", rpn_stk[i].op);
 					REJECT;
 			}
 		} else if(rpn_stk[i].op < 0){ /* rpn_func */
@@ -911,7 +898,7 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj) {
 				if(rpn_map[j].index == rpn_stk[i].op){
 					double popval = val_q[--val_i];
 					if(val_i < 0){
-						output_error_raw("%s(%d): insufficient arguments in equation", filename,linenum, rpn_stk[i].op);
+						output_error_raw("insufficient arguments in equation %i", rpn_stk[i].op);
 						REJECT;
 					}
 					val_q[val_i++] = (*rpn_map[j].fptr)(popval);
@@ -919,21 +906,22 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj) {
 				}
 			}
 			if(j == count){ /* missed */
-				output_error_raw("%s(%d): unrecognized function index %i (bug!)", filename,linenum, rpn_stk[i].op);
+				output_error_raw("unrecognized function index %i (bug!)", rpn_stk[i].op);
 				REJECT;
 			}
 
 		}
 	}
 	if((val_i > 1)){
-		output_error_raw("%s(%d): too many values in equation!", filename,linenum);
+		output_error_raw("too many values in equation!");
 		REJECT;
 	}
 	*pValue = val_q[0];
 	DONE;
 }
 
-int parser::functional_unit(PARSER, double *pValue,UNIT **unit) {
+int parser::functional_unit(string valueString, double *pValue,UNIT **unit) {
+    char *_p = valueString.data();
 	START;
 	if TERM(functional(HERE,pValue))
 	{
@@ -987,7 +975,8 @@ int parser::complex_value(PARSER, gld::complex *pValue) {
 	REJECT;
 }
 
-int parser::complex_unit(PARSER, gld::complex *pValue,UNIT **unit) {
+int parser::complex_unit(string valueString, gld::complex *pValue,UNIT **unit) {
+    char *_p = valueString.data();
 	START;
 	if TERM(complex_value(HERE,pValue))
 	{
@@ -1114,7 +1103,7 @@ string parser::expanded_value(string text) {
 		string path;
 		string name;
 		string ext;
-		filename_parts(filename, path, name, ext);
+		filename_parts(this->filename, path, name, ext);
 
 		 /* expanded specials variables */
 		replaceAll(text, "{file}", this->filename);
@@ -1123,7 +1112,7 @@ string parser::expanded_value(string text) {
 		replaceAll(text, "{fileext}", ext);
 		object_namespace(val, sizeof(val));
 		replaceAll(text, "{namespace}", val);
-		replaceAll(text, "{class}", current_object?current_object->oclass->name:"");
+		replaceAll(text, "{class}", this->current_object?this->current_object->oclass->name:"");
 		replaceAll(text, "{gridlabd}", global_execdir);
 		replaceAll(text, "{hostname}", global_hostname); 
 		replaceAll(text, "{hostaddr}", global_hostaddr); 
@@ -1184,4 +1173,208 @@ bool parser::alternate_value(string& text) {
 		return true;
 	}
 	return false;
+}
+
+int parser::linear_transform(string valueString, TRANSFORMSOURCE *xstype, void **source, double *scale, double *bias, OBJECT *from)
+{
+    char *_p = valueString.data();
+	START;
+	if WHITE ACCEPT;
+	/* scale * schedule_name [+ bias]  */
+	if (TERM(functional(HERE,scale)) && (WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE, xstype, source, from))))
+	{	
+		if ((WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,bias)))) { ACCEPT; }
+		else { *bias = 0;	ACCEPT;}
+		DONE;
+	}
+	OR
+	/* scale * schedule_name [- bias]  */
+	if (TERM(functional(HERE,scale)) &&( WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,xstype, source,from))))
+	{
+		if ((WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,bias)))) { *bias *= -1; ACCEPT; }
+		else { *bias = 0;	ACCEPT;}
+		DONE;
+	}
+	OR
+	/* schedule_name [* scale] [+ bias]  */
+	if (TERM(transform_source(HERE,xstype,source,from)))
+	{
+		if ((WHITE,LITERAL("*")) && (WHITE,TERM(functional(HERE,scale)))) { ACCEPT; }
+		else { ACCEPT; *scale = 1;}
+		if ((WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,bias)))) { ACCEPT; DONE; }
+	 	OR if ((WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,bias)))) { *bias *= -1; ACCEPT; DONE}
+		else { *bias = 0;	ACCEPT;}
+		DONE;
+	}
+	OR
+	/* bias + scale * schedule_name  */
+	if (TERM(functional(HERE,bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(functional(HERE,scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,xstype, source,from))))
+	{
+		ACCEPT;
+		DONE;
+	}
+	OR
+	/* bias - scale * schedule_name  */
+	if (TERM(functional(HERE,bias)) && (WHITE,LITERAL("-")) && (WHITE,TERM(functional(HERE,scale))) && (WHITE,LITERAL("*")) && (WHITE,TERM(transform_source(HERE,xstype, source,from))))
+	{
+		*scale *= -1;
+		ACCEPT;
+		DONE;
+	}
+	OR
+	/* bias + schedule_name [* scale] */
+	if (TERM(functional(HERE,bias)) && (WHITE,LITERAL("+")) && (WHITE,TERM(transform_source(HERE,xstype, source,from))))
+	{
+		if (WHITE,LITERAL("*") && WHITE,TERM(functional(HERE,scale))) { ACCEPT; }
+		else { ACCEPT; *scale = 1;}
+		DONE;
+	}
+	OR
+	/* bias - schedule_name [* scale] */
+	if (TERM(functional(HERE,bias)) && WHITE,LITERAL("-") && WHITE,TERM(transform_source(HERE,xstype, source,from)))
+	{
+		if ((WHITE,LITERAL("*")) && (WHITE,TERM(functional(HERE,scale)))) { ACCEPT; *scale *= -1; }
+		else { ACCEPT; *scale = 1;}
+		DONE;
+	}
+	REJECT;
+	DONE;
+}
+
+int parser::transform_source(PARSER, TRANSFORMSOURCE *xstype, void **source, OBJECT *from)
+{
+	SCHEDULE *sch;
+	START;
+	if WHITE ACCEPT;
+	if (TERM(schedule_ref(HERE,&sch)))
+	{
+		*source = (void*)&(sch->value);
+		*xstype = XS_SCHEDULE;
+		ACCEPT;
+	}
+	else if (TERM(property_ref(HERE,xstype,source,from)))
+	{	ACCEPT; }
+	else
+	{	REJECT; }
+	DONE;
+}
+
+int parser::schedule_ref(PARSER, SCHEDULE **sch)
+{
+	char name[64];
+	START;
+	if WHITE ACCEPT;
+	if (TERM(dashed_name(HERE,name,sizeof(name))))
+	{
+		ACCEPT;
+		if (((*sch)=schedule_find_byname(name))==nullptr)
+			REJECT;
+	}
+	else
+		REJECT;
+	DONE;
+}
+
+int parser::property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *from)
+{
+	FULLNAME oname;
+	PROPERTYNAME pname;
+	START;
+	if WHITE ACCEPT;
+	if (TERM(name(HERE,oname,sizeof(oname))) && LITERAL(".") && TERM(dotted_name(HERE,pname,sizeof(pname))))
+	{
+		OBJECT *obj = (strcmp(oname,"this")==0 ? from : object_find_name(oname));
+
+		// object isn't defined yet
+		if (obj==nullptr)
+		{
+			// add to unresolved list
+			char id[1024];
+			sprintf(id,"%s.%s",oname,pname);
+			*ref = (void*)add_unresolved(from,PT_double,nullptr,from->oclass,id,this->filename.data(),UR_TRANSFORM);
+			ACCEPT;
+		}
+		else 
+		{
+			PROPERTY *prop = object_get_property(obj,pname,nullptr);
+			if (prop==nullptr)
+			{
+				output_error_raw("property '%s' of object '%s' not found", oname, pname);
+				REJECT;
+			}
+			else if (prop->ptype==PT_double)
+			{
+				*ref = (void*)object_get_addr(obj,pname); 
+				*xstype = XS_DOUBLE;
+				ACCEPT;
+			}
+			else if (prop->ptype==PT_complex)
+			{
+				// TODO support R,I parts
+				*ref = (void*)object_get_addr(obj,pname); // get R part only
+				*xstype = XS_COMPLEX;
+				ACCEPT;
+			}
+			else if (prop->ptype==PT_loadshape)
+			{
+                loadshape *ls = static_cast<loadshape *>(object_get_addr(obj, pname));
+				*ref = &(ls->load);
+				*xstype = XS_LOADSHAPE;
+				ACCEPT;
+			}
+			else if (prop->ptype==PT_enduse)
+			{
+                enduse *eu = static_cast<enduse *>(object_get_addr(obj, pname));
+                *ref = &(eu->total.Re());
+				*xstype = XS_ENDUSE;
+				ACCEPT;
+			}
+			else if ( prop->ptype==PT_random )
+			{
+                randomvar_struct *rv = static_cast<randomvar_struct *>(object_get_addr(obj, pname));
+				*ref = &(rv->value);
+				*xstype = XS_RANDOMVAR;
+				ACCEPT;
+			}
+			else
+			{
+				output_error_raw("transform '%s.%s' does not reference a double or a double container like a loadshape", oname,pname);
+				REJECT;
+			}
+		}
+	}
+	else
+	{	REJECT;	}
+	DONE;
+}
+
+UNRESOLVED *parser::add_unresolved(OBJECT *by, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file, int flags)
+{
+	UNRESOLVED *item;
+	if ( strlen(id)>=sizeof(item->id))
+	{
+		output_error("add_unresolved(...): id '%s' is too long to resolve", id);
+		return nullptr;
+	}
+    item = static_cast<UNRESOLVED *>(malloc(sizeof(UNRESOLVED)));
+	if (item==nullptr) { errno = ENOMEM; return nullptr; }
+	item->by = by;
+	item->ptype = ptype;
+	item->ref = ref;
+	item->oclass = oclass;
+	strncpy(item->id,id,sizeof(item->id));
+	if (this->first_unresolved!=nullptr && strcmp(this->first_unresolved->file,file)==0)
+	{
+		item->file = this->first_unresolved->file; // means keep using the same file
+		first_unresolved->file = nullptr;
+	}
+	else
+	{
+		item->file = (char*)malloc(strlen(file)+1);
+		strcpy(item->file,file);
+	}
+	item->next = first_unresolved;
+	item->flags = flags;
+	first_unresolved = item;
+	return item;
 }

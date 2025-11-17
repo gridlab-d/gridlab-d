@@ -7103,7 +7103,7 @@ STATUS loadall(char *file){
 #endif
 	else if (strcmp(ext, ".json")==0) {
 		loader json_ldr = loader();
-		load_status - json_ldr.loadall_glm_roll(filename);
+		load_status = json_ldr.loadall_glm_roll(filename);
 	}
 	else
 		output_error("%s: unable to load unknown file type", filename, ext);
