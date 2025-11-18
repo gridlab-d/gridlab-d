@@ -171,6 +171,11 @@ GLOBAL char global_object_scan[32] INIT("%[^:]:%d"); /**< the format to use when
 GLOBAL int global_minimum_timestep INIT(1); /**< the minimum timestep allowed */
 GLOBAL int global_maximum_synctime INIT(60); /**< the maximum time allotted to any single sync call */
 
+/* API-specific timing globals */
+GLOBAL TIMESTAMP global_api_step_amount INIT(0); /**< the step amount for API step() function */
+GLOBAL TIMESTAMP global_api_step_target INIT(TS_NEVER); /**< the target time for API step_to() function */
+GLOBAL unsigned int global_api_clock_nanoseconds INIT(0); /**< nanoseconds component of API clock for sub-second precision */
+
 GLOBAL char global_platform[8] /**< the host operating platform */
 
 #ifdef _WIN32

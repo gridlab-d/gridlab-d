@@ -125,12 +125,17 @@ public:
 
     // Set the time step for the simulation
     GLDErrorCode set_time_step(double time_step);
+    
+    // Step the simulation to a specific timestamp
+    // Step the simulation to a specific timestamp
+    GLDErrorCode step_to(const std::string& target_time_str, double& simulation_time);
 
     //Exit simulation
     GLDErrorCode exit_gld(const std::string& filepath);
 
     private:
         std::string glm_file_path;  // Path to the GLM file
+        int selected_timestep;  // User-selected timestep in seconds (0 = use default event-driven behavior)
 };
 
 #endif // gldapi.hpp

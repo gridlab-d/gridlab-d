@@ -149,7 +149,7 @@ std::string GridLabD::get_executable_path() {
 }
 
  // constructor
-GridLabD::GridLabD() {
+GridLabD::GridLabD() : selected_timestep(0) {
     char *browser = getenv("GLBROWSER");
 
     /* set the default timezone */
@@ -571,22 +571,57 @@ GLDErrorCode GridLabD::step(double& simulation_time) {
         return init_result;
     }
     
-    // Store the current global clock before stepping
-    TIMESTAMP prev_clock = global_clock;
-    
-    // Execute a single simulation step
-    STATUS result = exec_step();
-    
-    if (result == FAILED) {
-        printf("Error occurred during simulation step\n");
+    // If selected_timestep is 0, use default event-driven behavior (single step)
+    if (selected_timestep == 0) {
+        printf("Using default event-driven stepping (selected_timestep = 0)\n");
+        TIMESTAMP prev_clock = global_clock;
+        
+        STATUS result = exec_step();
+        
+        if (result == FAILED) {
+            printf("Error occurred during simulation step\n");
+            simulation_time = (double)global_clock;
+            return GLD_OPERATION_FAILED;
+        }
+        
         simulation_time = (double)global_clock;
-        return GLD_OPERATION_FAILED;
+        printf("Stepped from %.2f to %.2f (advanced to next event)\n", 
+               (double)prev_clock, simulation_time);
+        return GLD_SUCCESS;
+    }
+    
+    // Otherwise, use the selected_timestep to advance by fixed duration
+    TIMESTAMP start_clock = global_clock;
+    TIMESTAMP target_clock = start_clock + selected_timestep;
+    
+    printf("Stepping from time %.2f to target %.2f (step size: %d seconds)\n", 
+           (double)start_clock, (double)target_clock, selected_timestep);
+    
+    // Keep stepping until we reach the target time
+    while (global_clock < target_clock) {
+        TIMESTAMP prev_clock = global_clock;
+        
+        // Execute a single simulation step
+        STATUS result = exec_step();
+        
+        if (result == FAILED) {
+            printf("Error occurred during simulation step\n");
+            simulation_time = (double)global_clock;
+            return GLD_OPERATION_FAILED;
+        }
+        
+//         printf("  Internal step: %.2f -> %.2f\n", (double)prev_clock, (double)global_clock);
+        
+        // Check if we've reached or passed the target
+        if (global_clock >= target_clock) {
+            break;
+        }
     }
     
     // Update the simulation time
     simulation_time = (double)global_clock;
     
-    printf("Stepped from time %.2f to %.2f\n", (double)prev_clock, simulation_time);
+    printf("Completed step: advanced from %.2f to %.2f\n", (double)start_clock, simulation_time);
     
     return GLD_SUCCESS;
 }
@@ -618,9 +653,15 @@ GLDErrorCode GridLabD::set_time(const std::string& timestamp) {
 
 // Get current simulation time
 GLDErrorCode GridLabD::get_time(std::string& current_time) {
-    current_time = "2025-06-12T12:00:00";
-    printf("Getting current time: %s\n", current_time.c_str());
-    return GLD_SUCCESS;
+    char buffer[64];
+    if (convert_from_timestamp(global_clock, buffer, sizeof(buffer)) > 0) {
+        current_time = buffer;
+        printf("Getting current time: %s\n", current_time.c_str());
+        return GLD_SUCCESS;
+    } else {
+        printf("Error: Failed to convert timestamp\n");
+        return GLD_OPERATION_FAILED;
+    }
 }
 
 // Set application mode
@@ -636,11 +677,77 @@ GLDErrorCode GridLabD::set_time_step(double time_step) {
         return GLD_OPERATION_FAILED;
     }
     
-    // Convert to TIMESTAMP units (seconds to internal time units)
-    // GridLAB-D uses integer TIMESTAMP, so convert double seconds to integer
-    global_minimum_timestep = static_cast<int>(time_step);
+    // Store the user-selected timestep
+    // This is separate from global_minimum_timestep to avoid interfering with GridLAB-D's core behavior
+    selected_timestep = static_cast<int>(time_step);
     
-    printf("Setting minimum simulation time step to: %d seconds\n", global_minimum_timestep);
+    printf("Setting API timestep to: %d seconds (global_minimum_timestep unchanged at %d)\n", 
+           selected_timestep, global_minimum_timestep);
     return GLD_SUCCESS;
 }
 
+
+// Step the simulation to a specific target timestamp
+GLDErrorCode GridLabD::step_to(const std::string& target_time_str, double& simulation_time) {
+    printf("Stepping to target time: %s\n", target_time_str.c_str());
+    
+    // Ensure simulation is initialized
+    GLDErrorCode init_result = ensure_simulation_initialized();
+    if (init_result != GLD_SUCCESS) {
+        simulation_time = (double)global_clock;
+        return init_result;
+    }
+    
+    // Convert the ISO 8601 string to a TIMESTAMP with sub-second support
+    unsigned int target_nanoseconds = 0;
+    double target_time_dbl = 0.0;
+    TIMESTAMP target_clock = convert_to_timestamp_delta(target_time_str.c_str(), &target_nanoseconds, &target_time_dbl);
+    
+    if (target_clock == TS_INVALID) {
+        printf("Error: Invalid timestamp string: %s\n", target_time_str.c_str());
+        simulation_time = (double)global_clock;
+        return GLD_OPERATION_FAILED;
+    }
+    
+    TIMESTAMP start_clock = global_clock;
+    
+    // Check if target is in the past (compare as doubles for sub-second precision)
+    double current_time_dbl = (double)global_clock + (double)global_api_clock_nanoseconds / 1e9;
+    if (target_time_dbl <= current_time_dbl) {
+        char start_buffer[64];
+        convert_from_timestamp(start_clock, start_buffer, sizeof(start_buffer));
+        printf("Warning: Target time %s is not after current time %s\n", 
+               target_time_str.c_str(), start_buffer);
+        simulation_time = current_time_dbl;
+        return GLD_SUCCESS;
+    }
+    
+    char start_buffer[64];
+    convert_from_timestamp(start_clock, start_buffer, sizeof(start_buffer));
+    printf("Stepping from %s to target %s\n", start_buffer, target_time_str.c_str());
+    
+    // Keep stepping until we reach or pass the target time (with sub-second precision)
+    while (true) {
+        current_time_dbl = (double)global_clock + (double)global_api_clock_nanoseconds / 1e9;
+        
+        if (current_time_dbl >= target_time_dbl) {
+            break;
+        }
+        
+        // Execute a single simulation step
+        STATUS result = exec_step();
+        
+        if (result == FAILED) {
+            printf("Error occurred during simulation step\n");
+            simulation_time = current_time_dbl;
+            return GLD_OPERATION_FAILED;
+        }
+    }
+    
+    simulation_time = (double)global_clock + (double)global_api_clock_nanoseconds / 1e9;
+    char final_buffer[64];
+    convert_from_timestamp(global_clock, final_buffer, sizeof(final_buffer));
+    printf("Reached time %s (target was %s)\n", final_buffer, target_time_str.c_str());
+    
+    return GLD_SUCCESS;
+}

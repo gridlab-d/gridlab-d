@@ -5,6 +5,15 @@ project(gridlabd_python_bindings)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Determine library extension based on platform
+if(APPLE)
+    set(LIB_EXT "dylib")
+elseif(WIN32)
+    set(LIB_EXT "dll")
+else()
+    set(LIB_EXT "so")
+endif()
+
 # Find required packages
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 find_package(nanobind CONFIG REQUIRED)

@@ -136,3 +136,4 @@ python_bindings/wheels/
 
 # Virtual env
 python_bindings/env
+docs/

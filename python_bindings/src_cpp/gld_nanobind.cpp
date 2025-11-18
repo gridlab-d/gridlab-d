@@ -96,6 +96,11 @@ NB_MODULE(gridlabd_core, m) {
             return nb::make_tuple(code, current_time);
         }, "Get the current simulation time")
         .def("set_time_step", &GridLabD::set_time_step, nb::arg("time_step"), "Set the simulation time step")
+        .def("step_to", [](GridLabD& self, const std::string& target_time_str) {
+            double simulation_time = 0.0;
+            GLDErrorCode code = self.step_to(target_time_str, simulation_time);
+            return nb::make_tuple(code, simulation_time);
+        }, nb::arg("target_time_str"), "Step the simulation to a specific timestamp (ISO 8601 string)")
         .def("save_checkpoint", &GridLabD::save_checkpoint, nb::arg("save_path"), nb::arg("mode") = GLD_CHECKPOINT_MODE_SAVE, "Save the simulation state")
         .def("load_checkpoint", &GridLabD::load_checkpoint, nb::arg("file_path"), "Load a previously saved simulation state")
         .def("exit_gld", &GridLabD::exit_gld, nb::arg("filepath"), "Shutdown the simulation")
