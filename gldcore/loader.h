@@ -16,6 +16,7 @@
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <queue>
 #include <string>
 #include <regex>
 #include <unordered_map>
@@ -38,16 +39,15 @@ private:
     OBJECT *currentObject = nullptr;
     MODULE *currentModule = nullptr;
     string convert(json value);
+    queue<string> included_files;
     STATUS loadObject(const string className, json objInstance);
     STATUS loadSetIndex(OBJECT *obj, OBJECTNUM id);
     STATUS objectProperties(CLASS *oClass, OBJECT *obj, const string propName, string propValue);
-    char *format_object(OBJECT *obj);
     int isInt(PROPERTYTYPE pt);
     double loadLatitude(char *buffer);
     double loadLongitude(char *buffer);
     int set_flags(OBJECT *obj, char *propval);
-    STATUS parseJsonModel(void);
-       
+
 public:
     bool open_file(string file_name);
     STATUS loadDirective();

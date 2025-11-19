@@ -1,16 +1,18 @@
 #include "loader.h"
 
-char * loader::format_object(OBJECT *obj)
-{
-    string buffer = "(unidentified)";
-    buffer = std::format("{} ({}:{})", obj->name==nullptr?buffer:obj->name, obj->oclass->name, obj->id);
-    return buffer.data();
-}
-
 bool loader::open_file(string file_name)
 {
 	ifstream file(file_name, std::ios::in);
-    if (!file.is_open()) 
+
+	std::filesystem::path filePath = file_name;
+	if (filePath.extension() != ".json")
+    {
+		output_error("%s: is not a json file", file_name.c_str());
+        std::cout << "ERROR : File not Opened, non json file!" << std::endl;
+        return false;
+	}
+
+	if (!file.is_open()) 
     {
 		output_error("%s: unable to read stream", file_name.c_str());
         std::cout << "ERROR : File not Opened, Error while opening the file!" << std::endl;
@@ -49,34 +51,46 @@ STATUS loader::loadDirectives()
         {
             break;
         }
-        for (auto& [key, value] : directive.items())
+        if (name == "#include" && directive.is_array())
         {
-            bool oldstrict = global_strictnames;
-            if (name == "#set")
+			for (string path : directive)
             {
-                global_strictnames = true;
+				this->included_files.push(path);
             }
-            else if (name == "#define")
+        }
+        else
+        {
+            for (auto& [key, value] : directive.items())
             {
-                global_strictnames = false;
-            }
-            propvalue = convert(value);	
-            result = global_setvar((const char*)key.c_str(), propvalue.data());
-            global_strictnames = strncmp(key.c_str(), "strictnames", 12)==0 ? global_strictnames : oldstrict;
-            if (result==FAILED)
-            {
+                bool oldstrict = global_strictnames;   
                 if (name == "#set")
                 {
-                    output_error_raw("%s: %s set term not found",filename,key);
-                    break;
+                    global_strictnames = true;
                 }
                 else if (name == "#define")
                 {
-                    output_error_raw("%s: %s define term not found",filename,key);
+                    global_strictnames = false;
+                }
+                propvalue = convert(value);
+                result = global_setvar((const char*)key.c_str(), propvalue.data());
+                global_strictnames = strncmp(key.c_str(), "strictnames", 12)==0 ? global_strictnames : oldstrict;
+                if (result==FAILED)
+                {
+                    if (name == "#set")
+                    {
+                        output_error_raw("%s: %s set term not found",filename,key);
+                        break;
+                    }
+                    else if (name == "#define")
+                    {
+                        output_error_raw("%s: %s define term not found",filename,key);
+                        break;
+                    }
                 }
             }
         }
-	}
+    }
+    return result;
 }
 
 STATUS loader::loadClasses()
@@ -131,7 +145,8 @@ STATUS loader::loadClock()
         {
             const char* ts = value.get_ref<const std::string&>().c_str();
 			TIMESTAMP tsval = convert_to_timestamp(ts);
-			if (tsval == TS_NEVER) {
+			if (tsval == TS_NEVER)
+            {
 				output_error_raw("%s: expected time value in the clock", ts);
                 rv = FAILED;
                 break;
@@ -160,7 +175,8 @@ STATUS loader::loadClock()
     }
 }
 
-bool loader::module_properties(MODULE *mod, json properties) {
+bool loader::module_properties(MODULE *mod, json properties)
+{
 	CLASS *oClass;
     bool rv = true;
 	for (auto& [name, value] : properties.items())
@@ -181,7 +197,8 @@ bool loader::module_properties(MODULE *mod, json properties) {
 			if (strlen(classname)>0 && strlen(classname)>65)
             {
 				oClass = class_get_class_from_classname(classname);
-				if (oClass==nullptr || oClass->module!=mod) {
+				if (oClass==nullptr || oClass->module!=mod)
+                {
 					output_error_raw("%s: module does not implement class '%s'", mod->name, classname);
                     rv = false;
                     break;
@@ -285,7 +302,8 @@ STATUS loader::loadObject(const string className, json objInstance)
                 rv = FAILED;
                 break;
             }
-            else if (obj == nullptr || obj == &nameObj) {
+            else if (obj == nullptr || obj == &nameObj)
+            {
                 output_error("['objects']['%s']: create failed name object %s:%d\n'%s'", className.c_str(), id,
                              objInstance.dump(4));
                 rv = FAILED;
@@ -322,7 +340,8 @@ STATUS loader::loadObject(const string className, json objInstance)
         {
             break;
         }
-        if (id == -1) {
+        if (id == -1)
+        {
             id2--;
         }
         else
@@ -333,13 +352,16 @@ STATUS loader::loadObject(const string className, json objInstance)
     return rv;
 }
 
-STATUS loader::loadSetIndex(OBJECT *obj, OBJECTNUM id) {
-    if (!this->objectIndexInitialized) {
+STATUS loader::loadSetIndex(OBJECT *obj, OBJECTNUM id)
+{
+    if (!this->objectIndexInitialized)
+    {
         this->objectIndex.reserve(500);
         this->objectLinked.reserve(500);
         this->objectIndexInitialized = true;
     }
-    if (this->objectIndex.find(id) != objectIndex.end()) {
+    if (this->objectIndex.find(id) != objectIndex.end())
+    {
         output_error("Duplicate object key detected for object id '%d'", id);
         return FAILED;
     }
@@ -348,7 +370,8 @@ STATUS loader::loadSetIndex(OBJECT *obj, OBJECTNUM id) {
     return SUCCESS;
 }
 
-STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, string propValue) {
+STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, string propValue)
+{
     char1024 propertyValue = "";
     double dval;
     gld::complex cval;
@@ -359,7 +382,8 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
 	double scale=1,bias=0;
 	UNIT *unit=nullptr;
     LOADMETHOD *method = class_get_loadmethod(obj->oclass, propName.c_str());
-    if (method != nullptr) {
+    if (method != nullptr)
+    {
         if (this->parse.value(propValue, propertyValue, sizeof(propertyValue)))
         {
             if (method->call(obj, propertyValue) != 1)
@@ -393,7 +417,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
 				}
 				else if (object_set_complex_by_name(obj, propName.c_str(), cval)==0)
 				{
-					output_error_raw("property %s of %s could not be set to '%g%+gi'", propName.c_str(), format_object(obj), cval.Re(), cval.Im());
+					output_error_raw("property %s of %s could not be set to '%g%+gi'", propName.c_str(), this->parse.format_object(obj), cval.Re(), cval.Im());
 					return FAILED;
 				}
 				else
@@ -410,7 +434,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             }
             else if (object_set_double_by_name(obj, propName.c_str(), dval) == 0)
             {
-                output_error_raw("property %s of %s could not be set to '%g'", propName, format_object(obj), dval);
+                output_error_raw("property %s of %s could not be set to '%g'", propName, this->parse.format_object(obj), dval);
                 return FAILED;
             }
             else
@@ -427,7 +451,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             }
             else if (object_set_double_by_name(obj, propName.c_str(), dval) == 0)
             {
-                output_error_raw("property %s of %s could not be set to '%g'", propName, format_object(obj), dval);
+                output_error_raw("property %s of %s could not be set to '%g'", propName, this->parse.format_object(obj), dval);
                 return FAILED;
             }
             {
@@ -468,7 +492,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 }
                 if(rv == 0)
                 {
-                    output_error_raw("property %s of %s could not be set to '%g'", propName.c_str(), format_object(obj), ival);
+                    output_error_raw("property %s of %s could not be set to '%g'", propName.c_str(), this->parse.format_object(obj), ival);
                     return FAILED;
                 }
                 else
@@ -621,7 +645,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             {	void *addr = object_get_addr(obj,propName.c_str());
                 if (addr==nullptr)
                 {
-                    output_error_raw("unable to get %s member %s", format_object(obj), propName.c_str());
+                    output_error_raw("unable to get %s member %s", this->parse.format_object(obj), propName.c_str());
                     return FAILED;
                 }
                 else
@@ -634,7 +658,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             {
                 if (object_set_value_by_name(obj, propName.data(), propValue.data())==0)
                 {
-                    output_error_raw("property %s of %s could not be set to '%s'", propName.c_str(), format_object(obj), propValue.c_str());
+                    output_error_raw("property %s of %s could not be set to '%s'", propName.c_str(), this->parse.format_object(obj), propValue.c_str());
                     return FAILED;
                 }
                 else
@@ -773,20 +797,63 @@ STATUS loader::loadall_glm_roll(char *file_name)
  /**< a pointer to the first character in the file name string */
  	OBJECT *obj, *first = object_get_first();
  	errno = 0;
-	STATUS status=FAILED;
-	this->filename = file_name;
-	std::string name(file_name);
-	if (this->open_file(name))
+	STATUS status=SUCCESS;
+    this->included_files.push(string(file_name));
+	while (!this->included_files.empty())
     {
-//		status = this->loadIncludes();
-		status = this->loadDirectives();
-		status = this->loadClock();
-//		status = this->loadClasses();
-		status = this->loadModules();
-		status = this->loadObjects();
-		status = this->loadSchedules();
+        this->filename = this->included_files.front();
+        this->included_files.pop();
+		if (this->open_file(this->filename))
+        {
+            if (this->jsn.empty())
+            {
+                output_error("input file, %s, is empty!", this->filename.c_str());
+                status = FAILED;
+                break;
+            }
+			if (this->loadDirectives() == FAILED)
+            {
+                status = FAILED;
+                break;
+            }
+			if (this->loadClock() == FAILED)
+            {
+                status = FAILED;
+                break;
+            }
+			if (this->loadModules() == FAILED)
+            {
+                status = FAILED;
+                break;
+            }
+            if (this->loadClasses() == FAILED)
+            {
+                status = FAILED;
+                break;
+            }
+            if (this->loadSchedules())
+            {
+                status = FAILED;
+                break;
+            }
+			if (this->loadObjects() == FAILED)
+            {
+                status = FAILED;
+                break;
+            }
+		} else {
+            status = FAILED;
+            break;
+        }
 	}
-    
+    if (status == FAILED)
+    {
+        return FAILED;
+    }
+    else if (this->parse.load_resolve_all() == FAILED)
+    {
+        return FAILED;
+    }
  	/* establish ranks */
  	for (obj=first?first:object_get_first(); obj!=nullptr; obj=obj->next)
     {
