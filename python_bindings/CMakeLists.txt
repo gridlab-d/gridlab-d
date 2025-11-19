@@ -133,6 +133,13 @@ endif()
 install(FILES ${GRIDLABD_DATA_FILES}
         DESTINATION gridlabd/share)
 
+# Install dummy bin/gridlabd so set_install_root() can work automatically
+# The C++ code expects bin/gridlabd to exist for proper path resolution
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/prebuilt/bin/gridlabd")
+    install(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/prebuilt/bin/gridlabd
+            DESTINATION gridlabd/bin)
+endif()
+
 # Install all GridLAB-D module libraries (.so files) so users can load modules
 # These are needed for simulations (residential, climate, powerflow, etc.)
 file(GLOB GRIDLABD_MODULES "${GRIDLABD_LIB_DIR}/*.so")
@@ -141,13 +148,6 @@ if(GRIDLABD_MODULES)
             DESTINATION gridlabd/lib)
 endif()
 
-# Also create a modules directory as an alias (GridLAB-D may look in multiple places)
-install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/gridlabd/lib)")
-
-# Install all GridLAB-D module libraries
-file(GLOB MODULE_LIBS "${GRIDLABD_LIB_DIR}/*.${LIB_EXT}")
-install(FILES ${MODULE_LIBS}
-        DESTINATION gridlabd/lib)
 
 # Create a custom target to fix RPATHs after installation
 if(UNIX AND NOT APPLE)

@@ -168,14 +168,30 @@ GLOBAL COMPLEXCONVERFORMAT global_complex_output_format INIT(CNF_DEFAULT);	/**< 
 GLOBAL char global_object_format[32] INIT("%s:%d"); 
 GLOBAL char global_object_scan[32] INIT("%[^:]:%d"); /**< the format to use when scanning for object ids */
 
+
 GLOBAL int global_minimum_timestep INIT(1); /**< the minimum timestep allowed */
 GLOBAL int global_maximum_synctime INIT(60); /**< the maximum time allotted to any single sync call */
 
-/* API-specific timing globals */
-GLOBAL TIMESTAMP global_api_step_amount INIT(0); /**< the step amount for API step() function */
-GLOBAL TIMESTAMP global_api_step_target INIT(TS_NEVER); /**< the target time for API step_to() function */
-GLOBAL unsigned int global_api_clock_nanoseconds INIT(0); /**< nanoseconds component of API clock for sub-second precision */
+/* API-specific timing globals for Python bindings and external API control */
+/* NOTE: These globals are reserved for coordinating API-level time control across instances.
+ * Currently, the GridLabD class uses instance variables (e.g., selected_timestep) for 
+ * per-instance control, which is preferred for object-oriented encapsulation.
+ * These globals are available for future enhancements where cross-instance coordination
+ * or global API state tracking is needed. */
 
+GLOBAL TIMESTAMP global_api_step_amount INIT(0); 
+/**< Reserved for future use: Could track the last step amount requested via API step() function.
+ * Currently unused - step() uses instance variable selected_timestep instead. */
+
+GLOBAL TIMESTAMP global_api_step_target INIT(TS_NEVER); 
+/**< Reserved for future use: Could track the target time for API step_to() operations.
+ * Currently unused - step_to() calculates target_clock locally. */
+
+GLOBAL unsigned int global_api_clock_nanoseconds INIT(0); 
+/**< Nanoseconds component for sub-second precision in API time operations.
+ * Currently referenced in step_to() for sub-second time comparisons, but always remains 0
+ * since nothing updates it yet. Future enhancement: populate from timestamp conversion functions
+ * like convert_to_timestamp_delta() to enable true sub-second stepping precision. */
 GLOBAL char global_platform[8] /**< the host operating platform */
 
 #ifdef _WIN32

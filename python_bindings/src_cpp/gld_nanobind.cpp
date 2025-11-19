@@ -3,6 +3,7 @@
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/pair.h>
+#include <nanobind/stl/map.h>
 
 #include <optional>
 #include <string>
@@ -111,6 +112,25 @@ NB_MODULE(gridlabd_core, m) {
         .def("is_initialized", [](GridLabD&) {
             return true;
         }, "Return True once the object exists")
+        // Object and property access functions
+        .def("get_all_classes", &GridLabD::get_all_classes, "Get all class names in the model")
+        .def("get_objects_by_class", &GridLabD::get_objects_by_class, nb::arg("class_name"), 
+             "Get all object names of a specific class")
+        .def("get_object_properties", &GridLabD::get_object_properties, nb::arg("object_name"),
+             "Get all properties of an object as a dictionary")
+        .def("get_property", [](GridLabD& self, const std::string& object_name, const std::string& property_name) {
+            std::string value;
+            GLDErrorCode code = self.get_property(object_name, property_name, value);
+            return nb::make_tuple(code, value);
+        }, nb::arg("object_name"), nb::arg("property_name"), "Get a property value from an object")
+        .def("set_property", &GridLabD::set_property, nb::arg("object_name"), nb::arg("property_name"), nb::arg("value"),
+             "Set a property value on an object")
+        .def("get_properties_by_class", &GridLabD::get_properties_by_class, 
+             nb::arg("class_name"), nb::arg("property_name"),
+             "Get property values from all objects of a class")
+        .def("set_property_by_class", &GridLabD::set_property_by_class,
+             nb::arg("class_name"), nb::arg("property_name"), nb::arg("value"),
+             "Set property value on all objects of a class")
         .def("get_checkpoint_json", [](GridLabD& self, const std::string& filepath) {
             Json::Value value = self.get_checkpoint_json(filepath);
             Json::StreamWriterBuilder builder;

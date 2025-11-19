@@ -751,3 +751,269 @@ GLDErrorCode GridLabD::step_to(const std::string& target_time_str, double& simul
     
     return GLD_SUCCESS;
 }
+
+// Get all objects of a specific class
+std::vector<std::string> GridLabD::get_objects_by_class(const std::string& class_name) {
+    std::vector<std::string> object_names;
+    
+    // Find the class by name
+    CLASS *oclass = class_get_class_from_classname(class_name.c_str());
+    if (oclass == nullptr) {
+        printf("Warning: Class '%s' not found\n", class_name.c_str());
+        return object_names;
+    }
+    
+    // Iterate through all objects
+    OBJECT *obj = object_get_first();
+    while (obj != nullptr) {
+        // Check if object belongs to the requested class
+        if (obj->oclass == oclass) {
+            // Get object name (use ID if name is empty)
+            if (obj->name != nullptr && obj->name[0] != '\0') {
+                object_names.push_back(std::string(obj->name));
+            } else {
+                // Use object ID if no name
+                char id_str[32];
+                snprintf(id_str, sizeof(id_str), "%d", obj->id);
+                object_names.push_back(std::string(id_str));
+            }
+        }
+        obj = object_get_next(obj);
+    }
+    
+    printf("Found %zu objects of class '%s'\n", object_names.size(), class_name.c_str());
+    return object_names;
+}
+
+// Get a property value from an object
+GLDErrorCode GridLabD::get_property(const std::string& object_name, const std::string& property_name, std::string& value) {
+    // Find the object by name
+    OBJECT *obj = nullptr;
+    
+    // Try to find by name first
+    obj = object_find_name(object_name.c_str());
+    
+    // If not found by name, try to parse as ID
+    if (obj == nullptr) {
+        char *endptr;
+        long id = strtol(object_name.c_str(), &endptr, 10);
+        if (*endptr == '\0') {  // Valid integer
+            obj = object_find_by_id(static_cast<OBJECTNUM>(id));
+        }
+    }
+    
+    if (obj == nullptr) {
+        printf("Error: Object '%s' not found\n", object_name.c_str());
+        return GLD_OPERATION_FAILED;
+    }
+    
+    // Get the property value
+    char buffer[1024];
+    int result = object_get_value_by_name(obj, property_name.c_str(), buffer, sizeof(buffer));
+    
+    if (result == 0) {
+        printf("Error: Failed to get property '%s' from object '%s'\n", 
+               property_name.c_str(), object_name.c_str());
+        return GLD_OPERATION_FAILED;
+    }
+    
+    value = std::string(buffer);
+    return GLD_SUCCESS;
+}
+
+// Set a property value on an object
+GLDErrorCode GridLabD::set_property(const std::string& object_name, const std::string& property_name, const std::string& value) {
+    // Find the object by name
+    OBJECT *obj = nullptr;
+    
+    // Try to find by name first
+    obj = object_find_name(object_name.c_str());
+    
+    // If not found by name, try to parse as ID
+    if (obj == nullptr) {
+        char *endptr;
+        long id = strtol(object_name.c_str(), &endptr, 10);
+        if (*endptr == '\0') {  // Valid integer
+            obj = object_find_by_id(static_cast<OBJECTNUM>(id));
+        }
+    }
+    
+    if (obj == nullptr) {
+        printf("Error: Object '%s' not found\n", object_name.c_str());
+        return GLD_OPERATION_FAILED;
+    }
+    
+    // Set the property value
+    char value_copy[1024];
+    strncpy(value_copy, value.c_str(), sizeof(value_copy) - 1);
+    value_copy[sizeof(value_copy) - 1] = '\0';
+    
+    int result = object_set_value_by_name(obj, const_cast<char*>(property_name.c_str()), value_copy);
+    
+    if (result == 0) {
+        printf("Error: Failed to set property '%s' on object '%s' to value '%s'\n", 
+               property_name.c_str(), object_name.c_str(), value.c_str());
+        return GLD_OPERATION_FAILED;
+    }
+    
+    printf("Set property '%s.%s' = '%s'\n", object_name.c_str(), property_name.c_str(), value.c_str());
+    return GLD_SUCCESS;
+}
+
+// Set a property value on all objects of a specific class
+GLDErrorCode GridLabD::set_property_by_class(const std::string& class_name, const std::string& property_name, const std::string& value) {
+    // Find the class by name
+    CLASS *oclass = class_get_class_from_classname(class_name.c_str());
+    if (oclass == nullptr) {
+        printf("Error: Class '%s' not found\n", class_name.c_str());
+        return GLD_OPERATION_FAILED;
+    }
+    
+    // Prepare value buffer
+    char value_copy[1024];
+    strncpy(value_copy, value.c_str(), sizeof(value_copy) - 1);
+    value_copy[sizeof(value_copy) - 1] = '\0';
+    
+    int success_count = 0;
+    int failure_count = 0;
+    
+    // Iterate through all objects and set property for matching class
+    OBJECT *obj = object_get_first();
+    while (obj != nullptr) {
+        if (obj->oclass == oclass) {
+            int result = object_set_value_by_name(obj, const_cast<char*>(property_name.c_str()), value_copy);
+            if (result != 0) {
+                success_count++;
+            } else {
+                failure_count++;
+                const char *obj_name = (obj->name != nullptr && obj->name[0] != '\0') ? obj->name : "(unnamed)";
+                printf("Warning: Failed to set property '%s' on object '%s' (id=%d)\n", 
+                       property_name.c_str(), obj_name, obj->id);
+            }
+        }
+        obj = object_get_next(obj);
+    }
+    
+    printf("Set property '%s.%s' = '%s' on %d objects (%d succeeded, %d failed)\n", 
+           class_name.c_str(), property_name.c_str(), value.c_str(), 
+           success_count + failure_count, success_count, failure_count);
+    
+    if (success_count == 0 && failure_count > 0) {
+        return GLD_OPERATION_FAILED;
+    }
+    
+    return GLD_SUCCESS;
+}
+
+// Get property values from all objects of a specific class
+std::map<std::string, std::string> GridLabD::get_properties_by_class(const std::string& class_name, const std::string& property_name) {
+    std::map<std::string, std::string> property_map;
+    
+    // Find the class by name
+    CLASS *oclass = class_get_class_from_classname(class_name.c_str());
+    if (oclass == nullptr) {
+        printf("Warning: Class '%s' not found\n", class_name.c_str());
+        return property_map;
+    }
+    
+    // Iterate through all objects
+    OBJECT *obj = object_get_first();
+    while (obj != nullptr) {
+        if (obj->oclass == oclass) {
+            // Get object name or ID
+            std::string obj_name;
+            if (obj->name != nullptr && obj->name[0] != '\0') {
+                obj_name = std::string(obj->name);
+            } else {
+                char id_str[32];
+                snprintf(id_str, sizeof(id_str), "%d", obj->id);
+                obj_name = std::string(id_str);
+            }
+            
+            // Get property value
+            char buffer[1024];
+            int result = object_get_value_by_name(obj, property_name.c_str(), buffer, sizeof(buffer));
+            
+            if (result != 0) {
+                property_map[obj_name] = std::string(buffer);
+            } else {
+                printf("Warning: Failed to get property '%s' from object '%s'\n", 
+                       property_name.c_str(), obj_name.c_str());
+            }
+        }
+        obj = object_get_next(obj);
+    }
+    
+    printf("Retrieved property '%s.%s' from %zu objects\n", 
+           class_name.c_str(), property_name.c_str(), property_map.size());
+    
+    return property_map;
+}
+
+// Get all available class names
+std::vector<std::string> GridLabD::get_all_classes() {
+    std::vector<std::string> class_names;
+    
+    // Iterate through all classes
+    CLASS *oclass = class_get_first_class();
+    while (oclass != nullptr) {
+        if (oclass->name != nullptr) {
+            class_names.push_back(std::string(oclass->name));
+        }
+        oclass = oclass->next;
+    }
+    
+    printf("Found %zu classes in the model\n", class_names.size());
+    return class_names;
+}
+
+// Get all properties of a specific object
+std::map<std::string, std::string> GridLabD::get_object_properties(const std::string& object_name) {
+    std::map<std::string, std::string> property_map;
+    
+    // Find the object by name
+    OBJECT *obj = nullptr;
+    
+    // Try to find by name first
+    obj = object_find_name(object_name.c_str());
+    
+    // If not found by name, try to parse as ID
+    if (obj == nullptr) {
+        char *endptr;
+        long id = strtol(object_name.c_str(), &endptr, 10);
+        if (*endptr == '\0') {  // Valid integer
+            obj = object_find_by_id(static_cast<OBJECTNUM>(id));
+        }
+    }
+    
+    if (obj == nullptr) {
+        printf("Error: Object '%s' not found\n", object_name.c_str());
+        return property_map;
+    }
+    
+    // Add basic object info
+    property_map["__class__"] = std::string(obj->oclass->name);
+    property_map["__id__"] = std::to_string(obj->id);
+    if (obj->name != nullptr && obj->name[0] != '\0') {
+        property_map["__name__"] = std::string(obj->name);
+    }
+    
+    // Iterate through all properties of the object's class
+    PROPERTY *prop = class_get_first_property(obj->oclass);
+    while (prop != nullptr) {
+        // Get property value
+        char buffer[1024];
+        int result = object_get_value_by_name(obj, prop->name, buffer, sizeof(buffer));
+        
+        if (result != 0) {
+            property_map[std::string(prop->name)] = std::string(buffer);
+        }
+        
+        prop = prop->next;
+    }
+    
+    printf("Retrieved %zu properties from object '%s' (class: %s)\n", 
+           property_map.size() - 3, object_name.c_str(), obj->oclass->name);  // -3 for the __meta__ properties
+    
+    return property_map;
+}

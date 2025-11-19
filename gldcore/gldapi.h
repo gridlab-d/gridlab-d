@@ -6,6 +6,7 @@
 #include <any>
 #include <memory>
 #include <vector>
+#include <map>
 #include <optional>
 #include <json/json.h> //jsoncpp library
 
@@ -132,6 +133,56 @@ public:
 
     //Exit simulation
     GLDErrorCode exit_gld(const std::string& filepath);
+
+    // Object and property access functions
+    
+    /** Get all object names of a specific class
+     * @param class_name The name of the class to query
+     * @return Vector of object names
+     */
+    std::vector<std::string> get_objects_by_class(const std::string& class_name);
+    
+    /** Get a property value from an object
+     * @param object_name The name of the object
+     * @param property_name The name of the property
+     * @param value Output string to store the property value
+     * @return Error code indicating success or failure
+     */
+    GLDErrorCode get_property(const std::string& object_name, const std::string& property_name, std::string& value);
+    
+    /** Set a property value on an object
+     * @param object_name The name of the object
+     * @param property_name The name of the property
+     * @param value The value to set (as string)
+     * @return Error code indicating success or failure
+     */
+    GLDErrorCode set_property(const std::string& object_name, const std::string& property_name, const std::string& value);
+    
+    /** Set a property value on all objects of a specific class
+     * @param class_name The name of the class
+     * @param property_name The name of the property
+     * @param value The value to set (as string)
+     * @return Error code indicating success or failure
+     */
+    GLDErrorCode set_property_by_class(const std::string& class_name, const std::string& property_name, const std::string& value);
+    
+    /** Get property values from all objects of a specific class
+     * @param class_name The name of the class
+     * @param property_name The name of the property
+     * @return Map of object name to property value
+     */
+    std::map<std::string, std::string> get_properties_by_class(const std::string& class_name, const std::string& property_name);
+    
+    /** Get all available class names in the loaded model
+     * @return Vector of class names
+     */
+    std::vector<std::string> get_all_classes();
+    
+    /** Get all property names and values for a specific object
+     * @param object_name The name or ID of the object
+     * @return Map of property name to property value
+     */
+    std::map<std::string, std::string> get_object_properties(const std::string& object_name);
 
     private:
         std::string glm_file_path;  // Path to the GLM file
