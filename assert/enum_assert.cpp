@@ -79,7 +79,7 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	gld_property target_prop(get_parent(), get_target().c_str());
 	if (!target_prop.is_valid() || target_prop.get_type() != PT_enumeration)
 	{
-		gl_error("Specified target %s for %s is not valid.", get_target(), get_parent()->get_name());
+		gl_error("Specified target %s for %s is not valid.", get_target().c_str(), get_parent()->get_name());
 		/*  TROUBLESHOOT
 		Check to make sure the target you are specifying is a published variable for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or
@@ -96,7 +96,7 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 		if (value != x)
 		{
 			gl_error("Assert failed on %s: %s=%d did not match %d",
-					 get_parent()->get_name(), get_target(), x, value);
+					 get_parent()->get_name(), get_target().c_str(), x, value);
 			// Log expected failures for error tests
 			if (is_error_test)
 			{
@@ -116,7 +116,7 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 		if (value == x)
 		{
 			gl_error("Assert failed on %s: %s=%d did match %d",
-					 get_parent()->get_name(), get_target(), x, value);
+					 get_parent()->get_name(), get_target().c_str(), x, value);
 			// Log expected failures for error tests
 			if (is_error_test)
 			{
@@ -163,7 +163,7 @@ EXPORT SIMULATIONMODE update_enum_assert(OBJECT *obj, TIMESTAMP t0, unsigned int
 
 			if (x == nullptr)
 			{
-				gl_error("Specified target %s for %s is not valid.", da->get_target(), gl_name(obj->parent, buff, 64));
+				gl_error("Specified target %s for %s is not valid.", da->get_target().c_str(), gl_name(obj->parent, buff, 64));
 				/*  TROUBLESHOOT
 				Check to make sure the target you are specifying is a published variable for the object
 				that you are pointing to.  Refer to the documentation of the command flag --modhelp, or
@@ -202,7 +202,7 @@ EXPORT SIMULATIONMODE update_enum_assert(OBJECT *obj, TIMESTAMP t0, unsigned int
 						sprintf(datebuff, "ERROR    %.09f : ", del_clock);
 
 					// Actual error part
-					sprintf(error_output_buff, "Assert failed on %s - %s (%d) did not match %d", gl_name(obj->parent, buff, 64), da->get_target(), *x, da->get_value());
+					sprintf(error_output_buff, "Assert failed on %s - %s (%d) did not match %d", gl_name(obj->parent, buff, 64), da->get_target().c_str(), *x, da->get_value());
 
 					// Send it out
 					gl_output("%s%s", datebuff, error_output_buff);
@@ -245,7 +245,7 @@ EXPORT SIMULATIONMODE update_enum_assert(OBJECT *obj, TIMESTAMP t0, unsigned int
 						sprintf(datebuff, "ERROR    %.09f : ", del_clock);
 
 					// Actual error part
-					sprintf(error_output_buff, "Assert failed on %s - %s (%d) did not match %d", gl_name(obj->parent, buff, 64), da->get_target(), *x, da->get_value());
+					sprintf(error_output_buff, "Assert failed on %s - %s (%d) did not match %d", gl_name(obj->parent, buff, 64), da->get_target().c_str(), *x, da->get_value());
 
 					// Send it out
 					gl_output("%s%s", datebuff, error_output_buff);
