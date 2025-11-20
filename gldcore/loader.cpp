@@ -173,6 +173,7 @@ STATUS loader::loadClock()
             }
         }
     }
+    return rv;
 }
 
 bool loader::module_properties(MODULE *mod, json properties)
@@ -320,7 +321,7 @@ STATUS loader::loadObject(const string className, json objInstance)
                 rv = FAILED;
                 break;
             }
-            if (id!=-1 && this->loadSetIndex(obj, (OBJECTNUM)id) == FAILED)
+            if (id!=-1 && this->parse.load_set_index(obj, (OBJECTNUM)id) == FAILED)
             {
                 output_error("['objects']['%s']: create failed for object %s:%d\n'%s'", className.c_str(), id,
                              objInstance.dump(4));
@@ -352,24 +353,6 @@ STATUS loader::loadObject(const string className, json objInstance)
     return rv;
 }
 
-STATUS loader::loadSetIndex(OBJECT *obj, OBJECTNUM id)
-{
-    if (!this->objectIndexInitialized)
-    {
-        this->objectIndex.reserve(500);
-        this->objectLinked.reserve(500);
-        this->objectIndexInitialized = true;
-    }
-    if (this->objectIndex.find(id) != objectIndex.end())
-    {
-        output_error("Duplicate object key detected for object id '%d'", id);
-        return FAILED;
-    }
-    objectIndex[id] = obj;
-    objectLinked[id] = false;
-    return SUCCESS;
-}
-
 STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, string propValue)
 {
     char1024 propertyValue = "";
@@ -382,6 +365,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
 	double scale=1,bias=0;
 	UNIT *unit=nullptr;
     LOADMETHOD *method = class_get_loadmethod(obj->oclass, propName.c_str());
+    STATUS status = SUCCESS;
     if (method != nullptr)
     {
         if (this->parse.value(propValue, propertyValue, sizeof(propertyValue)))
@@ -390,15 +374,14 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             {
                 output_error("Load method '%s/%s::%s' failed on value '%s'", obj->oclass->module->name,
                              obj->oclass->name, propName.c_str(), propertyValue.get_string());
-                return FAILED;
+                status = FAILED;
             }
-            return SUCCESS;
         }
         else
         {
             output_error_raw("unable to parse value for load method '%s/%s::%s'", obj->oclass->module->name,
                              obj->oclass->name, propName.c_str());
-            return FAILED;
+            status = FAILED;
         }
     }
     else
@@ -413,16 +396,16 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0 && unit_convert_complex(unit, prop->unit, &cval) == 0)
 				{
 					output_error_raw("units of value are incompatible with units of property %s, cannot convert from %s to %s", propName.c_str(), unit->name, prop->unit->name);
-					return FAILED;
+					status = FAILED;
 				}
 				else if (object_set_complex_by_name(obj, propName.c_str(), cval)==0)
 				{
 					output_error_raw("property %s of %s could not be set to '%g%+gi'", propName.c_str(), this->parse.format_object(obj), cval.Re(), cval.Im());
-					return FAILED;
+					status = FAILED;
 				}
 				else
                 {
-					return SUCCESS;
+					status = FAILED;
                 }
         }
         else if (prop != nullptr && prop->ptype == PT_double && this->parse.expression(propValue, &dval, &unit, obj) > 0)
@@ -430,16 +413,12 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit, prop->unit, &dval) == 0)
             {
                 output_error_raw("units of value are incompatible with units of property %s, cannot convert from %s to %s", propName.c_str(), unit->name, prop->unit->name);
-                return FAILED;
+                status = FAILED;
             }
             else if (object_set_double_by_name(obj, propName.c_str(), dval) == 0)
             {
                 output_error_raw("property %s of %s could not be set to '%g'", propName, this->parse.format_object(obj), dval);
-                return FAILED;
-            }
-            else
-            {
-                return SUCCESS;
+                status = FAILED;
             }
         }
         else if (prop != nullptr && prop->ptype == PT_double && this->parse.functional_unit(propValue, &dval, &unit) > 0)
@@ -447,15 +426,12 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit, prop->unit, &dval) == 0)
             {
                 output_error_raw("units of value are incompatible with units of property %s, cannot convert from %s to %s", propName.c_str(), unit->name, prop->unit->name);
-                return FAILED;
+                status = FAILED;
             }
             else if (object_set_double_by_name(obj, propName.c_str(), dval) == 0)
             {
                 output_error_raw("property %s of %s could not be set to '%g'", propName, this->parse.format_object(obj), dval);
-                return FAILED;
-            }
-            {
-                return SUCCESS;
+                status = FAILED;
             }
         }
         else if(prop != nullptr && isInt(prop->ptype) && this->parse.functional_unit(propValue, &dval, &unit) > 0)
@@ -468,7 +444,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             if(unit != nullptr && prop->unit != nullptr && strcmp((char *)(unit), "") != 0 && unit_convert_ex(unit, prop->unit, &dval) == 0)
             {
                 output_error_raw("units of value are incompatible with units of property %s, cannot convert from %s to %s", propName.c_str(), unit->name, prop->unit->name);
-                return FAILED;
+                status = FAILED;
             }
             else
             {
@@ -488,16 +464,12 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                         break;
                     default:
                         output_error("function_int operating on a non-integer (we shouldn't be here)");
-                        return FAILED;
+                        rv = 0;
                 }
                 if(rv == 0)
                 {
                     output_error_raw("property %s of %s could not be set to '%g'", propName.c_str(), this->parse.format_object(obj), ival);
-                    return FAILED;
-                }
-                else
-                {
-                    return SUCCESS;
+                    status = FAILED;
                 }
             }
         }
@@ -513,7 +485,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                                       static_cast<SCHEDULE *>(xstype == XS_SCHEDULE ? source : 0)))
             {
                 output_error_raw("schedule transform could not be created - %s", errno?strerror(errno):"(no details)");
-                return FAILED;
+                status = FAILED;
             }
             else if ( source!=nullptr )
             {
@@ -523,7 +495,6 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                     /* source was the unresolved entry, for now it will be the transform itself */
                     parse.first_unresolved->ref = (void*)transform_getnext(nullptr);
                 }
-                return SUCCESS;
             }
 		}
         else if (this->parse.alternate_value(propValue) == true)
@@ -534,18 +505,13 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 if (propName.compare("root"))
                 {
                     obj->parent = nullptr;
-                    return SUCCESS;
                 }
                 else if (propName.compare("parent"))
                 {
                     if (parse.add_unresolved(obj,PT_object,(void*)&obj->parent,oClass,propValue.data(),filename.data(),UR_RANKS)==nullptr)
                     {
                         output_error_raw("unable to add unresolved reference to parent %s", propValue.c_str());
-                        return FAILED;
-                    }
-                    else
-                    {
-                        return SUCCESS;
+                        status = FAILED;
                     }
                 }
                 else if (propName.compare("rank"))
@@ -553,77 +519,57 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                     if ((obj->rank = stoi(propValue)) < 0)
                     {
                         output_error_raw("unable to set rank to %s", propValue.c_str());
-                        return FAILED;
-                    }
-                    else
-                    {
-                        return SUCCESS;
+                        status = FAILED;
                     }
                 }
                 else if (propName.compare("clock"))
                 {
                     obj->clock = stoll(propValue); // @todo convert_to_timestamp should be used
-                    return SUCCESS;
                 }
                 else if (propName.compare("valid_to"))
                 {
                     obj->valid_to = stoll(propValue); // @todo convert_to_timestamp should be used
-                    return SUCCESS;
                 }
                 else if (propName.compare("schedule_skew"))
                 {
                     obj->schedule_skew = stoll(propValue);
-                    return SUCCESS;
                 }
                 else if (propName.compare("latitude"))
                 {
                     obj->latitude = this->loadLatitude(propValue.data());
-                    return SUCCESS;
                 }
                 else if (propName.compare("longitude"))
                 {
                     obj->longitude = this->loadLongitude(propValue.data());
-                    return SUCCESS;
                 }
                 else if (propName.compare("in"))
                 {
                     obj->in_svc = convert_to_timestamp_delta(propValue.c_str(), &obj->in_svc_micro, &obj->in_svc_double);
-                    return SUCCESS;
                 }
                 else if (propName.compare("out"))
                 {
                     obj->out_svc = convert_to_timestamp_delta(propValue.c_str(), &obj->out_svc_micro, &obj->out_svc_double);
-                    return SUCCESS;
                 }
                 else if (propName.compare("name"))
                 {
                     if (object_set_name(obj,propValue.data())==nullptr)
                     {
                         output_error_raw("property name %s could not be used", propValue.c_str());
-                        return FAILED;
-                    }
-                    else
-                    {
-                        return SUCCESS;
+                        status = FAILED;
                     }
                 }
                 else if (propName.compare("heartbeat"))
                 {
                     obj->heartbeat = convert_to_timestamp(propValue.c_str());
-                    return SUCCESS;
                 }
                 else if (propName.compare("groupid")){
                     strncpy(obj->groupid, propValue.c_str(), sizeof(obj->groupid));
                 }
                 else if (propName.compare("flags"))
                 {
-                    if(set_flags(obj,propValue.data()))
+                    if(this->set_flags(obj,propValue.data()) == 0)
                     {
-                        return FAILED;
-                    }
-                    else
-                    {
-                        return SUCCESS;
+                        status = FAILED;
                     }
                 }
                 else if (propName.compare("library"))
@@ -633,12 +579,11 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                         An attempt to use the <b>library</b> GLM directive was made.  Library directives
                         are not supported yet.
                         */
-                    return SUCCESS;
                 }
                 else
                 {
                     output_error_raw("property %s is not defined in class %s", propName.c_str(), oClass->name);
-                    return FAILED;
+                    status = FAILED;
                 }
             }
             else if (prop->ptype==PT_object)
@@ -646,12 +591,11 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 if (addr==nullptr)
                 {
                     output_error_raw("unable to get %s member %s", this->parse.format_object(obj), propName.c_str());
-                    return FAILED;
+                    status = FAILED;
                 }
                 else
                 {
                     parse.add_unresolved(obj, PT_object, addr, oClass, propValue.data(), this->filename.data(), UR_NONE);
-                    return SUCCESS;
                 }
             }
             else 
@@ -659,15 +603,17 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 if (object_set_value_by_name(obj, propName.data(), propValue.data())==0)
                 {
                     output_error_raw("property %s of %s could not be set to '%s'", propName.c_str(), this->parse.format_object(obj), propValue.c_str());
-                    return FAILED;
-                }
-                else
-                {
-                    return SUCCESS;
+                    status = FAILED;
                 }
             }
         }
+        else
+        {
+            output_error("Encountered invalid property value pairing! property %s of %s with value of %s", propName.c_str(), this->parse.format_object(obj), propValue.c_str());
+            status = FAILED;
+        }
     }
+    return status;
 }
 
 int loader::isInt(PROPERTYTYPE pt){
@@ -678,7 +624,7 @@ int loader::isInt(PROPERTYTYPE pt){
 	}
 }
 
-double load_latitude(char *buffer)
+double loader::loadLatitude(char *buffer)
 {
 	char oname[128], pname[128];
 	double v = convert_to_latitude(buffer);
@@ -696,7 +642,7 @@ double load_latitude(char *buffer)
 	return v;
 }
 
-double load_longitude(char *buffer)
+double loader::loadLongitude(char *buffer)
 {
 	char oname[128], pname[128];
 	double v = convert_to_longitude(buffer);
@@ -714,7 +660,7 @@ double load_longitude(char *buffer)
 	return v;
 }
 
-int set_flags(OBJECT *obj, char *propval)
+int loader::set_flags(OBJECT *obj, char *propval)
 {
 	extern KEYWORD oflags[];
 	if (convert_to_set(propval, &(obj->flags), object_flag_property()) <= 0)

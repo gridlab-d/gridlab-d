@@ -19,7 +19,6 @@
 #include <queue>
 #include <string>
 #include <regex>
-#include <unordered_map>
 #include <nlohmann/json.hpp>  // Requires JSON for Modern C++ library
 
 using namespace std;
@@ -33,15 +32,11 @@ private:
 	parser parse = parser();
     json jsn;
     string filename;
-    unordered_map<size_t, OBJECT*> objectIndex;
-    unordered_map<size_t, bool> objectLinked;
-    bool objectIndexInitialized = false;
     OBJECT *currentObject = nullptr;
     MODULE *currentModule = nullptr;
     string convert(json value);
     queue<string> included_files;
     STATUS loadObject(const string className, json objInstance);
-    STATUS loadSetIndex(OBJECT *obj, OBJECTNUM id);
     STATUS objectProperties(CLASS *oClass, OBJECT *obj, const string propName, string propValue);
     int isInt(PROPERTYTYPE pt);
     double loadLatitude(char *buffer);

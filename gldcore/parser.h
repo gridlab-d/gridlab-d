@@ -13,6 +13,7 @@
 
 #include <nlohmann/json.hpp>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 
@@ -20,17 +21,18 @@ using namespace std;
 using json = nlohmann::json;
 
 #ifdef __cplusplus
-typedef struct s_unresolved {
-	OBJECT *by;
-	PROPERTYTYPE ptype;
-	void *ref;
-	int flags;
-	CLASS *oclass;
-	char256 id;
-	char *file;
-	unsigned int line;
-	struct s_unresolved *next;
-} UNRESOLVED;
+
+typedef struct s_unresolved_reference {
+    OBJECT *by;
+    PROPERTYTYPE ptype;
+    void *ref;
+    int flags;
+    CLASS *oclass;
+    char256 id;
+    char *file;
+    unsigned int line;
+    struct s_unresolved_reference *next;
+} UNRESOLVED_REF;
 
 class parser {
 
@@ -56,7 +58,10 @@ private:
 public:
     string filename = "";
     OBJECT *current_object = nullptr;
-    UNRESOLVED *first_unresolved = nullptr;
+    UNRESOLVED_REF *first_unresolved = nullptr;
+    unordered_map<size_t, OBJECT*> objectIndex;
+    unordered_map<size_t, bool> objectLinked;
+    bool objectIndexInitialized = false;
 	int findLastIndex(string str, char x);
     int replaceAll(string& s, string const& toReplace, string const& replaceWith);
 	string extractBetween(string str, char startChar, char endChar);
@@ -154,7 +159,15 @@ public:
     int transform_source(PARSER, TRANSFORMSOURCE *xstype, void **source, OBJECT *from);
     int schedule_ref(PARSER, SCHEDULE **sch);
     int property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *from);
-    UNRESOLVED *add_unresolved(OBJECT *obj, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file, int flags);
+    UNRESOLVED_REF *add_unresolved(OBJECT *obj, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file, int flags);
+    int load_resolve_all(void);
+    int resolve_list(UNRESOLVED_REF *item);
+    int resolve_object(UNRESOLVED_REF *item, char *filename);
+    char *format_object(OBJECT *obj);
+    int resolve_double(UNRESOLVED_REF *item, char *context);
+    STATUS load_set_index(OBJECT *obj, OBJECTNUM id);
+    OBJECT *load_get_index(OBJECTNUM id);
+    OBJECT *get_next_unlinked(CLASS *oclass);
 };
 
 #endif // C++
