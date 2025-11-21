@@ -157,8 +157,11 @@ class Entity:
             Serialize the value, trying to convert strings that represent numbers
             back to numeric types.
             """
+            # Handle Item objects by extracting their value
+            if isinstance(value, Item):
+                return serialize(value.value)
             # If the value is a string, attempt to convert it to a number
-            if isinstance(value, str):
+            elif isinstance(value, str):
                 try:
                     # Attempt to convert to an integer first
                     return int(value)
