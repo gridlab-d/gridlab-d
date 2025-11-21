@@ -10,6 +10,8 @@ import os
 import sys
 import json
 import argparse
+from pathlib import Path
+from typing import List, Tuple
 
 # Add the current directory to the Python path to ensure local imports work
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -24,48 +26,75 @@ except (ImportError, ValueError):
     # Fall back to direct imports (for standalone usage)
     from glm_parser import GLMModel, GLMConditionalError
 
-def glm_to_json(glmName="TE_CHALLENGE"):
+def glm_to_json(glm_name, input_dir=None, output_dir=None):
     """Convert a GLM file to JSON format.
     
-    Reads a GridLAB-D model file and converts it to two JSON files:
+    Reads a GridLAB-D model file and converts it to JSON format.
     - A values file containing the actual model data and instances
     - A schema file containing the structure and metadata
     
     Args:
-        glmName (str): Name of the GLM file (without .glm extension).
-                      Defaults to "TE_CHALLENGE".
+        glm_name (str): Name of the GLM file (without .glm extension).
+        input_dir (str, optional): Directory containing the GLM file.
+                                   Defaults to 'glmFiles/' in current directory.
+        output_dir (str, optional): Directory for output JSON file.
+                                    Defaults to 'output/' in current directory,
+                                    or same as input_dir if input_dir is specified.
                       
-    Note:
-        The GLM file should be located in the 'glmFiles/' directory relative
-        to the current working directory. Output files are saved to the 
-        'output/' directory.
+    Returns:
+        bool: True if successful, False otherwise.
     """
     model_file = GLMModel()
-    filePath = os.path.join(os.getcwd(), 'glmFiles', glmName + ".glm")
+    if not glm_name:
+        print("\n❌ Error: No GLM file name provided")
+        print("\n💡 Run with --help for usage information")
+        return False
+    
+    # Determine input directory
+    if input_dir:
+        input_path = Path(input_dir)
+    else:
+        input_path = Path.cwd() / 'glmFiles'
+    
+    filePath = input_path / f"{glm_name}.glm"
     
     try:
-        success = model_file.read_model(filePath)
+        success = model_file.read_model(str(filePath))
     except GLMConditionalError as e:
-        print(f"\nError: {str(e)}")
+        print(f"\n❌ Error: {str(e)}")
+        print("\n💡 Run with --help for usage information")
         return False
     except FileNotFoundError:
-        print(f"\n❌ Error: GLM file not found")
+        print("\n❌ Error: GLM file not found")
         print(f"📄 Expected location: {filePath}")
-        print(f"💡 Please ensure the GLM file exists in the 'glmFiles/' directory")
+        if not input_dir:
+            print("💡 Please ensure the GLM file exists in the 'glmFiles/' directory")
+            print("   or use --dir to specify a custom directory")
+        else:
+            print(f"💡 Please ensure the GLM file exists in: {input_path}")
+        print("\n💡 Run with --help for usage information")
         return False
     except Exception as e:
         print(f"\n❌ Error reading GLM file: {str(e)}")
         print(f"📄 File: {filePath}")
+        print("\n💡 Run with --help for usage information")
         return False
     
     if success:
-        # Define the output directory and file path
-        output_dir = os.path.join(os.getcwd(), 'output')
-        output_file_path = os.path.join(output_dir, glmName + '_values.json')
-
+        # Determine output directory
+        # If input_dir was specified, output to same directory by default
+        # Otherwise use 'output/' directory
+        if output_dir:
+            out_path = Path(output_dir)
+        elif input_dir:
+            out_path = input_path
+        else:
+            out_path = Path.cwd() / 'output'
+        
         # Create the output directory if it doesn't exist
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        out_path.mkdir(parents=True, exist_ok=True)
+        
+        output_file_path = out_path / f"{glm_name}.json"
 
         # Extract class blueprints from parsed GLM definitions
         classes = getattr(model_file, 'class_definitions', {})
@@ -191,36 +220,205 @@ def glm_to_json(glmName="TE_CHALLENGE"):
         with open(output_file_path, 'w', encoding='utf-8') as op:
             json.dump(jsonEntity, op, ensure_ascii=False, indent=2)
         
-        print(f"✅ Successfully converted GLM to JSON")
+        print("✅ Successfully converted GLM to JSON")
         print(f"📄 Input:  {filePath}")
         print(f"📄 Output: {output_file_path}")
         return True
     else:
-        print(f"\n❌ Error: Failed to read GLM file")
+        print("\n❌ Error: Failed to read GLM file")
         print(f"📄 File: {filePath}")
-        print(f"💡 Please check the file format and try again")
+        print("💡 Please check the file format and try again")
+        print("\n💡 Run with --help for usage information")
         return False
+
+def find_glm_files(base_dir, autotest_only=True):
+    """Find .glm files in the directory tree.
+    
+    Args:
+        base_dir (str or Path): Base directory to search from
+        autotest_only (bool): If True, only search in subdirectories within autotest directories.
+                             If False, search all directories recursively.
         
-        # Disabled schema creation code below
-        # Define the output directory and file path
-        output_dir = os.path.join(os.getcwd(), 'output')
-        output_file_path = os.path.join(output_dir, glmName + '_schema.json')
+    Returns:
+        List[Path]: List of paths to .glm files
+    """
+    base_path = Path(base_dir)
+    glm_files = []
+    
+    if autotest_only:
+        # Find all directories named 'autotest'
+        for autotest_dir in base_path.rglob('autotest'):
+            if autotest_dir.is_dir():
+                # Find all .glm files in subdirectories of autotest (not in autotest itself)
+                for glm_file in autotest_dir.rglob('*.glm'):
+                    # Only include if the file is in a subdirectory, not directly in autotest/
+                    if glm_file.parent != autotest_dir:
+                        glm_files.append(glm_file)
+    else:
+        # Find all .glm files recursively
+        glm_files = list(base_path.rglob('*.glm'))
+    
+    return sorted(glm_files)
 
-        # Create the output directory if it doesn't exist
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-        op = open(output_file_path, 'w', encoding='utf-8')
-        json.dump(model_file.entities_to_schema(), op, ensure_ascii=False, indent=2)
-        op.close()
+def convert_batch_files(search_dir=None, output_dir=None):
+    """Convert GLM files to JSON in batch mode.
+    
+    Args:
+        search_dir (str, optional): If specified, recursively search this directory for all .glm files.
+                                   If not specified, search autotest directories from repository root.
+        output_dir (str, optional): If specified, all JSON files go here instead of in place.
+        
+    Returns:
+        Tuple[int, int, List[str]]: (total_count, success_count, error_files)
+    """
+    # Determine search behavior
+    if search_dir:
+        # Custom directory: search all .glm files recursively
+        search_path = Path(search_dir)
+        autotest_only = False
+        print(f"🔍 Recursively searching for all .glm files under: {search_path}")
+    else:
+        # Default: search autotest directories from repository root
+        search_path = Path(__file__).parent.parent.parent
+        autotest_only = True
+        print(f"🔍 Searching for .glm files in autotest directories under: {search_path}")
+    
+    # Find .glm files
+    glm_files = find_glm_files(search_path, autotest_only=autotest_only)
+    
+    if not glm_files:
+        if autotest_only:
+            print("❌ No .glm files found in autotest directories")
+        else:
+            print("❌ No .glm files found")
+        return 0, 0, []
+    
+    if autotest_only:
+        print(f"📁 Found {len(glm_files)} .glm files in autotest directories\n")
+    else:
+        print(f"📁 Found {len(glm_files)} .glm files\n")
+    
+    success_count = 0
+    error_files = []
+    
+    for idx, glm_file in enumerate(glm_files, 1):
+        glm_name = glm_file.stem  # filename without extension
+        glm_dir = glm_file.parent
+        
+        # Determine output location
+        if output_dir:
+            out_dir = output_dir
+        else:
+            # Output in the same directory as the .glm file
+            out_dir = str(glm_dir)
+        
+        # Display progress on a single line that updates
+        rel_path = glm_file.relative_to(search_path)
+        # Clear line and show progress
+        print(f"\r\033[K🔄 [{idx}/{len(glm_files)}] Converting: {rel_path}", end='', flush=True)
+        
+        # Convert using existing function, passing full path as input_dir
+        # Temporarily suppress output from glm_to_json during batch mode
+        import io
+        from contextlib import redirect_stdout, redirect_stderr
+        
+        f = io.StringIO()
+        with redirect_stdout(f), redirect_stderr(f):
+            result = glm_to_json(glm_name, str(glm_dir), out_dir)
+        
+        if result:
+            success_count += 1
+            # Show success on the same line
+            print(f"\r\033[K✅ [{idx}/{len(glm_files)}] Converted: {rel_path}", end='', flush=True)
+        else:
+            error_files.append(str(rel_path))
+            # Show error and move to next line since errors need to be visible
+            print(f"\r\033[K❌ [{idx}/{len(glm_files)}] Failed: {rel_path}")
+    
+    # Move to next line after all conversions complete
+    print()
+    
+    return len(glm_files), success_count, error_files
 
         # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Convert GLM file to JSON format')
-    parser.add_argument('glmName', nargs='?', default='TE_CHALLENGE', 
-                       help='Name of the GLM file (without .glm extension). Default: TE_CHALLENGE')
+    parser = argparse.ArgumentParser(
+        description='Convert GridLAB-D model files (.glm) to JSON format',
+        epilog='''
+Examples:
+  Single file conversion:
+    %(prog)s mymodel
+        Convert glmFiles/mymodel.glm to output/mymodel.json
+    
+    %(prog)s mymodel --dir /path/to/models
+        Convert /path/to/models/mymodel.glm to /path/to/models/mymodel.json
+    
+    %(prog)s mymodel --dir /path/to/models --output /path/to/output
+        Convert /path/to/models/mymodel.glm to /path/to/output/mymodel.json
+  
+  Batch conversion:
+    %(prog)s --batch
+        Find and convert all .glm files in autotest directories from project root (in place)
+    
+    %(prog)s --batch --search /custom/path
+        Recursively find and convert ALL .glm files under /custom/path (in place)
+    
+    %(prog)s --batch --output /path/to/output
+        Convert autotest .glm files and save all to specified output directory
+    
+    %(prog)s --batch --search /custom/path --output /path/to/output
+        Recursively convert all .glm files and save to output directory
+        ''',
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    
+    parser.add_argument('glm_name',
+                        nargs='?',
+                        metavar='GLM_NAME',
+                        help='Name of the GLM file (without .glm extension)')
+    
+    parser.add_argument('-d', '--dir',
+                        dest='input_dir',
+                        metavar='DIR',
+                        help='Directory containing the GLM file (default: glmFiles/)')
+    
+    parser.add_argument('-o', '--output',
+                        dest='output_dir',
+                        metavar='DIR',
+                        help='Directory for output JSON file (default: output/, or same as --dir if specified)')
+    
+    parser.add_argument('--batch',
+                        action='store_true',
+                        help='Batch mode: convert all .glm files in autotest directories (default), or all .glm files recursively if --search is specified')
+    
+    parser.add_argument('--search',
+                        dest='search_dir',
+                        metavar='DIR',
+                        help='Directory to recursively search for .glm files (used with --batch). When specified, searches ALL .glm files, not just autotest directories')
     
     args = parser.parse_args()
-    result = glm_to_json(args.glmName)
-    if result is False:
+    
+    # Handle batch conversion mode
+    if args.batch:
+        total, success, errors = convert_batch_files(args.search_dir, args.output_dir)
+        
+        print("=" * 60)
+        print("📊 CONVERSION SUMMARY")
+        print("=" * 60)
+        print(f"Total files found:     {total}")
+        print(f"Successfully converted: {success}")
+        print(f"Failed:                {len(errors)}")
+        
+        if errors:
+            sys.exit(1)
+        else:
+            print("\n✅ All files converted successfully!")
+            sys.exit(0)
+    
+    # Handle single file conversion mode
+    if not args.glm_name:
+        parser.error("GLM_NAME is required when not using --batch")
+    
+    conversion_result = glm_to_json(args.glm_name, args.input_dir, args.output_dir)
+    if conversion_result is False:
         sys.exit(1)

@@ -1264,7 +1264,7 @@ class GLMModel:
             
             # Inform user about converted include files
             if converted_includes:
-                print(f"\n📝 Converted {len(converted_includes)} include file(s) from .glm to .json:")
+                print(f"\n📝 Renamed{len(converted_includes)} include file(s) from .glm to .json:")
                 for orig, new in converted_includes:
                     print(f"   {orig} → {new}")
                 print("⚠️  Please ensure these files have been converted to JSON format.\n")
