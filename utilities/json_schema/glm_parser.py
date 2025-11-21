@@ -865,7 +865,7 @@ class GLMModel:
         # handle assigned object ids
         m_id = re.search(r":([^{}]+)\{", line)
         if m_id:
-            name = _type + ":" + m_id.group(1).strip()
+            name = _type + "_" + m_id.group(1).strip()
             params['id'] = m_id.group(1).strip()
         # Collect comments
         comments = []
