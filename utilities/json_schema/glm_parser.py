@@ -1,19 +1,14 @@
 """
 GLM parsing logic and model management.
 
-This module provides the core functionality for parsing GridLAB-D model files
-(.glm) and converting them to structured data representations. It handles
-the parsing of various GLM constructs including objects, modules, schedules,
-directives, and comments.
+Parses GridLAB-D model files (.glm) into structured data representations and
+handles conversion to JSON format via the GLMModel class.
 
-The main class GLMModel manages the entire parsing process and maintains
-the parsed model structure with support for JSON serialization and schema
-generation.
+Supported: Objects, modules, directives (#include, #define, #set, #undef),
+legacy directives (#setenv, #binpath, etc.), schedules, classes, clock, comments.
 
-Exceptions:
-    GLMConditionalError: Raised when conditional directives (#ifdef, #ifndef, 
-        #ifexist, #if, #else, #endif) are found in GLM files. These must be 
-        removed before conversion to JSON.
+Unsupported: Conditional directives (#ifdef, #ifndef, #if, #else, #endif) will
+raise GLMConditionalError and must be resolved before conversion.
 """
 
 import os
@@ -52,30 +47,22 @@ def create_conditional_error_message(directive, line, context=""):
     )
 
 class GLMConditionalError(Exception):
-    """Exception raised when conditional directives are found in GLM files.
-    
-    This exception is raised when #ifdef, #ifndef, #ifexist, #if, or #else 
-    statements are encountered during GLM parsing, as these must be removed
-    before conversion to JSON.
+    """Raised when conditional directives (#ifdef, #ifndef, #if, #else, #endif) are
+    encountered during parsing. These must be resolved before conversion to JSON.
     """
     pass
 
 class GLMModel:
-    """Main class for parsing and managing GridLAB-D model files.
+    """Parses and manages GridLAB-D model files.
     
-    This class handles the parsing of GLM files, manages entities and objects,
-    and provides methods for converting the parsed model to JSON format.
-    It maintains collections of modules, objects, schedules, and various
-    directives found in GLM files.
+    Orchestrates GLM file parsing, maintains collections of model elements
+    (objects, modules, directives, schedules, classes), and converts to JSON.
     
+    Main methods: read_model(), entities_to_json()
     """
     
     def __init__(self):
-        """Initialize a new GLMModel instance.
-        
-        Loads class definitions from the reference JSON file and sets up
-        the basic entity structure including clock and directives entities.
-        """
+        """Initialize GLMModel and load class definitions from reference JSON."""
         self.hash = None
         self.root = None
         self.in_file = ""
@@ -239,10 +226,10 @@ class GLMModel:
             raise TypeError(f"GRIDLABD object type and/or object name {obj_type} must be a string and is not.")
 
     def entities_to_json(self):
-        """Convert all entities to JSON format.
+        """Convert all parsed entities to JSON-serializable format.
         
         Returns:
-            dict: Dictionary containing JSON representations of all entities
+            dict: JSON representations of all entities (modules, objects, directives, etc.).
         """
         diction = {}
         for name in self.module_entities:

@@ -1,9 +1,9 @@
 """
-GLM to JSON Converter.
+GLM to JSON conversion utility.
 
-This module provides functionality to convert GridLAB-D model files (.glm)
-to JSON format, generating both values and schema files for easier 
-programmatic analysis and manipulation of GridLAB-D models.
+Converts GridLAB-D model (.glm) files to JSON. Supports single file and batch
+processing with in-place progress updates. Conditional directives (#ifdef, etc.)
+are not supported and will raise GLMConditionalError.
 """
 
 import os
@@ -29,18 +29,11 @@ except (ImportError, ValueError):
 def glm_to_json(glm_name, input_dir=None, output_dir=None):
     """Convert a GLM file to JSON format.
     
-    Reads a GridLAB-D model file and converts it to JSON format.
-    - A values file containing the actual model data and instances
-    - A schema file containing the structure and metadata
-    
     Args:
-        glm_name (str): Name of the GLM file (without .glm extension).
-        input_dir (str, optional): Directory containing the GLM file.
-                                   Defaults to 'glmFiles/' in current directory.
-        output_dir (str, optional): Directory for output JSON file.
-                                    Defaults to 'output/' in current directory,
-                                    or same as input_dir if input_dir is specified.
-                      
+        glm_name (str): Name of the GLM file (without .glm extension)
+        input_dir (str, optional): Input directory (default: 'glmFiles/')
+        output_dir (str, optional): Output directory (default: 'output/' or same as input_dir)
+    
     Returns:
         bool: True if successful, False otherwise.
     """
@@ -232,15 +225,14 @@ def glm_to_json(glm_name, input_dir=None, output_dir=None):
         return False
 
 def find_glm_files(base_dir, autotest_only=True):
-    """Find .glm files in the directory tree.
+    """Find .glm files in autotest subdirectories or recursively.
     
     Args:
-        base_dir (str or Path): Base directory to search from
-        autotest_only (bool): If True, only search in subdirectories within autotest directories.
-                             If False, search all directories recursively.
+        base_dir (str or Path): Base directory to search
+        autotest_only (bool): Search only autotest/*/ (True) or all directories (False)
         
     Returns:
-        List[Path]: List of paths to .glm files
+        List[Path]: Sorted absolute paths to .glm files.
     """
     base_path = Path(base_dir)
     glm_files = []
@@ -261,12 +253,11 @@ def find_glm_files(base_dir, autotest_only=True):
     return sorted(glm_files)
 
 def convert_batch_files(search_dir=None, output_dir=None):
-    """Convert GLM files to JSON in batch mode.
+    """Convert multiple GLM files with in-place progress updates.
     
     Args:
-        search_dir (str, optional): If specified, recursively search this directory for all .glm files.
-                                   If not specified, search autotest directories from repository root.
-        output_dir (str, optional): If specified, all JSON files go here instead of in place.
+        search_dir (str, optional): Custom directory for recursive search (default: autotest/*/)
+        output_dir (str, optional): Output directory for all JSON (default: alongside GLM files)
         
     Returns:
         Tuple[int, int, List[str]]: (total_count, success_count, error_files)
