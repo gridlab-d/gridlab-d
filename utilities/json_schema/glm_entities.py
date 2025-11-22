@@ -1,36 +1,17 @@
 """
-Core data classes for GLM entities
+Core data classes for GLM entities.
+
+Defines Item (attribute with metadata) and Entity (GLM element) classes for
+representing GridLAB-D model components with JSON serialization support.
 """
 
 
 class Item:
-    """Represents an individual attribute item in a GLM entity.
-    
-    This class encapsulates a single attribute with its metadata including
-    datatype, label, unit, and value. It provides context manager support
-    and JSON serialization capabilities.
-    
-    Attributes:
-        datatype (str): The data type of the attribute (TEXT, REAL, INTEGER, etc.)
-        label (str): Human-readable description of the attribute
-        unit (str): Unit of measurement for the attribute
-        item (str): The attribute name/identifier
-        value: The actual value of the attribute
-        range_check: Optional range validation information
-    """
+    """Represents an attribute with metadata (datatype, label, unit, value)."""
     
     def __init__(self, datatype, label, unit, item, value=None, 
                  range_check=None):
-        """Initialize an Item with the given parameters.
-        
-        Args:
-            datatype (str): The data type of the attribute
-            label (str): Human-readable description
-            unit (str): Unit of measurement
-            item (str): The attribute name/identifier
-            value: The actual value (optional)
-            range_check: Range validation information (optional)
-        """
+        """Initialize an Item with datatype, label, unit, item name, value, and range_check."""
         self.datatype = datatype
         self.label = label
         self.unit = unit
@@ -83,12 +64,7 @@ class Entity:
     """
     
     def __init__(self, entity, config):
-        """Initialize an Entity with the given configuration.
-        
-        Args:
-            entity (str): Name/type of the entity
-            config: Configuration data for initializing the entity attributes
-        """
+        """Initialize an Entity with configuration data."""
         self.item_cnt = 0
         self.entity = entity
         self.instances = {}
@@ -112,17 +88,14 @@ class Entity:
             pass
 
     def add_attr(self, datatype, label, unit, item, value=None):
-        """Add the Item attribute to the Entity.
-
+        """Add an Item attribute to the Entity.
+        
         Args:
-            datatype (str): Describes the datatype of the attribute
-            label (str): Describes the attribute
-            unit (str): The unit name of the attribute
-            item (str): The name of the attribute
-            value (any): The value of the item
-            
-        Returns:
-            Item: The created Item attribute
+            datatype (str): Attribute datatype (TEXT, TEXTARRAY, INTEGER, REAL, etc.)
+            label (str): Description
+            unit (str): Unit of measurement (e.g., "V", "A")
+            item (str): Attribute name
+            value (any, optional): Initial value
         """
         val = Item(datatype, label, unit, item, value)
         setattr(self, item, val)
@@ -130,33 +103,20 @@ class Entity:
         return self.__getattribute__(item)
 
     def find_item(self, item):
-        """Find the Item from the Entity.
-
-        Args:
-            item (str): name of the attribute in the entity
-            
-        Returns:
-            Item: The found Item or None if not found
-        """
+        """Find an Item attribute by name, returns None if not found."""
         try:
             return self.__getattribute__(item)
         except AttributeError:
             return None
         
     def to_json(self):
-        """Convert the Entity to a JSON-serializable dictionary.
+        """Convert Entity to JSON-serializable dictionary.
         
-        Recursively serializes all attributes of the entity, handling
-        nested dictionaries, lists, and custom objects.
-        
-        Returns:
-            dict: A dictionary representation suitable for JSON serialization
+        Handles Item objects (extracts .value), converts numeric strings to int/float,
+        and recursively processes nested structures.
         """
         def serialize(value):
-            """
-            Serialize the value, trying to convert strings that represent numbers
-            back to numeric types.
-            """
+            """Serialize value to JSON, extracting Item.value and converting numeric strings."""
             # Handle Item objects by extracting their value
             if isinstance(value, Item):
                 return serialize(value.value)
