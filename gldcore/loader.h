@@ -34,7 +34,7 @@ private:
     string filename;
     OBJECT *currentObject = nullptr;
     MODULE *currentModule = nullptr;
-    string convert(json value);
+    STATUS convert(json value, string &out);
     queue<string> included_files;
     STATUS loadObject(const string className, json objInstance);
     STATUS objectProperties(CLASS *oClass, OBJECT *obj, const string propName, string propValue);
@@ -54,7 +54,7 @@ public:
     STATUS loadObjects();
     STATUS loadSchedules();
     STATUS loadDirectives();
-    STATUS loadall_glm_roll(char *file_name);
+    STATUS loadall_json_roll(char *file_name);
 };
 
 #endif // C++

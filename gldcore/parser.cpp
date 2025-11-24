@@ -112,9 +112,14 @@ void parser::syntax_error(PARSER)
         context[15] = '\0';
     }
 	if (strlen(context)>0)
-		output_error_raw("syntax error at '%s...'", context);
+    {
+		output_error_raw("parser::syntax_error() parsing file, %s: syntax error at '%s...'", this->filename.c_str(),
+                         context);
+    }
 	else
-		output_error_raw("syntax error");
+    {
+		output_error_raw("parser::syntax_error() parsing file, %s.", this->filename.c_str());
+    }
 }
 
 int parser::white(PARSER)
@@ -143,7 +148,7 @@ int parser::pattern(PARSER, const char *pattern, char *result, int size)
 	char format[64];
 	START;
 	sprintf(format, "%%%s", pattern);
-	if (sscanf(_p, format, result)==1)
+	if (sscanf(_p, format, result) == 1)
 		_n = (int)strlen(result);
 	DONE;
 }
@@ -151,7 +156,7 @@ int parser::pattern(PARSER, const char *pattern, char *result, int size)
 int parser::scan(PARSER, char *format, char *result, int size)
 {
 	START;
-	if (sscanf(_p, format, result)==1)
+	if (sscanf(_p, format, result) == 1)
 		_n = (int)strlen(result);
 	DONE;
 }
@@ -230,8 +235,11 @@ int parser::property_list(PARSER, char *result, int size)
 	/* names cannot start with a digit */
 	if (isdigit(*_p))
         return 0;
-	while (size > 1 && isalpha(*_p) || isdigit(*_p) || *_p == ',' || *_p == ' ' || *_p == '.' || *_p == '_' || *_p == ':')
+	while (size > 1 && isalpha(*_p) || isdigit(*_p) || *_p == ',' || *_p == ' ' || *_p == '.' || *_p == '_'
+          || *_p == ':')
+    {
         COPY(result);
+    }
 	result[_n] = '\0';
 	DONE;
 }
@@ -241,8 +249,11 @@ int parser::unitspec(PARSER, UNIT **unit)
 	char result[1024];
 	size_t size = sizeof(result);
 	START;
-	while (size > 1 && isalpha(*_p) || isdigit(*_p) || *_p == '$' || *_p == '%' || *_p == '*' || *_p == '/' || *_p == '^')
+	while (size > 1 && isalpha(*_p) || isdigit(*_p) || *_p == '$' || *_p == '%' || *_p == '*' || *_p == '/'
+           || *_p == '^')
+    {
         COPY(result);
+    }
 	result[_n] = '\0';
     try
     {
@@ -269,12 +280,14 @@ int parser::unitsuffix(PARSER, UNIT **unit)
 	{
 		if (!TERM(unitspec(HERE, unit)))
 		{
-			output_error_raw("missing valid unit after [");
+			output_error_raw("parser::unitsuffix() parsing file, %s: missing valid unit after [",
+                             this->filename.c_str());
 			REJECT;
 		}
 		if (!LITERAL("]"))
 		{
-			output_error_raw("missing ] after unit '%s'", (*unit)->name);
+			output_error_raw("parser::unitsuffix() parsing file, %s: missing ] after unit '%s'", this->filename.c_str(),
+                             (*unit)->name);
 		}
 		ACCEPT;
 		DONE;
@@ -390,7 +403,10 @@ int parser::value(string valueString, char *result, int size)
 	}
 	result[_n] = '\0';
 	if (quote&1)
-		output_warning("missing closing double quote in value text %s", valueString.c_str());
+    {
+		output_warning("parser::value() parsing file, %s: missing closing double quote in value text %s",
+                       this->filename.c_str(), valueString.c_str());
+    }
 	return (int)(_p - start);
 }
 
@@ -476,7 +492,8 @@ int parser::functional(PARSER, double *pValue)
 		double a;
 		if (rtype == RT_INVALID || nargs == 0 || (WHITE, !LITERAL("(")))
 		{
-			output_error_raw("%s is not a valid random distribution", fname.get_string());
+			output_error_raw("parser::functional() parsing file, %s: %s is not a valid random distribution",
+                             this->filename.c_str(), fname.get_string());
 			REJECT;
 		}
 		if (nargs == -1)
@@ -494,7 +511,8 @@ int parser::functional(PARSER, double *pValue)
 					else
 					{
 						// variable arg list
-						output_error_raw("expected a %s distribution term after ,", fname.get_string());
+						output_error_raw("parser::functional() parsing file, %s: expected a %s distribution term after "
+                                         ",", this->filename.c_str(), fname.get_string());
 						REJECT;
 					}
 				}
@@ -505,13 +523,15 @@ int parser::functional(PARSER, double *pValue)
 				}
 				else
 				{
-					output_error_raw("missing ) after %s distribution terms", fname.get_string());
+					output_error_raw("parser::functional() parsing file, %s: missing ) after %s distribution terms",
+                                     this->filename.c_str(), fname.get_string());
 					REJECT;
 				}
 			}
 			else
 			{
-				output_error_raw("expected first term of %s distribution", fname.get_string());
+				output_error_raw("parser::functional() parsing file, %s: expected first term of %s distribution",
+                                 this->filename.c_str(), fname.get_string());
 				REJECT;
 			}
 		}
@@ -530,7 +550,8 @@ int parser::functional(PARSER, double *pValue)
 					}
 					else
 					{
-						output_error_raw("expected ) after %s distribution term", fname.get_string());
+						output_error_raw("parser::functional() parsing file, %s: expected ) after %s distribution term",
+                                         this->filename.c_str(), fname.get_string());
 						REJECT;
 					}
 				}
@@ -543,32 +564,37 @@ int parser::functional(PARSER, double *pValue)
 					}
 					else
 					{
-						output_error_raw("missing second %s distribution term and/or )", fname.get_string());
+						output_error_raw("parser::functional() parsing file, %s: missing second %s distribution term "
+                                         "and/or )", this->filename.c_str(), fname.get_string());
 						REJECT;
 					}
 				}
 				else if (nargs == 3)
 				{
-					if ((WHITE, LITERAL(",")) && (WHITE, TERM(real_value(HERE, &b))) && WHITE,LITERAL(",") && (WHITE, TERM(real_value(HERE, &c))) && (WHITE, LITERAL(")")))
+					if ((WHITE, LITERAL(",")) && (WHITE, TERM(real_value(HERE, &b))) && WHITE,LITERAL(",")
+                        && (WHITE, TERM(real_value(HERE, &c))) && (WHITE, LITERAL(")")))
 					{
 						*pValue = random_value(rtype, a, b, c);
 						ACCEPT;
 					}
 					else
 					{
-						output_error_raw("missing terms and/or ) in %s distribution", fname.get_string());
+						output_error_raw("parser::functional() parsing file, %s: missing terms and/or ) in %s "
+                                         "distribution", this->filename.c_str(), fname.get_string());
 						REJECT;
 					}
 				}
 				else
 				{
-					output_error_raw("%d terms is not supported", nargs);
+					output_error_raw("parser::functional() parsing file, %s: %d terms is not supported",
+                                     this->filename.c_str(), nargs);
 					REJECT;
 				}
 			}
 			else
 			{
-				output_error_raw("expected first term of %s distribution", fname.get_string());
+				output_error_raw("parser::functional() parsing file, %s: expected first term of %s distribution",
+                                 this->filename.c_str(), fname.get_string());
 				REJECT;
 			}
 		}
@@ -770,21 +796,23 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj)
 			OBJECT *nobj = object_find_name(oname);
 			if (nobj == nullptr)
 			{
-				output_error_raw("object not found (object must already exist): %s.%s", oname, tname);
+				output_error_raw("parser::expression() parsing file, %s: object not found (object must already exist): "
+                                 "%s.%s", this->filename.c_str(), oname, tname);
 				REJECT;
 			}
 			double *valptr = object_get_double_by_name(nobj, tname);
-			if (strcmp(tname,"latitude")==0)
+			if (strcmp(tname, "latitude")==0)
 			{
 				valptr = &(obj->latitude);
 			}
-			else if (strcmp(tname,"longitude")==0)
+			else if (strcmp(tname, "longitude")==0)
 			{
 				valptr = &(obj->longitude);
 			}
 			else if (valptr == nullptr)
 			{
-				output_error_raw("invalid property: %s.%s", oname, tname);
+				output_error_raw("parser::expression() parsing file, %s: invalid property: %s.%s",
+                                 this->filename.c_str(), oname, tname);
 				REJECT;
 			}
 			ACCEPT;
@@ -798,8 +826,10 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj)
         else if ((LITERAL("$") || LITERAL("this.")) && TERM(name(HERE, tname, sizeof(tname))))
         {
 			double *valptr = object_get_double_by_name(obj, tname);
-			if (valptr == nullptr){
-				output_error_raw("invalid property: %s.%s", obj->oclass->name, tname);
+			if (valptr == nullptr)
+            {
+				output_error_raw("parser::expression() parsing file, %s: invalid property: %s.%s",
+                                 this->filename.c_str(), obj->oclass->name, tname);
 				REJECT;
 			}
 			ACCEPT;
@@ -838,7 +868,8 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj)
 			if (otarg == nullptr)
             { // delayed checking
 				// disabled for now
-				output_error_raw("unknown reference: %s.%s", oname, pname);
+				output_error_raw("parser::expression() parsing file, %s: unknown reference: %s.%s",
+                                 this->filename.c_str(), oname, pname);
 				output_error("may be an order issue, delayed reference checking is a todo");
 				REJECT;
 			}
@@ -847,7 +878,8 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj)
 				double *valptr = object_get_double_by_name(otarg, pname);
 				if (valptr == nullptr)
                 {
-					output_error_raw("invalid property: %s.%s", oname, pname);
+					output_error_raw("parser::expression() parsing file, %s: invalid property: %s.%s",
+                                     this->filename.c_str(), oname, pname);
 					REJECT;
 				}
 				rpn_stk[rpn_i].op = 0;
@@ -858,7 +890,8 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj)
 		}
         else
         { /* oops */
-			output_error_raw("unrecognized token within: %s9", HERE-2);
+			output_error_raw("parser::expression() parsing file, %s: unrecognized token within: %s9",
+                             this->filename.c_str(), HERE-2);
 			REJECT;
 			/* It looked like an expression.  Give fair warning. */
 		}
@@ -902,7 +935,8 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj)
 			double popval = val_q[--val_i];
 			if (val_i < 0)
             {
-				output_error_raw("insufficient arguments in equation %i", rpn_stk[i].op);
+				output_error_raw("parser::expression() parsing file, %s: insufficient arguments in equation %i",
+                                 this->filename.c_str(), rpn_stk[i].op);
 				REJECT;
 			}
 			switch (rpn_stk[i].op){
@@ -925,7 +959,8 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj)
 					val_q[val_i-1] -= popval;
 					break;
 				default:
-					output_error_raw("unrecognized operator index %i (bug!)", rpn_stk[i].op);
+					output_error_raw("parser::expression() parsing file, %s: unrecognized operator index %i (bug!)",
+                                     this->filename.c_str(), rpn_stk[i].op);
 					REJECT;
 			}
 		}
@@ -939,7 +974,8 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj)
                 {
 					double popval = val_q[--val_i];
 					if (val_i < 0){
-						output_error_raw("insufficient arguments in equation %i", rpn_stk[i].op);
+						output_error_raw("parser::expression() parsing file, %s: insufficient arguments in equation %i",
+                                         this->filename.c_str(), rpn_stk[i].op);
 						REJECT;
 					}
 					val_q[val_i++] = (*rpn_map[j].fptr)(popval);
@@ -948,7 +984,8 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj)
 			}
 			if (j == count)
             { /* missed */
-				output_error_raw("unrecognized function index %i (bug!)", rpn_stk[i].op);
+				output_error_raw("parser::expression() parsing file, %s: unrecognized function index %i (bug!)",
+                                 this->filename.c_str(), rpn_stk[i].op);
 				REJECT;
 			}
 
@@ -956,7 +993,7 @@ int parser::expression(string text, double *pValue, UNIT **unit, OBJECT *obj)
 	}
 	if ((val_i > 1))
     {
-		output_error_raw("too many values in equation!");
+		output_error_raw("parser::expression() parsing file, %s: too many values in equation!", this->filename.c_str());
 		REJECT;
 	}
 	*pValue = val_q[0];
@@ -1018,7 +1055,6 @@ int parser::complex_value(PARSER, gld::complex *pValue)
 		ACCEPT;
 		DONE;
 	}
-
 	REJECT;
 }
 
@@ -1321,14 +1357,16 @@ bool parser::alternate_value(string& text)
 	return false;
 }
 
-int parser::linear_transform(string valueString, TRANSFORMSOURCE *xstype, void **source, double *scale, double *bias, OBJECT *from)
+int parser::linear_transform(string valueString, TRANSFORMSOURCE *xstype, void **source, double *scale, double *bias,
+                             OBJECT *from)
 {
     char *_p = valueString.data();
 	START;
 	if WHITE
         ACCEPT;
 	/* scale * schedule_name [+ bias]  */
-	if (TERM(functional(HERE, scale)) && (WHITE, LITERAL("*")) && (WHITE, TERM(transform_source(HERE, xstype, source, from))))
+	if (TERM(functional(HERE, scale)) && (WHITE, LITERAL("*"))
+        && (WHITE, TERM(transform_source(HERE, xstype, source, from))))
 	{	
 		if ((WHITE, LITERAL("+")) && (WHITE, TERM(functional(HERE, bias))))
         {
@@ -1343,7 +1381,8 @@ int parser::linear_transform(string valueString, TRANSFORMSOURCE *xstype, void *
 	}
 	OR
 	/* scale * schedule_name [- bias]  */
-	if (TERM(functional(HERE, scale)) &&( WHITE, LITERAL("*")) && (WHITE, TERM(transform_source(HERE, xstype, source, from))))
+	if (TERM(functional(HERE, scale)) &&( WHITE, LITERAL("*"))
+        && (WHITE, TERM(transform_source(HERE, xstype, source, from))))
 	{
 		if ((WHITE, LITERAL("-")) && (WHITE, TERM(functional(HERE, bias))))
         {
@@ -1391,14 +1430,16 @@ int parser::linear_transform(string valueString, TRANSFORMSOURCE *xstype, void *
 	}
 	OR
 	/* bias + scale * schedule_name  */
-	if (TERM(functional(HERE, bias)) && (WHITE, LITERAL("+")) && (WHITE, TERM(functional(HERE, scale))) && (WHITE, LITERAL("*")) && (WHITE, TERM(transform_source(HERE, xstype, source, from))))
+	if (TERM(functional(HERE, bias)) && (WHITE, LITERAL("+")) && (WHITE, TERM(functional(HERE, scale)))
+        && (WHITE, LITERAL("*")) && (WHITE, TERM(transform_source(HERE, xstype, source, from))))
 	{
 		ACCEPT;
 		DONE;
 	}
 	OR
 	/* bias - scale * schedule_name  */
-	if (TERM(functional(HERE, bias)) && (WHITE, LITERAL("-")) && (WHITE, TERM(functional(HERE, scale))) && (WHITE, LITERAL("*")) && (WHITE, TERM(transform_source(HERE, xstype, source, from))))
+	if (TERM(functional(HERE, bias)) && (WHITE, LITERAL("-")) && (WHITE, TERM(functional(HERE, scale)))
+        && (WHITE, LITERAL("*")) && (WHITE, TERM(transform_source(HERE, xstype, source, from))))
 	{
 		*scale *= -1;
 		ACCEPT;
@@ -1406,7 +1447,8 @@ int parser::linear_transform(string valueString, TRANSFORMSOURCE *xstype, void *
 	}
 	OR
 	/* bias + schedule_name [* scale] */
-	if (TERM(functional(HERE, bias)) && (WHITE, LITERAL("+")) && (WHITE, TERM(transform_source(HERE, xstype, source, from))))
+	if (TERM(functional(HERE, bias)) && (WHITE, LITERAL("+"))
+        && (WHITE, TERM(transform_source(HERE, xstype, source, from))))
 	{
 		if ((WHITE, LITERAL("*")) && (WHITE, TERM(functional(HERE,scale))))
         {
@@ -1421,7 +1463,8 @@ int parser::linear_transform(string valueString, TRANSFORMSOURCE *xstype, void *
 	}
 	OR
 	/* bias - schedule_name [* scale] */
-	if (TERM(functional(HERE, bias)) && (WHITE, LITERAL("-")) && (WHITE, TERM(transform_source(HERE, xstype, source, from))))
+	if (TERM(functional(HERE, bias)) && (WHITE, LITERAL("-"))
+        && (WHITE, TERM(transform_source(HERE, xstype, source, from))))
 	{
 		if ((WHITE, LITERAL("*")) && (WHITE, TERM(functional(HERE, scale))))
         {
@@ -1496,7 +1539,8 @@ int parser::property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *fr
 			// add to unresolved list
 			char id[1024];
 			sprintf(id, "%s.%s", oname, pname);
-			*ref = (void*)add_unresolved(from, PT_double, nullptr, from->oclass, id, this->filename.data(), UR_TRANSFORM);
+			*ref = (void*)add_unresolved(from, PT_double, nullptr, from->oclass, id, this->filename.data(),
+                                         UR_TRANSFORM);
 			ACCEPT;
 		}
 		else 
@@ -1504,7 +1548,8 @@ int parser::property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *fr
 			PROPERTY *prop = object_get_property(obj, pname, nullptr);
 			if (prop == nullptr)
 			{
-				output_error_raw("property '%s' of object '%s' not found", oname, pname);
+				output_error_raw("parser::property_ref() parsing file, %s: property '%s' of object '%s' not found",
+                                 this->filename.c_str(), oname, pname);
 				REJECT;
 			}
 			else if (prop->ptype == PT_double)
@@ -1543,7 +1588,8 @@ int parser::property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *fr
 			}
 			else
 			{
-				output_error_raw("transform '%s.%s' does not reference a double or a double container like a loadshape", oname, pname);
+				output_error_raw("parser::property_ref() parsing file, %s: transform '%s.%s' does not reference a "
+                                 "double or a double container like a loadshape", this->filename.c_str(), oname, pname);
 				REJECT;
 			}
 		}
@@ -1555,12 +1601,14 @@ int parser::property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *fr
 	DONE;
 }
 
-UNRESOLVED_REF *parser::add_unresolved(OBJECT *by, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file, int flags)
+UNRESOLVED_REF *parser::add_unresolved(OBJECT *by, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file,
+                                       int flags)
 {
 	UNRESOLVED_REF *item;
 	if ( strlen(id) >= sizeof(item->id))
 	{
-		output_error("add_unresolved(...): id '%s' is too long to resolve", id);
+		output_error("parser::add_unresolved() parsing file, %s: add_unresolved(...): id '%s' is too long to resolve",
+                     this->filename.c_str(), id);
 		return nullptr;
 	}
     item = static_cast<UNRESOLVED_REF *>(malloc(sizeof(UNRESOLVED_REF)));
@@ -1632,7 +1680,9 @@ int parser::resolve_list(UNRESOLVED_REF *item)
                     return FAILED;
                 break;
 		    default:
-                output_error_raw("%s(%d): unresolved reference to property '%s' uses unsupported type (ptype=%d)", filename, item->line, item->id.get_string(), item->ptype);
+                output_error_raw("parser::resolve_list() parsing file, %s: unresolved reference to property %s uses "
+                                 "unsupported type (ptype=%d)", this->filename.c_str(), item->id.get_string(),
+                                 item->ptype);
                 break;
 		}
 		next = item->next;
@@ -1658,7 +1708,9 @@ int parser::resolve_object(UNRESOLVED_REF *item, char *filename)
 		for (obj = object_get_first(); obj != nullptr; obj = object_get_next(obj))
 		{
 			char value[1024];
-			if (object_get_child_count(obj) == 0 && object_get_value_by_name(obj, propname, value, sizeof(value)) != '\0' && strcmp(value, target) == 0)
+			if (object_get_child_count(obj) == 0
+                && object_get_value_by_name(obj, propname, value, sizeof(value)) != '\0'
+                && strcmp(value, target) == 0)
 			{
 				object_set_parent(*(OBJECT**)(item->ref), obj);
 				break;
@@ -1666,7 +1718,8 @@ int parser::resolve_object(UNRESOLVED_REF *item, char *filename)
 		}
 		if (obj == nullptr)
 		{
-			output_error_raw("%s(%d): no childless objects found in %s=%s (parent unresolved)", filename, item->line, propname, target);
+			output_error_raw("parser::resolve_object() parsing file, %s: no childless objects found in %s=%s (parent "
+                             "unresolved)", this->filename.c_str(), propname, target);
 			return FAILED;
 		}
 	}
@@ -1676,21 +1729,22 @@ int parser::resolve_object(UNRESOLVED_REF *item, char *filename)
 		FINDLIST *match;
 		if (value++ == nullptr)
 		{
-			output_error_raw("%s(%d): %s reference to %s is missing match value", filename, item->line,
-				             format_object(item->by), item->id.get_string());
+			output_error_raw("parser::resolve_object() parsing file, %s: %s reference to %s is missing match value",
+                             this->filename.c_str(), this->format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 		match = find_objects(FL_NEW, FT_CLASS, SAME, classname, AND, FT_PROPERTY, propname, SAME, value, FT_END);
 		if (match==nullptr || match->hit_count==0)
 		{
-			output_error_raw("%s(%d): %s reference to %s does not match any existing objects", filename, item->line,
-				             format_object(item->by), item->id.get_string());
+			output_error_raw("parser::resolve_object() parsing file, %s: %s reference to %s does not match any "
+                             "existing objects", this->filename.c_str(), this->format_object(item->by),
+                             item->id.get_string());
 			return FAILED;
 		}
 		else if (match->hit_count > 1)
 		{
-			output_error_raw("%s(%d): %s reference to %s matches more than one object", filename, item->line,
-				             format_object(item->by), item->id.get_string());
+			output_error_raw("parser::resolve_object() parsing file, %s: %s reference to %s matches more than one "
+                             "object", this->filename.c_str(), this->format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 		obj=find_first(match);
@@ -1701,8 +1755,8 @@ int parser::resolve_object(UNRESOLVED_REF *item, char *filename)
 		obj = object_find_by_id(item->by->id + (op[0] == '+'? +1: -1) * id);
 		if (obj == nullptr)
 		{
-			output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
-				             format_object(item->by), item->id.get_string());
+			output_error_raw("parser::resolve_object() parsing file, %s: unable resolve reference from %s to %s",
+                             this->filename.c_str(), this->format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 	}
@@ -1711,14 +1765,14 @@ int parser::resolve_object(UNRESOLVED_REF *item, char *filename)
 		obj = load_get_index(id);
 		if (obj == nullptr)
 		{
-			output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
-				             format_object(item->by), item->id.get_string());
+			output_error_raw("parser::resolve_object() parsing file, %s: unable resolve reference from %s to %s",
+                             this->filename.c_str(), this->format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 		if ((strcmp(obj->oclass->name, classname) != 0) && (strcmp("id", classname) != 0))
 		{ /* "id:###" is our wildcard.  some converters use it for dangerous simplicity. -mh */
-			output_error_raw("%s(%d): class of reference from %s to %s mismatched", filename, item->line,
-				             format_object(item->by), item->id.get_string());
+			output_error_raw("parser::resolve_object() parsing file, %s: class of reference from %s to %s mismatched",
+                             this->filename.c_str(), this->format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 	}
@@ -1728,8 +1782,8 @@ int parser::resolve_object(UNRESOLVED_REF *item, char *filename)
 		obj = get_next_unlinked(oclass);
 		if (obj==nullptr)
 		{
-			output_error_raw("%s(%d): unable resolve reference from %s to %s", filename, item->line,
-				             format_object(item->by), item->id.get_string());
+			output_error_raw("parser::resolve_object() parsing file, %s: unable resolve reference from %s to %s",
+                             this->filename.c_str(), this->format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
 	}
@@ -1739,7 +1793,8 @@ int parser::resolve_object(UNRESOLVED_REF *item, char *filename)
 	}
 	else
 	{
-		output_error_raw("%s(%d): '%s' not found", filename, item->line, item->id.get_string());
+		output_error_raw("parser::resolve_object() parsing file, %s: %s not found", this->filename.c_str(),
+                         item->id.get_string());
 		return FAILED;
 	}
 	*(OBJECT**)(item->ref) = obj;
@@ -1763,7 +1818,7 @@ int parser::resolve_double(UNRESOLVED_REF *item, char *context)
 {
 	FULLNAME oname;
 	PROPERTYNAME pname;
-	char *filename = (item->file ? item->file : context);
+	char *fileName = (item->file ? item->file : context);
 
 	if (sscanf(item->id, "%64[^.].%64s", oname, pname) == 2)
 	{
@@ -1775,14 +1830,14 @@ int parser::resolve_double(UNRESOLVED_REF *item, char *context)
 		obj = object_find_name(oname);
 		if (obj == nullptr)
 		{
-			output_error_raw("%s(%d): object '%s' not found", filename, item->line, oname);
+			output_error_raw("parser::resolve_double() parsing file, %s: object %s not found", fileName, oname);
 			return FAILED;
 		}
 		/* get and check the property */
 		prop = object_get_property(obj, pname, nullptr);
 		if (prop == nullptr)
 		{
-			output_error_raw("%s(%d): property '%s' not found", filename, item->line, pname);
+			output_error_raw("parser::resolve_double() parsing file, %s: property %s not found", fileName, pname);
 			return FAILED;
 		}
 		/* get transform reference */
@@ -1826,10 +1881,12 @@ int parser::resolve_double(UNRESOLVED_REF *item, char *context)
                     xform->source_type = XS_ENDUSE;
                 break;
             default:
-                output_error_raw("%s(%d): reference '%s' type is not supported", filename, item->line, item->id.get_string());
+                output_error_raw("parser::resolve_double() parsing file, %s: reference %s type is not supported",
+                                 fileName, item->id.get_string());
                 return FAILED;
 		}
-		output_debug("reference '%s' resolved ok", item->id.get_string());
+		output_debug("parser::resolve_double() parsing file, %s: reference %s resolved ok", fileName,
+                     item->id.get_string());
 		return SUCCESS;
 	}
 	return FAILED;
@@ -1845,7 +1902,8 @@ STATUS parser::load_set_index(OBJECT *obj, OBJECTNUM id)
     }
     if (this->objectIndex.find(id) != objectIndex.end())
     {
-        output_error("Duplicate object key detected for object id '%d'", id);
+        output_error("parser::load_set_index() parsing file, %s: Duplicate object key detected for object id %d",
+                     this->filename.c_str(), id);
         return FAILED;
     }
     objectIndex[id] = obj;
@@ -1859,7 +1917,7 @@ OBJECT *parser::load_get_index(OBJECTNUM id)
         this->objectLinked.at(id) = true;
         return this->objectIndex.at(id);
     } catch(const std::exception& ex){
-        output_error("load_get_index failure");
+        output_error("parser::load_get_index() failure");
         return nullptr;
     }
 }
@@ -1873,6 +1931,6 @@ OBJECT *parser::get_next_unlinked(CLASS *oclass)
             return entry.second;
         }
     }
-    output_warning("get_next_unlinked did a weird thing?");
+    output_warning("parser::get_next_unlinked() did a weird thing?");
 	return nullptr;
 }
