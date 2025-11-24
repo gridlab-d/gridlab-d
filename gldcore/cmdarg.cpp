@@ -125,37 +125,6 @@ void set_tabs(char *tabs, int tabdepth){
 	}
 }
 
-// Helper function to find keywords for a property by searching the class hierarchy
-// This fixes the issue where inherited properties lose their keyword metadata
-KEYWORD* find_property_keywords(PROPERTY *prop, CLASS *start_class) {
-	if (prop->keywords != nullptr) {
-		return prop->keywords;
-	}
-	
-	// Extract base property name (strip prefix like "panel.")
-	const char *base_name = strrchr(prop->name, '.');
-	if (base_name != nullptr) {
-		base_name++; // skip the dot
-	} else {
-		base_name = prop->name;
-	}
-	
-	// Search all classes for a property with this base name that has keywords
-	CLASS *oclass = class_get_first_class();
-	while (oclass != nullptr) {
-		PROPERTY *p = oclass->pmap;
-		while (p != nullptr && p->oclass == oclass) {
-			if (strcmp(p->name, base_name) == 0 && p->keywords != nullptr) {
-				return p->keywords;
-			}
-			p = p->next;
-		}
-		oclass = oclass->next;
-	}
-	
-	return nullptr;
-}
-
 void jprint_class_d(CLASS *oclass, int tabdepth, nlohmann::json& _module){
 	PROPERTY *prop;
 	nlohmann::json _class;
@@ -177,11 +146,7 @@ void jprint_class_d(CLASS *oclass, int tabdepth, nlohmann::json& _module){
 			else if (prop->ptype==PT_set || prop->ptype==PT_enumeration) {
 				KEYWORD *key;
 				_property["type"] = propname;
-				
-				// Find keywords - either from this property or search for base property
-				KEYWORD *keywords = find_property_keywords(prop, oclass);
-				
-				for (key=keywords; key!=nullptr; key=key->next)
+				for (key=prop->keywords; key!=nullptr; key=key->next)
 					_property["keywords"][key->name] = key->value;
 			} 
 			else {
@@ -645,11 +610,7 @@ static int modattr(int argc, char *argv[])
 				_global[prop->name] = _property;
 			}
 		}
-		if (_global.empty()) {
-			_module["global_attributes"] = nlohmann::json::object();
-		} else {
-			_module["global_attributes"] = _global;
-		}
+		_module["global_attributes"] = _global;
 
 		if(mod == nullptr){
 			output_fatal("module %s is not found",*argv);
