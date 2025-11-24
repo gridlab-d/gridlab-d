@@ -20,11 +20,11 @@ from importlib_resources import files
 try:
     # Try relative imports first (for package usage)
     from .glm_entities import Entity, O_Entity, GLM
-    from .glm_utils import gld_strict_name, add_attr_to_entity
+    from .glm_utils import gld_strict_name, add_attr_to_entity, convert_suffix_id
 except (ImportError, ValueError):
     # Fall back to direct imports (for standalone usage)
     from glm_entities import Entity, O_Entity, GLM
-    from glm_utils import gld_strict_name, add_attr_to_entity
+    from glm_utils import gld_strict_name, add_attr_to_entity, convert_suffix_id
 
 glm_entities_path = files('references').joinpath('glm_classes.json')
 
@@ -666,6 +666,8 @@ class GLMModel:
                                 tokens = param_part.split(None, 1)
                                 param_name = tokens[0]
                                 param_value = tokens[1] if len(tokens) > 1 else ""
+                                # Check if value is a reference to an object with name:id
+                                param_value = convert_suffix_id(param_value)
                                 params[param_name] = param_value
                     
                     self.set_module_instance(_type, params)
@@ -732,6 +734,8 @@ class GLMModel:
                 # record each field for user-defined classes
                 if mod == 'class':
                     class_fields.append({'type': ptype, 'name': pname})
+                # Apply gld_strict_name to handle object references
+                pname = convert_suffix_id(pname)
                 params[ptype] = pname
             
             if re.search('}', line):
@@ -796,8 +800,10 @@ class GLMModel:
             
             if param in ["to", "from", "configuration", "parent"]:
                 val = gld_strict_name(name_prefix + val)
-            
-            params[param] = val.strip()
+
+            # Apply convert_suffix_id to handle object references (e.g., node:1 -> node_1)
+            val = convert_suffix_id(val)
+            params[param] = val
 
             if len(comments) > 0:
                 inside_comments[param] = comments
