@@ -94,6 +94,8 @@ Json::Value do_checkpoint(const char* output_directory = nullptr);
 //}
 //#endif
 
+STATUS exec_force_sync_to_time(TIMESTAMP target_time);
+
 #endif
 
 /**@}*/

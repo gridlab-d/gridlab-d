@@ -138,3 +138,4 @@ python_bindings/wheels/
 python_bindings/env
 docs/
 test/
+env

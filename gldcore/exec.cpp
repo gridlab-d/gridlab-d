@@ -2535,7 +2535,8 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
         using std::chrono::system_clock;
         static bool initialized = false;
         static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t1;
-        static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t2;
+        static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> 
+		t2;
         if (!initialized) { //[[unlikely]] {
             t1 = system_clock::now();
             t2 = t1 + 1s;
@@ -2962,6 +2963,77 @@ STATUS exec_step(void)
 	delete threadpool;
 	
 	return result;
+}
+
+
+/** Force all objects to sync to a specific target time
+    This is used by the API's step() function to achieve exact timestep intervals
+    @param target_time The exact time to sync to
+    @return STATUS is SUCCESS if the sync succeeded, FAILED otherwise
+ **/
+STATUS exec_force_sync_to_time(TIMESTAMP target_time) {
+    // Verify simulation is initialized
+    if (ranks == nullptr) {
+        output_error("exec_force_sync_to_time: simulation not properly initialized");
+        return FAILED;
+    }
+    
+    // Store the next natural event time for commit
+    TIMESTAMP next_event = exec_sync_get(nullptr);
+    
+    // Set global_clock to the target time
+    global_clock = target_time;
+    
+    // Reset sync state and set next sync time
+    exec_sync_reset(nullptr);
+    exec_sync_set(nullptr, target_time, false);
+    
+    output_verbose("Forcing sync to exact time %.2f (next natural event at %.2f)", 
+                   (double)target_time, (double)next_event);
+    
+    // Synchronize internal schedules first
+    TIMESTAMP internal_synctime = syncall_internals(global_clock);
+    if (internal_synctime != TS_NEVER && absolute_timestamp(internal_synctime) < global_clock) {
+        output_error("exec_force_sync_to_time: internal property sync failure");
+        return FAILED;
+    }
+    exec_sync_set(nullptr, internal_synctime, false);
+    
+    // Perform sync passes for all objects
+    for (int pass = 0; ranks[pass] != nullptr; pass++) {
+        for (int i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass)) {
+            if (ranks[pass]->ordinal[i] == nullptr)
+                continue;
+            
+            for (LISTITEM *item = ranks[pass]->ordinal[i]->first; item != nullptr; item = item->next) {
+                OBJECT *obj = static_cast<OBJECT *>(item->data);
+                TIMESTAMP sync_result = object_sync(obj, target_time, passtype[pass]);
+                
+                if (sync_result == TS_INVALID) {
+                    output_error("exec_force_sync_to_time: object sync failed for %s", 
+                               obj->name ? obj->name : "(unnamed)");
+                    return FAILED;
+                }
+                
+                // Update sync with this object's next event time
+                exec_sync_set(nullptr, sync_result, false);
+            }
+        }
+        
+        // Run transforms for this pass
+        TIMESTAMP st = transform_syncall(global_clock, static_cast<TRANSFORMSOURCE>(XS_DOUBLE|XS_COMPLEX|XS_ENDUSE), nullptr);
+        exec_sync_set(nullptr, st, false);
+    }
+    
+    // Commit all object states
+    TIMESTAMP commit_result = commit_all(global_clock, next_event);
+    if (commit_result == TS_INVALID || absolute_timestamp(commit_result) <= global_clock) {
+        output_error("exec_force_sync_to_time: commit failed");
+        return FAILED;
+    }
+    
+    output_verbose("Successfully forced sync and commit at time %.2f", (double)target_time);
+    return SUCCESS;
 }
 
 /** This is the main simulation loop

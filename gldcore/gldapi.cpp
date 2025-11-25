@@ -597,7 +597,7 @@ GLDErrorCode GridLabD::step(double& simulation_time) {
     printf("Stepping from time %.2f to target %.2f (step size: %d seconds)\n", 
            (double)start_clock, (double)target_clock, selected_timestep);
     
-    // Keep stepping until we reach the target time
+    // Keep stepping until we reach the target
     while (global_clock < target_clock) {
         TIMESTAMP prev_clock = global_clock;
         
@@ -610,18 +610,63 @@ GLDErrorCode GridLabD::step(double& simulation_time) {
             return GLD_OPERATION_FAILED;
         }
         
-//         printf("  Internal step: %.2f -> %.2f\n", (double)prev_clock, (double)global_clock);
+        printf("  DEBUG: Stepped from %.2f to %.2f (target=%.2f)\n",
+               (double)prev_clock, (double)global_clock, (double)target_clock);
         
-        // Check if we've reached or passed the target
-        if (global_clock >= target_clock) {
+        // Check if we overshot the target - if so, force sync back to exact target
+        if (global_clock > target_clock) {
+            printf("Overshot target! Clock=%.2f, target=%.2f - forcing sync to exact target\n",
+                   (double)global_clock, (double)target_clock);
+            
+            // Force sync to the exact target time
+            STATUS sync_result = exec_force_sync_to_time(target_clock);
+            
+            if (sync_result == FAILED) {
+                printf("Error: forced sync to time %.2f failed\n", (double)target_clock);
+                simulation_time = (double)global_clock;
+                return GLD_OPERATION_FAILED;
+            }
+            
+            printf("Successfully synced back to exact target time %.2f\n", (double)target_clock);
+            break;
+        }
+        
+        // Check if we've exactly reached the target
+        if (global_clock == target_clock) {
+            break;
+        }
+        
+        // Peek at the NEXT event time to see if another step would overshoot
+        TIMESTAMP next_event = exec_sync_get(nullptr);
+        
+        printf("  DEBUG: After step, next_event=%.2f, target=%.2f\n",
+               (double)next_event, (double)target_clock);
+        
+        // If the next event would take us past the target, force a sync to the exact target time
+        if (next_event > target_clock) {
+            printf("Next event at %.2f would exceed target %.2f - forcing sync to exact target %.2f\n",
+                   (double)next_event, (double)target_clock, (double)global_clock);
+            
+            // Call the new exec function to force sync to exact target time
+            STATUS sync_result = exec_force_sync_to_time(target_clock);
+            
+            if (sync_result == FAILED) {
+                printf("Error: forced sync to time %.2f failed\n", (double)target_clock);
+                simulation_time = (double)global_clock;
+                return GLD_OPERATION_FAILED;
+            }
+            
+            printf("Successfully synced and committed at exact target time %.2f\n", (double)target_clock);
             break;
         }
     }
+
     
     // Update the simulation time
     simulation_time = (double)global_clock;
     
-    printf("Completed step: advanced from %.2f to %.2f\n", (double)start_clock, simulation_time);
+    printf("Completed step: advanced from %.2f to %.2f (target was %.2f)\n", 
+           (double)start_clock, simulation_time, (double)target_clock);
     
     return GLD_SUCCESS;
 }
