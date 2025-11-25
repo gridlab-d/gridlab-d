@@ -1,0 +1,123 @@
+{
+  "__preamble": {
+    "comments": [
+      "//Microwave internal gain test",
+      "//test_microwave_internal_gains.glm",
+      "//The program checks to see that the correct internal gain is displayed when the microwave is on",
+      "//and when the microwave is on standby.",
+      "//if the microwave is off then the internal gain = magnitude of standby power.",
+      "//if the microwave is on then the internal gain = magnitude of installed power * heat fraction"
+    ]
+  },
+  "clock": {
+    "timestamp": "'2000-01-01 0:00:00'",
+    "timezone": "PST+8PDT"
+  },
+  "modules": {
+    "residential": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "house": {
+      "instances": [
+        {
+          "name": "house_1",
+          "id": 1
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_3",
+          "parent": "microwave_2",
+          "property": "heatgain,constant_power",
+          "file": "test_microwave_internal_gains_1.csv",
+          "interval": 1,
+          "limit": 10
+        },
+        {
+          "name": "recorder_5",
+          "parent": "microwave_3",
+          "property": "heatgain,constant_power",
+          "file": "test_microwave_internal_gains_0.csv",
+          "interval": 1,
+          "limit": 10
+        }
+      ]
+    },
+    "microwave": {
+      "instances": [
+        {
+          "name": "microwave_2",
+          "id": 2,
+          "parent": "house_1",
+          "installed_power": "1000 W",
+          "standby_power": "20 W",
+          "heatgain_fraction": 0.5,
+          "inside_comments": [
+            "//demand 1;"
+          ]
+        },
+        {
+          "name": "microwave_3",
+          "id": 3,
+          "parent": "house_1",
+          "installed_power": "1000 W",
+          "standby_power": "20 W",
+          "heatgain_fraction": 0.5,
+          "inside_comments": [
+            "//demand 0;"
+          ]
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_7",
+          "parent": "complex_assert_4",
+          "property": "value",
+          "file": "../test_microwave_internal_gains_1.player"
+        },
+        {
+          "name": "player_9",
+          "parent": "complex_assert_5",
+          "property": "value",
+          "file": "../test_microwave_internal_gains_0.player"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_4",
+          "id": 4,
+          "parent": "microwave_2",
+          "target": "internal_gains",
+          "within": 0.6,
+          "inside_comments": [
+            "//The variance of .6 is to compensate for when the microwave is off for the first second."
+          ],
+          "inline_comments": {
+            "within": "//I have checked the .csv files and internal_gains is actually within .0001 of the actual gain."
+          }
+        },
+        {
+          "name": "complex_assert_5",
+          "id": 5,
+          "parent": "microwave_3",
+          "target": "internal_gains",
+          "within": 0.03,
+          "inside_comments": [
+            "//The variance of .03 is to compensate for the anomolous power value on the first second."
+          ],
+          "inline_comments": {
+            "within": "//I have checked the .csv files and internal_gains is actually within .0001 of the actual gain."
+          }
+        }
+      ]
+    }
+  }
+}

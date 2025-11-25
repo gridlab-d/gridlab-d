@@ -1,0 +1,47 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Exercise 2.2.2"
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-01-01 00:00:00'",
+    "stoptime": "'2002-01-01 00:00:00'"
+  },
+  "modules": {
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_3",
+          "parent": "waterheater_2",
+          "property": "actual_load",
+          "file": "exercise_2_2_2.csv",
+          "interval": -1,
+          "limit": 100
+        }
+      ]
+    },
+    "waterheater": {
+      "instances": [
+        {
+          "name": "waterheater_2",
+          "parent": "house_1"
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_1"
+        }
+      ]
+    }
+  }
+}

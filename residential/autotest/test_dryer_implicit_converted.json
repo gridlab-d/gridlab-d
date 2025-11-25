@@ -1,0 +1,35 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $Id: test_dryer_implicit.glm 4738 2014-07-03 00:55:39Z dchassin $",
+      "// Test standalone lighting objects",
+      "//"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "suppress_repeat_messages": 0
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-01-01 00:00:00 PST'",
+    "stoptime": "'2002-01-01 00:00:00 PST'"
+  },
+  "modules": {
+    "residential": {
+      "implicit_enduses": "DRYER"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "house": {
+      "instances": [
+        {
+          "name": "house_1"
+        }
+      ]
+    }
+  }
+}

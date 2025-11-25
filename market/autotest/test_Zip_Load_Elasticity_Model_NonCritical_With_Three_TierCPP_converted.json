@@ -1,0 +1,248 @@
+{
+  "_directives": {
+    "#include": [
+      "../appliance_schedules.json"
+    ],
+    "#set": {
+      "profiler": "1;",
+      "double_format": "%+.12lg",
+      "randomseed": "10;",
+      "relax_naming_rules": "1;",
+      "minimum_timestep": "30;"
+    }
+  },
+  "classes": {
+    "player": [
+      {
+        "type": "double",
+        "name": "value"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "timestamp": "'2009-06-01 00:00:00'",
+    "stoptime": "'2009-06-06 00:00:00'"
+  },
+  "modules": {
+    "climate": {},
+    "market": {},
+    "powerflow": {
+      "solver_method": "FBS",
+      "NR_iteration_limit": 100
+    },
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "csv_reader": {
+      "instances": [
+        {
+          "name": "CSVREADER",
+          "filename": "../ColumbusWeather2009_Correct.csv"
+        }
+      ]
+    },
+    "climate": {
+      "instances": [
+        {
+          "name": "Columbus OH",
+          "tmyfile": "../ColumbusWeather2009_Correct.csv",
+          "reader": "CSVREADER"
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_4",
+          "parent": "Market1",
+          "property": "next.P",
+          "rank": 3,
+          "file": "../TOU_Pricing_2Tier_OnlyHigh.player",
+          "loop": 1
+        },
+        {
+          "name": "player_17",
+          "parent": "double_assert_16",
+          "property": "value",
+          "file": "../Elasticity_Multiplier_NonCritical_With_Three_TierCPP.player"
+        }
+      ]
+    },
+    "stubauction": {
+      "instances": [
+        {
+          "name": "Market1",
+          "unit": "kW",
+          "period": 3600
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "ROOT",
+          "bustype": "SWING",
+          "phases": "ABCN",
+          "nominal_voltage": 7200
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "substation_config",
+          "connect_type": "WYE_WYE",
+          "install_type": "PADMOUNT",
+          "primary_voltage": "7200 V",
+          "secondary_voltage": "7200 V",
+          "power_rating": 4500,
+          "powerA_rating": 1500,
+          "powerB_rating": 1500,
+          "powerC_rating": 1500,
+          "impedance": "0.0015+0.00675j"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "Transformer1",
+          "phases": "ABCN",
+          "from": "ROOT",
+          "to": "transformer_meter",
+          "configuration": "substation_config"
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_9",
+          "parent": "transformer_meter",
+          "property": "measured_real_power",
+          "limit": 100000000,
+          "interval": 300,
+          "file": "totalload.csv"
+        },
+        {
+          "name": "recorder_10",
+          "parent": "transformer_meter",
+          "property": "measured_real_power",
+          "limit": 100000000,
+          "interval": 60,
+          "file": "driver.csv"
+        },
+        {
+          "name": "recorder_14",
+          "parent": "passive_controller_13",
+          "property": "observation",
+          "limit": 100000000,
+          "interval": 300,
+          "file": "results1.csv"
+        },
+        {
+          "name": "recorder_15",
+          "parent": "zip1",
+          "property": "multiplier",
+          "limit": 100000000,
+          "interval": 300,
+          "file": "results.csv"
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "transformer_meter",
+          "phases": "ABCN",
+          "nominal_voltage": 7200
+        }
+      ]
+    },
+    "passive_controller": {
+      "instances": [
+        {
+          "name": "passive_controller_13",
+          "parent": "zip1",
+          "period": 300,
+          "control_mode": "ELASTICITY_MODEL",
+          "observation_object": "Market1",
+          "observation_property": "next.P",
+          "state_property": "multiplier",
+          "critical_day": 0,
+          "two_tier_cpp": false,
+          "daily_elasticity": -0.04,
+          "sub_elasticity_first_second": -0.22,
+          "second_tier_hours": 12,
+          "first_tier_hours": 12,
+          "linearize_elasticity": true,
+          "first_tier_price": 1.0,
+          "second_tier_price": 2.0,
+          "old_first_tier_price": 1.5,
+          "old_second_tier_price": 1.5
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_16",
+          "parent": "zip1",
+          "target": "multiplier",
+          "within": 0.01
+        }
+      ]
+    },
+    "ZIPload": {
+      "instances": [
+        {
+          "name": "zip1",
+          "parent": "house1_house_A2",
+          "schedule_skew": 1246,
+          "base_power": "LIGHTS*1.7385",
+          "power_fraction": 0.0,
+          "impedance_fraction": 1.0,
+          "current_fraction": 0.0,
+          "power_pf": 0.0,
+          "current_pf": 0.0,
+          "impedance_pf": 1.0,
+          "heat_fraction": 0.89
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house1_house_A2",
+          "parent": "transformer_meter",
+          "schedule_skew": 1246,
+          "Rroof": 32.8,
+          "Rwall": 16.6,
+          "Rfloor": 16.78,
+          "Rdoors": 5,
+          "Rwindows": 1.5,
+          "airchange_per_hour": 1.13,
+          "hvac_power_factor": 0.97,
+          "cooling_system_type": "ELECTRIC",
+          "heating_system_type": "GAS",
+          "fan_type": "ONE_SPEED",
+          "hvac_breaker_rating": 200,
+          "total_thermal_mass_per_floor_area": 3.44,
+          "motor_efficiency": "AVERAGE",
+          "motor_model": "BASIC",
+          "cooling_COP": 3.64,
+          "floor_area": 1680,
+          "number_of_doors": 2,
+          "inside_comments": [
+            "//Residential_4"
+          ]
+        }
+      ]
+    }
+  }
+}

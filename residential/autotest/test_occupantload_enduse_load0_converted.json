@@ -1,0 +1,82 @@
+{
+  "__preamble": {
+    "comments": [
+      "//",
+      "// test to ensure that enduse_load variable of occupantload always stays 0",
+      "// standard house with HVAC turned off and a single occupant; occupancy_fraction",
+      "// varies in 24hr cycles for 300 hours",
+      "//",
+      "// Payroll: d3y332"
+    ]
+  },
+  "clock": {
+    "timestamp": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-02 0:00:00'",
+    "timezone": "PST+8PDT"
+  },
+  "modules": {
+    "residential": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "player": {
+      "instances": [
+        {
+          "name": "player_3",
+          "parent": "occupantload_2",
+          "property": "occupancy_fraction",
+          "file": "../generic_demand.glt",
+          "loop": 100
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_4",
+          "parent": "occupantload_2",
+          "file": "occupantload3600.csv",
+          "interval": 3600,
+          "limit": 300,
+          "property": "power,heatgain,occupancy_fraction,heatgain_per_person"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_5",
+          "parent": "occupantload_2",
+          "target": "power",
+          "value": 0,
+          "within": 1e-06,
+          "inline_comments": {
+            "value": "// occupantloads should not consume power"
+          }
+        }
+      ]
+    },
+    "occupantload": {
+      "instances": [
+        {
+          "name": "occupantload_2",
+          "parent": "house_1",
+          "number_of_occupants": 1
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_1",
+          "floor_area": "1500 sf",
+          "cooling_setpoint": 80,
+          "air_temperature": 74,
+          "heating_setpoint": 60,
+          "thermostat_deadband": 2
+        }
+      ]
+    }
+  }
+}

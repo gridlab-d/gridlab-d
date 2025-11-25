@@ -1,0 +1,75 @@
+{
+  "__preamble": {
+    "comments": [
+      "// test of substation object as a normal node"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "minimum_timestep": "1;"
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-07-25 01:00:00'",
+    "stoptime": "'2001-07-25 01:05:00'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "FBS"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "load": {
+      "instances": [
+        {
+          "name": "load_2",
+          "parent": "substation_1",
+          "phases": "ABCN",
+          "constant_impedance_A": "1000+2000j",
+          "constant_impedance_B": "1000+1000j",
+          "constant_impedance_C": "1200+800j",
+          "nominal_voltage": 2400
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_3",
+          "parent": "substation_1",
+          "target": "distribution_voltage_A",
+          "within": 0.01,
+          "value": "2400+0d"
+        },
+        {
+          "name": "complex_assert_4",
+          "parent": "substation_1",
+          "target": "distribution_voltage_B",
+          "within": 0.01,
+          "value": "2400-120d"
+        },
+        {
+          "name": "complex_assert_5",
+          "parent": "substation_1",
+          "target": "distribution_voltage_C",
+          "within": 0.01,
+          "value": "2400+120d"
+        }
+      ]
+    },
+    "substation": {
+      "instances": [
+        {
+          "name": "substation_1",
+          "phases": "ABCN",
+          "nominal_voltage": 2400,
+          "base_power": "100 MVA",
+          "reference_phase": "PHASE_A"
+        }
+      ]
+    }
+  }
+}

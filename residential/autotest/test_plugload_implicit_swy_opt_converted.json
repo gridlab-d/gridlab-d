@@ -1,0 +1,97 @@
+{
+  "__preamble": {
+    "comments": [
+      "//test_plugload_implicit_swy.glm",
+      "//This test file test the implicit use of plugloads within house_e.",
+      "//This test validates power, energy, and heat gain."
+    ]
+  },
+  "clock": {
+    "timestamp": "'2000-05-01 0:00:00'",
+    "stoptime": "'2000-05-02 1:00:00'",
+    "timezone": "PST+8PDT"
+  },
+  "modules": {
+    "residential": {
+      "implicit_enduses": "PLUGS"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "player": {
+      "instances": [
+        {
+          "name": "player_3",
+          "parent": "complex_assert_2",
+          "property": "value",
+          "file": "../test_plugload_enduse_load_swy.player"
+        },
+        {
+          "name": "player_5",
+          "parent": "complex_assert_4",
+          "property": "value",
+          "file": "../test_plugload_energy_swy.player"
+        },
+        {
+          "name": "player_7",
+          "parent": "double_assert_6",
+          "property": "value",
+          "file": "../test_plugload_heatgain_swy.player"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_2",
+          "parent": "House",
+          "once": "ONCE_TRUE",
+          "target": "panel.power",
+          "within": 1e-06
+        },
+        {
+          "name": "complex_assert_4",
+          "parent": "House",
+          "once": "ONCE_TRUE",
+          "target": "panel.energy",
+          "within": 1e-06
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_6",
+          "parent": "House",
+          "once": "ONCE_TRUE",
+          "target": "panel.heatgain",
+          "within": 1e-06
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_8",
+          "parent": "House",
+          "property": "panel.power,panel.energy,panel.heatgain",
+          "file": "test_plugload_implicit_swy.csv",
+          "interval": 3600,
+          "limit": 30
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "House",
+          "heating_setpoint": 5,
+          "cooling_setpoint": 300,
+          "air_temperature": 70,
+          "outdoor_temperature": 73
+        }
+      ]
+    }
+  }
+}

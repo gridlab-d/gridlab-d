@@ -1,0 +1,216 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $id$",
+      "// Copyright (C) 2008 Battelle Memorial Institute",
+      "// 4 node system with a balanced load and a regulator",
+      "// being controlled under REMOTE_SENSE mode, each phase",
+      "// individually controlled.  Check to make sure voltages are being",
+      "// regulated correctly with both a Type A & B regulator.",
+      "// Somewhat contrived test, as a 200000 ft overhead line is used",
+      "// to artificially lower the voltage at the regulator, but tests",
+      "// the regulator function."
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "relax_naming_rules": 1
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:01'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "overhead_line_conductor_100",
+          "id": 100,
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306,
+          "outside_comments": [
+            "//#define savefile=\"test_reg_NR.xml\";",
+            "//#define stylesheet=\"C:\\Documents and Settings\\d3x289\\Desktop\\GLD_8_7\\trunk\\VS2005\\gridlabd-2_0\";"
+          ]
+        },
+        {
+          "name": "overhead_line_conductor_101",
+          "id": 101,
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "line_spacing_200",
+          "id": 200,
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "line_configuration_300",
+          "id": 300,
+          "conductor_A": "overhead_line_conductor_100",
+          "conductor_B": "overhead_line_conductor_100",
+          "conductor_C": "overhead_line_conductor_100",
+          "conductor_N": "overhead_line_conductor_101",
+          "spacing": "line_spacing_200"
+        }
+      ]
+    },
+    "regulator_configuration": {
+      "instances": [
+        {
+          "name": "auto_regulator",
+          "connect_type": "WYE_WYE",
+          "raise_taps": 16,
+          "lower_taps": 16,
+          "regulation": 0.1,
+          "Type": "A",
+          "Control": "REMOTE_NODE",
+          "band_center": 7200,
+          "band_width": 90,
+          "inline_comments": {
+            "band_width": "// approximately one tap difference"
+          }
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "FeederNode",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "InterNode",
+          "phases": "ABCN",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "TopNode",
+          "phases": "ABCN",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "MiddleNode",
+          "phases": "ABCN",
+          "nominal_voltage": 7200,
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "overhead_line_7",
+          "phases": "ABCN",
+          "from": "FeederNode",
+          "to": "InterNode",
+          "length": 200000,
+          "configuration": "line_configuration_300"
+        },
+        {
+          "name": "overhead_line_11",
+          "phases": "ABCN",
+          "from": "TopNode",
+          "to": "MiddleNode",
+          "length": 2000,
+          "configuration": "line_configuration_300"
+        },
+        {
+          "name": "overhead_line_13",
+          "phases": "ABCN",
+          "from": "MiddleNode",
+          "to": "BottomLoad",
+          "length": 2500,
+          "configuration": "line_configuration_300"
+        }
+      ]
+    },
+    "regulator": {
+      "instances": [
+        {
+          "name": "Regulator",
+          "phases": "ABCN",
+          "from": "InterNode",
+          "to": "TopNode",
+          "configuration": "auto_regulator",
+          "sense_node": "BottomLoad"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_15",
+          "parent": "BottomLoad",
+          "operation": "MAGNITUDE",
+          "value": 7200,
+          "target": "voltage_A",
+          "within": 45
+        },
+        {
+          "name": "complex_assert_16",
+          "parent": "BottomLoad",
+          "operation": "MAGNITUDE",
+          "value": 7200,
+          "target": "voltage_B",
+          "within": 45
+        },
+        {
+          "name": "complex_assert_17",
+          "parent": "BottomLoad",
+          "operation": "MAGNITUDE",
+          "value": 7200,
+          "target": "voltage_C",
+          "within": 45
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "BottomLoad",
+          "phases": "ABCN",
+          "constant_power_A": "+150000.000+1200.0j",
+          "constant_power_B": "+120000.000+1200.0j",
+          "constant_power_C": "+100000.000+1200.0j",
+          "nominal_voltage": 7200
+        }
+      ]
+    }
+  }
+}

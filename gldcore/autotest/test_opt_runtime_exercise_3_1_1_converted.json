@@ -1,0 +1,40 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Create a class called helloworld that displays the message \"Hello World\" on the command prompt"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "tmp": "../test_opt_runtime_exercise_3_1_1",
+      "force_compile": 1
+    }
+  },
+  "_legacy": {
+    "#setenv": [
+      "GRIDLABD=../../../core"
+    ]
+  },
+  "classes": {
+    "helloworld": [
+      {
+        "type": "return",
+        "name": "SUCCESS"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-01-01 00:00:00'",
+    "stoptime": "'2001-01-02 00:00:00'"
+  },
+  "objects": {
+    "helloworld": {
+      "instances": [
+        {
+          "name": "helloworld_1"
+        }
+      ]
+    }
+  }
+}
