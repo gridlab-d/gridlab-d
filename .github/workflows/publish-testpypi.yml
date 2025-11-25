@@ -35,8 +35,8 @@ jobs:
 
     - name: Build GridLAB-D Core
       run: |
-        mkdir -p cmake-build
-        cd cmake-build
+        mkdir -p build
+        cd build
         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install ..
         cmake --build . -j$(nproc)
       # This builds the core libraries that the Python bindings depend on
@@ -46,13 +46,13 @@ jobs:
         cd python_bindings
         pip install build auditwheel
         # Build the wheel
-        python -m build --wheel -Ccmake.define.GRIDLABD_ROOT=$(pwd)/..
+        python -m build --wheel
         # Repair the wheel to add manylinux tags
         auditwheel repair dist/*.whl -w dist/
         # Remove the old linux_x86_64 wheel
         rm dist/*-linux_x86_64.whl
       # This uses pyproject.toml and scikit-build-core to build the wheel
-      # It expects to find the built GridLAB-D libraries in ../cmake-build/lib
+      # It expects to find the built GridLAB-D libraries in ../build/lib
 
     - name: Upload wheel as artifact
       uses: actions/upload-artifact@v4
