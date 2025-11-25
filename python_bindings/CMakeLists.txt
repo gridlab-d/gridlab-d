@@ -70,8 +70,9 @@ target_include_directories(gridlabd_core PRIVATE
 # Find jsoncpp library (could be in different locations)
 set(JSONCPP_SEARCH_PATHS
     ${GRIDLABD_LIB_DIR}/static/libjsoncpp.a
-    ${GRIDLABD_BUILD_DIR}/third_party/jsoncpp_lib/src/lib_json/libjsoncpp.a
-    ${GRIDLABD_BUILD_DIR}/lib/libjsoncpp.a
+    ${GRIDLABD_LIB_DIR}/libjsoncpp.a
+    ${GRIDLABD_ROOT}/build/third_party/jsoncpp_lib/src/lib_json/libjsoncpp.a
+    ${GRIDLABD_ROOT}/third_party/jsoncpp_lib/src/lib_json/libjsoncpp.a
 )
 
 set(JSONCPP_LIB_PATH "")
@@ -88,19 +89,10 @@ if(NOT JSONCPP_LIB_PATH)
 endif()
 
 # Link against GridLAB-D API library and dependencies
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib/libgldapi.so")
-    # Development mode - use build directory
-    target_link_libraries(gridlabd_core PRIVATE 
-        ${GRIDLABD_LIB_DIR}/libgldapi.so
-        ${GRIDLABD_LIB_DIR}/static/libjsoncpp.a
-    )
-else()
-    # PyPI mode - use prebuilt libraries
-    target_link_libraries(gridlabd_core PRIVATE 
-        ${GRIDLABD_LIB_DIR}/libgldapi.so
-        ${GRIDLABD_LIB_DIR}/static/libjsoncpp.a
-    )
-endif()
+target_link_libraries(gridlabd_core PRIVATE 
+    ${GRIDLABD_LIB_DIR}/libgldapi.so
+    ${JSONCPP_LIB_PATH}
+)
 
 # Set RPATH for the module to find the shared library
 set_target_properties(gridlabd_core PROPERTIES
