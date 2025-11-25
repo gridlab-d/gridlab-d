@@ -1,0 +1,235 @@
+{
+  "__preamble": {
+    "comments": [
+      "//4-node-esque system, with an additional node floating (and with a child)",
+      "//Used to fail with floating node and fault_check",
+      "//Had issues with switch sync and meter sync routines",
+      "//Silent segfault",
+      "//module assert;"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "profiler": 1
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:01:00'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR",
+      "line_limits": false
+    },
+    "reliability": {
+      "report_event_log": false
+    },
+    "tape": {}
+  },
+  "objects": {
+    "fault_check": {
+      "instances": [
+        {
+          "name": "base_fault_check_object1",
+          "check_mode": "ONCHANGE",
+          "strictly_radial": false,
+          "grid_association": true,
+          "full_output_file": false,
+          "eventgen_object": "testgendev",
+          "output_filename": "unsupported_nodes.txt",
+          "outside_comments": [
+            "//Fault check object"
+          ]
+        }
+      ]
+    },
+    "eventgen": {
+      "instances": [
+        {
+          "name": "testgendev",
+          "use_external_faults": true,
+          "outside_comments": [
+            "//Manual object - just enables fault_check to remove things (not really needed)"
+          ]
+        }
+      ]
+    },
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc100",
+          "geometric_mean_radius": "0.0244 ft",
+          "resistance": "0.306 Ohm/mile"
+        },
+        {
+          "name": "olc101",
+          "geometric_mean_radius": "0.00814 ft",
+          "resistance": "0.592 Ohm/mile"
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls200",
+          "distance_AB": "2.5 ft",
+          "distance_BC": "4.5 ft",
+          "distance_AC": "7.0 ft",
+          "distance_AN": "5.656854 ft",
+          "distance_BN": "4.272002 ft",
+          "distance_CN": "5.0 ft"
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc300",
+          "conductor_A": "olc100",
+          "conductor_B": "olc100",
+          "conductor_C": "olc100",
+          "conductor_N": "olc101",
+          "spacing": "ls200"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "tc400",
+          "connect_type": "WYE_WYE",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06
+        }
+      ]
+    },
+    "switch": {
+      "instances": [
+        {
+          "name": "switch3_3B",
+          "phases": "ABCN",
+          "from": "node3",
+          "to": "node3B",
+          "status": "CLOSED",
+          "outside_comments": [
+            "//Switches, that would presumably make this three systems, eventually"
+          ]
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "node1",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "nominal_voltage": 7199.558,
+          "outside_comments": [
+            "//First system"
+          ]
+        },
+        {
+          "name": "node2CMeter",
+          "parent": "node1C",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "ol12",
+          "phases": "ABCN",
+          "from": "node1",
+          "to": "node2",
+          "length": 2000,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ol34",
+          "phases": "ABCN",
+          "from": "node3",
+          "to": "load4",
+          "length": 2500,
+          "configuration": "lc300"
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node2",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node3",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "node3B",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "node1C",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558,
+          "outside_comments": [
+            "//Floating nodes"
+          ]
+        },
+        {
+          "name": "node2C",
+          "parent": "node1C",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "tran23",
+          "phases": "ABCN",
+          "from": "node2",
+          "to": "node3",
+          "configuration": "tc400"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load4",
+          "phases": "ABCN",
+          "constant_power_A": "+1275000.000+790174.031j",
+          "constant_power_B": "+1800000.000+871779.789j",
+          "constant_power_C": "+2375000.000+780624.750j",
+          "nominal_voltage": 2401.777,
+          "inside_comments": [
+            "// object recorder {",
+            "// property \"voltage_A,voltage_B,voltage_C\";",
+            "// interval -1;",
+            "// file load4out.csv;",
+            "// };"
+          ]
+        },
+        {
+          "name": "node2CL",
+          "parent": "node1C",
+          "phases": "BN",
+          "nominal_voltage": 7199.558,
+          "constant_power_B": "25.0+10.0j"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "__preamble": {
+    "comments": [
+      "//Power limits Test",
+      "//test_microwave_standby_power_limits.glm",
+      "//This is a test to see that the auto-correction works correctly for standby_power.",
+      "//The default value for standby_power is 1% of installed_power"
+    ]
+  },
+  "clock": {
+    "starttime": "'2000-01-01 00:00:00'",
+    "stoptime": "'2001-01-01 00:00:00'",
+    "timezone": "PST+8PDT"
+  },
+  "modules": {
+    "residential": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "house": {
+      "instances": [
+        {
+          "name": "house_1",
+          "id": 1
+        }
+      ]
+    },
+    "microwave": {
+      "instances": [
+        {
+          "name": "microwave_2",
+          "id": 2,
+          "parent": "house_1",
+          "installed_power": "1000 W",
+          "standby_power": "-100 W"
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_3",
+          "id": 3,
+          "parent": "microwave_2",
+          "property": "standby_power,installed_power,cycle_length,constant_power,constant_current",
+          "file": "test_microwave_standby_power_limits.csv",
+          "interval": 1,
+          "limit": 10
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_5",
+          "parent": "double_assert_4",
+          "property": "value",
+          "file": "test_microwave_standby_power_limits.player",
+          "inline_comments": {
+            "file": "//standby_power should = 10 W"
+          }
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_4",
+          "id": 4,
+          "parent": "microwave_2",
+          "status": "ASSERT_TRUE",
+          "target": "standby_power",
+          "within": 0.001
+        }
+      ]
+    }
+  }
+}

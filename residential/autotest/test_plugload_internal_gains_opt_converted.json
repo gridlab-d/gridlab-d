@@ -1,0 +1,87 @@
+{
+  "__preamble": {
+    "comments": [
+      "//",
+      "// Test purpose: validating internal_gains calculation over time; verifies",
+      "// that the code uses the following equation correctly:",
+      "//\tinternal_gains = power*heat_fraction",
+      "//",
+      "// demand varies over time",
+      "// Payroll: d3y332"
+    ]
+  },
+  "clock": {
+    "timestamp": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-02 1:00:00'",
+    "timezone": "PST+8PDT"
+  },
+  "modules": {
+    "residential": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "player": {
+      "instances": [
+        {
+          "name": "player_3",
+          "parent": "plugload_2",
+          "file": "generic_demand.glt",
+          "loop": 24,
+          "property": "demand"
+        },
+        {
+          "name": "player_5",
+          "parent": "double_assert_4",
+          "property": "value",
+          "file": "plugload_internal_gains.player"
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_4",
+          "parent": "plugload_2",
+          "target": "heatgain",
+          "once": "ONCE_TRUE",
+          "within": 0.001
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_6",
+          "parent": "plugload_2",
+          "file": "plugload_load_usage3600.csv",
+          "interval": 3600,
+          "limit": 28,
+          "property": "demand,power,total,heatgain_fraction,heatgain"
+        }
+      ]
+    },
+    "plugload": {
+      "instances": [
+        {
+          "name": "plugload_2",
+          "parent": "house_1",
+          "installed_power": 0.1
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_1",
+          "floor_area": "1500 sf",
+          "cooling_setpoint": 100,
+          "heating_setpoint": 1,
+          "inline_comments": {
+            "cooling_setpoint": "// turns of HVAC"
+          }
+        }
+      ]
+    }
+  }
+}

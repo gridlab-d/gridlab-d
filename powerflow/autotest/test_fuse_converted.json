@@ -1,0 +1,236 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Fuse test",
+      "// Simple test to verify that the fuses blow when current exceeds amp rating, and that only",
+      "// the phase that blows actually creates an open in the circuit."
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "relax_naming_rules": 1
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2000-01-01 12:00:00'",
+    "stoptime": "'2000-01-01 12:03:00'"
+  },
+  "modules": {
+    "powerflow": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "overhead_line_conductor_100",
+          "id": 100,
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306,
+          "outside_comments": [
+            "//#define stylesheet=\"C:\\Documents and Settings\\d3x289\\Desktop\\GLD_6_4\\trunk\\VS2005\\gridlabd-2_0\";",
+            "//#set iteration_limit=100;"
+          ]
+        },
+        {
+          "name": "overhead_line_conductor_101",
+          "id": 101,
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "line_spacing_200",
+          "id": 200,
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "line_configuration_300",
+          "id": 300,
+          "conductor_A": "overhead_line_conductor_100",
+          "conductor_B": "overhead_line_conductor_100",
+          "conductor_C": "overhead_line_conductor_100",
+          "conductor_N": "overhead_line_conductor_101",
+          "spacing": "line_spacing_200"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "transformer_configuration_400",
+          "id": 400,
+          "connect_type": "WYE_WYE",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06,
+          "install_type": "PADMOUNT"
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node1",
+          "nominal_voltage": 7199.778,
+          "phases": "ABCN"
+        },
+        {
+          "name": "node2",
+          "nominal_voltage": 7199.778,
+          "phases": "ABCN"
+        },
+        {
+          "name": "node3",
+          "nominal_voltage": 2401.777,
+          "phases": "ABCN"
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_10",
+          "parent": "load4",
+          "property": "constant_power_B",
+          "file": "../fuse_load_B.player"
+        },
+        {
+          "name": "player_15",
+          "parent": "enum_assert_14",
+          "property": "value",
+          "file": "../fuse_ph_A_status.player"
+        },
+        {
+          "name": "player_17",
+          "parent": "enum_assert_16",
+          "property": "value",
+          "file": "../fuse_ph_B_status.player"
+        },
+        {
+          "name": "player_19",
+          "parent": "enum_assert_18",
+          "property": "value",
+          "file": "../fuse_ph_C_status.player"
+        },
+        {
+          "name": "player_22",
+          "parent": "complex_assert_21",
+          "property": "status",
+          "file": "../fuse_assert_status_B.player"
+        },
+        {
+          "name": "player_24",
+          "parent": "complex_assert_23",
+          "property": "status",
+          "file": "../fuse_assert_status_C.player"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load4",
+          "nominal_voltage": 2401.777,
+          "phases": "ABCN",
+          "constant_power_A": 10,
+          "constant_power_C": "100000+100000j"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "overhead_line_11",
+          "from": "node1",
+          "to": "node2",
+          "configuration": "line_configuration_300",
+          "phases": "ABCN"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "transformer_12",
+          "from": "node2",
+          "to": "node3",
+          "configuration": "transformer_configuration_400",
+          "phases": "ABCN"
+        }
+      ]
+    },
+    "enum_assert": {
+      "instances": [
+        {
+          "name": "enum_assert_14",
+          "parent": "fuse_test",
+          "target": "phase_A_status"
+        },
+        {
+          "name": "enum_assert_16",
+          "parent": "fuse_test",
+          "target": "phase_B_status"
+        },
+        {
+          "name": "enum_assert_18",
+          "parent": "fuse_test",
+          "target": "phase_C_status"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_20",
+          "parent": "fuse_test",
+          "target": "power_out_A",
+          "value": "10+0j",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_21",
+          "parent": "fuse_test",
+          "target": "power_out_B",
+          "value": "1000+1000j",
+          "within": 1
+        },
+        {
+          "name": "complex_assert_23",
+          "parent": "fuse_test",
+          "target": "power_out_C",
+          "value": "100000+100000j",
+          "within": 1
+        }
+      ]
+    },
+    "fuse": {
+      "instances": [
+        {
+          "name": "fuse_test",
+          "from": "node3",
+          "to": "load4",
+          "mean_replacement_time": 1000,
+          "current_limit": 1,
+          "phases": "ABCN"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "__preamble": {
+    "comments": [
+      "// test schedule characteristics"
+    ]
+  },
+  "schedules": {
+    "test_nonzero": [
+      {
+        "name": "",
+        "items": [
+          "nonzero",
+          "0-29 * * * * 1",
+          "30-59 * * * * 2"
+        ]
+      }
+    ],
+    "test_positive": [
+      {
+        "name": "",
+        "items": [
+          "positive",
+          "0-29 * * * * 0",
+          "30-59 * * * * 1"
+        ]
+      }
+    ],
+    "test_boolean": [
+      {
+        "name": "",
+        "items": [
+          "boolean",
+          "0-29 * * * * 0",
+          "30-59 * * * * 1"
+        ]
+      }
+    ]
+  }
+}

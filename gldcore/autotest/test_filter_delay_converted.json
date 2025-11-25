@@ -1,0 +1,63 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Filter test simple delay",
+      "//"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "debug": 0
+    }
+  },
+  "classes": {
+    "from": [
+      {
+        "type": "randomvar",
+        "name": "value"
+      }
+    ],
+    "to": [
+      {
+        "type": "double",
+        "name": "value"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2000-01-01 00:00:00 PST'",
+    "stoptime": "'2000-01-01 01:00:00 PST'"
+  },
+  "modules": {
+    "tape": {}
+  },
+  "objects": {
+    "from": {
+      "instances": [
+        {
+          "name": "from",
+          "value": "\"type:normal(0,1)"
+        }
+      ]
+    },
+    "to": {
+      "instances": [
+        {
+          "name": "to",
+          "value": "delay(from:value)"
+        }
+      ]
+    },
+    "multi_recorder": {
+      "instances": [
+        {
+          "name": "multi_recorder_3",
+          "file": "output.csv",
+          "interval": -1,
+          "property": "from:value,to:value"
+        }
+      ]
+    }
+  }
+}

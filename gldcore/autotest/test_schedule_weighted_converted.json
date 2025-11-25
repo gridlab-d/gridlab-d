@@ -1,0 +1,51 @@
+{
+  "classes": {
+    "test": [
+      {
+        "type": "double",
+        "name": "value"
+      }
+    ]
+  },
+  "clock": {
+    "starttime": "'2000-01-01 00:00:00'",
+    "stoptime": "'2000-01-01 01:00:00'"
+  },
+  "modules": {
+    "assert": {}
+  },
+  "objects": {
+    "assert": {
+      "instances": [
+        {
+          "name": "assert_2",
+          "parent": "test_1",
+          "target": "value",
+          "relation": "inside",
+          "lower": 0,
+          "upper": 0.5
+        }
+      ]
+    },
+    "test": {
+      "instances": [
+        {
+          "name": "test_1",
+          "value": "test_weighted"
+        }
+      ]
+    }
+  },
+  "schedules": {
+    "test_weighted": [
+      {
+        "name": "",
+        "items": [
+          "weighted",
+          "0-29 * * * * 0",
+          "30-59 * * * * 1"
+        ]
+      }
+    ]
+  }
+}

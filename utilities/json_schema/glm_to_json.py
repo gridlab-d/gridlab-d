@@ -26,13 +26,14 @@ except (ImportError, ValueError):
     # Fall back to direct imports (for standalone usage)
     from glm_parser import GLMModel, GLMConditionalError
 
-def glm_to_json(glm_name, input_dir=None, output_dir=None):
+def glm_to_json(glm_name, input_dir=None, output_dir=None, output_name=None):
     """Convert a GLM file to JSON format.
     
     Args:
         glm_name (str): Name of the GLM file (without .glm extension)
         input_dir (str, optional): Input directory (default: 'glmFiles/')
         output_dir (str, optional): Output directory (default: 'output/' or same as input_dir)
+        output_name (str, optional): Custom output filename (without .json extension, defaults to glm_name)
     
     Returns:
         bool: True if successful, False otherwise.
@@ -42,6 +43,10 @@ def glm_to_json(glm_name, input_dir=None, output_dir=None):
         print("\n❌ Error: No GLM file name provided")
         print("\n💡 Run with --help for usage information")
         return False
+    
+    # Default output name to input name if not specified
+    if output_name is None:
+        output_name = glm_name
     
     # Determine input directory
     if input_dir:
@@ -87,7 +92,7 @@ def glm_to_json(glm_name, input_dir=None, output_dir=None):
         # Create the output directory if it doesn't exist
         out_path.mkdir(parents=True, exist_ok=True)
         
-        output_file_path = out_path / f"{glm_name}.json"
+        output_file_path = out_path / f"{output_name}.json"
 
         # Extract class blueprints from parsed GLM definitions
         classes = getattr(model_file, 'class_definitions', {})
@@ -225,11 +230,11 @@ def glm_to_json(glm_name, input_dir=None, output_dir=None):
         return False
 
 def find_glm_files(base_dir, autotest_only=True):
-    """Find .glm files in autotest subdirectories or recursively.
+    """Find .glm files in autotest directories or recursively.
     
     Args:
         base_dir (str or Path): Base directory to search
-        autotest_only (bool): Search only autotest/*/ (True) or all directories (False)
+        autotest_only (bool): Search only autotest/ directories (True) or all directories (False)
         
     Returns:
         List[Path]: Sorted absolute paths to .glm files.
@@ -241,11 +246,9 @@ def find_glm_files(base_dir, autotest_only=True):
         # Find all directories named 'autotest'
         for autotest_dir in base_path.rglob('autotest'):
             if autotest_dir.is_dir():
-                # Find all .glm files in subdirectories of autotest (not in autotest itself)
-                for glm_file in autotest_dir.rglob('*.glm'):
-                    # Only include if the file is in a subdirectory, not directly in autotest/
-                    if glm_file.parent != autotest_dir:
-                        glm_files.append(glm_file)
+                # Find all .glm files directly in the autotest directory (not in subdirectories)
+                for glm_file in autotest_dir.glob('*.glm'):
+                    glm_files.append(glm_file)
     else:
         # Find all .glm files recursively
         glm_files = list(base_path.rglob('*.glm'))
@@ -303,6 +306,13 @@ def convert_batch_files(search_dir=None, output_dir=None):
             # Output in the same directory as the .glm file
             out_dir = str(glm_dir)
         
+        # Determine output filename
+        # Files starting with "test_" get "_converted" added before the extension
+        if glm_name.startswith('test_'):
+            output_name = f"{glm_name}_converted"
+        else:
+            output_name = glm_name
+        
         # Display progress on a single line that updates
         rel_path = glm_file.relative_to(search_path)
         # Clear line and show progress
@@ -315,7 +325,7 @@ def convert_batch_files(search_dir=None, output_dir=None):
         
         f = io.StringIO()
         with redirect_stdout(f), redirect_stderr(f):
-            result = glm_to_json(glm_name, str(glm_dir), out_dir)
+            result = glm_to_json(glm_name, str(glm_dir), out_dir, output_name)
         
         if result:
             success_count += 1

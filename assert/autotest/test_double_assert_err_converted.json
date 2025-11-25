@@ -1,0 +1,32 @@
+{
+  "__preamble": {
+    "comments": [
+      "// test_double_assert_err"
+    ]
+  },
+  "modules": {
+    "climate": {},
+    "assert": {}
+  },
+  "objects": {
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_2",
+          "parent": "climate_1",
+          "target": "temperature",
+          "value": 55,
+          "within": 1
+        }
+      ]
+    },
+    "climate": {
+      "instances": [
+        {
+          "name": "climate_1",
+          "temperature": 50
+        }
+      ]
+    }
+  }
+}
