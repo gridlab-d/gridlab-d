@@ -34,7 +34,7 @@ All standard **link** properties are inherited as well, and are not listed here 
 
 Details on the properties are outlined in Table 1. Note that although some of these are defined in the base **link** class, they're also listed here for completeness. 
 
-Table 1 - Switch properties  
+##### Table 1 - Switch properties  
 
 Property | Type | Definition   
 ---|---|---  

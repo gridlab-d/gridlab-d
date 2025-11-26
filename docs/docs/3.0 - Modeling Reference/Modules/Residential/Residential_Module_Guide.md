@@ -4,7 +4,7 @@ The thermal performance of a home in the House_e module is based on a simple the
 
 [![Equivalent Thermal Parameters Circuit Modeled by House-e.](../../../../images/300px-Residential_module_users_guide_figure_1.png)](/wiki/File:Residential_module_users_guide_figure_1.png)
 
-Figure 1. Equivalent Thermal Parameters Circuit Modeled by House-e.
+##### Figure 1. Equivalent Thermal Parameters Circuit Modeled by House-e.
 
 In the laws of physics, temperatures, conductances, thermal masses and heat flows are entirely equivalent to voltages, conductances, capacitors and current flows in the electric circuit analog. That is, the differential equations expressing conservation for energy are the same. In practice, when applied to represent heat flow in a building, this circuit is always over-damped. That is, it exhibits exponential decays and approaches toward steady-state (not oscillatory) conditions. 
 

@@ -18,7 +18,7 @@ When GridLAB-D™ stops and exits, the pw_model shall close the PowerWorld model
 
 ![Basic structure of PowerWorld/GridLAB-D™ Interactions](../../../images/300px-T_D_Integration_Figure.png)
 
-Figure 1. Basic structure of PowerWorld/GridLAB-D™ Interactions
+##### Figure 1. Basic structure of PowerWorld/GridLAB-D™ Interactions
 
 A basic structure for the interactions of the network `pw_` objects, PowerWorld, and the [powerflow] module are shown in Figure 1. 
 

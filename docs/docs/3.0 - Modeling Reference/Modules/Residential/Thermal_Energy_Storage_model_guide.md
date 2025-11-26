@@ -40,7 +40,7 @@ where k is the coefficient of thermal conductivity (W/M/°C) of the material ins
 
 The Ice Bear® unit stores 460 gallons of water for 360,000 Btu thermal energy storage. The volume of water is scaled linearly with the amount of required thermal energy storage. Converting gallons to m3 (460 U.S. Gallons = 1.7413 m3) and then converting volume to surface area with the assumption that the water is stored in a cube. 
 
-Table 1 - Coefficient of Thermal Conductivity (W/m/°C)  Material | k (W/m/°C)   
+##### Table 1 - Coefficient of Thermal Conductivity (W/m/°C)  Material | k (W/m/°C)   
 ---|---  
 Air | 0.024   
 Argon | 0.016   
@@ -66,7 +66,7 @@ There are several inputs for thermal energy storage, however, none of these vari
 
 ## User Defined Inputs
 
-Table 2 - User Defined Variables for Thermal Storage  Property Name | Type | Unit | Description   
+##### Table 2 - User Defined Variables for Thermal Storage  Property Name | Type | Unit | Description   
 ---|---|---|---  
 total_capacity | double | Btu | The total capacity of energy storage of the unit. When left to default, it is scaled based on the HVAC sizing in house.   
 stored_capacity | double | Btu | The amount of energy stored in the unit at the start of the simulation. If this exceeds the total_capacity, it will be set equal to the total_capacity. If SOC (state of charge) is also set, SOC is the dominant value and will be used instead.   
@@ -84,7 +84,7 @@ k | double | W/m/°C | The coefficient of thermal conductivity in Watts per mete
   
 ## Inputs Taken From house
 
-Table 3 - Internal Variables for Thermal Storage  Property Name | Type | Unit | Description   
+##### Table 3 - Internal Variables for Thermal Storage  Property Name | Type | Unit | Description   
 ---|---|---|---  
 design_cooling_capacity | double | Btu/hr | The designed cooling capacity of the unit.   
 outside_temperature | double | °F | The outside temperature.   

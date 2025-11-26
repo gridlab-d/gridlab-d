@@ -31,7 +31,7 @@ The following tables are used by the import/export proceduce in the mysql module
 
 ### Globals
 
-Table of globals Column name | Data type | Flags | Default   
+##### Table of globals Column name | Data type | Flags | Default   
 ---|---|---|---  
 name | char(64) | PK/NN |   
 type | int(11) |  | NULL   
@@ -44,7 +44,7 @@ description | text |  | NULL
 
 The modules table lists the module in use and their corresponding version information. 
 
-Table of modules Column name | Data type | Flags | Default   
+##### Table of modules Column name | Data type | Flags | Default   
 ---|---|---|---  
 name | char(64) | PK/NN |   
 major | int(11) |  | NULL   
@@ -54,7 +54,7 @@ minor | int(11) |  | NULL
 
 The classes table lists all the classes and properties defined (including those not in use). Runtime classes and properties are listed with a NULL module name. 
 
-Table of classes Column name | Data type | Flags | Default   
+##### Table of classes Column name | Data type | Flags | Default   
 ---|---|---|---  
 id | int(11) | PK/NN/AI |   
 name | char(64) |  |   
@@ -67,7 +67,7 @@ description | text |  | NULL
   
 ### Objects
 
-Table of objects Column name | Data type | Flags | Default   
+##### Table of objects Column name | Data type | Flags | Default   
 ---|---|---|---  
 id | int(11) | PK/NN |   
 class | char(64) |  | NULL   
@@ -92,7 +92,7 @@ flags | int(11) |  | NULL
 
 Some properties have extended specifications that are not captured by a simple read of the value. These specifications are stored in the properties table. 
 
-Table of Extended Properties  Column name | Data type | Flags | Default   
+##### Table of Extended Properties  Column name | Data type | Flags | Default   
 ---|---|---|---  
 id | mediumint | NN |   
 property | char(64) | NN |   
@@ -125,7 +125,7 @@ specification | text | NN |
 
 Schedules are recorded in the original input form which there were defined. See schedule for details. 
 
-Table of Schedules Column name | Data type | Flags | Default   
+##### Table of Schedules Column name | Data type | Flags | Default   
 ---|---|---|---  
 name | char(64) | PK/NN |   
 definition | text |  |   

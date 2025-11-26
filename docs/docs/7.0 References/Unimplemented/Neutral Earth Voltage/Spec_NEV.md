@@ -12,7 +12,7 @@ The Neutral-Earth Voltage implementation of GridLAB-D™ will require many chang
 
 To ensure all specifications are compatible and discussions are consistent, the following terms will be utilized for NEV-related discussions and specifications. 
 
-Table 1 - NEV Terminology  Term | Definition   
+##### Table 1 - NEV Terminology  Term | Definition   
 ---|---  
 Bus | Connection point of link-based objects, representing a point of voltage potential. Interchangeable with node.   
 Connection | A specific wire or relationship between two phases of distinct buses/nodes/terminals. e.g., the wire representing phase A between two nodes.   

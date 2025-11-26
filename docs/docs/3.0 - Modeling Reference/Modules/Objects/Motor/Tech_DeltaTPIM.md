@@ -47,27 +47,27 @@ Case 1 simulates a step change in mechanical torque at constant grid voltage. A 
 
 ![Q axis voltage](../../../../../images//300px-Q_axisvotage_Tstep.png)
 
-Figure 2. Q axis voltage
+##### Figure 2. Q axis voltage
 
 ![Step change in torque](../../../../../images//300px-Torque_Tstep.png)
 
-Figure 2. Step change in torque
+##### Figure 2. Step change in torque
 
 ![Direct axis current](../../../../../images//300px-Ids_Tstep.png)
 
-Figure 3. Direct axis current
+##### Figure 3. Direct axis current
 
 ![Quadrature axis current](../../../../../images//300px-Iqs_Tstep.png)
 
-Figure 4. Quadrature axis current
+##### Figure 4. Quadrature axis current
 
 ![Speed](../../../../../images//300px-Wrze_Tstep.png)
 
-Figure 5. Speed
+##### Figure 5. Speed
 
 ![Second harmonic component of Speed](../../../../../images//300px-Wrtw_Tstep.png)
 
-Figure 6. Second harmonic component of Speed
+##### Figure 6. Second harmonic component of Speed
 
 ### Case 2
 
@@ -76,27 +76,27 @@ Case 2 simulates a step change in grid voltage. A constant load torque is consid
 
 ![Q axis voltage](../../../../../images//300px-Q_axisvotage_Vstep.png)
 
-Figure 7. Q axis voltage
+##### Figure 7. Q axis voltage
 
 ![Step change in torque](../../../../../images//300px-Torque_Vstep.png)
 
-Figure 8. Step change in torque
+##### Figure 8. Step change in torque
 
 ![Direct axis current](../../../../../images//300px-Ids_Vstep.png)
 
-Figure 9. Direct axis current
+##### Figure 9. Direct axis current
 
 ![Quadrature axis current](../../../../../images//300px-Iqs_Vstep.png)
 
-Figure 10. Quadrature axis current
+##### Figure 10. Quadrature axis current
 
 ![Speed](../../../../../images//300px-Wrze_Vstep.png)
 
-Figure 11. Speed
+##### Figure 11. Speed
 
 ![Second harmonic component of Speed](../../../../../images//300px-Wrtw_Vstep.png)
 
-Figure 12. Second harmonic component of Speed
+##### Figure 12. Second harmonic component of Speed
 
 # References
 

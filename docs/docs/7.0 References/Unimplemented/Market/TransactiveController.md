@@ -77,9 +77,9 @@ air_temperature  | 75.1
   
 ![Illustration of Bid and Response of Transactive Controller](../../../../images/Figure_1.png)
 
-Figure 1: Illustration of Bid and Response of Transactive Controller.
+##### Figure 1: Illustration of Bid and Response of Transactive Controller.
 
-Figure 1 provides an example of cooling set points with the transactive controller. For heating, the slope would be negative, but operation would be similar. The portion left of the base set point in Figure 1 indicates a pre-cooling state due to low market prices, while the area to the right indicates a condition that allows the temperature to rise slightly due to high prices. It shows that the participant is willing to allow the temperature to climb by 5 degrees during high prices, and pre-cool by -3 degrees during times of low market prices. 
+##### Figure 1 provides an example of cooling set points with the transactive controller. For heating, the slope would be negative, but operation would be similar. The portion left of the base set point in Figure 1 indicates a pre-cooling state due to low market prices, while the area to the right indicates a condition that allows the temperature to rise slightly due to high prices. It shows that the participant is willing to allow the temperature to climb by 5 degrees during high prices, and pre-cool by -3 degrees during times of low market prices. 
 
 The current bid of the controller object is determined by where the current air temperature falls upon the bid curve, and is determined by 
 

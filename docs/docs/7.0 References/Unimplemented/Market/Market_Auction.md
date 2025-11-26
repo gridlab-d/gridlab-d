@@ -102,52 +102,52 @@ The secondary functionality of bidder status will be useful on systems where not
 
 [![Marginal seller clearing scenario](../../../../images/300px-SimpleMarket-Marginal_Sell.png)](/wiki/File:SimpleMarket-Marginal_Sell.png)
 
-Figure 1. Marginal seller clearing scenario
+##### Figure 1. Marginal seller clearing scenario
 
 [![Marginal buyer clearing scenario](../../../../images/300px-SimpleMarket-Marginal_Buy.png)](/wiki/File:SimpleMarket-Marginal_Buy.png)
 
-Figure 2. Marginal buyer clearing scenario
+##### Figure 2. Marginal buyer clearing scenario
 
 [![Buyer and seller clearing quantities equal](../../../../images/300px-SimpleMarket-Both_Marg.png)](/wiki/File:SimpleMarket-Both_Marg.png)
 
-Figure 3. Buyer and seller clearing quantities equal
+##### Figure 3. Buyer and seller clearing quantities equal
 
 [![Buyer and seller clearing quantities equal, close next seller bid](../../../../images/300px-SimpleMarket-Both_Marg_NextSell.png)](/wiki/File:SimpleMarket-Both_Marg_NextSell.png)
 
-Figure 4. Buyer and seller clearing quantities equal, close next seller bid
+##### Figure 4. Buyer and seller clearing quantities equal, close next seller bid
 
 [![Buyer and seller clearing quantities equal, close next buyer bid](../../../../images/300px-SimpleMarket-Both_Marg_NextBuy.png)](/wiki/File:SimpleMarket-Both_Marg_NextBuy.png)
 
-Figure 5. Buyer and seller clearing quantities equal, close next buyer bid
+##### Figure 5. Buyer and seller clearing quantities equal, close next buyer bid
 
 [![Buyer and seller clearing quantities and clearing prices equal](../../../../images/300px-SimpleMarket-Both.png)](/wiki/File:SimpleMarket-Both.png)
 
-Figure 6. Buyer and seller clearing quantities and clearing prices equal
+##### Figure 6. Buyer and seller clearing quantities and clearing prices equal
 
 [![Failure for market to clear](../../../../images/300px-SimpleMarket-Failure.png)](/wiki/File:SimpleMarket-Failure.png)
 
-Figure 7. Failure for market to clear
+##### Figure 7. Failure for market to clear
 
 [![Null market clearing scenario](../../../../images/300px-SimpleMarket-Null.png)](/wiki/File:SimpleMarket-Null.png)
 
-Figure 8. Null market clearing scenario
+##### Figure 8. Null market clearing scenario
 
 [![Equal clearing price, but marginal seller clearing scenario](../../../../images/300px-SimpleMarket-PriceMargSeller.png)](/wiki/File:SimpleMarket-PriceMargSeller.png)
 
-Figure 9. Equal clearing price, but marginal seller clearing scenario
+##### Figure 9. Equal clearing price, but marginal seller clearing scenario
 
 [![Equal clearing price, but marginal buyer clearing scenario](../../../../images/300px-SimpleMarket-PriceMargBuyer.png)](/wiki/File:SimpleMarket-PriceMargBuyer.png)
 
-Figure 10. Equal clearing price, but marginal buyer clearing scenario
+##### Figure 10. Equal clearing price, but marginal buyer clearing scenario
 
 [![Unresponsive buyers in marginal seller clearing scenario](../../../../images/300px-SimpleMarket-Marginal_Base.png)](/wiki/File:SimpleMarket-Marginal_Base.png)
 
 
-Figure 11. Unresponsive buyers in marginal seller clearing scenario
+##### Figure 11. Unresponsive buyers in marginal seller clearing scenario
 
 [![Unresponsive buyers in equal quantity clearing scenario](../../../../images/300px-SimpleMarket-MarginalUnresponse.png)](/wiki/File:SimpleMarket-MarginalUnresponse.png)
 
-Figure 12. Unresponsive buyers in equal quantity clearing scenario
+##### Figure 12. Unresponsive buyers in equal quantity clearing scenario
 
 Market clearing begins with the sorting of both buying and selling components. Buyers are sorted from highest price to lowest price. Sellers are sorted from lowest price to highest price. Buyer and seller curves are then created by the cumulative sum of the quantities associated with these sorted prices. These two, sorted curves are then overlaid. It is important to note that each curve is considered to move from one extreme in price to the other. i.e., the buyer curve will traverse from $+\infty$ price to $-\infty$ price, and the seller curve will traverse from $-\infty$ price to $+\infty$ price. In all of the figures in this section, these extremes occur at the zero-quantity location and after all seller or bidder quantities are bid (right edge of the bidding curve). 
 
@@ -169,7 +169,7 @@ An alternative is to use a method similar to the marginal generator. The margina
 
 A variation on the second marginal buyer in power systems method still utilizes a device like the Grid Friendly Appliance Controller (GFA). However, rather than only the marginal load arming the GFA functionality, all GFAs in the system are armed. The regulation price of the system is set to the marginal clearing price. Any device that exercises its GFA functionality during this time will receive compensation at the regulation price. This method helps increase the pool of marginal load since devices below the clearing threshold may still elect to participate in this regulation market. 
 
-Figure 3 represents the third market clearing scenario. Here, the intersection of buyer and seller curves is at the same quantity, but at different prices. The intersection point occurs on an edge of both the buyer and seller quantity curves. In this case, the quantity is obviously set to the intersection point of the two curves. This quantity is either the sum of all sellers' quantities with a bid less than the "marginal" seller bid, or the sum of all buyers' quantities with a bid higher than the "marginal" buyer bid. However, the price is ideally taken as the average price of the two intersecting bids. The ideal clearing price is determined as 
+##### Figure 3 represents the third market clearing scenario. Here, the intersection of buyer and seller curves is at the same quantity, but at different prices. The intersection point occurs on an edge of both the buyer and seller quantity curves. In this case, the quantity is obviously set to the intersection point of the two curves. This quantity is either the sum of all sellers' quantities with a bid less than the "marginal" seller bid, or the sum of all buyers' quantities with a bid higher than the "marginal" buyer bid. However, the price is ideally taken as the average price of the two intersecting bids. The ideal clearing price is determined as 
 
 $$Price_{Clear} = \frac{\left(Bid_{Seller} + Bid_{Buyer}\right)}{2}$$
 
@@ -179,7 +179,7 @@ Unfortunately, the scenario of Figure 3 is not always as straight forward. Figur
 
 In Figure 4, the next seller bid does not exceed the ideal clearing price. To ensure proper operation and that this device does not activate, the price associated with this bid must be above the final clearing price. This "next" bid price serves as a non-inclusive maximum for the clearing price. Therefore, the clearing price will have to be slightly below this "next" seller bid. Typically, this will be $0.01 below the next seller bid price. 
 
-Figure 5 shows a similar behavior with buyer bids. The next buyer bid does not fall below the ideal clearing price. Therefore, this device would assume it was the marginal quantity and activate. To prevent this, the final clearing price must be set slightly higher that this bid. In a manner similar to the previous seller curve example, the "next" buyer bid serves as a limit for the clearing price. However in this scenario, the "next" buyer bid serves as a non-inclusive lower limit for the market clearing price. The final clearing price of the market must then be slightly above this "next" buyer bid. Again, this may be something as trivial as a $0.01 increase above the next buyer bid. 
+##### Figure 5 shows a similar behavior with buyer bids. The next buyer bid does not fall below the ideal clearing price. Therefore, this device would assume it was the marginal quantity and activate. To prevent this, the final clearing price must be set slightly higher that this bid. In a manner similar to the previous seller curve example, the "next" buyer bid serves as a limit for the clearing price. However in this scenario, the "next" buyer bid serves as a non-inclusive lower limit for the market clearing price. The final clearing price of the market must then be slightly above this "next" buyer bid. Again, this may be something as trivial as a $0.01 increase above the next buyer bid. 
 
 The final, valid scenario is actually a variation on the third scenario. Figure 6 show the situation when both the buyer and seller clearing quantities and clearing prices match exactly. In this case, the clearing price is obviously the intersecting price (common for both buyer and seller). The clearing quantity is the sum of all buyers with bid prices equal to or greater than the clearing price, or the sum of all sellers with bid bid prices equal to or lower than the clearing price. Approaching the clearing point from either the seller or buyer curves should yield identical results. 
 
@@ -201,7 +201,7 @@ The resulting price is higher than any buyer, so no buyers will be activated. Th
 
 It is important to note that the market can only clear in one of these scenarios. Some confusing clearing situations can occur, but they are always related to these base cases. Figure 9 demonstrates a variation on the marginal seller case of Figure 1. Despite the intersecting bids having the same price, this scenario is identical to Figure 1. The three highest buyer bids are satisfied by the market and these buyers purchase their desired quantities. Two sellers are below the clearing price, so they accept the market price and sell their full quantities into the system. The third seller is at the clearing price, but its full quantity is not needed. This seller gets the clearing price and acts as the marginal seller in the market. It will only provide part of its full output, and may need to track the buyer demand around that output point. 
 
-Figure 10 shows a similar example where the clearing price is again very clear. However, the quantities once again do not properly align. This case is merely a special case of the scenario presented in Figure 2, or a marginal buyer scenario. The clearing price of the market is obvious. Only the sellers with bids at or below the clearing price accept the market clearing value, and only buyers with bids at or higher than the clearing price accept the cleared market. Unfortunately, there is more demand from the buyers than there is supply from the sellers. As such, the buyer with the market clearing bid will not be able to have their full bid quantity satisfied. This buyer must consume only the appropriate portion of their bid quantity. 
+##### Figure 10 shows a similar example where the clearing price is again very clear. However, the quantities once again do not properly align. This case is merely a special case of the scenario presented in Figure 2, or a marginal buyer scenario. The clearing price of the market is obvious. Only the sellers with bids at or below the clearing price accept the market clearing value, and only buyers with bids at or higher than the clearing price accept the cleared market. Unfortunately, there is more demand from the buyers than there is supply from the sellers. As such, the buyer with the market clearing bid will not be able to have their full bid quantity satisfied. This buyer must consume only the appropriate portion of their bid quantity. 
 
 If the capability for unresponsive buyers is included, that scenario must factor into the market clearing as well. Once the unresponsive load quantity is know or estimated, it is bid into the market as a buyer quantity with an impossibly large price (set to the `price_cap` input). Figure 11 shows how unresponsive buyers fit into the "five bidder, four seller" example for the four valid market clearing scenarios. The unresponsive buyers effectively become a bidding quantity that is always met first. Only once the needs of these unresponsive buyers are satisfied, will responsive buyer devices be able to interact with the market. If the needs of the unresponsive buyers are greater than the seller supply, the market failure case of Figure 7 will occur. 
 

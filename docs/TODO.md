@@ -31,10 +31,10 @@
 - [X] **XML** files. Still supported? Keep documentation? --> remove ref, "soft keep", switch to JSON as default
 - [ ] Talk with dev team to build out the built-in documentation within the code itself
 - [X] **MySQL** player and recorder - keep? If so, needs better intro. --> move to unimplemented
-- [ ] **Aggregate Demand Response Model** - this is a theory page, unclear what part of the GLD code it's actually referring to. Is this implemented? 
-- [ ] **Microgrids** and **Diesel_dg** - review for accuracy (esp frequency bit) and potentially merge?
-- [ ] **Energy storage** - page is essentially empty. Should be the battery object?
-- [ ] **Power Flow User Guide** - this page has a LOT in it, with a fair amount I've never heard of, with various stages of "this has been partially validated and is considered experimental at this time" : need to review and update/deprecate.
+- [ ] **Aggregate Demand Response Model** - this is a theory page, unclear what part of the GLD code it's actually referring to. Is this implemented? --> ***Move to unimplemented***
+- [ ] **Microgrids** and **Diesel_dg** - microgrids is essentially the intro, diesel_dg is the parameter list and seems accurate --> keep
+- [ ] **Energy storage** - page is essentially empty. Should be the battery object? --> ***very simplified model, assumes it will be paired with inverter_dyn. Dev team to consider whether it should stay separate or be merged with battery***
+- [ ] **Power Flow User Guide** - this page has a LOT in it, with a fair amount I've never heard of, with various stages of "this has been partially validated and is considered experimental at this time" : need to review and update/deprecate. --> **requested Dev team to put eyes on this.**
 
 ### Docs Questions
 - [ ] How do we handle objects? Source code integration/conversion/hybrid?

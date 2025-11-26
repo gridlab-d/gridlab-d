@@ -66,16 +66,11 @@ Much better!
 We added an image in the chunking example, but here are a few more options for how to do that. Images can be either local (in the images folder), or refering an external url. See the below examples:
 
 ![Here's an image](https://images.shoutwiki.com/gridlab-d/e/e6/Gdlogo.jpg)
+##### Figure 1: GridLAB-D Logo
 
-Another image (local) and resized
+Note that figure labels are below the image and at a list-level of five. The same goes for tables, but table captions appear above the table.
 
-![Here's an image| ,150%](https://images.shoutwiki.com/gridlab-d/e/e6/Gdlogo.jpg)
-
-<img   src=../../images/Gdlogo.jpg width="750">
-
-Not edited
-
-![logo](../../images/Gdlogo.jpg)
+TODO - Figure Scaling - Have yet to figure out how to rescale an image that renders correctly in our documentation. Would like to add some auto-formatter to resize all images to be page-width in size. 
 
 # Local Image Reference
 

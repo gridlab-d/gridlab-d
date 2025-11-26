@@ -88,7 +88,7 @@ The **network** module implements the Gauss-Seidel solution method for balanced 
 
 The module global variables are shown in Table 1. 
 
-Table 1. Network module properties  
+##### Table 1. Network module properties  
 
 _Property_ | _Type_  | _Default_  | _Unit_  | _Description_    
 ---|---|---|---|---  

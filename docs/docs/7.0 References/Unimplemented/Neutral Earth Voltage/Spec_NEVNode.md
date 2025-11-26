@@ -22,7 +22,7 @@ In order to support NEV, all node-based objects will need to define terminals in
 
 This input would then be read to create some internal variables: `NEV_voltage`[n] array, `NEV_current`[n][n] array, `NEV_power`[n][n] array, `NEV_shunt`[n][n] array, and `NEV_Y_FULL`[2][n][n] where n is corresponds to the number of terminals of the top most parent node. `NEV_Y_FULL` is where the admittance matrices of the node, and all links connected to that node are aggregated together and split into real and imaginary. The table below provides some definitions for the new properties shown in the above example. 
 
-Table 1 - NEV Node properties  Property | Definition   
+##### Table 1 - NEV Node properties  Property | Definition   
 ---|---  
 `terminals` | Terminal definition for the node. It defines how many distinct voltage potentials a node supports. Values between 1 and 64 are supported.   
 `voltage` | Potential between terminals of `terminals`. Used to define starting voltages (SWING node and initial powerflow solutions) and used to read voltages. Format for the specification is "complex value,terminal 1, terminal 2" to define a potential between terminals 1 and 2. Terminal 0 is absolute ground (0.0 Volt potential).   
@@ -163,7 +163,7 @@ Loads will follow their the same behavior as the nodes but will have three addit
 
 The table below provides some definitions for the new properties shown in the above example. 
 
-Table 1 - NEV Load properties  Property | Definition   
+##### Table 1 - NEV Load properties  Property | Definition   
 ---|---  
 `terminals` | Terminal definition for the node. Synonymous with phases, but not defined in an `ABC` sense.   
 `voltage` | Potential between corresponding terminals. Used to define starting voltages (SWING node and initial powerflow solutions) and used to read voltages.   

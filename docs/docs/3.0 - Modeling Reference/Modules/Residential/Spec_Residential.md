@@ -116,7 +116,7 @@ A number of enduses can be implicitly defined by listing them in the residential
 
 but others are expected any time, so please consult the _\--modhelp residential_ output for what is currently supported. 
 
-Table 1 - Implicit enduses  End use | Type | Schedule | Parameters   
+##### Table 1 - Implicit enduses  End use | Type | Schedule | Parameters   
 ---|---|---|---  
 Lights | analog | residential-lights-default | power: 760 W   
 Plugs | analog | residential-plugs-default | power: 360 W   
@@ -399,7 +399,7 @@ Any properties that are not set explicitly will carry these default values, with
 
 ### thermal_storage Properties
 
-Table 1 - Thermal Storage Properties  Property Name | Type | Unit | Description   
+##### Table 1 - Thermal Storage Properties  Property Name | Type | Unit | Description   
 ---|---|---|---  
 total_capacity | double | Btu | The total capacity of energy storage of the unit. When left to default, it is scaled based on the HVAC sizing in house_e.   
 stored_capacity | double | Btu | The amount of energy stored in the unit at the start of the simulation. If this exceeds the total_capacity, it will be set equal to the total_capacity. If SOC (state of charge) is also set, SOC is the dominant value and will be used instead.   

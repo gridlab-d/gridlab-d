@@ -68,7 +68,7 @@ The model approach that is used to estimate thermal loads is called an equivalen
 
 ![ETP Representation of the Typical Residences](../../../../images/300px-Residential_Module_Guide_Figure_3.png)
 
-Figure 1 – ETP Representation of the Typical Residences
+##### Figure 1 – ETP Representation of the Typical Residences
 
 where, 
 
@@ -200,11 +200,11 @@ These two critical flow rates depend on many factors, including the tank size an
 
 ![Illustration of using dh/dt to identify the **STABLE** state](../../../../images/300px-Residential_Module_Guide_Figure_1.png)
 
-Figure 1 – Illustration of using dh/dt to identify the **STABLE** state
+##### Figure 1 – Illustration of using dh/dt to identify the **STABLE** state
 
 ### Modeling Approach
 
-Figure 2 shows a schematic representation of the water heater model in which Tavg is the average water temperature throughout the tank and Tamb is the ambient temperature. The thermal capacitance of the water Cw is a function of the tank volume: 
+##### Figure 2 shows a schematic representation of the water heater model in which Tavg is the average water temperature throughout the tank and Tamb is the ambient temperature. The thermal capacitance of the water Cw is a function of the tank volume: 
 
 $$C_w = V(gal) \frac{1(ft^3)}{7.48(gal)} \frac{62.4(lb_m)}{1(ft^3)} \frac{1(Btu)}{1(lb_m \dot F)}$$
 
@@ -212,7 +212,7 @@ The thermal conductance of the tank shell (or “jacket”) $UA$ is calculated f
 
 ![Water heater model schematic representation](../../../../images/300px-Residential_Module_Guide_Figure_2.png)
 
-Figure 2: Water heater model schematic representation
+##### Figure 2: Water heater model schematic representation
 
 #### One-Node Model
 
