@@ -147,7 +147,6 @@ nav:
       - Debugging and Validation:
         - Model Debugging: docs/3.0 - Modeling Reference/Other Features/Debugging and Validation/Model_Debugging.md
         - Validate: docs/3.0 - Modeling Reference/Other Features/Debugging and Validation/Validate.md
-      - Delta Mode and Timing:
       - Macros: docs/3.0 - Modeling Reference/Other Features/Macros.md
       - Parameter expansion: docs/3.0 - Modeling Reference/Other Features/Parameter_expansion.md
       - Performance profiling: docs/3.0 - Modeling Reference/Other Features/Performance_profiling.md
