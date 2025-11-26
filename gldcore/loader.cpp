@@ -137,7 +137,7 @@ bool loader::class_properties(CLASS *oclass, json properties, string source_code
 				string unit = "";
 				string csv_keys = "";
 				if (name == "type" && value.is_string()) {
-					stype = convert(value);
+					convert(value, stype);
 					if (stype.length() < 32) {
 						ptype = class_get_propertytype_from_typename(stype.data());
 						if (ptype == PT_void) {
@@ -151,7 +151,7 @@ bool loader::class_properties(CLASS *oclass, json properties, string source_code
 					}
 				}
 				if (name == "name" && value.is_string()) {
-					sname = convert(value);
+					convert(value, sname);
 					if (parse.findLastIndex(sname, '[') > -1) {
 						unit = parse.extractBetween(sname, '[', ']');
 						sname = sname.substr(0, sname.find("["));
@@ -293,17 +293,24 @@ STATUS loader::loadClasses()
 				if (oclass!=nullptr) {
 					if (!class_properties(oclass, properties, source_code)) {
 						output_error_raw("expected class %s, has a problem with property declarations", classname.data());
+            			rv = FAILED;
 					}
 				}
+				else {
+				    rv = FAILED;
+                }
 			}
 			else {
 				output_error_raw("expected class %s, has no properties", classname.data());
+    			rv = FAILED;
 			}
 		}
 		else {
 			output_error_raw("expected class %s, must be shorter than 65 characters", classname.data());
+			rv = FAILED;
 		}
-	}    return rv;
+	}
+	return rv;
 }
 
 STATUS loader::loadClock()

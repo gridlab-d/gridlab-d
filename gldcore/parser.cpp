@@ -131,39 +131,6 @@ bool parser::property_specs(string csv_keys, KEYWORD **keys) {
 	return true;
 }
 
-bool parser::property_specs(string csv_keys, KEYWORD **keys) {
-	int32 keyvalue;
-	string key_name;
-	string key_value;
-	KEYWORD *last = nullptr;
-
-	while (true) {
-        *keys = static_cast<KEYWORD *>(malloc(sizeof(KEYWORD)));
-		(*keys)->next = nullptr;
-		if (last != nullptr)
-			last->next = (*keys);
-		size_t pos1 = csv_keys.find("=");
-		size_t pos2 = csv_keys.find(",");
-		if (pos1 < 32) {
-			key_name = csv_keys.substr(0, pos1);
-			if (pos2 > -1) {
-				key_value = csv_keys.substr(pos1, pos2);
-			}
-			else {
-				key_value = csv_keys.substr(pos1);
-			}
-			strcpy((*keys)->name,key_name.data());
-			(*keys)->value = atoi(key_value.data());
-			csv_keys = csv_keys.substr(pos2+1);
-			last = (*keys);
-		}
-		else {
-			return false;
-		}
-	}
-	return true;
-}
-
 void parser::syntax_error(PARSER)
 {
 	char context[16], *nl;
