@@ -1,6 +1,6 @@
 /*
  *  Created on: Aug 15, 2025
- *      Author: d3j331 - Mitch Pelton, Andy Fisher
+ *      Author: Mitch Pelton, Andy Fisher, Ryal O'Neil
  */
 
 #ifndef _PARSER_H_
@@ -68,6 +68,8 @@ public:
 	string extractBetweenEnd(string str, char startChar, char endChar);
 	void forward_slashes(string& str);
 	void filename_parts(string filename, string& path, string& name, string& ext);
+    bool property_specs(string csv_keys, KEYWORD **keys);
+
 	void syntax_error(PARSER);
 	int white(PARSER);
 	int comment(PARSER);

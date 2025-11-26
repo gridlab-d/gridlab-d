@@ -122,11 +122,188 @@ STATUS loader::loadDirectives()
     return result;
 }
 
+bool loader::class_properties(CLASS *oclass, json properties, string source_code) {
+	PROPERTYTYPE ptype;
+	PROPERTYNAME propname;
+	KEYWORD *keys = nullptr;
+	UNIT *pUnit = nullptr;
+	int property_cnt = 0; 
+
+	for (auto& element : properties) {
+		if (element.is_object() && element.contains("type") && element.contains("name")) {
+			for (auto& [name, value] : element.items()) {
+				string stype = "";
+				string sname = "";
+				string unit = "";
+				string csv_keys = "";
+				if (name == "type" && value.is_string()) {
+					stype = convert(value);
+					if (stype.length() < 32) {
+						ptype = class_get_propertytype_from_typename(stype.data());
+						if (ptype == PT_void) {
+							output_error_raw("property type %s is not recognized", stype.data());
+							return false;
+						}
+					}
+					else {
+						output_error_raw("property type %s must be less than 32 charaters", stype.data());
+						return false;
+					}
+				}
+				if (name == "name" && value.is_string()) {
+					sname = convert(value);
+					if (parse.findLastIndex(sname, '[') > -1) {
+						unit = parse.extractBetween(sname, '[', ']');
+						sname = sname.substr(0, sname.find("["));
+					}
+					else if (parse.findLastIndex(name, '{') > -1) {
+						csv_keys = parse.extractBetween(sname, '{', '}');
+						// construct an enumeration
+						if (parse.property_specs(csv_keys, &keys)) {
+							sname = sname.substr(sname.find("}")+1);
+						}
+						else {
+							output_error_raw("property name: %s, keys are not correctly defined: %s", sname.data(), csv_keys.data());
+							return false;
+						}
+					}
+					if (sname.length() < 64) {
+						strcpy(propname,sname.data());
+					}
+					else {
+						output_error_raw("property name: %s, must be less than 64 charaters", stype.data());
+						return false;
+					}
+				}
+			}
+			PROPERTY *prop = class_find_property(oclass, propname);
+			if (prop==nullptr) {
+				if (ptype==PT_void)	{
+					output_error_raw("property type %s is not recognized", ptype);
+					return false;
+				}
+				if (pUnit != nullptr) {
+					if (ptype==PT_double || ptype==PT_complex || ptype==PT_random) {
+						prop = class_add_extended_property(oclass,propname,ptype,pUnit->name);
+					}
+					else {
+						output_error_raw("units not permitted for type %s", class_get_property_typename(ptype));
+						return false;
+					}
+				}
+				else if (keys!=nullptr)	{
+					if (ptype==PT_enumeration || ptype==PT_set) {
+						prop = class_add_extended_property(oclass,propname,ptype,nullptr);
+						prop->keywords = keys;
+					}
+					else {
+						output_error_raw("keys not permitted for type %s", class_get_property_typename(prop->ptype));
+						return false;
+					}
+				}
+				else {
+					prop = class_add_extended_property(oclass,propname,ptype,nullptr);
+				}
+				// if (oclass->module==nullptr) {
+				// 	if (keys!=nullptr) {
+				// 		KEYWORD *key;
+				// 		for (key=prop->keywords; key!=nullptr; key=key->next) {
+				// 			char key_defined[64];
+				// 			sprintf(key_defined,"#define %s (0x%x)\n", key->name, key->value);
+				// 			source_code = source_code + key_defined;
+				// 		}
+				// 	}
+				// 	source_code = source_code + "\t" + class_get_property_typename(prop->ptype) + prop->name + ";\n";
+				// 	source_code = source_code + "/*RESETLINE*/\n";
+				// }
+			}
+			else if (prop->ptype!=ptype) {
+				output_error_raw("property %s is defined in class %s as type %s", propname, oclass->name, class_get_property_typename(prop->ptype));
+				return false;
+			}
+			property_cnt++;
+		}
+		// else element is not object or has no type/name and will not be parsed
+	}
+	if (property_cnt)
+		return true;
+	return false;
+}
+
 STATUS loader::loadClasses()
 {
     STATUS rv = SUCCESS;
-    auto j_obj = this->jsn["classes"];
-    return rv;
+	CLASS *oclass;
+	// string child = "";
+	// string parent = "";
+	string source_code = "";
+	// enum {NONE, PRIVATE, PROTECTED, PUBLIC, EXTERNAL} inherit = NONE;
+
+    auto classes = this->jsn["classes"];
+
+	for (auto& [classname, properties] : classes.items()) {
+		if (classname.length() < 64) {
+			// if (parse.findLastIndex(classname, ':') > -1) {
+			// 	child = parse.extractBetween(classname, classname[0], ':');
+			// 	parent = parse.extractBetweenEnd(classname, ':', classname[classname.length()-1]);
+			// 	if (parent.find("public") > -1) {
+			// 		parent = parse.extractBetweenEnd(parent, ' ', parent[parent.length()-1]);
+			// 		inherit = PUBLIC;
+			// 	}
+			// 	else if (parent.find("protected") > -1) {
+			// 		parent = parse.extractBetweenEnd(parent, ' ', parent[parent.length()-1]);
+			// 		inherit = PROTECTED;
+			// 	}
+			// 	else if (parent.find("private") > -1) {
+			// 		parent = parse.extractBetweenEnd(parent, ' ', parent[parent.length()-1]);
+			// 		inherit = PRIVATE;
+			// 	}
+			// 	else {
+			// 		output_error_raw("class %s missing inheritance qualifier", child.data());
+			// 	}
+			// 	if (class_get_class_from_classname(parent.data())==nullptr) {
+			// 		output_error_raw("class %s inherits from undefined class %s", child.data(), parent.data());
+			// 	}
+			// }
+			if (properties.is_array()) {
+				oclass = class_get_class_from_classname(classname.data());
+				if (oclass==nullptr) {
+					oclass = class_register(nullptr, classname.data(), 0, 0x00);
+					// switch (inherit) {
+					// case NONE:
+					// 	source_code = source_code + "class " + oclass->name + "{\npublic:\n\t" + oclass->name + "(MODULE*mod) {};\n";
+					// 	break;
+					// case PRIVATE:
+					// 	source_code = source_code + "class " + oclass->name + " : private " + parent + " {\npublic:\n\t" + oclass->name + "(MODULE*mod) : " + parent + "(mod) {};\n";
+					// 	oclass->parent = class_get_class_from_classname(parent.data());
+					// 	break;
+					// case PROTECTED:
+					// 	source_code = source_code + "class " + oclass->name + " : protected " + parent + " {\npublic:\n\t" + oclass->name + "(MODULE*mod) : " + parent + "(mod) {};\n", oclass->name, parent, oclass->name, parent);
+					// 	oclass->parent = class_get_class_from_classname(parent.data());
+					// 	break;
+					// case PUBLIC:
+					// 	source_code = source_code + "class " + oclass->name + " : public " + parent + " {\npublic:\n\t" + oclass->name + "(MODULE*mod) : " + parent + "(mod) {};\n", oclass->name, parent, oclass->name, parent);
+					// 	oclass->parent = class_get_class_from_classname(parent.data());
+					// 	break;
+					// default:
+					// 	output_error("class_block inherit status is invalid (inherit=%d)", inherit);
+					// 	break;
+					// }
+				}
+				if (oclass!=nullptr) {
+					if (!class_properties(oclass, properties, source_code)) {
+						output_error_raw("expected class %s, has a problem with property declarations", classname.data());
+					}
+				}
+			}
+			else {
+				output_error_raw("expected class %s, has no properties", classname.data());
+			}
+		}
+		else {
+			output_error_raw("expected class %s, must be shorter than 65 characters", classname.data());
+		}
+	}    return rv;
 }
 
 STATUS loader::loadClock()

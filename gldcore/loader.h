@@ -1,6 +1,6 @@
 /*
  *  Created on: Aug 15, 2025
- *      Author: d3j331 - Mitch Pelton, Andy Fisher
+ *      Author: Mitch Pelton, Andy Fisher, Ryal O'Neil
  */
 
 #ifndef _LOADER_H_
@@ -46,6 +46,7 @@ private:
 public:
     bool open_file(string file_name);
     STATUS loadDirective();
+    bool class_properties(CLASS *oclass, json properties, string source_code);
     STATUS loadClasses();
     STATUS loadClock();
 
