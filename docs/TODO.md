@@ -139,11 +139,14 @@ to
     
     host% gridlabd -[D] [validate_report]=validate.txt --validate
   
-# Candidate Long-Form Paper Topics
-- GridLAB-D object synchronization process
-- Device model development process
-- GridLAB-D deltamode
-- GridLAB-D loader and JSON file format
+# Candidate Long-Form Paper/New Doc Pages Topics
+
+Topic | Start Date | Time Estimate | Completed Date
+-- | -- | -- | --
+Deltamode | Oct 6 | 3 weeks | > 8 weeks
+Object synchronization process | 
+Device model development process | 
+GridLAB-D loader and JSON file format | 
 
 # Definition Plan
 - Open Index Tracker excel sheet on shareopint --> filter `Page Type` by `Definition`
