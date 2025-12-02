@@ -70,7 +70,7 @@ If the assert fails, the simulation halts.
   Property | Syntax | Description
   -- | -- | --
 **lower** |  `lower "value unit";` | The lower property specifies the lower bound when using the inside or outside relations.
- **part** |  `part "name";` | The part property specifies the property part to use when comparing values. All property parts are considered double or complex without units. The following property parts are supported: <br/> - *complex*: real, imag, mag, ang, arg <br/> - *enduse*: total (complex), energy (complex), demand (complex), breaker_amps, admittance (complex), current (complex), power (complex), impedance_fraction, current_fraction, power_fraction, power_factor, voltage_factor, heatgain, heatgain_fraction. <br/> Parts noted as (complex) must have the complex part specified, e.g., total.real, current.mag, power.ang.
+ **part** |  `part "name";` | The part property specifies the property part to use when comparing values. All property parts are considered double or complex without units. The following property parts are supported: <br/> - *complex*: real, imag, mag, ang, arg <br/> - *end use*: total (complex), energy (complex), demand (complex), breaker_amps, admittance (complex), current (complex), power (complex), impedance_fraction, current_fraction, power_fraction, power_factor, voltage_factor, heatgain, heatgain_fraction. <br/> Parts noted as (complex) must have the complex part specified, e.g., total.real, current.mag, power.ang.
  **relation** | `relation "op";` |     The relation operator specifies the relationship to test.
 **inside** | |  Compares the target property to determine whether it is between the lower and upper values (inclusive).
 **outside** | | Compares the target property to determine whether it is outside the lower and upper values (exclusive).
@@ -188,7 +188,7 @@ For example:
 
 **TODO** - Empty - Add content for Enumeration Assert
 
-# See also
+# Related Concepts:
 
   * assert (module)
     * assert (object)

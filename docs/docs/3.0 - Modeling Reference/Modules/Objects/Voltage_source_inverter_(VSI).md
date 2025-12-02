@@ -118,7 +118,7 @@ The reactive power slew rate is enabled in this example, with both maximum ramp 
 
 ## Properties
 
-This table lists the properties related to VSI implementation. Some parameters used by other types of inverters can be found in the inverter wiki page. 
+This table lists the properties related to VSI implementation. Some parameters used by other types of inverters can be found in the inverter documentation page. 
 
 Property name | Type | Unit | Description   
 ---|---|---|---  
@@ -187,7 +187,7 @@ Part of the feeder is disconnected at 12:00:05.0001 PST. As seem from the real p
   
 To run these cases, please find in the autotest in GridLAB-D™ generator module. 
 
-## See Also
+## Related Concepts:
 
   * [Modules]
     * [ Generators]

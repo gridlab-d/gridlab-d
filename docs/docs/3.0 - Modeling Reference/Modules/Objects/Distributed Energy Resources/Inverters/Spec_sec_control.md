@@ -362,7 +362,7 @@ Main `.glm`:
   2. ↑ See, for example Aström, Karl (2002). Control System Design (PDF(https://www.cds.caltech.edu/~murray/courses/cds101/fa02/caltech/astrom-ch6.pdf)). pp. 228–231.
   3. ↑ 3.0 3.1 Negative values possible for inverters if a battery is assumed that can also charge
 
-## See Also
+## Related Concepts:
 
 Req:sec_control
 

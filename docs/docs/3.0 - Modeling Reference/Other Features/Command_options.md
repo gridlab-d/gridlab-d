@@ -73,7 +73,7 @@ Option | Description
 -- | --
 `--example module:class ` | Output an example of GLM code that will create a object of class given from the module given .
 `--help \| -h` | Command line help.
-`--info keyword ` | Open a browser and searches these Wiki docs for the keyword given. Spaces may be entered as underscores in keywords .
+`--info keyword ` | Open a browser and searches these documentation for the keyword given. Spaces may be entered as underscores in keywords .
 `--modhelp module[:class]` | Output the GLM definition of class from module. All the classes from the specified module will be listed in alphabetical order if no class is given.
 
 ## Process control

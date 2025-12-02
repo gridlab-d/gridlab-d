@@ -67,7 +67,7 @@ Initialization time
 Initialization state
     As of [Hassayampa (Version 3.0)], all objects will have the OF_INIT flag set until after initialization is successfully completed ([R9]).
 
-## See also
+## Related Concepts:
 
   * [Initialization]
     * [Requirements]

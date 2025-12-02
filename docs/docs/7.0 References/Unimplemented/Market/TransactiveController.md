@@ -295,7 +295,7 @@ Hammerstrom, D. J. et. al., "Pacific Northwest GridWiseTM Testbed Demonstration 
 
 Smith, R. G., "The Contract Net Protocol: High-Level Communication and Control in Distributed Problem Solver," _IEEE Transactions on Computers_ , vol. C-29, issue 12, pp. 1104-1113, Dec. 1980. 
 
-# See also
+# Related Concepts:
 
 [Market_User_Guide]
 

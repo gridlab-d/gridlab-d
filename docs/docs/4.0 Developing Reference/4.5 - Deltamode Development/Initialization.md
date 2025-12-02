@@ -29,7 +29,7 @@ The order in which objects are initialized depends on the value of the [init_seq
 
 The deferred, bottom-up, and top-down initialization methods were introduced in [Hassayampa (Version 3.0)]. 
 
-## See also
+## Related Concepts:
 
   * Initialization
     * [Requirements]

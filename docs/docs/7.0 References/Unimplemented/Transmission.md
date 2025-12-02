@@ -202,7 +202,7 @@ The basic unit tests will include, in order:
 
 A proposed idea is to use a lightweight client (a "go-between") that exchanges data and commands with GridLAB-D™ over a network interface, converting the messages for use in PowerWorld. This would allow GridLAB-D™ to run on a Linux computer while using the network module. 
 
-## See also
+## Related Concepts:
 
   * [Requirements]
   * Specifications

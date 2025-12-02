@@ -105,7 +105,7 @@ Paralleling will only occur when the grid-alignment conditions are met. While th
 
 This subsection provides an outline on how the [sync_check] object will be tested to ensure its functionality. The current plan is to use two 4-node test systems interconnected through a [sync_check] object, which is open initially. The frequency and voltage values measured at the 'from' and 'to' nodes of the [sync_check] object are initialized in different values. The deviations must be larger than the user defined tolerances. The frequency and voltage of the 'from' node of its parent [switch] object are manipulated by a player towards the measurements of the 'to' node. Once the deviations are both within the tolerance longer than the user defined period, a 'closure' command should be sent to close its parent [switch] object. This sample use case will be included in the autotest for the [sync_check] object. 
 
-# See also
+# Related Concepts:
 
   * [Requirements]
   * [Implementation]

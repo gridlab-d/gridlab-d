@@ -76,7 +76,7 @@ By selecting `Exciter_Q_constant_mode` as true, the constant Q mode is selected.
 
 ## Properties
 
-This table lists the properties related to diesel generator in PQ constant mode. Some parameters used by diesel_dg can be found in the diesel_dg wiki page. 
+This table lists the properties related to diesel generator in PQ constant mode. Some parameters used by diesel_dg can be found in the diesel_dg documentation page. 
 
 Property name | Type | Unit | Description   
 ---|---|---|---  
@@ -554,7 +554,7 @@ Property  | Type  | Unit  | Description
   6. Krause, P., O. Wasynczuk, and S. Scott. "Analysis of electric machinery." IEEE Power Eng. Soc 15, no. 3 (1995).
   7. Kundur, P., and P. L. Dandeno. "Implementation of advanced generator models into power system stability programs." Power Apparatus and Systems, IEEE Transactions on 7 (1983): 2047-2054.
   
-# See Also
+# Related Concepts:
 
   * [ Early diesel_dg documentation]
   * [ Constant PQ modes for diesel]

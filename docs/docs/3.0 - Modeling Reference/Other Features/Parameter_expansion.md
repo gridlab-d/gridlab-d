@@ -99,7 +99,7 @@ Bitwise operations
 
 TODO - Check Status - This functionality is proposed for [Hassayampa (Version 3.0)] but is not yet implemented. 
 
-## See also
+## Related Concepts:
 
   * [Expansion variables]
   * [Global variables]

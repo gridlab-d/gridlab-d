@@ -70,7 +70,6 @@ nav:
       - Generating populations: docs/2.0 - New Users/2.2 - Getting Started/2.2.5 - Model Options.md
       - Generating output: docs/2.0 - New Users/2.2 - Getting Started/2.2.6 - Output.md
     - 2.3 - Running Simulations: docs/2.0 - New Users/2.3 - Running_Simulations.md
-    - 2.4 - Theory of Operation: docs/2.0 - New Users/2.4 - theory-of-operation.md
     - 2.5 - Intro to Modeling:
       - Basic Distribution System Modeling: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.1 - Basic Distribution System Modeling.md
       - GLM Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.2 - GLM Models.md
@@ -80,7 +79,7 @@ nav:
       - Distributed Generation: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.6 - Distributed_Generation.md
       - Advanced Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.7 - Advanced_Distribution_Models.md
       - Built-In Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.8 - Built-In Distribution Models.md
-    - Simulation Time: docs/2.0 - New Users/2.5 - Simulation Time.md
+    - The Clock: docs/2.0 - New Users/2.5 - Simulation Time.md
   - 3.0 - Modeling Reference:
     - Loads:
       - Loadshape: docs/3.0 - Modeling Reference/Loads/1.0 - Loadshape.md
@@ -131,16 +130,15 @@ nav:
         - Reliability User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/4.0 - Reliability_User_Guide.md
         - Newton-Raphson Distribution Powerflow Solver: docs/3.0 - Modeling Reference/Modules/Powerflow/5.0 - Newton-Raphson_Distribution_Powerflow_Solver.md
       - Residential:
-        - ETP closed form solution: docs/3.0 - Modeling Reference/Modules/Residential/ETP_closed_form_solution.md
-        - Loads: docs/3.0 - Modeling Reference/Modules/Residential/Loads.md
-        - Residential module user's guide: docs/3.0 - Modeling Reference/Modules/Residential/Residential_Module_Guide.md
-        - Spec:Residential: docs/3.0 - Modeling Reference/Modules/Residential/Spec_Residential.md
-        - Tech:Residential: docs/3.0 - Modeling Reference/Modules/Residential/Tech_Residential.md
-        - Thermal Energy Storage model guide: docs/3.0 - Modeling Reference/Modules/Residential/Thermal_Energy_Storage_model_guide.md
+        - Introduction: docs/3.0 - Modeling Reference/Modules/Residential/1.0 - Introduction.md
+        - House: docs/3.0 - Modeling Reference/Modules/Residential/2.0 - house-e.md
+        - Equivalent Thermal Parameter Model: docs/3.0 - Modeling Reference/Modules/Residential/ETP_closed_form_solution.md
+        - End Use Loads: docs/3.0 - Modeling Reference/Modules/Residential/Loads.md
+        - Thermal Energy Storage Model: docs/3.0 - Modeling Reference/Modules/Residential/Thermal_Energy_Storage_model_guide.md
+        - Waterheater: docs/3.0 - Modeling Reference/Modules/Residential/Waterheater.md
         - ZIPload: docs/3.0 - Modeling Reference/Modules/Residential/ZIPload.md
-        - House E: docs/3.0 - Modeling Reference/Modules/Residential/house-e.md
       - Tape: docs/3.0 - Modeling Reference/Modules/Tape.md
-      - Delta Mode: docs/3.0 - Modeling Reference/Modules/delta_mode.md
+      - Delta Mode Document: docs/3.0 - Modeling Reference/Modules/delta_mode.md
     - Other Features:
       - Checkpoints: docs/3.0 - Modeling Reference/Other Features/Checkpoints.md
       - Command Options: docs/3.0 - Modeling Reference/Other Features/Command_options.md
@@ -189,6 +187,7 @@ nav:
       - Pauseat: docs/4.0 Developing Reference/4.5 - Deltamode Development/Pauseat.md
       - Realtime server: docs/4.0 Developing Reference/4.5 - Deltamode Development/Realtime_server.md
       - Spec:Subsecond: docs/4.0 Developing Reference/4.5 - Deltamode Development/Spec_Subsecond.md
+      - 2.4 - Theory of Operation: docs/4.0 Developing Reference/4.5 - Deltamode Development/theory-of-operation.md
     - 4.6 - Debugging:
       - Introduction to Debugging when Developing GridLAB-Debugging: docs/4.0 Developing Reference/4.6 - Debugging/4.6.0 - Introduction.md
       - Command options: docs/4.0 Developing Reference/4.6 - Debugging/4.6.1 - Command_line_arguments.md
@@ -215,6 +214,7 @@ nav:
         - security: docs/7.0 References/Unimplemented/Connection/Connection_security.md
         - xml: docs/7.0 References/Unimplemented/Connection/Connection_xml.md
       - End Use Loads:
+        - Residential End Uses: docs/7.0 References/Unimplemented/End Use Loads/1.0 - Residential_End_Use.md
         - Hybrid Electric Vehicle Chargers: docs/7.0 References/Unimplemented/End Use Loads/Hybrid_Electric_Vehicle_Chargers.md
         - Lights: docs/7.0 References/Unimplemented/End Use Loads/Lights.md
         - Microwave: docs/7.0 References/Unimplemented/End Use Loads/Microwave.md

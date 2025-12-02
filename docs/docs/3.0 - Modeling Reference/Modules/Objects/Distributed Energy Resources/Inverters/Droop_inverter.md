@@ -58,7 +58,7 @@ In this example, the delay time of seeing the measured frequency and terminal vo
 
 ## Properties
 
-This table lists the properties related to VSI implementation. Some parameters used by other types of inverters can be found in the inverter wiki page. 
+This table lists the properties related to VSI implementation. Some parameters used by other types of inverters can be found in the inverter documentation page. 
 
 ##### Table 1. VSI Implementation Properties
 
@@ -106,7 +106,7 @@ At 2001-08-01 12:00:10.001 PST, three-phase load 49 increases based on the given
 
 To run this case, please find in the autotest in GridLAB-D™ generator module. 
 
-## See Also
+## Related Concepts:
 
   * [Modules]
     * generators

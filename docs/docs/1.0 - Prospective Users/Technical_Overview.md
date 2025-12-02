@@ -34,7 +34,7 @@ The following power distribution system components are implemented and available
 
 # Thermal Modeling - Buildings
 
-Commercial and residential buildings are implemented using the Equivalent Thermal Parameters model. These are differential models solved for both time as a function of state and state as a function of time. Currently implemented residential end-uses include: 
+Commercial and residential buildings are implemented using the Equivalent Thermal Parameters model. These are differential models solved for both time as a function of state and state as a function of time. Currently implemented residential end uses include: 
 
   * Water heaters.
   * Refrigerators.

@@ -1,8 +1,26 @@
 # ZIPload
 
-Residential ZIPload (explicit model) 
+Thus far the loads on the systems we’ve been modeling have been fairly abstract and quite simple with only a constant power load on a single phase being specified. A more general form of this type of load is often referred to as a ZIP load which is represented as a load with three distinct part: a constant impedance portion $Z$, a constant current portion $I$ and a constant power portion $P$. Each of these portions respond differently to changes in load voltage based on their first-principles models: $P=I^2Z$, $P = IV$, and $P = P$. For a reduction in system voltage, we would expect the following:
 
-**TODO**:  This page needs to be completed. 
+* For constant impedance, the power to be reduced as the square of the voltage change and current to reduce linearly to the voltage change.
+
+* For constant current, both the power and the current to reduce linearly with the voltage change.
+
+* For constant power, the power will remain unchanged and the current will increase linearly with the voltage change.
+
+In parallel with the real power components, ZIP loading can also be applied to the reactive power component; that is, these loads can all be expressed as complex values in GridLAB-D™, as you have seen in previous examples. In a three phase system, the load on each phase can be described independently, giving a total of nine complex load values to fully define a three-phase load.
+
+GridLAB-D™ also has an alternative and perhaps slightly more complex means of representing the same load using the same principles. Rather than specifying the portions of the load directly as three individual complex loads (per phase), a nominal “base” complex load value can be given and are then modified with three power-factor values (constant impedance, current and power power-factors) and an additional three load-fraction values (what portion of the load is constant impedance, current, and power). Mathematically, these two means of defining ZIP loads are identical.
+
+### Example - ZIP loads
+
+Open the model [zip_loads.glm](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%205%20-%20Loads/ZIP%20Loads/zip_loads) you'll see a slight variation on a version of the model we used in the last chapter. The main modification made to the file is the creation of an additional load at `branch_1_meter_1` in parallel to the original. These two loads have both been moved downstream of the main branch by the creation of `load_node` which connects to each of the two loads' meters through very short overhead lines.
+
+Looking at the two loads, you'll see that `b1m1_load_a` is defined in terms of the `constant_power`, `constant_current`, and `constant_voltage`. The default units for these value are W, A, and Ohms, respectively. Load `b1m1_load_b` has a very similar composite load but it is defined in the alternative style mentioned above. Running a simulation using this model and opening "meter_powers.csv" reveals that both of these loads have similar power over the duration of the simulation, at least to the precision of the values entered.
+
+![Zip load comparison scaled.png](../../../..//images\Zip_load_comparison_scaled.png)
+
+### Modeling Approach
 
 The ZIPload model is designed to provide a means to access the residential_enduse class at a fundamental level and from a "power engineer" perspective. It uses a classic ZIP load model (constant impedance, current, and power) where "base power" is specified, then the ZIP fractions and power factors are assigned. The ZIP model equations can be defined as: 
 
@@ -39,7 +57,7 @@ impedance_pf  | double  | pu  | Power factor for constant impedance portion of l
 actual_power  | complex  | kVA  | [read only] Variable to monitor total power of load as a function of voltage.   
 heatgain_only  | boolean  | \-  | Toggles the zipload to generate heat only (no kW), is deactivated (false) by default   
 is_240  | boolean  | \-  | Toggles between a 120 V (unbalanced) vs. a 240 V (balanced) connection - true indicates it is a 240 V load.   
-_These variables are inherited from the enduse load structure._  
+_These variables are inherited from the end use load structure._  
 power_fraction  | double  | pu  | The fraction of the load that is constant power.   
 current_fraction  | double  | pu  | The fraction of the load that is constant current.   
 impedance_fraction  | double  | pu  | The fraction of the load that is constant impedance.   
@@ -186,20 +204,16 @@ This model is representative of a "pool pump" or cycling model that is using a D
   
 **TODO**: : Examples for cycling, demand response and aggregate modes. 
 
-## See also
 
-  * [Powerflow User Guide]
-  * [Residential module]
-    * [User's Guide]
-    * [Appliances]
-    * [house] class – Single-family home model.
+### ZIPload State of Development
+
+ZIPload is considered a simple, stable model, with many layers of functionality. 
+
+## Related Concepts:
+
+  * Powerflow User Guide
+  * Residential module
+    * house class – Single-family home model.
     * residential_enduse class – Abstract residential end-use class.
-    * [occupantload] – Residential occupants (sensible and latent heat).
+    * occupantload – Residential occupants (sensible and latent heat).
     * ZIPload – Generic constant impedance/current/power end-use load.
-  * Technical Documents 
-    * [Requirements]
-    * [Specifications]
-    * [Developer notes]
-    * [Technical support document]
-    * [Validation]
-

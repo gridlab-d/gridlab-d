@@ -53,7 +53,7 @@ There are a number of internal synchronization events that take place while the 
 - Schedule - All schedules are updated
 - Loadshape - All loadshapes are updated
 - Transforms - Schedule transforms are updated
-- Enduse - All enduses are updated
+- Enduse - All end uses are updated
 - Heartbeat - All heartbeat signals are sent
 
 ### Before commit

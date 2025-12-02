@@ -260,7 +260,7 @@ The above testing and specifications should cover all initial functionality requ
   * Implement more advanced types of markets than the double auction, such as multiple auction clearings in a single period.
   * Implement "block-bidding" capabilities for multiple periods at once. e.g., submitting all 24 1-hour bids once the day in advance for the day-ahead market, not in 1-hour intervals.
 
-# See also
+# Related Concepts:
 
 [Market_User_Guide]
 

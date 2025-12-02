@@ -41,7 +41,7 @@ Parameter | Description
 **table** | Specifies the source table from which data is read.
 
 
-## See also
+## Related Concepts:
 
   * mysql module 
     * database class

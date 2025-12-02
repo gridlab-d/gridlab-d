@@ -292,7 +292,7 @@ Octave | octave | .m
   
 In all cases the output is copied to the client. Typically, it is the HTML code needed to properly embed the result of the script. 
 
-## See also
+## Related Concepts:
 
   * Realtime server
     * [control]

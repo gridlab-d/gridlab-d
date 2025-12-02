@@ -96,7 +96,7 @@ Dishwasher is modeled as a generic one to allow the user to make change(s) to in
 
 Interfacing overview ([R1])
 
-The [dishwasher] model shall use the [residential] [enduse] interface for all output. 
+The [dishwasher] model shall use the [residential] [end use] interface for all output. 
 
 # S2
 
@@ -187,7 +187,7 @@ queue(k+1) &= queue(k) - \displaystyle{}\delta\end{align}$. This is calculated i
   * 3\. J. C. Fuller, B. Vyakaranam, N. Prakash Kumar, S.M. Leistritz, and GB Parker, “Modeling of GE Appliances in GridLAB-D: Peak Demand Reduction,” PNNL-XXXXX, Pacific Northwest National Laboratory, Richland, WA, 2012.
   * 4\. Pratt, R.G., et al., 1989. “Description of Electric Energy Use in Single-Family Residences in the Pacific Northwest," End-Use Load and Consumer Assessment Program (ELCAP),” Pacific Northwest Laboratory, DOE/BP-13795-21, Richland, WA, April 1989
 
-## See also
+## Related Concepts:
 
   * [dishwasher]
     * [Requirements]

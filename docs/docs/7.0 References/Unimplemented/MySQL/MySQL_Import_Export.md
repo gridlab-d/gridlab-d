@@ -155,7 +155,7 @@ Property types  Value | Description
 18 | real  
 19 | float  
 20 | loadshape  
-21 | enduse  
+21 | end use  
 22 | randomvar  
 23 | triple (unused)   
 24 | triplex (unused)   
@@ -201,7 +201,7 @@ Special data types that are implicitly double (e.g., randomvar, loadshape) will 
 
 The MysQL Import/Export capability was developed under [Ticket 950](http://sourceforge.net/p/gridlab-d/tickets/950). 
 
-## See also
+## Related Concepts:
 
   * mysql module 
     * database class

@@ -72,7 +72,7 @@ Property | Type |  Description
 **loop** | double | By default, this value is zero. When using relative time in the player file, this determines the number of times the values with should "loop". The first timestamp in the file should designate the initial start time of the player, then all subsequent relative times will be "looped" the number of times defined by the loop variable. Note, the initial timestamp will be ignored on all subsequent loops.
 **flags** | enumeration | Use DELTAMODE to enable subsecond operation when processing data. Some features of player do not work the same when operation in DELTAMODE is enabled. This includes timezone processing (see <http://sourceforge.net/p/gridlab-d/tickets/563>).
 
-## See also
+## Related Concepts:
 
   * recorder
   * Tape (module)

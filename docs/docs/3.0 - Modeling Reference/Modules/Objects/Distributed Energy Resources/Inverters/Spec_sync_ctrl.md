@@ -140,7 +140,7 @@ This subsection provides an outline on how the sync_ctrl object will be tested t
 
 The frequency and voltage values measured at the 'from' and 'to' nodes of the switch object are initialized in different values. The deviations must be larger than the user defined tolerances. The frequency and voltage of the 'from'/'to' node of the parent switch object of the sync_check object are manipulated by the sync_ctrl object via the controlled generation unit (i.e., a diesel generator or a grid-forming inverter) towards the measurements of the 'from'/'to' node. The controlled generation unit is specified as a property of the sync_ctrl object. It is physically in the same island with the 'from'/'to' node. Once the deviations are both within the tolerance longer than the user defined period, the sync_ctrl object transits from 'Mode A' to 'Mode B' and sends an 'armed' command to the sync_check object. This sample use case will be included in the autotest for the sync_ctrl object. 
 
-# See also
+# Related Concepts:
 
   * Requirements of sync_ctrl
   * Implementation of sync_ctrl

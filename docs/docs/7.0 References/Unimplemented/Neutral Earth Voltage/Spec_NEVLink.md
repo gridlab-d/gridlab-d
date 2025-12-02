@@ -802,7 +802,7 @@ In order to avoid singularities in the actual impedance matrix and numerical sta
 
 Unlike parent-child connections, only the existence of terminal connections on both ends is required (as opposed to parent-child connections, where the child terminals must be a subset of the parent terminals). Similar to the parent-child connection implementation, the `connector` object will utilize the `NEVbusdata` and `NEVbranchdata` fields outlined on the [Spec:NEVDataFormat] page. Utilizing these structures, remapping the terminals will be handled internally so any `link` objects connected to the `to` end of the `connector` device are properly connected to the `from` node. 
 
-# See also
+# Related Concepts:
 
   * [Overview Page]
   * [Requirements]

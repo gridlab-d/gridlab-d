@@ -150,7 +150,7 @@ _The alternative is to revert to the old method (above) of including MATLAB. Edi
 
 _If all else fails, and you do not require the MATLAB connection, then the project can be unloaded._
 
-## See also
+## Related Concepts:
 
   * Link (directive)
     * Matlab link

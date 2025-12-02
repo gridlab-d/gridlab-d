@@ -176,7 +176,7 @@ physical_output_i_C_arg | Phase angle of phase C current from the optimization-b
   1. [J. Zhang, Y. Men, L. Ding, X. Lu and W. Du, "Gray-Box Modeling for Distribution Systems With Inverter-Based Resources: Integrating Physics-Based and Data-Driven Approaches," in IEEE Transactions on Industry Applications, vol. 60, no. 4, pp. 5490-5498, July-Aug. 2024.](https://ieeexplore.ieee.org/document/10507020)
   2. [J. Zhang, Y. Men, L. Ding, X. Lu and W. Du, "Gray-Box Modeling for Distribution Systems with Inverter-Based Resources," 2023 IEEE Energy Conversion Congress and Exposition (ECCE), Nashville, TN, USA, 2023, pp. 3124-3130.](https://ieeexplore.ieee.org/abstract/document/10362847)
   
-## See also
+## Related Concepts:
 
   * [Inverter_dyn Main Page]
   * [Inverter_dyn Requirements]

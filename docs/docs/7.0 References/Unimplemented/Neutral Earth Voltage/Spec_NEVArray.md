@@ -259,7 +259,7 @@ would publish the power values associated with current flowing on a conductor be
 
 In order to maintain proper functionality with recorder and player objects, reading and writing the values of the class-defined properties needs to be sequenced properly. Player objects currently execute during the presync pass, so all reads of such properties should occur first thing in the sync routine. Recorder objects currently execute during the postsync pass, so all updates to published properties should be completed by the end of an object's postsync call. 
 
-# See also
+# Related Concepts:
 
   * [Overview Page]
   * [Requirements]

@@ -86,7 +86,7 @@ On Windows 7 it is a common problem that GridLAB-D™ cannot find `libmysql.dll`
 
 The mysql module was introduced in [Hassayampa (Version 3.0)]. 
 
-## See also
+## Related Concepts:
 
   * mysql module 
     * [database] class

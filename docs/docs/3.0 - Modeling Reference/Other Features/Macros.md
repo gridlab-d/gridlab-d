@@ -44,7 +44,7 @@ Macro variables are expanded in-line while the GLM file is being loaded, so expa
 
 Macro expansions will expand macro variables, global variables, and environment variables. 
 
-# See also
+# Related Concepts:
 
   * Environment variables
   * GLM syntax

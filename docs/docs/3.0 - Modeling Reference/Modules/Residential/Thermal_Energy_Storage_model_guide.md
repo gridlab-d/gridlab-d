@@ -1,4 +1,4 @@
-# Thermal Energy Storage model guide
+# Thermal Energy Storage Model
 
 Thermal energy storage is based on technology that uses ice to cool air in place of a standard air conditioning unit. By making the ice at night with a compressor and utilizing the ice during the day to cool, the peak load of the cooling can be shifted to off peak hours. The model is based on the specifications and general functionality of the Ice Bear® unit developed by Ice Energy®. 
 
@@ -9,6 +9,47 @@ The Ice Bear® system is designed to be used in conjunction with existing buildi
 # Model
 
 The Ice Bear® system is a 5 Ton unit with 30 Ton-hours of storage and is designed to be used on commercial systems. For the purposes of GridLAB-D™, thermal storage is scaled based on the size of each house. Several houses can be put together, simulating a commercial building, so forcing a 5 Ton sizing on each house is not practical for simulating a commercial configuration. This model is not designed to model the Ice Bear® unit, but to model the effects of the technology based on the Ice Bear® unit's specifications. 
+
+### Default thermal_storage
+
+An empty thermal storage object, along the lines of 
+    
+    
+    object thermal_storage {}
+    
+
+will be constructed into a semi-consistent state. Assuming a 5 ton (60,000 Btu/hr) unit the "default thermal storage" ends up being similar to 
+    
+    
+    schedule recharge_sched {
+       * 0-10 * * * 1.0;
+       * 11-20 * * * 0.0;
+       * 21-23 * * * 1.0;
+    }
+    
+    schedule discharge_sched {
+       * 0-10 * * * 0.0;
+       * 11-20 * * * 1.0;
+       * 21-23 * * * 0.0;
+    }
+    
+    object thermal_storage {
+       total_capacity 360000;
+       stored_capacity 360000;
+       recharge_power 3.360;
+       discharge_power 0.300;
+       recharge_pf 0.97;
+       discharge_pf 1;
+       recharge_time recharge_sched*1;
+       discharge_time discharge_sched*1;
+       discharge_rate 60000;
+       k 0;
+    }
+    
+
+Note that setting both "stored_capacity" and "SOC" will raise a warning, since both values are attempted to define the initial capacity of the thermal_storage object. If SOC is used, the stored_capacity will be set to (SOC / 100 * total_capacity). 
+
+Any properties that are not set explicitly will carry these default values, with the exception of the total_capacity, discharge_power, recharge_power and discharge_rate, which will have values based on the designed_cooling_capacity of house_e and scaled appropriately based on the values listed here. 
 
 ## Sizing
 
@@ -26,7 +67,7 @@ It should be noted that house will run the fan to circulate air when the thermal
 
 The cooling load rating for the thermal energy storage unit is, by default, defined by house, but can be user defined. The Ice Bear® is a 5 Ton unit ($Q_{IceBear}$) with 30 Ton-hours or 360,000 Btu of energy storage ($S_{IceBear}$). This information is used to calculate the energy storage of the thermal energy storage unit to be used with the house. 
 
-    $S_{actual} = S_{IceBear}\frac{Q_{house}}{Q_{IceBear}}$
+$S_{actual} = S_{IceBear}\frac{Q_{house}}{Q_{IceBear}}$
 
 Additionally, the level of the stored energy at start up can be defined as the actual amount in Btu or as a state of charge defined as a percentage. By default, the unit is set to be fully charged. 
 
@@ -34,13 +75,15 @@ Additionally, the level of the stored energy at start up can be defined as the a
 
 The ice block being used to store thermal energy will lose stored capacity when the outside temperature is greater than the freezing temperature of water. The rate at which the stored thermal energy is lost is dependent on the insulating material and the outside temperature. By default, there is no loss of thermal energy storage, but the coefficient of thermal conductivity can be user specified in W/m/°C. The thickness of the insulation is fixed at 50mm (0.05m), so the user can adjust this by scaling the coefficient of thermal conductivity accordingly. 
 
-    $ Rate = \frac{kA\Delta{T}}{d}$
+$Rate = \frac{kA\Delta{T}}{d}$
 
 where k is the coefficient of thermal conductivity (W/M/°C) of the material insulating the ice block, A is the surface area (m2), ΔT is t1 \- t2 (t1 being the ice temperature in °F and t2 being the outside temperature in °F), d is the thickness of the material insulating the ice block and the Rate is in Joules per second or Watts. k is converted from the more common found form of W/m/°C to Btu/m/sec/°F to match the common variables in the GridLAB-D™, where 1 W/M/°C = 0.00052667 Btu/m/sec/°F. 
 
 The Ice Bear® unit stores 460 gallons of water for 360,000 Btu thermal energy storage. The volume of water is scaled linearly with the amount of required thermal energy storage. Converting gallons to m3 (460 U.S. Gallons = 1.7413 m3) and then converting volume to surface area with the assumption that the water is stored in a cube. 
 
-##### Table 1 - Coefficient of Thermal Conductivity (W/m/°C)  Material | k (W/m/°C)   
+##### Table 1 - Coefficient of Thermal Conductivity (k) [W/m/°C]
+
+Material | k [W/m/°C]
 ---|---  
 Air | 0.024   
 Argon | 0.016   
@@ -66,29 +109,36 @@ There are several inputs for thermal energy storage, however, none of these vari
 
 ## User Defined Inputs
 
-##### Table 2 - User Defined Variables for Thermal Storage  Property Name | Type | Unit | Description   
+##### Table 2 - User Defined Variables for Thermal Storage  
+
+Property Name | Type | Unit | Description   
 ---|---|---|---  
-total_capacity | double | Btu | The total capacity of energy storage of the unit. When left to default, it is scaled based on the HVAC sizing in house.   
-stored_capacity | double | Btu | The amount of energy stored in the unit at the start of the simulation. If this exceeds the total_capacity, it will be set equal to the total_capacity. If SOC (state of charge) is also set, SOC is the dominant value and will be used instead.   
-recharge_power | double | kW | The rated power required to run the compressor and charge the unit (make ice).   
-discharge_power | double | kW | The rated power required to run the pump and discharge the unit (melt the ice).   
-recharge_pf | double | NA | The rated power factor of the compressor to charge the unit (make ice).   
-discharge_pf | double | NA | The rated power factor of the pump to discharge the unit (melt the ice).   
-discharge_schedule_type | enum | NA | Specifies the use of either the "INTERNAL" or "EXTERNAL" schedule for the discharge (INTERNAL = default, EXTERNAL = user defined)   
-recharge_schedule_type | enum | NA | Specifies the use of either the "INTERNAL" or "EXTERNAL" schedule for the recharge (INTERNAL = default, EXTERNAL = user defined)   
-recharge_time | double | NA | The time schedule indicating the hours of operation for the recharge cycle (0 = OFF, 1 = ON). The recharge and discharge cycles can not overlap. The model will default to a recharge cycle in the event that both are set to be on.   
-discharge_time | double | NA | The time schedule indicating the hours of operation for the discharge cycle (0 = OFF, 1 = ON). The recharge and discharge cycles can not overlap. The model will default to a recharge cycle in the event that both are set to be on.   
-discharge_rate | double | Btu/hr | The rated capacity of the unit as it would relate to a normal HVAC unit (i.e. a 5 Ton unit to cool a house). When left to default, it is scaled based on the HVAC sizing in house.   
-SOC | double | % | The state of charge of the system in percent of ice energy available. If store capacity is also set, SOC is the dominant value and will be used.   
-k | double | W/m/°C | The coefficient of thermal conductivity in Watts per meter per °C.   
+**total_capacity** | double | Btu | The total capacity of energy storage of the unit. When left to default, it is scaled based on the HVAC sizing in house.   
+**stored_capacity** | double | Btu | The amount of energy stored in the unit at the start of the simulation. If this exceeds the total_capacity, it will be set equal to the total_capacity. If SOC (state of charge) is also set, SOC is the dominant value and will be used instead.   
+**recharge_power** | double | kW | The rated power required to run the compressor and charge the unit (make ice).   
+**discharge_power** | double | kW | The rated power required to run the pump and discharge the unit (melt the ice).   
+**recharge_pf** | double | NA | The rated power factor of the compressor to charge the unit (make ice).   
+**discharge_pf** | double | NA | The rated power factor of the pump to discharge the unit (melt the ice).   
+**discharge_schedule_type** | enum | NA | Specifies the use of either the "INTERNAL" or "EXTERNAL" schedule for the discharge (INTERNAL = default, EXTERNAL = user defined)   
+**recharge_schedule_type** | enum | NA | Specifies the use of either the "INTERNAL" or "EXTERNAL" schedule for the recharge (INTERNAL = default, EXTERNAL = user defined)   
+**recharge_time** | double | NA | The time schedule indicating the hours of operation for the recharge cycle (0 = OFF, 1 = ON). The recharge and discharge cycles can not overlap. The model will default to a recharge cycle in the event that both are set to be on.   
+**discharge_time** | double | NA | The time schedule indicating the hours of operation for the discharge cycle (0 = OFF, 1 = ON). The recharge and discharge cycles can not overlap. The model will default to a recharge cycle in the event that both are set to be on.   
+**discharge_rate** | double | Btu/hr | The rated capacity of the unit as it would relate to a normal HVAC unit (i.e. a 5 Ton unit to cool a house). When left to default, it is scaled based on the HVAC sizing in house.   
+**SOC** | double | % | The state of charge of the system in percent of ice energy available. If store capacity is also set, SOC is the dominant value and will be used.   
+**k** | double | W/m/°C | The coefficient of thermal conductivity in Watts per meter per °C.   
   
 ## Inputs Taken From house
 
-##### Table 3 - Internal Variables for Thermal Storage  Property Name | Type | Unit | Description   
+##### Table 3 - Internal Variables for Thermal Storage  
+
+Property Name | Type | Unit | Description   
 ---|---|---|---  
-design_cooling_capacity | double | Btu/hr | The designed cooling capacity of the unit.   
-outside_temperature | double | °F | The outside temperature.   
-thermal_storage_present | double | NA | Used as a bit to let house know that thermal storage is present and has capacity to be used (0 = not installed or not available, 1 = available and usable).   
-thermal_storage_inuse | double | NA | Used as a bit from house to let thermal storage know that it needs to turn on and provide cooling.   
+**design_cooling_capacity** | double | Btu/hr | The designed cooling capacity of the unit.   
+**outside_temperature** | double | °F | The outside temperature.   
+**thermal_storage_present** | double | NA | Used as a bit to let house know that thermal storage is present and has capacity to be used (0 = not installed or not available, 1 = available and usable).   
+**thermal_storage_inuse** | double | NA | Used as a bit from house to let thermal storage know that it needs to turn on and provide cooling.   
   
 
+### Thermal Storage State of Development
+
+`thermal_storage` is considered a stable model and contains many features. It is relatively new and subject to change as new features may be added at a later date. 

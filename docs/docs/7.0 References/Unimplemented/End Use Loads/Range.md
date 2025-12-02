@@ -13,12 +13,12 @@
     	parent residential_enduse;
     	class residential_enduse {
     		loadshape shape;
-    		enduse load; // the enduse load description
+    		end use load; // the end use load description
     		complex energy[kVAh]; // the total energy consumed since the last meter reading
     		complex power[kVA]; // the total power consumption of the load
     		complex peak_demand[kVA]; // the peak power consumption since the last meter reading
-    		double heatgain[Btu/h]; // the heat transferred from the enduse to the parent
-    		double cumulative_heatgain[Btu]; // the cumulative heatgain from the enduse to the parent
+    		double heatgain[Btu/h]; // the heat transferred from the end use to the parent
+    		double cumulative_heatgain[Btu]; // the cumulative heatgain from the end use to the parent
     		double heatgain_fraction[pu]; // the fraction of the heat that goes to the parent
     		double current_fraction[pu]; // the fraction of total power that is constant current
     		double impedance_fraction[pu]; // the fraction of total power that is constant impedance
@@ -90,7 +90,7 @@
     }
     
 
-## See also
+## Related Concepts:
 
   * [Residential module]
     * [User's Guide]

@@ -199,7 +199,7 @@ The cooktop model follows these steps:
 
   1. _IEEE power & energy magazine_; May/June 2010
   
-# See Also
+# Related Concepts:
 
   * [Range User Manual]
   * [Residential Module]

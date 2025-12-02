@@ -549,7 +549,7 @@ For the reactive power ($Q$) and voltage ($V$) control in the VSM mode Q-V droop
 
   1. ↑ W. Du, R. H. Lasseter, and A. S. Khalsa, "Survivability of Autonomous Microgrid during Overload Events," IEEE Transactions on Smart Grid, pp. 1-1, 2018.
 
-## See also
+## Related Concepts:
 
   * [Inverter_dyn Main Page]
   * [Inverter_dyn Requirements]
