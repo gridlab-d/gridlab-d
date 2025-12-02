@@ -22,7 +22,7 @@
     - propose to Dev team to get rid of MySQL integration in leiu of python interface with new api (same for Matlab, HELICS, any other external integration)
 
 ### Docs Questions
-- [ ] Intro to Programming needs to be re-written to not use metronome
+- [ ] Intro to Modeling needs to be re-written to not use metronome
 - [x] Pair down Getting Started Using GLD to be more approachable, noting that much of what's in there is already/can be moved to the Modeling 101 section of Modeling
 
 
@@ -31,7 +31,7 @@
 - [X] **XML** files. Still supported? Keep documentation? --> remove ref, "soft keep", switch to JSON as default
 - [ ] Talk with dev team to build out the built-in documentation within the code itself
 - [X] **MySQL** player and recorder - keep? If so, needs better intro. --> move to unimplemented
-- [ ] **Aggregate Demand Response Model** - this is a theory page, unclear what part of the GLD code it's actually referring to. Is this implemented? --> ***Move to unimplemented***
+- [X] **Aggregate Demand Response Model** - this is a theory page, unclear what part of the GLD code it's actually referring to. Is this implemented? --> ***Move to unimplemented***
 - [ ] **Microgrids** and **Diesel_dg** - microgrids is essentially the intro, diesel_dg is the parameter list and seems accurate --> keep
 - [ ] **Energy storage** - page is essentially empty. Should be the battery object? --> ***very simplified model, assumes it will be paired with inverter_dyn. Dev team to consider whether it should stay separate or be merged with battery***
 - [ ] **Power Flow User Guide** - this page has a LOT in it, with a fair amount I've never heard of, with various stages of "this has been partially validated and is considered experimental at this time" : need to review and update/deprecate. --> **requested Dev team to put eyes on this.**

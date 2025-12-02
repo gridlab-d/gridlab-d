@@ -59,7 +59,7 @@ The thermal energy storage unit is sized based on the sizing of the air conditio
 
 The power consumption for the thermal energy storage unit is a simple ratio of the Ice Bear® power consumption ($P_{IceBear}$) and cooling load ($Q_{IceBear}$) compared to the cooling load as defined in house or as defined by the user ($Q_{house}$). The 5 Ton Ice Bear® unit uses 3,360 Watts to charge at off peak hours and 300 Watts to cool air during on peak hours. 
 
-    $P_{actual} = P_{IceBear}\frac{Q_{house}}{Q_{IceBear}}$
+$P_{actual} = P_{IceBear}\frac{Q_{house}}{Q_{IceBear}}$
 
 It should be noted that house will run the fan to circulate air when the thermal energy storage is used to cool the air. This is a requirement of the system, but the calculations for the fan power are handled by house and not thermal energy storage. 
 

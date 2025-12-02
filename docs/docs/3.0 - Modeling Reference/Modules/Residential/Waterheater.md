@@ -118,10 +118,10 @@ or,
 $$dt = \frac{C_w}{ 
     
     
-     \dot m C_p T_{inlet} 
-     + U A T_{amb} 
-     - \left ( U A + \dot m C_p \right ) T_w
-     + Q_{elec}
+\dot m C_p T_{inlet} 
++ U A T_{amb} 
+- \left ( U A + \dot m C_p \right ) T_w
++ Q_{elec}
     
 
 } dT_w$$
@@ -132,10 +132,10 @@ The time required to change the tank’s temperature from an initial temperature
 $$t_1 - t_0 = \int_{T_0}^{T_1} \frac{1}{ 
     
     
-     \frac{\dot m C_p T_{inlet} 
-     + U A T_{amb} 
-     + Q_{elec}}{C_w}
-     - \frac{ U A + \dot m C_p }{C_w} T_w
+\frac{\dot m C_p T_{inlet} 
++ U A T_{amb} 
++ Q_{elec}}{C_w}
+- \frac{ U A + \dot m C_p }{C_w} T_w
     
 
 } dT_w$$
@@ -148,6 +148,7 @@ Where
 
   * $a = \frac{\dot m C_p T_{inlet} + U A T_{amb} + Q_{elec}}{C_w}$
   * $b = \frac{ U A + \dot m C_p }{C_w}$
+
 The reverse problem of calculating the new temperature of the tank from a known initial temperature and time difference, $t1-t0$, follows directly: 
 
 $$T_1 = -\frac{a}{b} + \left ( \frac{a}{b} + T_0 \right ) e^{b \left( t_1 - t_0 \right ) }$$

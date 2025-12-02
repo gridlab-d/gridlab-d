@@ -370,8 +370,8 @@ $$g(t) = g_0 + \Delta g \left ( t + \frac{C_M}{H_M} \right )\qquad (3.3g)$$
 
 where 
 
-$ g_0 = U_A T_O(0) + \Delta g \frac{C_M}{H_M} \,$
-$ \Delta g = U_A \frac{T_O(\Delta t)-T_O(0)}{\Delta t}$
+$g_0 = U_A T_O(0) + \Delta g \frac{C_M}{H_M} \,$
+$\Delta g = U_A \frac{T_O(\Delta t)-T_O(0)}{\Delta t}$
 
 and $T_O(0)$ and $T_O(\Delta t)$ are the outdoor air temperatures at time $t=0$ and time $t=\Delta t$, respectively. 
 
@@ -530,33 +530,39 @@ TODO - Relevant - Should this go somewhere or is it no longer relevant?
 
 Compute exterior surface areas: 
 
-    Define the following, based on rectangular geometry. Let x = width, y = depth.
-    Then the aspect ratio is $R = y / x$
-    The floor area is $A = x y n$
+  Define the following, based on rectangular geometry. Let x = width, y = depth.
+  Then the aspect ratio is $R = y / x$
+  The floor area is $A = x y n$
 
-    and the volume is $V = A h$
+  and the volume is $V = A h$
 
 The gross exterior wall area ($A_{wt}$) can be derived by introducing the perimeter (p), as follows: 
 
 $$y\ x = A / n$$
 
 $$y = R\ x$$
+
 $$R\ x^2 = A / n$$
+
 $$x^2 = \frac{A}{n R}$$
+
 $$x = \sqrt{\frac{A}{nR}}$$
+
 $$p\ = 2x + 2y = 2x + 2Rx = 2x (1 + R)$$
+
 $$p\ = 2 (1 + R)\sqrt{\frac{A}{nR}} $$
+
 $$A_{wt} = n\ h\ p $$
 
 Then   
 Equation | Explanation  
 ---  | -- |
-| $$A_{wt} = 2 n h (1 + R) \sqrt{\frac{A}{nR}} $$ | The gross exterior wall area ($A_{wt}$)   
-| $$A_g = WWR\ A_{wt}\ EWR$$ | The gross window area ($A_g$)   
-| $$A_d = n_d\ A_{1d}$$ | The total door area ($A_d$)   
-| $$A_w = (A_{wt}-(A_g + A_d))\ EWR$$ | The net exterior wall area ($A_w$)   
-| $$A_c = \frac{A}{n} ECR$$ | The net exterior ceiling area ($A_c$)   
-| $$A_f = \frac{A}{n} EFR$$ | The net exterior floor area ($A_f$)   
+| $A_{wt} = 2 n h (1 + R) \sqrt{\frac{A}{nR}}$ | The gross exterior wall area ($A_{wt}$)   
+| $A_g = WWR\ A_{wt}\ EWR$ | The gross window area ($A_g$)   
+| $A_d = n_d\ A_{1d}$ | The total door area ($A_d$)   
+| $A_w = (A_{wt}-(A_g + A_d))\ EWR$ | The net exterior wall area ($A_w$)   
+| $A_c = \frac{A}{n} ECR$ | The net exterior ceiling area ($A_c$)   
+| $A_f = \frac{A}{n} EFR$ | The net exterior floor area ($A_f$)   
   
 The total heat loss coefficient (conductance), $U_A$, for the house (the last term is for air infiltration); the defaults produce $U_A$ = 522.1 Btu/°F.hr 
 
@@ -565,7 +571,7 @@ $$U_A = A_g U_g + \frac{A_d}{R_d} + \frac{A_w}{R_w} + \frac{A_c}{R_c} + \frac{A_
     
 !!! note
 
-  0.018 is the volumetric heat capacity of air at standard conditions (Btu/°F.ft³std-air-pressure)
+    0.018 is the volumetric heat capacity of air at standard conditions (Btu/°F.ft³std-air-pressure)
 
 ### **Interior Mass Surface Conductance ( $H_m$)**
 
