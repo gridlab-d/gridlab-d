@@ -155,6 +155,7 @@ static struct s_varmap {
 	{"clock", PT_timestamp, &global_clock, PA_PUBLIC, "global clock"},
 	{"starttime", PT_timestamp, &global_starttime, PA_PUBLIC, "simulation start time"},
 	{"stoptime", PT_timestamp, &global_stoptime, PA_PUBLIC, "simulation stop time"},
+	{"step_time", PT_timestamp, &global_step_time, PA_PUBLIC, "API step target time"},
 	{"double_format", PT_char32, &global_double_format, PA_PUBLIC, "format for writing double values"},
 	{"complex_format", PT_char256, &global_complex_format, PA_PUBLIC, "format for writing complex values"},
 	{"complex_output_format", PT_enumeration, &global_complex_output_format, PA_PUBLIC, "complex output representation", cnf_keys},

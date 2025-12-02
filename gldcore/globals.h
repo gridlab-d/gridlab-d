@@ -188,6 +188,15 @@ GLOBAL TIMESTAMP global_api_step_target INIT(TS_NEVER);
  * Currently unused - step_to() calculates target_clock locally. */
 
 GLOBAL unsigned int global_api_clock_nanoseconds INIT(0); 
+
+
+GLOBAL TIMESTAMP global_step_time INIT(TS_NEVER);
+
+/**< Target time for the current step() or step_to() operation from the API.
+
+ * Updated by gldapi step() and step_to() functions to indicate the user's desired target time.
+
+ * Used by exec.cpp to ensure sync events don't overshoot the user's requested step target. */
 /**< Nanoseconds component for sub-second precision in API time operations.
  * Currently referenced in step_to() for sub-second time comparisons, but always remains 0
  * since nothing updates it yet. Future enhancement: populate from timestamp conversion functions

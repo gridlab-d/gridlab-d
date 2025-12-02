@@ -2950,8 +2950,15 @@ STATUS exec_step(void)
 			if (global_clock > start_clock) {
 				break;
 			}
+
+		/* Check if we need to cap the next event time to avoid overshooting step target */
+		TIMESTAMP next_event = exec_sync_get(nullptr);
+		if (global_step_time != TS_NEVER && next_event > global_step_time) {
+			exec_sync_set(nullptr, global_step_time, false);
+		}
 		}
 	}
+
 	CATCH (const char *msg)
 	{
 		output_error("exec_step halted: %s", msg);

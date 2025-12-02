@@ -593,6 +593,9 @@ GLDErrorCode GridLabD::step(double& simulation_time) {
     // Otherwise, use the selected_timestep to advance by fixed duration
     TIMESTAMP start_clock = global_clock;
     TIMESTAMP target_clock = start_clock + selected_timestep;
+
+    // Update global_step_time so exec.cpp can check against it
+    global_step_time = target_clock;
     
     printf("Stepping from time %.2f to target %.2f (step size: %d seconds)\n", 
            (double)start_clock, (double)target_clock, selected_timestep);
@@ -612,7 +615,7 @@ GLDErrorCode GridLabD::step(double& simulation_time) {
         
         printf("  DEBUG: Stepped from %.2f to %.2f (target=%.2f)\n",
                (double)prev_clock, (double)global_clock, (double)target_clock);
-        
+        /*
         // Check if we overshot the target - if so, force sync back to exact target
         if (global_clock > target_clock) {
             printf("Overshot target! Clock=%.2f, target=%.2f - forcing sync to exact target\n",
@@ -629,13 +632,15 @@ GLDErrorCode GridLabD::step(double& simulation_time) {
             
             printf("Successfully synced back to exact target time %.2f\n", (double)target_clock);
             break;
+            */
         }
         
         // Check if we've exactly reached the target
         if (global_clock == target_clock) {
-            break;
+            
         }
-        
+        // I don't think I need this, but leaving it for safety
+        /*
         // Peek at the NEXT event time to see if another step would overshoot
         TIMESTAMP next_event = exec_sync_get(nullptr);
         
@@ -659,7 +664,7 @@ GLDErrorCode GridLabD::step(double& simulation_time) {
             printf("Successfully synced and committed at exact target time %.2f\n", (double)target_clock);
             break;
         }
-    }
+    }*/
 
     
     // Update the simulation time
@@ -770,6 +775,9 @@ GLDErrorCode GridLabD::step_to(const std::string& target_time_str, double& simul
     char start_buffer[64];
     convert_from_timestamp(start_clock, start_buffer, sizeof(start_buffer));
     printf("Stepping from %s to target %s\n", start_buffer, target_time_str.c_str());
+
+    // Update global_step_time so exec.cpp can check against it
+    global_step_time = target_clock;
     
     // Keep stepping until we reach or pass the target time (with sub-second precision)
     while (true) {
@@ -793,6 +801,9 @@ GLDErrorCode GridLabD::step_to(const std::string& target_time_str, double& simul
     char final_buffer[64];
     convert_from_timestamp(global_clock, final_buffer, sizeof(final_buffer));
     printf("Reached time %s (target was %s)\n", final_buffer, target_time_str.c_str());
+
+    // Reset global_step_time after step_to completes
+    global_step_time = TS_NEVER;
     
     return GLD_SUCCESS;
 }
