@@ -13,13 +13,13 @@ This package provides Python bindings for GridLAB-D, a power system simulation p
 
 ### From Source (Development)
 
-1. **Build GridLAB-D core** (if not already built):
+1. **Build the GridLAB-D core** (if not already built):
    ```bash
    cd build
    cmake --build . --parallel
    ```
 
-2. **Install Python package in development mode**:
+2. **Install the Python package in development mode**:
    ```bash
    cd python_bindings
    pip install -e .
@@ -68,7 +68,7 @@ gld.exit_gld("")
 ```python
 import gridlabd
 
-# Using the high-level Simulation class
+# Use the high-level Simulation class
 with gridlabd.Simulation() as sim:
     sim.load_model("model.glm")
     results = sim.run()
@@ -78,7 +78,7 @@ with gridlabd.Simulation() as sim:
 
 GLM files often reference external files (climate data, CSV files, etc.) using relative paths. GridLAB-D resolves these paths from the **current working directory**.
 
-**Solution 1: Use the convenience function** (recommended):
+**Solution 1: Use the convenience function (recommended)**:
 ```python
 import gridlabd
 
@@ -146,7 +146,7 @@ site-packages/gridlabd/
 └── bundle_utils.py        # Path utilities
 ```
 
-**Note**: All necessary GridLAB-D modules are bundled with the package, making it fully self-contained. Users don't need a separate GridLAB-D installation!
+**Note**: All necessary GridLAB-D modules are bundled with the package, making it fully self-contained. Users do not need a separate GridLAB-D installation!
 
 ## What Gets Bundled
 
@@ -181,7 +181,7 @@ When you install the package (not in development mode), it includes:
 
 **Result**: A fully self-contained Python package that works without any external GridLAB-D installation!
 
-**Note**: Climate data files (TMY2/TMY3 weather files) are NOT bundled. You need to provide these separately if your models use them. See "Handling File References in GLM Files" section above for how to reference external data files.
+**Note**: Climate data files (TMY2/TMY3 weather files) are not bundled. You need to provide these separately if your models use them. See the "Handling File References in GLM Files" section above for how to reference external data files.
 
 ## Development
 
@@ -301,7 +301,7 @@ cd python_bindings
 ```
 
 **What this script does:**
-- Creates `prebuilt/` directory structure
+- Creates the `prebuilt/` directory structure
 - Copies `libgldapi.so` and all GridLAB-D module libraries (`.so` files)
 - Copies essential data files (`tzinfo.txt`, `unitfile.txt`)  
 - Copies required header files for compilation
@@ -331,8 +331,8 @@ python -m build
 ```
 
 This creates:
-- **Source distribution** (`.tar.gz`) - Contains source code and prebuilt files
-- **Wheel** (`.whl`) - Binary distribution ready for installation
+- **Source distribution** (`.tar.gz`) — Contains source code and prebuilt files
+- **Wheel** (`.whl`) — Binary distribution ready for installation
 
 #### Step 3: Test the Package
 
@@ -359,25 +359,25 @@ twine upload dist/*
 
 ### Architecture Details
 
-#### Why Pre-build Libraries?
+#### Why Prebuild Libraries?
 
-The PyPI approach uses **pre-built libraries** rather than building GridLAB-D during `pip install` because:
+The PyPI approach uses **prebuilt libraries** rather than building GridLAB-D during `pip install` because:
 
-1. **Fast installs** - No compilation needed (seconds vs minutes)
-2. **Reliable** - Works consistently across environments  
-3. **User-friendly** - No build dependencies required
-4. **Self-contained** - Everything needed is included
+1. **Fast installs** — No compilation needed (seconds vs minutes)
+2. **Reliable** — Works consistently across environments  
+3. **User-friendly** — No build dependencies required
+4. **Self-contained** — Everything needed is included
 
 #### Two-Mode CMakeLists.txt
 
 The CMakeLists.txt automatically detects the build context:
 
 ```cmake
-# Development mode - uses source tree
+# Development mode — uses source tree
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib/libgldapi.so")
     set(GRIDLABD_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)
     
-# PyPI mode - uses prebuilt files  
+# PyPI mode — uses prebuilt files  
 else()
     set(GRIDLABD_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 ```
@@ -395,8 +395,8 @@ else()
 - And more...
 
 **Data Files:**
-- `tzinfo.txt` - Timezone definitions (600+ timezones)
-- `unitfile.txt` - Unit conversion database
+- `tzinfo.txt` — Timezone definitions (600+ timezones)
+- `unitfile.txt` — Unit conversion database
 
 **Total Size:** ~13 MB compressed wheel, ~33 MB installed
 
@@ -406,7 +406,7 @@ else()
 ```
 GridLAB-D API library not found at build/lib/libgldapi.so
 ```
-**Solution:** Build GridLAB-D first: `cd build && cmake --build . --parallel`
+**Solution:** Build GridLAB-D first by running: `cd build && cmake --build . --parallel`
 
 #### Missing Prebuilt Files Error
 ```
@@ -419,7 +419,7 @@ CMake Error: libgldapi.so not found
 ```
 ImportError: No module named 'gridlabd.gridlabd_core'
 ```
-**Solution:** Check the wheel was built correctly and installed from the right location
+**Solution:** Check that the wheel was built correctly and installed from the right location
 
 ### Development vs PyPI Workflow
 
@@ -451,20 +451,20 @@ twine upload dist/*
 
 ### File Management
 
-The preparation script and build process create several directories that should **not** be committed to git:
+The preparation script and build process create several directories that should **not** be committed to Git:
 
-- `prebuilt/` - Copied libraries and data files
-- `gldcore/` - Copied header files  
-- `third_party/` - Copied jsoncpp files
-- `dist/` - Built packages
+- `prebuilt/` — Copied libraries and data files
+- `gldcore/` — Copied header files  
+- `third_party/` — Copied jsoncpp files
+- `dist/` — Built packages
 
 These are automatically ignored via `.gitignore` entries.
 
 ## Documentation
 
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick start guide and common tasks
-- **[TZINFO_FIX_SUMMARY.md](TZINFO_FIX_SUMMARY.md)** - Technical details on path configuration
-- **[PACKAGE_DATA_FIX.md](PACKAGE_DATA_FIX.md)** - Implementation details
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** — Quick start guide and common tasks
+- **[TZINFO_FIX_SUMMARY.md](TZINFO_FIX_SUMMARY.md)** — Technical details on path configuration
+- **[PACKAGE_DATA_FIX.md](PACKAGE_DATA_FIX.md)** — Implementation details
 
 ## API Reference
 

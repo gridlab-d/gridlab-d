@@ -3,8 +3,8 @@ requires = ["scikit-build-core >=0.8", "nanobind >=1.3.2"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "gridlabd"
-version = "1.0.6"
+name = "gridlabd-test-riley"
+version = "1.0.8"
 description = "Python bindings for GridLAB-D power system simulation"
 readme = "README.md"
 license = {text = "Battelle Open Source License"}
@@ -35,6 +35,7 @@ Documentation = "https://gridlab-d.shoutwiki.com/wiki/Main_Page"
 wheel.expand-macos-universal-tags = true
 cmake.version = ">=3.15"
 cmake.build-type = "Release"
+wheel.packages = ["src/gridlabd"]
 sdist.include = [
     "CMakeLists.txt", 
     "src_cpp/*", 
