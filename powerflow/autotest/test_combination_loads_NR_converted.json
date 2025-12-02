@@ -1,0 +1,807 @@
+{
+  "__preamble": {
+    "comments": [
+      "//Parameters adapted from IEEE 4-node system",
+      "// #set pauseatexit=1",
+      "// #set profiler=1",
+      "// #set savefile=outputvalues.xml",
+      "// #define stylesheet=\"C:/Code/ticket767/core/gridlabd-3_0\""
+    ]
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:01'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    },
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc100",
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306,
+          "outside_comments": [
+            "// object voltdump {",
+            "// file output_voltage.csv;",
+            "// mode rect;",
+            "// }"
+          ]
+        },
+        {
+          "name": "olc101",
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls200",
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc300",
+          "conductor_A": "olc100",
+          "conductor_B": "olc100",
+          "conductor_C": "olc100",
+          "conductor_N": "olc101",
+          "spacing": "ls200"
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node1",
+          "phases": "ABCD",
+          "bustype": "SWING",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node2",
+          "phases": "ABCD",
+          "nominal_voltage": 7200,
+          "inside_comments": [
+            "//All others tree, so if node2 is right, all should be right"
+          ]
+        },
+        {
+          "name": "load_child5_wye",
+          "phases": "ABC",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Full childed to wye"
+          ]
+        },
+        {
+          "name": "load_child6_delta",
+          "phases": "ABCD",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Full childed to delta"
+          ]
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "ohl12",
+          "phases": "ABCD",
+          "from": "node1",
+          "to": "node2",
+          "length": 2000,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ohl_2_deltapwr1",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_delt_old_pwr",
+          "configuration": "lc300",
+          "length": 1500.0
+        },
+        {
+          "name": "ohl_2_deltapwr1_new",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_delt_new_pwr",
+          "configuration": "lc300",
+          "length": 1500.0
+        },
+        {
+          "name": "ohl_2_deltapwr1_new_nod",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_delt_notdelt_new_pwr",
+          "configuration": "lc300",
+          "length": 1500.0
+        },
+        {
+          "name": "ohl_2_wyepwr1",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_wye_old_pwr",
+          "configuration": "lc300",
+          "length": 1500.0,
+          "outside_comments": [
+            "//Wye connections"
+          ]
+        },
+        {
+          "name": "ohl_2_wyepwr1_new",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_wye_new_pwr",
+          "configuration": "lc300",
+          "length": 1500.0
+        },
+        {
+          "name": "ohl_2_dwyepwr1_new_nod",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_wye_delt_new_pwr",
+          "configuration": "lc300",
+          "length": 1500.0
+        },
+        {
+          "name": "ohl_2_delwyepwr1",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_deltawye_old_pwr",
+          "configuration": "lc300",
+          "length": 1500.0,
+          "outside_comments": [
+            "//Both connections"
+          ]
+        },
+        {
+          "name": "ohl_2_delwyepwr1_new",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_deltawye_new_pwr",
+          "configuration": "lc300",
+          "length": 1500.0
+        },
+        {
+          "name": "ohl_2_deltadwyepwr1_new_nod",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_deltawye_delt_new_pwr",
+          "configuration": "lc300",
+          "length": 1500.0
+        },
+        {
+          "name": "ohl_2_child1",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_child1_wye",
+          "configuration": "lc300",
+          "length": 1500.0,
+          "outside_comments": [
+            "//Final test, make sure childing works",
+            "//Delta childed to wye full"
+          ]
+        },
+        {
+          "name": "ohl_2_child2",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_child2_delta",
+          "configuration": "lc300",
+          "length": 1500.0,
+          "outside_comments": [
+            "//wye childed to delta full"
+          ]
+        },
+        {
+          "name": "ohl_2_child3",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_child3_wye",
+          "configuration": "lc300",
+          "length": 1500.0,
+          "outside_comments": [
+            "//Full childed to wye base"
+          ]
+        },
+        {
+          "name": "ohl_2_child4",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_child4_delta",
+          "configuration": "lc300",
+          "length": 1500.0,
+          "outside_comments": [
+            "//Full childed to delta base"
+          ]
+        },
+        {
+          "name": "ohl_2_child5",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_child5_wye",
+          "configuration": "lc300",
+          "length": 1500.0,
+          "outside_comments": [
+            "//Full childed to wye base"
+          ]
+        },
+        {
+          "name": "ohl_2_child6",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_child6_delta",
+          "configuration": "lc300",
+          "length": 1500.0,
+          "outside_comments": [
+            "//Full childed to delta base"
+          ]
+        },
+        {
+          "name": "ohl_2_child7",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_child7_wye",
+          "configuration": "lc300",
+          "length": 1500.0,
+          "outside_comments": [
+            "//Full childed to wye base"
+          ]
+        },
+        {
+          "name": "ohl_2_child8",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "load_child8_delta",
+          "configuration": "lc300",
+          "length": 1500.0,
+          "outside_comments": [
+            "//Full childed to delta base"
+          ]
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_8",
+          "parent": "node2",
+          "target": "voltage_A",
+          "value": "6998.888-81.08j",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_9",
+          "parent": "node2",
+          "target": "voltage_B",
+          "value": "-3609.22-6021.75j",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_10",
+          "parent": "node2",
+          "target": "voltage_C",
+          "value": "-3391.47+6067.85j",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_15",
+          "parent": "load_delt_new_pwr",
+          "target": "voltage_A",
+          "value": "6990.542-82.87j",
+          "within": 0.1,
+          "outside_comments": [
+            "//Delta load, new style power"
+          ]
+        },
+        {
+          "name": "complex_assert_16",
+          "parent": "load_delt_new_pwr",
+          "target": "voltage_B",
+          "value": "-3610.01-6012.86j",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_17",
+          "parent": "load_delt_new_pwr",
+          "target": "voltage_C",
+          "value": "-3383.64+6061.67j",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_26",
+          "parent": "load_wye_delt_new_pwr",
+          "target": "voltage_A",
+          "value": "6996.46-83.65j",
+          "within": 0.1,
+          "outside_comments": [
+            "//Wye load, new style power, delta designated"
+          ]
+        },
+        {
+          "name": "complex_assert_27",
+          "parent": "load_wye_delt_new_pwr",
+          "target": "voltage_B",
+          "value": "-3608.93-6019.18j",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_28",
+          "parent": "load_wye_delt_new_pwr",
+          "target": "voltage_C",
+          "value": "-3388.12+6065.06j",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_48",
+          "parent": "load_child4_full_wye",
+          "target": "voltage_A",
+          "value": "6988.12-85.43j",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_49",
+          "parent": "load_child4_full_wye",
+          "target": "voltage_B",
+          "value": "-3609.71-6010.3j",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_50",
+          "parent": "load_child4_full_wye",
+          "target": "voltage_C",
+          "value": "-3380.3+6058.88j",
+          "within": 0.1
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load_delt_old_pwr",
+          "phases": "ABCD",
+          "constant_power_A": "5000.0+400.0j",
+          "constant_power_B": "4000.0+300.0j",
+          "constant_power_C": "4500.0+100.0j",
+          "constant_current_A": "3.5-1.7j",
+          "constant_current_B": "-4.0-2.8j",
+          "constant_current_C": "-0.4+4.8j",
+          "constant_impedance_A": "538.9+219.5j",
+          "constant_impedance_B": "438.9+319.5j",
+          "constant_impedance_C": "338.9+419.5j",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Delta load, old style power"
+          ]
+        },
+        {
+          "name": "load_delt_new_pwr",
+          "phases": "ABCD",
+          "constant_power_AB": "5000.0+400.0j",
+          "constant_power_BC": "4000.0+300.0j",
+          "constant_power_CA": "4500.0+100.0j",
+          "constant_current_AB": "3.5-1.7j",
+          "constant_current_BC": "-4.0-2.8j",
+          "constant_current_CA": "-0.4+4.8j",
+          "constant_impedance_AB": "538.9+219.5j",
+          "constant_impedance_BC": "438.9+319.5j",
+          "constant_impedance_CA": "338.9+419.5j",
+          "nominal_voltage": 7200.0
+        },
+        {
+          "name": "load_delt_notdelt_new_pwr",
+          "phases": "ABC",
+          "constant_power_AB": "5000.0+400.0j",
+          "constant_power_BC": "4000.0+300.0j",
+          "constant_power_CA": "4500.0+100.0j",
+          "constant_current_AB": "3.5-1.7j",
+          "constant_current_BC": "-4.0-2.8j",
+          "constant_current_CA": "-0.4+4.8j",
+          "constant_impedance_AB": "538.9+219.5j",
+          "constant_impedance_BC": "438.9+319.5j",
+          "constant_impedance_CA": "338.9+419.5j",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Delta load, new style power, not delta designated"
+          ]
+        },
+        {
+          "name": "load_wye_old_pwr",
+          "phases": "ABC",
+          "constant_power_A": "5000.0+400.0j",
+          "constant_power_B": "4000.0+300.0j",
+          "constant_power_C": "4500.0+100.0j",
+          "constant_current_A": "3.5-1.7j",
+          "constant_current_B": "-4.0-2.8j",
+          "constant_current_C": "-0.4+4.8j",
+          "constant_impedance_A": "538.9+219.5j",
+          "constant_impedance_B": "438.9+319.5j",
+          "constant_impedance_C": "338.9+419.5j",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Wye load, old style power"
+          ]
+        },
+        {
+          "name": "load_wye_new_pwr",
+          "phases": "ABC",
+          "constant_power_AN": "5000.0+400.0j",
+          "constant_power_BN": "4000.0+300.0j",
+          "constant_power_CN": "4500.0+100.0j",
+          "constant_current_AN": "3.5-1.7j",
+          "constant_current_BN": "-4.0-2.8j",
+          "constant_current_CN": "-0.4+4.8j",
+          "constant_impedance_AN": "538.9+219.5j",
+          "constant_impedance_BN": "438.9+319.5j",
+          "constant_impedance_CN": "338.9+419.5j",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Wye load, new style power"
+          ]
+        },
+        {
+          "name": "load_wye_delt_new_pwr",
+          "phases": "ABCD",
+          "constant_power_AN": "5000.0+400.0j",
+          "constant_power_BN": "4000.0+300.0j",
+          "constant_power_CN": "4500.0+100.0j",
+          "constant_current_AN": "3.5-1.7j",
+          "constant_current_BN": "-4.0-2.8j",
+          "constant_current_CN": "-0.4+4.8j",
+          "constant_impedance_AN": "538.9+219.5j",
+          "constant_impedance_BN": "438.9+319.5j",
+          "constant_impedance_CN": "338.9+419.5j",
+          "nominal_voltage": 7200.0
+        },
+        {
+          "name": "load_deltawye_old_pwr",
+          "phases": "ABC",
+          "constant_power_A": "5000.0+400.0j",
+          "constant_power_B": "4000.0+300.0j",
+          "constant_power_C": "4500.0+100.0j",
+          "constant_current_A": "3.5-1.7j",
+          "constant_current_B": "-4.0-2.8j",
+          "constant_current_C": "-0.4+4.8j",
+          "constant_impedance_A": "538.9+219.5j",
+          "constant_impedance_B": "438.9+319.5j",
+          "constant_impedance_C": "338.9+419.5j",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Delta-Wye load, old style power"
+          ]
+        },
+        {
+          "name": "load_deltawye_old_pwr_child",
+          "parent": "load_deltawye_old_pwr",
+          "phases": "ABCD",
+          "constant_power_A": "5000.0+400.0j",
+          "constant_power_B": "4000.0+300.0j",
+          "constant_power_C": "4500.0+100.0j",
+          "constant_current_A": "3.5-1.7j",
+          "constant_current_B": "-4.0-2.8j",
+          "constant_current_C": "-0.4+4.8j",
+          "constant_impedance_A": "538.9+219.5j",
+          "constant_impedance_B": "438.9+319.5j",
+          "constant_impedance_C": "338.9+419.5j",
+          "nominal_voltage": 7200.0
+        },
+        {
+          "name": "load_deltawye_new_pwr",
+          "phases": "ABCD",
+          "constant_power_AN": "5000.0+400.0j",
+          "constant_power_BN": "4000.0+300.0j",
+          "constant_power_CN": "4500.0+100.0j",
+          "constant_current_AN": "3.5-1.7j",
+          "constant_current_BN": "-4.0-2.8j",
+          "constant_current_CN": "-0.4+4.8j",
+          "constant_impedance_AN": "538.9+219.5j",
+          "constant_impedance_BN": "438.9+319.5j",
+          "constant_impedance_CN": "338.9+419.5j",
+          "constant_power_AB": "5000.0+400.0j",
+          "constant_power_BC": "4000.0+300.0j",
+          "constant_power_CA": "4500.0+100.0j",
+          "constant_current_AB": "3.5-1.7j",
+          "constant_current_BC": "-4.0-2.8j",
+          "constant_current_CA": "-0.4+4.8j",
+          "constant_impedance_AB": "538.9+219.5j",
+          "constant_impedance_BC": "438.9+319.5j",
+          "constant_impedance_CA": "338.9+419.5j",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Delta-Wye load, new style power, delta"
+          ]
+        },
+        {
+          "name": "load_deltawye_delt_new_pwr",
+          "phases": "ABC",
+          "constant_power_AN": "5000.0+400.0j",
+          "constant_power_BN": "4000.0+300.0j",
+          "constant_power_CN": "4500.0+100.0j",
+          "constant_current_AN": "3.5-1.7j",
+          "constant_current_BN": "-4.0-2.8j",
+          "constant_current_CN": "-0.4+4.8j",
+          "constant_impedance_AN": "538.9+219.5j",
+          "constant_impedance_BN": "438.9+319.5j",
+          "constant_impedance_CN": "338.9+419.5j",
+          "constant_power_AB": "5000.0+400.0j",
+          "constant_power_BC": "4000.0+300.0j",
+          "constant_power_CA": "4500.0+100.0j",
+          "constant_current_AB": "3.5-1.7j",
+          "constant_current_BC": "-4.0-2.8j",
+          "constant_current_CA": "-0.4+4.8j",
+          "constant_impedance_AB": "538.9+219.5j",
+          "constant_impedance_BC": "438.9+319.5j",
+          "constant_impedance_CA": "338.9+419.5j",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Wye load, new style power, not delta designated"
+          ]
+        },
+        {
+          "name": "load_child1_wye",
+          "phases": "ABC",
+          "constant_power_AN": "5000.0+400.0j",
+          "constant_power_BN": "4000.0+300.0j",
+          "constant_power_CN": "4500.0+100.0j",
+          "constant_current_AN": "3.5-1.7j",
+          "constant_current_BN": "-4.0-2.8j",
+          "constant_current_CN": "-0.4+4.8j",
+          "constant_impedance_AN": "538.9+219.5j",
+          "constant_impedance_BN": "438.9+319.5j",
+          "constant_impedance_CN": "338.9+419.5j",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Delta load childed to overall wye load"
+          ]
+        },
+        {
+          "name": "load_child1_delta",
+          "phases": "ABCD",
+          "parent": "load_child1_wye",
+          "constant_power_AB": "5000.0+400.0j",
+          "constant_power_BC": "4000.0+300.0j",
+          "constant_power_CA": "4500.0+100.0j",
+          "constant_current_AB": "3.5-1.7j",
+          "constant_current_BC": "-4.0-2.8j",
+          "constant_current_CA": "-0.4+4.8j",
+          "constant_impedance_AB": "538.9+219.5j",
+          "constant_impedance_BC": "438.9+319.5j",
+          "constant_impedance_CA": "338.9+419.5j",
+          "nominal_voltage": 7200.0
+        },
+        {
+          "name": "load_child2_delta",
+          "phases": "ABCD",
+          "constant_power_AB": "5000.0+400.0j",
+          "constant_power_BC": "4000.0+300.0j",
+          "constant_power_CA": "4500.0+100.0j",
+          "constant_current_AB": "3.5-1.7j",
+          "constant_current_BC": "-4.0-2.8j",
+          "constant_current_CA": "-0.4+4.8j",
+          "constant_impedance_AB": "538.9+219.5j",
+          "constant_impedance_BC": "438.9+319.5j",
+          "constant_impedance_CA": "338.9+419.5j",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Wye load childed to overall delta load"
+          ]
+        },
+        {
+          "name": "load_child2_wye",
+          "parent": "load_child2_delta",
+          "phases": "ABC",
+          "constant_power_AN": "5000.0+400.0j",
+          "constant_power_BN": "4000.0+300.0j",
+          "constant_power_CN": "4500.0+100.0j",
+          "constant_current_AN": "3.5-1.7j",
+          "constant_current_BN": "-4.0-2.8j",
+          "constant_current_CN": "-0.4+4.8j",
+          "constant_impedance_AN": "538.9+219.5j",
+          "constant_impedance_BN": "438.9+319.5j",
+          "constant_impedance_CN": "338.9+419.5j",
+          "nominal_voltage": 7200.0
+        },
+        {
+          "name": "load_child3_wye",
+          "phases": "ABC",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Full childed to wye"
+          ]
+        },
+        {
+          "name": "load_child3_full_wye",
+          "parent": "load_child3_wye",
+          "phases": "ABC",
+          "constant_power_AN": "5000.0+400.0j",
+          "constant_power_BN": "4000.0+300.0j",
+          "constant_power_CN": "4500.0+100.0j",
+          "constant_current_AN": "3.5-1.7j",
+          "constant_current_BN": "-4.0-2.8j",
+          "constant_current_CN": "-0.4+4.8j",
+          "constant_impedance_AN": "538.9+219.5j",
+          "constant_impedance_BN": "438.9+319.5j",
+          "constant_impedance_CN": "338.9+419.5j",
+          "constant_power_AB": "5000.0+400.0j",
+          "constant_power_BC": "4000.0+300.0j",
+          "constant_power_CA": "4500.0+100.0j",
+          "constant_current_AB": "3.5-1.7j",
+          "constant_current_BC": "-4.0-2.8j",
+          "constant_current_CA": "-0.4+4.8j",
+          "constant_impedance_AB": "538.9+219.5j",
+          "constant_impedance_BC": "438.9+319.5j",
+          "constant_impedance_CA": "338.9+419.5j",
+          "nominal_voltage": 7200.0
+        },
+        {
+          "name": "load_child4_delta",
+          "phases": "ABCD",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Full childed to delta"
+          ]
+        },
+        {
+          "name": "load_child4_full_wye",
+          "parent": "load_child4_delta",
+          "phases": "ABC",
+          "constant_power_AN": "5000.0+400.0j",
+          "constant_power_BN": "4000.0+300.0j",
+          "constant_power_CN": "4500.0+100.0j",
+          "constant_current_AN": "3.5-1.7j",
+          "constant_current_BN": "-4.0-2.8j",
+          "constant_current_CN": "-0.4+4.8j",
+          "constant_impedance_AN": "538.9+219.5j",
+          "constant_impedance_BN": "438.9+319.5j",
+          "constant_impedance_CN": "338.9+419.5j",
+          "constant_power_AB": "5000.0+400.0j",
+          "constant_power_BC": "4000.0+300.0j",
+          "constant_power_CA": "4500.0+100.0j",
+          "constant_current_AB": "3.5-1.7j",
+          "constant_current_BC": "-4.0-2.8j",
+          "constant_current_CA": "-0.4+4.8j",
+          "constant_impedance_AB": "538.9+219.5j",
+          "constant_impedance_BC": "438.9+319.5j",
+          "constant_impedance_CA": "338.9+419.5j",
+          "nominal_voltage": 7200.0,
+          "inside_comments": [
+            "//All of these child tests should be at the same voltage, so check a random one"
+          ]
+        },
+        {
+          "name": "load_child5_full_wye",
+          "parent": "load_child5_wye",
+          "phases": "ABC",
+          "constant_power_AN": "5000.0+400.0j",
+          "constant_power_BN": "4000.0+300.0j",
+          "constant_power_CN": "4500.0+100.0j",
+          "constant_current_AN": "3.5-1.7j",
+          "constant_current_BN": "-4.0-2.8j",
+          "constant_current_CN": "-0.4+4.8j",
+          "constant_impedance_AN": "538.9+219.5j",
+          "constant_impedance_BN": "438.9+319.5j",
+          "constant_impedance_CN": "338.9+419.5j",
+          "constant_power_AB": "5000.0+400.0j",
+          "constant_power_BC": "4000.0+300.0j",
+          "constant_power_CA": "4500.0+100.0j",
+          "constant_current_AB": "3.5-1.7j",
+          "constant_current_BC": "-4.0-2.8j",
+          "constant_current_CA": "-0.4+4.8j",
+          "constant_impedance_AB": "538.9+219.5j",
+          "constant_impedance_BC": "438.9+319.5j",
+          "constant_impedance_CA": "338.9+419.5j",
+          "nominal_voltage": 7200.0
+        },
+        {
+          "name": "load_child6_full_wye",
+          "parent": "load_child6_delta",
+          "phases": "ABC",
+          "constant_power_AN": "5000.0+400.0j",
+          "constant_power_BN": "4000.0+300.0j",
+          "constant_power_CN": "4500.0+100.0j",
+          "constant_current_AN": "3.5-1.7j",
+          "constant_current_BN": "-4.0-2.8j",
+          "constant_current_CN": "-0.4+4.8j",
+          "constant_impedance_AN": "538.9+219.5j",
+          "constant_impedance_BN": "438.9+319.5j",
+          "constant_impedance_CN": "338.9+419.5j",
+          "constant_power_AB": "5000.0+400.0j",
+          "constant_power_BC": "4000.0+300.0j",
+          "constant_power_CA": "4500.0+100.0j",
+          "constant_current_AB": "3.5-1.7j",
+          "constant_current_BC": "-4.0-2.8j",
+          "constant_current_CA": "-0.4+4.8j",
+          "constant_impedance_AB": "538.9+219.5j",
+          "constant_impedance_BC": "438.9+319.5j",
+          "constant_impedance_CA": "338.9+419.5j",
+          "nominal_voltage": 7200.0
+        },
+        {
+          "name": "load_child7_full_wye",
+          "parent": "load_child7_wye",
+          "phases": "ABC",
+          "constant_power_AN": "5000.0+400.0j",
+          "constant_power_BN": "4000.0+300.0j",
+          "constant_power_CN": "4500.0+100.0j",
+          "constant_current_AN": "3.5-1.7j",
+          "constant_current_BN": "-4.0-2.8j",
+          "constant_current_CN": "-0.4+4.8j",
+          "constant_impedance_AN": "538.9+219.5j",
+          "constant_impedance_BN": "438.9+319.5j",
+          "constant_impedance_CN": "338.9+419.5j",
+          "constant_power_AB": "5000.0+400.0j",
+          "constant_power_BC": "4000.0+300.0j",
+          "constant_power_CA": "4500.0+100.0j",
+          "constant_current_AB": "3.5-1.7j",
+          "constant_current_BC": "-4.0-2.8j",
+          "constant_current_CA": "-0.4+4.8j",
+          "constant_impedance_AB": "538.9+219.5j",
+          "constant_impedance_BC": "438.9+319.5j",
+          "constant_impedance_CA": "338.9+419.5j",
+          "nominal_voltage": 7200.0
+        },
+        {
+          "name": "load_child8_full_wye",
+          "parent": "load_child8_delta",
+          "phases": "ABC",
+          "constant_power_AN": "5000.0+400.0j",
+          "constant_power_BN": "4000.0+300.0j",
+          "constant_power_CN": "4500.0+100.0j",
+          "constant_current_AN": "3.5-1.7j",
+          "constant_current_BN": "-4.0-2.8j",
+          "constant_current_CN": "-0.4+4.8j",
+          "constant_impedance_AN": "538.9+219.5j",
+          "constant_impedance_BN": "438.9+319.5j",
+          "constant_impedance_CN": "338.9+419.5j",
+          "constant_power_AB": "5000.0+400.0j",
+          "constant_power_BC": "4000.0+300.0j",
+          "constant_power_CA": "4500.0+100.0j",
+          "constant_current_AB": "3.5-1.7j",
+          "constant_current_BC": "-4.0-2.8j",
+          "constant_current_CA": "-0.4+4.8j",
+          "constant_impedance_AB": "538.9+219.5j",
+          "constant_impedance_BC": "438.9+319.5j",
+          "constant_impedance_CA": "338.9+419.5j",
+          "nominal_voltage": 7200.0
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "load_child7_wye",
+          "phases": "ABC",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Full childed to wye"
+          ]
+        },
+        {
+          "name": "load_child8_delta",
+          "phases": "ABCD",
+          "nominal_voltage": 7200.0,
+          "outside_comments": [
+            "//Full childed to delta"
+          ]
+        }
+      ]
+    }
+  }
+}

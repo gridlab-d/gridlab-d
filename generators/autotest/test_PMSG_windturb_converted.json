@@ -1,0 +1,368 @@
+{
+  "_directives": {
+    "#define": {
+      "PF": "FBS"
+    },
+    "#set": {
+      "profiler": "1;",
+      "double_format": "%+.12lg",
+      "randomseed": "10;",
+      "relax_naming_rules": "1;"
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "timestamp": "'2009-01-01 00:00:00'",
+    "stoptime": "'2009-01-05 00:00:00'"
+  },
+  "modules": {
+    "climate": {},
+    "generators": {},
+    "powerflow": {
+      "solver_method": "${PF}"
+    },
+    "tape": {}
+  },
+  "objects": {
+    "climate": {
+      "instances": [
+        {
+          "name": "climate_1",
+          "tmyfile": "../Standard_Weather.csv",
+          "reader": "csvreader",
+          "outside_comments": [
+            "//#set savefile=\"test_my_turbine_${PF}.xml\""
+          ]
+        }
+      ]
+    },
+    "csv_reader": {
+      "instances": [
+        {
+          "name": "csvreader",
+          "filename": "../Standard_Weather.csv"
+        }
+      ]
+    },
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "overhead_line_conductor_100",
+          "id": 100,
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306
+        },
+        {
+          "name": "overhead_line_conductor_101",
+          "id": 101,
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "line_spacing_200",
+          "id": 200,
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "line_configuration_300",
+          "id": 300,
+          "conductor_A": "overhead_line_conductor_100",
+          "conductor_B": "overhead_line_conductor_100",
+          "conductor_C": "overhead_line_conductor_100",
+          "conductor_N": "overhead_line_conductor_101",
+          "spacing": "line_spacing_200"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "transformer_configuration_400",
+          "id": 400,
+          "connect_type": "WYE_WYE",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06,
+          "install_type": "PADMOUNT"
+        },
+        {
+          "name": "transformer_configuration_500",
+          "id": 500,
+          "connect_type": "WYE_WYE",
+          "power_rating": 3000,
+          "primary_voltage": 2401.77,
+          "secondary_voltage": 600,
+          "resistance": 0.01,
+          "reactance": 0.06,
+          "install_type": "PADMOUNT"
+        },
+        {
+          "name": "IEEE13_SPCT_CONFIG",
+          "connect_type": "SINGLE_PHASE_CENTER_TAPPED",
+          "install_type": "PADMOUNT",
+          "primary_voltage": "2401.7771 V",
+          "secondary_voltage": "120 V",
+          "power_rating": 25.0,
+          "impedance": "0.01924+0.08658j",
+          "shunt_impedance": "409.8361+1844.2624j",
+          "inline_comments": {
+            "power_rating": "//KVA rating"
+          }
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node1",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node2",
+          "phases": "ABCN",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node3",
+          "phases": "ABCN",
+          "voltage_A": "+2401.777+0.000j",
+          "voltage_B": "-1200.889-2080.000j",
+          "voltage_C": "-1200.889+2080.000j",
+          "nominal_voltage": 2400
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "overhead_line_9",
+          "phases": "ABCN",
+          "from": "node1",
+          "to": "node2",
+          "length": 2000,
+          "configuration": "line_configuration_300"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "xfmr24",
+          "phases": "ABCN",
+          "from": "node2",
+          "to": "my_meter1",
+          "configuration": "transformer_configuration_500"
+        },
+        {
+          "name": "xfmr23",
+          "phases": "ABCN",
+          "from": "node2",
+          "to": "node3",
+          "configuration": "transformer_configuration_400"
+        },
+        {
+          "name": "IEEE13_SPCT_1",
+          "phases": "AS",
+          "from": "node3",
+          "to": "inv_meter",
+          "configuration": "IEEE13_SPCT_CONFIG"
+        },
+        {
+          "name": "IEEE13_SPCT_2",
+          "phases": "AS",
+          "from": "node3",
+          "to": "triplexload_meter",
+          "configuration": "IEEE13_SPCT_CONFIG"
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "my_meter1",
+          "phases": "ABCN",
+          "nominal_voltage": 350
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_15",
+          "parent": "windturbVestas",
+          "file": "TEST_windturbVestas.csv",
+          "interval": 5,
+          "property": "wind_speed,WSadj,Cp,Pconv, voltage_A,voltage_B,voltage_C,current_A,current_B,current_C,TotalRealPow,TotalReacPow"
+        },
+        {
+          "name": "recorder_23",
+          "parent": "triplexload_meter",
+          "property": "measured_voltage_1, measured_voltage_2, measured_voltage_N, measured_current_1, measured_current_2, measured_current_N, measured_real_power, measured_reactive_power",
+          "file": "TEST_triLoadMeter.csv",
+          "interval": 5
+        },
+        {
+          "name": "recorder_28",
+          "parent": "inv_meter",
+          "property": "measured_voltage_1, measured_voltage_2, measured_voltage_N, measured_current_1, measured_current_2, measured_current_N, measured_real_power, measured_reactive_power",
+          "file": "TEST_invMeter.csv",
+          "interval": 5
+        },
+        {
+          "name": "recorder_30",
+          "parent": "inv1",
+          "property": "Vdc, V_In, I_In, phaseA_V_Out, phaseB_V_Out, phaseC_V_Out, phaseA_I_Out, phaseB_I_Out, phaseC_I_Out, P_Out, Q_Out, phases",
+          "file": "TEST_inverter.csv",
+          "interval": 5
+        },
+        {
+          "name": "recorder_32",
+          "parent": "rect1",
+          "file": "TEST_rectifier.csv",
+          "interval": 5,
+          "property": "voltage_A,voltage_B,voltage_C,current_A,current_B,current_C, power_out_A, power_out_B, power_out_C"
+        },
+        {
+          "name": "recorder_34",
+          "parent": "windturb1",
+          "file": "TEST_windturb.csv",
+          "interval": 5,
+          "property": "wind_speed,WSadj,Cp,Pconv, voltage_A,voltage_B,voltage_C,current_A,current_B,current_C,TotalRealPow,TotalReacPow"
+        }
+      ]
+    },
+    "windturb_dg": {
+      "instances": [
+        {
+          "name": "windturbVestas",
+          "parent": "my_meter1",
+          "phases": "ABCN",
+          "Gen_status": "ONLINE",
+          "Gen_type": "SYNCHRONOUS",
+          "Gen_mode": "CONSTANTP",
+          "Turbine_Model": "VESTAS_V82"
+        },
+        {
+          "name": "windturb1",
+          "parent": "rect1",
+          "phases": "ABCN",
+          "Gen_status": "ONLINE",
+          "Gen_mode": "CONSTANTP",
+          "Turbine_Model": "BERGEY_10kW"
+        }
+      ]
+    },
+    "triplex_node": {
+      "instances": [
+        {
+          "name": "triplexLoad",
+          "phases": "AS",
+          "nominal_voltage": 120.0,
+          "power_1": 5000
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "triplexload_meter",
+          "phases": "AS",
+          "nominal_voltage": 120.0
+        },
+        {
+          "name": "inv_meter",
+          "phases": "AS",
+          "nominal_voltage": 120.0
+        }
+      ]
+    },
+    "triplex_line_configuration": {
+      "instances": [
+        {
+          "name": "triplex_config_AB",
+          "conductor_1": "trip_cond_1",
+          "conductor_2": "trip_cond_1",
+          "conductor_N": "trip_cond_1",
+          "insulation_thickness": "0.08 in",
+          "diameter": "0.368 in"
+        }
+      ]
+    },
+    "triplex_line": {
+      "instances": [
+        {
+          "name": "triplex_line_25",
+          "phases": "AS",
+          "length": "100 ft",
+          "from": "triplexload_meter",
+          "to": "triplexLoad",
+          "configuration": "triplex_config_AB"
+        }
+      ]
+    },
+    "triplex_line_conductor": {
+      "instances": [
+        {
+          "name": "trip_cond_1",
+          "resistance": 0.97,
+          "geometric_mean_radius": 0.0111
+        }
+      ]
+    },
+    "inverter": {
+      "instances": [
+        {
+          "name": "inv1",
+          "phases": "AS",
+          "parent": "inv_meter",
+          "rated_power": 10000,
+          "generator_mode": "CONSTANT_PF",
+          "generator_status": "ONLINE",
+          "inverter_type": "PWM",
+          "inline_comments": {
+            "generator_mode": "//DEFAULT",
+            "generator_status": "//DEFAULT",
+            "inverter_type": "//DEFAULT"
+          }
+        }
+      ]
+    },
+    "rectifier": {
+      "instances": [
+        {
+          "name": "rect1",
+          "parent": "inv1",
+          "phases": "ABCN",
+          "rectifier_type": "SIX_PULSE",
+          "generator_mode": "SUPPLY_DRIVEN",
+          "inside_comments": [
+            "//efficiency .95;"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,818 @@
+{
+  "__preamble": {
+    "comments": [
+      "//Simple three-phase house connection test",
+      "//Has fixed loads of power, current, and impedance on each house",
+      "//Nodes all at 0.95 puV to make sure that is adjusting",
+      "//Technically a residential test, but duplicated FBS/NR to make sure powerflow interfaces work"
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-07-24 01:00:00'",
+    "stoptime": "'2001-07-24 01:00:10'"
+  },
+  "modules": {
+    "climate": {},
+    "powerflow": {
+      "solver_method": "FBS"
+    },
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "climate": {
+      "instances": [
+        {
+          "name": "Simple_Climate",
+          "temperature": 63.0,
+          "solar_diffuse": 0.0,
+          "solar_direct": 0.0,
+          "humidity": 0.0
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_3",
+          "parent": "load_208",
+          "target": "measured_power_A",
+          "value": "1085.0+443.189j",
+          "within": 0.01,
+          "outside_comments": [
+            "//Voltages all set at 0.95 PU just to make sure that is working"
+          ]
+        },
+        {
+          "name": "complex_assert_4",
+          "parent": "load_208",
+          "target": "measured_power_B",
+          "value": "1085.0+443.189j",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_5",
+          "parent": "load_208",
+          "target": "measured_power_C",
+          "value": "1085.0+443.189j",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_11",
+          "parent": "node_208",
+          "target": "current_inj_A",
+          "value": "+9.51754-3.88762j",
+          "within": 0.01,
+          "outside_comments": [
+            "//Node object"
+          ],
+          "inline_comments": {
+            "object complex_assert {": "Cheat and use current injection, since node doesn't have a power quantity"
+          }
+        },
+        {
+          "name": "complex_assert_12",
+          "parent": "node_208",
+          "target": "current_inj_B",
+          "value": "-8.12555-6.29862j",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_13",
+          "parent": "node_208",
+          "target": "current_inj_C",
+          "value": "-1.39199+10.1862j",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_19",
+          "parent": "meter_208",
+          "target": "measured_power_A",
+          "value": "1085.0+443.189j",
+          "within": 0.01,
+          "outside_comments": [
+            "//Meter object"
+          ]
+        },
+        {
+          "name": "complex_assert_20",
+          "parent": "meter_208",
+          "target": "measured_power_B",
+          "value": "1085.0+443.189j",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_21",
+          "parent": "meter_208",
+          "target": "measured_power_C",
+          "value": "1085.0+443.189j",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_27",
+          "parent": "tp_load_208",
+          "target": "measured_power",
+          "value": "3255.0+1329.57j",
+          "within": 0.01,
+          "outside_comments": [
+            "//Triplex objects, for \"completeness\"",
+            "//Triplex load"
+          ]
+        },
+        {
+          "name": "complex_assert_33",
+          "parent": "tp_node_208_parent",
+          "target": "measured_power",
+          "value": "3255.0+1329.57j",
+          "within": 0.01,
+          "outside_comments": [
+            "//Triplex-node object - do as a child (for assert)"
+          ]
+        },
+        {
+          "name": "complex_assert_40",
+          "parent": "tp_meter_208",
+          "target": "measured_power",
+          "value": "3255.0+1329.57j",
+          "within": 0.01,
+          "outside_comments": [
+            "//Triplex-Meter object"
+          ]
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load_208",
+          "bustype": "SWING",
+          "phases": "ABCN",
+          "nominal_voltage": 120.0,
+          "voltage_A": "114.0+0.0j",
+          "voltage_B": "-57.0-98.7269j",
+          "voltage_C": "-57.0+98.7269j",
+          "inside_comments": [
+            "// object recorder {",
+            "// property \"measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag\";",
+            "// interval -1;",
+            "// file test_load_house.csv;",
+            "// };"
+          ],
+          "inline_comments": {
+            "voltage_A": "//0.95 puV"
+          }
+        }
+      ]
+    },
+    "ZIPload": {
+      "instances": [
+        {
+          "name": "ZIPload_7",
+          "parent": "load_house_208",
+          "heat_fraction": 0,
+          "base_power": "1.0 kW",
+          "power_pf": 1,
+          "power_fraction": 0,
+          "current_pf": 0.75,
+          "current_fraction": 1,
+          "impedance_pf": 1,
+          "impedance_fraction": 0,
+          "inline_comments": {
+            "object ZIPload {": "Constant current - 1000+j881.9171 - 316.667+j279.2737/phase at 0.95vpu"
+          }
+        },
+        {
+          "name": "ZIPload_8",
+          "parent": "load_house_208",
+          "heat_fraction": 0,
+          "base_power": "2.0 kW",
+          "power_pf": 1,
+          "power_fraction": 0,
+          "current_pf": 1,
+          "current_fraction": 0,
+          "impedance_pf": 0.95,
+          "impedance_fraction": 1,
+          "inline_comments": {
+            "object ZIPload {": "Constant impedance - 2000+j657.3682 - 601.666+j197.7583/phase at .95vpu"
+          }
+        },
+        {
+          "name": "ZIPload_9",
+          "parent": "load_house_208",
+          "heat_fraction": 0,
+          "base_power": "0.5 kW",
+          "power_pf": -0.98,
+          "power_fraction": 1,
+          "current_pf": 1,
+          "current_fraction": 0,
+          "impedance_pf": 1,
+          "impedance_fraction": 0,
+          "inline_comments": {
+            "object ZIPload {": "Constant power - 500-j101.5293 --> 166.666-j33.84/phase"
+          }
+        },
+        {
+          "name": "ZIPload_15",
+          "parent": "node_house_208",
+          "heat_fraction": 0,
+          "base_power": "1.0 kW",
+          "power_pf": 1,
+          "power_fraction": 0,
+          "current_pf": 0.75,
+          "current_fraction": 1,
+          "impedance_pf": 1,
+          "impedance_fraction": 0,
+          "inline_comments": {
+            "object ZIPload {": "Constant current - 1000+j881.9171 - 316.667+j279.2737/phase at 0.95vpu"
+          }
+        },
+        {
+          "name": "ZIPload_16",
+          "parent": "node_house_208",
+          "heat_fraction": 0,
+          "base_power": "2.0 kW",
+          "power_pf": 1,
+          "power_fraction": 0,
+          "current_pf": 1,
+          "current_fraction": 0,
+          "impedance_pf": 0.95,
+          "impedance_fraction": 1,
+          "inline_comments": {
+            "object ZIPload {": "Constant impedance - 2000+j657.3682 - 601.666+j197.7583/phase at .95vpu"
+          }
+        },
+        {
+          "name": "ZIPload_17",
+          "parent": "node_house_208",
+          "heat_fraction": 0,
+          "base_power": "0.5 kW",
+          "power_pf": -0.98,
+          "power_fraction": 1,
+          "current_pf": 1,
+          "current_fraction": 0,
+          "impedance_pf": 1,
+          "impedance_fraction": 0,
+          "inline_comments": {
+            "object ZIPload {": "Constant power - 500-j101.5293 --> 166.666-j33.84/phase"
+          }
+        },
+        {
+          "name": "ZIPload_23",
+          "parent": "meter_house_208",
+          "heat_fraction": 0,
+          "base_power": "1.0 kW",
+          "power_pf": 1,
+          "power_fraction": 0,
+          "current_pf": 0.75,
+          "current_fraction": 1,
+          "impedance_pf": 1,
+          "impedance_fraction": 0,
+          "inline_comments": {
+            "object ZIPload {": "Constant current - 1000+j881.9171 - 316.667+j279.2737/phase at 0.95vpu"
+          }
+        },
+        {
+          "name": "ZIPload_24",
+          "parent": "meter_house_208",
+          "heat_fraction": 0,
+          "base_power": "2.0 kW",
+          "power_pf": 1,
+          "power_fraction": 0,
+          "current_pf": 1,
+          "current_fraction": 0,
+          "impedance_pf": 0.95,
+          "impedance_fraction": 1,
+          "inline_comments": {
+            "object ZIPload {": "Constant impedance - 2000+j657.3682 - 601.666+j197.7583/phase at .95vpu"
+          }
+        },
+        {
+          "name": "ZIPload_25",
+          "parent": "meter_house_208",
+          "heat_fraction": 0,
+          "base_power": "0.5 kW",
+          "power_pf": -0.98,
+          "power_fraction": 1,
+          "current_pf": 1,
+          "current_fraction": 0,
+          "impedance_pf": 1,
+          "impedance_fraction": 0,
+          "inline_comments": {
+            "object ZIPload {": "Constant power - 500-j101.5293 --> 166.666-j33.84/phase"
+          }
+        },
+        {
+          "name": "ZIPload_29",
+          "parent": "tp_load_house_208",
+          "heat_fraction": 0,
+          "base_power": "1.0 kW",
+          "power_pf": 1,
+          "power_fraction": 0,
+          "current_pf": 0.75,
+          "current_fraction": 1,
+          "impedance_pf": 1,
+          "impedance_fraction": 0,
+          "inline_comments": {
+            "object ZIPload {": "Constant current - 1000+j881.9171 - 950+j837.8211 at 0.95vpu"
+          }
+        },
+        {
+          "name": "ZIPload_30",
+          "parent": "tp_load_house_208",
+          "heat_fraction": 0,
+          "base_power": "2.0 kW",
+          "power_pf": 1,
+          "power_fraction": 0,
+          "current_pf": 1,
+          "current_fraction": 0,
+          "impedance_pf": 0.95,
+          "impedance_fraction": 1,
+          "inline_comments": {
+            "object ZIPload {": "Constant impedance - 2000+j657.3682 - 1804.998+j593.2749 at .95vpu"
+          }
+        },
+        {
+          "name": "ZIPload_31",
+          "parent": "tp_load_house_208",
+          "heat_fraction": 0,
+          "base_power": "0.5 kW",
+          "power_pf": -0.98,
+          "power_fraction": 1,
+          "current_pf": 1,
+          "current_fraction": 0,
+          "impedance_pf": 1,
+          "impedance_fraction": 0,
+          "inline_comments": {
+            "object ZIPload {": "Constant power - 500-j101.5293"
+          }
+        },
+        {
+          "name": "ZIPload_36",
+          "parent": "tp_node_house_208",
+          "heat_fraction": 0,
+          "base_power": "1.0 kW",
+          "power_pf": 1,
+          "power_fraction": 0,
+          "current_pf": 0.75,
+          "current_fraction": 1,
+          "impedance_pf": 1,
+          "impedance_fraction": 0,
+          "inline_comments": {
+            "object ZIPload {": "Constant current - 1000+j881.9171 - 950+j837.8211 at 0.95vpu"
+          }
+        },
+        {
+          "name": "ZIPload_37",
+          "parent": "tp_node_house_208",
+          "heat_fraction": 0,
+          "base_power": "2.0 kW",
+          "power_pf": 1,
+          "power_fraction": 0,
+          "current_pf": 1,
+          "current_fraction": 0,
+          "impedance_pf": 0.95,
+          "impedance_fraction": 1,
+          "inline_comments": {
+            "object ZIPload {": "Constant impedance - 2000+j657.3682 - 1804.998+j593.2749 at .95vpu"
+          }
+        },
+        {
+          "name": "ZIPload_38",
+          "parent": "tp_node_house_208",
+          "heat_fraction": 0,
+          "base_power": "0.5 kW",
+          "power_pf": -0.98,
+          "power_fraction": 1,
+          "current_pf": 1,
+          "current_fraction": 0,
+          "impedance_pf": 1,
+          "impedance_fraction": 0,
+          "inline_comments": {
+            "object ZIPload {": "Constant power - 500-j101.5293"
+          }
+        },
+        {
+          "name": "ZIPload_42",
+          "parent": "tp_meter_house_208",
+          "heat_fraction": 0,
+          "base_power": "1.0 kW",
+          "power_pf": 1,
+          "power_fraction": 0,
+          "current_pf": 0.75,
+          "current_fraction": 1,
+          "impedance_pf": 1,
+          "impedance_fraction": 0,
+          "inline_comments": {
+            "object ZIPload {": "Constant current - 1000+j881.9171 - 950+j837.8211 at 0.95vpu"
+          }
+        },
+        {
+          "name": "ZIPload_43",
+          "parent": "tp_meter_house_208",
+          "heat_fraction": 0,
+          "base_power": "2.0 kW",
+          "power_pf": 1,
+          "power_fraction": 0,
+          "current_pf": 1,
+          "current_fraction": 0,
+          "impedance_pf": 0.95,
+          "impedance_fraction": 1,
+          "inline_comments": {
+            "object ZIPload {": "Constant impedance - 2000+j657.3682 - 1804.998+j593.2749 at .95vpu"
+          }
+        },
+        {
+          "name": "ZIPload_44",
+          "parent": "tp_meter_house_208",
+          "heat_fraction": 0,
+          "base_power": "0.5 kW",
+          "power_pf": -0.98,
+          "power_fraction": 1,
+          "current_pf": 1,
+          "current_fraction": 0,
+          "impedance_pf": 1,
+          "impedance_fraction": 0,
+          "inline_comments": {
+            "object ZIPload {": "Constant power - 500-j101.5293"
+          }
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "load_house_208",
+          "parent": "load_208",
+          "window_wall_ratio": 0.07,
+          "cooling_COP": 3.0,
+          "system_mode": "OFF",
+          "auxiliary_strategy": "DEADBAND",
+          "heating_system_type": "NONE",
+          "cooling_system_type": "NONE",
+          "auxiliary_system_type": "NONE",
+          "air_temperature": 63.3,
+          "mass_temperature": 63.3,
+          "heating_setpoint": 60.0,
+          "cooling_setpoint": 75.0
+        },
+        {
+          "name": "node_house_208",
+          "parent": "node_208",
+          "window_wall_ratio": 0.07,
+          "cooling_COP": 3.0,
+          "system_mode": "OFF",
+          "auxiliary_strategy": "DEADBAND",
+          "heating_system_type": "NONE",
+          "cooling_system_type": "NONE",
+          "auxiliary_system_type": "NONE",
+          "air_temperature": 63.3,
+          "mass_temperature": 63.3,
+          "heating_setpoint": 60.0,
+          "cooling_setpoint": 75.0
+        },
+        {
+          "name": "meter_house_208",
+          "parent": "meter_208",
+          "window_wall_ratio": 0.07,
+          "cooling_COP": 3.0,
+          "system_mode": "OFF",
+          "auxiliary_strategy": "DEADBAND",
+          "heating_system_type": "NONE",
+          "cooling_system_type": "NONE",
+          "auxiliary_system_type": "NONE",
+          "air_temperature": 63.3,
+          "mass_temperature": 63.3,
+          "heating_setpoint": 60.0,
+          "cooling_setpoint": 75.0
+        },
+        {
+          "name": "tp_load_house_208",
+          "parent": "tp_load_208",
+          "window_wall_ratio": 0.07,
+          "cooling_COP": 3.0,
+          "system_mode": "OFF",
+          "auxiliary_strategy": "DEADBAND",
+          "heating_system_type": "NONE",
+          "cooling_system_type": "NONE",
+          "auxiliary_system_type": "NONE",
+          "air_temperature": 63.3,
+          "mass_temperature": 63.3,
+          "heating_setpoint": 60.0,
+          "cooling_setpoint": 75.0
+        },
+        {
+          "name": "tp_node_house_208",
+          "parent": "tp_node_208",
+          "window_wall_ratio": 0.07,
+          "cooling_COP": 3.0,
+          "system_mode": "OFF",
+          "auxiliary_strategy": "DEADBAND",
+          "heating_system_type": "NONE",
+          "cooling_system_type": "NONE",
+          "auxiliary_system_type": "NONE",
+          "air_temperature": 63.3,
+          "mass_temperature": 63.3,
+          "heating_setpoint": 60.0,
+          "cooling_setpoint": 75.0
+        },
+        {
+          "name": "tp_meter_house_208",
+          "parent": "tp_meter_208",
+          "window_wall_ratio": 0.07,
+          "cooling_COP": 3.0,
+          "system_mode": "OFF",
+          "auxiliary_strategy": "DEADBAND",
+          "heating_system_type": "NONE",
+          "cooling_system_type": "NONE",
+          "auxiliary_system_type": "NONE",
+          "air_temperature": 63.3,
+          "mass_temperature": 63.3,
+          "heating_setpoint": 60.0,
+          "cooling_setpoint": 75.0
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node_208",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "nominal_voltage": 120.0,
+          "voltage_A": "114.0+0.0j",
+          "voltage_B": "-57.0-98.7269j",
+          "voltage_C": "-57.0+98.7269j",
+          "inside_comments": [
+            "// object recorder {",
+            "// property \"current_inj_A.real,current_inj_A.imag,current_inj_B.real,current_inj_B.imag,current_inj_C.real,current_inj_C.imag\";",
+            "// interval -1;",
+            "// file test_node_house.csv;",
+            "// };"
+          ],
+          "inline_comments": {
+            "voltage_A": "//0.95 puV"
+          }
+        },
+        {
+          "name": "extra_load_208",
+          "phases": "ABCN",
+          "nominal_voltage": 120.0,
+          "outside_comments": [
+            "//Erroneous extra bits - make the system \"a little more system-y\" for NR (doesn't like stand-alone nodes)"
+          ]
+        },
+        {
+          "name": "extra_node_208",
+          "phases": "ABCN",
+          "nominal_voltage": 120.0
+        },
+        {
+          "name": "extra_meter_208",
+          "phases": "ABCN",
+          "nominal_voltage": 120.0
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "meter_208",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "nominal_voltage": 120.0,
+          "voltage_A": "114.0+0.0j",
+          "voltage_B": "-57.0-98.7269j",
+          "voltage_C": "-57.0+98.7269j",
+          "inside_comments": [
+            "// object recorder {",
+            "// property \"measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag\";",
+            "// interval -1;",
+            "// file test_node_house.csv;",
+            "// };"
+          ],
+          "inline_comments": {
+            "voltage_A": "//0.95 puV"
+          }
+        }
+      ]
+    },
+    "triplex_load": {
+      "instances": [
+        {
+          "name": "tp_load_208",
+          "bustype": "SWING",
+          "phases": "BS",
+          "nominal_voltage": 120.0,
+          "voltage_1": "-57.0-98.7269j",
+          "voltage_2": "-57.0-98.7269j",
+          "inside_comments": [
+            "// object recorder {",
+            "// property \"measured_power.real,measured_power.imag\";",
+            "// interval -1;",
+            "// file test_tp_load_house.csv;",
+            "// };"
+          ],
+          "inline_comments": {
+            "voltage_1": "//0.95 puV"
+          }
+        },
+        {
+          "name": "extra_tp_load_208",
+          "phases": "BS",
+          "nominal_voltage": 120.0
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "tp_node_208_parent",
+          "phases": "BS",
+          "bustype": "SWING",
+          "nominal_voltage": 120.0,
+          "voltage_1": "-57.0-98.7269j",
+          "voltage_2": "-57.0-98.7269j",
+          "inside_comments": [
+            "// object recorder {",
+            "// property \"measured_power.real,measured_power.imag\";",
+            "// interval -1;",
+            "// file test_tp_node_house.csv;",
+            "// };"
+          ],
+          "inline_comments": {
+            "voltage_1": "//0.95 puV"
+          }
+        },
+        {
+          "name": "tp_meter_208",
+          "phases": "BS",
+          "bustype": "SWING",
+          "nominal_voltage": 120.0,
+          "voltage_1": "-57.0-98.7269j",
+          "voltage_2": "-57.0-98.7269j",
+          "inside_comments": [
+            "// object recorder {",
+            "// property \"measured_power.real,measured_power.imag\";",
+            "// interval -1;",
+            "// file test_tp_meter_house.csv;",
+            "// };"
+          ],
+          "inline_comments": {
+            "voltage_1": "//0.95 puV"
+          }
+        }
+      ]
+    },
+    "triplex_node": {
+      "instances": [
+        {
+          "name": "tp_node_208",
+          "parent": "tp_node_208_parent",
+          "phases": "BS",
+          "nominal_voltage": 120.0,
+          "voltage_1": "-57.0-98.7269j",
+          "voltage_2": "-57.0-98.7269j",
+          "inline_comments": {
+            "voltage_1": "//0.95 puV"
+          }
+        },
+        {
+          "name": "extra_tp_node_208",
+          "phases": "BS",
+          "nominal_voltage": 120.0
+        },
+        {
+          "name": "extra_tp_meter_208",
+          "phases": "BS",
+          "nominal_voltage": 120.0
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "ohl_config",
+          "conductor_A": "olc10001",
+          "conductor_B": "olc10001",
+          "conductor_C": "olc10001",
+          "conductor_N": "olc10002",
+          "spacing": "ls5001",
+          "outside_comments": [
+            "//Line configurations"
+          ]
+        }
+      ]
+    },
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc10001",
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306
+        },
+        {
+          "name": "olc10002",
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls5001",
+          "distance_AB": 2.5,
+          "distance_AC": 7.0,
+          "distance_BC": 4.5,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        }
+      ]
+    },
+    "triplex_line_conductor": {
+      "instances": [
+        {
+          "name": "triplex_4/0 AA",
+          "resistance": 0.48,
+          "geometric_mean_radius": 0.0158
+        }
+      ]
+    },
+    "triplex_line_configuration": {
+      "instances": [
+        {
+          "name": "tplx_config",
+          "conductor_1": "triplex_4/0 AA",
+          "conductor_2": "triplex_4/0 AA",
+          "conductor_N": "triplex_4/0 AA",
+          "insulation_thickness": 0.08,
+          "diameter": 0.522
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "extra_load_connect",
+          "phases": "ABCN",
+          "from": "load_208",
+          "to": "extra_load_208",
+          "configuration": "ohl_config",
+          "length": 50.0,
+          "outside_comments": [
+            "//Extra lines to connect the extra nodes"
+          ]
+        },
+        {
+          "name": "extra_node_connect",
+          "phases": "ABCN",
+          "from": "node_208",
+          "to": "extra_node_208",
+          "configuration": "ohl_config",
+          "length": 50.0
+        },
+        {
+          "name": "extra_meter_connect",
+          "phases": "ABCN",
+          "from": "meter_208",
+          "to": "extra_meter_208",
+          "configuration": "ohl_config",
+          "length": 50.0
+        }
+      ]
+    },
+    "triplex_line": {
+      "instances": [
+        {
+          "name": "extra_tplex_load_connect",
+          "phases": "BS",
+          "from": "tp_load_208",
+          "to": "extra_tp_load_208",
+          "configuration": "tplx_config",
+          "length": 50.0
+        },
+        {
+          "name": "extra_tplex_node_connect",
+          "phases": "BS",
+          "from": "tp_node_208_parent",
+          "to": "extra_tp_node_208",
+          "configuration": "tplx_config",
+          "length": 50.0
+        },
+        {
+          "name": "extra_tplex_meter_connect",
+          "phases": "BS",
+          "from": "tp_meter_208",
+          "to": "extra_tp_meter_208",
+          "configuration": "tplx_config",
+          "length": 50.0
+        }
+      ]
+    }
+  }
+}

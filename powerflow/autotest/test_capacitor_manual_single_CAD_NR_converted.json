@@ -1,0 +1,163 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $id$",
+      "// Copyright (C) 2008 Battelle Memorial Institute",
+      "// 3 Node system",
+      "// Swing node and load connected by transmission lines",
+      "// Capacitor node right in the middle with manual control"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "relax_naming_rules": 1
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:01'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    },
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "overhead_line_conductor_100",
+          "id": 100,
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306
+        },
+        {
+          "name": "overhead_line_conductor_101",
+          "id": 101,
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "line_spacing_200",
+          "id": 200,
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "line_configuration_300",
+          "id": 300,
+          "conductor_A": "overhead_line_conductor_100",
+          "conductor_B": "overhead_line_conductor_100",
+          "conductor_C": "overhead_line_conductor_100",
+          "conductor_N": "overhead_line_conductor_101",
+          "spacing": "line_spacing_200"
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "TopNode",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "overhead_line_6",
+          "phases": "ABCN",
+          "from": "TopNode",
+          "to": "CapNode",
+          "length": 2000,
+          "configuration": "line_configuration_300"
+        },
+        {
+          "name": "overhead_line_8",
+          "phases": "ABCN",
+          "from": "CapNode",
+          "to": "BottomLoad",
+          "length": 2500,
+          "configuration": "line_configuration_300"
+        }
+      ]
+    },
+    "capacitor": {
+      "instances": [
+        {
+          "name": "CapNode",
+          "phases": "ABCD",
+          "phases_connected": "ABCD",
+          "control": "MANUAL",
+          "capacitor_A": "0.5 MVAr",
+          "capacitor_B": "0.5 MVAr",
+          "capacitor_C": "0.5 MVAr",
+          "control_level": "INDIVIDUAL",
+          "switchA": "OPEN",
+          "switchB": "OPEN",
+          "switchC": "CLOSED",
+          "nominal_voltage": 7200,
+          "inline_comments": {
+            "switchA": "//manual controls for load manipulation (don't use the switch player)"
+          }
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_10",
+          "parent": "BottomLoad",
+          "target": "voltage_A",
+          "value": "7219.86-0.226313d",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_11",
+          "parent": "BottomLoad",
+          "target": "voltage_B",
+          "value": "7199.58-119.972d",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_12",
+          "parent": "BottomLoad",
+          "target": "voltage_C",
+          "value": "7233.36+120.025d",
+          "within": 0.1
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "BottomLoad",
+          "phases": "ABCN",
+          "constant_power_A": "+5000.000-120.0j",
+          "constant_power_B": "+2000.000+230.0j",
+          "constant_power_C": "+2300.000+450.0j",
+          "nominal_voltage": 7200
+        }
+      ]
+    }
+  }
+}

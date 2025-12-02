@@ -1,0 +1,42 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $Id: test_opt_alternate_syntax.glm 4738 2014-07-03 00:55:39Z dchassin $",
+      "// Copyright (C) 2008 Battelle Memorial Institute",
+      "//",
+      "// Test the use of alternate property value syntax (A) ? (B) : (C);",
+      "//"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "tmp": "../test_opt_alternate_syntax",
+      "force_compile": 1
+    }
+  },
+  "_legacy": {
+    "#setenv": [
+      "GRIDLABD=../../../core"
+    ]
+  },
+  "classes": {
+    "test": [
+      {
+        "type": "enumeration",
+        "name": "{NO=0, YES=1} value"
+      }
+    ]
+  },
+  "objects": {
+    "test": {
+      "instances": [
+        {
+          "name": "test_..100",
+          "object_count": 100,
+          "id": "..100",
+          "value": "(random.bernoulli(0.8)) ? YES : NO"
+        }
+      ]
+    }
+  }
+}

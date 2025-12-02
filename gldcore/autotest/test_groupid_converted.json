@@ -1,0 +1,50 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $Id: test_groupid.glm 4738 2014-07-03 00:55:39Z dchassin $",
+      "//",
+      "// Test groupid function"
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2000-01-01 0:00:00 PST'",
+    "stoptime": "'2000-01-02 0:00:00 PST'"
+  },
+  "modules": {
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {}
+  },
+  "objects": {
+    "house": {
+      "instances": [
+        {
+          "name": "house_..10",
+          "object_count": 10,
+          "id": "..10",
+          "groupid": "A"
+        },
+        {
+          "name": "house_..12",
+          "object_count": 12,
+          "id": "..12",
+          "groupid": "B"
+        }
+      ]
+    },
+    "collector": {
+      "instances": [
+        {
+          "name": "collector_3",
+          "group": "class=house AND groupid=A",
+          "property": "count(floor_area)",
+          "limit": 10,
+          "interval": 3600,
+          "file": "output.csv"
+        }
+      ]
+    }
+  }
+}

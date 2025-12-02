@@ -1,0 +1,71 @@
+{
+  "__preamble": {
+    "comments": [
+      "//",
+      "// test purpose: basic validation of correct thermostat functioning and freezer cooling;",
+      "// makes sure that the freezer consistently cools itself down to its setpoint temperature;",
+      "// tests a setpoint 18 freezer with a .5 deadband over three years, makes sure that temperature",
+      "// stays within .251 degrees of the setpoint",
+      "//",
+      "// Payroll: d3y332"
+    ]
+  },
+  "clock": {
+    "timestamp": "'2000-01-01 0:00:00'",
+    "stoptime": "'2001-01-01 0:00:00'",
+    "timezone": "PST+8PDT"
+  },
+  "modules": {
+    "residential": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_3",
+          "parent": "freezer_2",
+          "file": "freezer_usage3600.csv",
+          "interval": 3600,
+          "limit": 6570,
+          "property": "enduse_load,energy_meter,temperature"
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_4",
+          "parent": "freezer_2",
+          "target": "temperature",
+          "value": 18,
+          "within": 0.251
+        }
+      ]
+    },
+    "freezer": {
+      "instances": [
+        {
+          "name": "freezer_2",
+          "parent": "house_1",
+          "size": 25,
+          "setpoint": 18,
+          "deadband": 0.5
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_1",
+          "floor_area": "1500 sf",
+          "cooling_setpoint": 100000,
+          "air_temperature": 80,
+          "heating_setpoint": 60,
+          "thermostat_deadband": 2
+        }
+      ]
+    }
+  }
+}

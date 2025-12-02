@@ -1,0 +1,29 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $Id$"
+    ]
+  },
+  "modules": {
+    "connection": {
+      "security": "STANDARD",
+      "lockout": "1 min"
+    }
+  },
+  "objects": {
+    "native": {
+      "instances": [
+        {
+          "name": "native_1",
+          "mode": "CLIENT",
+          "transport": "TCP"
+        },
+        {
+          "name": "native_2",
+          "mode": "CLIENT",
+          "transport": "UDP"
+        }
+      ]
+    }
+  }
+}

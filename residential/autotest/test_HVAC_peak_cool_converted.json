@@ -1,0 +1,176 @@
+{
+  "__preamble": {
+    "comments": [
+      "//This will test the accuracy of the HVAC energy use and temperature behavior",
+      "//This test is an example of a peak cooling day",
+      "//test_HVAC_peak_cool.glm created by Andy Fisher"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "minimum_timestep": "1;"
+    }
+  },
+  "clock": {
+    "timezone": "PST+0PDT",
+    "starttime": "'2001-07-22 01:00:00'",
+    "stoptime": "'2001-07-23 01:00:36'"
+  },
+  "modules": {
+    "climate": {},
+    "powerflow": {},
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "climate": {
+      "instances": [
+        {
+          "name": "climate_1",
+          "tmyfile": "../WA-Yakima.tmy2"
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_4",
+          "parent": "house_3",
+          "property": "energy,panel.energy",
+          "file": "test_HVAC_peak_cool.csv",
+          "interval": 1,
+          "limit": 86451
+        },
+        {
+          "name": "recorder_5",
+          "parent": "house_3",
+          "property": "energy,panel.energy",
+          "file": "test_HVAC_peak_cool_hourly.csv",
+          "interval": 3600,
+          "limit": 86451
+        },
+        {
+          "name": "recorder_8",
+          "parent": "triplex_meter_2",
+          "property": "measured_real_energy",
+          "file": "test_HVAC_peak_cool_energy.csv",
+          "interval": 1,
+          "limit": 86451
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_6",
+          "parent": "house_3",
+          "target": "energy",
+          "in": "'2001-07-23 1:00:34'",
+          "once": "ONCE_TRUE",
+          "value": "21.822+0i",
+          "within": 0.10911,
+          "inline_comments": {
+            "within": "//asserting house_e within 0.5 percent of Rob's ETP result"
+          }
+        }
+      ]
+    },
+    "ZIPload": {
+      "instances": [
+        {
+          "name": "ZIPload_7",
+          "parent": "house_3",
+          "heat_fraction": 1,
+          "base_power": "zippwr*1",
+          "power_pf": 1,
+          "power_fraction": 1,
+          "current_pf": 0,
+          "current_fraction": 0,
+          "impedance_pf": 0,
+          "impedance_fraction": 0
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_3",
+          "parent": "triplex_meter_2",
+          "window_wall_ratio": 0.07,
+          "cooling_COP": 3.0,
+          "system_mode": "OFF",
+          "auxiliary_strategy": "DEADBAND",
+          "heating_system_type": "HEAT_PUMP",
+          "cooling_system_type": "ELECTRIC",
+          "air_temperature": 66.0,
+          "mass_temperature": 66.0,
+          "heating_setpoint": "heatspt*1",
+          "cooling_setpoint": "coolspt*1"
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_9",
+          "parent": "triplex_meter_2",
+          "target": "measured_real_energy",
+          "in": "'2001-07-23 1:00:34'",
+          "once": "ONCE_TRUE",
+          "value": 38823,
+          "within": 194.11,
+          "inline_comments": {
+            "within": "//asserting house_e within 0.5 percent of Rob's ETP result"
+          }
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "triplex_meter_2",
+          "nominal_voltage": 120,
+          "phases": "AS"
+        }
+      ]
+    }
+  },
+  "schedules": {
+    "zippwr": [
+      {
+        "name": "",
+        "items": [
+          "* 0-5 * * * .29307107017222",
+          "* 6 * * * 0.58614214034444",
+          "* 7-9 * * * 0.87921321051666",
+          "* 10-15 * * * 0.58614214034444",
+          "* 16 * * * 0.87921321051666",
+          "* 17 * * * 1.1722842806889",
+          "* 18-20 * * * 1.4653553508611",
+          "* 21 * * * 1.1722842806889",
+          "* 22 * * * 0.58614214034444",
+          "* 23 * * * .29307107017222"
+        ]
+      }
+    ],
+    "heatspt": [
+      {
+        "name": "",
+        "items": [
+          "* * * * * 60"
+        ]
+      }
+    ],
+    "coolspt": [
+      {
+        "name": "",
+        "items": [
+          "* * * * * 75"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "__preamble": {
+    "comments": [
+      "//",
+      "// Test purpose: validating internal_gains calculation over time; verifies",
+      "// that the code uses the following equation correctly;",
+      "// internal_gains = power*heat_fraction",
+      "//",
+      "//heat_fraction varies over time, this might be overtesting it",
+      "// Payroll: d3y332"
+    ]
+  },
+  "clock": {
+    "timestamp": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-02 1:00:00'",
+    "timezone": "PST+8PDT"
+  },
+  "modules": {
+    "residential": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "player": {
+      "instances": [
+        {
+          "name": "player_3",
+          "parent": "plugload_2",
+          "file": "../generic_demand.glt",
+          "loop": 24,
+          "property": "heatgain_fraction",
+          "inline_comments": {
+            "file": "//used as heat fraction in this case"
+          }
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_4",
+          "parent": "plugload_2",
+          "file": "plugload_load_usage3600.csv",
+          "interval": 3600,
+          "limit": 28,
+          "property": "demand,heatgain_fraction,heatgain"
+        }
+      ]
+    },
+    "plugload": {
+      "instances": [
+        {
+          "name": "plugload_2",
+          "parent": "house_1",
+          "installed_power": 0.1,
+          "demand": 1,
+          "heatgain_fraction": 0.5,
+          "inside_comments": [
+            "//  object double_assert {",
+            "//   target \"internal_gains\";",
+            "//   within 0.000001;",
+            "//   object player {",
+            "//    property value;",
+            "//    file ../plugload_internal_gains_hf.player;",
+            "//   };",
+            "//  };"
+          ]
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_1",
+          "floor_area": "1500 sf",
+          "cooling_setpoint": 100,
+          "heating_setpoint": 1,
+          "inline_comments": {
+            "cooling_setpoint": "// turns of HVAC"
+          }
+        }
+      ]
+    }
+  }
+}

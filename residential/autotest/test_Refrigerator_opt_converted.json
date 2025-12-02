@@ -1,0 +1,400 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $id$",
+      "// Copyright (C) 2008 Battelle Memorial Institute",
+      "// 4 Node Feeder: Unbalanced step-down grY-grY",
+      "////////////////////////////////////////////////////////",
+      "// BEGIN",
+      "////////////////////////////////////////////////////////"
+    ]
+  },
+  "_directives": {
+    "#include": [
+      "../Refrigerator.json"
+    ],
+    "#define": {
+      "TIME_INT": 60
+    },
+    "#set": {
+      "profiler": 1,
+      "relax_naming_rules": 1,
+      "savefile": "dryer_test.xml",
+      "randomseed": 10
+    }
+  },
+  "clock": {
+    "timestamp": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-03 23:00:00'",
+    "timezone": "EST+5EDT"
+  },
+  "modules": {
+    "climate": {},
+    "generators": {},
+    "powerflow": {
+      "solver_method": "FBS"
+    },
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "climate": {
+      "instances": [
+        {
+          "name": "San_francisco_CA",
+          "tmyfile": "../CA-San_francisco.tmy2",
+          "interpolate": "QUADRATIC"
+        }
+      ]
+    },
+    "triplex_line_configuration": {
+      "instances": [
+        {
+          "name": "triplex_line_configuration_1",
+          "conductor_1": "object triplex_line_conductor ",
+          "resistance": 0.97,
+          "geometric_mean_radius": 0.0111
+        }
+      ]
+    },
+    "triplex_line_conductor": {
+      "instances": [
+        {
+          "name": "triplex_line_conductor_3",
+          "resistance": 0.97,
+          "geometric_mean_radius": 0.0111
+        },
+        {
+          "name": "triplex_line_conductor_4",
+          "resistance": 0.97,
+          "geometric_mean_radius": 0.0111
+        }
+      ]
+    },
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "overhead_line_conductor_100",
+          "id": 100,
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306
+        },
+        {
+          "name": "overhead_line_conductor_101",
+          "id": 101,
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "line_spacing_200",
+          "id": 200,
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "line_configuration_300",
+          "id": 300,
+          "conductor_A": "overhead_line_conductor_100",
+          "conductor_B": "overhead_line_conductor_100",
+          "conductor_C": "overhead_line_conductor_100",
+          "conductor_N": "overhead_line_conductor_101",
+          "spacing": "line_spacing_200"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "transformer_configuration_400",
+          "id": 400,
+          "connect_type": "WYE_WYE",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.01
+        },
+        {
+          "name": "AS_config",
+          "connect_type": "SINGLE_PHASE_CENTER_TAPPED",
+          "install_type": "POLETOP",
+          "powerA_rating": 75,
+          "primary_voltage": 2401,
+          "secondary_voltage": 120.0,
+          "impedance": "0.006+0.0136j"
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node_0",
+          "id": 0,
+          "bustype": "SWING",
+          "phases": "ABCN",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node_1",
+          "id": 1,
+          "phases": "ABCN",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node_2",
+          "id": 2,
+          "phases": "ABCN",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node_3",
+          "id": 3,
+          "phases": "ABCN",
+          "voltage_A": "+2401.777+0.000j",
+          "voltage_B": "-1200.889-2080.000j",
+          "voltage_C": "-1200.889+2080.000j",
+          "nominal_voltage": 2400
+        },
+        {
+          "name": "node_4",
+          "id": 4,
+          "phases": "ABCN",
+          "voltage_A": "+2401.777+0.000j",
+          "voltage_B": "-1200.889-2080.000j",
+          "voltage_C": "-1200.889+2080.000j",
+          "nominal_voltage": 2400
+        }
+      ]
+    },
+    "regulator": {
+      "instances": [
+        {
+          "name": "regulator_1210",
+          "id": 1210,
+          "phases": "ABCN",
+          "from": "node_0",
+          "to": "node_1",
+          "sense_node": "node_2",
+          "configuration": "regulator_configuration_1209"
+        }
+      ]
+    },
+    "regulator_configuration": {
+      "instances": [
+        {
+          "name": "regulator_configuration_1209",
+          "id": 1209,
+          "connect_type": "WYE_WYE",
+          "band_center": 7200,
+          "band_width": 100,
+          "time_delay": 300,
+          "raise_taps": 16,
+          "lower_taps": 16,
+          "Control": "MANUAL",
+          "regulation": 0.1,
+          "tap_pos_A": 0,
+          "tap_pos_B": 0,
+          "tap_pos_C": 0,
+          "inside_comments": [
+            "// tap_pos_A -8;  //114 V",
+            "// tap_pos_B -8;",
+            "// tap_pos_C -8;"
+          ],
+          "inline_comments": {
+            "Control": "//REMOTE_NODE;",
+            "tap_pos_A": "//120 V"
+          }
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "overhead_line_12",
+          "id": 12,
+          "phases": "ABCN",
+          "from": "node_1",
+          "to": "node_2",
+          "length": 2000,
+          "configuration": "line_configuration_300"
+        },
+        {
+          "name": "overhead_line_34",
+          "id": 34,
+          "phases": "ABCN",
+          "from": "node_3",
+          "to": "node_4",
+          "length": 2500,
+          "configuration": "line_configuration_300"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "transformer_23",
+          "id": 23,
+          "phases": "ABCN",
+          "from": "node_2",
+          "to": "node_3",
+          "configuration": "transformer_configuration_400"
+        },
+        {
+          "name": "center_tap_1",
+          "phases": "AS",
+          "from": "node_4",
+          "to": "trip_node1",
+          "configuration": "AS_config"
+        }
+      ]
+    },
+    "triplex_node": {
+      "instances": [
+        {
+          "name": "trip_node1",
+          "phases": "AS",
+          "nominal_voltage": 120
+        }
+      ]
+    },
+    "triplex_line": {
+      "instances": [
+        {
+          "name": "trip_line1",
+          "phases": "AS",
+          "from": "trip_node1",
+          "to": "trip_meter2",
+          "length": 40,
+          "configuration": "triplex_line_configuration_1"
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_25",
+          "parent": "trip_meter2",
+          "property": "measured_real_power,measured_reactive_power,voltage_1N.real,voltage_1N.imag",
+          "file": "meter_output_5.csv",
+          "interval": "${TIME_INT}",
+          "limit": 144000
+        },
+        {
+          "name": "recorder_28",
+          "parent": "refrigerator_27",
+          "file": "refrigerator_out.csv",
+          "interval": 1,
+          "limit": 10000000000000,
+          "property": "refrigerator_power"
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "trip_meter2",
+          "phases": "AS",
+          "nominal_voltage": 120
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_30",
+          "parent": "double_assert_29",
+          "property": "value",
+          "file": "../refrigerator_out.player"
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_29",
+          "parent": "refrigerator_27",
+          "target": "refrigerator_power",
+          "within": 0.1
+        }
+      ]
+    },
+    "refrigerator": {
+      "instances": [
+        {
+          "name": "refrigerator_27",
+          "parent": "house_26",
+          "door_opening_criterion": 24,
+          "daily_door_opening": 20,
+          "state": "COMPRESSSOR_OFF_NORMAL",
+          "energy_used": 13500,
+          "defrost_criterion": "DOOR_OPENINGS",
+          "delay_defrost_time": 600
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_26",
+          "parent": "trip_meter2",
+          "floor_area": "2500 sf",
+          "heating_setpoint": "70.0 degF",
+          "cooling_setpoint": "120.0 degF",
+          "thermostat_deadband": "2 degF",
+          "air_temperature": 65,
+          "mass_temperature": 65,
+          "heating_system_type": "NONE",
+          "cooling_system_type": "NONE",
+          "auxiliary_system_type": "NONE",
+          "inside_comments": [
+            "// turn off everything in the house"
+          ]
+        }
+      ]
+    }
+  },
+  "schedules": {
+    "waterdemand3": [
+      {
+        "name": "",
+        "items": [
+          "* 0-5 * * * 0",
+          "0-16 6 * * * 0",
+          "17-34 6 * * * 0.1",
+          "35-59 6 * * * 0.6",
+          "0-11 7 * * * 0.4",
+          "12-59 7 * * * 0",
+          "* 8-16 * * * 0",
+          "* 17 * * * 1",
+          "0-7 18 * * * 0.5",
+          "8-59 18 * * * 0",
+          "* 19-23 * * * 0"
+        ]
+      }
+    ]
+  }
+}
