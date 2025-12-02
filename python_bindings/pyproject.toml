@@ -3,7 +3,7 @@ requires = ["scikit-build-core >=0.8", "nanobind >=1.3.2"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "gridlabd-test-riley"
+name = "gridlabd"
 version = "1.0.8"
 description = "Python bindings for GridLAB-D power system simulation"
 readme = "README.md"
