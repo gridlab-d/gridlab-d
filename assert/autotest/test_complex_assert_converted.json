@@ -1,0 +1,59 @@
+{
+  "__preamble": {
+    "comments": [
+      "// test_double_assert"
+    ]
+  },
+  "modules": {
+    "powerflow": {},
+    "assert": {}
+  },
+  "objects": {
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_2",
+          "parent": "meter_1",
+          "target": "voltage_A",
+          "value": 120.0,
+          "operation": "MAGNITUDE",
+          "within": 1
+        },
+        {
+          "name": "complex_assert_3",
+          "parent": "meter_1",
+          "target": "voltage_A",
+          "value": 120.0,
+          "operation": "REAL",
+          "within": 1
+        },
+        {
+          "name": "complex_assert_4",
+          "parent": "meter_1",
+          "target": "voltage_A",
+          "value": 0,
+          "operation": "IMAGINARY",
+          "within": 1
+        },
+        {
+          "name": "complex_assert_5",
+          "parent": "meter_1",
+          "target": "voltage_A",
+          "value": 0,
+          "operation": "ANGLE",
+          "within": 1
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "meter_1",
+          "nominal_voltage": 120,
+          "phases": "A",
+          "voltage_A": 120.0
+        }
+      ]
+    }
+  }
+}

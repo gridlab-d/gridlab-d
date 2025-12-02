@@ -1,0 +1,748 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $Id: IEEE13-Feb27.glm",
+      "// Copyright (C) 2011 Battelle Memorial Institute"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "iteration_limit": "100000;"
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:01'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR",
+      "line_capacitance": true
+    },
+    "assert": {}
+  },
+  "objects": {
+    "voltdump": {
+      "instances": [
+        {
+          "name": "voltdump_1",
+          "filename": "IEEE_13_NR_TS_voltage.csv",
+          "mode": "POLAR"
+        }
+      ]
+    },
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc6010",
+          "geometric_mean_radius": 0.0313,
+          "diameter": "0.927 in",
+          "resistance": 0.1859,
+          "outside_comments": [
+            "// Phase Conductor for 601: 556,500 26/7 ACSR"
+          ]
+        },
+        {
+          "name": "olc6020",
+          "geometric_mean_radius": 0.00814,
+          "diameter": "0.56 in",
+          "resistance": 0.592,
+          "outside_comments": [
+            "// Phase Conductor for 602: 4/0 6/1 ACSR"
+          ]
+        },
+        {
+          "name": "olc6030",
+          "geometric_mean_radius": 0.00446,
+          "diameter": "0.4 in",
+          "resistance": 1.12,
+          "outside_comments": [
+            "// Phase Conductor for 603, 604, 605: 1/0 ACSR"
+          ]
+        }
+      ]
+    },
+    "underground_line_conductor": {
+      "instances": [
+        {
+          "name": "ulc6060",
+          "outer_diameter": 1.29,
+          "conductor_gmr": 0.0171,
+          "conductor_diameter": 0.567,
+          "conductor_resistance": 0.41,
+          "neutral_gmr": 0.00208,
+          "neutral_resistance": 14.872,
+          "neutral_diameter": 0.0640837,
+          "neutral_strands": 13.0,
+          "insulation_relative_permitivitty": 2.3,
+          "shield_gmr": 0.0,
+          "shield_resistance": 0.0,
+          "outside_comments": [
+            "// Phase Conductor for 606: 250,000 AA,CN"
+          ]
+        },
+        {
+          "name": "ulc6070",
+          "outer_diameter": 1.06,
+          "conductor_gmr": 0.0111,
+          "conductor_diameter": 0.368,
+          "conductor_resistance": 0.97,
+          "insulation_relative_permitivitty": 2.3,
+          "shield_gmr": 0.0365,
+          "shield_resistance": 4.2786,
+          "shield_thickness": 0.005,
+          "shield_diameter": 0.88,
+          "outside_comments": [
+            "// Phase Conductor for 607: 1/0 AA,TS N: 1/0 Cu, This is a Tape-shield cable, and Phase N is a CU copper conductor."
+          ],
+          "inside_comments": [
+            "//neutral_gmr 0.0113; //  represent phase N, ft",
+            "//neutral_resistance 0.607; // represent phase N",
+            "//neutral_diameter 0; //0.0640837;",
+            "//neutral_strands 0; //6.000000;"
+          ],
+          "inline_comments": {
+            "outer_diameter": "//1.060000; inch, not used in tape-shield calculation",
+            "conductor_gmr": "//ft",
+            "conductor_diameter": "//0.368000; inch",
+            "shield_gmr": "// ft",
+            "shield_resistance": "// ohm/mile, from book",
+            "shield_thickness": "//inch",
+            "shield_diameter": "// inch"
+          }
+        },
+        {
+          "name": "ulc6070N",
+          "outer_diameter": 1.06,
+          "conductor_gmr": 0.01113,
+          "conductor_diameter": 0.368,
+          "conductor_resistance": 0.607,
+          "insulation_relative_permitivitty": 2.3,
+          "outside_comments": [
+            "// Phase Conductor for 607, phase N. 1/0 AA,TS N: 1/0 Cu, Phase N is a CU copper conductor."
+          ],
+          "inside_comments": [
+            "//neutral_gmr 0.0113; //  represent phase N, ft",
+            "//neutral_resistance 0.607; // represent phase N",
+            "//neutral_diameter 0; //0.0640837;",
+            "//neutral_strands 0; //6.000000;",
+            "//shield_gmr 0.0365; // ft",
+            "//shield_resistance 4.2786;",
+            "//shield_thickness  0.005; //inch",
+            "//shield_diameter 0.88; // inch"
+          ],
+          "inline_comments": {
+            "outer_diameter": "//1.060000; inch, not used in tape-shield calculation",
+            "conductor_gmr": "//ft",
+            "conductor_diameter": "//0.368000; inch"
+          }
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls500601",
+          "distance_AB": 2.5,
+          "distance_AC": 4.5,
+          "distance_BC": 7.0,
+          "distance_BN": 5.656854,
+          "distance_AN": 4.272002,
+          "distance_CN": 5.0,
+          "distance_AE": 28.0,
+          "distance_BE": 28.0,
+          "distance_CE": 28.0,
+          "distance_NE": 24.0,
+          "outside_comments": [
+            "// Overhead line configurations"
+          ]
+        },
+        {
+          "name": "ls500602",
+          "distance_AC": 2.5,
+          "distance_AB": 4.5,
+          "distance_BC": 7.0,
+          "distance_CN": 5.656854,
+          "distance_AN": 4.272002,
+          "distance_BN": 5.0,
+          "distance_AE": 28.0,
+          "distance_BE": 28.0,
+          "distance_CE": 28.0,
+          "distance_NE": 24.0,
+          "outside_comments": [
+            "// Overhead line configurations"
+          ]
+        },
+        {
+          "name": "ls505603",
+          "distance_BC": 7.0,
+          "distance_CN": 5.656854,
+          "distance_BN": 5.0,
+          "distance_BE": 28.0,
+          "distance_CE": 28.0,
+          "distance_NE": 24.0
+        },
+        {
+          "name": "ls505604",
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_CN": 5.0,
+          "distance_AE": 28.0,
+          "distance_CE": 28.0,
+          "distance_NE": 24.0
+        },
+        {
+          "name": "ls510",
+          "distance_CN": 5.0,
+          "distance_CE": 28.0,
+          "distance_NE": 24.0
+        },
+        {
+          "name": "ls515",
+          "distance_AB": 0.5,
+          "distance_BC": 0.5,
+          "distance_AC": 1.0,
+          "outside_comments": [
+            "//Underground line configuration"
+          ]
+        },
+        {
+          "name": "ls520",
+          "distance_AB": 0.25,
+          "distance_BC": 0.25,
+          "distance_AC": 0.5,
+          "inline_comments": {
+            "distance_AB": "// 3 inch",
+            "distance_BC": "// 3 inch",
+            "distance_AC": "// 3 inch"
+          }
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc601",
+          "conductor_A": "olc6010",
+          "conductor_B": "olc6010",
+          "conductor_C": "olc6010",
+          "conductor_N": "olc6020",
+          "spacing": "ls500601"
+        },
+        {
+          "name": "lc602",
+          "conductor_A": "olc6020",
+          "conductor_B": "olc6020",
+          "conductor_C": "olc6020",
+          "conductor_N": "olc6020",
+          "spacing": "ls500602"
+        },
+        {
+          "name": "lc603",
+          "conductor_B": "olc6030",
+          "conductor_C": "olc6030",
+          "conductor_N": "olc6030",
+          "spacing": "ls505603"
+        },
+        {
+          "name": "lc604",
+          "conductor_A": "olc6030",
+          "conductor_C": "olc6030",
+          "conductor_N": "olc6030",
+          "spacing": "ls505604"
+        },
+        {
+          "name": "lc605",
+          "conductor_C": "olc6030",
+          "conductor_N": "olc6030",
+          "spacing": "ls510"
+        },
+        {
+          "name": "lc606",
+          "conductor_A": "ulc6060",
+          "conductor_B": "ulc6060",
+          "conductor_C": "ulc6060",
+          "spacing": "ls515"
+        },
+        {
+          "name": "lc607",
+          "conductor_A": "ulc6070",
+          "conductor_B": "ulc6070",
+          "conductor_C": "ulc6070",
+          "spacing": "ls520"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "line_632_645",
+          "phases": "BCN",
+          "from": "n632",
+          "to": "l645",
+          "length": 500,
+          "configuration": "lc603",
+          "outside_comments": [
+            "// Define line objects"
+          ]
+        },
+        {
+          "name": "line_645_646",
+          "phases": "BCN",
+          "from": "l645",
+          "to": "l646",
+          "length": 300,
+          "configuration": "lc603"
+        },
+        {
+          "name": "line_630_632",
+          "phases": "ABCN",
+          "from": "n630",
+          "to": "n632",
+          "length": 2000,
+          "configuration": "lc601",
+          "inline_comments": {
+            "object overhead_line {": "630632 {"
+          }
+        },
+        {
+          "name": "line_632_6321",
+          "phases": "ABCN",
+          "from": "n632",
+          "to": "l6321",
+          "length": 500,
+          "configuration": "lc601",
+          "outside_comments": [
+            "//Split line for distributed load"
+          ],
+          "inline_comments": {
+            "object overhead_line {": "6326321 {"
+          }
+        },
+        {
+          "name": "line_6321_671",
+          "phases": "ABCN",
+          "from": "l6321",
+          "to": "l671",
+          "length": 1500,
+          "configuration": "lc601",
+          "inline_comments": {
+            "object overhead_line {": "6321671 {"
+          }
+        },
+        {
+          "name": "line_671_680",
+          "phases": "ABCN",
+          "from": "l671",
+          "to": "n680",
+          "length": 1000,
+          "configuration": "lc601",
+          "outside_comments": [
+            "//End split line"
+          ],
+          "inline_comments": {
+            "object overhead_line {": "671680 {"
+          }
+        },
+        {
+          "name": "line_671_684",
+          "phases": "ACN",
+          "from": "l671",
+          "to": "n684",
+          "length": 300,
+          "configuration": "lc604",
+          "inline_comments": {
+            "object overhead_line {": "671684 {"
+          }
+        },
+        {
+          "name": "line_684_611",
+          "phases": "CN",
+          "from": "n684",
+          "to": "l611",
+          "length": 300,
+          "configuration": "lc605",
+          "inline_comments": {
+            "object overhead_line {": "684611 {"
+          }
+        },
+        {
+          "name": "line_632_633",
+          "phases": "ABCN",
+          "from": "n632",
+          "to": "n633",
+          "length": 500,
+          "configuration": "lc602",
+          "inline_comments": {
+            "object overhead_line {": "632633 {"
+          }
+        }
+      ]
+    },
+    "underground_line": {
+      "instances": [
+        {
+          "name": "line_692_675",
+          "phases": "ABC",
+          "from": "l692",
+          "to": "l675",
+          "length": 500,
+          "configuration": "lc606",
+          "inline_comments": {
+            "object underground_line {": "692675 {"
+          }
+        },
+        {
+          "name": "line_684_652",
+          "phases": "AC",
+          "from": "n684",
+          "to": "l652",
+          "length": 800,
+          "configuration": "lc607",
+          "inline_comments": {
+            "object underground_line {": "684652 {"
+          }
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "n633",
+          "phases": "ABCN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "outside_comments": [
+            "// Create node objects"
+          ],
+          "inline_comments": {
+            "object node {": "633 {"
+          }
+        },
+        {
+          "name": "n630",
+          "phases": "ABCN",
+          "voltage_A": "2401.7771+0j",
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "object node {": "630 {"
+          }
+        },
+        {
+          "name": "n632",
+          "phases": "ABCN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "object node {": "632 {"
+          }
+        },
+        {
+          "name": "n650",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "object node {": "650 {"
+          }
+        },
+        {
+          "name": "n680",
+          "phases": "ABCN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "object node {": "680 {"
+          }
+        },
+        {
+          "name": "n684",
+          "phases": "ACN",
+          "voltage_A": 2401.7771,
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "object node {": "684 {"
+          }
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_39",
+          "parent": "n684",
+          "target": "voltage_A",
+          "value": "2427.62-4.52d",
+          "within": 2
+        },
+        {
+          "name": "complex_assert_40",
+          "parent": "n684",
+          "target": "voltage_C",
+          "value": "2343.69+115.30d",
+          "within": 2
+        },
+        {
+          "name": "complex_assert_45",
+          "parent": "l652",
+          "target": "voltage_A",
+          "within": 2,
+          "value": "2427.62-4.52d"
+        },
+        {
+          "name": "complex_assert_46",
+          "parent": "l652",
+          "target": "voltage_C",
+          "within": 2,
+          "value": "2343.69+115.30d"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "l634",
+          "phases": "ABCN",
+          "voltage_A": "480.000+0j",
+          "voltage_B": "-240.000-415.6922j",
+          "voltage_C": "-240.000+415.6922j",
+          "constant_power_A": "160000+110000j",
+          "constant_power_B": "120000+90000j",
+          "constant_power_C": "120000+90000j",
+          "nominal_voltage": 480.0,
+          "outside_comments": [
+            "// Create load objects"
+          ],
+          "inline_comments": {
+            "object load {": "634 {"
+          }
+        },
+        {
+          "name": "l645",
+          "phases": "BCN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "170000+125000j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "object load {": "645 {"
+          }
+        },
+        {
+          "name": "l646",
+          "phases": "BCD",
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_B": "56.5993+32.4831j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "object load {": "646 {"
+          }
+        },
+        {
+          "name": "l652",
+          "phases": "AC",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "//constant_impedance_C 31.0501+20.8618j;"
+          ],
+          "inline_comments": {
+            "object load {": "652 {"
+          }
+        },
+        {
+          "name": "l671",
+          "phases": "ABCD",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "385000+220000j",
+          "constant_power_B": "385000+220000j",
+          "constant_power_C": "385000+220000j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "object load {": "671 {"
+          }
+        },
+        {
+          "name": "l675",
+          "phases": "ABC",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "485000+190000j",
+          "constant_power_B": "68000+60000j",
+          "constant_power_C": "290000+212000j",
+          "constant_impedance_A": "0.00-28.8427j",
+          "constant_impedance_B": "0.00-28.8427j",
+          "constant_impedance_C": "0.00-28.8427j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "object load {": "675 {",
+            "constant_impedance_A": "//Shunt Capacitors"
+          }
+        },
+        {
+          "name": "l692",
+          "phases": "ABCD",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_A": "0+0j",
+          "constant_current_B": "0+0j",
+          "constant_current_C": "-17.2414+51.8677j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "object load {": "692 {"
+          }
+        },
+        {
+          "name": "l611",
+          "phases": "CN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_C": "-6.5443+77.9524j",
+          "constant_impedance_C": "0.00-57.6854j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "object load {": "611 {",
+            "constant_impedance_C": "//Shunt Capacitor"
+          }
+        },
+        {
+          "name": "l6711",
+          "parent": "l671",
+          "phases": "ABC",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "5666.6667+3333.3333j",
+          "constant_power_B": "22000+12666.6667j",
+          "constant_power_C": "39000+22666.6667j",
+          "nominal_voltage": 2401.7771,
+          "outside_comments": [
+            "// distributed load between node 632 and 671",
+            "// 2/3 of load 1/4 of length down line: Kersting p.56"
+          ],
+          "inline_comments": {
+            "object load {": "6711 {"
+          }
+        },
+        {
+          "name": "l6321",
+          "phases": "ABCN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "11333.333+6666.6667j",
+          "constant_power_B": "44000+25333.3333j",
+          "constant_power_C": "78000+45333.3333j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "object load {": "6321 {"
+          }
+        }
+      ]
+    },
+    "switch": {
+      "instances": [
+        {
+          "name": "switch_671_692",
+          "phases": "ABCN",
+          "from": "l671",
+          "to": "l692",
+          "status": "CLOSED",
+          "outside_comments": [
+            "// Switch"
+          ]
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "tc400",
+          "connect_type": "WYE_WYE",
+          "install_type": "PADMOUNT",
+          "power_rating": 500,
+          "primary_voltage": 4160,
+          "secondary_voltage": 480,
+          "resistance": 0.011,
+          "reactance": 0.02,
+          "outside_comments": [
+            "// Transformer"
+          ]
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "transformer_633_634",
+          "phases": "ABCN",
+          "from": "n633",
+          "to": "l634",
+          "configuration": "tc400"
+        }
+      ]
+    },
+    "regulator_configuration": {
+      "instances": [
+        {
+          "name": "regconfig6506321",
+          "connect_type": 1,
+          "band_center": 122.0,
+          "band_width": 2.0,
+          "time_delay": 30.0,
+          "raise_taps": 16,
+          "lower_taps": 16,
+          "current_transducer_ratio": 700,
+          "power_transducer_ratio": 20,
+          "compensator_r_setting_A": 3.0,
+          "compensator_r_setting_B": 3.0,
+          "compensator_r_setting_C": 3.0,
+          "compensator_x_setting_A": 9.0,
+          "compensator_x_setting_B": 9.0,
+          "compensator_x_setting_C": 9.0,
+          "CT_phase": "ABC",
+          "PT_phase": "ABC",
+          "regulation": 0.1,
+          "Control": "MANUAL",
+          "Type": "A",
+          "tap_pos_A": 10,
+          "tap_pos_B": 8,
+          "tap_pos_C": 11,
+          "outside_comments": [
+            "// Regulator"
+          ]
+        }
+      ]
+    },
+    "regulator": {
+      "instances": [
+        {
+          "name": "fregn650n630",
+          "phases": "ABC",
+          "from": "n650",
+          "to": "n630",
+          "configuration": "regconfig6506321"
+        }
+      ]
+    }
+  }
+}

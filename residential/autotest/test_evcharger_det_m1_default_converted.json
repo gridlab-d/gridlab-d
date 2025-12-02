@@ -1,0 +1,81 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Test file for evcharger_det device",
+      "// Update interval check"
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2009-06-01 00:00:00'",
+    "stoptime": "'2009-06-05 00:00:00'"
+  },
+  "modules": {
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_2",
+          "parent": "house_for_sake_of_a_house",
+          "property": "hvac_load",
+          "interval": 3600,
+          "file": "driverfile.csv",
+          "outside_comments": [
+            "//Default house"
+          ],
+          "inline_comments": {
+            "object recorder {": "Here just to push the simulation"
+          }
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_for_sake_of_a_house"
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_5",
+          "parent": "double_assert_4",
+          "file": "../data_EV_det_output_m1_default.player",
+          "property": "value",
+          "outside_comments": [
+            "//CSV-populated file"
+          ]
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_4",
+          "parent": "ev_file_default",
+          "target": "battery_SOC",
+          "within": 0.01
+        }
+      ]
+    },
+    "evcharger_det": {
+      "instances": [
+        {
+          "name": "ev_file_default",
+          "parent": "house_for_sake_of_a_house",
+          "battery_SOC": 60.8696,
+          "inline_comments": {
+            "battery_SOC": "//Makes assert happier"
+          }
+        }
+      ]
+    }
+  }
+}

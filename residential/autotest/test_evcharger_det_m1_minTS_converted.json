@@ -1,0 +1,98 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Test file for evcharger_det device",
+      "// Update recording - 1 minute minimum timestep"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "minimum_timestep": "60;"
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2009-06-01 00:00:00'",
+    "stoptime": "'2009-06-05 00:00:00'"
+  },
+  "modules": {
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_2",
+          "parent": "house_for_sake_of_a_house",
+          "property": "hvac_load",
+          "interval": 3600,
+          "file": "driverfile.csv",
+          "outside_comments": [
+            "//Default house"
+          ],
+          "inline_comments": {
+            "object recorder {": "Here just to push the simulation"
+          }
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_for_sake_of_a_house"
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_5",
+          "parent": "double_assert_4",
+          "file": "../data_min_new_EV_det_output_m1.player",
+          "property": "value",
+          "outside_comments": [
+            "//CSV-populated file - index 2"
+          ]
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_4",
+          "parent": "ev_file_read",
+          "target": "battery_SOC",
+          "within": 0.01
+        }
+      ]
+    },
+    "evcharger_det": {
+      "instances": [
+        {
+          "name": "ev_file_read",
+          "parent": "house_for_sake_of_a_house",
+          "data_file": "../data_sample_NHTS.csv",
+          "vehicle_index": 2,
+          "charging_efficiency": 0.9,
+          "mileage_classification": 110.0,
+          "mileage_efficiency": 3.846,
+          "maximum_charge_rate": 1700.0,
+          "work_charging_available": false,
+          "inline_comments": {
+            "data_file": "//CSV file with car parameters",
+            "vehicle_index": "//Could be populated by a script",
+            "charging_efficiency": "//Efficiency of the charger - energy consumed vs. energy put into the battery",
+            "mileage_classification": "//Mileage rating on PHEV (e.g., PHEV-110 runs 110 miles on electric)",
+            "mileage_efficiency": "//Miles per kWh - helps determine battery size",
+            "maximum_charge_rate": "//Makimum power draw in Watts - used to determine charge rate and load",
+            "work_charging_available": "//Whether the vehicle charges at work - just affects SOC - not included as power draw on system (assumes work is on another feeder)"
+          }
+        }
+      ]
+    }
+  }
+}

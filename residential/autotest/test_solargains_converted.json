@@ -1,0 +1,108 @@
+{
+  "_directives": {
+    "#define": {
+      "stylesheet": "C:\\Project Files\\Gridlabd\\gridlab-d\\trunk\\VS2005\\gridlabd-2_0.xsl"
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-01-05 00:00:00 PST'",
+    "stoptime": "'2001-01-15 00:00:00 PST'"
+  },
+  "modules": {
+    "climate": {},
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_2",
+          "parent": "house_1",
+          "property": "mass_temperature,air_temperature,outdoor_temperature,internal_gain",
+          "file": "test_solargains.csv",
+          "interval": 3600,
+          "limit": 10000
+        }
+      ]
+    },
+    "ZIPload": {
+      "instances": [
+        {
+          "name": "ZIPload_3",
+          "parent": "house_1",
+          "heat_fraction": 1,
+          "base_power": "zippwr*1",
+          "power_pf": 1,
+          "power_fraction": 1,
+          "current_pf": 0,
+          "current_fraction": 0,
+          "impedance_pf": 0,
+          "impedance_fraction": 0
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_4",
+          "parent": "house_1",
+          "target": "mass_temperature",
+          "value": 27.5,
+          "within": 15
+        },
+        {
+          "name": "double_assert_5",
+          "parent": "house_1",
+          "target": "air_temperature",
+          "value": 27.5,
+          "within": 15
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_1",
+          "air_temperature": 19.2,
+          "mass_temperature": 19.2,
+          "system_mode": "OFF",
+          "auxiliary_system_type": "NONE",
+          "heating_system_type": "NONE",
+          "cooling_system_type": "NONE"
+        }
+      ]
+    },
+    "climate": {
+      "instances": [
+        {
+          "name": "climate_6",
+          "tmyfile": "../WA-Yakima.tmy2"
+        }
+      ]
+    }
+  },
+  "schedules": {
+    "zippwr": [
+      {
+        "name": "",
+        "items": [
+          "* 0-5 * * * .29307107017222",
+          "* 6 * * * 0.58614214034444",
+          "* 7-9 * * * 0.87921321051666",
+          "* 10-15 * * * 0.58614214034444",
+          "* 16 * * * 0.87921321051666",
+          "* 17 * * * 1.1722842806889",
+          "* 18-20 * * * 1.4653553508611",
+          "* 21 * * * 1.1722842806889",
+          "* 22 * * * 0.58614214034444",
+          "* 23 * * * .29307107017222"
+        ]
+      }
+    ]
+  }
+}

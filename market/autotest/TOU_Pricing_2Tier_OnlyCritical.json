@@ -1,0 +1,13 @@
+{
+  "schedules": {
+    "PRICE": [
+      {
+        "name": "critical price changes at noon",
+        "items": [
+          "* 0-19 * * * 1.0,",
+          "* 20-23 * * * 10.0,"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "__preamble": {
+    "comments": [
+      "// test schedule transforms",
+      "// test schedule transforms"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "randomseed": 17
+    }
+  },
+  "classes": {
+    "house": [
+      {
+        "type": "double",
+        "name": "my_double"
+      },
+      {
+        "type": "int32",
+        "name": "my_int32"
+      },
+      {
+        "type": "enumeration",
+        "name": "{A=0, B=1, C=2, D=3, E=4} my_enum"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2009-01-01 0:00:00 PST'",
+    "stoptime": "'2009-01-02 0:00:00 PST'"
+  },
+  "modules": {
+    "residential": {},
+    "tape": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_2",
+          "parent": "house_1",
+          "property": "my_double,my_int32,my_enum,my_set,my_complex",
+          "file": "test_schedule_xform_output.csv"
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_1",
+          "my_double": "test_schedule*2.58+1",
+          "my_int32": "test_schedule*2.58+1",
+          "my_enum": "test_schedule*2.58+1",
+          "my_set": "test_schedule*2.58+1",
+          "my_complex": "test_schedule*2.58+1"
+        }
+      ]
+    }
+  },
+  "schedules": {
+    "test_schedule": [
+      {
+        "name": "",
+        "items": [
+          "0-29 * * * * 0",
+          "30-59 * * * * 1"
+        ]
+      }
+    ]
+  }
+}

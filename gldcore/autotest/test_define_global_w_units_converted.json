@@ -1,0 +1,85 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Test file to see if globals that have units assigned",
+      "// are handled properly, and get set right",
+      "// Also tests loader handler for #set with either a space or a tab before comments",
+      "// Co-opted from test_deltamode to make sure it is working"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "dateformat": "US",
+      "deltamode_maximumtime": "600 s  //10 minute - space/tab test",
+      "deltamode_timestep": "35 ms  //35 ms - tab/space test",
+      "deltamode_iteration_limit": "10  //tab test - no unit",
+      "suppress_repeat_messages": "0 //Tab test - general",
+      "profiler": "1 //Space test - general"
+    }
+  },
+  "clock": {
+    "timezone": "\"PST+8PDT\"",
+    "starttime": "'2001-01-01 00:00:00 PST'",
+    "stoptime": "'2001-01-01 00:00:45 PST'"
+  },
+  "modules": {
+    "powerflow": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "player": {
+      "instances": [
+        {
+          "name": "player_2",
+          "parent": "delta_meter",
+          "file": "../test_deltamode_house_player.csv",
+          "property": "voltage_A",
+          "flags": "DELTAMODE",
+          "inside_comments": [
+            "//in 2001-01-01 00:00:01;"
+          ]
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_3",
+          "parent": "delta_meter",
+          "flags": "DELTAMODE",
+          "file": "test_output_recorder.csv",
+          "property": "voltage_A,voltage_B,voltage_C",
+          "interval": 1
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "delta_meter",
+          "phases": "ABC",
+          "nominal_voltage": 240
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_4",
+          "in": "'2001-01-01 00:00:01.07 PST'",
+          "once": "ONCE_TRUE",
+          "flags": "DELTAMODE",
+          "parent": "delta_meter",
+          "target": "voltage_A",
+          "within": 0.01,
+          "value": 150.0,
+          "outside_comments": [
+            "//Delayed by 1, due to how the timesteps align and this occurs",
+            "//This is effectively just testing that the 35 ms timestep took"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,239 @@
+{
+  "__preamble": {
+    "comments": [
+      "//test_powerflow_reg_counters.glm tests the tap counter variables for the three phase taps of a regulaator.",
+      "// #set profiler=1",
+      "//#set pauseatexit=1"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "relax_naming_rules": "1;"
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2000-01-01 00:00:00'",
+    "stoptime": "'2000-01-01 0:00:04'",
+    "inline_comments": {
+      "stoptime": "//36 hours"
+    }
+  },
+  "modules": {
+    "generators": {},
+    "powerflow": {
+      "solver_method": "NR"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "overhead_line_conductor_6010",
+          "id": 6010,
+          "geometric_mean_radius": 0.0313,
+          "resistance": 0.1859,
+          "outside_comments": [
+            "// 556.5 ACSR"
+          ]
+        },
+        {
+          "name": "overhead_line_conductor_6020",
+          "id": 6020,
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592,
+          "outside_comments": [
+            "// #4/0 ACSR"
+          ]
+        },
+        {
+          "name": "overhead_line_conductor_6030",
+          "id": 6030,
+          "geometric_mean_radius": 0.00446,
+          "resistance": 1.12,
+          "outside_comments": [
+            "// #1/0 ACSR"
+          ]
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "gld_630",
+          "phases": "ABCN",
+          "voltage_A": "2401.7771+0j",
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "gld_650",
+          "bustype": "SWING",
+          "phases": "ABCN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "outside_comments": [
+            "//NAS Battery"
+          ]
+        }
+      ]
+    },
+    "regulator_configuration": {
+      "instances": [
+        {
+          "name": "regulator_configuration_6506321",
+          "id": 6506321,
+          "connect_type": 1,
+          "band_center": 2401,
+          "band_width": 40,
+          "time_delay": 30.0,
+          "raise_taps": 16,
+          "lower_taps": 16,
+          "current_transducer_ratio": 700,
+          "power_transducer_ratio": 20,
+          "compensator_r_setting_A": 3.0,
+          "compensator_r_setting_B": 3.0,
+          "compensator_r_setting_C": 3.0,
+          "compensator_x_setting_A": 9.0,
+          "compensator_x_setting_B": 9.0,
+          "compensator_x_setting_C": 9.0,
+          "CT_phase": "ABC",
+          "PT_phase": "ABC",
+          "regulation": 0.1,
+          "Control": "MANUAL",
+          "Type": "A",
+          "tap_pos_A": 1,
+          "tap_pos_B": 1,
+          "tap_pos_C": 1,
+          "outside_comments": [
+            "// Regulator"
+          ]
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_8",
+          "parent": "regulator_650632",
+          "property": "tap_A",
+          "file": "../test_reg.player",
+          "loop": 0
+        },
+        {
+          "name": "player_9",
+          "parent": "regulator_650632",
+          "property": "tap_B",
+          "file": "../test_reg.player",
+          "loop": 0
+        },
+        {
+          "name": "player_10",
+          "parent": "regulator_650632",
+          "property": "tap_C",
+          "file": "../test_reg.player",
+          "loop": 0
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_11",
+          "parent": "regulator_650632",
+          "in": "'2000-01-01 00:00:04'",
+          "target": "tap_A_change_count",
+          "status": "ASSERT_TRUE",
+          "once": "ONCE_TRUE",
+          "value": 4,
+          "within": 0.1
+        },
+        {
+          "name": "double_assert_12",
+          "parent": "regulator_650632",
+          "in": "'2000-01-01 00:00:04'",
+          "target": "tap_B_change_count",
+          "status": "ASSERT_TRUE",
+          "once": "ONCE_TRUE",
+          "value": 4,
+          "within": 0.1
+        },
+        {
+          "name": "double_assert_13",
+          "parent": "regulator_650632",
+          "in": "'2000-01-01 00:00:04'",
+          "target": "tap_B_change_count",
+          "status": "ASSERT_TRUE",
+          "once": "ONCE_TRUE",
+          "value": 4,
+          "within": 0.1
+        }
+      ]
+    },
+    "regulator": {
+      "instances": [
+        {
+          "name": "regulator_650632",
+          "id": 650632,
+          "phases": "ABC",
+          "from": "gld_650",
+          "to": "gld_630",
+          "configuration": "regulator_configuration_6506321"
+        }
+      ]
+    },
+    "capacitor": {
+      "instances": [
+        {
+          "name": "CAP1",
+          "phases": "ABCN",
+          "pt_phase": "ABCN",
+          "parent": "gld_630",
+          "phases_connected": "ABCN",
+          "control": "MANUAL",
+          "voltage_set_high": 2700.0,
+          "voltage_set_low": 2250.0,
+          "capacitor_A": "0.10 MVAr",
+          "capacitor_B": "0.10 MVAr",
+          "capacitor_C": "0.10 MVAr",
+          "control_level": "INDIVIDUAL",
+          "time_delay": 300.0,
+          "dwell_time": 0.0,
+          "switchA": "CLOSED",
+          "switchB": "CLOSED",
+          "switchC": "CLOSED",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "CAP2",
+          "phases": "ABCN",
+          "pt_phase": "ABCN",
+          "parent": "gld_630",
+          "phases_connected": "ABCN",
+          "control": "MANUAL",
+          "voltage_set_high": 2600.0,
+          "voltage_set_low": 2150.0,
+          "capacitor_A": "0.05 MVAr",
+          "capacitor_B": "0.05 MVAr",
+          "capacitor_C": "0.05 MVAr",
+          "control_level": "INDIVIDUAL",
+          "time_delay": 300.0,
+          "dwell_time": 0.0,
+          "nominal_voltage": 2401.7771,
+          "switchA": "CLOSED",
+          "switchB": "CLOSED",
+          "switchC": "CLOSED"
+        }
+      ]
+    }
+  }
+}

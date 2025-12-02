@@ -1,0 +1,273 @@
+{
+  "__preamble": {
+    "comments": [
+      "// 4 node system with a balanced load and a regulator",
+      "// being controlled under LINE_DROP_COMP mode, each phase",
+      "// individually controlled.  Check to make sure voltages are being",
+      "// regulated correctly with both a Type A & B regulator.",
+      "// Somewhat contrived test, as a 200000 ft overhead line is used",
+      "// to artificially lower the voltage at the regulator, but tests",
+      "// the regulator function.",
+      "// this test is given a wider error than the FBS test because of known differences of how NR approaches the solution in combination with regulator tap positions",
+      "// the assert allows the NR solution to be one tap off from the FBS solution."
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "relax_naming_rules": 1
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 1:05:00'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "overhead_line_conductor_100",
+          "id": 100,
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306
+        },
+        {
+          "name": "overhead_line_conductor_101",
+          "id": 101,
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "line_spacing_200",
+          "id": 200,
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "line_configuration_300",
+          "id": 300,
+          "conductor_A": "overhead_line_conductor_100",
+          "conductor_B": "overhead_line_conductor_100",
+          "conductor_C": "overhead_line_conductor_100",
+          "conductor_N": "overhead_line_conductor_101",
+          "spacing": "line_spacing_200"
+        }
+      ]
+    },
+    "regulator_configuration": {
+      "instances": [
+        {
+          "name": "auto_regulator",
+          "connect_type": "WYE_WYE",
+          "raise_taps": 16,
+          "lower_taps": 16,
+          "regulation": 0.1,
+          "Type": "A",
+          "Control": "LINE_DROP_COMP",
+          "compensator_r_setting_A": 0.1,
+          "compensator_r_setting_B": 0.1,
+          "compensator_r_setting_C": 0.1,
+          "compensator_x_setting_A": 0.2,
+          "compensator_x_setting_B": 0.2,
+          "compensator_x_setting_C": 0.2,
+          "power_transducer_ratio": 60,
+          "current_transducer_ratio": 10,
+          "band_center": 120,
+          "band_width": 1.5,
+          "control_level": "INDIVIDUAL",
+          "CT_phase": "ABC",
+          "PT_phase": "ABC",
+          "reverse_flow_control": "LOCK_NEUTRAL",
+          "inline_comments": {
+            "compensator_r_setting_A": "// Should approximately look",
+            "compensator_r_setting_B": "// at the voltage at the load",
+            "band_width": "// approximately one tap difference"
+          }
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "FeederNode",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "InterNode",
+          "phases": "ABCN",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "TopNode",
+          "phases": "ABCN",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "MiddleNode",
+          "phases": "ABCN",
+          "nominal_voltage": 7200,
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "overhead_line_7",
+          "phases": "ABCN",
+          "from": "FeederNode",
+          "to": "InterNode",
+          "length": 200000,
+          "configuration": "line_configuration_300"
+        },
+        {
+          "name": "overhead_line_18",
+          "phases": "ABCN",
+          "from": "TopNode",
+          "to": "MiddleNode",
+          "length": 2000,
+          "configuration": "line_configuration_300"
+        },
+        {
+          "name": "overhead_line_20",
+          "phases": "ABCN",
+          "from": "MiddleNode",
+          "to": "BottomLoad",
+          "length": 2500,
+          "configuration": "line_configuration_300"
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_10",
+          "parent": "Regulator",
+          "property": "tap_A,tap_B,tap_C",
+          "file": "test_powerflow_reg_ind_rev_flow_control_neutral_tap_pos.csv",
+          "interval": 300
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_12",
+          "parent": "assert_11",
+          "property": "value",
+          "file": "../test_powerflow_reg_ind_rev_flow_control_neutral_tap_pos_A.player",
+          "loop": 0
+        },
+        {
+          "name": "player_14",
+          "parent": "assert_13",
+          "property": "value",
+          "file": "../test_powerflow_reg_ind_rev_flow_control_neutral_tap_pos_B.player",
+          "loop": 0
+        },
+        {
+          "name": "player_16",
+          "parent": "assert_15",
+          "property": "value",
+          "file": "../test_powerflow_reg_ind_rev_flow_control_neutral_tap_pos_C.player",
+          "loop": 0
+        },
+        {
+          "name": "player_22",
+          "parent": "BottomLoad",
+          "property": "constant_power_A",
+          "file": "../test_powerflow_reg_rev_flow_control_neutral_ind_A.player",
+          "loop": 0
+        },
+        {
+          "name": "player_23",
+          "parent": "BottomLoad",
+          "property": "constant_power_B",
+          "file": "../test_powerflow_reg_rev_flow_control_neutral_ind_B.player",
+          "loop": 0
+        },
+        {
+          "name": "player_24",
+          "parent": "BottomLoad",
+          "property": "constant_power_C",
+          "file": "../test_powerflow_reg_rev_flow_control_neutral_ind_C.player",
+          "loop": 0
+        }
+      ]
+    },
+    "assert": {
+      "instances": [
+        {
+          "name": "assert_11",
+          "parent": "Regulator",
+          "target": "tap_A",
+          "within": 0.1
+        },
+        {
+          "name": "assert_13",
+          "parent": "Regulator",
+          "target": "tap_B",
+          "within": 0.1
+        },
+        {
+          "name": "assert_15",
+          "parent": "Regulator",
+          "target": "tap_C",
+          "within": 0.1
+        }
+      ]
+    },
+    "regulator": {
+      "instances": [
+        {
+          "name": "Regulator",
+          "phases": "ABCN",
+          "from": "InterNode",
+          "to": "TopNode",
+          "configuration": "auto_regulator"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "BottomLoad",
+          "phases": "ABCN",
+          "nominal_voltage": 7200
+        }
+      ]
+    }
+  }
+}
