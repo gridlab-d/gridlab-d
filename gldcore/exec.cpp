@@ -657,6 +657,24 @@ nlohmann::json do_checkpoint(const char *output_directory)
 
 				// Get modules data!
 
+				// Get globals data
+				nlohmann::json globals = nlohmann::json::object();
+				GLOBALVAR *global = nullptr;
+				char buffer[1024];
+				
+				// Iterate through all global variables
+				while ((global = global_getnext(global)) != nullptr)
+				{
+					// Get the global variable value
+					if (global_getvar(global->prop->name, buffer, sizeof(buffer)))
+					{
+						globals[global->prop->name] = buffer;
+					}
+				}
+				
+				// Add globals to checkpoint
+				checkpoint["globals"] = globals;
+				
 				// Write JSON to file with pretty formatting
 				std::ofstream json_file(json_fn);
 				if (json_file.is_open())
