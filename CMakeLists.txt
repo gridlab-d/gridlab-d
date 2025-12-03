@@ -6,6 +6,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build: Debug Release RelWithDebInfo MinSizeRel" FORCE)
 endif()
 
+# Testing automated github workflows
 include(cmake/Warnings.cmake)
 OPTION(GLD_EXTRA_WARNINGS "Make warnings more pedantic" OFF)
 if (GLD_EXTRA_WARNINGS)
