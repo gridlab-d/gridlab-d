@@ -94,6 +94,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <set>
 
 #ifdef _WIN32
 #include <winsock2.h>

@@ -32,7 +32,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 # Find Eigen
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 REQUIRED NO_MODULE)
 
 # Include Eigen 
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -112,10 +112,12 @@ if (NOT XercesC_FOUND)
     message(STATUS "XercesC library could not be located on the platform. XML Loading is disabled.")
 endif ()
 
-find_package(Curses)
-if (CURSES_FOUND)
-    option(HAVE_CURSES "Curses library is present on the platform" ON)
-endif ()
+if(UNIX)
+    find_package(Curses)
+    if (CURSES_FOUND)
+        option(HAVE_CURSES "Curses library is present on the platform" ON)
+    endif ()
+endif()
 
 # Link required libraries for symbol checks
 list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
@@ -169,11 +171,19 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     endif()
 
     set(FOUND_WINDOWS yes CACHE INTERNAL "Tell script generator we're Windows")
-    add_compile_options(-static-libgcc -static-libstdc++ -static)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
+
+    if(NOT MSVC)
+        # Enable static linking for GCC on Windows
+        add_compile_options(-static-libgcc -static-libstdc++)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+        add_compile_options(-static-libgcc -static-libstdc++ -static)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
+    endif()
+
 elseif (APPLE)
-    set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
+    set(`zk ${CMAKE_DL_LIBS})
     set(FOUND_MACOS yes CACHE INTERNAL "Tell script generator we're MacOS")
 else ()
     set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
@@ -389,7 +399,22 @@ add_subdirectory(gldcore)
 
 # Add test_gldapi executable
 add_executable(test_gldapi gldcore/test_gldapi.cpp)
-target_link_libraries(test_gldapi PRIVATE gldapi ${DL_LIB} ${JSONCPP_LIB} ${SUPERLU_LIB} ${CURSES_LIBRARIES} Threads::Threads)
+target_link_libraries(test_gldapi PRIVATE gldapi ${DL_LIB} ${JSONCPP_LIB} ${SUPERLU_LIB} Threads::Threads)
+add_dependencies(test_gldapi gldapi)  
+
+if(MSVC)
+    set_target_properties(gldapi PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+    )
+endif()
+
+# Link Curses only on Unix/Linux platforms
+if(UNIX AND CURSES_FOUND)
+    target_link_libraries(test_gldapi PRIVATE ${CURSES_LIBRARIES})
+endif()
+
 set_target_properties(test_gldapi PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin
 )

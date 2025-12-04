@@ -5,7 +5,7 @@
 
  @{
  **/
-#define _MAIN_C
+// #define _MAIN_C
 
 #define WIN32_LEAN_AND_MEAN // <--- ADD THIS AT THE VERY TOP OF THE FILE
 
@@ -55,16 +55,16 @@
 #include "threadpool.h"
 #include "cpp_threadpool.h"
 
-#if defined WIN32 && _DEBUG
-#include <crtdbg.h>
-/** Implements a pause on exit capability for Windows consoles
- **/
-void pause_at_exit(void)
-{
-    if (global_pauseatexit)
-        system("pause");
-}
-#endif
+// #if defined(_WIN32) && defined(_DEBUG)
+// #include <crtdbg.h>
+// /** Implements a pause on exit capability for Windows consoles
+//  **/
+// void pause_at_exit(void)
+// {
+//     if (global_pauseatexit)
+//         system("pause");
+// }
+// #endif
 
 namespace fs = std::filesystem;
 
