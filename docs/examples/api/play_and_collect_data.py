@@ -102,11 +102,11 @@ def remove_old_results_file(filename:str):
 
 
 def _auto_run(args):
-    remove_old_results_file("./house_with_solar/indoor_air_temperatures.csv")
-    remove_old_results_file("./house_with_solar/floor_area.csv")
+    remove_old_results_file(os.path.join(args.model_folder,  "indoor_air_temperatures.csv"))
+    remove_old_results_file(os.path.join(args.model_folder, "floor_area.csv"))
 
     gld = gridlabd.GridLabD()
-    model_path = Path("/home/hard312/gld_api/house_with_solar")
+    model_path = Path(args.model_folder)
     gld.set_working_directory(str(model_path))
 
     # Initializing model
@@ -211,11 +211,11 @@ if __name__ == '__main__':
     parser.add_argument('-g', '--graph',
                         help="flag to only create a graph of simulated data",
                         action=argparse.BooleanOptionalAction,
-                        default=True)
-    # parser.add_argument('-i', '--input_paths',
-    #                     help="paths of folders to get sizes of, one per line",
-    #                     nargs='?',
-    #                     default="folder_paths_to_size.txt")
+                        default=False)
+    parser.add_argument('-m', '--model_folder',
+                         help="folder that contains the  GridLAB-D model",
+                         nargs='?',
+                         default="./house_with_solar")
     # parser.add_argument('-o', '--output_file',
     #                     help="output file to write results to",
     #                     nargs='?',
