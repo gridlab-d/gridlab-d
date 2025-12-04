@@ -170,7 +170,7 @@ Where $S_{ref}$ and $t_{ref}$ are light intensity and temperature in standard en
 
 A real PV panel has been modeled according to the formulas above, the output parameters of which are given in Table 1: 
 
-Table 1 - Output Parameters of PV Panel  Variable | Units | Value   
+##### Table 1 - Output Parameters of PV Panel  Variable | Units | Value   
 ---|---|---  
 $\displaystyle{}U_{oc}$ | V | 1005   
 $\displaystyle{}I_{sc}$ | A | 100   
@@ -183,5 +183,5 @@ The P-V curve of this PV panel is given in Figure 1, the maximum power is about 
 
 ![P-V Curve of PV Panel](../../../../../images/300px-PV_fig1.png)
 
-Figure 1 - P-V Curve of PV Panel
+##### Figure 1 - P-V Curve of PV Panel
 

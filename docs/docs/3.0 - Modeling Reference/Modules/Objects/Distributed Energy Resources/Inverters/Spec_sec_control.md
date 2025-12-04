@@ -4,16 +4,16 @@ The secondary controller object has a structure illustrated in Figure 1, and is 
 
 ![Secondary controller structure](../../../../../../images/300px-SecondaryControlChart.png)
 
-Figure 1: Secondary controller structure
+##### Figure 1: Secondary controller structure
 
 ![AGC Control Structure](../../../../../../images/300px-AGC_WW.png)
 
-Figure 2 - AGC Control Structure. Source: [1]
+##### Figure 2 - AGC Control Structure. Source: [1]
 
 The basic idea is that the frequency error $\Delta f$ is 
 
   1. Converted to a power error via bias factor $ B$
-  2. Adjusted with respect to the current deviation from schedule of participating units (and potentially intertie flows) via $ \epsilon_{\text{unit}}$
+  2. Adjusted with respect to the current deviation from schedule of participating units (and potentially intertie flows) via $\epsilon_{\text{unit}}$
   3. Integrate the error via a PID controller, where by default only the integrator branch is non-zero.
   4. Distribute the output $\Delta P$ to participating units via participation factor $\alpha_i$.
 
@@ -40,7 +40,7 @@ $c_i$ | 1 | 1
   
 !Illustration of inter-tie incorporation into the secondary controller via the unit error, $\epsilon_{text{unit}}$ ![input](../../../../../../images/300px-SecondaryControlIntertie.png)
 
-Figure 3: Illustration of inter-tie incorporation into the secondary controller via the unit error, $\epsilon_{text{unit}}$ input
+##### Figure 3: Illustration of inter-tie incorporation into the secondary controller via the unit error, $\epsilon_{text{unit}}$ input
 
 ## Anti-Windup
 
@@ -217,7 +217,7 @@ The following properties are implemented in the  inverter_dyn and  diesel_dg mod
 
 !!! note
 
-  Any future object that should also be capable of interaction with the secondary object will likely need these properties. 
+    Any future object that should also be capable of interaction with the secondary object will likely need these properties. 
 
 Object | Parameter | glm | units | Default | Description   
 ---|---|---|---|---|---  
@@ -354,7 +354,7 @@ Main `.glm`:
 
 ![Secondary controller setup on the IEEE 123 Bus case for illustration purposes](../../../../../../images/300px-Sec_cntrl_IEEE_123.png)
 
-Figure 4: Secondary controller setup on the IEEE 123 Bus case for illustration purposes.
+##### Figure 4: Secondary controller setup on the IEEE 123 Bus case for illustration purposes.
 
 ## References
 
@@ -362,7 +362,7 @@ Figure 4: Secondary controller setup on the IEEE 123 Bus case for illustration p
   2. ↑ See, for example Aström, Karl (2002). Control System Design (PDF(https://www.cds.caltech.edu/~murray/courses/cds101/fa02/caltech/astrom-ch6.pdf)). pp. 228–231.
   3. ↑ 3.0 3.1 Negative values possible for inverters if a battery is assumed that can also charge
 
-## See Also
+## Related Concepts:
 
 Req:sec_control
 

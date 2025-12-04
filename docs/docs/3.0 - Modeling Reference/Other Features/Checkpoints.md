@@ -5,7 +5,7 @@
 A checkpoint is a state save of a long simulation that is only partially completed. Checkpoints can be done periodically either based on the elapsed wall-clock time or elapsed simulation time. When a checkpoint save is performed, a stream dump of the model is output to a checkpoint file. At the time of each checkpoint, the stream file contains the complete internal state of the model, which includes 
 
   * global variables including module globals
-  * internal system states including indexes, multiprocessing states, schedules, loadshapes, end-uses, and transforms
+  * internal system states including indexes, multiprocessing states, schedules, loadshapes, end uses, and transforms
   * objects including all the internal state variables
   * open file handles and flushed positions
   * all other data required to ensure that the simulation can be resumed at the checkpoint

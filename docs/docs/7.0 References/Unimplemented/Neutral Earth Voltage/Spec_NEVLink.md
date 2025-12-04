@@ -42,14 +42,14 @@ To incorporate the NEV capabilities in a generic sense, a [Double_array]-like fo
 
 As with [node] objects, new [link] object properties are expected for the NEV implementation. They are outlined in Table 1. 
 
-Table 1 - Link properties  Property | Definition   
+##### Table 1 - Link properties  Property | Definition   
 ---|---  
 `from_terminal` | Terminal connection on the from side for each cable/connection. If an "implied neutral" is present (concentric neutral or tape shielded), this must be specified in pairs.   
 `to_terminal` | Terminal connection on the to side for each cable/connection. If an "implied neutral" is present (concentric neutral or tape shielded), this must be specified in pairs.   
   
 The `line_config` object will take the place of the specific [overhead_line_configuration] and [underground_line_configuration] objects that exist in GridLAB-D™ for the NEV implementation. Definitions are expected to match the existing configurations, but will be put into the array notation outlined earlier. The explicit property definitions are listed in Table 2. 
 
-Table 2 - Line_config properties  Property | Definition   
+##### Table 2 - Line_config properties  Property | Definition   
 ---|---  
 `conductor` | The physical connecting device between the appropriate elements of `from_terminal` and `to_terminal`.   
 `spacing` | The physical position of different conductors between the two nodes. This can either be specified as a distance array (with diagonal elements ignored), or as a physical coordinate space for each conductor. See the example given following the table.   
@@ -57,7 +57,7 @@ Table 2 - Line_config properties  Property | Definition
   
 ![Line Spacing Example](../../../../images/300px-Line_spacing.png)
 
-Figure 1. Line Spacing Example
+##### Figure 1. Line Spacing Example
 
 For the `spacing` field of `line_config`, the coordinates of the conductors can be specified as a Cartesian coordinate, or as a difference. Consider Figure 1 and the four conductor scenario presented. The `spacing` property can be specified for this case using distances in a full matrix format: 
     
@@ -484,7 +484,7 @@ It is during this time that the link class will determine the following.
 
 #### Series Impedance
 
-Table 1 - Equation Notation  Variable | Definition   
+##### Table 1 - Equation Notation  Variable | Definition   
 ---|---  
 $\displaystyle{}V_{i_{mg}}$ | Voltage at node i, phase m relative to true ground (V)   
 $\displaystyle{}I_{i_{mg}}$ | Voltage at node i, phase m relative to true ground (A)   
@@ -758,7 +758,7 @@ The transformer_configuration class specifies the connection type for the transf
 
 ![CUSTOM transformer configuration](../../../../images/300px-CustomXfmr.JPG)
 
-Figure 2. CUSTOM transformer configuration
+##### Figure 2. CUSTOM transformer configuration
 
 In the first two examples above, included connect_type models are used, which internally contain all of the transformer winding coupling/connection information. If a user wishes to model a transformer not included in the set, they can denote 'CUSTOM' under the 'connect-type' field and include the additional fields shown in the third example. Figure 2 illustrates the connections for this example, wherein there are three three-phase winding sets. Figure 2 illustrates that for each of the three phase sets A, B, and C, Winding 1 (on the left) links Windings 2 and 3 (on the right). The shaded terminal sets denoted I, II, and III denote the external primary, secondary and tertiary terminal sets which correspond to the sets in the transformer object. The field 'winding_coupling' should include pairs of winding numbers (separated by semicolons) which are magnetically coupled. In the example above, Winding 1 is magnetically coupled to both Winding 2 and Winding 3. The fields 'winding_connection_top' and 'winding_connection_bottom' describe how the winding terminals are connected to the external transformer terminals. For both fields, each group delineated by a line return corresponds to a winding set. Within a winding set group, each pair (delineated by semicolons) represents a single phase for the winding. The number of pairs in a set implies the number of phases for the winding. For the example above, each field includes three sets of three pairs, indicating three winding sets each with three phases. The values within the pairs give the external terminal address to which the winding terminal is connected. The first pair for the 'winding_connection_top' field, '1,3', indicates that the top of the first winding's first phase is connected to terminal set '1', phase '3' of the external terminals. Note also that in this example, an alternate array entry format has been used for both the winding voltage rating ('V_rating') and the winding per unit impedances ('impedance'). Note that, for unusual cases, kVA rating can also be specified in [M] double array format rather than a single double, where [M] is the number of windings. 
 
@@ -802,7 +802,7 @@ In order to avoid singularities in the actual impedance matrix and numerical sta
 
 Unlike parent-child connections, only the existence of terminal connections on both ends is required (as opposed to parent-child connections, where the child terminals must be a subset of the parent terminals). Similar to the parent-child connection implementation, the `connector` object will utilize the `NEVbusdata` and `NEVbranchdata` fields outlined on the [Spec:NEVDataFormat] page. Utilizing these structures, remapping the terminals will be handled internally so any `link` objects connected to the `to` end of the `connector` device are properly connected to the `from` node. 
 
-# See also
+# Related Concepts:
 
   * [Overview Page]
   * [Requirements]

@@ -7,6 +7,7 @@ The CSV reader class is a helper object for the **climate** class in the **clima
 The CSV reader is intentionally designed to have no active components. It does nothing during the create, init, and sync steps. 
 
 ## CSV reader actors
+TODO - CSV reader actors - what is a CSV reader actor?
 
 ### Climate object
 
@@ -49,14 +50,14 @@ Property | Description
 **ong_deg** | The whole degree longitude for the location that this weather data was recorded. West values are negative, east values are positive. 
 **long_min** | The sub-degree minutes of longitude for the location that this weather data was recorded. 
 **high_temp** | The highest observed temperature in the data set. 
-peak_solar | The highest observed solar input recorded in the data set. 
+**peak_solar** | The highest observed solar input recorded in the data set. 
 **status** | The current state of the weather reader. 
 **INIT** | The file has not been opened and no data has been read. 
 **OPEN** | The file has been opened and the data is either in the process of being read and processed, or is currently being used by the parent climate object. 
 **ERROR** | The file was opened, but an error occurred while reading and parsing the file. The file has been closed and the reader is not usable by the system. 
 **timefmt** | The string format to use for reading in timestamps from the file. By default, the format is `%d:%d:%d:%d:%d`. The order of the values is the month, day, hour, minute, then second that the associated weather data will be used. The same dates are used for multiple years; individual years cannot be specified. Any value that is omitted defaults to zero, thus applying the value to the entirety of the omitted interval. Alternate formats must preserve the interval ordering, but may alter the format so long as up to five integers are read in. 
 **timezone** | The timezone the weather data's source city is in. Should be a three-letter code, akin to "GMT", "PST", or "EDT". 
-columns | A list of headers for the columns. Each column name must match a property name in the **weather** object, else an error will occur. If this property is omitted, the parser will use the first line that is not a property definition and is not a comment as the column headers. 
+**columns** | A list of headers for the columns. Each column name must match a property name in the **weather** object, else an error will occur. If this property is omitted, the parser will use the first line that is not a property definition and is not a comment as the column headers. 
 **filename** | The name of the CSV file to read weather data from. 
 
 ## Functions

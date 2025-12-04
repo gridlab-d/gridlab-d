@@ -25,7 +25,7 @@ To accommodate the flexibility required for the NEV solver, many GLM-level input
 
 All array-like inputs into the powerflow module will be parsed in the GLM as character strings. Specific characters and sequences as defined in Table 1. 
 
-Table 1 - Powerflow Array Parsing Reserved Characters  Character | Function   
+##### Table 1 - Powerflow Array Parsing Reserved Characters  Character | Function   
 ---|---  
 <comma> "," | column or sub-element separator in the array.   
 <semicolon> ";" | row or element separator in the array.   
@@ -199,7 +199,7 @@ The class-defined published properties approach for interfacing NEV objects with
 
 `node` objects will automatically update the base property types listed in Table 2. Note that all `node` class-property definitions will require two terminals. If a property value between a terminal and ground is desired, the number "0" must be entered for the second terminal. Single terminal definitions will not be parsed. All class-defined properties are complex valued. 
 
-Table 2 - Node object properties available for class definition  Property | Definition   
+##### Table 2 - Node object properties available for class definition  Property | Definition   
 ---|---  
 `voltage` | Voltage values between two terminals   
   
@@ -207,7 +207,7 @@ Table 2 - Node object properties available for class definition  Property | Defi
 
 `load` objects will be able to map the properties of Table 3. These are also all complex valued properties. `load` objects will also have access to the property defined in Table 2. 
 
-Table 3 - Complex-valued load object properties available for class definition  Property | Definition   
+##### Table 3 - Complex-valued load object properties available for class definition  Property | Definition   
 ---|---  
 `constant_power` | Constant power load specification between two terminals   
 `constant_current` | Constant current load specification between two terminals   
@@ -216,7 +216,7 @@ Table 3 - Complex-valued load object properties available for class definition  
   
 `load` objects will also have access to the properties of Table 4. These properties are only double-valued, not complex. 
 
-Table 4 - Double-valued load object properties available for class definition  Property | Definition   
+##### Table 4 - Double-valued load object properties available for class definition  Property | Definition   
 ---|---  
 `power_pf` | Power factor for constant power fraction of ZIP-percentage-specified load on two terminals   
 `current_pf` | Power factor for constant current fraction of ZIP-percentage-specified load on two terminals   
@@ -229,7 +229,7 @@ Table 4 - Double-valued load object properties available for class definition  P
 
 `meter` objects will be able to map the properties of Table 5. These are all complex-valued properties. `meter` objects will also have access to the property defined in Table 2. 
 
-Table 5 - Meter object properties available for class definition  Property | Definition   
+##### Table 5 - Meter object properties available for class definition  Property | Definition   
 ---|---  
 `measured_power` | Measured power dissipation between two terminals   
 `measured_voltage` | Measured voltage between two terminals (identical to `voltage` values)   
@@ -247,7 +247,7 @@ Table 5 - Meter object properties available for class definition  Property | Def
 
 would publish the power values associated with current flowing on a conductor between terminal 2 of the from node and terminal 3 of the to node. The power would be signed such that it is associated with the current flowing into the conductor from the terminal 2 connection point (from side). 
 
-Table 6 - Link object properties available for class definition  Property | Definition   
+##### Table 6 - Link object properties available for class definition  Property | Definition   
 ---|---  
 `power_in` | Measured power flowing into a cable/conductor, using the from/to convention described   
 `power_out` | Measured power flowing out of a cable/conductor, using the from/to convention described   
@@ -259,7 +259,7 @@ Table 6 - Link object properties available for class definition  Property | Defi
 
 In order to maintain proper functionality with recorder and player objects, reading and writing the values of the class-defined properties needs to be sequenced properly. Player objects currently execute during the presync pass, so all reads of such properties should occur first thing in the sync routine. Recorder objects currently execute during the postsync pass, so all updates to published properties should be completed by the end of an object's postsync call. 
 
-# See also
+# Related Concepts:
 
   * [Overview Page]
   * [Requirements]

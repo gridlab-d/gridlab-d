@@ -1,5 +1,11 @@
 # Matlab link
 
+!!! warning
+
+	This page contains features that are unfinished, were never implemented, or have since been deprecated. We preserve these pages for archival purposes, and also as a foundational resource for prospective developers who may wish to implement the same or similar feature. Many of these pages provide robust explanations of the theory behind a particular module or feature that we hope readers will find useful. 
+  
+	**This page does not reflect the current state of GridLAB-D™**
+
 The matlab link control file is used establish a connection to an external Matlab instance. It is always referenced by a link directive in a GLM file, i.e., 
     
     link control-file;
@@ -144,7 +150,7 @@ _The alternative is to revert to the old method (above) of including MATLAB. Edi
 
 _If all else fails, and you do not require the MATLAB connection, then the project can be unloaded._
 
-## See also
+## Related Concepts:
 
   * Link (directive)
     * Matlab link

@@ -1,9 +1,5 @@
 # Microgrids
 
-Release | Effort | Status | Date
-| - | - | - | - |
-Hassayampa | As part of major DER dev project | Complete | 2015
-
 **TODO**: 
 This was a "Dev_" page. Review and rework to update
 
@@ -19,7 +15,7 @@ The primary basis for the implementation of the microgrids capability will invol
 
 Equations are taken from Reference 1 and 2 below. Equation notation will follow: 
 
-Table 1 - Equation Notation  
+##### Table 1 - Equation Notation  
 
 Variable | Definition   
 ---|---  
@@ -89,13 +85,13 @@ The GridLAB-D™ dynamic simulations represent electro-mechanic transients of un
 
 ![Figure 1](../../../../../images/Sub-second_algorithm.png)
 
-Figure 1. Overall algorithm of sub-second implementation
+##### Figure 1. Overall algorithm of sub-second implementation
 
 ### Notation
 
 The following variables and parameters are used in the dynamic model equations below. 
 
-Table 1 - Equation Notation  
+##### Table 1 - Equation Notation  
 
 | Variable                          | Definition                           
 |-|-|
@@ -171,33 +167,59 @@ Despite the inclusion of the $0$ terms, many assumptions go into the typical $dq
 
 The equations for the three stator voltages are given by: [R1.2.1]
 
-$$\begin{align}e_a&=p\psi_a-R_ai_a\\
-
-e_b&=p\psi_b-R_bi_b\\ e_c&=p\psi_c-R_ci_c\end{align}$$
+$$
+\begin{split}
+e_a &= p\psi_a - R_a i_a \\
+e_b &= p\psi_b - R_b i_b \\
+e_c &= p\psi_c - R_c i_c
+\end{split}
+$$
 
 where the individual fluxes are defined as 
 
-$$\begin{align}\psi_a=&-i_aL_{aa0}+L_{aa2}\cos(2\theta{})+i_bL_{ab0}+L_{ab2}\cos(2\theta{}+\frac{\pi{}}{3})\\
-
-&+i_cL_{ac0}+L_{ac2}\cos(2\theta{}-\frac{\pi{}}{3})+i_{fd}L_{afd}\cos(\theta{})\\ &+i_{kd}L_{akd}\cos(\theta{})-i_{kq}L_{akq}\sin(\theta{})\\ \psi_b=&i_aL_{ba0}+L_{ba2}\cos(2\theta{}+\frac{\pi{}}{3})-i_bL_{bb0}+L_{bb2}\cos(2\theta{}+\frac{2\pi{}}{3})\\ &+i_cL_{cb0}+L_{cb2}\cos(2\theta{}-\pi{})+i_{fd}L_{bfd}\cos(\theta{}-\frac{2\pi{}}{3})\\ &+i_{kd}L_{bkd}\cos(\theta{}-\frac{2\pi{}}{3})-i_{kq}L_{bkq}\sin(\theta{}-\frac{2\pi{}}{3})\\ \psi_c=&i_aL_{ca0}+L_{ca2}\cos(2\theta{}-\frac{\pi{}}{3})+i_bL_{cb0}+L_{cb2}\cos(2\theta{}-\pi{})\\ &-i_cL_{cc0}+L_{cc2}\cos(2\theta{}+\frac{2\pi{}}{3})+i_{fd}L_{cfd}\cos(\theta{}+\frac{2\pi{}}{3})\\ &+i_{kd}L_{ckd}\cos(\theta{}+\frac{2\pi{}}{3})-i_{kq}L_{ckq}\sin(\theta{}+\frac{2\pi{}}{3})\end{align}$$ 
+$$
+\begin{split}
+\psi_a =& -i_a L_{aa0} + L_{aa2} \cos(2\theta) 
+         + i_b L_{ab0} + L_{ab2} \cos\left(2\theta + \frac{\pi}{3}\right) \\
+       & + i_c L_{ac0} + L_{ac2} \cos\left(2\theta - \frac{\pi}{3}\right) 
+         + i_{fd} L_{afd} \cos(\theta) \\
+       & + i_{kd} L_{akd} \cos(\theta) 
+         - i_{kq} L_{akq} \sin(\theta) \\
+\psi_b =& i_a L_{ba0} + L_{ba2} \cos\left(2\theta + \frac{\pi}{3}\right) 
+         - i_b L_{bb0} + L_{bb2} \cos\left(2\theta + \frac{2\pi}{3}\right) \\
+       & + i_c L_{cb0} + L_{cb2} \cos\left(2\theta - \pi\right) 
+         + i_{fd} L_{bfd} \cos\left(\theta - \frac{2\pi}{3}\right) \\
+       & + i_{kd} L_{bkd} \cos\left(\theta - \frac{2\pi}{3}\right) 
+         - i_{kq} L_{bkq} \sin\left(\theta - \frac{2\pi}{3}\right) \\
+\psi_c =& i_a L_{ca0} + L_{ca2} \cos\left(2\theta - \frac{\pi}{3}\right) 
+         + i_b L_{cb0} + L_{cb2} \cos\left(2\theta - \pi\right) \\
+       & - i_c L_{cc0} + L_{cc2} \cos\left(2\theta + \frac{2\pi}{3}\right) 
+         + i_{fd} L_{cfd} \cos\left(\theta + \frac{2\pi}{3}\right) \\
+       & + i_{kd} L_{ckd} \cos\left(\theta + \frac{2\pi}{3}\right) 
+         - i_{kq} L_{ckq} \sin\left(\theta + \frac{2\pi}{3}\right)
+\end{split}
+$$
 
 The rotor voltage equations are governed by: 
 
-$$\begin{align}e_{fd}&=p\psi_{fd}+R_{fd}i_{fd}\\
-
-0&=p\psi_{kd}+R_{kd}i_{kd}\\ 0&=p\psi_{kq}+R_{kq}i_{kq}\end{align}$$
+$$
+\begin{split}
+e_{fd}&=p\psi_{fd}+R_{fd}i_{fd} \\
+0&=p\psi_{kd}+R_{kd}i_{kd} \\
+0&=p\psi_{kq}+R_{kq}i_{kq}
+\end{split}
+$$
 
 where the individual fluxes are defined as 
 
-$$\begin{align}\psi_{fd}&=L_{ffd}i_{fd}+L_{fkd}i_{kd}-L_{afd}i_a\cos(\theta{})-L_{bfd}i_b\cos(\theta{}-\frac{2\pi{}}{3})-L_{cfd}i_c\cos(\theta{}+\frac{2\pi{}}{3})\\
-
-\psi_{kd}&=L_{fkd}i_{fd}+L_{kkd}i_{kd}-L_{akd}i_a\cos(\theta{})-L_{bkd}i_b\cos(\theta{}-\frac{2\pi{}}{3})-L_{ckd}i_c\cos(\theta{}+\frac{2\pi{}}{3})\\ \psi_{kq}&=L_{kkq}i_{kq}+L_{akq}i_a\cos(\theta{})+L_{bkq}i_b\cos(\theta{}-\frac{2\pi{}}{3})+L_{ckq}i_c\cos(\theta{}+\frac{2\pi{}}{3})\end{align}$$
+$$\begin{split}\psi_{fd}&=L_{ffd}i_{fd}+L_{fkd}i_{kd}-L_{afd}i_a\cos(\theta{})-L_{bfd}i_b\cos(\theta{}-\frac{2\pi{}}{3})-L_{cfd}i_c\cos(\theta{}+\frac{2\pi{}}{3})\\
+\psi_{kd}&=L_{fkd}i_{fd}+L_{kkd}i_{kd}-L_{akd}i_a\cos(\theta{})-L_{bkd}i_b\cos(\theta{}-\frac{2\pi{}}{3})-L_{ckd}i_c\cos(\theta{}+\frac{2\pi{}}{3})\\ \psi_{kq}&=L_{kkq}i_{kq}+L_{akq}i_a\cos(\theta{})+L_{bkq}i_b\cos(\theta{}-\frac{2\pi{}}{3})+L_{ckq}i_c\cos(\theta{}+\frac{2\pi{}}{3})\end{split}$$
 
 Various components of these terms may be zeroed out, or omitted, for different models of the synchronous generator. These terms will need to be handled appropriately to ensure the solver is stable. 
 
 The output power of the stator is defined as: 
 
-$$\displaystyle{}P_t=e_ai_a + e_bi_b + e_ci_c$$
+$$P_t=e_ai_a + e_bi_b + e_ci_c$$
 
 The mechanical components of the synchronous generator are governed by a series of equations relating the electrical and mechanical aspects of the generator. These are computed as: 
 
@@ -205,9 +227,11 @@ $$J=\frac{2H}{\omega_{mech0}^2}VA_{m}$$
 
 $$T_m-T_e=J\frac{d\omega_{mech}}{dt}$$
 
-$$\displaystyle{}P_m=T_m\omega_{mech}$$
+$$P_m=T_m\omega_{mech}$$
 
-and $$\displaystyle{}P_e=T_e\omega_{elec}$$
+and 
+
+$$P_e=T_e\omega_{elec}$$
 
 $$\frac{d\delta}{dt}=\omega_{elec}-\omega_{mech}$$
 
@@ -248,7 +272,7 @@ $$\left[ \Delta I_{a,b,c} \right] = \left[ Jac \right] \left[ \Delta V_{a,b,c} \
 
 Where the matrix $\left[ Jac \right]$ is equal to the bus admittance matrix, except for the diagonal elements that have additional terms to represent ZIP loads [8]. The full generator admittances are incorporated to the bus admittance matrices to represent the machine characteristics. The generator admittance matrices are, according to [9]: 
 
- $$\left[ Y_{Ga,b,ci} \right] = \frac{1}{3}\begin{bmatrix} 1 & 1 & 1 \\ 1 & e^{j 4\pi /3} & e^{j 2\pi /3} \\ 1 & e^{j 2\pi /3} & e^{j 4\pi /3} \\ \end{bmatrix} \begin{bmatrix} Y_{G0i} & 0 & 0 \\ 0 & Y_{G1i} & 0 \\ 0 & 0 & Y_{G2i} \\ \end{bmatrix} \begin{bmatrix} 1 & 1 & 1 \\ 1 & e^{j 2\pi /3} & e^{j 4\pi /3} \\ 1 & e^{j 4\pi /3} & e^{j 2\pi /3} \\ \end{bmatrix}$$
+$$[Y_{Ga,b,ci}] = \frac{1}{3}\begin{bmatrix} 1 & 1 & 1 \\ 1 & e^{j 4\pi /3} & e^{j 2\pi /3} \\ 1 & e^{j 2\pi /3} & e^{j 4\pi /3} \\ \end{bmatrix} \begin{bmatrix} Y_{G0i} & 0 & 0 \\ 0 & Y_{G1i} & 0 \\ 0 & 0 & Y_{G2i} \\ \end{bmatrix} \begin{bmatrix} 1 & 1 & 1 \\ 1 & e^{j 2\pi /3} & e^{j 4\pi /3} \\ 1 & e^{j 4\pi /3} & e^{j 2\pi /3} \\ \end{bmatrix}$$
  
  The symmetry constraint applied to generator buses in the initial static power flow solution is given by [9]: 
 
@@ -281,9 +305,9 @@ DEGOV1 and SEXS models are commonly used in power system industry-grade transien
 
 The simplified exciter system (SEXS) equations are: 
 
-$$V_{err} = V_{set}- average \left( |\left[ V_{Ga,b,c} \right] | \right)$$
+$$V_{err} = V_{set}- average \left( |[ V_{Ga,b,c} \right] | )$$
 
-$$ T_{B} \frac{d x_{b}}{dt} = V_{err}- x_{b}$$
+$$T_{B} \frac{d x_{b}}{dt} = V_{err}- x_{b}$$
 
 $$V_{R}= x_{b}+ T_{C} \frac{d x_{b}}{dt}$$
 
@@ -293,29 +317,29 @@ $$E_{MIN} \leq E_{fd} \leq E_{MAX}$$
 
 The diesel governor DGOV1 equations are: 
 
-  * Electric control box
+  * Electric control box:
 
-  $$T_{1} T_{2} \frac{d x_{2}}{dt} = \omega_{set}- \omega_{i}- R \cdot y_{throttle}- x_{1}- x_{2}$$
+$$T_{1} T_{2} \frac{d x_{2}}{dt} = \omega_{set}- \omega_{i}- R \cdot y_{throttle}- x_{1}- x_{2}$$
 
-  $$ \frac{d x_{1}}{dt} = x_{2}$$
+$$\frac{d x_{1}}{dt} = x_{2}$$
 
-  $$\displaystyle{} y_{gov} = T_{3} x_{2}+ x_{1}$$
+$$\displaystyle{} y_{gov} = T_{3} x_{2}+ x_{1}$$
 
-  * Actuator
+  * Actuator:
 
-  $$T_{5} \frac{d x_{5}}{dt} = K \cdot y_{gov}- x_{5}$$
+$$T_{5} \frac{d x_{5}}{dt} = K \cdot y_{gov}- x_{5}$$
 
-  $$T_{6} \frac{d x_{6}}{dt} = x_{5}- x_{6}$$
+$$T_{6} \frac{d x_{6}}{dt} = x_{5}- x_{6}$$
 
-  $$\frac{d x_{4}}{dt} = x_{6}$$
+$$\frac{d x_{4}}{dt} = x_{6}$$
 
-  $$T_{MIN} \leq x_{4} \leq T_{MAX}$$
+$$T_{MIN} \leq x_{4} \leq T_{MAX}$$
 
-  $$\displaystyle{} y_{throttle}= T_{4} x_{6}+ x_{4}$$
+$$\displaystyle{} y_{throttle}= T_{4} x_{6}+ x_{4}$$
 
-  * Diesel engine
+  * Diesel engine:
   
-  $$T_{mechi} = delay \left( y_{t}, T_{D} \right)$$
+$$T_{mechi} = delay \left( y_{t}, T_{D} \right)$$
 
 ### Traditional Transmission-level Implementation Comparison
 
@@ -323,7 +347,7 @@ Under traditional, positive-sequence, balanced implementation, the positive-sequ
 
 With the ability to collapse the equations to balanced forms, and as a result ignore the $i_0$ term of the $dq0$ transformation, the equations for implementation become significantly reduced. Since everything is transferred to the $dq0$ plane, much of the formulation occurs in that notation. Table 2 will show the positive-sequence version compared to the unbalanced three-phase version above. Equations may be simplified for space using notation from 1. 
 
-Table 2 - Traditional vs. unbalanced implementation  
+##### Table 2 - Traditional vs. unbalanced implementation  
 
 Quantity | Traditional | Unbalanced   
 ---|---|---  
@@ -425,7 +449,7 @@ Inclusion in the microgrids-enabled dynamic solver capability will be handled du
 
 Most of the inputs to the microgrids capability will be handled by the solver directly, with links to appropriate objects. One "extraneous" situation will require an external input into the dynamic solver. This inputs is: 
 
-Table 3 - Solver inputs  
+##### Table 3 - Solver inputs  
 
 Variable | Type | Units | Definition   
 ---|---|---|---  
@@ -439,14 +463,14 @@ In cases of just being attached to a larger system, it is recommended than an ov
 
 Most of the added capabilities will be handled at the specific objects. However, a few global outputs will be available from the dynamic solver. These will include: 
 
-Table 4 - Solver outputs  
+##### Table 4 - Solver outputs  
 
 Variable | Type | Units | Definition   
 ---|---|---|---  
-`frequency` | double | Hz | Current estimated synchronous frequency of the system   
-`frequency_change` | double | Hz/sec | Change in frequency per second   
-`observed_generation` | double | Watts | Total power into the system observed   
-`observed_load` | double | Watts | Total load power observed on the system   
+**frequency** | double | Hz | Current estimated synchronous frequency of the system   
+**frequency_change** | double | Hz/sec | Change in frequency per second   
+**observed_generation** | double | Watts | Total power into the system observed   
+**observed_load** | double | Watts | Total load power observed on the system   
   
 These values are published mainly for recorder objects to capture them for overall GridLAB-D™ data output. The nature of the dynamic solver will require the creation of a new, frequency-capable recorder-like capability to capture the transient effects on the system. These properties will be among those recorded. 
 
@@ -454,24 +478,24 @@ These values are published mainly for recorder objects to capture them for overa
 
 To facilitate data operations between the individual objects and the dynamic solver capability, a common data structure will be used to pass information back and forth. This data structure should contain information and pointers to the following elements: 
 
-Table 5 - Solver interface elements  
+##### Table 5 - Solver interface elements  
 
 Variable | Definition   
 ---|---  
-`central_frequency` | Pointer to the central synchronous frequency solution of the system   
-`central_frequency_change` | Pointer to central frequency change between previous and current timestep   
-`timestamp` | Pointer to the current timestamp of the solution   
-`timestamp_change` | Pointer to the difference between the last and current timestamp   
-`inertia` | Pointer to accumulated inertia of the system   
-`phases` | Phase information - encoded like NR solver (0x04 = A, 0x02 = B, 0x01 = C)   
-`voltage` | Pointer to complex voltage values of the object  
-`current` | Pointer to complex current values of the object  
-`current_contrib` | Pointer to complex current contributions of the object  
-`power` | Pointer to complex power contributions of the object  
-`impedance` | Pointer to complex impedance contributions of the object  
-`frequency` | Pointer to local frequency solution associated with the object  
-`frequency_change` | Pointer to frequency change in the local frequency solution between previous and current timestep   
-`machine_parameters` | Pointer to machine parameters - includes exciter, pss, and governor properties   
+**central_frequency** | Pointer to the central synchronous frequency solution of the system   
+**central_frequency_change** | Pointer to central frequency change between previous and current timestep   
+**timestamp** | Pointer to the current timestamp of the solution   
+**timestamp_change** | Pointer to the difference between the last and current timestamp   
+**inertia** | Pointer to accumulated inertia of the system   
+**phases** | Phase information - encoded like NR solver (0x04 = A, 0x02 = B, 0x01 = C)   
+**voltage** | Pointer to complex voltage values of the object  
+**current** | Pointer to complex current values of the object  
+**current_contrib** | Pointer to complex current contributions of the object  
+**power** | Pointer to complex power contributions of the object  
+**impedance** | Pointer to complex impedance contributions of the object  
+**frequency** | Pointer to local frequency solution associated with the object  
+**frequency_change** | Pointer to frequency change in the local frequency solution between previous and current timestep   
+**machine_parameters** | Pointer to machine parameters - includes exciter, pss, and governor properties   
   
 `NULL` fields will be ignored as "no equipment present" to the solver. The pointer for this data structure will be passed to the dynamic solver capability during the solver's initialization routine.[R2.1][R2.2]
 
@@ -557,13 +581,13 @@ The completion of this test will gauge the numerical stability of the microgrids
 
 ![Simple Two-machine Test System](../../../../../images/300px-Two-machine_single-line_System.png)
 
-Figure 1. Simple Two-machine Test System
+##### Figure 1. Simple Two-machine Test System
 
 The two machine, single line (TWSL) system (Figure 1) will be used to test the simulation of actual dynamics on the system. All devices are full three-phase. Overhead lines connecting the two generators and the load follow the format of the IEEE 4-node test feeders 5. All test results will be validated against a DigSilent PowerFactory simulation to ensure the three-phase, unbalanced power is being handled correctly. 
 
 The two machine, single line system will be used in a variety of ways to test and validate the results. For all of the testing scenarios, Gen 1 and Gen 2 are assumed to be 100 MVA diesel generators. Unless otherwise specified, both generators are identical. Both incorporate DC exciters and droop-control governors with the following parameters: 
 
-Table 6 - Two machine, single line system parameters  
+##### Table 6 - Two machine, single line system parameters  
 
 Variable | Value   
 ---|---  
@@ -584,7 +608,7 @@ $B_{EX}$ | 1.55
   
 The actual tests are defined as: 
 
-Table 7 - Two machine, single line scenarios  
+##### Table 7 - Two machine, single line scenarios  
 
 Scenario | Testing | Description   
 ---|---|---  
@@ -602,7 +626,7 @@ Successful completion of these tests, as well as the successful validation again
 
 ![Basic Two-machine Test System](../../../../../images/300px-Two-machine_three-line_System.png)
 
-Figure 2. Basic Two-machine Test System
+##### Figure 2. Basic Two-machine Test System
 
 The two machine, three line (TWTL) system (Figure 2) will be used to test the simulation of actual dynamics on the system. Many parameters will follow those of the TWSL system. All devices are full three-phase. Overhead lines connecting the two generators and the load follow the format of the IEEE 4-node test feeders 5. All test results will be validated against a DigSilent PowerFactory simulation to ensure the three-phase, unbalanced power is being handled correctly. 
 
@@ -614,7 +638,7 @@ The actual tests for the two machine, three line system will be identical to tho
 
 ![Adapted IEEE 34-bus Test System](../../../../../images/300px-IEEE34Modified.png)
 
-Figure 3. Adapted IEEE 34-bus Test System 6
+##### Figure 3. Adapted IEEE 34-bus Test System 6
 
 The adapted 34-bus test feeder (Figure 3) will serve as the overall test and validation system for the initial microgrids implementation. Since wind turbine generators and energy storage are not part of the initial microgrids implementations, these devices will be substituted with equivalent diesel generators. All simulation results will be validated against values obtained for an equivalent model run in the DigSilent software. 
 
@@ -643,7 +667,7 @@ The adapted 34-bus test feeder (Figure 3) will serve as the overall test and val
 TODO - Incomplete - Super-second implementation details will go here - AVR and Drooping 
 
 
-# See also
+# Related Concepts:
 
   * [User's manual]
   * [Requirements]

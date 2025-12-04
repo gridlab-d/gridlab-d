@@ -223,7 +223,7 @@ The only valid unit product syntax is an asterisk. In the past users and program
 
 TODO - Check status - Although the `.` syntax is not valid now, it should be acceptable as a multiplication on the appropriate side of the `/`. For example `a.b/c.d` should be the same as `a*b/c/d`. This would be very much more user friendly and quite easy to implement. 
 
-## See also
+## Related Concepts:
 
   * double
   * complex

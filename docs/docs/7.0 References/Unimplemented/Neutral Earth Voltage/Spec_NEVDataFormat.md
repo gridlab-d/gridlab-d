@@ -27,7 +27,7 @@ Note that `terminals`, `voltage`, and `constant_impedance` utilize the syntax of
 
 Inside the source code, all interfacing to the NEV solver will be done through a common data structure. The structure will follow a form similar to the version 3.1 and earlier Newton-Raphson structure and will be divided into two main structures: a node/bus structure and a link/branch structure. Sparse matrix operations will store the data in the `Y_NEV` structure defined in Table 1. 
 
-Table 1 - Sparse Matrix Storage Structure - `Y_NEV` Property | C/C++ Type | Definition   
+##### Table 1 - Sparse Matrix Storage Structure - `Y_NEV` Property | C/C++ Type | Definition   
 ---|---|---  
 `matrix_association` | `int` | Matrix designator for this entry (islands)   
 `row_ind` | `unsigned int` | Row location of sparse matrix element   
@@ -38,7 +38,7 @@ Table 1 - Sparse Matrix Storage Structure - `Y_NEV` Property | C/C++ Type | Defi
 
 The elements of the node/bus structures are defined in Table 2. Node data will be formed in a structure typed `NEVbusdata`. Bolded items are internal working variables for the TCIM-Newton-Raphson method [1], but will be allocated within the [node] and [link] objects themselves. 
 
-Table 2 - NEV Node/bus Program Data Structure - `NEVbusdata` Property | C/C++ Type | Definition   
+##### Table 2 - NEV Node/bus Program Data Structure - `NEVbusdata` Property | C/C++ Type | Definition   
 ---|---|---  
 `name` | `char *` | Pointer to name field of [node] object.   
 `obj` | `OBJECT *` | Pointer to object header of [node] object.   
@@ -70,7 +70,7 @@ In an effort to compartmentalize the NEV code, two update functions will be perf
 
 The elements of the link/branch structures are defined in Table 3. Link data will be formed in a structure typed `NEVbranchdata`. Bolded items are internal working variables for the TCIM-Newton-Raphson method [1], but will be allocated within the [node] and [link] objects themselves. 
 
-Table 3 - NEV Link/bus Program Data Structure - `NEVbranchdata` Property | C/C++ Type | Definition   
+##### Table 3 - NEV Link/bus Program Data Structure - `NEVbranchdata` Property | C/C++ Type | Definition   
 ---|---|---  
 `name` | `char *` | Pointer to name field of [link] object.   
 `obj` | `OBJECT *` | Pointer to object header of [link] object.   
@@ -95,7 +95,7 @@ Many of the elements of the data structure are utilized by the underlying NEV so
 # References
 
   1. Garcia, P, J.L. Pereira, S. Carneiro Jr., V. da Costa, and N. Martins, "Three-Phase Power Flow Calculations Using the Current Injection Method," _IEEE Transactions on Power Systems_ , vol. 15, no. 2, May 2000, pp. 508-514.
-# See also
+# Related Concepts:
 
   * [Overview Page]
   * [Requirements]

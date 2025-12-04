@@ -42,7 +42,7 @@ The slave instances are started by another instance of GridLAB-D™ and include 
 
 The --slave parameter's input token is a string with a "host:port" syntax. If this string is "localhost:resource name", GridLAB-D™ will start in shared memory mode and look for the specified shared memory resource. Otherwise, it will attempt to open a TCP socket to the specified host. By default, the 'resource name' is internally generated, and the socket port randomly selected by the OS. 
 
-# See Also
+# Related Concepts:
 
   * Multirun mode
     * Directives

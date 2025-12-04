@@ -42,7 +42,7 @@ and it may be set to a new value
 
 which will implicitly restart the simulation if the new _datetime_ is greater than the current clock value. 
 
-# See also
+# Related Concepts:
 
   * timestamp
   * clock

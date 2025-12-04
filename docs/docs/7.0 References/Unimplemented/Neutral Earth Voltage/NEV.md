@@ -93,7 +93,7 @@ Assumes ground is infinite plane, zero potential plane
 
 ## Variables
 
-Table 1 - Equation Notation  Variable | Definition   
+##### Table 1 - Equation Notation  Variable | Definition   
 ---|---  
 $\displaystyle{}V_{i_{mg}}$ | Voltage at node i, phase m relative to true ground (V)   
 $\displaystyle{}I_{i_{mg}}$ | Voltage at node i, phase m relative to true ground (A)   
@@ -223,7 +223,7 @@ Assumes ground is infinite plane, zero potential plane
 
 ## Variables
 
-Table 1 - Equation Notation  Variable | Definition   
+##### Table 1 - Equation Notation  Variable | Definition   
 ---|---  
 $\displaystyle{}z_{ij_{(p)}}$ | Short circuit impedance between windings i and j, phase p (%)   
 $\displaystyle{}z_{base}$ | Impedance base to convert to a 1V base, equal to $\frac{1}{S_{base}}$  
@@ -698,7 +698,7 @@ Underground distribution lines will be modeled in a flexible way such that not o
 
 ## Variables
 
-Table 1 - Equation Notation  Variable | Definition   
+##### Table 1 - Equation Notation  Variable | Definition   
 ---|---  
 $\displaystyle{}V_{i_{mg}}$ | Voltage at node i, phase m relative to true ground (V)   
 $\displaystyle{}I_{i_{mg}}$ | Voltage at node i, phase m relative to true ground (A)   

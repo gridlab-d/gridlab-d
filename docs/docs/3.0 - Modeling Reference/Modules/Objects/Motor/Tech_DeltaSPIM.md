@@ -146,11 +146,11 @@ In order to verify that the motor model works as intended it was subjected to a 
 
 [![Top plot is the rotor speed of the motor. Middle plot is the electrical torque on the motor, and the bottom plot is the mechanical torque applied to the motor.](../../../../../images/400px-SPIM_plot_1.png)](/wiki/File:SPIM_plot_1.png)
 
-Figure 1. Top plot is the rotor speed of the motor. Middle plot is the electrical torque on the motor, and the bottom plot is the mechanical torque applied to the motor.
+##### Figure 1. Top plot is the rotor speed of the motor. Middle plot is the electrical torque on the motor, and the bottom plot is the mechanical torque applied to the motor.
 
 [![Top plot is voltage magnitude applied to the motor. Next plot is frequency at the motor. Next plot is real current drawn by the motor and last is the real power drawn by the motor](../../../../../images/400px-SPIM_plot_2.png)](/wiki/File:SPIM_plot_2.png)
 
-Figure 2. Top plot is voltage magnitude applied to the motor. Next plot is frequency at the motor. Next plot is real current drawn by the motor and last is the real power drawn by the motor
+##### Figure 2. Top plot is voltage magnitude applied to the motor. Next plot is frequency at the motor. Next plot is real current drawn by the motor and last is the real power drawn by the motor
 
 ## Motor State of Development
 

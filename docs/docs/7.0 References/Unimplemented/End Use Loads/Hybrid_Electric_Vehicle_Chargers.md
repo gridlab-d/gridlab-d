@@ -24,13 +24,13 @@ The **evcharger** simulation is based on demand state profile of the vehicle. Wh
 ![EV/PHEV trip state diagram](../../../../images/300px-Slide1.PNG)
 
 
-Figure 1 - EV/PHEV trip state diagram
+##### Figure 1 - EV/PHEV trip state diagram
 
 When away, the probability of a return is used to determine when the vehicle returns, as shown in Figure 2. 
 
 ![Daily EV/PHEV arrival/departure probabilities](../../../../images/300px-Slide2.PNG)
 
-Figure 2 - Daily EV/PHEV arrival/departure probabilities
+##### Figure 2 - Daily EV/PHEV arrival/departure probabilities
 
 The charger power can have one of three levels: 
 

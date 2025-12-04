@@ -1,47 +1,190 @@
 
-# ETP closed form solution
-TODO: Check equation numbering for consistency
+# Equivalent Thermal Parameter Model
 
-Note, this documentation was converted from a Word document and Excel spreadsheet implementation. The methodology described is the same as used in the GridLAB-D™ code base (see [Caveats] below), although, over time additions have been made to allow for greater flexibility. Additionally modifications have been made to speed up the solution process as implemented in code. The solution methodology, as described here and implemented in GridLAB-D™ was validated against the referenced spreadsheet. 
+The model approach that is used to estimate thermal loads is called an equivalent thermal parameter (ETP) modeling approach. Because the ETP approach has been proven to provide reasonably model the residential (and small commercial building) loads and energy consumption and also because it is based on first principles, this modeling approach has been chosen for the current work (Sonderegger 1978; Subbarao 1981; Wilson et al. 1985; Pratt and Taylor 1994).
 
-## Synopsis
+## House
 
-The solution for the indoor air temperature and mass temperatures of the ETP model shown in Figure 1 is given. 
+Thermal loads are implemented using the ETP model, which determines the heat flow between an inner and outer air mass and one solid mass embedded within the inner air mass. 
 
-[![Equivalent Thermal Parameters Circuit Modeled by House-e](../../../../images/300px-Residential_module_users_guide_figure_1.png) ](/wiki/File:Residential_module_users_guide_figure_1.png)
+The basic ETP parameters are 
 
-Figure 1. Equivalent Thermal Parameters Circuit Modeled by House-e.
+  * $U_a$: the conductance between the inner and outer air mass
+  * $C_a$: the heat capacity of the internal air mass
+  * $C_m$: the heat capacity of the internal solid mass
+  * $U_m$: the conductance between the inner air mass and the inner solid mass
+  * $T_o$: the outer air temperature
+  * $T_i$: the inner air temperature
+  * $T_m$: the inner mass temperature
+  * $Q_a$: the heat flux to the interior air mass
+  * $Q_m$: the heat flux to the interior solid mass (this is not supported yet)
+  
+The solution to the ETP model is based on the two ordinary differential equations (ODEs) 
 
-## General Solution to ETP model
+$$\begin{align} \frac{d T_i}{d t} & = \frac{1}{C_a} \left [ T_m U_m - T_i \left ( U_a + U_m \right ) +Q_a +T_0 U_a \right ] \\\ \frac{d T_m}{d t} & = \frac{1}{C_m} \left [ U_m \left ( T_i - T_m \right ) + Q_m \right ] \end{align}$$
 
-Given at the time $t$: 
+The general first-order ODEs are found by inspection: 
 
-$T_A$ is the indoor air temperature, and
-$T_M$ is the building mass temperature
+$$\begin{align} \dot T_i & = c_1 T_i + c_2 T_m + c_3 \\\ \dot T_m & = c_4 T_i + c_5 T_m + c_6 \end{align}$$
 
-and the constant values 
+where the constants $c_1$ through $c_6$ are 
 
-$T_O$ is the outdoor air temperature,
-$Q_A$ is the heat added to the indoor air,
-$Q_M$ is the heat added to the building mass,
-$U_A$ is the building envelop conductivity to the indoor air,
-$C_A$ is the heat capacity of the indoor air,
-$H_M$ is the building mass conductivity to the indoor air, and
-$C_M$ is the heat capacity of the building mass.
+  * $c_1 = -\frac{U_a + U_m}{C_a}$
+  * $c_2 = \frac{U_m}{C_a}$
+  * $c_3 = \frac{Q_a + U_a T_0}{C_a}$
+  * $c_4 = \frac{U_m}{C_m}$
+  * $c_5 = -\frac{U_m}{C_m}$
+  * $c_6 = \frac{Q_m}{C_m}$
 
-The heat balance on $T_A$ is 
+The general form of the second-order ODE is given by 
 
-$$0 = Q_A - U_A ( T_A - T_O ) - H_M ( T_A - T_M ) - C_A \frac{d}{dt}T_A\qquad (1)$$
+$$p_1 \ddot T_i + p_2 \dot T_i + p_3 T_i + p_4 = 0$$
 
-Rearranging (1) in the form for solving a differential equation: 
+where 
 
-$$0 = Q_A - ( U_A + H_M ) T_A + U_A T_O + H_M T_M - C_A \frac{d}{dt}T_A\qquad (1.1)$$
+  * $p_1 = \frac{1}{c_2}$
+  * $p_2 = -\frac{c_1+c_5}{c_2}$
+  * $p_3 = \frac{c_1 c_5}{c_2}-c_4$
+  * $p_4 = \frac{c_3 c_5}{c_2}-c_6$
 
-$$\frac{d}{dt}T_A +\frac {U_A+H_M} {C_A} T_A - \frac {H_M} {C_A} T_M - \frac {U_A} {C_A} T_O - \frac {Q_A} {C_A} = 0\qquad (1.2)$$
+where 
 
-The heat balance on $T_M$ is 
+  * $r_1$ and $r_2$ are the roots of $p_1 r^2 + p_2 r + p_3 = 0$,
+  * $k_1 = \frac{r_2 T_{i,0} + r_2 p_4 / p_3 - \dot T_{i,0}}{r_2-r_1}$,
+  * $ k_2 = \frac{T_{i,0} -r_1 k_1}{r_2}$
+  * $t$ is the elapsed time,
+  * $T_{i,0}$ is the initial value of $T_i$, and
+  * $\dot T_{i,0} = c_1 T_{i,0} + c_2 T_{m,0} + (c_1 + c_2) T_0 + c_7$
 
-$$0 = Q_M - H_M ( T_M - T_A ) - C_M \frac{d}{dt}T_M\qquad (2)$$
+with 
+
+  * $c_7 = \frac{Q_a}{C_a}$, and
+  * $T_{m,t} = k_1 \frac{r_1-c_1}{c_2} + k_2 \frac{r_2-c_1}{c_2} - \frac{p_4}{p_3} + \frac{c_6}{c_2}$
+
+## Modeling Assumptions
+
+The house model assumes that only envelope characteristics, solar gain through windows and internal gain contribute to the HVAC load. Only air conditioners and heat pumps are modeled in the current implementation. 
+
+## Modeling Approach
+
+The electric circuit analog of an ETP model used to simulate heating and cooling loads in a typical residence is shown in Figure 3. The heat transfer properties are represented by equivalent electrical components with associated parameters for modeling the thermostatically controlled heating, ventilation, and air-conditioning (HVAC) system. 
+
+![ETP Representation of the Typical Residences](../../../../images/300px-Residential_Module_Guide_Figure_3.png)
+
+##### Figure 1 – ETP Representation of the Typical Residences
+
+where, 
+
+  * $C_{air}$ – air heat capacity (Btu/°F or J/°C)
+  * $C_{mass}$ – mass (of the building and its content) heat capacity (Btu/°F or J/°C)
+  * $UA_{wall}$ – the gain/heat loss coefficient (Btu/°F.h or W/°C) to the ambient
+  * $UA_{mass}$ – the gain/heat loss coefficient (Btu/°F.h or W/°C) between air and mass
+  * $T_o$ – CLTDc \+ Tair (°F or °C)
+  * $T_{ambient}$ – ambient temperature (°F or °C)
+  * $T_{air}$ – air temperature inside the house (°F or °C)
+  * $T_{mass}$ – mass temperature inside the house (°F or °C)
+  * $Q_{HVAC}$ – heat rate for HVAC (Btu/hr or W)
+  * $Q_{internal}$ – heat rate from other appliance, plug loads, lights and people in the residence (Btu/h or W)
+  * $Q_{solar}$ – heat gain from solar (Btu/h or W)
+
+A state space description of the ETP model is: 
+
+$$\begin{align} \frac{dx}{dt} & = A x + B u \\\ y & = C x + D u \end{align}$$
+
+where (**there's something important missing here: A, B, C, D are not described**) 
+
+  * $R_1 = 1/UA_{insul}$
+  * $R_2 = 1/UA_{mass}$
+  * $Q = Q_{HVAC} + Q_{solar} + Q_{internal}$
+
+Because there is wide diversity in the thermal parameters (UA, mass, efficiency of equipment, and over sizing factor) used to compute the load across homes, ranges can be provided for these parameters. Because of regional difference in construction practices and wide variation even within a region, a range of values can be assigned for critical parameters based on metering studies (Pratt et al. 1990). While estimating energy consumption of individual homes, the thermal parameters are randomly (from the established range using known distribution, for example, uniform) assigned to each home. 
+
+The internal gains in the home are computed external to the house object and are assumed to be inputs to the ETP model. These gains represent heat from other appliances (such as range, microwave), plug loads, lights, and people. 
+
+Solving the ETP model (simultaneously for Tair and Tmass), we can obtain the cooling/heating load of an individual home as a function of time. The energy consumption to meet the comfort needs in the home can then be computed by converting the thermal loads by using typical manufacturer-provided air conditioner part load performance data. Using the same simulation model, the energy consumption of a population of homes can also be computed. While simulating a population of homes, the energy consumption for each home is computed simultaneously at each time step. Therefore, we get an accurate representation of distribution feeder load when electric loads are aggregated. 
+
+A single ETP model with different thermal parameters can be used to represent all homes in the population for simplicity, or if there is a need, multiple ETP models with different thermal parameters can be used. Therefore, in addition to changing input parameters while simulating a population of homes, the ETP model can also be changed to accurately represent a given building stock. This ensures that it accurately reproduces the effects of load diversity. 
+
+## Limitation and Future Improvements
+
+The approach described in the previous section only accounts for sensible loads. This does not lead to a significant error in heating load calculation (because most heating load is sensible); it does lead to some error in the estimation of the cooling load. 
+
+## ETP closed form solution
+
+The methodology described below is the same as used in the GridLAB-D™ code base (see [Caveats](#caveats)), although, over time additions have been made to allow for greater flexibility. Additionally modifications have been made to speed up the solution process as implemented in code. The solution methodology, as described here and implemented in GridLAB-D™ was validated against the referenced spreadsheet. 
+
+[![Equivalent Thermal Parameters Circuit Modeled by House-e.](../../../../images/300px-Residential_module_users_guide_figure_1.png)](/wiki/File:Residential_module_users_guide_figure_1.png)
+
+##### Figure 1. Equivalent Thermal Parameters Circuit Modeled by House-e.
+
+For the thermal circuit in Figure 1, a heat balance (conservation of energy) can be written for the air temperature node ($T_A$) as: 
+
+$Q_A - U_A (T_A-T_O) - H_M (T_A-T_M) - C_A \frac{dT_A}{dt} = 0 \qquad\qquad(1)$
+
+The heat balance for the mass temperature node ($T_M$) can be written as: 
+
+$Q_M - H_M (T_M-T_A) - C_M \frac{dT_M}{dt} = 0\qquad\qquad(2)$
+
+As shown in the ETP closed form solution, Equation (1) can be solved for $T_M$, differentiated with respect to time to provide $dT_M/dt$, and both of these substituted into (2) to form a second order linear differential equation in $T_A$ of the form 
+
+$a \frac{d^2T_A}{dt^2} + b \frac{dT_A}{dt} + c\ T_A = d\qquad\qquad(3)$
+
+where: 
+
+  * $a = \frac{C_M C_A}{H_M}$
+  * $b = \frac{C_M (U_A + H_M)}{H_M} + C_A$
+  * $c = U_A$
+  * $d = Q_M + Q_A + U_A T_O$
+
+which has the solution with known, constant boundary conditions $T_O$, $Q_A$, and $Q_M$ and initial conditions at time $t=0$ of $T_{A_o}$ and $dT_{A_o}/dt$
+
+$T_A = A_1 e^{r_1 t} + A_2 e^{r_2 t} + \frac{d}{c}\qquad\qquad(4)$
+
+where: 
+
+  * $r_1 = \frac{-b + \sqrt{b^2-4ac}}{2a}$
+  * $r_2 = \frac{-b - \sqrt{b^2-4ac}}{2a}$
+  * $A_1 = \frac{r_2 T_{A_o} - \frac{dT_{A_o}}{dt} - r_2 \frac{d}{c}}{( r_2 - r_1 )}$
+  * $A_2 = T_{A_o} - \frac{d}{c} - \frac{r_2 T_{A_o} - \frac{dT_{A_o}}{dt} - r_2 \frac{d}{c}}{( r_2 - r_1 )}$
+
+The initial condition $T_{A_o}$ is known as the final condition of $T_A$ from previous time step. However, at any time step at which the boundary conditions $T_O$, $Q_A$, or $Q_M$ have changed (i.e. the weather, internal gains, heating/cooling output) from the previous time interval, then the new air temperature trajectory at the beginning of the time step can be derived from Equation (1) as 
+
+$$\frac{dT_{A_o}}{dt} = \frac{H_M}{C_A T_{M_o}} - \frac{U_A + H_M}{C_A T_{A_o}} + \frac{U_A}{C_A T_O} + \frac{Q_A}{C_A}\qquad\qquad(5)$$
+
+Then, differentiating Equation (4) and substituting it and Equation (4) into Equation (1) yields a solution for $T_M$ of the form: 
+
+$$T_M = A_1 A_3 e^{r_1 t} + A_2 A_4 e^{r_2 t} + g + \frac{d}{c}\qquad\qquad(6)$$
+
+where: 
+
+  * $g = \frac{Q_M}{H_M}$
+  * $A_3 = \frac{r_1 C_A}{H_M} + \frac{U_A + H_M}{H_M}$
+  * $A_3 = \frac{r_2 C_A}{H_M} + \frac{U_A + H_M}{H_M}$
+  
+## Initial Room and Mass Air Temperature
+
+When initializing a House_E simulation, the temperature and weather history prior to the first time step is unknown. First assume the house is at the equilibrium air temperature (at steady state with the heating and cooling system off, i.e. in balance). Equilibrium is defined by $dT_A/dt_o = 0$. Then, by differentiating (4), at the beginning of the initial time step, it can be shown that 
+
+$$T_{A_{eq}} = \frac{d}{c} = T_O + \frac{Q_M + Q_A}{U_A}\qquad\qquad(7)$$
+
+and the corresponding mass temperature at equilibrium is 
+
+$$T_{M_{eq}} = T_{A_{eq}} + \frac{Q_M}{H_M}\qquad\qquad(8)$$
+
+If the heating system would be “on” (based on the thermostat heating set point; see the section Heating/Cooling Thermostat Operations) at the condition $T_A = T_{A_{eq}}$, then the initial conditions are best approximated as 
+
+$T_{A_o} = T_{M_o} = T_{set\ heat}\qquad\qquad(9)$ _# Heating system “on” at_ $T_A = T_{A_{eq}}$
+
+If the cooling system would be “on” (based on the thermostat cooling set point) at the condition $T_A = T_{A_{eq}}$, then the initial conditions are best approximated as 
+
+$T_{A_o} = T_{M_o} = T_{set\ cool}\qquad\qquad(10)$ _# Cooling system “on” at_ $T_A = T_{A_{eq}}$
+
+The time of day when either of these approximate initial conditions is most correct is when the conditions in the house have been stable for a long period of time. So, starting the simulation at midnight may be a good choice. An often better choice would be the earlier of sunrise or just prior to a morning thermostat change. 
+
+If neither the heating or cooling system would be “on” at the condition $T_A = T_{A_{eq}}$, then the initial conditions are best approximated as 
+
+$T_{A_o} = T_{A_{eq}}\qquad\qquad(11)$ _# Heating/cooling system “off” at_ $T_A = T_{A_{eq}}$
+$T_{M_o} = T_{M_{eq}}\qquad\qquad(12)$
 
 ### Derivation of ETP second-order ODE
 
@@ -227,8 +370,8 @@ $$g(t) = g_0 + \Delta g \left ( t + \frac{C_M}{H_M} \right )\qquad (3.3g)$$
 
 where 
 
-$ g_0 = U_A T_O(0) + \Delta g \frac{C_M}{H_M} \,$
-$ \Delta g = U_A \frac{T_O(\Delta t)-T_O(0)}{\Delta t}$
+$g_0 = U_A T_O(0) + \Delta g \frac{C_M}{H_M} \,$
+$\Delta g = U_A \frac{T_O(\Delta t)-T_O(0)}{\Delta t}$
 
 and $T_O(0)$ and $T_O(\Delta t)$ are the outdoor air temperatures at time $t=0$ and time $t=\Delta t$, respectively. 
 
@@ -377,3 +520,74 @@ Only the indoor air and mass temperature solution for fixed outdoor air and heat
 
 
   * [RG Pratt, **ETP Solution** , _Excel Workbook_ , 5/27/2008 (edited later)](https://github.com/gridlab-d/design/blob/master/ETP/)
+
+
+# TODO:
+
+TODO - Relevant - Should this go somewhere or is it no longer relevant?  
+
+### **Heat Loss Coefficient ( $U_A$)**
+
+Compute exterior surface areas: 
+
+  Define the following, based on rectangular geometry. Let x = width, y = depth.
+  Then the aspect ratio is $R = y / x$
+  The floor area is $A = x y n$
+
+  and the volume is $V = A h$
+
+The gross exterior wall area ($A_{wt}$) can be derived by introducing the perimeter (p), as follows: 
+
+$$y\ x = A / n$$
+
+$$y = R\ x$$
+
+$$R\ x^2 = A / n$$
+
+$$x^2 = \frac{A}{n R}$$
+
+$$x = \sqrt{\frac{A}{nR}}$$
+
+$$p\ = 2x + 2y = 2x + 2Rx = 2x (1 + R)$$
+
+$$p\ = 2 (1 + R)\sqrt{\frac{A}{nR}} $$
+
+$$A_{wt} = n\ h\ p $$
+
+Then   
+Equation | Explanation  
+---  | -- |
+| $A_{wt} = 2 n h (1 + R) \sqrt{\frac{A}{nR}}$ | The gross exterior wall area ($A_{wt}$)   
+| $A_g = WWR\ A_{wt}\ EWR$ | The gross window area ($A_g$)   
+| $A_d = n_d\ A_{1d}$ | The total door area ($A_d$)   
+| $A_w = (A_{wt}-(A_g + A_d))\ EWR$ | The net exterior wall area ($A_w$)   
+| $A_c = \frac{A}{n} ECR$ | The net exterior ceiling area ($A_c$)   
+| $A_f = \frac{A}{n} EFR$ | The net exterior floor area ($A_f$)   
+  
+The total heat loss coefficient (conductance), $U_A$, for the house (the last term is for air infiltration); the defaults produce $U_A$ = 522.1 Btu/°F.hr 
+
+$$U_A = A_g U_g + \frac{A_d}{R_d} + \frac{A_w}{R_w} + \frac{A_c}{R_c} + \frac{A_f}{R_f} + 0.018 A h I $$
+
+    
+!!! note
+
+    0.018 is the volumetric heat capacity of air at standard conditions (Btu/°F.ft³std-air-pressure)
+
+### **Interior Mass Surface Conductance ( $H_m$)**
+
+Surface area is estimates as total exterior walls (less doors and windows) + interior walls + ceilings 
+
+$$H_m = h_s\ (\frac{A_w}{EWR}) + A_{wt} IWR + \frac{A_c n}{ECR}$$
+
+### **Total “Air” Mass ( $C_a$)**
+
+Based on tuning to typical home heating system cycling times, the “air mass” seems to be well approximated as 3 times the volumetric capacitance of the interior air volume. 
+
+$C_a = 3\ (0.018 A\ h)$ _# Short-cycle thermal mass_
+
+### **Total Thermal Mass ( $C_m$)**
+
+$C_m = A\ m_f - 2\ (0.018 A\ h)$ # Thermal mass (daily cycle), less that added to the “air” mass
+
+
+

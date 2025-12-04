@@ -257,7 +257,7 @@ _Other members_
    |  |  |  |  |  |  
 --|--|--|--|--|
 autosize | (bool) | ∈ {TRUE,FALSE} | FALSE | Enables automatic sizing of arrays   
-load | (enduse) |  |  | Electric end use load composition   
+load | (end use) |  |  | Electric end use load composition   
   
 ### Default HVAC Controller
 

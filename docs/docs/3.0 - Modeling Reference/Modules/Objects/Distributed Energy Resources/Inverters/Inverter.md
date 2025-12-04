@@ -207,7 +207,7 @@ The values of these parameters is per unit. V_base is used to convert the voltag
 
 ## Bugs
 
-## See Also
+## Related Concepts:
 
   * Modules
     * generators

@@ -153,7 +153,7 @@ At least one database object must defined for recorder, player, and collector ob
 
 The database object was introduced in Hassayampa (Version 3.0). 
 
-## See also
+## Related Concepts:
 
   * mysql module 
     * database class

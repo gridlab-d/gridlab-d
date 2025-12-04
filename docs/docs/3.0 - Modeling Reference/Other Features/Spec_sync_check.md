@@ -6,7 +6,7 @@ The synchronization check capability in GridLAB-D™ will be implemented to perf
 
 The mapping between the properties and variables is listed in Table 1. The [sync_check] object will inherit all standard [Object_(directive)] values as well. The variable definitions are presented in Table 2 of the next section ["Variable definitions"]. Note that the properties listed here represent two different modes for calculating the from/to voltage conditions - `MAG_DIFF` and `SEP_DIFF`. Notes are included as to which property is used for which mode. 
 
-Table 1 - Mapping between Properties and Variables  
+##### Table 1 - Mapping between Properties and Variables  
 
 Property  | Mapped Variable  | Data Type  | Descriptions   
 ---|---|---|---  
@@ -58,7 +58,7 @@ Using the difference of the voltage magnitudes and angles separately:
 
 Variables of the [sync_check] functionality are defined as follows: 
 
-Table 2 - Variable Definitions  
+##### Table 2 - Variable Definitions  
 
 Variable  | Data Type  | Unit  | Definition   
 ---|---|---|---  
@@ -105,7 +105,7 @@ Paralleling will only occur when the grid-alignment conditions are met. While th
 
 This subsection provides an outline on how the [sync_check] object will be tested to ensure its functionality. The current plan is to use two 4-node test systems interconnected through a [sync_check] object, which is open initially. The frequency and voltage values measured at the 'from' and 'to' nodes of the [sync_check] object are initialized in different values. The deviations must be larger than the user defined tolerances. The frequency and voltage of the 'from' node of its parent [switch] object are manipulated by a player towards the measurements of the 'to' node. Once the deviations are both within the tolerance longer than the user defined period, a 'closure' command should be sent to close its parent [switch] object. This sample use case will be included in the autotest for the [sync_check] object. 
 
-# See also
+# Related Concepts:
 
   * [Requirements]
   * [Implementation]

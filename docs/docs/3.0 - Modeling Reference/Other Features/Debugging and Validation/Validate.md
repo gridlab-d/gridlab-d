@@ -117,7 +117,7 @@ Some output from gridlabd runs cannot be redirected and will always be displayed
 
 Unhandled exceptions in Windows can cause modal dialogs to pop up that block the process. This behavior appears to be impossible to suppress. See [ticket 606](http://sourceforge.net/p/gridlab-d/tickets/606) for details. 
 
-## See also
+## Related Concepts:
 
   * [Command options]
   * [Global variables]

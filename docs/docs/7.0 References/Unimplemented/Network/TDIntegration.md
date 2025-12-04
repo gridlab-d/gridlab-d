@@ -184,7 +184,7 @@ Output Name  | Quantity type  | Description
   
 Please note that the transmission current and impedance loads are converted to complex power values first and then posted to the proper properties (`load_current` and `load_impedance`) in the **pw_load** object. The average_transmission_power_load value must be added to the `average_distribution_load` before posting to **pw_load** (`load_power`). 
 
-# See also
+# Related Concepts:
 
   * Powerflow module
   * Requirements

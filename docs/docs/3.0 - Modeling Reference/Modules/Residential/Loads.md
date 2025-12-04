@@ -1,28 +1,128 @@
-# Loads
+# End Use Loads
 
+Residential loads can be explicit object definitions such as a water heater or EV charger that are added directly to the parent house as child objects or ZIP loads. Loads can also be modeled as implicit end uses, described here. Individual objects and ZIP loads have their own documentation pages, like the [water heater](../Residential/Waterheater.md) and [EV Charger](../Objects/Distributed%20Energy%20Resources/Evcharger_det.md), and [ZIP Loads](../Residential/ZIPload.md).
 
+**TODO - Review - Is this true? End use loads can be either implicitly modeled or explicitly defined (as in not the objects but still end use definitions)** 
 
-## ZIP Loads
+### Implicit End Use Loads
 
-Thus far the loads on the systems we’ve been modeling have been fairly abstract and quite simple with only a constant power load on a single phase being specified. A more general form of this type of load is often referred to as a ZIP load which is represented as a load with three distinct part: a constant impedance portion $Z$, a constant current portion $I$ and a constant power portion $P$. Each of these portions respond differently to changes in load voltage based on their first-principles models: $P=I^2Z$, $P = IV$, and $P = P$. For a reduction in system voltage, we would expect the following:
+The `implicit_enduse` load and it is identical for each house residence. The load defined by `implicit_enduse` is meant to cover all the other types of loads not explicitly modeled as part of the total residential load. These loads are on by default but can be turned off by adding a statement to the residential module declaration:
 
-* For constant impedance, the power to be reduced as the square of the voltage change and current to reduce linearly to the voltage change.
+```
+module residential {
+  implicit_enduses NONE;
+};
+```
 
-* For constant current, both the power and the current to reduce linearly with the voltage change.
+The differences a given house's load with and without the use of `implicit_enduse` is very clear:
 
-* For constant power, the power will remain unchanged and the current will increase linearly with the voltage change.
+![Implicit end use comparison](../../../../images/Implicit_enduse_comparison.png)
 
-In parallel with the real power components, ZIP loading can also be applied to the reactive power component; that is, these loads can all be expressed as complex values in GridLAB-D™, as you have seen in previous examples. In a three phase system, the load on each phase can be described independently, giving a total of nine complex load values to fully define a three-phase load.
+Generic end uses can be implemented using the **residential_enduse** object. This object requires a schedule and a loadshape definition (see [Built in schedules and loadshapes]). All other end uses are (or will soon be) inheriting the properties and methods of the **residential_enduse** object. 
 
-GridLAB-D™ also has an alternative and perhaps slightly more complex means of representing the same load using the same principles. Rather than specifying the portions of the load directly as three individual complex loads (per phase), a nominal “base” complex load value can be given and are then modified with three power-factor values (constant impedance, current and power power-factors) and an additional three load-fraction values (what portion of the load is constant impedance, current, and power). Mathematically, these two means of defining ZIP loads are identical.
+## Enduse Structure
 
-### Example - ZIP loads
+**TODO - Question - Are these then explicit end use definitions??**
 
-Open the model [zip_loads.glm](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%205%20-%20Loads/ZIP%20Loads/zip_loads) you'll see a slight variation on a version of the model we used in the last chapter. The main modification made to the file is the creation of an additional load at `branch_1_meter_1` in parallel to the original. These two loads have both been moved downstream of the main branch by the creation of `load_node` which connects to each of the two loads' meters through very short overhead lines.
+Objects that need to use the _enduse_ structure can either inherit the needed properties from an object that already includes one, e.g. _residential_enduse_ , or include one of their own. 
 
-Looking at the two loads, you'll see that `b1m1_load_a` is defined in terms of the `constant_power`, `constant_current`, and `constant_voltage`. The ["/wiki/Power_Flow_User_Guide#Loads"]documentation on the wiki shows us that the default units for these value are W, A, and Ohms, respectively. Load `b1m1_load_b` has a very similar composite load but it is defined in the alternative style mentioned above. Running a simulation using this model and opening "meter_powers.csv" reveals that both of these loads have similar power over the duration of the simulation, at least to the precision of the values entered.
+When the _enduse_ structure is inherited, it is strongly recommend that it's name be set during object creation. Usually the name given to the end use is the same of the class implementing the end use. The name can be assigned during _create_ by using the command 
+    
+    
+     load.name = "lights";
+    
 
-![Zip load comparison scaled.png](../../../..//images\Zip_load_comparison_scaled.png)
+However, when an object implements multiple end uses, then each one is embedded and the name of the property should be given when the end-use is published, i.e., 
+    
+    
+     PT_enduse, "lights", PADDR(end use),
+    
+
+In addition, the corresponding shape must be defined and linked. When inheriting the end use structure, this is already done. However, when defining the end use structure in an object, it must done explicitly during _create_ using the command 
+    
+    
+     lights.shape = lighting_shape;
+    
+
+where _shape_ is a property of type _loadshape_ and can be published as 
+    
+    
+     PT_loadshape, "shape", PADDR(lighting_shape),
+    
+
+It is recommended that shape for embedded end uses be published with the end use name as a prefix, e.g., 
+    
+    
+     PT_loadshape, "lights.shape", PADDR(lighting_shape),
+    
+
+The following updates are made before any _presync_ calls are made 
+
+* shape->schedule
+    the schedule is updated to adjust the schedule value according to the target time of the sync event. The value _next_t' is updated to give the time of the next expected schedule change._
+
+* shape
+    the shape is updated to make the state of the loadshape correspond to the schedule value. The value t2 is updated to correspond to the expected time of the next change in demand.
+
+* end use
+    this end use energy is updated to include the power consumed up to the target time of the sync event.
+
+In addition, during _sync_ events, objects that use _enduse_ properties must explicitly update their end use structures using the _gl_enduse_sync_. 
+
+Important: 
+    omitting _gl_enduse_sync_ after _enduse_ values are updated will result in erroneous output.
+
+## Lights
+
+Residential lighting tends to be a mixture of several different types of lighting that is distributed somewhat randomly throughout the house and across the two circuit phases. Very little residential lighting is controlled by timers, although some outdoor lighting may be controlled by daylight sensors. 
+
+Depending on its location, the heat produced by a light fixture may go entirely into the conditioned space or may be partly dumped to an unconditioned space such as an attic or directly outdoors. 
+
+### Modeling Assumptions
+
+* power_factor
+    If the _power_factor_ is not set by the user, then the power factor depends on the lighting type:
+
+  * Incandescent: 1.00
+  * Fluorescent: 0.95
+  * CFL: 0.92
+  * SSL: 0.90
+  * HID: 0.97
+
+* voltage_factor
+    If the lights are not connected to a house circuit from which voltage can be determined, then the _voltage_factor_ is 1.0.
+
+* shape.type
+    Only **analog** load shapes are supported. Any of three load shape scales are permitted
+
+  * Absolute (neither _shape.power_ nor _shape.energy_ are specified) and the schedule value is used as is
+  * Fixed energy (_shape.energy_ is given) and the total energy used by any schedule block is made to made the _shape.energy_ value.
+  * Scaled power (_shape.power_ is given or _installed_capacity_ is set) and the schedule value is multiplied by the _power_. This value must be provided if no schedule is given, and if missing, the _power_density_ is used to compute the _installed_capacity_ based on the _floor_area_. If the _floor_area_ is not available, a default 2500 sf is used.
+
+* power_density
+    The default installed power density of each lights object is based on an assumed power density randomly chosen between 0.75 and 1.25 Watts/sf using a triangle distribution.
+
+* Note
+    The default installed power density approximates the lighting in a whole house, so is unlikely to be correct unless there is only one lights object in the model. Because most homes have a mixture of lighting types, and thus need more than one lights object, the default density may need to change in the future to be type-specific (which would imply that several lights objects would have to be specified to get a correct set of defaults).
+
+* heatgain_fraction
+    The fraction of lighting consumption that ends up as heat in the house defaults to 1.0.
+
+* curtailment
+    The fractional curtailment of the lighting (if any). The default value is 1.0 (i.e., no curtailment).
+
+### Modeling Approach
+
+Each lights object will have a single type (incandescent, fluorescent, CFL, SSL, or HID) but may represent multiple fixtures in the house. It is expected that most models will contain one lights object for each type of lighting present in the house, although nothing constrains that. 
+
+Each object will have an installed capacity that represents its total consumption when all fixtures represented by the object are on. The scheduling of the lights object (on/off) is based on a simple demand multiplier (p.u.) that is read in from a tape . Future enhancements may give the lights module the ability to generate demand schedules in an intelligent (yet random) way. 
+
+Each object will have a constant power factor and each object will have a constant fraction of heat that enters the conditioned space. Thus, the real energy consumption is calculated as 
+
+$$P[kVA] = installed\_power[W] \times shape.load[pu] \times curtailment[pu] \frac{1[kw]}{1000[W]}$$
+
+$$Q[kVAR] = P[kVA] \sqrt {\frac{1}{power\_factor^2}-1}$$
+
 
 ## Loads and Weather
 
@@ -32,9 +132,10 @@ If GridLAB-D™only allowed users to represent loads as ZIP loads, it would not 
 
 The object type used to represent weather in GridLAB-D™is called “climate” and it contains a large number of parameters such as temperature, humidity, wind speed and direction, solar radiation, air pressure, and many more (see the source code in “climate.cpp” to see the full list). It is up to the individual GridLAB-D™classes to determine which, if any of these, will be used and in what manner. For example, though you would expect the solar panel class in GridLAB-D™to care about the solar radiation values in the weather data, it may surprise you to know that it also looks at the windspeed and ambient air temperature when calculating the energy production of the panel.
 
-### How does the wind influence solar panels? - A slightly off-topic exercise in digging through GridLAB-D™source code
+### How does the wind influence solar panels? 
+ A slightly off-topic exercise in digging through GridLAB-D™source code
 
-As you might expect, to determine which climate parameters are important to any other class, you’ll have to look on the ["/wiki/Solar">wiki page for the solar panels] and/or the source code (.../generators/solar.cpp). The wiki page makes it clear that these types of weather data are used by the solar PV object but to determine why they would be needed, we need to dig into the source code. Opening up “solar.cpp” we find the familiar table listing the class parameters with their names as they would appear in the model file and their default units; for example:
+As you might expect, to determine which climate parameters are important to any other class, you’ll have to look on the [solar panels](../Objects/Distributed%20Energy%20Resources/Solar.md) and/or the source code (.../generators/solar.cpp). The documentation page makes it clear that these types of weather data are used by the solar PV object but to determine why they would be needed, we need to dig into the source code. Opening up “solar.cpp” we find the familiar table listing the class parameters with their names as they would appear in the model file and their default units; for example:
 
 ```
 ...
@@ -189,7 +290,7 @@ The electrical connection of the house model to the rest of the electrical distr
 
 These lower voltage classes in GridLAB-D™all have the prefix "triplex_" appended to their names: `triples_node`, `triplex_line`, `triplex_meter`. The phase names at these nodes are `AS`, `BS`, or `CS` and a transformer with a `connect_type` of `SINGLE_PHASE_CENTER_TAPPED` must be used to connect the main distribution system to a triplex system.
 
-There are ["/wiki/House">many, many parameters] defined by the house class: square footage of the house, size of the air-conditioner and its efficiency, type of heater (electric vs gas, resistance vs heat-pump), square footage of windows and their insulation levels, number of floors.... Many of these factors interact as well; for example, `air_volume` is the product of `ceiling_height` and `floor_area`. If inconsistent values are defined, GridLAB-D™may or may not throw a warning or error. (In this case no error is thrown and an examination of the source code in "house_e.cpp" is necessary to determine that the directly specified `air_volume` value effectively overrides the other two. In the case of `solar_heatgain-factor`, setting that parameter throws an error.) Because of the large number of model parameters, if detailed modeling is necessary, it will certainly be necessary to dig into the details via the ["/wiki/House">wiki page] and the source code.
+There are ["/wiki/House">many, many parameters] defined by the house class: square footage of the house, size of the air-conditioner and its efficiency, type of heater (electric vs gas, resistance vs heat-pump), square footage of windows and their insulation levels, number of floors.... Many of these factors interact as well; for example, `air_volume` is the product of `ceiling_height` and `floor_area`. If inconsistent values are defined, GridLAB-D™may or may not throw a warning or error. (In this case no error is thrown and an examination of the source code in "house_e.cpp" is necessary to determine that the directly specified `air_volume` value effectively overrides the other two. In the case of `solar_heatgain-factor`, setting that parameter throws an error.) Because of the large number of model parameters, if detailed modeling is necessary, it will certainly be necessary to dig into the details via the ["/wiki/House">documentation page] and the source code.
 
 ### Example - Triplex Components and Residential Basics
 
@@ -205,31 +306,23 @@ Open up [residential_load_basics.glm](https://github.com/gridlab-d/course/blob/m
   module residential;
 ```
 
-The inclusion of these modules ties-in the GridLAB-D™functionality for a number of classes in each of these modules. Without these declarations, running this model in GridLAB-D™will through an error the first time it finds an object that is an instantiation of one of the classes defined in those modules.
+The inclusion of these modules ties-in the GridLAB-D™ functionality for a number of classes in each of these modules. Without these declarations, running this model in GridLAB-D™ will through an error the first time it finds an object that is an instantiation of one of the classes defined in those modules.
 
 ![Residential basics](../../../../images/Residential_basics.png)
-  Looking at the rest of the model file, find one of the definitions of a `house` object. All the house objects in this file have been defined using a variety of parameters to describe the thermal characteristics of the building. The diversity of parameters provides a variety of ways to describe a house; use whichever ones are most useful to describe the particular residence you are trying to model. 
+##### Figure. Residential Basics
 
+Looking at the rest of the model file, find one of the definitions of a `house` object. All the house objects in this file have been defined using a variety of parameters to describe the thermal characteristics of the building. The diversity of parameters provides a variety of ways to describe a house; use whichever ones are most useful to describe the particular residence you are trying to model. 
 
 Running a simulation using this model file generates several output files (generated by `recorder` objects in the model) including two house-specific files and one all-house temperature file. Looking at the "b1m1_house_data.csv" shows data for several different thermal parameters for that residence.  The model file shows that we are running this model using Spokane's weather on Aug. 8th so we would expect the air-conditioner to run some of the time but not necessarily continuously; looking at the `is_COOL_on` parameter we can see that this is the case, particularly in the afternoon.
 
 ![Residential air conditioner](../../../../images/Residential_air_conditioner.png)
+##### Figure. Residential Air Conditioner
 
 The model file also shows that the air temperature of the house was set to 72.5 'F. This parameter is technically an output parameter; that is, the thermodynamic model of the system will calculate the indoor air temperature and we shouldn't be able to externally define it to a fixed value. Though this is generally the case, the equations of the residential thermodynamic model need an initial condition and this statement is used to provide this. Looking at the data file for that house, we see that the indoor air temperature does indeed start at the specified value.
 
 Lastly, and most importantly from a power systems perspective, looking at the power consumption of this house shows dramatic changes when the air-conditioner runs. The thermodynamics of the house we've defined with our few parameters show that it has very little insulation which leads to frequent cycling of the air-conditioner. 
 
-You can also see that even when the air-conditioner is off, there is still a load the house places on the electrical system. This is the `implicit_enduse` load and it is identical for each house residence. The load defined by `implicit_enduse` is meant to cover all the other types of loads not explicitly modeled as part of the total residential load. These loads are on by default but can be turned off by adding a statement to the residential module declaration:
-
-```
-module residential {
-  implicit_enduses NONE;
-};
-```
-
-The differences a given house's load with and without the use of `implicit_enduse` is very clear:
-
-![Implicit enduse comparison](../../../../images/Implicit_enduse_comparison.png)
+You can also see that even when the air-conditioner is off, there is still a load the house places on the electrical system. 
 
 ### Example - Thermostat Settings
 
@@ -293,7 +386,7 @@ Location = Fort Worth, TX: 10.65 hrs
 
 ### Example - Adding Other Residential Loads
 
-As you've seen, the implicit enduse that is active by default for each residence is nice as it fills in the load profile of a residence without requiring a lot of extra effort when trying to build up the model. The downside of using implicit enduses is that this built-in load profile is identical for each house and changes only on the hour. GridLAB-D™actually has different simple models for each of the `implcit_enduses` that can be turned on and off for the whole system model.  For example, to only use the water heater, lights, and microwave implicit enduse models the residential statement would look like this:
+As you've seen, the implicit end use that is active by default for each residence is nice as it fills in the load profile of a residence without requiring a lot of extra effort when trying to build up the model. The downside of using implicit end uses is that this built-in load profile is identical for each house and changes only on the hour. GridLAB-D™actually has different simple models for each of the `implcit_enduses` that can be turned on and off for the whole system model.  For example, to only use the water heater, lights, and microwave implicit end use models the residential statement would look like this:
 
 ```
 module residential{
@@ -301,7 +394,7 @@ module residential{
 };
 ```
 
-These loads still change on the hour and apply to all the houses in the model equally. The ["/wiki/Implicit_enduses"> wiki] contains a complete list of the available enduse loads.
+These loads still change on the hour and apply to all the houses in the model equally. The ["/wiki/Implicit_enduses"> wiki] contains a complete list of the available end use loads.
 
 To create a more realistic and non-uniform model of all the other loads in a residence requires a more complex description of the residential loads.  Open up [residential_load_other_loads.glm](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%205%20-%20Loads/Residential%20Loads%20-%20Other%20loads/residential_load_other_loads) and take a look at one way this could be done in GridLAB-D™.
 

@@ -1,5 +1,11 @@
 # Link (directive)
- 
+
+!!! warning
+
+	This page contains features that are unfinished, were never implemented, or have since been deprecated. We preserve these pages for archival purposes, and also as a foundational resource for prospective developers who may wish to implement the same or similar feature. Many of these pages provide robust explanations of the theory behind a particular module or feature that we hope readers will find useful. 
+  
+	**This page does not reflect the current state of GridLAB-D™**
+
 An external application link can be added during the main synchronization process by adding a link directive to a GLM file. Multiple links can be added, in which case the links are processed in the order in which they are listed in the GLM file. 
 
 The implementation of the link depends on the application, but as a general rule the link behavior is as follows: 
@@ -51,7 +57,7 @@ When verbose is enabled, a performance measurement of each link is output at the
 
 provides basic information about the link performance. 
 
-## See also
+## Related Concepts:
 
   * Link (directive)
     * Matlab link

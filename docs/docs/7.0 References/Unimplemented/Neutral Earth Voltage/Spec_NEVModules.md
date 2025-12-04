@@ -80,7 +80,7 @@ The direct NEV-powerflow-related programming consideration is returning these ad
 
 For DELTAMODE-connected objects, similar considerations will need to be made for `deltaI` and direct admittance posted values. Exposed variables in the node will still be mapped to as they are now, but explicit pointers will be needed for each terminal and will need to be adjusted for the connecting terminals' location within the overall terminal structure of that particular node. As with the normal load interface, individual terminal locations will be referred to with direct pointers and using the transactional memory API. 
 
-# See also
+# Related Concepts:
 
   * [Overview Page]
   * [Requirements]

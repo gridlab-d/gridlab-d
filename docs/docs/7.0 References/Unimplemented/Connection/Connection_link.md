@@ -1,5 +1,12 @@
 # link
 
+
+!!! warning
+
+	This page contains features that are unfinished, were never implemented, or have since been deprecated. We preserve these pages for archival purposes, and also as a foundational resource for prospective developers who may wish to implement the same or similar feature. Many of these pages provide robust explanations of the theory behind a particular module or feature that we hope readers will find useful. 
+	
+	**This page does not reflect the current state of GridLAB-D™**
+
 The **link** pseudo-property allow one or more variables to be mapped to and from a remote system during various events in GridLAB-D™. 
 
 ## Synopsis
@@ -18,8 +25,8 @@ The **link** pseudo-property allow one or more variables to be mapped to and fro
 
 The _map_ may be one of the following: 
 
-  * **allow** : Specifies that a mapping forbidden under [STANDARD] [security] should be allowed.
-  * **deny** : Specifies that a mapping allowed under [STANDARD] [security] should be forbidden.
+  * **allow** : Specifies that a mapping forbidden under STANDARD security should be allowed.
+  * **deny** : Specifies that a mapping allowed under STANDARD security should be forbidden.
   * **init** : Map during initialization sequence
   * **precommit** : Map during precommit sequence
   * **presync** : Map during presync sequence
@@ -33,21 +40,25 @@ The _map_ may be one of the following:
   * **postnotify** : Map after a change to any connection property
   * **file** : Map using the specifications provided in the specified link file file
 
-The _local_ variable is specified in the form _name_._property_. If the _name_._property_ form is not found, the list of global variables is searched for a match. The _name_ and the _property_ may be specified using simple pattern matching as _prefix_ *, in which case all names or properties that have the same prefix will be linked. 
+The `local` variable is specified in the form `name.property`. If the `name.property` form is not found, the list of global variables is searched for a match. The `name` and the `property` may be specified using simple pattern matching as `prefix*`, in which case all names or properties that have the same prefix will be linked. 
 
 The _direction_ may be specified as one of the following 
 
-  * <- : Copy to local from remote
-  * -> : Copy to remote from local
-  * <-> : Copy both ways
+Direction | Description
+-- | --
+<- | Copy to local from remote
+-> | Copy to remote from local
+<-> | Copy both ways
 
-The _remote_ variable is specified as a string of arbitrary structure terminated by a semicolon or white space. The following special characters will be substituted if encountered 
+The _remote_ variable is specified as a string of arbitrary structure terminated by a semicolon or white space. The following special characters will be substituted if encountered:
 
-  * \# : GridLAB-D™ object number
-  * \@ : GridLAB-D™ object name
-  * \$ : GridLAB-D™ object class
-  * \\ : A single backslash
-  * \! : Lookup _local_ in the link file index
+Special Character | Description
+-- | --
+\# | GridLAB-D™ object number
+@ | GridLAB-D™ object name
+$ | GridLAB-D™ object class
+\ | A single backslash
+! | Lookup `local` in the link file index
 
 ### Link file
 
@@ -68,7 +79,7 @@ The **link** map file is used to provide a connection map with a list of **link*
       ...
     
 
-In addition the map can contain an index section to translate _local_ names to _remote_ names using the \! special character in the remote name, e.g., 
+In addition the map can contain an index section to translate _local_ names to _remote_ names using the `!` special character in the remote name, e.g., 
     
     
     index:

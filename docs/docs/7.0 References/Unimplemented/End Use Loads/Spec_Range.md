@@ -33,7 +33,7 @@ The cooktop has burners on the top and is usually installed into a countertop. T
 
 ## Oven Equations
 
-Table 1: Equation Notation  Variable | Definition   
+##### Table 1: Equation Notation  Variable | Definition   
 ---|---  
 $T_{on}$ | Lower setpoint temperature of oven ([degF])   
 $T_{off}$ | Upper setpoint temperature of oven ([degF])   
@@ -105,7 +105,7 @@ c_2&=\frac{-(ovenUA+\dot{m}\cdot c_{food})}{C_w}\\ C_w &= \frac{v_{oven}}{GALPCF
 
 The user may input values for the following variables related to the oven model. 
 
-Table 2: Oven inputs  Variable | Type | Units | Default | Definition   
+##### Table 2: Oven inputs  Variable | Type | Units | Default | Definition   
 ---|---|---|---|---  
 [oven_volume] | double | [gal] | 5 | Volume of oven   
 [heating_element_capacity] | double | [kw] | 1 | Power rating of heating element   
@@ -122,7 +122,7 @@ Table 2: Oven inputs  Variable | Type | Units | Default | Definition
 [load_power_fraction] | double | n/a | 0 | Constant power component fraction   
 [queue_oven] | double | n/a | 0.85 | Oven is placed in its 'queue' and awaiting to be turned on   
 [demand_oven] | double | n/a | RANGE * 20 | The probability that a given oven is turned on depends on [demand_oven], and the value of the normalized oven load shape at any given time. The higher these quantities are, the higher the probability of the given appliance turning on (GE CRADA report)   
-Table 3: Cooktop inputs  Variable | Type | Units | Default | Definition   
+##### Table 3: Cooktop inputs  Variable | Type | Units | Default | Definition   
 ---|---|---|---|---  
 [cooktop_energy_baseline] | double | [kwh] | 0.5 | The amount of energy needed for a cooktop event   
 [cooktop_coil_setting_1] | double | [W] | 2 | Power rating of the cooktop's high level setting   
@@ -139,7 +139,7 @@ Table 3: Cooktop inputs  Variable | Type | Units | Default | Definition
   
 ### Published Outputs
 
-Table 4: Range Outputs  Variable | Type | Units | Definition   
+##### Table 4: Range Outputs  Variable | Type | Units | Definition   
 ---|---|---|---  
 [total_power_oven] | double | [kw] | Total power required during the oven cycle   
 [total_power_cooktop] | double | [kw] | Total power required during the cooktop cycle   
@@ -154,7 +154,7 @@ Table 4: Range Outputs  Variable | Type | Units | Definition
 
 To facilitate data operations between the individual [objects] and the dynamic solver capability, a common data structure will be used to pass information back and forth. This data structure should contain information and pointers to the following elements. 
 
-Table 5: Range interface elements  Variable | Definition   
+##### Table 5: Range interface elements  Variable | Definition   
 ---|---  
 [timestamp] | Pointer to current [timestamp] of the solution   
 timestamp_change | Pointer to the difference between the last and current [timestamp]  
@@ -199,7 +199,7 @@ The cooktop model follows these steps:
 
   1. _IEEE power & energy magazine_; May/June 2010
   
-# See Also
+# Related Concepts:
 
   * [Range User Manual]
   * [Residential Module]

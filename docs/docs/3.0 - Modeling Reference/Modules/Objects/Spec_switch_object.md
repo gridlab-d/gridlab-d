@@ -34,7 +34,7 @@ All standard **link** properties are inherited as well, and are not listed here 
 
 Details on the properties are outlined in Table 1. Note that although some of these are defined in the base **link** class, they're also listed here for completeness. 
 
-Table 1 - Switch properties  
+##### Table 1 - Switch properties  
 
 Property | Type | Definition   
 ---|---|---  
@@ -132,7 +132,7 @@ Primary testing will be to ensure the **switch** still passes all existing autot
 
 No further autotests should be needed for the base functionality, since the existing autotests already encompass commonly-used scenarios. 
 
-## See also
+## Related Concepts:
 
   * Overview Page
   * Requirements
