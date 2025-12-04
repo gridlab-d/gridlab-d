@@ -1,0 +1,67 @@
+{
+  "__preamble": {
+    "comments": [
+      "// validates constant air temperature with hvac turned off; initial temp set to 59 degF",
+      "// payroll: d3y332"
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2001-01-01 0:00:00'"
+  },
+  "modules": {
+    "commercial": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_2",
+          "parent": "office_1",
+          "target": "air_temperature",
+          "within": 0.001,
+          "value": 59
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_3",
+          "parent": "office_1",
+          "file": "commercial_hvac_usage.csv",
+          "interval": 3600,
+          "limit": 360,
+          "property": "air_temperature,mass_temperature,hvac_mode"
+        },
+        {
+          "name": "recorder_4",
+          "parent": "office_1",
+          "file": "commercial_hvac_usage2.csv",
+          "interval": -1,
+          "limit": 36000,
+          "property": "air_temperature,mass_temperature,hvac_mode"
+        }
+      ]
+    },
+    "office": {
+      "instances": [
+        {
+          "name": "office_1",
+          "floor_area": "4000 sf",
+          "floor_height": "9 ft",
+          "exterior_ua": 2.0,
+          "interior_ua": 2.0,
+          "interior_mass": 2000,
+          "heating_setpoint": 58,
+          "cooling_setpoint": 76,
+          "thermostat_deadband": 0.25,
+          "air_temperature": 59
+        }
+      ]
+    }
+  }
+}

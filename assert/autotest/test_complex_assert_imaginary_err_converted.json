@@ -1,0 +1,35 @@
+{
+  "__preamble": {
+    "comments": [
+      "// test_complex_assert_imaginary_err"
+    ]
+  },
+  "modules": {
+    "powerflow": {},
+    "assert": {}
+  },
+  "objects": {
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_2",
+          "parent": "meter_1",
+          "target": "voltage_A",
+          "value": "110+10j",
+          "operation": "IMAGINARY",
+          "within": 1
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "meter_1",
+          "voltage_A": 110.0,
+          "nominal_voltage": 124.752,
+          "phases": "A"
+        }
+      ]
+    }
+  }
+}

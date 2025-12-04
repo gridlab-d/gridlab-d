@@ -1,0 +1,3618 @@
+{
+  "__preamble": {
+    "comments": [
+      "// The 123-bus feeder with one VSI in isochronous mode placed at SWING bus",
+      "// In this test case:",
+      "// Part of the feeder is disconnected at 12:00:10.0001 PST.",
+      "// Since the frequency is kept to 60 HZ by the isochronous VSI, the real power output of the droop VSI is kept the same. Other power outputs are adjusted accordingly.",
+      "//#set pauseatexit=1",
+      "//#set verbose=1",
+      "//Deltamode declarations - global values"
+    ]
+  },
+  "_directives": {
+    "#define": {
+      "rotor_convergence": 1e-14
+    },
+    "#set": {
+      "suppress_repeat_messages": 1,
+      "relax_naming_rules": "1;",
+      "profiler": 1,
+      "double_format": "%+.12lg",
+      "complex_format": "%+.12lg%+.12lg%c",
+      "deltamode_timestep": "100000000",
+      "deltamode_maximumtime": "60000000000",
+      "deltamode_iteration_limit": "10"
+    }
+  },
+  "clock": {
+    "timezone": "\"PST+8PDT\"",
+    "starttime": "'2001-08-01 12:00:08 PST'",
+    "stoptime": "'2001-08-01 12:00:12 PST'"
+  },
+  "modules": {
+    "generators": {
+      "enable_subsecond_models": true,
+      "deltamode_timestep": "10 ms"
+    },
+    "powerflow": {
+      "enable_subsecond_models": true,
+      "deltamode_timestep": "10 ms",
+      "solver_method": "NR",
+      "all_powerflow_delta": true,
+      "inline_comments": {
+        "deltamode_timestep": "//10 ms"
+      }
+    },
+    "reliability": {
+      "enable_subsecond_models": true,
+      "maximum_event_length": 1800000,
+      "report_event_log": false,
+      "inline_comments": {
+        "maximum_event_length": "//Maximum length of events in seconds (manual events are excluded from this limit)"
+      }
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "fault_check": {
+      "instances": [
+        {
+          "name": "base_fault_check_object",
+          "check_mode": "ONCHANGE",
+          "strictly_radial": false,
+          "eventgen_object": "testgendev",
+          "grid_association": true,
+          "full_output_file": true,
+          "outside_comments": [
+            "//Fault check option"
+          ],
+          "inside_comments": [
+            "// output_filename test_connect.txt;"
+          ],
+          "inline_comments": {
+            "grid_association": "//Flag to ensure non-monolithic islands"
+          }
+        }
+      ]
+    },
+    "eventgen": {
+      "instances": [
+        {
+          "name": "testgendev",
+          "flags": "DELTAMODE",
+          "fault_type": "SW-ABC",
+          "manual_outages": "microgrid_switch3,2001-08-01 12:00:10.001 PST,2001-08-01 12:00:18.001 PST",
+          "outside_comments": [
+            "//Manual object - needed to get fault_check to behave properly -- arbitrary item added",
+            "// Open switch to reduce the loads"
+          ],
+          "inside_comments": [
+            "// parent testmetrics;"
+          ],
+          "inline_comments": {
+            "fault_type": "//Type of fault for the object to induce",
+            "}": "// First time is when the switch will open, the second time is when it will close"
+          }
+        }
+      ]
+    },
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "overhead_line_conductor_10001",
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306,
+          "outside_comments": [
+            "// object metrics {",
+            "// name testmetrics;",
+            "// report_file delete_me.txt;",
+            "// module_metrics_object pwrmetrics;",
+            "// metrics_of_interest \"SAIFI\";",
+            "// customer_group \"class=meter\";",
+            "// }",
+            "// object power_metrics {",
+            "// name pwrmetrics;",
+            "// }",
+            "///////////////////////////////////////////////////////////////////////////",
+            "// Start of individual objects/////////////////////////////////////////////",
+            "///////////////////////////////////////////////////////////////////////////",
+            "//Phase Conductor for 1 thru 8: 336,400 26/7 ACSR"
+          ]
+        },
+        {
+          "name": "overhead_line_conductor_10009",
+          "id": 10009,
+          "geometric_mean_radius": 0.00446,
+          "resistance": 1.12,
+          "outside_comments": [
+            "//Phase Conductor for 9 thru 11: 1/0 ACSR"
+          ]
+        },
+        {
+          "name": "overhead_line_conductor_10002",
+          "id": 10002,
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592,
+          "outside_comments": [
+            "//Phase Conductor for neutral: 4/0 6/1 ACSR"
+          ]
+        }
+      ]
+    },
+    "underground_line_conductor": {
+      "instances": [
+        {
+          "name": "underground_line_conductor_10003",
+          "id": 10003,
+          "outer_diameter": 1.06,
+          "conductor_gmr": 0.0111,
+          "conductor_diameter": 0.368,
+          "conductor_resistance": 0.97,
+          "neutral_gmr": 0.0111,
+          "neutral_resistance": 0.97,
+          "neutral_diameter": 0.0640837,
+          "neutral_strands": 6.0,
+          "shield_gmr": 0.0,
+          "shield_resistance": 0.0,
+          "outside_comments": [
+            "// Phase Conductor for 12: 1/0 AA,TS"
+          ]
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "line_spacing_5001",
+          "id": 5001,
+          "distance_AB": 2.5,
+          "distance_AC": 7.0,
+          "distance_BC": 4.5,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0,
+          "outside_comments": [
+            "// Overhead line configurations",
+            "// ABCN"
+          ]
+        },
+        {
+          "name": "line_spacing_5002",
+          "id": 5002,
+          "distance_AB": 4.5,
+          "distance_AC": 2.5,
+          "distance_BC": 7.0,
+          "distance_AN": 5.0,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.656854,
+          "outside_comments": [
+            "// CABN"
+          ]
+        },
+        {
+          "name": "line_spacing_5003",
+          "id": 5003,
+          "distance_AB": 7.0,
+          "distance_AC": 4.5,
+          "distance_BC": 2.5,
+          "distance_AN": 5.0,
+          "distance_BN": 5.656854,
+          "distance_CN": 4.272002,
+          "outside_comments": [
+            "// BCAN"
+          ]
+        },
+        {
+          "name": "line_spacing_5004",
+          "id": 5004,
+          "distance_AB": 4.5,
+          "distance_AC": 7.0,
+          "distance_BC": 2.5,
+          "distance_AN": 5.0,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.656854,
+          "outside_comments": [
+            "// CBAN"
+          ]
+        },
+        {
+          "name": "line_spacing_5005",
+          "id": 5005,
+          "distance_AB": 2.5,
+          "distance_AC": 4.5,
+          "distance_BC": 7.0,
+          "distance_BN": 5.656854,
+          "distance_AN": 4.272002,
+          "distance_CN": 5.0,
+          "outside_comments": [
+            "// BACN"
+          ]
+        },
+        {
+          "name": "line_spacing_5006",
+          "id": 5006,
+          "distance_AB": 7.0,
+          "distance_AC": 2.5,
+          "distance_BC": 4.5,
+          "distance_AN": 5.656854,
+          "distance_CN": 4.272002,
+          "distance_BN": 5.0,
+          "outside_comments": [
+            "// ACBN"
+          ]
+        },
+        {
+          "name": "line_spacing_5007",
+          "id": 5007,
+          "distance_AB": 0.0,
+          "distance_AC": 7.0,
+          "distance_BC": 0.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 0.0,
+          "distance_CN": 5.0,
+          "outside_comments": [
+            "//ACN"
+          ]
+        },
+        {
+          "name": "line_spacing_5008",
+          "id": 5008,
+          "distance_AB": 7.0,
+          "distance_AC": 0.0,
+          "distance_BC": 0.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 5.0,
+          "distance_CN": 0.0,
+          "outside_comments": [
+            "//ABN"
+          ]
+        },
+        {
+          "name": "line_spacing_5009",
+          "id": 5009,
+          "distance_AB": 0.0,
+          "distance_AC": 0.0,
+          "distance_BC": 0.0,
+          "distance_AN": 5.0,
+          "distance_BN": 0.0,
+          "distance_CN": 0.0,
+          "outside_comments": [
+            "//AN"
+          ]
+        },
+        {
+          "name": "line_spacing_50010",
+          "id": 50010,
+          "distance_AB": 0.0,
+          "distance_AC": 0.0,
+          "distance_BC": 0.0,
+          "distance_AN": 0.0,
+          "distance_BN": 5.0,
+          "distance_CN": 0.0,
+          "outside_comments": [
+            "//BN"
+          ]
+        },
+        {
+          "name": "line_spacing_50011",
+          "id": 50011,
+          "distance_AB": 0.0,
+          "distance_AC": 0.0,
+          "distance_BC": 0.0,
+          "distance_AN": 0.0,
+          "distance_BN": 0.0,
+          "distance_CN": 5.0,
+          "outside_comments": [
+            "//CN"
+          ]
+        },
+        {
+          "name": "line_spacing_50012",
+          "id": 50012,
+          "distance_AB": 0.5,
+          "distance_AC": 1.0,
+          "distance_BC": 0.5,
+          "distance_AN": 0.0,
+          "distance_BN": 0.0,
+          "distance_CN": 0.0,
+          "outside_comments": [
+            "//ABC"
+          ]
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "line_configuration_1001",
+          "id": 1001,
+          "conductor_A": "overhead_line_conductor_10001",
+          "conductor_B": "overhead_line_conductor_10001",
+          "conductor_C": "overhead_line_conductor_10001",
+          "conductor_N": "overhead_line_conductor_10002",
+          "spacing": "line_spacing_5001"
+        },
+        {
+          "name": "line_configuration_1002",
+          "id": 1002,
+          "conductor_A": "overhead_line_conductor_10001",
+          "conductor_B": "overhead_line_conductor_10001",
+          "conductor_C": "overhead_line_conductor_10001",
+          "conductor_N": "overhead_line_conductor_10002",
+          "spacing": "line_spacing_5002"
+        },
+        {
+          "name": "line_configuration_1003",
+          "id": 1003,
+          "conductor_A": "overhead_line_conductor_10001",
+          "conductor_B": "overhead_line_conductor_10001",
+          "conductor_C": "overhead_line_conductor_10001",
+          "conductor_N": "overhead_line_conductor_10002",
+          "spacing": "line_spacing_5003"
+        },
+        {
+          "name": "line_configuration_1004",
+          "id": 1004,
+          "conductor_A": "overhead_line_conductor_10001",
+          "conductor_B": "overhead_line_conductor_10001",
+          "conductor_C": "overhead_line_conductor_10001",
+          "conductor_N": "overhead_line_conductor_10002",
+          "spacing": "line_spacing_5004"
+        },
+        {
+          "name": "line_configuration_1005",
+          "id": 1005,
+          "conductor_A": "overhead_line_conductor_10001",
+          "conductor_B": "overhead_line_conductor_10001",
+          "conductor_C": "overhead_line_conductor_10001",
+          "conductor_N": "overhead_line_conductor_10002",
+          "spacing": "line_spacing_5005"
+        },
+        {
+          "name": "line_configuration_1006",
+          "id": 1006,
+          "conductor_A": "overhead_line_conductor_10001",
+          "conductor_B": "overhead_line_conductor_10001",
+          "conductor_C": "overhead_line_conductor_10001",
+          "conductor_N": "overhead_line_conductor_10002",
+          "spacing": "line_spacing_5006"
+        },
+        {
+          "name": "line_configuration_1007",
+          "id": 1007,
+          "conductor_A": "overhead_line_conductor_10001",
+          "conductor_C": "overhead_line_conductor_10001",
+          "conductor_N": "overhead_line_conductor_10002",
+          "spacing": "line_spacing_5007"
+        },
+        {
+          "name": "line_configuration_1008",
+          "id": 1008,
+          "conductor_A": "overhead_line_conductor_10001",
+          "conductor_B": "overhead_line_conductor_10001",
+          "conductor_N": "overhead_line_conductor_10002",
+          "spacing": "line_spacing_5008"
+        },
+        {
+          "name": "line_configuration_1009",
+          "id": 1009,
+          "conductor_A": "overhead_line_conductor_10009",
+          "conductor_N": "overhead_line_conductor_10009",
+          "spacing": "line_spacing_5009"
+        },
+        {
+          "name": "line_configuration_10010",
+          "id": 10010,
+          "conductor_B": "overhead_line_conductor_10009",
+          "conductor_N": "overhead_line_conductor_10009",
+          "spacing": "line_spacing_50010"
+        },
+        {
+          "name": "line_configuration_10011",
+          "id": 10011,
+          "conductor_C": "overhead_line_conductor_10009",
+          "conductor_N": "overhead_line_conductor_10009",
+          "spacing": "line_spacing_50011"
+        },
+        {
+          "name": "line_configuration_10012",
+          "id": 10012,
+          "conductor_A": "underground_line_conductor_10003",
+          "conductor_B": "underground_line_conductor_10003",
+          "conductor_C": "underground_line_conductor_10003",
+          "spacing": "line_spacing_50012"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "1_2",
+          "phases": "BN",
+          "from": "load_1",
+          "to": "load_2",
+          "length": 175,
+          "configuration": "line_configuration_10010",
+          "outside_comments": [
+            "//Define line objects"
+          ]
+        },
+        {
+          "name": "1_3",
+          "phases": "CN",
+          "from": "load_1",
+          "to": "node_3",
+          "length": 250,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "1_7",
+          "phases": "ABCN",
+          "from": "load_1",
+          "to": "load_7",
+          "length": 300,
+          "configuration": "line_configuration_1001"
+        },
+        {
+          "name": "3_4",
+          "phases": "CN",
+          "from": "node_3",
+          "to": "load_4",
+          "length": 200,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "3_5",
+          "phases": "CN",
+          "from": "node_3",
+          "to": "load_5",
+          "length": 325,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "5_6",
+          "phases": "CN",
+          "from": "load_5",
+          "to": "load_6",
+          "length": 250,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "7_8",
+          "phases": "ABCN",
+          "from": "load_7",
+          "to": "meter_8",
+          "length": 200,
+          "configuration": "line_configuration_1001"
+        },
+        {
+          "name": "8_12",
+          "phases": "BN",
+          "from": "meter_8",
+          "to": "load_12",
+          "length": 225,
+          "configuration": "line_configuration_10010"
+        },
+        {
+          "name": "8_9",
+          "phases": "AN",
+          "from": "meter_8",
+          "to": "load_9",
+          "length": 225,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "8_13",
+          "phases": "ABCN",
+          "from": "meter_8",
+          "to": "meter_13",
+          "length": 300,
+          "configuration": "line_configuration_1001"
+        },
+        {
+          "name": "1401_14",
+          "phases": "AN",
+          "from": "node_1401",
+          "to": "node_14",
+          "length": 425,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "13_34",
+          "phases": "CN",
+          "from": "meter_13",
+          "to": "load_34",
+          "length": 150,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "13_18",
+          "phases": "ABCN",
+          "from": "meter_13",
+          "to": "node_18",
+          "length": 825,
+          "configuration": "line_configuration_1002"
+        },
+        {
+          "name": "14_11",
+          "phases": "AN",
+          "from": "node_14",
+          "to": "load_11",
+          "length": 250,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "14_10",
+          "phases": "AN",
+          "from": "node_14",
+          "to": "load_10",
+          "length": 250,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "15_16",
+          "phases": "CN",
+          "from": "node_15",
+          "to": "load_16",
+          "length": 375,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "15_17",
+          "phases": "CN",
+          "from": "node_15",
+          "to": "load_17",
+          "length": 350,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "18_19",
+          "phases": "AN",
+          "from": "node_18",
+          "to": "load_19",
+          "length": 250,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "18_21",
+          "phases": "ABCN",
+          "from": "node_18",
+          "to": "node_21",
+          "length": 300,
+          "configuration": "line_configuration_1002"
+        },
+        {
+          "name": "19_20",
+          "phases": "AN",
+          "from": "load_19",
+          "to": "load_20",
+          "length": 325,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "21_22",
+          "phases": "BN",
+          "from": "node_21",
+          "to": "load_22",
+          "length": 525,
+          "configuration": "line_configuration_10010"
+        },
+        {
+          "name": "21_23",
+          "phases": "ABCN",
+          "from": "node_21",
+          "to": "node_23",
+          "length": 250,
+          "configuration": "line_configuration_1002"
+        },
+        {
+          "name": "23_24",
+          "phases": "CN",
+          "from": "node_23",
+          "to": "load_24",
+          "length": 550,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "23_25",
+          "phases": "ABCN",
+          "from": "node_23",
+          "to": "node_25",
+          "length": 275,
+          "configuration": "line_configuration_1002"
+        },
+        {
+          "name": "2601_26",
+          "phases": "ACN",
+          "from": "node_2601",
+          "to": "node_26",
+          "length": 350,
+          "configuration": "line_configuration_1007"
+        },
+        {
+          "name": "25_28",
+          "phases": "ABCN",
+          "from": "node_25",
+          "to": "load_28",
+          "length": 200,
+          "configuration": "line_configuration_1002"
+        },
+        {
+          "name": "26_27",
+          "phases": "ACN",
+          "from": "node_26",
+          "to": "node_27",
+          "length": 275,
+          "configuration": "line_configuration_1007"
+        },
+        {
+          "name": "26_31",
+          "phases": "CN",
+          "from": "node_26",
+          "to": "load_31",
+          "length": 225,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "27_33",
+          "phases": "AN",
+          "from": "node_27",
+          "to": "load_33",
+          "length": 500,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "28_29",
+          "phases": "ABCN",
+          "from": "load_28",
+          "to": "load_29",
+          "length": 300,
+          "configuration": "line_configuration_1002"
+        },
+        {
+          "name": "29_30",
+          "phases": "ABCN",
+          "from": "load_29",
+          "to": "load_30",
+          "length": 350,
+          "configuration": "line_configuration_1002"
+        },
+        {
+          "name": "30_250",
+          "phases": "ABCN",
+          "from": "load_30",
+          "to": "node_250",
+          "length": 200,
+          "configuration": "line_configuration_1002"
+        },
+        {
+          "name": "31_32",
+          "phases": "CN",
+          "from": "load_31",
+          "to": "load_32",
+          "length": 300,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "34_15",
+          "phases": "CN",
+          "from": "load_34",
+          "to": "node_15",
+          "length": 100,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "35_36",
+          "phases": "ABN",
+          "from": "load_35",
+          "to": "node_36",
+          "length": 650,
+          "configuration": "line_configuration_1008"
+        },
+        {
+          "name": "35_40",
+          "phases": "ABCN",
+          "from": "load_35",
+          "to": "node_40",
+          "length": 250,
+          "configuration": "line_configuration_1001"
+        },
+        {
+          "name": "36_37",
+          "phases": "AN",
+          "from": "node_36",
+          "to": "load_37",
+          "length": 300,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "36_38",
+          "phases": "BN",
+          "from": "node_36",
+          "to": "load_38",
+          "length": 250,
+          "configuration": "line_configuration_10010"
+        },
+        {
+          "name": "38_39",
+          "phases": "BN",
+          "from": "load_38",
+          "to": "load_39",
+          "length": 325,
+          "configuration": "line_configuration_10010"
+        },
+        {
+          "name": "40_41",
+          "phases": "CN",
+          "from": "node_40",
+          "to": "load_41",
+          "length": 325,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "40_42",
+          "phases": "ABCN",
+          "from": "node_40",
+          "to": "load_42",
+          "length": 250,
+          "configuration": "line_configuration_1001"
+        },
+        {
+          "name": "42_43",
+          "phases": "BN",
+          "from": "load_42",
+          "to": "load_43",
+          "length": 500,
+          "configuration": "line_configuration_10010"
+        },
+        {
+          "name": "42_44",
+          "phases": "ABCN",
+          "from": "load_42",
+          "to": "node_44",
+          "length": 200,
+          "configuration": "line_configuration_1001"
+        },
+        {
+          "name": "44_45",
+          "phases": "AN",
+          "from": "node_44",
+          "to": "load_45",
+          "length": 200,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "44_47",
+          "phases": "ABCN",
+          "from": "node_44",
+          "to": "load_47",
+          "length": 250,
+          "configuration": "line_configuration_1001"
+        },
+        {
+          "name": "45_46",
+          "phases": "AN",
+          "from": "load_45",
+          "to": "load_46",
+          "length": 300,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "47_48",
+          "phases": "ABCN",
+          "from": "load_47",
+          "to": "load_48",
+          "length": 150,
+          "configuration": "line_configuration_1004"
+        },
+        {
+          "name": "47_49",
+          "phases": "ABCN",
+          "from": "load_47",
+          "to": "load_49",
+          "length": 250,
+          "configuration": "line_configuration_1004"
+        },
+        {
+          "name": "49_50",
+          "phases": "ABCN",
+          "from": "load_49",
+          "to": "meter_50",
+          "length": 250,
+          "configuration": "line_configuration_1004"
+        },
+        {
+          "name": "50_51",
+          "phases": "ABCN",
+          "from": "meter_50",
+          "to": "load_51",
+          "length": 250,
+          "configuration": "line_configuration_1004"
+        },
+        {
+          "name": "51_151",
+          "phases": "ABCN",
+          "from": "load_51",
+          "to": "node_151",
+          "length": 700,
+          "configuration": "line_configuration_1004",
+          "inline_comments": {
+            "phases": "//undefined line segment"
+          }
+        },
+        {
+          "name": "52_53",
+          "phases": "ABCN",
+          "from": "load_52",
+          "to": "load_53",
+          "length": 200,
+          "configuration": "line_configuration_1001"
+        },
+        {
+          "name": "53_54",
+          "phases": "ABCN",
+          "from": "load_53",
+          "to": "node_54",
+          "length": 125,
+          "configuration": "line_configuration_1001"
+        },
+        {
+          "name": "54_55",
+          "phases": "ABCN",
+          "from": "node_54",
+          "to": "load_55",
+          "length": 275,
+          "configuration": "line_configuration_1001"
+        },
+        {
+          "name": "54_57",
+          "phases": "ABCN",
+          "from": "node_54",
+          "to": "meter_57",
+          "length": 350,
+          "configuration": "line_configuration_1003"
+        },
+        {
+          "name": "55_56",
+          "phases": "ABCN",
+          "from": "meter_56",
+          "to": "load_55",
+          "length": 275,
+          "configuration": "line_configuration_1001",
+          "inline_comments": {
+            "from": "//load:55;",
+            "to": "//meter:56;"
+          }
+        },
+        {
+          "name": "57_58",
+          "phases": "BN",
+          "from": "meter_57",
+          "to": "load_58",
+          "length": 250,
+          "configuration": "line_configuration_10010"
+        },
+        {
+          "name": "57_60",
+          "phases": "ABCN",
+          "from": "meter_57",
+          "to": "load_60",
+          "length": 750,
+          "configuration": "line_configuration_1003"
+        },
+        {
+          "name": "58_59",
+          "phases": "BN",
+          "from": "load_58",
+          "to": "load_59",
+          "length": 250,
+          "configuration": "line_configuration_10010"
+        },
+        {
+          "name": "60_61",
+          "phases": "ABCN",
+          "from": "load_60",
+          "to": "node_61",
+          "length": 550,
+          "configuration": "line_configuration_1005"
+        },
+        {
+          "name": "67_68",
+          "phases": "AN",
+          "from": "meter_67",
+          "to": "load_68",
+          "length": 200,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "67_72",
+          "phases": "ABCN",
+          "from": "meter_67",
+          "to": "load_72",
+          "length": 275,
+          "configuration": "line_configuration_1003"
+        },
+        {
+          "name": "67_97",
+          "phases": "ABCN",
+          "from": "meter_67",
+          "to": "node_97",
+          "length": 250,
+          "configuration": "line_configuration_1003"
+        },
+        {
+          "name": "68_69",
+          "phases": "AN",
+          "from": "load_68",
+          "to": "load_69",
+          "length": 275,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "69_70",
+          "phases": "AN",
+          "from": "load_69",
+          "to": "load_70",
+          "length": 325,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "70_71",
+          "phases": "AN",
+          "from": "load_70",
+          "to": "load_71",
+          "length": 275,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "72_73",
+          "phases": "CN",
+          "from": "load_72",
+          "to": "load_73",
+          "length": 275,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "72_76",
+          "phases": "ABCN",
+          "from": "load_72",
+          "to": "load_76",
+          "length": 200,
+          "configuration": "line_configuration_1003"
+        },
+        {
+          "name": "73_74",
+          "phases": "CN",
+          "from": "load_73",
+          "to": "load_74",
+          "length": 350,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "74_75",
+          "phases": "CN",
+          "from": "load_74",
+          "to": "load_75",
+          "length": 400,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "76_77",
+          "phases": "ABCN",
+          "from": "load_76",
+          "to": "load_77",
+          "length": 400,
+          "configuration": "line_configuration_1006"
+        },
+        {
+          "name": "76_86",
+          "phases": "ABCN",
+          "from": "load_76",
+          "to": "load_86",
+          "length": 700,
+          "configuration": "line_configuration_1003"
+        },
+        {
+          "name": "77_78",
+          "phases": "ABCN",
+          "from": "load_77",
+          "to": "node_78",
+          "length": 100,
+          "configuration": "line_configuration_1006"
+        },
+        {
+          "name": "78_79",
+          "phases": "ABCN",
+          "from": "node_78",
+          "to": "load_79",
+          "length": 225,
+          "configuration": "line_configuration_1006"
+        },
+        {
+          "name": "78_80",
+          "phases": "ABCN",
+          "from": "node_78",
+          "to": "load_80",
+          "length": 475,
+          "configuration": "line_configuration_1006"
+        },
+        {
+          "name": "80_81",
+          "phases": "ABCN",
+          "from": "load_80",
+          "to": "node_81",
+          "length": 475,
+          "configuration": "line_configuration_1006"
+        },
+        {
+          "name": "81_82",
+          "phases": "ABCN",
+          "from": "node_81",
+          "to": "load_82",
+          "length": 250,
+          "configuration": "line_configuration_1006"
+        },
+        {
+          "name": "81_84",
+          "phases": "CN",
+          "from": "node_81",
+          "to": "load_84",
+          "length": 675,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "82_83",
+          "phases": "ABCN",
+          "from": "load_82",
+          "to": "load_83",
+          "length": 250,
+          "configuration": "line_configuration_1006"
+        },
+        {
+          "name": "84_85",
+          "phases": "CN",
+          "from": "load_84",
+          "to": "load_85",
+          "length": 475,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "86_87",
+          "phases": "ABCN",
+          "from": "load_86",
+          "to": "load_87",
+          "length": 450,
+          "configuration": "line_configuration_1006"
+        },
+        {
+          "name": "87_88",
+          "phases": "AN",
+          "from": "load_87",
+          "to": "load_88",
+          "length": 175,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "87_89",
+          "phases": "ABCN",
+          "from": "load_87",
+          "to": "node_89",
+          "length": 275,
+          "configuration": "line_configuration_1006"
+        },
+        {
+          "name": "89_90",
+          "phases": "BN",
+          "from": "node_89",
+          "to": "load_90",
+          "length": 225,
+          "configuration": "line_configuration_10010"
+        },
+        {
+          "name": "89_91",
+          "phases": "ABCN",
+          "from": "node_89",
+          "to": "node_91",
+          "length": 225,
+          "configuration": "line_configuration_1006"
+        },
+        {
+          "name": "91_92",
+          "phases": "CN",
+          "from": "node_91",
+          "to": "load_92",
+          "length": 300,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "91_93",
+          "phases": "ABCN",
+          "from": "node_91",
+          "to": "node_93",
+          "length": 225,
+          "configuration": "line_configuration_1006"
+        },
+        {
+          "name": "93_94",
+          "phases": "AN",
+          "from": "node_93",
+          "to": "load_94",
+          "length": 275,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "93_95",
+          "phases": "ABCN",
+          "from": "node_93",
+          "to": "load_95",
+          "length": 300,
+          "configuration": "line_configuration_1006"
+        },
+        {
+          "name": "95_96",
+          "phases": "BN",
+          "from": "load_95",
+          "to": "load_96",
+          "length": 200,
+          "configuration": "line_configuration_10010"
+        },
+        {
+          "name": "97_98",
+          "phases": "ABCN",
+          "from": "node_97",
+          "to": "load_98",
+          "length": 275,
+          "configuration": "line_configuration_1003"
+        },
+        {
+          "name": "98_99",
+          "phases": "ABCN",
+          "from": "load_98",
+          "to": "load_99",
+          "length": 550,
+          "configuration": "line_configuration_1003"
+        },
+        {
+          "name": "99_100",
+          "phases": "ABCN",
+          "from": "load_99",
+          "to": "load_100",
+          "length": 300,
+          "configuration": "line_configuration_1003"
+        },
+        {
+          "name": "100_450",
+          "phases": "ABCN",
+          "from": "load_100",
+          "to": "node_450",
+          "length": 800,
+          "configuration": "line_configuration_1003"
+        },
+        {
+          "name": "101_102",
+          "phases": "CN",
+          "from": "load_101",
+          "to": "load_102",
+          "length": 225,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "101_105",
+          "phases": "ABCN",
+          "from": "load_101",
+          "to": "node_105",
+          "length": 275,
+          "configuration": "line_configuration_1003"
+        },
+        {
+          "name": "102_103",
+          "phases": "CN",
+          "from": "load_102",
+          "to": "load_103",
+          "length": 325,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "103_104",
+          "phases": "CN",
+          "from": "load_103",
+          "to": "load_104",
+          "length": 700,
+          "configuration": "line_configuration_10011"
+        },
+        {
+          "name": "105_106",
+          "phases": "BN",
+          "from": "node_105",
+          "to": "load_106",
+          "length": 225,
+          "configuration": "line_configuration_10010"
+        },
+        {
+          "name": "105_108",
+          "phases": "ABCN",
+          "from": "node_105",
+          "to": "node_108",
+          "length": 325,
+          "configuration": "line_configuration_1003"
+        },
+        {
+          "name": "106_107",
+          "phases": "BN",
+          "from": "load_106",
+          "to": "load_107",
+          "length": 575,
+          "configuration": "line_configuration_10010"
+        },
+        {
+          "name": "108_109",
+          "phases": "AN",
+          "from": "node_108",
+          "to": "load_109",
+          "length": 450,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "108_300",
+          "phases": "ABCN",
+          "from": "node_108",
+          "to": "meter_300",
+          "length": 1000,
+          "configuration": "line_configuration_1003"
+        },
+        {
+          "name": "109_110",
+          "phases": "AN",
+          "from": "load_109",
+          "to": "node_110",
+          "length": 300,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "110_111",
+          "phases": "AN",
+          "from": "node_110",
+          "to": "load_111",
+          "length": 575,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "110_112",
+          "phases": "AN",
+          "from": "node_110",
+          "to": "load_112",
+          "length": 125,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "112_113",
+          "phases": "AN",
+          "from": "load_112",
+          "to": "load_113",
+          "length": 525,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "113_114",
+          "phases": "AN",
+          "from": "load_113",
+          "to": "load_114",
+          "length": 325,
+          "configuration": "line_configuration_1009"
+        },
+        {
+          "name": "135_35",
+          "phases": "ABCN",
+          "from": "node_135",
+          "to": "load_35",
+          "length": 375,
+          "configuration": "line_configuration_1004"
+        },
+        {
+          "name": "149_1",
+          "phases": "ABCN",
+          "from": "node_149",
+          "to": "load_1",
+          "length": 400,
+          "configuration": "line_configuration_1001"
+        },
+        {
+          "name": "152_52",
+          "phases": "ABCN",
+          "from": "node_152",
+          "to": "load_52",
+          "length": 400,
+          "configuration": "line_configuration_1001"
+        },
+        {
+          "name": "6701_67",
+          "phases": "ABCN",
+          "from": "node_6701",
+          "to": "meter_67",
+          "length": 350,
+          "configuration": "line_configuration_1006"
+        },
+        {
+          "name": "197_101",
+          "phases": "ABCN",
+          "from": "node_197",
+          "to": "load_101",
+          "length": 250,
+          "configuration": "line_configuration_1003"
+        }
+      ]
+    },
+    "underground_line": {
+      "instances": [
+        {
+          "name": "60_62",
+          "phases": "ABC",
+          "from": "load_60",
+          "to": "load_62",
+          "length": 250,
+          "configuration": "line_configuration_10012"
+        },
+        {
+          "name": "62_63",
+          "phases": "ABC",
+          "from": "load_62",
+          "to": "load_63",
+          "length": 175,
+          "configuration": "line_configuration_10012"
+        },
+        {
+          "name": "63_64",
+          "phases": "ABC",
+          "from": "load_63",
+          "to": "load_64",
+          "length": 350,
+          "configuration": "line_configuration_10012"
+        },
+        {
+          "name": "64_65",
+          "phases": "ABC",
+          "from": "load_64",
+          "to": "load_65",
+          "length": 425,
+          "configuration": "line_configuration_10012"
+        },
+        {
+          "name": "65_66",
+          "phases": "ABC",
+          "from": "load_65",
+          "to": "meter_66",
+          "length": 325,
+          "configuration": "line_configuration_10012"
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node_3",
+          "id": 3,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "outside_comments": [
+            "//Create node only objects"
+          ]
+        },
+        {
+          "name": "node_14",
+          "id": 14,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_1401",
+          "id": 1401,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_15",
+          "id": 15,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_18",
+          "id": 18,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_21",
+          "id": 21,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_23",
+          "id": 23,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_25",
+          "id": 25,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_26",
+          "id": 26,
+          "phases": "ACN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_2601",
+          "id": 2601,
+          "phases": "ACN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_27",
+          "id": 27,
+          "phases": "ACN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_36",
+          "id": 36,
+          "phases": "ABN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_40",
+          "id": 40,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_44",
+          "id": 44,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_54",
+          "id": 54,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_61",
+          "id": 61,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "outside_comments": [
+            "// object meter:5701 {",
+            "// phases \"ABCN\";",
+            "// name 5701;",
+            "//// bustype SWING_PQ;",
+            "// flags DELTAMODE;",
+            "// voltage_A 2401.7771;",
+            "// voltage_B -1200.8886-2080.000j;",
+            "// voltage_C -1200.8886+2080.000j;",
+            "// nominal_voltage 2401.7771;",
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag\";",
+            "// file VSI_droop_voltages.csv;",
+            "// interval 0; // 1;",
+            "// };",
+            "// object recorder {",
+            "// file VSI_droop_powers.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag\";",
+            "// interval 0; // -1;",
+            "// };",
+            "// object recorder {",
+            "// file VSI_droop_overallpowers.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_power.real,measured_power.imag\";",
+            "// interval 1; // -1;",
+            "// };",
+            "// object recorder {",
+            "// file VSI_droop_currents.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag\";",
+            "// interval 0; // 1;",
+            "// };",
+            "// object recorder {",
+            "// file VSI_droop_frequency.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_frequency\";",
+            "// interval 1;",
+            "// };",
+            "// }",
+            "// object switch:5702 {",
+            "// phases \"ABCN\";",
+            "// name 57-5701;",
+            "// from meter:57;",
+            "// to meter:5701;",
+            "// status CLOSED;",
+            "// }"
+          ]
+        },
+        {
+          "name": "node_6701",
+          "id": 6701,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_78",
+          "id": 78,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_81",
+          "id": 81,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_89",
+          "id": 89,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_91",
+          "id": 91,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_93",
+          "id": 93,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_97",
+          "id": 97,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_105",
+          "id": 105,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_108",
+          "id": 108,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_110",
+          "id": 110,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_135",
+          "id": 135,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_149",
+          "id": 149,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_1491",
+          "id": 1491,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_151",
+          "id": 151,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_152",
+          "id": 152,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_160",
+          "id": 160,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag\";",
+            "// file node160.csv;",
+            "// interval 0; // 1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "node_195",
+          "id": 195,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_197",
+          "id": 197,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_250",
+          "id": 250,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_251",
+          "id": 251,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_350",
+          "id": 350,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_450",
+          "id": 450,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_451",
+          "id": 451,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "node_610",
+          "id": 610,
+          "phases": "ABCN",
+          "voltage_A": "480.000+0j",
+          "voltage_B": "-240.000-415.6922j",
+          "voltage_C": "-240.000+415.6922j",
+          "nominal_voltage": 480.0
+        },
+        {
+          "name": "node_611",
+          "id": 611,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "meter_8",
+          "id": 8,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "//bustype SWING_PQ;",
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag\";",
+            "// file DG2voltages.csv;",
+            "// interval 0; // 1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "meter_13",
+          "id": 13,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "meter_57",
+          "id": 57,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "meter_67",
+          "id": 67,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag\";",
+            "// file bus67voltages.csv;",
+            "// interval 0; // 1;",
+            "// };",
+            "// object recorder {",
+            "// file node67powers.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag\";",
+            "// interval 0; // -1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "meter_150",
+          "id": 150,
+          "phases": "ABC",
+          "bustype": "SWING",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "//bustype SWING_PQ;",
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag\";",
+            "// file swingvoltages.csv;",
+            "// interval 0; // 1;",
+            "// };",
+            "// object recorder {",
+            "// file swingpowers.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag\";",
+            "// interval 0; // -1;",
+            "// };",
+            "// object recorder {",
+            "// file swingoverallpowers.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_power.real,measured_power.imag\";",
+            "// interval 1; // -1;",
+            "// };",
+            "// object recorder {",
+            "// file swingcurrents.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag\";",
+            "// interval 0; // 1;",
+            "// };",
+            "// object recorder {",
+            "// file swingfrequency.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_frequency\";",
+            "// interval 1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "meter_300",
+          "id": 300,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "meter_50",
+          "id": 50,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "//bustype SWING;",
+            "//bustype SWING_PQ;",
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag\";",
+            "// file DG1voltages.csv;",
+            "// interval 0; // 1;",
+            "// };",
+            "// object recorder {",
+            "// file node50powers.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag\";",
+            "// interval 0; // 1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "meter_56",
+          "id": 56,
+          "phases": "ABCN",
+          "bustype": "SWING_PQ",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "// constant_power_B 0+0j;",
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag\";",
+            "// file VSI_droop_voltages.csv;",
+            "// interval 0; // 1;",
+            "// };",
+            "// object recorder {",
+            "// file VSI_droop_powers.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag\";",
+            "// interval 0; // -1;",
+            "// };",
+            "// object recorder {",
+            "// file VSI_droop_overallpowers.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_power.real,measured_power.imag\";",
+            "// interval 1; // -1;",
+            "// };",
+            "// object recorder {",
+            "// file VSI_droop_currents.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag\";",
+            "// interval 0; // 1;",
+            "// };",
+            "// object recorder {",
+            "// file VSI_droop_frequency.csv;",
+            "// flags DELTAMODE;",
+            "// property \"measured_frequency\";",
+            "// interval 1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "meter_66",
+          "id": 66,
+          "phases": "ABC",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "//    constant_power_C 75000+35000j;"
+          ]
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load_72",
+          "id": 72,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "// constant_power_A 250000+90000j;",
+            "// constant_power_B 250000+90000j;",
+            "// constant_power_C 250000+90000j;"
+          ]
+        },
+        {
+          "name": "load_101",
+          "id": 101,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "// constant_power_A 50000+30000j;",
+            "// constant_power_B 50000+30000j;",
+            "// constant_power_C 50000+30000j;"
+          ]
+        },
+        {
+          "name": "load_1",
+          "id": 1,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "nominal_voltage": 2401.7771,
+          "outside_comments": [
+            "//Create load objects"
+          ]
+        },
+        {
+          "name": "load_2",
+          "id": 2,
+          "phases": "BN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_4",
+          "id": 4,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_5",
+          "id": 5,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_C": "-0.55781+9.2933j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_6",
+          "id": 6,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_C": "115.3707+57.6853j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_7",
+          "id": 7,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_9",
+          "id": 9,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_10",
+          "id": 10,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_A": "8.3272-4.1636j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_11",
+          "id": 11,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_A": "115.3707+57.6853j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_12",
+          "id": 12,
+          "phases": "BN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_16",
+          "id": 16,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_17",
+          "id": 17,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_19",
+          "id": 19,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_20",
+          "id": 20,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_A": "16.6543-8.3272j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_22",
+          "id": 22,
+          "phases": "BN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_B": "115.3707+57.6853j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_24",
+          "id": 24,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_28",
+          "id": 28,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_A": "16.6543-8.3272j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_29",
+          "id": 29,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_A": "115.3707+57.6853j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_30",
+          "id": 30,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_31",
+          "id": 31,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_32",
+          "id": 32,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_33",
+          "id": 33,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_A": "16.6543-8.3272j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_34",
+          "id": 34,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_C": "115.3707+57.6853j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_35",
+          "id": 35,
+          "phases": "ABCD",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_37",
+          "id": 37,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_A": "115.3707+57.6853j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_38",
+          "id": 38,
+          "phases": "BN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_B": "-7.7694-5.1297j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_39",
+          "id": 39,
+          "phases": "BN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_41",
+          "id": 41,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_42",
+          "id": 42,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "20000+10000j",
+          "constant_power_B": "20000+10000j",
+          "constant_power_C": "20000+10000j",
+          "nominal_voltage": 2401.7771,
+          "GFA_enable": true,
+          "GFA_freq_low_trip": "59.8 Hz",
+          "GFA_freq_high_trip": "60.5 Hz",
+          "GFA_volt_low_trip": 0.8,
+          "GFA_volt_high_trip": 1.2,
+          "GFA_reconnect_time": "300 s",
+          "GFA_freq_disconnect_time": "0.08 s",
+          "GFA_volt_disconnect_time": "0.08 s",
+          "outside_comments": [
+            "///////////////////////////////////////////////////////////////////",
+            "/////////////////////////// GFA #1 ////////////////////////////////",
+            "///////////////////////////////////////////////////////////////////"
+          ],
+          "inside_comments": [
+            "//frequency_measure_type PLL;",
+            "// object recorder {",
+            "// property \"GFA_status,measured_frequency\";",
+            "// interval 0; // 1;",
+            "// flags DELTAMODE;",
+            "// file \"GFA_status_out.csv\";",
+            "// };"
+          ]
+        },
+        {
+          "name": "load_43",
+          "id": 43,
+          "phases": "BN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_B": "115.3707+57.6853j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_45",
+          "id": 45,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_A": "8.3272-4.1636j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_46",
+          "id": 46,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_47",
+          "id": 47,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_A": "14.5725-10.409j",
+          "constant_current_B": "-16.3007-7.4157j",
+          "constant_current_C": "1.7282+17.8247j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_48",
+          "id": 48,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_A": "54.5672+38.9766j",
+          "constant_impedance_B": "54.5672+38.9766j",
+          "constant_impedance_C": "54.5672+38.9766j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_49",
+          "id": 49,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "//constant_power_A 35000+25000j;",
+            "//constant_power_B 70000+50000j;",
+            "//constant_power_C 35000+25000j;",
+            "// object player {",
+            "// file diesel_deltamode_load_player_A_1Gen.csv;",
+            "// property constant_power_A;",
+            "// flags DELTAMODE;",
+            "//};",
+            "//object player {",
+            "// file diesel_deltamode_load_player_B_1Gen.csv;",
+            "// property constant_power_B;",
+            "// flags DELTAMODE;",
+            "//};",
+            "//object player {",
+            "// file diesel_deltamode_load_player_C_1Gen.csv;",
+            "// property constant_power_C;",
+            "// flags DELTAMODE;",
+            "//};",
+            "// object recorder {",
+            "// file load49.csv;",
+            "// property \"voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag,constant_power_A.real,constant_power_A.imag,constant_power_B.real,constant_power_B.imag,constant_power_C.real,constant_power_C.imag\";",
+            "// flags DELTAMODE;",
+            "// interval 0; // -1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "load_51",
+          "id": 51,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_52",
+          "id": 52,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_53",
+          "id": 53,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_55",
+          "id": 55,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_A": "230.7413+115.3707j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_58",
+          "id": 58,
+          "phases": "BN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_B": "-7.7694-5.1297j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_59",
+          "id": 59,
+          "phases": "BN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_60",
+          "id": 60,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "20000+10000j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "//bustype SWING_PQ;"
+          ]
+        },
+        {
+          "name": "load_62",
+          "id": 62,
+          "phases": "ABC",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_C": "115.3707+57.6853j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_63",
+          "id": 63,
+          "phases": "ABC",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_64",
+          "id": 64,
+          "phases": "ABC",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_B": "-28.2336-19.757j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_65",
+          "id": 65,
+          "phases": "ABCD",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_A": "327.4032+233.8595j",
+          "constant_impedance_B": "327.4032+233.8595j",
+          "constant_impedance_C": "163.7016+116.9297j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_68",
+          "id": 68,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_69",
+          "id": 69,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_70",
+          "id": 70,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_71",
+          "id": 71,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_73",
+          "id": 73,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_74",
+          "id": 74,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_C": "115.3707+57.6853j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_75",
+          "id": 75,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_76",
+          "id": 76,
+          "phases": "ABCD",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_A": "31.4742-4.0341j",
+          "constant_current_B": "-12.0192-16.8269j",
+          "constant_current_C": "-8.5629+18.8224j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_77",
+          "id": 77,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_79",
+          "id": 79,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_A": "115.3707+57.6853j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_80",
+          "id": 80,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_82",
+          "id": 82,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_83",
+          "id": 83,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "20000+10000j",
+          "constant_impedance_A": "0.00-28.8427j",
+          "constant_impedance_B": "0.00-28.8427j",
+          "constant_impedance_C": "0.00-28.8427j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "constant_impedance_A": "//Shunt Capacitors"
+          }
+        },
+        {
+          "name": "load_84",
+          "id": 84,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_85",
+          "id": 85,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_86",
+          "id": 86,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_87",
+          "id": 87,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_88",
+          "id": 88,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "constant_impedance_A": "0.00-115.7067j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "constant_impedance_A": "//Shunt Capacitor"
+          }
+        },
+        {
+          "name": "load_90",
+          "id": 90,
+          "phases": "BN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_B": "-15.5387-10.2595j",
+          "constant_impedance_B": "0.00-115.7067j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "constant_impedance_B": "//Shunt Capacitor"
+          }
+        },
+        {
+          "name": "load_92",
+          "id": 92,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "40000+20000j",
+          "constant_impedance_C": "0.00-115.7067j",
+          "nominal_voltage": 2401.7771,
+          "inline_comments": {
+            "constant_impedance_C": "//Shunt Capacitor"
+          }
+        },
+        {
+          "name": "load_94",
+          "id": 94,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_95",
+          "id": 95,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_96",
+          "id": 96,
+          "phases": "BN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_98",
+          "id": 98,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_99",
+          "id": 99,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag\";",
+            "// file load99.csv;",
+            "// interval 0; // 1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "load_100",
+          "id": 100,
+          "phases": "ABCN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_C": "115.3707+57.6853j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_102",
+          "id": 102,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_103",
+          "id": 103,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_104",
+          "id": 104,
+          "phases": "CN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_C": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_106",
+          "id": 106,
+          "phases": "BN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_107",
+          "id": 107,
+          "phases": "BN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_109",
+          "id": 109,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "40000+20000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_111",
+          "id": 111,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_112",
+          "id": 112,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_current_A": "8.3272-4.1636j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_113",
+          "id": 113,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_A": "115.3707+57.6853j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "load_114",
+          "id": 114,
+          "phases": "AN",
+          "flags": "DELTAMODE",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "20000+10000j",
+          "nominal_voltage": 2401.7771
+        }
+      ]
+    },
+    "switch": {
+      "instances": [
+        {
+          "name": "switch_13152",
+          "id": 13152,
+          "phases": "ABCN",
+          "from": "meter_13",
+          "to": "node_152",
+          "status": "CLOSED",
+          "outside_comments": [
+            "// Switches"
+          ]
+        },
+        {
+          "name": "microgrid_switch1",
+          "id": 18135,
+          "phases": "ABCN",
+          "from": "node_18",
+          "to": "node_135",
+          "status": "CLOSED",
+          "inside_comments": [
+            "// object recorder {",
+            "// file microgrid_switch1.csv;",
+            "// property phase_A_state,phase_B_state,phase_C_state;",
+            "// flags DELTAMODE;",
+            "// interval 0; // 1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "microgrid_switch3",
+          "id": 60160,
+          "phases": "ABCN",
+          "from": "load_60",
+          "to": "node_160",
+          "status": "CLOSED",
+          "inside_comments": [
+            "// object recorder {",
+            "// file microgrid_switch3.csv;",
+            "// property phase_A_state,phase_B_state,phase_C_state;",
+            "// flags DELTAMODE;",
+            "// interval 0; // 1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "switch_61611",
+          "id": 61611,
+          "phases": "ABCN",
+          "from": "node_61",
+          "to": "node_611",
+          "status": "CLOSED"
+        },
+        {
+          "name": "microgrid_switch2",
+          "id": 97197,
+          "phases": "ABCN",
+          "from": "node_97",
+          "to": "node_197",
+          "status": "CLOSED",
+          "inside_comments": [
+            "// object recorder {",
+            "// file microgrid_switch2.csv;",
+            "// property phase_A_state,phase_B_state,phase_C_state;",
+            "// flags DELTAMODE;",
+            "// interval 0; // 1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "switch_1491149",
+          "id": 1491149,
+          "phases": "ABCN",
+          "from": "node_1491",
+          "to": "node_149",
+          "status": "CLOSED"
+        },
+        {
+          "name": "switch_250251",
+          "id": 250251,
+          "phases": "ABCN",
+          "from": "node_250",
+          "to": "node_251",
+          "status": "CLOSED"
+        },
+        {
+          "name": "switch_450451",
+          "id": 450451,
+          "phases": "ABCN",
+          "from": "node_450",
+          "to": "node_451",
+          "status": "CLOSED"
+        },
+        {
+          "name": "switch_5494",
+          "id": 5494,
+          "phases": "AN",
+          "from": "node_54",
+          "to": "load_94",
+          "status": "OPEN",
+          "inside_comments": [
+            "// object recorder {",
+            "// file switch5494.csv;",
+            "// property phase_A_state,phase_B_state,phase_C_state;",
+            "// flags DELTAMODE;",
+            "// interval 0; // 1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "switch_151300",
+          "id": 151300,
+          "phases": "ABCN",
+          "from": "node_151",
+          "to": "meter_300",
+          "status": "OPEN",
+          "inside_comments": [
+            "// object recorder {",
+            "// file microgrid_switch4.csv;",
+            "// property phase_A_state,phase_B_state,phase_C_state;",
+            "// flags DELTAMODE;",
+            "// interval 0; // 1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "switch_300350",
+          "id": 300350,
+          "phases": "ABCN",
+          "from": "meter_300",
+          "to": "node_350",
+          "status": "CLOSED"
+        },
+        {
+          "name": "switch_95195",
+          "id": 95195,
+          "phases": "ABCN",
+          "from": "load_95",
+          "to": "node_195",
+          "status": "CLOSED"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "transformer_configuration_400",
+          "id": 400,
+          "connect_type": "DELTA_DELTA",
+          "install_type": "PADMOUNT",
+          "power_rating": 150,
+          "primary_voltage": 4160,
+          "secondary_voltage": 480,
+          "resistance": 0.0127,
+          "reactance": 0.0272,
+          "outside_comments": [
+            "// Capacitors",
+            "//object load:8398 {",
+            "//       name 8398;",
+            "//       parent 83;",
+            "//       phases \"ABCN\";",
+            "//       flags DELTAMODE;",
+            "//      voltage_A 2401.7771;",
+            "//       voltage_B -1200.8886-2080.000j;",
+            "//       voltage_C -1200.8886+2080.000j;",
+            "//       constant_impedance_A 0.00-28.8427j;",
+            "//       constant_impedance_B 0.00-28.8427j;",
+            "//       constant_impedance_C 0.00-28.8427j;",
+            "//       nominal_voltage 2401.7771;",
+            "//}",
+            "//object load:8898 {",
+            "//       name 8898;",
+            "//       parent 88;",
+            "//       phases \"AN\";",
+            "//       flags DELTAMODE;",
+            "//      voltage_A 2401.7771;",
+            "//       voltage_B -1200.8886-2080.000j;",
+            "//       voltage_C -1200.8886+2080.000j;",
+            "//       constant_impedance_A 0.00-115.7067j;",
+            "//       nominal_voltage 2401.7771;",
+            "//}",
+            "//object load:9098 {",
+            "//       name 9098;",
+            "//       parent 90;",
+            "//       phases \"BN\";",
+            "//       flags DELTAMODE;",
+            "//       voltage_A 2401.7771;",
+            "//       voltage_B -1200.8886-2080.000j;",
+            "//       voltage_C -1200.8886+2080.000j;",
+            "//       constant_impedance_B 0.00-115.7067j;",
+            "//       nominal_voltage 2401.7771;",
+            "//}",
+            "//object load:9298 {",
+            "//       name 9298;",
+            "//       parent 92;",
+            "//       phases \"CN\";",
+            "//       flags DELTAMODE;",
+            "//     voltage_A 2401.7771;",
+            "//       voltage_B -1200.8886-2080.000j;",
+            "//       voltage_C -1200.8886+2080.000j;",
+            "//       constant_impedance_C 0.00-115.7067j;",
+            "//       nominal_voltage 2401.7771;",
+            "//}",
+            "// Transformer"
+          ]
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "transformer_611610",
+          "id": 611610,
+          "phases": "ABCN",
+          "from": "node_611",
+          "to": "node_610",
+          "configuration": "transformer_configuration_400"
+        }
+      ]
+    },
+    "regulator_configuration": {
+      "instances": [
+        {
+          "name": "regulator_configuration_1501490",
+          "id": 1501490,
+          "connect_type": 1,
+          "band_center": 120.0,
+          "band_width": 2.0,
+          "time_delay": 30.0,
+          "raise_taps": 16,
+          "lower_taps": 16,
+          "current_transducer_ratio": 700,
+          "power_transducer_ratio": 20,
+          "compensator_r_setting_A": 3.0,
+          "compensator_x_setting_A": 7.5,
+          "compensator_r_setting_B": 3.0,
+          "compensator_x_setting_B": 7.5,
+          "compensator_r_setting_C": 3.0,
+          "compensator_x_setting_C": 7.5,
+          "CT_phase": "ABC",
+          "PT_phase": "ABC",
+          "regulation": 0.1,
+          "Control": "MANUAL",
+          "Type": "A",
+          "tap_pos_A": 7,
+          "tap_pos_B": 7,
+          "tap_pos_C": 7,
+          "outside_comments": [
+            "// Regulators"
+          ]
+        },
+        {
+          "name": "regulator_configuration_2526010",
+          "id": 2526010,
+          "connect_type": 1,
+          "band_center": 120.0,
+          "band_width": 1.0,
+          "time_delay": 30.0,
+          "raise_taps": 16,
+          "lower_taps": 16,
+          "current_transducer_ratio": 50,
+          "power_transducer_ratio": 20,
+          "compensator_r_setting_A": 0.4,
+          "compensator_x_setting_A": 0.4,
+          "compensator_r_setting_C": 0.4,
+          "compensator_x_setting_C": 0.4,
+          "CT_phase": "AC",
+          "PT_phase": "AC",
+          "regulation": 0.1,
+          "Control": "MANUAL",
+          "Type": "A",
+          "tap_pos_A": 0,
+          "tap_pos_C": -1
+        },
+        {
+          "name": "regulator_configuration_914010",
+          "id": 914010,
+          "connect_type": 1,
+          "band_center": 120.0,
+          "band_width": 2.0,
+          "time_delay": 30.0,
+          "raise_taps": 16,
+          "lower_taps": 16,
+          "current_transducer_ratio": 50,
+          "power_transducer_ratio": 20,
+          "compensator_r_setting_A": 0.4,
+          "compensator_x_setting_A": 0.4,
+          "CT_phase": "A",
+          "PT_phase": "A",
+          "regulation": 0.1,
+          "Control": "MANUAL",
+          "Type": "A",
+          "tap_pos_A": -1
+        },
+        {
+          "name": "regulator_configuration_16067010",
+          "id": 16067010,
+          "connect_type": 1,
+          "band_center": 124.0,
+          "band_width": 2.0,
+          "time_delay": 30.0,
+          "raise_taps": 16,
+          "lower_taps": 16,
+          "current_transducer_ratio": 300,
+          "power_transducer_ratio": 20,
+          "CT_phase": "ABC",
+          "PT_phase": "ABC",
+          "regulation": 0.1,
+          "Control": "MANUAL",
+          "Type": "A",
+          "tap_pos_A": 8,
+          "tap_pos_B": 1,
+          "tap_pos_C": 5
+        }
+      ]
+    },
+    "regulator": {
+      "instances": [
+        {
+          "name": "regulator_1501491",
+          "id": 1501491,
+          "phases": "ABC",
+          "from": "meter_150",
+          "to": "node_1491",
+          "configuration": "regulator_configuration_1501490"
+        },
+        {
+          "name": "regulator_252601",
+          "id": 252601,
+          "phases": "AC",
+          "from": "node_25",
+          "to": "node_2601",
+          "configuration": "regulator_configuration_2526010"
+        },
+        {
+          "name": "regulator_91401",
+          "id": 91401,
+          "phases": "A",
+          "from": "load_9",
+          "to": "node_1401",
+          "configuration": "regulator_configuration_914010"
+        },
+        {
+          "name": "regulator_1606701",
+          "id": 1606701,
+          "phases": "ABC",
+          "from": "node_160",
+          "to": "node_6701",
+          "configuration": "regulator_configuration_16067010"
+        }
+      ]
+    },
+    "inverter": {
+      "instances": [
+        {
+          "name": "VSI",
+          "parent": "meter_150",
+          "inverter_type": "FOUR_QUADRANT",
+          "use_multipoint_efficiency": false,
+          "four_quadrant_control_mode": "VOLTAGE_SOURCE",
+          "generator_status": "ONLINE",
+          "inverter_efficiency": 1,
+          "enable_ramp_rates_real": true,
+          "max_ramp_down_real": "25.0 MW/s",
+          "max_ramp_up_real": "35.0 MW/s",
+          "enable_ramp_rates_reactive": false,
+          "max_ramp_down_reactive": "100 MVAr/s",
+          "max_ramp_up_reactive": "100 MVAr/s",
+          "rated_power": "10000 kVA",
+          "VSI_Rfilter": 0.25,
+          "VSI_Xfilter": 1,
+          "P_Out": 9000000,
+          "Q_Out": 3000000,
+          "V_In": 5000.0,
+          "I_In": 2000.0,
+          "flags": "DELTAMODE",
+          "dynamic_model_mode": "PI",
+          "inverter_convergence_criterion": 0.001,
+          "ki_Vterminal": 0.01,
+          "kp_Vterminal": 0.1,
+          "outside_comments": [
+            "// This player kicks the system into delta mode early so that all transition transients can settle before the scenario transients are triggered",
+            "//object player {",
+            "// file ../trigger.player;",
+            "// property nominal_voltage;",
+            "// parent 50;",
+            "// flags DELTAMODE;",
+            "//}",
+            "// Voltage source inverter"
+          ],
+          "inside_comments": [
+            "// object recorder {",
+            "// property V_In,I_In,VA_In, Pref, Qref, VA_Out, VA_Out.real, VA_Out.imag;",
+            "// file VSI_inv.csv;",
+            "// flags DELTAMODE;",
+            "// interval 1;",
+            "// };"
+          ],
+          "inline_comments": {
+            "rated_power": "// Per phase rating"
+          }
+        },
+        {
+          "name": "VSI_droop",
+          "parent": "meter_56",
+          "inverter_type": "FOUR_QUADRANT",
+          "use_multipoint_efficiency": false,
+          "four_quadrant_control_mode": "VOLTAGE_SOURCE",
+          "VSI_mode": "VSI_DROOP",
+          "generator_status": "ONLINE",
+          "inverter_efficiency": 1,
+          "enable_ramp_rates_real": false,
+          "enable_ramp_rates_reactive": false,
+          "rated_power": "1000 kVA",
+          "P_Out": 1000000,
+          "Q_Out": 1000000,
+          "V_In": 1000.0,
+          "I_In": 1000.0,
+          "flags": "DELTAMODE",
+          "dynamic_model_mode": "PI",
+          "inverter_convergence_criterion": 10,
+          "VSI_Rfilter": 0.01,
+          "VSI_Xfilter": 0.1,
+          "Tp_delay": 0.01,
+          "R_fp": 3.77,
+          "Tq_delay": 0.01,
+          "R_vq": 0.05,
+          "inside_comments": [
+            "//max_ramp_down_real 15.0 MW/s;",
+            "//max_ramp_up_real 15.0 MW/s;",
+            "//max_ramp_down_reactive 100 MVAr/s;",
+            "//max_ramp_up_reactive 100 MVAr/s;",
+            "// Droop curve parameters",
+            "// object recorder {",
+            "// property V_In,I_In,VA_In, Pref, Qref, VA_Out, VA_Out.real, VA_Out.imag, VSI_freq;",
+            "// file VSI_droop.csv;",
+            "// flags DELTAMODE;",
+            "// interval 1;",
+            "// };"
+          ],
+          "inline_comments": {
+            "rated_power": "// Per phase rating"
+          }
+        }
+      ]
+    },
+    "battery": {
+      "instances": [
+        {
+          "name": "battery_1",
+          "parent": "VSI",
+          "use_internal_battery_model": true,
+          "battery_type": "LI_ION",
+          "battery_capacity": "500 kWh",
+          "base_efficiency": 1,
+          "state_of_charge": 1,
+          "generator_mode": "SUPPLY_DRIVEN",
+          "flags": "DELTAMODE",
+          "inside_comments": [
+            "// object recorder {",
+            "// file \"battery_pq_soc.csv\";",
+            "// property state_of_charge;",
+            "// flags DELTAMODE;",
+            "// interval 1;",
+            "// };",
+            "// object recorder {",
+            "// file \"battery_pq_status.csv\";",
+            "// property battery_state;",
+            "// flags DELTAMODE;",
+            "// interval 1;",
+            "// };"
+          ],
+          "inline_comments": {
+            "state_of_charge": "// 1"
+          }
+        },
+        {
+          "name": "battery_2",
+          "parent": "VSI_droop",
+          "use_internal_battery_model": true,
+          "battery_type": "LI_ION",
+          "battery_capacity": "500 kWh",
+          "base_efficiency": 1,
+          "state_of_charge": 1,
+          "generator_mode": "SUPPLY_DRIVEN",
+          "flags": "DELTAMODE",
+          "inside_comments": [
+            "// object recorder {",
+            "// file \"battery_pq_soc2.csv\";",
+            "// property state_of_charge;",
+            "// flags DELTAMODE;",
+            "// interval 1;",
+            "// };",
+            "// object recorder {",
+            "// file \"battery_pq_status2.csv\";",
+            "// property battery_state;",
+            "// flags DELTAMODE;",
+            "// interval 1;",
+            "// };"
+          ],
+          "inline_comments": {
+            "state_of_charge": "// 1"
+          }
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_309",
+          "parent": "complex_assert_308",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../VSI_isochronous_droop_VA.csv"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_308",
+          "parent": "VSI_droop",
+          "flags": "DELTAMODE",
+          "target": "VA_Out",
+          "within": 0.5
+        }
+      ]
+    }
+  }
+}

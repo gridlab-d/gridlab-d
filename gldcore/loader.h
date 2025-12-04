@@ -42,6 +42,7 @@ private:
     double loadLatitude(char *buffer);
     double loadLongitude(char *buffer);
     int set_flags(OBJECT *obj, char *propval);
+    void clearQuotesFromStr(string &str);
 
 public:
     bool open_file(string file_name);

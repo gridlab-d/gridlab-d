@@ -1,0 +1,50 @@
+{
+  "__preamble": {
+    "comments": [
+      "// test of ticket:496"
+    ]
+  },
+  "classes": {
+    "my_test": [
+      {
+        "type": "randomvar",
+        "name": "x"
+      },
+      {
+        "type": "randomvar",
+        "name": "y"
+      }
+    ]
+  },
+  "clock": {
+    "starttime": "'2000-01-01 00:00:00'",
+    "stoptime": "'2000-01-01 00:01:00'"
+  },
+  "modules": {
+    "tape": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_2",
+          "parent": "my_test_..2",
+          "property": "x,y",
+          "file": "`my_test_",
+          "interval": -1
+        }
+      ]
+    },
+    "my_test": {
+      "instances": [
+        {
+          "name": "my_test_..2",
+          "object_count": 2,
+          "id": "..2",
+          "x": "\"type:uniform(0,1)",
+          "y": "\"type:uniform(0,1)"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,671 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Based on the IEEE 13-node, since it has both types",
+      "// of underground cables.  Changed to capture wider range",
+      "// I.E., THIS IS NOT THE IEEE 13-NODE SYSTEM ANYMORE",
+      "//#set pauseatexit=1",
+      "//#set savefile=UG_line.xml",
+      "//#define stylesheet=C:\\GridlabD\\944\\VS2005\\x64\\Debug\\gridlabd-2_0"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "iteration_limit": "100000;"
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:01'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "FBS",
+      "line_capacitance": true
+    },
+    "assert": {}
+  },
+  "objects": {
+    "underground_line_conductor": {
+      "instances": [
+        {
+          "name": "ulc6070",
+          "outer_diameter": "1.060000 in",
+          "conductor_gmr": "0.011100 ft",
+          "conductor_diameter": "0.368000 in",
+          "conductor_resistance": "0.970000 Ohm/mile",
+          "insulation_relative_permitivitty": 2.3,
+          "shield_gmr": "0.0365 ft",
+          "shield_resistance": "4.2786 Ohm/mile",
+          "shield_diameter": "0.88 in",
+          "shield_thickness": "0.005 in",
+          "outside_comments": [
+            "// Phase Conductor for 607: 1/0 AA,TS N: 1/0 Cu"
+          ]
+        },
+        {
+          "name": "ulc6070N",
+          "outer_diameter": 1.06,
+          "conductor_gmr": 0.01113,
+          "conductor_diameter": 0.368,
+          "conductor_resistance": 0.607,
+          "insulation_relative_permitivitty": 2.3,
+          "outside_comments": [
+            "// Phase Conductor for 607, phase N. 1/0 AA,TS N: 1/0 Cu, Phase N is a CU copper conductor."
+          ],
+          "inline_comments": {
+            "outer_diameter": "//1.060000; inch, not used in tape-shield calculation",
+            "conductor_gmr": "//ft",
+            "conductor_diameter": "//0.368000; inch"
+          }
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls520ABCN",
+          "distance_AB": 2.5,
+          "distance_AC": 4.5,
+          "distance_BC": 7.0,
+          "distance_BN": 0.25,
+          "distance_AN": 0.25,
+          "distance_CN": 0.25,
+          "inline_comments": {
+            "distance_BN": "//5.656854;",
+            "distance_AN": "//4.272002;",
+            "distance_CN": "//5.0;"
+          }
+        },
+        {
+          "name": "ls520ABC",
+          "distance_AB": 2.5,
+          "distance_AC": 4.5,
+          "distance_BC": 7.0
+        },
+        {
+          "name": "ls520AN",
+          "distance_AN": 0.25,
+          "inline_comments": {
+            "distance_AN": "//4.272002;"
+          }
+        },
+        {
+          "name": "ls520BN",
+          "distance_BN": 0.25,
+          "inline_comments": {
+            "distance_BN": "//5.656854;"
+          }
+        },
+        {
+          "name": "ls520CN",
+          "distance_CN": 0.25,
+          "inline_comments": {
+            "distance_CN": "//5.0;"
+          }
+        },
+        {
+          "name": "ls520ABN",
+          "distance_AB": 2.5,
+          "distance_BN": 0.25,
+          "distance_AN": 0.25,
+          "inline_comments": {
+            "distance_BN": "//5.656854;",
+            "distance_AN": "//4.272002;"
+          }
+        },
+        {
+          "name": "ls520BCN",
+          "distance_BC": 7.0,
+          "distance_BN": 0.25,
+          "distance_CN": 0.25,
+          "inline_comments": {
+            "distance_BN": "//5.656854;",
+            "distance_CN": "//5.0;"
+          }
+        },
+        {
+          "name": "ls520CAN",
+          "distance_AC": 4.5,
+          "distance_AN": 0.25,
+          "distance_CN": 0.25,
+          "inline_comments": {
+            "distance_AN": "//4.272002;",
+            "distance_CN": "//5.0;"
+          }
+        },
+        {
+          "name": "ls520AB",
+          "distance_AB": 2.5
+        },
+        {
+          "name": "ls520BC",
+          "distance_BC": 7.0
+        },
+        {
+          "name": "ls520CA",
+          "distance_AC": 4.5
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc607ABCN",
+          "conductor_A": "ulc6070",
+          "conductor_B": "ulc6070",
+          "conductor_C": "ulc6070",
+          "conductor_N": "ulc6070N",
+          "spacing": "ls520ABCN",
+          "outside_comments": [
+            "// Line Configuration"
+          ]
+        },
+        {
+          "name": "lc607ABC",
+          "conductor_A": "ulc6070",
+          "conductor_B": "ulc6070",
+          "conductor_C": "ulc6070",
+          "spacing": "ls520ABC"
+        },
+        {
+          "name": "lc607AN",
+          "conductor_A": "ulc6070",
+          "conductor_N": "ulc6070N",
+          "spacing": "ls520AN"
+        },
+        {
+          "name": "lc607BN",
+          "conductor_B": "ulc6070",
+          "conductor_N": "ulc6070N",
+          "spacing": "ls520BN"
+        },
+        {
+          "name": "lc607CN",
+          "conductor_C": "ulc6070",
+          "conductor_N": "ulc6070N",
+          "spacing": "ls520CAN",
+          "}object": "line_configuration ",
+          "conductor_A": "ulc6070",
+          "conductor_B": "ulc6070"
+        },
+        {
+          "name": "lc607AB",
+          "conductor_A": "ulc6070",
+          "conductor_B": "ulc6070",
+          "spacing": "ls520AB"
+        },
+        {
+          "name": "lc607BC",
+          "conductor_B": "ulc6070",
+          "conductor_C": "ulc6070",
+          "spacing": "ls520BC"
+        },
+        {
+          "name": "lc607CA",
+          "conductor_A": "ulc6070",
+          "conductor_C": "ulc6070",
+          "spacing": "ls520CA"
+        }
+      ]
+    },
+    "underground_line": {
+      "instances": [
+        {
+          "name": "line_684_652_AN",
+          "phases": "AN",
+          "from": "n684",
+          "to": "l652_AN",
+          "length": "1 mile",
+          "configuration": "lc607AN",
+          "outside_comments": [
+            "// Define line objects",
+            "// Phases AN, BN, CN, ABCN"
+          ]
+        },
+        {
+          "name": "line_684_652_BN",
+          "phases": "BN",
+          "from": "n684",
+          "to": "l652_BN",
+          "length": "1 mile",
+          "configuration": "lc607BN"
+        },
+        {
+          "name": "line_684_652_CN",
+          "phases": "CN",
+          "from": "n684",
+          "to": "l652_CN",
+          "length": "1 mile",
+          "configuration": "lc607CN"
+        },
+        {
+          "name": "line_684_652_ABCN",
+          "phases": "ABCN",
+          "from": "n684",
+          "to": "l652_ABCN",
+          "length": "1 mile",
+          "configuration": "lc607ABCN"
+        },
+        {
+          "name": "line_684_652_ABN",
+          "phases": "ABN",
+          "from": "n684",
+          "to": "l652_ABN",
+          "length": "1 mile",
+          "configuration": "lc607ABN",
+          "outside_comments": [
+            "// Phases ABN, BCN, CAN"
+          ]
+        },
+        {
+          "name": "line_684_652_BCN",
+          "phases": "BCN",
+          "from": "n684",
+          "to": "l652_BCN",
+          "length": "1 mile",
+          "configuration": "lc607BCN"
+        },
+        {
+          "name": "line_684_652_CAN",
+          "phases": "CAN",
+          "from": "n684",
+          "to": "l652_CAN",
+          "length": "1 mile",
+          "configuration": "lc607CAN"
+        },
+        {
+          "name": "line_684_652_AB",
+          "phases": "AB",
+          "from": "n684",
+          "to": "l652_AB",
+          "length": "1 mile",
+          "configuration": "lc607AB",
+          "outside_comments": [
+            "// Phases AB, BC, CA, ABC"
+          ],
+          "inside_comments": [
+            "//length 800 ft;"
+          ]
+        },
+        {
+          "name": "line_684_652_BC",
+          "phases": "BC",
+          "from": "n684",
+          "to": "l652_BC",
+          "length": "1 mile",
+          "configuration": "lc607BC",
+          "inside_comments": [
+            "//length 800 ft;"
+          ]
+        },
+        {
+          "name": "line_684_652_CA",
+          "phases": "CA",
+          "from": "n684",
+          "to": "l652_CA",
+          "length": "1 mile",
+          "configuration": "lc607CA",
+          "inside_comments": [
+            "//length 800 ft;"
+          ]
+        },
+        {
+          "name": "line_684_652_ABC",
+          "phases": "ABC",
+          "from": "n684",
+          "to": "l652_ABC",
+          "length": "1 mile",
+          "configuration": "lc607ABC"
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "n684",
+          "bustype": "SWING",
+          "phases": "ABCN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "nominal_voltage": 2401.7771,
+          "outside_comments": [
+            "// node"
+          ]
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_35",
+          "parent": "l652_AN",
+          "target": "voltage_A",
+          "value": "+2310.79+10.414j",
+          "within": 0.01,
+          "outside_comments": [
+            "//loads",
+            "// Phases AN, BN, CN"
+          ],
+          "inline_comments": {
+            "value": "//+2307.26+11.2559j;"
+          }
+        },
+        {
+          "name": "complex_assert_37",
+          "parent": "l652_BN",
+          "target": "voltage_B",
+          "value": "-1146.38-2006.41j",
+          "within": 0.01,
+          "inline_comments": {
+            "value": "//-1143.38-2003.77j;//-1143.88-2003.77j; //-1146.38-2006.41j"
+          }
+        },
+        {
+          "name": "complex_assert_39",
+          "parent": "l652_CN",
+          "target": "voltage_C",
+          "value": "-1164.41+1996j",
+          "within": 0.01,
+          "inline_comments": {
+            "value": "//-1164.41+1992.5j;"
+          }
+        },
+        {
+          "name": "complex_assert_41",
+          "parent": "l652_ABN",
+          "target": "voltage_A",
+          "value": "+2391.37+0.997664j",
+          "within": 0.01,
+          "outside_comments": [
+            "// Phases ABN, BCN, CAN"
+          ],
+          "inline_comments": {
+            "value": "//+2391.41+0.999035j; //+2391.37+0.997664j //+2388.85+1.21321j"
+          }
+        },
+        {
+          "name": "complex_assert_42",
+          "parent": "l652_ABN",
+          "target": "voltage_B",
+          "value": "-1197.27-2068.42j ",
+          "within": 0.01,
+          "inline_comments": {
+            "value": "//-1197.31-2068.47j; //-1197.27-2068.42j //-1199.99-2068.25j"
+          }
+        },
+        {
+          "name": "complex_assert_44",
+          "parent": "l652_BCN",
+          "target": "voltage_B",
+          "value": "-1195.75-2071.21j",
+          "within": 0.01,
+          "inline_comments": {
+            "value": "//-1195.77-2071.25j;"
+          }
+        },
+        {
+          "name": "complex_assert_45",
+          "parent": "l652_BCN",
+          "target": "voltage_C",
+          "value": "-1192.25+2070.2j",
+          "within": 0.01,
+          "inline_comments": {
+            "value": "//-1192.28+2070.26j;"
+          }
+        },
+        {
+          "name": "complex_assert_47",
+          "parent": "l652_CAN",
+          "target": "voltage_C",
+          "value": "-1196.15+2070.88j",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_48",
+          "parent": "l652_CAN",
+          "target": "voltage_A",
+          "value": "2389.39-2.62361j",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_50",
+          "parent": "l652_ABCN",
+          "target": "voltage_A",
+          "value": "+2391.38+0.907984j",
+          "within": 0.01,
+          "outside_comments": [
+            "// Phases ABCN"
+          ],
+          "inline_comments": {
+            "value": "//+2391.42+0.909195j;"
+          }
+        },
+        {
+          "name": "complex_assert_51",
+          "parent": "l652_ABCN",
+          "target": "voltage_B",
+          "value": "-1197.29-2068.51j",
+          "within": 0.01,
+          "inline_comments": {
+            "value": "//-1197.32-2068.56j;"
+          }
+        },
+        {
+          "name": "complex_assert_52",
+          "parent": "l652_ABCN",
+          "target": "voltage_C",
+          "value": "-1200.51+2081.77j",
+          "within": 0.01,
+          "inline_comments": {
+            "value": "//-1200.51+2081.76j;"
+          }
+        },
+        {
+          "name": "complex_assert_54",
+          "parent": "l652_AB",
+          "target": "voltage_A",
+          "value": "+2386.73+2.19331j",
+          "within": 0.01,
+          "outside_comments": [
+            "// Phases AB, BC, CA, ABC"
+          ],
+          "inline_comments": {
+            "value": "//+2386.8+2.20589j;"
+          }
+        },
+        {
+          "name": "complex_assert_55",
+          "parent": "l652_AB",
+          "target": "voltage_B",
+          "value": "-1201.89-2067.23j",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_57",
+          "parent": "l652_BC",
+          "target": "voltage_B",
+          "value": "-1192.5-2067.58j ",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_58",
+          "parent": "l652_BC",
+          "target": "voltage_C",
+          "value": "-1189.03+2073.81j ",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_60",
+          "parent": "l652_CA",
+          "target": "voltage_A",
+          "value": "+2390.8-7.21662j ",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_61",
+          "parent": "l652_CA",
+          "target": "voltage_C",
+          "value": "-1194.73+2066.25j",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_63",
+          "parent": "l652_ABC",
+          "target": "voltage_A",
+          "value": "+2395.81+1.69771j",
+          "within": 0.01,
+          "inline_comments": {
+            "value": "//+2395.82+1.69871j;"
+          }
+        },
+        {
+          "name": "complex_assert_64",
+          "parent": "l652_ABC",
+          "target": "voltage_B",
+          "value": "-1197.2-2075.4j",
+          "within": 0.01
+        },
+        {
+          "name": "complex_assert_65",
+          "parent": "l652_ABC",
+          "target": "voltage_C",
+          "value": "-1198.95+2073.91j",
+          "within": 0.01
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "l652_AN",
+          "phases": "AN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_A": "31.0501+20.8618j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "l652_BN",
+          "phases": "BN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_B": "31.0501+20.8618j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "l652_CN",
+          "phases": "CN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_impedance_C": "31.0501+20.8618j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "l652_ABN",
+          "phases": "ABN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "+18000.000+8717.789j",
+          "constant_power_B": "+18000.000+8717.789j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "l652_BCN",
+          "phases": "BCN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "+18000.000+8717.789j",
+          "constant_power_C": "+18000.000+8717.789j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "//constant_impedance_B 31.0501+20.8618j;"
+          ]
+        },
+        {
+          "name": "l652_CAN",
+          "phases": "CAN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "+18000.000+8717.789j",
+          "constant_power_C": "+18000.000+8717.789j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "//constant_impedance_A 31.0501+20.8618j;"
+          ]
+        },
+        {
+          "name": "l652_ABCN",
+          "phases": "ABCN",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "+18000.000+8717.789j",
+          "constant_power_B": "+18000.000+8717.789j",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "l652_AB",
+          "phases": "AB",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "+18000.000+8717.789j",
+          "constant_power_B": "+18000.000+8717.789j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "// constant_impedance_A 31.0501+20.8618j;"
+          ]
+        },
+        {
+          "name": "l652_BC",
+          "phases": "BC",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_B": "+18000.000+8717.789j",
+          "constant_power_C": "+18000.000+8717.789j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "//constant_impedance_B 31.0501+20.8618j;"
+          ]
+        },
+        {
+          "name": "l652_CA",
+          "phases": "CA",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "+18000.000+8717.789j",
+          "constant_power_C": "+18000.000+8717.789j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "//constant_impedance_A 31.0501+20.8618j;"
+          ]
+        },
+        {
+          "name": "l652_ABC",
+          "phases": "ABC",
+          "voltage_A": 2401.7771,
+          "voltage_B": "-1200.8886-2080.000j",
+          "voltage_C": "-1200.8886+2080.000j",
+          "constant_power_A": "+8000.000+8717.789j",
+          "constant_power_B": "+8000.000+8717.789j",
+          "constant_power_C": "+8000.000+8717.789j",
+          "nominal_voltage": 2401.7771,
+          "inside_comments": [
+            "//constant_impedance_A 31.0501+20.8618j;"
+          ]
+        }
+      ]
+    }
+  }
+}

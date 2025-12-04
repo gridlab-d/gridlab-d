@@ -1,0 +1,371 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $Id$",
+      "// Basic deltamode test",
+      "// parented devices test",
+      "// identical to test_deltamode_diesel_dg_assert.glm, but with parented meter on BUS_1",
+      "// and LOAD_1 parented to a meter",
+      "// Also tests unit conversion in modules",
+      "// Further variation to embed diesel down two child levels",
+      "//#set profiler=1",
+      "// #set verbose=1",
+      "//Overall GridLAB-D parameters",
+      "//Deltamode declarations - global values"
+    ]
+  },
+  "_directives": {
+    "#define": {
+      "rotor_convergence": 0.0001
+    },
+    "#set": {
+      "suppress_repeat_messages": 0,
+      "dateformat": "US",
+      "double_format": "%+.12lg",
+      "complex_format": "%+.12lg%+.12lg%c",
+      "complex_output_format": "RECT",
+      "deltamode_timestep": "100000000  //100 ms",
+      "deltamode_maximumtime": "60000000000 //1 minute",
+      "deltamode_iteration_limit": "10  //Iteration limit"
+    }
+  },
+  "clock": {
+    "timezone": "\"PST+8PDT\"",
+    "starttime": "'2001-01-01 00:00:00 PST'",
+    "stoptime": "'2001-01-01 00:00:38 PST'"
+  },
+  "modules": {
+    "generators": {
+      "enable_subsecond_models": true,
+      "deltamode_timestep": "10000.0 us",
+      "inline_comments": {
+        "deltamode_timestep": "//10 ms"
+      }
+    },
+    "powerflow": {
+      "enable_subsecond_models": true,
+      "deltamode_timestep": "10.0 ms",
+      "solver_method": "NR",
+      "inline_comments": {
+        "deltamode_timestep": "//10 ms"
+      }
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "OHL_config",
+          "z11": "0.3465+1.0179j",
+          "z12": "0.1560+0.5017j",
+          "z13": "0.1580+0.4236j",
+          "z21": "0.1560+0.5017j",
+          "z22": "0.3375+1.0478j",
+          "z23": "0.1535+0.3849j",
+          "z31": "0.1580+0.4236j",
+          "z32": "0.1535+0.3849j",
+          "z33": "0.3414+1.0348j",
+          "outside_comments": [
+            "//Reference line type"
+          ],
+          "inline_comments": {
+            "z11": "//Ohms/mile"
+          }
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_3",
+          "parent": "BUS_1",
+          "file": "bus_1_output_recorder.csv",
+          "property": "voltage_A,voltage_B,voltage_C,measured_power",
+          "flags": "DELTAMODE",
+          "interval": 1,
+          "outside_comments": [
+            "//Power system"
+          ],
+          "inside_comments": [
+            "//interval -1;"
+          ]
+        },
+        {
+          "name": "recorder_7",
+          "parent": "BUS_1_p",
+          "file": "bus_1_p_output_recorder.csv",
+          "property": "voltage_A,voltage_B,voltage_C,measured_power",
+          "flags": "DELTAMODE",
+          "interval": 1
+        },
+        {
+          "name": "recorder_10",
+          "parent": "BUS_1_p_p_p",
+          "file": "bus_1_p_p_p_output_recorder.csv",
+          "property": "voltage_A,voltage_B,voltage_C,measured_power",
+          "flags": "DELTAMODE",
+          "interval": 1
+        },
+        {
+          "name": "recorder_12",
+          "parent": "BUS_2",
+          "file": "bus_2_output_recorder.csv",
+          "property": "voltage_A,voltage_B,voltage_C,measured_power",
+          "flags": "DELTAMODE",
+          "interval": 1
+        },
+        {
+          "name": "recorder_14",
+          "parent": "Gen_Bus_1",
+          "property": "rotor_speed,rotor_angle,flux1d,flux2q,EpRotated,VintRotated,Eint_A,Eint_B,Eint_C,Irotated,pwr_electric,pwr_mech",
+          "flags": "DELTAMODE",
+          "interval": 1,
+          "file": "Gen_1_Speed.csv",
+          "inside_comments": [
+            "//interval -1;"
+          ]
+        },
+        {
+          "name": "recorder_18",
+          "parent": "Gen_Bus_2",
+          "property": "rotor_speed,rotor_angle,flux1d,flux2q,EpRotated,VintRotated,Eint_A,Eint_B,Eint_C,Irotated,pwr_electric,pwr_mech",
+          "flags": "DELTAMODE",
+          "interval": 1,
+          "file": "Gen_2_Speed.csv",
+          "inside_comments": [
+            "//interval -1;"
+          ]
+        },
+        {
+          "name": "recorder_24",
+          "parent": "LOAD_1_p",
+          "file": "load_output_recorder.csv",
+          "property": "voltage_A,voltage_B,voltage_C,measured_power",
+          "flags": "DELTAMODE",
+          "interval": 1
+        },
+        {
+          "name": "recorder_26",
+          "parent": "BUS_1_to_BUS_2",
+          "flags": "DELTAMODE",
+          "property": "power_in,power_out",
+          "interval": 1,
+          "file": "OHL_1_2.csv",
+          "outside_comments": [
+            "//Create overhead lines"
+          ]
+        },
+        {
+          "name": "recorder_28",
+          "parent": "BUS_1_to_LOAD_1",
+          "flags": "DELTAMODE",
+          "property": "power_in,power_out",
+          "interval": 1,
+          "file": "OHL_1_L1.csv"
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_5",
+          "parent": "complex_assert_4",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../data_Bus1_voltageA.csv"
+        },
+        {
+          "name": "player_16",
+          "parent": "double_assert_15",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../data_G1SpeedAssert.csv"
+        },
+        {
+          "name": "player_21",
+          "parent": "LOAD_1_p",
+          "file": "../diesel_deltamode_load_player_A.csv",
+          "property": "constant_power_A",
+          "flags": "DELTAMODE"
+        },
+        {
+          "name": "player_22",
+          "parent": "LOAD_1_p",
+          "file": "../diesel_deltamode_load_player_B.csv",
+          "property": "constant_power_B",
+          "flags": "DELTAMODE"
+        },
+        {
+          "name": "player_23",
+          "parent": "LOAD_1_p",
+          "file": "../diesel_deltamode_load_player_C.csv",
+          "property": "constant_power_C",
+          "flags": "DELTAMODE"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_4",
+          "parent": "BUS_1",
+          "flags": "DELTAMODE",
+          "target": "voltage_A",
+          "within": 0.02,
+          "operation": "FULL"
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "BUS_1",
+          "phases": "ABC",
+          "nominal_voltage": 8660.254,
+          "flags": "DELTAMODE"
+        },
+        {
+          "name": "BUS_1_p",
+          "phases": "ABC",
+          "parent": "BUS_1",
+          "nominal_voltage": 8660.254,
+          "flags": "DELTAMODE"
+        },
+        {
+          "name": "BUS_1_p_p_p",
+          "phases": "ABC",
+          "parent": "BUS_1_p_p",
+          "nominal_voltage": 8660.254,
+          "flags": "DELTAMODE"
+        },
+        {
+          "name": "BUS_2",
+          "phases": "ABC",
+          "nominal_voltage": 8660.254,
+          "bustype": "SWING",
+          "flags": "DELTAMODE"
+        },
+        {
+          "name": "LOAD_1",
+          "phases": "ABC",
+          "nominal_voltage": 8660.254,
+          "flags": "DELTAMODE"
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "BUS_1_p_p",
+          "phases": "ABC",
+          "parent": "BUS_1_p",
+          "nominal_voltage": 8660.254,
+          "flags": "DELTAMODE"
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_15",
+          "parent": "Gen_Bus_1",
+          "flags": "DELTAMODE",
+          "target": "rotor_speed",
+          "within": 0.02
+        }
+      ]
+    },
+    "diesel_dg": {
+      "instances": [
+        {
+          "name": "Gen_Bus_1",
+          "parent": "BUS_1_p_p_p",
+          "Rated_V": 15000.0,
+          "flags": "DELTAMODE",
+          "Gen_type": "DYN_SYNCHRONOUS",
+          "Exciter_type": "SEXS",
+          "Governor_type": "DEGOV1",
+          "rotor_speed_convergence": "${rotor_convergence}",
+          "power_out_A": "437500.0+287500.0j",
+          "power_out_B": "375000.0+287500.0j",
+          "power_out_C": "412500.0+287500.0j",
+          "inside_comments": [
+            "//temp properties - sync with example"
+          ]
+        },
+        {
+          "name": "Gen_Bus_2",
+          "parent": "BUS_2",
+          "Rated_V": 15000.0,
+          "flags": "DELTAMODE",
+          "Gen_type": "DYN_SYNCHRONOUS",
+          "rotor_speed_convergence": "${rotor_convergence}",
+          "power_out_A": "437500.0+287500.0j",
+          "power_out_B": "375000.0+287500.0j",
+          "power_out_C": "412500.0+287500.0j",
+          "Exciter_type": "NO_EXC",
+          "Governor_type": "NO_GOV",
+          "inside_comments": [
+            "//temp properties - sync with example"
+          ]
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "LOAD_1_p",
+          "phases": "ABC",
+          "parent": "LOAD_1",
+          "nominal_voltage": 8660.254,
+          "constant_power_A": "875000.0+575000.0j",
+          "constant_power_B": "750000.0+575000.0j",
+          "constant_power_C": "825000.0+575000.0j",
+          "flags": "DELTAMODE"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "BUS_1_to_BUS_2",
+          "phases": "ABC",
+          "from": "BUS_1",
+          "to": "BUS_2",
+          "length": "3500.0 ft",
+          "configuration": "OHL_config"
+        },
+        {
+          "name": "BUS_1_to_LOAD_1",
+          "phases": "ABC",
+          "from": "BUS_1",
+          "to": "LOAD_1",
+          "length": "1000.0 ft",
+          "configuration": "OHL_config"
+        },
+        {
+          "name": "BUS_2_to_LOAD_1",
+          "phases": "ABC",
+          "from": "BUS_2",
+          "to": "LOAD_1",
+          "length": "2500.0 ft",
+          "configuration": "OHL_config"
+        }
+      ]
+    },
+    "group_recorder": {
+      "instances": [
+        {
+          "name": "group_recorder_30",
+          "flags": "DELTAMODE",
+          "group": "class=meter",
+          "property": "measured_power",
+          "interval": 1,
+          "file": "meter_gr.csv"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "__preamble": {
+    "comments": [
+      "//Power limits Test",
+      "//test_microwave_cycle_length_limits_err.glm",
+      "//This is a test to see that an error will occurr when a negative value is input for cycle_length"
+    ]
+  },
+  "clock": {
+    "timestamp": "'2000-01-01 0:00:00'",
+    "timezone": "PST+8PDT"
+  },
+  "modules": {
+    "residential": {},
+    "tape": {}
+  },
+  "objects": {
+    "house": {
+      "instances": [
+        {
+          "name": "house_1",
+          "id": 1
+        }
+      ]
+    },
+    "microwave": {
+      "instances": [
+        {
+          "name": "microwave_2",
+          "id": 2,
+          "parent": "house_1",
+          "cycle_length": -45
+        }
+      ]
+    }
+  }
+}

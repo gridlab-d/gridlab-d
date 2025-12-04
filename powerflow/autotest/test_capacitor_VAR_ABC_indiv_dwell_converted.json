@@ -1,0 +1,257 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $id$",
+      "// Copyright (C) 2008 Battelle Memorial Institute",
+      "// 4 Node Feeder: Balanced step-up delta-grY",
+      "// Capacitor attached to end load",
+      "// Individual CAP VAR control - delta on a delta",
+      "// Implements a 3 second \"dwell\" time"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "relax_naming_rules": 1
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "timestamp": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:59'"
+  },
+  "modules": {
+    "powerflow": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "overhead_line_conductor_100",
+          "id": 100,
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306
+        },
+        {
+          "name": "overhead_line_conductor_101",
+          "id": 101,
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "line_spacing_200",
+          "id": 200,
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "line_configuration_300",
+          "id": 300,
+          "conductor_A": "overhead_line_conductor_100",
+          "conductor_B": "overhead_line_conductor_100",
+          "conductor_C": "overhead_line_conductor_100",
+          "conductor_N": "overhead_line_conductor_101",
+          "spacing": "line_spacing_200"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "transformer_configuration_400",
+          "id": 400,
+          "connect_type": "DELTA_GWYE",
+          "install_type": "VAULT",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 24900,
+          "resistance": 0.05,
+          "reactance": 0.06
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node_1",
+          "id": 1,
+          "phases": "ABCD",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node_2",
+          "id": 2,
+          "phases": "ABCD",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node_3",
+          "id": 3,
+          "phases": "ABCN",
+          "voltage_A": "+12450.764+7188.452j",
+          "voltage_B": "+0.000-14376.904j",
+          "voltage_C": "-12450.765+7188.452j",
+          "nominal_voltage": 14377
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "overhead_line_12",
+          "id": 12,
+          "phases": "ABCD",
+          "from": "node_1",
+          "to": "node_2",
+          "length": 2000,
+          "configuration": "line_configuration_300"
+        },
+        {
+          "name": "overhead_line_34",
+          "id": 34,
+          "phases": "ABCN",
+          "from": "node_3",
+          "to": "load_4",
+          "length": 2500,
+          "configuration": "line_configuration_300"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "transformer_23",
+          "id": 23,
+          "phases": "ABC",
+          "from": "node_2",
+          "to": "node_3",
+          "configuration": "transformer_configuration_400"
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_13",
+          "parent": "load_4",
+          "property": "constant_power_A",
+          "file": "../loader_fastA.player"
+        },
+        {
+          "name": "player_14",
+          "parent": "load_4",
+          "property": "constant_power_B",
+          "file": "../loader_fastB.player"
+        },
+        {
+          "name": "player_15",
+          "parent": "load_4",
+          "property": "constant_power_C",
+          "file": "../loader_fastC.player"
+        },
+        {
+          "name": "player_17",
+          "parent": "complex_assert_16",
+          "property": "value",
+          "file": "../cap_volt_A_indiv_VAR_dwell.player"
+        },
+        {
+          "name": "player_19",
+          "parent": "complex_assert_18",
+          "property": "value",
+          "file": "../cap_volt_B_indiv_VAR_dwell.player"
+        },
+        {
+          "name": "player_21",
+          "parent": "complex_assert_20",
+          "property": "value",
+          "file": "../cap_volt_C_indiv_VAR_dwell.player"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_16",
+          "parent": "load_4",
+          "target": "voltage_A",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_18",
+          "parent": "load_4",
+          "target": "voltage_B",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_20",
+          "parent": "load_4",
+          "target": "voltage_C",
+          "within": 0.1
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load_4",
+          "id": 4,
+          "phases": "ABCN",
+          "voltage_A": "+12450.764+7188.452j",
+          "voltage_B": "+0.000-14376.904j",
+          "voltage_C": "-12450.765+7188.452j",
+          "constant_power_A": "+0.000+0.0j",
+          "constant_power_B": "+0.000+0.0j",
+          "constant_power_C": "+0.000+0.0j",
+          "maximum_voltage_error": 0.001,
+          "nominal_voltage": 14377
+        }
+      ]
+    },
+    "capacitor": {
+      "instances": [
+        {
+          "name": "CAP2",
+          "phases": "ABCD",
+          "pt_phase": "ABC",
+          "parent": "load_4",
+          "remote_sense": "link34",
+          "phases_connected": "ABCD",
+          "control": "VAR",
+          "VAr_set_high": 65000.0,
+          "VAr_set_low": 50000.0,
+          "capacitor_A": "0.5 MVAr",
+          "capacitor_B": "0.5 MVAr",
+          "capacitor_C": "0.5 MVAr",
+          "control_level": "INDIVIDUAL",
+          "switchA": "OPEN",
+          "switchB": "OPEN",
+          "switchC": "OPEN",
+          "time_delay": 2.0,
+          "dwell_time": 3.0,
+          "cap_nominal_voltage": 14000,
+          "nominal_voltage": 14377
+        }
+      ]
+    }
+  }
+}

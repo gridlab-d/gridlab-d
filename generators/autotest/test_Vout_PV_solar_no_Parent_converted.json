@@ -1,0 +1,99 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Extremely simple GLM file",
+      "// Just tests to make sure the output voltage of a solar varies correctly",
+      "// when not connected to anything"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "profiler": 1
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "timestamp": "'2010-01-01 6:00:00'",
+    "stoptime": "'2010-01-01 12:00:00'"
+  },
+  "modules": {
+    "climate": {},
+    "generators": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "name": "recorder_2",
+          "parent": "MyClimate",
+          "file": "climate_out.csv",
+          "interval": 3600,
+          "limit": 120,
+          "property": "temperature,solar_direct,solar_diffuse,solar_global,ground_reflectivity"
+        },
+        {
+          "name": "recorder_6",
+          "parent": "sol_inv_B_2_645",
+          "file": "PV_out.csv",
+          "interval": 60,
+          "limit": 20000,
+          "property": "ambient_temperature,NOCT,Insolation,Voc_temp_coeff,Voc_Max,Voc,V_Max,V_Out,Tmodule"
+        }
+      ]
+    },
+    "climate": {
+      "instances": [
+        {
+          "name": "MyClimate",
+          "tmyfile": "../WA-Seattle.tmy2",
+          "inside_comments": [
+            "//reader CsvReader;"
+          ]
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_5",
+          "parent": "double_assert_4",
+          "property": "value",
+          "file": "../solar_Vout.player"
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_4",
+          "parent": "sol_inv_B_2_645",
+          "target": "V_Out",
+          "within": 0.1,
+          "inline_comments": {
+            "within": "//within 1 % of variance"
+          }
+        }
+      ]
+    },
+    "solar": {
+      "instances": [
+        {
+          "name": "sol_inv_B_2_645",
+          "panel_type": "SINGLE_CRYSTAL_SILICON",
+          "efficiency": 0.2,
+          "area": 450,
+          "V_Max": 79.34,
+          "Voc": 91.22,
+          "Voc_Max": 91.22,
+          "inline_comments": {
+            "V_Max": "// max. power voltage (Vmp) from GE solar cell performance charatcetristics",
+            "Voc": "//taken from GEPVp-200-M-Module performance characteristics, converted to degF",
+            "Voc_Max": "//taken from GEPVp-200-M-Module performance characteristics,  converted to degF"
+          }
+        }
+      ]
+    }
+  }
+}

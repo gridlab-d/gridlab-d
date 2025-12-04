@@ -1,0 +1,75 @@
+{
+  "__preamble": {
+    "comments": [
+      "//Zero conductor tests",
+      "//Overhead line conductor"
+    ]
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:01'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    }
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc309",
+          "geometric_mean_radius": 0.00446,
+          "resistance": 0.0,
+          "diameter": 0.398,
+          "inline_comments": {
+            "name": "//1/0 ACSR",
+            "resistance": "//Should error"
+          }
+        }
+      ]
+    },
+    "underground_line_conductor": {
+      "instances": [
+        {
+          "name": "ulc312",
+          "outer_diameter": 1.06,
+          "conductor_gmr": 0.0111,
+          "conductor_diameter": 0.368,
+          "conductor_resistance": 0.97,
+          "neutral_gmr": 0.00208,
+          "neutral_resistance": 14.8722,
+          "neutral_diameter": 0.0640837,
+          "neutral_strands": 16.0,
+          "inline_comments": {
+            "name": "//1/0 AA, CN"
+          }
+        }
+      ]
+    },
+    "triplex_line_conductor": {
+      "instances": [
+        {
+          "name": "F2407_4/0_AA_triplex",
+          "resistance": 0.484,
+          "geometric_mean_radius": 0.0158,
+          "rating.summer.continuous": 299,
+          "outside_comments": [
+            "//Triplex configuration - stolen from another file"
+          ]
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "test_node",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "nominal_voltage": 120.0
+        }
+      ]
+    }
+  }
+}
