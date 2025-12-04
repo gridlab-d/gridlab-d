@@ -4,6 +4,12 @@ Created on 10/15/2026
 This example shows the simplest way of running a GridLAB-D model, like users
 would do without the API.
 
+*******************   FICITICIOUS API    *******************
+This example uses a fictitious API that has not been implemented. This script 
+was used as a reference for the development team to see the kind of 
+functionality API users (who don't know GLD as well) might be looking for. 
+
+
 @author: Trevor Hardy
 trevor.hardy@pnnl.gov
 """

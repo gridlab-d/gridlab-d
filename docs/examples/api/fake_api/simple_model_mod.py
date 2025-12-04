@@ -5,6 +5,12 @@ This example shows how to modify an existing model prior to running it in
 GridLAB-D. It also shows how to do the same modification while a model is 
 running.
 
+*******************   FICITICIOUS API    *******************
+This example uses a fictitious API that has not been implemented. This script 
+was used as a reference for the development team to see the kind of 
+functionality API users (who don't know GLD as well) might be looking for. 
+
+
 @author: Trevor Hardy
 trevor.hardy@pnnl.gov
 """

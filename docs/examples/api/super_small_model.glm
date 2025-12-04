@@ -1,0 +1,26 @@
+clock {
+     timezone EST+5EDT;
+     starttime '2005-08-01 00:00:00';
+     stoptime '2005-08-02 00:00:00';
+}
+
+module powerflow {
+     solver_method FBS;
+};
+module tape;
+
+object node {     
+      name the_node;     
+      phases ABCN;     
+      nominal_voltage 7967.43;     
+      voltage_A 7967.43+0.0j;     
+      voltage_B -3983.72-6900j;     
+      voltage_C -3983.72+6900j;     
+} 
+
+object recorder {
+	parent the_node;
+	property voltage_A;
+	file node_recorder.csv;
+	interval 3600; //Hourly recording
+} 

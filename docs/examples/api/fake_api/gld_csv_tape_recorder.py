@@ -17,6 +17,11 @@ minute steps. We'll switch to one-minute steps once the substation voltage is
 below a critical value and back to ten-minute steps once it is above that
 value.
 
+*******************   FICITICIOUS API    *******************
+This example uses a fictitious API that has not been implemented. This script 
+was used as a reference for the development team to see the kind of 
+functionality API users (who don't know GLD as well) might be looking for. 
+
 
 @author: Trevor Hardy
 trevor.hardy@pnnl.gov
