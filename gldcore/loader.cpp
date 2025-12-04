@@ -1,5 +1,11 @@
 #include "loader.h"
 
+void loader::clearQuotesFromStr(string &str)
+{
+    str.erase(remove(str.begin(), str.end(), '\"'), str.end());
+    str.erase(remove(str.begin(), str.end(), '\''), str.end());
+}
+
 bool loader::open_file(string file_name)
 {
 	ifstream file(file_name, std::ios::in);
@@ -42,6 +48,12 @@ STATUS loader::convert(json value, string &out)
         out = value.get<std::string>();
         return SUCCESS;
     }
+    else if (value.is_boolean())
+    {
+        bool boolvalue = value.get<bool>();
+        out = boolvalue ? string("TRUE") : string("FALSE");
+        return SUCCESS;
+    }
     else
     {
         output_error_raw("loader::convert() parsing file, %s:  unable to convert value to string: %s",
@@ -66,7 +78,7 @@ STATUS loader::loadDirectives()
             if (!directive.is_array())
             {
                 output_error_raw("loader::loadDirectives() parsing file, %s: #include value is not an array! value: %s",
-                                 this->filename, directive.dump(4).c_str());
+                                 this->filename.c_str(), directive.dump(4).c_str());
                 result = FAILED;
                 break;
             }
@@ -106,13 +118,13 @@ STATUS loader::loadDirectives()
                     if (name == "#set")
                     {
                         output_error_raw("loader::loadDirectives() parsing file, %s: %s set term not found.",
-                                         this->filename,key);
+                                         this->filename.c_str(), key);
                         break;
                     }
                     else if (name == "#define")
                     {
                         output_error_raw("loader::loadDirectives() parsing file, %s: %s define term could not be "
-                                         "created.",this->filename,key);
+                                         "created.", this->filename.c_str(), key);
                         break;
                     }
                 }
@@ -324,6 +336,7 @@ STATUS loader::loadClock()
     if (j_obj.contains("timezone"))
     {
         string tz = j_obj["timezone"].get<string>();
+        clearQuotesFromStr(tz);
         if (tz.length()>0)
         {
             if (timestamp_set_tz(tz.data())==nullptr)
@@ -342,6 +355,7 @@ STATUS loader::loadClock()
     if (j_obj.contains("timestamp"))
     {
         string ts = j_obj["timestamp"].get<string>();
+        clearQuotesFromStr(ts);
         TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
         if (tsval == TS_NEVER)
         {
@@ -357,6 +371,7 @@ STATUS loader::loadClock()
     if (j_obj.contains("starttime"))
     {
         string ts = j_obj["starttime"].get<string>();
+        clearQuotesFromStr(ts);
         TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
         if (tsval == TS_NEVER)
         {
@@ -372,6 +387,7 @@ STATUS loader::loadClock()
     if (j_obj.contains("stoptime"))
     {
         string ts = j_obj["stoptime"].get<string>();
+        clearQuotesFromStr(ts);
         TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
         if (tsval == TS_NEVER)
         {
@@ -391,8 +407,13 @@ bool loader::module_properties(MODULE *mod, json properties)
 {
 	CLASS *oClass;
     bool rv = true;
+    string propValue = "";
 	for (auto& [name, value] : properties.items())
     {
+        if (name == "inline_comments" || name == "outside_comments" || name == "inside_comments")
+        {
+            continue;
+        }
 		if (name == "major" && value.is_number())
         {
 			//not used?
@@ -419,16 +440,15 @@ bool loader::module_properties(MODULE *mod, json properties)
 			}
 		}
 		// Must be property
-		else if (value.is_string())
+		else if (convert(value, propValue) == 1)
         {
 			currentObject = nullptr; /* object context */
 			currentModule = mod; /* module context */
-			string propvalue = value.get<std::string>();
 			if (name != "inline_comments")
             {
-				if (this->parse.alternate_value(propvalue))
+				if (this->parse.alternate_value(propValue))
                 {
-					if (!module_setvar(mod, (const char*)name.c_str(), propvalue.data()))
+					if (!module_setvar(mod, (const char*)name.c_str(), propValue.data()))
                     {
 						output_error_raw("loader::module_properties() parsing file, %s: invalid property, %s, for "
                                          "module, %s, specified.", this->filename.c_str(), name.c_str(), mod->name);
@@ -438,6 +458,14 @@ bool loader::module_properties(MODULE *mod, json properties)
 				}
 			}
 		}
+        else
+        {
+            output_error_raw("loader::module_properties() parsing file %s: invalid %s module property value provided."
+                             "property %s couldn't be set to value %s.", this->filename.c_str(), mod->name,
+                             name.c_str(), value.dump().c_str());
+            rv = false;
+            break;
+        }
 	}
 	return rv;
 }
@@ -453,7 +481,13 @@ STATUS loader::loadModules()
 		module = module_load(name.data(),0,nullptr);
 		if (module != nullptr)
         {
-			module_properties(module, value);
+			if (!module_properties(module, value))
+            {
+                output_error_raw("loader::loadModules() parsing file, %s: failed to load module %s.", 
+                                 this->filename.c_str(), module->name);
+                rv = FAILED;
+                break;
+            }
         }
         else
         {
@@ -547,6 +581,10 @@ STATUS loader::loadObject(const string className, json objInstance)
         }
         for (auto& [propName, propValue] : objInstance.items()) 
         {   
+            if (propName == "inline_comments" || propName == "outside_comments" || propName == "inside_comments")
+            {
+                continue;
+            }
             if (this->convert(propValue, propValueStr) == FAILED)
             {
                 rv = FAILED;
@@ -753,6 +791,16 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                                          "reference to parent %s", this->filename.c_str(), propValue.c_str());
                         status = FAILED;
                     }
+                }
+                else if (propName.compare("id") == 0)
+                {
+                    status = SUCCESS;
+                    // if (obj->id = stoi(propValue) < 0)
+                    // {
+                    //     output_error_raw("loader::objectProperties() parsing file, %s: unable to set id to %s",
+                    //                      this->filename.c_str(), propValue.c_str());
+                    //     status = FAILED;
+                    // }
                 }
                 else if (propName.compare("rank") == 0)
                 {

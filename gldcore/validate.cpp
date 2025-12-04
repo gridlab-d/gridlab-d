@@ -436,10 +436,11 @@ static counters run_test(char *file, double *elapsed_time=nullptr)
 	strcpy(dir,file);
 	char *ext = strrchr(dir,'.');
 	char *name = strrchr(dir,'/')+1;
+    std::string fileExtension = std::string(ext);
 	char * char_result;
-	if ( ext==nullptr || strcmp(ext,".glm")!=0 )
+	if (ext==nullptr || (strcmp(ext, ".glm") != 0 && strcmp(ext, ".json") != 0))
 	{
-		output_error("run_test(char *file='%s'): file is not a GLM", file);
+		output_error("run_test(char *file='%s'): file is not a GLM or JSON", file);
 		return result;
 	}
 	*ext = '\0'; // remove extension from dir
@@ -467,7 +468,7 @@ static counters run_test(char *file, double *elapsed_time=nullptr)
 	else
 		output_debug("created test folder '%s'", dir);
 	char out[1024];
-	sprintf(out,"%s/%s.glm",dir,name);
+	sprintf(out, "%s/%s%s", dir, name, fileExtension.c_str());
 	if ( !copyfile(file,out) )
 	{
 		output_error("run_test(char *file='%s'): unable to copy to test folder %s", file, dir);
@@ -476,13 +477,13 @@ static counters run_test(char *file, double *elapsed_time=nullptr)
 	}
 	int64 dt = exec_clock();
 	result.inc_files(file);
-	unsigned int code = vsystem("\"%s\" -W %s %s %s.glm ",
+	unsigned int code = vsystem("\"%s\" -W %s %s %s%s ",
 #ifdef _WIN32
 		_pgmptr,
 #else
         global_gl_executable.c_str(),
 #endif
-		dir,validate_cmdargs, name);
+		dir,validate_cmdargs, name, fileExtension.c_str());
 	dt = exec_clock() - dt;
 	double t = (double)dt/(double)global_ms_per_second;
 	if ( elapsed_time!=nullptr ) *elapsed_time = t;
@@ -702,7 +703,7 @@ static size_t process_dir(const char *path, bool runglms=false)
 		else if ( dp->d_type==DT_DIR )
 #endif
 			count+=process_dir(item);
-		else if ( runglms==true && strstr(item,"/test_")!=0 && ext!=NULL && strcmp(ext,".glm")==0 )
+		else if (runglms == true && strstr(item, "/test_") != 0 && ext != NULL && (strcmp(ext,".glm") == 0 || strcmp(ext,".json") == 0))
 		{
 			pushdir(item);
 			count++;

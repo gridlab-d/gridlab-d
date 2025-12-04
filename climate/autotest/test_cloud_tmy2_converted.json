@@ -73,18 +73,6 @@
         }
       ]
     },
-    "house": {
-      "instances": [
-        {
-          "name": "myHouse",
-          "parent": "tpm2_R1_12_47_1_tm_21",
-          "floor_area": "random.normal(1750,400)",
-          "heating_setpoint": 70,
-          "cooling_setpoint": 78,
-          "air_temperature": 79
-        }
-      ]
-    },
     "inverter": {
       "instances": [
         {
