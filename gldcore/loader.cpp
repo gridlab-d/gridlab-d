@@ -18,7 +18,7 @@ bool loader::open_file(string file_name)
         return false;
 	}
 
-	if (!file.is_open()) 
+	if (!file.is_open())
     {
 		output_error("%s: unable to read stream", file_name.c_str());
         std::cout << "ERROR : File not Opened, Error while opening the file!" << std::endl;
@@ -91,7 +91,7 @@ STATUS loader::loadDirectives()
         {
             for (auto& [key, value] : directive.items())
             {
-                bool oldstrict = global_strictnames;   
+                bool oldstrict = global_strictnames;
                 if (name == "#set")
                 {
                     global_strictnames = true;
@@ -139,7 +139,7 @@ bool loader::class_properties(CLASS *oclass, json properties, string source_code
 	PROPERTYNAME propname;
 	KEYWORD *keys = nullptr;
 	UNIT *pUnit = nullptr;
-	int property_cnt = 0; 
+	int property_cnt = 0;
 
 	for (auto& element : properties) {
 		if (element.is_object() && element.contains("type") && element.contains("name")) {
@@ -483,7 +483,7 @@ STATUS loader::loadModules()
         {
 			if (!module_properties(module, value))
             {
-                output_error_raw("loader::loadModules() parsing file, %s: failed to load module %s.", 
+                output_error_raw("loader::loadModules() parsing file, %s: failed to load module %s.",
                                  this->filename.c_str(), module->name);
                 rv = FAILED;
                 break;
@@ -619,8 +619,8 @@ STATUS loader::loadObject(const string className, json objInstance)
             rv = FAILED;
             break;
         }
-        for (auto& [propName, propValue] : objInstance.items()) 
-        {   
+        for (auto& [propName, propValue] : objInstance.items())
+        {
             if (propName == "inline_comments" || propName == "outside_comments" || propName == "inside_comments")
             {
                 continue;
@@ -693,7 +693,8 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
         this->parse.current_object = obj;
         if (prop != nullptr && prop->ptype == PT_complex && this->parse.complex_unit(propValue, &cval, &unit) > 0)
         {
-            if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0 
+            prop->raw = propValue;
+			if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0
                 && unit_convert_complex(unit, prop->unit, &cval) == 0)
 				{
 					output_error_raw("loader::objectProperties() parsing file, %s: units of value are incompatible "
@@ -709,10 +710,10 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
 					status = FAILED;
 				}
         }
-        else if (prop != nullptr && prop->ptype == PT_double 
+        else if (prop != nullptr && prop->ptype == PT_double
                  && this->parse.expression(propValue, &dval, &unit, obj) > 0)
         {
-            if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0 
+            if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0
                 && unit_convert_ex(unit, prop->unit, &dval) == 0)
             {
                 output_error_raw("loader::objectProperties() parsing file, %s: units of value are incompatible with "
@@ -750,7 +751,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             int32 ival32 = 0;
             int64 ival64 = 0;
             int rv = 0;
-            if (unit != nullptr && prop->unit != nullptr && strcmp((char *)(unit), "") != 0 
+            if (unit != nullptr && prop->unit != nullptr && strcmp((char *)(unit), "") != 0
                 && unit_convert_ex(unit, prop->unit, &dval) == 0)
             {
                 output_error_raw("loader::objectProperties() parsing file, %s: units of value are incompatible with "
@@ -824,7 +825,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 }
                 else if (propName.compare("parent") == 0)
                 {
-                    if (parse.add_unresolved(obj, PT_object, (void*)&obj->parent, oClass, propValue.data(), 
+                    if (parse.add_unresolved(obj, PT_object, (void*)&obj->parent, oClass, propValue.data(),
                                              this->filename.data(), UR_RANKS) == nullptr)
                     {
                         output_error_raw("loader::objectProperties() parsing file, %s: unable to add unresolved "
@@ -934,7 +935,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                                          UR_NONE);
                 }
             }
-            else 
+            else
             {
                 if (object_set_value_by_name(obj, propName.data(), propValue.data())==0)
                 {
@@ -1036,6 +1037,8 @@ STATUS loader::loadSchedules()
     auto j_obj = this->jsn["schedules"];
 	std::string cron_schedule;
 	std::string	sub_schedule;
+	SCHEDULE* sch;
+	json raw = json::array();
 	for (auto& [name, schedule] : j_obj.items())
     {
         if(rv == FAILED)
@@ -1059,8 +1062,9 @@ STATUS loader::loadSchedules()
 						for (auto& item : element["items"])
                         {
 							cron_schedule += item.get_ref<const std::string&>() + ";\n";
+							raw.push_back(item.get_ref<const std::string&>());
                         }
-					} 
+					}
                     else
                     {
 						output_error_raw("loader::loadSchedules() parsing file, %s: schedule %s items is not an array",
@@ -1079,7 +1083,8 @@ STATUS loader::loadSchedules()
 			}
 			if (cron_schedule != "")
             {
-				schedule_create(name.data(), cron_schedule.data());
+				sch = schedule_create(name.data(), cron_schedule.data());
+				sch->raw = raw;
             }
             else
             {
