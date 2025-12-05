@@ -4,7 +4,7 @@
 	@addtogroup schedule Schedules
 
 	Schedules are defined as a multiline string
-	
+
 	@par Schedule syntax
 	<code>
 	// comments are ignored until and end-of-line
@@ -34,6 +34,8 @@
 
 #include "class.h"
 #include "timestamp.h"
+#include <vector>
+#include <string>
 
 #define MAXNAME 64
 #define MAXDEFINITION 65536
@@ -75,6 +77,7 @@ struct s_schedule {
 	double abs[MAXBLOCKS];				/**< the sum of the absolute values for each block -- used to normalize */
 	unsigned int count[MAXBLOCKS];		/**< the number of values given in each block */
 	unsigned int minutes[MAXBLOCKS];	/**< the total number of minutes associate with each block */
+	std::vector<std::string> raw;
 #ifdef _DEBUG
 	unsigned int magic2;
 	unsigned int checksum;
