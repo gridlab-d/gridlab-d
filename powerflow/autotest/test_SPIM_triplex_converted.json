@@ -4,6 +4,9 @@
       "//Simple test system to verify the triplex connections for SPIM are working properly",
       "//#set profiler=1",
       "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit",
       "//#set deltamode_forced_extra_timesteps=15"
     ]
   },
@@ -15,9 +18,9 @@
       "suppress_repeat_messages": 0,
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {

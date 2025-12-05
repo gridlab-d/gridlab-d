@@ -49,7 +49,6 @@
       "instances": [
         {
           "name": "overhead_line_conductor_100",
-          "id": 100,
           "geometric_mean_radius": 0.0244,
           "resistance": 0.306
         },
@@ -112,7 +111,6 @@
         },
         {
           "name": "transformer_configuration_600",
-          "id": 600,
           "connect_type": "WYE_WYE",
           "power_rating": 3000,
           "primary_voltage": 4160,

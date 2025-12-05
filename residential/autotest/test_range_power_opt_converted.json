@@ -23,7 +23,6 @@
       "instances": [
         {
           "name": "house_1",
-          "id": 1,
           "floor_area": "random.normal(1500,300) sf",
           "heating_setpoint": 10,
           "cooling_setpoint": 150,
@@ -76,7 +75,6 @@
       "instances": [
         {
           "name": "range_2",
-          "id": 2,
           "parent": "house_1",
           "installed_power": "2000W"
         }

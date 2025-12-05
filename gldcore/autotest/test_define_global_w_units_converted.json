@@ -4,17 +4,22 @@
       "// Test file to see if globals that have units assigned",
       "// are handled properly, and get set right",
       "// Also tests loader handler for #set with either a space or a tab before comments",
-      "// Co-opted from test_deltamode to make sure it is working"
+      "// Co-opted from test_deltamode to make sure it is working",
+      "#set deltamode_maximumtime //10 minute - space/tab test",
+      "#set deltamode_timestep //35 ms - tab/space test",
+      "#set deltamode_iteration_limit //tab test - no unit",
+      "#set suppress_repeat_messages //Tab test - general",
+      "#set profiler //Space test - general"
     ]
   },
   "_directives": {
     "#set": {
       "dateformat": "US",
-      "deltamode_maximumtime": "600 s  //10 minute - space/tab test",
-      "deltamode_timestep": "35 ms  //35 ms - tab/space test",
-      "deltamode_iteration_limit": "10  //tab test - no unit",
-      "suppress_repeat_messages": "0 //Tab test - general",
-      "profiler": "1 //Space test - general"
+      "deltamode_maximumtime": "600 s",
+      "deltamode_timestep": "35 ms",
+      "deltamode_iteration_limit": 10,
+      "suppress_repeat_messages": 0,
+      "profiler": 1
     }
   },
   "clock": {

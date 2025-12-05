@@ -4,13 +4,15 @@
       "//Modified file for VFD testing",
       "//#set pauseatexit=1",
       "//#set profiler=1",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_maximumtime //2 minutes",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
     "#set": {
-      "deltamode_maximumtime": "5000000000000 //2 minutes",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_maximumtime": 5000000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {

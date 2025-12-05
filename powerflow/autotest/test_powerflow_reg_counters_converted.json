@@ -32,7 +32,6 @@
       "instances": [
         {
           "name": "overhead_line_conductor_6010",
-          "id": 6010,
           "geometric_mean_radius": 0.0313,
           "resistance": 0.1859,
           "outside_comments": [
@@ -41,7 +40,6 @@
         },
         {
           "name": "overhead_line_conductor_6020",
-          "id": 6020,
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592,
           "outside_comments": [
@@ -50,7 +48,6 @@
         },
         {
           "name": "overhead_line_conductor_6030",
-          "id": 6030,
           "geometric_mean_radius": 0.00446,
           "resistance": 1.12,
           "outside_comments": [
@@ -62,7 +59,7 @@
     "node": {
       "instances": [
         {
-          "name": "gld_630",
+          "name": "630",
           "phases": "ABCN",
           "voltage_A": "2401.7771+0j",
           "voltage_B": "-1200.8886-2080.000j",
@@ -74,7 +71,7 @@
     "meter": {
       "instances": [
         {
-          "name": "gld_650",
+          "name": "650",
           "bustype": "SWING",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
@@ -91,7 +88,6 @@
       "instances": [
         {
           "name": "regulator_configuration_6506321",
-          "id": 6506321,
           "connect_type": 1,
           "band_center": 2401,
           "band_width": 40,
@@ -183,10 +179,9 @@
       "instances": [
         {
           "name": "regulator_650632",
-          "id": 650632,
           "phases": "ABC",
-          "from": "gld_650",
-          "to": "gld_630",
+          "from": 650,
+          "to": 630,
           "configuration": "regulator_configuration_6506321"
         }
       ]
@@ -197,7 +192,7 @@
           "name": "CAP1",
           "phases": "ABCN",
           "pt_phase": "ABCN",
-          "parent": "gld_630",
+          "parent": 630,
           "phases_connected": "ABCN",
           "control": "MANUAL",
           "voltage_set_high": 2700.0,
@@ -217,7 +212,7 @@
           "name": "CAP2",
           "phases": "ABCN",
           "pt_phase": "ABCN",
-          "parent": "gld_630",
+          "parent": 630,
           "phases_connected": "ABCN",
           "control": "MANUAL",
           "voltage_set_high": 2600.0,

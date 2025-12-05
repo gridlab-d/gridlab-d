@@ -48,13 +48,11 @@
       "instances": [
         {
           "name": "overhead_line_conductor_100",
-          "id": 100,
           "geometric_mean_radius": 0.0244,
           "resistance": 0.306
         },
         {
           "name": "overhead_line_conductor_101",
-          "id": 101,
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592
         }
@@ -64,7 +62,6 @@
       "instances": [
         {
           "name": "line_spacing_200",
-          "id": 200,
           "distance_AB": 2.5,
           "distance_BC": 4.5,
           "distance_AC": 7.0,
@@ -78,7 +75,6 @@
       "instances": [
         {
           "name": "line_configuration_300",
-          "id": 300,
           "conductor_A": "overhead_line_conductor_100",
           "conductor_B": "overhead_line_conductor_100",
           "conductor_C": "overhead_line_conductor_100",
@@ -91,7 +87,6 @@
       "instances": [
         {
           "name": "transformer_configuration_400",
-          "id": 400,
           "connect_type": "WYE_WYE",
           "power_rating": 6000,
           "primary_voltage": 12470,
@@ -102,7 +97,6 @@
         },
         {
           "name": "transformer_configuration_500",
-          "id": 500,
           "connect_type": "WYE_WYE",
           "power_rating": 3000,
           "primary_voltage": 2401.77,

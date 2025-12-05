@@ -40,7 +40,6 @@
         {
           "name": "my_test_..2",
           "object_count": 2,
-          "id": "..2",
           "x": "\"type:uniform(0,1)",
           "y": "\"type:uniform(0,1)"
         }

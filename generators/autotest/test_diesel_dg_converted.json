@@ -74,7 +74,7 @@
     "triplex_line_conductor": {
       "instances": [
         {
-          "name": "IEEE13_1/0 AA triplex",
+          "name": "IEEE13-1/0 AA triplex",
           "resistance": 0.97,
           "geometric_mean_radius": 0.0111
         }

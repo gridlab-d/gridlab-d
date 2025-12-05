@@ -129,7 +129,6 @@
       "instances": [
         {
           "name": "overhead_line_12",
-          "id": 12,
           "phases": "ABCN",
           "from": "node_1",
           "to": "node_2",

@@ -6,7 +6,9 @@
       "//#set pauseatexit=1;",
       "//#set profiler=1",
       "//#set dateformat=US",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_maximumtime //2 minutes",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -17,8 +19,8 @@
       "suppress_repeat_messages": 1,
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
-      "deltamode_maximumtime": "5000000000000 //2 minutes",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_maximumtime": 5000000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {

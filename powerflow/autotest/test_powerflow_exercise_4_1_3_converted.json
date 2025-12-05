@@ -66,7 +66,6 @@
       "instances": [
         {
           "name": "overhead_line_conductor_6010",
-          "id": 6010,
           "geometric_mean_radius": 0.0313,
           "resistance": 0.1859,
           "outside_comments": [
@@ -75,7 +74,6 @@
         },
         {
           "name": "overhead_line_conductor_6020",
-          "id": 6020,
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592,
           "outside_comments": [
@@ -84,7 +82,6 @@
         },
         {
           "name": "overhead_line_conductor_6030",
-          "id": 6030,
           "geometric_mean_radius": 0.00446,
           "resistance": 1.12,
           "outside_comments": [
@@ -97,7 +94,6 @@
       "instances": [
         {
           "name": "underground_line_conductor_6060",
-          "id": 6060,
           "outer_diameter": 1.29,
           "conductor_gmr": 0.0171,
           "conductor_diameter": 0.567,
@@ -114,7 +110,6 @@
         },
         {
           "name": "underground_line_conductor_6070",
-          "id": 6070,
           "outer_diameter": 1.06,
           "conductor_gmr": 0.0111,
           "conductor_diameter": 0.368,
@@ -135,7 +130,6 @@
       "instances": [
         {
           "name": "line_spacing_500601",
-          "id": 500601,
           "distance_AB": 2.5,
           "distance_AC": 4.5,
           "distance_BC": 7.0,
@@ -148,7 +142,6 @@
         },
         {
           "name": "line_spacing_500602",
-          "id": 500602,
           "distance_AC": 2.5,
           "distance_AB": 4.5,
           "distance_BC": 7.0,
@@ -161,7 +154,6 @@
         },
         {
           "name": "line_spacing_505603",
-          "id": 505603,
           "distance_AC": 0.0,
           "distance_AB": 0.0,
           "distance_BC": 7.0,
@@ -171,7 +163,6 @@
         },
         {
           "name": "line_spacing_505604",
-          "id": 505604,
           "distance_AC": 7.0,
           "distance_AB": 0.0,
           "distance_BC": 0.0,
@@ -181,7 +172,6 @@
         },
         {
           "name": "line_spacing_510",
-          "id": 510,
           "distance_AC": 0.0,
           "distance_AB": 0.0,
           "distance_BC": 0.0,
@@ -191,7 +181,6 @@
         },
         {
           "name": "line_spacing_515",
-          "id": 515,
           "distance_AB": 0.5,
           "distance_BC": 0.5,
           "distance_AC": 1.0,
@@ -204,7 +193,6 @@
         },
         {
           "name": "line_spacing_520",
-          "id": 520,
           "distance_AB": 0.0,
           "distance_BC": 0.0,
           "distance_AC": 0.0,
@@ -218,7 +206,6 @@
       "instances": [
         {
           "name": "line_configuration_601",
-          "id": 601,
           "conductor_A": "overhead_line_conductor_6010",
           "conductor_B": "overhead_line_conductor_6010",
           "conductor_C": "overhead_line_conductor_6010",
@@ -227,7 +214,6 @@
         },
         {
           "name": "line_configuration_602",
-          "id": 602,
           "conductor_A": "overhead_line_conductor_6020",
           "conductor_B": "overhead_line_conductor_6020",
           "conductor_C": "overhead_line_conductor_6020",
@@ -236,7 +222,6 @@
         },
         {
           "name": "line_configuration_603",
-          "id": 603,
           "conductor_B": "overhead_line_conductor_6030",
           "conductor_C": "overhead_line_conductor_6030",
           "conductor_N": "overhead_line_conductor_6030",
@@ -244,7 +229,6 @@
         },
         {
           "name": "line_configuration_604",
-          "id": 604,
           "conductor_A": "overhead_line_conductor_6030",
           "conductor_C": "overhead_line_conductor_6030",
           "conductor_N": "overhead_line_conductor_6030",
@@ -252,14 +236,12 @@
         },
         {
           "name": "line_configuration_605",
-          "id": 605,
           "conductor_C": "overhead_line_conductor_6030",
           "conductor_N": "overhead_line_conductor_6030",
           "spacing": "line_spacing_510"
         },
         {
           "name": "line_configuration_606",
-          "id": 606,
           "conductor_A": "underground_line_conductor_6060",
           "conductor_B": "underground_line_conductor_6060",
           "conductor_C": "underground_line_conductor_6060",
@@ -267,7 +249,6 @@
         },
         {
           "name": "line_configuration_607",
-          "id": 607,
           "conductor_A": "underground_line_conductor_6070",
           "conductor_N": "underground_line_conductor_6070",
           "spacing": "line_spacing_520"
@@ -278,7 +259,6 @@
       "instances": [
         {
           "name": "overhead_line_632645",
-          "id": 632645,
           "phases": "BCN",
           "from": "node_632",
           "to": "node_645",
@@ -290,7 +270,6 @@
         },
         {
           "name": "overhead_line_645646",
-          "id": 645646,
           "phases": "BCN",
           "from": "node_645",
           "to": "node_646",
@@ -299,7 +278,6 @@
         },
         {
           "name": "overhead_line_630632",
-          "id": 630632,
           "phases": "ABCN",
           "from": "node_630",
           "to": "node_632",
@@ -308,7 +286,6 @@
         },
         {
           "name": "overhead_line_6326321",
-          "id": 6326321,
           "phases": "ABCN",
           "from": "node_632",
           "to": "node_6321",
@@ -320,7 +297,6 @@
         },
         {
           "name": "overhead_line_6321671",
-          "id": 6321671,
           "phases": "ABCN",
           "from": "node_6321",
           "to": "node_671",
@@ -329,7 +305,6 @@
         },
         {
           "name": "overhead_line_671680",
-          "id": 671680,
           "phases": "ABCN",
           "from": "node_671",
           "to": "node_680",
@@ -341,7 +316,6 @@
         },
         {
           "name": "overhead_line_671684",
-          "id": 671684,
           "phases": "ACN",
           "from": "node_671",
           "to": "node_684",
@@ -350,7 +324,6 @@
         },
         {
           "name": "overhead_line_684611",
-          "id": 684611,
           "phases": "CN",
           "from": "node_684",
           "to": "node_611",
@@ -359,7 +332,6 @@
         },
         {
           "name": "overhead_line_632633",
-          "id": 632633,
           "phases": "ABCN",
           "from": "node_632",
           "to": "node_633",
@@ -372,7 +344,6 @@
       "instances": [
         {
           "name": "underground_line_684652",
-          "id": 684652,
           "phases": "AN",
           "from": "node_684",
           "to": "node_652",
@@ -381,7 +352,6 @@
         },
         {
           "name": "underground_line_692675",
-          "id": 692675,
           "phases": "ABC",
           "from": "node_692",
           "to": "node_675",
@@ -394,7 +364,6 @@
       "instances": [
         {
           "name": "node_633",
-          "id": 633,
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -406,7 +375,6 @@
         },
         {
           "name": "node_630",
-          "id": 630,
           "phases": "ABCN",
           "voltage_A": "2401.7771+0j",
           "voltage_B": "-1200.8886-2080.000j",
@@ -415,7 +383,6 @@
         },
         {
           "name": "node_632",
-          "id": 632,
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -424,7 +391,6 @@
         },
         {
           "name": "node_650",
-          "id": 650,
           "phases": "ABCN",
           "bustype": "SWING",
           "voltage_A": 2401.7771,
@@ -434,7 +400,6 @@
         },
         {
           "name": "node_671",
-          "id": 671,
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -443,7 +408,6 @@
         },
         {
           "name": "node_680",
-          "id": 680,
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -452,7 +416,6 @@
         },
         {
           "name": "node_684",
-          "id": 684,
           "phases": "ACN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -461,8 +424,7 @@
         },
         {
           "name": "node_6711",
-          "id": 6711,
-          "parent": "gld_611",
+          "parent": 611,
           "phases": "CN",
           "voltage_C": "-1200.8886+2080.000j",
           "nominal_voltage": 2401.7771,
@@ -473,7 +435,6 @@
         },
         {
           "name": "node_6321",
-          "id": 6321,
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -482,7 +443,6 @@
         },
         {
           "name": "node_611",
-          "id": 611,
           "phases": "CN",
           "voltage_C": "-1200.8886+2080.000j",
           "nominal_voltage": 2401.7771,
@@ -492,7 +452,6 @@
         },
         {
           "name": "node_634",
-          "id": 634,
           "phases": "ABCN",
           "voltage_A": "480.000+0j",
           "voltage_B": "-240.000-415.6922j",
@@ -501,7 +460,6 @@
         },
         {
           "name": "node_645",
-          "id": 645,
           "phases": "BCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -510,7 +468,6 @@
         },
         {
           "name": "node_646",
-          "id": 646,
           "phases": "BCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -519,7 +476,6 @@
         },
         {
           "name": "node_652",
-          "id": 652,
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -528,7 +484,6 @@
         },
         {
           "name": "node_675",
-          "id": 675,
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -537,7 +492,6 @@
         },
         {
           "name": "node_692",
-          "id": 692,
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -655,7 +609,6 @@
         },
         {
           "name": "transformer_633634",
-          "id": 633634,
           "phases": "ABCN",
           "from": "node_633",
           "to": "node_634",
@@ -994,7 +947,6 @@
       "instances": [
         {
           "name": "switch_671692",
-          "id": 671692,
           "phases": "ABCN",
           "from": "node_671",
           "to": "node_692",
@@ -1009,7 +961,6 @@
       "instances": [
         {
           "name": "transformer_configuration_400",
-          "id": 400,
           "connect_type": "WYE_WYE",
           "install_type": "PADMOUNT",
           "power_rating": 500,
@@ -1056,7 +1007,7 @@
           "name": "CAP1",
           "phases": "ABCN",
           "pt_phase": "ABCN",
-          "parent": "gld_675",
+          "parent": 675,
           "phases_connected": "ABCN",
           "control": "VOLT",
           "voltage_set_high": 2500.0,
@@ -1079,7 +1030,7 @@
           "name": "CAP2",
           "phases": "ABCN",
           "pt_phase": "ABCN",
-          "parent": "gld_675",
+          "parent": 675,
           "phases_connected": "ABCN",
           "control": "VOLT",
           "voltage_set_high": 2600.0,
@@ -1104,7 +1055,6 @@
       "instances": [
         {
           "name": "regulator_configuration_6506321",
-          "id": 6506321,
           "connect_type": "WYE_WYE",
           "band_center": 2000.0,
           "band_width": 80.0,
@@ -1127,7 +1077,6 @@
       "instances": [
         {
           "name": "regulator_650630",
-          "id": 650630,
           "phases": "ABCN",
           "from": "node_650",
           "to": "node_630",
@@ -1449,7 +1398,6 @@
         {
           "name": "house_..20",
           "object_count": 20,
-          "id": "..20",
           "parent": "trip_meter15",
           "floor_area": "random.normal(1750,400)",
           "heating_setpoint": "heatingsetpoint2+random.normal(0,4)",

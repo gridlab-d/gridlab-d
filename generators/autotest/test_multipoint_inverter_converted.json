@@ -29,7 +29,7 @@
     "climate": {
       "instances": [
         {
-          "name": "WA_Seattle",
+          "name": "WA-Seattle",
           "tmyfile": "../WA-Yakima.tmy2",
           "interpolate": "QUADRATIC",
           "inside_comments": [

@@ -12,7 +12,10 @@
       "// Although there is f/p droop enabled in the inverter, since no speed change is sensed, inverter real power outputs are kept the same as the reference value",
       "// With the v/q droop disabled in the inverter, inverter reactive power outputs are kept the same as the reference value",
       "//#set pauseatexit=1",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -25,9 +28,9 @@
       "profiler": 1,
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -109,7 +112,6 @@
       "instances": [
         {
           "name": "overhead_line_conductor_10001",
-          "id": 10001,
           "geometric_mean_radius": 0.0244,
           "resistance": 0.306,
           "outside_comments": [
@@ -131,7 +133,6 @@
         },
         {
           "name": "overhead_line_conductor_10009",
-          "id": 10009,
           "geometric_mean_radius": 0.00446,
           "resistance": 1.12,
           "outside_comments": [
@@ -140,7 +141,6 @@
         },
         {
           "name": "overhead_line_conductor_10002",
-          "id": 10002,
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592,
           "outside_comments": [
@@ -153,7 +153,6 @@
       "instances": [
         {
           "name": "underground_line_conductor_10003",
-          "id": 10003,
           "outer_diameter": 1.06,
           "conductor_gmr": 0.0111,
           "conductor_diameter": 0.368,
@@ -174,7 +173,6 @@
       "instances": [
         {
           "name": "line_spacing_5001",
-          "id": 5001,
           "distance_AB": 2.5,
           "distance_AC": 7.0,
           "distance_BC": 4.5,
@@ -188,7 +186,6 @@
         },
         {
           "name": "line_spacing_5002",
-          "id": 5002,
           "distance_AB": 4.5,
           "distance_AC": 2.5,
           "distance_BC": 7.0,
@@ -201,7 +198,6 @@
         },
         {
           "name": "line_spacing_5003",
-          "id": 5003,
           "distance_AB": 7.0,
           "distance_AC": 4.5,
           "distance_BC": 2.5,
@@ -214,7 +210,6 @@
         },
         {
           "name": "line_spacing_5004",
-          "id": 5004,
           "distance_AB": 4.5,
           "distance_AC": 7.0,
           "distance_BC": 2.5,
@@ -227,7 +222,6 @@
         },
         {
           "name": "line_spacing_5005",
-          "id": 5005,
           "distance_AB": 2.5,
           "distance_AC": 4.5,
           "distance_BC": 7.0,
@@ -240,7 +234,6 @@
         },
         {
           "name": "line_spacing_5006",
-          "id": 5006,
           "distance_AB": 7.0,
           "distance_AC": 2.5,
           "distance_BC": 4.5,
@@ -253,7 +246,6 @@
         },
         {
           "name": "line_spacing_5007",
-          "id": 5007,
           "distance_AB": 0.0,
           "distance_AC": 7.0,
           "distance_BC": 0.0,
@@ -266,7 +258,6 @@
         },
         {
           "name": "line_spacing_5008",
-          "id": 5008,
           "distance_AB": 7.0,
           "distance_AC": 0.0,
           "distance_BC": 0.0,
@@ -279,7 +270,6 @@
         },
         {
           "name": "line_spacing_5009",
-          "id": 5009,
           "distance_AB": 0.0,
           "distance_AC": 0.0,
           "distance_BC": 0.0,
@@ -292,7 +282,6 @@
         },
         {
           "name": "line_spacing_50010",
-          "id": 50010,
           "distance_AB": 0.0,
           "distance_AC": 0.0,
           "distance_BC": 0.0,
@@ -305,7 +294,6 @@
         },
         {
           "name": "line_spacing_50011",
-          "id": 50011,
           "distance_AB": 0.0,
           "distance_AC": 0.0,
           "distance_BC": 0.0,
@@ -318,7 +306,6 @@
         },
         {
           "name": "line_spacing_50012",
-          "id": 50012,
           "distance_AB": 0.5,
           "distance_AC": 1.0,
           "distance_BC": 0.5,
@@ -335,7 +322,6 @@
       "instances": [
         {
           "name": "line_configuration_1001",
-          "id": 1001,
           "conductor_A": "overhead_line_conductor_10001",
           "conductor_B": "overhead_line_conductor_10001",
           "conductor_C": "overhead_line_conductor_10001",
@@ -344,7 +330,6 @@
         },
         {
           "name": "line_configuration_1002",
-          "id": 1002,
           "conductor_A": "overhead_line_conductor_10001",
           "conductor_B": "overhead_line_conductor_10001",
           "conductor_C": "overhead_line_conductor_10001",
@@ -353,7 +338,6 @@
         },
         {
           "name": "line_configuration_1003",
-          "id": 1003,
           "conductor_A": "overhead_line_conductor_10001",
           "conductor_B": "overhead_line_conductor_10001",
           "conductor_C": "overhead_line_conductor_10001",
@@ -362,7 +346,6 @@
         },
         {
           "name": "line_configuration_1004",
-          "id": 1004,
           "conductor_A": "overhead_line_conductor_10001",
           "conductor_B": "overhead_line_conductor_10001",
           "conductor_C": "overhead_line_conductor_10001",
@@ -371,7 +354,6 @@
         },
         {
           "name": "line_configuration_1005",
-          "id": 1005,
           "conductor_A": "overhead_line_conductor_10001",
           "conductor_B": "overhead_line_conductor_10001",
           "conductor_C": "overhead_line_conductor_10001",
@@ -380,7 +362,6 @@
         },
         {
           "name": "line_configuration_1006",
-          "id": 1006,
           "conductor_A": "overhead_line_conductor_10001",
           "conductor_B": "overhead_line_conductor_10001",
           "conductor_C": "overhead_line_conductor_10001",
@@ -389,7 +370,6 @@
         },
         {
           "name": "line_configuration_1007",
-          "id": 1007,
           "conductor_A": "overhead_line_conductor_10001",
           "conductor_C": "overhead_line_conductor_10001",
           "conductor_N": "overhead_line_conductor_10002",
@@ -397,7 +377,6 @@
         },
         {
           "name": "line_configuration_1008",
-          "id": 1008,
           "conductor_A": "overhead_line_conductor_10001",
           "conductor_B": "overhead_line_conductor_10001",
           "conductor_N": "overhead_line_conductor_10002",
@@ -405,28 +384,24 @@
         },
         {
           "name": "line_configuration_1009",
-          "id": 1009,
           "conductor_A": "overhead_line_conductor_10009",
           "conductor_N": "overhead_line_conductor_10009",
           "spacing": "line_spacing_5009"
         },
         {
           "name": "line_configuration_10010",
-          "id": 10010,
           "conductor_B": "overhead_line_conductor_10009",
           "conductor_N": "overhead_line_conductor_10009",
           "spacing": "line_spacing_50010"
         },
         {
           "name": "line_configuration_10011",
-          "id": 10011,
           "conductor_C": "overhead_line_conductor_10009",
           "conductor_N": "overhead_line_conductor_10009",
           "spacing": "line_spacing_50011"
         },
         {
           "name": "line_configuration_10012",
-          "id": 10012,
           "conductor_A": "underground_line_conductor_10003",
           "conductor_B": "underground_line_conductor_10003",
           "conductor_C": "underground_line_conductor_10003",
@@ -437,7 +412,7 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "gld_1_2",
+          "name": "1-2",
           "phases": "BN",
           "from": "load_1",
           "to": "load_2",
@@ -448,7 +423,7 @@
           ]
         },
         {
-          "name": "gld_1_3",
+          "name": "1-3",
           "phases": "CN",
           "from": "load_1",
           "to": "node_3",
@@ -456,7 +431,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_1_7",
+          "name": "1-7",
           "phases": "ABCN",
           "from": "load_1",
           "to": "load_7",
@@ -464,7 +439,7 @@
           "configuration": "line_configuration_1001"
         },
         {
-          "name": "gld_3_4",
+          "name": "3-4",
           "phases": "CN",
           "from": "node_3",
           "to": "load_4",
@@ -472,7 +447,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_3_5",
+          "name": "3-5",
           "phases": "CN",
           "from": "node_3",
           "to": "load_5",
@@ -480,7 +455,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_5_6",
+          "name": "5-6",
           "phases": "CN",
           "from": "load_5",
           "to": "load_6",
@@ -488,7 +463,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_7_8",
+          "name": "7-8",
           "phases": "ABCN",
           "from": "load_7",
           "to": "meter_8",
@@ -496,7 +471,7 @@
           "configuration": "line_configuration_1001"
         },
         {
-          "name": "gld_8_12",
+          "name": "8-12",
           "phases": "BN",
           "from": "meter_8",
           "to": "load_12",
@@ -504,7 +479,7 @@
           "configuration": "line_configuration_10010"
         },
         {
-          "name": "gld_8_9",
+          "name": "8-9",
           "phases": "AN",
           "from": "meter_8",
           "to": "load_9",
@@ -512,7 +487,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_8_13",
+          "name": "8-13",
           "phases": "ABCN",
           "from": "meter_8",
           "to": "meter_13",
@@ -520,7 +495,7 @@
           "configuration": "line_configuration_1001"
         },
         {
-          "name": "gld_1401_14",
+          "name": "1401-14",
           "phases": "AN",
           "from": "node_1401",
           "to": "node_14",
@@ -528,7 +503,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_13_34",
+          "name": "13-34",
           "phases": "CN",
           "from": "meter_13",
           "to": "load_34",
@@ -536,7 +511,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_13_18",
+          "name": "13-18",
           "phases": "ABCN",
           "from": "meter_13",
           "to": "node_18",
@@ -544,7 +519,7 @@
           "configuration": "line_configuration_1002"
         },
         {
-          "name": "gld_14_11",
+          "name": "14-11",
           "phases": "AN",
           "from": "node_14",
           "to": "load_11",
@@ -552,7 +527,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_14_10",
+          "name": "14-10",
           "phases": "AN",
           "from": "node_14",
           "to": "load_10",
@@ -560,7 +535,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_15_16",
+          "name": "15-16",
           "phases": "CN",
           "from": "node_15",
           "to": "load_16",
@@ -568,7 +543,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_15_17",
+          "name": "15-17",
           "phases": "CN",
           "from": "node_15",
           "to": "load_17",
@@ -576,7 +551,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_18_19",
+          "name": "18-19",
           "phases": "AN",
           "from": "node_18",
           "to": "load_19",
@@ -584,7 +559,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_18_21",
+          "name": "18-21",
           "phases": "ABCN",
           "from": "node_18",
           "to": "node_21",
@@ -592,7 +567,7 @@
           "configuration": "line_configuration_1002"
         },
         {
-          "name": "gld_19_20",
+          "name": "19-20",
           "phases": "AN",
           "from": "load_19",
           "to": "load_20",
@@ -600,7 +575,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_21_22",
+          "name": "21-22",
           "phases": "BN",
           "from": "node_21",
           "to": "load_22",
@@ -608,7 +583,7 @@
           "configuration": "line_configuration_10010"
         },
         {
-          "name": "gld_21_23",
+          "name": "21-23",
           "phases": "ABCN",
           "from": "node_21",
           "to": "node_23",
@@ -616,7 +591,7 @@
           "configuration": "line_configuration_1002"
         },
         {
-          "name": "gld_23_24",
+          "name": "23-24",
           "phases": "CN",
           "from": "node_23",
           "to": "load_24",
@@ -624,7 +599,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_23_25",
+          "name": "23-25",
           "phases": "ABCN",
           "from": "node_23",
           "to": "node_25",
@@ -632,7 +607,7 @@
           "configuration": "line_configuration_1002"
         },
         {
-          "name": "gld_2601_26",
+          "name": "2601-26",
           "phases": "ACN",
           "from": "node_2601",
           "to": "node_26",
@@ -640,7 +615,7 @@
           "configuration": "line_configuration_1007"
         },
         {
-          "name": "gld_25_28",
+          "name": "25-28",
           "phases": "ABCN",
           "from": "node_25",
           "to": "load_28",
@@ -648,7 +623,7 @@
           "configuration": "line_configuration_1002"
         },
         {
-          "name": "gld_26_27",
+          "name": "26-27",
           "phases": "ACN",
           "from": "node_26",
           "to": "node_27",
@@ -656,7 +631,7 @@
           "configuration": "line_configuration_1007"
         },
         {
-          "name": "gld_26_31",
+          "name": "26-31",
           "phases": "CN",
           "from": "node_26",
           "to": "load_31",
@@ -664,7 +639,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_27_33",
+          "name": "27-33",
           "phases": "AN",
           "from": "node_27",
           "to": "load_33",
@@ -672,7 +647,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_28_29",
+          "name": "28-29",
           "phases": "ABCN",
           "from": "load_28",
           "to": "load_29",
@@ -680,7 +655,7 @@
           "configuration": "line_configuration_1002"
         },
         {
-          "name": "gld_29_30",
+          "name": "29-30",
           "phases": "ABCN",
           "from": "load_29",
           "to": "load_30",
@@ -688,7 +663,7 @@
           "configuration": "line_configuration_1002"
         },
         {
-          "name": "gld_30_250",
+          "name": "30-250",
           "phases": "ABCN",
           "from": "load_30",
           "to": "node_250",
@@ -696,7 +671,7 @@
           "configuration": "line_configuration_1002"
         },
         {
-          "name": "gld_31_32",
+          "name": "31-32",
           "phases": "CN",
           "from": "load_31",
           "to": "load_32",
@@ -704,7 +679,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_34_15",
+          "name": "34-15",
           "phases": "CN",
           "from": "load_34",
           "to": "node_15",
@@ -712,7 +687,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_35_36",
+          "name": "35-36",
           "phases": "ABN",
           "from": "load_35",
           "to": "node_36",
@@ -720,7 +695,7 @@
           "configuration": "line_configuration_1008"
         },
         {
-          "name": "gld_35_40",
+          "name": "35-40",
           "phases": "ABCN",
           "from": "load_35",
           "to": "node_40",
@@ -728,7 +703,7 @@
           "configuration": "line_configuration_1001"
         },
         {
-          "name": "gld_36_37",
+          "name": "36-37",
           "phases": "AN",
           "from": "node_36",
           "to": "load_37",
@@ -736,7 +711,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_36_38",
+          "name": "36-38",
           "phases": "BN",
           "from": "node_36",
           "to": "load_38",
@@ -744,7 +719,7 @@
           "configuration": "line_configuration_10010"
         },
         {
-          "name": "gld_38_39",
+          "name": "38-39",
           "phases": "BN",
           "from": "load_38",
           "to": "load_39",
@@ -752,7 +727,7 @@
           "configuration": "line_configuration_10010"
         },
         {
-          "name": "gld_40_41",
+          "name": "40-41",
           "phases": "CN",
           "from": "node_40",
           "to": "load_41",
@@ -760,7 +735,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_40_42",
+          "name": "40-42",
           "phases": "ABCN",
           "from": "node_40",
           "to": "load_42",
@@ -768,7 +743,7 @@
           "configuration": "line_configuration_1001"
         },
         {
-          "name": "gld_42_43",
+          "name": "42-43",
           "phases": "BN",
           "from": "load_42",
           "to": "load_43",
@@ -776,7 +751,7 @@
           "configuration": "line_configuration_10010"
         },
         {
-          "name": "gld_42_44",
+          "name": "42-44",
           "phases": "ABCN",
           "from": "load_42",
           "to": "node_44",
@@ -784,7 +759,7 @@
           "configuration": "line_configuration_1001"
         },
         {
-          "name": "gld_44_45",
+          "name": "44-45",
           "phases": "AN",
           "from": "node_44",
           "to": "load_45",
@@ -792,7 +767,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_44_47",
+          "name": "44-47",
           "phases": "ABCN",
           "from": "node_44",
           "to": "load_47",
@@ -800,7 +775,7 @@
           "configuration": "line_configuration_1001"
         },
         {
-          "name": "gld_45_46",
+          "name": "45-46",
           "phases": "AN",
           "from": "load_45",
           "to": "load_46",
@@ -808,7 +783,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_47_48",
+          "name": "47-48",
           "phases": "ABCN",
           "from": "load_47",
           "to": "load_48",
@@ -816,7 +791,7 @@
           "configuration": "line_configuration_1004"
         },
         {
-          "name": "gld_47_49",
+          "name": "47-49",
           "phases": "ABCN",
           "from": "load_47",
           "to": "load_49",
@@ -824,7 +799,7 @@
           "configuration": "line_configuration_1004"
         },
         {
-          "name": "gld_49_50",
+          "name": "49-50",
           "phases": "ABCN",
           "from": "load_49",
           "to": "meter_50",
@@ -832,7 +807,7 @@
           "configuration": "line_configuration_1004"
         },
         {
-          "name": "gld_50_51",
+          "name": "50-51",
           "phases": "ABCN",
           "from": "meter_50",
           "to": "load_51",
@@ -840,7 +815,7 @@
           "configuration": "line_configuration_1004"
         },
         {
-          "name": "gld_51_151",
+          "name": "51-151",
           "phases": "ABCN",
           "from": "load_51",
           "to": "node_151",
@@ -851,7 +826,7 @@
           }
         },
         {
-          "name": "gld_52_53",
+          "name": "52-53",
           "phases": "ABCN",
           "from": "load_52",
           "to": "load_53",
@@ -859,7 +834,7 @@
           "configuration": "line_configuration_1001"
         },
         {
-          "name": "gld_53_54",
+          "name": "53-54",
           "phases": "ABCN",
           "from": "load_53",
           "to": "node_54",
@@ -867,7 +842,7 @@
           "configuration": "line_configuration_1001"
         },
         {
-          "name": "gld_54_55",
+          "name": "54-55",
           "phases": "ABCN",
           "from": "node_54",
           "to": "load_55",
@@ -875,7 +850,7 @@
           "configuration": "line_configuration_1001"
         },
         {
-          "name": "gld_54_57",
+          "name": "54-57",
           "phases": "ABCN",
           "from": "node_54",
           "to": "meter_57",
@@ -883,7 +858,7 @@
           "configuration": "line_configuration_1003"
         },
         {
-          "name": "gld_55_56",
+          "name": "55-56",
           "phases": "ABCN",
           "from": "load_55",
           "to": "load_56",
@@ -891,7 +866,7 @@
           "configuration": "line_configuration_1001"
         },
         {
-          "name": "gld_57_58",
+          "name": "57-58",
           "phases": "BN",
           "from": "meter_57",
           "to": "load_58",
@@ -899,7 +874,7 @@
           "configuration": "line_configuration_10010"
         },
         {
-          "name": "gld_57_60",
+          "name": "57-60",
           "phases": "ABCN",
           "from": "meter_57",
           "to": "load_60",
@@ -907,7 +882,7 @@
           "configuration": "line_configuration_1003"
         },
         {
-          "name": "gld_58_59",
+          "name": "58-59",
           "phases": "BN",
           "from": "load_58",
           "to": "load_59",
@@ -915,7 +890,7 @@
           "configuration": "line_configuration_10010"
         },
         {
-          "name": "gld_60_61",
+          "name": "60-61",
           "phases": "ABCN",
           "from": "load_60",
           "to": "node_61",
@@ -923,7 +898,7 @@
           "configuration": "line_configuration_1005"
         },
         {
-          "name": "gld_67_68",
+          "name": "67-68",
           "phases": "AN",
           "from": "meter_67",
           "to": "load_68",
@@ -931,7 +906,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_67_72",
+          "name": "67-72",
           "phases": "ABCN",
           "from": "meter_67",
           "to": "load_72",
@@ -939,7 +914,7 @@
           "configuration": "line_configuration_1003"
         },
         {
-          "name": "gld_67_97",
+          "name": "67-97",
           "phases": "ABCN",
           "from": "meter_67",
           "to": "node_97",
@@ -947,7 +922,7 @@
           "configuration": "line_configuration_1003"
         },
         {
-          "name": "gld_68_69",
+          "name": "68-69",
           "phases": "AN",
           "from": "load_68",
           "to": "load_69",
@@ -955,7 +930,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_69_70",
+          "name": "69-70",
           "phases": "AN",
           "from": "load_69",
           "to": "load_70",
@@ -963,7 +938,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_70_71",
+          "name": "70-71",
           "phases": "AN",
           "from": "load_70",
           "to": "load_71",
@@ -971,7 +946,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_72_73",
+          "name": "72-73",
           "phases": "CN",
           "from": "load_72",
           "to": "load_73",
@@ -979,7 +954,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_72_76",
+          "name": "72-76",
           "phases": "ABCN",
           "from": "load_72",
           "to": "load_76",
@@ -987,7 +962,7 @@
           "configuration": "line_configuration_1003"
         },
         {
-          "name": "gld_73_74",
+          "name": "73-74",
           "phases": "CN",
           "from": "load_73",
           "to": "load_74",
@@ -995,7 +970,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_74_75",
+          "name": "74-75",
           "phases": "CN",
           "from": "load_74",
           "to": "load_75",
@@ -1003,7 +978,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_76_77",
+          "name": "76-77",
           "phases": "ABCN",
           "from": "load_76",
           "to": "load_77",
@@ -1011,7 +986,7 @@
           "configuration": "line_configuration_1006"
         },
         {
-          "name": "gld_76_86",
+          "name": "76-86",
           "phases": "ABCN",
           "from": "load_76",
           "to": "load_86",
@@ -1019,7 +994,7 @@
           "configuration": "line_configuration_1003"
         },
         {
-          "name": "gld_77_78",
+          "name": "77-78",
           "phases": "ABCN",
           "from": "load_77",
           "to": "node_78",
@@ -1027,7 +1002,7 @@
           "configuration": "line_configuration_1006"
         },
         {
-          "name": "gld_78_79",
+          "name": "78-79",
           "phases": "ABCN",
           "from": "node_78",
           "to": "load_79",
@@ -1035,7 +1010,7 @@
           "configuration": "line_configuration_1006"
         },
         {
-          "name": "gld_78_80",
+          "name": "78-80",
           "phases": "ABCN",
           "from": "node_78",
           "to": "load_80",
@@ -1043,7 +1018,7 @@
           "configuration": "line_configuration_1006"
         },
         {
-          "name": "gld_80_81",
+          "name": "80-81",
           "phases": "ABCN",
           "from": "load_80",
           "to": "node_81",
@@ -1051,7 +1026,7 @@
           "configuration": "line_configuration_1006"
         },
         {
-          "name": "gld_81_82",
+          "name": "81-82",
           "phases": "ABCN",
           "from": "node_81",
           "to": "load_82",
@@ -1059,7 +1034,7 @@
           "configuration": "line_configuration_1006"
         },
         {
-          "name": "gld_81_84",
+          "name": "81-84",
           "phases": "CN",
           "from": "node_81",
           "to": "load_84",
@@ -1067,7 +1042,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_82_83",
+          "name": "82-83",
           "phases": "ABCN",
           "from": "load_82",
           "to": "load_83",
@@ -1075,7 +1050,7 @@
           "configuration": "line_configuration_1006"
         },
         {
-          "name": "gld_84_85",
+          "name": "84-85",
           "phases": "CN",
           "from": "load_84",
           "to": "load_85",
@@ -1083,7 +1058,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_86_87",
+          "name": "86-87",
           "phases": "ABCN",
           "from": "load_86",
           "to": "load_87",
@@ -1091,7 +1066,7 @@
           "configuration": "line_configuration_1006"
         },
         {
-          "name": "gld_87_88",
+          "name": "87-88",
           "phases": "AN",
           "from": "load_87",
           "to": "load_88",
@@ -1099,7 +1074,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_87_89",
+          "name": "87-89",
           "phases": "ABCN",
           "from": "load_87",
           "to": "node_89",
@@ -1107,7 +1082,7 @@
           "configuration": "line_configuration_1006"
         },
         {
-          "name": "gld_89_90",
+          "name": "89-90",
           "phases": "BN",
           "from": "node_89",
           "to": "load_90",
@@ -1115,7 +1090,7 @@
           "configuration": "line_configuration_10010"
         },
         {
-          "name": "gld_89_91",
+          "name": "89-91",
           "phases": "ABCN",
           "from": "node_89",
           "to": "node_91",
@@ -1123,7 +1098,7 @@
           "configuration": "line_configuration_1006"
         },
         {
-          "name": "gld_91_92",
+          "name": "91-92",
           "phases": "CN",
           "from": "node_91",
           "to": "load_92",
@@ -1131,7 +1106,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_91_93",
+          "name": "91-93",
           "phases": "ABCN",
           "from": "node_91",
           "to": "node_93",
@@ -1139,7 +1114,7 @@
           "configuration": "line_configuration_1006"
         },
         {
-          "name": "gld_93_94",
+          "name": "93-94",
           "phases": "AN",
           "from": "node_93",
           "to": "load_94",
@@ -1147,7 +1122,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_93_95",
+          "name": "93-95",
           "phases": "ABCN",
           "from": "node_93",
           "to": "load_95",
@@ -1155,7 +1130,7 @@
           "configuration": "line_configuration_1006"
         },
         {
-          "name": "gld_95_96",
+          "name": "95-96",
           "phases": "BN",
           "from": "load_95",
           "to": "load_96",
@@ -1163,7 +1138,7 @@
           "configuration": "line_configuration_10010"
         },
         {
-          "name": "gld_97_98",
+          "name": "97-98",
           "phases": "ABCN",
           "from": "node_97",
           "to": "load_98",
@@ -1171,7 +1146,7 @@
           "configuration": "line_configuration_1003"
         },
         {
-          "name": "gld_98_99",
+          "name": "98-99",
           "phases": "ABCN",
           "from": "load_98",
           "to": "load_99",
@@ -1179,7 +1154,7 @@
           "configuration": "line_configuration_1003"
         },
         {
-          "name": "gld_99_100",
+          "name": "99-100",
           "phases": "ABCN",
           "from": "load_99",
           "to": "load_100",
@@ -1187,7 +1162,7 @@
           "configuration": "line_configuration_1003"
         },
         {
-          "name": "gld_100_450",
+          "name": "100-450",
           "phases": "ABCN",
           "from": "load_100",
           "to": "node_450",
@@ -1195,7 +1170,7 @@
           "configuration": "line_configuration_1003"
         },
         {
-          "name": "gld_101_102",
+          "name": "101-102",
           "phases": "CN",
           "from": "load_101",
           "to": "load_102",
@@ -1203,7 +1178,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_101_105",
+          "name": "101-105",
           "phases": "ABCN",
           "from": "load_101",
           "to": "node_105",
@@ -1211,7 +1186,7 @@
           "configuration": "line_configuration_1003"
         },
         {
-          "name": "gld_102_103",
+          "name": "102-103",
           "phases": "CN",
           "from": "load_102",
           "to": "load_103",
@@ -1219,7 +1194,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_103_104",
+          "name": "103-104",
           "phases": "CN",
           "from": "load_103",
           "to": "load_104",
@@ -1227,7 +1202,7 @@
           "configuration": "line_configuration_10011"
         },
         {
-          "name": "gld_105_106",
+          "name": "105-106",
           "phases": "BN",
           "from": "node_105",
           "to": "load_106",
@@ -1235,7 +1210,7 @@
           "configuration": "line_configuration_10010"
         },
         {
-          "name": "gld_105_108",
+          "name": "105-108",
           "phases": "ABCN",
           "from": "node_105",
           "to": "node_108",
@@ -1243,7 +1218,7 @@
           "configuration": "line_configuration_1003"
         },
         {
-          "name": "gld_106_107",
+          "name": "106-107",
           "phases": "BN",
           "from": "load_106",
           "to": "load_107",
@@ -1251,7 +1226,7 @@
           "configuration": "line_configuration_10010"
         },
         {
-          "name": "gld_108_109",
+          "name": "108-109",
           "phases": "AN",
           "from": "node_108",
           "to": "load_109",
@@ -1259,7 +1234,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_108_300",
+          "name": "108-300",
           "phases": "ABCN",
           "from": "node_108",
           "to": "meter_300",
@@ -1267,7 +1242,7 @@
           "configuration": "line_configuration_1003"
         },
         {
-          "name": "gld_109_110",
+          "name": "109-110",
           "phases": "AN",
           "from": "load_109",
           "to": "node_110",
@@ -1275,7 +1250,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_110_111",
+          "name": "110-111",
           "phases": "AN",
           "from": "node_110",
           "to": "load_111",
@@ -1283,7 +1258,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_110_112",
+          "name": "110-112",
           "phases": "AN",
           "from": "node_110",
           "to": "load_112",
@@ -1291,7 +1266,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_112_113",
+          "name": "112-113",
           "phases": "AN",
           "from": "load_112",
           "to": "load_113",
@@ -1299,7 +1274,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_113_114",
+          "name": "113-114",
           "phases": "AN",
           "from": "load_113",
           "to": "load_114",
@@ -1307,7 +1282,7 @@
           "configuration": "line_configuration_1009"
         },
         {
-          "name": "gld_135_35",
+          "name": "135-35",
           "phases": "ABCN",
           "from": "node_135",
           "to": "load_35",
@@ -1315,7 +1290,7 @@
           "configuration": "line_configuration_1004"
         },
         {
-          "name": "gld_149_1",
+          "name": "149-1",
           "phases": "ABCN",
           "from": "node_149",
           "to": "load_1",
@@ -1323,7 +1298,7 @@
           "configuration": "line_configuration_1001"
         },
         {
-          "name": "gld_152_52",
+          "name": "152-52",
           "phases": "ABCN",
           "from": "node_152",
           "to": "load_52",
@@ -1331,7 +1306,7 @@
           "configuration": "line_configuration_1001"
         },
         {
-          "name": "gld_6701_67",
+          "name": "6701-67",
           "phases": "ABCN",
           "from": "node_6701",
           "to": "meter_67",
@@ -1339,7 +1314,7 @@
           "configuration": "line_configuration_1006"
         },
         {
-          "name": "gld_197_101",
+          "name": "197-101",
           "phases": "ABCN",
           "from": "node_197",
           "to": "load_101",
@@ -1351,7 +1326,7 @@
     "underground_line": {
       "instances": [
         {
-          "name": "gld_60_62",
+          "name": "60-62",
           "phases": "ABC",
           "from": "load_60",
           "to": "load_62",
@@ -1359,7 +1334,7 @@
           "configuration": "line_configuration_10012"
         },
         {
-          "name": "gld_62_63",
+          "name": "62-63",
           "phases": "ABC",
           "from": "load_62",
           "to": "load_63",
@@ -1367,7 +1342,7 @@
           "configuration": "line_configuration_10012"
         },
         {
-          "name": "gld_63_64",
+          "name": "63-64",
           "phases": "ABC",
           "from": "load_63",
           "to": "load_64",
@@ -1375,7 +1350,7 @@
           "configuration": "line_configuration_10012"
         },
         {
-          "name": "gld_64_65",
+          "name": "64-65",
           "phases": "ABC",
           "from": "load_64",
           "to": "load_65",
@@ -1383,7 +1358,7 @@
           "configuration": "line_configuration_10012"
         },
         {
-          "name": "gld_65_66",
+          "name": "65-66",
           "phases": "ABC",
           "from": "load_65",
           "to": "meter_66",
@@ -1396,7 +1371,6 @@
       "instances": [
         {
           "name": "node_3",
-          "id": 3,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1409,7 +1383,6 @@
         },
         {
           "name": "node_14",
-          "id": 14,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1419,7 +1392,6 @@
         },
         {
           "name": "node_1401",
-          "id": 1401,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1429,7 +1401,6 @@
         },
         {
           "name": "node_15",
-          "id": 15,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1439,7 +1410,6 @@
         },
         {
           "name": "node_18",
-          "id": 18,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1449,7 +1419,6 @@
         },
         {
           "name": "node_21",
-          "id": 21,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1459,7 +1428,6 @@
         },
         {
           "name": "node_23",
-          "id": 23,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1469,7 +1437,6 @@
         },
         {
           "name": "node_25",
-          "id": 25,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1479,7 +1446,6 @@
         },
         {
           "name": "node_26",
-          "id": 26,
           "phases": "ACN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1489,7 +1455,6 @@
         },
         {
           "name": "node_2601",
-          "id": 2601,
           "phases": "ACN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1499,7 +1464,6 @@
         },
         {
           "name": "node_27",
-          "id": 27,
           "phases": "ACN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1509,7 +1473,6 @@
         },
         {
           "name": "node_36",
-          "id": 36,
           "phases": "ABN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1519,7 +1482,6 @@
         },
         {
           "name": "node_40",
-          "id": 40,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1529,7 +1491,6 @@
         },
         {
           "name": "node_44",
-          "id": 44,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1539,7 +1500,6 @@
         },
         {
           "name": "node_54",
-          "id": 54,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "bustype": "SWING_PQ",
@@ -1550,7 +1510,6 @@
         },
         {
           "name": "node_61",
-          "id": 61,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1560,7 +1519,6 @@
         },
         {
           "name": "node_6701",
-          "id": 6701,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1570,7 +1528,6 @@
         },
         {
           "name": "node_78",
-          "id": 78,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1580,7 +1537,6 @@
         },
         {
           "name": "node_81",
-          "id": 81,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1590,7 +1546,6 @@
         },
         {
           "name": "node_89",
-          "id": 89,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1600,7 +1555,6 @@
         },
         {
           "name": "node_91",
-          "id": 91,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1610,7 +1564,6 @@
         },
         {
           "name": "node_93",
-          "id": 93,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1620,7 +1573,6 @@
         },
         {
           "name": "node_97",
-          "id": 97,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1630,7 +1582,6 @@
         },
         {
           "name": "node_105",
-          "id": 105,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1640,7 +1591,6 @@
         },
         {
           "name": "node_108",
-          "id": 108,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1650,7 +1600,6 @@
         },
         {
           "name": "node_110",
-          "id": 110,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1660,7 +1609,6 @@
         },
         {
           "name": "node_135",
-          "id": 135,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1670,7 +1618,6 @@
         },
         {
           "name": "node_149",
-          "id": 149,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1680,7 +1627,6 @@
         },
         {
           "name": "node_1491",
-          "id": 1491,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1690,7 +1636,6 @@
         },
         {
           "name": "node_151",
-          "id": 151,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1700,7 +1645,6 @@
         },
         {
           "name": "node_152",
-          "id": 152,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1710,7 +1654,6 @@
         },
         {
           "name": "node_160",
-          "id": 160,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1720,7 +1663,6 @@
         },
         {
           "name": "node_195",
-          "id": 195,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1730,7 +1672,6 @@
         },
         {
           "name": "node_197",
-          "id": 197,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1740,7 +1681,6 @@
         },
         {
           "name": "node_250",
-          "id": 250,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1750,7 +1690,6 @@
         },
         {
           "name": "node_251",
-          "id": 251,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1760,7 +1699,6 @@
         },
         {
           "name": "node_350",
-          "id": 350,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1770,7 +1708,6 @@
         },
         {
           "name": "node_450",
-          "id": 450,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1780,7 +1717,6 @@
         },
         {
           "name": "node_451",
-          "id": 451,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1790,7 +1726,6 @@
         },
         {
           "name": "node_610",
-          "id": 610,
           "phases": "ABCN",
           "voltage_A": "480.000+0j",
           "voltage_B": "-240.000-415.6922j",
@@ -1799,7 +1734,6 @@
         },
         {
           "name": "node_611",
-          "id": 611,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1813,7 +1747,6 @@
       "instances": [
         {
           "name": "meter_8",
-          "id": 8,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1823,14 +1756,12 @@
         },
         {
           "name": "meter_13",
-          "id": 13,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "nominal_voltage": 2401.7771
         },
         {
           "name": "meter_57",
-          "id": 57,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1840,7 +1771,6 @@
         },
         {
           "name": "meter_67",
-          "id": 67,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1850,7 +1780,6 @@
         },
         {
           "name": "meter_150",
-          "id": 150,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1860,7 +1789,6 @@
         },
         {
           "name": "meter_300",
-          "id": 300,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1870,7 +1798,6 @@
         },
         {
           "name": "meter_50",
-          "id": 50,
           "bustype": "SWING",
           "phases": "ABCN",
           "flags": "DELTAMODE",
@@ -1881,7 +1808,6 @@
         },
         {
           "name": "meter_66",
-          "id": 66,
           "phases": "ABC",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1894,9 +1820,8 @@
         },
         {
           "name": "meter_1370",
-          "id": 1370,
           "phases": "ABCN",
-          "parent": "gld_54",
+          "parent": 54,
           "flags": "DELTAMODE",
           "nominal_voltage": 2401.7771,
           "outside_comments": [
@@ -1909,7 +1834,6 @@
       "instances": [
         {
           "name": "load_72",
-          "id": 72,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1924,7 +1848,6 @@
         },
         {
           "name": "load_101",
-          "id": 101,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1939,7 +1862,6 @@
         },
         {
           "name": "load_1",
-          "id": 1,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1953,7 +1875,6 @@
         },
         {
           "name": "load_2",
-          "id": 2,
           "phases": "BN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1964,7 +1885,6 @@
         },
         {
           "name": "load_4",
-          "id": 4,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1975,7 +1895,6 @@
         },
         {
           "name": "load_5",
-          "id": 5,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1986,7 +1905,6 @@
         },
         {
           "name": "load_6",
-          "id": 6,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -1997,7 +1915,6 @@
         },
         {
           "name": "load_7",
-          "id": 7,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2008,7 +1925,6 @@
         },
         {
           "name": "load_9",
-          "id": 9,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2019,7 +1935,6 @@
         },
         {
           "name": "load_10",
-          "id": 10,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2030,7 +1945,6 @@
         },
         {
           "name": "load_11",
-          "id": 11,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2041,7 +1955,6 @@
         },
         {
           "name": "load_12",
-          "id": 12,
           "phases": "BN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2052,7 +1965,6 @@
         },
         {
           "name": "load_16",
-          "id": 16,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2063,7 +1975,6 @@
         },
         {
           "name": "load_17",
-          "id": 17,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2074,7 +1985,6 @@
         },
         {
           "name": "load_19",
-          "id": 19,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2085,7 +1995,6 @@
         },
         {
           "name": "load_20",
-          "id": 20,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2096,7 +2005,6 @@
         },
         {
           "name": "load_22",
-          "id": 22,
           "phases": "BN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2107,7 +2015,6 @@
         },
         {
           "name": "load_24",
-          "id": 24,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2118,7 +2025,6 @@
         },
         {
           "name": "load_28",
-          "id": 28,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2129,7 +2035,6 @@
         },
         {
           "name": "load_29",
-          "id": 29,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2140,7 +2045,6 @@
         },
         {
           "name": "load_30",
-          "id": 30,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2151,7 +2055,6 @@
         },
         {
           "name": "load_31",
-          "id": 31,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2162,7 +2065,6 @@
         },
         {
           "name": "load_32",
-          "id": 32,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2173,7 +2075,6 @@
         },
         {
           "name": "load_33",
-          "id": 33,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2184,7 +2085,6 @@
         },
         {
           "name": "load_34",
-          "id": 34,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2195,7 +2095,6 @@
         },
         {
           "name": "load_35",
-          "id": 35,
           "phases": "ABCD",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2206,7 +2105,6 @@
         },
         {
           "name": "load_37",
-          "id": 37,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2217,7 +2115,6 @@
         },
         {
           "name": "load_38",
-          "id": 38,
           "phases": "BN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2228,7 +2125,6 @@
         },
         {
           "name": "load_39",
-          "id": 39,
           "phases": "BN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2239,7 +2135,6 @@
         },
         {
           "name": "load_41",
-          "id": 41,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2250,7 +2145,6 @@
         },
         {
           "name": "load_42",
-          "id": 42,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2279,7 +2173,6 @@
         },
         {
           "name": "load_43",
-          "id": 43,
           "phases": "BN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2290,7 +2183,6 @@
         },
         {
           "name": "load_45",
-          "id": 45,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2301,7 +2193,6 @@
         },
         {
           "name": "load_46",
-          "id": 46,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2312,7 +2203,6 @@
         },
         {
           "name": "load_47",
-          "id": 47,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2325,7 +2215,6 @@
         },
         {
           "name": "load_48",
-          "id": 48,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2338,7 +2227,6 @@
         },
         {
           "name": "load_49",
-          "id": 49,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2353,7 +2241,6 @@
         },
         {
           "name": "load_51",
-          "id": 51,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2364,7 +2251,6 @@
         },
         {
           "name": "load_52",
-          "id": 52,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2375,7 +2261,6 @@
         },
         {
           "name": "load_53",
-          "id": 53,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2386,7 +2271,6 @@
         },
         {
           "name": "load_55",
-          "id": 55,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2397,7 +2281,6 @@
         },
         {
           "name": "load_56",
-          "id": 56,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2408,7 +2291,6 @@
         },
         {
           "name": "load_58",
-          "id": 58,
           "phases": "BN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2419,7 +2301,6 @@
         },
         {
           "name": "load_59",
-          "id": 59,
           "phases": "BN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2430,7 +2311,6 @@
         },
         {
           "name": "load_60",
-          "id": 60,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2441,7 +2321,6 @@
         },
         {
           "name": "load_62",
-          "id": 62,
           "phases": "ABC",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2452,7 +2331,6 @@
         },
         {
           "name": "load_63",
-          "id": 63,
           "phases": "ABC",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2463,7 +2341,6 @@
         },
         {
           "name": "load_64",
-          "id": 64,
           "phases": "ABC",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2474,7 +2351,6 @@
         },
         {
           "name": "load_65",
-          "id": 65,
           "phases": "ABCD",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2487,7 +2363,6 @@
         },
         {
           "name": "load_68",
-          "id": 68,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2498,7 +2373,6 @@
         },
         {
           "name": "load_69",
-          "id": 69,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2509,7 +2383,6 @@
         },
         {
           "name": "load_70",
-          "id": 70,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2520,7 +2393,6 @@
         },
         {
           "name": "load_71",
-          "id": 71,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2531,7 +2403,6 @@
         },
         {
           "name": "load_73",
-          "id": 73,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2542,7 +2413,6 @@
         },
         {
           "name": "load_74",
-          "id": 74,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2553,7 +2423,6 @@
         },
         {
           "name": "load_75",
-          "id": 75,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2564,7 +2433,6 @@
         },
         {
           "name": "load_76",
-          "id": 76,
           "phases": "ABCD",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2577,7 +2445,6 @@
         },
         {
           "name": "load_77",
-          "id": 77,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2588,7 +2455,6 @@
         },
         {
           "name": "load_79",
-          "id": 79,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2599,7 +2465,6 @@
         },
         {
           "name": "load_80",
-          "id": 80,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2610,7 +2475,6 @@
         },
         {
           "name": "load_82",
-          "id": 82,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2621,7 +2485,6 @@
         },
         {
           "name": "load_83",
-          "id": 83,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2638,7 +2501,6 @@
         },
         {
           "name": "load_84",
-          "id": 84,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2649,7 +2511,6 @@
         },
         {
           "name": "load_85",
-          "id": 85,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2660,7 +2521,6 @@
         },
         {
           "name": "load_86",
-          "id": 86,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2671,7 +2531,6 @@
         },
         {
           "name": "load_87",
-          "id": 87,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2682,7 +2541,6 @@
         },
         {
           "name": "load_88",
-          "id": 88,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2697,7 +2555,6 @@
         },
         {
           "name": "load_90",
-          "id": 90,
           "phases": "BN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2712,7 +2569,6 @@
         },
         {
           "name": "load_92",
-          "id": 92,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2727,7 +2583,6 @@
         },
         {
           "name": "load_94",
-          "id": 94,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2738,7 +2593,6 @@
         },
         {
           "name": "load_95",
-          "id": 95,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2749,7 +2603,6 @@
         },
         {
           "name": "load_96",
-          "id": 96,
           "phases": "BN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2760,7 +2613,6 @@
         },
         {
           "name": "load_98",
-          "id": 98,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2771,7 +2623,6 @@
         },
         {
           "name": "load_99",
-          "id": 99,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2781,7 +2632,6 @@
         },
         {
           "name": "load_100",
-          "id": 100,
           "phases": "ABCN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2792,7 +2642,6 @@
         },
         {
           "name": "load_102",
-          "id": 102,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2803,7 +2652,6 @@
         },
         {
           "name": "load_103",
-          "id": 103,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2814,7 +2662,6 @@
         },
         {
           "name": "load_104",
-          "id": 104,
           "phases": "CN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2825,7 +2672,6 @@
         },
         {
           "name": "load_106",
-          "id": 106,
           "phases": "BN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2836,7 +2682,6 @@
         },
         {
           "name": "load_107",
-          "id": 107,
           "phases": "BN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2847,7 +2692,6 @@
         },
         {
           "name": "load_109",
-          "id": 109,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2858,7 +2702,6 @@
         },
         {
           "name": "load_111",
-          "id": 111,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2869,7 +2712,6 @@
         },
         {
           "name": "load_112",
-          "id": 112,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2880,7 +2722,6 @@
         },
         {
           "name": "load_113",
-          "id": 113,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2891,7 +2732,6 @@
         },
         {
           "name": "load_114",
-          "id": 114,
           "phases": "AN",
           "flags": "DELTAMODE",
           "voltage_A": 2401.7771,
@@ -2929,7 +2769,7 @@
           "name": "player_308",
           "file": "../trigger3.player",
           "property": "nominal_voltage",
-          "parent": "gld_50",
+          "parent": 50,
           "flags": "DELTAMODE",
           "outside_comments": [
             "// This player kicks the system into delta mode early so that all transition transients can settle before the scenario transients are triggered"
@@ -2957,7 +2797,6 @@
       "instances": [
         {
           "name": "switch_13152",
-          "id": 13152,
           "phases": "ABCN",
           "from": "meter_13",
           "to": "node_152",
@@ -2968,7 +2807,6 @@
         },
         {
           "name": "switch_18135",
-          "id": 18135,
           "phases": "ABCN",
           "from": "node_18",
           "to": "node_135",
@@ -2976,7 +2814,6 @@
         },
         {
           "name": "switch_60160",
-          "id": 60160,
           "phases": "ABCN",
           "from": "load_60",
           "to": "node_160",
@@ -2984,7 +2821,6 @@
         },
         {
           "name": "switch_61611",
-          "id": 61611,
           "phases": "ABCN",
           "from": "node_61",
           "to": "node_611",
@@ -2992,7 +2828,6 @@
         },
         {
           "name": "switch_97197",
-          "id": 97197,
           "phases": "ABCN",
           "from": "node_97",
           "to": "node_197",
@@ -3000,7 +2835,6 @@
         },
         {
           "name": "switch_1491149",
-          "id": 1491149,
           "phases": "ABCN",
           "from": "node_1491",
           "to": "node_149",
@@ -3008,7 +2842,6 @@
         },
         {
           "name": "switch_250251",
-          "id": 250251,
           "phases": "ABCN",
           "from": "node_250",
           "to": "node_251",
@@ -3016,7 +2849,6 @@
         },
         {
           "name": "switch_450451",
-          "id": 450451,
           "phases": "ABCN",
           "from": "node_450",
           "to": "node_451",
@@ -3024,7 +2856,6 @@
         },
         {
           "name": "switch_5494",
-          "id": 5494,
           "phases": "AN",
           "from": "node_54",
           "to": "load_94",
@@ -3032,7 +2863,6 @@
         },
         {
           "name": "switch_151300",
-          "id": 151300,
           "phases": "ABCN",
           "from": "node_151",
           "to": "meter_300",
@@ -3040,7 +2870,6 @@
         },
         {
           "name": "switch_300350",
-          "id": 300350,
           "phases": "ABCN",
           "from": "meter_300",
           "to": "node_350",
@@ -3048,7 +2877,6 @@
         },
         {
           "name": "switch_95195",
-          "id": 95195,
           "phases": "ABCN",
           "from": "load_95",
           "to": "node_195",
@@ -3060,7 +2888,6 @@
       "instances": [
         {
           "name": "transformer_configuration_400",
-          "id": 400,
           "connect_type": "DELTA_DELTA",
           "install_type": "PADMOUNT",
           "power_rating": 150,
@@ -3125,7 +2952,6 @@
       "instances": [
         {
           "name": "transformer_611610",
-          "id": 611610,
           "phases": "ABCN",
           "from": "node_611",
           "to": "node_610",
@@ -3137,7 +2963,6 @@
       "instances": [
         {
           "name": "regulator_configuration_1501490",
-          "id": 1501490,
           "connect_type": 1,
           "band_center": 120.0,
           "band_width": 2.0,
@@ -3166,7 +2991,6 @@
         },
         {
           "name": "regulator_configuration_2526010",
-          "id": 2526010,
           "connect_type": 1,
           "band_center": 120.0,
           "band_width": 1.0,
@@ -3189,7 +3013,6 @@
         },
         {
           "name": "regulator_configuration_914010",
-          "id": 914010,
           "connect_type": 1,
           "band_center": 120.0,
           "band_width": 2.0,
@@ -3209,7 +3032,6 @@
         },
         {
           "name": "regulator_configuration_16067010",
-          "id": 16067010,
           "connect_type": 1,
           "band_center": 124.0,
           "band_width": 2.0,
@@ -3233,7 +3055,6 @@
       "instances": [
         {
           "name": "regulator_1501491",
-          "id": 1501491,
           "phases": "ABC",
           "from": "meter_150",
           "to": "node_1491",
@@ -3241,7 +3062,6 @@
         },
         {
           "name": "regulator_252601",
-          "id": 252601,
           "phases": "AC",
           "from": "node_25",
           "to": "node_2601",
@@ -3249,7 +3069,6 @@
         },
         {
           "name": "regulator_91401",
-          "id": 91401,
           "phases": "A",
           "from": "load_9",
           "to": "node_1401",
@@ -3257,7 +3076,6 @@
         },
         {
           "name": "regulator_1606701",
-          "id": 1606701,
           "phases": "ABC",
           "from": "node_160",
           "to": "node_6701",
@@ -3280,7 +3098,7 @@
       "instances": [
         {
           "name": "const_pq_inv1",
-          "parent": "gld_1370",
+          "parent": 1370,
           "inverter_type": "FOUR_QUADRANT",
           "use_multipoint_efficiency": false,
           "four_quadrant_control_mode": "CONSTANT_PQ",
@@ -3328,7 +3146,7 @@
         {
           "name": "Gen1",
           "flags": "DELTAMODE",
-          "parent": "gld_50",
+          "parent": 50,
           "Rated_V": 4156,
           "Rated_VA": 5000000,
           "Gen_type": "DYN_SYNCHRONOUS",

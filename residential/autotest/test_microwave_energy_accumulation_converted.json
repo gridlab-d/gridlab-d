@@ -20,8 +20,7 @@
     "house": {
       "instances": [
         {
-          "name": "house_1",
-          "id": 1
+          "name": "house_1"
         }
       ]
     },
@@ -29,7 +28,6 @@
       "instances": [
         {
           "name": "microwave_2",
-          "id": 2,
           "parent": "house_1",
           "installed_power": "1000 W",
           "standby_power": "200 W",
@@ -41,7 +39,6 @@
       "instances": [
         {
           "name": "recorder_3",
-          "id": 3,
           "parent": "microwave_2",
           "property": "constant_power,energy",
           "file": "test_microwave_energy_accumulation.csv",
@@ -64,7 +61,6 @@
       "instances": [
         {
           "name": "complex_assert_4",
-          "id": 4,
           "parent": "microwave_2",
           "target": "energy",
           "within": 0.02

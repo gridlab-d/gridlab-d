@@ -22,8 +22,7 @@
     "house": {
       "instances": [
         {
-          "name": "house_1",
-          "id": 1
+          "name": "house_1"
         }
       ]
     },
@@ -31,7 +30,6 @@
       "instances": [
         {
           "name": "microwave_2",
-          "id": 2,
           "parent": "house_1"
         }
       ]
@@ -40,7 +38,6 @@
       "instances": [
         {
           "name": "player_3",
-          "id": 3,
           "parent": "microwave_2",
           "property": "load",
           "file": "test_generic_limit_demand(range0-1).glt"
@@ -57,7 +54,6 @@
       "instances": [
         {
           "name": "recorder_4",
-          "id": 4,
           "parent": "microwave_2",
           "property": "load",
           "file": "test_generic_limit_demand.csv",
@@ -70,7 +66,6 @@
       "instances": [
         {
           "name": "double_assert_5",
-          "id": 5,
           "parent": "microwave_2",
           "status": "ASSERT_TRUE",
           "target": "load",

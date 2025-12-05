@@ -34,7 +34,7 @@
     "node": {
       "instances": [
         {
-          "name": "three_phase",
+          "name": "three-phase",
           "phases": "ABCN",
           "bustype": "SWING",
           "nominal_voltage": 7200
@@ -61,7 +61,7 @@
         {
           "name": "center_tap_transformer_A",
           "phases": "AS",
-          "from": "three_phase",
+          "from": "three-phase",
           "to": "trip_node",
           "configuration": "default_transformer"
         }

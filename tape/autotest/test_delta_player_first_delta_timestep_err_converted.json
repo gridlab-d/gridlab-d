@@ -12,7 +12,8 @@
       "//and works on all platforms, this autotest can lose the \"_err\" extension.",
       "//#set pauseatexit=1",
       "//#set profiler=1",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -24,7 +25,7 @@
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
       "deltamode_maximumtime": 5000000000000,
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {

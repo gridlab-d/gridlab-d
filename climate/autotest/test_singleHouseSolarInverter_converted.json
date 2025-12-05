@@ -164,9 +164,8 @@
       "instances": [
         {
           "name": "regulator_4383",
-          "id": 4383,
-          "from": "R1_12_47_1_node_617",
-          "to": "R1_12_47_1_meter_21",
+          "from": "R1-12-47-1_node_617",
+          "to": "R1-12-47-1_meter_21",
           "phases": "ABCN",
           "configuration": "feeder_reg_cfg"
         }
@@ -176,7 +175,6 @@
       "instances": [
         {
           "name": "regulator_configuration_4384",
-          "id": 4384,
           "Control": "OUTPUT_VOLTAGE",
           "band_center": 7520.0,
           "band_width": 120,
@@ -195,7 +193,6 @@
       "instances": [
         {
           "name": "node_4385",
-          "id": 4385,
           "bustype": "SWING",
           "phases": "ABCN",
           "nominal_voltage": 7216.88,
@@ -204,8 +201,8 @@
           "voltage_C": "-3608.44+6250j"
         },
         {
-          "name": "R1_12_47_1_node_613",
-          "parent": "R1_12_47_1_meter_21",
+          "name": "R1-12-47-1_node_613",
+          "parent": "R1-12-47-1_meter_21",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -213,7 +210,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_612",
+          "name": "R1-12-47-1_node_612",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -221,7 +218,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_3",
+          "name": "R1-12-47-1_node_3",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -229,7 +226,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_21",
+          "name": "R1-12-47-1_node_21",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -237,7 +234,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_4",
+          "name": "R1-12-47-1_node_4",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -245,7 +242,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_25",
+          "name": "R1-12-47-1_node_25",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -253,7 +250,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_5",
+          "name": "R1-12-47-1_node_5",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -261,7 +258,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_6",
+          "name": "R1-12-47-1_node_6",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -269,7 +266,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_7",
+          "name": "R1-12-47-1_node_7",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -277,7 +274,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_8",
+          "name": "R1-12-47-1_node_8",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -285,7 +282,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_9",
+          "name": "R1-12-47-1_node_9",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -293,7 +290,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_10",
+          "name": "R1-12-47-1_node_10",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -301,7 +298,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_11",
+          "name": "R1-12-47-1_node_11",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -309,7 +306,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_12",
+          "name": "R1-12-47-1_node_12",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -317,7 +314,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_13",
+          "name": "R1-12-47-1_node_13",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -325,7 +322,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_14",
+          "name": "R1-12-47-1_node_14",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -333,7 +330,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_15",
+          "name": "R1-12-47-1_node_15",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -341,7 +338,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_16",
+          "name": "R1-12-47-1_node_16",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -349,7 +346,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_17",
+          "name": "R1-12-47-1_node_17",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -357,7 +354,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_43",
+          "name": "R1-12-47-1_node_43",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -365,7 +362,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_44",
+          "name": "R1-12-47-1_node_44",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -373,7 +370,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_130",
+          "name": "R1-12-47-1_node_130",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -381,7 +378,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_131",
+          "name": "R1-12-47-1_node_131",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -389,7 +386,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_134",
+          "name": "R1-12-47-1_node_134",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -397,7 +394,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_132",
+          "name": "R1-12-47-1_node_132",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -405,7 +402,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_133",
+          "name": "R1-12-47-1_node_133",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -413,7 +410,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_139",
+          "name": "R1-12-47-1_node_139",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -421,7 +418,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_140",
+          "name": "R1-12-47-1_node_140",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -429,7 +426,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_174",
+          "name": "R1-12-47-1_node_174",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -437,7 +434,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_175",
+          "name": "R1-12-47-1_node_175",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -445,7 +442,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_202",
+          "name": "R1-12-47-1_node_202",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -453,7 +450,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_203",
+          "name": "R1-12-47-1_node_203",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -461,7 +458,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_204",
+          "name": "R1-12-47-1_node_204",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -469,7 +466,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_215",
+          "name": "R1-12-47-1_node_215",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -477,7 +474,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_216",
+          "name": "R1-12-47-1_node_216",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -485,7 +482,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_217",
+          "name": "R1-12-47-1_node_217",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -493,7 +490,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_535",
+          "name": "R1-12-47-1_node_535",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -501,7 +498,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_536",
+          "name": "R1-12-47-1_node_536",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -509,7 +506,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_538",
+          "name": "R1-12-47-1_node_538",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -517,7 +514,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_539",
+          "name": "R1-12-47-1_node_539",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -525,7 +522,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_540",
+          "name": "R1-12-47-1_node_540",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -533,7 +530,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_546",
+          "name": "R1-12-47-1_node_546",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -541,7 +538,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_547",
+          "name": "R1-12-47-1_node_547",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -549,7 +546,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_550",
+          "name": "R1-12-47-1_node_550",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -557,7 +554,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_551",
+          "name": "R1-12-47-1_node_551",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -565,7 +562,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_552",
+          "name": "R1-12-47-1_node_552",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -573,7 +570,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_559",
+          "name": "R1-12-47-1_node_559",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -581,7 +578,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_560",
+          "name": "R1-12-47-1_node_560",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -589,7 +586,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_561",
+          "name": "R1-12-47-1_node_561",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -597,7 +594,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_562",
+          "name": "R1-12-47-1_node_562",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -605,7 +602,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_576",
+          "name": "R1-12-47-1_node_576",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -613,7 +610,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_590",
+          "name": "R1-12-47-1_node_590",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -621,7 +618,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_591",
+          "name": "R1-12-47-1_node_591",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -629,7 +626,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_592",
+          "name": "R1-12-47-1_node_592",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -637,7 +634,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_593",
+          "name": "R1-12-47-1_node_593",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -645,7 +642,7 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_594",
+          "name": "R1-12-47-1_node_594",
           "phases": "ABCN",
           "voltage_A": "7216.88+0.0j",
           "voltage_B": "-3608.44-6250j",
@@ -653,31 +650,31 @@
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_595",
+          "name": "R1-12-47-1_node_595",
           "phases": "AN",
           "voltage_A": "7216.88+0.0j",
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_596",
+          "name": "R1-12-47-1_node_596",
           "phases": "AN",
           "voltage_A": "7216.88+0.0j",
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_597",
+          "name": "R1-12-47-1_node_597",
           "phases": "AN",
           "voltage_A": "7216.88+0.0j",
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_604",
+          "name": "R1-12-47-1_node_604",
           "phases": "AN",
           "voltage_A": "7216.88+0.0j",
           "nominal_voltage": 7216.88
         },
         {
-          "name": "R1_12_47_1_node_605",
+          "name": "R1-12-47-1_node_605",
           "phases": "AN",
           "voltage_A": "7216.88+0.0j",
           "nominal_voltage": 7216.88
@@ -688,7 +685,6 @@
       "instances": [
         {
           "name": "meter_4382",
-          "id": 4382,
           "phases": "ABCN",
           "nominal_voltage": 7216.88,
           "voltage_A": "7216.88+0.0j",
@@ -700,31 +696,31 @@
     "switch": {
       "instances": [
         {
-          "name": "R1_12_47_1_switch_9",
+          "name": "R1-12-47-1_switch_9",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_613",
-          "to": "R1_12_47_1_node_612",
+          "from": "R1-12-47-1_node_613",
+          "to": "R1-12-47-1_node_612",
           "status": "CLOSED"
         },
         {
-          "name": "R1_12_47_1_switch_7",
+          "name": "R1-12-47-1_switch_7",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_17",
-          "to": "R1_12_47_1_node_43",
+          "from": "R1-12-47-1_node_17",
+          "to": "R1-12-47-1_node_43",
           "status": "CLOSED"
         },
         {
-          "name": "R1_12_47_1_switch_4",
+          "name": "R1-12-47-1_switch_4",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_216",
-          "to": "R1_12_47_1_node_217",
+          "from": "R1-12-47-1_node_216",
+          "to": "R1-12-47-1_node_217",
           "status": "CLOSED"
         },
         {
-          "name": "R1_12_47_1_switch_1",
+          "name": "R1-12-47-1_switch_1",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_217",
-          "to": "R1_12_47_1_node_535",
+          "from": "R1-12-47-1_node_217",
+          "to": "R1-12-47-1_node_535",
           "status": "CLOSED"
         }
       ]
@@ -732,479 +728,479 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "R1_12_47_1_ol_301",
+          "name": "R1-12-47-1_ol_301",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_612",
-          "to": "R1_12_47_1_node_3",
+          "from": "R1-12-47-1_node_612",
+          "to": "R1-12-47-1_node_3",
           "length": 458.063,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_298",
+          "name": "R1-12-47-1_ol_298",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_3",
-          "to": "R1_12_47_1_node_21",
+          "from": "R1-12-47-1_node_3",
+          "to": "R1-12-47-1_node_21",
           "length": 167.609,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_300",
+          "name": "R1-12-47-1_ol_300",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_21",
-          "to": "R1_12_47_1_node_4",
+          "from": "R1-12-47-1_node_21",
+          "to": "R1-12-47-1_node_4",
           "length": 142.189,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_299",
+          "name": "R1-12-47-1_ol_299",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_4",
-          "to": "R1_12_47_1_node_25",
+          "from": "R1-12-47-1_node_4",
+          "to": "R1-12-47-1_node_25",
           "length": 487.2,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_297",
+          "name": "R1-12-47-1_ol_297",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_25",
-          "to": "R1_12_47_1_node_5",
+          "from": "R1-12-47-1_node_25",
+          "to": "R1-12-47-1_node_5",
           "length": 408.623,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_295",
+          "name": "R1-12-47-1_ol_295",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_5",
-          "to": "R1_12_47_1_node_6",
+          "from": "R1-12-47-1_node_5",
+          "to": "R1-12-47-1_node_6",
           "length": 115.345,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_296",
+          "name": "R1-12-47-1_ol_296",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_6",
-          "to": "R1_12_47_1_node_7",
+          "from": "R1-12-47-1_node_6",
+          "to": "R1-12-47-1_node_7",
           "length": 187.936,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_293",
+          "name": "R1-12-47-1_ol_293",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_7",
-          "to": "R1_12_47_1_node_8",
+          "from": "R1-12-47-1_node_7",
+          "to": "R1-12-47-1_node_8",
           "length": 281.853,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_294",
+          "name": "R1-12-47-1_ol_294",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_8",
-          "to": "R1_12_47_1_node_9",
+          "from": "R1-12-47-1_node_8",
+          "to": "R1-12-47-1_node_9",
           "length": 275.842,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_292",
+          "name": "R1-12-47-1_ol_292",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_9",
-          "to": "R1_12_47_1_node_10",
+          "from": "R1-12-47-1_node_9",
+          "to": "R1-12-47-1_node_10",
           "length": 303.045,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_291",
+          "name": "R1-12-47-1_ol_291",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_10",
-          "to": "R1_12_47_1_node_11",
+          "from": "R1-12-47-1_node_10",
+          "to": "R1-12-47-1_node_11",
           "length": 248.282,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_290",
+          "name": "R1-12-47-1_ol_290",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_11",
-          "to": "R1_12_47_1_node_12",
+          "from": "R1-12-47-1_node_11",
+          "to": "R1-12-47-1_node_12",
           "length": 283.154,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_289",
+          "name": "R1-12-47-1_ol_289",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_12",
-          "to": "R1_12_47_1_node_13",
+          "from": "R1-12-47-1_node_12",
+          "to": "R1-12-47-1_node_13",
           "length": 150.18,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_288",
+          "name": "R1-12-47-1_ol_288",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_13",
-          "to": "R1_12_47_1_node_14",
+          "from": "R1-12-47-1_node_13",
+          "to": "R1-12-47-1_node_14",
           "length": 313.906,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_286",
+          "name": "R1-12-47-1_ol_286",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_14",
-          "to": "R1_12_47_1_node_15",
+          "from": "R1-12-47-1_node_14",
+          "to": "R1-12-47-1_node_15",
           "length": 197.482,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_287",
+          "name": "R1-12-47-1_ol_287",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_15",
-          "to": "R1_12_47_1_node_16",
+          "from": "R1-12-47-1_node_15",
+          "to": "R1-12-47-1_node_16",
           "length": 228.462,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_285",
+          "name": "R1-12-47-1_ol_285",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_16",
-          "to": "R1_12_47_1_node_17",
+          "from": "R1-12-47-1_node_16",
+          "to": "R1-12-47-1_node_17",
           "length": 414.813,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_261",
+          "name": "R1-12-47-1_ol_261",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_43",
-          "to": "R1_12_47_1_node_44",
+          "from": "R1-12-47-1_node_43",
+          "to": "R1-12-47-1_node_44",
           "length": 602.269,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_256",
+          "name": "R1-12-47-1_ol_256",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_44",
-          "to": "R1_12_47_1_node_130",
+          "from": "R1-12-47-1_node_44",
+          "to": "R1-12-47-1_node_130",
           "length": 200.088,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_252",
+          "name": "R1-12-47-1_ol_252",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_130",
-          "to": "R1_12_47_1_node_131",
+          "from": "R1-12-47-1_node_130",
+          "to": "R1-12-47-1_node_131",
           "length": 279.785,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_248",
+          "name": "R1-12-47-1_ol_248",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_131",
-          "to": "R1_12_47_1_node_134",
+          "from": "R1-12-47-1_node_131",
+          "to": "R1-12-47-1_node_134",
           "length": 325.098,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_236",
+          "name": "R1-12-47-1_ol_236",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_134",
-          "to": "R1_12_47_1_node_132",
+          "from": "R1-12-47-1_node_134",
+          "to": "R1-12-47-1_node_132",
           "length": 310.693,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_234",
+          "name": "R1-12-47-1_ol_234",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_132",
-          "to": "R1_12_47_1_node_133",
+          "from": "R1-12-47-1_node_132",
+          "to": "R1-12-47-1_node_133",
           "length": 96.881,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_224",
+          "name": "R1-12-47-1_ol_224",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_133",
-          "to": "R1_12_47_1_node_139",
+          "from": "R1-12-47-1_node_133",
+          "to": "R1-12-47-1_node_139",
           "length": 283.386,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_218",
+          "name": "R1-12-47-1_ol_218",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_139",
-          "to": "R1_12_47_1_node_140",
+          "from": "R1-12-47-1_node_139",
+          "to": "R1-12-47-1_node_140",
           "length": 112.123,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_200",
+          "name": "R1-12-47-1_ol_200",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_140",
-          "to": "R1_12_47_1_node_174",
+          "from": "R1-12-47-1_node_140",
+          "to": "R1-12-47-1_node_174",
           "length": 185.396,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_199",
+          "name": "R1-12-47-1_ol_199",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_174",
-          "to": "R1_12_47_1_node_175",
+          "from": "R1-12-47-1_node_174",
+          "to": "R1-12-47-1_node_175",
           "length": 161.413,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_188",
+          "name": "R1-12-47-1_ol_188",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_175",
-          "to": "R1_12_47_1_node_202",
+          "from": "R1-12-47-1_node_175",
+          "to": "R1-12-47-1_node_202",
           "length": 827.015,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_182",
+          "name": "R1-12-47-1_ol_182",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_202",
-          "to": "R1_12_47_1_node_203",
+          "from": "R1-12-47-1_node_202",
+          "to": "R1-12-47-1_node_203",
           "length": 148.948,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_4",
+          "name": "R1-12-47-1_ol_4",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_203",
-          "to": "R1_12_47_1_node_204",
+          "from": "R1-12-47-1_node_203",
+          "to": "R1-12-47-1_node_204",
           "length": 341.187,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_174",
+          "name": "R1-12-47-1_ol_174",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_204",
-          "to": "R1_12_47_1_node_215",
+          "from": "R1-12-47-1_node_204",
+          "to": "R1-12-47-1_node_215",
           "length": 261.737,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_166",
+          "name": "R1-12-47-1_ol_166",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_215",
-          "to": "R1_12_47_1_node_216",
+          "from": "R1-12-47-1_node_215",
+          "to": "R1-12-47-1_node_216",
           "length": 348.295,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_133",
+          "name": "R1-12-47-1_ol_133",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_535",
-          "to": "R1_12_47_1_node_536",
+          "from": "R1-12-47-1_node_535",
+          "to": "R1-12-47-1_node_536",
           "length": 130.221,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_128",
+          "name": "R1-12-47-1_ol_128",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_536",
-          "to": "R1_12_47_1_node_538",
+          "from": "R1-12-47-1_node_536",
+          "to": "R1-12-47-1_node_538",
           "length": 161.48,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_123",
+          "name": "R1-12-47-1_ol_123",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_538",
-          "to": "R1_12_47_1_node_539",
+          "from": "R1-12-47-1_node_538",
+          "to": "R1-12-47-1_node_539",
           "length": 205.755,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_115",
+          "name": "R1-12-47-1_ol_115",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_539",
-          "to": "R1_12_47_1_node_540",
+          "from": "R1-12-47-1_node_539",
+          "to": "R1-12-47-1_node_540",
           "length": 118.915,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_107",
+          "name": "R1-12-47-1_ol_107",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_540",
-          "to": "R1_12_47_1_node_546",
+          "from": "R1-12-47-1_node_540",
+          "to": "R1-12-47-1_node_546",
           "length": 263.933,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_103",
+          "name": "R1-12-47-1_ol_103",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_546",
-          "to": "R1_12_47_1_node_547",
+          "from": "R1-12-47-1_node_546",
+          "to": "R1-12-47-1_node_547",
           "length": 97.213,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_97",
+          "name": "R1-12-47-1_ol_97",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_547",
-          "to": "R1_12_47_1_node_550",
+          "from": "R1-12-47-1_node_547",
+          "to": "R1-12-47-1_node_550",
           "length": 173.7,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_95",
+          "name": "R1-12-47-1_ol_95",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_550",
-          "to": "R1_12_47_1_node_551",
+          "from": "R1-12-47-1_node_550",
+          "to": "R1-12-47-1_node_551",
           "length": 127.665,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_85",
+          "name": "R1-12-47-1_ol_85",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_551",
-          "to": "R1_12_47_1_node_552",
+          "from": "R1-12-47-1_node_551",
+          "to": "R1-12-47-1_node_552",
           "length": 150.282,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_77",
+          "name": "R1-12-47-1_ol_77",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_552",
-          "to": "R1_12_47_1_node_559",
+          "from": "R1-12-47-1_node_552",
+          "to": "R1-12-47-1_node_559",
           "length": 230.89,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_11",
+          "name": "R1-12-47-1_ol_11",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_559",
-          "to": "R1_12_47_1_node_560",
+          "from": "R1-12-47-1_node_559",
+          "to": "R1-12-47-1_node_560",
           "length": 223.978,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_64",
+          "name": "R1-12-47-1_ol_64",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_560",
-          "to": "R1_12_47_1_node_561",
+          "from": "R1-12-47-1_node_560",
+          "to": "R1-12-47-1_node_561",
           "length": 138.878,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_59",
+          "name": "R1-12-47-1_ol_59",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_561",
-          "to": "R1_12_47_1_node_562",
+          "from": "R1-12-47-1_node_561",
+          "to": "R1-12-47-1_node_562",
           "length": 156.295,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_49",
+          "name": "R1-12-47-1_ol_49",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_562",
-          "to": "R1_12_47_1_node_576",
+          "from": "R1-12-47-1_node_562",
+          "to": "R1-12-47-1_node_576",
           "length": 362.21,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_27",
+          "name": "R1-12-47-1_ol_27",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_576",
-          "to": "R1_12_47_1_node_590",
+          "from": "R1-12-47-1_node_576",
+          "to": "R1-12-47-1_node_590",
           "length": 421.091,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_23",
+          "name": "R1-12-47-1_ol_23",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_590",
-          "to": "R1_12_47_1_node_591",
+          "from": "R1-12-47-1_node_590",
+          "to": "R1-12-47-1_node_591",
           "length": 356.862,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_20",
+          "name": "R1-12-47-1_ol_20",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_591",
-          "to": "R1_12_47_1_node_592",
+          "from": "R1-12-47-1_node_591",
+          "to": "R1-12-47-1_node_592",
           "length": 184.623,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_17",
+          "name": "R1-12-47-1_ol_17",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_592",
-          "to": "R1_12_47_1_node_593",
+          "from": "R1-12-47-1_node_592",
+          "to": "R1-12-47-1_node_593",
           "length": 171.388,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_16",
+          "name": "R1-12-47-1_ol_16",
           "groupid": "Distribution_Line",
           "phases": "ABCN",
-          "from": "R1_12_47_1_node_593",
-          "to": "R1_12_47_1_node_594",
+          "from": "R1-12-47-1_node_593",
+          "to": "R1-12-47-1_node_594",
           "length": 185.398,
           "configuration": "line_configuration_22"
         },
         {
-          "name": "R1_12_47_1_ol_12",
+          "name": "R1-12-47-1_ol_12",
           "groupid": "Distribution_Line",
           "phases": "AN",
-          "from": "R1_12_47_1_node_595",
-          "to": "R1_12_47_1_node_596",
+          "from": "R1-12-47-1_node_595",
+          "to": "R1-12-47-1_node_596",
           "length": 666.009,
           "configuration": "line_configuration_18"
         },
         {
-          "name": "R1_12_47_1_ol_13",
+          "name": "R1-12-47-1_ol_13",
           "groupid": "Distribution_Line",
           "phases": "AN",
-          "from": "R1_12_47_1_node_596",
-          "to": "R1_12_47_1_node_597",
+          "from": "R1-12-47-1_node_596",
+          "to": "R1-12-47-1_node_597",
           "length": 200.721,
           "configuration": "line_configuration_18"
         }
@@ -1213,10 +1209,10 @@
     "fuse": {
       "instances": [
         {
-          "name": "R1_12_47_1_fuse_2",
+          "name": "R1-12-47-1_fuse_2",
           "phases": "AN",
-          "from": "R1_12_47_1_node_594",
-          "to": "R1_12_47_1_node_604",
+          "from": "R1-12-47-1_node_594",
+          "to": "R1-12-47-1_node_604",
           "current_limit": 50000,
           "status": "CLOSED",
           "inline_comments": {
@@ -1228,20 +1224,20 @@
     "underground_line": {
       "instances": [
         {
-          "name": "R1_12_47_1_ul_25",
+          "name": "R1-12-47-1_ul_25",
           "groupid": "Distribution_Line",
           "phases": "AN",
-          "from": "R1_12_47_1_node_597",
-          "to": "R1_12_47_1_node_604",
+          "from": "R1-12-47-1_node_597",
+          "to": "R1-12-47-1_node_604",
           "length": 288.179,
           "configuration": "line_configuration_16"
         },
         {
-          "name": "R1_12_47_1_ul_27",
+          "name": "R1-12-47-1_ul_27",
           "groupid": "Distribution_Line",
           "phases": "AN",
-          "from": "R1_12_47_1_node_604",
-          "to": "R1_12_47_1_node_605",
+          "from": "R1-12-47-1_node_604",
+          "to": "R1-12-47-1_node_605",
           "length": 354.342,
           "configuration": "line_configuration_16"
         }
@@ -1250,11 +1246,11 @@
     "transformer": {
       "instances": [
         {
-          "name": "R1_12_47_1_xfmr_21",
+          "name": "R1-12-47-1_xfmr_21",
           "groupid": "Distribution_Trans",
           "phases": "AS",
-          "from": "R1_12_47_1_node_605",
-          "to": "R1_12_47_1_tn_21",
+          "from": "R1-12-47-1_node_605",
+          "to": "R1-12-47-1_tn_21",
           "configuration": "transformer_configuration_3084"
         }
       ]
@@ -1262,7 +1258,7 @@
     "triplex_node": {
       "instances": [
         {
-          "name": "R1_12_47_1_tn_21",
+          "name": "R1-12-47-1_tn_21",
           "phases": "AS",
           "voltage_1": 120,
           "voltage_2": 120,
@@ -1270,9 +1266,9 @@
           "nominal_voltage": 120
         },
         {
-          "name": "R1_12_47_1_tn_619",
+          "name": "R1-12-47-1_tn_619",
           "phases": "AS",
-          "parent": "R1_12_47_1_tm_21",
+          "parent": "R1-12-47-1_tm_21",
           "voltage_1": 120,
           "voltage_2": 120,
           "voltage_N": 0,
@@ -1283,11 +1279,11 @@
     "triplex_line": {
       "instances": [
         {
-          "name": "R1_12_47_1_tl_21",
+          "name": "R1-12-47-1_tl_21",
           "groupid": "Triplex_Line",
           "phases": "AS",
-          "from": "R1_12_47_1_tn_21",
-          "to": "R1_12_47_1_tm_21",
+          "from": "R1-12-47-1_tn_21",
+          "to": "R1-12-47-1_tm_21",
           "length": 30,
           "configuration": "triplex_line_configuration_1"
         }
@@ -1296,7 +1292,7 @@
     "triplex_meter": {
       "instances": [
         {
-          "name": "R1_12_47_1_tm_21",
+          "name": "R1-12-47-1_tm_21",
           "phases": "AS",
           "voltage_1": 120,
           "voltage_2": 120,
@@ -1304,9 +1300,9 @@
           "nominal_voltage": 120
         },
         {
-          "name": "tpm2_R1_12_47_1_tm_21",
+          "name": "tpm2_R1-12-47-1_tm_21",
           "phases": "AS",
-          "parent": "R1_12_47_1_tm_21",
+          "parent": "R1-12-47-1_tm_21",
           "nominal_voltage": 120
         }
       ]
@@ -1315,7 +1311,7 @@
       "instances": [
         {
           "name": "myHouse",
-          "parent": "tpm2_R1_12_47_1_tm_21",
+          "parent": "tpm2_R1-12-47-1_tm_21",
           "floor_area": "random.normal(1750,400)",
           "heating_setpoint": 70,
           "cooling_setpoint": 78,
@@ -1328,7 +1324,7 @@
         {
           "name": "DHHL_3_inv",
           "phases": "AS",
-          "parent": "tpm2_R1_12_47_1_tm_21",
+          "parent": "tpm2_R1-12-47-1_tm_21",
           "rated_power": 2500000
         }
       ]

@@ -20,7 +20,6 @@
       "instances": [
         {
           "name": "house_11258999068426240",
-          "id": 11258999068426240,
           "groupid": "A",
           "outside_comments": [
             "// Create house with ID large enough to allocate 10 PB in old system"

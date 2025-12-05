@@ -98,7 +98,7 @@
           "phases": "ABCN"
         },
         {
-          "name": "gld_645",
+          "name": "645",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -112,14 +112,14 @@
         {
           "name": "substation_transformer",
           "from": "network_node",
-          "to": "gld_645",
+          "to": 645,
           "phases": "ABCN",
           "configuration": "trans_config_to_feeder"
         },
         {
           "name": "CTTF_B_645",
           "phases": "BS",
-          "from": "gld_645",
+          "from": 645,
           "to": "tn_B_645",
           "configuration": "SPCT_trans"
         }

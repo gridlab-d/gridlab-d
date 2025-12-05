@@ -23,13 +23,11 @@
         {
           "name": "house_..10",
           "object_count": 10,
-          "id": "..10",
           "groupid": "A"
         },
         {
           "name": "house_..12",
           "object_count": 12,
-          "id": "..12",
           "groupid": "B"
         }
       ]

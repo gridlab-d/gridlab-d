@@ -79,7 +79,7 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "line_1_2",
+          "name": "line_1-2",
           "phases": "ABCN",
           "from": "m1",
           "to": "n2",
@@ -94,7 +94,7 @@
           }
         },
         {
-          "name": "line_2_3",
+          "name": "line_2-3",
           "phases": "ABCN",
           "from": "n2",
           "to": "n3",
@@ -105,7 +105,7 @@
           }
         },
         {
-          "name": "line_3_4",
+          "name": "line_3-4",
           "phases": "ABCN",
           "from": "n3",
           "to": "n4",
@@ -116,7 +116,7 @@
           }
         },
         {
-          "name": "line_3_5",
+          "name": "line_3-5",
           "phases": "ABCN",
           "from": "n3",
           "to": "n5",
@@ -127,7 +127,7 @@
           }
         },
         {
-          "name": "line_5_6",
+          "name": "line_5-6",
           "phases": "ABCN",
           "from": "n5",
           "to": "n6",
@@ -138,7 +138,7 @@
           }
         },
         {
-          "name": "line_6_11",
+          "name": "line_6-11",
           "phases": "ABCN",
           "from": "n6",
           "to": "n11",
@@ -149,7 +149,7 @@
           }
         },
         {
-          "name": "line_6_7",
+          "name": "line_6-7",
           "phases": "ABCN",
           "from": "n6",
           "to": "n7",
@@ -160,7 +160,7 @@
           }
         },
         {
-          "name": "line_7_8",
+          "name": "line_7-8",
           "phases": "ABCN",
           "from": "n7",
           "to": "n8",
@@ -171,7 +171,7 @@
           }
         },
         {
-          "name": "line_8_9",
+          "name": "line_8-9",
           "phases": "ABCN",
           "from": "n8",
           "to": "n9",
@@ -182,7 +182,7 @@
           }
         },
         {
-          "name": "line_9_10",
+          "name": "line_9-10",
           "phases": "ABCN",
           "from": "n9",
           "to": "n10",

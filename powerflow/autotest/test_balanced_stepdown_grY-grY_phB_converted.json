@@ -35,13 +35,11 @@
       "instances": [
         {
           "name": "overhead_line_conductor_100",
-          "id": 100,
           "geometric_mean_radius": 0.0244,
           "resistance": 0.306
         },
         {
           "name": "overhead_line_conductor_101",
-          "id": 101,
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592
         }
@@ -51,7 +49,6 @@
       "instances": [
         {
           "name": "line_spacing_200",
-          "id": 200,
           "distance_AB": 2.5,
           "distance_BC": 4.5,
           "distance_AC": 7.0,
@@ -61,7 +58,6 @@
         },
         {
           "name": "line_spacing_201",
-          "id": 201,
           "distance_BN": 4.272002
         }
       ]
@@ -70,7 +66,6 @@
       "instances": [
         {
           "name": "line_configuration_300",
-          "id": 300,
           "conductor_A": "overhead_line_conductor_100",
           "conductor_B": "overhead_line_conductor_100",
           "conductor_C": "overhead_line_conductor_100",
@@ -79,7 +74,6 @@
         },
         {
           "name": "line_configuration_301",
-          "id": 301,
           "conductor_B": "overhead_line_conductor_100",
           "conductor_N": "overhead_line_conductor_101",
           "spacing": "line_spacing_201"
@@ -90,7 +84,6 @@
       "instances": [
         {
           "name": "transformer_configuration_400",
-          "id": 400,
           "connect_type": 1,
           "power_rating": 6000,
           "powerA_rating": 2000,
@@ -107,7 +100,6 @@
       "instances": [
         {
           "name": "node_1",
-          "id": 1,
           "phases": "ABCN",
           "bustype": "SWING",
           "voltage_A": "+7199.558+0.000j",
@@ -117,7 +109,6 @@
         },
         {
           "name": "node_2",
-          "id": 2,
           "phases": "ABCN",
           "voltage_A": "+7199.558+0.000j",
           "voltage_B": "-3599.779-6235.000j",
@@ -126,7 +117,6 @@
         },
         {
           "name": "node_3",
-          "id": 3,
           "phases": "ABCN",
           "voltage_A": "+2401.777+0.000j",
           "voltage_B": "-1200.889-2080.000j",
@@ -139,7 +129,6 @@
       "instances": [
         {
           "name": "overhead_line_12",
-          "id": 12,
           "phases": "ABCN",
           "from": "node_1",
           "to": "node_2",
@@ -148,7 +137,6 @@
         },
         {
           "name": "overhead_line_34",
-          "id": 34,
           "phases": "BN",
           "from": "node_3",
           "to": "load_4",
@@ -228,7 +216,6 @@
       "instances": [
         {
           "name": "transformer_23",
-          "id": 23,
           "phases": "ABCN",
           "from": "node_2",
           "to": "node_3",
@@ -240,7 +227,6 @@
       "instances": [
         {
           "name": "load_4",
-          "id": 4,
           "phases": "BN",
           "voltage_B": "-1200.889-2080.000j",
           "constant_power_B": "+1800009.000+871779.789j",

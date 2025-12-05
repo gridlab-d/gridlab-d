@@ -11,7 +11,10 @@
       "//#set profiler=1",
       "// #set verbose=1",
       "//Overall GridLAB-D parameters",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -24,9 +27,9 @@
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
       "complex_output_format": "RECT",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {

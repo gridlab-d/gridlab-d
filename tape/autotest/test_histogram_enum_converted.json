@@ -23,140 +23,120 @@
       "instances": [
         {
           "name": "node_1",
-          "id": 1,
           "phases": "A",
           "voltage_A": "2400+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_2",
-          "id": 2,
           "phases": "A",
           "voltage_A": "2600+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_3",
-          "id": 3,
           "phases": "A",
           "voltage_A": "2800+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_4",
-          "id": 4,
           "phases": "A",
           "voltage_A": "3000+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_5",
-          "id": 5,
           "phases": "A",
           "voltage_A": "3200+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_6",
-          "id": 6,
           "phases": "A",
           "voltage_A": "3400+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_7",
-          "id": 7,
           "phases": "A",
           "voltage_A": "3600+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_8",
-          "id": 8,
           "phases": "A",
           "voltage_A": "3800+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_9",
-          "id": 9,
           "phases": "A",
           "voltage_A": "4000+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_10",
-          "id": 10,
           "phases": "A",
           "voltage_A": "4200+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_11",
-          "id": 11,
           "phases": "A",
           "voltage_A": "4400+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_12",
-          "id": 12,
           "phases": "A",
           "voltage_A": "4600+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_13",
-          "id": 13,
           "phases": "A",
           "voltage_A": "4800+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_14",
-          "id": 14,
           "phases": "A",
           "voltage_A": "2400+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_15",
-          "id": 15,
           "phases": "A",
           "voltage_A": "2600+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_16",
-          "id": 16,
           "phases": "A",
           "voltage_A": "2800+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_17",
-          "id": 17,
           "phases": "A",
           "voltage_A": "3000+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_18",
-          "id": 18,
           "phases": "A",
           "voltage_A": "3200+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_19",
-          "id": 19,
           "phases": "A",
           "voltage_A": "3400+0i",
           "nominal_voltage": 2400
         },
         {
           "name": "node_20",
-          "id": 20,
           "phases": "A",
           "voltage_A": "3600+0i",
           "nominal_voltage": 2400

@@ -12,14 +12,17 @@
       "// Somewhat contrived test, as a 200000 ft overhead line is used",
       "// to artificially lower the voltage at the regulator, but tests",
       "// the regulator function.  This test will look at a time series.",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit - due to the nature of this file, this needs to be higher -- tap changes and low dwell",
       "//Order matters for deltamode"
     ]
   },
   "_directives": {
     "#set": {
-      "deltamode_timestep": "100000000\t\t//100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "60  //Iteration limit - due to the nature of this file, this needs to be higher -- tap changes and low dwell"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 60
     }
   },
   "clock": {

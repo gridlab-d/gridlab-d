@@ -33,7 +33,6 @@
         {
           "name": "test_..100",
           "object_count": 100,
-          "id": "..100",
           "value": "(random.bernoulli(0.8)) ? YES : NO"
         }
       ]

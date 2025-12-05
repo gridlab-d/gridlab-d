@@ -21,7 +21,7 @@
       "instances": [
         {
           "name": "complex_assert_2",
-          "parent": "direct_power",
+          "parent": "direct-power",
           "in": "'2002-01-01 00:00:00 PST'",
           "target": "energy",
           "within": 1,
@@ -34,7 +34,7 @@
         },
         {
           "name": "complex_assert_4",
-          "parent": "installed_power",
+          "parent": "installed-power",
           "in": "'2002-01-01 00:00:00 PST'",
           "target": "energy",
           "within": 1,
@@ -47,7 +47,7 @@
         },
         {
           "name": "complex_assert_6",
-          "parent": "scaled_power",
+          "parent": "scaled-power",
           "in": "'2002-01-01 00:00:00 PST'",
           "target": "energy",
           "within": 1,
@@ -63,7 +63,7 @@
     "lights": {
       "instances": [
         {
-          "name": "direct_power",
+          "name": "direct-power",
           "power_fraction": 1.0,
           "type": "CFL",
           "power_factor": -0.92,
@@ -73,7 +73,7 @@
           }
         },
         {
-          "name": "installed_power",
+          "name": "installed-power",
           "installed_power": "500 W",
           "power_fraction": 1.0,
           "type": "CFL",
@@ -84,7 +84,7 @@
           }
         },
         {
-          "name": "scaled_power",
+          "name": "scaled-power",
           "type": "CFL",
           "power_factor": -0.92,
           "power_fraction": 1.0,
@@ -99,7 +99,7 @@
       "instances": [
         {
           "name": "multi_recorder_7",
-          "parent": "direct_power",
+          "parent": "direct-power",
           "property": "energy,installed-power:energy,scaled-power:energy",
           "file": "test_lights_standalone.csv",
           "interval": 3600,

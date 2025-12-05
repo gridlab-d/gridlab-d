@@ -33,7 +33,7 @@
     "climate": {
       "instances": [
         {
-          "name": "WA_Yakima",
+          "name": "WA-Yakima",
           "tmyfile": "../WA-Yakima.tmy2",
           "interpolate": "NONE"
         }

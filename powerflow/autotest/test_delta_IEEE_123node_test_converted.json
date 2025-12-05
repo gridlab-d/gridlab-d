@@ -6,7 +6,8 @@
       "//Used to test various powerflow components in deltamode",
       "//Modified from base version for this testing purpose",
       "//#set pauseatexit=1",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -19,7 +20,7 @@
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
       "deltamode_maximumtime": 5000000000000,
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {

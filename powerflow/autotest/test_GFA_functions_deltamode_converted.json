@@ -8,7 +8,10 @@
       "//#set pauseatexit=1",
       "// #set double_format=%+.12lg",
       "// #set complex_format=%+.12lg%+.12lg%c",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -16,9 +19,9 @@
       "double_format": "%+.6lg",
       "complex_format": "%+.6lg%+.6lg%c",
       "dateformat": "ISO",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {

@@ -22,8 +22,7 @@
     "house": {
       "instances": [
         {
-          "name": "house_1",
-          "id": 1
+          "name": "house_1"
         }
       ]
     },
@@ -51,7 +50,6 @@
       "instances": [
         {
           "name": "microwave_2",
-          "id": 2,
           "parent": "house_1",
           "installed_power": "1000 W",
           "standby_power": "20 W",
@@ -62,7 +60,6 @@
         },
         {
           "name": "microwave_3",
-          "id": 3,
           "parent": "house_1",
           "installed_power": "1000 W",
           "standby_power": "20 W",
@@ -93,7 +90,6 @@
       "instances": [
         {
           "name": "complex_assert_4",
-          "id": 4,
           "parent": "microwave_2",
           "target": "internal_gains",
           "within": 0.6,
@@ -106,7 +102,6 @@
         },
         {
           "name": "complex_assert_5",
-          "id": 5,
           "parent": "microwave_3",
           "target": "internal_gains",
           "within": 0.03,

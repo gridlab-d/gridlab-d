@@ -121,7 +121,6 @@
         },
         {
           "name": "overhead_line_34",
-          "id": 34,
           "phases": "ABCN",
           "from": "node3",
           "to": "node4",

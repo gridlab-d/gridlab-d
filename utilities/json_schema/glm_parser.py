@@ -76,6 +76,7 @@ class GLMModel:
         self.module_types = []
         self.class_types = []
         self.module_entities = {}
+        self.class_entities = {}
         self.object_entities = {}
         self.set_lines = []
         self.define_lines = []
@@ -191,6 +192,36 @@ class GLMModel:
             raise TypeError(f"{mod_type} must be a string and is not.")
         return None
 
+    def set_class_instance(self, class_type, params):
+        """Create and configure a class instance.
+        
+        Args:
+            class_type (str): The class type name
+            params (dict): Parameters for the class instance
+            
+        Returns:
+            Entity instance or None: The created class instance
+            
+        Raises:
+            TypeError: If class_type is not a string
+        """
+        if isinstance(class_type, str):
+            try:
+                entity = self.class_entities[class_type]
+                return entity.set_instance(class_type, params)
+            except KeyError:
+                # Create new class entity
+                self.class_types.append(class_type)
+                entity = Entity(class_type, None)
+                self.class_entities[class_type] = entity
+                for items in params:
+                    if items in ["integer", "double", "string"]:
+                        entity.add_attr('TEXT', items[0], "", items[0], "")
+                return entity.set_instance(class_type, params)
+        else:
+            raise TypeError(f"{class_type} must be a string and is not.")
+        return None
+
     def set_object_instance(self, obj_type, object_name, params):
         """Create and configure an object instance.
         
@@ -244,6 +275,11 @@ class GLMModel:
                 value = self.module_entities[name].to_json()
                 if value is not None:
                     diction[name] = self.module_entities[name].to_json()
+        # Add class entities to the output
+        for name in self.class_entities:
+            value = self.class_entities[name].to_json()
+            if value is not None:
+                diction[name] = self.class_entities[name].to_json()
         for name in self.object_entities:
             value = self.object_entities[name].to_json()
             if value is not None:
@@ -757,7 +793,9 @@ class GLMModel:
         if mod == 'class':
             # use collected class_fields to capture all defined fields
             self.class_definitions[_type] = class_fields
-        self.set_module_instance(_type, params)
+            self.set_class_instance(_type, params)
+        else:
+            self.set_module_instance(_type, params)
 
         return _type
 
@@ -780,7 +818,10 @@ class GLMModel:
         if param == 'name':
             # found a parameter name
             if name is None:
-                name = gld_strict_name(name_prefix + val)
+                # Remove quotes around the string
+                if isinstance(val, str) and val.startswith('"') and val.endswith('"'):
+                    val = val[1:-1]
+                name = name_prefix + val
             return name, line
         elif param == 'object':
             # This case should be handled separately for nested objects
@@ -797,9 +838,6 @@ class GLMModel:
                 pos1 = line.find(";")
                 val = val + line[pos:pos1]
                 line = ""
-            
-            if param in ["to", "from", "configuration", "parent"]:
-                val = gld_strict_name(name_prefix + val)
 
             # Apply convert_suffix_id to handle object references (e.g., node:1 -> node_1)
             val = convert_suffix_id(val)
@@ -855,11 +893,10 @@ class GLMModel:
         m_qty = re.search(r'\.\.(\d+)$', oid)
         if m_qty:
             params['object_count'] = int(m_qty.group(1))
-        # handle assigned object ids
+        # handle assigned object ids (use for name but don't add to params)
         m_id = re.search(r":([^{}]+)\{", line)
         if m_id:
             name = _type + "_" + m_id.group(1).strip()
-            params['id'] = m_id.group(1).strip()
         # Collect comments
         comments = []
         inside_comments = []
@@ -1118,11 +1155,21 @@ class GLMModel:
                 # Check if this is the first module/object and finalize preamble if needed
                 first_module_or_object_found = self._check_and_finalize_preamble(line_type, first_module_or_object_found, preamble_comments)
                 if line_type == 'set':
-                    self.set_lines.append(self._extract_directive_content(processed_line, 'set'))
+                    content, comment = self._extract_directive_content(processed_line, 'set')
+                    self.set_lines.append(content)
+                    if comment and not first_module_or_object_found:
+                        # Prefix comment with the directive and setting name (inline comment format)
+                        setting_name = content.split('=')[0] if '=' in content else content
+                        preamble_comments.append(f"#set {setting_name} {comment}")
                 elif line_type == 'include':
                     self.include_lines.append(self._extract_directive_content(processed_line, 'include'))
                 elif line_type == 'define':
-                    self.define_lines.append(self._extract_directive_content(processed_line, 'define'))
+                    content, comment = self._extract_directive_content(processed_line, 'define')
+                    self.define_lines.append(content)
+                    if comment and not first_module_or_object_found:
+                        # Prefix comment with the directive and definition name (inline comment format)
+                        define_name = content.split('=')[0] if '=' in content else content
+                        preamble_comments.append(f"#define {define_name} {comment}")
                 elif line_type == 'undef':
                     self.undef_lines.append(self._extract_directive_content(processed_line, 'undef'))
                 elif line_type == 'error':
@@ -1305,18 +1352,38 @@ class GLMModel:
         """Extract the content part of a directive line.
         
         Removes the directive prefix and returns just the content.
+        For #set and #define directives, also removes inline comments.
         
         Args:
             line (str): The line containing the directive
             directive (str): The directive name (e.g., 'set', 'include', 'define', 'ifdef')
             
         Returns:
-            str: The content without the directive prefix, or the original line if no match
+            str or tuple: For most directives, returns the content without the directive prefix.
+                         For 'set' and 'define', returns tuple (content, comment) where comment
+                         is None if no inline comment exists.
         """
         directive_match = re.search(rf'#{directive}\s+(.*)', line)
         if directive_match:
-            return directive_match.group(1).strip()
+            content = directive_match.group(1).strip()
+            
+            # For #set and #define, extract and separate inline comments
+            if directive in ['set', 'define']:
+                # Find '//' that is NOT part of a URL (i.e., not preceded by 'http:' or 'https:')
+                # Look for '//' that has whitespace before it (likely a comment)
+                comment_match = re.search(r'\s+(//.*)', content)
+                if comment_match:
+                    comment_text = comment_match.group(1).strip()
+                    content_without_comment = content[:comment_match.start()].strip()
+                    return (content_without_comment, comment_text)
+                else:
+                    return (content, None)
+            
+            return content
         
         # If no match found, return original line
+        if directive in ['set', 'define']:
+            return (line, None)
         return line
+
 

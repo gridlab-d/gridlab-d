@@ -34,7 +34,7 @@
     "node": {
       "instances": [
         {
-          "name": "three_phase",
+          "name": "three-phase",
           "bustype": "SWING",
           "phases": "ABCN",
           "voltage_A": "7200+0j",
@@ -70,7 +70,7 @@
         {
           "name": "center_tap_transformer_A",
           "phases": "AS",
-          "from": "three_phase",
+          "from": "three-phase",
           "to": "trip_node",
           "configuration": "default_transformer"
         }
@@ -93,7 +93,7 @@
     "triplex_line_conductor": {
       "instances": [
         {
-          "name": "one_zero AA triplex",
+          "name": "one-zero AA triplex",
           "resistance": 0.97,
           "geometric_mean_radius": 0.0111,
           "outside_comments": [

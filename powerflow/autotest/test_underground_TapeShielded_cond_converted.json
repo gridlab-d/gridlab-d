@@ -213,7 +213,7 @@
     "underground_line": {
       "instances": [
         {
-          "name": "line_684_652_AN",
+          "name": "line_684-652_AN",
           "phases": "AN",
           "from": "n684",
           "to": "l652_AN",
@@ -225,7 +225,7 @@
           ]
         },
         {
-          "name": "line_684_652_BN",
+          "name": "line_684-652_BN",
           "phases": "BN",
           "from": "n684",
           "to": "l652_BN",
@@ -233,7 +233,7 @@
           "configuration": "lc607BN"
         },
         {
-          "name": "line_684_652_CN",
+          "name": "line_684-652_CN",
           "phases": "CN",
           "from": "n684",
           "to": "l652_CN",
@@ -241,7 +241,7 @@
           "configuration": "lc607CN"
         },
         {
-          "name": "line_684_652_ABCN",
+          "name": "line_684-652_ABCN",
           "phases": "ABCN",
           "from": "n684",
           "to": "l652_ABCN",
@@ -249,7 +249,7 @@
           "configuration": "lc607ABCN"
         },
         {
-          "name": "line_684_652_ABN",
+          "name": "line_684-652_ABN",
           "phases": "ABN",
           "from": "n684",
           "to": "l652_ABN",
@@ -260,7 +260,7 @@
           ]
         },
         {
-          "name": "line_684_652_BCN",
+          "name": "line_684-652_BCN",
           "phases": "BCN",
           "from": "n684",
           "to": "l652_BCN",
@@ -268,7 +268,7 @@
           "configuration": "lc607BCN"
         },
         {
-          "name": "line_684_652_CAN",
+          "name": "line_684-652_CAN",
           "phases": "CAN",
           "from": "n684",
           "to": "l652_CAN",
@@ -276,7 +276,7 @@
           "configuration": "lc607CAN"
         },
         {
-          "name": "line_684_652_AB",
+          "name": "line_684-652_AB",
           "phases": "AB",
           "from": "n684",
           "to": "l652_AB",
@@ -290,7 +290,7 @@
           ]
         },
         {
-          "name": "line_684_652_BC",
+          "name": "line_684-652_BC",
           "phases": "BC",
           "from": "n684",
           "to": "l652_BC",
@@ -301,7 +301,7 @@
           ]
         },
         {
-          "name": "line_684_652_CA",
+          "name": "line_684-652_CA",
           "phases": "CA",
           "from": "n684",
           "to": "l652_CA",
@@ -312,7 +312,7 @@
           ]
         },
         {
-          "name": "line_684_652_ABC",
+          "name": "line_684-652_ABC",
           "phases": "ABC",
           "from": "n684",
           "to": "l652_ABC",

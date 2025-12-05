@@ -224,7 +224,6 @@
       "instances": [
         {
           "name": "line_spacing_200",
-          "id": 200,
           "distance_AB": 2.5,
           "distance_BC": 4.5,
           "distance_AC": 7.0,

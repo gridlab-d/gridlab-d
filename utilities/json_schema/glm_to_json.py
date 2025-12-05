@@ -164,8 +164,8 @@ def glm_to_json(glm_name, input_dir=None, output_dir=None, output_name=None):
         # Build modules and objects using parsed data
         modules = {}
         for mtype, entity in model_file.module_entities.items():
-            # Skip 'clock' and class definitions
-            if mtype == 'clock' or mtype in classes:
+            # Skip 'clock' only (classes are now in class_entities, not module_entities)
+            if mtype == 'clock':
                 continue
             inst_dict = getattr(entity, 'instances', {})
             if inst_dict:

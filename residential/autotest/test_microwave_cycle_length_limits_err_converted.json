@@ -18,8 +18,7 @@
     "house": {
       "instances": [
         {
-          "name": "house_1",
-          "id": 1
+          "name": "house_1"
         }
       ]
     },
@@ -27,7 +26,6 @@
       "instances": [
         {
           "name": "microwave_2",
-          "id": 2,
           "parent": "house_1",
           "cycle_length": -45
         }
