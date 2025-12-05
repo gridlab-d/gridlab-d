@@ -998,7 +998,7 @@ STATUS loader::loadSchedules()
 	std::string cron_schedule;
 	std::string	sub_schedule;
 	SCHEDULE* sch;
-	vector<string> raw;
+	json raw = json::array();
 	for (auto& [name, schedule] : j_obj.items())
     {
         if(rv == FAILED)
