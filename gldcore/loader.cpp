@@ -538,8 +538,48 @@ STATUS loader::loadObject(const string className, json objInstance)
     }
     strncpy(clsName, className.c_str(), 63);
     nameObj.name = clsName;
-    int id = objInstance.contains("id") ? objInstance["id"].get<int>() : -1;
-    int id2 = id + 1;
+    int id = -1;
+    int id2 = -1;
+    if (objInstance.contains("object_declaration")) {
+        string objectDeclaration = objInstance["object_declaration"].get<string>();
+        size_t strIdx = objectDeclaration.find(':');
+        string classNameStripped = objectDeclaration.substr(strIdx + 1);
+        strIdx = classNameStripped.find("..");
+        if (strIdx != string::npos)
+        {
+            if (strIdx > 0)
+            {
+                id = stoi(classNameStripped, &strIdx);
+                id2 = stoi(classNameStripped.substr(strIdx + 2)) + 1;
+                if (id2 <= id)
+                {
+                    output_error("loader::loadObject() parsing file, %s: invalid object id ranges %s",
+                                 this->filename.c_str(), objectDeclaration.c_str());
+                    return FAILED;
+                }
+            }
+            else
+            {
+                id = 0;
+                id2 = stoi(classNameStripped.substr(strIdx + 2));
+                if (id2 <= id)
+                {
+                    output_error("loader::loadObject() parsing file, %s: invalid object count %s",
+                                 this->filename.c_str(), objectDeclaration.c_str());
+                    return FAILED;
+                }
+            }
+        }
+        else
+        {
+            id = stoi(classNameStripped);
+        }
+        cout << "ID from object_declaration: " << id << endl;
+    }
+    if (id2 <= id)
+    {
+        id2 = id + 1;
+    }
     while (id < id2)
     {
         if (oClass->create != nullptr)
