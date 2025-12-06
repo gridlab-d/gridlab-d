@@ -21,6 +21,7 @@ import csv
 import os
 import argparse
 from matplotlib import pyplot as plt
+import matplotlib as m
 import logging
 import sys
 
@@ -182,6 +183,7 @@ def _auto_run(args):
             house_properties = gld.get_object_properties(house)
             data.append(house_properties["floor_area"])
             if args.graph:
+                m.interactive(True)
                 if house == "house1":
                     floor_area_timestamps.append(current_time)
                     house1_floor_areas.append(house_properties["floor_area"])
@@ -191,7 +193,8 @@ def _auto_run(args):
                     ax.set_xlim(min(floor_area_timestamps), max(floor_area_timestamps))
                     ax.set_ylim(min(house1_floor_areas), max(house1_floor_areas))
                     plt.draw()
-                    plt.pause(0.1)  # Pause briefly to allow the figure to refresh
+                    plt.show()
+                    plt.pause(1)  # Pause briefly to allow the figure to refresh
         write_to_csv(output_floor_area_file, data, house_header_row)    
         dummy = 1
 
@@ -211,7 +214,7 @@ if __name__ == '__main__':
     parser.add_argument('-g', '--graph',
                         help="flag to only create a graph of simulated data",
                         action=argparse.BooleanOptionalAction,
-                        default=False)
+                        default=True)
     parser.add_argument('-m', '--model_folder',
                          help="folder that contains the  GridLAB-D model",
                          nargs='?',
