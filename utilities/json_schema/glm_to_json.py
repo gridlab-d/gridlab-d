@@ -185,14 +185,38 @@ def glm_to_json(glm_name, input_dir=None, output_dir=None, output_name=None):
             if insts:
                 clock_data = try_conversion(next(iter(insts.values()), {}))
 
+        # First pass: identify which objects are referenced as parents
+        referenced_parents = set()
+        for otype, insts in model_file.model.items():
+            for name, params in insts.items():
+                if 'parent' in params:
+                    referenced_parents.add(params['parent'])
+
         # Build objects using parsed data
         objects = {}
         for otype, insts in model_file.model.items():
             obj_list = []
             for name, params in insts.items():
-                entry = {'name': name}
+                is_auto_generated = params.get('_auto_generated_name', False)
+                has_object_declaration = 'object_declaration' in params
+                is_referenced_parent = name in referenced_parents
+                
+                # Include name in JSON if:
+                # 1. It was explicitly provided (not auto-generated), OR
+                # 2. It's auto-generated but needed because it's referenced as a parent
+                # Exclude name if:
+                # - It's auto-generated AND has object_declaration, OR
+                # - It's auto-generated AND not referenced as a parent
+                
+                if is_auto_generated and (has_object_declaration or not is_referenced_parent):
+                    entry = {}
+                else:
+                    entry = {'name': name}
+                    
                 try:
                     entry.update(try_conversion(params))
+                    # Remove the auto-generated flag from output
+                    entry.pop('_auto_generated_name', None)
                 except Exception as e:
                     print(f"Error processing {name}: {e}")  
                 obj_list.append(entry)

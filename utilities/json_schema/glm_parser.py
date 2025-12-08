@@ -227,34 +227,36 @@ class GLMModel:
         
         Args:
             obj_type (str): The object type name
-            object_name (str): The name for the object instance
+            object_name (str): The internal identifier for the object instance (may be UUID-based for unnamed objects)
             params (dict): Parameters for the object instance
             
         Returns:
             Entity instance or None: The created object instance
             
         Raises:
-            TypeError: If obj_type or object_name is not a string
+            TypeError: If obj_type is not a string
         """
-        if isinstance(obj_type, str) and isinstance(object_name, str):
+        if isinstance(obj_type, str):
+            instance_name = object_name
+            
             try:
                 # Try to retrieve the existing entity
                 entity = self.object_entities[obj_type]
             except KeyError:
                 # Handle unrecognized object types
-                print(f"Unrecognized GRIDLABD object and id: {obj_type} {object_name}, must be a new object")
+                print(f"Unrecognized GRIDLABD object and id: {obj_type} {instance_name}, must be a new object")
                 if not obj_type in self.class_types:
                     print(f"Unrecognized user class/object and id: "
-                          f"{obj_type} {object_name}")
+                          f"{obj_type} {instance_name}")
                 # Create a new entity for the unrecognized object
-                entity = O_Entity(obj_type, object_name, None)
+                entity = O_Entity(obj_type, instance_name, None)
                 self.object_entities[obj_type] = entity
                 # Add all parameters to the new entity
                 for param, value in params.items():
                     entity.add_attr('TEXT', param, "", param, value)
-            return entity.set_instance(object_name, params)
+            return entity.set_instance(instance_name, params)
         else:
-            raise TypeError(f"GRIDLABD object type and/or object name {obj_type} must be a string and is not.")
+            raise TypeError(f"GRIDLABD object type must be a string and is not.")
 
     def entities_to_json(self):
         """Convert all parsed entities to JSON-serializable format.
@@ -502,7 +504,7 @@ class GLMModel:
         
         Args:
             _type (str): The object type
-            name (str): The object name
+            name (str or None): The object name (None if no name provided)
             params (dict): Object parameters
             
         Returns:
@@ -816,12 +818,13 @@ class GLMModel:
                    if param is 'name', otherwise None
         """
         if param == 'name':
-            # found a parameter name
-            if name is None:
-                # Remove quotes around the string
-                if isinstance(val, str) and val.startswith('"') and val.endswith('"'):
-                    val = val[1:-1]
-                name = name_prefix + val
+            # found a parameter name - always use it (don't check if name is None)
+            # Remove quotes around the string
+            if isinstance(val, str) and val.startswith('"') and val.endswith('"'):
+                val = val[1:-1]
+            name = name_prefix + val
+            # Remove auto-generated flag since we have an explicit name
+            params.pop('_auto_generated_name', None)
             return name, line
         elif param == 'object':
             # This case should be handled separately for nested objects
@@ -839,8 +842,6 @@ class GLMModel:
                 val = val + line[pos:pos1]
                 line = ""
 
-            # Apply convert_suffix_id to handle object references (e.g., node:1 -> node_1)
-            val = convert_suffix_id(val)
             params[param] = val
 
             if len(comments) > 0:
@@ -872,31 +873,29 @@ class GLMModel:
             oid = n.group(1)
         # single-line object (no body) ends with ';'
         if line.strip().endswith(';') and '{' not in line:
-            # capture multiplicity count if present
             params = {}
-            qty_match = re.search(r'\.\.(\d+)', oid)
-            if qty_match:
-                params['object_count'] = int(qty_match.group(1))
-            # default name
+            # If oid is not empty, save the full object declaration
+            if oid:
+                params['object_declaration'] = oid
             counter += 1
-            name = f"{_type}_{counter}"
-            oidh[name] = name
+            # Generate internal tracking name (without parent prefix)
+            name = _type + "_" + str(counter)
+            params['_auto_generated_name'] = True
             self.add_object(_type, name, params)
             return line, counter, name
 
         # Collect parameters
         counter += 1
-        name = None
-        name_prefix = ''
+        name_prefix = parent if parent else ''
+        # Generate internal tracking name initially (without parent prefix)
+        name = _type + "_" + str(counter)
         params = {}
-        # handle multiplicity syntax (e.g., object house:..28 indicates multiple instances)
-        m_qty = re.search(r'\.\.(\d+)$', oid)
-        if m_qty:
-            params['object_count'] = int(m_qty.group(1))
-        # handle assigned object ids (use for name but don't add to params)
-        m_id = re.search(r":([^{}]+)\{", line)
-        if m_id:
-            name = _type + "_" + m_id.group(1).strip()
+        params['_auto_generated_name'] = True
+        
+        # If oid is not empty, save the full object declaration
+        if oid:
+            params['object_declaration'] = oid
+        
         # Collect comments
         comments = []
         inside_comments = []
@@ -913,7 +912,7 @@ class GLMModel:
             before_comment = line.split("//", 1)[0].strip()
             inline_comments[before_comment] = substring
         line = next(itr)
-        if len(parent):
+        if parent:
             params['parent'] = parent
         while not done:
             # capture object-level #error directives
@@ -966,9 +965,6 @@ class GLMModel:
                 if param == 'object':
                     # found a nested object
                     intobj += 1
-                    if name is None:
-                        name = name_prefix + _type + "_" + str(counter)
-                        oidh[name] = name
                     line, counter, lname = self.glm_object(name, line, itr, oidh, counter)
                 else:
                     # Process parameter using helper method
@@ -988,13 +984,12 @@ class GLMModel:
                     done = True
             else:
                 line = next(itr)
-        # if undefined, use a default name
-        if name is None:
-            name = name_prefix + _type + "_" + str(counter)
-        oidh[name] = name
-        # hash an object identifier to the object name
-        if n:
-            oidh[oid] = name
+        # Don't generate a name if not provided
+        if name is not None:
+            oidh[name] = name
+            # hash an object identifier to the object name
+            if n:
+                oidh[oid] = name
         self._finalize_comments_and_params(params, inside_comments, inline_comments)
         # attach object-level trigger error
         if inside_errors:

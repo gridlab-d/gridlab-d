@@ -30,19 +30,20 @@
     "house": {
       "instances": [
         {
-          "name": "house_",
-          "groupid": "B",
+          "groupid": "A",
           "outside_comments": [
             "// This is a syntax error. The colon is for assigning IDs, and should be omitted from anonymous objects.",
             "// The correct version of this behavior is shown below in the comment."
           ]
+        },
+        {
+          "groupid": "B"
         }
       ]
     },
     "collector": {
       "instances": [
         {
-          "name": "collector_3",
           "group": "class=house AND groupid=A",
           "property": "count(floor_area)",
           "limit": 10,

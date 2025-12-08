@@ -26,7 +26,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_2",
           "parent": "meter671",
           "value": "-479.669-235.478j",
           "target": "measured_power",

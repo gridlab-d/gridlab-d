@@ -52,7 +52,7 @@
         {
           "name": "event_loadshed1",
           "fault_type": "SW-B",
-          "manual_outages": "C1_R2-12-47-2_fuse_25,2009-07-01 10:00:30,2009-07-01 11:30_00",
+          "manual_outages": "C1_R2-12-47-2_fuse_25,2009-07-01 10:00:30,2009-07-01 11:30:00",
           "inside_comments": [
             "// max_outage_length 360000;",
             "// max_simultaneous_faults 1;",

@@ -21,12 +21,12 @@
     "overhead_line_conductor": {
       "instances": [
         {
-          "name": "overhead_line_conductor_100",
+          "object_declaration": "overhead_line_conductor:100",
           "geometric_mean_radius": 0.0244,
           "resistance": 0.306
         },
         {
-          "name": "overhead_line_conductor_101",
+          "object_declaration": "overhead_line_conductor:101",
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592
         }
@@ -35,7 +35,7 @@
     "line_spacing": {
       "instances": [
         {
-          "name": "line_spacing_200",
+          "object_declaration": "line_spacing:200",
           "distance_AB": 2.5,
           "distance_BC": 4.5,
           "distance_AC": 7.0,
@@ -48,19 +48,19 @@
     "line_configuration": {
       "instances": [
         {
-          "name": "line_configuration_300",
-          "conductor_A": "overhead_line_conductor_100",
-          "conductor_B": "overhead_line_conductor_100",
-          "conductor_C": "overhead_line_conductor_100",
-          "conductor_N": "overhead_line_conductor_101",
-          "spacing": "line_spacing_200"
+          "object_declaration": "line_configuration:300",
+          "conductor_A": "overhead_line_conductor:100",
+          "conductor_B": "overhead_line_conductor:100",
+          "conductor_C": "overhead_line_conductor:100",
+          "conductor_N": "overhead_line_conductor:101",
+          "spacing": "line_spacing:200"
         }
       ]
     },
     "transformer_configuration": {
       "instances": [
         {
-          "name": "transformer_configuration_400",
+          "object_declaration": "transformer_configuration:400",
           "connect_type": 1,
           "power_rating": 6000,
           "powerA_rating": 2000,
@@ -104,38 +104,37 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_12",
+          "object_declaration": "overhead_line:12",
           "phases": "ABCN",
           "from": "node1",
           "to": "node2",
           "length": 2000,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         },
         {
-          "name": "overhead_line_34",
+          "object_declaration": "overhead_line:34",
           "phases": "ABCN",
           "from": "node3",
           "to": "load4",
           "length": 2500,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         }
       ]
     },
     "transformer": {
       "instances": [
         {
-          "name": "transformer_23",
+          "object_declaration": "transformer:23",
           "phases": "ABCN",
           "from": "node2",
           "to": "node3",
-          "configuration": "transformer_configuration_400"
+          "configuration": "transformer_configuration:400"
         }
       ]
     },
     "player": {
       "instances": [
         {
-          "name": "player_13",
           "parent": "load4",
           "property": "constant_power_A, constant_power_B, constant_power_C",
           "file": "../test_player_buffer.player",
@@ -146,21 +145,18 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_14",
           "parent": "load4",
           "target": "constant_power_A",
           "value": "20.12820806729023+79.78912749199718j",
           "within": 0.001
         },
         {
-          "name": "complex_assert_15",
           "parent": "load4",
           "target": "constant_power_B",
           "value": "21.12820806729023+79.78912749199718j",
           "within": 0.001
         },
         {
-          "name": "complex_assert_16",
           "parent": "load4",
           "target": "constant_power_C",
           "value": "22.12820806729023+79.78912749199718j",

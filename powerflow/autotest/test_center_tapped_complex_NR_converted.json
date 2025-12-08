@@ -118,7 +118,6 @@
     "triplex_line": {
       "instances": [
         {
-          "name": "triplex_line_7",
           "from": "trip_node",
           "to": "load_node",
           "phases": "AS",
@@ -130,7 +129,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_9",
           "parent": "load_node",
           "target": "voltage_1",
           "value": "115.4-.14d",
@@ -141,91 +139,78 @@
           ]
         },
         {
-          "name": "complex_assert_10",
           "parent": "load_node",
           "target": "voltage_2",
           "value": "113.6-.53d",
           "within": 2.5
         },
         {
-          "name": "complex_assert_11",
           "parent": "load_node",
           "target": "voltage_1N",
           "value": "115.4-.14d",
           "within": 2.5
         },
         {
-          "name": "complex_assert_12",
           "parent": "load_node",
           "target": "voltage_2N",
           "value": "113.6-.53d",
           "within": 2.5
         },
         {
-          "name": "complex_assert_13",
           "parent": "load_node",
           "target": "voltage_12",
           "value": "229.1-0.09d",
           "within": 2.5
         },
         {
-          "name": "complex_assert_14",
           "parent": "load_node",
           "target": "voltage_N",
           "value": 0,
           "within": 1e-15
         },
         {
-          "name": "complex_assert_15",
           "parent": "load_node",
           "target": "measured_voltage_N",
           "value": 0,
           "within": 1e-15
         },
         {
-          "name": "complex_assert_16",
           "parent": "load_node",
           "target": "measured_voltage_1",
           "value": "115.4-.14d",
           "within": 2.5
         },
         {
-          "name": "complex_assert_17",
           "parent": "load_node",
           "target": "measured_voltage_2",
           "value": "113.6-.53d",
           "within": 2.5
         },
         {
-          "name": "complex_assert_18",
           "parent": "load_node",
           "target": "measured_current_1",
           "value": "175.0-26.1d",
           "within": 2
         },
         {
-          "name": "complex_assert_19",
           "parent": "load_node",
           "target": "measured_current_2",
           "value": "213.2+152.7d",
           "within": 3
         },
         {
-          "name": "complex_assert_20",
           "parent": "load_node",
           "target": "indiv_measured_power_1",
           "value": "20195+25.96d",
           "within": 251
         },
         {
-          "name": "complex_assert_21",
           "parent": "load_node",
           "target": "indiv_measured_power_2",
           "value": "24219.52+27.16d",
           "within": 326
         },
         {
-          "name": "complex_assert_22",
           "parent": "load_node",
           "target": "measured_power",
           "value": "44412.10472+26.614369d",
@@ -236,7 +221,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_24",
           "parent": "double_assert_23",
           "property": "value",
           "file": "../center_tapped_complex_energy.player"
@@ -260,7 +244,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_25",
           "parent": "load_node",
           "interval": 3600,
           "limit": 27,

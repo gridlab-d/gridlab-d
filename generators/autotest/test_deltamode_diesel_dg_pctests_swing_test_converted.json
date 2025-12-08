@@ -190,7 +190,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_7",
           "parent": "Gen_Bus_1",
           "property": "rotor_speed,rotor_angle,flux1d,flux2q,EpRotated,VintRotated,Eint_A,Eint_B,Eint_C,Irotated,pwr_electric.real,pwr_electric.imag,pwr_mech",
           "flags": "DELTAMODE",
@@ -264,21 +263,18 @@
     "player": {
       "instances": [
         {
-          "name": "player_11",
           "parent": "LOAD_1_p",
           "file": "../diesel_deltamode_load_player_A.csv",
           "property": "constant_power_A",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_12",
           "parent": "LOAD_1_p",
           "file": "../diesel_deltamode_load_player_B.csv",
           "property": "constant_power_B",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_13",
           "parent": "LOAD_1_p",
           "file": "../diesel_deltamode_load_player_C.csv",
           "property": "constant_power_C",

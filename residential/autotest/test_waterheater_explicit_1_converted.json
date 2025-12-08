@@ -57,7 +57,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_7",
           "parent": "double_assert_6",
           "property": "value",
           "file": "../test_wh_explicit_1_temperature.player"
@@ -68,7 +67,7 @@
       "instances": [
         {
           "name": "double_assert_6",
-          "parent": "w1",
+          "parent": "house1w1",
           "target": "temperature",
           "within": 0.01
         }
@@ -77,7 +76,7 @@
     "waterheater": {
       "instances": [
         {
-          "name": "w1",
+          "name": "house1w1",
           "parent": "house1",
           "heating_element_capacity": "4.0 kW",
           "thermostat_deadband": 4,

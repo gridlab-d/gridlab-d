@@ -31,7 +31,6 @@
     "server": {
       "instances": [
         {
-          "name": "server_1",
           "port": 8080
         }
       ]
@@ -71,7 +70,7 @@
     "underground_line_conductor": {
       "instances": [
         {
-          "name": "underground_line_conductor_1",
+          "object_declaration": "underground_line_conductor:1",
           "rating.summer.continuous": 564.0,
           "outer_diameter": 2.291,
           "conductor_gmr": "0.03592 ft",
@@ -92,7 +91,7 @@
     "line_spacing": {
       "instances": [
         {
-          "name": "line_spacing_2",
+          "object_declaration": "line_spacing:2",
           "distance_AB": "6.0 in",
           "distance_BC": "6.0 in",
           "distance_AC": "6.0 in",
@@ -105,12 +104,12 @@
     "line_configuration": {
       "instances": [
         {
-          "name": "line_configuration_3",
-          "conductor_A": "underground_line_conductor_1",
-          "conductor_B": "underground_line_conductor_1",
-          "conductor_C": "underground_line_conductor_1",
-          "conductor_N": "underground_line_conductor_1",
-          "spacing": "line_spacing_2"
+          "object_declaration": "line_configuration:3",
+          "conductor_A": "underground_line_conductor:1",
+          "conductor_B": "underground_line_conductor:1",
+          "conductor_C": "underground_line_conductor:1",
+          "conductor_N": "underground_line_conductor:1",
+          "spacing": "line_spacing:2"
         }
       ]
     },
@@ -213,7 +212,7 @@
           "from": "R2-25-00-1_node_317",
           "to": "R2-25-00-1_node_150",
           "length": 165.0,
-          "configuration": "line_configuration_3"
+          "configuration": "line_configuration:3"
         }
       ]
     }

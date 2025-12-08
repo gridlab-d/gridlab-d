@@ -239,7 +239,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_13",
           "parent": "xform_23",
           "flags": "DELTAMODE",
           "property": "current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C",
@@ -251,21 +250,18 @@
     "player": {
       "instances": [
         {
-          "name": "player_15",
           "parent": "complex_assert_14",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_transformer_inrush_currents_A.csv"
         },
         {
-          "name": "player_17",
           "parent": "complex_assert_16",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_transformer_inrush_currents_B.csv"
         },
         {
-          "name": "player_19",
           "parent": "complex_assert_18",
           "flags": "DELTAMODE",
           "property": "value",

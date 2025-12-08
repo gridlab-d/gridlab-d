@@ -91,7 +91,6 @@
     "json": {
       "instances": [
         {
-          "name": "json_2",
           "link": "function:shadow_auction/submit_bid_state -> auction/submit_bid_state",
           "option": "transport:hostname afisher, port 39037, timeout 1000, on_error retry, maxretry none"
         }

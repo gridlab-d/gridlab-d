@@ -73,7 +73,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_5",
           "parent": "load_node",
           "target": "measured_current_N",
           "value": "-40.94+147.0d",
@@ -87,77 +86,66 @@
           }
         },
         {
-          "name": "complex_assert_6",
           "parent": "load_node",
           "target": "measured_current_1",
           "value": "179.6-26.6d",
           "within": 0.11
         },
         {
-          "name": "complex_assert_7",
           "parent": "load_node",
           "target": "measured_current_2",
           "value": "220.4+152.2d",
           "within": 0.11
         },
         {
-          "name": "complex_assert_8",
           "parent": "load_node",
           "target": "measured_voltage_N",
           "value": 0,
           "within": 0.11
         },
         {
-          "name": "complex_assert_9",
           "parent": "load_node",
           "target": "measured_voltage_1",
           "value": "118-0.6131d",
           "within": 0.11
         },
         {
-          "name": "complex_assert_10",
           "parent": "load_node",
           "target": "measured_voltage_2",
           "value": "117.9-0.61421d",
           "within": 0.11
         },
         {
-          "name": "complex_assert_11",
           "parent": "load_node",
           "target": "voltage_1",
           "value": "118-0.6131d",
           "within": 0.11
         },
         {
-          "name": "complex_assert_12",
           "parent": "load_node",
           "target": "voltage_2",
           "value": "117.9-0.61421d",
           "within": 0.11
         },
         {
-          "name": "complex_assert_13",
           "parent": "load_node",
           "target": "voltage_12",
           "value": "235.9-0.6147d",
           "within": 0.11
         },
         {
-          "name": "complex_assert_14",
           "parent": "load_node",
           "target": "indiv_measured_power_1",
           "value": "21199+25.9925d",
           "within": 28
         },
         {
-          "name": "complex_assert_15",
           "parent": "load_node",
           "target": "indiv_measured_power_2",
           "value": "+23106.6+11859.2j",
           "within": 28
         },
         {
-          "name": "complex_assert_16",
           "parent": "load_node",
           "target": "measured_power",
           "value": "47168.7+26.64d",
@@ -168,7 +156,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_18",
           "parent": "double_assert_17",
           "property": "value",
           "file": "../center_tapped_basic_energy.player"
@@ -188,7 +175,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_19",
           "parent": "load_node",
           "interval": 3600,
           "limit": 30,

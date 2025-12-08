@@ -68,7 +68,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_6",
           "parent": "trip_node",
           "interval": 5,
           "file": "meter_power.csv",

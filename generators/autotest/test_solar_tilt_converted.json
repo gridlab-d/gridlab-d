@@ -77,7 +77,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_7",
           "parent": "double_assert_6",
           "property": "value",
           "file": "../fixed_90_S_Insolation.player",
@@ -89,13 +88,11 @@
           ]
         },
         {
-          "name": "player_9",
           "parent": "double_assert_8",
           "property": "value",
           "file": "../fixed_90_S_VA_out.player"
         },
         {
-          "name": "player_12",
           "parent": "double_assert_11",
           "property": "value",
           "file": "../fixed_20_S_VA_out.player"

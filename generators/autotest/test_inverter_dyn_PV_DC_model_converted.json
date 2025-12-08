@@ -176,28 +176,24 @@
     "player": {
       "instances": [
         {
-          "name": "player_13",
           "parent": "load_bus",
           "flags": "DELTAMODE",
           "property": "constant_impedance_A",
           "file": "../data_inverter_dyn_player_impedance.csv"
         },
         {
-          "name": "player_14",
           "parent": "load_bus",
           "flags": "DELTAMODE",
           "property": "constant_impedance_B",
           "file": "../data_inverter_dyn_player_impedance.csv"
         },
         {
-          "name": "player_15",
           "parent": "load_bus",
           "flags": "DELTAMODE",
           "property": "constant_impedance_C",
           "file": "../data_inverter_dyn_player_impedance.csv"
         },
         {
-          "name": "player_23",
           "parent": "double_assert_22",
           "flags": "DELTAMODE",
           "property": "value",
@@ -207,14 +203,12 @@
           ]
         },
         {
-          "name": "player_25",
           "parent": "double_assert_24",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inverter_dyn_assert_inverter_P_In.csv"
         },
         {
-          "name": "player_27",
           "parent": "complex_assert_26",
           "flags": "DELTAMODE",
           "property": "value",

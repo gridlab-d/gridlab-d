@@ -57,28 +57,24 @@
     "player": {
       "instances": [
         {
-          "name": "player_3",
           "parent": "double_assert_2",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inverter_dyn_assert_Imax_PAC_E_droop_mag_pu.csv"
         },
         {
-          "name": "player_28",
           "parent": "Node3_1",
           "file": "../data_test_inverter_dyn_Imax_Load4.player",
           "property": "constant_impedance_A",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_29",
           "parent": "Node3_1",
           "file": "../data_test_inverter_dyn_Imax_Load4.player",
           "property": "constant_impedance_B",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_30",
           "parent": "Node3_1",
           "file": "../data_test_inverter_dyn_Imax_Load4.player",
           "property": "constant_impedance_C",
@@ -100,7 +96,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "VSI1",
           "file": "Inverter_1_meter.csv",
           "flags": "DELTAMODE",
@@ -108,7 +103,6 @@
           "interval": 1
         },
         {
-          "name": "recorder_5",
           "parent": "VSI1",
           "file": "Inverter_1_esource.csv",
           "flags": "DELTAMODE",
@@ -116,7 +110,6 @@
           "interval": 1
         },
         {
-          "name": "recorder_6",
           "parent": "VSI1",
           "flags": "DELTAMODE",
           "property": "freq",
@@ -124,7 +117,6 @@
           "file": "Inverter_1_freq.csv"
         },
         {
-          "name": "recorder_8",
           "parent": "VSI2",
           "file": "Inverter_2_meter.csv",
           "flags": "DELTAMODE",
@@ -132,7 +124,6 @@
           "interval": 1
         },
         {
-          "name": "recorder_9",
           "parent": "VSI2",
           "file": "Inverter_2_esource.csv",
           "flags": "DELTAMODE",
@@ -140,7 +131,6 @@
           "interval": 1
         },
         {
-          "name": "recorder_10",
           "parent": "VSI2",
           "flags": "DELTAMODE",
           "property": "freq",
@@ -148,7 +138,6 @@
           "file": "Inverter_2_freq.csv"
         },
         {
-          "name": "recorder_16",
           "parent": "Line1",
           "property": "current_in_A.real,current_in_A.imag,current_in_B.real,current_in_B.imag,current_in_C.real,current_in_C.imag",
           "interval": -1,
@@ -159,7 +148,6 @@
           ]
         },
         {
-          "name": "recorder_18",
           "parent": "Line2",
           "property": "current_in_A.real,current_in_A.imag,current_in_B.real,current_in_B.imag,current_in_C.real,current_in_C.imag",
           "interval": -1,
@@ -170,7 +158,6 @@
           ]
         },
         {
-          "name": "recorder_20",
           "parent": "Line_fault",
           "property": "current_in_A.real,current_in_A.imag,current_in_B.real,current_in_B.imag,current_in_C.real,current_in_C.imag",
           "interval": -1,
@@ -181,7 +168,6 @@
           ]
         },
         {
-          "name": "recorder_22",
           "parent": "Node1",
           "property": "measured_real_power,measured_reactive_power,measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag",
           "interval": -1,
@@ -189,7 +175,6 @@
           "file": "Inverter_#1_MG1.csv"
         },
         {
-          "name": "recorder_24",
           "parent": "Node4",
           "property": "measured_real_power,measured_reactive_power,measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag",
           "interval": -1,
@@ -197,7 +182,6 @@
           "file": "Inverter_#2_MG1.csv"
         },
         {
-          "name": "recorder_32",
           "parent": "microgrid_switch1",
           "file": "microgrid_switch1.csv",
           "property": "phase_A_state,phase_B_state,phase_C_state",

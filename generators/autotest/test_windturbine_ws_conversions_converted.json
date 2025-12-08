@@ -28,7 +28,6 @@
     "climate": {
       "instances": [
         {
-          "name": "climate_1",
           "tmyfile": "../Standard_Weather.csv",
           "reader": "csvreader",
           "outside_comments": [
@@ -48,12 +47,12 @@
     "overhead_line_conductor": {
       "instances": [
         {
-          "name": "overhead_line_conductor_100",
+          "object_declaration": "overhead_line_conductor:100",
           "geometric_mean_radius": 0.0244,
           "resistance": 0.306
         },
         {
-          "name": "overhead_line_conductor_101",
+          "object_declaration": "overhead_line_conductor:101",
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592
         }
@@ -62,7 +61,7 @@
     "line_spacing": {
       "instances": [
         {
-          "name": "line_spacing_200",
+          "object_declaration": "line_spacing:200",
           "distance_AB": 2.5,
           "distance_BC": 4.5,
           "distance_AC": 7.0,
@@ -75,19 +74,19 @@
     "line_configuration": {
       "instances": [
         {
-          "name": "line_configuration_300",
-          "conductor_A": "overhead_line_conductor_100",
-          "conductor_B": "overhead_line_conductor_100",
-          "conductor_C": "overhead_line_conductor_100",
-          "conductor_N": "overhead_line_conductor_101",
-          "spacing": "line_spacing_200"
+          "object_declaration": "line_configuration:300",
+          "conductor_A": "overhead_line_conductor:100",
+          "conductor_B": "overhead_line_conductor:100",
+          "conductor_C": "overhead_line_conductor:100",
+          "conductor_N": "overhead_line_conductor:101",
+          "spacing": "line_spacing:200"
         }
       ]
     },
     "transformer_configuration": {
       "instances": [
         {
-          "name": "transformer_configuration_400",
+          "object_declaration": "transformer_configuration:400",
           "connect_type": "WYE_WYE",
           "power_rating": 12000,
           "primary_voltage": 12470,
@@ -97,7 +96,7 @@
           "install_type": "PADMOUNT"
         },
         {
-          "name": "transformer_configuration_600",
+          "object_declaration": "transformer_configuration:600",
           "connect_type": "WYE_WYE",
           "power_rating": 12000,
           "primary_voltage": 4160,
@@ -107,7 +106,7 @@
           "install_type": "PADMOUNT"
         },
         {
-          "name": "transformer_configuration_800",
+          "object_declaration": "transformer_configuration:800",
           "connect_type": "SINGLE_PHASE_CENTER_TAPPED",
           "power_rating": 6000,
           "primary_voltage": 4160,
@@ -121,7 +120,7 @@
     "node": {
       "instances": [
         {
-          "name": "node_1",
+          "object_declaration": "node:1",
           "phases": "ABCN",
           "bustype": "SWING",
           "voltage_A": "+7199.558+0.000j",
@@ -130,7 +129,7 @@
           "nominal_voltage": 7200
         },
         {
-          "name": "node_2",
+          "object_declaration": "node:2",
           "phases": "ABCN",
           "voltage_A": "+7199.558+0.000j",
           "voltage_B": "-3599.779-6235.000j",
@@ -138,7 +137,7 @@
           "nominal_voltage": 7200
         },
         {
-          "name": "node_3",
+          "object_declaration": "node:3",
           "phases": "ABCN",
           "voltage_A": "+2401.777+0.000j",
           "voltage_B": "-1200.889-2080.000j",
@@ -150,28 +149,27 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_12",
+          "object_declaration": "overhead_line:12",
           "phases": "ABCN",
-          "from": "node_1",
-          "to": "node_2",
+          "from": "node:1",
+          "to": "node:2",
           "length": 2000,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         },
         {
-          "name": "overhead_line_34",
+          "object_declaration": "overhead_line:34",
           "phases": "ABCN",
-          "from": "node_3",
-          "to": "load_4",
+          "from": "node:3",
+          "to": "load:4",
           "length": 2500,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         }
       ]
     },
     "recorder": {
       "instances": [
         {
-          "name": "recorder_12",
-          "parent": "transformer_23",
+          "parent": "transformer23",
           "property": "power_out_real",
           "interval": 900,
           "file": "test_windpower_${PF}.csv"
@@ -181,11 +179,12 @@
     "transformer": {
       "instances": [
         {
-          "name": "transformer_23",
+          "name": "transformer23",
+          "object_declaration": "transformer:23",
           "phases": "ABCN",
-          "from": "node_2",
-          "to": "node_3",
-          "configuration": "transformer_configuration_400",
+          "from": "node:2",
+          "to": "node:3",
+          "configuration": "transformer_configuration:400",
           "inside_comments": [
             "//object double_assert {",
             "// object player {",
@@ -200,18 +199,17 @@
           ]
         },
         {
-          "name": "transformer_18",
           "phases": "BS",
-          "from": "load_4",
+          "from": "load:4",
           "to": "TrplMtr1",
-          "configuration": "transformer_configuration_800"
+          "configuration": "transformer_configuration:800"
         }
       ]
     },
     "load": {
       "instances": [
         {
-          "name": "load_4",
+          "object_declaration": "load:4",
           "phases": "ABCN",
           "voltage_A": "+2401.777+0.000j",
           "voltage_B": "-1200.889-2080.000j",
@@ -236,25 +234,21 @@
     "player": {
       "instances": [
         {
-          "name": "player_22",
           "parent": "double_assert_21",
           "property": "value",
           "file": "../ws_assert_turb1.player"
         },
         {
-          "name": "player_25",
           "parent": "windturb2",
           "property": "wind_speed_hub_ht",
           "file": "../windspeed.csv"
         },
         {
-          "name": "player_27",
           "parent": "double_assert_26",
           "property": "value",
           "file": "../ws_assert_turb2.player"
         },
         {
-          "name": "player_31",
           "parent": "double_assert_30",
           "property": "value",
           "file": "../ws_assert_turb3.player"
@@ -286,21 +280,18 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_23",
           "parent": "windturb1",
           "file": "test_wind_power_${PF}1.csv",
           "interval": 900,
           "property": "voltage_12, voltage_1N, voltage_2N, current_12, power_12,WSadj,Cp,TrplMtr1:measured_real_power,total_real_power"
         },
         {
-          "name": "multi_recorder_28",
           "parent": "windturb2",
           "file": "test_wind_power_${PF}2.csv",
           "interval": 900,
           "property": "voltage_12, voltage_1N, voltage_2N, current_12, power_12,WSadj,Cp,TrplMtr1:measured_real_power,total_real_power"
         },
         {
-          "name": "multi_recorder_32",
           "parent": "windturb3",
           "file": "test_wind_power_${PF}3.csv",
           "interval": 900,

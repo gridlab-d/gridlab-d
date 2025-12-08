@@ -30,7 +30,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_3",
           "parent": "complex_assert_2",
           "property": "value",
           "file": "../office_hvac_energy.player",
@@ -51,7 +50,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "office_1",
           "file": "commercial_hvac_usage2.csv",
           "interval": 1,

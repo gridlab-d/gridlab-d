@@ -26,7 +26,6 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_1",
           "filename": "IEEE_13_NR_TS_voltage.csv",
           "mode": "POLAR"
         }
@@ -482,28 +481,24 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_39",
           "parent": "n684",
           "target": "voltage_A",
           "value": "2427.62-4.52d",
           "within": 2
         },
         {
-          "name": "complex_assert_40",
           "parent": "n684",
           "target": "voltage_C",
           "value": "2343.69+115.30d",
           "within": 2
         },
         {
-          "name": "complex_assert_45",
           "parent": "l652",
           "target": "voltage_A",
           "within": 2,
           "value": "2427.62-4.52d"
         },
         {
-          "name": "complex_assert_46",
           "parent": "l652",
           "target": "voltage_C",
           "within": 2,

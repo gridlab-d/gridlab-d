@@ -20,13 +20,11 @@
     "player": {
       "instances": [
         {
-          "name": "player_3",
           "parent": "double_assert_2",
           "property": "value",
           "file": "../test_schedule_skew_1.player"
         },
         {
-          "name": "player_6",
           "parent": "double_assert_5",
           "property": "value",
           "file": "../test_schedule_skew_2.player"

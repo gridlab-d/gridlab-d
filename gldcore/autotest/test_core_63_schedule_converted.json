@@ -21,7 +21,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "ZIPload_3",
           "property": "base_power",
           "file": "base_power.csv",
@@ -33,7 +32,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_6",
           "parent": "double_assert_5",
           "property": "value",
           "file": "../test_core_63_schedule.player"

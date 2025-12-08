@@ -163,7 +163,8 @@
     "regulator": {
       "instances": [
         {
-          "name": "regulator_4383",
+          "name": "R1-12-47-1_reg_1",
+          "object_declaration": "regulator:4383",
           "from": "R1-12-47-1_node_617",
           "to": "R1-12-47-1_meter_21",
           "phases": "ABCN",
@@ -174,7 +175,8 @@
     "regulator_configuration": {
       "instances": [
         {
-          "name": "regulator_configuration_4384",
+          "name": "feeder_reg_cfg",
+          "object_declaration": "regulator_configuration:4384",
           "Control": "OUTPUT_VOLTAGE",
           "band_center": 7520.0,
           "band_width": 120,
@@ -192,7 +194,8 @@
     "node": {
       "instances": [
         {
-          "name": "node_4385",
+          "name": "R1-12-47-1_node_617",
+          "object_declaration": "node:4385",
           "bustype": "SWING",
           "phases": "ABCN",
           "nominal_voltage": 7216.88,
@@ -684,7 +687,8 @@
     "meter": {
       "instances": [
         {
-          "name": "meter_4382",
+          "name": "R1-12-47-1_meter_21",
+          "object_declaration": "meter:4382",
           "phases": "ABCN",
           "nominal_voltage": 7216.88,
           "voltage_A": "7216.88+0.0j",

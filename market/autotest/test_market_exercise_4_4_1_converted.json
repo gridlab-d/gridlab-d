@@ -27,7 +27,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "Market_1",
           "property": "current_market.clearing_price,current_market.clearing_quantity,current_market.start_time,current_market.end_time",
           "file": "exercise_4_4_1.csv",

@@ -10,8 +10,8 @@
     "house": {
       "instances": [
         {
-          "name": "house_..10",
-          "object_count": 10
+          "name": "`House_",
+          "object_declaration": "house:..10"
         }
       ]
     }

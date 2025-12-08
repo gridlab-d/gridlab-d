@@ -27,8 +27,7 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
-          "parent": "my_test_..2",
+          "parent": "my_test_1",
           "property": "x,y",
           "file": "`my_test_",
           "interval": -1
@@ -38,8 +37,7 @@
     "my_test": {
       "instances": [
         {
-          "name": "my_test_..2",
-          "object_count": 2,
+          "object_declaration": "my_test:..2",
           "x": "\"type:uniform(0,1)",
           "y": "\"type:uniform(0,1)"
         }

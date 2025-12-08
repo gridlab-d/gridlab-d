@@ -52,7 +52,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_3",
           "parent": "house_2",
           "status": "ASSERT_TRUE",
           "once": "ONCE_DONE",

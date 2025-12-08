@@ -214,7 +214,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_18",
           "parent": "complex_assert_17",
           "property": "value",
           "file": "../cdgc_test_meter_power_assert.player",
@@ -223,67 +222,56 @@
           ]
         },
         {
-          "name": "player_20",
           "parent": "complex_assert_19",
           "property": "value",
           "file": "../cdgc_test_meter_power_assert.player"
         },
         {
-          "name": "player_22",
           "parent": "complex_assert_21",
           "property": "value",
           "file": "../cdgc_test_meter_power_assert.player"
         },
         {
-          "name": "player_54",
           "parent": "load2",
           "property": "constant_power_A",
           "file": "../CDGCLoad.player"
         },
         {
-          "name": "player_55",
           "parent": "load2",
           "property": "constant_power_B",
           "file": "../CDGCLoad.player"
         },
         {
-          "name": "player_56",
           "parent": "load2",
           "property": "constant_power_C",
           "file": "../CDGCLoad.player"
         },
         {
-          "name": "player_75",
           "parent": "sol5",
           "property": "Insolation",
           "file": "../Yakima_Insolation.player"
         },
         {
-          "name": "player_76",
           "parent": "sol5",
           "property": "ambient_temperature",
           "file": "../Yakima_ambient_temperature.player"
         },
         {
-          "name": "player_77",
           "parent": "sol5",
           "property": "wind_speed",
           "file": "../Yakima_wind_speed.player"
         },
         {
-          "name": "player_80",
           "parent": "sol8",
           "property": "Insolation",
           "file": "../Yakima_Insolation.player"
         },
         {
-          "name": "player_81",
           "parent": "sol8",
           "property": "ambient_temperature",
           "file": "../Yakima_ambient_temperature.player"
         },
         {
-          "name": "player_82",
           "parent": "sol8",
           "property": "wind_speed",
           "file": "../Yakima_wind_speed.player"
@@ -894,7 +882,7 @@
           ]
         },
         {
-          "name": "batt9",
+          "name": "inv10",
           "parent": "m10",
           "use_internal_battery_model": true,
           "battery_type": "LI_ION",

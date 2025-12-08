@@ -86,7 +86,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_8",
           "parent": "double_assert_7",
           "property": "value",
           "file": "../cloud_insolation_tmy3.player",
@@ -127,7 +126,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_9",
           "property": "DHHL_3_PV:Insolation",
           "file": "solar_insolation_tmy3.csv",
           "interval": 60,

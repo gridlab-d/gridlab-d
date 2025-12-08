@@ -51,7 +51,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "Market_1",
           "interval": 15,
           "property": "current_market.clearing_quantity",
@@ -65,19 +64,16 @@
     "player": {
       "instances": [
         {
-          "name": "player_5",
           "parent": "double_assert_4",
           "property": "value",
           "file": "../data_controller_double_price_clearing_quant_assert.csv"
         },
         {
-          "name": "player_9",
           "parent": "double_assert_8",
           "property": "value",
           "file": "../data_controller_double_price_cool_setpoint_assert.csv"
         },
         {
-          "name": "player_12",
           "parent": "double_assert_11",
           "file": "../data_controller_double_price_bids_assert.csv",
           "property": "value"
@@ -100,7 +96,7 @@
         },
         {
           "name": "double_assert_11",
-          "parent": "cool_control",
+          "parent": "house1cool_control",
           "target": "bid_price",
           "within": 0.001
         }
@@ -141,7 +137,7 @@
     "controller": {
       "instances": [
         {
-          "name": "cool_control",
+          "name": "house1cool_control",
           "parent": "house1",
           "market": "Market_1",
           "bid_mode": "ON",
@@ -172,7 +168,7 @@
           ]
         },
         {
-          "name": "cool_control2",
+          "name": "house2cool_control2",
           "parent": "house2",
           "market": "Market_1",
           "bid_mode": "ON",

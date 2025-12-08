@@ -23,7 +23,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_2",
           "parent": "meter671",
           "value": "-729.669-355.478j",
           "target": "measured_power",
@@ -133,14 +132,12 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_11",
           "parent": "Imadiesel",
           "target": "real_power_generation",
           "value": 750.0,
           "within": 0.001
         },
         {
-          "name": "double_assert_12",
           "parent": "Imadiesel",
           "target": "reactive_power_generation",
           "value": 360.0,

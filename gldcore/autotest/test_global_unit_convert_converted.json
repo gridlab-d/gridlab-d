@@ -15,21 +15,18 @@
     "assert": {
       "instances": [
         {
-          "name": "assert_1",
           "target": "test_complex",
           "relation": "==",
           "value": "12000+0d V",
           "within": "100 V"
         },
         {
-          "name": "assert_2",
           "target": "test_double",
           "relation": "==",
           "value": "32 degF",
           "within": 0.01
         },
         {
-          "name": "assert_3",
           "target": "residential::default_outdoor_temperature",
           "relation": "==",
           "value": "32 degF",

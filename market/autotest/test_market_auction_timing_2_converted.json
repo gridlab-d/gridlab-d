@@ -30,7 +30,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "Market_1",
           "property": "past_market.clearing_price,past_market.clearing_quantity,current_market.clearing_price,current_market.clearing_quantity,next_market.clearing_price,next_market.clearing_quantity",
           "file": "test_market_timing_2.csv",
@@ -42,7 +41,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_3",
           "parent": "Market_1",
           "target": "current_market.clearing_quantity",
           "in": "'2001-01-01 2:00:00'",
@@ -54,7 +52,6 @@
           }
         },
         {
-          "name": "double_assert_4",
           "parent": "Market_1",
           "target": "current_market.clearing_price",
           "in": "'2001-01-01 2:00:00'",
@@ -66,7 +63,6 @@
           }
         },
         {
-          "name": "double_assert_5",
           "parent": "Market_1",
           "target": "next_market.clearing_quantity",
           "in": "'2001-01-01 1:00:00'",
@@ -78,7 +74,6 @@
           }
         },
         {
-          "name": "double_assert_6",
           "parent": "Market_1",
           "target": "next_market.clearing_price",
           "in": "'2001-01-01 1:00:00'",
@@ -90,7 +85,6 @@
           }
         },
         {
-          "name": "double_assert_7",
           "parent": "Market_1",
           "target": "past_market.clearing_quantity",
           "in": "'2001-01-01 3:00:00'",
@@ -102,7 +96,6 @@
           }
         },
         {
-          "name": "double_assert_8",
           "parent": "Market_1",
           "target": "past_market.clearing_price",
           "in": "'2001-01-01 3:00:00'",

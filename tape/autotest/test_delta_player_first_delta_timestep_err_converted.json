@@ -955,14 +955,12 @@
     "player": {
       "instances": [
         {
-          "name": "player_81",
           "parent": "load_49",
           "flags": "DELTAMODE",
           "property": "constant_power_A",
           "file": "../data_delta_player_load_A.csv"
         },
         {
-          "name": "player_83",
           "parent": "complex_assert_82",
           "flags": "DELTAMODE",
           "property": "value",

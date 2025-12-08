@@ -47,7 +47,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_4",
           "parent": "double_assert_3",
           "property": "value",
           "file": "../range_output.player"
@@ -67,7 +66,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_5",
           "parent": "range_2",
           "property": "total_power_oven,total_power_cooktop,cooktop_energy_used,time_cooktop_operation,Toff,Ton,time_oven_operation,time_oven_setting",
           "interval": 1,

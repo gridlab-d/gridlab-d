@@ -58,7 +58,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "noise_1",
           "property": "signal",
           "file": "noise_source.csv",

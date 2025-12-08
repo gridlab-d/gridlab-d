@@ -76,7 +76,7 @@
     "controller": {
       "instances": [
         {
-          "name": "DC_1",
+          "name": "H_1DC_1",
           "parent": "H_1",
           "use_override": "ON",
           "override": "override",
@@ -114,7 +114,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_6",
           "parent": "H_1",
           "property": "is_COOL_on,Market1:current_market.clearing_price,override,DC_1:bid_price",
           "file": "test_controller_override.csv",
@@ -125,13 +124,11 @@
     "player": {
       "instances": [
         {
-          "name": "player_8",
           "parent": "enum_assert_7",
           "property": "value",
           "file": "../test_controller_override_value.player"
         },
         {
-          "name": "player_10",
           "parent": "double_assert_9",
           "property": "value",
           "file": "../test_controller_override_is_COOL_on.player"

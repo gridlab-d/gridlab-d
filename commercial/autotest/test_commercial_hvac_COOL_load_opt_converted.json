@@ -30,7 +30,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "climate_1",
           "property": "temperature,solar_flux",
           "file": "temp.csv",
@@ -38,7 +37,6 @@
           "limit": 58
         },
         {
-          "name": "recorder_7",
           "parent": "office_3",
           "file": "commercial_hvac_usage2.csv",
           "interval": 1,
@@ -58,7 +56,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_5",
           "parent": "complex_assert_4",
           "file": "../office_hvac_ECON_assert.player",
           "property": "status",
@@ -83,7 +80,6 @@
     "enum_assert": {
       "instances": [
         {
-          "name": "enum_assert_6",
           "parent": "office_3",
           "target": "hvac_mode",
           "value": 3,

@@ -128,42 +128,36 @@
     "player": {
       "instances": [
         {
-          "name": "player_8",
           "parent": "node149",
           "property": "voltage_A",
           "file": "../data_inv_voltage_player_A_test.csv",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_9",
           "parent": "node149",
           "property": "voltage_B",
           "file": "../data_inv_voltage_player_B_test.csv",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_10",
           "parent": "node149",
           "property": "voltage_C",
           "file": "../data_inv_voltage_player_C_test.csv",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_13",
           "parent": "complex_assert_12",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_PI_inverter_current_A.csv"
         },
         {
-          "name": "player_15",
           "parent": "complex_assert_14",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_PI_inverter_current_B.csv"
         },
         {
-          "name": "player_17",
           "parent": "complex_assert_16",
           "flags": "DELTAMODE",
           "property": "value",

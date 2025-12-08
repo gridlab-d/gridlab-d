@@ -12,7 +12,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_2",
           "parent": "climate_1",
           "target": "temperature",
           "value": 55,

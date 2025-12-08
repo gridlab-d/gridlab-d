@@ -147,7 +147,6 @@
           ]
         },
         {
-          "name": "player_5",
           "parent": "double_assert_4",
           "flags": "DELTAMODE",
           "property": "value",
@@ -161,35 +160,30 @@
           ]
         },
         {
-          "name": "player_7",
           "parent": "double_assert_6",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_seccntrl_t1Ts_fAssert.csv"
         },
         {
-          "name": "player_9",
           "parent": "double_assert_8",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_seccntrl_t1Ts_PAssert.csv"
         },
         {
-          "name": "player_12",
           "parent": "double_assert_11",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_seccntrl_t1Gen1Pdispatch_offsetAssert.csv"
         },
         {
-          "name": "player_19",
           "parent": "double_assert_18",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_seccntrl_t1Gen4Pdispatch_offsetAssert.csv"
         },
         {
-          "name": "player_21",
           "parent": "double_assert_20",
           "flags": "DELTAMODE",
           "property": "value",
@@ -199,14 +193,12 @@
           ]
         },
         {
-          "name": "player_23",
           "parent": "double_assert_22",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_seccntrl_t1Inv1Pdispatch_offsetAssert.csv"
         },
         {
-          "name": "player_25",
           "parent": "double_assert_24",
           "flags": "DELTAMODE",
           "property": "value",
@@ -216,14 +208,12 @@
           ]
         },
         {
-          "name": "player_29",
           "parent": "double_assert_28",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_seccntrl_t1Inv3Pdispatch_offsetAssert.csv"
         },
         {
-          "name": "player_33",
           "parent": "complex_assert_32",
           "flags": "DELTAMODE",
           "property": "value",
@@ -235,7 +225,6 @@
           ]
         },
         {
-          "name": "player_35",
           "parent": "complex_assert_34",
           "flags": "DELTAMODE",
           "property": "value",
@@ -245,7 +234,6 @@
           ]
         },
         {
-          "name": "player_37",
           "parent": "complex_assert_36",
           "flags": "DELTAMODE",
           "property": "value",
@@ -255,7 +243,6 @@
           ]
         },
         {
-          "name": "player_39",
           "parent": "complex_assert_38",
           "flags": "DELTAMODE",
           "property": "value",
@@ -265,7 +252,6 @@
           ]
         },
         {
-          "name": "player_41",
           "parent": "complex_assert_40",
           "flags": "DELTAMODE",
           "property": "value",
@@ -275,7 +261,6 @@
           ]
         },
         {
-          "name": "player_43",
           "parent": "complex_assert_42",
           "flags": "DELTAMODE",
           "property": "value",
@@ -285,7 +270,6 @@
           ]
         },
         {
-          "name": "player_45",
           "parent": "complex_assert_44",
           "flags": "DELTAMODE",
           "property": "value",
@@ -295,7 +279,6 @@
           ]
         },
         {
-          "name": "player_47",
           "parent": "complex_assert_46",
           "flags": "DELTAMODE",
           "property": "value",
@@ -330,7 +313,6 @@
           "within": 0.0001
         },
         {
-          "name": "double_assert_10",
           "parent": "Gen1",
           "flags": "DELTAMODE",
           "target": "pdispatch",
@@ -350,7 +332,6 @@
           "within": 0.001
         },
         {
-          "name": "double_assert_13",
           "parent": "Gen2",
           "flags": "DELTAMODE",
           "target": "pdispatch",
@@ -361,7 +342,6 @@
           ]
         },
         {
-          "name": "double_assert_14",
           "parent": "Gen2",
           "flags": "DELTAMODE",
           "target": "pdispatch_offset",
@@ -369,7 +349,6 @@
           "value": 0
         },
         {
-          "name": "double_assert_15",
           "parent": "Gen3",
           "flags": "DELTAMODE",
           "target": "pdispatch",
@@ -380,7 +359,6 @@
           ]
         },
         {
-          "name": "double_assert_16",
           "parent": "Gen3",
           "flags": "DELTAMODE",
           "target": "pdispatch_offset",
@@ -388,7 +366,6 @@
           "value": 0
         },
         {
-          "name": "double_assert_17",
           "parent": "Gen4",
           "flags": "DELTAMODE",
           "target": "pdispatch",
@@ -427,7 +404,6 @@
           "within": 0.001
         },
         {
-          "name": "double_assert_26",
           "parent": "Inv2",
           "flags": "DELTAMODE",
           "target": "pdispatch_offset",
@@ -435,7 +411,6 @@
           "value": 0
         },
         {
-          "name": "double_assert_27",
           "parent": "Inv3",
           "flags": "DELTAMODE",
           "target": "pdispatch",
@@ -453,7 +428,6 @@
           "within": 0.001
         },
         {
-          "name": "double_assert_30",
           "parent": "Inv4",
           "flags": "DELTAMODE",
           "target": "pdispatch",
@@ -464,7 +438,6 @@
           ]
         },
         {
-          "name": "double_assert_31",
           "parent": "Inv4",
           "flags": "DELTAMODE",
           "target": "pdispatch_offset",
@@ -3153,7 +3126,8 @@
     "regulator": {
       "instances": [
         {
-          "name": "regulator_1501491",
+          "name": "regulator_1",
+          "object_declaration": "regulator:1501491",
           "phases": "ABC",
           "from": "node_150",
           "to": "node_1491",

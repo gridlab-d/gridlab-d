@@ -869,42 +869,36 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_37",
           "property": "m634:measured_voltage_A,m634:measured_voltage_B,m634:measured_voltage_C,m645:measured_voltage_A,m645:measured_voltage_B,m645:measured_voltage_C,m646:measured_voltage_A,m646:measured_voltage_B,m646:measured_voltage_C,m652:measured_voltage_A,m652:measured_voltage_B,m652:measured_voltage_C,m671:measured_voltage_A,m671:measured_voltage_B,m671:measured_voltage_C,m675:measured_voltage_A,m675:measured_voltage_B,m675:measured_voltage_C,m692:measured_voltage_A,m692:measured_voltage_B,m692:measured_voltage_C,m611:measured_voltage_A,m611:measured_voltage_B,m611:measured_voltage_C,m6321:measured_voltage_A,m6321:measured_voltage_B,m6321:measured_voltage_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13AMIVoltages.csv"
         },
         {
-          "name": "multi_recorder_38",
           "property": "m634:measured_power_A,m634:measured_power_B,m634:measured_power_C,m645:measured_power_A,m645:measured_power_B,m645:measured_power_C,m646:measured_power_A,m646:measured_power_B,m646:measured_power_C,m652:measured_power_A,m652:measured_power_B,m652:measured_power_C,m671:measured_power_A,m671:measured_power_B,m671:measured_power_C,m675:measured_power_A,m675:measured_power_B,m675:measured_power_C,m692:measured_power_A,m692:measured_power_B,m692:measured_power_C,m611:measured_power_A,m611:measured_power_B,m611:measured_power_C,m6321:measured_power_A,m6321:measured_power_B,m6321:measured_power_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13AMIPowers.csv"
         },
         {
-          "name": "multi_recorder_39",
           "property": "m630:voltage_A,m630:voltage_B,m630:voltage_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13SubVoltages.csv"
         },
         {
-          "name": "multi_recorder_40",
           "property": "m630:measured_power_A,m630:measured_power_B,m630:measured_power_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13SubPowers.csv"
         },
         {
-          "name": "multi_recorder_41",
           "property": "m632:voltage_A,m632:voltage_B,m632:voltage_C,m633:voltage_A,m633:voltage_B,m633:voltage_C,m680:voltage_A,m680:voltage_B,m680:voltage_C,m684:voltage_A,m684:voltage_B,m684:voltage_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13PseudoVoltages.csv"
         },
         {
-          "name": "multi_recorder_42",
           "property": "m632:measured_power_A,m632:measured_power_B,m632:measured_power_C,m633:measured_power_A,m633:measured_power_B,m633:measured_power_C,m680:measured_power_A,m680:measured_power_B,m680:measured_power_C,m684:measured_power_A,m684:measured_power_B,m684:measured_power_C",
           "limit": 0,
           "interval": 1,
@@ -915,112 +909,90 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_43",
           "filename": "output_voltage0.csv",
           "runtime": "'2000-01-01 0:00:00'"
         },
         {
-          "name": "voltdump_44",
           "filename": "output_voltage1.csv",
           "runtime": "'2000-01-01 0:00:01'"
         },
         {
-          "name": "voltdump_45",
           "filename": "output_voltage2.csv",
           "runtime": "'2000-01-01 0:00:02'"
         },
         {
-          "name": "voltdump_46",
           "filename": "output_voltage3.csv",
           "runtime": "'2000-01-01 0:00:03'"
         },
         {
-          "name": "voltdump_47",
           "filename": "output_voltage4.csv",
           "runtime": "'2000-01-01 0:00:04'"
         },
         {
-          "name": "voltdump_48",
           "filename": "output_voltage5.csv",
           "runtime": "'2000-01-01 0:00:05'"
         },
         {
-          "name": "voltdump_49",
           "filename": "output_voltage6.csv",
           "runtime": "'2000-01-01 0:00:06'"
         },
         {
-          "name": "voltdump_50",
           "filename": "output_voltage7.csv",
           "runtime": "'2000-01-01 0:00:07'"
         },
         {
-          "name": "voltdump_51",
           "filename": "output_voltage8.csv",
           "runtime": "'2000-01-01 0:00:08'"
         },
         {
-          "name": "voltdump_52",
           "filename": "output_voltage9.csv",
           "runtime": "'2000-01-01 0:00:09'"
         },
         {
-          "name": "voltdump_53",
           "filename": "output_voltage10.csv",
           "runtime": "'2000-01-01 0:00:10'"
         },
         {
-          "name": "voltdump_95",
           "filename": "output_voltage0.csv",
           "runtime": "'2000-01-01 0:00:00'"
         },
         {
-          "name": "voltdump_96",
           "filename": "output_voltage1.csv",
           "runtime": "'2000-01-01 0:00:01'"
         },
         {
-          "name": "voltdump_97",
           "filename": "output_voltage2.csv",
           "runtime": "'2000-01-01 0:00:02'"
         },
         {
-          "name": "voltdump_98",
           "filename": "output_voltage3.csv",
           "runtime": "'2000-01-01 0:00:03'"
         },
         {
-          "name": "voltdump_99",
           "filename": "output_voltage4.csv",
           "runtime": "'2000-01-01 0:00:04'"
         },
         {
-          "name": "voltdump_100",
           "filename": "output_voltage5.csv",
           "runtime": "'2000-01-01 0:00:05'"
         },
         {
-          "name": "voltdump_101",
           "filename": "output_voltage6.csv",
           "runtime": "'2000-01-01 0:00:06'"
         },
         {
-          "name": "voltdump_102",
           "filename": "output_voltage7.csv",
           "runtime": "'2000-01-01 0:00:07'"
         },
         {
-          "name": "voltdump_103",
           "filename": "output_voltage8.csv",
           "runtime": "'2000-01-01 0:00:08'"
         },
         {
-          "name": "voltdump_104",
           "filename": "output_voltage9.csv",
           "runtime": "'2000-01-01 0:00:09'"
         },
         {
-          "name": "voltdump_105",
           "filename": "output_voltage10.csv",
           "runtime": "'2000-01-01 0:00:10'"
         }
@@ -1043,7 +1015,6 @@
     "impedance_dump": {
       "instances": [
         {
-          "name": "impedance_dump_94",
           "filename": "IEEE_13_node_impedance_dump.xml",
           "outside_comments": [
             "// Transformer",

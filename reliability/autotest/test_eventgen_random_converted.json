@@ -73,49 +73,41 @@
     "player": {
       "instances": [
         {
-          "name": "player_6",
           "parent": "double_assert_5",
           "property": "value",
           "file": "../random_SAIFI.csv"
         },
         {
-          "name": "player_8",
           "parent": "double_assert_7",
           "property": "value",
           "file": "../random_SAIDI.csv"
         },
         {
-          "name": "player_10",
           "parent": "double_assert_9",
           "property": "value",
           "file": "../random_CAIDI.csv"
         },
         {
-          "name": "player_12",
           "parent": "double_assert_11",
           "property": "value",
           "file": "../random_MAIFI.csv"
         },
         {
-          "name": "player_14",
           "parent": "double_assert_13",
           "property": "value",
           "file": "../random_SAIFI_int.csv"
         },
         {
-          "name": "player_16",
           "parent": "double_assert_15",
           "property": "value",
           "file": "../random_SAIDI_int.csv"
         },
         {
-          "name": "player_18",
           "parent": "double_assert_17",
           "property": "value",
           "file": "../random_CAIDI_int.csv"
         },
         {
-          "name": "player_20",
           "parent": "double_assert_19",
           "property": "value",
           "file": "../random_MAIFI_int.csv"

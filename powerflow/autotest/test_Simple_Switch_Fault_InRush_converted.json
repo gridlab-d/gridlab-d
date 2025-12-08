@@ -151,42 +151,36 @@
     "player": {
       "instances": [
         {
-          "name": "player_9",
           "parent": "complex_assert_8",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inrush_LineFlowCurrentOut_A.csv"
         },
         {
-          "name": "player_11",
           "parent": "complex_assert_10",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inrush_LineFlowCurrentOut_B.csv"
         },
         {
-          "name": "player_13",
           "parent": "complex_assert_12",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inrush_LineFlowCurrentOut_C.csv"
         },
         {
-          "name": "player_19",
           "parent": "complex_assert_18",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inrush_Voltage_node2_A.csv"
         },
         {
-          "name": "player_21",
           "parent": "complex_assert_20",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inrush_Voltage_node2_B.csv"
         },
         {
-          "name": "player_23",
           "parent": "complex_assert_22",
           "flags": "DELTAMODE",
           "property": "value",

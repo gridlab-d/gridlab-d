@@ -25,7 +25,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_4",
           "parent": "complex_assert_3",
           "property": "value",
           "file": "../test_lights_explicit_power4.player",
@@ -61,7 +60,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_5",
           "parent": "house_1",
           "property": "power",
           "file": "test_lights_explicit_power4.csv",

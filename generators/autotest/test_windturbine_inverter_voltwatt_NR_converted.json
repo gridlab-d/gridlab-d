@@ -28,7 +28,6 @@
     "climate": {
       "instances": [
         {
-          "name": "climate_1",
           "tmyfile": "../Standard_Weather.csv",
           "reader": "csvreader",
           "outside_comments": [
@@ -48,7 +47,8 @@
     "overhead_line_conductor": {
       "instances": [
         {
-          "name": "overhead_line_conductor_100",
+          "name": "olc100",
+          "object_declaration": "overhead_line_conductor:100",
           "geometric_mean_radius": 0.0244,
           "resistance": 0.306
         },
@@ -110,7 +110,7 @@
           ]
         },
         {
-          "name": "transformer_configuration_600",
+          "object_declaration": "transformer_configuration:600",
           "connect_type": "WYE_WYE",
           "power_rating": 3000,
           "primary_voltage": 4160,
@@ -176,7 +176,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_13",
           "parent": "double_assert_12",
           "property": "value",
           "file": "../windpower_assert_inv_NR.player"
@@ -199,14 +198,12 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_14",
           "parent": "xform23",
           "property": "power_out_real",
           "interval": 900,
           "file": "test_windpower_${PF}.csv"
         },
         {
-          "name": "recorder_27",
           "parent": "inv1",
           "property": "V_In, I_In, VA_Out,phaseA_V_Out, phaseB_V_Out, phaseC_V_Out,power_A, power_B, power_C, phases",
           "file": "TEST_inverter.csv",
@@ -231,11 +228,10 @@
           "configuration": "tc500"
         },
         {
-          "name": "transformer_24",
           "phases": "ABCN",
           "from": "load4",
           "to": "my_meter2",
-          "configuration": "transformer_configuration_600"
+          "configuration": "transformer_configuration:600"
         }
       ]
     },
@@ -272,14 +268,12 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_22",
           "parent": "windturb1",
           "file": "test_wind_power_${PF}1.csv",
           "interval": 900,
           "property": "wind_speed,WSadj,Cp,my_meter1:measured_real_power,total_real_power"
         },
         {
-          "name": "multi_recorder_29",
           "parent": "windturb2",
           "file": "test_wind_power_${PF}2.csv",
           "interval": 900,

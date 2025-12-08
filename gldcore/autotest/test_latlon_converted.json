@@ -22,62 +22,50 @@
     "test": {
       "instances": [
         {
-          "name": "test_1",
           "latitude": 51.123456,
           "longitude": 14.123456
         },
         {
-          "name": "test_2",
           "latitude": -51.123456,
           "longitude": 14.123456
         },
         {
-          "name": "test_3",
           "latitude": 51.123456,
           "longitude": -14.123456
         },
         {
-          "name": "test_4",
           "latitude": -51.123456,
           "longitude": -14.123456
         },
         {
-          "name": "test_5",
           "latitude": "51N12.3456",
           "longitude": "14W12.3456"
         },
         {
-          "name": "test_6",
           "latitude": "51S12.3456",
           "longitude": "14W12.3456"
         },
         {
-          "name": "test_7",
           "latitude": "51N12.3456",
           "longitude": "14E12.3456"
         },
         {
-          "name": "test_8",
           "latitude": "51S12.3456",
           "longitude": "14E12.3456"
         },
         {
-          "name": "test_9",
           "latitude": "51N12:34.56",
           "longitude": "14W12:34.56"
         },
         {
-          "name": "test_10",
           "latitude": "51S12:34.56",
-          "longitude": "14W12_34"
+          "longitude": "14W12:34"
         },
         {
-          "name": "test_11",
           "latitude": "51N12:34.56",
           "longitude": "14E12:34.56"
         },
         {
-          "name": "test_12",
           "latitude": "51S12:34.56",
           "longitude": "14E12:34.56"
         }

@@ -31,7 +31,7 @@
     "overhead_line_conductor": {
       "instances": [
         {
-          "name": "overhead_line_conductor_6010",
+          "object_declaration": "overhead_line_conductor:6010",
           "geometric_mean_radius": 0.0313,
           "resistance": 0.1859,
           "outside_comments": [
@@ -39,7 +39,7 @@
           ]
         },
         {
-          "name": "overhead_line_conductor_6020",
+          "object_declaration": "overhead_line_conductor:6020",
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592,
           "outside_comments": [
@@ -47,7 +47,7 @@
           ]
         },
         {
-          "name": "overhead_line_conductor_6030",
+          "object_declaration": "overhead_line_conductor:6030",
           "geometric_mean_radius": 0.00446,
           "resistance": 1.12,
           "outside_comments": [
@@ -87,7 +87,7 @@
     "regulator_configuration": {
       "instances": [
         {
-          "name": "regulator_configuration_6506321",
+          "object_declaration": "regulator_configuration:6506321",
           "connect_type": 1,
           "band_center": 2401,
           "band_width": 40,
@@ -119,22 +119,19 @@
     "player": {
       "instances": [
         {
-          "name": "player_8",
-          "parent": "regulator_650632",
+          "parent": "Reg1",
           "property": "tap_A",
           "file": "../test_reg.player",
           "loop": 0
         },
         {
-          "name": "player_9",
-          "parent": "regulator_650632",
+          "parent": "Reg1",
           "property": "tap_B",
           "file": "../test_reg.player",
           "loop": 0
         },
         {
-          "name": "player_10",
-          "parent": "regulator_650632",
+          "parent": "Reg1",
           "property": "tap_C",
           "file": "../test_reg.player",
           "loop": 0
@@ -144,8 +141,7 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_11",
-          "parent": "regulator_650632",
+          "parent": "Reg1",
           "in": "'2000-01-01 00:00:04'",
           "target": "tap_A_change_count",
           "status": "ASSERT_TRUE",
@@ -154,8 +150,7 @@
           "within": 0.1
         },
         {
-          "name": "double_assert_12",
-          "parent": "regulator_650632",
+          "parent": "Reg1",
           "in": "'2000-01-01 00:00:04'",
           "target": "tap_B_change_count",
           "status": "ASSERT_TRUE",
@@ -164,8 +159,7 @@
           "within": 0.1
         },
         {
-          "name": "double_assert_13",
-          "parent": "regulator_650632",
+          "parent": "Reg1",
           "in": "'2000-01-01 00:00:04'",
           "target": "tap_B_change_count",
           "status": "ASSERT_TRUE",
@@ -178,11 +172,12 @@
     "regulator": {
       "instances": [
         {
-          "name": "regulator_650632",
+          "name": "Reg1",
+          "object_declaration": "regulator:650632",
           "phases": "ABC",
           "from": 650,
           "to": 630,
-          "configuration": "regulator_configuration_6506321"
+          "configuration": "regulator_configuration:6506321"
         }
       ]
     },

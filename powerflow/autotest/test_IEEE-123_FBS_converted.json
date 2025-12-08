@@ -30,7 +30,7 @@
     "overhead_line_conductor": {
       "instances": [
         {
-          "name": "overhead_line_conductor_10001",
+          "object_declaration": "overhead_line_conductor:10001",
           "geometric_mean_radius": 0.0244,
           "resistance": 0.306,
           "outside_comments": [
@@ -43,7 +43,7 @@
           ]
         },
         {
-          "name": "overhead_line_conductor_10009",
+          "object_declaration": "overhead_line_conductor:10009",
           "geometric_mean_radius": 0.00446,
           "resistance": 1.12,
           "outside_comments": [
@@ -51,7 +51,7 @@
           ]
         },
         {
-          "name": "overhead_line_conductor_10002",
+          "object_declaration": "overhead_line_conductor:10002",
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592,
           "outside_comments": [
@@ -63,7 +63,7 @@
     "underground_line_conductor": {
       "instances": [
         {
-          "name": "underground_line_conductor_10003",
+          "object_declaration": "underground_line_conductor:10003",
           "outer_diameter": 1.06,
           "conductor_gmr": 0.0111,
           "conductor_diameter": 0.368,
@@ -83,7 +83,7 @@
     "line_spacing": {
       "instances": [
         {
-          "name": "line_spacing_5001",
+          "object_declaration": "line_spacing:5001",
           "distance_AB": 2.5,
           "distance_AC": 7.0,
           "distance_BC": 4.5,
@@ -96,7 +96,7 @@
           ]
         },
         {
-          "name": "line_spacing_5002",
+          "object_declaration": "line_spacing:5002",
           "distance_AB": 4.5,
           "distance_AC": 2.5,
           "distance_BC": 7.0,
@@ -108,7 +108,7 @@
           ]
         },
         {
-          "name": "line_spacing_5003",
+          "object_declaration": "line_spacing:5003",
           "distance_AB": 7.0,
           "distance_AC": 4.5,
           "distance_BC": 2.5,
@@ -120,7 +120,7 @@
           ]
         },
         {
-          "name": "line_spacing_5004",
+          "object_declaration": "line_spacing:5004",
           "distance_AB": 4.5,
           "distance_AC": 7.0,
           "distance_BC": 2.5,
@@ -132,7 +132,7 @@
           ]
         },
         {
-          "name": "line_spacing_5005",
+          "object_declaration": "line_spacing:5005",
           "distance_AB": 2.5,
           "distance_AC": 4.5,
           "distance_BC": 7.0,
@@ -144,7 +144,7 @@
           ]
         },
         {
-          "name": "line_spacing_5006",
+          "object_declaration": "line_spacing:5006",
           "distance_AB": 7.0,
           "distance_AC": 2.5,
           "distance_BC": 4.5,
@@ -156,7 +156,7 @@
           ]
         },
         {
-          "name": "line_spacing_5007",
+          "object_declaration": "line_spacing:5007",
           "distance_AB": 0.0,
           "distance_AC": 7.0,
           "distance_BC": 0.0,
@@ -168,7 +168,7 @@
           ]
         },
         {
-          "name": "line_spacing_5008",
+          "object_declaration": "line_spacing:5008",
           "distance_AB": 7.0,
           "distance_AC": 0.0,
           "distance_BC": 0.0,
@@ -180,7 +180,7 @@
           ]
         },
         {
-          "name": "line_spacing_5009",
+          "object_declaration": "line_spacing:5009",
           "distance_AB": 0.0,
           "distance_AC": 0.0,
           "distance_BC": 0.0,
@@ -192,7 +192,7 @@
           ]
         },
         {
-          "name": "line_spacing_50010",
+          "object_declaration": "line_spacing:50010",
           "distance_AB": 0.0,
           "distance_AC": 0.0,
           "distance_BC": 0.0,
@@ -204,7 +204,7 @@
           ]
         },
         {
-          "name": "line_spacing_50011",
+          "object_declaration": "line_spacing:50011",
           "distance_AB": 0.0,
           "distance_AC": 0.0,
           "distance_BC": 0.0,
@@ -216,7 +216,7 @@
           ]
         },
         {
-          "name": "line_spacing_50012",
+          "object_declaration": "line_spacing:50012",
           "distance_AB": 0.5,
           "distance_AC": 1.0,
           "distance_BC": 0.5,
@@ -232,91 +232,91 @@
     "line_configuration": {
       "instances": [
         {
-          "name": "line_configuration_1001",
-          "conductor_A": "overhead_line_conductor_10001",
-          "conductor_B": "overhead_line_conductor_10001",
-          "conductor_C": "overhead_line_conductor_10001",
-          "conductor_N": "overhead_line_conductor_10002",
-          "spacing": "line_spacing_5001"
+          "object_declaration": "line_configuration:1001",
+          "conductor_A": "overhead_line_conductor:10001",
+          "conductor_B": "overhead_line_conductor:10001",
+          "conductor_C": "overhead_line_conductor:10001",
+          "conductor_N": "overhead_line_conductor:10002",
+          "spacing": "line_spacing:5001"
         },
         {
-          "name": "line_configuration_1002",
-          "conductor_A": "overhead_line_conductor_10001",
-          "conductor_B": "overhead_line_conductor_10001",
-          "conductor_C": "overhead_line_conductor_10001",
-          "conductor_N": "overhead_line_conductor_10002",
-          "spacing": "line_spacing_5002"
+          "object_declaration": "line_configuration:1002",
+          "conductor_A": "overhead_line_conductor:10001",
+          "conductor_B": "overhead_line_conductor:10001",
+          "conductor_C": "overhead_line_conductor:10001",
+          "conductor_N": "overhead_line_conductor:10002",
+          "spacing": "line_spacing:5002"
         },
         {
-          "name": "line_configuration_1003",
-          "conductor_A": "overhead_line_conductor_10001",
-          "conductor_B": "overhead_line_conductor_10001",
-          "conductor_C": "overhead_line_conductor_10001",
-          "conductor_N": "overhead_line_conductor_10002",
-          "spacing": "line_spacing_5003"
+          "object_declaration": "line_configuration:1003",
+          "conductor_A": "overhead_line_conductor:10001",
+          "conductor_B": "overhead_line_conductor:10001",
+          "conductor_C": "overhead_line_conductor:10001",
+          "conductor_N": "overhead_line_conductor:10002",
+          "spacing": "line_spacing:5003"
         },
         {
-          "name": "line_configuration_1004",
-          "conductor_A": "overhead_line_conductor_10001",
-          "conductor_B": "overhead_line_conductor_10001",
-          "conductor_C": "overhead_line_conductor_10001",
-          "conductor_N": "overhead_line_conductor_10002",
-          "spacing": "line_spacing_5004"
+          "object_declaration": "line_configuration:1004",
+          "conductor_A": "overhead_line_conductor:10001",
+          "conductor_B": "overhead_line_conductor:10001",
+          "conductor_C": "overhead_line_conductor:10001",
+          "conductor_N": "overhead_line_conductor:10002",
+          "spacing": "line_spacing:5004"
         },
         {
-          "name": "line_configuration_1005",
-          "conductor_A": "overhead_line_conductor_10001",
-          "conductor_B": "overhead_line_conductor_10001",
-          "conductor_C": "overhead_line_conductor_10001",
-          "conductor_N": "overhead_line_conductor_10002",
-          "spacing": "line_spacing_5005"
+          "object_declaration": "line_configuration:1005",
+          "conductor_A": "overhead_line_conductor:10001",
+          "conductor_B": "overhead_line_conductor:10001",
+          "conductor_C": "overhead_line_conductor:10001",
+          "conductor_N": "overhead_line_conductor:10002",
+          "spacing": "line_spacing:5005"
         },
         {
-          "name": "line_configuration_1006",
-          "conductor_A": "overhead_line_conductor_10001",
-          "conductor_B": "overhead_line_conductor_10001",
-          "conductor_C": "overhead_line_conductor_10001",
-          "conductor_N": "overhead_line_conductor_10002",
-          "spacing": "line_spacing_5006"
+          "object_declaration": "line_configuration:1006",
+          "conductor_A": "overhead_line_conductor:10001",
+          "conductor_B": "overhead_line_conductor:10001",
+          "conductor_C": "overhead_line_conductor:10001",
+          "conductor_N": "overhead_line_conductor:10002",
+          "spacing": "line_spacing:5006"
         },
         {
-          "name": "line_configuration_1007",
-          "conductor_A": "overhead_line_conductor_10001",
-          "conductor_C": "overhead_line_conductor_10001",
-          "conductor_N": "overhead_line_conductor_10002",
-          "spacing": "line_spacing_5007"
+          "object_declaration": "line_configuration:1007",
+          "conductor_A": "overhead_line_conductor:10001",
+          "conductor_C": "overhead_line_conductor:10001",
+          "conductor_N": "overhead_line_conductor:10002",
+          "spacing": "line_spacing:5007"
         },
         {
-          "name": "line_configuration_1008",
-          "conductor_A": "overhead_line_conductor_10001",
-          "conductor_B": "overhead_line_conductor_10001",
-          "conductor_N": "overhead_line_conductor_10002",
-          "spacing": "line_spacing_5008"
+          "object_declaration": "line_configuration:1008",
+          "conductor_A": "overhead_line_conductor:10001",
+          "conductor_B": "overhead_line_conductor:10001",
+          "conductor_N": "overhead_line_conductor:10002",
+          "spacing": "line_spacing:5008"
         },
         {
-          "name": "line_configuration_1009",
-          "conductor_A": "overhead_line_conductor_10009",
-          "conductor_N": "overhead_line_conductor_10009",
-          "spacing": "line_spacing_5009"
+          "object_declaration": "line_configuration:1009",
+          "conductor_A": "overhead_line_conductor:10009",
+          "conductor_N": "overhead_line_conductor:10009",
+          "spacing": "line_spacing:5009"
         },
         {
-          "name": "line_configuration_10010",
-          "conductor_B": "overhead_line_conductor_10009",
-          "conductor_N": "overhead_line_conductor_10009",
-          "spacing": "line_spacing_50010"
+          "object_declaration": "line_configuration:10010",
+          "conductor_B": "overhead_line_conductor:10009",
+          "conductor_N": "overhead_line_conductor:10009",
+          "spacing": "line_spacing:50010"
         },
         {
-          "name": "line_configuration_10011",
-          "conductor_C": "overhead_line_conductor_10009",
-          "conductor_N": "overhead_line_conductor_10009",
-          "spacing": "line_spacing_50011"
+          "object_declaration": "line_configuration:10011",
+          "conductor_C": "overhead_line_conductor:10009",
+          "conductor_N": "overhead_line_conductor:10009",
+          "spacing": "line_spacing:50011"
         },
         {
-          "name": "line_configuration_10012",
-          "conductor_A": "underground_line_conductor_10003",
-          "conductor_B": "underground_line_conductor_10003",
-          "conductor_C": "underground_line_conductor_10003",
-          "spacing": "line_spacing_50012"
+          "object_declaration": "line_configuration:10012",
+          "conductor_A": "underground_line_conductor:10003",
+          "conductor_B": "underground_line_conductor:10003",
+          "conductor_C": "underground_line_conductor:10003",
+          "spacing": "line_spacing:50012"
         }
       ]
     },
@@ -325,10 +325,10 @@
         {
           "name": "1-2",
           "phases": "BN",
-          "from": "load_1",
-          "to": "load_2",
+          "from": "load:1",
+          "to": "load:2",
           "length": 175,
-          "configuration": "line_configuration_10010",
+          "configuration": "line_configuration:10010",
           "outside_comments": [
             "//Define line objects"
           ]
@@ -336,402 +336,402 @@
         {
           "name": "1-3",
           "phases": "CN",
-          "from": "load_1",
-          "to": "node_3",
+          "from": "load:1",
+          "to": "node:3",
           "length": 250,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "1-7",
           "phases": "ABCN",
-          "from": "load_1",
-          "to": "load_7",
+          "from": "load:1",
+          "to": "load:7",
           "length": 300,
-          "configuration": "line_configuration_1001"
+          "configuration": "line_configuration:1001"
         },
         {
           "name": "3-4",
           "phases": "CN",
-          "from": "node_3",
-          "to": "load_4",
+          "from": "node:3",
+          "to": "load:4",
           "length": 200,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "3-5",
           "phases": "CN",
-          "from": "node_3",
-          "to": "load_5",
+          "from": "node:3",
+          "to": "load:5",
           "length": 325,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "5-6",
           "phases": "CN",
-          "from": "load_5",
-          "to": "load_6",
+          "from": "load:5",
+          "to": "load:6",
           "length": 250,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "7-8",
           "phases": "ABCN",
-          "from": "load_7",
-          "to": "node_8",
+          "from": "load:7",
+          "to": "node:8",
           "length": 200,
-          "configuration": "line_configuration_1001"
+          "configuration": "line_configuration:1001"
         },
         {
           "name": "8-12",
           "phases": "BN",
-          "from": "node_8",
-          "to": "load_12",
+          "from": "node:8",
+          "to": "load:12",
           "length": 225,
-          "configuration": "line_configuration_10010"
+          "configuration": "line_configuration:10010"
         },
         {
           "name": "8-9",
           "phases": "AN",
-          "from": "node_8",
-          "to": "load_9",
+          "from": "node:8",
+          "to": "load:9",
           "length": 225,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "8-13",
           "phases": "ABCN",
-          "from": "node_8",
-          "to": "node_13",
+          "from": "node:8",
+          "to": "node:13",
           "length": 300,
-          "configuration": "line_configuration_1001"
+          "configuration": "line_configuration:1001"
         },
         {
           "name": "1401-14",
           "phases": "AN",
-          "from": "node_1401",
-          "to": "node_14",
+          "from": "node:1401",
+          "to": "node:14",
           "length": 425,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "13-34",
           "phases": "CN",
-          "from": "node_13",
-          "to": "load_34",
+          "from": "node:13",
+          "to": "load:34",
           "length": 150,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "13-18",
           "phases": "ABCN",
-          "from": "node_13",
-          "to": "node_18",
+          "from": "node:13",
+          "to": "node:18",
           "length": 825,
-          "configuration": "line_configuration_1002"
+          "configuration": "line_configuration:1002"
         },
         {
           "name": "14-11",
           "phases": "AN",
-          "from": "node_14",
-          "to": "load_11",
+          "from": "node:14",
+          "to": "load:11",
           "length": 250,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "14-10",
           "phases": "AN",
-          "from": "node_14",
-          "to": "load_10",
+          "from": "node:14",
+          "to": "load:10",
           "length": 250,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "15-16",
           "phases": "CN",
-          "from": "node_15",
-          "to": "load_16",
+          "from": "node:15",
+          "to": "load:16",
           "length": 375,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "15-17",
           "phases": "CN",
-          "from": "node_15",
-          "to": "load_17",
+          "from": "node:15",
+          "to": "load:17",
           "length": 350,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "18-19",
           "phases": "AN",
-          "from": "node_18",
-          "to": "load_19",
+          "from": "node:18",
+          "to": "load:19",
           "length": 250,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "18-21",
           "phases": "ABCN",
-          "from": "node_18",
-          "to": "node_21",
+          "from": "node:18",
+          "to": "node:21",
           "length": 300,
-          "configuration": "line_configuration_1002"
+          "configuration": "line_configuration:1002"
         },
         {
           "name": "19-20",
           "phases": "AN",
-          "from": "load_19",
-          "to": "load_20",
+          "from": "load:19",
+          "to": "load:20",
           "length": 325,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "21-22",
           "phases": "BN",
-          "from": "node_21",
-          "to": "load_22",
+          "from": "node:21",
+          "to": "load:22",
           "length": 525,
-          "configuration": "line_configuration_10010"
+          "configuration": "line_configuration:10010"
         },
         {
           "name": "21-23",
           "phases": "ABCN",
-          "from": "node_21",
-          "to": "node_23",
+          "from": "node:21",
+          "to": "node:23",
           "length": 250,
-          "configuration": "line_configuration_1002"
+          "configuration": "line_configuration:1002"
         },
         {
           "name": "23-24",
           "phases": "CN",
-          "from": "node_23",
-          "to": "load_24",
+          "from": "node:23",
+          "to": "load:24",
           "length": 550,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "23-25",
           "phases": "ABCN",
-          "from": "node_23",
-          "to": "node_25",
+          "from": "node:23",
+          "to": "node:25",
           "length": 275,
-          "configuration": "line_configuration_1002"
+          "configuration": "line_configuration:1002"
         },
         {
           "name": "2601-26",
           "phases": "ACN",
-          "from": "node_2601",
-          "to": "node_26",
+          "from": "node:2601",
+          "to": "node:26",
           "length": 350,
-          "configuration": "line_configuration_1007"
+          "configuration": "line_configuration:1007"
         },
         {
           "name": "25-28",
           "phases": "ABCN",
-          "from": "node_25",
-          "to": "load_28",
+          "from": "node:25",
+          "to": "load:28",
           "length": 200,
-          "configuration": "line_configuration_1002"
+          "configuration": "line_configuration:1002"
         },
         {
           "name": "26-27",
           "phases": "ACN",
-          "from": "node_26",
-          "to": "node_27",
+          "from": "node:26",
+          "to": "node:27",
           "length": 275,
-          "configuration": "line_configuration_1007"
+          "configuration": "line_configuration:1007"
         },
         {
           "name": "26-31",
           "phases": "CN",
-          "from": "node_26",
-          "to": "load_31",
+          "from": "node:26",
+          "to": "load:31",
           "length": 225,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "27-33",
           "phases": "AN",
-          "from": "node_27",
-          "to": "load_33",
+          "from": "node:27",
+          "to": "load:33",
           "length": 500,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "28-29",
           "phases": "ABCN",
-          "from": "load_28",
-          "to": "load_29",
+          "from": "load:28",
+          "to": "load:29",
           "length": 300,
-          "configuration": "line_configuration_1002"
+          "configuration": "line_configuration:1002"
         },
         {
           "name": "29-30",
           "phases": "ABCN",
-          "from": "load_29",
-          "to": "load_30",
+          "from": "load:29",
+          "to": "load:30",
           "length": 350,
-          "configuration": "line_configuration_1002"
+          "configuration": "line_configuration:1002"
         },
         {
           "name": "30-250",
           "phases": "ABCN",
-          "from": "load_30",
-          "to": "node_250",
+          "from": "load:30",
+          "to": "node:250",
           "length": 200,
-          "configuration": "line_configuration_1002"
+          "configuration": "line_configuration:1002"
         },
         {
           "name": "31-32",
           "phases": "CN",
-          "from": "load_31",
-          "to": "load_32",
+          "from": "load:31",
+          "to": "load:32",
           "length": 300,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "34-15",
           "phases": "CN",
-          "from": "load_34",
-          "to": "node_15",
+          "from": "load:34",
+          "to": "node:15",
           "length": 100,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "35-36",
           "phases": "ABN",
-          "from": "load_35",
-          "to": "node_36",
+          "from": "load:35",
+          "to": "node:36",
           "length": 650,
-          "configuration": "line_configuration_1008"
+          "configuration": "line_configuration:1008"
         },
         {
           "name": "35-40",
           "phases": "ABCN",
-          "from": "load_35",
-          "to": "node_40",
+          "from": "load:35",
+          "to": "node:40",
           "length": 250,
-          "configuration": "line_configuration_1001"
+          "configuration": "line_configuration:1001"
         },
         {
           "name": "36-37",
           "phases": "AN",
-          "from": "node_36",
-          "to": "load_37",
+          "from": "node:36",
+          "to": "load:37",
           "length": 300,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "36-38",
           "phases": "BN",
-          "from": "node_36",
-          "to": "load_38",
+          "from": "node:36",
+          "to": "load:38",
           "length": 250,
-          "configuration": "line_configuration_10010"
+          "configuration": "line_configuration:10010"
         },
         {
           "name": "38-39",
           "phases": "BN",
-          "from": "load_38",
-          "to": "load_39",
+          "from": "load:38",
+          "to": "load:39",
           "length": 325,
-          "configuration": "line_configuration_10010"
+          "configuration": "line_configuration:10010"
         },
         {
           "name": "40-41",
           "phases": "CN",
-          "from": "node_40",
-          "to": "load_41",
+          "from": "node:40",
+          "to": "load:41",
           "length": 325,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "40-42",
           "phases": "ABCN",
-          "from": "node_40",
-          "to": "load_42",
+          "from": "node:40",
+          "to": "load:42",
           "length": 250,
-          "configuration": "line_configuration_1001"
+          "configuration": "line_configuration:1001"
         },
         {
           "name": "42-43",
           "phases": "BN",
-          "from": "load_42",
-          "to": "load_43",
+          "from": "load:42",
+          "to": "load:43",
           "length": 500,
-          "configuration": "line_configuration_10010"
+          "configuration": "line_configuration:10010"
         },
         {
           "name": "42-44",
           "phases": "ABCN",
-          "from": "load_42",
-          "to": "node_44",
+          "from": "load:42",
+          "to": "node:44",
           "length": 200,
-          "configuration": "line_configuration_1001"
+          "configuration": "line_configuration:1001"
         },
         {
           "name": "44-45",
           "phases": "AN",
-          "from": "node_44",
-          "to": "load_45",
+          "from": "node:44",
+          "to": "load:45",
           "length": 200,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "44-47",
           "phases": "ABCN",
-          "from": "node_44",
-          "to": "load_47",
+          "from": "node:44",
+          "to": "load:47",
           "length": 250,
-          "configuration": "line_configuration_1001"
+          "configuration": "line_configuration:1001"
         },
         {
           "name": "45-46",
           "phases": "AN",
-          "from": "load_45",
-          "to": "load_46",
+          "from": "load:45",
+          "to": "load:46",
           "length": 300,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "47-48",
           "phases": "ABCN",
-          "from": "load_47",
-          "to": "load_48",
+          "from": "load:47",
+          "to": "load:48",
           "length": 150,
-          "configuration": "line_configuration_1004"
+          "configuration": "line_configuration:1004"
         },
         {
           "name": "47-49",
           "phases": "ABCN",
-          "from": "load_47",
-          "to": "load_49",
+          "from": "load:47",
+          "to": "load:49",
           "length": 250,
-          "configuration": "line_configuration_1004"
+          "configuration": "line_configuration:1004"
         },
         {
           "name": "49-50",
           "phases": "ABCN",
-          "from": "load_49",
-          "to": "load_50",
+          "from": "load:49",
+          "to": "load:50",
           "length": 250,
-          "configuration": "line_configuration_1004"
+          "configuration": "line_configuration:1004"
         },
         {
           "name": "50-51",
           "phases": "ABCN",
-          "from": "load_50",
-          "to": "load_51",
+          "from": "load:50",
+          "to": "load:51",
           "length": 250,
-          "configuration": "line_configuration_1004"
+          "configuration": "line_configuration:1004"
         },
         {
           "name": "51-151",
           "phases": "ABCN",
-          "from": "load_51",
-          "to": "node_151",
+          "from": "load:51",
+          "to": "node:151",
           "length": 700,
-          "configuration": "line_configuration_1004",
+          "configuration": "line_configuration:1004",
           "inline_comments": {
             "phases": "//undefined line segment"
           }
@@ -739,498 +739,498 @@
         {
           "name": "52-53",
           "phases": "ABCN",
-          "from": "load_52",
-          "to": "load_53",
+          "from": "load:52",
+          "to": "load:53",
           "length": 200,
-          "configuration": "line_configuration_1001"
+          "configuration": "line_configuration:1001"
         },
         {
           "name": "53-54",
           "phases": "ABCN",
-          "from": "load_53",
-          "to": "node_54",
+          "from": "load:53",
+          "to": "node:54",
           "length": 125,
-          "configuration": "line_configuration_1001"
+          "configuration": "line_configuration:1001"
         },
         {
           "name": "54-55",
           "phases": "ABCN",
-          "from": "node_54",
-          "to": "load_55",
+          "from": "node:54",
+          "to": "load:55",
           "length": 275,
-          "configuration": "line_configuration_1001"
+          "configuration": "line_configuration:1001"
         },
         {
           "name": "54-57",
           "phases": "ABCN",
-          "from": "node_54",
-          "to": "node_57",
+          "from": "node:54",
+          "to": "node:57",
           "length": 350,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         },
         {
           "name": "55-56",
           "phases": "ABCN",
-          "from": "load_55",
-          "to": "load_56",
+          "from": "load:55",
+          "to": "load:56",
           "length": 275,
-          "configuration": "line_configuration_1001"
+          "configuration": "line_configuration:1001"
         },
         {
           "name": "57-58",
           "phases": "BN",
-          "from": "node_57",
-          "to": "load_58",
+          "from": "node:57",
+          "to": "load:58",
           "length": 250,
-          "configuration": "line_configuration_10010"
+          "configuration": "line_configuration:10010"
         },
         {
           "name": "57-60",
           "phases": "ABCN",
-          "from": "node_57",
-          "to": "load_60",
+          "from": "node:57",
+          "to": "load:60",
           "length": 750,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         },
         {
           "name": "58-59",
           "phases": "BN",
-          "from": "load_58",
-          "to": "load_59",
+          "from": "load:58",
+          "to": "load:59",
           "length": 250,
-          "configuration": "line_configuration_10010"
+          "configuration": "line_configuration:10010"
         },
         {
           "name": "60-61",
           "phases": "ABCN",
-          "from": "load_60",
-          "to": "node_61",
+          "from": "load:60",
+          "to": "node:61",
           "length": 550,
-          "configuration": "line_configuration_1005"
+          "configuration": "line_configuration:1005"
         },
         {
           "name": "67-68",
           "phases": "AN",
-          "from": "node_67",
-          "to": "load_68",
+          "from": "node:67",
+          "to": "load:68",
           "length": 200,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "67-72",
           "phases": "ABCN",
-          "from": "node_67",
-          "to": "node_72",
+          "from": "node:67",
+          "to": "node:72",
           "length": 275,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         },
         {
           "name": "67-97",
           "phases": "ABCN",
-          "from": "node_67",
-          "to": "node_97",
+          "from": "node:67",
+          "to": "node:97",
           "length": 250,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         },
         {
           "name": "68-69",
           "phases": "AN",
-          "from": "load_68",
-          "to": "load_69",
+          "from": "load:68",
+          "to": "load:69",
           "length": 275,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "69-70",
           "phases": "AN",
-          "from": "load_69",
-          "to": "load_70",
+          "from": "load:69",
+          "to": "load:70",
           "length": 325,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "70-71",
           "phases": "AN",
-          "from": "load_70",
-          "to": "load_71",
+          "from": "load:70",
+          "to": "load:71",
           "length": 275,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "72-73",
           "phases": "CN",
-          "from": "node_72",
-          "to": "load_73",
+          "from": "node:72",
+          "to": "load:73",
           "length": 275,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "72-76",
           "phases": "ABCN",
-          "from": "node_72",
-          "to": "load_76",
+          "from": "node:72",
+          "to": "load:76",
           "length": 200,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         },
         {
           "name": "73-74",
           "phases": "CN",
-          "from": "load_73",
-          "to": "load_74",
+          "from": "load:73",
+          "to": "load:74",
           "length": 350,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "74-75",
           "phases": "CN",
-          "from": "load_74",
-          "to": "load_75",
+          "from": "load:74",
+          "to": "load:75",
           "length": 400,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "76-77",
           "phases": "ABCN",
-          "from": "load_76",
-          "to": "load_77",
+          "from": "load:76",
+          "to": "load:77",
           "length": 400,
-          "configuration": "line_configuration_1006"
+          "configuration": "line_configuration:1006"
         },
         {
           "name": "76-86",
           "phases": "ABCN",
-          "from": "load_76",
-          "to": "load_86",
+          "from": "load:76",
+          "to": "load:86",
           "length": 700,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         },
         {
           "name": "77-78",
           "phases": "ABCN",
-          "from": "load_77",
-          "to": "node_78",
+          "from": "load:77",
+          "to": "node:78",
           "length": 100,
-          "configuration": "line_configuration_1006"
+          "configuration": "line_configuration:1006"
         },
         {
           "name": "78-79",
           "phases": "ABCN",
-          "from": "node_78",
-          "to": "load_79",
+          "from": "node:78",
+          "to": "load:79",
           "length": 225,
-          "configuration": "line_configuration_1006"
+          "configuration": "line_configuration:1006"
         },
         {
           "name": "78-80",
           "phases": "ABCN",
-          "from": "node_78",
-          "to": "load_80",
+          "from": "node:78",
+          "to": "load:80",
           "length": 475,
-          "configuration": "line_configuration_1006"
+          "configuration": "line_configuration:1006"
         },
         {
           "name": "80-81",
           "phases": "ABCN",
-          "from": "load_80",
-          "to": "node_81",
+          "from": "load:80",
+          "to": "node:81",
           "length": 475,
-          "configuration": "line_configuration_1006"
+          "configuration": "line_configuration:1006"
         },
         {
           "name": "81-82",
           "phases": "ABCN",
-          "from": "node_81",
-          "to": "load_82",
+          "from": "node:81",
+          "to": "load:82",
           "length": 250,
-          "configuration": "line_configuration_1006"
+          "configuration": "line_configuration:1006"
         },
         {
           "name": "81-84",
           "phases": "CN",
-          "from": "node_81",
-          "to": "load_84",
+          "from": "node:81",
+          "to": "load:84",
           "length": 675,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "82-83",
           "phases": "ABCN",
-          "from": "load_82",
-          "to": "load_83",
+          "from": "load:82",
+          "to": "load:83",
           "length": 250,
-          "configuration": "line_configuration_1006"
+          "configuration": "line_configuration:1006"
         },
         {
           "name": "84-85",
           "phases": "CN",
-          "from": "load_84",
-          "to": "load_85",
+          "from": "load:84",
+          "to": "load:85",
           "length": 475,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "86-87",
           "phases": "ABCN",
-          "from": "load_86",
-          "to": "load_87",
+          "from": "load:86",
+          "to": "load:87",
           "length": 450,
-          "configuration": "line_configuration_1006"
+          "configuration": "line_configuration:1006"
         },
         {
           "name": "87-88",
           "phases": "AN",
-          "from": "load_87",
-          "to": "load_88",
+          "from": "load:87",
+          "to": "load:88",
           "length": 175,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "87-89",
           "phases": "ABCN",
-          "from": "load_87",
-          "to": "node_89",
+          "from": "load:87",
+          "to": "node:89",
           "length": 275,
-          "configuration": "line_configuration_1006"
+          "configuration": "line_configuration:1006"
         },
         {
           "name": "89-90",
           "phases": "BN",
-          "from": "node_89",
-          "to": "load_90",
+          "from": "node:89",
+          "to": "load:90",
           "length": 225,
-          "configuration": "line_configuration_10010"
+          "configuration": "line_configuration:10010"
         },
         {
           "name": "89-91",
           "phases": "ABCN",
-          "from": "node_89",
-          "to": "node_91",
+          "from": "node:89",
+          "to": "node:91",
           "length": 225,
-          "configuration": "line_configuration_1006"
+          "configuration": "line_configuration:1006"
         },
         {
           "name": "91-92",
           "phases": "CN",
-          "from": "node_91",
-          "to": "load_92",
+          "from": "node:91",
+          "to": "load:92",
           "length": 300,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "91-93",
           "phases": "ABCN",
-          "from": "node_91",
-          "to": "node_93",
+          "from": "node:91",
+          "to": "node:93",
           "length": 225,
-          "configuration": "line_configuration_1006"
+          "configuration": "line_configuration:1006"
         },
         {
           "name": "93-94",
           "phases": "AN",
-          "from": "node_93",
-          "to": "load_94",
+          "from": "node:93",
+          "to": "load:94",
           "length": 275,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "93-95",
           "phases": "ABCN",
-          "from": "node_93",
-          "to": "load_95",
+          "from": "node:93",
+          "to": "load:95",
           "length": 300,
-          "configuration": "line_configuration_1006"
+          "configuration": "line_configuration:1006"
         },
         {
           "name": "95-96",
           "phases": "BN",
-          "from": "load_95",
-          "to": "load_96",
+          "from": "load:95",
+          "to": "load:96",
           "length": 200,
-          "configuration": "line_configuration_10010"
+          "configuration": "line_configuration:10010"
         },
         {
           "name": "97-98",
           "phases": "ABCN",
-          "from": "node_97",
-          "to": "load_98",
+          "from": "node:97",
+          "to": "load:98",
           "length": 275,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         },
         {
           "name": "98-99",
           "phases": "ABCN",
-          "from": "load_98",
-          "to": "load_99",
+          "from": "load:98",
+          "to": "load:99",
           "length": 550,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         },
         {
           "name": "99-100",
           "phases": "ABCN",
-          "from": "load_99",
-          "to": "load_100",
+          "from": "load:99",
+          "to": "load:100",
           "length": 300,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         },
         {
           "name": "100-450",
           "phases": "ABCN",
-          "from": "load_100",
-          "to": "node_450",
+          "from": "load:100",
+          "to": "node:450",
           "length": 800,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         },
         {
           "name": "101-102",
           "phases": "CN",
-          "from": "node_101",
-          "to": "load_102",
+          "from": "node:101",
+          "to": "load:102",
           "length": 225,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "101-105",
           "phases": "ABCN",
-          "from": "node_101",
-          "to": "node_105",
+          "from": "node:101",
+          "to": "node:105",
           "length": 275,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         },
         {
           "name": "102-103",
           "phases": "CN",
-          "from": "load_102",
-          "to": "load_103",
+          "from": "load:102",
+          "to": "load:103",
           "length": 325,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "103-104",
           "phases": "CN",
-          "from": "load_103",
-          "to": "load_104",
+          "from": "load:103",
+          "to": "load:104",
           "length": 700,
-          "configuration": "line_configuration_10011"
+          "configuration": "line_configuration:10011"
         },
         {
           "name": "105-106",
           "phases": "BN",
-          "from": "node_105",
-          "to": "load_106",
+          "from": "node:105",
+          "to": "load:106",
           "length": 225,
-          "configuration": "line_configuration_10010"
+          "configuration": "line_configuration:10010"
         },
         {
           "name": "105-108",
           "phases": "ABCN",
-          "from": "node_105",
-          "to": "node_108",
+          "from": "node:105",
+          "to": "node:108",
           "length": 325,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         },
         {
           "name": "106-107",
           "phases": "BN",
-          "from": "load_106",
-          "to": "load_107",
+          "from": "load:106",
+          "to": "load:107",
           "length": 575,
-          "configuration": "line_configuration_10010"
+          "configuration": "line_configuration:10010"
         },
         {
           "name": "108-109",
           "phases": "AN",
-          "from": "node_108",
-          "to": "load_109",
+          "from": "node:108",
+          "to": "load:109",
           "length": 450,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "108-300",
           "phases": "ABCN",
-          "from": "node_108",
-          "to": "node_300",
+          "from": "node:108",
+          "to": "node:300",
           "length": 1000,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         },
         {
           "name": "109-110",
           "phases": "AN",
-          "from": "load_109",
-          "to": "node_110",
+          "from": "load:109",
+          "to": "node:110",
           "length": 300,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "110-111",
           "phases": "AN",
-          "from": "node_110",
-          "to": "load_111",
+          "from": "node:110",
+          "to": "load:111",
           "length": 575,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "110-112",
           "phases": "AN",
-          "from": "node_110",
-          "to": "load_112",
+          "from": "node:110",
+          "to": "load:112",
           "length": 125,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "112-113",
           "phases": "AN",
-          "from": "load_112",
-          "to": "load_113",
+          "from": "load:112",
+          "to": "load:113",
           "length": 525,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "113-114",
           "phases": "AN",
-          "from": "load_113",
-          "to": "load_114",
+          "from": "load:113",
+          "to": "load:114",
           "length": 325,
-          "configuration": "line_configuration_1009"
+          "configuration": "line_configuration:1009"
         },
         {
           "name": "135-35",
           "phases": "ABCN",
-          "from": "node_135",
-          "to": "load_35",
+          "from": "node:135",
+          "to": "load:35",
           "length": 375,
-          "configuration": "line_configuration_1004"
+          "configuration": "line_configuration:1004"
         },
         {
           "name": "149-1",
           "phases": "ABCN",
-          "from": "node_149",
-          "to": "load_1",
+          "from": "node:149",
+          "to": "load:1",
           "length": 400,
-          "configuration": "line_configuration_1001"
+          "configuration": "line_configuration:1001"
         },
         {
           "name": "152-52",
           "phases": "ABCN",
-          "from": "node_152",
-          "to": "load_52",
+          "from": "node:152",
+          "to": "load:52",
           "length": 400,
-          "configuration": "line_configuration_1001"
+          "configuration": "line_configuration:1001"
         },
         {
           "name": "6701-67",
           "phases": "ABCN",
-          "from": "node_6701",
-          "to": "node_67",
+          "from": "node:6701",
+          "to": "node:67",
           "length": 350,
-          "configuration": "line_configuration_1006"
+          "configuration": "line_configuration:1006"
         },
         {
           "name": "197-101",
           "phases": "ABCN",
-          "from": "node_197",
-          "to": "node_101",
+          "from": "node:197",
+          "to": "node:101",
           "length": 250,
-          "configuration": "line_configuration_1003"
+          "configuration": "line_configuration:1003"
         }
       ]
     },
@@ -1239,50 +1239,49 @@
         {
           "name": "60-62",
           "phases": "ABC",
-          "from": "load_60",
-          "to": "load_62",
+          "from": "load:60",
+          "to": "load:62",
           "length": 250,
-          "configuration": "line_configuration_10012"
+          "configuration": "line_configuration:10012"
         },
         {
           "name": "62-63",
           "phases": "ABC",
-          "from": "load_62",
-          "to": "load_63",
+          "from": "load:62",
+          "to": "load:63",
           "length": 175,
-          "configuration": "line_configuration_10012"
+          "configuration": "line_configuration:10012"
         },
         {
           "name": "63-64",
           "phases": "ABC",
-          "from": "load_63",
-          "to": "load_64",
+          "from": "load:63",
+          "to": "load:64",
           "length": 350,
-          "configuration": "line_configuration_10012"
+          "configuration": "line_configuration:10012"
         },
         {
           "name": "64-65",
           "phases": "ABC",
-          "from": "load_64",
-          "to": "load_65",
+          "from": "load:64",
+          "to": "load:65",
           "length": 425,
-          "configuration": "line_configuration_10012"
+          "configuration": "line_configuration:10012"
         },
         {
           "name": "65-66",
           "phases": "ABC",
-          "from": "load_65",
-          "to": "load_66",
+          "from": "load:65",
+          "to": "load:66",
           "length": 325,
-          "configuration": "line_configuration_10012"
+          "configuration": "line_configuration:10012"
         }
       ]
     },
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_148",
-          "parent": "node_3",
+          "parent": 3,
           "target": "voltage_C",
           "within": 5,
           "value": "+2481.44+119.592d",
@@ -1291,302 +1290,259 @@
           ]
         },
         {
-          "name": "complex_assert_150",
-          "parent": "node_8",
+          "parent": 8,
           "target": "voltage_A",
           "within": 5,
           "value": "+2440.67-1.43982d"
         },
         {
-          "name": "complex_assert_151",
-          "parent": "node_8",
+          "parent": 8,
           "target": "voltage_B",
           "within": 5,
           "value": "+2494.43-120.728d"
         },
         {
-          "name": "complex_assert_152",
-          "parent": "node_8",
+          "parent": 8,
           "target": "voltage_C",
           "within": 5,
           "value": "+2462.4+119.203d"
         },
         {
-          "name": "complex_assert_154",
-          "parent": "node_13",
+          "parent": 13,
           "target": "voltage_A",
           "within": 5,
           "value": "+2421.69-1.87889d"
         },
         {
-          "name": "complex_assert_155",
-          "parent": "node_13",
+          "parent": 13,
           "target": "voltage_B",
           "within": 5,
           "value": "+2489.38-120.962d"
         },
         {
-          "name": "complex_assert_156",
-          "parent": "node_13",
+          "parent": 13,
           "target": "voltage_C",
           "within": 5,
           "value": "+2448.7+118.92d"
         },
         {
-          "name": "complex_assert_171",
-          "parent": "node_54",
+          "parent": 54,
           "target": "voltage_A",
           "within": 5,
           "value": "+2397.25-2.541d "
         },
         {
-          "name": "complex_assert_172",
-          "parent": "node_54",
+          "parent": 54,
           "target": "voltage_B",
           "within": 5,
           "value": "+2483.45-121.403d"
         },
         {
-          "name": "complex_assert_173",
-          "parent": "node_54",
+          "parent": 54,
           "target": "voltage_C",
           "within": 5,
           "value": "+2434.91+118.457d"
         },
         {
-          "name": "complex_assert_175",
-          "parent": "node_57",
+          "parent": 57,
           "target": "voltage_A",
           "within": 5,
           "value": "+2389.82-2.84461d"
         },
         {
-          "name": "complex_assert_176",
-          "parent": "node_57",
+          "parent": 57,
           "target": "voltage_B",
           "within": 5,
           "value": "+2476.83-121.609d"
         },
         {
-          "name": "complex_assert_177",
-          "parent": "node_57",
+          "parent": 57,
           "target": "voltage_C",
           "within": 5,
           "value": "+2428.76+118.244d"
         },
         {
-          "name": "complex_assert_179",
-          "parent": "node_61",
+          "parent": 61,
           "target": "voltage_A",
           "within": 5,
           "value": "+2374.39-3.52678d "
         },
         {
-          "name": "complex_assert_180",
-          "parent": "node_61",
+          "parent": 61,
           "target": "voltage_B",
           "within": 5,
           "value": "+2465.05-122.008d "
         },
         {
-          "name": "complex_assert_181",
-          "parent": "node_61",
+          "parent": 61,
           "target": "voltage_C",
           "within": 5,
           "value": "+2414.38+117.79d "
         },
         {
-          "name": "complex_assert_183",
-          "parent": "node_67",
+          "parent": 67,
           "target": "voltage_A",
           "within": 5,
           "value": "+2488.67-3.77586d "
         },
         {
-          "name": "complex_assert_184",
-          "parent": "node_67",
+          "parent": 67,
           "target": "voltage_B",
           "within": 5,
           "value": "+2478.31-122.188d "
         },
         {
-          "name": "complex_assert_185",
-          "parent": "node_67",
+          "parent": 67,
           "target": "voltage_C",
           "within": 5,
           "value": "+2484.7+117.653d "
         },
         {
-          "name": "complex_assert_188",
-          "parent": "node_72",
+          "parent": 72,
           "target": "voltage_A",
           "within": 5,
           "value": "+2489.67-3.87278d "
         },
         {
-          "name": "complex_assert_189",
-          "parent": "node_72",
+          "parent": 72,
           "target": "voltage_B",
           "within": 5,
           "value": "+2476.22-122.291d "
         },
         {
-          "name": "complex_assert_190",
-          "parent": "node_72",
+          "parent": 72,
           "target": "voltage_C",
           "within": 5,
           "value": "+2484.25+117.535d "
         },
         {
-          "name": "complex_assert_192",
-          "parent": "node_78",
+          "parent": 78,
           "target": "voltage_A",
           "within": 5,
           "value": "+2493.03-4.02034d "
         },
         {
-          "name": "complex_assert_193",
-          "parent": "node_78",
+          "parent": 78,
           "target": "voltage_B",
           "within": 5,
           "value": "+2478.75-122.484d "
         },
         {
-          "name": "complex_assert_194",
-          "parent": "node_78",
+          "parent": 78,
           "target": "voltage_C",
           "within": 5,
           "value": "+2488.3+117.388d "
         },
         {
-          "name": "complex_assert_196",
-          "parent": "node_81",
+          "parent": 81,
           "target": "voltage_A",
           "within": 5,
           "value": "+2503.25-4.15568d "
         },
         {
-          "name": "complex_assert_197",
-          "parent": "node_81",
+          "parent": 81,
           "target": "voltage_B",
           "within": 5,
           "value": "+2488.28-122.577d "
         },
         {
-          "name": "complex_assert_198",
-          "parent": "node_81",
+          "parent": 81,
           "target": "voltage_C",
           "within": 5,
           "value": "+2491.77+117.18d "
         },
         {
-          "name": "complex_assert_200",
-          "parent": "node_89",
+          "parent": 89,
           "target": "voltage_A",
           "within": 5,
           "value": "+2485.02-3.98368d "
         },
         {
-          "name": "complex_assert_201",
-          "parent": "node_89",
+          "parent": 89,
           "target": "voltage_B",
           "within": 5,
           "value": "+2468.37-122.694d "
         },
         {
-          "name": "complex_assert_202",
-          "parent": "node_89",
+          "parent": 89,
           "target": "voltage_C",
           "within": 5,
           "value": "+2491.52+117.424d "
         },
         {
-          "name": "complex_assert_204",
-          "parent": "node_91",
+          "parent": 91,
           "target": "voltage_A",
           "within": 5,
           "value": "+2484.54-3.98114d "
         },
         {
-          "name": "complex_assert_205",
-          "parent": "node_91",
+          "parent": 91,
           "target": "voltage_B",
           "within": 5,
           "value": "+2467.58-122.708d "
         },
         {
-          "name": "complex_assert_206",
-          "parent": "node_91",
+          "parent": 91,
           "target": "voltage_C",
           "within": 5,
           "value": "+2492.04+117.408d "
         },
         {
-          "name": "complex_assert_208",
-          "parent": "node_93",
+          "parent": 93,
           "target": "voltage_A",
           "within": 5,
           "value": "+2483.78-3.98739d "
         },
         {
-          "name": "complex_assert_209",
-          "parent": "node_93",
+          "parent": 93,
           "target": "voltage_B",
           "within": 5,
           "value": "+2467.2-122.724d "
         },
         {
-          "name": "complex_assert_210",
-          "parent": "node_93",
+          "parent": 93,
           "target": "voltage_C",
           "within": 5,
           "value": "+2492.27+117.414d "
         },
         {
-          "name": "complex_assert_212",
-          "parent": "node_97",
+          "parent": 97,
           "target": "voltage_A",
           "within": 5,
           "value": "+2486.28-3.82811d "
         },
         {
-          "name": "complex_assert_213",
-          "parent": "node_97",
+          "parent": 97,
           "target": "voltage_B",
           "within": 5,
           "value": "+2477.1-122.21d "
         },
         {
-          "name": "complex_assert_214",
-          "parent": "node_97",
+          "parent": 97,
           "target": "voltage_C",
           "within": 5,
           "value": "+2482.94+117.634d "
         },
         {
-          "name": "complex_assert_216",
-          "parent": "node_101",
+          "parent": 101,
           "target": "voltage_A",
           "within": 5,
           "value": "+2484.35-3.87119d "
         },
         {
-          "name": "complex_assert_217",
-          "parent": "node_101",
+          "parent": 101,
           "target": "voltage_B",
           "within": 5,
           "value": "+2476.46-122.225d "
         },
         {
-          "name": "complex_assert_218",
-          "parent": "node_101",
+          "parent": 101,
           "target": "voltage_C",
           "within": 5,
           "value": "+2481.64+117.625d"
         },
         {
-          "name": "complex_assert_240",
-          "parent": "load_1",
+          "parent": 1,
           "target": "voltage_A",
           "within": 5,
           "value": "+2477.15-0.647854d ",
@@ -1595,64 +1551,55 @@
           ]
         },
         {
-          "name": "complex_assert_242",
-          "parent": "load_2",
+          "parent": 2,
           "target": "voltage_B",
           "within": 5,
           "value": "+2500.69-120.316d "
         },
         {
-          "name": "complex_assert_244",
-          "parent": "load_4",
+          "parent": 4,
           "target": "voltage_C",
           "within": 5,
           "value": "+2480.22+119.582d "
         },
         {
-          "name": "complex_assert_246",
-          "parent": "load_5",
+          "parent": 5,
           "target": "voltage_C",
           "within": 5,
           "value": "+2478.3+119.567d "
         },
         {
-          "name": "complex_assert_248",
-          "parent": "load_6",
+          "parent": 6,
           "target": "voltage_C",
           "within": 5,
           "value": "+2476.67+119.554d "
         },
         {
-          "name": "complex_assert_250",
-          "parent": "load_7",
+          "parent": 7,
           "target": "voltage_A",
           "within": 5,
           "value": "+2455.02-1.12388d "
         },
         {
-          "name": "complex_assert_251",
-          "parent": "load_7",
+          "parent": 7,
           "target": "voltage_B",
           "within": 5,
           "value": "+2497.24-120.562d "
         },
         {
-          "name": "complex_assert_252",
-          "parent": "load_7",
+          "parent": 7,
           "target": "voltage_C",
           "within": 5,
           "value": "+2471.56+119.374d "
         },
         {
-          "name": "complex_assert_257",
-          "parent": "load_12",
+          "parent": 12,
           "target": "voltage_B",
           "within": 5,
           "value": "+2493.75-120.734d "
         },
         {
-          "name": "complex_assert_285",
-          "parent": "load_51",
+          "parent": 51,
           "target": "voltage_A",
           "within": 5,
           "value": "+2380.32-2.57331d"
@@ -1662,7 +1609,8 @@
     "node": {
       "instances": [
         {
-          "name": "node_3",
+          "name": "3",
+          "object_declaration": "node:3",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1670,7 +1618,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_8",
+          "name": "8",
+          "object_declaration": "node:8",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1678,7 +1627,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_13",
+          "name": "13",
+          "object_declaration": "node:13",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1686,7 +1636,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_14",
+          "name": "14",
+          "object_declaration": "node:14",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1694,7 +1645,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_1401",
+          "name": "1401",
+          "object_declaration": "node:1401",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1702,7 +1654,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_15",
+          "name": "15",
+          "object_declaration": "node:15",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1710,7 +1663,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_18",
+          "name": "18",
+          "object_declaration": "node:18",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1718,7 +1672,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_21",
+          "name": "21",
+          "object_declaration": "node:21",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1726,7 +1681,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_23",
+          "name": "23",
+          "object_declaration": "node:23",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1734,7 +1690,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_25",
+          "name": "25",
+          "object_declaration": "node:25",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1742,7 +1699,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_26",
+          "name": "26",
+          "object_declaration": "node:26",
           "phases": "ACN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1750,7 +1708,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_2601",
+          "name": "2601",
+          "object_declaration": "node:2601",
           "phases": "ACN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1758,7 +1717,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_27",
+          "name": "27",
+          "object_declaration": "node:27",
           "phases": "ACN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1766,7 +1726,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_36",
+          "name": "36",
+          "object_declaration": "node:36",
           "phases": "ABN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1774,7 +1735,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_40",
+          "name": "40",
+          "object_declaration": "node:40",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1782,7 +1744,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_44",
+          "name": "44",
+          "object_declaration": "node:44",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1790,7 +1753,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_54",
+          "name": "54",
+          "object_declaration": "node:54",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1798,7 +1762,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_57",
+          "name": "57",
+          "object_declaration": "node:57",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1806,7 +1771,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_61",
+          "name": "61",
+          "object_declaration": "node:61",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1814,7 +1780,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_67",
+          "name": "67",
+          "object_declaration": "node:67",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1822,7 +1789,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_6701",
+          "name": "6701",
+          "object_declaration": "node:6701",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1830,7 +1798,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_72",
+          "name": "72",
+          "object_declaration": "node:72",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1838,7 +1807,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_78",
+          "name": "78",
+          "object_declaration": "node:78",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1846,7 +1816,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_81",
+          "name": "81",
+          "object_declaration": "node:81",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1854,7 +1825,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_89",
+          "name": "89",
+          "object_declaration": "node:89",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1862,7 +1834,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_91",
+          "name": "91",
+          "object_declaration": "node:91",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1870,7 +1843,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_93",
+          "name": "93",
+          "object_declaration": "node:93",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1878,7 +1852,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_97",
+          "name": "97",
+          "object_declaration": "node:97",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1886,7 +1861,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_101",
+          "name": "101",
+          "object_declaration": "node:101",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1894,7 +1870,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_105",
+          "name": "105",
+          "object_declaration": "node:105",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1902,7 +1879,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_108",
+          "name": "108",
+          "object_declaration": "node:108",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1910,7 +1888,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_110",
+          "name": "110",
+          "object_declaration": "node:110",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1918,7 +1897,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_135",
+          "name": "135",
+          "object_declaration": "node:135",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1926,7 +1906,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_149",
+          "name": "149",
+          "object_declaration": "node:149",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1934,7 +1915,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_1491",
+          "name": "1491",
+          "object_declaration": "node:1491",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1942,7 +1924,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_150",
+          "name": "150",
+          "object_declaration": "node:150",
           "phases": "ABCN",
           "bustype": "SWING",
           "voltage_A": 2401.7771,
@@ -1951,7 +1934,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_151",
+          "name": "151",
+          "object_declaration": "node:151",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1959,7 +1943,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_152",
+          "name": "152",
+          "object_declaration": "node:152",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1967,7 +1952,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_160",
+          "name": "160",
+          "object_declaration": "node:160",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1975,7 +1961,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_195",
+          "name": "195",
+          "object_declaration": "node:195",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1986,7 +1973,8 @@
           ]
         },
         {
-          "name": "node_197",
+          "name": "197",
+          "object_declaration": "node:197",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -1994,7 +1982,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_250",
+          "name": "250",
+          "object_declaration": "node:250",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2002,7 +1991,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_251",
+          "name": "251",
+          "object_declaration": "node:251",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2013,7 +2003,8 @@
           ]
         },
         {
-          "name": "node_300",
+          "name": "300",
+          "object_declaration": "node:300",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2021,7 +2012,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_350",
+          "name": "350",
+          "object_declaration": "node:350",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2029,7 +2021,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_450",
+          "name": "450",
+          "object_declaration": "node:450",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2037,7 +2030,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_451",
+          "name": "451",
+          "object_declaration": "node:451",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2048,7 +2042,8 @@
           ]
         },
         {
-          "name": "node_610",
+          "name": "610",
+          "object_declaration": "node:610",
           "phases": "ABCN",
           "voltage_A": "480.000+0j",
           "voltage_B": "-240.000-415.6922j",
@@ -2056,7 +2051,8 @@
           "nominal_voltage": 480.0
         },
         {
-          "name": "node_611",
+          "name": "611",
+          "object_declaration": "node:611",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2068,7 +2064,8 @@
     "load": {
       "instances": [
         {
-          "name": "load_1",
+          "name": "1",
+          "object_declaration": "load:1",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2077,7 +2074,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_2",
+          "name": "2",
+          "object_declaration": "load:2",
           "phases": "BN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2086,7 +2084,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_4",
+          "name": "4",
+          "object_declaration": "load:4",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2095,7 +2094,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_5",
+          "name": "5",
+          "object_declaration": "load:5",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2104,7 +2104,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_6",
+          "name": "6",
+          "object_declaration": "load:6",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2113,7 +2114,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_7",
+          "name": "7",
+          "object_declaration": "load:7",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2122,7 +2124,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_9",
+          "name": "9",
+          "object_declaration": "load:9",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2131,7 +2134,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_10",
+          "name": "10",
+          "object_declaration": "load:10",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2140,7 +2144,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_11",
+          "name": "11",
+          "object_declaration": "load:11",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2149,7 +2154,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_12",
+          "name": "12",
+          "object_declaration": "load:12",
           "phases": "BN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2158,7 +2164,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_16",
+          "name": "16",
+          "object_declaration": "load:16",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2167,7 +2174,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_17",
+          "name": "17",
+          "object_declaration": "load:17",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2176,7 +2184,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_19",
+          "name": "19",
+          "object_declaration": "load:19",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2185,7 +2194,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_20",
+          "name": "20",
+          "object_declaration": "load:20",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2194,7 +2204,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_22",
+          "name": "22",
+          "object_declaration": "load:22",
           "phases": "BN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2203,7 +2214,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_24",
+          "name": "24",
+          "object_declaration": "load:24",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2212,7 +2224,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_28",
+          "name": "28",
+          "object_declaration": "load:28",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2221,7 +2234,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_29",
+          "name": "29",
+          "object_declaration": "load:29",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2230,7 +2244,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_30",
+          "name": "30",
+          "object_declaration": "load:30",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2239,7 +2254,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_31",
+          "name": "31",
+          "object_declaration": "load:31",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2248,7 +2264,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_32",
+          "name": "32",
+          "object_declaration": "load:32",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2257,7 +2274,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_33",
+          "name": "33",
+          "object_declaration": "load:33",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2266,7 +2284,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_34",
+          "name": "34",
+          "object_declaration": "load:34",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2275,7 +2294,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_35",
+          "name": "35",
+          "object_declaration": "load:35",
           "phases": "ABCD",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2284,7 +2304,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_37",
+          "name": "37",
+          "object_declaration": "load:37",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2293,7 +2314,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_38",
+          "name": "38",
+          "object_declaration": "load:38",
           "phases": "BN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2302,7 +2324,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_39",
+          "name": "39",
+          "object_declaration": "load:39",
           "phases": "BN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2311,7 +2334,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_41",
+          "name": "41",
+          "object_declaration": "load:41",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2320,7 +2344,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_42",
+          "name": "42",
+          "object_declaration": "load:42",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2329,7 +2354,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_43",
+          "name": "43",
+          "object_declaration": "load:43",
           "phases": "BN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2338,7 +2364,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_45",
+          "name": "45",
+          "object_declaration": "load:45",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2347,7 +2374,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_46",
+          "name": "46",
+          "object_declaration": "load:46",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2356,7 +2384,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_47",
+          "name": "47",
+          "object_declaration": "load:47",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2367,7 +2396,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_48",
+          "name": "48",
+          "object_declaration": "load:48",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2378,7 +2408,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_49",
+          "name": "49",
+          "object_declaration": "load:49",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2389,7 +2420,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_50",
+          "name": "50",
+          "object_declaration": "load:50",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2398,7 +2430,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_51",
+          "name": "51",
+          "object_declaration": "load:51",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2407,7 +2440,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_52",
+          "name": "52",
+          "object_declaration": "load:52",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2416,7 +2450,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_53",
+          "name": "53",
+          "object_declaration": "load:53",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2425,7 +2460,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_55",
+          "name": "55",
+          "object_declaration": "load:55",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2434,7 +2470,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_56",
+          "name": "56",
+          "object_declaration": "load:56",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2443,7 +2480,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_58",
+          "name": "58",
+          "object_declaration": "load:58",
           "phases": "BN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2452,7 +2490,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_59",
+          "name": "59",
+          "object_declaration": "load:59",
           "phases": "BN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2461,7 +2500,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_60",
+          "name": "60",
+          "object_declaration": "load:60",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2470,7 +2510,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_62",
+          "name": "62",
+          "object_declaration": "load:62",
           "phases": "ABC",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2479,7 +2520,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_63",
+          "name": "63",
+          "object_declaration": "load:63",
           "phases": "ABC",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2488,7 +2530,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_64",
+          "name": "64",
+          "object_declaration": "load:64",
           "phases": "ABC",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2497,7 +2540,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_65",
+          "name": "65",
+          "object_declaration": "load:65",
           "phases": "ABCD",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2508,7 +2552,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_66",
+          "name": "66",
+          "object_declaration": "load:66",
           "phases": "ABC",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2517,7 +2562,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_68",
+          "name": "68",
+          "object_declaration": "load:68",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2526,7 +2572,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_69",
+          "name": "69",
+          "object_declaration": "load:69",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2535,7 +2582,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_70",
+          "name": "70",
+          "object_declaration": "load:70",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2544,7 +2592,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_71",
+          "name": "71",
+          "object_declaration": "load:71",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2553,7 +2602,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_73",
+          "name": "73",
+          "object_declaration": "load:73",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2562,7 +2612,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_74",
+          "name": "74",
+          "object_declaration": "load:74",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2571,7 +2622,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_75",
+          "name": "75",
+          "object_declaration": "load:75",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2580,7 +2632,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_76",
+          "name": "76",
+          "object_declaration": "load:76",
           "phases": "ABCD",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2591,7 +2644,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_77",
+          "name": "77",
+          "object_declaration": "load:77",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2600,7 +2654,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_79",
+          "name": "79",
+          "object_declaration": "load:79",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2609,7 +2664,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_80",
+          "name": "80",
+          "object_declaration": "load:80",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2618,7 +2674,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_82",
+          "name": "82",
+          "object_declaration": "load:82",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2627,7 +2684,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_83",
+          "name": "83",
+          "object_declaration": "load:83",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2642,7 +2700,8 @@
           }
         },
         {
-          "name": "load_84",
+          "name": "84",
+          "object_declaration": "load:84",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2651,7 +2710,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_85",
+          "name": "85",
+          "object_declaration": "load:85",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2660,7 +2720,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_86",
+          "name": "86",
+          "object_declaration": "load:86",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2669,7 +2730,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_87",
+          "name": "87",
+          "object_declaration": "load:87",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2678,7 +2740,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_88",
+          "name": "88",
+          "object_declaration": "load:88",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2691,7 +2754,8 @@
           }
         },
         {
-          "name": "load_90",
+          "name": "90",
+          "object_declaration": "load:90",
           "phases": "BN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2704,7 +2768,8 @@
           }
         },
         {
-          "name": "load_92",
+          "name": "92",
+          "object_declaration": "load:92",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2717,7 +2782,8 @@
           }
         },
         {
-          "name": "load_94",
+          "name": "94",
+          "object_declaration": "load:94",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2726,7 +2792,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_95",
+          "name": "95",
+          "object_declaration": "load:95",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2735,7 +2802,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_96",
+          "name": "96",
+          "object_declaration": "load:96",
           "phases": "BN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2744,7 +2812,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_98",
+          "name": "98",
+          "object_declaration": "load:98",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2753,7 +2822,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_99",
+          "name": "99",
+          "object_declaration": "load:99",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2762,7 +2832,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_100",
+          "name": "100",
+          "object_declaration": "load:100",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2771,7 +2842,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_102",
+          "name": "102",
+          "object_declaration": "load:102",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2780,7 +2852,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_103",
+          "name": "103",
+          "object_declaration": "load:103",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2789,7 +2862,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_104",
+          "name": "104",
+          "object_declaration": "load:104",
           "phases": "CN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2798,7 +2872,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_106",
+          "name": "106",
+          "object_declaration": "load:106",
           "phases": "BN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2807,7 +2882,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_107",
+          "name": "107",
+          "object_declaration": "load:107",
           "phases": "BN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2816,7 +2892,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_109",
+          "name": "109",
+          "object_declaration": "load:109",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2825,7 +2902,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_111",
+          "name": "111",
+          "object_declaration": "load:111",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2834,7 +2912,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_112",
+          "name": "112",
+          "object_declaration": "load:112",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2843,7 +2922,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_113",
+          "name": "113",
+          "object_declaration": "load:113",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2852,7 +2932,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "load_114",
+          "name": "114",
+          "object_declaration": "load:114",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -2865,90 +2946,102 @@
     "switch": {
       "instances": [
         {
-          "name": "switch_13152",
+          "name": "13-152",
+          "object_declaration": "switch:13152",
           "phases": "ABCN",
-          "from": "node_13",
-          "to": "node_152",
+          "from": "node:13",
+          "to": "node:152",
           "status": "CLOSED",
           "outside_comments": [
             "// Switches"
           ]
         },
         {
-          "name": "switch_18135",
+          "name": "18-135",
+          "object_declaration": "switch:18135",
           "phases": "ABCN",
-          "from": "node_18",
-          "to": "node_135",
+          "from": "node:18",
+          "to": "node:135",
           "status": "CLOSED"
         },
         {
-          "name": "switch_60160",
+          "name": "60-160",
+          "object_declaration": "switch:60160",
           "phases": "ABCN",
-          "from": "load_60",
-          "to": "node_160",
+          "from": "load:60",
+          "to": "node:160",
           "status": "CLOSED"
         },
         {
-          "name": "switch_61611",
+          "name": "61-611",
+          "object_declaration": "switch:61611",
           "phases": "ABCN",
-          "from": "node_61",
-          "to": "node_611",
+          "from": "node:61",
+          "to": "node:611",
           "status": "CLOSED"
         },
         {
-          "name": "switch_97197",
+          "name": "97-197",
+          "object_declaration": "switch:97197",
           "phases": "ABCN",
-          "from": "node_97",
-          "to": "node_197",
+          "from": "node:97",
+          "to": "node:197",
           "status": "CLOSED"
         },
         {
-          "name": "switch_1491149",
+          "name": "1491-149",
+          "object_declaration": "switch:1491149",
           "phases": "ABCN",
-          "from": "node_1491",
-          "to": "node_149",
+          "from": "node:1491",
+          "to": "node:149",
           "status": "CLOSED"
         },
         {
-          "name": "switch_250251",
+          "name": "250-251",
+          "object_declaration": "switch:250251",
           "phases": "ABCN",
-          "from": "node_250",
-          "to": "node_251",
+          "from": "node:250",
+          "to": "node:251",
           "status": "OPEN"
         },
         {
-          "name": "switch_450451",
+          "name": "450-451",
+          "object_declaration": "switch:450451",
           "phases": "ABCN",
-          "from": "node_450",
-          "to": "node_451",
+          "from": "node:450",
+          "to": "node:451",
           "status": "OPEN"
         },
         {
-          "name": "switch_5494",
+          "name": "54-94",
+          "object_declaration": "switch:5494",
           "phases": "AN",
-          "from": "node_54",
-          "to": "load_94",
+          "from": "node:54",
+          "to": "load:94",
           "status": "OPEN"
         },
         {
-          "name": "switch_151300",
+          "name": "151-300",
+          "object_declaration": "switch:151300",
           "phases": "ABCN",
-          "from": "node_151",
-          "to": "node_300",
+          "from": "node:151",
+          "to": "node:300",
           "status": "OPEN"
         },
         {
-          "name": "switch_300350",
+          "name": "300-350",
+          "object_declaration": "switch:300350",
           "phases": "ABCN",
-          "from": "node_300",
-          "to": "node_350",
+          "from": "node:300",
+          "to": "node:350",
           "status": "OPEN"
         },
         {
-          "name": "switch_95195",
+          "name": "95-195",
+          "object_declaration": "switch:95195",
           "phases": "ABCN",
-          "from": "load_95",
-          "to": "node_195",
+          "from": "load:95",
+          "to": "node:195",
           "status": "OPEN"
         }
       ]
@@ -2956,7 +3049,7 @@
     "transformer_configuration": {
       "instances": [
         {
-          "name": "transformer_configuration_400",
+          "object_declaration": "transformer_configuration:400",
           "connect_type": "DELTA_DELTA",
           "install_type": "PADMOUNT",
           "power_rating": 150,
@@ -3016,18 +3109,19 @@
     "transformer": {
       "instances": [
         {
-          "name": "transformer_611610",
+          "name": "611-610",
+          "object_declaration": "transformer:611610",
           "phases": "ABCN",
-          "from": "node_611",
-          "to": "node_610",
-          "configuration": "transformer_configuration_400"
+          "from": "node:611",
+          "to": "node:610",
+          "configuration": "transformer_configuration:400"
         }
       ]
     },
     "regulator_configuration": {
       "instances": [
         {
-          "name": "regulator_configuration_1501490",
+          "object_declaration": "regulator_configuration:1501490",
           "connect_type": 1,
           "band_center": 120.0,
           "band_width": 2.0,
@@ -3055,7 +3149,7 @@
           ]
         },
         {
-          "name": "regulator_configuration_2526010",
+          "object_declaration": "regulator_configuration:2526010",
           "connect_type": 1,
           "band_center": 120.0,
           "band_width": 1.0,
@@ -3077,7 +3171,7 @@
           "tap_pos_C": -1
         },
         {
-          "name": "regulator_configuration_914010",
+          "object_declaration": "regulator_configuration:914010",
           "connect_type": 1,
           "band_center": 120.0,
           "band_width": 2.0,
@@ -3096,7 +3190,7 @@
           "tap_pos_A": -1
         },
         {
-          "name": "regulator_configuration_16067010",
+          "object_declaration": "regulator_configuration:16067010",
           "connect_type": 1,
           "band_center": 124.0,
           "band_width": 2.0,
@@ -3125,32 +3219,32 @@
     "regulator": {
       "instances": [
         {
-          "name": "regulator_1501491",
+          "object_declaration": "regulator:1501491",
           "phases": "ABC",
-          "from": "node_150",
-          "to": "node_1491",
-          "configuration": "regulator_configuration_1501490"
+          "from": "node:150",
+          "to": "node:1491",
+          "configuration": "regulator_configuration:1501490"
         },
         {
-          "name": "regulator_252601",
+          "object_declaration": "regulator:252601",
           "phases": "AC",
-          "from": "node_25",
-          "to": "node_2601",
-          "configuration": "regulator_configuration_2526010"
+          "from": "node:25",
+          "to": "node:2601",
+          "configuration": "regulator_configuration:2526010"
         },
         {
-          "name": "regulator_91401",
+          "object_declaration": "regulator:91401",
           "phases": "A",
-          "from": "load_9",
-          "to": "node_1401",
-          "configuration": "regulator_configuration_914010"
+          "from": "load:9",
+          "to": "node:1401",
+          "configuration": "regulator_configuration:914010"
         },
         {
-          "name": "regulator_1606701",
+          "object_declaration": "regulator:1606701",
           "phases": "ABC",
-          "from": "node_160",
-          "to": "node_6701",
-          "configuration": "regulator_configuration_16067010"
+          "from": "node:160",
+          "to": "node:6701",
+          "configuration": "regulator_configuration:16067010"
         }
       ]
     }

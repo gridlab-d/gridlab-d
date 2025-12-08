@@ -19,7 +19,7 @@
     "house": {
       "instances": [
         {
-          "name": "house_11258999068426240",
+          "object_declaration": "house:11258999068426240",
           "groupid": "A",
           "outside_comments": [
             "// Create house with ID large enough to allocate 10 PB in old system"
@@ -30,7 +30,6 @@
     "collector": {
       "instances": [
         {
-          "name": "collector_2",
           "group": "class=house AND groupid=A",
           "property": "count(floor_area)",
           "limit": 10,

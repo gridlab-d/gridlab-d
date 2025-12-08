@@ -33,12 +33,12 @@
     "overhead_line_conductor": {
       "instances": [
         {
-          "name": "overhead_line_conductor_100",
+          "object_declaration": "overhead_line_conductor:100",
           "geometric_mean_radius": 0.0244,
           "resistance": 0.306
         },
         {
-          "name": "overhead_line_conductor_101",
+          "object_declaration": "overhead_line_conductor:101",
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592
         }
@@ -47,7 +47,7 @@
     "line_spacing": {
       "instances": [
         {
-          "name": "line_spacing_200",
+          "object_declaration": "line_spacing:200",
           "distance_AB": 2.5,
           "distance_BC": 4.5,
           "distance_AC": 7.0,
@@ -60,12 +60,12 @@
     "line_configuration": {
       "instances": [
         {
-          "name": "line_configuration_300",
-          "conductor_A": "overhead_line_conductor_100",
-          "conductor_B": "overhead_line_conductor_100",
-          "conductor_C": "overhead_line_conductor_100",
-          "conductor_N": "overhead_line_conductor_101",
-          "spacing": "line_spacing_200"
+          "object_declaration": "line_configuration:300",
+          "conductor_A": "overhead_line_conductor:100",
+          "conductor_B": "overhead_line_conductor:100",
+          "conductor_C": "overhead_line_conductor:100",
+          "conductor_N": "overhead_line_conductor:101",
+          "spacing": "line_spacing:200"
         }
       ]
     },
@@ -141,35 +141,31 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_7",
           "phases": "ABCN",
           "from": "FeederNode",
           "to": "InterNode",
           "length": 200000,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         },
         {
-          "name": "overhead_line_18",
           "phases": "ABCN",
           "from": "TopNode",
           "to": "MiddleNode",
           "length": 2000,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         },
         {
-          "name": "overhead_line_20",
           "phases": "ABCN",
           "from": "MiddleNode",
           "to": "BottomLoad",
           "length": 2500,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         }
       ]
     },
     "recorder": {
       "instances": [
         {
-          "name": "recorder_10",
           "parent": "Regulator",
           "property": "tap_A,tap_B,tap_C",
           "file": "test_powerflow_reg_bank_rev_flow_control_current_pos_tap_pos.csv",
@@ -180,42 +176,36 @@
     "player": {
       "instances": [
         {
-          "name": "player_12",
           "parent": "assert_11",
           "property": "value",
           "file": "../test_powerflow_reg_bank_rev_flow_control_current_pos_tap_pos.player",
           "loop": 0
         },
         {
-          "name": "player_14",
           "parent": "assert_13",
           "property": "value",
           "file": "../test_powerflow_reg_bank_rev_flow_control_current_pos_tap_pos.player",
           "loop": 0
         },
         {
-          "name": "player_16",
           "parent": "assert_15",
           "property": "value",
           "file": "../test_powerflow_reg_bank_rev_flow_control_current_pos_tap_pos.player",
           "loop": 0
         },
         {
-          "name": "player_22",
           "parent": "BottomLoad",
           "property": "constant_power_A",
           "file": "../test_powerflow_reg_rev_flow_control_neutral_ind_A.player",
           "loop": 0
         },
         {
-          "name": "player_23",
           "parent": "BottomLoad",
           "property": "constant_power_B",
           "file": "../test_powerflow_reg_rev_flow_control_neutral_ind_B.player",
           "loop": 0
         },
         {
-          "name": "player_24",
           "parent": "BottomLoad",
           "property": "constant_power_C",
           "file": "../test_powerflow_reg_rev_flow_control_neutral_ind_C.player",

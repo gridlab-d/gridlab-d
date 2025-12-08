@@ -152,7 +152,6 @@
           ]
         },
         {
-          "name": "player_5",
           "parent": "int_assert_4",
           "flags": "DELTAMODE",
           "property": "value",
@@ -2800,7 +2799,8 @@
     "regulator": {
       "instances": [
         {
-          "name": "regulator_1501491",
+          "name": "regulator_1",
+          "object_declaration": "regulator:1501491",
           "phases": "ABC",
           "from": "node_150",
           "to": "node_1491",

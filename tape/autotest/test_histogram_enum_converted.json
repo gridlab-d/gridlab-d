@@ -22,121 +22,121 @@
     "node": {
       "instances": [
         {
-          "name": "node_1",
+          "object_declaration": "node:1",
           "phases": "A",
           "voltage_A": "2400+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_2",
+          "object_declaration": "node:2",
           "phases": "A",
           "voltage_A": "2600+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_3",
+          "object_declaration": "node:3",
           "phases": "A",
           "voltage_A": "2800+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_4",
+          "object_declaration": "node:4",
           "phases": "A",
           "voltage_A": "3000+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_5",
+          "object_declaration": "node:5",
           "phases": "A",
           "voltage_A": "3200+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_6",
+          "object_declaration": "node:6",
           "phases": "A",
           "voltage_A": "3400+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_7",
+          "object_declaration": "node:7",
           "phases": "A",
           "voltage_A": "3600+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_8",
+          "object_declaration": "node:8",
           "phases": "A",
           "voltage_A": "3800+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_9",
+          "object_declaration": "node:9",
           "phases": "A",
           "voltage_A": "4000+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_10",
+          "object_declaration": "node:10",
           "phases": "A",
           "voltage_A": "4200+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_11",
+          "object_declaration": "node:11",
           "phases": "A",
           "voltage_A": "4400+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_12",
+          "object_declaration": "node:12",
           "phases": "A",
           "voltage_A": "4600+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_13",
+          "object_declaration": "node:13",
           "phases": "A",
           "voltage_A": "4800+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_14",
+          "object_declaration": "node:14",
           "phases": "A",
           "voltage_A": "2400+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_15",
+          "object_declaration": "node:15",
           "phases": "A",
           "voltage_A": "2600+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_16",
+          "object_declaration": "node:16",
           "phases": "A",
           "voltage_A": "2800+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_17",
+          "object_declaration": "node:17",
           "phases": "A",
           "voltage_A": "3000+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_18",
+          "object_declaration": "node:18",
           "phases": "A",
           "voltage_A": "3200+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_19",
+          "object_declaration": "node:19",
           "phases": "A",
           "voltage_A": "3400+0i",
           "nominal_voltage": 2400
         },
         {
-          "name": "node_20",
+          "object_declaration": "node:20",
           "phases": "A",
           "voltage_A": "3600+0i",
           "nominal_voltage": 2400

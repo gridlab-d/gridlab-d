@@ -464,7 +464,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_39",
           "parent": "l634",
           "file": "../data_loadchange.csv",
           "property": "constant_power_A",

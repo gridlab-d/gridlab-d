@@ -51,12 +51,10 @@
     "triplex_line_conductor": {
       "instances": [
         {
-          "name": "triplex_line_conductor_2",
           "resistance": 0.97,
           "geometric_mean_radius": 0.0111
         },
         {
-          "name": "triplex_line_conductor_3",
           "resistance": 0.97,
           "geometric_mean_radius": 0.0111
         }
@@ -65,7 +63,7 @@
     "overhead_line_conductor": {
       "instances": [
         {
-          "name": "overhead_line_conductor_6010",
+          "object_declaration": "overhead_line_conductor:6010",
           "geometric_mean_radius": 0.0313,
           "resistance": 0.1859,
           "outside_comments": [
@@ -73,7 +71,7 @@
           ]
         },
         {
-          "name": "overhead_line_conductor_6020",
+          "object_declaration": "overhead_line_conductor:6020",
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592,
           "outside_comments": [
@@ -81,7 +79,7 @@
           ]
         },
         {
-          "name": "overhead_line_conductor_6030",
+          "object_declaration": "overhead_line_conductor:6030",
           "geometric_mean_radius": 0.00446,
           "resistance": 1.12,
           "outside_comments": [
@@ -93,7 +91,7 @@
     "underground_line_conductor": {
       "instances": [
         {
-          "name": "underground_line_conductor_6060",
+          "object_declaration": "underground_line_conductor:6060",
           "outer_diameter": 1.29,
           "conductor_gmr": 0.0171,
           "conductor_diameter": 0.567,
@@ -109,7 +107,7 @@
           ]
         },
         {
-          "name": "underground_line_conductor_6070",
+          "object_declaration": "underground_line_conductor:6070",
           "outer_diameter": 1.06,
           "conductor_gmr": 0.0111,
           "conductor_diameter": 0.368,
@@ -129,7 +127,7 @@
     "line_spacing": {
       "instances": [
         {
-          "name": "line_spacing_500601",
+          "object_declaration": "line_spacing:500601",
           "distance_AB": 2.5,
           "distance_AC": 4.5,
           "distance_BC": 7.0,
@@ -141,7 +139,7 @@
           ]
         },
         {
-          "name": "line_spacing_500602",
+          "object_declaration": "line_spacing:500602",
           "distance_AC": 2.5,
           "distance_AB": 4.5,
           "distance_BC": 7.0,
@@ -153,7 +151,7 @@
           ]
         },
         {
-          "name": "line_spacing_505603",
+          "object_declaration": "line_spacing:505603",
           "distance_AC": 0.0,
           "distance_AB": 0.0,
           "distance_BC": 7.0,
@@ -162,7 +160,7 @@
           "distance_BN": 5.0
         },
         {
-          "name": "line_spacing_505604",
+          "object_declaration": "line_spacing:505604",
           "distance_AC": 7.0,
           "distance_AB": 0.0,
           "distance_BC": 0.0,
@@ -171,7 +169,7 @@
           "distance_BN": 0.0
         },
         {
-          "name": "line_spacing_510",
+          "object_declaration": "line_spacing:510",
           "distance_AC": 0.0,
           "distance_AB": 0.0,
           "distance_BC": 0.0,
@@ -180,7 +178,7 @@
           "distance_BN": 0.0
         },
         {
-          "name": "line_spacing_515",
+          "object_declaration": "line_spacing:515",
           "distance_AB": 0.5,
           "distance_BC": 0.5,
           "distance_AC": 1.0,
@@ -192,7 +190,7 @@
           ]
         },
         {
-          "name": "line_spacing_520",
+          "object_declaration": "line_spacing:520",
           "distance_AB": 0.0,
           "distance_BC": 0.0,
           "distance_AC": 0.0,
@@ -205,165 +203,177 @@
     "line_configuration": {
       "instances": [
         {
-          "name": "line_configuration_601",
-          "conductor_A": "overhead_line_conductor_6010",
-          "conductor_B": "overhead_line_conductor_6010",
-          "conductor_C": "overhead_line_conductor_6010",
-          "conductor_N": "overhead_line_conductor_6020",
-          "spacing": "line_spacing_500601"
+          "object_declaration": "line_configuration:601",
+          "conductor_A": "overhead_line_conductor:6010",
+          "conductor_B": "overhead_line_conductor:6010",
+          "conductor_C": "overhead_line_conductor:6010",
+          "conductor_N": "overhead_line_conductor:6020",
+          "spacing": "line_spacing:500601"
         },
         {
-          "name": "line_configuration_602",
-          "conductor_A": "overhead_line_conductor_6020",
-          "conductor_B": "overhead_line_conductor_6020",
-          "conductor_C": "overhead_line_conductor_6020",
-          "conductor_N": "overhead_line_conductor_6020",
-          "spacing": "line_spacing_500602"
+          "object_declaration": "line_configuration:602",
+          "conductor_A": "overhead_line_conductor:6020",
+          "conductor_B": "overhead_line_conductor:6020",
+          "conductor_C": "overhead_line_conductor:6020",
+          "conductor_N": "overhead_line_conductor:6020",
+          "spacing": "line_spacing:500602"
         },
         {
-          "name": "line_configuration_603",
-          "conductor_B": "overhead_line_conductor_6030",
-          "conductor_C": "overhead_line_conductor_6030",
-          "conductor_N": "overhead_line_conductor_6030",
-          "spacing": "line_spacing_505603"
+          "object_declaration": "line_configuration:603",
+          "conductor_B": "overhead_line_conductor:6030",
+          "conductor_C": "overhead_line_conductor:6030",
+          "conductor_N": "overhead_line_conductor:6030",
+          "spacing": "line_spacing:505603"
         },
         {
-          "name": "line_configuration_604",
-          "conductor_A": "overhead_line_conductor_6030",
-          "conductor_C": "overhead_line_conductor_6030",
-          "conductor_N": "overhead_line_conductor_6030",
-          "spacing": "line_spacing_505604"
+          "object_declaration": "line_configuration:604",
+          "conductor_A": "overhead_line_conductor:6030",
+          "conductor_C": "overhead_line_conductor:6030",
+          "conductor_N": "overhead_line_conductor:6030",
+          "spacing": "line_spacing:505604"
         },
         {
-          "name": "line_configuration_605",
-          "conductor_C": "overhead_line_conductor_6030",
-          "conductor_N": "overhead_line_conductor_6030",
-          "spacing": "line_spacing_510"
+          "object_declaration": "line_configuration:605",
+          "conductor_C": "overhead_line_conductor:6030",
+          "conductor_N": "overhead_line_conductor:6030",
+          "spacing": "line_spacing:510"
         },
         {
-          "name": "line_configuration_606",
-          "conductor_A": "underground_line_conductor_6060",
-          "conductor_B": "underground_line_conductor_6060",
-          "conductor_C": "underground_line_conductor_6060",
-          "spacing": "line_spacing_515"
+          "object_declaration": "line_configuration:606",
+          "conductor_A": "underground_line_conductor:6060",
+          "conductor_B": "underground_line_conductor:6060",
+          "conductor_C": "underground_line_conductor:6060",
+          "spacing": "line_spacing:515"
         },
         {
-          "name": "line_configuration_607",
-          "conductor_A": "underground_line_conductor_6070",
-          "conductor_N": "underground_line_conductor_6070",
-          "spacing": "line_spacing_520"
+          "object_declaration": "line_configuration:607",
+          "conductor_A": "underground_line_conductor:6070",
+          "conductor_N": "underground_line_conductor:6070",
+          "spacing": "line_spacing:520"
         }
       ]
     },
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_632645",
+          "name": "632-645",
+          "object_declaration": "overhead_line:632645",
           "phases": "BCN",
-          "from": "node_632",
-          "to": "node_645",
+          "from": "node:632",
+          "to": "node:645",
           "length": 500,
-          "configuration": "line_configuration_603",
+          "configuration": "line_configuration:603",
           "outside_comments": [
             "// Define line objects"
           ]
         },
         {
-          "name": "overhead_line_645646",
+          "name": "645-646",
+          "object_declaration": "overhead_line:645646",
           "phases": "BCN",
-          "from": "node_645",
-          "to": "node_646",
+          "from": "node:645",
+          "to": "node:646",
           "length": 300,
-          "configuration": "line_configuration_603"
+          "configuration": "line_configuration:603"
         },
         {
-          "name": "overhead_line_630632",
+          "name": "630-632",
+          "object_declaration": "overhead_line:630632",
           "phases": "ABCN",
-          "from": "node_630",
-          "to": "node_632",
+          "from": "node:630",
+          "to": "node:632",
           "length": 2000,
-          "configuration": "line_configuration_601"
+          "configuration": "line_configuration:601"
         },
         {
-          "name": "overhead_line_6326321",
+          "name": "632-6321",
+          "object_declaration": "overhead_line:6326321",
           "phases": "ABCN",
-          "from": "node_632",
-          "to": "node_6321",
+          "from": "node:632",
+          "to": "node:6321",
           "length": 500,
-          "configuration": "line_configuration_601",
+          "configuration": "line_configuration:601",
           "outside_comments": [
             "// Split line for distributed load"
           ]
         },
         {
-          "name": "overhead_line_6321671",
+          "name": "6321-671",
+          "object_declaration": "overhead_line:6321671",
           "phases": "ABCN",
-          "from": "node_6321",
-          "to": "node_671",
+          "from": "node:6321",
+          "to": "node:671",
           "length": 1500,
-          "configuration": "line_configuration_601"
+          "configuration": "line_configuration:601"
         },
         {
-          "name": "overhead_line_671680",
+          "name": "671-680",
+          "object_declaration": "overhead_line:671680",
           "phases": "ABCN",
-          "from": "node_671",
-          "to": "node_680",
+          "from": "node:671",
+          "to": "node:680",
           "length": 1000,
-          "configuration": "line_configuration_601",
+          "configuration": "line_configuration:601",
           "outside_comments": [
             "// End split line"
           ]
         },
         {
-          "name": "overhead_line_671684",
+          "name": "671-684",
+          "object_declaration": "overhead_line:671684",
           "phases": "ACN",
-          "from": "node_671",
-          "to": "node_684",
+          "from": "node:671",
+          "to": "node:684",
           "length": 300,
-          "configuration": "line_configuration_604"
+          "configuration": "line_configuration:604"
         },
         {
-          "name": "overhead_line_684611",
+          "name": "684-611",
+          "object_declaration": "overhead_line:684611",
           "phases": "CN",
-          "from": "node_684",
-          "to": "node_611",
+          "from": "node:684",
+          "to": "node:611",
           "length": 300,
-          "configuration": "line_configuration_605"
+          "configuration": "line_configuration:605"
         },
         {
-          "name": "overhead_line_632633",
+          "name": "632-633",
+          "object_declaration": "overhead_line:632633",
           "phases": "ABCN",
-          "from": "node_632",
-          "to": "node_633",
+          "from": "node:632",
+          "to": "node:633",
           "length": 500,
-          "configuration": "line_configuration_602"
+          "configuration": "line_configuration:602"
         }
       ]
     },
     "underground_line": {
       "instances": [
         {
-          "name": "underground_line_684652",
+          "name": "684-652",
+          "object_declaration": "underground_line:684652",
           "phases": "AN",
-          "from": "node_684",
-          "to": "node_652",
+          "from": "node:684",
+          "to": "node:652",
           "length": 800,
-          "configuration": "line_configuration_607"
+          "configuration": "line_configuration:607"
         },
         {
-          "name": "underground_line_692675",
+          "name": "692-675",
+          "object_declaration": "underground_line:692675",
           "phases": "ABC",
-          "from": "node_692",
-          "to": "node_675",
+          "from": "node:692",
+          "to": "node:675",
           "length": 500,
-          "configuration": "line_configuration_606"
+          "configuration": "line_configuration:606"
         }
       ]
     },
     "node": {
       "instances": [
         {
-          "name": "node_633",
+          "name": "633",
+          "object_declaration": "node:633",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -374,7 +384,8 @@
           ]
         },
         {
-          "name": "node_630",
+          "name": "630",
+          "object_declaration": "node:630",
           "phases": "ABCN",
           "voltage_A": "2401.7771+0j",
           "voltage_B": "-1200.8886-2080.000j",
@@ -382,7 +393,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_632",
+          "name": "632",
+          "object_declaration": "node:632",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -390,7 +402,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_650",
+          "name": "650",
+          "object_declaration": "node:650",
           "phases": "ABCN",
           "bustype": "SWING",
           "voltage_A": 2401.7771,
@@ -399,7 +412,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_671",
+          "name": "671",
+          "object_declaration": "node:671",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -407,7 +421,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_680",
+          "name": "680",
+          "object_declaration": "node:680",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -415,7 +430,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_684",
+          "name": "684",
+          "object_declaration": "node:684",
           "phases": "ACN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -423,7 +439,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_6711",
+          "name": "6711",
+          "object_declaration": "node:6711",
           "parent": 611,
           "phases": "CN",
           "voltage_C": "-1200.8886+2080.000j",
@@ -434,7 +451,8 @@
           ]
         },
         {
-          "name": "node_6321",
+          "name": "6321",
+          "object_declaration": "node:6321",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -442,7 +460,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_611",
+          "name": "611",
+          "object_declaration": "node:611",
           "phases": "CN",
           "voltage_C": "-1200.8886+2080.000j",
           "nominal_voltage": 2401.7771,
@@ -451,7 +470,8 @@
           ]
         },
         {
-          "name": "node_634",
+          "name": "634",
+          "object_declaration": "node:634",
           "phases": "ABCN",
           "voltage_A": "480.000+0j",
           "voltage_B": "-240.000-415.6922j",
@@ -459,7 +479,8 @@
           "nominal_voltage": 480.0
         },
         {
-          "name": "node_645",
+          "name": "645",
+          "object_declaration": "node:645",
           "phases": "BCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -467,7 +488,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_646",
+          "name": "646",
+          "object_declaration": "node:646",
           "phases": "BCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -475,7 +497,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_652",
+          "name": "652",
+          "object_declaration": "node:652",
           "phases": "AN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -483,7 +506,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_675",
+          "name": "675",
+          "object_declaration": "node:675",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -491,7 +515,8 @@
           "nominal_voltage": 2401.7771
         },
         {
-          "name": "node_692",
+          "name": "692",
+          "object_declaration": "node:692",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -505,114 +530,115 @@
         {
           "name": "center_tap_1",
           "phases": "CS",
-          "from": "node_611",
+          "from": "node:611",
           "to": "trip_node1",
           "configuration": "CS_config"
         },
         {
           "name": "center_tap_2",
           "phases": "AS",
-          "from": "node_634",
+          "from": "node:634",
           "to": "trip_node2",
           "configuration": "AS_config"
         },
         {
           "name": "center_tap_3",
           "phases": "BS",
-          "from": "node_634",
+          "from": "node:634",
           "to": "trip_node3",
           "configuration": "BS_config"
         },
         {
           "name": "center_tap_4",
           "phases": "CS",
-          "from": "node_634",
+          "from": "node:634",
           "to": "trip_node4",
           "configuration": "CS_config"
         },
         {
           "name": "center_tap_5",
           "phases": "BS",
-          "from": "node_645",
+          "from": "node:645",
           "to": "trip_node5",
           "configuration": "BS_config"
         },
         {
           "name": "center_tap_6",
           "phases": "CS",
-          "from": "node_645",
+          "from": "node:645",
           "to": "trip_node6",
           "configuration": "CS_config"
         },
         {
           "name": "center_tap_7",
           "phases": "BS",
-          "from": "node_646",
+          "from": "node:646",
           "to": "trip_node7",
           "configuration": "BS_config"
         },
         {
           "name": "center_tap_8",
           "phases": "CS",
-          "from": "node_646",
+          "from": "node:646",
           "to": "trip_node8",
           "configuration": "CS_config"
         },
         {
           "name": "center_tap_9",
           "phases": "AS",
-          "from": "node_652",
+          "from": "node:652",
           "to": "trip_node9",
           "configuration": "AS_config"
         },
         {
           "name": "center_tap_10",
           "phases": "AS",
-          "from": "node_675",
+          "from": "node:675",
           "to": "trip_node10",
           "configuration": "AS_config"
         },
         {
           "name": "center_tap_11",
           "phases": "BS",
-          "from": "node_675",
+          "from": "node:675",
           "to": "trip_node11",
           "configuration": "BS_config"
         },
         {
           "name": "center_tap_12",
           "phases": "CS",
-          "from": "node_675",
+          "from": "node:675",
           "to": "trip_node12",
           "configuration": "CS_config"
         },
         {
           "name": "center_tap_13",
           "phases": "AS",
-          "from": "node_692",
+          "from": "node:692",
           "to": "trip_node13",
           "configuration": "AS_config"
         },
         {
           "name": "center_tap_14",
           "phases": "BS",
-          "from": "node_692",
+          "from": "node:692",
           "to": "trip_node14",
           "configuration": "BS_config"
         },
         {
           "name": "center_tap_15",
           "phases": "CS",
-          "from": "node_692",
+          "from": "node:692",
           "to": "trip_node15",
           "configuration": "CS_config"
         },
         {
-          "name": "transformer_633634",
+          "name": "633-634",
+          "object_declaration": "transformer:633634",
           "phases": "ABCN",
-          "from": "node_633",
-          "to": "node_634",
-          "configuration": "transformer_configuration_400"
+          "from": "node:633",
+          "to": "node:634",
+          "configuration": "transformer_configuration:400"
         }
       ]
     },
@@ -946,10 +972,11 @@
     "switch": {
       "instances": [
         {
-          "name": "switch_671692",
+          "name": "671-692",
+          "object_declaration": "switch:671692",
           "phases": "ABCN",
-          "from": "node_671",
-          "to": "node_692",
+          "from": "node:671",
+          "to": "node:692",
           "status": "CLOSED",
           "outside_comments": [
             "// Switch"
@@ -960,7 +987,7 @@
     "transformer_configuration": {
       "instances": [
         {
-          "name": "transformer_configuration_400",
+          "object_declaration": "transformer_configuration:400",
           "connect_type": "WYE_WYE",
           "install_type": "PADMOUNT",
           "power_rating": 500,
@@ -1054,7 +1081,7 @@
     "regulator_configuration": {
       "instances": [
         {
-          "name": "regulator_configuration_6506321",
+          "object_declaration": "regulator_configuration:6506321",
           "connect_type": "WYE_WYE",
           "band_center": 2000.0,
           "band_width": 80.0,
@@ -1076,20 +1103,19 @@
     "regulator": {
       "instances": [
         {
-          "name": "regulator_650630",
+          "object_declaration": "regulator:650630",
           "phases": "ABCN",
-          "from": "node_650",
-          "to": "node_630",
+          "from": "node:650",
+          "to": "node:630",
           "sense_node": 671,
-          "configuration": "regulator_configuration_6506321"
+          "configuration": "regulator_configuration:6506321"
         }
       ]
     },
     "ZIPload": {
       "instances": [
         {
-          "name": "ZIPload_121",
-          "parent": "house_..20",
+          "parent": "house_120",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1102,8 +1128,7 @@
           ]
         },
         {
-          "name": "ZIPload_124",
-          "parent": "house_..20",
+          "parent": "house_123",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1116,8 +1141,7 @@
           ]
         },
         {
-          "name": "ZIPload_127",
-          "parent": "house_..20",
+          "parent": "house_126",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1130,8 +1154,7 @@
           ]
         },
         {
-          "name": "ZIPload_130",
-          "parent": "house_..20",
+          "parent": "house_129",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1144,8 +1167,7 @@
           ]
         },
         {
-          "name": "ZIPload_133",
-          "parent": "house_..20",
+          "parent": "house_132",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1158,8 +1180,7 @@
           ]
         },
         {
-          "name": "ZIPload_136",
-          "parent": "house_..20",
+          "parent": "house_135",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1172,8 +1193,7 @@
           ]
         },
         {
-          "name": "ZIPload_139",
-          "parent": "house_..20",
+          "parent": "house_138",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1186,8 +1206,7 @@
           ]
         },
         {
-          "name": "ZIPload_142",
-          "parent": "house_..20",
+          "parent": "house_141",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1200,8 +1219,7 @@
           ]
         },
         {
-          "name": "ZIPload_145",
-          "parent": "house_..20",
+          "parent": "house_144",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1214,8 +1232,7 @@
           ]
         },
         {
-          "name": "ZIPload_148",
-          "parent": "house_..20",
+          "parent": "house_147",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1228,8 +1245,7 @@
           ]
         },
         {
-          "name": "ZIPload_151",
-          "parent": "house_..20",
+          "parent": "house_150",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1242,8 +1258,7 @@
           ]
         },
         {
-          "name": "ZIPload_154",
-          "parent": "house_..20",
+          "parent": "house_153",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1256,8 +1271,7 @@
           ]
         },
         {
-          "name": "ZIPload_157",
-          "parent": "house_..20",
+          "parent": "house_156",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1270,8 +1284,7 @@
           ]
         },
         {
-          "name": "ZIPload_160",
-          "parent": "house_..20",
+          "parent": "house_159",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1284,8 +1297,7 @@
           ]
         },
         {
-          "name": "ZIPload_163",
-          "parent": "house_..20",
+          "parent": "house_162",
           "base_power": "ZIP1base_power*random.normal(1,.25)",
           "power_fraction": 0.2,
           "impedance_fraction": 0.3,
@@ -1302,92 +1314,77 @@
     "waterheater": {
       "instances": [
         {
-          "name": "waterheater_122",
-          "parent": "house_..20",
+          "parent": "house_120",
           "location": "INSIDE",
           "water_demand": "waterdemand1*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_125",
-          "parent": "house_..20",
+          "parent": "house_123",
           "location": "INSIDE",
           "water_demand": "waterdemand3*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_128",
-          "parent": "house_..20",
+          "parent": "house_126",
           "location": "INSIDE",
           "water_demand": "waterdemand2*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_131",
-          "parent": "house_..20",
+          "parent": "house_129",
           "location": "INSIDE",
           "water_demand": "waterdemand3*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_134",
-          "parent": "house_..20",
+          "parent": "house_132",
           "location": "INSIDE",
           "water_demand": "waterdemand3*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_137",
-          "parent": "house_..20",
+          "parent": "house_135",
           "location": "INSIDE",
           "water_demand": "waterdemand1*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_140",
-          "parent": "house_..20",
+          "parent": "house_138",
           "location": "INSIDE",
           "water_demand": "waterdemand2*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_143",
-          "parent": "house_..20",
+          "parent": "house_141",
           "location": "INSIDE",
           "water_demand": "waterdemand2*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_146",
-          "parent": "house_..20",
+          "parent": "house_144",
           "location": "INSIDE",
           "water_demand": "waterdemand3*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_149",
-          "parent": "house_..20",
+          "parent": "house_147",
           "location": "INSIDE",
           "water_demand": "waterdemand3*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_152",
-          "parent": "house_..20",
+          "parent": "house_150",
           "location": "INSIDE",
           "water_demand": "waterdemand2*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_155",
-          "parent": "house_..20",
+          "parent": "house_153",
           "location": "INSIDE",
           "water_demand": "waterdemand3*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_158",
-          "parent": "house_..20",
+          "parent": "house_156",
           "location": "INSIDE",
           "water_demand": "waterdemand2*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_161",
-          "parent": "house_..20",
+          "parent": "house_159",
           "location": "INSIDE",
           "water_demand": "waterdemand1*random.normal(1,.2)"
         },
         {
-          "name": "waterheater_164",
-          "parent": "house_..20",
+          "parent": "house_162",
           "location": "INSIDE",
           "water_demand": "waterdemand3*random.normal(1,.2)"
         }
@@ -1396,20 +1393,116 @@
     "house": {
       "instances": [
         {
-          "name": "house_..20",
-          "object_count": 20,
+          "object_declaration": "house:..20",
+          "parent": "trip_meter1",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint4+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)",
+          "thermostat_deadband": "random.normal (2,.5)"
+        },
+        {
+          "object_declaration": "house:..20",
+          "parent": "trip_meter2",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint2+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)"
+        },
+        {
+          "object_declaration": "house:..20",
+          "parent": "trip_meter3",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint2+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)"
+        },
+        {
+          "object_declaration": "house:..20",
+          "parent": "trip_meter4",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint5+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)"
+        },
+        {
+          "object_declaration": "house:..20",
+          "parent": "trip_meter5",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint2+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)"
+        },
+        {
+          "object_declaration": "house:..20",
+          "parent": "trip_meter6",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint3+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)"
+        },
+        {
+          "object_declaration": "house:..20",
+          "parent": "trip_meter7",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint5+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)"
+        },
+        {
+          "object_declaration": "house:..20",
+          "parent": "trip_meter8",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint2+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)"
+        },
+        {
+          "object_declaration": "house:..20",
+          "parent": "trip_meter9",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint5+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)"
+        },
+        {
+          "object_declaration": "house:..20",
+          "parent": "trip_meter10",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint4+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)"
+        },
+        {
+          "object_declaration": "house:..20",
+          "parent": "trip_meter11",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint2+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)"
+        },
+        {
+          "object_declaration": "house:..20",
+          "parent": "trip_meter12",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint1+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)"
+        },
+        {
+          "object_declaration": "house:..20",
+          "parent": "trip_meter13",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint3+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)"
+        },
+        {
+          "object_declaration": "house:..20",
+          "parent": "trip_meter14",
+          "floor_area": "random.normal(1750,400)",
+          "heating_setpoint": "heatingsetpoint4+random.normal(0,4)",
+          "cooling_setpoint": "random.normal (80,2)"
+        },
+        {
+          "object_declaration": "house:..20",
           "parent": "trip_meter15",
           "floor_area": "random.normal(1750,400)",
           "heating_setpoint": "heatingsetpoint2+random.normal(0,4)",
-          "cooling_setpoint": "random.normal (80,2)",
-          "thermostat_deadband": "random.normal (2,.5)"
+          "cooling_setpoint": "random.normal (80,2)"
         }
       ]
     },
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_165",
           "property": "trip_meter1:measured_real_power,trip_meter2:measured_real_power,trip_meter3:measured_real_power,trip_meter4:measured_real_power,trip_meter5:measured_real_power,trip_meter6:measured_real_power,trip_meter7:measured_real_power,trip_meter8:measured_real_power,trip_meter9:measured_real_power,trip_meter10:measured_real_power,trip_meter11:measured_real_power,trip_meter12:measured_real_power,trip_meter13:measured_real_power,trip_meter14:measured_real_power,trip_meter15:measured_real_power",
           "file": "exercise_4_1_3.csv",
           "interval": 60,

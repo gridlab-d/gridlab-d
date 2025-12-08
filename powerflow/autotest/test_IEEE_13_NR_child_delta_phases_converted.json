@@ -27,7 +27,6 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_1",
           "filename": "IEEE_13_NR_voltage.csv",
           "mode": "POLAR"
         }
@@ -366,7 +365,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_33",
           "parent": "n633",
           "target": "voltage_C",
           "value": "2437.54+117.83d",
@@ -377,7 +375,6 @@
           ]
         },
         {
-          "name": "complex_assert_36",
           "parent": "n632",
           "target": "voltage_C",
           "value": "2443.82+117.83d",
@@ -385,7 +382,6 @@
           "};": " object complex_assert "
         },
         {
-          "name": "complex_assert_38",
           "parent": "n650",
           "target": "voltage_C",
           "value": "2401.7771+120.0d",
@@ -393,21 +389,18 @@
           "};": " object complex_assert "
         },
         {
-          "name": "complex_assert_40",
           "parent": "n680",
           "target": "voltage_A",
           "value": "2377.78-5.3d",
           "within": 2
         },
         {
-          "name": "complex_assert_41",
           "parent": "n680",
           "target": "voltage_B",
           "value": "2528.94-122.34d",
           "within": 2
         },
         {
-          "name": "complex_assert_42",
           "parent": "n680",
           "target": "voltage_C",
           "value": "2348.63+116.03d",
@@ -417,42 +410,36 @@
           }
         },
         {
-          "name": "complex_assert_44",
           "parent": "n684",
           "target": "voltage_A",
           "value": "2373.11-5.32d",
           "within": 2
         },
         {
-          "name": "complex_assert_45",
           "parent": "n684",
           "target": "voltage_C",
           "value": "2343.80+115.93d",
           "within": 2
         },
         {
-          "name": "complex_assert_48",
           "parent": "l634",
           "target": "voltage_A",
           "within": 2,
           "value": "275.47-3.23d"
         },
         {
-          "name": "complex_assert_49",
           "parent": "l634",
           "target": "voltage_B",
           "within": 2,
           "value": "283.16-122.22d"
         },
         {
-          "name": "complex_assert_50",
           "parent": "l634",
           "target": "voltage_C",
           "within": 2,
           "value": "276.04+117.35d"
         },
         {
-          "name": "complex_assert_53",
           "parent": "l645",
           "target": "voltage_B",
           "within": 2,
@@ -462,98 +449,84 @@
           ]
         },
         {
-          "name": "complex_assert_54",
           "parent": "l645",
           "target": "voltage_C",
           "within": 2,
           "value": "2439.07+117.86d"
         },
         {
-          "name": "complex_assert_57",
           "parent": "l646",
           "target": "voltage_B",
           "within": 2,
           "value": "2476.50-121.98d"
         },
         {
-          "name": "complex_assert_58",
           "parent": "l646",
           "target": "voltage_C",
           "within": 2,
           "value": "2434.12+117.90d"
         },
         {
-          "name": "complex_assert_61",
           "parent": "l652",
           "target": "voltage_A",
           "within": 2,
           "value": "2363.35-5.21d"
         },
         {
-          "name": "complex_assert_64",
           "parent": "l671",
           "target": "voltage_A",
           "within": 2,
           "value": "2377.78-5.3d"
         },
         {
-          "name": "complex_assert_65",
           "parent": "l671",
           "target": "voltage_B",
           "within": 2,
           "value": "2528.94-122.34d"
         },
         {
-          "name": "complex_assert_66",
           "parent": "l671",
           "target": "voltage_C",
           "within": 8,
           "value": "2348.63+116.02d"
         },
         {
-          "name": "complex_assert_69",
           "parent": "l675",
           "target": "voltage_A",
           "within": 2,
           "value": "2362.16-5.55d"
         },
         {
-          "name": "complex_assert_70",
           "parent": "l675",
           "target": "voltage_B",
           "within": 2,
           "value": "2534.68-122.52d"
         },
         {
-          "name": "complex_assert_71",
           "parent": "l675",
           "target": "voltage_C",
           "within": 8,
           "value": "2344.04+116.04d"
         },
         {
-          "name": "complex_assert_74",
           "parent": "l692",
           "target": "voltage_A",
           "within": 2,
           "value": "2377.78-5.30d"
         },
         {
-          "name": "complex_assert_75",
           "parent": "l692",
           "target": "voltage_B",
           "within": 2,
           "value": "2528.94-122.34d"
         },
         {
-          "name": "complex_assert_76",
           "parent": "l692",
           "target": "voltage_C",
           "within": 8,
           "value": "2348.63+116.02d"
         },
         {
-          "name": "complex_assert_79",
           "parent": "l611",
           "target": "voltage_C",
           "within": 8,

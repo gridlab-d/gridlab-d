@@ -20,7 +20,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_2",
           "parent": "direct-power",
           "in": "'2002-01-01 00:00:00 PST'",
           "target": "energy",
@@ -33,7 +32,6 @@
           ]
         },
         {
-          "name": "complex_assert_4",
           "parent": "installed-power",
           "in": "'2002-01-01 00:00:00 PST'",
           "target": "energy",
@@ -46,7 +44,6 @@
           ]
         },
         {
-          "name": "complex_assert_6",
           "parent": "scaled-power",
           "in": "'2002-01-01 00:00:00 PST'",
           "target": "energy",
@@ -98,7 +95,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_7",
           "parent": "direct-power",
           "property": "energy,installed-power:energy,scaled-power:energy",
           "file": "test_lights_standalone.csv",

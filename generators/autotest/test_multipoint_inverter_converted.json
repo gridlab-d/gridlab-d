@@ -57,7 +57,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_6",
           "parent": "complex_assert_5",
           "property": "value",
           "file": "../MPINV_OUT1.player",
@@ -80,14 +79,12 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_7",
           "parent": "trip_lat",
           "file": "MPINV_OUT1.csv",
           "interval": 3600,
           "property": "VA_Out"
         },
         {
-          "name": "recorder_9",
           "parent": "trip_lat_solar",
           "property": "Insolation,P_Out",
           "file": "fixed_array_lat_angle_fix.csv",

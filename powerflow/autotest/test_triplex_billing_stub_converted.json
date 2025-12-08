@@ -35,14 +35,12 @@
     "player": {
       "instances": [
         {
-          "name": "player_2",
           "parent": "STUB2",
           "file": "../stub_bill_price.player",
           "loop": 100,
           "property": "next.P"
         },
         {
-          "name": "player_18",
           "parent": "double_assert_17",
           "file": "../stub_nofee_bill_value.player",
           "loop": 1,
@@ -201,7 +199,6 @@
     "triplex_line": {
       "instances": [
         {
-          "name": "triplex_line_14",
           "from": "triplex_node_A",
           "to": "tpm_rtp_A1",
           "phases": "AS",
@@ -213,7 +210,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_16",
           "parent": "tpm_rtp_A1",
           "limit": 1000000,
           "interval": 1800,

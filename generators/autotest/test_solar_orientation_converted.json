@@ -86,7 +86,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_7",
           "parent": "double_assert_6",
           "property": "value",
           "file": "../fixed_45_S_VA_out.player",
@@ -98,25 +97,21 @@
           ]
         },
         {
-          "name": "player_9",
           "parent": "double_assert_8",
           "property": "value",
           "file": "../fixed_45_S_Insolation.player"
         },
         {
-          "name": "player_12",
           "parent": "double_assert_11",
           "property": "value",
           "file": "../fixed_45_W_VA_out.player"
         },
         {
-          "name": "player_15",
           "parent": "double_assert_14",
           "property": "value",
           "file": "../fixed_45_N_VA_out.player"
         },
         {
-          "name": "player_18",
           "parent": "double_assert_17",
           "property": "value",
           "file": "../fixed_45_E_VA_out.player"

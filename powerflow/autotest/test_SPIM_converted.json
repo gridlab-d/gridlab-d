@@ -37,7 +37,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_3",
           "parent": "complex_assert_2",
           "property": "value",
           "file": "../SPIM_power_assert.player",
@@ -45,7 +44,6 @@
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_6",
           "parent": "double_assert_5",
           "property": "value",
           "file": "../SPIM_wr_assert.player",
@@ -53,7 +51,6 @@
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_8",
           "parent": "double_assert_7",
           "property": "value",
           "file": "../SPIM_trip_assert.player",
@@ -61,7 +58,6 @@
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_10",
           "parent": "double_assert_9",
           "property": "value",
           "file": "../SPIM_reconnect_assert.player",
@@ -69,7 +65,6 @@
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_12",
           "parent": "enum_assert_11",
           "property": "value",
           "file": "../SPIM_status_assert.player",
@@ -77,21 +72,18 @@
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_13",
           "parent": "rooty",
           "file": "../SPIM_voltage.player",
           "property": "voltage_A",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_14",
           "parent": "rooty",
           "file": "../SPIM_frequency.player",
           "property": "measured_frequency_A",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_15",
           "parent": "induction_motor",
           "file": "../SPIM_override.player",
           "property": "desired_motor_state",

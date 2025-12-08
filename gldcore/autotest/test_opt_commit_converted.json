@@ -63,7 +63,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "test_1",
           "property": "interval,delay,counter",
           "file": "commit_output.csv",
@@ -75,14 +74,12 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_3",
           "parent": "test_1",
           "value": "counter_values*1",
           "target": "counter",
           "within": 0.1
         },
         {
-          "name": "double_assert_4",
           "parent": "test_1",
           "in": "'2001-01-01 00:01:00'",
           "value": "interval_values*1",

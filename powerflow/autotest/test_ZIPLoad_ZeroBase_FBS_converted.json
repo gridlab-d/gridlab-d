@@ -43,19 +43,16 @@
           ]
         },
         {
-          "name": "player_11",
           "parent": "complex_assert_10",
           "property": "value",
           "file": "../data_zip_measload_phaseA.csv"
         },
         {
-          "name": "player_13",
           "parent": "complex_assert_12",
           "property": "value",
           "file": "../data_zip_measload_phaseB.csv"
         },
         {
-          "name": "player_15",
           "parent": "complex_assert_14",
           "property": "value",
           "file": "../data_zip_measload_phaseC.csv"
@@ -154,7 +151,6 @@
     "transformer": {
       "instances": [
         {
-          "name": "transformer_8",
           "phases": "BS",
           "from": "node1",
           "to": "tpl_load2",

@@ -24,7 +24,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_3",
           "parent": "complex_assert_2",
           "property": "value",
           "file": "../energy_pf.player",
@@ -50,7 +49,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "office_1",
           "file": "commercial_lights_usage.csv",
           "interval": 3600,

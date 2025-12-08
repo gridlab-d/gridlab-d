@@ -21,7 +21,6 @@
     "impedance_dump": {
       "instances": [
         {
-          "name": "impedance_dump_1",
           "filename": "impedance_output.xml"
         }
       ]
@@ -109,7 +108,6 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_8",
           "phases": "ABCN",
           "from": "node1",
           "to": "node2",
@@ -120,7 +118,8 @@
           ]
         },
         {
-          "name": "overhead_line_34",
+          "name": "node34",
+          "object_declaration": "overhead_line:34",
           "phases": "ABCN",
           "from": "node3",
           "to": "node4",

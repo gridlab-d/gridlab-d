@@ -55,28 +55,24 @@
     "player": {
       "instances": [
         {
-          "name": "player_3",
           "parent": "subtation_bus",
           "file": "../data_inverter_freq_player_A.csv",
           "property": "voltage_A",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_4",
           "parent": "subtation_bus",
           "file": "../data_inverter_freq_player_B.csv",
           "property": "voltage_B",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_5",
           "parent": "subtation_bus",
           "file": "../data_inverter_freq_player_C.csv",
           "property": "voltage_C",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_15",
           "parent": "enum_assert_14",
           "flags": "DELTAMODE",
           "property": "value",
@@ -170,7 +166,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_16",
           "flags": "DELTAMODE",
           "parent": "inverter_top_greatgrand",
           "property": "IEEE_1547_trip_method",

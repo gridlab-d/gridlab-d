@@ -33,7 +33,7 @@
     "overhead_line_conductor": {
       "instances": [
         {
-          "name": "overhead_line_conductor_100",
+          "object_declaration": "overhead_line_conductor:100",
           "geometric_mean_radius": 0.0244,
           "resistance": 0.306,
           "outside_comments": [
@@ -42,7 +42,7 @@
           ]
         },
         {
-          "name": "overhead_line_conductor_101",
+          "object_declaration": "overhead_line_conductor:101",
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592
         }
@@ -51,7 +51,7 @@
     "line_spacing": {
       "instances": [
         {
-          "name": "line_spacing_200",
+          "object_declaration": "line_spacing:200",
           "distance_AB": 2.5,
           "distance_BC": 4.5,
           "distance_AC": 7.0,
@@ -64,12 +64,12 @@
     "line_configuration": {
       "instances": [
         {
-          "name": "line_configuration_300",
-          "conductor_A": "overhead_line_conductor_100",
-          "conductor_B": "overhead_line_conductor_100",
-          "conductor_C": "overhead_line_conductor_100",
-          "conductor_N": "overhead_line_conductor_101",
-          "spacing": "line_spacing_200"
+          "object_declaration": "line_configuration:300",
+          "conductor_A": "overhead_line_conductor:100",
+          "conductor_B": "overhead_line_conductor:100",
+          "conductor_C": "overhead_line_conductor:100",
+          "conductor_N": "overhead_line_conductor:101",
+          "spacing": "line_spacing:200"
         }
       ]
     },
@@ -131,28 +131,25 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_7",
           "phases": "ABCN",
           "from": "FeederNode",
           "to": "InterNode",
           "length": 200000,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         },
         {
-          "name": "overhead_line_14",
           "phases": "ABCN",
           "from": "TopNode",
           "to": "MiddleNode",
           "length": 2000,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         },
         {
-          "name": "overhead_line_16",
           "phases": "ABCN",
           "from": "MiddleNode",
           "to": "BottomLoad",
           "length": 2500,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         }
       ]
     },
@@ -170,7 +167,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_11",
           "parent": "TopNode",
           "operation": "MAGNITUDE",
           "value": 7200,
@@ -178,7 +174,6 @@
           "within": 45
         },
         {
-          "name": "complex_assert_12",
           "parent": "TopNode",
           "operation": "MAGNITUDE",
           "value": 7200,
@@ -186,7 +181,6 @@
           "within": 45
         },
         {
-          "name": "complex_assert_13",
           "parent": "TopNode",
           "operation": "MAGNITUDE",
           "value": 7200,

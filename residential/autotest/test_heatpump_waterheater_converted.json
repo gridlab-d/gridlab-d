@@ -220,7 +220,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_20",
           "interval": 60,
           "parent": "trip_meter1",
           "property": "measured_real_power",
@@ -231,7 +230,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_24",
           "parent": "double_assert_23",
           "property": "value",
           "file": "../data_hpwh_temp.csv"
@@ -242,7 +240,7 @@
       "instances": [
         {
           "name": "double_assert_23",
-          "parent": "wh1",
+          "parent": "house1wh1",
           "target": "temperature",
           "within": 0.1
         }
@@ -251,7 +249,7 @@
     "waterheater": {
       "instances": [
         {
-          "name": "wh1",
+          "name": "house1wh1",
           "parent": "house1",
           "location": "INSIDE",
           "temperature": 120.0,

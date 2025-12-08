@@ -36,7 +36,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_2",
           "parent": "delta_meter",
           "file": "../test_deltamode_house_player.csv",
           "property": "voltage_A",
@@ -50,7 +49,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "delta_meter",
           "flags": "DELTAMODE",
           "file": "test_output_recorder.csv",
@@ -71,7 +69,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_4",
           "in": "'2001-01-01 00:00:01.07 PST'",
           "once": "ONCE_TRUE",
           "flags": "DELTAMODE",

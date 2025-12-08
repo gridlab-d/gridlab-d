@@ -75,7 +75,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_5",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -85,7 +84,6 @@
           "in": "'2000-01-01 0:30:00'"
         },
         {
-          "name": "complex_assert_6",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -95,7 +93,6 @@
           "in": "'2000-01-01 1:30:00'"
         },
         {
-          "name": "complex_assert_7",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -105,7 +102,6 @@
           "in": "'2000-01-01 2:30:00'"
         },
         {
-          "name": "complex_assert_8",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -115,7 +111,6 @@
           "in": "'2000-01-01 3:30:00'"
         },
         {
-          "name": "complex_assert_9",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -125,7 +120,6 @@
           "in": "'2000-01-01 4:30:00'"
         },
         {
-          "name": "complex_assert_10",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -135,7 +129,6 @@
           "in": "'2000-01-01 5:30:00'"
         },
         {
-          "name": "complex_assert_11",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -145,7 +138,6 @@
           "in": "'2000-01-01 6:30:00'"
         },
         {
-          "name": "complex_assert_12",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -155,7 +147,6 @@
           "in": "'2000-01-01 7:30:00'"
         },
         {
-          "name": "complex_assert_13",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -165,7 +156,6 @@
           "in": "'2000-01-01 8:30:00'"
         },
         {
-          "name": "complex_assert_53",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -175,7 +165,6 @@
           "in": "'2000-01-01 0:30:00'"
         },
         {
-          "name": "complex_assert_54",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -185,7 +174,6 @@
           "in": "'2000-01-01 1:30:00'"
         },
         {
-          "name": "complex_assert_55",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -195,7 +183,6 @@
           "in": "'2000-01-01 2:30:00'"
         },
         {
-          "name": "complex_assert_56",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -205,7 +192,6 @@
           "in": "'2000-01-01 3:30:00'"
         },
         {
-          "name": "complex_assert_57",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -215,7 +201,6 @@
           "in": "'2000-01-01 4:30:00'"
         },
         {
-          "name": "complex_assert_58",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -225,7 +210,6 @@
           "in": "'2000-01-01 5:30:00'"
         },
         {
-          "name": "complex_assert_59",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -235,7 +219,6 @@
           "in": "'2000-01-01 6:30:00'"
         },
         {
-          "name": "complex_assert_60",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -245,7 +228,6 @@
           "in": "'2000-01-01 7:30:00'"
         },
         {
-          "name": "complex_assert_61",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -259,13 +241,11 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_14",
           "runtime": "'2000-01-01 0:30:00'",
           "filename": "vdump1.csv",
           "mode": "POLAR"
         },
         {
-          "name": "voltdump_15",
           "runtime": "'2000-01-01 8:30:00'",
           "filename": "vdump2.csv",
           "mode": "POLAR"
@@ -275,13 +255,11 @@
     "currdump": {
       "instances": [
         {
-          "name": "currdump_16",
           "runtime": "'2000-01-01 0:30:00'",
           "filename": "cdump1.csv",
           "mode": "POLAR"
         },
         {
-          "name": "currdump_17",
           "runtime": "'2000-01-01 8:30:00'",
           "filename": "cdump2.csv",
           "mode": "POLAR"
@@ -927,7 +905,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_78",
           "property": "n650:distribution_load,n630:voltage_A.real,m692:measured_voltage_A,m692:measured_voltage_B,m692:measured_voltage_C",
           "interval": 1800.0,
           "file": "switching_13_output.csv"

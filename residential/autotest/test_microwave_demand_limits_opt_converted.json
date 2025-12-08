@@ -22,28 +22,27 @@
     "house": {
       "instances": [
         {
-          "name": "house_1"
+          "object_declaration": "house:1"
         }
       ]
     },
     "microwave": {
       "instances": [
         {
-          "name": "microwave_2",
-          "parent": "house_1"
+          "object_declaration": "microwave:2",
+          "parent": "house:1"
         }
       ]
     },
     "player": {
       "instances": [
         {
-          "name": "player_3",
-          "parent": "microwave_2",
+          "object_declaration": "player:3",
+          "parent": "microwave:2",
           "property": "load",
           "file": "test_generic_limit_demand(range0-1).glt"
         },
         {
-          "name": "player_6",
           "parent": "double_assert_5",
           "property": "value",
           "file": "test_generic_limit_demand.player"
@@ -53,8 +52,8 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
-          "parent": "microwave_2",
+          "object_declaration": "recorder:4",
+          "parent": "microwave:2",
           "property": "load",
           "file": "test_generic_limit_demand.csv",
           "interval": 3600,
@@ -65,8 +64,8 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_5",
-          "parent": "microwave_2",
+          "object_declaration": "double_assert:5",
+          "parent": "microwave:2",
           "status": "ASSERT_TRUE",
           "target": "load",
           "within": 0.001

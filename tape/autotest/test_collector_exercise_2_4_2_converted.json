@@ -15,15 +15,13 @@
     "house": {
       "instances": [
         {
-          "name": "house_..100",
-          "object_count": 100
+          "object_declaration": "house:..100"
         }
       ]
     },
     "collector": {
       "instances": [
         {
-          "name": "collector_2",
           "file": "exercise_2_4_2.csv",
           "group": "class=house",
           "property": "avg(air_temperature),std(air_temperature),max(air_temperature),min(air_temperature)",

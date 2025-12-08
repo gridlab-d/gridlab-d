@@ -1252,7 +1252,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_105",
           "parent": "test_assert",
           "flags": "DELTAMODE",
           "property": "value",

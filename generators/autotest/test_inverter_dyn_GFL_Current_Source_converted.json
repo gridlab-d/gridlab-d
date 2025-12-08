@@ -59,7 +59,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_2",
           "parent": "A2",
           "property": "Pref",
           "file": "../data_inverter_GFLCurrent_init_Pref.player",
@@ -69,7 +68,6 @@
           ]
         },
         {
-          "name": "player_5",
           "parent": "complex_assert_4",
           "flags": "DELTAMODE",
           "property": "value",
@@ -80,7 +78,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "A2",
           "file": "Inverter_2_meter.csv",
           "flags": "DELTAMODE",

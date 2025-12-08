@@ -430,42 +430,36 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_32",
           "property": "m634:measured_voltage_A,m634:measured_voltage_B,m634:measured_voltage_C,m645:measured_voltage_A,m645:measured_voltage_B,m645:measured_voltage_C,m646:measured_voltage_A,m646:measured_voltage_B,m646:measured_voltage_C,m652:measured_voltage_A,m652:measured_voltage_B,m652:measured_voltage_C,m671:measured_voltage_A,m671:measured_voltage_B,m671:measured_voltage_C,m675:measured_voltage_A,m675:measured_voltage_B,m675:measured_voltage_C,m692:measured_voltage_A,m692:measured_voltage_B,m692:measured_voltage_C,m611:measured_voltage_A,m611:measured_voltage_B,m611:measured_voltage_C,m6321:measured_voltage_A,m6321:measured_voltage_B,m6321:measured_voltage_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13AMIVoltages.csv"
         },
         {
-          "name": "multi_recorder_33",
           "property": "m634:measured_power_A,m634:measured_power_B,m634:measured_power_C,m645:measured_power_A,m645:measured_power_B,m645:measured_power_C,m646:measured_power_A,m646:measured_power_B,m646:measured_power_C,m652:measured_power_A,m652:measured_power_B,m652:measured_power_C,m671:measured_power_A,m671:measured_power_B,m671:measured_power_C,m675:measured_power_A,m675:measured_power_B,m675:measured_power_C,m692:measured_power_A,m692:measured_power_B,m692:measured_power_C,m611:measured_power_A,m611:measured_power_B,m611:measured_power_C,m6321:measured_power_A,m6321:measured_power_B,m6321:measured_power_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13AMIPowers.csv"
         },
         {
-          "name": "multi_recorder_34",
           "property": "n650:voltage_A,n650:voltage_B,n650:voltage_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13SubVoltages.csv"
         },
         {
-          "name": "multi_recorder_35",
           "property": "n650:power_A,n650:power_B,n650:power_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13SubPowers.csv"
         },
         {
-          "name": "multi_recorder_36",
           "property": "n630:voltage_A,n630:voltage_B,n630:voltage_C,n632:voltage_A,n632:voltage_B,n632:voltage_C,n633:voltage_A,n633:voltage_B,n633:voltage_C,n680:voltage_A,n680:voltage_B,n680:voltage_C,n684:voltage_A,n684:voltage_B,n684:voltage_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13PseudoVoltages.csv"
         },
         {
-          "name": "multi_recorder_37",
           "property": "n630:power_A,n630:power_B,n630:power_C,n632:power_A,n632:power_B,n632:power_C,n633:power_A,n633:power_B,n633:power_C,n680:power_A,n680:power_B,n680:power_C,n684:power_A,n684:power_B,n684:power_C",
           "limit": 0,
           "interval": 1,
@@ -476,7 +470,6 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_38",
           "filename": "output_voltage.csv"
         }
       ]
@@ -776,7 +769,6 @@
     "impedance_dump": {
       "instances": [
         {
-          "name": "impedance_dump_68",
           "filename": "IEEE_13_node_impedance_dump.xml"
         }
       ]

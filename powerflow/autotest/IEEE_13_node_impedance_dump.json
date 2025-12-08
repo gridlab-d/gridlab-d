@@ -554,7 +554,7 @@
           }
         },
         {
-          "name": "load_l6321",
+          "name": "l6321load_l6321",
           "parent": "l6321",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
@@ -671,7 +671,6 @@
     "impedance_dump": {
       "instances": [
         {
-          "name": "impedance_dump_53",
           "filename": "IEEE_13_node_impedance_dump.xml"
         }
       ]

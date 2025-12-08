@@ -72,7 +72,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "Market_1",
           "property": "past_price_stdev_1d,current_price_stdev_1d,past_price_stdev_3d,current_price_stdev_3d,current_price_mean_1d,past_price_mean_1d,past_price_mean_3d,current_price_mean_3d",
           "file": "test_market_timing_5.csv",
@@ -84,7 +83,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_3",
           "parent": "Market_1",
           "target": "current_price_mean_1d",
           "in": "'2001-01-03 00:00:00'",
@@ -96,7 +94,6 @@
           }
         },
         {
-          "name": "double_assert_4",
           "parent": "Market_1",
           "target": "current_price_stdev_1d",
           "in": "'2001-01-03 00:00:00'",
@@ -108,7 +105,6 @@
           }
         },
         {
-          "name": "double_assert_5",
           "parent": "Market_1",
           "target": "past_price_mean_1d",
           "in": "'2001-01-03 1:00:00'",
@@ -120,7 +116,6 @@
           }
         },
         {
-          "name": "double_assert_6",
           "parent": "Market_1",
           "target": "past_price_stdev_1d",
           "in": "'2001-01-03 1:00:00'",
@@ -132,7 +127,6 @@
           }
         },
         {
-          "name": "double_assert_7",
           "parent": "Market_1",
           "target": "past_price_stdev_3d",
           "in": "'2001-01-05 1:00:00'",
@@ -144,7 +138,6 @@
           }
         },
         {
-          "name": "double_assert_8",
           "parent": "Market_1",
           "target": "current_price_stdev_3d",
           "in": "'2001-01-05 00:00:00'",
@@ -156,7 +149,6 @@
           }
         },
         {
-          "name": "double_assert_9",
           "parent": "Market_1",
           "target": "past_price_mean_3d",
           "in": "'2001-01-05 1:00:00'",
@@ -168,7 +160,6 @@
           }
         },
         {
-          "name": "double_assert_10",
           "parent": "Market_1",
           "target": "current_price_mean_3d",
           "in": "'2001-01-05 00:00:00'",

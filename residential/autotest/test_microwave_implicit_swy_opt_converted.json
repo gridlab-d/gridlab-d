@@ -23,7 +23,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_2",
           "parent": "house_1",
           "in": "'2001-05-02 1:00:00'",
           "once": "ONCE_TRUE",
@@ -36,7 +35,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "house_1",
           "property": "panel.energy",
           "file": "test_microwave_implicit_swy.csv",

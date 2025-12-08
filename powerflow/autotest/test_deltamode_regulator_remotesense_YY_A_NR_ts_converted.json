@@ -132,7 +132,6 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_7",
           "phases": "ABCN",
           "from": "FeederNode",
           "to": "InterNode",
@@ -140,7 +139,6 @@
           "configuration": "lc300"
         },
         {
-          "name": "overhead_line_11",
           "phases": "ABCN",
           "from": "TopNode",
           "to": "MiddleNode",
@@ -148,7 +146,6 @@
           "configuration": "lc300"
         },
         {
-          "name": "overhead_line_13",
           "phases": "ABCN",
           "from": "MiddleNode",
           "to": "BottomLoad",
@@ -172,14 +169,13 @@
     "player": {
       "instances": [
         {
-          "name": "uselessdeltatrigger",
+          "name": "BottomLoaduselessdeltatrigger",
           "parent": "BottomLoad",
           "flags": "DELTAMODE",
           "property": "nominal_voltage",
           "file": "../data_reg_deltamode_trigger.player"
         },
         {
-          "name": "player_16",
           "parent": "BottomLoad",
           "flags": "DELTAMODE",
           "file": "../regulator_load_phA.player",
@@ -187,7 +183,6 @@
           "property": "constant_power_A"
         },
         {
-          "name": "player_17",
           "parent": "BottomLoad",
           "flags": "DELTAMODE",
           "file": "../regulator_load_phB.player",
@@ -195,7 +190,6 @@
           "property": "constant_power_B"
         },
         {
-          "name": "player_18",
           "parent": "BottomLoad",
           "flags": "DELTAMODE",
           "file": "../regulator_load_phC.player",
@@ -203,21 +197,18 @@
           "property": "constant_power_C"
         },
         {
-          "name": "player_20",
           "parent": "complex_assert_19",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_reg_remote_YY_A_NR_phase_A.csv"
         },
         {
-          "name": "player_22",
           "parent": "complex_assert_21",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_reg_remote_YY_A_NR_phase_B.csv"
         },
         {
-          "name": "player_24",
           "parent": "complex_assert_23",
           "flags": "DELTAMODE",
           "property": "value",

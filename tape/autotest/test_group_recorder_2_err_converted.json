@@ -213,7 +213,6 @@
     "group_recorder": {
       "instances": [
         {
-          "name": "group_recorder_14",
           "interval": 3600,
           "group": "groupid=meter_group",
           "property": "0_measured_voltage_A",

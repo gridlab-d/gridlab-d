@@ -76,7 +76,7 @@
           "name": "testgendever",
           "parent": "testmetrics",
           "fault_type": "SLG-A",
-          "manual_outages": "node702-703,2000-01-01 5:03:00,2000-01-01 5:07_00",
+          "manual_outages": "node702-703,2000-01-01 5:03:00,2000-01-01 5:07:00",
           "outside_comments": [
             "//Manual object - swing fault"
           ],
@@ -90,7 +90,7 @@
           "name": "testgendev",
           "parent": "testmetrics",
           "fault_type": "SLG-A",
-          "manual_outages": "node711-741,2000-01-01 5:05:00,2000-01-01 5:10:00,node733-734,2000-01-01 5:21:00,2000-01-01 5:24_10",
+          "manual_outages": "node711-741,2000-01-01 5:05:00,2000-01-01 5:10:00,node733-734,2000-01-01 5:21:00,2000-01-01 5:24:10",
           "outside_comments": [
             "//Manual object"
           ],
@@ -105,7 +105,7 @@
           "name": "testgendevTLL",
           "parent": "testmetrics",
           "fault_type": "TLL",
-          "manual_outages": "node711-741,2000-01-01 10:25:00,2000-01-01 10:40_00",
+          "manual_outages": "node711-741,2000-01-01 10:25:00,2000-01-01 10:40:00",
           "outside_comments": [
             "//Manual object"
           ],
@@ -120,7 +120,7 @@
           "name": "testgen_fuse",
           "parent": "testmetrics",
           "fault_type": "FUS-ABC",
-          "manual_outages": "node703-703b,2000-01-01 5:10:11,2000-01-01 5:12:15,node703-703b,2000-01-01 15:10:11,2000-01-01 15:12_15",
+          "manual_outages": "node703-703b,2000-01-01 5:10:11,2000-01-01 5:12:15,node703-703b,2000-01-01 15:10:11,2000-01-01 15:12:15",
           "outside_comments": [
             "//Manual object - fuse - same fuse being altered by player below"
           ]
@@ -129,7 +129,7 @@
           "name": "testgen_sw",
           "parent": "testmetrics",
           "fault_type": "SW-AC",
-          "manual_outages": "sw_load834_834b,2000-01-01 5:10:11,2000-01-01 5:12_15",
+          "manual_outages": "sw_load834_834b,2000-01-01 5:10:11,2000-01-01 5:12:15",
           "outside_comments": [
             "//Manual object - switch"
           ],
@@ -141,7 +141,7 @@
           "name": "testgendevB",
           "parent": "testmetrics",
           "fault_type": "DLG-X",
-          "manual_outages": "node720-706,2000-01-01 5:02:05,2000-01-01 5:02:10,node704-714,2000-01-01 5:03:05,2000-01-01 5:03_10",
+          "manual_outages": "node720-706,2000-01-01 5:02:05,2000-01-01 5:02:10,node704-714,2000-01-01 5:03:05,2000-01-01 5:03:10",
           "outside_comments": [
             "//Manual object B"
           ],
@@ -154,61 +154,51 @@
     "player": {
       "instances": [
         {
-          "name": "player_11",
           "parent": "double_assert_10",
           "property": "value",
           "file": "../deterministic_SAIFI.csv"
         },
         {
-          "name": "player_13",
           "parent": "double_assert_12",
           "property": "value",
           "file": "../deterministic_SAIDI.csv"
         },
         {
-          "name": "player_15",
           "parent": "double_assert_14",
           "property": "value",
           "file": "../deterministic_CAIDI.csv"
         },
         {
-          "name": "player_17",
           "parent": "double_assert_16",
           "property": "value",
           "file": "../deterministic_MAIFI.csv"
         },
         {
-          "name": "player_19",
           "parent": "double_assert_18",
           "property": "value",
           "file": "../deterministic_SAIFI_int.csv"
         },
         {
-          "name": "player_21",
           "parent": "double_assert_20",
           "property": "value",
           "file": "../deterministic_SAIDI_int.csv"
         },
         {
-          "name": "player_23",
           "parent": "double_assert_22",
           "property": "value",
           "file": "../deterministic_CAIDI_int.csv"
         },
         {
-          "name": "player_25",
           "parent": "double_assert_24",
           "property": "value",
           "file": "../deterministic_MAIFI_int.csv"
         },
         {
-          "name": "player_138",
           "parent": "complex_assert_137",
           "property": "value",
           "file": "../deterministic_powerA.csv"
         },
         {
-          "name": "player_160",
           "parent": "node703-703b",
           "property": "current_limit",
           "file": "../fuse_limit_manipulate.player"

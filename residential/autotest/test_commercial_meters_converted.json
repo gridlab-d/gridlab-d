@@ -31,7 +31,6 @@
     "climate": {
       "instances": [
         {
-          "name": "climate_1",
           "tmyfile": "../WA-Yakima.tmy2"
         }
       ]
@@ -88,7 +87,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_6",
           "parent": "network_node",
           "target": "distribution_power_A",
           "in": "'2001-07-24 13:31:40'",
@@ -97,7 +95,6 @@
           "within": 1.0
         },
         {
-          "name": "complex_assert_7",
           "parent": "network_node",
           "target": "distribution_power_B",
           "in": "'2001-07-24 13:31:40'",
@@ -106,7 +103,6 @@
           "within": 1.0
         },
         {
-          "name": "complex_assert_8",
           "parent": "network_node",
           "target": "distribution_power_C",
           "in": "'2001-07-24 13:31:40'",
@@ -186,7 +182,6 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "ZIPload_16",
           "parent": "house_120",
           "heat_fraction": 1,
           "base_power": "zippwr*1",
@@ -198,7 +193,6 @@
           "impedance_fraction": 0
         },
         {
-          "name": "ZIPload_18",
           "parent": "house_208",
           "heat_fraction": 1,
           "base_power": "zippwr*1",
@@ -210,7 +204,6 @@
           "impedance_fraction": 0
         },
         {
-          "name": "ZIPload_20",
           "parent": "house_480",
           "heat_fraction": 1,
           "base_power": "zippwr*1",
@@ -272,7 +265,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_21",
           "parent": "network_node",
           "property": "distribution_power_A.real,distribution_power_A.imag,distribution_power_B.real,distribution_power_B.imag,distribution_power_C.real,distribution_power_C.imag",
           "file": "test_commercial_meters_load.csv",
@@ -286,7 +278,6 @@
           ]
         },
         {
-          "name": "recorder_22",
           "parent": "load_480",
           "property": "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag",
           "file": "voltages_480.csv",

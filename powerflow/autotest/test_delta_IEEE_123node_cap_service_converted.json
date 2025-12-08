@@ -318,14 +318,12 @@
     "player": {
       "instances": [
         {
-          "name": "player_34",
           "parent": "complex_assert_33",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_cap_service_test_power_measure.csv"
         },
         {
-          "name": "player_269",
           "parent": "cap_83",
           "flags": "DELTAMODE",
           "property": "service_status",
@@ -335,21 +333,18 @@
           ]
         },
         {
-          "name": "player_271",
           "parent": "cap_88",
           "flags": "DELTAMODE",
           "property": "service_status",
           "file": "../data_cap_service.csv"
         },
         {
-          "name": "player_273",
           "parent": "cap_90",
           "flags": "DELTAMODE",
           "property": "service_status",
           "file": "../data_cap_service.csv"
         },
         {
-          "name": "player_275",
           "parent": "cap_92",
           "flags": "DELTAMODE",
           "property": "service_status",

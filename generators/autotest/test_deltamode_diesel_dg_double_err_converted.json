@@ -94,28 +94,24 @@
     "player": {
       "instances": [
         {
-          "name": "player_6",
           "parent": "double_assert_5",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_error_G1SpeedAssert.csv"
         },
         {
-          "name": "player_9",
           "parent": "LOAD_1",
           "file": "../diesel_deltamode_load_player_A.csv",
           "property": "constant_power_A",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_10",
           "parent": "LOAD_1",
           "file": "../diesel_deltamode_load_player_B.csv",
           "property": "constant_power_B",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_11",
           "parent": "LOAD_1",
           "file": "../diesel_deltamode_load_player_C.csv",
           "property": "constant_power_C",
