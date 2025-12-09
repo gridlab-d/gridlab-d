@@ -688,12 +688,13 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
     else
     {
         PROPERTY *prop = class_find_property(oClass, propName.c_str());
+        if (prop != nullptr)
+            prop->raw = propValue;
         this->currentObject = obj;
         this->currentModule = obj->oclass->module;
         this->parse.current_object = obj;
         if (prop != nullptr && prop->ptype == PT_complex && this->parse.complex_unit(propValue, &cval, &unit) > 0)
         {
-            prop->raw = propValue;
 			if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0
                 && unit_convert_complex(unit, prop->unit, &cval) == 0)
 				{
