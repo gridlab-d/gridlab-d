@@ -35,9 +35,10 @@
 #include "class.h"
 #include "timestamp.h"
 #include <iostream>
-#include <nlohmann/json.hpp>
+#include <string>
+// #include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
+//using json = nlohmann::json;
 
 #define MAXNAME 64
 #define MAXDEFINITION 65536
@@ -79,7 +80,7 @@ struct s_schedule {
 	double abs[MAXBLOCKS];				/**< the sum of the absolute values for each block -- used to normalize */
 	unsigned int count[MAXBLOCKS];		/**< the number of values given in each block */
 	unsigned int minutes[MAXBLOCKS];	/**< the total number of minutes associate with each block */
-	json raw = json::array();
+	std::string raw;
 #ifdef _DEBUG
 	unsigned int magic2;
 	unsigned int checksum;
