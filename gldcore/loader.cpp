@@ -1038,7 +1038,6 @@ STATUS loader::loadSchedules()
 	std::string cron_schedule;
 	std::string	sub_schedule;
 	SCHEDULE* sch;
-	json raw = json::array();
 	for (auto& [name, schedule] : j_obj.items())
     {
         if(rv == FAILED)
@@ -1047,6 +1046,7 @@ STATUS loader::loadSchedules()
         }
 		if (schedule.is_array())
         {
+
 			cron_schedule = "";
 			for (auto& element : schedule)
             {
@@ -1062,7 +1062,6 @@ STATUS loader::loadSchedules()
 						for (auto& item : element["items"])
                         {
 							cron_schedule += item.get_ref<const std::string&>() + ";\n";
-							raw.push_back(item.get_ref<const std::string&>());
                         }
 					}
                     else
@@ -1084,7 +1083,7 @@ STATUS loader::loadSchedules()
 			if (cron_schedule != "")
             {
 				sch = schedule_create(name.data(), cron_schedule.data());
-				sch->raw = raw;
+				sch->raw = schedule.dump();
             }
             else
             {
