@@ -281,28 +281,24 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_8",
           "parent": "node2",
           "target": "voltage_A",
           "value": "6998.888-81.08j",
           "within": 0.1
         },
         {
-          "name": "complex_assert_9",
           "parent": "node2",
           "target": "voltage_B",
           "value": "-3609.22-6021.75j",
           "within": 0.1
         },
         {
-          "name": "complex_assert_10",
           "parent": "node2",
           "target": "voltage_C",
           "value": "-3391.47+6067.85j",
           "within": 0.1
         },
         {
-          "name": "complex_assert_15",
           "parent": "load_delt_new_pwr",
           "target": "voltage_A",
           "value": "6990.542-82.87j",
@@ -312,21 +308,18 @@
           ]
         },
         {
-          "name": "complex_assert_16",
           "parent": "load_delt_new_pwr",
           "target": "voltage_B",
           "value": "-3610.01-6012.86j",
           "within": 0.1
         },
         {
-          "name": "complex_assert_17",
           "parent": "load_delt_new_pwr",
           "target": "voltage_C",
           "value": "-3383.64+6061.67j",
           "within": 0.1
         },
         {
-          "name": "complex_assert_26",
           "parent": "load_wye_delt_new_pwr",
           "target": "voltage_A",
           "value": "6996.46-83.65j",
@@ -336,35 +329,30 @@
           ]
         },
         {
-          "name": "complex_assert_27",
           "parent": "load_wye_delt_new_pwr",
           "target": "voltage_B",
           "value": "-3608.93-6019.18j",
           "within": 0.1
         },
         {
-          "name": "complex_assert_28",
           "parent": "load_wye_delt_new_pwr",
           "target": "voltage_C",
           "value": "-3388.12+6065.06j",
           "within": 0.1
         },
         {
-          "name": "complex_assert_48",
           "parent": "load_child4_full_wye",
           "target": "voltage_A",
           "value": "6988.12-85.43j",
           "within": 0.1
         },
         {
-          "name": "complex_assert_49",
           "parent": "load_child4_full_wye",
           "target": "voltage_B",
           "value": "-3609.71-6010.3j",
           "within": 0.1
         },
         {
-          "name": "complex_assert_50",
           "parent": "load_child4_full_wye",
           "target": "voltage_C",
           "value": "-3380.3+6058.88j",

@@ -105,7 +105,7 @@
         {
           "name": "testgendev",
           "fault_type": "SW-ABC",
-          "manual_outages": "switch3_3B,2000-01-01 00:00:05,2000-01-01 00:00_30",
+          "manual_outages": "switch3_3B,2000-01-01 00:00:05,2000-01-01 00:00:30",
           "outside_comments": [
             "//Manual object - needed to get fault_check to behave properly -- arbitrary item added"
           ],
@@ -116,7 +116,7 @@
         {
           "name": "testgendev_B",
           "fault_type": "SW-ABC",
-          "manual_outages": "switch2B_2C,2000-01-01 00:00:04,2000-01-01 00:00_35",
+          "manual_outages": "switch2B_2C,2000-01-01 00:00:04,2000-01-01 00:00:35",
           "inline_comments": {
             "fault_type": "//Type of fault for the object to induce"
           }
@@ -147,7 +147,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_12",
           "parent": "node1",
           "property": "voltage_A,voltage_B,voltage_C",
           "interval": 1,
@@ -161,37 +160,31 @@
     "player": {
       "instances": [
         {
-          "name": "player_13",
           "parent": "node1",
           "property": "voltage_A",
           "file": "../data_swing_pq_voltage_player_A.csv"
         },
         {
-          "name": "player_14",
           "parent": "node1",
           "property": "voltage_B",
           "file": "../data_swing_pq_voltage_player_B.csv"
         },
         {
-          "name": "player_15",
           "parent": "node1",
           "property": "voltage_C",
           "file": "../data_swing_pq_voltage_player_C.csv"
         },
         {
-          "name": "player_17",
           "parent": "complex_assert_16",
           "property": "value",
           "file": "../data_assert_swing_pq_voltage_A.csv"
         },
         {
-          "name": "player_19",
           "parent": "complex_assert_18",
           "property": "value",
           "file": "../data_assert_swing_pq_voltage_B.csv"
         },
         {
-          "name": "player_21",
           "parent": "complex_assert_20",
           "property": "value",
           "file": "../data_assert_swing_pq_voltage_C.csv"

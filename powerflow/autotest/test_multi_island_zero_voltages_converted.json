@@ -89,7 +89,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_8",
           "parent": "I_Should_Disconnect",
           "target": "voltage_A",
           "value": 0.0,
@@ -99,14 +98,12 @@
           ]
         },
         {
-          "name": "complex_assert_9",
           "parent": "I_Should_Disconnect",
           "target": "voltage_B",
           "value": 0.0,
           "within": 0.01
         },
         {
-          "name": "complex_assert_10",
           "parent": "I_Should_Disconnect",
           "target": "voltage_C",
           "value": 0.0,

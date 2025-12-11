@@ -34,7 +34,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "MyClimate",
           "file": "climate_out.csv",
           "interval": 3600,
@@ -42,7 +41,6 @@
           "property": "temperature,solar_global,solar_direct"
         },
         {
-          "name": "recorder_14",
           "parent": "tn_B_645",
           "property": "measured_real_power,measured_reactive_power,measured_power",
           "file": "const_pf_meter.csv",
@@ -50,8 +48,7 @@
           "limit": 25
         },
         {
-          "name": "recorder_19",
-          "parent": "sol_inv_B_2_645",
+          "parent": "tn_B_645const_pf_invsol_inv_B_2_645",
           "file": "PV_out.csv",
           "interval": 3600,
           "limit": 25,
@@ -99,7 +96,7 @@
           "phases": "ABCN"
         },
         {
-          "name": "gld_645",
+          "name": "645",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -113,14 +110,14 @@
         {
           "name": "substation_transformer",
           "from": "network_node",
-          "to": "gld_645",
+          "to": "645",
           "phases": "ABCN",
           "configuration": "trans_config_to_feeder"
         },
         {
           "name": "CTTF_B_645",
           "phases": "BS",
-          "from": "gld_645",
+          "from": "645",
           "to": "tn_B_645",
           "configuration": "inv_transformer"
         }
@@ -129,7 +126,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_10",
           "parent": "complex_assert_9",
           "property": "value",
           "file": "../constantPQmeterPower_multi_efficiency.player",
@@ -138,7 +134,6 @@
           ]
         },
         {
-          "name": "player_16",
           "parent": "complex_assert_15",
           "property": "value",
           "file": "../constantPFmeterPower_multi_efficiency.player",
@@ -152,7 +147,7 @@
       "instances": [
         {
           "name": "complex_assert_9",
-          "parent": "const_pq_meter",
+          "parent": "645const_pq_meter",
           "target": "measured_power",
           "within": 0.1
         },
@@ -167,8 +162,8 @@
     "inverter": {
       "instances": [
         {
-          "name": "const_pq_inv",
-          "parent": "const_pq_meter",
+          "name": "645const_pq_meterconst_pq_inv",
+          "parent": "645const_pq_meter",
           "phases": "B",
           "inverter_type": "FOUR_QUADRANT",
           "use_multipoint_efficiency": true,
@@ -192,7 +187,7 @@
           }
         },
         {
-          "name": "const_pf_inv",
+          "name": "tn_B_645const_pf_inv",
           "parent": "tn_B_645",
           "phases": "BS",
           "inverter_type": "FOUR_QUADRANT",
@@ -218,8 +213,8 @@
     "meter": {
       "instances": [
         {
-          "name": "const_pq_meter",
-          "parent": "gld_645",
+          "name": "645const_pq_meter",
+          "parent": "645",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",
@@ -239,8 +234,8 @@
     "solar": {
       "instances": [
         {
-          "name": "sol_inv_B_2_645",
-          "parent": "const_pf_inv",
+          "name": "tn_B_645const_pf_invsol_inv_B_2_645",
+          "parent": "tn_B_645const_pf_inv",
           "panel_type": "SINGLE_CRYSTAL_SILICON",
           "orientation": "FIXED_AXIS",
           "area": 323

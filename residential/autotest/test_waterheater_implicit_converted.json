@@ -27,7 +27,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "house_1",
           "property": "panel.power,panel.energy,system_mode,air_temperature,outdoor_temperature",
           "interval": -1,

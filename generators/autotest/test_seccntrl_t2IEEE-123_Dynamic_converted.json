@@ -2,7 +2,9 @@
   "__preamble": {
     "comments": [
       "//Deltamode declarations - global values",
-      "// #set deltamode_timestep=100000000  //100 ms"
+      "// #set deltamode_timestep=100000000  //100 ms",
+      "#set deltamode_maximumtime //1 hour",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -32,8 +34,8 @@
       "pauseatexit": 0,
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
-      "deltamode_maximumtime": "3.6e12 //1 hour",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_maximumtime": 3600000000000.0,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -150,7 +152,6 @@
           ]
         },
         {
-          "name": "player_5",
           "parent": "int_assert_4",
           "flags": "DELTAMODE",
           "property": "value",
@@ -472,7 +473,7 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "OH_line_1_2",
+          "name": "OH_line_1-2",
           "phases": "BN",
           "from": "load_1",
           "to": "load_2",
@@ -483,7 +484,7 @@
           ]
         },
         {
-          "name": "OH_line_1_3",
+          "name": "OH_line_1-3",
           "phases": "CN",
           "from": "load_1",
           "to": "node_3",
@@ -491,7 +492,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_1_7",
+          "name": "OH_line_1-7",
           "phases": "ABCN",
           "from": "load_1",
           "to": "load_7",
@@ -499,7 +500,7 @@
           "configuration": "line_configuration_1"
         },
         {
-          "name": "OH_line_3_4",
+          "name": "OH_line_3-4",
           "phases": "CN",
           "from": "node_3",
           "to": "load_4",
@@ -507,7 +508,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_3_5",
+          "name": "OH_line_3-5",
           "phases": "CN",
           "from": "node_3",
           "to": "load_5",
@@ -515,7 +516,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_5_6",
+          "name": "OH_line_5-6",
           "phases": "CN",
           "from": "load_5",
           "to": "load_6",
@@ -523,7 +524,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_7_8",
+          "name": "OH_line_7-8",
           "phases": "ABCN",
           "from": "load_7",
           "to": "node_8",
@@ -531,7 +532,7 @@
           "configuration": "line_configuration_1"
         },
         {
-          "name": "OH_line_8_12",
+          "name": "OH_line_8-12",
           "phases": "BN",
           "from": "node_8",
           "to": "load_12",
@@ -539,7 +540,7 @@
           "configuration": "line_configuration_10"
         },
         {
-          "name": "OH_line_8_9",
+          "name": "OH_line_8-9",
           "phases": "AN",
           "from": "node_8",
           "to": "load_9",
@@ -547,7 +548,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_8_13",
+          "name": "OH_line_8-13",
           "phases": "ABCN",
           "from": "node_8",
           "to": "meter_13",
@@ -555,7 +556,7 @@
           "configuration": "line_configuration_1"
         },
         {
-          "name": "OH_line_1401_14",
+          "name": "OH_line_1401-14",
           "phases": "AN",
           "from": "node_1401",
           "to": "node_14",
@@ -563,7 +564,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_13_34",
+          "name": "OH_line_13-34",
           "phases": "CN",
           "from": "meter_13",
           "to": "load_34",
@@ -571,7 +572,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_13_18",
+          "name": "OH_line_13-18",
           "phases": "ABCN",
           "from": "meter_13",
           "to": "node_18",
@@ -579,7 +580,7 @@
           "configuration": "line_configuration_2"
         },
         {
-          "name": "OH_line_14_11",
+          "name": "OH_line_14-11",
           "phases": "AN",
           "from": "node_14",
           "to": "load_11",
@@ -587,7 +588,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_14_10",
+          "name": "OH_line_14-10",
           "phases": "AN",
           "from": "node_14",
           "to": "load_10",
@@ -595,7 +596,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_15_16",
+          "name": "OH_line_15-16",
           "phases": "CN",
           "from": "node_15",
           "to": "load_16",
@@ -603,7 +604,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_15_17",
+          "name": "OH_line_15-17",
           "phases": "CN",
           "from": "node_15",
           "to": "load_17",
@@ -611,7 +612,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_18_19",
+          "name": "OH_line_18-19",
           "phases": "AN",
           "from": "node_18",
           "to": "load_19",
@@ -619,7 +620,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_18_21",
+          "name": "OH_line_18-21",
           "phases": "ABCN",
           "from": "node_18",
           "to": "node_21",
@@ -627,7 +628,7 @@
           "configuration": "line_configuration_2"
         },
         {
-          "name": "OH_line_19_20",
+          "name": "OH_line_19-20",
           "phases": "AN",
           "from": "load_19",
           "to": "load_20",
@@ -635,7 +636,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_21_22",
+          "name": "OH_line_21-22",
           "phases": "BN",
           "from": "node_21",
           "to": "load_22",
@@ -643,7 +644,7 @@
           "configuration": "line_configuration_10"
         },
         {
-          "name": "OH_line_21_23",
+          "name": "OH_line_21-23",
           "phases": "ABCN",
           "from": "node_21",
           "to": "node_23",
@@ -651,7 +652,7 @@
           "configuration": "line_configuration_2"
         },
         {
-          "name": "OH_line_23_24",
+          "name": "OH_line_23-24",
           "phases": "CN",
           "from": "node_23",
           "to": "load_24",
@@ -659,7 +660,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_23_25",
+          "name": "OH_line_23-25",
           "phases": "ABCN",
           "from": "node_23",
           "to": "node_25",
@@ -667,7 +668,7 @@
           "configuration": "line_configuration_2"
         },
         {
-          "name": "OH_line_2601_26",
+          "name": "OH_line_2601-26",
           "phases": "ACN",
           "from": "node_2601",
           "to": "node_26",
@@ -675,7 +676,7 @@
           "configuration": "line_configuration_7"
         },
         {
-          "name": "OH_line_25_28",
+          "name": "OH_line_25-28",
           "phases": "ABCN",
           "from": "node_25",
           "to": "load_28",
@@ -683,7 +684,7 @@
           "configuration": "line_configuration_2"
         },
         {
-          "name": "OH_line_26_27",
+          "name": "OH_line_26-27",
           "phases": "ACN",
           "from": "node_26",
           "to": "node_27",
@@ -691,7 +692,7 @@
           "configuration": "line_configuration_7"
         },
         {
-          "name": "OH_line_26_31",
+          "name": "OH_line_26-31",
           "phases": "CN",
           "from": "node_26",
           "to": "load_31",
@@ -699,7 +700,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_27_33",
+          "name": "OH_line_27-33",
           "phases": "AN",
           "from": "node_27",
           "to": "load_33",
@@ -707,7 +708,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_28_29",
+          "name": "OH_line_28-29",
           "phases": "ABCN",
           "from": "load_28",
           "to": "load_29",
@@ -715,7 +716,7 @@
           "configuration": "line_configuration_2"
         },
         {
-          "name": "OH_line_29_30",
+          "name": "OH_line_29-30",
           "phases": "ABCN",
           "from": "load_29",
           "to": "load_30",
@@ -723,7 +724,7 @@
           "configuration": "line_configuration_2"
         },
         {
-          "name": "OH_line_30_250",
+          "name": "OH_line_30-250",
           "phases": "ABCN",
           "from": "load_30",
           "to": "node_250",
@@ -731,7 +732,7 @@
           "configuration": "line_configuration_2"
         },
         {
-          "name": "OH_line_31_32",
+          "name": "OH_line_31-32",
           "phases": "CN",
           "from": "load_31",
           "to": "load_32",
@@ -739,7 +740,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_34_15",
+          "name": "OH_line_34-15",
           "phases": "CN",
           "from": "load_34",
           "to": "node_15",
@@ -747,7 +748,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_35_36",
+          "name": "OH_line_35-36",
           "phases": "ABN",
           "from": "load_35",
           "to": "node_36",
@@ -755,7 +756,7 @@
           "configuration": "line_configuration_8"
         },
         {
-          "name": "OH_line_35_40",
+          "name": "OH_line_35-40",
           "phases": "ABCN",
           "from": "load_35",
           "to": "node_40",
@@ -763,7 +764,7 @@
           "configuration": "line_configuration_1"
         },
         {
-          "name": "OH_line_36_37",
+          "name": "OH_line_36-37",
           "phases": "AN",
           "from": "node_36",
           "to": "load_37",
@@ -771,7 +772,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_36_38",
+          "name": "OH_line_36-38",
           "phases": "BN",
           "from": "node_36",
           "to": "load_38",
@@ -779,7 +780,7 @@
           "configuration": "line_configuration_10"
         },
         {
-          "name": "OH_line_38_39",
+          "name": "OH_line_38-39",
           "phases": "BN",
           "from": "load_38",
           "to": "load_39",
@@ -787,7 +788,7 @@
           "configuration": "line_configuration_10"
         },
         {
-          "name": "OH_line_40_41",
+          "name": "OH_line_40-41",
           "phases": "CN",
           "from": "node_40",
           "to": "load_41",
@@ -795,7 +796,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_40_42",
+          "name": "OH_line_40-42",
           "phases": "ABCN",
           "from": "node_40",
           "to": "load_42",
@@ -803,7 +804,7 @@
           "configuration": "line_configuration_1"
         },
         {
-          "name": "OH_line_42_43",
+          "name": "OH_line_42-43",
           "phases": "BN",
           "from": "load_42",
           "to": "load_43",
@@ -811,7 +812,7 @@
           "configuration": "line_configuration_10"
         },
         {
-          "name": "OH_line_42_44",
+          "name": "OH_line_42-44",
           "phases": "ABCN",
           "from": "load_42",
           "to": "node_44",
@@ -819,7 +820,7 @@
           "configuration": "line_configuration_1"
         },
         {
-          "name": "OH_line_44_45",
+          "name": "OH_line_44-45",
           "phases": "AN",
           "from": "node_44",
           "to": "load_45",
@@ -827,7 +828,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_44_47",
+          "name": "OH_line_44-47",
           "phases": "ABCN",
           "from": "node_44",
           "to": "load_47",
@@ -835,7 +836,7 @@
           "configuration": "line_configuration_1"
         },
         {
-          "name": "OH_line_45_46",
+          "name": "OH_line_45-46",
           "phases": "AN",
           "from": "load_45",
           "to": "load_46",
@@ -843,7 +844,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_47_48",
+          "name": "OH_line_47-48",
           "phases": "ABCN",
           "from": "load_47",
           "to": "load_48",
@@ -851,7 +852,7 @@
           "configuration": "line_configuration_4"
         },
         {
-          "name": "OH_line_47_49",
+          "name": "OH_line_47-49",
           "phases": "ABCN",
           "from": "load_47",
           "to": "load_49",
@@ -859,7 +860,7 @@
           "configuration": "line_configuration_4"
         },
         {
-          "name": "OH_line_49_50",
+          "name": "OH_line_49-50",
           "phases": "ABCN",
           "from": "load_49",
           "to": "meter_50",
@@ -867,7 +868,7 @@
           "configuration": "line_configuration_4"
         },
         {
-          "name": "OH_line_50_51",
+          "name": "OH_line_50-51",
           "phases": "ABCN",
           "from": "meter_50",
           "to": "load_51",
@@ -875,7 +876,7 @@
           "configuration": "line_configuration_4"
         },
         {
-          "name": "OH_line_51_151",
+          "name": "OH_line_51-151",
           "phases": "ABCN",
           "from": "load_51",
           "to": "node_151",
@@ -886,7 +887,7 @@
           }
         },
         {
-          "name": "OH_line_52_53",
+          "name": "OH_line_52-53",
           "phases": "ABCN",
           "from": "load_52",
           "to": "load_53",
@@ -894,7 +895,7 @@
           "configuration": "line_configuration_1"
         },
         {
-          "name": "OH_line_53_54",
+          "name": "OH_line_53-54",
           "phases": "ABCN",
           "from": "load_53",
           "to": "node_54",
@@ -902,7 +903,7 @@
           "configuration": "line_configuration_1"
         },
         {
-          "name": "OH_line_54_55",
+          "name": "OH_line_54-55",
           "phases": "ABCN",
           "from": "node_54",
           "to": "load_55",
@@ -910,7 +911,7 @@
           "configuration": "line_configuration_1"
         },
         {
-          "name": "OH_line_54_57",
+          "name": "OH_line_54-57",
           "phases": "ABCN",
           "from": "node_54",
           "to": "node_57",
@@ -918,7 +919,7 @@
           "configuration": "line_configuration_3"
         },
         {
-          "name": "OH_line_55_56",
+          "name": "OH_line_55-56",
           "phases": "ABCN",
           "from": "load_55",
           "to": "load_56",
@@ -926,7 +927,7 @@
           "configuration": "line_configuration_1"
         },
         {
-          "name": "OH_line_57_58",
+          "name": "OH_line_57-58",
           "phases": "BN",
           "from": "node_57",
           "to": "load_58",
@@ -934,7 +935,7 @@
           "configuration": "line_configuration_10"
         },
         {
-          "name": "OH_line_57_60",
+          "name": "OH_line_57-60",
           "phases": "ABCN",
           "from": "node_57",
           "to": "load_60",
@@ -942,7 +943,7 @@
           "configuration": "line_configuration_3"
         },
         {
-          "name": "OH_line_58_59",
+          "name": "OH_line_58-59",
           "phases": "BN",
           "from": "load_58",
           "to": "load_59",
@@ -950,7 +951,7 @@
           "configuration": "line_configuration_10"
         },
         {
-          "name": "OH_line_60_61",
+          "name": "OH_line_60-61",
           "phases": "ABCN",
           "from": "load_60",
           "to": "node_61",
@@ -958,7 +959,7 @@
           "configuration": "line_configuration_5"
         },
         {
-          "name": "OH_line_67_68",
+          "name": "OH_line_67-68",
           "phases": "AN",
           "from": "node_67",
           "to": "load_68",
@@ -966,7 +967,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_67_72",
+          "name": "OH_line_67-72",
           "phases": "ABCN",
           "from": "node_67",
           "to": "load_72",
@@ -974,7 +975,7 @@
           "configuration": "line_configuration_3"
         },
         {
-          "name": "OH_line_67_97",
+          "name": "OH_line_67-97",
           "phases": "ABCN",
           "from": "node_67",
           "to": "node_97",
@@ -982,7 +983,7 @@
           "configuration": "line_configuration_3"
         },
         {
-          "name": "OH_line_68_69",
+          "name": "OH_line_68-69",
           "phases": "AN",
           "from": "load_68",
           "to": "load_69",
@@ -990,7 +991,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_69_70",
+          "name": "OH_line_69-70",
           "phases": "AN",
           "from": "load_69",
           "to": "load_70",
@@ -998,7 +999,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_70_71",
+          "name": "OH_line_70-71",
           "phases": "AN",
           "from": "load_70",
           "to": "load_71",
@@ -1006,7 +1007,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_72_73",
+          "name": "OH_line_72-73",
           "phases": "CN",
           "from": "load_72",
           "to": "load_73",
@@ -1014,7 +1015,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_72_76",
+          "name": "OH_line_72-76",
           "phases": "ABCN",
           "from": "load_72",
           "to": "load_76",
@@ -1022,7 +1023,7 @@
           "configuration": "line_configuration_3"
         },
         {
-          "name": "OH_line_73_74",
+          "name": "OH_line_73-74",
           "phases": "CN",
           "from": "load_73",
           "to": "load_74",
@@ -1030,7 +1031,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_74_75",
+          "name": "OH_line_74-75",
           "phases": "CN",
           "from": "load_74",
           "to": "load_75",
@@ -1038,7 +1039,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_76_77",
+          "name": "OH_line_76-77",
           "phases": "ABCN",
           "from": "load_76",
           "to": "load_77",
@@ -1046,7 +1047,7 @@
           "configuration": "line_configuration_6"
         },
         {
-          "name": "OH_line_76_86",
+          "name": "OH_line_76-86",
           "phases": "ABCN",
           "from": "load_76",
           "to": "load_86",
@@ -1054,7 +1055,7 @@
           "configuration": "line_configuration_3"
         },
         {
-          "name": "OH_line_77_78",
+          "name": "OH_line_77-78",
           "phases": "ABCN",
           "from": "load_77",
           "to": "node_78",
@@ -1062,7 +1063,7 @@
           "configuration": "line_configuration_6"
         },
         {
-          "name": "OH_line_78_79",
+          "name": "OH_line_78-79",
           "phases": "ABCN",
           "from": "node_78",
           "to": "load_79",
@@ -1070,7 +1071,7 @@
           "configuration": "line_configuration_6"
         },
         {
-          "name": "OH_line_78_80",
+          "name": "OH_line_78-80",
           "phases": "ABCN",
           "from": "node_78",
           "to": "load_80",
@@ -1078,7 +1079,7 @@
           "configuration": "line_configuration_6"
         },
         {
-          "name": "OH_line_80_81",
+          "name": "OH_line_80-81",
           "phases": "ABCN",
           "from": "load_80",
           "to": "node_81",
@@ -1086,7 +1087,7 @@
           "configuration": "line_configuration_6"
         },
         {
-          "name": "OH_line_81_82",
+          "name": "OH_line_81-82",
           "phases": "ABCN",
           "from": "node_81",
           "to": "load_82",
@@ -1094,7 +1095,7 @@
           "configuration": "line_configuration_6"
         },
         {
-          "name": "OH_line_81_84",
+          "name": "OH_line_81-84",
           "phases": "CN",
           "from": "node_81",
           "to": "load_84",
@@ -1102,7 +1103,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_82_83",
+          "name": "OH_line_82-83",
           "phases": "ABCN",
           "from": "load_82",
           "to": "load_83",
@@ -1110,7 +1111,7 @@
           "configuration": "line_configuration_6"
         },
         {
-          "name": "OH_line_84_85",
+          "name": "OH_line_84-85",
           "phases": "CN",
           "from": "load_84",
           "to": "load_85",
@@ -1118,7 +1119,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_86_87",
+          "name": "OH_line_86-87",
           "phases": "ABCN",
           "from": "load_86",
           "to": "load_87",
@@ -1126,7 +1127,7 @@
           "configuration": "line_configuration_6"
         },
         {
-          "name": "OH_line_87_88",
+          "name": "OH_line_87-88",
           "phases": "AN",
           "from": "load_87",
           "to": "load_88",
@@ -1134,7 +1135,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_87_89",
+          "name": "OH_line_87-89",
           "phases": "ABCN",
           "from": "load_87",
           "to": "node_89",
@@ -1142,7 +1143,7 @@
           "configuration": "line_configuration_6"
         },
         {
-          "name": "OH_line_89_90",
+          "name": "OH_line_89-90",
           "phases": "BN",
           "from": "node_89",
           "to": "load_90",
@@ -1150,7 +1151,7 @@
           "configuration": "line_configuration_10"
         },
         {
-          "name": "OH_line_89_91",
+          "name": "OH_line_89-91",
           "phases": "ABCN",
           "from": "node_89",
           "to": "node_91",
@@ -1158,7 +1159,7 @@
           "configuration": "line_configuration_6"
         },
         {
-          "name": "OH_line_91_92",
+          "name": "OH_line_91-92",
           "phases": "CN",
           "from": "node_91",
           "to": "load_92",
@@ -1166,7 +1167,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_91_93",
+          "name": "OH_line_91-93",
           "phases": "ABCN",
           "from": "node_91",
           "to": "node_93",
@@ -1174,7 +1175,7 @@
           "configuration": "line_configuration_6"
         },
         {
-          "name": "OH_line_93_94",
+          "name": "OH_line_93-94",
           "phases": "AN",
           "from": "node_93",
           "to": "load_94",
@@ -1182,7 +1183,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_93_95",
+          "name": "OH_line_93-95",
           "phases": "ABCN",
           "from": "node_93",
           "to": "load_95",
@@ -1190,7 +1191,7 @@
           "configuration": "line_configuration_6"
         },
         {
-          "name": "OH_line_95_96",
+          "name": "OH_line_95-96",
           "phases": "BN",
           "from": "load_95",
           "to": "load_96",
@@ -1198,7 +1199,7 @@
           "configuration": "line_configuration_10"
         },
         {
-          "name": "OH_line_97_98",
+          "name": "OH_line_97-98",
           "phases": "ABCN",
           "from": "node_97",
           "to": "load_98",
@@ -1206,7 +1207,7 @@
           "configuration": "line_configuration_3"
         },
         {
-          "name": "OH_line_98_99",
+          "name": "OH_line_98-99",
           "phases": "ABCN",
           "from": "load_98",
           "to": "load_99",
@@ -1214,7 +1215,7 @@
           "configuration": "line_configuration_3"
         },
         {
-          "name": "OH_line_99_100",
+          "name": "OH_line_99-100",
           "phases": "ABCN",
           "from": "load_99",
           "to": "load_100",
@@ -1222,7 +1223,7 @@
           "configuration": "line_configuration_3"
         },
         {
-          "name": "OH_line_100_450",
+          "name": "OH_line_100-450",
           "phases": "ABCN",
           "from": "load_100",
           "to": "node_450",
@@ -1230,7 +1231,7 @@
           "configuration": "line_configuration_3"
         },
         {
-          "name": "OH_line_101_102",
+          "name": "OH_line_101-102",
           "phases": "CN",
           "from": "load_101",
           "to": "load_102",
@@ -1238,7 +1239,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_101_105",
+          "name": "OH_line_101-105",
           "phases": "ABCN",
           "from": "load_101",
           "to": "node_105",
@@ -1246,7 +1247,7 @@
           "configuration": "line_configuration_3"
         },
         {
-          "name": "OH_line_102_103",
+          "name": "OH_line_102-103",
           "phases": "CN",
           "from": "load_102",
           "to": "load_103",
@@ -1254,7 +1255,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_103_104",
+          "name": "OH_line_103-104",
           "phases": "CN",
           "from": "load_103",
           "to": "load_104",
@@ -1262,7 +1263,7 @@
           "configuration": "line_configuration_11"
         },
         {
-          "name": "OH_line_105_106",
+          "name": "OH_line_105-106",
           "phases": "BN",
           "from": "node_105",
           "to": "load_106",
@@ -1270,7 +1271,7 @@
           "configuration": "line_configuration_10"
         },
         {
-          "name": "OH_line_105_108",
+          "name": "OH_line_105-108",
           "phases": "ABCN",
           "from": "node_105",
           "to": "node_108",
@@ -1278,7 +1279,7 @@
           "configuration": "line_configuration_3"
         },
         {
-          "name": "OH_line_106_107",
+          "name": "OH_line_106-107",
           "phases": "BN",
           "from": "load_106",
           "to": "load_107",
@@ -1286,7 +1287,7 @@
           "configuration": "line_configuration_10"
         },
         {
-          "name": "OH_line_108_109",
+          "name": "OH_line_108-109",
           "phases": "AN",
           "from": "node_108",
           "to": "load_109",
@@ -1294,7 +1295,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_108_300",
+          "name": "OH_line_108-300",
           "phases": "ABCN",
           "from": "node_108",
           "to": "meter_300",
@@ -1302,7 +1303,7 @@
           "configuration": "line_configuration_3"
         },
         {
-          "name": "OH_line_109_110",
+          "name": "OH_line_109-110",
           "phases": "AN",
           "from": "load_109",
           "to": "node_110",
@@ -1310,7 +1311,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_110_111",
+          "name": "OH_line_110-111",
           "phases": "AN",
           "from": "node_110",
           "to": "load_111",
@@ -1318,7 +1319,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_110_112",
+          "name": "OH_line_110-112",
           "phases": "AN",
           "from": "node_110",
           "to": "load_112",
@@ -1326,7 +1327,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_112_113",
+          "name": "OH_line_112-113",
           "phases": "AN",
           "from": "load_112",
           "to": "load_113",
@@ -1334,7 +1335,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_113_114",
+          "name": "OH_line_113-114",
           "phases": "AN",
           "from": "load_113",
           "to": "load_114",
@@ -1342,7 +1343,7 @@
           "configuration": "line_configuration_9"
         },
         {
-          "name": "OH_line_135_35",
+          "name": "OH_line_135-35",
           "phases": "ABCN",
           "from": "node_135",
           "to": "load_35",
@@ -1350,7 +1351,7 @@
           "configuration": "line_configuration_4"
         },
         {
-          "name": "OH_line_149_1",
+          "name": "OH_line_149-1",
           "phases": "ABCN",
           "from": "node_149",
           "to": "load_1",
@@ -1358,7 +1359,7 @@
           "configuration": "line_configuration_1"
         },
         {
-          "name": "OH_line_152_52",
+          "name": "OH_line_152-52",
           "phases": "ABCN",
           "from": "node_152",
           "to": "load_52",
@@ -1366,7 +1367,7 @@
           "configuration": "line_configuration_1"
         },
         {
-          "name": "OH_line_6701_67",
+          "name": "OH_line_6701-67",
           "phases": "ABCN",
           "from": "node_6701",
           "to": "node_67",
@@ -1374,7 +1375,7 @@
           "configuration": "line_configuration_6"
         },
         {
-          "name": "OH_line_197_101",
+          "name": "OH_line_197-101",
           "phases": "ABCN",
           "from": "node_197",
           "to": "load_101",
@@ -1386,7 +1387,7 @@
     "underground_line": {
       "instances": [
         {
-          "name": "OH_line_60_62",
+          "name": "OH_line_60-62",
           "phases": "ABC",
           "from": "load_60",
           "to": "load_62",
@@ -1394,7 +1395,7 @@
           "configuration": "line_configuration_12"
         },
         {
-          "name": "OH_line_62_63",
+          "name": "OH_line_62-63",
           "phases": "ABC",
           "from": "load_62",
           "to": "load_63",
@@ -1402,7 +1403,7 @@
           "configuration": "line_configuration_12"
         },
         {
-          "name": "OH_line_63_64",
+          "name": "OH_line_63-64",
           "phases": "ABC",
           "from": "load_63",
           "to": "load_64",
@@ -1410,7 +1411,7 @@
           "configuration": "line_configuration_12"
         },
         {
-          "name": "OH_line_64_65",
+          "name": "OH_line_64-65",
           "phases": "ABC",
           "from": "load_64",
           "to": "load_65",
@@ -1418,7 +1419,7 @@
           "configuration": "line_configuration_12"
         },
         {
-          "name": "OH_line_65_66",
+          "name": "OH_line_65-66",
           "phases": "ABC",
           "from": "load_65",
           "to": "meter_66",
@@ -2615,28 +2616,28 @@
           }
         },
         {
-          "name": "switch_13_152",
+          "name": "switch_13-152",
           "phases": "ABCN",
           "from": "meter_13",
           "to": "node_152",
           "status": "CLOSED"
         },
         {
-          "name": "switch_61_611",
+          "name": "switch_61-611",
           "phases": "ABCN",
           "from": "node_61",
           "to": "node_611",
           "status": "CLOSED"
         },
         {
-          "name": "switch_1491_149",
+          "name": "switch_1491-149",
           "phases": "ABCN",
           "from": "node_1491",
           "to": "node_149",
           "status": "CLOSED"
         },
         {
-          "name": "switch_250_251",
+          "name": "switch_250-251",
           "phases": "ABCN",
           "from": "node_250",
           "to": "node_251",
@@ -2646,28 +2647,28 @@
           ]
         },
         {
-          "name": "switch_450_451",
+          "name": "switch_450-451",
           "phases": "ABCN",
           "from": "node_450",
           "to": "node_451",
           "status": "CLOSED"
         },
         {
-          "name": "switch_54_94",
+          "name": "switch_54-94",
           "phases": "AN",
           "from": "node_54",
           "to": "load_94",
           "status": "OPEN"
         },
         {
-          "name": "switch_300_350",
+          "name": "switch_300-350",
           "phases": "ABCN",
           "from": "meter_300",
           "to": "node_350",
           "status": "CLOSED"
         },
         {
-          "name": "switch_95_195",
+          "name": "switch_95-195",
           "phases": "ABCN",
           "from": "load_95",
           "to": "node_195",
@@ -2695,7 +2696,7 @@
     "transformer": {
       "instances": [
         {
-          "name": "transformer_611_610",
+          "name": "transformer_611-610",
           "phases": "ABCN",
           "from": "node_611",
           "to": "node_610",
@@ -2798,8 +2799,8 @@
     "regulator": {
       "instances": [
         {
-          "name": "regulator_1501491",
-          "id": 1501491,
+          "name": "regulator_1",
+          "object_declaration": "regulator:1501491",
           "phases": "ABC",
           "from": "node_150",
           "to": "node_1491",

@@ -25,7 +25,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_3",
           "parent": "range_2",
           "target": "energy",
           "within": 0.01,
@@ -37,7 +36,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "range_2",
           "property": "enduse_load,energy",
           "file": "test_range_explicit_energy2.csv",

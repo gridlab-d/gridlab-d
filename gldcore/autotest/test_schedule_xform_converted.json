@@ -39,7 +39,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "house_1",
           "property": "my_double,my_int32,my_enum,my_set,my_complex",
           "file": "test_schedule_xform_output.csv"

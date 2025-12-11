@@ -148,7 +148,6 @@
     "plc": {
       "instances": [
         {
-          "name": "plc_15",
           "parent": "Switch34",
           "source": "switch34.plc"
         }
@@ -157,7 +156,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_16",
           "parent": "Node2",
           "property": "voltage_A,voltage_B,voltage_C",
           "interval": 300,
@@ -165,7 +163,6 @@
           "limit": 20
         },
         {
-          "name": "recorder_17",
           "parent": "Switch34",
           "property": "status",
           "interval": 300,

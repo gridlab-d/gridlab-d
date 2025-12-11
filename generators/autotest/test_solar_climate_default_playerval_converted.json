@@ -59,7 +59,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_5",
           "parent": "trip_shad_solar1",
           "property": "Insolation",
           "file": "../Yakima_Insolation.player",
@@ -71,19 +70,16 @@
           ]
         },
         {
-          "name": "player_6",
           "parent": "trip_shad_solar1",
           "property": "ambient_temperature",
           "file": "../Yakima_ambient_temperature.player"
         },
         {
-          "name": "player_7",
           "parent": "trip_shad_solar1",
           "property": "wind_speed",
           "file": "../Yakima_wind_speed.player"
         },
         {
-          "name": "player_9",
           "parent": "double_assert_8",
           "property": "value",
           "file": "../solar_playerval_VA_Out.player"
@@ -99,14 +95,12 @@
           "within": 0.05
         },
         {
-          "name": "double_assert_11",
           "parent": "trip_shad_solar2",
           "target": "Insolation",
           "value": 92.902,
           "within": 0.01
         },
         {
-          "name": "double_assert_12",
           "parent": "trip_shad_solar2",
           "target": "P_Out",
           "value": 3589,

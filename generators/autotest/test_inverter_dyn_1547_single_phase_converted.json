@@ -53,7 +53,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_2",
           "parent": "subtation_bus",
           "file": "../data_7200v_1s_delta_trigger.player",
           "property": "nominal_voltage",
@@ -162,21 +161,18 @@
     "enum_assert": {
       "instances": [
         {
-          "name": "enum_assert_16",
           "parent": "inverterA",
           "flags": "DELTAMODE",
           "target": "IEEE_1547_trip_method",
           "value": 0
         },
         {
-          "name": "enum_assert_18",
           "parent": "inverterB",
           "flags": "DELTAMODE",
           "target": "IEEE_1547_trip_method",
           "value": 0
         },
         {
-          "name": "enum_assert_20",
           "parent": "inverterC",
           "flags": "DELTAMODE",
           "target": "IEEE_1547_trip_method",

@@ -12,7 +12,6 @@
     "enum_assert": {
       "instances": [
         {
-          "name": "enum_assert_2",
           "parent": "climate_1",
           "target": "interpolate",
           "value": 1

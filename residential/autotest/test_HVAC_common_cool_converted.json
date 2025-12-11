@@ -29,7 +29,6 @@
     "climate": {
       "instances": [
         {
-          "name": "climate_1",
           "tmyfile": "../WA-Yakima.tmy2"
         }
       ]
@@ -37,7 +36,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "house_3",
           "property": "energy,panel.energy,air_temperature,mass_temperature,outdoor_temperature",
           "file": "test_HVAC_common_cool.csv",
@@ -45,7 +43,6 @@
           "limit": 86425
         },
         {
-          "name": "recorder_5",
           "parent": "house_3",
           "property": "energy,panel.energy,air_temperature,mass_temperature,outdoor_temperature",
           "file": "test_HVAC_common_cool_hourly.csv",
@@ -53,7 +50,6 @@
           "limit": 86425
         },
         {
-          "name": "recorder_8",
           "parent": "triplex_meter_2",
           "property": "measured_real_energy",
           "file": "test_HVAC_common_cool_energy.csv",
@@ -65,7 +61,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_6",
           "parent": "house_3",
           "target": "energy",
           "in": "'2001-07-25 1:00:19'",
@@ -84,7 +79,6 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "ZIPload_7",
           "parent": "house_3",
           "heat_fraction": 1,
           "base_power": "zippwr*1",
@@ -118,7 +112,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_9",
           "parent": "triplex_meter_2",
           "target": "measured_real_energy",
           "in": "'2001-07-25 1:00:19'",

@@ -25,7 +25,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_3",
           "parent": "dishwasher_2",
           "target": "power",
           "within": 0.01,
@@ -53,7 +52,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "house_1",
           "property": "power",
           "file": "test_dishwasher_external_power2.csv",

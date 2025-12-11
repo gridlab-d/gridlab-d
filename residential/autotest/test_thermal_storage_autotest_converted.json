@@ -38,7 +38,6 @@
     "climate": {
       "instances": [
         {
-          "name": "climate_1",
           "tmyfile": "../WA-Yakima.tmy2",
           "interpolate": "QUADRATIC"
         }
@@ -52,7 +51,6 @@
           "loop": 1
         },
         {
-          "name": "player_8",
           "parent": "double_assert_7",
           "property": "value",
           "file": "../test_thermal_storage_SOC.player",
@@ -63,7 +61,6 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "ZIPload_5",
           "parent": "house_4",
           "heat_fraction": 1,
           "base_power": "zippwr*1",
@@ -88,7 +85,6 @@
           }
         },
         {
-          "name": "double_assert_9",
           "parent": "triplex_meter_3",
           "target": "measured_real_energy",
           "value": "TSenergy.value*1",

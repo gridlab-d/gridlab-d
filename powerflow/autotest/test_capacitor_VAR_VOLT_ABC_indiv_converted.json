@@ -111,7 +111,6 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_7",
           "phases": "ABCD",
           "from": "node1",
           "to": "node2",
@@ -142,37 +141,31 @@
     "player": {
       "instances": [
         {
-          "name": "player_13",
           "parent": "load4",
           "property": "constant_power_A",
           "file": "../loader_fastA.player"
         },
         {
-          "name": "player_14",
           "parent": "load4",
           "property": "constant_power_B",
           "file": "../loader_fastB.player"
         },
         {
-          "name": "player_15",
           "parent": "load4",
           "property": "constant_power_C",
           "file": "../loader_fastC.player"
         },
         {
-          "name": "player_17",
           "parent": "complex_assert_16",
           "property": "value",
           "file": "../cap_volt_A_indiv_VOLTVAR.player"
         },
         {
-          "name": "player_19",
           "parent": "complex_assert_18",
           "property": "value",
           "file": "../cap_volt_B_indiv_VOLTVAR.player"
         },
         {
-          "name": "player_21",
           "parent": "complex_assert_20",
           "property": "value",
           "file": "../cap_volt_C_indiv_VOLTVAR.player"

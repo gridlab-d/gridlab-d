@@ -639,7 +639,6 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_52",
           "filename": "Volt_Dump_NR.csv"
         }
       ]
@@ -647,7 +646,6 @@
     "currdump": {
       "instances": [
         {
-          "name": "currdump_53",
           "filename": "Current_Dump_NR.csv"
         }
       ]
@@ -655,7 +653,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_54",
           "parent": "Reg1",
           "file": "reg1_output.csv",
           "interval": 3600,
@@ -667,7 +664,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_57",
           "parent": "complex_assert_56",
           "property": "value",
           "file": "../fqm_constant_pq_power.player",
@@ -676,19 +672,16 @@
           ]
         },
         {
-          "name": "player_58",
           "parent": "complex_assert_56",
           "property": "status",
           "file": "../fqm_constant_pq_status.player"
         },
         {
-          "name": "player_62",
           "parent": "double_assert_61",
           "property": "value",
           "file": "../fqm_constant_pq_soc.player"
         },
         {
-          "name": "player_63",
           "parent": "double_assert_61",
           "property": "status",
           "file": "../fqm_constant_pq_status.player"

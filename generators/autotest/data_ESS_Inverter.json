@@ -3,21 +3,18 @@
     "player": {
       "instances": [
         {
-          "name": "player_2",
           "parent": "VSI1",
           "property": "Vset",
           "flags": "DELTAMODE",
           "file": "../data_ESS_Inv_Vset_droop.player"
         },
         {
-          "name": "player_3",
           "parent": "VSI1",
           "property": "Pset",
           "flags": "DELTAMODE",
           "file": "../data_ESS_Pset1.player"
         },
         {
-          "name": "player_7",
           "parent": "double_assert_6",
           "flags": "DELTAMODE",
           "property": "value",
@@ -102,7 +99,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_5",
           "parent": "ESS_01",
           "file": "SOC_ES.csv",
           "flags": "DELTAMODE",

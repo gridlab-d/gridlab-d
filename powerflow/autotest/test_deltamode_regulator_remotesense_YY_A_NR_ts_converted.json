@@ -12,14 +12,17 @@
       "// Somewhat contrived test, as a 200000 ft overhead line is used",
       "// to artificially lower the voltage at the regulator, but tests",
       "// the regulator function.  This test will look at a time series.",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit - due to the nature of this file, this needs to be higher -- tap changes and low dwell",
       "//Order matters for deltamode"
     ]
   },
   "_directives": {
     "#set": {
-      "deltamode_timestep": "100000000\t\t//100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "60  //Iteration limit - due to the nature of this file, this needs to be higher -- tap changes and low dwell"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 60
     }
   },
   "clock": {
@@ -129,7 +132,6 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_7",
           "phases": "ABCN",
           "from": "FeederNode",
           "to": "InterNode",
@@ -137,7 +139,6 @@
           "configuration": "lc300"
         },
         {
-          "name": "overhead_line_11",
           "phases": "ABCN",
           "from": "TopNode",
           "to": "MiddleNode",
@@ -145,7 +146,6 @@
           "configuration": "lc300"
         },
         {
-          "name": "overhead_line_13",
           "phases": "ABCN",
           "from": "MiddleNode",
           "to": "BottomLoad",
@@ -169,14 +169,13 @@
     "player": {
       "instances": [
         {
-          "name": "uselessdeltatrigger",
+          "name": "BottomLoaduselessdeltatrigger",
           "parent": "BottomLoad",
           "flags": "DELTAMODE",
           "property": "nominal_voltage",
           "file": "../data_reg_deltamode_trigger.player"
         },
         {
-          "name": "player_16",
           "parent": "BottomLoad",
           "flags": "DELTAMODE",
           "file": "../regulator_load_phA.player",
@@ -184,7 +183,6 @@
           "property": "constant_power_A"
         },
         {
-          "name": "player_17",
           "parent": "BottomLoad",
           "flags": "DELTAMODE",
           "file": "../regulator_load_phB.player",
@@ -192,7 +190,6 @@
           "property": "constant_power_B"
         },
         {
-          "name": "player_18",
           "parent": "BottomLoad",
           "flags": "DELTAMODE",
           "file": "../regulator_load_phC.player",
@@ -200,21 +197,18 @@
           "property": "constant_power_C"
         },
         {
-          "name": "player_20",
           "parent": "complex_assert_19",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_reg_remote_YY_A_NR_phase_A.csv"
         },
         {
-          "name": "player_22",
           "parent": "complex_assert_21",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_reg_remote_YY_A_NR_phase_B.csv"
         },
         {
-          "name": "player_24",
           "parent": "complex_assert_23",
           "flags": "DELTAMODE",
           "property": "value",

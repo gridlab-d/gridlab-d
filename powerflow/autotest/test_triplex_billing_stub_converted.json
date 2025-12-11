@@ -35,14 +35,12 @@
     "player": {
       "instances": [
         {
-          "name": "player_2",
           "parent": "STUB2",
           "file": "../stub_bill_price.player",
           "loop": 100,
           "property": "next.P"
         },
         {
-          "name": "player_18",
           "parent": "double_assert_17",
           "file": "../stub_nofee_bill_value.player",
           "loop": 1,
@@ -180,7 +178,7 @@
     "triplex_line_conductor": {
       "instances": [
         {
-          "name": "gld_1/0 AA triplex",
+          "name": "1/0 AA triplex",
           "resistance": 0.97,
           "geometric_mean_radius": 0.0111
         }
@@ -201,7 +199,6 @@
     "triplex_line": {
       "instances": [
         {
-          "name": "triplex_line_14",
           "from": "triplex_node_A",
           "to": "tpm_rtp_A1",
           "phases": "AS",
@@ -213,7 +210,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_16",
           "parent": "tpm_rtp_A1",
           "limit": 1000000,
           "interval": 1800,

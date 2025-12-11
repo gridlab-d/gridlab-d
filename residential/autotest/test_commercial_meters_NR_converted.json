@@ -38,7 +38,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_3",
           "parent": "load_208",
           "target": "measured_power_A",
           "value": "1085.0+443.189j",
@@ -48,21 +47,18 @@
           ]
         },
         {
-          "name": "complex_assert_4",
           "parent": "load_208",
           "target": "measured_power_B",
           "value": "1085.0+443.189j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_5",
           "parent": "load_208",
           "target": "measured_power_C",
           "value": "1085.0+443.189j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_11",
           "parent": "node_208",
           "target": "current_inj_A",
           "value": "+9.51754-3.88762j",
@@ -75,21 +71,18 @@
           }
         },
         {
-          "name": "complex_assert_12",
           "parent": "node_208",
           "target": "current_inj_B",
           "value": "-8.12555-6.29862j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_13",
           "parent": "node_208",
           "target": "current_inj_C",
           "value": "-1.39199+10.1862j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_19",
           "parent": "meter_208",
           "target": "measured_power_A",
           "value": "1085.0+443.189j",
@@ -99,21 +92,18 @@
           ]
         },
         {
-          "name": "complex_assert_20",
           "parent": "meter_208",
           "target": "measured_power_B",
           "value": "1085.0+443.189j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_21",
           "parent": "meter_208",
           "target": "measured_power_C",
           "value": "1085.0+443.189j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_27",
           "parent": "tp_load_208",
           "target": "measured_power",
           "value": "3255.0+1329.57j",
@@ -124,7 +114,6 @@
           ]
         },
         {
-          "name": "complex_assert_33",
           "parent": "tp_node_208_parent",
           "target": "measured_power",
           "value": "3255.0+1329.57j",
@@ -134,7 +123,6 @@
           ]
         },
         {
-          "name": "complex_assert_40",
           "parent": "tp_meter_208",
           "target": "measured_power",
           "value": "3255.0+1329.57j",
@@ -171,7 +159,6 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "ZIPload_7",
           "parent": "load_house_208",
           "heat_fraction": 0,
           "base_power": "1.0 kW",
@@ -186,7 +173,6 @@
           }
         },
         {
-          "name": "ZIPload_8",
           "parent": "load_house_208",
           "heat_fraction": 0,
           "base_power": "2.0 kW",
@@ -201,7 +187,6 @@
           }
         },
         {
-          "name": "ZIPload_9",
           "parent": "load_house_208",
           "heat_fraction": 0,
           "base_power": "0.5 kW",
@@ -216,7 +201,6 @@
           }
         },
         {
-          "name": "ZIPload_15",
           "parent": "node_house_208",
           "heat_fraction": 0,
           "base_power": "1.0 kW",
@@ -231,7 +215,6 @@
           }
         },
         {
-          "name": "ZIPload_16",
           "parent": "node_house_208",
           "heat_fraction": 0,
           "base_power": "2.0 kW",
@@ -246,7 +229,6 @@
           }
         },
         {
-          "name": "ZIPload_17",
           "parent": "node_house_208",
           "heat_fraction": 0,
           "base_power": "0.5 kW",
@@ -261,7 +243,6 @@
           }
         },
         {
-          "name": "ZIPload_23",
           "parent": "meter_house_208",
           "heat_fraction": 0,
           "base_power": "1.0 kW",
@@ -276,7 +257,6 @@
           }
         },
         {
-          "name": "ZIPload_24",
           "parent": "meter_house_208",
           "heat_fraction": 0,
           "base_power": "2.0 kW",
@@ -291,7 +271,6 @@
           }
         },
         {
-          "name": "ZIPload_25",
           "parent": "meter_house_208",
           "heat_fraction": 0,
           "base_power": "0.5 kW",
@@ -306,7 +285,6 @@
           }
         },
         {
-          "name": "ZIPload_29",
           "parent": "tp_load_house_208",
           "heat_fraction": 0,
           "base_power": "1.0 kW",
@@ -321,7 +299,6 @@
           }
         },
         {
-          "name": "ZIPload_30",
           "parent": "tp_load_house_208",
           "heat_fraction": 0,
           "base_power": "2.0 kW",
@@ -336,7 +313,6 @@
           }
         },
         {
-          "name": "ZIPload_31",
           "parent": "tp_load_house_208",
           "heat_fraction": 0,
           "base_power": "0.5 kW",
@@ -351,7 +327,6 @@
           }
         },
         {
-          "name": "ZIPload_36",
           "parent": "tp_node_house_208",
           "heat_fraction": 0,
           "base_power": "1.0 kW",
@@ -366,7 +341,6 @@
           }
         },
         {
-          "name": "ZIPload_37",
           "parent": "tp_node_house_208",
           "heat_fraction": 0,
           "base_power": "2.0 kW",
@@ -381,7 +355,6 @@
           }
         },
         {
-          "name": "ZIPload_38",
           "parent": "tp_node_house_208",
           "heat_fraction": 0,
           "base_power": "0.5 kW",
@@ -396,7 +369,6 @@
           }
         },
         {
-          "name": "ZIPload_42",
           "parent": "tp_meter_house_208",
           "heat_fraction": 0,
           "base_power": "1.0 kW",
@@ -411,7 +383,6 @@
           }
         },
         {
-          "name": "ZIPload_43",
           "parent": "tp_meter_house_208",
           "heat_fraction": 0,
           "base_power": "2.0 kW",
@@ -426,7 +397,6 @@
           }
         },
         {
-          "name": "ZIPload_44",
           "parent": "tp_meter_house_208",
           "heat_fraction": 0,
           "base_power": "0.5 kW",

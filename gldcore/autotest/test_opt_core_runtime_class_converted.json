@@ -56,7 +56,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "Market",
           "property": "last.P,last.Q,next.P,next.Q,avg24,std24,avg72,std72,avg168,std168",
           "file": "test_market_auction.csv",

@@ -67,70 +67,60 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_6",
           "parent": "tpm",
           "target": "measured_power",
           "value": "3443.480+369.529j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_8",
           "parent": "tpl",
           "target": "constant_power_1",
           "value": "593.750+195.156j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_9",
           "parent": "tpl",
           "target": "constant_power_2",
           "value": "0.000+200.000j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_10",
           "parent": "tpl",
           "target": "constant_power_12",
           "value": "900.000-435.890j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_11",
           "parent": "tpl",
           "target": "constant_current_1",
           "value": "1.875+0.908j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_12",
           "parent": "tpl",
           "target": "constant_current_2",
           "value": "2.833-1.756j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_13",
           "parent": "tpl",
           "target": "constant_current_12",
           "value": "0.000+0.000j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_14",
           "parent": "tpl",
           "target": "constant_impedance_1",
           "value": "115.200+0.000j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_15",
           "parent": "tpl",
           "target": "constant_impedance_2",
           "value": "34.200-11.241j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_16",
           "parent": "tpl",
           "target": "constant_impedance_12",
           "value": "51.840+25.107j",
@@ -188,7 +178,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_17",
           "parent": "tpl",
           "property": "constant_power_1,constant_power_2,constant_power_12,constant_current_1,constant_current_2,constant_current_12,constant_impedance_1,constant_impedance_2,constant_impedance_12,tpm:measured_power",
           "file": "test_powerflow_triplex_load.csv",

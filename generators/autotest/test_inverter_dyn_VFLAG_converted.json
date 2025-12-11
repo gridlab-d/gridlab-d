@@ -2,6 +2,9 @@
   "__preamble": {
     "comments": [
       "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit",
       "//#set deltamode_forced_always=true"
     ]
   },
@@ -16,9 +19,9 @@
       "pauseatexit": 1,
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -59,7 +62,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "VSI1",
           "file": "Inverter_1_meter.csv",
           "flags": "DELTAMODE",
@@ -67,7 +69,6 @@
           "interval": 1
         },
         {
-          "name": "recorder_3",
           "parent": "VSI1",
           "file": "Inverter_1_esource.csv",
           "flags": "DELTAMODE",
@@ -75,7 +76,6 @@
           "interval": 1
         },
         {
-          "name": "recorder_4",
           "parent": "VSI1",
           "flags": "DELTAMODE",
           "property": "freq",
@@ -83,7 +83,6 @@
           "file": "Inverter_1_freq.csv"
         },
         {
-          "name": "recorder_12",
           "parent": "Line1",
           "property": "current_in_A.real,current_in_A.imag,current_in_B.real,current_in_B.imag,current_in_C.real,current_in_C.imag",
           "interval": -1,
@@ -94,7 +93,6 @@
           ]
         },
         {
-          "name": "recorder_14",
           "parent": "Line2",
           "property": "current_in_A.real,current_in_A.imag,current_in_B.real,current_in_B.imag,current_in_C.real,current_in_C.imag",
           "interval": -1,
@@ -105,7 +103,6 @@
           ]
         },
         {
-          "name": "recorder_16",
           "parent": "Line_fault",
           "property": "current_in_A.real,current_in_A.imag,current_in_B.real,current_in_B.imag,current_in_C.real,current_in_C.imag",
           "interval": -1,
@@ -116,7 +113,6 @@
           ]
         },
         {
-          "name": "recorder_18",
           "parent": "Node1",
           "property": "measured_real_power,measured_reactive_power,measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag",
           "interval": -1,
@@ -124,7 +120,6 @@
           "file": "Inverter_#1_MG1.csv"
         },
         {
-          "name": "recorder_20",
           "parent": "Node4",
           "property": "measured_real_power,measured_reactive_power,measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag",
           "interval": -1,
@@ -132,7 +127,6 @@
           "file": "Inverter_#2_MG1.csv"
         },
         {
-          "name": "recorder_28",
           "parent": "microgrid_switch1",
           "file": "microgrid_switch1.csv",
           "property": "phase_A_state,phase_B_state,phase_C_state",
@@ -147,28 +141,24 @@
     "player": {
       "instances": [
         {
-          "name": "player_6",
           "parent": "double_assert_5",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inverter_dyn_assert_VFLAG_E_droop_mag_pu.csv"
         },
         {
-          "name": "player_24",
           "parent": "Node3_1",
           "file": "../data_inverter_dyn_VFLAG_Load4.player",
           "property": "constant_impedance_A",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_25",
           "parent": "Node3_1",
           "file": "../data_inverter_dyn_VFLAG_Load4.player",
           "property": "constant_impedance_B",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_26",
           "parent": "Node3_1",
           "file": "../data_inverter_dyn_VFLAG_Load4.player",
           "property": "constant_impedance_C",

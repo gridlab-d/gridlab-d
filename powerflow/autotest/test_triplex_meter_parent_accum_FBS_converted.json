@@ -121,7 +121,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_7",
           "parent": "triplex_transformer_to_second",
           "target": "power_out",
           "value": "+2242.13+1127.71j",
@@ -244,19 +243,16 @@
     "player": {
       "instances": [
         {
-          "name": "player_11",
           "parent": "complex_assert_10",
           "property": "value",
           "file": "../data_triplex_parent_test_swingbus.csv"
         },
         {
-          "name": "player_15",
           "parent": "complex_assert_14",
           "property": "value",
           "file": "../data_triplex_parent_test_parentbus.csv"
         },
         {
-          "name": "player_19",
           "parent": "complex_assert_18",
           "property": "value",
           "file": "../data_triplex_parent_test_housebus.csv"
@@ -310,7 +306,7 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "house2_resp_load",
+          "name": "house_load_thingerhouse2_resp_load",
           "parent": "house_load_thinger",
           "base_power": 1.5,
           "heatgain_fraction": 0.9,
@@ -326,7 +322,7 @@
           ]
         },
         {
-          "name": "house2_unresp_load",
+          "name": "house_load_thingerhouse2_unresp_load",
           "parent": "house_load_thinger",
           "schedule_skew": -2658,
           "base_power": 1.05,
@@ -346,7 +342,7 @@
     "waterheater": {
       "instances": [
         {
-          "name": "house_2_wh",
+          "name": "house_load_thingerhouse_2_wh",
           "parent": "house_load_thinger",
           "schedule_skew": 3884,
           "heating_element_capacity": "5.5 kW",

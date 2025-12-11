@@ -27,7 +27,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "waterheater_2",
           "file": "exerces_2_3_3.csv",
           "property": "power,water_demand,energy",

@@ -22,14 +22,12 @@
     "player": {
       "instances": [
         {
-          "name": "player_2",
           "parent": "office_1",
           "file": "../generic_demand.glt",
           "loop": 1,
           "property": "lights.fraction"
         },
         {
-          "name": "player_4",
           "parent": "complex_assert_3",
           "property": "value",
           "file": "../load_f.player",
@@ -50,7 +48,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_5",
           "parent": "office_1",
           "file": "commercial_lights_usage.csv",
           "interval": 3600,

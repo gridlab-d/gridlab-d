@@ -123,7 +123,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_9",
           "parent": "_Transformer1",
           "property": "power_out_real",
           "limit": 100000000,
@@ -131,7 +130,6 @@
           "file": "totalload_5_houses_Aug.csv"
         },
         {
-          "name": "recorder_37",
           "parent": "H_5",
           "property": "Rroof, Rwall,Rfloor,Rdoors",
           "file": "test_recorder_whitespace1.csv",
@@ -259,7 +257,6 @@
     "triplex_line": {
       "instances": [
         {
-          "name": "triplex_line_17",
           "from": "_triplex_node_A",
           "to": "_tpm_flatrate_A1",
           "groupid": "_Triplex_Line",
@@ -268,7 +265,6 @@
           "configuration": "TLCFG"
         },
         {
-          "name": "triplex_line_21",
           "from": "_triplex_node_B",
           "to": "_tpm_flatrate_B2",
           "groupid": "_Triplex_Line",
@@ -277,7 +273,6 @@
           "configuration": "TLCFG"
         },
         {
-          "name": "triplex_line_25",
           "from": "_triplex_node_B",
           "to": "_tpm_flatrate_B3",
           "groupid": "_Triplex_Line",
@@ -286,7 +281,6 @@
           "configuration": "TLCFG"
         },
         {
-          "name": "triplex_line_29",
           "from": "_triplex_node_C",
           "to": "_tpm_flatrate_C4",
           "groupid": "_Triplex_Line",
@@ -295,7 +289,6 @@
           "configuration": "TLCFG"
         },
         {
-          "name": "triplex_line_33",
           "from": "_triplex_node_C",
           "to": "_tpm_flatrate_C5",
           "groupid": "_Triplex_Line",
@@ -447,7 +440,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_38",
           "parent": "H_5",
           "property": "Rroof, H_4:Rroof,H_3:Rroof,H_2:Rroof,H_1:Rroof",
           "file": "test_multi_recorder_whitespace1.csv",
@@ -458,7 +450,6 @@
     "collector": {
       "instances": [
         {
-          "name": "collector_39",
           "group": "class=house",
           "property": "avg(Rroof),  sum(Rroof), max(Rroof),min(Rroof)",
           "file": "test_collector_whitespace1.csv",

@@ -118,25 +118,21 @@
     "player": {
       "instances": [
         {
-          "name": "player_11",
           "parent": "assert_10",
           "property": "value",
           "file": "../meter_real_energy_delta.player"
         },
         {
-          "name": "player_13",
           "parent": "assert_12",
           "property": "value",
           "file": "../meter_reactive_energy_delta.player"
         },
         {
-          "name": "player_20",
           "parent": "assert_19",
           "property": "value",
           "file": "../triplex_meter_real_energy_delta.player"
         },
         {
-          "name": "player_22",
           "parent": "assert_21",
           "property": "value",
           "file": "../triplex_meter_reactive_energy_delta.player"
@@ -216,7 +212,6 @@
     "triplex_line": {
       "instances": [
         {
-          "name": "triplex_line_16",
           "groupid": "Triplex_Line",
           "phases": "AS",
           "from": "triplex_NODE_1",
@@ -229,7 +224,7 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "house2_resp_load",
+          "name": "house_load_thingerhouse2_resp_load",
           "parent": "house_load_thinger",
           "base_power": "loads*10",
           "heatgain_fraction": 0.9,
@@ -241,7 +236,7 @@
           "power_fraction": 0.4
         },
         {
-          "name": "house2_unresp_load",
+          "name": "house_load_thingerhouse2_unresp_load",
           "parent": "house_load_thinger",
           "base_power": "loads*5",
           "heatgain_fraction": 0.9,
@@ -257,7 +252,7 @@
     "waterheater": {
       "instances": [
         {
-          "name": "house_2_wh",
+          "name": "house_load_thingerhouse_2_wh",
           "parent": "house_load_thinger",
           "heating_element_capacity": "5.5 kW",
           "tank_setpoint": 134.0,

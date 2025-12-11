@@ -102,7 +102,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_7",
           "parent": "transformer_meter",
           "target": "monthly_bill",
           "value": 383.71,
@@ -115,7 +114,6 @@
           }
         },
         {
-          "name": "double_assert_8",
           "parent": "transformer_meter",
           "target": "monthly_bill",
           "value": 399.39,
@@ -128,7 +126,6 @@
           }
         },
         {
-          "name": "double_assert_14",
           "parent": "triplex_node_A",
           "target": "monthly_bill",
           "value": 168.66,
@@ -140,7 +137,6 @@
           }
         },
         {
-          "name": "double_assert_15",
           "parent": "triplex_node_A",
           "target": "monthly_bill",
           "value": 175.55,
@@ -211,7 +207,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_13",
           "parent": "triplex_node_A",
           "limit": 7000,
           "interval": 3600,

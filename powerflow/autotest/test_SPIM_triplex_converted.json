@@ -4,6 +4,9 @@
       "//Simple test system to verify the triplex connections for SPIM are working properly",
       "//#set profiler=1",
       "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit",
       "//#set deltamode_forced_extra_timesteps=15"
     ]
   },
@@ -15,9 +18,9 @@
       "suppress_repeat_messages": 0,
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -49,7 +52,7 @@
     "player": {
       "instances": [
         {
-          "name": "Voltage_input",
+          "name": "Gen1Voltage_input",
           "parent": "Gen1",
           "property": "vset",
           "file": "../data_SPIM_Vset.player",
@@ -59,42 +62,36 @@
           ]
         },
         {
-          "name": "player_11",
           "parent": "complex_assert_10",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_SPIM_triplex_measured_phaseA.csv"
         },
         {
-          "name": "player_13",
           "parent": "complex_assert_12",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_SPIM_triplex_measured_phaseB.csv"
         },
         {
-          "name": "player_15",
           "parent": "complex_assert_14",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_SPIM_triplex_measured_phaseC.csv"
         },
         {
-          "name": "player_27",
           "parent": "double_assert_26",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_SPIM_triplex_motor_A_speed.csv"
         },
         {
-          "name": "player_30",
           "parent": "double_assert_29",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_SPIM_triplex_motor_B_speed.csv"
         },
         {
-          "name": "player_33",
           "parent": "double_assert_32",
           "flags": "DELTAMODE",
           "property": "value",
