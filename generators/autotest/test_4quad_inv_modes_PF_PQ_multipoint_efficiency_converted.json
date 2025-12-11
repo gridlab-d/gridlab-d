@@ -110,14 +110,14 @@
         {
           "name": "substation_transformer",
           "from": "network_node",
-          "to": 645,
+          "to": "645",
           "phases": "ABCN",
           "configuration": "trans_config_to_feeder"
         },
         {
           "name": "CTTF_B_645",
           "phases": "BS",
-          "from": 645,
+          "from": "645",
           "to": "tn_B_645",
           "configuration": "inv_transformer"
         }
@@ -214,7 +214,7 @@
       "instances": [
         {
           "name": "645const_pq_meter",
-          "parent": 645,
+          "parent": "645",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
           "voltage_B": "-1200.8886-2080.000j",

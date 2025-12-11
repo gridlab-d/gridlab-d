@@ -441,7 +441,7 @@
         {
           "name": "6711",
           "object_declaration": "node:6711",
-          "parent": 611,
+          "parent": "611",
           "phases": "CN",
           "voltage_C": "-1200.8886+2080.000j",
           "nominal_voltage": 2401.7771,
@@ -1034,7 +1034,7 @@
           "name": "CAP1",
           "phases": "ABCN",
           "pt_phase": "ABCN",
-          "parent": 675,
+          "parent": "675",
           "phases_connected": "ABCN",
           "control": "VOLT",
           "voltage_set_high": 2500.0,
@@ -1057,7 +1057,7 @@
           "name": "CAP2",
           "phases": "ABCN",
           "pt_phase": "ABCN",
-          "parent": 675,
+          "parent": "675",
           "phases_connected": "ABCN",
           "control": "VOLT",
           "voltage_set_high": 2600.0,
@@ -1107,7 +1107,7 @@
           "phases": "ABCN",
           "from": "node:650",
           "to": "node:630",
-          "sense_node": 671,
+          "sense_node": "671",
           "configuration": "regulator_configuration:6506321"
         }
       ]

@@ -1878,7 +1878,7 @@
           "name": "1369",
           "object_declaration": "meter:1369",
           "phases": "ABCN",
-          "parent": 151,
+          "parent": "151",
           "flags": "DELTAMODE",
           "nominal_voltage": 2401.7771,
           "outside_comments": [
@@ -3193,7 +3193,7 @@
         {
           "name": "Gen1",
           "flags": "DELTAMODE",
-          "parent": 50,
+          "parent": "50",
           "groupid": "dg_controlled",
           "Rated_V": 4156,
           "Rated_VA": 5000000,
@@ -3329,7 +3329,7 @@
       "instances": [
         {
           "name": "const_pq_inv",
-          "parent": 1369,
+          "parent": "1369",
           "inverter_type": "FOUR_QUADRANT",
           "use_multipoint_efficiency": false,
           "four_quadrant_control_mode": "CONSTANT_PQ",

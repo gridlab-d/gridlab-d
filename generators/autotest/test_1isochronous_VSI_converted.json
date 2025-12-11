@@ -3522,7 +3522,7 @@
       "instances": [
         {
           "name": "VSI",
-          "parent": 150,
+          "parent": "150",
           "inverter_type": "FOUR_QUADRANT",
           "use_multipoint_efficiency": false,
           "four_quadrant_control_mode": "VOLTAGE_SOURCE",

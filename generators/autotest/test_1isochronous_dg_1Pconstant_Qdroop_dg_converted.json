@@ -3191,7 +3191,7 @@
         {
           "file": "../trigger.player",
           "property": "nominal_voltage",
-          "parent": 50,
+          "parent": "50",
           "flags": "DELTAMODE",
           "outside_comments": [
             "// This player kicks the system into delta mode early so that all transition transients can settle before the scenario transients are triggered"
@@ -3212,7 +3212,7 @@
         {
           "name": "Gen1",
           "flags": "DELTAMODE",
-          "parent": 50,
+          "parent": "50",
           "Rated_V": 4156,
           "Rated_VA": 4000000,
           "Gen_type": "DYN_SYNCHRONOUS",
@@ -3317,7 +3317,7 @@
         {
           "name": "Gen2",
           "flags": "DELTAMODE",
-          "parent": 8,
+          "parent": "8",
           "Rated_V": 4156,
           "Rated_VA": 1000000,
           "Gen_type": "DYN_SYNCHRONOUS",

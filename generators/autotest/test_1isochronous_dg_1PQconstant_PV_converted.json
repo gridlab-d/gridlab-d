@@ -1857,7 +1857,7 @@
           "name": "1370",
           "object_declaration": "meter:1370",
           "phases": "ABCN",
-          "parent": 54,
+          "parent": "54",
           "flags": "DELTAMODE",
           "nominal_voltage": 2401.7771,
           "outside_comments": [
@@ -2866,19 +2866,19 @@
     "player": {
       "instances": [
         {
-          "parent": 49,
+          "parent": "49",
           "file": "../diesel_deltamode_load_player_A_1Gen_2.player",
           "property": "constant_power_A",
           "flags": "DELTAMODE"
         },
         {
-          "parent": 49,
+          "parent": "49",
           "file": "../diesel_deltamode_load_player_B_1Gen_2.player",
           "property": "constant_power_B",
           "flags": "DELTAMODE"
         },
         {
-          "parent": 49,
+          "parent": "49",
           "file": "../diesel_deltamode_load_player_C_1Gen_2.player",
           "property": "constant_power_C",
           "flags": "DELTAMODE"
@@ -2886,7 +2886,7 @@
         {
           "file": "../trigger2.player",
           "property": "nominal_voltage",
-          "parent": 50,
+          "parent": "50",
           "flags": "DELTAMODE",
           "outside_comments": [
             "// This player kicks the system into delta mode early so that all transition transients can settle before the scenario transients are triggered"
@@ -3217,7 +3217,7 @@
         {
           "name": "Gen1",
           "flags": "DELTAMODE",
-          "parent": 50,
+          "parent": "50",
           "Rated_V": 4156,
           "Rated_VA": 5000000,
           "Gen_type": "DYN_SYNCHRONOUS",
@@ -3332,7 +3332,7 @@
       "instances": [
         {
           "name": "const_pq_inv1",
-          "parent": 1370,
+          "parent": "1370",
           "inverter_type": "FOUR_QUADRANT",
           "use_multipoint_efficiency": false,
           "four_quadrant_control_mode": "CONSTANT_PQ",

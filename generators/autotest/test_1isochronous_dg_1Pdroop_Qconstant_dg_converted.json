@@ -3192,7 +3192,7 @@
         {
           "name": "Gen1",
           "flags": "DELTAMODE",
-          "parent": 50,
+          "parent": "50",
           "Rated_V": 4156,
           "Rated_VA": 3000000,
           "Gen_type": "DYN_SYNCHRONOUS",
@@ -3300,7 +3300,7 @@
         {
           "name": "Gen2",
           "flags": "DELTAMODE",
-          "parent": 8,
+          "parent": "8",
           "Rated_V": 4156,
           "Rated_VA": 1000000,
           "Gen_type": "DYN_SYNCHRONOUS",

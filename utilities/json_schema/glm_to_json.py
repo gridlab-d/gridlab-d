@@ -132,12 +132,76 @@ def glm_to_json(glm_name, input_dir=None, output_dir=None, output_name=None):
                and field_key not in ['item_cnt', 'entity', 'instances']
         }
 
-        # TODO: Come back to this when schema v1 is ready and check against it for which fields to do number conversion
-        def try_conversion(value):
+        def is_object_property(obj_type, prop_name):
+            """
+            Check if a property is of type 'object' (PT_OBJECT) in the class definition.
+            
+            Args:
+                obj_type (str): The object/class type (e.g., 'tap_controller', 'player')
+                prop_name (str): The property name to check (e.g., 'parent', 'regulator', 'target_object')
+                
+            Returns:
+                bool: True if the property is defined as type 'object' (PT_OBJECT)
+            """
+            # Universal object reference properties that apply to all objects
+            # These are core GridLAB-D properties not defined in individual class schemas
+            universal_object_properties = {
+                'parent',           # Parent object in hierarchy
+                'root',            # Root object reference
+                'clock',           # Clock object reference
+            }
+            
+            if prop_name in universal_object_properties:
+                return True
+            
+            # Check in class_definitions parsed from GLM file
+            # Structure: { "class_name": [{'type': 'object', 'name': 'regulator'}, ...] }
+            if obj_type in classes:
+                class_fields = classes[obj_type]
+                for field in class_fields:
+                    if field.get('name') == prop_name and field.get('type') == 'object':
+                        return True
+            
+            # Check built-in classes from glm_classes.json reference
+            # Structure: { "module_name": { "class_name": { "prop": {"type": "object"} } } }
+            def check_class_and_parents(class_name):
+                """Recursively check class and its parents for the property."""
+                for module_name, module_classes in model_file.classes.items():
+                    if class_name in module_classes:
+                        class_properties = module_classes[class_name]
+                        
+                        # Check if property exists in this class
+                        if prop_name in class_properties:
+                            prop_def = class_properties[prop_name]
+                            if isinstance(prop_def, dict) and prop_def.get('type') == 'object':
+                                return True
+                        
+                        # Check for parent class inheritance
+                        # Properties with "type": "parent" indicate the parent class name
+                        for parent_prop_name, parent_prop_def in class_properties.items():
+                            if isinstance(parent_prop_def, dict) and parent_prop_def.get('type') == 'parent':
+                                # Recursively check the parent class
+                                if check_class_and_parents(parent_prop_name):
+                                    return True
+                return False
+            
+            return check_class_and_parents(obj_type)
+
+        def try_conversion(value, obj_type=None, prop_name=None):
             """
             Try to convert a string to a number type (int or float) or boolean.
+            Skip conversion for properties of type 'object' (object references).
+            
+            Args:
+                value: The value to convert
+                obj_type (str, optional): The object/class type
+                prop_name (str, optional): The property name
             """
             if isinstance(value, str):
+                # Skip conversion if this is an object reference property
+                if obj_type and prop_name and is_object_property(obj_type, prop_name):
+                    return value
+                    
                 if value.lower() == "true":
                     return True
                 elif value.lower() == "false":
@@ -154,10 +218,10 @@ def glm_to_json(glm_name, input_dir=None, output_dir=None, output_name=None):
                         return value
             elif isinstance(value, dict):
                 # Recursively convert values in a dictionary
-                return {k: try_conversion(v) for k, v in value.items()}
+                return {k: try_conversion(v, obj_type, k) for k, v in value.items()}
             elif isinstance(value, list):
                 # Recursively convert values in a list
-                return [try_conversion(v) for v in value]
+                return [try_conversion(v, obj_type, prop_name) for v in value]
             return value  # Return the original value if not a string
 
 
@@ -171,7 +235,7 @@ def glm_to_json(glm_name, input_dir=None, output_dir=None, output_name=None):
             if inst_dict:
                 # Extract the single instance and ensure numeric conversion in its values
                 single = next(iter(inst_dict.values()), {})
-                modules[mtype] = try_conversion(single)
+                modules[mtype] = try_conversion(single, mtype)
                 # Add entity-level conditionals only if instance doesn't already have them
                 # (instance-level conditionals are more accurate after merging)
                 if entity._conditionals and '_conditionals' not in modules[mtype]:
@@ -183,7 +247,7 @@ def glm_to_json(glm_name, input_dir=None, output_dir=None, output_name=None):
         if clock_entity:
             insts = getattr(clock_entity, 'instances', {})
             if insts:
-                clock_data = try_conversion(next(iter(insts.values()), {}))
+                clock_data = try_conversion(next(iter(insts.values()), {}), 'clock')
 
         # First pass: identify which objects are referenced as parents
         referenced_parents = set()
@@ -214,7 +278,7 @@ def glm_to_json(glm_name, input_dir=None, output_dir=None, output_name=None):
                     entry = {'name': name}
                     
                 try:
-                    entry.update(try_conversion(params))
+                    entry.update(try_conversion(params, otype))
                     # Remove the auto-generated flag from output
                     entry.pop('_auto_generated_name', None)
                 except Exception as e:
