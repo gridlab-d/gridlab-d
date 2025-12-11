@@ -31,7 +31,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_1",
           "parent": "node_775",
           "target": "voltage_AB",
           "value": "485.325-0.11d",
@@ -41,35 +40,30 @@
           ]
         },
         {
-          "name": "complex_assert_2",
           "parent": "node_775",
           "target": "voltage_BC",
           "value": "480.576-120.73d",
           "within": 0.5
         },
         {
-          "name": "complex_assert_3",
           "parent": "node_775",
           "target": "voltage_CA",
           "value": "478.416+120.07d",
           "within": 0.5
         },
         {
-          "name": "complex_assert_4",
           "parent": "load_741",
           "target": "voltage_AB",
           "value": "4790.88+0.07d",
           "within": 0.5
         },
         {
-          "name": "complex_assert_5",
           "parent": "load_741",
           "target": "voltage_BC",
           "value": "4781.76-120.75d",
           "within": 0.5
         },
         {
-          "name": "complex_assert_6",
           "parent": "load_741",
           "target": "voltage_CA",
           "value": "4727.52+119.76d",
@@ -80,7 +74,6 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_7",
           "filename": "voltageout.csv",
           "mode": "RECT",
           "outside_comments": [
@@ -92,7 +85,6 @@
     "currdump": {
       "instances": [
         {
-          "name": "currdump_8",
           "filename": "currentout.csv",
           "mode": "RECT"
         }

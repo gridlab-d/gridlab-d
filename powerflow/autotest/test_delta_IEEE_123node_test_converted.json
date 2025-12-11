@@ -6,7 +6,8 @@
       "//Used to test various powerflow components in deltamode",
       "//Modified from base version for this testing purpose",
       "//#set pauseatexit=1",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -19,7 +20,7 @@
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
       "deltamode_maximumtime": 5000000000000,
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -319,84 +320,72 @@
     "player": {
       "instances": [
         {
-          "name": "player_34",
           "parent": "complex_assert_33",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_delta_powermeas_assert.csv"
         },
         {
-          "name": "player_83",
           "parent": "load_49",
           "flags": "DELTAMODE",
           "property": "constant_power_A",
           "file": "../data_delta_player_load_A.csv"
         },
         {
-          "name": "player_84",
           "parent": "load_49",
           "flags": "DELTAMODE",
           "property": "constant_power_B",
           "file": "../data_delta_player_load_B.csv"
         },
         {
-          "name": "player_85",
           "parent": "load_49",
           "flags": "DELTAMODE",
           "property": "constant_power_C",
           "file": "../data_delta_player_load_C.csv"
         },
         {
-          "name": "player_87",
           "parent": "complex_assert_86",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_delta_load_voltage_A.csv"
         },
         {
-          "name": "player_89",
           "parent": "complex_assert_88",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_delta_load_voltage_B.csv"
         },
         {
-          "name": "player_91",
           "parent": "complex_assert_90",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_delta_load_voltage_C.csv"
         },
         {
-          "name": "player_145",
           "parent": "complex_assert_144",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_delta_triplex_load_voltage_1.csv"
         },
         {
-          "name": "player_147",
           "parent": "complex_assert_146",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_delta_triplex_load_voltage_2.csv"
         },
         {
-          "name": "player_149",
           "parent": "complex_assert_148",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_delta_triplex_load_voltage_12.csv"
         },
         {
-          "name": "player_151",
           "parent": "complex_assert_150",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_delta_triplex_load_power.csv"
         },
         {
-          "name": "player_153",
           "parent": "triplex_load_device",
           "flags": "DELTAMODE",
           "property": "constant_power_12",

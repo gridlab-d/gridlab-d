@@ -23,29 +23,25 @@
     "player": {
       "instances": [
         {
-          "name": "player_2",
           "parent": "STUB",
           "file": "../Price_Static.player",
           "loop": 10000000,
           "property": "next.P"
         },
         {
-          "name": "player_6",
-          "parent": "assert_lastP",
+          "parent": "STUBassert_lastP",
           "property": "value",
           "file": "../lastP_static.player",
           "loop": 100000
         },
         {
-          "name": "player_9",
           "parent": "STUB2",
           "file": "../Price_Changing.player",
           "loop": 10000000,
           "property": "next.P"
         },
         {
-          "name": "player_12",
-          "parent": "assert_nextP_2",
+          "parent": "STUB2assert_nextP_2",
           "property": "value",
           "file": "../Price_Changing.player",
           "loop": 100000
@@ -55,7 +51,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "STUB",
           "property": "avg24,std24,last.P,next.P",
           "limit": 8808,
@@ -63,7 +58,6 @@
           "file": "Output.csv"
         },
         {
-          "name": "recorder_10",
           "parent": "STUB2",
           "property": "avg24,std24,last.P,next.P",
           "limit": 8808,
@@ -75,27 +69,27 @@
     "double_assert": {
       "instances": [
         {
-          "name": "assert_std24",
+          "name": "STUBassert_std24",
           "parent": "STUB",
           "target": "std24",
           "within": 0.0001,
           "value": 0.0
         },
         {
-          "name": "assert_lastP",
+          "name": "STUBassert_lastP",
           "parent": "STUB",
           "target": "last.P",
           "within": 0.0001
         },
         {
-          "name": "assert_nextP",
+          "name": "STUBassert_nextP",
           "parent": "STUB",
           "target": "next.P",
           "within": 0.0001,
           "value": 0.1
         },
         {
-          "name": "assert_nextP_2",
+          "name": "STUB2assert_nextP_2",
           "parent": "STUB2",
           "target": "next.P",
           "within": 0.0001

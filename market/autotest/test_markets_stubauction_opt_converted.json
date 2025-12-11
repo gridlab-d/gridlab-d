@@ -30,7 +30,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "stubauction_1",
           "property": "next.P,last.P,avg24,std24,avg72,std72,avg168,std168",
           "file": "test_markets_stubauction.csv",
@@ -42,7 +41,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_3",
           "parent": "stubauction_1",
           "target": "next.P",
           "status": "ASSERT_TRUE",
@@ -50,7 +48,6 @@
           "within": 0.1
         },
         {
-          "name": "double_assert_4",
           "parent": "stubauction_1",
           "target": "last.P",
           "in": "'2001-01-01 1:00:00'",
@@ -59,7 +56,6 @@
           "within": 0.1
         },
         {
-          "name": "double_assert_5",
           "parent": "stubauction_1",
           "target": "avg24",
           "in": "'2001-01-03 00:00:00'",
@@ -68,7 +64,6 @@
           "within": 0.1
         },
         {
-          "name": "double_assert_6",
           "parent": "stubauction_1",
           "target": "avg72",
           "in": "'2001-01-05 00:00:00'",
@@ -77,7 +72,6 @@
           "within": 0.1
         },
         {
-          "name": "double_assert_7",
           "parent": "stubauction_1",
           "target": "avg168",
           "in": "'2001-01-09 00:00:00'",
@@ -86,7 +80,6 @@
           "within": 0.1
         },
         {
-          "name": "double_assert_8",
           "parent": "stubauction_1",
           "target": "std168",
           "in": "'2001-01-09 00:00:00'",
@@ -95,7 +88,6 @@
           "within": 0.0001
         },
         {
-          "name": "double_assert_9",
           "parent": "stubauction_1",
           "target": "std72",
           "in": "'2001-01-05 00:00:00'",
@@ -104,7 +96,6 @@
           "within": 0.0001
         },
         {
-          "name": "double_assert_10",
           "parent": "stubauction_1",
           "target": "std24",
           "in": "'2001-01-03 00:00:00'",

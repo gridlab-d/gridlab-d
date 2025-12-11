@@ -63,7 +63,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_4",
           "file": "output.csv",
           "interval": 1,
           "property": "from:noise,to:value,from:step,fvt:value"
@@ -73,7 +72,6 @@
     "assert": {
       "instances": [
         {
-          "name": "assert_5",
           "parent": "fvt",
           "in": "'2000-01-01 01:00:00 PST'",
           "target": "value",

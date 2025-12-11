@@ -21,7 +21,6 @@
     "lights": {
       "instances": [
         {
-          "name": "lights_2",
           "parent": "house_1",
           "type": "INCANDESCENT",
           "power_factor": 0.97,
@@ -37,7 +36,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "house_1",
           "property": "panel.energy,internal_gain",
           "file": "test_lights_exp.csv",
@@ -49,7 +47,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_4",
           "parent": "house_1",
           "target": "panel.energy",
           "once": "ONCE_TRUE",

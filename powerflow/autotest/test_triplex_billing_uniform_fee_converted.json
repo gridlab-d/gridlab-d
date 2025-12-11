@@ -135,7 +135,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_11",
           "parent": "triplex_node_A",
           "limit": 7000,
           "interval": 84000,
@@ -147,7 +146,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_12",
           "parent": "triplex_node_A",
           "target": "monthly_bill",
           "value": 11.2816,
@@ -156,7 +154,6 @@
           "in": "'2006-01-11 00:00:00 CST'"
         },
         {
-          "name": "double_assert_13",
           "parent": "triplex_node_A",
           "target": "monthly_bill",
           "value": 11.5768,
@@ -165,7 +162,6 @@
           "in": "'2006-01-16 00:00:00 CST'"
         },
         {
-          "name": "double_assert_14",
           "parent": "triplex_node_A",
           "target": "monthly_bill",
           "value": 12.8584,
@@ -174,7 +170,6 @@
           "in": "'2006-01-26 00:00:00 CST'"
         },
         {
-          "name": "double_assert_15",
           "parent": "triplex_node_A",
           "target": "monthly_energy",
           "value": 1.2816,
@@ -183,7 +178,6 @@
           "in": "'2006-01-11 00:00:00 CST'"
         },
         {
-          "name": "double_assert_16",
           "parent": "triplex_node_A",
           "target": "monthly_energy",
           "value": 1.5768,
@@ -192,7 +186,6 @@
           "in": "'2006-01-16 00:00:00 CST'"
         },
         {
-          "name": "double_assert_17",
           "parent": "triplex_node_A",
           "target": "monthly_energy",
           "value": 2.8584,
@@ -201,7 +194,6 @@
           "in": "'2006-01-26 00:00:00 CST'"
         },
         {
-          "name": "double_assert_18",
           "parent": "triplex_node_A",
           "target": "previous_monthly_bill",
           "value": 13.8952,
@@ -213,7 +205,6 @@
           }
         },
         {
-          "name": "double_assert_19",
           "parent": "triplex_node_A",
           "target": "previous_monthly_energy",
           "value": 3.8952,
@@ -229,7 +220,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_20",
           "parent": "triplex_node_A",
           "file": "../billing_power.player",
           "loop": 1,

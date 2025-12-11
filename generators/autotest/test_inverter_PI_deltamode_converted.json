@@ -2,7 +2,10 @@
   "__preamble": {
     "comments": [
       "//#set pauseatexit=1",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -14,9 +17,9 @@
       "profiler": 1,
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -102,7 +105,7 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "n149_1",
+          "name": "n149-1",
           "phases": "ABCN",
           "from": "node149",
           "to": "load1",
@@ -113,7 +116,7 @@
           ]
         },
         {
-          "name": "n1_67",
+          "name": "n1-67",
           "phases": "ABCN",
           "from": "load1",
           "to": "m1369",
@@ -125,42 +128,36 @@
     "player": {
       "instances": [
         {
-          "name": "player_8",
           "parent": "node149",
           "property": "voltage_A",
           "file": "../data_inv_voltage_player_A_test.csv",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_9",
           "parent": "node149",
           "property": "voltage_B",
           "file": "../data_inv_voltage_player_B_test.csv",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_10",
           "parent": "node149",
           "property": "voltage_C",
           "file": "../data_inv_voltage_player_C_test.csv",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_13",
           "parent": "complex_assert_12",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_PI_inverter_current_A.csv"
         },
         {
-          "name": "player_15",
           "parent": "complex_assert_14",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_PI_inverter_current_B.csv"
         },
         {
-          "name": "player_17",
           "parent": "complex_assert_16",
           "flags": "DELTAMODE",
           "property": "value",

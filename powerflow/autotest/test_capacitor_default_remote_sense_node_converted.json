@@ -111,7 +111,6 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_7",
           "phases": "ABCD",
           "from": "node1",
           "to": "node2",
@@ -158,7 +157,6 @@
     "enum_assert": {
       "instances": [
         {
-          "name": "enum_assert_14",
           "parent": "CAP1",
           "in": "'2000-01-01 00:00:02'",
           "target": "switchA",
@@ -166,7 +164,6 @@
           "status": "ASSERT_TRUE"
         },
         {
-          "name": "enum_assert_16",
           "parent": "CAP",
           "in": "'2000-01-01 00:00:02'",
           "target": "switchA",

@@ -43,7 +43,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_3",
           "parent": "complex_assert_2",
           "property": "value",
           "file": "../inv_loadflow_meter_measured_power_real.player",
@@ -52,13 +51,11 @@
           ]
         },
         {
-          "name": "player_5",
           "parent": "complex_assert_4",
           "property": "value",
           "file": "../inv_loadflow_meter_measured_power_imag.player"
         },
         {
-          "name": "player_17",
           "parent": "double_assert_16",
           "property": "value",
           "file": "../inv_loadflow_battery_soc_out.player"

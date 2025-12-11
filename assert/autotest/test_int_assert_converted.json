@@ -17,7 +17,6 @@
     "int_assert": {
       "instances": [
         {
-          "name": "int_assert_2",
           "parent": "house_1",
           "target": "compressor_count",
           "value": 4,

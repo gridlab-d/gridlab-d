@@ -224,7 +224,7 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "line_632_645",
+          "name": "line_632-645",
           "phases": "BCN",
           "from": "n632",
           "to": "m645",
@@ -235,7 +235,7 @@
           ]
         },
         {
-          "name": "line_645_646",
+          "name": "line_645-646",
           "phases": "BCN",
           "from": "m645",
           "to": "m646",
@@ -243,7 +243,7 @@
           "configuration": "lc603"
         },
         {
-          "name": "line_630_632",
+          "name": "line_630-632",
           "phases": "ABCN",
           "from": "n630",
           "to": "n632",
@@ -254,7 +254,7 @@
           }
         },
         {
-          "name": "line_632_6321",
+          "name": "line_632-6321",
           "phases": "ABCN",
           "from": "n632",
           "to": "m6321",
@@ -268,7 +268,7 @@
           }
         },
         {
-          "name": "line_6321_671",
+          "name": "line_6321-671",
           "phases": "ABCN",
           "from": "m6321",
           "to": "m671",
@@ -279,7 +279,7 @@
           }
         },
         {
-          "name": "line_671_680",
+          "name": "line_671-680",
           "phases": "ABCN",
           "from": "m671",
           "to": "n680",
@@ -293,7 +293,7 @@
           }
         },
         {
-          "name": "line_671_684",
+          "name": "line_671-684",
           "phases": "ACN",
           "from": "m671",
           "to": "n684",
@@ -304,7 +304,7 @@
           }
         },
         {
-          "name": "line_684_611",
+          "name": "line_684-611",
           "phases": "CN",
           "from": "n684",
           "to": "m611",
@@ -315,7 +315,7 @@
           }
         },
         {
-          "name": "line_632_633",
+          "name": "line_632-633",
           "phases": "ABCN",
           "from": "n632",
           "to": "n633",
@@ -330,7 +330,7 @@
     "underground_line": {
       "instances": [
         {
-          "name": "line_684_652",
+          "name": "line_684-652",
           "phases": "AN",
           "from": "n684",
           "to": "m652",
@@ -341,7 +341,7 @@
           }
         },
         {
-          "name": "line_692_675",
+          "name": "line_692-675",
           "phases": "ABC",
           "from": "m692",
           "to": "m675",
@@ -430,42 +430,36 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_32",
           "property": "m634:measured_voltage_A,m634:measured_voltage_B,m634:measured_voltage_C,m645:measured_voltage_A,m645:measured_voltage_B,m645:measured_voltage_C,m646:measured_voltage_A,m646:measured_voltage_B,m646:measured_voltage_C,m652:measured_voltage_A,m652:measured_voltage_B,m652:measured_voltage_C,m671:measured_voltage_A,m671:measured_voltage_B,m671:measured_voltage_C,m675:measured_voltage_A,m675:measured_voltage_B,m675:measured_voltage_C,m692:measured_voltage_A,m692:measured_voltage_B,m692:measured_voltage_C,m611:measured_voltage_A,m611:measured_voltage_B,m611:measured_voltage_C,m6321:measured_voltage_A,m6321:measured_voltage_B,m6321:measured_voltage_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13AMIVoltages.csv"
         },
         {
-          "name": "multi_recorder_33",
           "property": "m634:measured_power_A,m634:measured_power_B,m634:measured_power_C,m645:measured_power_A,m645:measured_power_B,m645:measured_power_C,m646:measured_power_A,m646:measured_power_B,m646:measured_power_C,m652:measured_power_A,m652:measured_power_B,m652:measured_power_C,m671:measured_power_A,m671:measured_power_B,m671:measured_power_C,m675:measured_power_A,m675:measured_power_B,m675:measured_power_C,m692:measured_power_A,m692:measured_power_B,m692:measured_power_C,m611:measured_power_A,m611:measured_power_B,m611:measured_power_C,m6321:measured_power_A,m6321:measured_power_B,m6321:measured_power_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13AMIPowers.csv"
         },
         {
-          "name": "multi_recorder_34",
           "property": "n650:voltage_A,n650:voltage_B,n650:voltage_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13SubVoltages.csv"
         },
         {
-          "name": "multi_recorder_35",
           "property": "n650:power_A,n650:power_B,n650:power_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13SubPowers.csv"
         },
         {
-          "name": "multi_recorder_36",
           "property": "n630:voltage_A,n630:voltage_B,n630:voltage_C,n632:voltage_A,n632:voltage_B,n632:voltage_C,n633:voltage_A,n633:voltage_B,n633:voltage_C,n680:voltage_A,n680:voltage_B,n680:voltage_C,n684:voltage_A,n684:voltage_B,n684:voltage_C",
           "limit": 0,
           "interval": 1,
           "file": "IEEE13PseudoVoltages.csv"
         },
         {
-          "name": "multi_recorder_37",
           "property": "n630:power_A,n630:power_B,n630:power_C,n632:power_A,n632:power_B,n632:power_C,n633:power_A,n633:power_B,n633:power_C,n680:power_A,n680:power_B,n680:power_C,n684:power_A,n684:power_B,n684:power_C",
           "limit": 0,
           "interval": 1,
@@ -476,7 +470,6 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_38",
           "filename": "output_voltage.csv"
         }
       ]
@@ -691,7 +684,7 @@
     "switch": {
       "instances": [
         {
-          "name": "switch_671_692",
+          "name": "switch_671-692",
           "phases": "ABCN",
           "from": "l671",
           "to": "m692",
@@ -722,7 +715,7 @@
     "transformer": {
       "instances": [
         {
-          "name": "transformer_633_634",
+          "name": "transformer_633-634",
           "phases": "ABCN",
           "from": "n633",
           "to": "m634",
@@ -776,7 +769,6 @@
     "impedance_dump": {
       "instances": [
         {
-          "name": "impedance_dump_68",
           "filename": "IEEE_13_node_impedance_dump.xml"
         }
       ]

@@ -116,7 +116,6 @@
     "assert": {
       "instances": [
         {
-          "name": "assert_2",
           "parent": "test_1",
           "target": "output",
           "relation": "inside",
@@ -124,7 +123,6 @@
           "upper": 12.5
         },
         {
-          "name": "assert_5",
           "parent": "test_4",
           "target": "output",
           "relation": "inside",
@@ -132,7 +130,6 @@
           "upper": 12.5
         },
         {
-          "name": "assert_8",
           "parent": "test_7",
           "target": "output",
           "relation": "inside",
@@ -144,21 +141,18 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "test_1",
           "property": "input,output,x1,x2",
           "file": "test_double_array_1.csv",
           "interval": 1
         },
         {
-          "name": "recorder_6",
           "parent": "test_4",
           "property": "input,output,x1,x2",
           "file": "test_double_array_2.csv",
           "interval": 1
         },
         {
-          "name": "recorder_9",
           "parent": "test_7",
           "property": "input,output,x1,x2",
           "file": "test_double_array_3.csv",

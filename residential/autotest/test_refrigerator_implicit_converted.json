@@ -30,7 +30,6 @@
     "house": {
       "instances": [
         {
-          "name": "house_1",
           "inside_comments": [
             "// assert needed here"
           ]

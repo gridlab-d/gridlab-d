@@ -21,7 +21,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "house_1",
           "property": "mass_temperature,air_temperature,outdoor_temperature,internal_gain",
           "file": "test_solargains.csv",
@@ -33,7 +32,6 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "ZIPload_3",
           "parent": "house_1",
           "heat_fraction": 1,
           "base_power": "zippwr*1",
@@ -49,14 +47,12 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_4",
           "parent": "house_1",
           "target": "mass_temperature",
           "value": 27.5,
           "within": 15
         },
         {
-          "name": "double_assert_5",
           "parent": "house_1",
           "target": "air_temperature",
           "value": 27.5,
@@ -80,7 +76,6 @@
     "climate": {
       "instances": [
         {
-          "name": "climate_6",
           "tmyfile": "../WA-Yakima.tmy2"
         }
       ]

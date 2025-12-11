@@ -26,7 +26,6 @@
     "test": {
       "instances": [
         {
-          "name": "test_1",
           "x": 1.23,
           "y": 3.45
         }
@@ -35,13 +34,11 @@
     "native": {
       "instances": [
         {
-          "name": "native_2",
           "mode": "SERVER",
           "transport": "TCP",
           "link": "sync:y<-var2"
         },
         {
-          "name": "native_3",
           "mode": "SERVER",
           "transport": "UDP"
         }

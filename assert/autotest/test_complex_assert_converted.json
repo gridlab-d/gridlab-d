@@ -12,7 +12,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_2",
           "parent": "meter_1",
           "target": "voltage_A",
           "value": 120.0,
@@ -20,7 +19,6 @@
           "within": 1
         },
         {
-          "name": "complex_assert_3",
           "parent": "meter_1",
           "target": "voltage_A",
           "value": 120.0,
@@ -28,7 +26,6 @@
           "within": 1
         },
         {
-          "name": "complex_assert_4",
           "parent": "meter_1",
           "target": "voltage_A",
           "value": 0,
@@ -36,7 +33,6 @@
           "within": 1
         },
         {
-          "name": "complex_assert_5",
           "parent": "meter_1",
           "target": "voltage_A",
           "value": 0,

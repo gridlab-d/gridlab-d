@@ -35,7 +35,6 @@
     "xml": {
       "instances": [
         {
-          "name": "xml_2",
           "link": "sync:my.y <- var2",
           "option": "server:maxclients 1",
           "inside_comments": [
@@ -48,7 +47,6 @@
           }
         },
         {
-          "name": "xml_3",
           "mode": "SERVER",
           "transport": "UDP"
         }

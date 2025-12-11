@@ -72,7 +72,7 @@
           "name": "SLG_A",
           "parent": "testmetrics",
           "fault_type": "SLG-A",
-          "manual_outages": "overhead_line_34,2001-01-01 0:00:01,2001-01-01 00:00_02",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:01,2001-01-01 00:00:02",
           "inline_comments": {
             "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
             "parent": "//Parent it to the reliability metrics object",
@@ -83,7 +83,7 @@
           "name": "SLG_B",
           "parent": "testmetrics",
           "fault_type": "SLG-B",
-          "manual_outages": "overhead_line_34,2001-01-01 0:00:03,2001-01-01 00:00_04",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:03,2001-01-01 00:00:04",
           "inline_comments": {
             "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
             "parent": "//Parent it to the reliability metrics object",
@@ -94,7 +94,7 @@
           "name": "SLG_C",
           "parent": "testmetrics",
           "fault_type": "SLG-C",
-          "manual_outages": "overhead_line_34,2001-01-01 0:00:05,2001-01-01 00:00_06",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:05,2001-01-01 00:00:06",
           "inline_comments": {
             "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
             "parent": "//Parent it to the reliability metrics object",
@@ -105,7 +105,7 @@
           "name": "DLG_AB",
           "parent": "testmetrics",
           "fault_type": "DLG-AB",
-          "manual_outages": "overhead_line_34,2001-01-01 0:00:07,2001-01-01 00:00_08",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:07,2001-01-01 00:00:08",
           "inline_comments": {
             "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
             "parent": "//Parent it to the reliability metrics object",
@@ -116,7 +116,7 @@
           "name": "DLG_BC",
           "parent": "testmetrics",
           "fault_type": "DLG-BC",
-          "manual_outages": "overhead_line_34,2001-01-01 0:00:09,2001-01-01 00:00_10",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:09,2001-01-01 00:00:10",
           "inline_comments": {
             "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
             "parent": "//Parent it to the reliability metrics object",
@@ -127,7 +127,7 @@
           "name": "DLG_CA",
           "parent": "testmetrics",
           "fault_type": "DLG-CA",
-          "manual_outages": "overhead_line_34,2001-01-01 0:00:11,2001-01-01 00:00_12",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:11,2001-01-01 00:00:12",
           "inline_comments": {
             "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
             "parent": "//Parent it to the reliability metrics object",
@@ -138,7 +138,7 @@
           "name": "LL_AB",
           "parent": "testmetrics",
           "fault_type": "LL-AB",
-          "manual_outages": "overhead_line_34,2001-01-01 0:00:13,2001-01-01 00:00_14",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:13,2001-01-01 00:00:14",
           "inline_comments": {
             "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
             "parent": "//Parent it to the reliability metrics object",
@@ -149,7 +149,7 @@
           "name": "LL_BC",
           "parent": "testmetrics",
           "fault_type": "LL-BC",
-          "manual_outages": "overhead_line_34,2001-01-01 0:00:15,2001-01-01 00:00_16",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:15,2001-01-01 00:00:16",
           "inline_comments": {
             "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
             "parent": "//Parent it to the reliability metrics object",
@@ -160,7 +160,7 @@
           "name": "LL_CA",
           "parent": "testmetrics",
           "fault_type": "LL-CA",
-          "manual_outages": "overhead_line_34,2001-01-01 0:00:17,2001-01-01 00:00_18",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:17,2001-01-01 00:00:18",
           "inline_comments": {
             "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
             "parent": "//Parent it to the reliability metrics object",
@@ -171,7 +171,7 @@
           "name": "TLG",
           "parent": "testmetrics",
           "fault_type": "TLG",
-          "manual_outages": "overhead_line_34,2001-01-01 0:00:19,2001-01-01 00:00_20",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:19,2001-01-01 00:00:20",
           "inline_comments": {
             "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
             "parent": "//Parent it to the reliability metrics object",
@@ -182,7 +182,7 @@
           "name": "TLL",
           "parent": "testmetrics",
           "fault_type": "TLL",
-          "manual_outages": "overhead_line_34,2001-01-01 0:00:21,2001-01-01 00:00_22",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:21,2001-01-01 00:00:22",
           "inline_comments": {
             "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
             "parent": "//Parent it to the reliability metrics object",
@@ -224,7 +224,7 @@
       "instances": [
         {
           "name": "line_spacing_200",
-          "id": 200,
+          "object_declaration": "line_spacing:200",
           "distance_AB": 2.5,
           "distance_BC": 4.5,
           "distance_AC": 7.0,
@@ -294,7 +294,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_22",
           "parent": "overhead_line_12",
           "property": "fault_current_in_A,fault_current_in_B,fault_current_in_C",
           "file": "swing_bus_fault_current.csv",
@@ -302,7 +301,6 @@
           "limit": 23
         },
         {
-          "name": "recorder_36",
           "parent": "overhead_line_34",
           "property": "fault_current_in_A,fault_current_in_B,fault_current_in_C",
           "file": "fault_bus_fault_current.csv",
@@ -314,14 +312,12 @@
     "player": {
       "instances": [
         {
-          "name": "player_24",
           "parent": "complex_assert_23",
           "property": "value",
           "file": "../swing_bus_fault_current_A.player",
           "loop": 0
         },
         {
-          "name": "player_25",
           "parent": "complex_assert_23",
           "property": "within",
           "file": "../swing_bus_A_within.player",
@@ -331,14 +327,12 @@
           }
         },
         {
-          "name": "player_27",
           "parent": "complex_assert_26",
           "property": "value",
           "file": "../swing_bus_fault_current_B.player",
           "loop": 0
         },
         {
-          "name": "player_28",
           "parent": "complex_assert_26",
           "property": "within",
           "file": "../swing_bus_B_within.player",
@@ -348,14 +342,12 @@
           }
         },
         {
-          "name": "player_30",
           "parent": "complex_assert_29",
           "property": "value",
           "file": "../swing_bus_fault_current_C.player",
           "loop": 0
         },
         {
-          "name": "player_31",
           "parent": "complex_assert_29",
           "property": "within",
           "file": "../swing_bus_C_within.player",
@@ -365,14 +357,12 @@
           }
         },
         {
-          "name": "player_38",
           "parent": "complex_assert_37",
           "property": "value",
           "file": "../fault_bus_fault_current_A.player",
           "loop": 0
         },
         {
-          "name": "player_39",
           "parent": "complex_assert_37",
           "property": "within",
           "file": "../fault_bus_A_within.player",
@@ -382,14 +372,12 @@
           }
         },
         {
-          "name": "player_41",
           "parent": "complex_assert_40",
           "property": "value",
           "file": "../fault_bus_fault_current_B.player",
           "loop": 0
         },
         {
-          "name": "player_42",
           "parent": "complex_assert_40",
           "property": "within",
           "file": "../fault_bus_B_within.player",
@@ -399,14 +387,12 @@
           }
         },
         {
-          "name": "player_44",
           "parent": "complex_assert_43",
           "property": "value",
           "file": "../fault_bus_fault_current_C.player",
           "loop": 0
         },
         {
-          "name": "player_45",
           "parent": "complex_assert_43",
           "property": "within",
           "file": "../fault_bus_C_within.player",

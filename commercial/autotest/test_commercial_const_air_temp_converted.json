@@ -19,7 +19,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_2",
           "parent": "office_1",
           "target": "air_temperature",
           "within": 0.001,
@@ -30,7 +29,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "office_1",
           "file": "commercial_hvac_usage.csv",
           "interval": 3600,
@@ -38,7 +36,6 @@
           "property": "air_temperature,mass_temperature,hvac_mode"
         },
         {
-          "name": "recorder_4",
           "parent": "office_1",
           "file": "commercial_hvac_usage2.csv",
           "interval": -1,

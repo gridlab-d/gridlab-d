@@ -26,7 +26,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_3",
           "parent": "dryer_2",
           "target": "energy",
           "within": 0.01,
@@ -38,7 +37,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "dryer_2",
           "property": "enduse_load,energy",
           "file": "test_dryer_external_power.csv",

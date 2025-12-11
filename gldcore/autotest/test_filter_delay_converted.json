@@ -52,7 +52,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_3",
           "file": "output.csv",
           "interval": -1,
           "property": "from:value,to:value"

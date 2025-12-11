@@ -104,7 +104,7 @@
         {
           "name": "testgendev",
           "fault_type": "SW-ABC",
-          "manual_outages": "switch3_3B,2000-01-01 00:00:05,2000-01-01 00:00_30",
+          "manual_outages": "switch3_3B,2000-01-01 00:00:05,2000-01-01 00:00:30",
           "outside_comments": [
             "//Manual object - needed to get fault_check to behave properly -- arbitrary item added"
           ],
@@ -115,7 +115,7 @@
         {
           "name": "testgendev_B",
           "fault_type": "SW-ABC",
-          "manual_outages": "switch2B_2C,2000-01-01 00:00:04,2000-01-01 00:00_35",
+          "manual_outages": "switch2B_2C,2000-01-01 00:00:04,2000-01-01 00:00:35",
           "inline_comments": {
             "fault_type": "//Type of fault for the object to induce"
           }
@@ -146,7 +146,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_12",
           "parent": "node1",
           "property": "voltage_A,voltage_B,voltage_C",
           "interval": 1,
@@ -160,31 +159,26 @@
     "player": {
       "instances": [
         {
-          "name": "player_13",
           "parent": "node1",
           "property": "voltage_A",
           "file": "../data_swing_pq_voltage_player_A.csv"
         },
         {
-          "name": "player_14",
           "parent": "node1",
           "property": "voltage_B",
           "file": "../data_swing_pq_voltage_player_B.csv"
         },
         {
-          "name": "player_15",
           "parent": "node1",
           "property": "voltage_C",
           "file": "../data_swing_pq_voltage_player_C.csv"
         },
         {
-          "name": "player_17",
           "parent": "assert_16",
           "property": "value",
           "file": "../data_multi_island_SWING_status.csv"
         },
         {
-          "name": "player_26",
           "parent": "complex_assert_25",
           "property": "value",
           "file": "../data_multi_island_separate_fail_volt_A.csv",
@@ -193,25 +187,21 @@
           ]
         },
         {
-          "name": "player_28",
           "parent": "complex_assert_27",
           "property": "value",
           "file": "../data_multi_island_separate_fail_volt_B.csv"
         },
         {
-          "name": "player_30",
           "parent": "complex_assert_29",
           "property": "value",
           "file": "../data_multi_island_separate_fail_volt_C.csv"
         },
         {
-          "name": "player_37",
           "parent": "load4B",
           "property": "constant_power_A",
           "file": "../data_multi_island_big_load_step_increase.csv"
         },
         {
-          "name": "player_45",
           "parent": "node1B",
           "property": "reset_disabled_island_state",
           "file": "../data_multi_island_broken_island_repair.csv"

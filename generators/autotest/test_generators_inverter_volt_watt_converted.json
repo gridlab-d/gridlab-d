@@ -29,7 +29,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_1",
           "parent": "swingbus",
           "property": "voltage_A",
           "file": "../test_generators_inverter_volt_var_voltageA.player",
@@ -39,35 +38,30 @@
           ]
         },
         {
-          "name": "player_2",
           "parent": "swingbus",
           "property": "voltage_B",
           "file": "../test_generators_inverter_volt_var_voltageB.player",
           "loop": 0
         },
         {
-          "name": "player_3",
           "parent": "swingbus",
           "property": "voltage_C",
           "file": "../test_generators_inverter_volt_var_voltageC.player",
           "loop": 0
         },
         {
-          "name": "player_7",
           "parent": "complex_assert_6",
           "property": "value",
           "file": "../test_generators_inverter_vw_output_A.player",
           "loop": 0
         },
         {
-          "name": "player_9",
           "parent": "complex_assert_8",
           "property": "value",
           "file": "../test_generators_inverter_vw_output_B.player",
           "loop": 0
         },
         {
-          "name": "player_11",
           "parent": "complex_assert_10",
           "property": "value",
           "file": "../test_generators_inverter_vw_output_C.player",
@@ -146,14 +140,12 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_13",
           "parent": "volt_watt_inv",
           "property": "power_A,power_B,power_C,VA_Out",
           "interval": 60,
           "file": "vwinv.csv"
         },
         {
-          "name": "recorder_14",
           "parent": "inv_meter",
           "property": "measured_power_A,measured_power_B,measured_power_C",
           "interval": 60,

@@ -28,7 +28,6 @@
     "climate": {
       "instances": [
         {
-          "name": "climate_1",
           "tmyfile": "../Standard_Weather.csv",
           "reader": "csvreader",
           "outside_comments": [
@@ -176,7 +175,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_13",
           "parent": "double_assert_12",
           "property": "value",
           "file": "../windpower_assert_inv_FBS.player"
@@ -200,14 +198,12 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_14",
           "parent": "transformer23",
           "property": "power_out_real",
           "interval": 900,
           "file": "test_windpower_${PF}.csv"
         },
         {
-          "name": "recorder_27",
           "parent": "inv1",
           "property": "V_In, I_In, VA_Out,phaseA_V_Out, phaseB_V_Out, phaseC_V_Out, phaseA_I_Out, phaseB_I_Out, phaseC_I_Out, power_A, power_B, power_C, phases",
           "file": "TEST_inverter.csv",
@@ -273,14 +269,12 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_22",
           "parent": "windturb1",
           "file": "test_wind_power_${PF}1.csv",
           "interval": 900,
           "property": "wind_speed,WSadj,Cp,my_meter1:measured_real_power,total_real_power"
         },
         {
-          "name": "multi_recorder_29",
           "parent": "windturb2",
           "file": "test_wind_power_${PF}2.csv",
           "interval": 900,

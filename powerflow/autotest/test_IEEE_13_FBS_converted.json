@@ -26,7 +26,6 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_1",
           "filename": "IEEE_13_FBS_voltage.csv",
           "mode": "POLAR"
         }
@@ -233,7 +232,7 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "line_632_645",
+          "name": "line_632-645",
           "phases": "BCN",
           "from": "n632",
           "to": "l645",
@@ -244,7 +243,7 @@
           ]
         },
         {
-          "name": "line_645_646",
+          "name": "line_645-646",
           "phases": "BCN",
           "from": "l645",
           "to": "l646",
@@ -252,7 +251,7 @@
           "configuration": "lc603"
         },
         {
-          "name": "line_630_632",
+          "name": "line_630-632",
           "phases": "ABCN",
           "from": "n630",
           "to": "n632",
@@ -263,7 +262,7 @@
           }
         },
         {
-          "name": "line_632_6321",
+          "name": "line_632-6321",
           "phases": "ABCN",
           "from": "n632",
           "to": "l6321",
@@ -277,7 +276,7 @@
           }
         },
         {
-          "name": "line_6321_671",
+          "name": "line_6321-671",
           "phases": "ABCN",
           "from": "l6321",
           "to": "l671",
@@ -288,7 +287,7 @@
           }
         },
         {
-          "name": "line_671_680",
+          "name": "line_671-680",
           "phases": "ABCN",
           "from": "l671",
           "to": "n680",
@@ -302,7 +301,7 @@
           }
         },
         {
-          "name": "line_671_684",
+          "name": "line_671-684",
           "phases": "ACN",
           "from": "l671",
           "to": "n684",
@@ -313,7 +312,7 @@
           }
         },
         {
-          "name": "line_684_611",
+          "name": "line_684-611",
           "phases": "CN",
           "from": "n684",
           "to": "l611",
@@ -324,7 +323,7 @@
           }
         },
         {
-          "name": "line_632_633",
+          "name": "line_632-633",
           "phases": "ABCN",
           "from": "n632",
           "to": "n633",
@@ -339,7 +338,7 @@
     "underground_line": {
       "instances": [
         {
-          "name": "line_684_652",
+          "name": "line_684-652",
           "phases": "AN",
           "from": "n684",
           "to": "l652",
@@ -350,7 +349,7 @@
           }
         },
         {
-          "name": "line_692_675",
+          "name": "line_692-675",
           "phases": "ABC",
           "from": "l692",
           "to": "l675",
@@ -365,7 +364,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_33",
           "parent": "n633",
           "target": "voltage_C",
           "value": "2437.54+117.83d",
@@ -376,7 +374,6 @@
           ]
         },
         {
-          "name": "complex_assert_36",
           "parent": "n632",
           "target": "voltage_C",
           "value": "2443.82+117.83d",
@@ -384,7 +381,6 @@
           "};": " object complex_assert "
         },
         {
-          "name": "complex_assert_38",
           "parent": "n650",
           "target": "voltage_C",
           "value": "2401.7771+120.0d",
@@ -392,21 +388,18 @@
           "};": " object complex_assert "
         },
         {
-          "name": "complex_assert_40",
           "parent": "n680",
           "target": "voltage_A",
           "value": "2377.78-5.3d",
           "within": 2
         },
         {
-          "name": "complex_assert_41",
           "parent": "n680",
           "target": "voltage_B",
           "value": "2528.94-122.34d",
           "within": 2
         },
         {
-          "name": "complex_assert_42",
           "parent": "n680",
           "target": "voltage_C",
           "value": "2348.63+116.03d",
@@ -416,21 +409,18 @@
           }
         },
         {
-          "name": "complex_assert_44",
           "parent": "n684",
           "target": "voltage_A",
           "value": "2373.11-5.32d",
           "within": 2
         },
         {
-          "name": "complex_assert_45",
           "parent": "n684",
           "target": "voltage_C",
           "value": "2343.80+115.93d",
           "within": 2
         },
         {
-          "name": "complex_assert_47",
           "parent": "l634",
           "target": "voltage_A",
           "within": 2,
@@ -440,119 +430,102 @@
           ]
         },
         {
-          "name": "complex_assert_48",
           "parent": "l634",
           "target": "voltage_B",
           "within": 2,
           "value": "283.16-122.22d"
         },
         {
-          "name": "complex_assert_49",
           "parent": "l634",
           "target": "voltage_C",
           "within": 2,
           "value": "276.04+117.35d"
         },
         {
-          "name": "complex_assert_51",
           "parent": "l645",
           "target": "voltage_B",
           "within": 2,
           "value": "2480.67-121.90d"
         },
         {
-          "name": "complex_assert_52",
           "parent": "l645",
           "target": "voltage_C",
           "within": 2,
           "value": "2439.07+117.86d"
         },
         {
-          "name": "complex_assert_54",
           "parent": "l646",
           "target": "voltage_B",
           "within": 2,
           "value": "2476.50-121.98d"
         },
         {
-          "name": "complex_assert_55",
           "parent": "l646",
           "target": "voltage_C",
           "within": 2,
           "value": "2434.12+117.90d"
         },
         {
-          "name": "complex_assert_57",
           "parent": "l652",
           "target": "voltage_A",
           "within": 2,
           "value": "2363.35-5.21d"
         },
         {
-          "name": "complex_assert_59",
           "parent": "l671",
           "target": "voltage_A",
           "within": 2,
           "value": "2377.78-5.3d"
         },
         {
-          "name": "complex_assert_60",
           "parent": "l671",
           "target": "voltage_B",
           "within": 2,
           "value": "2528.94-122.34d"
         },
         {
-          "name": "complex_assert_61",
           "parent": "l671",
           "target": "voltage_C",
           "within": 8,
           "value": "2348.63+116.02d"
         },
         {
-          "name": "complex_assert_63",
           "parent": "l675",
           "target": "voltage_A",
           "within": 2,
           "value": "2362.16-5.55d"
         },
         {
-          "name": "complex_assert_64",
           "parent": "l675",
           "target": "voltage_B",
           "within": 2,
           "value": "2534.68-122.52d"
         },
         {
-          "name": "complex_assert_65",
           "parent": "l675",
           "target": "voltage_C",
           "within": 8,
           "value": "2344.04+116.04d"
         },
         {
-          "name": "complex_assert_67",
           "parent": "l692",
           "target": "voltage_A",
           "within": 2,
           "value": "2377.78-5.30d"
         },
         {
-          "name": "complex_assert_68",
           "parent": "l692",
           "target": "voltage_B",
           "within": 2,
           "value": "2528.94-122.34d"
         },
         {
-          "name": "complex_assert_69",
           "parent": "l692",
           "target": "voltage_C",
           "within": 8,
           "value": "2348.63+116.02d"
         },
         {
-          "name": "complex_assert_71",
           "parent": "l611",
           "target": "voltage_C",
           "within": 8,
@@ -780,7 +753,7 @@
     "switch": {
       "instances": [
         {
-          "name": "switch_671_692",
+          "name": "switch_671-692",
           "phases": "ABCN",
           "from": "l671",
           "to": "l692",
@@ -811,7 +784,7 @@
     "transformer": {
       "instances": [
         {
-          "name": "transformer_633_634",
+          "name": "transformer_633-634",
           "phases": "ABCN",
           "from": "n633",
           "to": "l634",

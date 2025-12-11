@@ -39,7 +39,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "dryer",
           "property": "load.demand",
           "file": "test_appliance.csv",

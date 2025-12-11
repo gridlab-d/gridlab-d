@@ -129,28 +129,24 @@
     "player": {
       "instances": [
         {
-          "name": "player_7",
           "parent": "complex_assert_6",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_combination_loads_FPI_power_A.csv"
         },
         {
-          "name": "player_9",
           "parent": "complex_assert_8",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_combination_loads_FPI_power_B.csv"
         },
         {
-          "name": "player_11",
           "parent": "complex_assert_10",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_combination_loads_FPI_power_C.csv"
         },
         {
-          "name": "player_19",
           "parent": "load_delt_old_pwr",
           "flags": "DELTAMODE",
           "property": "constant_power_A",
@@ -160,35 +156,30 @@
           ]
         },
         {
-          "name": "player_33",
           "parent": "load_deltawye_old_pwr_child",
           "flags": "DELTAMODE",
           "property": "constant_power_A",
           "file": "../data_combination_step_player.csv"
         },
         {
-          "name": "player_37",
           "parent": "load_wyedelta_old_pwr_child",
           "flags": "DELTAMODE",
           "property": "constant_power_A",
           "file": "../data_combination_step_player.csv"
         },
         {
-          "name": "player_41",
           "parent": "load_wyewye_old_pwr_child",
           "flags": "DELTAMODE",
           "property": "constant_power_A",
           "file": "../data_combination_step_player.csv"
         },
         {
-          "name": "player_45",
           "parent": "load_deltadelta_old_pwr_child",
           "flags": "DELTAMODE",
           "property": "constant_power_A",
           "file": "../data_combination_step_player.csv"
         },
         {
-          "name": "player_48",
           "parent": "load_deltawye_new_pwr",
           "flags": "DELTAMODE",
           "property": "constant_power_AB",
@@ -198,7 +189,6 @@
           ]
         },
         {
-          "name": "player_51",
           "parent": "load_deltawye_delt_new_pwr",
           "flags": "DELTAMODE",
           "property": "constant_power_AB",
@@ -208,7 +198,6 @@
           ]
         },
         {
-          "name": "player_54",
           "parent": "load_child1_wye",
           "flags": "DELTAMODE",
           "property": "constant_power_AN",
@@ -218,21 +207,18 @@
           ]
         },
         {
-          "name": "player_56",
           "parent": "load_child1_delta",
           "flags": "DELTAMODE",
           "property": "constant_power_AB",
           "file": "../data_combination_step_player.csv"
         },
         {
-          "name": "player_60",
           "parent": "load_child2_wye",
           "flags": "DELTAMODE",
           "property": "constant_power_AN",
           "file": "../data_combination_step_player.csv"
         },
         {
-          "name": "player_64",
           "parent": "load_child3_full_wye",
           "flags": "DELTAMODE",
           "property": "constant_power_AB",
@@ -264,7 +250,6 @@
           "within": 0.5
         },
         {
-          "name": "complex_assert_14",
           "parent": "node2",
           "target": "voltage_A",
           "in": "2000-01-01 00:00:04 EST",
@@ -272,7 +257,6 @@
           "within": 0.1
         },
         {
-          "name": "complex_assert_15",
           "parent": "node2",
           "target": "voltage_B",
           "in": "2000-01-01 00:00:04 EST",
@@ -280,7 +264,6 @@
           "within": 0.1
         },
         {
-          "name": "complex_assert_16",
           "parent": "node2",
           "target": "voltage_C",
           "in": "2000-01-01 00:00:04 EST",

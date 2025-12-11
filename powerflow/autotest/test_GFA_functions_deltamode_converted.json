@@ -8,7 +8,10 @@
       "//#set pauseatexit=1",
       "// #set double_format=%+.12lg",
       "// #set complex_format=%+.12lg%+.12lg%c",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -16,9 +19,9 @@
       "double_format": "%+.6lg",
       "complex_format": "%+.6lg%+.6lg%c",
       "dateformat": "ISO",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -136,7 +139,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_10",
           "parent": "complex_assert_9",
           "flags": "DELTAMODE",
           "property": "value",
@@ -146,70 +148,60 @@
           ]
         },
         {
-          "name": "player_11",
           "parent": "source_node",
           "flags": "DELTAMODE",
           "property": "voltage_A",
           "file": "../data_GFA_voltage_frequency_player_A.csv"
         },
         {
-          "name": "player_12",
           "parent": "source_node",
           "flags": "DELTAMODE",
           "property": "voltage_B",
           "file": "../data_GFA_voltage_frequency_player_B.csv"
         },
         {
-          "name": "player_13",
           "parent": "source_node",
           "flags": "DELTAMODE",
           "property": "voltage_C",
           "file": "../data_GFA_voltage_frequency_player_C.csv"
         },
         {
-          "name": "player_18",
           "parent": "direct_freq_load",
           "flags": "DELTAMODE",
           "property": "measured_frequency",
           "file": "../data_GFA_frequency_values_player.csv"
         },
         {
-          "name": "player_20",
           "parent": "enum_assert_19",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_direct_freq_GFA_trip_method.csv"
         },
         {
-          "name": "player_24",
           "parent": "enum_assert_23",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_measure_freq_GFA_trip_method.csv"
         },
         {
-          "name": "player_28",
           "parent": "tpl_B",
           "flags": "DELTAMODE",
           "property": "measured_frequency",
           "file": "../data_GFA_frequency_values_player.csv"
         },
         {
-          "name": "player_30",
           "parent": "enum_assert_29",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_direct_freq_GFA_trip_method.csv"
         },
         {
-          "name": "player_33",
           "parent": "enum_assert_32",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_measure_freq_GFA_trip_method.csv"
         },
         {
-          "name": "player_36",
           "parent": "enum_assert_35",
           "flags": "DELTAMODE",
           "property": "value",
@@ -455,7 +447,6 @@
     "transformer": {
       "instances": [
         {
-          "name": "transformer_42",
           "phases": "BS",
           "from": "secondary_node",
           "to": "tpm_B",
@@ -466,7 +457,6 @@
     "triplex_line": {
       "instances": [
         {
-          "name": "triplex_line_43",
           "phases": "BS",
           "from": "tpm_B",
           "to": "tpl_B",
@@ -474,7 +464,6 @@
           "length": "50.0 ft"
         },
         {
-          "name": "triplex_line_44",
           "phases": "BS",
           "from": "tpm_B",
           "to": "tpl_B_freq",
@@ -482,7 +471,6 @@
           "length": "50.0 ft"
         },
         {
-          "name": "triplex_line_45",
           "phases": "BS",
           "from": "tpm_B",
           "to": "tpm_B2",
@@ -494,7 +482,6 @@
     "group_recorder": {
       "instances": [
         {
-          "name": "group_recorder_46",
           "flags": "DELTAMODE",
           "group": "groupid=GFA_loads",
           "property": "GFA_status",

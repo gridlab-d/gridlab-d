@@ -46,7 +46,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "RootNode",
           "property": "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag",
           "interval": 1,
@@ -54,7 +53,6 @@
           "file": "SwingVoltageTest.csv"
         },
         {
-          "name": "recorder_4",
           "parent": "RandomLine",
           "flags": "DELTAMODE",
           "property": "power_out_A.real,power_out_A.imag,power_out_real",
@@ -65,7 +63,6 @@
           ]
         },
         {
-          "name": "recorder_14",
           "parent": "induction_motor",
           "file": "machine_rotor.csv",
           "interval": 1,
@@ -73,7 +70,6 @@
           "flags": "DELTAMODE"
         },
         {
-          "name": "recorder_15",
           "parent": "RootNode",
           "file": "meaured_power_Main.csv",
           "interval": 1,
