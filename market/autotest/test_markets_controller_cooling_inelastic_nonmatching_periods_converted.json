@@ -61,7 +61,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_3",
           "parent": "Market_1",
           "property": "house1:air_temperature,house1:heating_setpoint,house1:cooling_setpoint,cool_control:bid_price,current_market.clearing_price,house1:system_mode,cool_control:bid_quantity,current_market.clearing_quantity",
           "file": "test_markets_controller_cooling_inelastic_nonmatching_periods_output.csv",
@@ -72,7 +71,6 @@
           ]
         },
         {
-          "name": "multi_recorder_4",
           "parent": "Market_1",
           "property": "current_price_mean_30min,house1:air_temperature,cool_control:base_setpoint,cool_control:ramp_low,cool_control:ramp_high,current_price_stdev_30min,cool_control:range_low,cool_control:range_high,cool_control:bid_price",
           "file": "controller_cooling_inelastic_nonmatching_periods_calculate_bid_price.csv",
@@ -80,7 +78,6 @@
           "limit": 4320
         },
         {
-          "name": "multi_recorder_5",
           "parent": "Market_1",
           "property": "cool_control:bid_price,current_market.clearing_price,cool_control:bid_quantity,current_market.clearing_quantity",
           "file": "calculate_clearing_quantity.csv",
@@ -91,8 +88,7 @@
           }
         },
         {
-          "name": "multi_recorder_11",
-          "parent": "cool_control",
+          "parent": "triplex_meter_8house1cool_control",
           "property": "simple_mode,period,setpoint,target,base_setpoint,control_mode,resolve_mode,demand,load,total,range_low,range_high,ramp_low,ramp_high,bid_mode,bid_price,bid_quantity,set_temp,house1:power_state,house1:cooling_demand,house1:cooling_setpoint,house1:air_temperature,house1:system_mode,average_target,standard_deviation_target,house1:hvac_load,house1:outdoor_temperature",
           "file": "check_defaults_output1.csv",
           "interval": 90,
@@ -103,7 +99,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_6",
           "parent": "Market_1",
           "interval": 1,
           "property": "period"
@@ -113,15 +108,13 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_7",
           "parent": "Market_1",
           "value": "clearing_quantities*1",
           "target": "current_market.clearing_quantity",
           "within": 0.01
         },
         {
-          "name": "double_assert_12",
-          "parent": "cool_control",
+          "parent": "triplex_meter_8house1cool_control",
           "value": "controller_bids*1",
           "target": "bid_price",
           "within": 0.01
@@ -153,8 +146,8 @@
     "controller": {
       "instances": [
         {
-          "name": "cool_control",
-          "parent": "house1",
+          "name": "triplex_meter_8house1cool_control",
+          "parent": "triplex_meter_8house1",
           "market": "Market_1",
           "bid_mode": "ON",
           "period": 300,
@@ -179,7 +172,7 @@
     "house": {
       "instances": [
         {
-          "name": "house1",
+          "name": "triplex_meter_8house1",
           "parent": "triplex_meter_8",
           "weather": "Yakima WA",
           "cooling_setpoint": 70,

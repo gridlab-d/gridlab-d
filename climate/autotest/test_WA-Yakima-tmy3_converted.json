@@ -23,6 +23,7 @@
     "stoptime": "'2007-01-01 00:00:00'"
   },
   "modules": {
+    "climate": {},
     "tape": {},
     "assert": {}
   },
@@ -30,7 +31,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_2",
           "parent": "Yakima WA",
           "target": "temperature",
           "in": "'2006-02-20 23:00:00'",
@@ -40,7 +40,6 @@
           "within": 0.001
         },
         {
-          "name": "double_assert_3",
           "parent": "Yakima WA",
           "target": "humidity",
           "in": "'2006-01-10 02:00:00'",
@@ -50,7 +49,6 @@
           "within": 0.001
         },
         {
-          "name": "double_assert_4",
           "parent": "Yakima WA",
           "target": "solar_flux",
           "in": "'2006-01-12 15:00:00'",
@@ -60,7 +58,6 @@
           "within": 0.001
         },
         {
-          "name": "double_assert_5",
           "parent": "Yakima WA",
           "target": "solar_diffuse",
           "in": "'2006-05-03 10:00:00'",
@@ -70,7 +67,6 @@
           "within": 0.001
         },
         {
-          "name": "double_assert_6",
           "parent": "Yakima WA",
           "target": "solar_global",
           "in": "'2006-03-30 11:00:00'",
@@ -80,7 +76,6 @@
           "within": 0.001
         },
         {
-          "name": "double_assert_7",
           "parent": "Yakima WA",
           "target": "extraterrestrial_direct_normal",
           "in": "'2006-05-04 17:00:00'",
@@ -90,7 +85,6 @@
           "within": 0.001
         },
         {
-          "name": "double_assert_8",
           "parent": "Yakima WA",
           "target": "pressure",
           "in": "'2006-07-27 01:00:00'",
@@ -100,7 +94,6 @@
           "within": 0.001
         },
         {
-          "name": "double_assert_9",
           "parent": "Yakima WA",
           "target": "wind_speed",
           "in": "'2006-10-31 03:00:00'",
@@ -110,7 +103,6 @@
           "within": 0.001
         },
         {
-          "name": "double_assert_10",
           "parent": "Yakima WA",
           "target": "wind_dir",
           "in": "'2006-04-26 20:00:00'",
@@ -120,7 +112,6 @@
           "within": 0.001
         },
         {
-          "name": "double_assert_11",
           "parent": "Yakima WA",
           "target": "solar_horiz",
           "in": "'2006-06-09 06:00:00'",
@@ -130,7 +121,6 @@
           "within": 0.001
         },
         {
-          "name": "double_assert_12",
           "parent": "Yakima WA",
           "target": "rainfall",
           "in": "'2001-02-19 03:00:00'",

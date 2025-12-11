@@ -8,7 +8,10 @@
       "// but also duplicates some of the aspects of the parent/child tests",
       "//#set profiler=1",
       "// #set verbose=1",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -20,9 +23,9 @@
       "dateformat": "US",
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -76,7 +79,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_3",
           "parent": "BUS_1",
           "flags": "DELTAMODE",
           "target": "measured_power",
@@ -87,7 +89,6 @@
           ]
         },
         {
-          "name": "complex_assert_4",
           "parent": "BUS_1",
           "flags": "DELTAMODE",
           "target": "measured_power_A",
@@ -95,7 +96,6 @@
           "value": 0.0
         },
         {
-          "name": "complex_assert_5",
           "parent": "BUS_1",
           "flags": "DELTAMODE",
           "target": "measured_power_B",
@@ -103,7 +103,6 @@
           "value": 0.0
         },
         {
-          "name": "complex_assert_6",
           "parent": "BUS_1",
           "flags": "DELTAMODE",
           "target": "measured_power_C",
@@ -257,49 +256,42 @@
     "player": {
       "instances": [
         {
-          "name": "player_9",
           "parent": "complex_assert_8",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_diesel_meter_accum_bus_1_p_total_power.csv"
         },
         {
-          "name": "player_11",
           "parent": "complex_assert_10",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_diesel_meter_accum_bus_1_p_phase_A_power.csv"
         },
         {
-          "name": "player_13",
           "parent": "complex_assert_12",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_diesel_meter_accum_bus_1_p_phase_B_power.csv"
         },
         {
-          "name": "player_15",
           "parent": "complex_assert_14",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_diesel_meter_accum_bus_1_p_phase_C_power.csv"
         },
         {
-          "name": "player_22",
           "parent": "LOAD_1_p",
           "file": "../diesel_deltamode_load_player_A.csv",
           "property": "constant_power_A",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_23",
           "parent": "LOAD_1_p",
           "file": "../diesel_deltamode_load_player_B.csv",
           "property": "constant_power_B",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_24",
           "parent": "LOAD_1_p",
           "file": "../diesel_deltamode_load_player_C.csv",
           "property": "constant_power_C",

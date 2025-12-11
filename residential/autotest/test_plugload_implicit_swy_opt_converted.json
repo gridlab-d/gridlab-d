@@ -22,19 +22,16 @@
     "player": {
       "instances": [
         {
-          "name": "player_3",
           "parent": "complex_assert_2",
           "property": "value",
           "file": "../test_plugload_enduse_load_swy.player"
         },
         {
-          "name": "player_5",
           "parent": "complex_assert_4",
           "property": "value",
           "file": "../test_plugload_energy_swy.player"
         },
         {
-          "name": "player_7",
           "parent": "double_assert_6",
           "property": "value",
           "file": "../test_plugload_heatgain_swy.player"
@@ -73,7 +70,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_8",
           "parent": "House",
           "property": "panel.power,panel.energy,panel.heatgain",
           "file": "test_plugload_implicit_swy.csv",

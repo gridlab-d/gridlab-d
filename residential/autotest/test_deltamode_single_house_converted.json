@@ -90,7 +90,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_5",
           "parent": "REAL_SWING",
           "flags": "DELTAMODE",
           "target": "measured_power_B",
@@ -102,7 +101,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_6",
           "flags": "DELTAMODE",
           "parent": "REAL_SWING",
           "property": "nominal_voltage",
@@ -192,7 +190,7 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "SX3086079B_1_lights",
+          "name": "SX3086079B_1_houseSX3086079B_1_lights",
           "parent": "SX3086079B_1_house",
           "schedule_skew": 6343,
           "base_power": "2000.0 W",
@@ -204,7 +202,7 @@
           "impedance_pf": -0.88
         },
         {
-          "name": "house_tv",
+          "name": "SX3086079B_1_househouse_tv",
           "parent": "SX3086079B_1_house",
           "base_power": "1575.0 W",
           "power_fraction": 0.9987,
@@ -215,7 +213,7 @@
           "impedance_pf": 0.61
         },
         {
-          "name": "house_plugs",
+          "name": "SX3086079B_1_househouse_plugs",
           "parent": "SX3086079B_1_house",
           "base_power": "750 W",
           "power_fraction": 0.1,
@@ -230,7 +228,7 @@
     "waterheater": {
       "instances": [
         {
-          "name": "house_water_heater",
+          "name": "SX3086079B_1_househouse_water_heater",
           "parent": "SX3086079B_1_house",
           "location": "INSIDE",
           "tank_volume": 44.496493,

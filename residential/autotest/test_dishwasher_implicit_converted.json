@@ -30,7 +30,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "house_1",
           "property": "panel.power,panel.energy",
           "file": "test_dishwasher_energy.csv",

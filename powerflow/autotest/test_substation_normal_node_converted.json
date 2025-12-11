@@ -25,7 +25,6 @@
     "load": {
       "instances": [
         {
-          "name": "load_2",
           "parent": "substation_1",
           "phases": "ABCN",
           "constant_impedance_A": "1000+2000j",
@@ -38,21 +37,18 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_3",
           "parent": "substation_1",
           "target": "distribution_voltage_A",
           "within": 0.01,
           "value": "2400+0d"
         },
         {
-          "name": "complex_assert_4",
           "parent": "substation_1",
           "target": "distribution_voltage_B",
           "within": 0.01,
           "value": "2400-120d"
         },
         {
-          "name": "complex_assert_5",
           "parent": "substation_1",
           "target": "distribution_voltage_C",
           "within": 0.01,

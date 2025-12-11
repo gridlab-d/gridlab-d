@@ -32,7 +32,9 @@
   "objects": {
     "object_value;": {
       "instances": [
-        {}
+        {
+          "name": "object_value;_1"
+        }
       ]
     },
     "test": {
@@ -108,6 +110,7 @@
     "assert": {
       "instances": [
         {
+          "name": "test_4assert_5",
           "parent": "test_4",
           "target": "double_value",
           "relation": "==",
@@ -117,42 +120,49 @@
           ]
         },
         {
+          "name": "test_4assert_6",
           "parent": "test_4",
           "target": "double_value",
           "relation": "<",
           "value": 51
         },
         {
+          "name": "test_4assert_7",
           "parent": "test_4",
           "target": "double_value",
           "relation": ">",
           "value": 49
         },
         {
+          "name": "test_4assert_8",
           "parent": "test_4",
           "target": "double_value",
           "relation": "<=",
           "value": 51
         },
         {
+          "name": "test_4assert_9",
           "parent": "test_4",
           "target": "double_value",
           "relation": "<=",
           "value": 50
         },
         {
+          "name": "test_4assert_10",
           "parent": "test_4",
           "target": "double_value",
           "relation": ">=",
           "value": 49
         },
         {
+          "name": "test_4assert_11",
           "parent": "test_4",
           "target": "double_value",
           "relation": ">=",
           "value": 50
         },
         {
+          "name": "test_4assert_12",
           "parent": "test_4",
           "target": "double_value",
           "relation": "inside",
@@ -160,6 +170,7 @@
           "upper": 51
         },
         {
+          "name": "test_4assert_13",
           "parent": "test_4",
           "target": "double_value",
           "relation": "outside",
@@ -167,6 +178,7 @@
           "upper": 49
         },
         {
+          "name": "test_4assert_14",
           "parent": "test_4",
           "target": "double_value",
           "relation": "outside",
@@ -174,6 +186,7 @@
           "upper": 53
         },
         {
+          "name": "test_15assert_16",
           "parent": "test_15",
           "target": "complex_value",
           "part": "real",
@@ -184,6 +197,7 @@
           ]
         },
         {
+          "name": "test_15assert_17",
           "parent": "test_15",
           "target": "complex_value",
           "part": "imag",
@@ -191,6 +205,7 @@
           "value": 1.0
         },
         {
+          "name": "test_15assert_18",
           "parent": "test_15",
           "target": "complex_value",
           "part": "mag",
@@ -198,6 +213,7 @@
           "value": 120.0
         },
         {
+          "name": "test_15assert_19",
           "parent": "test_15",
           "target": "complex_value",
           "part": "ang",
@@ -206,6 +222,7 @@
           "upper": 2.0
         },
         {
+          "name": "test_20assert_21",
           "parent": "test_20",
           "target": "enumeration_value",
           "relation": "==",
@@ -215,12 +232,14 @@
           ]
         },
         {
+          "name": "test_20assert_22",
           "parent": "test_20",
           "target": "enumeration_value",
           "relation": "!=",
           "value": "EV0"
         },
         {
+          "name": "test_23assert_24",
           "parent": "test_23",
           "target": "set_value",
           "relation": "==",
@@ -230,12 +249,14 @@
           ]
         },
         {
+          "name": "test_23assert_25",
           "parent": "test_23",
           "target": "set_value",
           "relation": "!=",
           "value": "SV0"
         },
         {
+          "name": "test_26assert_27",
           "parent": "test_26",
           "target": "int16_value",
           "relation": "==",
@@ -245,12 +266,14 @@
           ]
         },
         {
+          "name": "test_26assert_28",
           "parent": "test_26",
           "target": "int16_value",
           "relation": "!=",
           "value": 3724
         },
         {
+          "name": "test_29assert_30",
           "parent": "test_29",
           "target": "int32_value",
           "relation": "==",
@@ -260,12 +283,14 @@
           ]
         },
         {
+          "name": "test_29assert_31",
           "parent": "test_29",
           "target": "int32_value",
           "relation": "!=",
           "value": 3723348
         },
         {
+          "name": "test_32assert_33",
           "parent": "test_32",
           "target": "int64_value",
           "relation": "==",
@@ -275,12 +300,14 @@
           ]
         },
         {
+          "name": "test_32assert_34",
           "parent": "test_32",
           "target": "int64_value",
           "relation": "!=",
           "value": 37233473425
         },
         {
+          "name": "test_35assert_36",
           "parent": "test_35",
           "target": "char8_value",
           "relation": "==",
@@ -290,12 +317,14 @@
           ]
         },
         {
+          "name": "test_35assert_37",
           "parent": "test_35",
           "target": "char8_value",
           "relation": "!=",
           "value": "abcdefgh"
         },
         {
+          "name": "test_38assert_39",
           "parent": "test_38",
           "target": "char32_value",
           "relation": "==",
@@ -305,12 +334,14 @@
           ]
         },
         {
+          "name": "test_38assert_40",
           "parent": "test_38",
           "target": "char32_value",
           "relation": "!=",
           "value": "abcdefgh"
         },
         {
+          "name": "test_41assert_42",
           "parent": "test_41",
           "target": "char256_value",
           "relation": "==",
@@ -320,12 +351,14 @@
           ]
         },
         {
+          "name": "test_41assert_43",
           "parent": "test_41",
           "target": "char256_value",
           "relation": "!=",
           "value": "abcdefgh"
         },
         {
+          "name": "test_44assert_45",
           "parent": "test_44",
           "target": "char1024_value",
           "relation": "==",
@@ -335,12 +368,14 @@
           ]
         },
         {
+          "name": "test_44assert_46",
           "parent": "test_44",
           "target": "char1024_value",
           "relation": "!=",
           "value": "abcdefgh"
         },
         {
+          "name": "test_47assert_48",
           "parent": "test_47",
           "target": "object_value",
           "relation": "==",
@@ -350,12 +385,14 @@
           ]
         },
         {
+          "name": "test_47assert_49",
           "parent": "test_47",
           "target": "object_value",
           "relation": "!=",
           "value": "ref_none"
         },
         {
+          "name": "test_47assert_50",
           "parent": "test_47",
           "target": "object_value",
           "part": "clock.days",
@@ -363,6 +400,7 @@
           "value": 0
         },
         {
+          "name": "test_51assert_52",
           "parent": "test_51",
           "target": "bool_value",
           "relation": "==",
@@ -372,12 +410,14 @@
           ]
         },
         {
+          "name": "test_51assert_53",
           "parent": "test_51",
           "target": "bool_value",
           "relation": "!=",
           "value": false
         },
         {
+          "name": "test_54assert_55",
           "parent": "test_54",
           "target": "timestamp_value",
           "relation": "==",
@@ -387,12 +427,14 @@
           ]
         },
         {
+          "name": "test_54assert_56",
           "parent": "test_54",
           "target": "timestamp_value",
           "relation": "!=",
           "value": "'2001-02-03 04:56:28 PST'"
         },
         {
+          "name": "test_54assert_57",
           "parent": "test_54",
           "target": "timestamp_value",
           "part": "year",
@@ -400,6 +442,7 @@
           "value": 2001
         },
         {
+          "name": "test_54assert_58",
           "parent": "test_54",
           "target": "timestamp_value",
           "part": "month",
@@ -407,6 +450,7 @@
           "value": 2
         },
         {
+          "name": "test_54assert_59",
           "parent": "test_54",
           "target": "timestamp_value",
           "part": "day",
@@ -414,6 +458,7 @@
           "value": 3
         },
         {
+          "name": "test_54assert_60",
           "parent": "test_54",
           "target": "timestamp_value",
           "part": "hour",
@@ -421,6 +466,7 @@
           "value": 4
         },
         {
+          "name": "test_54assert_61",
           "parent": "test_54",
           "target": "timestamp_value",
           "part": "minute",
@@ -428,6 +474,7 @@
           "value": 56
         },
         {
+          "name": "test_54assert_62",
           "parent": "test_54",
           "target": "timestamp_value",
           "part": "second",
@@ -435,6 +482,7 @@
           "value": 27
         },
         {
+          "name": "test_63assert_64",
           "parent": "test_63",
           "target": "enduse_value",
           "part": "energy.real",
@@ -445,6 +493,7 @@
           ]
         },
         {
+          "name": "test_63assert_65",
           "parent": "test_63",
           "target": "enduse_value",
           "part": "energy.real",
@@ -452,6 +501,7 @@
           "value": 0.0
         },
         {
+          "name": "test_63assert_66",
           "parent": "test_63",
           "target": "enduse_value",
           "part": "energy.real",
@@ -459,6 +509,7 @@
           "value": 1.0
         },
         {
+          "name": "test_63assert_67",
           "parent": "test_63",
           "target": "enduse_value",
           "part": "energy.real",
@@ -466,6 +517,7 @@
           "value": 0.0
         },
         {
+          "name": "test_63assert_68",
           "parent": "test_63",
           "target": "enduse_value",
           "part": "energy.real",
@@ -473,6 +525,7 @@
           "value": -1.0
         },
         {
+          "name": "test_63assert_69",
           "parent": "test_63",
           "target": "enduse_value",
           "part": "energy.real",
@@ -480,6 +533,7 @@
           "value": 1.0
         },
         {
+          "name": "test_63assert_70",
           "parent": "test_63",
           "target": "enduse_value",
           "part": "energy.real",
@@ -488,6 +542,7 @@
           "upper": 1.0
         },
         {
+          "name": "test_63assert_71",
           "parent": "test_63",
           "target": "enduse_value",
           "part": "energy.real",

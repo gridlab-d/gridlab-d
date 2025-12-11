@@ -18,7 +18,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "test_1",
           "property": "x",
           "interval": "1h",

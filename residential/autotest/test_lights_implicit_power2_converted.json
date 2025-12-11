@@ -27,7 +27,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "house_1",
           "property": "panel",
           "file": "test_lights_implicit_power.csv",
@@ -39,7 +38,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_4",
           "parent": "complex_assert_3",
           "property": "value",
           "file": "../test_lights_explicit_power2.player",

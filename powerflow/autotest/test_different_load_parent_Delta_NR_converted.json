@@ -147,7 +147,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_9",
           "parent": "           node_dlc_848",
           "target": "voltage_A",
           "value": "2142.499081-90.709894j",
@@ -157,14 +156,12 @@
           ]
         },
         {
-          "name": "complex_assert_10",
           "parent": "           node_dlc_848",
           "target": "voltage_B",
           "value": "-1169.737987-1826.572314j",
           "within": 0.1
         },
         {
-          "name": "complex_assert_11",
           "parent": "           node_dlc_848",
           "target": "voltage_C",
           "value": "-989.333555+1908.318400j",

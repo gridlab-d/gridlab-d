@@ -51,7 +51,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_3",
           "parent": "n1",
           "property": "measured_power.real,measured_power.imag,battery_1:Energy,battery_1:battery_state",
           "file": "old_battery.csv",

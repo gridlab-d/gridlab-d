@@ -28,7 +28,6 @@
     "house": {
       "instances": [
         {
-          "name": "house_1",
           "occupancy": "\"type: scheduled",
           "inside_comments": [
             "// don't really have an idea about an assert to use here"

@@ -30,7 +30,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_2",
           "parent": "Market_1",
           "target": "current_market.clearing_price",
           "in": "'2001-01-01 1:00:00'",
@@ -39,7 +38,6 @@
           "within": 1e-05
         },
         {
-          "name": "double_assert_3",
           "parent": "Market_1",
           "target": "current_market.clearing_quantity",
           "in": "'2001-01-01 1:00:00'",
@@ -51,7 +49,6 @@
           }
         },
         {
-          "name": "double_assert_5",
           "parent": "Market_2",
           "target": "current_market.clearing_price",
           "in": "'2001-01-01 1:00:00'",
@@ -60,7 +57,6 @@
           "within": 1e-05
         },
         {
-          "name": "double_assert_6",
           "parent": "Market_2",
           "target": "current_market.clearing_quantity",
           "in": "'2001-01-01 1:00:00'",
@@ -72,7 +68,6 @@
           }
         },
         {
-          "name": "double_assert_8",
           "parent": "Market_3",
           "target": "current_market.clearing_price",
           "in": "'2001-01-01 1:00:00'",
@@ -81,7 +76,6 @@
           "within": 1e-05
         },
         {
-          "name": "double_assert_9",
           "parent": "Market_3",
           "target": "current_market.clearing_quantity",
           "in": "'2001-01-01 1:00:00'",
@@ -93,7 +87,6 @@
           }
         },
         {
-          "name": "double_assert_11",
           "parent": "Market_4",
           "target": "current_market.clearing_price",
           "in": "'2001-01-01 1:00:00'",
@@ -102,7 +95,6 @@
           "within": 1e-05
         },
         {
-          "name": "double_assert_12",
           "parent": "Market_4",
           "target": "current_market.clearing_quantity",
           "in": "'2001-01-01 1:00:00'",

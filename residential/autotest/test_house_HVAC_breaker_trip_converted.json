@@ -54,7 +54,6 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "ZIPload_3",
           "parent": "bldg",
           "schedule_skew": -129,
           "heatgain_fraction": 0.9,

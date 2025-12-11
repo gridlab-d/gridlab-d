@@ -30,7 +30,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "Market_1",
           "property": "fixed_price",
           "file": "test_skew_DST_fall_output.csv",
@@ -42,7 +41,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_3",
           "parent": "Market_1",
           "value": "skewed_prices*1",
           "target": "fixed_price",

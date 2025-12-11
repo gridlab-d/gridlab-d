@@ -21,7 +21,6 @@
     "assert": {
       "instances": [
         {
-          "name": "assert_2",
           "parent": "test_1",
           "target": "x",
           "relation": "==",

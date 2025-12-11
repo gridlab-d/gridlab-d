@@ -29,7 +29,6 @@
     "climate": {
       "instances": [
         {
-          "name": "climate_1",
           "tmyfile": "../WA-Yakima.tmy2"
         }
       ]
@@ -37,7 +36,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "house_3",
           "property": "panel.energy",
           "file": "test_HVAC_peak_heat.csv",
@@ -45,7 +43,6 @@
           "limit": 86447
         },
         {
-          "name": "recorder_6",
           "parent": "triplex_meter_2",
           "property": "measured_real_energy",
           "file": "test_HVAC_peak_heat_energy.csv",
@@ -57,7 +54,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_5",
           "parent": "house_3",
           "target": "panel.energy",
           "in": "'2001-01-06 5:00:47'",
@@ -89,7 +85,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_7",
           "parent": "triplex_meter_2",
           "target": "measured_real_energy",
           "in": "'2001-01-06 5:00:47'",

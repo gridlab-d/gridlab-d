@@ -81,7 +81,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_2",
           "parent": "Market_1",
           "property": "current_market.clearing_price,current_market.clearing_quantity,current_price_mean_24h,current_price_stdev_24h,current_market.clearing_type,current_market.marginal_quantity",
           "file": "test_markets_auction_large_balanced_marginal_price_output.csv",
@@ -93,7 +92,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_3",
           "parent": "Market_1",
           "in": "'2001-01-01 01:00:00'",
           "value": 67.5,
@@ -101,7 +99,6 @@
           "target": "current_market.clearing_price"
         },
         {
-          "name": "double_assert_4",
           "parent": "Market_1",
           "in": "'2001-01-01 01:00:00'",
           "value": 67,
@@ -109,7 +106,6 @@
           "target": "current_market.clearing_quantity"
         },
         {
-          "name": "double_assert_5",
           "parent": "Market_1",
           "in": "'2001-01-01 01:00:00'",
           "value": 67.5,
@@ -117,7 +113,6 @@
           "target": "current_price_mean_24h"
         },
         {
-          "name": "double_assert_6",
           "parent": "Market_1",
           "in": "'2001-01-01 01:00:00'",
           "value": 0,
@@ -125,7 +120,6 @@
           "target": "current_price_stdev_24h"
         },
         {
-          "name": "double_assert_8",
           "parent": "Market_1",
           "in": "'2001-01-01 01:00:00'",
           "value": 0,
@@ -137,7 +131,6 @@
     "enum_assert": {
       "instances": [
         {
-          "name": "enum_assert_7",
           "parent": "Market_1",
           "in": "'2001-01-01 01:00:00'",
           "value": 3,

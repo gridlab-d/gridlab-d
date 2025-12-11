@@ -7,7 +7,9 @@
       "//#set profiler=1",
       "//#set dateformat=US",
       "//Overall GridLAB-D parameters",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_maximumtime //2 minutes",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -19,8 +21,8 @@
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
       "complex_output_format": "RECT",
-      "deltamode_maximumtime": "5000000000000 //2 minutes",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_maximumtime": 5000000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -152,42 +154,36 @@
     "player": {
       "instances": [
         {
-          "name": "player_9",
           "parent": "complex_assert_8",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inrush_LineFlowCurrentOut_A.csv"
         },
         {
-          "name": "player_11",
           "parent": "complex_assert_10",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inrush_LineFlowCurrentOut_B.csv"
         },
         {
-          "name": "player_13",
           "parent": "complex_assert_12",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inrush_LineFlowCurrentOut_C.csv"
         },
         {
-          "name": "player_19",
           "parent": "complex_assert_18",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inrush_Voltage_node2_A.csv"
         },
         {
-          "name": "player_21",
           "parent": "complex_assert_20",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inrush_Voltage_node2_B.csv"
         },
         {
-          "name": "player_23",
           "parent": "complex_assert_22",
           "flags": "DELTAMODE",
           "property": "value",

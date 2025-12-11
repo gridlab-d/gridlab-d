@@ -33,7 +33,6 @@
     "metrics_collector_writer": {
       "instances": [
         {
-          "name": "metrics_collector_writer_1",
           "interval": 300,
           "interim": 3600,
           "filename": "sub_",
@@ -127,7 +126,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_10",
           "parent": "_Transformer1",
           "property": "power_out_real",
           "limit": 100000000,
@@ -256,7 +254,6 @@
     "triplex_line": {
       "instances": [
         {
-          "name": "triplex_line_18",
           "from": "_triplex_node_A",
           "to": "_tpm_flatrate_A1",
           "groupid": "_Triplex_Line",
@@ -265,7 +262,6 @@
           "configuration": "TLCFG"
         },
         {
-          "name": "triplex_line_25",
           "from": "_triplex_node_B",
           "to": "_tpm_flatrate_B2",
           "groupid": "_Triplex_Line",
@@ -274,7 +270,6 @@
           "configuration": "TLCFG"
         },
         {
-          "name": "triplex_line_32",
           "from": "_triplex_node_B",
           "to": "_tpm_flatrate_B3",
           "groupid": "_Triplex_Line",
@@ -283,7 +278,6 @@
           "configuration": "TLCFG"
         },
         {
-          "name": "triplex_line_39",
           "from": "_triplex_node_C",
           "to": "_tpm_flatrate_C4",
           "groupid": "_Triplex_Line",
@@ -292,7 +286,6 @@
           "configuration": "TLCFG"
         },
         {
-          "name": "triplex_line_46",
           "from": "_triplex_node_C",
           "to": "_tpm_flatrate_C5",
           "groupid": "_Triplex_Line",
@@ -305,52 +298,42 @@
     "metrics_collector": {
       "instances": [
         {
-          "name": "metrics_collector_23",
-          "parent": "wh_1",
+          "parent": "H_1wh_1",
           "interval": 300
         },
         {
-          "name": "metrics_collector_24",
           "parent": "H_1",
           "interval": 300
         },
         {
-          "name": "metrics_collector_30",
-          "parent": "wh_2",
+          "parent": "H_2wh_2",
           "interval": 300
         },
         {
-          "name": "metrics_collector_31",
           "parent": "H_2",
           "interval": 300
         },
         {
-          "name": "metrics_collector_37",
-          "parent": "wh_3",
+          "parent": "H_3wh_3",
           "interval": 300
         },
         {
-          "name": "metrics_collector_38",
           "parent": "H_3",
           "interval": 300
         },
         {
-          "name": "metrics_collector_44",
-          "parent": "wh_4",
+          "parent": "H_4wh_4",
           "interval": 300
         },
         {
-          "name": "metrics_collector_45",
           "parent": "H_4",
           "interval": 300
         },
         {
-          "name": "metrics_collector_51",
-          "parent": "wh_5",
+          "parent": "H_5wh_5",
           "interval": 300
         },
         {
-          "name": "metrics_collector_52",
           "parent": "H_5",
           "interval": 300
         }
@@ -359,7 +342,7 @@
     "waterheater": {
       "instances": [
         {
-          "name": "wh_1",
+          "name": "H_1wh_1",
           "parent": "H_1",
           "schedule_skew": -5660,
           "heating_element_capacity": "4.0 kW",
@@ -376,11 +359,11 @@
           "T_mixing_valve": 122.3
         },
         {
-          "name": "wh_2",
+          "name": "H_2wh_2",
           "parent": "H_2"
         },
         {
-          "name": "wh_3",
+          "name": "H_3wh_3",
           "parent": "H_3",
           "schedule_skew": -2094,
           "heating_element_capacity": "5.0 kW",
@@ -397,7 +380,7 @@
           "T_mixing_valve": 124.2
         },
         {
-          "name": "wh_4",
+          "name": "H_4wh_4",
           "parent": "H_4",
           "schedule_skew": -13972,
           "heating_element_capacity": "5.5 kW",
@@ -414,7 +397,7 @@
           "T_mixing_valve": 118.2
         },
         {
-          "name": "wh_5",
+          "name": "H_5wh_5",
           "parent": "H_5"
         }
       ]

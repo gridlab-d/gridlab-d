@@ -252,35 +252,30 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_17",
           "parent": "xform23dy",
           "target": "power_losses",
           "within": 0.5,
           "value": "129706.5+80.5377d"
         },
         {
-          "name": "complex_assert_22",
           "parent": "xform23dd",
           "target": "power_losses",
           "within": 0.5,
           "value": "89062.5+80.5377d"
         },
         {
-          "name": "complex_assert_27",
           "parent": "xform23yy",
           "target": "power_losses",
           "within": 0.5,
           "value": "135724+80.5377d"
         },
         {
-          "name": "complex_assert_32",
           "parent": "xform23spct",
           "target": "power_losses",
           "within": 0.5,
           "value": "21759.1+130554j"
         },
         {
-          "name": "complex_assert_37",
           "parent": "xform23spy",
           "target": "power_losses",
           "within": 0.5,

@@ -98,7 +98,7 @@
         {
           "name": "testgendev",
           "fault_type": "SW-ABC",
-          "manual_outages": "switch3_3B,2000-01-01 00:00:05,2000-01-01 00:00_30",
+          "manual_outages": "switch3_3B,2000-01-01 00:00:05,2000-01-01 00:00:30",
           "outside_comments": [
             "//Manual object - open the \"tie switches\""
           ],
@@ -109,7 +109,7 @@
         {
           "name": "testgendev_B",
           "fault_type": "SW-ABC",
-          "manual_outages": "switch2B_2C,2000-01-01 00:00:04,2000-01-01 00:00_35",
+          "manual_outages": "switch2B_2C,2000-01-01 00:00:04,2000-01-01 00:00:35",
           "inline_comments": {
             "fault_type": "//Type of fault for the object to induce"
           }
@@ -280,55 +280,46 @@
     "player": {
       "instances": [
         {
-          "name": "player_19",
           "parent": "complex_assert_18",
           "property": "value",
           "file": "../data_multi_load4_phaseA.csv"
         },
         {
-          "name": "player_21",
           "parent": "complex_assert_20",
           "property": "value",
           "file": "../data_multi_load4_phaseB.csv"
         },
         {
-          "name": "player_23",
           "parent": "complex_assert_22",
           "property": "value",
           "file": "../data_multi_load4_phaseC.csv"
         },
         {
-          "name": "player_32",
           "parent": "complex_assert_31",
           "property": "value",
           "file": "../data_multi_load4B_phaseA.csv"
         },
         {
-          "name": "player_34",
           "parent": "complex_assert_33",
           "property": "value",
           "file": "../data_multi_load4B_phaseB.csv"
         },
         {
-          "name": "player_36",
           "parent": "complex_assert_35",
           "property": "value",
           "file": "../data_multi_load4B_phaseC.csv"
         },
         {
-          "name": "player_45",
           "parent": "complex_assert_44",
           "property": "value",
           "file": "../data_multi_load4C_phaseA.csv"
         },
         {
-          "name": "player_47",
           "parent": "complex_assert_46",
           "property": "value",
           "file": "../data_multi_load4C_phaseB.csv"
         },
         {
-          "name": "player_49",
           "parent": "complex_assert_48",
           "property": "value",
           "file": "../data_multi_load4C_phaseC.csv"

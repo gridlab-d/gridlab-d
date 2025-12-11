@@ -124,7 +124,6 @@
     "triplex_line": {
       "instances": [
         {
-          "name": "triplex_line_9",
           "from": "node1",
           "to": "node2",
           "phases": "CS",

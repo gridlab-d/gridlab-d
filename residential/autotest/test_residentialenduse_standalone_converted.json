@@ -23,14 +23,14 @@
     "residential_enduse": {
       "instances": [
         {
-          "name": "res_enduse_basic",
+          "name": "res-enduse-basic",
           "shape": "\"type:analog",
           "outside_comments": [
             "// this object should generate a continuous load of about 416.67W"
           ]
         },
         {
-          "name": "res_enduse_none",
+          "name": "res-enduse-none",
           "shape": "\"type:analog",
           "outside_comments": [
             "// this object should generate a warning message about a missing schedule"
@@ -40,8 +40,8 @@
           ]
         },
         {
-          "name": "res_enduse_badparent",
-          "parent": "res_enduse_none",
+          "name": "res-enduse-badparent",
+          "parent": "res-enduse-none",
           "shape": "\"type:analog",
           "outside_comments": [
             "// this object should generate a warning message about a bad parent"

@@ -31,7 +31,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "Market_1",
           "property": "current_market.clearing_price,current_market.clearing_quantity",
           "file": "test_market_timing_1.csv",
@@ -43,7 +42,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_3",
           "parent": "Market_1",
           "target": "current_market.clearing_price",
           "in": "'2001-01-01 00:00:00'",
@@ -56,7 +54,6 @@
           }
         },
         {
-          "name": "double_assert_4",
           "parent": "Market_1",
           "target": "current_market.clearing_price",
           "in": "'2001-01-01 01:00:00'",
@@ -69,7 +66,6 @@
           }
         },
         {
-          "name": "double_assert_5",
           "parent": "Market_1",
           "target": "current_market.clearing_price",
           "in": "'2001-01-01 23:00:00'",

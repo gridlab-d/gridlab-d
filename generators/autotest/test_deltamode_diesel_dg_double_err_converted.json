@@ -6,7 +6,10 @@
       "// No asserts, just a \"did it run without issues\"",
       "//#set profiler=1",
       "// #set verbose=1",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -16,9 +19,9 @@
     "#set": {
       "suppress_repeat_messages": 0,
       "dateformat": "US",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -91,28 +94,24 @@
     "player": {
       "instances": [
         {
-          "name": "player_6",
           "parent": "double_assert_5",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_error_G1SpeedAssert.csv"
         },
         {
-          "name": "player_9",
           "parent": "LOAD_1",
           "file": "../diesel_deltamode_load_player_A.csv",
           "property": "constant_power_A",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_10",
           "parent": "LOAD_1",
           "file": "../diesel_deltamode_load_player_B.csv",
           "property": "constant_power_B",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_11",
           "parent": "LOAD_1",
           "file": "../diesel_deltamode_load_player_C.csv",
           "property": "constant_power_C",

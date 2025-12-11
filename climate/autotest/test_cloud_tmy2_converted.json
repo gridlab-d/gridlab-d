@@ -45,7 +45,7 @@
     "triplex_meter": {
       "instances": [
         {
-          "name": "R1_12_47_1_tm_21",
+          "name": "R1-12-47-1_tm_21",
           "phases": "AS",
           "voltage_1": 120,
           "voltage_2": 120,
@@ -53,9 +53,9 @@
           "nominal_voltage": 120
         },
         {
-          "name": "tpm2_R1_12_47_1_tm_21",
+          "name": "tpm2_R1-12-47-1_tm_21",
           "phases": "AS",
-          "parent": "R1_12_47_1_tm_21",
+          "parent": "R1-12-47-1_tm_21",
           "nominal_voltage": 120
         }
       ]
@@ -63,9 +63,9 @@
     "triplex_node": {
       "instances": [
         {
-          "name": "R1_12_47_1_tn_619",
+          "name": "R1-12-47-1_tn_619",
           "phases": "AS",
-          "parent": "R1_12_47_1_tm_21",
+          "parent": "R1-12-47-1_tm_21",
           "voltage_1": 120,
           "voltage_2": 120,
           "voltage_N": 0,
@@ -77,7 +77,7 @@
       "instances": [
         {
           "name": "myHouse",
-          "parent": "tpm2_R1_12_47_1_tm_21",
+          "parent": "tpm2_R1-12-47-1_tm_21",
           "floor_area": "random.normal(1750,400)",
           "heating_setpoint": 70,
           "cooling_setpoint": 78,
@@ -90,7 +90,7 @@
         {
           "name": "DHHL_3_inv",
           "phases": "AS",
-          "parent": "tpm2_R1_12_47_1_tm_21",
+          "parent": "tpm2_R1-12-47-1_tm_21",
           "rated_power": 2500000
         }
       ]
@@ -98,7 +98,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_9",
           "parent": "double_assert_8",
           "property": "value",
           "file": "../cloud_insolation_tmy2.player",
@@ -139,7 +138,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_10",
           "property": "DHHL_3_PV:Insolation",
           "file": "tmy2_solar_insolation.csv",
           "interval": 60,

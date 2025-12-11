@@ -20,19 +20,16 @@
     "player": {
       "instances": [
         {
-          "name": "player_4",
           "parent": "complex_assert_3",
           "property": "value",
           "file": "../test_plugload_enduse_load_swd.player"
         },
         {
-          "name": "player_6",
           "parent": "complex_assert_5",
           "property": "value",
           "file": "../test_plugload_energy_swd.player"
         },
         {
-          "name": "player_8",
           "parent": "double_assert_7",
           "property": "value",
           "file": "../test_plugload_heatgain_swd.player"
@@ -71,7 +68,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_9",
           "parent": "plugload_2",
           "property": "power,energy,heatgain",
           "file": "test_plugload_explicit_swd.csv",

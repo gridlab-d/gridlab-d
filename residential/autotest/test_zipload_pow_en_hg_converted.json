@@ -28,7 +28,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_4",
           "parent": "ZIPload_3",
           "target": "power",
           "once": "ONCE_FALSE",
@@ -36,7 +35,6 @@
           "within": 1e-06
         },
         {
-          "name": "complex_assert_5",
           "parent": "ZIPload_3",
           "target": "energy",
           "in": "'2001-01-02 00:00:00'",
@@ -45,7 +43,6 @@
           "within": 1e-06
         },
         {
-          "name": "complex_assert_7",
           "parent": "house_2",
           "target": "panel.power",
           "once": "ONCE_FALSE",
@@ -53,7 +50,6 @@
           "within": 1e-06
         },
         {
-          "name": "complex_assert_8",
           "parent": "house_2",
           "target": "panel.energy",
           "in": "'2001-01-02 00:00:00'",
@@ -62,7 +58,6 @@
           "within": 1e-06
         },
         {
-          "name": "complex_assert_10",
           "parent": "triplex_meter_1",
           "target": "measured_power",
           "once": "ONCE_FALSE",
@@ -74,7 +69,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_6",
           "parent": "ZIPload_3",
           "target": "heatgain",
           "once": "ONCE_FALSE",
@@ -82,7 +76,6 @@
           "within": 0.01
         },
         {
-          "name": "double_assert_9",
           "parent": "house_2",
           "target": "internal_gain",
           "once": "ONCE_FALSE",
@@ -90,7 +83,6 @@
           "within": 0.01
         },
         {
-          "name": "double_assert_11",
           "parent": "triplex_meter_1",
           "target": "measured_real_energy",
           "in": "'2001-01-02 00:00:00'",
@@ -99,7 +91,6 @@
           "within": 1e-06
         },
         {
-          "name": "double_assert_12",
           "parent": "triplex_meter_1",
           "target": "measured_reactive_energy",
           "in": "'2001-01-02 00:00:00'",

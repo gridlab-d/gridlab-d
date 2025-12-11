@@ -23,7 +23,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_3",
           "parent": "occupantload_2",
           "property": "occupancy_fraction",
           "file": "../generic_demand.glt",
@@ -34,7 +33,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "occupantload_2",
           "file": "occupantload3600.csv",
           "interval": 3600,
@@ -46,7 +44,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_5",
           "parent": "occupantload_2",
           "target": "power",
           "value": 0,
