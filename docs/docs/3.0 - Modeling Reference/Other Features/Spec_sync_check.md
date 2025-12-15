@@ -1,10 +1,10 @@
 # Sync Check
 
-The synchronization check capability in GridLAB-D™ will be implemented to perform paralleling for two independent power grids. This could be used to parallel two separate power systems, or to reconnect a microgrid to the bulk power system. In the simulation, the frequency and voltage metrics are checked. When conditions are satisfied, the [sync_check] object sends a closure command to its parent [switch_object]. 
+The synchronization check capability in GridLAB-D™ will be implemented to perform paralleling for two independent power grids. This could be used to parallel two separate power systems, or to reconnect a microgrid to the bulk power system. In the simulation, the frequency and voltage metrics are checked. When conditions are satisfied, the sync_check object sends a closure command to its parent switch_object. 
 
 # Published properties (i.e., GLM inputs)
 
-The mapping between the properties and variables is listed in Table 1. The [sync_check] object will inherit all standard [Object_(directive)] values as well. The variable definitions are presented in Table 2 of the next section ["Variable definitions"]. Note that the properties listed here represent two different modes for calculating the from/to voltage conditions - `MAG_DIFF` and `SEP_DIFF`. Notes are included as to which property is used for which mode. 
+The mapping between the properties and variables is listed in Table 1. The sync_check object will inherit all standard Object_(directive) values as well. The variable definitions are presented in Table 2 of the next section "Variable definitions". Note that the properties listed here represent two different modes for calculating the from/to voltage conditions - `MAG_DIFF` and `SEP_DIFF`. Notes are included as to which property is used for which mode. 
 
 ##### Table 1 - Mapping between Properties and Variables  
 
@@ -19,7 +19,7 @@ voltage_angle_tolerance  | eps_ang_volt  | Double  | The user-specified toleranc
 metrics_period  | t_ud  | Double  | The user-defined period when both metrics are satisfied. Used by both `volt_compare_mode` types.   
 delta_trigger_mult  | delta_trigger_mult  | Double  | Multiplier of the appropriate voltage/frequency tolerances to trigger deltamode. e.g., in `MAG_DIFF` mode, `voltage_tolerance` and `frequency_tolerance` will be multiplied by this value, and if current conditions are within that band (and `sync_check` is armed), deltamode will be triggered/maintained until either a close action occurs, or the band is exited.   
   
-Two sample [sync_check] objects defined in the glm file are shown as follows. 
+Two sample sync_check objects defined in the glm file are shown as follows. 
 
 Using only the difference of the overall magnitude: 
     
@@ -56,7 +56,7 @@ Using the difference of the voltage magnitudes and angles separately:
 
 # Variable definitions
 
-Variables of the [sync_check] functionality are defined as follows: 
+Variables of the sync_check functionality are defined as follows: 
 
 ##### Table 2 - Variable Definitions  
 
@@ -103,11 +103,11 @@ Paralleling will only occur when the grid-alignment conditions are met. While th
 
 # Validation
 
-This subsection provides an outline on how the [sync_check] object will be tested to ensure its functionality. The current plan is to use two 4-node test systems interconnected through a [sync_check] object, which is open initially. The frequency and voltage values measured at the 'from' and 'to' nodes of the [sync_check] object are initialized in different values. The deviations must be larger than the user defined tolerances. The frequency and voltage of the 'from' node of its parent [switch] object are manipulated by a player towards the measurements of the 'to' node. Once the deviations are both within the tolerance longer than the user defined period, a 'closure' command should be sent to close its parent [switch] object. This sample use case will be included in the autotest for the [sync_check] object. 
+This subsection provides an outline on how the sync_check object will be tested to ensure its functionality. The current plan is to use two 4-node test systems interconnected through a sync_check object, which is open initially. The frequency and voltage values measured at the 'from' and 'to' nodes of the sync_check object are initialized in different values. The deviations must be larger than the user defined tolerances. The frequency and voltage of the 'from' node of its parent switch object are manipulated by a player towards the measurements of the 'to' node. Once the deviations are both within the tolerance longer than the user defined period, a 'closure' command should be sent to close its parent switch object. This sample use case will be included in the autotest for the sync_check object. 
 
 # Related Concepts:
 
-  * [Requirements]
-  * [Implementation]
-  * [sync_ctrl]
+  * Requirements
+  * Implementation
+  * sync_ctrl
   * [IEEE Std C50.13TM-2014](https://standards.ieee.org/project/C50_13.html)

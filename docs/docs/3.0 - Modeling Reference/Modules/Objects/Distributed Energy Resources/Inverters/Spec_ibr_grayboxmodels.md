@@ -178,7 +178,7 @@ physical_output_i_C_arg | Phase angle of phase C current from the optimization-b
   
 ## Related Concepts:
 
-  * [Inverter_dyn Main Page]
-  * [Inverter_dyn Requirements]
-  * [Inverter_dyn Specifications]
+  * Inverter_dyn Main Page
+  * Inverter_dyn Requirements
+  * Inverter_dyn Specifications
 

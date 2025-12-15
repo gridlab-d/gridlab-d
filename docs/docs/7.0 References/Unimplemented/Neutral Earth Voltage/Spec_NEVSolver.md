@@ -15,7 +15,7 @@ While the details of the algorithm are found in [1], the basic process for imple
   1. `link` objects will compute their static base admittance matrix contributions. This occurs as part of the normal exec loop process, likely during `presync` calls. 
      1. `link` objects will post their "off-block", "transfer admittance" diagonal matrix elements to the overall system admittance matrix, in `Y_NEV` format. This will be the portions associated with the current transfers between nodes.
      2. `link` objects will post their "on-diagonal" block matrix components to the appropriate nodes "self-admittance" matrix. This will be internal to the `node` objects.
-  2. `node` objects will compute their admittance matrix contributions and `deltaI` vector contributions. This will occur as part of the NEV solver call, executed by the SWING node(s) of the system. This functionality will be initiated by the `Y_update_fxn` detailed in the [node] and [data format] specifications. 
+  2. `node` objects will compute their admittance matrix contributions and `deltaI` vector contributions. This will occur as part of the NEV solver call, executed by the SWING node(s) of the system. This functionality will be initiated by the `Y_update_fxn` detailed in the node and data format specifications. 
      1. `node` objects will use any fixed components from the `link` objects update to form the basis of the self admittance matrix.
      2. `node` objects will contribute any fixed, `DELTAMODE`-oriented contributions to the "self-admittance" matrix portions.
      3. `node` objects will perform the power calculations for all specific load contributions associated with that bus.
@@ -104,9 +104,9 @@ This function will perform updates to the voltage values at a bus following a su
   1. Garcia, P, J.L. Pereira, S. Carneiro Jr., V. da Costa, and N. Martins, "Three-Phase Power Flow Calculations Using the Current Injection Method," _IEEE Transactions on Power Systems_ , vol. 15, no. 2, May 2000, pp. 508-514.
 # Related Concepts:
 
-  * [Overview Page]
-  * [Requirements]
-  * [Specifications]
-  * [Implementation]
-  * [Keeler (Version 4.0)]
+  * Overview Page
+  * Requirements
+  * Specifications
+  * Implementation
+  * Keeler (Version 4.0)
 

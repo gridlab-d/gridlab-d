@@ -556,17 +556,17 @@ Property  | Type  | Unit  | Description
   
 # Related Concepts:
 
-  * [ Early diesel_dg documentation]
-  * [ Constant PQ modes for diesel]
-  * [Generator Module Guide]
-  * [Generators (module)]
-    * [Battery]
+  *  Early diesel_dg documentation
+  *  Constant PQ modes for diesel
+  * Generator Module Guide
+  * Generators (module)
+    * Battery
     * Diesel dg
-    * [Energy storage]
+    * Energy storage
     * inverter
-    * [Microturbine]
-    * [Power electronics]
-    * [Rectifier]
-    * [Solar]
-    * [Windturb dg]
+    * Microturbine
+    * Power electronics
+    * Rectifier
+    * Solar
+    * Windturb dg
 

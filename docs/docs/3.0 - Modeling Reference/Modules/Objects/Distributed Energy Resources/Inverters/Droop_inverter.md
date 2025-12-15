@@ -108,8 +108,8 @@ To run this case, please find in the autotest in GridLAB-D™ generator module.
 
 ## Related Concepts:
 
-  * [Modules]
+  * Modules
     * generators
       * inverter
-        * [Voltage source inverter (VSI)]
+        * Voltage source inverter (VSI)
 

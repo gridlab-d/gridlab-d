@@ -43,7 +43,7 @@ Property Name  | Type  | Unit  | Description
 **tank_volume**  | double  | gallons  | The water volume of the water tank.   
 **tank_UA**  | double  | BTU/hour  | The product of the U-value of the tank's insulation and the surface area of the tank, assuming R values of about 13.   
 tank_diameter  | double  | feet  | The diameter of the water tank, influences heat loss calculations.   
-**water_demand**  | double  | gallons/minute  | Hot water consumption. Constant unless controlled by a [Player] object.   
+**water_demand**  | double  | gallons/minute  | Hot water consumption. Constant unless controlled by a Player object.   
 **heating_element_capacity**  | double  | kW  | The rate at which the waterheater heating element will dump thermal energy into the water tank in kilowatts.   
 **inlet_water_temperature**  | double  | degF  | The temperature of the cold water entering the bottom of the waterheater to replace any hot water drawn out the top of the tank.   
 **heat_mode**  | enumeration  |  | "ELECTRIC" or "GASHEAT". Determines the method that heat is added to the water tank.   

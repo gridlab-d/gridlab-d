@@ -551,7 +551,7 @@ For the reactive power ($Q$) and voltage ($V$) control in the VSM mode Q-V droop
 
 ## Related Concepts:
 
-  * [Inverter_dyn Main Page]
-  * [Inverter_dyn Requirements]
-  * [Navajo (Version 4.3)]
+  * Inverter_dyn Main Page
+  * Inverter_dyn Requirements
+
 

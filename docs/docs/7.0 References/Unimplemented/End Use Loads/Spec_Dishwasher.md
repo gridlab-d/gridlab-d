@@ -6,19 +6,19 @@
   
 	**This page does not reflect the current state of GridLAB-D™**
   
-The purpose of this document is to describe the specifications of the [dishwasher] class in the [residential] module. 
+The purpose of this document is to describe the specifications of the dishwasher class in the residential module. 
 
 ## Modeling Assumptions
 
-  * Energy consumption in [dishwasher] is split between motors and resistance heaters. Thus, the power factor changes depending on whether the wash cycle includes water temperature boost and changes from one part of the cycle to another. At this point, however, power factor modeling is simplified to be a constant value.
-  * The [dishwasher] model was designed as a multi-state machine model. These states are defined by the level of their electricity consumption.
+  * Energy consumption in dishwasher is split between motors and resistance heaters. Thus, the power factor changes depending on whether the wash cycle includes water temperature boost and changes from one part of the cycle to another. At this point, however, power factor modeling is simplified to be a constant value.
+  * The dishwasher model was designed as a multi-state machine model. These states are defined by the level of their electricity consumption.
   * Eight different time intervals are considered in this model, and these intervals determine the transition times between the states.
 
 ![Dishwasher representative cycle](../../../images/300px-Dishwasher_states.png)
 
 ##### Figure 1. Dishwasher representative cycle
 
-The [dishwasher] model developed in [GridLAB-D] is a multi-state load model and it is shown in Figure 1. The states in the dishwasher model are defined by the level of their electricity consumption and they are: State 1 (off), State 2 (Control only), State 3 (Motor only), State 4 (Motor and coil) and State 5 (Heated dry). 
+The dishwasher model developed in GridLAB-D is a multi-state load model and it is shown in Figure 1. The states in the dishwasher model are defined by the level of their electricity consumption and they are: State 1 (off), State 2 (Control only), State 3 (Motor only), State 4 (Motor and coil) and State 5 (Heated dry). 
 
 Each state in the model is governed by a ZIP model with transitions between states determined by internal state transition rules. The multi-state dishwasher model is shown Figure 2. 
 
@@ -94,13 +94,13 @@ Dishwasher is modeled as a generic one to allow the user to make change(s) to in
 
 # S1
 
-Interfacing overview ([R1])
+Interfacing overview (R1)
 
-The [dishwasher] model shall use the [residential] [end use] interface for all output. 
+The dishwasher model shall use the residential end use interface for all output. 
 
 # S2
 
-Inputs ([R2])
+Inputs (R2)
 ##### Table 2: Dishwasher inputs  Variable | Type | Units | Value (default) | Allowable values | Definition   
 ---|---|---|---|---|---  
 energy_baseline | double | kWh | 0.9 | Value > 0 | The amount of energy need for a dishwasher cycle   
@@ -189,11 +189,11 @@ queue(k+1) &= queue(k) - \displaystyle{}\delta\end{align}$. This is calculated i
 
 ## Related Concepts:
 
-  * [dishwasher]
-    * [Requirements]
+  * dishwasher
+    * Requirements
     * Specifications
-    * [Validation]
-    * [Technical manual]
-    * [User manual]
-  * [House]
+    * Validation
+    * Technical manual
+    * User manual
+  * House
 

@@ -796,7 +796,7 @@ I_{1-2_{eg}} \\
 I_{1-2_{ng}}
 \end{bmatrix}$$
 
-The hat notation, taken from [Kersting], indicates that the return path, i.e. the ground impedance, has been folded into the other impedances. According to Carson's equations, the elements of the primitive impedance matrix can be calculated by: 
+The hat notation, taken from Kersting, indicates that the return path, i.e. the ground impedance, has been folded into the other impedances. According to Carson's equations, the elements of the primitive impedance matrix can be calculated by: 
 
 $$\hat{z}_{1-2_{ii}} = r_i + 4\omega P_{ii}G + j\left(X_i + 2\omega G \ln{\frac{S_{ii}}{RD_i}} + 4\omega Q_{ii}G\right) \, \Omega / \text{mi}$$
 

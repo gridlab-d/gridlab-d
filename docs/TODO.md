@@ -20,6 +20,7 @@
     - [x] add the "easy" or "light" executable install option
 - [X] MySQL instructions - DEPRECATE/Unimplemented? If so, most content is unfinished. Needs robust introduction explaining what it is and why it is useful.
     - propose to Dev team to get rid of MySQL integration in leiu of python interface with new api (same for Matlab, HELICS, any other external integration)
+- [ ] Add a troubleshooting section to the new users section walking people through referencing the source code and how to find information they need on the source of truth.
 
 ### Docs Questions
 - [ ] Intro to Modeling needs to be re-written to not use metronome

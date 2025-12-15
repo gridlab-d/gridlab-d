@@ -6,7 +6,7 @@
   
 	**This page does not reflect the current state of GridLAB-D™**
     
-mysql \- MySQL module [Template:NEW30]
+mysql \- MySQL module Template:NEW30
 
 ## Synopsis
     
@@ -18,51 +18,51 @@ mysql \- MySQL module [Template:NEW30]
       schema "gridlabd";
       port 3306;
       socketname "/tmp/mysql.sock";
-      clientflags [COMPRESS]|[FOUND_ROWS]|[IGNORE_SIGPIPE]|[INTERACTIVE]|[LOCAL_FILES]|[MULTI_RESULTS]|[MULTI_STATEMENTS]|[NO_SCHEMA]|[ODBC]|[SSL]|[REMEMBER_OPTIONS];
+      clientflags COMPRESS|FOUND_ROWS|IGNORE_SIGPIPE|INTERACTIVE|LOCAL_FILES|MULTI_RESULTS|MULTI_STATEMENTS|NO_SCHEMA|ODBC|SSL|REMEMBER_OPTIONS;
     }
     
 
 ## Description
 
-The mysql module implements the principal [tape] module classes recorder, [player], and [collector] in a property-compatible manner. For details on the functionality of these classes, see the [tape] module. The main difference between the [tape] implementation and the mysql implementation is that these classes can refer to a [database] connection if there is more than one connection in the GLM file. 
+The mysql module implements the principal tape module classes recorder, player, and collector in a property-compatible manner. For details on the functionality of these classes, see the tape module. The main difference between the tape implementation and the mysql implementation is that these classes can refer to a database connection if there is more than one connection in the GLM file. 
 
 ### hostname
 
-The default server to use for a connection. See [database] [hostname] for details. 
+The default server to use for a connection. See database hostname for details. 
 
 ### username
 
-The default username to use for a connection. See [database] [username] for details. 
+The default username to use for a connection. See database username for details. 
 
 ### password
 
-The default password to use for a connection. See [database] [password] for details. 
+The default password to use for a connection. See database password for details. 
 
 ### schema
 
-The default schema to use for a connection. See [database] [schema] for details. 
+The default schema to use for a connection. See database schema for details. 
 
 ### port
 
-The default port to use for a connection. See [database] [port] for details. 
+The default port to use for a connection. See database port for details. 
 
 ### socketname
 
-The default socket name to use for a connection. See [database] [socketname] for details. 
+The default socket name to use for a connection. See database socketname for details. 
 
 ### clientflags
 
-The default client flags to use for a connection. See [database] [clientflags] for details. 
+The default client flags to use for a connection. See database clientflags for details. 
 
 ## Classes
 
-* [database]
+* database
     Implements a connection to a MySQL server. There must be at least one defined in a model in order to use the recorder, player, or collector objects.
 * recorder
     Implements a property recorder using the specified (or last) database connection.
-* [player]
+* player
     Implements a property player using the specified (or last) database connection.
-* [collector]
+* collector
     Implements a property aggregate collector using the specified (or last) database connection.
 
 ## Prerequisites
@@ -84,16 +84,16 @@ On Windows 7 it is a common problem that GridLAB-D™ cannot find `libmysql.dll`
 
 ## Version
 
-The mysql module was introduced in [Hassayampa (Version 3.0)]. 
+The mysql module was introduced in Hassayampa (Version 3.0). 
 
 ## Related Concepts:
 
   * mysql module 
-    * [database] class
+    * database class
     * recorder class
-    * [player] class
-    * [collector] class
-    * [MySQL Import/Export]
+    * player class
+    * collector class
+    * MySQL Import/Export
   * Technical manuals 
-    * [Programmer's manual]
-    * [MySQL How To Guide]
+    * Programmer's manual
+    * MySQL How To Guide

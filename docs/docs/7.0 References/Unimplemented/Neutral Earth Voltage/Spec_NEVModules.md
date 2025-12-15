@@ -42,7 +42,7 @@ Triplex-connected devices will have a similar implementation, but only two entri
 
 ## Programming Considerations
 
-In both cases described above, the corresponding contributions for current, power, and admittance/impedance will be posted to the appropriate terminal phase inside the node. `DELTAMODE`-enabled devices will also have their corresponding values translated to the appropriate terminals internally. All "traditionally posted" values will be incorporated into the multi-phase power, current, and impedance contributions as outlined in the [Node Specification], as part of the `Y_update_fxn` call from the NEV solver. 
+In both cases described above, the corresponding contributions for current, power, and admittance/impedance will be posted to the appropriate terminal phase inside the node. `DELTAMODE`-enabled devices will also have their corresponding values translated to the appropriate terminals internally. All "traditionally posted" values will be incorporated into the multi-phase power, current, and impedance contributions as outlined in the Node Specification, as part of the `Y_update_fxn` call from the NEV solver. 
 
 # NEV-native Implementation
 
@@ -72,7 +72,7 @@ For a delta, or phase-to-phase, connected load, the connection terminals need to
 
 ## Programming Considerations
 
-The key part of the program implementation is how the individual load quantities are posted by the powerflow-external object. Many of these objects assume the requested phases occur in sequence, so only the first block of the array is mapped. For example, the current implementation of `diesel_dg` only maps an address to `current_A` with an array `pCurrent`. It then assumes that `pCurrent[1]` refers to phase B, since phase B would immediately follow the mapped phase A value. NEV-explicit implementations will no longer be able to make this assumption and will have to have pointers to the appropriate quantity adjusted. 
+The key part of the program implementation is how the individual load quantities are posted by the powerflow-external object. Many of these objects assume the requested phases occur in sequence, so only the first block of the array is mapped. For example, the current implementation of `diesel_dg` only maps an address to `current_A` with an array `pCurrent`. It then assumes that `pCurrent1` refers to phase B, since phase B would immediately follow the mapped phase A value. NEV-explicit implementations will no longer be able to make this assumption and will have to have pointers to the appropriate quantity adjusted. 
 
 For specific load pointers, proper posting locations will need to be determined based on the number of terminals and the connections. For example, if an inverter is connected to terminal 2's constant power load, but the node only has terminal 2, it needs to know to connect to the first entry of the constant power load. This connection consideration (as well as any delta-connected redirections) will be handled during the variable mapping phase. Read variables (e.g., voltage) will also need to be mapped in a similar fashion. 
 
@@ -82,8 +82,8 @@ For DELTAMODE-connected objects, similar considerations will need to be made for
 
 # Related Concepts:
 
-  * [Overview Page]
-  * [Requirements]
-  * [Specifications]
-  * [Implementation]
-  * [Keeler (Version 4.0)]
+  * Overview Page
+  * Requirements
+  * Specifications
+  * Implementation
+  * Keeler (Version 4.0)
