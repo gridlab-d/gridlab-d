@@ -115,30 +115,34 @@ $$Q_{elec} - \dot m C_p \left ( T_w - T_{inlet} \right ) + UA \left ( T_{amb} - 
 
 or, 
 
-$$dt = \frac{C_w}{ 
-    
-    
-\dot m C_p T_{inlet} 
-+ U A T_{amb} 
-- \left ( U A + \dot m C_p \right ) T_w
-+ Q_{elec}
-    
-
-} dT_w$$
+$$
+dt = \frac{
+  C_w
+}{
+  \dot{m} C_p T_{\text{inlet}}
+  + U A T_{\text{amb}}
+  - \left( U A + \dot{m} C_p \right) T_w
+  + Q_{\text{elec}}
+} \, dT_w
+$$
 
   
 The time required to change the tank’s temperature from an initial temperature $T_0$ to a new temperature $T_1$ is given by integrating that equation. 
 
-$$t_1 - t_0 = \int_{T_0}^{T_1} \frac{1}{ 
-    
-    
-\frac{\dot m C_p T_{inlet} 
-+ U A T_{amb} 
-+ Q_{elec}}{C_w}
-- \frac{ U A + \dot m C_p }{C_w} T_w
-    
-
-} dT_w$$
+$$
+t_1 - t_0
+= \int_{T_0}^{T_1}
+\frac{1}{
+  \dfrac{
+    \dot{m} C_p T_{\text{inlet}}
+    + U A T_{\text{amb}}
+    + Q_{\text{elec}}
+  }{C_w}
+  - \dfrac{
+    U A + \dot{m} C_p
+  }{C_w} T_w
+}\, dT_w
+$$
 
 That is an integral of the form $dx/(a+bx)$, which has solution $\log(a+bx)/b$ . Therefore, the final model of the time required to raise (or lower) the tank’s temperature is 
 
