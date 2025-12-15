@@ -24,14 +24,12 @@
     "player": {
       "instances": [
         {
-          "name": "player_3",
           "parent": "plugload_2",
           "file": "generic_demand.glt",
           "loop": 100,
           "property": "demand"
         },
         {
-          "name": "player_5",
           "parent": "complex_assert_4",
           "property": "value",
           "file": "plugload_energy_meter.player"
@@ -52,7 +50,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_6",
           "parent": "plugload_2",
           "file": "plugload_load_usage3600.csv",
           "interval": 3600,

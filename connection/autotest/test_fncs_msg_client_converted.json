@@ -86,15 +86,13 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "Market_1",
           "property": "current_price_mean_1h,current_price_stdev_1h,market_id,current_market.clearing_price",
           "file": "test_fncs_msg_client_auction.csv",
           "interval": -1
         },
         {
-          "name": "recorder_8",
-          "parent": "C_1",
+          "parent": "triplex_meter_5house1C_1",
           "property": "proxy_average,proxy_standard_deviation,proxy_market_id,proxy_clear_price",
           "file": "test_fncs_msg_client_proxy.csv",
           "interval": 0
@@ -130,8 +128,8 @@
     "controller": {
       "instances": [
         {
-          "name": "C_1",
-          "parent": "house1",
+          "name": "triplex_meter_5house1C_1",
+          "parent": "triplex_meter_5house1",
           "bid_id": 13,
           "market": "Market_1",
           "bid_mode": "PROXY",
@@ -161,7 +159,7 @@
     "house": {
       "instances": [
         {
-          "name": "house1",
+          "name": "triplex_meter_5house1",
           "parent": "triplex_meter_5",
           "cooling_setpoint": 70,
           "heating_setpoint": 55,

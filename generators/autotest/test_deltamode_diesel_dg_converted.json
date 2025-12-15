@@ -4,7 +4,10 @@
       "// $Id: test_deltamode_diesel_dg.glm 4738 2014-07-03 00:55:39Z dchassin $",
       "// Basic deltamode test",
       "// No asserts, just a \"did it run without issues\"",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -15,9 +18,9 @@
       "suppress_repeat_messages": 0,
       "profiler": 1,
       "dateformat": "US",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -69,7 +72,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "BUS_1",
           "file": "bus_1_output_recorder.csv",
           "property": "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag",
@@ -83,7 +85,6 @@
           ]
         },
         {
-          "name": "recorder_5",
           "parent": "BUS_2",
           "file": "bus_2_output_recorder.csv",
           "property": "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag",
@@ -91,7 +92,6 @@
           "interval": 1
         },
         {
-          "name": "recorder_7",
           "parent": "Gen_Bus_1",
           "property": "rotor_speed,rotor_angle,flux1d,flux2q,EpRotated,VintRotated,Eint_A,Eint_B,Eint_C,Irotated,pwr_electric.real,pwr_electric.imag,pwr_mech",
           "flags": "DELTAMODE",
@@ -102,7 +102,6 @@
           ]
         },
         {
-          "name": "recorder_9",
           "parent": "Gen_Bus_2",
           "property": "rotor_speed,rotor_angle,flux1d,flux2q,EpRotated,VintRotated,Eint_A,Eint_B,Eint_C,Irotated,pwr_electric.real,pwr_electric.imag,pwr_mech",
           "flags": "DELTAMODE",
@@ -113,7 +112,6 @@
           ]
         },
         {
-          "name": "recorder_14",
           "parent": "LOAD_1",
           "file": "load_output_recorder.csv",
           "property": "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag,constant_power_A.real,constant_power_A.imag,constant_power_B.real,constant_power_B.imag,constant_power_C.real,constant_power_C.imag",
@@ -178,21 +176,18 @@
     "player": {
       "instances": [
         {
-          "name": "player_11",
           "parent": "LOAD_1",
           "file": "../diesel_deltamode_load_player_A.csv",
           "property": "constant_power_A",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_12",
           "parent": "LOAD_1",
           "file": "../diesel_deltamode_load_player_B.csv",
           "property": "constant_power_B",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_13",
           "parent": "LOAD_1",
           "file": "../diesel_deltamode_load_player_C.csv",
           "property": "constant_power_C",

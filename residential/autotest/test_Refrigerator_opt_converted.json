@@ -63,12 +63,10 @@
     "triplex_line_conductor": {
       "instances": [
         {
-          "name": "triplex_line_conductor_3",
           "resistance": 0.97,
           "geometric_mean_radius": 0.0111
         },
         {
-          "name": "triplex_line_conductor_4",
           "resistance": 0.97,
           "geometric_mean_radius": 0.0111
         }
@@ -77,14 +75,12 @@
     "overhead_line_conductor": {
       "instances": [
         {
-          "name": "overhead_line_conductor_100",
-          "id": 100,
+          "object_declaration": "overhead_line_conductor:100",
           "geometric_mean_radius": 0.0244,
           "resistance": 0.306
         },
         {
-          "name": "overhead_line_conductor_101",
-          "id": 101,
+          "object_declaration": "overhead_line_conductor:101",
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592
         }
@@ -93,8 +89,7 @@
     "line_spacing": {
       "instances": [
         {
-          "name": "line_spacing_200",
-          "id": 200,
+          "object_declaration": "line_spacing:200",
           "distance_AB": 2.5,
           "distance_BC": 4.5,
           "distance_AC": 7.0,
@@ -107,21 +102,19 @@
     "line_configuration": {
       "instances": [
         {
-          "name": "line_configuration_300",
-          "id": 300,
-          "conductor_A": "overhead_line_conductor_100",
-          "conductor_B": "overhead_line_conductor_100",
-          "conductor_C": "overhead_line_conductor_100",
-          "conductor_N": "overhead_line_conductor_101",
-          "spacing": "line_spacing_200"
+          "object_declaration": "line_configuration:300",
+          "conductor_A": "overhead_line_conductor:100",
+          "conductor_B": "overhead_line_conductor:100",
+          "conductor_C": "overhead_line_conductor:100",
+          "conductor_N": "overhead_line_conductor:101",
+          "spacing": "line_spacing:200"
         }
       ]
     },
     "transformer_configuration": {
       "instances": [
         {
-          "name": "transformer_configuration_400",
-          "id": 400,
+          "object_declaration": "transformer_configuration:400",
           "connect_type": "WYE_WYE",
           "power_rating": 6000,
           "primary_voltage": 12470,
@@ -143,8 +136,7 @@
     "node": {
       "instances": [
         {
-          "name": "node_0",
-          "id": 0,
+          "object_declaration": "node:0",
           "bustype": "SWING",
           "phases": "ABCN",
           "voltage_A": "+7199.558+0.000j",
@@ -153,8 +145,7 @@
           "nominal_voltage": 7200
         },
         {
-          "name": "node_1",
-          "id": 1,
+          "object_declaration": "node:1",
           "phases": "ABCN",
           "voltage_A": "+7199.558+0.000j",
           "voltage_B": "-3599.779-6235.000j",
@@ -162,8 +153,7 @@
           "nominal_voltage": 7200
         },
         {
-          "name": "node_2",
-          "id": 2,
+          "object_declaration": "node:2",
           "phases": "ABCN",
           "voltage_A": "+7199.558+0.000j",
           "voltage_B": "-3599.779-6235.000j",
@@ -171,8 +161,7 @@
           "nominal_voltage": 7200
         },
         {
-          "name": "node_3",
-          "id": 3,
+          "object_declaration": "node:3",
           "phases": "ABCN",
           "voltage_A": "+2401.777+0.000j",
           "voltage_B": "-1200.889-2080.000j",
@@ -180,8 +169,7 @@
           "nominal_voltage": 2400
         },
         {
-          "name": "node_4",
-          "id": 4,
+          "object_declaration": "node:4",
           "phases": "ABCN",
           "voltage_A": "+2401.777+0.000j",
           "voltage_B": "-1200.889-2080.000j",
@@ -193,21 +181,20 @@
     "regulator": {
       "instances": [
         {
-          "name": "regulator_1210",
-          "id": 1210,
+          "name": "617_0001406_reg",
+          "object_declaration": "regulator:1210",
           "phases": "ABCN",
-          "from": "node_0",
-          "to": "node_1",
-          "sense_node": "node_2",
-          "configuration": "regulator_configuration_1209"
+          "from": "node:0",
+          "to": "node:1",
+          "sense_node": "node:2",
+          "configuration": "regulator_configuration:1209"
         }
       ]
     },
     "regulator_configuration": {
       "instances": [
         {
-          "name": "regulator_configuration_1209",
-          "id": 1209,
+          "object_declaration": "regulator_configuration:1209",
           "connect_type": "WYE_WYE",
           "band_center": 7200,
           "band_width": 100,
@@ -234,39 +221,36 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_12",
-          "id": 12,
+          "object_declaration": "overhead_line:12",
           "phases": "ABCN",
-          "from": "node_1",
-          "to": "node_2",
+          "from": "node:1",
+          "to": "node:2",
           "length": 2000,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         },
         {
-          "name": "overhead_line_34",
-          "id": 34,
+          "object_declaration": "overhead_line:34",
           "phases": "ABCN",
-          "from": "node_3",
-          "to": "node_4",
+          "from": "node:3",
+          "to": "node:4",
           "length": 2500,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         }
       ]
     },
     "transformer": {
       "instances": [
         {
-          "name": "transformer_23",
-          "id": 23,
+          "object_declaration": "transformer:23",
           "phases": "ABCN",
-          "from": "node_2",
-          "to": "node_3",
-          "configuration": "transformer_configuration_400"
+          "from": "node:2",
+          "to": "node:3",
+          "configuration": "transformer_configuration:400"
         },
         {
           "name": "center_tap_1",
           "phases": "AS",
-          "from": "node_4",
+          "from": "node:4",
           "to": "trip_node1",
           "configuration": "AS_config"
         }
@@ -296,7 +280,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_25",
           "parent": "trip_meter2",
           "property": "measured_real_power,measured_reactive_power,voltage_1N.real,voltage_1N.imag",
           "file": "meter_output_5.csv",
@@ -304,7 +287,6 @@
           "limit": 144000
         },
         {
-          "name": "recorder_28",
           "parent": "refrigerator_27",
           "file": "refrigerator_out.csv",
           "interval": 1,
@@ -325,7 +307,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_30",
           "parent": "double_assert_29",
           "property": "value",
           "file": "../refrigerator_out.player"

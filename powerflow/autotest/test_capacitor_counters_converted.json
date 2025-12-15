@@ -111,7 +111,6 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_7",
           "phases": "ABCD",
           "from": "node1",
           "to": "node2",
@@ -142,19 +141,16 @@
     "player": {
       "instances": [
         {
-          "name": "player_13",
           "parent": "load4",
           "property": "constant_power_A",
           "file": "../loader_fastA.player"
         },
         {
-          "name": "player_14",
           "parent": "load4",
           "property": "constant_power_B",
           "file": "../loader_fastB.player"
         },
         {
-          "name": "player_15",
           "parent": "load4",
           "property": "constant_power_C",
           "file": "../loader_fastC.player"
@@ -180,7 +176,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_17",
           "parent": "CAP2",
           "in": "'2000-01-01 00:00:58'",
           "target": "cap_A_switch_count",
@@ -190,7 +185,6 @@
           "within": 0.1
         },
         {
-          "name": "double_assert_18",
           "parent": "CAP2",
           "in": "'2000-01-01 00:00:58'",
           "target": "cap_B_switch_count",
@@ -200,7 +194,6 @@
           "within": 0.1
         },
         {
-          "name": "double_assert_19",
           "parent": "CAP2",
           "in": "'2000-01-01 00:00:58'",
           "target": "cap_C_switch_count",

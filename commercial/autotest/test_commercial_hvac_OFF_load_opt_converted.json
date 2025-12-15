@@ -23,7 +23,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_2",
           "parent": "office_1",
           "target": "hvac.load",
           "value": 0,
@@ -34,7 +33,6 @@
     "enum_assert": {
       "instances": [
         {
-          "name": "enum_assert_3",
           "parent": "office_1",
           "target": "hvac_mode",
           "value": 0,
@@ -47,7 +45,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "office_1",
           "file": "commercial_hvac_usage2.csv",
           "interval": 3600,

@@ -18,17 +18,15 @@
     "house": {
       "instances": [
         {
-          "name": "house_1",
-          "id": 1
+          "object_declaration": "house:1"
         }
       ]
     },
     "microwave": {
       "instances": [
         {
-          "name": "microwave_2",
-          "id": 2,
-          "parent": "house_1",
+          "object_declaration": "microwave:2",
+          "parent": "house:1",
           "cycle_length": -45
         }
       ]

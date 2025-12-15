@@ -29,42 +29,36 @@
     "player": {
       "instances": [
         {
-          "name": "player_1",
           "parent": "swingbus",
           "property": "voltage_A",
           "file": "../test_generators_inverter_volt_var_voltageA.player",
           "loop": 0
         },
         {
-          "name": "player_2",
           "parent": "swingbus",
           "property": "voltage_B",
           "file": "../test_generators_inverter_volt_var_voltageB.player",
           "loop": 0
         },
         {
-          "name": "player_3",
           "parent": "swingbus",
           "property": "voltage_C",
           "file": "../test_generators_inverter_volt_var_voltageC.player",
           "loop": 0
         },
         {
-          "name": "player_12",
           "parent": "complex_assert_11",
           "property": "value",
           "file": "../test_generators_inverter_vv_output_A.player",
           "loop": 0
         },
         {
-          "name": "player_14",
           "parent": "complex_assert_13",
           "property": "value",
           "file": "../test_generators_inverter_vv_output_B.player",
           "loop": 0
         },
         {
-          "name": "player_16",
           "parent": "complex_assert_15",
           "property": "value",
           "file": "../test_generators_inverter_vv_output_C.player",

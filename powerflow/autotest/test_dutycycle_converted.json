@@ -129,7 +129,7 @@
       "instances": [
         {
           "name": "overhead_line_12",
-          "id": 12,
+          "object_declaration": "overhead_line:12",
           "phases": "ABCN",
           "from": "node_1",
           "to": "node_2",
@@ -168,7 +168,7 @@
     "load": {
       "instances": [
         {
-          "name": "load_4",
+          "name": "load4",
           "phases": "ABCN",
           "voltage_A": "+2401.777+0.000j",
           "voltage_B": "-1200.889-2080.000j",
@@ -183,7 +183,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_15",
           "parent": "transformer_14",
           "file": "test_dutycycle.csv",
           "interval": 60,
@@ -194,7 +193,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_17",
           "parent": "complex_assert_16",
           "property": "value",
           "file": "../dutycycle_player.player",
@@ -267,7 +265,6 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "ZIPload_24",
           "parent": "house_23",
           "base_power": 1.5,
           "duty_cycle": 0.2,
@@ -301,7 +298,6 @@
           ]
         },
         {
-          "name": "ZIPload_26",
           "parent": "house_25",
           "base_power": 1.23,
           "duty_cycle": 0.33,

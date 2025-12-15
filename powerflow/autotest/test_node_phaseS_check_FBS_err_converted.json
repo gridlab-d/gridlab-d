@@ -116,7 +116,6 @@
     "transformer": {
       "instances": [
         {
-          "name": "transformer_7",
           "phases": "BS",
           "from": "node1",
           "to": "tpl_load2",

@@ -157,6 +157,7 @@ public:
 	int time_value(PARSER, TIMESTAMP *t);
 	string expanded_value(string text);
 	bool alternate_value(string& text);
+    bool replace_variables(string& text);
     int linear_transform(string valueString, TRANSFORMSOURCE *xstype, void **source, double *scale, double *bias, OBJECT *from);
     int transform_source(PARSER, TRANSFORMSOURCE *xstype, void **source, OBJECT *from);
     int schedule_ref(PARSER, SCHEDULE **sch);

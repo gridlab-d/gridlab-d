@@ -4,13 +4,15 @@
       "//Modified file for VFD testing",
       "//#set pauseatexit=1",
       "//#set profiler=1",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_maximumtime //2 minutes",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
     "#set": {
-      "deltamode_maximumtime": "5000000000000 //2 minutes",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_maximumtime": 5000000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -158,7 +160,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_16",
           "parent": "complex_assert_15",
           "flags": "DELTAMODE",
           "property": "value",
@@ -172,147 +173,126 @@
           ]
         },
         {
-          "name": "player_18",
           "parent": "complex_assert_17",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_currRecorderB.csv"
         },
         {
-          "name": "player_20",
           "parent": "complex_assert_19",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_currRecorderC.csv"
         },
         {
-          "name": "player_22",
           "parent": "complex_assert_21",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_powRecorderA.csv"
         },
         {
-          "name": "player_24",
           "parent": "complex_assert_23",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_powRecorderB.csv"
         },
         {
-          "name": "player_26",
           "parent": "complex_assert_25",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_powRecorderC.csv"
         },
         {
-          "name": "player_28",
           "parent": "vfd_27",
           "property": "desired_motor_speed",
           "file": "../data_vfd_speedPlayer_delta.player",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_30",
           "parent": "complex_assert_29",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_in_rec_curr_A.csv"
         },
         {
-          "name": "player_32",
           "parent": "complex_assert_31",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_in_rec_curr_B.csv"
         },
         {
-          "name": "player_34",
           "parent": "complex_assert_33",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_in_rec_curr_C.csv"
         },
         {
-          "name": "player_36",
           "parent": "complex_assert_35",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_in_rec_pow_A.csv"
         },
         {
-          "name": "player_38",
           "parent": "complex_assert_37",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_in_rec_pow_B.csv"
         },
         {
-          "name": "player_40",
           "parent": "complex_assert_39",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_in_rec_pow_C.csv"
         },
         {
-          "name": "player_42",
           "parent": "complex_assert_41",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_out_rec_curr_A.csv"
         },
         {
-          "name": "player_44",
           "parent": "complex_assert_43",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_out_rec_curr_B.csv"
         },
         {
-          "name": "player_46",
           "parent": "complex_assert_45",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_out_rec_curr_C.csv"
         },
         {
-          "name": "player_48",
           "parent": "complex_assert_47",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_out_rec_pow_A.csv"
         },
         {
-          "name": "player_50",
           "parent": "complex_assert_49",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_out_rec_pow_B.csv"
         },
         {
-          "name": "player_52",
           "parent": "complex_assert_51",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_out_rec_pow_C.csv"
         },
         {
-          "name": "player_55",
           "parent": "complex_assert_54",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_load_volt_out_volt_A.csv"
         },
         {
-          "name": "player_57",
           "parent": "complex_assert_56",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_vfd_load_volt_out_volt_B.csv"
         },
         {
-          "name": "player_59",
           "parent": "complex_assert_58",
           "flags": "DELTAMODE",
           "property": "value",

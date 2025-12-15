@@ -67,7 +67,6 @@
           "file": "../data_deltamode_transform.csv"
         },
         {
-          "name": "player_10",
           "parent": "complex_assert_9",
           "flags": "DELTAMODE",
           "property": "value",
@@ -113,7 +112,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_8",
           "parent": "load_connection",
           "flags": "DELTAMODE",
           "property": "constant_power_CN",

@@ -217,7 +217,7 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "line_632_645",
+          "name": "line_632-645",
           "phases": "BCN",
           "from": "n632",
           "to": "l645",
@@ -228,7 +228,7 @@
           ]
         },
         {
-          "name": "line_645_646",
+          "name": "line_645-646",
           "phases": "BCN",
           "from": "l645",
           "to": "l646",
@@ -236,7 +236,7 @@
           "configuration": "lc603"
         },
         {
-          "name": "line_630_632",
+          "name": "line_630-632",
           "phases": "ABCN",
           "from": "n630",
           "to": "n632",
@@ -247,7 +247,7 @@
           }
         },
         {
-          "name": "line_632_6321",
+          "name": "line_632-6321",
           "phases": "ABCN",
           "from": "n632",
           "to": "l6321",
@@ -261,7 +261,7 @@
           }
         },
         {
-          "name": "line_6321_671",
+          "name": "line_6321-671",
           "phases": "ABCN",
           "from": "l6321",
           "to": "l671",
@@ -272,7 +272,7 @@
           }
         },
         {
-          "name": "line_671_680",
+          "name": "line_671-680",
           "phases": "ABCN",
           "from": "l671",
           "to": "n680",
@@ -286,7 +286,7 @@
           }
         },
         {
-          "name": "line_671_684",
+          "name": "line_671-684",
           "phases": "ACN",
           "from": "l671",
           "to": "n684",
@@ -297,7 +297,7 @@
           }
         },
         {
-          "name": "line_684_611",
+          "name": "line_684-611",
           "phases": "CN",
           "from": "n684",
           "to": "l611",
@@ -308,7 +308,7 @@
           }
         },
         {
-          "name": "line_632_633",
+          "name": "line_632-633",
           "phases": "ABCN",
           "from": "n632",
           "to": "n633",
@@ -323,7 +323,7 @@
     "underground_line": {
       "instances": [
         {
-          "name": "line_684_652",
+          "name": "line_684-652",
           "phases": "AN",
           "from": "n684",
           "to": "l652",
@@ -334,7 +334,7 @@
           }
         },
         {
-          "name": "line_692_675",
+          "name": "line_692-675",
           "phases": "ABC",
           "from": "l692",
           "to": "l675",
@@ -554,7 +554,7 @@
           }
         },
         {
-          "name": "load_l6321",
+          "name": "l6321load_l6321",
           "parent": "l6321",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
@@ -586,7 +586,7 @@
     "switch": {
       "instances": [
         {
-          "name": "switch_671_692",
+          "name": "switch_671-692",
           "phases": "ABCN",
           "from": "l671",
           "to": "l692",
@@ -617,7 +617,7 @@
     "transformer": {
       "instances": [
         {
-          "name": "transformer_633_634",
+          "name": "transformer_633-634",
           "phases": "ABCN",
           "from": "n633",
           "to": "l634",
@@ -671,7 +671,6 @@
     "impedance_dump": {
       "instances": [
         {
-          "name": "impedance_dump_53",
           "filename": "IEEE_13_node_impedance_dump.xml"
         }
       ]

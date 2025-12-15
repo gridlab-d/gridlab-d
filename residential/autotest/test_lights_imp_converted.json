@@ -21,7 +21,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "house_1",
           "property": "panel.energy,internal_gain",
           "file": "test_lights_imp.csv",
@@ -33,7 +32,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_3",
           "parent": "house_1",
           "target": "panel.energy",
           "once": "ONCE_TRUE",

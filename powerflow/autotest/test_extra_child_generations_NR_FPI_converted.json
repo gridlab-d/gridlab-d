@@ -108,105 +108,90 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_8",
           "parent": "ohl12",
           "target": "current_in_A",
           "within": 10,
           "value": "230.1-35.9d"
         },
         {
-          "name": "complex_assert_9",
           "parent": "ohl12",
           "target": "current_in_B",
           "within": 10,
           "value": "345.7-152.6d"
         },
         {
-          "name": "complex_assert_10",
           "parent": "ohl12",
           "target": "current_in_C",
           "within": 10,
           "value": "455.1+84.7d"
         },
         {
-          "name": "complex_assert_12",
           "parent": "node2",
           "target": "voltage_A",
           "within": 5,
           "value": "7164-.1d"
         },
         {
-          "name": "complex_assert_13",
           "parent": "node2",
           "target": "voltage_B",
           "within": 5,
           "value": "7110-120.2d"
         },
         {
-          "name": "complex_assert_14",
           "parent": "node2",
           "target": "voltage_C",
           "within": 5,
           "value": "7082+119.3d"
         },
         {
-          "name": "complex_assert_17",
           "parent": "node_3_base",
           "target": "voltage_A",
           "within": 5,
           "value": "2305-2.3d"
         },
         {
-          "name": "complex_assert_18",
           "parent": "node_3_base",
           "target": "voltage_B",
           "within": 5,
           "value": "2255-123.6d"
         },
         {
-          "name": "complex_assert_19",
           "parent": "node_3_base",
           "target": "voltage_C",
           "within": 5,
           "value": "2203+114.8d"
         },
         {
-          "name": "complex_assert_24",
           "parent": "ohl34",
           "target": "current_in_A",
           "within": 10,
           "value": "689.7-35.9d"
         },
         {
-          "name": "complex_assert_25",
           "parent": "ohl34",
           "target": "current_in_B",
           "within": 10,
           "value": "1036.0-152.6d"
         },
         {
-          "name": "complex_assert_26",
           "parent": "ohl34",
           "target": "current_in_C",
           "within": 10,
           "value": "1364.0+84.7d"
         },
         {
-          "name": "complex_assert_28",
           "parent": "load4",
           "target": "voltage_A",
           "within": 5,
           "value": "2175-4.1d"
         },
         {
-          "name": "complex_assert_29",
           "parent": "load4",
           "target": "voltage_B",
           "within": 5,
           "value": "1930-126.8d"
         },
         {
-          "name": "complex_assert_30",
           "parent": "load4",
           "target": "voltage_C",
           "within": 5,

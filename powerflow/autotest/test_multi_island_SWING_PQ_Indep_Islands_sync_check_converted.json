@@ -126,7 +126,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_7",
           "parent": "switch3_3B",
           "property": "status",
           "file": "switch_status_value.csv",
@@ -141,7 +140,6 @@
     "group_recorder": {
       "instances": [
         {
-          "name": "group_recorder_8",
           "flags": "DELTAMODE",
           "group": "groupid=connection_point",
           "property": "measured_frequency",
@@ -153,7 +151,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_11",
           "parent": "enum_assert_10",
           "flags": "DELTAMODE",
           "property": "value",
@@ -197,7 +194,7 @@
           ]
         },
         {
-          "name": "node1_A_player",
+          "name": "node1node1_A_player",
           "parent": "node1",
           "flags": "DELTAMODE",
           "property": "voltage_A",
@@ -207,21 +204,21 @@
           ]
         },
         {
-          "name": "node1_B_player",
+          "name": "node1node1_B_player",
           "parent": "node1",
           "flags": "DELTAMODE",
           "property": "voltage_B",
           "file": "../data_sync_check_volt_freq_player_bus_1_B.csv"
         },
         {
-          "name": "node1_C_player",
+          "name": "node1node1_C_player",
           "parent": "node1",
           "flags": "DELTAMODE",
           "property": "voltage_C",
           "file": "../data_sync_check_volt_freq_player_bus_1_C.csv"
         },
         {
-          "name": "node1B_A_player",
+          "name": "node1Bnode1B_A_player",
           "parent": "node1B",
           "flags": "DELTAMODE",
           "property": "voltage_A",
@@ -231,14 +228,14 @@
           ]
         },
         {
-          "name": "node1B_B_player",
+          "name": "node1Bnode1B_B_player",
           "parent": "node1B",
           "flags": "DELTAMODE",
           "property": "voltage_B",
           "file": "../data_sync_check_volt_freq_player_bus_1B_B.csv"
         },
         {
-          "name": "node1B_C_player",
+          "name": "node1Bnode1B_C_player",
           "parent": "node1B",
           "flags": "DELTAMODE",
           "property": "voltage_C",

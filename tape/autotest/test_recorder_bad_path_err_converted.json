@@ -26,7 +26,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "Imanode",
           "property": "nominal_voltage",
           "file": "disk_folder/junk_delete.csv",

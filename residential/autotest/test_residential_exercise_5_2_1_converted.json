@@ -23,7 +23,6 @@
     "climate": {
       "instances": [
         {
-          "name": "climate_1",
           "tmyfile": "../WA-Yakima.tmy2"
         }
       ]
@@ -31,7 +30,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "house_3",
           "property": "total_load",
           "file": "exercise_5_2_1.csv",

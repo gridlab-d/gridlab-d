@@ -28,7 +28,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_2",
           "parent": "THREE_PHASE_ROOT",
           "property": "voltage_A",
           "file": "../data_voltage_values_AMI_average_test_A.player",
@@ -37,31 +36,26 @@
           ]
         },
         {
-          "name": "player_3",
           "parent": "THREE_PHASE_ROOT",
           "property": "voltage_B",
           "file": "../data_voltage_values_AMI_average_test_B.player"
         },
         {
-          "name": "player_4",
           "parent": "THREE_PHASE_ROOT",
           "property": "voltage_C",
           "file": "../data_voltage_values_AMI_average_test_C.player"
         },
         {
-          "name": "player_6",
           "parent": "double_assert_5",
           "property": "value",
           "file": "../data_AMI_average_test_15_min_avg_voltage_mag_A.csv"
         },
         {
-          "name": "player_8",
           "parent": "double_assert_7",
           "property": "value",
           "file": "../data_AMI_average_test_15_min_avg_voltage_mag_B.csv"
         },
         {
-          "name": "player_10",
           "parent": "double_assert_9",
           "property": "value",
           "file": "../data_AMI_average_test_15_min_avg_voltage_mag_C.csv"

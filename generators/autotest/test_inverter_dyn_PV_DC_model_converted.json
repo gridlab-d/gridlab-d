@@ -4,6 +4,9 @@
       "//Used to test the PV DC Bus Modeling Mode - The DC bus voltage is calculated with respect to the output power of the PV",
       "// #set pauseatexit=1",
       "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit",
       "//#set deltamode_forced_always=true"
     ]
   },
@@ -13,9 +16,9 @@
       "profiler": 1,
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -173,28 +176,24 @@
     "player": {
       "instances": [
         {
-          "name": "player_13",
           "parent": "load_bus",
           "flags": "DELTAMODE",
           "property": "constant_impedance_A",
           "file": "../data_inverter_dyn_player_impedance.csv"
         },
         {
-          "name": "player_14",
           "parent": "load_bus",
           "flags": "DELTAMODE",
           "property": "constant_impedance_B",
           "file": "../data_inverter_dyn_player_impedance.csv"
         },
         {
-          "name": "player_15",
           "parent": "load_bus",
           "flags": "DELTAMODE",
           "property": "constant_impedance_C",
           "file": "../data_inverter_dyn_player_impedance.csv"
         },
         {
-          "name": "player_23",
           "parent": "double_assert_22",
           "flags": "DELTAMODE",
           "property": "value",
@@ -204,14 +203,12 @@
           ]
         },
         {
-          "name": "player_25",
           "parent": "double_assert_24",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inverter_dyn_assert_inverter_P_In.csv"
         },
         {
-          "name": "player_27",
           "parent": "complex_assert_26",
           "flags": "DELTAMODE",
           "property": "value",

@@ -31,8 +31,7 @@
     "overhead_line_conductor": {
       "instances": [
         {
-          "name": "overhead_line_conductor_6010",
-          "id": 6010,
+          "object_declaration": "overhead_line_conductor:6010",
           "geometric_mean_radius": 0.0313,
           "resistance": 0.1859,
           "outside_comments": [
@@ -40,8 +39,7 @@
           ]
         },
         {
-          "name": "overhead_line_conductor_6020",
-          "id": 6020,
+          "object_declaration": "overhead_line_conductor:6020",
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592,
           "outside_comments": [
@@ -49,8 +47,7 @@
           ]
         },
         {
-          "name": "overhead_line_conductor_6030",
-          "id": 6030,
+          "object_declaration": "overhead_line_conductor:6030",
           "geometric_mean_radius": 0.00446,
           "resistance": 1.12,
           "outside_comments": [
@@ -62,7 +59,7 @@
     "node": {
       "instances": [
         {
-          "name": "gld_630",
+          "name": "630",
           "phases": "ABCN",
           "voltage_A": "2401.7771+0j",
           "voltage_B": "-1200.8886-2080.000j",
@@ -74,7 +71,7 @@
     "meter": {
       "instances": [
         {
-          "name": "gld_650",
+          "name": "650",
           "bustype": "SWING",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
@@ -90,8 +87,7 @@
     "regulator_configuration": {
       "instances": [
         {
-          "name": "regulator_configuration_6506321",
-          "id": 6506321,
+          "object_declaration": "regulator_configuration:6506321",
           "connect_type": 1,
           "band_center": 2401,
           "band_width": 40,
@@ -123,22 +119,19 @@
     "player": {
       "instances": [
         {
-          "name": "player_8",
-          "parent": "regulator_650632",
+          "parent": "Reg1",
           "property": "tap_A",
           "file": "../test_reg.player",
           "loop": 0
         },
         {
-          "name": "player_9",
-          "parent": "regulator_650632",
+          "parent": "Reg1",
           "property": "tap_B",
           "file": "../test_reg.player",
           "loop": 0
         },
         {
-          "name": "player_10",
-          "parent": "regulator_650632",
+          "parent": "Reg1",
           "property": "tap_C",
           "file": "../test_reg.player",
           "loop": 0
@@ -148,8 +141,7 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_11",
-          "parent": "regulator_650632",
+          "parent": "Reg1",
           "in": "'2000-01-01 00:00:04'",
           "target": "tap_A_change_count",
           "status": "ASSERT_TRUE",
@@ -158,8 +150,7 @@
           "within": 0.1
         },
         {
-          "name": "double_assert_12",
-          "parent": "regulator_650632",
+          "parent": "Reg1",
           "in": "'2000-01-01 00:00:04'",
           "target": "tap_B_change_count",
           "status": "ASSERT_TRUE",
@@ -168,8 +159,7 @@
           "within": 0.1
         },
         {
-          "name": "double_assert_13",
-          "parent": "regulator_650632",
+          "parent": "Reg1",
           "in": "'2000-01-01 00:00:04'",
           "target": "tap_B_change_count",
           "status": "ASSERT_TRUE",
@@ -182,12 +172,12 @@
     "regulator": {
       "instances": [
         {
-          "name": "regulator_650632",
-          "id": 650632,
+          "name": "Reg1",
+          "object_declaration": "regulator:650632",
           "phases": "ABC",
-          "from": "gld_650",
-          "to": "gld_630",
-          "configuration": "regulator_configuration_6506321"
+          "from": "650",
+          "to": "630",
+          "configuration": "regulator_configuration:6506321"
         }
       ]
     },
@@ -197,7 +187,7 @@
           "name": "CAP1",
           "phases": "ABCN",
           "pt_phase": "ABCN",
-          "parent": "gld_630",
+          "parent": "630",
           "phases_connected": "ABCN",
           "control": "MANUAL",
           "voltage_set_high": 2700.0,
@@ -217,7 +207,7 @@
           "name": "CAP2",
           "phases": "ABCN",
           "pt_phase": "ABCN",
-          "parent": "gld_630",
+          "parent": "630",
           "phases_connected": "ABCN",
           "control": "MANUAL",
           "voltage_set_high": 2600.0,

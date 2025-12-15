@@ -32,7 +32,7 @@
     "climate": {
       "instances": [
         {
-          "name": "WA_Yakima",
+          "name": "WA-Yakima",
           "tmyfile": "../WA-Yakima.tmy2",
           "interpolate": "NONE"
         }
@@ -77,7 +77,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_7",
           "parent": "double_assert_6",
           "property": "value",
           "file": "../fixed_45_S_shading_Insolation_15min.player",
@@ -90,7 +89,6 @@
           ]
         },
         {
-          "name": "player_9",
           "parent": "double_assert_8",
           "property": "value",
           "file": "../fixed_45_S_shading_VA_out_15min.player"

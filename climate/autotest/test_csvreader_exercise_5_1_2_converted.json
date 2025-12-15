@@ -23,7 +23,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "MyClimate",
           "file": "climate_out.csv",
           "interval": 3600,
@@ -31,7 +30,6 @@
           "property": "temperature,humidity"
         },
         {
-          "name": "recorder_5",
           "parent": "house_4",
           "file": "house_out.csv",
           "interval": 3600,
