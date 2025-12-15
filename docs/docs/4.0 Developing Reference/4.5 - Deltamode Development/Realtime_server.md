@@ -173,7 +173,7 @@ The value can include units (separate by a space) and they will be converted aut
 
 ### Control
 
-Template:NEW30 (as of Grizzly:2732(http://sourceforge.net/apps/trac/gridlab-d/changeset/2732)) 
+ (as of Grizzly:2732(http://sourceforge.net/apps/trac/gridlab-d/changeset/2732)) 
 
 To pause the simulation at a specified time, use the following query: 
     

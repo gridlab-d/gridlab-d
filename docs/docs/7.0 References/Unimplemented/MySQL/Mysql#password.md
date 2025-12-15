@@ -6,7 +6,7 @@
   
 	**This page does not reflect the current state of GridLAB-D™**
 
-mysql \- MySQL module Template:NEW30
+mysql \- MySQL module 
 
 ## Synopsis
     
