@@ -5,6 +5,11 @@ This example shows how to implement interaction between GridLAB-D and MATLAB
 during runtime. In this case, the MATLAB functionality is trivial (calculating
 three-phase voltage) but any callable MATLAB function can be executed.
 
+*******************   FICITICIOUS API    *******************
+This example uses a fictitious API that has not been implemented. This script 
+was used as a reference for the development team to see the kind of 
+functionality API users (who don't know GLD as well) might be looking for. 
+
 
 @author: Trevor Hardy
 trevor.hardy@pnnl.gov

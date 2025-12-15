@@ -5,6 +5,12 @@ This example shows how to use the async call to GridLAB-D when advancing
 simulation time. Specific data is collected from the house objects at each
 time step and shoved into a Pandas DataFrame.
 
+*******************   FICITICIOUS API    *******************
+This example uses a fictitious API that has not been implemented. This script 
+was used as a reference for the development team to see the kind of 
+functionality API users (who don't know GLD as well) might be looking for. 
+
+
 @author: Trevor Hardy
 trevor.hardy@pnnl.gov
 """

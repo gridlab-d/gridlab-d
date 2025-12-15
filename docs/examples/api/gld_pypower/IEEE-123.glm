@@ -1,0 +1,7363 @@
+//IEEE 123-node feeder
+
+#set profiler=1
+#set iteration_limit=100000;
+
+clock {
+	timezone PST+8PDT;
+	timestamp '2000-01-01 00:00:00';
+    stoptime '2000-01-01 1:00:00';
+}
+module tape;
+module powerflow {
+	solver_method FBS;
+	default_maximum_voltage_error 0.01;
+}
+
+//Phase Conductor for 1 thru 8: 336,400 26/7 ACSR
+object overhead_line_conductor {
+	name olc10001;
+	geometric_mean_radius 0.0244  ;
+	resistance 0.30600;
+}
+
+//Phase Conductor for 9 thru 11: 1/0 ACSR
+object overhead_line_conductor {
+	name olc10009;
+	geometric_mean_radius 0.004460  ;
+	resistance 1.12000;
+}	
+
+//Phase Conductor for neutral: 4/0 6/1 ACSR
+object overhead_line_conductor {
+	name olc10002;
+	geometric_mean_radius 0.008140  ;
+	resistance 0.59200;
+}
+
+// Phase Conductor for 12: 1/0 AA,TS
+object underground_line_conductor {
+	name ulc10003; 
+	 outer_diameter 1.060000;
+	 conductor_gmr 0.011100;
+	 conductor_diameter 0.368000;
+	 conductor_resistance 0.970000;
+	 neutral_gmr 0.011100;
+	 neutral_resistance 0.970000;
+	 neutral_diameter 0.0640837;
+	 neutral_strands 6.000000;
+	 shield_gmr 0.000000;
+	 shield_resistance 0.000000;
+}
+
+// Phase Conductor for triplex 4/0_aa
+object triplex_line_conductor { 
+     name tlc1000; 
+     resistance 0.48; 
+     geometric_mean_radius 0.0158; 
+     rating.summer.continuous 1000.0;
+     rating.summer.emergency 1000.0;
+     rating.winter.continuous 1000.0;
+     rating.winter.emergency 1000.0;     
+} 
+
+// Overhead line configurations
+// ABCN
+object line_spacing {
+	name ls5001;
+	distance_AB 2.5;
+	distance_AC 7.0;
+	distance_BC 4.5;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+// CABN
+object line_spacing {
+	name ls5002;
+	distance_AB 4.5;
+	distance_AC 2.5;
+	distance_BC 7.0;
+	distance_AN 5.0;
+	distance_BN 4.272002;
+	distance_CN 5.656854;
+}
+
+// BCAN
+object line_spacing {
+	name ls5003;
+	distance_AB 7.0;
+	distance_AC 4.5;
+	distance_BC 2.5;
+	distance_AN 5.0;
+	distance_BN 5.656854;
+	distance_CN 4.272002;
+}
+
+// CBAN
+object line_spacing {
+	name ls5004;
+	distance_AB 4.5;
+	distance_AC 7.0;
+	distance_BC 2.5;
+	distance_AN 5.0;
+	distance_BN 4.272002;
+	distance_CN 5.656854;
+}
+
+// BACN
+object line_spacing {
+	name ls5005;
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_BN 5.656854;
+	distance_AN 4.272002;
+	distance_CN 5.0;
+}
+
+// ACBN
+object line_spacing {
+	name ls5006;
+	distance_AB 7.0;
+	distance_AC 2.5;
+	distance_BC 4.5;
+	distance_AN 5.656854;
+	distance_CN 4.272002;
+	distance_BN 5.0;
+}
+
+//ACN
+object line_spacing {
+	name ls5007;
+	distance_AB 0.0;
+	distance_AC 7.0;
+	distance_BC 0.0;
+	distance_AN 5.656854;
+	distance_BN 0.0;
+	distance_CN 5.0;
+}
+
+//ABN
+object line_spacing {
+	name ls5008;
+	distance_AB 7.0;
+	distance_AC 0.0;
+	distance_BC 0.0;
+	distance_AN 5.656854;
+	distance_BN 5.0;
+	distance_CN 0.0;
+}
+
+//AN
+object line_spacing {
+	name ls5009;
+	distance_AB 0.0;
+	distance_AC 0.0;
+	distance_BC 0.0;
+	distance_AN 5.0;
+	distance_BN 0.0;
+	distance_CN 0.0;
+}
+
+//BN
+object line_spacing {
+	name ls50010;
+	distance_AB 0.0;
+	distance_AC 0.0;
+	distance_BC 0.0;
+	distance_AN 0.0;
+	distance_BN 5.0;
+	distance_CN 0.0;
+}
+
+//CN
+object line_spacing {
+	name ls50011;
+	distance_AB 0.0;
+	distance_AC 0.0;
+	distance_BC 0.0;
+	distance_AN 0.0;
+	distance_BN 0.0;
+	distance_CN 5.0;
+}
+
+//ABC
+object line_spacing {
+	name ls50012;
+	distance_AB 0.5;
+	distance_AC 1.0;
+	distance_BC 0.5;
+	distance_AN 0.0;
+	distance_BN 0.0;
+	distance_CN 0.0;
+}
+
+object triplex_line_configuration { 
+     name lc1000;
+     conductor_1 tlc1000; 
+     conductor_2 tlc1000; 
+     conductor_N tlc1000; 
+     insulation_thickness 0.08; 
+     diameter 0.522; 
+} 
+
+object line_configuration {
+	name lc1001;
+	conductor_A olc10001;
+	conductor_B olc10001;
+	conductor_C olc10001;
+	conductor_N olc10002;
+	spacing ls5001;
+}
+
+object line_configuration {
+	name lc1002;
+	conductor_A olc10001;
+	conductor_B olc10001;
+	conductor_C olc10001;
+	conductor_N olc10002;
+	spacing ls5002;
+}
+
+object line_configuration {
+	name lc1003;
+	conductor_A olc10001;
+	conductor_B olc10001;
+	conductor_C olc10001;
+	conductor_N olc10002;
+	spacing ls5003;
+}
+
+object line_configuration {
+	name lc1004;
+	conductor_A olc10001;
+	conductor_B olc10001;
+	conductor_C olc10001;
+	conductor_N olc10002;
+	spacing ls5004;
+}
+
+object line_configuration {
+	name lc1005;
+	conductor_A olc10001;
+	conductor_B olc10001;
+	conductor_C olc10001;
+	conductor_N olc10002;
+	spacing ls5005;
+}
+
+object line_configuration {
+	name lc1006;
+	conductor_A olc10001;
+	conductor_B olc10001;
+	conductor_C olc10001;
+	conductor_N olc10002;
+	spacing ls5006;
+}
+
+object line_configuration {
+	name lc1007;
+	conductor_A olc10001;
+	conductor_C olc10001;
+	conductor_N olc10002;
+	spacing ls5007;
+}
+
+object line_configuration {
+	name lc1008;
+	conductor_A olc10001;
+	conductor_B olc10001;
+	conductor_N olc10002;
+	spacing ls5008;
+}
+
+object line_configuration {
+	name lc1009;
+	conductor_A olc10009;
+	conductor_N olc10009;
+	spacing ls5009;
+}
+
+object line_configuration {
+	name lc10010;
+	conductor_B olc10009;
+	conductor_N olc10009;
+	spacing ls50010;
+}
+
+object line_configuration {
+	name lc10011;
+	conductor_C olc10009;
+	conductor_N olc10009;
+	spacing ls50011;
+}
+
+object line_configuration {
+	name lc10012;
+	 conductor_A ulc10003;
+	 conductor_B ulc10003;
+	 conductor_C ulc10003;
+	 spacing ls50012;
+}
+
+
+
+//Define line objects 
+object overhead_line {
+     phases "BN";
+     name linobj12;
+     from l1;
+     to l2;
+     length 175;
+     configuration lc10010;
+}
+
+object overhead_line {
+     phases "CN";
+     name linobj13;
+     from l1;
+     to n3;
+     length 250;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj17;
+     from l1;
+     to l7;
+     length 300;
+     configuration lc1001;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj34;
+     from n3;
+     to l4;
+     length 200;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj35;
+     from n3;
+     to l5;
+     length 325;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj56;
+     from l5;
+     to l6;
+     length 250;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj78;
+     from l7;
+     to n8;
+     length 200;
+     configuration lc1001;
+}
+ 
+object overhead_line {
+     phases "BN";
+     name linobj812;
+     from n8;
+     to l12;
+     length 225;
+     configuration lc10010;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj89;
+     from n8;
+     to l9;
+     length 225;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj813;
+     from n8;
+     to n13;
+     length 300;
+     configuration lc1001;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj140114;
+     from n1401;
+     to n14;
+     length 425;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj1334;
+     from n13;
+     to l34;
+     length 150;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj1318;
+     from n13;
+     to n18;
+     length 825;
+     configuration lc1002;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj1411;
+     from n14;
+     to l11;
+     length 250;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj1410;
+     from n14;
+     to l10;
+     length 250;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj1516;
+     from n15;
+     to l16;
+     length 375;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj1517;
+     from n15;
+     to l17;
+     length 350;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj1819;
+     from n18;
+     to l19;
+     length 250;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj1821;
+     from n18;
+     to n21;
+     length 300;
+     configuration lc1002;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj1920;
+     from l19;
+     to l20;
+     length 325;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "BN";
+     name linobj2122;
+     from n21;
+     to l22;
+     length 525;
+     configuration lc10010;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj2123;
+     from n21;
+     to n23;
+     length 250;
+     configuration lc1002;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj2324;
+     from n23;
+     to l24;
+     length 550;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj2325;
+     from n23;
+     to n25;
+     length 275;
+     configuration lc1002;
+}
+ 
+object overhead_line {
+     phases "ACN";
+     name linobj260126;
+     from n2601;
+     to n26;
+     length 350;
+     configuration lc1007;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj2528;
+     from n25;
+     to l28;
+     length 200;
+     configuration lc1002;
+}
+ 
+object overhead_line {
+     phases "ACN";
+     name linobj2627;
+     from n26;
+     to n27;
+     length 275;
+     configuration lc1007;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj2631;
+     from n26;
+     to l31;
+     length 225;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj2733;
+     from n27;
+     to l33;
+     length 500;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj2829;
+     from l28;
+     to l29;
+     length 300;
+     configuration lc1002;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj2930;
+     from l29;
+     to l30;
+     length 350;
+     configuration lc1002;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj30250;
+     from l30;
+     to n250;
+     length 200;
+     configuration lc1002;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj3132;
+     from l31;
+     to l32;
+     length 300;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj3415;
+     from l34;
+     to n15;
+     length 100;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "ABN";
+     name linobj3536;
+     from l35;
+     to n36;
+     length 650;
+     configuration lc1008;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj3540;
+     from l35;
+     to n40;
+     length 250;
+     configuration lc1001;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj3637;
+     from n36;
+     to l37;
+     length 300;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "BN";
+     name linobj3638;
+     from n36;
+     to l38;
+     length 250;
+     configuration lc10010;
+}
+ 
+object overhead_line {
+     phases "BN";
+     name linobj3839;
+     from l38;
+     to l39;
+     length 325;
+     configuration lc10010;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj4041;
+     from n40;
+     to l41;
+     length 325;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj4042;
+     from n40;
+     to l42;
+     length 250;
+     configuration lc1001;
+}
+ 
+object overhead_line {
+     phases "BN";
+     name linobj4243;
+     from l42;
+     to l43;
+     length 500;
+     configuration lc10010;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj4244;
+     from l42;
+     to n44;
+     length 200;
+     configuration lc1001;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj4445;
+     from n44;
+     to l45;
+     length 200;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj4447;
+     from n44;
+     to l47;
+     length 250;
+     configuration lc1001;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj4546;
+     from l45;
+     to l46;
+     length 300;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj4748;
+     from l47;
+     to l48;
+     length 150;
+     configuration lc1004;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj4749;
+     from l47;
+     to l49;
+     length 250;
+     configuration lc1004;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj4950;
+     from l49;
+     to l50;
+     length 250;
+     configuration lc1004;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj5051;
+     from l50;
+     to l51;
+     length 250;
+     configuration lc1004;
+}
+
+object overhead_line {
+     phases "ABCN";			//undefined line segment
+     name linobj51151;
+     from l51;
+     to n151;
+     length 700;
+     configuration lc1004;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj5253;
+     from l52;
+     to l53;
+     length 200;
+     configuration lc1001;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj5354;
+     from l53;
+     to n54;
+     length 125;
+     configuration lc1001;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj5455;
+     from n54;
+     to l55;
+     length 275;
+     configuration lc1001;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj5457;
+     from n54;
+     to n57;
+     length 350;
+     configuration lc1003;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj5556;
+     from l55;
+     to l56;
+     length 275;
+     configuration lc1001;
+}
+ 
+object overhead_line {
+     phases "BN";
+     name linobj5758;
+     from n57;
+     to l58;
+     length 250;
+     configuration lc10010;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj5760;
+     from n57;
+     to l60;
+     length 750;
+     configuration lc1003;
+}
+ 
+object overhead_line {
+     phases "BN";
+     name linobj5859;
+     from l58;
+     to l59;
+     length 250;
+     configuration lc10010;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj6061;
+     from l60;
+     to n61;
+     length 550;
+     configuration lc1005;
+}
+ 
+object underground_line {
+     phases "ABC";
+     name linobj6062;
+     from l60;
+     to l62;
+     length 250;
+     configuration lc10012;
+}
+ 
+object underground_line {
+     phases "ABC";
+     name linobj6263;
+     from l62;
+     to l63;
+     length 175;
+     configuration lc10012;
+}
+ 
+object underground_line {
+     phases "ABC";
+     name linobj6364;
+     from l63;
+     to l64;
+     length 350;
+     configuration lc10012;
+}
+ 
+object underground_line {
+     phases "ABC";
+     name linobj6465;
+     from l64;
+     to l65;
+     length 425;
+     configuration lc10012;
+}
+ 
+object underground_line {
+     phases "ABC";
+     name linobj6566;
+     from l65;
+     to l66;
+     length 325;
+     configuration lc10012;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj6768;
+     from n67;
+     to l68;
+     length 200;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj6772;
+     from n67;
+     to n72;
+     length 275;
+     configuration lc1003;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj6797;
+     from n6701;
+     to n97;
+     length 250;
+     configuration lc1003;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj6869;
+     from l68;
+     to l69;
+     length 275;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj6970;
+     from l69;
+     to l70;
+     length 325;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj7071;
+     from l70;
+     to l71;
+     length 275;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj7273;
+     from n72;
+     to l73;
+     length 275;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj7276;
+     from n72;
+     to l76;
+     length 200;
+     configuration lc1003;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj7374;
+     from l73;
+     to l74;
+     length 350;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj7475;
+     from l74;
+     to l75;
+     length 400;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj7677;
+     from l76;
+     to l77;
+     length 400;
+     configuration lc1006;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj7686;
+     from l76;
+     to l86;
+     length 700;
+     configuration lc1003;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj7778;
+     from l77;
+     to n78;
+     length 100;
+     configuration lc1006;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj7879;
+     from n78;
+     to l79;
+     length 225;
+     configuration lc1006;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj7880;
+     from n78;
+     to l80;
+     length 475;
+     configuration lc1006;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj8081;
+     from l80;
+     to n81;
+     length 475;
+     configuration lc1006;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj8182;
+     from n81;
+     to l82;
+     length 250;
+     configuration lc1006;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj8184;
+     from n81;
+     to l84;
+     length 675;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj8283;
+     from l82;
+     to l83;
+     length 250;
+     configuration lc1006;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj8485;
+     from l84;
+     to l85;
+     length 475;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj8687;
+     from l86;
+     to l87;
+     length 450;
+     configuration lc1006;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj8788;
+     from l87;
+     to l88;
+     length 175;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj8789;
+     from l87;
+     to n89;
+     length 275;
+     configuration lc1006;
+}
+ 
+object overhead_line {
+     phases "BN";
+     name linobj8990;
+     from n89;
+     to l90;
+     length 225;
+     configuration lc10010;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj8991;
+     from n89;
+     to n91;
+     length 225;
+     configuration lc1006;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj9192;
+     from n91;
+     to l92;
+     length 300;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj9193;
+     from n91;
+     to n93;
+     length 225;
+     configuration lc1006;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj9394;
+     from n93;
+     to l94;
+     length 275;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj9395;
+     from n93;
+     to l95;
+     length 300;
+     configuration lc1006;
+}
+ 
+object overhead_line {
+     phases "BN";
+     name linobj9596;
+     from l95;
+     to l96;
+     length 200;
+     configuration lc10010;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj9798;
+     from n97;
+     to l98;
+     length 275;
+     configuration lc1003;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj9899;
+     from l98;
+     to l99;
+     length 550;
+     configuration lc1003;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj99100;
+     from l99;
+     to l100;
+     length 300;
+     configuration lc1003;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj100450;
+     from l100;
+     to n450;
+     length 800;
+     configuration lc1003;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj101102;
+     from n101;
+     to l102;
+     length 225;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj101105;
+     from n101;
+     to n105;
+     length 275;
+     configuration lc1003;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj102103;
+     from l102;
+     to l103;
+     length 325;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "CN";
+     name linobj103104;
+     from l103;
+     to l104;
+     length 700;
+     configuration lc10011;
+}
+ 
+object overhead_line {
+     phases "BN";
+     name linobj105106;
+     from n105;
+     to l106;
+     length 225;
+     configuration lc10010;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj105108;
+     from n105;
+     to n108;
+     length 325;
+     configuration lc1003;
+}
+ 
+object overhead_line {
+     phases "BN";
+     name linobj106107;
+     from l106;
+     to l107;
+     length 575;
+     configuration lc10010;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj108109;
+     from n108;
+     to l109;
+     length 450;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj108300;
+     from n108;
+     to n300;
+     length 1000;
+     configuration lc1003;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj109110;
+     from l109;
+     to n110;
+     length 300;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj110111;
+     from n110;
+     to l111;
+     length 575;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj110112;
+     from n110;
+     to l112;
+     length 125;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj112113;
+     from l112;
+     to l113;
+     length 525;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "AN";
+     name linobj113114;
+     from l113;
+     to l114;
+     length 325;
+     configuration lc1009;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj13535;
+     from n135;
+     to l35;
+     length 375;
+     configuration lc1004;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj1491;
+     from n149;
+     to l1;
+     length 400;
+     configuration lc1001;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj15252;
+     from n152;
+     to l52;
+     length 400;
+     configuration lc1001;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj670167;
+     from n6701;
+     to n67;
+     length 350;
+     configuration lc1006;
+}
+ 
+object overhead_line {
+     phases "ABCN";
+     name linobj197101;
+     from n197;
+     to n101;
+     length 250;
+     configuration lc1003;
+}
+
+
+
+
+
+//Create node only objects 
+object node {
+	 name n3;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+ 
+object node {
+	 name n8;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n13;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n14;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+
+object node {
+	 name n1401;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n15;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+ 
+object node {
+	 name n18;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+ 
+object node {
+	 name n21;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object node {
+	 name n23;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object node {
+	 name n25;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n26;
+     phases "ACN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+
+object node {
+	 name n2601;
+     phases "ACN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n27;
+     phases "ACN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object node {
+	 name n36;
+     phases "ABN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object node {
+	 name n40;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object node {
+	 name n44;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+ 
+object node {
+	 name n54;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object meter {
+	 name n57;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+
+// Adding a meter to n57
+
+//object meter {
+//	name n57_meter;
+//	phases "ABCN";
+//	parent n57;
+//	nominal_voltage 2401.7771;
+//}
+ 
+ 
+object node {
+	 name n61;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object meter {
+	 name n67;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+
+object node {
+	 name n6701;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+
+ 
+object node {
+	 name n72;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object node {
+	 name n78;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object node {
+	 name n81;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+
+ 
+object node {
+	 name n89;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object node {
+	 name n91;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object node {
+	 name n93;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object meter {
+	 name n97;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object node {
+	 name n101;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object node {
+	 name n105;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object node {
+	 name n108;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+
+ 
+object node {
+	 name n110;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+ 
+object meter {
+	 name n135;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n149;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+
+object node {
+	 name n1491;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+
+object node {
+	 name n150;
+     phases "ABCN";
+     bustype SWING;
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n151;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+
+object node {
+	 name n152;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n160;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n195;
+     phases "ABCN";
+//     bustype SWING;
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n197;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n250;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n251;
+     phases "ABCN";
+//   bustype SWING;
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n300;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n350;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n450;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+object node {
+	 name n451;
+     phases "ABCN";
+//   bustype SWING;
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+ 
+//object node {
+//	 name n610;
+//    phases "ABCN";
+//     voltage_A 480.000+0j;
+//     voltage_B -240.000-415.6922j;
+//     voltage_C -240.000+415.6922j;
+//     nominal_voltage 480.000;
+//}
+
+object substation {
+  name n610;
+  bustype SWING;
+  nominal_voltage 2401.000;
+  positive_sequence_voltage 2401.000;
+  base_power 100000.0;
+  phases ABCN;
+}
+
+object node {
+	 name n611;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+     nominal_voltage 2401.7771;
+}
+
+
+
+
+//Create load objects
+object load {
+	 name l1;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l1_tn;
+	parent l1_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l1;
+	phases AS;
+	from l1;
+	to l1_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l1_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l1_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l1_tpn_tm;
+	phases AS;
+	from l1_tpn;
+	to l1_tm;
+	length 26.4;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l2;
+     phases "BN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l2_tn;
+	parent l2_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l2;
+	phases BS;
+	from l2;
+	to l2_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l2_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l2_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l2_tpn_tm;
+	phases BS;
+	from l2_tpn;
+	to l2_tm;
+	length 29.7;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l4;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l4_tn;
+	parent l4_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l4;
+	phases CS;
+	from l4;
+	to l4_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l4_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l4_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l4_tpn_tm;
+	phases CS;
+	from l4_tpn;
+	to l4_tm;
+	length 29.7;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l5;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_current_C -0.55781+9.2933j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l5_tn;
+	parent l5_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +19999.96+9999.98j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l5;
+	phases CS;
+	from l5;
+	to l5_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l5_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l5_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l5_tpn_tm;
+	phases CS;
+	from l5_tpn;
+	to l5_tm;
+	length 30.2;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l6;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_C 115.3707+57.6853j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l6_tn;
+	parent l6_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +40000.10+20000.03j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l6;
+	phases CS;
+	from l6;
+	to l6_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l6_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l6_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l6_tpn_tm;
+	phases CS;
+	from l6_tpn;
+	to l6_tm;
+	length 29.5;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l7;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l7_tn;
+	parent l7_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l7;
+	phases AS;
+	from l7;
+	to l7_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l7_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l7_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l7_tpn_tm;
+	phases AS;
+	from l7_tpn;
+	to l7_tm;
+	length 34.2;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l9;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l9_tn;
+	parent l9_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l9;
+	phases AS;
+	from l9;
+	to l9_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l9_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l9_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l9_tpn_tm;
+	phases AS;
+	from l9_tpn;
+	to l9_tm;
+	length 23.1;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l10;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_current_A 8.3272-4.1636j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l10_tn;
+	parent l10_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +20000.10+10000.05j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l10;
+	phases AS;
+	from l10;
+	to l10_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l10_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l10_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l10_tpn_tm;
+	phases AS;
+	from l10_tpn;
+	to l10_tm;
+	length 30.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l11;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_A 115.3707+57.6853j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l11_tn;
+	parent l11_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +40000.10+20000.03j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l11;
+	phases AS;
+	from l11;
+	to l11_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l11_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l11_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l11_tpn_tm;
+	phases AS;
+	from l11_tpn;
+	to l11_tm;
+	length 23.5;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l12;
+     phases "BN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l12_tn;
+	parent l12_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l12;
+	phases BS;
+	from l12;
+	to l12_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l12_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l12_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l12_tpn_tm;
+	phases BS;
+	from l12_tpn;
+	to l12_tm;
+	length 21.8;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l16;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l16_tn;
+	parent l16_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l16;
+	phases CS;
+	from l16;
+	to l16_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l16_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l16_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l16_tpn_tm;
+	phases CS;
+	from l16_tpn;
+	to l16_tm;
+	length 29.1;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l17;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l17_tn;
+	parent l17_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l17;
+	phases CS;
+	from l17;
+	to l17_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l17_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l17_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l17_tpn_tm;
+	phases CS;
+	from l17_tpn;
+	to l17_tm;
+	length 26.8;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l19;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l19_tn;
+	parent l19_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l19;
+	phases AS;
+	from l19;
+	to l19_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l19_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l19_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l19_tpn_tm;
+	phases AS;
+	from l19_tpn;
+	to l19_tm;
+	length 26.9;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l20;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_current_A 16.6543-8.3272j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l20_tn;
+	parent l20_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +39999.96+20000.10j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l20;
+	phases AS;
+	from l20;
+	to l20_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l20_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l20_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l20_tpn_tm;
+	phases AS;
+	from l20_tpn;
+	to l20_tm;
+	length 29.9;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l22;
+     phases "BN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_B 115.3707+57.6853j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l22_tn;
+	parent l22_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +40000.10+20000.03j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l22;
+	phases BS;
+	from l22;
+	to l22_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l22_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l22_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l22_tpn_tm;
+	phases BS;
+	from l22_tpn;
+	to l22_tm;
+	length 31.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l24;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l24_tn;
+	parent l24_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l24;
+	phases CS;
+	from l24;
+	to l24_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l24_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l24_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l24_tpn_tm;
+	phases CS;
+	from l24_tpn;
+	to l24_tm;
+	length 25.3;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l28;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_current_A 16.6543-8.3272j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l28_tn;
+	parent l28_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +39999.96+20000.10j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l28;
+	phases AS;
+	from l28;
+	to l28_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l28_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l28_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l28_tpn_tm;
+	phases AS;
+	from l28_tpn;
+	to l28_tm;
+	length 29.9;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l29;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_A 115.3707+57.6853j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l29_tn;
+	parent l29_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +40000.10+20000.03j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l29;
+	phases AS;
+	from l29;
+	to l29_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l29_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l29_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l29_tpn_tm;
+	phases AS;
+	from l29_tpn;
+	to l29_tm;
+	length 26.2;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l30;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l30_tn;
+	parent l30_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l30;
+	phases CS;
+	from l30;
+	to l30_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l30_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l30_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l30_tpn_tm;
+	phases CS;
+	from l30_tpn;
+	to l30_tm;
+	length 32.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l31;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l31_tn;
+	parent l31_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l31;
+	phases CS;
+	from l31;
+	to l31_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l31_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l31_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l31_tpn_tm;
+	phases CS;
+	from l31_tpn;
+	to l31_tm;
+	length 32.5;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l32;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l32_tn;
+	parent l32_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l32;
+	phases CS;
+	from l32;
+	to l32_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l32_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l32_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l32_tpn_tm;
+	phases CS;
+	from l32_tpn;
+	to l32_tm;
+	length 23.8;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l33;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_current_A 16.6543-8.3272j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l33_tn;
+	parent l33_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +39999.96+20000.10j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l33;
+	phases AS;
+	from l33;
+	to l33_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l33_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l33_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l33_tpn_tm;
+	phases AS;
+	from l33_tpn;
+	to l33_tm;
+	length 29.2;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l34;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_C 115.3707+57.6853j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l34_tn;
+	parent l34_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +40000.10+20000.03j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l34;
+	phases CS;
+	from l34;
+	to l34_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l34_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l34_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l34_tpn_tm;
+	phases CS;
+	from l34_tpn;
+	to l34_tm;
+	length 28.7;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l35;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l35_tn;
+	parent l35_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l35;
+	phases AS;
+	from l35;
+	to l35_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l35_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l35_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l35_tpn_tm;
+	phases AS;
+	from l35_tpn;
+	to l35_tm;
+	length 32.6;
+	configuration lc1000;
+}
+
+object load {
+	 name l37;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_A 115.3707+57.6853j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l37_tn;
+	parent l37_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +40000.10+20000.03j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l37;
+	phases AS;
+	from l37;
+	to l37_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l37_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l37_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l37_tpn_tm;
+	phases AS;
+	from l37_tpn;
+	to l37_tm;
+	length 28.1;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l38;
+     phases "BN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_current_B -7.7694-5.1297j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l38_tn;
+	parent l38_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +19999.98+10000.17j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l38;
+	phases BS;
+	from l38;
+	to l38_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l38_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l38_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l38_tpn_tm;
+	phases BS;
+	from l38_tpn;
+	to l38_tm;
+	length 33.0;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l39;
+     phases "BN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l39_tn;
+	parent l39_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l39;
+	phases BS;
+	from l39;
+	to l39_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l39_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l39_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l39_tpn_tm;
+	phases BS;
+	from l39_tpn;
+	to l39_tm;
+	length 24.0;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l41;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l41_tn;
+	parent l41_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l41;
+	phases CS;
+	from l41;
+	to l41_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l41_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l41_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l41_tpn_tm;
+	phases CS;
+	from l41_tpn;
+	to l41_tm;
+	length 24.8;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l42;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l42_tn;
+	parent l42_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l42;
+	phases AS;
+	from l42;
+	to l42_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l42_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l42_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l42_tpn_tm;
+	phases AS;
+	from l42_tpn;
+	to l42_tm;
+	length 21.8;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l43;
+     phases "BN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_B 115.3707+57.6853j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l43_tn;
+	parent l43_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +40000.10+20000.03j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l43;
+	phases BS;
+	from l43;
+	to l43_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l43_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l43_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l43_tpn_tm;
+	phases BS;
+	from l43_tpn;
+	to l43_tm;
+	length 34.1;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l45;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_current_A 8.3272-4.1636j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l45_tn;
+	parent l45_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +20000.10+10000.05j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l45;
+	phases AS;
+	from l45;
+	to l45_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l45_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l45_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l45_tpn_tm;
+	phases AS;
+	from l45_tpn;
+	to l45_tm;
+	length 29.7;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l46;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l46_tn;
+	parent l46_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l46;
+	phases AS;
+	from l46;
+	to l46_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l46_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l46_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l46_tpn_tm;
+	phases AS;
+	from l46_tpn;
+	to l46_tm;
+	length 27.2;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l47;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_current_A 14.5725-10.409j;
+//     constant_current_B -16.3007-7.4157j;
+//     constant_current_C 1.7282+17.8247j;
+     nominal_voltage 2401.7771;
+}
+
+// Adding Phase A triplex load
+object triplex_node {
+	name l47A_tn;
+	parent l47A_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 35000+25000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l47A;
+	phases AS;
+	from l47;
+	to l47A_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l47A_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l47A_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l47A_tpn_tm;
+	phases AS;
+	from l47A_tpn;
+	to l47A_tm;
+	length 32.6;
+	configuration lc1000;
+}
+
+// Adding Phase B triplex load
+
+ object triplex_node {
+	name l47B_tn;
+	parent l47B_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 35000+25000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l47B;
+	phases BS;
+	from l47;
+	to l47B_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l47B_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l47B_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l47B_tpn_tm;
+	phases BS;
+	from l47B_tpn;
+	to l47B_tm;
+	length 32.6;
+	configuration lc1000;
+}
+
+// Adding Phase C triplex load
+
+ object triplex_node {
+	name l47C_tn;
+	parent l47C_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 35000+25000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l47C;
+	phases CS;
+	from l47;
+	to l47C_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l47C_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l47C_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l47C_tpn_tm;
+	phases CS;
+	from l47C_tpn;
+	to l47C_tm;
+	length 32.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l48;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_A 54.5672+38.9766j;
+//     constant_impedance_B 54.5672+38.9766j;
+//     constant_impedance_C 54.5672+38.9766j;
+     nominal_voltage 2401.7771;
+}
+
+// Adding Phase A triplex load
+object triplex_node {
+	name l48A_tn;
+	parent l48A_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 70000+50000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l48A;
+	phases AS;
+	from l48;
+	to l48A_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l48A_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l48A_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l48A_tpn_tm;
+	phases AS;
+	from l48A_tpn;
+	to l48A_tm;
+	length 32.6;
+	configuration lc1000;
+}
+
+// Adding Phase B triplex load
+
+ object triplex_node {
+	name l48B_tn;
+	parent l48B_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 70000+50000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l48B;
+	phases BS;
+	from l48;
+	to l48B_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l48B_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l48B_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l48B_tpn_tm;
+	phases BS;
+	from l48B_tpn;
+	to l48B_tm;
+	length 32.6;
+	configuration lc1000;
+}
+
+// Adding Phase C triplex load
+
+ object triplex_node {
+	name l48C_tn;
+	parent l48C_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 70000+50000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l48C;
+	phases CS;
+	from l48;
+	to l48C_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l48C_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l48C_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l48C_tpn_tm;
+	phases CS;
+	from l48C_tpn;
+	to l48C_tm;
+	length 32.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l49;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 35000+25000j;
+//     constant_power_B 70000+50000j;
+//     constant_power_C 35000+25000j;
+     nominal_voltage 2401.7771;
+}
+
+// Adding Phase A triplex load
+object triplex_node {
+	name l49A_tn;
+	parent l49A_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 35000+25000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l49A;
+	phases AS;
+	from l49;
+	to l49A_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l49A_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l49A_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l49A_tpn_tm;
+	phases AS;
+	from l49A_tpn;
+	to l49A_tm;
+	length 32.6;
+	configuration lc1000;
+}
+
+// Adding Phase B triplex load
+
+ object triplex_node {
+	name l49B_tn;
+	parent l49B_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 70000+50000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l49B;
+	phases BS;
+	from l49;
+	to l49B_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l49B_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l49B_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l49B_tpn_tm;
+	phases BS;
+	from l49B_tpn;
+	to l49B_tm;
+	length 32.6;
+	configuration lc1000;
+}
+
+// Adding Phase C triplex load
+
+ object triplex_node {
+	name l49C_tn;
+	parent l49C_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 35000+25000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l49C;
+	phases CS;
+	from l49;
+	to l49C_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l49C_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l49C_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l49C_tpn_tm;
+	phases CS;
+	from l49C_tpn;
+	to l49C_tm;
+	length 32.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l50;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l50_tn;
+	parent l50_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l50;
+	phases CS;
+	from l50;
+	to l50_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l50_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l50_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l50_tpn_tm;
+	phases CS;
+	from l50_tpn;
+	to l50_tm;
+	length 29.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l51;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l51_tn;
+	parent l51_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l51;
+	phases AS;
+	from l51;
+	to l51_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l51_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l51_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l51_tpn_tm;
+	phases AS;
+	from l51_tpn;
+	to l51_tm;
+	length 28.2;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l52;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l52_tn;
+	parent l52_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l52;
+	phases AS;
+	from l52;
+	to l52_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l52_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l52_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l52_tpn_tm;
+	phases AS;
+	from l52_tpn;
+	to l52_tm;
+	length 29.7;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l53;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l53_tn;
+	parent l53_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l53;
+	phases AS;
+	from l53;
+	to l53_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l53_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l53_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l53_tpn_tm;
+	phases AS;
+	from l53_tpn;
+	to l53_tm;
+	length 28.2;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l55;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_A 230.7413+115.3707j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l55_tn;
+	parent l55_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +20000.05+10000.03j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l55;
+	phases AS;
+	from l55;
+	to l55_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l55_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l55_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l55_tpn_tm;
+	phases AS;
+	from l55_tpn;
+	to l55_tm;
+	length 30.8;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l56;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l56_tn;
+	parent l56_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l56;
+	phases BS;
+	from l56;
+	to l56_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l56_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l56_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l56_tpn_tm;
+	phases BS;
+	from l56_tpn;
+	to l56_tm;
+	length 27.8;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l58;
+     phases "BN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_current_B -7.7694-5.1297j;
+     nominal_voltage 2401.7771;
+}
+
+// object triplex_node {
+// 	name l58_tn;
+// 	parent l58_tm;
+// 	phases BS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	power_12 +19999.98+10000.17j;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object transformer {
+// 	name triplex_l58;
+// 	phases BS;
+// 	from l58;
+// 	to l58_tpn;
+// 	configuration tc5601;
+// }
+// 
+// object triplex_meter {
+// 	name l58_tm;
+// 	phases BS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_node {
+// 	name l58_tpn;
+// 	phases BS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_line {
+// 	name l58_tpn_tm;
+// 	phases BS;
+// 	from l58_tpn;
+// 	to l58_tm;
+// 	length 34.9;
+// 	configuration lc1000;
+// }
+ 
+object load {
+	 name l59;
+     phases "BN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+// object triplex_node {
+// 	name l59_tn;
+// 	parent l59_tm;
+// 	phases BS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	power_12 20000+10000j;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object transformer {
+// 	name triplex_l59;
+// 	phases BS;
+// 	from l59;
+// 	to l59_tpn;
+// 	configuration tc5601;
+// }
+// 
+// object triplex_meter {
+// 	name l59_tm;
+// 	phases BS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_node {
+// 	name l59_tpn;
+// 	phases BS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_line {
+// 	name l59_tpn_tm;
+// 	phases BS;
+// 	from l59_tpn;
+// 	to l59_tm;
+// 	length 23.3;
+// 	configuration lc1000;
+// }
+ 
+object meter {
+	 name l60;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+// object triplex_node {
+// 	name l60_tn;
+// 	parent l60_tm;
+// 	phases AS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// //	power_12 20000+10000j;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object transformer {
+// 	name triplex_l60;
+// 	phases AS;
+// 	from l60;
+// 	to l60_tpn;
+// 	configuration tc5600;
+// }
+// 
+// object triplex_meter {
+// 	name l60_tm;
+// 	phases AS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_node {
+// 	name l60_tpn;
+// 	phases AS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_line {
+// 	name l60_tpn_tm;
+// 	phases AS;
+// 	from l60_tpn;
+// 	to l60_tm;
+// 	length 21.6;
+// 	configuration lc1000;
+// }
+ 
+object load {
+	 name l62;
+     phases "ABC";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_C 115.3707+57.6853j;
+     nominal_voltage 2401.7771;
+}
+
+// object triplex_node {
+// 	name l62_tn;
+// 	parent l62_tm;
+// 	phases CS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	power_12 +40000.10+20000.03j;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object transformer {
+// 	name triplex_l62;
+// 	phases CS;
+// 	from l62;
+// 	to l62_tpn;
+// 	configuration tc5602;
+// }
+// 
+// object triplex_meter {
+// 	name l62_tm;
+// 	phases CS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_node {
+// 	name l62_tpn;
+// 	phases CS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_line {
+// 	name l62_tpn_tm;
+// 	phases CS;
+// 	from l62_tpn;
+// 	to l62_tm;
+// 	length 21.6;
+// 	configuration lc1000;
+// }
+
+object load {
+	 name l63;
+     phases "ABC";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+// object triplex_node {
+// 	name l63_tn;
+// 	parent l63_tm;
+// 	phases AS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	power_12 40000+20000j;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object transformer {
+// 	name triplex_l63;
+// 	phases AS;
+// 	from l63;
+// 	to l63_tpn;
+// 	configuration tc5600;
+// }
+// 
+// object triplex_meter {
+// 	name l63_tm;
+// 	phases AS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_node {
+// 	name l63_tpn;
+// 	phases AS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_line {
+// 	name l63_tpn_tm;
+// 	phases AS;
+// 	from l63_tpn;
+// 	to l63_tm;
+// 	length 21.0;
+// 	configuration lc1000;
+// }
+ 
+object load {
+	 name l64;
+     phases "ABC";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_current_B -28.2336-19.757j;
+     nominal_voltage 2401.7771;
+}
+
+// object triplex_node {
+// 	name l64_tn;
+// 	parent l64_tm;
+// 	phases BS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	power_12 +75000.06+34999.97j;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object transformer {
+// 	name triplex_l64;
+// 	phases BS;
+// 	from l64;
+// 	to l64_tpn;
+// 	configuration tc5601;
+// }
+// 
+// object triplex_meter {
+// 	name l64_tm;
+// 	phases BS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_node {
+// 	name l64_tpn;
+// 	phases BS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_line {
+// 	name l64_tpn_tm;
+// 	phases BS;
+// 	from l64_tpn;
+// 	to l64_tm;
+// 	length 26.1;
+// 	configuration lc1000;
+// }
+ 
+object load {
+	 name l65;
+     phases "ABCD";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_A 327.4032+233.8595j;
+//     constant_impedance_B 327.4032+233.8595j;
+//     constant_impedance_C 163.7016+116.9297j;
+     nominal_voltage 2401.7771;
+}
+ 
+object load {
+	 name l66;
+     phases "ABC";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 75000+35000j;
+     nominal_voltage 2401.7771;
+}
+
+// object triplex_node {
+// 	name l66_tn;
+// 	parent l66_tm;
+// 	phases CS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	power_12 75000+35000j;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object transformer {
+// 	name triplex_l66;
+// 	phases CS;
+// 	from l66;
+// 	to l66_tpn;
+// 	configuration tc5602;
+// }
+// 
+// object triplex_meter {
+// 	name l66_tm;
+// 	phases CS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_node {
+// 	name l66_tpn;
+// 	phases CS;
+// 	voltage_1 120.0;
+// 	voltage_2 120.0;
+// 	voltage_N 0;
+// 	nominal_voltage 120.0;
+// }
+// 
+// object triplex_line {
+// 	name l66_tpn_tm;
+// 	phases CS;
+// 	from l66_tpn;
+// 	to l66_tm;
+// 	length 26.7;
+// 	configuration lc1000;
+// }
+ 
+object load {
+	 name l68;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l68_tn;
+	parent l68_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l68;
+	phases AS;
+	from l68;
+	to l68_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l68_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l68_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l68_tpn_tm;
+	phases AS;
+	from l68_tpn;
+	to l68_tm;
+	length 25.5;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l69;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l69_tn;
+	parent l69_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l69;
+	phases AS;
+	from l69;
+	to l69_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l69_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l69_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l69_tpn_tm;
+	phases AS;
+	from l69_tpn;
+	to l69_tm;
+	length 31.5;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l70;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l70_tn;
+	parent l70_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l70;
+	phases AS;
+	from l70;
+	to l70_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l70_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l70_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l70_tpn_tm;
+	phases AS;
+	from l70_tpn;
+	to l70_tm;
+	length 29.4;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l71;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l71_tn;
+	parent l71_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l71;
+	phases AS;
+	from l71;
+	to l71_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l71_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l71_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l71_tpn_tm;
+	phases AS;
+	from l71_tpn;
+	to l71_tm;
+	length 31.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l73;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l73_tn;
+	parent l73_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l73;
+	phases CS;
+	from l73;
+	to l73_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l73_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l73_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l73_tpn_tm;
+	phases CS;
+	from l73_tpn;
+	to l73_tm;
+	length 34.0;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l74;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_C 115.3707+57.6853j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l74_tn;
+	parent l74_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +40000.10+20000.03j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l74;
+	phases CS;
+	from l74;
+	to l74_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l74_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l74_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l74_tpn_tm;
+	phases CS;
+	from l74_tpn;
+	to l74_tm;
+	length 34.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l75;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l75_tn;
+	parent l75_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l75;
+	phases CS;
+	from l75;
+	to l75_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l75_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l75_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l75_tpn_tm;
+	phases CS;
+	from l75_tpn;
+	to l75_tm;
+	length 22.9;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l76;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_current_A 31.4742-4.0341j;
+//     constant_current_B -12.0192-16.8269j;
+//     constant_current_C -8.5629+18.8224j;
+     nominal_voltage 2401.7771;
+}
+
+// Adding Phase A triplex load
+object triplex_node {
+	name l76A_tn;
+	parent l76A_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 105000+80000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l76A;
+	phases AS;
+	from l76;
+	to l76A_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l76A_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l76A_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l76A_tpn_tm;
+	phases AS;
+	from l76A_tpn;
+	to l76A_tm;
+	length 32.6;
+	configuration lc1000;
+}
+
+// Adding Phase B triplex load
+
+ object triplex_node {
+	name l76B_tn;
+	parent l76B_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 70000+50000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l76B;
+	phases BS;
+	from l76;
+	to l76B_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l76B_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l76B_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l76B_tpn_tm;
+	phases BS;
+	from l76B_tpn;
+	to l76B_tm;
+	length 32.6;
+	configuration lc1000;
+}
+
+// Adding Phase C triplex load
+
+ object triplex_node {
+	name l76C_tn;
+	parent l76C_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 70000+50000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l76C;
+	phases CS;
+	from l76;
+	to l76C_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l76C_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l76C_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l76C_tpn_tm;
+	phases CS;
+	from l76C_tpn;
+	to l76C_tm;
+	length 32.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l77;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l77_tn;
+	parent l77_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l77;
+	phases BS;
+	from l77;
+	to l77_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l77_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l77_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l77_tpn_tm;
+	phases BS;
+	from l77_tpn;
+	to l77_tm;
+	length 22.1;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l79;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_A 115.3707+57.6853j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l79_tn;
+	parent l79_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +40000.10+20000.03j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l79;
+	phases AS;
+	from l79;
+	to l79_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l79_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l79_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l79_tpn_tm;
+	phases AS;
+	from l79_tpn;
+	to l79_tm;
+	length 30.4;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l80;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l80_tn;
+	parent l80_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l80;
+	phases BS;
+	from l80;
+	to l80_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l80_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l80_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l80_tpn_tm;
+	phases BS;
+	from l80_tpn;
+	to l80_tm;
+	length 21.4;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l82;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l82_tn;
+	parent l82_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l82;
+	phases AS;
+	from l82;
+	to l82_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l82_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l82_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l82_tpn_tm;
+	phases AS;
+	from l82_tpn;
+	to l82_tm;
+	length 27.9;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l83;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l83_tn;
+	parent l83_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l83;
+	phases CS;
+	from l83;
+	to l83_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l83_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l83_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l83_tpn_tm;
+	phases CS;
+	from l83_tpn;
+	to l83_tm;
+	length 28.0;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l84;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l84_tn;
+	parent l84_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l84;
+	phases CS;
+	from l84;
+	to l84_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l84_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l84_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l84_tpn_tm;
+	phases CS;
+	from l84_tpn;
+	to l84_tm;
+	length 32.9;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l85;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l85_tn;
+	parent l85_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l85;
+	phases CS;
+	from l85;
+	to l85_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l85_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l85_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l85_tpn_tm;
+	phases CS;
+	from l85_tpn;
+	to l85_tm;
+	length 27.3;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l86;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l86_tn;
+	parent l86_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l86;
+	phases BS;
+	from l86;
+	to l86_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l86_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l86_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l86_tpn_tm;
+	phases BS;
+	from l86_tpn;
+	to l86_tm;
+	length 25.9;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l87;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l87_tn;
+	parent l87_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l87;
+	phases BS;
+	from l87;
+	to l87_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l87_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l87_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l87_tpn_tm;
+	phases BS;
+	from l87_tpn;
+	to l87_tm;
+	length 30.1;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l88;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l88_tn;
+	parent l88_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l88;
+	phases AS;
+	from l88;
+	to l88_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l88_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l88_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l88_tpn_tm;
+	phases AS;
+	from l88_tpn;
+	to l88_tm;
+	length 31.1;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l90;
+     phases "BN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_current_B -15.5387-10.2595j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l90_tn;
+	parent l90_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +40000.06+20000.00j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l90;
+	phases BS;
+	from l90;
+	to l90_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l90_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l90_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l90_tpn_tm;
+	phases BS;
+	from l90_tpn;
+	to l90_tm;
+	length 27.8;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l92;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l92_tn;
+	parent l92_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l92;
+	phases CS;
+	from l92;
+	to l92_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l92_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l92_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l92_tpn_tm;
+	phases CS;
+	from l92_tpn;
+	to l92_tm;
+	length 25.2;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l94;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l94_tn;
+	parent l94_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l94;
+	phases AS;
+	from l94;
+	to l94_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l94_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l94_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l94_tpn_tm;
+	phases AS;
+	from l94_tpn;
+	to l94_tm;
+	length 22.2;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l95;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l95_tn;
+	parent l95_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l95;
+	phases BS;
+	from l95;
+	to l95_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l95_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l95_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l95_tpn_tm;
+	phases BS;
+	from l95_tpn;
+	to l95_tm;
+	length 28.8;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l96;
+     phases "BN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l96_tn;
+	parent l96_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l96;
+	phases BS;
+	from l96;
+	to l96_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l96_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l96_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l96_tpn_tm;
+	phases BS;
+	from l96_tpn;
+	to l96_tm;
+	length 23.9;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l98;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l98_tn;
+	parent l98_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l98;
+	phases AS;
+	from l98;
+	to l98_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l98_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l98_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l98_tpn_tm;
+	phases AS;
+	from l98_tpn;
+	to l98_tm;
+	length 20.7;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l99;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l99_tn;
+	parent l99_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l99;
+	phases BS;
+	from l99;
+	to l99_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l99_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l99_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l99_tpn_tm;
+	phases BS;
+	from l99_tpn;
+	to l99_tm;
+	length 31.3;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l100;
+     phases "ABCN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_C 115.3707+57.6853j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l100_tn;
+	parent l100_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +40000.10+20000.03j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l100;
+	phases CS;
+	from l100;
+	to l100_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l100_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l100_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l100_tpn_tm;
+	phases CS;
+	from l100_tpn;
+	to l100_tm;
+	length 23.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l102;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l102_tn;
+	parent l102_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l102;
+	phases CS;
+	from l102;
+	to l102_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l102_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l102_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l102_tpn_tm;
+	phases CS;
+	from l102_tpn;
+	to l102_tm;
+	length 26.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l103;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l103_tn;
+	parent l103_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l103;
+	phases CS;
+	from l103;
+	to l103_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l103_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l103_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l103_tpn_tm;
+	phases CS;
+	from l103_tpn;
+	to l103_tm;
+	length 30.3;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l104;
+     phases "CN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_C 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l104_tn;
+	parent l104_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l104;
+	phases CS;
+	from l104;
+	to l104_tpn;
+	configuration tc5602;
+}
+
+object triplex_meter {
+	name l104_tm;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l104_tpn;
+	phases CS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l104_tpn_tm;
+	phases CS;
+	from l104_tpn;
+	to l104_tm;
+	length 25.4;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l106;
+     phases "BN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l106_tn;
+	parent l106_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l106;
+	phases BS;
+	from l106;
+	to l106_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l106_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l106_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l106_tpn_tm;
+	phases BS;
+	from l106_tpn;
+	to l106_tm;
+	length 31.0;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l107;
+     phases "BN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_B 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l107_tn;
+	parent l107_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l107;
+	phases BS;
+	from l107;
+	to l107_tpn;
+	configuration tc5601;
+}
+
+object triplex_meter {
+	name l107_tm;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l107_tpn;
+	phases BS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l107_tpn_tm;
+	phases BS;
+	from l107_tpn;
+	to l107_tm;
+	length 25.9;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l109;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 40000+20000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l109_tn;
+	parent l109_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 40000+20000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l109;
+	phases AS;
+	from l109;
+	to l109_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l109_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l109_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l109_tpn_tm;
+	phases AS;
+	from l109_tpn;
+	to l109_tm;
+	length 30.3;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l111;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l111_tn;
+	parent l111_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l111;
+	phases AS;
+	from l111;
+	to l111_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l111_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l111_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l111_tpn_tm;
+	phases AS;
+	from l111_tpn;
+	to l111_tm;
+	length 30.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l112;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_current_A 8.3272-4.1636j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l112_tn;
+	parent l112_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +20000.10+10000.05j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l112;
+	phases AS;
+	from l112;
+	to l112_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l112_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l112_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l112_tpn_tm;
+	phases AS;
+	from l112_tpn;
+	to l112_tm;
+	length 26.6;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l113;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_impedance_A 115.3707+57.6853j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l113_tn;
+	parent l113_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 +40000.10+20000.03j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l113;
+	phases AS;
+	from l113;
+	to l113_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l113_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l113_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l113_tpn_tm;
+	phases AS;
+	from l113_tpn;
+	to l113_tm;
+	length 20.3;
+	configuration lc1000;
+}
+ 
+object load {
+	 name l114;
+     phases "AN";
+     voltage_A 2401.7771;
+     voltage_B -1200.8886-2080.000j;
+     voltage_C -1200.8886+2080.000j;
+//     constant_power_A 20000+10000j;
+     nominal_voltage 2401.7771;
+}
+
+object triplex_node {
+	name l114_tn;
+	parent l114_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	power_12 20000+10000j;
+	nominal_voltage 120.0;
+}
+
+object transformer {
+	name triplex_l114;
+	phases AS;
+	from l114;
+	to l114_tpn;
+	configuration tc5600;
+}
+
+object triplex_meter {
+	name l114_tm;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name l114_tpn;
+	phases AS;
+	voltage_1 120.0;
+	voltage_2 120.0;
+	voltage_N 0;
+	nominal_voltage 120.0;
+}
+
+object triplex_line {
+	name l114_tpn_tm;
+	phases AS;
+	from l114_tpn;
+	to l114_tm;
+	length 25.0;
+	configuration lc1000;
+}
+
+// Switches
+object switch {
+	 name sw13152;
+     phases "ABCN";
+     from n13;
+     to n152;
+     status CLOSED;
+}
+// closing switch for TMG
+//object switch {
+//	 name sw18135;
+//     phases "ABCN";
+//     from n18;
+//     to n135;
+//     status CLOSED;
+//}
+
+// Creating new switch for TMG
+object switch {
+	 name sw57135;
+     phases "ABCN";
+     from n57;
+     to n135;
+     status CLOSED;
+}
+
+object switch {
+	 name sw60160;
+     phases "ABCN";
+     from l60;
+     to n160;
+     status CLOSED;
+}
+
+object switch {
+	 name sw61611;
+     phases "ABCN";
+     from n61;
+     to n611;
+     status CLOSED;
+}
+
+object switch {
+	 name sw97197;
+     phases "ABCN";
+     from n97;
+     to n197;
+     status CLOSED;
+}
+
+object switch {
+	 name sw1491149;
+     phases "ABCN";
+     from n1491;
+     to n149;
+     status CLOSED;
+}
+
+object switch {
+	 name sw250251;
+     phases "ABCN";
+     from n250;
+     to n251;
+     //status OPEN;
+	 status CLOSED;		//For giggles - useless node
+}
+
+object switch {
+	 name sw450451;
+     phases "ABCN";
+     from n450;
+     to n451;
+     //status OPEN;
+	 status CLOSED;		//For giggles - useless node
+}
+
+// removing open switches
+//object switch {
+//	 name sw5494;
+//     phases "AN";
+//     from n54;
+//     to l94;
+//     status OPEN;
+//}
+
+// opening switches for TMG
+//object switch {
+//	 name sw151300;
+//     phases "ABCN";
+//     from n151;
+//     to n300;
+//    status CLOSED;
+//}
+
+object switch {
+	 name sw300350;
+     phases "ABCN";
+     from n300;
+     to n350;
+     //status OPEN;
+	 status CLOSED;		//For giggles - useless node
+}
+
+object switch {
+	name sw95195;
+     phases "ABCN";
+     from l95;
+     to n195;
+     //status OPEN;
+	 status CLOSED;		//For giggles - useless node
+}
+
+
+// Capacitors
+object capacitor {
+     name c83;
+     phases ABCN;
+     pt_phase ABCN;
+     parent l83;
+     phases_connected ABCN;
+     control VOLT;
+     dwell_time 300;
+     voltage_set_high 2500;
+     voltage_set_low 2300;
+     remote_sense l83;
+     capacitor_A 200 kVAr;
+     capacitor_B 200 kVAr;
+     capacitor_C 200 kVAr;
+     control_level INDIVIDUAL;
+     nominal_voltage 2401.7771;
+}
+
+object capacitor {
+     phases AN;
+     name c88;
+     pt_phase AN;
+     parent l88;
+     phases_connected AN;
+     control VOLT;
+     dwell_time 300;
+     voltage_set_high 2500;
+     voltage_set_low 2300;
+     remote_sense l88;
+     capacitor_A 50 kVAr;
+     control_level INDIVIDUAL;
+     nominal_voltage 2401.7771;
+}
+
+object capacitor {
+     phases BN;
+     name c90;
+     pt_phase BN;
+     parent l90;
+     phases_connected BN;
+     control VOLT;
+     dwell_time 300;
+     voltage_set_high 2500;
+     voltage_set_low 2300;
+     remote_sense l90;
+     capacitor_B 50 kVAr;
+     control_level INDIVIDUAL;
+     nominal_voltage 2401.7771;
+}
+
+object capacitor {
+     phases CN;
+     name c92;
+     pt_phase CN;
+     parent l92;
+     phases_connected CN;
+     control VOLT;
+     dwell_time 300;
+     voltage_set_high 2500;
+     voltage_set_low 2300;
+     remote_sense l92;
+     capacitor_C 50 kVAr;
+     control_level INDIVIDUAL;
+     nominal_voltage 2401.7771;
+}
+
+// Transformer
+
+object transformer_configuration {
+     name tc5600;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type POLETOP;
+     resistance 0.00600; 
+     reactance 0.00400; 
+     shunt_impedance 339.610+287.181j;
+     primary_voltage 4160.000;
+     secondary_voltage 207.846;
+     power_rating 100.0;
+     powerA_rating 100.0;
+}
+
+object transformer_configuration {
+     name tc5601;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type POLETOP;
+     resistance 0.00600; 
+     reactance 0.00400; 
+     shunt_impedance 339.610+287.181j;
+     primary_voltage 4160.000;
+     secondary_voltage 207.846;
+      power_rating 100.0;
+     powerB_rating 100.0;
+}
+
+object transformer_configuration {
+     name tc5602;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type POLETOP;
+     resistance 0.00600; 
+     reactance 0.00400; 
+     shunt_impedance 339.610+287.181j;
+     primary_voltage 4160.000;
+     secondary_voltage 207.846;
+      power_rating 100.0;
+     powerC_rating 100.0;
+}
+
+//object transformer_configuration {
+//	name tc400;
+//	connect_type DELTA_DELTA;
+//  	install_type PADMOUNT;
+//  	power_rating 150;
+//  	primary_voltage 4160;
+//  	secondary_voltage 480;
+//  	resistance 0.0127;
+//  	reactance 0.0272;
+//}
+  
+//object transformer {
+//	name tran611610;
+//  	phases "ABCN";
+//  	from n611;
+//  	to n610;
+//  	configuration tc400;
+//}
+
+
+
+// Regulators
+object regulator_configuration {
+	name regcon1501490;
+	connect_type 1;
+	band_center 2450.0;
+	band_width 40.0;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 700;
+	power_transducer_ratio 20;
+	compensator_r_setting_A 3.0;
+	compensator_x_setting_A 7.5;
+	compensator_r_setting_B 3.0;
+	compensator_x_setting_B 7.5;
+	compensator_r_setting_C 3.0;
+	compensator_x_setting_C 7.5;
+	CT_phase "ABC";
+	PT_phase "ABC";
+	regulation 0.10;
+	Control OUTPUT_VOLTAGE;
+     control_level INDIVIDUAL;
+	Type A;
+}
+  
+object regulator {
+	 name reg1501491;
+	 phases "ABC";
+	 from n150;
+	 to n1491;
+	 configuration regcon1501490;
+}
+
+object regulator_configuration {
+	name regcon2526010;
+	connect_type 1;
+	band_center 2450.0;
+	band_width 40.0;
+	time_delay 90.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 50;
+	power_transducer_ratio 20;
+	compensator_r_setting_A 0.4;
+	compensator_x_setting_A 0.4;
+	compensator_r_setting_C 0.4;
+	compensator_x_setting_C 0.4;
+	CT_phase "A";
+	PT_phase "A";
+	regulation 0.10;
+	Control OUTPUT_VOLTAGE;
+     control_level BANK;
+	Type A;
+}
+  
+object regulator {
+	 name reg252601;
+	 phases "AC";
+	 from n25;
+	 to n2601;
+	 configuration regcon2526010;
+}
+
+object regulator_configuration {
+	name regcon914010;
+	connect_type 1;
+	band_center 2450.0;
+	band_width 40.0;
+	time_delay 60.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 50;
+	power_transducer_ratio 20;
+	compensator_r_setting_A 0.4;
+	compensator_x_setting_A 0.4;
+	CT_phase "A";
+	PT_phase "A";
+	regulation 0.10;
+     Control OUTPUT_VOLTAGE;
+     control_level BANK;
+	Type A;
+}
+  
+object regulator {
+	 name reg91401;
+	 phases "A";
+	 from l9;
+	 to n1401;
+	 configuration regcon914010;
+}
+
+object regulator_configuration {
+	name regcon16067010;
+	connect_type 1;
+	band_center 2450.0;
+	band_width 4.0;
+	time_delay 120.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 300;
+	power_transducer_ratio 20;
+	compensator_r_setting_A 0.6;
+	compensator_x_setting_A 1.3;
+	compensator_r_setting_B 1.4;
+	compensator_x_setting_B 2.6;
+	compensator_r_setting_C 0.2;
+	compensator_x_setting_C 1.4;
+	CT_phase "ABC";
+	PT_phase "ABC";
+	regulation 0.10;
+     Control OUTPUT_VOLTAGE;
+     control_level INDIVIDUAL;
+	Type A;
+}
+  
+object regulator {
+	 name reg1606701;
+	 phases "ABC";
+	 from n160;
+	 to n6701;
+	 configuration regcon16067010;
+}
+
