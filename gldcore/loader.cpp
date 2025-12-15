@@ -33,8 +33,16 @@ STATUS loader::convert(json value, string &out)
 {
     if (value.is_number_float())
     {
+        char buf[64]{};
         double dblvalue = value.get<double>();
-        out = std::to_string(dblvalue);
+        to_chars_result res = to_chars(buf, buf + sizeof(buf), dblvalue);
+        if (res.ec == errc::value_too_large)
+        {
+            output_error("loader::convert() parsing file, %s: double value too large to convert to string: %f",
+                         this->filename.c_str(), dblvalue);
+            return FAILED;
+        }
+        out = string(buf);
         return SUCCESS;
     }
     else if (value.is_number_integer())
@@ -168,7 +176,7 @@ bool loader::class_properties(CLASS *oclass, json properties, string source_code
 						unit = parse.extractBetween(sname, '[', ']');
 						sname = sname.substr(0, sname.find("["));
 					}
-					else if (parse.findLastIndex(name, '{') > -1) {
+					else if (parse.findLastIndex(sname, '{') > -1) {
 						csv_keys = parse.extractBetween(sname, '{', '}');
 						// construct an enumeration
 						if (parse.property_specs(csv_keys, &keys)) {
@@ -357,7 +365,7 @@ STATUS loader::loadClock()
         string ts = j_obj["timestamp"].get<string>();
         clearQuotesFromStr(ts);
         TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
-        if (tsval == TS_NEVER)
+        if (tsval == TS_INVALID)
         {
             output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. timestamp "
                              "provided: %s.", this->filename.c_str(), ts.c_str());
@@ -373,7 +381,7 @@ STATUS loader::loadClock()
         string ts = j_obj["starttime"].get<string>();
         clearQuotesFromStr(ts);
         TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
-        if (tsval == TS_NEVER)
+        if (tsval == TS_INVALID)
         {
             output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. starttime "
                              "provided: %s.", this->filename.c_str(), ts.c_str());
@@ -389,7 +397,7 @@ STATUS loader::loadClock()
         string ts = j_obj["stoptime"].get<string>();
         clearQuotesFromStr(ts);
         TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
-        if (tsval == TS_NEVER)
+        if (tsval == TS_INVALID)
         {
             output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. stoptime "
                              "provided: %s.", this->filename.c_str(), ts.c_str());
@@ -410,6 +418,21 @@ bool loader::module_properties(MODULE *mod, json properties)
     string propValue = "";
 	for (auto& [name, value] : properties.items())
     {
+        if (value.is_string())
+        {
+            string strValue = value.get<std::string>();
+            if (parse.replace_variables(strValue))
+            {
+                value = strValue;
+            }
+            else
+            {
+                output_error("loader::module_properties() parsing file, %s: unable perform variable substitution in "
+                             "module property value %s for property %s of module %s.", this->filename.c_str(),
+                             strValue.c_str(), name.c_str(), mod->name);
+                return false;
+            }
+        }
         if (name == "inline_comments" || name == "outside_comments" || name == "inside_comments")
         {
             continue;
@@ -538,19 +561,26 @@ STATUS loader::loadObject(const string className, json objInstance)
     }
     strncpy(clsName, className.c_str(), 63);
     nameObj.name = clsName;
-    int id = -1;
-    int id2 = -1;
+    int64 id = -1;
+    int64 id2 = -1;
     if (objInstance.contains("object_declaration")) {
         string objectDeclaration = objInstance["object_declaration"].get<string>();
         size_t strIdx = objectDeclaration.find(':');
         string classNameStripped = objectDeclaration.substr(strIdx + 1);
+        if (classNameStripped.empty())
+        {
+            output_error("loader::loadObject() parsing file, %s: invalid object declaration %s. Missing identifier "
+                         "syntax after the ':'.",
+                         this->filename.c_str(), objectDeclaration.c_str());
+            return FAILED;
+        }
         strIdx = classNameStripped.find("..");
         if (strIdx != string::npos)
         {
             if (strIdx > 0)
             {
-                id = stoi(classNameStripped, &strIdx);
-                id2 = stoi(classNameStripped.substr(strIdx + 2)) + 1;
+                id = stoll(classNameStripped, &strIdx);
+                id2 = stoll(classNameStripped.substr(strIdx + 2)) + 1;
                 if (id2 <= id)
                 {
                     output_error("loader::loadObject() parsing file, %s: invalid object id ranges %s",
@@ -560,8 +590,8 @@ STATUS loader::loadObject(const string className, json objInstance)
             }
             else
             {
-                id = 0;
-                id2 = stoi(classNameStripped.substr(strIdx + 2));
+                id = -1;
+                id2 = stoll(classNameStripped.substr(strIdx + 2)) - 1;
                 if (id2 <= id)
                 {
                     output_error("loader::loadObject() parsing file, %s: invalid object count %s",
@@ -572,9 +602,8 @@ STATUS loader::loadObject(const string className, json objInstance)
         }
         else
         {
-            id = stoi(classNameStripped);
+            id = stoll(classNameStripped);
         }
-        cout << "ID from object_declaration: " << id << endl;
     }
     if (id2 <= id)
     {
@@ -621,7 +650,10 @@ STATUS loader::loadObject(const string className, json objInstance)
         }
         for (auto& [propName, propValue] : objInstance.items())
         {
-            if (propName == "inline_comments" || propName == "outside_comments" || propName == "inside_comments")
+            if (propName == "inline_comments"
+                || propName == "outside_comments"
+                || propName == "inside_comments"
+                || propName == "object_declaration")
             {
                 continue;
             }
@@ -663,8 +695,16 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
 	char sources[4096];
 	double scale=1,bias=0;
 	UNIT *unit=nullptr;
-    LOADMETHOD *method = class_get_loadmethod(obj->oclass, propName.c_str());
     STATUS status = SUCCESS;
+    if (this->parse.replace_variables(propValue) == false)
+    {
+        output_error("loader::objectProperties() parsing file, %s: unable perform variable substitution in "
+                     "object property value %s for property %s of object %s/%s.", this->filename.c_str(),
+                     propValue.c_str(), propName.c_str(), obj->oclass->module->name, obj->oclass->name);
+        return FAILED;
+    }
+    clearQuotesFromStr(propValue);
+    LOADMETHOD *method = class_get_loadmethod(obj->oclass, propName.c_str());
     if (method != nullptr)
     {
         if (this->parse.value(propValue, propertyValue, sizeof(propertyValue)))
@@ -1036,8 +1076,9 @@ STATUS loader::loadSchedules()
 {
     STATUS rv = SUCCESS;
     auto j_obj = this->jsn["schedules"];
-	std::string cron_schedule;
-	std::string	sub_schedule;
+	string cron_schedule;
+    string schedule_block;
+    size_t numberOfBlocks = 0;
 	SCHEDULE* sch;
 	for (auto& [name, schedule] : j_obj.items())
     {
@@ -1047,30 +1088,32 @@ STATUS loader::loadSchedules()
         }
 		if (schedule.is_array())
         {
-
 			cron_schedule = "";
-			for (auto& element : schedule)
+            numberOfBlocks = schedule.size();
+			for (auto& block : schedule)
             {
-				sub_schedule = "";
-				if (element.is_object() && element.contains("items"))
+				schedule_block = "";
+				if (block.is_object())
                 {
-					if (element["items"].is_array())
+                    if (numberOfBlocks > 1)
                     {
-						if (element.contains("name") && element["name"].is_string())
+                        schedule_block += block["name"].get<std::string>();
+                        if (schedule_block == "")
                         {
-							sub_schedule = element["name"].get_ref<const std::string&>();
-                        }
-						for (auto& item : element["items"])
+                            schedule_block += "{";
+                        } 
+                        else
                         {
-							cron_schedule += item.get_ref<const std::string&>() + ";\n";
+                            schedule_block += " {";
                         }
-					}
-                    else
+                    }
+					for (auto& item: block["items"])
                     {
-						output_error_raw("loader::loadSchedules() parsing file, %s: schedule %s items is not an array",
-                                         this->filename.c_str(), name.data());
-                        rv = FAILED;
-                        break;
+                        schedule_block += item.get<string>() + ";";
+                    }
+                    if (numberOfBlocks > 1)
+                    {
+                        schedule_block += "}";
                     }
 				}
                 else
@@ -1080,15 +1123,17 @@ STATUS loader::loadSchedules()
                     rv = FAILED;
                     break;
                 }
+                cron_schedule += schedule_block;
 			}
-			if (cron_schedule != "")
+
+			sch = schedule_create(name.data(), cron_schedule.data());
+            if (sch != nullptr)
             {
-				sch = schedule_create(name.data(), cron_schedule.data());
-				sch->raw = schedule.dump();
+			    sch->raw = schedule.dump();
             }
             else
             {
-				output_error_raw("loader::loadSchedules() parsing file, %s: schedule %s is blank",
+				output_error_raw("loader::loadSchedules() parsing file, %s: schedule '%s' could not be created",
                                  this->filename.c_str(), name.data());
                 rv = FAILED;
                 break;

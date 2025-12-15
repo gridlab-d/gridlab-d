@@ -800,6 +800,27 @@
           }
         },
         {
+          "name": "inv10",
+          "parent": "m10",
+          "groupid": "cdc_group",
+          "inverter_type": "FOUR_QUADRANT",
+          "four_quadrant_control_mode": "CONSTANT_PQ",
+          "generator_mode": "CONSTANT_PQ",
+          "generator_status": "ONLINE",
+          "inverter_efficiency": 1.0,
+          "rated_power": 20000.0,
+          "charge_on_threshold": "5.0 kW",
+          "charge_off_threshold": "7.0 kW",
+          "discharge_off_threshold": "7.5 kW",
+          "discharge_on_threshold": "9.0 kW",
+          "max_discharge_rate": "1.0 kW",
+          "max_charge_rate": "0.80 kW",
+          "inline_comments": {
+            "generator_mode": "//Not effectively used, just tired of seeing Warning",
+            "rated_power": "//Per phase rating"
+          }
+        },
+        {
           "name": "inv11",
           "groupid": "cdc_group",
           "parent": "m11",
@@ -882,31 +903,14 @@
           ]
         },
         {
-          "name": "inv10",
-          "parent": "m10",
+          "name": "batt9",
+          "parent": "inv9",
           "use_internal_battery_model": true,
           "battery_type": "LI_ION",
           "Energy": "200.0 kWh",
           "base_efficiency": 1.0,
           "state_of_charge": 1.0,
-          "generator_mode": "CONSTANT_PQ",
-          "}object": "inverter ",
-          "groupid": "cdc_group",
-          "inverter_type": "FOUR_QUADRANT",
-          "four_quadrant_control_mode": "CONSTANT_PQ",
-          "generator_status": "ONLINE",
-          "inverter_efficiency": 1.0,
-          "rated_power": 20000.0,
-          "charge_on_threshold": "5.0 kW",
-          "charge_off_threshold": "7.0 kW",
-          "discharge_off_threshold": "7.5 kW",
-          "discharge_on_threshold": "9.0 kW",
-          "max_discharge_rate": "1.0 kW",
-          "max_charge_rate": "0.80 kW",
-          "inline_comments": {
-            "generator_mode": "//Not effectively used, just tired of seeing Warning",
-            "rated_power": "//Per phase rating"
-          }
+          "generator_mode": "SUPPLY_DRIVEN"
         },
         {
           "name": "batt10",

@@ -1390,6 +1390,44 @@ bool parser::alternate_value(string& text)
 	return false;
 }
 
+bool parser::replace_variables(string& text)
+{
+    /**
+        attempts to replace variable references in the ${varname}
+        format with either environment variables or global variables
+        returns false if no no environment variable or global variable with name varname is defined.
+        returns true if there was not need for replacement or the replacement was succesful.
+    **/
+    char varBuffer[1024] = "";
+    size_t varnameStart = text.find("${");
+    size_t varnameEnd = text.find("}");
+    string varname = "";
+    char *varPtr = nullptr;
+    if (varnameStart != string::npos && varnameEnd != string::npos && varnameEnd > varnameStart)
+    {
+        size_t varnameLength = varnameEnd - varnameStart - 2;
+        size_t replaceLength = varnameEnd - varnameStart + 1;
+        varname = text.substr(varnameStart + 2, varnameLength);
+        varPtr = getenv(varname.c_str());
+        if (varPtr != nullptr)
+        {
+            text.replace(varnameStart, replaceLength, varPtr);
+            return true;
+        }
+        else if (global_getvar(varname.c_str(), varBuffer, sizeof(varBuffer)) != nullptr)
+        {
+            text.replace(varnameStart, replaceLength, string(varBuffer));
+            return true;
+        }
+        else
+        {
+            output_error_raw("parser::replace_variables() parsing file, %s: variable name, %s, is not defined as a "
+                             "global variable or an environment variable!", this->filename.c_str(), varname.c_str());
+            return false;
+        }
+    }
+    return true;
+}
 int parser::linear_transform(string valueString, TRANSFORMSOURCE *xstype, void **source, double *scale, double *bias,
                              OBJECT *from)
 {
