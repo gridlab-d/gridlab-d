@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-publish:
     name: Build and Publish to TestPyPI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     environment: testpypi
     permissions:
       id-token: write  # IMPORTANT: Mandatory for trusted publishing
