@@ -1,0 +1,384 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $id$",
+      "// Copyright (C) 2014 Battelle Memorial Institute",
+      "// Transformer loss calculations",
+      "// FBS version",
+      "// Any delta-connected transformers solve slightly different -- separate branch for their asserts (so align between solvers)"
+    ]
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:01'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "FBS",
+      "line_capacitance": true,
+      "line_limits": false,
+      "maximum_voltage_error": 1e-12
+    },
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc301c",
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306,
+          "diameter": 0.721,
+          "outside_comments": [
+            "//COnfiguration information",
+            "//Conductors"
+          ],
+          "inline_comments": {
+            "name": "//336,400 26/7 ACSR"
+          }
+        },
+        {
+          "name": "olc301n",
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592,
+          "diameter": 0.563,
+          "inline_comments": {
+            "name": "//4/0 6/1 ACSR"
+          }
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls500301",
+          "distance_AB": 2.5,
+          "distance_AC": 7.0,
+          "distance_BC": 4.5,
+          "distance_CN": 5.0,
+          "distance_AN": 5.65685424949,
+          "distance_BN": 4.27200187266,
+          "distance_AE": 28.0,
+          "distance_BE": 28.0,
+          "distance_CE": 28.0,
+          "distance_NE": 24.0,
+          "outside_comments": [
+            "//Line spacings",
+            "//ABCN"
+          ]
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc300",
+          "conductor_A": "olc301c",
+          "conductor_B": "olc301c",
+          "conductor_C": "olc301c",
+          "conductor_N": "olc301n",
+          "spacing": "ls500301",
+          "outside_comments": [
+            "//Line configurations",
+            "//ABCN"
+          ]
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "tconfigdy",
+          "connect_type": "DELTA_GWYE",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06
+        },
+        {
+          "name": "tconfigdd",
+          "connect_type": "DELTA_DELTA",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06
+        },
+        {
+          "name": "tconfigyy",
+          "connect_type": "WYE_WYE",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06
+        },
+        {
+          "name": "tconfigspctB",
+          "connect_type": "SINGLE_PHASE_CENTER_TAPPED",
+          "power_rating": 6000,
+          "powerB_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06
+        },
+        {
+          "name": "tconfigyyspB",
+          "connect_type": "SINGLE_PHASE",
+          "power_rating": 6000,
+          "powerB_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "node1",
+          "phases": "ABCD",
+          "bustype": "SWING",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node2dy",
+          "phases": "ABCD",
+          "nominal_voltage": 7200.0,
+          "parent": "node2del",
+          "outside_comments": [
+            "//DGwye"
+          ]
+        },
+        {
+          "name": "load4dy",
+          "phases": "ABCN",
+          "nominal_voltage": 2400
+        },
+        {
+          "name": "node2dd",
+          "phases": "ABCD",
+          "nominal_voltage": 7200.0,
+          "parent": "node2del",
+          "outside_comments": [
+            "//DD"
+          ]
+        },
+        {
+          "name": "load4dd",
+          "phases": "ABCD",
+          "nominal_voltage": 2400
+        },
+        {
+          "name": "node2yy",
+          "phases": "ABC",
+          "nominal_voltage": 7200.0,
+          "parent": "node2",
+          "outside_comments": [
+            "//YY"
+          ]
+        },
+        {
+          "name": "load4yy",
+          "phases": "ABC",
+          "nominal_voltage": 2400
+        },
+        {
+          "name": "node2spct",
+          "phases": "ABC",
+          "nominal_voltage": 7200.0,
+          "parent": "node2",
+          "outside_comments": [
+            "//SPCT"
+          ]
+        },
+        {
+          "name": "node2spy",
+          "phases": "ABC",
+          "nominal_voltage": 7200.0,
+          "parent": "node2",
+          "outside_comments": [
+            "//Single-phase Y"
+          ]
+        },
+        {
+          "name": "load4spy",
+          "phases": "B",
+          "nominal_voltage": 2400
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "ohl12",
+          "phases": "ABC",
+          "from": "node1",
+          "to": "node2",
+          "length": 2000,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ohl12del",
+          "phases": "ABC",
+          "from": "node1",
+          "to": "node2del",
+          "length": 2000,
+          "configuration": "lc300"
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node2",
+          "phases": "ABCD",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node2del",
+          "phases": "ABCD",
+          "nominal_voltage": 7200
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "parent": "xform23dy",
+          "target": "power_losses",
+          "within": 0.5,
+          "value": "129706.5+80.5377d"
+        },
+        {
+          "parent": "xform23dd",
+          "target": "power_losses",
+          "within": 0.5,
+          "value": "89062.5+80.5377d"
+        },
+        {
+          "parent": "xform23yy",
+          "target": "power_losses",
+          "within": 0.5,
+          "value": "135724+80.5377d"
+        },
+        {
+          "parent": "xform23spct",
+          "target": "power_losses",
+          "within": 0.5,
+          "value": "21759.1+130554j"
+        },
+        {
+          "parent": "xform23spy",
+          "target": "power_losses",
+          "within": 0.5,
+          "value": "132355+80.5377d"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "xform23dy",
+          "phases": "ABCN",
+          "from": "node2dy",
+          "to": "load4dy",
+          "configuration": "tconfigdy"
+        },
+        {
+          "name": "xform23dd",
+          "phases": "ABCD",
+          "from": "node2dd",
+          "to": "load4dd",
+          "configuration": "tconfigdd"
+        },
+        {
+          "name": "xform23yy",
+          "phases": "ABCN",
+          "from": "node2yy",
+          "to": "load4yy",
+          "configuration": "tconfigyy"
+        },
+        {
+          "name": "xform23spct",
+          "phases": "BS",
+          "from": "node2spct",
+          "to": "load4spct",
+          "configuration": "tconfigspctB"
+        },
+        {
+          "name": "xform23spy",
+          "phases": "BN",
+          "from": "node2spy",
+          "to": "load4spy",
+          "configuration": "tconfigyyspB"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load4dy_load",
+          "parent": "load4dy",
+          "phases": "ABCN",
+          "constant_power_A": "+1800000.000+800000.000j",
+          "constant_power_B": "+180000.000+80000.000j",
+          "constant_power_C": "+18000.000+8000.000j",
+          "nominal_voltage": 2400
+        },
+        {
+          "name": "load4dd_load",
+          "parent": "load4dd",
+          "phases": "ABCD",
+          "constant_power_A": "+1800000.000+800000.000j",
+          "constant_power_B": "+180000.000+80000.000j",
+          "constant_power_C": "+18000.000+8000.000j",
+          "nominal_voltage": 2400
+        },
+        {
+          "name": "load4yy_load",
+          "parent": "load4yy",
+          "phases": "ABC",
+          "constant_power_A": "+1800000.000+800000.000j",
+          "constant_power_B": "+180000.000+80000.000j",
+          "constant_power_C": "+18000.000+8000.000j",
+          "nominal_voltage": 2400
+        },
+        {
+          "name": "load4spy_load",
+          "parent": "load4spy",
+          "phases": "B",
+          "constant_power_B": "+1800000.000+800000.000j",
+          "nominal_voltage": 2400
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "load4spct",
+          "phases": "BS",
+          "nominal_voltage": 2400
+        }
+      ]
+    },
+    "triplex_load": {
+      "instances": [
+        {
+          "name": "load4spct_load",
+          "parent": "load4spct",
+          "phases": "BS",
+          "constant_power_12": "+1800000.000+800000.000j",
+          "nominal_voltage": 2400
+        }
+      ]
+    }
+  }
+}

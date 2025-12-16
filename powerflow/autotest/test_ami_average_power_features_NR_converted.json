@@ -1,0 +1,336 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Tests \"average reporting\" for AMI systems",
+      "//Checks the power values",
+      "//#set profiler=1"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "double_format": "%+.12lg"
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2012-01-01 00:00:00'",
+    "stoptime": "'2012-01-01 01:00:00'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR",
+      "maximum_voltage_error": 1e-09
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "triplex_line_conductor": {
+      "instances": [
+        {
+          "name": "tplex_line_cond",
+          "resistance": 0.97,
+          "geometric_mean_radius": 0.0111
+        },
+        {
+          "name": "tplex_line_cond1",
+          "resistance": 0.97,
+          "geometric_mean_radius": 0.0111
+        },
+        {
+          "name": "tplex_line_cond2",
+          "resistance": 0.97,
+          "geometric_mean_radius": 0.0111
+        }
+      ]
+    },
+    "triplex_line_configuration": {
+      "instances": [
+        {
+          "name": "triplex_line_configuration_1",
+          "conductor_1": "tplex_line_cond",
+          "conductor_2": "tplex_line_cond",
+          "conductor_N": "tplex_line_cond",
+          "insulation_thickness": 0.08,
+          "diameter": 0.368
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "OHL_config",
+          "z11": "0.3465+1.0179j",
+          "z12": "0.1560+0.5017j",
+          "z13": "0.1580+0.4236j",
+          "z21": "0.1560+0.5017j",
+          "z22": "0.3375+1.0478j",
+          "z23": "0.1535+0.3849j",
+          "z31": "0.1580+0.4236j",
+          "z32": "0.1535+0.3849j",
+          "z33": "0.3414+1.0348j",
+          "outside_comments": [
+            "//Simple three-phase line"
+          ],
+          "inline_comments": {
+            "z11": "//Ohms/mile"
+          }
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "parent": "double_assert_7",
+          "property": "value",
+          "file": "../data_AMI_average_test_7_min_avg_real_power_threephase.csv",
+          "outside_comments": [
+            "//Three-phase system"
+          ]
+        },
+        {
+          "parent": "double_assert_9",
+          "property": "value",
+          "file": "../data_AMI_average_test_7_min_avg_reac_power_threephase.csv"
+        },
+        {
+          "parent": "double_assert_11",
+          "property": "value",
+          "file": "../data_AMI_average_test_7_min_avg_real_power_A.csv"
+        },
+        {
+          "parent": "double_assert_13",
+          "property": "value",
+          "file": "../data_AMI_average_test_7_min_avg_reac_power_A.csv"
+        },
+        {
+          "parent": "double_assert_15",
+          "property": "value",
+          "file": "../data_AMI_average_test_7_min_avg_real_power_B.csv"
+        },
+        {
+          "parent": "double_assert_17",
+          "property": "value",
+          "file": "../data_AMI_average_test_7_min_avg_reac_power_B.csv"
+        },
+        {
+          "parent": "double_assert_19",
+          "property": "value",
+          "file": "../data_AMI_average_test_7_min_avg_real_power_C.csv"
+        },
+        {
+          "parent": "double_assert_21",
+          "property": "value",
+          "file": "../data_AMI_average_test_7_min_avg_reac_power_C.csv"
+        },
+        {
+          "parent": "THREE_PHASE_LOAD",
+          "property": "constant_power_A",
+          "file": "../data_power_values_ami_average_test_A.player"
+        },
+        {
+          "parent": "THREE_PHASE_LOAD",
+          "property": "constant_power_B",
+          "file": "../data_power_values_ami_average_test_B.player"
+        },
+        {
+          "parent": "THREE_PHASE_LOAD",
+          "property": "constant_power_C",
+          "file": "../data_power_values_ami_average_test_C.player"
+        },
+        {
+          "parent": "NOTROOT2",
+          "property": "power_12",
+          "file": "../data_power_values_ami_average_test.player"
+        },
+        {
+          "parent": "double_assert_33",
+          "property": "value",
+          "file": "../data_AMI_average_test_5_min_avg_real_power_triplex.csv"
+        },
+        {
+          "parent": "double_assert_35",
+          "property": "value",
+          "file": "../data_AMI_average_test_5_min_avg_reac_power_triplex.csv"
+        },
+        {
+          "parent": "NOTROOT",
+          "property": "power_12",
+          "file": "../data_power_values_ami_average_test.player"
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_7",
+          "parent": "THREE_PHASE_ROOT",
+          "target": "measured_avg_real_power_in_interval",
+          "within": 0.01
+        },
+        {
+          "name": "double_assert_9",
+          "parent": "THREE_PHASE_ROOT",
+          "target": "measured_avg_reactive_power_in_interval",
+          "within": 0.01
+        },
+        {
+          "name": "double_assert_11",
+          "parent": "THREE_PHASE_ROOT",
+          "target": "measured_avg_real_power_A_in_interval",
+          "within": 0.01
+        },
+        {
+          "name": "double_assert_13",
+          "parent": "THREE_PHASE_ROOT",
+          "target": "measured_avg_reactive_power_A_in_interval",
+          "within": 0.01
+        },
+        {
+          "name": "double_assert_15",
+          "parent": "THREE_PHASE_ROOT",
+          "target": "measured_avg_real_power_B_in_interval",
+          "within": 0.01
+        },
+        {
+          "name": "double_assert_17",
+          "parent": "THREE_PHASE_ROOT",
+          "target": "measured_avg_reactive_power_B_in_interval",
+          "within": 0.01
+        },
+        {
+          "name": "double_assert_19",
+          "parent": "THREE_PHASE_ROOT",
+          "target": "measured_avg_real_power_C_in_interval",
+          "within": 0.01
+        },
+        {
+          "name": "double_assert_21",
+          "parent": "THREE_PHASE_ROOT",
+          "target": "measured_avg_reactive_power_C_in_interval",
+          "within": 0.01
+        },
+        {
+          "name": "double_assert_33",
+          "parent": "NOTROOT",
+          "target": "measured_avg_real_power_in_interval",
+          "within": 0.01
+        },
+        {
+          "name": "double_assert_35",
+          "parent": "NOTROOT",
+          "target": "measured_avg_reactive_power_in_interval",
+          "within": 0.01
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "THREE_PHASE_ROOT",
+          "bustype": "SWING",
+          "phases": "ABCN",
+          "measured_stats_interval": "7.0 min",
+          "nominal_voltage": 7200.0,
+          "inside_comments": [
+            "// Three phase:",
+            "// Per phase:",
+            "// A:",
+            "// B:",
+            "// C:",
+            "// object recorder",
+            "// {",
+            "// property \"measured_real_power,measured_reactive_power,measured_avg_real_power_in_interval,measured_avg_reactive_power_in_interval,measured_real_max_power_in_interval,measured_reactive_max_power_in_interval,measured_real_min_power_in_interval,measured_reactive_min_power_in_interval\";",
+            "// interval 60;",
+            "// file \"ami_test_out_data_7min_new_threephase.csv\";",
+            "// };"
+          ]
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "THREE_PHASE_LOAD",
+          "phases": "ABCN",
+          "parent": "THREE_PHASE_ROOT",
+          "nominal_voltage": 7200.0,
+          "constant_power_A": "2500.0-120.0j",
+          "constant_power_B": "2500.0-120.0j",
+          "constant_power_C": "2500.0-120.0j"
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "ROOT",
+          "bustype": "SWING",
+          "phases": "BS",
+          "nominal_voltage": 120.0,
+          "outside_comments": [
+            "//object overhead_line {",
+            "// phases ABCN;",
+            "// name three_phase_line;",
+            "// from THREE_PHASE_ROOT;",
+            "// to THREE_PHASE_LOAD;",
+            "// length 100.0 ft;",
+            "// configuration OHL_config;",
+            "//}",
+            "//Triplex system"
+          ]
+        },
+        {
+          "name": "NOTROOT2",
+          "phases": "BS",
+          "nominal_voltage": 120.0,
+          "measured_stats_interval": "7.0 min",
+          "power_12": "2500.0-120.0j",
+          "inside_comments": [
+            "// object recorder",
+            "// {",
+            "// property \"measured_real_power,measured_reactive_power,measured_avg_real_power_in_interval,measured_avg_reactive_power_in_interval,measured_real_max_power_in_interval,measured_reactive_max_power_in_interval,measured_real_min_power_in_interval,measured_reactive_min_power_in_interval\";",
+            "// interval 60;",
+            "// file \"ami_test_out_data_7min_new.csv\";",
+            "// };"
+          ]
+        },
+        {
+          "name": "NOTROOT",
+          "phases": "BS",
+          "nominal_voltage": 120.0,
+          "measured_stats_interval": "5.0 min",
+          "power_12": "2500.0-120.0j",
+          "inside_comments": [
+            "// object recorder",
+            "// {",
+            "// property \"measured_real_power,measured_reactive_power,measured_avg_real_power_in_interval,measured_avg_reactive_power_in_interval\";",
+            "// interval 60;",
+            "// file \"ami_test_out_data_5min_new.csv\";",
+            "// };"
+          ]
+        }
+      ]
+    },
+    "triplex_line": {
+      "instances": [
+        {
+          "name": "IMALINE",
+          "phases": "BS",
+          "from": "ROOT",
+          "to": "NOTROOT",
+          "configuration": "triplex_line_configuration_1",
+          "length": "50.0 ft"
+        },
+        {
+          "name": "IMALINE2",
+          "phases": "BS",
+          "from": "ROOT",
+          "to": "NOTROOT2",
+          "configuration": "triplex_line_configuration_1",
+          "length": "50.0 ft"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "__preamble": {
+    "comments": [
+      "//",
+      "// Test purpose: valdating energy_meter property of plugload under normal operating",
+      "// conditions over a 24hr period with varying demand. This test compares the values recorded",
+      "// into the plugload energy_meter every hour to a player with the expected hourly values for the",
+      "// energy_meter. Expected values were calculated using with a working version of energy_meter",
+      "// using the following equation:",
+      "// energy_meter(of hour #h)=energy_meter(of all previous hours) + enduse_load(of hour #h)"
+    ]
+  },
+  "clock": {
+    "timestamp": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-02 02:00:00'",
+    "timezone": "PST+8PDT"
+  },
+  "modules": {
+    "residential": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "player": {
+      "instances": [
+        {
+          "parent": "plugload_2",
+          "file": "generic_demand.glt",
+          "loop": 100,
+          "property": "demand"
+        },
+        {
+          "parent": "complex_assert_4",
+          "property": "value",
+          "file": "plugload_energy_meter.player"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_4",
+          "parent": "plugload_2",
+          "target": "energy",
+          "once": "ONCE_TRUE",
+          "within": 0.0001
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "plugload_2",
+          "file": "plugload_load_usage3600.csv",
+          "interval": 3600,
+          "limit": 24,
+          "property": "load,power,energy_meter"
+        }
+      ]
+    },
+    "plugload": {
+      "instances": [
+        {
+          "name": "plugload_2",
+          "parent": "house_1",
+          "inside_comments": [
+            "//shape \"type: analog; schedule: residential-plugs-default; power: 0.1\";"
+          ]
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_1",
+          "floor_area": "1500 sf",
+          "cooling_setpoint": 100,
+          "heating_setpoint": 1,
+          "inline_comments": {
+            "cooling_setpoint": "// turns of HVAC"
+          }
+        }
+      ]
+    }
+  }
+}

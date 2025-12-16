@@ -1,0 +1,355 @@
+{
+  "__preamble": {
+    "comments": [
+      "//#set profiler=1;"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "minimum_timestep": "60;"
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2009-07-01 04:00:00'",
+    "stoptime": "'2009-07-01 04:59:00'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    },
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "conf_OHLine11kV",
+          "conductor_A": "overhead_line_conductor_11kV",
+          "conductor_B": "overhead_line_conductor_11kV",
+          "conductor_C": "overhead_line_conductor_11kV",
+          "conductor_N": "overhead_line_conductor_11kV",
+          "spacing": "line_spacing_11kV"
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "line_spacing_11kV",
+          "distance_AB": "1.0 m",
+          "distance_BC": "1.0 m",
+          "distance_AC": "2.0 m"
+        }
+      ]
+    },
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "overhead_line_conductor_11kV",
+          "geometric_mean_radius": 0.00446,
+          "resistance": 1.12
+        }
+      ]
+    },
+    "triplex_line_conductor": {
+      "instances": [
+        {
+          "name": "triplex_4/0 AA",
+          "resistance": 0.48,
+          "geometric_mean_radius": 0.0158
+        }
+      ]
+    },
+    "triplex_line_configuration": {
+      "instances": [
+        {
+          "name": "triplex_line_configuration_1",
+          "conductor_1": "triplex_4/0 AA",
+          "conductor_2": "triplex_4/0 AA",
+          "conductor_N": "triplex_4/0 AA",
+          "insulation_thickness": 0.08,
+          "diameter": 0.522
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "default_transformer",
+          "connect_type": "SINGLE_PHASE_CENTER_TAPPED",
+          "install_type": "PADMOUNT",
+          "primary_voltage": "7200 V",
+          "secondary_voltage": "120 V",
+          "power_rating": 50.0,
+          "powerA_rating": 50.0,
+          "resistance": 0.011,
+          "reactance": 0.018
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "SWING_BUS",
+          "nominal_voltage": 7200,
+          "voltage_A": "7200 V",
+          "phases": "A",
+          "bustype": "SWING"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "LINE_1",
+          "phases": "A",
+          "from": "SWING_BUS",
+          "to": "NODE_1",
+          "configuration": "conf_OHLine11kV",
+          "length": "1500 m"
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "parent": "assert_10",
+          "property": "value",
+          "file": "../meter_real_energy_delta.player"
+        },
+        {
+          "parent": "assert_12",
+          "property": "value",
+          "file": "../meter_reactive_energy_delta.player"
+        },
+        {
+          "parent": "assert_19",
+          "property": "value",
+          "file": "../triplex_meter_real_energy_delta.player"
+        },
+        {
+          "parent": "assert_21",
+          "property": "value",
+          "file": "../triplex_meter_reactive_energy_delta.player"
+        }
+      ]
+    },
+    "assert": {
+      "instances": [
+        {
+          "name": "assert_10",
+          "parent": "NODE_1",
+          "target": "measured_real_energy_delta",
+          "within": 0.1
+        },
+        {
+          "name": "assert_12",
+          "parent": "NODE_1",
+          "target": "measured_reactive_energy_delta",
+          "within": 0.1
+        },
+        {
+          "name": "assert_19",
+          "parent": "house_meter",
+          "target": "measured_real_energy_delta",
+          "within": 0.1
+        },
+        {
+          "name": "assert_21",
+          "parent": "house_meter",
+          "target": "measured_reactive_energy_delta",
+          "within": 0.1
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "NODE_1",
+          "nominal_voltage": 7200,
+          "phases": "A",
+          "measured_energy_delta_timestep": 300
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "center_tap_transformer_A",
+          "phases": "AS",
+          "from": "NODE_1",
+          "to": "triplex_NODE_1",
+          "configuration": "default_transformer"
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "triplex_NODE_1",
+          "phases": "AS",
+          "nominal_voltage": 120
+        },
+        {
+          "name": "trip_parent_meter",
+          "phases": "AS",
+          "nominal_voltage": 120
+        },
+        {
+          "name": "house_meter",
+          "parent": "trip_parent_meter",
+          "phases": "AS",
+          "nominal_voltage": 120,
+          "measured_energy_delta_timestep": 300
+        }
+      ]
+    },
+    "triplex_line": {
+      "instances": [
+        {
+          "groupid": "Triplex_Line",
+          "phases": "AS",
+          "from": "triplex_NODE_1",
+          "to": "trip_parent_meter",
+          "length": 10,
+          "configuration": "triplex_line_configuration_1"
+        }
+      ]
+    },
+    "ZIPload": {
+      "instances": [
+        {
+          "name": "house_load_thingerhouse2_resp_load",
+          "parent": "house_load_thinger",
+          "base_power": "loads*10",
+          "heatgain_fraction": 0.9,
+          "power_pf": 0.9,
+          "current_pf": -0.9,
+          "impedance_pf": 0.8,
+          "impedance_fraction": 0.2,
+          "current_fraction": 0.4,
+          "power_fraction": 0.4
+        },
+        {
+          "name": "house_load_thingerhouse2_unresp_load",
+          "parent": "house_load_thinger",
+          "base_power": "loads*5",
+          "heatgain_fraction": 0.9,
+          "power_pf": 0.9,
+          "current_pf": 0.8,
+          "impedance_pf": -0.95,
+          "impedance_fraction": 0.2,
+          "current_fraction": 0.4,
+          "power_fraction": 0.4
+        }
+      ]
+    },
+    "waterheater": {
+      "instances": [
+        {
+          "name": "house_load_thingerhouse_2_wh",
+          "parent": "house_load_thinger",
+          "heating_element_capacity": "5.5 kW",
+          "tank_setpoint": 134.0,
+          "temperature": 132,
+          "thermostat_deadband": 5.8,
+          "location": "INSIDE",
+          "tank_UA": 4.0,
+          "demand": 1.01,
+          "tank_height": 5,
+          "tank_diameter": 2
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_load_thinger",
+          "parent": "house_meter",
+          "schedule_skew": -2658,
+          "floor_area": 2227,
+          "number_of_stories": 2,
+          "ceiling_height": 10,
+          "over_sizing_factor": 0.2,
+          "Rroof": 13.92,
+          "Rwall": 9.14,
+          "Rfloor": 8.47,
+          "glazing_layers": 1,
+          "glass_type": 1,
+          "glazing_treatment": 1,
+          "window_frame": 1,
+          "Rdoors": 3.37,
+          "airchange_per_hour": 0.79,
+          "cooling_COP": 2.7,
+          "air_temperature": 68.87,
+          "mass_temperature": 68.87,
+          "total_thermal_mass_per_floor_area": 2.981,
+          "heating_system_type": "HEAT_PUMP",
+          "heating_COP": 2.7,
+          "cooling_system_type": "ELECTRIC",
+          "auxiliary_strategy": "DEADBAND",
+          "auxiliary_system_type": "ELECTRIC",
+          "motor_model": "BASIC",
+          "motor_efficiency": "AVERAGE",
+          "breaker_amps": 1000,
+          "hvac_breaker_rating": 1000,
+          "cooling_setpoint": 78.93,
+          "heating_setpoint": 67.59,
+          "inside_comments": [
+            "//Thermal integrity -> Single Family 1"
+          ]
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "name": "meter_delta",
+          "parent": "NODE_1",
+          "property": "measured_real_energy, measured_real_energy_delta, measured_reactive_energy, measured_reactive_energy_delta",
+          "file": "meter_energy.csv",
+          "interval": 300,
+          "outside_comments": [
+            "//object recorder {",
+            "//  name triplex_meter_delta;",
+            "//  parent house_meter;",
+            "//  property measured_real_energy, measured_real_energy_delta, measured_reactive_energy, measured_reactive_energy_delta;",
+            "//  file \"triplex_meter_energy.csv\";",
+            "//  interval 300;",
+            "//}",
+            "//"
+          ]
+        }
+      ]
+    }
+  },
+  "schedules": {
+    "loads": [
+      {
+        "name": "",
+        "items": [
+          "0-4 4 * 4-9 * 0.4897",
+          "5-8 4 * 4-9 * 0.4145",
+          "9-12 4 * 4-9 * 0.3829",
+          "13-16 4 * 4-9 * 0.3300",
+          "17-20 4 * 4-9 * 0.3817",
+          "21-24 4 * 4-9 * 0.4340",
+          "25-28 4 * 4-9 * 0.5499",
+          "29-32 4 * 4-9 * 0.6556",
+          "33-36 4 * 4-9 * 0.6961",
+          "37-40 4 * 4-9 * 0.7413",
+          "41-44 4 * 4-9 * 0.7653",
+          "45-48 4 * 4-9 * 0.7755",
+          "49-52 4 * 4-9 * 0.7900",
+          "53-56 4 * 4-9 * 0.7326",
+          "57-59 4 * 4-9 * 0.7097"
+        ]
+      }
+    ]
+  }
+}

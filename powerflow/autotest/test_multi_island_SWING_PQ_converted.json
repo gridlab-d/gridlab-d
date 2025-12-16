@@ -1,0 +1,385 @@
+{
+  "__preamble": {
+    "comments": [
+      "//4-node-esque system to test multiple islands/solutions approach",
+      "//Half loads",
+      "//Simple test for multi-islanding capability",
+      "//Event-mode test",
+      "//Has a \"deferred/decayed\" swing - asserts test to see if it is behaving that way",
+      "//Players on deferred swing try to enforce higher voltage more often, as a secondary check on the solver behavior"
+    ]
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:01:00'"
+  },
+  "modules": {
+    "powerflow": {
+      "line_capacitance": false,
+      "solver_method": "NR",
+      "line_limits": false,
+      "default_resistance": 5e-05,
+      "inline_comments": {
+        "default_resistance": "//To make consistent with original switch admittance"
+      }
+    },
+    "reliability": {
+      "report_event_log": false
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc100",
+          "geometric_mean_radius": "0.0244 ft",
+          "resistance": "0.306 Ohm/mile"
+        },
+        {
+          "name": "olc101",
+          "geometric_mean_radius": "0.00814 ft",
+          "resistance": "0.592 Ohm/mile"
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls200",
+          "distance_AB": "2.5 ft",
+          "distance_BC": "4.5 ft",
+          "distance_AC": "7.0 ft",
+          "distance_AN": "5.656854 ft",
+          "distance_BN": "4.272002 ft",
+          "distance_CN": "5.0 ft"
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc300",
+          "conductor_A": "olc100",
+          "conductor_B": "olc100",
+          "conductor_C": "olc100",
+          "conductor_N": "olc101",
+          "spacing": "ls200"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "tc400",
+          "connect_type": "WYE_WYE",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06
+        }
+      ]
+    },
+    "fault_check": {
+      "instances": [
+        {
+          "name": "base_fault_check_object",
+          "check_mode": "ONCHANGE",
+          "strictly_radial": false,
+          "eventgen_object": "testgendev",
+          "grid_association": true,
+          "outside_comments": [
+            "//Fault check option"
+          ],
+          "inline_comments": {
+            "grid_association": "//Flag to ensure non-monolithic islands"
+          }
+        }
+      ]
+    },
+    "eventgen": {
+      "instances": [
+        {
+          "name": "testgendev",
+          "fault_type": "SW-ABC",
+          "manual_outages": "switch3_3B,2000-01-01 00:00:05,2000-01-01 00:00:30",
+          "outside_comments": [
+            "//Manual object - needed to get fault_check to behave properly -- arbitrary item added"
+          ],
+          "inline_comments": {
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        },
+        {
+          "name": "testgendev_B",
+          "fault_type": "SW-ABC",
+          "manual_outages": "switch2B_2C,2000-01-01 00:00:04,2000-01-01 00:00:35",
+          "inline_comments": {
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        }
+      ]
+    },
+    "switch": {
+      "instances": [
+        {
+          "name": "switch3_3B",
+          "phases": "ABCN",
+          "from": "node3",
+          "to": "node3B",
+          "status": "CLOSED",
+          "outside_comments": [
+            "//Switches, that would presumably make this three systems, eventually"
+          ]
+        },
+        {
+          "name": "switch2B_2C",
+          "phases": "ABCN",
+          "from": "node2B",
+          "to": "node2C",
+          "status": "CLOSED"
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "node1",
+          "property": "voltage_A,voltage_B,voltage_C",
+          "interval": 1,
+          "file": "node1out.csv",
+          "outside_comments": [
+            "//First system"
+          ]
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "parent": "node1",
+          "property": "voltage_A",
+          "file": "../data_swing_pq_voltage_player_A.csv"
+        },
+        {
+          "parent": "node1",
+          "property": "voltage_B",
+          "file": "../data_swing_pq_voltage_player_B.csv"
+        },
+        {
+          "parent": "node1",
+          "property": "voltage_C",
+          "file": "../data_swing_pq_voltage_player_C.csv"
+        },
+        {
+          "parent": "complex_assert_16",
+          "property": "value",
+          "file": "../data_assert_swing_pq_voltage_A.csv"
+        },
+        {
+          "parent": "complex_assert_18",
+          "property": "value",
+          "file": "../data_assert_swing_pq_voltage_B.csv"
+        },
+        {
+          "parent": "complex_assert_20",
+          "property": "value",
+          "file": "../data_assert_swing_pq_voltage_C.csv"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_16",
+          "parent": "node1",
+          "target": "voltage_A",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_18",
+          "parent": "node1",
+          "target": "voltage_B",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_20",
+          "parent": "node1",
+          "target": "voltage_C",
+          "within": 0.1
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node1",
+          "phases": "ABCN",
+          "bustype": "SWING_PQ",
+          "nominal_voltage": 7199.558,
+          "inside_comments": [
+            "//Players for work-around to get it to solve - resets SWING voltage"
+          ]
+        },
+        {
+          "name": "node2",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node3",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "node1B",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "nominal_voltage": 7199.558,
+          "outside_comments": [
+            "//Duplicate B"
+          ]
+        },
+        {
+          "name": "node2B",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node3B",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "node1C",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558,
+          "outside_comments": [
+            "//Duplicate C -- No swing here, so it should get removed"
+          ],
+          "inside_comments": [
+            "//bustype SWING;"
+          ]
+        },
+        {
+          "name": "node2C",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node3C",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.777
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "ol12",
+          "phases": "ABCN",
+          "from": "node1",
+          "to": "node2",
+          "length": 2000,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ol34",
+          "phases": "ABCN",
+          "from": "node3",
+          "to": "load4",
+          "length": 2500,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ol12B",
+          "phases": "ABCN",
+          "from": "node1B",
+          "to": "node2B",
+          "length": 2000,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ol34B",
+          "phases": "ABCN",
+          "from": "node3B",
+          "to": "load4B",
+          "length": 2500,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ol12C",
+          "phases": "ABCN",
+          "from": "node1C",
+          "to": "node2C",
+          "length": 2000,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ol34C",
+          "phases": "ABCN",
+          "from": "node3C",
+          "to": "load4C",
+          "length": 2500,
+          "configuration": "lc300"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "tran23",
+          "phases": "ABCN",
+          "from": "node2",
+          "to": "node3",
+          "configuration": "tc400"
+        },
+        {
+          "name": "tran23B",
+          "phases": "ABCN",
+          "from": "node2B",
+          "to": "node3B",
+          "configuration": "tc400"
+        },
+        {
+          "name": "tran23C",
+          "phases": "ABCN",
+          "from": "node2C",
+          "to": "node3C",
+          "configuration": "tc400"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load4",
+          "phases": "ABCN",
+          "constant_power_A": "637500.0+395087.0155j",
+          "constant_power_B": "900000.0+435889.8945j",
+          "constant_power_C": "1187500.0+390312.375j",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "load4B",
+          "phases": "ABCN",
+          "constant_power_A": "+537500.0+395087.0155j",
+          "constant_power_B": "+900250.0+435889.8945j",
+          "constant_power_C": "+1037500.0+390312.375j",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "load4C",
+          "phases": "ABCN",
+          "constant_power_A": "+437500.0+395087.0155j",
+          "constant_power_B": "+400500.0+435889.8945j",
+          "constant_power_C": "+802500.0+390312.375j",
+          "nominal_voltage": 2401.777
+        }
+      ]
+    }
+  }
+}

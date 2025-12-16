@@ -1,0 +1,388 @@
+{
+  "clock": {
+    "timezone": "GMT0",
+    "timestamp": "'2000-01-01 0:00:00'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR",
+      "nominal_frequency": 50,
+      "line_capacitance": true
+    },
+    "assert": {}
+  },
+  "objects": {
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "line_config_without_capacitance",
+          "z11": "11.703333333333+0.696666666667j Ohm/km",
+          "z12": "0.033333333333+0.256666666667j Ohm/km",
+          "z13": "0.033333333333+0.256666666667j Ohm/km",
+          "z21": "0.033333333333+0.256666666667j Ohm/km",
+          "z22": "11.703333333333+0.696666666667j Ohm/km",
+          "z23": "0.033333333333+0.256666666667j Ohm/km",
+          "z31": "0.033333333333+0.256666666667j Ohm/km",
+          "z32": "0.033333333333+0.256666666667j Ohm/km",
+          "z33": "11.703333333333+0.696666666667j Ohm/km",
+          "outside_comments": [
+            "// Line Configurations",
+            "// In SINCAL the lines have been specified with the following configuration:",
+            "//   r = 11.67 Ohm/km  r0 = 11.77 Ohm/km",
+            "//   x =  0.44 Ohm/km  x0 =  1.21 Ohm/km",
+            "//   c = 170.2 nF/km   c0 = 103.0 nF/km",
+            "//",
+            "// Conversion is applied using:",
+            "//   z = complex(r, x);",
+            "//   z0 = complex(r0, x0);",
+            "//   z11 = z22 = z33 = (z0 + 2.0 * z) / 3.0;",
+            "//   z12 = z13 = z21 = z23 = z31 = z32 = (z0 - z) / 3.0;",
+            "//   c11 = c22 = c33 = (c0 + 2.0 * c) / 3.0;",
+            "//   c12 = c13 = c21 = c23 = c31 = c32 = (c0 - c) / 3.0;",
+            "//",
+            "// Therefore:",
+            "//   z11 = z22 = z33 = (11.77+1.21j + 2.0 * 11.67+0.44j) / 3.0 = 11.703333333333+0.696666666667j Ohm/km",
+            "//   z12 = z13 = z21 = z23 = z31 = z32 = (11.77+1.21j - 11.67+0.44j) / 3.0 = 0.033333333333+0.256666666667j Ohm/km",
+            "//   c11 = c22 = c33 = (103.0 + 2.0 * 170.2) / 3.0 = 147.8 nF/km",
+            "//   c12 = c13 = c21 = c23 = c31 = c32 = (103.0 - 170.2) / 3.0 = -22.4 nF/km"
+          ]
+        },
+        {
+          "name": "line_config_with_capacitance",
+          "z11": "11.703333333333+0.696666666667j Ohm/km",
+          "z12": "0.033333333333+0.256666666667j Ohm/km",
+          "z13": "0.033333333333+0.256666666667j Ohm/km",
+          "z21": "0.033333333333+0.256666666667j Ohm/km",
+          "z22": "11.703333333333+0.696666666667j Ohm/km",
+          "z23": "0.033333333333+0.256666666667j Ohm/km",
+          "z31": "0.033333333333+0.256666666667j Ohm/km",
+          "z32": "0.033333333333+0.256666666667j Ohm/km",
+          "z33": "11.703333333333+0.696666666667j Ohm/km",
+          "c11": "147.8 nF/km",
+          "c12": "-22.4 nF/km",
+          "c13": "-22.4 nF/km",
+          "c21": "-22.4 nF/km",
+          "c22": "147.8 nF/km",
+          "c23": "-22.4 nF/km",
+          "c31": "-22.4 nF/km",
+          "c32": "-22.4 nF/km",
+          "c33": "147.8 nF/km"
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "_SWING_BUS",
+          "phases": "ABCN",
+          "nominal_voltage": 6350.85296108588,
+          "voltage_A": 6350.85296108588,
+          "voltage_B": "6350.85296108588+120d",
+          "voltage_C": "6350.85296108588-120d",
+          "bustype": "SWING",
+          "outside_comments": [
+            "// Nodes"
+          ]
+        },
+        {
+          "name": "N1",
+          "phases": "ABC",
+          "nominal_voltage": 6350.85296108588,
+          "inside_comments": [
+            "// Assert values from SINCAL model"
+          ]
+        },
+        {
+          "name": "N2",
+          "phases": "ABC",
+          "nominal_voltage": 6350.85296108588,
+          "inside_comments": [
+            "// Assert values from SINCAL model"
+          ]
+        },
+        {
+          "name": "N3",
+          "phases": "ABC",
+          "nominal_voltage": 6350.85296108588,
+          "inside_comments": [
+            "// Assert values from SINCAL model"
+          ]
+        },
+        {
+          "name": "N11",
+          "phases": "ABC",
+          "nominal_voltage": 6350.85296108588,
+          "inside_comments": [
+            "// Assert values from SINCAL model"
+          ]
+        },
+        {
+          "name": "N12",
+          "phases": "ABC",
+          "nominal_voltage": 6350.85296108588,
+          "inside_comments": [
+            "// Assert values from SINCAL model"
+          ]
+        },
+        {
+          "name": "N13",
+          "phases": "ABC",
+          "nominal_voltage": 6350.85296108588,
+          "inside_comments": [
+            "// Assert values from SINCAL model"
+          ]
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "parent": "N1",
+          "target": "voltage_A",
+          "within": 1.0,
+          "value": "5187+5.623d"
+        },
+        {
+          "parent": "N1",
+          "target": "voltage_B",
+          "within": 1.0,
+          "value": "5187+125.623d"
+        },
+        {
+          "parent": "N1",
+          "target": "voltage_C",
+          "within": 1.0,
+          "value": "5187-114.377d"
+        },
+        {
+          "parent": "N2",
+          "target": "voltage_A",
+          "within": 1.0,
+          "value": "4381+10.973d"
+        },
+        {
+          "parent": "N2",
+          "target": "voltage_B",
+          "within": 1.0,
+          "value": "4381+130.973d"
+        },
+        {
+          "parent": "N2",
+          "target": "voltage_C",
+          "within": 1.0,
+          "value": "4381-109.027d"
+        },
+        {
+          "parent": "N3",
+          "target": "voltage_A",
+          "within": 1.0,
+          "value": "4017+15.332d"
+        },
+        {
+          "parent": "N3",
+          "target": "voltage_B",
+          "within": 1.0,
+          "value": "4017+135.332d"
+        },
+        {
+          "parent": "N3",
+          "target": "voltage_C",
+          "within": 1.0,
+          "value": "4017-104.668d"
+        },
+        {
+          "parent": "N11",
+          "target": "voltage_A",
+          "within": 1.0,
+          "value": "5257+4.033d"
+        },
+        {
+          "parent": "N11",
+          "target": "voltage_B",
+          "within": 1.0,
+          "value": "5257+124.033d"
+        },
+        {
+          "parent": "N11",
+          "target": "voltage_C",
+          "within": 1.0,
+          "value": "5257-115.967d"
+        },
+        {
+          "parent": "N12",
+          "target": "voltage_A",
+          "within": 1.0,
+          "value": "4491+8.091d"
+        },
+        {
+          "parent": "N12",
+          "target": "voltage_B",
+          "within": 1.0,
+          "value": "4491+128.091d"
+        },
+        {
+          "parent": "N12",
+          "target": "voltage_C",
+          "within": 1.0,
+          "value": "4491-111.909d"
+        },
+        {
+          "parent": "N13",
+          "target": "voltage_A",
+          "within": 1.0,
+          "value": "4142+11.801d"
+        },
+        {
+          "parent": "N13",
+          "target": "voltage_B",
+          "within": 1.0,
+          "value": "4142+131.801d"
+        },
+        {
+          "parent": "N13",
+          "target": "voltage_C",
+          "within": 1.0,
+          "value": "4142-108.199d"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "L1",
+          "phases": "ABCN",
+          "from": "_SWING_BUS",
+          "to": "N1",
+          "length": "5.0 km",
+          "configuration": "line_config_without_capacitance",
+          "outside_comments": [
+            "// Lines"
+          ]
+        },
+        {
+          "name": "L3",
+          "phases": "ABCN",
+          "from": "N2",
+          "to": "N3",
+          "length": "5.0 km",
+          "configuration": "line_config_without_capacitance"
+        },
+        {
+          "name": "L11",
+          "phases": "ABCN",
+          "from": "_SWING_BUS",
+          "to": "N11",
+          "length": "5.0 km",
+          "configuration": "line_config_with_capacitance"
+        },
+        {
+          "name": "L13",
+          "phases": "ABCN",
+          "from": "N12",
+          "to": "N13",
+          "length": "5.0 km",
+          "configuration": "line_config_with_capacitance"
+        }
+      ]
+    },
+    "underground_line": {
+      "instances": [
+        {
+          "name": "L2",
+          "phases": "ABCN",
+          "from": "N1",
+          "to": "N2",
+          "length": "5.0 km",
+          "configuration": "line_config_without_capacitance"
+        },
+        {
+          "name": "L12",
+          "phases": "ABCN",
+          "from": "N11",
+          "to": "N12",
+          "length": "5.0 km",
+          "configuration": "line_config_with_capacitance"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "LO1",
+          "parent": "N1",
+          "phases": "ABCN",
+          "nominal_voltage": 6350.85296108588,
+          "constant_power_A": "0.026666666667+0.02j MVA",
+          "constant_power_B": "0.026666666667+0.02j MVA",
+          "constant_power_C": "0.026666666667+0.02j MVA",
+          "outside_comments": [
+            "// Loads"
+          ],
+          "inside_comments": [
+            "// Load is 0.1 MVA 0.8pf"
+          ]
+        },
+        {
+          "name": "LO2",
+          "parent": "N2",
+          "phases": "ABCN",
+          "nominal_voltage": 6350.85296108588,
+          "constant_power_A": "0.03+0.014529663145j MVA",
+          "constant_power_B": "0.03+0.014529663145j MVA",
+          "constant_power_C": "0.03+0.014529663145j MVA",
+          "inside_comments": [
+            "// Load is 0.1 MVA 0.9pf"
+          ]
+        },
+        {
+          "name": "LO3",
+          "parent": "N3",
+          "phases": "ABCN",
+          "nominal_voltage": 6350.85296108588,
+          "constant_power_A": "0.023333333333+0.023804761428j MVA",
+          "constant_power_B": "0.023333333333+0.023804761428j MVA",
+          "constant_power_C": "0.023333333333+0.023804761428j MVA",
+          "inside_comments": [
+            "// Load is 0.1 MVA 0.7pf"
+          ]
+        },
+        {
+          "name": "LO11",
+          "parent": "N11",
+          "phases": "ABCN",
+          "nominal_voltage": 6350.85296108588,
+          "constant_power_A": "0.026666666667+0.02j MVA",
+          "constant_power_B": "0.026666666667+0.02j MVA",
+          "constant_power_C": "0.026666666667+0.02j MVA",
+          "inside_comments": [
+            "// Load is 0.1 MVA 0.8pf"
+          ]
+        },
+        {
+          "name": "LO12",
+          "parent": "N12",
+          "phases": "ABCN",
+          "nominal_voltage": 6350.85296108588,
+          "constant_power_A": "0.03+0.014529663145j MVA",
+          "constant_power_B": "0.03+0.014529663145j MVA",
+          "constant_power_C": "0.03+0.014529663145j MVA",
+          "inside_comments": [
+            "// Load is 0.1 MVA 0.9pf"
+          ]
+        },
+        {
+          "name": "LO13",
+          "parent": "N13",
+          "phases": "ABCN",
+          "nominal_voltage": 6350.85296108588,
+          "constant_power_A": "0.023333333333+0.023804761428j MVA",
+          "constant_power_B": "0.023333333333+0.023804761428j MVA",
+          "constant_power_C": "0.023333333333+0.023804761428j MVA",
+          "inside_comments": [
+            "// Load is 0.1 MVA 0.7pf"
+          ]
+        }
+      ]
+    }
+  }
+}
