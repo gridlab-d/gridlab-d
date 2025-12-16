@@ -19,12 +19,14 @@ Example usage:
 import os
 from pathlib import Path
 
-# Set up GRIDLABD_ROOT to point to data files
-# Priority: 1) Already set, 2) Package share/ dir, 3) Development source tree
+# Set up GRIDLABD_HOME/GRIDLABD_ROOT to point to data files
+# Priority: 1) GRIDLABD_HOME (user custom), 2) GRIDLABD_ROOT (backward compat), 
+#           3) Package share/ dir, 4) Development source tree
 _package_dir = Path(__file__).parent
 _share_dir = _package_dir / "share"
 
-if "GRIDLABD_ROOT" not in os.environ:
+# Skip auto-detection if user has already set either environment variable
+if "GRIDLABD_HOME" not in os.environ and "GRIDLABD_ROOT" not in os.environ:
     # For installed package: use package's share and lib directories
     _lib_dir = _package_dir / "lib"
     if _share_dir.exists() and (_share_dir / "tzinfo.txt").exists():
@@ -77,10 +79,11 @@ from .gridlabd_core import (
 
 # Set install root immediately after importing GridLabD class
 # This allows the C++ code to find tzinfo.txt and other data files
-if "GRIDLABD_ROOT" in os.environ:
+# Priority: GRIDLABD_HOME > GRIDLABD_ROOT (for backward compatibility)
+install_root = os.environ.get("GRIDLABD_HOME") or os.environ.get("GRIDLABD_ROOT")
+if install_root:
     try:
-        root = os.environ["GRIDLABD_ROOT"]
-        GridLabD.set_install_root(root)
+        GridLabD.set_install_root(install_root)
     except Exception:
         # If setting install root fails, continue anyway
         # The C++ code will use GLPATH environment variable

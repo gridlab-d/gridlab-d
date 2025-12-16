@@ -69,7 +69,10 @@ def setup_bundled_environment() -> bool:
 
     exec_path = Path(gridlabd_path).resolve()
     os.environ['GRIDLABD_EXECUTABLE'] = str(exec_path)
-    os.environ['GRIDLABD_ROOT'] = str(exec_path.parent.parent)
+    # Set GRIDLABD_ROOT for backward compatibility
+    # Note: GRIDLABD_HOME takes priority if set by user
+    if 'GRIDLABD_HOME' not in os.environ:
+        os.environ['GRIDLABD_ROOT'] = str(exec_path.parent.parent)
 
     # Add GridLAB-D executable directory to PATH
     gridlabd_dir = str(Path(gridlabd_path).parent)

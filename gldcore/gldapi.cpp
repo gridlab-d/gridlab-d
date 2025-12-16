@@ -61,6 +61,25 @@ fs::path locate_exec_from_root(const fs::path& root) {
     return {};
 }
 
+bool validate_gridlabd_installation(const fs::path& root) {
+    // Check for required directory structure
+    // At minimum, we need either:
+    // - share/ directory (for data files like tzinfo.txt)
+    // - lib/ directory (for modules)
+    // - gldcore/ directory (for development mode)
+    
+    fs::path share_dir = root / "share";
+    fs::path lib_dir = root / "lib";
+    fs::path gldcore_dir = root / "gldcore";
+    
+    bool has_share = fs::exists(share_dir) && fs::is_directory(share_dir);
+    bool has_lib = fs::exists(lib_dir) && fs::is_directory(lib_dir);
+    bool has_gldcore = fs::exists(gldcore_dir) && fs::is_directory(gldcore_dir);
+    
+    // Valid if it has share or gldcore (for data files) and optionally lib (for modules)
+    return has_share || has_gldcore || has_lib;
+}
+
 void apply_runtime_paths(const fs::path& exec_path) {
     fs::path exec = weakly_canonical_or_self(exec_path);
     fs::path bin_dir = exec.parent_path();
@@ -117,8 +136,13 @@ void GridLabD::set_install_root(const std::string& install_root) {
         return;
     }
     
-    // If it's a directory, look for the executable
+    // If it's a directory, validate it has required structure
     if (fs::is_directory(candidate)) {
+        if (!validate_gridlabd_installation(candidate)) {
+            throw std::runtime_error("Invalid GridLAB-D installation: " + install_root + 
+                                     " (missing required directories: share/, lib/, or gldcore/)");
+        }
+        
         g_install_root_override = candidate;
         fs::path exec = locate_exec_from_root(candidate);
         if (!exec.empty()) {
@@ -131,7 +155,7 @@ void GridLabD::set_install_root(const std::string& install_root) {
         return;
     }
     
-    throw std::runtime_error("Invalid install root: " + install_root);
+    throw std::runtime_error("Invalid install root: " + install_root + " (path does not exist)");
 }
 
 std::string GridLabD::get_install_root() {
@@ -181,18 +205,24 @@ GridLabD::GridLabD() : selected_timestep(0) {
 
     // Auto-discover paths if not already set
     if (!g_install_root_override.has_value()) {
-        // Try to find gridlabd executable or use package location
-        const char* override_path = std::getenv("GRIDLABD_ROOT");
+        // Try environment variables in priority order: GRIDLABD_HOME > GRIDLABD_ROOT
+        // GRIDLABD_HOME: For custom GridLAB-D installations (modules/data)
+        // GRIDLABD_ROOT: For bundled package installations (backward compatibility)
+        const char* override_path = std::getenv("GRIDLABD_HOME");
+        if (override_path == nullptr || *override_path == '\0') {
+            override_path = std::getenv("GRIDLABD_ROOT");
+        }
+        
         if (override_path != nullptr && *override_path != '\0') {
             try {
                 set_install_root(override_path);
             } catch (...) {
-                // If GRIDLABD_ROOT is invalid, continue without setting paths
+                // If environment variable path is invalid, continue without setting paths
                 // The find_file() function will search GLPATH
             }
         }
-        // Note: For Python packages, paths should be set via GRIDLABD_ROOT environment
-        // variable or by calling set_install_root() explicitly from Python
+        // Note: For Python packages, paths should be set via GRIDLABD_HOME or GRIDLABD_ROOT
+        // environment variables, or by calling set_install_root() explicitly from Python
     }
 
     if (setup_before_load() == GLD_OPERATION_FAILED)
@@ -844,6 +874,7 @@ GLDErrorCode GridLabD::set_property(const std::string& object_name, const std::s
     }
     
     // Set the property value
+    // Set the property value
     char value_copy[1024];
     strncpy(value_copy, value.c_str(), sizeof(value_copy) - 1);
     value_copy[sizeof(value_copy) - 1] = '\0';
@@ -869,6 +900,7 @@ GLDErrorCode GridLabD::set_property_by_class(const std::string& class_name, cons
         return GLD_OPERATION_FAILED;
     }
     
+    // Prepare value buffer
     // Prepare value buffer
     char value_copy[1024];
     strncpy(value_copy, value.c_str(), sizeof(value_copy) - 1);
