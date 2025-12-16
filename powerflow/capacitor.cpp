@@ -180,12 +180,12 @@ int capacitor::create()
 int capacitor::init(OBJECT *parent)
 {
 	gld_property *pTempProperty = nullptr;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	gld::set temp_phases;
 	OBJECT *temp_obj_link = nullptr;
 	int result = node::init();
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if ((control == VARVOLT) && (SecondaryRemote!=nullptr))	//Something set in the secondary sensor location & VARVOLT scheme
 	{
@@ -286,7 +286,7 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Pull the object
-		pTempProperty->getp<OBJECT*>(temp_obj_link,*test_rlock);
+		pTempProperty->getp<OBJECT*>(temp_obj_link,test_rlock);
 
 		//Delete the property
 		delete pTempProperty;
@@ -1212,7 +1212,7 @@ bool capacitor::cap_sync_fxn(double time_value)
 		}
 		else if (((phases_connected & PHASE_D) != PHASE_D) && ((phases & PHASE_D) == PHASE_D))	//Delta connected node, but Wye connected Cap
 		{
-			GL_THROW("Capacitor:%d is Wye-connected on a Delta-connected node.  This is not supported at this time.",OBJECTHDR(this)->id);
+			GL_THROW("Capacitor:%d is Wye-connected on a Delta-connected node.  This is not supported at this time.",object_header(this)->id);
 			/*  TROUBLESHOOT
 			Wye-connected capacitors on a delta-connected node are not supported at this time.  They may be added in a future release when
 			the functionality is needed.
@@ -1243,7 +1243,7 @@ bool capacitor::cap_sync_fxn(double time_value)
 			Phase_Mismatch = true;	//Flag us as an exception.  Otherwise values are wrong.
 		}
 		else	//No case should exist here, so if it does, scream about it.
-			GL_THROW("Unable to determine connection for capacitor:%d",OBJECTHDR(this)->id);
+			GL_THROW("Unable to determine connection for capacitor:%d",object_header(this)->id);
 			/*  TROUBLESHOOT
 			The capacitor object encountered a connection it was unable to decipher.  Please submit this as
 			a bug report with your code.
@@ -1305,7 +1305,7 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 
 	retvalue = cap_prePost_fxn(t0_dbl);
 
-	//Check it	-- gl_errors inside (unsure why aren't throws)
+	//Check it	-- gl_errors inside (unsure why aren't t.rows())
 	if (retvalue != 1)
 	{
 		return TS_INVALID;
@@ -1453,20 +1453,25 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 	CAPSWITCH cap_A_test_state, cap_B_test_state, cap_C_test_state;
 	gld::complex VoltVals[3];
 	int return_status;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if ((control==VAR) || (control==VARVOLT))	//Grab the power values from remote link
 	{
-		READLOCK_OBJECT(RLink);
+		
+		{
+			//auto v = READLOCK_OBJECT(RLink);
+			std::shared_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(RLink));
 
-		//Force the link to do an update (will be ignored first run anyways (zero))
-		if (RLink_calculate_power_fxn != nullptr) {
-			return_status = ((int (*)(OBJECT *))(*RLink_calculate_power_fxn))(RLink);
-		} else {
-			return_status = 1;
+			//Force the link to do an update (will be ignored first run anyways (zero))
+			if (RLink_calculate_power_fxn != nullptr) {
+				return_status = ((int (*)(OBJECT*))(*RLink_calculate_power_fxn))(RLink);
+			}
+			else {
+				return_status = 1;
+			}
+
+			//READUNLOCK_OBJECT(RLink);
 		}
-
-		READUNLOCK_OBJECT(RLink);
 
 		//Make sure it worked
 		if (return_status != 1)
@@ -1891,7 +1896,7 @@ int capacitor::isa(char *classname)
 //Module-level call
 SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	double curr_time_value;	//Current time of simulation
 	double deltat;
 	double result_dbl;		//Working variable for capacitors
@@ -1970,7 +1975,7 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 		//Perform the pre-postsync portions of the capacitor
 		retvalue = cap_prePost_fxn(curr_time_value);
 
-		//Check it	-- gl_errors inside (unsure why aren't throws)
+		//Check it	-- gl_errors inside (unsure why aren't t.rows())
 		if (retvalue != 1)
 		{
 			//Error returned, so exit us out
@@ -2049,7 +2054,7 @@ EXPORT int create_capacitor(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(capacitor::oclass);
 		if (*obj!=nullptr)
 		{
-			capacitor *my = OBJECTDATA(*obj,capacitor);
+			capacitor *my = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -2070,7 +2075,7 @@ EXPORT int create_capacitor(OBJECT **obj, OBJECT *parent)
 EXPORT int init_capacitor(OBJECT *obj)
 {
 	try {
-		capacitor *my = OBJECTDATA(obj,capacitor);
+		capacitor *my = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(capacitor);
@@ -2087,7 +2092,7 @@ EXPORT int init_capacitor(OBJECT *obj)
 EXPORT TIMESTAMP sync_capacitor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		capacitor *pObj = OBJECTDATA(obj,capacitor);
+		capacitor *pObj = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -2115,13 +2120,13 @@ EXPORT TIMESTAMP sync_capacitor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 */
 EXPORT int isa_capacitor(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,capacitor)->isa(classname);
+	return /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj)->isa(classname);
 }
 
 //Deltamode export
 EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	capacitor *my = OBJECTDATA(obj,capacitor);
+	capacitor *my = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -2138,7 +2143,7 @@ EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj, unsigned int64 delta_ti
 //KML Export
 EXPORT int capacitor_kmldata(OBJECT *obj,int (*stream)(const char*,...))
 {
-	capacitor *n = OBJECTDATA(obj, capacitor);
+	capacitor *n = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj);
 	int rv = 1;
 
 	rv = n->kmldata(stream);

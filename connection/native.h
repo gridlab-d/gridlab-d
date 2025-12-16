@@ -29,9 +29,125 @@ extern "C" FUNCTIONRELAY *find_relay_function(const char *rname, const char *rcl
 
 class native : public gld_object {
 public:
-	GL_ATOMIC(enumeration, mode);
-	GL_ATOMIC(enumeration, transport);
-	GL_ATOMIC(double,timestep);
+	//GL_ATOMIC(enumeration, mode);
+	//GL_ATOMIC(enumeration, transport);
+	//GL_ATOMIC(double,timestep);
+public:
+	static inline native* get_defaults() {
+		if (!defaults) {
+			defaults = new native(); // Initialize lazily
+		}
+		return defaults;
+	}
+
+	native() {}
+	~native() { if (defaults) delete defaults; }
+
+protected:
+	enumeration mode;  // Member variable of type `enumeration`.
+
+public:
+	// Static inline method to get the byte offset of the member `mode`.
+	static inline size_t get_mode_offset(void) {
+		native*  current_defaults = get_defaults();
+		return reinterpret_cast<const char*>(&(current_defaults->mode)) - reinterpret_cast<const char*>(current_defaults);
+	}
+
+	// Inline function to get the value of `mode`.
+	inline enumeration get_mode(void) {
+		return mode;
+	}
+
+	// Inline method to return a `gld_property` object for `mode`.
+	inline gld_property get_mode_property(void) {
+		return gld_property(my(), std::string("mode").c_str());
+	}
+
+	// Inline method to set the value of `mode`.
+	inline void set_mode(enumeration p) {
+		mode = p;
+	}
+
+	// Inline method to get the string representation of the `mode` property.
+	inline gld_string get_mode_string(void) {
+		return get_mode_property().get_string();
+	}
+
+	// Inline method to set the `mode` property from a provided string.
+	inline void set_mode(char* str) {
+		get_mode_property().from_string(str);
+	}
+
+protected:
+	enumeration transport;  // Member variable of type `enumeration`.
+
+public:
+	// Static inline method to get the byte offset of the member `transport`.
+	static inline size_t get_transport_offset(void) {
+		native*  current_defaults = get_defaults();
+		return reinterpret_cast<const char*>(&(current_defaults->transport)) - reinterpret_cast<const char*>(current_defaults);
+	}
+
+	// Inline function to get the value of `transport`.
+	inline enumeration get_transport(void) {
+		return transport;
+	}
+
+	// Inline method to return a `gld_property` object for `transport`.
+	inline gld_property get_transport_property(void) {
+		return gld_property(my(), std::string("transport").c_str());
+	}
+
+	// Inline method to set the value of `transport`.
+	inline void set_transport(enumeration p) {
+		transport = p;
+	}
+
+	// Inline method to get the string representation of the `transport` property.
+	inline gld_string get_transport_string(void) {
+		return get_transport_property().get_string();
+	}
+
+	// Inline method to set the `transport` property from a provided string.
+	inline void set_transport(char* str) {
+		get_transport_property().from_string(str);
+	}
+
+protected:
+	double timestep;  // Member variable of type `double`.
+
+public:
+	// Static inline method to get the byte offset of the member `timestep`.
+	static inline size_t get_timestep_offset(void) {
+		native*  current_defaults = get_defaults();
+		return reinterpret_cast<const char*>(&(current_defaults->timestep)) - reinterpret_cast<const char*>(current_defaults);
+	}
+
+	// Inline function to get the value of `timestep`.
+	inline double get_timestep(void) {
+		return timestep;
+	}
+
+	// Inline method to return a `gld_property` object for `timestep`.
+	inline gld_property get_timestep_property(void) {
+		return gld_property(my(), std::string("timestep").c_str());
+	}
+
+	// Inline method to set the value of `timestep`.
+	inline void set_timestep(double p) {
+		timestep = p;
+	}
+
+	// Inline method to get the string representation of the `timestep` property.
+	inline gld_string get_timestep_string(void) {
+		return get_timestep_property().get_string();
+	}
+
+	// Inline method to set the `timestep` property from a provided string.
+	inline void set_timestep(char* str) {
+		get_timestep_property().from_string(str);
+	}
+
 private:
 	connection_mode *m;
 	typedef enum {NONE,ALLOW,FORBID,

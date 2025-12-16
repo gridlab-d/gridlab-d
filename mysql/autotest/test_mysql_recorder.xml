@@ -60,7 +60,7 @@
 	<streaming_io>FALSE</streaming_io>
 	<compileonly>FALSE</compileonly>
 	<relax_naming_rules>FALSE</relax_naming_rules>
-	<browser>safari</browser>
+	<.rows()er>safari</.rows()er>
 	<server_portnum>6267</server_portnum>
 	<server_quit_on_close>FALSE</server_quit_on_close>
 	<autoclean>TRUE</autoclean>

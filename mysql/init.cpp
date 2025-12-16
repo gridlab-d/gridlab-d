@@ -27,7 +27,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("mysql::socketname",PT_char1024,default_socketname,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL socket name (unix only)",nullptr);
 	gl_global_create("mysql::clientflags",PT_set,&default_clientflags,PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"default MySQL client flags",
 		PT_KEYWORD,"COMPRESS",(int64)CLIENT_COMPRESS,
-		PT_KEYWORD,"FOUND_ROWS",(int64)CLIENT_FOUND_ROWS,
+		PT_KEYWORD,"FOUND.rows()",(int64)CLIENT_FOUND.rows(),
 		PT_KEYWORD,"IGNORE_SIGPIPE",(int64)CLIENT_IGNORE_SIGPIPE,
 		PT_KEYWORD,"INTERACTIVE",(int64)CLIENT_INTERACTIVE,
 		PT_KEYWORD,"LOCAL_FILES",(int64)CLIENT_LOCAL_FILES,

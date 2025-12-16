@@ -16,7 +16,7 @@ function [h, g, dh, dg] = opf_consfcn(x, om, Ybus, Yf, Yt, mpopt, il, varargin)
 %     IL : (optional) vector of branch indices corresponding to
 %          branches with flow limits (all others are assumed to be
 %          unconstrained). The default is [1:nl] (all branches).
-%          YF and YT contain only the rows corresponding to IL.
+%          YF and YT contain only the.rows() corresponding to IL.
 %
 %   Outputs:
 %     H  : vector of inequality constraint values (flow limits)

@@ -3,12 +3,12 @@
 	@file check.cpp
 	@addtogroup check Network check
 	@ingroup network
-	
+
 	The check() function implements a network validation check on the
 	current model.  The following checks are performed
 	- <b>Connectivity</b>: this verifies that all nodes have a least one link
 	  and that all links have both a \p to and \p from node.
-    - <b>Swing bus</b>: this verifies that all islands have at least one swing bus.
+	- <b>Swing bus</b>: this verifies that all islands have at least one swing bus.
 
  @{
  **/
@@ -22,31 +22,31 @@
 
 EXPORT int check(void)
 {
-	unsigned int errcount=0;
+	unsigned int errcount = 0;
 	OBJECT *obj;
-	FINDLIST *nodes = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",FT_END);
-	FINDLIST *links = gl_find_objects(FL_NEW,FT_CLASS,SAME,"link",FT_END);
-	FINDLIST *swings = gl_find_objects(FL_NEW,FT_CLASS,SAME,"node",AND,FT_PROPERTY,"type",EQ,"3",FT_END);
+	FINDLIST *nodes = gl_find_objects(FL_NEW, FT_CLASS, SAME, "node", FT_END);
+	FINDLIST *links = gl_find_objects(FL_NEW, FT_CLASS, SAME, "link", FT_END);
+	FINDLIST *swings = gl_find_objects(FL_NEW, FT_CLASS, SAME, "node", AND, FT_PROPERTY, "type", EQ, "3", FT_END);
 
 	// check links for connectivity
 	int linkcount[10000];
-	memset(linkcount,0,sizeof(linkcount));
-	obj=nullptr;
-	while ((obj=gl_find_next(links,obj))!=nullptr)
+	memset(linkcount, 0, sizeof(linkcount));
+	obj = nullptr;
+	while ((obj = gl_find_next(links, obj)) != nullptr)
 	{
-		link *branch=OBJECTDATA(obj,link);
-		if (branch->from==nullptr && branch->to==nullptr)
+		link *branch = OBJECTDATA(obj, link);
+		if (branch->from == nullptr && branch->to == nullptr)
 		{
 			gl_error("link:%d is not connected on either end", obj->id);
 			errcount++;
 		}
-		else if (branch->from==nullptr)
+		else if (branch->from == nullptr)
 		{
 			gl_error("link:%d is not connected on 'from' end", obj->id);
 			errcount++;
 			linkcount[branch->to->id]++;
 		}
-		else if (branch->to==nullptr)
+		else if (branch->to == nullptr)
 		{
 			gl_error("link:%d is not connected on 'to' end", obj->id);
 			errcount++;
@@ -56,93 +56,95 @@ EXPORT int check(void)
 		{
 			linkcount[branch->to->id]++;
 			linkcount[branch->from->id]++;
-			if (branch->Y.Mag()==0)
+			if (branch->Y.Mag() == 0)
 				gl_warning("link:%d is open", obj->id);
 		}
 	}
 
 	// find swing buses and check link connectivity
-	struct {
+	struct
+	{
 		OBJECT *swing;
 		int count;
 	} areas[1000];
-	memset(areas,0,sizeof(areas));
-	obj=nullptr;
-	while ( (obj=gl_find_next(nodes,obj))!=nullptr)
+	memset(areas, 0, sizeof(areas));
+	obj = nullptr;
+	while ((obj = gl_find_next(nodes, obj)) != nullptr)
 	{
-		node *bus=OBJECTDATA(obj,node);
+		node *bus = OBJECTDATA(obj, node);
 		int n = bus->flow_area_num;
 		areas[n].count++;
-		if (bus->type==SWING)
+		if (bus->type == SWING)
 		{
-			if (areas[n].swing!=nullptr)
+			if (areas[n].swing != nullptr)
 				gl_warning("flow area %d has more than one swing bus (node:%d and node:%d)", n, areas[n].swing->id, obj->id);
 			else
 				areas[n].swing = obj;
 		}
-		if (linkcount[obj->id]==0)
+		if (linkcount[obj->id] == 0)
 			gl_warning("node:%d is not connected to anything", obj->id);
 	}
 
 	// check each area
 	int i;
-	for (i=0; i<sizeof(areas)/sizeof(areas[0]); i++)
+	for (i = 0; i < sizeof(areas) / sizeof(areas[0]); i++)
 	{
-		if (areas[i].count>0 && areas[i].swing==nullptr)
+		if (areas[i].count > 0 && areas[i].swing == nullptr)
 		{
 			gl_error("flow area %d has no swing bus", i);
 			errcount++;
 		}
-
 	}
 
 	// check for islands without swing buses
-	obj=nullptr;
+	obj = nullptr;
 	OBJECTNUM bus[10000];
-	memset(bus,0xff,sizeof(bus));
-	while ( (obj=gl_find_next(swings,obj))!=nullptr)
+	memset(bus, 0xff, sizeof(bus));
+	while ((obj = gl_find_next(swings, obj)) != nullptr)
 	{
 		// mark swing bus
-		bus[obj->id]=obj->id;
+		bus[obj->id] = obj->id;
 
 		// scan all links to spread swing info until no changes made
 		bool changed;
-		do {
-			OBJECT *p=nullptr;
-			changed=false;
-			while ((p=gl_find_next(links,p))!=nullptr)
+		do
+		{
+			OBJECT *p = nullptr;
+			changed = false;
+			while ((p = gl_find_next(links, p)) != nullptr)
 			{
-				link *q=OBJECTDATA(p,link);
+				link *q = OBJECTDATA(p, link);
 				OBJECT *f = q->from;
 				OBJECT *t = q->to;
-				if (f==nullptr || t==nullptr)
+				if (f == nullptr || t == nullptr)
 					continue;
-				if (bus[f->id]==obj->id && bus[t->id]==0xffffffff)
+				if (bus[f->id] == obj->id && bus[t->id] == 0xffffffff)
 				{
 					changed = true;
-					bus[t->id]=obj->id;
+					bus[t->id] = obj->id;
 				}
-				else if (bus[t->id]==obj->id && bus[f->id]==0xffffffff)
+				else if (bus[t->id] == obj->id && bus[f->id] == 0xffffffff)
 				{
 					changed = true;
-					bus[f->id]=obj->id;
+					bus[f->id] = obj->id;
 				}
 			}
 		} while (changed);
 	}
-	obj=nullptr;
-	while ( (obj=gl_find_next(nodes,obj))!=nullptr)
+	obj = nullptr;
+	while ((obj = gl_find_next(nodes, obj)) != nullptr)
 	{
-		if (bus[obj->id]==0xffffffff)
+		if (bus[obj->id] == 0xffffffff)
 		{
 			gl_warning("node:%d is not connected to any swing bus", obj->id);
 			errcount++;
 		}
 	}
-	gl_free(nodes);
-	gl_free(links);
+	gl_free((void **)&nodes);
+	gl_free((void **)&links);
+	gl_free((void **)&swings);
 
-	gl_output("Network check complete: %d errors found",errcount);
+	gl_output("Network check complete: %d errors found", errcount);
 	return errcount;
 }
 

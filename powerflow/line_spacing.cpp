@@ -85,7 +85,7 @@ EXPORT int create_line_spacing(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(line_spacing::oclass);
 		if (*obj!=nullptr)
 		{
-			line_spacing *my = OBJECTDATA(*obj,line_spacing);
+			line_spacing *my = /*OBJECTDATA(obj,<>)*/ object_data<line_spacing>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}

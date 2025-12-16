@@ -3,7 +3,7 @@
 	@file exception.c
 	@addtogroup exception Exception handling
 	@ingroup core
-	
+
 	Exception handlers are created and caught using the exception module
 
 	Note that the exception handlers are only necessary for C code.  This
@@ -19,16 +19,16 @@
 		output_error("Exception caught: %s", msg);
 	} ENDCATCH
 	@endcode
-	
+
 	In C++ code, you can use THROW() to throw an exception that is
-	to be caught by the main system exception handler. 
+	to be caught by the main system exception handler.
 
 	The recommended format for exception messages is as follows:
 
 	- <b>Core exceptions</b> should include the offending function
-	  call and the specifics of the error in context, as in	
-		\code 
-	  	THROW("object_tree_add(obj='%s:%d', name='%s'): memory allocation failed (%s)", 
+	  call and the specifics of the error in context, as in
+		\code
+		THROW("object_tree_add(obj='%s:%d', name='%s'): memory allocation failed (%s)",
 			obj->oclass->name, obj->id, name, strerror(errno));
 		\endcode
 	  For functions that a \p static, you should include the file in which
@@ -60,19 +60,20 @@
 
 EXCEPTIONHANDLER *handlers = nullptr;
 
-/** Creates an exception handler for use in a try block 
+/** Creates an exception handler for use in a try block
 	@return a pointer to an EXCEPTIONHANDLER structure
  **/
 EXCEPTIONHANDLER *create_exception_handler(void)
 {
-	EXCEPTIONHANDLER *ptr = static_cast<EXCEPTIONHANDLER*>(malloc(sizeof(EXCEPTIONHANDLER)));
-	if(ptr == nullptr){
+	EXCEPTIONHANDLER *ptr = static_cast<EXCEPTIONHANDLER *>(malloc(sizeof(EXCEPTIONHANDLER)));
+	if (ptr == nullptr)
+	{
 		output_fatal("create_exception_handler(): malloc failure");
 		return nullptr;
 	}
 	ptr->next = handlers;
-	ptr->id = (handlers==nullptr?0:handlers->id)+1;
-	memset(ptr->msg,0,sizeof(ptr->msg));
+	ptr->id = (handlers == nullptr ? 0 : handlers->id) + 1;
+	memset(ptr->msg, 0, sizeof(ptr->msg));
 	handlers = ptr;
 	return ptr;
 }
@@ -82,15 +83,16 @@ EXCEPTIONHANDLER *create_exception_handler(void)
 void delete_exception_handler(EXCEPTIONHANDLER *ptr) /**< a pointer to the exception handler */
 {
 	EXCEPTIONHANDLER *target;
-	if(ptr == nullptr){
+	if (ptr == nullptr)
+	{
 		output_fatal("delete_exception_handler(): ending an exception handler block where no exception handler was present");
 		return;
 	}
 	target = ptr->next;
-	while (handlers!=target)
+	while (handlers != target)
 	{
 		ptr = handlers;
-		handlers=ptr->next;
+		handlers = ptr->next;
 		free(ptr);
 		ptr = nullptr;
 		/* if(handlers == nullptr) break; */
@@ -100,25 +102,25 @@ void delete_exception_handler(EXCEPTIONHANDLER *ptr) /**< a pointer to the excep
 /** Throw an exception
  **/
 void throw_exception(const char *format, /**< the format string */
-					 ...) /**< the parameters of the message */
+					 ...)				 /**< the parameters of the message */
 {
 	char buffer[1024];
 	va_list ptr;
-	va_start(ptr,format);
-	vsprintf(buffer,format,ptr);
+	va_start(ptr, format);
+	vsprintf(buffer, format, ptr);
 	va_end(ptr);
 
 	if (handlers)
 	{
-		strncpy(handlers->msg,buffer,sizeof(handlers->msg));
+		strncpy(handlers->msg, buffer, sizeof(handlers->msg));
 		// do not use output_* because they use functions that can throw exception
-		//fprintf(stderr,"EXCEPTION: %s\n", buffer);
-		longjmp(handlers->buf,handlers->id);
+		// fprintf(stderr,"EXCEPTION: %s\n", buffer);
+		longjmp(handlers->buf, handlers->id);
 	}
 	else
 	{
 		// do not use output_* because they use functions that can throw exception
-		fprintf(stderr,"UNHANDLED EXCEPTION: %s\n", buffer);
+		// fprintf(stderr,"UNHANDLED EXCEPTION: %s\n", buffer);
 		/*	TROUBLESHOOT
 			An exception was generated that can't be handled by
 			the system.  This usually occurs because some part

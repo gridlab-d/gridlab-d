@@ -29,6 +29,8 @@ int convert_from_int16(char *buffer, int size, void *data, PROPERTY *prop);
 int convert_to_int16(const char *buffer, void *data, PROPERTY *prop);
 int convert_from_int32(char *buffer, int size, void *data, PROPERTY *prop);
 int convert_to_int32(const char *buffer, void *data, PROPERTY *prop);
+int convert_from_uint32(char* buffer, int size, void* data, PROPERTY* prop);
+int convert_to_uint32(const char* buffer, void* data, PROPERTY* prop);
 int convert_from_int64(char *buffer, int size, void *data, PROPERTY *prop);
 int convert_to_int64(const char *buffer, void *data, PROPERTY *prop);
 int convert_from_char8(char *buffer, int size, void *data, PROPERTY *prop);

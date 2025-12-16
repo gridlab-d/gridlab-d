@@ -86,7 +86,7 @@ Changes since 4.0b4
 
 10/12/10
     - Performance optimization in opf_consfcn(). Assign sparse cols
-      then transpose instead of assigning sparse rows. Results in >2x
+      then transpose instead of assigning sparse.rows(). Results in >2x
       speed up for this function on case2935, ~10x on case42k.
 
 7/20/10
@@ -1114,7 +1114,7 @@ Changes since 1.0.1
       not included explicitly in the optimization as variables and
       equality constraints. Generator reactive powers were computed
       directly. Now they are included explicitly in the optimization.
-      Costs for Qg are specified in extra rows int gencost.
+      Costs for Qg are specified in extra.rows() int gencost.
 
 
 Changes since 1.0

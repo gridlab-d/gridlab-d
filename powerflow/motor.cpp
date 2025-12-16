@@ -296,13 +296,13 @@ int motor::create()
 
 int motor::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	int result;
 	bool temp_house_motor_state;
 	double temp_house_capacity_info, temp_house_cop;
 	enumeration temp_house_type;
 	gld_property *temp_gld_property;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	//See if we have a house connection defined -- if so, do this after that initializes (to get data)
 	if (mtr_house_pointer != nullptr)
@@ -419,7 +419,7 @@ int motor::init(OBJECT *parent)
 			}
 
 			//Pull the value
-			temp_gld_property->getp<enumeration>(temp_house_type, *test_rlock);
+			temp_gld_property->getp<enumeration>(temp_house_type, test_rlock);
 
 			//Delete the connection
 			delete temp_gld_property;
@@ -480,7 +480,7 @@ int motor::init(OBJECT *parent)
 			}
 
 			//Pull the value
-			temp_gld_property->getp<enumeration>(temp_house_type, *test_rlock);
+			temp_gld_property->getp<enumeration>(temp_house_type, test_rlock);
 
 			//Delete the connection
 			delete temp_gld_property;
@@ -545,7 +545,7 @@ int motor::init(OBJECT *parent)
 
 		//Set the flag and push it
 		temp_house_motor_state = true;
-		temp_gld_property->setp<bool>(temp_house_motor_state,*test_rlock);
+		temp_gld_property->setp<bool>(temp_house_motor_state,test_rlock);
 
 		//Now that it is done, kill it
 		delete temp_gld_property;
@@ -564,7 +564,7 @@ int motor::init(OBJECT *parent)
 		}
 
 		//Check the initial state - pull the value (not sure it is actually set yet)
-		mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+		mtr_house_state_pointer->getp<bool>(temp_house_motor_state,test_rlock);
 
 		//Determine our state
 		if (temp_house_motor_state)
@@ -793,7 +793,7 @@ TIMESTAMP motor::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	bool temp_house_motor_state;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	// update voltage and frequency
 	updateFreqVolt();
@@ -804,7 +804,7 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (mtr_house_state_pointer != nullptr)
 		{
 			//Pull the updated state
-			mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+			mtr_house_state_pointer->getp<bool>(temp_house_motor_state,test_rlock);
 
 			//Set the motor state
 			if (temp_house_motor_state)
@@ -989,10 +989,10 @@ TIMESTAMP motor::postsync(TIMESTAMP t0, TIMESTAMP t1)
 //Module-level call
 SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	STATUS return_status_val;
 	bool temp_house_motor_state;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int  test_rlock = 0;
 	double deltat, deltat_ndiv;
 
 	// make sure to capture the current time
@@ -1039,7 +1039,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			if (mtr_house_state_pointer != nullptr)
 			{
 				//Pull the updated state
-				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,test_rlock);
 
 				//Set the motor state
 				if (temp_house_motor_state)
@@ -1095,7 +1095,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			if (mtr_house_state_pointer != nullptr)
 			{
 				//Pull the updated state
-				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,test_rlock);
 
 				//Set the motor state
 				if (temp_house_motor_state)
@@ -1307,7 +1307,7 @@ void motor::updateFreqVolt() {
 	{
 		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0) // if we have a parent, reference the voltage and frequency of the parent
 		{
-			node *parNode = OBJECTDATA(SubNodeParent,node);
+			node *parNode = object_data<node>(SubNodeParent);
 			if (triplex_connected)
 			{
 				//See which type of triplex
@@ -1368,7 +1368,7 @@ void motor::updateFreqVolt() {
 	{
 		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0) // if we have a parent, reference the voltage and frequency of the parent
 		{
-			node *parNode = OBJECTDATA(SubNodeParent,node);
+			node *parNode = object_data<node>(SubNodeParent);
 			// obtain 3-phase voltages
 			Vas = parNode->voltage[0]/parNode->nominal_voltage;
 			Vbs = parNode->voltage[1]/parNode->nominal_voltage;
@@ -2247,7 +2247,7 @@ EXPORT int create_motor(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(motor::oclass);
 		if (*obj!=nullptr)
 		{
-			motor *my = OBJECTDATA(*obj,motor);
+			motor *my = /*OBJECTDATA(obj,<>)*/ object_data<motor>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -2266,7 +2266,7 @@ EXPORT int create_motor(OBJECT **obj, OBJECT *parent)
 EXPORT int init_motor(OBJECT *obj)
 {
 	try {
-		motor *my = OBJECTDATA(obj,motor);
+		motor *my = /*OBJECTDATA(obj,<>)*/ object_data<motor>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(motor);
@@ -2283,7 +2283,7 @@ EXPORT int init_motor(OBJECT *obj)
 EXPORT TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP t1 = TS_INVALID;
-	motor *my = OBJECTDATA(obj,motor);
+	motor *my = /*OBJECTDATA(obj,<>)*/ object_data<motor>(obj);
 	try
 	{
 		switch (pass) {
@@ -2318,7 +2318,7 @@ EXPORT TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int isa_motor(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,motor)->isa(classname);
+		return /*OBJECTDATA(obj,<>)*/ object_data<motor>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -2329,7 +2329,7 @@ EXPORT int isa_motor(OBJECT *obj, char *classname)
 */
 EXPORT SIMULATIONMODE interupdate_motor(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	motor *my = OBJECTDATA(obj,motor);
+	motor *my = /*OBJECTDATA(obj,<>)*/ object_data<motor>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{

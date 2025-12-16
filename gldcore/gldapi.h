@@ -5,6 +5,10 @@
 #include <map>
 #include <any>
 #include <memory>
+#include <vector>
+#include <optional>
+#include <nlohmann/json.hpp>
+#include "platform.h"
 
 // typedefs for GLD data types
 typedef std::map<std::string, std::any> GLDData;
@@ -16,7 +20,8 @@ enum GLDErrorCode {
     GLD_INVALID_FORMAT = 2,
     GLD_OPERATION_FAILED = 3,
     GLD_OBJECT_NOT_FOUND = 4,
-    GLD_TIME_STEP_ERROR = 5
+    GLD_TIME_STEP_ERROR = 5,
+    GLD_FAILED_TO_START = 6
 };
 
 enum GLDApplicationType {
@@ -40,23 +45,29 @@ typedef GLDErrorCode (*GLDCallback)(GridLabD* gld);
 class GridLabD {
 public:
      // Default constructor
-    GridLabD() {
-        // Initialization code goes here
-    }
+    GridLabD();
 
     ~GridLabD() {
         // Cleanup code goes here
     }
-
+    nlohmann::json gld_model;
+    time_t started_at;
+    int64 passes = 0, tsteps = 0;
     // Set the configuration file path
     GLDErrorCode set_config_file(const std::string& config_file);
 
-
     // Load a GLM and return an error code
-    GLDErrorCode load_glm(const std::string& filepath);
+    GLDErrorCode load_glm(int argc, char* argv[]);
 
-    // Get the GLM data based on a query
-    GLDErrorCode get_glm_data(const std::string& query, GLDData& result);
+    // Setup GLD and return an error code
+    //GLDErrorCode setup_before_load(const std::string& filepath) ;
+    GLDErrorCode setup_before_load();
+
+    // Setup GLD and return an error code
+    GLDErrorCode setup_after_load() ;
+
+    // Get the GLM data based on a query, optionally save to filepath
+    nlohmann::json get_checkpoint_json(const std::string& filepath = "");
 
     // Set the GLM based on input data
     GLDErrorCode set_glm_data(const GLDData& data);
@@ -76,8 +87,8 @@ public:
     // Edit an object in the model
     GLDErrorCode edit_object(const std::string& name, const GLDData& updated_data);
 
-    // Run the simulation for a specified time range and return the simulation time
-    GLDErrorCode run(double start_time, double end_time, double& simulation_time);
+    // Run the simulation for a specified time range (optional). If not provided, previous values are used.
+    GLDErrorCode run(std::optional<double> start_time = std::nullopt, std::optional<double> stop_time = std::nullopt);
 
     // Run the simulation by one time step and return the simulation time
     GLDErrorCode step(double& simulation_time);
@@ -98,10 +109,20 @@ public:
     GLDErrorCode get_time(std::string& current_time);
 
     // Set the application mode (e.g., POWERFLOW, TIMESERIES, VVO)
-    GLDErrorCode set_application_mode(GLDApplicationType mode);
+    GLDErrorCode set_application_mode(GLDApplicationType mode); //Not needed anymore
 
     // Set the time step for the simulation
     GLDErrorCode set_time_step(double time_step);
+
+    //Exit simulation
+    GLDErrorCode exit_gld(const std::string& filepath);
+
+    // Simple object finding method
+    void* find_object_by_name(const std::string& object_name);
+    
+    // Property access methods
+    GLDErrorCode get_property_value(void* object_ptr, const std::string& property_name, std::string& value);
+    GLDErrorCode set_property_value(void* object_ptr, const std::string& property_name, const std::string& value);
 
     private:
         std::string glm_file_path;  // Path to the GLM file

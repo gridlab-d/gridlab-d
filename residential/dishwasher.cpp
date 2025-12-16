@@ -175,7 +175,7 @@ int dishwasher::create()
 	last_t = 0;
 	
 
-	gl_warning("explicit %s model is experimental and has not been validated", OBJECTHDR(this)->oclass->name);
+	gl_warning("explicit %s model is experimental and has not been validated", object_header(this)->oclass->name);
 	/* TROUBLESHOOT
 		The dishwasher explicit model has some serious issues and should be considered for complete
 		removal.  It is highly suggested that this model NOT be used.
@@ -188,7 +188,7 @@ int dishwasher::init(OBJECT *parent)
 {
 	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
 
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -468,7 +468,7 @@ double dishwasher::update_state(double dt) //,TIMESTAMP t1)
 	// accumulate the energy
 
 	double temp_voltage_value_mag;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	energy_used += total_power/1000 * dt/3600;
 
@@ -1440,7 +1440,7 @@ case dishwasher_TRIPPED:
 EXPORT TIMESTAMP sync_dishwasher(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP tret;
-	dishwasher *my = OBJECTDATA(obj, dishwasher);
+	dishwasher *my = object_data<dishwasher>(obj);
 	if (obj->clock <= ROUNDOFF)
 		obj->clock = t0;  //set the object clock if it has not been set yet
 	try {
@@ -1472,7 +1472,7 @@ EXPORT int create_dishwasher(OBJECT **obj, OBJECT *parent)
 	*obj = gl_create_object(dishwasher::oclass);
 	if (*obj!=nullptr)
 	{
-		dishwasher *my = OBJECTDATA(*obj,dishwasher);
+		dishwasher *my = object_data<dishwasher>(*obj);
 		gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
@@ -1482,14 +1482,14 @@ EXPORT int create_dishwasher(OBJECT **obj, OBJECT *parent)
 
 EXPORT int init_dishwasher(OBJECT *obj)
 {
-	dishwasher *my = OBJECTDATA(obj,dishwasher);
+	dishwasher *my = object_data<dishwasher>(obj);
 	return my->init(obj->parent);
 }
 
 EXPORT int isa_dishwasher(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,dishwasher)->isa(classname);
+		return object_data<dishwasher>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -1497,7 +1497,7 @@ EXPORT int isa_dishwasher(OBJECT *obj, char *classname)
 
 //EXPORT TIMESTAMP sync_dishwasher(OBJECT *obj, TIMESTAMP t0)
 //{
-//	dishwasher *my = OBJECTDATA(obj, dishwasher);
+//	dishwasher *my = object_data<dishwasher>(obj);
 //	TIMESTAMP t1 = my->sync(obj->clock, t0);
 //	obj->clock = t0;
 //	return t1;

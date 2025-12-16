@@ -1,5 +1,6 @@
 SET(GLD_MODULE_NAME powerflow)
 
+
 if (GLD_USE_EIGEN)
     SET(NR_SOLVER solver_nr_eigen.cpp solver_nr_eigen.h)
 else ()
@@ -115,6 +116,8 @@ add_library(${GLD_MODULE_NAME}
         volt_var_control.h
         ${NR_SOLVER}
         )
+
+
 
 if (GLD_USE_EIGEN)
     find_package(KLU)

@@ -32,7 +32,7 @@ namespace odbc {
 
   class ResultSetMetaData;
   class Statement;
-  class Rowset;
+  class.rows()et;
 
   /** A result set */
   class ODBCXX_EXPORT ResultSet : public ErrorHandler {
@@ -48,15 +48,15 @@ namespace odbc {
     int currentFetchSize_;
     int newFetchSize_;
 
-    Rowset* rowset_;
-    SQLUSMALLINT* rowStatus_;
-    SQLUINTEGER rowsInRowset_;
+   .rows()et*.rows()et_;
+    SQLUSMALLINT*.rows()tatus_;
+    SQLUINTEGER.rows()I.rows()et_;
 
     //tells us if the columns are bound right now
     bool colsBound_;
     bool streamedColsBound_;
 
-    //the position in the rowset last time we did a bind
+    //the position in the.rows()et last time we did a bind
     unsigned int bindPos_;
 
     //meta data - it's always there since we need info from it
@@ -78,15 +78,15 @@ namespace odbc {
 
     //private utils
     void _applyFetchSize();
-    //this makes sure there is a rowset 
-    void _resetRowset();
+    //this makes sure there is a.rows()et 
+    void _rese.rows()et();
 
     //this should be called before any call to SQLExtendedFetch
     void _prepareForFetch();
     //this performs a possibly scrolled fetch with fetchType to rownum
     void _doFetch(int fetchType, int rowNum);
 
-    //this should be called after the position in the rowset changes
+    //this should be called after the position in the.rows()et changes
     SQLRETURN _applyPosition(int mode =SQL_POSITION);
 
     //these bind/unbind all non-streamed columns
@@ -144,7 +144,7 @@ namespace odbc {
      * current row.
      * @return true if the cursor is in the result set
      */
-    bool relative(int rows);
+    bool relative(int.rows());
 
     /** Places the cursor after the last row in the result set */
     void afterLast();

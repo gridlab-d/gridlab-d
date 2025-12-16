@@ -100,4 +100,5 @@ object triplex_meter{
 		value 27543;
 		within 137.71;//asserting house_e within 0.5 percent of Rob's ETP result
 	};
+
 }

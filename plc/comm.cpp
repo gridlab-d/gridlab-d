@@ -111,7 +111,7 @@ comm *comm::defaults = nullptr; ///< a pointer to the default values for new obj
 
 void comm::route(Message *msg)
 {
-	msg->set_deliverytime((TIMESTAMP)(gl_randomvalue(rtype,a,b)/TS_SECOND)+OBJECTHDR(this)->clock);
+	msg->set_deliverytime((TIMESTAMP)(gl_randomvalue(rtype,a,b)/TS_SECOND)+object_header(this)->clock);
 	DATETIME dt;
 	char ts[64]="unknown time";
 	gl_localtime(msg->get_deliverytime(),&dt);

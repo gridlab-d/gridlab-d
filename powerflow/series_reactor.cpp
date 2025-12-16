@@ -162,7 +162,7 @@ EXPORT TIMESTAMP commit_series_reactor(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if (solver_method==SM_FBS)
 	{
-		series_reactor *plink = OBJECTDATA(obj,series_reactor);
+		series_reactor *plink = object_data<series_reactor>(obj);
 		plink->calculate_power();
 	}
 	return TS_NEVER;
@@ -174,7 +174,7 @@ EXPORT int create_series_reactor(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(series_reactor::oclass);
 		if (*obj!=nullptr)
 		{
-			series_reactor *my = OBJECTDATA(*obj,series_reactor);
+			series_reactor *my = object_data<series_reactor>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -193,7 +193,7 @@ EXPORT int create_series_reactor(OBJECT **obj, OBJECT *parent)
 EXPORT int init_series_reactor(OBJECT *obj)
 {
 	try {
-		series_reactor *my = OBJECTDATA(obj,series_reactor);
+		series_reactor *my = object_data<series_reactor>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(series_reactor);
@@ -210,7 +210,7 @@ EXPORT int init_series_reactor(OBJECT *obj)
 EXPORT TIMESTAMP sync_series_reactor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		series_reactor *pObj = OBJECTDATA(obj,series_reactor);
+		series_reactor *pObj = object_data<series_reactor>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -230,7 +230,7 @@ EXPORT TIMESTAMP sync_series_reactor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_series_reactor(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,series_reactor)->isa(classname);
+	return object_data<series_reactor>(obj)->isa(classname);
 }
 
 /**@}**/

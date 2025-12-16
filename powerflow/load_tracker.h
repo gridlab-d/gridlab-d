@@ -3,7 +3,7 @@
 
 #include "gridlabd.h"
 
-class load_tracker
+class load_tracker: public gld_object
 {
 private:
 	typedef union
@@ -35,9 +35,9 @@ private:
 	void update_feedback_variable();
 public:
 	/* get_name acquires the name of an object or 'unnamed' if non set */
-	inline const char *get_name(void) const { static char tmp[64]; OBJECT *obj=OBJECTHDR(this); return obj->name?obj->name:(sprintf(tmp,"%s:%d",obj->oclass->name,obj->id)>0?tmp:"(unknown)");};
+	inline const char *get_name(void) const { static char tmp[64]; OBJECT *obj=object_header(this); return obj->name?obj->name:(sprintf(tmp,"%s:%d",obj->oclass->name,obj->id)>0?tmp:"(unknown)");};
 	/* get_id acquires the object's id */
-	inline unsigned int get_id(void) const {return OBJECTHDR(this)->id;};
+	inline unsigned int get_id(void) const {return object_header(this)->id;};
 public:
 	load_tracker(MODULE *mod);
 	inline load_tracker(CLASS *cl=oclass){};

@@ -16,6 +16,7 @@
 #include <cstdlib>
 
 #include "fuse.h"
+#include "object.h"
 
 //initialize pointers
 CLASS* fuse::oclass = nullptr;
@@ -130,7 +131,7 @@ int fuse::create()
 int fuse::init(OBJECT *parent)
 {
 	char jindex, kindex;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if ((phases & PHASE_S) == PHASE_S)
 	{
@@ -319,7 +320,7 @@ int fuse::init(OBJECT *parent)
 
 TIMESTAMP fuse::sync(TIMESTAMP t0)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	unsigned char work_phases;
 	bool fuse_blew;
 	TIMESTAMP replacement_time;
@@ -651,7 +652,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 
 TIMESTAMP fuse::postsync(TIMESTAMP t0)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	char jindex;
 	unsigned char goodphases = 0x00;
 	TIMESTAMP Ret_Val[3], t1;
@@ -855,9 +856,12 @@ void fuse::fuse_change_status_function(void)
 			}
 		}
 
-		LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+		//LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+		std::unique_lock<std::shared_mutex> nr_lock( SharedMutexManager::get_mutex( NR_swing_bus));
+		
 		NR_admit_change = true;	//Flag an admittance change
-		UNLOCK_OBJECT(NR_swing_bus);	//Finished
+		nr_lock.unlock();
+		//UNLOCK_OBJECT(NR_swing_bus);	//Finished
 		//Update prev_status
 		prev_status = status;
 
@@ -983,9 +987,10 @@ void fuse::fuse_sync_function(void)
 		//Check status before running sync (since it will clear it)
 		if ((status != prev_status) || (pres_status != prev_full_status))
 		{
-			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			//LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			std::unique_lock<std::shared_mutex> nr_lock(SharedMutexManager::get_mutex(NR_swing_bus));
 			NR_admit_change = true;	//Flag an admittance change
-			UNLOCK_OBJECT(NR_swing_bus);	//Finished
+			//UNLOCK_OBJECT(NR_swing_bus);	//Finished
 		}
 
 		prev_full_status = pres_status;	//Update the status flags
@@ -1147,7 +1152,7 @@ OBJECT **fuse::get_object(OBJECT *obj, const char *name)
 	PROPERTY *p = gl_get_property(obj,name);
 	if (p==nullptr || p->ptype!=PT_object)
 		return nullptr;
-	return (OBJECT**)GETADDR(obj,p);
+	return (OBJECT**)get_addr(obj,p);
 }
 
 //Function to adjust "faulted phases" block - in case something has tried to restore itself
@@ -1173,7 +1178,7 @@ void fuse::fuse_check(gld::set phase_to_check, gld::complex *fcurr)
 	unsigned char work_phase;
 	FUSESTATE *valstate;
 	TIMESTAMP *fixtime;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	if (phase_to_check == PHASE_A)
 	{
@@ -1198,7 +1203,7 @@ void fuse::fuse_check(gld::set phase_to_check, gld::complex *fcurr)
 	}
 	else
 	{
-		GL_THROW("Unknown phase to check in fuse:%d",OBJECTHDR(this)->id);
+		GL_THROW("Unknown phase to check in fuse:%d",object_header(this)->id);
 		/*  TROUBLESHOOT
 		An invalid phase was specified for the phase check in a fuse.  Please
 		check your code and continue.  If it persists, submit your code and a bug
@@ -1289,7 +1294,7 @@ EXPORT int create_fuse(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(fuse::oclass);
 		if (*obj!=nullptr)
 		{
-			fuse *my = OBJECTDATA(*obj,fuse);
+			fuse *my = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -1302,7 +1307,7 @@ EXPORT int create_fuse(OBJECT **obj, OBJECT *parent)
 EXPORT int init_fuse(OBJECT *obj)
 {
 	try {
-		fuse *my = OBJECTDATA(obj,fuse);
+		fuse *my = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(fuse);
@@ -1311,12 +1316,12 @@ EXPORT int init_fuse(OBJECT *obj)
 //Commit timestep - after all iterations are done
 EXPORT TIMESTAMP commit_fuse(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
-	fuse *fsr = OBJECTDATA(obj,fuse);
+	fuse *fsr = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(obj);
 	try
 	{
 		if (solver_method==SM_FBS)
 		{
-			link_object *plink = OBJECTDATA(obj,link_object);
+			link_object *plink = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
 			plink->calculate_power();
 			
 			return (fsr->fuse_state(obj->parent) ? TS_NEVER : 0);
@@ -1334,7 +1339,7 @@ EXPORT TIMESTAMP commit_fuse(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 EXPORT TIMESTAMP sync_fuse(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		fuse *pObj = OBJECTDATA(obj,fuse);
+		fuse *pObj = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -1362,7 +1367,7 @@ EXPORT TIMESTAMP sync_fuse(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 */
 EXPORT int isa_fuse(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,fuse)->isa(classname);
+	return /*OBJECTDATA(obj,<>)*/ object_data<fuse>(obj)->isa(classname);
 }
 
 //Function to change fuse states
@@ -1371,7 +1376,7 @@ EXPORT int change_fuse_state(OBJECT *thisobj, unsigned char phase_change, bool s
 	char desA, desB, desC;
 
 	//Map the Fuse
-	fuse *fuseobj = OBJECTDATA(thisobj,fuse);
+	fuse *fuseobj = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(thisobj);
 
 	//Figure out what we need to call
 	if ((phase_change & 0x04) == 0x04)
@@ -1416,7 +1421,7 @@ EXPORT int change_fuse_state(OBJECT *thisobj, unsigned char phase_change, bool s
 EXPORT int fuse_reliability_operation(OBJECT *thisobj, unsigned char desired_phases)
 {
 	//Map the fuse
-	fuse *fuseobj = OBJECTDATA(thisobj,fuse);
+	fuse *fuseobj = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(thisobj);
 
 	fuseobj->set_fuse_full_reliability(desired_phases);
 
@@ -1428,7 +1433,7 @@ EXPORT int create_fault_fuse(OBJECT *thisobj, OBJECT **protect_obj, char *fault_
 	int retval;
 
 	//Link to ourselves
-	fuse *thisfuse = OBJECTDATA(thisobj,fuse);
+	fuse *thisfuse = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(thisobj);
 
 	//Try to fault up
 	retval = thisfuse->link_fault_on(protect_obj, fault_type, implemented_fault,repair_time);
@@ -1440,7 +1445,7 @@ EXPORT int fix_fault_fuse(OBJECT *thisobj, int *implemented_fault, char *imp_fau
 	int retval;
 
 	//Link to ourselves
-	fuse *thisfuse = OBJECTDATA(thisobj,fuse);
+	fuse *thisfuse = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(thisobj);
 
 	//Clear the fault
 	retval = thisfuse->link_fault_off(implemented_fault, imp_fault_name);
@@ -1456,7 +1461,7 @@ EXPORT int clear_fault_fuse(OBJECT *thisobj, int *implemented_fault, char *imp_f
 	int retval;
 
 	//Link to ourselves
-	fuse *thisfuse = OBJECTDATA(thisobj,fuse);
+	fuse *thisfuse = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(thisobj);
 
 	//Clear the fault
 	retval = thisfuse->clear_fault_only(implemented_fault, imp_fault_name);
@@ -1470,7 +1475,7 @@ EXPORT int clear_fault_fuse(OBJECT *thisobj, int *implemented_fault, char *imp_f
 EXPORT int fuse_fault_updates(OBJECT *thisobj, unsigned char restoration_phases)
 {
 	//Link to ourselves
-	fuse *thisfuse = OBJECTDATA(thisobj,fuse);
+	fuse *thisfuse = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(thisobj);
 
 	//Call the update
 	thisfuse->set_fuse_faulted_phases(restoration_phases);

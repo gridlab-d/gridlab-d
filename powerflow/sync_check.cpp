@@ -19,6 +19,10 @@ using namespace std;
 
 #define FLAG_VAL -1.0
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 // sync_check CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -91,7 +95,7 @@ int sync_check::create(void)
 
 int sync_check::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	int retval = powerflow_object::init(parent);
 
 	// Check if the parent is a switch_object object
@@ -136,7 +140,7 @@ TIMESTAMP sync_check::presync(TIMESTAMP t0)
 
 TIMESTAMP sync_check::sync(TIMESTAMP t0)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP tret = powerflow_object::sync(t0);
 
 	return tret;
@@ -144,7 +148,7 @@ TIMESTAMP sync_check::sync(TIMESTAMP t0)
 
 TIMESTAMP sync_check::postsync(TIMESTAMP t0)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP tret = powerflow_object::postsync(t0);
 
 	//Code to check if we need a deltamode call
@@ -216,7 +220,7 @@ void sync_check::init_sensors(OBJECT *par)
 	swt_ph_C_flag = ((phases & PHASE_C) == PHASE_C); // Phase C
 
 	/* Get properties for measurements */
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	/* Get the 'from' node freq */
 	prop_fm_node_freq = new gld_property(swt_fm_node, "measured_frequency");
@@ -343,7 +347,7 @@ void sync_check::init_diff_prop(double unarmed_val) /* Measurement Properties (h
 
 void sync_check::init_vars()
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double temp_freq_val;
 
 	/* Measurement Properties (hidden) for Recorders */
@@ -443,7 +447,7 @@ void sync_check::init_vars()
 
 void sync_check::data_sanity_check(OBJECT *par)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double temp_freq_val;
 
 	// Check the status of the 'switch_object' object (when it is armed, the parent switch should be in 'OPEN' status)
@@ -596,7 +600,7 @@ void sync_check::data_sanity_check(OBJECT *par)
 
 void sync_check::reg_deltamode_check()
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	// Set the deltamode flag, if desired
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
@@ -658,7 +662,7 @@ void sync_check::reg_deltamode()
 		}
 
 		// Get the self-pointer
-		OBJECT *obj = OBJECTHDR(this);
+		OBJECT *obj = object_header(this);
 
 		// Add this object into the list of deltamode objects
 		delta_objects[pwr_object_current] = obj;
@@ -689,7 +693,7 @@ void sync_check::reg_deltamode()
 void sync_check::init_norm_values(OBJECT *par)
 {
 	// Get the self-pointer
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	/* Get the from node */
 	temp_property_pointer = new gld_property(par, "from");
@@ -953,9 +957,9 @@ void sync_check::check_excitation(unsigned long dt)
 
 	if (t_sat >= metrics_period_sec)
 	{
-		gld_wlock *test_rlock = nullptr;
+		unsigned int test_rlock = 0;
 		enumeration swt_cmd = LS_CLOSED;
-		swt_prop_status->setp<enumeration>(swt_cmd, *test_rlock); // Close the switch for parallelling
+		swt_prop_status->setp<enumeration>(swt_cmd, test_rlock); // Close the switch for parallelling
 		reset_after_excitation();
 	}
 }
@@ -1033,7 +1037,7 @@ EXPORT int create_sync_check(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(sync_check::oclass);
 		if (*obj != nullptr)
 		{
-			sync_check *my = OBJECTDATA(*obj, sync_check);
+			sync_check *my = object_data<sync_check>(*obj);
 			gl_set_parent(*obj, parent);
 			return my->create();
 		}
@@ -1047,7 +1051,7 @@ EXPORT int init_sync_check(OBJECT *obj)
 {
 	try
 	{
-		sync_check *my = OBJECTDATA(obj, sync_check);
+		sync_check *my = object_data<sync_check>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(sync_check);
@@ -1065,7 +1069,7 @@ EXPORT TIMESTAMP sync_sync_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try
 	{
-		sync_check *pObj = OBJECTDATA(obj, sync_check);
+		sync_check *pObj = object_data<sync_check>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass)
 		{
@@ -1086,13 +1090,13 @@ EXPORT TIMESTAMP sync_sync_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_sync_check(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj, sync_check)->isa(classname);
+	return object_data<sync_check>(obj)->isa(classname);
 }
 
 //Deltamode export
 EXPORT SIMULATIONMODE interupdate_sync_check(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	sync_check *my = OBJECTDATA(obj, sync_check);
+	sync_check *my = object_data<sync_check>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{

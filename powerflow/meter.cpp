@@ -28,7 +28,7 @@
 // meter reset function
 EXPORT int64 meter_reset(OBJECT *obj)
 {
-	meter *pMeter = OBJECTDATA(obj,meter);
+	meter *pMeter = object_data<meter>(obj);
 	pMeter->measured_demand = 0;
 	return 0;
 }
@@ -351,7 +351,7 @@ int meter::create()
 int meter::init(OBJECT *parent)
 {
 	char temp_buff[128];
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if(power_market != 0){
 		price_prop = gl_get_property(power_market, "current_market.clearing_price");
@@ -496,7 +496,7 @@ TIMESTAMP meter::presync(TIMESTAMP t0)
 void meter::BOTH_meter_sync_fxn()
 {
 	int TempNodeRef;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Reliability check
 	if ((fault_check_object != nullptr) && (solver_method == SM_NR))	//proper solver and fault_object isn't null - may need to set a flag
@@ -509,7 +509,7 @@ void meter::BOTH_meter_sync_fxn()
 			if (TempNodeRef == -1)
 			{
 				//Try to initialize it, for giggles
-				node *Temp_Node = OBJECTDATA(SubNodeParent,node);
+				node *Temp_Node = object_data<node>(SubNodeParent);
 
 				//Call the initialization
 				Temp_Node->NR_populate();
@@ -569,7 +569,7 @@ TIMESTAMP meter::sync(TIMESTAMP t0)
 
 TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	gld::complex temp_current;
 	TIMESTAMP tretval;
 
@@ -1293,7 +1293,7 @@ double meter::process_bill(TIMESTAMP t1){
 //Module-level call
 SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	double deltat;
 	STATUS return_status_val;
 
@@ -1428,7 +1428,7 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 
 EXPORT int isa_meter(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,meter)->isa(classname);
+	return object_data<meter>(obj)->isa(classname);
 }
 
 EXPORT int create_meter(OBJECT **obj, OBJECT *parent)
@@ -1438,7 +1438,7 @@ EXPORT int create_meter(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(meter::oclass);
 		if (*obj!=nullptr)
 		{
-			meter *my = OBJECTDATA(*obj,meter);
+			meter *my = object_data<meter>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -1451,7 +1451,7 @@ EXPORT int create_meter(OBJECT **obj, OBJECT *parent)
 EXPORT int init_meter(OBJECT *obj)
 {
 	try {
-		meter *my = OBJECTDATA(obj,meter);
+		meter *my = object_data<meter>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(meter);
@@ -1460,7 +1460,7 @@ EXPORT int init_meter(OBJECT *obj)
 EXPORT TIMESTAMP sync_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		meter *pObj = OBJECTDATA(obj,meter);
+		meter *pObj = object_data<meter>(obj);
 		TIMESTAMP t1;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -1480,7 +1480,7 @@ EXPORT TIMESTAMP sync_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 }
 
 EXPORT int notify_meter(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
-	meter *n = OBJECTDATA(obj, meter);
+	meter *n = object_data<meter>(obj);
 	int rv = 1;
 
 	rv = n->notify(update_mode, prop, value);
@@ -1491,7 +1491,7 @@ EXPORT int notify_meter(OBJECT *obj, int update_mode, PROPERTY *prop, char *valu
 //Deltamode export
 EXPORT SIMULATIONMODE interupdate_meter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	meter *my = OBJECTDATA(obj,meter);
+	meter *my = object_data<meter>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -1508,7 +1508,7 @@ EXPORT SIMULATIONMODE interupdate_meter(OBJECT *obj, unsigned int64 delta_time, 
 //KML Export
 EXPORT int meter_kmldata(OBJECT *obj,int (*stream)(const char*,...))
 {
-	meter *n = OBJECTDATA(obj, meter);
+	meter *n = object_data<meter>(obj);
 	int rv = 1;
 
 	rv = n->kmldata(stream);

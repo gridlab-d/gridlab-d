@@ -5,10 +5,14 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include<memory>
 
 #include "gridlabd.h"
 
 #include "climate.h"
+
+
+
 
 #ifndef _NO_CPPUNIT
 

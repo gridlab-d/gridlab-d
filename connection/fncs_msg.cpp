@@ -332,7 +332,7 @@ int fncs_msg::init(OBJECT *parent){
 	int n = 0;
 	int i = 0;
 	int d = 0;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	OBJECT *vObj = nullptr;
 	char buffer[1024] = "";
 	string simName = string(gl_name(obj, buffer, 1023));
@@ -1246,7 +1246,7 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 	int nvecsize = vjson_publish_gld_property_name.size();
 	int vecidx = 0;
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	char buffer[1024] = "";
 	string simName = string(gl_name(obj, buffer, 1023));
 	//simName = simName+"/fncs_output";
@@ -1319,7 +1319,7 @@ int fncs_msg::subscribeJsonVariables( ) //Renke add
 	// throw a warning inside subscribejsonvariables(); and return a 0
 
 	vector<string> values = {};
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	char buffer[1024] = "";
 	string simName = string(gl_name(obj, buffer, 1023));
 	string skey = simName+"/fncs_input";

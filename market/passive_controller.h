@@ -14,6 +14,8 @@
 #include "auction.h"
 #include "gridlabd.h"
 
+#undef CM_NONE
+
 class passive_controller : public gld_object {
 public:
 	passive_controller(MODULE *);
