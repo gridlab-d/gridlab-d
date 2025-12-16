@@ -51,9 +51,9 @@ public:
 	enumeration reverse_flow_control;
 
 	/* get_name acquires the name of an object or 'unnamed' if non set */
-	inline const char *get_name(void) const { static char tmp[64]; OBJECT *obj=OBJECTHDR(this); return obj->name?obj->name:(sprintf(tmp,"%s:%d",obj->oclass->name,obj->id)>0?tmp:"(unknown)");};
+	inline const char *get_name(void) const { static char tmp[64]; OBJECT *obj=object_header(this); return obj->name?obj->name:(sprintf(tmp,"%s:%d",obj->oclass->name,obj->id)>0?tmp:"(unknown)");};
 	/* get_id acquires the object's id */
-	inline unsigned int get_id(void) const {return OBJECTHDR(this)->id;};
+	inline unsigned int get_id(void) const {return object_header(this)->id;};
 	
 	double band_center;		// band center setting of regulator control
 	double band_width;		// band width setting of regulator control

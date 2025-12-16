@@ -215,7 +215,7 @@ void histogram::test_for_complex(char *tprop, char *tpart){
 int histogram::init(OBJECT *parent)
 {
 	PROPERTY *prop = nullptr;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	char tprop[64], tpart[8];
 	int e = 0;
 	TAPEFUNCS *tf = 0;
@@ -467,7 +467,7 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	int i = 0;
 	double value = 0.0;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if((sampling_interval == -1.0 && t_count > t1) ||
 		sampling_interval == 0.0 ||
@@ -558,7 +558,7 @@ EXPORT int create_histogram(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(histogram::oclass);
 		if (*obj!=nullptr)
 		{
-			histogram *my = OBJECTDATA(*obj,histogram);
+			histogram *my = object_data<histogram>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -572,7 +572,7 @@ EXPORT int create_histogram(OBJECT **obj, OBJECT *parent)
 
 EXPORT int init_histogram(OBJECT *obj)
 {
-	histogram *my = OBJECTDATA(obj,histogram);
+	histogram *my = object_data<histogram>(obj);
 	try {
 		return my->init(obj->parent);
 	}
@@ -585,7 +585,7 @@ EXPORT int init_histogram(OBJECT *obj)
 
 EXPORT TIMESTAMP sync_histogram(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	histogram *pObj = OBJECTDATA(obj,histogram);
+	histogram *pObj = object_data<histogram>(obj);
 	try {
 		if (pass == PC_PRETOPDOWN)
 			return pObj->sync(obj->clock, t0);
@@ -609,7 +609,7 @@ EXPORT TIMESTAMP sync_histogram(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 */
 EXPORT int isa_histogram(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,histogram)->isa(classname);
+	return object_data<histogram>(obj)->isa(classname);
 }
 
 /**@}*/

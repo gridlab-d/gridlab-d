@@ -97,5 +97,6 @@
 #  undef _MBCS
 # endif
 #endif
-
+#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
+#include <winsock2.h>
 #include <windows.h>

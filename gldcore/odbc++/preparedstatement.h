@@ -35,7 +35,7 @@
 
 namespace odbc {
 
-  class Rowset;
+  class.rows()et;
 
   /** A prepared statement.
    *
@@ -54,7 +54,7 @@ namespace odbc {
    *    ("INSERT INTO SOMETABLE(AN_INTEGER_COL,A_VARCHAR_COL) VALUES(?,?)"));
    * pstmt->setInt(1,10);
    * pstmt->setString(2,"Hello, world!");
-   * int affectedRows=pstmt-&gt;executeUpdate();
+   * int affecte.rows()=pstmt-&gt;executeUpdate();
    * </pre>
    * @see Connection::prepareStatement()
    */
@@ -69,7 +69,7 @@ namespace odbc {
   protected:
     ODBCXX_STRING sql_;
     //here we store the parameters
-    Rowset* rowset_;
+   .rows()et*.rows()et_;
     size_t numParams_;
     std::vector<int> directions_;
     int defaultDirection_;

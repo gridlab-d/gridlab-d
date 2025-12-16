@@ -114,7 +114,7 @@ int transformer::create()
 }
 
 void transformer::fetch_double(double **prop, const char *name, OBJECT *parent){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	*prop = gl_get_double_by_name(parent, name);
 	if(*prop == nullptr){
 		char tname[32];
@@ -159,7 +159,7 @@ int transformer::init(OBJECT *parent)
 	gld::complex zt, zt_a, zt_b, zt_c, z0, z1, z2, zc;
 	FINDLIST *climate_list = nullptr;
 
-	config = OBJECTDATA(configuration,transformer_configuration);
+	config = object_data<transformer_configuration>(configuration);
 
 	if (config->connect_type==2)		//Flag delta-delta for power calculations
 		SpecialLnk = DELTADELTA;
@@ -180,7 +180,7 @@ int transformer::init(OBJECT *parent)
 	if (result == 2)
 		return 2;	//Return the deferment - no sense doing everything else!
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//map and pull the phases
 	tphases_ref = new gld_property(to,"phases");
@@ -1231,7 +1231,7 @@ int transformer::init(OBJECT *parent)
 
 TIMESTAMP transformer::postsync(TIMESTAMP t0)
 {	
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double time_left;
 	TIMESTAMP trans_end;
 	if(use_thermal_model){
@@ -1377,7 +1377,7 @@ int transformer::transformer_inrush_mat_update(void)
 	gld::complex Zo;
 	double A_sat, B_sat, C_sat;
 	gld::complex work_val_cplex;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Set neutral impedance, arbitrarily
 	Zo = 1e8;
@@ -1769,7 +1769,7 @@ int transformer::transformer_inrush_mat_update(void)
 //Function to do saturation updates (if needed) during powerflow
 int transformer::transformer_saturation_update(bool *deltaIsat)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	int index_loop;
 	gld::complex work_values_voltages[6], phi_values[6];
 	double phi_mag, phi_ang, angle_offset, imag_phi_value, imag_phi_value_pu;
@@ -2036,7 +2036,7 @@ EXPORT TIMESTAMP commit_transformer(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {	
 	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 	{	
-		transformer *plink = OBJECTDATA(obj,transformer);
+		transformer *plink = object_data<transformer>(obj);
 		if (plink->has_phase(PHASE_S))
 			plink->calculate_power_splitphase();
 		else
@@ -2052,7 +2052,7 @@ EXPORT int create_transformer(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(transformer::oclass);
 		if (*obj!=nullptr)
 		{
-			transformer *my = OBJECTDATA(*obj,transformer);
+			transformer *my = object_data<transformer>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -2073,7 +2073,7 @@ EXPORT int create_transformer(OBJECT **obj, OBJECT *parent)
 EXPORT int init_transformer(OBJECT *obj)
 {
 	try {
-		transformer *my = OBJECTDATA(obj,transformer);
+		transformer *my = object_data<transformer>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(transformer);
@@ -2090,7 +2090,7 @@ EXPORT int init_transformer(OBJECT *obj)
 EXPORT TIMESTAMP sync_transformer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		transformer *pObj = OBJECTDATA(obj,transformer);
+		transformer *pObj = object_data<transformer>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -2110,27 +2110,27 @@ EXPORT TIMESTAMP sync_transformer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT void power_calculation(OBJECT *thisobj)
 {
-	transformer *transformerobj = OBJECTDATA(thisobj,transformer);
+	transformer *transformerobj = object_data<transformer>(thisobj);
 	transformerobj->calculate_power();
 }
 
 EXPORT int recalc_transformer_mat(OBJECT *obj)
 {
 	int result;
-	result = OBJECTDATA(obj,transformer)->transformer_inrush_mat_update();
+	result = object_data<transformer>(obj)->transformer_inrush_mat_update();
 	return result;
 }
 
 EXPORT int recalc_deltamode_saturation(OBJECT *obj,bool *deltaIsat)
 {
 	int result;
-	result = OBJECTDATA(obj,transformer)->transformer_saturation_update(deltaIsat);
+	result = object_data<transformer>(obj)->transformer_saturation_update(deltaIsat);
 	return result;
 }
 
 EXPORT int isa_transformer(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,transformer)->isa(classname);
+	return object_data<transformer>(obj)->isa(classname);
 }
 
 /**@}**/

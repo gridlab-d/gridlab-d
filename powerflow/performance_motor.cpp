@@ -133,11 +133,11 @@ int performance_motor::create()
 
 int performance_motor::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	int result;
     double Z_base;
 	gld_property *temp_gld_property;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	//Now run node init, as necessary
 	result = node::init(parent);
@@ -236,10 +236,10 @@ TIMESTAMP performance_motor::postsync(TIMESTAMP t0, TIMESTAMP t1)
 SIMULATIONMODE performance_motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
 	double deltat;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	STATUS return_status_val;
 	bool temp_house_motor_state;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	// make sure to capture the current time
 	curr_time_val = gl_globaldeltaclock;
@@ -435,7 +435,7 @@ EXPORT int create_performance_motor(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(performance_motor::oclass);
 		if (*obj!=nullptr)
 		{
-			performance_motor *my = OBJECTDATA(*obj,performance_motor);
+			performance_motor *my = object_data<performance_motor>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -454,7 +454,7 @@ EXPORT int create_performance_motor(OBJECT **obj, OBJECT *parent)
 EXPORT int init_performance_motor(OBJECT *obj)
 {
 	try {
-		performance_motor *my = OBJECTDATA(obj,performance_motor);
+		performance_motor *my = object_data<performance_motor>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(performance_motor);
@@ -471,7 +471,7 @@ EXPORT int init_performance_motor(OBJECT *obj)
 EXPORT TIMESTAMP sync_performance_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP t1 = TS_INVALID;
-	performance_motor *my = OBJECTDATA(obj,performance_motor);
+	performance_motor *my = object_data<performance_motor>(obj);
 	try
 	{
 		switch (pass) {
@@ -506,7 +506,7 @@ EXPORT TIMESTAMP sync_performance_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pa
 EXPORT int isa_performance_motor(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,performance_motor)->isa(classname);
+		return object_data<performance_motor>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -517,7 +517,7 @@ EXPORT int isa_performance_motor(OBJECT *obj, char *classname)
 */
 EXPORT SIMULATIONMODE interupdate_performance_motor(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	performance_motor *my = OBJECTDATA(obj,performance_motor);
+	performance_motor *my = object_data<performance_motor>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{

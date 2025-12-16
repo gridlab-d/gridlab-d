@@ -5,7 +5,21 @@
 
  **/
 
+#include <memory> // For std::unique_ptr
+#include <vector>
+#include <sstream> // For safer string tokenization
+
 #include "csv_reader.h"
+#include "gldrandom.h"
+
+#ifdef _WIN32
+#include <direct.h>  // Required for getcwd() on Windows
+#else
+#include <unistd.h>  // Required for getcwd() on POSIX systems
+#endif
+
+//extern enum class RANDOMTYPE;
+
 
 CLASS *csv_reader::oclass = 0;
 
@@ -20,7 +34,7 @@ EXPORT int create_csv_reader(OBJECT **obj, OBJECT *parent){
 }
 
 EXPORT int init_csv_reader(OBJECT **obj, OBJECT *parent){
-	csv_reader *my = OBJECTDATA(obj,csv_reader);
+	csv_reader *my = /*OBJECTDATA(obj, csv_reader)*/   object_data<csv_reader>(obj) ;
 	return 1; // let the climate object cause the file to open
 }
 
@@ -30,11 +44,11 @@ EXPORT TIMESTAMP sync_csv_reader(OBJECT *obj, TIMESTAMP t0){
 }
 
 csv_reader::csv_reader(){
-	memset(this, 0, sizeof(csv_reader));
+	////memset(this, 0, sizeof(csv_reader));
 }
 
 csv_reader::csv_reader(MODULE *module){
-	memset(this, 0, sizeof(csv_reader));
+	////memset(this, 0, sizeof(csv_reader));
 	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"csv_reader",sizeof(csv_reader), 0);
@@ -60,7 +74,7 @@ csv_reader::csv_reader(MODULE *module){
 			PT_char256,"columns",PADDR(columns_str),
 			PT_char256,"filename",PADDR(filename),
 			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
-		memset(this,0,sizeof(csv_reader));
+		//memset(this,0,sizeof(csv_reader));
 	}
 }
 
@@ -73,8 +87,14 @@ int csv_reader::open(const char *file){
 	int has_cols = 0;
 	int linenum = 0;
 	int i = 0;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	weather *wtr = 0;
+
+	char cwd[1024];
+	getcwd(cwd, sizeof(cwd));
+	
+
+	gl_debug("Reading weather file from %s\\%s",cwd, file);
 
 	if(file == 0){
 		gl_error("csv_reader has no input file name!");
@@ -143,11 +163,33 @@ int csv_reader::open(const char *file){
 			}
 		}
 	}
+
+	//if (samples) {
+	//	free(samples);  // cleanup from previous allocation
+	//	samples = nullptr;
+	//}
+
+
 	/* move list into double pointer */
-	samples = (weather**)malloc(sizeof(weather *) * (size_t) sample_ct);
-	for(i = 0, wtr = weather_root; i < sample_ct && wtr != nullptr; ++i, wtr=wtr->next){
-		samples[i] = wtr;
+	//samples = (weather**)malloc(sizeof(weather *) * (size_t) sample_ct);
+
+	samples = std::vector<weather*>();
+
+	for(i = 0, wtr = weather_root.get(); i < sample_ct && wtr != nullptr; ++i, wtr=wtr->next.get()){
+		if (!wtr) {
+			gl_error("weather_root list terminated early at index %d", i);
+			break;
+		}
+		//samples[i] = wtr;
+		samples.push_back(wtr);
+
 	}
+
+	if (samples.empty()) {
+		gl_error("csv_reader::open ~ no valid weather samples loaded");
+		return 0;
+	}
+
 	sample_ct = i; // if wtr was the limiting factor, truncate the count
 
 //	index = -1;	// forces to start on zero-eth index
@@ -161,7 +203,7 @@ int csv_reader::open(const char *file){
 }
 
 int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
-	OBJECT *my = OBJECTHDR(this);
+	OBJECT *my = object_header(this);
 	char *split = strchr(line, '=');
 	char propstr[256], valstr[256];
 	PROPERTY *prop = 0;
@@ -241,14 +283,17 @@ int csv_reader::read_header(char *line){
 	struct cmnlist {
 		char *name;
 		PROPERTY *column;
-		struct cmnlist *next;
+		//struct cmnlist *next;
+		std::unique_ptr<cmnlist> next; // Use unique_ptr for automatic memory management
 	};
 	char buffer[1024];
 	int index = 0, start_idx = 0;
 	int done = 0;
 	int i = 0;
-	PROPERTY *prop = 0;
-	struct cmnlist *first = 0, *last = 0, *temp = 0;
+	PROPERTY* prop = 0;
+	std::unique_ptr<struct cmnlist> first = nullptr;
+	struct cmnlist *last = nullptr;  //, * temp = 0;
+	std::unique_ptr<cmnlist> temp; // Use unique_ptr for automatic memory management
 
 	// expected format: x,y,z\n
 
@@ -268,7 +313,8 @@ int csv_reader::read_header(char *line){
 			buffer[index] = 0;
 		}
 
-		temp = (struct cmnlist *)malloc(sizeof(struct cmnlist));
+		//temp = (struct cmnlist *)malloc(sizeof(struct cmnlist));
+		temp = std::make_unique<cmnlist>(); // Use unique_ptr for automatic memory management
 		temp->name = buffer+start_idx;
 		temp->column = prop;
 		temp->next = 0;
@@ -277,10 +323,11 @@ int csv_reader::read_header(char *line){
 		++column_ct;
 
 		if(first == 0){
-			first = last = temp;
+			first = std::move(temp);
+			last = first.get();
 		} else {
-			last->next = temp;
-			last = temp;
+			last->next = std::move(temp);
+			last = last->next.get();
 		}
 
 		if(buffer[index] == 0 || buffer[index] == '\n' || buffer[index] == '\r'){
@@ -290,8 +337,10 @@ int csv_reader::read_header(char *line){
 	}
 
 	//	find properties for each column header
-	temp = first;
-	columns = (PROPERTY **)malloc(sizeof(PROPERTY *) * (size_t)column_ct);
+	temp = std::move(first);
+	//columns = (PROPERTY **)malloc(sizeof(PROPERTY *) * (size_t)column_ct);
+	columns.resize(column_ct);
+
 	while(temp != 0 && i < column_ct){
 		temp->column = gl_find_property(weather::oclass, temp->name);
 		if(temp->column == 0){
@@ -302,110 +351,173 @@ int csv_reader::read_header(char *line){
 			*/
 			return 0;
 		}
-		columns[i] = temp->column;
-		temp = temp->next;
+		columns[i] = temp->column; // Move ownership to the vector
+		//columns[i] = temp->column;
+		temp = std::move(temp->next);
 		++i;
 	}
 	return 1;
 }
 
-int csv_reader::read_line(char *line, int linenum){
-	int done = 0;
-	int col = 0;
-	char buffer[2048];
-	char *token = 0;
-	weather *sample = 0;
-	int64 t1, t2;
-//	OBJECT *my = 0;
 
-	strncpy(buffer, line, 1023);
-	token = strtok(buffer, " ,\t\n\r");
 
-	if(token == 0){
-		return 2; // blank line 
+// When adding a new weather object
+void csv_reader::add_weather(weather::unique_ptr_type new_weather) {
+	if (!weather_root) {
+		// First element
+		weather_root = std::move(new_weather);
+		weather_last = weather_root.get();
+	}
+	else {
+		// Append to the end of the list
+		weather_last->next = std::move(new_weather);
+		weather_last = weather_last->next.get();
+	}
+}
+
+
+csv_reader::~csv_reader() {
+	weather_root.reset();
+	weather_last = nullptr;
+}
+
+
+int csv_reader::read_line(char* line, int linenum) {
+	std::vector<std::string> tokens;
+	std::string line_str(line);
+	std::istringstream iss(line_str);
+	std::string token;
+
+	// Split the line into tokens
+	while (std::getline(iss, token, ',')) {
+		token.erase(0, token.find_first_not_of(" \t\r\n"));
+		token.erase(token.find_last_not_of(" \t\r\n") + 1);
+		tokens.push_back(token);
 	}
 
-	sample = new weather();
-
-	if(timefmt[0] == 0){
-		TIMESTAMP ts = callback->time.convert_to_timestamp(token);
-		DATETIME dt;
-		dt.nanosecond = 0;
-
-		if ( ts!=TS_INVALID && ts!=TS_NEVER && callback->time.local_datetime(ts,&dt) )
-		{
-			 sample->month = dt.month;
-			 sample->day = dt.day;
-			 sample->hour = dt.hour;
-			 sample->minute = dt.minute;
-			 sample->second = dt.second;
-			 // IMPORTANT NOTE: if DST is not handled properly by sample, don't try to fix
-			 // the problem here.  The weather class may need to be fixed so it uses UTC internally.
-		}
-		else if(sscanf(token, "%hd:%hd:%hd:%hd:%hd", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
-			gl_error("csv_reader::read_line ~ unable to read time string \'%s\' with default format", token);
-			/* TROUBLESHOOT
-				The input timestamp could not be parsed.  Verify that all time strings are formatted
-				as 'MM:dd:hh:mm:ss', 'MM:dd:hh:mm', 'MM:dd:hh', 'MM:dd', or 'MM'.
-			*/
-			delete sample;
-			return 0;
-		}
-	} else {
-		if(sscanf(token, timefmt.get_string(), &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
-			gl_error(R"(csv_reader::read_line ~ unable to read time string '%s' with format '%s')", token, timefmt.get_string());
-			/* TROUBLESHOOT
-				The input timestamp could not be parsed using the specified time format.  Please
-				review the specified file's time format and input time strings.
-			*/
-			delete sample;
-			return 0;
-		}
+	if (tokens.empty()) {
+		return 2; // blank line
 	}
 
-	if(weather_last != 0){
-		t1 = weather_last->month * 31*24*60*60 +
-			 weather_last->day * 24*60*60 +
-			 weather_last->hour * 60*60 +
-			 weather_last->minute * 60 +
-			 weather_last->second;
-		t2 = sample->month * 31*24*60*60 +
-			 sample->day * 24*60*60 +
-			 sample->hour * 60*60 +
-			 sample->minute * 60 +
-			 sample->second;
-		if(t1 >= t2){
-			gl_warning("csv_reader::read_line ~ sample on line %i does not advance in time and has been discarded", linenum);
-			delete sample;
-			return 2;
-		}
-	}
+	// Use a raw pointer and manage memory explicitly
+	auto sample = weather::unique_ptr_type(new weather());
 
-	while((token=strtok(nullptr, ",\n\r")) != 0 && col < column_ct){
-		if(columns[col]->ptype == PT_double){
-			double *dptr = (double *)((uint64)(columns[col]->addr) + (uint64)(sample));
-			if(sscanf(token, "%lg", dptr) != 1){
-				gl_error(R"(csv_reader::read_line ~ unable to set value '%s' to double property '%s')", token, columns[col]->name);
-				/* TROUBLESHOOT
-					The specified property value could not be parsed as a number.  Please check
-					the CSV file for non-numeric characters in the data fields on that line.
-				*/
-				delete sample;
+	try {
+		std::string timestamp_str = tokens[0];
+
+		// More explicit timestamp parsing
+		int parsed_year = 0, parsed_month = 0, parsed_day = 0,
+			parsed_hour = 0, parsed_minute = 0, parsed_second = 0;
+		char timezone[32] = { 0 };
+
+		// Try parsing with different format specifiers
+		if (sscanf(timestamp_str.c_str(), "%d-%d-%d %d:%d:%d %31[^ \t\n\r]",  //weather_dst.csv
+			&parsed_year, &parsed_month, &parsed_day,
+			&parsed_hour, &parsed_minute, &parsed_second,
+			timezone) >= 6) {
+			// Successfully parsed full timestamp with timezone
+			sample->month = parsed_month;
+			sample->day = parsed_day;
+			sample->hour = parsed_hour;
+			sample->minute = parsed_minute;
+			sample->second = parsed_second;
+		}
+		else if (sscanf(timestamp_str.c_str(), "%d-%d-%d %d:%d:%d",
+			&parsed_year, &parsed_month, &parsed_day,
+			&parsed_hour, &parsed_minute, &parsed_second) >= 6) {
+			// Successfully parsed full timestamp without timezone
+			sample->month = parsed_month;
+			sample->day = parsed_day;
+			sample->hour = parsed_hour;
+			sample->minute = parsed_minute;
+			sample->second = parsed_second;
+		}
+		else if (sscanf(timestamp_str.c_str(), "%d:%d:%d",				//weather.csv
+			&parsed_month, &parsed_day, &parsed_hour) == 3) {
+			// Successfully parsed full timestamp without timezone
+			sample->month = parsed_month;
+			sample->day = parsed_day;
+			sample->hour = parsed_hour;
+			sample->minute = 0;
+			sample->second = 0;
+		}
+		else if (sscanf(timestamp_str.c_str(), "%d:%d:%d:%d:%d",		//weather_elev.csv
+			 &parsed_month, &parsed_day,
+			&parsed_hour, &parsed_minute, &parsed_second) >= 5) {
+			// Successfully parsed full timestamp without timezone
+			//sample->month = parsed_month;
+			//sample->day = parsed_day;
+			sample->hour = parsed_hour;
+			sample->minute = parsed_minute;
+			sample->second = parsed_second;
+		}
+		else {
+			// Fallback to timestamp conversion
+			TIMESTAMP ts = callback->time.convert_to_timestamp(timestamp_str.c_str());
+			DATETIME dt;
+			dt.nanosecond = 0;
+
+			if (ts != TS_INVALID && ts != TS_NEVER && callback->time.local_datetime(ts, &dt)) {
+				sample->month = dt.month;
+				sample->day = dt.day; 
+				sample->hour = dt.hour;
+				sample->minute = dt.minute;
+				sample->second = dt.second;
+			}
+			else {
+				gl_error("csv_reader::read_line ~ unable to read time string '%s'", timestamp_str.c_str());
+				//delete sample;  // Clean up on error
 				return 0;
 			}
 		}
-		++col;
+
+		// Process remaining columns
+		for (size_t col = 1; col < tokens.size() && col <= column_ct; ++col) {
+			if (columns[col - 1]->ptype == PT_double) {
+				const std::string& name = columns[col - 1]->name;
+				double value;
+				if (sscanf(tokens[col].c_str(), "%lg", &value) != 1) {
+					gl_error("Unable to set value '%s' to double property '%s'",
+						tokens[col].c_str(), name.c_str());
+					//delete sample;  // Clean up on error
+					return 0;
+				}
+
+				// Property mapping
+				if (name == "temperature")
+					sample->temperature = value;
+				else if (name == "humidity")
+					sample->humidity = value;
+				else if (name == "solar_direct" || name == "solar_dir")
+					sample->solar_dir = value;
+				else if (name == "solar_diffuse" || name == "solar_diff")
+					sample->solar_diff = value;
+				else if (name == "pressure")
+					sample->pressure = value;
+				else if (name == "wind_speed")
+					sample->wind_speed = value;
+				else if (name == "solar_global")
+					sample->solar_global = value;
+				else {
+					gl_error("Unknown property name '%s'", name.c_str());
+					//delete sample;  // Clean up on error.  Important to handle this correctly.
+					return 0;
+				}
+			}
+		}
+	}
+	catch (const std::exception& e) {
+		gl_error("Parsing error: %s", e.what());
+		//delete sample;  // Clean up on exception
+		return 0;
 	}
 
-	if(weather_root == 0){
-		weather_root = sample;
-	} else {
-		weather_last->next = sample;
-	}
-	weather_last = sample;
+	add_weather(std::move(sample));
+
 
 	return 1;
 }
+
 
 TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *extra_global,  double *wind,double *winddir, double *opaque, double *total, double *rain, double *snow, double *pressure){
 	DATETIME now, then;
@@ -492,6 +604,23 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 			*snow = samples[index]->snowdepth;
 			*pressure = samples[index]->pressure;
 		} else { // somewhere between the last and the first element
+
+			gl_debug("samples.size() = %zu", samples.size());
+			if (!samples.empty()) {
+				gl_debug("samples.back() = %p", samples.back());
+			}
+
+			if (samples.empty() || samples.back() == nullptr) {
+				gl_error("csv_reader::get_data ~ last sample is null or missing");
+				return -1;
+			}
+
+
+			if (!samples[sample_ct - 1]) {
+				gl_error("csv_reader::get_data ~ sample at index %d is null", sample_ct - 1);
+				return -1; // Or choose a fallback value
+			}
+
 			*temp = samples[sample_ct - 1]->temperature;
 			*humid = samples[sample_ct - 1]->humidity;
 			*direct = samples[sample_ct - 1]->solar_dir;

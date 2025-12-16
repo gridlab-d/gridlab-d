@@ -4,6 +4,7 @@
  */
 
 #include <cstdlib>
+#include<memory>
 
 #include "globals.h"
 #include "cmdarg.h"
@@ -12,7 +13,8 @@
 #include "save.h"
 #include "find.h"
 #include "test.h"
-#include "aggregate.h"
+
+
 
 typedef struct s_testlist {
 	char name[64];
@@ -111,14 +113,19 @@ static void *test_lock_proc(void *ptr)
 	output_test("thread %d created ok", (unsigned int)id);
 	for ( m=0 ; m<TESTCOUNT ; m++ )
 	{
-		wlock(&key);
+		//wlock(&key);
+		//replace the above with SharedMutexManager
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&key));
 		count[id]++;
 		total++;
-		wunlock(&key);
+		//wunlock(&key);
 	}
-	wlock(&key);
+	//wlock(&key);
+	//replace the above with SharedMutexManager
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&key));
 	done++;
-	wunlock(&key);
+	/*wunlock(&key);*/
+	lock.unlock();
 	output_test("thread %d done ok", (unsigned int)id);
 	return (void*)0;
 }
@@ -136,18 +143,33 @@ int test_lock(void)
 		}
 
 		output_test("*** Begin memory locking test for %d threads", global_threadcount);
-		wlock(&key);
+		//wlock(&key);
+		//replace the above with SharedMutexManager
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&key));
+
+
 		for ( n=0 ; n<global_threadcount ; n++ )
 		{
-			pthread_t pt;
-			count[n] = 0;
-			if ( pthread_create(&pt,nullptr,test_lock_proc,(void*)&n)!=0 )
-			{
-				output_test("thread creation failed");
-				return FAILED;
+			//pthread_t pt;
+			//count[n] = 0;
+			//if ( pthread_create(&pt,nullptr,test_lock_proc,(void*)&n)!=0 )
+			//{
+			//	output_test("thread creation failed");
+			//	return FAILED;
+			//}
+
+			try {
+				count[n] = 0;
+				std::thread t(test_lock_proc, &n); // Create thread with n as argument
+				t.detach(); // Detach thread if it should run independently (similar to original behavior)
+			}
+			catch (const std::system_error& e) {
+				output_test("thread creation failed: %s", e.what());
+				return STATUS::FAILED;
 			}
 		}
-		wunlock(&key);
+		//wunlock(&key);
+		lock.unlock();
 		global_suppress_repeat_messages = 0;
 		for ( n=0 ; n<global_threadcount ; n++ )
 			output_raw("THREAD %2d  ", n);
@@ -160,11 +182,14 @@ int test_lock(void)
 			int c[256], t, s=0;
 			exec_sleep(100000);
 			output_raw("\r");
-			rlock(&key);
+			//auto v = rlock(&key);
+			//replace the above with SharedMutexManager
+			std::shared_lock<std::shared_mutex> runlock(SharedMutexManager::get_mutex(&key));
 			for ( n=0 ; n<global_threadcount ; n++ )
 				s += (c[n]=count[n]);
 			t = total;
-			runlock(&key);
+			//runlock();
+			runlock.unlock();
 			for ( n=0 ; n<global_threadcount ; n++ )
 				output_raw("%10d ",c[n]);
 			output_raw("%10d %8d",t,t-s);

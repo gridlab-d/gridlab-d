@@ -226,7 +226,7 @@ int series_compensator::init(OBJECT *parent)
 {
 	char iindex, jindex;
 	int result = link_object::init(parent);
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	gld_property *temp_volt_prop;
 
 	//Loop through and zero the various line matrices (link should really do this -- @TODO - Put this in link.cpp sometime)
@@ -834,9 +834,11 @@ void series_compensator::sercom_postPre_fxn(void)
 			}
 
 			//Flag an update
-			LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			//LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
+			std::unique_lock<std::shared_mutex> nr_lock(SharedMutexManager::get_mutex(NR_swing_bus));
 			NR_admit_change = true;
-			UNLOCK_OBJECT(NR_swing_bus);	//Unlock
+			//UNLOCK_OBJECT(NR_swing_bus);	//Unlock
+			nr_lock.unlock();
 
 			//Update our previous turns ratio - for tracking
 			prev_turns_ratio[0] = turns_ratio[0];
@@ -1511,7 +1513,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 //Module-level deltamode call
 SIMULATIONMODE series_compensator::inter_deltaupdate_series_compensator(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	//OBJECT *hdr = OBJECTHDR(this);
+	//OBJECT *hdr = object_header(this);
 	double curr_time_value;	//Current time of simulation
 	int temp_return_val;
 	double deltat;
@@ -1585,7 +1587,7 @@ EXPORT int create_series_compensator(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(series_compensator::oclass);
 		if (*obj!=nullptr)
 		{
-			series_compensator *my = OBJECTDATA(*obj,series_compensator);
+			series_compensator *my = object_data<series_compensator>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -1604,7 +1606,7 @@ EXPORT int create_series_compensator(OBJECT **obj, OBJECT *parent)
 EXPORT int init_series_compensator(OBJECT *obj)
 {
 	try {
-		series_compensator *my = OBJECTDATA(obj,series_compensator);
+		series_compensator *my = object_data<series_compensator>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(series_compensator);
@@ -1621,7 +1623,7 @@ EXPORT int init_series_compensator(OBJECT *obj)
 EXPORT TIMESTAMP sync_series_compensator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		series_compensator *pObj = OBJECTDATA(obj,series_compensator);
+		series_compensator *pObj = object_data<series_compensator>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -1641,13 +1643,13 @@ EXPORT TIMESTAMP sync_series_compensator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG p
 
 EXPORT int isa_series_compensator(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,series_compensator)->isa(classname);
+	return object_data<series_compensator>(obj)->isa(classname);
 }
 
 //Export for deltamode
 EXPORT SIMULATIONMODE interupdate_series_compensator(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	series_compensator *my = OBJECTDATA(obj,series_compensator);
+	series_compensator *my = object_data<series_compensator>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{

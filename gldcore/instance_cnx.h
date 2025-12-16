@@ -21,7 +21,7 @@
 #include <unistd.h>
 #endif
 
-#include <pthread.h>
+//#include <pthread.h>
 
 #include "property.h"
 #include "timestamp.h"
@@ -34,6 +34,6 @@
 
 #include "gld_sock.h"
 
-STATUS instance_connect(instance *inst);
+//STATUS instance_connect(instance *inst);
 
 #endif //	_INSTANCE_CNX_H

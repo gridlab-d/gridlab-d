@@ -180,7 +180,7 @@ int pw_model::init(OBJECT *parent){
 
 		//Set flag to true to uninitialize us upon closing
 		startedCOM=true;
-		initiatorCOM=OBJECTHDR(this);
+		initiatorCOM=object_header(this);
 
 	//	* check syntax
 	//	* start SIMAuto if not running
@@ -396,7 +396,7 @@ TIMESTAMP pw_model::presync(TIMESTAMP t1){
 }
 
 TIMESTAMP pw_model::sync(TIMESTAMP t1){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	if(update_flag){
 		return t1;
 	}

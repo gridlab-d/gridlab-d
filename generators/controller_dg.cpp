@@ -87,7 +87,7 @@ int controller_dg::create(void)
 /* Object initialization is called once after all object have been created */
 int controller_dg::init(OBJECT *parent)
 {
-	OBJECT *thisobj = OBJECTHDR(this);
+	OBJECT *thisobj = object_header(this);
 	OBJECT *obj;
 	gld_property *temp_prop;
 	gld_object *temp_from, *temp_to;
@@ -414,7 +414,7 @@ int controller_dg::init(OBJECT *parent)
 	}
 
 	// Set rank as 1 so that the controller_dg can be executed after the generators (ranked 0) in sync (and delta-mode) process
-	obj = OBJECTHDR(this);
+	obj = object_header(this);
 	gl_set_rank(obj,1);
 
 	return 1;
@@ -430,7 +430,7 @@ TIMESTAMP controller_dg::presync(TIMESTAMP t0, TIMESTAMP t1)
 /* Sync is called at first run, mainly for registration of the delta mode functions */
 TIMESTAMP controller_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	return TS_NEVER;
 }
@@ -439,7 +439,7 @@ TIMESTAMP controller_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP controller_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	int ret_state;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Update global, if necessary - assume everyone grabbed by sync
 	if (deltamode_endtime != TS_NEVER)
@@ -492,7 +492,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 	double nominal_voltage;
 	FUNCTIONADDR funadd = nullptr;
 	int return_val;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	unsigned char openPhases[] = {0x04, 0x02, 0x01};
 
 	// Control of the generator switch
@@ -629,14 +629,14 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 
 			//Set value
 			pDG[index].Pref = ctrlGen[index]->next_state->Pref_ctrl;
-			pDG[index].Pref_prop->setp<double>(pDG[index].Pref,*test_rlock);
+			pDG[index].Pref_prop->setp<double>(pDG[index].Pref,test_rlock);
 
 			// Apply prediction update
 			ctrlGen[index]->next_state->x_QV = ctrlGen[index]->curr_state->x_QV + predictor_vals.x_QV*deltat;
 			ctrlGen[index]->next_state->Vset_ctrl = ctrlGen[index]->next_state->x_QV + predictor_vals.x_QV*(kp_QV/ki_QV);
 
 			pDG[index].Vset = ctrlGen[index]->next_state->Vset_ctrl;
-			pDG[index].Vset_prop->setp<double>(pDG[index].Vset,*test_rlock);
+			pDG[index].Vset_prop->setp<double>(pDG[index].Vset,test_rlock);
 		}
 
 		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
@@ -656,14 +656,14 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 
 			//Set value
 			pDG[index].Pref = ctrlGen[index]->next_state->Pref_ctrl;
-			pDG[index].Pref_prop->setp<double>(pDG[index].Pref,*test_rlock);
+			pDG[index].Pref_prop->setp<double>(pDG[index].Pref,test_rlock);
 
 			// Apply prediction update
 			ctrlGen[index]->next_state->x_QV = ctrlGen[index]->curr_state->x_QV + (predictor_vals.x_QV + corrector_vals.x_QV)*deltat;
 			ctrlGen[index]->next_state->Vset_ctrl = ctrlGen[index]->next_state->x_QV + (predictor_vals.x_QV + corrector_vals.x_QV)*0.5*(kp_QV/ki_QV);
 
 			pDG[index].Vset = ctrlGen[index]->next_state->Vset_ctrl;
-			pDG[index].Vset_prop->setp<double>(pDG[index].Vset,*test_rlock);
+			pDG[index].Vset_prop->setp<double>(pDG[index].Vset,test_rlock);
 
 			// Copy everything back into curr_state, since we'll be back there
 			memcpy(ctrlGen[index]->curr_state,ctrlGen[index]->next_state,sizeof(CTRL_VARS));
@@ -761,7 +761,7 @@ STATUS controller_dg::init_dynamics(CTRL_VARS *curr_time, int index)
 gld_property *controller_dg::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -784,7 +784,7 @@ gld_property *controller_dg::map_complex_value(OBJECT *obj, const char *name)
 gld_property *controller_dg::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -815,7 +815,7 @@ EXPORT int create_controller_dg(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(controller_dg::oclass);
 		if (*obj!=nullptr)
 		{
-			controller_dg *my = OBJECTDATA(*obj,controller_dg);
+			controller_dg *my = /*OBJECTDATA(*obj, controller_dg)*/ object_data<controller_dg>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -830,7 +830,7 @@ EXPORT int init_controller_dg(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,controller_dg)->init(parent);
+			return /*OBJECTDATA(obj,controller_dg)*/ object_data<controller_dg>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -840,7 +840,7 @@ EXPORT int init_controller_dg(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_controller_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP t1 = TS_INVALID;
-	controller_dg *my = OBJECTDATA(obj,controller_dg);
+	controller_dg *my = /*OBJECTDATA(obj,controller_dg)*/ object_data<controller_dg>(obj);
 	try
 	{
 		switch (pass) {
@@ -866,7 +866,7 @@ EXPORT TIMESTAMP sync_controller_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT SIMULATIONMODE interupdate_controller_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	controller_dg *my = OBJECTDATA(obj,controller_dg);
+	controller_dg *my = /*OBJECTDATA(obj, controller_dg)*/ object_data<controller_dg>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -882,7 +882,7 @@ EXPORT SIMULATIONMODE interupdate_controller_dg(OBJECT *obj, unsigned int64 delt
 
 EXPORT STATUS postupdate_controller_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
-	controller_dg *my = OBJECTDATA(obj,controller_dg);
+	controller_dg *my = /*OBJECTDATA(obj, controller_dg)*/ object_data<controller_dg>(obj);
 	STATUS status = FAILED;
 	try
 	{

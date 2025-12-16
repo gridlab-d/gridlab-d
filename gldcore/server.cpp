@@ -25,8 +25,17 @@
 #include <cerrno>
 #include <cstring>
 #include <memory.h>
-#include <pthread.h>
+//#include <pthread.h>
+//#include <unistd.h>
+
+
+#ifdef _WIN32
+	// Windows-specific includes for system functions
+#include <windows.h>
+#else
+	// Unix-like systems
 #include <unistd.h>
+#endif
 
 #include "server.h"
 #include "output.h"
@@ -47,6 +56,19 @@
 SET_MYCONTEXT(DMC_SERVER)
 
 #define MAXSTR		1024		// maximum string length
+
+
+// Define access mode constants for portability (mimicking POSIX R_OK, W_OK, etc.)
+#ifdef _WIN32
+#include <io.h> // For _access on Windows
+#define R_OK 4  // Read access (POSIX value, for compatibility)
+#define W_OK 2  // Write access
+#define X_OK 1  // Execute access (not always meaningful on Windows)
+#define F_OK 0  // File existence
+#define access _access // Map POSIX access to Windows _access
+#else
+#include <unistd.h> // For POSIX access on Unix-like systems
+#endif
 
 static int shutdown_server = 0; /**< flag to stop accepting incoming connections */
 SOCKET sockfd = (SOCKET)0; /**< socket on which incomming connections are accepted */
@@ -118,7 +140,8 @@ int client_allowed(char *saddr)
     @returns a pointer to the status flag
  **/
 static unsigned int n_threads = 0;
-static pthread_t thread_id;
+//static pthread_t thread_id;
+static std::thread thread_id;
 static void *server_routine(void *arg)
 {
 	static int status = 0;
@@ -129,7 +152,12 @@ static void *server_routine(void *arg)
 		return nullptr;
 	}
 	started = 1;
-	sockfd = *reinterpret_cast<SOCKET*>(arg);
+	
+	//sockfd = *reinterpret_cast<SOCKET*>(arg);
+	SOCKET sockfd = *reinterpret_cast<SOCKET*>(arg);
+	delete reinterpret_cast<SOCKET*>(arg);  // clean up
+
+
 	// repeat forever..
 	static int active = 0;
 	void *result = nullptr;
@@ -165,9 +193,21 @@ static void *server_routine(void *arg)
 			}
 			IN_MYCONTEXT output_verbose("accepting connection from %s on port %d",saddr, cli_addr.sin_port);
 			if ( active )
-				pthread_join(thread_id,&result);
-			if ( pthread_create(&thread_id,nullptr, http_response,reinterpret_cast<int*>(newsockfd))!=0 )
-				output_error("unable to start http response thread");
+				//pthread_join(thread_id,&result);
+				thread_id.join();
+			
+			SOCKET* sock_arg = new SOCKET(sockfd);  // dynamically allocate
+			/*if ( pthread_create(&thread_id,nullptr, http_response, sock_arg)!=0 )
+				output_error("unable to start http response thread");*/
+
+			try {
+				thread_id= std::thread(http_response, sock_arg);
+				thread_id.detach(); // Detach thread if it should run independently (similar to original behavior)
+			}
+			catch (const std::system_error& e) {
+				output_error("unable to start http response thread: %s", e.what());
+			}
+
 			if (global_server_quit_on_close)
 				shutdown_now();
 			else
@@ -185,7 +225,8 @@ Done:
 	@returns SUCCESS/FAILED status code
  **/
 #define DEFAULT_PORTNUM 6267
-static pthread_t startup_thread;
+//static pthread_t startup_thread;
+static std::thread startup_thread;
 STATUS server_startup(int argc, char *argv[])
 {
 	static int started = 0;
@@ -270,14 +311,25 @@ Retry:
 
 	/* join the old thread and wait if it hasn't finished yet */
 	if ( started ) {
-		pthread_join(startup_thread,&result);
+		//pthread_join(startup_thread,&result);
+		startup_thread.join();
 	}
 
 	/* start the new thread */
-	if (pthread_create(&startup_thread,nullptr,server_routine, reinterpret_cast<int*>(sockfd)))
+	SOCKET* sock_arg = new SOCKET(sockfd);  // dynamically allocate
+	/*if (pthread_create(&startup_thread,nullptr,server_routine, sock_arg))
 	{
 		output_error("server thread startup failed: %s",strerror(GetLastError()));
 		return FAILED;
+	}*/
+
+	try {
+		startup_thread = std::thread(server_routine, sock_arg);
+		startup_thread.detach(); // Detach thread if it should run independently (similar to original behavior)
+	}
+	catch (const std::system_error& e) {
+		output_error("server thread startup failed: %s", e.what());
+		return STATUS::FAILED;
 	}
 
 	started = 1;
@@ -285,13 +337,25 @@ Retry:
 }
 STATUS server_join(void)
 {
-	void *result;
-	if (pthread_join(startup_thread,&result)==0)
-		return *static_cast<STATUS*>(result);
-	else
+	//void *result;
+	/*if (pthread_join(startup_thread,&result)==0)
+		return *static_cast<STATUS*>(result);*/
+	/*else
 	{
 		output_error("server thread join failed: %s", strerror(GetLastError()));
 		return FAILED;
+	}*/
+
+
+	try {
+		startup_thread.join();
+		// Note: std::thread::join does not return a value like pthread_join
+		// If result is needed, it must be handled via another mechanism (see notes)
+		return STATUS::SUCCESS; // Placeholder, adjust based on how result is captured
+	}
+	catch (const std::system_error& e) {
+		output_error("error joining server thread: %s", e.what());
+		return STATUS::FAILED;
 	}
 }
 
@@ -1827,7 +1891,9 @@ int http_control_request(HTTPCNX *http, char *action)
 		exec_mls_resume(global_clock);
 		output_verbose("waiting for pause");
 		while ( global_mainloopstate!=MLS_PAUSED )
-			usleep(100000);
+		/*	usleep(100000);*/
+			// Portable sleep for 100,000 microseconds (100 milliseconds)
+			std::this_thread::sleep_for(std::chrono::microseconds(100000));
 		return 1;
 	}
 	else if ( sscanf(action,"pauseat=%[-0-9%:A-Za-z ]",buffer)==1 )
@@ -1892,7 +1958,11 @@ int http_favicon(HTTPCNX *http)
  **/
 void *http_response(void *ptr)
 {
-	SOCKET fd = *static_cast<SOCKET*>(ptr);
+	int sockfd = *reinterpret_cast<int*>(ptr);
+	delete reinterpret_cast<int*>(ptr);  // Free the allocated memory
+	SOCKET fd = sockfd;  // Safe reuse
+
+	/*SOCKET fd = *static_cast<SOCKET*>(ptr);*/
 	HTTPCNX *http = http_create(fd);
 	size_t len;
 	int content_length = 0;
@@ -1945,7 +2015,7 @@ void *http_response(void *ptr)
 			for ( v=0 ; v<sizeof(map)/sizeof(map[0]) ; v++ )
 			{
 				if (map[v].sz==0) map[v].sz = strlen(map[v].name);
-				if (strnicmp(map[v].name,p,map[v].sz)==0 && strncmp(p+map[v].sz,": ",2)==0)
+				if (strnicmp_portable(map[v].name,p,map[v].sz)==0 && strncmp(p+map[v].sz,": ",2)==0)
 				{
 					if (map[v].type==INTEGER) { *(int*)(map[v].value) = atoi(p+map[v].sz+2); break; }
 					else if (map[v].type==STRING) { *(char**)map[v].value = p+map[v].sz+2; break; }
@@ -1955,7 +2025,7 @@ void *http_response(void *ptr)
 		IN_MYCONTEXT output_verbose("%s (host='%s', len=%d, keep-alive=%d)",http->query,host?host:"???",content_length, keep_alive);
 
 		/* reject anything but a GET */
-		if (stricmp(method,"GET")!=0)
+		if (stricmp_portable(method,"GET")!=0)
 		{
 			http_status(http,HTTP_METHODNOTALLOWED);
 			/* technically, we should add an Allow entry to the response header */
@@ -2016,7 +2086,7 @@ void *http_response(void *ptr)
 					http_send(http);
 
 					/* keep-alive not desired*/
-					if (connection && stricmp(connection,"close")==0)
+					if (connection && stricmp_portable(connection,"close")==0)
 						break;
 					else
 						continue;

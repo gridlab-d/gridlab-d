@@ -1,10 +1,13 @@
 SET(GLD_MODULE_NAME gridlabd)
 
-# Load and link C/C++ files for the executeable
+#set(CMAKE_BUILD_TYPE Debug) # Add this near the top if not using multi-config generator
+
+
+# Load and link C/C++ files for the executable
 set(SOURCE_LIST
         gridlabd.h
-	gldapi.h
-	gldapi.cpp
+	    gldapi.h
+	    gldapi.cpp
         globals.cpp
         globals.h
         object.cpp
@@ -131,8 +134,54 @@ set(SOURCE_LIST
         #        xcore.h
         )
 
+# Create library source list (exclude main.cpp)
+set(LIBRARY_SOURCE_LIST ${SOURCE_LIST})
+list(REMOVE_ITEM LIBRARY_SOURCE_LIST main.cpp)
+
+# Build the LIBRARY first (without main.cpp)
+add_library(gldapi ${LIBRARY_SOURCE_LIST})
+
+# Define _MAIN_C ONLY for globals.cpp (not all files in the library)
+set_source_files_properties(globals.cpp PROPERTIES 
+    COMPILE_DEFINITIONS _MAIN_C
+)
+
+# Export all symbols on Windows for DLL
+if(MSVC)
+    set_target_properties(gldapi PROPERTIES
+        WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
+endif()
+
+
+target_link_libraries(gldapi PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(gldapi PRIVATE ${OS_SPECIFIC_LIBRARIES})
+
+# Set output directories for gldapi to ensure .lib is generated
+set_target_properties(gldapi PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+)
+
 #if(NOT APPLE)
 add_executable(${GLD_MODULE_NAME} ${SOURCE_LIST})
+
+
+# Place this after your add_executable(gridlabd ...) command
+if(MSVC)
+    # Set the stack size for the gridlabd executable to 16MB.
+    # This is not a hack; it's the proper way to configure an executable
+    # that is known to have deep recursion or large stack-based allocations.
+    target_link_options(gridlabd PRIVATE /STACK:16777216)
+    message(STATUS "MSVC build detected: Increasing stack size for 'gridlabd' to 16MB to support complex models.")
+    target_compile_options(gridlabd PRIVATE $<$<CONFIG:Debug>:/Zi /Od>)
+    set_property(TARGET ${GLD_MODULE_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+else()
+    target_compile_options(gridlabd PRIVATE $<$<CONFIG:Debug>:-g -O0>)
+endif()
+
+
 #else()
 #    add_executable(${GLD_MODULE_NAME} MACOSX_BUNDLE ${SOURCE_LIST})
 #    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
@@ -142,20 +191,21 @@ add_executable(${GLD_MODULE_NAME} ${SOURCE_LIST})
 #            )
 #endif()
 
-add_library(gldapi ${SOURCE_LIST})
+# add_library(gldapi ${SOURCE_LIST})
 target_link_libraries(${GLD_MODULE_NAME} PUBLIC ${GL_MODULES})
 target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 if (CURSES_FOUND)
-    target_link_libraries(gldapi PRIVATE ${CURSES_LIBRARIES})
+    #target_link_libraries(gldapi PRIVATE ${CURSES_LIBRARIES})
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CURSES_LIBRARIES})
 endif ()
 if (XercesC_FOUND)
-    target_link_libraries(gldapi PRIVATE ${XercesC_LIBRARIES})
+    #target_link_libraries(gldapi PRIVATE ${XercesC_LIBRARIES})
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${XercesC_LIBRARIES})
 endif ()
 
-target_link_libraries(gldapi PRIVATE nlohmann_json::nlohmann_json)
-target_link_libraries(${GLD_MODULE_NAME} PRIVATE nlohmann_json::nlohmann_json)
+## Ensure nlohmann_json include directories propagate to consumers (e.g., test targets)
+target_link_libraries(gldapi PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(${GLD_MODULE_NAME} PUBLIC nlohmann_json::nlohmann_json)
 target_link_libraries(gldapi PRIVATE ${OS_SPECIFIC_LIBRARIES})
 
 target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})

@@ -194,7 +194,7 @@ else
   [Ay, by] = makeAy(baseMVA, ng, gencost, 1, q1, 1+ng+nq);
 end
 if any(gencost(:, MODEL) ~= POLYNOMIAL & gencost(:, MODEL) ~= PW_LINEAR)
-    error('opf_setup: some generator cost rows have invalid MODEL value');
+    error('opf_setup: some generator cost.rows() have invalid MODEL value');
 end
 
 

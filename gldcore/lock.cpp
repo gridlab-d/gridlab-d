@@ -15,8 +15,11 @@
 #include "globals.h"
 #include "exception.h"
 #include "config.h"
+#include "object.h"
 
 #include <cstdio>
+#include<mutex>
+#include<shared_mutex>
 
 //#define LOCKTRACE // enable this to trace locking events back to variables
 #define MAXSPIN 1000000000
@@ -50,7 +53,7 @@
 #elif defined HAVE___SYNC_BOOL_COMPARE_AND_SWAP
 	#define atomic_compare_and_swap __sync_bool_compare_and_swap
 	#ifdef HAVE___SYNC_ADD_AND_FETCH
-		#define atomic_increment(ptr) __sync_add_and_fetch((volatile long *)ptr, 1)
+		#define atomic_increment(ptr) __sync_add_and_fetch((volatile unsigned int*)ptr, 1)
 	#else
 		static inline unsigned int atomic_increment(unsigned int *ptr)
 		{
@@ -154,9 +157,16 @@ void register_lock(unsigned int *lock)
  */
 /** Read lock
  **/
-extern "C" void rlock(unsigned int *lock)
+//extern "C" 
+std::shared_lock<std::shared_mutex> rlock(unsigned int *obj_ptr)
 {
-	if(global_lock_enabled){
+	std::shared_mutex& mtx = SharedMutexManager::get_mutex(obj_ptr);
+	std::shared_lock<std::shared_mutex> lock(mtx);
+	if (global_lock_enabled)
+		return lock;
+	return std::shared_lock<std::shared_mutex>();
+
+	/*if(global_lock_enabled){
 		unsigned int timeout = MAXSPIN;
 		unsigned int value;
 		extern unsigned int rlock_count, rlock_spin;
@@ -168,39 +178,42 @@ extern "C" void rlock(unsigned int *lock)
 			if ( timeout--==0 )
 				throw_exception("read lock timeout");
 		} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
-	}
+	}*/
 }
 /** Write lock 
  **/
-extern "C" void wlock(unsigned int *lock)
-{
-	if(global_lock_enabled){
-		unsigned int timeout = MAXSPIN;
-		unsigned int value;
-		extern unsigned int wlock_count, wlock_spin;
-		check_lock(lock,true,false);
-		atomic_increment(&wlock_count);
-		do {
-			value = (*lock);
-			atomic_increment(&wlock_spin);
-			if ( timeout--==0 )
-				throw_exception("write lock timeout");
-		} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
-	}
-}
+//extern "C" 
+//void wlock(unsigned int *lock)
+//{
+//	if(global_lock_enabled){
+//		unsigned int timeout = MAXSPIN;
+//		unsigned int value;
+//		extern unsigned int wlock_count, wlock_spin;
+//		check_lock(lock,true,false);
+//		atomic_increment(&wlock_count);
+//		do {
+//			value = (*lock);
+//			atomic_increment(&wlock_spin);
+//			if ( timeout--==0 )
+//				throw_exception("write lock timeout");
+//		} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
+//	}
+//}
 /** Read unlock
  **/
-extern "C" void runlock(unsigned int *lock)
+//extern "C" 
+void runlock()
 {
-	if(global_lock_enabled){
+	/*if(global_lock_enabled){
 		unsigned int value = *lock;
 		check_lock(lock,false,true);
 		atomic_increment(lock);
-	}
+	}*/
 }
 /** Write unlock
  **/
-extern "C" void wunlock(unsigned int *lock)
+//extern "C" 
+void wunlock(unsigned int *lock)
 {
 	if(global_lock_enabled){
 		unsigned int value = *lock;

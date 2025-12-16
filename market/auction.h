@@ -83,7 +83,7 @@ private:
 protected:
 public:
 	int32 immediate;	// debug variable
-	GL_STRING(char32,unit);		/**< unit of quantity (see unitfile.txt) */
+	//GL_STRING(char32,unit);		/**< unit of quantity (see unitfile.txt) */
 	double dPeriod, dLatency;
 	TIMESTAMP period;		/**< time period of auction closing (s) */
 	TIMESTAMP latency;		/**< delay after closing before unit commitment (s) */
@@ -163,6 +163,49 @@ public:
 	TIMESTAMP nextclear() const;
 private:
 	void clear_market(void);
+
+public:
+	static inline auction* get_defaults() {
+		if (!defaults) {
+			defaults = new auction(); // Initialize lazily
+		}
+		return defaults;
+	}
+
+	auction() {}
+	~auction() { if (defaults) delete defaults; }
+
+protected:
+	char32 unit;  // Member variable of type `char[32]`.
+
+public:
+	// Static inline method to get the byte offset of the member `unit`.
+	static inline size_t get_unit_offset(void) {
+		auction* current_defaults = get_defaults();
+		return reinterpret_cast<const char*>(&(current_defaults->unit)) -
+			reinterpret_cast<const char*>(current_defaults);
+	}
+
+	// Getter method to safely retrieve the string value of `unit`.
+	inline std::string get_unit(void) {
+		auto& mtx = SharedMutexManager::get_mutex(my());
+		std::shared_lock<std::shared_mutex> lock(mtx);
+		return std::string(unit);
+	}
+
+	// Getter method to retrieve `gld_property` for `unit`.
+	inline gld_property get_unit_property(void) {
+		return gld_property(my(), std::string("unit").c_str());
+	}
+
+	// Setter method to update the value for `unit` using a string.
+	inline void set_unit(const std::string& str) {
+		auto& mtx = SharedMutexManager::get_mutex(my());
+		std::unique_lock<std::shared_mutex> lock(mtx);
+		strncpy(unit, str.c_str(), sizeof(unit) - 1);
+		unit[sizeof(unit) - 1] = '\0';  // Ensure null termination
+	}
+
 public:
 	/* required implementations */
 	auction(MODULE *module);

@@ -59,7 +59,10 @@ bool cache::write(VARMAP *var, TRANSLATOR *xltr)
 	cacheitem *item = cacheitem::get_item(id);
 	if ( item==nullptr ) item = new cacheitem(var);
 	char buffer[1025];
-	{	gld_rlock lock(var->obj->get_object());
+	{	
+		//gld_rlock lock(var->obj->get_object());
+
+		std::shared_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(var->obj->get_object()));
 		var->obj->to_string(buffer,sizeof(buffer));
 	}
 	return true;
@@ -79,7 +82,9 @@ bool cache::read(VARMAP *var, TRANSLATOR *xltr)
 	{
 		if ( strlen(buffer)>0 )
 		{
-			gld_wlock lock(var->obj->get_object());
+			//gld_wlock lock(var->obj->get_object());
+			//replace above with SharedMutexManager
+			std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(var->obj->get_object()));
 			return var->obj->from_string(buffer)>0; // convert incoming data
 		}
 		else

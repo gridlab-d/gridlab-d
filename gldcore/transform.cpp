@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include <pthread.h>
+//#include <pthread.h>
 
 #include "platform.h"
 #include "object.h"

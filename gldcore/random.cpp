@@ -21,7 +21,40 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+//#include <sys/time.h>
+
+#ifdef _WIN32
+	// Windows-specific includes for time functions
+#include <windows.h>
+
+// Define a dummy timezone struct for compatibility with gettimeofday
+struct timezone {
+	int tz_minuteswest; // Minutes west of Greenwich
+	int tz_dsttime;     // Type of DST correction
+};
+
+ // Emulate gettimeofday for Windows
+int gettimeofday(struct timeval* tv, struct timezone* tz) {
+	if (tv) {
+		FILETIME ft;
+		GetSystemTimeAsFileTime(&ft);
+		uint64_t t = (static_cast<uint64_t>(ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+		t -= 116444736000000000ULL; // Convert from Windows epoch (1601) to Unix epoch (1970)
+		tv->tv_sec = static_cast<long>(t / 10000000);
+		tv->tv_usec = static_cast<long>((t % 10000000) / 10);
+	}
+	if (tz) {
+		TIME_ZONE_INFORMATION tzi;
+		GetTimeZoneInformation(&tzi);
+		tz->tz_minuteswest = tzi.Bias;
+		tz->tz_dsttime = (tzi.StandardBias != 0);
+	}
+	return 0;
+}
+#else
+	// Unix-like systems
 #include <sys/time.h>
+#endif
 
 #include "gldrandom.h"
 #include "find.h"
@@ -39,6 +72,14 @@
 #define getpid _getpid
 #else
 #include <unistd.h>
+#endif
+
+#if defined(_WIN32) || defined(_MSC_VER)
+ // Windows already has strtok_s
+ // Nothing to do as strtok_s is already defined in string.h
+#else
+ // For Linux/POSIX systems, define strtok_s to use strtok_r
+#define strtok_s(str, delimiters, context) strtok_r(str, delimiters, context)
 #endif
 
 #ifdef __MINGW32__
@@ -104,20 +145,20 @@ static struct {
 	int nargs;
 } *p, random_map[] = {
 	/* tested */
-	{"degenerate", RT_DEGENERATE,1},
-	{"uniform",RT_UNIFORM,2},
-	{"normal",RT_NORMAL,2},
-	{"bernoulli",RT_BERNOULLI,1},
-	{"sampled",RT_SAMPLED,-1},
-	{"pareto",RT_PARETO,2},
-	{"lognormal",RT_LOGNORMAL,2},
-	{"exponential",RT_EXPONENTIAL,1},
-	{"rayleigh",RT_RAYLEIGH,1},
+	{"degenerate", RANDOMTYPE::RT_DEGENERATE,1},
+	{"uniform",RANDOMTYPE::RT_UNIFORM,2},
+	{"normal",RANDOMTYPE::RT_NORMAL,2},
+	{"bernoulli",RANDOMTYPE::RT_BERNOULLI,1},
+	{"sampled",RANDOMTYPE::RT_SAMPLED,-1},
+	{"pareto",RANDOMTYPE::RT_PARETO,2},
+	{"lognormal",RANDOMTYPE::RT_LOGNORMAL,2},
+	{"exponential",RANDOMTYPE::RT_EXPONENTIAL,1},
+	{"rayleigh",RANDOMTYPE::RT_RAYLEIGH,1},
 	/* untested */
-	{"weibull",RT_WEIBULL,2},
-	{"gamma",RT_GAMMA,1},
-	{"beta",RT_BETA,2},
-	{"triangle",RT_TRIANGLE,2},
+	{"weibull",RANDOMTYPE::RT_WEIBULL,2},
+	{"gamma",RANDOMTYPE::RT_GAMMA,1},
+	{"beta",RANDOMTYPE::RT_BETA,2},
+	{"triangle",RANDOMTYPE::RT_TRIANGLE,2},
 	/** @todo Add some other distributions (e.g., Cauchy, Laplace)  (ticket #56)*/
 };
 /** Converts a distribution name to a #RANDOMTYPE
@@ -129,7 +170,7 @@ RANDOMTYPE random_type(char *name) /**< the name of the distribution */
 		if (strcmp(p->name,name)==0)
 			return p->type;
 	}
-	return RT_INVALID;
+	return RANDOMTYPE::RT_INVALID;
 }
 /** Gets the number of arguments required by distribution (0=failed, -1=variable)
  **/
@@ -214,10 +255,18 @@ double randunit(unsigned int *state)
 	unsigned int ur;
 	static unsigned int random_lock=0;
 
-	if ( state==nullptr || state==ur_state )
+	/*if ( state==nullptr || state==ur_state )
 	{
 		state=ur_state;
 		wlock(&random_lock);
+	}*/
+
+	bool needs_lock = (state == nullptr || state == ur_state);
+	std::unique_lock<std::shared_mutex> lock;
+
+	if (needs_lock) {
+		state = ur_state;
+		lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(&random_lock));
 	}
 
 TryAgain:
@@ -233,8 +282,8 @@ TryAgain:
 		goto TryAgain;
 	}
 
-	if ( state==ur_state )
-		wunlock(&random_lock);
+	//if ( state==ur_state )
+		//wunlock(&random_lock);
 	
 	return u;
 
@@ -622,61 +671,61 @@ double random_triangle(unsigned int *state, /**< the rng state */
 static double _random_value(RANDOMTYPE type, unsigned int *state, va_list ptr)
 {
 	switch (type) {
-	case RT_DEGENERATE:/* ... double value */
+	case RANDOMTYPE::RT_DEGENERATE:/* ... double value */
 		{	double a = va_arg(ptr,double);
 			return random_degenerate(state, a);
 		}
-	case RT_UNIFORM:		/* ... double min, double max */
+	case RANDOMTYPE::RT_UNIFORM:		/* ... double min, double max */
 		{	double min = va_arg(ptr,double);
 			double max = va_arg(ptr,double);
 			return random_uniform(state,min,max);
 		}
-	case RT_NORMAL:		/* ... double mean, double stdev */
+	case RANDOMTYPE::RT_NORMAL:		/* ... double mean, double stdev */
 		{	double mu = va_arg(ptr,double);
 			double sigma = va_arg(ptr,double);
 			return random_normal(state,mu,sigma);
 		}
-	case RT_BERNOULLI:	/* ... double p */
+	case RANDOMTYPE::RT_BERNOULLI:	/* ... double p */
 		return random_bernoulli(state,va_arg(ptr,double));
-	case RT_SAMPLED: /* ... unsigned n_samples, double samples[n_samples] */
+	case RANDOMTYPE::RT_SAMPLED: /* ... unsigned n_samples, double samples[n_samples] */
 		{	unsigned n_samples = va_arg(ptr,unsigned);
 			double *samples = va_arg(ptr,double*);
 			return random_sampled(state,n_samples,samples);
 		}
-	case RT_PARETO:	/* ... double base, double gamma */
+	case RANDOMTYPE::RT_PARETO:	/* ... double base, double gamma */
 		{	double base = va_arg(ptr,double);
 			double gamma = va_arg(ptr,double);
 			return random_pareto(state,base,gamma);
 		}
-	case RT_LOGNORMAL:	/* ... double gmean, double gsigma */
+	case RANDOMTYPE::RT_LOGNORMAL:	/* ... double gmean, double gsigma */
 		{	double gmu = va_arg(ptr,double);
 			double gsigma = va_arg(ptr,double);
 			return random_lognormal(state,gmu,gsigma);
 		}
-	case RT_EXPONENTIAL: /* ... double lambda */
+	case RANDOMTYPE::RT_EXPONENTIAL: /* ... double lambda */
 		{	double lambda = va_arg(ptr,double);
 			return random_exponential(state,lambda);
 		}
-	case RT_RAYLEIGH: /* ... double sigma */
+	case RANDOMTYPE::RT_RAYLEIGH: /* ... double sigma */
 		{	double sigma = va_arg(ptr,double);
 			return random_rayleigh(state,sigma);
 		}
-	case RT_WEIBULL: /* ... double lambda, double k */
+	case RANDOMTYPE::RT_WEIBULL: /* ... double lambda, double k */
 		{	double lambda = va_arg(ptr,double);
 			double k = va_arg(ptr,double);
 			return random_weibull(state,lambda,k);
 		}
-	case RT_GAMMA: /* ... double alpha, double beta */
+	case RANDOMTYPE::RT_GAMMA: /* ... double alpha, double beta */
 		{	double alpha = va_arg(ptr,double);
 			double beta = va_arg(ptr,double);
 			return random_gamma(state,alpha,beta);
 		}
-	case RT_BETA: /* ... double alpha, double beta */
+	case RANDOMTYPE::RT_BETA: /* ... double alpha, double beta */
 		{	double alpha = va_arg(ptr,double);
 			double beta = va_arg(ptr,double);
 			return random_beta(state,alpha,beta);
 		}
-	case RT_TRIANGLE: /* ... double a, double b */
+	case RANDOMTYPE::RT_TRIANGLE: /* ... double a, double b */
 		{	double a = va_arg(ptr,double);
 			double b = va_arg(ptr,double);
 			return random_triangle(state,a,b);
@@ -696,31 +745,31 @@ static double _random_value(RANDOMTYPE type, unsigned int *state, va_list ptr)
 int _random_specs(RANDOMTYPE type, double a, double b,char *buffer,int size)
 {
 	switch ( type ) {
-	case RT_DEGENERATE:/* ... double value */
+	case RANDOMTYPE::RT_DEGENERATE:/* ... double value */
 		return sprintf(buffer,"degenerate(%lf)",a);
-	case RT_UNIFORM:		/* ... double min, double max */
+	case RANDOMTYPE::RT_UNIFORM:		/* ... double min, double max */
 		return sprintf(buffer,"uniform(%lf,%lf)",a,b);
-	case RT_NORMAL:		/* ... double mean, double stdev */
+	case RANDOMTYPE::RT_NORMAL:		/* ... double mean, double stdev */
 		return sprintf(buffer,"normal(%lf,%lf)",a,b);
-	case RT_BERNOULLI:	/* ... double p */
+	case RANDOMTYPE::RT_BERNOULLI:	/* ... double p */
 		return sprintf(buffer,"bernoulli(%lf,%lf)",a,b);
-	case RT_SAMPLED: /* ... unsigned n_samples, double samples[n_samples] */
+	case RANDOMTYPE::RT_SAMPLED: /* ... unsigned n_samples, double samples[n_samples] */
 		return sprintf(buffer,"sampled(%lf,%lf)",a,b);
-	case RT_PARETO:	/* ... double base, double gamma */
+	case RANDOMTYPE::RT_PARETO:	/* ... double base, double gamma */
 		return sprintf(buffer,"pareto(%lf,%lf)",a,b);
-	case RT_LOGNORMAL:	/* ... double gmean, double gsigma */
+	case RANDOMTYPE::RT_LOGNORMAL:	/* ... double gmean, double gsigma */
 		return sprintf(buffer,"lognormal(%lf,%lf)",a,b);
-	case RT_EXPONENTIAL: /* ... double lambda */
+	case RANDOMTYPE::RT_EXPONENTIAL: /* ... double lambda */
 		return sprintf(buffer,"exponential(%lf,%lf)",a,b);
-	case RT_RAYLEIGH: /* ... double sigma */
+	case RANDOMTYPE::RT_RAYLEIGH: /* ... double sigma */
 		return sprintf(buffer,"rayleigh(%lf,%lf)",a,b);
-	case RT_WEIBULL: /* ... double lambda, double k */
+	case RANDOMTYPE::RT_WEIBULL: /* ... double lambda, double k */
 		return sprintf(buffer,"weibull(%lf,%lf)",a,b);
-	case RT_GAMMA: /* ... double alpha, double beta */
+	case RANDOMTYPE::RT_GAMMA: /* ... double alpha, double beta */
 		return sprintf(buffer,"gamma(%lf,%lf)",a,b);
-	case RT_BETA: /* ... double alpha, double beta */
+	case RANDOMTYPE::RT_BETA: /* ... double alpha, double beta */
 		return sprintf(buffer,"beta(%lf,%lf)",a,b);
-	case RT_TRIANGLE: /* ... double a, double b */
+	case RANDOMTYPE::RT_TRIANGLE: /* ... double a, double b */
 		return sprintf(buffer,"triangle(%lf,%lf)",a,b);
 	default:
 		throw_exception("_random_specs(type=%d,...); type is not valid",type);
@@ -1072,10 +1121,10 @@ int random_test(void)
 	/* test non-deterministic sequences */
 	output_test("\nNon-deterministic test (N=%d)",count);
 	for (i=0; i<count; i++)
-		sample[i] = random_value(RT_NORMAL,0.0,1.0);
+		sample[i] = random_value(RANDOMTYPE::RT_NORMAL,0.0,1.0);
 	for (i=0; i<count; i++)
 	{
-		double v = random_value(RT_NORMAL,0.0,1.0);
+		double v = random_value(RANDOMTYPE::RT_NORMAL,0.0,1.0);
 		if ( sample[i] == v )
 			failed++,output_test("Sample %d matched (%f==%f)", i, sample[i],v);
 	}	
@@ -1086,11 +1135,11 @@ int random_test(void)
 	initstate = state = rand();
 	output_test("\nDeterministic test for state %u (N=%d)",initstate,count);
 	for (i=0; i<count; i++)
-		sample[i] = pseudorandom_value(RT_UNIFORM,&state,0.0,1.0);
+		sample[i] = pseudorandom_value(RANDOMTYPE::RT_UNIFORM,&state,0.0,1.0);
 	state = initstate;
 	for (i=0; i<count; i++)
 	{
-		double v = pseudorandom_value(RT_UNIFORM,&state,0.0,1.0);
+		double v = pseudorandom_value(RANDOMTYPE::RT_UNIFORM,&state,0.0,1.0);
 		if (sample[i] != v)
 			failed++,output_test("Sample %d did not match (%f!=%f)", i, sample[i],v);
 	}	
@@ -1174,7 +1223,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 				int nargs;
 				*a++ = '\0';
 				var->type = random_type(value);
-				if ( var->type==RT_INVALID )
+				if ( var->type==RANDOMTYPE::RT_INVALID )
 				{
 					output_error("convert_to_randomvar(string='%-.64s...', ...) type '%s' is invalid",string,value);
 					return 0;
@@ -1232,7 +1281,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 		/* fixed value */
 		else if (param[0]=='-' || param[0]=='+' || isdigit(param[0]) || param[0]=='.')
 		{
-			var->type = RT_DEGENERATE;
+			var->type = RANDOMTYPE::RT_DEGENERATE;
 			var->a = atof(param);
 		}
 		else if (strcmp(param,"")!=0)

@@ -1,0 +1,12 @@
+module tape;
+
+class test {
+	double x;
+}
+object test {
+	object recorder {
+		property x;
+		file x.csv;
+		interval -2;
+	};
+}

@@ -86,7 +86,7 @@ double_controller::double_controller(MODULE *module)
 }
 
 int double_controller::create(){
-	memset(this, 0, sizeof(double_controller));
+	//memset(this, 0, sizeof(double_controller));
 	sprintf(avg_target, "avg24");
 	sprintf(std_target, "std24");
 	controller_bid.rebid = false;
@@ -115,7 +115,7 @@ void double_controller::cheat(){
 }
 
 void double_controller::fetch(double **value, char *name, OBJECT *parent, PROPERTY **prop, const char *goal){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	*prop = gl_get_property(parent, name);
 	if(*name == 0){
 		GL_THROW("double_controller:%i, %s property not specified", hdr->id,goal);
@@ -137,7 +137,7 @@ void double_controller::fetch(double **value, char *name, OBJECT *parent, PROPER
 }
 
 int double_controller::init(OBJECT *parent){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	char tname[32];
 	char *namestr = (hdr->name ? hdr->name : tname);
 
@@ -266,7 +266,7 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 	double demand = 0.0;
 	double heat_ramp, cool_ramp;
 	double new_limit;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	char mktname[1024];
 	char ctrname[1024];
 
@@ -542,7 +542,7 @@ EXPORT int create_double_controller(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(double_controller::oclass);
 		if (*obj!=nullptr)
 		{
-			double_controller *my = OBJECTDATA(*obj,double_controller);
+			double_controller *my = /*OBJECTDATA(*obj, double_controller)*/ object_data<double_controller>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -557,7 +557,7 @@ EXPORT int init_double_controller(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr){
-			return OBJECTDATA(obj,double_controller)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<double_controller>(obj)->init(parent);
 		}
 		else
 			return 0;
@@ -568,7 +568,7 @@ EXPORT int init_double_controller(OBJECT *obj, OBJECT *parent)
 EXPORT int isa_double_controller(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,double_controller)->isa(classname);
+		return /*OBJECTDATA(obj,<>)*/ object_data<double_controller>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -577,7 +577,7 @@ EXPORT int isa_double_controller(OBJECT *obj, char *classname)
 EXPORT TIMESTAMP sync_double_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	double_controller *my = OBJECTDATA(obj,double_controller);
+	double_controller *my = /*OBJECTDATA(obj,<>)*/ object_data<double_controller>(obj);
 	try
 	{
 		switch (pass) {

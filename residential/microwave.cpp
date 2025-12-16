@@ -71,7 +71,7 @@ int microwave::create()
 	standby_power = 0.01;
 	shape.load = gl_random_uniform(RNGSTATE,0, 0.1);  // assuming a default maximum 10% of the sync time 
 
-	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
+	gl_warning("explicit %s model is experimental", object_header(this)->oclass->name);
 
 	return res;
 }
@@ -112,7 +112,7 @@ int microwave::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	if (load.voltage_factor==0) load.voltage_factor = 1.0;
@@ -323,7 +323,7 @@ EXPORT int create_microwave(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(microwave::oclass);
 		if (*obj!=nullptr)
 		{
-			microwave *my = OBJECTDATA(*obj,microwave);;
+			microwave *my = object_data<microwave>(*obj);
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
@@ -338,7 +338,7 @@ EXPORT int create_microwave(OBJECT **obj, OBJECT *parent)
 EXPORT int init_microwave(OBJECT *obj)
 {
 	try {
-		microwave *my = OBJECTDATA(obj,microwave);
+		microwave *my = object_data<microwave>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(microwave);
@@ -347,7 +347,7 @@ EXPORT int init_microwave(OBJECT *obj)
 EXPORT int isa_microwave(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,microwave)->isa(classname);
+		return object_data<microwave>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -356,7 +356,7 @@ EXPORT int isa_microwave(OBJECT *obj, char *classname)
 EXPORT TIMESTAMP sync_microwave(OBJECT *obj, TIMESTAMP t0)
 {
 	try {
-		microwave *my = OBJECTDATA(obj, microwave);
+		microwave *my = object_data<microwave>(obj);
 		TIMESTAMP t2 = my->sync(obj->clock, t0);
 		obj->clock = t0;
 		return t2;

@@ -17,6 +17,11 @@
 #include "globals.h"
 #include "index.h"
 #include "cpp_threadpool.h"
+#include <nlohmann/json.hpp>
+
+ // In a header file
+extern const PASSCONFIG passtype[];
+
 
 struct sync_data {
 	TIMESTAMP step_to; /**< time to advance to */
@@ -26,7 +31,8 @@ struct sync_data {
 
 struct thread_data {
 	int count; /**< the thread count */
-	struct sync_data *data; /**< pointer to the sync state structure */
+	//struct sync_data *data; /**< pointer to the sync state structure */
+	std::vector<std::shared_ptr<struct sync_data>> data; /**< pointer to the sync state structure */
 };
 
 class threadpool_thread_data {
@@ -45,7 +51,11 @@ public:
 //extern "C" {
 //#endif
 int exec_init(void);
-STATUS exec_start(void);
+STATUS exec_start(int64* passes = nullptr, int64* tsteps = nullptr);
+STATUS exec_step(int64* passes = nullptr, int64* tsteps = nullptr);
+STATUS run_preparation(void);
+STATUS exec_finalize_all(void);
+bool exec_is_initialized(void);
 const char *simtime(void);
 STATUS t_setup_ranks(void);
 INDEX **exec_getranks(void);
@@ -58,18 +68,18 @@ void exec_mls_suspend(void);
 void exec_mls_resume(TIMESTAMP next_pause);
 void exec_mls_done(void);
 void exec_mls_statewait(unsigned states);
-void exec_slave_node();
+//void exec_slave_node();
 int exec_run_createscripts(void);
 
-void exec_sync_reset(struct sync_data *d);
-void exec_sync_merge(struct sync_data *to, struct sync_data *from);
-void exec_sync_set(struct sync_data *d, TIMESTAMP t,bool deltaflag);
-TIMESTAMP exec_sync_get(struct sync_data *d);
-unsigned int exec_sync_getevents(struct sync_data *d);
-int exec_sync_ishard(struct sync_data *d);
-int exec_sync_isnever(struct sync_data *d);
-int exec_sync_isinvalid(struct sync_data *d);
-STATUS exec_sync_getstatus(struct sync_data *d);
+void exec_sync_reset(std::shared_ptr<struct sync_data>& d);
+void exec_sync_merge(std::shared_ptr<struct sync_data>& to, std::shared_ptr<struct sync_data>& from);
+void exec_sync_set(std::shared_ptr<struct sync_data>& d, TIMESTAMP t,bool deltaflag);
+TIMESTAMP exec_sync_get(std::shared_ptr<struct sync_data>& d);
+unsigned int exec_sync_getevents(std::shared_ptr<struct sync_data>& d);
+int exec_sync_ishard(std::shared_ptr<struct sync_data>& d);
+int exec_sync_isnever(std::shared_ptr<struct sync_data>& d);
+int exec_sync_isinvalid(std::shared_ptr<struct sync_data>& d);
+STATUS exec_sync_getstatus(std::shared_ptr<struct sync_data>& d);
 
 EXITCODE exec_setexitcode(EXITCODE);
 EXITCODE exec_getexitcode(void);
@@ -83,6 +93,8 @@ int exec_add_scriptexport(const char *file);
 EXITCODE exec_run_initscripts(void);
 EXITCODE exec_run_syncscripts(void);
 EXITCODE exec_run_termscripts(void);
+void report_performance_after_run(time_t start_time, int64 passes, int64 tsteps);
+nlohmann::json do_checkpoint(const char* output_directory = nullptr);
 
 //#ifdef __cplusplus
 //}

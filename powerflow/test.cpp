@@ -29,6 +29,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include<memory>
 
 #include "gridlabd.h"
 
