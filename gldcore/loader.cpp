@@ -175,12 +175,12 @@ STATUS loader::loadIncludes()
 bool loader::class_properties(CLASS *oclass, ojson properties, string source_code) {
 	PROPERTYTYPE ptype;
 	PROPERTYNAME propname;
-	KEYWORD *keys = nullptr;
-	UNIT *pUnit = nullptr;
 	int property_cnt = 0;
 
 	for (auto& element : properties) {
 		if (element.is_object() && element.contains("type") && element.contains("name")) {
+            KEYWORD *keys = nullptr;
+            UNIT *pUnit = nullptr;
 			for (auto& [name, value] : element.items()) {
 				string stype = "";
 				string sname = "";
@@ -204,13 +204,17 @@ bool loader::class_properties(CLASS *oclass, ojson properties, string source_cod
 					convert(value, sname);
 					if (parse.findLastIndex(sname, '[') > -1) {
 						unit = parse.extractBetween(sname, '[', ']');
+                        pUnit = unit_find(unit.data());
 						sname = sname.substr(0, sname.find("["));
+                        parse.replaceAll(sname, " ", "");
 					}
 					else if (parse.findLastIndex(sname, '{') > -1) {
 						csv_keys = parse.extractBetween(sname, '{', '}');
+                        parse.replaceAll(csv_keys, " ", "");
 						// construct an enumeration
 						if (parse.property_specs(csv_keys, &keys)) {
 							sname = sname.substr(sname.find("}")+1);
+                            parse.replaceAll(sname, " ", "");
 						}
 						else {
 							output_error_raw("property name: %s, keys are not correctly defined: %s", sname.data(),
