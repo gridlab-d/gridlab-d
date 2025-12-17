@@ -43,7 +43,7 @@ string parser::extractBetween(string str, char startChar, char endChar)
     size_t endPos = str.find(endChar, startPos + 1);
     if (startPos != string::npos && endPos != string::npos)
     {
-        return str.substr(startPos + 1, endPos - 1);
+        return str.substr(startPos + 1, endPos - startPos - 1);
     }
     return string(""); // Return empty string if characters not found
 }

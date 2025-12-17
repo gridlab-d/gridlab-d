@@ -124,13 +124,13 @@
     "double_assert": {
       "instances": [
         {
-          "parent": "triplex_meter_7house1hvac_control",
+          "parent": "hvac_control",
           "value": "controller_bids*1",
           "target": "bid_price",
           "within": 0.001
         },
         {
-          "parent": "triplex_meter_7house1",
+          "parent": "house1",
           "value": "cooling_setpoints*1",
           "target": "cooling_setpoint",
           "within": 0.001
@@ -140,8 +140,8 @@
     "controller": {
       "instances": [
         {
-          "name": "triplex_meter_7house1hvac_control",
-          "parent": "triplex_meter_7house1",
+          "name": "hvac_control",
+          "parent": "house1",
           "market": "Market_1",
           "bid_mode": "ON",
           "control_mode": "DOUBLE_RAMP",
@@ -184,7 +184,7 @@
     "house": {
       "instances": [
         {
-          "name": "triplex_meter_7house1",
+          "name": "house1",
           "parent": "triplex_meter_7",
           "weather": "Yakima WA",
           "cooling_setpoint": 70,
