@@ -23,7 +23,7 @@
 #include <nlohmann/json.hpp>  // Requires JSON for Modern C++ library
 
 using namespace std;
-using json = nlohmann::json;
+using ojson = nlohmann::ordered_json;
 
 #ifdef __cplusplus
 
@@ -31,32 +31,33 @@ class loader {
 
 private:
 	parser parse = parser();
-    json jsn;
-    string filename;
+    ojson jsn;
+    filesystem::path filename;
     OBJECT *currentObject = nullptr;
     MODULE *currentModule = nullptr;
-    STATUS convert(json value, string &out);
-    queue<string> included_files;
-    STATUS loadObject(const string className, json objInstance);
+    STATUS convert(ojson value, string &out);
+    STATUS loadObject(const string className, ojson objInstance);
     STATUS objectProperties(CLASS *oClass, OBJECT *obj, const string propName, string propValue);
     int isInt(PROPERTYTYPE pt);
     double loadLatitude(char *buffer);
     double loadLongitude(char *buffer);
     int set_flags(OBJECT *obj, char *propval);
     void clearQuotesFromStr(string &str);
+    STATUS loadJsonFile(filesystem::path filePath);
 
 public:
-    bool open_file(string file_name);
+    bool open_file(filesystem::path &file_name);
     STATUS loadDirective();
-    bool class_properties(CLASS *oclass, json properties, string source_code);
+    bool class_properties(CLASS *oclass, ojson properties, string source_code);
     STATUS loadClasses();
     STATUS loadClock();
 
-    bool module_properties(MODULE *mod, json properties);
+    bool module_properties(MODULE *mod, ojson properties);
     STATUS loadModules();
     STATUS loadObjects();
     STATUS loadSchedules();
     STATUS loadDirectives();
+    STATUS loadIncludes();
     STATUS loadall_json_roll(char *file_name);
 };
 
