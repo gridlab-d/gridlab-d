@@ -523,7 +523,7 @@ int parser::functional(PARSER, double *pValue)
 		RANDOMTYPE rtype = random_type(fname);
 		int nargs = random_nargs(fname);
 		double a;
-		if (rtype == RT_INVALID || nargs == 0 || (WHITE, !LITERAL("(")))
+		if (rtype == RANDOMTYPE::RT_INVALID || nargs == 0 || (WHITE, !LITERAL("(")))
 		{
 			output_error_raw("parser::functional() parsing file, %s: %s is not a valid random distribution",
                              this->filename.c_str(), fname.get_string());
