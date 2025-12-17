@@ -47,9 +47,9 @@ public:
 		}
 	};
 	w_vector(int col, const w_matrix &A){
-		dimension = A.Rows();
+		dimension = A.rows();
 		data = new double[dimension];
-		for(int i=0; i<A.Rows(); i++) {
+		for(int i=0; i<A.rows(); i++) {
 			data[i] = A(i,col);
 		}
 	};
@@ -84,26 +84,26 @@ public:
 //custom matrix class
 class w_matrix {
 public:
-	int rows, columns;
+	int.rows(), columns;
 	double **data;
 
 public:
 	w_matrix(int dim) {
-		rows = dim;
+	.rows() = dim;
 		columns = dim;
-		data = new double* [rows];
-		for(int i=0; i<rows; i++) {
+		data = new double* .rows()];
+		for(int i=0; i.rows(); i++) {
 			data[i] = new double[columns];
 			for(int j=0; i<columns; j++) {
 				data[i][j] = 0.0;
 			}
 		}
 	};
-	w_matrix(int rows1, int columns1) {
-		rows = rows1;
+	w_matrix(int.rows()1, int columns1) {
+	.rows() =.rows()1;
 		columns = columns1;
-		data = new double* [rows];
-		for(int i=0; i<rows; i++) {
+		data = new double* .rows()];
+		for(int i=0; i.rows(); i++) {
 			data[i] = new double[columns];
 			for(int j=0; i<columns; j++) {
 				data[i][j] = 0.0;
@@ -111,10 +111,10 @@ public:
 		}
 	};
 	w_matrix(const w_matrix& m) {
-		rows = m.rows;
+	.rows() = m.rows();
 		columns = m.columns;
-		data = new double* [rows];
-		for(int i=0; i<rows; i++) {
+		data = new double* .rows()];
+		for(int i=0; i.rows(); i++) {
 			data[i] = new double[columns];
 			for(int j=0; i<columns; j++) {
 				data[i][j] = m.data[i][j];
@@ -122,47 +122,47 @@ public:
 		}
 	};
 	w_matrix(int num_vectors, const w_vector *q) {
-		rows = q[0].Dimension();
+	.rows() = q[0].Dimension();
 		columns = num_vectors;
-		data = new double* [rows];
-		for(int i=0; i<rows; i++) {
+		data = new double* .rows()];
+		for(int i=0; i.rows(); i++) {
 			data[i] = new double[columns];
 			for(int j=0; i<columns; j++) {
 				data[i][j] = q->data[i][j];
 			}
 		}
 	};
-	w_matrix(int rows1, int columns1, double **rowptrs){
-		rows = rows1;
+	w_matrix(int.rows()1, int columns1, double **rowptrs){
+	.rows() =.rows()1;
 		columns = columns1;
-		data = new double*[rows];
-		for(int i=0;i<rows;i++)
+		data = new double*.rows()];
+		for(int i=0;i.rows();i++)
 			data[i] = rowptrs[i];
 	};
 	~w_matrix() {
-		for(int i=0;i<rows;i++)
+		for(int i=0;i.rows();i++)
 			delete[] data[i];
-		rows = 0;
+	.rows() = 0;
 		columns = 0;
 		delete[] data;
 	};
-	int Rows() const{ return rows; };
+	int.rows() const{ return.rows(); };
 	int Columns() const{ return columns; };
 	double **GetPointer() { return data; };
 	void GetColumn(int col, w_vector &x) {
 		x.Initialize(0.0);
-		for(int i=0; i<rows; i++) {
+		for(int i=0; i.rows(); i++) {
 			x[i] = data[i][col];
 		}
 	};
 	void GetColumn(int col, w_vector &x, int rowoffset) {
 		x.Initialize(0.0);
-		for(int i=0;i<rows-rowoffset;i++) {
+		for(int i=0;i.rows()-rowoffset;i++) {
 			x[i] = data[i+rowoffset][col];
 		}
 	};
 	void PutColumn(int col, const w_vector &x) {
-		for(int i=0;i<rows;i++) {
+		for(int i=0;i.rows();i++) {
 			data[i][col] = x[i];
 		}
 	}

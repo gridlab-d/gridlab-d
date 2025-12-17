@@ -145,14 +145,14 @@ int dryer::create()
 	
 	last_t = 0;	
 
-	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
+	gl_warning("explicit %s model is experimental", object_header(this)->oclass->name);
 
 	return res;
 }
 
 int dryer::init(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -401,7 +401,7 @@ double dryer::update_state(double dt) //,TIMESTAMP t1)
 {	
 	double temp_voltage_magnitude;
 
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	// accumulate the energy
 	energy_used += total_power/1000 * dt/3600;
 
@@ -872,7 +872,7 @@ case DRYER_MOTOR_COIL_ONLY:
 EXPORT TIMESTAMP sync_dryer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP tret;
-	dryer *my = OBJECTDATA(obj, dryer);
+	dryer *my = object_data<dryer>(obj);
 	if (obj->clock <= ROUNDOFF)
 		obj->clock = t0;  //set the object clock if it has not been set yet
 	try {
@@ -904,7 +904,7 @@ EXPORT int create_dryer(OBJECT **obj, OBJECT *parent)
 	*obj = gl_create_object(dryer::oclass);
 	if (*obj!=nullptr)
 	{
-		dryer *my = OBJECTDATA(*obj,dryer);
+		dryer *my = object_data<dryer>(*obj);
 		gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
@@ -914,14 +914,14 @@ EXPORT int create_dryer(OBJECT **obj, OBJECT *parent)
 
 EXPORT int init_dryer(OBJECT *obj)
 {
-	dryer *my = OBJECTDATA(obj,dryer);
+	dryer *my = object_data<dryer>(obj);
 	return my->init(obj->parent);
 }
 
 EXPORT int isa_dryer(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,dryer)->isa(classname);
+		return object_data<dryer>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -929,7 +929,7 @@ EXPORT int isa_dryer(OBJECT *obj, char *classname)
 
 //EXPORT TIMESTAMP sync_dryer(OBJECT *obj, TIMESTAMP t0)
 //{
-//	dryer *my = OBJECTDATA(obj, dryer);
+//	dryer *my = object_data<dryer>(obj);
 //	TIMESTAMP t1 = my->sync(obj->clock, t0);
 //	obj->clock = t0;
 //	return t1;

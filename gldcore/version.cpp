@@ -48,9 +48,12 @@ unsigned int version_patch(void)
 }
 unsigned int version_build(void)
 {
+#if defined(BUILDNUM) && BUILDNUM+0 != 0
 	return BUILDNUM;
+#else
+	return 0; // Default to 0 if BUILDNUM is defined but blank or not a valid number
+#endif
 }
-
 const char *version_branch(void)
 {
 	return BRANCH;

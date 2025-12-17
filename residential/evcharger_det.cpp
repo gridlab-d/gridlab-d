@@ -198,7 +198,7 @@ int evcharger_det::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	int init_res;
 	int comma_count, curr_idx, curr_comma_count;
 	char temp_char;
@@ -212,7 +212,7 @@ int evcharger_det::init(OBJECT *parent)
 	TIMESTAMP temp_time, temp_time_dbl, prev_temp_time;
 	DATETIME temp_date;
 	gld_property *temp_property;
-	gld_wlock *test_rlock;
+	unsigned int test_rlock = 0;
 	int32 temp_int_val;
 
 	//Map the minimum timestep
@@ -233,7 +233,7 @@ int evcharger_det::init(OBJECT *parent)
 	}
 
 	//Pull the value
-	temp_property->getp<int32>(temp_int_val,*test_rlock);
+	temp_property->getp<int32>(temp_int_val,test_rlock);
 
 	//remove the mapping
 	delete temp_property;
@@ -1110,7 +1110,7 @@ int evcharger_det::isa(char *classname)
 
 TIMESTAMP evcharger_det::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP t2, tret;
 	double tret_dbl, t_J2894_ret_dbl, t1_dbl, tdiff_dbl;
 	bool min_timestep_floored;
@@ -1307,7 +1307,7 @@ TIMESTAMP evcharger_det::postsync(TIMESTAMP t0, TIMESTAMP t1)
 //Functionalized sync routine - so can be called from deltamode easier
 double evcharger_det::sync_ev_function(double curr_time_dbl)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double temp_double, charge_out_percent, ramp_temp, ramp_time, temp_voltage;
 	complex temp_current_value, temp_current_calc;
 	gld::complex temp_complex;
@@ -2314,7 +2314,7 @@ EXPORT int create_evcharger_det(OBJECT **obj, OBJECT *parent)
 
 		if (*obj!=nullptr)
 		{
-			evcharger_det *my = OBJECTDATA(*obj,evcharger_det);
+			evcharger_det *my = object_data<evcharger_det>(*obj);
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
@@ -2328,7 +2328,7 @@ EXPORT int create_evcharger_det(OBJECT **obj, OBJECT *parent)
 EXPORT int init_evcharger_det(OBJECT *obj)
 {
 	try {
-		evcharger_det *my = OBJECTDATA(obj,evcharger_det);
+		evcharger_det *my = object_data<evcharger_det>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(evcharger_det);
@@ -2337,7 +2337,7 @@ EXPORT int init_evcharger_det(OBJECT *obj)
 EXPORT int isa_evcharger_det(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,evcharger_det)->isa(classname);
+		return object_data<evcharger_det>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -2348,7 +2348,7 @@ EXPORT TIMESTAMP sync_evcharger_det(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	TIMESTAMP t1;
 
 	try {
-		evcharger_det *my = OBJECTDATA(obj, evcharger_det);
+		evcharger_det *my = object_data<evcharger_det>(obj);
 		t1 = TS_NEVER;
 		switch (pass)
 		{
@@ -2374,7 +2374,7 @@ EXPORT TIMESTAMP sync_evcharger_det(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 //Deltamode exposed functions
 EXPORT SIMULATIONMODE interupdate_evcharger_det(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	evcharger_det *my = OBJECTDATA(obj,evcharger_det);
+	evcharger_det *my = object_data<evcharger_det>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{

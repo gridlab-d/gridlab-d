@@ -67,7 +67,7 @@ if nargin > 1 || ~isfield(om.cost.params, 'N')
         Nk = om.cost.data.N.(name);          %% N for kth cost set
         i1 = om.cost.idx.i1.(name);          %% starting row index
         iN = om.cost.idx.iN.(name);          %% ending row index
-        if om.cost.idx.N.(name)              %% non-zero number of rows to add
+        if om.cost.idx.N.(name)              %% non-zero number of.rows() to add
             vsl = om.cost.data.vs.(name);       %% var set list
             kN = 0;                             %% initialize last col of Nk used
             for v = 1:length(vsl)

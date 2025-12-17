@@ -176,7 +176,7 @@ EXPORT int create_underground_line_conductor(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(underground_line_conductor::oclass);
 		if (*obj!=nullptr)
 		{
-			underground_line_conductor *my = OBJECTDATA(*obj,underground_line_conductor);
+			underground_line_conductor *my = object_data<underground_line_conductor>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -189,7 +189,7 @@ EXPORT int create_underground_line_conductor(OBJECT **obj, OBJECT *parent)
 EXPORT int init_underground_line_conductor(OBJECT *obj)
 {
 	try {
-		underground_line_conductor *my = OBJECTDATA(obj,underground_line_conductor);
+		underground_line_conductor *my = object_data<underground_line_conductor>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(underground_line_conductor);
@@ -202,7 +202,7 @@ EXPORT TIMESTAMP sync_underground_line_conductor(OBJECT *obj, TIMESTAMP t1, PASS
 
 EXPORT int isa_underground_line_conductor(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,underground_line_conductor)->isa(classname);
+	return object_data<underground_line_conductor>(obj)->isa(classname);
 }
 
 /**@}**/

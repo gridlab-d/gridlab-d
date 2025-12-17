@@ -8,7 +8,7 @@
 	#undef int64 // wtypes.h uses the term int64
 	#endif
 	#include <winsock2.h>
-	#define snprintf _snprintf
+	//#define snprintf _snprintf
 	#ifndef int64
 	#define int64 __int64
 	#endif

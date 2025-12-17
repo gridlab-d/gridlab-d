@@ -617,7 +617,7 @@ int pw_load::init(OBJECT *parent){
 
 	if(nomvolt_value != 0){
 		char objname[256];
-		gl_error("pw_load::init(): unable to get PowerWorld nominal voltage from Bus #%i, for the pw_load \'%s\'", powerworld_bus_num, gl_name(OBJECTHDR(this), objname, 255));
+		gl_error("pw_load::init(): unable to get PowerWorld nominal voltage from Bus #%i, for the pw_load \'%s\'", powerworld_bus_num, gl_name(object_header(this), objname, 255));
 		/* TROUBLESHOOT
 			An error occured while calling a function that retrieves data from PowerWorld.  The Bus/Load pair may be incorrect, there may have
 			been a COM error with SimAuto, or other unexpected results may have occured.
@@ -627,7 +627,7 @@ int pw_load::init(OBJECT *parent){
 
 	if(busangle_value != 0){
 		char objname[256];
-		gl_error("pw_load::init(): unable to get PowerWorld bus voltage from Bus #%i, Load ID %s, for the pw_load \'%s\'", powerworld_bus_num, powerworld_load_id, gl_name(OBJECTHDR(this), objname, 255));
+		gl_error("pw_load::init(): unable to get PowerWorld bus voltage from Bus #%i, Load ID %s, for the pw_load \'%s\'", powerworld_bus_num, powerworld_load_id, gl_name(object_header(this), objname, 255));
 		/* TROUBLESHOOT
 			An error occured while calling a function that retrieves data from PowerWorld.  The Bus/Load pair may be incorrect, there may have
 			been a COM error with SimAuto, or other unexpected results may have occured.
@@ -636,7 +636,7 @@ int pw_load::init(OBJECT *parent){
 	}
 	if(voltage_value != 0){
 		char objname[256];
-		gl_error("pw_load::init(): unable to get PowerWorld bus voltage from Bus #%i, Load ID %s, for the pw_load \'%s\'", powerworld_bus_num, powerworld_load_id, gl_name(OBJECTHDR(this), objname, 255));
+		gl_error("pw_load::init(): unable to get PowerWorld bus voltage from Bus #%i, Load ID %s, for the pw_load \'%s\'", powerworld_bus_num, powerworld_load_id, gl_name(object_header(this), objname, 255));
 		/* TROUBLESHOOT
 			An error occured while calling a function that retrieves data from PowerWorld.  The Bus/Load pair may be incorrect, there may have
 			been a COM error with SimAuto, or other unexpected results may have occured.
@@ -741,7 +741,7 @@ TIMESTAMP pw_load::sync(TIMESTAMP t1){
 	power_diff = fabs(z_diff) + fabs(i_diff) + fabs(p_diff);
 	// @TODO once we hook the substation up, need to verify that the flag isn't set for adequately small changes
 	if(power_diff > power_threshold){
-		OBJECT *obj = OBJECTHDR(this);
+		OBJECT *obj = object_header(this);
 		cModel->set_update_flag(true, gld_wlock(obj->parent));
 
 	}

@@ -185,13 +185,13 @@ namespace odbc {
     virtual ResultSet* executeQuery(const ODBCXX_STRING& sql);
 
     /** Execute an SQL statement, expected to return an update count.
-     * @return The number of affected rows
+     * @return The number of affected.rows()
      */
     virtual int executeUpdate(const ODBCXX_STRING& sql);
 
     /** Fetch the current result as an update count.
      *
-     * @return the current result's update count (affected rows), or <code>-1</code>
+     * @return the current result's update count (affected.rows()), or <code>-1</code>
      * if the result is a ResultSet or if there are no more results.
      */
     int getUpdateCount();
@@ -208,7 +208,7 @@ namespace odbc {
     /** Set the cursor name for this statement */
     void setCursorName(const ODBCXX_STRING& name);
 
-    /** Fetch the current fetch size (also called rowset size) for
+    /** Fetch the current fetch size (also called.rows()et size) for
      * resultsets created by this statement.
      */
     int getFetchSize() {
@@ -233,10 +233,10 @@ namespace odbc {
     /** Set the query timeout for this statement */
     void setQueryTimeout(int seconds);
 
-    /** Get the maximum number of rows to return in a resultset */
-    int getMaxRows();
-    /** Set the maximum number of rows to return in a resultset */
-    void setMaxRows(int maxRows);
+    /** Get the maximum number of.rows() to return in a resultset */
+    int getMa.rows();
+    /** Set the maximum number of.rows() to return in a resultset */
+    void setMa.rows()(int ma.rows());
 
     /** Get the maximum field size for resultsets create by this statement */
     int getMaxFieldSize();

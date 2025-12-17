@@ -14,6 +14,7 @@ EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *, unsigned int64, unsigned l
 class pid_ctrl;
 class sync_ctrl : public gld_object
 {
+    unsigned int  rlock = 0;
 public:
     static CLASS *oclass;
 

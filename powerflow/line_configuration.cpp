@@ -104,7 +104,7 @@ EXPORT int create_line_configuration(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(line_configuration::oclass);
 		if (*obj!=nullptr)
 		{
-			line_configuration *my = OBJECTDATA(*obj,line_configuration);
+			line_configuration *my = /*OBJECTDATA(obj,<>)*/ object_data<line_configuration>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
