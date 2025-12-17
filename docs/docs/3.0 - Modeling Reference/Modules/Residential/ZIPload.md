@@ -123,7 +123,7 @@ This model is representative of a ZIPload used in cycling mode to roughly repres
         };
     
 
-This model is representative of a ZIPload with a passive controller used to implement the elasticity model out of the [market module]. 
+This model is representative of a ZIPload with a passive controller used to implement the elasticity model out of the market module. 
     
     
         object ZIPload {
@@ -163,7 +163,7 @@ This model is representative of a ZIPload with a passive controller used to impl
         };
     
 
-This model is representative of a "pool pump" or cycling model that is using a DR control from the [market module]. 
+This model is representative of a "pool pump" or cycling model that is using a DR control from the market module. 
     
     
         object ZIPload {

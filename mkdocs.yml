@@ -100,7 +100,6 @@ nav:
       - Objects:
         - Introduction: docs/3.0 - Modeling Reference/Modules/Objects/1.0 - Introduction.md
         - Distributed Energy Resources:
-          - Aggregate Demand Response Model: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Aggregate_demand_response_model.md
           - Microgrids: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Dev_Microgrids.md
           - Diesel dg: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Diesel_dg.md
           - Energy storage: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Energy_storage.md
@@ -202,6 +201,7 @@ nav:
   - 7.0 References:
     - Unimplemented:
       - Introduction: docs/7.0 References/Unimplemented/1.0 - Introduction.md
+      - Aggregate Demand Response Model: docs/7.0 References/Unimplemented/Aggregate_demand_response_model.md
       - Commercial:
         - Commercial Module: docs/7.0 References/Unimplemented/Commercial/1.0 - Tech_Commercial.md
         - Commercial User Guide: docs/7.0 References/Unimplemented/Commercial/Commercial_User_Guide.md

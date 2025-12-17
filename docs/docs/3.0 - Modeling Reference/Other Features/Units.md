@@ -1,6 +1,6 @@
 # Units
 
-Units are used to automatically convert double to and from the internal representation declared in a class and the definition or output (see [tape]). All units have two parts, the scalar and the fundamental unit. 
+Units are used to automatically convert double to and from the internal representation declared in a class and the definition or output (see tape). All units have two parts, the scalar and the fundamental unit. 
 
 ## Scalars
 
@@ -217,7 +217,7 @@ Furthermore, parentheses are not recognized.
 
 ### Improper Syntax
 
-The only valid unit product syntax is an asterisk. In the past users and programmers sometimes used a period instead of an asterisk when specifying derived units. This usage results in incorrect unit specifications but was not always detected in [Hassayampa (Version 3.0)] and earlier. 
+The only valid unit product syntax is an asterisk. In the past users and programmers sometimes used a period instead of an asterisk when specifying derived units. This usage results in incorrect unit specifications but was not always detected in Hassayampa (Version 3.0) and earlier. 
 
 ## Wish list
 

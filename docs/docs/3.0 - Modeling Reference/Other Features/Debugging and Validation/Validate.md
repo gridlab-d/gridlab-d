@@ -17,13 +17,13 @@ Example:
 The `test-options` are applied to the validation instance of GridLAB-D™, while the `run-options` are applied to the test instance of GridLAB-D™. For example, 
     
     
-    host% gridlabd --[threadcount] 2 --validate 
+    host% gridlabd --threadcount 2 --validate 
     
 
 will run two validation tests simultaneously, while 
     
     
-    host% gridlabd --validate --[threadcount] 2
+    host% gridlabd --validate --threadcount 2
     
 
 will run a single two-threaded validation test at a time. 
@@ -32,16 +32,16 @@ will run a single two-threaded validation test at a time.
 
 Validation test failures are reported as errors. Optional test failures are reported as warning. 
 
-By default all output is redirected to the default output streams (see [redirect]). You can send all output to the console using --[redirect none] command option. 
+By default all output is redirected to the default output streams (see redirect**TODO** - Redirect - pull in def for redirect). You can send all output to the console using --redirect none command option. 
 
 ### Options
 
 The validate procedure is controlled using the following **global variables**. 
 
-`--define|-[D] [clean]=1`: 
+`--define|-D clean=1`: 
     If the `clean` variable is defined, the directories used to run each test are purged before the test is started.
 
-`--define|-[D] [validate]=NONE|TRUN|TERR|TEXC|TOPT|TSTD|TALL|RDIR|RGLD|RALL`:
+`--define|-D validate=NONE|TRUN|TERR|TEXC|TOPT|TSTD|TALL|RDIR|RGLD|RALL`:
     Controls which validation tests are performed. 
 
 * **NONE** -
@@ -65,17 +65,17 @@ The validate procedure is controlled using the following **global variables**.
 * **RALL** -
     Includes both directory and file results in output report
 
-`--define|-[D] [force_validate]=1`:
+`--define|-D force_validate=1`:
 Overrides the effect of the `validate.no` file if found in a folder. Normally, validate does not process folders that contain the file `validate.no`.
 
 
 ### Report Format
 
 
-When a validation run is performed only progress and unexpected results are normally displayed on screen. However, a detailed validation report is output to the file `validate.csv`. You may change the name and type of the validation report file by setting the [validate_report] global variable. For example, 
+When a validation run is performed only progress and unexpected results are normally displayed on screen. However, a detailed validation report is output to the file `validate.csv`. You may change the name and type of the validation report file by setting the validate_report global variable. For example, 
 
     
-    host% **gridlabd -[D] [validate_report]=validate.txt --validate**
+    host% **gridlabd -D validate_report=validate.txt --validate**
     
 
 will output a (tab-delimited) TXT file instead of a CSV file. 
@@ -86,9 +86,9 @@ The validation report is formatted to facilitate parsing by scripts and includes
 * **TEST CONFIGURATION** -
     This section provide general information about the gridlabd environment configuration used to perform the validation test.
 * **DIRECTORY SCAN RESULTS** -
-    This section lists how many files were found in each directory scanned. This section is only output if the **RDIR** or **RALL** [validate (global)] options are set.
+    This section lists how many files were found in each directory scanned. This section is only output if the **RDIR** or **RALL** validate (global) options are set.
 * **FILE TEST RESULTS** -
-    This section lists the results of each test and is only output if the **RGLM** or **RALL** [validate (global)] options are set. In the first column `S` indicates the test unexpectedly succeeded, `E` indicates the test unexpectedly produced an error, and `X` indicates the test unexpectedly produces an exception. The second column provides the runtime of the test. The third column provides the name of the GLM file tested.
+    This section lists the results of each test and is only output if the **RGLM** or **RALL** validate (global) options are set. In the first column `S` indicates the test unexpectedly succeeded, `E` indicates the test unexpectedly produced an error, and `X` indicates the test unexpectedly produces an exception. The second column provides the runtime of the test. The third column provides the name of the GLM file tested.
 * **OVERALL RESULTS** -
     The section summarizes the overall results of the validation test. Any unusual results are flagged with a triple exclamation point (**!!!**) in the first column. The result code is a unique number that is generated that can be compared to validation test results from other platforms. A result code having all zeros represents complete success. Non-zero values correspond to various failure modes on specific files.
 
@@ -97,9 +97,9 @@ The validation report is formatted to facilitate parsing by scripts and includes
 
 Linux/Mac only
     
-    When a validation run is completed, a copy of the validation report can be emailed using the [mailto] global variable. For example
+    When a validation run is completed, a copy of the validation report can be emailed using the mailto global variable. For example
 
-    host% **gridlabd -[D] [mailto] _user_ @localhost --validate**
+    host% **gridlabd -D mailto _user_ @localhost --validate**
 
 Will email the validation report in to _user_ on the local machine. 
 
@@ -109,7 +109,7 @@ Will email the validation report in to _user_ on the local machine.
 
 ## Caveats
 
-Multithreaded operation can cause intermingled output, particularly when used in conjunction with --[redirect none]. This is due to the lack of locking in the output message streams when running multiple jobs on a single console. 
+Multithreaded operation can cause intermingled output, particularly when used in conjunction with --redirect none. This is due to the lack of locking in the output message streams when running multiple jobs on a single console. 
 
 Some output from gridlabd runs cannot be redirected and will always be displayed on the console. Known problems include output from compilers, linked applications, and scripts. 
 
@@ -119,8 +119,8 @@ Unhandled exceptions in Windows can cause modal dialogs to pop up that block the
 
 ## Related Concepts:
 
-  * [Command options]
-  * [Global variables]
+  * Command options
+  * Global variables
 
 
 

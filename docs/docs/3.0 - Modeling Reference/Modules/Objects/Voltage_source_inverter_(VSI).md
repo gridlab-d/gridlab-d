@@ -189,5 +189,5 @@ To run these cases, please find in the autotest in GridLAB-D™ generator module
 
 ## Related Concepts:
 
-  * [Modules]
-    * [ Generators]
+  * Modules
+    *  Generators

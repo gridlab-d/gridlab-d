@@ -20,7 +20,7 @@ When GridLAB-D™ stops and exits, the pw_model shall close the PowerWorld model
 
 ##### Figure 1. Basic structure of PowerWorld/GridLAB-D™ Interactions
 
-A basic structure for the interactions of the network `pw_` objects, PowerWorld, and the [powerflow] module are shown in Figure 1. 
+A basic structure for the interactions of the network `pw_` objects, PowerWorld, and the powerflow module are shown in Figure 1. 
 
 ## Operation Sequence
 
@@ -112,7 +112,7 @@ load_voltage  | complex Volts  | The voltage as dictated by the PowerWorld bus i
 
 The substation object in the GridLAB-D™ powerflow module will perform two objectives. The substation will read the load_voltage property from the pw_load parent, if present, and convert this positive sequence value to a three-phase balanced voltage matrix to act as the swing bus voltages for the powerflow solution. The substation will take the three phase unbalanced power solution seen at the substation node, calculate the average power on the phases, and write this the average to the load_power property in the pw_load parent, if present. The substation node will also convert three-phase unbalanced load contributions, explicitly set at the substation, to the format pw_load expects (e.g., not the feeder's load, but additional components specified directly at the substation). In addition, there will be a property that allows the user to specify which phase at the substation is the reference phase for the GridLAB-D™ powerflow solution. The substation object will be updated to keep track of the three phase power solution. 
 
-The substation will keep all of it's previous functionality and properties with the exception of the hooks to the old network module. Substation will continue to be a child class of the [node] object inside the [powerflow] module. Listed below are the additional properties that will interact with the pw_load object. 
+The substation will keep all of it's previous functionality and properties with the exception of the hooks to the old network module. Substation will continue to be a child class of the node object inside the powerflow module. Listed below are the additional properties that will interact with the pw_load object. 
 
 Timing: 
 
@@ -142,9 +142,9 @@ Input Name  | Quantity type  | Description
 ---|---|---  
 positive_sequence_voltage  | complex Volts  | The positive sequence voltage given from the PowerWorld bus model.   
 reference_phase  | enumeration  | The phase that will be used as the reference angle for the powerflow solution. <br/> - PHASE_A(Default)<br/> - PHASE_B<br/> - PHASE_C  
-transmission_level_constant_power_load  | complex Volt-Amperes  | the positive-sequence constant power load to be posted directly to the pw_load object ([powerflow] solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
-transmission_level_constant_impedance_load  | complex Ohms  | the positive-sequence constant impedance load to be posted directly to the pw_load object ([powerflow] solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
-transmission_level_constant_current_load  | complex Amperes  | the positive-sequence constant current load to be posted directly to the pw_load object ([powerflow] solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
+transmission_level_constant_power_load  | complex Volt-Amperes  | the positive-sequence constant power load to be posted directly to the pw_load object (powerflow solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
+transmission_level_constant_impedance_load  | complex Ohms  | the positive-sequence constant impedance load to be posted directly to the pw_load object (powerflow solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
+transmission_level_constant_current_load  | complex Amperes  | the positive-sequence constant current load to be posted directly to the pw_load object (powerflow solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
   
 Published Outputs: 
 
@@ -204,8 +204,8 @@ A proposed idea is to use a lightweight client (a "go-between") that exchanges d
 
 ## Related Concepts:
 
-  * [Requirements]
+  * Requirements
   * Specifications
-  * [Implementation]
-  * [User's manual]
-  * [Navajo (trunk)]
+  * Implementation
+  * User's manual
+  * Navajo (trunk)

@@ -154,7 +154,7 @@ _If all else fails, and you do not require the MATLAB connection, then the proje
 
   * Link (directive)
     * Matlab link
-    * JSON link Template:NEW30
+    * JSON link 
     * Technical manual
   * **How To**
     * How to plot data using Matlab

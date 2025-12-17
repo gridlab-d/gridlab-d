@@ -79,7 +79,7 @@ Bitwise operations
 
 !!! warning
 
-        During implicitly looped loader operations such as with `object:..n`, the parameter is expanded only once prior to the loop being executed. Sometimes, it is desirable to execute the parameter expansion operation each time the parameter is referenced. In such cases use of the [expansion variables] syntax is required, e.g., 
+        During implicitly looped loader operations such as with `object:..n`, the parameter is expanded only once prior to the loop being executed. Sometimes, it is desirable to execute the parameter expansion operation each time the parameter is referenced. In such cases use of the expansion variables syntax is required, e.g., 
             
             
             object test:..10 {
@@ -97,10 +97,10 @@ Bitwise operations
 
 ## Version
 
-TODO - Check Status - This functionality is proposed for [Hassayampa (Version 3.0)] but is not yet implemented. 
+TODO - Check Status - This functionality is proposed for Hassayampa (Version 3.0) but is not yet implemented. 
 
 ## Related Concepts:
 
-  * [Expansion variables]
-  * [Global variables]
+  * Expansion variables
+  * Global variables
 

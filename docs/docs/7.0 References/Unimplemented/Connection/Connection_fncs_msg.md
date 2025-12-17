@@ -108,8 +108,8 @@ the `JSON` messaging structure was designed specifically for the GridAPPS-D™ P
     
     
     {
-         "globals" : [<global property>, ...],
-         <object name> : [<property name>, ...],
+         "globals" : <global property>, ...,
+         <object name> : <property name>, ...,
          ...
     }
     
@@ -118,9 +118,9 @@ The example shown below shows how to publish the simulation global clock, the ta
     
     
     {
-         "globals" : ["clock"],
-         "regulator12" : ["tap_A", "tap_B", "tap_C"],
-         "house23" : ["air_temperature"],
+         "globals" : "clock",
+         "regulator12" : "tap_A", "tap_B", "tap_C",
+         "house23" : "air_temperature",
     }
     
 

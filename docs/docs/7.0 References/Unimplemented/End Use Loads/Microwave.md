@@ -44,17 +44,17 @@
 
 ## Related Concepts:
 
-  * [Residential module]
-    * [User's Guide]
-    * [Appliances]
-    * [house] class – Single-family home model.
+  * Residential module
+    * User's Guide
+    * Appliances
+    * house class – Single-family home model.
     * residential_enduse class – Abstract residential end-use class.
-    * [occupantload] – Residential occupants (sensible and latent heat).
-    * [ZIPload] – Generic constant impedance/current/power end-use load.
+    * occupantload – Residential occupants (sensible and latent heat).
+    * ZIPload – Generic constant impedance/current/power end-use load.
   * Technical Documents 
-    * [Requirements]
-    * [Specifications]
-    * [Developer notes]
-    * [Technical support document]
-    * [Validation]
+    * Requirements
+    * Specifications
+    * Developer notes
+    * Technical support document
+    * Validation
 

@@ -669,7 +669,7 @@ TODO - Incomplete - Super-second implementation details will go here - AVR and D
 
 # Related Concepts:
 
-  * [User's manual]
-  * [Requirements]
-  * [Specifications]
-  * [Grizzly (Version 2.3)]
+  * User's manual
+  * Requirements
+  * Specifications
+  * Grizzly (Version 2.3)
