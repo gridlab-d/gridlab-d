@@ -70,7 +70,7 @@ if "GRIDLABD_ROOT" not in os.environ:
 from .gridlabd_core import (
     hello,
     __version__,
-    GridLabD,
+    GridLabD as _DirectGridLabD,  # Import as private name
     GLDErrorCode,
     GLDCheckPointMode,
 )
@@ -80,11 +80,22 @@ from .gridlabd_core import (
 if "GRIDLABD_ROOT" in os.environ:
     try:
         root = os.environ["GRIDLABD_ROOT"]
-        GridLabD.set_install_root(root)
+        _DirectGridLabD.set_install_root(root)
     except Exception:
         # If setting install root fails, continue anyway
         # The C++ code will use GLPATH environment variable
         pass
+
+# Import isolated GridLabD wrapper
+from ._isolated import IsolatedGridLabD
+
+# Choose which GridLabD to expose based on environment variable
+# GRIDLABD_DIRECT_MODE=true -> use direct C++ binding (single instance only, for debugging)
+# GRIDLABD_DIRECT_MODE=false or unset -> use isolated wrapper (multiple instances supported)
+if os.environ.get("GRIDLABD_DIRECT_MODE", "").lower() in ("true", "1", "yes"):
+    GridLabD = _DirectGridLabD
+else:
+    GridLabD = IsolatedGridLabD
 
 # Import high-level Python API
 from .simulation import (
@@ -164,6 +175,12 @@ def info():
     print("Built with nanobind")
     print(hello())
     print("GridLAB-D API integration: ✓ Available")
+    
+    # Print which GridLabD implementation is being used
+    if GridLabD == _DirectGridLabD:
+        print("GridLabD Mode: Direct (single instance only)")
+    else:
+        print("GridLabD Mode: Isolated (multiple instances supported)")
 
     try:
         sim = Simulation()

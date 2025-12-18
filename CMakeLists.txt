@@ -8,6 +8,7 @@ endif()
 
 # Testing automated github workflows
 include(cmake/Warnings.cmake)
+
 OPTION(GLD_EXTRA_WARNINGS "Make warnings more pedantic" OFF)
 if (GLD_EXTRA_WARNINGS)
     set(GLD_COMPILE_OPTIONS ${WARNING_FLAGS} CACHE INTERNAL "GLD_COMPILE_OPTIONS")
