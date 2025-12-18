@@ -96,7 +96,7 @@
         },
         {
           "name": "double_assert_11",
-          "parent": "house1cool_control",
+          "parent": "cool_control",
           "target": "bid_price",
           "within": 0.001
         }
@@ -137,7 +137,7 @@
     "controller": {
       "instances": [
         {
-          "name": "house1cool_control",
+          "name": "cool_control",
           "parent": "house1",
           "market": "Market_1",
           "bid_mode": "ON",
@@ -168,7 +168,7 @@
           ]
         },
         {
-          "name": "house2cool_control2",
+          "name": "cool_control2",
           "parent": "house2",
           "market": "Market_1",
           "bid_mode": "ON",

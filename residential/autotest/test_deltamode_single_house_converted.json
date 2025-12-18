@@ -190,7 +190,7 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "SX3086079B_1_houseSX3086079B_1_lights",
+          "name": "SX3086079B_1_lights",
           "parent": "SX3086079B_1_house",
           "schedule_skew": 6343,
           "base_power": "2000.0 W",
@@ -202,7 +202,7 @@
           "impedance_pf": -0.88
         },
         {
-          "name": "SX3086079B_1_househouse_tv",
+          "name": "house_tv",
           "parent": "SX3086079B_1_house",
           "base_power": "1575.0 W",
           "power_fraction": 0.9987,
@@ -213,7 +213,7 @@
           "impedance_pf": 0.61
         },
         {
-          "name": "SX3086079B_1_househouse_plugs",
+          "name": "house_plugs",
           "parent": "SX3086079B_1_house",
           "base_power": "750 W",
           "power_fraction": 0.1,
@@ -228,7 +228,7 @@
     "waterheater": {
       "instances": [
         {
-          "name": "SX3086079B_1_househouse_water_heater",
+          "name": "house_water_heater",
           "parent": "SX3086079B_1_house",
           "location": "INSIDE",
           "tank_volume": 44.496493,

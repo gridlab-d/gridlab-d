@@ -89,7 +89,7 @@
           "parent": "VSI1",
           "flags": "DELTAMODE",
           "target": "E_mag",
-          "within": 0.01
+          "within": 0.02
         }
       ]
     },

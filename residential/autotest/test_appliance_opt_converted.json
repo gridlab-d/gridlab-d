@@ -28,7 +28,7 @@
         {
           "name": "dryer",
           "durations": "86400 240 120",
-          "transitions": "\"0.0 daily_run_probability 0.0 ",
+          "transitions": "0.0 daily_run_probability 0.0 ; 0 0 0.5 ; 0.5 0.5 0",
           "powers": "0 1+0.1j 1+0.2j",
           "inside_comments": [
             "// daily start, tumble, heat"

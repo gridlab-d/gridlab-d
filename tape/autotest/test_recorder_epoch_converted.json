@@ -463,7 +463,7 @@
       "instances": [
         {
           "name": "ResidentialMetersEnergy",
-          "group": " \"groupid=_rt_meter\"",
+          "group": "groupid=_rt_meter",
           "property": "measured_real_energy",
           "file": "test_group_recorder_epoch.csv",
           "format": 1,

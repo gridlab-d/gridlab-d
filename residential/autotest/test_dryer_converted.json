@@ -56,7 +56,7 @@
       "instances": [
         {
           "name": "double_assert_3",
-          "parent": "house_1direct-gpm1_R1-12-47-2_tn_252",
+          "parent": "direct-gpm1_R1-12-47-2_tn_252",
           "target": "total_power",
           "within": 0.1
         }
@@ -65,7 +65,7 @@
     "dryer": {
       "instances": [
         {
-          "name": "house_1direct-gpm1_R1-12-47-2_tn_252",
+          "name": "direct-gpm1_R1-12-47-2_tn_252",
           "parent": "house_1",
           "energy_baseline": "3.0kWh",
           "controls_power": "10W",

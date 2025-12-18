@@ -68,7 +68,7 @@
     "double_assert": {
       "instances": [
         {
-          "parent": "house1buyer",
+          "parent": "buyer",
           "target": "bid_quantity",
           "in": "'2001-01-01 01:50:00'",
           "once": "ONCE_TRUE",
@@ -80,7 +80,7 @@
     "controller": {
       "instances": [
         {
-          "name": "house1buyer",
+          "name": "buyer",
           "parent": "house1",
           "simple_mode": "NONE",
           "control_mode": "RAMP",

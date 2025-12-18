@@ -240,7 +240,7 @@
       "instances": [
         {
           "name": "double_assert_23",
-          "parent": "house1wh1",
+          "parent": "wh1",
           "target": "temperature",
           "within": 0.1
         }
@@ -249,7 +249,7 @@
     "waterheater": {
       "instances": [
         {
-          "name": "house1wh1",
+          "name": "wh1",
           "parent": "house1",
           "location": "INSIDE",
           "temperature": 120.0,

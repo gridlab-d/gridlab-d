@@ -64,7 +64,7 @@
           "power_fraction": 1.0,
           "type": "CFL",
           "power_factor": -0.92,
-          "shape": "\"type: analog",
+          "shape": "type: analog; schedule: lighting",
           "inline_comments": {
             "type": "// -> PF = -0.92"
           }
@@ -75,7 +75,7 @@
           "power_fraction": 1.0,
           "type": "CFL",
           "power_factor": -0.92,
-          "shape": "\"type: analog",
+          "shape": "type: analog; schedule: lighting",
           "inline_comments": {
             "type": "// -> PF = -0.92"
           }
@@ -85,7 +85,7 @@
           "type": "CFL",
           "power_factor": -0.92,
           "power_fraction": 1.0,
-          "shape": "\"type: analog",
+          "shape": "type: analog; schedule: lighting; power: 500 W",
           "inline_comments": {
             "type": "// -> PF = -0.92"
           }
@@ -109,9 +109,14 @@
       {
         "name": "",
         "items": [
-          "* 17-22 * 12-2 * 0.75 // winter",
-          "* 18-22 * 3-5,9-11 * 0.5 // spring/fall",
-          "* 19-22 * 6-8 * 0.25 // summer"
+          "* 17-22 * 12-2 * 0.75",
+          "* 18-22 * 3-5,9-11 * 0.5",
+          "* 19-22 * 6-8 * 0.25"
+        ],
+        "inline_comments": [
+          "winter",
+          "spring/fall",
+          "summer"
         ]
       }
     ]
