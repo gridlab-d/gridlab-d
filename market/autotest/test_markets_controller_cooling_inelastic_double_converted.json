@@ -102,25 +102,25 @@
           "within": 1e-06
         },
         {
-          "parent": "triplex_meter_8house1",
+          "parent": "house1",
           "value": "cooling_setpoints*1",
           "target": "cooling_setpoint",
           "within": 0.001
         },
         {
-          "parent": "triplex_meter_8house1cool_control",
+          "parent": "cool_control",
           "value": "controller_bids*1",
           "target": "bid_price",
           "within": 0.001
         },
         {
-          "parent": "triplex_meter_8house2",
+          "parent": "house2",
           "value": "cooling_setpoints*1",
           "target": "cooling_setpoint",
           "within": 0.001
         },
         {
-          "parent": "triplex_meter_8house2cool_control2",
+          "parent": "cool_control2",
           "value": "controller_bids*1",
           "target": "bid_price",
           "within": 0.001
@@ -151,8 +151,8 @@
     "controller": {
       "instances": [
         {
-          "name": "triplex_meter_8house1cool_control",
-          "parent": "triplex_meter_8house1",
+          "name": "cool_control",
+          "parent": "house1",
           "market": "Market_1",
           "bid_mode": "ON",
           "period": 900,
@@ -179,8 +179,8 @@
           ]
         },
         {
-          "name": "triplex_meter_8house2cool_control2",
-          "parent": "triplex_meter_8house2",
+          "name": "cool_control2",
+          "parent": "house2",
           "market": "Market_1",
           "bid_mode": "ON",
           "period": 900,
@@ -211,7 +211,7 @@
     "house": {
       "instances": [
         {
-          "name": "triplex_meter_8house1",
+          "name": "house1",
           "parent": "triplex_meter_8",
           "weather": "Yakima WA",
           "cooling_setpoint": 70,
@@ -226,7 +226,7 @@
           ]
         },
         {
-          "name": "triplex_meter_8house2",
+          "name": "house2",
           "parent": "triplex_meter_8",
           "weather": "Yakima WA",
           "cooling_setpoint": 70,

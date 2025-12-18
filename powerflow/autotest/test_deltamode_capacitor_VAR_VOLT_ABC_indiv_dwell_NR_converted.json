@@ -159,7 +159,7 @@
           "file": "../loader_fastC.player"
         },
         {
-          "name": "load4uselessdeltatrigger",
+          "name": "uselessdeltatrigger",
           "parent": "load4",
           "flags": "DELTAMODE",
           "property": "nominal_voltage",

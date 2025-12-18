@@ -119,7 +119,7 @@
     "solar": {
       "instances": [
         {
-          "name": "CTTF_B_645sol_inv_B_2_645",
+          "name": "sol_inv_B_2_645",
           "parent": "CTTF_B_645",
           "generator_mode": "SUPPLY_DRIVEN",
           "panel_type": "SINGLE_CRYSTAL_SILICON",
@@ -139,7 +139,7 @@
     "inverter": {
       "instances": [
         {
-          "name": "tn_B_645inv_B_2_645",
+          "name": "inv_B_2_645",
           "parent": "tn_B_645",
           "phases": "BS",
           "generator_mode": "CONSTANT_PF",

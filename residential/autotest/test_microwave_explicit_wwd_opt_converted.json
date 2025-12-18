@@ -53,7 +53,7 @@
           "parent": "house_1",
           "heatgain_fraction": 0.8,
           "power_factor": 0.7,
-          "shape": "\"type:pulsed"
+          "shape": "type:pulsed; schedule: micro; energy: 1.0 kWh; power: 0.2 kW; count: 1; stdev: 40 W"
         }
       ]
     },

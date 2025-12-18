@@ -136,7 +136,7 @@
           "file": "driver.csv"
         },
         {
-          "parent": "house1_house_A2zip1",
+          "parent": "zip1",
           "property": "multiplier",
           "limit": 100000000,
           "interval": 300,
@@ -156,7 +156,7 @@
     "passive_controller": {
       "instances": [
         {
-          "parent": "house1_house_A2zip1",
+          "parent": "zip1",
           "period": 300,
           "control_mode": "ELASTICITY_MODEL",
           "observation_object": "Market1",
@@ -179,7 +179,7 @@
       "instances": [
         {
           "name": "double_assert_15",
-          "parent": "house1_house_A2zip1",
+          "parent": "zip1",
           "target": "multiplier",
           "within": 0.01
         }
@@ -188,7 +188,7 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "house1_house_A2zip1",
+          "name": "zip1",
           "parent": "house1_house_A2",
           "schedule_skew": 1246,
           "base_power": "LIGHTS*1.7385",
