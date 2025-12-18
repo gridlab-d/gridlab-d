@@ -48,7 +48,7 @@
           "limit": 25
         },
         {
-          "parent": "tn_B_645const_pf_invsol_inv_B_2_645",
+          "parent": "sol_inv_B_2_645",
           "file": "PV_out.csv",
           "interval": 3600,
           "limit": 25,
@@ -147,7 +147,7 @@
       "instances": [
         {
           "name": "complex_assert_9",
-          "parent": "645const_pq_meter",
+          "parent": "const_pq_meter",
           "target": "measured_power",
           "within": 0.1
         },
@@ -162,8 +162,8 @@
     "inverter": {
       "instances": [
         {
-          "name": "645const_pq_meterconst_pq_inv",
-          "parent": "645const_pq_meter",
+          "name": "const_pq_inv",
+          "parent": "const_pq_meter",
           "phases": "B",
           "inverter_type": "FOUR_QUADRANT",
           "use_multipoint_efficiency": true,
@@ -187,7 +187,7 @@
           }
         },
         {
-          "name": "tn_B_645const_pf_inv",
+          "name": "const_pf_inv",
           "parent": "tn_B_645",
           "phases": "BS",
           "inverter_type": "FOUR_QUADRANT",
@@ -213,7 +213,7 @@
     "meter": {
       "instances": [
         {
-          "name": "645const_pq_meter",
+          "name": "const_pq_meter",
           "parent": "645",
           "phases": "ABCN",
           "voltage_A": 2401.7771,
@@ -234,8 +234,8 @@
     "solar": {
       "instances": [
         {
-          "name": "tn_B_645const_pf_invsol_inv_B_2_645",
-          "parent": "tn_B_645const_pf_inv",
+          "name": "sol_inv_B_2_645",
+          "parent": "const_pf_inv",
           "panel_type": "SINGLE_CRYSTAL_SILICON",
           "orientation": "FIXED_AXIS",
           "area": 323

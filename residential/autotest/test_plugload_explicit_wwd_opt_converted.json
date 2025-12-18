@@ -83,7 +83,7 @@
           "parent": "House",
           "installed_power": 0.36,
           "heatgain_fraction": 0.9,
-          "shape": "\"type: analog"
+          "shape": "type: analog; schedule: plugs; power: .36 kW"
         }
       ]
     },

@@ -474,7 +474,7 @@
     "player": {
       "instances": [
         {
-          "name": "Load634playerA",
+          "name": "playerA",
           "parent": "Load634",
           "property": "constant_power_A",
           "file": "../fqm_group_lf_load.player",
@@ -483,13 +483,13 @@
           ]
         },
         {
-          "name": "Load634playerB",
+          "name": "playerB",
           "parent": "Load634",
           "property": "constant_power_B",
           "file": "../fqm_group_lf_load.player"
         },
         {
-          "name": "Load634playerC",
+          "name": "playerC",
           "parent": "Load634",
           "property": "constant_power_C",
           "file": "../fqm_group_lf_load.player"

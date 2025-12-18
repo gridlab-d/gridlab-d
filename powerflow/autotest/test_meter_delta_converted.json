@@ -224,7 +224,7 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "house_load_thingerhouse2_resp_load",
+          "name": "house2_resp_load",
           "parent": "house_load_thinger",
           "base_power": "loads*10",
           "heatgain_fraction": 0.9,
@@ -236,7 +236,7 @@
           "power_fraction": 0.4
         },
         {
-          "name": "house_load_thingerhouse2_unresp_load",
+          "name": "house2_unresp_load",
           "parent": "house_load_thinger",
           "base_power": "loads*5",
           "heatgain_fraction": 0.9,
@@ -252,7 +252,7 @@
     "waterheater": {
       "instances": [
         {
-          "name": "house_load_thingerhouse_2_wh",
+          "name": "house_2_wh",
           "parent": "house_load_thinger",
           "heating_element_capacity": "5.5 kW",
           "tank_setpoint": 134.0,

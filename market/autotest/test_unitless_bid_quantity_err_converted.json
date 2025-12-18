@@ -57,7 +57,7 @@
     "controller": {
       "instances": [
         {
-          "name": "house1buyer",
+          "name": "buyer",
           "parent": "house1",
           "simple_mode": "NONE",
           "control_mode": "RAMP",

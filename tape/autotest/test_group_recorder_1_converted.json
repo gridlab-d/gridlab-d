@@ -259,7 +259,7 @@
         },
         {
           "name": "ResidentialMetersEnergy",
-          "group": " \"groupid=meter_group\"",
+          "group": "groupid=meter_group",
           "property": "measured_real_energy",
           "file": "test_group_recorder_epoch.csv",
           "format": 1,

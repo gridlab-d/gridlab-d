@@ -76,7 +76,7 @@
     "controller": {
       "instances": [
         {
-          "name": "H_1DC_1",
+          "name": "DC_1",
           "parent": "H_1",
           "use_override": "ON",
           "override": "override",

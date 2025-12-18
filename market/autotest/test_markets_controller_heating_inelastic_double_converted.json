@@ -77,14 +77,14 @@
           "limit": 4320
         },
         {
-          "parent": "triplex_meter_7house1heat_control",
+          "parent": "heat_control",
           "property": "simple_mode,period,setpoint,target,base_setpoint,control_mode,resolve_mode,demand,load,total,range_low,range_high,ramp_low,ramp_high,bid_mode,bid_price,bid_quantity,set_temp,house1:power_state,house1:heating_demand,house1:heating_setpoint,house1:air_temperature,house1:system_mode,average_target,standard_deviation_target,house1:hvac_load,house1:outdoor_temperature",
           "file": "check_defaults_output1.csv",
           "interval": 60,
           "limit": 4320
         },
         {
-          "parent": "triplex_meter_7house2heat_control2",
+          "parent": "heat_control2",
           "property": "simple_mode,period,setpoint,target,base_setpoint,control_mode,resolve_mode,demand,load,total,range_low,range_high,ramp_low,ramp_high,bid_mode,bid_price,bid_quantity,set_temp,house2:power_state,house2:heating_demand,house2:heating_setpoint,house2:air_temperature,house2:system_mode,average_target,standard_deviation_target,house2:hvac_load,house1:outdoor_temperature",
           "file": "check_defaults_output2.csv",
           "interval": 60,
@@ -110,13 +110,13 @@
           "within": 0.001
         },
         {
-          "parent": "triplex_meter_7house1heat_control",
+          "parent": "heat_control",
           "target": "bid_price",
           "value": "controller_bids*1",
           "within": 0.001
         },
         {
-          "parent": "triplex_meter_7house2heat_control2",
+          "parent": "heat_control2",
           "target": "bid_price",
           "value": "controller_bids*1",
           "within": 0.001
@@ -146,8 +146,8 @@
     "controller": {
       "instances": [
         {
-          "name": "triplex_meter_7house1heat_control",
-          "parent": "triplex_meter_7house1",
+          "name": "heat_control",
+          "parent": "house1",
           "market": "Market_1",
           "bid_mode": "ON",
           "period": 60,
@@ -168,8 +168,8 @@
           ]
         },
         {
-          "name": "triplex_meter_7house2heat_control2",
-          "parent": "triplex_meter_7house2",
+          "name": "heat_control2",
+          "parent": "house2",
           "market": "Market_1",
           "bid_mode": "ON",
           "period": 60,
@@ -194,14 +194,14 @@
     "house": {
       "instances": [
         {
-          "name": "triplex_meter_7house1",
+          "name": "house1",
           "parent": "triplex_meter_7",
           "weather": "Yakima WA",
           "air_temperature": 62,
           "heating_setpoint": 65
         },
         {
-          "name": "triplex_meter_7house2",
+          "name": "house2",
           "parent": "triplex_meter_7",
           "weather": "Yakima WA",
           "air_temperature": 62,
