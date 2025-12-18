@@ -67,7 +67,7 @@
       "instances": [
         {
           "name": "double_assert_6",
-          "parent": "house1w1",
+          "parent": "w1",
           "target": "temperature",
           "within": 0.01
         }
@@ -76,7 +76,7 @@
     "waterheater": {
       "instances": [
         {
-          "name": "house1w1",
+          "name": "w1",
           "parent": "house1",
           "heating_element_capacity": "4.0 kW",
           "thermostat_deadband": 4,

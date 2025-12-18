@@ -50,7 +50,7 @@
           "name": "dishwasher_2",
           "parent": "house_1",
           "installed_power": "1000 W",
-          "shape": "\"type:pulsed",
+          "shape": "type:pulsed; schedule: dishwashing; energy: 1.0 kWh; power: 1.0 kW; count: 1; stdev: 150 W",
           "inside_comments": [
             "//Weekday test",
             "//WARNING: From what I understand, this schedule should return an energy of \"energy\" multiplied by \"count\" above.",

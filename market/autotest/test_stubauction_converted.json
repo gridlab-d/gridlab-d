@@ -29,7 +29,7 @@
           "property": "next.P"
         },
         {
-          "parent": "STUBassert_lastP",
+          "parent": "assert_lastP",
           "property": "value",
           "file": "../lastP_static.player",
           "loop": 100000
@@ -41,7 +41,7 @@
           "property": "next.P"
         },
         {
-          "parent": "STUB2assert_nextP_2",
+          "parent": "assert_nextP_2",
           "property": "value",
           "file": "../Price_Changing.player",
           "loop": 100000
@@ -69,27 +69,27 @@
     "double_assert": {
       "instances": [
         {
-          "name": "STUBassert_std24",
+          "name": "assert_std24",
           "parent": "STUB",
           "target": "std24",
           "within": 0.0001,
           "value": 0.0
         },
         {
-          "name": "STUBassert_lastP",
+          "name": "assert_lastP",
           "parent": "STUB",
           "target": "last.P",
           "within": 0.0001
         },
         {
-          "name": "STUBassert_nextP",
+          "name": "assert_nextP",
           "parent": "STUB",
           "target": "next.P",
           "within": 0.0001,
           "value": 0.1
         },
         {
-          "name": "STUB2assert_nextP_2",
+          "name": "assert_nextP_2",
           "parent": "STUB2",
           "target": "next.P",
           "within": 0.0001

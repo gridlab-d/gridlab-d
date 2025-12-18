@@ -1074,6 +1074,15 @@
           "0-29 18 * * * 22.0001",
           "30-59 18 * * * 22.0001",
           "* 19-23 * * * 22.0001"
+        ],
+        "inline_comments": [
+          "6.9999 instead",
+          "6.9999 instead",
+          "6.9999 instead",
+          "15.0001 instead",
+          "15.0001 instead",
+          "16.0001 instead",
+          "BUG: should be 18 - FIXED"
         ]
       }
     ],

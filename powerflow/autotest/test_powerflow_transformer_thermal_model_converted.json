@@ -246,7 +246,7 @@
     "ZIPload": {
       "instances": [
         {
-          "parent": "trip_meter2house1",
+          "parent": "house1",
           "base_power": "transformer_load*15",
           "power_fraction": 1,
           "impedance_fraction": 0,
@@ -261,7 +261,7 @@
     "house": {
       "instances": [
         {
-          "name": "trip_meter2house1",
+          "name": "house1",
           "parent": "trip_meter2",
           "heating_system_type": "NONE",
           "cooling_system_type": "NONE",

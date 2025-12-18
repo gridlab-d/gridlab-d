@@ -42,7 +42,7 @@
           "property": "temperature,solar_global,solar_direct"
         },
         {
-          "parent": "tn_B_645inv_B_2_645sol_inv_B_2_645",
+          "parent": "sol_inv_B_2_645",
           "file": "PV_out.csv",
           "interval": 60,
           "limit": 20000,
@@ -136,7 +136,7 @@
       "instances": [
         {
           "name": "double_assert_12",
-          "parent": "tn_B_645inv_B_2_645sol_inv_B_2_645",
+          "parent": "sol_inv_B_2_645",
           "target": "V_Out",
           "within": 0.1,
           "inline_comments": {
@@ -148,8 +148,8 @@
     "solar": {
       "instances": [
         {
-          "name": "tn_B_645inv_B_2_645sol_inv_B_2_645",
-          "parent": "tn_B_645inv_B_2_645",
+          "name": "sol_inv_B_2_645",
+          "parent": "inv_B_2_645",
           "panel_type": "SINGLE_CRYSTAL_SILICON",
           "V_Max": 79.34,
           "Voc": 91.22,
@@ -167,7 +167,7 @@
     "inverter": {
       "instances": [
         {
-          "name": "tn_B_645inv_B_2_645",
+          "name": "inv_B_2_645",
           "parent": "tn_B_645",
           "phases": "BS",
           "generator_mode": "CONSTANT_PF",

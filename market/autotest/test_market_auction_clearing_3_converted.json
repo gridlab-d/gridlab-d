@@ -1,316 +1,456 @@
 {
-    "__preamble": {
-      "comments": [
-        "// Design a market to test equal bidding scenarios. Implement two bidders",
-        "// (do for both buyers and sellers, individually) that submit bids of equal parameters.",
-        "// These will be equal price, equal quantity, and equal price and quantity. Ensure the market clears",
-        "// to the correct final value. Adjust the buyer and seller curves so a clearing point occurs on one of",
-        "// these duplicated bid quantities. Ensure the market resolves to the correct final values."
+  "__preamble": {
+    "comments": [
+      "// Design a market to test equal bidding scenarios. Implement two bidders",
+      "// (do for both buyers and sellers, individually) that submit bids of equal parameters.",
+      "// These will be equal price, equal quantity, and equal price and quantity. Ensure the market clears",
+      "// to the correct final value. Adjust the buyer and seller curves so a clearing point occurs on one of",
+      "// these duplicated bid quantities. Ensure the market resolves to the correct final values."
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "tmp": "../test_market_auction_clearing_3"
+    }
+  },
+  "_legacy": {
+    "#setenv": [
+      "GRIDLABD=../../../core"
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-01-01 00:00:00'",
+    "stoptime": "'2001-01-03 00:00:00'"
+  },
+  "modules": {
+    "market": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "multi_recorder": {
+      "instances": [
+        {
+          "parent": "Market_1",
+          "property": "current_market.clearing_price,current_market.clearing_quantity,buyer_1:price,buyer_1:quantity,buyer_2:price,buyer_2:quantity,seller_1:price,seller_1:quantity,seller_2:price,seller_2:quantity",
+          "file": "test_auction_3.csv",
+          "interval": 3600,
+          "limit": 240
+        }
       ]
     },
-    "_directives": {
-      "#set": {
-        "tmp": "../test_market_auction_clearing_3"
-      }
-    },
-    "_legacy": {
-      "#setenv": [
-        "GRIDLABD=../../../core"
+    "double_assert": {
+      "instances": [
+        {
+          "parent": "Market_1",
+          "target": "current_market.clearing_price",
+          "in": "'2001-01-02 01:00:00'",
+          "value": "assert_clearing_price*1",
+          "out": "'2001-01-03 00:00:00'",
+          "status": "ASSERT_TRUE",
+          "within": 0.0001,
+          "inline_comments": {
+            "within": "// asserting clearing price"
+          }
+        },
+        {
+          "parent": "Market_1",
+          "target": "current_market.clearing_quantity",
+          "in": "'2001-01-02 01:00:00'",
+          "value": "assert_clearing_quantity*1",
+          "out": "'2001-01-03 00:00:00'",
+          "status": "ASSERT_TRUE",
+          "within": 0.0001,
+          "inline_comments": {
+            "within": "// asserting clearing quantity"
+          }
+        }
       ]
     },
-    "clock": {
-      "timezone": "PST+8PDT",
-      "starttime": "'2001-01-01 00:00:00'",
-      "stoptime": "'2001-01-03 00:00:00'"
+    "auction": {
+      "instances": [
+        {
+          "name": "Market_1",
+          "unit": "MWh",
+          "period": 3600,
+          "verbose": false,
+          "special_mode": "NONE",
+          "warmup": 0
+        }
+      ]
     },
-    "modules": {
-      "market": {},
-      "tape": {},
-      "assert": {}
-    },
-    "objects": {
-      "multi_recorder": {
-        "instances": [
-          {
-            "parent": "Market_1",
-            "property": "current_market.clearing_price,current_market.clearing_quantity,buyer_1:price,buyer_1:quantity,buyer_2:price,buyer_2:quantity,seller_1:price,seller_1:quantity,seller_2:price,seller_2:quantity",
-            "file": "test_auction_3.csv",
-            "interval": 3600,
-            "limit": 240
-          }
-        ]
-      },
-      "double_assert": {
-        "instances": [
-          {
-            "parent": "Market_1",
-            "target": "current_market.clearing_price",
-            "in": "'2001-01-02 01:00:00'",
-            "value": "assert_clearing_price*1",
-            "out": "'2001-01-03 00:00:00'",
-            "status": "ASSERT_TRUE",
-            "within": 0.0001,
-            "inline_comments": {
-              "within": "// asserting clearing price"
-            }
-          },
-          {
-            "parent": "Market_1",
-            "target": "current_market.clearing_quantity",
-            "in": "'2001-01-02 01:00:00'",
-            "value": "assert_clearing_quantity*1",
-            "out": "'2001-01-03 00:00:00'",
-            "status": "ASSERT_TRUE",
-            "within": 0.0001,
-            "inline_comments": {
-              "within": "// asserting clearing quantity"
-            }
-          }
-        ]
-      },
-      "auction": {
-        "instances": [
-          {
-            "name": "Market_1",
-            "unit": "MWh",
-            "period": 3600,
-            "verbose": false,
-            "special_mode": "NONE",
-            "warmup": 0
-          }
-        ]
-      },
-      "stub_bidder": {
-        "instances": [
-          {
-            "name": "buyer_1",
-            "role": "BUYER",
-            "bid_period": 1800,
-            "market": "Market_1",
-            "price": "buyer_price1*1",
-            "quantity": "buyer_quantity1*1",
-            "count": 10000
-          },
-          {
-            "name": "buyer_2",
-            "role": "BUYER",
-            "bid_period": 1800,
-            "market": "Market_1",
-            "price": "buyer_price2*1",
-            "quantity": "buyer_quantity2*1",
-            "count": 10000
-          },
-          {
-            "name": "seller_1",
-            "role": "SELLER",
-            "bid_period": 1800,
-            "market": "Market_1",
-            "price": "seller_price1*1",
-            "quantity": "seller_quantity1*1",
-            "count": 10000
-          },
-          {
-            "name": "seller_2",
-            "role": "SELLER",
-            "bid_period": 1800,
-            "market": "Market_1",
-            "price": "seller_price2*1",
-            "quantity": "seller_quantity2*1",
-            "count": 10000
-          }
-        ]
-      }
-    },
-    "schedules": {
-      "buyer_price1": [
+    "stub_bidder": {
+      "instances": [
         {
-          "name": "",
-          "items": [
-            "* 0-1 * * * 40",
-            "* 2-3 * * * 50",
-            "* 4-5 * * * 40",
-            "* 6-7 * * * 45",
-            "* 8-9 * * * 40",
-            "* 10-11 * * * 40",
-            "* 12-13 * * * 40",
-            "* 14-15 * * * 40",
-            "* 16-17 * * * 40",
-            "* 18-19 * * * 50",
-            "* 20-21 * * * 40",
-            "* 22-23 * * * 40"
-          ]
-        }
-      ],
-      "buyer_price2": [
+          "name": "buyer_1",
+          "role": "BUYER",
+          "bid_period": 1800,
+          "market": "Market_1",
+          "price": "buyer_price1*1",
+          "quantity": "buyer_quantity1*1",
+          "count": 10000
+        },
         {
-          "name": "",
-          "items": [
-            "* 0-1 * * * 40",
-            "* 2-3 * * * 40",
-            "* 4-5 * * * 40",
-            "* 6-7 * * * 40",
-            "* 8-9 * * * 40",
-            "* 10-11 * * * 40",
-            "* 12-13 * * * 40",
-            "* 14-15 * * * 40",
-            "* 16-17 * * * 40",
-            "* 18-19 * * * 40",
-            "* 20-21 * * * 40",
-            "* 22-23 * * * 40"
-          ]
-        }
-      ],
-      "seller_price1": [
+          "name": "buyer_2",
+          "role": "BUYER",
+          "bid_period": 1800,
+          "market": "Market_1",
+          "price": "buyer_price2*1",
+          "quantity": "buyer_quantity2*1",
+          "count": 10000
+        },
         {
-          "name": "",
-          "items": [
-            "* 0-1 * * * 30",
-            "* 2-3 * * * 30",
-            "* 4-5 * * * 30",
-            "* 6-7 * * * 30",
-            "* 8-9 * * * 30",
-            "* 10-11 * * * 30",
-            "* 12-13 * * * 40",
-            "* 14-15 * * * 35*",
-            "* 16-17 * * * 40*",
-            "* 18-19 * * * 45*",
-            "* 20-21 * * * 40*",
-            "* 22-23 * * * 40"
-          ]
-        }
-      ],
-      "seller_price2": [
+          "name": "seller_1",
+          "role": "SELLER",
+          "bid_period": 1800,
+          "market": "Market_1",
+          "price": "seller_price1*1",
+          "quantity": "seller_quantity1*1",
+          "count": 10000
+        },
         {
-          "name": "",
-          "items": [
-            "* 0-1 * * * 30",
-            "* 2-3 * * * 30",
-            "* 4-5 * * * 30",
-            "* 6-7 * * * 30",
-            "* 8-9 * * * 30",
-            "* 10-11 * * * 30",
-            "* 12-13 * * * 40",
-            "* 14-15 * * * 40",
-            "* 16-17 * * * 40",
-            "* 18-19 * * * 40",
-            "* 20-21 * * * 40",
-            "* 22-23 * * * 40"
-          ]
-        }
-      ],
-      "buyer_quantity1": [
-        {
-          "name": "",
-          "items": [
-            "* 0-1 * * * 6",
-            "* 2-3 * * * 5",
-            "* 4-5 * * * 4",
-            "* 6-7 * * * 3",
-            "* 8-9 * * * 5.5",
-            "* 10-11 * * * 4",
-            "* 12-13 * * * 4",
-            "* 14-15 * * * 4",
-            "* 16-17 * * * 4",
-            "* 18-19 * * * 4",
-            "* 20-21 * * * 4",
-            "* 22-23 * * * 4"
-          ]
-        }
-      ],
-      "buyer_quantity2": [
-        {
-          "name": "",
-          "items": [
-            "* 0-1 * * * 8",
-            "* 2-3 * * * 5",
-            "* 4-5 * * * 3",
-            "* 6-7 * * * 3",
-            "* 8-9 * * * 5.5",
-            "* 10-11 * * * 4",
-            "* 12-13 * * * 4",
-            "* 14-15 * * * 4",
-            "* 16-17 * * * 4",
-            "* 18-19 * * * 4",
-            "* 20-21 * * * 4",
-            "* 22-23 * * * 4"
-          ]
-        }
-      ],
-      "seller_quantity1": [
-        {
-          "name": "",
-          "items": [
-            "* 0-1 * * * 7",
-            "* 2-3 * * * 6",
-            "* 4-5 * * * 2",
-            "* 6-7 * * * 2.5",
-            "* 8-9 * * * 4",
-            "* 10-11 * * * 5",
-            "* 12-13 * * * 5",
-            "* 14-15 * * * 6",
-            "* 16-17 * * * 3",
-            "* 18-19 * * * 5",
-            "* 20-21 * * * 3",
-            "* 22-23 * * * 5"
-          ]
-        }
-      ],
-      "seller_quantity2": [
-        {
-          "name": "",
-          "items": [
-            "* 0-1 * * * 9",
-            "* 2-3 * * * 6",
-            "* 4-5 * * * 4",
-            "* 6-7 * * * 2.5",
-            "* 8-9 * * * 4.5",
-            "* 10-11 * * * 6",
-            "* 12-13 * * * 4",
-            "* 14-15 * * * 6",
-            "* 16-17 * * * 4",
-            "* 18-19 * * * 5",
-            "* 20-21 * * * 3",
-            "* 22-23 * * * 5"
-          ]
-        }
-      ],
-      "assert_clearing_price": [
-        {
-          "name": "",
-          "items": [
-            "* 1-2 * * * 30(seller_price)",
-            "* 3-4 * * * 30(seller_price)",
-            "* 5-6 * * * 40(bidder_price)",
-            "* 7-8 * * * 40(low_bidder_price)",
-            "* 9-10 * * * 40(bidder_price)",
-            "* 11-12 * * * 30(seller_price)",
-            "* 13-14 * * * 40(seller_price)",
-            "* 15-16 * * * 40(high_seller_price)",
-            "* 17-18 * * * 40(bidder_price)",
-            "* 19-20 * * * 40(bidder_price)",
-            "* 21-22 * * * 40(bidder_price)",
-            "* 23-0 * * * 40(seller_bid))"
-          ]
-        }
-      ],
-      "assert_clearing_quantity": [
-        {
-          "name": "",
-          "items": [
-            "* 1-2 * * * 14(bidder_quantity)*",
-            "* 3-4 * * * 10(bidder_quantity)*",
-            "* 5-6 * * * 6(seller_quantity)*",
-            "* 7-8 * * * 5(seller_quantity)*",
-            "* 9-10 * * * 8.5(seller_quantity)*",
-            "* 11-12 * * * 8(bidder_quantity)*",
-            "* 13-14 * * * 8(bidder_quantity)*",
-            "* 15-16 * * * 8(bidder_quantity)*",
-            "* 17-18 * * * 7(seller_quantity)*",
-            "* 19-20 * * * 5(seller_quantity)*",
-            "* 21-22 * * * 6(seller_quantity)*",
-            "* 23-0 * * * 8(bidder_quantity)*"
-          ]
+          "name": "seller_2",
+          "role": "SELLER",
+          "bid_period": 1800,
+          "market": "Market_1",
+          "price": "seller_price2*1",
+          "quantity": "seller_quantity2*1",
+          "count": 10000
         }
       ]
     }
+  },
+  "schedules": {
+    "buyer_price1": [
+      {
+        "name": "",
+        "items": [
+          "* 0-1 * * * 40",
+          "* 2-3 * * * 50",
+          "* 4-5 * * * 40",
+          "* 6-7 * * * 45",
+          "* 8-9 * * * 40",
+          "* 10-11 * * * 40",
+          "* 12-13 * * * 40",
+          "* 14-15 * * * 40",
+          "* 16-17 * * * 40",
+          "* 18-19 * * * 50",
+          "* 20-21 * * * 40",
+          "* 22-23 * * * 40"
+        ],
+        "inline_comments": [
+          "identical buyers with same bids, different quantities, enough supply*",
+          "identical buyers with different bids, same quantities, enough supply*",
+          "identical buyers with same bids, different quantities, not enough supply*",
+          "identical buyers with different bids, same quantities, not enough supply*",
+          "identical buyers with same bids, same quantities, not enough supply*",
+          "identical buyers with same bids, same quantities, enough supply*",
+          "identical sellers with same bids, different quantities, enough supply",
+          "identical sellers with different bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, not enough supply",
+          "identical sellers with different bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, enough supply"
+        ]
+      }
+    ],
+    "buyer_price2": [
+      {
+        "name": "",
+        "items": [
+          "* 0-1 * * * 40",
+          "* 2-3 * * * 40",
+          "* 4-5 * * * 40",
+          "* 6-7 * * * 40",
+          "* 8-9 * * * 40",
+          "* 10-11 * * * 40",
+          "* 12-13 * * * 40",
+          "* 14-15 * * * 40",
+          "* 16-17 * * * 40",
+          "* 18-19 * * * 40",
+          "* 20-21 * * * 40",
+          "* 22-23 * * * 40"
+        ],
+        "inline_comments": [
+          "identical buyers with same bids, different quantities, enough supply",
+          "identical buyers with different bids, same quantities, enough supply",
+          "identical buyers with same bids, different quantities, not enough supply",
+          "identical buyers with different bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, enough supply",
+          "identical sellers with different bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, not enough supply",
+          "identical sellers with different bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, enough supply"
+        ]
+      }
+    ],
+    "seller_price1": [
+      {
+        "name": "",
+        "items": [
+          "* 0-1 * * * 30",
+          "* 2-3 * * * 30",
+          "* 4-5 * * * 30",
+          "* 6-7 * * * 30",
+          "* 8-9 * * * 30",
+          "* 10-11 * * * 30",
+          "* 12-13 * * * 40",
+          "* 14-15 * * * 35",
+          "* 16-17 * * * 40",
+          "* 18-19 * * * 45",
+          "* 20-21 * * * 40",
+          "* 22-23 * * * 40"
+        ],
+        "inline_comments": [
+          "identical buyers with same bids, different quantities, enough supply",
+          "identical buyers with different bids, same quantities, enough supply",
+          "identical buyers with same bids, different quantities, not enough supply",
+          "identical buyers with different bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, enough supply*",
+          "identical sellers with different bids, same quantities, enough supply*",
+          "identical sellers with same bids, different quantities, not enough supply*",
+          "identical sellers with different bids, same quantities, not enough supply*",
+          "identical sellers with same bids, same quantities, not enough supply*",
+          "identical sellers with same bids, same quantities, enough supply"
+        ]
+      }
+    ],
+    "seller_price2": [
+      {
+        "name": "",
+        "items": [
+          "* 0-1 * * * 30",
+          "* 2-3 * * * 30",
+          "* 4-5 * * * 30",
+          "* 6-7 * * * 30",
+          "* 8-9 * * * 30",
+          "* 10-11 * * * 30",
+          "* 12-13 * * * 40",
+          "* 14-15 * * * 40",
+          "* 16-17 * * * 40",
+          "* 18-19 * * * 40",
+          "* 20-21 * * * 40",
+          "* 22-23 * * * 40"
+        ],
+        "inline_comments": [
+          "identical buyers with same bids, different quantities, enough supply",
+          "identical buyers with different bids, same quantities, enough supply",
+          "identical buyers with same bids, different quantities, not enough supply",
+          "identical buyers with different bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, enough supply",
+          "identical sellers with different bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, not enough supply",
+          "identical sellers with different bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, enough supply"
+        ]
+      }
+    ],
+    "buyer_quantity1": [
+      {
+        "name": "",
+        "items": [
+          "* 0-1 * * * 6",
+          "* 2-3 * * * 5",
+          "* 4-5 * * * 4",
+          "* 6-7 * * * 3",
+          "* 8-9 * * * 5.5",
+          "* 10-11 * * * 4",
+          "* 12-13 * * * 4",
+          "* 14-15 * * * 4",
+          "* 16-17 * * * 4",
+          "* 18-19 * * * 4",
+          "* 20-21 * * * 4",
+          "* 22-23 * * * 4"
+        ],
+        "inline_comments": [
+          "identical buyers with same bids, different quantities, enough supply",
+          "identical buyers with different bids, same quantities, enough supply",
+          "identical buyers with same bids, different quantities, not enough supply",
+          "identical buyers with different bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, enough supply",
+          "identical sellers with different bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, not enough supply",
+          "identical sellers with different bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, enough supply"
+        ]
+      }
+    ],
+    "buyer_quantity2": [
+      {
+        "name": "",
+        "items": [
+          "* 0-1 * * * 8",
+          "* 2-3 * * * 5",
+          "* 4-5 * * * 3",
+          "* 6-7 * * * 3",
+          "* 8-9 * * * 5.5",
+          "* 10-11 * * * 4",
+          "* 12-13 * * * 4",
+          "* 14-15 * * * 4",
+          "* 16-17 * * * 4",
+          "* 18-19 * * * 4",
+          "* 20-21 * * * 4",
+          "* 22-23 * * * 4"
+        ],
+        "inline_comments": [
+          "identical buyers with same bids, different quantities, enough supply",
+          "identical buyers with different bids, same quantities, enough supply",
+          "identical buyers with same bids, different quantities, not enough supply",
+          "identical buyers with different bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, enough supply",
+          "identical sellers with different bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, not enough supply",
+          "identical sellers with different bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, enough supply"
+        ]
+      }
+    ],
+    "seller_quantity1": [
+      {
+        "name": "",
+        "items": [
+          "* 0-1 * * * 7",
+          "* 2-3 * * * 6",
+          "* 4-5 * * * 2",
+          "* 6-7 * * * 2.5",
+          "* 8-9 * * * 4",
+          "* 10-11 * * * 5",
+          "* 12-13 * * * 5",
+          "* 14-15 * * * 6",
+          "* 16-17 * * * 3",
+          "* 18-19 * * * 5",
+          "* 20-21 * * * 3",
+          "* 22-23 * * * 5"
+        ],
+        "inline_comments": [
+          "identical buyers with same bids, different quantities, enough supply",
+          "identical buyers with different bids, same quantities, enough supply",
+          "identical buyers with same bids, different quantities, not enough supply",
+          "identical buyers with different bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, enough supply",
+          "identical sellers with different bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, not enough supply",
+          "identical sellers with different bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, enough supply"
+        ]
+      }
+    ],
+    "seller_quantity2": [
+      {
+        "name": "",
+        "items": [
+          "* 0-1 * * * 9",
+          "* 2-3 * * * 6",
+          "* 4-5 * * * 4",
+          "* 6-7 * * * 2.5",
+          "* 8-9 * * * 4.5",
+          "* 10-11 * * * 6",
+          "* 12-13 * * * 4",
+          "* 14-15 * * * 6",
+          "* 16-17 * * * 4",
+          "* 18-19 * * * 5",
+          "* 20-21 * * * 3",
+          "* 22-23 * * * 5"
+        ],
+        "inline_comments": [
+          "identical buyers with same bids, different quantities, enough supply",
+          "identical buyers with different bids, same quantities, enough supply",
+          "identical buyers with same bids, different quantities, not enough supply",
+          "identical buyers with different bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, not enough supply",
+          "identical buyers with same bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, enough supply",
+          "identical sellers with different bids, same quantities, enough supply",
+          "identical sellers with same bids, different quantities, not enough supply",
+          "identical sellers with different bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, not enough supply",
+          "identical sellers with same bids, same quantities, enough supply"
+        ]
+      }
+    ],
+    "assert_clearing_price": [
+      {
+        "name": "",
+        "items": [
+          "* 1-2 * * * 30",
+          "* 3-4 * * * 30",
+          "* 5-6 * * * 40",
+          "* 7-8 * * * 40",
+          "* 9-10 * * * 40",
+          "* 11-12 * * * 30",
+          "* 13-14 * * * 40",
+          "* 15-16 * * * 40",
+          "* 17-18 * * * 40",
+          "* 19-20 * * * 40",
+          "* 21-22 * * * 40",
+          "* 23-0 * * * 40"
+        ],
+        "inline_comments": [
+          "identical buyers with same bids, different quantities, enough supply(seller_price)",
+          "identical buyers with different bids, same quantities, enough supply(seller_price)",
+          "identical buyers with same bids, different quantities, not enough supply(bidder_price)",
+          "identical buyers with different bids, same quantities, not enough supply(low_bidder_price)",
+          "identical buyers with same bids, same quantities, not enough supply(bidder_price)",
+          "identical buyers with same bids, same quantities, enough supply(seller_price)",
+          "identical sellers with same bids, different quantities, enough supply(seller_price)",
+          "identical sellers with different bids, same quantities, enough supply(high_seller_price)",
+          "identical sellers with same bids, different quantities, not enough supply(bidder_price)",
+          "identical sellers with different bids, same quantities, not enough supply(bidder_price)",
+          "identical sellers with same bids, same quantities, not enough supply(bidder_price)",
+          "identical sellers with same bids, same quantities, enough supply(seller_bid))"
+        ]
+      }
+    ],
+    "assert_clearing_quantity": [
+      {
+        "name": "",
+        "items": [
+          "* 1-2 * * * 14",
+          "* 3-4 * * * 10",
+          "* 5-6 * * * 6",
+          "* 7-8 * * * 5",
+          "* 9-10 * * * 8.5",
+          "* 11-12 * * * 8",
+          "* 13-14 * * * 8",
+          "* 15-16 * * * 8",
+          "* 17-18 * * * 7",
+          "* 19-20 * * * 5",
+          "* 21-22 * * * 6",
+          "* 23-0 * * * 8"
+        ],
+        "inline_comments": [
+          "identical buyers with same bids, different quantities, enough supply(bidder_quantity)*",
+          "identical buyers with different bids, same quantities, enough supply(bidder_quantity)*",
+          "identical buyers with same bids, different quantities, not enough supply(seller_quantity)*",
+          "identical buyers with different bids, same quantities, not enough supply(seller_quantity)*",
+          "identical buyers with same bids, same quantities, not enough supply(seller_quantity)*",
+          "identical buyers with same bids, same quantities, enough supply(bidder_quantity)*",
+          "identical sellers with same bids, different quantities, enough supply(bidder_quantity)*",
+          "identical sellers with different bids, same quantities, enough supply(bidder_quantity)*",
+          "identical sellers with same bids, different quantities, not enough supply(seller_quantity)*",
+          "identical sellers with different bids, same quantities, not enough supply(seller_quantity)*",
+          "identical sellers with same bids, same quantities, not enough supply(seller_quantity)*",
+          "identical sellers with same bids, same quantities, enough supply(bidder_quantity)*"
+        ]
+      }
+    ]
   }
+}

@@ -194,7 +194,7 @@
           ]
         },
         {
-          "name": "node1node1_A_player",
+          "name": "node1_A_player",
           "parent": "node1",
           "flags": "DELTAMODE",
           "property": "voltage_A",
@@ -204,21 +204,21 @@
           ]
         },
         {
-          "name": "node1node1_B_player",
+          "name": "node1_B_player",
           "parent": "node1",
           "flags": "DELTAMODE",
           "property": "voltage_B",
           "file": "../data_sync_check_volt_freq_player_bus_1_B.csv"
         },
         {
-          "name": "node1node1_C_player",
+          "name": "node1_C_player",
           "parent": "node1",
           "flags": "DELTAMODE",
           "property": "voltage_C",
           "file": "../data_sync_check_volt_freq_player_bus_1_C.csv"
         },
         {
-          "name": "node1Bnode1B_A_player",
+          "name": "node1B_A_player",
           "parent": "node1B",
           "flags": "DELTAMODE",
           "property": "voltage_A",
@@ -228,14 +228,14 @@
           ]
         },
         {
-          "name": "node1Bnode1B_B_player",
+          "name": "node1B_B_player",
           "parent": "node1B",
           "flags": "DELTAMODE",
           "property": "voltage_B",
           "file": "../data_sync_check_volt_freq_player_bus_1B_B.csv"
         },
         {
-          "name": "node1Bnode1B_C_player",
+          "name": "node1B_C_player",
           "parent": "node1B",
           "flags": "DELTAMODE",
           "property": "voltage_C",
