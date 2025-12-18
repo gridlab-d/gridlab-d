@@ -50,7 +50,7 @@ public:
     ~GridLabD() {
         // Cleanup code goes here
     }
-    nlohmann::json gld_model;
+    nlohmann::ordered_json gld_model;
     time_t started_at;
     int64 passes = 0, tsteps = 0;
     // Set the configuration file path
@@ -67,7 +67,7 @@ public:
     GLDErrorCode setup_after_load() ;
 
     // Get the GLM data based on a query, optionally save to filepath
-    nlohmann::json get_checkpoint_json(const std::string& filepath = "");
+    nlohmann::ordered_json get_checkpoint_json(const std::string& filepath = "");
 
     // Set the GLM based on input data
     GLDErrorCode set_glm_data(const GLDData& data);
@@ -123,6 +123,13 @@ public:
     // Property access methods
     GLDErrorCode get_property_value(void* object_ptr, const std::string& property_name, std::string& value);
     GLDErrorCode set_property_value(void* object_ptr, const std::string& property_name, const std::string& value);
+
+    // Validation and testing
+    GLDErrorCode validate(const std::string& repo_root = "/mnt/c/dev/gridlab-d_fork", 
+                         const std::vector<std::string>& modules = {});
+    
+    // Self-contained API health check (suitable for Python packages)
+    GLDErrorCode validate_api(bool verbose = true);
 
     private:
         std::string glm_file_path;  // Path to the GLM file

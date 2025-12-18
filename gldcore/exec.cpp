@@ -398,7 +398,14 @@ static bool directory_exists(const char *path)
 }
 
 // Do Checkpoint
-nlohmann::json do_checkpoint(const char *output_directory)
+/**
+ * Creates a JSON checkpoint of the current simulation state.
+ * 
+ * @param output_directory Directory path for writing checkpoint files. 
+ *                        If nullptr or empty, generates JSON in-memory without writing files.
+ * @return nlohmann::ordered_json containing the checkpoint data
+ */
+nlohmann::ordered_json do_checkpoint(const char *output_directory)
 {
 	/* last checkpoint value */
 	static TIMESTAMP last_checkpoint = 0;
@@ -430,7 +437,7 @@ nlohmann::json do_checkpoint(const char *output_directory)
 		now = 0;
 		break;
 	}
-	nlohmann::json checkpoint;
+	nlohmann::ordered_json checkpoint;
 	/* checkpoint may be needed */
 	if (now > 0)
 	{
@@ -442,62 +449,65 @@ nlohmann::json do_checkpoint(const char *output_directory)
 		{
 			static char fn[1024] = "";
 			static char json_fn[1024] = "";
-			FILE *fp = nullptr;
-			FILE *json_fp = nullptr;
+			const bool should_write_files = (output_directory && strlen(output_directory) > 0);
 
-			/* default checkpoint filename */
-			if (strcmp(global_checkpoint_file, "") == 0)
+			// Only perform file operations if output directory was provided
+			if (should_write_files)
 			{
-				char *ext;
-				/* use the model name by default */
-				strcpy(global_checkpoint_file, global_modelname);
-				ext = strrchr(global_checkpoint_file, '.');
-				/* trim off the extension, if any */
-				if (ext != nullptr && (strcmp(ext, ".glm") == 0 || strcmp(ext, ".xml") == 0))
-					*ext = '\0';
+				FILE *fp = nullptr;
+
+				/* default checkpoint filename */
+				if (strcmp(global_checkpoint_file, "") == 0)
+				{
+					char *ext;
+					/* use the model name by default */
+					strcpy(global_checkpoint_file, global_modelname);
+					ext = strrchr(global_checkpoint_file, '.');
+					/* trim off the extension, if any */
+					if (ext != nullptr && (strcmp(ext, ".glm") == 0 || strcmp(ext, ".xml") == 0))
+						*ext = '\0';
+				}
+
+				/* delete old checkpoint file if not desired */
+				if (global_checkpoint_keepall == 0 && strcmp(fn, "") != 0)
+				{
+					unlink(fn);
+					if (strcmp(json_fn, "") != 0)
+						unlink(json_fn);
+				}
+
+				/* create current checkpoint save filename */
+				sprintf(fn, "%s.%d", global_checkpoint_file, global_checkpoint_seqnum);
+				sprintf(json_fn, "%s/%s.%d.json", output_directory, global_checkpoint_file, global_checkpoint_seqnum++);
+
+				/* check if output directory exists */
+				if (!directory_exists(output_directory))
+				{
+					output_error("directory '%s' does not exist for JSON checkpoint files", output_directory);
+					return nlohmann::ordered_json(); // Return empty JSON value on error
+				}
+
+				fp = fopen(fn, "w");
+
+				if (fp == nullptr)
+				{
+					output_error("unable to open checkpoint file '%s' for writing", fn);
+				}
+				else
+				{
+					if (stream(fp, SF_OUT) <= 0)
+						output_error("checkpoint failure (stream context is %s)", stream_context());
+					fclose(fp);
+					last_checkpoint = now;
+				}
 			}
-
-			/* delete old checkpoint file if not desired */
-			if (global_checkpoint_keepall == 0 && strcmp(fn, "") != 0)
-			{
-				unlink(fn);
-				if (strcmp(json_fn, "") != 0)
-					unlink(json_fn);
-			}
-
-			/* create current checkpoint save filename */
-			sprintf(fn, "%s.%d", global_checkpoint_file, global_checkpoint_seqnum);
-
-			/* set default output directory if none provided or empty string */
-			const char *json_dir = (output_directory && strlen(output_directory) > 0) ? output_directory : "../../_test_results";
-			sprintf(json_fn, "%s/%s.%d.json", json_dir, global_checkpoint_file, global_checkpoint_seqnum++);
-
-			/* check if output directory exists */
-			if (!directory_exists(json_dir))
-			{
-				output_error("directory '%s' does not exist for JSON checkpoint files", json_dir);
-				return nlohmann::json(); // Return empty JSON value on error
-			}
-
-			fp = fopen(fn, "w");
-			json_fp = fopen(json_fn, "w");
-
-			if (fp == nullptr)
-				output_error("unable to open checkpoint file '%s' for writing");
-			else
-			{
-				if (stream(fp, SF_OUT) <= 0)
-					output_error("checkpoint failure (stream context is %s)", stream_context());
-				fclose(fp);
+			
+			/* Set initial value of last checkpoint if not yet set */
+			if (last_checkpoint == 0)
 				last_checkpoint = now;
-			}
-		/* initial value of last checkpoint */
-		if (last_checkpoint == 0)
-			last_checkpoint = now;
-		/* Write JSON data using JsonCpp */
-		if (json_fp != nullptr)
-		{
-			fclose(json_fp); // Close the FILE* since we'll use ofstream
+			
+			/* Generate JSON data structure (always generated, files written only if output_directory provided) */
+			{
 
 			// Helper function to parse property value string into JSON based on type
 			auto parse_property_value = [](PROPERTYTYPE ptype, const char *value_str) -> nlohmann::json {
@@ -541,9 +551,9 @@ nlohmann::json do_checkpoint(const char *output_directory)
 			};				// Create JSON structure using nlohmann::json
 				// Add preamble (ensure comments is an array)
 				if (!checkpoint.contains("__preamble"))
-					checkpoint["__preamble"] = nlohmann::json::object();
+					checkpoint["__preamble"] = nlohmann::ordered_json::object();
 				if (!checkpoint["__preamble"].contains("comments") || !checkpoint["__preamble"]["comments"].is_array())
-					checkpoint["__preamble"]["comments"] = nlohmann::json::array();
+					checkpoint["__preamble"]["comments"] = nlohmann::ordered_json::array();
 				checkpoint["__preamble"]["comments"].push_back("// GridLAB-D checkpoint data export");
 				std::string timestamp_comment = "// Generated at timestamp: " + std::to_string(global_clock);
 				checkpoint["__preamble"]["comments"].push_back(timestamp_comment);
@@ -585,12 +595,11 @@ nlohmann::json do_checkpoint(const char *output_directory)
 				int classnameCounter = 0;
 				for (auto &class_pair : objects_by_class)
 				{
-					nlohmann::json instances = nlohmann::json::array();
+					nlohmann::ordered_json instances = nlohmann::ordered_json::array();
 
 					for (OBJECT *obj : class_pair.second)
 					{
-						nlohmann::json instance = nlohmann::json::object();
-
+						nlohmann::ordered_json instance = nlohmann::ordered_json::object();
 						// Add object name if it exists
 						if (obj->name && strlen(obj->name) > 0)
 							instance["name"] = obj->name;
@@ -647,12 +656,12 @@ nlohmann::json do_checkpoint(const char *output_directory)
 				}
 
 				// Get modules data
-				nlohmann::json modules = nlohmann::json::object();
+				nlohmann::ordered_json modules = nlohmann::ordered_json::object();
 				std::map<std::string, MODULE *> module_map;
 				
 				for (MODULE *mod = module_get_first(); mod != nullptr; mod = mod->next)
 				{
-					nlohmann::json module = nlohmann::json::object();
+					nlohmann::ordered_json module = nlohmann::ordered_json::object();
 					
 					// Add module name
 					module["name"] = std::string(mod->name);
@@ -678,7 +687,7 @@ nlohmann::json do_checkpoint(const char *output_directory)
 				}
 
 				// Get globals data and assign to modules
-				nlohmann::json globals = nlohmann::json::object();
+				nlohmann::ordered_json globals = nlohmann::ordered_json::object();
 				GLOBALVAR *global = nullptr;
 				char buffer[1024];
 				
@@ -724,25 +733,25 @@ nlohmann::json do_checkpoint(const char *output_directory)
 				checkpoint["globals"] = globals;
 				checkpoint["modules"] = modules;	
 
-				// Write JSON to file with pretty formatting
-				std::ofstream json_file(json_fn);
-				if (json_file.is_open())
+				// Write JSON to file with pretty formatting (only if output directory was specified)
+				if (should_write_files)
 				{
-					// pretty print with 2-space indentation
-					std::string out = checkpoint.dump(2);
-					json_file << out;
-					json_file.close();
-					output_verbose("JSON checkpoint written to '%s'", json_fn);
+					std::ofstream json_file(json_fn);
+					if (json_file.is_open())
+					{
+						// pretty print with 2-space indentation
+						std::string out = checkpoint.dump(2);
+						json_file << out;
+						json_file.close();
+						output_verbose("JSON checkpoint written to '%s'", json_fn);
+					}
+					else
+					{
+						output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
+					}
 				}
-				else
-				{
-					output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
-				}
+				
 				return checkpoint;
-			}
-			else if (json_fp == nullptr)
-			{
-				output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
 			}
 		}
 	}

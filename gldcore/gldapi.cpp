@@ -18,6 +18,14 @@
 #include "exec.h"
 #include "object.h"
 #include <nlohmann/json.hpp>
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <algorithm>
+#include <map>
+#include <chrono>
+#include <unistd.h>
+#include <sys/wait.h>
 //#include <module.h>
 //#include <module.h>
 
@@ -308,8 +316,8 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
 }
 
 // Retrieve GLM data based on a query, optionally save to filepath
-nlohmann::json GridLabD::get_checkpoint_json(const std::string& filepath) {
-    nlohmann::json checkpoint;
+nlohmann::ordered_json GridLabD::get_checkpoint_json(const std::string& filepath) {
+    nlohmann::ordered_json checkpoint;
     
     if (filepath.empty()) {
         // If no filepath provided, just return the JSON without saving
@@ -330,7 +338,7 @@ nlohmann::json GridLabD::get_checkpoint_json(const std::string& filepath) {
     }
     
     // Set the internal gld_model representation to be equal to checkpoint
-    gld_model = nlohmann::json(checkpoint);
+    gld_model = nlohmann::ordered_json(checkpoint);
     
     return checkpoint;
 }
@@ -599,5 +607,436 @@ GLDErrorCode GridLabD::set_property_value(void* object_ptr, const std::string& p
     
     printf("set_property_value: FAILED - Property not set (result=%d)\n", result);
     return GLD_OPERATION_FAILED;
+}
+
+// Validation structures and functions
+namespace {
+    struct TestResult {
+        std::string test_path;
+        std::string test_name;
+        std::string module;
+        bool success;
+        std::string error_message;
+        double duration_seconds;
+    };
+
+    struct TestSummary {
+        int total_tests = 0;
+        int passed_tests = 0;
+        int failed_tests = 0;
+        std::vector<TestResult> results;
+    };
+
+    int run_single_test(const std::filesystem::path& test_dir, const std::string& test_name) {
+        namespace fs = std::filesystem;
+        
+        try {
+            fs::current_path(test_dir);
+            
+            GridLabD gld;
+            
+            std::string glm_filename = test_name + ".glm";
+            std::vector<const char*> args = {"gridlabd", glm_filename.c_str()};
+            int test_argc = static_cast<int>(args.size());
+            std::vector<char*> test_argv;
+            for (const auto& arg : args) {
+                test_argv.push_back(const_cast<char*>(arg));
+            }
+            
+            if (gld.load_glm(test_argc, test_argv.data()) != GLD_SUCCESS) {
+                return 1;
+            }
+            
+            if (gld.run() != GLD_SUCCESS) {
+                return 1;
+            }
+            
+            return 0;
+            
+        } catch (...) {
+            return 1;
+        }
+    }
+
+    void print_test_summary(const TestSummary& summary) {
+        std::cout << "=============================================================\n";
+        std::cout << "                    TEST SUMMARY\n";
+        std::cout << "=============================================================\n\n";
+        
+        std::cout << "Total Tests:  " << summary.total_tests << "\n";
+        std::cout << "Passed:       " << summary.passed_tests 
+                  << " (" << std::fixed << std::setprecision(2) 
+                  << (summary.total_tests > 0 ? (100.0 * summary.passed_tests / summary.total_tests) : 0.0) 
+                  << "%)\n";
+        std::cout << "Failed:       " << summary.failed_tests 
+                  << " (" << std::fixed << std::setprecision(2) 
+                  << (summary.total_tests > 0 ? (100.0 * summary.failed_tests / summary.total_tests) : 0.0) 
+                  << "%)\n\n";
+        
+        // Group results by module
+        std::map<std::string, std::pair<int, int>> module_stats;
+        for (const auto& result : summary.results) {
+            if (result.success) {
+                module_stats[result.module].first++;
+            }
+            module_stats[result.module].second++;
+        }
+        
+        std::cout << "Results by Module:\n";
+        std::cout << std::string(60, '-') << "\n";
+        for (const auto& [module, stats] : module_stats) {
+            std::cout << "  " << module << ": " << stats.first << "/" << stats.second << " passed\n";
+        }
+        
+        // Show failed tests
+        std::vector<TestResult> failed_tests;
+        for (const auto& result : summary.results) {
+            if (!result.success) {
+                failed_tests.push_back(result);
+            }
+        }
+        
+        if (!failed_tests.empty()) {
+            std::cout << "\nFailed Tests:\n";
+            std::cout << std::string(60, '-') << "\n";
+            for (const auto& result : failed_tests) {
+                std::cout << "  ✗ " << result.module << "/" << result.test_name << "\n";
+                if (!result.error_message.empty()) {
+                    std::cout << "    " << result.error_message << "\n";
+                }
+            }
+        }
+        
+        std::cout << "\n=============================================================\n\n";
+    }
+}
+
+GLDErrorCode GridLabD::validate(const std::string& repo_root, const std::vector<std::string>& modules) {
+    namespace fs = std::filesystem;
+    TestSummary summary;
+    
+    std::vector<std::string> all_modules = {
+        "assert", "climate", "commercial", "connection", "generators",
+        "market", "mysql", "network", "plc", "powerflow", 
+        "reliability", "residential", "rest", "tape", "taxonomy_feeders"
+    };
+    
+    std::vector<std::string> modules_to_test = modules.empty() ? all_modules : modules;
+    
+    // Determine the search path for autotests
+    // Autotests are located in the source tree at MODULE/autotest/ (e.g., residential/autotest/)
+    fs::path search_root;
+    if (!repo_root.empty() && fs::exists(repo_root)) {
+        search_root = repo_root;
+    } else {
+        // Default to current working directory (typically the source tree root)
+        search_root = fs::current_path();
+    }
+    
+    std::cout << "=============================================================\n";
+    std::cout << "         GridLAB-D Autotest Suite Runner\n";
+    std::cout << "=============================================================\n";
+    std::cout << "Search path: " << search_root << "\n\n";
+    
+    int modules_found = 0;
+    for (const auto& module : modules_to_test) {
+        fs::path autotest_dir = search_root / module / "autotest";
+        
+        if (!fs::exists(autotest_dir) || !fs::is_directory(autotest_dir)) {
+            continue;
+        }
+        
+        modules_found++;
+        std::cout << "Module: " << module << "\n";
+        std::cout << std::string(60, '-') << "\n";
+        
+        std::vector<fs::path> test_dirs;
+        for (const auto& entry : fs::directory_iterator(autotest_dir)) {
+            if (entry.is_directory()) {
+                std::string dirname = entry.path().filename().string();
+                if (dirname.rfind("test_", 0) == 0) {
+                    fs::path glm_file = entry.path() / (dirname + ".glm");
+                    if (fs::exists(glm_file)) {
+                        test_dirs.push_back(entry.path());
+                    }
+                }
+            }
+        }
+        
+        std::sort(test_dirs.begin(), test_dirs.end());
+        
+        for (const auto& test_dir : test_dirs) {
+            std::string test_name = test_dir.filename().string();
+            
+            TestResult result;
+            result.test_path = test_dir.string();
+            result.test_name = test_name;
+            result.module = module;
+            result.success = false;
+            
+            std::cout << "  Running: " << test_name << " ... " << std::flush;
+            
+            fs::path original_cwd = fs::current_path();
+            
+            auto start_time = std::chrono::high_resolution_clock::now();
+            
+            pid_t pid = fork();
+            
+            if (pid == -1) {
+                result.error_message = "Failed to fork process";
+                result.success = false;
+                summary.failed_tests++;
+            } else if (pid == 0) {
+                freopen("/dev/null", "w", stdout);
+                freopen("/dev/null", "w", stderr);
+                
+                int test_result = run_single_test(test_dir, test_name);
+                exit(test_result);
+            } else {
+                int status;
+                waitpid(pid, &status, 0);
+                
+                bool is_error_test = test_name.find("_err") != std::string::npos;
+                
+                if (WIFEXITED(status)) {
+                    int exit_code = WEXITSTATUS(status);
+                    bool test_passed = is_error_test ? (exit_code != 0) : (exit_code == 0);
+                    
+                    if (test_passed) {
+                        result.success = true;
+                        summary.passed_tests++;
+                    } else {
+                        if (is_error_test) {
+                            result.error_message = "Error test unexpectedly succeeded (exit code 0)";
+                        } else {
+                            result.error_message = "Test returned exit code " + std::to_string(exit_code);
+                        }
+                        summary.failed_tests++;
+                    }
+                } else if (WIFSIGNALED(status)) {
+                    if (is_error_test) {
+                        result.success = true;
+                        summary.passed_tests++;
+                    } else {
+                        result.error_message = "Test terminated by signal " + std::to_string(WTERMSIG(status));
+                        summary.failed_tests++;
+                    }
+                } else {
+                    result.error_message = "Test terminated abnormally";
+                    summary.failed_tests++;
+                }
+            }
+            
+            auto end_time = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> duration = end_time - start_time;
+            result.duration_seconds = duration.count();
+            
+            fs::current_path(original_cwd);
+            
+            if (result.success) {
+                std::cout << "✓ PASS (" << std::fixed << std::setprecision(2) 
+                         << result.duration_seconds << "s)\n";
+            } else {
+                std::cout << "✗ FAIL (" << std::fixed << std::setprecision(2) 
+                         << result.duration_seconds << "s)\n";
+                std::cout << "    Error: " << result.error_message << "\n";
+            }
+            
+            summary.results.push_back(result);
+            summary.total_tests++;
+        }
+        
+        std::cout << "\n";
+    }
+    
+    if (modules_found == 0) {
+        std::cout << "\n*** WARNING: No autotest directories found ***\n";
+        std::cout << "Searched in: " << search_root << "\n";
+        std::cout << "\nAutotests are located in the source tree at MODULE/autotest/ directories.\n";
+        std::cout << "To fix this issue:\n";
+        std::cout << "  - Specify the repo_root parameter pointing to the GridLAB-D source tree\n";
+        std::cout << "    Example: gld.validate('/path/to/gridlab-d')\n";
+        std::cout << "  - Or run from the GridLAB-D source tree root directory\n\n";
+        return GLD_FILE_NOT_FOUND;
+    }
+    
+    print_test_summary(summary);
+    
+    return (summary.failed_tests > 0) ? GLD_OPERATION_FAILED : GLD_SUCCESS;
+}
+
+/**
+ * Self-contained API health check that validates core functionality.
+ * Creates a temporary test model with a residential house object and runs
+ * a series of tests to verify: GLM loading, object lookup, property access,
+ * simulation execution, and in-memory JSON checkpoint generation.
+ * 
+ * @param verbose If true, prints detailed test results to stdout
+ * @return GLD_SUCCESS if all tests pass, GLD_OPERATION_FAILED otherwise
+ */
+GLDErrorCode GridLabD::validate_api(bool verbose) {
+    namespace fs = std::filesystem;
+    
+    if (verbose) {
+        std::cout << "=============================================================\n";
+        std::cout << "         GridLAB-D API Health Check\n";
+        std::cout << "=============================================================\n\n";
+    }
+    
+    int passed = 0;
+    int failed = 0;
+    
+    // Create a simple test file with a house object
+    fs::path temp_dir = fs::temp_directory_path() / "gldapi_health_check";
+    fs::create_directories(temp_dir);
+    fs::path test_file = temp_dir / "health_check.glm";
+    
+    std::ofstream glm_file(test_file);
+    glm_file << "#set suppress_repeat_messages=1\n"
+             << "#set checkpoint_type=SIM\n"
+             << "clock {\n"
+             << "  timezone PST+8PDT;\n"
+             << "  starttime '2000-01-01 0:00:00';\n"
+             << "  stoptime '2000-01-01 0:15:00';\n"
+             << "}\n"
+             << "module residential {\n"
+             << "  implicit_enduses NONE;\n"
+             << "}\n"
+             << "object house {\n"
+             << "  name test_house;\n"
+             << "  floor_area 2000;\n"
+             << "}\n";
+    glm_file.close();
+    
+    // Use this instance for all tests - keep the path as a string to ensure it stays valid
+    std::string test_file_str = test_file.string();
+    char* argv[] = {const_cast<char*>("gridlabd"), const_cast<char*>(test_file_str.c_str())};
+    int argc = 2;
+    
+    // Declare test_house_obj before any gotos to avoid C++ scoping issues
+    void* test_house_obj = nullptr;
+    
+    // Test 1: Basic GLM loading
+    if (verbose) std::cout << "Test 1: Basic GLM loading... " << std::flush;
+    try {
+        if (this->load_glm(argc, argv) == GLD_SUCCESS) {
+            if (verbose) std::cout << "✓ PASS\n";
+            passed++;
+        } else {
+            if (verbose) std::cout << "✗ FAIL\n";
+            failed++;
+            goto cleanup;
+        }
+    } catch (...) {
+        if (verbose) std::cout << "✗ FAIL (exception)\n";
+        failed++;
+        goto cleanup;
+    }
+    
+    // Test 2: Object finding
+    if (verbose) std::cout << "Test 2: Object lookup... " << std::flush;
+    try {
+        test_house_obj = this->find_object_by_name("test_house");
+        if (test_house_obj != nullptr) {
+            if (verbose) std::cout << "✓ PASS\n";
+            passed++;
+        } else {
+            if (verbose) std::cout << "✗ FAIL\n";
+            failed++;
+        }
+    } catch (...) {
+        if (verbose) std::cout << "✗ FAIL (exception)\n";
+        failed++;
+    }
+    
+    // Test 3: Property get
+    if (verbose) std::cout << "Test 3: Property get... " << std::flush;
+    try {
+        if (test_house_obj) {
+            std::string floor_area;
+            GLDErrorCode result = this->get_property_value(test_house_obj, "floor_area", floor_area);
+            // Just check if we can get a property value successfully (don't validate exact format)
+            if (result == GLD_SUCCESS && !floor_area.empty()) {
+                if (verbose) std::cout << "✓ PASS\n";
+                passed++;
+            } else {
+                if (verbose) std::cout << "✗ FAIL\n";
+                failed++;
+            }
+        } else {
+            if (verbose) std::cout << "✗ FAIL (no object from Test 2)\n";
+            failed++;
+        }
+    } catch (...) {
+        if (verbose) std::cout << "✗ FAIL (exception)\n";
+        failed++;
+    }
+    
+    // Test 4: Simulation run
+    if (verbose) std::cout << "Test 4: Simulation execution... " << std::flush;
+    try {
+        if (this->run() == GLD_SUCCESS) {
+            if (verbose) std::cout << "✓ PASS\n";
+            passed++;
+        } else {
+            if (verbose) std::cout << "✗ FAIL\n";
+            failed++;
+        }
+    } catch (...) {
+        if (verbose) std::cout << "✗ FAIL (exception)\n";
+        failed++;
+    }
+    
+    // Test 5: In-memory JSON checkpoint
+    if (verbose) std::cout << "Test 5: JSON checkpoint (in-memory)... " << std::flush;
+    try {
+        // Get checkpoint JSON in memory (no file writing since no directory specified)
+        nlohmann::ordered_json checkpoint = this->get_checkpoint_json();
+        
+        // Validate the checkpoint has expected structure
+        // Note: checkpoint["objects"] is an object/dictionary of classes, not an array
+        bool valid = !checkpoint.empty() && 
+                     checkpoint.contains("globals") &&
+                     checkpoint.contains("objects") &&
+                     checkpoint["objects"].is_object()&&
+                     checkpoint.contains("modules") &&
+                     checkpoint["modules"].is_object()&& 
+                     checkpoint.contains("clock") &&
+                     checkpoint["clock"].is_object();                                         
+        
+        if (valid) {
+            if (verbose) std::cout << "✓ PASS\n";
+            passed++;
+        } else {
+            if (verbose) std::cout << "✗ FAIL\n";
+            failed++;
+        }
+    } catch (...) {
+        if (verbose) std::cout << "✗ FAIL (exception)\n";
+        failed++;
+    }
+    
+cleanup:
+    fs::remove_all(temp_dir);
+    
+    if (verbose) {
+        std::cout << "\n=============================================================\n";
+        std::cout << "                    HEALTH CHECK SUMMARY\n";
+        std::cout << "=============================================================\n\n";
+        std::cout << "Total Tests:  " << (passed + failed) << "\n";
+        std::cout << "Passed:       " << passed << " (" << std::fixed << std::setprecision(2)
+                  << (100.0 * passed / (passed + failed)) << "%)\n";
+        std::cout << "Failed:       " << failed << " (" << std::fixed << std::setprecision(2)
+                  << (100.0 * failed / (passed + failed)) << "%)\n\n";
+        
+        if (failed == 0) {
+            std::cout << "✓ GridLAB-D API is functioning correctly\n";
+        } else {
+            std::cout << "✗ GridLAB-D API has issues - some tests failed\n";
+        }
+        std::cout << "\n=============================================================\n\n";
+    }
+    
+    return (failed == 0) ? GLD_SUCCESS : GLD_OPERATION_FAILED;
 }
 
