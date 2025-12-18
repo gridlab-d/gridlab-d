@@ -1,0 +1,67 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $Id: test_residentialenduse_standalone.glm 4738 2014-07-03 00:55:39Z dchassin $",
+      "// Test standalone lighting objects",
+      "//"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "suppress_repeat_messages": 0
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2000-01-01 0:00:00 PST'",
+    "stoptime": "'2001-01-01 0:00:00 PST'"
+  },
+  "modules": {
+    "residential": {}
+  },
+  "objects": {
+    "residential_enduse": {
+      "instances": [
+        {
+          "name": "res-enduse-basic",
+          "shape": "\"type:analog",
+          "outside_comments": [
+            "// this object should generate a continuous load of about 416.67W"
+          ]
+        },
+        {
+          "name": "res-enduse-none",
+          "shape": "\"type:analog",
+          "outside_comments": [
+            "// this object should generate a warning message about a missing schedule"
+          ],
+          "outside_print": [
+            "Object 'res-enduse-none' should generate a warning about missing schedule"
+          ]
+        },
+        {
+          "name": "res-enduse-badparent",
+          "parent": "res-enduse-none",
+          "shape": "\"type:analog",
+          "outside_comments": [
+            "// this object should generate a warning message about a bad parent"
+          ],
+          "outside_print": [
+            "Object 'res-enduse-badparent' should generate a warning about its parent"
+          ]
+        }
+      ]
+    }
+  },
+  "schedules": {
+    "weekly": [
+      {
+        "name": "",
+        "items": [
+          "* * * * 1-5 5 // 5/7 of energy on weekdays",
+          "* * * * 6-0 2 // 2/7 of energy on weekends"
+        ]
+      }
+    ]
+  }
+}

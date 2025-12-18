@@ -365,9 +365,10 @@ endif ()
 find_package(nlohmann_json 3.12.0 QUIET)
 if(NOT nlohmann_json_FOUND)
     message(STATUS "nlohmann_json not found, downloading...")
-    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz DOWNLOAD_EXTRACT_TIMESTAMP 1)
+    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
     FetchContent_MakeAvailable(json)
 endif()
+
 
 if (GLD_USE_EIGEN)
     message(FATAL_ERROR "Eigen implementation is not complete, and should not be used at this time.")

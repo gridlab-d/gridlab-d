@@ -1,0 +1,128 @@
+{
+  "__preamble": {
+    "comments": [
+      "// This autotest is meant to test the intrinsic commit",
+      "// function, and its ability to correctly influence the",
+      "// simulation when it returns a timestamp",
+      "// This file contains a simple runtime class with a",
+      "// commit function that returns t0 + delay and increments",
+      "// a counter each time the function is called. A recorder",
+      "// is chosen with an interval that is twice as long as the",
+      "// delay, so that the commit function should be called",
+      "// twice for every time the recorder writes out."
+    ]
+  },
+  "_directives": {
+    "#define": {
+      "stylesheet": "http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0"
+    },
+    "#set": {
+      "tmp": "../test_opt_commit",
+      "force_compile": 1
+    }
+  },
+  "_legacy": {
+    "#setenv": [
+      "GRIDLABD=../../../core"
+    ]
+  },
+  "classes": {
+    "test": [
+      {
+        "type": "double",
+        "name": "interval"
+      },
+      {
+        "type": "int64",
+        "name": "delay"
+      },
+      {
+        "type": "double",
+        "name": "counter"
+      },
+      {
+        "type": "int16",
+        "name": "max_itr"
+      },
+      {
+        "type": "return",
+        "name": "SUCCESS"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-01-01 00:00:00'",
+    "stoptime": "'2001-01-01 00:12:00'"
+  },
+  "modules": {
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "parent": "test_1",
+          "property": "interval,delay,counter",
+          "file": "commit_output.csv",
+          "interval": 120,
+          "limit": 12
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "parent": "test_1",
+          "value": "counter_values*1",
+          "target": "counter",
+          "within": 0.1
+        },
+        {
+          "parent": "test_1",
+          "in": "'2001-01-01 00:01:00'",
+          "value": "interval_values*1",
+          "target": "interval",
+          "within": 0.1
+        }
+      ]
+    },
+    "test": {
+      "instances": [
+        {
+          "name": "test_1"
+        }
+      ]
+    }
+  },
+  "schedules": {
+    "counter_values": [
+      {
+        "name": "",
+        "items": [
+          "0 * * * * 1",
+          "1 * * * * 2",
+          "2 * * * * 3",
+          "3 * * * * 4",
+          "4 * * * * 5",
+          "5 * * * * 6",
+          "6 * * * * 7",
+          "7 * * * * 8",
+          "8 * * * * 9",
+          "9 * * * * 10",
+          "10-12 * * * * 11"
+        ]
+      }
+    ],
+    "interval_values": [
+      {
+        "name": "",
+        "items": [
+          "1-11 * * * * 60",
+          "12 * * * * 120"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $Id$"
+    ]
+  },
+  "modules": {
+    "connection": {
+      "security": "STANDARD",
+      "lockout": "1 min"
+    }
+  },
+  "objects": {
+    "xml": {
+      "instances": [
+        {
+          "mode": "CLIENT",
+          "transport": "TCP"
+        },
+        {
+          "mode": "CLIENT",
+          "transport": "UDP"
+        }
+      ]
+    }
+  }
+}

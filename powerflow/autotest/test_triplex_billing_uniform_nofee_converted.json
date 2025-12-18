@@ -1,0 +1,249 @@
+{
+  "__preamble": {
+    "comments": [
+      "// glm to validate monthly uniform billing with a varying power",
+      "// load based on a player see billing_power.player for input to power_1",
+      "// previous monthly bill is off by large amount; see @weird",
+      "//",
+      "// author: alek332"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "profiler": "1;",
+      "double_format": "%+.12lg",
+      "randomseed": "10;",
+      "minimum_timestep": "60;",
+      "relax_naming_rules": 1
+    }
+  },
+  "clock": {
+    "timezone": "CST+6CDT",
+    "starttime": "'2006-01-01 00:00:00'",
+    "stoptime": "'2006-03-31 00:00:00'"
+  },
+  "modules": {
+    "market": {},
+    "powerflow": {
+      "solver_method": "FBS"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "stubauction": {
+      "instances": [
+        {
+          "name": "STUB",
+          "unit": "price",
+          "period": 3600,
+          "next.P": 1.2
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "ROOT",
+          "bustype": "SWING",
+          "phases": "ABCN",
+          "nominal_voltage": 7200
+        }
+      ]
+    },
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "CU_AL",
+          "geometric_mean_radius": "0.4 cm",
+          "resistance": "0.1 ohm/km"
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "HORIZONTAL_ABCN",
+          "distance_AB": "4 ft",
+          "distance_BC": "4 ft",
+          "distance_AC": "4 ft",
+          "distance_AN": "6 ft",
+          "distance_BN": "6 ft",
+          "distance_CN": "6 ft"
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "OHL_config",
+          "conductor_A": "CU_AL",
+          "conductor_B": "CU_AL",
+          "conductor_C": "CU_AL",
+          "conductor_N": "CU_AL",
+          "spacing": "HORIZONTAL_ABCN"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "ROOT_LINE",
+          "phases": "ABCN",
+          "from": "ROOT",
+          "to": "transformer_meter",
+          "length": 25,
+          "configuration": "OHL_config"
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "transformer_meter",
+          "phases": "ABCN",
+          "nominal_voltage": 7200
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "default_transformer_A",
+          "connect_type": "SINGLE_PHASE_CENTER_TAPPED",
+          "install_type": "PADMOUNT",
+          "primary_voltage": "7200 V",
+          "secondary_voltage": "124 V",
+          "power_rating": 250.0,
+          "powerA_rating": 250.0,
+          "impedance": "0.015+0.0675j",
+          "shunt_impedance": "454.5455+2045.4548j"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "center_tap_transformer_A",
+          "phases": "AS",
+          "from": "transformer_meter",
+          "to": "triplex_node_A",
+          "configuration": "default_transformer_A"
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "triplex_node_A",
+          "limit": 7000,
+          "interval": 83600,
+          "file": "uniform_bills.csv",
+          "property": "monthly_energy,monthly_bill,previous_monthly_bill,previous_monthly_energy,monthly_fee,bill_mode,bill_day,price,first_tier_price,second_tier_price,third_tier_price,first_tier_energy,second_tier_energy,third_tier_energy"
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "parent": "triplex_node_A",
+          "target": "monthly_bill",
+          "value": 1.2774,
+          "within": 0.1,
+          "once": "ONCE_TRUE",
+          "in": "'2006-01-11 00:00:00 CST'"
+        },
+        {
+          "parent": "triplex_node_A",
+          "target": "monthly_bill",
+          "value": 1.5726,
+          "within": 0.1,
+          "once": "ONCE_TRUE",
+          "in": "'2006-01-16 00:00:00 CST'"
+        },
+        {
+          "parent": "triplex_node_A",
+          "target": "monthly_bill",
+          "value": 2.8542,
+          "within": 0.1,
+          "once": "ONCE_TRUE",
+          "in": "'2006-01-26 00:00:00 CST'"
+        },
+        {
+          "parent": "triplex_node_A",
+          "target": "monthly_energy",
+          "value": 1.2774,
+          "within": 0.1,
+          "once": "ONCE_TRUE",
+          "in": "'2006-01-11 00:00:00 CST'"
+        },
+        {
+          "parent": "triplex_node_A",
+          "target": "monthly_energy",
+          "value": 1.5726,
+          "within": 0.1,
+          "once": "ONCE_TRUE",
+          "in": "'2006-01-16 00:00:00 CST'"
+        },
+        {
+          "parent": "triplex_node_A",
+          "target": "monthly_energy",
+          "value": 2.8542,
+          "within": 0.1,
+          "once": "ONCE_TRUE",
+          "in": "'2006-01-26 00:00:00 CST'"
+        },
+        {
+          "parent": "triplex_node_A",
+          "target": "previous_monthly_bill",
+          "value": 3.8952,
+          "within": 0.1,
+          "once": "ONCE_TRUE",
+          "in": "'2006-02-08 00:00:00 CST'",
+          "inline_comments": {
+            "within": "// @weird"
+          }
+        },
+        {
+          "parent": "triplex_node_A",
+          "target": "previous_monthly_energy",
+          "value": 3.8952,
+          "within": 0.1,
+          "once": "ONCE_TRUE",
+          "in": "'2006-02-08 00:00:00 CST'",
+          "inline_comments": {
+            "within": "// @weird"
+          }
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "parent": "triplex_node_A",
+          "file": "../billing_power.player",
+          "loop": 1,
+          "property": "power_1"
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "triplex_node_A",
+          "phases": "AS",
+          "nominal_voltage": 124.0,
+          "bill_mode": "UNIFORM",
+          "monthly_fee": 0,
+          "price": 1,
+          "bill_day": 1,
+          "power_2": 1,
+          "power_12": 1,
+          "inside_comments": [
+            "//  power_1 2;"
+          ]
+        }
+      ]
+    }
+  }
+}

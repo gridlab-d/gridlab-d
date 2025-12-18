@@ -6,6 +6,7 @@ including name sanitization, datatype conversion, and entity attribute
 management. These utilities support the main GLM parsing and conversion
 functionality.
 """
+import re
 
 def gld_strict_name(val):
     """Sanitizes a name for GridLAB-D publication to FNCS.
@@ -23,6 +24,23 @@ def gld_strict_name(val):
     if val[0].isdigit():
         val = "gld_" + val
     return val.replace('-', '_')
+
+
+def convert_suffix_id(val):
+    """Convert string patterns ending with ':number' to '_number'.
+
+    Args:
+        val (str): the input value
+
+    Returns:
+        str: val with ':number' suffix replaced by '_number' (e.g., 'node:1' -> 'node_1')
+    """
+    
+    if isinstance(val, str):
+        # Convert ':number' pattern at the end of string to '_number'
+        # e.g., 'node:1' becomes 'node_1'
+        return re.sub(r':(\d+)$', r'_\1', val)
+    return val
 
 
 def get_datatype(m_type: str):
