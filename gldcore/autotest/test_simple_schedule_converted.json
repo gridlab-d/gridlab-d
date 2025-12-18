@@ -1,0 +1,39 @@
+{
+  "__preamble": {
+    "comments": [
+      "// test schedule transforms"
+    ]
+  },
+  "classes": {
+    "house": [
+      {
+        "type": "loadshape",
+        "name": "occupancy"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2009-01-01 0:00:00 PST'",
+    "stoptime": "'2009-01-08 0:00:00 PST'"
+  },
+  "modules": {
+    "residential": {
+      "default_outdoor_temperature": 70.5,
+      "implicit_enduses": "NONE"
+    },
+    "assert": {}
+  },
+  "objects": {
+    "house": {
+      "instances": [
+        {
+          "occupancy": "\"type: scheduled",
+          "inside_comments": [
+            "// don't really have an idea about an assert to use here"
+          ]
+        }
+      ]
+    }
+  }
+}

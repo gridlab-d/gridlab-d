@@ -119,12 +119,6 @@ public:
 	int isa(char *classname);
 public:
 	/* status values */
-	gld::set affected_phases;				/* use this to determine which phases are affected by status change */
-	#define IMPEDANCE_CHANGED		1	/* use this status to indicate an impedance change (e.g., line contact) */
-	double resistance;					/* use this resistance when status=IMPEDANCE_CHANGED */
-	#define LINE_CONTACT			2	/* use this to indicate line contact */
-	gld::set line_contacted;					/* use this to indicate which line was contacted (N means ground) */
-	#define CONTROL_FAILED			4	/* use this status to indicate a controller failure (e.g., PLC failure) */
 
 	class node *get_from(void) const;
 	class node *get_to(void) const;

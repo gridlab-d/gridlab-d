@@ -1,0 +1,170 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Test the volt_watt mode for four quadrant inverter."
+    ]
+  },
+  "classes": {
+    "player": [
+      {
+        "type": "complex",
+        "name": "value"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2015-01-01 00:00:00'",
+    "stoptime": "'2015-01-01 00:25:00'"
+  },
+  "modules": {
+    "generators": {},
+    "powerflow": {
+      "solver_method": "NR"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "player": {
+      "instances": [
+        {
+          "parent": "swingbus",
+          "property": "voltage_A",
+          "file": "../test_generators_inverter_volt_var_voltageA.player",
+          "loop": 0,
+          "outside_comments": [
+            "// using same voltages as the VOLT_VAR test"
+          ]
+        },
+        {
+          "parent": "swingbus",
+          "property": "voltage_B",
+          "file": "../test_generators_inverter_volt_var_voltageB.player",
+          "loop": 0
+        },
+        {
+          "parent": "swingbus",
+          "property": "voltage_C",
+          "file": "../test_generators_inverter_volt_var_voltageC.player",
+          "loop": 0
+        },
+        {
+          "parent": "complex_assert_6",
+          "property": "value",
+          "file": "../test_generators_inverter_vw_output_A.player",
+          "loop": 0
+        },
+        {
+          "parent": "complex_assert_8",
+          "property": "value",
+          "file": "../test_generators_inverter_vw_output_B.player",
+          "loop": 0
+        },
+        {
+          "parent": "complex_assert_10",
+          "property": "value",
+          "file": "../test_generators_inverter_vw_output_C.player",
+          "loop": 0
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "swingbus",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "inv_meter",
+          "phases": "ABC",
+          "parent": "swingbus",
+          "nominal_voltage": 7200
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_6",
+          "parent": "inv_meter",
+          "target": "measured_power_A",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_8",
+          "parent": "inv_meter",
+          "target": "measured_power_B",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_10",
+          "parent": "inv_meter",
+          "target": "measured_power_C",
+          "within": 0.1
+        }
+      ]
+    },
+    "inverter": {
+      "instances": [
+        {
+          "name": "volt_watt_inv",
+          "parent": "inv_meter",
+          "inverter_type": "FOUR_QUADRANT",
+          "four_quadrant_control_mode": "VOLT_WATT",
+          "generator_status": "ONLINE",
+          "generator_mode": "SUPPLY_DRIVEN",
+          "phases": "ABC",
+          "rated_power": "11.6 kVA",
+          "inverter_efficiency": 0.87,
+          "V_base": 7200,
+          "VW_V1": 1.05833,
+          "VW_P1": 1.0,
+          "VW_V2": 1.1,
+          "VW_P2": 0.0,
+          "V_In": 200.0,
+          "I_In": 200.0,
+          "inside_comments": [
+            "//VOLT_WATT parameters;",
+            "// volt_var_control_lockout 10.0; // shared with VOLT_VAR"
+          ],
+          "inline_comments": {
+            "rated_power": "// per phase",
+            "V_base": "// shared with VOLT_VAR"
+          }
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "volt_watt_inv",
+          "property": "power_A,power_B,power_C,VA_Out",
+          "interval": 60,
+          "file": "vwinv.csv"
+        },
+        {
+          "parent": "inv_meter",
+          "property": "measured_power_A,measured_power_B,measured_power_C",
+          "interval": 60,
+          "file": "vwmtr.csv"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load",
+          "phases": "ABCN",
+          "parent": "swingbus",
+          "constant_power_A": "12000+5600j",
+          "constant_power_B": "46000-2300j",
+          "constant_power_C": "68000+9000j",
+          "nominal_voltage": 7200
+        }
+      ]
+    }
+  }
+}

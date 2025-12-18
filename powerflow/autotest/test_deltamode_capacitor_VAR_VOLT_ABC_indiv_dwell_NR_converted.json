@@ -1,0 +1,272 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $id$",
+      "// $id$",
+      "// Duplicates test_capacitor_VAR_VOLT_ABC_indiv_dwell_NR, but forces",
+      "// it to do this in deltamode, as a way to test that functionality",
+      "// Does so via a \"useless player\"",
+      "//",
+      "// 4 Node Feeder: Balanced step-up delta-grY",
+      "// Capacitor attached to end load",
+      "// Individual CAP VAR control - delta on a delta",
+      "//Order matters for deltamode"
+    ]
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "timestamp": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:58'"
+  },
+  "modules": {
+    "powerflow": {
+      "enable_subsecond_models": true,
+      "deltamode_timestep": "10.0 ms",
+      "all_powerflow_delta": true,
+      "solver_method": "NR",
+      "outside_comments": [
+        "//Enable deltamode"
+      ]
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "cond100",
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306
+        },
+        {
+          "name": "cond101",
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "line_spac200",
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "line_conf_300",
+          "conductor_A": "cond100",
+          "conductor_B": "cond100",
+          "conductor_C": "cond100",
+          "conductor_N": "cond101",
+          "spacing": "line_spac200"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "trans_conf400",
+          "connect_type": "DELTA_GWYE",
+          "install_type": "VAULT",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 24900,
+          "resistance": 0.05,
+          "reactance": 0.06
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node1",
+          "bustype": "SWING",
+          "phases": "ABCD",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node2",
+          "phases": "ABCD",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node3",
+          "phases": "ABCN",
+          "nominal_voltage": 14377
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "phases": "ABCD",
+          "from": "node1",
+          "to": "node2",
+          "length": 2000,
+          "configuration": "line_conf_300"
+        },
+        {
+          "name": "link34",
+          "phases": "ABCN",
+          "from": "node3",
+          "to": "load4",
+          "length": 2500,
+          "configuration": "line_conf_300"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "xformer",
+          "phases": "ABC",
+          "from": "node2",
+          "to": "node3",
+          "configuration": "trans_conf400"
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "parent": "load4",
+          "flags": "DELTAMODE",
+          "property": "constant_power_A",
+          "file": "../loader_fastA.player"
+        },
+        {
+          "parent": "load4",
+          "flags": "DELTAMODE",
+          "property": "constant_power_B",
+          "file": "../loader_fastB.player"
+        },
+        {
+          "parent": "load4",
+          "flags": "DELTAMODE",
+          "property": "constant_power_C",
+          "file": "../loader_fastC.player"
+        },
+        {
+          "name": "load4uselessdeltatrigger",
+          "parent": "load4",
+          "flags": "DELTAMODE",
+          "property": "nominal_voltage",
+          "file": "../data_cap_deltamode_trigger.player"
+        },
+        {
+          "parent": "complex_assert_17",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../cap_volt_A_indiv_VOLTVAR_dwell.player"
+        },
+        {
+          "parent": "complex_assert_19",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../cap_volt_B_indiv_VOLTVAR_dwell.player"
+        },
+        {
+          "parent": "complex_assert_21",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../cap_volt_C_indiv_VOLTVAR_dwell.player"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_17",
+          "parent": "load4",
+          "flags": "DELTAMODE",
+          "target": "voltage_A",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_19",
+          "parent": "load4",
+          "flags": "DELTAMODE",
+          "target": "voltage_B",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_21",
+          "parent": "load4",
+          "flags": "DELTAMODE",
+          "target": "voltage_C",
+          "within": 0.1
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load4",
+          "phases": "ABCN",
+          "constant_power_A": "+0.000+0.0j",
+          "constant_power_B": "+0.000+0.0j",
+          "constant_power_C": "+0.000+0.0j",
+          "maximum_voltage_error": 0.001,
+          "nominal_voltage": 14377,
+          "inside_comments": [
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag\";",
+            "// interval -1;",
+            "// file voltagerecorder_out.csv;",
+            "// };"
+          ]
+        }
+      ]
+    },
+    "capacitor": {
+      "instances": [
+        {
+          "name": "CAP2",
+          "phases": "ABC",
+          "pt_phase": "ABC",
+          "parent": "load4",
+          "remote_sense": "link34",
+          "phases_connected": "ABC",
+          "control": "VARVOLT",
+          "VAr_set_high": 60000.0,
+          "VAr_set_low": 50000.0,
+          "voltage_set_low": 14260.0,
+          "voltage_set_high": 14270.0,
+          "capacitor_A": "10.0 kVAr",
+          "capacitor_B": "10.0 kVAr",
+          "capacitor_C": "10.0 kVAr",
+          "control_level": "INDIVIDUAL",
+          "switchA": "OPEN",
+          "switchB": "OPEN",
+          "switchC": "OPEN",
+          "time_delay": 4.0,
+          "lockout_time": 5.0,
+          "dwell_time": 3.0,
+          "cap_nominal_voltage": 14000,
+          "nominal_voltage": 14377,
+          "inside_comments": [
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"switchA,switchB,switchC\";",
+            "// interval -1;",
+            "// file \"cap_status_out.csv\";",
+            "// };"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "__preamble": {
+    "comments": [
+      "// test whether ticket:114 is fixed",
+      "// run example for 1 day",
+      "// implement a deterministic noise source and signal target",
+      "// record the output"
+    ]
+  },
+  "_directives": {
+    "#include": [
+      "<math.h>"
+    ],
+    "#set": {
+      "module_compiler_flags": "VERBOSE|DEBUG|KEEPWORK|CLEAN",
+      "force_compile": 1
+    }
+  },
+  "classes": {
+    "noise": [
+      {
+        "type": "double",
+        "name": "source"
+      },
+      {
+        "type": "double",
+        "name": "signal"
+      },
+      {
+        "type": "source",
+        "name": "= (double)t0"
+      },
+      {
+        "type": "signal",
+        "name": "= 1.0/rand()"
+      },
+      {
+        "type": "return",
+        "name": "t0+1"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2009-01-01 00:00:00 PST'",
+    "stoptime": "'2009-01-02 00:00:00 PST'"
+  },
+  "modules": {
+    "tape": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "parent": "noise_1",
+          "property": "signal",
+          "file": "noise_source.csv",
+          "interval": -1
+        }
+      ]
+    },
+    "noise": {
+      "instances": [
+        {
+          "name": "noise_1"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "classes": {
+    "test": [
+      {
+        "type": "double",
+        "name": "value"
+      }
+    ]
+  },
+  "clock": {
+    "starttime": "'2000-01-01 00:00:00'",
+    "stoptime": "'2000-01-01 01:00:00'"
+  },
+  "modules": {
+    "assert": {}
+  },
+  "objects": {
+    "assert": {
+      "instances": [
+        {
+          "parent": "test_1",
+          "target": "value",
+          "relation": "inside",
+          "lower": 0,
+          "upper": 1
+        }
+      ]
+    },
+    "test": {
+      "instances": [
+        {
+          "name": "test_1",
+          "value": "test_normal"
+        }
+      ]
+    }
+  },
+  "schedules": {
+    "test_normal": [
+      {
+        "name": "",
+        "items": [
+          "normal",
+          "0-29 * * * * 0",
+          "30-59 * * * * 2"
+        ]
+      }
+    ]
+  }
+}

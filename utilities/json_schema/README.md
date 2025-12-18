@@ -1,39 +1,26 @@
 # GLM to JSON Converter
 
-A Python utility for converting GridLAB-D model files (`.glm`) to JSON format, providing both structured data and schema outputs.
-
-## Overview
-
-This tool parses GridLAB-D model files and converts them into JSON format, making it easier to programmatically analyze and manipulate GridLAB-D models. It generates two types of output:
-- **Values JSON**: Contains the actual model data with instances and configurations
-- **Schema JSON**: Contains the structure and metadata of the model entities *(TODO: Schema generation needs further development)*
+Converts GridLAB-D model files (`.glm`) to JSON format for easier programmatic analysis and manipulation.
 
 ## Features
 
-- Parses GridLAB-D `.glm` files including:
-  - Objects (nodes, lines, transformers, etc.)
-  - Modules and classes
-  - Clock/date configurations
-  - Directives (#include, #define, #set)
-  - Schedules
-  - Comments (inline, inside, and outside)
-  - Conditional compilation (#ifdef/#endif)
-- Generates clean JSON output with intelligent filtering
-- Supports both standalone and package usage
-- Command-line interface with customizable input files
+- Parses objects, modules, classes, clock, directives, schedules, and comments
+- Single file and batch conversion modes
+- Batch mode: autotest directory scanning or recursive search
+- Proper array handling and automatic type conversion
+- Clean JSON output with intelligent filtering
 
 ## Directory Structure
 
 ```
-glm_to_json/
+json_schema/
 ├── README.md              # This file
-├── glm_to_json.py         # Main converter script
-├── glm_parser.py          # Core parsing logic
-├── glm_entities.py        # Entity class definitions
+├── glm_to_json.py         # Main converter script with CLI
+├── glm_parser.py          # Core parsing logic and model management
+├── glm_entities.py        # Entity and Item class definitions
 ├── glm_utils.py           # Utility functions
-├── glmFiles/              # Input GLM files directory
-├── output/                # Generated JSON files directory
 ├── references/            # Reference data (glm_classes.json)
+│   └── glm_classes.json   # Class definitions reference
 └── __pycache__/           # Python cache files
 ```
 
@@ -46,162 +33,119 @@ glm_to_json/
 
 ## Installation
 
-1. Ensure you have Python 3.6 or later installed
-2. Install required dependencies:
-   ```bash
-   pip install pyjson5 importlib_resources
-   ```
+```bash
+pip install pyjson5 importlib_resources
+```
+
+Requires Python 3.6+.
 
 ## Usage
 
 ### Command Line
 
-#### Basic Usage
 ```bash
-python glm_to_json.py
+# Single file (output to same directory)
+python glm_to_json.py mymodel --dir /path/to/models
+
+# Single file (custom output)
+python glm_to_json.py mymodel --dir /path/to/models --output /path/to/output
+
+# Batch: all autotest files
+python glm_to_json.py --batch
+
+# Batch: custom directory (recursive)
+python glm_to_json.py --batch --search /custom/path
+
+# Batch: custom output directory
+python glm_to_json.py --batch --output /path/to/output
 ```
-This will process the default file `TE_CHALLENGE.glm` from the `glmFiles/` directory.
 
-#### Custom GLM File
-```bash
-python glm_to_json.py your_model_name
-```
-This will process `your_model_name.glm` from the `glmFiles/` directory.
+### Batch Mode
 
-#### Examples
-```bash
-# Process the default TE_CHALLENGE.glm file
-python glm_to_json.py
-
-# Process a custom model file named "residential_feeder.glm"
-python glm_to_json.py residential_feeder
-
-# Process a model with specific name
-python glm_to_json.py IEEE_13_Node_Test_Feeder
-```
+- Real-time progress with in-place console updates
+- Error tracking and summary report
+- Default: searches `autotest/*/*.glm` from repository root  
+- With `--search`: recursively searches all `.glm` files in directory
 
 ### Python Package Usage
 
 ```python
 from glm_to_json import glm_to_json
 
-# Convert default model
-glm_to_json()
-
-# Convert specific model
+# Convert with default directories (glmFiles/ -> output/)
 glm_to_json("your_model_name")
+
+# Convert with custom directories
+glm_to_json("your_model_name", input_dir="/path/to/models", output_dir="/path/to/output")
+
+# Batch conversion
+from glm_to_json import convert_batch_files
+total, success, errors = convert_batch_files()
+print(f"Converted {success}/{total} files")
 ```
 
-## Input Requirements
+## Output Structure
 
-1. **GLM File Location**: Place your `.glm` files in the `glmFiles/` directory
-2. **File Naming**: The script expects files with `.glm` extension
-3. **File Format**: Standard GridLAB-D model file format
+Generates a single JSON file with:
+- `__preamble`: Comments before first module/object
+- `_directives`: `#include`, `#define`, `#set`, `#undef`  
+- `_legacy`: `#setenv`, `#binpath`, `#libpath`, `#incpath`, `#option`, `#system`, `#start`
+- `clock`: Timezone and timestamps
+- `modules`: Module configurations
+- `classes`: User-defined classes
+- `objects`: Object instances grouped by type
+- `schedules`: Schedule definitions
 
-## Output
+See full JSON example in previous version of this README if needed.
 
-The converter generates two JSON files in the `output/` directory:
+## Processing
 
-### 1. Values File (`{model_name}_values.json`)
-Contains the actual model data including:
-- Object instances with their properties
-- Module configurations
-- Directives (includes, defines, sets)
-- Conditional compilation blocks (ifdef)
-
-Example structure:
-```json
-{
-  "_directives": {
-    "includes": ["path/to/included/file.glm"],
-    "defines": ["VARIABLE_NAME value"],
-    "sets": ["property=value"]
-  },
-  "powerflow": {
-    "instances": {
-      "module_instance": {
-        "solver_method": "NR"
-      }
-    }
-  },
-  "node": {
-    "instances": {
-      "node_1": {
-        "phases": "ABCN",
-        "voltage_A": "7200+0j V"
-      }
-    }
-  }
-}
-```
-
-### 2. Schema File (`{model_name}_schema.json`) - **TODO**
-Contains the structure and metadata for all entity types in the model.
-
-> **Note**: Schema generation is currently under development and may not produce complete or accurate results. This feature requires additional work to properly extract and format entity schemas from the GLM class definitions.
-
-## Filtering Logic
-
-The converter applies intelligent filtering to keep the output clean:
-
-- **Empty containers**: Removes empty lists, dictionaries, and strings
-- **Directives**: Keeps only meaningful directive content
-- **Entities**: Focuses on instances and conditional compilation blocks
-- **Top-level filtering**: Removes completely empty entity groups
+- Removes empty containers and metadata fields
+- Converts numeric strings to int/float
+- Properly formats comment arrays (not string representations)
+- By default, creates JSON alongside source GLM files
 
 ## Error Handling
 
-- **File Not Found**: The script will raise a `FileNotFoundError` if the specified GLM file doesn't exist
-- **Parse Errors**: Unrecognized lines are printed to console but don't stop processing
-- **Import Errors**: Graceful fallback from relative to absolute imports
+**Unsupported**: Conditional directives (`#ifdef`, `#ifndef`, `#ifexist`, `#if`, `#else`, `#endif`) will raise `GLMConditionalError`. These must be manually resolved before conversion.
 
-## Troubleshooting
+**Common issues**:
+- FileNotFoundError: Check file path and directory
+- Parse errors: Check console for "Unrecognized parameter" messages  
+- Empty output: Verify valid GLM syntax
+- Permission errors: Ensure write permissions for output directory
 
-### Common Issues
+## Limitations
 
-1. **ModuleNotFoundError**: Ensure all required packages are installed
-2. **FileNotFoundError**: Check that your GLM file exists in the `glmFiles/` directory
-3. **Empty Output**: Verify your GLM file has valid GridLAB-D syntax
+**Parsed but not evaluated**:
+- `#include`: Recorded but files not merged
+- `#define`: Recorded but macros not expanded
 
-### Debug Tips
-
-- Check the console output for "Un-parsed line" messages
-- Verify your GLM file syntax using GridLAB-D directly
-- Ensure proper file encoding (UTF-8 recommended)
-
-## Supported GridLAB-D Elements
-
-- **Objects**: All standard GridLAB-D objects (nodes, lines, transformers, etc.)
-- **Modules**: powerflow, residential, commercial, etc.
-- **Directives**: #include, #define, #set
-- **Conditional Compilation**: #ifdef, #endif
-- **Schedules**: Named schedule definitions
-- **Classes**: User-defined classes
-- **Comments**: Inline (//) and block comments
+**Not supported**:
+- Conditional directives: `#ifdef`, `#ifndef`, `#ifexist`, `#if`, `#else`, `#endif`
+- Complex class hierarchies
 
 ## Examples
 
-### Example 1: Processing a Simple Feeder
 ```bash
-# Assuming you have "simple_feeder.glm" in glmFiles/
-python glm_to_json.py simple_feeder
+# Single file
+python glm_to_json.py IEEE-123 --dir ./tests
+
+# Batch: all autotest files
+python glm_to_json.py --batch
+
+# Batch: custom directory
+python glm_to_json.py --batch --search /path/to/models
 ```
 
-### Example 2: Batch Processing
 ```python
-models = ["feeder_1", "feeder_2", "feeder_3"]
-for model in models:
-    glm_to_json(model)
+# Python API
+from glm_to_json import glm_to_json, convert_batch_files
+
+glm_to_json("mymodel", input_dir="./models", output_dir="./json")
+total, success, errors = convert_batch_files(search_dir="./models")
 ```
-
-## Contributing
-
-When modifying this tool:
-1. Follow the existing code structure
-2. Add appropriate error handling
-3. Update this README for any new features
-4. Test with various GLM file formats
 
 ## License
 
-This tool is part of the GridLAB-D project. See the main project LICENSE file for details.
+Part of the GridLAB-D project. See main project LICENSE.

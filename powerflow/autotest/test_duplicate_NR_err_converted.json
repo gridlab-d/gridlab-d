@@ -1,0 +1,147 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Simple modified 4-node system to induce a duplicate NR entry",
+      "// Checks to see if the duplicate checker still works",
+      "// Should fail out (that's a pass)"
+    ]
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:01'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    }
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc100",
+          "geometric_mean_radius": "0.0244 ft",
+          "resistance": "0.306 Ohm/mile"
+        },
+        {
+          "name": "olc101",
+          "geometric_mean_radius": "0.00814 ft",
+          "resistance": "0.592 Ohm/mile"
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls200",
+          "distance_AB": "2.5 ft",
+          "distance_BC": "4.5 ft",
+          "distance_AC": "7.0 ft",
+          "distance_AN": "5.656854 ft",
+          "distance_BN": "4.272002 ft",
+          "distance_CN": "5.0 ft"
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc300",
+          "conductor_A": "olc100",
+          "conductor_B": "olc100",
+          "conductor_C": "olc100",
+          "conductor_N": "olc101",
+          "spacing": "ls200"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "tc400",
+          "connect_type": "WYE_WYE",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node1",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node2",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node3",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.777
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "ol12",
+          "phases": "ABCN",
+          "from": "node1",
+          "to": "node2",
+          "length": 2000,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ol12b",
+          "phases": "ABCN",
+          "from": "node1",
+          "to": "node2",
+          "length": 2000,
+          "configuration": "lc300",
+          "outside_comments": [
+            "//Duplicate line - should induce a failure"
+          ]
+        },
+        {
+          "name": "ol34",
+          "phases": "ABCN",
+          "from": "node3",
+          "to": "load4",
+          "length": 2500,
+          "configuration": "lc300"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "tran23",
+          "phases": "ABCN",
+          "from": "node2",
+          "to": "node3",
+          "configuration": "tc400"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load4",
+          "phases": "ABCN",
+          "constant_power_A": "+1275000.000+790174.031j",
+          "constant_power_B": "+1800000.000+871779.789j",
+          "constant_power_C": "+2375000.000+780624.750j",
+          "nominal_voltage": 2401.777
+        }
+      ]
+    }
+  }
+}

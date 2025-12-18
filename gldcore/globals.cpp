@@ -1305,4 +1305,14 @@ int strnicmp_portable(const char *str1, const char *str2, size_t n)
 	return 0; // Equal up to n characters
 }
 
+#if defined(_WIN32) && defined(_DEBUG)
+/** Implements a pause on exit capability for Windows consoles
+ **/
+void pause_at_exit(void)
+{
+	if (global_pauseatexit)
+		system("pause");
+}
+#endif
+
 /**@}**/
