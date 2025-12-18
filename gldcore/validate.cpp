@@ -5,6 +5,8 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
 #include <winsock2.h>
+#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
+#include <winsock2.h>
 #include <windows.h>
 #include <direct.h>
 #include <io.h>
@@ -935,6 +937,8 @@ char *encode_result(std::atomic<char> *data, size_t sz)
 {
 	size_t len = (sz + 1) / 2 + 1;
 	char *code = (char *)malloc(len);
+	if (code == NULL)
+		return NULL;
 	memset(code, 0, len);
 	size_t i;
 	for (i = 0; i < sz; i++)
@@ -942,15 +946,33 @@ char *encode_result(std::atomic<char> *data, size_t sz)
 		size_t ndx = i / 2;
 		size_t shft = (i % 2) * 2;
 		// code[ndx] |= (data[i] << shft);
-		encode_result(result_code.get(), next_id);
+		// encode_result(result_code.get(), next_id);
 	}
-	for (i = 0; i < len; i++)
+	// for (i = 0; i < len; i++)
+	// {
+	// 	static char t[] = "0123456789ABCDEF";
+	// 	code[i] = t[code[i]];
+	// }
+	// code[len] = '\0';
+	// return code;
+
+	char *result = (char *)malloc(sz + 1);
+	if (result == NULL)
 	{
-		static char t[] = "0123456789ABCDEF";
-		code[i] = t[code[i]];
+		free(code);
+		return NULL;
 	}
-	code[len] = '\0';
-	return code;
+	for (i = 0; i < sz; i++)
+	{
+		static const char hex[] = "0123456789ABCDEF";
+		unsigned char val = (unsigned char)data[i].load(); // Use .load() for atomics
+		result[i * 2] = hex[val >> 4];
+		result[i * 2 + 1] = hex[val & 0x0F];
+	}
+	result[sz * 2] = '\0';
+
+	free(code);	   // Free the intermediate buffer
+	return result; // Return the final hex string
 }
 
 /** main validation routine */

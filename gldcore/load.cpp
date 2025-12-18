@@ -7248,25 +7248,34 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 {
 #ifndef WIN32
 	char *var, *val, *save; // used by *nix
+	char *var, *val, *save; // used by *nix
 	int i, count;			// used by *nix
 #endif
 	char buffer[64];
 	if (strncmp(line, MACRO "endif", 6) == 0)
+	if (strncmp(line, MACRO "endif", 6) == 0)
 	{
+		if (nesting > 0)
 		if (nesting > 0)
 		{
 			// @TODO pop 'if' context
 			nesting--;
 			suppress &= ~(1 << nesting);
+			suppress &= ~(1 << nesting);
 		}
+		else
+		{
+			output_error_raw("%s(%d): %sendif is mismatched", filename, linenum, MACRO);
 		else
 		{
 			output_error_raw("%s(%d): %sendif is mismatched", filename, linenum, MACRO);
 		}
 		strcpy(line, "\n");
+		strcpy(line, "\n");
 
 		return true;
 	}
+	else if (strncmp(line, MACRO "else", 5) == 0)
 	else if (strncmp(line, MACRO "else", 5) == 0)
 	{
 		char *term;
@@ -7274,6 +7283,13 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 		// @TODO pop 'if' context (old context)
 		// @TODO push 'if' context (else context)
 
+		if ((suppress & (1 << (nesting - 1))) == (1 << (nesting - 1)))
+		{
+			suppress &= ~(1 << (nesting - 1));
+		}
+		else
+		{
+			suppress |= (1 << (nesting - 1));
 		if ((suppress & (1 << (nesting - 1))) == (1 << (nesting - 1)))
 		{
 			suppress &= ~(1 << (nesting - 1));
@@ -8097,6 +8113,7 @@ STATUS loadall(char *file)
 	}
 
 	/* if nothing requested only config files are loaded */
+	if (file == nullptr)
 	if (file == nullptr)
 		return SUCCESS;
 

@@ -1,0 +1,2583 @@
+//This file tests that all associated values are
+//calculated correctly when there is a large,
+//unbalanced market and a null market scenario
+
+//Bidding period: 3600s
+//Buyers 1-100: bids: 1-100, quantities: 1, period: 3600s
+//Sellers 1-150: bids: 110-261, quantities: 1, period: 3600s
+//Expected clearing price: 105
+//Expected clearing quantity: 0
+
+#set tmp=../test_markets_auction_large_unbalanced_null
+#setenv GRIDLABD=../../../core
+
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+module market;
+module tape;
+module assert;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-01 06:00:00';
+}
+
+class auction {
+	double current_price_mean_24h;
+	double current_price_stdev_24h;
+}
+
+object auction {
+	name Market_1;
+
+	unit MWh;
+	period 3600;
+	verbose FALSE;
+	special_mode NONE;
+	warmup 0;
+	init_price 105;
+	init_stdev 1e-6;
+	object multi_recorder {
+		property current_market.clearing_price,current_market.clearing_quantity,current_price_mean_24h,current_price_stdev_24h,current_market.clearing_type,current_market.marginal_quantity;
+		file "test_markets_auction_large_unbalanced_null_output.csv";
+		interval 3600;
+		limit 168;
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 105;
+		within 1e-4;
+		target "current_market.clearing_price";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 0;
+		within 1e-5;
+		target "current_market.clearing_quantity";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 105;
+		within 1e-4;
+		target "current_price_mean_24h";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 0;
+		within 1e-5;
+		target "current_price_stdev_24h";
+	};
+	object enum_assert {
+		in '2001-01-01 01:00:00';
+		value 0;
+		target "current_market.clearing_type";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 0;
+		target "current_market.marginal_quantity";
+		within 1e-5;
+	};
+}
+
+object stub_bidder {
+	name buyer1;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 100.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer2;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 99.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer3;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 98.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer4;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 97.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer5;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 96.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer6;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 95.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer7;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 94.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer8;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 93.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer9;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 92.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer10;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 91.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer11;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 90.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer12;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 89.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer13;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 88.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer14;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 87.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer15;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 86.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer16;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 85.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer17;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 84.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer18;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 83.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer19;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 82.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer20;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 81.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer21;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 80.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer22;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 79.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer23;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 78.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer24;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 77.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer25;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 76.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer26;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 75.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer27;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 74.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer28;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 73.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer29;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 72.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer30;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 71.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer31;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 70.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer32;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 69.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer33;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 68.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer34;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 67.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer35;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 66.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer36;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 65.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer37;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 64.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer38;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 63.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer39;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 62.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer40;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 61.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer41;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 60.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer42;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 59.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer43;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 58.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer44;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 57.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer45;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 56.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer46;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 55.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer47;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 54.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer48;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 53.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer49;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 52.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer50;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 51.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer51;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 50.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer52;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 49.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer53;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 48.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer54;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 47.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer55;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 46.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer56;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 45.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer57;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 44.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer58;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 43.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer59;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 42.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer60;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 41.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer61;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 40.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer62;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 39.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer63;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 38.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer64;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 37.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer65;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 36.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer66;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 35.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer67;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 34.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer68;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 33.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer69;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 32.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer70;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 31.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer71;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 30.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer72;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 29.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer73;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 28.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer74;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 27.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer75;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 26.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer76;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 25.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer77;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 24.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer78;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 23.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer79;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 22.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer80;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 21.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer81;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 20.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer82;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 19.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer83;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 18.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer84;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 17.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer85;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 16.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer86;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 15.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer87;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 14.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer88;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 13.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer89;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 12.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer90;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 11.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer91;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 10.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer92;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  9.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer93;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  8.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer94;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  7.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer95;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  6.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer96;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  5.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer97;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  4.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer98;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  3.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer99;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  2.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name buyer100;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  1.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller1;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 110.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller2;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 111.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller3;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 112.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller4;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 113.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller5;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 114.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller6;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 115.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller7;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 116.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller8;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 117.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller9;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 118.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller10;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 119.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller11;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 120.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller12;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 121.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller13;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 122.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller14;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 123.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller15;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 124.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller16;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 125.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller17;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 126.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller18;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 127.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller19;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 128.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller20;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 129.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller21;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 130.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller22;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 131.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller23;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 132.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller24;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 133.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller25;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 134.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller26;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 135.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller27;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 136.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller28;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 137.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller29;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 138.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller30;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 139.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller31;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 140.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller32;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 141.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller33;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 142.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller34;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 143.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller35;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 144.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller36;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 145.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller37;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 146.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller38;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 147.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller39;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 148.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller40;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 149.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller41;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 150.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller42;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 151.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller43;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 152.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller44;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 153.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller45;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 154.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller46;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 155.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller47;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 156.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller48;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 157.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller49;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 158.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller50;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 159.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller51;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 160.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller52;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 161.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller53;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 162.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller54;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 163.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller55;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 164.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller56;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 165.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller57;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 166.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller58;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 167.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller59;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 168.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller60;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 169.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller61;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 170.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller62;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 171.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller63;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 172.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller64;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 173.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller65;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 174.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller66;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 175.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller67;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 176.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller68;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 177.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller69;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 178.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller70;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 179.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller71;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 180.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller72;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 181.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller73;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 182.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller74;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 183.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller75;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 184.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller76;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 185.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller77;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 186.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller78;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 187.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller79;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 188.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller80;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 189.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller81;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 190.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller82;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 191.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller83;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 192.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller84;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 193.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller85;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 194.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller86;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 195.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller87;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 196.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller88;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 197.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller89;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 198.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller90;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 199.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller91;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 200.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller92;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 201.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller93;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 202.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller94;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 203.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller95;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 204.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller96;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 205.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller97;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 206.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller98;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 207.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller99;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 208.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller100;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 209.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller101;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 210.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller102;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 211.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller103;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 212.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller104;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 213.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller105;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 214.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller106;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 215.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller107;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 216.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller108;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 217.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller109;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 218.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller110;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 219.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller111;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 220.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller112;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 221.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller113;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 222.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller114;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 223.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller115;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 224.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller116;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 225.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller117;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 226.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller118;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 227.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller119;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 228.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller120;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 229.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller121;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 230.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller122;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 231.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller123;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 232.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller124;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 233.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller125;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 234.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller126;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 235.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller127;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 236.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller128;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 237.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller129;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 238.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller130;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 239.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller131;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 240.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller132;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 241.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller133;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 242.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller134;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 243.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller135;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 244.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller136;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 245.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller137;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 246.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller138;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 247.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller139;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 248.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller140;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 249.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller141;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 250.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller142;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 251.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller143;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 252.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller144;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 253.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller145;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 254.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller146;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 255.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller147;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 256.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller148;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 257.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller149;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 258.00;
+	quantity 1;
+	count 10000;
+}
+
+object stub_bidder {
+	name seller150;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 259.00;
+	quantity 1;
+	count 10000;
+}
+

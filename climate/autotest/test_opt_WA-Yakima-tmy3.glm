@@ -1,0 +1,108 @@
+// $Id$
+// automatically generated Thu May  7 09:19:15 PDT 2009 from 24243.tm2
+clock {
+	timezone "PST+8PDT";
+	starttime '2006-01-01 00:00:00';
+	stoptime '2007-01-01 00:00:00';
+}
+module climate;
+module tape;
+module assert;
+class climate {
+	double elevation[m];
+	double tzoffset[h];
+}
+object climate {
+	name "Yakima WA";
+	tmyfile "../WA-Yakima.tmy3"; 
+	tzoffset -8;
+	elevation 325;
+	object double_assert {
+		target "temperature";
+		in '2006-02-20 23:00:00';
+		out '2006-02-20 23:59:00';
+		status ASSERT_TRUE;
+		value 35.062;
+		within 0.001;
+	};
+	object double_assert {
+		target "humidity";
+		in '2006-01-10 02:00:00';
+		out '2006-01-10 02:59:00';
+		status ASSERT_TRUE;
+		value 1;
+		within 0.001;
+	};
+	object double_assert {
+		target "solar_flux";
+		in '2006-01-12 15:00:00';
+		out '2006-01-12 15:59:00';
+		status ASSERT_TRUE;
+		value 16.5561;
+		within 0.001;
+	};
+	object double_assert {
+		target "solar_diffuse";
+		in '2006-05-03 10:00:00';
+		out '2006-05-03 10:59:00';
+		status ASSERT_TRUE;
+		value 6.78192;
+		within 0.001;
+	};
+	object double_assert {
+		target "solar_global";
+		in '2006-03-30 11:00:00';
+		out '2006-03-30 11:59:00';
+		status ASSERT_TRUE;
+		value 59.0863;
+		within 0.001;
+	};
+	object double_assert {
+		target "extraterrestrial_direct_normal";
+		in '2006-05-04 17:00:00';
+		out '2006-05-04 17:59:00';
+		status ASSERT_TRUE;
+		value 124.862;
+		within 0.001;
+	};
+	object double_assert {
+		target "pressure";
+		in '2006-07-27 01:00:00';
+		out '2006-07-27 01:59:00';
+		status ASSERT_TRUE;
+		value 977;
+		within 0.001;
+	};
+	object double_assert {
+		target "wind_speed";
+		in '2006-10-31 03:00:00';
+		out '2006-10-31 03:59:00';
+		status ASSERT_TRUE;
+		value 6.9345;
+		within 0.001;
+	};
+	object double_assert {
+		target "wind_dir";
+		in '2006-04-26 20:00:00';
+		out '2006-04-26 20:59:00';
+		status ASSERT_TRUE;
+		value 120;
+		within 0.001;
+	};
+	object double_assert {
+		target "solar_horiz";
+		in '2006-06-09 06:00:00';
+		out '2006-06-09 06:59:00';
+		status ASSERT_TRUE;
+		value 0.464515;
+		within 0.001;
+	};
+	object double_assert {
+		target "rainfall";
+		in '2001-02-19 03:00:00';
+		out '2001-02-19 03:59:00';
+		status ASSERT_TRUE;
+		value 0.31496;
+		within 0.001;
+	};
+}

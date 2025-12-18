@@ -1,0 +1,181 @@
+//This file tests the operation of a cooling controller 
+//in ramp mode in an inelastic market with a nonmatching period
+//Since the averages and standard deviations in the controller
+//are not published properties, the only way to check if these
+//values are correct is to check whether the calculated bidding
+//prices are correct (this calculation uses these values)
+
+#set tmp=../test_markets_controller_cooling_inelastic_nonmatching_periods
+#setenv GRIDLABD=../../../core
+
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+module market;
+module tape;
+module assert;
+module climate;
+module powerflow;
+module residential {
+	implicit_enduses NONE;
+}
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-06-25 14:00:00';
+	stoptime '2001-06-25 16:00:00';
+}
+
+schedule fixed_prices {
+	0-14 14 * * * 100;
+	15-29 14 * * * 10;
+	30-44 14 * * * 25;
+	45-59 14 * * * 112;
+	0-14 15 * * * 49.5;
+	15-29 15 * * * 49.8;
+	30-44 15 * * * 50.2;
+	45-59 15 * * * 77;
+	* 16 * * * 82;
+}
+
+schedule controller_bids {
+	0-4 14 * * * 100;
+	5-9 14 * * * 100;
+	10-14 14 * * * 0;
+	15-19 14 * * * 55;
+	20-24 14 * * * 0;
+	25-29 14 * * * 0;
+	30-34 14 * * * 19.2211;
+	35-39 14 * * * 21.5605;
+	40-44 14 * * * 24.0586;
+	45-49 14 * * * 115.501;
+	50-54 14 * * * 122.26;
+	55-59 14 * * * 128.126;
+	0-4 15 * * * 99.7825;
+	5-9 15 * * * 82.6635;
+	10-14 15 * * * 0;
+	15-19 15 * * * 0;
+	20-24 15 * * * 49.747;
+	25-29 15 * * * 49.7968;
+	30-34 15 * * * 50.2355;
+	35-39 15 * * * 50.2646;
+	40-44 15 * * * 50.1877;
+	45-49 15 * * * 76.5139;
+	50-54 15 * * * 81.1608;
+	55-59 15 * * * 74.0547;
+	* 16 * * * 82.1781;
+}
+
+schedule clearing_quantities {
+	0-14 14 * * * 0;
+	15-29 14 * * * 4.3699;
+	30-44 14 * * * 4.3699;
+	45-59 14 * * * 0;
+	0-14 15 * * * 4.3699;
+	15-29 15 * * * 4.3898;
+	30-44 15 * * * 0;
+	45-59 15 * * * 0;
+	* 16 * * * 0;
+}
+
+object climate {
+	name "Yakima WA";
+	tmyfile "../WA-Yakima.tmy2";
+}
+
+class auction {
+	double current_price_mean_30min;
+	double current_price_stdev_30min;
+}
+
+object auction {
+	name Market_1;
+	unit kW;
+	period 900;
+	verbose TRUE;
+	special_mode BUYERS_ONLY;
+	fixed_price fixed_prices*1;
+	warmup 0;
+	init_price 100;
+	init_stdev 0;
+	object multi_recorder {
+		//property cool_control:bid_price,current_market.clearing_price,current_market.clearing_quantity,current_market.clearing_type,current_market.marginal_quantity,current_price_mean_30min,current_price_stdev_30min;
+		property house1:air_temperature,house1:heating_setpoint,house1:cooling_setpoint,cool_control:bid_price,current_market.clearing_price,house1:system_mode,cool_control:bid_quantity,current_market.clearing_quantity;
+		file "test_markets_controller_cooling_inelastic_nonmatching_periods_output.csv";
+		interval 300;
+		limit 168;
+	};
+	//put the following into cell K10 into the calculate_bid_price file and drag down to check if bid prices are calculated correctly:
+	//=IF(C10<D10,IF(H10=0,0,B10+((C10-D10)*E10*G10)/H10),IF(I10=0,0,B10+((C10-D10)*F10*G10)/I10))
+	object multi_recorder {
+		property current_price_mean_30min,house1:air_temperature,cool_control:base_setpoint,cool_control:ramp_low,cool_control:ramp_high,current_price_stdev_30min,cool_control:range_low,cool_control:range_high,cool_control:bid_price;
+		file "controller_cooling_inelastic_nonmatching_periods_calculate_bid_price.csv";
+		interval 60;
+		limit 4320;
+	};
+	//put the following into cell F10 into the calculate_clearing_quantity file and drag down to check if clearing quantities are calculated correctly:
+	//=IF(MOD(ROW(),3)<>1,F9,IF(ROW()=10,0,IF(IF(INDIRECT(ADDRESS(ROW()-1,2))<>0,INDIRECT(ADDRESS(ROW()-1,2)),IF(INDIRECT(ADDRESS(ROW()-2,2))<>0,INDIRECT(ADDRESS(ROW()-2,2)),INDIRECT(ADDRESS(ROW()-3,2))))>=C10,IF(INDIRECT(ADDRESS(ROW()-1,4))<>0,INDIRECT(ADDRESS(ROW()-1,4)),IF(INDIRECT(ADDRESS(ROW()-2,4))<>0,INDIRECT(ADDRESS(ROW()-2,4)),INDIRECT(ADDRESS(ROW()-3,4)))),0)))
+	object multi_recorder {
+		property cool_control:bid_price,current_market.clearing_price,cool_control:bid_quantity,current_market.clearing_quantity;
+		file "calculate_clearing_quantity.csv";
+		interval 300;
+		limit 288; //one day's worth of data
+	};
+	//recorder to fix the timestep so values will stay constant
+	object recorder {
+		interval 1;
+		property period;
+	};
+	object double_assert {
+		value clearing_quantities*1;
+		target "current_market.clearing_quantity";
+		within 1e-2;
+	};
+}
+
+object triplex_meter {
+	phases AS;
+	nominal_voltage 120;
+	object house {
+		name house1;
+		weather "Yakima WA";
+		cooling_setpoint 70;
+		air_temperature 72;
+		// object multi_recorder {
+			// property outdoor_temperature;
+			// file "weather_data.csv";
+			// interval 2 h;
+			// limit 4380;
+		// };
+		object controller {
+			name cool_control;			
+			market Market_1;
+			bid_mode ON;			
+			period 300;
+			average_target current_price_mean_30min;
+			standard_deviation_target current_price_stdev_30min;		
+			control_mode RAMP;
+			target air_temperature;
+			setpoint cooling_setpoint;
+			demand cooling_demand;
+			total total_load;
+			load hvac_load;
+			//slider_setting 0; //set to 0 or ramps will be overwritten
+			ramp_low 2;
+			ramp_high 2;
+			range_low 0;
+			range_high 5;
+
+			object multi_recorder {
+				property simple_mode,period,setpoint,target,base_setpoint,control_mode,resolve_mode,demand,load,total,range_low,range_high,ramp_low,ramp_high,bid_mode,bid_price,bid_quantity,set_temp,house1:power_state,house1:cooling_demand,house1:cooling_setpoint,house1:air_temperature,house1:system_mode,average_target,standard_deviation_target,house1:hvac_load,house1:outdoor_temperature;
+				file "check_defaults_output1.csv";
+				interval 90;
+				limit 4320;
+			};
+			object double_assert {
+				value controller_bids*1;
+				target "bid_price";
+				within 1e-2;
+			};
+		};
+	};
+}

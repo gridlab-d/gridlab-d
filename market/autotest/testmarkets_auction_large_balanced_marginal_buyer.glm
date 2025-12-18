@@ -1,0 +1,2130 @@
+//This file tests that all associated values are
+//calculated correctly when there is a large,
+//balanced market and a marginal buyer scenario
+
+//Bidding period: 3600s
+//Buyers 1-100: bids: 1-100, quantities: 1 (2 for buyer 50), period: 3600s
+//Sellers 1-100: bids: 2-101, quantities: 1, period: 3600s
+//Expected clearing price: 51
+//Expected clearing quantity: 50
+
+#set tmp=../test_opt_markets_auction_large_balanced_marginal_buyer
+#setenv GRIDLABD=../../../core
+#set force_compile=1
+
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+module market;
+module tape;
+module assert;
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-01 06:00:00';
+}
+
+class auction {
+	double current_price_mean_24h;
+	double current_price_stdev_24h;
+}
+
+object auction {
+	name Market_1;
+
+	unit MWh;
+	period 3600;
+	verbose FALSE;
+	special_mode NONE;
+	warmup 0;
+	init_price 51;
+	init_stdev 1e-6;
+	object multi_recorder {
+		property current_market.clearing_price,current_market.clearing_quantity,current_price_mean_24h,current_price_stdev_24h,current_market.clearing_type,current_market.marginal_quantity;
+		file "test_markets_auction_large_balanced_marginal_buyer_output.csv";
+		interval 3600;
+		limit 168;
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 51;
+		within 1e-4;
+		target "current_market.clearing_price";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 50;
+		within 1e-5;
+		target "current_market.clearing_quantity";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 51;
+		within 1e-4;
+		target "current_price_mean_24h";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 0;
+		within 1e-5;
+		target "current_price_stdev_24h";
+	};
+	object enum_assert {
+		in '2001-01-01 01:00:00';
+		value 2;
+		target "current_market.clearing_type";
+	};
+	object double_assert {
+		in '2001-01-01 01:00:00';
+		value 1;
+		target "current_market.marginal_quantity";
+		within 1e-5;
+	};
+}
+
+class test {
+	int64 next_t;
+	int64 new_bid_id;
+	int64 new_bid_id;
+	double bid_period;
+	int16 count;
+	object market;
+	enumeration {BUYER=0, SELLER=1} role;
+	int32 lastbid_id;
+	int64 lastmkt_id;
+	double price;		//Added in so price can be specified
+	double quantity;	//Added in so quantity can be specified
+	public int64 *thismkt_id;
+	function auction::submit_bid;
+	intrinsic create (object parent)
+	{
+		return SUCCESS;
+	};
+	intrinsic init (object parent)
+	{
+		new_bid_id = -1;
+		next_t = 0;
+		lastbid_id = -1;
+		lastmkt_id = -1;
+		if (market==NULL)			throw "market is not defined";
+		thismkt_id = (int64*)gl_get_addr(market,"market_id");
+		if (thismkt_id==NULL)
+			throw "market does not define market_id";
+		return SUCCESS;
+	};
+	intrinsic sync (TIMESTAMP t0, TIMESTAMP t1)
+	{
+		if (t1==next_t || next_t==0)
+		{
+			next_t=t1+bid_period;
+			lastbid_id = (int32)submit_bid(market,my,role==BUYER?-quantity:quantity,price,*thismkt_id!=lastmkt_id?new_bid_id:lastbid_id);
+			count--;
+			lastmkt_id = *thismkt_id;
+		}
+		if (count>0)
+			return next_t;
+		else
+			return TS_NEVER;
+		};
+	}
+
+object test {
+	name buyer1;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 100.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer2;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 99.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer3;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 98.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer4;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 97.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer5;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 96.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer6;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 95.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer7;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 94.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer8;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 93.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer9;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 92.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer10;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 91.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer11;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 90.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer12;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 89.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer13;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 88.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer14;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 87.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer15;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 86.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer16;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 85.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer17;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 84.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer18;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 83.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer19;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 82.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer20;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 81.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer21;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 80.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer22;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 79.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer23;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 78.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer24;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 77.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer25;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 76.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer26;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 75.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer27;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 74.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer28;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 73.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer29;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 72.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer30;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 71.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer31;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 70.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer32;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 69.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer33;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 68.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer34;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 67.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer35;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 66.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer36;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 65.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer37;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 64.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer38;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 63.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer39;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 62.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer40;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 61.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer41;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 60.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer42;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 59.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer43;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 58.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer44;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 57.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer45;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 56.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer46;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 55.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer47;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 54.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer48;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 53.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer49;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 52.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer50;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 51.00;
+	quantity 2;
+	count 10000;
+}
+
+object test {
+	name buyer51;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 50.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer52;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 49.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer53;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 48.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer54;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 47.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer55;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 46.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer56;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 45.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer57;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 44.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer58;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 43.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer59;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 42.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer60;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 41.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer61;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 40.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer62;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 39.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer63;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 38.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer64;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 37.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer65;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 36.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer66;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 35.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer67;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 34.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer68;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 33.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer69;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 32.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer70;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 31.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer71;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 30.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer72;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 29.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer73;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 28.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer74;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 27.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer75;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 26.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer76;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 25.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer77;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 24.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer78;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 23.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer79;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 22.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer80;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 21.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer81;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 20.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer82;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 19.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer83;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 18.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer84;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 17.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer85;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 16.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer86;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 15.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer87;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 14.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer88;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 13.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer89;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 12.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer90;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 11.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer91;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price 10.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer92;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  9.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer93;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  8.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer94;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  7.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer95;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  6.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer96;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  5.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer97;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  4.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer98;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  3.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer99;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  2.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name buyer100;
+	role BUYER;
+	bid_period 3600;
+	market Market_1;
+	price  1.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller1;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price  2.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller2;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price  3.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller3;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price  4.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller4;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price  5.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller5;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price  6.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller6;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price  7.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller7;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price  8.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller8;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price  9.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller9;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 10.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller10;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 11.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller11;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 12.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller12;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 13.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller13;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 14.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller14;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 15.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller15;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 16.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller16;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 17.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller17;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 18.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller18;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 19.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller19;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 20.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller20;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 21.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller21;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 22.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller22;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 23.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller23;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 24.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller24;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 25.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller25;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 26.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller26;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 27.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller27;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 28.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller28;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 29.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller29;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 30.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller30;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 31.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller31;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 32.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller32;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 33.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller33;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 34.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller34;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 35.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller35;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 36.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller36;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 37.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller37;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 38.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller38;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 39.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller39;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 40.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller40;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 41.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller41;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 42.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller42;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 43.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller43;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 44.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller44;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 45.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller45;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 46.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller46;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 47.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller47;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 48.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller48;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 49.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller49;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 50.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller50;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 51.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller51;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 52.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller52;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 53.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller53;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 54.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller54;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 55.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller55;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 56.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller56;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 57.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller57;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 58.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller58;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 59.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller59;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 60.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller60;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 61.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller61;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 62.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller62;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 63.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller63;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 64.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller64;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 65.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller65;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 66.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller66;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 67.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller67;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 68.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller68;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 69.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller69;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 70.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller70;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 71.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller71;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 72.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller72;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 73.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller73;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 74.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller74;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 75.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller75;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 76.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller76;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 77.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller77;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 78.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller78;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 79.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller79;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 80.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller80;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 81.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller81;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 82.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller82;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 83.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller83;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 84.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller84;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 85.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller85;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 86.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller86;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 87.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller87;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 88.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller88;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 89.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller89;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 90.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller90;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 91.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller91;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 92.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller92;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 93.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller93;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 94.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller94;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 95.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller95;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 96.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller96;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 97.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller97;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 98.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller98;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 99.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller99;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 100.00;
+	quantity 1;
+	count 10000;
+}
+
+object test {
+	name seller100;
+	role SELLER;
+	bid_period 3600;
+	market Market_1;
+	price 101.00;
+	quantity 1;
+	count 10000;
+}
+
