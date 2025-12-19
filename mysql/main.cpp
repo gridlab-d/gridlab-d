@@ -319,8 +319,8 @@ static MYSQL_RES *query_result(MYSQL *mysql, const char *fmt,...)
 		gl_error("query [%s] store result failed - %s", command, mysql_error(mysql));
 		return nullptr;
 	}
-	int n = mysql_num_rows(res);
-	gl_debug("query [%s] returned %d rows", command, n);
+	int n = mysql_num.rows()(res);
+	gl_debug("query [%s] returned %d.rows()", command, n);
 
 	va_end(ptr);
 	return res;
@@ -351,12 +351,12 @@ static bool import_modules(MYSQL *mysql)
 		return false;
 
 	// get size of result
-	unsigned long n_rows = mysql_num_rows(data);
+	unsigned long n.rows() = mysql_num.rows()(data);
 	unsigned long n_fields = mysql_num_fields(data);
-	gl_debug("modules table: %d rows x %d fields", n_rows, n_fields);
+	gl_debug("modules table: %d.rows() x %d fields", n.rows(), n_fields);
 
 	// scan result
-	for ( unsigned long n=0 ; n<n_rows ; n++ )
+	for ( unsigned long n=0 ; n<n.rows() ; n++ )
 	{
 		MYSQL_ROW row = mysql_fetch_row(data);
 		MYSQL_FIELD *fields = mysql_fetch_fields(data);
@@ -379,12 +379,12 @@ static bool import_globals(MYSQL *mysql)
 		return false;
 
 	// get size of result
-	unsigned long n_rows = mysql_num_rows(data);
+	unsigned long n.rows() = mysql_num.rows()(data);
 	unsigned long n_fields = mysql_num_fields(data);
-	gl_debug("globals table: %d rows x %d fields", n_rows, n_fields);
+	gl_debug("globals table: %d.rows() x %d fields", n.rows(), n_fields);
 
 	// scan result
-	for ( unsigned long n=0 ; n<n_rows ; n++ )
+	for ( unsigned long n=0 ; n<n.rows() ; n++ )
 	{
 		MYSQL_ROW row = mysql_fetch_row(data);
 		MYSQL_FIELD *fields = mysql_fetch_fields(data);
@@ -424,12 +424,12 @@ static bool import_classes(MYSQL *mysql)
 		return false;
 
 	// get size of result
-	unsigned long n_rows = mysql_num_rows(data);
+	unsigned long n.rows() = mysql_num.rows()(data);
 	unsigned long n_fields = mysql_num_fields(data);
-	gl_debug("classes table: %d rows x %d fields", n_rows, n_fields);
+	gl_debug("classes table: %d.rows() x %d fields", n.rows(), n_fields);
 
 	// scan result
-	for ( unsigned long n=0 ; n<n_rows ; n++ )
+	for ( unsigned long n=0 ; n<n.rows() ; n++ )
 	{
 		MYSQL_ROW row = mysql_fetch_row(data);
 		MYSQL_FIELD *fields = mysql_fetch_fields(data);
@@ -474,13 +474,13 @@ static bool import_objects(MYSQL *mysql)
 		return false;
 
 	// get size of result
-	unsigned long n_rows = mysql_num_rows(data);
+	unsigned long n.rows() = mysql_num.rows()(data);
 	unsigned long n_fields = mysql_num_fields(data);
-	gl_debug("objects table: %d rows x %d fields", n_rows, n_fields);
+	gl_debug("objects table: %d.rows() x %d fields", n.rows(), n_fields);
 
 	// scan result
 	OBJECT *first_object = nullptr;
-	for ( unsigned long n=0 ; n<n_rows ; n++ )
+	for ( unsigned long n=0 ; n<n.rows() ; n++ )
 	{
 		MYSQL_ROW row = mysql_fetch_row(data);
 		MYSQL_FIELD *fields = mysql_fetch_fields(data);
@@ -547,9 +547,9 @@ static bool import_objects(MYSQL *mysql)
 			MYSQL_RES *vars = query_result(mysql,"SELECT * FROM `%s` WHERE id=%d", get_table_name("%s_%s", cls->module?cls->module->name:"", cls->name), obj->id);
 			if ( vars==nullptr )
 				return false;
-			unsigned n_vars = mysql_num_rows(vars);
+			unsigned n_vars = mysql_num.rows()(vars);
 			unsigned n_props = mysql_num_fields(vars);
-			gl_verbose("object properties: %d rows x %d fields", n_vars, n_props);
+			gl_verbose("object properties: %d.rows() x %d fields", n_vars, n_props);
 			for ( unsigned long m=0 ; m<n_vars ; m++ )
 			{
 				MYSQL_ROW var = mysql_fetch_row(vars);
@@ -580,10 +580,10 @@ static bool import_objects(MYSQL *mysql)
 
 	// resolve parents
 	data = query_result(mysql,"SELECT `id`, `parent` FROM `%s` WHERE `parent`>`id`", get_table_name("objects"));
-	n_rows = mysql_num_rows(data);
+	n.rows() = mysql_num.rows()(data);
 	n_fields = mysql_num_fields(data);
-	gl_debug("unresolved parents: %d rows x %d fields", n_rows, n_fields);
-	for ( unsigned long n=0 ; n<n_rows ; n++ )
+	gl_debug("unresolved parents: %d.rows() x %d fields", n.rows(), n_fields);
+	for ( unsigned long n=0 ; n<n.rows() ; n++ )
 	{
 		MYSQL_ROW row = mysql_fetch_row(data);
 		MYSQL_FIELD *fields = mysql_fetch_fields(data);
@@ -621,13 +621,13 @@ bool import_properties(MYSQL *mysql)
 		return false;
 
 	// get size of result
-	unsigned long n_rows = mysql_num_rows(data);
+	unsigned long n.rows() = mysql_num.rows()(data);
 	unsigned long n_fields = mysql_num_fields(data);
-	gl_debug("properties table: %d rows x %d fields", n_rows, n_fields);
+	gl_debug("properties table: %d.rows() x %d fields", n.rows(), n_fields);
 
 	// scan result
 	OBJECT *first_object = nullptr;
-	for ( unsigned long n=0 ; n<n_rows ; n++ )
+	for ( unsigned long n=0 ; n<n.rows() ; n++ )
 	{
 		MYSQL_ROW row = mysql_fetch_row(data);
 		MYSQL_FIELD *fields = mysql_fetch_fields(data);
@@ -675,12 +675,12 @@ EXPORT int import_schedules(MYSQL *mysql)
 		return false;
 
 	// get size of result
-	unsigned long n_rows = mysql_num_rows(data);
+	unsigned long n.rows() = mysql_num.rows()(data);
 	unsigned long n_fields = mysql_num_fields(data);
-	gl_debug("schedules table: %d rows x %d fields", n_rows, n_fields);
+	gl_debug("schedules table: %d.rows() x %d fields", n.rows(), n_fields);
 
 	// scan result
-	for ( unsigned long n=0 ; n<n_rows ; n++ )
+	for ( unsigned long n=0 ; n<n.rows() ; n++ )
 	{
 		MYSQL_ROW row = mysql_fetch_row(data);
 		if ( row[0]==nullptr || row[1]==nullptr )
@@ -780,12 +780,12 @@ EXPORT int import_transforms(MYSQL *mysql)
 		return false;
 
 	// get size of result
-	unsigned long n_rows = mysql_num_rows(data);
+	unsigned long n.rows() = mysql_num.rows()(data);
 	unsigned long n_fields = mysql_num_fields(data);
-	gl_debug("transforms table: %d rows x %d fields", n_rows, n_fields);
+	gl_debug("transforms table: %d.rows() x %d fields", n.rows(), n_fields);
 
 	// scan result
-	for ( unsigned long n=0 ; n<n_rows ; n++ )
+	for ( unsigned long n=0 ; n<n.rows() ; n++ )
 	{
 		MYSQL_ROW row = mysql_fetch_row(data);
 		char *source = row[0];

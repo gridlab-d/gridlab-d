@@ -106,56 +106,56 @@
           "within": 1e-05
         },
         {
-          "parent": "house_10cool_control",
+          "parent": "cool_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "controller_clearing_prices*1",
           "target": "observation",
           "within": 0.0001
         },
         {
-          "parent": "house_10cool_control",
+          "parent": "cool_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "controller_averages*1",
           "target": "expectation",
           "within": 0.0001
         },
         {
-          "parent": "house_10cool_control",
+          "parent": "cool_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "controller_standard_deviations*1",
           "target": "stdev_observation",
           "within": 0.0001
         },
         {
-          "parent": "house_10cool_control",
+          "parent": "cool_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "cooling_setpoints*1",
           "target": "output_setpoint",
           "within": 0.0001
         },
         {
-          "parent": "house_10heat_control",
+          "parent": "heat_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "controller_clearing_prices*1",
           "target": "observation",
           "within": 0.0001
         },
         {
-          "parent": "house_10heat_control",
+          "parent": "heat_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "controller_averages*1",
           "target": "expectation",
           "within": 0.0001
         },
         {
-          "parent": "house_10heat_control",
+          "parent": "heat_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "controller_standard_deviations*1",
           "target": "stdev_observation",
           "within": 0.0001
         },
         {
-          "parent": "house_10heat_control",
+          "parent": "heat_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "heating_setpoints*1",
           "target": "output_setpoint",
@@ -191,7 +191,7 @@
     "passive_controller": {
       "instances": [
         {
-          "name": "house_10cool_control",
+          "name": "cool_control",
           "parent": "house_10",
           "period": "1 day",
           "base_setpoint": 78,
@@ -208,7 +208,7 @@
           "ramp_high": 2
         },
         {
-          "name": "house_10heat_control",
+          "name": "heat_control",
           "parent": "house_10",
           "period": "1 day",
           "base_setpoint": 62,

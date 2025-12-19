@@ -1,7 +1,7 @@
 function TorF = isload(gen)
 %ISLOAD  Checks for dispatchable loads.
 %   TORF = ISLOAD(GEN) returns a column vector of 1's and 0's. The 1's
-%   correspond to rows of the GEN matrix which represent dispatchable loads.
+%   correspond to.rows() of the GEN matrix which represent dispatchable loads.
 %   The current test is Pmin < 0 AND Pmax == 0.
 %   This may need to be revised to allow sensible specification
 %   of both elastic demand and pumped storage units.

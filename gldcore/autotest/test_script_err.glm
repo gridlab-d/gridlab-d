@@ -1,6 +1,0 @@
-#ifdef WINDOWS
-#error This is windows. 
-// TODO call something that fails in windows
-#else
-script "false";
-#endif

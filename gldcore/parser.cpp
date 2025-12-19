@@ -43,7 +43,7 @@ string parser::extractBetween(string str, char startChar, char endChar)
     size_t endPos = str.find(endChar, startPos + 1);
     if (startPos != string::npos && endPos != string::npos)
     {
-        return str.substr(startPos + 1, endPos - 1);
+        return str.substr(startPos + 1, endPos - startPos - 1);
     }
     return string(""); // Return empty string if characters not found
 }
@@ -524,7 +524,7 @@ int parser::functional(PARSER, double *pValue)
 		RANDOMTYPE rtype = random_type(fname);
 		int nargs = random_nargs(fname);
 		double a;
-		if (rtype == RT_INVALID || nargs == 0 || (WHITE, !LITERAL("(")))
+		if (rtype == RANDOMTYPE::RT_INVALID || nargs == 0 || (WHITE, !LITERAL("(")))
 		{
 			output_error_raw("parser::functional() parsing file, %s: %s is not a valid random distribution",
                              this->filename.c_str(), fname.get_string());

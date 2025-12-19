@@ -119,13 +119,13 @@
     "double_assert": {
       "instances": [
         {
-          "parent": "triplex_meter_6house1hvac_control",
+          "parent": "hvac_control",
           "value": "controller_bids*1",
           "target": "bid_price",
           "within": 0.001
         },
         {
-          "parent": "triplex_meter_6house1",
+          "parent": "house1",
           "value": "heating_setpoints*1",
           "target": "heating_setpoint",
           "within": 0.001
@@ -135,8 +135,8 @@
     "controller": {
       "instances": [
         {
-          "name": "triplex_meter_6house1hvac_control",
-          "parent": "triplex_meter_6house1",
+          "name": "hvac_control",
+          "parent": "house1",
           "market": "Market_1",
           "bid_mode": "ON",
           "control_mode": "DOUBLE_RAMP",
@@ -179,7 +179,7 @@
     "house": {
       "instances": [
         {
-          "name": "triplex_meter_6house1",
+          "name": "house1",
           "parent": "triplex_meter_6",
           "cooling_setpoint": 70,
           "heating_setpoint": 65,

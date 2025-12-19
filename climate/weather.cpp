@@ -9,12 +9,12 @@
 CLASS *weather::oclass = 0;
 
 /* mostly doing this to exploit the property system -MH */
-weather::weather(){
-	memset(this, 0, sizeof(weather));
-}
+//weather::weather(){
+//	////memset(this, 0, sizeof(weather));
+//}
 
 weather::weather(MODULE *module){
-	memset(this, 0, sizeof(weather));
+	////memset(this, 0, sizeof(weather));
 	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"weather",sizeof(weather), 0);
@@ -57,5 +57,64 @@ EXPORT int create_weather(OBJECT **obj, OBJECT *parent){
 EXPORT TIMESTAMP sync_weather(OBJECT *obj, TIMESTAMP t0){
 	return TS_NEVER; // really doesn't do anything
 }
+
+
+weather::unique_ptr_type create_weather() {
+	return weather::unique_ptr_type(new weather());
+}
+
+
+// Override release method from gld_object
+void weather::release()  {
+	// Recursively release the linked list
+	if (next) {
+		next->release();
+		next.reset();
+	}
+
+	// Reset all values to default
+	reset();
+}
+
+// Validation method
+bool weather::is_valid_weather()  {
+	// Add any specific validation logic
+	return temperature >= -459.67 && temperature <= 1000.0 && // Fahrenheit range
+		humidity >= 0.0 && humidity <= 100.0 &&
+		month >= 1 && month <= 12 &&
+		day >= 1 && day <= 31 &&
+		hour >= 0 && hour <= 23 &&
+		minute >= 0 && minute <= 59 &&
+		second >= 0 && second <= 59;
+}
+
+
+
+
+// Reset method to clear all data
+void weather::reset() {
+	temperature = 0.0;
+	humidity = 0.0;
+	solar_dir = 0.0;
+	solar_diff = 0.0;
+	solar_global = 0.0;
+	global_horizontal_extra = 0.0;
+	wind_speed = 0.0;
+	wind_dir = 0.0;
+	opq_sky_cov = 0.0;
+	tot_sky_cov = 0.0;
+	rainfall = 0.0;
+	snowdepth = 0.0;
+	pressure = 0.0;
+
+	month = 0;
+	day = 0;
+	hour = 0;
+	minute = 0;
+	second = 0;
+}
+
+
+
 
 // EOF

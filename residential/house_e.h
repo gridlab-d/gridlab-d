@@ -486,7 +486,7 @@ public:
 	int error_flag;
 	static CLASS *oclass, *pclass;
 	house_e( MODULE *module);
-	~house_e();
+	~house_e() {}
 
 	int create();
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);

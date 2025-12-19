@@ -22,7 +22,7 @@ typedef struct NR_SOLVER_VARS {
     double *a_LU;
     double *rhs_LU;
     int *cols_LU;
-    int *rows_LU;
+    int .rows()_LU;
 } NR_SOLVER_VARS;
 
 

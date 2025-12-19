@@ -464,7 +464,7 @@
     "player": {
       "instances": [
         {
-          "name": "Load634playerA",
+          "name": "playerA",
           "parent": "Load634",
           "property": "constant_power_A",
           "file": "../fqm_pf_reg_load.player",

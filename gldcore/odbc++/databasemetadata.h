@@ -76,7 +76,7 @@ namespace odbc {
     enum {
       bestRowTemporary		= SQL_SCOPE_CURROW,
       bestRowTransaction	= SQL_SCOPE_TRANSACTION,
-      bestRowSession		= SQL_SCOPE_SESSION
+      bes.rows()ession		= SQL_SCOPE_SESSION
     };
 
     /** Constants for the ResultSet returned by getBestRowIdentifier */
@@ -589,35 +589,35 @@ namespace odbc {
      */
     bool supportsCorrelatedSubqueries();
 
-    /** Returns true if updated rows are available with their new
+    /** Returns true if updated.rows() are available with their new
      * values in the ResultSet.
      * @param type The type of ResultSet of interest
      */
     bool ownUpdatesAreVisible(int type);
 
-    /** Returns true if deleted rows dissapear from a ResultSet
+    /** Returns true if deleted.rows() dissapear from a ResultSet
      * @param type The type of ResultSet of interest
      */
     bool ownDeletesAreVisible(int type);
 
-    /** Returns true if inserted rows become available in a ResultSet
+    /** Returns true if inserted.rows() become available in a ResultSet
      * @param type The type of ResultSet of interest
      */
     bool ownInsertsAreVisible(int type);
 
-    /** Returns true if rows updated by others are visible
+    /** Returns true if.rows() updated by others are visible
      * with their new values.
      * @param type The type of ResultSet of interest
      */
     bool othersUpdatesAreVisible(int type);
 
-    /** Returns true if rows deleted by others disapear
+    /** Returns true if.rows() deleted by others disapear
      * from a ResultSet.
      * @param type The type of ResultSet of interest
      */
     bool othersDeletesAreVisible(int type);
 
-    /** Returns true if rows inserted by others become available in
+    /** Returns true if.rows() inserted by others become available in
      * a ResultSet.
      * @param type The type of ResultSet of interest
      */
@@ -699,12 +699,12 @@ namespace odbc {
 
     /** Returns the maximum size of a row in bytes.
      */
-    int getMaxRowSize();
+    int getMa.rows()ize();
 
-    /** Returns true if the value returned by getMaxRowSize() includes
+    /** Returns true if the value returned by getMa.rows()ize() includes
      * BLOBs.
      */
-    bool doesMaxRowSizeIncludeBlobs();
+    bool doesMa.rows()izeIncludeBlobs();
 
 
     /** Returns the maximum length of a statement (query).
@@ -1075,7 +1075,7 @@ namespace odbc {
      *     <code>"D"</code> for descending index. <code>NULL</code> if <code>TYPE</code>
      *     is <code>tableIndexStatistic</code>.
      * <li><b>CARDINALITY</b> - int - If <code>TYPE</code> is
-     *     <code>tableIndexStatistic</code>, the number of rows in the
+     *     <code>tableIndexStatistic</code>, the number of.rows() in the
      *     table. Otherwise, the number of unique values in the index.
      * <li><b>PAGES</b> - int - Number of pages used for the table if
      *     <code>TYPE</code> is <code>tableIndexStatistic</code>. Otherwise
@@ -1262,7 +1262,7 @@ namespace odbc {
      *     a ResultSet is using the row
      *     <li><code>bestRowTransaction</code> - valid until the
      *     current transaction ends
-     *     <li><code>bestRowSession</code> - valid through the whole
+     *     <li><code>bes.rows()ession</code> - valid through the whole
      *     session - until the connection is closed
      *     </ul>
      * <li><b>COLUMN_NAME</b> - string - the column name

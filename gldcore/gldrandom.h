@@ -18,8 +18,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	typedef enum {
-		RT_INVALID=-1,	/**< used to flag bad random types */
+	enum class RANDOMTYPE {
+		RT_INVALID = -1,	/**< used to flag bad random types */
 		RT_DEGENERATE,	/**< degenerate distribution (Dirac delta function); double only_value */
 		RT_UNIFORM,		/**< uniform distribution; double minimum_value, double maximum_value */
 		RT_NORMAL,		/**< normal distribution; double arithmetic_mean, double arithmetic_stdev */
@@ -33,7 +33,7 @@ extern "C" {
 		RT_GAMMA,		/**< Gamma distribution; double alpha, double beta */
 		RT_BETA,		/**< Beta distribution; double alpha, double beta */
 		RT_TRIANGLE,	/**< Triangle distribution; double a, double b */
-	} RANDOMTYPE;
+	}; // RANDOMTYPE;
 	int random_init(void);
 	int random_test(void);
 	int randwarn(unsigned int *state);

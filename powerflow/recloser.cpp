@@ -148,7 +148,7 @@ EXPORT int create_recloser(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(recloser::oclass);
 		if (*obj!=nullptr)
 		{
-			recloser *my = OBJECTDATA(*obj,recloser);
+			recloser *my = object_data<recloser>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -167,7 +167,7 @@ EXPORT int create_recloser(OBJECT **obj, OBJECT *parent)
 EXPORT int init_recloser(OBJECT *obj)
 {
 	try {
-		recloser *my = OBJECTDATA(obj,recloser);
+		recloser *my = object_data<recloser>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(recloser);
@@ -177,7 +177,7 @@ EXPORT int init_recloser(OBJECT *obj)
 EXPORT TIMESTAMP sync_recloser(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		recloser *pObj = OBJECTDATA(obj,recloser);
+		recloser *pObj = object_data<recloser>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -197,7 +197,7 @@ EXPORT TIMESTAMP sync_recloser(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_recloser(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,recloser)->isa(classname);
+	return object_data<recloser>(obj)->isa(classname);
 }
 
 //Function to change recloser states - just call underlying switch routine
@@ -213,7 +213,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 	count_values = 0.0;
 
 	//Map us as a recloser - just so we can get our count
-	reclobj = OBJECTDATA(thisobj,recloser);
+	reclobj = object_data<recloser>(thisobj);
 
 	//Set count
 	if (!state)
@@ -222,7 +222,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 		count_values = 1.0;	//Just a non-zero value
 
 	//Map the switch
-	swtchobj = OBJECTDATA(thisobj,switch_object);
+	swtchobj = object_data<switch_object>(thisobj);
 
 	if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || meshed_fault_checking_enabled)
 	{
@@ -274,7 +274,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 EXPORT int recloser_reliability_operation(OBJECT *thisobj, unsigned char desired_phases)
 {
 	//Map the switch
-	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
+	switch_object *swtchobj = object_data<switch_object>(thisobj);
 
 	swtchobj->set_switch_full_reliability(desired_phases);
 
@@ -284,7 +284,7 @@ EXPORT int recloser_reliability_operation(OBJECT *thisobj, unsigned char desired
 EXPORT int recloser_fault_updates(OBJECT *thisobj, unsigned char restoration_phases)
 {
 	//Link to ourselves
-	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
+	switch_object *thisswitch = object_data<switch_object>(thisobj);
 
 	//Call the update
 	thisswitch->set_switch_faulted_phases(restoration_phases);

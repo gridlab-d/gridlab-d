@@ -32,12 +32,31 @@
  @{
  **/
 
+#include <iostream>
+#include <thread>  // For std::thread
+#include <exception>
+#include <system_error>
+
+
 #include "version.h"
 
 #include "globals.h"
 #include "legal.h"
 #include "output.h"
 #include "find.h"
+
+
+#ifndef X_OK
+#define X_OK 0x01
+#endif
+
+#ifndef R_OK
+#define R_OK 0x02
+#endif
+
+#ifndef F_OK
+#define F_OK 0  // Define F_OK to represent file existence checks
+#endif
 
 /* branch names and histories (named after WECC 500kV busses)
 	Allston			Version 1.0 originated at PNNL March 2007, released February 2008
@@ -169,11 +188,12 @@ STATUS legal_license(void)
 
  **************************************************************************************/
 #include <cctype>
-#include <pthread.h>
+//#include <pthread.h>
 
 #include "http_client.h"
 
-static pthread_t check_version_thread_id;
+//static pthread_t check_version_thread_id;
+static std::thread check_version_thread_id; // Changed from pthread_t to std::thread
 
 #define CV_NOINFO 0x0001
 #define CV_BADURL 0x0002
@@ -259,10 +279,59 @@ Done:
 void check_version(int mt)
 {
 	/* start version check thread */
-	if ( mt==0 || pthread_create(&check_version_thread_id,nullptr,check_version_proc,nullptr)!=0 )
-	{
-		/* unable to create a thread to do this so just do it inline (much slower) */
+	//if ( mt==0 || pthread_create(&check_version_thread_id,nullptr,check_version_proc,nullptr)!=0 )
+	//{
+	//	/* unable to create a thread to do this so just do it inline (much slower) */
+	//	check_version_proc(nullptr);
+	//}
+
+
+// Assuming check_version_thread is now a std::thread instead of pthread_t
+	std::thread check_version_thread;
+
+	if (mt == 0) {
+		// Multi-threading disabled, run inline
 		check_version_proc(nullptr);
+	}
+	else {
+		try {
+			// Attempt to create a new thread to run check_version_proc
+			check_version_thread = std::thread([]() {
+				using FuncType = void* (*)(void*);
+				FuncType func = check_version_proc;
+				func(nullptr);
+				});
+		}
+		catch (const std::system_error& e) {
+			// Thread creation failed, fall back to inline execution
+			check_version_proc(nullptr);
+		}
+	}
+}
+
+
+
+
+void version_check(int mt) {
+	if (!mt) {  // No multi-threading allowed
+		// Perform the task inline (slower)
+		std::cout << "Multi-threading disabled, running in-line.\n";
+		check_version_proc(nullptr);
+	}
+	else {
+		try {
+			// Start the version check in a separate thread
+			std::thread check_version_thread(check_version_proc, nullptr);
+
+			// Detach the thread to let it run independently
+			check_version_thread.detach();
+		}
+		catch (const std::system_error& e) {
+			// Handle thread creation failure
+			std::cerr << "Could not create thread: " << e.what() << std::endl;
+			// Fallback: Run the task inline
+			check_version_proc(nullptr);
+		}
 	}
 }
 

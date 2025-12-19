@@ -92,8 +92,8 @@ else
 	offers.P.qty = [25; 26; 0; 27; 0];
 	offers.P.prc = [10; 50; 0; 100; 0];
 	[gen, gencost] = off2case(gen0, gencost0, offers);
-	t_is( gen, gen1, 8, [t ' (all rows in offer) - gen'] );
-	t_is( gencost, gencost1, 8, [t ' (all rows in offer) - gencost'] );
+	t_is( gen, gen1, 8, [t ' (all.rows() in offer) - gen'] );
+	t_is( gencost, gencost1, 8, [t ' (all.rows() in offer) - gencost'] );
 	
 	t = 'P offers only (GEN_STATUS=0 for 0 qty offer)';
 	offers.P.qty = [0; 26; 27];
@@ -141,7 +141,7 @@ else
 	gencost1(L, NCOST:(NCOST+4)) = [2 -20 -2000 0 0; 2 -28 -280 0 0];
 	t_is( gencost, gencost1, 8, [t ' - gencost'] );
 	
-	t = 'P offers & P bids (all rows in bid)';
+	t = 'P offers & P bids (all.rows() in bid)';
 	bids.P.qty = [0; 0; 20; 0; 28];
 	bids.P.prc = [0; 0; 100; 0; 10];
 	[gen, gencost] = off2case(gen0, gencost0, offers, bids);

@@ -69,7 +69,7 @@ group_recorder::group_recorder(MODULE *mod) {
 			; //GL_THROW("unable to publish properties in %s",__FILE__);
 		}
 		defaults = this;
-		memset(this, 0, sizeof(group_recorder));
+		//memset(this, 0, sizeof(group_recorder));
 	}
 }
 
@@ -298,7 +298,7 @@ void cleanup_property_buffer(stringstream* property_name_buffer) {
 int group_recorder::write_header() {
 	time_t now = time(nullptr);
 	quickobjlist *qol = 0;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	query_engine* grc = group_recorder_connection;
 	grc->set_table_root(get_table());
 	grc->init_tables(recordid_fieldname, datetime_fieldname, false);

@@ -277,7 +277,7 @@ void memory_close_shaper(struct shaper *my)
 int memory_open_recorder(struct recorder *my, char *fname, char *flags)
 {
 	time_t now=time(nullptr);
-	OBJECT *obj=OBJECTHDR(my);
+	OBJECT *obj=object_header(my);
 
 	my->memory = (MEMORY*)malloc(sizeof(MEMORY));
 	if (my->memory==nullptr)
@@ -326,7 +326,7 @@ void memory_close_recorder(struct recorder *my)
 int memory_open_collector(struct collector *my, char *fname, char *flags)
 {
 	time_t now=time(nullptr);
-	OBJECT *obj=OBJECTHDR(my);
+	OBJECT *obj=object_header(my);
 
 	my->memory = (MEMORY*)malloc(sizeof(MEMORY));
 	if (my->memory==nullptr)

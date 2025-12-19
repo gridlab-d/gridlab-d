@@ -81,7 +81,6 @@ utilities/json_schema/output/
 .cproject
 .project
 .settings/
-.vscode
 Makefile
 */.deps/
 */*/*/.deps/
@@ -121,3 +120,9 @@ GLD GridLAB-D build instructions.txt
 
 # scratch is a folder for local work only
 scratch/*
+
+# IDE-related
+.vs/
+.vscode/
+CMakePresets.json
+

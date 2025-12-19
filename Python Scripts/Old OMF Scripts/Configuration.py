@@ -296,7 +296,7 @@ def ConfigurationFunc(config_file, classification=None):
 	# Load Classifications
 	data["load_classifications"] = ['Residential1', 'Residential2', 'Residential3', 'Residential4', 'Residential5', 'Residential6', 'Commercial1', 'Commercial2', 'Commercial3']
 	# Thermal Percentages by Region
-		# - The "columns" represent load classifications. The "rows" represent the breakdown within that classification of building age. 
+		# - The "columns" represent load classifications. The .rows()" represent the breakdown within that classification of building age. 
 		#   1:<1940     2:1980-89   3:<1940     4:1980-89   5:<1960     6:<1960     7:<2010 8:<2010 9:<2010
 		#   1:1940-49   2:>1990     3:1940-49   4:>1990     5:1960-89   6:1960-89   7:-     8:-     9:-
 		#   1:1950-59   2:-         3:1950-59   4:-         5:>1990     6:>1990     7:-     8:-     9:-
@@ -437,7 +437,7 @@ def ConfigurationFunc(config_file, classification=None):
                      [0, 0, 0, 0, 0, 0, 1, 0, 0]]  # strip mall
 
 	# COP High/Low Values
-	# - "columns" represent load classifications. The "rows" represent the sub-classifications (See thermal_percentages).
+	# - "columns" represent load classifications. The .rows()" represent the sub-classifications (See thermal_percentages).
 	cop_high = [[2.8, 3.8, 2.8, 3.8, 0.0, 2.8, 0, 0, 0], 
                 [3.0, 4.0, 3.0, 4.0, 2.8, 3.0, 0, 0, 0], 
                 [3.2, 0.0, 3.2, 0.0, 3.5, 3.2, 0, 0, 0], 

@@ -68,7 +68,7 @@ gld::complex * impedance_dump::get_complex(OBJECT *obj, const char *name)
 	PROPERTY *p = gl_get_property(obj,name);
 	if (p==nullptr || p->ptype!=PT_complex)
 		return nullptr;
-	return (gld::complex*)GETADDR(obj,p);
+	return (gld::complex*)get_addr(obj,p);
 }
 
 int impedance_dump::dump(TIMESTAMP t)
@@ -146,7 +146,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= fuses->hit_count){
 				break;
 			}
-			pFuse[index] = OBJECTDATA(obj,link_object);
+			pFuse[index] = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
 			if(pFuse[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
@@ -339,7 +339,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= ohlines->hit_count){
 				break;
 			}
-			pOhLine[index] = OBJECTDATA(obj,line);
+			pOhLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
 			if(pOhLine[index] == nullptr){
 				gl_error("Unable to map object as overhead_line object.");
 				return 0;
@@ -535,7 +535,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= reclosers->hit_count){
 				break;
 			}
-			pRecloser[index] = OBJECTDATA(obj,link_object);
+			pRecloser[index] = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
 			if(pRecloser[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
@@ -728,7 +728,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= regulators->hit_count){
 				break;
 			}
-			pRegulator[index] = OBJECTDATA(obj,regulator);
+			pRegulator[index] = /*OBJECTDATA(obj,<>)*/ object_data<regulator>(obj);
 			if(pRegulator[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
@@ -925,7 +925,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= relays->hit_count){
 				break;
 			}
-			pRelay[index] = OBJECTDATA(obj,link_object);
+			pRelay[index] = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
 			if(pRelay[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
@@ -1118,7 +1118,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= sectionalizers->hit_count){
 				break;
 			}
-			pSectionalizer[index] = OBJECTDATA(obj,link_object);
+			pSectionalizer[index] = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
 			if(pSectionalizer[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
@@ -1311,7 +1311,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= series_reactors->hit_count){
 				break;
 			}
-			pSeriesReactor[index] = OBJECTDATA(obj,link_object);
+			pSeriesReactor[index] = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
 			if(pSeriesReactor[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
@@ -1504,7 +1504,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= switches->hit_count){
 				break;
 			}
-			pSwitch[index] = OBJECTDATA(obj,switch_object);
+			pSwitch[index] = /*OBJECTDATA(obj,<>)*/ object_data<switch_object>(obj);
 			if(pSwitch[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
@@ -1699,7 +1699,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= transformers->hit_count){
 				break;
 			}
-			pTransformer[index] = OBJECTDATA(obj,transformer);
+			pTransformer[index] = /*OBJECTDATA(obj,<>)*/ object_data<transformer>(obj);
 			if(pTransformer[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
@@ -1916,7 +1916,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= tplines->hit_count){
 				break;
 			}
-			pTpLine[index] = OBJECTDATA(obj,line);
+			pTpLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
 			if(pTpLine[index] == nullptr){
 				gl_error("Unable to map object as overhead_line object.");
 				return 0;
@@ -2086,7 +2086,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= uglines->hit_count){
 				break;
 			}
-			pUgLine[index] = OBJECTDATA(obj,line);
+			pUgLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
 			if(pUgLine[index] == nullptr){
 				gl_error("Unable to map object as overhead_line object.");
 				return 0;
@@ -2282,7 +2282,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			if(index >= capacitors->hit_count){
 				break;
 			}
-			pCapacitor[index] = OBJECTDATA(obj,capacitor);
+			pCapacitor[index] = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj);
 			if(pCapacitor[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
@@ -2421,7 +2421,7 @@ EXPORT int create_impedance_dump(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(impedance_dump::oclass);
 		if (*obj!=nullptr)
 		{
-			impedance_dump *my = OBJECTDATA(*obj,impedance_dump);
+			impedance_dump *my = /*OBJECTDATA(obj,<>)*/ object_data<impedance_dump>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -2435,7 +2435,7 @@ EXPORT int create_impedance_dump(OBJECT **obj, OBJECT *parent)
 
 EXPORT int init_impedance_dump(OBJECT *obj)
 {
-	impedance_dump *my = OBJECTDATA(obj,impedance_dump);
+	impedance_dump *my = /*OBJECTDATA(obj,<>)*/ object_data<impedance_dump>(obj);
 	try {
 		return my->init(obj->parent);
 	}
@@ -2450,7 +2450,7 @@ EXPORT TIMESTAMP sync_impedance_dump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	try
 	{
-		impedance_dump *my = OBJECTDATA(obj,impedance_dump);
+		impedance_dump *my = /*OBJECTDATA(obj,<>)*/ object_data<impedance_dump>(obj);
 		TIMESTAMP rv;
 		obj->clock = t1;
 		rv = my->runtime > t1 ? my->runtime : TS_NEVER;
@@ -2461,7 +2461,7 @@ EXPORT TIMESTAMP sync_impedance_dump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 
 EXPORT TIMESTAMP commit_impedance_dump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 	try {
-		impedance_dump *my = OBJECTDATA(obj,impedance_dump);
+		impedance_dump *my = /*OBJECTDATA(obj,<>)*/ object_data<impedance_dump>(obj);
 		return my->commit(t1);
 	} 
 	I_CATCHALL(commit,impedance_dump);
@@ -2469,7 +2469,7 @@ EXPORT TIMESTAMP commit_impedance_dump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2){
 
 EXPORT int isa_impedance_dump(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,impedance_dump)->isa(classname);
+	return /*OBJECTDATA(obj,<>)*/ object_data<impedance_dump>(obj)->isa(classname);
 }
 
 /**@}*/

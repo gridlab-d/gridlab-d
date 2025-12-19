@@ -79,7 +79,7 @@ loadshape::loadshape(MODULE *module)
 
 		// setup the default values
 		defaults = this;
-		memset(this, 0, sizeof(loadshape));
+		//memset(this, 0, sizeof(loadshape));
 		interval = -1;
 		limit = -1;
 		
@@ -99,7 +99,7 @@ int loadshape::create()
  */
 int loadshape::init(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	
 	state = TS_INIT;
 

@@ -35,9 +35,6 @@ appliance::appliance(MODULE *module) : residential_enduse(module)
 	}
 }  
 
-appliance::~appliance()
-{
-}
 
 int appliance::create()
 {
@@ -51,60 +48,60 @@ int appliance::init(OBJECT *parent)
 	gl_warning("This device, %s, is considered very experimental and has not been validated.", get_name());
 
 	// check that duration is a vector
-	if ( duration.get_rows()!=1 )
-		exception("duration must have 1 rows (it has %d)", n_states, duration.get_rows());
+	if ( duration.rows()!=1 )
+		exception("duration must have 1 rows (it has %d)", n_states, duration.rows());
 
 	// number of states if length of duration vector
-	n_states = (unsigned int)duration.get_cols();
+	n_states = (unsigned int)duration.cols();
 	if ( state<0 || state>=n_states )
 		exception("initial state must be between 0 and %d, inclusive", n_states-1);
 	gl_debug("n_states = %d (initial state is %d)", n_states, state);
 
 	// transition must be either 1xN or NxN
-	if ( ( transition.get_rows()!=1 && transition.get_rows()!=n_states ) || transition.get_cols()!=n_states )
-		exception("transition must have either 1r x %dc or %dr x %dc (it is %dr c %dc)", n_states, n_states, n_states, transition.get_rows(), transition.get_cols());
+	if ( ( transition.rows()!=1 && transition.rows()!=n_states ) || transition.cols()!=n_states )
+		exception("transition must have either 1r x %dc or %dr x %dc (it is %dr c %dc)", n_states, n_states, n_states, transition.rows(), transition.cols());
 
 	// default impedance is zero
-	if ( impedance.is_empty() )
+	if ( impedance.size() == 0)
 	{
-		impedance.grow_to(0,n_states-1);
+		impedance.resize(0,n_states-1);
 		gld::complex zero(0);
-		impedance = zero;
+		impedance.setZero(); // = zero;
 	}
-	if ( impedance.get_rows()!=1 || impedance.get_cols()!=n_states )
-		exception("impedance must 1r x %dc (it is %dr x %dc)", n_states, impedance.get_rows(), impedance.get_cols());
+	if ( impedance.rows()!=1 || impedance.cols()!=n_states )
+		exception("impedance must 1r x %dc (it is %dr x %dc)", n_states, impedance.rows(), impedance.cols());
 
 	// default current is zero
-	if ( current.is_empty() )
+	if ( current.isZero() )
 	{
-		current.grow_to(0,n_states-1);
+		current.resize(0,n_states-1);
 		gld::complex zero(0);
-		current = zero;
+		current.setZero();
 	}
-	if ( current.get_rows()!=1 || current.get_cols()!=n_states )
-		exception("current must 1r x %dc (it is %dr x %dc)", n_states, current.get_rows(), current.get_cols());
+	if ( current.rows()!=1 || current.cols()!=n_states )
+		exception("current must 1r x %dc (it is %dr x %dc)", n_states, current.rows(), current.cols());
 
 	// default power is zero
-	if ( power.is_empty() )
+	if ( power.size()==0 )
 	{
-		power.grow_to(0,n_states-1);
+		power.resize(0,n_states-1);
 		gld::complex zero(0);
-		power = zero;
+		power.setZero();
 	}
-	if ( power.get_rows()!=1 || power.get_cols()!=n_states )
-		exception("power must 1r x %dc (it is %dr x %dc)", n_states, power.get_rows(), power.get_cols());
+	if ( power.rows()!=1 || power.cols()!=n_states )
+		exception("power must 1r x %dc (it is %dr x %dc)", n_states, power.rows(), power.cols());
 
 	// default heatgain is zero
-	if ( heatgain.is_empty() )
+	if ( heatgain.size() == 0)
 	{
-		heatgain.grow_to(0,n_states-1);
-		heatgain = 0;
+		heatgain.resize(0,n_states-1);
+		heatgain.setZero();
 	}
-	if ( heatgain.get_rows()!=1 || heatgain.get_cols()!=n_states )
-		exception("current must 1r x %dc (it is %dr x %dc)", n_states, heatgain.get_rows(), heatgain.get_cols());
+	if ( heatgain.rows()!=1 || heatgain.cols()!=n_states )
+		exception("current must 1r x %dc (it is %dr x %dc)", n_states, heatgain.rows(), heatgain.cols());
 
 	// allocated space of transition matrix row
-	if ( transition.get_rows()>1 )
+	if ( transition.rows()>1 )
 		transition_probabilities = new double[n_states];
 
 	// ready to start
@@ -114,33 +111,33 @@ int appliance::init(OBJECT *parent)
 
 void appliance::update_next_t(void)
 {
-	double transition_probability = transition.get_at(0,state);
+	double transition_probability = transition(0,state);
 	if ( !isfinite(transition_probability) )
 	{
 		// transition occurs exactly at the next scheduled time
-		next_t = gl_globalclock + (TIMESTAMP)duration.get_at(0,state);
+		next_t = gl_globalclock + (TIMESTAMP)duration(0,state);
 		gl_debug("%s: non-probabilistic transition scheduled at %lld", get_name(), next_t);
 	}
 	else if ( gl_random_uniform(&my()->rng_state,0,1)<transition_probability )
 	{
 		// transition is uncertain
-		next_t = gl_globalclock + (TIMESTAMP)gl_random_uniform(&my()->rng_state,1,duration.get_at(0,state));
+		next_t = gl_globalclock + (TIMESTAMP)gl_random_uniform(&my()->rng_state,1,duration(0,state));
 		gl_debug("%s: transition scheduled at %lld", get_name(), next_t);
 	}
 	else
 	{
 		// transition does not occur so check in again later
-		next_t = -(gl_globalclock + (TIMESTAMP)duration.get_at(0,state));
+		next_t = -(gl_globalclock + (TIMESTAMP)duration(0,state));
 		gl_debug("%s: no transition scheduled prior to %lld", get_name(), next_t);
 	}
 }
 void appliance::update_power(void)
 {
-	gld::complex Z = impedance.get_at(0,state);
+	gld::complex Z = impedance(0,state);
 	load.admittance = Z.Mag()==0  ? gld::complex(0) : gld::complex(1)/Z;
-	load.current = current.get_at(0,state);
-	load.power = power.get_at(0,state);
-	load.heatgain = heatgain.get_at(0,state);
+	load.current = current(0,state);
+	load.power = power(0,state);
+	load.heatgain = heatgain(0,state);
 }
 void appliance::update_state(void)
 {
@@ -153,7 +150,7 @@ void appliance::update_state(void)
 	else
 	{
 		// transition matrix
-		transition.extract_row(transition_probabilities,state);
+		auto transition_probabilities = transition.row(state);
 
 		// generate a random uniform number
 		double rn = gl_random_uniform(&my()->rng_state,0,1);

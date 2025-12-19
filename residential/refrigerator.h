@@ -131,7 +131,7 @@ public:
 
 	static CLASS *oclass, *pclass;
 	refrigerator(MODULE *module);
-	~refrigerator();
+	~refrigerator() {}
 	
 	int create();
 	int init(OBJECT *parent);

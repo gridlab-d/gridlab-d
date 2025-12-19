@@ -78,7 +78,7 @@ int simple::create(void)
 /* Object initialization is called once after all object have been created */
 int simple::init(OBJECT *parent)
 {
-	OBJECT *my = OBJECTHDR(this);
+	OBJECT *my = object_header(this);
 	char buffer[1024];
 	struct {
 		const char *name;
@@ -239,7 +239,7 @@ TIMESTAMP simple::presync(TIMESTAMP t0, TIMESTAMP t1)
 /* Postsync is called when the clock needs to advance on the second top-down pass */
 TIMESTAMP simple::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *my = OBJECTHDR(this);
+	OBJECT *my = object_header(this);
 	char buffer[1024];
 
 	// trial limit reached or objective cannot be calculated
@@ -375,7 +375,7 @@ EXPORT int create_simple(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(simple::oclass);
 		if (*obj!=nullptr)
 		{
-			simple *my = OBJECTDATA(*obj,simple);
+			simple *my = /*OBJECTDATA(obj,<>)*/ object_data<simple>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -390,7 +390,7 @@ EXPORT int init_simple(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,simple)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<simple>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -400,7 +400,7 @@ EXPORT int init_simple(OBJECT *obj, OBJECT *parent)
 EXPORT int isa_simple(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,simple)->isa(classname);
+		return /*OBJECTDATA(obj,<>)*/ object_data<simple>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -409,7 +409,7 @@ EXPORT int isa_simple(OBJECT *obj, char *classname)
 EXPORT TIMESTAMP sync_simple(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	simple *my = OBJECTDATA(obj,simple);
+	simple *my = /*OBJECTDATA(obj,<>)*/ object_data<simple>(obj);
 	try
 	{
 		switch (pass) {

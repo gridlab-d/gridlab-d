@@ -91,7 +91,7 @@ int rectifier::create(void)
 /* Object initialization is called once after all object have been created */
 int rectifier::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	rectifier_type_v = SIX_PULSE;
 
@@ -183,7 +183,7 @@ TIMESTAMP rectifier::presync(TIMESTAMP t0, TIMESTAMP t1)
 /* Sync is called when the clock needs to advance on the bottom-up pass */
 TIMESTAMP rectifier::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {	
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	V_Out = V_Rated;
 
@@ -217,10 +217,10 @@ TIMESTAMP rectifier::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				//Write the current
 				//NOTE: This isn't checked/bounded because right now this only works with an inverter as a parent (no unparanted or other)
-				pLine_I->setp<double>(I_Out,*test_rlock);
+				pLine_I->setp<double>(I_Out,test_rlock);
 
 				//Write the voltage
-				pCircuit_V->setp<double>(V_Out,*test_rlock);
+				pCircuit_V->setp<double>(V_Out,test_rlock);
 
 				return TS_NEVER;
 			}
@@ -250,7 +250,7 @@ EXPORT int create_rectifier(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(rectifier::oclass);
 		if (*obj!=nullptr)
 		{
-			rectifier *my = OBJECTDATA(*obj,rectifier);
+			rectifier *my = /*OBJECTDATA(obj,<>)*/ object_data<rectifier>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -265,7 +265,7 @@ EXPORT int init_rectifier(OBJECT *obj, OBJECT *parent)
 	try 
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,rectifier)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<rectifier>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -275,7 +275,7 @@ EXPORT int init_rectifier(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_rectifier(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	rectifier *my = OBJECTDATA(obj,rectifier);
+	rectifier *my = /*OBJECTDATA(obj,<>)*/ object_data<rectifier>(obj);
 	try
 	{
 		switch (pass) {
