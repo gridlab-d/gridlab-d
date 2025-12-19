@@ -142,7 +142,6 @@
           "interval": 60,
           "limit": 1440,
           "file": "50.csv",
-          "};": "//@off completely",
           "inline_comments": {
             "};": "//@off completely; logs values for voltage_A/C when they should be 0"
           }
