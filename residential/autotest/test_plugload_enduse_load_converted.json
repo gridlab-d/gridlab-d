@@ -41,6 +41,19 @@
         }
       ]
     },
+    "house": {
+      "instances": [
+        {
+          "name": "house_1",
+          "floor_area": "1500 sf",
+          "cooling_setpoint": 100,
+          "heating_setpoint": 1,
+          "inline_comments": {
+            "cooling_setpoint": "// turns of HVAC"
+          }
+        }
+      ]
+    },
     "plugload": {
       "instances": [
         {
@@ -57,19 +70,6 @@
             "//   };",
             "//  };"
           ]
-        }
-      ]
-    },
-    "house": {
-      "instances": [
-        {
-          "name": "house_1",
-          "floor_area": "1500 sf",
-          "cooling_setpoint": 100,
-          "heating_setpoint": 1,
-          "inline_comments": {
-            "cooling_setpoint": "// turns of HVAC"
-          }
         }
       ]
     }
