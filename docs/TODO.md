@@ -69,6 +69,71 @@
     * Common warnings you might be able to avoid
     * Running validation scripts – Something that post-processes results and looks for modeling abnormalities
  
+### Outline with Notes:
+Loads
+* Loadshape
+* Load Composition
+* Industrial and Agricultural Loads
+Metrics & Recorders
+* Recorder
+* Multi recorder
+* Metrics collector writer
+* Plotting Output
+Modules
+* Introduction
+* Assert
+* Climate
+  * Climate Module
+  * CSV reader
+* Objects
+  * DER
+    * Microgrids
+    * Diesel dg
+    * Energy Storage
+    * Evcharger det
+    * Inverters
+    * Solar Panel
+    * Windturb dg
+  * Motor
+    * Composition Motor
+    * Single phase induction motor
+    * Three phase induction motor
+  * Player
+  * Series copmensator
+  * Switch
+  * Voltage source inverter (VSI)
+  * Poweflow
+    * Powerflow user guide
+    * poweflow (module)
+    * Poweflow technical reference
+    * Reliability user guide
+    * Newton-Raphson Distribution Powerflow Solver
+  * Residential
+    * Introduction
+    * House
+    * ETPM
+    * End Use Loads
+    * Thermal energy storage model
+    * Waterheater
+    * ZIPload
+  * Tape
+  * Delta Mode Document
+  * Other Features
+    * Checkpoints
+    * Command Options
+    * Debugging and Validation
+      * Model Debugging
+      * Validate
+    * Macros
+    * Parameter expansion
+    * Performance profiling
+    * Sync Check
+    * Units
+
+
+
+
+
 # 4.0 Developing
 
 **Purpose**: part walkthrough, part dictionary/reference

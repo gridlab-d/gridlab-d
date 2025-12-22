@@ -124,7 +124,6 @@ nav:
         - Voltage source inverter (VSI): docs/3.0 - Modeling Reference/Modules/Objects/Voltage_source_inverter_(VSI).md
       - Powerflow:
         - Power Flow User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/1.0 - Power_Flow_User_Guide.md
-        - Powerflow (module): docs/3.0 - Modeling Reference/Modules/Powerflow/2.0 - Powerflow_(module).md
         - Powerflow Tehnical Reference: docs/3.0 - Modeling Reference/Modules/Powerflow/3.0 - Power_Flow_Reference.md
         - Reliability User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/4.0 - Reliability_User_Guide.md
         - Newton-Raphson Distribution Powerflow Solver: docs/3.0 - Modeling Reference/Modules/Powerflow/5.0 - Newton-Raphson_Distribution_Powerflow_Solver.md
