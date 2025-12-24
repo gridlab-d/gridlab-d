@@ -554,7 +554,7 @@
           }
         },
         {
-          "name": "l6321load_l6321",
+          "name": "load_l6321",
           "parent": "l6321",
           "phases": "ABCN",
           "voltage_A": 2401.7771,

@@ -73,13 +73,13 @@
       "instances": [
         {
           "name": "double_assert_6",
-          "parent": "house1w1",
+          "parent": "w1",
           "target": "lower_tank_temperature",
           "within": 0.01
         },
         {
           "name": "double_assert_8",
-          "parent": "house1w1",
+          "parent": "w1",
           "target": "upper_tank_temperature",
           "within": 0.01
         }
@@ -88,7 +88,7 @@
     "recorder": {
       "instances": [
         {
-          "parent": "house1w1",
+          "parent": "w1",
           "file": "waterheater_multilayer.csv",
           "property": "lower_tank_temperature, upper_tank_temperature, lower_heating_element_state, upper_heating_element_state, demand, actual_power, is_waterheater_on, heating_element_capacity, waterheater_model, water_demand",
           "interval": 1
@@ -98,7 +98,7 @@
     "waterheater": {
       "instances": [
         {
-          "name": "house1w1",
+          "name": "w1",
           "parent": "house1",
           "heating_element_capacity": "4.0 kW",
           "thermostat_deadband": 4,

@@ -52,7 +52,7 @@
     "player": {
       "instances": [
         {
-          "name": "Gen1Voltage_input",
+          "name": "Voltage_input",
           "parent": "Gen1",
           "property": "vset",
           "file": "../data_SPIM_Vset.player",

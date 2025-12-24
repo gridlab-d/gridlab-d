@@ -169,7 +169,7 @@
     "player": {
       "instances": [
         {
-          "name": "BottomLoaduselessdeltatrigger",
+          "name": "uselessdeltatrigger",
           "parent": "BottomLoad",
           "flags": "DELTAMODE",
           "property": "nominal_voltage",

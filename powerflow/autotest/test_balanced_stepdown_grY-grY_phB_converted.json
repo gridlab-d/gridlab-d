@@ -167,37 +167,37 @@
           "value": "+7258.91+119.711d "
         },
         {
-          "parent": "node_15",
+          "parent": "node:3",
           "target": "voltage_A",
           "within": 5,
           "value": "+2401.25+0.644302d "
         },
         {
-          "parent": "node_15",
+          "parent": "node:3",
           "target": "voltage_B",
           "within": 5,
           "value": "+2188.33-124.193d "
         },
         {
-          "parent": "node_15",
+          "parent": "node:3",
           "target": "voltage_C",
           "within": 5,
           "value": "+2421.58+119.711d "
         },
         {
-          "parent": "load_20",
+          "parent": "load:4",
           "target": "voltage_A",
           "within": 5,
           "value": "+0+0d"
         },
         {
-          "parent": "load_20",
+          "parent": "load:4",
           "target": "voltage_B",
           "within": 5,
           "value": "+1639.84-135.454d"
         },
         {
-          "parent": "load_20",
+          "parent": "load:4",
           "target": "voltage_C",
           "within": 5,
           "value": "+0+0d"

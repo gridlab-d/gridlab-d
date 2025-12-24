@@ -39,7 +39,7 @@
           "name": "dishwasher_2",
           "parent": "house_1",
           "installed_power": "1000 W",
-          "shape": "\"type: analog",
+          "shape": "type: analog; schedule: dishwashing; power: .76 kW",
           "inside_comments": [
             "//Weekend test",
             "//WARNING: From what I understand, this schedule should return an energy of \"energy\" multiplied by \"count\" above.",

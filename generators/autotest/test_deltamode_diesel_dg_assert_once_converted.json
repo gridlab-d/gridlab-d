@@ -142,7 +142,7 @@
     "double_assert": {
       "instances": [
         {
-          "name": "Gen_Bus_1testing_assert",
+          "name": "testing_assert",
           "parent": "Gen_Bus_1",
           "in": "'2001-01-01 00:00:05.180000 PST'",
           "out": "'2001-01-01 00:00:05.1900 PST'",

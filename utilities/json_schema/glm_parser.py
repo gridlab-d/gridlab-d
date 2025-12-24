@@ -308,16 +308,30 @@ class GLMModel:
                     # derive name from first comment, default empty
                     name = ""
                     items = []
+                    inline_comments = []
                 for l in lines_blk:
                     stripped_line = l.strip()  # Remove leading and trailing whitespace
                     if stripped_line.startswith('//'):
                         if name != "" and name != stripped_line[2:].strip():
-                            blocks.append({'name': name, 'items': items})
+                            block_data = {'name': name, 'items': items}
+                            if inline_comments:
+                                block_data['inline_comments'] = inline_comments
+                            blocks.append(block_data)
                             items = []
+                            inline_comments = []
                         name = stripped_line[2:].strip()  # Extract everything after '//' and remove extra spaces
                     elif stripped_line and not stripped_line.startswith('//'): 
-                        items.append(stripped_line)  
-                blocks.append({'name': name, 'items': items})
+                        # Check for inline comment
+                        if '//' in stripped_line:
+                            entry_part, comment_part = stripped_line.split('//', 1)
+                            items.append(entry_part.strip().rstrip(';'))
+                            inline_comments.append(comment_part.strip())
+                        else:
+                            items.append(stripped_line)
+                block_data = {'name': name, 'items': items}
+                if inline_comments:
+                    block_data['inline_comments'] = inline_comments
+                blocks.append(block_data)
                 schedules[sched_name] = blocks
             diction['schedules'] = schedules
         return diction
@@ -822,7 +836,7 @@ class GLMModel:
             # Remove quotes around the string
             if isinstance(val, str) and val.startswith('"') and val.endswith('"'):
                 val = val[1:-1]
-            name = name_prefix + val
+            name = val
             # Remove auto-generated flag since we have an explicit name
             params.pop('_auto_generated_name', None)
             return name, line
@@ -849,6 +863,20 @@ class GLMModel:
                 comments.clear()
             
             return None, line
+
+    def _get_parent_value_for_nested_object(self, params, name):
+        """Determine the parent value for a nested object, using OID if appropriate."""
+        obj_decl = params.get('object_declaration', '')
+        is_oid = (
+            isinstance(obj_decl, str)
+            and ':' in obj_decl
+            and ' ' not in obj_decl
+            and not obj_decl.split(':', 1)[1].startswith('..')
+        )
+        if params.get('_auto_generated_name', False) and is_oid:
+            return obj_decl
+        else:
+            return name
 
     def glm_object(self, parent, line, itr, oidh, counter):
         """Store an object in the model structure.
@@ -949,6 +977,9 @@ class GLMModel:
                         create_conditional_error_message(d, line, "inside object")
                     )
             intobj = 0
+            # Try to match parameter with quoted value first (handles values with semicolons inside quotes)
+            m_quoted = re.match(r'\s*(\S+)\s+"([^"]+)"\s*;', line)
+            # Then try regular parameter matching
             m = re.match(r'\s*(\S+) ([^;{]+)[;{]', line)
             if '${' in line and line.strip().endswith(';'):
                 # Split into parameter and value parts
@@ -959,13 +990,32 @@ class GLMModel:
                     val = tokens[1].rsplit(";", 1)[0].strip()
                     processed_name, updated_line = self._process_object_parameter(param, val, name_prefix,
                              params, comments, inside_comments, line, name)
+            elif m_quoted:
+                # Handle quoted values (which may contain semicolons)
+                param = m_quoted.group(1)
+                val = '"' + m_quoted.group(2) + '"'
+                if param == 'object':
+                    # found a nested object
+                    intobj += 1
+                    parent_value = self._get_parent_value_for_nested_object(params, name)
+                    line, counter, lname = self.glm_object(parent_value, line, itr, oidh, counter)
+                else:
+                    # Process parameter using helper method
+                    processed_name, updated_line = self._process_object_parameter(
+                        param, val, name_prefix, params, comments, inside_comments, line, name
+                    )
+                    if processed_name is not None:
+                        name = processed_name
+                    if updated_line != line:
+                        line = updated_line
             elif m:
                 param = m.group(1)
                 val = m.group(2)
                 if param == 'object':
                     # found a nested object
                     intobj += 1
-                    line, counter, lname = self.glm_object(name, line, itr, oidh, counter)
+                    parent_value = self._get_parent_value_for_nested_object(params, name)
+                    line, counter, lname = self.glm_object(parent_value, line, itr, oidh, counter)
                 else:
                     # Process parameter using helper method
                     processed_name, updated_line = self._process_object_parameter(
