@@ -864,6 +864,20 @@ class GLMModel:
             
             return None, line
 
+    def _get_parent_value_for_nested_object(self, params, name):
+        """Determine the parent value for a nested object, using OID if appropriate."""
+        obj_decl = params.get('object_declaration', '')
+        is_oid = (
+            isinstance(obj_decl, str)
+            and ':' in obj_decl
+            and ' ' not in obj_decl
+            and not obj_decl.split(':', 1)[1].startswith('..')
+        )
+        if params.get('_auto_generated_name', False) and is_oid:
+            return obj_decl
+        else:
+            return name
+
     def glm_object(self, parent, line, itr, oidh, counter):
         """Store an object in the model structure.
 
@@ -983,7 +997,8 @@ class GLMModel:
                 if param == 'object':
                     # found a nested object
                     intobj += 1
-                    line, counter, lname = self.glm_object(name, line, itr, oidh, counter)
+                    parent_value = self._get_parent_value_for_nested_object(params, name)
+                    line, counter, lname = self.glm_object(parent_value, line, itr, oidh, counter)
                 else:
                     # Process parameter using helper method
                     processed_name, updated_line = self._process_object_parameter(
@@ -999,7 +1014,8 @@ class GLMModel:
                 if param == 'object':
                     # found a nested object
                     intobj += 1
-                    line, counter, lname = self.glm_object(name, line, itr, oidh, counter)
+                    parent_value = self._get_parent_value_for_nested_object(params, name)
+                    line, counter, lname = self.glm_object(parent_value, line, itr, oidh, counter)
                 else:
                     # Process parameter using helper method
                     processed_name, updated_line = self._process_object_parameter(

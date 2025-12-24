@@ -51,7 +51,7 @@
       "instances": [
         {
           "name": "complex_assert_3",
-          "parent": "range_2",
+          "parent": "range:2",
           "target": "enduse_load",
           "within": 0.1
         }
@@ -60,7 +60,7 @@
     "recorder": {
       "instances": [
         {
-          "parent": "range_2",
+          "parent": "range:2",
           "property": "enduse_load,internal_gains,energy_meter,constant_current",
           "file": "test_range_power.csv",
           "interval": -1,
