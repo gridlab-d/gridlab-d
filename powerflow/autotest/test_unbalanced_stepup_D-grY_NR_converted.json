@@ -108,91 +108,91 @@
     "complex_assert": {
       "instances": [
         {
-          "parent": "overhead_line_7",
+          "parent": "overhead_line:12",
           "target": "current_in_A",
           "within": 10,
           "value": "309.3-35.2d"
         },
         {
-          "parent": "overhead_line_7",
+          "parent": "overhead_line:12",
           "target": "current_in_B",
           "within": 10,
           "value": "249.5-146.5d"
         },
         {
-          "parent": "overhead_line_7",
+          "parent": "overhead_line:12",
           "target": "current_in_C",
           "within": 10,
           "value": "319.3+98.1d"
         },
         {
-          "parent": "node_11",
+          "parent": "node:2",
           "target": "voltage_AB",
           "within": 10,
           "value": "12364+29.8d"
         },
         {
-          "parent": "node_11",
+          "parent": "node:2",
           "target": "voltage_BC",
           "within": 10,
           "value": "12391-90.5d"
         },
         {
-          "parent": "node_11",
+          "parent": "node:2",
           "target": "voltage_CA",
           "within": 10,
           "value": "12333+149.6d"
         },
         {
-          "parent": "node_16",
+          "parent": "node:3",
           "target": "voltage_A",
           "within": 10,
           "value": "13792+27.7d"
         },
         {
-          "parent": "node_16",
+          "parent": "node:3",
           "target": "voltage_B",
           "within": 10,
           "value": "13733-93.5d"
         },
         {
-          "parent": "node_16",
+          "parent": "node:3",
           "target": "voltage_C",
           "within": 10,
           "value": "13641+145.4d"
         },
         {
-          "parent": "overhead_line_20",
+          "parent": "overhead_line:34",
           "target": "current_in_A",
           "within": 10,
           "value": "109.0-4.1d"
         },
         {
-          "parent": "overhead_line_20",
+          "parent": "overhead_line:34",
           "target": "current_in_B",
           "within": 10,
           "value": "146.2-119.4d"
         },
         {
-          "parent": "overhead_line_20",
+          "parent": "overhead_line:34",
           "target": "current_in_C",
           "within": 10,
           "value": "183.8+127.0d"
         },
         {
-          "parent": "load_24",
+          "parent": "load:4",
           "target": "voltage_A",
           "within": 11,
           "value": "13768+27.7d"
         },
         {
-          "parent": "load_24",
+          "parent": "load:4",
           "target": "voltage_B",
           "within": 11.5,
           "value": "13684-93.6d"
         },
         {
-          "parent": "load_24",
+          "parent": "load:4",
           "target": "voltage_C",
           "within": 11,
           "value": "13600+145.2d"

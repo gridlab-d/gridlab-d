@@ -43,7 +43,7 @@
           "file": "test_generic_limit_demand(range0-1).glt"
         },
         {
-          "parent": "double_assert_5",
+          "parent": "double_assert:5",
           "property": "value",
           "file": "test_generic_limit_demand.player"
         }

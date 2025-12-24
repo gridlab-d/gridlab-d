@@ -143,55 +143,55 @@
     "complex_assert": {
       "instances": [
         {
-          "parent": "node_10",
+          "parent": "node:2",
           "target": "voltage_AB",
           "within": 5,
           "value": "+12398.4+29.9927d "
         },
         {
-          "parent": "node_10",
+          "parent": "node:2",
           "target": "voltage_BC",
           "within": 5,
           "value": "+12482.1-90.0323d d"
         },
         {
-          "parent": "node_10",
+          "parent": "node:2",
           "target": "voltage_CA",
           "within": 5,
           "value": "+12435.8+149.646d "
         },
         {
-          "parent": "node_15",
+          "parent": "node:3",
           "target": "voltage_AB",
           "within": 5,
           "value": "+23887+29.2151d "
         },
         {
-          "parent": "node_15",
+          "parent": "node:3",
           "target": "voltage_BC",
           "within": 5,
           "value": "+24924.2-90.0323d "
         },
         {
-          "parent": "node_15",
+          "parent": "node:3",
           "target": "voltage_CA",
           "within": 5,
           "value": "+24698.9+147.515d "
         },
         {
-          "parent": "load_20",
+          "parent": "load:4",
           "target": "voltage_AB",
           "within": 5,
           "value": "+13510.6-4.31444d "
         },
         {
-          "parent": "load_20",
+          "parent": "load:4",
           "target": "voltage_BC",
           "within": 5,
           "value": "+0+0d "
         },
         {
-          "parent": "load_20",
+          "parent": "load:4",
           "target": "voltage_CA",
           "within": 5,
           "value": "+13510.6+175.686d "
