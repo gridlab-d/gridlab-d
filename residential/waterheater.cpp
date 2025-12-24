@@ -37,7 +37,6 @@ void RUN_WH_FC (
         int *dr_signal,
         double *sensor_pos,
         double *heater_q,
-        double *heater_size,
 		double *heat_lost_rate,
         double *water_rho,
         double *water_k0,
@@ -46,7 +45,6 @@ void RUN_WH_FC (
         double *temp_amb,
 		double *hum_amb,
         double *temp_in,
-        double *temp_set,
         double *temp_db,
         double *comp_power,
         double *comp_off,
@@ -120,6 +118,13 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"actual_load[kW]",PADDR(actual_load),PT_DESCRIPTION, "the actual load based on the current voltage across the coils",
 			PT_double,"previous_load[kW]",PADDR(prev_load),PT_DESCRIPTION, "the previous load based on voltage across the coils at the last sync operation",
 			PT_complex,"actual_power[kVA]",PADDR(waterheater_actual_power), PT_DESCRIPTION, "the actual power based on the current voltage across the coils",
+			PT_double,"time_to_transition",PADDR(time_to_transition), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for time to transition",
+			PT_double,"Tlower",PADDR(Tlower), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tlower", 
+			PT_bool,"heating_element_on",PADDR(heating_element_on), PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for heating element on",
+			PT_bool,"turn_fan_on",PADDR(turn_fan_on), PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for turn fan on",
+			PT_bool,"heat_needed",PADDR(heat_needed), PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for heat needed",
+			PT_double,"water_demand_old",PADDR(water_demand_old), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for previous water demand",
+			PT_double,"init_tank_temp", PADDR(init_tank_temp[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for initial tank temperature",
 			PT_double,"is_waterheater_on",PADDR(is_waterheater_on),PT_DESCRIPTION, "simple logic output to determine state of waterheater (1-on, 0-off)",
 			PT_double,"gas_fan_power[kW]",PADDR(gas_fan_power),PT_DESCRIPTION, "load of a running gas waterheater",
 			PT_double,"gas_standby_power[kW]",PADDR(gas_standby_power),PT_DESCRIPTION, "load of a gas waterheater in standby",
@@ -445,18 +450,12 @@ int waterheater::init(OBJECT *parent)
 		current_model = NONE;
 		load_state = STABLE;
 
-		// initial demand
-		Tset_curtail	= tank_setpoint - thermostat_deadband/2 - 10;  // Allow T to drop only 10 degrees below lower cut-in T...
-
-
-
 		h = height;
 
 		// initial water temperature
 		if(h == 0){
 			// discharged
 			Tlower = Tinlet;
-			Tupper = Tinlet + TSTAT_PRECISION;
 		} else {
 			Tlower = Tinlet;
 		}
@@ -537,96 +536,30 @@ int waterheater::init(OBJECT *parent)
 
 		if(tank_volume == 40){
 			thermal_conductivity = 1.80;
-			convective_coefficient = 0.0024;
-			water_density = 1000.0;
-			water_heat_capacity = 4181.3;
 			h = 1.1;
 			tank_diameter = 0.3568;
-			sensor_position[0] = 0.92;
-			sensor_position[1] = 0.4;
-			heater_element_power[0] = 4200.0;
-			heater_element_power[1] = 2000.0;
-			heater_size[0] = heater_size[1] = 0.01;
-			heater_element_position[0] = heater_element_position[1] = 0.2;
 			tank_heat_loss_rate = 3.5;
-			temp_set[0] = temp_set[1] = 51.37;
 			thermostat_deadband = 0.75;
 			inlet_water_flow_threshold = 0.0;
-			compressor_power_capacity = 750.0;
-			compressor_activation_temp_offset = 9.0;
-			lowest_ambient_temperature_limit = 45.0;
-			highest_ambient_temperature_limit = 109.0;
-			lowest_water_temperature_limit = 58.0;
-			activation_temperature_offset = 5.0;
-			ambient_air_dry_bulb_temp = 67.5; //not used
-			ambient_air_wet_bulb_temp = 57.0; //not used
-			upper_element_activation_temp_offset = 18.0;
-			upper_fraction = 0.83;
-			lower_fraction = 0.20;
 			coarse_tank_grid = 12;
 			fine_tank_grid = 12;
 		} else if(tank_volume == 80){
 			if(operating_mode == 3){//electric resistance wh
 				thermal_conductivity = 0.58;
-				convective_coefficient = 0.0024;
-				water_density = 1000;
-				water_heat_capacity = 4181.3;
 				h = 1.524;
 				tank_diameter = 0.508;
-				sensor_position[0] = 0.92;
-				sensor_position[1] = 0.4;
-				heater_element_power[0] = 3900.0;
-				heater_element_power[1] = 3900.0;
-				heater_size[0] = 0.01;
-				heater_size[1] = 0.01;
-				heater_element_position[0] = 1.143;
-				heater_element_position[1] = 0.254;
 				tank_heat_loss_rate = 3.35;
-				temp_set[0] = temp_set[1] = 51.67;
 				thermostat_deadband = 0.75;
 				inlet_water_flow_threshold = 0.0;
-				compressor_power_capacity = 750.0;
-				compressor_activation_temp_offset = 9.0;
-				lowest_ambient_temperature_limit = 45.0;
-				highest_ambient_temperature_limit = 109.0;
-				lowest_water_temperature_limit = 58.0;
-				activation_temperature_offset = 5.0;
-				ambient_air_dry_bulb_temp = 67.5; //not used
-				ambient_air_wet_bulb_temp = 57.0; //not used
-				upper_element_activation_temp_offset = 18.0;
-				upper_fraction = 0.83;
-				lower_fraction = 0.20;
 				coarse_tank_grid = 12;
 				fine_tank_grid = 12;
 			} else { //heat pump wh
 				thermal_conductivity = 0.58;
-				convective_coefficient = 0.0024;
-				water_density = 1000;
-				water_heat_capacity = 4181.3;
 				h = 1.4732;
 				tank_diameter = 0.5;
-				sensor_position[0] = 1.2277;
-				sensor_position[1] = 0.4911;
-				heater_element_power[0] = 4200.0;
-				heater_element_power[1] = 2000.0;
-				heater_size[0] = 0.0106;
-				heater_size[1] = 0.01;
-				heater_element_position[0] = heater_element_position[1] = 0.2;
 				tank_heat_loss_rate = 3.9;
-				temp_set[0] = temp_set[1] = 51.67;
 				thermostat_deadband = 2.25;
 				inlet_water_flow_threshold = 0.0;
-				compressor_power_capacity = 750.0;
-				compressor_activation_temp_offset = 9.0;
-				lowest_ambient_temperature_limit = 45.0;
-				highest_ambient_temperature_limit = 109.0;
-				lowest_water_temperature_limit = 58.0;
-				activation_temperature_offset = 5.0;
-				ambient_air_dry_bulb_temp = 67.5; //not used
-				ambient_air_wet_bulb_temp = 57.0; //not used
-				upper_element_activation_temp_offset = 18.0;
-				upper_fraction = 0.83;
-				lower_fraction = 0.20;
 				coarse_tank_grid = 12;
 				fine_tank_grid = 12;
 			}
@@ -1178,33 +1111,15 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
                     &h,
                     &tank_diameter,
                     &dr_sig,
-					sensor_position,
-                    heater_element_power,
-                    heater_size,
 					&tank_heat_loss_rate,
-                    &water_density,
                     &thermal_conductivity,
-					&convective_coefficient,
-                    &water_heat_capacity,
                     &ambient_temp,
                     &ambient_rh,
 					&t_in,
-                    temp_set,
                     &thermostat_deadband,
-                    &compressor_power_capacity,
-					&compressor_activation_temp_offset,
-                    &lowest_ambient_temperature_limit,
-					&highest_ambient_temperature_limit,
-                    &lowest_water_temperature_limit,
-					&activation_temperature_offset,
-                    &ambient_air_dry_bulb_temp,
-                    &ambient_air_wet_bulb_temp,
-					&upper_element_activation_temp_offset,
                     &inlet_water_flow_threshold,
                     &water_demand,
 					init_tank_temp,
-                    &lower_fraction,
-                    &upper_fraction,
                     &ncomp,
 					nheat,
                     &heat_up,
@@ -1297,9 +1212,6 @@ TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
 }
 
 TIMESTAMP waterheater::commit(){
-	Tw_old = Tw;
-	Tupper_old = /*Tupper*/ Tw;
-	Tlower_old = Tlower;
 	water_demand_old = water_demand;
 	return TS_NEVER;
 }
@@ -1388,7 +1300,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				
 				current_model = ONENODE;
 				load_state = DEPLETING;
-				Tw = Tupper = Tinlet + HEIGHT_PRECISION;
+				Tw = Tinlet + HEIGHT_PRECISION;
 				Tlower = Tinlet;
 				h = height;
 				/* empty of hot water? full of cold water! */

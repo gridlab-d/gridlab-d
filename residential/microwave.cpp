@@ -38,7 +38,7 @@ microwave::microwave(MODULE *module) : residential_enduse(module)
 		// publish the class properties
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "residential_enduse",
-			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power),PT_DESCRIPTION,"rated microwave power level",
+			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power),PT_DESCRIPTION,"rated microwave power level",			
 			PT_double,"standby_power[kW]",PADDR(standby_power),PT_DESCRIPTION,"standby microwave power draw (unshaped only)",
 			PT_double,"circuit_split",PADDR(circuit_split),
 			PT_enumeration,"state",PADDR(state),PT_DESCRIPTION,"on/off state of the microwave",
@@ -48,6 +48,7 @@ microwave::microwave(MODULE *module) : residential_enduse(module)
 			PT_double,"cycle_length[s]",PADDR(cycle_time),PT_DESCRIPTION,"length of the combined on/off cycle between uses",
 			PT_double,"runtime[s]",PADDR(runtime),PT_DESCRIPTION,"",
 			PT_double,"state_time[s]",PADDR(state_time),PT_DESCRIPTION,"",
+			PT_double,"prev_demand",PADDR(prev_demand), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for previous demand",
 			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}

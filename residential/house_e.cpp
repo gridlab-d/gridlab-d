@@ -219,6 +219,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"envelope_UA[Btu/degF*h]",PADDR(envelope_UA),PT_DESCRIPTION,"overall UA of the home's envelope",
 			PT_double,"window_wall_ratio",PADDR(window_wall_ratio),PT_DESCRIPTION,"ratio of window area to wall area",
 			PT_double,"number_of_doors",PADDR(number_of_doors),PT_DESCRIPTION,"ratio of door area to wall area",
+			PT_double,"area_per_door[sf]",PADDR(area_per_door), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for area per door in square feet",
 			PT_double,"exterior_wall_fraction",PADDR(exterior_wall_fraction),PT_DESCRIPTION,"ratio of exterior wall area to total wall area",
 			PT_double,"interior_exterior_wall_ratio",PADDR(interior_exterior_wall_ratio),PT_DESCRIPTION,"ratio of interior to exterior walls",
 			PT_double,"exterior_ceiling_fraction",PADDR(exterior_ceiling_fraction),PT_DESCRIPTION,"ratio of external ceiling sf to floor area",
@@ -281,6 +282,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_timestamp,"thermostat_last_cycle_time",PADDR(thermostat_last_cycle_time),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"last time the thermostat changed state",
 			PT_double,"heating_setpoint[degF]",PADDR(heating_setpoint),PT_DESCRIPTION,"thermostat heating setpoint",
 			PT_double,"cooling_setpoint[degF]",PADDR(cooling_setpoint),PT_DESCRIPTION,"thermostat cooling setpoint",
+			PT_double,"TcoolOn[degF]",PADDR(TcoolOn), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tcool on in degF",
 			PT_double,"design_heating_setpoint[degF]",PADDR(design_heating_setpoint),PT_DESCRIPTION,"system design heating setpoint",
 			PT_double,"design_cooling_setpoint[degF]",PADDR(design_cooling_setpoint),PT_DESCRIPTION,"system design cooling setpoint",
 			PT_double,"over_sizing_factor",PADDR(over_sizing_factor),PT_DESCRIPTION,"over sizes the heating and cooling system from standard specifications (0.2 ='s 120% sizing)",
@@ -293,6 +295,8 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"window_linear_coefficient",PADDR(window_b),PT_DESCRIPTION,"linear coefficient for describing function between low and high temperature cutoffs",
 			PT_double,"window_constant_coefficient",PADDR(window_c),PT_DESCRIPTION,"constant coefficient for describing function between low and high temperature cutoffs",
 			PT_double,"window_temperature_delta",PADDR(window_temp_delta),PT_DESCRIPTION,"change in outdoor temperature required to update the window opening model",
+			PT_double,"last_temperature[degF]",PADDR(last_temperature), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last temperature in degF",
+			PT_int16,"window_first_time_through",PADDR(window_first_time_through), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for window first time through",
 
 			PT_double,"design_heating_capacity[Btu/h]",PADDR(design_heating_capacity),PT_DESCRIPTION,"system heating capacity",
 			PT_double,"design_cooling_capacity[Btu/h]",PADDR(design_cooling_capacity),PT_DESCRIPTION,"system cooling capacity",
@@ -320,6 +324,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"fan_power_fraction[pu]",PADDR(fan_power_fraction),PT_DESCRIPTION,"Power component of fan ZIP load",
 			PT_double,"fan_current_fraction[pu]",PADDR(fan_current_fraction),PT_DESCRIPTION,"Current component of fan ZIP load",
 			PT_double,"fan_power_factor[pu]",PADDR(fan_power_factor),PT_DESCRIPTION,"Power factor of the fan load",
+			PT_double,"fan_heatgain_fraction[pu]",PADDR(fan_heatgain_fraction), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for fan heatgain fraction in pu",
 
 			PT_double,"heating_demand[kW]",PADDR(heating_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the heating system",
 			PT_double,"cooling_demand[kW]",PADDR(cooling_demand),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the current power draw to run the cooling system",
@@ -460,6 +465,8 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_int64,"compressor_count",PADDR(compressor_count),
 			PT_timestamp,"hvac_last_on",PADDR(hvac_last_on),
 			PT_timestamp,"hvac_last_off",PADDR(hvac_last_off),
+			PT_double,"hvac_period_on[min]",PADDR(hvac_period_on), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION,"CHECKPOINT_VAR: internal variable for hvac period on (minutes)",
+			PT_double,"hvac_period_off[min]",PADDR(hvac_period_off), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION,"CHECKPOINT_VAR: internal variable for hvac period off (minutes)",
 			PT_double,"hvac_period_length[s]",PADDR(hvac_period_length),
 			PT_double,"hvac_duty_cycle",PADDR(hvac_duty_cycle),
 
@@ -482,7 +489,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"Qa",PADDR(Qa),PT_ACCESS,PA_HIDDEN,
 			PT_double,"Qm",PADDR(Qm),PT_ACCESS,PA_HIDDEN,
 			PT_double,"Qh",PADDR(load.heatgain),PT_ACCESS,PA_HIDDEN,
-			PT_double,"Qlatent",PADDR(Qlatent),PT_ACCESS,PA_HIDDEN,
+			PT_double,"Qlatent",PADDR(Qlatent), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Qlatent",
 			PT_double,"dTair",PADDR(dTair),PT_ACCESS,PA_HIDDEN,
 			PT_double,"adj_cooling_cap",PADDR(adj_cooling_cap),PT_ACCESS,PA_HIDDEN,
 			PT_double,"adj_heating_cap",PADDR(adj_heating_cap),PT_ACCESS,PA_HIDDEN,
@@ -502,7 +509,9 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_complex,"external_v2N",PADDR(external_v2N),PT_DESCRIPTION,"circuit 2N voltage from external power flow",
 
 			//Same idea for frequency
-			PT_double,"grid_frequency",PADDR(value_Frequency),PT_ACCESS,PA_HIDDEN,
+			PT_double,"grid_frequency",PADDR(value_Frequency), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for grid frequency",
+
+			PT_int16,"value_MeterStatus",PADDR(value_MeterStatus), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value MeterStatus",
 
 			PT_enumeration,"thermostat_control", PADDR(thermostat_control), PT_DESCRIPTION, "determine level of internal thermostatic control",
 				PT_KEYWORD, "FULL", (enumeration)TC_FULL, // setpoint/deadband controls HVAC
@@ -717,7 +726,6 @@ int house_e::create()
 	floor_area = 0;
 	gross_wall_area = 0;
 	window_wall_ratio = 0;
-	window_roof_ratio = 0;
 	interior_exterior_wall_ratio = 0;
 	exterior_wall_fraction = 0;
 	exterior_ceiling_fraction = 0;
@@ -1735,7 +1743,6 @@ int house_e::init(OBJECT *parent)
 	if (ceiling_height==0)		ceiling_height = 8.0;
 	if (gross_wall_area==0)		gross_wall_area = 2.0 * number_of_stories * (aspect_ratio + 1.0) * ceiling_height * sqrt(floor_area/aspect_ratio/number_of_stories);
 	if (window_wall_ratio==0)	window_wall_ratio = 0.15;
-	if (window_roof_ratio==0)	window_roof_ratio = 0.0; // explicitly zero'ed
 	if (number_of_doors==0)		number_of_doors = 4.0;
 	else						number_of_doors = floor(number_of_doors); /* integer-based */
 	if (interior_exterior_wall_ratio == 0) interior_exterior_wall_ratio = 1.5; //Based partions for six rooms per floor

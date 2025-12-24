@@ -49,7 +49,7 @@ evcharger_det::evcharger_det(MODULE *module) : residential_enduse(module)
 				PT_KEYWORD,"HOME",(enumeration)VL_HOME,
 				PT_KEYWORD,"WORK",(enumeration)VL_WORK,
 				PT_KEYWORD,"DRIVING_HOME",(enumeration)VL_WORK_TO_HOME,
-				PT_KEYWORD,"DRIVING_WORK",(enumeration)VL_HOME_TO_WORK,
+				PT_KEYWORD,"DRIVING_WORK",(enumeration)VL_HOME_TO_WORK,	
 			PT_double,"travel_distance[mile]",PADDR(CarInformation.travel_distance), PT_DESCRIPTION, "Distance vehicle travels from home to home (round trip)",
 			PT_double,"arrival_at_work",PADDR(CarInformation.WorkArrive), PT_DESCRIPTION, "Time vehicle arrives at work - HHMM",
 			PT_double,"duration_at_work[s]",PADDR(CarInformation.WorkDuration), PT_DESCRIPTION, "Duration the vehicle remains at work",
@@ -91,6 +91,19 @@ evcharger_det::evcharger_det(MODULE *module) : residential_enduse(module)
 			PT_double, "J2894_ramp_rate_limit[A/s]",PADDR(J2894_ramp_limit),PT_DESCRIPTION,"J2894-suggested ramp rate limit for charger activation",
 
 			PT_double, "J2894_outage_disconnect_interval[s]", PADDR(J2894_off_threshold), PT_DESCRIPTION, "J2894-suggested outage length, when criterion has been exceeded",
+
+			/* Additional published internal/state variables from props_to_publish/evcharger_det.csv */
+			PT_timestamp, "glob_min_timestep", PADDR(glob_min_timestep), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for global minimum timestep",
+			PT_double, "glob_min_timestep_dbl", PADDR(glob_min_timestep_dbl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for global minimum timestep in double format",
+			PT_bool, "off_nominal_time", PADDR(off_nominal_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for off nominal time",
+			PT_double, "prev_time_dbl", PADDR(prev_time_dbl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for previous time in double format",
+			PT_bool, "deltamode_registered", PADDR(deltamode_registered), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for deltamode registration status",
+			PT_bool, "J2894_voltage_high_state_0", PADDR(J2894_voltage_high_state[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 high-voltage state (index 0)",
+			PT_bool, "J2894_voltage_high_state_1", PADDR(J2894_voltage_high_state[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 high-voltage state (index 1)",
+			PT_bool, "J2894_voltage_low_state_0", PADDR(J2894_voltage_low_state[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 low-voltage state (index 0)",
+			PT_bool, "J2894_voltage_low_state_1", PADDR(J2894_voltage_low_state[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 low-voltage state (index 1)",
+			PT_double, "J2894_off_accumulator", PADDR(J2894_off_accumulator), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 off accumulator",
+			PT_bool, "J2894_is_ramp_constrained", PADDR(J2894_is_ramp_constrained), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 ramp constrained flag",
 
 			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);

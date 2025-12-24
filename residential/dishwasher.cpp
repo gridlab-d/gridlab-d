@@ -141,6 +141,18 @@ dishwasher::dishwasher(MODULE *module) : residential_enduse(module)
 			PT_double,"motor_on_off",PADDR(motor_on_off),
 			PT_double,"motor_coil_on_off",PADDR(motor_coil_on_off),
 			
+			PT_bool,"motor_only_25_repeat_one",PADDR(motor_only_25_repeat_one), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal flag for motor only 25 repeat one",
+			PT_double,"controls_power",PADDR(controls_power), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for controls power",
+			PT_double,"cycle_duration",PADDR(cycle_duration), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for cycle duration",
+			PT_double,"count_motor_only",PADDR(count_motor_only), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for motor only cycles",
+			PT_double,"count_motor_only1",PADDR(count_motor_only1), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for motor only cycles 1",
+			PT_double,"count_motor_only_25",PADDR(count_motor_only_25), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for motor only 25",
+			PT_double,"count_coil_only",PADDR(count_coil_only), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for coil only",
+			PT_double,"count_motor_only_68",PADDR(count_motor_only_68), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for motor only 68",
+			PT_double,"count_control_only",PADDR(count_control_only), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for control only cycles",
+			PT_double,"count_control_only1",PADDR(count_control_only1), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for control only cycles 1",
+			PT_timestamp,"next_change_time",PADDR(next_change_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next change time",
+			PT_double,"heat_fraction",PADDR(heat_fraction), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for heat fraction",
 
 			PT_bool,"is_240",PADDR(is_240), PT_DESCRIPTION, "load is 220/240 V (across both phases)",
 			nullptr)<1)
@@ -170,7 +182,7 @@ int dishwasher::create()
 	energy_used = 0;
 	
 	coil_power[0] = -1;
-	motor_on_off = motor_coil_on_off = both_coils_on_off = 0;
+	motor_on_off = motor_coil_on_off = 0;
 
 	last_t = 0;
 	
@@ -1397,7 +1409,7 @@ case dishwasher_TRIPPED:
 
 	case dishwasher_MOTOR_ONLY:
 		motor_on_off = 1;
-		motor_coil_on_off = both_coils_on_off = 0;
+		motor_coil_on_off = 0;
 		cycle_time -= dt;
 
 		load.power.SetPowerFactor(motor_power/1000, load.power_factor);

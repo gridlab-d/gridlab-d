@@ -22,14 +22,11 @@ public:
 	double enduse_queue;				///< accumulated demand (units)
 	double cycle_duration;				///< typical cycle runtime (s)
 	double cycle_time;					///< remaining time in main cycle (s)
-	double state_time;					///< remaining time in current state (s)
 	double stall_voltage;				///< voltage at which the motor stalls
 	double start_voltage;				///< voltage at which motor can start
 	gld::complex stall_impedance;			///< impedance of motor when stalled
 	double trip_delay;					///< stalled time before thermal trip
 	double reset_delay;					///< trip time before thermal reset and restart
-	double heat_fraction;				///< internal gain fraction of installed power
-	TIMESTAMP time_state;				///< time in current state
 	bool starttime;
 	enum {
 		STOPPED=0,						///< motor is stopped
@@ -52,7 +49,6 @@ public:
 	double Is_on;
 
 	bool new_running_state;
-	bool critical_cycle;
 	double clothesWasherPower;
 	double normal_perc;
 	double perm_press_perc;

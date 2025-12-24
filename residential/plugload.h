@@ -16,8 +16,6 @@ class plugload : public residential_enduse
 {
 public:
 	double circuit_split;		///< -1=100% negative, 0=balanced, +1=100% positive
-	double demand;				///< fraction of time plugloads are ON (schedule driven)
-	double heat_fraction;		///< fraction of the plugload that is transferred as heat (default = 0.90)
 	gld::complex plugs_actual_power;	///< actual power demand as a function of voltage
 
 public:
