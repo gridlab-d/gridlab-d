@@ -50,7 +50,7 @@
     "player": {
       "instances": [
         {
-          "parent": "complex_assert_4",
+          "parent": "complex_assert:4",
           "property": "value",
           "file": "../test_microwave_energy_accumulation.player"
         }
