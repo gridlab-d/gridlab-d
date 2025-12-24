@@ -105,6 +105,9 @@ dryer::dryer(MODULE *module) : residential_enduse(module)
 			PT_double,"pulse_interval_5[s]", PADDR(pulse_interval[4]),
 			PT_double,"pulse_interval_6[s]", PADDR(pulse_interval[5]),
 			PT_double,"pulse_interval_7[s]", PADDR(pulse_interval[6]),
+			PT_double,"pulse_interval_8[s]", PADDR(pulse_interval[7]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for pulse interval",
+			PT_double,"pulse_interval_9[s]", PADDR(pulse_interval[8]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for pulse interval",
+			PT_double,"pulse_interval_10[s]", PADDR(pulse_interval[9]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for pulse interval",
 
 			
 			PT_double,"energy_needed[kWh]",PADDR(energy_needed),
@@ -112,6 +115,10 @@ dryer::dryer(MODULE *module) : residential_enduse(module)
 			PT_double,"actual_dryer_demand[kWh]",PADDR(actual_dryer_demand),
 			PT_double,"motor_on_off",PADDR(motor_on_off),
 			PT_double,"motor_coil_on_off",PADDR(motor_coil_on_off),
+			PT_bool,"new_running_state",PADDR(new_running_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for new running state",
+			PT_double,"cycle_time[s]",PADDR(cycle_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for cycle time",
+			PT_double,"state_time[s]",PADDR(state_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for state time",
+			PT_timestamp,"start_time",PADDR(start_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for start time",
 			
 
 			PT_bool,"is_240",PADDR(is_240), PT_DESCRIPTION, "load is 220/240 V (across both phases)",
@@ -420,7 +427,7 @@ switch(state) {
 			{
 				state = DRYER_CONTROL_ONLY;
 				energy_needed = energy_baseline;
-				cycle_duration = cycle_time = 1000 * (energy_needed - energy_used) / controls_power * 60 * 60;
+				cycle_time = 1000 * (energy_needed - energy_used) / controls_power * 60 * 60;				
 				cycle_time = pulse_interval[0];
 				//cycle_duration_dryer = pulse_interval[0];
 				enduse_queue--;

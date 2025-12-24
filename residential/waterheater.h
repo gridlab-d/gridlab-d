@@ -204,7 +204,6 @@ public:
 	double time_to_transition;		///< time until next transition [in seconds]
 
 	// Basic characteristics defined at creation...
-	double Tset_curtail;			///< lower limit before we cancel curtailment [F]
 	double Tinlet;					///< default will be set to 60 degF
 	enumeration location;			///< location of tank (inside or garage) [enum]
 	enumeration heat_mode;				///< method of heating the water (gas or electric) [enum]
@@ -220,12 +219,7 @@ public:
 	// The primary values we compute in our simultation...
 	double h;						///< boundary between hot and cold water layers [ft from top of tank]
 	double Tlower;					///< temperature in lower zone of tank (for 2-zone model) [F]
-	double Tlower_old;
-	double Tupper;					///< temperature in upper zone of tank (for 2-zone model) [F]
-	double Tupper_old;
-	double Twater;					///< temperature of whole tank (for 1-node model) [F]
 	double Tw;						///< water temperature [F]
-	double Tw_old;					///< previous water temperature, for internal_gains
 	double Tcontrol;
 	
 	// Heat pump water heater update
@@ -274,31 +268,12 @@ public:
 
 public:
 	// Tank physical parameters
-	double sensor_position[2];									//sensor_pos
-	double heater_element_power[2];						//heater_q
-	double heater_size[2];											//heater_size
-	double heater_element_position[2];						//heater_pos
-	double upper_element_activation_temp_offset;		//upper_elem_off
-	double compressor_power_capacity;					//comp_power
-	double compressor_activation_temp_offset;			// comp_off
 	double tank_heat_loss_rate;									//heat_loss_rate
-	double upper_fraction;											//upperf
-	double lower_fraction;											//lowerf
 
 	// Water_related_parameters
 	double thermal_conductivity;		//water_k0
-	double convective_coefficient;		//water_alpha
-	double water_heat_capacity;			//water_cv
-	double water_density;					//water_rho
 
 	// Simulation parameters
-	double lowest_ambient_temperature_limit;	//low_amb_lim
-	double highest_ambient_temperature_limit;	//up_amb_lim
-	double lowest_water_temperature_limit;		//water_low_lim
-	double activation_temperature_offset;			//mode_3_off
-	double ambient_air_dry_bulb_temp;				//t_db
-	double ambient_air_wet_bulb_temp;				//t_wb
-	double temp_set[2];										//temp_set
 	int coarse_tank_grid;								//large_bins
 	int fine_tank_grid;									//small_bins
 	int ncomp;
