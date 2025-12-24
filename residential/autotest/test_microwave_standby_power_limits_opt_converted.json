@@ -50,7 +50,7 @@
     "player": {
       "instances": [
         {
-          "parent": "double_assert_4",
+          "parent": "double_assert:4",
           "property": "value",
           "file": "test_microwave_standby_power_limits.player",
           "inline_comments": {
