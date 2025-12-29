@@ -170,7 +170,9 @@ Where $S_{ref}$ and $t_{ref}$ are light intensity and temperature in standard en
 
 A real PV panel has been modeled according to the formulas above, the output parameters of which are given in Table 1: 
 
-##### Table 1 - Output Parameters of PV Panel  Variable | Units | Value   
+##### Table 1 - Output Parameters of 
+
+PV Panel  Variable | Units | Value   
 ---|---|---  
 $\displaystyle{}U_{oc}$ | V | 1005   
 $\displaystyle{}I_{sc}$ | A | 100   

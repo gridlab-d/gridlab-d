@@ -35,27 +35,27 @@ Deterministic electric or hybrid vehicle charging
 
 Property name | Type | Unit | Description   
 ---|---|---|---  
-charge_rate | double | W | Current demanded charge rate of the vehicle   
-variation_mean | double | s | Mean of normal-distributed variation of schedule variation   
-variation_std_dev | double | s | Standard deviation of normal-distributed variation of schedule times   
-variation_trip_mean | double | mile | Mean of normal-distributed variation of trip distance variation   
-variation_trip_std_dev | double | mile | Standard deviation of normal-distributed variation of trip distance   
-mileage_classification | double | mile | Mileage classification of electric vehicle - range to run in all electric   
-work_charging_available | bool | none | Charging available when at work   
-data_file | char1024 | none | Path to .CSV file with vehicle travel information   
-vehicle_index | int32 | none | Index of vehicles in file to this particular vehicle's data   
-vehicle_location | enumeration | none | Current vehicle location (UNKNOWN, HOME, WORK, DRIVING_HOME, DRIVING_WORK)   
-travel_distance | double | mile | Distance vehicle travels from home to home - round trip distance for the day   
-arrival_at_work | double | none | Time vehicle arrives at work - HHMM format   
-duration_at_work | double | s | Duration the vehicle remains at work   
-arrival_at_home | double | none | Time vehicle arrives at home - HHMM format   
-duration_at_home | double | s | Duration the vehicle remains at home   
-battery_capacity | double | kWh | Current capacity of the battery   
-battery_SOC | double | % | State of charge of battery   
-battery_size | double | kWh | Full capacity of battery   
-mileage_efficiency | double | mile/kWh | Efficiency of drive train   
-maximum_charge_rate | double | W | Maximum output rate of charger   
-charging_efficiency | double | unit | Efficiency of charger (ratio) when charging   
+**charge_rate** | double | W | Current demanded charge rate of the vehicle   
+**variation_mean** | double | s | Mean of normal-distributed variation of schedule variation   
+**variation_std_dev** | double | s | Standard deviation of normal-distributed variation of schedule times   
+**variation_trip_mean** | double | mile | Mean of normal-distributed variation of trip distance variation   
+**variation_trip_std_dev** | double | mile | Standard deviation of normal-distributed variation of trip distance   
+**mileage_classification** | double | mile | Mileage classification of electric vehicle - range to run in all electric   
+**work_charging_available** | bool | none | Charging available when at work   
+**data_file** | char1024 | none | Path to .CSV file with vehicle travel information   
+**vehicle_index** | int32 | none | Index of vehicles in file to this particular vehicle's data   
+**vehicle_location** | enumeration | none | Current vehicle location (UNKNOWN, HOME, WORK, DRIVING_HOME, DRIVING_WORK)   
+**travel_distance** | double | mile | Distance vehicle travels from home to home - round trip distance for the day   
+**arrival_at_work** | double | none | Time vehicle arrives at work - HHMM format   
+**duration_at_work** | double | s | Duration the vehicle remains at work   
+**arrival_at_home** | double | none | Time vehicle arrives at home - HHMM format   
+**duration_at_home** | double | s | Duration the vehicle remains at home   
+**battery_capacity** | double | kWh | Current capacity of the battery   
+**battery_SOC** | double | % | State of charge of battery   
+**battery_size** | double | kWh | Full capacity of battery   
+**mileage_efficiency** | double | mile/kWh | Efficiency of drive train   
+**maximum_charge_rate** | double | W | Maximum output rate of charger   
+**charging_efficiency** | double | unit | Efficiency of charger (ratio) when charging   
   
 ## Default Evcharger_det
 

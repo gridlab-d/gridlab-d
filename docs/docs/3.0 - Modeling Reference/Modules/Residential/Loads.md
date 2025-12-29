@@ -2,8 +2,6 @@
 
 Residential loads can be explicit object definitions such as a water heater or EV charger that are added directly to the parent house as child objects or ZIP loads. Loads can also be modeled as implicit end uses, described here. Individual objects and ZIP loads have their own documentation pages, like the [water heater](../Residential/Waterheater.md) and [EV Charger](../Objects/Distributed%20Energy%20Resources/Evcharger_det.md), and [ZIP Loads](../Residential/ZIPload.md).
 
-**TODO - Review - Is this true? End use loads can be either implicitly modeled or explicitly defined (as in not the objects but still end use definitions)** 
-
 ### Implicit End Use Loads
 
 The `implicit_enduse` load and it is identical for each house residence. The load defined by `implicit_enduse` is meant to cover all the other types of loads not explicitly modeled as part of the total residential load. These loads are on by default but can be turned off by adding a statement to the residential module declaration:

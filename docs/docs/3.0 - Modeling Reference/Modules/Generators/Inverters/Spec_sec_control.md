@@ -38,7 +38,7 @@ Link _to_ end
 (Microgrid B) | Desired | $P_{\text{err}}\downarrow$ | $P_{\text{err}}\uparrow$  
 $c_i$ | 1 | 1   
   
-!Illustration of inter-tie incorporation into the secondary controller via the unit error, $\epsilon_{text{unit}}$ ![input](../../../../../../images/300px-SecondaryControlIntertie.png)
+![input](../../../../../../images/300px-SecondaryControlIntertie.png)
 
 ##### Figure 3: Illustration of inter-tie incorporation into the secondary controller via the unit error, $\epsilon_{text{unit}}$ input
 

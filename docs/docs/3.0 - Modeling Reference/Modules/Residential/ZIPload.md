@@ -18,7 +18,7 @@ Open the model [zip_loads.glm](https://github.com/gridlab-d/course/blob/master/T
 
 Looking at the two loads, you'll see that `b1m1_load_a` is defined in terms of the `constant_power`, `constant_current`, and `constant_voltage`. The default units for these value are W, A, and Ohms, respectively. Load `b1m1_load_b` has a very similar composite load but it is defined in the alternative style mentioned above. Running a simulation using this model and opening "meter_powers.csv" reveals that both of these loads have similar power over the duration of the simulation, at least to the precision of the values entered.
 
-![Zip load comparison scaled.png](../../../..//images\Zip_load_comparison_scaled.png)
+![Zip load comparison scaled.png](../../../../images/Zip_load_comparison_scaled.png)
 
 ### Modeling Approach
 
@@ -202,7 +202,7 @@ This model is representative of a "pool pump" or cycling model that is using a D
     
 
   
-**TODO**: : Examples for cycling, demand response and aggregate modes. 
+**TODO** - Examples - Examples for cycling, demand response and aggregate modes. 
 
 
 ### ZIPload State of Development
