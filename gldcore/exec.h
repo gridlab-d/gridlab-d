@@ -71,13 +71,13 @@ void exec_mls_statewait(unsigned states);
 //void exec_slave_node();
 int exec_run_createscripts(void);
 
-void exec_sync_reset(std::shared_ptr<struct sync_data>& d);
-void exec_sync_merge(std::shared_ptr<struct sync_data>& to, std::shared_ptr<struct sync_data>& from);
-void exec_sync_set(std::shared_ptr<struct sync_data>& d, TIMESTAMP t,bool deltaflag);
-TIMESTAMP exec_sync_get(std::shared_ptr<struct sync_data>& d);
-unsigned int exec_sync_getevents(std::shared_ptr<struct sync_data>& d);
+void exec_sync_reset(std::shared_ptr<struct sync_data> d);
+void exec_sync_merge(std::shared_ptr<struct sync_data> to, std::shared_ptr<struct sync_data> from);
+void exec_sync_set(std::shared_ptr<struct sync_data> d, TIMESTAMP t,bool deltaflag);
+TIMESTAMP exec_sync_get(std::shared_ptr<struct sync_data> d);
+unsigned int exec_sync_getevents(std::shared_ptr<struct sync_data> d);
 int exec_sync_ishard(std::shared_ptr<struct sync_data>& d);
-int exec_sync_isnever(std::shared_ptr<struct sync_data>& d);
+int exec_sync_isnever(std::shared_ptr<struct sync_data> d);
 int exec_sync_isinvalid(std::shared_ptr<struct sync_data>& d);
 STATUS exec_sync_getstatus(std::shared_ptr<struct sync_data>& d);
 

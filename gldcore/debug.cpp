@@ -1466,7 +1466,7 @@ DEBUGCMD exec_debug_cmd(std::shared_ptr<struct sync_data> &data, /**< the curren
 
 /** This is the main debugger processing loop
  **/
-int exec_debug(std::shared_ptr<struct sync_data> &data, /**< the current sync status of the mail loop */
+int exec_debug(std::shared_ptr<struct sync_data> data, /**< the current sync status of the mail loop */
 			   int pass,								/**< the current pass on the main loop */
 			   int index,								/**< the rank index */
 			   OBJECT *obj)								/**< the current object being processed */

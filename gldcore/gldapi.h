@@ -188,8 +188,6 @@ public:
      */
     std::map<std::string, std::string> get_object_properties(const std::string& object_name);
 
-    //Exit simulation
-    GLDErrorCode exit_gld(const std::string& filepath);
 
     // Simple object finding method
     void* find_object_by_name(const std::string& object_name);

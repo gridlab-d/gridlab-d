@@ -2,3 +2,5 @@
 	path = third_party/SuperLU
 	url = https://github.com/xiaoyeli/superlu.git
 	ignore = dirty
+[submodule "third_party/eigen"]
+	path = third_party/eigen

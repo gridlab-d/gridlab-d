@@ -38,9 +38,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 # Find Eigen
-find_package(Eigen3 REQUIRED NO_MODULE)
-
-# Include Eigen 
+set(EIGEN3_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/third_party/eigen")
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 

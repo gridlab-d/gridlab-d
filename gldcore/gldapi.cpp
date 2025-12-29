@@ -16,7 +16,6 @@
 #include "kml.h"
 #include "local.h"
 #include "exec.h"
-#include <json/json.h>
 //#include <module.h>
 //#include <module.h>
 
@@ -29,13 +28,10 @@
 #include <string>
 #include <system_error>
 #include <vector>
-#ifndef _WIN32
 #include "object.h"
 #include "kill.h"
 #include "globals.h"
 #include <nlohmann/json.hpp>
-// #include <module.h>
-// #include <module.h>
 
 #ifdef _WIN32
 #include <direct.h>
