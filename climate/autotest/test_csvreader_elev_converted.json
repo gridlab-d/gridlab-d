@@ -1,0 +1,40 @@
+{
+  "_directives": {
+    "#set": {
+      "minimum_timestep": "60;",
+      "suppress_repeat_messages": "FALSE;"
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2023-01-01 0:00:00'",
+    "stoptime": "'2023-12-31 23:59:00'"
+  },
+  "modules": {
+    "climate": {},
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {}
+  },
+  "objects": {
+    "csv_reader": {
+      "instances": [
+        {
+          "name": "CsvReader",
+          "filename": "../weather_elev.csv"
+        }
+      ]
+    },
+    "climate": {
+      "instances": [
+        {
+          "name": "climate",
+          "reader": "CsvReader",
+          "tmyfile": "../weather_elev.csv",
+          "interpolate": "QUADRATIC"
+        }
+      ]
+    }
+  }
+}

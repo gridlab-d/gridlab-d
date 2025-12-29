@@ -95,7 +95,7 @@ int particle_swarm_optimization::create(void)
 int particle_swarm_optimization::init(OBJECT *parent)
 {
 	//int rval;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	char buffer[1024];
 
 	if (cycle_interval == 0.0)
@@ -201,7 +201,7 @@ int particle_swarm_optimization::init(OBJECT *parent)
 //	change such that this value is once again optimal.
 TIMESTAMP particle_swarm_optimization::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if (prev_cycle_time != t0)	//New timestamp - accumulate
 	{
@@ -333,7 +333,7 @@ TIMESTAMP particle_swarm_optimization::presync(TIMESTAMP t0, TIMESTAMP t1)
 // Postsync is called when the clock needs to advance on the second top-down pass
 TIMESTAMP particle_swarm_optimization::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *my = OBJECTHDR(this);
+	OBJECT *my = object_header(this);
 	char buffer[1024];
 
 	if(t_next == 0 || t_next == t1)

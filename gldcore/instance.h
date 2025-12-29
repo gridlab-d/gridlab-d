@@ -8,6 +8,9 @@
 #ifndef _INSTANCE_H
 #define _INSTANCE_H
 
+#include <mutex>
+#include <condition_variable>
+
 #include "property.h"
 #include "timestamp.h"
 #include "linkage.h"
@@ -73,7 +76,8 @@ typedef struct s_instance {
 	unsigned int id;
 	char model[1024];
 	char execdir[1024];
-	pthread_t threadid;
+	//pthread_t threadid;
+	//std::thread threadid;
 
 	/* linkage information */
 	linkage *read;	///< link read from slave
@@ -127,13 +131,15 @@ typedef struct s_instance {
 			int shmid; ///<
 		};
 #endif
+		std::condition_variable_any sock_signal;
 		struct {
 			int sockfd; ///<
 			FILE *stream;
-			pthread_mutex_t sock_lock;
-			pthread_cond_t sock_signal;
-			pthread_mutex_t wait_lock;
-			pthread_cond_t wait_signal;
+			//pthread_mutex_t sock_lock;
+			unsigned int sock_lock;
+			//pthread_cond_t sock_signal;
+			//pthread_mutex_t wait_lock;
+			//pthread_cond_t wait_signal;
 			int has_data;
 			int has_data_lock;
 		};

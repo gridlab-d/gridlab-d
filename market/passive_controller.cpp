@@ -197,7 +197,7 @@ passive_controller::passive_controller(MODULE *mod)
 }
 
 void passive_controller::fetch_double(double **prop, const char *name, OBJECT *parent){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	*prop = gl_get_double_by_name(parent, name);
 	if(*prop == nullptr){
 		char tname[32];
@@ -213,7 +213,7 @@ void passive_controller::fetch_double(double **prop, const char *name, OBJECT *p
 }
 
 void passive_controller::fetch_int(int **prop, const char *name, OBJECT *parent){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	*prop = gl_get_int32_by_name(parent, name);
 	if(*prop == nullptr){
 		char tname[32];
@@ -229,7 +229,7 @@ void passive_controller::fetch_int(int **prop, const char *name, OBJECT *parent)
 }
 
 int passive_controller::create(){
-	memset(this, 0, sizeof(passive_controller));
+	//memset(this, 0, sizeof(passive_controller));
 	comfort_level = 1.0;
 	zipLoadParent = false;
 	pool_pump_model = false;
@@ -240,7 +240,7 @@ int passive_controller::create(){
 
 int passive_controller::init(OBJECT *parent){
 	
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	PROPERTY *enduseProperty;
 
 	if(parent == nullptr){
@@ -381,7 +381,7 @@ int passive_controller::init(OBJECT *parent){
 			// get the rated power consumed by the parent
 			fetch_double(&ratedPowerParent, "heating_element_capacity", parent);			
 			// cheating a little to get the unit of supervisor
-			market = OBJECTDATA(observation_object, supervisory_control);
+			market = /*OBJECTDATA(obj,<>)*/ object_data<supervisory_control>(observation_object);
 		}
 
 		if (voltage_lockout != 0 || observation_object != 0) { //we need to check the voltage of the parent 
@@ -453,7 +453,7 @@ int passive_controller::init(OBJECT *parent){
 		if (enduseProperty == nullptr)
 			GL_THROW("Unable to map base power property");
 			
-		current_load_enduse = (enduse*)GETADDR(parent,enduseProperty);
+		current_load_enduse = (enduse*)get_addr(parent,enduseProperty);
 
 		for(int32 i=0; i < ArraySize; i++){				
 				tier_prices[i] = 0;
@@ -751,7 +751,7 @@ TIMESTAMP passive_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 }
 
 TIMESTAMP passive_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	char ctrname[1024];
 	char spvrname[1024];
 	
@@ -1326,7 +1326,7 @@ int passive_controller::calc_ramp(TIMESTAMP t0, TIMESTAMP t1){
 
 int passive_controller::calc_dlc(TIMESTAMP t0, TIMESTAMP t1){
 	
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 		
 	if(output_state_addr != 0){
 		output_state = *(int *)output_state_addr;
@@ -1396,7 +1396,7 @@ int passive_controller::calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1){
 	
 	if (pool_pump_model == true)
 	{
-		OBJECT *hdr = OBJECTHDR(this);
+		OBJECT *hdr = object_header(this);
 		
 		if(output_state_addr != 0){
 			output_state = *(int *)output_state_addr;
@@ -1498,7 +1498,7 @@ int passive_controller::calc_proboff(TIMESTAMP t0, TIMESTAMP t1){
 }
 
 int passive_controller::calc_pfc(TIMESTAMP t0, TIMESTAMP t1){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	double direction = -1;
 		
 	if(output_state_addr != 0){ 
@@ -1625,7 +1625,7 @@ EXPORT int create_passive_controller(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(passive_controller::oclass);
 		if (*obj!=nullptr)
 		{
-			passive_controller *my = OBJECTDATA(*obj,passive_controller);
+			passive_controller *my = /*OBJECTDATA(obj,<>)*/ object_data<passive_controller>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -1640,7 +1640,7 @@ EXPORT int init_passive_controller(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr){
-			return OBJECTDATA(obj,passive_controller)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<passive_controller>(obj)->init(parent);
 		}
 		else
 			return 0;
@@ -1651,7 +1651,7 @@ EXPORT int init_passive_controller(OBJECT *obj, OBJECT *parent)
 EXPORT int isa_passive_controller(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,passive_controller)->isa(classname);
+		return /*OBJECTDATA(obj,<>)*/ object_data<passive_controller>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -1660,7 +1660,7 @@ EXPORT int isa_passive_controller(OBJECT *obj, char *classname)
 EXPORT TIMESTAMP sync_passive_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	passive_controller *my = OBJECTDATA(obj,passive_controller);
+	passive_controller *my = /*OBJECTDATA(obj,<>)*/ object_data<passive_controller>(obj);
 	try
 	{
 		switch (pass) {

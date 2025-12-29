@@ -4,34 +4,35 @@
 //
 
 #include <cstring>
+#include <thread>
 
 #include "server.h"
 
 extern CONNECTIONSECURITY connection_security;
 extern double connection_lockout;
 
-static void* tcp_handler(void *arg)
+void server::tcp_handler()
 {
-	server *srv = (server*)arg;
-	while ( srv->get_status()==server::READY )
-		srv->accept_tcp();
-	return 0;
+	//server *srv = (server*)arg;
+	while ( this->get_status()==server::READY )
+		this->accept_tcp();
+	//return 0;
 }
 
-static void* udp_handler(void *arg)
+void server::udp_handler()
 {
-	server *srv = (server*)arg;
-	while ( srv->get_status()==server::READY )
-		srv->accept_udp();
-	return 0;
+	//server *srv = (server*)arg;
+	while ( this->get_status()==server::READY )
+		this->accept_udp();
+	//return 0;
 }
 
-static void* msg_handler(void *arg)
+void server::msg_handler(RemoteSocket* client)
 {
-	RemoteSocket *client = (RemoteSocket *)arg;
+	//RemoteSocket *client = (RemoteSocket *)arg;
 	client->get_server()->process_msg(*client);
 	delete client;
-	return 0;
+	//return 0;
 }
 
 server::server(void)
@@ -100,19 +101,40 @@ int server::init(void)
 			status = READY;
 
 		// start handler
-		if ( pthread_create(&handler,nullptr,tcp_handler,(void*)this)!=0 )
+		/*if ( pthread_create(&handler,nullptr,tcp_handler,(void*)this)!=0 )
 		{
 			gl_error("%s: unable to start tcp handler", local.get_saddr());
 			return 0;
+		}*/
+
+		try {
+			// Create a thread and start the tcp_handler
+			std::thread handler(&server::tcp_handler, this);
+
+			// Detach the thread or join as needed
+			handler.detach();  // Detach the thread to let it run independently
+		}
+		catch (const std::system_error& e) {
+			gl_error("%s: unable to start tcp handler", local.get_saddr());
 		}
 	}
 	else if ( type==SOCK_DGRAM )
 	{
 		status = READY;
-		if ( pthread_create(&handler,nullptr,udp_handler,(void*)this)!=0 )
+		/*if ( pthread_create(&handler,nullptr,udp_handler,(void*)this)!=0 )
 		{
 			gl_error("%s: unable to start udp handler", local.get_saddr());
 			return 0;
+		}*/
+		try {
+			// Create a thread and start the tcp_handler
+			std::thread handler(&server::udp_handler, this);
+
+			// Detach the thread or join as needed
+			handler.detach();  // Detach the thread to let it run independently
+		}
+		catch (const std::system_error& e) {
+			gl_error("%s: unable to start udp handler", local.get_saddr());
 		}
 	}
 
@@ -127,8 +149,19 @@ void server::accept_tcp(void)
 	if ( client->accept(local) )
 	{
 		// process incoming messages as they arrive
-		if ( pthread_create(client->get_proc(),nullptr,msg_handler,(void*)client)!=0 )
-			gl_error("%s: unable to start stream handler for %s", local.get_saddr(), client->get_saddr());
+		/*if ( pthread_create(client->get_proc(),nullptr,msg_handler,(void*)client)!=0 )
+			gl_error("%s: unable to start stream handler for %s", local.get_saddr(), client->get_saddr());*/
+
+		try {
+			// Create a thread and start the tcp_handler
+			std::thread handler(&server::msg_handler, this, client);
+
+			// Detach the thread or join as needed
+			handler.detach();  // Detach the thread to let it run independently
+		}
+		catch (const std::system_error& e) {
+			gl_error("%s: unable to start msg handler", local.get_saddr());
+		}
 	}
 
 	// only an error if not interrupted
@@ -151,8 +184,25 @@ void server::accept_udp(void)
 		break;
 	default:
 		// begin processing incoming messages as they arrive
-		if ( pthread_create(client->get_proc(),nullptr,msg_handler,(void*)client)!=0 )
+		//if ( pthread_create(client->get_proc(),nullptr,msg_handler,(void*)client)!=0 )
+			//gl_error("%s: unable to start datagram handler", local.get_saddr());
+
+		try {
+			// Create a thread for message handling
+			
+			// If msg_handler has parameters
+			client->proc = std::thread([this, client]() {
+				this->msg_handler(client);
+				});
+
+			// Detach the thread or join later as needed
+			client->proc.detach();  // Allow the thread to run independently
+		}
+		catch (const std::system_error& e) {
+			// Handle thread creation failure
 			gl_error("%s: unable to start datagram handler", local.get_saddr());
+		}
+
 		break;
 	}
 	return;

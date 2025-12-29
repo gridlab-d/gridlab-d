@@ -512,7 +512,7 @@ public:
 	STATUS init_PID_dynamics(void);
 #ifdef OPTIONAL
 	static CLASS *pclass; /**< defines the parent class */
-	TIMESTAMPP plc(TIMESTAMP t0, TIMESTAMP t1); /**< defines the default PLC code */
+	TIMESTAMP plc(TIMESTAMP t0, TIMESTAMP t1); /**< defines the default PLC code */
 #endif
 };
 

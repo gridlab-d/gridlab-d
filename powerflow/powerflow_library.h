@@ -16,8 +16,8 @@ class powerflow_library : public gld_object
 public:
 	static CLASS *oclass; 
 	static CLASS *pclass;
-	inline const char *get_name(void) const { static char tmp[128]; OBJECT *obj=OBJECTHDR(this); return obj->name?obj->name:(sprintf(tmp,"%s:%d",obj->oclass->name,obj->id)>0?tmp:"(unknown)");};
-	inline unsigned int get_id(void) const {return OBJECTHDR(this)->id;};
+	inline const char *get_name(void) const { static char tmp[128]; OBJECT *obj=object_header(this); return obj->name?obj->name:(sprintf(tmp,"%s:%d",obj->oclass->name,obj->id)>0?tmp:"(unknown)");};
+	inline unsigned int get_id(void) const {return object_header(this)->id;};
 
 public:
 	int create(void);

@@ -96,7 +96,7 @@ int line::create()
 
 int line::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	gld_property *fNode_nominal, *tNode_nominal;
 	double f_nominal_voltage, t_nominal_voltage;
 	gld::complex Zabc_mat_temp[3][3], Yabc_mat_temp[3][3];
@@ -180,7 +180,7 @@ int line::isa(char *classname)
 
 void line::load_matrix_based_configuration(gld::complex Zabc_mat[3][3], gld::complex Yabc_mat[3][3])
 {
-	line_configuration *config = OBJECTDATA(configuration, line_configuration);
+	line_configuration *config = object_data<line_configuration>(configuration);
 	double miles;
 	gld::complex cap_freq_mult;
 
@@ -242,7 +242,7 @@ void line::load_matrix_based_configuration(gld::complex Zabc_mat[3][3], gld::com
 	{
 		if (!use_line_cap)
 		{
-			gl_warning("Shunt capacitance of line:%s specified without setting powerflow::line_capacitance = TRUE. Shunt capacitance will be ignored.",OBJECTHDR(this)->name);
+			gl_warning("Shunt capacitance of line:%s specified without setting powerflow::line_capacitance = TRUE. Shunt capacitance will be ignored.",object_header(this)->name);
 
 			for (int i = 0; i < 3; i++) 
 			{
@@ -402,7 +402,7 @@ EXPORT TIMESTAMP commit_line(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if (solver_method==SM_FBS)
 	{
-		line *plink = OBJECTDATA(obj,line);
+		line *plink =  object_data<line>(obj);
 		plink->calculate_power();
 	}
 	return TS_NEVER;
@@ -415,7 +415,7 @@ EXPORT int create_line(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(line::oclass);
 		if (*obj!=nullptr)
 		{
-			line *my = OBJECTDATA(*obj,line);
+			line *my = /*OBJECTDATA(obj,<>)*/ object_data<line>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -428,7 +428,7 @@ EXPORT int create_line(OBJECT **obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		line *pObj = OBJECTDATA(obj,line);
+		line *pObj = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -449,7 +449,7 @@ EXPORT TIMESTAMP sync_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int init_line(OBJECT *obj)
 {
 	try {
-		line *my = OBJECTDATA(obj,line);
+		line *my = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(line);
@@ -457,7 +457,7 @@ EXPORT int init_line(OBJECT *obj)
 
 EXPORT int isa_line(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,line)->isa(classname);
+	return /*OBJECTDATA(obj,<>)*/ object_data<line>(obj)->isa(classname);
 }
 
 /**@}**/

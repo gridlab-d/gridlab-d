@@ -7,7 +7,7 @@
 #include "socket.h"
 
 #ifdef _WIN32
-#define snprintf _snprintf
+//#define snprintf _snprintf
 #endif
 
 Socket::Socket(int pf, int type, int prot)

@@ -147,7 +147,7 @@ int thermal_storage::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 	gld_property *design_cooling_capacity_prop;
 	double design_cooling_capacity;
@@ -350,7 +350,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;
 	next_timestep = TS_NEVER;
 	double actual_recharge_power, outside_temperature_val;
-	gld_wlock *test_rlock;
+	unsigned int test_rlock = 0;
 	bool temp_bool_val;
 
 	//Make sure we aren't on the first run
@@ -409,7 +409,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			//Recharge cycle, so ES is not available
 			temp_bool_val = false;
-			thermal_storage_available->setp<bool>(temp_bool_val,*test_rlock);
+			thermal_storage_available->setp<bool>(temp_bool_val,test_rlock);
 
 			actual_recharge_power = recharge_power * (1 + (75 - outside_temperature_val) * 0.0106);
 			if (last_timestep != t0) //only calculate energy once per timestep
@@ -439,20 +439,20 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (*recharge_time_ptr != 1 && *discharge_time_ptr == 1 && state_of_charge > 0 && outside_temperature_val >=15)
 		//not set to recharge, set to discharge, has charge to use and the outside air temperature is above 15 deg F
 		{
-			thermal_storage_active->getp<bool>(temp_bool_val,*test_rlock);
+			thermal_storage_active->getp<bool>(temp_bool_val,test_rlock);
 			if (temp_bool_val == false)	last_timestep = t0; //don't run energy calculations when first turned on
 
 
 			temp_bool_val = true;
-			thermal_storage_available->setp<bool>(temp_bool_val,*test_rlock);
+			thermal_storage_available->setp<bool>(temp_bool_val,test_rlock);
 
 		} else {
 			temp_bool_val = false;
-			thermal_storage_available->setp<bool>(temp_bool_val,*test_rlock);
+			thermal_storage_available->setp<bool>(temp_bool_val,test_rlock);
 		}
 
 		//Pull the bool value to see if we're active or not
-		thermal_storage_active->getp<bool>(temp_bool_val,*test_rlock);
+		thermal_storage_active->getp<bool>(temp_bool_val,test_rlock);
 
 		//Discharge cycle
 		if (recharge == 0 && *discharge_time_ptr == 1 && (temp_bool_val == true))
@@ -461,7 +461,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				//Capacity available - flag as available
 				temp_bool_val = true;
-				thermal_storage_available->setp<bool>(temp_bool_val,*test_rlock);
+				thermal_storage_available->setp<bool>(temp_bool_val,test_rlock);
 
 				if (last_timestep != t0) //only calculate energy once per timestep
 				{
@@ -477,7 +477,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				//Out of capacity - flag as unavailable
 				temp_bool_val = false;
-				thermal_storage_available->setp<bool>(temp_bool_val,*test_rlock);
+				thermal_storage_available->setp<bool>(temp_bool_val,test_rlock);
 
 				state_of_charge = 0;
 				load.power = 0;
@@ -514,7 +514,7 @@ EXPORT int create_thermal_storage(OBJECT **obj, OBJECT *parent)
 	*obj = gl_create_object(thermal_storage::oclass);
 	if (*obj!=nullptr)
 	{
-		thermal_storage *my = OBJECTDATA(*obj,thermal_storage);
+		thermal_storage *my = object_data<thermal_storage>(*obj);
 		gl_set_parent(*obj,parent);
 		try {
 			my->create();
@@ -535,7 +535,7 @@ EXPORT int create_thermal_storage(OBJECT **obj, OBJECT *parent)
 
 EXPORT int init_thermal_storage(OBJECT *obj)
 {
-	thermal_storage *my = OBJECTDATA(obj,thermal_storage);
+	thermal_storage *my = object_data<thermal_storage>(obj);
 	try {
 		return my->init(obj->parent);
 	}
@@ -553,7 +553,7 @@ EXPORT int init_thermal_storage(OBJECT *obj)
 EXPORT int isa_thermal_storage(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,thermal_storage)->isa(classname);
+		return object_data<thermal_storage>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -561,7 +561,7 @@ EXPORT int isa_thermal_storage(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_thermal_storage(OBJECT *obj, TIMESTAMP t1)
 {
-	thermal_storage *my = OBJECTDATA(obj,thermal_storage);
+	thermal_storage *my = object_data<thermal_storage>(obj);
 	try {
 		TIMESTAMP t2 = my->sync(obj->clock, t1);
 		obj->clock = t1;

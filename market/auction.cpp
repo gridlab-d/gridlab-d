@@ -38,7 +38,7 @@ EXPORT int64 get_market_for_time(OBJECT *obj, TIMESTAMP ts){
 			*/
 		return -1;
 	}
-	pAuc = OBJECTDATA(obj, auction);
+	pAuc = /*OBJECTDATA(obj,<>)*/ object_data<auction>(obj);
 	// find when the current market started
 	market_time = gl_globalclock + pAuc->period + pAuc->latency - ((gl_globalclock + pAuc->period) % pAuc->period);
 	if(ts < market_time){
@@ -234,7 +234,7 @@ int auction::create(void)
 		} // else some number of statistics came back
 	}
 	for(stat = stats; stat != nullptr; stat = stat->next){
-		gl_set_value(OBJECTHDR(this), stat->prop, val);
+		gl_set_value(object_header(this), stat->prop, val);
 	}
 	statistic_mode = ST_ON;
 	fixed_uncontrollable_load = -1;
@@ -244,7 +244,7 @@ int auction::create(void)
 /* Object initialization is called once after all object have been created */
 int auction::init(OBJECT *parent)
 {
-	OBJECT *obj=OBJECTHDR(this);
+	OBJECT *obj=object_header(this);
 	unsigned int i = 0;
 
 	if(capacity_reference_object != nullptr){
@@ -458,7 +458,7 @@ int auction::init_statistics(){
 	STATISTIC *tail = 0;
 	STATISTIC statprop;
 	PROPERTY *prop = oclass->pmap;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	for(prop = oclass->pmap; prop != nullptr; prop = prop->next){
 		char frame[32], price[32], stat[32], period[32], period_unit[32];
 		memset(&statprop, 0, sizeof(STATISTIC));
@@ -530,7 +530,7 @@ int auction::init_statistics(){
 }
 
 int auction::update_statistics(){
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	STATISTIC *current = 0;
 	uint32 sample_need = 0;
 	unsigned int start = 0, stop = 0;
@@ -626,7 +626,7 @@ int auction::update_statistics(){
 /*	Take the current market values and enqueue them on the end of the latency frame queue. */
 int auction::push_market_frame(TIMESTAMP t1){
 	MARKETFRAME *frame = 0;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	STATISTIC *stat = stats;
 	double *stats = 0;
 	int64 frame_addr = latency_stride * latency_back + (int64)framedata;
@@ -675,7 +675,7 @@ int auction::check_next_market(TIMESTAMP t1){
 	MARKETFRAME *frame = 0;
 	frame = (MARKETFRAME *)(latency_front * this->latency_stride + (int64)framedata);
 	if(frame->start_time > t1 && frame->start_time <= t1 + period){
-		OBJECT *obj = OBJECTHDR(this);
+		OBJECT *obj = object_header(this);
 		MARKETFRAME *nframe = frame;
 		unsigned int i = 0;
 		STATISTIC *stat;
@@ -705,7 +705,7 @@ int auction::check_next_market(TIMESTAMP t1){
 /*	Fill in the exposed current market values with those within the */
 TIMESTAMP auction::pop_market_frame(TIMESTAMP t1){
 	MARKETFRAME *frame = 0;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	STATISTIC *stat = stats;
 	double *stats = 0;
 	uint32 i = 0;
@@ -759,7 +759,7 @@ TIMESTAMP auction::presync(TIMESTAMP t0, TIMESTAMP t1)
 		update_statistics();
 		char buffer[256];
 		char myname[64];
-		if (verbose) gl_output("   ...%s first clearing at %s", gl_name(OBJECTHDR(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+		if (verbose) gl_output("   ...%s first clearing at %s", gl_name(object_header(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 	}
 	else
 	{
@@ -778,7 +778,7 @@ TIMESTAMP auction::presync(TIMESTAMP t0, TIMESTAMP t1)
 		gl_localtime(clearat,&dt);
 		char buffer[256];
 		char myname[64];
-		if (verbose) gl_output("   ...%s clearing process started at %s", gl_name(OBJECTHDR(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+		if (verbose) gl_output("   ...%s clearing process started at %s", gl_name(object_header(this),myname,sizeof(myname)), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 
 		/* clear market */
 		thishr = dt.hour;
@@ -793,7 +793,7 @@ TIMESTAMP auction::presync(TIMESTAMP t0, TIMESTAMP t1)
 		// kick this over every hour to prevent odd behavior
 		checkat = gl_globalclock + (TIMESTAMP)(3600.0 - fmod(gl_globalclock+3600.0,3600.0));
 		gl_localtime(clearat,&dt);
-		if (verbose) gl_output("   ...%s opens for clearing of market_id %d at %s", gl_name(OBJECTHDR(this),name,sizeof(name)), (int32)market_id, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+		if (verbose) gl_output("   ...%s opens for clearing of market_id %d at %s", gl_name(object_header(this),name,sizeof(name)), (int32)market_id, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 	}
 
 	return -clearat; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
@@ -848,7 +848,7 @@ void auction::record_curve(double bu, double su){
 				sprintf(tstr, "failure");
 				break;
 		}
-		fprintf(curve_file, "# marginal quantity of %f %s (%f %%)\n", cleared_frame.marginal_quantity, this->unit.get_string(), cleared_frame.marginal_frac);
+		fprintf(curve_file, "# marginal quantity of %f %s (%f %%)\n", cleared_frame.marginal_quantity, this->unit, cleared_frame.marginal_frac);
 		fprintf(curve_file, "# curve cleared %f at $%f with %s type\n", cleared_frame.clearing_quantity, cleared_frame.clearing_price, tstr);
 	}
 
@@ -893,15 +893,15 @@ void auction::clear_market(void)
 
 		if(strcmp(unit, "") != 0){
 			if(capacity_reference_property->unit != 0){
-				if(gl_convert(capacity_reference_property->unit->name,unit.get_string(),&refload) == 0){
+				if(gl_convert(capacity_reference_property->unit->name,unit,&refload) == 0){
 					char msg[256];
-					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", capacity_reference_property->name, capacity_reference_property->unit->name, unit.get_string());
+					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", capacity_reference_property->name, capacity_reference_property->unit->name, unit);
 					throw msg;
 					/* TROUBLESHOOT
 						If capacity_reference_property has units specified, the units must be convertable to the units used by its auction object.
 						*/
 				} else if (verbose){
-					gl_output("capacity_reference_property converted %.3f %s to %.3f %s", *pRefload, capacity_reference_property->unit->name, refload, unit.get_string());
+					gl_output("capacity_reference_property converted %.3f %s to %.3f %s", *pRefload, capacity_reference_property->unit->name, refload, unit);
 				}
 			} // else assume same units
 		}
@@ -944,12 +944,12 @@ void auction::clear_market(void)
 		caprefq = *pCaprefq;
 		if(strcmp(unit, "") != 0) {
 			if (capacity_reference_property->unit != 0) {
-				if(gl_convert(capacity_reference_property->unit->name,unit.get_string(),&caprefq) == 0) {
+				if(gl_convert(capacity_reference_property->unit->name,unit,&caprefq) == 0) {
 					char msg[256];
-					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", capacity_reference_property->name, capacity_reference_property->unit->name, unit.get_string());
+					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", capacity_reference_property->name, capacity_reference_property->unit->name, unit);
 					throw msg;
 				} else {
-					submit_nolock((char *)OBJECTHDR(this)->name, max_capacity_reference_bid_quantity, capacity_reference_bid_price, (int64)OBJECTHDR(this)->id, BS_ON, false, market_id);
+					submit_nolock((char *)object_header(this)->name, max_capacity_reference_bid_quantity, capacity_reference_bid_price, (int64)object_header(this)->id, BS_ON, false, market_id);
 					if (verbose) gl_output("Capacity reference object: %s bids %.2f at %.2f", capacity_reference_object->name, max_capacity_reference_bid_quantity, capacity_reference_bid_price);
 				}
 			}
@@ -968,7 +968,38 @@ void auction::clear_market(void)
 			}
 			for (unsigned int i=0; i<offers.getcount(); i++){
 				if (verbose){
-					gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,offers.getbid(i)->from, offers.getbid(i)->quantity,unit.get_string(),offers.getbid(i)->price,unit.get_string());
+
+					// --- Inside your loop that iterates with 'i' ---
+
+					// 1. Call the function ONCE and store the pointer in a local variable.
+					auto offer = offers.getbid(i);
+
+					// 2. *** ALWAYS CHECK THE POINTER FOR NULL BEFORE USING IT. ***
+					if (offer != nullptr)
+					{
+						// 3. It's now safe to access the members of the 'offer' object.
+						// Also, continue to apply defensive checks for other pointers like 'unit' and 'from'.
+						//const char* safe_unit_str = unit ? unit : "N/A";
+						const char* safe_unit_str = unit ? static_cast<const char*>(unit) : "N/A";
+						const char* safe_from_str = offer->from ? offer->from : "unknown_source";
+
+						gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",
+							i,
+							safe_from_str,
+							offer->quantity,
+							safe_unit_str,
+							offer->price,
+							safe_unit_str);
+					}
+					else
+					{
+						// 4. (Optional but highly recommended) The pointer was NULL.
+						// Log a warning or debug message so you know why some data is missing from the output.
+						gl_warning("Offer at index %d is NULL and was skipped in output.", i);
+					}
+
+					// --- Continue the loop ---
+				/*	gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,offers.getbid(i)->from, offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);*/
 				}
 			}
 			if(fixed_price * fixed_quantity != 0.0){
@@ -1020,7 +1051,37 @@ void auction::clear_market(void)
 			}
 			for (unsigned int i=0; i<asks.getcount(); i++){
 				if (verbose){
-					gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,asks.getbid(i)->from, asks.getbid(i)->quantity,unit.get_string(),asks.getbid(i)->price,unit.get_string());
+					// --- Inside your loop that iterates with 'i' ---
+
+					// 1. Call the function ONCE and store the result in a local pointer variable.
+					auto bid = asks.getbid(i); // Or use the specific pointer type, e.g., const BidObject* bid = ...
+
+					// 2. *** ALWAYS CHECK THE POINTER FOR NULL BEFORE USING IT. ***
+					if (bid != nullptr)
+					{
+						// 3. Now that we know 'bid' is a valid pointer, it is safe to access its members.
+						// We should also continue to apply the lessons from before and check other pointers like 'unit'.
+						//const char* safe_unit_str = unit ? unit : "N/A";
+						const char* safe_unit_str = unit ? static_cast<const char*>(unit) : "N/A";
+						const char* safe_from_str = bid->from ? bid->from : "unknown_source";
+
+						gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",
+							i,
+							safe_from_str,
+							bid->quantity,
+							safe_unit_str,
+							bid->price,
+							safe_unit_str);
+					}
+					else
+					{
+						// 4. (Optional but highly recommended) The pointer was NULL.
+						// Log a warning so you know why some output might be missing.
+						gl_warning("ask bid at index %d is NULL and was skipped.", i);
+					}
+
+					// --- Continue the loop ---
+					//gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,asks.getbid(i)->from, asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);
 				}
 			}
 			if(fixed_price * fixed_quantity != 0.0){
@@ -1067,7 +1128,7 @@ void auction::clear_market(void)
 				gl_warning("Seller-only auction was given purchasing bids");
 			}
 			asks.clear();
-			submit((char *)OBJECTHDR(this)->name, -fixed_quantity, fixed_price, (int64)OBJECTHDR(this)->id, BS_ON, false, market_id);
+			submit((char *)object_header(this)->name, -fixed_quantity, fixed_price, (int64)object_header(this)->id, BS_ON, false, market_id);
 			break;
 		case MD_FIXED_BUYER:
 			asks.sort(true);
@@ -1075,7 +1136,7 @@ void auction::clear_market(void)
 				gl_warning("Buyer-only auction was given offering bids");
 			}
 			offers.clear();
-			submit((char *)OBJECTHDR(this)->name, fixed_quantity, fixed_price, (int64)OBJECTHDR(this)->id, BS_ON, false, market_id);
+			submit((char *)object_header(this)->name, fixed_quantity, fixed_price, (int64)object_header(this)->id, BS_ON, false, market_id);
 			break;
 		case MD_NONE:
 			offers.sort(false);
@@ -1089,9 +1150,48 @@ void auction::clear_market(void)
 		DATETIME dt;
 		TIMESTAMP submit_time = gl_globalclock;
 		gl_localtime(submit_time,&dt);
+		
 		if (verbose){
-			gl_output("   ...  %s clears %.2f %s at $%.2f/%s at %s", gl_name(OBJECTHDR(this),name,sizeof(name)),
-				next.quantity, unit.get_string(), next.price, unit.get_string(), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+
+			// --- Defensive Calling Pattern to Isolate the Segfault ---
+
+			// 1. Store every argument in a local variable FIRST.
+			const char* arg1_name = gl_name(object_header(this), name, sizeof(name));
+			double      arg2_qty = next.quantity;
+			const char* arg3_unit = unit;
+			double      arg4_price = next.price;
+			const char* arg5_unit = unit; // Same as arg3, but let's be explicit
+
+			// 2. Use a SEPARATE, LOCAL buffer for gl_strtime to avoid conflicts.
+			char time_buffer[256];
+			const char* arg6_time = gl_strtime(&dt, time_buffer, sizeof(time_buffer)) ? time_buffer : "unknown time";
+
+			// 3. Print every single argument to stderr to verify their values before the call.
+			// This will immediately show you if any pointer is NULL or if a double is garbage.
+			//fprintf(stderr, "DEBUG: Pre-call to gl_output:\n");
+			//fprintf(stderr, "  Format: \"... %%s clears %%.2f %%s at $%%.2f/%%s at %%s\"\n");
+			//fprintf(stderr, "  Arg 1 (name): %s\n", arg1_name ? arg1_name : "NULL");
+			//fprintf(stderr, "  Arg 2 (qty):  %.2f\n", arg2_qty);
+			//fprintf(stderr, "  Arg 3 (unit): %s\n", arg3_unit ? arg3_unit : "NULL");
+			//fprintf(stderr, "  Arg 4 (price):%.2f\n", arg4_price);
+			//fprintf(stderr, "  Arg 5 (unit): %s\n", arg5_unit ? arg5_unit : "NULL");
+			//fprintf(stderr, "  Arg 6 (time): %s\n", arg6_time ? arg6_time : "NULL");
+			//fflush(stderr); // Make sure the debug output appears before a crash
+
+			// 4. Now, make the call using the safe, local variables.
+			gl_output("   ...  %s clears %.2f %s at $%.2f/%s at %s",
+				arg1_name,
+				arg2_qty,
+				arg3_unit,
+				arg4_price,
+				arg5_unit,
+				arg6_time);
+
+			/*fprintf(stderr, "DEBUG: Post-call to gl_output succeeded.\n");
+			fflush(stderr);*/
+
+			//gl_output("   ...  %s clears %.2f %s at $%.2f/%s at %s", gl_name(object_header(this),name,sizeof(name)),
+				//next.quantity, unit, next.price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 		}
 	} else if ((asks.getcount()>0) && offers.getcount()>0)
 	{
@@ -1120,7 +1220,37 @@ void auction::clear_market(void)
 			}
 			for (i=0; i<offers.getcount(); i++){
 				if (verbose){
-					gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,offers.getbid(i)->from, offers.getbid(i)->quantity,unit.get_string(),offers.getbid(i)->price,unit.get_string());
+					// --- Inside your loop that iterates with 'i' ---
+
+					// 1. Call the function ONCE and store the returned pointer in a local variable.
+					auto offer = offers.getbid(i);
+
+					// 2. *** ALWAYS CHECK IF THE POINTER IS NULL BEFORE USING IT. ***
+					if (offer != nullptr)
+					{
+						// 3. Now it is safe to access the members of the 'offer' object.
+						// As a best practice, also guard any other pointers that could be null.
+						//const char* safe_unit_str = unit ? unit : "N/A";
+						const char* safe_unit_str = unit ? static_cast<const char*>(unit) : "N/A";
+						const char* safe_from_str = offer->from ? offer->from : "unknown_source";
+
+						gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",
+							i,
+							safe_from_str,
+							offer->quantity,
+							safe_unit_str,
+							offer->price,
+							safe_unit_str);
+					}
+					else
+					{
+						// 4. (Optional but strongly recommended) Log a warning that the offer was null.
+						// This helps in debugging why some data might be missing from your output.
+						gl_warning("Offer at index %d was not found (is NULL).", i);
+					}
+
+					// --- Continue the loop ---
+					//gl_output("   ...  %4d: %s offers %.3f %s at %.2f $/%s",i,offers.getbid(i)->from, offers.getbid(i)->quantity,unit,offers.getbid(i)->price,unit);
 				}
 				if(offers.getbid(i)->price == -pricecap){
 					unresponsive_sell += offers.getbid(i)->quantity;
@@ -1134,7 +1264,34 @@ void auction::clear_market(void)
 			}
 			for (i=0; i<asks.getcount(); i++){
 				if (verbose){
-					gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,asks.getbid(i)->from, asks.getbid(i)->quantity,unit.get_string(),asks.getbid(i)->price,unit.get_string());
+					// A. Call the function ONCE and store the result in a local pointer.
+					const BID* bid = asks.getbid(i);
+
+					// B. *** CHECK IF THE POINTER IS NULL BEFORE USING IT. ***
+					if (bid != nullptr)
+					{
+						// C. Now it is safe to use the 'bid' pointer.
+						// We also continue to guard against other potentially null pointers.
+						const char* safe_from_str = "unknown_seller"; //bid->from ? bid->from : "unknown_seller";
+
+						//const char* safe_unit_str = unit ? unit : "N/A";
+						const char* safe_unit_str = unit ? static_cast<const char*>(unit) : "N/A";
+
+						gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",
+							i,
+							safe_from_str,
+							bid->quantity,
+							safe_unit_str,
+							bid->price,
+							safe_unit_str);
+					}
+					else
+					{
+						// D. The pointer was NULL. Log a warning instead of crashing.
+						gl_warning("Ask at index %d is NULL and was skipped.", i);
+					}
+
+					/*gl_output("   ...  %4d: %s asks %.3f %s at %.2f $/%s",i,asks.getbid(i)->from, asks.getbid(i)->quantity,unit,asks.getbid(i)->price,unit);*/
 				}
 				if(asks.getbid(i)->price == pricecap){
 					unresponsive_buy += asks.getbid(i)->quantity;
@@ -1311,7 +1468,32 @@ void auction::clear_market(void)
 	
 		/* post the price */
 		char name[64];
-		if (verbose) gl_output("   ...  %s clears %.2f %s at $%.2f/%s at %s", gl_name(OBJECTHDR(this),name,sizeof(name)), clear.quantity, unit.get_string(), clear.price, unit.get_string(), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+		if (verbose) {
+			// 1. Use a dedicated local buffer for the name.
+			char name_buffer[64];
+			const char* safe_name_str = gl_name(object_header(this), name_buffer, sizeof(name_buffer));
+
+			// 2. Use a dedicated local buffer for the time to prevent buffer aliasing.
+			char time_buffer[64];
+			const char* safe_time_str = gl_strtime(&dt, time_buffer, sizeof(time_buffer))
+				? time_buffer
+				: "unknown time";
+
+			// 3. Guard against a potentially null 'unit' pointer.
+			//const char* safe_unit_str = unit ? unit : "N/A";
+			const char* safe_unit_str = unit ? static_cast<const char*>(unit) : "N/A";
+
+			// 4. Now make the final call with safe, validated variables.
+			gl_output("   ...  %s clears %.2f %s at $%.2f/%s at %s",
+				safe_name_str,
+				clear.quantity,
+				safe_unit_str,
+				clear.price,
+				safe_unit_str,
+				safe_time_str);
+
+			//gl_output("   ...  %s clears %.2f %s at $%.2f/%s at %s", gl_name(object_header(this), name, sizeof(name)), clear.quantity, unit, clear.price, unit, gl_strtime(&dt, buffer, sizeof(buffer)) ? buffer : "unknown time");
+		}
 		next.price = clear.price;
 		next.quantity = clear.quantity;
 	}
@@ -1329,7 +1511,7 @@ void auction::clear_market(void)
 		}
 		next.quantity = 0;
 		clearing_type = CT_NULL;
-		gl_warning("market '%s' fails to clear due to missing %s", gl_name(OBJECTHDR(this),name,sizeof(name)), asks.getcount()==0?(offers.getcount()==0?"buyers and sellers":"buyers"):"sellers");
+		gl_warning("market '%s' fails to clear due to missing %s", gl_name(object_header(this),name,sizeof(name)), asks.getcount()==0?(offers.getcount()==0?"buyers and sellers":"buyers"):"sellers");
 	}
 	
 	double marginal_total = 0.0;
@@ -1414,7 +1596,7 @@ void auction::clear_market(void)
 		check_next_market(gl_globalclock);
 	} else {
 		STATISTIC *stat = 0;
-		OBJECT *obj = OBJECTHDR(this);
+		OBJECT *obj = object_header(this);
 		memcpy(&past_frame, &current_frame, sizeof(MARKETFRAME)); // just the frame
 		// ~ copy new data in
 		current_frame.market_id = cleared_frame.market_id;
@@ -1490,7 +1672,9 @@ void auction::record_bid(char *from, double quantity, double real_price, BIDDERS
 
 int auction::submit(char *from, double quantity, double real_price, KEY key, BIDDERSTATE state, bool rebid, int64 mkt_id)
 {
-	gld_wlock lock(my());
+	//gld_wlock lock(my());
+	//replace the above with SharedMutexManager
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(my())); // exclusive lock for writing
 	return submit_nolock(from,quantity,real_price,key,state, rebid, mkt_id);
 }
 int auction::submit_nolock(char *from, double quantity, double real_price, KEY key, BIDDERSTATE state, bool rebid, int64 mkt_id)
@@ -1509,14 +1693,14 @@ int auction::submit_nolock(char *from, double quantity, double real_price, KEY k
 	/* suppress demand bidding until market stabilizes */
 	unsigned int sph24 = (unsigned int)(3600/period*24);
 	if(real_price > pricecap){
-		gl_warning("%s received a bid above the price cap, truncating", gl_name(OBJECTHDR(this),myname,sizeof(myname)));
+		gl_warning("%s received a bid above the price cap, truncating", gl_name(object_header(this),myname,sizeof(myname)));
 		price = pricecap;
 	} else {
 		price = real_price;
 	}
 	if (total_samples<sph24 && quantity<0 && warmup)
 	{
-		if (verbose) gl_output("   ...  %s ignoring demand bid during first 24 hours", gl_name(OBJECTHDR(this),myname,sizeof(myname)));
+		if (verbose) gl_output("   ...  %s ignoring demand bid during first 24 hours", gl_name(object_header(this),myname,sizeof(myname)));
 		return 1;
 	}
 
@@ -1544,9 +1728,39 @@ int auction::submit_nolock(char *from, double quantity, double real_price, KEY k
 	{
 		KEY out;
 		if (verbose){
-			gl_output("   ...  %s resubmits %s from object %s for %.2f %s at $%.2f/%s at %s", 
-				gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", from,
-				fabs(quantity), unit.get_string(), price, unit.get_string(), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+
+
+			// 1. Store the name in a dedicated local buffer.
+			char name_buffer[64];
+			const char* name_str = gl_name(object_header(this), name_buffer, sizeof(name_buffer));
+
+			// 2. Use a dedicated local buffer for the time to PREVENT BUFFER ALIASING.
+			char time_buffer[64];
+			const char* time_str = gl_strtime(&dt, time_buffer, sizeof(time_buffer))
+				? time_buffer
+				: "unknown time";
+
+			// 3. Use the ternary operator to GUARD AGAINST NULL POINTERS for all string arguments.
+			const char* safe_name_str = name_str ? name_str : "unknown_object";
+			const char* safe_from_str = from ? from : "unknown_source";
+			//const char* safe_unit_str = unit ? unit : "N/A";
+			const char* safe_unit_str = unit ? static_cast<const char*>(unit) : "N/A";
+
+			// 4. Now make the final, safe call with validated local variables.
+			gl_output("   ...  %s resubmits %s from object %s for %.2f %s at $%.2f/%s at %s",
+				safe_name_str,
+				(quantity < 0 ? "ask" : "offer"),
+				safe_from_str,
+				fabs(quantity),
+				safe_unit_str,
+				price,
+				safe_unit_str,
+				time_str);
+
+
+			//gl_output("   ...  %s resubmits %s from object %s for %.2f %s at $%.2f/%s at %s", 
+			//	gl_name(object_header(this),myname,sizeof(myname)), quantity<0?"ask":"offer", from,
+			//	fabs(quantity), unit, price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 		}
 		BID bid = {from,b_id,fabs(quantity),price,state};
 		if (quantity < 0){
@@ -1577,9 +1791,34 @@ int auction::submit_nolock(char *from, double quantity, double real_price, KEY k
 		char biddername[64];
 		KEY out;
 		if (verbose){
-			gl_output("   ...  %s receives %s from object %s for %.2f %s at $%.2f/%s at %s", 
-				gl_name(OBJECTHDR(this),myname,sizeof(myname)), quantity<0?"ask":"offer", from,
-				fabs(quantity), unit.get_string(), price, unit.get_string(), gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
+
+			// --- Defensive and Corrected Call to gl_output ---
+
+			// 1. Use a separate, local buffer for the time string to avoid aliasing.
+			char time_buffer[64];
+			const char* time_str = gl_strtime(&dt, time_buffer, sizeof(time_buffer))
+				? time_buffer
+				: "unknown time";
+
+			// 2. Use the ternary operator to guard against NULL pointers for all %s arguments.
+			const char* safe_name_str = gl_name(object_header(this), myname, sizeof(myname));
+			const char* safe_unit_str = unit;
+
+			// 3. Make the safe call.
+			gl_output("   ...  %s receives %s from object %s for %.2f %s at $%.2f/%s at %s",
+				(safe_name_str ? safe_name_str : "unknown_object"), // Guard against NULL from gl_name
+				(quantity < 0 ? "ask" : "offer"),
+				(from ? from : "unknown_source"),                   // Guard against NULL from
+				fabs(quantity),
+				(safe_unit_str ? safe_unit_str : "N/A"),            // *** THE MAIN FIX ***
+				price,
+				(safe_unit_str ? safe_unit_str : "N/A"),            // *** THE MAIN FIX ***
+				time_str);                                          // Use the safe, separate time buffer
+
+
+			//gl_output("   ...  %s receives %s from object %s for %.2f %s at $%.2f/%s at %s", 
+				//gl_name(object_header(this),myname,sizeof(myname)), quantity<0?"ask":"offer", from,
+				//fabs(quantity), unit, price, unit, gl_strtime(&dt,buffer,sizeof(buffer))?buffer:"unknown time");
 		}
 		BID bid = {from,b_id,fabs(quantity),price,state};
 		if (quantity<0){
@@ -1602,7 +1841,7 @@ int auction::submit_nolock(char *from, double quantity, double real_price, KEY k
 		if(verbose){
 			char myname[64];
 			gl_output(" ... %s receives %s from object %s for a previously cleared market",
-				gl_name(OBJECTHDR(this),myname,sizeof(myname)),quantity<0?"ask":"offer",
+				gl_name(object_header(this),myname,sizeof(myname)),quantity<0?"ask":"offer",
 				from);
 		}
 	}
@@ -1625,7 +1864,7 @@ EXPORT int create_auction(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(auction::oclass);
 		if (*obj!=nullptr)
 		{
-			auction *my = OBJECTDATA(*obj,auction);
+			auction *my = /*OBJECTDATA(obj,<>)*/ object_data<auction>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -1640,7 +1879,7 @@ EXPORT int init_auction(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,auction)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<auction>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -1650,7 +1889,7 @@ EXPORT int init_auction(OBJECT *obj, OBJECT *parent)
 EXPORT int isa_auction(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,auction)->isa(classname);
+		return /*OBJECTDATA(obj,<>)*/ object_data<auction>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -1659,7 +1898,7 @@ EXPORT int isa_auction(OBJECT *obj, char *classname)
 EXPORT TIMESTAMP sync_auction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	auction *my = OBJECTDATA(obj,auction);
+	auction *my = /*OBJECTDATA(obj, auction)*/  object_data<auction>(obj);
 	try
 	{
 		switch (pass) {

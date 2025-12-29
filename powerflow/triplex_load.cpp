@@ -158,7 +158,7 @@ int triplex_load::create(void)
 int triplex_load::init(OBJECT *parent)
 {
 	int ret_value;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	ret_value = triplex_node::init(parent);
 
@@ -275,7 +275,7 @@ void triplex_load::triplex_load_update_fxn(void)
 		{	
 			power_fraction[0] = 1 - current_fraction[0] - impedance_fraction[0];
 
-			OBJECT *obj = OBJECTHDR(this);
+			OBJECT *obj = object_header(this);
 
 			gl_warning("load:%s - ZIP components on phase 1 did not sum to 1. Setting power_fraction to %.2f", obj->name ? obj->name : "unnamed", power_fraction[0]);
 			/*  TROUBLESHOOT
@@ -378,7 +378,7 @@ void triplex_load::triplex_load_update_fxn(void)
 		{	
 			power_fraction[1] = 1 - current_fraction[1] - impedance_fraction[1];
 
-			OBJECT *obj = OBJECTHDR(this);
+			OBJECT *obj = object_header(this);
 
 			gl_warning("load:%s - ZIP components on phase 2 did not sum to 1. Setting power_fraction to %.2f", obj->name ? obj->name : "unnamed", power_fraction[1]);
 			/*  TROUBLESHOOT
@@ -479,7 +479,7 @@ void triplex_load::triplex_load_update_fxn(void)
 		{	
 			power_fraction[2] = 1 - current_fraction[2] - impedance_fraction[2];
 
-			OBJECT *obj = OBJECTHDR(this);
+			OBJECT *obj = object_header(this);
 
 			gl_warning("load:%s - ZIP components on phase 12 did not sum to 1. Setting power_fraction to %.2f", obj->name ? obj->name : "unnamed", power_fraction[2]);
 			/*  TROUBLESHOOT
@@ -757,7 +757,7 @@ void triplex_load::triplex_load_delete_update_fxn(void)
 //Module-level call
 SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	double deltat;
 	STATUS return_status_val;
 
@@ -875,7 +875,7 @@ EXPORT int create_triplex_load(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(triplex_load::oclass);
 		if (*obj!=nullptr)
 		{
-			triplex_load *my = OBJECTDATA(*obj,triplex_load);
+			triplex_load *my = object_data<triplex_load>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -894,7 +894,7 @@ EXPORT int create_triplex_load(OBJECT **obj, OBJECT *parent)
 EXPORT int init_triplex_load(OBJECT *obj)
 {
 	try {
-		triplex_load *my = OBJECTDATA(obj,triplex_load);
+		triplex_load *my = object_data<triplex_load>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(triplex_load);
@@ -911,7 +911,7 @@ EXPORT int init_triplex_load(OBJECT *obj)
 EXPORT TIMESTAMP sync_triplex_load(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		triplex_load *pObj = OBJECTDATA(obj,triplex_load);
+		triplex_load *pObj = object_data<triplex_load>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -931,13 +931,13 @@ EXPORT TIMESTAMP sync_triplex_load(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_triplex_load(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,triplex_load)->isa(classname);
+	return object_data<triplex_load>(obj)->isa(classname);
 }
 
 //Deltamode export
 EXPORT SIMULATIONMODE interupdate_triplex_load(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	triplex_load *my = OBJECTDATA(obj,triplex_load);
+	triplex_load *my = object_data<triplex_load>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -954,7 +954,7 @@ EXPORT SIMULATIONMODE interupdate_triplex_load(OBJECT *obj, unsigned int64 delta
 //Exposed function to do load update - primarily to get impedance conversion into solver_nr directly
 EXPORT STATUS update_triplex_load_values(OBJECT *obj)
 {
-	triplex_load *my = OBJECTDATA(obj,triplex_load);
+	triplex_load *my = object_data<triplex_load>(obj);
 
 	//Call the update
 	my->triplex_load_update_fxn();

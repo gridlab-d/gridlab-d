@@ -115,25 +115,25 @@ int generator::init(node *parent)
 	// check sanity of initial state
 	if (parent->type==PQ && !Qcontrolled)
 	{
-		OBJECT *obj = OBJECTHDR(this);
+		OBJECT *obj = object_header(this);
 		gl_error("generator:%d is Qcontrolled but is not connected to a PQ bus", obj->id);
 		return 0;
 	}
 	else if (parent->type!=PQ && Qcontrolled)
 	{
-		OBJECT *obj = OBJECTHDR(this);
+		OBJECT *obj = object_header(this);
 		gl_error("generator:%d is not Qcontrolled but is connected to a PQ bus", obj->id);
 		return 0;
 	}
 	else if (Qcontrolled && Qdesired_MVAR<Qmin_MVAR && Qdesired_MVAR>Qmax_MVAR)
 	{
-		OBJECT *obj = OBJECTHDR(this);
+		OBJECT *obj = object_header(this);
 		gl_error("generator:%d Qdesired is out of Qmin/Qmax limits", obj->id);
 		return 0;
 	}
 	else if (parent->type!=SWING && Pdesired_MW>Pmax_MW)
 	{
-		OBJECT *obj = OBJECTHDR(this);
+		OBJECT *obj = object_header(this);
 		gl_error("generator:%d Pdesired exceeds Pmax", obj->id);
 		return 0;
 	}
@@ -143,7 +143,7 @@ int generator::init(node *parent)
 TIMESTAMP generator::sync(TIMESTAMP t0) 
 {
 	TIMESTAMP t1 = TS_NEVER;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	node *pBus = OBJECTDATA(obj->parent,node);
 	switch (pBus->type) {
 		case SWING:

@@ -7,6 +7,43 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Testing automated github workflows
+
+if(WIN32)
+    add_compile_options(
+        $<$<CONFIG:Debug>:/MDd>
+        $<$<CONFIG:Release>:/MD>
+    )
+endif()
+
+
+
+set(CMAKE_CXX_STANDARD 23) # Or 14, 11 if 17 is not supported
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# if(MSVC)
+#     # MSVC compiler (cl.exe)
+#     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address /Zi /Od")
+#     set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO /fsanitize=address")
+# elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+#     # Clang on Windows or Linux
+#     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=address -fno-omit-frame-pointer")
+#     set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
+#     set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address")
+# elseif(UNIX)
+#     # GCC or Clang on Linux
+#     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=address -fno-omit-frame-pointer")
+#     set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
+#     set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address")
+# endif()
+
+
+# Find Eigen
+find_package(Eigen3 REQUIRED NO_MODULE)
+
+# Include Eigen 
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+
 include(cmake/Warnings.cmake)
 
 OPTION(GLD_EXTRA_WARNINGS "Make warnings more pedantic" OFF)
@@ -25,7 +62,7 @@ else ()
     endif ()
 endif ()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23) 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(GLD_PACKAGE gridlabd)
@@ -82,10 +119,12 @@ if (NOT XercesC_FOUND)
     message(STATUS "XercesC library could not be located on the platform. XML Loading is disabled.")
 endif ()
 
-find_package(Curses)
-if (CURSES_FOUND)
-    option(HAVE_CURSES "Curses library is present on the platform" ON)
-endif ()
+if(UNIX)
+    find_package(Curses)
+    if (CURSES_FOUND)
+        option(HAVE_CURSES "Curses library is present on the platform" ON)
+    endif ()
+endif()
 
 # Link required libraries for symbol checks
 list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
@@ -120,22 +159,38 @@ add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
 ## Set up platform specific library linking and platform identification
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     FetchContent_Declare(
-            dlfcn-win32
-            GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
-            GIT_TAG v1.4.2
-    )
-    FetchContent_MakeAvailable(dlfcn-win32)
-    include_directories(${dlfcn-win32_SOURCE_DIR}/src)
-    set(DL_NAME dl)
-    set(DL_LIB dl)
+             dlfcn-win32
+             GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
+             GIT_TAG v1.4.2
+     )
+     FetchContent_MakeAvailable(dlfcn-win32)
+     include_directories(${dlfcn-win32_SOURCE_DIR}/src)
+     set(DL_NAME dl)
+     set(DL_LIB dl)
 
-    set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
+     set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
+
+
+    if(WIN32)
+        set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME})
+    else()
+        set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
+    endif()
+
     set(FOUND_WINDOWS yes CACHE INTERNAL "Tell script generator we're Windows")
-    add_compile_options(-static-libgcc -static-libstdc++ -static)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
+
+    if(NOT MSVC)
+        # Enable static linking for GCC on Windows
+        add_compile_options(-static-libgcc -static-libstdc++)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+        add_compile_options(-static-libgcc -static-libstdc++ -static)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
+    endif()
+
 elseif (APPLE)
-    set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
+    set(`zk ${CMAKE_DL_LIBS})
     set(FOUND_MACOS yes CACHE INTERNAL "Tell script generator we're MacOS")
 else ()
     set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
@@ -205,7 +260,7 @@ set(HEADER_FILE_NAMES
         ${CMAKE_SOURCE_DIR}/gldcore/property.h
         ${CMAKE_SOURCE_DIR}/gldcore/schedule.h
         ${CMAKE_SOURCE_DIR}/gldcore/test.h
-	${CMAKE_SOURCE_DIR}/gldcore/gldapi.h
+        ${CMAKE_SOURCE_DIR}/gldcore/gldapi.h
 )
 
 file(COPY ${HEADER_FILE_NAMES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/headers)
@@ -314,11 +369,13 @@ if (GLD_USE_SUPERLU)
     set(SUPERLU_LIB superlu)
 endif ()
 
-option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
-add_subdirectory(third_party/jsoncpp_lib)
-get_target_property(JSON_INC_PATH jsoncpp_static INTERFACE_INCLUDE_DIRECTORIES)
-include_directories(${JSON_INC_PATH})
-set(JSONCPP_LIB jsoncpp_static)
+find_package(nlohmann_json 3.12.0 QUIET)
+if(NOT nlohmann_json_FOUND)
+    message(STATUS "nlohmann_json not found, downloading...")
+    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
+    FetchContent_MakeAvailable(json)
+endif()
+
 
 if (GLD_USE_EIGEN)
     message(FATAL_ERROR "Eigen implementation is not complete, and should not be used at this time.")
@@ -351,6 +408,21 @@ add_subdirectory(gldcore)
 # Add test_gldapi executable
 add_executable(test_gldapi gldcore/test_gldapi.cpp)
 target_link_libraries(test_gldapi PRIVATE gldapi ${DL_LIB} ${JSONCPP_LIB} ${SUPERLU_LIB} Threads::Threads)
+add_dependencies(test_gldapi gldapi)  
+
+if(MSVC)
+    set_target_properties(gldapi PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+    )
+endif()
+
+# Link Curses only on Unix/Linux platforms
+if(UNIX AND CURSES_FOUND)
+    target_link_libraries(test_gldapi PRIVATE ${CURSES_LIBRARIES})
+endif()
+
 set_target_properties(test_gldapi PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin
 )
@@ -369,7 +441,7 @@ set(GLD_LIBS
         climate
         commercial
         connection
-	gldapi
+	    gldapi
         generators
         market
         mysql

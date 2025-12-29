@@ -30,6 +30,17 @@
 #include <system_error>
 #include <vector>
 #ifndef _WIN32
+#include "object.h"
+#include "kill.h"
+#include "globals.h"
+#include <nlohmann/json.hpp>
+// #include <module.h>
+// #include <module.h>
+
+#ifdef _WIN32
+#include <direct.h>
+#define getcwd _getcwd
+#else
 #include <unistd.h>
 #endif
 
@@ -210,7 +221,8 @@ GridLabD::GridLabD() : selected_timestep(0) {
 
 
 // Set configuration file
-GLDErrorCode GridLabD::set_config_file(const std::string& config_file) {
+GLDErrorCode GridLabD::set_config_file(const std::string &config_file)
+{
     printf("Setting config file: %s\n", config_file.c_str());
     return GLD_SUCCESS;
 }
@@ -346,13 +358,15 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
 #endif
 
     /* save the model */
-    if (strcmp(global_savefile, "") != 0) {
+    if (strcmp(global_savefile, "") != 0)
+    {
         if (saveall(global_savefile) == FAILED)
             output_error("save to '%s' failed", global_savefile);
     }
 
     /* do module dumps */
-    if (global_dumpall != false) {
+    if (global_dumpall != false)
+    {
         output_verbose("dumping module data");
         module_dumpall();
     }
@@ -361,9 +375,12 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
     if (strcmp(global_kmlfile, "") != 0)
         kml_dump(global_kmlfile);
 
+    // Put reporting stuff here, probably not the xml dump
+
     /* finalize all objects */
     output_verbose("finalizing all objects");
-    if (exec_finalize_all() == FAILED) {
+    if (exec_finalize_all() == FAILED)
+    {
         output_error("object finalization failed");
     }
 
@@ -374,7 +391,8 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
     output_verbose("shutdown complete");
 
     /* profile results */
-    if (global_profiler) {
+    if (global_profiler)
+    {
         class_profiles();
         module_profiles();
     }
@@ -390,7 +408,8 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
     /* if pause enabled */
 #ifndef WIN32
 #ifdef _DEBUG
-    if (global_pauseatexit) {
+    if (global_pauseatexit)
+    {
         output_verbose("pausing at exit");
 
         /* Replicate "pause" on Windows */
@@ -400,6 +419,8 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
 #endif
 #endif
 
+    report_performance_after_run(started_at, passes, tsteps);
+
     /* compute elapsed runtime */
     output_verbose("elapsed runtime %d seconds", realtime_runtime());
     output_verbose("exit code %d", exec_getexitcode());
@@ -408,78 +429,82 @@ GLDErrorCode GridLabD::exit_gld(const std::string& filepath) {
 }
 
 // Retrieve GLM data based on a query, optionally save to filepath
-Json::Value GridLabD::get_checkpoint_json(const std::string& filepath) {
-    Json::Value checkpoint;
-    
-    if (filepath.empty()) {
+nlohmann::json GridLabD::get_checkpoint_json(const std::string &filepath)
+{
+    nlohmann::json checkpoint;
+
+    if (filepath.empty())
+    {
         // If no filepath provided, just return the JSON without saving
         checkpoint = do_checkpoint(nullptr);
-    } else {
+    }
+    else
+    {
         // Extract directory from filepath for do_checkpoint
         size_t last_slash = filepath.find_last_of("/\\");
         std::string directory;
-        
-        if (last_slash != std::string::npos) {
+
+        if (last_slash != std::string::npos)
+        {
             directory = filepath.substr(0, last_slash);
-        } else {
+        }
+        else
+        {
             directory = "."; // Current directory if no path separators found
         }
-        
+
         // Get checkpoint JSON with directory specified
         checkpoint = do_checkpoint(directory.c_str());
-        
-        // Additionally save the JSON directly to the specified filepath
-        if (!checkpoint.empty()) {
-            std::ofstream json_file(filepath);
-            if (json_file.is_open()) {
-                Json::StreamWriterBuilder builder;
-                builder["indentation"] = "  "; // 2-space indentation
-                std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
-                writer->write(checkpoint, &json_file);
-                json_file.close();
-                printf("Checkpoint JSON saved to: %s\n", filepath.c_str());
-            } else {
-                printf("Error: Unable to open file '%s' for writing\n", filepath.c_str());
-            }
-        }
     }
-    
+
+    // Set the internal gld_model representation to be equal to checkpoint
+    gld_model = nlohmann::json(checkpoint);
+
     return checkpoint;
 }
 
 // Set the GLM model with provided data
-GLDErrorCode GridLabD::set_glm_data(const GLDData& data) {
+GLDErrorCode GridLabD::set_glm_data(const GLDData &data)
+{
     printf("Setting GLM data with %zu fields.\n", data.size());
     return GLD_SUCCESS;
 }
 
 // Save simulation checkpoint
-GLDErrorCode GridLabD::save_checkpoint(const std::string& save_path, GLDCheckPointMode mode) {
+GLDErrorCode GridLabD::save_checkpoint(const std::string &save_path, GLDCheckPointMode mode)
+{
     printf("Saving checkpoint to %s with mode %d\n", save_path.c_str(), static_cast<int>(mode));
-    Json::Value checkpoint = do_checkpoint(save_path.c_str()); // Use provided directory
+    nlohmann::json checkpoint = do_checkpoint(save_path.c_str()); // Use provided directory
+
+    // Set the internal gld_model representation to be equal to checkpoint
+    gld_model = nlohmann::json(checkpoint);
     return GLD_SUCCESS;
 }
 
 // Load simulation checkpoint
-GLDErrorCode GridLabD::load_checkpoint(const std::string& file_path) {
+GLDErrorCode GridLabD::load_checkpoint(const std::string &file_path)
+{
     printf("Loading checkpoint from %s\n", file_path.c_str());
     return GLD_SUCCESS;
 }
 
 // Add an object
-GLDErrorCode GridLabD::add_object(GLDData& object_data) {
+GLDErrorCode GridLabD::add_object(GLDData &object_data)
+{
     printf("Adding object with %zu fields.\n", object_data.size());
     return GLD_SUCCESS;
 }
 
 // Delete an object
-GLDErrorCode GridLabD::delete_object(const std::string& name) {
+GLDErrorCode GridLabD::delete_object(const std::string &name)
+{
     printf("Deleting object named: %s\n", name.c_str());
     return GLD_SUCCESS;
 }
 
 // Edit an object
-GLDErrorCode GridLabD::edit_object(const std::string& name, const GLDData& updated_data) {
+GLDErrorCode GridLabD::edit_object(const std::string &name, const GLDData &updated_data)
+{
     printf("Editing object: %s with %zu fields.\n", name.c_str(), updated_data.size());
     return GLD_SUCCESS;
 }
@@ -499,25 +524,30 @@ GLDErrorCode check_environment_and_handle_failure() {
 }
 
 // Common helper to handle simulation failure with optional dump
-GLDErrorCode handle_simulation_failure(const char* context_message) {
+GLDErrorCode handle_simulation_failure(const char *context_message)
+{
     output_fatal("shutdown after simulation stopped prematurely");
     /*	TROUBLESHOOT
         The simulation stopped because an unexpected condition was encountered.
         This can be caused by a wide variety of things, but most often it is
-        because one of the objects in the model could not be synchronized 
+        because one of the objects in the model could not be synchronized
         properly and its clock stopped.  This message usually follows a
         more specific message that indicates what caused the simulation to
         stop.
         */
-    if (global_dumpfile[0] != '\0') {
-        if (!saveall(global_dumpfile)) {
+    if (global_dumpfile[0] != '\0')
+    {
+        if (!saveall(global_dumpfile))
+        {
             output_error("dump to '%s' failed", global_dumpfile);
             /* TROUBLESHOOT
                 An attempt to create a dump file failed.  This message should be
                 preceded by a more detailed message explaining why it failed.
                 Follow the guidance for that message and try again.
                 */
-        } else {
+        }
+        else
+        {
             output_debug("dump to '%s' complete", global_dumpfile);
         }
     }
@@ -525,43 +555,53 @@ GLDErrorCode handle_simulation_failure(const char* context_message) {
 }
 
 // Common helper to ensure simulation is initialized for stepping
-GLDErrorCode ensure_simulation_initialized() {
-    if (!exec_is_initialized()) {
+GLDErrorCode ensure_simulation_initialized()
+{
+    if (!exec_is_initialized())
+    {
         printf("Simulation not initialized, attempting to initialize...\n");
-        
+
         GLDErrorCode env_check = check_environment_and_handle_failure();
-        if (env_check != GLD_SUCCESS) {
+        if (env_check != GLD_SUCCESS)
+        {
             return env_check;
         }
-        
-        if (run_preparation() == FAILED) {
+
+        if (run_preparation() == FAILED)
+        {
             printf("Failed to initialize simulation for stepping\n");
             return GLD_OPERATION_FAILED;
         }
-        
+
         printf("Simulation initialized successfully\n");
     }
     return GLD_SUCCESS;
 }
 
 // Run simulation from start to end
-GLDErrorCode GridLabD::run(std::optional<double> start_time, std::optional<double> stop_time) {
+GLDErrorCode GridLabD::run(std::optional<double> start_time, std::optional<double> stop_time)
+{
     set_clocks(start_time, stop_time);
-    
+
     GLDErrorCode env_check = check_environment_and_handle_failure();
-    if (env_check != GLD_SUCCESS) {
+    if (env_check != GLD_SUCCESS)
+    {
         return env_check;
     }
-    
-    if (exec_start() == FAILED) {
+
+    if (exec_start(&passes, &tsteps) == FAILED)
+    {
         return handle_simulation_failure("exec_start failed");
     }
-    
+
+    gld_model = get_checkpoint_json();
+
     return GLD_SUCCESS;
 }
 
 // Perform a single time step
-GLDErrorCode GridLabD::step(double& simulation_time) {
+GLDErrorCode GridLabD::step(double &simulation_time)
+{
     printf("Stepping simulation forward\n");
     
     // Ensure simulation is initialized
@@ -677,26 +717,30 @@ GLDErrorCode GridLabD::step(double& simulation_time) {
 }
 
 // Set pre-step callback
-GLDErrorCode GridLabD::set_prestep_callback(GLDCallback callback) {
+GLDErrorCode GridLabD::set_prestep_callback(GLDCallback callback)
+{
     printf("Setting pre-step callback\n");
     return GLD_SUCCESS;
 }
 
 // Set post-step callback
-GLDErrorCode GridLabD::set_poststep_callback(GLDCallback callback) {
+GLDErrorCode GridLabD::set_poststep_callback(GLDCallback callback)
+{
     printf("Setting post-step callback\n");
     return GLD_SUCCESS;
 }
 
 // Reset timestep
-GLDErrorCode GridLabD::reset_step(double& current_time) {
+GLDErrorCode GridLabD::reset_step(double &current_time)
+{
     printf("Resetting simulation step\n");
     current_time = 0.0;
     return GLD_SUCCESS;
 }
 
 // Set time manually
-GLDErrorCode GridLabD::set_time(const std::string& timestamp) {
+GLDErrorCode GridLabD::set_time(const std::string &timestamp)
+{
     printf("Setting time to: %s\n", timestamp.c_str());
     return GLD_SUCCESS;
 }
@@ -715,7 +759,8 @@ GLDErrorCode GridLabD::get_time(std::string& current_time) {
 }
 
 // Set application mode
-GLDErrorCode GridLabD::set_application_mode(GLDApplicationType mode) {
+GLDErrorCode GridLabD::set_application_mode(GLDApplicationType mode)
+{
     printf("Setting application mode: %d\n", static_cast<int>(mode));
     return GLD_SUCCESS;
 }

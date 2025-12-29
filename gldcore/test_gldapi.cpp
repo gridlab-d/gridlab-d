@@ -3,39 +3,14 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "globals.h"
-#include <json/json.h> //jsoncpp library
-
-// Safe value extraction with type conversion
-template<typename T>
-T safeGetValue(const Json::Value& value, const T& defaultValue) {
-    if (value.isNull()) return defaultValue;
-    
-    try {
-        if constexpr (std::is_same_v<T, std::string>) {
-            return value.isString() ? value.asString() : defaultValue;
-        } else if constexpr (std::is_same_v<T, double>) {
-            return value.isNumeric() ? value.asDouble() : defaultValue;
-        } else if constexpr (std::is_same_v<T, int>) {
-            return value.isInt() ? value.asInt() : defaultValue;
-        } else if constexpr (std::is_same_v<T, long long> || std::is_same_v<T, int64_t>) {
-            return value.isInt64() ? value.asInt64() : defaultValue;
-        } else if constexpr (std::is_same_v<T, bool>) {
-            return value.isBool() ? value.asBool() : defaultValue;
-        }
-    } catch (const std::exception&) {
-        // Return default on any conversion error
-    }
-    
-    return defaultValue;
-}
+#include <nlohmann/json.hpp>
+#include "timestamp.h"
 
 int main(int argc, char* argv[]) {
-    const char* fileName = "test_HVAC_balance.glm";
+    // const char* fileName = "test_balanced_stepup_D-D_phAB";
+    const char* fileName = "test_HVAC_balance";
+    // Instantiate GridLabD via exectuable path
     GridLabD gld;
-
-    // Test set_config_file
-    // gld.set_config_file("config.cfg");
     
     // Test load_glm
     std::vector<const char*> args = {"gridlabd", fileName, "--verbose"};
@@ -43,29 +18,40 @@ int main(int argc, char* argv[]) {
     char* test_argv[] = { const_cast<char*>(args[0]), const_cast<char*>(args[1]), const_cast<char*>(args[2])};
     gld.load_glm(test_argc, test_argv);
 
-
     TIMESTAMP start_time = convert_to_timestamp("2000-04-01 0:00:00");
     TIMESTAMP stop_time = convert_to_timestamp("2000-06-01 0:00:00");
     
-    // gld.set_time_step(900); // 15 minutes in seconds
     // Test run examples
-    gld.run(start_time, stop_time);
     // gld.run();
+    // gld.run(start_time, stop_time);
 
     // Stepping through the simulation examples, check sim_time for each step if needed. 
-    // double sim_time;
-    // for (int i = 0; i < 6; i++) {
-    //     gld.step(sim_time);
-    //     std::cout << "Simulation time after step " << (i+1) << ": " << sim_time << std::endl;
-    // }
+    // gld.set_time_step(900); // 15 minutes in seconds
+    // Need to support actually setting the timestep value, not just the minimum. Recorders do this. Tell it what the synchronization time is. 
+    double sim_time;
+    void* house = gld.find_object_by_name("This_old_house");
+    for (int i = 0; i < 10; i++) {
+        printf("\n=== Step %d ===\n", i+1);
+        
+        // Check current value before setting
+        std::string current_setpoint;
+        if (gld.get_property_value(house, "number_of_doors", current_setpoint) == GLD_SUCCESS) {
+            printf("Current number_of_doors before set: %s\n", current_setpoint.c_str());
+        }
+        
+        // Set new value
+        GLDErrorCode set_result = gld.set_property_value(house, "number_of_doors", std::to_string(i).c_str());
 
+        gld.step(sim_time);
+        
+    nlohmann::json checkpoint = gld.get_checkpoint_json("/mnt/c/dev/gridlab-d_fork/_test_results/");
+    }
     
     // Get all info for GLD
-    Json::Value checkpoint = gld.get_checkpoint_json("/mnt/c/dev/gridlab-d_fork/_test_results/");
-    
-    std::cout << "\n=== Example Property Access ===" << std::endl;
-    auto air_temp = checkpoint["objects"]["house"]["instances"][0]["air_temperature"];
-    std::cout << "House air temp: " << air_temp << std::endl;
+    nlohmann::json checkpoint = gld.get_checkpoint_json("/mnt/c/dev/gridlab-d_fork/_test_results/");
+    // OR access it directly
+    // gld.get_checkpoint_json();
+    // nlohmann::json checkpoint = gld.gld_model; // use nlohmann::json (JsonCpp removed)
 
     // Test exit_gld
     gld.exit_gld(fileName);

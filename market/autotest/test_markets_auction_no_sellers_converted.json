@@ -1,0 +1,153 @@
+{
+  "__preamble": {
+    "comments": [
+      "//This file tests that the appropriate variables",
+      "//are set correctly when the market fails to clear",
+      "//because there are no sellers (NULL clearing type)",
+      "//Bidding period: 3600 s",
+      "//Buyer1: bid 31, quantity: 5, period: 3600 s",
+      "//Buyer2: bid 47, quantity: 5, period: 3600 s",
+      "//Buyer3: bid 63, quantity: 5, period: 3600 s",
+      "//Expected clearing price: 63.0001",
+      "//Expected clearing quantity: 0",
+      "//There are no sellers so clearing price will be",
+      "//set 1 cent above the highest buyer bid"
+    ]
+  },
+  "_directives": {
+    "#define": {
+      "stylesheet": "http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0"
+    },
+    "#set": {
+      "tmp": "../test_markets_auction_no_sellers"
+    }
+  },
+  "_legacy": {
+    "#setenv": [
+      "GRIDLABD=../../../core"
+    ]
+  },
+  "classes": {
+    "auction": [
+      {
+        "type": "double",
+        "name": "current_price_mean_24h"
+      },
+      {
+        "type": "double",
+        "name": "current_price_stdev_24h"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-01-01 00:00:00'",
+    "stoptime": "'2001-01-03 00:00:00'"
+  },
+  "modules": {
+    "market": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "multi_recorder": {
+      "instances": [
+        {
+          "parent": "Market_1",
+          "property": "current_market.clearing_price,current_market.clearing_quantity,current_market.clearing_type,current_price_mean_24h,current_price_stdev_24h,buyer1:price,buyer1:quantity,buyer2:price,buyer2:quantity,buyer3:price,buyer3:quantity",
+          "file": "test_markets_auction_no_sellers_output.csv",
+          "interval": 3600,
+          "limit": 168
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "parent": "Market_1",
+          "in": "'2001-01-01 01:00:00'",
+          "value": 63.0001,
+          "within": 0.0001,
+          "target": "current_market.clearing_price"
+        },
+        {
+          "parent": "Market_1",
+          "in": "'2001-01-01 01:00:00'",
+          "value": 0,
+          "within": 1e-05,
+          "target": "current_market.clearing_quantity"
+        },
+        {
+          "parent": "Market_1",
+          "value": 63.0001,
+          "within": 0.0001,
+          "target": "current_price_mean_24h"
+        },
+        {
+          "parent": "Market_1",
+          "value": 0,
+          "within": 1e-05,
+          "target": "current_price_stdev_24h"
+        }
+      ]
+    },
+    "enum_assert": {
+      "instances": [
+        {
+          "parent": "Market_1",
+          "in": "'2001-01-01 01:00:00'",
+          "value": 0,
+          "target": "current_market.clearing_type",
+          "inline_comments": {
+            "value": "//NULL type"
+          }
+        }
+      ]
+    },
+    "auction": {
+      "instances": [
+        {
+          "name": "Market_1",
+          "unit": "MWh",
+          "period": 3600,
+          "verbose": true,
+          "special_mode": "NONE",
+          "warmup": 0,
+          "init_price": 63.0001,
+          "init_stdev": 1e-06
+        }
+      ]
+    },
+    "stub_bidder": {
+      "instances": [
+        {
+          "name": "buyer1",
+          "role": "BUYER",
+          "bid_period": 3600,
+          "market": "Market_1",
+          "price": 31,
+          "quantity": 5,
+          "count": 10000
+        },
+        {
+          "name": "buyer2",
+          "role": "BUYER",
+          "bid_period": 3600,
+          "market": "Market_1",
+          "price": 63,
+          "quantity": 5,
+          "count": 10000
+        },
+        {
+          "name": "buyer3",
+          "role": "BUYER",
+          "bid_period": 3600,
+          "market": "Market_1",
+          "price": 47,
+          "quantity": 5,
+          "count": 10000
+        }
+      ]
+    }
+  }
+}

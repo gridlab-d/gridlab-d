@@ -66,7 +66,7 @@ npqh = size(ipqh, 1);   %% number of general PQ capability curves (upper)
 npql = size(ipql, 1);   %% number of general PQ capability curves (lower)
 
 %% make Apqh if there is a need to add general PQ capability curves;
-%% use normalized coefficient rows so multipliers have right scaling
+%% use normalized coefficient.rows() so multipliers have right scaling
 %% in $$/pu
 if npqh > 0
   data.h = [gen(ipqh,QC1MAX)-gen(ipqh,QC2MAX), gen(ipqh,PC2)-gen(ipqh,PC1)];

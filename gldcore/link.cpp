@@ -15,6 +15,8 @@
 #if defined WIN32 && ! defined __MINGW32__
 	#define _WIN32_WINNT 0x0400
 	#undef int64 // wtypes.h also used int64
+	#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
+	#include <winsock2.h>
 	#include <windows.h>
 	#define int64 _int64
 	#define PREFIX ""
@@ -24,7 +26,7 @@
 	#define DLLOAD(P) LoadLibrary(P)
 	#define DLSYM(H,S) GetProcAddress((HINSTANCE)H,S)
 	#define DLERR "no diagnostics available"
-	#define snprintf _snprintf
+	//#define snprintf _snprintf
 #else /* ANSI */
 #ifndef __MINGW32__
 	#include "dlfcn.h"
@@ -42,6 +44,25 @@
 	#define DLSYM(H,S) dlsym(H,S)
 	#define DLERR dlerror()
 #endif
+
+#ifdef _WIN32
+#include <io.h>  // Use Windows file access headers
+#ifndef F_OK
+#define F_OK 0   // Define POSIX-like F_OK for Windows
+#endif
+#else
+#include <unistd.h>  // Use POSIX headers for Linux/WSL2
+#endif
+
+#ifndef X_OK
+#define X_OK 0x01
+#endif
+
+#ifndef R_OK
+#define R_OK 0x02
+#endif
+
+
 
 glxlink *glxlink::first = nullptr;
 

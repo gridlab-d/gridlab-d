@@ -172,7 +172,7 @@ int triplex_node::init(OBJECT *parent)
 {
 	if ( !(has_phase(PHASE_S)) )
 	{
-		OBJECT *obj = OBJECTHDR(this);
+		OBJECT *obj = object_header(this);
 		gl_warning("Init() triplex_node (name:%s, id:%d): Phases specified did not include phase S. Adding phase S. Check upstream devices.", obj->name,obj->id);
 		/* TROUBLESHOOT
 		Triplex nodes and meters require a single phase and a phase S component (for split-phase).
@@ -208,7 +208,7 @@ TIMESTAMP triplex_node::postsync(TIMESTAMP t0)
 //Module-level call
 SIMULATIONMODE triplex_node::inter_deltaupdate_triplex_node(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	double deltat;
 	STATUS return_status_val;
 
@@ -315,7 +315,7 @@ EXPORT int create_triplex_node(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(triplex_node::oclass);
 		if (*obj!=nullptr)
 		{
-			triplex_node *my = OBJECTDATA(*obj,triplex_node);
+			triplex_node *my = object_data<triplex_node>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}	
@@ -334,7 +334,7 @@ EXPORT int create_triplex_node(OBJECT **obj, OBJECT *parent)
 EXPORT int init_triplex_node(OBJECT *obj)
 {
 	try {
-		triplex_node *my = OBJECTDATA(obj,triplex_node);
+		triplex_node *my = object_data<triplex_node>(obj);
 		return my->init();
 	}
 	INIT_CATCHALL(triplex_node);
@@ -351,7 +351,7 @@ EXPORT int init_triplex_node(OBJECT *obj)
 EXPORT TIMESTAMP sync_triplex_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		triplex_node *pObj = OBJECTDATA(obj,triplex_node);
+		triplex_node *pObj = object_data<triplex_node>(obj);
 		TIMESTAMP t1;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -371,11 +371,11 @@ EXPORT TIMESTAMP sync_triplex_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_triplex_node(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,triplex_node)->isa(classname);
+	return object_data<triplex_node>(obj)->isa(classname);
 }
 
 EXPORT int notify_triplex_node(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
-	triplex_node *n = OBJECTDATA(obj, triplex_node);
+	triplex_node *n = object_data<triplex_node>(obj);
 	int rv = 1;
 
 	rv = n->notify(update_mode, prop, value);
@@ -386,7 +386,7 @@ EXPORT int notify_triplex_node(OBJECT *obj, int update_mode, PROPERTY *prop, cha
 //Deltamode export
 EXPORT SIMULATIONMODE interupdate_triplex_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	triplex_node *my = OBJECTDATA(obj,triplex_node);
+	triplex_node *my = object_data<triplex_node>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{

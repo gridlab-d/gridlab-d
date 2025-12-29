@@ -24,6 +24,8 @@ gldcore/stamp-h1
 gldcore/gridlabd.sh
 .pydevproject
 .idea
+utilities/json_schema/glmFiles/
+utilities/json_schema/output/
 
 # Prerequisites
 *.d
@@ -79,7 +81,6 @@ gldcore/gridlabd.sh
 .cproject
 .project
 .settings/
-.vscode
 Makefile
 */.deps/
 */*/*/.deps/
@@ -139,3 +140,9 @@ python_bindings/env
 docs/
 test/
 env
+
+# IDE-related
+.vs/
+.vscode/
+CMakePresets.json
+

@@ -1,5 +1,8 @@
+//#include<Eigen/Dense>
+
 using gld::set;
 using gld::complex;
+//using Eigen;
 
 stream_type(double);
 stream_type(complex);
@@ -15,8 +18,8 @@ stream_type(char1024);
 stream_type(object);
 stream_type(bool);
 stream_type(TIMESTAMP);
-stream_type(double_array);
-stream_type(complex_array);
+//stream_type(MatrixXd);
+//stream_type(MatrixXcd);
 stream_type(float);
 stream_type(real);
 stream_type(loadshape);

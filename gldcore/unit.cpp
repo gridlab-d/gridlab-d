@@ -90,6 +90,17 @@
 #include "find.h"
 #include "lock.h"
 
+#ifndef X_OK
+#define X_OK 0x01
+#endif
+
+#ifndef R_OK
+#define R_OK 0x02
+#endif
+
+#ifndef F_OK
+#define F_OK 0  // Define F_OK to represent file existence checks
+#endif
 
 /* fundamental physical/economic constants */
 static double c = 2.997925e8;		/**< m/s */
@@ -322,7 +333,7 @@ int unit_derived(const char *name,const char *derivation)
 	while (*p != '\0')
 	{
 		char term[32];
-		UNIT *pUnit;
+		UNIT *pUnit = NULL;
 
 		/* extract operation */
 		if (sscanf(p,"%[^-*/^+]",term)!=1){
@@ -477,10 +488,12 @@ void unit_init(void)
 	char tpath[1024];
 
 	/* try only once */
-	wlock(&trylock);
+	//wlock(&trylock);
+	//replace the above with SharedMutexManager
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&trylock));
 	if (tried)
 	{
-		wunlock(&trylock);
+		//wunlock(&trylock);
 		return;
 	}
 	else
@@ -514,7 +527,7 @@ void unit_init(void)
 			The unit subsystem was not able to locate the unit file in the working directoy or in the directories
 			specified in GLPATH.
 		*/
-		wunlock(&trylock);
+		//wunlock(&trylock);
 		return;
 	}
 
@@ -534,9 +547,19 @@ void unit_init(void)
 		}
 
 		/* remove trailing whitespace */
-		p = buffer + strlen(buffer) - 1;
+	/*	p = buffer + strlen(buffer) - 1;
 		while (iswspace(*p) && p>buffer){
 			*p-- = '\0';
+		}*/
+
+
+		/* remove trailing whitespace */
+		size_t len = strlen(buffer);
+		if (len > 0) {
+			p = buffer + strlen(buffer) - 1;
+			while (iswspace(*p) && p > buffer) {
+				*p-- = '\0';
+			}
 		}
 
 		/* ignore blank lines or lines starting with white space*/
@@ -609,7 +632,7 @@ void unit_init(void)
 	/* done */
 	fclose(fp);
 	
-	wunlock(&trylock);
+	//wunlock(&trylock);
 	return;
 }
 

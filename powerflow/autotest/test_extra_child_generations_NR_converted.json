@@ -1,0 +1,290 @@
+{
+  "__preamble": {
+    "comments": [
+      "//IEEE 4-node unbalanced Y-Y stepdown file",
+      "//Grandchild (or greater) connections and testing",
+      "//Has all the asserts from the base file still in place, so if \"descendants\" fail, the answers will be wrong",
+      "//#set savefile=test.xml"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "double_format": "%+.12lg",
+      "complex_format": "%+.12lg%+.12lg%c",
+      "complex_output_format": "RECT"
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:01'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc100",
+          "geometric_mean_radius": "0.0244 ft",
+          "resistance": "0.306 Ohm/mile"
+        },
+        {
+          "name": "olc101",
+          "geometric_mean_radius": "0.00814 ft",
+          "resistance": "0.592 Ohm/mile"
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls200",
+          "distance_AB": "2.5 ft",
+          "distance_BC": "4.5 ft",
+          "distance_AC": "7.0 ft",
+          "distance_AN": "5.656854 ft",
+          "distance_BN": "4.272002 ft",
+          "distance_CN": "5.0 ft"
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc300",
+          "conductor_A": "olc100",
+          "conductor_B": "olc100",
+          "conductor_C": "olc100",
+          "conductor_N": "olc101",
+          "spacing": "ls200"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "tc400",
+          "connect_type": "WYE_WYE",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "node1",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "child_node_3",
+          "parent": "node_3_base",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "grandchild_node_3",
+          "parent": "child_node_3",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "great_grandchild_node_3",
+          "parent": "grandchild_node_3",
+          "nominal_voltage": 2401.777
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "parent": "ohl12",
+          "target": "current_in_A",
+          "within": 10,
+          "value": "230.1-35.9d"
+        },
+        {
+          "parent": "ohl12",
+          "target": "current_in_B",
+          "within": 10,
+          "value": "345.7-152.6d"
+        },
+        {
+          "parent": "ohl12",
+          "target": "current_in_C",
+          "within": 10,
+          "value": "455.1+84.7d"
+        },
+        {
+          "parent": "node2",
+          "target": "voltage_A",
+          "within": 5,
+          "value": "7164-.1d"
+        },
+        {
+          "parent": "node2",
+          "target": "voltage_B",
+          "within": 5,
+          "value": "7110-120.2d"
+        },
+        {
+          "parent": "node2",
+          "target": "voltage_C",
+          "within": 5,
+          "value": "7082+119.3d"
+        },
+        {
+          "parent": "node_3_base",
+          "target": "voltage_A",
+          "within": 5,
+          "value": "2305-2.3d"
+        },
+        {
+          "parent": "node_3_base",
+          "target": "voltage_B",
+          "within": 5,
+          "value": "2255-123.6d"
+        },
+        {
+          "parent": "node_3_base",
+          "target": "voltage_C",
+          "within": 5,
+          "value": "2203+114.8d"
+        },
+        {
+          "parent": "ohl34",
+          "target": "current_in_A",
+          "within": 10,
+          "value": "689.7-35.9d"
+        },
+        {
+          "parent": "ohl34",
+          "target": "current_in_B",
+          "within": 10,
+          "value": "1036.0-152.6d"
+        },
+        {
+          "parent": "ohl34",
+          "target": "current_in_C",
+          "within": 10,
+          "value": "1364.0+84.7d"
+        },
+        {
+          "parent": "load4",
+          "target": "voltage_A",
+          "within": 5,
+          "value": "2175-4.1d"
+        },
+        {
+          "parent": "load4",
+          "target": "voltage_B",
+          "within": 5,
+          "value": "1930-126.8d"
+        },
+        {
+          "parent": "load4",
+          "target": "voltage_C",
+          "within": 5,
+          "value": "1833+102.8d"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "ohl12",
+          "phases": "ABCN",
+          "from": "node1",
+          "to": "node2",
+          "length": "2000 ft",
+          "configuration": "lc300"
+        },
+        {
+          "name": "ohl34",
+          "phases": "ABCN",
+          "from": "great_grandchild_node_3",
+          "to": "load4",
+          "length": "2500 ft",
+          "configuration": "lc300",
+          "inside_comments": [
+            "// object recorder {",
+            "// property \"current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C\";",
+            "// interval -1;",
+            "// file ohl_current.csv;",
+            "// };"
+          ]
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node2",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node_3_base",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.777
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "xformer23",
+          "phases": "ABCN",
+          "from": "node2",
+          "to": "node_3_base",
+          "configuration": "tc400"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load4",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.777,
+          "inside_comments": [
+            "//Original power - split across descendants for an amusing test",
+            "// constant_power_A +1275000.000+790174.031j;",
+            "// constant_power_B +1800000.000+871779.789j;",
+            "// constant_power_C +2375000.000+780624.750j;"
+          ]
+        },
+        {
+          "name": "load4_child",
+          "phases": "ABCN",
+          "parent": "load4",
+          "constant_power_A": "+1275000.000+790174.031j",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "load4_grandchild",
+          "phases": "ABCN",
+          "parent": "load4_child",
+          "constant_power_B": "+1800000.000+871779.789j",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "load4_greatgrandchild",
+          "phases": "ABCN",
+          "parent": "load4_grandchild",
+          "constant_power_C": "+2375000.000+780624.750j",
+          "nominal_voltage": 2401.777
+        }
+      ]
+    }
+  }
+}

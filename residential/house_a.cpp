@@ -215,7 +215,7 @@ int house::create()
 	load.admittance = complex(0,0,J);
 	load.current = complex(0,0,J);
 
-	tload.end_obj = OBJECTHDR(this);
+	tload.end_obj = object_header(this);
 
 // initalize published variables.  The model definition can set any of this.
 	heat_mode = ELECTRIC;
@@ -252,7 +252,7 @@ then Tout will be set to 74 degF, RHout is set to 75% and solar flux will be set
 **/
 int house::init_climate()
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	// link to climate data
 	static FINDLIST *climates = nullptr;
@@ -306,7 +306,7 @@ and internal gain variables.
 
 int house::init(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	// construct circuit variable map to meter
@@ -326,7 +326,7 @@ int house::init(OBJECT *parent)
 	int i;
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	if (parent!=nullptr && gl_object_isa(parent,"triplex_meter"))
 	{
 		// attach meter variables to each circuit
@@ -542,7 +542,7 @@ TIMESTAMP house::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP sync_time = TS_NEVER;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	// clear accumulators for panel currents
 	complex I[3]; I[X12] = I[X23] = I[X13] = complex(0,0);
@@ -764,7 +764,7 @@ Also synchronizes the voltages and current in the panel with the meter.
 
 TIMESTAMP house::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double nHours = (gl_tohours(t1)- gl_tohours(t0));
 	//load.energy += load.total * nHours;
 	/* TIMESTAMP sync_time = */ sync_hvac_load(t1, nHours);
@@ -900,7 +900,7 @@ double house::get_Tsolar(int hour, int month, double Tair, double Tout)
 	double LMnow = 0.0;
 	int LMcol = month-1;
 
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	if (hdr->latitude <= 24.0)
 		LMnow = LM[0][LMcol];

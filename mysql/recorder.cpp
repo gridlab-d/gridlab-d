@@ -69,7 +69,7 @@ recorder::recorder(MODULE *module) {
 			throw msg;
 		}
 
-		memset(this, 0, sizeof(recorder));
+		//memset(this, 0, sizeof(recorder));
 	}
 }
 

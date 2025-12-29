@@ -4,8 +4,8 @@
 	@author David P. Chassin
 	@addtogroup output Output functions
 	@ingroup core
-	
-	Implements functions that send output to the current environment's console, 
+
+	Implements functions that send output to the current environment's console,
 	error stream, and test result string using printf style args.
 
 	Debug, warning, errors, fatal messages should provide an indicate of the context in which
@@ -16,7 +16,7 @@
 	it is and this is left to the programmers judgement, save to say that if the situation is not
 	expected to seriously affect the result, it should be a warning; if the results are likely
 	to be seriously affected, it should be an error; and if the result is hopelessly compromised
-	it should be a fatal error.  
+	it should be a fatal error.
 	\code
 	output_fatal("module_load(file='%s', argc=%d, argv=['%s',...]): intrinsic %s is not defined in module", file, argc,argc>0?argv[0]:"",fname);
 	\endcode
@@ -24,7 +24,7 @@
 	- <b>Module messages</b> should be produced un the same guidelines as core messages, except that
 	fatal messages are not supported for modules.  However, the context should provide the object, if known
 	\code
-	 gl_error("office:%d occupancy_schedule '%s' day '%c' is invalid", OBJECTHDR(this)->id, block, *p);
+	 gl_error("office:%d occupancy_schedule '%s' day '%c' is invalid", object_header(this)->id, block, *p);
 	\endcode
 
 	@{
@@ -35,6 +35,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <mutex>
+#include <shared_mutex>
 
 #include "output.h"
 #include "globals.h"
@@ -42,15 +44,29 @@
 #include "lock.h"
 #include "module.h"
 
-static unsigned int output_lock = 0;
+std::shared_mutex verbose_lock;
+std::shared_mutex debug_lock;
+std::shared_mutex error_lock;
+std::shared_mutex message_lock;
+std::shared_mutex raw_lock;
+std::shared_mutex fatal_lock;
+std::shared_mutex warning_lock;
+std::shared_mutex test_lock;
+
+// static unsigned int output_lock = 0;
 static char buffer[65536];
 #define CHECK 0xcdcd
-int overflow=CHECK;
+int overflow = CHECK;
 int flush = 0;
-enum output_type {none, error, standard};
-output_type last_out {none};
+enum output_type
+{
+	none,
+	error,
+	standard
+};
+output_type last_out{none};
 
-static char prefix[16]="";
+static char prefix[16] = "";
 void output_prefix_enable(void)
 {
 	unsigned short cpuid, procid;
@@ -60,17 +76,18 @@ void output_prefix_enable(void)
 	output_debug("reading procid()");
 	procid = sched_get_procid();
 	output_debug("sprintf'ing m/s name");
-	switch ( global_multirun_mode ) {
+	switch (global_multirun_mode)
+	{
 	case MRM_STANDALONE:
-		sprintf(prefix,"-%02d(%05d): ", cpuid, procid);
+		sprintf(prefix, "-%02d(%05d): ", cpuid, procid);
 		break;
 	case MRM_MASTER:
 		flush = 1;
-		sprintf(prefix,"M%02d(%05d): ", cpuid, procid);
+		sprintf(prefix, "M%02d(%05d): ", cpuid, procid);
 		break;
 	case MRM_SLAVE:
 		flush = 1;
-		sprintf(prefix,"S%02d(%05d): ", cpuid, procid);
+		sprintf(prefix, "S%02d(%05d): ", cpuid, procid);
 		break;
 	default:
 		break;
@@ -78,10 +95,11 @@ void output_prefix_enable(void)
 	output_debug("exiting output_prefix_enable");
 }
 
-/** output_redirect() changes where output message are sent 
+/** output_redirect() changes where output message are sent
 	instead of the usual stdin, stdout streams
  **/
-static struct s_redirection {
+static struct s_redirection
+{
 	FILE *output;
 	FILE *error;
 	FILE *warning;
@@ -90,27 +108,28 @@ static struct s_redirection {
 	FILE *profile;
 	FILE *progress;
 } redirect;
-FILE* output_redirect_stream(char *name, FILE *fp)
+FILE *output_redirect_stream(char *name, FILE *fp)
 {
-	struct {
+	struct
+	{
 		const char *name;
 		FILE **file;
 		const char *defaultfile;
 	} map[] = {
-		{"output",&redirect.output,"gridlabd.out"},
-		{"error",&redirect.error,"gridlabd.err"},
-		{"warning",&redirect.warning,"gridlabd.wrn"},
-		{"debug",&redirect.debug,"gridlabd.dbg"},
-		{"verbose",&redirect.verbose,"gridlabd.inf"},
-		{"profile",&redirect.profile,"gridlabd.pro"},
-		{"progress",&redirect.progress,"gridlabd.prg"},
+		{"output", &redirect.output, "gridlabd.out"},
+		{"error", &redirect.error, "gridlabd.err"},
+		{"warning", &redirect.warning, "gridlabd.wrn"},
+		{"debug", &redirect.debug, "gridlabd.dbg"},
+		{"verbose", &redirect.verbose, "gridlabd.inf"},
+		{"profile", &redirect.profile, "gridlabd.pro"},
+		{"progress", &redirect.progress, "gridlabd.prg"},
 	};
 	int i;
-	for (i=0; i<sizeof(map)/sizeof(map[0]); i++) 
+	for (i = 0; i < sizeof(map) / sizeof(map[0]); i++)
 	{
-		if (strcmp(name,map[i].name)==0)
+		if (strcmp(name, map[i].name) == 0)
 		{
-			char *mode = const_cast<char*>("w");
+			char *mode = const_cast<char *>("w");
 			FILE *oldfp = *(map[i].file);
 			*(map[i].file) = fp;
 #ifndef WIN32
@@ -130,36 +149,38 @@ int output_notify_error(void (*notify)(void))
 	return 0;
 }
 
-FILE* output_redirect(const char *name, char *path)
+FILE *output_redirect(const char *name, char *path)
 {
-	struct {
+	struct
+	{
 		const char *name;
 		FILE **file;
 		const char *defaultfile;
 	} map[] = {
-		{"output",&redirect.output,"gridlabd.out"},
-		{"error",&redirect.error,"gridlabd.err"},
-		{"warning",&redirect.warning,"gridlabd.wrn"},
-		{"debug",&redirect.debug,"gridlabd.dbg"},
-		{"verbose",&redirect.verbose,"gridlabd.inf"},
-		{"profile",&redirect.profile,"gridlabd.pro"},
-		{"progress",&redirect.progress,"gridlabd.prg"},
+		{"output", &redirect.output, "gridlabd.out"},
+		{"error", &redirect.error, "gridlabd.err"},
+		{"warning", &redirect.warning, "gridlabd.wrn"},
+		{"debug", &redirect.debug, "gridlabd.dbg"},
+		{"verbose", &redirect.verbose, "gridlabd.inf"},
+		{"profile", &redirect.profile, "gridlabd.pro"},
+		{"progress", &redirect.progress, "gridlabd.prg"},
 	};
 	int i;
-	for (i=0; i<sizeof(map)/sizeof(map[0]); i++) 
+	for (i = 0; i < sizeof(map) / sizeof(map[0]); i++)
 	{
-		if (strcmp(name,map[i].name)==0)
+		if (strcmp(name, map[i].name) == 0)
 		{
-			char *mode = const_cast<char*>("w");
-			if (*(map[i].file)!=nullptr)
+			char *mode = const_cast<char *>("w");
+			if (*(map[i].file) != nullptr)
 				fclose(*(map[i].file));
-			
+
 			/* test for append mode, path led with + */
-			if (path != nullptr && path[0]=='+')
-			{	mode = const_cast<char*>("a");
+			if (path != nullptr && path[0] == '+')
+			{
+				mode = const_cast<char *>("a");
 				path++;
 			}
-			*(map[i].file) = fopen(path?path:map[i].defaultfile,"w");
+			*(map[i].file) = fopen(path ? path : map[i].defaultfile, "w");
 #ifndef WIN32
 			if (*(map[i].file))
 				setlinebuf(*(map[i].file));
@@ -175,26 +196,33 @@ FILE* output_redirect(const char *name, char *path)
 **/
 static FILE *curr_stream[3] = {nullptr, nullptr, nullptr};
 static int stream_prep = 0;
-static void prep_stream(){
-	if(stream_prep)
+static void prep_stream()
+{
+	if (stream_prep)
 		return;
 	stream_prep = 1;
-	if(curr_stream[FS_IN] == nullptr){
+	if (curr_stream[FS_IN] == nullptr)
+	{
 		curr_stream[FS_IN] = stdin;
 #ifdef DEBUG
-		if (global_verbose_mode) printf("    ... prep_stream() set FS_IN to stdin\n");
+		if (global_verbose_mode)
+			printf("    ... prep_stream() set FS_IN to stdin\n");
 #endif
 	}
-	if(curr_stream[FS_STD] == nullptr){
+	if (curr_stream[FS_STD] == nullptr)
+	{
 		curr_stream[FS_STD] = stdout;
 #ifdef DEBUG
-		if (global_verbose_mode) printf("    ... prep_stream() set FS_STD to stdout\n");
+		if (global_verbose_mode)
+			printf("    ... prep_stream() set FS_STD to stdout\n");
 #endif
 	}
-	if(curr_stream[FS_ERR] == nullptr){
+	if (curr_stream[FS_ERR] == nullptr)
+	{
 		curr_stream[FS_ERR] = stderr;
 #ifdef DEBUG
-		if (global_verbose_mode) printf("    ... prep_stream() set FS_ERR to stderr\n");
+		if (global_verbose_mode)
+			printf("    ... prep_stream() set FS_ERR to stderr\n");
 #endif
 	}
 	return;
@@ -217,50 +245,53 @@ void output_cleanup(void)
 	output_debug(nullptr);
 }
 
-static int default_printstd(const char *format,...)
+static int default_printstd(const char *format, ...)
 {
 	int count;
 	va_list ptr;
 	prep_stream();
-	if( last_out != standard ) {
+	if (last_out != standard)
+	{
 		fprintf(curr_stream[FS_STD], "\n");
 		last_out = standard;
 	}
-	va_start(ptr,format);
-	count = vfprintf(curr_stream[FS_STD],format,ptr);
-	if ( flush )
-	    fflush(curr_stream[FS_STD]);
+	va_start(ptr, format);
+	count = vfprintf(curr_stream[FS_STD], format, ptr);
+	if (flush)
+		fflush(curr_stream[FS_STD]);
 	va_end(ptr);
 	return count;
 }
 
-static int default_printerr(const char *format,...)
+static int default_printerr(const char *format, ...)
 {
 	int count;
 	va_list ptr;
 	prep_stream();
-	if( last_out != error ) {
+	if (last_out != error)
+	{
 		fprintf(curr_stream[FS_ERR], "\n");
 		last_out = error;
 	}
-	va_start(ptr,format);
-	count = vfprintf(curr_stream[FS_ERR],format,ptr);
+	va_start(ptr, format);
+	count = vfprintf(curr_stream[FS_ERR], format, ptr);
 	va_end(ptr);
 	fflush(curr_stream[FS_ERR]);
 	return count;
 }
 
-FILE *output_set_stream(FILESTREAM fs, FILE *newfp){
+FILE *output_set_stream(FILESTREAM fs, FILE *newfp)
+{
 	FILE *oldfp = curr_stream[fs];
-	if(fs > FS_ERR)	/* input check */
+	if (fs > FS_ERR) /* input check */
 		return nullptr;
-	if(newfp == nullptr)
+	if (newfp == nullptr)
 		return nullptr;
 	curr_stream[fs] = newfp;
 	return oldfp;
 }
 
-static PRINTFUNCTION printstd=default_printstd, printerr=default_printerr;
+static PRINTFUNCTION printstd = default_printstd, printerr = default_printerr;
 
 /**	Sets stderr to stdout
 
@@ -268,7 +299,8 @@ static PRINTFUNCTION printstd=default_printstd, printerr=default_printerr;
 	for the Java GUI, since catching messages from both stderr and stdout was
 	causing difficulties.
  **/
-void output_both_stdout(){
+void output_both_stdout()
+{
 	curr_stream[FS_STD] = stdout;
 	curr_stream[FS_ERR] = stdout;
 }
@@ -299,14 +331,14 @@ PRINTFUNCTION output_set_stderr(PRINTFUNCTION call) /**< The \b printf style fun
 	return old;
 }
 
-static char time_context[256]="INIT";
+static char time_context[256] = "INIT";
 void output_set_time_context(TIMESTAMP ts)
 {
-	convert_from_timestamp(ts,time_context,sizeof(time_context)-1);
+	convert_from_timestamp(ts, time_context, sizeof(time_context) - 1);
 }
 void output_set_delta_time_context(TIMESTAMP ts, DELTAT delta_ts)
 {
-	convert_from_timestamp_delta(ts,delta_ts,time_context,sizeof(time_context)-1);
+	convert_from_timestamp_delta(ts, delta_ts, time_context, sizeof(time_context) - 1);
 }
 char *output_get_time_context(void)
 {
@@ -314,19 +346,21 @@ char *output_get_time_context(void)
 }
 
 /** Output a fatal error message
-	
-	output_fatal() will produce output to the standard output stream.  
-	Error messages are always preceded by the string "FATAL: " 
+
+	output_fatal() will produce output to the standard output stream.
+	Error messages are always preceded by the string "FATAL: "
 	and a newline is always appended to the message.
  **/
-int output_fatal(const char *format,...) /**< \bprintf style argument list */
+int output_fatal(const char *format, ...) /**< \bprintf style argument list */
 {
 	/* check for repeated message */
 	static char lastfmt[4096] = "";
-	static int count=0;
+	static int count = 0;
 	int result = 0;
-	wlock(&output_lock);
-	if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+	// wlock(&output_lock);
+	std::unique_lock<std::shared_mutex> lock;
+
+	if (format != nullptr && strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
 		goto Unlock;
@@ -334,45 +368,53 @@ int output_fatal(const char *format,...) /**< \bprintf style argument list */
 	else
 	{
 		va_list ptr;
-		int len=0;
-		strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
-		if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
+		int len = 0;
+		strncpy(lastfmt, format ? format : "", sizeof(lastfmt) - 1);
+		if (count > 0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
-			len = sprintf(buffer,"last fatal error message was repeated %d times", count);
+			len = sprintf(buffer, "last fatal error message was repeated %d times", count);
 			count = 0;
-			if(format == nullptr) goto Output;
-			else len += sprintf(buffer+len,"\n%sFATAL    [%s] : ",prefix, time_context);
+			if (format == nullptr)
+				goto Output;
+			else
+				len += sprintf(buffer + len, "\n%sFATAL    [%s] : ", prefix, time_context);
 		}
-		else if (format==nullptr)
+		else if (format == nullptr)
 			goto Unlock;
-		va_start(ptr,format);
-		vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
+		va_start(ptr, format);
+		vsprintf(buffer + len, format, ptr); /* note the lack of check on buffer overrun */
 		va_end(ptr);
 	}
 Output:
+	if (format != nullptr)
+		lock = std::unique_lock<std::shared_mutex>(fatal_lock);
+
 	if (redirect.error)
-		result = fprintf(redirect.error,"%sFATAL    [%s] : %s\n", prefix, time_context, buffer);
+		result = fprintf(redirect.error, "%sFATAL    [%s] : %s\n", prefix, time_context, buffer);
 	else
 		result = (*printerr)("%sFATAL    [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
-	wunlock(&output_lock);
+	// wunlock(&output_lock);
 	return result;
 }
 
 /** Output an error message to the stdout stream using printf style argument processing
-	
-	output_error() will produce output to the standard output stream.  
-	Error messages are always preceded by the string "ERROR: " 
+
+	output_error() will produce output to the standard output stream.
+	Error messages are always preceded by the string "ERROR: "
 	and a newline is always appended to the message.
  **/
-int output_error(const char *format,...) /**< \bprintf style argument list */
+int output_error(const char *format, ...) /**< \bprintf style argument list */
 {
+	std::unique_lock<std::shared_mutex> lock;
+
 	/* check for repeated message */
 	static char lastfmt[4096] = "";
-	static int count=0;
+	static int count = 0;
 	int result = 0;
-	wlock(&output_lock);
-	if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+	// wlock(&output_lock);
+
+	if (format != nullptr && strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
 		goto Unlock;
@@ -380,49 +422,55 @@ int output_error(const char *format,...) /**< \bprintf style argument list */
 	else
 	{
 		va_list ptr;
-		int len=0;
-		strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
-		if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
+		int len = 0;
+		strncpy(lastfmt, format ? format : "", sizeof(lastfmt) - 1);
+		if (count > 0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
-			len = sprintf(buffer,"last error message was repeated %d times", count);
+			len = sprintf(buffer, "last error message was repeated %d times", count);
 			count = 0;
-			if(format == nullptr) goto Output;
-			else len += sprintf(buffer+len,"\n%sERROR    [%s] : ", prefix, time_context);
+			if (format == nullptr)
+				goto Output;
+			else
+				len += sprintf(buffer + len, "\n%sERROR    [%s] : ", prefix, time_context);
 		}
-		else if (format==nullptr)
+		else if (format == nullptr)
 			goto Unlock;
-		va_start(ptr,format);
-		vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
+		va_start(ptr, format);
+		vsprintf(buffer + len, format, ptr); /* note the lack of check on buffer overrun */
 		va_end(ptr);
 	}
 Output:
 
-	if (notify_error!=nullptr)
+	if (notify_error != nullptr)
 		(*notify_error)();
 
+	if (format != nullptr)
+		lock = std::unique_lock<std::shared_mutex>(error_lock);
+
 	if (redirect.error)
-		result = fprintf(redirect.error,"%sERROR    [%s] : %s\n", prefix, time_context, buffer);
+		result = fprintf(redirect.error, "%sERROR    [%s] : %s\n", prefix, time_context, buffer);
 	else
 		result = (*printerr)("%sERROR    [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
-	wunlock(&output_lock);
+	// wunlock(&output_lock);
 	return result;
 }
 
 /** Output an error message to the stdout stream using printf style argument processing
-	
-	output_error() will produce output to the standard output stream.  
-	Error messages are always preceded by the string "ERROR: " 
+
+	output_error() will produce output to the standard output stream.
+	Error messages are always preceded by the string "ERROR: "
 	and a newline is always appended to the message.
  **/
-int output_error_raw(const char *format,...) /**< \bprintf style argument list */
+int output_error_raw(const char *format, ...) /**< \bprintf style argument list */
 {
 	/* check for repeated message */
 	static char lastfmt[4096] = "";
-	static int count=0;
+	static int count = 0;
 	int result = 0;
-	wlock(&output_lock);
-	if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+	// wlock(&output_lock);
+	std::unique_lock<std::shared_mutex> lock;
+	if (format != nullptr && strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode)
 	{
 		count++;
 		goto Unlock;
@@ -430,99 +478,110 @@ int output_error_raw(const char *format,...) /**< \bprintf style argument list *
 	else
 	{
 		va_list ptr;
-		int len=0;
-		strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
-		if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
+		int len = 0;
+		strncpy(lastfmt, format ? format : "", sizeof(lastfmt) - 1);
+		if (count > 0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
-			len = sprintf(buffer,"last error message was repeated %d times", count);
+			len = sprintf(buffer, "last error message was repeated %d times", count);
 			count = 0;
-			if(format == nullptr) goto Output;
-			else len += sprintf(buffer+len,"\n");
+			if (format == nullptr)
+				goto Output;
+			else
+				len += sprintf(buffer + len, "\n");
 		}
-		else if (format==nullptr)
+		else if (format == nullptr)
 			goto Unlock;
-		va_start(ptr,format);
-		vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
+		va_start(ptr, format);
+		vsprintf(buffer + len, format, ptr); /* note the lack of check on buffer overrun */
 		va_end(ptr);
 	}
 Output:
 
-	if (notify_error!=nullptr)
+	if (notify_error != nullptr)
 		(*notify_error)();
 
+	if (format != nullptr)
+		lock = std::unique_lock<std::shared_mutex>(raw_lock);
+
 	if (redirect.error)
-		result= fprintf(redirect.error,"%s%s\n", prefix, buffer);
+		result = fprintf(redirect.error, "%s%s\n", prefix, buffer);
 	else
-		result= (*printerr)("%s%s\n", prefix, buffer);
+		result = (*printerr)("%s%s\n", prefix, buffer);
 Unlock:
-	wunlock(&output_lock);
+	// wunlock(&output_lock);
 	return result;
 }
 
 /** Output an test message to the stdout stream using printf style argument processing
-	
-	output_test() will produce output to the test output file defined by the 
+
+	output_test() will produce output to the test output file defined by the
 	variable \p global_testoutputfile.
-	A newline is always appended to the message. 
+	A newline is always appended to the message.
  **/
-int output_test(const char *format,...) /**< \bprintf style argument list */
+int output_test(const char *format, ...) /**< \bprintf style argument list */
 {
 	static FILE *fp = nullptr;
 	char minor_b[32], major_b[32];
 	char testoutputfilename[1024];
 	char commandline[256];
 	va_list ptr;
+	std::unique_lock<std::shared_mutex> lock;
 
 	int result = 0;
-	wlock(&output_lock);
+	// wlock(&output_lock);
 
-	if(format == nullptr){
+	if (format == nullptr)
+	{
 		goto Unlock;
 	}
 
-	va_start(ptr,format);
-	vsprintf(buffer,format,ptr); /* note the lack of check on buffer overrun */
+	va_start(ptr, format);
+	vsprintf(buffer, format, ptr); /* note the lack of check on buffer overrun */
 	va_end(ptr);
 
-	if (fp==nullptr)
+	if (format != nullptr)
+		lock = std::unique_lock<std::shared_mutex>(test_lock);
+
+	if (fp == nullptr)
 	{
 		time_t now = time(nullptr);
 		fp = fopen(global_getvar("testoutputfile", testoutputfilename, 1023), "w");
-		if (fp==nullptr)
+		if (fp == nullptr)
 		{
 			/* can't write to output file, write to stderr instead */
-			return (*printstd)("TEST: %s\n",buffer);
+			return (*printstd)("TEST: %s\n", buffer);
 		}
-		fprintf(fp,"GridLAB-D Version %s.%s\n", global_getvar("version.major", major_b, 32), global_getvar("version.minor", minor_b, 32));
-		fprintf(fp,"Test results from run started %s", asctime(localtime(&now)));
-		fprintf(fp,"Command line: %s\n", global_getvar("command_line", commandline, 255));
-		if ( global_multirun_mode!=MRM_STANDALONE )
-			fprintf(fp,"Instance: %s\n", prefix);
+		fprintf(fp, "GridLAB-D Version %s.%s\n", global_getvar("version.major", major_b, 32), global_getvar("version.minor", minor_b, 32));
+		fprintf(fp, "Test results from run started %s", asctime(localtime(&now)));
+		fprintf(fp, "Command line: %s\n", global_getvar("command_line", commandline, 255));
+		if (global_multirun_mode != MRM_STANDALONE)
+			fprintf(fp, "Instance: %s\n", prefix);
 	}
 
-	result = fprintf(fp,"%s\n", buffer);
+	result = fprintf(fp, "%s\n", buffer);
 Unlock:
-	wunlock(&output_lock);
+	// wunlock(&output_lock);
 	return result;
-
 }
 
 /** Output a warning message to the stdout stream using printf style argument processing
-	
+
 	output_warning() will produce output to the standard output stream only when the
 	\p global_warn_mode variable is not \b 0.  Warning messages are always preceded by
 	the string "WARNING: " and a newline is always appended to the message.
  **/
-int output_warning(const char *format,...) /**< \bprintf style argument list */
+int output_warning(const char *format, ...) /**< \bprintf style argument list */
 {
 	if (global_warn_mode)
 	{
 		/* check for repeated message */
 		static char lastfmt[4096] = "";
-		static int count=0;
+		static int count = 0;
 		int result = 0;
-		wlock(&output_lock);
-		if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+		// wlock(&output_lock);
+		std::unique_lock<std::shared_mutex> lock;
+
+		if (format != nullptr && strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
 			goto Unlock;
@@ -530,49 +589,56 @@ int output_warning(const char *format,...) /**< \bprintf style argument list */
 		else
 		{
 			va_list ptr;
-			int len=0;
-			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
-			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
+			int len = 0;
+			strncpy(lastfmt, format ? format : "", sizeof(lastfmt) - 1);
+			if (count > 0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
-				len = sprintf(buffer,"last warning message was repeated %d times", count);
+				len = sprintf(buffer, "last warning message was repeated %d times", count);
 				count = 0;
-				if(format == nullptr) goto Output;
-				else len += sprintf(buffer+len,"\n%sWARNING  [%s] : ", prefix, time_context);
+				if (format == nullptr)
+					goto Output;
+				else
+					len += sprintf(buffer + len, "\n%sWARNING  [%s] : ", prefix, time_context);
 			}
-			else if (format==nullptr)
+			else if (format == nullptr)
 				goto Unlock;
-			va_start(ptr,format);
-			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
+			va_start(ptr, format);
+			vsprintf(buffer + len, format, ptr); /* note the lack of check on buffer overrun */
 			va_end(ptr);
 		}
-Output:
+	Output:
+		if (format != nullptr)
+			lock = std::unique_lock<std::shared_mutex>(warning_lock);
+
 		if (redirect.warning)
-			result = fprintf(redirect.warning,"%sWARNING  [%s] : %s\n", prefix, time_context, buffer);
+			result = fprintf(redirect.warning, "%sWARNING  [%s] : %s\n", prefix, time_context, buffer);
 		else
 			result = (*printstd)("%sWARNING  [%s] : %s\n", prefix, time_context, buffer);
-Unlock:
-		wunlock(&output_lock);
+	Unlock:
+		// wunlock(&output_lock);
 		return result;
 	}
 	return 0;
 }
 
 /** Output a debug message to the stdout stream using printf style argument processing
-	
+
 	output_debug() will produce output to the standard output stream only when the
 	\p global_debug_output variable is not \b 0.  Debug messages are always preceded by
 	the string "DEBUG: " and a newline is always appended to the message.
  **/
-int output_debug(const char *format,...) /**< \bprintf style argument list */
+int output_debug(const char *format, ...) /**< \bprintf style argument list */
 {
+	std::unique_lock<std::shared_mutex> lock;
+
 	if (global_debug_output)
 	{
 		/* check for repeated message */
 		static char lastfmt[4096] = "";
-		static int count=0;
+		static int count = 0;
 		int result = 0;
-		wlock(&output_lock);
-		if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+		// wlock(&output_lock);
+		if (format != nullptr && strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
 			goto Unlock;
@@ -580,50 +646,59 @@ int output_debug(const char *format,...) /**< \bprintf style argument list */
 		else
 		{
 			va_list ptr;
-			int len=0;
-			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
-			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
+			int len = 0;
+			strncpy(lastfmt, format ? format : "", sizeof(lastfmt) - 1);
+			if (count > 0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
-				len = sprintf(buffer,"last debug message was repeated %d times", count);
+				len = sprintf(buffer, "last debug message was repeated %d times", count);
 				count = 0;
-				if(format == 0) goto Output;
-				else len += sprintf(buffer+len,"\n%sDEBUG [%s] : ", prefix, time_context);
+				if (format == 0)
+					goto Output;
+				else
+					len += sprintf(buffer + len, "\n%sDEBUG [%s] : ", prefix, time_context);
 			}
-			else if (format==nullptr)
+			else if (format == nullptr)
 				goto Unlock;
-			va_start(ptr,format);
-			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
+			va_start(ptr, format);
+			vsprintf(buffer + len, format, ptr); /* note the lack of check on buffer overrun */
 			va_end(ptr);
 		}
-Output:
+	Output:
+
+		if (format != nullptr)
+			lock = std::unique_lock<std::shared_mutex>(debug_lock);
+
 		if (redirect.debug)
-			result = fprintf(redirect.debug,"%sDEBUG [%s] : %s\n", prefix, time_context, buffer);
+			result = fprintf(redirect.debug, "%sDEBUG [%s] : %s\n", prefix, time_context, buffer);
 		else
 			result = (*printstd)("%sDEBUG [%s] : %s\n", prefix, time_context, buffer);
-Unlock:
-		wunlock(&output_lock);
+	Unlock:
+		// wunlock(&output_lock);
 		return result;
 	}
 	return 0;
 }
 
 /** Output a verbose message to the stdout stream using printf style argument processing
-	
+
 	output_verbose() will produce output to the standard output stream only when the
 	\p global_verbose_mode variable is not \b 0.  Verbose message always have
-	leading spaces and an ellipsis printed before the string, and 
+	leading spaces and an ellipsis printed before the string, and
 	a newline is always appended to the message.
  **/
-int output_verbose(const char *format,...) /**< \bprintf style argument list */
+int output_verbose(const char *format, ...) /**< \bprintf style argument list */
 {
+	std::unique_lock<std::shared_mutex> lock;
+
 	if (global_verbose_mode)
 	{
 		/* check for repeated message */
 		static char lastfmt[4096] = "";
-		static int count=0;
+		static int count = 0;
 		int result = 0;
-		wlock(&output_lock);
-		if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+		// wlock(&output_lock);
+
+		if (format != nullptr && strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode)
 		{
 			count++;
 			goto Unlock;
@@ -631,79 +706,192 @@ int output_verbose(const char *format,...) /**< \bprintf style argument list */
 		else
 		{
 			va_list ptr;
-			int len=0;
-			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
-			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
+			int len = 0;
+			strncpy(lastfmt, format ? format : "", sizeof(lastfmt) - 1);
+			if (count > 0 && global_suppress_repeat_messages && !global_verbose_mode)
 			{
-				len = sprintf(buffer,"%slast verbose message was repeated %d times\n   ... ", prefix, count);
+				len = sprintf(buffer, "%slast verbose message was repeated %d times\n   ... ", prefix, count);
 				count = 0;
-				if(format == 0) goto Output;
+				if (format == 0)
+					goto Output;
 			}
-			else if (format==nullptr)
+			else if (format == nullptr)
 				goto Unlock;
-			va_start(ptr,format);
-			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
+			va_start(ptr, format);
+			vsprintf(buffer + len, format, ptr); /* note the lack of check on buffer overrun */
 			va_end(ptr);
 		}
-Output:
+	Output:
+
+		if (format != nullptr)
+			lock = std::unique_lock<std::shared_mutex>(verbose_lock);
+
 		if (redirect.verbose)
-			result = fprintf(redirect.verbose,"%s%s\n", prefix, buffer);
+			result = fprintf(redirect.verbose, "%s%s\n", prefix, buffer);
 		else
 			result = (*printstd)("%s   ... %s\n", prefix, buffer);
-Unlock:
-		wunlock(&output_lock);
-	return result;
-	}
-	return 0;
-}
-/** Output a message to the stdout stream using printf style argument processing
-	
-	output_message() will produce output to the standard output stream only when the
-	\p global_quiet_mode variable is not \b 0.  A newline is always appended to the message.
- **/
-int output_message(const char *format,...) /**< \bprintf style argument list */
-{
-	if (!global_quiet_mode)
-	{
-		/* check for repeated message */
-		static char lastfmt[4096] = "";
-		static int count=0;
-		size_t sz = strlen(format?format:"");
-		int result = 0;
-		wlock(&output_lock);
-		if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
-		{
-			count++;
-			goto Unlock;
-		}
-		else
-		{
-			va_list ptr;
-			int len=0;
-			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
-			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
-			{
-				len = sprintf(buffer,"%slast message was repeated %d times\n", prefix, count);
-				count = 0;
-				if(format == nullptr) goto Output;
-			}
-			if (format==nullptr)
-				goto Unlock;
-			va_start(ptr,format);
-			vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
-			va_end(ptr);
-		}
-Output:
-		if (redirect.output)
-			result = fprintf(redirect.output,"%s%s\n", prefix, buffer);
-		else
-			result = (*printstd)("%s%s\n", prefix, buffer);
-Unlock:
-		wunlock(&output_lock);
+	Unlock:
+		// wunlock(&output_lock);
 		return result;
 	}
 	return 0;
 }
+/** Output a message to the stdout stream using printf style argument processing
+
+	output_message() will produce output to the standard output stream only when the
+	\p global_quiet_mode variable is not \b 0.  A newline is always appended to the message.
+ **/
+int output_message(const char *format, ...)
+{
+	std::unique_lock<std::shared_mutex> lock;
+
+	if (!global_quiet_mode)
+	{
+		// Variables for repeated message handling
+		static char lastfmt[4096] = "";
+		static int count = 0;
+
+		// Static buffer for message formatting
+		static char buffer[65536];
+		size_t len = 0;
+		int result = 0;
+		size_t remaining_space = 0;
+
+		const char *pfx = prefix ? prefix : "";
+
+		// Validate format string
+		if (!format)
+		{
+			// fprintf(stderr, "Error: format is NULL.\n");
+			result = 0;
+			goto Unlock;
+		}
+
+		// wlock(&output_lock);  // Acquire lock for thread-safety
+
+		// Check for repeated message suppression
+		if (strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages && !global_verbose_mode)
+		{
+			count++;
+			goto Unlock; // Skip output formatting
+		}
+
+		// Variadic argument handling and message formatting
+		va_list ptr;
+		len = 0;
+
+		// Update `lastfmt` with the current format
+		strncpy(lastfmt, format, sizeof(lastfmt) - 1);
+		lastfmt[sizeof(lastfmt) - 1] = '\0';
+
+		// Handle repeated message count
+		if (count > 0 && global_suppress_repeat_messages && !global_verbose_mode)
+		{
+			len = snprintf(buffer, sizeof(buffer), "%sLast message was repeated %d times\n", prefix, count);
+			count = 0;
+			if (len < 0 || len >= sizeof(buffer))
+			{
+				fprintf(stderr, "Error: Buffer overflow in repeated message formatting.\n");
+				result = -1;
+				goto Unlock;
+			}
+		}
+
+		// Check buffer size for remaining space
+		remaining_space = sizeof(buffer) - len;
+		if (remaining_space <= 0)
+		{
+			fprintf(stderr, "Error: No space left in buffer.\n");
+			result = -1;
+			goto Unlock;
+		}
+
+		// Format the new message
+		va_start(ptr, format);
+		result = vsnprintf(buffer + len, remaining_space, format, ptr);
+		if (result < 0)
+		{
+			fprintf(stderr, "vsnprintf failed.\n");
+			va_end(ptr);
+			goto Unlock;
+		}
+		va_end(ptr);
+
+		if (format != nullptr)
+			lock = std::unique_lock<std::shared_mutex>(message_lock);
+
+		// Validate `vsnprintf` result
+		if ((size_t)(len + result) >= sizeof(buffer))
+		{
+			fprintf(stderr, "Warning: Message truncated.\n");
+		}
+
+		// Output the message to the specified target
+		if (redirect.output)
+		{
+			result = fprintf(redirect.output, "%s%s\n", pfx, buffer);
+		}
+		else if (printstd)
+		{
+			result = (*printstd)("%s%s\n", pfx, buffer);
+		}
+		else
+		{
+			fprintf(stderr, "Error: No output target defined.\n");
+			result = -1;
+		}
+
+	Unlock:
+		// wunlock(&output_lock);  // Release lock
+		return result; // Return the number of characters written
+	}
+	return 0; // Return 0 if `global_quiet_mode` is enabled
+}
+
+// int output_message(const char *format,...) /**< \bprintf style argument list */
+//{
+//	if (!global_quiet_mode)
+//	{
+//		/* check for repeated message */
+//		static char lastfmt[4096] = "";
+//		static int count=0;
+//		size_t sz = strlen(format?format:"");
+//		int result = 0;
+//		wlock(&output_lock);
+//		if (format!=nullptr && strcmp(lastfmt,format)==0 && global_suppress_repeat_messages && !global_verbose_mode)
+//		{
+//			count++;
+//			goto Unlock;
+//		}
+//		else
+//		{
+//			va_list ptr;
+//			int len=0;
+//			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
+//			if (count>0 && global_suppress_repeat_messages && !global_verbose_mode)
+//			{
+//				len = sprintf(buffer,"%slast message was repeated %d times\n", prefix, count);
+//				count = 0;
+//				if(format == nullptr) goto Output;
+//			}
+//			if (format==nullptr)
+//				goto Unlock;
+//			va_start(ptr,format);
+//			int result = vsnprintf(buffer + len, sizeof(buffer) - len, format, ptr);
+//			//vsprintf(buffer+len,format,ptr); /* note the lack of check on buffer overrun */
+//			va_end(ptr);
+//		}
+// Output:
+//		if (redirect.output)
+//			result = fprintf(redirect.output,"%s%s\n", prefix, buffer);
+//		else
+//			result = (*printstd)("%s%s\n", prefix, buffer);
+// Unlock:
+//		wunlock(&output_lock);
+//		return result;
+//	}
+//	return 0;
+// }
 
 /** Output a profiler message
  **/
@@ -712,12 +900,12 @@ int output_profile(const char *format, ...) /**< /bprintf style argument list */
 	char tmp[1024];
 	va_list ptr;
 
-	va_start(ptr,format);
-	vsprintf(tmp,format,ptr);
+	va_start(ptr, format);
+	vsprintf(tmp, format, ptr);
 	va_end(ptr);
 
-	if (redirect.profile!=nullptr)
-		return fprintf(redirect.profile,"%s%s\n", prefix, tmp);
+	if (redirect.profile != nullptr)
+		return fprintf(redirect.profile, "%s%s\n", prefix, tmp);
 	else
 		return (*printstd)("%s%s\n", prefix, tmp);
 }
@@ -728,16 +916,16 @@ int output_progress()
 {
 	char buffer[64];
 	int res = 0;
-	char *ts; 
+	char *ts;
 
 	/* handle delta mode highres time */
-	if ( global_simulation_mode==SM_DELTA )
+	if (global_simulation_mode == SM_DELTA)
 	{
 		DATETIME t;
-		unsigned int64 secs = global_deltaclock/1000000000;
-		local_datetime(global_clock+secs,&t);
-		t.nanosecond = (unsigned int)(global_deltaclock-secs*1000000000);
-		strdatetime(&t,buffer,sizeof(buffer));
+		unsigned int64 secs = global_deltaclock / 1000000000;
+		local_datetime(global_clock + secs, &t);
+		t.nanosecond = (unsigned int)(global_deltaclock - secs * 1000000000);
+		strdatetime(&t, buffer, sizeof(buffer));
 		ts = buffer;
 	}
 	else
@@ -745,50 +933,58 @@ int output_progress()
 
 	if (redirect.progress)
 	{
-		res = fprintf(redirect.progress,"%s\n",ts);
+		res = fprintf(redirect.progress, "%s\n", ts);
 		fflush(redirect.progress);
 	}
 	else if (global_keep_progress)
 		res = output_message("%sProcessing %s...", prefix, ts);
 	else
 	{
-		static int len=0;
-		int i=len, slen = (int)strlen(ts)+15;
-		while (i--) putchar(' ');
+		static int len = 0;
+		int i = len, slen = (int)strlen(ts) + 15;
+		while (i--)
+			putchar(' ');
 		putchar('\r');
-		if (slen>len) len=slen;
+		if (slen > len)
+			len = slen;
 		res = output_raw("%sProcessing %s...\r", prefix, ts);
 	}
 	return res;
 }
 
 /** Output a raw string to the stdout stream using printf style argument processing
-	
+
 	output_raw() will produce output to the standard output stream only when the
-	\p global_quiet_mode variable is not \b 0.  
+	\p global_quiet_mode variable is not \b 0.
  **/
-int output_raw(const char *format,...) /**< \bprintf style argument list */
+int output_raw(const char *format, ...) /**< \bprintf style argument list */
 {
 	if (!global_quiet_mode)
 	{
 		va_list ptr;
 		int result = 0;
-		wlock(&output_lock);
+		// wlock(&output_lock);
 
-		va_start(ptr,format);
-		vsprintf(buffer,format,ptr); /* note the lack of check on buffer overrun */
+		va_start(ptr, format);
+		vsprintf(buffer, format, ptr); /* note the lack of check on buffer overrun */
 		va_end(ptr);
 
-			if (redirect.output)
-			{	int len = fprintf(redirect.output,"%s%s", prefix, buffer);
-				fflush(redirect.output);
-				result =  len;
-			}
-			else {
-				result = (*printstd)("%s%s",prefix, buffer);
-				fflush(curr_stream[FS_STD]);
-			}
-		wunlock(&output_lock);
+		std::unique_lock<std::shared_mutex> lock;
+		if (format != nullptr)
+			lock = std::unique_lock<std::shared_mutex>(raw_lock);
+
+		if (redirect.output)
+		{
+			int len = fprintf(redirect.output, "%s%s", prefix, buffer);
+			fflush(redirect.output);
+			result = len;
+		}
+		else
+		{
+			result = (*printstd)("%s%s", prefix, buffer);
+			fflush(curr_stream[FS_STD]);
+		}
+		// wunlock(&output_lock);
 		return result;
 	}
 	return 0;
@@ -801,7 +997,7 @@ int output_xsd(char *spec)
 {
 	MODULE *mod = nullptr;
 	CLASS *oclass = nullptr;
-	char modulename[1024], classname[1024]="";
+	char modulename[1024], classname[1024] = "";
 	char buffer[65536];
 	/*if(sscanf(spec, "%[A-Za-z_0-9]::%[A-Za-z_0-9]:%s",modulename, submodulename, classname) == 3)
 	{
@@ -811,7 +1007,7 @@ int output_xsd(char *spec)
 			output_error("unable to load parent module %s", modulename);
 			return 0;
 		}
-		
+
 	}
 	else if(sscanf(spec, "%[A-Za-z_0-9]::%[A-Za-z_0-9]",modulename, submodulename) == 2)
 	{
@@ -822,36 +1018,37 @@ int output_xsd(char *spec)
 			return 0;
 		}
 	}
-	else */if (sscanf(spec,"%[A-Za-z_0-9]:%s",modulename,classname)<1)
+	else */
+	if (sscanf(spec, "%[A-Za-z_0-9]:%s", modulename, classname) < 1)
 	{
 		output_error("improperly formatted XSD dump specification");
 		return 0;
 	}
 	if (mod == nullptr)
-		mod = module_load(modulename,0,nullptr);
-	if (mod==nullptr)
+		mod = module_load(modulename, 0, nullptr);
+	if (mod == nullptr)
 	{
 		output_error("unable to find module '%s'", spec);
 		return 0;
 	}
-	if (classname[0]!='\0' && (oclass=class_get_class_from_classname(classname))==nullptr)
+	if (classname[0] != '\0' && (oclass = class_get_class_from_classname(classname)) == nullptr)
 	{
 		output_error("unable to find class '%s' in module '%s'", classname, modulename);
 		return 0;
 	}
-	//if ((strlen(submodulename) > 1))
+	// if ((strlen(submodulename) > 1))
 	//	strcpy(modulename, submodulename);
-	output_message("<?xml version=\"1.0\" encoding=\"utf-%d\"?>",global_xml_encoding);
+	output_message("<?xml version=\"1.0\" encoding=\"utf-%d\"?>", global_xml_encoding);
 	output_message("<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"http://www.w3.org/\" xmlns=\"http://www.w3.org/\" elementFormDefault=\"qualified\">\n");
-	for (oclass=(classname[0]!='\0'?oclass:class_get_first_class()); oclass!=nullptr; oclass=oclass->next)
+	for (oclass = (classname[0] != '\0' ? oclass : class_get_first_class()); oclass != nullptr; oclass = oclass->next)
 	{
-		if (class_get_xsd(oclass,buffer,sizeof(buffer))<=0)
+		if (class_get_xsd(oclass, buffer, sizeof(buffer)) <= 0)
 		{
 			output_error("unable to convert class '%s' to XSD", oclass->name);
 			return 0;
 		}
 		output_message(buffer);
-		if (classname[0]!='\0')	/**  is this needed? -mh **/
+		if (classname[0] != '\0') /**  is this needed? -mh **/
 			break;
 	}
 	output_message("</xs:schema>\n");
@@ -863,10 +1060,10 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 	FILE *fp;
 
 	/* load modules */
-	while (n_mods-->0)
+	while (n_mods-- > 0)
 	{
-		MODULE *mod = module_load(*p_mods,0,nullptr);
-		if (mod==nullptr)
+		MODULE *mod = module_load(*p_mods, 0, nullptr);
+		if (mod == nullptr)
 		{
 			output_error("module %s not found", *p_mods);
 			return FAILED;
@@ -875,217 +1072,217 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 	}
 
 	/* open the output file */
-	fp = fopen(fname,"w");
-	if (fp==nullptr)
+	fp = fopen(fname, "w");
+	if (fp == nullptr)
 	{
 		output_error("%s open failed: %s", fname, strerror(errno));
 		return errno;
 	}
 
 	/* heading */
-	fprintf(fp,"<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
-	fprintf(fp,"<!-- output by GridLAB-D -->\n");
-	
+	fprintf(fp, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
+	fprintf(fp, "<!-- output by GridLAB-D -->\n");
+
 	/* document */
-	fprintf(fp,"<html xsl:version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns=\"http://www.w3.org/1999/xhtml\">\n");
+	fprintf(fp, "<html xsl:version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns=\"http://www.w3.org/1999/xhtml\">\n");
 	{
-		fprintf(fp,"<xsl:for-each select=\"/gridlabd\">\n");
+		fprintf(fp, "<xsl:for-each select=\"/gridlabd\">\n");
 		{
-			fprintf(fp,"<head>\n");
+			fprintf(fp, "<head>\n");
 			{
 				GLOBALVAR *stylesheet = global_find("stylesheet");
-				fprintf(fp,"<title>GridLAB-D <xsl:value-of select=\"version.major\"/>.<xsl:value-of select=\"version.minor\"/> - <xsl:value-of select=\"modelname\"/></title>\n");
-				if (stylesheet==nullptr || stylesheet->prop->ptype!=PT_char1024) /* only char1024 is allowed */
-					fprintf(fp,"<link rel=\"stylesheet\" href=\"%sgridlabd-%d_%d.css\" type=\"text/css\"/>\n",global_urlbase,global_version_major,global_version_minor);
+				fprintf(fp, "<title>GridLAB-D <xsl:value-of select=\"version.major\"/>.<xsl:value-of select=\"version.minor\"/> - <xsl:value-of select=\"modelname\"/></title>\n");
+				if (stylesheet == nullptr || stylesheet->prop->ptype != PT_char1024) /* only char1024 is allowed */
+					fprintf(fp, "<link rel=\"stylesheet\" href=\"%sgridlabd-%d_%d.css\" type=\"text/css\"/>\n", global_urlbase, global_version_major, global_version_minor);
 				else
-					fprintf(fp,"<link rel=\"stylesheet\" href=\"%s.css\" type=\"text/css\"/>\n",static_cast<char*>(stylesheet->prop->addr));
+					fprintf(fp, "<link rel=\"stylesheet\" href=\"%s.css\" type=\"text/css\"/>\n", static_cast<char *>(stylesheet->prop->addr));
 			}
-			fprintf(fp,"</head>\n");
-			fprintf(fp,"<body>\n");
+			fprintf(fp, "</head>\n");
+			fprintf(fp, "<body>\n");
 			{
-				GLOBALVAR *var=nullptr;
+				GLOBALVAR *var = nullptr;
 				MODULE *mod;
-				
-				fprintf(fp,"<H1><xsl:value-of select=\"modelname\"/></H1>\n");
+
+				fprintf(fp, "<H1><xsl:value-of select=\"modelname\"/></H1>\n");
 
 				/* table of contents */
-				fprintf(fp,"<H2>Table of Contents</H2>\n");
-				fprintf(fp,"<OL TYPE=\"1\">\n");
-				fprintf(fp,"<LI><A HREF=\"#global_variables\">Global variables</A></LI>\n");
-				fprintf(fp,"<LI><A HREF=\"#solver_ranks\">Solver ranks</A></LI>\n");
-				fprintf(fp,"<LI><A HREF=\"#modules\">Modules</A></LI><OL TYPE=\"a\">\n");
-				for (mod=module_get_first(); mod!=nullptr; mod=mod->next)
-					fprintf(fp,"<LI><A HREF=\"#modules_%s\">%s</A></LI>\n",mod->name,mod->name);
-				fprintf(fp,"</OL>\n");
-				fprintf(fp,"<LI><A HREF=\"#output\">Output</A></LI>\n");
-				fprintf(fp,"</OL>\n");
+				fprintf(fp, "<H2>Table of Contents</H2>\n");
+				fprintf(fp, "<OL TYPE=\"1\">\n");
+				fprintf(fp, "<LI><A HREF=\"#global_variables\">Global variables</A></LI>\n");
+				fprintf(fp, "<LI><A HREF=\"#solver_ranks\">Solver ranks</A></LI>\n");
+				fprintf(fp, "<LI><A HREF=\"#modules\">Modules</A></LI><OL TYPE=\"a\">\n");
+				for (mod = module_get_first(); mod != nullptr; mod = mod->next)
+					fprintf(fp, "<LI><A HREF=\"#modules_%s\">%s</A></LI>\n", mod->name, mod->name);
+				fprintf(fp, "</OL>\n");
+				fprintf(fp, "<LI><A HREF=\"#output\">Output</A></LI>\n");
+				fprintf(fp, "</OL>\n");
 
 				/* global variable dump */
-				fprintf(fp,"<H2><A NAME=\"global_variables\">GridLAB-D system variables</A></H2>\n");
-				fprintf(fp,"<TABLE BORDER=\"1\">\n");
-				while (var=global_getnext(var))
+				fprintf(fp, "<H2><A NAME=\"global_variables\">GridLAB-D system variables</A></H2>\n");
+				fprintf(fp, "<TABLE BORDER=\"1\">\n");
+				while (var = global_getnext(var))
 				{
-					if (strstr(var->prop->name,"::"))
+					if (strstr(var->prop->name, "::"))
 						continue; /* skip module globals (they'll get dumped later) */
-					fprintf(fp,"<TR><TH>%s</TH><TD><xsl:value-of select=\"%s\"/></TD></TR>\n",var->prop->name,var->prop->name);
+					fprintf(fp, "<TR><TH>%s</TH><TD><xsl:value-of select=\"%s\"/></TD></TR>\n", var->prop->name, var->prop->name);
 				}
-				fprintf(fp,"</TABLE>\n");
+				fprintf(fp, "</TABLE>\n");
 
 				/* processing sequence dump */
-				fprintf(fp,"<H2><A NAME=\"solver_ranks\">Solver ranks</A></H2>\n");
-				fprintf(fp,"<TABLE BORDER=\"1\">\n");
-					fprintf(fp,"<TR>");
-						fprintf(fp,"<xsl:for-each select=\"sync-order/pass\">\n");
-							fprintf(fp,"<TH>Pass <xsl:value-of select=\"name\"/></TH>\n");
-						fprintf(fp,"</xsl:for-each>\n");
-					fprintf(fp,"</TR>\n");
-					fprintf(fp,"<TR>\n");
-						fprintf(fp,"<xsl:for-each select=\"sync-order/pass\"><TD><DL>\n");
-							fprintf(fp,"<xsl:for-each select=\"rank\">\n");
-								fprintf(fp,"<xsl:sort select=\"ordinal\" data-type=\"number\" order=\"descending\"/>\n");
-								fprintf(fp,"<DT>Rank <xsl:value-of select=\"ordinal\"/></DT>");
-								fprintf(fp,"<xsl:for-each select=\"object\">\n");
-								fprintf(fp,"<DD><a href=\"#{name}\"><xsl:value-of select=\"name\"/></a></DD>\n");
-								fprintf(fp,"</xsl:for-each>\n");
-							fprintf(fp,"</xsl:for-each>\n");
-						fprintf(fp,"</DL></TD></xsl:for-each>\n");
-					fprintf(fp,"</TR>\n");
-				fprintf(fp,"</TABLE>\n");
+				fprintf(fp, "<H2><A NAME=\"solver_ranks\">Solver ranks</A></H2>\n");
+				fprintf(fp, "<TABLE BORDER=\"1\">\n");
+				fprintf(fp, "<TR>");
+				fprintf(fp, "<xsl:for-each select=\"sync-order/pass\">\n");
+				fprintf(fp, "<TH>Pass <xsl:value-of select=\"name\"/></TH>\n");
+				fprintf(fp, "</xsl:for-each>\n");
+				fprintf(fp, "</TR>\n");
+				fprintf(fp, "<TR>\n");
+				fprintf(fp, "<xsl:for-each select=\"sync-order/pass\"><TD><DL>\n");
+				fprintf(fp, "<xsl:for-each select=\"rank\">\n");
+				fprintf(fp, "<xsl:sort select=\"ordinal\" data-type=\"number\" order=\"descending\"/>\n");
+				fprintf(fp, "<DT>Rank <xsl:value-of select=\"ordinal\"/></DT>");
+				fprintf(fp, "<xsl:for-each select=\"object\">\n");
+				fprintf(fp, "<DD><a href=\"#{name}\"><xsl:value-of select=\"name\"/></a></DD>\n");
+				fprintf(fp, "</xsl:for-each>\n");
+				fprintf(fp, "</xsl:for-each>\n");
+				fprintf(fp, "</DL></TD></xsl:for-each>\n");
+				fprintf(fp, "</TR>\n");
+				fprintf(fp, "</TABLE>\n");
 
 				/* module object dumps */
-				fprintf(fp,"<H2><A NAME=\"modules\">Modules</A></H2>\n");
-				for (mod=module_get_first(); mod!=nullptr; mod=mod->next)
+				fprintf(fp, "<H2><A NAME=\"modules\">Modules</A></H2>\n");
+				for (mod = module_get_first(); mod != nullptr; mod = mod->next)
 				{
 					CLASS *oclass;
 					PROPERTY *prop;
 
-					fprintf(fp,"<H3><A NAME=\"modules_%s\">%s</A></H3>", mod->name,mod->name);
+					fprintf(fp, "<H3><A NAME=\"modules_%s\">%s</A></H3>", mod->name, mod->name);
 
 					/* globals */
-					fprintf(fp,"<TABLE BORDER=\"1\">\n");
-					fprintf(fp,"<TR><TH>version.major</TH><TD><xsl:value-of select=\"%s/version.major\"/></TD></TR>",mod->name);
-					fprintf(fp,"<TR><TH>version.minor</TH><TD><xsl:value-of select=\"%s/version.minor\"/></TD></TR>",mod->name);
-					while (var=global_getnext(var))
+					fprintf(fp, "<TABLE BORDER=\"1\">\n");
+					fprintf(fp, "<TR><TH>version.major</TH><TD><xsl:value-of select=\"%s/version.major\"/></TD></TR>", mod->name);
+					fprintf(fp, "<TR><TH>version.minor</TH><TD><xsl:value-of select=\"%s/version.minor\"/></TD></TR>", mod->name);
+					while (var = global_getnext(var))
 					{
-						if (strncmp(var->prop->name,mod->name,strlen(mod->name))==0)
+						if (strncmp(var->prop->name, mod->name, strlen(mod->name)) == 0)
 						{
-							char *name = var->prop->name + strlen(mod->name)+2; // offset name to after ::
-							fprintf(fp,"<TR><TH>%s</TH><TD><xsl:value-of select=\"%s/%s\"/></TD></TR>",name,mod->name,name);
+							char *name = var->prop->name + strlen(mod->name) + 2; // offset name to after ::
+							fprintf(fp, "<TR><TH>%s</TH><TD><xsl:value-of select=\"%s/%s\"/></TD></TR>", name, mod->name, name);
 						}
 					}
-					fprintf(fp,"</TABLE>\n");
+					fprintf(fp, "</TABLE>\n");
 
 					/* object dump */
-					for (oclass=mod->oclass; oclass!=nullptr && oclass->module==mod; oclass=oclass->next)
+					for (oclass = mod->oclass; oclass != nullptr && oclass->module == mod; oclass = oclass->next)
 					{
 						CLASS *pclass = oclass;
-						fprintf(fp,"<H4>%s objects</H4>", oclass->name);
-						fprintf(fp,"<TABLE BORDER=\"1\">\n");
-						fprintf(fp,"<TR><TH>Name</TH>");
-						for (pclass=oclass; pclass!=nullptr; pclass=pclass->parent)
-							for (prop=class_get_first_property(pclass); prop!=nullptr; prop=class_get_next_property(prop))
-								fprintf(fp,"<TH>%s</TH>",prop->name);
-						fprintf(fp,"</TR>\n");
+						fprintf(fp, "<H4>%s objects</H4>", oclass->name);
+						fprintf(fp, "<TABLE BORDER=\"1\">\n");
+						fprintf(fp, "<TR><TH>Name</TH>");
+						for (pclass = oclass; pclass != nullptr; pclass = pclass->parent)
+							for (prop = class_get_first_property(pclass); prop != nullptr; prop = class_get_next_property(prop))
+								fprintf(fp, "<TH>%s</TH>", prop->name);
+						fprintf(fp, "</TR>\n");
 						{
-							fprintf(fp,"<xsl:for-each select=\"%s/%s_list/%s\">", mod->name,oclass->name,oclass->name);
+							fprintf(fp, "<xsl:for-each select=\"%s/%s_list/%s\">", mod->name, oclass->name, oclass->name);
 							{
-								fprintf(fp,"<TR><TD><a name=\"#{name}\"/><xsl:value-of select=\"name\"/> (#<xsl:value-of select=\"id\"/>)</TD>");
-								for (pclass=oclass; pclass!=nullptr; pclass=pclass->parent)
-									for (prop=class_get_first_property(pclass); prop!=nullptr; prop=class_get_next_property(prop))
+								fprintf(fp, "<TR><TD><a name=\"#{name}\"/><xsl:value-of select=\"name\"/> (#<xsl:value-of select=\"id\"/>)</TD>");
+								for (pclass = oclass; pclass != nullptr; pclass = pclass->parent)
+									for (prop = class_get_first_property(pclass); prop != nullptr; prop = class_get_next_property(prop))
 									{
-										if (prop->ptype==PT_object)
-											fprintf(fp,"<TD><a href=\"#{%s}\"><xsl:value-of select=\"%s\"/></a></TD>",prop->name,prop->name);
+										if (prop->ptype == PT_object)
+											fprintf(fp, "<TD><a href=\"#{%s}\"><xsl:value-of select=\"%s\"/></a></TD>", prop->name, prop->name);
 										else
-											fprintf(fp,"<TD><xsl:value-of select=\"%s\"/></TD>",prop->name);
+											fprintf(fp, "<TD><xsl:value-of select=\"%s\"/></TD>", prop->name);
 									}
-								fprintf(fp,"</TR>\n");
+								fprintf(fp, "</TR>\n");
 							}
-							fprintf(fp,"</xsl:for-each>");
+							fprintf(fp, "</xsl:for-each>");
 						}
-						fprintf(fp,"</TABLE>\n");
+						fprintf(fp, "</TABLE>\n");
 					}
 				}
 
 				/* GLM output */
-				fprintf(fp,"<H2><A NAME=\"output\">GLM Output</A></H2>\n");
-				fprintf(fp,"<table border=\"1\" width=\"100%%\"><tr><td><pre>\n");
+				fprintf(fp, "<H2><A NAME=\"output\">GLM Output</A></H2>\n");
+				fprintf(fp, "<table border=\"1\" width=\"100%%\"><tr><td><pre>\n");
 				{
 
 					/* heading info */
-					fprintf(fp,"# Generated by GridLAB-D <xsl:value-of select=\"version.major\"/>.<xsl:value-of select=\"version.minor\"/>\n");
-					fprintf(fp,"# Command line..... <xsl:value-of select=\"command_line\"/>\n");
-					fprintf(fp,"# Model name....... <xsl:value-of select=\"modelname\"/>\n");
-					fprintf(fp,"# Start at......... <xsl:value-of select=\"starttime\"/>\n");
-					fprintf(fp,"#\n");
+					fprintf(fp, "# Generated by GridLAB-D <xsl:value-of select=\"version.major\"/>.<xsl:value-of select=\"version.minor\"/>\n");
+					fprintf(fp, "# Command line..... <xsl:value-of select=\"command_line\"/>\n");
+					fprintf(fp, "# Model name....... <xsl:value-of select=\"modelname\"/>\n");
+					fprintf(fp, "# Start at......... <xsl:value-of select=\"starttime\"/>\n");
+					fprintf(fp, "#\n");
 
 					/* clock info */
-					fprintf(fp,"clock {\n");
-					fprintf(fp,"\ttimestamp '<xsl:value-of select=\"clock\"/>';\n");
-					fprintf(fp,"\ttimezone <xsl:value-of select=\"timezone\"/>;\n");
-					fprintf(fp,"}\n");
+					fprintf(fp, "clock {\n");
+					fprintf(fp, "\ttimestamp '<xsl:value-of select=\"clock\"/>';\n");
+					fprintf(fp, "\ttimezone <xsl:value-of select=\"timezone\"/>;\n");
+					fprintf(fp, "}\n");
 
 					/* module blocks */
-					for (mod=module_get_first(); mod!=nullptr; mod=mod->next)
+					for (mod = module_get_first(); mod != nullptr; mod = mod->next)
 					{
-						GLOBALVAR *var=nullptr;
-						fprintf(fp,"<xsl:for-each select=\"%s\">", mod->name);
+						GLOBALVAR *var = nullptr;
+						fprintf(fp, "<xsl:for-each select=\"%s\">", mod->name);
 						{
 							CLASS *oclass;
 
-							fprintf(fp,"\n##############################################\n");
-							fprintf(fp,"# %s module\n", mod->name);
-							fprintf(fp,"module %s {\n", mod->name);
-							fprintf(fp,"\tversion.major <xsl:value-of select=\"version.major\"/>;\n");
-							fprintf(fp,"\tversion.minor <xsl:value-of select=\"version.minor\"/>;\n");
-							while (var=global_getnext(var))
+							fprintf(fp, "\n##############################################\n");
+							fprintf(fp, "# %s module\n", mod->name);
+							fprintf(fp, "module %s {\n", mod->name);
+							fprintf(fp, "\tversion.major <xsl:value-of select=\"version.major\"/>;\n");
+							fprintf(fp, "\tversion.minor <xsl:value-of select=\"version.minor\"/>;\n");
+							while (var = global_getnext(var))
 							{
-								if (strncmp(var->prop->name,mod->name,strlen(mod->name))==0)
+								if (strncmp(var->prop->name, mod->name, strlen(mod->name)) == 0)
 								{
-									char *name = var->prop->name + strlen(mod->name)+2; // offset name to after ::
-									fprintf(fp,"\t%s <xsl:value-of select=\"%s\"/>;\n",name,name);
+									char *name = var->prop->name + strlen(mod->name) + 2; // offset name to after ::
+									fprintf(fp, "\t%s <xsl:value-of select=\"%s\"/>;\n", name, name);
 								}
 							}
-							fprintf(fp,"}\n");
+							fprintf(fp, "}\n");
 
-							for (oclass=mod->oclass; oclass!=nullptr && oclass->module==mod; oclass=oclass->next)
+							for (oclass = mod->oclass; oclass != nullptr && oclass->module == mod; oclass = oclass->next)
 							{
-								fprintf(fp,"\n# %s::%s objects\n", mod->name, oclass->name);
+								fprintf(fp, "\n# %s::%s objects\n", mod->name, oclass->name);
 								{
-									fprintf(fp,"<xsl:for-each select=\"%s_list/%s\">", oclass->name,oclass->name);
+									fprintf(fp, "<xsl:for-each select=\"%s_list/%s\">", oclass->name, oclass->name);
 									{
 										PROPERTY *prop;
-										fprintf(fp,"<a name=\"#GLM.{name}\"/>object %s:<xsl:value-of select=\"id\"/> {\n", oclass->name);
-										fprintf(fp,"<xsl:if test=\"name!=''\">\tname \"<xsl:value-of select=\"name\"/>\";\n</xsl:if>");
-										fprintf(fp,"<xsl:if test=\"parent!=''\">\tparent \"<a href=\"#GLM.{parent}\"><xsl:value-of select=\"parent\"/></a>\";\n</xsl:if>");
-										fprintf(fp,"<xsl:if test=\"clock!=''\">\tclock '<xsl:value-of select=\"clock\"/>';\n</xsl:if>");
-										fprintf(fp,"<xsl:if test=\"in_svc!=''\">\tin_svc '<xsl:value-of select=\"in_svc\"/>';\n</xsl:if>");
-										fprintf(fp,"<xsl:if test=\"out_svc!=''\">\tout_svc '<xsl:value-of select=\"out_svc\"/>';\n</xsl:if>");
-										fprintf(fp,"<xsl:if test=\"latitude!=''\">\tlatitude <xsl:value-of select=\"latitude\"/>;\n</xsl:if>");
-										fprintf(fp,"<xsl:if test=\"longitude!=''\">\tlongitude <xsl:value-of select=\"longitude\"/>;\n</xsl:if>");
-										fprintf(fp,"<xsl:if test=\"rank!=''\">\trank <xsl:value-of select=\"rank\"/>;\n</xsl:if>");
-										for (prop=class_get_first_property(oclass); prop!=nullptr; prop=class_get_next_property(prop))
+										fprintf(fp, "<a name=\"#GLM.{name}\"/>object %s:<xsl:value-of select=\"id\"/> {\n", oclass->name);
+										fprintf(fp, "<xsl:if test=\"name!=''\">\tname \"<xsl:value-of select=\"name\"/>\";\n</xsl:if>");
+										fprintf(fp, "<xsl:if test=\"parent!=''\">\tparent \"<a href=\"#GLM.{parent}\"><xsl:value-of select=\"parent\"/></a>\";\n</xsl:if>");
+										fprintf(fp, "<xsl:if test=\"clock!=''\">\tclock '<xsl:value-of select=\"clock\"/>';\n</xsl:if>");
+										fprintf(fp, "<xsl:if test=\"in_svc!=''\">\tin_svc '<xsl:value-of select=\"in_svc\"/>';\n</xsl:if>");
+										fprintf(fp, "<xsl:if test=\"out_svc!=''\">\tout_svc '<xsl:value-of select=\"out_svc\"/>';\n</xsl:if>");
+										fprintf(fp, "<xsl:if test=\"latitude!=''\">\tlatitude <xsl:value-of select=\"latitude\"/>;\n</xsl:if>");
+										fprintf(fp, "<xsl:if test=\"longitude!=''\">\tlongitude <xsl:value-of select=\"longitude\"/>;\n</xsl:if>");
+										fprintf(fp, "<xsl:if test=\"rank!=''\">\trank <xsl:value-of select=\"rank\"/>;\n</xsl:if>");
+										for (prop = class_get_first_property(oclass); prop != nullptr; prop = class_get_next_property(prop))
 										{
-											if (prop->ptype==PT_object)
-												fprintf(fp,"<xsl:if test=\"%s\">\t%s <a href=\"#GLM.{%s}\"><xsl:value-of select=\"%s\"/></a>;\n</xsl:if>",prop->name,prop->name,prop->name,prop->name);
+											if (prop->ptype == PT_object)
+												fprintf(fp, "<xsl:if test=\"%s\">\t%s <a href=\"#GLM.{%s}\"><xsl:value-of select=\"%s\"/></a>;\n</xsl:if>", prop->name, prop->name, prop->name, prop->name);
 											else
-												fprintf(fp,"<xsl:if test=\"%s\">\t%s <xsl:value-of select=\"%s\"/>;\n</xsl:if>",prop->name,prop->name,prop->name);
+												fprintf(fp, "<xsl:if test=\"%s\">\t%s <xsl:value-of select=\"%s\"/>;\n</xsl:if>", prop->name, prop->name, prop->name);
 										}
-										fprintf(fp,"}\n");
+										fprintf(fp, "}\n");
 									}
-									fprintf(fp,"</xsl:for-each>");
+									fprintf(fp, "</xsl:for-each>");
 								}
 							}
 						}
-						fprintf(fp,"</xsl:for-each>");
+						fprintf(fp, "</xsl:for-each>");
 					}
 				}
-				fprintf(fp,"</pre></td></tr></table>\n");
+				fprintf(fp, "</pre></td></tr></table>\n");
 			}
-			fprintf(fp,"</body>\n");
+			fprintf(fp, "</body>\n");
 		}
-		fprintf(fp,"</xsl:for-each>");
+		fprintf(fp, "</xsl:for-each>");
 	}
-	fprintf(fp,"</html>\n");
+	fprintf(fp, "</html>\n");
 
 	fclose(fp);
 	return 0;

@@ -8,8 +8,13 @@
 #ifndef _AGGREGATE_H
 #define _AGGREGATE_H
 
+#include<memory>
+
 #include "platform.h"
 #include "find.h"
+
+typedef struct s_aggregate AGGREGATION;
+
 
 typedef enum {AGGR_NOP, AGGR_MIN, AGGR_MAX, AGGR_AVG, AGGR_STD, AGGR_MBE, AGGR_MEAN, AGGR_VAR, AGGR_SKEW, AGGR_KUR, AGGR_GAMMA, AGGR_COUNT, AGGR_SUM, AGGR_PROD} AGGREGATOR; /**< the aggregation method to use */
 typedef enum {AP_NONE, AP_REAL, AP_IMAG, AP_MAG, AP_ANG, AP_ARG} AGGRPART; /**< the part of complex values to aggregate */
@@ -32,8 +37,8 @@ typedef struct s_aggregate {
 //extern "C" {
 //#endif
 
-AGGREGATION *aggregate_mkgroup(char *aggregator, char *group_expression);
-double aggregate_value(AGGREGATION *aggregate);
+std::shared_ptr<struct s_aggregate> aggregate_mkgroup(char* aggregator, char* group_expression);
+double aggregate_value(std::shared_ptr<struct s_aggregate> aggregate);
 
 //#ifdef __cplusplus
 //}

@@ -1,0 +1,32 @@
+{
+  "classes": {
+    "test": [
+      {
+        "type": "double",
+        "name": "x"
+      }
+    ]
+  },
+  "modules": {
+    "tape": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "parent": "test_1",
+          "property": "x",
+          "file": "x.csv",
+          "interval": -2
+        }
+      ]
+    },
+    "test": {
+      "instances": [
+        {
+          "name": "test_1"
+        }
+      ]
+    }
+  }
+}

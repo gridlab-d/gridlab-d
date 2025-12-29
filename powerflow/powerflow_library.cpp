@@ -73,7 +73,7 @@ EXPORT int create_powerflow_library(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(powerflow_library::oclass);
 		if (*obj!=nullptr)
 		{
-			powerflow_library *my = OBJECTDATA(*obj,powerflow_library);
+			powerflow_library *my = object_data<powerflow_library>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -92,7 +92,7 @@ EXPORT int create_powerflow_library(OBJECT **obj, OBJECT *parent)
 EXPORT int init_powerflow_library(OBJECT *obj)
 {
 	try {
-		powerflow_library *my = OBJECTDATA(obj,powerflow_library);
+		powerflow_library *my = object_data<powerflow_library>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(powerflow_library);
@@ -108,14 +108,14 @@ EXPORT int init_powerflow_library(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_powerflow_library(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	powerflow_library *pObj = OBJECTDATA(obj,powerflow_library);
+	powerflow_library *pObj = object_data<powerflow_library>(obj);
 	gl_error("%s (powerflow_library:%d): sync should never be called", pObj->get_name(), pObj->get_id());
 	return TS_INVALID;
 }
 
 EXPORT int isa_powerflow_library(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,powerflow_library)->isa(classname);
+	return object_data<powerflow_library>(obj)->isa(classname);
 }
 
 /**@}**/
