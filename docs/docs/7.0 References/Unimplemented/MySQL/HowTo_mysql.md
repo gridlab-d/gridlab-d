@@ -6,7 +6,7 @@
   
 	**This page does not reflect the current state of GridLAB-D™**
 
-HowTo:mysql \- MySQL How To Guide Template:NEW30
+HowTo:mysql \- MySQL How To Guide 
 
 ## Contents
 

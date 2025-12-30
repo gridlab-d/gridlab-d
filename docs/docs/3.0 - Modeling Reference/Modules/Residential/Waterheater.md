@@ -43,7 +43,7 @@ Property Name  | Type  | Unit  | Description
 **tank_volume**  | double  | gallons  | The water volume of the water tank.   
 **tank_UA**  | double  | BTU/hour  | The product of the U-value of the tank's insulation and the surface area of the tank, assuming R values of about 13.   
 tank_diameter  | double  | feet  | The diameter of the water tank, influences heat loss calculations.   
-**water_demand**  | double  | gallons/minute  | Hot water consumption. Constant unless controlled by a [Player] object.   
+**water_demand**  | double  | gallons/minute  | Hot water consumption. Constant unless controlled by a Player object.   
 **heating_element_capacity**  | double  | kW  | The rate at which the waterheater heating element will dump thermal energy into the water tank in kilowatts.   
 **inlet_water_temperature**  | double  | degF  | The temperature of the cold water entering the bottom of the waterheater to replace any hot water drawn out the top of the tank.   
 **heat_mode**  | enumeration  |  | "ELECTRIC" or "GASHEAT". Determines the method that heat is added to the water tank.   
@@ -115,30 +115,34 @@ $$Q_{elec} - \dot m C_p \left ( T_w - T_{inlet} \right ) + UA \left ( T_{amb} - 
 
 or, 
 
-$$dt = \frac{C_w}{ 
-    
-    
-\dot m C_p T_{inlet} 
-+ U A T_{amb} 
-- \left ( U A + \dot m C_p \right ) T_w
-+ Q_{elec}
-    
-
-} dT_w$$
+$$
+dt = \frac{
+  C_w
+}{
+  \dot{m} C_p T_{\text{inlet}}
+  + U A T_{\text{amb}}
+  - \left( U A + \dot{m} C_p \right) T_w
+  + Q_{\text{elec}}
+} \, dT_w
+$$
 
   
 The time required to change the tank’s temperature from an initial temperature $T_0$ to a new temperature $T_1$ is given by integrating that equation. 
 
-$$t_1 - t_0 = \int_{T_0}^{T_1} \frac{1}{ 
-    
-    
-\frac{\dot m C_p T_{inlet} 
-+ U A T_{amb} 
-+ Q_{elec}}{C_w}
-- \frac{ U A + \dot m C_p }{C_w} T_w
-    
-
-} dT_w$$
+$$
+t_1 - t_0
+= \int_{T_0}^{T_1}
+\frac{1}{
+  \dfrac{
+    \dot{m} C_p T_{\text{inlet}}
+    + U A T_{\text{amb}}
+    + Q_{\text{elec}}
+  }{C_w}
+  - \dfrac{
+    U A + \dot{m} C_p
+  }{C_w} T_w
+}\, dT_w
+$$
 
 That is an integral of the form $dx/(a+bx)$, which has solution $\log(a+bx)/b$ . Therefore, the final model of the time required to raise (or lower) the tank’s temperature is 
 

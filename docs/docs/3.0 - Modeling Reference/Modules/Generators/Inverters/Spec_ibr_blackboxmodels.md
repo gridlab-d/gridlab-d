@@ -220,6 +220,6 @@ A Keras model saved in the .keras format includes everything needed to reload an
 
 ## Related Concepts:
 
-  * [Inverter_dyn Main Page]
-  * [Inverter_dyn Requirements]
-  * [Inverter_dyn Specifications]
+  * Inverter_dyn Main Page
+  * Inverter_dyn Requirements
+  * Inverter_dyn Specifications

@@ -61,7 +61,7 @@ provides basic information about the link performance.
 
   * Link (directive)
     * Matlab link
-    * JSON link Template:NEW30
+    * JSON link 
     * Technical manual
   * **How To**
     * How to plot data using Matlab

@@ -56,7 +56,7 @@ In this way the child load object would check the size of it's parent `NEV_volta
 
 #### Connector Object
 
-Parent-child connections are the preferred method for breaking an identical electrical potential into separate node objects. The NEV solver will also support a `connector` object, which will effectively do the same operations as the parent-child relationship in a `link`-based object. See the [Spec:NEVLink] page for more details on the `connector` object. 
+Parent-child connections are the preferred method for breaking an identical electrical potential into separate node objects. The NEV solver will also support a `connector` object, which will effectively do the same operations as the parent-child relationship in a `link`-based object. See the Spec:NEVLink page for more details on the `connector` object. 
 
 #### Ranking
 
@@ -282,9 +282,9 @@ As indicated elsewhere in the specifications, iteration handling and convergence
 
 # Related Concepts:
 
-  * [Overview Page]
-  * [Requirements]
-  * [Specifications]
-  * [Implementation]
-  * [Keeler (Version 4.0)]
+  * Overview Page
+  * Requirements
+  * Specifications
+  * Implementation
+  * Keeler (Version 4.0)
 

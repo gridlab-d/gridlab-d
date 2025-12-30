@@ -10,7 +10,7 @@
 
 ## GLM Inputs
 
-To incorporate the NEV capabilities in a generic sense, a [Double_array]-like format for input data will be utilized for `link` objects. This style of input formatting will be utilized for double-precision inputs, complex inputs, and character-based inputs. A sample overhead line and underground line implementation could look like: 
+To incorporate the NEV capabilities in a generic sense, a Double_array-like format for input data will be utilized for `link` objects. This style of input formatting will be utilized for double-precision inputs, complex inputs, and character-based inputs. A sample overhead line and underground line implementation could look like: 
     
     
      object line {	//OHL-type
@@ -40,20 +40,20 @@ To incorporate the NEV capabilities in a generic sense, a [Double_array]-like fo
      };
     
 
-As with [node] objects, new [link] object properties are expected for the NEV implementation. They are outlined in Table 1. 
+As with node objects, new link object properties are expected for the NEV implementation. They are outlined in Table 1. 
 
 ##### Table 1 - Link properties  Property | Definition   
 ---|---  
 `from_terminal` | Terminal connection on the from side for each cable/connection. If an "implied neutral" is present (concentric neutral or tape shielded), this must be specified in pairs.   
 `to_terminal` | Terminal connection on the to side for each cable/connection. If an "implied neutral" is present (concentric neutral or tape shielded), this must be specified in pairs.   
   
-The `line_config` object will take the place of the specific [overhead_line_configuration] and [underground_line_configuration] objects that exist in GridLAB-D™ for the NEV implementation. Definitions are expected to match the existing configurations, but will be put into the array notation outlined earlier. The explicit property definitions are listed in Table 2. 
+The `line_config` object will take the place of the specific overhead_line_configuration and underground_line_configuration objects that exist in GridLAB-D™ for the NEV implementation. Definitions are expected to match the existing configurations, but will be put into the array notation outlined earlier. The explicit property definitions are listed in Table 2. 
 
 ##### Table 2 - Line_config properties  Property | Definition   
 ---|---  
 `conductor` | The physical connecting device between the appropriate elements of `from_terminal` and `to_terminal`.   
 `spacing` | The physical position of different conductors between the two nodes. This can either be specified as a distance array (with diagonal elements ignored), or as a physical coordinate space for each conductor. See the example given following the table.   
-`length` | Physical length of the connection between the two [node] objects. Only one length entry is permitted.   
+`length` | Physical length of the connection between the two node objects. Only one length entry is permitted.   
   
 ![Line Spacing Example](../../../../images/300px-Line_spacing.png)
 
@@ -89,13 +89,13 @@ or using Cartesian coordinates:
 Implementation `test_spacing_distances` defines the distances between each conductor in matrix format. Diagonal elements are ignored (representing "self distance") and are set to zero for this implementation. Under distance implementation, the last column is the distance above the ground. For underground lines, this column is ignored. A breakdown of row 1 (conductor 1 information) is: 
     
     
-     [ N/A ,(distance 1 to 2), (distance(1 to 3), (distance 1 to 4), (distance 1 to E)]
+      N/A ,(distance 1 to 2), (distance(1 to 3), (distance 1 to 4), (distance 1 to E)
     
 
 The second implementation, `spacing_test_distances_upper` follows a similar format, but does only defines the distances once (e.g., the distance between 1 and 2 is the same as the distance between 2 and 1, so it is only defined once). The representation is strictly upper triangular, meaning the zero entry elements are removed. Therefore, the first row now represents: 
     
     
-     [(distance 1 to 2), (distance(1 to 3), (distance 1 to 4), (distance 1 to E)]
+     (distance 1 to 2), (distance(1 to 3), (distance 1 to 4), (distance 1 to E)
      
     
 
@@ -115,7 +115,7 @@ Each `link` object will need to populate and adjust values associated with four 
   * To bus transfer admittance matrix -- Admittance associated with the relationship of electrically moving from the `to` bus to the `from` bus.
 Each of these matrices must be determined and updated prior to the NEV solver call. Note that the breakdown of these matrices is a recommendation for common line types. For items such as transformers, the whole admittance contribution is not as easily broken into the "four matrix partitions" definition, but will need to be parsed in that manner for posting to the overall NEV admittance matrices (e.g., fixed components versus components aggregated into other node contributions). Following the existing Newton-Raphson (NR) implementation, this call will likely be performed by objects high in the rank order list of the `sync` pass of the exec loop. Updates and "posting" of the various `link` admittance matrices are expected to occur in the object's `init` routine, as well as either the `presync` or lower-ranked `sync` routines. 
 
-Transfer matrix components will be implemented into the `Y_NEV` structure format and posted to the overall admittance matrix locations using the transactional memory API. Information on those structures can be found in [NEV Data Format] and [NEV Solver]. Specific matrix locations will be determined using the information contained in the `NEVBUSDATA` structures associated with the from and to nodes (`matrix_index` and `matrix_size` fields). It is useful to note that this will be in the partitioned complex real and imaginary portions, as per [1]. 
+Transfer matrix components will be implemented into the `Y_NEV` structure format and posted to the overall admittance matrix locations using the transactional memory API. Information on those structures can be found in NEV Data Format and NEV Solver. Specific matrix locations will be determined using the information contained in the `NEVBUSDATA` structures associated with the from and to nodes (`matrix_index` and `matrix_size` fields). It is useful to note that this will be in the partitioned complex real and imaginary portions, as per [1]. 
 
 Self admittance components will be accumulated directly into a self-admittance matrix associated with the corresponding from or to node. This will be a complex-valued matrix and will be accumulated directly into the node's exposed `Y_matrix_self` variable. This interaction will not need to be partitioned into real/imaginary componetns like the transfer admittance. Interactions with this matrix will be handled via pointers to the memory location and adjustments scheduled through the transactive memory API. Values within the `Y_matrix_self` will be translated into the appropriate `Y_NEV` format and location by the `node` object. 
 
@@ -135,7 +135,7 @@ There are four classes that contain all the information necessary to construct a
 
 ### Class:overhead_line
 
-The class overhead_line provides connection information as well as the length and configuration for an overhead line. It must provide what nodes it is connected to as well as the specific terminals on each node that it ties in to. The terminal information needs to be provided in a list format. The overhead_line class will retain all of its previous functionality. Please see [Power Flow User Guide] for a reference of previous functionality. An example entry for the NEV implementation is shown below. 
+The class overhead_line provides connection information as well as the length and configuration for an overhead line. It must provide what nodes it is connected to as well as the specific terminals on each node that it ties in to. The terminal information needs to be provided in a list format. The overhead_line class will retain all of its previous functionality. Please see Power Flow User Guide for a reference of previous functionality. An example entry for the NEV implementation is shown below. 
     
     
         object overhead_line {
@@ -155,7 +155,7 @@ In the future, if varied earth resistivities are to be allowable, this seems lik
 
 ### Class: line_configuration
 
-The class line_configuration is common to both overhead and underground lines, and gives the cable types for the line (in an array) as well as the spacing object. Overhead versus underground line types are not indicated in the line configuration, but conductors and spacings listed should be the appropriate type. The line_configuration class will retain all of its previous functionality. Please see [Power Flow User Guide] for a reference of previous functionality. An example entry for the NEV implementation is shown below. 
+The class line_configuration is common to both overhead and underground lines, and gives the cable types for the line (in an array) as well as the spacing object. Overhead versus underground line types are not indicated in the line configuration, but conductors and spacings listed should be the appropriate type. The line_configuration class will retain all of its previous functionality. Please see Power Flow User Guide for a reference of previous functionality. An example entry for the NEV implementation is shown below. 
     
     
         object line_configuration {
@@ -172,7 +172,7 @@ From the example above, it can be determined that the conductor types used for c
 
 ### Class: line_spacing
 
-The line_spacing class is not specific to overhead or underground lines, but for overhead lines the distance from each conductor to the ground is required to calculated the conductor image distances. When the Cartesian format is used as in the example below, the y-coordinate reference is assumed to be earth. The line_spacing class will retain all of its previous functionality. Please see [Power Flow User Guide] for a reference of previous functionality. An example entry for the NEV implementation is shown below.implementation is shown below. 
+The line_spacing class is not specific to overhead or underground lines, but for overhead lines the distance from each conductor to the ground is required to calculated the conductor image distances. When the Cartesian format is used as in the example below, the y-coordinate reference is assumed to be earth. The line_spacing class will retain all of its previous functionality. Please see Power Flow User Guide for a reference of previous functionality. An example entry for the NEV implementation is shown below.implementation is shown below. 
     
     
         object line_spacing {
@@ -192,7 +192,7 @@ If the absolute distances are being provided then there must be N(N-1)/2 entries
 
 ### Class: overhead_line_conductor
 
-The overhead_line_conductor class specifies all the physical and electrical parameters of the cable necessary to calculate the self and mutual impedances involving the conductor. The [Overhead Line Equations] page discusses these quantities and their use in Carson's equations. The overhead_line_conductor class will retain all of its previous functionality. Please see [Power Flow User Guide] for a reference of previous functionality. An example entry for the NEV implementation is shown below. 
+The overhead_line_conductor class specifies all the physical and electrical parameters of the cable necessary to calculate the self and mutual impedances involving the conductor. The Overhead Line Equations page discusses these quantities and their use in Carson's equations. The overhead_line_conductor class will retain all of its previous functionality. Please see Power Flow User Guide for a reference of previous functionality. An example entry for the NEV implementation is shown below. 
     
     
         object overhead_line_conductor {
@@ -204,13 +204,13 @@ The overhead_line_conductor class specifies all the physical and electrical para
         }
     
 
-Current ratings can also be included in this object as described in the [Power Flow User Guide]. 
+Current ratings can also be included in this object as described in the Power Flow User Guide. 
 
 ### Model Implementation
 
 #### Primitive Matrices
 
-As in the current implementation, each of the described objects above will be rendered during runtime as a C++ object of the corresponding class. The overhead_line object's line_configuration variable will contain an address to the correct line-configuration object, which in turn will contain a pointer array with addresses of each conductor's conductor object, as well as the address of the correct spacing object. Since the NEV power flow implementation will solely support the Newton-Raphson method, the overhead lines are incorporated in the solver by constructing primitive series and shunt admittance matrices to be inserted in the larger system nodal admittance matrices. With all the data necessary data assembled in the aforementioned GridLAB-D™ objects, the primitive admittance matrices are constructed as described in detail on the [Overhead Line Equations] page. The primitive series impedance matrix is an $n\times n$ matrix where n is the number of phases present. For example, for a line with 6 phases (including one neutral denoted 'n'), the matrix will be of form: 
+As in the current implementation, each of the described objects above will be rendered during runtime as a C++ object of the corresponding class. The overhead_line object's line_configuration variable will contain an address to the correct line-configuration object, which in turn will contain a pointer array with addresses of each conductor's conductor object, as well as the address of the correct spacing object. Since the NEV power flow implementation will solely support the Newton-Raphson method, the overhead lines are incorporated in the solver by constructing primitive series and shunt admittance matrices to be inserted in the larger system nodal admittance matrices. With all the data necessary data assembled in the aforementioned GridLAB-D™ objects, the primitive admittance matrices are constructed as described in detail on the Overhead Line Equations page. The primitive series impedance matrix is an $n\times n$ matrix where n is the number of phases present. For example, for a line with 6 phases (including one neutral denoted 'n'), the matrix will be of form: 
 
 $$
 \displaystyle
@@ -257,7 +257,7 @@ Due to the location of underground lines, the modified Carson's equations, shoul
 
 ### Class:underground_line
 
-The class underground_line provides connection information as well as the length and configuration for an underground line. It must provide what nodes it is connected to as well as the specific terminals on each node that it ties in to. The terminal information needs to be provided in a list format. The underground_line class will retain all of its previous functionality. Please see [Power Flow User Guide] for a reference of previous functionality. An example of the necessary information for NEV is shown below. 
+The class underground_line provides connection information as well as the length and configuration for an underground line. It must provide what nodes it is connected to as well as the specific terminals on each node that it ties in to. The terminal information needs to be provided in a list format. The underground_line class will retain all of its previous functionality. Please see Power Flow User Guide for a reference of previous functionality. An example of the necessary information for NEV is shown below. 
     
     
         object underground_line {
@@ -275,7 +275,7 @@ From the example above, it can be determined that there is a 2000 ft underground
 
 ### Class: line_configuration
 
-The class line_configuration provides information on which cables are connected to terminals and provides a spacing object. The cables need to be provided in an array. The line_configuration class will retain all of its previous functionality. Please see [Power Flow User Guide] for a reference of previous functionality. An example of the necessary information for NEV is shown below. 
+The class line_configuration provides information on which cables are connected to terminals and provides a spacing object. The cables need to be provided in an array. The line_configuration class will retain all of its previous functionality. Please see Power Flow User Guide for a reference of previous functionality. An example of the necessary information for NEV is shown below. 
     
     
         object line_configuration {
@@ -291,7 +291,7 @@ Take special note! GridLAB-D™ must be able to read in an array of strings as i
 
 ### Class: line_spacing
 
-The line_spacing class needs to be able to specify the absolute spacing between each physical cable contained in the conductor property of the line_configuration. The line_spacing class will retain all of its previous functionality. Please see [Power Flow User Guide] for a reference of previous functionality. An example of the necessary information for NEV is shown below. 
+The line_spacing class needs to be able to specify the absolute spacing between each physical cable contained in the conductor property of the line_configuration. The line_spacing class will retain all of its previous functionality. Please see Power Flow User Guide for a reference of previous functionality. An example of the necessary information for NEV is shown below. 
     
     
         object line_spacing {
@@ -304,7 +304,7 @@ The cable_spacing property can be listed in a coordinate fashion or absolute dis
 
 ### Class: underground_line_conductor
 
-The underground_line_conductor class specifies the type of cable, concentric neutral, tape-shielld, or unshielded (A cable made of a insulated single conductor). It also needs to provide all the physical and electrical parameters of the cable necessary for calculating the self and mutual impedances for each conductor present in the line. This link, [Underground Line Equations], provides a comprehensive list of all the physical and electrical parameters needed to determine the self and mutual impedances for all the conductors present in the underground line. The underground_line_conductor class will retain all of its previous functionality. Please see [Power Flow User Guide] for a reference of previous functionality. An example of the necessary information for NEV is shown below. 
+The underground_line_conductor class specifies the type of cable, concentric neutral, tape-shielld, or unshielded (A cable made of a insulated single conductor). It also needs to provide all the physical and electrical parameters of the cable necessary for calculating the self and mutual impedances for each conductor present in the line. This link, Underground Line Equations, provides a comprehensive list of all the physical and electrical parameters needed to determine the self and mutual impedances for all the conductors present in the underground line. The underground_line_conductor class will retain all of its previous functionality. Please see Power Flow User Guide for a reference of previous functionality. An example of the necessary information for NEV is shown below. 
     
     
         object underground_line_conductor {
@@ -355,13 +355,13 @@ What needs to come out of the underground_line class is an [2][N][N] impedance, 
 
 The number of conductors, N, present in the underground line is determined by number of entries in the conductor property of the line_configuration class along with the type property in the underground_line_conductor class. The impedance and shunt admittance arrays are split in the the real and imaginary parts of the calculated impedance and shunt admittance. The from_terminal and to_terminal arrays will be filled from the from_terminal and to_terminal property in such a way that each entry matches with the conductor row of the impedance and capacitance arrays. The from_terminal and to_terminal arrays grab their information from the the from_terminal and to_terminal properties of the underground_line class. 
 
-In order to populate the impedance array, a [N][2] position, [N][N] distance, and [N] resistance array need to be populated.The position array is populated with the x and y coordinates given in the cable_spacing property of the line_spacing class. Euclidean geometry and equations in [Underground Line Equations] are used to determine the absolute distance between conductors. These distances get place in the off-diagonals of the [N][N] distance array. The diagonals of the [N][N] distance array are populated with the geometric mean radius of the conductors that can be found in the underground_line_conductor class properties or can be calculated from the underground_line_conductor class properties according the the equations specified in [Underground Line Equations]. 
+In order to populate the impedance array, a [N][2] position, [N][N] distance, and [N] resistance array need to be populated.The position array is populated with the x and y coordinates given in the cable_spacing property of the line_spacing class. Euclidean geometry and equations in Underground Line Equations are used to determine the absolute distance between conductors. These distances get place in the off-diagonals of the [N][N] distance array. The diagonals of the [N][N] distance array are populated with the geometric mean radius of the conductors that can be found in the underground_line_conductor class properties or can be calculated from the underground_line_conductor class properties according the the equations specified in Underground Line Equations. 
 
-The resistance array is populated with the resistance for each conductor either found in the underground_line_conductor class properties or calculated from the underground_line_conductor class properties according to the equations found in [Underground Line Equations]. 
+The resistance array is populated with the resistance for each conductor either found in the underground_line_conductor class properties or calculated from the underground_line_conductor class properties according to the equations found in Underground Line Equations. 
 
-With the distance and resistance arrays fully populated, the self and mutual impedance for each conductor can be calculated according to Kersting (2007) and placed in the impedance array. The Specific equations can be found in [Underground Line Equations]. 
+With the distance and resistance arrays fully populated, the self and mutual impedance for each conductor can be calculated according to Kersting (2007) and placed in the impedance array. The Specific equations can be found in Underground Line Equations. 
 
-When determining the shunt admittance array for an underground line, certain assumptions are made about the capacitance between conductors. Firstly, the electric field does not go beyond the cable insulation so that there is no capacitance between cables. Secondly, the only capacitance exists between the neutral conductor and phase conductor of an tape-shield cable or concentric neutral cable. The [N][N] shunt admittance array will only be populated with the admittance that exists between the neutral and phase conductors of the tape-shield and concentric neutral cables. The shunt admittance for underground concentric neutral and tape-shield cables will be calculated by using the information given in the underground_line_conductor class properties and the equations specified in [Underground Line Equations]. 
+When determining the shunt admittance array for an underground line, certain assumptions are made about the capacitance between conductors. Firstly, the electric field does not go beyond the cable insulation so that there is no capacitance between cables. Secondly, the only capacitance exists between the neutral conductor and phase conductor of an tape-shield cable or concentric neutral cable. The [N][N] shunt admittance array will only be populated with the admittance that exists between the neutral and phase conductors of the tape-shield and concentric neutral cables. The shunt admittance for underground concentric neutral and tape-shield cables will be calculated by using the information given in the underground_line_conductor class properties and the equations specified in Underground Line Equations. 
 
 #### Init
 
@@ -585,7 +585,7 @@ I_{1-2_{ng}}
 $$
 
 
-The hat notation, taken from [Kersting], indicates that the return path, i.e. the ground impedance, has been folded into the other impedances. According to Carson's equations, the elements of the primitive impedance matrix can be calculated by: 
+The hat notation, taken from Kersting, indicates that the return path, i.e. the ground impedance, has been folded into the other impedances. According to Carson's equations, the elements of the primitive impedance matrix can be calculated by: 
 
 $$\displaystyle{}\hat z_{1-2_{ii}}=r_i+4\omega P_{ii}G + j\left(X_i + 2\omega G\ln{\frac{S_{ii}}{RD_i}} + 4\omega Q_{ii}G\right)\Omega /mi$$
 
@@ -671,7 +671,7 @@ There are two classes that contain the information necessary to model a transfor
 
 ### Class:transformer
 
-The class transformer provides connection information as well as the configuration name for a transformer. It must provide what nodes it is connected to as well as the specific terminals on each node that it ties in to. The terminal information needs to be provided in a list format. Note that each transformer_configuration will have a single allowable specified number of high-side and low-side terminal connections. These connections will also have an implied order. For example, for a three-phase wye-wye transformer, four terminal connections should be specified for each side of the transformer, corresponding to the conventional 'ABCN' phase designations. For a single phase center-tapped transformer, the high side of the transformer should have two terminal connections specified corresponding to the primary phase and neutral connection. The low side should have three terminal connections specified, corresponding to the conventional '1,2,N' phase designation. The transformer class will retain all of its previous functionality. Please see [Power Flow User Guide] for a reference of previous functionality. An example entry for the NEV implementation is shown below. 
+The class transformer provides connection information as well as the configuration name for a transformer. It must provide what nodes it is connected to as well as the specific terminals on each node that it ties in to. The terminal information needs to be provided in a list format. Note that each transformer_configuration will have a single allowable specified number of high-side and low-side terminal connections. These connections will also have an implied order. For example, for a three-phase wye-wye transformer, four terminal connections should be specified for each side of the transformer, corresponding to the conventional 'ABCN' phase designations. For a single phase center-tapped transformer, the high side of the transformer should have two terminal connections specified corresponding to the primary phase and neutral connection. The low side should have three terminal connections specified, corresponding to the conventional '1,2,N' phase designation. The transformer class will retain all of its previous functionality. Please see Power Flow User Guide for a reference of previous functionality. An example entry for the NEV implementation is shown below. 
     
     
         object transformer {
@@ -711,7 +711,7 @@ From the first example above, it can be determined that the primary and secondar
 
 ### Class: transformer_configuration
 
-The transformer_configuration class specifies the connection type for the transformer, which implies the number of windings and their coupling polarities, as well as number of terminals on each side of the transformer. Also given here are primary and secondary voltage ratings which imply the turns ratio. Power rating along with series and shunt impedances can be used to derive the equivalent impedance model of the transformer. As with the previous implementation, impedance values can be specified in conventional per unit (%) or absolute values. Moreover, values can be specified for entire transformer or for each winding individually. Where the value specified for 'connect_type' is one of the preconfigured types, the transformer winding coupling and winding-to-terminal connection scheme is included automatically. If a user-defined transformer configuration is desired, 'connect_type' is given a value of 'CUSTOM'. This requires the user to include the fields 'winding_coupling' and 'winding_connection' in the specification. These fields accept double arrays and string arrays, respectively. The 'winding_coupling' list elements are comprised of a list of winding pairings. The 'winding_connection_top' and 'winding_connection_bottom' fields indicate which bus-terminal the 'top' and 'bottom' ends of each winding-phase are connected to. Each of the two fields contain a group of pairs for each winding, with groups being separated by semicolon. The pairs within each group correspond to bus-terminal numbers. Thus, the first pair listed in the first group for the winding_connection_top field indicates the bus and terminal to which the first winding's first phase top end is connected. The first three list elements in the example each contain two winding terminals, in an configuration corresponding to a delta connection. The remaining list elements describe grounded wye connections for both the secondary and tertiary windings. The transformer_configuration class will retain all of its previous functionality. Please see [Power Flow User Guide] for a reference of previous functionality. An example entry for the NEV implementation is shown below. 
+The transformer_configuration class specifies the connection type for the transformer, which implies the number of windings and their coupling polarities, as well as number of terminals on each side of the transformer. Also given here are primary and secondary voltage ratings which imply the turns ratio. Power rating along with series and shunt impedances can be used to derive the equivalent impedance model of the transformer. As with the previous implementation, impedance values can be specified in conventional per unit (%) or absolute values. Moreover, values can be specified for entire transformer or for each winding individually. Where the value specified for 'connect_type' is one of the preconfigured types, the transformer winding coupling and winding-to-terminal connection scheme is included automatically. If a user-defined transformer configuration is desired, 'connect_type' is given a value of 'CUSTOM'. This requires the user to include the fields 'winding_coupling' and 'winding_connection' in the specification. These fields accept double arrays and string arrays, respectively. The 'winding_coupling' list elements are comprised of a list of winding pairings. The 'winding_connection_top' and 'winding_connection_bottom' fields indicate which bus-terminal the 'top' and 'bottom' ends of each winding-phase are connected to. Each of the two fields contain a group of pairs for each winding, with groups being separated by semicolon. The pairs within each group correspond to bus-terminal numbers. Thus, the first pair listed in the first group for the winding_connection_top field indicates the bus and terminal to which the first winding's first phase top end is connected. The first three list elements in the example each contain two winding terminals, in an configuration corresponding to a delta connection. The remaining list elements describe grounded wye connections for both the secondary and tertiary windings. The transformer_configuration class will retain all of its previous functionality. Please see Power Flow User Guide for a reference of previous functionality. An example entry for the NEV implementation is shown below. 
     
     
         transformer_configuration {
@@ -765,7 +765,7 @@ In the first two examples above, included connect_type models are used, which in
   
 ### Model Implementation
 
-The formation of the set of transformer primitive admittance matrices is a lengthy process, described in detail at the [NEV Transformer] page. In short, four matrices are assembled as follows. $\mathbf{A}$ is constructed to model the terminal connections (information described in the 'winding_connection' field for the transformer_configuration object). $\mathbf{N}$ is constructed to model the turns ratio(s), which are derived from the 'V_primary', 'V_secondary', and sometimes 'V_tertiary' fields. $\mathbf{B}$ is constructed to model the winding couplings as described in 'winding_coupling'. Finally, $\mathbf{Z_B}$ is constructed to model the short circuit impedances between windings. With these matrices assembled, the primitive series admittance matrix for the transformer is calculated by: 
+The formation of the set of transformer primitive admittance matrices is a lengthy process, described in detail at the NEV Transformer page. In short, four matrices are assembled as follows. $\mathbf{A}$ is constructed to model the terminal connections (information described in the 'winding_connection' field for the transformer_configuration object). $\mathbf{N}$ is constructed to model the turns ratio(s), which are derived from the 'V_primary', 'V_secondary', and sometimes 'V_tertiary' fields. $\mathbf{B}$ is constructed to model the winding couplings as described in 'winding_coupling'. Finally, $\mathbf{Z_B}$ is constructed to model the short circuit impedances between windings. With these matrices assembled, the primitive series admittance matrix for the transformer is calculated by: 
 
 $$\displaystyle{}\mathbf{Y}_{series}=\mathbf{A}\mathbf{N}\mathbf{B}\mathbf{Z_B}^{-1}\mathbf{B}^T\mathbf{N}^T\mathbf{A}^T$$
 
@@ -798,15 +798,15 @@ Given the zero-impedance, linking nature of the `connector` object, it will beco
 
 ### Implementation
 
-In order to avoid singularities in the actual impedance matrix and numerical stability issues associated with a very large admittance value, the `connector` object will not actually exist as a `link` object within the system. Rather, connections will be done in a manner identical to the parent-child connections between `node` objects described in [Spec:NEVNode]. Whenever a `connector` object is invoked and "closed" (in regards to `switch` object implementations), the lower ranked node (typically the `to`-referenced node) will be parented to the `from`-referenced node. 
+In order to avoid singularities in the actual impedance matrix and numerical stability issues associated with a very large admittance value, the `connector` object will not actually exist as a `link` object within the system. Rather, connections will be done in a manner identical to the parent-child connections between `node` objects described in Spec:NEVNode. Whenever a `connector` object is invoked and "closed" (in regards to `switch` object implementations), the lower ranked node (typically the `to`-referenced node) will be parented to the `from`-referenced node. 
 
-Unlike parent-child connections, only the existence of terminal connections on both ends is required (as opposed to parent-child connections, where the child terminals must be a subset of the parent terminals). Similar to the parent-child connection implementation, the `connector` object will utilize the `NEVbusdata` and `NEVbranchdata` fields outlined on the [Spec:NEVDataFormat] page. Utilizing these structures, remapping the terminals will be handled internally so any `link` objects connected to the `to` end of the `connector` device are properly connected to the `from` node. 
+Unlike parent-child connections, only the existence of terminal connections on both ends is required (as opposed to parent-child connections, where the child terminals must be a subset of the parent terminals). Similar to the parent-child connection implementation, the `connector` object will utilize the `NEVbusdata` and `NEVbranchdata` fields outlined on the Spec:NEVDataFormat page. Utilizing these structures, remapping the terminals will be handled internally so any `link` objects connected to the `to` end of the `connector` device are properly connected to the `from` node. 
 
 # Related Concepts:
 
-  * [Overview Page]
-  * [Requirements]
-  * [Specifications]
-  * [Implementation]
-  * [Keeler (Version 4.0)]
+  * Overview Page
+  * Requirements
+  * Specifications
+  * Implementation
+  * Keeler (Version 4.0)
 

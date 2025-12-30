@@ -30,7 +30,7 @@ All array-like inputs into the powerflow module will be parsed in the GLM as cha
 <comma> "," | column or sub-element separator in the array.   
 <semicolon> ";" | row or element separator in the array.   
   
-Spaces before or after the individual delimiters will be ignored. Spaces in text fields (i.e., object names) will be supported. Spaces in numeric values will be expected to precede unit specifications on that value, so the appropriate [GLD Unit] conversions can be performed. 
+Spaces before or after the individual delimiters will be ignored. Spaces in text fields (i.e., object names) will be supported. Spaces in numeric values will be expected to precede unit specifications on that value, so the appropriate GLD Unit conversions can be performed. 
 
 # Array Input Parsing
 
@@ -261,8 +261,8 @@ In order to maintain proper functionality with recorder and player objects, read
 
 # Related Concepts:
 
-  * [Overview Page]
-  * [Requirements]
-  * [Specifications]
-  * [Implementation]
-  * [Keeler (Version 4.0)]
+  * Overview Page
+  * Requirements
+  * Specifications
+  * Implementation
+  * Keeler (Version 4.0)

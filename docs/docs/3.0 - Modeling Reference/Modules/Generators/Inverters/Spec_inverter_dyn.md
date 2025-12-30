@@ -17,7 +17,7 @@ The equivalent circuits of three-phased and single-phased grid-forming inverters
 
 ### CERTS Droop Control
 
-##### Figure 2 shows the Q-V droop control, Figure 3 shows the P-f droop control and overload mitigation control. When $m_q$ and $m_p$ are set zero, the CERTS droop control becomes isochronous control. 
+Figure 2 shows the Q-V droop control, Figure 3 shows the P-f droop control and overload mitigation control. When $m_q$ and $m_p$ are set zero, the CERTS droop control becomes isochronous control. 
 
 ![Q-V Droop Control](../../../../../../images/300px-Inv_dyn_fig2.png)
 
@@ -157,7 +157,7 @@ For a practical grid-following inverter, it also uses a voltage source converter
 
 ### Equivalent Circuit of a Detailed Grid-Following Inverter
 
-##### Figure 4 (a) and (b) show the equivalent circuits of three-phased and single-phased grid-following inverters respectively. It can be seen that the main circuit of a grid-following inverter is fundamentally either a three-phased or single-phased voltage source. This is because the inverter itself is a voltage source converter. The grid-following controller makes the inverter behaves as a current source. When implemented in GridLAB-D™, these voltage sources behind coupling reactance are converted to the Norton equivalent circuits for power flow calculation. The following assumptions are made when implementing grid-following inverter in GridLAB-D: 
+Figure 4 (a) and (b) show the equivalent circuits of three-phased and single-phased grid-following inverters respectively. It can be seen that the main circuit of a grid-following inverter is fundamentally either a three-phased or single-phased voltage source. This is because the inverter itself is a voltage source converter. The grid-following controller makes the inverter behaves as a current source. When implemented in GridLAB-D™, these voltage sources behind coupling reactance are converted to the Norton equivalent circuits for power flow calculation. The following assumptions are made when implementing grid-following inverter in GridLAB-D: 
 
   * For simplicity, the grid-following controller is modeled per phase. This means each phase has its own PLL and current control loop.
   * We assume each phase injects the same amount of P and Q into the grid.
@@ -173,13 +173,13 @@ The grid-following controller includes two key components, the Phase-Lock-Loop (
 
 For simplicity, the grid-following controller is modeled per phase. This means each phase has its own PLL and current control loop. We assume each phase injects the same amount of P into the grid. 
 
-##### Figure 5 shows the control block of a PLL. For each phase, the grid side voltage $U_{gi}\angle{\delta_{gi}}$ ($i=a,b,c$) is transformed from $xy$ frame into $dq$ frame. The controllers tries to control $u_{gqi}=0$. The output $\angle{\delta_{PLLi}}$ should equal to the phase angle of the grid side voltage $\angle{\delta_{gi}}\left(\angle{\delta_{PLLi}}=\angle{\delta_{gi}}\right)$, and $f_{PLLi}$ should equal to the system frequency. 
+Figure 5 shows the control block of a PLL. For each phase, the grid side voltage $U_{gi}\angle{\delta_{gi}}$ ($i=a,b,c$) is transformed from $xy$ frame into $dq$ frame. The controllers tries to control $u_{gqi}=0$. The output $\angle{\delta_{PLLi}}$ should equal to the phase angle of the grid side voltage $\angle{\delta_{gi}}\left(\angle{\delta_{PLLi}}=\angle{\delta_{gi}}\right)$, and $f_{PLLi}$ should equal to the system frequency. 
 
 ![Control block of a PLL](../../../../../../images/300px-Inv_dyn_fig5.png)
 
 ##### Figure 5 - Control block of a PLL
 
-##### Figure 6 and equations (10) to (13) show how the grid side voltage $U_{gi}\angle{\delta_{gi}}$ and current $I_{gi}\angle{\delta_{gi}}$ ($i=a,b,c$) are transformed from $xy$ frame into $dq$ frame individually. In steady state $u_{gqi}=0$. It should be noted that in equation (13) there is a negative sign in current calculation. This is because the phase angle of voltage is assumed to be lead the phase angle of current, so positive direction of $iq$ should be negative. 
+Figure 6 and equations (10) to (13) show how the grid side voltage $U_{gi}\angle{\delta_{gi}}$ and current $I_{gi}\angle{\delta_{gi}}$ ($i=a,b,c$) are transformed from $xy$ frame into $dq$ frame individually. In steady state $u_{gqi}=0$. It should be noted that in equation (13) there is a negative sign in current calculation. This is because the phase angle of voltage is assumed to be lead the phase angle of current, so positive direction of $iq$ should be negative. 
 
 ![Coordinate Transformation: $ xy$ to $dq$](../../../../../../images/300px-Inv_dyn_fig6.png)
 
@@ -197,7 +197,7 @@ It should be noted that according to (11) we can also have (14). (14) helps to e
 
 $$\displaystyle{}u_{gqi}=\sin{\delta_{gi}-\delta{PLLi}}\frac{U_{gi}}{U_B}\tag{14}$$
   
-##### Figure 7 shows the current control loop. The outputs of the current control loop are the internal voltages $e_{di}$ and $e_{qi}$ for each phase. 
+Figure 7 shows the current control loop. The outputs of the current control loop are the internal voltages $e_{di}$ and $e_{qi}$ for each phase. 
 
 ![Current Control Loop](../../../../../../images/300px-Inv_dyn_fig7.png)
 
@@ -209,7 +209,7 @@ $$\displaystyle{}i_{gdi\_ref}=\frac{P_{refi}}{u_{gdi}}\tag{115}$$
 
 $$\displaystyle{}i_{gqi\_ref}=\frac{-Q_{refi}}{u_{gdi}}\tag{16}$$
   
-##### Figure 8, Equation (17) and (18) show how the internal voltages $e_{di}$ and $e_{qi}$ are transformed from $dq$ frame back into $xy$ frame. With $E_i\angle{\delta_i}$ obtained, power flow analysis can be conducted. $E_i\angle{\delta_i}$ should be converted to their Norton equivalence when conducting power flow analysis. 
+Figure 8, Equation (17) and (18) show how the internal voltages $e_{di}$ and $e_{qi}$ are transformed from $dq$ frame back into $xy$ frame. With $E_i\angle{\delta_i}$ obtained, power flow analysis can be conducted. $E_i\angle{\delta_i}$ should be converted to their Norton equivalence when conducting power flow analysis. 
 
 ![Coordinate Transformation: $ dq$ to $xy$](../../../../../../images/300px-Inv_dyn_fig8.png)
 
@@ -254,13 +254,13 @@ $$\displaystyle{}\textrm{Im}\left(E_i\angle{\delta_i}\right)=\left(e_{di}\sin{\d
 
 The external controls include frequency-watt control and volt-var control. These functions can be enabled or disabled. 
 
-##### Figure 9 shows the control block of the frequency-watt control. It measures the variation of frequency and changes the reference of output power $P$. The frequency is measured by a PLL. 
+Figure 9 shows the control block of the frequency-watt control. It measures the variation of frequency and changes the reference of output power $P$. The frequency is measured by a PLL. 
 
 ![Frequency-watt control](../../../../../../images/300px-Inv_dyn_fig9.png)
 
 ##### Figure 9 - Frequency-watt control
 
-##### Figure 10 shows the control block of the Volt-Var control. It measures the variation of voltage and changes the reference of reactive power $Q$. 
+Figure 10 shows the control block of the Volt-Var control. It measures the variation of voltage and changes the reference of reactive power $Q$. 
 
 ![Volt-Var control](../../../../../../images/300px-Inv_dyn_fig10.png)
 
@@ -551,7 +551,7 @@ For the reactive power ($Q$) and voltage ($V$) control in the VSM mode Q-V droop
 
 ## Related Concepts:
 
-  * [Inverter_dyn Main Page]
-  * [Inverter_dyn Requirements]
-  * [Navajo (Version 4.3)]
+  * Inverter_dyn Main Page
+  * Inverter_dyn Requirements
+
 
