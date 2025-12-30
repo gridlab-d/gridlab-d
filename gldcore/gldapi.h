@@ -189,6 +189,11 @@ public:
      * @return Vector of property maps, one per object (includes __class__, __id__, optional __name__)
      */
     std::vector<std::map<std::string, std::string>> get_all_objects(const std::string& class_name);
+    
+    /** Get the entire model with all objects and properties organized by class
+     * @return Map of class names to vectors of object property maps
+     */
+    std::map<std::string, std::vector<std::map<std::string, std::string>>> get_model();
 
     private:
         std::string glm_file_path;  // Path to the GLM file

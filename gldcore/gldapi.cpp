@@ -1101,3 +1101,26 @@ std::vector<std::map<std::string, std::string>> GridLabD::get_all_objects(const 
     printf("Collected %zu objects for class '%s'\n", objects.size(), class_name.c_str());
     return objects;
 }
+
+// Get the entire model with all objects and properties organized by class
+std::map<std::string, std::vector<std::map<std::string, std::string>>> GridLabD::get_model() {
+    std::map<std::string, std::vector<std::map<std::string, std::string>>> model;
+    
+    // Get all classes
+    std::vector<std::string> classes = get_all_classes();
+    
+    // For each class, get all objects
+    size_t total_objects = 0;
+    for (const auto& class_name : classes) {
+        auto objects = get_all_objects(class_name);
+        if (!objects.empty()) {
+            model[class_name] = std::move(objects);
+            total_objects += model[class_name].size();
+        }
+    }
+    
+    printf("Retrieved entire model: %zu classes with %zu total objects\n", 
+           model.size(), total_objects);
+    
+    return model;
+}
