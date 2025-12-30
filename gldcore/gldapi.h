@@ -184,6 +184,12 @@ public:
      */
     std::map<std::string, std::string> get_object_properties(const std::string& object_name);
 
+    /** Get all objects of a class along with their properties
+     * @param class_name The class to enumerate
+     * @return Vector of property maps, one per object (includes __class__, __id__, optional __name__)
+     */
+    std::vector<std::map<std::string, std::string>> get_all_objects(const std::string& class_name);
+
     private:
         std::string glm_file_path;  // Path to the GLM file
         int selected_timestep;  // User-selected timestep in seconds (0 = use default event-driven behavior)

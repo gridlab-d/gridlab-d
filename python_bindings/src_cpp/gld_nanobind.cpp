@@ -118,6 +118,8 @@ NB_MODULE(gridlabd_core, m) {
              "Get all object names of a specific class")
         .def("get_object_properties", &GridLabD::get_object_properties, nb::arg("object_name"),
              "Get all properties of an object as a dictionary")
+           .def("get_all_objects", &GridLabD::get_all_objects, nb::arg("class_name"),
+               "Get all objects (and their properties) of a specific class")
         .def("get_property", [](GridLabD& self, const std::string& object_name, const std::string& property_name) {
             std::string value;
             GLDErrorCode code = self.get_property(object_name, property_name, value);

@@ -40,6 +40,46 @@ namespace {
 std::optional<fs::path> g_install_root_override;
 std::optional<fs::path> g_executable_override;
 
+std::string object_identifier(const OBJECT *obj) {
+    if (obj == nullptr) {
+        return "";
+    }
+
+    if (obj->name != nullptr && obj->name[0] != '\0') {
+        return std::string(obj->name);
+    }
+
+    char id_str[32];
+    snprintf(id_str, sizeof(id_str), "%d", obj->id);
+    return std::string(id_str);
+}
+
+std::map<std::string, std::string> collect_property_map_for_object(OBJECT *obj) {
+    std::map<std::string, std::string> property_map;
+
+    if (obj == nullptr || obj->oclass == nullptr || obj->oclass->name == nullptr) {
+        return property_map;
+    }
+
+    property_map["__class__"] = std::string(obj->oclass->name);
+    property_map["__id__"] = std::to_string(obj->id);
+    if (obj->name != nullptr && obj->name[0] != '\0') {
+        property_map["__name__"] = std::string(obj->name);
+    }
+
+    PROPERTY *prop = class_get_first_property(obj->oclass);
+    while (prop != nullptr) {
+        char buffer[1024];
+        int result = object_get_value_by_name(obj, prop->name, buffer, sizeof(buffer));
+        if (result != 0) {
+            property_map[std::string(prop->name)] = std::string(buffer);
+        }
+        prop = prop->next;
+    }
+
+    return property_map;
+}
+
 fs::path weakly_canonical_or_self(const fs::path& candidate) {
     std::error_code ec;
     auto canonical = fs::weakly_canonical(candidate, ec);
@@ -1023,29 +1063,41 @@ std::map<std::string, std::string> GridLabD::get_object_properties(const std::st
         return property_map;
     }
     
-    // Add basic object info
-    property_map["__class__"] = std::string(obj->oclass->name);
-    property_map["__id__"] = std::to_string(obj->id);
-    if (obj->name != nullptr && obj->name[0] != '\0') {
-        property_map["__name__"] = std::string(obj->name);
-    }
-    
-    // Iterate through all properties of the object's class
-    PROPERTY *prop = class_get_first_property(obj->oclass);
-    while (prop != nullptr) {
-        // Get property value
-        char buffer[1024];
-        int result = object_get_value_by_name(obj, prop->name, buffer, sizeof(buffer));
-        
-        if (result != 0) {
-            property_map[std::string(prop->name)] = std::string(buffer);
-        }
-        
-        prop = prop->next;
-    }
-    
+    property_map = collect_property_map_for_object(obj);
+
+    size_t meta_fields = 0;
+    meta_fields += property_map.count("__class__");
+    meta_fields += property_map.count("__id__");
+    meta_fields += property_map.count("__name__");
+    size_t reported_properties = property_map.size() >= meta_fields ? property_map.size() - meta_fields : 0;
+
     printf("Retrieved %zu properties from object '%s' (class: %s)\n", 
-           property_map.size() - 3, object_name.c_str(), obj->oclass->name);  // -3 for the __meta__ properties
+           reported_properties, object_name.c_str(), obj->oclass->name);
     
     return property_map;
+}
+
+// Get all objects of a specific class with their properties
+std::vector<std::map<std::string, std::string>> GridLabD::get_all_objects(const std::string& class_name) {
+    std::vector<std::map<std::string, std::string>> objects;
+
+    CLASS *oclass = class_get_class_from_classname(class_name.c_str());
+    if (oclass == nullptr) {
+        printf("Warning: Class '%s' not found\n", class_name.c_str());
+        return objects;
+    }
+
+    OBJECT *obj = object_get_first();
+    while (obj != nullptr) {
+        if (obj->oclass == oclass) {
+            auto property_map = collect_property_map_for_object(obj);
+            if (!property_map.empty()) {
+                objects.push_back(std::move(property_map));
+            }
+        }
+        obj = object_get_next(obj);
+    }
+
+    printf("Collected %zu objects for class '%s'\n", objects.size(), class_name.c_str());
+    return objects;
 }
