@@ -39,6 +39,9 @@ class _GLDObj:
     def __getitem__(self, key):
         return self._data[key]
 
+    def __repr__(self):
+        return f"{self._data!r}"
+
 class GLDModel:
     """
     GLDModel is the data structure for holding the GridLAB-D model in a form
@@ -255,6 +258,8 @@ print(f'Old Rwall: {gld.glm.house["house1"]["Rwall"]}') # Read it like a dict
 gld.glm.house["house1"]["Rwall"] = "30"                 # Modify it like a dict
 house1_dict = gld.get_object_properties("house1")       # Call the GLD API to get the new from the model
 print(f'New Rwall: {house1_dict["Rwall"]}')             # New value is in GLD!
+
+# Change whole dictionary
 dummy = 0
 
 # Get current state of GLD model and push into dictionary
