@@ -1,0 +1,224 @@
+@startuml GLD User
+
+class GLD {
+    glm: GLDModel
+    gld: GridLAB-D
+    wd: Path
+    sim_running: bool
+    sim_time: DateTime
+    start_time: DateTime
+    stop_time: DataTime
+    step_size: float
+    console_messages: list
+
+    -- GridLAB-D native APIs --
+    get_model()
+    set_install_root(path:str) -> None
+    get_install_root() -> str
+    get_executable_path() -> str
+    set_config_file(config_file: str) -> int
+    set_working_directory(self, dir: str) -> int
+    setup_before_load() -> int
+    setup_after_load() -> int
+    start() -> int
+    load_glm(arguments: list[str]) -> int
+    load(filename: str) -> int:
+    run(start_time: Optional[float] = None, stop_time: Optional[float] = None) -> int
+    run_test(self) -> int
+    step() -> tuple[int, float]
+    step_to(target_time_str: str) -> tuple[int, float]
+    set_time(self, timestamp: str) -> int
+    get_time(self) -> tuple[int, str]
+    set_time_step(self, time_step: int) -> int
+    save_checkpoint(self, save_path: str, mode: Optional[int] = None) -> int
+    load_checkpoint(self, file_path: str) -> int
+    get_checkpoint_json(self, filepath: str = "") -> str
+    stop(self) -> int
+    exit_gld(self, filepath: str = "") -> int
+    finalize(self, filepath: str = "") -> int
+    is_initialized(self) -> bool
+    get_all_classes(self) -> list[str]
+    get_all_objects(class_name: str) -> list[dict]
+    get_model() -> dict[list[dict]]
+    get_objects_by_class(self, class_name: str) -> list[str]
+    get_object_properties(self, object_name: str) -> dict[str, str]
+    get_property(self, object_name: str, property_name: str) -> tuple[int, str]
+    set_property(self, object_name: str, property_name: str, value: str) -> int
+    get_properties_by_class(self, class_name: str, property_name: str) -> dict[str, str]
+    set_property_by_class(self, class_name: str, property_name: str, value: str) -> int
+    global_setvar(self, name: str, value: str) -> int
+    global_getvar(self, name: str) -> str
+
+    -- GLD User Model-Building APIs --
+    load_model_to_edit(path: str) -> GLDModel
+    set_sim_times(start: Datetime, stop: Datetime) -> None
+    get_object_by_class(class_name: str) -> dict
+
+
+    -- GLD User Model-Running APIs --
+    load_model_to_run(model: str | GLDModel) -> None
+    begin_sim(start: Optional[Datetime]=start_time, 
+    stop: Optional[Datetime]=stop_time,
+    step_size: Optional[TimeDelta]=step_size,
+    pause_at: Optional[Datetime]=None)
+    step() -> DateTime
+    step_to(target_time: DateTime) -> DateTime
+    get_model() -> GLDModel
+    save_checkpoint(save_path: str, mode: Optional[int] = None) -> int
+    load_checkpoint(self, file_path: str) -> int
+    _ettime_to_dt(etime: float) -> Datetime
+
+    
+    -- GLD User Other APIs --
+    write_console_to_log_file() -> None
+    show_console_messages_for_level(level: GLDMessageLevel) -> list
+    show_console_messages_for_class(level: GLDClass) -> list
+    show_console_messages_for_object(obj_name: str) -> list
+    
+
+}
+
+class _GLDObj {
+    _data = dict
+
+    __init__()
+    __setitem__(key: str, value: Any) -> str
+    __getitem__(key: str) -> Any
+    __iter__()
+    __reversed__()
+    __contains__(key: str)
+    __repr__() -> str
+}
+
+class _GLDObjHolder {
+    _model: dict[_GLDObj]
+    extendable: bool
+
+    __init__()
+    __setitem__(key: str, value: Any) -> str
+    __getitem__(key: str) -> _GLDObj
+    __delitem__(key: str) -> str
+    __iter__()
+    __reversed__()
+    __contains__(key: str)
+    __repr__() -> str
+
+}
+
+class GLDModel {
+    model: _GLDObjHolder
+    extendable: bool
+
+    _load_model() -> None
+}
+
+class PythonEnum {
+
+}
+
+class GLDMessageLevel {
+    ERROR = 0
+    WARNING = 1
+    INFO = 2
+    DEBUG = 3
+}
+
+class GLDClass {
+    PLAYER = 0
+    SHAPER = 1
+    RECORDER = 2
+    MULTI_RECORDER = 3
+    COLLECTOR = 4
+    HISTOGRAM = 5
+    GROUP_RECORDER = 6
+    VIOLATION_RECORDER = 7
+    METRICS_COLLECTOR = 8
+    METRICS_COLLECTOR_WRITER = 9
+    CLIMATE = 10
+    WEATHER = 11
+    CSV_READER = 12
+    DIESEL_DG = 13
+    WINDTURB_DG = 14
+    INVERTER = 15
+    RECTIFIER = 16
+    BATTERY = 17
+    SOLAR = 18
+    CENTRAL_DG_CONTROL = 19
+    CONTROLLER_DG = 20
+    INVERTER_DYN = 21
+    SYNC_CTRL = 22
+    ENERGY_STORAGE = 23
+    SEC_CONTROL = 24
+    POWERFLOW_OBJECT = 25
+    POWERFLOW_LIBRARY = 26
+    NODE = 27
+    LINK = 28
+    CAPACITOR = 29
+    FUSE = 30
+    METER = 31
+    LINE = 32
+    LINE_SPACING = 33
+    OVERHEAD_LINE = 34
+    UNDERGROUND_LINE = 35
+    OVERHEAD_LINE_CONDUCTOR = 36
+    UNDERGROUND_LINE_CONDUCTOR = 37
+    LINE_CONFIGURATION = 38
+    TRANSFORMER_CONFIGURATION = 39
+    TRANSFORMER = 40
+    LOAD = 41
+    REGULATOR_CONFIGURATION = 42
+    REGULATOR = 43
+    TRIPLEX_NODE = 44
+    TRIPLEX_METER = 45
+    TRIPLEX_LINE = 46
+    TRIPLEX_LINE_CONFIGURATION = 47
+    TRIPLEX_LINE_CONDUCTOR = 48
+    SWITCH = 49
+    SUBSTATION = 50
+    PQLOAD = 51
+    VOLTDU MP = 52
+    SERIES_REACTOR = 53
+    RESTORATION = 54
+    VOLT_VAR_CONTROL = 55
+    FAULT_CHECK = 56
+    MOTOR = 57
+    BILLDUMP = 58
+    POWER_METRICS = 59
+    CURRDUMP = 60
+    RECLOSER = 61
+    SECTIONALIZER = 62
+    EMISSIONS = 63
+    LOAD_TRACKER = 64
+    TRIPLEX_LOAD = 65
+    IMPEDANCE_DUMP = 66
+    VFD = 67
+    JSONDUMP = 68
+    SERIES_COMPENSATOR = 69
+    PERFORMANCE_MOTOR = 70
+    SYNC_CHECK = 71
+    RESIDENTIAL_ENDUSE = 72
+    APPLIANCE = 73
+    HOUSE = 74
+    WATERHEATER = 75
+    LIGHTS = 76
+    REFRIGERATOR = 77
+    CLOTHESWASHER = 78
+    DISHWASHER = 79
+    OCCUPANTLOAD = 80
+    PLUGLOAD = 81
+    MICROWAVE = 82
+    RANGE = 83
+    FREEZER = 84
+    DRYER = 85
+    EVCHARGER = 86
+    ZIPLOAD = 87
+    THERMAL_STORAGE = 88
+    EVCHARGER_DET = 89
+}
+PythonEnum <|-- GLDClass
+PythonEnum <|-- GLDMessageLevel
+GLD o-- GLDModel
+GLDModel o-- _GLDObjHolder
+_GLDObjHolder o-- _GLDObj
+
+@enduml
