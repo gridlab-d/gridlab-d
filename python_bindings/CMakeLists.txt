@@ -16,6 +16,15 @@ endif()
 
 # Find required packages
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+
+# Find or fetch nlohmann/json
+find_package(nlohmann_json 3.12.0 QUIET)
+if(NOT nlohmann_json_FOUND)
+    message(STATUS "nlohmann_json not found, downloading...")
+    include(FetchContent)
+    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
+    FetchContent_MakeAvailable(json)
+endif()
 find_package(nanobind CONFIG REQUIRED)
 
 # For PyPI distribution, we expect GridLAB-D to be pre-built
@@ -40,16 +49,18 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib/libgldapi.so")
     # Development mode paths
     set(GRIDLABD_INCLUDE_DIR ${GRIDLABD_ROOT}/gldcore)
-    set(JSONCPP_INCLUDE_DIR ${GRIDLABD_ROOT}/third_party/jsoncpp_lib/include)
 else()
     # PyPI mode paths (using copied headers)
     set(GRIDLABD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gldcore)
-    set(JSONCPP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/jsoncpp_lib/include)
 endif()
 
 # Verify GridLAB-D library exists (should be pre-built for PyPI)
+
+# Define HAVE_CONFIG_H like main build does
+add_definitions(-DHAVE_CONFIG_H)
 if(NOT EXISTS ${GRIDLABD_LIB_DIR}/libgldapi.so)
     message(FATAL_ERROR "GridLAB-D API library not found at ${GRIDLABD_LIB_DIR}/libgldapi.so. Please build GridLAB-D first or ensure prebuilt libraries are included.")
+
 endif()
 
 message(STATUS "Found GridLAB-D API library at ${GRIDLABD_LIB_DIR}/libgldapi.${LIB_EXT}")
@@ -62,36 +73,16 @@ nanobind_add_module(
 
 # Add include directories
 target_include_directories(gridlabd_core PRIVATE 
+    ${GRIDLABD_ROOT}/build/headers
     ${GRIDLABD_INCLUDE_DIR}
     ${GRIDLABD_ROOT}/third_party
-    ${JSONCPP_INCLUDE_DIR}
+    ${json_SOURCE_DIR}/include
 )
 
-# Find jsoncpp library (could be in different locations)
-set(JSONCPP_SEARCH_PATHS
-    ${GRIDLABD_LIB_DIR}/static/libjsoncpp.a
-    ${GRIDLABD_LIB_DIR}/libjsoncpp.a
-    ${GRIDLABD_ROOT}/build/third_party/jsoncpp_lib/src/lib_json/libjsoncpp.a
-    ${GRIDLABD_ROOT}/third_party/jsoncpp_lib/src/lib_json/libjsoncpp.a
-)
-
-set(JSONCPP_LIB_PATH "")
-foreach(SEARCH_PATH ${JSONCPP_SEARCH_PATHS})
-    if(EXISTS ${SEARCH_PATH})
-        set(JSONCPP_LIB_PATH ${SEARCH_PATH})
-        message(STATUS "Found jsoncpp at: ${JSONCPP_LIB_PATH}")
-        break()
-    endif()
-endforeach()
-
-if(NOT JSONCPP_LIB_PATH)
-    message(FATAL_ERROR "Could not find libjsoncpp.a. Searched in: ${JSONCPP_SEARCH_PATHS}")
-endif()
 
 # Link against GridLAB-D API library and dependencies
 target_link_libraries(gridlabd_core PRIVATE 
     ${GRIDLABD_LIB_DIR}/libgldapi.so
-    ${JSONCPP_LIB_PATH}
 )
 
 # Set RPATH for the module to find the shared library

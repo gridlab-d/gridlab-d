@@ -64,6 +64,9 @@ public:
     // Retrieve the resolved GridLAB-D executable path
     static std::string get_executable_path();
     
+    // Set the global environment (internal use - for subprocess initialization)
+    void set_environment(const std::string& env);
+
     // Set the configuration file path
     GLDErrorCode set_config_file(const std::string& config_file);
 

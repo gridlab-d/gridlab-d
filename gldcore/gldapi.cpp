@@ -157,6 +157,7 @@ std::string GridLabD::get_executable_path() {
 
  // constructor
 GridLabD::GridLabD() : selected_timestep(0) {
+    //strcpy(global_environment, "batch");
     char *browser = getenv("GLBROWSER");
 
     /* set the default timezone */
@@ -579,17 +580,47 @@ GLDErrorCode GridLabD::run(std::optional<double> start_time, std::optional<doubl
 {
     set_clocks(start_time, stop_time);
 
+    FILE* f = fopen("/tmp/gld_debug.log", "a");
+    if (f) {
+        fprintf(f, "DEBUG: run() called, global_clock=%lld, object_count=%d\n", 
+                global_clock, object_get_count());
+        fclose(f);
+    }
     GLDErrorCode env_check = check_environment_and_handle_failure();
     if (env_check != GLD_SUCCESS)
     {
         return env_check;
     }
 
+    STATUS exec_result = exec_start(&passes, &tsteps);
+    
+    FILE* f4 = fopen("/tmp/gld_debug.log", "a");
+    if (f) {
+        fprintf(f, "DEBUG: exec_start returned: %d (FAILED=%d, SUCCESS=%d)\n", exec_result, FAILED, SUCCESS);
+        fclose(f);
+    }
+    
+    if (exec_result == FAILED)
+    {
+        FILE* f2 = fopen("/tmp/gld_debug.log", "a");
+        if (f2) {
+            fprintf(f2, "DEBUG: exec_start FAILED, returning error\n");
+            fclose(f2);
+        }
+        return handle_simulation_failure("exec_start failed");
+    }
+    
+    FILE* f3 = fopen("/tmp/gld_debug.log", "a");
+    if (f3) {
+        fprintf(f3, "DEBUG: exec_start succeeded, getting checkpoint\n");
+        fclose(f3);
+    }
+    /*
     if (exec_start(&passes, &tsteps) == FAILED)
     {
         return handle_simulation_failure("exec_start failed");
     }
-
+    */
     gld_model = get_checkpoint_json();
 
     return GLD_SUCCESS;

@@ -67,92 +67,22 @@ if "GRIDLABD_ROOT" not in os.environ:
         os.environ["GLPATH"] = path_sep.join(glpath_components)
 
 # Import low-level C++ API
+# Import low-level C++ API (enums and utilities only)
 from .gridlabd_core import (
     hello,
     __version__,
-    GridLabD as _DirectGridLabD,  # Import as private name
     GLDErrorCode,
     GLDCheckPointMode,
 )
 
-# Set install root immediately after importing GridLabD class
-# This allows the C++ code to find tzinfo.txt and other data files
-if "GRIDLABD_ROOT" in os.environ:
-    try:
-        root = os.environ["GRIDLABD_ROOT"]
-        _DirectGridLabD.set_install_root(root)
-    except Exception:
-        # If setting install root fails, continue anyway
-        # The C++ code will use GLPATH environment variable
-        pass
-
-# Import isolated GridLabD wrapper
+# Import isolated GridLabD wrapper (process isolation for multiple instances)
 from ._isolated import IsolatedGridLabD
 
-# Choose which GridLabD to expose based on environment variable
-# GRIDLABD_DIRECT_MODE=true -> use direct C++ binding (single instance only, for debugging)
-# GRIDLABD_DIRECT_MODE=false or unset -> use isolated wrapper (multiple instances supported)
-if os.environ.get("GRIDLABD_DIRECT_MODE", "").lower() in ("true", "1", "yes"):
-    GridLabD = _DirectGridLabD
-else:
-    GridLabD = IsolatedGridLabD
-
-# Import high-level Python API
-from .simulation import (
-    Simulation,
-    GridLABDError,
-    ConfigurationError, 
-    SimulationError
-)
-
-def load_model(glm_path, change_to_model_dir=True):
-    """
-    Load a GridLAB-D model, optionally changing to its directory first.
-    
-    This is a convenience function that handles the common pattern of:
-    1. Creating a GridLabD instance
-    2. Changing to the model's directory (so relative paths in the GLM work)
-    3. Loading the model
-    
-    Args:
-        glm_path: Path to the GLM file
-        change_to_model_dir: If True, change working directory to the GLM file's directory
-                            before loading (recommended). This allows relative paths in the
-                            GLM file (like climate data files) to work correctly.
-    
-    Returns:
-        tuple: (GridLabD instance, GLDErrorCode)
-    
-    Example:
-        gld, result = gridlabd.load_model("path/to/model.glm")
-        if result == gridlabd.GLDErrorCode.SUCCESS:
-            gld.run()
-    """
-    from pathlib import Path
-    
-    gld = GridLabD()
-    glm_file = Path(glm_path).resolve()
-    
-    if not glm_file.exists():
-        return gld, GLDErrorCode.FILE_NOT_FOUND
-    
-    if change_to_model_dir:
-        model_dir = str(glm_file.parent)
-        result = gld.set_working_directory(model_dir)
-        if result != GLDErrorCode.SUCCESS:
-            return gld, result
-    
-    result = gld.load_glm(["gridlabd", str(glm_file)])
-    return gld, result
+# Always use isolated wrapper for safety and multi-instance support
+GridLabD = IsolatedGridLabD
 
 __all__ = [
-    # High-level interface (recommended for most users)
-    "Simulation",
-    "GridLABDError",
-    "ConfigurationError",
-    "SimulationError",
-    
-    # Low-level interface (advanced users)
+    # Main API
     "GridLabD",
     "GLDErrorCode",
     "GLDCheckPointMode",
@@ -162,7 +92,7 @@ __all__ = [
     "__version__",
     "version",
     "info",
-    "load_model",  # Convenience function
+    
 ]
 
 def version():
@@ -175,21 +105,5 @@ def info():
     print("Built with nanobind")
     print(hello())
     print("GridLAB-D API integration: ✓ Available")
-    
-    # Print which GridLabD implementation is being used
-    if GridLabD == _DirectGridLabD:
-        print("GridLabD Mode: Direct (single instance only)")
-    else:
-        print("GridLabD Mode: Isolated (multiple instances supported)")
+    print("GridLabD Mode: Isolated (multiple instances supported)")
 
-    try:
-        sim = Simulation()
-        print(f"GridLAB-D executable: ✓ Found at {sim.gridlabd_path}")
-    except Exception as e:
-        print(f"GridLAB-D executable: ✗ {e}")
-
-# Bundle utilities
-from .bundle_utils import get_gridlabd_info, setup_bundled_environment
-
-# Add to __all__ exports
-__all__.extend(['get_gridlabd_info', 'setup_bundled_environment'])

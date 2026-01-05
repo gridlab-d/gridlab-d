@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 
 #include "gldapi.h"
 
@@ -132,10 +132,8 @@ NB_MODULE(gridlabd_core, m) {
              nb::arg("class_name"), nb::arg("property_name"), nb::arg("value"),
              "Set property value on all objects of a class")
         .def("get_checkpoint_json", [](GridLabD& self, const std::string& filepath) {
-            Json::Value value = self.get_checkpoint_json(filepath);
-            Json::StreamWriterBuilder builder;
-            builder["indentation"] = "";
-            return Json::writeString(builder, value);
+            nlohmann::json value = self.get_checkpoint_json(filepath);
+            return value.dump();
         }, nb::arg("filepath") = std::string(), "Return checkpoint data as a JSON string");
 
 #ifdef VERSION_INFO

@@ -3469,9 +3469,11 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
 	// Create local variables for internal use (use provided values or defaults)
 	int64 local_passes = (passes != nullptr) ? *passes : 0;
 	int64 local_tsteps = (tsteps != nullptr) ? *tsteps : 0;
+        FILE* prep_dbg = fopen("/tmp/env_check.log", "a"); fprintf(prep_dbg, "About to call run_preparation()\n"); fclose(prep_dbg);
 
 	if (run_preparation() == FAILED)
 	{
+                FILE* prep_fail = fopen("/tmp/env_check.log", "a"); fprintf(prep_fail, "run_preparation() returned FAILED\n"); fclose(prep_fail);
 		return FAILED;
 	}
 
@@ -3551,9 +3553,10 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
 	sched_update(global_clock, MLS_DONE);
 
 	/* terminate links */
+        STATUS final_status = exec_sync_getstatus(sync_data_nullptr);
+        FILE* status_dbg = fopen("/tmp/env_check.log", "a"); fprintf(status_dbg, "exec_start returning status=%d\n", final_status); fclose(status_dbg);
 	// delete threadpool;
-
-	return exec_sync_getstatus(sync_data_nullptr);
+        return final_status;
 }
 
 
