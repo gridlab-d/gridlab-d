@@ -2726,6 +2726,7 @@ void report_performance_after_run(time_t start_time, int64 passes, int64 tsteps)
 static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int64& passes, int64& tsteps, 
 												int& j, LISTITEM*& ptr, int& pc_rv, int& iObjRankList)
 {
+
 	TIMESTAMP internal_synctime;
 	output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, exitcode=%i ***", exec_sync_get(nullptr), global_stoptime, exec_sync_getevents(nullptr), exec_getexitcode());
 
@@ -2833,8 +2834,9 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 		output_error("a simulation mode error has occurred");
 		return false; /* terminate main loop immediately */
 	}
-	exec_sync_set(nullptr,t,false);
 
+
+	exec_sync_set(nullptr,t,false);
 
 	/* synchronize all internal schedules */
 	if ( global_clock < 0 )
@@ -2866,8 +2868,8 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 			Follow the troubleshooting recommendations for that message and try again.
 		 */
 	}
-	exec_sync_set(nullptr,internal_synctime,false);
 
+	exec_sync_set(nullptr,internal_synctime,false);
 	/* prepare multithreading */
 	if (!global_debug_mode)
 	{
@@ -2887,6 +2889,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 		pc_rv = precommit_all(global_clock);
 		if(SUCCESS != pc_rv)
 		{
+			
 			THROW("precommit failure");
 		}
 	}
@@ -2982,13 +2985,23 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 		output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(nullptr));
 	}
 
+	// TODO: Run tests to ensure correct behavior before deleting.
+	// exec_run_syncscripts() causes compilation issues without proper
+	// implementation of function for python bindings. Commenting out for now.
 	/* run sync scripts, if any */
-	// if ( exec_run_syncscripts()!=XC_SUCCESS ) // Function not implemented
+	/*
+	if ( exec_run_syncscripts()!=XC_SUCCESS )
 	{
 		output_error("sync script(s) failed");
+		// TODO: Delete this debug log once environment issues are resolved
+		FILE* f4 = fopen("/tmp/gld_debug.log", "a");
+    	if (f4) {
+        	fprintf(f4, "DEBUG: in execute_single_simulation_iteration script sync failure\n");
+        	fclose(f4);
+    	}
 		THROW("script synchronization failure");
 	}
-
+	*/
 	/* check for clock advance (indicating last pass) */
 	if ( exec_sync_get(nullptr)!=global_clock && global_simulation_mode == SM_EVENT)
 	{
@@ -3077,6 +3090,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool* threadpool, int6
 static void run_main_simulation_loop(cpp_threadpool* threadpool, int64& passes, int64& tsteps, 
 									int& j, LISTITEM*& ptr, int& pc_rv, int& iObjRankList)
 {
+	int i = 0;
 	/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
 	while ( execute_single_simulation_iteration(threadpool, passes, tsteps, j, ptr, pc_rv, iObjRankList) )
 	{
@@ -3320,12 +3334,13 @@ STATUS exec_start()
 		output_error("finalize_all() failed");
 	}
 
+	// TODO: Delete scripts after confirming autotest success for C++.
 	/* run term scripts, if any */
 	// if ( exec_run_termscripts()!=XC_SUCCESS ) // Function not implemented
-	{
-		output_error("term script(s) failed");
-		return FAILED;
-	}
+	//{
+	//	output_error("term script(s) failed");
+	//	return FAILED;
+	//}
 
 	/* deallocate threadpool */
 	if (!global_debug_mode)
@@ -3471,15 +3486,18 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
 	int64 local_tsteps = (tsteps != nullptr) ? *tsteps : 0;
         FILE* prep_dbg = fopen("/tmp/env_check.log", "a"); fprintf(prep_dbg, "About to call run_preparation()\n"); fclose(prep_dbg);
 
+	
 	if (run_preparation() == FAILED)
 	{
                 FILE* prep_fail = fopen("/tmp/env_check.log", "a"); fprintf(prep_fail, "run_preparation() returned FAILED\n"); fclose(prep_fail);
+		
 		return FAILED;
 	}
 
 	/* main loop exception handler */
 	TRY
 	{
+		
 		/* Run the main simulation loop */
 		run_main_simulation_loop(threadpool, local_passes, local_tsteps, j, ptr, pc_rv, iObjRankList);
 

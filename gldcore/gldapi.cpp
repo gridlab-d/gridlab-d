@@ -255,6 +255,7 @@ GLDErrorCode GridLabD::load_glm(int argc, char* argv[]) {
          */
         exit(XC_ARGERR);
     }
+    
     setup_after_load();
 
     return GLD_SUCCESS;
@@ -338,6 +339,7 @@ GLDErrorCode GridLabD::setup_before_load() {
 GLDErrorCode GridLabD::setup_after_load() {
     /* ensure clocks are synced */
     global_clock = global_starttime;
+
     /* initialize scheduler */
     sched_init(0);
 
@@ -515,8 +517,18 @@ GLDErrorCode check_environment_and_handle_failure() {
             the <b>batch</b> environment is normally supported, although 
             some builds can support other environments, such as <b>matlab</b>.
         */
+        FILE* f = fopen("/tmp/gld_debug.log", "a");
+        if (f) {
+            fprintf(f, "DEBUG: Failed in check_environment_and_handle_failure due to unsupported environment: %s\n", global_environment);
+            fclose(f);
+        }
         return GLD_FAILED_TO_START;
     }
+    FILE* f2 = fopen("/tmp/gld_debug.log", "a");
+        if (f2) {
+            fprintf(f2, "DEBUG: Succeeded in check_environment_and_handle_failure. Environment: %s\n", global_environment);
+            fclose(f2);
+        }
     return GLD_SUCCESS;
 }
 
