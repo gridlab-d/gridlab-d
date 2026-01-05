@@ -146,3 +146,5 @@ env
 .vscode/
 CMakePresets.json
 
+workdir/
+__pycache__/
