@@ -268,6 +268,20 @@ class IsolatedGridLabD:
             raise RuntimeError(response.error)
         return response.result
     
+    def get_all_objects(self, class_name: str) -> list[dict[str, str]]:
+        """Get all objects (and their properties) of a specific class."""
+        response = self._send_command(Command.GET_ALL_OBJECTS, {"class_name": class_name})
+        if not response.success:
+            raise RuntimeError(response.error)
+        return response.result
+    
+    def get_model(self) -> dict[str, list[dict[str, str]]]:
+        """Get the entire model with all objects and properties organized by class."""
+        response = self._send_command(Command.GET_MODEL, {})
+        if not response.success:
+            raise RuntimeError(response.error)
+        return response.result
+    
     def get_property(self, object_name: str, property_name: str) -> tuple[int, str]:
         """Get a property value from an object."""
         response = self._send_command(Command.GET_PROPERTY, {

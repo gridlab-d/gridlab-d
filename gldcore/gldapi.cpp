@@ -48,6 +48,43 @@ namespace {
 std::optional<fs::path> g_install_root_override;
 std::optional<fs::path> g_executable_override;
 
+std::string object_identifier(const OBJECT *obj) {
+    if (obj == nullptr) {
+        return "";
+    }
+    if (obj->name != nullptr && obj->name[0] != '\0') {
+        return std::string(obj->name);
+    }
+    char id_str[32];
+    snprintf(id_str, sizeof(id_str), "%d", obj->id);
+    return std::string(id_str);
+}
+
+std::map<std::string, std::string> collect_property_map_for_object(OBJECT *obj) {
+    std::map<std::string, std::string> property_map;
+    if (obj == nullptr || obj->oclass == nullptr || obj->oclass->name == nullptr) {
+        return property_map;
+    }
+    
+    property_map["__class__"] = std::string(obj->oclass->name);
+    property_map["__id__"] = std::to_string(obj->id);
+    if (obj->name != nullptr && obj->name[0] != '\0') {
+        property_map["__name__"] = std::string(obj->name);
+    }
+    
+    PROPERTY *prop = class_get_first_property(obj->oclass);
+    while (prop != nullptr) {
+        char buffer[1024];
+        int result = object_get_value_by_name(obj, prop->name, buffer, sizeof(buffer));
+        if (result != 0) {
+            property_map[std::string(prop->name)] = std::string(buffer);
+        }
+        prop = prop->next;
+    }
+    
+    return property_map;
+}
+
 fs::path weakly_canonical_or_self(const fs::path& candidate) {
     std::error_code ec;
     auto canonical = fs::weakly_canonical(candidate, ec);
@@ -112,6 +149,25 @@ void apply_runtime_paths(const fs::path& exec_path) {
     global_execdir[sizeof(global_execdir) - 1] = '\0';
 }
 
+bool validate_gridlabd_installation(const fs::path& root) {
+    // Check for required directory structure
+    // At minimum, we need either:
+    // - share/ directory (for data files like tzinfo.txt)
+    // - lib/ directory (for modules)
+    // - gldcore/ directory (for development mode)
+    
+    fs::path share_dir = root / "share";
+    fs::path lib_dir = root / "lib";
+    fs::path gldcore_dir = root / "gldcore";
+    
+    bool has_share = fs::exists(share_dir) && fs::is_directory(share_dir);
+    bool has_lib = fs::exists(lib_dir) && fs::is_directory(lib_dir);
+    bool has_gldcore = fs::exists(gldcore_dir) && fs::is_directory(gldcore_dir);
+    
+    // Valid if it has share or gldcore (for data files) and optionally lib (for modules)
+    return has_share || has_gldcore || has_lib;
+}
+
 } // namespace
 
 void GridLabD::set_install_root(const std::string& install_root) {
@@ -125,8 +181,13 @@ void GridLabD::set_install_root(const std::string& install_root) {
         return;
     }
     
-    // If it's a directory, look for the executable
+    // If it's a directory, validate it has required structure
     if (fs::is_directory(candidate)) {
+        if (!validate_gridlabd_installation(candidate)) {
+            throw std::runtime_error("Invalid GridLAB-D installation: " + install_root + 
+                                     " (missing required directories: share/, lib/, or gldcore/)");
+        }
+        
         g_install_root_override = candidate;
         fs::path exec = locate_exec_from_root(candidate);
         if (!exec.empty()) {
@@ -139,7 +200,7 @@ void GridLabD::set_install_root(const std::string& install_root) {
         return;
     }
     
-    throw std::runtime_error("Invalid install root: " + install_root);
+    throw std::runtime_error("Invalid install root: " + install_root + " (path does not exist)");
 }
 
 std::string GridLabD::get_install_root() {
@@ -190,18 +251,24 @@ GridLabD::GridLabD() : selected_timestep(0) {
 
     // Auto-discover paths if not already set
     if (!g_install_root_override.has_value()) {
-        // Try to find gridlabd executable or use package location
-        const char* override_path = std::getenv("GRIDLABD_ROOT");
+        // Try environment variables in priority order: GRIDLABD_HOME > GRIDLABD_ROOT
+        // GRIDLABD_HOME: For custom GridLAB-D installations (modules/data)
+        // GRIDLABD_ROOT: For bundled package installations (backward compatibility)
+        const char* override_path = std::getenv("GRIDLABD_HOME");
+        if (override_path == nullptr || *override_path == '\0') {
+            override_path = std::getenv("GRIDLABD_ROOT");
+        }
+        
         if (override_path != nullptr && *override_path != '\0') {
             try {
                 set_install_root(override_path);
             } catch (...) {
-                // If GRIDLABD_ROOT is invalid, continue without setting paths
+                // If environment variable path is invalid, continue without setting paths
                 // The find_file() function will search GLPATH
             }
         }
-        // Note: For Python packages, paths should be set via GRIDLABD_ROOT environment
-        // variable or by calling set_install_root() explicitly from Python
+        // Note: For Python packages, paths should be set via GRIDLABD_HOME or GRIDLABD_ROOT
+        // environment variables, or by calling set_install_root() explicitly from Python
     }
 
     if (setup_before_load() == GLD_OPERATION_FAILED)
@@ -1138,29 +1205,63 @@ std::map<std::string, std::string> GridLabD::get_object_properties(const std::st
         return property_map;
     }
     
-    // Add basic object info
-    property_map["__class__"] = std::string(obj->oclass->name);
-    property_map["__id__"] = std::to_string(obj->id);
-    if (obj->name != nullptr && obj->name[0] != '\0') {
-        property_map["__name__"] = std::string(obj->name);
-    }
+    property_map = collect_property_map_for_object(obj);
     
-    // Iterate through all properties of the object's class
-    PROPERTY *prop = class_get_first_property(obj->oclass);
-    while (prop != nullptr) {
-        // Get property value
-        char buffer[1024];
-        int result = object_get_value_by_name(obj, prop->name, buffer, sizeof(buffer));
-        
-        if (result != 0) {
-            property_map[std::string(prop->name)] = std::string(buffer);
-        }
-        
-        prop = prop->next;
-    }
-    
+    size_t meta_fields = 0;
+    meta_fields += property_map.count("__class__");
+    meta_fields += property_map.count("__id__");
+    meta_fields += property_map.count("__name__");
+    size_t reported_properties = property_map.size() >= meta_fields ? property_map.size() - meta_fields : 0;
     printf("Retrieved %zu properties from object '%s' (class: %s)\n", 
-           property_map.size() - 3, object_name.c_str(), obj->oclass->name);  // -3 for the __meta__ properties
+           reported_properties, object_name.c_str(), obj->oclass->name);
     
     return property_map;
+}
+
+// Get all objects of a specific class with their properties
+std::vector<std::map<std::string, std::string>> GridLabD::get_all_objects(const std::string& class_name) {
+    std::vector<std::map<std::string, std::string>> objects;
+    
+    CLASS *oclass = class_get_class_from_classname(class_name.c_str());
+    if (oclass == nullptr) {
+        printf("Warning: Class '%s' not found\n", class_name.c_str());
+        return objects;
+    }
+    
+    OBJECT *obj = object_get_first();
+    while (obj != nullptr) {
+        if (obj->oclass == oclass) {
+            auto property_map = collect_property_map_for_object(obj);
+            if (!property_map.empty()) {
+                objects.push_back(std::move(property_map));
+            }
+        }
+        obj = object_get_next(obj);
+    }
+    
+    printf("Collected %zu objects for class '%s'\n", objects.size(), class_name.c_str());
+    return objects;
+}
+
+// Get the entire model with all objects and properties organized by class
+std::map<std::string, std::vector<std::map<std::string, std::string>>> GridLabD::get_model() {
+    std::map<std::string, std::vector<std::map<std::string, std::string>>> model;
+    
+    // Get all classes
+    std::vector<std::string> classes = get_all_classes();
+    
+    // For each class, get all objects
+    size_t total_objects = 0;
+    for (const auto& class_name : classes) {
+        auto objects = get_all_objects(class_name);
+        if (!objects.empty()) {
+            model[class_name] = std::move(objects);
+            total_objects += model[class_name].size();
+        }
+    }
+    
+    printf("Retrieved entire model: %zu classes with %zu total objects\n", 
+           model.size(), total_objects);
+    
+    return model;
 }

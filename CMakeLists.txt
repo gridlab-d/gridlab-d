@@ -38,7 +38,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 # Find Eigen
-set(EIGEN3_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/third_party/eigen")
+# Try to use system Eigen if third_party/eigen doesn't exist
+if(EXISTS "${CMAKE_SOURCE_DIR}/third_party/eigen")
+    set(EIGEN3_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/third_party/eigen")
+else()
+    set(EIGEN3_INCLUDE_DIR "/usr/include/eigen3")
+endif()
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 
