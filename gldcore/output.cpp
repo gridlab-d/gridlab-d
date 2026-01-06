@@ -35,6 +35,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <vector>
+#include <string>
+#include <map>
 
 #include "output.h"
 #include "globals.h"
@@ -313,6 +316,76 @@ char *output_get_time_context(void)
 	return time_context;
 }
 
+// Message capture infrastructure
+struct CapturedMessage {
+	std::string type;
+	std::string timestamp;
+	std::string message;
+};
+
+static std::vector<CapturedMessage> captured_messages;
+static unsigned int capture_lock = 0;
+static bool capture_enabled = true;
+static size_t max_captured_messages = 10000;  // Default limit to prevent memory leaks
+
+// Helper function to add a captured message
+static void capture_message(const char* type, const char* msg) {
+	if (!capture_enabled) return;
+	
+	wlock(&capture_lock);
+	
+	// Enforce size limit - remove oldest message if at capacity
+	if (captured_messages.size() >= max_captured_messages) {
+		captured_messages.erase(captured_messages.begin());
+	}
+	
+	CapturedMessage cm;
+	cm.type = type;
+	cm.timestamp = time_context ? time_context : "";
+	cm.message = msg ? msg : "";
+	captured_messages.push_back(cm);
+	wunlock(&capture_lock);
+}
+
+// API functions for message capture (called from gldapi.cpp)
+std::vector<std::map<std::string, std::string>> output_get_captured_messages() {
+	std::vector<std::map<std::string, std::string>> result;
+	wlock(&capture_lock);
+	for (const auto& msg : captured_messages) {
+		std::map<std::string, std::string> m;
+		m["type"] = msg.type;
+		m["timestamp"] = msg.timestamp;
+		m["message"] = msg.message;
+		result.push_back(m);
+	}
+	wunlock(&capture_lock);
+	return result;
+}
+
+void output_clear_captured_messages() {
+	wlock(&capture_lock);
+	captured_messages.clear();
+	wunlock(&capture_lock);
+}
+
+void output_enable_capture(bool enable) {
+	capture_enabled = enable;
+}
+
+void output_set_message_capture_limit(size_t limit) {
+	wlock(&capture_lock);
+	max_captured_messages = limit > 0 ? limit : 10000;  // Minimum of 1, default if 0
+	// Trim if current size exceeds new limit
+	while (captured_messages.size() > max_captured_messages) {
+		captured_messages.erase(captured_messages.begin());
+	}
+	wunlock(&capture_lock);
+}
+
+size_t output_get_message_capture_limit() {
+	return max_captured_messages;
+}
+
 /** Output a fatal error message
 	
 	output_fatal() will produce output to the standard output stream.  
@@ -350,6 +423,9 @@ int output_fatal(const char *format,...) /**< \bprintf style argument list */
 		va_end(ptr);
 	}
 Output:
+	// Capture the fatal error message
+	capture_message("FATAL", buffer);
+	
 	if (redirect.error)
 		result = fprintf(redirect.error,"%sFATAL    [%s] : %s\n", prefix, time_context, buffer);
 	else
@@ -399,6 +475,9 @@ Output:
 
 	if (notify_error!=nullptr)
 		(*notify_error)();
+
+	// Capture the error message
+	capture_message("ERROR", buffer);
 
 	if (redirect.error)
 		result = fprintf(redirect.error,"%sERROR    [%s] : %s\n", prefix, time_context, buffer);
@@ -550,6 +629,9 @@ Output:
 			result = fprintf(redirect.warning,"%sWARNING  [%s] : %s\n", prefix, time_context, buffer);
 		else
 			result = (*printstd)("%sWARNING  [%s] : %s\n", prefix, time_context, buffer);
+		
+		// Capture the warning message
+		capture_message("WARNING", buffer);
 Unlock:
 		wunlock(&output_lock);
 		return result;
@@ -600,6 +682,9 @@ Output:
 			result = fprintf(redirect.debug,"%sDEBUG [%s] : %s\n", prefix, time_context, buffer);
 		else
 			result = (*printstd)("%sDEBUG [%s] : %s\n", prefix, time_context, buffer);
+		
+		// Capture the debug message
+		capture_message("DEBUG", buffer);
 Unlock:
 		wunlock(&output_lock);
 		return result;
@@ -650,6 +735,9 @@ Output:
 			result = fprintf(redirect.verbose,"%s%s\n", prefix, buffer);
 		else
 			result = (*printstd)("%s   ... %s\n", prefix, buffer);
+		
+		// Capture the verbose message
+		capture_message("VERBOSE", buffer);
 Unlock:
 		wunlock(&output_lock);
 	return result;
@@ -698,6 +786,9 @@ Output:
 			result = fprintf(redirect.output,"%s%s\n", prefix, buffer);
 		else
 			result = (*printstd)("%s%s\n", prefix, buffer);
+		
+		// Capture the message
+		capture_message("MESSAGE", buffer);
 Unlock:
 		wunlock(&output_lock);
 		return result;

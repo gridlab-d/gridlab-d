@@ -18,6 +18,13 @@
 #include "exec.h"
 #include <json/json.h>
 //#include <module.h>
+
+// External declarations for message capture functions in output.cpp
+extern std::vector<std::map<std::string, std::string>> output_get_captured_messages();
+extern void output_clear_captured_messages();
+extern void output_enable_capture(bool enable);
+extern void output_set_message_capture_limit(size_t limit);
+extern size_t output_get_message_capture_limit();
 //#include <module.h>
 
 #include <array>
@@ -1123,4 +1130,24 @@ std::map<std::string, std::vector<std::map<std::string, std::string>>> GridLabD:
            model.size(), total_objects);
     
     return model;
+}
+
+std::vector<std::map<std::string, std::string>> GridLabD::get_messages() {
+    return output_get_captured_messages();
+}
+
+void GridLabD::clear_messages() {
+    output_clear_captured_messages();
+}
+
+void GridLabD::enable_message_capture(bool enable) {
+    output_enable_capture(enable);
+}
+
+void GridLabD::set_message_capture_limit(size_t limit) {
+    output_set_message_capture_limit(limit);
+}
+
+size_t GridLabD::get_message_capture_limit() {
+    return output_get_message_capture_limit();
 }

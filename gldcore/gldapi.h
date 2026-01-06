@@ -195,6 +195,30 @@ public:
      */
     std::map<std::string, std::vector<std::map<std::string, std::string>>> get_model();
 
+    /** Get all captured warning/error/debug messages
+     * @return Vector of message dictionaries with 'type', 'timestamp', and 'message' keys
+     */
+    std::vector<std::map<std::string, std::string>> get_messages();
+
+    /** Clear all captured messages
+     */
+    void clear_messages();
+
+    /** Enable or disable message capture
+     * @param enable True to capture messages, false to disable
+     */
+    void enable_message_capture(bool enable);
+
+    /** Set maximum number of messages to capture (default 10000)
+     * @param limit Maximum messages to store (oldest dropped when exceeded)
+     */
+    void set_message_capture_limit(size_t limit);
+
+    /** Get current message capture limit
+     * @return Current maximum message count
+     */
+    size_t get_message_capture_limit();
+
     private:
         std::string glm_file_path;  // Path to the GLM file
         int selected_timestep;  // User-selected timestep in seconds (0 = use default event-driven behavior)

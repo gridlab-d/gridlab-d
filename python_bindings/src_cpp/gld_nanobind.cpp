@@ -120,7 +120,18 @@ NB_MODULE(gridlabd_core, m) {
              "Get all properties of an object as a dictionary")
            .def("get_all_objects", &GridLabD::get_all_objects, nb::arg("class_name"),
                "Get all objects (and their properties) of a specific class")        .def("get_model", &GridLabD::get_model,
-             "Get the entire model with all objects and properties organized by class")        .def("get_property", [](GridLabD& self, const std::string& object_name, const std::string& property_name) {
+             "Get the entire model with all objects and properties organized by class")        
+        .def("get_messages", &GridLabD::get_messages,
+             "Get all captured warning/error/debug messages")
+        .def("clear_messages", &GridLabD::clear_messages,
+             "Clear all captured messages")
+        .def("enable_message_capture", &GridLabD::enable_message_capture, nb::arg("enable"),
+             "Enable or disable message capture")
+        .def("set_message_capture_limit", &GridLabD::set_message_capture_limit, nb::arg("limit"),
+             "Set maximum number of messages to capture (default 10000)")
+        .def("get_message_capture_limit", &GridLabD::get_message_capture_limit,
+             "Get current message capture limit")
+        .def("get_property", [](GridLabD& self, const std::string& object_name, const std::string& property_name) {
             std::string value;
             GLDErrorCode code = self.get_property(object_name, property_name, value);
             return nb::make_tuple(code, value);
