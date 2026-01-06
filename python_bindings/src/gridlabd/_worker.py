@@ -68,7 +68,14 @@ def handle_get_executable_path(message: Message) -> Response:
     except Exception as e:
         return Response(success=False, error=str(e))
 
-
+def handle_get_object_count(msg: Message) -> Response:
+    """Get the number of objects in the model."""
+    try:
+        count = _gld_instance.object_get_count()
+        return Response(success=True, result=count)
+    except Exception as e:
+        return Response(success=False, error=str(e))
+    
 def handle_set_config_file(message: Message) -> Response:
     """Set the configuration file."""
     try:
@@ -382,6 +389,7 @@ COMMAND_HANDLERS = {
     Command.IS_INITIALIZED: handle_is_initialized,
     Command.GET_ALL_CLASSES: handle_get_all_classes,
     Command.GET_OBJECTS_BY_CLASS: handle_get_objects_by_class,
+    Command.GET_OBJECT_COUNT: handle_get_object_count,
     Command.GET_OBJECT_PROPERTIES: handle_get_object_properties,
     Command.GET_PROPERTY: handle_get_property,
     Command.SET_PROPERTY: handle_set_property,

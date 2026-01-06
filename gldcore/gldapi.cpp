@@ -28,6 +28,7 @@
 #include <string>
 #include <system_error>
 #include <vector>
+#include "load.h"
 #include "object.h"
 #include "kill.h"
 #include "globals.h"
@@ -255,7 +256,13 @@ GLDErrorCode GridLabD::load_glm(int argc, char* argv[]) {
          */
         exit(XC_ARGERR);
     }
-    
+    /* load the GLM file */
+    if (argc > 0 && argv[0] != nullptr) {
+        if (loadall(argv[0]) == FAILED) {
+            output_fatal("failed to load model file: %s", argv[0]);
+            return GLD_FAILED_TO_START;
+        }
+    }
     setup_after_load();
 
     return GLD_SUCCESS;

@@ -19,8 +19,8 @@ def test_run_minimal_model(minimal_model):
 
 def test_run_without_loading(gld_instance):
     """Test that running without loading a model fails."""
-    result = gld_instance.run()
-    assert result != 0  # Should return error code
+    with pytest.raises(RuntimeError, match="no objects loaded"):
+        gld_instance.run()
 
 
 def test_step_minimal_model(minimal_model):
@@ -57,10 +57,9 @@ def test_step_until_completion(gld_instance, test_models_dir):
 
 
 def test_step_without_loading(gld_instance):
-    """Test that stepping without loading a model returns error."""
-    status, timestamp = gld_instance.step()
-    # Should either fail or return 0 (no model)
-    assert isinstance(status, int)
+    """Test that stepping without loading a model fails."""
+    with pytest.raises(RuntimeError, match="no objects loaded"):
+        gld_instance.step()
 
 
 def test_stepped_fixture_is_initialized(stepped_model):

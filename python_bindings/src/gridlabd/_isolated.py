@@ -131,6 +131,8 @@ class IsolatedGridLabD:
     # Execution methods
     def run(self, start_time: Optional[float] = None, stop_time: Optional[float] = None) -> int:
         """Run the simulation optionally bounding time interval."""
+        if self.get_object_count() == 0:
+            raise RuntimeError("Cannot run simulation: no objects loaded in model")
         response = self._send_command(Command.RUN, {
             "start_time": start_time,
             "stop_time": stop_time
@@ -148,9 +150,13 @@ class IsolatedGridLabD:
     
     def step(self) -> tuple[int, float]:
         """Advance the simulation by one time step."""
+        if self.get_object_count() == 0:
+            raise RuntimeError("Cannot step simulation: no objects loaded in model")
+  
         response = self._send_command(Command.STEP, {})
         if not response.success:
             raise RuntimeError(response.error)
+        
         return response.result["code"], response.result["time"]
     
     def step_to(self, target_time_str: str) -> tuple[int, float]:
@@ -241,6 +247,13 @@ class IsolatedGridLabD:
             raise RuntimeError(response.error)
         return response.result
     
+    def get_object_count(self) -> int:
+        """Get the number of objects in the loaded model."""
+        response = self._send_command(Command.GET_OBJECT_COUNT, {})
+        if not response.success:
+            raise RuntimeError(response.error)
+        return response.result
+
     def get_objects_by_class(self, class_name: str) -> list[str]:
         """Get all object names of a specific class."""
         response = self._send_command(Command.GET_OBJECTS_BY_CLASS, {"class_name": class_name})

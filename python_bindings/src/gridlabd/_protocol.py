@@ -59,6 +59,7 @@ class Command(Enum):
     GET_ALL_CLASSES = "get_all_classes"
     GET_OBJECTS_BY_CLASS = "get_objects_by_class"
     GET_OBJECT_PROPERTIES = "get_object_properties"
+    GET_OBJECT_COUNT = "get_object_count"
     GET_PROPERTY = "get_property"
     SET_PROPERTY = "set_property"
     GET_PROPERTIES_BY_CLASS = "get_properties_by_class"

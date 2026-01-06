@@ -12,6 +12,10 @@
 #include <nlohmann/json.hpp>
 
 #include "gldapi.h"
+// Forward declaration to avoid pulling in heavy headers
+extern "C" {
+    unsigned int object_get_count(void);
+}
 
 #define NB_STRINGIFY_HELPER(x) #x
 #define NB_STRINGIFY(x) NB_STRINGIFY_HELPER(x)
@@ -114,6 +118,9 @@ NB_MODULE(gridlabd_core, m) {
         }, "Return True once the object exists")
         // Object and property access functions
         .def("get_all_classes", &GridLabD::get_all_classes, "Get all class names in the model")
+        .def("object_get_count", [](GridLabD& self) {
+            return object_get_count();
+        }, "Get the number of objects in the loaded model")
         .def("get_objects_by_class", &GridLabD::get_objects_by_class, nb::arg("class_name"), 
              "Get all object names of a specific class")
         .def("get_object_properties", &GridLabD::get_object_properties, nb::arg("object_name"),
