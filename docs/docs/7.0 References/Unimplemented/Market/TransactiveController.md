@@ -18,9 +18,9 @@ The basic strategy of the transactive controller is to allow the setpoint to be 
 
 Under no circumstances will the setpoint stray outside the boundary ranges imposed with Tmin and Tmax. If the observation extents above or below these values, the system will either shut off or turn on, regardless of the current price of power. 
 
-## Controller Inputs
+#### Table 1: Controller Inputs
 
- _**Property**_ | **Unit** | **Description**  
+Property | Unit | Description*
 ---|---|---  
 `market` | name | This references the market that provides the price signal to the controller, and generates the rolling average and standard deviations seen by the object. This is also the object into which the controller will bid its price. It is typically specified as an auction or stubauction object, and is typically referenced by the name of the object.   
 `parent` | name | This is the object that is being affected by the controller object. To operate with a controller object, the parent object must have a set point that can be monitored and modified by the controller. Since the controller is modifying set points, the parent object should be designed as a state machine, with the ability to determine its load at certain operating conditions. At this time, only the HVAC system (house_e) and the hot water heater object can be used with the controller object.   
@@ -66,7 +66,8 @@ As implemented now, the transactive controller is specifically designed to contr
 
 As an actual thermostat user, only a few parameters must be set. The first are the range_low and range_high settings, which determines the comfort zone the participant is willing to use. When referring to cooling set points, range_high determines how much higher the participant is willing to allow the temperature to climb before it becomes too hot for comfort, while range_low indicates the amount of pre-cooling allowed. For heating set points, these are reversed. The second setting is the slope of the piece-wise linear function that controls the coupling between the thermostat set points and the price (ramp_low and ramp_high or kT_L and kT_h in the Olympic Peninsula Project documentation). Essentially, this slope describes the participant’s willingness to participate in the market, and how willing they are to adjust their temperature settings as a function of the market price. While this is the background implementation within GridLAB-D™, on an actual thermostat this might map onto a more user-friendly system, such as ‘money saver’ versus ‘keep it comfortable’. Figure 1 more fully demonstrates this operation and the operational set points for Figure 1 are shown in Table 2. 
 
-**Table 2: Settings used in Figure 1.** 
+#### Table 2: Settings used in Figure 1.
+
 ramp_low  | 0.667   
 ---|---  
 ramp_high  | 0.360   
@@ -79,7 +80,7 @@ air_temperature  | 75.1
 
 ##### Figure 1: Illustration of Bid and Response of Transactive Controller.
 
-##### Figure 1 provides an example of cooling set points with the transactive controller. For heating, the slope would be negative, but operation would be similar. The portion left of the base set point in Figure 1 indicates a pre-cooling state due to low market prices, while the area to the right indicates a condition that allows the temperature to rise slightly due to high prices. It shows that the participant is willing to allow the temperature to climb by 5 degrees during high prices, and pre-cool by -3 degrees during times of low market prices. 
+Figure 1 provides an example of cooling set points with the transactive controller. For heating, the slope would be negative, but operation would be similar. The portion left of the base set point in Figure 1 indicates a pre-cooling state due to low market prices, while the area to the right indicates a condition that allows the temperature to rise slightly due to high prices. It shows that the participant is willing to allow the temperature to climb by 5 degrees during high prices, and pre-cool by -3 degrees during times of low market prices. 
 
 The current bid of the controller object is determined by where the current air temperature falls upon the bid curve, and is determined by 
 
@@ -105,14 +106,14 @@ Any thermostatic set point should be controllable by this object. This can be ap
 
 Simple settings will also be developed for easy connections to standard objects. This is loosely described as `simple_mode` in Table 1, and as more objects are added with connections to the transactive controller, additional pre-built connections should be created. Additionally, a simple user interface for the `ramp_high`, `ramp_low`, `range_high`, and `range_low` settings will be included. This will be based on a simple slider setting that varies between 0% and 100%, where 100% represents maximum participation in the market ("save money"), while 0% represents no participation ("keep my temperature"). Heating and cooling sliders will be set independently, and will default to cooling ranges of -3 to 5 and heating ranges of -5 to 3, unless a `simple_mode` is chosen which limits those ranges or a range_high or range_low is chosen by the user. The range and ramp settings are given by Table 3. 
 
-**Table 3: Easy to use slider settings. Range_low/high-limit is not a new variable, but is the maximum range defined by the user (or default) if slider were at 100%.** 
+#### Table 3: Easy to use slider settings. Range_low/high-limit is not a new variable, but is the maximum range defined by the user (or default) if slider were at 100%. 
 
 Parameter | **Cooling Settings** (x = `slider_setting_cool`)  | **Heating Settings** (y = `slider_setting_heat`)   
 ---|---|---  
-| $range_{high}$          | $= range_{high-limit} - range_{high-limit} \cdot (1 - x)$                 | $= \begin{cases} \text{range}_{high-limit} - \text{range}_{high-limit} \cdot (1 - y), & \text{if pre-heating is desired} \\ 0, & \text{if a mode without pre-heating is chosen} \end{cases}$ |
-| $range_{low}$           | $= \begin{cases} \text{range}_{low-limit} - \text{range}_{low-limit} \cdot (1 - x), & \text{if pre-cooling is desired} \\ 0, & \text{if a mode without pre-cooling is chosen} \end{cases}$ | $= \text{range}_{low-limit} - \text{range}_{low-limit} \cdot (1 - y)$ |
-| $ramp_{high}$           | $= \begin{cases} 2 + (1 - x), & \text{if } x \neq 0 \\ 0, & \text{if } x = 0 \end{cases}$ | $= \begin{cases} -2 - (1 - y), & \text{if } y \neq 0 \\ 0, & \text{if } y = 0 \end{cases}$ |
-| $ramp_{low}$            | $= \begin{cases} -2 - (1 - x), & \text{if } x \neq 0 \\ 0, & \text{if } x = 0 \end{cases}$ | $= \begin{cases} 2 + (1 - y), & \text{if } y \neq 0 \\ 0, & \text{if } y = 0 \end{cases}$ |
+ $range_{high}$         | $= range_{high-limit} - range_{high-limit} \cdot (1 - x)$  | $= \begin{cases} \text{range}_{high-limit} - \text{range}_{high-limit} \cdot (1 - y), & \text{if pre-heating is desired} \\ 0, & \text{if a mode without pre-heating is chosen} \end{cases}$ |
+$range_{low}$           | $= \begin{cases} \text{range}_{low-limit} - \text{range}_{low-limit} \cdot (1 - x), & \text{if pre-cooling is desired} \\ 0, & \text{if a mode without pre-cooling is chosen} \end{cases}$ | $= \text{range}_{low-limit} - \text{range}_{low-limit} \cdot (1 - y)$ |
+$ramp_{high}$           | $= \begin{cases} 2 + (1 - x), & \text{if } x \neq 0 \\ 0, & \text{if } x = 0 \end{cases}$ | $= \begin{cases} -2 - (1 - y), & \text{if } y \neq 0 \\ 0, & \text{if } y = 0 \end{cases}$ |
+$ramp_{low}$            | $= \begin{cases} -2 - (1 - x), & \text{if } x \neq 0 \\ 0, & \text{if } x = 0 \end{cases}$ | $= \begin{cases} 2 + (1 - y), & \text{if } y \neq 0 \\ 0, & \text{if } y = 0 \end{cases}$ |
   
 ### Double Control (double_ramp)
 
@@ -124,17 +125,17 @@ Deadband operation resolves the set point conflict by taking the average of the 
 
 ![Normal operation with overlapping pre-heat and pre-cool settings](../../../../images/Figure_2.png)
 
-**Figure 2: Normal operation with overlapping pre-heat and pre-cool settings.**
+#### Figure 2: Normal operation with overlapping pre-heat and pre-cool settings.
 
 ![Deadband resolve_mode](../../../../images/Figure_3.png)
 
-**Figure 3: Deadband resolve_mode.**
+#### Figure 3: Deadband resolve_mode.
   
 Sliding mode tries to maximize the amount of pre-cooling and pre-heating performed, while still resolving the collision. In sliding mode, the previous active mode of the HVAC system is stored. The active modes include heating or cooling, and not on or off. If the previous HVAC mode were to be cooling, then the pre-cooling mode would dominate the pre-heating mode. This assumes that if the HVAC were previously cooling, then the user would desire it to continue cooling and not switch to a heating mode. The pre-cooling region will extend to its defined range, while the pre-heating range will be reduced to the pre-cooling range minus the deadband. This operation is shown in Figure 4. If the previous HVAC mode were to be heating, then the pre-heating range would dominate and pre-cooling range would be reduced. Again, the bid price is determined by the regime in which the current air temperature falls and follows equations 1 and 2. Additionally, a time delay setting should be included. This time delay lets the user specify how long the "last mode" is stored before it re-checks the current operational mode - this only applies when moving between COOL and OFF or HEAT and OFF. If the HVAC system transitions from COOL to HEAT (this may be in the series of COOL to OFF to HEAT), this should reset the time delay. Time delay should default to 0 seconds (no time delay and the controller perfectly tracks the HVAC system mode in real time). 
 
 ![Sliding resolve_mode.](../../../../images/Figure_4.png)
 
-**Figure 4: Sliding resolve_mode.**
+#### Figure 4: Sliding resolve_mode.
 
 ## Testing Specifications
 
@@ -167,9 +168,9 @@ This controller is similar to the transactive controller, except without the cap
 
 The `RAMP` control_mode is similar in action to the original Olympic Peninsula transactive controller, minus the ability to bid into the market. It is also a generic version of the transactive controller, allowing the user to control the set point using parameters other than average price or temperature, such as frequency or an artificial demand signal. It uses a piece-wise linear function to adjust the set point as a function of a defined parameter and standard deviation from the defined parameter. Required variables are shown in Table 3. 
 
-**Table 3: Ramp control mode required parameters.**
+#### Table 3: Ramp control mode required parameters.
 
-_**Property**_ | **Unit** | **Description**  
+Property | Unit | Description*
 ---|---|---  
 `control_mode` | RAMP | This defines the control to be used.   
 `range_high` <br/> `range_low` | - | This defines the upper and low limits that the participant will allow the temperature swing. Similar to the transactive controller, this is relative to the base set point (+/- 5). Range_high must be zero or greater and range_low must be zero or less.   
@@ -187,17 +188,15 @@ Probabilistic off is similar in nature to the Olympic Peninsula Project applicat
 
 $$r = k_w * (N(P_{clear}, P_{avg}, P_{std})-0.5), r \ge 0\tag{3}$$
 
-where 
-
-$$N(P_{clear},P_{avg},P_{std}) = \frac{1}{\sqrt{2\pi}P_{std}} \int_{-\infty}^{P_{clear}} e^{-\frac{(P_{avg}-x)^2}{(2P_{std}^2)}}dx\$$
+where $N(P_{clear},P_{avg},P_{std}) = \frac{1}{\sqrt{2\pi}P_{std}} \int_{-\infty}^{P_{clear}} e^{-\frac{(P_{avg}-x)^2}{(2P_{std}^2)}}dx$
 
 was chosen. If r <= 0, then the device will operate normally. A cutoff is then chosen from a randomly drawn uniform distribution. If r is greater than the chosen cutoff number, then the water heater is turned off, otherwise it operates normally. 
 
 Future implementations of this device should include distributions other than a cumulative normal distribution functions, especially uniform and exponential. Additionally, implementation should include multi-state abilities. For example, the water heater could contain two heating coils, each of 2 kW. At a higher price, there would be a strong possibility of one of the coils cutting out, while the second coil has a much lower probability of cutting out. This is only an example, but the controller object should be built to handle this type of configuration. 
 
-**Table 4: Probabilistic control mode required parameters.**
+#### Table 4: Probabilistic control mode required parameters.
 
-_**Property**_ | **Unit** | **Description**  
+Property | Unit | Description*
 ---|---|---  
 `control_mode` | PROBABILITY_OFF | This defines the control to be used.   
 `distribution_type` | enumeration | Defines which distribution function to used (NORMAL, EXPONENTIAL, UNIFORM).   
@@ -227,9 +226,9 @@ $$
 
 Duty cycle mode will look at modifying the duty cycle as a function of price (or some other control signal). At an average price or below, the duty cycle would be 100% of the appliance’s normal operation (the duty cycle at this time may be 100% or lower, depending on the appliance). As price increases, the duty cycle of the appliance will decrease the overall amount of energy used during the time period by modifying the number of pulses delivered. For example, this could be applied to a drier unit. At the average price or below, the drier heating coil operates normally, say with an 80% duty cycle at 4.5 kW. As price increases, this duty cycle may fall to 60% or 40%, but still maintains the 4.5 kW demand at each pulse. Over a large, diverse population of units, this provides a reduction in demand. This mode will be highly dependent upon the type of appliance it is applied to, but the basic functionality shall be similar to the ramp control using a linear function to control the duty cycle. Additionally, for appliances that have only a limited number of duty cycles available, a discrete version should be created, where the appliance stays at one duty cycle until a cutoff (say of 1.5 standard deviations) is reached, and then it transitions to its next state. 
 
-**Table 5: Duty cycle control mode required parameters.**
+#### Table 5: Duty cycle control mode required parameters.
 
-_**Property**_ | **Unit** | **Description**  
+Property | Unit | Description  
 ---|---|---  
 `control_mode` | DUTY_CYCLE | This defines the control to be used.   
 `range_high` <br/> `range_low` | - | This defines the upper and low limits that the participant will allow the duty cycle to swing. This is in percentage relative to the base_setpoint (+/- 0.10 = 10% faster or slower duty cycle). Range_high must be zero or greater and range_low must be zero or less.   
@@ -297,10 +296,7 @@ Smith, R. G., "The Contract Net Protocol: High-Level Communication and Control i
 
 # Related Concepts:
 
-[Market_User_Guide]
-
-[Market_module]
-
-[Market Specifications]
-
-[Wholesale_Markets]
+* Market_User_Guide
+* Market_module
+* Market Specifications
+* Wholesale_Markets
