@@ -745,6 +745,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
     LOADMETHOD *method = class_get_loadmethod(obj->oclass, propName.c_str());
     if (method != nullptr)
     {
+        method->args = propValue;
         if (this->parse.value(propValue, propertyValue, sizeof(propertyValue)))
         {
             if (method->call(obj, propertyValue) != 1)

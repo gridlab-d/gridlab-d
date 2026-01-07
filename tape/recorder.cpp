@@ -562,7 +562,7 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 	PROPERTY *prop;
 	PROPERTY *target;
 	char1024 list;
-	complex oblig;
+	gld::complex oblig;
 	double scale;
 	char256 pstr, ustr;
 	char *cpart = 0;

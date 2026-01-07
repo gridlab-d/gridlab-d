@@ -279,7 +279,7 @@ int exec_init()
 	return 1;
 }
 
-clock_t cstart, cend;
+clock_t cstart, clock_end;
 
 #ifndef _MAX_PATH
 #define _MAX_PATH 1024
@@ -3268,7 +3268,7 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
 	}
 
 	// sjin: GetMachineCycleCount
-	cend = (clock_t)exec_clock();
+	clock_end = (clock_t)exec_clock();
 
 	fnl_rv = finalize_all();
 	if (FAILED == fnl_rv)

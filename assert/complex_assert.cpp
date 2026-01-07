@@ -152,13 +152,13 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	}
 
 	// test the target value
-	complex x;
+	gld::complex x;
 	target_prop.getp(x);
 	if (status == ASSERT_TRUE)
 	{
 		if (operation == FULL || operation == REAL || operation == IMAGINARY)
 		{
-			complex error = x - value;
+			gld::complex error = x - value;
 			double real_error = error.Re();
 			double imag_error = error.Im();
 			if ((_isnan(real_error) || fabs(real_error) > within) && (operation == FULL || operation == REAL))
@@ -215,7 +215,7 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	{
 		if (operation == FULL || operation == REAL || operation == IMAGINARY)
 		{
-			complex error = x - value;
+			gld::complex error = x - value;
 			double real_error = error.Re();
 			double imag_error = error.Im();
 			if ((_isnan(real_error) || fabs(real_error) < within) && (operation == FULL || operation == REAL))
@@ -285,7 +285,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 	double del_clock;
 	TIMESTAMP del_clock_int;
 	int del_microseconds;
-	complex *x;
+	gld::complex *x;
 
 	if (da->get_once() == da->ONCE_TRUE)
 	{
@@ -313,7 +313,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 		{
 			// Get value
 			// x = (complex*)gl_get_complex_by_name(obj->parent,da->get_target());
-			x = (complex *)gl_get_complex_by_name(obj->parent, da->get_target().c_str());
+			x = (gld::complex *)gl_get_complex_by_name(obj->parent, da->get_target().c_str());
 
 			if (x == nullptr)
 			{
@@ -330,7 +330,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 			{
 				if (da->get_operation() == da->FULL || da->get_operation() == da->REAL || da->get_operation() == da->IMAGINARY)
 				{
-					complex error = *x - da->get_value();
+					gld::complex error = *x - da->get_value();
 					double real_error = error.Re();
 					double imag_error = error.Im();
 					if ((_isnan(real_error) || fabs(real_error) > da->get_within()) && (da->get_operation() == da->FULL || da->get_operation() == da->REAL))
@@ -489,7 +489,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 			{
 				if (da->get_operation() == da->FULL || da->get_operation() == da->REAL || da->get_operation() == da->IMAGINARY)
 				{
-					complex error = *x - da->get_value();
+					gld::complex error = *x - da->get_value();
 					double real_error = error.Re();
 					double imag_error = error.Im();
 					if ((_isnan(real_error) || fabs(real_error) < da->get_within()) && (da->get_operation() == da->FULL || da->get_operation() == da->REAL))
