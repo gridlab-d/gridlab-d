@@ -227,9 +227,9 @@ GridLAB-D loader and JSON file format |
 # New Features Dev Schedule
 Topic |  Estimate Complete Date | Actual Completed Date | Able to Start Docs?
 -- | -- | -- | --
-Basic C/C++ API | Oct 31st
+Basic C/C++ API | Oct 31st | | Yes
 JSON Loader | Nov 30
-Checkpoint System | Jan 31
+Checkpoint System | Jan 31 | Trying to figure out how to save/load| Potentially - Orestis to keep in mind as he works Dev side
 Multithreading | Mar 31
 Docker Containerization | Mar 15
 HELICS Update | Apr 15
@@ -241,10 +241,10 @@ Rlease v5.4/6.0 | May 31
 
 # Documentation Review Series Meeting Topics
 
-Topic | Date
--- | --
-Residential Module | Dec 22
-Generators Module | Dec 23
+Topic | Date | Outstanding Decisions
+-- | -- | ---
+Residential Module | Dec 22 | Waterheater needs Multi-Layer model wit accurate reflection of its status and stability
+Generators Module | Dec 23 | -  Decide whether to merge inverter and inverter_dyn (invluding VSI, part of SETO project) <br/> - Either energy_storage model gets some tests or it is deprecated <br/> - Single- and three-phase motors shoud be revisited, some "extra features" may not be fully documented. <br/> - Unclear if wind turbine is still experimental
 Powerflow | Next Up
 
 # Definition Plan
