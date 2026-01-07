@@ -1,0 +1,130 @@
+@startuml GLD User Load and Modify Model
+
+actor GLDUser
+participant GLD
+participant GridlabD
+participant GLDModel
+participant _GLDObjHolder
+participant _GLDObj
+
+
+GLDUser -> GLD: << create >>
+activate GLD #Green
+GLD -> GridlabD: << create >>
+activate GridlabD #Blue
+GLDUser -> GLD: load_model_to_edit(path)
+GLD -> GLD: set_working_directory(path)
+activate GLD #YellowGreen
+GLD -> GridlabD: set_working_directory(path)
+activate GridlabD #DodgerBlue
+GLD <-- GridlabD: response_code
+deactivate GridlabD
+GLD -> GridlabD: load_glm(arguments)
+activate GridlabD #DodgerBlue
+GLD <-- GridlabD: response code
+deactivate GridlabD
+GLD -> GLD: get_model()
+activate GLD #Lime
+GLD -> GridlabD: get_model() 
+activate GridlabD #DodgerBlue
+GLD <-- GridlabD: model dict
+deactivate GridlabD
+GLD -> GLDModel: << create >>
+activate GLDModel #Red
+GLDModel -> GLDModel: _load_model()
+GLDModel -> _GLDObjHolder: << create >>
+activate _GLDObjHolder #Gold
+loop For each class in model
+GLDModel -> _GLDObjHolder: (load classes into dict)
+loop For each obj in model
+_GLDObjHolder -> _GLDObj: <<create>>
+_GLDObjHolder -> _GLDObj: (load attribute into dict)
+_GLDObj -> _GLDObj: (load obj into dict) 
+end
+end
+activate _GLDObj #DarkSlateGray
+GLD <-- GLDModel: GLDModel obj
+GLD -> GLD: (clear "sim_running")
+GLD -> GLDModel: (set "extendable")
+GLDModel -> _GLDObjHolder: (set "extendable")
+deactivate GLD
+deactivate GLD
+
+== Modifying Model as Dictionary Before Starting Sim ==
+GLDUser -> GLD: set_sim_times(start, stop)
+GLDUser -> GLD: (add objects in model dict)
+activate GLD #YellowGreen
+GLD -> GLDModel: (add objects in model dict)
+GLDModel -> _GLDObjHolder: (add objects in model dict)
+deactivate GLD
+GLDUser -> GLD: (modify objects in model dict)
+activate GLD #YellowGreen
+GLD -> GLDModel: (modify model)
+GLDModel -> _GLDObjHolder: (modify model)
+_GLDObjHolder -> _GLDObj: (modify model)
+_GLDObj -> _GLDObj: __setitem__()
+deactivate GLD
+
+
+
+== Beginning Simulation  ==
+GLDUser -> GLD: run_sim(pause_at=Datetime)
+activate GLD #YellowGreen
+GLD -> GLD: load_model_to_run(GLDModel)
+GLD -> GLD: (set "sim_running")
+GLD -> GLDModel: (clear "extendable")
+activate GLDModel #Salmon
+GLDModel -> _GLDObjHolder: (clear "extendable") 
+deactivate GLDModel
+GLD -> GridlabD: step_to(DateTime)
+activate GridlabD #DodgerBlue
+GLD <-- GridlabD: float as etime sim time
+deactivate GridlabD
+GLD -> GLD: _convert_to_dt(etime)
+GLD -> GLD: (set sim_time attribute)
+deactivate GLD
+
+== Modifying Model During Simulation ==
+GLDUser -> GLD: get_model()
+GLD -> GLD: get_model() 
+activate GLD #YellowGreen
+GLD -> GridlabD: get_model()
+activate GridlabD #DodgerBlue 
+GLD <-- GridlabD: model dict
+deactivate GridlabD
+GLD -> GLDModel: (modify model as dict)
+activate GLDModel #Salmon
+GLDModel -> GLDModel: _load_model()
+loop For each class in model
+GLDModel -> _GLDObjHolder: (load classes into dict)
+activate _GLDObjHolder #GoldenRod
+_GLDObjHolder -> _GLDObj: (load attribute into dict)
+loop For each obj in model
+_GLDObj -> _GLDObj: (load obj into dict) 
+deactivate _GLDObjHolder
+end
+end
+GLD <-- GLDModel: GLDModel obj
+deactivate GLD
+
+
+GLDUser -> GLD: (modify model in glm attribute as dict)
+activate GLD #YellowGreen
+GLD -> GLDModel: (modify model)
+GLDModel -> _GLDObjHolder: (modify model)
+_GLDObjHolder -> _GLDObj: (modify model)
+activate _GLDObj #Gray
+_GLDObj -> _GLDObj: __setitem__()
+_GLDObj -> GridlabD: set_property()
+deactivate _GLDObj
+deactivate GLD
+
+== Evaluating Console Messages ==
+
+
+== Completing Simulation Run ==
+GLDUser -> GLD: run_sim()
+GLD -> GLD: run(stop_time=self.stop_time)
+
+
+@enduml

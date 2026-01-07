@@ -1,0 +1,112 @@
+@startuml GLD User Load and Modify Model
+
+actor GLDUser
+participant GLD
+participant GridlabD
+participant GLDModel
+participant _GLDObjHolder
+participant _GLDObj
+
+
+GLDUser -> GLD: << create >>
+activate GLD
+GLD -> GridlabD: << create >>
+activate GridlabD
+GLDUser -> GLD: load_model_to_edit(path)
+GLD -> GLD: set_working_directory(path)
+activate GLD
+GLD -> GridlabD: set_working_directory(path)
+GLD <-- GridlabD: response_code
+GLD -> GridlabD: load_glm(arguments)
+GLD <-- GridlabD: response code
+GLD -> GLD: get_model() 
+activate GLD
+GLD -> GridlabD: get_model() 
+GLD <-- GridlabD: model dict
+GLD -> GLDModel: << create >>
+activate GLDModel
+GLDModel -> GLDModel: _load_model()
+GLDModel -> _GLDObjHolder: << create >>
+activate _GLDObjHolder
+loop For each class in model
+GLDModel -> _GLDObjHolder: (load classes into dict)
+loop For each obj in model
+_GLDObjHolder -> _GLDObj: <<create>>
+_GLDObj -> _GLDObj: (load obj into dict) 
+end
+end
+activate _GLDObj
+GLD <-- GLDModel: GLDModel obj
+GLD -> GLD: (clear "sim_running")
+GLD -> GLDModel: (set "extendable")
+GLDModel -> _GLDObjHolder: (set "extendable")
+deactivate GLDModel
+deactivate GLD
+deactivate GLD
+
+== Modifying Model as Dictionary Before Starting Sim ==
+
+GLDUser -> GLD: set_sim_times(start, stop)
+GLDUser -> GLD: (add objects in model dict)
+activate GLD
+GLD -> GLDModel: (add objects in model dict)
+GLDModel -> _GLDObjHolder: (add objects in model dict)
+deactivate GLD
+GLDUser -> GLD: (modify objects in model dict)
+activate GLD
+GLD -> GLDModel: (modify model)
+GLDModel -> _GLDObjHolder: (modify model)
+_GLDObjHolder -> _GLDObj: (modify model)
+_GLDObj -> _GLDObj: __setitem__()
+deactivate GLD
+
+
+
+== Beginning Simulation  ==
+GLDUser -> GLD: begin_sim(pause_at=Datetime)
+activate GLD
+GLD -> GLD: load_model_to_run(GLDModel)
+GLD -> GLD: (set "sim_running")
+GLD -> GLDModel: (clear "extendable")
+activate GLDModel 
+GLDModel -> _GLDObjHolder: (clear "extendable") 
+deactivate GLDModel
+GLD -> GridlabD: step_to(DateTime)
+activate GridlabD
+GLD <-- GridlabD: float as etime sim time
+deactivate GridlabD
+GLD -> GLD: _convert_to_dt(etime)
+GLD -> GLD: (set sim_time attribute)
+deactivate GLD
+
+== Modifying Model ==
+GLDUser -> GLD: get_model()
+GLD -> GLD: get_model() 
+activate GLD
+GLD -> GridlabD: get_model() 
+GLD <-- GridlabD: model dict
+GLD -> GLDModel: << create >>
+activate GLDModel
+GLDModel -> GLDModel: _load_model()
+activate _GLDObjHolder
+loop For each class in model
+GLDModel -> _GLDObjHolder: (load classes into dict)
+loop For each obj in model
+_GLDObj -> _GLDObj: (load obj into dict) 
+end
+end
+GLD <-- GLDModel: GLDModel obj
+deactivate GLD
+
+GLDUser -> GLD: (modify model in glm attribute as dict)
+activate GLD
+GLD -> GLDModel: (modify model)
+GLDModel -> _GLDObjHolder: (modify model)
+_GLDObjHolder -> _GLDObj: (modify model)
+activate _GLDObj
+_GLDObj -> _GLDObj: __setitem__()
+_GLDObj -> GridlabD: set_property()
+deactivate _GLDObj
+deactivate GLD
+
+@enduml
