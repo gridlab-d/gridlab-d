@@ -72,8 +72,11 @@ To achieve the necessary computational speed, we make the following assumptions:
 
 The water heater simulation uses two very different models depending on the state of the tank at any given moment. The two models are: 
 
+TODO - Update - Add multilayer model, with understanding that it is computationally expensive and not much confidence in its numerical stability.
+
   1. **One-Node Model** – This is a simple, lumped-parameter electric analogue model that considers the entire tank to be a single “slug” of water at a uniform temperature. This model concerns the temperature of the water at any given time and/or the time required for the temperature to move between two specified points.
   2. **Two-Node Model** – This model, which applies when the heater is in a state of partial depletion, considers the heater to consist of two slugs of water, each at a uniform temperature. The upper “hot” node is near the heater’s setpoint temperature, while the lower “cold” node is near the inlet water temperature. This model concerns the location of the boundary between the hot and cold nodes, calculating the movement of that boundary as hot water is drawn from the tank and/or heat is added to the tank.
+
 The water heater simulation keys on two primary “states” of the water heater: 
 
   * **Tank State** – The tank can be in one of three states: 

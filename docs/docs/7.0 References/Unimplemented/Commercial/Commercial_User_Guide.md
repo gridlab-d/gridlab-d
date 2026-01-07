@@ -6,11 +6,9 @@
 	
 	**This page does not reflect the current state of GridLAB-D™**
 
-TODO - Empty - Commercial Overiew
 
 ## Using the Office
 
-TODO - Empty - Using the Office
 
 ### Default Office
 
@@ -193,7 +191,7 @@ total_load | complex | kW | Current aggregate power draw from the office
 
 !!! note
 
-	 TODO - Deprecated - *The small office building is part of the original implementation of the commercial module and is expected to be deprecated when the full commercial building implementation is completed. This will include deprecation of the multizone class. Small office buildings will be derived from the building implementation when that is validated and released.*
+	 Deprecated - *The small office building is part of the original implementation of the commercial module and is expected to be deprecated when the full commercial building implementation is completed. This will include deprecation of the multizone class. Small office buildings will be derived from the building implementation when that is validated and released.*
 
 !!! bug
 
@@ -206,8 +204,6 @@ The building class implements that abstract class used to solve all linearized m
 #### Class members
 
 _General Properties_ 
-
-TODO - Formatting - Not sure what's going on here, are we trying to bold these 'R's?
 
 Property| Unit | Constraints | Default | Description | Remarks  
 --|--|--|--|--|--|

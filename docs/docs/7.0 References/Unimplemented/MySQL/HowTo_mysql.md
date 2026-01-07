@@ -73,27 +73,27 @@ If you want to record the values in a different unit than the unit to property y
 
 ## A simple mysql player
 
-**TODO**: 
+
 
 ## A simple mysql collector
 
-**TODO**: 
+
 
 ## Using multiple mysql databases
 
-**TODO**: 
+
 
 ## Converting a tape recorder to mysql
 
-**TODO**: 
+
 
 ## Converting a tape player to mysql
 
-**TODO**: 
+
 
 ## Converting a tape collector to mysql
 
-**TODO**: 
+
 
 ## Related Concepts:
 

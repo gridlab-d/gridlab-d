@@ -195,15 +195,15 @@ The cooktop model follows these steps:
 
 ### Solution Timesteps
 
-**TODO**: Add description like in Spec:Microgrids. 
+Add description like in Spec:Microgrids. 
 
 ### Solver Call Timing
 
-**TODO**: Add description like in Spec:Microgrids. 
+Add description like in Spec:Microgrids. 
 
 # Testing And Validation
 
-**TODO**: Include finalized testing and validation. 
+Include finalized testing and validation. 
 
 # References
 

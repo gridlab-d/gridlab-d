@@ -7,8 +7,7 @@
 	
 	**This page does not reflect the current state of GridLAB-D™**
 
-In December 2008 the **residential** module received a preliminary implementation of all-electric and plug-in hybrid-electric vehicle charger loads for inclusion in Diablo (Version 2.0). The following describes that implementation and the requiremenets for subsequent enhancements (noted as **TODO**). 
-
+In December 2008 the **residential** module received a preliminary implementation of all-electric and plug-in hybrid-electric vehicle charger loads for inclusion in Diablo (Version 2.0). 
 ## EV/PHEV Model
 
 There are only two types of electric vehicles supported: 
@@ -18,9 +17,9 @@ There are only two types of electric vehicles supported:
 The **evcharger** simulation is based on demand state profile of the vehicle. When the vehicle is at home, it has a probability of leaving on one of 3 trips, as shown in Figure 1. 
 
   * **WORK** trip to work (standard distance defined by trip.d_work)
-  * **SHORTTRIP** random trip up to 50 miles (battery will not be fully discharged) (**TODO**)
-  * **LONGTRIP** random trip over 50 miles (battery will be discharged up to 25%) but only possible for **HYBRID** vehicles (**TODO**)
-
+  * **SHORTTRIP** random trip up to 50 miles (battery will not be fully discharged)
+  * **LONGTRIP** random trip over 50 miles (battery will be discharged up to 25%) but only possible for **HYBRID** vehicles
+  
 ![EV/PHEV trip state diagram](../../../../images/300px-Slide1.PNG)
 
 

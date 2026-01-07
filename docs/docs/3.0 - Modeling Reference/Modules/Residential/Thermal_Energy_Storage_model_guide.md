@@ -141,4 +141,4 @@ Property Name | Type | Unit | Description
 
 ### Thermal Storage State of Development
 
-`thermal_storage` is considered a stable model and contains many features. It is relatively new and subject to change as new features may be added at a later date. 
+**thermal_storage** is considered a stable and mature model, containing many features.

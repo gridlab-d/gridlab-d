@@ -122,6 +122,9 @@ This model is representative of a ZIPload used in cycling mode to roughly repres
               is_240 TRUE;
         };
     
+!!! note
+
+        The passive controller is part of the market module, which has been deprecated. See [market module](../../../7.0%20References/Unimplemented/Market/1.0%20-%20Market_User_Guide.md) for more information.
 
 This model is representative of a ZIPload with a passive controller used to implement the elasticity model out of the market module. 
     
