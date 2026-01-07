@@ -1,10 +1,14 @@
-# Windturb dg
+# Wind Turbine
 
 ## Power Curve Based Implementation
 
-Note that the power curve-based implementation is not included in the v4.2. It is planned to be released in v4.3. 
+!!! note
+	
+	Note that the power curve-based implementation is not included in the v4.2. It is planned to be released in v4.3. The windturbine_dg is considered experimental.
 
-The power curve-based wind turbine implementation uses the power curves that translate the wind speed directly into output power. Power curves are often available from manufacturers through marketing materials and/or owner documentation. Their use simplifies the wind turbine modeling since they skip the internal details of the wind turbine and instead focus on the input/output characteristics. The implementation uses a default power curve or one of the power curves provided by the user. Examples of commercial and generic power curves can be found at: <https://github.com/NREL/turbine-models>
+TODO - Check Status - This model remains in the experimental level of development. 
+
+The power curve-based wind turbine implementation uses the power curves that translate the wind speed directly into output power. Power curves are often available from manufacturers through marketing materials and/or owner documentation. Their use simplifies the wind turbine modeling since they skip the internal details of the wind turbine and instead focus on the input/output characteristics. The implementation uses a default power curve or one of the power curves provided by the user. Examples of commercial and generic power curves can be found [here](https://github.com/NREL/turbine-models).
 
 The power curve-based implementation replaces the coefficient of performance-based implementation. In future versions starting from v4.3, it will be the default implementation. 
 
@@ -12,7 +16,7 @@ The power curve-based implementation replaces the coefficient of performance-bas
 
 The coefficient of performance-based implementation was the original wind turbine implementation. It includes an explicit model of the wind turbine and the electrical machine/generator parameters. The implementation contains highly granular models of the synchronous and induction generators with their respective impedances. It uses the wind turbine coefficient of performance data to generate the output for a given wind speed input. The coefficient of performance is defined as the ratio of the power captured by the rotor of the wind turbine divided by the total power available in the wind just before it interacts with the turbine. 
 
-TODO - Check Status - This model remains in the experimental level of development. 
+
 
 ## Properties
 

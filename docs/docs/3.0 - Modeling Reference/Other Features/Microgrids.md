@@ -1,6 +1,6 @@
 # Microgrids
 
-The microgrids use-case in GridLAB-D™ is implemented to allow islanded, smaller power system simulations. These simulations examine sub-second influences on parameters like frequency and voltage. The final capability allows the examination of transients in the voltage and frequency associated with microgrid operations. 
+The microgrids use case in GridLAB-D™ is implemented to allow islanded, smaller power system simulations. These simulations examine sub-second influences on parameters like frequency and voltage. The final capability allows the examination of transients in the voltage and frequency associated with microgrid operations. 
 
 ## Equations
 
@@ -76,7 +76,7 @@ $\displaystyle{}B_{EX}$ | Exciter saturation function exponential term
 
 The GridLAB-D™ dynamic simulations represent electro-mechanic transients of unbalanced micro grid operation. The synchronous machines models are in fundamental frequency phasor representation considering unbalanced operation. The network and loads are represented with a full abc model. Additionally, diesel governor control and automatic voltage regulators are modeled. Figure 1 briefly presents the overall algorithm. Each model in the algorithm is explained in detail below. 
 
-![Figure 1](../../../../../images/Sub-second_algorithm.png)
+![Figure 1](../../../images/Sub-second_algorithm.png)
 
 ##### Figure 1. Overall algorithm of sub-second implementation
 
@@ -294,7 +294,7 @@ Generator control models are also defined in the GridLAB-D™ dynamic simulation
   * Woodward diesel governor (DEGOV1) that modifies the mechanical power of the diesel generator proportionally to the generator speed deviation
   * Simplified exciter system (SEXS) that modifies the generator field voltage (and hence its reactive power) to control the generator^\prime s terminal voltage (average voltage magnitude of all phases)
 
-DEGOV1 and SEXS models are commonly used in power system industry-grade transient stability programs such as GE PSLF and PSS/E.Block diagrams for DEGOV1 and SEXS can be found at: <http://www.powerworld.com/files/Block-Diagrams-16.pdf>. DEGOV1 is on page 123 and SEXS is on page 88. 
+DEGOV1 and SEXS models are commonly used in power system industry-grade transient stability programs such as GE PSLF and PSS/E.Block diagrams for DEGOV1 and SEXS can be found [here](http://www.powerworld.com/files/Block-Diagrams-16.pdf). DEGOV1 is on page 123 and SEXS is on page 88. 
 
 The simplified exciter system (SEXS) equations are: 
 
@@ -572,7 +572,7 @@ The completion of this test gauges the numerical stability of the microgrids cap
 
 ## Two machine, single line system
 
-![Simple Two-machine Test System](../../../../../images/300px-Two-machine_single-line_System.png)
+![Simple Two-machine Test System](../../../images/300px-Two-machine_single-line_System.png)
 
 ##### Figure 1. Simple Two-machine Test System
 
@@ -629,7 +629,7 @@ The actual tests for the two machine, three line system is identical to those of
 
 ## Adapted IEEE 34-bus test feeder
 
-![Adapted IEEE 34-bus Test System](../../../../../images/300px-IEEE34Modified.png)
+![Adapted IEEE 34-bus Test System](../../../images/300px-IEEE34Modified.png)
 
 ##### Figure 3. Adapted IEEE 34-bus Test System 6
 
@@ -665,4 +665,3 @@ TODO - Incomplete - Super-second implementation details will go here - AVR and D
   * User's manual
   * Requirements
   * Specifications
-  * Grizzly (Version 2.3)

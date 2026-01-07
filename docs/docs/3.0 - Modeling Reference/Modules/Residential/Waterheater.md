@@ -42,7 +42,7 @@ Property Name  | Type  | Unit  | Description
 ---|---|---|---  
 **tank_volume**  | double  | gallons  | The water volume of the water tank.   
 **tank_UA**  | double  | BTU/hour  | The product of the U-value of the tank's insulation and the surface area of the tank, assuming R values of about 13.   
-tank_diameter  | double  | feet  | The diameter of the water tank, influences heat loss calculations.   
+**tank_diameter**  | double  | feet  | The diameter of the water tank, influences heat loss calculations.   
 **water_demand**  | double  | gallons/minute  | Hot water consumption. Constant unless controlled by a Player object.   
 **heating_element_capacity**  | double  | kW  | The rate at which the waterheater heating element will dump thermal energy into the water tank in kilowatts.   
 **inlet_water_temperature**  | double  | degF  | The temperature of the cold water entering the bottom of the waterheater to replace any hot water drawn out the top of the tank.   
@@ -56,7 +56,7 @@ height  | double  | feet  | The height of the hot water tank.
 **enduse_load**  | complex  | kilowatts  | The current power draw of the water heater. Required by the house to attach the water heater to the circuit panel.   
 **constant_power**  | complex  | kilowatts  | The constant power draw of the water heater. No effect ~ modify the heating_element_capacity.   
 **constant_current**  | complex  | amps  | The constant current draw of the water heater. No effect.   
-constant_admittance  | complex  | 1/Ohm  | The constant admittance of power across the water heater. No effect.   
+**constant_admittance**  | complex  | 1/Ohm  | The constant admittance of power across the water heater. No effect.   
 **internal_gains**  | double  | kilowatts  | The heat loss for the current timestep from the water heater to the water tank's location.   
 **gas_fan_power**  | double  | kW  | The load of a running gas waterheater, primarily from any venting fan.   
 **gas_standby_power**  | double  | kW  | The load of a gas waterheater in standby mode ~ digital logic attached to the thermostat, etc.   
@@ -72,15 +72,15 @@ To achieve the necessary computational speed, we make the following assumptions:
 
 The water heater simulation uses two very different models depending on the state of the tank at any given moment. The two models are: 
 
-  1. One-Node Model – This is a simple, lumped-parameter electric analogue model that considers the entire tank to be a single “slug” of water at a uniform temperature. This model concerns the temperature of the water at any given time and/or the time required for the temperature to move between two specified points.
-  2. Two-Node Model – This model, which applies when the heater is in a state of partial depletion, considers the heater to consist of two slugs of water, each at a uniform temperature. The upper “hot” node is near the heater’s setpoint temperature, while the lower “cold” node is near the inlet water temperature. This model concerns the location of the boundary between the hot and cold nodes, calculating the movement of that boundary as hot water is drawn from the tank and/or heat is added to the tank.
+  1. **One-Node Model** – This is a simple, lumped-parameter electric analogue model that considers the entire tank to be a single “slug” of water at a uniform temperature. This model concerns the temperature of the water at any given time and/or the time required for the temperature to move between two specified points.
+  2. **Two-Node Model** – This model, which applies when the heater is in a state of partial depletion, considers the heater to consist of two slugs of water, each at a uniform temperature. The upper “hot” node is near the heater’s setpoint temperature, while the lower “cold” node is near the inlet water temperature. This model concerns the location of the boundary between the hot and cold nodes, calculating the movement of that boundary as hot water is drawn from the tank and/or heat is added to the tank.
 The water heater simulation keys on two primary “states” of the water heater: 
 
-  * Tank State – The tank can be in one of three states: 
+  * **Tank State** – The tank can be in one of three states: 
     * **FULL** – All the water in the tank is at a uniform temperature near the heater’s setpoint. The One-Node model applies.
     * **PARTIAL** – The tank is in a state of partial depletion, where some of the hot water has been (or is being) drawn out, leaving hot and cold layers of water in the tank. The Two-Node model applies.
     * **EMPTY** – The tank has been completely depleted; all the water is at a uniform temperature near the water inlet temperature. The One-Node model applies.
-  * Load State – This refers to the current water load on the heater; that is, whether and how fast hot water is being drawn from the top of the tank. Formally, this load state applies only when the tank state is **PARTIAL** , but is useful for the **FULL** and **EMPTY** tank states because it tells whether the tank will begin to move toward a **PARTIAL** state or stay in the current state. There are three possible load states: 
+  * **Load State** – This refers to the current water load on the heater; that is, whether and how fast hot water is being drawn from the top of the tank. Formally, this load state applies only when the tank state is **PARTIAL** , but is useful for the **FULL** and **EMPTY** tank states because it tells whether the tank will begin to move toward a **PARTIAL** state or stay in the current state. There are three possible load states: 
     * **DEPLETING** – Hot water is being drawn at a rate sufficient to move the boundary between the hot and cold zones upward. That is, hot water is being drawn out faster than the heating element can warm the incoming cold water, so the upper layer of hot water is getting smaller and the lower layer of cold water is getting larger.
     * **RECOVERING** – Hot water is either not being drawn from the tank or begin drawn at a low enough level that the boundary between the hot and cold layers is moving downward. That is, the hot water is being drawn out at a rate low enough that the heating element can warm the replacement water faster than it is being introduced, causing the upper layer of hot water to get larger and the lower layer of cold water to get smaller.
     * **STABLE** – Simplistically, this state implies that hot water is being drawn at a rate that matches the heating element’s ability to warm the incoming cold water. Actually, the hot water draw does not have to exactly match the warming rate for this state to apply. Because there are other heat flows acting on the water (e.g., jacket losses to surrounding air), in any given situation where the tank state is **PARTIAL** there is a range of hot water flow rates for which the tank will never reach either the **FULL** or the **EMPTY** state.
@@ -159,7 +159,7 @@ $$T_1 = -\frac{a}{b} + \left ( \frac{a}{b} + T_0 \right ) e^{b \left( t_1 - t_0 
 
 #### Two-Node temperature model
 
-**TODO**:  The two-node equations listed are incorrect, even though the repository code is correct. The latter should be parsed for the former. --[Mhauer] 20:11, 5 February 2009 (UTC) 
+**TODO** - Correction -  The two-node equations listed are incorrect, even though the repository code is correct. The latter should be parsed for the former. --[Mhauer] 20:11, 5 February 2009 (UTC) 
 
 This model, which applies when the heater is in a state of partial depletion, considers the heater to consist of two slugs of water, each at a uniform temperature. The upper “hot” node is near the heater’s setpoint temperature, while the lower “cold” node is near the inlet water temperature. The time required to change the tank’s hot water column from an initial height of $h_0$ to a final height of $h_1$ is given by the following equation: 
 
@@ -180,8 +180,6 @@ In the two-node model, during each synchronization cycle, the height the hot wat
 $$h_1 = \frac{e^{b T_w} \left ( a + b h_0 \right ) - a}{b}$$
 
 ### Simulation Sequence
-
-**TODO**:  Move this section to [Dev:Residential] \--[Dchassin] 20:22, 24 November 2011 (UTC) 
 
 Each time the water heater is sync’d, the simulation follows four steps: 
 

@@ -1,6 +1,6 @@
 # Switch 
 
-**switch** objects provide a means to electrically disconnect two portions of the power system model. The **switch** is a subclass of **link** objects, so it will connect two **node**-based objects on the system. Operations on the **switch** will either allow current flow between these **node** objects, or prevent it. 
+The **switch** objects provide a means to electrically disconnect two portions of the power system model. The **switch** is a subclass of **link** objects, so it will connect two **node**-based objects on the system. Operations on the **switch** will either allow current flow between these **node** objects, or prevent it. 
 
 ## GLM Inputs
 
@@ -137,4 +137,3 @@ No further autotests should be needed for the base functionality, since the exis
   * Overview Page
   * Requirements
   * Implementation
-  * Navajo (Version 4.3)

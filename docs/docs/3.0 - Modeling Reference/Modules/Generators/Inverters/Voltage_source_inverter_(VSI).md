@@ -2,14 +2,18 @@
 
 This document describes GridLAB-D™ implementation of voltage source inverter (VSI). VSI is implemented in a similar way as the **diesel_dg**. A Norton current source behind an admittance is used to represent the VSI. A Thevenin voltage source is then converted from the Norton source for the calculation of voltage source **e_source** magnitude and angle. 
 
-![VSI Norton to Thevenin](../../../../images/500px-VSI_Norton_to_Thevenin.png)
+![VSI Norton to Thevenin](../../../../../images/500px-VSI_Norton_to_Thevenin.png)
+
+#### Figure 1. VSI Norton to Thevenin
 
 Two VSI modes are implemented: isochronous mode and droop mode. 
 
   * **The isochronous mode VSI**
     The isochronous mode VSI is usually placed at the SWING bus, with constant voltage source **e_source** angle. In this way, frequency of the VSI is assumed to be constant. In order to keep the bus voltage at VSI at a reasonable range, the measured VSI terminal voltage is compared to the nominal voltage, and a PI voltage controller is used to obtain the magnitude of **e_source**.
 
-![Voltage control of e_source](../../../../images/400px-Voltage_control_of_e_source.png)
+![Voltage control of e_source](../../../../../images/400px-Voltage_control_of_e_source.png)
+
+#### Figure 2. Voltage control of e_source
 
 The slew rate limits for both real and reactive power have been implemented in the isochronous mode VSI. An export function in the inverter object is defined to update the VSI current injection **IGenerated** to the grid in each power flow iteration.
 In each power flow iteration in solver_nr.cpp, if the VSI bus has the export function (`current_injection_update`) mapped, the export function will be executed. In this function, when the ramp rate check for real power is enabled, the real power output change from the last time step (either delta-mode time step, or steady-state mode time step) is calculated, and compared with the ramp rate limit. The ramp rate up and down limits have been defined in glm file, or given as default values. If the change exceeds the limit, the real power value is updated based on the value in the last time step, and the ramp rate limit. The updated real power output will also change the VSI current injection **IGenerated** , as well as the **e_source** value correspondingly.  
@@ -22,7 +26,9 @@ To be noticed, both real and reactive power slew rate check cannot be enabled in
 * **The droop mode VSI**
 The droop mode VSI includes two droops: $f/p$ and $v/q$. Based on measured (delayed) power outputs from VSI, the corresponding frequency (and therefore **e_source** angle) and **e_source** magnitude are updated.
 
-![VSI Droop](../../../../images/500px-VSI_droop.png)
+![VSI Droop](../../../../../images/500px-VSI_droop.png)
+
+#### Figure 3. VSI Droop
 
 The slew rate limits for both real and reactive power have been implemented in the droop mode VSI. Similar to the implementation for the isochronous mode VSI, the real power slew rate check is executed in each power flow iteration. In addition, the real and reactive power changes are examined in each delta mode time step in `inter_deltaupdate` function.  
 
@@ -163,27 +169,33 @@ Property name | Type | Unit | Description
   
 ## Test cases
 
-### Case 1
+### Case 1 - Isochronous Mode
 
 In IEEE 123-bus feeder, one VSI in isochronous mode is placed at swing bus, and one VSI in droop mode is placed at another bus.
 
 Part of the feeder is disconnected at 12:00:05.0001 PST. As seem from the real power outputs result in the figure below, since the frequency is kept to 60 HZ by the isochronous VSI, the real power output of the droop VSI is kept the same. The real power outputs from isochronous VSI reduces after disconnection of the feeder.   
+
 At 12:00:8.001 PST, the part of the feeder is reconnected. Outputs from the two VSIs return to initial values.   
 
 
-![IsochronousVSI](../../../../images/700px-IsochronousVSI_droopVSI.png)
+![IsochronousVSI](../../../../../images/700px-IsochronousVSI_droopVSI.png)
 
-### Case 2
+#### Figure 4. Isochronous VSI
+
+### Case 2 - Droop Mode
 
 In IEEE 123-bus feeder, one VSI in droop mode is placed at swing bus, and one VSI in droop mode is placed at another bus.   
 
 Part of the feeder is disconnected at 12:00:05.0001 PST. As seem from the real power outputs result in the figure below, real power outputs decrease at two VSIs. With the reduction of real power outputs, frequency of the VSI increases, as seen from the second figure below.   
 
 
-![TwoDroopVSI](../../../../images/700px-TwoDroopVSIs.png)
+![TwoDroopVSI](../../../../../images/700px-TwoDroopVSIs.png)
 
-![Frequency](../../../../images/700px-Frequency.png)
+#### Figure 4. Two Droop VSI
 
+![Frequency](../../../../../images/700px-Frequency.png)
+
+#### Figure 6. Frequency
   
 To run these cases, please find in the autotest in GridLAB-D™ generator module. 
 

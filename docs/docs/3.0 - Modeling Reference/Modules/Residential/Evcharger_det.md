@@ -2,6 +2,12 @@
 
 Deterministic electric or hybrid vehicle charging 
 
+The EV charger object is part of the residential module, added under the parentage of a house object, as seen in Figure 1.
+
+![Object Hierarchy](../../../../images/Module-Object-Parentage-Hierarchy.png)
+
+#### Figure 1. Object hierarchy of DER that may be attached to a house. Note that EV chargers belong to the Residential Module but solar and energy storage objects are generators.
+
 ## Synopsis
     
     
@@ -59,7 +65,7 @@ Property name | Type | Unit | Description
   
 ## Default Evcharger_det
 
-The minimum definition for an evcharger_det object is 
+The minimum definition for an **evcharger_det** object is 
     
     
     object evcharger_det {
@@ -89,11 +95,11 @@ This will implement a deterministic EV charger equivalent to the following:
 
 ## Evcharger_det Schedule
 
-The charging schedule for the deterministic EV is primarily determined by arrival_at_home, arrival_at_work, duration_at_home, and duration_at_work. Parameters set in variation_mean and variation_std_dev will apply a normal distribution of variation to any arrival and departure times for the vehicle. The vehicle will only influence the local power grid when plugged in at home. If work charging is available, the battery state of charge will be updated, but it is assumed the vehicle is charging elsewhere on the system and not influencing the electrical properties of the current GLM. 
+The charging schedule for the deterministic EV is primarily determined by `arrival_at_home`, `arrival_at_work`, `duration_at_home`, and `duration_at_work`. Parameters set in variation_mean and variation_std_dev will apply a normal distribution of variation to any arrival and departure times for the vehicle. The vehicle will only influence the local power grid when plugged in at home. If work charging is available, the battery state of charge will be updated, but it is assumed the vehicle is charging elsewhere on the system and not influencing the electrical properties of the current GLM. 
 
 ## Data File Example
 
-A data file can be specified for deterministic EV chargers to aid in creating diverse populations. The data file contains information that was available from the Department of Transportation's 2001 National Household Travel Survey. With the specified data file, only the vehicle_index parameter is needed to vary the population behavior. Note that only the ARRHOME, DUR.HOME, HHVEHMILES, ARRWORK, and DUR.WORK columns are used by the evcharger_det object. These fields correspond to the arrival_at_home, duration_at_home, travel_distance, arrival_at_work, and duration_at_work fields of the EV. 
+A data file can be specified for deterministic EV chargers to aid in creating diverse populations. The data file contains information that was available from the Department of Transportation's 2001 National Household Travel Survey. With the specified data file, only the vehicle_index parameter is needed to vary the population behavior. Note that only the ARRHOME, DUR.HOME, HHVEHMILES, ARRWORK, and DUR.WORK columns are used by the evcharger_det object. These fields correspond to the `arrival_at_home`, `duration_at_home`, `travel_distance`, `arrival_at_work`, and `duration_at_work` fields of the EV. 
 
 Sample NHTS-data set in CSV format: 
     

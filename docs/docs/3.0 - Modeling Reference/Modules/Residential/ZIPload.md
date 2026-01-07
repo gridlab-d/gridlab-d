@@ -50,36 +50,36 @@ Internally, the model performs all of the proper phase rotations and scaling for
 
 Property Name  | Type  | Unit  | Description   
 ---|---|---|---  
-base_power  | double  | kW  | Base real power of the total load at nominal voltage.   
-power_pf  | double  | pu  | Power factor for constant power portion of load.   
-current_pf  | double  | pu  | Power factor for constant current portion of load.   
-impedance_pf  | double  | pu  | Power factor for constant impedance portion of load.   
-actual_power  | complex  | kVA  | [read only] Variable to monitor total power of load as a function of voltage.   
-heatgain_only  | boolean  | \-  | Toggles the zipload to generate heat only (no kW), is deactivated (false) by default   
-is_240  | boolean  | \-  | Toggles between a 120 V (unbalanced) vs. a 240 V (balanced) connection - true indicates it is a 240 V load.   
+**base_power**  | double  | kW  | Base real power of the total load at nominal voltage.   
+**power_pf**  | double  | pu  | Power factor for constant power portion of load.   
+**current_pf**  | double  | pu  | Power factor for constant current portion of load.   
+**impedance_pf**  | double  | pu  | Power factor for constant impedance portion of load.   
+**actual_power**  | complex  | kVA  | [read only] Variable to monitor total power of load as a function of voltage.   
+**heatgain_only**  | boolean  | \-  | Toggles the zipload to generate heat only (no kW), is deactivated (false) by default   
+**is_240**  | boolean  | \-  | Toggles between a 120 V (unbalanced) vs. a 240 V (balanced) connection - true indicates it is a 240 V load.   
 _These variables are inherited from the end use load structure._  
-power_fraction  | double  | pu  | The fraction of the load that is constant power.   
-current_fraction  | double  | pu  | The fraction of the load that is constant current.   
-impedance_fraction  | double  | pu  | The fraction of the load that is constant impedance.   
-heatgain_fraction  | double  | pu  | The fraction of the total load (kW) that produces waste heat.   
+**power_fraction**  | double  | pu  | The fraction of the load that is constant power.   
+**current_fraction**  | double  | pu  | The fraction of the load that is constant current.   
+**impedance_fraction**  | double  | pu  | The fraction of the load that is constant impedance.   
+**heatgain_fraction**  | double  | pu  | The fraction of the total load (kW) that produces waste heat.   
 _These variables are used for creating cyclic load behavior._  
-duty_cycle  | double  | pu  | Fraction of time the device is in the _on_ state.   
-period  | double  | hours  | Time interval over which duty cycle is applied.   
-phase  | double  | pu  | Indicates percentage of phase that the object is currently in; running period is assumed to be from 0.0 until percent of duty cycle. To create a distribution of devices, this variable should be randomized between 0 and 1.   
+**duty_cycle**  | double  | pu  | Fraction of time the device is in the _on_ state.   
+**period**  | double  | hours  | Time interval over which duty cycle is applied.   
+**phase**  | double  | pu  | Indicates percentage of phase that the object is currently in; running period is assumed to be from 0.0 until percent of duty cycle. To create a distribution of devices, this variable should be randomized between 0 and 1.   
 _These variables are used for various aggregate and demand response modes._  
-demand_response_mode  | boolean  | \-  | Activates equilibrium dynamic representation of demand response.   
-number_of_devices  | int16  | \-  | [Used with _demand_response_mode_ only.] Number of devices to model - base power is the total load of all devices.   
-thermostatic_control_range  | int16  | K  | [Used with _demand_response_mode_ only.] Range of the thermostat's control operation.   
-number_of_devices_off  | double  | \-  | [Used with _demand_response_mode_ only.] Total number of devices that are off.   
-number_of_devices_on  | double  | \-  | [Used with _demand_response_mode_ only.] Total number of devices that are on.   
-rate_of_cooling  | double  | K/h  | [Used with _demand_response_mode_ only.] rate at which devices cool down.   
-rate_of_heating  | double  | K/h  | [Used with _demand_response_mode_ only.] rate at which devices heat up.   
-temperature  | int16  | K  | [Used with _demand_response_mode_ only.] temperature of the device's controlled media (eg air temp or water temp).   
-phi  | double  | pu  | [Used with _demand_response_mode_ only.] duty cycle of the device(s).   
-demand_rate  | double  | 1/h  | [Used with _demand_response_mode_ only.] consumer demand rate that prematurely turns on a device or population.   
-nominal_power  | double  | kW  | [Used with _demand_response_mode_ only.] the rated amount of power demanded by devices that are on.   
-recovery_duty_cycle  | double  | pu  | [Used with cycling mode and [passive_controller] duty cycle mode.] Fraction of time in the on state, while in recovery interval.   
-multiplier  | double  | pu  | [Used with cycling mode and [passive_controller] duty cycle mode.] This variable is used to modify the base power as a function of multiplier times base_power.   
+**demand_response_mode**  | boolean  | \-  | Activates equilibrium dynamic representation of demand response.   
+**number_of_devices**  | int16  | \-  | [Used with _demand_response_mode_ only.] Number of devices to model - base power is the total load of all devices.   
+**thermostatic_control_range**  | int16  | K  | [Used with _demand_response_mode_ only.] Range of the thermostat's control operation.   
+**number_of_devices_off**  | double  | \-  | [Used with _demand_response_mode_ only.] Total number of devices that are off.   
+**number_of_devices_on**  | double  | \-  | [Used with _demand_response_mode_ only.] Total number of devices that are on.   
+**rate_of_cooling**  | double  | K/h  | [Used with _demand_response_mode_ only.] rate at which devices cool down.   
+**rate_of_heating**  | double  | K/h  | [Used with _demand_response_mode_ only.] rate at which devices heat up.   
+**temperature**  | int16  | K  | [Used with _demand_response_mode_ only.] temperature of the device's controlled media (eg air temp or water temp).   
+**phi**  | double  | pu  | [Used with _demand_response_mode_ only.] duty cycle of the device(s).   
+**demand_rate**  | double  | 1/h  | [Used with _demand_response_mode_ only.] consumer demand rate that prematurely turns on a device or population.   
+**nominal_power**  | double  | kW  | [Used with _demand_response_mode_ only.] the rated amount of power demanded by devices that are on.   
+**recovery_duty_cycle**  | double  | pu  | [Used with cycling mode and [passive_controller] duty cycle mode.] Fraction of time in the on state, while in recovery interval.   
+**multiplier**  | double  | pu  | [Used with cycling mode and [passive_controller] duty cycle mode.] This variable is used to modify the base power as a function of multiplier times base_power.   
   
 **TODO**: : Document cycling, demand response and aggregate modes. 
 

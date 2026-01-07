@@ -23,19 +23,28 @@
 - [ ] Add a troubleshooting section to the new users section walking people through referencing the source code and how to find information they need on the source of truth.
 
 ### Docs Questions
-- [ ] Intro to Modeling needs to be re-written to not use metronome
-- [x] Pair down Getting Started Using GLD to be more approachable, noting that much of what's in there is already/can be moved to the Modeling 101 section of Modeling
+- [ ] **Intro to Modeling needs to be re-written to not use metronome**
+- [ ] Review tutorial pages, consider length and potentially splitting into smaller, more focused pages
 
 
 # 3.0 Modeling
 ### Dev Questions
-- [X] **XML** files. Still supported? Keep documentation? --> remove ref, "soft keep", switch to JSON as default
+- [X] **XML** files. Still supported? Keep documentation? 
+  - remove ref, "soft keep", switch to JSON as default
 - [ ] Talk with dev team to build out the built-in documentation within the code itself
-- [X] **MySQL** player and recorder - keep? If so, needs better intro. --> move to unimplemented
-- [X] **Aggregate Demand Response Model** - this is a theory page, unclear what part of the GLD code it's actually referring to. Is this implemented? --> ***Move to unimplemented***
-- [ ] **Microgrids** and **Diesel_dg** - microgrids is essentially the intro, diesel_dg is the parameter list and seems accurate --> keep
-- [ ] **Energy storage** - page is essentially empty. Should be the battery object? --> ***very simplified model, assumes it will be paired with inverter_dyn. Dev team to consider whether it should stay separate or be merged with battery***
-- [ ] **Power Flow User Guide** - this page has a LOT in it, with a fair amount I've never heard of, with various stages of "this has been partially validated and is considered experimental at this time" : need to review and update/deprecate. --> **requested Dev team to put eyes on this.**
+  - Dev team to build out a few doxygen examples to test campatability and usefulness
+- [X] **MySQL** player and recorder - keep? If so, needs better intro. 
+  - move to unimplemented
+- [X] **Aggregate Demand Response Model** - this is a theory page, unclear what part of the GLD code it's actually referring to. Is this implemented? 
+  - ***Move to unimplemented***
+- [X] **Microgrids** and **Diesel_dg** - microgrids is essentially the intro, diesel_dg is the parameter list and seems accurate 
+  - Microgrids is a use case, diesel_dg is keep.
+- [X] **Energy storage** - page is essentially empty. Should be the battery object? 
+  - ***very simplified model, assumes it will be paired with inverter_dyn. Dev team to consider whether it should stay separate or be merged with battery***
+  - [ ] Page now contains both generic and battery models. Needs some remarks and examples
+- [ ] **Inverter** and **Inverter_Dyn** - pages have status updates, (i.e., inverter_dyn more recent than inverter) but dev team needs to review and possibly rework based on their updates. Still likely out of date, may end up being merged. *DEV DECISION POINT*.
+- [ ] **Power Flow User Guide** - this page has a LOT in it, with a fair amount I've never heard of, with various stages of "this has been partially validated and is considered experimental at this time" : need to review and update/deprecate. 
+  - **Topic for a Dev Team Review Meeting**
 
 ### Docs Questions
 - [ ] How do we handle objects? Source code integration/conversion/hybrid?
@@ -191,28 +200,52 @@ Modules
 - [ ] Word/page limit of a single doc page?
 - [ ] "See Also" lists:
   - Do we want to keep these? Will have to ensure pages still exist and links are accurate. Do we assume that the pages are now well-organized enough that this is no longer needed?
+  - Converted to "Related Concepts" list for now. When we're ready to finalize we can review and make items links to other pages where relevant.
 - [ ] Consistency of Terms, example blocks `<mymodel>`, for example (maybe standalone page in New Users)
 - [ ] Remove dated clauses, like:
               `"As of Hassayampa (Version 3.0)..."`
 - [ ] Code blocks have embedded wiki links that will no longer work. Code blocks should be reworked to just display the code snippbit. Can be helpful to refer to original wiki page and copy/paste code. Example:
 
-Change this:   
+    - Change this:   
     
-    host% **gridlabd -[D](/wiki/Define "Define") [validate_report](/wiki/Validate_report "Validate report")=validate.txt --validate**
+          host% **gridlabd -[D](/wiki/Define "Define") [validate_report](/wiki/Validate_report "Validate report")=validate.txt --validate**
 
-to
-    
-    
-    host% gridlabd -[D] [validate_report]=validate.txt --validate
+  - to this:
+      
+      
+        host% gridlabd -[D] [validate_report]=validate.txt --validate
   
-# Candidate Long-Form Paper/New Doc Pages Topics
+# New Doc Pages (Existing Features) Topics
 
 Topic | Start Date | Time Estimate | Completed Date
 -- | -- | -- | --
-Deltamode | Oct 6 | 3 weeks | > 8 weeks
+Deltamode | Oct 6 | 3 weeks | > 13 weeks
 Object synchronization process | 
 Device model development process | 
 GridLAB-D loader and JSON file format | 
+
+# New Features Dev Schedule
+Topic |  Estimate Complete Date | Actual Completed Date | Able to Start Docs?
+-- | -- | -- | --
+Basic C/C++ API | Oct 31st
+JSON Loader | Nov 30
+Checkpoint System | Jan 31
+Multithreading | Mar 31
+Docker Containerization | Mar 15
+HELICS Update | Apr 15
+Common Solver Decentralization | Mar 31
+Utility functions for API | Mar 31
+CIMHub Testing/Integration | Apr 15
+Rlease v5.4/6.0 | May 31
+
+
+# Documentation Review Series Meeting Topics
+
+Topic | Date
+-- | --
+Residential Module | Dec 22
+Generators Module | Dec 23
+Powerflow | Next Up
 
 # Definition Plan
 - Open Index Tracker excel sheet on shareopint --> filter `Page Type` by `Definition`

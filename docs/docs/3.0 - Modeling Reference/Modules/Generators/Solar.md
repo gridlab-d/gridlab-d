@@ -1,4 +1,4 @@
-# Solar - Solar Panel
+# Solar Panel
 
 A solar panel (also known as solar module or photovoltaic module/panel) is an assembly of solar cells. Solar panels must be connected via a parent inverter. 
 
@@ -19,7 +19,7 @@ Property name | Type | Unit | Description | Default
 **T_coeff** | double | none | Maximum power temperature coefficient for temperature correction forumula | -0.5 [%/degC]   
 **NOCT** | double | degF | Nominal operating cell temperature. | 118.4 [degF]    
 **Tcell** | double | degF | TODO - Description | 69.8 [degF] 
-Tmodule | double | degF | Calculated internal temperature of the PV module.   
+**Tmodule** | double | degF | Calculated internal temperature of the PV module.   
 **Tambient** | double | degF | Outside air temperature. | 77 [degF]   
 **wind_speed** | double | mph | Outside wind speed. Currently not used.   
 **ambient_temperature** | double | degF | Current ambient temperature of air   
@@ -183,7 +183,7 @@ In GridLAB-D™ simulation, the PV panel is modeled as a controllable current so
 
 The P-V curve of this PV panel is given in Figure 1, the maximum power is about 1400kW and the voltage at maximum power point is 850V. ($t=25^{\circ}C, S=600\frac{w}{m^2}$). 
 
-![P-V Curve of PV Panel](../../../../../images/300px-PV_fig1.png)
+![P-V Curve of PV Panel](../../../../images/300px-PV_fig1.png)
 
 ##### Figure 1 - P-V Curve of PV Panel
 

@@ -99,8 +99,7 @@ nav:
         - CSV reader: docs/3.0 - Modeling Reference/Modules/Climate/CSV_reader_(climate_class).md
       - Generators:
         - Diesel dg: docs/3.0 - Modeling Reference/Modules/Generators/Diesel_dg.md
-        - Energy storage: docs/3.0 - Modeling Reference/Modules/Generators/Energy_storage.md
-        - Evcharger det: docs/3.0 - Modeling Reference/Modules/Generators/Evcharger_det.md
+        - Battery Energy storage: docs/3.0 - Modeling Reference/Modules/Generators/Energy_storage.md
         - Inverters:
           - Inverter: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter.md
           - ibr blackboxmodels: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_ibr_blackboxmodels.md
@@ -109,8 +108,8 @@ nav:
           - Sec control: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_sec_control.md
           - Sync Ctrl: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_sync_ctrl.md
           - Voltage source inverter (VSI): docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Voltage_source_inverter_(VSI).md
-        - Solar - Solar Panel: docs/3.0 - Modeling Reference/Modules/Generators/Solar.md
-        - Windturb dg: docs/3.0 - Modeling Reference/Modules/Generators/Windturb_dg.md
+        - Solar Panel: docs/3.0 - Modeling Reference/Modules/Generators/Solar.md
+        - Wind Turbine: docs/3.0 - Modeling Reference/Modules/Generators/Windturb_dg.md
       - Powerflow:
         - Power Flow User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/1.0 - Power_Flow_User_Guide.md
         - Powerflow Tehnical Reference: docs/3.0 - Modeling Reference/Modules/Powerflow/3.0 - Power_Flow_Reference.md
@@ -126,6 +125,7 @@ nav:
         - Introduction: docs/3.0 - Modeling Reference/Modules/Residential/1.0 - Introduction.md
         - House: docs/3.0 - Modeling Reference/Modules/Residential/2.0 - house-e.md
         - Equivalent Thermal Parameter Model: docs/3.0 - Modeling Reference/Modules/Residential/ETP_closed_form_solution.md
+        - Evcharger det: docs/3.0 - Modeling Reference/Modules/Residential/Evcharger_det.md
         - End Use Loads: docs/3.0 - Modeling Reference/Modules/Residential/Loads.md
         - Thermal Energy Storage Model: docs/3.0 - Modeling Reference/Modules/Residential/Thermal_Energy_Storage_model_guide.md
         - Waterheater: docs/3.0 - Modeling Reference/Modules/Residential/Waterheater.md
