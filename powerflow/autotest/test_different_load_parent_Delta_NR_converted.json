@@ -2,7 +2,7 @@
   "__preamble": {
     "comments": [
       "//Tests multiple children where one is differently connected",
-      "//under NR.  \"Last child\"is the same as parent, to make sure it doesn't",
+      "//under NR.  \"Last child\" is the same as parent, to make sure it doesn't",
       "//override the flagging in NR.",
       "//Tests a bug discovered via a forum post (code below is from post, more or less)",
       "//Parented node is delta for this one and children are swapped (so delta is connected last)"
@@ -263,7 +263,7 @@
             "// Load dlc-848 (Load model: Z)"
           ],
           "inside_comments": [
-            "//name                      node_dlc_848;"
+            "//name node_dlc_848;"
           ]
         }
       ]

@@ -159,7 +159,7 @@
           "name": "transformer_14",
           "phases": "AS",
           "configuration": "AS_config",
-          "from": "load4",
+          "from": "load_4",
           "to": "triplex_1",
           "nominal_voltage": 2401.777
         }
@@ -168,7 +168,7 @@
     "load": {
       "instances": [
         {
-          "name": "load4",
+          "name": "load_4",
           "phases": "ABCN",
           "voltage_A": "+2401.777+0.000j",
           "voltage_B": "-1200.889-2080.000j",

@@ -235,28 +235,38 @@
         }
       ]
     },
+    "double_assert": {
+      "instances": [
+        {
+          "parent": "RECLOSER_1_LOAD_TRACKER",
+          "target": "setpoint",
+          "value": " RECLOSER_1_LOAD_TRACKER.feedback",
+          "within": 2191,
+          "inline_comments": {
+            "within": "// 1%+ of full scale"
+          }
+        }
+      ]
+    },
     "load_tracker": {
       "instances": [
         {
           "name": "RECLOSER_1_LOAD_TRACKER",
-          "target": "setpoint",
+          "target": "RECLOSER_1",
           "target_property": "power_in",
           "operation": "MAGNITUDE",
           "setpoint": 145000,
           "deadband": 1.0,
           "damping": 2.0,
           "full_scale": 219000,
-          "value": " RECLOSER_1_LOAD_TRACKER.feedback",
-          "within": 2191,
           "inside_comments": [
+            "// Note: This is the sum of the base powers",
             "//       from the 2 downstream loads. It does",
             "//       not take account of line losses but",
             "//       is the expected value users would enter"
           ],
           "inline_comments": {
-            "deadband": "// Ensure double_assert.within > 219000 * deadband (as a percent)",
-            "full_scale": "// Note: This is the sum of the base powers",
-            "within": "// 1%+ of full scale"
+            "deadband": "// Ensure double_assert.within > 219000 * deadband (as a percent)"
           }
         }
       ]

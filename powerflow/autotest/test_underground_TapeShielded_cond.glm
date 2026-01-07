@@ -138,19 +138,22 @@ object line_configuration {
 	conductor_C ulc6070;
 	conductor_N ulc6070N;
 	spacing ls520CN;
-}object line_configuration {
+}
+object line_configuration {
 	name lc607ABN;
 	conductor_A ulc6070;
 	conductor_B ulc6070;
 	conductor_N ulc6070N;
 	spacing ls520ABN;
-}object line_configuration {
+}
+object line_configuration {
 	name lc607BCN;
 	conductor_B ulc6070;
 	conductor_C ulc6070;
 	conductor_N ulc6070N;
 	spacing ls520BCN;
-}object line_configuration {
+}
+object line_configuration {
 	name lc607CAN;
 	conductor_A ulc6070;
 	conductor_C ulc6070;
