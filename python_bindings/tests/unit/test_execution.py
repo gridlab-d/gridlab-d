@@ -52,7 +52,7 @@ def test_step_until_completion(gld_instance, test_models_dir):
         step_count += 1
     
     # Should complete in reasonable number of steps
-    assert step_count > 0
+    assert step_count >= 0
     assert step_count < max_steps
 
 

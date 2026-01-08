@@ -401,10 +401,11 @@ static bool directory_exists(const char *path)
 // Do Checkpoint
 nlohmann::json do_checkpoint(const char *output_directory)
 {
+    
 	/* last checkpoint value */
 	static TIMESTAMP last_checkpoint = 0;
 	TIMESTAMP now = 0;
-
+	
 	/* check point type selection */
 	switch (global_checkpoint_type)
 	{
@@ -415,6 +416,7 @@ nlohmann::json do_checkpoint(const char *output_directory)
 		/* default checkpoint for WALL */
 		if (global_checkpoint_interval == 0)
 			global_checkpoint_interval = 3600;
+
 		break;
 
 	/* simulation checkpoint interval */
@@ -424,6 +426,7 @@ nlohmann::json do_checkpoint(const char *output_directory)
 		/* default checkpoint for SIM */
 		if (global_checkpoint_interval == 0)
 			global_checkpoint_interval = 86400;
+		
 		break;
 
 	/* no checkpoints used */
@@ -435,12 +438,12 @@ nlohmann::json do_checkpoint(const char *output_directory)
 	/* checkpoint may be needed */
 	if (now > 0)
 	{
-
 		// TODO: Take a look at global_checkpoint_interval and if we want to keep it
 		/* checkpoint time lapsed */
 		// if ( last_checkpoint + global_checkpoint_interval <= now )
+		
 		if (last_checkpoint <= now)
-		{
+		{   
 			static char fn[1024] = "";
 			static char json_fn[1024] = "";
 			FILE *fp = nullptr;
@@ -457,7 +460,6 @@ nlohmann::json do_checkpoint(const char *output_directory)
 				if (ext != nullptr && (strcmp(ext, ".glm") == 0 || strcmp(ext, ".xml") == 0))
 					*ext = '\0';
 			}
-
 			/* delete old checkpoint file if not desired */
 			if (global_checkpoint_keepall == 0 && strcmp(fn, "") != 0)
 			{
@@ -474,32 +476,47 @@ nlohmann::json do_checkpoint(const char *output_directory)
 			sprintf(json_fn, "%s/%s.%d.json", json_dir, global_checkpoint_file, global_checkpoint_seqnum++);
 
 			/* check if output directory exists */
-			if (!directory_exists(json_dir))
+			/* check if output directory exists (only when actually writing files) */
+			if (output_directory != nullptr && !directory_exists(json_dir))
 			{
-				output_error("directory '%s' does not exist for JSON checkpoint files", json_dir);
-				return nlohmann::json(); // Return empty JSON value on error
+			    output_error("directory '%s' does not exist for JSON checkpoint files", json_dir);
+    			return nlohmann::json(); // Return empty JSON value on error
 			}
 
-			fp = fopen(fn, "w");
-			json_fp = fopen(json_fn, "w");
-
-			if (fp == nullptr)
-				output_error("unable to open checkpoint file '%s' for writing");
-			else
+			
+			/* Only open and write files if we're actually writing to disk */
+			if (output_directory != nullptr)
 			{
-				if (stream(fp, SF_OUT) <= 0)
-					output_error("checkpoint failure (stream context is %s)", stream_context());
-				fclose(fp);
-				last_checkpoint = now;
+    			fp = fopen(fn, "w");
+    			json_fp = fopen(json_fn, "w");
+
+		    	if (fp == nullptr)
+        			output_error("unable to open checkpoint file '%s' for writing", fn);
+    			else
+    			{
+        			if (stream(fp, SF_OUT) <= 0)
+            			output_error("checkpoint failure (stream context is %s)", stream_context());
+        			fclose(fp);
+        			last_checkpoint = now;
+				}
+    
+		    	/* initial value of last checkpoint */
+    			if (last_checkpoint == 0)
+        			last_checkpoint = now;
+
+			    /* Close FILE* before building JSON (will use ofstream later) */
+    			if (json_fp != nullptr)
+        			fclose(json_fp);
 			}
-			/* initial value of last checkpoint */
-			if (last_checkpoint == 0)
-				last_checkpoint = now;
+			
 			/* Write JSON data using JsonCpp */
-			if (json_fp != nullptr)
 			{
-				fclose(json_fp); // Close the FILE* since we'll use ofstream
-
+    
+				if (json_fp != nullptr)
+				{
+    				fclose(json_fp);
+				}
+				
 				// Create JSON structure using nlohmann::json
 				// Add preamble (ensure comments is an array)
 				if (!checkpoint.contains("__preamble"))
@@ -516,10 +533,11 @@ nlohmann::json do_checkpoint(const char *output_directory)
 				checkpoint["clock"]["starttime"] = static_cast<int64_t>(global_starttime);
 				checkpoint["clock"]["timezone"] = timestamp_current_timezone();
 
+				
 				// First, collect objects by class name
 				std::map<std::string, std::vector<OBJECT *>> objects_by_class;
 				std::set<OBJECT *> processed_objects; // Track processed objects to prevent duplicates
-
+				
 				/* Traverse all objects to group by class */
 				for (int pass = 0; ranks[pass] != nullptr; pass++)
 				{
@@ -656,8 +674,13 @@ nlohmann::json do_checkpoint(const char *output_directory)
 					checkpoint["objects"][class_pair.first]["instances"] = instances;
 				}
 
-				// Get modules data!
-
+				// TODO: Output_directory is nullptr in python API calls.
+				// Advise if we need to report an error writing files for other cases.
+				if (output_directory == nullptr)
+				{
+					// If output_directory is nullptr, we're not writing files
+					return checkpoint;
+				}
 				// Write JSON to file with pretty formatting
 				std::ofstream json_file(json_fn);
 				if (json_file.is_open())
@@ -672,12 +695,11 @@ nlohmann::json do_checkpoint(const char *output_directory)
 				{
 					output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
 				}
-				return checkpoint;
 			}
-			else if (json_fp == nullptr)
-			{
-				output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
-			}
+			//else if (json_fp == nullptr)
+			//{
+			//	output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
+			//}
 		}
 	}
 	return checkpoint;

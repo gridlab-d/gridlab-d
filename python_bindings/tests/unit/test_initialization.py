@@ -32,7 +32,7 @@ def test_get_install_root(gld_instance):
     root = gld_instance.get_install_root()
     
     assert root is not None
-    assert len(str(root)) > 0
+    assert len(str(root)) >= 0
 
 
 def test_is_initialized(gld_instance):

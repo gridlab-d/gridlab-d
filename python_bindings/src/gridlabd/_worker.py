@@ -224,12 +224,19 @@ def handle_load_checkpoint(message: Message) -> Response:
 def handle_get_checkpoint_json(message: Message) -> Response:
     """Get checkpoint as JSON."""
     try:
+        print("DEBUG _worker: handle_get_checkpoint_json called", file=sys.stderr, flush=True)
         filepath = message.args.get("filepath", "")
+        print(f"DEBUG _worker: filepath='{filepath}'", file=sys.stderr, flush=True)
+        print("DEBUG _worker: calling _gld_instance.get_checkpoint_json", file=sys.stderr, flush=True)
         result = _gld_instance.get_checkpoint_json(filepath)
+        print(f"DEBUG _worker: got result, length={len(result)}", file=sys.stderr, flush=True)
         return Response(success=True, result=result)
     except Exception as e:
+        print(f"DEBUG _worker: Exception: {e}", file=sys.stderr, flush=True)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
         return Response(success=False, error=str(e))
-
+    
 
 def handle_start(message: Message) -> Response:
     """Start the simulation (alias for setup_before_load)."""

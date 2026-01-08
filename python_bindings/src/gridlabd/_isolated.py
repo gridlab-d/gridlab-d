@@ -35,7 +35,7 @@ class IsolatedGridLabD:
             [sys.executable, "-m", "gridlabd._worker"],
             stdin=PIPE,
             stdout=PIPE,
-            stderr=PIPE,
+            stderr=None,
             text=True,
             bufsize=1
         )

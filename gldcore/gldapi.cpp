@@ -1,4 +1,5 @@
 #include "gldapi.h"
+#include "gridlabd.h"
 #include <cstdio>
 #include <fstream>
 #include "timestamp.h"
@@ -465,7 +466,7 @@ nlohmann::json GridLabD::get_checkpoint_json(const std::string &filepath)
 
     // Set the internal gld_model representation to be equal to checkpoint
     gld_model = nlohmann::json(checkpoint);
-
+    
     return checkpoint;
 }
 
