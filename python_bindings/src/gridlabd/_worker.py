@@ -299,6 +299,24 @@ def handle_get_object_properties(message: Message) -> Response:
         return Response(success=False, error=str(e))
 
 
+def handle_get_all_objects(message: Message) -> Response:
+    """Get all objects (and their properties) of a specific class."""
+    try:
+        result = _gld_instance.get_all_objects(message.args["class_name"])
+        return Response(success=True, result=result)
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
+def handle_get_model(message: Message) -> Response:
+    """Get the entire model with all objects and properties organized by class."""
+    try:
+        result = _gld_instance.get_model()
+        return Response(success=True, result=result)
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
 def handle_get_property(message: Message) -> Response:
     """Get a property value."""
     try:
@@ -398,6 +416,8 @@ COMMAND_HANDLERS = {
     Command.GET_OBJECTS_BY_CLASS: handle_get_objects_by_class,
     Command.GET_OBJECT_COUNT: handle_get_object_count,
     Command.GET_OBJECT_PROPERTIES: handle_get_object_properties,
+    Command.GET_ALL_OBJECTS: handle_get_all_objects,
+    Command.GET_MODEL: handle_get_model,
     Command.GET_PROPERTY: handle_get_property,
     Command.SET_PROPERTY: handle_set_property,
     Command.GET_PROPERTIES_BY_CLASS: handle_get_properties_by_class,
