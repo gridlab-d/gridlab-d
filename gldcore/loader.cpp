@@ -45,7 +45,7 @@ STATUS loader::convert(ojson value, string &out)
     }
     else if (value.is_number_integer())
     {
-        int intvalue = value.get<int>();
+        int64 intvalue = value.get<int64>();
         out = std::to_string(intvalue);
         return SUCCESS;
     }
