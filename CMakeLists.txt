@@ -42,15 +42,15 @@ if(NOT Eigen3_FOUND)
       Eigen3
       URL https://gitlab.com/libeigen/eigen/-/archive/3.3.9/eigen-3.3.9.tar.gz
       URL_HASH SHA256=7985975b787340124786f092b3a07d594b2e9cd53bbfe5f3d9b1daee7d55f56f
+      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
-
-    # Populate Eigen3 without processing its CMakeLists to avoid conflicts
+    
+    # Use Populate instead of MakeAvailable to include headers only (avoids BLAS/LAPACK conflicts)
     FetchContent_GetProperties(Eigen3)
     if(NOT eigen3_POPULATED)
       FetchContent_Populate(Eigen3)
     endif()
-
-    # Include Eigen headers only (no BLAS/LAPACK conflicts)
+    
     include_directories(${eigen3_SOURCE_DIR})
 else()
     message(STATUS "Using system Eigen3 (version ${Eigen3_VERSION})")
