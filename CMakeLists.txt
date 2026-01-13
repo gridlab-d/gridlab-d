@@ -54,6 +54,7 @@ if(NOT Eigen3_FOUND)
     include_directories(${eigen3_SOURCE_DIR})
 else()
     message(STATUS "Using system Eigen3 (version ${Eigen3_VERSION})")
+    include_directories(${EIGEN3_INCLUDE_DIR})
 endif()
 
 
