@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
-
 if(WIN32)
     add_compile_options(
         $<$<CONFIG:Debug>:/MDd>
@@ -31,11 +30,32 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # endif()
 
 
-# Find Eigen
-find_package(Eigen3 REQUIRED NO_MODULE)
+# Include FetchContent module
+include(FetchContent)
 
-# Include Eigen 
-include_directories(${EIGEN3_INCLUDE_DIR})
+# Try to find system Eigen3 first (version 3.3 or higher)
+find_package(Eigen3 3.3 QUIET)
+
+if(NOT Eigen3_FOUND)
+    # Fetch Eigen3 from release tarball (faster than git clone)
+    FetchContent_Declare(
+      Eigen3
+      URL https://gitlab.com/libeigen/eigen/-/archive/3.3.9/eigen-3.3.9.tar.gz
+      URL_HASH SHA256=7985975b787340124786f092b3a07d594b2e9cd53bbfe5f3d9b1daee7d55f56f
+    )
+
+    # Populate Eigen3 without processing its CMakeLists to avoid conflicts
+    FetchContent_GetProperties(Eigen3)
+    if(NOT eigen3_POPULATED)
+      FetchContent_Populate(Eigen3)
+    endif()
+
+    # Include Eigen headers only (no BLAS/LAPACK conflicts)
+    include_directories(${eigen3_SOURCE_DIR})
+else()
+    message(STATUS "Using system Eigen3 (version ${Eigen3_VERSION})")
+endif()
+
 
 
 include(cmake/Warnings.cmake)
@@ -346,16 +366,17 @@ if (GLD_USE_SUPERLU)
             ${CMAKE_BINARY_DIR}/third_party/SuperLU/CBLAS
     )
 
+    # Use SuperLU's internal BLAS (faster build, no external dependencies)
+    # The CBLAS version provided by SuperLU does not build in MSYS2
     if (WIN32 OR MSYS OR MINGW OR CYGWIN)
-        # The CBLAS version provided by SuperLU does not build in MSYS2.
-        option(enable_internal_blaslib "Build the CBLAS library" OFF)
-    else ()
-        option(enable_internal_blaslib "Build the CBLAS library" ON)
-    endif ()
+        set(enable_internal_blaslib OFF CACHE BOOL "Build the CBLAS library" FORCE)
+    else()
+        set(enable_internal_blaslib ON CACHE BOOL "Build the CBLAS library" FORCE)
+    endif()
 
     # SuperLU's generic names here can cause issues, make sure other projects do not cross these names
-    option(enable_examples "Build SuperLU examples" OFF)
-    option(enable_tests "Build SuperLU tests" OFF)
+    set(enable_examples OFF CACHE BOOL "Build SuperLU examples" FORCE)
+    set(enable_tests OFF CACHE BOOL "Build SuperLU tests" FORCE)
 
     include_directories(third_party/SuperLU/SRC)
     add_subdirectory(third_party/SuperLU)
