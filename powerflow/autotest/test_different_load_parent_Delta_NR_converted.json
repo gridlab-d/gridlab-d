@@ -66,11 +66,11 @@
       "instances": [
         {
           "name": "          olcfg_dlc",
-          "conductor_A": "   olcon__2_ACSR",
-          "conductor_B": "   olcon__2_ACSR",
-          "conductor_C": "   olcon__2_ACSR",
-          "conductor_N": "   olcon__2_ACSR",
-          "spacing": "       olspc_500_BAC",
+          "conductor_A": "olcon__2_ACSR",
+          "conductor_B": "olcon__2_ACSR",
+          "conductor_C": "olcon__2_ACSR",
+          "conductor_N": "olcon__2_ACSR",
+          "spacing": "olspc_500_BAC",
           "outside_comments": [
             "////////////////////////////////////////////////////////////////////////////////",
             "// Underground Cable Conductors",
@@ -87,12 +87,12 @@
       "instances": [
         {
           "name": "              node_dlc_834",
-          "phases": "            ABC",
+          "phases": "ABC",
           "nominal_voltage": 2401.7771,
-          "bustype": "           SWING",
-          "voltage_A": "         2401.7771+0.0000j",
-          "voltage_B": "         -1200.8886-2080.0000j",
-          "voltage_C": "         -1200.8886+2080.0000j",
+          "bustype": "SWING",
+          "voltage_A": "2401.7771+0.0000j",
+          "voltage_B": "-1200.8886-2080.0000j",
+          "voltage_C": "-1200.8886+2080.0000j",
           "outside_comments": [
             "////////////////////////////////////////////////////////////////////////////////",
             "// Underground Cable Configurations",
@@ -105,9 +105,9 @@
         },
         {
           "name": "           node_dlc_842",
-          "phases": "         ABCN",
+          "phases": "ABCN",
           "nominal_voltage": 2401.7771,
-          "bustype": "        PQ",
+          "bustype": "PQ",
           "outside_comments": [
             "////////////////////////////////////////////////////////////////////////////////",
             "// Nodes",
@@ -117,27 +117,27 @@
         },
         {
           "name": "           node_dlc_844",
-          "phases": "         ABCN",
+          "phases": "ABCN",
           "nominal_voltage": 2401.7771,
-          "bustype": "        PQ",
+          "bustype": "PQ",
           "outside_comments": [
             "// Node dlc-844"
           ]
         },
         {
           "name": "           node_dlc_846",
-          "phases": "         ABCN",
+          "phases": "ABCN",
           "nominal_voltage": 2401.7771,
-          "bustype": "        PQ",
+          "bustype": "PQ",
           "outside_comments": [
             "// Node dlc-846"
           ]
         },
         {
           "name": "           node_dlc_848",
-          "phases": "         ABCD",
+          "phases": "ABCD",
           "nominal_voltage": 2401.7771,
-          "bustype": "        PQ",
+          "bustype": "PQ",
           "inside_comments": [
             "//Check the voltage on this node"
           ]
@@ -147,7 +147,7 @@
     "complex_assert": {
       "instances": [
         {
-          "parent": "           node_dlc_848",
+          "parent": "node_dlc_848",
           "target": "voltage_A",
           "value": "2142.499081-90.709894j",
           "within": 0.1,
@@ -156,13 +156,13 @@
           ]
         },
         {
-          "parent": "           node_dlc_848",
+          "parent": "node_dlc_848",
           "target": "voltage_B",
           "value": "-1169.737987-1826.572314j",
           "within": 0.1
         },
         {
-          "parent": "           node_dlc_848",
+          "parent": "node_dlc_848",
           "target": "voltage_C",
           "value": "-989.333555+1908.318400j",
           "within": 0.1
@@ -173,11 +173,11 @@
       "instances": [
         {
           "name": "          ol_dlc_834_dlc_842",
-          "phases": "        ABCN",
-          "from": "          node_dlc_834",
-          "to": "            node_dlc_842",
+          "phases": "ABCN",
+          "from": "node_dlc_834",
+          "to": "node_dlc_842",
           "length": 2500.0,
-          "configuration": " olcfg_dlc",
+          "configuration": "olcfg_dlc",
           "outside_comments": [
             "////////////////////////////////////////////////////////////////////////////////",
             "// Overhead Lines",
@@ -187,33 +187,33 @@
         },
         {
           "name": "          ol_dlc_842_dlc_844",
-          "phases": "        ABCN",
-          "from": "          node_dlc_842",
-          "to": "            node_dlc_844",
+          "phases": "ABCN",
+          "from": "node_dlc_842",
+          "to": "node_dlc_844",
           "length": 2500.0,
-          "configuration": " olcfg_dlc",
+          "configuration": "olcfg_dlc",
           "outside_comments": [
             "// Overhead line dlc-842-dlc-844"
           ]
         },
         {
           "name": "          ol_dlc_844_dlc_846",
-          "phases": "        ABCN",
-          "from": "          node_dlc_844",
-          "to": "            node_dlc_846",
+          "phases": "ABCN",
+          "from": "node_dlc_844",
+          "to": "node_dlc_846",
           "length": 2500.0,
-          "configuration": " olcfg_dlc",
+          "configuration": "olcfg_dlc",
           "outside_comments": [
             "// Overhead line dlc-844-dlc-846"
           ]
         },
         {
           "name": "          ol_dlc_846_dlc_848",
-          "phases": "        ABCN",
-          "from": "          node_dlc_846",
-          "to": "            node_dlc_848",
+          "phases": "ABCN",
+          "from": "node_dlc_846",
+          "to": "node_dlc_848",
           "length": 2500.0,
-          "configuration": " olcfg_dlc",
+          "configuration": "olcfg_dlc",
           "outside_comments": [
             "// Overhead line dlc-846-dlc-848"
           ]
@@ -224,12 +224,12 @@
       "instances": [
         {
           "name": "                         cap_dlc_848",
-          "parent": "                       node_dlc_848",
-          "phases": "                       ABCN",
-          "phases_connected": "             ABCN",
-          "switchA": "                      CLOSED",
-          "switchB": "                      CLOSED",
-          "switchC": "                      CLOSED",
+          "parent": "node_dlc_848",
+          "phases": "ABCN",
+          "phases_connected": "ABCN",
+          "switchA": "CLOSED",
+          "switchB": "CLOSED",
+          "switchC": "CLOSED",
           "nominal_voltage": 2401.7771,
           "capacitor_A": 150000.0,
           "capacitor_B": 150000.0,
@@ -247,8 +247,8 @@
       "instances": [
         {
           "name": "                     load_dlc_848",
-          "parent": "                   node_dlc_848",
-          "phases": "                   ABCD",
+          "parent": "node_dlc_848",
+          "phases": "ABCD",
           "constant_impedance_A_real": 52.761,
           "constant_impedance_A_reac": 42.2088,
           "constant_impedance_B_real": 52.761,

@@ -151,55 +151,55 @@
           "parent": "node:2",
           "target": "voltage_AB",
           "within": 7,
-          "value": "+12466.5+30.0119d  "
+          "value": "+12466.5+30.0119d"
         },
         {
           "parent": "node:2",
           "target": "voltage_BC",
           "within": 7,
-          "value": "+12436.6-90.3306d "
+          "value": "+12436.6-90.3306d"
         },
         {
           "parent": "node:2",
           "target": "voltage_CA",
           "within": 7,
-          "value": "+12387.1+149.96d "
+          "value": "+12387.1+149.96d"
         },
         {
           "parent": "node:3",
           "target": "voltage_AB",
           "within": 7,
-          "value": "+24893+30.0119d  "
+          "value": "+24893+30.0119d"
         },
         {
           "parent": "node:3",
           "target": "voltage_BC",
           "within": 7,
-          "value": "+24707.2-92.457d "
+          "value": "+24707.2-92.457d"
         },
         {
           "parent": "node:3",
           "target": "voltage_CA",
           "within": 7,
-          "value": "+23869.5+149.168d "
+          "value": "+23869.5+149.168d"
         },
         {
           "parent": "load:4",
           "target": "voltage_AB",
           "within": 7,
-          "value": "+0+0d "
+          "value": "+0+0d"
         },
         {
           "parent": "load:4",
           "target": "voltage_BC",
           "within": 7,
-          "value": "+13548.9-63.9048d "
+          "value": "+13548.9-63.9048d"
         },
         {
           "parent": "load:4",
           "target": "voltage_CA",
           "within": 7,
-          "value": "+13548.9+116.095d "
+          "value": "+13548.9+116.095d"
         }
       ]
     },

@@ -145,7 +145,7 @@
           "parent": "node:2",
           "target": "voltage_AB",
           "within": 5,
-          "value": "+12430.5+30.088d "
+          "value": "+12430.5+30.088d"
         },
         {
           "parent": "node:2",
@@ -163,7 +163,7 @@
           "parent": "node:3",
           "target": "voltage_AB",
           "within": 5,
-          "value": "+24909.1+59.9882d "
+          "value": "+24909.1+59.9882d"
         },
         {
           "parent": "node:3",

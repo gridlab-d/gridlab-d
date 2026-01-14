@@ -246,7 +246,7 @@
           "deadband": 1.0,
           "damping": 0.0,
           "full_scale": 219000,
-          "value": " RECLOSER_1_LOAD_TRACKER.feedback",
+          "value": "RECLOSER_1_LOAD_TRACKER.feedback",
           "within": 2191,
           "inside_comments": [
             "//       from the 2 downstream loads. It does",
