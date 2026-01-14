@@ -72,6 +72,8 @@ std::map<std::string, std::string> collect_property_map_for_object(OBJECT *obj) 
     property_map["__id__"] = std::to_string(obj->id);
     if (obj->name != nullptr && obj->name[0] != '\0') {
         property_map["__name__"] = std::string(obj->name);
+        // Also add 'name' as a regular property for user convenience
+        property_map["name"] = std::string(obj->name);
     }
 
     PROPERTY *prop = class_get_first_property(obj->oclass);

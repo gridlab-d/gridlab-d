@@ -72,6 +72,12 @@ class TestSingleObjectAllProperties:
         assert "__id__" in props
         assert props["__class__"] == "house"
         
+        # Should have 'name' as both metadata (__name__) and regular property (name)
+        # This ensures users can access it like any other GLM property
+        if "__name__" in props:  # Only if object has a name
+            assert "name" in props
+            assert props["name"] == props["__name__"]
+        
         # Should have actual properties (beyond metadata)
         meta_keys = {"__class__", "__id__", "__name__"}
         property_keys = [k for k in props.keys() if k not in meta_keys]
