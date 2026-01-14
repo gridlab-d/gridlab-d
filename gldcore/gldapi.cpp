@@ -516,9 +516,9 @@ Json::Value GridLabD::get_checkpoint_json(const std::string& filepath) {
                 std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
                 writer->write(checkpoint, &json_file);
                 json_file.close();
-                printf("Checkpoint JSON saved to: %s\n", filepath.c_str());
+                output_verbose("Checkpoint JSON saved to: %s", filepath.c_str());
             } else {
-                printf("Error: Unable to open file '%s' for writing\n", filepath.c_str());
+                output_error("Unable to open file '%s' for writing", filepath.c_str());
             }
         }
     }
@@ -614,7 +614,7 @@ GLDErrorCode ensure_simulation_initialized() {
         }
         
         if (run_preparation() == FAILED) {
-            printf("Failed to initialize simulation for stepping\n");
+            output_error("Failed to initialize simulation for stepping");
             return GLD_OPERATION_FAILED;
         }
         
@@ -658,7 +658,7 @@ GLDErrorCode GridLabD::step(double& simulation_time) {
         STATUS result = exec_step();
         
         if (result == FAILED) {
-            printf("Error occurred during simulation step\n");
+            output_error("Error occurred during simulation step");
             simulation_time = (double)global_clock;
             return GLD_OPERATION_FAILED;
         }
@@ -684,7 +684,7 @@ GLDErrorCode GridLabD::step(double& simulation_time) {
         STATUS result = exec_step();
         
         if (result == FAILED) {
-            printf("Error occurred during simulation step\n");
+            output_error("Error occurred during simulation step");
             simulation_time = (double)global_clock;
             return GLD_OPERATION_FAILED;
         }
@@ -735,10 +735,10 @@ GLDErrorCode GridLabD::get_time(std::string& current_time) {
     char buffer[64];
     if (convert_from_timestamp(global_clock, buffer, sizeof(buffer)) > 0) {
         current_time = buffer;
-        printf("Getting current time: %s\n", current_time.c_str());
+        output_verbose("Getting current time: %s", current_time.c_str());
         return GLD_SUCCESS;
     } else {
-        printf("Error: Failed to convert timestamp\n");
+        output_error("Failed to convert timestamp");
         return GLD_OPERATION_FAILED;
     }
 }
@@ -752,7 +752,7 @@ GLDErrorCode GridLabD::set_application_mode(GLDApplicationType mode) {
 // Set timestep
 GLDErrorCode GridLabD::set_time_step(double time_step) {
     if (time_step <= 0) {
-        printf("Error: Time step must be positive, got: %.2f\n", time_step);
+        output_error("Time step must be positive, got: %.2f", time_step);
         return GLD_OPERATION_FAILED;
     }
     
@@ -783,7 +783,7 @@ GLDErrorCode GridLabD::step_to(const std::string& target_time_str, double& simul
     TIMESTAMP target_clock = convert_to_timestamp_delta(target_time_str.c_str(), &target_nanoseconds, &target_time_dbl);
     
     if (target_clock == TS_INVALID) {
-        printf("Error: Invalid timestamp string: %s\n", target_time_str.c_str());
+        output_error("Invalid timestamp string: %s", target_time_str.c_str());
         simulation_time = (double)global_clock;
         return GLD_OPERATION_FAILED;
     }
@@ -795,8 +795,8 @@ GLDErrorCode GridLabD::step_to(const std::string& target_time_str, double& simul
     if (target_time_dbl <= current_time_dbl) {
         char start_buffer[64];
         convert_from_timestamp(start_clock, start_buffer, sizeof(start_buffer));
-        printf("Warning: Target time %s is not after current time %s\n", 
-               target_time_str.c_str(), start_buffer);
+        output_warning("Target time %s is not after current time %s", 
+                       target_time_str.c_str(), start_buffer);
         simulation_time = current_time_dbl;
         return GLD_SUCCESS;
     }
@@ -817,7 +817,7 @@ GLDErrorCode GridLabD::step_to(const std::string& target_time_str, double& simul
         STATUS result = exec_step();
         
         if (result == FAILED) {
-            printf("Error occurred during simulation step\n");
+            output_error("Error occurred during simulation step");
             simulation_time = current_time_dbl;
             return GLD_OPERATION_FAILED;
         }
@@ -838,7 +838,7 @@ std::vector<std::string> GridLabD::get_objects_by_class(const std::string& class
     // Find the class by name
     CLASS *oclass = class_get_class_from_classname(class_name.c_str());
     if (oclass == nullptr) {
-        printf("Warning: Class '%s' not found\n", class_name.c_str());
+        output_warning("Class '%s' not found", class_name.c_str());
         return object_names;
     }
     
@@ -882,7 +882,7 @@ GLDErrorCode GridLabD::get_property(const std::string& object_name, const std::s
     }
     
     if (obj == nullptr) {
-        printf("Error: Object '%s' not found\n", object_name.c_str());
+        output_error("Object '%s' not found", object_name.c_str());
         return GLD_OPERATION_FAILED;
     }
     
@@ -891,8 +891,8 @@ GLDErrorCode GridLabD::get_property(const std::string& object_name, const std::s
     int result = object_get_value_by_name(obj, property_name.c_str(), buffer, sizeof(buffer));
     
     if (result == 0) {
-        printf("Error: Failed to get property '%s' from object '%s'\n", 
-               property_name.c_str(), object_name.c_str());
+        output_error("Failed to get property '%s' from object '%s'", 
+                     property_name.c_str(), object_name.c_str());
         return GLD_OPERATION_FAILED;
     }
     
@@ -918,7 +918,7 @@ GLDErrorCode GridLabD::set_property(const std::string& object_name, const std::s
     }
     
     if (obj == nullptr) {
-        printf("Error: Object '%s' not found\n", object_name.c_str());
+        output_error("Object '%s' not found", object_name.c_str());
         return GLD_OPERATION_FAILED;
     }
     
@@ -931,8 +931,8 @@ GLDErrorCode GridLabD::set_property(const std::string& object_name, const std::s
     int result = object_set_value_by_name(obj, const_cast<char*>(property_name.c_str()), value_copy);
     
     if (result == 0) {
-        printf("Error: Failed to set property '%s' on object '%s' to value '%s'\n", 
-               property_name.c_str(), object_name.c_str(), value.c_str());
+        output_error("Failed to set property '%s' on object '%s' to value '%s'", 
+                     property_name.c_str(), object_name.c_str(), value.c_str());
         return GLD_OPERATION_FAILED;
     }
     
@@ -945,7 +945,7 @@ GLDErrorCode GridLabD::set_property_by_class(const std::string& class_name, cons
     // Find the class by name
     CLASS *oclass = class_get_class_from_classname(class_name.c_str());
     if (oclass == nullptr) {
-        printf("Error: Class '%s' not found\n", class_name.c_str());
+        output_error("Class '%s' not found", class_name.c_str());
         return GLD_OPERATION_FAILED;
     }
     
@@ -968,8 +968,8 @@ GLDErrorCode GridLabD::set_property_by_class(const std::string& class_name, cons
             } else {
                 failure_count++;
                 const char *obj_name = (obj->name != nullptr && obj->name[0] != '\0') ? obj->name : "(unnamed)";
-                printf("Warning: Failed to set property '%s' on object '%s' (id=%d)\n", 
-                       property_name.c_str(), obj_name, obj->id);
+                output_warning("Failed to set property '%s' on object '%s' (id=%d)", 
+                               property_name.c_str(), obj_name, obj->id);
             }
         }
         obj = object_get_next(obj);
@@ -993,7 +993,7 @@ std::map<std::string, std::string> GridLabD::get_properties_by_class(const std::
     // Find the class by name
     CLASS *oclass = class_get_class_from_classname(class_name.c_str());
     if (oclass == nullptr) {
-        printf("Warning: Class '%s' not found\n", class_name.c_str());
+        output_warning("Class '%s' not found", class_name.c_str());
         return property_map;
     }
     
@@ -1018,8 +1018,8 @@ std::map<std::string, std::string> GridLabD::get_properties_by_class(const std::
             if (result != 0) {
                 property_map[obj_name] = std::string(buffer);
             } else {
-                printf("Warning: Failed to get property '%s' from object '%s'\n", 
-                       property_name.c_str(), obj_name.c_str());
+                output_warning("Failed to get property '%s' from object '%s'", 
+                               property_name.c_str(), obj_name.c_str());
             }
         }
         obj = object_get_next(obj);
@@ -1068,7 +1068,7 @@ std::map<std::string, std::string> GridLabD::get_object_properties(const std::st
     }
     
     if (obj == nullptr) {
-        printf("Error: Object '%s' not found\n", object_name.c_str());
+        output_error("Object '%s' not found", object_name.c_str());
         return property_map;
     }
     
@@ -1092,7 +1092,7 @@ std::vector<std::map<std::string, std::string>> GridLabD::get_all_objects(const 
 
     CLASS *oclass = class_get_class_from_classname(class_name.c_str());
     if (oclass == nullptr) {
-        printf("Warning: Class '%s' not found\n", class_name.c_str());
+        output_warning("Class '%s' not found", class_name.c_str());
         return objects;
     }
 

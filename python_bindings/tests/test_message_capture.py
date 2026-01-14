@@ -1,9 +1,14 @@
 """Tests for message capture API"""
-import pytest
+import os
+import sys
+
+# Add parent directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 import gridlabd
 
 
-def test_message_capture_warnings():
+def test_error_messages_captured():
     """Test that warnings are captured during model run"""
     gld = gridlabd.GridLabD()
     gld.clear_messages()
