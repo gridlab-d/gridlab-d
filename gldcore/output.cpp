@@ -57,7 +57,7 @@ std::shared_mutex test_lock;
 static char buffer[65536];
 #define CHECK 0xcdcd
 int overflow = CHECK;
-int flush = 0;
+int flush_output = 0;
 enum output_type
 {
 	none,
@@ -82,11 +82,11 @@ void output_prefix_enable(void)
 		sprintf(prefix, "-%02d(%05d): ", cpuid, procid);
 		break;
 	case MRM_MASTER:
-		flush = 1;
+		flush_output = 1;
 		sprintf(prefix, "M%02d(%05d): ", cpuid, procid);
 		break;
 	case MRM_SLAVE:
-		flush = 1;
+		flush_output = 1;
 		sprintf(prefix, "S%02d(%05d): ", cpuid, procid);
 		break;
 	default:
@@ -257,7 +257,7 @@ static int default_printstd(const char *format, ...)
 	}
 	va_start(ptr, format);
 	count = vfprintf(curr_stream[FS_STD], format, ptr);
-	if (flush)
+	if (flush_output)
 		fflush(curr_stream[FS_STD]);
 	va_end(ptr);
 	return count;

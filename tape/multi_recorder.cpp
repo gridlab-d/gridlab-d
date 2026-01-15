@@ -546,7 +546,7 @@ RECORDER_MAP *link_multi_properties(OBJECT *obj, char *property_list)
 	OBJECT *target_obj = nullptr;
 	UNIT *unit = nullptr;
 	char1024 list;
-	complex oblig;
+	gld::complex oblig;
 	int partres = 0;
 	char name[128];
 	char256 pstr, ustr;

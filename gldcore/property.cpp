@@ -57,7 +57,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 		{"timestamp",     "string",  sizeof(int64),         24,                 convert_from_timestamp_stub, convert_to_timestamp_stub, nullptr, nullptr, {TCOPS(uint64)}, timestamp_get_part},
 		{"double_array",  "string",  0,  0,                  nullptr,   nullptr,  nullptr,                                                                                                nullptr, {TCNONE},        nullptr},
 		{"complex_array", "string",  sizeof(Eigen::MatrixXcd), 0,                  convert_from_complex_array,  convert_to_complex_array, nullptr,                                                                                               nullptr, {TCNONE},        nullptr},
-		{"real",          "decimal", sizeof(real),          24,                 convert_from_real,           convert_to_real},
+		{"real",          "decimal", sizeof(real_type),          24,                 convert_from_real,           convert_to_real},
 		{"float",         "decimal", sizeof(float),         24,                 convert_from_float,          convert_to_float},
 		{"loadshape",     "string",  sizeof(loadshape),     0,                  convert_from_loadshape,      reinterpret_cast<int (*)(
 				const char *,
@@ -108,7 +108,7 @@ int property_check(void)
 		case PT_timestamp: sz = sizeof(TIMESTAMP); break;
 		case PT_double_array: sz = sizeof(Eigen::MatrixXd); break;
 		case PT_complex_array: sz = sizeof(Eigen::MatrixXcd); break;
-		case PT_real: sz = sizeof(real); break;
+		case PT_real: sz = sizeof(real_type); break;
 		case PT_float: sz = sizeof(float); break;
 		case PT_loadshape: sz = sizeof(loadshape); break;
 		case PT_enduse: sz = sizeof(enduse); break;

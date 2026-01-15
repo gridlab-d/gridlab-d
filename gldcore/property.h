@@ -1214,9 +1214,9 @@ typedef gld::complex triplex[3];
 /* ADD NEW CORE TYPES HERE */
 
 #ifdef REAL4
-typedef float real;
+typedef float real_type;
 #else
-typedef double real;
+typedef double real_type;
 #endif
 
 //#ifndef __cplusplus
