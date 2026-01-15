@@ -36,7 +36,7 @@
 #include "threadpool.h"
 #include "object.h"
 
-static std::mutex subprocess_launch_mutex;
+static std::mutex subprocess_launch_gate; // Mutex to protect subprocess launches
 
 /** validating result counter */
 class counters
@@ -447,8 +447,15 @@ static int vsystem(const char *fmt, ...)
 	char command[1024];
 	va_list ptr;
 	va_start(ptr, fmt);
-	vsprintf(command, fmt, ptr);
+	int n = vsnprintf(command, sizeof(command), fmt, ptr);
 	va_end(ptr);
+
+	if (n < 0 || (size_t)n >= sizeof(command))
+	{
+		output_error("vsystem(): command truncated/overflow");
+		return -1;
+	}
+
 	output_debug("calling system('%s')", command);
 	int rc = system(command);
 	output_debug("system('%s') returns code %x", command, rc);
@@ -645,12 +652,11 @@ static counters run_test(char *file, double *elapsed_time = nullptr)
 
 	unsigned int code;
 	{
-		std::lock_guard<std::mutex> lock(subprocess_launch_mutex);
+		std::lock_guard<std::mutex> lock(subprocess_launch_gate);
 
 		output_debug("Thread %zu launching subprocess: %s", std::hash<std::thread::id>{}(std::this_thread::get_id()), command_line.c_str());
-
-		code = vsystem(command_line.c_str());
 	}
+	code = vsystem(command_line.c_str());
 
 	output_debug("Thread %zu released subprocess launch lock", std::hash<std::thread::id>{}(std::this_thread::get_id()));
 
@@ -773,6 +779,7 @@ static void pushdir(char *dir)
 	output_debug("adding %s to process stack", dir);
 	DIRLIST *item = (DIRLIST *)malloc(sizeof(DIRLIST));
 	strncpy(item->name, dir, sizeof(item->name) - 1);
+	item->name[sizeof(item->name) - 1] = '\0';
 	// wlock(&dirlock);
 	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&dirlock));
 	item->next = dirstack;
@@ -952,7 +959,7 @@ char *encode_result(std::atomic<char> *data, size_t sz)
 	// code[len] = '\0';
 	// return code;
 
-	char *result = (char *)malloc(sz + 1);
+	char *result = (char *)malloc(sz * 2 + 1);
 	if (result == NULL)
 	{
 		free(code);
@@ -1255,7 +1262,13 @@ int validate(int argc, char *argv[])
 
 	report_data();
 	report_data("Result code");
-	report_data("%s", encode_result(result_code.get(), next_id));
+
+	if (char *code = encode_result(result_code.get(), next_id))
+	{
+		report_data("%s", code);
+		free(code); // avoid leaking the heap buffer
+	}
+
 	report_newrow();
 
 	report_newrow();
