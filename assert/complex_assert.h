@@ -76,13 +76,13 @@ public:
     }
 
 protected:
-    enumeration status;    // Member variable of type `enumeration`.
-    enumeration operation; // Member variable of type `enumeration`.
-    enumeration once;      // Member variable of type `enumeration`.
-    double within;         // Member variable of type `double`.
-    gld::complex value;         // Member variable of type `complex`.
-    gld::complex once_value;    // Member variable of type `complex`.
-    char1024 target;       // Protected member variable
+    enumeration status;      // Member variable of type `enumeration`.
+    enumeration operation;   // Member variable of type `enumeration`.
+    enumeration once;        // Member variable of type `enumeration`.
+    double within;           // Member variable of type `double`.
+    gld::complex value;      // Member variable of type `complex`.
+    gld::complex once_value; // Member variable of type `complex`.
+    char1024 target;         // Protected member variable
 
 public:
     // Static inline method to get the byte offset of the member `status`.
