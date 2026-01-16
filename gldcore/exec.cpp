@@ -95,7 +95,6 @@ update time and those that are immediately related to it need be updated.  This
  **/
 
 #include <algorithm> // Add this include for std::ranges
-#include <algorithm>
 #include <cctype>
 #include <csignal>
 #include <cstring>
@@ -1628,19 +1627,20 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2) {
 //				for (pc = 0; pc < 2; pc++) {
 //					for (item = commit_list[pc].get(); item
 //!= nullptr; item = item->next.get()) {
-//!OBJECT *obj = (OBJECT *) item->data;
+//! OBJECT *obj = (OBJECT *) item->data;
 //						threadpool->add_job([=,
 //&result]() { 							auto
-//inner_result = result.load();
+// inner_result = result.load();
 //
 //							if (t0 < obj->in_svc) {
 //								if (obj->in_svc
 //< inner_result) result = obj->in_svc;
 //} else if ((t0 == obj->in_svc) && (obj->in_svc_micro != 0)) {
-//if (obj->in_svc == inner_result) 									result.store(obj->in_svc
+// if (obj->in_svc == inner_result)
+// result.store(obj->in_svc
 //+ 1); 							} else if
 //(obj->out_svc >= t0) {
-//TIMESTAMP next = object_commit(obj, t0, t2);
+// TIMESTAMP next = object_commit(obj, t0, t2);
 // if (next == TS_INVALID) {
 // char name[64];
 // throw_exception("object %s commit failed",
@@ -2010,7 +2010,7 @@ static std::shared_ptr<sync_data> main_sync =
         steady state.
  **/
 void exec_sync_reset(std::shared_ptr<struct sync_data>
-                         d) /**< sync data to reset (nullptr to reset main)  **/
+                         &d) /**< sync data to reset (nullptr to reset main) **/
 {
   if (d == nullptr)
     d = main_sync;
@@ -2038,7 +2038,7 @@ void exec_sync_reset(std::shared_ptr<struct sync_data>
 // to merge from */
 void exec_sync_merge(
     std::shared_ptr<struct sync_data>
-        to, /**< sync data to merge to (nullptr to update main)  **/
+        &to, /**< sync data to merge to (nullptr to update main)  **/
     std::shared_ptr<struct sync_data> from) /**< sync data to merge from */
 {
   if (to == nullptr)
@@ -2072,7 +2072,7 @@ void exec_sync_merge(
  **/
 void exec_sync_set(
     std::shared_ptr<struct sync_data>
-        d,       /**< sync data to update (nullptr to update main) */
+        &d,      /**< sync data to update (nullptr to update main) */
     TIMESTAMP t, /**< timestamp to update with (negative time means soft event,
                     0 means failure) */
     bool deltaflag) /**< flag to let us know this was a deltamode exit - force
@@ -2124,7 +2124,7 @@ void exec_sync_set(
  **/
 TIMESTAMP exec_sync_get(
     std::shared_ptr<struct sync_data>
-        d) /**< Sync data to get sync time from (nullptr to read main)  */
+        &d) /**< Sync data to get sync time from (nullptr to read main)  */
 {
   if (d == nullptr)
     d = main_sync;
@@ -2139,7 +2139,7 @@ TIMESTAMP exec_sync_get(
  **/
 unsigned int exec_sync_getevents(
     std::shared_ptr<struct sync_data>
-        d) /**< Sync data to get sync events from (nullptr to read main)  */
+        &d) /**< Sync data to get sync events from (nullptr to read main)  */
 {
   if (d == nullptr)
     d = main_sync;
@@ -2161,7 +2161,7 @@ int exec_sync_ishard(std::shared_ptr<struct sync_data>
         @return non-zero if the event is NEVER, 0 otherwise
  **/
 int exec_sync_isnever(std::shared_ptr<struct sync_data>
-                          d) /**< Sync data to read never sync status from
+                          &d) /**< Sync data to read never sync status from
                                 (nullptr to read main)  */
 {
   if (d == nullptr)
@@ -2361,7 +2361,7 @@ STATUS multi_thread_init() {
 // 	{
 // 		if (thread_data->data[j].status == FAILED)
 // 		{
-// 			exec_sync_set(nullptr, TS_INVALID, false);
+// 			exec_sync_set(sync_data_nullptr, TS_INVALID, false);
 // 			THROW("synchronization failed");
 // 		}
 // 	}
@@ -2733,11 +2733,12 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
                                                 int64 &passes, int64 &tsteps,
                                                 int &j, LISTITEM *&ptr,
                                                 int &pc_rv, int &iObjRankList) {
+  std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
   TIMESTAMP internal_synctime;
   output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, "
                "exitcode=%i ***",
-               exec_sync_get(nullptr), global_stoptime,
-               exec_sync_getevents(nullptr), exec_getexitcode());
+               exec_sync_get(sync_data_nullptr, global_stoptime,
+               exec_sync_getevents(sync_data_nullptr), exec_getexitcode());
 
   /* update the process table info */
   sched_update(global_clock, MLS_RUNNING);
@@ -2791,14 +2792,14 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
 
 #define IIR 0.9 /* about 30s for 95% unit step response */
     global_realtime_metric = global_realtime_metric * IIR + metric * (1 - IIR);
-    exec_sync_reset(nullptr);
-    exec_sync_set(nullptr, global_clock, false);
+    exec_sync_reset(sync_data_nullptr);
+    exec_sync_set(sync_data_nullptr, global_clock, false);
     output_verbose("realtime clock advancing to %d", (int)global_clock);
   }
 
   /* internal control of global clock */
   else
-    global_clock = exec_sync_get(nullptr);
+    global_clock = exec_sync_get(sync_data_nullptr);
 
   /* operate delta mode if necessary (but only when event mode is active, e.g.,
    * not right after init) */
@@ -2847,7 +2848,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
     return false; /* terminate main loop immediately */
   }
 
-  exec_sync_set(nullptr, t, false);
+  exec_sync_set(sync_data_nullptr, t, false);
 
   /* synchronize all internal schedules */
   if (global_clock < 0)
@@ -2861,11 +2862,11 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   output_set_time_context(global_clock);
 
   /* reset for a new sync event */
-  exec_sync_reset(nullptr);
+  exec_sync_reset(sync_data_nullptr);
 
   /* account for stoptime only if global clock is not already at stoptime */
   if (global_clock <= global_stoptime && global_stoptime != TS_NEVER)
-    exec_sync_set(nullptr, global_stoptime + 1, false);
+    exec_sync_set(sync_data_nullptr, global_stoptime + 1, false);
 
   /* synchronize all internal schedules */
   internal_synctime = syncall_internals(global_clock);
@@ -2882,7 +2883,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
      */
   }
 
-  exec_sync_set(nullptr, internal_synctime, false);
+  exec_sync_set(sync_data_nullptr, internal_synctime, false);
   /* prepare multithreading */
 
   if (!global_debug_mode) {
@@ -2956,14 +2957,14 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
           global_clock,
           static_cast<TRANSFORMSOURCE>(XS_DOUBLE | XS_COMPLEX | XS_ENDUSE),
           nullptr); // if (abs(t) < t2) t2 = t;
-      exec_sync_set(nullptr, st, false);
+      exec_sync_set(sync_data_nullptr, st, false);
     }
   }
   //	setTP = false;
 
   if (!global_debug_mode) {
     for (j = 0; j < thread_data->count; j++) {
-      exec_sync_merge(nullptr, thread_data->data[j]);
+      exec_sync_merge(sync_data_nullptr, thread_data->data[j]);
     }
 
     /* report progress */
@@ -2975,7 +2976,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
 
   /**** LOOPED SLAVE PAUSE HERE ****/
   if (global_multirun_mode == MRM_SLAVE) {
-    output_debug("step_to = %lli", exec_sync_get(nullptr));
+    output_debug("step_to = %lli", exec_sync_get(sync_data_nullptr));
     output_debug("exec_start(), slave waiting for looped time signal");
 
     // pthread_cond_broadcast(&mls_inst_signal);
@@ -2985,7 +2986,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
     // pthread_mutex_unlock(&mls_inst_lock);
 
     output_debug("exec_start(), slave received looped time signal (%lli)",
-                 exec_sync_get(nullptr));
+                 exec_sync_get(sync_data_nullptr));
   }
 
   // TODO: Run tests to ensure correct behavior before deleting.
@@ -2996,24 +2997,18 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   if ( exec_run_syncscripts()!=XC_SUCCESS )
   {
           output_error("sync script(s) failed");
-          // TODO: Delete this debug log once environment issues are resolved
-          FILE* f4 = fopen("/tmp/gld_debug.log", "a");
-  if (f4) {
-          fprintf(f4, "DEBUG: in execute_single_simulation_iteration script sync
-  failure\n"); fclose(f4);
-  }
           THROW("script synchronization failure");
   }
   */
   /* check for clock advance (indicating last pass) */
-  if (exec_sync_get(nullptr) != global_clock &&
+  if (exec_sync_get(sync_data_nullptr) != global_clock &&
       global_simulation_mode == SM_EVENT) {
     /* clock update is the very last chance to change the next time */
     exec_clock_update_modules();
-    if (exec_sync_get(nullptr) > global_clock) {
+    if (exec_sync_get(sync_data_nullptr) > global_clock) {
       global_federation_reiteration = false;
       TIMESTAMP commit_time = TS_NEVER;
-      commit_time = commit_all(global_clock, exec_sync_get(nullptr));
+      commit_time = commit_all(global_clock, exec_sync_get(sync_data_nullptr));
       //		commit_time = tp_commit_all(global_clock,
       // exec_sync_get(nullptr), threadpool);
       if (absolute_timestamp(commit_time) <= global_clock) {
@@ -3027,8 +3022,9 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
                 the guidance for that message and try again.
          */
         THROW("commit failure");
-      } else if (absolute_timestamp(commit_time) < exec_sync_get(nullptr)) {
-        exec_sync_set(nullptr, commit_time, false);
+      } else if (absolute_timestamp(commit_time) <
+                 exec_sync_get(sync_data_nullptr)) {
+        exec_sync_set(sync_data_nullptr, commit_time, false);
       }
       /* reset iteration count */
       iteration_counter = global_iteration_limit;
@@ -3036,7 +3032,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
 
       /* count number of timesteps */
       tsteps++;
-    } else if (exec_sync_get(nullptr) == global_clock) {
+    } else if (exec_sync_get(sync_data_nullptr) == global_clock) {
       iteration_counter = global_iteration_limit;
       global_federation_reiteration = true;
       if (--federation_iteration_counter == 0) {
@@ -3047,7 +3043,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
                 This indicates that the federation that this gridlab-d model a
            part of was unable to determine a steady state any time horizon.
          */
-        exec_sync_set(nullptr, TS_INVALID, false);
+        exec_sync_set(sync_data_nullptr, TS_INVALID, false);
         THROW("convergence failure");
       }
     }
@@ -3062,20 +3058,20 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
             the object that is causing the convergence problem and contact
             the developer of the module that implements that object's class.
      */
-    exec_sync_set(nullptr, TS_INVALID, false);
+    exec_sync_set(sync_data_nullptr, TS_INVALID, false);
     THROW("convergence failure");
   }
 
   /* handle delta mode operation */
   if (global_simulation_mode == SM_DELTA &&
-      exec_sync_get(nullptr) >= global_clock) {
+      exec_sync_get(sync_data_nullptr) >= global_clock) {
     if (handle_delta_mode_operation() == -1) {
       return false; // DELTA MODE FAILURE
     }
   }
 
   /* Check if simulation should continue */
-  return (iteration_counter > 0 && exec_sync_isrunning(nullptr) &&
+  return (iteration_counter > 0 && exec_sync_isrunning(sync_data_nullptr) &&
           exec_getexitcode() == XC_SUCCESS);
 }
 
@@ -3192,7 +3188,7 @@ STATUS exec_step(void) {
        * target */
       TIMESTAMP next_event = exec_sync_get(nullptr);
       if (global_step_time != TS_NEVER && next_event > global_step_time) {
-        exec_sync_set(nullptr, global_step_time, false);
+        exec_sync_set(sync_data_nullptr, global_step_time, false);
       }
     }
   }
@@ -3230,8 +3226,8 @@ STATUS exec_force_sync_to_time(TIMESTAMP target_time) {
   global_clock = target_time;
 
   // Reset sync state and set next sync time
-  exec_sync_reset(nullptr);
-  exec_sync_set(nullptr, target_time, false);
+  exec_sync_reset(sync_data_nullptr);
+  exec_sync_set(sync_data_nullptr, target_time, false);
 
   output_verbose("Forcing sync to exact time %.2f (next natural event at %.2f)",
                  (double)target_time, (double)next_event);
@@ -3243,7 +3239,7 @@ STATUS exec_force_sync_to_time(TIMESTAMP target_time) {
     output_error("exec_force_sync_to_time: internal property sync failure");
     return FAILED;
   }
-  exec_sync_set(nullptr, internal_synctime, false);
+  exec_sync_set(sync_data_nullptr, internal_synctime, false);
 
   // Perform sync passes for all objects
   for (int pass = 0; ranks[pass] != nullptr; pass++) {
@@ -3263,7 +3259,7 @@ STATUS exec_force_sync_to_time(TIMESTAMP target_time) {
         }
 
         // Update sync with this object's next event time
-        exec_sync_set(nullptr, sync_result, false);
+        exec_sync_set(sync_data_nullptr, sync_result, false);
       }
     }
 
@@ -3272,7 +3268,7 @@ STATUS exec_force_sync_to_time(TIMESTAMP target_time) {
         global_clock,
         static_cast<TRANSFORMSOURCE>(XS_DOUBLE | XS_COMPLEX | XS_ENDUSE),
         nullptr);
-    exec_sync_set(nullptr, st, false);
+    exec_sync_set(sync_data_nullptr, st, false);
   }
 
   // Commit all object states
@@ -3293,6 +3289,7 @@ STATUS exec_force_sync_to_time(TIMESTAMP target_time) {
         and FAILED if a problem was encountered.
  **/
 STATUS exec_start() {
+  std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
   cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
   int64 passes = 0, tsteps = 0;
   int ptc_rv = 0;                         // unused
@@ -3332,7 +3329,7 @@ STATUS exec_start() {
   }
   CATCH(const char *msg) {
     output_error("exec halted: %s", msg);
-    exec_sync_set(nullptr, TS_INVALID, false);
+    exec_sync_set(sync_data_nullptr, TS_INVALID, false);
     /* TROUBLESHOOT
             This indicates that the core's solver shut down.  This message
             is usually preceded by more detailed messages.  Follow the guidance
@@ -3342,8 +3339,8 @@ STATUS exec_start() {
   ENDCATCH
   output_debug("*** main loop ended at %lli; stoptime=%lli, n_events=%i, "
                "exitcode=%i ***",
-               exec_sync_get(nullptr), global_stoptime,
-               exec_sync_getevents(nullptr), exec_getexitcode());
+               exec_sync_get(sync_data_nullptr), global_stoptime,
+               exec_sync_getevents(sync_data_nullptr), exec_getexitcode());
   if (global_multirun_mode == MRM_MASTER) {
     instance_master_done(TS_NEVER); // tell everyone to pack up and go home
   }
@@ -3426,7 +3423,7 @@ STATUS exec_start() {
 }
 
 STATUS exec_step(int64 *passes, int64 *tsteps) {
-  // Setup variables needed for the step (similar to exec_start)
+  std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
   cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
   int j = 0, pc_rv = 0, iObjRankList = 0;
   LISTITEM *ptr = nullptr;
@@ -3755,7 +3752,7 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 //	{
 //		output_error("slave_node_proc(): received handshake mismatch
 //(\"%s\")", buffer); 		closesocket(masterfd); 		free(addrin);
-//return 0;
+// return 0;
 //	}
 //
 //	sprintf(response, HS_ACK);
@@ -3812,7 +3809,8 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 //	{
 //		output_error("slave_node_proc(): error in command instruction
 // dir token"); 		output_debug("t=\"%5s\" vs c=\"%5s\"", token[1],
-// buffer+offset); 		closesocket(masterfd); 		free(addrin); 		return 0;
+// buffer+offset); 		closesocket(masterfd); 		free(addrin);
+// return 0;
 //	}
 //	offset += token_len[1];
 //	//tok_len = strcspn(buffer+offset, "\"\n\r\t\0"); // whitespace in path
@@ -3929,7 +3927,7 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 //	sprintf(filepath, "%s%s%s", dirname, (dirname[0] ? "\\" : ""),
 // filename); 	output_debug("filepath = %s", filepath); 	sprintf(ippath,
 // "--slave %s:%d", addrstr, mtr_port); 	output_debug("ippath = %s",
-//ippath); 	sprintf(cmd,
+// ippath); 	sprintf(cmd,
 //"\"%s%sgridlabd.exe\" %s --id %" FMT_INT64 "d %s %s",
 //(global_execdir[0] ? global_execdir : ""), (global_execdir[0] ? "\\" : ""),
 // params, id, ippath, filepath);//addrstr, mtr_port, filepath);//,
@@ -3997,7 +3995,7 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 //	{
 //		output_fatal("exec_slave_node(): unable to bind socket to port
 //%d", global_slave_port); 		perror("bind()");
-//closesocket(sockfd); 		return;
+// closesocket(sockfd); 		return;
 //	}
 //
 //	// listen
@@ -4047,7 +4045,7 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 //			args[2] = (SOCKET
 //*)reinterpret_cast<int*>(accept(sockfd, (struct sockaddr *)inaddr,
 //&inaddrsz)); 			output_debug("esn(): accepted client");
-//if (-1 == (int64)(args[2]))
+// if (-1 == (int64)(args[2]))
 //			{
 //				output_error("unable to accept connection");
 //				perror("accept()");
@@ -4078,7 +4076,8 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
 //			{
 //				output_error("slavenode unable to detach
 // connection thread"); 				node_done = true;
-// closesocket(sockfd); 				closesocket(*args[2]); 				return;
+// closesocket(sockfd); 				closesocket(*args[2]);
+// return;
 //			}
 //			//output_debug("esn(): thread detached");
 //		} // end if rct

@@ -138,6 +138,7 @@ gridlabd.xml
 *.0
 *.1
 *.csv
+*.sh
 
 # Virtual env
 python_bindings/env
