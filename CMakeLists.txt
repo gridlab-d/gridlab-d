@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
-# Set default build type to Debug if not specified
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build: Debug Release RelWithDebInfo MinSizeRel" FORCE)
-endif()
-
-# Testing automated github workflows
-
 if(WIN32)
     add_compile_options(
         $<$<CONFIG:Debug>:/MDd>
@@ -37,20 +30,36 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # endif()
 
 
-# Find Eigen
-# Permanent eigen fix is WIP. Leaving commented out for now.
-# find_package(Eigen3 REQUIRED NO_MODULE)
-# Try to use system Eigen if third_party/eigen doesn't exist
-if(EXISTS "${CMAKE_SOURCE_DIR}/third_party/eigen")
-    set(EIGEN3_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/third_party/eigen")
+# Include FetchContent module
+include(FetchContent)
+
+# Try to find system Eigen3 first (version 3.3 or higher)
+find_package(Eigen3 3.3 QUIET)
+
+if(NOT Eigen3_FOUND)
+    # Fetch Eigen3 from release tarball (faster than git clone)
+    FetchContent_Declare(
+      Eigen3
+      URL https://gitlab.com/libeigen/eigen/-/archive/3.3.9/eigen-3.3.9.tar.gz
+      URL_HASH SHA256=7985975b787340124786f092b3a07d594b2e9cd53bbfe5f3d9b1daee7d55f56f
+      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+    
+    # Use Populate instead of MakeAvailable to include headers only (avoids BLAS/LAPACK conflicts)
+    FetchContent_GetProperties(Eigen3)
+    if(NOT eigen3_POPULATED)
+      FetchContent_Populate(Eigen3)
+    endif()
+    
+    include_directories(${eigen3_SOURCE_DIR})
 else()
-    set(EIGEN3_INCLUDE_DIR "/usr/include/eigen3")
+    message(STATUS "Using system Eigen3 (version ${Eigen3_VERSION})")
+    include_directories(${EIGEN3_INCLUDE_DIR})
 endif()
-include_directories(${EIGEN3_INCLUDE_DIR})
+
 
 
 include(cmake/Warnings.cmake)
-
 OPTION(GLD_EXTRA_WARNINGS "Make warnings more pedantic" OFF)
 if (GLD_EXTRA_WARNINGS)
     set(GLD_COMPILE_OPTIONS ${WARNING_FLAGS} CACHE INTERNAL "GLD_COMPILE_OPTIONS")
@@ -358,16 +367,17 @@ if (GLD_USE_SUPERLU)
             ${CMAKE_BINARY_DIR}/third_party/SuperLU/CBLAS
     )
 
+    # Use SuperLU's internal BLAS (faster build, no external dependencies)
+    # The CBLAS version provided by SuperLU does not build in MSYS2
     if (WIN32 OR MSYS OR MINGW OR CYGWIN)
-        # The CBLAS version provided by SuperLU does not build in MSYS2.
-        option(enable_internal_blaslib "Build the CBLAS library" OFF)
-    else ()
-        option(enable_internal_blaslib "Build the CBLAS library" ON)
-    endif ()
+        set(enable_internal_blaslib OFF CACHE BOOL "Build the CBLAS library" FORCE)
+    else()
+        set(enable_internal_blaslib ON CACHE BOOL "Build the CBLAS library" FORCE)
+    endif()
 
     # SuperLU's generic names here can cause issues, make sure other projects do not cross these names
-    option(enable_examples "Build SuperLU examples" OFF)
-    option(enable_tests "Build SuperLU tests" OFF)
+    set(enable_examples OFF CACHE BOOL "Build SuperLU examples" FORCE)
+    set(enable_tests OFF CACHE BOOL "Build SuperLU tests" FORCE)
 
     include_directories(third_party/SuperLU/SRC)
     add_subdirectory(third_party/SuperLU)
