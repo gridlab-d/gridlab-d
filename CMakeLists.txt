@@ -38,6 +38,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 # Find Eigen
+# Permanent eigen fix is WIP. Leaving commented out for now.
+# find_package(Eigen3 REQUIRED NO_MODULE)
 # Try to use system Eigen if third_party/eigen doesn't exist
 if(EXISTS "${CMAKE_SOURCE_DIR}/third_party/eigen")
     set(EIGEN3_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/third_party/eigen")
