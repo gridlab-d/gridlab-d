@@ -10,6 +10,11 @@
 #ifndef _DEBUG_H
 #define _DEBUG_H
 
+#include <memory>
+
+struct sync_data;
+typedef struct s_object_list OBJECT;
+
 void exec_sighandler(int sig);
 int exec_debug(std::shared_ptr<struct sync_data> &data, int pass, int index,
                OBJECT *obj);

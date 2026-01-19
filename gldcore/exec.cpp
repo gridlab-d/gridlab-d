@@ -2039,7 +2039,7 @@ void exec_sync_reset(std::shared_ptr<struct sync_data>
 void exec_sync_merge(
     std::shared_ptr<struct sync_data>
         &to, /**< sync data to merge to (nullptr to update main)  **/
-    std::shared_ptr<struct sync_data> from) /**< sync data to merge from */
+    std::shared_ptr<struct sync_data> &from) /**< sync data to merge from */
 {
   if (to == nullptr)
     to = main_sync;
@@ -2737,7 +2737,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   TIMESTAMP internal_synctime;
   output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, "
                "exitcode=%i ***",
-               exec_sync_get(sync_data_nullptr, global_stoptime,
+               exec_sync_get(sync_data_nullptr), global_stoptime,
                exec_sync_getevents(sync_data_nullptr), exec_getexitcode());
 
   /* update the process table info */
@@ -3010,7 +3010,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
       TIMESTAMP commit_time = TS_NEVER;
       commit_time = commit_all(global_clock, exec_sync_get(sync_data_nullptr));
       //		commit_time = tp_commit_all(global_clock,
-      // exec_sync_get(nullptr), threadpool);
+      // exec_sync_get(sync_data_nullptr), threadpool);
       if (absolute_timestamp(commit_time) <= global_clock) {
         // commit cannot force reiterations, and any event where the time is
         // less than the global clock
@@ -3146,6 +3146,7 @@ STATUS exec_finalize_all(void) { return finalize_all(); }
 STATUS exec_step(void) {
   // Setup variables needed for the step (similar to exec_start)
   cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
+  std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
   int64 passes = 0, tsteps = 0;
   int j = 0, pc_rv = 0, iObjRankList = 0;
   LISTITEM *ptr = nullptr;
@@ -3186,7 +3187,7 @@ STATUS exec_step(void) {
 
       /* Check if we need to cap the next event time to avoid overshooting step
        * target */
-      TIMESTAMP next_event = exec_sync_get(nullptr);
+      TIMESTAMP next_event = exec_sync_get(sync_data_nullptr);
       if (global_step_time != TS_NEVER && next_event > global_step_time) {
         exec_sync_set(sync_data_nullptr, global_step_time, false);
       }
@@ -3220,7 +3221,8 @@ STATUS exec_force_sync_to_time(TIMESTAMP target_time) {
   }
 
   // Store the next natural event time for commit
-  TIMESTAMP next_event = exec_sync_get(nullptr);
+  std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
+  TIMESTAMP next_event = exec_sync_get(sync_data_nullptr);
 
   // Set global_clock to the target time
   global_clock = target_time;
@@ -3315,7 +3317,7 @@ STATUS exec_start() {
     signal(SIGINT, nullptr);
 
     /* check end state */
-    if (exec_sync_isnever(nullptr)) {
+    if (exec_sync_isnever(sync_data_nullptr)) {
       char buffer[64];
       output_verbose(
           "simulation at steady state at %s",
