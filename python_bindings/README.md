@@ -15,8 +15,19 @@ This package provides Python bindings for GridLAB-D, a power system simulation p
 
 1. **Build the GridLAB-D core** (if not already built):
    ```bash
-   cd build
-   cmake --build . --parallel
+   # Create out-of-source build directory
+   mkdir cmake-build
+   cd cmake-build
+   
+   # Configure the build (use ccmake for interactive configuration)
+   ccmake ../
+   
+   # Build and install (use sudo if installing to default system location)
+   sudo cmake --build . --target install
+   
+   # Verify GridLAB-D installation
+   cd ../
+   gridlabd -T 0 --validate
    ```
 
 2. **Install the Python package in development mode**:
@@ -26,8 +37,9 @@ This package provides Python bindings for GridLAB-D, a power system simulation p
    ```
    
    **Note**: In development mode (`-e`), the package links to your source tree. It automatically finds:
+   - GridLAB-D libraries in `cmake-build/lib/` or `build/lib/`
    - Data files in `gldcore/` (tzinfo.txt, unitfile.txt)
-   - Modules in `build/lib/` (residential.so, climate.so, etc.)
+   - Modules (residential.so, climate.so, etc.)
 
 3. **Verify installation**:
    ```python
