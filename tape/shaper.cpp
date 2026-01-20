@@ -55,7 +55,7 @@ EXPORT int create_shaper(OBJECT **obj, OBJECT *parent)
 	*obj = gl_create_object(shaper_class);
 	if (*obj!=nullptr)
 	{
-		struct shaper *my = OBJECTDATA(*obj,struct shaper);
+		struct shaper *my = object_data<struct shaper>(*obj);
 		last_shaper = *obj;
 		gl_set_parent(*obj,parent);
 		strcpy(my->file,"");
@@ -84,7 +84,7 @@ static int shaper_open(OBJECT *obj)
 	char1024 fname="";
 	char32 flags="r";
 	TAPEFUNCS *fns;
-	struct shaper *my = OBJECTDATA(obj,struct shaper);
+	struct shaper *my = object_data<struct shaper>(obj);
 	
 	/* if prefix is omitted (no colons found) */
 //	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
@@ -125,7 +125,7 @@ static void close_shaper(struct shaper *my)
 
 static TIMESTAMP shaper_read(OBJECT *obj, TIMESTAMP t0, unsigned int n)
 {
-	struct shaper *my = OBJECTDATA(obj,struct shaper);
+	struct shaper *my = object_data<struct shaper>(obj);
 	TIMESTAMP t1 = TS_NEVER;
 
 	/* determine shape time */
@@ -156,7 +156,7 @@ static TIMESTAMP shaper_read(OBJECT *obj, TIMESTAMP t0, unsigned int n)
 
 static TIMESTAMP shaper_update(OBJECT *obj, TIMESTAMP t0, unsigned int n)
 {
-	struct shaper *my = OBJECTDATA(obj,struct shaper);
+	struct shaper *my = object_data<struct shaper>(obj);
 	TIMESTAMP t1 = TS_NEVER;
 	if (my->events<=0) /* direct shaper */
 	{
@@ -187,7 +187,7 @@ static TIMESTAMP shaper_update(OBJECT *obj, TIMESTAMP t0, unsigned int n)
 
 EXPORT TIMESTAMP sync_shaper(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	struct shaper *my = OBJECTDATA(obj,struct shaper);
+	struct shaper *my = object_data<struct shaper>(obj);
 	TIMESTAMP t1 = TS_NEVER;
 	if (my->status==TS_INIT)
 		shaper_open(obj);

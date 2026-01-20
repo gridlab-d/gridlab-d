@@ -73,7 +73,7 @@ int underground_line::init(OBJECT *parent)
 	int type_A, type_B, type_C, type_N;
 	int cond_present, cond_present_CN, cable_types_value;
 	OBJECT *temp_obj;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	int result = line::init(parent);
 
@@ -96,7 +96,7 @@ int underground_line::init(OBJECT *parent)
 		*/
 
 	//Test the phases
-	line_configuration *config = OBJECTDATA(configuration, line_configuration);
+	line_configuration *config = object_data<line_configuration>(configuration);
 
 	type_A = test_phases(config,'A');
 	type_B = test_phases(config,'B');
@@ -285,11 +285,11 @@ int underground_line::init(OBJECT *parent)
 
 void underground_line::recalc(void)
 {
-	line_configuration *config = OBJECTDATA(configuration, line_configuration);
+	line_configuration *config = object_data<line_configuration>(configuration);
 	gld::complex Zabc_mat[3][3], Yabc_mat[3][3];
 	bool not_TS_CN = false;
 	bool is_CN_ug_line = false;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	// Zero out Zabc_mat and Yabc_mat. Un-needed phases will be left zeroed.
 	for (int i = 0; i < 3; i++) 
@@ -382,7 +382,7 @@ void underground_line::recalc(void)
 		#define TAP(i) (tap[i - 1])
 
 		#define UG_GET(ph, name) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
-				OBJECTDATA(config->phase##ph##_conductor, underground_line_conductor)->name : 0)
+				object_data<underground_line_conductor>(config->phase##ph##_conductor)->name : 0)
 
 		dia_od1 = UG_GET(A, outer_diameter);
 		dia_od2 = UG_GET(B, outer_diameter);
@@ -487,7 +487,7 @@ void underground_line::recalc(void)
 		}
 
 		#define DIST(ph1, ph2) (has_phase(PHASE_##ph1) && has_phase(PHASE_##ph2) && config->line_spacing ? \
-			OBJECTDATA(config->line_spacing, line_spacing)->distance_##ph1##to##ph2 : 0.0)
+			object_data<line_spacing>(config->line_spacing)->distance_##ph1##to##ph2 : 0.0)
 
 		D(1, 2) = DIST(A, B);
 		D(1, 3) = DIST(A, C);
@@ -833,7 +833,7 @@ void underground_line::recalc(void)
 				{
 					if ((dia[0]==0.0) || (rad_14==0.0) || (strands_4 == 0))	//Make sure conductor or "neutral ring" radius are not zero
 					{
-						gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
+						gl_warning("Unable to compute capacitance for %s",object_header(this)->name);
 						/* TROUBLESHOOT
 						One phase of an underground line has either a conductor diameter, a concentric-neutral location diameter, or a neutral
 						strand count of zero.  This will lead to indeterminant values in the analysis.  Please fix these values, or run the simulation
@@ -850,7 +850,7 @@ void underground_line::recalc(void)
 
 						if (temp_denom == 0.0)
 						{
-							gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+							gl_warning("Capacitance calculation failure for %s",object_header(this)->name);
 							/*  TROUBLESHOOT
 							While computing the capacitance, a zero-value denominator was encountered.  Please check
 							your underground_conductor parameter values and try again.
@@ -880,7 +880,7 @@ void underground_line::recalc(void)
 				{
 					if ((dia[1]==0.0) || (rad_25==0.0) || (strands_5 == 0))	//Make sure conductor or "neutral ring" radius are not zero
 					{
-						gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
+						gl_warning("Unable to compute capacitance for %s",object_header(this)->name);
 						//Defined above
 
 						c_bn = 0.0;
@@ -892,7 +892,7 @@ void underground_line::recalc(void)
 
 						if (temp_denom == 0.0)
 						{
-							gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+							gl_warning("Capacitance calculation failure for %s",object_header(this)->name);
 							//Defined above
 
 							c_bn = 0.0;
@@ -919,7 +919,7 @@ void underground_line::recalc(void)
 					if ((dia[2]==0.0) || (rad_36==0.0) || (strands_6 == 0))	//Make sure conductor or "neutral ring" radius are not zero
 
 					{
-						gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
+						gl_warning("Unable to compute capacitance for %s",object_header(this)->name);
 						//Defined above
 
 						c_cn = 0.0;
@@ -932,7 +932,7 @@ void underground_line::recalc(void)
 
 						if (temp_denom == 0.0)
 						{
-							gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+							gl_warning("Capacitance calculation failure for %s",object_header(this)->name);
 							//Defined above
 
 							c_cn = 0.0;
@@ -960,7 +960,7 @@ void underground_line::recalc(void)
 					
 					if ((dia[0]==0.0) || (rad_14==0.0))	//Make sure conductor or "neutral ring" radius are not zero
 					{
-						gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
+						gl_warning("Unable to compute capacitance for %s",object_header(this)->name);
 						/* TROUBLESHOOT
 						One phase of an underground line has either a conductor diameter, a concentric-neutral location diameter, or a neutral
 						strand count of zero.  This will lead to indeterminant values in the analysis.  Please fix these values, or run the simulation
@@ -976,7 +976,7 @@ void underground_line::recalc(void)
 
 						if (temp_denom == 0.0)
 						{
-							gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+							gl_warning("Capacitance calculation failure for %s",object_header(this)->name);
 							/*  TROUBLESHOOT
 							While computing the capacitance, a zero-value denominator was encountered.  Please check
 							your underground_conductor parameter values and try again.
@@ -1005,7 +1005,7 @@ void underground_line::recalc(void)
 					
 					if ((dia[1]==0.0) || (rad_25==0.0))	//Make sure conductor or "neutral ring" radius are not zero
 					{
-						gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
+						gl_warning("Unable to compute capacitance for %s",object_header(this)->name);
 						//Defined above
 
 						c_bn = 0.0;
@@ -1017,7 +1017,7 @@ void underground_line::recalc(void)
 
 						if (temp_denom == 0.0)
 						{
-							gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+							gl_warning("Capacitance calculation failure for %s",object_header(this)->name);
 							//Defined above
 
 							c_bn = 0.0;
@@ -1045,7 +1045,7 @@ void underground_line::recalc(void)
 					if ((dia[2]==0.0) || (rad_36==0.0))	//Make sure conductor or "neutral ring" radius are not zero
 
 					{
-						gl_warning("Unable to compute capacitance for %s",OBJECTHDR(this)->name);
+						gl_warning("Unable to compute capacitance for %s",object_header(this)->name);
 						//Defined above
 
 						c_cn = 0.0;
@@ -1058,7 +1058,7 @@ void underground_line::recalc(void)
 
 						if (temp_denom == 0.0)
 						{
-							gl_warning("Capacitance calculation failure for %s",OBJECTHDR(this)->name);
+							gl_warning("Capacitance calculation failure for %s",object_header(this)->name);
 							//Defined above
 
 							c_cn = 0.0;
@@ -1354,7 +1354,7 @@ void underground_line::get_cable_values(OBJECT *line_conductor, double *sh_gmr, 
 {
 	gld_property *temp_prop_A;
 	double temp_shield_gmr_val, temp_neutral_gmr_val;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Map some properties and get some values
 	temp_prop_A = new gld_property(line_conductor,"shield_gmr");
@@ -1414,7 +1414,7 @@ EXPORT TIMESTAMP commit_underground_line(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2
 {
 	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 	{
-		underground_line *plink = OBJECTDATA(obj,underground_line);
+		underground_line *plink = object_data<underground_line>(obj);
 		plink->calculate_power();
 	}
 	return TS_NEVER;
@@ -1426,7 +1426,7 @@ EXPORT int create_underground_line(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(underground_line::oclass);
 		if (*obj!=nullptr)
 		{
-			underground_line *my = OBJECTDATA(*obj,underground_line);
+			underground_line *my = object_data<underground_line>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}	
@@ -1439,7 +1439,7 @@ EXPORT int create_underground_line(OBJECT **obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_underground_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		underground_line *pObj = OBJECTDATA(obj,underground_line);
+		underground_line *pObj = object_data<underground_line>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -1460,7 +1460,7 @@ EXPORT TIMESTAMP sync_underground_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pas
 EXPORT int init_underground_line(OBJECT *obj)
 {
 	try {
-		underground_line *my = OBJECTDATA(obj,underground_line);
+		underground_line *my = object_data<underground_line>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(underground_line);
@@ -1468,12 +1468,12 @@ EXPORT int init_underground_line(OBJECT *obj)
 
 EXPORT int isa_underground_line(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,underground_line)->isa(classname);
+	return object_data<underground_line>(obj)->isa(classname);
 }
 
 EXPORT int recalc_underground_line(OBJECT *obj)
 {
-	OBJECTDATA(obj,underground_line)->recalc();
+	object_data<underground_line>(obj)->recalc();
 	return 1;
 }
 
@@ -1482,7 +1482,7 @@ EXPORT int create_fault_ugline(OBJECT *thisobj, OBJECT **protect_obj, char *faul
 	int retval;
 
 	//Link to ourselves
-	underground_line *thisline = OBJECTDATA(thisobj,underground_line);
+	underground_line *thisline = object_data<underground_line>(thisobj);
 
 	//Try to fault up
 	retval = thisline->link_fault_on(protect_obj, fault_type, implemented_fault,repair_time);
@@ -1494,7 +1494,7 @@ EXPORT int fix_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp_f
 	int retval;
 
 	//Link to ourselves
-	underground_line *thisline = OBJECTDATA(thisobj,underground_line);
+	underground_line *thisline = object_data<underground_line>(thisobj);
 
 	//Clear the fault
 	retval = thisline->link_fault_off(implemented_fault, imp_fault_name);
@@ -1509,7 +1509,7 @@ EXPORT int clear_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp
 	int retval;
 
 	//Link to ourselves
-	underground_line *thisline = OBJECTDATA(thisobj,underground_line);
+	underground_line *thisline = object_data<underground_line>(thisobj);
 
 	//Clear the fault
 	retval = thisline->clear_fault_only(implemented_fault, imp_fault_name);

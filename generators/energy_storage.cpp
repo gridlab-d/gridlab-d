@@ -97,7 +97,7 @@ int energy_storage::create(void)
 /* Object initialization is called once after all object have been created */
 int energy_storage::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	FUNCTIONADDR temp_fxn;
 	STATUS fxn_return_status;
 
@@ -324,7 +324,7 @@ TIMESTAMP energy_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double curr_time;
 	double deltat;
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//******* QSTS Updates might go here - this may also be called by deltamode *******//
 
@@ -378,7 +378,7 @@ SIMULATIONMODE energy_storage::inter_deltaupdate(unsigned int64 delta_time, unsi
 //DC update function
 STATUS energy_storage::energy_storage_dc_update(OBJECT *calling_obj, bool init_mode)
 {
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	STATUS temp_status = SUCCESS;
 	//double  P_ES_pu;
 
@@ -402,8 +402,8 @@ STATUS energy_storage::energy_storage_dc_update(OBJECT *calling_obj, bool init_m
 
 		//Push the voltage back out to the inverter - this may need different logic when there are multiple objects
 		//******* Just an example - may not be needed *******//
-		inverter_voltage_property->setp<double>(ES_DC_Voltage, *test_rlock);
-		inverter_current_property->setp<double>(ES_DC_Current, *test_rlock);
+		inverter_voltage_property->setp<double>(ES_DC_Voltage, test_rlock);
+		inverter_current_property->setp<double>(ES_DC_Current, test_rlock);
 
 	}
 	else //Standard runs
@@ -427,7 +427,7 @@ STATUS energy_storage::energy_storage_dc_update(OBJECT *calling_obj, bool init_m
 
 
 		//Push the changes
-		inverter_current_property->setp<double>(ES_DC_Current, *test_rlock);
+		inverter_current_property->setp<double>(ES_DC_Current, test_rlock);
 		//inverter_power_property->setp<double>(inv_P, *test_rlock);
 	}
 
@@ -446,7 +446,7 @@ EXPORT int create_energy_storage(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(energy_storage::oclass);
 		if (*obj != nullptr)
 		{
-			energy_storage *my = OBJECTDATA(*obj, energy_storage);
+			energy_storage *my = /*OBJECTDATA(*obj, energy_storage)*/ object_data<energy_storage>(*obj);
 			gl_set_parent(*obj, parent);
 			return my->create();
 		}
@@ -461,7 +461,7 @@ EXPORT int init_energy_storage(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj != nullptr)
-			return OBJECTDATA(obj, energy_storage)->init(parent);
+			return /*OBJECTDATA(obj, energy_storage)*/  object_data<energy_storage>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -471,7 +471,7 @@ EXPORT int init_energy_storage(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_energy_storage(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	energy_storage *my = OBJECTDATA(obj, energy_storage);
+	energy_storage *my = /*OBJECTDATA(obj, energy_storage)*/ object_data<energy_storage>(obj);
 	try
 	{
 		switch (pass)
@@ -497,7 +497,7 @@ EXPORT TIMESTAMP sync_energy_storage(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 //DELTAMODE Linkage
 EXPORT SIMULATIONMODE interupdate_energy_storage(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	energy_storage *my = OBJECTDATA(obj, energy_storage);
+	energy_storage *my = /*OBJECTDATA(obj, energy_storage)*/ object_data<energy_storage>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -514,7 +514,7 @@ EXPORT SIMULATIONMODE interupdate_energy_storage(OBJECT *obj, unsigned int64 del
 //DC Object calls from inverter linkage
 EXPORT STATUS dc_object_update_energy_storage(OBJECT *us_obj, OBJECT *calling_obj, bool init_mode)
 {
-	energy_storage *me_energy_storage = OBJECTDATA(us_obj, energy_storage);
+	energy_storage *me_energy_storage = /*OBJECTDATA(us_obj, energy_storage)*/  object_data<energy_storage>(us_obj);
 	STATUS temp_status;
 
 	//Call our update function

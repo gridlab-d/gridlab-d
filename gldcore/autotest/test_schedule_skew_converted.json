@@ -1,0 +1,90 @@
+{
+  "classes": {
+    "test": [
+      {
+        "type": "double",
+        "name": "x"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2016-01-01 00:00:00'",
+    "stoptime": "'2016-01-02 00:00:00'"
+  },
+  "modules": {
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "player": {
+      "instances": [
+        {
+          "parent": "double_assert_2",
+          "property": "value",
+          "file": "../test_schedule_skew_1.player"
+        },
+        {
+          "parent": "double_assert_5",
+          "property": "value",
+          "file": "../test_schedule_skew_2.player"
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_2",
+          "parent": "runTimeClass",
+          "target": "x",
+          "within": 1e-05
+        },
+        {
+          "name": "double_assert_5",
+          "parent": "runTimeClass2",
+          "target": "x",
+          "within": 1e-05
+        }
+      ]
+    },
+    "test": {
+      "instances": [
+        {
+          "name": "runTimeClass",
+          "schedule_skew": -12,
+          "x": "skewed_schedule*1+0.0",
+          "inside_comments": [
+            "// object recorder{",
+            "//  property x;",
+            "//  file test_schedule_skew_1.player;",
+            "//  interval -1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "runTimeClass2",
+          "schedule_skew": 25,
+          "x": "skewed_schedule*1.0+0.0",
+          "inside_comments": [
+            "// object recorder{",
+            "//  property x;",
+            "//  file test_schedule_skew_2.player;",
+            "//  interval -1;",
+            "// };"
+          ]
+        }
+      ]
+    }
+  },
+  "schedules": {
+    "skewed_schedule": [
+      {
+        "name": "",
+        "items": [
+          "0-29 * * * * 0.0",
+          "30-59 * * * * 1.0"
+        ]
+      }
+    ]
+  }
+}

@@ -21,7 +21,7 @@
 #include <sstream>
 #include <iostream>
 #include <memory>
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 //#include "../third_party/jsonCpp/json/json.h"
 using namespace std;
 //using namespace Json;
@@ -91,12 +91,13 @@ typedef struct _fncslist {
 
 class fncs_msg : public gld_object {
 public:
-	GL_ATOMIC(double,version);
+	//GL_ATOMIC(double,version);
 	string *port;
 	string *header_version;
 	string *hostname;
 	char1024 configFile;
 	// TODO add published properties here
+
 
 private:
 	vector<string> *inFunctionTopics;
@@ -108,6 +109,51 @@ private:
 	bool exitDeltamode;
 	// TODO add other properties here as needed.
 
+protected:
+	double version;  // Member variable of type `double`.
+
+public:
+	static inline fncs_msg* get_defaults() {
+		if (!defaults) {
+			defaults = new fncs_msg(); // Initialize lazily
+		}
+		return defaults;
+	}
+
+	fncs_msg() {}
+	~fncs_msg() { if (defaults) delete defaults; }
+
+public:
+	// Static inline method to get the byte offset of the member `version`.
+	static inline size_t get_version_offset(void) {
+		fncs_msg* current_defaults = get_defaults();
+		return reinterpret_cast<const char*>(&(current_defaults->version)) - reinterpret_cast<const char*>(current_defaults);
+	}
+
+	// Inline function to get the value of `version`.
+	inline double get_version(void) {
+		return version;
+	}
+
+	// Inline method to return a gld_property object for `version`.
+	inline gld_property get_version_property(void) {
+		return gld_property(my(), std::string("version").c_str());
+	}
+
+	// Inline method to set the value of `version`.
+	inline void set_version(double p) {
+		version = p;
+	}
+
+	// Inline method to get the string representation of the `version` property.
+	inline gld_string get_version_string(void) {
+		return get_version_property().get_string();
+	}
+
+	// Inline method to set the `version` property from a provided string.
+	inline void set_version(char* str) {
+		get_version_property().from_string(str);
+	}
 public:
 	enumeration message_type;
 	// required implementations
@@ -152,9 +198,9 @@ public:
 	static FNCSLIST *find(FNCSLIST *list, const char *tag);
 	static char *get(FNCSLIST *list, const char *tag);
 	static void destroy(FNCSLIST *list);
-	Json::Value publish_json_config;  //add by Renke
-	Json::Value publish_json_data;    //add by Renke
-	Json::Value subscribe_json_data;  //add by Renke
+	nlohmann::json publish_json_config;
+	nlohmann::json publish_json_data;
+	nlohmann::json subscribe_json_data;
 	string publish_json_key; //add by Renke
 	string subscribe_json_key; //add by Renke
 	vector <JsonProperty*> vjson_publish_gld_property_name;

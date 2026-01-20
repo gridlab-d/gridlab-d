@@ -156,7 +156,7 @@ int transformer_configuration::create(void)
 int transformer_configuration::init(OBJECT *parent)
 {
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	// if aggregate rating is not set and 3 phase is specified
 	if (kVA_rating==0)
@@ -318,7 +318,7 @@ EXPORT int create_transformer_configuration(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(transformer_configuration::oclass);
 		if (*obj!=nullptr)
 		{
-			transformer_configuration *my = OBJECTDATA(*obj,transformer_configuration);
+			transformer_configuration *my = object_data<transformer_configuration>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -331,7 +331,7 @@ EXPORT int create_transformer_configuration(OBJECT **obj, OBJECT *parent)
 EXPORT int init_transformer_configuration(OBJECT *obj, OBJECT *parent)
 {
 	try {
-		return OBJECTDATA(obj,transformer_configuration)->init(parent);
+		return object_data<transformer_configuration>(obj)->init(parent);
 	}
 	INIT_CATCHALL(transformer_configuration);
 }
@@ -343,7 +343,7 @@ EXPORT TIMESTAMP sync_transformer_configuration(OBJECT *obj, TIMESTAMP t1, PASSC
 
 EXPORT int isa_transformer_configuration(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,transformer_configuration)->isa(classname);
+	return object_data<transformer_configuration>(obj)->isa(classname);
 }
 
 /**@}**/

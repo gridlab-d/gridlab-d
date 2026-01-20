@@ -11,7 +11,7 @@
 #define _METRICS_COLLECTOR_WRITER_H_
 
 
-#include <json/json.h> //jsoncpp library
+#include <nlohmann/json.hpp>
 #include <iostream>
 #include <fstream>
 #include <cstring>
@@ -341,8 +341,8 @@ public:
 private:
 
 	int write_line(TIMESTAMP);
-	void writeMetadata(Json::Value& meta, Json::Value& metadata, char* time_str, char256 filename_house);
-	void writeJsonFile (char256 filename, Json::Value& metrics);
+	void writeMetadata(nlohmann::json& meta, nlohmann::json& metadata, char* time_str, char256 filename_house);
+	void writeJsonFile (char256 filename, nlohmann::json& metrics);
 	void maketime(double time, char *buffer, int size);
 
 #ifdef HAVE_HDF5
@@ -360,39 +360,39 @@ private:
 
 	// Functions to write dataset to a file
 	void hdfWrite(char256 filename, const std::unique_ptr<H5::CompType>& mtype, void *ptr, int structKind, int size);
-	void hdfMetadataWrite(Json::Value& meta, char* time_str, char256 filename);
-	void hdfBillingMeterWrite (size_t objs, Json::Value& metrics);
-	void hdfHouseWrite (size_t objs, Json::Value& metrics);
-	void hdfInverterWrite (size_t objs, Json::Value& metrics);
-	void hdfCapacitorWrite (size_t objs, Json::Value& metrics);
-	void hdfRegulatorWrite (size_t objs, Json::Value& metrics);
-	void hdfFeederWrite (size_t objs, Json::Value& metrics);
-	void hdfTransformerWrite (size_t objs, Json::Value& metrics);
-	void hdfLineWrite (size_t objs, Json::Value& metrics);
-	void hdfEvChargerDetWrite  (size_t objs, Json::Value& metrics);
+	void hdfMetadataWrite(nlohmann::json& meta, char* time_str, char256 filename);
+	void hdfBillingMeterWrite (size_t objs, nlohmann::json& metrics);
+	void hdfHouseWrite (size_t objs, nlohmann::json& metrics);
+	void hdfInverterWrite (size_t objs, nlohmann::json& metrics);
+	void hdfCapacitorWrite (size_t objs, nlohmann::json& metrics);
+	void hdfRegulatorWrite (size_t objs, nlohmann::json& metrics);
+	void hdfFeederWrite (size_t objs, nlohmann::json& metrics);
+	void hdfTransformerWrite (size_t objs, nlohmann::json& metrics);
+	void hdfLineWrite (size_t objs, nlohmann::json& metrics);
+	void hdfEvChargerDetWrite  (size_t objs, nlohmann::json& metrics);
 #endif
 
 private:
 
-	Json::Value metrics_writer_billing_meters;      // Final output dictionary for triplex_meters and non-swing meters
-	Json::Value metrics_writer_houses;              // Final output dictionary for houses and water heater
-	Json::Value metrics_writer_inverters;           // Final output dictionary for inverters
-	Json::Value metrics_writer_feeders;             // Final output dictionary for feeders
-	Json::Value metrics_writer_capacitors;          // Final output dictionary for capacitors
-	Json::Value metrics_writer_regulators;          // Final output dictionary for regulators
-	Json::Value metrics_writer_transformers;        // Final output dictionary for transformers
-	Json::Value metrics_writer_lines;               // Final output dictionary for lines
-	Json::Value metrics_writer_evchargerdets;        // Final output dictionary for evcharger det
+	nlohmann::json metrics_writer_billing_meters;      // Final output dictionary for triplex_meters and non-swing meters
+	nlohmann::json metrics_writer_houses;              // Final output dictionary for houses and water heater
+	nlohmann::json metrics_writer_inverters;           // Final output dictionary for inverters
+	nlohmann::json metrics_writer_feeders;             // Final output dictionary for feeders
+	nlohmann::json metrics_writer_capacitors;          // Final output dictionary for capacitors
+	nlohmann::json metrics_writer_regulators;          // Final output dictionary for regulators
+	nlohmann::json metrics_writer_transformers;        // Final output dictionary for transformers
+	nlohmann::json metrics_writer_lines;               // Final output dictionary for lines
+	nlohmann::json metrics_writer_evchargerdets;        // Final output dictionary for evcharger det
 
-	Json::Value ary_billing_meters;  // array storage for billing meter metrics
-	Json::Value ary_houses;          // array storage for house (and water heater) metrics
-	Json::Value ary_inverters;       // array storage for inverter metrics
-	Json::Value ary_feeders;         // array storage for feeder metrics
-	Json::Value ary_capacitors;      // array storage for capacitors metrics
-	Json::Value ary_regulators;      // array storage for regulators metrics
-	Json::Value ary_transformers;    // array storage for tranformers metrics
-	Json::Value ary_lines;           // array storage for lines metrics
-	Json::Value ary_evchargerdets;    // array storage for evcharger det metrics
+	nlohmann::json ary_billing_meters;  // array storage for billing meter metrics
+	nlohmann::json ary_houses;          // array storage for house (and water heater) metrics
+	nlohmann::json ary_inverters;       // array storage for inverter metrics
+	nlohmann::json ary_feeders;         // array storage for feeder metrics
+	nlohmann::json ary_capacitors;      // array storage for capacitors metrics
+	nlohmann::json ary_regulators;      // array storage for regulators metrics
+	nlohmann::json ary_transformers;    // array storage for tranformers metrics
+	nlohmann::json ary_lines;           // array storage for lines metrics
+	nlohmann::json ary_evchargerdets;    // array storage for evcharger det metrics
 
 #ifdef HAVE_HDF5
 	hsize_t len_billing_meters;

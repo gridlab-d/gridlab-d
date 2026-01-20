@@ -5,6 +5,9 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <vector>
+#include <memory>
+#include <functional>
 
 #include "gridlabd.h"
 
@@ -46,8 +49,61 @@
 #include "performance_motor.h"
 #include "sync_check.h"
 
+std::vector<std::pair<gld_object*, std::string>> allocated_objects;
+
+
+template <typename T>
+void register_object(MODULE* module) {
+
+	//static_assert(std::is_base_of<powerflow_object, T>::value, "T must derive from powerflow_object");
+	//std::cout << "Attempting to register type: " << typeid(T).name() << std::endl;
+
+	T* obj = new T(module);
+	allocated_objects.push_back(std::make_pair(static_cast<gld_object*>(obj), typeid(T).name()));
+
+	//std::cout << "Registered object of type: " << typeid(T).name() << ", at: " << obj << std::endl;
+
+}
+
+
+
+void cleanup_tracked_objects() {
+	//std::cout << "=== CLEANUP CALLED ===" << std::endl;
+	//std::cout << "Number of tracked objects: " << allocated_objects.size() << std::endl;
+
+	for (const auto& obj_pair : allocated_objects) {
+		//std::cout << "Deleting object of type: " << obj_pair.second
+			//<< " at: " << obj_pair.first << std::endl;
+
+		try {
+			// Dynamically cast to the base type
+			gld_object* obj = dynamic_cast<gld_object*>(static_cast<gld_object*>(obj_pair.first));
+			if (obj) {
+				delete obj; // Safe deletion
+				//std::cout << "Object deleted successfully." << std::endl;
+			}
+			else {
+				std::cerr << "Failed to match type for object deletion!" << std::endl;
+			}
+		}
+		catch (const std::exception& e) {
+			std::cerr << "Error deleting object of type: " << obj_pair.second
+				<< " at: " << obj_pair.first << " - " << e.what() << std::endl;
+		}
+	}
+	allocated_objects.clear();
+	//std::cout << "Cleanup completed!" << std::endl;
+}
+
+
+
+
+
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
+
+
+	
 	if (!set_callback(fntable)) {
 		errno = EINVAL;
 		return nullptr;
@@ -121,55 +177,111 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("powerflow::market_price_name",PT_char1024,&market_price_name,PT_DESCRIPTION,"Market current price published variable name",nullptr);
 
     // register each object class by creating the default instance
-    new powerflow_object(module);
-    new powerflow_library(module);
-    new node(module);
-    new link_object(module);
-    new capacitor(module);
-    new fuse(module);
-    new meter(module);
-    new line(module);
-    new line_spacing(module);
-    new overhead_line(module);
-    new underground_line(module);
-    new overhead_line_conductor(module);
-    new underground_line_conductor(module);
-    new line_configuration(module);
-	new transformer_configuration(module);
-	new transformer(module);
-	new load(module);
-	new regulator_configuration(module);
-	new regulator(module);
-	new triplex_node(module);
-	new triplex_meter(module);
-	new triplex_line(module);
-	new triplex_line_configuration(module);
-	new triplex_line_conductor(module);
-	new switch_object(module);
-	new substation(module);
-	new pqload(module);
-	new voltdump(module);
-	new series_reactor(module);
-	new restoration(module);
-	new volt_var_control(module);
-	new fault_check(module);
-	new motor(module);
-	new billdump(module);
-	new power_metrics(module);
-	new currdump(module);
-	new recloser(module);
-	new sectionalizer(module);
-	new emissions(module);
-	new load_tracker(module);
-	new triplex_load(module);
-	new impedance_dump(module);
-	new vfd(module);
-	new jsondump(module);
-	new series_compensator(module);
-	new performance_motor(module);
-	new sync_check(module);
+ //   new powerflow_object(module);
+ //   new powerflow_library(module);
+ //   new node(module);
+ //   new link_object(module);
+ //   new capacitor(module);
+ //   new fuse(module);
+ //   new meter(module);
+ //   new line(module);
+ //   new line_spacing(module);
+ //   new overhead_line(module);
+ //   new underground_line(module);
+ //   new overhead_line_conductor(module);
+ //   new underground_line_conductor(module);
+ //   new line_configuration(module);
+	//new transformer_configuration(module);
+	//new transformer(module);
+	//new load(module);
+	//new regulator_configuration(module);
+	//new regulator(module);
+	//new triplex_node(module);
+	//new triplex_meter(module);
+	//new triplex_line(module);
+	//new triplex_line_configuration(module);
+	//new triplex_line_conductor(module);
+	//new switch_object(module);
+	//new substation(module);
+	//new pqload(module);
+	//new voltdump(module);
+	//new series_reactor(module);
+	//new restoration(module);
+	//new volt_var_control(module);
+	//new fault_check(module);
+	//new motor(module);
+	//new billdump(module);
+	//new power_metrics(module);
+	//new currdump(module);
+	//new recloser(module);
+	//new sectionalizer(module);
+	//new emissions(module);
+	//new load_tracker(module);
+	//new triplex_load(module);
+	//new impedance_dump(module);
+	//new vfd(module);
+	//new jsondump(module);
+	//new series_compensator(module);
+	//new performance_motor(module);
+	//new sync_check(module);
 
-    /* always return the first class registered */
+	// Register each object class by creating the default instance (safely)
+	register_object<powerflow_object>(module);
+	register_object<powerflow_library>(module);
+	register_object<node>(module);
+	register_object<link_object>(module);
+	register_object<capacitor>(module);
+	register_object<fuse>(module);
+	register_object<meter>(module);
+	register_object<line>(module);
+	register_object<line_spacing>(module);
+	register_object<overhead_line>(module);
+	register_object<underground_line>(module);
+	register_object<overhead_line_conductor>(module);
+	register_object<underground_line_conductor>(module);
+	register_object<line_configuration>(module);
+	register_object<transformer_configuration>(module);
+	register_object<transformer>(module);
+	register_object<load>(module);
+	register_object<regulator_configuration>(module);
+	register_object<regulator>(module);
+	register_object<triplex_node>(module);
+	register_object<triplex_meter>(module);
+	register_object<triplex_line>(module);
+	register_object<triplex_line_configuration>(module);
+	register_object<triplex_line_conductor>(module);
+	register_object<switch_object>(module);
+	register_object<substation>(module);
+	register_object<pqload>(module);
+	register_object<voltdump>(module);
+	register_object<series_reactor>(module);
+	register_object<restoration>(module);
+	register_object<volt_var_control>(module);
+	register_object<fault_check>(module);
+	register_object<motor>(module);
+	register_object<billdump>(module);
+	register_object<power_metrics>(module);
+	register_object<currdump>(module);
+	register_object<recloser>(module);
+	register_object<sectionalizer>(module);
+	register_object<emissions>(module);
+	register_object<load_tracker>(module);
+	register_object<triplex_load>(module);
+	register_object<impedance_dump>(module);
+	register_object<vfd>(module);
+	register_object<jsondump>(module);
+	register_object<series_compensator>(module);
+	register_object<performance_motor>(module);
+	register_object<sync_check>(module);
+
+	static bool cleanup_registered = false;
+	if (!cleanup_registered) {
+		atexit(cleanup_tracked_objects);
+		cleanup_registered = true;
+	}
+
+	
+	/* always return the first class registered */
     return node::oclass;
 }
 
@@ -306,7 +418,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				{
 					if (delta_functions[curr_object_number] != nullptr)
 					{
-						//Try/catch for any GL_THROWs that may be called
+						//Try/catch for any GL_T.rows() that may be called
 						try {
 							//Call the actual function
 							function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,false);
@@ -354,7 +466,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			//Call dynamic powerflow (start of either predictor or correct set)
 			powerflow_type = PF_DYNCALC;
 
-			//Put in try/catch, since GL_THROWs inside solver_nr tend to be a little upsetting
+			//Put in try/catch, since GL_T.rows() inside solver_nr tend to be a little upsetting
 			try {
                 //Call solver_nr
 #ifndef GLD_USE_EIGEN
@@ -417,7 +529,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				{
 					if (delta_functions[curr_object_number] != nullptr)
 					{
-						//Try/catch for any GL_THROWs that may be called
+						//Try/catch for any GL_T.rows() that may be called
 						try {
 							//Call the actual function
 							function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val,true);
@@ -557,7 +669,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 				//See if we're in service or not
 				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 				{
-					//Try/catch for any GL_THROWs that may be called
+					//Try/catch for any GL_T.rows() that may be called
 					try {
 						//Call the actual function
 						function_status = ((STATUS (*)(OBJECT *))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number]);
@@ -663,11 +775,11 @@ EXPORT int check()
 		}
 		else if (gl_object_isa(obj,"link"))
 		{
-			link_object *pLink = OBJECTDATA(obj,link_object);
+			link_object *pLink = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
 			OBJECT *from = pLink->from;
 			OBJECT *to = pLink->to;
-			node *tNode = OBJECTDATA(to, node);
-			node *fNode = OBJECTDATA(from, node);
+			node *tNode = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
+			node *fNode = /*OBJECTDATA(obj,<>)*/ object_data<node>(from);
 			/* count 'to' reference */
 			tomap[to->id]++;
 			/* check link connections */
@@ -820,7 +932,7 @@ EXPORT int check()
 				link_object *l;
 				if(!gl_object_isa(now, "link"))
 					continue;
-				l = OBJECTDATA(now, link_object);
+				l = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(now);
 				if((l->from != front->ptr) && (l->to != front->ptr)){
 					continue;
 				} else if(rankmap[l->from->id]<objct && rankmap[l->to->id]<objct){
@@ -853,6 +965,16 @@ EXPORT int check()
 	free(linkmap);
 	free(linklist);
 	free(linkqueue);
+
+	// Also ensure all PFLIST structures are freed
+	PFLIST* current = anchor.next;
+	while (current != nullptr) {
+		PFLIST* temp = current;
+		current = current->next;
+		free(temp);
+	}
+
+
 	//return 0;
 	return 1;	//Nothing really checked in here, so just let it pass.  Not sure why it fails by default.
 }

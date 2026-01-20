@@ -148,7 +148,7 @@ int refrigerator::create()
 	load.power_fraction = 1;
 	is_240 = true;	
 
-	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
+	gl_warning("explicit %s model is experimental", object_header(this)->oclass->name);
 	/* TROUBLESHOOT
 		The refrigerator explicit model has some serious issues and should be considered for complete
 		removal.  It is highly suggested that this model NOT be used.
@@ -167,7 +167,7 @@ int refrigerator::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	// defaults for unset values */
@@ -279,7 +279,7 @@ int refrigerator::isa(char *classname)
 
 TIMESTAMP refrigerator::presync(TIMESTAMP t0, TIMESTAMP t1){
 
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	if(start_time==0)
 	{
@@ -323,7 +323,7 @@ TIMESTAMP refrigerator::postsync(TIMESTAMP t0, TIMESTAMP t1){
 
 double refrigerator::update_refrigerator_state(double dt0,TIMESTAMP t1)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	
 	// accumulate the energy
 	energy_used += refrigerator_power*dt0;
@@ -773,7 +773,7 @@ EXPORT int create_refrigerator(OBJECT **obj, OBJECT *parent)
 	*obj = gl_create_object(refrigerator::oclass);
 	if (*obj!=nullptr)
 	{
-		refrigerator *my = OBJECTDATA(*obj,refrigerator);;
+		refrigerator *my = object_data<refrigerator>(*obj);;
 		gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
@@ -783,7 +783,7 @@ EXPORT int create_refrigerator(OBJECT **obj, OBJECT *parent)
 
 EXPORT TIMESTAMP sync_refrigerator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass,  TIMESTAMP t1)
 {
-	refrigerator *my = OBJECTDATA(obj,refrigerator);
+	refrigerator *my = object_data<refrigerator>(obj);
 	TIMESTAMP next_time = TS_NEVER;
 
 	// obj->clock = 0 is legit
@@ -827,14 +827,14 @@ EXPORT TIMESTAMP sync_refrigerator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass,  
 
 EXPORT int init_refrigerator(OBJECT *obj)
 {
-	refrigerator *my = OBJECTDATA(obj,refrigerator);
+	refrigerator *my = object_data<refrigerator>(obj);
 	return my->init(obj->parent);
 }
 
 EXPORT int isa_refrigerator(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,refrigerator)->isa(classname);
+		return object_data<refrigerator>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -845,7 +845,7 @@ EXPORT TIMESTAMP plc_refrigerator(OBJECT *obj, TIMESTAMP t0)
 {
 	// this will be disabled if a PLC object is attached to the refrigerator
 
-	refrigerator *my = OBJECTDATA(obj,refrigerator);
+	refrigerator *my = object_data<refrigerator>(obj);
 	my->thermostat(obj->clock, t0);
 
 	return TS_NEVER;  

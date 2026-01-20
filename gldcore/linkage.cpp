@@ -104,13 +104,13 @@ STATUS linkage_master_to_slave(char *buffer, linkage *lnk)
 	switch ( global_multirun_mode ) {
 		case MRM_MASTER:
 //			rv = class_property_to_string(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),(char *)((int64)lnk->addr),size);
-			rv = object_get_value_by_addr(lnk->target.obj, GETADDR(lnk->target.obj,lnk->target.prop), (char*)((int64)lnk->addr), size, lnk->target.prop);
-			output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
+			rv = object_get_value_by_addr(lnk->target.obj, get_addr(lnk->target.obj,lnk->target.prop), (char*)((int64)lnk->addr), size, lnk->target.prop);
+			output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, get_addr(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
 			break;
 		case MRM_SLAVE:
 //			rv = class_string_to_property(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),(char *)((int64)lnk->addr));
-			rv = object_set_value_by_addr(lnk->target.obj, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->target.prop);
-			output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
+			rv = object_set_value_by_addr(lnk->target.obj, get_addr(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->target.prop);
+			output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, get_addr(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
 			break;
 		default:
 			break;
@@ -145,13 +145,13 @@ STATUS linkage_slave_to_master(char *buffer, linkage *lnk)
 	switch ( global_multirun_mode ) {
 	case MRM_MASTER:
 //		rv = class_string_to_property(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),(char *)((int64)lnk->addr));
-		rv = object_set_value_by_addr(lnk->target.obj, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->target.prop);
-		output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
+		rv = object_set_value_by_addr(lnk->target.obj, get_addr(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->target.prop);
+		output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, get_addr(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
 		break;
 	case MRM_SLAVE:
 //		rv = class_property_to_string(lnk->target.prop,GETADDR(lnk->target.obj,lnk->target.prop),(char *)((int64)lnk->addr),size);
-		rv = object_get_value_by_addr(lnk->target.obj, GETADDR(lnk->target.obj,lnk->target.prop), (char*)((int64)lnk->addr), size, lnk->target.prop);
-		output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, GETADDR(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
+		rv = object_get_value_by_addr(lnk->target.obj, get_addr(lnk->target.obj,lnk->target.prop), (char*)((int64)lnk->addr), size, lnk->target.prop);
+		output_debug("prop %s, addr %x, addr2 %x, val %s", lnk->target.prop->name, get_addr(lnk->target.obj,lnk->target.prop), (char *)((int64)lnk->addr), lnk->addr);
 		break;
 	default:
 		break;

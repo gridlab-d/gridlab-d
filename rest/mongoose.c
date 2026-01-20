@@ -3607,7 +3607,7 @@ static void handle_cgi_request(struct mg_connection *conn, const char *prog) {
 
   // Parent closes only one side of the pipes.
   // If we don't mark them as closed, close() attempt before
-  // return from this function throws an exception on Windows.
+  // return from this function t.rows() an exception on Windows.
   // Windows does not like when closed descriptor is closed again.
   (void) close(fdin[0]);
   (void) close(fdout[1]);

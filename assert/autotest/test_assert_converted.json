@@ -1,0 +1,501 @@
+{
+  "__preamble": {
+    "comments": [
+      "// test_assert",
+      "// set the clock",
+      "// create the test class"
+    ]
+  },
+  "classes": {
+    "test": [
+      {
+        "type": "double",
+        "name": "double_value"
+      },
+      {
+        "type": "complex",
+        "name": "complex_value"
+      },
+      {
+        "type": "enumeration",
+        "name": "{EV0=0, EV1=1} enumeration_value"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-01-01 00:00:00 PST'"
+  },
+  "modules": {
+    "assert": {}
+  },
+  "objects": {
+    "object_value;": {
+      "instances": [
+        {}
+      ]
+    },
+    "test": {
+      "instances": [
+        {
+          "name": "ref_test",
+          "double_value": 8.2
+        },
+        {
+          "name": "ref_none"
+        },
+        {
+          "name": "test_4",
+          "double_value": 50
+        },
+        {
+          "name": "test_15",
+          "complex_value": "120.0+1j"
+        },
+        {
+          "name": "test_20",
+          "enumeration_value": "EV1"
+        },
+        {
+          "name": "test_23",
+          "set_value": "SV1"
+        },
+        {
+          "name": "test_26",
+          "int16_value": 3723
+        },
+        {
+          "name": "test_29",
+          "int32_value": 3723347
+        },
+        {
+          "name": "test_32",
+          "int64_value": 37233473424
+        },
+        {
+          "name": "test_35",
+          "char8_value": "abcdefg"
+        },
+        {
+          "name": "test_38",
+          "char32_value": "abcdefg"
+        },
+        {
+          "name": "test_41",
+          "char256_value": "abcdefg"
+        },
+        {
+          "name": "test_44",
+          "char1024_value": "abcdefg"
+        },
+        {
+          "name": "test_47",
+          "object_value": "ref_test"
+        },
+        {
+          "name": "test_51",
+          "bool_value": true
+        },
+        {
+          "name": "test_54",
+          "timestamp_value": "'2001-02-03 04:56:27 PST'"
+        },
+        {
+          "name": "test_63"
+        }
+      ]
+    },
+    "assert": {
+      "instances": [
+        {
+          "parent": "test_4",
+          "target": "double_value",
+          "relation": "==",
+          "value": 50,
+          "outside_comments": [
+            "// double target"
+          ]
+        },
+        {
+          "parent": "test_4",
+          "target": "double_value",
+          "relation": "<",
+          "value": 51
+        },
+        {
+          "parent": "test_4",
+          "target": "double_value",
+          "relation": ">",
+          "value": 49
+        },
+        {
+          "parent": "test_4",
+          "target": "double_value",
+          "relation": "<=",
+          "value": 51
+        },
+        {
+          "parent": "test_4",
+          "target": "double_value",
+          "relation": "<=",
+          "value": 50
+        },
+        {
+          "parent": "test_4",
+          "target": "double_value",
+          "relation": ">=",
+          "value": 49
+        },
+        {
+          "parent": "test_4",
+          "target": "double_value",
+          "relation": ">=",
+          "value": 50
+        },
+        {
+          "parent": "test_4",
+          "target": "double_value",
+          "relation": "inside",
+          "lower": 49,
+          "upper": 51
+        },
+        {
+          "parent": "test_4",
+          "target": "double_value",
+          "relation": "outside",
+          "lower": 47,
+          "upper": 49
+        },
+        {
+          "parent": "test_4",
+          "target": "double_value",
+          "relation": "outside",
+          "lower": 51,
+          "upper": 53
+        },
+        {
+          "parent": "test_15",
+          "target": "complex_value",
+          "part": "real",
+          "relation": "==",
+          "value": 120.0,
+          "outside_comments": [
+            "// complex target"
+          ]
+        },
+        {
+          "parent": "test_15",
+          "target": "complex_value",
+          "part": "imag",
+          "relation": "==",
+          "value": 1.0
+        },
+        {
+          "parent": "test_15",
+          "target": "complex_value",
+          "part": "mag",
+          "relation": ">",
+          "value": 120.0
+        },
+        {
+          "parent": "test_15",
+          "target": "complex_value",
+          "part": "ang",
+          "relation": "inside",
+          "lower": 0.0,
+          "upper": 2.0
+        },
+        {
+          "parent": "test_20",
+          "target": "enumeration_value",
+          "relation": "==",
+          "value": "EV1",
+          "outside_comments": [
+            "// enumeration target"
+          ]
+        },
+        {
+          "parent": "test_20",
+          "target": "enumeration_value",
+          "relation": "!=",
+          "value": "EV0"
+        },
+        {
+          "parent": "test_23",
+          "target": "set_value",
+          "relation": "==",
+          "value": "SV1",
+          "outside_comments": [
+            "// set target"
+          ]
+        },
+        {
+          "parent": "test_23",
+          "target": "set_value",
+          "relation": "!=",
+          "value": "SV0"
+        },
+        {
+          "parent": "test_26",
+          "target": "int16_value",
+          "relation": "==",
+          "value": 3723,
+          "outside_comments": [
+            "// int16 target"
+          ]
+        },
+        {
+          "parent": "test_26",
+          "target": "int16_value",
+          "relation": "!=",
+          "value": 3724
+        },
+        {
+          "parent": "test_29",
+          "target": "int32_value",
+          "relation": "==",
+          "value": 3723347,
+          "outside_comments": [
+            "// int32 target"
+          ]
+        },
+        {
+          "parent": "test_29",
+          "target": "int32_value",
+          "relation": "!=",
+          "value": 3723348
+        },
+        {
+          "parent": "test_32",
+          "target": "int64_value",
+          "relation": "==",
+          "value": 37233473424,
+          "outside_comments": [
+            "// int64 target"
+          ]
+        },
+        {
+          "parent": "test_32",
+          "target": "int64_value",
+          "relation": "!=",
+          "value": 37233473425
+        },
+        {
+          "parent": "test_35",
+          "target": "char8_value",
+          "relation": "==",
+          "value": "abcdefg",
+          "outside_comments": [
+            "// char8 target"
+          ]
+        },
+        {
+          "parent": "test_35",
+          "target": "char8_value",
+          "relation": "!=",
+          "value": "abcdefgh"
+        },
+        {
+          "parent": "test_38",
+          "target": "char32_value",
+          "relation": "==",
+          "value": "abcdefg",
+          "outside_comments": [
+            "// char32 target"
+          ]
+        },
+        {
+          "parent": "test_38",
+          "target": "char32_value",
+          "relation": "!=",
+          "value": "abcdefgh"
+        },
+        {
+          "parent": "test_41",
+          "target": "char256_value",
+          "relation": "==",
+          "value": "abcdefg",
+          "outside_comments": [
+            "// char256 target"
+          ]
+        },
+        {
+          "parent": "test_41",
+          "target": "char256_value",
+          "relation": "!=",
+          "value": "abcdefgh"
+        },
+        {
+          "parent": "test_44",
+          "target": "char1024_value",
+          "relation": "==",
+          "value": "abcdefg",
+          "outside_comments": [
+            "// char1024 target"
+          ]
+        },
+        {
+          "parent": "test_44",
+          "target": "char1024_value",
+          "relation": "!=",
+          "value": "abcdefgh"
+        },
+        {
+          "parent": "test_47",
+          "target": "object_value",
+          "relation": "==",
+          "value": "ref_test",
+          "outside_comments": [
+            "// object target"
+          ]
+        },
+        {
+          "parent": "test_47",
+          "target": "object_value",
+          "relation": "!=",
+          "value": "ref_none"
+        },
+        {
+          "parent": "test_47",
+          "target": "object_value",
+          "part": "clock.days",
+          "relation": "==",
+          "value": 0
+        },
+        {
+          "parent": "test_51",
+          "target": "bool_value",
+          "relation": "==",
+          "value": true,
+          "outside_comments": [
+            "// bool target"
+          ]
+        },
+        {
+          "parent": "test_51",
+          "target": "bool_value",
+          "relation": "!=",
+          "value": false
+        },
+        {
+          "parent": "test_54",
+          "target": "timestamp_value",
+          "relation": "==",
+          "value": "'2001-02-03 04:56:27 PST'",
+          "outside_comments": [
+            "// timestamp target"
+          ]
+        },
+        {
+          "parent": "test_54",
+          "target": "timestamp_value",
+          "relation": "!=",
+          "value": "'2001-02-03 04:56:28 PST'"
+        },
+        {
+          "parent": "test_54",
+          "target": "timestamp_value",
+          "part": "year",
+          "relation": "==",
+          "value": 2001
+        },
+        {
+          "parent": "test_54",
+          "target": "timestamp_value",
+          "part": "month",
+          "relation": "==",
+          "value": 2
+        },
+        {
+          "parent": "test_54",
+          "target": "timestamp_value",
+          "part": "day",
+          "relation": "==",
+          "value": 3
+        },
+        {
+          "parent": "test_54",
+          "target": "timestamp_value",
+          "part": "hour",
+          "relation": "==",
+          "value": 4
+        },
+        {
+          "parent": "test_54",
+          "target": "timestamp_value",
+          "part": "minute",
+          "relation": "==",
+          "value": 56
+        },
+        {
+          "parent": "test_54",
+          "target": "timestamp_value",
+          "part": "second",
+          "relation": "==",
+          "value": 27
+        },
+        {
+          "parent": "test_63",
+          "target": "enduse_value",
+          "part": "energy.real",
+          "relation": "==",
+          "value": 0.0,
+          "outside_comments": [
+            "// enduse target"
+          ]
+        },
+        {
+          "parent": "test_63",
+          "target": "enduse_value",
+          "part": "energy.real",
+          "relation": "<=",
+          "value": 0.0
+        },
+        {
+          "parent": "test_63",
+          "target": "enduse_value",
+          "part": "energy.real",
+          "relation": "<=",
+          "value": 1.0
+        },
+        {
+          "parent": "test_63",
+          "target": "enduse_value",
+          "part": "energy.real",
+          "relation": ">=",
+          "value": 0.0
+        },
+        {
+          "parent": "test_63",
+          "target": "enduse_value",
+          "part": "energy.real",
+          "relation": ">",
+          "value": -1.0
+        },
+        {
+          "parent": "test_63",
+          "target": "enduse_value",
+          "part": "energy.real",
+          "relation": "!=",
+          "value": 1.0
+        },
+        {
+          "parent": "test_63",
+          "target": "enduse_value",
+          "part": "energy.real",
+          "relation": "inside",
+          "lower": 0.0,
+          "upper": 1.0
+        },
+        {
+          "parent": "test_63",
+          "target": "enduse_value",
+          "part": "energy.real",
+          "relation": "outside",
+          "lower": 1.0,
+          "upper": 2.0
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,520 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Design a market to test the SELLERS_ONLY and BUYERS_ONLY special operation modes. Ensure the market automatically submits a",
+      "// bid using the fixed_price or fixed_quantity parameters. Ensure the market clears to an appropriate value, including an",
+      "// unresolvable condition (i.e., if the market can't clear, ensure it doesn't and returns appropriate outputs)."
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "tmp": "../test_market_auction_advanced_1"
+    }
+  },
+  "_legacy": {
+    "#setenv": [
+      "GRIDLABD=../../../core"
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-01-01 00:00:00'",
+    "stoptime": "'2001-01-02 00:00:00'"
+  },
+  "modules": {
+    "market": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "double_assert": {
+      "instances": [
+        {
+          "parent": "Market_1",
+          "target": "current_market.clearing_price",
+          "in": "'2001-01-01 1:00:00'",
+          "status": "ASSERT_TRUE",
+          "value": "cp1*1",
+          "within": 1e-05
+        },
+        {
+          "parent": "Market_1",
+          "target": "current_market.clearing_quantity",
+          "in": "'2001-01-01 1:00:00'",
+          "status": "ASSERT_TRUE",
+          "value": "cq1*1",
+          "within": 0.001,
+          "inline_comments": {
+            "within": "// asserting clearing quantity"
+          }
+        },
+        {
+          "parent": "Market_2",
+          "target": "current_market.clearing_price",
+          "in": "'2001-01-01 1:00:00'",
+          "status": "ASSERT_TRUE",
+          "value": "cp2*1",
+          "within": 1e-05
+        },
+        {
+          "parent": "Market_2",
+          "target": "current_market.clearing_quantity",
+          "in": "'2001-01-01 1:00:00'",
+          "status": "ASSERT_TRUE",
+          "value": "cq2*1",
+          "within": 0.001,
+          "inline_comments": {
+            "within": "// asserting clearing quantity"
+          }
+        },
+        {
+          "parent": "Market_3",
+          "target": "current_market.clearing_price",
+          "in": "'2001-01-01 1:00:00'",
+          "status": "ASSERT_TRUE",
+          "value": "cp3*1",
+          "within": 1e-05
+        },
+        {
+          "parent": "Market_3",
+          "target": "current_market.clearing_quantity",
+          "in": "'2001-01-01 1:00:00'",
+          "status": "ASSERT_TRUE",
+          "value": "cq3*1",
+          "within": 0.001,
+          "inline_comments": {
+            "within": "// asserting clearing quantity"
+          }
+        },
+        {
+          "parent": "Market_4",
+          "target": "current_market.clearing_price",
+          "in": "'2001-01-01 1:00:00'",
+          "status": "ASSERT_TRUE",
+          "value": "cp4*1",
+          "within": 1e-05
+        },
+        {
+          "parent": "Market_4",
+          "target": "current_market.clearing_quantity",
+          "in": "'2001-01-01 1:00:00'",
+          "status": "ASSERT_TRUE",
+          "value": "cq4*1",
+          "within": 0.001,
+          "inline_comments": {
+            "within": "// asserting clearing quantity"
+          }
+        }
+      ]
+    },
+    "auction": {
+      "instances": [
+        {
+          "name": "Market_1",
+          "unit": "MWh",
+          "period": 3600,
+          "verbose": true,
+          "special_mode": "BUYERS_ONLY",
+          "init_price": 35.0001,
+          "fixed_quantity": "seller_quantity_1*1",
+          "warmup": 0,
+          "inside_comments": [
+            "// object multi_recorder {",
+            "// property current_market.clearing_price,current_market.clearing_quantity,buyer_1:price,buyer_2:price,fixed_price,fixed_quantity;",
+            "// file \"test_market_auction_advanced_1_1.csv\";",
+            "// interval 3600;",
+            "// limit 200;",
+            "// };"
+          ],
+          "inline_comments": {
+            "object auction {": "buyers_only,fixed_quantity"
+          }
+        },
+        {
+          "name": "Market_2",
+          "unit": "MWh",
+          "period": 3600,
+          "verbose": true,
+          "special_mode": "BUYERS_ONLY",
+          "init_price": 25,
+          "fixed_price": "buyers_fixed_price*1",
+          "warmup": 0,
+          "inside_comments": [
+            "// object multi_recorder {",
+            "// property current_market.clearing_price,current_market.clearing_quantity,special_mode,fixed_price,current_market.clearing_type;",
+            "// file \"test_market_auction_advanced_1_2.csv\";",
+            "// interval 3600;",
+            "// limit 168;",
+            "// };"
+          ],
+          "inline_comments": {
+            "object auction {": "buyers_only,fixed_price"
+          }
+        },
+        {
+          "name": "Market_3",
+          "unit": "MWh",
+          "period": 3600,
+          "verbose": true,
+          "special_mode": "SELLERS_ONLY",
+          "init_price": 35,
+          "fixed_quantity": "sellers_fixed_quantity*1",
+          "warmup": 0,
+          "inside_comments": [
+            "// fixed_price 35;",
+            "// object multi_recorder {",
+            "// property current_market.clearing_price,current_market.clearing_quantity,special_mode,fixed_price,fixed_quantity,current_market.clearing_type;",
+            "// file \"test_market_auction_advanced_1_3.csv\";",
+            "// interval 3600;",
+            "// limit 168;",
+            "// };"
+          ],
+          "inline_comments": {
+            "object auction {": "sellers_only,fixed_quantity"
+          }
+        },
+        {
+          "name": "Market_4",
+          "unit": "MWh",
+          "period": 3600,
+          "verbose": true,
+          "special_mode": "SELLERS_ONLY",
+          "init_price": 35,
+          "fixed_price": "seller_fixed_price*1",
+          "warmup": 0,
+          "inside_comments": [
+            "// fixed_quantity 3;",
+            "// object multi_recorder {",
+            "// property current_market.clearing_price,current_market.clearing_quantity,special_mode,fixed_price,fixed_quantity,current_market.clearing_type;",
+            "// file \"test_market_auction_advanced_1_4.csv\";",
+            "// interval 3600;",
+            "// limit 168;",
+            "// };"
+          ],
+          "inline_comments": {
+            "object auction {": "sellers_only,fixed_price"
+          }
+        }
+      ]
+    },
+    "stub_bidder": {
+      "instances": [
+        {
+          "name": "buyer_1",
+          "role": "BUYER",
+          "bid_period": 3600,
+          "market": "Market_1",
+          "price": "buyer_price1*1",
+          "quantity": "buyer_quantity*1",
+          "count": 10000
+        },
+        {
+          "name": "buyer_2",
+          "role": "BUYER",
+          "bid_period": 3600,
+          "market": "Market_1",
+          "price": "buyer_price2*1",
+          "quantity": "buyer_quantity*1",
+          "count": 10000
+        },
+        {
+          "name": "buyer_3",
+          "role": "BUYER",
+          "bid_period": 3600,
+          "market": "Market_2",
+          "price": "buyer_price3*1",
+          "quantity": "buyer_quantity*1",
+          "count": 10000
+        },
+        {
+          "name": "buyer_4",
+          "role": "BUYER",
+          "bid_period": 3600,
+          "market": "Market_2",
+          "price": "buyer_price4*1",
+          "quantity": "buyer_quantity*1",
+          "count": 10000
+        },
+        {
+          "name": "seller_1",
+          "role": "SELLER",
+          "bid_period": 3600,
+          "market": "Market_3",
+          "price": "seller_price1*1",
+          "quantity": "seller_quantity_2*1",
+          "count": 10000
+        },
+        {
+          "name": "seller_2",
+          "role": "SELLER",
+          "bid_period": 3600,
+          "market": "Market_3",
+          "price": "seller_price2*1",
+          "quantity": "seller_quantity_2*1",
+          "count": 10000
+        },
+        {
+          "name": "seller_3",
+          "role": "SELLER",
+          "bid_period": 3600,
+          "market": "Market_4",
+          "price": "seller_price3*1",
+          "quantity": "seller_quantity_2*1",
+          "count": 10000
+        },
+        {
+          "name": "seller_4",
+          "role": "SELLER",
+          "bid_period": 3600,
+          "market": "Market_4",
+          "price": "seller_price4*1",
+          "quantity": "seller_quantity_2*1",
+          "count": 10000
+        }
+      ]
+    }
+  },
+  "schedules": {
+    "buyer_price1": [
+      {
+        "name": "buyers_only,fixed_quantity",
+        "items": [
+          "* 0-5 * * * 30",
+          "* 6-12 * * * 30",
+          "* 13-18 * * * 30",
+          "* 19-23 * * * 30"
+        ]
+      }
+    ],
+    "buyer_price2": [
+      {
+        "name": "buyers_only,fixed_quantity",
+        "items": [
+          "* 0-5 * * * 20",
+          "* 6-12 * * * 20",
+          "* 13-18 * * * 20",
+          "* 19-23 * * * 20"
+        ]
+      }
+    ],
+    "seller_quantity_1": [
+      {
+        "name": "buyers_only,fixed_quantity",
+        "items": [
+          "* 0-6 * * * 0",
+          "* 7-13 * * * 15",
+          "* 14-19 * * * 25",
+          "* 20-23 * * * 10"
+        ]
+      }
+    ],
+    "buyer_price3": [
+      {
+        "name": "buyers_only,fixed_price",
+        "items": [
+          "* 0-7 * * * 30",
+          "* 8-15 * * * 25",
+          "* 16-23 * * * 30"
+        ]
+      }
+    ],
+    "buyer_price4": [
+      {
+        "name": "buyers_only,fixed_price",
+        "items": [
+          "* 0-7 * * * 20",
+          "* 8-15 * * * 15",
+          "* 16-23 * * * 20"
+        ]
+      }
+    ],
+    "buyers_fixed_price": [
+      {
+        "name": "buyers_only,fixed_price",
+        "items": [
+          "* 0-8 * * * 25",
+          "* 9-16 * * * 30",
+          "* 17-23 * * * 20"
+        ]
+      }
+    ],
+    "buyer_quantity": [
+      {
+        "name": "all buyers_only",
+        "items": [
+          "* * * * * 10"
+        ]
+      }
+    ],
+    "seller_price1": [
+      {
+        "name": "sellers_only,fixed_quantity",
+        "items": [
+          "* 0-5 * * * 5",
+          "* 6-12 * * * 5",
+          "* 13-18 * * * 5",
+          "* 19-23 * * * 5"
+        ]
+      }
+    ],
+    "seller_price2": [
+      {
+        "name": "sellers_only,fixed_quantity",
+        "items": [
+          "* 0-5 * * * 15",
+          "* 6-12 * * * 15",
+          "* 13-18 * * * 15",
+          "* 19-23 * * * 15"
+        ]
+      }
+    ],
+    "sellers_fixed_quantity": [
+      {
+        "name": "sellers_only,fixed_quantity",
+        "items": [
+          "* 0-5 * * * 0",
+          "* 6-12 * * * 15",
+          "* 13-18 * * * 25",
+          "* 19-23 * * * 10"
+        ]
+      }
+    ],
+    "seller_price3": [
+      {
+        "name": "sellers_only,fixed_price",
+        "items": [
+          "* 0-3 * * * 5",
+          "* 4-7 * * * 10",
+          "* 8-11 * * * 5",
+          "* 12-15 * * * 5",
+          "* 16-19 * * * 10",
+          "* 20-23 * * * 5"
+        ]
+      }
+    ],
+    "seller_price4": [
+      {
+        "name": "sellers_only,fixed_price",
+        "items": [
+          "* 0-3 * * * 15",
+          "* 4-7 * * * 20",
+          "* 8-11 * * * 15",
+          "* 12-15 * * * 15",
+          "* 16-19 * * * 20",
+          "* 20-23 * * * 15"
+        ]
+      }
+    ],
+    "seller_fixed_price": [
+      {
+        "name": "sellers_only,fixed_price",
+        "items": [
+          "* 0-4 * * * 10",
+          "* 5-8 * * * 5",
+          "* 9-12 * * * 15",
+          "* 13-16 * * * 10",
+          "* 17-20 * * * 5",
+          "* 21-23 * * * 15"
+        ]
+      }
+    ],
+    "seller_quantity_2": [
+      {
+        "name": "all sellers_only",
+        "items": [
+          "* * * * * 10"
+        ]
+      }
+    ],
+    "cp1": [
+      {
+        "name": "",
+        "items": [
+          "* 0-6 * * * 0",
+          "* 7-13 * * * 20",
+          "* 14-19 * * * 30.0001",
+          "* 20-23 * * * 30"
+        ]
+      }
+    ],
+    "cq1": [
+      {
+        "name": "",
+        "items": [
+          "* 0-6 * * * 20",
+          "* 7-13 * * * 15",
+          "* 14-19 * * * 0",
+          "* 20-23 * * * 10"
+        ]
+      }
+    ],
+    "cp2": [
+      {
+        "name": "",
+        "items": [
+          "* 0-8 * * * 25",
+          "* 9-16 * * * 30",
+          "* 17-23 * * * 20"
+        ]
+      }
+    ],
+    "cq2": [
+      {
+        "name": "",
+        "items": [
+          "* 0-8 * * * 10",
+          "* 9-16 * * * 0",
+          "* 17-23 * * * 20"
+        ]
+      }
+    ],
+    "cp3": [
+      {
+        "name": "",
+        "items": [
+          "* 0-5 * * * 0",
+          "* 6-12 * * * 15",
+          "* 13-18 * * * 4.9999",
+          "* 19-23 * * * 5"
+        ]
+      }
+    ],
+    "cq3": [
+      {
+        "name": "",
+        "items": [
+          "* 0-5 * * * 0",
+          "* 6-12 * * * 15",
+          "* 13-18 * * * 0",
+          "* 19-23 * * * 10"
+        ]
+      }
+    ],
+    "cp4": [
+      {
+        "name": "",
+        "items": [
+          "* 0-4 * * * 10",
+          "* 5-8 * * * 5",
+          "* 9-12 * * * 15",
+          "* 13-16 * * * 10",
+          "* 17-20 * * * 5",
+          "* 21-23 * * * 15"
+        ]
+      }
+    ],
+    "cq4": [
+      {
+        "name": "",
+        "items": [
+          "* 0-4 * * * 10",
+          "* 5-8 * * * 0",
+          "* 9-12 * * * 20",
+          "* 13-16 * * * 10",
+          "* 17-20 * * * 0",
+          "* 21-23 * * * 20"
+        ]
+      }
+    ]
+  }
+}

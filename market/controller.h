@@ -11,8 +11,10 @@
 
 #include <stdarg.h>
 
-#include "auction.h"
+#include "controller.h"
 #include "gridlabd.h"
+#include "market.h"
+#include "bid.h"
 
 class controller : public gld_object {
 public:
@@ -84,7 +86,7 @@ public:
 	char pMkt2[33];
 	OBJECT *pMarket;
 	OBJECT *pMarket2;
-	auction *market;
+	controller *market;
 	KEY lastbid_id;
 	KEY lastmkt_id;
 	KEY lastbid_id2;
@@ -219,11 +221,10 @@ private:
 	gld_property *pClearedPrice2;
 	gld_property *pPriceCap;
 	gld_property *pPriceCap2;
-	GL_STRING(char32,marketunit);
+	//GL_STRING(char32,marketunit);
 	char market_unit[32];
 	char market_unit2[32];
 	gld_property *pMarginMode;
-	static controller *defaults;
 	int dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1);
 	gld_property *pClearedQuantity;
 	gld_property *pClearedQuantity2;
@@ -269,6 +270,52 @@ private:
 	enumeration proxy_clearing_type;
 	enumeration proxy_clearing_type2;
 	double proxy_marginal_fraction2;
+
+public:
+	static inline controller* get_defaults() {
+		if (!defaults) {
+			defaults = new controller(); // Initialize lazily
+		}
+		return defaults;
+	}
+
+	controller() {}
+	~controller() { if (defaults) delete defaults; }
+
+protected:
+	char32 marketunit;  // Member variable of type `char[32]`.
+
+public:
+	// Static inline method to get the byte offset of the member `marketunit`.
+	static inline size_t get_marketunit_offset(void) {
+		controller* current_defaults = get_defaults();
+		return reinterpret_cast<const char*>(&(current_defaults->marketunit)) -
+			reinterpret_cast<const char*>(current_defaults);
+	}
+
+	// Getter method to safely retrieve the string value of `marketunit`.
+	inline std::string get_marketunit(void) {
+		auto& mtx = SharedMutexManager::get_mutex(my());
+		std::shared_lock<std::shared_mutex> lock(mtx);
+		return std::string(marketunit);
+	}
+
+	// Getter method to retrieve `gld_property` for `marketunit`.
+	inline gld_property get_marketunit_property(void) {
+		return gld_property(my(), std::string("marketunit").c_str());
+	}
+
+	// Setter method to update the value for `marketunit` using a string.
+	inline void set_marketunit(const std::string& str) {
+		auto& mtx = SharedMutexManager::get_mutex(my());
+		std::unique_lock<std::shared_mutex> lock(mtx);
+		strncpy(marketunit, str.c_str(), sizeof(marketunit) - 1);
+		marketunit[sizeof(marketunit) - 1] = '\0';  // Ensure null termination
+	}
+
+public:
+	static controller* defaults;
+
 };
 
 #endif // _controller_H

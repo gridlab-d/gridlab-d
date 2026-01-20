@@ -8,16 +8,26 @@
 #include "property.h"
 #include "tape.h"
 
-
 /* recorder-specific enums */
-typedef enum {HU_DEFAULT, HU_ALL, HU_NONE} HEADERUNITS;
-typedef enum {LU_DEFAULT, LU_ALL, LU_NONE} LINEUNITS;
+typedef enum
+{
+    HU_DEFAULT,
+    HU_ALL,
+    HU_NONE
+} HEADERUNITS;
+typedef enum
+{
+    LU_DEFAULT,
+    LU_ALL,
+    LU_NONE
+} LINEUNITS;
 
 /** @}
-	@addtogroup recorder
-	@{
+    @addtogroup recorder
+    @{
  **/
-class recorder : public gld_object {
+class recorder : public gld_object
+{
 public:
     static recorder *defaults;
     char1024 file;
@@ -40,13 +50,15 @@ public:
     char32 columns;
     char32 trigger;
     int32 flush;
-public: //Does this need to be Private?
+
+public: // Does this need to be Private?
     RECORDER_MAP *rmap;
     TAPEOPS *ops;
     FILETYPE type;
     HEADERUNITS header_units;
     LINEUNITS line_units;
-    union {
+    union
+    {
         FILE *fp;
         MEMORY *memory;
         void *tsp;
@@ -54,7 +66,8 @@ public: //Does this need to be Private?
     };
     TAPESTATUS status;
     char8 delim;
-    struct {
+    struct
+    {
         TIMESTAMP ts;
         int64 ns;
         char1024 value;
@@ -67,4 +80,10 @@ extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, cha
 EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
 EXPORT TIMESTAMP sync_recorder_error(OBJECT **obj, struct recorder **my, char2048 buffer);
 
+extern "C"
+{
+    EXPORT int create_recorder(OBJECT **obj, OBJECT *parent);
+    EXPORT int init_recorder(OBJECT *obj);
+    EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
+}
 #endif //_RECORDER_H

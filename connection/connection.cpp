@@ -4,6 +4,14 @@
 #include "server.h"
 #include "client.h"
 
+
+#ifdef _MSC_VER
+char* strtok_r(char* str, const char* delim, char** saveptr) {
+	return strtok_s(str, delim, saveptr);
+}
+#endif
+
+
 ////////////////////////////////////////////////////////////////////////////////////
 connection_mode::connection_mode(void)
 {
@@ -35,7 +43,7 @@ connection_mode* connection_mode::new_instance(const char *options)
 	connection_mode *connection = nullptr;
 	char temp[4096];
 	strcpy(temp,options);
-	while ( (tag=strtok_s(tag==nullptr?temp:nullptr,",",&next_tag))!=nullptr )
+	while ( (tag=strtok_r(tag==nullptr?temp:nullptr,",",&next_tag))!=nullptr )
 	{
 		if ( connection==nullptr )
 		{

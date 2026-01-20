@@ -1,0 +1,75 @@
+{
+  "_directives": {
+    "#set": {
+      "suppress_repeat_messages": "FALSE",
+      "debug": 1
+    }
+  },
+  "classes": {
+    "test": [
+      {
+        "type": "double",
+        "name": "x"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "PST8PDT",
+    "starttime": "'2000-01-01 00:00:00 PST'",
+    "stoptime": "'2001-01-01 00:00:00 PST'"
+  },
+  "objects": {
+    "test": {
+      "instances": [
+        {
+          "latitude": 51.123456,
+          "longitude": 14.123456
+        },
+        {
+          "latitude": -51.123456,
+          "longitude": 14.123456
+        },
+        {
+          "latitude": 51.123456,
+          "longitude": -14.123456
+        },
+        {
+          "latitude": -51.123456,
+          "longitude": -14.123456
+        },
+        {
+          "latitude": "51N12.3456",
+          "longitude": "14W12.3456"
+        },
+        {
+          "latitude": "51S12.3456",
+          "longitude": "14W12.3456"
+        },
+        {
+          "latitude": "51N12.3456",
+          "longitude": "14E12.3456"
+        },
+        {
+          "latitude": "51S12.3456",
+          "longitude": "14E12.3456"
+        },
+        {
+          "latitude": "51N12:34.56",
+          "longitude": "14W12:34.56"
+        },
+        {
+          "latitude": "51S12:34.56",
+          "longitude": "14W12:34"
+        },
+        {
+          "latitude": "51N12:34.56",
+          "longitude": "14E12:34.56"
+        },
+        {
+          "latitude": "51S12:34.56",
+          "longitude": "14E12:34.56"
+        }
+      ]
+    }
+  }
+}

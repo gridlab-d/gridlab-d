@@ -127,7 +127,7 @@ typedef struct s_zonedata {
 } ZONEDATA;
 
 class office : public gld_object {
-	GL_STRUCT(ZONEDATA,zone);
+	//GL_STRUCT(ZONEDATA,zone);
 public:
 	static double warn_low_temp;
 	static double warn_high_temp;
@@ -164,6 +164,66 @@ public:
 	TIMESTAMP plc(TIMESTAMP t1);
 
 	friend class multizone;
+
+public:
+	static inline office* get_defaults() {
+		if (!defaults) {
+			defaults = new office(); // Initialize lazily
+		}
+		return defaults;
+	}
+
+	office() {}
+	~office() { if (defaults) delete defaults; }
+
+protected:
+	ZONEDATA zone; // Member variable of type `ZONEDATA`.
+
+public:
+	// Static inline method to get the byte offset of the member `zone`.
+	static inline size_t get_zone_offset(void) {
+		office* current_defaults = get_defaults();
+		return reinterpret_cast<const char*>(&(current_defaults->zone)) -
+			reinterpret_cast<const char*>(current_defaults);
+	}
+
+	// Inline function to get the value of `zone` with thread safety.
+	inline ZONEDATA get_zone(void) {
+		auto& mtx = SharedMutexManager::get_mutex(my());
+		std::shared_lock<std::shared_mutex> lock(mtx); // Shared lock for read access
+		return zone;
+	}
+
+	// Inline method to return a gld_property object for `zone`.
+	inline gld_property get_zone_property(void) {
+		return gld_property(my(), std::string("zone").c_str());
+	}
+
+	// Inline method to get the string representation of the `zone` property.
+	inline gld_string get_zone_string(void) {
+		return get_zone_property().get_string();
+	}
+
+	// Inline method to set the `zone` property from a provided string with thread safety.
+	inline void set_zone(char* str) {
+		auto& mtx = SharedMutexManager::get_mutex(my());
+		std::unique_lock<std::shared_mutex> lock(mtx); // Exclusive lock for write access
+		get_zone_property().from_string(str);
+	}
+
+	inline void set_zone(const std::string& str) {
+		auto& mtx = SharedMutexManager::get_mutex(my());
+		std::unique_lock<std::shared_mutex> lock(mtx); // Exclusive lock for write access
+		get_zone_property().from_string(const_cast<char*>(str.c_str()));
+	}
+
+	// Inline method to set the `zone` property directly using a `ZONEDATA` object.
+	inline void set_zone(ZONEDATA p) {
+		auto& mtx = SharedMutexManager::get_mutex(my());
+		std::unique_lock<std::shared_mutex> lock(mtx); // Exclusive lock for write access
+		zone = p;
+	}
+
 };
 
 #endif

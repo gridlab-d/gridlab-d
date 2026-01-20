@@ -1,0 +1,291 @@
+{
+  "__preamble": {
+    "comments": [
+      "//Modified by Midrar Adham",
+      "//Updated heat-pump water heater model",
+      "/////////////////////////////////////////////",
+      "// BEGIN",
+      "/////////////////////////////////////////////"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "randomseed": 12150
+    }
+  },
+  "clock": {
+    "timezone": "\"PST+8PDT\"",
+    "starttime": "'2021-12-25 00:00:00'",
+    "stoptime": "'2021-12-31 00:10:00'"
+  },
+  "modules": {
+    "powerflow": {},
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc100",
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306
+        },
+        {
+          "name": "olc101",
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls200",
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc300",
+          "conductor_A": "olc100",
+          "conductor_B": "olc100",
+          "conductor_C": "olc100",
+          "conductor_N": "olc101",
+          "spacing": "ls200"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "tc400",
+          "connect_type": 1,
+          "power_rating": 6000,
+          "powerA_rating": 2000,
+          "powerB_rating": 2000,
+          "powerC_rating": 2000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06
+        },
+        {
+          "name": "CS_config",
+          "connect_type": "SINGLE_PHASE_CENTER_TAPPED",
+          "install_type": "POLETOP",
+          "powerC_rating": 75,
+          "primary_voltage": 2401,
+          "secondary_voltage": 120.0,
+          "impedance": "0.006+0.0136j"
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node1",
+          "phases": "ABCN",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node2",
+          "phases": "ABCN",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node3",
+          "phases": "ABCN",
+          "nominal_voltage": 2400
+        },
+        {
+          "name": "node4",
+          "phases": "ABCN",
+          "nominal_voltage": 2400
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "ol12",
+          "phases": "ABCN",
+          "from": "node1",
+          "to": "node2",
+          "length": 2000,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ol34",
+          "phases": "ABCN",
+          "from": "node3",
+          "to": "node4",
+          "length": 2500,
+          "configuration": "lc300"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "trans23",
+          "phases": "ABCN",
+          "from": "node2",
+          "to": "node3",
+          "configuration": "tc400"
+        },
+        {
+          "name": "center_tap_1",
+          "phases": "CS",
+          "from": "node4",
+          "to": "trip_node1",
+          "configuration": "CS_config",
+          "outside_comments": [
+            "///////////////////////////////",
+            "// Triplex Lines, Nodes, and Transformers",
+            "///////////////////////////////"
+          ]
+        }
+      ]
+    },
+    "triplex_line_conductor": {
+      "instances": [
+        {
+          "name": "tp_line_conductor",
+          "resistance": 0.97,
+          "geometric_mean_radius": 0.0111,
+          "outside_comments": [
+            "///////////////////////////////",
+            "// TRIPLEX OBJECTS",
+            "///////////////////////////////",
+            "///////////////////////////////",
+            "// CONFIGURATIONS",
+            "///////////////////////////////"
+          ]
+        }
+      ]
+    },
+    "triplex_line_configuration": {
+      "instances": [
+        {
+          "name": "triplex_line_configuration_1",
+          "conductor_1": "tp_line_conductor",
+          "conductor_2": "tp_line_conductor",
+          "conductor_N": "tp_line_conductor",
+          "insulation_thickness": 0.08,
+          "diameter": 0.368
+        }
+      ]
+    },
+    "triplex_node": {
+      "instances": [
+        {
+          "name": "trip_node1",
+          "phases": "CS",
+          "nominal_voltage": 120
+        }
+      ]
+    },
+    "triplex_line": {
+      "instances": [
+        {
+          "name": "trip_line1",
+          "phases": "CS",
+          "from": "trip_node1",
+          "to": "trip_meter1",
+          "length": 0,
+          "configuration": "triplex_line_configuration_1"
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "trip_meter1",
+          "phases": "CS",
+          "nominal_voltage": 120
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "interval": 60,
+          "parent": "trip_meter1",
+          "property": "measured_real_power",
+          "file": "recorder_data_meter.csv"
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "parent": "double_assert_23",
+          "property": "value",
+          "file": "../data_hpwh_temp.csv"
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_23",
+          "parent": "wh1",
+          "target": "temperature",
+          "within": 0.1
+        }
+      ]
+    },
+    "waterheater": {
+      "instances": [
+        {
+          "name": "wh1",
+          "parent": "house1",
+          "location": "INSIDE",
+          "temperature": 120.0,
+          "water_demand": 0,
+          "heat_mode": "HEAT_PUMP",
+          "heating_element_capacity": "0.0 kW",
+          "thermostat_deadband": 8,
+          "inlet_water_temperature": 60,
+          "tank_setpoint": 120,
+          "tank_UA": 3.3,
+          "tank_volume": 50,
+          "inside_comments": [
+            "// object recorder {",
+            "// interval 60;",
+            "// parent wh1;",
+            "// property heatpump_predicted_energy,temperature,is_waterheater_on,power.real;",
+            "// file \"wh_idle_losses.csv\";",
+            "// };",
+            "// object recorder {",
+            "// interval 60;",
+            "// parent wh1;",
+            "// property temperature;",
+            "// file \"data_hpwh_temp.csv\";",
+            "// };"
+          ]
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house1",
+          "breaker_amps": 30,
+          "parent": "trip_meter1"
+        }
+      ]
+    }
+  }
+}

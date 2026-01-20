@@ -11,6 +11,7 @@
 #ifdef _WIN32
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0400
+#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
 #include <winsock2.h>
 #include <windows.h>
 #else
@@ -24,7 +25,7 @@
 #define closesocket close
 #endif
 
-#include <pthread.h>
+//#include <pthread.h>
 
 #include "instance.h"
 #include "instance_cnx.h"
@@ -37,8 +38,11 @@
 clock_t instance_synctime = 0;
 
 // only used for passing control between slaveproc and main threads
-pthread_mutex_t mls_inst_lock;
-pthread_cond_t mls_inst_signal;
+//pthread_mutex_t mls_inst_lock;
+//pthread_cond_t mls_inst_signal;
+
+unsigned int mls_inst_lock = 0;
+std::condition_variable_any mls_inst_signal;
 int inst_created = 0;
 
 // used to balance control between instance_master_wait_socket and instance_runproc
@@ -141,7 +145,9 @@ void *instance_runproc_socket(void *ptr){
 			output_error("instance_runproc_socket(): error receiving data");
 			running = 0;
 		}
-		pthread_mutex_lock(&inst->sock_lock);
+		//pthread_mutex_lock(&inst->sock_lock);
+		//replace the above with SharedMutexManager
+		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&inst->sock_lock));
 		if(0 == memcmp(inst->buffer, MSG_DATA, strlen(MSG_DATA))){
 			got_data = 1;
 //			wlock(&inst->has_data_lock);
@@ -169,14 +175,16 @@ void *instance_runproc_socket(void *ptr){
 //		pthread_cond_wait(&inst->wait_signal, &inst->wait_lock);
 //		pthread_cond_wait(&inst->wait_signal, &inst->sock_lock);
 		output_debug("inst %d sending signal 0x%x", inst->id, &(inst->sock_signal));
-		pthread_cond_broadcast(&(inst->sock_signal));
+		//pthread_cond_broadcast(&(inst->sock_signal));
+		inst->sock_signal.notify_all();
 //		pthread_mutex_unlock(&inst->wait_lock);
-		pthread_mutex_unlock(&inst->sock_lock);
+		//pthread_mutex_unlock(&inst->sock_lock);
 		//output_debug("i_rp_s(): sending broadcast %d", inst->sock_signal);
 		
 		
 	}
-	pthread_cond_broadcast(&inst->sock_signal);
+	//pthread_cond_broadcast(&inst->sock_signal);
+	inst->sock_signal.notify_all();
 	sock_created = 0;
 	return 0;
 }
@@ -344,43 +352,83 @@ int instance_master_wait_mmap(instance *inst){
 #endif
 }
 
-int instance_master_wait_socket(instance *inst){
 
-	if(0 == inst){
+int instance_master_wait_socket(instance* inst) {
+	if (inst == nullptr) {
 		output_error("instance_master_wait_socket(): null inst pointer");
 		return 0;
 	}
 
-	if(sock_created){
-		// wait for message
-//		wlock(&inst->has_data_lock);
-		pthread_mutex_lock(&inst->sock_lock);
-		if(inst->has_data > 0){ // maybe 'while' this?
-//			wunlock(&inst->has_data_lock);
+	if (sock_created) {
+		// Wait for message using std::mutex and std::condition_variable
+		std::unique_lock<std::shared_mutex> lock( SharedMutexManager::get_mutex(&inst->sock_lock));
+
+		if (inst->has_data > 0) { // maybe 'while' this?
 			output_debug("instance_master_wait_socket(): already has data for %d", inst->id);
-		} else {
-			//wunlock(&inst->has_data_lock);
-			//output_debug("instance_master_wait_socket(): requesting unwait on %d", inst->sock_signal);
-			output_debug("instance_master_wait_socket(): inst %d waiting on %x", inst->id, &inst->sock_signal);
-			//pthread_cond_broadcast(&inst->wait_signal);
-			
-//			pthread_mutex_lock(&inst->sock_lock);
-//			pthread_cond_broadcast(&inst->wait_signal);
-			output_debug("inst %d waiting on signal 0x%x", inst->id, &(inst->sock_signal));
-			pthread_cond_wait(&inst->sock_signal, &inst->sock_lock);
-			pthread_mutex_unlock(&inst->sock_lock);
-			
 		}
-//		wlock(&inst->has_data_lock);
+		else {
+			output_debug("instance_master_wait_socket(): inst %d waiting on %p",
+				inst->id, static_cast<void*>(&inst->sock_signal));
+
+			// Wait for notification
+			output_debug("inst %d waiting on signal %p",
+				inst->id, static_cast<void*>(&inst->sock_signal));
+
+			inst->sock_signal.wait(lock);
+			// Lock is automatically released while waiting
+			// and reacquired when wait returns
+		}
+
+		// Decrement the data counter
 		inst->has_data -= 1;
-//		wunlock(&inst->has_data_lock);
-		pthread_mutex_unlock(&inst->sock_lock);
-	} else {
+
+		// Lock is automatically released when unique_lock goes out of scope
+	}
+	else {
 		output_debug("instance_master_wait_socket(): no socket mutexes");
 		return 0;
 	}
+
 	return 1;
 }
+
+//int instance_master_wait_socket(instance *inst){
+//
+//	if(0 == inst){
+//		output_error("instance_master_wait_socket(): null inst pointer");
+//		return 0;
+//	}
+//
+//	if(sock_created){
+//		// wait for message
+////		wlock(&inst->has_data_lock);
+//		pthread_mutex_lock(&inst->sock_lock);
+//		if(inst->has_data > 0){ // maybe 'while' this?
+////			wunlock(&inst->has_data_lock);
+//			output_debug("instance_master_wait_socket(): already has data for %d", inst->id);
+//		} else {
+//			//wunlock(&inst->has_data_lock);
+//			//output_debug("instance_master_wait_socket(): requesting unwait on %d", inst->sock_signal);
+//			output_debug("instance_master_wait_socket(): inst %d waiting on %x", inst->id, &inst->sock_signal);
+//			//pthread_cond_broadcast(&inst->wait_signal);
+//			
+////			pthread_mutex_lock(&inst->sock_lock);
+////			pthread_cond_broadcast(&inst->wait_signal);
+//			output_debug("inst %d waiting on signal 0x%x", inst->id, &(inst->sock_signal));
+//			pthread_cond_wait(&inst->sock_signal, &inst->sock_lock);
+//			pthread_mutex_unlock(&inst->sock_lock);
+//			
+//		}
+////		wlock(&inst->has_data_lock);
+//		inst->has_data -= 1;
+////		wunlock(&inst->has_data_lock);
+//		pthread_mutex_unlock(&inst->sock_lock);
+//	} else {
+//		output_debug("instance_master_wait_socket(): no socket mutexes");
+//		return 0;
+//	}
+//	return 1;
+//}
 
 /** instance_master_wait
 	Wait the master into a wait state for all the slave->master signal.
@@ -500,138 +548,138 @@ void instance_master_done(TIMESTAMP t1)
     Initialize an instance object.  This occurs on the master side for each slave instance.
 	return 1 on failure, 0 on success.
  **/
-STATUS instance_init(instance *inst)
-{
-	linkage *lnk;
-	size_t name_offset=0, prop_offset=0;
-	STATUS result;
-
-	int i;
-	int cnxtypecnt = 3;
-	struct {
-		const char *word;
-		CNXTYPE type;
-	} cnxtype[] = {
-		{"mmap", CI_MMAP},
-		{"shmem", CI_SHMEM},
-		{"socket", CI_SOCKET},
-	};
-	
-	if(0 == inst){
-		output_error("instance_init(): null inst pointer");
-		return FAILED;
-	}
-
-	/* check for looping model */
-	if (strcmp(inst->model,global_modelname)==0)
-	{
-		output_error("instance_init(): slave instance model '%s' is the same as the master model '%'", inst->model,global_modelname);
-		return FAILED;
-	}
-
-	// validate cnxtype
-	if(inst->cnxtypestr[0] != 0){
-		for (i = 0; i < cnxtypecnt; ++i){
-			if(0 == strcmp(inst->cnxtypestr, cnxtype[i].word)){
-				inst->cnxtype = cnxtype[i].type;
-				break;
-			}
-		}
-		if(i == cnxtypecnt){ // exhausted the list without finding a match
-			output_error("instance_init(): unrecognized connection type '%s' for instance '%s'", inst->cnxtypestr.get_string(), inst->model);
-			return FAILED;
-		}
-	} else {
-		// default
-#ifdef _WIN32
-		inst->cnxtype = CI_MMAP;
-#else
-		inst->cnxtype = CI_SHMEM;
-#endif
-	}
-	// calculate message buffer requirements
-	/* initialize linkages */
-	inst->cachesize = sizeof(MESSAGE);
-	inst->prop_size = 0;
-	inst->name_size = 0;
-
-	for ( lnk=inst->write ; lnk!=nullptr ; lnk=lnk->next ){
-		if ( linkage_init(inst, lnk)==FAILED ){
-			output_error("instance_init(): linkage_init failed for inst '%s.%s' on link '%s.%s'", inst->hostname, inst->model, lnk->local.obj, lnk->local.prop);
-			return FAILED;
-		} else {
-			inst->cachesize += lnk->size;
-			inst->prop_size += lnk->prop_size;
-			inst->name_size += lnk->name_size;
-			++inst->writer_count;
-		}
-	}
-	for ( lnk=inst->read ; lnk!=nullptr ; lnk=lnk->next ){
-		if ( linkage_init(inst, lnk)==FAILED ){
-			output_error("instance_init(): linkage_init failed for inst '%s.%s' on link '%s.%s'", inst->hostname, inst->model, lnk->local.obj, lnk->local.prop);
-			return FAILED;
-		} else {
-			inst->cachesize += lnk->size;
-			inst->prop_size += lnk->prop_size;
-			inst->name_size += lnk->name_size;
-			++inst->reader_count;
-		}
-	}
-
-	// allocate message buffer
-	inst->buffer_size = inst->cachesize = sizeof(MESSAGE) + (size_t)(inst->name_size + inst->prop_size);
-	inst->cache = (MESSAGE *)malloc(inst->cachesize);
-	memset(inst->cache, 0, inst->cachesize);
-	message_init(inst->cache, inst->cachesize, (int16)inst->name_size, (int16)inst->prop_size);
-	if(FAILED == messagewrapper_init(&(inst->message), inst->cache)){
-		return FAILED;
-	}
-	
-	//	initialize cache
-	inst->cache->id = inst->id = instances_count;
-
-	//output_verbose("inst_init(): slave %d cache at %x, ts at %x", instances_count, inst->cache, &(inst->cache->ts));
-
-	// write property lists
-	// properties are written into the buffer as "obj1.prop1,obj2.prop2 obj3.prop3,obj4.prop4\0".
-	//	a space separates the writers from the readers.
-	for ( lnk=inst->write ; lnk!=nullptr ; lnk=lnk->next ){
-		sprintf(inst->message->name_buffer+name_offset, "%s.%s%c", lnk->remote.obj, lnk->remote.prop, (lnk->next == 0 ? ' ' : ','));
-		lnk->addr = (char *)(inst->message->data_buffer + prop_offset);
-		name_offset += lnk->name_size;
-		prop_offset += lnk->prop_size;
-	}
-	for ( lnk=inst->read ; lnk!=nullptr ; lnk=lnk->next ){
-		sprintf(inst->message->name_buffer+name_offset, "%s.%s%c", lnk->remote.obj, lnk->remote.prop, (lnk->next == 0 ? '\0' : ','));
-		lnk->addr = (char *)(inst->message->data_buffer + prop_offset);
-		name_offset += lnk->name_size;
-		prop_offset += lnk->prop_size;
-	}
-	// note that for the first go-around, we cannot write the property values.
-	//	the system is still in init_all() and has not gotten to object
-	//	initialization, where defaults, calculated values, etc will be set.
-
-	// create message layer
-	// this will set inst->buffer to a pointer that can be used for data
-	//	exchange, whether it point to shmem or to a buffer that will be
-	//	fed into send()
-	result = instance_connect(inst);
-	if(result == FAILED){
-		output_error("instance_init(): instance_connect() failed");
-		return FAILED;
-	}
-	// start instance_proc thread
-	/* start the slave instance */
-	if ( pthread_create(&(inst->threadid), nullptr, instance_runproc, (void*)inst) )
-	{
-		output_error("instance_init(): unable to starte instance slave %d", inst->id);
-		return FAILED;
-	}
-
-	output_verbose("instance_init(): started instance for slave %d", inst->id);
-	instances_count++;
-	return SUCCESS;
-}
+//STATUS instance_init(instance *inst)
+//{
+//	linkage *lnk;
+//	size_t name_offset=0, prop_offset=0;
+//	STATUS result;
+//
+//	int i;
+//	int cnxtypecnt = 3;
+//	struct {
+//		const char *word;
+//		CNXTYPE type;
+//	} cnxtype[] = {
+//		{"mmap", CI_MMAP},
+//		{"shmem", CI_SHMEM},
+//		{"socket", CI_SOCKET},
+//	};
+//	
+//	if(0 == inst){
+//		output_error("instance_init(): null inst pointer");
+//		return FAILED;
+//	}
+//
+//	/* check for looping model */
+//	if (strcmp(inst->model,global_modelname)==0)
+//	{
+//		output_error("instance_init(): slave instance model '%s' is the same as the master model '%'", inst->model,global_modelname);
+//		return FAILED;
+//	}
+//
+//	// validate cnxtype
+//	if(inst->cnxtypestr[0] != 0){
+//		for (i = 0; i < cnxtypecnt; ++i){
+//			if(0 == strcmp(inst->cnxtypestr, cnxtype[i].word)){
+//				inst->cnxtype = cnxtype[i].type;
+//				break;
+//			}
+//		}
+//		if(i == cnxtypecnt){ // exhausted the list without finding a match
+//			output_error("instance_init(): unrecognized connection type '%s' for instance '%s'", inst->cnxtypestr.get_string(), inst->model);
+//			return FAILED;
+//		}
+//	} else {
+//		// default
+//#ifdef _WIN32
+//		inst->cnxtype = CI_MMAP;
+//#else
+//		inst->cnxtype = CI_SHMEM;
+//#endif
+//	}
+//	// calculate message buffer requirements
+//	/* initialize linkages */
+//	inst->cachesize = sizeof(MESSAGE);
+//	inst->prop_size = 0;
+//	inst->name_size = 0;
+//
+//	for ( lnk=inst->write ; lnk!=nullptr ; lnk=lnk->next ){
+//		if ( linkage_init(inst, lnk)==FAILED ){
+//			output_error("instance_init(): linkage_init failed for inst '%s.%s' on link '%s.%s'", inst->hostname, inst->model, lnk->local.obj, lnk->local.prop);
+//			return FAILED;
+//		} else {
+//			inst->cachesize += lnk->size;
+//			inst->prop_size += lnk->prop_size;
+//			inst->name_size += lnk->name_size;
+//			++inst->writer_count;
+//		}
+//	}
+//	for ( lnk=inst->read ; lnk!=nullptr ; lnk=lnk->next ){
+//		if ( linkage_init(inst, lnk)==FAILED ){
+//			output_error("instance_init(): linkage_init failed for inst '%s.%s' on link '%s.%s'", inst->hostname, inst->model, lnk->local.obj, lnk->local.prop);
+//			return FAILED;
+//		} else {
+//			inst->cachesize += lnk->size;
+//			inst->prop_size += lnk->prop_size;
+//			inst->name_size += lnk->name_size;
+//			++inst->reader_count;
+//		}
+//	}
+//
+//	// allocate message buffer
+//	inst->buffer_size = inst->cachesize = sizeof(MESSAGE) + (size_t)(inst->name_size + inst->prop_size);
+//	inst->cache = (MESSAGE *)malloc(inst->cachesize);
+//	memset(inst->cache, 0, inst->cachesize);
+//	message_init(inst->cache, inst->cachesize, (int16)inst->name_size, (int16)inst->prop_size);
+//	if(FAILED == messagewrapper_init(&(inst->message), inst->cache)){
+//		return FAILED;
+//	}
+//	
+//	//	initialize cache
+//	inst->cache->id = inst->id = instances_count;
+//
+//	//output_verbose("inst_init(): slave %d cache at %x, ts at %x", instances_count, inst->cache, &(inst->cache->ts));
+//
+//	// write property lists
+//	// properties are written into the buffer as "obj1.prop1,obj2.prop2 obj3.prop3,obj4.prop4\0".
+//	//	a space separates the writers from the readers.
+//	for ( lnk=inst->write ; lnk!=nullptr ; lnk=lnk->next ){
+//		sprintf(inst->message->name_buffer+name_offset, "%s.%s%c", lnk->remote.obj, lnk->remote.prop, (lnk->next == 0 ? ' ' : ','));
+//		lnk->addr = (char *)(inst->message->data_buffer + prop_offset);
+//		name_offset += lnk->name_size;
+//		prop_offset += lnk->prop_size;
+//	}
+//	for ( lnk=inst->read ; lnk!=nullptr ; lnk=lnk->next ){
+//		sprintf(inst->message->name_buffer+name_offset, "%s.%s%c", lnk->remote.obj, lnk->remote.prop, (lnk->next == 0 ? '\0' : ','));
+//		lnk->addr = (char *)(inst->message->data_buffer + prop_offset);
+//		name_offset += lnk->name_size;
+//		prop_offset += lnk->prop_size;
+//	}
+//	// note that for the first go-around, we cannot write the property values.
+//	//	the system is still in init_all() and has not gotten to object
+//	//	initialization, where defaults, calculated values, etc will be set.
+//
+//	// create message layer
+//	// this will set inst->buffer to a pointer that can be used for data
+//	//	exchange, whether it point to shmem or to a buffer that will be
+//	//	fed into send()
+//	result = instance_connect(inst);
+//	if(result == FAILED){
+//		output_error("instance_init(): instance_connect() failed");
+//		return FAILED;
+//	}
+//	// start instance_proc thread
+//	/* start the slave instance */
+//	if ( pthread_create(&(inst->threadid), nullptr, instance_runproc, (void*)inst) )
+//	{
+//		output_error("instance_init(): unable to starte instance slave %d", inst->id);
+//		return FAILED;
+//	}
+//
+//	output_verbose("instance_init(): started instance for slave %d", inst->id);
+//	instances_count++;
+//	return SUCCESS;
+//}
 
 /** instance_initall
 	Initialize all instance objects.
@@ -639,96 +687,99 @@ STATUS instance_init(instance *inst)
 	@see instance_slave_done
 	@returns SUCCESS or FAILED.
  **/
-STATUS instance_initall(void)
-{
-	instance *inst = 0;
-	int rv;
-
-	if ( instance_list ) 
-	{
-		global_multirun_mode = MRM_MASTER;
-		output_verbose("entering multirun mode");
-		output_prefix_enable();
-		pthread_mutex_lock(&mls_inst_lock);
-		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
-		
-	} else {
-		return SUCCESS;
-	}
-	for ( inst=instance_list ; inst!=nullptr ; inst=inst->next )
-	{
-		if ( FAILED == instance_init(inst)){
-			return FAILED;
-		}
-	}
-
-	// wait for slaves to signal init done
-	rv = instance_master_wait();
-	if(0 == rv){
-		output_error("instance_initall(): final wait() failed");
-		return FAILED;
-	}
-	return SUCCESS;
-}
+//STATUS instance_initall(void)
+//{
+//	instance *inst = 0;
+//	int rv;
+//
+//	if ( instance_list ) 
+//	{
+//		global_multirun_mode = MRM_MASTER;
+//		output_verbose("entering multirun mode");
+//		output_prefix_enable();
+//		//pthread_mutex_lock(&mls_inst_lock);
+//		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&mls_inst_lock));
+//		//pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
+//		mls_inst_signal.wait(lock);
+//
+//		
+//	} else {
+//		return SUCCESS;
+//	}
+//	for ( inst=instance_list ; inst!=nullptr ; inst=inst->next )
+//	{
+//		if ( FAILED == instance_init(inst)){
+//			return FAILED;
+//		}
+//	}
+//
+//	// wait for slaves to signal init done
+//	rv = instance_master_wait();
+//	if(0 == rv){
+//		output_error("instance_initall(): final wait() failed");
+//		return FAILED;
+//	}
+//	return SUCCESS;
+//}
 
 /** instance_write_slave
     Write linkages to slaves.
  **/
-STATUS instance_write_slave(instance *inst)
-{
-	linkage *lnk;
-	STATUS res;
-
-	if(0 == inst){
-		output_error("instance_write_slave(): null inst pointer");
-		return FAILED;
-	}
-	/* update buffer header */
-
-	/* write output to instance */
-	//output_verbose("master writing links for inst %d", inst->id);
-	for ( lnk=inst->write ; lnk!=nullptr ; lnk=lnk->next ){
-		res = linkage_master_to_slave(0, lnk);
-		if(FAILED == res){
-			output_error("instance_write_slave(): linkage_master_to_slave failed");
-			return FAILED;
-		}
-	}
-	//output_verbose("copying %d bytes from %x to %x (%lli)", inst->cachesize, inst->cache, inst->buffer, inst->cache->ts);
-	memcpy(inst->buffer, inst->cache, inst->cachesize);
-	printcontent(inst->buffer, (int)inst->cachesize);
-	return SUCCESS;
-}
+//STATUS instance_write_slave(instance *inst)
+//{
+//	linkage *lnk;
+//	STATUS res;
+//
+//	if(0 == inst){
+//		output_error("instance_write_slave(): null inst pointer");
+//		return FAILED;
+//	}
+//	/* update buffer header */
+//
+//	/* write output to instance */
+//	//output_verbose("master writing links for inst %d", inst->id);
+//	for ( lnk=inst->write ; lnk!=nullptr ; lnk=lnk->next ){
+//		res = linkage_master_to_slave(0, lnk);
+//		if(FAILED == res){
+//			output_error("instance_write_slave(): linkage_master_to_slave failed");
+//			return FAILED;
+//		}
+//	}
+//	//output_verbose("copying %d bytes from %x to %x (%lli)", inst->cachesize, inst->cache, inst->buffer, inst->cache->ts);
+//	memcpy(inst->buffer, inst->cache, inst->cachesize);
+//	printcontent(inst->buffer, (int)inst->cachesize);
+//	return SUCCESS;
+//}
 
 /** instance_read_slaves
     Read linkages from slaves (including next time)
  **/
-TIMESTAMP instance_read_slave(instance *inst)
-{
-	linkage *lnk;
-	TIMESTAMP t2 = TS_INVALID;
-	STATUS res;
-
-	if(0 == inst){
-		output_error("instance_read_slave(): null inst pointer");
-		return TS_INVALID;
-	}
-
-//	printcontent(inst->buffer, (int)inst->cachesize);
-	t2 = inst->cache->ts;
-
-	//output_debug("master reading links for inst %d", inst->id);
-	/* @todo read input from instance */
-	for ( lnk=inst->read ; lnk!=nullptr ; lnk=lnk->next ){
-		res = linkage_slave_to_master(0, lnk);
-		if(FAILED == res){
-			;
-		}
-	}
-
-	/* return the next time */
-	return t2;
-}
+//TIMESTAMP instance_read_slave(instance *inst)
+//{
+//	linkage *lnk;
+//	TIMESTAMP t2 = TS_INVALID;
+//	STATUS res;
+//
+//	if(0 == inst){
+//		output_error("instance_read_slave(): null inst pointer");
+//		return TS_INVALID;
+//	}
+//
+////	printcontent(inst->buffer, (int)inst->cachesize);
+//	t2 = inst->cache->ts;
+//
+//	//output_debug("master reading links for inst %d", inst->id);
+//	/* @todo read input from instance */
+//	for ( lnk=inst->read ; lnk!=nullptr ; lnk=lnk->next ){
+//		res = linkage_slave_to_master(0, lnk);
+//		if(FAILED == res){
+//			;
+//		}
+//	}
+//
+//	/* return the next time */
+//	return t2;
+//}
 
 /** instance_syncall
     Synchronize all slave instances
@@ -740,72 +791,72 @@ TIMESTAMP instance_read_slave(instance *inst)
 	used to parallelize other sync loops only without the use
 	of multiple lock events.
  **/
-TIMESTAMP instance_syncall(TIMESTAMP t1)
-{
-	int wc = 0;
-	/* only process if instances exist */
-	if ( instance_list )
-	{
-		TIMESTAMP t2 = TS_NEVER;
-		clock_t ts = (clock_t)exec_clock();
-		instance *inst;
+//TIMESTAMP instance_syncall(TIMESTAMP t1)
+//{
+//	int wc = 0;
+//	/* only process if instances exist */
+//	if ( instance_list )
+//	{
+//		TIMESTAMP t2 = TS_NEVER;
+//		clock_t ts = (clock_t)exec_clock();
+//		instance *inst;
+//
+//		/* check to see if an instance was lost */
+//		if ( instances_exited>0 )
+//		{
+//			output_debug("%d instance exit detected, stopping main loop", instances_exited);
+//	
+//			/* tell main too to stop */
+//			return TS_INVALID;
+//		}
+//	
+//		/* send linkage to slaves */
+//		for ( inst=instance_list ; inst!=nullptr ; inst=inst->next ){
+//			inst->cache->ts = t1;
+//			instance_write_slave(inst);
+//		}
+//	
+//		/* signal slaves to start */
+//		instance_master_done(t1);
+//	
+//		wc = instance_master_wait();
+//		if(wc != 0){
+//			;
+//		}
+//
+//		/* read linkages from slaves */
+//		for ( inst=instance_list ; inst!=nullptr ; inst=inst->next )
+//		{
+//			TIMESTAMP t3 = 0;
+//			
+//			t3 = instance_read_slave(inst);
+//			if ( t3 < t2 ){
+//				t2 = t3;
+//			}
+//		}
+//	
+//		output_debug("instance sync time is %" FMT_INT64 "d", t2);
+//		instance_synctime += (clock_t)exec_clock() - ts;
+//		return t2;
+//	}
+//	else
+//		return TS_NEVER;
+//}
 
-		/* check to see if an instance was lost */
-		if ( instances_exited>0 )
-		{
-			output_debug("%d instance exit detected, stopping main loop", instances_exited);
-	
-			/* tell main too to stop */
-			return TS_INVALID;
-		}
-	
-		/* send linkage to slaves */
-		for ( inst=instance_list ; inst!=nullptr ; inst=inst->next ){
-			inst->cache->ts = t1;
-			instance_write_slave(inst);
-		}
-	
-		/* signal slaves to start */
-		instance_master_done(t1);
-	
-		wc = instance_master_wait();
-		if(wc != 0){
-			;
-		}
-
-		/* read linkages from slaves */
-		for ( inst=instance_list ; inst!=nullptr ; inst=inst->next )
-		{
-			TIMESTAMP t3 = 0;
-			
-			t3 = instance_read_slave(inst);
-			if ( t3 < t2 ){
-				t2 = t3;
-			}
-		}
-	
-		output_debug("instance sync time is %" FMT_INT64 "d", t2);
-		instance_synctime += (clock_t)exec_clock() - ts;
-		return t2;
-	}
-	else
-		return TS_NEVER;
-}
-
-STATUS instance_dispose(){
-	instance *inst = 0;
-	if(instance_list){ // master
-		instance_master_done(TS_NEVER);
-		for(inst = instance_list; inst != 0; inst = inst->next){
-			// release pthread and event resources
-			;
-		}
-		return SUCCESS;
-	} else { // slave
-		//release pthread and event resources
-		return SUCCESS;
-	}
-}
+//STATUS instance_dispose(){
+//	instance *inst = 0;
+//	if(instance_list){ // master
+//		instance_master_done(TS_NEVER);
+//		for(inst = instance_list; inst != 0; inst = inst->next){
+//			// release pthread and event resources
+//			;
+//		}
+//		return SUCCESS;
+//	} else { // slave
+//		//release pthread and event resources
+//		return SUCCESS;
+//	}
+//}
 
 /////////////////////////////////////////////////////////////////////
 // SLAVE INSTANCE

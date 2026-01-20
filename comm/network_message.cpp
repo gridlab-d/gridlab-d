@@ -179,7 +179,7 @@ int network_message::isa(char *classname){
 }
 
 int network_message::notify(int update_mode, PROPERTY *prop){
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	return 1;
 }
 

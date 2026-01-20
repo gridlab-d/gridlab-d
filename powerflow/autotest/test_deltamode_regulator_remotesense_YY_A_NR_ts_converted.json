@@ -1,0 +1,283 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $id$",
+      "// Copy/modification of XXXX",
+      "// Mostly to just replicate in deltamode - to make sure that works",
+      "//",
+      "// 4 node system with a balanced load and a regulator",
+      "// being controlled under REMOTE_SENSE mode, each phase",
+      "// individually controlled.  Check to make sure voltages are being",
+      "// regulated correctly with both a Type A & B regulator.",
+      "// Somewhat contrived test, as a 200000 ft overhead line is used",
+      "// to artificially lower the voltage at the regulator, but tests",
+      "// the regulator function.  This test will look at a time series.",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit - due to the nature of this file, this needs to be higher -- tap changes and low dwell",
+      "//Order matters for deltamode"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 60
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 4:00:00'"
+  },
+  "modules": {
+    "powerflow": {
+      "enable_subsecond_models": true,
+      "deltamode_timestep": "100.0 ms",
+      "all_powerflow_delta": true,
+      "solver_method": "NR",
+      "outside_comments": [
+        "//Enable deltamode"
+      ]
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc100",
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306
+        },
+        {
+          "name": "olc101",
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls200",
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc300",
+          "conductor_A": "olc100",
+          "conductor_B": "olc100",
+          "conductor_C": "olc100",
+          "conductor_N": "olc101",
+          "spacing": "ls200"
+        }
+      ]
+    },
+    "regulator_configuration": {
+      "instances": [
+        {
+          "name": "auto_regulator",
+          "connect_type": "WYE_WYE",
+          "raise_taps": 16,
+          "lower_taps": 16,
+          "regulation": 0.1,
+          "Type": "A",
+          "Control": "REMOTE_NODE",
+          "band_center": 7200,
+          "band_width": 90,
+          "inline_comments": {
+            "band_width": "// approximately one tap difference"
+          }
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "FeederNode",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "InterNode",
+          "phases": "ABCN",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "TopNode",
+          "phases": "ABCN",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "MiddleNode",
+          "phases": "ABCN",
+          "nominal_voltage": 7200
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "phases": "ABCN",
+          "from": "FeederNode",
+          "to": "InterNode",
+          "length": 200000,
+          "configuration": "lc300"
+        },
+        {
+          "phases": "ABCN",
+          "from": "TopNode",
+          "to": "MiddleNode",
+          "length": 2000,
+          "configuration": "lc300"
+        },
+        {
+          "phases": "ABCN",
+          "from": "MiddleNode",
+          "to": "BottomLoad",
+          "length": 2500,
+          "configuration": "lc300"
+        }
+      ]
+    },
+    "regulator": {
+      "instances": [
+        {
+          "name": "Regulator",
+          "phases": "ABCN",
+          "from": "InterNode",
+          "to": "TopNode",
+          "configuration": "auto_regulator",
+          "sense_node": "BottomLoad"
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "uselessdeltatrigger",
+          "parent": "BottomLoad",
+          "flags": "DELTAMODE",
+          "property": "nominal_voltage",
+          "file": "../data_reg_deltamode_trigger.player"
+        },
+        {
+          "parent": "BottomLoad",
+          "flags": "DELTAMODE",
+          "file": "../regulator_load_phA.player",
+          "loop": 6,
+          "property": "constant_power_A"
+        },
+        {
+          "parent": "BottomLoad",
+          "flags": "DELTAMODE",
+          "file": "../regulator_load_phB.player",
+          "loop": 6,
+          "property": "constant_power_B"
+        },
+        {
+          "parent": "BottomLoad",
+          "flags": "DELTAMODE",
+          "file": "../regulator_load_phC.player",
+          "loop": 6,
+          "property": "constant_power_C"
+        },
+        {
+          "parent": "complex_assert_19",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../data_reg_remote_YY_A_NR_phase_A.csv"
+        },
+        {
+          "parent": "complex_assert_21",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../data_reg_remote_YY_A_NR_phase_B.csv"
+        },
+        {
+          "parent": "complex_assert_23",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../data_reg_remote_YY_A_NR_phase_C.csv"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_19",
+          "parent": "BottomLoad",
+          "flags": "DELTAMODE",
+          "operation": "MAGNITUDE",
+          "target": "voltage_A",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_21",
+          "parent": "BottomLoad",
+          "flags": "DELTAMODE",
+          "operation": "MAGNITUDE",
+          "target": "voltage_B",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_23",
+          "parent": "BottomLoad",
+          "flags": "DELTAMODE",
+          "operation": "MAGNITUDE",
+          "target": "voltage_C",
+          "within": 0.1
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "BottomLoad",
+          "phases": "ABCN",
+          "nominal_voltage": 7200,
+          "inside_comments": [
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag\";",
+            "// interval -1;",
+            "// file voltagerecorder_out.csv;",
+            "// };",
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"voltage_A.real,voltage_A.imag\";",
+            "// interval 60;",
+            "// file voltagerecorder_out_A.csv;",
+            "// };",
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"voltage_B.real,voltage_B.imag\";",
+            "// interval 60;",
+            "// file voltagerecorder_out_B.csv;",
+            "// };",
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"voltage_C.real,voltage_C.imag\";",
+            "// interval 60;",
+            "// file voltagerecorder_out_C.csv;",
+            "// };"
+          ]
+        }
+      ]
+    }
+  }
+}

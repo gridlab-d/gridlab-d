@@ -23,7 +23,7 @@ typedef struct s_records {
 		double solar;
 } RECORDS;
 
-class weather_reader {
+class weather_reader: public gld_object {
 private:
 protected:
 	FILE *infile;

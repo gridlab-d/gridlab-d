@@ -131,10 +131,10 @@ int player::init(OBJECT *parent)
 		get_property(),get_table(),db->convert_to_dbtime(start.get_timestamp()));
 	if ( data==nullptr )
 		return 0; // no data
-	n_rows = mysql_num_rows(data);
+	n.rows() = mysql_num.rows()(data);
 	n_fields = mysql_num_fields(data);
 	row_num = 0;
-	gl_verbose("%s: %d rows with %d fields found", get_name(), n_rows, n_fields);
+	gl_verbose("%s: %d.rows() with %d fields found", get_name(), n.rows(), n_fields);
 
 	// fetch first row
 	row = mysql_fetch_row(data);

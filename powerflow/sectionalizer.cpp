@@ -88,7 +88,7 @@ int sectionalizer::init(OBJECT *parent)
 
 EXPORT int isa_sectionalizer(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,sectionalizer)->isa(classname);
+	return object_data<sectionalizer>(obj)->isa(classname);
 }
 
 EXPORT int create_sectionalizer(OBJECT **obj, OBJECT *parent)
@@ -98,7 +98,7 @@ EXPORT int create_sectionalizer(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(sectionalizer::oclass);
 		if (*obj!=nullptr)
 		{
-			sectionalizer *my = OBJECTDATA(*obj,sectionalizer);
+			sectionalizer *my = object_data<sectionalizer>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -111,7 +111,7 @@ EXPORT int create_sectionalizer(OBJECT **obj, OBJECT *parent)
 EXPORT int init_sectionalizer(OBJECT *obj)
 {
 	try {
-		sectionalizer *my = OBJECTDATA(obj,sectionalizer);
+		sectionalizer *my = object_data<sectionalizer>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(sectionalizer);
@@ -120,7 +120,7 @@ EXPORT int init_sectionalizer(OBJECT *obj)
 EXPORT TIMESTAMP sync_sectionalizer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		sectionalizer *pObj = OBJECTDATA(obj,sectionalizer);
+		sectionalizer *pObj = object_data<sectionalizer>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -154,7 +154,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 	if (!state && !restoration_checks_active)	//Check routine to find a recloser (or we're in reconfiguration mode)
 	{
 		//Map us up as a proper object
-		sectionobj = OBJECTDATA(thisobj,sectionalizer);
+		sectionobj = object_data<sectionalizer>(thisobj);
 
 		//Call to see if a recloser is present
 		if (fault_check_object == nullptr)
@@ -215,7 +215,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 	if (perform_operation)	//Either is a "replace" or a recloser was found - operation is a go
 	{
 		//Map the switch
-		swtchobj = OBJECTDATA(thisobj,switch_object);
+		swtchobj = object_data<switch_object>(thisobj);
 
 		if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || meshed_fault_checking_enabled)
 		{
@@ -268,7 +268,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 EXPORT int sectionalizer_reliability_operation(OBJECT *thisobj, unsigned char desired_phases)
 {
 	//Map the switch
-	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
+	switch_object *swtchobj = object_data<switch_object>(thisobj);
 
 	swtchobj->set_switch_full_reliability(desired_phases);
 
@@ -278,7 +278,7 @@ EXPORT int sectionalizer_reliability_operation(OBJECT *thisobj, unsigned char de
 EXPORT int sectionalizer_fault_updates(OBJECT *thisobj, unsigned char restoration_phases)
 {
 	//Link to ourselves
-	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
+	switch_object *thisswitch = object_data<switch_object>(thisobj);
 
 	//Call the update
 	thisswitch->set_switch_faulted_phases(restoration_phases);

@@ -11,7 +11,7 @@
 #define _DEBUG_H
 
 void exec_sighandler(int sig);
-int exec_debug(struct sync_data *data, int pass, int index, OBJECT *obj);
+int exec_debug(std::shared_ptr<struct sync_data>& data, int pass, int index, OBJECT *obj);
 #ifdef WIN32
 const char *strsignal(int sig);
 #endif // WIN32

@@ -1,0 +1,56 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $Id$"
+    ]
+  },
+  "classes": {
+    "test": [
+      {
+        "type": "double",
+        "name": "x"
+      },
+      {
+        "type": "double",
+        "name": "y"
+      }
+    ]
+  },
+  "modules": {
+    "connection": {
+      "security": "STANDARD",
+      "lockout": "1 min"
+    }
+  },
+  "objects": {
+    "test": {
+      "instances": [
+        {
+          "name": "my",
+          "x": 1.23,
+          "y": 3.45
+        }
+      ]
+    },
+    "xml": {
+      "instances": [
+        {
+          "link": "sync:my.y <- var2",
+          "option": "server:maxclients 1",
+          "inside_comments": [
+            "// option \"transport:udp\";",
+            "// option \"readcache:size 1024\";",
+            "// option \"writecache:size 1024\";"
+          ],
+          "inline_comments": {
+            "option": "// pass options one at a time"
+          }
+        },
+        {
+          "mode": "SERVER",
+          "transport": "UDP"
+        }
+      ]
+    }
+  }
+}

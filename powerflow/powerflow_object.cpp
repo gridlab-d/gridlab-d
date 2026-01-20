@@ -155,7 +155,7 @@ int powerflow_object::isa(const char *classname)
 
 int powerflow_object::create(void)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	phases = NO_PHASE;
 	nominal_voltage = 0.0;
 
@@ -175,12 +175,12 @@ int powerflow_object::create(void)
 
 int powerflow_object::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	/* unspecified phase inherits from parent, if any */
 	if (parent && gl_object_isa(parent,"powerflow_object"))
 	{
-		powerflow_object *pParent = OBJECTDATA(parent,powerflow_object);
+		powerflow_object *pParent = object_data<powerflow_object>(parent);
 		if (phases==NO_PHASE)
 			phases = pParent->phases;
 	}
@@ -246,7 +246,7 @@ TIMESTAMP powerflow_object::sync(TIMESTAMP t0)
 TIMESTAMP powerflow_object::postsync(TIMESTAMP t0)
 {
 #ifdef SUPPORT_OUTAGES
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	if (condition!=OC_NORMAL && solution==PS_NORMAL)
 	{
 		char buffer[1024]="???";
@@ -287,7 +287,7 @@ EXPORT int create_powerflow_object(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(powerflow_object::oclass);
 		if (*obj!=nullptr)
 		{
-			powerflow_object *my = OBJECTDATA(*obj,powerflow_object);
+			powerflow_object *my = object_data<powerflow_object>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -306,7 +306,7 @@ EXPORT int create_powerflow_object(OBJECT **obj, OBJECT *parent)
 EXPORT int init_powerflow_object(OBJECT *obj)
 {
 	try {
-		powerflow_object *my = OBJECTDATA(obj,powerflow_object);
+		powerflow_object *my = object_data<powerflow_object>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(powerflow_object);
@@ -322,7 +322,7 @@ EXPORT int init_powerflow_object(OBJECT *obj)
 */
 EXPORT TIMESTAMP sync_powerflow_object(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	powerflow_object *pObj = OBJECTDATA(obj,powerflow_object);
+	powerflow_object *pObj = object_data<powerflow_object>(obj);
 	try {
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
@@ -343,7 +343,7 @@ EXPORT TIMESTAMP sync_powerflow_object(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pas
 
 EXPORT int isa_powerflow_object(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,powerflow_object)->isa(classname);
+	return object_data<powerflow_object>(obj)->isa(classname);
 }
 
 /**@}**/

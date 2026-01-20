@@ -1,0 +1,494 @@
+{
+  "__preamble": {
+    "comments": [
+      "//Test GFA functionality for loads/triplex loads under direct values, frequency measurement, and parent/child",
+      "//Test UF/OF, UV/OV functions",
+      "//Deltamode-test",
+      "//#set profiler=1",
+      "//#set pauseatexit=1",
+      "// #set double_format=%+.12lg",
+      "// #set complex_format=%+.12lg%+.12lg%c",
+      "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "double_format": "%+.6lg",
+      "complex_format": "%+.6lg%+.6lg%c",
+      "dateformat": "ISO",
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:25'"
+  },
+  "modules": {
+    "powerflow": {
+      "enable_subsecond_models": true,
+      "deltamode_timestep": "10 ms",
+      "solver_method": "NR",
+      "all_powerflow_delta": true,
+      "enable_frequency_dependence": true
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc6010",
+          "geometric_mean_radius": 0.0313,
+          "diameter": "0.927 in",
+          "resistance": 0.1859,
+          "outside_comments": [
+            "// Phase Conductor for 601: 556,500 26/7 ACSR"
+          ]
+        },
+        {
+          "name": "olc6020",
+          "geometric_mean_radius": 0.00814,
+          "diameter": "0.56 in",
+          "resistance": 0.592,
+          "outside_comments": [
+            "// Phase Conductor for 602: 4/0 6/1 ACSR"
+          ]
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls500601",
+          "distance_AB": 2.5,
+          "distance_AC": 4.5,
+          "distance_BC": 7.0,
+          "distance_BN": 5.656854,
+          "distance_AN": 4.272002,
+          "distance_CN": 5.0,
+          "distance_AE": 28.0,
+          "distance_BE": 28.0,
+          "distance_CE": 28.0,
+          "distance_NE": 24.0,
+          "outside_comments": [
+            "// Overhead line configurations"
+          ]
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc601",
+          "conductor_A": "olc6010",
+          "conductor_B": "olc6010",
+          "conductor_C": "olc6010",
+          "conductor_N": "olc6020",
+          "spacing": "ls500601"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "spct_B_type",
+          "connect_type": "SINGLE_PHASE_CENTER_TAPPED",
+          "install_type": "POLETOP",
+          "primary_voltage": "7200.0V",
+          "secondary_voltage": "120.0V",
+          "power_rating": "150.0kVA",
+          "powerB_rating": "150.0kVA",
+          "impedance": "0.006000+0.013600j",
+          "impedance1": "0.012000+0.006800j",
+          "impedance2": "0.012000+0.006800j",
+          "shunt_impedance": "1728000+691200j"
+        }
+      ]
+    },
+    "triplex_line_conductor": {
+      "instances": [
+        {
+          "name": "tplx_1_0_AA",
+          "resistance": 0.97,
+          "geometric_mean_radius": 0.0111,
+          "outside_comments": [
+            "//Triplex lines"
+          ]
+        }
+      ]
+    },
+    "triplex_line_configuration": {
+      "instances": [
+        {
+          "name": "TLCFG",
+          "conductor_1": "tplx_1_0_AA",
+          "conductor_2": "tplx_1_0_AA",
+          "conductor_N": "tplx_1_0_AA",
+          "insulation_thickness": 0.08,
+          "diameter": 0.368
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "parent": "complex_assert_9",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../data_GFA_system_power_overall.csv",
+          "outside_comments": [
+            "//File"
+          ]
+        },
+        {
+          "parent": "source_node",
+          "flags": "DELTAMODE",
+          "property": "voltage_A",
+          "file": "../data_GFA_voltage_frequency_player_A.csv"
+        },
+        {
+          "parent": "source_node",
+          "flags": "DELTAMODE",
+          "property": "voltage_B",
+          "file": "../data_GFA_voltage_frequency_player_B.csv"
+        },
+        {
+          "parent": "source_node",
+          "flags": "DELTAMODE",
+          "property": "voltage_C",
+          "file": "../data_GFA_voltage_frequency_player_C.csv"
+        },
+        {
+          "parent": "direct_freq_load",
+          "flags": "DELTAMODE",
+          "property": "measured_frequency",
+          "file": "../data_GFA_frequency_values_player.csv"
+        },
+        {
+          "parent": "enum_assert_19",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../data_direct_freq_GFA_trip_method.csv"
+        },
+        {
+          "parent": "enum_assert_23",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../data_measure_freq_GFA_trip_method.csv"
+        },
+        {
+          "parent": "tpl_B",
+          "flags": "DELTAMODE",
+          "property": "measured_frequency",
+          "file": "../data_GFA_frequency_values_player.csv"
+        },
+        {
+          "parent": "enum_assert_29",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../data_direct_freq_GFA_trip_method.csv"
+        },
+        {
+          "parent": "enum_assert_32",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../data_measure_freq_GFA_trip_method.csv"
+        },
+        {
+          "parent": "enum_assert_35",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../data_measure_freq_GFA_trip_method.csv"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_9",
+          "parent": "source_node",
+          "flags": "DELTAMODE",
+          "target": "measured_power",
+          "within": 0.1
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "source_node",
+          "phases": "ABCN",
+          "nominal_voltage": 7200.0,
+          "bustype": "SWING",
+          "inside_comments": [
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property \"measured_power.real,measured_power.imag\";",
+            "// interval 1;",
+            "// file data_GFA_system_power_overall.csv;",
+            "// };"
+          ]
+        },
+        {
+          "name": "secondary_node",
+          "phases": "ABCN",
+          "nominal_voltage": 7200.0
+        },
+        {
+          "name": "tertiary_node",
+          "phases": "ABCN",
+          "nominal_voltage": 7200.0
+        },
+        {
+          "name": "tert_par_node",
+          "phases": "ABCN",
+          "nominal_voltage": 7200.0
+        }
+      ]
+    },
+    "enum_assert": {
+      "instances": [
+        {
+          "name": "enum_assert_19",
+          "parent": "direct_freq_load",
+          "flags": "DELTAMODE",
+          "target": "GFA_trip_method"
+        },
+        {
+          "name": "enum_assert_23",
+          "parent": "measure_freq_load_parent",
+          "flags": "DELTAMODE",
+          "target": "GFA_trip_method"
+        },
+        {
+          "name": "enum_assert_29",
+          "parent": "tpl_B",
+          "flags": "DELTAMODE",
+          "target": "GFA_trip_method"
+        },
+        {
+          "name": "enum_assert_32",
+          "parent": "tpl_B_freq",
+          "flags": "DELTAMODE",
+          "target": "GFA_trip_method"
+        },
+        {
+          "name": "enum_assert_35",
+          "parent": "tpl_B_freq_parent",
+          "flags": "DELTAMODE",
+          "target": "GFA_trip_method"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "direct_freq_load",
+          "phases": "ABCN",
+          "groupid": "GFA_loads",
+          "nominal_voltage": 7200.0,
+          "constant_power_A": "1000.0+500.0j",
+          "constant_power_B": "1000.0+500.0j",
+          "constant_power_C": "1000.0+500.0j",
+          "GFA_enable": true,
+          "GFA_reconnect_time": "1.0 s"
+        },
+        {
+          "name": "measure_freq_load",
+          "phases": "ABCN",
+          "groupid": "GFA_loads",
+          "nominal_voltage": 7200.0,
+          "constant_power_A": "1000.0+500.0j",
+          "constant_power_B": "1000.0+500.0j",
+          "constant_power_C": "1000.0+500.0j",
+          "GFA_enable": true,
+          "GFA_reconnect_time": "1.0 s",
+          "frequency_measure_type": "SIMPLE"
+        },
+        {
+          "name": "measure_freq_load_parent",
+          "phases": "ABCN",
+          "groupid": "GFA_loads",
+          "parent": "tert_par_node",
+          "nominal_voltage": 7200.0,
+          "constant_power_A": "1000.0+500.0j",
+          "constant_power_B": "1000.0+500.0j",
+          "constant_power_C": "1000.0+500.0j",
+          "GFA_enable": true,
+          "GFA_reconnect_time": "1.0 s",
+          "frequency_measure_type": "SIMPLE"
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "tpm_B",
+          "phases": "BS",
+          "nominal_voltage": 120.0
+        },
+        {
+          "name": "tpm_B2",
+          "phases": "BS",
+          "nominal_voltage": 120.0
+        }
+      ]
+    },
+    "triplex_load": {
+      "instances": [
+        {
+          "name": "tpl_B",
+          "phases": "BS",
+          "groupid": "GFA_loads",
+          "nominal_voltage": 120.0,
+          "constant_power_1": "500.0+200.0j",
+          "constant_power_2": "500.0+200.0j",
+          "constant_power_12": "1000.0+400.0j",
+          "GFA_enable": true,
+          "GFA_reconnect_time": "1.0 s",
+          "inside_comments": [
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property GFA_trip_method;",
+            "// file \"data_direct_freq_GFA_trip_method.csv\";",
+            "// interval 1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "tpl_B_freq",
+          "phases": "BS",
+          "groupid": "GFA_loads",
+          "nominal_voltage": 120.0,
+          "constant_power_1": "500.0+200.0j",
+          "constant_power_2": "500.0+200.0j",
+          "constant_power_12": "1000.0+400.0j",
+          "GFA_enable": true,
+          "GFA_reconnect_time": "1.0 s",
+          "frequency_measure_type": "SIMPLE",
+          "inside_comments": [
+            "// object recorder {",
+            "// flags DELTAMODE;",
+            "// property GFA_trip_method;",
+            "// file \"data_measure_freq_GFA_trip_method.csv\";",
+            "// interval 1;",
+            "// };"
+          ]
+        },
+        {
+          "name": "tpl_B_freq_parent",
+          "phases": "BS",
+          "groupid": "GFA_loads",
+          "parent": "tpm_B2",
+          "nominal_voltage": 120.0,
+          "constant_power_1": "500.0+200.0j",
+          "constant_power_2": "500.0+200.0j",
+          "constant_power_12": "1000.0+400.0j",
+          "GFA_enable": true,
+          "GFA_reconnect_time": "1.0 s",
+          "frequency_measure_type": "SIMPLE"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "ohl_1",
+          "phases": "ABCN",
+          "from": "source_node",
+          "to": "secondary_node",
+          "length": "100.0 ft",
+          "configuration": "lc601",
+          "outside_comments": [
+            "//lines"
+          ]
+        },
+        {
+          "name": "ohl_2",
+          "phases": "ABCN",
+          "from": "source_node",
+          "to": "tertiary_node",
+          "length": "100.0 ft",
+          "configuration": "lc601"
+        },
+        {
+          "name": "ohl_21",
+          "phases": "ABCN",
+          "from": "tertiary_node",
+          "to": "direct_freq_load",
+          "length": "100.0 ft",
+          "configuration": "lc601"
+        },
+        {
+          "name": "ohl_22",
+          "phases": "ABCN",
+          "from": "tertiary_node",
+          "to": "measure_freq_load",
+          "length": "100.0 ft",
+          "configuration": "lc601"
+        },
+        {
+          "name": "ohl_32",
+          "phases": "ABCN",
+          "from": "tertiary_node",
+          "to": "tert_par_node",
+          "length": "100.0 ft",
+          "configuration": "lc601"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "phases": "BS",
+          "from": "secondary_node",
+          "to": "tpm_B",
+          "configuration": "spct_B_type"
+        }
+      ]
+    },
+    "triplex_line": {
+      "instances": [
+        {
+          "phases": "BS",
+          "from": "tpm_B",
+          "to": "tpl_B",
+          "configuration": "TLCFG",
+          "length": "50.0 ft"
+        },
+        {
+          "phases": "BS",
+          "from": "tpm_B",
+          "to": "tpl_B_freq",
+          "configuration": "TLCFG",
+          "length": "50.0 ft"
+        },
+        {
+          "phases": "BS",
+          "from": "tpm_B",
+          "to": "tpm_B2",
+          "configuration": "TLCFG",
+          "length": "50.0 ft"
+        }
+      ]
+    },
+    "group_recorder": {
+      "instances": [
+        {
+          "flags": "DELTAMODE",
+          "group": "groupid=GFA_loads",
+          "property": "GFA_status",
+          "file": "group_GFA_status.csv",
+          "interval": 1
+        }
+      ]
+    }
+  }
+}
