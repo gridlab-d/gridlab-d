@@ -22,14 +22,21 @@ find_package(nanobind CONFIG REQUIRED)
 # The build process should ensure libgldapi.so exists before calling this
 
 # Determine paths based on build context
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib/libgldapi.so")
-    # Development mode - use pre-built GridLAB-D from parent directory
-    set(GRIDLABD_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)
-    set(GRIDLABD_LIB_DIR ${GRIDLABD_ROOT}/build/lib)
-    message(STATUS "Development mode: using pre-built GridLAB-D at ${GRIDLABD_ROOT}")
+set(GRIDLABD_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)
+if(EXISTS "${GRIDLABD_ROOT}/cmake-build/lib/libgldapi.so")
+    # Development mode - prefer cmake out-of-source build
+    set(GRIDLABD_BUILD_DIR ${GRIDLABD_ROOT}/cmake-build)
+    set(GRIDLABD_LIB_DIR ${GRIDLABD_BUILD_DIR}/lib)
+    message(STATUS "Development mode: using pre-built GridLAB-D at ${GRIDLABD_BUILD_DIR}")
+elseif(EXISTS "${GRIDLABD_ROOT}/build/lib/libgldapi.so")
+    # Legacy in-tree build fallback
+    set(GRIDLABD_BUILD_DIR ${GRIDLABD_ROOT}/build)
+    set(GRIDLABD_LIB_DIR ${GRIDLABD_BUILD_DIR}/lib)
+    message(STATUS "Development mode: using pre-built GridLAB-D at ${GRIDLABD_BUILD_DIR}")
 elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/prebuilt/lib/libgldapi.so")
     # PyPI mode - use prebuilt libraries included in the package
     set(GRIDLABD_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+    set(GRIDLABD_BUILD_DIR ${GRIDLABD_ROOT})
     set(GRIDLABD_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/prebuilt/lib)
     message(STATUS "PyPI mode: using prebuilt GridLAB-D libraries")
 else()
@@ -37,13 +44,15 @@ else()
 endif()
 
 # Set include directories based on the build mode
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib/libgldapi.so")
+if(EXISTS "${GRIDLABD_LIB_DIR}/libgldapi.so")
     # Development mode paths
     set(GRIDLABD_INCLUDE_DIR ${GRIDLABD_ROOT}/gldcore)
+    set(GRIDLABD_BUILD_INCLUDE_DIR ${GRIDLABD_BUILD_DIR}/headers)
     set(JSONCPP_INCLUDE_DIR ${GRIDLABD_ROOT}/third_party/jsoncpp_lib/include)
 else()
     # PyPI mode paths (using copied headers)
     set(GRIDLABD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gldcore)
+    set(GRIDLABD_BUILD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/headers)
     set(JSONCPP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/jsoncpp_lib/include)
 endif()
 
@@ -63,15 +72,18 @@ nanobind_add_module(
 # Add include directories
 target_include_directories(gridlabd_core PRIVATE 
     ${GRIDLABD_INCLUDE_DIR}
+    ${GRIDLABD_BUILD_INCLUDE_DIR}
     ${GRIDLABD_ROOT}/third_party
     ${JSONCPP_INCLUDE_DIR}
 )
+
+target_compile_definitions(gridlabd_core PRIVATE HAVE_CONFIG_H)
 
 # Find jsoncpp library (could be in different locations)
 set(JSONCPP_SEARCH_PATHS
     ${GRIDLABD_LIB_DIR}/static/libjsoncpp.a
     ${GRIDLABD_LIB_DIR}/libjsoncpp.a
-    ${GRIDLABD_ROOT}/build/third_party/jsoncpp_lib/src/lib_json/libjsoncpp.a
+    ${GRIDLABD_BUILD_DIR}/third_party/jsoncpp_lib/src/lib_json/libjsoncpp.a
     ${GRIDLABD_ROOT}/third_party/jsoncpp_lib/src/lib_json/libjsoncpp.a
 )
 
@@ -108,7 +120,7 @@ install(FILES ${GRIDLABD_LIB_DIR}/libgldapi.${LIB_EXT}
         DESTINATION gridlabd)
 
 # Install essential data files (tzinfo.txt, unitfile.txt) alongside the Python package
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib/libgldapi.so")
+if(EXISTS "${GRIDLABD_LIB_DIR}/libgldapi.so")
     # Development mode - use original locations
     set(GRIDLABD_DATA_FILES
         ${GRIDLABD_ROOT}/gldcore/tzinfo.txt
