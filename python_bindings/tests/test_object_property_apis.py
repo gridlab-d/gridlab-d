@@ -3,7 +3,6 @@ Comprehensive test of all object and property query APIs.
 
 This test demonstrates and validates all the different ways to query
 objects and their properties in GridLAB-D:
-
 1. get_property() - Get a single property from a single object
 2. get_object_properties() - Get all properties from a single object
 3. get_objects_by_class() - Get names/IDs of all objects of a class
@@ -21,12 +20,13 @@ def gld_with_model():
     
     model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
     result = gld.load_glm(["gridlabd", model_path])
-    assert result == gridlabd.GLDErrorCode.GLD_SUCCESS
+    assert result == gridlabd.GLDErrorCode.SUCCESS
     
     result = gld.setup_after_load()
-    assert result == gridlabd.GLDErrorCode.GLD_SUCCESS
+    assert result == gridlabd.GLDErrorCode.SUCCESS
     
     return gld
+
 
 class TestSingleObjectSingleProperty:
     """Test get_property() - most granular query."""
@@ -41,14 +41,15 @@ class TestSingleObjectSingleProperty:
         # Get a single property
         result, value = gld_with_model.get_property(houses[0], "floor_area")
         
-        assert result == gridlabd.GLDErrorCode.GLD_SUCCESS
+        assert result == gridlabd.GLDErrorCode.SUCCESS
         assert isinstance(value, str)
         assert value != ""
     
     def test_get_property_invalid_object(self, gld_with_model):
         """Get property from non-existent object."""
         result, value = gld_with_model.get_property("nonexistent_obj", "some_prop")
-        assert result == gridlabd.GLDErrorCode.GLD_OPERATION_FAILED
+        assert result == gridlabd.GLDErrorCode.OPERATION_FAILED
+
 
 class TestSingleObjectAllProperties:
     """Test get_object_properties() - all properties from one object."""
@@ -68,6 +69,12 @@ class TestSingleObjectAllProperties:
         assert "__class__" in props
         assert "__id__" in props
         assert props["__class__"] == "house"
+        
+        # Should have 'name' as both metadata (__name__) and regular property (name)
+        # This ensures users can access it like any other GLM property
+        if "__name__" in props:  # Only if object has a name
+            assert "name" in props
+            assert props["name"] == props["__name__"]
         
         # Should have actual properties (beyond metadata)
         meta_keys = {"__class__", "__id__", "__name__"}
@@ -208,7 +215,7 @@ class TestAPIComparison:
         
         # 4. Get single property from one object
         result, floor_area = gld_with_model.get_property(obj_names[0], "floor_area")
-        assert result == gridlabd.GLDErrorCode.GLD_SUCCESS
+        assert result == gridlabd.GLDErrorCode.SUCCESS
         assert floor_area == first_obj_props["floor_area"]
         
         # 5. Get all objects with all properties (NEW!)

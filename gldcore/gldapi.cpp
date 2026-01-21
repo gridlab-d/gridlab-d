@@ -8,15 +8,16 @@
 #include "kml.h"
 #include "legal.h"
 #include "local.h"
-#include "module.h"
-#include "output.h"
-#include "realtime.h"
-#include "save.h"
-#include "threadpool.h"
-#include "timestamp.h"
-#include <cstdio>
-#include <fstream>
+#include <json/json.h>
 // #include <module.h>
+
+// External declarations for message capture functions in output.cpp
+extern std::vector<std::map<std::string, std::string>>
+output_get_captured_messages();
+extern void output_clear_captured_messages();
+extern void output_enable_capture(bool enable);
+extern void output_set_message_capture_limit(size_t limit);
+extern size_t output_get_message_capture_limit();
 // #include <module.h>
 
 #include "globals.h"
@@ -52,9 +53,11 @@ std::string object_identifier(const OBJECT *obj) {
   if (obj == nullptr) {
     return "";
   }
+
   if (obj->name != nullptr && obj->name[0] != '\0') {
     return std::string(obj->name);
   }
+
   char id_str[32];
   snprintf(id_str, sizeof(id_str), "%d", obj->id);
   return std::string(id_str);
@@ -63,6 +66,7 @@ std::string object_identifier(const OBJECT *obj) {
 std::map<std::string, std::string>
 collect_property_map_for_object(OBJECT *obj) {
   std::map<std::string, std::string> property_map;
+
   if (obj == nullptr || obj->oclass == nullptr ||
       obj->oclass->name == nullptr) {
     return property_map;
@@ -72,6 +76,8 @@ collect_property_map_for_object(OBJECT *obj) {
   property_map["__id__"] = std::to_string(obj->id);
   if (obj->name != nullptr && obj->name[0] != '\0') {
     property_map["__name__"] = std::string(obj->name);
+    // Also add 'name' as a regular property for user convenience
+    property_map["name"] = std::string(obj->name);
   }
 
   PROPERTY *prop = class_get_first_property(obj->oclass);
@@ -104,6 +110,26 @@ fs::path locate_exec_from_root(const fs::path &root) {
     }
   }
   return {};
+}
+
+bool validate_gridlabd_installation(const fs::path &root) {
+  // Check for required directory structure
+  // At minimum, we need either:
+  // - share/ directory (for data files like tzinfo.txt)
+  // - lib/ directory (for modules)
+  // - gldcore/ directory (for development mode)
+
+  fs::path share_dir = root / "share";
+  fs::path lib_dir = root / "lib";
+  fs::path gldcore_dir = root / "gldcore";
+
+  bool has_share = fs::exists(share_dir) && fs::is_directory(share_dir);
+  bool has_lib = fs::exists(lib_dir) && fs::is_directory(lib_dir);
+  bool has_gldcore = fs::exists(gldcore_dir) && fs::is_directory(gldcore_dir);
+
+  // Valid if it has share or gldcore (for data files) and optionally lib (for
+  // modules)
+  return has_share || has_gldcore || has_lib;
 }
 
 void apply_runtime_paths(const fs::path &exec_path) {
@@ -502,8 +528,8 @@ GLDErrorCode GridLabD::exit_gld(const std::string &filepath) {
 }
 
 // Retrieve GLM data based on a query, optionally save to filepath
-nlohmann::json GridLabD::get_checkpoint_json(const std::string &filepath) {
-  nlohmann::json checkpoint;
+Json::Value GridLabD::get_checkpoint_json(const std::string &filepath) {
+  Json::Value checkpoint;
 
   if (filepath.empty()) {
     // If no filepath provided, just return the JSON without saving
@@ -521,10 +547,22 @@ nlohmann::json GridLabD::get_checkpoint_json(const std::string &filepath) {
 
     // Get checkpoint JSON with directory specified
     checkpoint = do_checkpoint(directory.c_str());
-  }
 
-  // Set the internal gld_model representation to be equal to checkpoint
-  gld_model = nlohmann::json(checkpoint);
+    // Additionally save the JSON directly to the specified filepath
+    if (!checkpoint.empty()) {
+      std::ofstream json_file(filepath);
+      if (json_file.is_open()) {
+        Json::StreamWriterBuilder builder;
+        builder["indentation"] = "  "; // 2-space indentation
+        std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+        writer->write(checkpoint, &json_file);
+        json_file.close();
+        output_verbose("Checkpoint JSON saved to: %s", filepath.c_str());
+      } else {
+        output_error("Unable to open file '%s' for writing", filepath.c_str());
+      }
+    }
+  }
 
   return checkpoint;
 }
@@ -642,7 +680,7 @@ GLDErrorCode ensure_simulation_initialized() {
     }
 
     if (run_preparation() == FAILED) {
-      printf("Failed to initialize simulation for stepping\n");
+      output_error("Failed to initialize simulation for stepping");
       return GLD_OPERATION_FAILED;
     }
 
@@ -720,7 +758,7 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
     STATUS result = exec_step();
 
     if (result == FAILED) {
-      printf("Error occurred during simulation step\n");
+      output_error("Error occurred during simulation step");
       simulation_time = (double)global_clock;
       return GLD_OPERATION_FAILED;
     }
@@ -735,13 +773,10 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
   TIMESTAMP start_clock = global_clock;
   TIMESTAMP target_clock = start_clock + selected_timestep;
 
-  // Update global_step_time so exec.cpp can check against it
-  global_step_time = target_clock;
-
   printf("Stepping from time %.2f to target %.2f (step size: %d seconds)\n",
          (double)start_clock, (double)target_clock, selected_timestep);
 
-  // Keep stepping until we reach the target
+  // Keep stepping until we reach the target time
   while (global_clock < target_clock) {
     TIMESTAMP prev_clock = global_clock;
 
@@ -749,68 +784,25 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
     STATUS result = exec_step();
 
     if (result == FAILED) {
-      printf("Error occurred during simulation step\n");
+      output_error("Error occurred during simulation step");
       simulation_time = (double)global_clock;
       return GLD_OPERATION_FAILED;
     }
 
-    printf("  DEBUG: Stepped from %.2f to %.2f (target=%.2f)\n",
-           (double)prev_clock, (double)global_clock, (double)target_clock);
-    /*
-    // Check if we overshot the target - if so, force sync back to exact target
-    if (global_clock > target_clock) {
-        printf("Overshot target! Clock=%.2f, target=%.2f - forcing sync to exact
-    target\n", (double)global_clock, (double)target_clock);
+    //         printf("  Internal step: %.2f -> %.2f\n", (double)prev_clock,
+    //         (double)global_clock);
 
-        // Force sync to the exact target time
-        STATUS sync_result = exec_force_sync_to_time(target_clock);
-
-        if (sync_result == FAILED) {
-            printf("Error: forced sync to time %.2f failed\n",
-    (double)target_clock); simulation_time = (double)global_clock; return
-    GLD_OPERATION_FAILED;
-        }
-
-        printf("Successfully synced back to exact target time %.2f\n",
-    (double)target_clock); break;
-        */
+    // Check if we've reached or passed the target
+    if (global_clock >= target_clock) {
+      break;
+    }
   }
-
-  // Check if we've exactly reached the target
-  if (global_clock == target_clock) {
-  }
-  // I don't think I need this, but leaving it for safety
-  /*
-  // Peek at the NEXT event time to see if another step would overshoot
-  TIMESTAMP next_event = exec_sync_get(nullptr);
-
-  printf("  DEBUG: After step, next_event=%.2f, target=%.2f\n",
-         (double)next_event, (double)target_clock);
-
-  // If the next event would take us past the target, force a sync to the exact
-target time if (next_event > target_clock) { printf("Next event at %.2f would
-exceed target %.2f - forcing sync to exact target %.2f\n", (double)next_event,
-(double)target_clock, (double)global_clock);
-
-      // Call the new exec function to force sync to exact target time
-      STATUS sync_result = exec_force_sync_to_time(target_clock);
-
-      if (sync_result == FAILED) {
-          printf("Error: forced sync to time %.2f failed\n",
-(double)target_clock); simulation_time = (double)global_clock; return
-GLD_OPERATION_FAILED;
-      }
-
-      printf("Successfully synced and committed at exact target time %.2f\n",
-(double)target_clock); break;
-  }
-}*/
 
   // Update the simulation time
   simulation_time = (double)global_clock;
 
-  printf("Completed step: advanced from %.2f to %.2f (target was %.2f)\n",
-         (double)start_clock, simulation_time, (double)target_clock);
+  printf("Completed step: advanced from %.2f to %.2f\n", (double)start_clock,
+         simulation_time);
 
   return GLD_SUCCESS;
 }
@@ -845,10 +837,10 @@ GLDErrorCode GridLabD::get_time(std::string &current_time) {
   char buffer[64];
   if (convert_from_timestamp(global_clock, buffer, sizeof(buffer)) > 0) {
     current_time = buffer;
-    printf("Getting current time: %s\n", current_time.c_str());
+    output_verbose("Getting current time: %s", current_time.c_str());
     return GLD_SUCCESS;
   } else {
-    printf("Error: Failed to convert timestamp\n");
+    output_error("Failed to convert timestamp");
     return GLD_OPERATION_FAILED;
   }
 }
@@ -862,7 +854,7 @@ GLDErrorCode GridLabD::set_application_mode(GLDApplicationType mode) {
 // Set timestep
 GLDErrorCode GridLabD::set_time_step(double time_step) {
   if (time_step <= 0) {
-    printf("Error: Time step must be positive, got: %.2f\n", time_step);
+    output_error("Time step must be positive, got: %.2f", time_step);
     return GLD_OPERATION_FAILED;
   }
 
@@ -896,7 +888,7 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
       target_time_str.c_str(), &target_nanoseconds, &target_time_dbl);
 
   if (target_clock == TS_INVALID) {
-    printf("Error: Invalid timestamp string: %s\n", target_time_str.c_str());
+    output_error("Invalid timestamp string: %s", target_time_str.c_str());
     simulation_time = (double)global_clock;
     return GLD_OPERATION_FAILED;
   }
@@ -910,8 +902,8 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
   if (target_time_dbl <= current_time_dbl) {
     char start_buffer[64];
     convert_from_timestamp(start_clock, start_buffer, sizeof(start_buffer));
-    printf("Warning: Target time %s is not after current time %s\n",
-           target_time_str.c_str(), start_buffer);
+    output_warning("Target time %s is not after current time %s",
+                   target_time_str.c_str(), start_buffer);
     simulation_time = current_time_dbl;
     return GLD_SUCCESS;
   }
@@ -920,9 +912,6 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
   convert_from_timestamp(start_clock, start_buffer, sizeof(start_buffer));
   printf("Stepping from %s to target %s\n", start_buffer,
          target_time_str.c_str());
-
-  // Update global_step_time so exec.cpp can check against it
-  global_step_time = target_clock;
 
   // Keep stepping until we reach or pass the target time (with sub-second
   // precision)
@@ -938,7 +927,7 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
     STATUS result = exec_step();
 
     if (result == FAILED) {
-      printf("Error occurred during simulation step\n");
+      output_error("Error occurred during simulation step");
       simulation_time = current_time_dbl;
       return GLD_OPERATION_FAILED;
     }
@@ -951,9 +940,6 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
   printf("Reached time %s (target was %s)\n", final_buffer,
          target_time_str.c_str());
 
-  // Reset global_step_time after step_to completes
-  global_step_time = TS_NEVER;
-
   return GLD_SUCCESS;
 }
 
@@ -965,7 +951,7 @@ GridLabD::get_objects_by_class(const std::string &class_name) {
   // Find the class by name
   CLASS *oclass = class_get_class_from_classname(class_name.c_str());
   if (oclass == nullptr) {
-    printf("Warning: Class '%s' not found\n", class_name.c_str());
+    output_warning("Class '%s' not found", class_name.c_str());
     return object_names;
   }
 
@@ -1012,7 +998,7 @@ GLDErrorCode GridLabD::get_property(const std::string &object_name,
   }
 
   if (obj == nullptr) {
-    printf("Error: Object '%s' not found\n", object_name.c_str());
+    output_error("Object '%s' not found", object_name.c_str());
     return GLD_OPERATION_FAILED;
   }
 
@@ -1022,8 +1008,8 @@ GLDErrorCode GridLabD::get_property(const std::string &object_name,
                                         sizeof(buffer));
 
   if (result == 0) {
-    printf("Error: Failed to get property '%s' from object '%s'\n",
-           property_name.c_str(), object_name.c_str());
+    output_error("Failed to get property '%s' from object '%s'",
+                 property_name.c_str(), object_name.c_str());
     return GLD_OPERATION_FAILED;
   }
 
@@ -1051,10 +1037,11 @@ GLDErrorCode GridLabD::set_property(const std::string &object_name,
   }
 
   if (obj == nullptr) {
-    printf("Error: Object '%s' not found\n", object_name.c_str());
+    output_error("Object '%s' not found", object_name.c_str());
     return GLD_OPERATION_FAILED;
   }
 
+  // Set the property value
   // Set the property value
   char value_copy[1024];
   strncpy(value_copy, value.c_str(), sizeof(value_copy) - 1);
@@ -1064,8 +1051,8 @@ GLDErrorCode GridLabD::set_property(const std::string &object_name,
       obj, const_cast<char *>(property_name.c_str()), value_copy);
 
   if (result == 0) {
-    printf("Error: Failed to set property '%s' on object '%s' to value '%s'\n",
-           property_name.c_str(), object_name.c_str(), value.c_str());
+    output_error("Failed to set property '%s' on object '%s' to value '%s'",
+                 property_name.c_str(), object_name.c_str(), value.c_str());
     return GLD_OPERATION_FAILED;
   }
 
@@ -1081,10 +1068,11 @@ GLDErrorCode GridLabD::set_property_by_class(const std::string &class_name,
   // Find the class by name
   CLASS *oclass = class_get_class_from_classname(class_name.c_str());
   if (oclass == nullptr) {
-    printf("Error: Class '%s' not found\n", class_name.c_str());
+    output_error("Class '%s' not found", class_name.c_str());
     return GLD_OPERATION_FAILED;
   }
 
+  // Prepare value buffer
   // Prepare value buffer
   char value_copy[1024];
   strncpy(value_copy, value.c_str(), sizeof(value_copy) - 1);
@@ -1106,8 +1094,8 @@ GLDErrorCode GridLabD::set_property_by_class(const std::string &class_name,
         const char *obj_name = (obj->name != nullptr && obj->name[0] != '\0')
                                    ? obj->name
                                    : "(unnamed)";
-        printf("Warning: Failed to set property '%s' on object '%s' (id=%d)\n",
-               property_name.c_str(), obj_name, obj->id);
+        output_warning("Failed to set property '%s' on object '%s' (id=%d)",
+                       property_name.c_str(), obj_name, obj->id);
       }
     }
     obj = object_get_next(obj);
@@ -1134,7 +1122,7 @@ GridLabD::get_properties_by_class(const std::string &class_name,
   // Find the class by name
   CLASS *oclass = class_get_class_from_classname(class_name.c_str());
   if (oclass == nullptr) {
-    printf("Warning: Class '%s' not found\n", class_name.c_str());
+    output_warning("Class '%s' not found", class_name.c_str());
     return property_map;
   }
 
@@ -1160,8 +1148,8 @@ GridLabD::get_properties_by_class(const std::string &class_name,
       if (result != 0) {
         property_map[obj_name] = std::string(buffer);
       } else {
-        printf("Warning: Failed to get property '%s' from object '%s'\n",
-               property_name.c_str(), obj_name.c_str());
+        output_warning("Failed to get property '%s' from object '%s'",
+                       property_name.c_str(), obj_name.c_str());
       }
     }
     obj = object_get_next(obj);
@@ -1211,7 +1199,7 @@ GridLabD::get_object_properties(const std::string &object_name) {
   }
 
   if (obj == nullptr) {
-    printf("Error: Object '%s' not found\n", object_name.c_str());
+    output_error("Object '%s' not found", object_name.c_str());
     return property_map;
   }
 
@@ -1224,6 +1212,7 @@ GridLabD::get_object_properties(const std::string &object_name) {
   size_t reported_properties = property_map.size() >= meta_fields
                                    ? property_map.size() - meta_fields
                                    : 0;
+
   printf("Retrieved %zu properties from object '%s' (class: %s)\n",
          reported_properties, object_name.c_str(), obj->oclass->name);
 
@@ -1237,7 +1226,7 @@ GridLabD::get_all_objects(const std::string &class_name) {
 
   CLASS *oclass = class_get_class_from_classname(class_name.c_str());
   if (oclass == nullptr) {
-    printf("Warning: Class '%s' not found\n", class_name.c_str());
+    output_warning("Class '%s' not found", class_name.c_str());
     return objects;
   }
 
@@ -1279,4 +1268,22 @@ GridLabD::get_model() {
          model.size(), total_objects);
 
   return model;
+}
+
+std::vector<std::map<std::string, std::string>> GridLabD::get_messages() {
+  return output_get_captured_messages();
+}
+
+void GridLabD::clear_messages() { output_clear_captured_messages(); }
+
+void GridLabD::enable_message_capture(bool enable) {
+  output_enable_capture(enable);
+}
+
+void GridLabD::set_message_capture_limit(size_t limit) {
+  output_set_message_capture_limit(limit);
+}
+
+size_t GridLabD::get_message_capture_limit() {
+  return output_get_message_capture_limit();
 }

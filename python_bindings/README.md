@@ -15,8 +15,19 @@ This package provides Python bindings for GridLAB-D, a power system simulation p
 
 1. **Build the GridLAB-D core** (if not already built):
    ```bash
-   cd build
-   cmake --build . --parallel
+   # Create out-of-source build directory
+   mkdir cmake-build
+   cd cmake-build
+   
+   # Configure the build (use ccmake for interactive configuration)
+   ccmake ../
+   
+   # Build and install (use sudo if installing to default system location)
+   sudo cmake --build . --target install
+   
+   # Verify GridLAB-D installation
+   cd ../
+   gridlabd -T 0 --validate
    ```
 
 2. **Install the Python package in development mode**:
@@ -26,8 +37,9 @@ This package provides Python bindings for GridLAB-D, a power system simulation p
    ```
    
    **Note**: In development mode (`-e`), the package links to your source tree. It automatically finds:
+   - GridLAB-D libraries in `cmake-build/lib/` or `build/lib/`
    - Data files in `gldcore/` (tzinfo.txt, unitfile.txt)
-   - Modules in `build/lib/` (residential.so, climate.so, etc.)
+   - Modules (residential.so, climate.so, etc.)
 
 3. **Verify installation**:
    ```python
@@ -122,6 +134,137 @@ gridlabd.GridLabD.set_install_root("/path/to/gridlabd")
 # Query paths
 print("Install root:", gridlabd.GridLabD.get_install_root())
 print("Executable:", gridlabd.GridLabD.get_executable_path())
+```
+
+### Using Custom GridLAB-D Installations
+
+If you want to use a different GridLAB-D installation (e.g., for custom modules or data files) alongside the bundled PyPI package, use the `GRIDLABD_HOME` environment variable:
+
+#### Quick Start
+
+```bash
+# Point to your custom GridLAB-D installation
+export GRIDLABD_HOME=/usr/local/custom-gridlabd
+
+# Run your Python code
+python my_simulation.py
+```
+
+#### What Gets Used
+
+When `GRIDLABD_HOME` is set, the package uses a **hybrid approach**:
+- ✅ **Core API**: Uses bundled `libgldapi.so` (from PyPI package)
+- ✅ **Modules**: Uses custom modules from `$GRIDLABD_HOME/lib/` (e.g., `residential.so`)
+- ✅ **Data files**: Uses custom data from `$GRIDLABD_HOME/share/` (e.g., `tzinfo.txt`)
+
+This allows you to:
+- Use custom or modified GridLAB-D modules
+- Override built-in data files
+- Experiment with development builds
+- Support multiple GridLAB-D configurations
+
+#### Directory Structure Requirements
+
+Your custom installation must have this structure:
+
+```
+/usr/local/custom-gridlabd/
+├── lib/                    # Required: GridLAB-D modules
+│   ├── residential.so
+│   ├── powerflow.so
+│   └── ... (other modules)
+└── share/                  # Required: Data files
+    ├── tzinfo.txt
+    └── unitfile.txt
+```
+
+Or for development builds:
+
+```
+/path/to/gridlabd-dev/
+├── gldcore/               # Data files location
+│   ├── tzinfo.txt
+│   └── unitfile.txt
+└── build/lib/             # Compiled modules
+    ├── residential.so
+    └── ...
+```
+
+#### Usage Examples
+
+**Example 1: Use Custom Modules**
+```bash
+# Build custom GridLAB-D with modified modules
+cd /path/to/custom-gridlabd
+cmake -B build
+cmake --build build --parallel
+
+# Use custom installation
+export GRIDLABD_HOME=/path/to/custom-gridlabd
+python -c "import gridlabd; print(gridlabd.GridLabD.get_install_root())"
+# Output: /path/to/custom-gridlabd
+```
+
+**Example 2: Switch Between Installations**
+```bash
+# Use default bundled installation
+unset GRIDLABD_HOME
+python my_sim.py
+
+# Use custom installation
+export GRIDLABD_HOME=/usr/local/gridlabd-dev
+python my_sim.py
+```
+
+**Example 3: Per-Project Configuration**
+```python
+import os
+os.environ['GRIDLABD_HOME'] = '/path/to/project/gridlabd'
+import gridlabd  # Will use custom installation
+
+gld = gridlabd.GridLabD()
+# Now using modules from /path/to/project/gridlabd/lib/
+```
+
+#### Important Limitations
+
+⚠️ **Core API Version**: The bundled `libgldapi.so` (core API) is compiled into the PyPI package and **cannot be swapped** via `GRIDLABD_HOME`. Only modules and data files can be customized.
+
+**If you need a different core API version**, you must:
+1. **Rebuild the Python package** from source against the desired GridLAB-D version
+2. **Use development mode** with `pip install -e python_bindings/`
+
+#### Validation
+
+The package validates that your custom installation has the required structure:
+
+```python
+import gridlabd
+import os
+
+os.environ['GRIDLABD_HOME'] = '/invalid/path'
+
+try:
+    gridlabd.GridLabD.set_install_root(os.environ['GRIDLABD_HOME'])
+except RuntimeError as e:
+    print(f"Validation failed: {e}")
+    # Output: Invalid GridLAB-D installation: /invalid/path 
+    #         (missing required directories: share/, lib/, or gldcore/)
+```
+
+#### Environment Variable Priority
+
+The package checks environment variables in this order:
+1. **`GRIDLABD_HOME`** - Custom installation (highest priority)
+2. **`GRIDLABD_ROOT`** - Backward compatibility with older versions
+3. **Auto-detection** - Bundled package files (default)
+
+```bash
+# GRIDLABD_HOME takes precedence
+export GRIDLABD_ROOT=/old/path
+export GRIDLABD_HOME=/new/path
+python -c "import gridlabd; print(gridlabd.GridLabD.get_install_root())"
+# Output: /new/path
 ```
 
 ## Package Structure

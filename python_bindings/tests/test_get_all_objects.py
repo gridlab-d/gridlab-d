@@ -14,13 +14,14 @@ def gld_with_model():
     # Load test model
     model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
     result = gld.load_glm(["gridlabd", model_path])
-    assert result == gridlabd.GLDErrorCode.GLD_SUCCESS, "Failed to load model"
+    assert result == gridlabd.GLDErrorCode.SUCCESS, "Failed to load model"
     
     # Initialize
     result = gld.setup_after_load()
-    assert result == gridlabd.GLDErrorCode.GLD_SUCCESS, "Failed to initialize model"
+    assert result == gridlabd.GLDErrorCode.SUCCESS, "Failed to initialize model"
     
     return gld
+
 
 def test_get_all_objects_returns_list(gld_with_model):
     """Test that get_all_objects returns a list."""

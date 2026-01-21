@@ -140,6 +140,17 @@ gridlabd.xml
 *.csv
 *.sh
 
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+
+# GridLab-D output files
+*.0
+*.0.json
+
 # Virtual env
 python_bindings/env
 docs/
@@ -153,3 +164,4 @@ CMakePresets.json
 
 workdir/
 __pycache__/
+python_bindings/src/gridlabd/__pycache__/__init__.cpython-312.pyc
