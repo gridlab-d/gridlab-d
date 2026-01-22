@@ -54,6 +54,7 @@ std::shared_mutex raw_lock;
 std::shared_mutex fatal_lock;
 std::shared_mutex warning_lock;
 std::shared_mutex test_lock;
+std::shared_mutex output_lock;
 
 // static unsigned int output_lock = 0;
 static char buffer[65536];
@@ -325,7 +326,7 @@ struct CapturedMessage {
 };
 
 static std::vector<CapturedMessage> captured_messages;
-static unsigned int capture_lock = 0;
+static std::shared_mutex capture_lock;
 static bool capture_enabled = true;
 static size_t max_captured_messages =
     10000; // Default limit to prevent memory leaks
@@ -335,7 +336,7 @@ static void capture_message(const char *type, const char *msg) {
   if (!capture_enabled)
     return;
 
-  wlock(&capture_lock);
+  std::unique_lock<std::shared_mutex> lock(capture_lock);
 
   // Enforce size limit - remove oldest message if at capacity
   if (captured_messages.size() >= max_captured_messages) {
@@ -347,13 +348,12 @@ static void capture_message(const char *type, const char *msg) {
   cm.timestamp = time_context ? time_context : "";
   cm.message = msg ? msg : "";
   captured_messages.push_back(cm);
-  wunlock(&capture_lock);
 }
 
 // API functions for message capture (called from gldapi.cpp)
 std::vector<std::map<std::string, std::string>> output_get_captured_messages() {
   std::vector<std::map<std::string, std::string>> result;
-  wlock(&capture_lock);
+  std::unique_lock<std::shared_mutex> lock(capture_lock);
   for (const auto &msg : captured_messages) {
     std::map<std::string, std::string> m;
     m["type"] = msg.type;
@@ -361,27 +361,24 @@ std::vector<std::map<std::string, std::string>> output_get_captured_messages() {
     m["message"] = msg.message;
     result.push_back(m);
   }
-  wunlock(&capture_lock);
   return result;
 }
 
 void output_clear_captured_messages() {
-  wlock(&capture_lock);
+  std::unique_lock<std::shared_mutex> lock(capture_lock);
   captured_messages.clear();
-  wunlock(&capture_lock);
 }
 
 void output_enable_capture(bool enable) { capture_enabled = enable; }
 
 void output_set_message_capture_limit(size_t limit) {
-  wlock(&capture_lock);
+  std::unique_lock<std::shared_mutex> lock(capture_lock);
   max_captured_messages =
       limit > 0 ? limit : 10000; // Minimum of 1, default if 0
   // Trim if current size exceeds new limit
   while (captured_messages.size() > max_captured_messages) {
     captured_messages.erase(captured_messages.begin());
   }
-  wunlock(&capture_lock);
 }
 
 size_t output_get_message_capture_limit() { return max_captured_messages; }
@@ -404,7 +401,7 @@ int output_fatal(const char *format, ...) /**< \bprintf style argument list */
   if (format != nullptr && strcmp(lastfmt, format) == 0 &&
       global_suppress_repeat_messages && !global_verbose_mode) {
     count++;
-    goto Unlock;
+    return 0;
   } else {
     va_list ptr;
     int len = 0;
@@ -419,7 +416,7 @@ int output_fatal(const char *format, ...) /**< \bprintf style argument list */
         len +=
             sprintf(buffer + len, "\n%sFATAL    [%s] : ", prefix, time_context);
     } else if (format == nullptr)
-      goto Unlock;
+      return 0;
     va_start(ptr, format);
     vsprintf(buffer + len, format,
              ptr); /* note the lack of check on buffer overrun */
@@ -460,7 +457,7 @@ int output_error(const char *format, ...) /**< \bprintf style argument list */
   if (format != nullptr && strcmp(lastfmt, format) == 0 &&
       global_suppress_repeat_messages && !global_verbose_mode) {
     count++;
-    goto Unlock;
+    return 0;
   } else {
     va_list ptr;
     int len = 0;
@@ -474,7 +471,7 @@ int output_error(const char *format, ...) /**< \bprintf style argument list */
         len +=
             sprintf(buffer + len, "\n%sERROR    [%s] : ", prefix, time_context);
     } else if (format == nullptr)
-      goto Unlock;
+      return 0;
     va_start(ptr, format);
     vsprintf(buffer + len, format,
              ptr); /* note the lack of check on buffer overrun */
@@ -518,7 +515,7 @@ int output_error_raw(const char *format,
   if (format != nullptr && strcmp(lastfmt, format) == 0 &&
       global_suppress_repeat_messages && !global_verbose_mode) {
     count++;
-    goto Unlock;
+    return 0;
   } else {
     va_list ptr;
     int len = 0;
@@ -531,7 +528,7 @@ int output_error_raw(const char *format,
       else
         len += sprintf(buffer + len, "\n");
     } else if (format == nullptr)
-      goto Unlock;
+      return 0;
     va_start(ptr, format);
     vsprintf(buffer + len, format,
              ptr); /* note the lack of check on buffer overrun */
@@ -574,7 +571,7 @@ int output_test(const char *format, ...) /**< \bprintf style argument list */
   // wlock(&output_lock);
 
   if (format == nullptr) {
-    goto Unlock;
+    return 0;
   }
 
   va_start(ptr, format);
@@ -628,7 +625,7 @@ int output_warning(const char *format, ...) /**< \bprintf style argument list */
     if (format != nullptr && strcmp(lastfmt, format) == 0 &&
         global_suppress_repeat_messages && !global_verbose_mode) {
       count++;
-      goto Unlock;
+      return 0;
     } else {
       va_list ptr;
       int len = 0;
@@ -644,7 +641,7 @@ int output_warning(const char *format, ...) /**< \bprintf style argument list */
           len += sprintf(buffer + len, "\n%sWARNING  [%s] : ", prefix,
                          time_context);
       } else if (format == nullptr)
-        goto Unlock;
+        return 0;
       va_start(ptr, format);
       vsprintf(buffer + len, format,
                ptr); /* note the lack of check on buffer overrun */
@@ -663,9 +660,6 @@ int output_warning(const char *format, ...) /**< \bprintf style argument list */
 
     // Capture the warning message
     capture_message("WARNING", buffer);
-  Unlock:
-    wunlock(&output_lock);
-    return result;
   }
   return 0;
 }
@@ -691,7 +685,7 @@ int output_debug(const char *format, ...) /**< \bprintf style argument list */
     if (format != nullptr && strcmp(lastfmt, format) == 0 &&
         global_suppress_repeat_messages && !global_verbose_mode) {
       count++;
-      goto Unlock;
+      return 0;
     } else {
       va_list ptr;
       int len = 0;
@@ -707,7 +701,7 @@ int output_debug(const char *format, ...) /**< \bprintf style argument list */
           len +=
               sprintf(buffer + len, "\n%sDEBUG [%s] : ", prefix, time_context);
       } else if (format == nullptr)
-        goto Unlock;
+        return 0;
       va_start(ptr, format);
       vsprintf(buffer + len, format,
                ptr); /* note the lack of check on buffer overrun */
@@ -726,9 +720,6 @@ int output_debug(const char *format, ...) /**< \bprintf style argument list */
 
     // Capture the debug message
     capture_message("DEBUG", buffer);
-  Unlock:
-    wunlock(&output_lock);
-    return result;
   }
   return 0;
 }
@@ -755,7 +746,7 @@ int output_verbose(const char *format, ...) /**< \bprintf style argument list */
     if (format != nullptr && strcmp(lastfmt, format) == 0 &&
         global_suppress_repeat_messages && !global_verbose_mode) {
       count++;
-      goto Unlock;
+      return 0;
     } else {
       va_list ptr;
       int len = 0;
@@ -769,7 +760,7 @@ int output_verbose(const char *format, ...) /**< \bprintf style argument list */
         if (format == 0)
           goto Output;
       } else if (format == nullptr)
-        goto Unlock;
+        return 0;
       va_start(ptr, format);
       vsprintf(buffer + len, format,
                ptr); /* note the lack of check on buffer overrun */
@@ -787,9 +778,6 @@ int output_verbose(const char *format, ...) /**< \bprintf style argument list */
 
     // Capture the verbose message
     capture_message("VERBOSE", buffer);
-  Unlock:
-    wunlock(&output_lock);
-    return result;
   }
   return 0;
 }
@@ -819,7 +807,7 @@ int output_message(const char *format, ...) {
     if (!format) {
       // fprintf(stderr, "Error: format is NULL.\n");
       result = 0;
-      goto Unlock;
+      return 0;
     }
 
     // wlock(&output_lock);  // Acquire lock for thread-safety
@@ -828,7 +816,7 @@ int output_message(const char *format, ...) {
     if (strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages &&
         !global_verbose_mode) {
       count++;
-      goto Unlock; // Skip output formatting
+      return 0; // Skip output formatting
     }
 
     // Variadic argument handling and message formatting
@@ -848,7 +836,7 @@ int output_message(const char *format, ...) {
         fprintf(stderr,
                 "Error: Buffer overflow in repeated message formatting.\n");
         result = -1;
-        goto Unlock;
+        return 0;
       }
     }
 
@@ -857,7 +845,7 @@ int output_message(const char *format, ...) {
     if (remaining_space <= 0) {
       fprintf(stderr, "Error: No space left in buffer.\n");
       result = -1;
-      goto Unlock;
+      return 0;
     }
 
     // Format the new message
@@ -866,7 +854,7 @@ int output_message(const char *format, ...) {
     if (result < 0) {
       fprintf(stderr, "vsnprintf failed.\n");
       va_end(ptr);
-      goto Unlock;
+      return 0;
     }
     va_end(ptr);
 
@@ -886,9 +874,6 @@ int output_message(const char *format, ...) {
 
     // Capture the message
     capture_message("MESSAGE", buffer);
-  Unlock:
-    wunlock(&output_lock);
-    return result;
   }
   return 0; // Return 0 if `global_quiet_mode` is enabled
 }
@@ -908,7 +893,7 @@ int output_message(const char *format, ...) {
 //global_suppress_repeat_messages && !global_verbose_mode)
 //		{
 //			count++;
-//			goto Unlock;
+//			return 0;
 //		}
 //		else
 //		{
@@ -923,7 +908,7 @@ int output_message(const char *format, ...) {
 //Output;
 //			}
 //			if (format==nullptr)
-//				goto Unlock;
+//				return 0;
 //			va_start(ptr,format);
 //			int result = vsnprintf(buffer + len, sizeof(buffer) -
 //len, format, ptr);
