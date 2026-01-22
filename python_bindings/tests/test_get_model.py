@@ -1,25 +1,7 @@
 """
 Test the get_model() API that returns the entire model as a nested structure.
 """
-
-import os
 import pytest
-import gridlabd
-
-
-@pytest.fixture
-def gld_with_model():
-    """Fixture that provides a GridLAB-D instance with the HVAC model loaded."""
-    gld = gridlabd.GridLabD()
-    
-    model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-    result = gld.load(model_path)
-    assert result == 0, f"Failed to load model: {result}"
-    
-    result = gld.setup_after_load()
-    assert result == 0, f"Failed to setup: {result}"
-    
-    return gld
 
 
 def test_get_model_returns_dict(gld_with_model):

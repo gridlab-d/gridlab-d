@@ -9,23 +9,7 @@ objects and their properties in GridLAB-D:
 4. get_properties_by_class() - Get one property from all objects of a class
 5. get_all_objects() - Get all properties from all objects of a class
 """
-import os
 import pytest
-import gridlabd
-
-@pytest.fixture
-def gld_with_model():
-    """Fixture that provides a GridLAB-D instance with the HVAC model loaded."""
-    gld = gridlabd.GridLabD()
-    
-    model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-    result = gld.load(model_path)
-    assert result == 0, f"Failed to load model: {result}"
-    
-    result = gld.setup_after_load()
-    assert result == 0, f"Failed to setup: {result}"
-    
-    return gld
 
 
 class TestSingleObjectSingleProperty:

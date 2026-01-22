@@ -1,11 +1,6 @@
 """Tests for message capture API"""
-import os
-import sys
+from pathlib import Path
 import pytest
-
-# Add parent directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
 import gridlabd
 
 
@@ -14,8 +9,8 @@ def test_error_messages_captured():
     gld = gridlabd.GridLabD()
     gld.clear_messages()
     
-    model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-    gld.load(model_path)
+    model_path = Path(__file__).parent / "test_HVAC_balance.glm"
+    gld.load(str(model_path))
     gld.setup_after_load()
     gld.run()
     
@@ -35,8 +30,8 @@ def test_clear_messages():
     gld = gridlabd.GridLabD()
     gld.clear_messages()
     
-    model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-    gld.load(model_path)
+    model_path = Path(__file__).parent / "test_HVAC_balance.glm"
+    gld.load(str(model_path))
     gld.setup_after_load()
     gld.run()
     
@@ -53,8 +48,8 @@ def test_message_content():
     gld = gridlabd.GridLabD()
     gld.clear_messages()
     
-    model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-    gld.load(model_path)
+    model_path = Path(__file__).parent / "test_HVAC_balance.glm"
+    gld.load(str(model_path))
     gld.setup_after_load()
     gld.run()
     
@@ -74,8 +69,8 @@ def test_enable_disable_capture():
     gld = gridlabd.GridLabD()
     
     gld.clear_messages()
-    model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-    gld.load(model_path)
+    model_path = Path(__file__).parent / "test_HVAC_balance.glm"
+    gld.load(str(model_path))
     gld.setup_after_load()
     
     # Disable and clear
@@ -107,8 +102,8 @@ def test_message_limit_enforcement():
     assert gld.get_message_capture_limit() == 5
     
     gld.clear_messages()
-    model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-    gld.load(model_path)
+    model_path = Path(__file__).parent / "test_HVAC_balance.glm"
+    gld.load(str(model_path))
     gld.setup_after_load()
     gld.run()
     
@@ -124,8 +119,8 @@ def test_message_timestamps():
     gld = gridlabd.GridLabD()
     gld.clear_messages()
     
-    model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-    gld.load(model_path)
+    model_path = Path(__file__).parent / "test_HVAC_balance.glm"
+    gld.load(str(model_path))
     gld.setup_after_load()
     gld.run()
     

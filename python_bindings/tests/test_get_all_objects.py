@@ -2,32 +2,12 @@
 Test the new get_all_objects() API that returns all objects of a class
 with their properties as a list of dictionaries.
 """
-import os
 import pytest
-import gridlabd
-
-@pytest.fixture
-def gld_with_model():
-    """Fixture that provides a GridLAB-D instance with the HVAC model loaded."""
-    gld = gridlabd.GridLabD()
-    
-    # Load test model
-    model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-    result = gld.load(model_path)
-    # Accept either integer 0 or GLDErrorCode.SUCCESS enum
-    assert result == 0 or result == gridlabd.GLDErrorCode.SUCCESS, f"Failed to load model: {result}"
-    
-    # Initialize
-    result = gld.setup_after_load()
-    assert result == 0 or result == gridlabd.GLDErrorCode.SUCCESS, f"Failed to initialize model: {result}"
-    
-    return gld
 
 
 def test_get_all_objects_returns_list(gld_with_model):
     """Test that get_all_objects returns a list."""
     objects = gld_with_model.get_all_objects("house")
-    print(objects)
     assert isinstance(objects, list), "get_all_objects should return a list"
 
 def test_get_all_objects_structure(gld_with_model):

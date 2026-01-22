@@ -434,7 +434,7 @@ Output:
         (*printerr)("%sFATAL    [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
   // wunlock(&output_lock);
-  return result;
+  return 0;
 }
 
 /** Output an error message to the stdout stream using printf style argument
@@ -493,7 +493,7 @@ Output:
         (*printerr)("%sERROR    [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
   // wunlock(&output_lock);
-  return result;
+  return 0;
 }
 
 /** Output an error message to the stdout stream using printf style argument
@@ -548,7 +548,7 @@ Output:
     result = (*printerr)("%s%s\n", prefix, buffer);
 Unlock:
   // wunlock(&output_lock);
-  return result;
+  return 0;
 }
 
 /** Output an test message to the stdout stream using printf style argument
@@ -601,7 +601,7 @@ int output_test(const char *format, ...) /**< \bprintf style argument list */
   result = fprintf(fp, "%s\n", buffer);
 Unlock:
   // wunlock(&output_lock);
-  return result;
+  return 0;
 }
 
 /** Output a warning message to the stdout stream using printf style argument
