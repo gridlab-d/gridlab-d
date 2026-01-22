@@ -66,6 +66,13 @@ class Command(Enum):
     SET_PROPERTY = "set_property"
     GET_PROPERTIES_BY_CLASS = "get_properties_by_class"
     SET_PROPERTY_BY_CLASS = "set_property_by_class"
+    
+    # Message capture
+    GET_MESSAGES = "get_messages"
+    CLEAR_MESSAGES = "clear_messages"
+    ENABLE_MESSAGE_CAPTURE = "enable_message_capture"
+    SET_MESSAGE_CAPTURE_LIMIT = "set_message_capture_limit"
+    GET_MESSAGE_CAPTURE_LIMIT = "get_message_capture_limit"
 
 
 @dataclass

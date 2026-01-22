@@ -44,17 +44,6 @@ def test_models_dir():
 
 
 @pytest.fixture
-def test_data_dir():
-    """
-    Get the path to the test data directory.
-    
-    Returns:
-        Path: Absolute path to tests/data/
-    """
-    return Path(__file__).parent / "data"
-
-
-@pytest.fixture
 def minimal_model(gld_instance, test_models_dir):
     """
     Pre-loaded minimal GridLAB-D model (not yet run).
@@ -123,6 +112,29 @@ def residential_model(gld_instance, test_models_dir):
     model_path = test_models_dir / "residential.glm"
     result = gld_instance.load(str(model_path))
     assert result == 0, f"Failed to load {model_path}, error code: {result}"
+    yield gld_instance
+
+
+@pytest.fixture
+def gld_with_model(gld_instance):
+    """
+    Pre-loaded and initialized HVAC model for property and object tests.
+    
+    Provides:
+        - test_HVAC_balance.glm loaded
+        - Model initialized via setup_after_load()
+        - Ready for get_all_objects(), get_property(), etc.
+        
+    Yields:
+        GridLabD: Instance with HVAC model loaded and initialized
+    """
+    model_path = Path(__file__).parent / "test_HVAC_balance.glm"
+    result = gld_instance.load(str(model_path))
+    assert result == 0, f"Failed to load model: {result}"
+    
+    result = gld_instance.setup_after_load()
+    assert result == 0, f"Failed to initialize model: {result}"
+    
     yield gld_instance
 
 

@@ -27,18 +27,34 @@ class IsolatedGridLabD:
         self._process: Optional[subprocess.Popen] = None
         self._spawn_worker()
         # Initialize the GridLabD instance in the worker
-        self._send_command(Command.INIT, {})
+        response = self._send_command(Command.INIT, {})
+        if not response.success:
+            raise RuntimeError(f"Failed to initialize worker: {response.error}")
     
     def _spawn_worker(self):
-        """Spawn a new worker subprocess."""
+        """Spawn a new worker subprocess and wait for it to be ready."""
         self._process = subprocess.Popen(
             [sys.executable, "-m", "gridlabd._worker"],
             stdin=PIPE,
             stdout=PIPE,
-            stderr=None,
+            stderr=sys.stderr,  # Send worker stderr to parent stderr for debugging
             text=True,
             bufsize=1
         )
+        
+        # Read the READY signal (worker sends it immediately on startup)
+        # This will block until worker sends READY or closes stdout
+        try:
+            ready_line = self._process.stdout.readline().strip()
+            if ready_line != "READY":
+                # Process sent something unexpected
+                self._process.terminate()
+                raise RuntimeError(f"Worker sent unexpected startup message: {ready_line!r}")
+        except Exception as e:
+            # Check if process died
+            if self._process.poll() is not None:
+                raise RuntimeError(f"Worker process exited with code {self._process.returncode}")
+            raise RuntimeError(f"Failed to read READY signal from worker: {e}")
     
     def _send_command(self, command: Command, args: dict[str, Any]) -> Response:
         """Send a command to the worker and get the response."""
@@ -46,38 +62,85 @@ class IsolatedGridLabD:
             raise RuntimeError("Worker process is not running")
         
         message = Message(command=command, args=args)
-        self._process.stdin.write(message.to_json() + "\n")
-        self._process.stdin.flush()
+        try:
+            self._process.stdin.write(message.to_json() + "\n")
+            self._process.stdin.flush()
+        except Exception as e:
+            exit_code = self._process.poll()
+            raise RuntimeError(f"Failed to send {command.name} to worker (exit code: {exit_code}): {e}")
         
         response_line = self._process.stdout.readline()
         if not response_line:
-            raise RuntimeError("Worker process closed unexpectedly")
+            # Check if worker died
+            exit_code = self._process.poll()
+            if exit_code is not None:
+                raise RuntimeError(f"Worker process exited unexpectedly with code {exit_code} while processing {command.name}")
+            raise RuntimeError(f"Worker process closed stdout while processing {command.name}")
         
-        return Response.from_json(response_line.strip())
+        response_line = response_line.strip()
+        if not response_line:
+            # Empty line - check if worker is still alive
+            exit_code = self._process.poll()
+            if exit_code is not None:
+                raise RuntimeError(f"Worker process died (exit code {exit_code}) while processing {command.name}")
+            # Worker is alive but sent empty line - this means stdout is corrupted
+            # Read a few more lines to see what's interfering
+            extra_lines = []
+            for _ in range(5):
+                try:
+                    line = self._process.stdout.readline()
+                    if line:
+                        extra_lines.append(line.strip())
+                except:
+                    break
+            raise RuntimeError(f"Worker sent empty response for {command.name}. Next lines from stdout: {extra_lines}")
+        
+        try:
+            return Response.from_json(response_line)
+        except Exception as e:
+            # Check if worker died during JSON parse
+            exit_code = self._process.poll()
+            if exit_code is not None:
+                raise RuntimeError(f"Worker process crashed (exit code {exit_code}) while processing {command.name}. Last output: {response_line[:100]}")
+            raise RuntimeError(f"Invalid JSON response from worker for {command.name}: {e}. Response: {response_line[:100]}")
     
     def __del__(self):
         """Clean up the worker process."""
         if self._process and self._process.poll() is None:
-            self._process.terminate()
-            self._process.wait(timeout=5)
+            try:
+                # Try graceful termination first
+                self._process.terminate()
+                try:
+                    self._process.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    # Force kill if it doesn't terminate
+                    self._process.kill()
+                    self._process.wait(timeout=3)
+            except Exception:
+                pass
     
     # Static methods
     @staticmethod
     def set_install_root(path: str):
         """Set the GridLAB-D installation root directory."""
-        # This would need to be sent to worker, but static methods are tricky with process isolation
-        # For now, set it as environment variable
-        os.environ["GRIDLABD_INSTALL_ROOT"] = path
+        # Set it as environment variable so worker processes can pick it up
+        os.environ["GRIDLABD_ROOT"] = path
+        # Also try to validate it using the C++ class directly
+        from .gridlabd_core import GridLabD as CppGridLabD
+        CppGridLabD.set_install_root(path)
     
     @staticmethod
     def get_install_root() -> str:
         """Get the GridLAB-D installation root directory."""
-        return os.environ.get("GRIDLABD_INSTALL_ROOT", "")
+        # Get from the C++ class which may have been set before this wrapper
+        from .gridlabd_core import GridLabD as CppGridLabD
+        return CppGridLabD.get_install_root()
     
     @staticmethod
     def get_executable_path() -> str:
         """Get the GridLAB-D executable path."""
-        return sys.executable
+        from .gridlabd_core import GridLabD as CppGridLabD
+        return CppGridLabD.get_executable_path()
     
     # Configuration methods
     def set_config_file(self, config_file: str) -> int:
@@ -335,6 +398,39 @@ class IsolatedGridLabD:
     def global_getvar(self, name: str) -> str:
         """Get a global variable (legacy support)."""
         response = self._send_command(Command.GET_GLOBAL, {"name": name})
+        if not response.success:
+            raise RuntimeError(response.error)
+        return response.result
+    
+    # Message capture methods
+    def get_messages(self) -> list[dict[str, str]]:
+        """Get all captured warning/error/debug messages."""
+        response = self._send_command(Command.GET_MESSAGES, {})
+        if not response.success:
+            raise RuntimeError(response.error)
+        return response.result
+    
+    def clear_messages(self) -> None:
+        """Clear all captured messages."""
+        response = self._send_command(Command.CLEAR_MESSAGES, {})
+        if not response.success:
+            raise RuntimeError(response.error)
+    
+    def enable_message_capture(self, enable: bool) -> None:
+        """Enable or disable message capture."""
+        response = self._send_command(Command.ENABLE_MESSAGE_CAPTURE, {"enable": enable})
+        if not response.success:
+            raise RuntimeError(response.error)
+    
+    def set_message_capture_limit(self, limit: int) -> None:
+        """Set maximum number of messages to capture."""
+        response = self._send_command(Command.SET_MESSAGE_CAPTURE_LIMIT, {"limit": limit})
+        if not response.success:
+            raise RuntimeError(response.error)
+    
+    def get_message_capture_limit(self) -> int:
+        """Get current message capture limit."""
+        response = self._send_command(Command.GET_MESSAGE_CAPTURE_LIMIT, {})
         if not response.success:
             raise RuntimeError(response.error)
         return response.result

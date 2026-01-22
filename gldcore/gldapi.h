@@ -245,20 +245,6 @@ public:
    */
   size_t get_message_capture_limit();
 
-  /** Get all objects of a class along with their properties
-   * @param class_name The class to enumerate
-   * @return Vector of property maps, one per object (includes __class__,
-   * __id__, optional __name__)
-   */
-  std::vector<std::map<std::string, std::string>>
-  get_all_objects(const std::string &class_name);
-
-  /** Get the entire model with all objects and properties organized by class
-   * @return Map of class names to vectors of object property maps
-   */
-  std::map<std::string, std::vector<std::map<std::string, std::string>>>
-  get_model();
-
   // Simple object finding method
   void *find_object_by_name(const std::string &object_name);
 

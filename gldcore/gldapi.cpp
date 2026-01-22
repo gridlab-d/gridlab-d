@@ -8,7 +8,6 @@
 #include "kml.h"
 #include "legal.h"
 #include "local.h"
-#include <json/json.h>
 // #include <module.h>
 
 // External declarations for message capture functions in output.cpp
@@ -24,10 +23,13 @@ extern size_t output_get_message_capture_limit();
 #include "kill.h"
 #include "load.h"
 #include "object.h"
+#include "save.h"
+#include "threadpool.h"
 #include <array>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <stdexcept>
@@ -175,26 +177,6 @@ void apply_runtime_paths(const fs::path &exec_path) {
   std::string exec_dir_str = bin_dir.string();
   strncpy(global_execdir, exec_dir_str.c_str(), sizeof(global_execdir) - 1);
   global_execdir[sizeof(global_execdir) - 1] = '\0';
-}
-
-bool validate_gridlabd_installation(const fs::path &root) {
-  // Check for required directory structure
-  // At minimum, we need either:
-  // - share/ directory (for data files like tzinfo.txt)
-  // - lib/ directory (for modules)
-  // - gldcore/ directory (for development mode)
-
-  fs::path share_dir = root / "share";
-  fs::path lib_dir = root / "lib";
-  fs::path gldcore_dir = root / "gldcore";
-
-  bool has_share = fs::exists(share_dir) && fs::is_directory(share_dir);
-  bool has_lib = fs::exists(lib_dir) && fs::is_directory(lib_dir);
-  bool has_gldcore = fs::exists(gldcore_dir) && fs::is_directory(gldcore_dir);
-
-  // Valid if it has share or gldcore (for data files) and optionally lib (for
-  // modules)
-  return has_share || has_gldcore || has_lib;
 }
 
 } // namespace
@@ -528,8 +510,8 @@ GLDErrorCode GridLabD::exit_gld(const std::string &filepath) {
 }
 
 // Retrieve GLM data based on a query, optionally save to filepath
-Json::Value GridLabD::get_checkpoint_json(const std::string &filepath) {
-  Json::Value checkpoint;
+nlohmann::json GridLabD::get_checkpoint_json(const std::string &filepath) {
+  nlohmann::json checkpoint;
 
   if (filepath.empty()) {
     // If no filepath provided, just return the JSON without saving
@@ -552,10 +534,7 @@ Json::Value GridLabD::get_checkpoint_json(const std::string &filepath) {
     if (!checkpoint.empty()) {
       std::ofstream json_file(filepath);
       if (json_file.is_open()) {
-        Json::StreamWriterBuilder builder;
-        builder["indentation"] = "  "; // 2-space indentation
-        std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
-        writer->write(checkpoint, &json_file);
+        json_file << checkpoint.dump(2); // 2-space indentation
         json_file.close();
         output_verbose("Checkpoint JSON saved to: %s", filepath.c_str());
       } else {

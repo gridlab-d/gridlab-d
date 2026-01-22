@@ -92,8 +92,70 @@ if install_root:
 # Import isolated GridLabD wrapper (process isolation for multiple instances)
 from ._isolated import IsolatedGridLabD
 
-# Always use isolated wrapper for safety and multi-instance support
+# Save the original C++ class before we wrap it
+_CppGridLabD = GridLabD
+
+# Create a singleton wrapper to avoid global variable re-registration errors
+# The C++ GridLabD core has global state that cannot be reset, so we reuse
+# the same instance across all "new" GridLabD() calls
+class GridLabDSingleton:
+    """Singleton wrapper that ensures only one C++ GridLabD instance exists."""
+    _cpp_instance = None
+    
+    def __new__(cls):
+        if cls._cpp_instance is None:
+            # Create the actual C++ instance only once
+            cls._cpp_instance = _CppGridLabD()
+        # Always return a new wrapper instance
+        inst = object.__new__(cls)
+        return inst
+    
+    def __getattr__(self, name):
+        """Delegate all attribute access to the singleton C++ instance."""
+        return getattr(self._cpp_instance, name)
+    
+    def __setattr__(self, name, value):
+        """Delegate all attribute writes to the singleton C++ instance."""
+        if name == '_cpp_instance':
+            object.__setattr__(self, name, value)
+        else:
+            setattr(self._cpp_instance, name, value)
+    
+    def load(self, filename: str):
+        """Load a GLM file (convenience method that wraps load_glm)."""
+        return self._cpp_instance.load_glm([filename])
+    
+    # Expose static methods from the C++ class
+    @staticmethod
+    def set_install_root(install_root: str):
+        """Set the GridLAB-D installation root directory."""
+        return _CppGridLabD.set_install_root(install_root)
+    
+    @staticmethod
+    def get_install_root() -> str:
+        """Get the GridLAB-D installation root directory."""
+        return _CppGridLabD.get_install_root()
+    
+    @staticmethod
+    def get_executable_path() -> str:
+        """Get the GridLAB-D executable path."""
+        return _CppGridLabD.get_executable_path()
+
+# Create a wrapper class that adds convenience methods to the C++ binding  
+class GridLabDWrapper(_CppGridLabD):
+    """Wrapper around the C++ GridLabD class that adds convenience methods."""
+    
+    def load(self, filename: str):
+        """Load a GLM file (convenience method that wraps load_glm)."""
+        return self.load_glm([filename])
+
+# By default, use the isolated wrapper to provide proper process isolation
+# This allows multiple GridLabD instances to coexist without conflicts
 GridLabD = IsolatedGridLabD
+
+# Alternative implementations available for specific use cases
+SingletonGridLabD = GridLabDSingleton  # Reuses one C++ instance (legacy compatibility)
+DirectGridLabD = GridLabDWrapper  # Direct C++ binding (no isolation, for advanced users)
 
 __all__ = [
     # Main API

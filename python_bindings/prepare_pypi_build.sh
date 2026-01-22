@@ -54,13 +54,16 @@ cp ../gldcore/unitfile.txt prebuilt/share/
 
 # Copy header files needed for compilation
 echo "Copying header files..."
-mkdir -p gldcore
-cp ../gldcore/*.h gldcore/
+mkdir -p prebuilt/gldcore
+cp ../gldcore/*.h prebuilt/gldcore/
 
-# Copy jsoncpp headers
-echo "Copying jsoncpp headers..."
-mkdir -p third_party/jsoncpp_lib
-cp -r ../third_party/jsoncpp_lib/include third_party/jsoncpp_lib/
+# Copy generated headers (config.h, version.h, build.h)
+echo "Copying generated headers..."
+mkdir -p prebuilt/headers
+cp ../build/headers/*.h prebuilt/headers/
+
+# Copy the fixed gldapi.h from gldcore to headers (overwrite the build one)
+cp ../gldcore/gldapi.h prebuilt/headers/
 
 echo "Prebuilt files prepared successfully!"
 echo "You can now run: python -m build"
