@@ -15,15 +15,15 @@ def gld_after_simulation():
     gld = gridlabd.GridLabD()
     
     model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-    result = gld.load_glm(["gridlabd", model_path])
-    assert result == gridlabd.GLDErrorCode.SUCCESS
+    result = gld.load(model_path)
+    assert result == 0, f"Failed to load model: {result}"
     
     result = gld.setup_after_load()
-    assert result == gridlabd.GLDErrorCode.SUCCESS
+    assert result == 0, f"Failed to setup: {result}"
     
     # ← THIS IS THE KEY DIFFERENCE - ACTUALLY RUN THE SIMULATION
     result = gld.run()
-    assert result == gridlabd.GLDErrorCode.SUCCESS
+    assert result == 0, f"Failed to run: {result}"
     
     return gld
 
@@ -36,7 +36,7 @@ class TestSimulationResults:
         gld = gridlabd.GridLabD()
         
         model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-        gld.load_glm(["gridlabd", model_path])
+        gld.load(model_path)
         gld.setup_after_load()
         
         # Get initial state (before simulation)
@@ -45,15 +45,15 @@ class TestSimulationResults:
             pytest.skip("No houses in model")
         
         result, initial_temp = gld.get_property(houses[0], "air_temperature")
-        assert result == gridlabd.GLDErrorCode.SUCCESS
+        assert result == 0, f"Failed to get initial temp: {result}"
         
         # RUN THE SIMULATION
         result = gld.run()
-        assert result == gridlabd.GLDErrorCode.SUCCESS
+        assert result == 0, f"Failed to run: {result}"
         
         # Get final state (after simulation)
         result, final_temp = gld.get_property(houses[0], "air_temperature")
-        assert result == gridlabd.GLDErrorCode.SUCCESS
+        assert result == 0, f"Failed to get final temp: {result}"
         
         # Temperature likely changed (HVAC ran)
         print(f"\nInitial temp: {initial_temp}")
@@ -111,7 +111,7 @@ class TestRealWorldWorkflow:
             gld = gridlabd.GridLabD()
             
             model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-            gld.load_glm(["gridlabd", model_path])
+            gld.load(model_path)
             gld.setup_after_load()
             
             # In real use, you'd modify properties here:

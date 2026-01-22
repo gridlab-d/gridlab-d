@@ -13,11 +13,11 @@ def gld_with_model():
     gld = gridlabd.GridLabD()
     
     model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-    result = gld.load_glm(["gridlabd", model_path])
-    assert result == gridlabd.GLDErrorCode.SUCCESS
+    result = gld.load(model_path)
+    assert result == 0, f"Failed to load model: {result}"
     
     result = gld.setup_after_load()
-    assert result == gridlabd.GLDErrorCode.SUCCESS
+    assert result == 0, f"Failed to setup: {result}"
     
     return gld
 

@@ -37,6 +37,11 @@ def handle_init(message: Message) -> Response:
             DirectGridLabD.set_install_root(os.environ["GRIDLABD_ROOT"])
         
         _gld_instance = DirectGridLabD()
+        
+        # CRITICAL: Enable message capture to prevent GridLAB-D from writing to stdout
+        # This would corrupt the JSON protocol between worker and parent
+        _gld_instance.enable_message_capture(True)
+        
         return Response(success=True, result=True)
     except Exception as e:
         return Response(success=False, error=str(e))
@@ -385,6 +390,51 @@ def handle_get_global(message: Message) -> Response:
         return Response(success=False, error=str(e))
 
 
+def handle_get_messages(message: Message) -> Response:
+    """Get all captured warning/error/debug messages."""
+    try:
+        result = _gld_instance.get_messages()
+        return Response(success=True, result=result)
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
+def handle_clear_messages(message: Message) -> Response:
+    """Clear all captured messages."""
+    try:
+        _gld_instance.clear_messages()
+        return Response(success=True, result=None)
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
+def handle_enable_message_capture(message: Message) -> Response:
+    """Enable or disable message capture."""
+    try:
+        _gld_instance.enable_message_capture(message.args["enable"])
+        return Response(success=True, result=None)
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
+def handle_set_message_capture_limit(message: Message) -> Response:
+    """Set maximum number of messages to capture."""
+    try:
+        _gld_instance.set_message_capture_limit(message.args["limit"])
+        return Response(success=True, result=None)
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
+def handle_get_message_capture_limit(message: Message) -> Response:
+    """Get current message capture limit."""
+    try:
+        result = _gld_instance.get_message_capture_limit()
+        return Response(success=True, result=result)
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
 # Command handler mapping
 COMMAND_HANDLERS = {
     Command.INIT: handle_init,
@@ -424,11 +474,30 @@ COMMAND_HANDLERS = {
     Command.SET_PROPERTY_BY_CLASS: handle_set_property_by_class,
     Command.SET_GLOBAL: handle_set_global,
     Command.GET_GLOBAL: handle_get_global,
+    Command.GET_MESSAGES: handle_get_messages,
+    Command.CLEAR_MESSAGES: handle_clear_messages,
+    Command.ENABLE_MESSAGE_CAPTURE: handle_enable_message_capture,
+    Command.SET_MESSAGE_CAPTURE_LIMIT: handle_set_message_capture_limit,
+    Command.GET_MESSAGE_CAPTURE_LIMIT: handle_get_message_capture_limit,
 }
 
 
 def main():
     """Main worker loop - reads commands from stdin, executes them, writes responses to stdout."""
+    # CRITICAL: Redirect C++ stdout to stderr to prevent GridLAB-D debug output
+    # from corrupting the JSON protocol on stdout
+    import os
+    # Duplicate stdout to a safe place, then redirect stdout fd to stderr
+    original_stdout_fd = os.dup(1)  # Save original stdout
+    os.dup2(2, 1)  # Redirect stdout (fd 1) to stderr (fd 2)
+    
+    # Create a Python file object from the saved stdout for protocol communication
+    protocol_out = os.fdopen(original_stdout_fd, 'w', buffering=1)
+    
+    # Send READY signal to parent to indicate worker is ready to receive commands
+    protocol_out.write("READY\n")
+    protocol_out.flush()
+    
     for line in sys.stdin:
         try:
             message = Message.from_json(line.strip())
@@ -439,10 +508,13 @@ def main():
             else:
                 response = handler(message)
             
-            print(response.to_json(), flush=True)
+            protocol_out.write(response.to_json() + "\n")
+            protocol_out.flush()
         except Exception as e:
             response = Response(success=False, error=f"Worker error: {str(e)}")
-            print(response.to_json(), flush=True)
+            protocol_out.write(response.to_json() + "\n")
+            protocol_out.flush()
+
 
 
 if __name__ == "__main__":

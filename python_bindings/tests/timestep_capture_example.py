@@ -16,13 +16,14 @@ test_dir = Path(__file__).parent
 gld.set_working_directory(str(test_dir))
 
 # Load model
-result = gld.load_glm(["gridlabd", "./test_HVAC_balance.glm"])
-if result != gridlabd.GLDErrorCode.SUCCESS:
-    print(f"Failed to load model")
+model_path = test_dir / "test_HVAC_balance.glm"
+result = gld.load(str(model_path))
+if result != 0:
+    print(f"Failed to load model: {result}")
     exit(1)
 
 result = gld.setup_after_load()
-if result != gridlabd.GLDErrorCode.SUCCESS:
+if result != 0:
     print(f"Setup failed")
     exit(1)
 

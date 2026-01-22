@@ -13,12 +13,13 @@ def gld_with_model():
     
     # Load test model
     model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-    result = gld.load_glm(["gridlabd", model_path])
-    assert result == gridlabd.GLDErrorCode.SUCCESS, "Failed to load model"
+    result = gld.load(model_path)
+    # Accept either integer 0 or GLDErrorCode.SUCCESS enum
+    assert result == 0 or result == gridlabd.GLDErrorCode.SUCCESS, f"Failed to load model: {result}"
     
     # Initialize
     result = gld.setup_after_load()
-    assert result == gridlabd.GLDErrorCode.SUCCESS, "Failed to initialize model"
+    assert result == 0 or result == gridlabd.GLDErrorCode.SUCCESS, f"Failed to initialize model: {result}"
     
     return gld
 

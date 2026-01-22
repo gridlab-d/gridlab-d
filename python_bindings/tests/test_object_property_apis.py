@@ -19,11 +19,11 @@ def gld_with_model():
     gld = gridlabd.GridLabD()
     
     model_path = os.path.join(os.path.dirname(__file__), "test_HVAC_balance.glm")
-    result = gld.load_glm(["gridlabd", model_path])
-    assert result == gridlabd.GLDErrorCode.SUCCESS
+    result = gld.load(model_path)
+    assert result == 0, f"Failed to load model: {result}"
     
     result = gld.setup_after_load()
-    assert result == gridlabd.GLDErrorCode.SUCCESS
+    assert result == 0, f"Failed to setup: {result}"
     
     return gld
 
@@ -41,14 +41,14 @@ class TestSingleObjectSingleProperty:
         # Get a single property
         result, value = gld_with_model.get_property(houses[0], "floor_area")
         
-        assert result == gridlabd.GLDErrorCode.SUCCESS
+        assert result == 0, f"Failed to get property: {result}"
         assert isinstance(value, str)
         assert value != ""
     
     def test_get_property_invalid_object(self, gld_with_model):
         """Get property from non-existent object."""
         result, value = gld_with_model.get_property("nonexistent_obj", "some_prop")
-        assert result == gridlabd.GLDErrorCode.OPERATION_FAILED
+        assert result == 3  # GLD_OPERATION_FAILED
 
 
 class TestSingleObjectAllProperties:
@@ -215,7 +215,7 @@ class TestAPIComparison:
         
         # 4. Get single property from one object
         result, floor_area = gld_with_model.get_property(obj_names[0], "floor_area")
-        assert result == gridlabd.GLDErrorCode.SUCCESS
+        assert result == 0, f"Failed to get property: {result}"
         assert floor_area == first_obj_props["floor_area"]
         
         # 5. Get all objects with all properties (NEW!)

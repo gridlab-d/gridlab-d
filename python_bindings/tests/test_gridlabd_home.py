@@ -93,23 +93,39 @@ def test_priority_order():
     """Test that GRIDLABD_HOME takes priority over GRIDLABD_ROOT."""
     print("\n[Test 3] Priority: GRIDLABD_HOME > GRIDLABD_ROOT")
     
-    # Set both variables, GRIDLABD_HOME should win
-    os.environ['GRIDLABD_ROOT'] = '/tmp/should_not_use_this_path'
-    os.environ['GRIDLABD_HOME'] = str(REPO_ROOT)
+    # Save original environment
+    original_root = os.environ.get('GRIDLABD_ROOT')
+    original_home = os.environ.get('GRIDLABD_HOME')
     
-    # Use set_install_root to test priority
-    # The C++ code should check GRIDLABD_HOME first
-    gridlabd.GridLabD.set_install_root(str(REPO_ROOT))
-    root = gridlabd.GridLabD.get_install_root()
-    
-    print(f"  GRIDLABD_ROOT: {os.environ['GRIDLABD_ROOT']}")
-    print(f"  GRIDLABD_HOME: {os.environ['GRIDLABD_HOME']}")
-    print(f"  Resolved root: {root}")
-    
-    # Should use GRIDLABD_HOME, not GRIDLABD_ROOT
-    assert '/tmp/should_not_use_this_path' not in root
-    assert str(REPO_ROOT) in root
-    print("  ✓ Priority order correct")
+    try:
+        # Set both variables, GRIDLABD_HOME should win
+        os.environ['GRIDLABD_ROOT'] = '/tmp/should_not_use_this_path'
+        os.environ['GRIDLABD_HOME'] = str(REPO_ROOT)
+        
+        # Use set_install_root to test priority
+        # The C++ code should check GRIDLABD_HOME first
+        gridlabd.GridLabD.set_install_root(str(REPO_ROOT))
+        root = gridlabd.GridLabD.get_install_root()
+        
+        print(f"  GRIDLABD_ROOT: {os.environ['GRIDLABD_ROOT']}")
+        print(f"  GRIDLABD_HOME: {os.environ['GRIDLABD_HOME']}")
+        print(f"  Resolved root: {root}")
+        
+        # Should use GRIDLABD_HOME, not GRIDLABD_ROOT
+        assert '/tmp/should_not_use_this_path' not in root
+        assert str(REPO_ROOT) in root
+        print("  ✓ Priority order correct")
+    finally:
+        # Restore original environment
+        if original_root is not None:
+            os.environ['GRIDLABD_ROOT'] = original_root
+        elif 'GRIDLABD_ROOT' in os.environ:
+            del os.environ['GRIDLABD_ROOT']
+        
+        if original_home is not None:
+            os.environ['GRIDLABD_HOME'] = original_home
+        elif 'GRIDLABD_HOME' in os.environ:
+            del os.environ['GRIDLABD_HOME']
 
 
 def test_validation_nonexistent_path():
