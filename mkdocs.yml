@@ -143,6 +143,13 @@ nav:
       - Units: docs/3.0 - Modeling Reference/Other Features/Units.md
       - Validate: docs/3.0 - Modeling Reference/Other Features/Validate.md
   - 4.0 Developing Reference:
+    - 4.0 - Feature Development:
+      - Basic C/C++ API: docs/4.0 Developing Reference/4.0 - Feature Development/Basic C-C++ API.md
+      - Checkpointing: docs/4.0 Developing Reference/4.0 - Feature Development/Checkpointing.md
+      - Docker Containerization: docs/4.0 Developing Reference/4.0 - Feature Development/Docker Containerization.md
+      - JSON Loader: docs/4.0 Developing Reference/4.0 - Feature Development/JSON Loader.md
+      - Multithreading: docs/4.0 Developing Reference/4.0 - Feature Development/Multithreading.md
+      - Stretch Goals: docs/4.0 Developing Reference/4.0 - Feature Development/Stretch Goals.md
     - 4.1 - Introduction - TBD: docs/4.0 Developing Reference/4.1 - Introduction.md
     - 4.2 - Building from Source:
       - 4.2 - Building GridLAB-D™ from Source: docs/4.0 Developing Reference/4.2 - Building from Source/4.2.1 - Building_from_Source.md
