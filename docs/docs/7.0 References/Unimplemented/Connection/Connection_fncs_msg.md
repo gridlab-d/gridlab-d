@@ -8,7 +8,6 @@
 	**This page does not reflect the current state of GridLAB-D™**
 
 The **fncs_msg** object is part of the `connection` module. It allows GridLAB-D™ models to be run as federates in a FNCS co-simulation. Starting in 4.0 this object is not available in the default 4.0 distribution of GridLAB-D™ but can be compiled with FNCS from the source code. In 4.1 the **fncs_msg** object is available by default. 
-TODO - Update - FNCS availability description (above)
 
 ### Enabling the **fncs_msg** object
 

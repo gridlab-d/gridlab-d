@@ -1,6 +1,8 @@
 # Command Options
 The command-line argument processing module processes arguments as they are encountered.
 
+TODO - Revisit - Revisit after API is complete
+
 !!! note
 
     Some modules can process command arguments as well. Those options are not listed here.

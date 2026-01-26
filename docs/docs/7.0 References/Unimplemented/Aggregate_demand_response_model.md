@@ -1,5 +1,11 @@
 # Aggregate Demand Response Model
 
+!!! warning
+
+	This page contains features that are unfinished, were never implemented, or have since been deprecated. We preserve these pages for archival purposes, and also as a foundational resource for prospective developers who may wish to implement the same or similar feature. Many of these pages provide robust explanations of the theory behind a particular module or feature that we hope readers will find useful. 
+	
+	**This page does not reflect the current state of GridLAB-D™**
+
 Explicit modeling of individual devices does produce a very accurate simulation, but it can be very computationally intensive. For some time, there has been a desire to build an aggregate load model that incorporates the essential features of demand response, and in particular the three primary types of demand response DR control signals 
 
 * **Direct load control** -

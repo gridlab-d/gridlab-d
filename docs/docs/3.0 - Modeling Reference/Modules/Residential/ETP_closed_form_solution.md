@@ -115,7 +115,7 @@ The methodology described below is the same as used in the GridLAB-D™ code bas
 
 [![Equivalent Thermal Parameters Circuit Modeled by House-e.](../../../../images/300px-Residential_module_users_guide_figure_1.png)](/wiki/File:Residential_module_users_guide_figure_1.png)
 
-##### Figure 1. Equivalent Thermal Parameters Circuit Modeled by House-e.
+##### Figure 2. Equivalent Thermal Parameters Circuit Modeled by House-e.
 
 For the thermal circuit in Figure 1, a heat balance (conservation of energy) can be written for the air temperature node ($T_A$) as: 
 
@@ -573,19 +573,19 @@ $$U_A = A_g U_g + \frac{A_d}{R_d} + \frac{A_w}{R_w} + \frac{A_c}{R_c} + \frac{A_
 
     0.018 is the volumetric heat capacity of air at standard conditions (Btu/°F.ft³std-air-pressure)
 
-### **Interior Mass Surface Conductance ( $H_m$)**
+### Interior Mass Surface Conductance ( $H_m$)
 
 Surface area is estimates as total exterior walls (less doors and windows) + interior walls + ceilings 
 
 $$H_m = h_s\ (\frac{A_w}{EWR}) + A_{wt} IWR + \frac{A_c n}{ECR}$$
 
-### **Total “Air” Mass ( $C_a$)**
+### Total “Air” Mass ( $C_a$)
 
 Based on tuning to typical home heating system cycling times, the “air mass” seems to be well approximated as 3 times the volumetric capacitance of the interior air volume. 
 
 $C_a = 3\ (0.018 A\ h)$ _# Short-cycle thermal mass_
 
-### **Total Thermal Mass ( $C_m$)**
+### Total Thermal Mass ( $C_m$)
 
 $C_m = A\ m_f - 2\ (0.018 A\ h)$ # Thermal mass (daily cycle), less that added to the “air” mass
 

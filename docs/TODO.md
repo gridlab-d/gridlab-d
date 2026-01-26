@@ -25,35 +25,47 @@
 - [x] Keep metronome example? --> No, delete.
     - [x] Pull metronome mentions out of Getting Started and into a single metronome example 
     file (or delete if not kept) 
-- [] Definitive installation instructions
+- [ ] Definitive installation instructions
     - [x] add the "easy" or "light" executable install option
 - [X] MySQL instructions - DEPRECATE/Unimplemented? If so, most content is unfinished. Needs robust introduction explaining what it is and why it is useful.
     - propose to Dev team to get rid of MySQL integration in leiu of python interface with new api (same for Matlab, HELICS, any other external integration)
 - [ ] Add a troubleshooting section to the new users section walking people through referencing the source code and how to find information they need on the source of truth.
 
 ### Docs Questions
-- [ ] Intro to Modeling needs to be re-written to not use metronome
-- [x] Pair down Getting Started Using GLD to be more approachable, noting that much of what's in there is already/can be moved to the Modeling 101 section of Modeling
+- [ ] **Intro to Modeling needs to be re-written to not use metronome**
+- [ ] Review tutorial pages, consider length and potentially splitting into smaller, more focused pages
 
 
 # 3.0 Modeling
 ### Dev Questions
-- [X] **XML** files. Still supported? Keep documentation? --> remove ref, "soft keep", switch to JSON as default
+- [X] **XML** files. Still supported? Keep documentation? 
+  - remove ref, "soft keep", switch to JSON as default
 - [ ] Talk with dev team to build out the built-in documentation within the code itself
-- [X] **MySQL** player and recorder - keep? If so, needs better intro. --> move to unimplemented
-- [X] **Aggregate Demand Response Model** - this is a theory page, unclear what part of the GLD code it's actually referring to. Is this implemented? --> ***Move to unimplemented***
-- [ ] **Microgrids** and **Diesel_dg** - microgrids is essentially the intro, diesel_dg is the parameter list and seems accurate --> keep
-- [ ] **Energy storage** - page is essentially empty. Should be the battery object? --> ***very simplified model, assumes it will be paired with inverter_dyn. Dev team to consider whether it should stay separate or be merged with battery***
-- [ ] **Power Flow User Guide** - this page has a LOT in it, with a fair amount I've never heard of, with various stages of "this has been partially validated and is considered experimental at this time" : need to review and update/deprecate. --> **requested Dev team to put eyes on this.**
+  - Dev team to build out a few doxygen examples to test campatability and usefulness
+- [X] **MySQL** player and recorder - keep? If so, needs better intro. 
+  - move to unimplemented
+- [X] **Aggregate Demand Response Model** - this is a theory page, unclear what part of the GLD code it's actually referring to. Is this implemented? 
+  - ***Moved to unimplemented***
+- [X] **Microgrids** and **Diesel_dg** - microgrids is essentially the intro, diesel_dg is the parameter list and seems accurate 
+  - Microgrids is a use case, diesel_dg is keep.
+- [X] **Energy storage** - page is essentially empty. Should be the battery object? 
+  - ***very simplified model, assumes it will be paired with inverter_dyn. Dev team to consider whether it should stay separate or be merged with battery***
+  - [ ] Page now contains both generic and battery models. ***Needs some remarks and examples***
+- [ ] **Inverter** and **Inverter_Dyn** - pages have status updates, (i.e., inverter_dyn more recent than inverter) but dev team needs to review and possibly rework based on their updates. Still likely out of date, may end up being merged. ***DEV DECISION POINT***.
+- [ ] **Power Flow User Guide** - this page has a LOT in it, with a fair amount I've never heard of, with various stages of "this has been partially validated and is considered experimental at this time" : need to review and update/deprecate. 
+  - **Topic for a Dev Team Review Meeting**
 
 ### Docs Questions
+- [ ] Consider: specific status messages for unimplemented material, where appropriate. 
+  - I.e., "the functionality of this module has been replaced by *blank*, please checkout that page (link)"
 - [ ] How do we handle objects? Source code integration/conversion/hybrid?
     - [ ] How does Mkdocs handle linking/interactive display elements? 
         (built-in or scripted?)
 - [ ] Usability and Usefulness
   - [ ] New examples
   - [ ] Additional content/features covered
-- [ ] Modules - Connection - Does this need individual pages for each type? Or can we merge into one connection page? Existing individual connection pages are very brief/ more like definitions.
+- [X] Modules - Connection - Does this need individual pages for each type? Or can we merge into one connection page? Existing individual connection pages are very brief/ more like definitions.
+  - *Moved to unimplemented*
 - [ ] Keep in mind:
   - What are we doing here?
   - Who is a “modeler” and what this guide intends to provide?
@@ -200,28 +212,53 @@ Modules
 - [ ] Word/page limit of a single doc page?
 - [ ] "See Also" lists:
   - Do we want to keep these? Will have to ensure pages still exist and links are accurate. Do we assume that the pages are now well-organized enough that this is no longer needed?
+  - Converted to "Related Concepts" list for now. When we're ready to finalize we can review and make items links to other pages where relevant.
 - [ ] Consistency of Terms, example blocks `<mymodel>`, for example (maybe standalone page in New Users)
+  - See style guide for guidance 
 - [ ] Remove dated clauses, like:
               `"As of Hassayampa (Version 3.0)..."`
 - [ ] Code blocks have embedded wiki links that will no longer work. Code blocks should be reworked to just display the code snippbit. Can be helpful to refer to original wiki page and copy/paste code. Example:
 
-Change this:   
+    - Change this:   
     
-    host% **gridlabd -[D](/wiki/Define "Define") [validate_report](/wiki/Validate_report "Validate report")=validate.txt --validate**
+          host% **gridlabd -[D](/wiki/Define "Define") [validate_report](/wiki/Validate_report "Validate report")=validate.txt --validate**
 
-to
-    
-    
-    host% gridlabd -[D] [validate_report]=validate.txt --validate
+  - to this:
+      
+      
+        host% gridlabd -[D] [validate_report]=validate.txt --validate
   
-# Candidate Long-Form Paper/New Doc Pages Topics
+# New Doc Pages (Existing Features) Topics
 
 Topic | Start Date | Time Estimate | Completed Date
 -- | -- | -- | --
-Deltamode | Oct 6 | 3 weeks | > 8 weeks
+Deltamode | Oct 6 | 3 weeks | > 13 weeks
 Object synchronization process | 
 Device model development process | 
 GridLAB-D loader and JSON file format | 
+
+# New Features Dev Schedule
+Topic |  Estimate Complete Date | Actual Completed Date | Able to Start Docs?
+-- | -- | -- | --
+Basic C/C++ API | Oct 31st | | Yes
+JSON Loader | <s>Nov 30</s> -> Jan 31
+Checkpoint System | <s>Jan 31</s> -> Feb 27 | Trying to figure out how to save/load| Potentially - Orestis to keep in mind as he works Dev side
+Multithreading | Mar 31
+Docker Containerization | Mar 15
+HELICS Update | Apr 15
+Common Solver Decentralization | Mar 31
+Utility functions for API | Mar 31
+CIMHub Testing/Integration | Apr 15
+Rlease v5.4/6.0 | May 31
+
+
+# Documentation Review Series Meeting Topics
+
+Topic | Date | Outstanding Decisions
+-- | -- | ---
+Residential Module | Dec 22 | Waterheater needs Multi-Layer model with accurate reflection of its status and stability
+Generators Module | Dec 23 | -  Decide whether to merge inverter and inverter_dyn (invluding VSI, part of SETO project) <br/> - Either energy_storage model gets some tests or it is deprecated <br/> - Single- and three-phase motors shoud be revisited, some "extra features" may not be fully documented. <br/> - Unclear if wind turbine is still experimental
+Powerflow | Next Up
 
 # Definition Plan
 - Open Index Tracker excel sheet on shareopint --> filter `Page Type` by `Definition`

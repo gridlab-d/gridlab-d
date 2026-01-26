@@ -65,7 +65,7 @@ nav:
     - Quick Install: docs/2.0 - New Users/2.1 - Installation Guide.md
     - 2.2 - Getting Started:
       - Gridlab-D™ Overview: docs/2.0 - New Users/2.2 - Getting Started/2.2.1 - Overview.md
-      - What is a GridLAB-D™ model?: docs/2.0 - New Users/2.2 - Getting Started/2.2.2 - Models.md
+      - What is a GridLAB-D™ Model?: docs/2.0 - New Users/2.2 - Getting Started/2.2.2 - Models.md
       - Running GridLAB-D™: docs/2.0 - New Users/2.2 - Getting Started/2.2.3 - Running a Model.md
       - Generating populations: docs/2.0 - New Users/2.2 - Getting Started/2.2.5 - Model Options.md
       - Generating output: docs/2.0 - New Users/2.2 - Getting Started/2.2.6 - Output.md
@@ -97,58 +97,59 @@ nav:
       - Climate:
         - Climate Module: docs/3.0 - Modeling Reference/Modules/Climate/1.0 - Climate.md
         - CSV reader: docs/3.0 - Modeling Reference/Modules/Climate/CSV_reader_(climate_class).md
-      - Objects:
-        - Introduction: docs/3.0 - Modeling Reference/Modules/Objects/1.0 - Introduction.md
-        - Distributed Energy Resources:
-          - Microgrids: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Dev_Microgrids.md
-          - Diesel dg: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Diesel_dg.md
-          - Energy storage: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Energy_storage.md
-          - Evcharger det: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Evcharger_det.md
-          - Inverters:
-            - Droop inverter: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Droop_inverter.md
-            - Inverter: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Inverter.md
-            - ibr blackboxmodels: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Spec_ibr_blackboxmodels.md
-            - ibr grayboxmodels: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Spec_ibr_grayboxmodels.md
-            - inverter_dyn: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Spec_inverter_dyn.md
-            - Sec control: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Spec_sec_control.md
-            - Sync Ctrl: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Inverters/Spec_sync_ctrl.md
-          - Solar - Solar Panel: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Solar.md
-          - Windturb dg: docs/3.0 - Modeling Reference/Modules/Objects/Distributed Energy Resources/Windturb_dg.md
-        - Motor:
-          - Composition Motor: docs/3.0 - Modeling Reference/Modules/Objects/Motor/Tech_CompositionMotor.md
-          - Single Phase Induction Motors: docs/3.0 - Modeling Reference/Modules/Objects/Motor/Tech_DeltaSPIM.md
-          - Three Phase Induction Motors: docs/3.0 - Modeling Reference/Modules/Objects/Motor/Tech_DeltaTPIM.md
-        - Player: docs/3.0 - Modeling Reference/Modules/Objects/Player.md
-        - Series compensator: docs/3.0 - Modeling Reference/Modules/Objects/Series_compensator.md
-        - Switch: docs/3.0 - Modeling Reference/Modules/Objects/Spec_switch_object.md
-        - Voltage source inverter (VSI): docs/3.0 - Modeling Reference/Modules/Objects/Voltage_source_inverter_(VSI).md
+      - Generators:
+        - Diesel dg: docs/3.0 - Modeling Reference/Modules/Generators/Diesel_dg.md
+        - Battery Energy storage: docs/3.0 - Modeling Reference/Modules/Generators/Energy_storage.md
+        - Inverters:
+          - Inverter: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter.md
+          - ibr blackboxmodels: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_ibr_blackboxmodels.md
+          - ibr grayboxmodels: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_ibr_grayboxmodels.md
+          - inverter_dyn: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_inverter_dyn.md
+          - Sec control: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_sec_control.md
+          - Sync Ctrl: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_sync_ctrl.md
+          - Voltage source inverter (VSI): docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Voltage_source_inverter_(VSI).md
+        - Solar Panel: docs/3.0 - Modeling Reference/Modules/Generators/Solar.md
+        - Wind Turbine: docs/3.0 - Modeling Reference/Modules/Generators/Windturb_dg.md
       - Powerflow:
         - Power Flow User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/1.0 - Power_Flow_User_Guide.md
         - Powerflow Tehnical Reference: docs/3.0 - Modeling Reference/Modules/Powerflow/3.0 - Power_Flow_Reference.md
         - Reliability User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/4.0 - Reliability_User_Guide.md
         - Newton-Raphson Distribution Powerflow Solver: docs/3.0 - Modeling Reference/Modules/Powerflow/5.0 - Newton-Raphson_Distribution_Powerflow_Solver.md
+        - Motor:
+          - Composition Motor: docs/3.0 - Modeling Reference/Modules/Powerflow/Motor/Tech_CompositionMotor.md
+          - Single Phase Induction Motors: docs/3.0 - Modeling Reference/Modules/Powerflow/Motor/Tech_DeltaSPIM.md
+          - Three Phase Induction Motors: docs/3.0 - Modeling Reference/Modules/Powerflow/Motor/Tech_DeltaTPIM.md
+        - Series compensator: docs/3.0 - Modeling Reference/Modules/Powerflow/Series_compensator.md
+        - Switch: docs/3.0 - Modeling Reference/Modules/Powerflow/Switch_object.md
       - Residential:
         - Introduction: docs/3.0 - Modeling Reference/Modules/Residential/1.0 - Introduction.md
         - House: docs/3.0 - Modeling Reference/Modules/Residential/2.0 - house-e.md
         - Equivalent Thermal Parameter Model: docs/3.0 - Modeling Reference/Modules/Residential/ETP_closed_form_solution.md
+        - Evcharger det: docs/3.0 - Modeling Reference/Modules/Residential/Evcharger_det.md
         - End Use Loads: docs/3.0 - Modeling Reference/Modules/Residential/Loads.md
         - Thermal Energy Storage Model: docs/3.0 - Modeling Reference/Modules/Residential/Thermal_Energy_Storage_model_guide.md
         - Waterheater: docs/3.0 - Modeling Reference/Modules/Residential/Waterheater.md
         - ZIPload: docs/3.0 - Modeling Reference/Modules/Residential/ZIPload.md
-      - Tape: docs/3.0 - Modeling Reference/Modules/Tape.md
+      - Tape:
+        - Player: docs/3.0 - Modeling Reference/Modules/Tape/Player.md
+        - Tape: docs/3.0 - Modeling Reference/Modules/Tape/Tape.md
       - Delta Mode Document: docs/3.0 - Modeling Reference/Modules/delta_mode.md
     - Other Features:
       - Checkpoints: docs/3.0 - Modeling Reference/Other Features/Checkpoints.md
       - Command Options: docs/3.0 - Modeling Reference/Other Features/Command_options.md
-      - Debugging and Validation:
-        - Model Debugging: docs/3.0 - Modeling Reference/Other Features/Debugging and Validation/Model_Debugging.md
-        - Validate: docs/3.0 - Modeling Reference/Other Features/Debugging and Validation/Validate.md
-      - Macros: docs/3.0 - Modeling Reference/Other Features/Macros.md
-      - Parameter expansion: docs/3.0 - Modeling Reference/Other Features/Parameter_expansion.md
+      - Microgrids: docs/3.0 - Modeling Reference/Other Features/Microgrids.md
       - Performance profiling: docs/3.0 - Modeling Reference/Other Features/Performance_profiling.md
       - Sync Check: docs/3.0 - Modeling Reference/Other Features/Spec_sync_check.md
       - Units: docs/3.0 - Modeling Reference/Other Features/Units.md
+      - Validate: docs/3.0 - Modeling Reference/Other Features/Validate.md
   - 4.0 Developing Reference:
+    - 4.0 - Feature Development:
+      - Basic C/C++ API: docs/4.0 Developing Reference/4.0 - Feature Development/Basic C-C++ API.md
+      - Checkpointing: docs/4.0 Developing Reference/4.0 - Feature Development/Checkpointing.md
+      - Docker Containerization: docs/4.0 Developing Reference/4.0 - Feature Development/Docker Containerization.md
+      - JSON Loader: docs/4.0 Developing Reference/4.0 - Feature Development/JSON Loader.md
+      - Multithreading: docs/4.0 Developing Reference/4.0 - Feature Development/Multithreading.md
+      - Stretch Goals: docs/4.0 Developing Reference/4.0 - Feature Development/Stretch Goals.md
     - 4.1 - Introduction - TBD: docs/4.0 Developing Reference/4.1 - Introduction.md
     - 4.2 - Building from Source:
       - 4.2 - Building GridLAB-D™ from Source: docs/4.0 Developing Reference/4.2 - Building from Source/4.2.1 - Building_from_Source.md
@@ -224,10 +225,12 @@ nav:
       - Link:
         - Link (directive): docs/7.0 References/Unimplemented/Link/Link_(directive).md
         - Matlab link: docs/7.0 References/Unimplemented/Link/Matlab_link.md
+      - Macros: docs/7.0 References/Unimplemented/Macros.md
       - Market:
         - Market User Guide: docs/7.0 References/Unimplemented/Market/1.0 - Market_User_Guide.md
         - Market Auction: docs/7.0 References/Unimplemented/Market/Market_Auction.md
         - Transactive Controller: docs/7.0 References/Unimplemented/Market/TransactiveController.md
+      - Model Debugging: docs/7.0 References/Unimplemented/Model_Debugging.md
       - MySQL:
         - Mysql: docs/7.0 References/Unimplemented/MySQL/Mysql#username.md
         - Database: docs/7.0 References/Unimplemented/MySQL/Database.md

@@ -22,7 +22,6 @@ Implementation of JSON data exchange with external applications The json class i
       }
 
 ## Class members
-TODO - Incomplete - Class member table for json connection incomplete
 
 Member | Description
 -- | --
@@ -31,32 +30,32 @@ Member | Description
 **forbid** | The forbid link specifier indicates that a normally allowed exchange of data should be forbidden. his specifier only has an effect for security modes that permit data exchanges. 
 **option** | The option pseudo-member is used to control connection layer and transport layer options. 
 **init** | The init option indicates the data elements are to exchange during an [INIT] event. 
-**precommit** | **TODO**
-**presync**| **TODO**: 
-**sync**| **TODO**: 
-**postsync**| **TODO**: 
-**prenotify**| **TODO**: 
-**postnotify**| **TODO**: 
-**commit**| **TODO**: 
-**finalize**| **TODO**: 
-**term**| **TODO**: 
-**connection**| **TODO**: 
-**client**| **TODO**: 
-**server**| **TODO**: 
-**udp**| **TODO**: 
-**readcache**| **TODO**: 
-**writecache**| **TODO**: 
-**transport**| **TODO**: 
-**port**| **TODO**: 
-**header_version**| **TODO**: 
-**hostname**| **TODO**: 
-**debug_level**| **TODO**: 
-**on_error**| **TODO**: 
-**retry**| **TODO**: 
-**abort**| **TODO**: 
-**ignore**| **TODO**: 
-**maxretry**| **TODO**: 
-**none**| **TODO**: 
+**precommit** | 
+**presync**| 
+**sync**| 
+**postsync**| 
+**prenotify**| 
+**postnotify**| 
+**commit**| 
+**finalize**| 
+**term**| 
+**connection**| 
+**client**| 
+**server**| 
+**udp**| 
+**readcache**| 
+**writecache**| 
+**transport**| 
+**port**| 
+**header_version**| 
+**hostname**| 
+**debug_level**| 
+**on_error**| 
+**retry**| 
+**abort**| 
+**ignore**| 
+**maxretry**| 
+**none**| 
 
 ## Example
     

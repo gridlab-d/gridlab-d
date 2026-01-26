@@ -20,6 +20,7 @@ from functools import partial
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
+import matplotlib.dates as mdates
 import numpy as np
 import threading
 import queue
@@ -155,10 +156,18 @@ class SimulationGUI:
         
         # Max points to display
         ttk.Label(settings_frame, text="Max Points:").pack(side=tk.LEFT, padx=5)
-        self.max_points_var = tk.StringVar(value="1000")
+        self.max_points_var = tk.StringVar(value="2000")
         points_spinbox = ttk.Spinbox(settings_frame, from_=100, to=5000, 
                                    textvariable=self.max_points_var, width=10)
         points_spinbox.pack(side=tk.LEFT, padx=5)
+
+        # Date format selection
+        ttk.Label(settings_frame, text="Date Format:").pack(side=tk.LEFT, padx=5)
+        self.date_format_var = tk.StringVar(value="full")
+        date_format_combo = ttk.Combobox(settings_frame, textvariable=self.date_format_var, 
+                                       values=["auto", "full", "date_only", "time_only", "compact"], 
+                                       width=10, state="readonly")
+        date_format_combo.pack(side=tk.LEFT, padx=5)
         
         # Apply settings button
         apply_button = ttk.Button(settings_frame, text="Apply Settings", 
@@ -175,6 +184,9 @@ class SimulationGUI:
         self.ax.set_xlabel("Time Step")
         self.ax.set_ylabel("Value")
         self.ax.grid(True, alpha=0.3)
+
+        # Setup datetime formatting for x-axis
+        self.setup_datetime_formatting()
         
         # Create canvas
         self.canvas = FigureCanvasTkAgg(self.fig, plot_frame)
@@ -183,6 +195,43 @@ class SimulationGUI:
         # Initialize empty line plot
         self.line, = self.ax.plot([], [], 'b-', linewidth=2)
 
+    def setup_datetime_formatting(self):
+        """Configure datetime formatting for the x-axis"""
+        # Format the x-axis to show dates nicely
+        self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+        self.ax.xaxis.set_minor_formatter(mdates.DateFormatter('%H:%M'))
+        
+        # Rotate labels for better readability
+        plt.setp(self.ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+        
+        # Enable automatic date formatting
+        self.fig.autofmt_xdate()
+        
+    def update_date_formatting(self, format_type="auto"):
+        """Update the date formatting based on user selection"""
+        if format_type == "full":
+            self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M:%S'))
+        elif format_type == "date_only":
+            self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+        elif format_type == "time_only":
+            self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+        elif format_type == "compact":
+            self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M'))
+        else:  # auto
+            # Automatically choose format based on data range
+            if len(self.time_data) > 1:
+                time_range = max(self.time_data) - min(self.time_data)
+                if time_range.days > 1:
+                    self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M'))
+                elif time_range.seconds > 3600:  # More than 1 hour
+                    self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+                else:
+                    self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+            else:
+                self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+        
+        # Re-enable automatic date formatting
+        self.fig.autofmt_xdate()
         
     def setup_plot(self):
         """Setup the animated plot"""
@@ -197,18 +246,35 @@ class SimulationGUI:
         while not self.data_queue.empty():
             try:
                 timestamp, value = self.data_queue.get_nowait()
+                # Ensure timestamp is a datetime object
+                if not isinstance(timestamp, datetime):
+                    if isinstance(timestamp, (int, float)):
+                        # Convert numeric timestamp to datetime (assuming Unix timestamp or similar)
+                        timestamp = datetime.fromtimestamp(timestamp)
+                    else:
+                        # Try to parse string timestamp
+                        timestamp = datetime.fromisoformat(str(timestamp))
+                
                 self.time_data.append(timestamp)
                 self.value_data.append(value)
             except queue.Empty:
                 break
-        
-        # Update plot if we have data
+            except Exception as e:
+                logger.error(f"Error processing timestamp: {e}")
+                continue
+
+            # Update plot if we have data
         if self.time_data and self.value_data:
-            self.line.set_data(list(self.time_data), list(self.value_data))
+            # Convert datetime objects to matplotlib date numbers for plotting
+            time_nums = mdates.date2num(list(self.time_data))
+            self.line.set_data(time_nums, list(self.value_data))
             
             # Auto-scale the plot
             self.ax.relim()
             self.ax.autoscale_view()
+            
+            # Update date formatting if needed
+            self.update_date_formatting(self.date_format_var.get())
         
         return self.line,
     
@@ -254,6 +320,9 @@ class SimulationGUI:
             
             # Update animation interval
             self.animation.event_source.interval = new_interval
+
+            # Update date formatting
+            self.update_date_formatting(self.date_format_var.get())
             
             messagebox.showinfo("Settings", "Settings applied successfully!")
             
@@ -278,19 +347,37 @@ class SimulationGUI:
         while self.simulation_running:
             # Step simulation time.
             status, sim_time = gld.step()
-            house_properties = gld.gld.get_object_properties("house1")
-            # air_str = +70.0005 degF
-            air_str = house_properties["air_temperature"]
-            air_float = self.get_temperature_value(air_str)
+            house1_properties = gld.gld.get_object_properties("house1")
+            house1_air_str = house1_properties["air_temperature"]
+            house_1_air_float = self.get_temperature_value(house1_air_str)
+
+            house2_properties = gld.gld.get_object_properties("house2")
+            house2_air_str = house2_properties["air_temperature"]
+            house_2_air_float = self.get_temperature_value(house2_air_str)
 
             # Put data into queue for the GUI thread
-            self.data_queue.put((sim_time_ordinal, air_float))
-            
+            # Single data plot 
+            #self.data_queue.put((sim_time, house_1_air_float))
+            house1_data = {
+                "series": "house1",
+                "time": sim_time,
+                "value": house_1_air_float
+            }
+
+            house2_data = {
+                "series": "house2",
+                "time": sim_time,
+                "value": house_2_air_float
+            }
+            self.data_queue.put(house1_data)
+            self.data_queue.put(house2_data)
+
+
             sim_time_ordinal += 1
             if sim_time_ordinal % 500 == 0:
-                heating_setpoint_str = house_properties["air_temperature"]
-                heating_setpoint_float = self.get_temperature_value(air_str)
-                gld.gld.set_property("house1", "cooling_setpoint", str(heating_setpoint_float + 1))
+                cooling_setpoint_str = house1_properties["air_temperature"]
+                cooling_setpoint_float = self.get_temperature_value(cooling_setpoint_str)
+                gld.gld.set_property("house1", "cooling_setpoint", str(cooling_setpoint_float + 1))
 
             # Simulate some processing time
             time.sleep(0.00)  # Adjust this based on your simulation speed
@@ -339,7 +426,8 @@ class MultiSeriesSimulationGUI(SimulationGUI):
             self.ax.legend()
             
     def add_data_point_series(self, series_name, timestamp, value):
-        """Add data point to a specific series"""
+        """Add data point to a specific series
+        timestamp should be a datetime object"""
         data = {'series': series_name, 'time': timestamp, 'value': value}
         self.data_queue.put(data)
     
@@ -349,34 +437,62 @@ class MultiSeriesSimulationGUI(SimulationGUI):
         while not self.data_queue.empty():
             try:
                 data = self.data_queue.get_nowait()
+                logger.debug(f"Data from queue: {}")
                 if isinstance(data, dict) and 'series' in data:
                     # Multi-series data
+                    logger.debug(f"***** Got valid data: {data} ******")
                     series_name = data['series']
+                    timestamp = data['time']
+                    value = data['value']
+                    
+                    # Ensure timestamp is a datetime object
+                    if not isinstance(timestamp, datetime):
+                        if isinstance(timestamp, (int, float)):
+                            timestamp = datetime.fromtimestamp(timestamp)
+                        else:
+                            timestamp = datetime.fromisoformat(str(timestamp))
+                    
                     if series_name in self.series_data:
-                        self.series_data[series_name]['time'].append(data['time'])
-                        self.series_data[series_name]['values'].append(data['value'])
+                        self.series_data[series_name]['time'].append(timestamp)
+                        self.series_data[series_name]['values'].append(value)
                 else:
                     # Single series data (backward compatibility)
                     timestamp, value = data
+                    # Ensure timestamp is a datetime object
+                    if not isinstance(timestamp, datetime):
+                        if isinstance(timestamp, (int, float)):
+                            timestamp = datetime.fromtimestamp(timestamp)
+                        else:
+                            timestamp = datetime.fromisoformat(str(timestamp))
+                    
                     self.time_data.append(timestamp)
                     self.value_data.append(value)
             except queue.Empty:
                 break
+            except Exception as e:
+                logger.error(f"Error processing data: {e}")
+                continue
         
         # Update all series
         for series_name, line in self.series_lines.items():
             time_data = list(self.series_data[series_name]['time'])
             value_data = list(self.series_data[series_name]['values'])
             if time_data and value_data:
-                line.set_data(time_data, value_data)
+                # Convert datetime objects to matplotlib date numbers
+                time_nums = mdates.date2num(time_data)
+                line.set_data(time_nums, value_data)
         
         # Update single series (backward compatibility)
         if self.time_data and self.value_data:
-            self.line.set_data(list(self.time_data), list(self.value_data))
+            time_nums = mdates.date2num(list(self.time_data))
+            self.line.set_data(time_nums, list(self.value_data))
         
         # Auto-scale the plot
         self.ax.relim()
         self.ax.autoscale_view()
+        
+        # Update date formatting if needed
+        self.update_date_formatting(self.date_format_var.get())
         
         return list(self.series_lines.values()) + [self.line]
 
@@ -393,22 +509,19 @@ def main():
     logging.basicConfig(level=logging.DEBUG,
                         handlers=[fileHandle, streamHandle])
 
-    # Initializing simulation
-    gld = GLD("./house_with_solar", "./houses.glm")
-
     # Initializing GUI
     root = tk.Tk()
 
     
     
     # Choose which version to use
-    app = SimulationGUI(root)  # Single series
-    # app = MultiSeriesSimulationGUI(root)  # Multiple series
+    # app = SimulationGUI(root)  # Single series
+    app = MultiSeriesSimulationGUI(root)  # Multiple series
     
     # For multi-series, add some series
     if isinstance(app, MultiSeriesSimulationGUI):
-        app.add_data_series("Series 1", 'blue')
-        app.add_data_series("Series 2", 'red')
+        app.add_data_series("House 1 temperature", 'blue')
+        app.add_data_series("House 2 temperature", 'red')
     
     # Handle window closing
     root.protocol("WM_DELETE_WINDOW", app.on_closing)

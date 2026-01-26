@@ -23,7 +23,6 @@ The module global table_prefix can be used to stored multiple models in the same
 
 ### Options
 
-**TODO**: 
 
 ## Data Dictionary
 
