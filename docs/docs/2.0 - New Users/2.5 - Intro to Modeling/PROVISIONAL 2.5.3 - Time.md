@@ -1,4 +1,4 @@
-# The Clock Directive (TODO: Is there a better word for "directive"?)
+# The Clock Directive
 This page explains how to manage simulation time in GridLAB-D in more detail. We start with a reminder of the information presented in TODO: Add reference after we break 2.5.2 - GLM Models. A user can use the clock directive to indicate the start and stop time of a simulation, as well as provide timezone information.
 
 ## Using date and time
