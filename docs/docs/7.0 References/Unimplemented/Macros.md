@@ -18,8 +18,8 @@ Macro | Description
 **#binpath _path_** | Define the path to search for executables.  **DEPRECATED** 
 **#debug _string_** | Prints _string_ when debugging is enabled. 
 **#define _variable_ =_value_** | Define new macro variables.
-**#endif** | End an `#if`, `#ifdef`, or `#ifndef` block.
-**#else** | Open an alternative block after an `#if`, `#ifexist`, `#ifdef`, or `#ifndef` block.
+**#endif** | Closes an `#if`, `#ifdef`, or `#ifndef` conditional block. The `#endif` must be in the same file the open macro occurred in.
+**#else** | Closes a conditional block and opens an alternative block after an `#if`, `#ifexist`, `#ifdef`, or `#ifndef` block.
 **#error _message_** | Force the GLM loader to print an error message and stop.
 **#if _test_** | Open an #if block.
 **#ifdef _variable_** | Open an `#ifdef` block.
@@ -49,6 +49,36 @@ Macro variables are expanded in-line while the GLM file is being loaded, so expa
     
 
 Macro expansions will expand macro variables, global variables, and environment variables. 
+
+## Environment Variables
+
+GridLAB-D uses many environment variable during operation.
+
+* DBFLAGS - Specifies debugging options to use when compiling inline C and C++ code.
+* CC - Specifies the C compiler to use when compiling inline C code.
+* COMSPEC (windows only)
+* SHELL (linux/unix only)
+* GLPATH - Specifies where to search for GridLAB-D modules and support files.
+* GLTEMP - Specifies the path to GridLAB-D temporary folder
+* HOMEVAR (windows only)
+* HOMEDRIVE (windows only)
+* TEMP
+* USER (linux/unix only)
+* USERNAME (windows only)
+* GRIDLABD - Specifies the path to the GridLAB-D install.
+* PATH
+* INCLUDE
+* LIB
+* CCFLAGS - Specifies the C compiler options to use when compiling inline C code.
+* CXXFLAGS - Specifies the C++ compiler options to use when compiling inline C++ code.
+* CXX - Specifies the C++ compiler to use when compiling inline C++ code.
+* LDFLAGS - Specifies the linker options to use when compiling inline C and C++ code.
+* GLBROWSER Template:NEW30
+* LD_LIBRARY_PATH (linux/unix only)
+* COMPUTERNAME (windows only)
+* HOSTNAME (linux/unix only)
+* TZ - Specifies the default timezone.
+* NUMBER_OF_PROCESSORS
 
 # Related Concepts:
 

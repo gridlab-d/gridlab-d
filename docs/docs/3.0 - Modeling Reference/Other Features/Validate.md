@@ -117,6 +117,35 @@ Some output from gridlabd runs cannot be redirected and will always be displayed
 
 Unhandled exceptions in Windows can cause modal dialogs to pop up that block the process. This behavior appears to be impossible to suppress. See [ticket 606](http://sourceforge.net/p/gridlab-d/tickets/606) for details. 
 
+
+# Test
+
+The user may provide a command option `--test` to enable the various test routines supported in GridLAB-D. The routines are made available to users by listing the core test routines in the `test_list` variable and/or exporting the `module_test` routine from modules the support self-tests.
+
+
+Core (in `core/test.c`)
+
+        static TESTLIST test_list[] = {
+        // ...
+        {"name", component_test, 0, next_ptr}
+        };
+
+Component (in `core/_component_.c`)
+
+        int component_test(void)
+        {
+        // ...
+        return SUCCESS; // or FAILED
+        }
+
+Module (in `_module_ /test.cpp`)
+
+        EXPORT int module_test (int argc, char *argv[])
+        {
+        // ...
+        return SUCCESS; // or FAILED
+        }
+
 ## Related Concepts:
 
   * Command options
