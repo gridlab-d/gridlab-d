@@ -27,7 +27,8 @@
     - Distributed Generation: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.6 - Distributed_Generation.md
     - Advanced Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.7 - Advanced_Distribution_Models.md
     - Built-In Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.8 - Built-In Distribution Models.md
-  - The Clock: docs/2.0 - New Users/2.5 - Simulation Time.md
+    - The Clock Directive (TODO: Is there a better word for "directive"?): docs/2.0 - New Users/2.5 - Intro to Modeling/PROVISIONAL 2.5.3 - Time.md
+  - Quasi-static mode: docs/2.0 - New Users/2.6 - Time Management.md
 - 3.0 - Modeling Reference:
   - Loads:
     - Loadshape: docs/3.0 - Modeling Reference/Loads/1.0 - Loadshape.md
@@ -85,6 +86,7 @@
   - Other Features:
     - Checkpoints: docs/3.0 - Modeling Reference/Other Features/Checkpoints.md
     - Command Options: docs/3.0 - Modeling Reference/Other Features/Command_options.md
+    - Complex Numbers: docs/3.0 - Modeling Reference/Other Features/ComplexNumbers.md
     - Microgrids: docs/3.0 - Modeling Reference/Other Features/Microgrids.md
     - Performance profiling: docs/3.0 - Modeling Reference/Other Features/Performance_profiling.md
     - Sync Check: docs/3.0 - Modeling Reference/Other Features/Spec_sync_check.md
@@ -94,10 +96,11 @@
   - 4.0 - Feature Development:
     - Basic C/C++ API: docs/4.0 Developing Reference/4.0 - Feature Development/Basic C-C++ API.md
     - Checkpointing: docs/4.0 Developing Reference/4.0 - Feature Development/Checkpointing.md
-    - Docker Containerization: docs/4.0 Developing Reference/4.0 - Feature Development/Docker Containerization.md
+    - Docker Containerization/Build Process: docs/4.0 Developing Reference/4.0 - Feature Development/Docker Containerization.md
     - JSON Loader: docs/4.0 Developing Reference/4.0 - Feature Development/JSON Loader.md
+    - Multithreaded Random Number Generation: docs/4.0 Developing Reference/4.0 - Feature Development/Multithreaded_Random_Number_Generation.md
     - Multithreading: docs/4.0 Developing Reference/4.0 - Feature Development/Multithreading.md
-    - Stretch Goals: docs/4.0 Developing Reference/4.0 - Feature Development/Stretch Goals.md
+    - Miscelaneous Features and Updates: docs/4.0 Developing Reference/4.0 - Feature Development/Stretch Goals.md
   - 4.1 - Introduction - TBD: docs/4.0 Developing Reference/4.1 - Introduction.md
   - 4.2 - Building from Source:
     - 4.2 - Building GridLAB-D™ from Source: docs/4.0 Developing Reference/4.2 - Building from Source/4.2.1 - Building_from_Source.md
@@ -125,18 +128,8 @@
     - GridLAB-D™ Device Modeling: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.5 - GridLAB-D Device Modeling.md
     - Integrated Testing: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.6 - Integrated_Testing.md
   - 4.5 - Deltamode Development:
-    - Introduction to Deltamode Development - TBD: docs/4.0 Developing Reference/4.5 - Deltamode Development/4.5.0 - Introduction to Deltamode Development.md
-    - Dev:Subsecond: docs/4.0 Developing Reference/4.5 - Deltamode Development/4.5.1 - Dev_Subsecond.md
-    - Subsecond: docs/4.0 Developing Reference/4.5 - Deltamode Development/Delta_mode.md
-    - Model Initialization: docs/4.0 Developing Reference/4.5 - Deltamode Development/Initialization.md
-    - Multirun mode: docs/4.0 Developing Reference/4.5 - Deltamode Development/Multirun_mode.md
-    - Multithreaded Random Number Generation: docs/4.0 Developing Reference/4.5 - Deltamode Development/Multithreaded_Random_Number_Generation.md
-    - Pauseat: docs/4.0 Developing Reference/4.5 - Deltamode Development/Pauseat.md
-    - Realtime server: docs/4.0 Developing Reference/4.5 - Deltamode Development/Realtime_server.md
-    - Spec:Subsecond: docs/4.0 Developing Reference/4.5 - Deltamode Development/Spec_Subsecond.md
-    - 2.4 - Theory of Operation: docs/4.0 Developing Reference/4.5 - Deltamode Development/theory-of-operation.md
+  - Clock operation: docs/4.0 Developing Reference/4.5 - Time Management.md
   - 4.6 - Debugging:
-    - Introduction to Debugging when Developing GridLAB-Debugging: docs/4.0 Developing Reference/4.6 - Debugging/4.6.0 - Introduction.md
     - Command options: docs/4.0 Developing Reference/4.6 - Debugging/4.6.1 - Command_line_arguments.md
     - Performance Profiling: docs/4.0 Developing Reference/4.6 - Debugging/4.6.2 - performance-profiling.md
   - 4.7 - Style Guide: docs/4.0 Developing Reference/4.7 - Style_guide.md
