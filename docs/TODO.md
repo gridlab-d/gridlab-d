@@ -3,6 +3,15 @@
 - [x] GLD Association? Is that still a thing? --> it is not, removed from repo.
 ### Docs Questions
 - [ ]
+- The following came from 2.2.1 - Overview.md. Just want to ensure that, in the overall set of documentation, that we cover the following topics:
+
+  * Essential concepts and terminology
+  * Starting and stopping GridLAB-D
+  * Creating and running models
+  * Creating and modifying classes
+  * Instantiating objects
+  * Extracting results
+  * Constructing complex models
 
 # 1.0 Prospective Users
 ### Dev Questions
