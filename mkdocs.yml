@@ -30,7 +30,36 @@ plugins:
   - mkdoxy:
       projects:
        gridlabd:
-          src-dirs: assert autotest build climate comm commercial connection control debug generators gldcore GldEditor market matlab matpower mysql network optimize plc powerflow python reliability residential rest tape tape_file tape_memory tape_plot utitlies
+          src-dirs: 
+            - assert 
+            - autotest 
+            - build 
+            - climate 
+            - comm 
+            - commercial 
+            - connection 
+            - control 
+            - debug 
+            - generators 
+            - gldcore 
+            - GldEditor 
+            - market 
+            - matlab 
+            - matpower 
+            - mysql 
+            - network 
+            - optimize 
+            - plc 
+            - powerflow 
+            - python 
+            - reliability 
+            - residential 
+            - rest 
+            - tape 
+            - tape_file 
+            - tape_memory 
+            - tape_plot 
+            - utilities
           full-doc: True 
           doxy-cfg: 
             FILE_PATTERNS: "*.cpp *.h*" 
@@ -41,13 +70,12 @@ markdown_extensions:
   - markdown_include.include:
       base_path: docs/
   - admonition
+  - codehilite
   - pymdownx.details
   - pymdownx.superfences
 extra_javascript:
   - javascripts/mathjax.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
-  - admonition
-  - codehilite
 nav:
   - Home: index.md
   - 0.0 - GridLAB-D™:
@@ -179,13 +207,12 @@ nav:
       - Creating a solver: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.4 - Creating_a_solver.md
       - GridLAB-D™ Device Modeling: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.5 - GridLAB-D Device Modeling.md
       - Integrated Testing: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.6 - Integrated_Testing.md
-    - 4.5 - Deltamode Development:
-    - Clock operation: docs/4.0 Developing Reference/4.5 - Time Management.md
+    - 4.5 - Clock operation: docs/4.0 Developing Reference/4.5 - Time Management.md
     - 4.6 - Debugging:
       - Command options: docs/4.0 Developing Reference/4.6 - Debugging/4.6.1 - Command_line_arguments.md
       - Performance Profiling: docs/4.0 Developing Reference/4.6 - Debugging/4.6.2 - performance-profiling.md
     - 4.7 - Style Guide: docs/4.0 Developing Reference/4.7 - Style_guide.md
-    - GridLAB-D Release Process - TBD: docs/4.0 Developing Reference/4.8 - Release_Process.md
+    - 4.8 - GridLAB-D Release Process: docs/4.0 Developing Reference/4.8 - Release_Process.md
   - 5.0 Integration:
     - Interfacing with External Software: docs/5.0 Integration/Interfacing_with_External_Software.md
     - Intro to Integration: docs/5.0 Integration/intro-to-integration.md
