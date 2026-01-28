@@ -22,12 +22,12 @@
     - Basic Distribution System Modeling: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.1 - Basic Distribution System Modeling.md
     - GLM Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.2 - GLM Models.md
     - Modules: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.3 - Modules.md
+    - The Clock Directive: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.3.1 - Clock Directive.md
     - Recorders and Players: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.4 - Recorders and Players.md
     - Built-in Schedules and Loadshapes: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.5 - Schedules and Loadshapes.md
     - Distributed Generation: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.6 - Distributed_Generation.md
     - Advanced Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.7 - Advanced_Distribution_Models.md
     - Built-In Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.8 - Built-In Distribution Models.md
-    - The Clock Directive: docs/2.0 - New Users/2.5 - Intro to Modeling/PROVISIONAL 2.5.3 - Time.md
   - Quasi-static mode: docs/2.0 - New Users/2.6 - Time Management.md
 - 3.0 - Modeling Reference:
   - Loads:
