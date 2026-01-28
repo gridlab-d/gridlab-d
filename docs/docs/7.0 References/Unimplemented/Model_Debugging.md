@@ -6,11 +6,51 @@
 	
 	**This page does not reflect the current state of GridLAB-D™**
 
+The debug option produces all the debugging output from GridLAB-D. It is managed by the global variable **debug**, which is by default **FALSE**.
+
+## GLM
+
 The debugger is started when the `-debugger` command-line option is used. It can also be started by including the line:
     
-    #set debugger=1
+    # GLM
+
+To enable debug mode use the directive 
+    
+    
+    #set debug=1
+    
+
+To disable debug mode use the directive 
+    
+    
+    #set debug=0
+    
+
+## Command line
+
+To toggle debug mode use the option 
+    
+    
+    host% gridlabd --debug
+    
+
+To enable debug mode use the option 
+    
+    
+    host% gridlabd -D debug=1
+    
+
+To disable debug mode use the option 
+    
+    
+    host% gridlabd -D debug=0
     
 in the GLM file. The debugger supports two methods of interrupting the simulation. 
+
+The **debugger** option enables the debugger in GridLAB-D. To enable the debugger use the command option 
+    
+    
+    host% gridlabd --debugger
 
   1. **Breakpoints** halt the simulator and start the debugger whenever a situation arises that matches the breakpoint criterion. For example, a breakpoint on the bottom-up pass will stop the simulation every time an object sync is called during a bottom-up pass.
 

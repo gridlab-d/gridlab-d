@@ -2,6 +2,28 @@
 
 Brief description of feature (~1 paragraph).
 
+From wiki:
+
+TECHNICAL MANUAL
+
+Checkpoints are a method of periodically saving the state of a simulation in progress to a file in such a way that the file can be loaded by another instance of GridLAB-D and resumed from the same state.
+
+Checkpoints are enabled by defining the checkpoint_file to establish the base file name used for the checkpoint file.
+
+The interval at which the checkpoint is saved is specified by the checkpoint_interval global variable. The checkpoint interval can either be based on the wall clock or the simulation clock depending on the setting of checkpoint_type global variable.
+
+Normally, the checkpoint system keeps only the last checkpoint. However, all checkpoint images can be preserved using the checkpoint_keepall global variable.
+
+## GLM
+    
+    #set checkpoint_file="savefile"
+    #set checkpoint_interval=3600
+    #set checkpoint_type=WALL
+    
+## Command line
+    
+    host% gridlabd -D checkpoint_file="savefile" -D checkpoint_interval=3600 -D checkpoint_type=WALL
+
 ## Motivation
 
 Why will this be worthwhile feature for GridLAB-D? Why now? Who will it help (developers or users)? How will it help them?
