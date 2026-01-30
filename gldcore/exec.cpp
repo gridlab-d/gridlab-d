@@ -130,6 +130,7 @@
 #include "index.h"
 #include "realtime.h"
 #include "module.h"
+#include "gridlabd.h"
 #include "loader.h"
 #include <map>
 #include <string>
@@ -157,6 +158,7 @@
 #include "save.h"
 
 #include "cpp_threadpool.h"
+#include "serialize.h"
 
 using namespace std::literals;
 
@@ -653,50 +655,194 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 									{
 										instance[pmap->name] = val;
 									}
-								}
-								break;
-								case PT_int32:
-								{
-									int32 val = (int32)strtol(value_str, nullptr, 10);
-									instance[pmap->name] = val;
-								}
-								break;
-								case PT_int64:
-								{
-									int64 val = strtoll(value_str, nullptr, 10);
-									instance[pmap->name] = static_cast<int64_t>(val);
-								}
-								break;
-								case PT_bool:
-								{
-									bool val = (strcmp(value_str, "TRUE") == 0 || strcmp(value_str, "1") == 0);
-									instance[pmap->name] = val;
-								}
-								break;
-								case PT_timestamp:
-								{
-									TIMESTAMP val = strtoll(value_str, nullptr, 10);
-									instance[pmap->name] = static_cast<int64_t>(val);
-								}
-								break;
-								case PT_char8:
-								case PT_char32:
-								case PT_char256:
-								case PT_char1024:
-									instance[pmap->name] = std::string(value_str);
 									break;
-								case PT_complex:
-									// Complex values are already formatted as strings by object_get_value_by_name
-									instance[pmap->name] = std::string(value_str);
+									case PT_int32:
+									{
+										int32 val = (int32)strtol(value_str, nullptr, 10);
+										instance[pmap->name] = val;
+									}
 									break;
-								default:
-									// For all other types, store as string
-									instance[pmap->name] = std::string(value_str);
+									case PT_int64:
+									{
+										// Check if this is a struct pointer for checkpointing
+										if (pmap->description != nullptr && strstr(pmap->description, "CHECKPOINT_VAR") != nullptr &&
+											(strstr(pmap->description, "STRUCT_ARRAY") != nullptr || strstr(pmap->description, "STRUCT[") != nullptr))
+										{
+											// Determine which type of struct it is
+											if (strstr(pmap->description, "STRUCT_ARRAY[OBJEVENTDETAILS]"))
+											{
+												int64_t val = (int64_t)strtoll(value_str, nullptr, 10);
+												OBJEVENTDETAILS_LOCAL *details_array = (OBJEVENTDETAILS_LOCAL *)val;
+												nlohmann::json details_json_array = nlohmann::json::array();
+
+												if (details_array != nullptr)
+												{
+													// Extract count property name from description
+													// Format: "CHECKPOINT_VAR: STRUCT_ARRAY[OBJEVENTDETAILS]:UnreliableObjCount ..."
+													const char *count_start = strstr(pmap->description, "]:");
+													if (count_start != nullptr)
+													{
+														count_start += 2;
+														char count_property[256];
+														int i = 0;
+														while (count_start[i] != ' ' && count_start[i] != '\0' && i < 255)
+														{
+															count_property[i] = count_start[i];
+															i++;
+														}
+														count_property[i] = '\0';
+														char count_value_str[1024] = "";
+														object_get_value_by_name(obj, count_property, count_value_str, sizeof(count_value_str));
+														int count = (int)strtol(count_value_str, nullptr, 10);
+														for (int k = 0; k < count; k++)
+														{
+															nlohmann::json detail = serialize_objeventdetails(&details_array[k]);
+															if (!detail.is_null())
+															{
+																details_json_array.push_back(detail);
+															}
+														}
+													}
+												}
+												instance[pmap->name] = details_json_array;
+											}
+											else if (strstr(pmap->description, "STRUCT_ARRAY[INDEXARRAY]"))
+											{
+												int64_t val = (int64_t)strtoll(value_str, nullptr, 10);
+												INDEXARRAY_LOCAL *indices_array = (INDEXARRAY_LOCAL *)val;
+												nlohmann::json indices_json_array = nlohmann::json::array();
+
+												if (indices_array != nullptr)
+												{
+													const char *count_start = strstr(pmap->description, "]:");
+													if (count_start != nullptr)
+													{
+														count_start += 2;
+														char count_property[256];
+														int i = 0;
+														while (count_start[i] != ' ' && count_start[i] != '\0' && i < 255)
+														{
+															count_property[i] = count_start[i];
+															i++;
+														}
+														count_property[i] = '\0';
+														char count_value_str[1024] = "";
+														object_get_value_by_name(obj, count_property, count_value_str, sizeof(count_value_str));
+														int count = (int)strtol(count_value_str, nullptr, 10);
+														for (int k = 0; k < count; k++)
+														{
+															nlohmann::json detail = serialize_indexarray(&indices_array[k]);
+															if (!detail.is_null())
+															{
+																indices_json_array.push_back(detail);
+															}
+														}
+													}
+												}
+												instance[pmap->name] = indices_json_array;
+											}
+											else if (strstr(pmap->description, "STRUCT_ARRAY[CUSTARRAY]"))
+											{
+												int64_t val = (int64_t)strtoll(value_str, nullptr, 10);
+												CUSTARRAY_LOCAL *cust_array = (CUSTARRAY_LOCAL *)val;
+												nlohmann::json cust_json_array = nlohmann::json::array();
+
+												if (cust_array != nullptr)
+												{
+													const char *count_start = strstr(pmap->description, "]:");
+													if (count_start != nullptr)
+													{
+														count_start += 2;
+														char count_property[256];
+														int i = 0;
+														while (count_start[i] != ' ' && count_start[i] != '\0' && i < 255)
+														{
+															count_property[i] = count_start[i];
+															i++;
+														}
+														count_property[i] = '\0';
+														char count_value_str[1024] = "";
+														object_get_value_by_name(obj, count_property, count_value_str, sizeof(count_value_str));
+														int count = (int)strtol(count_value_str, nullptr, 10);
+														for (int k = 0; k < count; k++)
+														{
+															nlohmann::json detail = serialize_custarray(&cust_array[k]);
+															if (!detail.is_null())
+															{
+																cust_json_array.push_back(detail);
+															}
+														}
+													}
+												}
+												instance[pmap->name] = cust_json_array;
+											}
+											else if (strstr(pmap->description, "STRUCT[RELEVANTSTRUCT]"))
+											{
+												int64_t val = (int64_t)strtoll(value_str, nullptr, 10);
+												if (val == 0)
+												{
+													break;
+												}
+												RELEVANTSTRUCT_LOCAL *dummy_head = (RELEVANTSTRUCT_LOCAL *)val;
+												RELEVANTSTRUCT_LOCAL *current = dummy_head->next;
+												nlohmann::json list_json = nlohmann::json::array();
+
+												while (current != nullptr)
+												{
+													nlohmann::json details_json = serialize_objeventdetails(&current->objdetails);
+													if (!details_json.is_null())
+													{
+														nlohmann::json node_data = nlohmann::json::object();
+														node_data["objdetails"] = details_json;
+														node_data["event_type"] = std::string((char *)current->event_type);
+														list_json.push_back(node_data);
+													}
+													current = current->next;
+												}
+												instance[pmap->name] = list_json;
+											}
+										}
+										else
+										{
+											int64 val = strtoll(value_str, nullptr, 10);
+											instance[pmap->name] = static_cast<int64_t>(val);
+										}
+									}
 									break;
+									case PT_bool:
+									{
+										bool val = (strcmp(value_str, "TRUE") == 0 || strcmp(value_str, "1") == 0);
+										instance[pmap->name] = val;
+									}
+									break;
+									case PT_timestamp:
+									{
+										TIMESTAMP val = strtoll(value_str, nullptr, 10);
+										instance[pmap->name] = static_cast<int64_t>(val);
+									}
+									break;
+									case PT_char8:
+									case PT_char32:
+									case PT_char256:
+									case PT_char1024:
+										instance[pmap->name] = std::string(value_str);
+										break;
+									case PT_complex:
+										// Complex values are already formatted as strings by object_get_value_by_name
+										instance[pmap->name] = std::string(value_str);
+										break;
+									default:
+										// For all other types, store as string
+										instance[pmap->name] = std::string(value_str);
+										break;
+									}
+								}
+								else
+								{
+									// Property value could not be retrieved, set to null
+									instance[pmap->name] = nullptr;
 								}
 							}
-							// Skip properties that couldn't be retrieved - don't add null values
-						}
 
 						// Move to parent class
 						current_class = current_class->parent;
