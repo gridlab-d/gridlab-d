@@ -27,7 +27,6 @@ jobs:
 
       - name: Setup vcpkg (manifest mode + cache)
         uses: lukka/run-vcpkg@v11 
-        #microsoft/vcpkg@v1
         with:
           runVcpkgInstall: true
           vcpkgDirectory: '${{ github.workspace }}'
@@ -48,7 +47,7 @@ jobs:
           Write-Host "Searching for CMakeOutput.log / CMakeError.log..."
           Get-ChildItem -Path $pwd -Recurse -Include CMakeOutput.log,CMakeError.log |
             Select-Object FullName
-                        
+
       - name: vcpkg version & env (on failure)
         if: failure()
         shell: pwsh
@@ -60,6 +59,21 @@ jobs:
           $vcpkg = Get-ChildItem -Path $pwd -Recurse -Filter vcpkg.exe | Select-Object -First 1
           if ($vcpkg) { & $vcpkg.FullName version }
           Write-Host "Environment:"
+
+      - name: Diagnose vcpkg bootstrap failure (on failure)
+        if: failure()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Write-Host "Workspace: $pwd"
+
+          Write-Host "Locate vcpkg.exe under workspace:"
+          Get-ChildItem -Path $pwd -Recurse -Filter vcpkg.exe | Select-Object FullName
+
+          Write-Host "Show any vcpkg buildtrees logs under workspace:"
+          Get-ChildItem -Path $pwd -Recurse -Filter *.log |
+            Where-Object { $_.FullName -match '\\vcpkg\\buildtrees\\' } |
+            Select-Object FullName
 
       - name: Upload vcpkg & CMake logs (on failure)
         if: failure()
