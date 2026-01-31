@@ -30,9 +30,11 @@ jobs:
         #microsoft/vcpkg@v1
         with:
           runVcpkgInstall: true
-          pkgDirectory: '${{ github.workspace }}'
-          # Optional: pin the vcpkg repo for reproducibility
-          # vcpkgGitCommitId: 3426db05b996481ca31e95fff3734cf23e0f51bc
+          vcpkgDirectory: '${{ github.workspace }}'
+          logCollectionRegExps: |
+                **/CMakeOutput.log
+                **/CMakeError.log
+                **/vcpkg/buildtrees/**/*.log
 
       - name: Configure CMake (VS2022 + vcpkg toolchain)
         shell: pwsh
