@@ -32,9 +32,9 @@ jobs:
           runVcpkgInstall: true
           vcpkgDirectory: '${{ github.workspace }}'
           logCollectionRegExps: |
-                **/CMakeOutput.log
-                **/CMakeError.log
-                **/vcpkg/buildtrees/**/*.log
+                .*/CMakeOutput\.log$
+                .*/CMakeError\.log$
+                .*/vcpkg/buildtrees/.+\.log$
 
       - name: Configure CMake (VS2022 + vcpkg toolchain)
         shell: pwsh
