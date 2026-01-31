@@ -4,7 +4,7 @@ name: CI
 on:
   push:
   pull_request:
-  workflow_dispatch:   # 👈 enables "Run workflow" button in Actions tab
+  workflow_dispatch:   
     inputs:
       config:
         description: 'CMake build config'
@@ -29,7 +29,6 @@ jobs:
         uses: lukka/run-vcpkg@v11 
         with:
           runVcpkgInstall: true
-          vcpkgDirectory: '${{ github.workspace }}'
           logCollectionRegExps: |                
             .*/CMakeOutput\.log$
             .*/CMakeError\.log$
@@ -85,14 +84,14 @@ jobs:
             out/build/ci-windows/**/CMakeOutput.log
             out/build/ci-windows/**/CMakeError.log
 
-            - name: Configure CMake (VS2022 + vcpkg toolchain)
-              shell: pwsh
-              run: >
-                cmake -S . -B out/build/ci-windows
-                -G "Visual Studio 17 2022"
-                -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
-                -DVCPKG_TARGET_TRIPLET=x64-windows
-                -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+      - name: Configure CMake (VS2022 + vcpkg toolchain)
+        shell: pwsh
+        run: >
+          cmake -S . -B out/build/ci-windows
+          -G "Visual Studio 17 2022"
+          -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
+          -DVCPKG_TARGET_TRIPLET=x64-windows
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 
       - name: Build (Release)
         shell: pwsh
