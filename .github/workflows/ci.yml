@@ -20,7 +20,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4        
+        with:
+            submodules: recursive   # init + update submodules (and nested ones)
+            fetch-depth: 0          # optional; full history helps some tools
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
