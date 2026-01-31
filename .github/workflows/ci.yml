@@ -31,19 +31,29 @@ jobs:
         with:
           runVcpkgInstall: true
           vcpkgDirectory: '${{ github.workspace }}'
-          logCollectionRegExps: |
-                .*/CMakeOutput\.log$
-                .*/CMakeError\.log$
-                .*/vcpkg/buildtrees/.+\.log$
+          logCollectionRegExps: |                
+            .*/CMakeOutput\.log$
+            .*/CMakeError\.log$
+            .*/vcpkg/buildtrees/.+\.log$
 
-      - name: Configure CMake (VS2022 + vcpkg toolchain)
-        shell: pwsh
-        run: >
-          cmake -S . -B out/build/ci-windows
-          -G "Visual Studio 17 2022"
-          -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
-          -DVCPKG_TARGET_TRIPLET=x64-windows
-          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+      - name: Upload vcpkg & CMake logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-and-cmake-logs
+          path: |
+            ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
+            out/build/ci-windows/**/CMakeOutput.log
+            out/build/ci-windows/**/CMakeError.log
+
+            - name: Configure CMake (VS2022 + vcpkg toolchain)
+              shell: pwsh
+              run: >
+                cmake -S . -B out/build/ci-windows
+                -G "Visual Studio 17 2022"
+                -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
+                -DVCPKG_TARGET_TRIPLET=x64-windows
+                -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 
       - name: Build (Release)
         shell: pwsh
