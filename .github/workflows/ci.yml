@@ -1,0 +1,83 @@
+
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:   # 👈 enables "Run workflow" button in Actions tab
+    inputs:
+      config:
+        description: 'CMake build config'
+        required: false
+        default: 'Release'
+
+jobs:
+  # ------------------------------
+  # Windows: Visual Studio 2022 + vcpkg manifest mode
+  # ------------------------------
+  build-and-validate-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.3
+
+      - name: Setup vcpkg (manifest mode + cache)
+        uses: microsoft/vcpkg@v1
+        with:
+          runVcpkgInstall: true
+          # Optional: pin the vcpkg repo for reproducibility
+          # vcpkgGitCommitId: 3426db05b996481ca31e95fff3734cf23e0f51bc
+
+      - name: Configure CMake (VS2022 + vcpkg toolchain)
+        shell: pwsh
+        run: >
+          cmake -S . -B out/build/ci-windows
+          -G "Visual Studio 17 2022"
+          -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
+          -DVCPKG_TARGET_TRIPLET=x64-windows
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+
+      - name: Build (Release)
+        shell: pwsh
+        run: cmake --build out/build/ci-windows --config Release
+
+      - name: Run gridlabd --validate
+        shell: pwsh
+        run: |
+          $buildDir = Resolve-Path "out/build/ci-windows"
+          $binDir   = Resolve-Path "out/build/ci-windows/bin/Release"
+          $shareDir = Resolve-Path "out/build/ci-windows/share"
+          $libDir   = Resolve-Path "out/build/ci-windows/lib"
+          $gldcore  = Resolve-Path "gldcore"
+
+          if (-not (Test-Path "$binDir/gridlabd.exe")) {
+            Write-Error "gridlabd.exe not found in $binDir"
+            Get-ChildItem -Recurse "out/build/ci-windows" | Select-Object FullName
+            exit 1
+          }
+
+          # Windows uses ';' as path separator
+          $env:GLPATH = "$pwd;$buildDir;$binDir;$libDir;$shareDir;$gldcore"
+          $env:PATH   = "$env:PATH;$binDir"
+
+          & "$binDir/gridlabd.exe" --validate
+
+      - name: (Optional) Run CTest
+        shell: pwsh
+        working-directory: out/build/ci-windows
+        run: ctest -C Release --output-on-failure
+
+      - name: Upload artifact (gridlabd Windows Release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: gridlabd-windows-release
+          path: |
+            out/build/ci-windows/bin/Release/*
+            out/build/ci-windows/share/**
+            out/build/ci-windows/lib/**
+
+  
