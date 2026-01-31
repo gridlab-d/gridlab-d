@@ -35,6 +35,31 @@ jobs:
             .*/CMakeOutput\.log$
             .*/CMakeError\.log$
             .*/vcpkg/buildtrees/.+\.log$
+      
+      - name: Discover vcpkg & CMake logs (on failure)
+        if: failure()
+        shell: pwsh
+        run: |
+          Write-Host "Workspace: $pwd"
+          Write-Host "Searching for vcpkg buildtrees logs..."
+          Get-ChildItem -Path $pwd -Recurse -Filter *.log |
+            Where-Object { $_.FullName -match '\\vcpkg\\buildtrees\\' } |
+            Select-Object FullName
+          Write-Host "Searching for CMakeOutput.log / CMakeError.log..."
+          Get-ChildItem -Path $pwd -Recurse -Include CMakeOutput.log,CMakeError.log |
+            Select-Object FullName
+                        
+      - name: vcpkg version & env (on failure)
+        if: failure()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Write-Host "Attempting to locate vcpkg.exe..."
+          Get-ChildItem -Path $pwd -Recurse -Filter vcpkg.exe | Select-Object FullName
+          Write-Host "Print vcpkg version if found:"
+          $vcpkg = Get-ChildItem -Path $pwd -Recurse -Filter vcpkg.exe | Select-Object -First 1
+          if ($vcpkg) { & $vcpkg.FullName version }
+          Write-Host "Environment:"
 
       - name: Upload vcpkg & CMake logs (on failure)
         if: failure()
