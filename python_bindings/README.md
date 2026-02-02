@@ -7,12 +7,15 @@ This package provides Python bindings for GridLAB-D, a power system simulation p
 1. **Build the GridLAB-D core** (if not already built):
    ```bash
    # From the repository root
+   mkdir build
    cd build
-   cmake --build . --parallel
+   cmake -DCMAKE_BUILD_TYPE=Debug ..
+   cmake --build .
    ```
 
 2. **Install the Python package in development mode**:
    ```bash
+   # From the repository root
    cd python_bindings
    pip install -e .
    ```
@@ -23,6 +26,25 @@ This package provides Python bindings for GridLAB-D, a power system simulation p
    pytest -v
    ```
 
+## Building Wheels for Distribution
+
+To create wheel (.whl) and source distribution (.tar.gz) files for PyPI:
+
+1. **Run the preparation script** (copies built libraries into the package):
+   ```bash
+   cd python_bindings
+   ./prepare_pypi_build.sh
+   ```
+
+2. **Build the distribution files**:
+   ```bash
+   python3 -m build
+   ```
+
+   This creates both files in the `dist/` directory.
+
+**Note:** `pip install -e .` works for local development without running the preparation script because it accesses libraries directly from `../build/lib/`. However, `python -m build` creates an isolated environment and requires the prebuilt libraries to be bundled within the package directory.
+
 ## API Usage Examples
 
 ### Basic Usage
@@ -31,7 +53,7 @@ This package provides Python bindings for GridLAB-D, a power system simulation p
 import gridlabd
 
 # Create a GridLAB-D instance
-gld = gridlabd.GridLabD()
+gld = gridlabd.GridLabD()S
 
 # Load a model file
 result = gld.load("path/to/model.glm")
