@@ -5,8 +5,30 @@ This module provides reusable fixtures that eliminate boilerplate in test files.
 """
 
 import os
-import pytest
 from pathlib import Path
+
+# Ensure tests use a valid install root (prefer build output when available)
+# This prevents stale or invalid GRIDLABD_ROOT values from breaking isolation workers
+REPO_ROOT = Path(__file__).parent.parent.parent.resolve()
+BUILD_ROOT = REPO_ROOT / "build"
+
+if (BUILD_ROOT / "share").exists() and (BUILD_ROOT / "lib").exists():
+    os.environ["GRIDLABD_HOME"] = str(BUILD_ROOT)
+else:
+    os.environ["GRIDLABD_ROOT"] = str(REPO_ROOT)
+
+# Ensure weather/data files can be resolved via GLPATH
+test_data_dir = Path(__file__).parent
+glpath_parts = []
+if (BUILD_ROOT / "share").exists():
+    glpath_parts.append(str(BUILD_ROOT / "share"))
+glpath_parts.append(str(test_data_dir))
+existing_glpath = os.environ.get("GLPATH")
+if existing_glpath:
+    glpath_parts.append(existing_glpath)
+os.environ["GLPATH"] = os.pathsep.join(glpath_parts)
+
+import pytest
 from gridlabd import GridLabD
 
 
@@ -23,6 +45,8 @@ def gld_instance():
             assert gld_instance.load("test.glm") == 0
     """
     instance = GridLabD()
+    # Ensure relative paths (e.g., WA-Yakima.tmy2) resolve from tests dir
+    instance.set_working_directory(str(Path(__file__).parent))
     yield instance
     # Cleanup happens automatically via __del__
 

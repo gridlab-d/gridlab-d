@@ -8,7 +8,7 @@ print("=== Test 1: Direct C++ module ===")
 from gridlabd.gridlabd_core import GridLabD as CppGridLabD
 
 try:
-    CppGridLabD.set_install_root('/mnt/c/dev/gridlab-d_fork')
+    CppGridLabD.set_install_root('/mnt/c/dev/gridlab-d')
     print('✓ set_install_root succeeded')
     root = CppGridLabD.get_install_root()
     print(f'  Root: "{root}"')
@@ -20,7 +20,7 @@ except Exception as e:
 
 # Test 2: Through __init__.py with GRIDLABD_ROOT set
 print("\n=== Test 2: Full import with GRIDLABD_ROOT ===")
-os.environ['GRIDLABD_ROOT'] = '/mnt/c/dev/gridlab-d_fork'
+os.environ['GRIDLABD_ROOT'] = '/mnt/c/dev/gridlab-d'
 import gridlabd
 root = gridlabd.GridLabD.get_install_root()
 print(f'  Root: "{root}"')
