@@ -866,6 +866,8 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
   TIMESTAMP target_clock = convert_to_timestamp_delta(
       target_time_str.c_str(), &target_nanoseconds, &target_time_dbl);
 
+  printf("Formatted target time: %lld\n", target_clock);
+
   if (target_clock == TS_INVALID) {
     output_error("Invalid timestamp string: %s", target_time_str.c_str());
     simulation_time = (double)global_clock;
@@ -884,8 +886,12 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
     output_warning("Target time %s is not after current time %s",
                    target_time_str.c_str(), start_buffer);
     simulation_time = current_time_dbl;
+    global_step_time = TS_NEVER;
     return GLD_SUCCESS;
   }
+
+  // Cap the next event time so exec_step doesn't overshoot the target.
+  global_step_time = target_clock;
 
   char start_buffer[64];
   convert_from_timestamp(start_clock, start_buffer, sizeof(start_buffer));
@@ -908,16 +914,32 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
     if (result == FAILED) {
       output_error("Error occurred during simulation step");
       simulation_time = current_time_dbl;
+      global_step_time = TS_NEVER;
       return GLD_OPERATION_FAILED;
     }
   }
 
   simulation_time =
       (double)global_clock + (double)global_api_clock_nanoseconds / 1e9;
+
+  if (global_clock > target_clock) {
+    // Clamp to the exact target time to avoid overshoot.
+    if (exec_force_sync_to_time(target_clock) == FAILED) {
+      output_error("Failed to force sync to target time");
+      global_step_time = TS_NEVER;
+      return GLD_OPERATION_FAILED;
+    }
+    global_api_clock_nanoseconds = target_nanoseconds;
+    simulation_time =
+        (double)global_clock + (double)global_api_clock_nanoseconds / 1e9;
+  }
+
   char final_buffer[64];
   convert_from_timestamp(global_clock, final_buffer, sizeof(final_buffer));
   printf("Reached time %s (target was %s)\n", final_buffer,
          target_time_str.c_str());
+
+  global_step_time = TS_NEVER;
 
   return GLD_SUCCESS;
 }

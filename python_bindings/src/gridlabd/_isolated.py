@@ -73,8 +73,20 @@ class IsolatedGridLabD:
         if not response_line:
             # Check if worker died
             exit_code = self._process.poll()
+            if command in (Command.EXIT_GLD, Command.FINALIZE):
+                # EXIT_GLD may close stdout before replying; treat as success and
+                # ensure the worker is terminated.
+                if exit_code is None:
+                    try:
+                        self._process.terminate()
+                        self._process.wait(timeout=2)
+                    except Exception:
+                        pass
+                self._process = None
+                return Response(success=True, result=0)
             if exit_code is not None:
-                raise RuntimeError(f"Worker process exited unexpectedly with code {exit_code} while processing {command.name}")
+                raise RuntimeError(
+                    f"Worker process exited unexpectedly with code {exit_code} while processing {command.name}")
             raise RuntimeError(f"Worker process closed stdout while processing {command.name}")
         
         response_line = response_line.strip()
