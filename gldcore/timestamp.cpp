@@ -1347,18 +1347,25 @@ TIMESTAMP convert_to_timestamp_delta(const char *value,
   output_value = TS_NEVER;
 
   /* scan ISO format date/time -- nanosecond inclusive */
-  // Normalize ISO 8601 strings that use 'T' and/or a trailing 'Z'
+  // Normalize ISO 8601 strings that use 'T' between date/time and/or trailing
+  // 'Z'
   char normalized[128];
   const char *parse_value = value;
-  if (strchr(value, 'T') != nullptr || strchr(value, 'Z') != nullptr ||
+  const char *tpos = strchr(value, 'T');
+  const bool has_date_time_T =
+      (tpos != nullptr && tpos == value + 10 && value[4] == '-' &&
+       value[7] == '-' && isdigit((unsigned char)value[0]) &&
+       isdigit((unsigned char)value[1]) && isdigit((unsigned char)value[2]) &&
+       isdigit((unsigned char)value[3]) && isdigit((unsigned char)value[5]) &&
+       isdigit((unsigned char)value[6]) && isdigit((unsigned char)value[8]) &&
+       isdigit((unsigned char)value[9]) && isdigit((unsigned char)value[11]));
+  if (has_date_time_T || strchr(value, 'Z') != nullptr ||
       strchr(value, 'z') != nullptr) {
     strncpy(normalized, value, sizeof(normalized) - 1);
     normalized[sizeof(normalized) - 1] = '\0';
 
-    for (char *c = normalized; *c != '\0'; ++c) {
-      if (*c == 'T') {
-        *c = ' ';
-      }
+    if (has_date_time_T) {
+      normalized[10] = ' ';
     }
 
     size_t len = strlen(normalized);
