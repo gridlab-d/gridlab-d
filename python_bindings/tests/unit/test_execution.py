@@ -76,3 +76,19 @@ def test_run_returns_status_code(minimal_model):
     result = minimal_model.run()
     assert isinstance(result, int)
     assert result == 0  # Success
+
+
+def test_step_respects_fixed_timestep(gld_instance, test_models_dir):
+    """Test that step() advances by the configured fixed timestep."""
+    model_path = test_models_dir / "minimal.glm"
+    assert gld_instance.load(str(model_path)) == 0
+
+    assert gld_instance.set_time_step(900) == 0
+
+    status1, time1 = gld_instance.step()
+    assert status1 >= 0
+
+    status2, time2 = gld_instance.step()
+    assert status2 >= 0
+
+    assert time2 - time1 == pytest.approx(900.0, abs=1e-6)
