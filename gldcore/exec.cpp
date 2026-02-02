@@ -3176,6 +3176,15 @@ STATUS exec_step(void) {
     /* Store the current clock to detect when it advances */
     TIMESTAMP start_clock = global_clock;
 
+    /* Cap the next event time before stepping to avoid overshooting the API
+     * step target. */
+    if (global_step_time != TS_NEVER) {
+      TIMESTAMP next_event = exec_sync_get(sync_data_nullptr);
+      if (next_event > global_step_time) {
+        exec_sync_set(sync_data_nullptr, global_step_time, false);
+      }
+    }
+
     /* Keep running iterations until the clock advances or simulation should
      * stop */
     while (execute_single_simulation_iteration(threadpool, passes, tsteps, j,
@@ -3187,9 +3196,11 @@ STATUS exec_step(void) {
 
       /* Check if we need to cap the next event time to avoid overshooting step
        * target */
-      TIMESTAMP next_event = exec_sync_get(sync_data_nullptr);
-      if (global_step_time != TS_NEVER && next_event > global_step_time) {
-        exec_sync_set(sync_data_nullptr, global_step_time, false);
+      if (global_step_time != TS_NEVER) {
+        TIMESTAMP next_event = exec_sync_get(sync_data_nullptr);
+        if (next_event > global_step_time) {
+          exec_sync_set(sync_data_nullptr, global_step_time, false);
+        }
       }
     }
   }

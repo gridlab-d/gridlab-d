@@ -755,6 +755,9 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
   printf("Stepping from time %.2f to target %.2f (step size: %d seconds)\n",
          (double)start_clock, (double)target_clock, selected_timestep);
 
+  // Cap the next event time so exec_step doesn't overshoot the target.
+  global_step_time = target_clock;
+
   // Keep stepping until we reach the target time
   while (global_clock < target_clock) {
     TIMESTAMP prev_clock = global_clock;
@@ -765,6 +768,7 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
     if (result == FAILED) {
       output_error("Error occurred during simulation step");
       simulation_time = (double)global_clock;
+      global_step_time = TS_NEVER;
       return GLD_OPERATION_FAILED;
     }
 
@@ -776,6 +780,18 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
       break;
     }
   }
+
+  if (global_clock > target_clock) {
+    // Clamp to the exact target time to avoid overshoot.
+    if (exec_force_sync_to_time(target_clock) == FAILED) {
+      output_error("Failed to force sync to target time");
+      simulation_time = (double)global_clock;
+      global_step_time = TS_NEVER;
+      return GLD_OPERATION_FAILED;
+    }
+  }
+
+  global_step_time = TS_NEVER;
 
   // Update the simulation time
   simulation_time = (double)global_clock;
