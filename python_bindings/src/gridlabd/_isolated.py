@@ -189,8 +189,103 @@ class IsolatedGridLabD:
         return self.setup_before_load()
     
     # Loading methods
-    def load_glm(self, arguments: list[str]) -> int:
-        """Load a model using argv-style arguments (list of strings)."""
+    def load_glm(
+        self, 
+        filename_or_args: str | list[str],
+        *,
+        defines: dict[str, str] | None = None,
+        verbose: bool = False,
+        warn: bool = False,
+        quiet: bool = False,
+        debug: bool = False,
+        debugger: bool = False,
+        check: bool = False,
+        workdir: str | None = None,
+        threads: int | None = None,
+        compile_only: bool = False,
+        save: str | None = None,
+        **kwargs
+    ) -> int:
+        """Load a model using either argv-style arguments or Pythonic kwargs.
+        
+        Args:
+            filename_or_args: Either a GLM filename (str) for Pythonic style,
+                            or a list of argv-style arguments for backward compatibility
+            defines: Dictionary of global variables to define (e.g., {"VAR": "value"})
+            verbose: Enable verbose output messages
+            warn: Enable warning messages
+            quiet: Suppress all but error and fatal messages
+            debug: Enable debug messages
+            debugger: Enable the debugger
+            check: Perform module checks before starting
+            workdir: Set the working directory for resolving relative paths
+            threads: Set maximum number of threads allowed
+            compile_only: Enable compile-only mode
+            save: Enable save of output to specified file
+            **kwargs: Additional arguments (ignored for forward compatibility)
+        
+        Returns:
+            Error code (0 for success)
+            
+        Examples:
+            # Old style (backward compatible)
+            gld.load_glm(["model.glm"])
+            gld.load_glm(["model.glm", "-D", "VAR=123", "--verbose"])
+            
+            # New Pythonic style
+            gld.load_glm("model.glm")
+            gld.load_glm("model.glm", verbose=True)
+            gld.load_glm("model.glm", defines={"VAR": "123", "PARAM": "value"})
+            gld.load_glm("model.glm", workdir="/path/to/dir", warn=True)
+            gld.load_glm("model.glm", defines={"X": "10"}, threads=4, verbose=True)
+        """
+        # Backward compatibility: if first arg is a list, use old behavior
+        if isinstance(filename_or_args, list):
+            arguments = filename_or_args
+        else:
+            # Build argv-style arguments from kwargs
+            # GridLAB-D expects: [filename, options...]
+            arguments = [filename_or_args]
+            
+            # Add options after filename
+            if check:
+                arguments.append("--check")
+            
+            if debug:
+                arguments.append("--debug")
+            
+            if debugger:
+                arguments.append("--debugger")
+            
+            if verbose:
+                arguments.append("--verbose")
+            
+            if warn:
+                arguments.append("--warn")
+            
+            if quiet:
+                arguments.append("--quiet")
+            
+            if workdir is not None:
+                arguments.append("-W")
+                arguments.append(workdir)
+            
+            if threads is not None:
+                arguments.append("--threadcount")
+                arguments.append(str(threads))
+            
+            if defines:
+                for key, value in defines.items():
+                    arguments.append("-D")
+                    arguments.append(f"{key}={value}")
+            
+            if compile_only:
+                arguments.append("--compile")
+            
+            if save is not None:
+                arguments.append("--save")
+                arguments.append(save)
+        
         response = self._send_command(Command.LOAD_GLM, {"arguments": arguments})
         if not response.success:
             raise RuntimeError(response.error)
