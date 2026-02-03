@@ -15,6 +15,8 @@
 // Forward declaration to avoid pulling in heavy headers
 extern "C" {
 unsigned int object_get_count(void);
+char *global_getvar(const char *name, char *buffer, int size);
+int global_setvar(const char *def, ...);
 }
 
 #define NB_STRINGIFY_HELPER(x) #x
@@ -228,7 +230,28 @@ NB_MODULE(gridlabd_core, m) {
             return value.dump();
           },
           nb::arg("filepath") = std::string(),
-          "Return checkpoint data as a JSON string");
+          "Return checkpoint data as a JSON string")
+      .def(
+          "get_global",
+          [](GridLabD &self, const std::string &name) {
+            char buffer[1024];
+            char *result = global_getvar(name.c_str(), buffer, sizeof(buffer));
+            if (result == nullptr) {
+              return std::string("");
+            }
+            return std::string(buffer);
+          },
+          nb::arg("name"),
+          "Get a global variable value")
+      .def(
+          "set_global",
+          [](GridLabD &self, const std::string &name, const std::string &value) {
+            std::string def = name + "=" + value;
+            int result = global_setvar(def.c_str());
+            return result;
+          },
+          nb::arg("name"), nb::arg("value"),
+          "Set a global variable value");
 
 #ifdef VERSION_INFO
   m.attr("__version__") = NB_STRINGIFY(VERSION_INFO);

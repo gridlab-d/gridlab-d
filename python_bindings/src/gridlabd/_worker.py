@@ -389,19 +389,22 @@ def handle_set_property_by_class(message: Message) -> Response:
 
 
 def handle_set_global(message: Message) -> Response:
-    """Set a global variable (legacy support)."""
+    """Set a global variable."""
     try:
-        # For now, just return success - globals are handled differently
-        return Response(success=True, result=0)
+        result = _gld_instance.set_global(
+            message.args["name"],
+            message.args["value"]
+        )
+        return Response(success=True, result=result)
     except Exception as e:
         return Response(success=False, error=str(e))
 
 
 def handle_get_global(message: Message) -> Response:
-    """Get a global variable (legacy support)."""
+    """Get a global variable."""
     try:
-        # For now, return empty string
-        return Response(success=True, result="")
+        result = _gld_instance.get_global(message.args["name"])
+        return Response(success=True, result=result)
     except Exception as e:
         return Response(success=False, error=str(e))
 

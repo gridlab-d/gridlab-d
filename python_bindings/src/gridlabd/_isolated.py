@@ -451,18 +451,73 @@ class IsolatedGridLabD:
     
     # Legacy global variable methods (for backward compatibility)
     def global_setvar(self, name: str, value: str) -> int:
-        """Set a global variable (legacy support)."""
+        """Set a global variable."""
         response = self._send_command(Command.SET_GLOBAL, {"name": name, "value": value})
         if not response.success:
             raise RuntimeError(response.error)
         return response.result
     
     def global_getvar(self, name: str) -> str:
-        """Get a global variable (legacy support)."""
+        """Get a global variable."""
         response = self._send_command(Command.GET_GLOBAL, {"name": name})
         if not response.success:
             raise RuntimeError(response.error)
         return response.result
+    
+    # Convenience methods for clock properties
+    def get_clock(self) -> str:
+        """Get the current simulation time.
+        
+        Returns:
+            Current simulation time as a string (ISO 8601 format or timestamp)
+        """
+        return self.global_getvar("clock")
+    
+    def get_starttime(self) -> str:
+        """Get the simulation start time.
+        
+        Returns:
+            Start time as a string (ISO 8601 format or timestamp)
+        """
+        return self.global_getvar("starttime")
+    
+    def get_stoptime(self) -> str:
+        """Get the simulation stop time.
+        
+        Returns:
+            Stop time as a string (ISO 8601 format or timestamp)
+        """
+        return self.global_getvar("stoptime")
+    
+    def set_starttime(self, value: str) -> int:
+        """Set the simulation start time.
+        
+        Args:
+            value: Start time as string (ISO 8601 format or timestamp)
+            
+        Returns:
+            Error code (0 for success)
+        """
+        return self.global_setvar("starttime", value)
+    
+    def set_stoptime(self, value: str) -> int:
+        """Set the simulation stop time.
+        
+        Args:
+            value: Stop time as string (ISO 8601 format or timestamp)
+            
+        Returns:
+            Error code (0 for success)
+        """
+        return self.global_setvar("stoptime", value)
+    
+    def get_timezone(self) -> str:
+        """Get the current timezone.
+        
+        Returns:
+            Timezone string
+        """
+        return self.global_getvar("timezone")
     
     # Message capture methods
     def get_messages(self) -> list[dict[str, str]]:
