@@ -112,7 +112,7 @@
     "recorder": {
       "instances": [
         {
-          "parent": "overhead_line_7",
+          "parent": "overhead_line:12",
           "file": "line12.csv",
           "interval": 1,
           "limit": 1000,
@@ -133,7 +133,7 @@
           "property": "voltage_A,voltage_B,voltage_C,voltage_AB,voltage_BC,voltage_CA,current_A,current_B,current_C,power_A,power_B,power_C,shunt_A,shunt_B,shunt_C"
         },
         {
-          "parent": "overhead_line_23",
+          "parent": "overhead_line:34",
           "file": "line34.csv",
           "interval": 1,
           "limit": 1000,
@@ -159,19 +159,19 @@
     "complex_assert": {
       "instances": [
         {
-          "parent": "overhead_line_7",
+          "parent": "overhead_line:12",
           "target": "current_in_A",
           "within": 5,
           "value": "347.9-34.9d"
         },
         {
-          "parent": "overhead_line_7",
+          "parent": "overhead_line:12",
           "target": "current_in_B",
           "within": 5,
           "value": "323.7-154.2d"
         },
         {
-          "parent": "overhead_line_7",
+          "parent": "overhead_line:12",
           "target": "current_in_C",
           "within": 5,
           "value": "336.8+85.0d"
@@ -213,19 +213,19 @@
           "value": "2256+116.4d"
         },
         {
-          "parent": "overhead_line_23",
+          "parent": "overhead_line:34",
           "target": "current_in_A",
           "within": 5,
           "value": "1042.8-34.9d"
         },
         {
-          "parent": "overhead_line_23",
+          "parent": "overhead_line:34",
           "target": "current_in_B",
           "within": 5,
           "value": "970.2-154.2d"
         },
         {
-          "parent": "overhead_line_23",
+          "parent": "overhead_line:34",
           "target": "current_in_C",
           "within": 5,
           "value": "1009.6+85.0d"

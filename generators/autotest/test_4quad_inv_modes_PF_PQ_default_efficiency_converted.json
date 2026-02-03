@@ -130,7 +130,7 @@
       "instances": [
         {
           "name": "complex_assert_8",
-          "parent": "645const_pq_meter",
+          "parent": "const_pq_meter",
           "target": "measured_power",
           "within": 0.1
         },
@@ -145,8 +145,8 @@
     "inverter": {
       "instances": [
         {
-          "name": "645const_pq_meterconst_pq_inv",
-          "parent": "645const_pq_meter",
+          "name": "const_pq_inv",
+          "parent": "const_pq_meter",
           "inverter_type": "FOUR_QUADRANT",
           "use_multipoint_efficiency": false,
           "four_quadrant_control_mode": "CONSTANT_PQ",
@@ -165,7 +165,7 @@
           ]
         },
         {
-          "name": "tn_B_645const_pf_inv",
+          "name": "const_pf_inv",
           "parent": "tn_B_645",
           "phases": "BS",
           "inverter_type": "FOUR_QUADRANT",
@@ -188,7 +188,7 @@
     "meter": {
       "instances": [
         {
-          "name": "645const_pq_meter",
+          "name": "const_pq_meter",
           "parent": "645",
           "phases": "ABCN",
           "voltage_A": 2401.7771,

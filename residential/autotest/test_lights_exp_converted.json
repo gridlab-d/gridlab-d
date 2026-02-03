@@ -29,7 +29,7 @@
           "impedance_fraction": 0.5,
           "current_fraction": 0.1,
           "power_fraction": 0.4,
-          "shape": "\"type: analog"
+          "shape": "type: analog; schedule: light_load; power: 0.76 kW"
         }
       ]
     },

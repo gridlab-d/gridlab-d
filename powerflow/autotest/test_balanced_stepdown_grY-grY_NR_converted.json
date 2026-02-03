@@ -114,19 +114,19 @@
     "complex_assert": {
       "instances": [
         {
-          "parent": "overhead_line_7",
+          "parent": "overhead_line:12",
           "target": "current_in_A",
           "within": 5,
           "value": "347.9-34.9d"
         },
         {
-          "parent": "overhead_line_7",
+          "parent": "overhead_line:12",
           "target": "current_in_B",
           "within": 5,
           "value": "323.7-154.2d"
         },
         {
-          "parent": "overhead_line_7",
+          "parent": "overhead_line:12",
           "target": "current_in_C",
           "within": 5,
           "value": "336.8+85.0d"
@@ -168,19 +168,19 @@
           "value": "2256+116.4d"
         },
         {
-          "parent": "overhead_line_20",
+          "parent": "overhead_line:34",
           "target": "current_in_A",
           "within": 5,
           "value": "1042.8-34.9d"
         },
         {
-          "parent": "overhead_line_20",
+          "parent": "overhead_line:34",
           "target": "current_in_B",
           "within": 5,
           "value": "970.2-154.2d"
         },
         {
-          "parent": "overhead_line_20",
+          "parent": "overhead_line:34",
           "target": "current_in_C",
           "within": 5,
           "value": "1009.6+85.0d"

@@ -61,7 +61,7 @@
           }
         },
         {
-          "parent": "complex_assert_5",
+          "parent": "complex_assert:5",
           "property": "value",
           "file": "test_microwave_energy.player"
         }

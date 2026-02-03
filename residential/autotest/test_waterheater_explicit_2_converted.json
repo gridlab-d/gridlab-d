@@ -72,13 +72,13 @@
       "instances": [
         {
           "name": "double_assert_6",
-          "parent": "house1w1",
+          "parent": "w1",
           "target": "temperature",
           "within": 0.01
         },
         {
           "name": "double_assert_8",
-          "parent": "house1w1",
+          "parent": "w1",
           "target": "height",
           "within": 0.01
         }
@@ -87,7 +87,7 @@
     "recorder": {
       "instances": [
         {
-          "parent": "house1w1",
+          "parent": "w1",
           "file": "waterheater1.csv",
           "property": "tank_setpoint,thermostat_deadband,temperature,height,water_demand,demand,is_waterheater_on,actual_load,previous_load",
           "interval": -1,
@@ -98,7 +98,7 @@
     "waterheater": {
       "instances": [
         {
-          "name": "house1w1",
+          "name": "w1",
           "parent": "house1",
           "heating_element_capacity": "4.0 kW",
           "thermostat_deadband": 4,
