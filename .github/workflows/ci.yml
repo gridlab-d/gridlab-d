@@ -1,42 +1,45 @@
-
 name: CI
 
 on:
+  # 1) Run for any push in your fork (all branches)
   push:
+
+  # 2) Run for PRs whose base branch is 'feature/1510' in the upstream repo
   pull_request:
-  workflow_dispatch:   
+    branches:
+      - feature/1510
+
+  # 3) Allow manual runs with an optional build config input
+  workflow_dispatch:
     inputs:
       config:
-        description: 'CMake build config'
+        description: "CMake build config"
         required: false
-        default: 'Release'
+        default: "Release"
 
 jobs:
-  # ------------------------------
-  # Windows: Visual Studio 2022 + vcpkg manifest mode
-  # ------------------------------
   build-and-validate-windows:
     runs-on: windows-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4        
+        uses: actions/checkout@v4
         with:
-            submodules: recursive   # init + update submodules (and nested ones)
-            fetch-depth: 0          # optional; full history helps some tools
+          submodules: recursive
+          fetch-depth: 0
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
       - name: Setup vcpkg (manifest mode + cache)
-        uses: lukka/run-vcpkg@v11 
+        uses: lukka/run-vcpkg@v11
         with:
           runVcpkgInstall: true
-          logCollectionRegExps: |                
+          logCollectionRegExps: |
             .*/CMakeOutput\.log$
             .*/CMakeError\.log$
             .*/vcpkg/buildtrees/.+\.log$
-      
+
       - name: Discover vcpkg & CMake logs (on failure)
         if: failure()
         shell: pwsh
@@ -68,10 +71,8 @@ jobs:
         run: |
           $ErrorActionPreference = 'Continue'
           Write-Host "Workspace: $pwd"
-
           Write-Host "Locate vcpkg.exe under workspace:"
           Get-ChildItem -Path $pwd -Recurse -Filter vcpkg.exe | Select-Object FullName
-
           Write-Host "Show any vcpkg buildtrees logs under workspace:"
           Get-ChildItem -Path $pwd -Recurse -Filter *.log |
             Where-Object { $_.FullName -match '\\vcpkg\\buildtrees\\' } |
@@ -134,5 +135,3 @@ jobs:
             out/build/ci-windows/bin/Release/*
             out/build/ci-windows/share/**
             out/build/ci-windows/lib/**
-
-  
