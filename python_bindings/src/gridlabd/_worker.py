@@ -334,6 +334,22 @@ def handle_get_property(message: Message) -> Response:
         return Response(success=False, error=str(e))
 
 
+def handle_get_property_info(message: Message) -> Response:
+    """Get property metadata (type, unit, description)."""
+    try:
+        # Check if the method exists on the C++ binding
+        if not hasattr(_gld_instance, 'get_property_info'):
+            return Response(success=False, error="'gridlabd.gridlabd_core.GridLabD' object has no attribute 'get_property_info'")
+        
+        code, info = _gld_instance.get_property_info(
+            message.args["object_name"],
+            message.args["property_name"]
+        )
+        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "info": info})
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
 def handle_set_property(message: Message) -> Response:
     """Set a property value."""
     try:
@@ -469,6 +485,7 @@ COMMAND_HANDLERS = {
     Command.GET_ALL_OBJECTS: handle_get_all_objects,
     Command.GET_MODEL: handle_get_model,
     Command.GET_PROPERTY: handle_get_property,
+    Command.GET_PROPERTY_INFO: handle_get_property_info,
     Command.SET_PROPERTY: handle_set_property,
     Command.GET_PROPERTIES_BY_CLASS: handle_get_properties_by_class,
     Command.SET_PROPERTY_BY_CLASS: handle_set_property_by_class,

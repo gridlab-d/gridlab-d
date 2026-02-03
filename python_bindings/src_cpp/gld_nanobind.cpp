@@ -194,6 +194,24 @@ NB_MODULE(gridlabd_core, m) {
           },
           nb::arg("object_name"), nb::arg("property_name"),
           "Get a property value from an object")
+      .def(
+          "get_property_info",
+          [](GridLabD &self, const std::string &object_name,
+             const std::string &property_name) {
+            int prop_type;
+            std::string unit_str;
+            std::string description;
+            GLDErrorCode code = self.get_property_info(
+                object_name, property_name, prop_type, unit_str, description);
+            // Return tuple: (error_code, dict with info)
+            nb::dict info;
+            info["type"] = prop_type;
+            info["unit"] = unit_str;
+            info["description"] = description;
+            return nb::make_tuple(code, info);
+          },
+          nb::arg("object_name"), nb::arg("property_name"),
+          "Get property metadata (type, unit, description)")
       .def("set_property", &GridLabD::set_property, nb::arg("object_name"),
            nb::arg("property_name"), nb::arg("value"),
            "Set a property value on an object")

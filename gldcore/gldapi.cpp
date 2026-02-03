@@ -1018,6 +1018,61 @@ GLDErrorCode GridLabD::get_property(const std::string &object_name,
   return GLD_SUCCESS;
 }
 
+// Get property metadata (type, units, description)
+GLDErrorCode GridLabD::get_property_info(const std::string &object_name,
+                                        const std::string &property_name,
+                                        int &prop_type,
+                                        std::string &unit_str,
+                                        std::string &description) {
+  // Find the object by name
+  OBJECT *obj = nullptr;
+
+  // Try to find by name first
+  obj = object_find_name(object_name.c_str());
+
+  // If not found by name, try to parse as ID
+  if (obj == nullptr) {
+    char *endptr;
+    long id = strtol(object_name.c_str(), &endptr, 10);
+    if (*endptr == '\0') { // Valid integer
+      obj = object_find_by_id(static_cast<OBJECTNUM>(id));
+    }
+  }
+
+  if (obj == nullptr) {
+    output_error("Object '%s' not found", object_name.c_str());
+    return GLD_OPERATION_FAILED;
+  }
+
+  // Find the property
+  PROPERTY *prop = object_get_property(obj, property_name.c_str(), nullptr);
+  
+  if (prop == nullptr) {
+    output_error("Property '%s' not found on object '%s'",
+                 property_name.c_str(), object_name.c_str());
+    return GLD_OPERATION_FAILED;
+  }
+
+  // Get property type
+  prop_type = static_cast<int>(prop->ptype);
+
+  // Get unit string
+  if (prop->unit != nullptr && prop->unit->name != nullptr) {
+    unit_str = std::string(prop->unit->name);
+  } else {
+    unit_str = "";
+  }
+
+  // Get description
+  if (prop->description != nullptr) {
+    description = std::string(prop->description);
+  } else {
+    description = "";
+  }
+
+  return GLD_SUCCESS;
+}
+
 // Set a property value on an object
 GLDErrorCode GridLabD::set_property(const std::string &object_name,
                                     const std::string &property_name,

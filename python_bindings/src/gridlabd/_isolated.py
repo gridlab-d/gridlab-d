@@ -367,12 +367,62 @@ class IsolatedGridLabD:
             raise RuntimeError(response.error)
         return response.result["code"], response.result["value"]
     
-    def set_property(self, object_name: str, property_name: str, value: str) -> int:
-        """Set a property value on an object."""
+    def get_property_info(self, object_name: str, property_name: str) -> tuple[int, dict]:
+        """Get property metadata (type, unit, description).
+        
+        Args:
+            object_name: Name or ID of the object
+            property_name: Name of the property
+            
+        Returns:
+            tuple: (error_code, info_dict) where info_dict contains:
+                - type: PropertyType enum value (int)
+                - type_name: PropertyType enum name (str)
+                - unit: Unit string (str, empty if no unit)
+                - description: Property description (str)
+        """
+        response = self._send_command(Command.GET_PROPERTY_INFO, {
+            "object_name": object_name,
+            "property_name": property_name
+        })
+        if not response.success:
+            raise RuntimeError(response.error)
+        return response.result["code"], response.result["info"]
+    
+    def set_property(self, object_name: str, property_name: str, value) -> int:
+        """Set a property value on an object.
+        
+        Args:
+            object_name: Name or ID of the object
+            property_name: Name of the property
+            value: Value to set - can be str, int, float, bool, or complex
+                   Native Python types are automatically converted to GridLAB-D format
+        
+        Returns:
+            Error code (0 for success)
+        """
+        # Convert Python native types to strings for C++ binding
+        if isinstance(value, bool):
+            # Handle bool before int since bool is subclass of int
+            str_value = "TRUE" if value else "FALSE"
+        elif isinstance(value, complex):
+            # Convert complex to GridLAB-D format: "real+imagj" or "real-imagj"
+            if value.imag >= 0:
+                str_value = f"{value.real}+{value.imag}j"
+            else:
+                str_value = f"{value.real}{value.imag}j"
+        elif isinstance(value, (int, float)):
+            str_value = str(value)
+        elif isinstance(value, str):
+            str_value = value
+        else:
+            # Let it through and see what happens
+            str_value = str(value)
+        
         response = self._send_command(Command.SET_PROPERTY, {
             "object_name": object_name,
             "property_name": property_name,
-            "value": value
+            "value": str_value
         })
         if not response.success:
             raise RuntimeError(response.error)
