@@ -234,13 +234,26 @@ When `gdb` is non-zero, runtime classes are built with debugging enabled and Gri
 
 The `gdb` option interacts in complex ways with debug, `gdb_window`, `compile_once`, and `use_msvc`. For details, see further documentation on working with MS Visual Studio 2005 in GridLAB-D. To implement:
 
-        host% gridlabd -D gdb=0|1
-        host% gridlabd --define gdb=0|1
-        #set gdb=0|1
+    host% gridlabd -D gdb=0|1
+    host% gridlabd --define gdb=0|1
+    #set gdb=0|1
 
 `gdb_window` controls the use of the source debugger window for runtime classes. When gdb_window is non-zero, runtime classes are built with debugging enabled and GridLAB-D is started inside the host platform's debugging environment using a debugging window. This is specifically to allow users to debug runtime classes using a debugging window. To implement: 
 
     host% gridlabd -D gdb_window=0|1
     host% gridlabd --define gdb_window=0|1
     #set gdb_window=0|1
+
+
+# Runtime Debugger
+
+When the environment variable GRIDLABD_DEBUG is set, the script `/usr/local/bin/gridlabd` starts the specified debugger and opens the file `/usr/local/bin/gridlabd.bin`. This enables debugging of your code. 
+
+If you enable debugging using debug or by including -g in CXXFLAGS and LDFLAGS then you will be able to set a breakpoint in your runtime code. When the GRIDLABD_DEBUG environment variable is set, the C++ source file is not deleted after the runtime code is compiled. This file can be found in your temporary folder, which is specified by the tmp global variable.
+
+    /bin/bash$ export GRIDLABD_DEBUG=debugger
+
+!!! note
+
+    When GRIDLABD_DEBUG is set, the runtime compiler does not delete the C++ implementation file of runtime classes. This is important if you want to debug the implementation itself and can be used in combination with the noglmrefs global variable to allow debugging of the runtime implementation.
 
