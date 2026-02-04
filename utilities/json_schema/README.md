@@ -9,6 +9,7 @@ Converts GridLAB-D model files (`.glm`) to JSON format for easier programmatic a
 - Batch mode: autotest directory scanning or recursive search
 - Proper array handling and automatic type conversion
 - Clean JSON output with intelligent filtering
+- JSON Schema generation for validation and IDE support
 
 ## Directory Structure
 
@@ -16,11 +17,13 @@ Converts GridLAB-D model files (`.glm`) to JSON format for easier programmatic a
 json_schema/
 ├── README.md              # This file
 ├── glm_to_json.py         # Main converter script with CLI
+├── generate_schema.py     # JSON Schema generator
 ├── glm_parser.py          # Core parsing logic and model management
 ├── glm_entities.py        # Entity and Item class definitions
 ├── glm_utils.py           # Utility functions
 ├── references/            # Reference data (glm_classes.json)
 │   └── glm_classes.json   # Class definitions reference
+├── glm_schema.json        # Generated JSON Schema (created by generate_schema.py)
 └── __pycache__/           # Python cache files
 ```
 
@@ -30,18 +33,22 @@ json_schema/
 - Required packages:
   - `pyjson5`
   - `importlib_resources`
+- Optional (for schema validation):
+  - `jsonschema`
 
 ## Installation
 
 ```bash
-pip install pyjson5 importlib_resources
+pip install pyjson5 importlib_resources jsonschema
 ```
 
 Requires Python 3.6+.
 
 ## Usage
 
-### Command Line
+### Converting GLM Files to JSON
+
+#### Command Line
 
 ```bash
 # Single file (output to same directory)
@@ -144,6 +151,71 @@ from glm_to_json import glm_to_json, convert_batch_files
 
 glm_to_json("mymodel", input_dir="./models", output_dir="./json")
 total, success, errors = convert_batch_files(search_dir="./models")
+```
+
+### Generating JSON Schema
+
+The `generate_schema.py` tool creates a JSON Schema that describes the structure of JSON files produced by `glm_to_json.py`.
+
+#### Command Line
+
+```bash
+# Generate schema with default name (glm_schema.json)
+python generate_schema.py
+
+# Generate schema with custom name
+python generate_schema.py --output custom_schema.json
+
+# Generate schema in specific directory
+python generate_schema.py --output /path/to/output/schema.json
+```
+
+#### Python API
+
+```python
+from generate_schema import generate_schema
+
+# Generate with default name
+generate_schema()
+
+# Generate with custom path
+generate_schema("path/to/schema.json")
+```
+
+#### Using the Generated Schema
+
+The generated JSON Schema can be used to:
+- **Validate JSON files** with validation tools
+- **Enable IDE autocomplete** in VS Code, IntelliJ, etc.
+- **Document the JSON format** for API consumers
+
+**Validation with Python:**
+```python
+import json
+from jsonschema import validate
+
+# Load schema and data
+with open('glm_schema.json') as f:
+    schema = json.load(f)
+with open('mymodel.json') as f:
+    data = json.load(f)
+
+# Validate
+validate(instance=data, schema=schema)
+print("✅ Valid!")
+```
+
+**VS Code Integration:**
+Add to your workspace `.vscode/settings.json`:
+```json
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["*.json"],
+      "url": "./glm_schema.json"
+    }
+  ]
+}
 ```
 
 ## License

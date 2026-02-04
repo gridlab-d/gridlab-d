@@ -155,6 +155,10 @@ class Entity:
 
         Ensures `$schema` is not included in nested objects, while including "required" fields.
 
+        Args:
+            isObject (bool): If True, generates schema for object entities with instances.
+                           If False, generates schema for module entities with flexible properties.
+
         Returns:
             dict: A JSON Schema dictionary describing the structure and constraints of the Entity.
         """
@@ -214,22 +218,56 @@ class Entity:
                     "INTEGER": "integer",
                     "REAL": "number",
                     "OBJECT": "object",
-                    "ARRAY": "array"
+                    "ARRAY": "array",
+                    "BOOLEAN": "boolean"
                 }
+                
+                base_type = datatype_map.get(value.datatype, "string")
+                
+                # GridLAB-D allows expressions and references as strings for most types
+                # So we need to allow both the native type AND string representations
+                if value.datatype in ["INTEGER", "REAL"]:
+                    # Numeric types can be numbers OR string expressions
+                    type_spec = {
+                        "anyOf": [
+                            {"type": base_type},
+                            {"type": "string"}
+                        ]
+                    }
+                elif value.datatype == "OBJECT":
+                    # Object references can be strings (object names) or objects
+                    type_spec = {"type": "string"}
+                else:
+                    # For other types, use the base type
+                    type_spec = {"type": base_type}
+                
                 schema = {
                     "anyOf": 
                         [
-                            {"type": datatype_map.get(value.datatype, "string")},
+                            type_spec,
                             {"$ref": "#/definitions/itemConditionals"}
                         ]
-                    
                 }
+                
                 if value.unit and value.unit != "":
                     # Check if `unit` looks like an enum (contains | characters)
                     if "|" in value.unit:
                         # Split by | and clean up empty strings
                         enum_values = [v.strip() for v in value.unit.split("|") if v.strip()]
-                        schema["anyOf"][0]["enum"] = enum_values
+                        
+                        # Special handling for boolean enums (true|false)
+                        if set(enum_values) == {"true", "false"}:
+                            # For boolean fields, allow both boolean primitives and string values
+                            schema["anyOf"][0] = {
+                                "anyOf": [
+                                    {"type": "boolean"},
+                                    {"type": "string", "enum": enum_values}
+                                ]
+                            }
+                        else:
+                            # Regular enum - set the enum constraint
+                            # For enums, only allow the specific enum values
+                            schema["anyOf"][0] = {"type": "string", "enum": enum_values}
                     else:
                         # Otherwise, treat as descriptive metadata
                         schema["unit"] = value.unit
@@ -264,7 +302,9 @@ class Entity:
             },
 
             "required": [],
-            "additionalProperties": False
+            # Modules allow additional properties (custom settings)
+            # Objects have strict schema (additionalProperties: false)
+            "additionalProperties": True if not isObject else False
         }
 
         
@@ -276,7 +316,9 @@ class Entity:
                     "type": "object",
                     "properties": {},
                     "required": [],
-                    "additionalProperties": False
+                    # Allow additional properties for object instances
+                    # (properties not defined in class definition)
+                    "additionalProperties": True
                 }
             }
 

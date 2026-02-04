@@ -386,10 +386,26 @@ class GLMModel:
                     "additionalProperties": True
                 },
                 "schedules": {  # schedules object
-                    "type": "array",
-                    "properties": {},
-                    "required": [],
-                    "additionalProperties": True
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "items": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                },
+                                "inline_comments": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                }
+                            },
+                            "required": [],
+                            "additionalProperties": False
+                        }
+                    }
                 },
             },
             "definitions": {
@@ -501,6 +517,56 @@ class GLMModel:
                     schema["properties"]["modules"]["properties"][name] = module_schema
             else:
                 raise AttributeError(f"Entity '{name}' in `module_entities` does not implement `to_schema()`.")
+
+        # Override _directives schema to match actual JSON output structure
+        # (where #set and #define are objects, not arrays)
+        schema["properties"]["_directives"] = {
+            "type": "object",
+            "properties": {
+                "_conditionals": {
+                    "$ref": "#/definitions/entityConditionals"
+                },
+                "#include": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of included files"
+                },
+                "#set": {
+                    "type": "object",
+                    "additionalProperties": {"type": "string"},
+                    "description": "Global variable assignments"
+                },
+                "#define": {
+                    "type": "object",
+                    "additionalProperties": {"type": "string"},
+                    "description": "Macro definitions"
+                },
+                "#undef": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Undefined macros"
+                }
+            },
+            "required": [],
+            "additionalProperties": False
+        }
+
+        # Override __preamble schema to match actual JSON output structure
+        schema["properties"]["__preamble"] = {
+            "type": "object",
+            "properties": {
+                "_conditionals": {
+                    "$ref": "#/definitions/entityConditionals"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Preamble comments from the GLM file"
+                }
+            },
+            "required": [],
+            "additionalProperties": False
+        }
 
         # Add `object_entities` into the `objects` section
         for name in self.object_entities:
