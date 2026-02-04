@@ -274,7 +274,7 @@ The default control strategy for node _n_ is as follows:
       else
         mode = OFF
     
-    else if _mode_ == HEAT
+    else if mode == HEAT
       if T < Th-2*Td
         mode = AUX
       else if T > Th+Td/2
@@ -283,14 +283,14 @@ The default control strategy for node _n_ is as follows:
         else
           mode = OFF
     
-    else if _mode_ == COOL
+    else if mode == COOL
       if T < Tc - Td/2
         if Vm > 0
           mode = VENT
         else
           mode = OFF
     
-    else if _mode_ == AUX
+    else if mode == AUX
       if T > Th - Td/2
         if Vm > 0
           mode = VENT
