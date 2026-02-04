@@ -17,9 +17,9 @@ MySQL Import/Export \- Import/export for MySQL databases
 
 ## Description
 
-The import and export functions are supported for MySQL databases. The export directive saves the current model to the MySQL database named _`schema`_. The import directive loads a model from the MySQL database named _`schema`_. 
+The import and export functions are supported for MySQL databases. The export directive saves the current model to the MySQL database named _`schema`_. The import directive loads a model from the MySQL database named _`schema`_.  If the import process succeeds, the load continues on the next line of the GLM file.
 
-The module global table_prefix can be used to stored multiple models in the same database. The default table_prefix is an empty string. 
+The module global `table_prefix` can be used to stored multiple models in the same database. The default `table_prefix` is an empty string. 
 
 ### Options
 
