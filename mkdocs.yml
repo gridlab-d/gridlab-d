@@ -135,7 +135,7 @@ nav:
       - Complex Numbers: docs/3.0 - Modeling Reference/Other Features/ComplexNumbers.md
       - Microgrids: docs/3.0 - Modeling Reference/Other Features/Microgrids.md
       - Performance profiling: docs/3.0 - Modeling Reference/Other Features/Performance_profiling.md
-      - 2.3 - Running Simulations: docs/3.0 - Modeling Reference/Other Features/Simulation Options.md
+      - Simulation Options: docs/3.0 - Modeling Reference/Other Features/Simulation Options.md
       - Sync Check: docs/3.0 - Modeling Reference/Other Features/Spec_sync_check.md
       - Units: docs/3.0 - Modeling Reference/Other Features/Units.md
       - Validate: docs/3.0 - Modeling Reference/Other Features/Validate.md

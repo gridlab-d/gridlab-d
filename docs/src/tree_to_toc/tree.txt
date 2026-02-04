@@ -26,7 +26,7 @@
     - Distributed Generation: docs/2.0 - New Users/Tutorial/2.5.6 - Distributed_Generation.md
     - Advanced Distribution Models: docs/2.0 - New Users/Tutorial/2.5.7 - Advanced_Distribution_Models.md
     - Built-In Distribution Models: docs/2.0 - New Users/Tutorial/2.5.8 - Built-In Distribution Models.md
-    - Quasi-static mode: docs/2.0 - New Users/Tutorial/2.6 - Time Management.md
+    - Time Management: docs/2.0 - New Users/Tutorial/2.6 - Time Management.md
 - 3.0 - Modeling Reference:
   - Loads:
     - Loadshape: docs/3.0 - Modeling Reference/Loads/1.0 - Loadshape.md
@@ -84,7 +84,7 @@
     - Complex Numbers: docs/3.0 - Modeling Reference/Other Features/ComplexNumbers.md
     - Microgrids: docs/3.0 - Modeling Reference/Other Features/Microgrids.md
     - Performance profiling: docs/3.0 - Modeling Reference/Other Features/Performance_profiling.md
-    - 2.3 - Running Simulations: docs/3.0 - Modeling Reference/Other Features/Simulation Options.md
+    - Simulation Options: docs/3.0 - Modeling Reference/Other Features/Simulation Options.md
     - Sync Check: docs/3.0 - Modeling Reference/Other Features/Spec_sync_check.md
     - Units: docs/3.0 - Modeling Reference/Other Features/Units.md
     - Validate: docs/3.0 - Modeling Reference/Other Features/Validate.md
