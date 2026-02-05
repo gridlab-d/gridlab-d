@@ -185,7 +185,9 @@ Topic | Date | Outstanding Decisions
 -- | -- | ---
 Residential Module | Dec 22 | Waterheater needs Multi-Layer model with accurate reflection of its status and stability
 Generators Module | Dec 23 | -  Decide whether to merge inverter and inverter_dyn (invluding VSI, part of SETO project) <br/> - Either energy_storage model gets some tests or it is deprecated <br/> - Single- and three-phase motors shoud be revisited, some "extra features" may not be fully documented. <br/> - Unclear if wind turbine is still experimental
-Powerflow | Next Up
+Powerflow | Feb 2 | Meeting notes circulated, TODOs pending
+Climate | Next Up
+Developing Reference | On Deck
 
 # Definition Plan
 - Open Index Tracker excel sheet on shareopint --> filter `Page Type` by `Definition`

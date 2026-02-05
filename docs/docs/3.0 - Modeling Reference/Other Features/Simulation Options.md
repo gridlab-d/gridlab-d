@@ -100,6 +100,24 @@ Option | Description
 `--globals` | Displays the global variables and their values
 `--libinfo module \| -L module` | Displays information about a module, including API version, classes defined, functions implemented and global variables.
 
+!!! example
+
+        host% gridlabd --libinfo|-L module_name
+
+    The information displayed relates to the following capabilities that may be implemented by a module 
+
+    * Version:
+        The major and minor version relate to the API level supported by the module. The major version is changed when features that are not backward compatible are altered. The minor version is changed when features that are backward compatible are changed. In other words, a module can always be loaded only if the major version is the same, however only a module with a same or higher minor version number that GridLAB-D's module API can be loaded.
+
+    * Classes:
+        A list of the implemented classes is displayed.
+
+    * Implementations:
+        A list of exported functions and support function is displayed.
+
+    * Globals:
+        A list of the module's global variables is displayed.
+
 
 #### Table 3: Informational Options
 
@@ -235,7 +253,16 @@ For instance, read and write any global or object property can be done as follow
 
 Running server-side scripts of various types is also an available feature of GRIDLAB-D™ server mode. The general syntax is <http://localhost/language/script-name>, where language is r (extension `.r`), scilab (extension `.sce`), perl (extension `.pl`), python (extension `.py`), octave (extension `.m`), java (extension `.jar`), gnuplot(extension `.plt`). The set of available languages will be soon expended even more.   
 
-Retrieve output files, such as CSV files, is also available in GridLAB-D™ server mode by using the syntax <http://localhost/output/filename.ext>.   
+
+!!! note
+
+    To Execute a Java script:
+        
+        http://_server_ :_port_ /java/_filename_.jar
+        
+    The specified _filename_ must exist on the server. The stdout and stderr are sent to the server's output streams. The output file is sent to the client as MIME-type content. 
+
+To retrieve output files, such as CSV files, is also available in GridLAB-D™ server mode by using the syntax <http://localhost/output/filename.ext>.   
 
 The work done for the gui capability enables generation of HTML code by using the syntax <http://localhost/gui/pagename.ext>. 
 

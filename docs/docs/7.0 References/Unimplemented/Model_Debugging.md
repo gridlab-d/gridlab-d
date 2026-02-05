@@ -257,3 +257,39 @@ If you enable debugging using debug or by including -g in CXXFLAGS and LDFLAGS t
 
     When GRIDLABD_DEBUG is set, the runtime compiler does not delete the C++ implementation file of runtime classes. This is important if you want to debug the implementation itself and can be used in combination with the noglmrefs global variable to allow debugging of the runtime implementation.
 
+## LDFLAGS
+
+    #setenv LDFLAGS=g++-command-line-options
+    /bin/bash$ export LDFLAGS=g++-command-line-options
+
+
+The default C++ runtime class linker options are as follows: 
+
+* `-shared`:
+    Generate a shared library (always included)
+* `-m32:`
+    Generate 32-bit code (always included on 32-bit GridLAB-D versions)
+* `-m64:`
+    Generate 64-bit code (always included on 64-bit GridLAB-D versions)
+* `-lstdc++`:
+    Use the standard C++ library (always included)
+
+If `debug` output is enabled, the `-g` optional to enable linking with debugging symbols is added automatically. If you wish to enable debugging without debug output generated, you must add the `-g` option to both CXXFLAGS and LDFLAGS.
+
+## LDPOSTLINK
+
+    #setenv LDPOSTLINK=command
+
+-or-
+
+    /bin/bash$ export LDPOSTLINK=command
+
+Some operating systems require special commands to allow dynamic link or shared libraries to used after they are linked. For example, SELinux requires the following to load a runtime class after it is built and linked.
+
+    chcon -t textrel_shlib_t afile
+
+To make this occur before the runtime module is loaded, use
+
+    /bin/bash$ export LDPOSTLINK=chcon -t textrel_shlib_t
+    
+to cause the command to be executed on every afile created by the runtime class compiler.
