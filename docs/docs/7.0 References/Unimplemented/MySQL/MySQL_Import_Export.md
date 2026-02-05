@@ -17,9 +17,9 @@ MySQL Import/Export \- Import/export for MySQL databases
 
 ## Description
 
-The import and export functions are supported for MySQL databases. The export directive saves the current model to the MySQL database named _`schema`_. The import directive loads a model from the MySQL database named _`schema`_. 
+The import and export functions are supported for MySQL databases. The export directive saves the current model to the MySQL database named _`schema`_. The import directive loads a model from the MySQL database named _`schema`_.  If the import process succeeds, the load continues on the next line of the GLM file.
 
-The module global table_prefix can be used to stored multiple models in the same database. The default table_prefix is an empty string. 
+The module global `table_prefix` can be used to stored multiple models in the same database. The default `table_prefix` is an empty string. 
 
 ### Options
 
@@ -100,18 +100,18 @@ specs | text |  |
   
 ### Transforms
 
-Schedule transformation use the schedule name as the source. A direct transformation uses the object name and property in the form `_class_ :_id_._property_`. The target is always specified in the form `_class_ :_id_._property_`. 
+Schedule transformation use the schedule name as the source. A direct transformation uses the object name and property in the form `class :id.property`. The target is always specified in the form `class :id.property`. 
 
-The specification for the linear transformation uses the form `*_scale_ +_offset_`. An external function uses the form 
+The specification for the linear transformation uses the form `*scale +offset`. An external function uses the form 
     
     
-    _y_ =_function_(_x_ 1,_x_ 2,...,_x_ n)
+    y =function(x 1,x 2,...,x n)
     
 
-where _x_ 1, _x_ 2, ..., _x_ n and _y_ are all specified in the form 
+where x 1, x 2, ..., x n and y are all specified in the form 
     
     
-     _class_ :_id_._property_
+     class :id.property
     
 
 Column name | Data type | Flags | Default   
@@ -188,7 +188,7 @@ Object flags  Value | Description
   
 ### Class tables
 
-Class tables are created with the naming convention `_module_ __class_` , with the exception of runtime classes, which are named `__class_`. The fields in the class tables will depend on the properties defined in the classes. There is always an `id` field that is a key into the `objects` table. All other fields are of type `text`. 
+Class tables are created with the naming convention `module _class` , with the exception of runtime classes, which are named `_class`. The fields in the class tables will depend on the properties defined in the classes. There is always an `id` field that is a key into the `objects` table. All other fields are of type `text`. 
 
 The data recorded in properties fields is always formatted as text. double and complex values with units will include the units. complex values may be formatted in various ways depending on the convention, e.g., real/imaginary or magnitude/angle. Timestamps include the timezone. 
 

@@ -62,24 +62,22 @@ nav:
     - Technical Overview: docs/1.0 - Prospective Users/Technical_Overview.md
   - 2.0 - New Users:
     - Quick Install: docs/2.0 - New Users/2.1 - Installation Guide.md
-    - 2.2 - Getting Started:
-      - Gridlab-D™ Overview: docs/2.0 - New Users/2.2 - Getting Started/2.2.1 - Overview.md
-      - What is a GridLAB-D™ Model?: docs/2.0 - New Users/2.2 - Getting Started/2.2.2 - Models.md
-      - Running GridLAB-D™: docs/2.0 - New Users/2.2 - Getting Started/2.2.3 - Running a Model.md
-      - Generating populations: docs/2.0 - New Users/2.2 - Getting Started/2.2.5 - Model Options.md
-      - Generating output: docs/2.0 - New Users/2.2 - Getting Started/2.2.6 - Output.md
-    - 2.3 - Running Simulations: docs/2.0 - New Users/2.3 - Running_Simulations.md
-    - 2.5 - Intro to Modeling:
-      - Basic Distribution System Modeling: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.1 - Basic Distribution System Modeling.md
-      - GLM Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.2 - GLM Models.md
-      - Modules: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.3 - Modules.md
-      - The Clock Directive: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.3.1 - Clock Directive.md
-      - Recorders and Players: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.4 - Recorders and Players.md
-      - Built-in Schedules and Loadshapes: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.5 - Schedules and Loadshapes.md
-      - Distributed Generation: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.6 - Distributed_Generation.md
-      - Advanced Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.7 - Advanced_Distribution_Models.md
-      - Built-In Distribution Models: docs/2.0 - New Users/2.5 - Intro to Modeling/2.5.8 - Built-In Distribution Models.md
-    - Quasi-static mode: docs/2.0 - New Users/2.6 - Time Management.md
+    - Tutorial:
+      - Gridlab-D™ Overview: docs/2.0 - New Users/Tutorial/2.2.1 - Overview.md
+      - What is a GridLAB-D™ Model?: docs/2.0 - New Users/Tutorial/2.2.2 - Models.md
+      - Running GridLAB-D™: docs/2.0 - New Users/Tutorial/2.2.3 - Running a Model.md
+      - Generating populations: docs/2.0 - New Users/Tutorial/2.2.5 - Model Options.md
+      - Generating output: docs/2.0 - New Users/Tutorial/2.2.6 - Output.md
+      - Basic Distribution System Modeling: docs/2.0 - New Users/Tutorial/2.5.1 - Basic Distribution System Modeling.md
+      - GLM Models: docs/2.0 - New Users/Tutorial/2.5.2 - GLM Models.md
+      - Modules: docs/2.0 - New Users/Tutorial/2.5.3 - Modules.md
+      - Simulation time: docs/2.0 - New Users/Tutorial/2.5.3.1 - Clock Block.md
+      - Recorders and Players: docs/2.0 - New Users/Tutorial/2.5.4 - Recorders and Players.md
+      - Built-in Schedules and Loadshapes: docs/2.0 - New Users/Tutorial/2.5.5 - Schedules and Loadshapes.md
+      - Distributed Generation: docs/2.0 - New Users/Tutorial/2.5.6 - Distributed_Generation.md
+      - Advanced Distribution Models: docs/2.0 - New Users/Tutorial/2.5.7 - Advanced_Distribution_Models.md
+      - Built-In Distribution Models: docs/2.0 - New Users/Tutorial/2.5.8 - Built-In Distribution Models.md
+      - Time Management: docs/2.0 - New Users/Tutorial/2.6 - Time Management.md
   - 3.0 - Modeling Reference:
     - Loads:
       - Loadshape: docs/3.0 - Modeling Reference/Loads/1.0 - Loadshape.md
@@ -93,7 +91,6 @@ nav:
       - Plotting Output: docs/3.0 - Modeling Reference/Metrics & Recorders/plotting-output.md
     - Modules:
       - Introduction: docs/3.0 - Modeling Reference/Modules/1.0 - Introduction.md
-      - Assert: docs/3.0 - Modeling Reference/Modules/Assert.md
       - Climate:
         - Climate Module: docs/3.0 - Modeling Reference/Modules/Climate/1.0 - Climate.md
         - CSV reader: docs/3.0 - Modeling Reference/Modules/Climate/CSV_reader_(climate_class).md
@@ -133,13 +130,12 @@ nav:
       - Tape:
         - Player: docs/3.0 - Modeling Reference/Modules/Tape/Player.md
         - Tape: docs/3.0 - Modeling Reference/Modules/Tape/Tape.md
-      - Delta Mode Document: docs/3.0 - Modeling Reference/Modules/delta_mode.md
     - Other Features:
       - Checkpoints: docs/3.0 - Modeling Reference/Other Features/Checkpoints.md
-      - Command Options: docs/3.0 - Modeling Reference/Other Features/Command_options.md
       - Complex Numbers: docs/3.0 - Modeling Reference/Other Features/ComplexNumbers.md
       - Microgrids: docs/3.0 - Modeling Reference/Other Features/Microgrids.md
       - Performance profiling: docs/3.0 - Modeling Reference/Other Features/Performance_profiling.md
+      - Simulation Options: docs/3.0 - Modeling Reference/Other Features/Simulation Options.md
       - Sync Check: docs/3.0 - Modeling Reference/Other Features/Spec_sync_check.md
       - Units: docs/3.0 - Modeling Reference/Other Features/Units.md
       - Validate: docs/3.0 - Modeling Reference/Other Features/Validate.md
@@ -166,6 +162,7 @@ nav:
       - GridLAB-D™ Modules: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.2 - Modules.md
       - GridLAB-D™ Objects: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.3 - Objects.md
       - Object Synchronization Process: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.4 - Object Synchronization Process.md
+      - Clock Operation: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.5 - Time Management.md
       - GridLAB-D™ Parallelization: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.6 - Parallelization.md
       - GridLAB-D™ Loader: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.7 - Loader.md
       - GridLAB-D™ Data Transforms: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.8 - Transforms.md
@@ -178,12 +175,12 @@ nav:
       - Creating a solver: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.4 - Creating_a_solver.md
       - GridLAB-D™ Device Modeling: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.5 - GridLAB-D Device Modeling.md
       - Integrated Testing: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.6 - Integrated_Testing.md
-    - 4.5 - Clock operation: docs/4.0 Developing Reference/4.5 - Time Management.md
-    - 4.6 - Debugging:
-      - Command options: docs/4.0 Developing Reference/4.6 - Debugging/4.6.1 - Command_line_arguments.md
-      - Performance Profiling: docs/4.0 Developing Reference/4.6 - Debugging/4.6.2 - performance-profiling.md
-    - 4.7 - Style Guide: docs/4.0 Developing Reference/4.7 - Style_guide.md
-    - 4.8 - GridLAB-D Release Process: docs/4.0 Developing Reference/4.8 - Release_Process.md
+    - 4.5 - Debugging:
+      - Command options: docs/4.0 Developing Reference/4.5 - Debugging/4.6.1 - Command_line_arguments.md
+      - Performance Profiling: docs/4.0 Developing Reference/4.5 - Debugging/4.6.2 - performance-profiling.md
+      - Assert: docs/4.0 Developing Reference/4.5 - Debugging/Assert.md
+    - 4.6 - Style Guide: docs/4.0 Developing Reference/4.6 - Style_guide.md
+    - 4.7 - GridLAB-D Release Process: docs/4.0 Developing Reference/4.7 - Release_Process.md
   - 5.0 Integration:
     - Interfacing with External Software: docs/5.0 Integration/Interfacing_with_External_Software.md
     - Intro to Integration: docs/5.0 Integration/intro-to-integration.md

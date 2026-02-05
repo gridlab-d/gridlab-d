@@ -56,6 +56,15 @@ If no plotcommands directive is found, Gridlab will try to plot the first two co
 
 For more information on Gnuplot commands, consult the [Gnuplot documentation page](http://www.gnuplot.info/documentation.html).
 
+## GridLAB-D Server
+To execute a GNU plot script on a GridLAB-D server
+
+    http://server:port/gnuplot/filename.plt
+
+!!! note
+
+    The specified filename must exist on the server. The stdout and stderr are sent to the server's output streams. The output file is sent to the client as MIME-type content.
+
 
 ## TODO - Check Status - Future
 

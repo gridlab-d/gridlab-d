@@ -1,5 +1,6 @@
-# 2.3 - Running Simulations
-TODO - Build out - Turn this into a new-user example of how to run a simple simulation. Move more in-depth content to later sections where appropriate.
+# Simulation Options
+
+This page outlines the different ways to run GridLAB-D™, using either the command line or server mode. The various command line options available to users are described, with look-up tables provided for easy reference.
 
 ## Installation Notes
 
@@ -71,40 +72,130 @@ To further speed things up, another option may be enabled which automatically sa
 
 The command-line argument module processes arguments as they are encountered. 
 
-The following command-line toggles are supported 
+The following command-line options are supported 
 
-  * **\--warn** toggles the warning mode
-  * **\--check** toggles calls to module check functions
-  * **\--debug** toggles debug messages
-  * **\--debugger** enables the debugger and turns on debug messages
-  * **\--dumpall** toggles a complete model dump when the simulation exits
-  * **\--quiet** toggles all messages except error and fatal messages
-  * **\--profile** toggles performance profiling
+
+#### Table 1: Basic Command Line Options
+
+Option | Description
+-- | --
+`-W\|--workdir path ` | Sets the working directory for the remainder of the run.
+`--quiet \| -q` | Toggles display all messages except error and fatal messages.
+`--verbose \| -v` | Toggles display of verbose messages. Verbose messages can be useful in understanding why certain error or warning occur.
+`--warn \| -w` | Toggles display of warning messages. Warning messages relate to problems that might affect results.
+`--debug` | Toggles display of debug messages. Debugging messages are highly detailed messages about the internal state of the simulation.
+`--debugger` | Enables the debugger and turns on debug messages.
+`--dumpall` | Enables a complete model dump when the simulation exits.
+`--output file \| -o file` | Directs model output to the specified file.
+`--profile` | Enables performance profiling of the model and displays profile output when the simulation exits.
+`--check` | Enables calls to module check functions before the simulation starts. This can be used to detect models errors, but not all modules support such check functions. See --libinfo for details on module functions.
+
 The following command-line processes can be called 
 
-  * **\--license** prints the software license
-  * **\--dsttest** performs a daylight saving time definitions in tzinfo.txt
-  * **\--unitstest** performs a test of the units in unitfile.txt
-  * **\--randtest** performs a test of the random number generators
-  * **\--testall** file performs module selftests of modules those listed in file
-  * **\--test** run the internal core self-test routines
-  * **\--define** define a global variable
-  * **\--libinfo _module_** prints information about the module
-  * **\--xsd _module_[:_object_]** prints the xsd of a module or object
-  * **\--xsl** creates the xsl for this version of gridlab-d
-  * **\--kml=_file_** output kml (Google Earth) file of model
-  * **\--modhelp _module_[:_class_]** output definition of _class_ from _module_. All the classes from the specified module will be listed in alphabetical order if no class is given
-  * **\--server** runs in server mode (uses **pidfile** and redirects all output)
-  * **\--pidfile[=_filename_]** creates a process id file while GridLAB-D™ is running (default is gridlabd.pid)
-  * **\--redirect _stream_[:_file_]** redirects output stream to file
-The following system options may be changed 
+#### Table 2: Global and Module Control Options
 
-  * **\--threadcount _n_** changes the number of thread to use during simulation (default is 0, meaning as many as useful)
-  * **\--output _file_** saves dump output to file (default is **gridlabd.glm**)
-  * **\--environment _app_** start the app as the processing environment (default is **batch**)
-  * **\--xmlencoding _num_** sets the XML encoding (8, 16, or 32)
-  * **\--xmlstrict** toggles XML to be strict
-  * **\--relax** allows implicit variable definition when assignments made
+Option | Description
+-- | --
+`--define name=value \| -D name=value` | Defines a global variable
+`--globals` | Displays the global variables and their values
+`--libinfo module \| -L module` | Displays information about a module, including API version, classes defined, functions implemented and global variables.
+
+!!! example
+
+        host% gridlabd --libinfo|-L module_name
+
+    The information displayed relates to the following capabilities that may be implemented by a module 
+
+    * Version:
+        The major and minor version relate to the API level supported by the module. The major version is changed when features that are not backward compatible are altered. The minor version is changed when features that are backward compatible are changed. In other words, a module can always be loaded only if the major version is the same, however only a module with a same or higher minor version number that GridLAB-D's module API can be loaded.
+
+    * Classes:
+        A list of the implemented classes is displayed.
+
+    * Implementations:
+        A list of exported functions and support function is displayed.
+
+    * Globals:
+        A list of the module's global variables is displayed.
+
+
+#### Table 3: Informational Options
+
+Option | Description
+-- | --
+`--version \| -V` | Displays the full version/build number.
+`--license` | Displays the software license.
+`--copyright` | Displays the copyright.
+
+#### Table 4: Test Processes Options
+
+Option | Description
+-- | --
+`--dsttest` | Performs a daylight saving time definitions in tzinfo.txt
+`--endusetest` | Performs a test of the end-use pseudo-objects
+`--globaldump` | Perform a global dump of the system and immediately exits.
+`--loadshapetest` | Performs a test of the loadshape pseudo-objects
+`--locktest` | Performs memory locking test
+`--modtest module` | Performs the module self-test for the specified module
+`--randtest` | Performs a test of the random number generators
+`--scheduletest` | Performs a test of the schedule pseudo-objects
+`--test` | Perform all the internal core self-test routines
+`--testall file` | Performs module selftests of modules those listed in a file.
+`--unitstest` | Performs a test of the units in unitfile.txt
+`--validate` | Perform model validation check 
+
+#### Table 5: File and I/O Formatting Options
+
+Option | Description
+-- | --
+`--xmlencoding num` | Sets the XML encoding (8, 16, or 32)
+`--xmlstrict` | Toggles XML to be strict, which is needed for compliance with certain XML loaders.
+`--stream` | Enables streaming I/O (binary I/O instead of GLM/XML)
+`--xsd module[:object]` | Prints the XSD of a module or object.
+`--xsl modulelist` | Creates the XSL for the modules listed.
+`--kml=file` | Output the KML (Google Earth) file of model (only supported by some modules).
+
+
+#### Table 6: Help Options
+
+Option | Description
+-- | --
+`--example module:class ` | Output an example of GLM code that will create a object of class given from the module given .
+`--help \| -h` | Command line help.
+`--info keyword ` | Open a browser and searches these documentation for the keyword given. Spaces may be entered as underscores in keywords .
+`--modhelp module[:class]` | Output the GLM definition of class from module. All the classes from the specified module will be listed in alphabetical order if no class is given.
+
+#### Table 7: Process Control Options
+
+Option | Description
+-- | --
+`--threadcount n\| -T n` | Changes the number of threads to use during simulation (0 means as many as useful, default is 1)
+`--clearmap` | DEPRECATED 
+`--pclear` | Clears the processor map of defunct processes 
+`--pcontrol ` | Enter interactive process control 
+`--pkill n ` | Kills job n in the process map 
+`--pstatus ` | Displays the processor status 
+
+#### Table 8: System Options
+
+Option | Description
+-- | --
+`--checkversion` | Perform online version check to see if any updates are available (as of 3.0).
+`--compile` | Enables compile-only mode (the GLM file is loaded but the simulation does not start)
+`--relax` | Allows implicit variable definition when assignments made
+`--pause` | Enable pause at exit (waits for user input before exiting)
+`--bothstdout` | Sends all output to stdout
+`--check \| -c` | Run global checks of models (only supported by some modules)
+`--avlbalance` | Controls automatic balancing of object index
+`--output file \| -o file` | Saves dump output to file (default is **gridlabd.glm**)
+`--environment app \| -e app` | Starts the app as the processing environment (default is **batch**). Recognized environments are **matlab**, **html**, **gui**, and **X11**. All but **batch** are experimental or under development.
+
+
+#### Table 9: Job Control Options
+
+Option | Description
+-- | --
+`--job ` | Runs all the GLM files found in the current folder as a single job .
 
 ### GridLAB-D™ Server Mode
 
@@ -162,11 +253,30 @@ For instance, read and write any global or object property can be done as follow
 
 Running server-side scripts of various types is also an available feature of GRIDLAB-D™ server mode. The general syntax is <http://localhost/language/script-name>, where language is r (extension `.r`), scilab (extension `.sce`), perl (extension `.pl`), python (extension `.py`), octave (extension `.m`), java (extension `.jar`), gnuplot(extension `.plt`). The set of available languages will be soon expended even more.   
 
-Retrieve output files, such as CSV files, is also available in GridLAB-D™ server mode by using the syntax <http://localhost/output/filename.ext>.   
+
+!!! note
+
+    To Execute a Java script:
+        
+        http://_server_ :_port_ /java/_filename_.jar
+        
+    The specified _filename_ must exist on the server. The stdout and stderr are sent to the server's output streams. The output file is sent to the client as MIME-type content. 
+
+To retrieve output files, such as CSV files, is also available in GridLAB-D™ server mode by using the syntax <http://localhost/output/filename.ext>.   
 
 The work done for the gui capability enables generation of HTML code by using the syntax <http://localhost/gui/pagename.ext>. 
 
 All the features presented above are in early stages of development and under constinuous improvement. Example of concept tests are presented in ` core/test/gui_example...`. The examples are not fully functional at this point because we are trying to understand the limitations of each on various platforms. 
+
+#### Table 10: Server Mode Command Options
+
+Option | Description
+-- | --
+`--pidfile[=filename]` | Creates a process id file while GridLAB-D™is running (default is gridlabd.pid). Note: this is only supported in POSIX platforms.
+`--redirect stream[:file]` | Redirects output stream to file (or null). Valid streams are **output**, **error**, **warning**, **debug**, **verbose**, **profile**, **progress**, **none** and **all**.
+`--server` | Runs in server mode (uses **pidfile** and redirects all output)
+`--server_portnum n \| -P n` | Sets the server port number (default is 6267)
+
 
 #### Control
 
@@ -174,7 +284,10 @@ When operating in server mode, GridLAB-D accepts main loop state control message
 
      http://server :port /control/command
 
-The following control actions are recognized
+The following control actions are recognized:
+
+
+#### Table 11: Control Actions
 
 Action | Description
 -- | --
