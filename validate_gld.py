@@ -8,6 +8,25 @@ import sys
 import time
 
 autotestFiles = []
+gldBinary = None
+
+def getGLDBinary():
+    """
+    Check developement environment for the gridlabd binary file.
+    """
+    global gldBinary
+    gldBinary = shutil.which("gridlabd")
+    if gldBinary == "":
+        rootPath = Path(__file__).parent.resolve()
+        for child in rootPath.iterdir():
+            if child.is_dir():
+                childBin = child / "bin" / "gridlabd"
+                childBin.resolve()
+                if childBin.exists() and childBin.is_file():
+                    gldBinary = f"{childBin}"
+                    break
+    if gldBinary == "":
+        raise ModuleNotFoundError("Could not find the gridlabd binary in the development environment!")
 
 def processModuleDirectory(moduleDirectory: Path, runOptionalTests: bool):
     """
@@ -27,7 +46,7 @@ def processModuleDirectory(moduleDirectory: Path, runOptionalTests: bool):
                         and (autotestChild.suffix == ".glm" or autotestChild.suffix == ".json") 
                         and "test_" in autotestChild.stem
                         and (("_opt" in autotestChild.stem and runOptionalTests) or "_opt" not in autotestChild.stem)):
-                    autotestFiles.append(autotestChild)
+                    autotestFiles.append((autotestChild, gldBinary))
                     autotestDir = autotestChild.parent / autotestChild.stem
                     autotestDir.resolve()
                     if not autotestDir.exists():
@@ -35,14 +54,14 @@ def processModuleDirectory(moduleDirectory: Path, runOptionalTests: bool):
                     shutil.copy(autotestChild, autotestDir)
 
 
-def runAutotest(autotestFile: Path) -> int:
+def runAutotest(autotestFile: Path, binFile: str) -> int:
     """
     Run a single autotest file using GridLAB-D.
     """
     print(f"Running autotest: {autotestFile}")
     autotestDir = autotestFile.parent / autotestFile.stem
     autotestDir.resolve()
-    command = ["gridlabd", str(autotestFile.name)]
+    command = [binFile, str(autotestFile.name)]
     result = subprocess.run(
         command,
         cwd=autotestDir,
@@ -60,7 +79,7 @@ def getGLDVersionInfo() -> str:
     """
     Get the GridLAB-D version information.
     """
-    command = ["gridlabd", "--version"]
+    command = [gldBinary, "--version"]
     result = subprocess.run(
         command,
         capture_output=True,
@@ -98,15 +117,13 @@ def processResults(results: list[int], resultsFile: Path, testPerformance: int) 
         f.write("\nResults Summary:\n")
         f.write(f"\tTotal Tests Run: {len(results)}.\n")
         f.write(f"\tTotal Tests Pass: {passCount}.\n")
-        f.write(f"\tTotal Tests Fail: {failCount}.\n")
-        f.write(f"\tTotal Unexpected Passes: {unexpectedPassCount}.\n")
+        f.write(f"\tTotal Tests Fail: {failCount + unexpectedPassCount}.\n")
         f.write(f"\tPass Percentage: {math.floor((float(passCount) / float(len(results))) * 100.0)}%.\n")
         f.write(f"\tTotal Test Time: {testPerformance} seconds.")
         print("\nResults Summary:\n"
               f"Total Tests Run: {len(results)}.\n"
               f"Total Tests Pass: {passCount}.\n"
-              f"Total Tests Fail: {failCount}.\n"
-              f"Total Unexpected Passes: {unexpectedPassCount}.\n"
+              f"Total Tests Fail: {failCount + unexpectedPassCount}.\n"
               f"Pass Percentage: {math.floor((float(passCount) / float(len(results))) * 100.0)}%.\n"
               f"Total Test Time: {testPerformance} seconds.\n"
               f"Full results written to {resultsFile}.")
@@ -123,6 +140,7 @@ def main(module: str, runOptionalTests: bool, threads: int):
         procs = multiprocessing.cpu_count()
     else:
         procs = min(threads, multiprocessing.cpu_count())
+    getGLDBinary()
     searchDirectoryBase = Path(__file__).parent.resolve()
     moduleDirectory = None
     resultsFile = searchDirectoryBase / "validate.txt"
@@ -145,13 +163,13 @@ def main(module: str, runOptionalTests: bool, threads: int):
             if moduleChild.is_dir():
                 processModuleDirectory(moduleChild.resolve(), runOptionalTests)
     # Run autotests in parallel
-    autotestFiles.sort()
+    autotestFiles.sort(key = lambda x: x[0])
     if len(autotestFiles) > 0:
         procs = min(procs, len(autotestFiles))
         results = []
         startTime = time.perf_counter_ns()
         with multiprocessing.Pool(procs) as p:
-            results = p.map(runAutotest, autotestFiles)
+            results = p.starmap(runAutotest, autotestFiles)
         endTime = time.perf_counter_ns()
         testPerformance = math.ceil((endTime - startTime) / 1.0e9)
         rv = processResults(results, resultsFile, testPerformance)
