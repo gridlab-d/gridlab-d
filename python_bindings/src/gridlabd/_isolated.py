@@ -211,8 +211,103 @@ class IsolatedGridLabD:
         return self.setup_before_load()
     
     # Loading methods
-    def load_glm(self, arguments: list[str]) -> int:
-        """Load a model using argv-style arguments (list of strings)."""
+    def load_glm(
+        self, 
+        filename_or_args: str | list[str],
+        *,
+        defines: dict[str, str] | None = None,
+        verbose: bool = False,
+        warn: bool = False,
+        quiet: bool = False,
+        debug: bool = False,
+        debugger: bool = False,
+        check: bool = False,
+        workdir: str | None = None,
+        threads: int | None = None,
+        compile_only: bool = False,
+        save: str | None = None,
+        **kwargs
+    ) -> int:
+        """Load a model using either argv-style arguments or Pythonic kwargs.
+        
+        Args:
+            filename_or_args: Either a GLM filename (str) for Pythonic style,
+                            or a list of argv-style arguments for backward compatibility
+            defines: Dictionary of global variables to define (e.g., {"VAR": "value"})
+            verbose: Enable verbose output messages
+            warn: Enable warning messages
+            quiet: Suppress all but error and fatal messages
+            debug: Enable debug messages
+            debugger: Enable the debugger
+            check: Perform module checks before starting
+            workdir: Set the working directory for resolving relative paths
+            threads: Set maximum number of threads allowed
+            compile_only: Enable compile-only mode
+            save: Enable save of output to specified file
+            **kwargs: Additional arguments (ignored for forward compatibility)
+        
+        Returns:
+            Error code (0 for success)
+            
+        Examples:
+            # Old style (backward compatible)
+            gld.load_glm(["model.glm"])
+            gld.load_glm(["model.glm", "-D", "VAR=123", "--verbose"])
+            
+            # New Pythonic style
+            gld.load_glm("model.glm")
+            gld.load_glm("model.glm", verbose=True)
+            gld.load_glm("model.glm", defines={"VAR": "123", "PARAM": "value"})
+            gld.load_glm("model.glm", workdir="/path/to/dir", warn=True)
+            gld.load_glm("model.glm", defines={"X": "10"}, threads=4, verbose=True)
+        """
+        # Backward compatibility: if first arg is a list, use old behavior
+        if isinstance(filename_or_args, list):
+            arguments = filename_or_args
+        else:
+            # Build argv-style arguments from kwargs
+            # GridLAB-D expects: [filename, options...]
+            arguments = [filename_or_args]
+            
+            # Add options after filename
+            if check:
+                arguments.append("--check")
+            
+            if debug:
+                arguments.append("--debug")
+            
+            if debugger:
+                arguments.append("--debugger")
+            
+            if verbose:
+                arguments.append("--verbose")
+            
+            if warn:
+                arguments.append("--warn")
+            
+            if quiet:
+                arguments.append("--quiet")
+            
+            if workdir is not None:
+                arguments.append("-W")
+                arguments.append(workdir)
+            
+            if threads is not None:
+                arguments.append("--threadcount")
+                arguments.append(str(threads))
+            
+            if defines:
+                for key, value in defines.items():
+                    arguments.append("-D")
+                    arguments.append(f"{key}={value}")
+            
+            if compile_only:
+                arguments.append("--compile")
+            
+            if save is not None:
+                arguments.append("--save")
+                arguments.append(save)
+        
         response = self._send_command(Command.LOAD_GLM, {"arguments": arguments})
         if not response.success:
             raise RuntimeError(response.error)
@@ -389,12 +484,62 @@ class IsolatedGridLabD:
             raise RuntimeError(response.error)
         return response.result["code"], response.result["value"]
     
-    def set_property(self, object_name: str, property_name: str, value: str) -> int:
-        """Set a property value on an object."""
+    def get_property_info(self, object_name: str, property_name: str) -> tuple[int, dict]:
+        """Get property metadata (type, unit, description).
+        
+        Args:
+            object_name: Name or ID of the object
+            property_name: Name of the property
+            
+        Returns:
+            tuple: (error_code, info_dict) where info_dict contains:
+                - type: PropertyType enum value (int)
+                - type_name: PropertyType enum name (str)
+                - unit: Unit string (str, empty if no unit)
+                - description: Property description (str)
+        """
+        response = self._send_command(Command.GET_PROPERTY_INFO, {
+            "object_name": object_name,
+            "property_name": property_name
+        })
+        if not response.success:
+            raise RuntimeError(response.error)
+        return response.result["code"], response.result["info"]
+    
+    def set_property(self, object_name: str, property_name: str, value) -> int:
+        """Set a property value on an object.
+        
+        Args:
+            object_name: Name or ID of the object
+            property_name: Name of the property
+            value: Value to set - can be str, int, float, bool, or complex
+                   Native Python types are automatically converted to GridLAB-D format
+        
+        Returns:
+            Error code (0 for success)
+        """
+        # Convert Python native types to strings for C++ binding
+        if isinstance(value, bool):
+            # Handle bool before int since bool is subclass of int
+            str_value = "TRUE" if value else "FALSE"
+        elif isinstance(value, complex):
+            # Convert complex to GridLAB-D format: "real+imagj" or "real-imagj"
+            if value.imag >= 0:
+                str_value = f"{value.real}+{value.imag}j"
+            else:
+                str_value = f"{value.real}{value.imag}j"
+        elif isinstance(value, (int, float)):
+            str_value = str(value)
+        elif isinstance(value, str):
+            str_value = value
+        else:
+            # Let it through and see what happens
+            str_value = str(value)
+        
         response = self._send_command(Command.SET_PROPERTY, {
             "object_name": object_name,
             "property_name": property_name,
-            "value": value
+            "value": str_value
         })
         if not response.success:
             raise RuntimeError(response.error)
@@ -423,18 +568,73 @@ class IsolatedGridLabD:
     
     # Legacy global variable methods (for backward compatibility)
     def global_setvar(self, name: str, value: str) -> int:
-        """Set a global variable (legacy support)."""
+        """Set a global variable."""
         response = self._send_command(Command.SET_GLOBAL, {"name": name, "value": value})
         if not response.success:
             raise RuntimeError(response.error)
         return response.result
     
     def global_getvar(self, name: str) -> str:
-        """Get a global variable (legacy support)."""
+        """Get a global variable."""
         response = self._send_command(Command.GET_GLOBAL, {"name": name})
         if not response.success:
             raise RuntimeError(response.error)
         return response.result
+    
+    # Convenience methods for clock properties
+    def get_clock(self) -> str:
+        """Get the current simulation time.
+        
+        Returns:
+            Current simulation time as a string (ISO 8601 format or timestamp)
+        """
+        return self.global_getvar("clock")
+    
+    def get_starttime(self) -> str:
+        """Get the simulation start time.
+        
+        Returns:
+            Start time as a string (ISO 8601 format or timestamp)
+        """
+        return self.global_getvar("starttime")
+    
+    def get_stoptime(self) -> str:
+        """Get the simulation stop time.
+        
+        Returns:
+            Stop time as a string (ISO 8601 format or timestamp)
+        """
+        return self.global_getvar("stoptime")
+    
+    def set_starttime(self, value: str) -> int:
+        """Set the simulation start time.
+        
+        Args:
+            value: Start time as string (ISO 8601 format or timestamp)
+            
+        Returns:
+            Error code (0 for success)
+        """
+        return self.global_setvar("starttime", value)
+    
+    def set_stoptime(self, value: str) -> int:
+        """Set the simulation stop time.
+        
+        Args:
+            value: Stop time as string (ISO 8601 format or timestamp)
+            
+        Returns:
+            Error code (0 for success)
+        """
+        return self.global_setvar("stoptime", value)
+    
+    def get_timezone(self) -> str:
+        """Get the current timezone.
+        
+        Returns:
+            Timezone string
+        """
+        return self.global_getvar("timezone")
     
     # Message capture methods
     def get_messages(self) -> list[dict[str, str]]:
