@@ -510,6 +510,8 @@ def main():
             
             protocol_out.write(response.to_json() + "\n")
             protocol_out.flush()
+            if message.command in (Command.EXIT_GLD, Command.FINALIZE):
+                break
         except Exception as e:
             response = Response(success=False, error=f"Worker error: {str(e)}")
             protocol_out.write(response.to_json() + "\n")

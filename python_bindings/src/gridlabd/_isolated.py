@@ -5,9 +5,11 @@ This module provides a GridLabD interface that runs each instance in a separate
 subprocess, preventing global state conflicts in the C++ core.
 """
 
+import atexit
 import subprocess
 import sys
 import os
+import weakref
 from subprocess import PIPE
 from typing import Any, Optional
 
@@ -21,6 +23,9 @@ class IsolatedGridLabD:
     Each instance spawns its own worker process, ensuring complete isolation
     of global state in the C++ core.
     """
+
+    _instances: "weakref.WeakSet[IsolatedGridLabD]" = weakref.WeakSet()
+    _atexit_registered = False
     
     def __init__(self):
         """Create a new isolated GridLabD instance."""
@@ -30,6 +35,12 @@ class IsolatedGridLabD:
         response = self._send_command(Command.INIT, {})
         if not response.success:
             raise RuntimeError(f"Failed to initialize worker: {response.error}")
+
+        # Track instances to ensure clean shutdown on interpreter exit
+        IsolatedGridLabD._instances.add(self)
+        if not IsolatedGridLabD._atexit_registered:
+            atexit.register(IsolatedGridLabD._shutdown_all)
+            IsolatedGridLabD._atexit_registered = True
     
     def _spawn_worker(self):
         """Spawn a new worker subprocess and wait for it to be ready."""
@@ -39,7 +50,8 @@ class IsolatedGridLabD:
             stdout=PIPE,
             stderr=sys.stderr,  # Send worker stderr to parent stderr for debugging
             text=True,
-            bufsize=1
+            bufsize=1,
+            start_new_session=True
         )
         
         # Read the READY signal (worker sends it immediately on startup)
@@ -78,10 +90,13 @@ class IsolatedGridLabD:
                 # ensure the worker is terminated.
                 if exit_code is None:
                     try:
-                        self._process.terminate()
                         self._process.wait(timeout=2)
-                    except Exception:
-                        pass
+                    except subprocess.TimeoutExpired:
+                        try:
+                            self._process.kill()
+                            self._process.wait(timeout=3)
+                        except Exception:
+                            pass
                 self._process = None
                 return Response(success=True, result=0)
             if exit_code is not None:
@@ -115,21 +130,28 @@ class IsolatedGridLabD:
             if exit_code is not None:
                 raise RuntimeError(f"Worker process crashed (exit code {exit_code}) while processing {command.name}. Last output: {response_line[:100]}")
             raise RuntimeError(f"Invalid JSON response from worker for {command.name}: {e}. Response: {response_line[:100]}")
+
+    @classmethod
+    def _shutdown_all(cls):
+        """Ensure all worker processes are cleanly stopped at interpreter exit."""
+        for inst in list(cls._instances):
+            try:
+                inst._shutdown_worker()
+            except Exception:
+                pass
+
+    def _shutdown_worker(self):
+        """Attempt clean worker shutdown without sending SIGTERM."""
+        if self._process and self._process.poll() is None:
+            try:
+                self._process.kill()
+                self._process.wait(timeout=3)
+            except Exception:
+                pass
     
     def __del__(self):
         """Clean up the worker process."""
-        if self._process and self._process.poll() is None:
-            try:
-                # Try graceful termination first
-                self._process.terminate()
-                try:
-                    self._process.wait(timeout=2)
-                except subprocess.TimeoutExpired:
-                    # Force kill if it doesn't terminate
-                    self._process.kill()
-                    self._process.wait(timeout=3)
-            except Exception:
-                pass
+        self._shutdown_worker()
     
     # Static methods
     @staticmethod
