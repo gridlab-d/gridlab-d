@@ -200,7 +200,7 @@
           "phases": "ABCN",
           "from": "Meter1",
           "to": "Load1",
-          "length": "1 mile ",
+          "length": "1 mile",
           "configuration": "Line_Config_1",
           "outside_comments": [
             "//"
@@ -219,7 +219,7 @@
           "phases": "ABCN",
           "from": "Meter1",
           "to": "node1",
-          "length": "1 mile ",
+          "length": "1 mile",
           "configuration": "Line_Config_1"
         },
         {
@@ -227,7 +227,7 @@
           "phases": "ABCN",
           "from": "node1",
           "to": "node2",
-          "length": "1 mile ",
+          "length": "1 mile",
           "configuration": "Line_Config_1"
         },
         {
@@ -235,7 +235,7 @@
           "phases": "ABCN",
           "from": "node2",
           "to": "node3",
-          "length": "1 mile ",
+          "length": "1 mile",
           "configuration": "Line_Config_1"
         }
       ]

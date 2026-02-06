@@ -198,6 +198,9 @@ def glm_to_json(glm_name, input_dir=None, output_dir=None, output_name=None):
                 prop_name (str, optional): The property name
             """
             if isinstance(value, str):
+                # Strip whitespace from the beginning and end of the string
+                value = value.strip()
+                
                 # Skip conversion if this is an object reference property
                 if obj_type and prop_name and is_object_property(obj_type, prop_name):
                     return value

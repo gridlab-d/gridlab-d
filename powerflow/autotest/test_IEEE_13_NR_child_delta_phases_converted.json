@@ -369,7 +369,7 @@
           "target": "voltage_C",
           "value": "2437.54+117.83d",
           "within": 2,
-          "};": " object complex_assert ",
+          "};": "object complex_assert",
           "outside_comments": [
             "// Create node objects"
           ]
@@ -379,14 +379,14 @@
           "target": "voltage_C",
           "value": "2443.82+117.83d",
           "within": 2,
-          "};": " object complex_assert "
+          "};": "object complex_assert"
         },
         {
           "parent": "n650",
           "target": "voltage_C",
           "value": "2401.7771+120.0d",
           "within": 2,
-          "};": " object complex_assert "
+          "};": "object complex_assert"
         },
         {
           "parent": "n680",

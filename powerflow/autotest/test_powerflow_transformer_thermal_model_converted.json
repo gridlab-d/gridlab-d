@@ -33,7 +33,7 @@
       "instances": [
         {
           "name": "triplex_line_configuration_1",
-          "conductor_1": "object triplex_line_conductor ",
+          "conductor_1": "object triplex_line_conductor",
           "resistance": 0.97,
           "geometric_mean_radius": 0.0111
         }

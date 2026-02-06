@@ -186,7 +186,7 @@
           "conductor_C": "ulc6070",
           "conductor_N": "ulc6070N",
           "spacing": "ls520CAN",
-          "}object": "line_configuration ",
+          "}object": "line_configuration",
           "conductor_A": "ulc6070",
           "conductor_B": "ulc6070"
         },
@@ -385,7 +385,7 @@
         {
           "parent": "l652_ABN",
           "target": "voltage_B",
-          "value": "-1197.27-2068.42j ",
+          "value": "-1197.27-2068.42j",
           "within": 0.01,
           "inline_comments": {
             "value": "//-1197.31-2068.47j; //-1197.27-2068.42j //-1199.99-2068.25j"
@@ -472,19 +472,19 @@
         {
           "parent": "l652_BC",
           "target": "voltage_B",
-          "value": "-1192.5-2067.58j ",
+          "value": "-1192.5-2067.58j",
           "within": 0.01
         },
         {
           "parent": "l652_BC",
           "target": "voltage_C",
-          "value": "-1189.03+2073.81j ",
+          "value": "-1189.03+2073.81j",
           "within": 0.01
         },
         {
           "parent": "l652_CA",
           "target": "voltage_A",
-          "value": "+2390.8-7.21662j ",
+          "value": "+2390.8-7.21662j",
           "within": 0.01
         },
         {

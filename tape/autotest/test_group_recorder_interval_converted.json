@@ -98,7 +98,7 @@
           "name": "load_node_actual_load_part",
           "parent": "trip_node",
           "constant_impedance_1": "1.4+0.5j",
-          "constant_impedance_2": " 0.9+0.4j",
+          "constant_impedance_2": "0.9+0.4j",
           "constant_impedance_12": "2.0+1.2j",
           "phases": "AS",
           "nominal_voltage": 120.0

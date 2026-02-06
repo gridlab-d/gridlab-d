@@ -181,7 +181,7 @@
           "parent": "load:4",
           "target": "voltage_AB",
           "within": 5,
-          "value": "+13681.8+26.5785d "
+          "value": "+13681.8+26.5785d"
         },
         {
           "parent": "load:4",

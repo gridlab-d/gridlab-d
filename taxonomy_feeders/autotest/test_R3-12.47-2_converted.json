@@ -1325,7 +1325,7 @@
           "once": "ONCE_TRUE",
           "in": "'2000-01-01 00:04:00 EST'",
           "target": "voltage_B",
-          "value": " +0+0j",
+          "value": "+0+0j",
           "within": 1
         },
         {
@@ -1349,7 +1349,7 @@
           "once": "ONCE_TRUE",
           "in": "'2000-01-01 00:04:00 EST'",
           "target": "voltage_B",
-          "value": " -152.929-228.122j",
+          "value": "-152.929-228.122j",
           "within": 1
         },
         {
@@ -1373,7 +1373,7 @@
           "once": "ONCE_TRUE",
           "in": "'2000-01-01 00:04:00 EST'",
           "target": "voltage_B",
-          "value": " -144.749-245.876j",
+          "value": "-144.749-245.876j",
           "within": 1
         },
         {
@@ -1397,7 +1397,7 @@
           "once": "ONCE_TRUE",
           "in": "'2000-01-01 00:04:00 EST'",
           "target": "voltage_B",
-          "value": " -146.538-241.337j",
+          "value": "-146.538-241.337j",
           "within": 1
         },
         {
@@ -1421,7 +1421,7 @@
           "once": "ONCE_TRUE",
           "in": "'2000-01-01 00:04:00 EST'",
           "target": "voltage_B",
-          "value": " -146.636-241.077j",
+          "value": "-146.636-241.077j",
           "within": 1
         },
         {
@@ -1445,7 +1445,7 @@
           "once": "ONCE_TRUE",
           "in": "'2000-01-01 00:04:00 EST'",
           "target": "voltage_B",
-          "value": " +0+0j",
+          "value": "+0+0j",
           "within": 1
         },
         {
@@ -1469,7 +1469,7 @@
           "once": "ONCE_TRUE",
           "in": "'2000-01-01 00:04:00 EST'",
           "target": "voltage_B",
-          "value": " -143.912-245.356j",
+          "value": "-143.912-245.356j",
           "within": 1
         },
         {
@@ -1517,7 +1517,7 @@
           "once": "ONCE_TRUE",
           "in": "'2000-01-01 00:04:00 EST'",
           "target": "voltage_B",
-          "value": " -3804.49-6277.05j",
+          "value": "-3804.49-6277.05j",
           "within": 1
         },
         {
@@ -1565,7 +1565,7 @@
           "once": "ONCE_TRUE",
           "in": "'2000-01-01 00:04:00 EST'",
           "target": "voltage_B",
-          "value": " -3600-6235j",
+          "value": "-3600-6235j",
           "within": 1
         },
         {

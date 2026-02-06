@@ -890,7 +890,7 @@
           "base_efficiency": 1.0,
           "state_of_charge": 1.0,
           "generator_mode": "CONSTANT_PQ",
-          "}object": "inverter ",
+          "}object": "inverter",
           "groupid": "cdc_group",
           "inverter_type": "FOUR_QUADRANT",
           "four_quadrant_control_mode": "CONSTANT_PQ",

@@ -475,7 +475,7 @@
           "name": "rad_1_load",
           "phases": "ABCN",
           "nominal_voltage": 2401.7771,
-          "constant_current_A": " 416.35837+0.0j",
+          "constant_current_A": "416.35837+0.0j",
           "constant_current_B": "-776.93529-512.97466j",
           "constant_current_C": "96.616295+1498.0891j",
           "inline_comments": {
@@ -489,7 +489,7 @@
           "parent": "rad_2_meter",
           "phases": "ABCN",
           "nominal_voltage": 2401.7771,
-          "constant_current_A": " 416.35837+0.0j",
+          "constant_current_A": "416.35837+0.0j",
           "constant_current_B": "-776.93529-512.97466j",
           "constant_current_C": "96.616295+1498.0891j",
           "inline_comments": {
@@ -502,7 +502,7 @@
           "name": "rad_3_load",
           "phases": "ABCN",
           "nominal_voltage": 2401.7771,
-          "constant_current_AN": " 416.35837+0.0j",
+          "constant_current_AN": "416.35837+0.0j",
           "constant_current_BN": "-776.93529-512.97466j",
           "constant_current_CN": "96.616295+1498.0891j",
           "inline_comments": {
@@ -516,7 +516,7 @@
           "parent": "rad_4_meter",
           "phases": "ABCN",
           "nominal_voltage": 2401.7771,
-          "constant_current_AN": " 416.35837+0.0j",
+          "constant_current_AN": "416.35837+0.0j",
           "constant_current_BN": "-776.93529-512.97466j",
           "constant_current_CN": "96.616295+1498.0891j",
           "inline_comments": {

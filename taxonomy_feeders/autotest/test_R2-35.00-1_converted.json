@@ -7153,7 +7153,7 @@
         {
           "parent": "R2-35-00-1_load_139",
           "target": "voltage_B",
-          "value": " -138.1-236.094j",
+          "value": "-138.1-236.094j",
           "within": 1
         },
         {
@@ -7171,7 +7171,7 @@
         {
           "parent": "R2-35-00-1_load_297",
           "target": "voltage_B",
-          "value": " -138.548-236.751j",
+          "value": "-138.548-236.751j",
           "within": 1
         },
         {
@@ -7319,7 +7319,7 @@
           "target": "voltage_B",
           "once": "ONCE_TRUE",
           "in": "'2000-01-01 00:04:00 EST'",
-          "value": " -10058-16998.9j",
+          "value": "-10058-16998.9j",
           "within": 1
         },
         {

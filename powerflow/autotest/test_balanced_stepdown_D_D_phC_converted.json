@@ -147,13 +147,13 @@
           "parent": "node:2",
           "target": "voltage_AB",
           "within": 5,
-          "value": "+12469.5+30.0012d "
+          "value": "+12469.5+30.0012d"
         },
         {
           "parent": "node:2",
           "target": "voltage_BC",
           "within": 5,
-          "value": "+12467-90.032d "
+          "value": "+12467-90.032d"
         },
         {
           "parent": "node:2",
@@ -165,19 +165,19 @@
           "parent": "node:3",
           "target": "voltage_AB",
           "within": 5,
-          "value": "+4159.83+30.0012d "
+          "value": "+4159.83+30.0012d"
         },
         {
           "parent": "node:3",
           "target": "voltage_BC",
           "within": 5,
-          "value": "+4157.29-90.2364d "
+          "value": "+4157.29-90.2364d"
         },
         {
           "parent": "node:3",
           "target": "voltage_CA",
           "within": 5,
-          "value": "+4143.62+149.913d "
+          "value": "+4143.62+149.913d"
         },
         {
           "parent": "load:4",

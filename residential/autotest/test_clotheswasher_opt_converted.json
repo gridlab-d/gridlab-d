@@ -54,7 +54,7 @@
       "instances": [
         {
           "name": "triplex_line_configuration_1",
-          "conductor_1": "object triplex_line_conductor ",
+          "conductor_1": "object triplex_line_conductor",
           "resistance": 0.97,
           "geometric_mean_radius": 0.0111
         }
@@ -288,7 +288,7 @@
         },
         {
           "parent": "clotheswasher_27",
-          "property": " clothesWasherPower",
+          "property": "clothesWasherPower",
           "interval": 1,
           "limit": 1296020,
           "file": "clotheswasher_out.csv"

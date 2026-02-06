@@ -172,7 +172,7 @@
           "parent": "node:3",
           "target": "voltage_A",
           "within": 5,
-          "value": "+2198.93-4.25804d "
+          "value": "+2198.93-4.25804d"
         },
         {
           "parent": "node:3",
@@ -184,7 +184,7 @@
           "parent": "node:3",
           "target": "voltage_C",
           "within": 5,
-          "value": "+2416.38+120.307d "
+          "value": "+2416.38+120.307d"
         },
         {
           "parent": "load:4",
