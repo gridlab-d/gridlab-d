@@ -56,3 +56,26 @@ def test_step_to_accepts_iso8601_and_hits_target(gld_instance):
 
     final_time = _parse_gld_time(time2)
     assert (final_time - target_time).total_seconds() == pytest.approx(0.0, abs=1e-6)
+
+
+def test_step_does_not_exceed_stoptime(gld_instance, test_models_dir):
+    """Ensure step() does not advance beyond the clock stoptime."""
+    model_path = test_models_dir / "minimal.glm"
+    assert gld_instance.load(str(model_path)) == 0
+
+    max_steps = 1000
+    for _ in range(max_steps):
+        status, _ = gld_instance.step()
+        if status < 0:
+            pytest.fail(f"step() failed with status {status}")
+        if status == 0:
+            break
+    else:
+        pytest.fail("step() did not reach completion within max_steps")
+
+    status_time, time_str = gld_instance.get_time()
+    assert status_time >= 0
+
+    final_time = _parse_gld_time(time_str)
+    expected_stop = datetime(2020, 1, 1, 1, 0, 0)
+    assert final_time == expected_stop
