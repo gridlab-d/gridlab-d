@@ -8,7 +8,7 @@
 ### Dev Questions
 - [ ]
 ### Docs Questions
-- [ ] Technical Overview needs rework
+- [ ] Technical Overview needs rework - Review status in Scott's tracker
 
 # New Users
 ### Dev Questions
@@ -20,7 +20,8 @@
     - [x] add the "easy" or "light" executable install option
 - [X] MySQL instructions - DEPRECATE/Unimplemented? If so, most content is unfinished. Needs robust introduction explaining what it is and why it is useful.
     - propose to Dev team to get rid of MySQL integration in leiu of python interface with new api (same for Matlab, HELICS, any other external integration)
-- [ ] Add a troubleshooting section to the new users section walking people through referencing the source code and how to find information they need on the source of truth.
+- [X] Add a troubleshooting section to the new users section walking people through referencing the source code and how to find information they need on the source of truth.
+  - [ ] Page started, needs more content.
 
 ### Docs Questions
 - [ ] **Intro to Modeling needs to be re-written to not use metronome**
@@ -137,9 +138,9 @@
 - [ ] Visual navigation:
     - [ ] Pages with subpages should be more visually distinct, bold, underilned, something. The [+] left of the header that is just barely visible until you hover over it is not very helpful.
 - [ ] Word/page limit of a single doc page?
-- [ ] "See Also" lists:
+- [X] "See Also" lists:  --> Replaced with "**Related Concepts**"
   - Do we want to keep these? Will have to ensure pages still exist and links are accurate. Do we assume that the pages are now well-organized enough that this is no longer needed?
-  - Converted to "Related Concepts" list for now. When we're ready to finalize we can review and make items links to other pages where relevant.
+  - [ ] Converted to "Related Concepts" list for now. When we're ready to finalize we can review and make items links to other pages where relevant.
 - [ ] Consistency of Terms, example blocks `<mymodel>`, for example (maybe standalone page in New Users)
   - See style guide for guidance 
 - [ ] Remove dated clauses, like:
