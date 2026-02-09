@@ -57,7 +57,7 @@ class TestClockAPI:
         clock = gld_with_model.get_clock()
         assert clock is not None
         assert isinstance(clock, str)
-        assert len(clock) > 0
+        assert "T" in clock  # ISO 8601 format
         print(f"Clock: {clock}")
 
     def test_get_starttime(self, gld_with_model):
@@ -65,9 +65,8 @@ class TestClockAPI:
         starttime = gld_with_model.get_starttime()
         assert starttime is not None
         assert isinstance(starttime, str)
-        assert len(starttime) > 0
-        # Should contain the year 2024 from our GLM
-        assert "2024" in starttime or starttime.startswith("17")  # timestamp or ISO
+        assert "T" in starttime  # ISO 8601 format
+        assert "2024" in starttime
         print(f"Starttime: {starttime}")
 
     def test_get_stoptime(self, gld_with_model):
@@ -75,7 +74,7 @@ class TestClockAPI:
         stoptime = gld_with_model.get_stoptime()
         assert stoptime is not None
         assert isinstance(stoptime, str)
-        assert len(stoptime) > 0
+        assert "T" in stoptime  # ISO 8601 format
         print(f"Stoptime: {stoptime}")
 
     def test_get_timezone(self, gld_with_model):

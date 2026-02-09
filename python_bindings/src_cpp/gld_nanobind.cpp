@@ -17,6 +17,7 @@ extern "C" {
 unsigned int object_get_count(void);
 char *global_getvar(const char *name, char *buffer, int size);
 int global_setvar(const char *def, ...);
+int convert_from_timestamp(int64_t ts, char *buffer, int size);
 }
 
 #define NB_STRINGIFY_HELPER(x) #x
@@ -115,7 +116,12 @@ NB_MODULE(gridlabd_core, m) {
           [](GridLabD &self) {
             double simulation_time = 0.0;
             GLDErrorCode code = self.step(simulation_time);
-            return nb::make_tuple(code, simulation_time);
+            char buffer[64];
+            int64_t ts = static_cast<int64_t>(simulation_time);
+            if (convert_from_timestamp(ts, buffer, sizeof(buffer)) > 0) {
+              return nb::make_tuple(code, std::string(buffer));
+            }
+            return nb::make_tuple(code, std::string("INVALID"));
           },
           "Advance the simulation by one time step")
       .def("set_time", &GridLabD::set_time, nb::arg("timestamp"),
@@ -135,7 +141,12 @@ NB_MODULE(gridlabd_core, m) {
           [](GridLabD &self, const std::string &target_time_str) {
             double simulation_time = 0.0;
             GLDErrorCode code = self.step_to(target_time_str, simulation_time);
-            return nb::make_tuple(code, simulation_time);
+            char buffer[64];
+            int64_t ts = static_cast<int64_t>(simulation_time);
+            if (convert_from_timestamp(ts, buffer, sizeof(buffer)) > 0) {
+              return nb::make_tuple(code, std::string(buffer));
+            }
+            return nb::make_tuple(code, std::string("INVALID"));
           },
           nb::arg("target_time_str"),
           "Step the simulation to a specific timestamp (ISO 8601 string)")
