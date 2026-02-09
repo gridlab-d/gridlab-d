@@ -752,6 +752,11 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
   TIMESTAMP start_clock = global_clock;
   TIMESTAMP target_clock = start_clock + selected_timestep;
 
+  // Respect global stoptime when using fixed timesteps
+  if (global_stoptime != TS_NEVER && target_clock > global_stoptime) {
+    target_clock = global_stoptime;
+  }
+
   output_verbose("Stepping from time %.2f to target %.2f (step size: %d seconds)",
                  (double)start_clock, (double)target_clock, selected_timestep);
 
