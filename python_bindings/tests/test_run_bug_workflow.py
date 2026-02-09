@@ -3,23 +3,15 @@
 from __future__ import annotations
 
 from datetime import datetime
+import re
 from pathlib import Path
 
 
 def _parse_gld_time(time_str: str) -> datetime:
-    parts = time_str.rsplit(" ", 1)
-    if len(parts) == 2 and parts[1] in [
-        "PST",
-        "PDT",
-        "EST",
-        "EDT",
-        "CST",
-        "CDT",
-        "MST",
-        "MDT",
-    ]:
-        time_str = parts[0]
-    return datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+    match = re.search(r"(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}:\d{2})", time_str)
+    if not match:
+        raise ValueError(f"Unrecognized time format: {time_str}")
+    return datetime.strptime(f"{match.group(1)} {match.group(2)}", "%Y-%m-%d %H:%M:%S")
 
 
 def test_run_house_with_solar_one_hour(gld_instance):

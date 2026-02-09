@@ -10,6 +10,37 @@ import json
 from typing import Any
 
 from ._protocol import Command, Message, Response
+import re
+
+_TZ_OFFSETS = {
+    "PST": "-08:00",
+    "PDT": "-07:00",
+    "MST": "-07:00",
+    "MDT": "-06:00",
+    "CST": "-06:00",
+    "CDT": "-05:00",
+    "EST": "-05:00",
+    "EDT": "-04:00",
+}
+
+
+def _to_iso8601(time_str: str) -> str:
+    value = time_str.strip()
+    if re.match(r"^\d{4}-\d{2}-\d{2}T", value):
+        return value
+
+    parts = value.split()
+    if len(parts) < 2:
+        return value
+
+    date_part = parts[0]
+    time_part = parts[1]
+    tz_part = parts[2] if len(parts) >= 3 else None
+
+    iso = f"{date_part}T{time_part}"
+    if tz_part in _TZ_OFFSETS:
+        iso = f"{iso}{_TZ_OFFSETS[tz_part]}"
+    return iso
 
 # Import the direct C++ binding
 from .gridlabd_core import GridLabD as DirectGridLabD, GLDErrorCode
@@ -189,7 +220,8 @@ def handle_get_time(message: Message) -> Response:
     """Get the current simulation time."""
     try:
         code, current_time = _gld_instance.get_time()
-        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "time": current_time})
+        iso_time = _to_iso8601(current_time)
+        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "time": iso_time})
     except Exception as e:
         return Response(success=False, error=str(e))
 
