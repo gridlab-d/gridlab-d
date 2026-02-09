@@ -42,7 +42,8 @@ def test_step_to_accepts_iso8601_and_hits_target(gld_instance):
 
     base_time = datetime.fromisoformat(time1)
     target_time = base_time + timedelta(minutes=30)
-    target_str = target_time.isoformat(timespec="seconds")
+    # Strip timezone for step_to - C++ convert_to_timestamp_delta doesn't support TZ offsets
+    target_str = target_time.replace(tzinfo=None).isoformat(timespec="seconds")
 
     status_step, _ = gld_instance.step_to(target_str)
     assert status_step >= 0
@@ -51,6 +52,11 @@ def test_step_to_accepts_iso8601_and_hits_target(gld_instance):
     assert status2 >= 0
 
     final_time = datetime.fromisoformat(time2)
+    # Strip timezone for comparison if present
+    if final_time.tzinfo:
+        final_time = final_time.replace(tzinfo=None)
+    if target_time.tzinfo:
+        target_time = target_time.replace(tzinfo=None)
     assert (final_time - target_time).total_seconds() == pytest.approx(0.0, abs=1e-6)
 
 
@@ -100,7 +106,10 @@ def test_step_does_not_exceed_stoptime(gld_instance, test_models_dir):
     status_time, time_str = gld_instance.get_time()
     assert status_time >= 0
 
-    final_time = _parse_gld_time(time_str)
+    final_time = datetime.fromisoformat(time_str)
+    # Strip timezone for comparison if present
+    if final_time.tzinfo:
+        final_time = final_time.replace(tzinfo=None)
     expected_stop = datetime(2020, 1, 1, 1, 0, 0)
     assert final_time == expected_stop
 

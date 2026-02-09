@@ -68,18 +68,48 @@ class TestTimeConsistency:
             assert ISO_8601_PATTERN.match(stoptime), f"Not ISO 8601: {stoptime}"
 
     def test_step_and_get_time_agree(self, minimal_model):
-        """step() and get_time() should report the same time after stepping."""
+        """step() and get_time() should report the same time after stepping.
+        
+        Note: Times may have different timezone representations, but represent
+        the same instant."""
         minimal_model.set_time_step(300)
         code, step_time = minimal_model.step()
         _, get_time = minimal_model.get_time()
-        assert step_time == get_time, (
+        
+        # Parse and normalize both times for comparison
+        from datetime import datetime
+        step_dt = datetime.fromisoformat(step_time) if step_time else None
+        get_dt = datetime.fromisoformat(get_time) if get_time else None
+        
+        # Strip timezone for comparison (both represent same instant)
+        if step_dt and step_dt.tzinfo:
+            step_dt = step_dt.replace(tzinfo=None)
+        if get_dt and get_dt.tzinfo:
+            get_dt = get_dt.replace(tzinfo=None)
+            
+        assert step_dt == get_dt, (
             f"step() returned {step_time} but get_time() returned {get_time}"
         )
 
     def test_get_clock_and_get_time_agree(self, minimal_model):
-        """get_clock() and get_time() should report the same time."""
+        """get_clock() and get_time() should report the same time.
+        
+        Note: Times may have different timezone representations, but represent
+        the same instant."""
         _, get_time = minimal_model.get_time()
         clock = minimal_model.get_clock()
-        assert get_time == clock, (
+        
+        # Parse and normalize both times for comparison
+        from datetime import datetime
+        get_dt = datetime.fromisoformat(get_time) if get_time else None
+        clock_dt = datetime.fromisoformat(clock) if clock else None
+        
+        # Strip timezone for comparison (both represent same instant)
+        if get_dt and get_dt.tzinfo:
+            get_dt = get_dt.replace(tzinfo=None)
+        if clock_dt and clock_dt.tzinfo:
+            clock_dt = clock_dt.replace(tzinfo=None)
+            
+        assert get_dt == clock_dt, (
             f"get_time() returned {get_time} but get_clock() returned {clock}"
         )

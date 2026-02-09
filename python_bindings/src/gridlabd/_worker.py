@@ -192,7 +192,8 @@ def handle_step(message: Message) -> Response:
     """Step the simulation."""
     try:
         code, simulation_time = _gld_instance.step()
-        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "time": simulation_time})
+        iso_time = _to_iso8601(simulation_time)
+        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "time": iso_time})
     except Exception as e:
         return Response(success=False, error=str(e))
 
@@ -202,7 +203,8 @@ def handle_step_to(message: Message) -> Response:
     try:
         target_time = message.args["target_time"]
         code, simulation_time = _gld_instance.step_to(target_time)
-        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "time": simulation_time})
+        iso_time = _to_iso8601(simulation_time)
+        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "time": iso_time})
     except Exception as e:
         return Response(success=False, error=str(e))
 
