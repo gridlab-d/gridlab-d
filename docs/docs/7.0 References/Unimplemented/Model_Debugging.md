@@ -6,11 +6,51 @@
 	
 	**This page does not reflect the current state of GridLAB-D™**
 
+The debug option produces all the debugging output from GridLAB-D. It is managed by the global variable **debug**, which is by default **FALSE**.
+
+## GLM
+
 The debugger is started when the `-debugger` command-line option is used. It can also be started by including the line:
     
-    #set debugger=1
+    # GLM
+
+To enable debug mode use the directive 
+    
+    
+    #set debug=1
+    
+
+To disable debug mode use the directive 
+    
+    
+    #set debug=0
+    
+
+## Command line
+
+To toggle debug mode use the option 
+    
+    
+    host% gridlabd --debug
+    
+
+To enable debug mode use the option 
+    
+    
+    host% gridlabd -D debug=1
+    
+
+To disable debug mode use the option 
+    
+    
+    host% gridlabd -D debug=0
     
 in the GLM file. The debugger supports two methods of interrupting the simulation. 
+
+The **debugger** option enables the debugger in GridLAB-D. To enable the debugger use the command option 
+    
+    
+    host% gridlabd --debugger
 
   1. **Breakpoints** halt the simulator and start the debugger whenever a situation arises that matches the breakpoint criterion. For example, a breakpoint on the bottom-up pass will stop the simulation every time an object sync is called during a bottom-up pass.
 
@@ -188,5 +228,68 @@ You can run a script containing debug commands using the script command:
     DEBUG: pass BOTTOMUP, rank 2, object node:0, iteration 5
     GLD>
     
+# GDB
+
+When `gdb` is non-zero, runtime classes are built with debugging enabled and GridLAB-D is started inside the host platform's debugging environment. This is specifically to allow user to debug runtime classes.
+
+The `gdb` option interacts in complex ways with debug, `gdb_window`, `compile_once`, and `use_msvc`. For details, see further documentation on working with MS Visual Studio 2005 in GridLAB-D. To implement:
+
+    host% gridlabd -D gdb=0|1
+    host% gridlabd --define gdb=0|1
+    #set gdb=0|1
+
+`gdb_window` controls the use of the source debugger window for runtime classes. When gdb_window is non-zero, runtime classes are built with debugging enabled and GridLAB-D is started inside the host platform's debugging environment using a debugging window. This is specifically to allow users to debug runtime classes using a debugging window. To implement: 
+
+    host% gridlabd -D gdb_window=0|1
+    host% gridlabd --define gdb_window=0|1
+    #set gdb_window=0|1
 
 
+# Runtime Debugger
+
+When the environment variable GRIDLABD_DEBUG is set, the script `/usr/local/bin/gridlabd` starts the specified debugger and opens the file `/usr/local/bin/gridlabd.bin`. This enables debugging of your code. 
+
+If you enable debugging using debug or by including -g in CXXFLAGS and LDFLAGS then you will be able to set a breakpoint in your runtime code. When the GRIDLABD_DEBUG environment variable is set, the C++ source file is not deleted after the runtime code is compiled. This file can be found in your temporary folder, which is specified by the tmp global variable.
+
+    /bin/bash$ export GRIDLABD_DEBUG=debugger
+
+!!! note
+
+    When GRIDLABD_DEBUG is set, the runtime compiler does not delete the C++ implementation file of runtime classes. This is important if you want to debug the implementation itself and can be used in combination with the noglmrefs global variable to allow debugging of the runtime implementation.
+
+## LDFLAGS
+
+    #setenv LDFLAGS=g++-command-line-options
+    /bin/bash$ export LDFLAGS=g++-command-line-options
+
+
+The default C++ runtime class linker options are as follows: 
+
+* `-shared`:
+    Generate a shared library (always included)
+* `-m32:`
+    Generate 32-bit code (always included on 32-bit GridLAB-D versions)
+* `-m64:`
+    Generate 64-bit code (always included on 64-bit GridLAB-D versions)
+* `-lstdc++`:
+    Use the standard C++ library (always included)
+
+If `debug` output is enabled, the `-g` optional to enable linking with debugging symbols is added automatically. If you wish to enable debugging without debug output generated, you must add the `-g` option to both CXXFLAGS and LDFLAGS.
+
+## LDPOSTLINK
+
+    #setenv LDPOSTLINK=command
+
+-or-
+
+    /bin/bash$ export LDPOSTLINK=command
+
+Some operating systems require special commands to allow dynamic link or shared libraries to used after they are linked. For example, SELinux requires the following to load a runtime class after it is built and linked.
+
+    chcon -t textrel_shlib_t afile
+
+To make this occur before the runtime module is loaded, use
+
+    /bin/bash$ export LDPOSTLINK=chcon -t textrel_shlib_t
+    
+to cause the command to be executed on every afile created by the runtime class compiler.

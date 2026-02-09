@@ -23,8 +23,8 @@ MySQL database connection
       on_init _file-name_ ;
       on_sync _file-name_ ;
       on_term _file-name_ ;
-      sync_interval _seconds_ ;
-      tz_offset _seconds_ ; 
+      sync_interval seconds ;
+      tz_offset seconds ; 
       uses_dst FALSE; 
     }
     

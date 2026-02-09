@@ -81,71 +81,6 @@
     * Common warnings you might be able to avoid
     * Running validation scripts – Something that post-processes results and looks for modeling abnormalities
  
-### Outline with Notes:
-Loads
-* Loadshape
-* Load Composition
-* Industrial and Agricultural Loads
-Metrics & Recorders
-* Recorder
-* Multi recorder
-* Metrics collector writer
-* Plotting Output
-Modules
-* Introduction
-* Assert
-* Climate
-  * Climate Module
-  * CSV reader
-* Objects
-  * DER
-    * Microgrids
-    * Diesel dg
-    * Energy Storage
-    * Evcharger det
-    * Inverters
-    * Solar Panel
-    * Windturb dg
-  * Motor
-    * Composition Motor
-    * Single phase induction motor
-    * Three phase induction motor
-  * Player
-  * Series copmensator
-  * Switch
-  * Voltage source inverter (VSI)
-  * Poweflow
-    * Powerflow user guide
-    * poweflow (module)
-    * Poweflow technical reference
-    * Reliability user guide
-    * Newton-Raphson Distribution Powerflow Solver
-  * Residential
-    * Introduction
-    * House
-    * ETPM
-    * End Use Loads
-    * Thermal energy storage model
-    * Waterheater
-    * ZIPload
-  * Tape
-  * Delta Mode Document
-  * Other Features
-    * Checkpoints
-    * Command Options
-    * Debugging and Validation
-      * Model Debugging
-      * Validate
-    * Macros
-    * Parameter expansion
-    * Performance profiling
-    * Sync Check
-    * Units
-
-
-
-
-
 # 4.0 Developing
 
 **Purpose**: part walkthrough, part dictionary/reference
@@ -192,6 +127,7 @@ Modules
 - [ ] 
 
 # Miscellaneous Notes
+- [ ] NOTE - Dev team does not have installation process well documented (i.e., checking that all installers are functional)
 - [ ] Branding, logo
 - [ ] Math doesn't display on search, can we fix that?
 - [ ] Search in general is not great, what can we do
@@ -223,16 +159,16 @@ Modules
 
 Topic | Start Date | Time Estimate | Completed Date
 -- | -- | -- | --
-Deltamode | Oct 6 | 3 weeks | > 13 weeks
-Object synchronization process | 
+Deltamode | Oct 6 | 3 weeks | Jan 28
+Object synchronization process | Wrapped into time management, TODO: check that there isn't anything specific here to investigate
 Device model development process | 
-GridLAB-D loader and JSON file format | 
+GridLAB-D loader and JSON file format | Mostly complete, pending specific parameter list for each object -- could start this any time.
 
 # New Features Dev Schedule
 Topic |  Estimate Complete Date | Actual Completed Date | Able to Start Docs?
 -- | -- | -- | --
 Basic C/C++ API | Oct 31st | | Yes
-JSON Loader | <s>Nov 30</s> -> Jan 31
+JSON Loader | <s>Nov 30</s> -> Jan 31 | Does not yet have full parameter list | Possible - Confirm with Frank what "done" means for JSON loader
 Checkpoint System | <s>Jan 31</s> -> Feb 27 | Trying to figure out how to save/load| Potentially - Orestis to keep in mind as he works Dev side
 Multithreading | Mar 31
 Docker Containerization | Mar 15
@@ -249,7 +185,9 @@ Topic | Date | Outstanding Decisions
 -- | -- | ---
 Residential Module | Dec 22 | Waterheater needs Multi-Layer model with accurate reflection of its status and stability
 Generators Module | Dec 23 | -  Decide whether to merge inverter and inverter_dyn (invluding VSI, part of SETO project) <br/> - Either energy_storage model gets some tests or it is deprecated <br/> - Single- and three-phase motors shoud be revisited, some "extra features" may not be fully documented. <br/> - Unclear if wind turbine is still experimental
-Powerflow | Next Up
+Powerflow | Feb 2 | Meeting notes circulated, TODOs pending
+Climate | Next Up
+Developing Reference | On Deck
 
 # Definition Plan
 - Open Index Tracker excel sheet on shareopint --> filter `Page Type` by `Definition`

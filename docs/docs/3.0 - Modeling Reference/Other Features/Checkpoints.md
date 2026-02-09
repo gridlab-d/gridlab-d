@@ -1,5 +1,7 @@
 # Checkpoints
 
+NOTE: This is likely deprecated (old checkpointing system that never worked).  See 4.0 subdocument (Chekpointing.md) for the more recent implementation.
+
 **TODO** - Incomplete - Add in content from related checkpoint files
 
 A checkpoint is a state save of a long simulation that is only partially completed. Checkpoints can be done periodically either based on the elapsed wall-clock time or elapsed simulation time. When a checkpoint save is performed, a stream dump of the model is output to a checkpoint file. At the time of each checkpoint, the stream file contains the complete internal state of the model, which includes 

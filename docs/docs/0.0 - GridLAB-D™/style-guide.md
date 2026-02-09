@@ -83,7 +83,7 @@ The PNNL Style Guide is available [here](https://confluence.pnnl.gov/confluence/
 
 # Quick Markdown Reference
 
-Markdown can be extremely powerful to use, and there are a lof of tips and tricks that we shall attempt to capture here where relevant.
+Markdown can be extremely powerful to use, and there are a lot of tips and tricks that we shall attempt to capture here where relevant.
 
 ## Adding Images
 

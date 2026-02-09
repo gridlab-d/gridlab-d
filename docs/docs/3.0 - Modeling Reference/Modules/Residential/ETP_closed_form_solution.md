@@ -559,10 +559,10 @@ Equation | Explanation
 ---  | -- |
 | $A_{wt} = 2 n h (1 + R) \sqrt{\frac{A}{nR}}$ | The gross exterior wall area ($A_{wt}$)   
 | $A_g = WWR\ A_{wt}\ EWR$ | The gross window area ($A_g$)   
-| $A_d = n_d\ A_{1d}$ | The total door area ($A_d$)   
+| $A_d = n_d\ A_{1d}$ | The total door area ($A_d$), used to calculate `net_exterior_wall_area`, `envelope_UA`, and `house_content_heat_transfer`. This is an automatically calculated value, not a variable that the user may set. The default door area is 78 square feet.  It is calculated by <br/> *door_area = number_of_doors * 3.0 * (78.0/12.0)*
 | $A_w = (A_{wt}-(A_g + A_d))\ EWR$ | The net exterior wall area ($A_w$)   
-| $A_c = \frac{A}{n} ECR$ | The net exterior ceiling area ($A_c$)   
-| $A_f = \frac{A}{n} EFR$ | The net exterior floor area ($A_f$)   
+| $A_c = \frac{A}{n} ECR$ | The net exterior ceiling area ($A_c$). This is an automatically calculated value, not a variable that the user may set. The default exterior ceiling area is 2500 sqft. It is calculated by <br/> *exterior_ceiling_area = floor_area * exterior_ceiling_fraction / number_of_stories*
+| $A_f = \frac{A}{n} EFR$ | The net exterior floor area ($A_f$). This is an automatically calculated value, not a variable that the user may set. The default exterior floor area is 2500 sqft. It is calcualted by <br/> *exterior_floor_area = floor_area * exterior_floor_fraction / number_of_stories*
   
 The total heat loss coefficient (conductance), $U_A$, for the house (the last term is for air infiltration); the defaults produce $U_A$ = 522.1 Btu/°F.hr 
 
