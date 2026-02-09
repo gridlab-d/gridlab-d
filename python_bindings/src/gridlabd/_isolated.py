@@ -28,9 +28,16 @@ class IsolatedGridLabD:
     _instances: "weakref.WeakSet[IsolatedGridLabD]" = weakref.WeakSet()
     _atexit_registered = False
     
-    def __init__(self):
-        """Create a new isolated GridLabD instance."""
+    def __init__(self, verbose: bool = False):
+        """Create a new isolated GridLabD instance.
+
+        Args:
+            verbose: If True, pass C++ debug/warning output through to stderr.
+                     If False (default), suppress console output. Use
+                     get_messages() to retrieve warnings and errors.
+        """
         self._process: Optional[subprocess.Popen] = None
+        self._verbose = verbose
         self._spawn_worker()
         # Initialize the GridLabD instance in the worker
         response = self._send_command(Command.INIT, {})
@@ -49,7 +56,7 @@ class IsolatedGridLabD:
             [sys.executable, "-m", "gridlabd._worker"],
             stdin=PIPE,
             stdout=PIPE,
-            stderr=sys.stderr,  # Send worker stderr to parent stderr for debugging
+            stderr=sys.stderr if self._verbose else subprocess.DEVNULL,
             text=True,
             bufsize=1,
             start_new_session=True
