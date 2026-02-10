@@ -27,6 +27,7 @@ def getGLDBinary():
                     break
     if gldBinary == "":
         raise ModuleNotFoundError("Could not find the gridlabd binary in the development environment!")
+    
 
 def processModuleDirectory(moduleDirectory: Path, runOptionalTests: bool):
     """
