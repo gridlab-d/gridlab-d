@@ -242,6 +242,17 @@ int waterheater::create()
 	interval = 0;
 	// =================================
 	
+	// Initialize checkpoint variables with sentinel values
+	time_to_transition = QNAN;
+	Tlower = QNAN;
+	heating_element_on = false;
+	turn_fan_on = false;
+	// heat_needed already set to false above
+	water_demand_old = QNAN;
+	for (int i = 0; i < 144; i++) {
+		init_tank_temp[i] = QNAN;
+	}
+	
 	dr_signal = 1;
 	return res;
 	last_water_demand = -1.0;
@@ -452,12 +463,15 @@ int waterheater::init(OBJECT *parent)
 
 		h = height;
 
-		// initial water temperature
-		if(h == 0){
-			// discharged
-			Tlower = Tinlet;
-		} else {
-			Tlower = Tinlet;
+		// Only initialize Tlower if not loaded from checkpoint (QNAN sentinel)
+		if (isnan(Tlower)) {
+			// initial water temperature
+			if(h == 0){
+				// discharged
+				Tlower = Tinlet;
+			} else {
+				Tlower = Tinlet;
+			}
 		}
 	}
 	Tcontrol = Tw;
@@ -563,9 +577,17 @@ int waterheater::init(OBJECT *parent)
 				coarse_tank_grid = 12;
 				fine_tank_grid = 12;
 			}
-			for( int i = 0; i < coarse_tank_grid*fine_tank_grid; i++){
-				init_tank_temp[i] = (Tw - 32.0) * (5.0 / 9.0);
-				tank_water_temp[i] = init_tank_temp[i];
+			// Only initialize init_tank_temp if not loaded from checkpoint (QNAN sentinel)
+			if (isnan(init_tank_temp[0])) {
+				for( int i = 0; i < coarse_tank_grid*fine_tank_grid; i++){
+					init_tank_temp[i] = (Tw - 32.0) * (5.0 / 9.0);
+					tank_water_temp[i] = init_tank_temp[i];
+				}
+			} else {
+				// Checkpoint was loaded, restore tank_water_temp from init_tank_temp
+				for( int i = 0; i < coarse_tank_grid*fine_tank_grid; i++){
+					tank_water_temp[i] = init_tank_temp[i];
+				}
 			}
 		} else {
 			GL_THROW("Invalid tank volume for the fortran water heater_model. Valid volumes are 40 or 80 gallons.");
@@ -706,6 +728,17 @@ int waterheater::init(OBJECT *parent)
 
         T_layers.resize(number_of_states, vector<double>());
 	}
+	
+	// Only initialize runtime checkpoint variables if not loaded from checkpoint (QNAN/false sentinels)
+	// time_to_transition is runtime state that gets set by set_time_to_transition()
+	if (isnan(time_to_transition)) time_to_transition = 0;
+	
+	// water_demand_old tracks previous water_demand and is updated in commit()
+	if (isnan(water_demand_old)) water_demand_old = 0;
+	
+	// heating_element_on and turn_fan_on are runtime state variables (already initialized to false via sentinel)
+	// heat_needed is already initialized to false in create()
+	
 	return residential_enduse::init(parent);
 }
 
@@ -987,6 +1020,11 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	int multilayer_transition_time = 0;
 	int i = 0;
 	int dt = (int)(t1-t0);
+
+	// Initialize checkpoint variables on first run after checkpoint load
+	if (isnan(time_to_transition)) time_to_transition = 0.0;
+	if (isnan(Tlower)) Tlower = Tinlet;
+
 	if (dt > interval)
 		interval = dt;
 
@@ -1023,6 +1061,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	// Now find our current temperatures and boundary height...
 	// And compute the time to the next transition...
 	//Adjusted because shapers go on sync, not presync
+	// Only call set_time_to_transition if just initialized from checkpoint (QNAN sentinel cleared above)
 	if(current_model != FORTRAN && current_model != MULTILAYER){
 		set_time_to_transition();
 	}

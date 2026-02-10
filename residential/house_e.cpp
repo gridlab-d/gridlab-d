@@ -781,6 +781,18 @@ int house_e::create()
 	window_c = 1;
 	window_temp_delta = 5; 
 	last_temperature = 75;
+	
+	// Initialize checkpoint variables with sentinel values
+	area_per_door = QNAN;
+	TcoolOn = QNAN;
+	fan_heatgain_fraction = QNAN;
+	hvac_period_on = QNAN;
+	hvac_period_off = QNAN;
+	Qlatent = QNAN;
+	value_Frequency = QNAN;
+	window_first_time_through = INT16_MIN;  // Use INT16_MIN as sentinel for int16
+	value_MeterStatus = INT16_MIN;  // Use INT16_MIN as sentinel for int16
+	
 	thermostat_mode = TM_AUTO;
 
 	//Deltamode variables
@@ -806,8 +818,7 @@ int house_e::create()
 	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = gld::complex(0.0,0.0);
 	value_Shunt[0] = value_Shunt[1] = value_Shunt[2] = gld::complex(0.0,0.0);
 	value_Power[0] = value_Power[1] = value_Power[2] = gld::complex(0.0,0.0);
-	value_MeterStatus = 1;
-	value_Frequency = 60.0;
+	// Note: value_MeterStatus and value_Frequency are initialized in init() after checkpoint checks
 	external_pf_mode = XPFV_NONE;
 	external_v1N = complex(0,0);
 	external_v2N = complex(0,0);
@@ -1660,8 +1671,8 @@ int house_e::init(OBJECT *parent)
 		proper_meter_parent = false;
 		commercial_load_parent = false;
 
-		//Set frequency
-		value_Frequency = default_grid_frequency;
+		//Set frequency - only if not loaded from checkpoint
+		if (isnan(value_Frequency)) value_Frequency = default_grid_frequency;
 
 		//Map us too, since the enduse loads may use it
 		pFrequency = map_double_value(obj,"grid_frequency");
@@ -1800,6 +1811,9 @@ int house_e::init(OBJECT *parent)
 	if (design_cooling_setpoint==0.0) design_cooling_setpoint = 75.0;
 	if (design_heating_setpoint==0.0) design_heating_setpoint = 70.0;
 	if (design_peak_solar<=0.0)	design_peak_solar = 195.0; //From Rob's defaults
+
+	// Initialize TcoolOn checkpoint - only if not already loaded from checkpoint
+	if (isnan(TcoolOn)) TcoolOn = cooling_setpoint;
 
 	if (thermostat_deadband<=0.0)	thermostat_deadband = 2.0; // F
 	if (thermostat_cycle_time<=0.0) thermostat_cycle_time = 120; // seconds
@@ -2000,10 +2014,13 @@ int house_e::init(OBJECT *parent)
 	}
 	update_model();
 	
-	if(include_fan_heatgain == true){
-		fan_heatgain_fraction = 1;
-	} else {
-		fan_heatgain_fraction = 0;
+	// Initialize fan_heatgain_fraction checkpoint - only if not already loaded from checkpoint
+	if (isnan(fan_heatgain_fraction)) {
+		if(include_fan_heatgain == true){
+			fan_heatgain_fraction = 1;
+		} else {
+			fan_heatgain_fraction = 0;
+		}
 	}
 
 	//"Cheating" function for compatibility with older models -- enables all houses to be deltamode-ready

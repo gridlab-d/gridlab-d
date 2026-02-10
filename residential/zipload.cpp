@@ -108,7 +108,7 @@ int ZIPload::create()
 	demand_response_mode = false;
 	ron = roff = -1;
 	phi = eta = 0.2;	
-	next_time = 0;
+	next_time = TS_INVALID;  // Sentinel for checkpoint - will be properly initialized in sync()
 
 	duty_cycle = recovery_duty_cycle = -1;
 	period = 0;
@@ -119,7 +119,10 @@ int ZIPload::create()
 
 	load.voltage_factor = 1.0; // assume 'even' voltage, initially
 
-	first_pass = 1;
+	first_pass = INT32_CHECKPOINT_SENTINEL;  // Sentinel for checkpoint - will be properly initialized in sync()
+	last_time = TS_INVALID;  // Sentinel for checkpoint - will be properly initialized in sync()
+	last_duty_cycle = QNAN;  // Sentinel for checkpoint - will be properly initialized in sync()
+	t = QNAN;  // Sentinel for checkpoint - will be properly initialized if needed
 	return res;
 }
 
@@ -132,6 +135,25 @@ int ZIPload::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
+
+	// Initialize checkpoint variables on first run after checkpoint load
+	if (next_time == TS_INVALID)
+	{
+		next_time = TS_NEVER;  // Initialize to current time
+	}
+	if (last_time == TS_INVALID)
+	{
+		last_time = TS_NEVER;  // Initialize to current time
+	}
+	if (std::isnan(last_duty_cycle))
+	{
+		last_duty_cycle = duty_cycle;  // Initialize to current duty cycle
+	}
+	if (first_pass == INT32_CHECKPOINT_SENTINEL)
+	{
+		first_pass = 1;  // Initialize to first pass
+	}
+	
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 

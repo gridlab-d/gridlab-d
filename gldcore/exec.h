@@ -16,6 +16,7 @@
 
 #include "globals.h"
 #include "index.h"
+#include "object.h"
 #include "cpp_threadpool.h"
 #include <nlohmann/json.hpp>
 

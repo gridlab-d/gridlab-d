@@ -72,6 +72,9 @@ int microwave::create()
 	standby_power = 0.01;
 	shape.load = gl_random_uniform(RNGSTATE,0, 0.1);  // assuming a default maximum 10% of the sync time 
 
+	// Initialize checkpoint variables with sentinel values
+	prev_demand = QNAN;
+
 	gl_warning("explicit %s model is experimental", object_header(this)->oclass->name);
 
 	return res;
@@ -278,6 +281,9 @@ TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double dt = 0;
 	double val = 0.0;
 	TIMESTAMP t2 = TS_NEVER;
+
+	// Initialize checkpoint variables on first run after checkpoint load
+	if (isnan(prev_demand)) prev_demand = 0.0;
 
 	if (t0 <= 0)
 		return TS_NEVER;

@@ -397,22 +397,6 @@ STATUS loader::loadClock()
             return FAILED;
         }
     }
-    if (j_obj.contains("timestamp"))
-    {
-        string ts = j_obj["timestamp"].get<string>();
-        clearQuotesFromStr(ts);
-        TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
-        if (tsval == TS_INVALID)
-        {
-            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. timestamp "
-                             "provided: %s.", this->filename.string().c_str(), ts.c_str());
-            return FAILED;
-        }
-        else
-        {
-            global_starttime = tsval;
-        }
-    }
     if (j_obj.contains("starttime"))
     {
         string ts = j_obj["starttime"].get<string>();
@@ -429,6 +413,22 @@ STATUS loader::loadClock()
             global_starttime = tsval;
         }
     }
+    if (j_obj.contains("timestamp"))
+    {
+        string ts = j_obj["timestamp"].get<string>();
+        clearQuotesFromStr(ts);
+        TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
+        if (tsval == TS_INVALID)
+        {
+            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. timestamp "
+                             "provided: %s.", this->filename.string().c_str(), ts.c_str());
+            return FAILED;
+        }
+        else
+        {
+            global_starttime = tsval;
+        }
+    }    
     if (j_obj.contains("stoptime"))
     {
         string ts = j_obj["stoptime"].get<string>();

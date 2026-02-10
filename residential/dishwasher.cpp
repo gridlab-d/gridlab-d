@@ -186,6 +186,19 @@ int dishwasher::create()
 
 	last_t = 0;
 	
+	// Initialize checkpoint variables with sentinel values
+	motor_only_25_repeat_one = false;
+	controls_power = QNAN;
+	cycle_duration = QNAN;
+	count_motor_only = QNAN;
+	count_motor_only1 = QNAN;
+	count_motor_only_25 = QNAN;
+	count_coil_only = QNAN;
+	count_motor_only_68 = QNAN;
+	count_control_only = QNAN;
+	count_control_only1 = QNAN;
+	next_change_time = TS_INVALID;
+	heat_fraction = QNAN;
 
 	gl_warning("explicit %s model is experimental and has not been validated", object_header(this)->oclass->name);
 	/* TROUBLESHOOT
@@ -211,7 +224,8 @@ int dishwasher::init(OBJECT *parent)
 	int rv = 0;
 	// default properties
 	if (motor_power==0) motor_power = gl_random_uniform(&hdr->rng_state,150,350);
-	if (heat_fraction==0) heat_fraction = 0.2;
+	// Only initialize heat_fraction if it hasn't been loaded from checkpoint (QNAN sentinel)
+	if (isnan(heat_fraction)) heat_fraction = 0.2;
 	if (is_240)
 	{
 		load.config = EUC_IS220;
@@ -223,13 +237,19 @@ int dishwasher::init(OBJECT *parent)
 	if (trip_delay==0) trip_delay = 10;
 	if (reset_delay==0) reset_delay = 60;
 
-	count_motor_only = 0;
-	count_motor_only1 =0;
-	count_motor_only_25 = 0;
-	count_coil_only = 0;
-	count_control_only =0;
-	count_control_only1 =0;
-	count_motor_only_68 =0;
+	// Only initialize count variables if they haven't been loaded from checkpoint (QNAN sentinel)
+	if (isnan(count_motor_only)) count_motor_only = 0;
+	if (isnan(count_motor_only1)) count_motor_only1 =0;
+	if (isnan(count_motor_only_25)) count_motor_only_25 = 0;
+	if (isnan(count_coil_only)) count_coil_only = 0;
+	if (isnan(count_control_only)) count_control_only =0;
+	if (isnan(count_control_only1)) count_control_only1 =0;
+	if (isnan(count_motor_only_68)) count_motor_only_68 =0;
+	
+	// Only initialize other state variables if they haven't been loaded from checkpoint (QNAN/TS_INVALID sentinel)
+	if (isnan(controls_power)) controls_power = 0;
+	if (isnan(cycle_duration)) cycle_duration = 0;
+	// if (next_change_time == TS_INVALID) next_change_time = gl_globalclock;
 	
 	pulse_interval[0] = 8;
 	pulse_interval[1] = 18;

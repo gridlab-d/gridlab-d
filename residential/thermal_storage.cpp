@@ -122,6 +122,11 @@ int thermal_storage::create(void)
 	state_of_charge = -1;
 	k = -1;
 
+	// Initialize checkpoint variables with sentinel values
+	recharge = false;
+	last_timestep = TS_INVALID;
+	next_timestep = TS_INVALID;
+
 	//Pointers to house
 	thermal_storage_available = nullptr;
 	thermal_storage_active = nullptr;
@@ -150,6 +155,17 @@ int thermal_storage::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
+
+	// Initialize checkpoint variables on first run after checkpoint load
+	if (last_timestep == TS_INVALID)
+	{
+		last_timestep = TS_NEVER;  // Initialize to current time
+	}
+	if (next_timestep == TS_INVALID)
+	{
+		next_timestep = TS_NEVER;  // Initialize to never
+	}
+
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 	gld_property *design_cooling_capacity_prop;

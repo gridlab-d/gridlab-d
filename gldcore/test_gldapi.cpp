@@ -6,55 +6,72 @@
 #include <nlohmann/json.hpp>
 #include "timestamp.h"
 
+// Helper function to get filename without path and without extension
+std::string get_base_filename(const std::string& filepath) {
+    // Get filename without path
+    size_t pos = filepath.find_last_of("/\\");
+    std::string filename = (pos == std::string::npos) ? filepath : filepath.substr(pos + 1);
+    
+    // Remove extension
+    size_t dot = filename.find_last_of('.');
+    if (dot != std::string::npos) {
+        filename = filename.substr(0, dot);
+    }
+    return filename;
+}
+
 int main(int argc, char* argv[]) {
-    // const char* fileName = "test_balanced_stepup_D-D_phAB";
-    const char* fileName = "test_HVAC_balance";
-    // Instantiate GridLabD via exectuable path
+    std::string fileName = argv[1];
     GridLabD gld;
     
-    // Test load_glm
-    std::vector<const char*> args = {"gridlabd", fileName, "--verbose"};
+    // Parse flags
+    bool checkpoint_mode = false;
+    bool restore_mode = false;
+    int num_steps = 2;
+    
+    for (int i = 2; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg == "--checkpoint") {
+            checkpoint_mode = true;
+        } else if (arg == "--restore") {
+            restore_mode = true;
+        } else if (arg == "--steps" && i + 1 < argc) {
+            num_steps = std::stoi(argv[++i]);
+        }
+    }
+    
+    // Load GLM file
+    if(restore_mode) {
+        fileName = get_base_filename(fileName) + "_checkpoint.json";
+    }
+    std::vector<const char*> args = {"notneeded", fileName.c_str(), "--verbose"};
     int test_argc = static_cast<int>(args.size());
     char* test_argv[] = { const_cast<char*>(args[0]), const_cast<char*>(args[1]), const_cast<char*>(args[2])};
     gld.load_glm(test_argc, test_argv);
-
-    TIMESTAMP start_time = convert_to_timestamp("2000-04-01 0:00:00");
-    TIMESTAMP stop_time = convert_to_timestamp("2000-06-01 0:00:00");
     
-    // Test run examples
-    // gld.run();
-    // gld.run(start_time, stop_time);
-
-    // Stepping through the simulation examples, check sim_time for each step if needed. 
-    // gld.set_time_step(900); // 15 minutes in seconds
-    // Need to support actually setting the timestep value, not just the minimum. Recorders do this. Tell it what the synchronization time is. 
-    double sim_time;
-    void* house = gld.find_object_by_name("This_old_house");
-    for (int i = 0; i < 10; i++) {
-        printf("\n=== Step %d ===\n", i+1);
-        
-        // Check current value before setting
-        std::string current_setpoint;
-        if (gld.get_property_value(house, "number_of_doors", current_setpoint) == GLD_SUCCESS) {
-            printf("Current number_of_doors before set: %s\n", current_setpoint.c_str());
+    if (checkpoint_mode) {
+        // Run N steps and save checkpoint
+        double sim_time;
+        for (int i = 0; i < num_steps; i++) {
+            gld.step(sim_time);
         }
+        printf("Completed %d steps. Simulation time: %.2f\n", num_steps, sim_time);
         
-        // Set new value
-        GLDErrorCode set_result = gld.set_property_value(house, "number_of_doors", std::to_string(i).c_str());
-
-        gld.step(sim_time);
-        
-    nlohmann::json checkpoint = gld.get_checkpoint_json("/mnt/c/dev/gridlab-d_fork/_test_results/");
+        // Get checkpoint and save it
+        nlohmann::json checkpoint = gld.get_checkpoint_json();
+        printf("Checkpoint saved.\n");
+    } 
+    else if (restore_mode) {
+        printf("Checkpoint loaded.\n");
+        gld.run();
+    }
+    else {
+        // Default: just run to completion
+        gld.run();
     }
     
-    // Get all info for GLD
-    nlohmann::json checkpoint = gld.get_checkpoint_json("/mnt/c/dev/gridlab-d_fork/_test_results/");
-    // OR access it directly
-    // gld.get_checkpoint_json();
-    // nlohmann::json checkpoint = gld.gld_model; // use nlohmann::json (JsonCpp removed)
-
-    // Test exit_gld
-    gld.exit_gld(fileName);
-
+    // Exit
+    gld.exit_gld(fileName.c_str());
+    
     return 0;
 }

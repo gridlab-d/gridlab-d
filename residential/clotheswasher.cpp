@@ -153,6 +153,8 @@ int clotheswasher::create()
 	load.power_factor = 0.95;
 	load.power_fraction = 1.0;
 
+	cycle_duration = QNAN;  // Sentinel for checkpoint - will be properly initialized if needed
+
 	gl_warning("explicit %s model is experimental", object_header(this)->oclass->name);
 	/* TROUBLESHOOT
 		The clothes washer explicit model has some serious issues and should be considered for complete

@@ -645,18 +645,9 @@ static counters run_test(char *file, double *elapsed_time = nullptr)
 	// Assuming vsystem expects a C-style string (const char*).
 	// unsigned int code = vsystem(command_line.c_str());
 
-	output_debug("Thread %zu acquiring subprocess launch lock", std::hash<std::thread::id>{}(std::this_thread::get_id()));
-
 	unsigned int code;
-	{
-		std::lock_guard<std::mutex> lock(subprocess_launch_mutex);
-
-		output_debug("Thread %zu launching subprocess: %s", std::hash<std::thread::id>{}(std::this_thread::get_id()), command_line.c_str());
-
-		code = vsystem(command_line.c_str());
-	}
-
-	output_debug("Thread %zu released subprocess launch lock", std::hash<std::thread::id>{}(std::this_thread::get_id()));
+	output_debug("Thread %zu launching subprocess: %s", std::hash<std::thread::id>{}(std::this_thread::get_id()), command_line.c_str());
+	code = vsystem(command_line.c_str());
 
 	// output_message("Command '%s' returned code %d", command_line.c_str(), code);
 

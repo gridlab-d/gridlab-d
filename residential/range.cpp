@@ -227,6 +227,18 @@ int range::create()
 
 	enduse_queue_cooktop = 0.99;
 
+	// Initialize checkpoint variables with sentinel values
+	time_to_transition = QNAN;
+	cycle_duration_cooktop = QNAN;
+	cycle_time_cooktop = QNAN;
+	state_time = QNAN;
+	Tlower = QNAN;
+	Tlower_old = QNAN;
+	Tupper = QNAN;
+	Tupper_old = QNAN;
+	Tw_old = QNAN;
+	oven_demand_old = QNAN;
+
 	return res;
 
 }
@@ -244,6 +256,20 @@ int range::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
+
+
+	// Initialize checkpoint variables on first run after checkpoint load
+	if (isnan(time_to_transition)) time_to_transition = 0.0;
+	if (isnan(cycle_duration_cooktop)) cycle_duration_cooktop = 0.0;
+	if (isnan(cycle_time_cooktop)) cycle_time_cooktop = 0.0;
+	if (isnan(state_time)) state_time = 0.0;
+	if (isnan(Tlower)) Tlower = Tinlet;
+	if (isnan(Tlower_old)) Tlower_old = Tinlet;
+	if (isnan(Tupper)) Tupper = Tinlet;
+	if (isnan(Tupper_old)) Tupper_old = Tinlet;
+	if (isnan(Tw_old)) Tw_old = Tinlet;
+	if (isnan(oven_demand_old)) oven_demand_old = 0.0;
+
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 

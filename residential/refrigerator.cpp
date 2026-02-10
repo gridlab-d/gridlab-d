@@ -162,6 +162,22 @@ int refrigerator::create()
 	load.power_fraction = 1;
 	is_240 = true;	
 
+	// Initialize checkpoint variables with sentinel values
+	check_icemaking = false;
+	return_time = QNAN;
+	door_return_time = INT32_CHECKPOINT_SENTINEL;
+	start_time = TS_INVALID;
+	check_defrost = false;
+	no_of_defrost = QNAN;
+	hourly_door_opening = INT32_CHECKPOINT_SENTINEL;
+	door_next_open_time = INT32_CHECKPOINT_SENTINEL;
+	door_time = INT32_CHECKPOINT_SENTINEL;
+	door_open = false;
+	door_to_open = false;
+	door_energy_calc = false;
+	total_compressor_time = QNAN;
+	new_running_state = false;
+
 	gl_warning("explicit %s model is experimental", object_header(this)->oclass->name);
 	/* TROUBLESHOOT
 		The refrigerator explicit model has some serious issues and should be considered for complete
@@ -235,6 +251,16 @@ int refrigerator::init(OBJECT *parent)
 	if(defrost_criterion==0) defrost_criterion=DC_TIMED;	
 	
 	refrigerator_power = 0;
+
+	// Initialize checkpoint variables if loaded from checkpoint (QNAN/TS_INVALID sentinel)
+	if (isnan(return_time)) return_time = 0;
+	if (door_return_time == INT32_CHECKPOINT_SENTINEL) door_return_time = 0;
+	if (start_time == TS_INVALID) start_time = 0;
+	if (isnan(no_of_defrost)) no_of_defrost = 0;
+	if (hourly_door_opening == INT32_CHECKPOINT_SENTINEL) hourly_door_opening = 0;
+	if (door_next_open_time == INT32_CHECKPOINT_SENTINEL) door_next_open_time = 0;
+	if (door_time == INT32_CHECKPOINT_SENTINEL) door_time = 0;
+	if (isnan(total_compressor_time)) total_compressor_time = 0;
 
 	return_time = 0;
 

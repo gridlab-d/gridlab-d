@@ -150,7 +150,16 @@ int dryer::create()
 	
 	energy_used = 0;	
 	
-	last_t = 0;	
+	last_t = 0;
+	
+	// Initialize checkpoint variables with sentinel values
+	pulse_interval[7] = QNAN;
+	pulse_interval[8] = QNAN;
+	pulse_interval[9] = QNAN;
+	new_running_state = false;
+	cycle_time = QNAN;
+	state_time = QNAN;
+	start_time = TS_INVALID;
 
 	gl_warning("explicit %s model is experimental", object_header(this)->oclass->name);
 
@@ -184,7 +193,7 @@ int dryer::init(OBJECT *parent)
 
 	if (coil_power[0]==-1) coil_power[0] = 5800;
 
-	start_time = 0;
+	// start_time set to TS_INVALID in create(); presync() initializes it if not loaded from checkpoint
 	dryer_run_prob = 0;
 
 	control_check = false;
@@ -198,6 +207,12 @@ int dryer::init(OBJECT *parent)
 	pulse_interval[4] = 129;
 	pulse_interval[5] = 138;
 	pulse_interval[6] = 60;
+	
+	// Only initialize pulse_interval[7-9] if they haven't been loaded from checkpoint (QNAN sentinel)
+	// These appear to be unused but are marked as CHECKPOINT_VAR
+	if (isnan(pulse_interval[7])) pulse_interval[7] = 0;
+	if (isnan(pulse_interval[8])) pulse_interval[8] = 0;
+	if (isnan(pulse_interval[9])) pulse_interval[9] = 0;
 
     controls_power = 10;
 	motor_power = 200;
@@ -220,6 +235,12 @@ int dryer::init(OBJECT *parent)
 	motor_only_check4 = false;
 	motor_only_check5 = false;
 	motor_only_check6 = false;
+	
+	// Only initialize runtime state variables if they haven't been loaded from checkpoint (QNAN/false sentinels)
+	// Note: new_running_state is a bool so we can't distinguish false sentinel from false loaded value
+	// cycle_time and state_time are runtime state that get set during operation
+	if (isnan(cycle_time)) cycle_time = 0;
+	if (isnan(state_time)) state_time = 0;
 
 
 	hdr->flags |= OF_SKIPSAFE;
@@ -347,10 +368,10 @@ TIMESTAMP dryer::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP dryer::presync(TIMESTAMP t0, TIMESTAMP t1){
 
-	if(start_time==0)
+	// Only initialize start_time if not loaded from checkpoint (TS_INVALID sentinel)
+	if(start_time == TS_INVALID)
 	{
 		start_time = int32(t0);
-		
 	}	
 
 

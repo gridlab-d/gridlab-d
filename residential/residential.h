@@ -27,6 +27,7 @@
 #define KWPBTUPH	(1e-3/BTUPHPW)	// kW/BTUPH
 #define MWPBTUPH	(1e-6/BTUPHPW)	// MW/BTUPH
 #define ROUNDOFF	1e-6			// numerical accuracy for zero in float comparisons
+#define INT32_CHECKPOINT_SENTINEL (-999999)	// Sentinel value for int32 checkpoint variables
 
 const double pi = 3.1415926535897931;
 const double Cp = 1;					// Btu/lbm-F

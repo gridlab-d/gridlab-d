@@ -199,6 +199,14 @@ int evcharger_det::create()
 	J2894_ramp_limit = 40.0;	//40 A/s default rate
 	J2894_is_ramp_constrained = false;	//Not ramp limited, by default
 
+	// Initialize checkpoint variables with sentinel values
+	glob_min_timestep = TS_INVALID;
+	glob_min_timestep_dbl = QNAN;
+	prev_time_dbl = QNAN;
+	J2894_off_accumulator = QNAN;
+	// Note: boolean checkpoint variables (off_nominal_time, deltamode_registered, etc.)
+	// are already initialized to false above, which is appropriate for bool variables
+
 	return create_res;
 }
 
@@ -251,12 +259,18 @@ int evcharger_det::init(OBJECT *parent)
 	//remove the mapping
 	delete temp_property;
 
-	//Convert it to a timestep
-	glob_min_timestep = (TIMESTAMP)temp_int_val;
+	//Convert it to a timestep - only if not already loaded from checkpoint
+	if (glob_min_timestep == TS_INVALID)
+	{
+		glob_min_timestep = (TIMESTAMP)temp_int_val;
+	}
 
 	if (glob_min_timestep > 1)					//Now check us
 	{
-		off_nominal_time=true;					//Set flag
+		if (off_nominal_time == false)			//Only set if not already loaded from checkpoint
+		{
+			off_nominal_time=true;				//Set flag
+		}
 		gl_verbose("evcharger_det:%s - minimum_timestep set - problems may emerge",hdr->name);
 		/*  TROUBLESHOOT
 		The evcharger detected that the forced minimum timestep feature is enabled.  This may cause
@@ -265,8 +279,11 @@ int evcharger_det::init(OBJECT *parent)
 		*/
 	}
 
-	//Set the double version
-	glob_min_timestep_dbl = (double)glob_min_timestep;
+	//Set the double version - only if not already loaded from checkpoint
+	if (isnan(glob_min_timestep_dbl))
+	{
+		glob_min_timestep_dbl = (double)glob_min_timestep;
+	}
 
 	//End-use properties
 	//Check the maximum charge rate - if over 1.7 kW, see if it is 220 VAC
@@ -682,7 +699,10 @@ int evcharger_det::init(OBJECT *parent)
 
 	//Initialize "tracking time", otherwise problems emerge
 	prev_temp_time = gl_globalclock;
-	prev_time_dbl = (double)prev_temp_time;
+	if (isnan(prev_time_dbl))	//Only set if not already loaded from checkpoint
+	{
+		prev_time_dbl = (double)prev_temp_time;
+	}
 
 	//Convert it to a timestamp value
 	temp_time = gl_globalclock;
@@ -1111,6 +1131,12 @@ int evcharger_det::init(OBJECT *parent)
 			It is recommended all objects that support deltamode enable it.
 			*/
 		}
+	}
+
+	// Initialize checkpoint variables that weren't set in create() - only if not already loaded from checkpoint
+	if (isnan(J2894_off_accumulator))
+	{
+		J2894_off_accumulator = 0.0;
 	}
 
 	return init_res;
