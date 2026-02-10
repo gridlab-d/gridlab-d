@@ -107,13 +107,13 @@ def processResults(results: list[int], resultsFile: Path, testPerformance: int) 
             autotestFile = autotestFiles[i]
             if result == 0:
                 passCount += 1
-                f.write(f"\t[PASS]\t{autotestFile}\n")
+                f.write(f"\t[PASS]\t{autotestFile[0]}\n")
             elif result == 1:
                 failCount += 1
-                f.write(f"\t[FAIL]\t{autotestFile} - Expected to pass but failed.\n")
+                f.write(f"\t[FAIL]\t{autotestFile[0]} - Expected to pass but failed.\n")
             elif result == 2:
                 unexpectedPassCount += 1
-                f.write(f"\t[FAIL]\t{autotestFile} - Expected to fail but passed.\n")
+                f.write(f"\t[FAIL]\t{autotestFile[0]} - Expected to fail but passed.\n")
         f.write("\nResults Summary:\n")
         f.write(f"\tTotal Tests Run: {len(results)}.\n")
         f.write(f"\tTotal Tests Pass: {passCount}.\n")
