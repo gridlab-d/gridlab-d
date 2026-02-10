@@ -33,26 +33,12 @@ def parse_gld_time(time_str):
     return datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
 
 
-# Verify version
-print(f"GLD Python library location: {gridlabd.__file__}")
-
-# Make GLD instances
 gld = gridlabd.GridLabD()
-
-# Load models
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))
 loaded_model= gld.load("houses.glm")
-
-# Setting time steps for 15 minutes
 gld.set_time_step(step_size)
-
-# Post(?)-initialize GLD
-gld.setup_after_load()
-
-# Must take one step before generating a checkpoint.
 gld.step()
-
 checkpoint_dict = json.loads(gld.get_checkpoint_json())
 start_time_etime = float(checkpoint_dict['clock']['starttime'])
 stop_time_etime = float(checkpoint_dict['clock']['stoptime'])
@@ -68,17 +54,22 @@ for steps in range(int(num_steps)):
     status, time = gld.get_time()
     print(f"GLD time: {time}\n")
 
-print(f"********* Making an extra step after simulation complete *******")
+final_time = time
+print(f"********* Making an extra step after simulation should have been completed *******")
 
 # What happens if you try to take another step?
 gld.step()
-status, time = gld.get_time()
-print(f"GLD time : {time}")
+status, extra_time = gld.get_time()
+print(f"GLD last legitimate time : {final_time}")
+print(f"GLD extra step time : {extra_time}")
+if final_time == extra_time:
+    print("Correctly failed to advance simulation time by calling `.step()`")
+else:
+    print("Advanced simulation time beyond model's stop time with `step()`")
 
-# Stop simulation
 gld.stop()
-
-# Exit simulation
 gld.exit_gld()
+
+
 
  
