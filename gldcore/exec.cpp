@@ -399,7 +399,14 @@ static bool directory_exists(const char *path)
 }
 
 // Do Checkpoint
-nlohmann::json do_checkpoint(const char *output_directory)
+/**
+ * Creates a JSON checkpoint of the current simulation state.
+ * 
+ * @param output_directory Directory path for writing checkpoint files. 
+ *                        If nullptr or empty, generates JSON in-memory without writing files.
+ * @return nlohmann::ordered_json containing the checkpoint data
+ */
+nlohmann::ordered_json do_checkpoint(const char *output_directory)
 {
 	/* last checkpoint value */
 	static TIMESTAMP last_checkpoint = 0;
@@ -431,8 +438,7 @@ nlohmann::json do_checkpoint(const char *output_directory)
 		now = 0;
 		break;
 	}
-
-	nlohmann::json checkpoint;
+	nlohmann::ordered_json checkpoint;
 	/* checkpoint may be needed */
 	if (now > 0)
 	{
@@ -479,6 +485,47 @@ nlohmann::json do_checkpoint(const char *output_directory)
 			// First, collect objects by class name
 			std::map<std::string, std::vector<OBJECT *>> objects_by_class;
 			std::set<OBJECT *> processed_objects; // Track processed objects to prevent duplicates
+
+			// Helper function to parse property value string into JSON based on type
+			auto parse_property_value = [](PROPERTYTYPE ptype, const char *value_str) -> nlohmann::json {
+				switch (ptype)
+				{
+				case PT_double:
+				{
+					double val = strtod(value_str, nullptr);
+					return val;
+				}
+				case PT_int32:
+				{
+					int32 val = (int32)strtol(value_str, nullptr, 10);
+					return val;
+				}
+				case PT_int64:
+				{
+					int64 val = strtoll(value_str, nullptr, 10);
+					return static_cast<int64_t>(val);
+				}
+				case PT_bool:
+				{
+					bool val = (strcmp(value_str, "TRUE") == 0 || strcmp(value_str, "1") == 0);
+					return val;
+				}
+				case PT_timestamp:
+				{
+					TIMESTAMP val = strtoll(value_str, nullptr, 10);
+					return static_cast<int64_t>(val);
+				}
+				case PT_char8:
+				case PT_char32:
+				case PT_char256:
+				case PT_char1024:
+				case PT_complex:
+					return std::string(value_str);
+				default:
+					// For all other types, store as string
+					return std::string(value_str);
+				}
+			};				
 
 			/* Traverse all objects to group by class */
 			for (int pass = 0; ranks[pass] != nullptr; pass++)
@@ -616,7 +663,83 @@ nlohmann::json do_checkpoint(const char *output_directory)
 				checkpoint["objects"][class_pair.first]["instances"] = instances;
 			}
 
-			// Get modules data!
+			// Get modules data
+			nlohmann::ordered_json modules = nlohmann::ordered_json::object();
+			std::map<std::string, MODULE *> module_map;
+			
+			for (MODULE *mod = module_get_first(); mod != nullptr; mod = mod->next)
+			{
+				nlohmann::ordered_json module = nlohmann::ordered_json::object();
+				
+				// Add module name
+				module["name"] = std::string(mod->name);
+				
+				// Add module ID
+				module["id"] = mod->id;
+				
+			// Iterate through module's own property list
+			if (mod->globals != nullptr)
+			{
+				char value_buffer[1024];
+				for (PROPERTY *prop = mod->globals; prop != nullptr; prop = prop->next)
+				{
+					// Get the value using module_getvar
+					if (module_getvar(mod, prop->name, value_buffer, sizeof(value_buffer)) != nullptr)
+					{
+						// Parse the value based on property type
+						module[prop->name] = parse_property_value(prop->ptype, value_buffer);
+					}
+				}
+			}					modules[mod->name] = module;
+				module_map[mod->name] = mod;
+			}
+
+			// Get globals data and assign to modules
+			nlohmann::ordered_json globals = nlohmann::ordered_json::object();
+			GLOBALVAR *global = nullptr;
+			char buffer[1024];
+			
+			// Iterate through all global variables
+			while ((global = global_getnext(global)) != nullptr)
+			{
+				// Get the global variable value
+				if (global_getvar(global->prop->name, buffer, sizeof(buffer)))
+				{
+					std::string global_name(global->prop->name);
+					
+					// Check if this global belongs to a module (contains "::")
+					size_t separator_pos = global_name.find("::");
+					if (separator_pos != std::string::npos)
+					{
+						// Extract module name and variable name
+						std::string module_name = global_name.substr(0, separator_pos);
+						std::string var_name = global_name.substr(separator_pos + 2);
+						
+						// Check if the module exists
+						if (module_map.find(module_name) != module_map.end())
+						{
+							// Assign global to the module with proper type parsing
+							modules[module_name][var_name] = parse_property_value(global->prop->ptype, buffer);
+						}
+						else
+						{
+							// Module not found, issue a warning
+							output_warning("Global variable '%s' references module '%s' which is not loaded", 
+								global_name.c_str(), module_name.c_str());
+							// Still add to core globals as fallback
+							globals[global_name] = parse_property_value(global->prop->ptype, buffer);
+						}
+					}
+					else
+					{
+						// Core global variable (no module prefix)
+						globals[global_name] = parse_property_value(global->prop->ptype, buffer);
+					}
+				}
+			}
+			// Assign globals and modules to checkpoint
+			checkpoint["globals"] = globals;
+			checkpoint["modules"] = modules;	
 
 			// Write JSON to file with pretty formatting
 			std::ofstream json_file(json_fn);
