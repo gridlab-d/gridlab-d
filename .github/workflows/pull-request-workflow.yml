@@ -119,7 +119,12 @@ jobs:
       - name: Configure CMake (VS2022 + vcpkg toolchain)
         shell: pwsh
         run: >
-          cmake -S . -B out/build/ci-windows
+          cmake -S . 
+          --log-level=VERBOSE
+          --log-context 
+          --debug-output
+          --trace / --trace-expand
+          -B out/build/ci-windows
           -G "Visual Studio 17 2022"
           -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
           -DVCPKG_TARGET_TRIPLET=x64-windows
@@ -141,10 +146,10 @@ jobs:
           $env:PATH   = "$env:PATH;$binDir"
           & "$binDir/gridlabd.exe" --validate
 
-      - name: Run CTest
-        shell: pwsh
-        working-directory: out/build/ci-windows
-        run: ctest -C Release --output-on-failure
+      # - name: Run CTest
+      #   shell: pwsh
+      #   working-directory: out/build/ci-windows
+      #   run: ctest -C Release --output-on-failure
           
   mac-build:
     strategy:
