@@ -15,6 +15,7 @@ from subprocess import PIPE
 from typing import Any, Optional
 
 from ._protocol import Command, Message, Response
+from ._time_utils import gld_to_iso
 
 _TZ_OFFSETS = {
     "PST": "-08:00",
@@ -58,9 +59,16 @@ class IsolatedGridLabD:
     _instances: "weakref.WeakSet[IsolatedGridLabD]" = weakref.WeakSet()
     _atexit_registered = False
     
-    def __init__(self):
-        """Create a new isolated GridLabD instance."""
+    def __init__(self, verbose: bool = False):
+        """Create a new isolated GridLabD instance.
+
+        Args:
+            verbose: If True, pass C++ debug/warning output through to stderr.
+                     If False (default), suppress console output. Use
+                     get_messages() to retrieve warnings and errors.
+        """
         self._process: Optional[subprocess.Popen] = None
+        self._verbose = verbose
         self._spawn_worker()
         # Initialize the GridLabD instance in the worker
         response = self._send_command(Command.INIT, {})
@@ -79,7 +87,7 @@ class IsolatedGridLabD:
             [sys.executable, "-m", "gridlabd._worker"],
             stdin=PIPE,
             stdout=PIPE,
-            stderr=sys.stderr,  # Send worker stderr to parent stderr for debugging
+            stderr=sys.stderr if self._verbose else subprocess.DEVNULL,
             text=True,
             bufsize=1,
             start_new_session=True
@@ -371,23 +379,38 @@ class IsolatedGridLabD:
             raise RuntimeError(response.error)
         return response.result
     
-    def step(self) -> tuple[int, float]:
-        """Advance the simulation by one time step."""
+    def step(self) -> tuple[int, Optional[str]]:
+        """Advance the simulation by one time step.
+
+        Returns:
+            tuple: (error_code, simulation_time) where simulation_time is an
+                   ISO 8601 string in the simulation's local timezone, or None
+                   if the time is a sentinel value (INIT, NEVER).
+        """
         if self.get_object_count() == 0:
             raise RuntimeError("Cannot step simulation: no objects loaded in model")
-  
+
         response = self._send_command(Command.STEP, {})
         if not response.success:
             raise RuntimeError(response.error)
-        
-        return response.result["code"], response.result["time"]
+
+        return response.result["code"], gld_to_iso(response.result["time"])
     
-    def step_to(self, target_time_str: str) -> tuple[int, float]:
-        """Step the simulation to a specific timestamp (ISO 8601 string)."""
+    def step_to(self, target_time_str: str) -> tuple[int, Optional[str]]:
+        """Step the simulation to a specific timestamp.
+
+        Args:
+            target_time_str: Target time as an ISO 8601 string.
+
+        Returns:
+            tuple: (error_code, simulation_time) where simulation_time is an
+                   ISO 8601 string in the simulation's local timezone, or None
+                   if the time is a sentinel value.
+        """
         response = self._send_command(Command.STEP_TO, {"target_time": target_time_str})
         if not response.success:
             raise RuntimeError(response.error)
-        return response.result["code"], response.result["time"]
+        return response.result["code"], gld_to_iso(response.result["time"])
     
     # Time management methods
     def set_time(self, timestamp: str) -> int:
@@ -397,12 +420,18 @@ class IsolatedGridLabD:
             raise RuntimeError(response.error)
         return response.result
     
-    def get_time(self) -> tuple[int, str]:
-        """Get the current simulation time."""
+    def get_time(self) -> tuple[int, Optional[str]]:
+        """Get the current simulation time.
+
+        Returns:
+            tuple: (error_code, current_time) where current_time is an
+                   ISO 8601 string in the simulation's local timezone, or None
+                   if the time represents INIT or NEVER.
+        """
         response = self._send_command(Command.GET_TIME, {})
         if not response.success:
             raise RuntimeError(response.error)
-        return response.result["code"], _to_iso8601(response.result["time"])
+        return response.result["code"], gld_to_iso(response.result["time"])
     
     def set_time_step(self, time_step: int) -> int:
         """Set the simulation time step."""
@@ -613,29 +642,32 @@ class IsolatedGridLabD:
         return response.result
     
     # Convenience methods for clock properties
-    def get_clock(self) -> str:
+    def get_clock(self) -> Optional[str]:
         """Get the current simulation time.
-        
+
         Returns:
-            Current simulation time as a string (ISO 8601 format or timestamp)
+            ISO 8601 string in the simulation's local timezone, or None
+            if the clock has not been initialized.
         """
-        return self.global_getvar("clock")
-    
-    def get_starttime(self) -> str:
+        return gld_to_iso(self.global_getvar("clock"))
+
+    def get_starttime(self) -> Optional[str]:
         """Get the simulation start time.
-        
+
         Returns:
-            Start time as a string (ISO 8601 format or timestamp)
+            ISO 8601 string in the simulation's local timezone, or None
+            if start time is not set.
         """
-        return self.global_getvar("starttime")
-    
-    def get_stoptime(self) -> str:
+        return gld_to_iso(self.global_getvar("starttime"))
+
+    def get_stoptime(self) -> Optional[str]:
         """Get the simulation stop time.
-        
+
         Returns:
-            Stop time as a string (ISO 8601 format or timestamp)
+            ISO 8601 string in the simulation's local timezone, or None
+            if stop time is NEVER (unbounded simulation).
         """
-        return self.global_getvar("stoptime")
+        return gld_to_iso(self.global_getvar("stoptime"))
     
     def set_starttime(self, value: str) -> int:
         """Set the simulation start time.

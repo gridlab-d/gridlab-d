@@ -151,21 +151,20 @@ for i in range(10):
 
 ### Message Capture
 
+GridLAB-D messages (warnings, errors, debug output) are automatically captured and can be retrieved programmatically. By default, C++ output is suppressed to keep your console clean.
+
 ```python
 import gridlabd
 
+# Default: C++ output suppressed, clean console
 gld = gridlabd.GridLabD()
-
-# Enable message capture
-gld.enable_message_capture(True)
-gld.clear_messages()
 
 # Load and run model
 gld.load("model.glm")
 gld.setup_after_load()
 gld.run()
 
-# Get captured messages
+# Get captured messages programmatically
 messages = gld.get_messages()
 for msg in messages:
     print(f"[{msg['type']}] {msg['timestamp']}: {msg['message']}")
@@ -173,5 +172,31 @@ for msg in messages:
 # Filter for errors only
 errors = [m for m in messages if m['type'] == 'ERROR']
 print(f"Found {len(errors)} errors")
+```
+
+**Verbose mode** - Enable C++ console output for debugging:
+
+```python
+# Show C++ output on stderr (useful for debugging)
+gld = gridlabd.GridLabD(verbose=True)
+gld.load("model.glm")
+gld.run()
+
+# Messages are still captured even in verbose mode
+messages = gld.get_messages()
+```
+
+**Message capture controls**:
+
+```python
+# Disable message capture (not recommended)
+gld.enable_message_capture(False)
+
+# Clear captured messages
+gld.clear_messages()
+
+# Set message limit (default: 10000)
+gld.set_message_capture_limit(5000)
+limit = gld.get_message_capture_limit()
 ```
    
