@@ -124,7 +124,6 @@ jobs:
           -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
           -DVCPKG_TARGET_TRIPLET=x64-windows
           -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-          -DGLD_CI_BUILD=ON
 
       - name: Build (Release)
         shell: pwsh
