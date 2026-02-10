@@ -86,60 +86,67 @@ jobs:
           ctest --verbose
 
   win-build:
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            arch: x86_64
-    runs-on: ${{matrix.os}}
-    defaults:
-      run:
-        shell: msys2 {0}
-
+    runs-on: windows-latest
     steps:
-      - uses: msys2/setup-msys2@v2
-        with:
-          msystem: mingw64
-          update: true
-          install: >-
-            base-devel
-            git
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-nsis
-            mingw-w64-x86_64-boost
-            mingw-w64-x86_64-helics
-
-      - name: Checkout GridLAB-D
+      - name: Checkout
         uses: actions/checkout@v5
         with:
           submodules: recursive
-          path: gridlab-build
+          fetch-depth: 0
 
-      - name: Build GridLAB-D
-        working-directory: ${{github.workspace}}/gridlab-build
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup vcpkg (manifest mode + cache)
+        uses: lukka/run-vcpkg@v11
+        with:
+          runVcpkgInstall: true
+          logCollectionRegExps: |
+            .*/CMakeOutput\.log$
+            .*/CMakeError\.log$
+            .*/vcpkg/buildtrees/.+\.log$
+
+      - name: Upload vcpkg & CMake logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-and-cmake-logs
+          path: |
+            ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
+            out/build/ci-windows/**/CMakeOutput.log
+            out/build/ci-windows/**/CMakeError.log
+
+      - name: Configure CMake (VS2022 + vcpkg toolchain)
+        shell: pwsh
+        run: >
+          cmake -S . -B out/build/ci-windows
+          -G "Visual Studio 17 2022"
+          -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
+          -DVCPKG_TARGET_TRIPLET=x64-windows
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DGLD_CI_BUILD=ON
+
+      - name: Build (Release)
+        shell: pwsh
+        run: cmake --build out/build/ci-windows --config Release
+
+      - name: Run gridlabd --validate
+        shell: pwsh
         run: |
-          threads=`nproc`
-          workspace="$(cygpath -u '${{github.workspace}}')"
-          cmake -G "Unix Makefiles" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-          -DCMAKE_INSTALL_PREFIX="$workspace/.temp/GridLAB-D" -DGLD_USE_HELICS=ON -DCMAKE_C_COMPILER=gcc \
-          -DCMAKE_CXX_COMPILER=g++ -DGLD_CI_BUILD=ON
-          cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
+          $buildDir = Resolve-Path "out/build/ci-windows"
+          $binDir   = Resolve-Path "out/build/ci-windows/bin/Release"
+          $shareDir = Resolve-Path "out/build/ci-windows/share"
+          $libDir   = Resolve-Path "out/build/ci-windows/lib"
+          $gldcore  = Resolve-Path "gldcore"
+          $env:GLPATH = "$pwd;$buildDir;$binDir;$libDir;$shareDir;$gldcore"
+          $env:PATH   = "$env:PATH;$binDir"
+          & "$binDir/gridlabd.exe" --validate
 
-      - name: Install GridLAB-D
-        working-directory: ${{github.workspace}}/gridlab-build/build
-        run: cmake --install . --config ${{env.BUILD_TYPE}}
-
-      - name: Run GridLAB-D autotests
-        working-directory: ${{github.workspace}}/gridlab-build
-        run: |
-          workspace="$(cygpath -u '${{github.workspace}}')"
-          export PATH=$PATH:"$workspace/.temp/GridLAB-D/bin"
-          gridlabd -T 0 --validate
-          # Future Catch2 unit tests (placeholder):
-          # ./build/tests/unit_tests --reporter junit --out unit-tests-windows.xml
-          ctest --verbose
-
+      - name: Run CTest
+        shell: pwsh
+        working-directory: out/build/ci-windows
+        run: ctest -C Release --output-on-failure
+          
   mac-build:
     strategy:
       matrix:
