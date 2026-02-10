@@ -2,7 +2,7 @@
 Created on 02/10/2026
 
 This example verifies that GLD returns the same timestamp format from the 
-clock object and `.get_tiem()`
+clock object and `.get_time()`
 
 https://github.com/gridlab-d/gridlab-d/issues/1559
 
