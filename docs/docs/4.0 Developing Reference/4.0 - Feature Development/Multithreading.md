@@ -1,24 +1,24 @@
 # Multithreading
 
-Brief description of feature (~1 paragraph).
+Multithreading is the capability for GridLAB-D to use multiple threads/cores on the computer to execute the models being studied more quickly.  Due to the agent-based nature of GridLAB-D, aspects of the model structure lend itself well to being executed in parallel (minimal or no interaction between those particular objects), which can use multithreading to execute faster.
 
 ## Motivation
 
-Why will this be worthwhile feature for GridLAB-D? Why now? Who will it help (developers or users)? How will it help them?
+GridLAB-D models of actual systems often have a very large number of objects and time-series simulations can take a significant amount of compute time to complete.  Methods to improve the computation time/computational efficiency of GridLAB-D help improve the user experience, and also improve the applicability of GridLAB-D to near-term planning/potential operations instead of long-term planning or post-event reconstruction.
+
+Most modern computers have several threads and/or distinct computation cores at their discretion, so nearly all users can benefit from a reliable multithreading capability being implemented in GridLAB-D.  While some aspects will remain sequential, longer time series may benefit almost linearly from increased thread counts, allowing that level of speedup on the GridLAB-D model runs.
 
 ## Feature Objective
 
-What problem will this feature solve?
+Multithreading gets divided into two main implementations in GridLAB-D: batch multithreading and model multithreading.
 
-### Developer Goals
+Batch multithreading is primarily used by the autotest feature in GridLAB-D, which effectively allow a single controlling instance of GridLAB-D to spin up individual instaces of GridLAB-D running specific autotest models.  The individual instances are still single threaded, but multiples of them can be executed in parallel as they are independent instances of GridLAB-D (so called "embarassingly parallel" implementations).
 
-What do the developers want to see out of this feature?
-
-### User Goals
-
-What do the users hope to see out of this feature?
+Model multithreading is allowing common `rank`s of objects to be executed in parallel within a single GridLAB-D model instance (GLM of JSON file).  Multithreading only applies to the time-series execution portion of the overall GridLAB-D program loop -- items like the file loader and objection creation will still be single threaded for the immediate future.
 
 ## Functionality
+
+Interactions with the multithreading capability will be distinct
 
 How will devs/users interact with this feature? Will it be behind-the-scenes, a new module, method, or interface?
 
