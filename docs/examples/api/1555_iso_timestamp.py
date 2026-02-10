@@ -1,5 +1,5 @@
 """
-Created on 01/23/2026
+Created on 02/10/2026
 
 This example tests the ability for GLD return an ISO 8061 timestamp from
 `.get_time()`
