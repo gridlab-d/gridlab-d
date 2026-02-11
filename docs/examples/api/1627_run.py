@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 os.chdir(script_dir)
-gld = gridlabd.GridLabD()
+gld = gridlabd.GridLabD(verbose = True)
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))
 loaded_model= gld.load("houses.glm")
