@@ -16,24 +16,23 @@ import json
 from pprint import pprint
 from datetime import datetime, timedelta
 
-def parse_gld_time(time_str):
-    parts = time_str.rsplit(' ', 1)
-    if len(parts) == 2 and parts[1] in ['PST', 'PDT', 'EST', 'EDT', 'CST', 'CDT', 'MST', 'MDT', 'UTC']:
-        time_str = parts[0]
-    return datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S'), parts[1]
-
 gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))
 loaded_model= gld.load("houses.glm")
-status, time = gld.get_time()
-print(f"*******  GLD time 1: {time} **********")
-time, tz = parse_gld_time(time)
-test_time = time + timedelta(minutes = 15)
-test_time_str = test_time.strftime('%Y-%m-%d %H:%M:%S') + " " + tz
-gld.step_to(test_time_str)
-status, time = gld.get_time()
-print(f"*******  GLD time 2: {time} **********")
+status, first_time = gld.get_time()
+print(f"*******  Time before `.step_to()`: {first_time} **********")
+first_time_obj = datetime.fromisoformat(first_time)
+test_time = first_time_obj + timedelta(minutes = 20)
+test_time_str = datetime.isoformat(test_time)
+error_code, return_time = gld.step_to(test_time_str)
+print(f"*******  Time after `.step_to()`: {return_time} **********")
+print(f"*******  Target time : {test_time_str} **********")
+print(f"*******  Error code : {error_code} **********")
+if test_time_str == return_time:
+    print("Successfully stepped to correct time.")
+else:
+    print("Failed to step to correct time.")
 gld.stop()
 gld.exit_gld()
  
