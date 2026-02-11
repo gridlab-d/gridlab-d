@@ -13,15 +13,14 @@ trevor.hardy@pnnl.gov
 
 import gridlabd
 from pathlib import Path
-import json
+import os
 from pprint import pprint
 from datetime import datetime, timedelta
 
-def parse_gld_time(time_str):
-    parts = time_str.rsplit(' ', 1)
-    if len(parts) == 2 and parts[1] in ['PST', 'PDT', 'EST', 'EDT', 'CST', 'CDT', 'MST', 'MDT', 'UTC']:
-        time_str = parts[0]
-    return datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S'), parts[1]
+# Ensure's we're running from the correct directory
+script_path = os.path.abspath(__file__)
+script_dir = os.path.dirname(script_path)
+os.chdir(script_dir)
 
 gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
