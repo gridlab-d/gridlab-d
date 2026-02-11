@@ -113,7 +113,7 @@ The approach described in the previous section only accounts for sensible loads.
 
 The methodology described below is the same as used in the GridLAB-D™ code base (see [Caveats](#caveats)), although, over time additions have been made to allow for greater flexibility. Additionally modifications have been made to speed up the solution process as implemented in code. The solution methodology, as described here and implemented in GridLAB-D™ was validated against the referenced spreadsheet. 
 
-[![Equivalent Thermal Parameters Circuit Modeled by House-e.](../../../../images/300px-Residential_module_users_guide_figure_1.png)](/wiki/File:Residential_module_users_guide_figure_1.png)
+[![Equivalent Thermal Parameters Circuit Modeled by House-e.](../../../../images/300px-Residential_module_users_guide_figure_1.png)]
 
 ##### Figure 2. Equivalent Thermal Parameters Circuit Modeled by House-e.
 

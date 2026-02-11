@@ -144,11 +144,11 @@ motor_override  | enumeration  | N/A  | The current status of the motor. <br/> -
 
 In order to verify that the motor model works as intended it was subjected to a voltage ramp signal as seen in Fig. 1. It is expected, as the voltage magnitude drops below ~0.6 pu, that the motor will stall, as it does in this simulation. From the data it can also be verified that the object switches into delta mode in order to capture the stall and out again when the motor is running with nominal voltage and rotor speed. After the motor is stalled it trips of at ~38 seconds due to thermal overload. The motor tries to reconnect again at ~58 seconds. The motor remains stalled until ~77 seconds where the voltage has recovered enough for the motor to start. The full simulation can be seen in Fig. 1 and 2. 
 
-[![Top plot is the rotor speed of the motor. Middle plot is the electrical torque on the motor, and the bottom plot is the mechanical torque applied to the motor.](../../../../../images/400px-SPIM_plot_1.png)](/wiki/File:SPIM_plot_1.png)
+[![Top plot is the rotor speed of the motor. Middle plot is the electrical torque on the motor, and the bottom plot is the mechanical torque applied to the motor.](../../../../../images/400px-SPIM_plot_1.png)]
 
 ##### Figure 1. Top plot is the rotor speed of the motor. Middle plot is the electrical torque on the motor, and the bottom plot is the mechanical torque applied to the motor.
 
-[![Top plot is voltage magnitude applied to the motor. Next plot is frequency at the motor. Next plot is real current drawn by the motor and last is the real power drawn by the motor](../../../../../images/400px-SPIM_plot_2.png)](/wiki/File:SPIM_plot_2.png)
+[![Top plot is voltage magnitude applied to the motor. Next plot is frequency at the motor. Next plot is real current drawn by the motor and last is the real power drawn by the motor](../../../../../images/400px-SPIM_plot_2.png)]
 
 ##### Figure 2. Top plot is voltage magnitude applied to the motor. Next plot is frequency at the motor. Next plot is real current drawn by the motor and last is the real power drawn by the motor
 
