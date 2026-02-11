@@ -100,52 +100,51 @@ The secondary functionality of bidder status will be useful on systems where not
 
 ## Market Clearing
 
-[![Marginal seller clearing scenario](../../../../images/300px-SimpleMarket-Marginal_Sell.png)](/wiki/File:SimpleMarket-Marginal_Sell.png)
+[![Marginal seller clearing scenario](../../../../images/300px-SimpleMarket-Marginal_Sell.png)]
 
 ##### Figure 1. Marginal seller clearing scenario
 
-[![Marginal buyer clearing scenario](../../../../images/300px-SimpleMarket-Marginal_Buy.png)](/wiki/File:SimpleMarket-Marginal_Buy.png)
+[![Marginal buyer clearing scenario](../../../../images/300px-SimpleMarket-Marginal_Buy.png)]
 
 ##### Figure 2. Marginal buyer clearing scenario
 
-[![Buyer and seller clearing quantities equal](../../../../images/300px-SimpleMarket-Both_Marg.png)](/wiki/File:SimpleMarket-Both_Marg.png)
+[![Buyer and seller clearing quantities equal](../../../../images/300px-SimpleMarket-Both_Marg.png)]
 
 ##### Figure 3. Buyer and seller clearing quantities equal
 
-[![Buyer and seller clearing quantities equal, close next seller bid](../../../../images/300px-SimpleMarket-Both_Marg_NextSell.png)](/wiki/File:SimpleMarket-Both_Marg_NextSell.png)
+[![Buyer and seller clearing quantities equal, close next seller bid](../../../../images/300px-SimpleMarket-Both_Marg_NextSell.png)]
 
 ##### Figure 4. Buyer and seller clearing quantities equal, close next seller bid
 
-[![Buyer and seller clearing quantities equal, close next buyer bid](../../../../images/300px-SimpleMarket-Both_Marg_NextBuy.png)](/wiki/File:SimpleMarket-Both_Marg_NextBuy.png)
+[![Buyer and seller clearing quantities equal, close next buyer bid](../../../../images/300px-SimpleMarket-Both_Marg_NextBuy.png)]
 
 ##### Figure 5. Buyer and seller clearing quantities equal, close next buyer bid
 
-[![Buyer and seller clearing quantities and clearing prices equal](../../../../images/300px-SimpleMarket-Both.png)](/wiki/File:SimpleMarket-Both.png)
+[![Buyer and seller clearing quantities and clearing prices equal](../../../../images/300px-SimpleMarket-Both.png)]
 
 ##### Figure 6. Buyer and seller clearing quantities and clearing prices equal
 
-[![Failure for market to clear](../../../../images/300px-SimpleMarket-Failure.png)](/wiki/File:SimpleMarket-Failure.png)
+[![Failure for market to clear](../../../../images/300px-SimpleMarket-Failure.png)]
 
 ##### Figure 7. Failure for market to clear
 
-[![Null market clearing scenario](../../../../images/300px-SimpleMarket-Null.png)](/wiki/File:SimpleMarket-Null.png)
+[![Null market clearing scenario](../../../../images/300px-SimpleMarket-Null.png)]
 
 ##### Figure 8. Null market clearing scenario
 
-[![Equal clearing price, but marginal seller clearing scenario](../../../../images/300px-SimpleMarket-PriceMargSeller.png)](/wiki/File:SimpleMarket-PriceMargSeller.png)
+[![Equal clearing price, but marginal seller clearing scenario](../../../../images/300px-SimpleMarket-PriceMargSeller.png)]
 
 ##### Figure 9. Equal clearing price, but marginal seller clearing scenario
 
-[![Equal clearing price, but marginal buyer clearing scenario](../../../../images/300px-SimpleMarket-PriceMargBuyer.png)](/wiki/File:SimpleMarket-PriceMargBuyer.png)
-
+[![Equal clearing price, but marginal buyer clearing scenario](../../../../images/300px-SimpleMarket-PriceMargBuyer.png)]
 ##### Figure 10. Equal clearing price, but marginal buyer clearing scenario
 
-[![Unresponsive buyers in marginal seller clearing scenario](../../../../images/300px-SimpleMarket-Marginal_Base.png)](/wiki/File:SimpleMarket-Marginal_Base.png)
+[![Unresponsive buyers in marginal seller clearing scenario](../../../../images/300px-SimpleMarket-Marginal_Base.png)]
 
 
 ##### Figure 11. Unresponsive buyers in marginal seller clearing scenario
 
-[![Unresponsive buyers in equal quantity clearing scenario](../../../../images/300px-SimpleMarket-MarginalUnresponse.png)](/wiki/File:SimpleMarket-MarginalUnresponse.png)
+[![Unresponsive buyers in equal quantity clearing scenario](../../../../images/300px-SimpleMarket-MarginalUnresponse.png)]
 
 ##### Figure 12. Unresponsive buyers in equal quantity clearing scenario
 

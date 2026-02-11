@@ -2,6 +2,10 @@
 
 The microgrids use case in GridLAB-D™ is implemented to allow islanded, smaller power system simulations. These simulations examine sub-second influences on parameters like frequency and voltage. The final capability allows the examination of transients in the voltage and frequency associated with microgrid operations. 
 
+Microgrids functionality in GridLAB-D is primarily an overall capability of the simulation engine. No specific microgrid module exists, but rather objects in several modules support transient-level time scales (~10 ms) and islanded operation.
+
+Microgrids are typically operated in a manner that there is no strong, stiff source bus on the system. During microgrid operations, connections to the larger, bulk transmission system are disconnected and only local, smaller, often distributed, generation sources are utilized. Under such scenarios, the dynamics of the system are expected to play a more significant part in the stability of the power system.
+
 ## Equations
 
 The primary basis for the implementation of the microgrids capability involves modeling the relevant components with accurate equation models. At this time, these models are expected to operate down to a 1-millisecond time step. 
@@ -617,7 +621,7 @@ Successful completion of these tests, as well as the successful validation again
 
 ## Two machine, three line system
 
-![Basic Two-machine Test System](../../../../../images/300px-Two-machine_three-line_System.png)
+![Basic Two-machine Test System](../../../images/300px-Two-machine_three-line_System.png)
 
 ##### Figure 2. Basic Two-machine Test System
 
@@ -653,6 +657,48 @@ The adapted 34-bus test feeder (Figure 3) serves as the overall test and validat
   14. DigSilent GmbH, DigSilent PowerFactory Software, ONLINE Available: <http://www.digsilent.de/index.php/products-powerfactory.html>
   15. IEEE Distribution System Analysis Subcommittee, IEEE 4 Node Test Feeder, ONLINE Available: <http://ewh.ieee.org/soc/pes/dsacom/testfeeders/>
   16. Lu, S., M. Elizondo, N. Samaan, K. Kalsi, E. Mayhorn, R. Diao, C. Jin, and Y. Zhang, "Control Strategies for Distributed Energy Resources to Maximize the Use of Wind Power in Rural Microgrids," in _Proceedings of the 2011 IEEE PES General Meeting_ , Detroit, MI, USA, July 24-28, 2011.
+
+
+### Capabilities
+
+Capabilities have slowly been evolving. This section documents what milestones certain features have been deployed, or are expected to be deployed. 
+
+## Version 2.3 - Grizzly
+
+  * Delta mode capabilities - ability to transition to simulation timesteps as small as one nanosecond, then transition back into traditional, event-driven GridLAB-D mode.
+  * Player capabilities - the ability to play in subsecond data to influence objects during delta mode execution.
+  * Recorder capabilities - the ability to record subsecond data during delta mode operations.
+  * Powerflow capabilities - basic support for three-phase, unbalanced powerflow operations in delta mode and in isolated operation
+  * Diesel_dg capabilities - Initial implementation of a three-phase, unbalanced dynamics-capable diesel generator
+
+
+
+## Version 3.0 - Hassayampa
+
+  * Various bug fixes
+
+
+
+## Version 3.1 - Hatwai (planned)
+
+  * Various bug fixes in time handling and transition
+  * Diesel_dg model validated against EMTP-type solver
+  * Inverter capabilities - Initial implementation of transient-level (~10 ms) dynamics of a three-phase inverter system
+  * Grid-connected dynamic support
+  * Assert capabilities - the ability to check values and execute unit testing in delta mode
+  * Powerflow integration - full support for delta mode operations by all powerflow objects
+  * Powerflow dynamics - transient-level impacts of line charging and transformer in-rush currents
+  * Frequency measurement - localized frequency measurements during delta mode
+  * Reliability capabilities - the ability to induce events at a subsecond time level (metrics not supported yet)
+
+
+
+## Version 4.0 - Jojoba
+
+  * Neutral-earth voltage (generic polyphase implementation) powerflow solver for protection modeling
+  * Protective device capabilities - initial models of protection devices for examining microgrid and distribution-level behavior
+  * Reliability update - changes to the reliability module to handle the new powerflow solver and protection capabilities
+
 
 
 ## Super-second Implementation
