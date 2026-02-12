@@ -133,7 +133,22 @@ jobs:
       - name: Build (Release)
         shell: pwsh
         continue-on-error: true
-        run: cmake --build out/build/ci-windows --config Release --parallel -t ALL_BUILD -- /p:ContinueOnError=true /m
+        run: cmake --build out/build/ci-windows --config Release --parallel -t gridlabd -- /p:ContinueOnError=true /m
+
+      - name: Locate and list gridlabd.exe
+        shell: pwsh
+        run: |
+          $buildDir = Resolve-Path "out/build/ci-windows"
+          $exe = Get-ChildItem -Path $buildDir -Filter gridlabd.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) {
+            Write-Host "gridlabd.exe not found under $buildDir"
+            Write-Host "Listing other .exe files for diagnostics:"
+            Get-ChildItem -Path $buildDir -Recurse -Include *.exe | Select-Object FullName
+            exit 1
+          } else {
+            Write-Host "Found gridlabd.exe at: $($exe.FullName)"
+          }
+
 
       - name: Save DLL/EXE list
         shell: pwsh
@@ -149,18 +164,20 @@ jobs:
         with:
           name: dll-exe-list
           path: dll-exe-list.txt
-
+          
       - name: Run gridlabd --validate
         shell: pwsh
         run: |
           $buildDir = Resolve-Path "out/build/ci-windows"
-          $binDir   = Resolve-Path "out/build/ci-windows/bin/Release"
+          $exe = Get-ChildItem -Path $buildDir -Filter gridlabd.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { throw "gridlabd.exe not found." }
+          $binDir   = Split-Path $exe.FullName -Parent
           $shareDir = Resolve-Path "out/build/ci-windows/share"
           $libDir   = Resolve-Path "out/build/ci-windows/lib"
           $gldcore  = Resolve-Path "gldcore"
           $env:GLPATH = "$pwd;$buildDir;$binDir;$libDir;$shareDir;$gldcore"
           $env:PATH   = "$env:PATH;$binDir"
-          & "$binDir/gridlabd.exe" --validate
+          & $exe.FullName --validate
 
       # - name: Run CTest
       #   shell: pwsh
