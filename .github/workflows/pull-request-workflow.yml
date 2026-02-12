@@ -132,8 +132,9 @@ jobs:
 
       - name: Build (Release)
         shell: pwsh
-	continue-on-error: true
-        run: cmake --build out/build/ci-windows --config Release
+        continue-on-error: true
+        run: cmake --build out/build/ci-windows --config Release --parallel -t ALL_BUILD -- /p:ContinueOnError=true /m
+
 
       - name: Run gridlabd --validate
         shell: pwsh
