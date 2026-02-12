@@ -101,8 +101,6 @@ int switch_object::create()
 	phase_B_state = SW_CLOSED;
 	phase_C_state = SW_CLOSED;
 
-	prev_SW_time = 0;
-
 	phased_switch_status = 0x00;	//Reset variable
 	faulted_switch_phases = 0x00;	//No faults at onset
 	prefault_banked = false;		//Condition of the switch prior to a fault - individual mode has to be enacted for reliability
@@ -940,9 +938,6 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 		}
 		event_schedule_map_attempt = true;
 	}
-	// update time variable
-	if (prev_SW_time != t0)	//New timestep
-		prev_SW_time = t0;
 
 	//Call functionalized "pre-link" sync items
 	BOTH_switch_sync_pre(&work_phases_pre, &work_phases_post);

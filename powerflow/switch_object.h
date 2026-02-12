@@ -53,7 +53,6 @@ public:
 	SIMULATIONMODE inter_deltaupdate_switch(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 	enumeration switch_banked_mode;
-	TIMESTAMP prev_SW_time;	//Used to track switch opens/closes in NR.  Zeros end voltage on first run for other
 
 	unsigned char phased_switch_status;	//Used to track individual phase switch position - mainly for reliability - use LSB - x0_XABC
 	unsigned char faulted_switch_phases;	//Used for phase faulting tracking - mainly for reliabiilty - replicated NR functionality so FBS can use it later
