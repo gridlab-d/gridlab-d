@@ -116,21 +116,21 @@ jobs:
             out/build/ci-windows/**/CMakeOutput.log
             out/build/ci-windows/**/CMakeError.log
 
-            - name: Configure CMake (VS2022 + vcpkg toolchain)
-              shell: pwsh
-              run: >
-                cmake -S .
-                --log-level=VERBOSE
-                --log-context
-                --debug-output
-                -B out/build/ci-windows
-                -G "Visual Studio 17 2022"
-                -A x64
-                -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
-                -DVCPKG_TARGET_TRIPLET=x64-windows
-                "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-                "-DCMAKE_INSTALL_PREFIX=$env:USERPROFILE/.temp/GridLAB-D"
-                -DGLD_CI_BUILD=ON
+      - name: Configure CMake (VS2022 + vcpkg toolchain)
+        shell: pwsh
+        run: >
+            cmake -S .
+            --log-level=VERBOSE
+            --log-context
+            --debug-output
+            -B out/build/ci-windows
+            -G "Visual Studio 17 2022"
+            -A x64
+            -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
+            -DVCPKG_TARGET_TRIPLET=x64-windows
+            "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+            "-DCMAKE_INSTALL_PREFIX=$env:USERPROFILE/.temp/GridLAB-D"
+            -DGLD_CI_BUILD=ON
 
       - name: Build (Release)
         shell: pwsh
@@ -142,7 +142,6 @@ jobs:
         continue-on-error: true
         run: cmake --install out/build/ci-windows --config Release
 
-      
       - name: List installed DLLs and EXEs
         shell: pwsh
         run: |
@@ -151,8 +150,7 @@ jobs:
           Get-ChildItem -Path $installRoot -Include *.dll, *.exe -Recurse | ForEach-Object {
             Write-Host $_.FullName
           }
-  
-          
+
       - name: Run gridlabd --validate
         shell: pwsh
         run: |
