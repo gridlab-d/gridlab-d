@@ -135,6 +135,20 @@ jobs:
         continue-on-error: true
         run: cmake --build out/build/ci-windows --config Release --parallel -t ALL_BUILD -- /p:ContinueOnError=true /m
 
+      - name: Save DLL/EXE list
+        shell: pwsh
+        run: |
+          $buildDir = Resolve-Path "out/build/ci-windows"
+          Write-Host "Searching for DLL and EXE files under $buildDir..."          
+          Get-ChildItem -Path $buildDir -Include *.dll, *.exe -Recurse | ForEach-Object {
+                Write-Host $_.FullName
+              }
+          Get-ChildItem -Path $buildDir -Include *.dll, *.exe -Recurse | Select-Object FullName | Out-File dll-exe-list.txt
+      - name: Upload DLL/EXE list
+        uses: actions/upload-artifact@v4
+        with:
+          name: dll-exe-list
+          path: dll-exe-list.txt
 
       - name: Run gridlabd --validate
         shell: pwsh
