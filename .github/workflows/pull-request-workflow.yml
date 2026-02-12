@@ -116,6 +116,16 @@ jobs:
             out/build/ci-windows/**/CMakeOutput.log
             out/build/ci-windows/**/CMakeError.log
 
+      - name: Clean install prefix (Windows)
+        shell: pwsh
+        run: |
+         $installRoot = "$env:USERPROFILE\.temp\GridLAB-D"
+         if (Test-Path $installRoot) {
+            Write-Host "Removing previous install at $installRoot..."
+            Remove-Item -Path $installRoot -Recurse -Force -ErrorAction SilentlyContinue
+         }
+
+
       - name: Configure CMake (VS2022 + vcpkg toolchain)
         shell: pwsh
         run: >
@@ -134,24 +144,33 @@ jobs:
 
       - name: Build gridlabd (Release)
         shell: pwsh
-        continue-on-error: true
-        run: cmake --build out/build/ci-windows --config Release -t gridlabd
+        run: cmake --build out/build/ci-windows --config Release -t ALL_BUILD
         env:
           CFLAGS: "/W0"
           CXXFLAGS: "/W0"
 
-      - name: Build gridlabd (Release)
+      - name: Verify gldapi.dll before install
         shell: pwsh
-        continue-on-error: true
-        run: cmake --build out/build/ci-windows --config Release -t ALL_BUILD
-        env:
-          CFLAGS: "/W0"
-          CXXFLAGS: "/W0"    
+        run: |
+         $src = Resolve-Path "out/build/ci-windows/bin/Release/gldapi.dll"
+         Write-Host "Found: $src"
+         Get-Item $src | Format-List *
+
+
+      - name: Show install prefix
+        shell: pwsh
+        run: |
+          Write-Host "CMAKE_INSTALL_PREFIX=$env:USERPROFILE\.temp\GridLAB-D"
+          if (Test-Path "$env:USERPROFILE\.temp\GridLAB-D") {
+            Get-ChildItem "$env:USERPROFILE\.temp\GridLAB-D" -Recurse | Select-Object FullName
+          } else {
+            Write-Host "Install prefix does not yet exist."
+          }
+
 
       - name: Install GridLAB-D
         shell: pwsh
-        continue-on-error: true
-        run: cmake --install out/build/ci-windows --config Release
+        run: cmake --install out/build/ci-windows --config Release --verbose
 
       - name: List installed DLLs and EXEs
         shell: pwsh
@@ -183,7 +202,7 @@ jobs:
       #   shell: pwsh
       #   working-directory: out/build/ci-windows
       #   run: ctest -C Release --output-on-failure
-          
+
   mac-build:
     strategy:
       matrix:
