@@ -20,7 +20,6 @@ build-aux/install-sh
 build-aux/ltmain.sh
 build-aux/missing
 gldcore/stamp-h1
-gridlabd
 gldcore/gridlabd.sh
 .pydevproject
 .idea
@@ -120,9 +119,49 @@ GLD GridLAB-D build instructions.txt
 
 # scratch is a folder for local work only
 scratch/*
+reference/*
+third_party/*
+.venv
+testenv
+
+# Python bindings build artifacts
+python_bindings/prebuilt/
+python_bindings/gldcore/
+python_bindings/third_party/
+python_bindings/dist/
+python_bindings/build/
+python_bindings/*.egg-info/
+python_bindings/.eggs/
+python_bindings/wheels/
+gridlabd.xml
+*.pyc
+*.0
+*.1
+*.csv
+*.sh
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+
+# GridLab-D output files
+*.0
+*.0.json
+
+# Virtual env
+python_bindings/env
+docs/
+test/
+env
 
 # IDE-related
 .vs/
 .vscode/
 CMakePresets.json
 
+workdir/
+__pycache__/
+python_bindings/src/gridlabd/__pycache__/__init__.cpython-312.pyc

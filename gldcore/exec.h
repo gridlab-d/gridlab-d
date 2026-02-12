@@ -1,58 +1,59 @@
 /** $Id: exec.h 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file exec.h
-	@addtogroup exec
-	@ingroup core
+        Copyright (C) 2008 Battelle Memorial Institute
+        @file exec.h
+        @addtogroup exec
+        @ingroup core
  @{
  **/
-
 
 #ifndef _EXEC_H
 #define _EXEC_H
 
-#include <setjmp.h>
 #include <map>
+#include <setjmp.h>
 #include <thread>
 
+#include "cpp_threadpool.h"
 #include "globals.h"
 #include "index.h"
-#include "cpp_threadpool.h"
 #include <nlohmann/json.hpp>
 
- // In a header file
+// In a header file
 extern const PASSCONFIG passtype[];
 
-
 struct sync_data {
-	TIMESTAMP step_to; /**< time to advance to */
-	unsigned int hard_event; /**< non-zero for hard events that can effect the advance step-to */
-	STATUS status; /**< the current status */
+  TIMESTAMP step_to;       /**< time to advance to */
+  unsigned int hard_event; /**< non-zero for hard events that can effect the
+                              advance step-to */
+  STATUS status;           /**< the current status */
 }; /**< the synchronization state structure */
 
 struct thread_data {
-	int count; /**< the thread count */
-	//struct sync_data *data; /**< pointer to the sync state structure */
-	std::vector<std::shared_ptr<struct sync_data>> data; /**< pointer to the sync state structure */
+  int count; /**< the thread count */
+  // struct sync_data *data; /**< pointer to the sync state structure */
+  std::vector<std::shared_ptr<struct sync_data>>
+      data; /**< pointer to the sync state structure */
 };
 
 class threadpool_thread_data {
-	int count;
-	struct sync_data *data;
-//	std::vector<struct sync_data> data;
-	std::map<std::thread::id, int> thread_map;
+  int count;
+  struct sync_data *data;
+  //	std::vector<struct sync_data> data;
+  std::map<std::thread::id, int> thread_map;
+
 public:
-	inline int get_count() {return count;}
-	threadpool_thread_data(int size, cpp_threadpool* threadpool);
-	struct sync_data* get_thread_data(std::thread::id thread_id);
-	struct sync_data* get_data(int index);
+  inline int get_count() { return count; }
+  threadpool_thread_data(int size, cpp_threadpool *threadpool);
+  struct sync_data *get_thread_data(std::thread::id thread_id);
+  struct sync_data *get_data(int index);
 };
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
+// #ifdef __cplusplus
+// extern "C" {
+// #endif
 int exec_init(void);
-STATUS exec_start(int64* passes = nullptr, int64* tsteps = nullptr);
-STATUS exec_step(int64* passes = nullptr, int64* tsteps = nullptr);
+STATUS exec_start(int64 *passes = nullptr, int64 *tsteps = nullptr);
+STATUS exec_step(int64 *passes = nullptr, int64 *tsteps = nullptr);
 STATUS run_preparation(void);
 STATUS exec_finalize_all(void);
 bool exec_is_initialized(void);
@@ -68,18 +69,20 @@ void exec_mls_suspend(void);
 void exec_mls_resume(TIMESTAMP next_pause);
 void exec_mls_done(void);
 void exec_mls_statewait(unsigned states);
-//void exec_slave_node();
+// void exec_slave_node();
 int exec_run_createscripts(void);
 
-void exec_sync_reset(std::shared_ptr<struct sync_data>& d);
-void exec_sync_merge(std::shared_ptr<struct sync_data>& to, std::shared_ptr<struct sync_data>& from);
-void exec_sync_set(std::shared_ptr<struct sync_data>& d, TIMESTAMP t,bool deltaflag);
-TIMESTAMP exec_sync_get(std::shared_ptr<struct sync_data>& d);
-unsigned int exec_sync_getevents(std::shared_ptr<struct sync_data>& d);
-int exec_sync_ishard(std::shared_ptr<struct sync_data>& d);
-int exec_sync_isnever(std::shared_ptr<struct sync_data>& d);
-int exec_sync_isinvalid(std::shared_ptr<struct sync_data>& d);
-STATUS exec_sync_getstatus(std::shared_ptr<struct sync_data>& d);
+void exec_sync_reset(std::shared_ptr<struct sync_data> &d);
+void exec_sync_merge(std::shared_ptr<struct sync_data> &to,
+                     std::shared_ptr<struct sync_data> &from);
+void exec_sync_set(std::shared_ptr<struct sync_data> &d, TIMESTAMP t,
+                   bool deltaflag);
+TIMESTAMP exec_sync_get(std::shared_ptr<struct sync_data> &d);
+unsigned int exec_sync_getevents(std::shared_ptr<struct sync_data> &d);
+int exec_sync_ishard(std::shared_ptr<struct sync_data> &d);
+int exec_sync_isnever(std::shared_ptr<struct sync_data> &d);
+int exec_sync_isinvalid(std::shared_ptr<struct sync_data> &d);
+STATUS exec_sync_getstatus(std::shared_ptr<struct sync_data> &d);
 
 EXITCODE exec_setexitcode(EXITCODE);
 EXITCODE exec_getexitcode(void);
@@ -93,12 +96,15 @@ int exec_add_scriptexport(const char *file);
 EXITCODE exec_run_initscripts(void);
 EXITCODE exec_run_syncscripts(void);
 EXITCODE exec_run_termscripts(void);
-void report_performance_after_run(time_t start_time, int64 passes, int64 tsteps);
-nlohmann::json do_checkpoint(const char* output_directory = nullptr);
+void report_performance_after_run(time_t start_time, int64 passes,
+                                  int64 tsteps);
+nlohmann::json do_checkpoint(const char *output_directory = nullptr);
 
-//#ifdef __cplusplus
-//}
-//#endif
+// #ifdef __cplusplus
+// }
+// #endif
+
+STATUS exec_force_sync_to_time(TIMESTAMP target_time);
 
 #endif
 
