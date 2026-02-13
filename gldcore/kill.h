@@ -8,6 +8,15 @@
 #ifdef __MINGW32__
 #include <sys/types.h>
 #endif
+
+#ifdef _WIN32
+    #include <process.h>
+    typedef int pid_t;  // Windows doesn't have pid_t, define it as int
+#else
+    #include <sys/types.h>  // POSIX systems have pid_t here
+#endif
+
+
 void kill_starthandler(void);
 void kill_stophandler(void);
 int kill(pid_t pid, int sig);
