@@ -12,57 +12,31 @@ trevor.hardy@pnnl.gov
 
 import gridlabd
 from pathlib import Path
-import json
+import os
 from pprint import pprint
 from datetime import datetime, timedelta
 
-def parse_gld_time(time_str):
-    parts = time_str.rsplit(' ', 1)
-    if len(parts) == 2 and parts[1] in ['PST', 'PDT', 'EST', 'EDT', 'CST', 'CDT', 'MST', 'MDT']:
-        time_str = parts[0]
-    return datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+# Ensure's we're running from the correct directory
+script_path = os.path.abspath(__file__)
+script_dir = os.path.dirname(script_path)
+os.chdir(script_dir)
 
-
-# Verify version
-print(f"GLD Python library location: {gridlabd.__file__}")
-
-# Make GLD instances
 gld = gridlabd.GridLabD()
-
-# Load models
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))
 loaded_model= gld.load("houses.glm")
-
-# Setting time steps
 gld.set_time_step(900)
-
-# Post(?)-initialize GLD
 gld.setup_after_load()
-
-# Getting simulation times 
 status, time = gld.get_time()
-print(f"*******  GLD time 1: {time} **********")
-
-# Start simulations
+print(f"GLD time 1: {time}")
 gld.step()
-
-# Getting simulation times 
 status, time = gld.get_time()
-print(f"*******  GLD time 2: {time} **********")
-
+print(f"GLD time 2: {time}")
 gld.save_checkpoint(model_path, "model_checkpoint1")
-
-gld.step()
-
-# Getting simulation times 
+gld.step() 
 status, time = gld.get_time()
-print(f"*******  GLD time 3: {time} **********")
-
-# Stop simulation
+print(f"GLD time 3: {time}")
 gld.stop()
-
-# Exit simulation
 gld.exit_gld()
 
  

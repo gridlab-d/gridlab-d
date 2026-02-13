@@ -1,8 +1,5 @@
 # Spec:Initialization
 
-**Source URL:** https://GridLAB-D™.shoutwiki.com/wiki/Spec:Initialization
-# Spec:Initialization
-
 Approval item:  SPECIFICATION REVIEW NEEDED 
 
 ## S1

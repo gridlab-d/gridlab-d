@@ -179,11 +179,11 @@ For the csv input two files would be needed:
 
 which looks something like: 
 
-ADD   
----  
-gen1 | 0.7 |  |  | 0.9 | 0.3 |   
-gen2 | 0.3 | 0.5 | 0.5 |  |  | 1   
-tie1 | -1 |  |  | 0.1 | 0.1   
+    ADD   
+    ---  
+    gen1 | 0.7 |  |  | 0.9 | 0.3 |   
+    gen2 | 0.3 | 0.5 | 0.5 |  |  | 1   
+    tie1 | -1 |  |  | 0.1 | 0.1   
   
 and `t1.csv`
     
@@ -197,12 +197,12 @@ and `t1.csv`
 
 which looks something like: 
 
-REMOVE   
----  
-gen2 |  |  |  |  |   
-MODIFY   
-gen1 | 1 |  |  | 1 |   
-tie1 |  |  |  | 0.15 | 0.15   
+    REMOVE   
+    ---  
+    gen2 |  |  |  |  |   
+    MODIFY   
+    gen1 | 1 |  |  | 1 |   
+    tie1 |  |  |  | 0.15 | 0.15   
   
 The player would then have contain: 
     

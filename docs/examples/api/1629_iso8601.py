@@ -14,26 +14,31 @@ trevor.hardy@pnnl.gov
 import gridlabd
 from pathlib import Path
 import json
+import os
 from pprint import pprint
 from datetime import datetime, timedelta
 
-def parse_gld_time(time_str):
-    parts = time_str.rsplit(' ', 1)
-    if len(parts) == 2 and parts[1] in ['PST', 'PDT', 'EST', 'EDT', 'CST', 'CDT', 'MST', 'MDT', 'UTC']:
-        time_str = parts[0]
-    return datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S'), parts[1]
+# Ensure's we're running from the correct directory
+script_path = os.path.abspath(__file__)
+script_dir = os.path.dirname(script_path)
+os.chdir(script_dir)
 
 gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))
 loaded_model= gld.load("houses.glm")
 status, time = gld.get_time()
-print(f"*******  GLD time 1: {time} **********")
-time, tz = parse_gld_time(time)
-test_time_str = time.isoformat()
-gld.step_to(test_time_str)
+print(f"Starting time:                  {time}")
+time_obj = datetime.fromisoformat(time)
+target_time = time_obj + timedelta(minutes = 23)
+target_time_str = datetime.isoformat(target_time)
+print(f"New target time stepping to:    {target_time_str}")
+gld.step_to(target_time_str)
 status, time = gld.get_time()
-print(f"*******  GLD time 2: {time} **********")
+messages = gld.get_messages()
+for message in messages:
+    print(message)
+print(f"Post `step_to()` time:          {time}")
 gld.stop()
 gld.exit_gld()
  

@@ -18,38 +18,24 @@ import json
 from pprint import pprint
 from datetime import datetime, timedelta
 
-# Verify version
-print(f"GLD Python library location: {gridlabd.__file__}")
-
-# Make GLD instances
+step_size = 900
 gld = gridlabd.GridLabD()
-
-# Load model
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))
 loaded_model = gld.load("houses.glm")
-
-# Setting time steps
-gld.set_time_step(900)
-
-# Post(?)-initialize GLD
-# gld1.setup_after_load()
-
-# Getting simulation times 
-status, time = gld.get_time()
-print(f"*******  GLD time 1: {time} **********")
-
-# Start simulations
+gld.set_time_step(step_size)
+status, first_time = gld.get_time()
+first_time_obj = datetime.fromisoformat(first_time)
+second_time_object = first_time_obj + timedelta(seconds = step_size)
+print(f"GLD time 1 : {first_time}")
 gld.step()
-
-# Getting simulation times 
-status, time = gld.get_time()
-print(f"*******  GLD time 2: {time} **********")
-print(f"************ This should be one step size later than the first time. ************")
-
-# Stop simulation
+status, next_time = gld.get_time()
+print(f"GLD time 2 : {next_time}")
+print(f"Target time: {second_time_object}")
+if next_time == datetime.isoformat(second_time_object):
+    print("Successfully stepped to correct time")
+else:
+    print("Failed to step to correct time.")
 gld.stop()
-
-# Exit simulation
 gld.exit_gld()
  

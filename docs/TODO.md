@@ -1,38 +1,33 @@
 # 0.0 GridLAB-D
-### Dev Questions
+
 - [x] GLD Association? Is that still a thing? --> it is not, removed from repo.
-### Docs Questions
-- [ ]
 
 # 1.0 Prospective Users
-### Dev Questions
-- [ ]
-### Docs Questions
-- [ ] Technical Overview needs rework
+
+- [ ] Technical Overview needs rework - Review status in Scott's tracker
 
 # New Users
-### Dev Questions
 
+- [ ] **Review tutorial pages, consider length and potentially splitting into smaller, more focused pages**
 - [x] Keep metronome example? --> No, delete.
     - [x] Pull metronome mentions out of Getting Started and into a single metronome example 
     file (or delete if not kept) 
+    - [ ] **Intro to Modeling needs to be re-written to not use metronome**
 - [ ] Definitive installation instructions
     - [x] add the "easy" or "light" executable install option
+    - [ ] *NOTE - Dev team does not have installation process well documented (i.e., checking that all installers are functional)*
 - [X] MySQL instructions - DEPRECATE/Unimplemented? If so, most content is unfinished. Needs robust introduction explaining what it is and why it is useful.
     - propose to Dev team to get rid of MySQL integration in leiu of python interface with new api (same for Matlab, HELICS, any other external integration)
-- [ ] Add a troubleshooting section to the new users section walking people through referencing the source code and how to find information they need on the source of truth.
-
-### Docs Questions
-- [ ] **Intro to Modeling needs to be re-written to not use metronome**
-- [ ] Review tutorial pages, consider length and potentially splitting into smaller, more focused pages
+- [X] Add a troubleshooting section to the new users section walking people through referencing the source code and how to find information they need on the source of truth.
+  - [ ] Page started, needs more content.
 
 
 # 3.0 Modeling
-### Dev Questions
+
 - [X] **XML** files. Still supported? Keep documentation? 
   - remove ref, "soft keep", switch to JSON as default
-- [ ] Talk with dev team to build out the built-in documentation within the code itself
-  - Dev team to build out a few doxygen examples to test campatability and usefulness
+- [ ] Revisit doxygen/built-in documentation within the code itself
+  - [ ]Dev team to build out a few doxygen examples to test campatability and usefulness
 - [X] **MySQL** player and recorder - keep? If so, needs better intro. 
   - move to unimplemented
 - [X] **Aggregate Demand Response Model** - this is a theory page, unclear what part of the GLD code it's actually referring to. Is this implemented? 
@@ -65,18 +60,7 @@
   - Device models – For each device the following
     * Specification page – All the math; this may be something that we try to write into the source code and extract to build the webpage or we write the webpage (via Markdown) and then reference it in the code. We don’t want to have to describe these equations twice (once as code comments and once in the documentation).
     * User page – Parameter list for the object and what each parameter does. Again, may be pulled from the existing source code documentation and created as a webpage; we just don’t want to write things down twice. This is likely to be the more popular page as it is what you need when you’re trying to put a .glm together.
-   - Support objects
-      * Recorders
-        * Output formats
-        * Connecting to databases (if this is still a supported feature)
-      * Players
-      * Schedules
-      * Timing (assuming it exists and replaces “starttime” “min\_timeste”, etc)
-      * Message (may not be needed if we have libgld?)
-  - Other objects
-    * Weather
-    * Market
-  - Verifying/debugging a model
+  - [ ] Verifying/debugging a model - consider linking or putting in Troubleshooting section
     * What are the red flags?
     * Common warnings you might be able to avoid
     * Running validation scripts – Something that post-processes results and looks for modeling abnormalities
@@ -127,24 +111,24 @@
 - [ ] 
 
 # Miscellaneous Notes
-- [ ] NOTE - Dev team does not have installation process well documented (i.e., checking that all installers are functional)
+
 - [ ] Branding, logo
 - [ ] Math doesn't display on search, can we fix that?
 - [ ] Search in general is not great, what can we do
 - [x] Get images from wiki (urls to wiki pages will no longer work)
 - [ ] Find a way to set default width of images to fill the ReadTheDocs window
-- [ ] Remove "History" sections from docs, irrelevant 
+- [X] Remove "History" sections from docs, irrelevant 
 - [ ] Visual navigation:
     - [ ] Pages with subpages should be more visually distinct, bold, underilned, something. The [+] left of the header that is just barely visible until you hover over it is not very helpful.
 - [ ] Word/page limit of a single doc page?
-- [ ] "See Also" lists:
+- [X] "See Also" lists:  --> Replaced with "**Related Concepts**"
   - Do we want to keep these? Will have to ensure pages still exist and links are accurate. Do we assume that the pages are now well-organized enough that this is no longer needed?
-  - Converted to "Related Concepts" list for now. When we're ready to finalize we can review and make items links to other pages where relevant.
+  - [ ] Converted to "Related Concepts" list for now. When we're ready to finalize we can review and make items links to other pages where relevant.
 - [ ] Consistency of Terms, example blocks `<mymodel>`, for example (maybe standalone page in New Users)
   - See style guide for guidance 
 - [ ] Remove dated clauses, like:
               `"As of Hassayampa (Version 3.0)..."`
-- [ ] Code blocks have embedded wiki links that will no longer work. Code blocks should be reworked to just display the code snippbit. Can be helpful to refer to original wiki page and copy/paste code. Example:
+- [X] Code blocks have embedded wiki links that will no longer work. Code blocks should be reworked to just display the code snippbit. Can be helpful to refer to original wiki page and copy/paste code. **Pretty well gotten rid of all these, double check upon finalization.** Example:
 
     - Change this:   
     
@@ -154,7 +138,7 @@
       
       
         host% gridlabd -[D] [validate_report]=validate.txt --validate
-  
+
 # New Doc Pages (Existing Features) Topics
 
 Topic | Start Date | Time Estimate | Completed Date

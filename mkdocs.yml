@@ -62,6 +62,7 @@ nav:
     - Technical Overview: docs/1.0 - Prospective Users/Technical_Overview.md
   - 2.0 - New Users:
     - Quick Install: docs/2.0 - New Users/2.1 - Installation Guide.md
+    - Troubleshooting: docs/2.0 - New Users/2.3 - Troubleshooting.md
     - Tutorial:
       - Gridlab-D™ Overview: docs/2.0 - New Users/Tutorial/2.2.1 - Overview.md
       - What is a GridLAB-D™ Model?: docs/2.0 - New Users/Tutorial/2.2.2 - Models.md
@@ -83,12 +84,6 @@ nav:
       - Loadshape: docs/3.0 - Modeling Reference/Loads/1.0 - Loadshape.md
       - Load Composition: docs/3.0 - Modeling Reference/Loads/2.0 - Load_Composition.md
       - Industrial and Agricultural Loads: docs/3.0 - Modeling Reference/Loads/3.0 - Industrial_and_agricultural_loads.md
-    - Metrics & Recorders:
-      - Recorder: docs/3.0 - Modeling Reference/Metrics & Recorders/1.0 - Recorder.md
-      - Multi recorder: docs/3.0 - Modeling Reference/Metrics & Recorders/2.0 - Multi_recorder.md
-      - Metrics collector: docs/3.0 - Modeling Reference/Metrics & Recorders/3.0 - Metrics_collector.md
-      - Metrics collector writer: docs/3.0 - Modeling Reference/Metrics & Recorders/4.0 - Metrics_collector_writer.md
-      - Plotting Output: docs/3.0 - Modeling Reference/Metrics & Recorders/plotting-output.md
     - Modules:
       - Introduction: docs/3.0 - Modeling Reference/Modules/1.0 - Introduction.md
       - Climate:
@@ -128,8 +123,15 @@ nav:
         - Waterheater: docs/3.0 - Modeling Reference/Modules/Residential/Waterheater.md
         - ZIPload: docs/3.0 - Modeling Reference/Modules/Residential/ZIPload.md
       - Tape:
-        - Player: docs/3.0 - Modeling Reference/Modules/Tape/Player.md
-        - Tape: docs/3.0 - Modeling Reference/Modules/Tape/Tape.md
+        - Tape: docs/3.0 - Modeling Reference/Modules/Tape/1.0 - Tape.md
+        - Player: docs/3.0 - Modeling Reference/Modules/Tape/2.0 - Player.md
+        - Recorder: docs/3.0 - Modeling Reference/Modules/Tape/3.0 - Recorder.md
+        - Group Recorder: docs/3.0 - Modeling Reference/Modules/Tape/3.1 - Group Recorder.md
+        - Multi recorder: docs/3.0 - Modeling Reference/Modules/Tape/3.2 - Multi_recorder.md
+        - Violation Recorder: docs/3.0 - Modeling Reference/Modules/Tape/3.3 - Violation Recorder.md
+        - Collector: docs/3.0 - Modeling Reference/Modules/Tape/5.0 - Collector.md
+        - Metrics collector: docs/3.0 - Modeling Reference/Modules/Tape/6.0 - Metrics_collector.md
+        - Metrics collector writer: docs/3.0 - Modeling Reference/Modules/Tape/6.1 - Metrics_collector_writer.md
     - Other Features:
       - Checkpoints: docs/3.0 - Modeling Reference/Other Features/Checkpoints.md
       - Complex Numbers: docs/3.0 - Modeling Reference/Other Features/ComplexNumbers.md
@@ -175,6 +177,7 @@ nav:
       - Creating a solver: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.4 - Creating_a_solver.md
       - GridLAB-D™ Device Modeling: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.5 - GridLAB-D Device Modeling.md
       - Integrated Testing: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.6 - Integrated_Testing.md
+      - Issue Tracking: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.7 - Issue Tracking.md
     - 4.5 - Debugging:
       - Command options: docs/4.0 Developing Reference/4.5 - Debugging/4.6.1 - Command_line_arguments.md
       - Performance Profiling: docs/4.0 Developing Reference/4.5 - Debugging/4.6.2 - performance-profiling.md
