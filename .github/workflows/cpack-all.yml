@@ -82,29 +82,101 @@ jobs:
             !${{github.workspace}}/build/packages/_CPack_Packages
 
   win-build:
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            arch: x86_64
-    runs-on: ${{matrix.os}}
-    defaults:
-      run:
-        shell: msys2 {0}
-
+    runs-on: windows-latest
     steps:
-      - uses: msys2/setup-msys2@v2
+      - name: Checkout
+        uses: actions/checkout@v5
         with:
-          msystem: mingw64
-          update: true
-          install: >-
-            base-devel
-            git
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-nsis
-            mingw-w64-x86_64-boost
-            mingw-w64-x86_64-helics
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup vcpkg (manifest mode + cache)
+        uses: lukka/run-vcpkg@v11
+        with:
+          runVcpkgInstall: true
+          logCollectionRegExps: |
+            .*/CMakeOutput\.log$
+            .*/CMakeError\.log$
+            .*/vcpkg/buildtrees/.+\.log$
+
+      - name: Upload vcpkg & CMake logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-and-cmake-logs
+          path: |
+            ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
+            out/build/ci-windows/**/CMakeOutput.log
+            out/build/ci-windows/**/CMakeError.log
+
+      - name: Clean install prefix (Windows)
+        shell: pwsh
+        run: |
+         $installRoot = "$env:USERPROFILE\.temp\GridLAB-D"
+         if (Test-Path $installRoot) {
+            Write-Host "Removing previous install at $installRoot..."
+            Remove-Item -Path $installRoot -Recurse -Force -ErrorAction SilentlyContinue
+         }
+
+
+      - name: Configure CMake (VS2022 + vcpkg toolchain)
+        shell: pwsh
+        run: >
+            cmake -S .
+            --log-level=VERBOSE
+            --log-context
+            --debug-output
+            -B out/build/ci-windows
+            -G "Visual Studio 17 2022"
+            -A x64
+            -DCMAKE_CONFIGURATION_TYPES="Release"
+            -DVCPKG_TARGET_TRIPLET=x64-windows
+            "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+            "-DCMAKE_INSTALL_PREFIX=$env:USERPROFILE/.temp/GridLAB-D"
+            -DGLD_CI_BUILD=ON
+
+      - name: Build gridlabd (Release)
+        shell: pwsh
+        run: cmake --build out/build/ci-windows --config Release -t ALL_BUILD
+        env:
+          CFLAGS: "/W0"
+          CXXFLAGS: "/W0"
+
+      - name: Verify gldapi.dll before install
+        shell: pwsh
+        run: |
+         $src = Resolve-Path "out/build/ci-windows/bin/Release/gldapi.dll"
+         Write-Host "Found: $src"
+         Get-Item $src | Format-List *
+
+
+      - name: Show install prefix
+        shell: pwsh
+        run: |
+          Write-Host "CMAKE_INSTALL_PREFIX=$env:USERPROFILE\.temp\GridLAB-D"
+          if (Test-Path "$env:USERPROFILE\.temp\GridLAB-D") {
+            Get-ChildItem "$env:USERPROFILE\.temp\GridLAB-D" -Recurse | Select-Object FullName
+          } else {
+            Write-Host "Install prefix does not yet exist."
+          }
+
+
+      - name: Install GridLAB-D
+        shell: pwsh
+        run: cmake --install out/build/ci-windows --config Release --verbose
+
+      - name: List installed DLLs and EXEs
+        shell: pwsh
+        run: |
+          $installRoot = "$env:USERPROFILE\.temp\GridLAB-D"
+          Write-Host "Listing under $installRoot..."
+          Get-ChildItem -Path $installRoot -Include *.dll, *.exe -Recurse | ForEach-Object {
+            Write-Host $_.FullName
+          }
+
 
       # - name: Build HELICS Cache
       #   id: cache-helics
