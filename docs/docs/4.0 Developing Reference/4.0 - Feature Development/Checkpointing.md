@@ -14,6 +14,8 @@ Checkpointing is a feature aimed at all users, be they just normal GridLAB-D use
 
 Checkpointing is expected to primarily be used through the C/C++ API (or Python interpretation of that).  Using command line options and global variable settings is possible, but not recommended.
 
+Checkpointing will not be supported in transient mode and will only take a "snapshot" on standard time-series timestamps.  Checkpoint "snapshots" will occur at the end of a quasi-steady-state time-series timestamp (before moving to the next timestep).
+
 TODO: detail what API calls
 
 ## Class/Sequence Diagrams
