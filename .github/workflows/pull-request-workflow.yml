@@ -2,12 +2,10 @@ name: GridLAB-D PR Validation
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - '**'
   pull_request:
     branches:
-      - '**'
+      - feature/1478
+      - develop
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
