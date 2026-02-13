@@ -16,7 +16,6 @@
     #include <sys/types.h>  // POSIX systems have pid_t here
 #endif
 
-
 void kill_starthandler(void);
 void kill_stophandler(void);
 int kill(pid_t pid, int sig);
