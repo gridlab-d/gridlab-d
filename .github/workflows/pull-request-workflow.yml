@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - ['**']
+      - '**'
   pull_request:
     branches:
-      - ['**']
+      - '**'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
