@@ -523,8 +523,7 @@ extern "C"
 	TIMESTAMP object_heartbeat(OBJECT *obj);
 
 	int object_loadmethod(OBJECT *obj, char *name, char *value);
-	
-	void object_profile(OBJECT *obj, OBJECTPROFILEITEM pass, clock_t t);
+
 
 #ifdef __cplusplus
 }
