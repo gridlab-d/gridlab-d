@@ -18,11 +18,15 @@ Model multithreading is allowing common `rank`s of objects to be executed in par
 
 ## Functionality
 
-Interactions with the multithreading capability will be distinct
+Interactions with the multithreading capability will be different between a developer and a user.
 
-How will devs/users interact with this feature? Will it be behind-the-scenes, a new module, method, or interface?
+On the development side, GridLAB-D core functions are expected to handle most of the specifics of multithreading such that the common model/module developer will not need to do anything different.  The exception will be any potential contention areas, where additional memory management/locking features may be needed, which developers will need to include in their objects.
+
+On the user side, the only interaction will be designating a core/threadcount for GridLAB-D to utilitize, which will just result in additional performance/faster simulation times.  Answers from GridLAB-D models should be identical between single-threaded and multithreaded runs, with the only difference being in execution time. 
 
 ## Class/Sequence Diagrams
+
+TODO: Needed?
 
 If apropriate, document the feature using class or sequence diagrams.
 
