@@ -475,11 +475,25 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 			std::string timestamp_comment = "// Generated at timestamp: " + std::to_string(global_clock);
 			checkpoint["__preamble"]["comments"].push_back(timestamp_comment);
 
-			// Add clock info (use int64_t for timestamps)
-			checkpoint["clock"]["timestamp"] = static_cast<int64_t>(global_clock);
-			checkpoint["clock"]["stoptime"] = static_cast<int64_t>(global_stoptime);
-			checkpoint["clock"]["starttime"] = static_cast<int64_t>(global_starttime);
-			checkpoint["clock"]["timezone"] = timestamp_current_timezone();
+			// Add clock info (format timestamps as strings with timezone)
+			char ts_buffer[64];
+			std::string tz = timestamp_current_timezone();
+			size_t first_digit = tz.find_first_of("0123456789");
+			if (first_digit != std::string::npos && (first_digit == 0 || (tz[first_digit - 1] != '+' && tz[first_digit - 1] != '-')))
+			{
+				tz.insert(first_digit, "+");
+			}
+			
+			convert_from_timestamp(global_clock, ts_buffer, sizeof(ts_buffer));
+			checkpoint["clock"]["timestamp"] = "'" + std::string(ts_buffer) + "'";
+			
+			convert_from_timestamp(global_stoptime, ts_buffer, sizeof(ts_buffer));
+			checkpoint["clock"]["stoptime"] = "'" + std::string(ts_buffer) + "'";
+			
+			convert_from_timestamp(global_starttime, ts_buffer, sizeof(ts_buffer));
+			checkpoint["clock"]["starttime"] = "'" + std::string(ts_buffer) + "'";
+			
+			checkpoint["clock"]["timezone"] = tz;
 			checkpoint["_checkpoint"] = true;
 
 			// First, collect objects by class name
@@ -565,9 +579,20 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 						instance["name"] = obj->name;
 					else
 					{
-						instance["name"] = std::string(obj->oclass->name) + std::to_string(classnameCounter);
+						instance["object_declaration"] = std::string(obj->oclass->name) + ":" + std::to_string(static_cast<int>(obj->id));
 						classnameCounter++;
 					}
+
+					// Add reference to parent object
+					if (obj->parent && obj->parent != nullptr){
+						if(obj->parent->name && strlen(obj->parent->name) > 0){
+							instance["parent"] = obj->parent->name;
+						}
+						else {
+							instance["parent"] = std::string(obj->parent->oclass->name) + ":" + std::to_string(static_cast<int>(obj->parent->id));
+						}
+					}
+
 					// Add all properties from this object's class and all parent classes
 					std::set<std::string> processed_properties; // Track processed properties to avoid duplicates
 
@@ -597,13 +622,27 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 							// Use object_get_value_by_name for all property types to ensure proper access
 							if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0)
 							{
+								// Skip if value is empty, null, or invalid to avoid unusable values
+								if (value_str == nullptr || strlen(value_str) == 0 || 
+								    strcmp(value_str, "null") == 0 || strcmp(value_str, "NULL") == 0 ||
+								    strcmp(value_str, "\"\"") == 0 || strcmp(value_str, "''") == 0 ||
+								    strcmp(value_str, "NAN") == 0 || strcmp(value_str, "nan") == 0)
+								{
+									// Skip this property - don't add empty/null values
+									continue;
+								}
+
 								// Parse the string value based on property type
 								switch (pmap->ptype)
 								{
 								case PT_double:
 								{
 									double val = strtod(value_str, nullptr);
-									instance[pmap->name] = val;
+									// Skip NaN values - they become null in JSON
+									if (!std::isnan(val))
+									{
+										instance[pmap->name] = val;
+									}
 								}
 								break;
 								case PT_int32:
@@ -646,11 +685,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 									break;
 								}
 							}
-							else
-							{
-								// Property value could not be retrieved, set to null
-								instance[pmap->name] = nullptr;
-							}
+							// Skip properties that couldn't be retrieved - don't add null values
 						}
 
 						// Move to parent class
@@ -672,10 +707,10 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 				nlohmann::ordered_json module = nlohmann::ordered_json::object();
 				
 				// Add module name
-				module["name"] = std::string(mod->name);
+				// module["name"] = std::string(mod->name);
 				
 				// Add module ID
-				module["id"] = mod->id;
+				// module["id"] = mod->id;
 				
 			// Iterate through module's own property list
 			if (mod->globals != nullptr)
@@ -686,6 +721,14 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 					// Get the value using module_getvar
 					if (module_getvar(mod, prop->name, value_buffer, sizeof(value_buffer)) != nullptr)
 					{
+						// Skip if value is empty, null, or invalid
+						if (value_buffer == nullptr || strlen(value_buffer) == 0 ||
+						    strcmp(value_buffer, "null") == 0 || strcmp(value_buffer, "NULL") == 0 ||
+						    strcmp(value_buffer, "\"\"") == 0 || strcmp(value_buffer, "''") == 0 ||
+						    strcmp(value_buffer, "NAN") == 0 || strcmp(value_buffer, "nan") == 0)
+						{
+							continue;
+						}
 						// Parse the value based on property type
 						module[prop->name] = parse_property_value(prop->ptype, value_buffer);
 					}
@@ -718,22 +761,41 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 						// Check if the module exists
 						if (module_map.find(module_name) != module_map.end())
 						{
-							// Assign global to the module with proper type parsing
-							modules[module_name][var_name] = parse_property_value(global->prop->ptype, buffer);
+							// Skip if value is empty, null, or invalid
+							if (buffer != nullptr && strlen(buffer) > 0 &&
+							    strcmp(buffer, "null") != 0 && strcmp(buffer, "NULL") != 0 &&
+							    strcmp(buffer, "\"\"") != 0 && strcmp(buffer, "''") != 0 &&
+							    strcmp(buffer, "NAN") != 0 && strcmp(buffer, "nan") != 0)
+							{
+								// Assign global to the module with proper type parsing
+								modules[module_name][var_name] = parse_property_value(global->prop->ptype, buffer);
+							}
 						}
 						else
 						{
 							// Module not found, issue a warning
 							output_warning("Global variable '%s' references module '%s' which is not loaded", 
 								global_name.c_str(), module_name.c_str());
-							// Still add to core globals as fallback
-							globals[global_name] = parse_property_value(global->prop->ptype, buffer);
+							// Still add to core globals as fallback if value is valid
+							if (buffer != nullptr && strlen(buffer) > 0 &&
+							    strcmp(buffer, "null") != 0 && strcmp(buffer, "NULL") != 0 &&
+							    strcmp(buffer, "\"\"") != 0 && strcmp(buffer, "''") != 0 &&
+							    strcmp(buffer, "NAN") != 0 && strcmp(buffer, "nan") != 0)
+							{
+								globals[global_name] = parse_property_value(global->prop->ptype, buffer);
+							}
 						}
 					}
 					else
 					{
 						// Core global variable (no module prefix)
-						globals[global_name] = parse_property_value(global->prop->ptype, buffer);
+						if (buffer != nullptr && strlen(buffer) > 0 &&
+						    strcmp(buffer, "null") != 0 && strcmp(buffer, "NULL") != 0 &&
+						    strcmp(buffer, "\"\"") != 0 && strcmp(buffer, "''") != 0 &&
+						    strcmp(buffer, "NAN") != 0 && strcmp(buffer, "nan") != 0)
+						{
+							globals[global_name] = parse_property_value(global->prop->ptype, buffer);
+						}
 					}
 				}
 			}

@@ -771,6 +771,21 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
         this->currentObject = obj;
         this->currentModule = obj->oclass->module;
         this->parse.current_object = obj;
+        
+        // Protect against empty property values to prevent segfaults in parsing functions
+        if (propValue.empty())
+        {
+            if (prop == nullptr)
+            {
+                output_error_raw("loader::objectProperties() parsing file, %s: property %s is not defined in class "
+                                 "%s and has empty value", this->filename.string().c_str(), propName.c_str(), 
+                                 oClass->name);
+                return FAILED;
+            }
+            // Empty value for valid property - just skip parsing
+            return SUCCESS;
+        }
+        
         if (prop != nullptr && prop->ptype == PT_complex && this->parse.complex_unit(propValue, &cval, &unit) > 0)
         {
 			if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0

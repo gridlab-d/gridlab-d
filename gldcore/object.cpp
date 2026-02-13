@@ -891,7 +891,7 @@ int object_set_value_by_addr(OBJECT *obj,	 /**< the object to alter */
 	int result = 0;
 	if (prop == nullptr && (prop = get_property_at_addr(obj, addr)) == nullptr)
 		return 0;
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
+	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN) && (prop->access != PA_REFERENCE))
 	{
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
@@ -1270,7 +1270,7 @@ int object_set_value_by_name(OBJECT *obj,		/**< the object to change */
 			return len > 0 ? (int)len : 1; /* empty string is not necessarily wrong */
 		}
 	}
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
+	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN) && (prop->access != PA_REFERENCE))
 	{
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
@@ -1293,7 +1293,7 @@ int object_set_int16_by_name(OBJECT *obj, const PROPERTYNAME name, int16 value)
 		errno = ENOENT;
 		return 0;
 	}
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
+	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN) && (prop->access != PA_REFERENCE))
 	{
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
@@ -1323,7 +1323,7 @@ int object_set_int32_by_name(OBJECT *obj, const PROPERTYNAME name, int32 value)
 		errno = ENOENT;
 		return 0;
 	}
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
+	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN) && (prop->access != PA_REFERENCE))
 	{
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
@@ -1345,7 +1345,7 @@ int object_set_int64_by_name(OBJECT *obj, const PROPERTYNAME name, int64 value)
 		errno = ENOENT;
 		return 0;
 	}
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
+	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN) && (prop->access != PA_REFERENCE))
 	{
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
@@ -1367,7 +1367,7 @@ int object_set_double_by_name(OBJECT *obj, const PROPERTYNAME name, double value
 		errno = ENOENT;
 		return 0;
 	}
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
+	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN) && (prop->access != PA_REFERENCE))
 	{
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
@@ -1389,7 +1389,7 @@ int object_set_complex_by_name(OBJECT *obj, const PROPERTYNAME name, gld::comple
 		errno = ENOENT;
 		return 0;
 	}
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
+	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN) && (prop->access != PA_REFERENCE))
 	{
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT

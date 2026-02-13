@@ -49,7 +49,13 @@ int main(int argc, char* argv[]) {
     std::vector<const char*> args = {"notneeded", fileName.c_str(), "--verbose"};
     int test_argc = static_cast<int>(args.size());
     char* test_argv[] = { const_cast<char*>(args[0]), const_cast<char*>(args[1]), const_cast<char*>(args[2])};
-    gld.load_glm(test_argc, test_argv);
+    try{
+        gld.load_glm(test_argc, test_argv);
+    } catch (const std::exception& e) {
+        std::cerr << "Error loading GLM: " << e.what() << std::endl;
+        return 1;
+    }
+
     
     if (checkpoint_mode) {
         // Run N steps and save checkpoint
@@ -66,10 +72,13 @@ int main(int argc, char* argv[]) {
     else if (restore_mode) {
         printf("Checkpoint loaded.\n");
         gld.run();
+        nlohmann::json checkpoint = gld.get_checkpoint_json();
+        printf("Checkpoint saved.\n");
     }
     else {
         // Default: just run to completion
         gld.run();
+        nlohmann::json checkpoint = gld.get_checkpoint_json();
     }
     
     // Exit
