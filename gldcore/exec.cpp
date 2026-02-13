@@ -279,7 +279,7 @@ int exec_init()
 	return 1;
 }
 
-clock_t cstart, cend;
+clock_t cstart, clock_end;
 
 #ifndef _MAX_PATH
 #define _MAX_PATH 1024
@@ -3238,7 +3238,7 @@ static void run_main_simulation_loop(cpp_threadpool *threadpool, int64 &passes, 
 	/* main loop runs for iteration limit, or when nothing futher occurs (ignoring soft events) */
 	while (execute_single_simulation_iteration(threadpool, passes, tsteps, j, ptr, pc_rv, iObjRankList))
 	{
-		// Continue executing iterations until simulation should stop
+		continue;
 	}
 }
 
@@ -3411,7 +3411,7 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
 	}
 
 	// sjin: GetMachineCycleCount
-	cend = (clock_t)exec_clock();
+	clock_end = (clock_t)exec_clock();
 
 	fnl_rv = finalize_all();
 	if (FAILED == fnl_rv)

@@ -126,3 +126,6 @@ scratch/*
 .vscode/
 CMakePresets.json
 
+*.python-version
+*pyproject.toml
+*uv.lock

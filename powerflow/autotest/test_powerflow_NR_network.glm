@@ -312,11 +312,13 @@ object node { //633 {
 		target voltage_A;
 		value 2444.96-2.55d;
 		within 2;
-	 };	 object complex_assert {
+	 };	 
+   object complex_assert {
 		target voltage_B;
 		value 2498.11-121.77d;
 		within 5;
-	 };	 object complex_assert {
+	 };	 
+   object complex_assert {
 		target voltage_C;
 		value 2437.49+117.83d;
 		within 5;
@@ -343,11 +345,13 @@ object node { //632 {
 		target voltage_A;
 		value 2452.23-2.49d;
 		within 5;
-	 };	 object complex_assert {
+	 };	 
+   object complex_assert {
 		target voltage_B;
 		value 2502.66-121.72d;
 		within 5;
-	 };	 object complex_assert {
+	 };	 
+   object complex_assert {
 		target voltage_C;
 		value 2443.76+117.83d;
 		within 5;
@@ -366,11 +370,13 @@ object node { //650 {
 		target voltage_A;
 		value 2401.7771;
 		within 5;
-	 };	 object complex_assert {
+	 };	 
+   object complex_assert {
 		target voltage_B;
 		value 2401.7771-120.0d;
 		within 5;
-	 };	 object complex_assert {
+	 };	 
+   object complex_assert {
 		target voltage_C;
 		value 2401.7771+120.0d;
 		within 5;

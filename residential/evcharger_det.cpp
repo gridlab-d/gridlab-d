@@ -1348,9 +1348,9 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 {
 	OBJECT *obj = object_header(this);
 	double temp_double, charge_out_percent, ramp_temp, ramp_time, temp_voltage;
-	complex temp_current_value, temp_current_calc;
+	gld::complex temp_current_value, temp_current_calc;
 	gld::complex temp_complex;
-	complex actual_power_value;
+	gld::complex actual_power_value;
 	double tdiff;
 	bool in_deltamode;
 
@@ -1401,7 +1401,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 					}
 					else
 					{
-						actual_power_value = complex(0.0,0.0);
+						actual_power_value = gld::complex(0.0,0.0);
 					}
 
 					//Push the update in
@@ -1507,7 +1507,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 					}
 					else
 					{
-						actual_power_value = complex(0.0,0.0);
+						actual_power_value = gld::complex(0.0,0.0);
 					}
 
 					//Push the update in
@@ -1763,7 +1763,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 					}
 					else
 					{
-						actual_power_value = complex(0.0,0.0);
+						actual_power_value = gld::complex(0.0,0.0);
 					}
 
 					//Push the update in
@@ -1908,7 +1908,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 	}
 
 	//See if it will exceed the maximum pu
-	temp_current_value = ~(temp_complex / complex((expected_voltage_base * load.voltage_factor),0.0));
+	temp_current_value = ~(temp_complex / gld::complex((expected_voltage_base * load.voltage_factor),0.0));
 
 	//Basing it off the power, since close enough
 	if (temp_current_value.Mag() > max_overload_charge_current)
@@ -1916,7 +1916,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 		temp_current_calc.SetPolar(max_overload_charge_current,temp_current_value.Arg());
 
 		//Limit it
-		temp_complex = complex(expected_voltage_base * load.voltage_factor,0.0) * ~temp_current_calc;
+		temp_complex = gld::complex(expected_voltage_base * load.voltage_factor,0.0) * ~temp_current_calc;
 	}
 	//Default else - smaller, so okay
 
@@ -1933,9 +1933,9 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 	}
 	else	//Just zero it all
 	{
-		load.power = complex(0.0,0.0);
-		load.current = complex(0.0,0.0);
-		load.admittance = complex(0.0,0.0);
+		load.power = gld::complex(0.0,0.0);
+		load.current = gld::complex(0.0,0.0);
+		load.admittance = gld::complex(0.0,0.0);
 	}
 
 	//See if we're in deltamode and ramp-limited

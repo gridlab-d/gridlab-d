@@ -1166,7 +1166,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
                     &fwh_power,
 					&fwh_cop,
 					&fwh_energy);*/
-            load.total = complex(fwh_energy/(1000*simulation_time), 0);
+            load.total = gld::complex(fwh_energy/(1000*simulation_time), 0);
             fwh_energy = 0;
 			fwh_sim_time = t1+ (TIMESTAMP)simulation_time;
 		}

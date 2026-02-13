@@ -133,8 +133,8 @@ char *_strlwr(char *s)
 #endif
 
 // for commercial house-zone sequence transforms
-static complex A_OPERATOR =  complex (-0.5,  0.8660254);
-static complex A2_OPERATOR = complex (-0.5, -0.8660254);
+static gld::complex A_OPERATOR =  gld::complex (-0.5,  0.8660254);
+static gld::complex A2_OPERATOR = gld::complex (-0.5, -0.8660254);
 // list of enduses that are implicitly active
 gld::set house_e::implicit_enduses_active = IEU_ALL;
 enumeration house_e::implicit_enduse_source = IES_ELCAP1990;
@@ -820,8 +820,8 @@ int house_e::create()
 	value_Power[0] = value_Power[1] = value_Power[2] = gld::complex(0.0,0.0);
 	// Note: value_MeterStatus and value_Frequency are initialized in init() after checkpoint checks
 	external_pf_mode = XPFV_NONE;
-	external_v1N = complex(0,0);
-	external_v2N = complex(0,0);
+	external_v1N = gld::complex(0,0);
+	external_v2N = gld::complex(0,0);
 
 	proper_meter_parent = false;	//By default, assume we have no proper parent
 	commercial_load_parent = false;
@@ -2601,9 +2601,9 @@ void house_e::update_system(double dt)
 				}
 				else	//Attached, but zero these, because below are accumulators
 				{
-					load.power = complex(0.0,0.0);
-					load.admittance = complex(0.0,0.0);
-					load.current = complex(0.0,0.0);
+					load.power = gld::complex(0.0,0.0);
+					load.admittance = gld::complex(0.0,0.0);
+					load.current = gld::complex(0.0,0.0);
 				}
 				
 				// Motor losses that are related to the efficiency of the induction motor. These contribute to electric power
@@ -3722,14 +3722,14 @@ void house_e::pull_complex_powerflow_values()
 	//Pull in the various values from powerflow - straight reads
 	if (commercial_load_parent == true) {
 		if (numPhases == 3) { // V1n = positive-sequence voltage
-			complex Va = pCircuit_V[0]->get_complex();
-			complex Vb = pCircuit_V[1]->get_complex();
-			complex Vc = pCircuit_V[2]->get_complex();
+			gld::complex Va = pCircuit_V[0]->get_complex();
+			gld::complex Vb = pCircuit_V[1]->get_complex();
+			gld::complex Vc = pCircuit_V[2]->get_complex();
 			value_Circuit_V[1] = Va + A_OPERATOR * Vb + A2_OPERATOR * Vc;
 			value_Circuit_V[1] /= 3.0;
 		} else if (numPhases == 2) {
-			complex v1;
-			complex v2;
+			gld::complex v1;
+			gld::complex v2;
 			if (!(externalPhases & 1)) { // phases B and C
 				v1 = pCircuit_V[1]->get_complex();
 				v2 = pCircuit_V[2]->get_complex();
@@ -3804,14 +3804,14 @@ void house_e::push_complex_powerflow_values()
 
 		double denom = numPhases;
 		// split the total power equally among the phases
-		complex balPower = (value_Power[0] + value_Power[1] + value_Power[2]) / denom;
+		gld::complex balPower = (value_Power[0] + value_Power[1] + value_Power[2]) / denom;
 		int insertP = 0;
 		if (balPower.Mag() > 0.0) {
 			insertP = 1;
 //			gl_output ("house: %s commercial per-phase P=[%g +j%g]", obj->name, balPower.Re(), balPower.Im());
 		}
 		// adjust the constant shunt for voltages and internal turns, then balance among phases
-		complex balShunt = (value_Shunt[0] + value_Shunt[1] + value_Shunt[2] * 4.0)
+		gld::complex balShunt = (value_Shunt[0] + value_Shunt[1] + value_Shunt[2] * 4.0)
 			/ (internalTurnsRatio * internalTurnsRatio) / denom;
 		int insertS = 0;
 		if (balShunt.Mag() > 0.0) {
@@ -3819,7 +3819,7 @@ void house_e::push_complex_powerflow_values()
 //			gl_output ("house: %s commercial per-phase Y=[%g +j%g]", obj->name, balShunt.Re(), balShunt.Im());
 		}
 		// adjust the constant current for voltages and internal turns, then balance among phases
-		complex balCurrent = (value_Line_I[0] + value_Line_I[1] + value_Line_I[2] * 2.0)
+		gld::complex balCurrent = (value_Line_I[0] + value_Line_I[1] + value_Line_I[2] * 2.0)
 			/ internalTurnsRatio / denom;
 		int insertI = 0;
 		if (balCurrent.Mag() > 0.0) {
@@ -3835,7 +3835,7 @@ void house_e::push_complex_powerflow_values()
 //					gl_output ("  adding P to [%g +j%g] on phase mask %d",
 //										 temp_complex_val.Re(), temp_complex_val.Im(), mask);
 					temp_complex_val += balPower;
-					pPower[indexval]->setp<complex>(temp_complex_val,test_rlock);
+					pPower[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 				}
 				if (insertS > 0) {
 					temp_complex_val = pShunt[indexval]->get_complex();
@@ -3844,7 +3844,7 @@ void house_e::push_complex_powerflow_values()
 					temp_complex_val += balShunt;
 
 					//Push it back up
-					pShunt[indexval]->setp<complex>(temp_complex_val,test_rlock);
+					pShunt[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 				}
 				if (insertI > 0) {
 					temp_complex_val = pLine_I[indexval]->get_complex();
@@ -3853,7 +3853,7 @@ void house_e::push_complex_powerflow_values()
 					temp_complex_val += balCurrent;
 
 					//Push the value back up
-					pLine_I[indexval]->setp<complex>(temp_complex_val,test_rlock);
+					pLine_I[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 				}
 			}
 			mask *= 2;
@@ -4113,9 +4113,9 @@ SIMULATIONMODE house_e::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 		t1_dbl = t0_dbl + (double)(dt)/(double)(DT_SECOND);
 
 		//Zero the accumulator
-		value_Power[0] = value_Power[1] = value_Power[2] = complex(0.0,0.0);
-		value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
-		value_Shunt[0] = value_Shunt[1] = value_Shunt[2] = complex(0.0,0.0);
+		value_Power[0] = value_Power[1] = value_Power[2] = gld::complex(0.0,0.0);
+		value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = gld::complex(0.0,0.0);
+		value_Shunt[0] = value_Shunt[1] = value_Shunt[2] = gld::complex(0.0,0.0);
 
 		if (proper_meter_parent == true)
 		{
