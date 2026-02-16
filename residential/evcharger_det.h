@@ -70,7 +70,7 @@ public:
 	static CLASS *oclass, *pclass;
 
 	evcharger_det(MODULE *module);
-	~evcharger_det();
+	~evcharger_det() {}
 	int create();
 	int init(OBJECT *parent);
 	int isa(char *classname);

@@ -115,7 +115,7 @@ static mxArray* matlab_create_value(gld_property *prop)
 	case PT_double_array:
 		{
 			double_array *data = (double_array*)prop->get_addr();
-			size_t n=data->get_rows(), m=data->get_cols();
+			size_t n=data-.rows(), m=data->get_cols();
 			value = mxCreateDoubleMatrix(0,0,mxREAL);
 			double *copy = (double*)mxMalloc(m*n);
 			for ( int c=0 ; c<m ; c++ )

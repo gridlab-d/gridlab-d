@@ -282,7 +282,7 @@ int fncs_msg::init(OBJECT *parent){
 	int n = 0;
 	int i = 0;
 	int d = 0;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	OBJECT *vObj = NULL;
 	char buffer[1024] = "";
 	string simName = string(gl_name(obj, buffer, 1023));

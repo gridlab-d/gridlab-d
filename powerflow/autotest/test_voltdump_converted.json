@@ -1,0 +1,172 @@
+{
+  "__preamble": {
+    "comments": [
+      "//Simple test for voltdump -- basically just makes sure it runs",
+      "//Adapted from test_meter_delta (just because this had multiple node types)"
+    ]
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2009-07-01 04:00:00'",
+    "stoptime": "'2009-07-01 04:01:00'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    }
+  },
+  "objects": {
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "conf_OHLine11kV",
+          "conductor_A": "overhead_line_conductor_11kV",
+          "conductor_B": "overhead_line_conductor_11kV",
+          "conductor_C": "overhead_line_conductor_11kV",
+          "conductor_N": "overhead_line_conductor_11kV",
+          "spacing": "line_spacing_11kV"
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "line_spacing_11kV",
+          "distance_AB": "1.0 m",
+          "distance_BC": "1.0 m",
+          "distance_AC": "2.0 m"
+        }
+      ]
+    },
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "overhead_line_conductor_11kV",
+          "geometric_mean_radius": 0.00446,
+          "resistance": 1.12
+        }
+      ]
+    },
+    "triplex_line_conductor": {
+      "instances": [
+        {
+          "name": "triplex_4/0 AA",
+          "resistance": 0.48,
+          "geometric_mean_radius": 0.0158
+        }
+      ]
+    },
+    "triplex_line_configuration": {
+      "instances": [
+        {
+          "name": "triplex_line_configuration_1",
+          "conductor_1": "triplex_4/0 AA",
+          "conductor_2": "triplex_4/0 AA",
+          "conductor_N": "triplex_4/0 AA",
+          "insulation_thickness": 0.08,
+          "diameter": 0.522
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "default_transformer",
+          "connect_type": "SINGLE_PHASE_CENTER_TAPPED",
+          "install_type": "PADMOUNT",
+          "primary_voltage": "7200 V",
+          "secondary_voltage": "120 V",
+          "power_rating": 50.0,
+          "powerA_rating": 50.0,
+          "resistance": 0.011,
+          "reactance": 0.018
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "SWING_BUS",
+          "nominal_voltage": 7200,
+          "voltage_A": "7200 V",
+          "phases": "A",
+          "bustype": "SWING"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "LINE_1",
+          "phases": "A",
+          "from": "SWING_BUS",
+          "to": "NODE_1",
+          "configuration": "conf_OHLine11kV",
+          "length": "1500 m"
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "NODE_1",
+          "nominal_voltage": 7200,
+          "phases": "A",
+          "measured_energy_delta_timestep": 300
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "center_tap_transformer_A",
+          "phases": "AS",
+          "from": "NODE_1",
+          "to": "triplex_NODE_1",
+          "configuration": "default_transformer"
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "triplex_NODE_1",
+          "phases": "AS",
+          "nominal_voltage": 120
+        },
+        {
+          "name": "trip_parent_meter",
+          "phases": "AS",
+          "nominal_voltage": 120
+        },
+        {
+          "name": "house_meter",
+          "parent": "trip_parent_meter",
+          "phases": "AS",
+          "nominal_voltage": 120,
+          "measured_energy_delta_timestep": 300
+        }
+      ]
+    },
+    "triplex_line": {
+      "instances": [
+        {
+          "groupid": "Triplex_Line",
+          "phases": "AS",
+          "from": "triplex_NODE_1",
+          "to": "trip_parent_meter",
+          "length": 10,
+          "configuration": "triplex_line_configuration_1"
+        }
+      ]
+    },
+    "voltdump": {
+      "instances": [
+        {
+          "filename": "test_volt.csv",
+          "mode": "POLAR"
+        }
+      ]
+    }
+  }
+}

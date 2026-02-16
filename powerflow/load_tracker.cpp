@@ -150,7 +150,8 @@ int load_tracker::init(OBJECT *parent)
 void load_tracker::update_feedback_variable()
 {
 	//Locking - lock pointed device
-	READLOCK_OBJECT(target);
+	//auto v = READLOCK_OBJECT(target);
+	std::shared_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(target));
 		switch (type)
 		{
 		case PT_double:
@@ -192,7 +193,7 @@ void load_tracker::update_feedback_variable()
 			break;
 		}
 	//Unlock
-	READUNLOCK_OBJECT(target);
+	//READUNLOCK_OBJECT();
 }
 
 TIMESTAMP load_tracker::presync(TIMESTAMP t0)
@@ -279,7 +280,7 @@ TIMESTAMP load_tracker::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 EXPORT int isa_load_tracker(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,load_tracker)->isa(classname);
+	return object_data<load_tracker>(obj)->isa(classname);
 }
 
 EXPORT int create_load_tracker(OBJECT **obj, OBJECT *parent)
@@ -289,7 +290,7 @@ EXPORT int create_load_tracker(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(load_tracker::oclass);
 		if (*obj!=nullptr)
 		{
-			load_tracker *my = OBJECTDATA(*obj,load_tracker);
+			load_tracker *my = object_data<load_tracker>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -303,7 +304,7 @@ EXPORT int create_load_tracker(OBJECT **obj, OBJECT *parent)
 EXPORT int init_load_tracker(OBJECT *obj)
 {
 	try {
-		load_tracker *my = OBJECTDATA(obj,load_tracker);
+		load_tracker *my = object_data<load_tracker>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(load_tracker);
@@ -311,7 +312,7 @@ EXPORT int init_load_tracker(OBJECT *obj)
 
 EXPORT TIMESTAMP sync_load_tracker(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	load_tracker *pObj = OBJECTDATA(obj,load_tracker);
+	load_tracker *pObj = object_data<load_tracker>(obj);
 	try {
 		TIMESTAMP t1;
 		switch (pass) {

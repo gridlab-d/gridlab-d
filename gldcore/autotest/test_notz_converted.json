@@ -1,0 +1,37 @@
+{
+  "classes": {
+    "test": [
+      {
+        "type": "randomvar",
+        "name": "x"
+      }
+    ]
+  },
+  "clock": {
+    "starttime": "'2001-01-01 0:00:00'",
+    "stoptime": "'2001-01-02 0:00:00'"
+  },
+  "modules": {
+    "tape": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "parent": "test_1",
+          "property": "x",
+          "interval": "1h",
+          "file": "test_x.csv"
+        }
+      ]
+    },
+    "test": {
+      "instances": [
+        {
+          "name": "test_1",
+          "x": "\"type:normal(0,1)"
+        }
+      ]
+    }
+  }
+}

@@ -201,7 +201,7 @@ EXPORT int create_regulator_configuration(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(regulator_configuration::oclass);
 		if (*obj!=nullptr)
 		{
-			regulator_configuration *my = OBJECTDATA(*obj,regulator_configuration);
+			regulator_configuration *my = object_data<regulator_configuration>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -214,7 +214,7 @@ EXPORT int create_regulator_configuration(OBJECT **obj, OBJECT *parent)
 EXPORT int init_regulator_configuration(OBJECT *obj)
 {
 	try {
-		regulator_configuration *my = OBJECTDATA(obj,regulator_configuration);
+		regulator_configuration *my = object_data<regulator_configuration>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(regulator_configuration);
@@ -227,7 +227,7 @@ EXPORT TIMESTAMP sync_regulator_configuration(OBJECT *obj, TIMESTAMP t1, PASSCON
 
 EXPORT int isa_regulator_configuration(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,regulator_configuration)->isa(classname);
+	return object_data<regulator_configuration>(obj)->isa(classname);
 }
 
 /**@}*/

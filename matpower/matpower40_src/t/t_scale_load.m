@@ -339,7 +339,7 @@ for k = 1:length(load)
     t_is(-sum(gen(lda{k}, QMAX)), area(k).disp.qmax, 8, sprintf('%s area %d disp Qmax', t, k));
 end
 
-t = 'area disp loads (PQ) => total = [100 80 60] : throws expected exception';
+t = 'area disp loads (PQ) => total = [100 80 60] : t.rows() expected exception';
 load = [100 80 60];
 opt = struct('scale', 'QUANTITY', 'which', 'DISPATCHABLE');
 err = 0;

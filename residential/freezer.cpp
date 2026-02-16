@@ -107,7 +107,7 @@ int freezer::create()
 	// name of enduse
 	load.name = oclass->name;
 
-	gl_warning("explicit %s model is experimental", OBJECTHDR(this)->oclass->name);
+	gl_warning("explicit %s model is experimental", object_header(this)->oclass->name);
 
 	return res;
 }
@@ -134,7 +134,7 @@ int freezer::init(OBJECT *parent)
 	if (Tout==0)				Tout = 59.0;
 	if (power_factor==0)		power_factor = 0.95;
 
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	
@@ -171,7 +171,7 @@ int freezer::isa(char *classname)
 }
 
 TIMESTAMP freezer::presync(TIMESTAMP t0, TIMESTAMP t1){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	double *pTout = 0, t = 0.0, dt = 0.0;
 	double nHours = (gl_tohours(t1)- gl_tohours(t0))/TS_SECOND;
 
@@ -297,7 +297,7 @@ EXPORT int create_freezer(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(freezer::oclass);
 		if (*obj!=nullptr)
 		{
-			freezer *my = OBJECTDATA(*obj,freezer);;
+			freezer *my = object_data<freezer>(*obj);;
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
@@ -311,7 +311,7 @@ EXPORT int create_freezer(OBJECT **obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_freezer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		freezer *my = OBJECTDATA(obj,freezer);
+		freezer *my = object_data<freezer>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) 
 		{
@@ -341,7 +341,7 @@ EXPORT int init_freezer(OBJECT *obj)
 {
 	try
 	{
-		freezer *my = OBJECTDATA(obj,freezer);
+		freezer *my = object_data<freezer>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(freezer);
@@ -350,7 +350,7 @@ EXPORT int init_freezer(OBJECT *obj)
 EXPORT int isa_freezer(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,freezer)->isa(classname);
+		return object_data<freezer>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -361,7 +361,7 @@ EXPORT TIMESTAMP plc_freezer(OBJECT *obj, TIMESTAMP t0)
 {
 	// this will be disabled if a PLC object is attached to the freezer
 
-	freezer *my = OBJECTDATA(obj,freezer);
+	freezer *my = object_data<freezer>(obj);
 	my->thermostat(obj->clock, t0);
 
 	return TS_NEVER;  

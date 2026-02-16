@@ -53,8 +53,8 @@ void CGldEditorView::OnInitialUpdate()
 	CListView::OnInitialUpdate();
 
 	ListView_SetExtendedListViewStyleEx(GetListCtrl().m_hWnd,
-		LVS_EX_FULLROWSELECT|LVS_EX_GRIDLINES ,
-		LVS_EX_FULLROWSELECT|LVS_EX_GRIDLINES  );
+		LVS_EX_FUL.rows()ELECT|LVS_EX_GRIDLINES ,
+		LVS_EX_FUL.rows()ELECT|LVS_EX_GRIDLINES  );
 }
 
 

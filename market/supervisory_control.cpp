@@ -55,7 +55,7 @@ supervisory_control::supervisory_control(MODULE *module) {
 }
 
 void supervisory_control::fetch_double(double **prop, char *name, OBJECT *parent){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	*prop = gl_get_double_by_name(parent, name);
 	if(*prop == nullptr){
 		char tname[32];
@@ -78,7 +78,7 @@ int supervisory_control::create(void) {
 
 /* Object initialization is called once after all object have been created */
 int supervisory_control::init(OBJECT *parent) {
-	OBJECT *obj=OBJECTHDR(this);
+	OBJECT *obj=object_header(this);
 	market_id = 0;
 	n_bids_on = 0;
 	n_bids_off = 0;
@@ -126,7 +126,9 @@ TIMESTAMP supervisory_control::postsync(TIMESTAMP t0, TIMESTAMP t1) {
 }
 
 int supervisory_control::submit(OBJECT *from, double power, double voltage_deviation, int key, int state) {
-	gld_wlock lock(my());
+	//gld_wlock lock(my());
+	//replace the above with SharedMutexManager
+	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(my()));
 	return submit_nolock(from,power,voltage_deviation,key,state);
 }
 
@@ -179,7 +181,7 @@ EXPORT int create_supervisory_control(OBJECT **obj, OBJECT *parent) {
 		*obj = gl_create_object(supervisory_control::oclass);
 		if (*obj!=nullptr)
 		{
-			supervisory_control *my = OBJECTDATA(*obj,supervisory_control);
+			supervisory_control *my = /*OBJECTDATA(obj,<>)*/ object_data<supervisory_control>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -193,7 +195,7 @@ EXPORT int init_supervisory_control(OBJECT *obj, OBJECT *parent) {
 	try
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,supervisory_control)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<supervisory_control>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -202,7 +204,7 @@ EXPORT int init_supervisory_control(OBJECT *obj, OBJECT *parent) {
 
 EXPORT int isa_supervisory_control(OBJECT *obj, char *classname) {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,supervisory_control)->isa(classname);
+		return /*OBJECTDATA(obj,<>)*/ object_data<supervisory_control>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -210,7 +212,7 @@ EXPORT int isa_supervisory_control(OBJECT *obj, char *classname) {
 
 EXPORT TIMESTAMP sync_supervisory_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
 	TIMESTAMP t2 = TS_NEVER;
-	supervisory_control *my = OBJECTDATA(obj,supervisory_control);
+	supervisory_control *my = /*OBJECTDATA(obj,<>)*/ object_data<supervisory_control>(obj);
 	try
 	{
 		switch (pass) {

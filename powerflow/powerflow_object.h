@@ -11,6 +11,12 @@
 
 #include "gridlabd.h"
 
+ // Forward declaration of the function template
+template<typename T>
+constexpr OBJECT* object_header(T* data);
+
+
+
 // DPC: this is to remain undefined until GS solver method is reconciled with reliability module
 //#define SUPPORT_OUTAGES /**< defined when reliability module is supported */
 
@@ -121,10 +127,10 @@ public:
 	inline bool is_contact_any(set ph=PHASE_INFO) const { return (condition&OC_CONTACT)!=0 && (condition&ph)!=0;};
 #endif
 	/* get_name acquires the name of an object or 'unnamed' if non set */
-	inline const char *get_name(void) const { static char tmp[128]; OBJECT *obj=OBJECTHDR(this); return obj->name?obj->name:(sprintf(tmp,"%s:%d",obj->oclass->name,obj->id)>0?tmp:"(unknown)");};
+	inline const char *get_name(void) const { static char tmp[128]; OBJECT *obj=object_header(this); return obj->name?obj->name:(sprintf(tmp,"%s:%d",obj->oclass->name,obj->id)>0?tmp:"(unknown)");};
 	
 	/* get_id acquires the object's id */
-	inline unsigned int get_id(void) const {return OBJECTHDR(this)->id;};
+	inline unsigned int get_id(void) const {return object_header(this)->id;};
 	
 	/* has_phase checks whether a particular phase is configured */
 	inline bool has_phase(gld::set ph, gld::set flags=0) const { return ((flags ? flags : phases) & ph) == ph; };
@@ -135,7 +141,7 @@ public:
 	/* get_phases acquires the phase part of the flags given */
 	inline gld::set get_phases(gld::set flags) const { return flags & PHASE_INFO;};
 
-	inline OBJECT* objecthdr() const { return OBJECTHDR(this);}
+	inline OBJECT* objecthdr() const { return object_header(this); }
 public:
 	int create(void);
 	int init(OBJECT *parent);
@@ -147,6 +153,10 @@ public:
 	static int isa(const char *classname);
 
 	int kmldump(FILE *fp);
+
+public:
+	virtual ~powerflow_object() {}
+
 };
 
 #endif // _POWERFLOWOBJECT_H

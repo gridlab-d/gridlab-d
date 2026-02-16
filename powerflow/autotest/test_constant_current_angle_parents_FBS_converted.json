@@ -1,0 +1,763 @@
+{
+  "__preamble": {
+    "comments": [
+      "//File to test different constant_current implementations with parent/child relationships",
+      "//Configurations:",
+      "//Radial 1 - short line",
+      "//Radial 2 - parent/child",
+      "//Radial 3 - short line, explicit Delta-Wye load",
+      "//Radial 4 - parent/child, explicit Delta-Wye load",
+      "//Radial 5 - short line - triplex",
+      "//Radial 6 - parent/child - triplex",
+      "//Radial 7 - double short line - triplex",
+      "//Radial 8 - childed house - triplex",
+      "//Radial 9 - childed house - double-childed - triplex"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "profiler": 1,
+      "complex_output_format": "POLAR_DEG",
+      "double_format": "%+.12lg",
+      "complex_format": "%+.12lg%+.12lg%c"
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:01'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "FBS"
+    },
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "dgw_xfmr_cfg",
+          "connect_type": "DELTA_GWYE",
+          "primary_voltage": 115000.0,
+          "secondary_voltage": 4160.0,
+          "power_rating": 7000.0,
+          "resistance": 1e-05,
+          "reactance": 0.0001,
+          "outside_comments": [
+            "//Configurations"
+          ]
+        },
+        {
+          "name": "tplex_xmfr_config",
+          "connect_type": "SINGLE_PHASE_CENTER_TAPPED",
+          "install_type": "POLETOP",
+          "primary_voltage": "66395.281 V",
+          "secondary_voltage": "120.0 V",
+          "power_rating": "150.0 kVA",
+          "powerB_rating": "150.0 kVA",
+          "impedance": "0.006000+0.013600j",
+          "impedance1": "0.012000+0.006800j",
+          "impedance2": "0.012000+0.006800j",
+          "shunt_impedance": "1728000+691200j"
+        }
+      ]
+    },
+    "triplex_line_conductor": {
+      "instances": [
+        {
+          "name": "triplex_4/0 AA",
+          "resistance": 0.48,
+          "geometric_mean_radius": 0.0158
+        }
+      ]
+    },
+    "triplex_line_configuration": {
+      "instances": [
+        {
+          "name": "tplex_line_config",
+          "conductor_1": "triplex_4/0 AA",
+          "conductor_2": "triplex_4/0 AA",
+          "conductor_N": "triplex_4/0 AA",
+          "insulation_thickness": 0.08,
+          "diameter": 0.522
+        }
+      ]
+    },
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc6010",
+          "geometric_mean_radius": 0.0313,
+          "diameter": "0.927 in",
+          "resistance": 0.1859,
+          "outside_comments": [
+            "//Overhead line configs - stolen from an IEEE feeder",
+            "// Phase Conductor for 601: 556,500 26/7 ACSR"
+          ]
+        },
+        {
+          "name": "olc6020",
+          "geometric_mean_radius": 0.00814,
+          "diameter": "0.56 in",
+          "resistance": 0.592,
+          "outside_comments": [
+            "// Phase Conductor for 602: 4/0 6/1 ACSR"
+          ]
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls500601",
+          "distance_AB": 2.5,
+          "distance_AC": 4.5,
+          "distance_BC": 7.0,
+          "distance_BN": 5.656854,
+          "distance_AN": 4.272002,
+          "distance_CN": 5.0,
+          "distance_AE": 28.0,
+          "distance_BE": 28.0,
+          "distance_CE": 28.0,
+          "distance_NE": 24.0,
+          "outside_comments": [
+            "// Overhead line configurations"
+          ]
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc601",
+          "conductor_A": "olc6010",
+          "conductor_B": "olc6010",
+          "conductor_C": "olc6010",
+          "conductor_N": "olc6020",
+          "spacing": "ls500601"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "parent": "sourcebus",
+          "target": "measured_power_A",
+          "value": "+7204436.37847+6.74460794198d",
+          "within": 3
+        },
+        {
+          "parent": "sourcebus",
+          "target": "measured_power_B",
+          "value": "+12166070.7243+23.5005936999d",
+          "within": 3
+        },
+        {
+          "parent": "sourcebus",
+          "target": "measured_power_C",
+          "value": "+8495710.78237+47.9798410155d",
+          "within": 3
+        },
+        {
+          "parent": "rad_1_meter",
+          "target": "measured_power_A",
+          "value": "+999995.69783+0.0104880555216d",
+          "within": 3
+        },
+        {
+          "parent": "rad_1_meter",
+          "target": "measured_power_B",
+          "value": "+2235952.927+26.5679289697d",
+          "within": 3
+        },
+        {
+          "parent": "rad_1_meter",
+          "target": "measured_power_C",
+          "value": "+3605195.3702+33.7345366537d",
+          "within": 3
+        },
+        {
+          "parent": "rad_2_meter",
+          "target": "measured_power_A",
+          "value": "+999995.705672+0d",
+          "within": 5
+        },
+        {
+          "parent": "rad_2_meter",
+          "target": "measured_power_B",
+          "value": "+2235952.93614+26.5650512986d",
+          "within": 5
+        },
+        {
+          "parent": "rad_2_meter",
+          "target": "measured_power_C",
+          "value": "+3605195.70584+33.6900676022d",
+          "within": 5
+        },
+        {
+          "parent": "rad_3_meter",
+          "target": "measured_power_A",
+          "value": "+999995.69783+0.0104880555216d",
+          "within": 3
+        },
+        {
+          "parent": "rad_3_meter",
+          "target": "measured_power_B",
+          "value": "+2235952.927+26.5679289697d",
+          "within": 3
+        },
+        {
+          "parent": "rad_3_meter",
+          "target": "measured_power_C",
+          "value": "+3605195.3702+33.7345366537d",
+          "within": 3
+        },
+        {
+          "parent": "rad_4_meter",
+          "target": "measured_power_A",
+          "value": "+999995.705672+0d",
+          "within": 5
+        },
+        {
+          "parent": "rad_4_meter",
+          "target": "measured_power_B",
+          "value": "+2235952.93614+26.5650512986d",
+          "within": 5
+        },
+        {
+          "parent": "rad_4_meter",
+          "target": "measured_power_C",
+          "value": "+3605195.70584+33.6900676022d",
+          "within": 5
+        },
+        {
+          "parent": "rad_5_meter",
+          "target": "indiv_measured_power_1",
+          "value": "+269.237526816+21.8011823691d",
+          "within": 3
+        },
+        {
+          "parent": "rad_5_meter",
+          "target": "indiv_measured_power_2",
+          "value": "+403.080296224+29.7442300522d",
+          "within": 3
+        },
+        {
+          "parent": "rad_6_meter",
+          "target": "indiv_measured_power_1",
+          "value": "+269.237526816+21.8011823691d",
+          "within": 3
+        },
+        {
+          "parent": "rad_6_meter",
+          "target": "indiv_measured_power_2",
+          "value": "+403.080296224+29.7442300522d",
+          "within": 3
+        },
+        {
+          "parent": "rad_7_meter",
+          "target": "indiv_measured_power_1",
+          "value": "+269.237526816+21.8011823691d",
+          "within": 3
+        },
+        {
+          "parent": "rad_7_meter",
+          "target": "indiv_measured_power_2",
+          "value": "+403.080296224+29.7442300522d",
+          "within": 3
+        },
+        {
+          "parent": "rad_7_meter_B",
+          "target": "indiv_measured_power_1",
+          "value": "+269.237526816+21.8011823691d",
+          "within": 3
+        },
+        {
+          "parent": "rad_7_meter_B",
+          "target": "indiv_measured_power_2",
+          "value": "+403.080296224+29.7442300522d",
+          "within": 3
+        },
+        {
+          "parent": "rad_8_meter",
+          "target": "indiv_measured_power_1",
+          "value": "+269.237526816+21.8011823691d",
+          "within": 3
+        },
+        {
+          "parent": "rad_8_meter",
+          "target": "indiv_measured_power_2",
+          "value": "+403.080296224+29.7442300522d",
+          "within": 3
+        },
+        {
+          "parent": "rad_9_meter",
+          "target": "indiv_measured_power_1",
+          "value": "+269.237526816+21.8011823691d",
+          "within": 3
+        },
+        {
+          "parent": "rad_9_meter",
+          "target": "indiv_measured_power_2",
+          "value": "+403.080296224+29.7442300522d",
+          "within": 3
+        },
+        {
+          "parent": "rad_9_meter_B",
+          "target": "indiv_measured_power_1",
+          "value": "+269.237526816+21.8011823691d",
+          "within": 3
+        },
+        {
+          "parent": "rad_9_meter_B",
+          "target": "indiv_measured_power_2",
+          "value": "+403.080296224+29.7442300522d",
+          "within": 3
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "sourcebus",
+          "bustype": "SWING",
+          "phases": "ABCN",
+          "nominal_voltage": 66395.28
+        },
+        {
+          "name": "rad_1_meter",
+          "phases": "ABCN",
+          "groupid": "downstream_threephase",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "rad_2_meter",
+          "phases": "ABCN",
+          "groupid": "downstream_threephase",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "rad_3_meter",
+          "phases": "ABCN",
+          "groupid": "downstream_threephase",
+          "nominal_voltage": 2401.7771
+        },
+        {
+          "name": "rad_4_meter",
+          "phases": "ABCN",
+          "groupid": "downstream_threephase",
+          "nominal_voltage": 2401.7771
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "rad_1_xfrmer",
+          "phases": "ABCN",
+          "from": "sourcebus",
+          "to": "rad_1_meter",
+          "configuration": "dgw_xfmr_cfg",
+          "outside_comments": [
+            "//Radial 1 - short line"
+          ]
+        },
+        {
+          "name": "rad_2_xfrmer",
+          "phases": "ABCN",
+          "from": "sourcebus",
+          "to": "rad_2_meter",
+          "configuration": "dgw_xfmr_cfg",
+          "outside_comments": [
+            "//Radial 2 - parent/child"
+          ]
+        },
+        {
+          "name": "rad_3_xfrmer",
+          "phases": "ABCN",
+          "from": "sourcebus",
+          "to": "rad_3_meter",
+          "configuration": "dgw_xfmr_cfg",
+          "outside_comments": [
+            "//Radial 3 - short line, explicit Delta-Wye load"
+          ]
+        },
+        {
+          "name": "rad_4_xfrmer",
+          "phases": "ABCN",
+          "from": "sourcebus",
+          "to": "rad_4_meter",
+          "configuration": "dgw_xfmr_cfg",
+          "outside_comments": [
+            "//Radial 4 - parent/child, explicit Delta-Wye load"
+          ]
+        },
+        {
+          "name": "rad_5_xfrmer",
+          "phases": "BS",
+          "from": "sourcebus",
+          "to": "rad_5_meter",
+          "configuration": "tplex_xmfr_config",
+          "outside_comments": [
+            "//Radial 5 - short line - triplex"
+          ]
+        },
+        {
+          "name": "rad_6_xfrmer",
+          "phases": "BS",
+          "from": "sourcebus",
+          "to": "rad_6_meter",
+          "configuration": "tplex_xmfr_config",
+          "outside_comments": [
+            "//Radial 6 - parent/child - triplex"
+          ]
+        },
+        {
+          "name": "rad_7_xfrmer",
+          "phases": "BS",
+          "from": "sourcebus",
+          "to": "rad_7_meter",
+          "configuration": "tplex_xmfr_config",
+          "outside_comments": [
+            "//Radial 7 - double short line - triplex"
+          ]
+        },
+        {
+          "name": "rad_8_xfrmer",
+          "phases": "BS",
+          "from": "sourcebus",
+          "to": "rad_8_meter",
+          "configuration": "tplex_xmfr_config",
+          "outside_comments": [
+            "//Radial 8 - childed house - triplex"
+          ]
+        },
+        {
+          "name": "rad_9_xfrmer",
+          "phases": "BS",
+          "from": "sourcebus",
+          "to": "rad_9_meter",
+          "configuration": "tplex_xmfr_config",
+          "outside_comments": [
+            "//Radial 9 - childed house - double-childed - triplex"
+          ]
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "ohl_rad_1",
+          "phases": "ABCN",
+          "from": "rad_1_meter",
+          "to": "rad_1_load",
+          "length": "10 ft",
+          "configuration": "lc601"
+        },
+        {
+          "name": "ohl_rad_3",
+          "phases": "ABCN",
+          "from": "rad_3_meter",
+          "to": "rad_3_load",
+          "length": "10 ft",
+          "configuration": "lc601"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "rad_1_load",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.7771,
+          "constant_current_A": " 416.35837+0.0j",
+          "constant_current_B": "-776.93529-512.97466j",
+          "constant_current_C": "96.616295+1498.0891j",
+          "inline_comments": {
+            "constant_current_A": "// 1+j0 === 1.0000+00.0000d MVA",
+            "constant_current_B": "// 2+j1 === 2.2361+26.5651d MVA",
+            "constant_current_C": "// 3+j2 === 3.6056+33.6901d MVA"
+          }
+        },
+        {
+          "name": "rad_2_load",
+          "parent": "rad_2_meter",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.7771,
+          "constant_current_A": " 416.35837+0.0j",
+          "constant_current_B": "-776.93529-512.97466j",
+          "constant_current_C": "96.616295+1498.0891j",
+          "inline_comments": {
+            "constant_current_A": "// 1+j0 === 1.0000+00.0000d MVA",
+            "constant_current_B": "// 2+j1 === 2.2361+26.5651d MVA",
+            "constant_current_C": "// 3+j2 === 3.6056+33.6901d MVA"
+          }
+        },
+        {
+          "name": "rad_3_load",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.7771,
+          "constant_current_AN": " 416.35837+0.0j",
+          "constant_current_BN": "-776.93529-512.97466j",
+          "constant_current_CN": "96.616295+1498.0891j",
+          "inline_comments": {
+            "constant_current_AN": "// 1+j0 === 1.0000+00.0000d MVA",
+            "constant_current_BN": "// 2+j1 === 2.2361+26.5651d MVA",
+            "constant_current_CN": "// 3+j2 === 3.6056+33.6901d MVA"
+          }
+        },
+        {
+          "name": "rad_4_load",
+          "parent": "rad_4_meter",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.7771,
+          "constant_current_AN": " 416.35837+0.0j",
+          "constant_current_BN": "-776.93529-512.97466j",
+          "constant_current_CN": "96.616295+1498.0891j",
+          "inline_comments": {
+            "constant_current_AN": "// 1+j0 === 1.0000+00.0000d MVA",
+            "constant_current_BN": "// 2+j1 === 2.2361+26.5651d MVA",
+            "constant_current_CN": "// 3+j2 === 3.6056+33.6901d MVA"
+          }
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "rad_5_meter",
+          "phases": "BS",
+          "groupid": "downstream_singlephase",
+          "nominal_voltage": 120.0
+        },
+        {
+          "name": "rad_6_meter",
+          "phases": "BS",
+          "groupid": "downstream_singlephase",
+          "nominal_voltage": 120.0
+        },
+        {
+          "name": "rad_7_meter",
+          "phases": "BS",
+          "groupid": "downstream_singlephase",
+          "nominal_voltage": 120.0
+        },
+        {
+          "name": "rad_7_meter_B",
+          "phases": "BS",
+          "groupid": "downstream_singlephase",
+          "nominal_voltage": 120.0
+        },
+        {
+          "name": "rad_8_meter",
+          "phases": "BS",
+          "groupid": "downstream_singlephase",
+          "nominal_voltage": 120.0
+        },
+        {
+          "name": "rad_9_meter",
+          "phases": "BS",
+          "groupid": "downstream_singlephase",
+          "nominal_voltage": 120.0
+        },
+        {
+          "name": "rad_9_meter_B",
+          "phases": "BS",
+          "groupid": "downstream_singlephase",
+          "parent": "rad_9_meter",
+          "nominal_voltage": 120.0
+        }
+      ]
+    },
+    "triplex_line": {
+      "instances": [
+        {
+          "name": "triplex_5_line",
+          "phases": "BS",
+          "from": "rad_5_meter",
+          "to": "rad_5_load",
+          "length": "10 ft",
+          "configuration": "tplex_line_config"
+        },
+        {
+          "name": "triplex_7_line_A",
+          "phases": "BS",
+          "from": "rad_7_meter",
+          "to": "rad_7_meter_B",
+          "length": "10 ft",
+          "configuration": "tplex_line_config"
+        },
+        {
+          "name": "triplex_7_line_B",
+          "phases": "BS",
+          "from": "rad_7_meter_B",
+          "to": "rad_7_load",
+          "length": "10 ft",
+          "configuration": "tplex_line_config"
+        }
+      ]
+    },
+    "triplex_load": {
+      "instances": [
+        {
+          "name": "rad_5_load",
+          "phases": "BS",
+          "nominal_voltage": 120.0,
+          "constant_current_1": "0.83333+0.0j",
+          "constant_current_2": "1.6667-0.83333j",
+          "constant_current_12": "1.25-0.83333j",
+          "inline_comments": {
+            "constant_current_1": "// 1+j0 === 1.0000+00.0000d dVA",
+            "constant_current_2": "// 2+j1 === 2.2361+26.5651d dVA",
+            "constant_current_12": "// 3+j2 === 3.6056+33.6901d dVA"
+          }
+        },
+        {
+          "name": "rad_6_load",
+          "parent": "rad_6_meter",
+          "phases": "BS",
+          "nominal_voltage": 120.0,
+          "constant_current_1": "0.83333+0.0j",
+          "constant_current_2": "1.6667-0.83333j",
+          "constant_current_12": "1.25-0.83333j",
+          "inside_comments": [
+            "// base_power_1 100.0;",
+            "// current_pf_1 1.0;",
+            "// current_fraction_1 1.0;",
+            "// power_fraction_1 0.0;",
+            "// impedance_fraction_1 0.0;",
+            "// base_power_2 223.6068;",
+            "// current_pf_2 0.8944;",
+            "// current_fraction_2 1.0;",
+            "// power_fraction_2 0.0;",
+            "// impedance_fraction_2 0.0;"
+          ],
+          "inline_comments": {
+            "constant_current_1": "// 1+j0 === 1.0000+00.0000d dVA",
+            "constant_current_2": "// 2+j1 === 2.2361+26.5651d dVA",
+            "constant_current_12": "// 3+j2 === 3.6056+33.6901d dVA"
+          }
+        },
+        {
+          "name": "rad_7_load",
+          "phases": "BS",
+          "nominal_voltage": 120.0,
+          "constant_current_1": "0.83333+0.0j",
+          "constant_current_2": "1.6667-0.83333j",
+          "constant_current_12": "1.25-0.83333j",
+          "inline_comments": {
+            "constant_current_1": "// 1+j0 === 1.0000+00.0000d dVA",
+            "constant_current_2": "// 2+j1 === 2.2361+26.5651d dVA",
+            "constant_current_12": "// 3+j2 === 3.6056+33.6901d dVA"
+          }
+        }
+      ]
+    },
+    "ZIPload": {
+      "instances": [
+        {
+          "parent": "rad_8_house",
+          "base_power": "100.0 W",
+          "current_pf": 1.0,
+          "current_fraction": 1.0,
+          "power_fraction": 0.0,
+          "impedance_fraction": 0.0,
+          "configuration": "IS110",
+          "inside_comments": [
+            "// constant_current_1 0.83333+0.0j;  // 1+j0 === 1.0000+00.0000d dVA"
+          ]
+        },
+        {
+          "parent": "rad_8_house",
+          "base_power": "200.0 W",
+          "current_pf": 0.8944,
+          "current_fraction": 1.0,
+          "power_fraction": 0.0,
+          "impedance_fraction": 0.0,
+          "configuration": "IS110",
+          "inside_comments": [
+            "//constant_current_2 1.6667-0.83333j; // 2+j1 === 2.2361+26.5651d dVA"
+          ]
+        },
+        {
+          "parent": "rad_8_house",
+          "base_power": "300.0 W",
+          "current_pf": 0.8321,
+          "current_fraction": 1.0,
+          "power_fraction": 0.0,
+          "impedance_fraction": 0.0,
+          "configuration": "IS220",
+          "inside_comments": [
+            "//constant_current_12 1.25-0.83333j; // 3+j2 === 3.6056+33.6901d dVA"
+          ]
+        },
+        {
+          "parent": "rad_9_house",
+          "base_power": "100.0 W",
+          "current_pf": 1.0,
+          "current_fraction": 1.0,
+          "power_fraction": 0.0,
+          "impedance_fraction": 0.0,
+          "configuration": "IS110",
+          "inside_comments": [
+            "// constant_current_1 0.83333+0.0j;  // 1+j0 === 1.0000+00.0000d dVA"
+          ]
+        },
+        {
+          "parent": "rad_9_house",
+          "base_power": "200.0 W",
+          "current_pf": 0.8944,
+          "current_fraction": 1.0,
+          "power_fraction": 0.0,
+          "impedance_fraction": 0.0,
+          "configuration": "IS110",
+          "inside_comments": [
+            "//constant_current_2 1.6667-0.83333j; // 2+j1 === 2.2361+26.5651d dVA"
+          ]
+        },
+        {
+          "parent": "rad_9_house",
+          "base_power": "300.0 W",
+          "current_pf": 0.8321,
+          "current_fraction": 1.0,
+          "power_fraction": 0.0,
+          "impedance_fraction": 0.0,
+          "configuration": "IS220",
+          "inside_comments": [
+            "//constant_current_12 1.25-0.83333j; // 3+j2 === 3.6056+33.6901d dVA"
+          ]
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "rad_8_house",
+          "parent": "rad_8_meter"
+        },
+        {
+          "name": "rad_9_house",
+          "parent": "rad_9_meter_B"
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "sourcebus",
+          "property": "measured_power_A,measured_power_B,measured_power_C",
+          "interval": 1,
+          "file": "source_measured_power.csv",
+          "outside_comments": [
+            "//Substation recorder"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -42,7 +42,7 @@ int stub_bidder::init(OBJECT *parent)
 	next_t = 0;
 	lastbid_id = -1;
 	lastmkt_id = -1;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	if (market==nullptr)
 		throw "market is not defined";
 	thismkt_id = (int64*)gl_get_addr(market,"market_id");
@@ -70,7 +70,7 @@ int stub_bidder::isa(char *classname)
 
 TIMESTAMP stub_bidder::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	char mktname[1024];
 	char ctrname[1024];
 
@@ -113,7 +113,7 @@ EXPORT int create_stub_bidder(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(stub_bidder::oclass);
 		if (*obj!=nullptr)
 		{
-			stub_bidder *my = OBJECTDATA(*obj,stub_bidder);
+			stub_bidder *my = /*OBJECTDATA(obj,<>)*/ object_data<stub_bidder>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -131,7 +131,7 @@ EXPORT int init_stub_bidder(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr){
-			return OBJECTDATA(obj,stub_bidder)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<stub_bidder>(obj)->init(parent);
 		}
 	}
 	catch (const char *msg)
@@ -146,7 +146,7 @@ EXPORT int init_stub_bidder(OBJECT *obj, OBJECT *parent)
 EXPORT int isa_stub_bidder(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,stub_bidder)->isa(classname);
+		return /*OBJECTDATA(obj,<>)*/ object_data<stub_bidder>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -155,7 +155,7 @@ EXPORT int isa_stub_bidder(OBJECT *obj, char *classname)
 EXPORT TIMESTAMP sync_stub_bidder(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	stub_bidder *my = OBJECTDATA(obj,stub_bidder);
+	stub_bidder *my = /*OBJECTDATA(obj,<>)*/ object_data<stub_bidder>(obj);
 	switch (pass) {
 	case PC_BOTTOMUP:
 		t2 = my->sync(obj->clock,t1);

@@ -16,7 +16,7 @@
 #endif
 
 
-#include <pthread.h>
+//#include <pthread.h>
 
 
 #include "property.h"

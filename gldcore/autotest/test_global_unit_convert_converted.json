@@ -1,0 +1,38 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $Id: test_global_unit_convert.glm 4738 2014-07-03 00:55:39Z dchassin $"
+    ]
+  },
+  "modules": {
+    "residential": {
+      "implicit_enduses": "NONE",
+      "default_outdoor_temperature": "0.0 degC"
+    },
+    "assert": {}
+  },
+  "objects": {
+    "assert": {
+      "instances": [
+        {
+          "target": "test_complex",
+          "relation": "==",
+          "value": "12000+0d V",
+          "within": "100 V"
+        },
+        {
+          "target": "test_double",
+          "relation": "==",
+          "value": "32 degF",
+          "within": 0.01
+        },
+        {
+          "target": "residential::default_outdoor_temperature",
+          "relation": "==",
+          "value": "32 degF",
+          "within": 0.01
+        }
+      ]
+    }
+  }
+}

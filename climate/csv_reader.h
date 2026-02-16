@@ -9,6 +9,8 @@
 #ifndef CLIMATE_CSV_READER_
 #define CLIMATE_CSV_READER_
 
+#include<vector>
+
 #include "climate.h"
 #include "weather.h"
 #include "weather_reader.h"
@@ -29,20 +31,27 @@ protected:
 	int read_line(char *, int);
 
 	int column_ct;
-	PROPERTY **columns;
+	//PROPERTY **columns;
+	std::vector<PROPERTY*> columns;
 	TIMESTAMP last_ts; /* time on the last read line */
-	weather *weather_root, *weather_last;
+
+	weather::unique_ptr_type weather_root; // Using unique_ptr for automatic memory management
+	weather* weather_last = nullptr;
 
 public:
 	csv_reader();
 	csv_reader(MODULE *module);
 	~csv_reader();
 
+	void add_weather(weather::unique_ptr_type new_weather);
+
 	static CLASS *oclass;
 
 	long int index;
 	TIMESTAMP next_ts;
-	weather **samples;
+	//weather **samples;
+	std::vector<weather*> samples;
+
 	long int sample_ct;
 
 	char32 city_name;

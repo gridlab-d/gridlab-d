@@ -12,6 +12,15 @@
 #include <cctype>
 
 
+#ifdef _WIN32
+ // Windows-specific: Use strtok_s (secure version of strtok)
+#define strtok_r strtok_s
+#else
+ // Unix-like systems: Use strtok_r
+#include <string.h>
+#endif
+
+
 HTTP* hopen(const char *url, int maxlen)
 {
 	struct sockaddr_in serv_addr;

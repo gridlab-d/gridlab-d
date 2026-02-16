@@ -11,8 +11,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <vector>
-#include <json/json.h>
-
+// #include <json/json.h>
+#include <nlohmann/json.hpp>
 #include "gridlabd.h"
 #include "reliability.h"
 

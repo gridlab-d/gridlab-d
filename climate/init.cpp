@@ -13,6 +13,9 @@
 #include "weather.h"
 #include "csv_reader.h"
 
+
+
+
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
 	if (set_callback(fntable)==nullptr)
@@ -24,6 +27,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new climate(module);
 	new weather(module);
 	new csv_reader(module);
+
+
+
+
 
 	/* always return the first class registered */
 	return climate::oclass;

@@ -134,7 +134,7 @@ PROPERTY *class_find_property(CLASS *oclass, const PROPERTYNAME name);
 void class_add_property(CLASS *oclass, PROPERTY *prop);
 PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE ptype, char *unit);
 PROPERTYTYPE class_get_propertytype_from_typename(char *name);
-int class_string_to_property(PROPERTY *prop, void *addr, char *value);
+int class_string_to_property(PROPERTY *prop, void *addr, const char *value);
 int class_string_to_propertytype(PROPERTYTYPE type, void *addr, char *value);
 int class_property_to_string(PROPERTY *prop, void *addr, char *value, int size);
 CLASS *class_get_first_class(void);

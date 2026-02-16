@@ -133,13 +133,13 @@ controller2::controller2(MODULE *mod){
 }
 
 int controller2::create(){
-	memset(this, 0, sizeof(controller2));
+	////memset(this, 0, sizeof(controller2));
 	sensitivity = 1.0;
 	return 1;
 }
 
 int controller2::init(OBJECT *parent){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	if(parent == nullptr){
 		gl_error("controller2 has no parent and will be operating in 'dummy' mode");
 	} else {
