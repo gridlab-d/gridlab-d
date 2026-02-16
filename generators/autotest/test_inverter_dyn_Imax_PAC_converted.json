@@ -54,42 +54,134 @@
         "assert": {}
     },
     "objects": {
-        "player": {
+        "fault_check": {
             "instances": [
                 {
-                    "parent": "double_assert_2",
-                    "flags": "DELTAMODE",
-                    "property": "value",
-                    "file": "../data_inverter_dyn_assert_Imax_PAC_E_droop_mag_pu.csv"
-                },
-                {
-                    "parent": "Node3_1",
-                    "file": "../data_test_inverter_dyn_Imax_Load4.player",
-                    "property": "constant_impedance_A",
-                    "flags": "DELTAMODE"
-                },
-                {
-                    "parent": "Node3_1",
-                    "file": "../data_test_inverter_dyn_Imax_Load4.player",
-                    "property": "constant_impedance_B",
-                    "flags": "DELTAMODE"
-                },
-                {
-                    "parent": "Node3_1",
-                    "file": "../data_test_inverter_dyn_Imax_Load4.player",
-                    "property": "constant_impedance_C",
-                    "flags": "DELTAMODE"
+                    "name": "base_fault_check_object",
+                    "check_mode": "ONCHANGE",
+                    "strictly_radial": false,
+                    "eventgen_object": "testgendev",
+                    "grid_association": true,
+                    "outside_comments": [
+                        "//Fault check option"
+                    ],
+                    "inside_comments": [
+                        "//output_filename test_connect.txt;",
+                        "//full_output_file true;"
+                    ],
+                    "inline_comments": {
+                        "grid_association": "//Flag to ensure non-monolithic islands"
+                    }
                 }
             ]
         },
-        "double_assert": {
+        "eventgen": {
             "instances": [
                 {
-                    "name": "double_assert_2",
-                    "parent": "VSI1",
+                    "name": "testgendev",
                     "flags": "DELTAMODE",
-                    "target": "E_mag",
-                    "within": 0.02
+                    "fault_type": "SW-A",
+                    "manual_outages": "microgrid_switch1,2001-08-01 12:00:10.00 PST,2001-08-01 12:00:31 PST",
+                    "outside_comments": [
+                        "// Junk event"
+                    ],
+                    "inside_comments": [
+                        "//parent testmetrics;"
+                    ],
+                    "inline_comments": {
+                        "fault_type": "//Type of fault for the object to induce",
+                        "}": "// First time is when the switch will open, the second time is when it will close"
+                    }
+                }
+            ]
+        },
+        "line_configuration": {
+            "instances": [
+                {
+                    "name": "LINE606",
+                    "z11": "10.58+52.90j",
+                    "z12": 0,
+                    "z13": 0,
+                    "z21": 0,
+                    "z22": "10.58+52.90j",
+                    "z23": 0,
+                    "z31": 0,
+                    "z32": 0,
+                    "z33": "10.58+52.90j",
+                    "outside_comments": [
+                        "///////////////////////////////////////////////////////////////////////////",
+                        "// Start of individual objects/////////////////////////////////////////////",
+                        "///////////////////////////////////////////////////////////////////////////"
+                    ],
+                    "inline_comments": {
+                        "z12": "//0.01+0.01j;",
+                        "z31": "//0.01+0.01j;"
+                    }
+                }
+            ]
+        },
+        "meter": {
+            "instances": [
+                {
+                    "name": "Node1",
+                    "phases": "ABCN",
+                    "flags": "DELTAMODE",
+                    "nominal_voltage": "132.79 kV",
+                    "inside_comments": [
+                        "//bustype SWING;",
+                        "//voltage_A 277.1363;",
+                        "//voltage_B -138.5682-240.0000j;",
+                        "//voltage_C -138.5682+240.0000j;"
+                    ],
+                    "inline_comments": {
+                        "name": "// inverter 1"
+                    }
+                },
+                {
+                    "name": "Node4",
+                    "phases": "ABCN",
+                    "bustype": "SWING",
+                    "flags": "DELTAMODE",
+                    "nominal_voltage": "132.79 kV",
+                    "inside_comments": [
+                        "//voltage_A 277.1363;",
+                        "//voltage_B -138.5682-240.0000j;",
+                        "//voltage_C -138.5682+240.0000j;"
+                    ],
+                    "inline_comments": {
+                        "name": "// inverter 2"
+                    }
+                }
+            ]
+        },
+        "node": {
+            "instances": [
+                {
+                    "name": "Node2",
+                    "phases": "ABCN",
+                    "flags": "DELTAMODE",
+                    "nominal_voltage": "132.79 kV"
+                }
+            ]
+        },
+        "load": {
+            "instances": [
+                {
+                    "name": "Node3",
+                    "phases": "ABCN",
+                    "flags": "DELTAMODE",
+                    "nominal_voltage": "132.79 kV",
+                    "inside_comments": [
+                        "//constant_impedance_A 2.25756;",
+                        "//constant_impedance_B 2.25756;",
+                        "//constant_impedance_C 2.25756;"
+                    ]
+                },
+                {
+                    "name": "Node3_1",
+                    "phases": "ABCN",
+                    "flags": "DELTAMODE",
+                    "nominal_voltage": "132.79 kV"
                 }
             ]
         },
@@ -180,84 +272,6 @@
                 }
             ]
         },
-        "group_recorder": {
-            "instances": [
-                {
-                    "name": "E_mag_pu",
-                    "property": "E_mag",
-                    "group": "class=inverter_dyn",
-                    "flags": "DELTAMODE",
-                    "interval": 1,
-                    "file": "E_droop_mag_pu.csv"
-                }
-            ]
-        },
-        "fault_check": {
-            "instances": [
-                {
-                    "name": "base_fault_check_object",
-                    "check_mode": "ONCHANGE",
-                    "strictly_radial": false,
-                    "eventgen_object": "testgendev",
-                    "grid_association": true,
-                    "outside_comments": [
-                        "//Fault check option"
-                    ],
-                    "inside_comments": [
-                        "//output_filename test_connect.txt;",
-                        "//full_output_file true;"
-                    ],
-                    "inline_comments": {
-                        "grid_association": "//Flag to ensure non-monolithic islands"
-                    }
-                }
-            ]
-        },
-        "eventgen": {
-            "instances": [
-                {
-                    "name": "testgendev",
-                    "flags": "DELTAMODE",
-                    "fault_type": "SW-A",
-                    "manual_outages": "microgrid_switch1,2001-08-01 12:00:10.00 PST,2001-08-01 12:00:31 PST",
-                    "outside_comments": [
-                        "// Junk event"
-                    ],
-                    "inside_comments": [
-                        "//parent testmetrics;"
-                    ],
-                    "inline_comments": {
-                        "fault_type": "//Type of fault for the object to induce",
-                        "}": "// First time is when the switch will open, the second time is when it will close"
-                    }
-                }
-            ]
-        },
-        "line_configuration": {
-            "instances": [
-                {
-                    "name": "LINE606",
-                    "z11": "10.58+52.90j",
-                    "z12": 0,
-                    "z13": 0,
-                    "z21": 0,
-                    "z22": "10.58+52.90j",
-                    "z23": 0,
-                    "z31": 0,
-                    "z32": 0,
-                    "z33": "10.58+52.90j",
-                    "outside_comments": [
-                        "///////////////////////////////////////////////////////////////////////////",
-                        "// Start of individual objects/////////////////////////////////////////////",
-                        "///////////////////////////////////////////////////////////////////////////"
-                    ],
-                    "inline_comments": {
-                        "z12": "//0.01+0.01j;",
-                        "z31": "//0.01+0.01j;"
-                    }
-                }
-            ]
-        },
         "overhead_line": {
             "instances": [
                 {
@@ -286,71 +300,6 @@
                 }
             ]
         },
-        "meter": {
-            "instances": [
-                {
-                    "name": "Node1",
-                    "phases": "ABCN",
-                    "flags": "DELTAMODE",
-                    "nominal_voltage": "132.79 kV",
-                    "inside_comments": [
-                        "//bustype SWING;",
-                        "//voltage_A 277.1363;",
-                        "//voltage_B -138.5682-240.0000j;",
-                        "//voltage_C -138.5682+240.0000j;"
-                    ],
-                    "inline_comments": {
-                        "name": "// inverter 1"
-                    }
-                },
-                {
-                    "name": "Node4",
-                    "phases": "ABCN",
-                    "bustype": "SWING",
-                    "flags": "DELTAMODE",
-                    "nominal_voltage": "132.79 kV",
-                    "inside_comments": [
-                        "//voltage_A 277.1363;",
-                        "//voltage_B -138.5682-240.0000j;",
-                        "//voltage_C -138.5682+240.0000j;"
-                    ],
-                    "inline_comments": {
-                        "name": "// inverter 2"
-                    }
-                }
-            ]
-        },
-        "node": {
-            "instances": [
-                {
-                    "name": "Node2",
-                    "phases": "ABCN",
-                    "flags": "DELTAMODE",
-                    "nominal_voltage": "132.79 kV"
-                }
-            ]
-        },
-        "load": {
-            "instances": [
-                {
-                    "name": "Node3",
-                    "phases": "ABCN",
-                    "flags": "DELTAMODE",
-                    "nominal_voltage": "132.79 kV",
-                    "inside_comments": [
-                        "//constant_impedance_A 2.25756;",
-                        "//constant_impedance_B 2.25756;",
-                        "//constant_impedance_C 2.25756;"
-                    ]
-                },
-                {
-                    "name": "Node3_1",
-                    "phases": "ABCN",
-                    "flags": "DELTAMODE",
-                    "nominal_voltage": "132.79 kV"
-                }
-            ]
-        },
         "switch": {
             "instances": [
                 {
@@ -359,6 +308,57 @@
                     "from": "Node2",
                     "to": "Node3",
                     "status": "CLOSED"
+                }
+            ]
+        },
+        "double_assert": {
+            "instances": [
+                {
+                    "name": "double_assert_2",
+                    "parent": "VSI1",
+                    "flags": "DELTAMODE",
+                    "target": "E_mag",
+                    "within": 0.02
+                }
+            ]
+        },
+        "player": {
+            "instances": [
+                {
+                    "parent": "double_assert_2",
+                    "flags": "DELTAMODE",
+                    "property": "value",
+                    "file": "../data_inverter_dyn_assert_Imax_PAC_E_droop_mag_pu.csv"
+                },
+                {
+                    "parent": "Node3_1",
+                    "file": "../data_test_inverter_dyn_Imax_Load4.player",
+                    "property": "constant_impedance_A",
+                    "flags": "DELTAMODE"
+                },
+                {
+                    "parent": "Node3_1",
+                    "file": "../data_test_inverter_dyn_Imax_Load4.player",
+                    "property": "constant_impedance_B",
+                    "flags": "DELTAMODE"
+                },
+                {
+                    "parent": "Node3_1",
+                    "file": "../data_test_inverter_dyn_Imax_Load4.player",
+                    "property": "constant_impedance_C",
+                    "flags": "DELTAMODE"
+                }
+            ]
+        },
+        "group_recorder": {
+            "instances": [
+                {
+                    "name": "E_mag_pu",
+                    "property": "E_mag",
+                    "group": "class=inverter_dyn",
+                    "flags": "DELTAMODE",
+                    "interval": 1,
+                    "file": "E_droop_mag_pu.csv"
                 }
             ]
         },

@@ -16,7 +16,7 @@ def getGLDBinary():
     """
     global gldBinary
     gldBinary = shutil.which("gridlabd")
-    if gldBinary == "":
+    if not gldBinary:
         rootPath = Path(__file__).parent.resolve()
         for child in rootPath.iterdir():
             if child.is_dir():
@@ -25,7 +25,7 @@ def getGLDBinary():
                 if childBin.exists() and childBin.is_file():
                     gldBinary = f"{childBin}"
                     break
-    if gldBinary == "":
+    if not gldBinary:
         raise ModuleNotFoundError("Could not find the gridlabd binary in the development environment!")
     
 
