@@ -524,7 +524,6 @@ extern "C"
 
 	int object_loadmethod(OBJECT *obj, char *name, char *value);
 
-
 #ifdef __cplusplus
 }
 #endif

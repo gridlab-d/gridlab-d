@@ -131,7 +131,7 @@ int ZIPload::create()
 	demand_response_mode = false;
 	ron = roff = -1;
 	phi = eta = 0.2;	
-	next_time = TS_INVALID;  // Sentinel for checkpoint - will be properly initialized in sync()
+	next_time = 0;
 
 	duty_cycle = recovery_duty_cycle = -1;
 	period = 0;
@@ -142,10 +142,7 @@ int ZIPload::create()
 
 	load.voltage_factor = 1.0; // assume 'even' voltage, initially
 
-	first_pass = INT32_CHECKPOINT_SENTINEL;  // Sentinel for checkpoint - will be properly initialized in sync()
-	last_time = TS_INVALID;  // Sentinel for checkpoint - will be properly initialized in sync()
-	last_duty_cycle = QNAN;  // Sentinel for checkpoint - will be properly initialized in sync()
-	t = QNAN;  // Sentinel for checkpoint - will be properly initialized if needed
+	first_pass = 1;
 	return res;
 }
 
@@ -158,25 +155,6 @@ int ZIPload::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-
-	// Initialize checkpoint variables on first run after checkpoint load
-	if (next_time == TS_INVALID)
-	{
-		next_time = TS_NEVER;  // Initialize to current time
-	}
-	if (last_time == TS_INVALID)
-	{
-		last_time = TS_NEVER;  // Initialize to current time
-	}
-	if (std::isnan(last_duty_cycle))
-	{
-		last_duty_cycle = duty_cycle;  // Initialize to current duty cycle
-	}
-	if (first_pass == INT32_CHECKPOINT_SENTINEL)
-	{
-		first_pass = 1;  // Initialize to first pass
-	}
-	
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
@@ -188,7 +166,7 @@ int ZIPload::init(OBJECT *parent)
 		about it, please see the Matlab files found in ../design/dr_model/ or read the paper titled "On the Equilibrium Dynamics of Demand Response"
 		submitted to HICSS 2011 or post your questions on the WIKI forum.
 		*/
-		
+
 		// Initial error checks
 		if (abs(eta) > 1)
 		{
@@ -206,7 +184,7 @@ int ZIPload::init(OBJECT *parent)
 			from phi.  Please set to a value between 1 and 0 (inclusive).
 			*/
 		}
-		
+
 		// Set up the buffers and perform some error checks
 		if (L > 0)
 			if (L < 70)
@@ -293,6 +271,8 @@ int ZIPload::init(OBJECT *parent)
 				drm.on[x] = N * eta * (1-phi) * exp(eta*(L-0.5-x)/roff) / (exp(eta*L/roff)-1);
 				drm.off[x] = drm.on[x] * ron/roff;
 				test_N += drm.on[x] + drm.off[x];
+				//non += drm.on[x] = eta * (1-phi) * exp(eta*(L-x+0.5)/roff) / (exp(eta*L/roff)-1);
+				//noff += drm.off[x] = drm.on[x]*ron/roff;
 			}
 		}
 
@@ -302,7 +282,7 @@ int ZIPload::init(OBJECT *parent)
 			double extra = N - test_N;
 			drm.off[0] += extra;
 		}
-		
+
 	}
 
 	if (duty_cycle > 1 || duty_cycle < 0)
@@ -350,8 +330,6 @@ int ZIPload::init(OBJECT *parent)
 	}
 
 	load.breaker_amps = breaker_val;
-
-	shared_init();
 
 	return residential_enduse::init(parent);
 }

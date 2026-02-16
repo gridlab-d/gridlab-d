@@ -1377,7 +1377,6 @@ int house_e::checkpoint_init(OBJECT *parent)
 			hvac_breaker_rating = 200;
 		}
 		else{
-
 			load.breaker_amps = hvac_breaker_rating;
 			load.config = EUC_IS220;
 			pHVAC_EnduseLoad = attach(object_header(this), hvac_breaker_rating, true, &load);
