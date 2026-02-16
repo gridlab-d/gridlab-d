@@ -227,20 +227,48 @@ int range::create()
 
 	enduse_queue_cooktop = 0.99;
 
-	// Initialize checkpoint variables with sentinel values
-	time_to_transition = QNAN;
-	cycle_duration_cooktop = QNAN;
-	cycle_time_cooktop = QNAN;
-	state_time = QNAN;
-	Tlower = QNAN;
-	Tlower_old = QNAN;
-	Tupper = QNAN;
-	Tupper_old = QNAN;
-	Tw_old = QNAN;
-	oven_demand_old = QNAN;
-
 	return res;
 
+}
+
+/** Shared initialization for both normal init and checkpoint restore
+ **/
+void range::shared_init(void)
+{
+	OBJECT *parent = object_header(this)->parent;
+	static double sTair = 74;
+	static double sTout = 68;
+
+	// Initialize pointers to parent properties
+	if(parent){
+		pTair = gl_get_double_by_name(parent, "air_temperature");
+		pTout = gl_get_double_by_name(parent, "outdoor_temperature");
+	}
+
+	if(pTair == 0){
+		pTair = &sTair;
+		gl_warning("range parent lacks \'air_temperature\' property, using default");
+	}
+	if(pTout == 0){
+		pTout = &sTout;
+		gl_warning("range parent lacks \'outside_temperature\' property, using default");
+	}
+}
+
+/** Called when restoring from checkpoint to reinitialize non-published variables
+ **/
+int range::checkpoint_init(OBJECT *parent)
+{
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("range::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+
+	shared_init();
+	return residential_enduse::checkpoint_init(parent);
 }
 
 /** Initialize oven model properties - randomized defaults for all published variables
@@ -257,39 +285,13 @@ int range::init(OBJECT *parent)
 		}
 	}
 
-
-	// Initialize checkpoint variables on first run after checkpoint load
-	if (isnan(time_to_transition)) time_to_transition = 0.0;
-	if (isnan(cycle_duration_cooktop)) cycle_duration_cooktop = 0.0;
-	if (isnan(cycle_time_cooktop)) cycle_time_cooktop = 0.0;
-	if (isnan(state_time)) state_time = 0.0;
-	if (isnan(Tlower)) Tlower = Tinlet;
-	if (isnan(Tlower_old)) Tlower_old = Tinlet;
-	if (isnan(Tupper)) Tupper = Tinlet;
-	if (isnan(Tupper_old)) Tupper_old = Tinlet;
-	if (isnan(Tw_old)) Tw_old = Tinlet;
-	if (isnan(oven_demand_old)) oven_demand_old = 0.0;
-
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
-	static double sTair = 74;
-	static double sTout = 68;
 	if (heat_fraction==0) heat_fraction = 0.2;
 
-	if(parent){
-		pTair = gl_get_double_by_name(parent, "air_temperature");
-		pTout = gl_get_double_by_name(parent, "outdoor_temperature");
-	}
-
-	if(pTair == 0){
-		pTair = &sTair;
-		gl_warning("range parent lacks \'air_temperature\' property, using default");
-	}
-	if(pTout == 0){
-		pTout = &sTout;
-		gl_warning("range parent lacks \'outside_temperature\' property, using default");
-	}
+	// Initialize pointers and other non-published variables
+	shared_init();
 
 	/* sanity checks */
 	/* initialize oven volume */
@@ -1300,6 +1302,10 @@ EXPORT int isa_range(OBJECT *obj, char *classname)
 	}
 }
 
+EXPORT int checkpoint_init_range(OBJECT *obj)
+{
+	return object_data<range>(obj)->checkpoint_init(obj->parent);
+}
 
 EXPORT TIMESTAMP sync_range(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {

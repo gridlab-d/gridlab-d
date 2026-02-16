@@ -55,6 +55,7 @@ public:
 
 private:
 	int first_pass;
+	void shared_init(void);
 
 public:
 	static CLASS *oclass, *pclass;
@@ -64,6 +65,7 @@ public:
 	~ZIPload();
 	int create();
 	int init(OBJECT *parent);
+	int checkpoint_init(OBJECT *parent);
 	int isa(char *classname);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 

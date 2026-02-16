@@ -71,6 +71,7 @@ int main(int argc, char* argv[]) {
     } 
     else if (restore_mode) {
         printf("Checkpoint loaded.\n");
+        std::cout << gld.gld_model.dump(4) << std::endl; // Pretty print with 4-space indent
         gld.run();
         nlohmann::json checkpoint = gld.get_checkpoint_json();
         printf("Checkpoint saved.\n");

@@ -104,8 +104,7 @@ evcharger_det::evcharger_det(MODULE *module) : residential_enduse(module)
 			PT_bool, "J2894_voltage_low_state_1", PADDR(J2894_voltage_low_state[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 low-voltage state (index 1)",
 			PT_double, "J2894_off_accumulator", PADDR(J2894_off_accumulator), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 off accumulator",
 			PT_bool, "J2894_is_ramp_constrained", PADDR(J2894_is_ramp_constrained), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 ramp constrained flag",
-
-			nullptr)<1)
+		nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
 			if (gl_publish_function(oclass,	"interupdate_res_object", (FUNCTIONADDR)interupdate_evcharger_det)==nullptr)
@@ -139,7 +138,7 @@ int evcharger_det::create()
 	mileage_classification = 33;	//PHEV 33, by default
 
 	Work_Charge_Available = false;	//No work charging
-	
+
 	NHTSDataFile[0] = '\0';			//Null file
 	VehicleLocation = 0;		
 
@@ -199,19 +198,53 @@ int evcharger_det::create()
 	J2894_ramp_limit = 40.0;	//40 A/s default rate
 	J2894_is_ramp_constrained = false;	//Not ramp limited, by default
 
-	// Initialize checkpoint variables with sentinel values
-	glob_min_timestep = TS_INVALID;
-	glob_min_timestep_dbl = QNAN;
-	prev_time_dbl = QNAN;
-	J2894_off_accumulator = QNAN;
-	// Note: boolean checkpoint variables (off_nominal_time, deltamode_registered, etc.)
-	// are already initialized to false above, which is appropriate for bool variables
-
 	return create_res;
+}
+
+void evcharger_det::shared_init(void)
+{
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	deltamode_inclusive = false;		//By default, no deltamode participation
+	
+	//Zero the accumulators - just because
+	J2894_voltage_high_accumulators[0] = J2894_voltage_high_accumulators[1] = 0.0;
+	J2894_voltage_low_accumulators[0] = J2894_voltage_low_accumulators[1] = 0.0;
+	
+	// Recalculate derived values that depend on published variables
+	if (load.config == EUC_IS220)
+	{
+		expected_voltage_base = 2.0 * default_line_voltage;
+	}
+	else	//Assume 110/120 connected
+	{
+		expected_voltage_base = default_line_voltage;
+	}
+	
+	//Populate the "max current" value, based on published values
+	max_overload_charge_current = max_overload_currentPU * CarInformation.MaxChargeRate / expected_voltage_base / 1000.0;
+}
+
+int evcharger_det::checkpoint_init(OBJECT *parent)
+{
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("evcharger_det::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	shared_init();
+	return residential_enduse::checkpoint_init(parent);
 }
 
 int evcharger_det::init(OBJECT *parent)
 {
+	// Initialize non-published variables
+	shared_init();
+	
 	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -259,18 +292,12 @@ int evcharger_det::init(OBJECT *parent)
 	//remove the mapping
 	delete temp_property;
 
-	//Convert it to a timestep - only if not already loaded from checkpoint
-	if (glob_min_timestep == TS_INVALID)
-	{
-		glob_min_timestep = (TIMESTAMP)temp_int_val;
-	}
+	//Convert it to a timestep
+	glob_min_timestep = (TIMESTAMP)temp_int_val;
 
 	if (glob_min_timestep > 1)					//Now check us
 	{
-		if (off_nominal_time == false)			//Only set if not already loaded from checkpoint
-		{
-			off_nominal_time=true;				//Set flag
-		}
+		off_nominal_time=true;					//Set flag
 		gl_verbose("evcharger_det:%s - minimum_timestep set - problems may emerge",hdr->name);
 		/*  TROUBLESHOOT
 		The evcharger detected that the forced minimum timestep feature is enabled.  This may cause
@@ -279,11 +306,8 @@ int evcharger_det::init(OBJECT *parent)
 		*/
 	}
 
-	//Set the double version - only if not already loaded from checkpoint
-	if (isnan(glob_min_timestep_dbl))
-	{
-		glob_min_timestep_dbl = (double)glob_min_timestep;
-	}
+	//Set the double version
+	glob_min_timestep_dbl = (double)glob_min_timestep;
 
 	//End-use properties
 	//Check the maximum charge rate - if over 1.7 kW, see if it is 220 VAC
@@ -699,10 +723,7 @@ int evcharger_det::init(OBJECT *parent)
 
 	//Initialize "tracking time", otherwise problems emerge
 	prev_temp_time = gl_globalclock;
-	if (isnan(prev_time_dbl))	//Only set if not already loaded from checkpoint
-	{
-		prev_time_dbl = (double)prev_temp_time;
-	}
+	prev_time_dbl = (double)prev_temp_time;
 
 	//Convert it to a timestamp value
 	temp_time = gl_globalclock;
@@ -771,11 +792,11 @@ int evcharger_det::init(OBJECT *parent)
 	{
 		CarInformation.HomeWorkDuration = (temp_sec_C - temp_sec_B);
 	}
-	
+
 	//Get current hours in right format
 	temp_hours_curr = ((double)(temp_date.hour)) + (((double)(temp_date.minute))/60.0) + (((double)(temp_date.second))/3600.0);
 	temp_sec_curr = ((double)(temp_date.hour))*3600.0 + ((double)(temp_date.minute))*60.0 + ((double)(temp_date.second));
-	
+
 	//Determine the schedule we are in
 	if (temp_sec_A < temp_sec_B)	//HArrive < HDepart
 	{
@@ -1010,7 +1031,7 @@ int evcharger_det::init(OBJECT *parent)
 		//Populate SOC
 		CarInformation.battery_SOC = CarInformation.battery_capacity / CarInformation.battery_size * 100.0;
 	}
-	
+
 	//Should be set, if was specified, otherwise, give us an init
 	if ((CarInformation.battery_SOC < 0.0) || (CarInformation.battery_capacity < 0.0))
 	{
@@ -1030,7 +1051,7 @@ int evcharger_det::init(OBJECT *parent)
 				The initial battery SOC somehow ended up outside a 0 - 100% range.  It has been forced to 50%.
 				*/
 			}
-			
+
 			//Update capacity
 			CarInformation.battery_capacity = CarInformation.battery_size * CarInformation.battery_SOC / 100.0;
 		}
@@ -1131,12 +1152,6 @@ int evcharger_det::init(OBJECT *parent)
 			It is recommended all objects that support deltamode enable it.
 			*/
 		}
-	}
-
-	// Initialize checkpoint variables that weren't set in create() - only if not already loaded from checkpoint
-	if (isnan(J2894_off_accumulator))
-	{
-		J2894_off_accumulator = 0.0;
 	}
 
 	return init_res;
@@ -1409,7 +1424,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 
 					//Update battery information first - just in case the transition occurred in the middle of a timestep
 					temp_double = tdiff / 3600.0 * RealizedChargeRate * CarInformation.ChargeEfficiency;	//Convert to kWh
-					
+
 					//Accumulate it
 					CarInformation.battery_capacity += temp_double;
 
@@ -1446,7 +1461,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 						//Calculate and remove the energy consumed
 						CarInformation.battery_capacity = CarInformation.battery_capacity - CarInformation.travel_distance / 2.0 / CarInformation.mileage_efficiency;
 					}
-					
+
 					//Make sure the battery didn't go too low
 					if (CarInformation.battery_capacity < 0.0)
 					{
@@ -1699,7 +1714,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 						//Calculate and remove the energy consumed
 						CarInformation.battery_capacity = CarInformation.battery_capacity - CarInformation.travel_distance / 2.0 / CarInformation.mileage_efficiency;
 					}
-					
+
 					//Make sure the battery didn't go too low
 					if (CarInformation.battery_capacity < 0.0)
 					{
@@ -2380,6 +2395,12 @@ EXPORT int isa_evcharger_det(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
+}
+
+EXPORT int checkpoint_init_evcharger_det(OBJECT *obj)
+{
+	evcharger_det *my = object_data<evcharger_det>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_evcharger_det(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)

@@ -63,8 +63,32 @@ int occupantload::create()
 	return res;
 }
 
+void occupantload::shared_init(void)
+{
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	// (occupantload class has no non-published variables at this time)
+}
+
+int occupantload::checkpoint_init(OBJECT *parent)
+{
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("occupantload::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}	
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	shared_init();
+	return SUCCESS;
+}
+
 int occupantload::init(OBJECT *parent)
 {
+	// Initialize non-published variables
+	shared_init();
+	
 	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -203,6 +227,12 @@ EXPORT int isa_occupantload(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
+}
+
+EXPORT int checkpoint_init_occupantload(OBJECT *obj)
+{
+	occupantload *my = object_data<occupantload>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_occupantload(OBJECT *obj, TIMESTAMP t0)

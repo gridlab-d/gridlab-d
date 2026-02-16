@@ -88,6 +88,29 @@ ZIPload::~ZIPload()
 {
 }
 
+// Initialize non-published variables (not loaded from checkpoint)
+void ZIPload::shared_init()
+{
+	// Example: reset internal state variables
+	// (add any non-published variable initializations here)
+	// For now, nothing custom, but this is the pattern for future use
+}
+
+// Called after checkpoint load to reinitialize non-published variables
+int ZIPload::checkpoint_init(OBJECT *parent)
+{
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("zipload::checkpoint_init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+	// Only initialize variables that aren't published. If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	shared_init();
+	return residential_enduse::checkpoint_init(parent);
+}
+
 int ZIPload::create() 
 {
 	int res = residential_enduse::create();
@@ -327,6 +350,8 @@ int ZIPload::init(OBJECT *parent)
 	}
 
 	load.breaker_amps = breaker_val;
+
+	shared_init();
 
 	return residential_enduse::init(parent);
 }
@@ -647,6 +672,13 @@ EXPORT TIMESTAMP sync_ZIPload(OBJECT *obj, TIMESTAMP t0)
 		return t1;
 	}
 	SYNC_CATCHALL(ZIPload);
+}
+
+// EXPORTed checkpoint_init for module loader
+EXPORT int checkpoint_init_ZIPload(OBJECT *obj, OBJECT *parent)
+{
+	ZIPload *my = object_data<ZIPload>(obj);
+	return my->checkpoint_init(parent);
 }
 
 /**@}**/

@@ -72,9 +72,6 @@ int microwave::create()
 	standby_power = 0.01;
 	shape.load = gl_random_uniform(RNGSTATE,0, 0.1);  // assuming a default maximum 10% of the sync time 
 
-	// Initialize checkpoint variables with sentinel values
-	prev_demand = QNAN;
-
 	gl_warning("explicit %s model is experimental", object_header(this)->oclass->name);
 
 	return res;
@@ -107,8 +104,34 @@ void microwave::init_noshape(){
 	}
 }
 
+void microwave::shared_init(void)
+{
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	cycle_start = 0;
+	cycle_on = 0;
+	cycle_off = 0;
+}
+
+int microwave::checkpoint_init(OBJECT *parent)
+{
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("microwave::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}	
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	shared_init();
+	return residential_enduse::checkpoint_init(parent);
+}
+
 int microwave::init(OBJECT *parent)
 {
+	// Initialize non-published variables
+	shared_init();
+	
 	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -282,9 +305,6 @@ TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double val = 0.0;
 	TIMESTAMP t2 = TS_NEVER;
 
-	// Initialize checkpoint variables on first run after checkpoint load
-	if (isnan(prev_demand)) prev_demand = 0.0;
-
 	if (t0 <= 0)
 		return TS_NEVER;
 	
@@ -358,6 +378,12 @@ EXPORT int isa_microwave(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
+}
+
+EXPORT int checkpoint_init_microwave(OBJECT *obj)
+{
+	microwave *my = object_data<microwave>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_microwave(OBJECT *obj, TIMESTAMP t0)

@@ -162,22 +162,6 @@ int refrigerator::create()
 	load.power_fraction = 1;
 	is_240 = true;	
 
-	// Initialize checkpoint variables with sentinel values
-	check_icemaking = false;
-	return_time = QNAN;
-	door_return_time = INT32_CHECKPOINT_SENTINEL;
-	start_time = TS_INVALID;
-	check_defrost = false;
-	no_of_defrost = QNAN;
-	hourly_door_opening = INT32_CHECKPOINT_SENTINEL;
-	door_next_open_time = INT32_CHECKPOINT_SENTINEL;
-	door_time = INT32_CHECKPOINT_SENTINEL;
-	door_open = false;
-	door_to_open = false;
-	door_energy_calc = false;
-	total_compressor_time = QNAN;
-	new_running_state = false;
-
 	gl_warning("explicit %s model is experimental", object_header(this)->oclass->name);
 	/* TROUBLESHOOT
 		The refrigerator explicit model has some serious issues and should be considered for complete
@@ -185,6 +169,39 @@ int refrigerator::create()
 	*/
 
 	return res;
+}
+
+/** Shared initialization for both normal init and checkpoint restore
+ **/
+void refrigerator::shared_init(void)
+{
+	OBJECT *parent = object_header(this)->parent;
+	OBJECT *hdr = object_header(this);
+	
+	// Initialize pointer to parent properties
+	pTout = (double*)gl_get_addr(parent, "air_temperature");
+	if (pTout==nullptr)
+	{
+		static double default_air_temperature = 72;
+		gl_warning("%s (%s:%d) parent object lacks air temperature, using %0f degF instead", hdr->name, hdr->oclass->name, hdr->id, default_air_temperature);
+		pTout = &default_air_temperature;
+	}
+}
+
+/** Called when restoring from checkpoint to reinitialize non-published variables
+ **/
+int refrigerator::checkpoint_init(OBJECT *parent)
+{
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("refrigerator::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+
+	shared_init();
+	return residential_enduse::checkpoint_init(parent);
 }
 
 int refrigerator::init(OBJECT *parent)
@@ -207,13 +224,8 @@ int refrigerator::init(OBJECT *parent)
 	if (UA == 0)				UA = 0.6;
 	if (load.power_factor==0)		load.power_factor = 0.95;
 
-	pTout = (double*)gl_get_addr(parent, "air_temperature");
-	if (pTout==nullptr)
-	{
-		static double default_air_temperature = 72;
-		gl_warning("%s (%s:%d) parent object lacks air temperature, using %0f degF instead", hdr->name, hdr->oclass->name, hdr->id, default_air_temperature);
-		pTout = &default_air_temperature;
-	}
+	// Initialize pointers and other non-published variables
+	shared_init();
 
 	/* derived values */
 	Tair = gl_random_uniform(&hdr->rng_state,Tset-thermostat_deadband/2, Tset+thermostat_deadband/2);
@@ -251,16 +263,6 @@ int refrigerator::init(OBJECT *parent)
 	if(defrost_criterion==0) defrost_criterion=DC_TIMED;	
 	
 	refrigerator_power = 0;
-
-	// Initialize checkpoint variables if loaded from checkpoint (QNAN/TS_INVALID sentinel)
-	if (isnan(return_time)) return_time = 0;
-	if (door_return_time == INT32_CHECKPOINT_SENTINEL) door_return_time = 0;
-	if (start_time == TS_INVALID) start_time = 0;
-	if (isnan(no_of_defrost)) no_of_defrost = 0;
-	if (hourly_door_opening == INT32_CHECKPOINT_SENTINEL) hourly_door_opening = 0;
-	if (door_next_open_time == INT32_CHECKPOINT_SENTINEL) door_next_open_time = 0;
-	if (door_time == INT32_CHECKPOINT_SENTINEL) door_time = 0;
-	if (isnan(total_compressor_time)) total_compressor_time = 0;
 
 	return_time = 0;
 
@@ -863,6 +865,11 @@ EXPORT int isa_refrigerator(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
+}
+
+EXPORT int checkpoint_init_refrigerator(OBJECT *obj)
+{
+	return object_data<refrigerator>(obj)->checkpoint_init(obj->parent);
 }
 
 /*	determine if we're turning the motor on or off and nothing else. */

@@ -130,6 +130,7 @@
 #include "index.h"
 #include "realtime.h"
 #include "module.h"
+#include "loader.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -450,8 +451,17 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 		{
 			static char json_fn[1024] = "";
 
+			// Strip extension from global_modelname if present
+			char modelname_noext[1024];
+			strncpy(modelname_noext, global_modelname, sizeof(modelname_noext));
+			modelname_noext[sizeof(modelname_noext)-1] = '\0';
+			char *last_dot = strrchr(modelname_noext, '.');
+			if (last_dot) {
+				*last_dot = '\0';
+			}
+
 			/* create current checkpoint save filename */
-			sprintf(json_fn, "%s_%s", global_modelname, "checkpoint.json");
+			sprintf(json_fn, "%s_%s", modelname_noext, "checkpoint.json");
 
 			const char *json_dir = (output_directory && strlen(output_directory) > 0) ? output_directory : ".";
 			/* check if output directory exists */
@@ -2588,6 +2598,21 @@ STATUS run_preparation()
 		 */
 		return FAILED;
 	}
+
+	// If this is a checkpoint JSON, loadall again to overwrite intialization result
+	// if (global_checkpoint_loaded){
+	// 	loader json_ldr = loader();
+	// 	if (json_ldr.loadall_json_roll(global_modelname) == FAILED)
+	// 	{
+	// 		output_error("model loading failed");
+	// 		/* TROUBLESHOOT
+	// 			The loading procedure failed.  This is usually preceded
+	// 			by a more detailed message that explains why it failed.  Follow
+	// 			the guidance for that message and try again.
+	// 		 */
+	// 		return FAILED;
+	// 	}
+	// }
 
 	/* establish rank index if necessary */
 	if (ranks == nullptr && setup_ranks() == FAILED)

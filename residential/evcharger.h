@@ -88,6 +88,8 @@ public:
 	~evcharger();
 	int create();
 	int init(OBJECT *parent);
+	int checkpoint_init(OBJECT *parent);
+	void shared_init(void);
 	int isa(char *classname);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	double update_state(double dt=0.0);

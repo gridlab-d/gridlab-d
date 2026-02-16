@@ -348,7 +348,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"is_AUX_on",PADDR(is_AUX_on),PT_DESCRIPTION,"logic statement to determine population statistics - is the AUX on? 0 no, 1 yes",
 			PT_double,"is_HEAT_on",PADDR(is_HEAT_on),PT_DESCRIPTION,"logic statement to determine population statistics - is the HEAT on? 0 no, 1 yes",
 			PT_double,"is_COOL_on",PADDR(is_COOL_on),PT_DESCRIPTION,"logic statement to determine population statistics - is the COOL on? 0 no, 1 yes",
-			
+
 			PT_bool,"thermal_storage_present",PADDR(thermal_storage_present),PT_DESCRIPTION,"logic statement for determining if energy storage is present",
 			PT_bool,"thermal_storage_in_use",PADDR(thermal_storage_inuse),PT_DESCRIPTION,"logic statement for determining if energy storage is being utilized",
 
@@ -589,7 +589,7 @@ int house_e::create()
 
 	cooling_supply_air_temp = 50.0;
 	heating_supply_air_temp = 150.0;
-	
+
 	heating_system_type = HT_HEAT_PUMP; // assume heat pump under all circumstances until we are told otherwise
 	cooling_system_type = CT_UNKNOWN;
 	auxiliary_system_type = AT_UNKNOWN;
@@ -633,7 +633,7 @@ int house_e::create()
 		{
 			char *euname = eulist[n_eu];
 			_strlwr(euname);
-			
+
 			// find the implicit enduse description
 			struct s_implicit_enduse_list *eu = nullptr;
 			int found=0;
@@ -781,24 +781,12 @@ int house_e::create()
 	window_c = 1;
 	window_temp_delta = 5; 
 	last_temperature = 75;
-	
-	// Initialize checkpoint variables with sentinel values
-	area_per_door = QNAN;
-	TcoolOn = QNAN;
-	fan_heatgain_fraction = QNAN;
-	hvac_period_on = QNAN;
-	hvac_period_off = QNAN;
-	Qlatent = QNAN;
-	value_Frequency = QNAN;
-	window_first_time_through = INT16_MIN;  // Use INT16_MIN as sentinel for int16
-	value_MeterStatus = INT16_MIN;  // Use INT16_MIN as sentinel for int16
-	
 	thermostat_mode = TM_AUTO;
 
 	//Deltamode variables
 	deltamode_inclusive = false;	//By default, don't be included in deltamode simulations
 	deltamode_registered = false;
-	
+
 	//Powerflow pointers
 	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = nullptr;
 	pLine_I[0] = pLine_I[1] = pLine_I[2] = nullptr;
@@ -818,7 +806,8 @@ int house_e::create()
 	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = gld::complex(0.0,0.0);
 	value_Shunt[0] = value_Shunt[1] = value_Shunt[2] = gld::complex(0.0,0.0);
 	value_Power[0] = value_Power[1] = value_Power[2] = gld::complex(0.0,0.0);
-	// Note: value_MeterStatus and value_Frequency are initialized in init() after checkpoint checks
+	value_MeterStatus = 1;
+	value_Frequency = 60.0;
 	external_pf_mode = XPFV_NONE;
 	external_v1N = gld::complex(0,0);
 	external_v2N = gld::complex(0,0);
@@ -892,7 +881,7 @@ int house_e::init_climate()
 		{
 			//default to mock data
 			gl_warning("house_e: no climate data found, using static data");
-			
+
 			value_Tout = default_outdoor_temperature;
 			value_Rhout = default_humidity;
 			value_Solar[0] = default_horizontal_solar;
@@ -1351,6 +1340,55 @@ void house_e::set_window_Rvalue(){
 		Rwindows = 2.0;
 	}
 }
+
+void house_e::shared_init(OBJECT *parent)
+{
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	heat_start = false;
+	air_density = 0.0735;		// density of air [lb/cf]
+	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
+}
+
+int house_e::checkpoint_init(OBJECT *parent)
+{
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("house::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}	
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	shared_init(parent);
+
+
+	// Re-initialize pMeterStatus if parent is available
+	if (parent != nullptr && pMeterStatus == nullptr) {
+		if (pMeterStatus) delete pMeterStatus;
+		pMeterStatus = new gld_property(parent, "service_status");
+	}
+
+	// Re-initialize pHVAC_EnduseLoad
+	if(pHVAC_EnduseLoad == nullptr){
+		if (hvac_breaker_rating == 0)
+		{
+			load.breaker_amps = 200;
+			hvac_breaker_rating = 200;
+		}
+		else{
+
+			load.breaker_amps = hvac_breaker_rating;
+			load.config = EUC_IS220;
+			pHVAC_EnduseLoad = attach(object_header(this), hvac_breaker_rating, true, &load);
+		}
+	}	
+		
+	return SUCCESS;
+}
+
+
+
 /** Map circuit variables to meter.  Initalize house_e and HVAC model properties,
 and internal gain variables.
 **/
@@ -1361,6 +1399,9 @@ int house_e::init(OBJECT *parent)
 	unsigned int test_rlock = 0;
 	bool temp_bool_val;
 
+	// Initialize non-published variables
+	shared_init(parent);
+
 	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -1370,8 +1411,6 @@ int house_e::init(OBJECT *parent)
 	}
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
-
-	heat_start = false;
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	OBJECT *obj = object_header(this);
@@ -1671,8 +1710,8 @@ int house_e::init(OBJECT *parent)
 		proper_meter_parent = false;
 		commercial_load_parent = false;
 
-		//Set frequency - only if not loaded from checkpoint
-		if (isnan(value_Frequency)) value_Frequency = default_grid_frequency;
+		//Set frequency
+		value_Frequency = default_grid_frequency;
 
 		//Map us too, since the enduse loads may use it
 		pFrequency = map_double_value(obj,"grid_frequency");
@@ -1768,9 +1807,6 @@ int house_e::init(OBJECT *parent)
 	if (Rfloor<=0)				Rfloor = 22.0;
 	if (Rwindows<=0)			set_window_Rvalue();
 	if (Rdoors<=0)				Rdoors = 5.0;
-	
-	air_density = 0.0735;		// density of air [lb/cf]
-	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
 
 	//house_e properties for HVAC
 	if (volume==0) volume = ceiling_height*floor_area;					// volume of air [cf]
@@ -1811,9 +1847,6 @@ int house_e::init(OBJECT *parent)
 	if (design_cooling_setpoint==0.0) design_cooling_setpoint = 75.0;
 	if (design_heating_setpoint==0.0) design_heating_setpoint = 70.0;
 	if (design_peak_solar<=0.0)	design_peak_solar = 195.0; //From Rob's defaults
-
-	// Initialize TcoolOn checkpoint - only if not already loaded from checkpoint
-	if (isnan(TcoolOn)) TcoolOn = cooling_setpoint;
 
 	if (thermostat_deadband<=0.0)	thermostat_deadband = 2.0; // F
 	if (thermostat_cycle_time<=0.0) thermostat_cycle_time = 120; // seconds
@@ -1883,7 +1916,7 @@ int house_e::init(OBJECT *parent)
 		double design_heating_cfm;
 		double design_cooling_cfm;
 		double gtr_cfm;
-	
+
 		design_heating_cfm = (design_heating_capacity > aux_heat_capacity ? design_heating_capacity : aux_heat_capacity) / (air_density * air_heat_capacity * (heating_supply_air_temp - design_heating_setpoint)) / 60.0;
 		design_cooling_cfm = design_cooling_capacity / (1.0 + latent_load_fraction) / (air_density * air_heat_capacity * (design_cooling_setpoint - cooling_supply_air_temp)) / 60.0;
 		gtr_cfm = (design_heating_cfm > design_cooling_cfm ? design_heating_cfm : design_cooling_cfm);
@@ -1950,7 +1983,7 @@ int house_e::init(OBJECT *parent)
 				break;
 		}
 	}
-				
+
 
 	// calculate thermal constants
 #define Ca (air_thermal_mass)
@@ -2013,14 +2046,11 @@ int house_e::init(OBJECT *parent)
 		return 0;
 	}
 	update_model();
-	
-	// Initialize fan_heatgain_fraction checkpoint - only if not already loaded from checkpoint
-	if (isnan(fan_heatgain_fraction)) {
-		if(include_fan_heatgain == true){
-			fan_heatgain_fraction = 1;
-		} else {
-			fan_heatgain_fraction = 0;
-		}
+
+	if(include_fan_heatgain == true){
+		fan_heatgain_fraction = 1;
+	} else {
+		fan_heatgain_fraction = 0;
 	}
 
 	//"Cheating" function for compatibility with older models -- enables all houses to be deltamode-ready
@@ -2120,7 +2150,7 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 	}
 	else
 			GL_THROW("end-use load couldn't be connected neither an object nor a enduse property was given");
-	
+
 	// choose circuit
 	if (is220 == 1) // 220V circuit is on x12
 	{
@@ -2178,7 +2208,7 @@ void house_e::update_model(double dt)
 		throw "UA must be positive";
 
 	a = Cm*Ca/Hm;
-	
+
 	if (window_open == 1)
 	{
 		b = Cm*(10*Ua+Hm)/Hm+Ca;
@@ -2225,7 +2255,7 @@ void house_e::update_model(double dt)
 	west_incident_solar_radiation = 3.412*value_Solar[7];
 	north_west_incident_solar_radiation = 3.412*value_Solar[8];
 
-	
+
 	if((include_solar_quadrant & 0x0002) == 0x0002){
 		incident_solar_radiation += value_Solar[1];
 		incident_solar_radiation += value_Solar[2]/2;
@@ -2316,7 +2346,7 @@ void house_e::update_system(double dt)
 	}	
 
 	temp_c = 5*(value_Tout - 32)/9;
-	
+
 	if(heating_cop_curve == HC_DEFAULT){
 		if(value_Tout > 80){
 			temp_temperature = 80;
@@ -2402,7 +2432,7 @@ void house_e::update_system(double dt)
 #pragma warning("house_e: add update_system voltage adjustment for heating")
 	double voltage_adj = (((value_Circuit_V[0]).Mag() * (value_Circuit_V[0]).Mag()) / (240.0 * 240.0) * load.impedance_fraction + ((value_Circuit_V[0]).Mag() / 240.0) * load.current_fraction + load.power_fraction);
 	double voltage_adj_resistive = ((value_Circuit_V[0]).Mag() * (value_Circuit_V[0]).Mag()) / (240.0 * 240.0);
-	
+
 	//Only provide demand in if meter isn't out of service
 	if ((value_MeterStatus!=0) && (pHVAC_EnduseLoad->status == BRK_CLOSED))
 	{
@@ -2553,7 +2583,7 @@ void house_e::update_system(double dt)
 			system_rated_capacity =  fan_power*BTUPHPKW*fan_heatgain_fraction;	// total heat gain of system
 			system_rated_power = 0.0;					// total power drawn by system
 			thermal_storage_inuse = false;					//If the system is off, it isn't using thermal storage
-			
+
 		}
 
 		/* calculate the power consumption */
@@ -2605,7 +2635,7 @@ void house_e::update_system(double dt)
 					load.admittance = gld::complex(0.0,0.0);
 					load.current = gld::complex(0.0,0.0);
 				}
-				
+
 				// Motor losses that are related to the efficiency of the induction motor. These contribute to electric power
 				// consumed, but are not incorporated into the heat flow equations.
 				if (motor_model == MM_BASIC)
@@ -2880,7 +2910,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		pull_climate_values();
 	}
-	
+
 	if(!heat_start){
 		// force an update of the outside temperature, even if we don't do anything with it
 		outside_temperature = value_Tout;
@@ -2941,7 +2971,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	/* solve for the time to the next event */
 	double dt2;
-	
+
 	/* dt2 is for the next thermal event ... avoid calculating the next time to a given
 		temperature until the cycle time has elapse.
 	 */
@@ -3037,7 +3067,7 @@ TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		value_Power[0] = gld::complex(-1.0,0.0) * value_Power[0];
 		value_Power[1] = gld::complex(-1.0,0.0) * value_Power[1];
 		value_Power[2] = gld::complex(-1.0,0.0) * value_Power[2];
-		
+
 		//Current
 		value_Line_I[0] = gld::complex(-1.0,0.0) * value_Line_I[0];
 		value_Line_I[1] = gld::complex(-1.0,0.0) * value_Line_I[1];
@@ -3232,7 +3262,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		gl_warning("%s: system_mode was unknown, changed to off", gl_name(object_header(this),buffer,sizeof(buffer)));
 		system_mode = SM_OFF;
 	}
-	
+
 	/* rationale behind thermostat_last_cycle_time:
 		at this point, the system's handling PLC code, between presync and sync. t0 is when
 		the temperature was updated from, and t1 is "now".  Any changes for "now" must operate
@@ -3355,7 +3385,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 			break;
 		}
 	}
-	
+
 	if(turned_on){
 		if(hvac_last_off != 0){
 			hvac_period_off = (double)(t1 - hvac_last_off)/60.0;
@@ -3453,7 +3483,7 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 				}
 				continue;
 			}
-			
+
 			//Current flow is based on the actual load, not nominal load
 			gld::complex actual_power = c->pLoad->power + (c->pLoad->current + c->pLoad->admittance * c->pLoad->voltage_factor)* c->pLoad->voltage_factor;
 			gld::complex current = ~(actual_power*1000 / value_Circuit_V[(int)c->type]);
@@ -4267,6 +4297,11 @@ EXPORT STATUS postupdate_house_e(OBJECT *obj)
 	}
 }
 
-/**@}**/
+// EXPORTed checkpoint_init for module loader
+EXPORT int checkpoint_init_house(OBJECT *obj, OBJECT *parent)
+{
+	house_e *my = object_data<house_e>(obj);
+	return my->checkpoint_init(parent);
+}
 
- 	  	 
+/**@}**/

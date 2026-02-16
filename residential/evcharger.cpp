@@ -346,8 +346,36 @@ static double fuse[] = {15,35,70};
 static double amps[] = {12,28,55};
 static bool hiV[] = {false,true,true};
 
+void evcharger::shared_init(void)
+{
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	
+	// load demand profile - pDemand is a private pointer that must be reloaded
+	pDemand = nullptr;  // Initialize to null first
+	if (strcmp(demand_profile,"")!=0)
+		pDemand = get_demand_profile(demand_profile);
+}
+
+int evcharger::checkpoint_init(OBJECT *parent)
+{
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("evcharger::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}	
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	shared_init();
+	return residential_enduse::checkpoint_init(parent);
+}
+
 int evcharger::init(OBJECT *parent)
 {
+	// Initialize non-published variables
+	shared_init();
+	
 	int retval;
 
 	if(parent != nullptr){
@@ -389,10 +417,6 @@ int evcharger::init(OBJECT *parent)
 		value.
 		*/
 	}
-
-	// load demand profile
-	if (strcmp(demand_profile,"")!=0)
-		pDemand = get_demand_profile(demand_profile);
 	
 	retval = residential_enduse::init(parent);
 
@@ -644,6 +668,12 @@ EXPORT int isa_evcharger(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
+}
+
+EXPORT int checkpoint_init_evcharger(OBJECT *obj)
+{
+	evcharger *my = object_data<evcharger>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_evcharger(OBJECT *obj, TIMESTAMP t0)

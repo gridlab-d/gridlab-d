@@ -264,6 +264,7 @@ extern "C"
 	GLOBAL int global_checkpoint_seqnum INIT(0);	   /**< checkpoint sequence file number */
 	GLOBAL int global_checkpoint_interval INIT(0);	   /** checkpoint interval (default is 3600 for CPT_WALL and 86400 for CPT_SIM */
 	GLOBAL int global_checkpoint_keepall INIT(0);	   /** determines whether all checkpoint files are kept, non-zero keeps files, zero delete all but last */
+	GLOBAL int global_checkpoint_loaded INIT(0);	   /**< flag to indicate whether a checkpoint file has been loaded */
 
 	/* version check */
 	GLOBAL int global_check_version INIT(0); /**< check version flag */

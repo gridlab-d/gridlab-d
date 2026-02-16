@@ -1220,6 +1220,12 @@ STATUS loader::loadJsonFile(filesystem::path filename)
             output_error("loader::loadJsonFile() parsing file, %s: file is empty!", filename.string().c_str());
             return FAILED;
         }
+        // Check if this is a checkpoint file
+        if (this->jsn.contains("_checkpoint") && this->jsn["_checkpoint"].is_boolean() && this->jsn["_checkpoint"].get<bool>() == true)
+        {
+            global_checkpoint_loaded = 1;
+            output_verbose("loader::loadJsonFile(): checkpoint file detected");
+        }
         if (this->loadDirectives() == FAILED)
         {
             return FAILED;

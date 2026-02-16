@@ -112,8 +112,33 @@ int freezer::create()
 	return res;
 }
 
+void freezer::shared_init(void)
+{
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	last_time = 0;
+	next_time = 0;
+}
+
+int freezer::checkpoint_init(OBJECT *parent)
+{
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("freezer::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	shared_init();
+	return residential_enduse::checkpoint_init(parent);
+}
+
 int freezer::init(OBJECT *parent)
 {
+	// Initialize non-published variables
+	shared_init();
+
 	gl_warning("This device, %s, is considered very experimental and has not been validated.", get_name());
 
 	if(parent != nullptr){
@@ -354,6 +379,12 @@ EXPORT int isa_freezer(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
+}
+
+EXPORT int checkpoint_init_freezer(OBJECT *obj)
+{
+	freezer *my = object_data<freezer>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 /*	determine if we're turning the motor on or off and nothing else. */

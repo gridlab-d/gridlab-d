@@ -67,8 +67,25 @@ int plugload::create()
 	return res;
 }
 
+void plugload::shared_init(void)
+{
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	// (plugload class has no non-published variables at this time)
+}
+
+int plugload::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	shared_init();
+	return residential_enduse::checkpoint_init(parent);
+}
+
 int plugload::init(OBJECT *parent)
 {
+	// Initialize non-published variables
+	shared_init();
+	
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
@@ -172,6 +189,12 @@ EXPORT int isa_plugload(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
+}
+
+EXPORT int checkpoint_init_plugload(OBJECT *obj)
+{
+	plugload *my = object_data<plugload>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_plugload(OBJECT *obj, TIMESTAMP t0)

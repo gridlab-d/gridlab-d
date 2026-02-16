@@ -119,7 +119,7 @@ dryer::dryer(MODULE *module) : residential_enduse(module)
 			PT_double,"cycle_time[s]",PADDR(cycle_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for cycle time",
 			PT_double,"state_time[s]",PADDR(state_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for state time",
 			PT_timestamp,"start_time",PADDR(start_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for start time",
-			
+
 
 			PT_bool,"is_240",PADDR(is_240), PT_DESCRIPTION, "load is 220/240 V (across both phases)",
 			nullptr)<1)
@@ -147,27 +147,42 @@ int dryer::create()
 	coil_power[0] = -1;
 
 	state = DRYER_STOPPED;
-	
+
 	energy_used = 0;	
-	
-	last_t = 0;
-	
-	// Initialize checkpoint variables with sentinel values
-	pulse_interval[7] = QNAN;
-	pulse_interval[8] = QNAN;
-	pulse_interval[9] = QNAN;
-	new_running_state = false;
-	cycle_time = QNAN;
-	state_time = QNAN;
-	start_time = TS_INVALID;
+
+	last_t = 0;	
 
 	gl_warning("explicit %s model is experimental", object_header(this)->oclass->name);
 
 	return res;
 }
 
+void dryer::shared_init(void)
+{
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	last_t = 0;
+}
+
+int dryer::checkpoint_init(OBJECT *parent)
+{
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("dryer::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}	
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	shared_init();
+	return residential_enduse::checkpoint_init(parent);
+}
+
 int dryer::init(OBJECT *parent)
 {
+	// Initialize non-published variables
+	shared_init();
+
 	OBJECT *hdr = object_header(this);
 	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
@@ -193,7 +208,7 @@ int dryer::init(OBJECT *parent)
 
 	if (coil_power[0]==-1) coil_power[0] = 5800;
 
-	// start_time set to TS_INVALID in create(); presync() initializes it if not loaded from checkpoint
+	start_time = 0;
 	dryer_run_prob = 0;
 
 	control_check = false;
@@ -207,12 +222,6 @@ int dryer::init(OBJECT *parent)
 	pulse_interval[4] = 129;
 	pulse_interval[5] = 138;
 	pulse_interval[6] = 60;
-	
-	// Only initialize pulse_interval[7-9] if they haven't been loaded from checkpoint (QNAN sentinel)
-	// These appear to be unused but are marked as CHECKPOINT_VAR
-	if (isnan(pulse_interval[7])) pulse_interval[7] = 0;
-	if (isnan(pulse_interval[8])) pulse_interval[8] = 0;
-	if (isnan(pulse_interval[9])) pulse_interval[9] = 0;
 
     controls_power = 10;
 	motor_power = 200;
@@ -235,12 +244,6 @@ int dryer::init(OBJECT *parent)
 	motor_only_check4 = false;
 	motor_only_check5 = false;
 	motor_only_check6 = false;
-	
-	// Only initialize runtime state variables if they haven't been loaded from checkpoint (QNAN/false sentinels)
-	// Note: new_running_state is a bool so we can't distinguish false sentinel from false loaded value
-	// cycle_time and state_time are runtime state that get set during operation
-	if (isnan(cycle_time)) cycle_time = 0;
-	if (isnan(state_time)) state_time = 0;
 
 
 	hdr->flags |= OF_SKIPSAFE;
@@ -368,10 +371,10 @@ TIMESTAMP dryer::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP dryer::presync(TIMESTAMP t0, TIMESTAMP t1){
 
-	// Only initialize start_time if not loaded from checkpoint (TS_INVALID sentinel)
-	if(start_time == TS_INVALID)
+	if(start_time==0)
 	{
 		start_time = int32(t0);
+		
 	}	
 
 
@@ -441,20 +444,20 @@ switch(state) {
 	case DRYER_STOPPED:
 
 		if (enduse_queue>1)// && dryer_on == true)
-		
+
 			dryer_run_prob = double(gl_random_uniform(&hdr->rng_state,queue_min,queue_max));
-		
+
 		if (enduse_queue > 1 && (dryer_run_prob > enduse_queue))
 			{
 				state = DRYER_CONTROL_ONLY;
 				energy_needed = energy_baseline;
-				cycle_time = 1000 * (energy_needed - energy_used) / controls_power * 60 * 60;				
+				cycle_time = 1000 * (energy_needed - energy_used) / controls_power * 60 * 60;
 				cycle_time = pulse_interval[0];
 				//cycle_duration_dryer = pulse_interval[0];
 				enduse_queue--;
 
 				new_running_state = true;
-				
+
 			}
 		else if (temp_voltage_magnitude<stall_voltage)
 			{
@@ -507,7 +510,7 @@ switch(state) {
 						new_running_state = true;
 			}		
 
-		
+
 		else if (temp_voltage_magnitude<stall_voltage)
 			{
 				state = DRYER_STALLED;
@@ -515,7 +518,7 @@ switch(state) {
 			}
 		break;
 
-		
+
 case DRYER_MOTOR_COIL_ONLY:
 
 	if (energy_used >= energy_needed && cycle_time <= 0)
@@ -718,7 +721,7 @@ case DRYER_MOTOR_COIL_ONLY:
 
 					motor_only_check4 = false;
 					motor_only_check5 = true;
-					
+
 						if (cycle_t > interval)
 							cycle_time = interval;
 						else
@@ -733,7 +736,7 @@ case DRYER_MOTOR_COIL_ONLY:
 					double interval = pulse_interval[6];
 
 					motor_only_check5 = false;
-					
+
 						if (cycle_t > interval)
 							cycle_time = interval;
 						else
@@ -746,7 +749,7 @@ case DRYER_MOTOR_COIL_ONLY:
 					state = DRYER_STALLED;
 					state_time = 0;
 			}
-			
+
 	break;
 
 	case DRYER_STALLED:
@@ -777,7 +780,7 @@ case DRYER_MOTOR_COIL_ONLY:
 
 		break;
 	}
-	
+
 
 	// accumulating units in the queue no matter what happens
 	if (dryer_on == true)
@@ -787,11 +790,11 @@ case DRYER_MOTOR_COIL_ONLY:
 
 	actual_dryer_demand = actual_dryer_demand + daily_dryer_demand;
 
-	
+
 	// now implement current state
 	switch(state) {
 	case DRYER_STOPPED: 
-		
+
 		motor_on_off = motor_coil_on_off = 0;
 
 		// nothing running
@@ -816,7 +819,7 @@ case DRYER_MOTOR_COIL_ONLY:
 	case DRYER_CONTROL_ONLY:
 
 		if(true==new_running_state){
-			
+
 			new_running_state = false;
 
 		}
@@ -847,7 +850,7 @@ case DRYER_MOTOR_COIL_ONLY:
 
 		// nothing running
 		load.power = load.current = load.admittance = gld::complex(0,0,J);
-		
+
 		// time to next expected state change
 		dt = reset_delay; 
 
@@ -946,6 +949,12 @@ EXPORT int init_dryer(OBJECT *obj)
 	return my->init(obj->parent);
 }
 
+EXPORT int checkpoint_init_dryer(OBJECT *obj)
+{
+	dryer *my = object_data<dryer>(obj);
+	return my->checkpoint_init(obj->parent);
+}
+
 EXPORT int isa_dryer(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
@@ -962,5 +971,3 @@ EXPORT int isa_dryer(OBJECT *obj, char *classname)
 //	obj->clock = t0;
 //	return t1;
 //}
-
-/**@}**/

@@ -95,6 +95,8 @@ public:
 	~dryer();
 	int create();
 	int init(OBJECT *parent);
+	int checkpoint_init(OBJECT *parent);
+	void shared_init(void);
 	int isa(char *classname);
 	TIMESTAMP last_t;
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);

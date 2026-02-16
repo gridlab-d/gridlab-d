@@ -241,18 +241,7 @@ int waterheater::create()
 	heating_element_min_threshold = 1100; // compressor replaces heating element when it hits this threshold.
 	interval = 0;
 	// =================================
-	
-	// Initialize checkpoint variables with sentinel values
-	time_to_transition = QNAN;
-	Tlower = QNAN;
-	heating_element_on = false;
-	turn_fan_on = false;
-	// heat_needed already set to false above
-	water_demand_old = QNAN;
-	for (int i = 0; i < 144; i++) {
-		init_tank_temp[i] = QNAN;
-	}
-	
+
 	dr_signal = 1;
 	return res;
 	last_water_demand = -1.0;
@@ -266,34 +255,16 @@ int waterheater::create()
 	T_mixing_valve = -1;
 }
 
-/** Initialize water heater model properties - randomized defaults for all published variables
+/** Shared initialization for both normal init and checkpoint restore
  **/
-int waterheater::init(OBJECT *parent)
+void waterheater::shared_init(void)
 {
-	OBJECT *hdr = object_header(this);
-
-	nominal_voltage = (2.0 * default_line_voltage); //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
-	actual_voltage = nominal_voltage;
-	
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("waterheater::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
-
-	hdr->flags |= OF_SKIPSAFE;
-
+	OBJECT *parent = object_header(this)->parent;
 	static double sTair = 74;
 	static double sTout = 68;
 	static double sRH = 0.05;
 
-	if(current_model == FORTRAN){
-		tank_setpoint = 126.05;
-		thermostat_deadband = 4.05;
-	}
-
+	// Initialize pointers to parent properties
 	if(parent){
 		pTair = gl_get_double_by_name(parent, "air_temperature");
 		pTout = gl_get_double_by_name(parent, "outdoor_temperature");
@@ -309,9 +280,53 @@ int waterheater::init(OBJECT *parent)
 		gl_warning("waterheater parent lacks \'outside_temperature\' property, using default");
 	}
 	if(pRH == 0){
-		pRH = &sTout;
-		gl_warning("waterheater parent lacks \'outside_temperature\' property, using default");
+		pRH = &sRH;
+		gl_warning("waterheater parent lacks \'outdoor_rh\' property, using default");
 	}
+}
+
+/** Called when restoring from checkpoint to reinitialize non-published variables
+ **/
+int waterheater::checkpoint_init(OBJECT *parent)
+{
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("waterheater::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+
+	shared_init();
+	return residential_enduse::checkpoint_init(parent);
+}
+
+/** Initialize water heater model properties - randomized defaults for all published variables
+ **/
+int waterheater::init(OBJECT *parent)
+{
+	OBJECT *hdr = object_header(this);
+
+	nominal_voltage = (2.0 * default_line_voltage); //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
+	actual_voltage = nominal_voltage;
+
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
+			char objname[256];
+			gl_verbose("waterheater::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+
+	hdr->flags |= OF_SKIPSAFE;
+
+	if(current_model == FORTRAN){
+		tank_setpoint = 126.05;
+		thermostat_deadband = 4.05;
+	}
+
+	// Initialize pointers and other non-published variables
+	shared_init();
 
 	/* sanity checks */
 	/* initialize water tank volume */
@@ -344,7 +359,7 @@ int waterheater::init(OBJECT *parent)
 			} else {
 				// Tank volume was not set, so calculating size
 				gl_verbose( "waterheater::init() : tank volume was not specified, calculating from height and diameter");
-				
+
 				area 		  = (pi * pow(tank_diameter,2))/4;
 				tank_volume   = area * tank_height * GALPCF;
 			}
@@ -361,14 +376,14 @@ int waterheater::init(OBJECT *parent)
 			if (tank_diameter <= 0) {
 				// Only tank volume was set, set defaulting to a standard size
 				gl_warning( "waterheater::init() : height and diameter were not specified, defaulting to 3.78 ft");
-		
+
 				tank_height   = 3.782; // was the old default for a 1.5 ft diameter
 				tank_diameter = 2 * sqrt( tank_volume * (1/GALPCF) / (pi * tank_height) );
 				area 		  = (pi * pow(tank_diameter,2))/4;
 			} else {
 				// Tank height was not set, so calculating size
 				gl_verbose( "waterheater::init() : tank height was not specified, calculating from volume and diameter");
-				
+
 				area 		  = (pi * pow(tank_diameter,2))/4;
 				tank_height	  = tank_volume/GALPCF / area;
 			}
@@ -376,7 +391,7 @@ int waterheater::init(OBJECT *parent)
 			if (tank_diameter <= 0) {
 				// Tank volume and height were set, so calculating diameter
 				gl_verbose( "waterheater::init() : diameter was not specified, calculating from volume and height");
-		
+
 				tank_diameter = 2 * sqrt( tank_volume * (1/GALPCF) / (pi * tank_height) );
 				area 		  = (pi * pow(tank_diameter,2))/4;
 			} else {
@@ -463,15 +478,12 @@ int waterheater::init(OBJECT *parent)
 
 		h = height;
 
-		// Only initialize Tlower if not loaded from checkpoint (QNAN sentinel)
-		if (isnan(Tlower)) {
-			// initial water temperature
-			if(h == 0){
-				// discharged
-				Tlower = Tinlet;
-			} else {
-				Tlower = Tinlet;
-			}
+		// initial water temperature
+		if(h == 0){
+			// discharged
+			Tlower = Tinlet;
+		} else {
+			Tlower = Tinlet;
 		}
 	}
 	Tcontrol = Tw;
@@ -577,17 +589,9 @@ int waterheater::init(OBJECT *parent)
 				coarse_tank_grid = 12;
 				fine_tank_grid = 12;
 			}
-			// Only initialize init_tank_temp if not loaded from checkpoint (QNAN sentinel)
-			if (isnan(init_tank_temp[0])) {
-				for( int i = 0; i < coarse_tank_grid*fine_tank_grid; i++){
-					init_tank_temp[i] = (Tw - 32.0) * (5.0 / 9.0);
-					tank_water_temp[i] = init_tank_temp[i];
-				}
-			} else {
-				// Checkpoint was loaded, restore tank_water_temp from init_tank_temp
-				for( int i = 0; i < coarse_tank_grid*fine_tank_grid; i++){
-					tank_water_temp[i] = init_tank_temp[i];
-				}
+			for( int i = 0; i < coarse_tank_grid*fine_tank_grid; i++){
+				init_tank_temp[i] = (Tw - 32.0) * (5.0 / 9.0);
+				tank_water_temp[i] = init_tank_temp[i];
 			}
 		} else {
 			GL_THROW("Invalid tank volume for the fortran water heater_model. Valid volumes are 40 or 80 gallons.");
@@ -728,17 +732,6 @@ int waterheater::init(OBJECT *parent)
 
         T_layers.resize(number_of_states, vector<double>());
 	}
-	
-	// Only initialize runtime checkpoint variables if not loaded from checkpoint (QNAN/false sentinels)
-	// time_to_transition is runtime state that gets set by set_time_to_transition()
-	if (isnan(time_to_transition)) time_to_transition = 0;
-	
-	// water_demand_old tracks previous water_demand and is updated in commit()
-	if (isnan(water_demand_old)) water_demand_old = 0;
-	
-	// heating_element_on and turn_fan_on are runtime state variables (already initialized to false via sentinel)
-	// heat_needed is already initialized to false in create()
-	
 	return residential_enduse::init(parent);
 }
 
@@ -797,7 +790,7 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 
 	DATETIME t_next;
 	gl_localtime(t1,&t_next);
-	
+
 	if (t_next.day > 7 ) {
 		if (t_next.hour >= 8) {
 				double temp = 2;
@@ -850,7 +843,7 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 			attached to the bug report.
 		 */
 	}
-	
+
 	/* determine loadshape effects */
 	switch(shape.type){
 		case MT_UNKNOWN:
@@ -932,7 +925,7 @@ void waterheater::sync_energytake()
 	When HPWH is in idle mode (losing heat over time), energytake increases. Further, energytake drops significantly if a water draw occurs.
 	*/
 
-	
+
 	/*
 	* idle losses calc
 			* ET as function of TIME
@@ -941,28 +934,28 @@ void waterheater::sync_energytake()
 
 	/* Model created by Portland State - Midrar Adham submitted under PR #1355 */
 	actual_kW();
-	
+
 
 	if (interval == 60 && (water_demand > 0) && turn_fan_on)
 		heating_element_capacity = nominal_voltage * 0.000171; 							// rated fan current is 0.000171.
 
 	if ((Toff >= Tw) && (Tw >= Ton)  && (heating_element_capacity == 0)) 				// when energy take is between setpoints, HPWH is in idle mode.
 	{
-	
+
 		energytake = log(70 / (get_Tambient(location) * 0.39) ) * time_step; // Constants are based on trial and error to get the most appropraite behavior similar to the physical unit.
 		Tw = (tank_setpoint - (energytake/(tank_volume * 2.44)))+ 1.00034;
 		heat_needed = false;
 		current_model = ONENODE;
 
-		
+
 	}
 	else // when energy take is not between setpoints (i.e. waterheater is on)
 	{
-					
+
 		if (Tw <= Ton || heating_element_capacity != 0)
 		{
 			time_step = 0;
-			
+
 
 			if (water_demand > 0)
 			{
@@ -987,7 +980,7 @@ void waterheater::sync_energytake()
 				}
 				energytake =  ((tank_setpoint - Tw_temp) * tank_volume * 2.44) + energy_increment_value;
 			}
-			
+
 			if (heating_element_capacity <= 0.42) // compressor operation. The resistive heating element should not trigger when the compressor is ON and Energytake within compressor's limits.
 			{	
 				energytake -= (heating_element_capacity - 0.447)/(-( get_Tambient(location)/ pow(get_Tambient(location),2.4)));
@@ -999,16 +992,16 @@ void waterheater::sync_energytake()
 		}	
 		if (energytake <= heating_element_min_threshold)
 			heating_element_on = false;
-		
+
 		Tw = tank_setpoint - ((energytake)/(tank_volume * 2.44));
 	}
 	if (energytake<=0){
-		
+
 		energytake = 0;
 		heating_element_capacity = 0;
 	}	
 	return;
-				
+
 }
 
 
@@ -1020,11 +1013,6 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	int multilayer_transition_time = 0;
 	int i = 0;
 	int dt = (int)(t1-t0);
-
-	// Initialize checkpoint variables on first run after checkpoint load
-	if (isnan(time_to_transition)) time_to_transition = 0.0;
-	if (isnan(Tlower)) Tlower = Tinlet;
-
 	if (dt > interval)
 		interval = dt;
 
@@ -1057,11 +1045,10 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		control_lower[0] = 0.0;
 	}
 	TIMESTAMP t2 = residential_enduse::sync(t0,t1);
-	
+
 	// Now find our current temperatures and boundary height...
 	// And compute the time to the next transition...
 	//Adjusted because shapers go on sync, not presync
-	// Only call set_time_to_transition if just initialized from checkpoint (QNAN sentinel cleared above)
 	if(current_model != FORTRAN && current_model != MULTILAYER){
 		set_time_to_transition();
 	}
@@ -1079,7 +1066,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (location == INSIDE){
 		if (heat_mode ==HEAT_PUMP)
 			this->current_model = ONENODE;
-	
+
 		if(this->current_model == ONENODE)
 		{
 
@@ -1087,9 +1074,9 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Subtract Heat drawn in from Heat pump
 			if(heat_mode == HEAT_PUMP)
 			{
-				
+
 				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
-				
+
 			}
 		} 
 		else if(this->current_model == TWONODE)
@@ -1101,7 +1088,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
 			}
-			
+
 		} else if(this->current_model == MULTILAYER) {
 			//TODO: update internal gain from all layers in the tank.
 			internal_gain = A_bottom*U_val*(T_layers[1][0] - Tamb) + A_top*U_val*(T_layers[10][0] - Tamb);
@@ -1150,15 +1137,33 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
                     &h,
                     &tank_diameter,
                     &dr_sig,
+					sensor_position,
+                    heater_element_power,
+                    heater_size,
 					&tank_heat_loss_rate,
+                    &water_density,
                     &thermal_conductivity,
+					&convective_coefficient,
+                    &water_heat_capacity,
                     &ambient_temp,
                     &ambient_rh,
 					&t_in,
+                    temp_set,
                     &thermostat_deadband,
+                    &compressor_power_capacity,
+					&compressor_activation_temp_offset,
+                    &lowest_ambient_temperature_limit,
+					&highest_ambient_temperature_limit,
+                    &lowest_water_temperature_limit,
+					&activation_temperature_offset,
+                    &ambient_air_dry_bulb_temp,
+                    &ambient_air_wet_bulb_temp,
+					&upper_element_activation_temp_offset,
                     &inlet_water_flow_threshold,
                     &water_demand,
 					init_tank_temp,
+                    &lower_fraction,
+                    &upper_fraction,
                     &ncomp,
 					nheat,
                     &heat_up,
@@ -1241,9 +1246,9 @@ TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	{
 		if((water_demand- water_demand_old)>0)
 			turn_fan_on = true;
-		
+
 		sync_energytake();
-		
+
 		if (turn_fan_on)
 			turn_fan_on = false;
 	}	
@@ -1332,11 +1337,11 @@ enumeration waterheater::set_current_model_and_load_state(void)
 			{
 				// If the tank is empty, a negative dh/dt means we're still
 				// drawing water, so we'll be switching to the 1-zone model...
-				
+
 				/* original plan */
 				//current_model = NONE;
 				//load_state = DEPLETING;
-				
+
 				current_model = ONENODE;
 				load_state = DEPLETING;
 				Tw = Tinlet + HEIGHT_PRECISION;
@@ -1384,7 +1389,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				}
 
 				double dhdt_full_temp = dhdt(height);
-				
+
 				if (dhdt_full_temp < 0)
 				{
 					if (heat_mode == HEAT_PUMP) {
@@ -1403,7 +1408,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				else
 				{
 					current_model = ONENODE;
-					
+
 					heat_needed = cur_heat_needed;
 					load_state = heat_needed ? RECOVERING : DEPLETING;
 				}
@@ -1536,7 +1541,7 @@ void waterheater::update_T_and_or_h(double nHours)
 SingleZone:
 			Tw = new_temp_1node(Tw, nHours);
 			/*Tupper*/ Tw = Tw;
-			
+
 			Tlower = Tinlet;
 			break;
 
@@ -1790,7 +1795,7 @@ inline double waterheater::new_h_2zone(double h0, double delta_t)
 	if (fabs(c1) <= ROUNDOFF)
         return height;      // if /*Tupper*/ Tw and Tlower are real close, then the new height is the same as tank height
 //		throw MODEL_NOT_2ZONE;
-		
+
 //	#define CWATER		(0.9994)		// BTU/lb/F
 	double cA;
 	if (heat_mode == HEAT_PUMP) {
@@ -2060,6 +2065,10 @@ EXPORT int isa_waterheater(OBJECT *obj, char *classname)
 	}
 }
 
+EXPORT int checkpoint_init_waterheater(OBJECT *obj)
+{
+	return object_data<waterheater>(obj)->checkpoint_init(obj->parent);
+}
 
 EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {

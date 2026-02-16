@@ -1883,8 +1883,12 @@ int object_init(OBJECT *obj) /**< the object to initialize */
 	clock_t t = (clock_t)exec_clock();
 	int rv = 1;
 	obj->clock = global_starttime;
-	if (obj->oclass->init != nullptr)
+	if (global_checkpoint_loaded && obj->oclass->checkpoint_init != nullptr){
+		rv = (int)(*(obj->oclass->checkpoint_init))(obj, obj->parent);
+	} else if (obj->oclass->init != nullptr)
 		rv = (int)(*(obj->oclass->init))(obj, obj->parent);
+	// if (obj->oclass->init != nullptr)
+	// 	rv = (int)(*(obj->oclass->init))(obj, obj->parent);
 	object_profile(obj, OPI_INIT, t);
 	if (global_debug_output > 0)
 		output_debug("object %s:%d init -> %s", obj->oclass->name, obj->id, rv ? "ok" : "failed");
