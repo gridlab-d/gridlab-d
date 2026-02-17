@@ -600,8 +600,6 @@ class GLMModel:
 
         # Add `object_entities` into the `objects` section
         for name in self.object_entities:
-            if name == "capacitor":
-                pass
             if hasattr(self.object_entities[name], "to_schema"):  # Ensure `to_schema` exists
                 object_schema = self.object_entities[name].to_schema(True)
                 schema["properties"]["objects"]["properties"][name] = object_schema
