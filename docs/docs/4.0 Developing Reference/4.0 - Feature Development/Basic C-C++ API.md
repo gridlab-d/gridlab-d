@@ -1,110 +1,129 @@
 # Basic C/C++ API
 
-Brief description of feature (~1 paragraph).
+GridLAB-D’s basic C/C++ API (via `gldapi`) provides an embeddable, in-process interface to the simulation engine. Instead of orchestrating runs by shelling out to the `gridlabd` executable and exchanging state through files/stdout, a host application can construct a `GridLabD` instance, load a model using GridLAB-D’s existing argument parsing, execute the simulation (to completion or step-by-step), inspect/mutate object properties, and export a structured JSON checkpoint of the current simulation state. This API is intended as a native integration surface for tooling, language bindings, co-simulation harnesses, and automated workflows.
 
 ## Motivation
 
-Why will this be worthwhile feature for GridLAB-D? Why now? Who will it help (developers or users)? How will it help them?
+GridLAB-D is often used as one component in larger pipelines (co-simulation, parameter sweeps, optimization/calibration loops, automated regression testing, and interactive tooling). Subprocess-based integration works, but it tends to be slow (process startup overhead), brittle (parsing logs or ad-hoc text), and limiting (hard to single-step, hard to inspect/modify state mid-run, awkward error propagation). A basic C/C++ API is valuable because it enables tighter coupling and lower-latency control for developers building higher-level interfaces (Python bindings, services, GUIs, or HPC orchestration), while keeping GridLAB-D’s core engine execution model intact.
 
 ## Feature Objective
 
-What problem will this feature solve?
+Provide a minimal, stable, developer-oriented API that enables external code to:
+
+- Initialize and run GridLAB-D in-process.
+- Load a GLM model (in .glm or .json format) and view/edit the model prior to simulation.
+- Execute simulations either end-to-end (`run`) or incrementally (`step`, `step_to`).
+- Locate objects and read/write property values programmatically.
+- Export simulation state as a structured JSON checkpoint for inspection or downstream processing.
+- Validate core API functionality (`validate_api`) and optionally run the repository autotests (`validate`).
 
 ### Developer Goals
 
-What do the developers want to see out of this feature?
+- A small, well-scoped header surface (`gldcore/gldapi.h`) with explicit error codes (`GLDErrorCode`).
+- A lifecycle that is easy to embed in other programs and expose via language bindings.
+- Support for both batch-style runs and stepping for integration with external control loops.
+- Deterministic state exchange without relying on log parsing (JSON checkpoint export).
+- A self-contained health check suitable for CI and packaging (`validate_api`).
 
 ### User Goals
 
-What do the users hope to see out of this feature?
+For this feature, “users” are typically tool authors and workflow builders (not modelers writing GLMs directly). They want:
+
+- Faster automation loops by avoiding subprocess orchestration where possible.
+- Programmatic access to model state and results during a run.
+- The ability to modify selected parameters/properties between steps or between runs.
+- Straightforward error handling for long-lived integrations.
 
 ## Functionality
 
-How will devs/users interact with this feature? Will it be behind-the-scenes, a new module, method, or interface?
+This feature is a **native C++ interface** exposed as the `GridLabD` class in `gldcore/gldapi.h`.
+
+Developers interact with it by:
+
+- Constructing an instance (`GridLabD gld;`).
+- Optionally setting install root / working directory (`set_install_root`, `set_working_directory`).
+- Loading a model:
+  - `load_glm(int argc, char* argv[])` (CLI-style), or
+  - `load_glm(const std::string& filepath)` (convenience overload).
+- Running a simulation:
+  - `run(start_time?, stop_time?)` to run to completion.
+  - `step(sim_time)` to advance a single step.
+  - `step_to(target_time, sim_time)` to advance until a timestamp.
+- Inspecting/mutating state:
+  - Object/class queries (`get_all_classes`, `get_objects_by_class`).
+  - Property access by object name (`get_property`, `set_property`) and by class (`get_properties_by_class`, `set_property_by_class`).
+- Exporting state as JSON (`get_checkpoint_json`).
+- Validating the integration (`validate_api`, `validate`).
 
 ## Class/Sequence Diagrams
 
-If apropriate, document the feature using class or sequence diagrams.
+The diagram below reflects the current `gldapi` public surface (conceptual; types are simplified).
 
 ```mermaid
 classDiagram
-      GLD <|-- GLDModel
-      GLDModel <|-- GLDObjHolder
-      GLDObjHolder <|-- GLDObj
-      GLD: gld - GridLAB-D
-      GLD: wd - Path
-      GLD: sim_running - bool
-      GLD: sim_time - DateTime
-      GLD: start_time - DateTime
-      GLD: stop_time - DataTime
-      GLD: step_size - float
-      GLD: console_messages- list
-      GLD:get_model()
-      GLD:set_install_root(path|str) -> None
-      GLD:get_install_root() -> str
-      GLD:get_executable_path() -> str
-      GLD:set_config_file(config_file| str) -> int
-      GLD:set_working_directory(self, dir| str) -> int
-      GLD:setup_before_load() -> int
-      GLD:setup_after_load() -> int
-      GLD:start() -> int
-      GLD:load_glm(arguments| list[str]) -> int
-      GLD:load(filename| str) -> int
-      GLD:run(start_time| Optional[float] = None, stop_time| Optional[float] = None) -> t
-      GLD:run_test(self) -> int
-      GLD:step() -> tuple[int, float]
-      GLD:step_to(target_time_str| str) -> tuple[int, float]
-      GLD:set_time(self, timestamp| str) -> int
-      GLD:get_time(self) -> tuple[int, str]
-      GLD:set_time_step(self, time_step| int) -> int
-      GLD:save_checkpoint(self, save_path| str, mode| Optional[int] = None) -> int
-      GLD:load_checkpoint(self, file_path| str) -> int
-      GLD:get_checkpoint_json(self, filepath| str = "") -> str
-      GLD:stop(self) -> int
-      GLD:exit_gld(self, filepath| str = "") -> int
-      GLD:finalize(self, filepath| str = "") -> int
-      GLD:is_initialized(self) -> bool
-      GLD:get_all_classes(self) -> list[str]
-      GLD:get_all_objects(class_name| str) -> list[dict]
-      GLD:get_model() -> dict[list[dict]]
-      GLD:get_objects_by_class(self, class_name| str) -> list[str]
-      GLD:get_object_properties(self, object_name| str) -> dict[str, str]
-      GLD:get_property(self, object_name| str, property_name| str) -> tuple[int, str]
-      GLD:set_property(self, object_name| str, property_name| str, value| str) -> int
-      GLD:get_properties_by_class(self, class_name| str, property_name| str) -> dict[str, str]
-      GLD:set_property_by_class(self, class_name| str, property_name| str, value| str) -> int
-      GLD:global_setvar(self, name| str, value| str) -> int
-      GLD:global_getvar(self, name| str) -> str
-      class GLDModel{
-            model: _GLDObjHolder
-            extendable: bool
+            class GridLabD {
+                +json gld_model
+                +time_t started_at
+                +int64 passes
+                +int64 tsteps
 
-            _load_model() -> None
-            }
-        class GLDObjHolder{
-            _model: dict[_GLDObj]
-            extendable: bool
+                +set_install_root(install_root)$
+                +get_install_root()$ string
+                +get_executable_path()$ string
+                +set_environment(env) void
+                +set_config_file(config_file) GLDErrorCode
+                +set_working_directory(dir) GLDErrorCode
 
-            __init__()
-            __setitem__(key: str, value: Any) -> str
-            __getitem__(key: str) -> _GLDObj
-            __delitem__(key: str) -> str
-            __iter__()
-            __reversed__()
-            __contains__(key: str)
-            __repr__() -> str
-            }
-        class GLDObj{
-            _data = dict
+                +setup_before_load() GLDErrorCode
+                +setup_after_load() GLDErrorCode
 
-            __init__()
-            __setitem__(key: str, value: Any) -> str
-            __getitem__(key: str) -> Any
-            __iter__()
-            __reversed__()
-            __contains__(key: str)
-            __repr__() -> str
+                +load_glm(argc, argv) GLDErrorCode
+                +load_glm(filepath) GLDErrorCode
+
+                +run(start_time?, stop_time?) GLDErrorCode
+                +step(simulation_time) GLDErrorCode
+                +step_to(target_time_str, simulation_time) GLDErrorCode
+                +set_time(timestamp) GLDErrorCode
+                +get_time(current_time) GLDErrorCode
+                +set_time_step(seconds) GLDErrorCode
+
+                +get_checkpoint_json(filepath="") json
+                +save_checkpoint(save_path, mode) GLDErrorCode
+                +load_checkpoint(file_path) GLDErrorCode
+                +exit_gld(filepath) GLDErrorCode
+
+                +get_all_classes() vector~string~
+                +get_objects_by_class(class_name) vector~string~
+                +get_property(object_name, property_name, out_value) GLDErrorCode
+                +set_property(object_name, property_name, value) GLDErrorCode
+                +get_properties_by_class(class_name, property_name) map~string,string~
+                +set_property_by_class(class_name, property_name, value) GLDErrorCode
+
+                +validate(repo_root, modules) GLDErrorCode
+                +validate_api(verbose) GLDErrorCode
             }
+
+            class GLDErrorCode {
+                <<enum>>
+                GLD_SUCCESS
+                GLD_OPERATION_FAILED
+                GLD_OBJECT_NOT_FOUND
+                GLD_FAILED_TO_START
+            }
+
+            class GLDCheckPointMode {
+                <<enum>>
+                GLD_CHECKPOINT_MODE_SAVE
+                GLD_CHECKPOINT_MODE_LOAD
+            }
+
+            class GLDApplicationType {
+                <<enum>>
+            }
+
+            GridLabD ..> GLDErrorCode : returns
+            GridLabD ..> GLDCheckPointMode : uses
+            GridLabD ..> GLDApplicationType : uses
 ```
 
 
@@ -123,6 +142,7 @@ classDiagram
 Links to any relevant source code for the feature as it is developed.
 
 - [gldapi.h](https://github.com/gridlab-d/gridlab-d/blob/feature/1478/gldcore/gldapi.h): brief description
+- [gldapi.cpp](https://github.com/gridlab-d/gridlab-d/blob/feature/1478/gldcore/gldapi.cpp): implementation of `GridLabD`
 
 
 ## Workflow
