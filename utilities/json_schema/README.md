@@ -22,8 +22,8 @@ json_schema/
 ├── glm_entities.py        # Entity and Item class definitions
 ├── glm_utils.py           # Utility functions
 ├── references/            # Reference data (glm_classes.json)
-│   └── glm_classes.json   # Class definitions reference
-├── glm_schema.json        # Generated JSON Schema (created by generate_schema.py)
+│   ├── glm_classes.json   # Class definitions reference
+|   └── glm_schema.json    # Generated JSON Schema (created by generate_schema.py)
 └── __pycache__/           # Python cache files
 ```
 
