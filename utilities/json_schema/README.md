@@ -205,6 +205,13 @@ validate(instance=data, schema=schema)
 print("✅ Valid!")
 ```
 
+**Small test with Bash:**
+```bash
+# Some tests are supposed to fail 
+./test_glm_conversion.sh
+```
+
+
 **VS Code Integration:**
 Add to your workspace `.vscode/settings.json`:
 ```json
@@ -217,6 +224,8 @@ Add to your workspace `.vscode/settings.json`:
   ]
 }
 ```
+
+
 
 ## License
 

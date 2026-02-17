@@ -49,7 +49,7 @@ def generate_schema(output_file=None):
     """
     # Default output file
     if output_file is None:
-        output_file = "glm_schema.json"
+        output_file = "references/glm_schema.json"
     
     output_path = Path(output_file)
     
@@ -104,7 +104,7 @@ Examples:
     parser.add_argument('-o', '--output',
                         dest='output_file',
                         metavar='FILE',
-                        help='Output schema file path (default: glm_schema.json)')
+                        help='Output schema file path (default: references/glm_schema.json)')
     
     args = parser.parse_args()
     

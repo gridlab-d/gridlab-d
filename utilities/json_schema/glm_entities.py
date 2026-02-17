@@ -267,7 +267,11 @@ class Entity:
                         else:
                             # Regular enum - set the enum constraint
                             # For enums, only allow the specific enum values
-                            schema["anyOf"][0] = {"type": "string", "enum": enum_values}
+                            if value.item in "phases":
+                                # Fix this we would to provide every permutation of the phase ['A', 'B', 'C', 'D', 'G', 'N', 'S']
+                                schema["anyOf"][0] = {"type": "string"}
+                            else:
+                                schema["anyOf"][0] = {"type": "string", "enum": enum_values}
                     else:
                         # Otherwise, treat as descriptive metadata
                         schema["unit"] = value.unit
@@ -321,7 +325,7 @@ class Entity:
                     "additionalProperties": True
                 }
             }
-
+        c = []
         for attr, item in self.__dict__.items():
             if attr in exclude_keys:
                 continue
@@ -331,6 +335,8 @@ class Entity:
                     "$ref": "#/definitions/entityConditionals"
                 }
             elif isObject:
+                if item.datatype == "OBJECT" and attr != "parent":
+                    c.append(attr)
                 # Handle instances
                 schema["properties"]["instances"]["items"]["properties"][attr] = serialize_schema(item)
                 schema["properties"]["instances"]["items"]["properties"]["name"] = {
@@ -344,6 +350,9 @@ class Entity:
 
             else:
                 schema["properties"][attr] = serialize_schema(item)
+
+        if len(c) > 0:
+            print("Must be a named object ->", len(c), c, "for", self.entity)
 
         return schema
 

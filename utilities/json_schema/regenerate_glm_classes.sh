@@ -5,6 +5,8 @@
 
 # Set the gridlabd executable path (relative to project root)
 GRIDLABD_PATH="../../build/bin/gridlabd"
+# Using TESP environment
+#GRIDLABD_PATH="$INSTDIR/bin/gridlabd"
 
 # Set the output file path (relative to this script's location)
 OUTPUT_FILE="references/glm_classes.json"
@@ -16,7 +18,7 @@ if [ ! -f "$GRIDLABD_PATH" ]; then
     exit 1
 fi
 
-echo "Regenerating glm_classes.json..."
+echo "Regenerating $OUTPUT_FILE..."
 
 # Start the JSON structure
 echo "{" > "$OUTPUT_FILE"
