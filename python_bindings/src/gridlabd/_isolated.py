@@ -18,37 +18,6 @@ from typing import Any, Optional
 from ._protocol import Command, Message, Response
 from ._time_utils import gld_to_iso
 
-_TZ_OFFSETS = {
-    "PST": "-08:00",
-    "PDT": "-07:00",
-    "MST": "-07:00",
-    "MDT": "-06:00",
-    "CST": "-06:00",
-    "CDT": "-05:00",
-    "EST": "-05:00",
-    "EDT": "-04:00",
-}
-
-
-def _to_iso8601(time_str: str) -> str:
-    value = time_str.strip()
-    if re.match(r"^\d{4}-\d{2}-\d{2}T", value):
-        return value
-
-    parts = value.split()
-    if len(parts) < 2:
-        return value
-
-    date_part = parts[0]
-    time_part = parts[1]
-    tz_part = parts[2] if len(parts) >= 3 else None
-
-    iso = f"{date_part}T{time_part}"
-    if tz_part in _TZ_OFFSETS:
-        iso = f"{iso}{_TZ_OFFSETS[tz_part]}"
-    return iso
-
-
 def _normalize_time_input(value: str) -> str:
     """Normalize ISO 8601 time strings into GridLAB-D friendly format.
 
