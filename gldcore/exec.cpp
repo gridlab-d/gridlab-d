@@ -655,14 +655,15 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 									{
 										instance[pmap->name] = val;
 									}
-									break;
-									case PT_int32:
-									{
-										int32 val = (int32)strtol(value_str, nullptr, 10);
-										instance[pmap->name] = val;
-									}
-									break;
-									case PT_int64:
+								}
+								break;
+								case PT_int32:
+								{
+									int32 val = (int32)strtol(value_str, nullptr, 10);
+									instance[pmap->name] = val;
+								}
+								break;
+								case PT_int64:
 									{
 										// Check if this is a struct pointer for checkpointing
 										if (pmap->description != nullptr && strstr(pmap->description, "CHECKPOINT_VAR") != nullptr &&
