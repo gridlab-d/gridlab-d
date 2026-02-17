@@ -1,0 +1,84 @@
+name: Publish Python Bindings to TestPyPI
+
+on:
+  push:
+    branches:
+      - pypi_build  # The branch you want to trigger this workflow
+
+jobs:
+  build-and-publish:
+    name: Build and Publish to TestPyPI
+    runs-on: ubuntu-22.04
+    environment: testpypi
+    permissions:
+      id-token: write  # IMPORTANT: Mandatory for trusted publishing
+    
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install System Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+
+    - name: Build GridLAB-D Core
+      run: |
+        mkdir -p build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install ..
+        cmake --build . -j$(nproc)
+      # This builds the core libraries that the Python bindings depend on
+
+    - name: Build Python Wheel for Python ${{ matrix.python-version }}
+      run: |
+        cd python_bindings
+        pip install build auditwheel
+        # Build the wheel
+        python -m build --wheel
+        # Repair the wheel to add manylinux tags
+        auditwheel repair dist/*.whl -w dist/
+        # Remove the old linux_x86_64 wheel
+        rm dist/*-linux_x86_64.whl
+      # This uses pyproject.toml and scikit-build-core to build the wheel
+      # It expects to find the built GridLAB-D libraries in ../build/lib
+
+    - name: Upload wheel as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheel-${{ matrix.python-version }}
+        path: python_bindings/dist/*.whl
+
+  publish:
+    name: Publish all wheels to TestPyPI
+    needs: build-and-publish
+    runs-on: ubuntu-20.04
+    environment: testpypi
+    permissions:
+      id-token: write
+
+    steps:
+    - name: Download all wheels
+      uses: actions/download-artifact@v4
+      with:
+        pattern: wheel-*
+        merge-multiple: true
+        path: dist/
+
+    - name: Publish to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        packages-dir: dist/
+        verbose: true

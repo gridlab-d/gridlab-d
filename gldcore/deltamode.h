@@ -5,6 +5,8 @@
 #ifndef _DELTAMODE_H
 #define _DELTAMODE_H
 
+#include "globals.h"
+
 STATUS delta_init(void); /* initialize delta mode - 0 on fail */
 DT delta_update(void); /* update in delta mode - <=0 on fail, seconds to advance clock if ok */
 DT delta_modedesired(DELTAMODEFLAGS *flags); /* ask module how many seconds until deltamode is needed, 0xfffffff(DT_INVALID)->error, oxfffffffe(DT_INFINITY)->no delta mode needed */
