@@ -1226,7 +1226,7 @@ object triplex_meter {
 	name F1_tpm_flatrate_B7;
 	groupid F1_flatrate_meter;
 	phases SB;
-	nominal_voltage 120;	
+	nominal_voltage 120;
 	bill_mode UNIFORM;
   price ${FIXED_PRICE};
   bill_day 1;

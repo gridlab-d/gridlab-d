@@ -19,11 +19,11 @@ from importlib_resources import files
 # Import the modular components with fallback
 try:
     # Try relative imports first (for package usage)
-    from .glm_entities import Entity, O_Entity, GLM
+    from .glm_entities import Item, Entity, O_Entity, GLM
     from .glm_utils import gld_strict_name, add_attr_to_entity, convert_suffix_id
 except (ImportError, ValueError):
     # Fall back to direct imports (for standalone usage)
-    from glm_entities import Entity, O_Entity, GLM
+    from glm_entities import Item, Entity, O_Entity, GLM
     from glm_utils import gld_strict_name, add_attr_to_entity, convert_suffix_id
 
 glm_entities_path = files('references').joinpath('glm_classes.json')
@@ -136,6 +136,7 @@ class GLMModel:
             entity = Entity("__preamble", None)
             entity.add_attr("TEXTARRAY", "Preamble comments", "", "comments", value=[])
             self.module_entities["__preamble"] = entity
+            inheritance = []
             for module_name in self.classes:
                 self.module_types.append(module_name)
                 for object_name in self.classes[module_name]:
@@ -144,20 +145,49 @@ class GLMModel:
                         self.classes[module_name][object_name] = {}
                     if object_name == "global_attributes":
                         entity = Entity(module_name, None)
-                        if obj == None:
+                        if obj is None:
                             self.module_entities[module_name] = entity
                             continue
                         for attr in obj:
-                            add_attr_to_entity(entity, attr, obj[attr])
+                            attr_name = attr.replace(module_name+"::", "")
+                            add_attr_to_entity(entity, attr_name, obj[attr])
                         self.module_entities[module_name] = entity
                     else:
                         obj = self.classes[module_name][object_name]
                         entity = O_Entity(self, object_name, None)
                         entity.add_attr("OBJECT", "Parent", "", "parent", value=None)
                         for attr in obj:
-                            add_attr_to_entity(entity, attr, obj[attr])
+                            if obj[attr]['type'] == "parent":
+                                inheritance.append([object_name, attr])
+                            else:
+                                if obj[attr]['type'] == "complex":
+                                    obj[attr]['type'] = "double"
+                                add_attr_to_entity(entity, attr, obj[attr])
                         self.object_entities[object_name] = entity
-                        setattr(self.glm, object_name, entity) 
+                        setattr(self.glm, object_name, entity)
+
+            # Add inheritance
+            # multiple inheritance for powerflow object(s)
+            # hard coded as to walk parent/child relationships [node, link, triplex_node]
+            for myheritance in inheritance:
+                if myheritance[0] in ['node', 'link', 'triplex_node']:
+                    entity = self.object_entities[myheritance[0]]
+                    inherit = self.object_entities[myheritance[1]]
+                    for p_attr, p_item in inherit.__dict__.items():
+                        if isinstance(p_item, Item):
+                            if not p_attr in ['name','parent','instances']:
+                                setattr(entity, p_attr, p_item)
+
+            for myheritance in inheritance:
+                # print("Inheritance object ->", myheritance[0], "for", myheritance[1])
+                if not myheritance[0] in ['node', 'link', 'triplex_node']:
+                    entity = self.object_entities[myheritance[0]]
+                    inherit = self.object_entities[myheritance[1]]
+                    for p_attr, p_item in inherit.__dict__.items():
+                        if isinstance(p_item, Item):
+                            if not p_attr in ['name','parent','instances']:
+                                setattr(entity, p_attr, p_item)
+
 
     def set_module_instance(self, mod_type, params):
         """Create and configure a module instance.
@@ -386,10 +416,26 @@ class GLMModel:
                     "additionalProperties": True
                 },
                 "schedules": {  # schedules object
-                    "type": "array",
-                    "properties": {},
-                    "required": [],
-                    "additionalProperties": True
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "items": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                },
+                                "inline_comments": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                }
+                            },
+                            "required": [],
+                            "additionalProperties": False
+                        }
+                    }
                 },
             },
             "definitions": {
@@ -501,6 +547,56 @@ class GLMModel:
                     schema["properties"]["modules"]["properties"][name] = module_schema
             else:
                 raise AttributeError(f"Entity '{name}' in `module_entities` does not implement `to_schema()`.")
+
+        # Override _directives schema to match actual JSON output structure
+        # (where #set and #define are objects, not arrays)
+        schema["properties"]["_directives"] = {
+            "type": "object",
+            "properties": {
+                "_conditionals": {
+                    "$ref": "#/definitions/entityConditionals"
+                },
+                "#include": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of included files"
+                },
+                "#set": {
+                    "type": "object",
+                    "properties": {"type": "string"},
+                    "description": "Global variable assignments"
+                },
+                "#define": {
+                    "type": "object",
+                    "properties": {"type": "string"},
+                    "description": "Macro definitions"
+                },
+                "#undef": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Undefined macros"
+                }
+            },
+            "required": [],
+            "additionalProperties": False
+        }
+
+        # Override __preamble schema to match actual JSON output structure
+        schema["properties"]["__preamble"] = {
+            "type": "object",
+            "properties": {
+                "_conditionals": {
+                    "$ref": "#/definitions/entityConditionals"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Preamble comments from the GLM file"
+                }
+            },
+            "required": [],
+            "additionalProperties": False
+        }
 
         # Add `object_entities` into the `objects` section
         for name in self.object_entities:
