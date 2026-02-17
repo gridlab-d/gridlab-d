@@ -6,6 +6,8 @@ This module tests:
 2. set_property() with native Python types (int, float, bool, complex, str)
 """
 
+from pathlib import Path
+
 import pytest
 import gridlabd
 
@@ -14,6 +16,7 @@ import gridlabd
 def gld_with_house():
     """Create a GridLabD instance with a simple house model."""
     gld = gridlabd.GridLabD()
+    gld.set_working_directory(str(Path(__file__).parent))
     
     # Load the HVAC test model which has houses
     gld.load_glm(["test_HVAC_balance.glm"])
