@@ -11,41 +11,31 @@ import sys
 import os
 import weakref
 import re
+from datetime import datetime
 from subprocess import PIPE
 from typing import Any, Optional
 
 from ._protocol import Command, Message, Response
 from ._time_utils import gld_to_iso
 
-_TZ_OFFSETS = {
-    "PST": "-08:00",
-    "PDT": "-07:00",
-    "MST": "-07:00",
-    "MDT": "-06:00",
-    "CST": "-06:00",
-    "CDT": "-05:00",
-    "EST": "-05:00",
-    "EDT": "-04:00",
-}
+def _normalize_time_input(value: str) -> str:
+    """Normalize ISO 8601 time strings into GridLAB-D friendly format.
 
-
-def _to_iso8601(time_str: str) -> str:
-    value = time_str.strip()
-    if re.match(r"^\d{4}-\d{2}-\d{2}T", value):
+    GridLAB-D core APIs generally accept "YYYY-MM-DD HH:MM:SS" without
+    timezone offsets. If an ISO string is provided, strip the offset and
+    replace the T separator.
+    """
+    if not isinstance(value, str):
         return value
 
-    parts = value.split()
-    if len(parts) < 2:
-        return value
+    if "T" in value:
+        try:
+            parsed = datetime.fromisoformat(value)
+            return parsed.strftime("%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return value.replace("T", " ", 1)
 
-    date_part = parts[0]
-    time_part = parts[1]
-    tz_part = parts[2] if len(parts) >= 3 else None
-
-    iso = f"{date_part}T{time_part}"
-    if tz_part in _TZ_OFFSETS:
-        iso = f"{iso}{_TZ_OFFSETS[tz_part]}"
-    return iso
+    return value
 
 
 class IsolatedGridLabD:
@@ -407,7 +397,8 @@ class IsolatedGridLabD:
                    ISO 8601 string in the simulation's local timezone, or None
                    if the time is a sentinel value.
         """
-        response = self._send_command(Command.STEP_TO, {"target_time": target_time_str})
+        normalized_time = _normalize_time_input(target_time_str)
+        response = self._send_command(Command.STEP_TO, {"target_time": normalized_time})
         if not response.success:
             raise RuntimeError(response.error)
         return response.result["code"], gld_to_iso(response.result["time"])
@@ -415,7 +406,8 @@ class IsolatedGridLabD:
     # Time management methods
     def set_time(self, timestamp: str) -> int:
         """Set the simulation time."""
-        response = self._send_command(Command.SET_TIME, {"timestamp": timestamp})
+        normalized_time = _normalize_time_input(timestamp)
+        response = self._send_command(Command.SET_TIME, {"timestamp": normalized_time})
         if not response.success:
             raise RuntimeError(response.error)
         return response.result
@@ -678,7 +670,7 @@ class IsolatedGridLabD:
         Returns:
             Error code (0 for success)
         """
-        return self.global_setvar("starttime", value)
+        return self.global_setvar("starttime", _normalize_time_input(value))
     
     def set_stoptime(self, value: str) -> int:
         """Set the simulation stop time.
@@ -689,7 +681,7 @@ class IsolatedGridLabD:
         Returns:
             Error code (0 for success)
         """
-        return self.global_setvar("stoptime", value)
+        return self.global_setvar("stoptime", _normalize_time_input(value))
     
     def get_timezone(self) -> str:
         """Get the current timezone.
