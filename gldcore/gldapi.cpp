@@ -1118,7 +1118,19 @@ GLDErrorCode GridLabD::set_property(const std::string &object_name,
     return GLD_OPERATION_FAILED;
   }
 
-  // Set the property value
+  // Check property access flags before attempting write.
+  // Properties marked PA_REFERENCE lack the PA_W bit — they are computed by
+  // the simulation and any written value will be overwritten on the next
+  // timestep.  Warn the user and skip the write rather than hard-failing.
+  PROPERTY *prop = object_get_property(obj, property_name.c_str(), nullptr);
+  if (prop != nullptr && !(prop->access & PA_W)) {
+    output_warning("Property '%s' on object '%s' is read-only (PA_REFERENCE); "
+                   "it is computed by the simulation and any written value will "
+                   "be overwritten on the next timestep",
+                   property_name.c_str(), object_name.c_str());
+    return GLD_SUCCESS;
+  }
+
   // Set the property value
   char value_copy[1024];
   strncpy(value_copy, value.c_str(), sizeof(value_copy) - 1);
