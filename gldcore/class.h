@@ -60,6 +60,7 @@ typedef struct s_loadmethod {
 	const char *name;
 	int (*call)(void*,char*);
 	struct s_loadmethod *next;
+    std::string args;
 } LOADMETHOD;
 
 /* Set operations */

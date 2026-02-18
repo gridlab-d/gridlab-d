@@ -621,8 +621,7 @@ object inverter {
 	  max_charge_rate 900 kW;
 	  group_rated_power 1200 kW;		//Group all-phase inverter power rating
 	  group_max_charge_rate 1200 kW;	//Group all-phase battery power rating	
-	  group_max_discharge_rate 1200
-	   kW; 
+	  group_max_discharge_rate 1200 kW; 
 	  pf_reg INCLUDED;
 	  pf_reg_activate 0.9;
 	  pf_reg_deactivate 0.95;

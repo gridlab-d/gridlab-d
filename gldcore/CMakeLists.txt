@@ -75,6 +75,8 @@ set(SOURCE_LIST
         list.h
         load.cpp
         load.h
+        loader.cpp
+        loader.h
         load_xml.cpp
         load_xml.h
         load_xml_handle.cpp
@@ -94,6 +96,8 @@ set(SOURCE_LIST
         module.h
         output.cpp
         output.h
+        parser.cpp
+        parser.h
         platform.h
         property.cpp
         property.h

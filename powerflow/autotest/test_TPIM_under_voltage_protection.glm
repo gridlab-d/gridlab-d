@@ -1,10 +1,10 @@
 //Simple test system
 #set profiler=1
 //#set pauseatexit=1
-#set randomseed=39;
+#set randomseed=39
 
 clock {
-	timezone "PST+8PDT";
+	timezone PST+8PDT;
 	starttime '2001-08-01 12:00:00 PDT';
 	stoptime '2001-08-01 12:00:03 PDT';
 }

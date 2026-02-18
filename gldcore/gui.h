@@ -51,7 +51,7 @@ typedef struct s_guientity {
 	char objectname[64]; // ref object
 	char propertyname[64]; // ref property
 	char action[64]; // action value
-	int span; // col span
+	int gui_span; // col span
 	int size; // size spec
 	int height; // height spec
 	int width; // width spec

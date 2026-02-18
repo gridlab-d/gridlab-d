@@ -51,7 +51,6 @@
           "interval": 60,
           "limit": 1440,
           "file": "UL709.csv",
-          "};": "// @off by ~3000",
           "inline_comments": {
             "};": "// @off by ~3000; see comparison of values below:"
           }

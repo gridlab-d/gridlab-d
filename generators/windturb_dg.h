@@ -64,11 +64,11 @@ private:
 	bool climate_is_valid;			//< Flag to pointer values
 	
 	//For current injection updates
-	complex prev_current[3];
+	gld::complex prev_current[3];
 	bool NR_first_run;
 	double internal_model_current_convergence;	//Variable to set convergence/reiteration context (for normal executions)
 
-	complex prev_current12;
+	gld::complex prev_current12;
 	
 	//Inverter connections
 	gld_property *inverter_power_property;

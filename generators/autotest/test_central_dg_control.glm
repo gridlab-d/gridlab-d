@@ -629,7 +629,8 @@ object battery {
 	state_of_charge 1.0;
 	generator_mode SUPPLY_DRIVEN;
 
-}object inverter {
+}
+object inverter {
     name inv10;
 	parent m10;
 	groupid "cdc_group";

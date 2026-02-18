@@ -12,7 +12,7 @@
     },
     "#set": {
       "profiler": 1,
-      "randomseed": "39;",
+      "randomseed": 39,
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
       "deltamode_maximumtime": 5000000000000,
@@ -20,7 +20,7 @@
     }
   },
   "clock": {
-    "timezone": "\"PST+8PDT\"",
+    "timezone": "PST+8PDT",
     "starttime": "'2001-08-01 12:00:00 PDT'",
     "stoptime": "'2001-08-01 12:00:03 PDT'"
   },

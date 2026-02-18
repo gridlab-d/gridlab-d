@@ -132,7 +132,6 @@ object overhead_line {
 object load {
 	name load_4;
 	phases "ABCN";
-	name load4;
 	voltage_A +2401.777+0.000j;
 	voltage_B -1200.889-2080.000j;
 	voltage_C -1200.889+2080.000j;
@@ -156,7 +155,7 @@ object transformer_configuration {
 object transformer {
 	phases AS;
 	configuration AS_config;
-	from load4;
+	from load_4;
 	to triplex_1;
 	nominal_voltage 2401.777;
 	object recorder {

@@ -2919,8 +2919,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						phaseA_I_Out = ~ phaseA_I_Out;
 
 						//Zero the others in here, just for paranoia reasons
-						phaseB_I_Out = complex(0.0,0.0);
-						phaseC_I_Out = complex(0.0,0.0);
+						phaseB_I_Out = gld::complex(0.0,0.0);
+						phaseC_I_Out = gld::complex(0.0,0.0);
 					}
 					else
 					{
@@ -2975,8 +2975,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 
 						//Zero the other currents, just because
-						phaseB_I_Out = complex(0.0,0.0);
-						phaseC_I_Out = complex(0.0,0.0);
+						phaseB_I_Out = gld::complex(0.0,0.0);
+						phaseC_I_Out = gld::complex(0.0,0.0);
 					}
 					else	//Not triplex
 					{
@@ -3846,7 +3846,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 								}
 								else
 								{
-									value_IGenerated[0] = complex(0.0,0.0);
+									value_IGenerated[0] = gld::complex(0.0,0.0);
 								}
 
 								//Compute desired output - sign convention appears to be backwards
@@ -7751,7 +7751,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 		//Default else, who knows
 
 		//Zero the output variable too - for giggles
-		VA_Out = complex(0.0,0.0);
+		VA_Out = gld::complex(0.0,0.0);
 
 		//We're disabled - unless something else wants deltamode, we're done
 		simmode_return_value = SM_EVENT;

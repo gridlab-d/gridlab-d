@@ -75,10 +75,13 @@ int residential_enduse::init(OBJECT *parent)
 {
 	set_flags(get_flags()|OF_SKIPSAFE);
 	gld_object *pParent = object_data<gld_object>(parent);
-
 	//	pull parent attach_enduse and attach the enduseload
 	if ( pParent!=nullptr && pParent->is_valid() )
 	{
+        if ((pParent->get_flags() & OF_INIT) != OF_INIT)
+        {
+            return 2;
+        }
 		ATTACHFUNCTION attach = (ATTACHFUNCTION)pParent->get_function("attach_enduse");
 		if ( attach )
 			pCircuit = (*attach)(parent, &load, load.breaker_amps, (load.config&EUC_IS220)!=0);
