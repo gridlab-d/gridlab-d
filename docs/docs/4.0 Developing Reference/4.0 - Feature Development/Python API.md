@@ -1,22 +1,39 @@
-# Basic C/C++ API
+# Python API
 
-Brief description of feature (~1 paragraph).
+GridLAB-D has a Python API that provides users programmatic ways of interacting with the simulation engine. The API provides simple means of using GridLAB-D in a hands-off manner where a model is loaded and then a simulation is run. This basic capablity allows users to integrate GridLAB-D into a larger suite of Python-based analysis or workflow. The API also provides more advanced capabilities such as controlling simulation time and reading and writing to object parameters. This capability allows for more sophisticated extensions of GridLAB-D such as customized data collection, use-case specific monitoring and control of the system being modeled, and integration into multi-domain models as might be performed in a HELICS-based co-simulation.
 
-## Motivation
+## Motivation (Problem Definition?)
 
 Why will this be worthwhile feature for GridLAB-D? Why now? Who will it help (developers or users)? How will it help them?
 
+The development of the GridLAB-D Python API was motivated by a need to allow users a more dynamic means of interacting with GridLAB-D models than was planned when GridLAB-D was originally conceived nearly two decades ago. Since that time, GridLAB-D has been a purpose-built command-line tool with limited means of user-interaction through a few purpose-built mechanisms. These mechanisms have served GridLAB-D well but have not met the expectations of users as their growing needs for more dynamic interactions and control of the simulation tools they use. 
+
+As a dedicated simulation tool, GridLAB-D has lacked a flexibility that much modern software can provide. For example, the mechanisms to insert data dynamically into GridLAB-D have primarily been accomplished through dedicated objects in the GridLAB-D model that are able to read files with particular time-series formats to define object parameter values. Similarly, reading data out of a GridLAB-d model required adding data collection and recording objects. These objects performed their job well-enough but are constrained by implementation limitations and can, at times, be somewhat clumsy to use.
+
+The lack of flexibility is even more pronounced for objects that are used to model specific devices such as inverters or houses. The behavior of these devices is defined by the model used to implement them and thus fixed when GridLAB-D is compiled. To support flexibility for users in some of these devices, some parameters device specific operating modes for the device with corresponding mode-specific parameters. This proliferation of parameters makes the configuring the devices correctly confusing and difficult.
+
+In short, the behavior of GridLAB-D in general and its modeling of specific devices have been constrained by the limitations of the modeling framework (objects and parameters) as well as the implicit assumptions of the GridLAB-D developers that define how devices will need to behave when being simulated.
+
 ## Feature Objective
 
-What problem will this feature solve?
+The GridLAB-D Python API provides users with a large degree of flexibility to
+
+- Configure their models by adding, removing and editing objects and their corresponding parameters prior to beginning simulation 
+- Control of simulation time 
+- Writing and reading arbitrary model state during simulation
 
 ### Developer Goals
 
-What do the developers want to see out of this feature?
+Developers are not the primary audience for this feature but as the originators of the feature, they need to produce the API in a way that is easy to understand and maintain.
 
 ### User Goals
 
-What do the users hope to see out of this feature?
+Users need an API that is
+
+- Easy to install
+- Easy to understand and use
+- Flexible enough to support the interations with the GridLAB-D engine and their model to achieve their analysis goals.
+
 
 ## Functionality
 
