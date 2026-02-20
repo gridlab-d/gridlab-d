@@ -4,13 +4,11 @@ GridLAB-D has a Python API that provides users programmatic ways of interacting 
 
 ## Motivation (Problem Definition?)
 
-Why will this be worthwhile feature for GridLAB-D? Why now? Who will it help (developers or users)? How will it help them?
+The development of the GridLAB-D Python API was motivated by a need to allow users a more dynamic means of interacting with GridLAB-D models than was planned when GridLAB-D was originally conceived nearly two decades ago. Since that time, GridLAB-D has been a purpose-built command-line tool with limited means of user-interaction through a few purpose-built mechanisms. These mechanisms have served GridLAB-D well but have not met the expectations of users as their needs for more dynamic interactions and control of the simulation tools they use grow. 
 
-The development of the GridLAB-D Python API was motivated by a need to allow users a more dynamic means of interacting with GridLAB-D models than was planned when GridLAB-D was originally conceived nearly two decades ago. Since that time, GridLAB-D has been a purpose-built command-line tool with limited means of user-interaction through a few purpose-built mechanisms. These mechanisms have served GridLAB-D well but have not met the expectations of users as their growing needs for more dynamic interactions and control of the simulation tools they use. 
+As a dedicated simulation tool, GridLAB-D has lacked a flexibility that much modern software can provide. For example, the mechanisms to insert data dynamically into GridLAB-D have primarily been accomplished through dedicated objects in the GridLAB-D model that are able to read files with particular time-series formats to define specific object parameter values. Similarly, reading data out of a GridLAB-d model required adding data collection and recording objects. These objects performed their job well-enough but are constrained by implementation limitations and can, at times, be somewhat clumsy to use.
 
-As a dedicated simulation tool, GridLAB-D has lacked a flexibility that much modern software can provide. For example, the mechanisms to insert data dynamically into GridLAB-D have primarily been accomplished through dedicated objects in the GridLAB-D model that are able to read files with particular time-series formats to define object parameter values. Similarly, reading data out of a GridLAB-d model required adding data collection and recording objects. These objects performed their job well-enough but are constrained by implementation limitations and can, at times, be somewhat clumsy to use.
-
-The lack of flexibility is even more pronounced for objects that are used to model specific devices such as inverters or houses. The behavior of these devices is defined by the model used to implement them and thus fixed when GridLAB-D is compiled. To support flexibility for users in some of these devices, some parameters device specific operating modes for the device with corresponding mode-specific parameters. This proliferation of parameters makes the configuring the devices correctly confusing and difficult.
+The lack of flexibility is even more pronounced for objects that are used to model specific devices such as inverters or houses. The behavior of these devices is defined by the model used to implement them and thus fixed when GridLAB-D is compiled. To support flexibility for users in some of these devices, some parameters are device specific operating modes for the device with corresponding mode-specific parameters. This proliferation of parameters makes the configuring the devices correctly confusing and difficult.
 
 In short, the behavior of GridLAB-D in general and its modeling of specific devices have been constrained by the limitations of the modeling framework (objects and parameters) as well as the implicit assumptions of the GridLAB-D developers that define how devices will need to behave when being simulated.
 
@@ -37,11 +35,114 @@ Users need an API that is
 
 ## Functionality
 
-How will devs/users interact with this feature? Will it be behind-the-scenes, a new module, method, or interface?
+The Python API will be distributed as a PyPI package that users will be able to `pip install ...`. Users will `import ...` the package like any other Python package, allowing them to make the API calls that have been developed. More specifically, this will allow users to instantiate a GridLAB-D engine, load a GridLAB-D model into it, advance the GridLAB-D model through simulation time in a controlled manner, and read and write to model parameters as simulation time is being advanced.
 
-## Class/Sequence Diagrams
+**TODO** - Add additional paragraph or two about the Python class assuming that materializes as planned.
 
-If apropriate, document the feature using class or sequence diagrams.
+
+
+## Use Cases
+
+The Python API enables a broad range of applications for GridLAB-D, from simply running a model to integrating GridLAB-D into a larger code base where it serves as a modeling engine alongside a wide range of Python-enabled functionality. The API fundamentally changes GridLAB-D from a command-line simulation tool to a simulation engine that can be used in a much broader range of applications. Below are a few examples of how we envision GridLAB-D being used via this new API and fully expect users to go even further to meet a broad range of power system simulation needs.
+
+### General API Notes
+
+- **TODO** - Make sure this is correct in the final version: The data types used when interacting with the model match the types used by GridLAB-D. That is, if a GridLAB-D model specifies that a value is a complex number, that is the data type returned when using the API to ask for that parameter from the specified object and the data type expected when writing to that parameter via the API.
+- **TODO** - Make sure this is correct in the final version:Simulation time is always represented by and ISO 8601 string which is easily converted to a Python datetime object. (Or maybe in the final version with the user-facing API it is a datetime object already).
+- Messages produced by the GridLAB-D engine that are normally printed on the console are supressed by default and are instead as a list of JSON strings whenever the simulation is stopped via the `get_messages()` method. 
+- **TODO** - Make sure this is correct in the final version: Trying to write an object parameter that is read-only via the API will produce a warning.
+
+
+### Simple Model Run
+As a most minimal use case, the following code is all that is required to perform the equivalent of running a model on the command line
+
+```python
+import gridlabd
+
+# Instantiate a GridLAB-D engine
+gld = gridlabd.GridLabD()
+
+# Load the model
+gld.load("houses.glm")
+
+# Simulate the model
+gld.run()
+
+# Finish up cleanly
+gld.exit_gld()
+```
+
+Though creating a script to just run a single model is likely less common, this code does show the simplest use case. A slightly more complex use case could extend this to run multiple models in parallel by instantiating multiple GridLAB-D engines, loading each with a unique model and running it.
+
+**TODO** - We need to think about any code examples. I've seen problems on other projects where this kind of documentation gets out of date with the codebase but because it is effectively just text on the page and never has to be run, nobody but the poor user who thinks it should actually work finds out. I'm still going to put this stuff in since its not a big lift but I don't think it should stay. In HELICS, we had a page to document each example we made. The examples were realized as code on disk and thus could be tested and so if we copied any of that code to the documentation page, and if the code failed during testing we knew we only had to update the code snippets on that one page.
+
+
+### Simulation Control with Model Reading and Writing
+GridLAB-D, as an existing part of its core functionality, loads properly formatted models from a file into memory as a part of preparing for simulation. The Python API is able to leverage that model parsing and allow access to the model in memory via API calls. This allows users to read and write to the model directly, both before and during the execution of the simulation proper. 
+
+This is particularly useful when coupled with APIs that allow users to control the advancement of simulation time. The APIs allow users to advance through simulation time at a regular cadence or advance to a particular time. Once at that simulation time, users can then read state of the model. In the example below, the code gets the state of all house objects in the model and prints out the current indoor air temperature of each. If the temperature is too high or too low, the thermostat setpoint in the modeled house is adjusted.
+
+```python
+import gridlabd
+
+gld = gridlabd.GridLabD()
+gld.load("houses.glm")
+gld.set_time_step(60)
+gld.step()
+house_list = gld.get_all_objects("house")
+for house in house_list:
+    indoor_temp = gld.get_object_properties(house["air_temperature"])
+    house_name = gld.get_object_properties(house["name"])
+    print(f"Indoor temperature for house {house_name} is {indoor_temp}".)
+    if float(indoor_temp) > 85:
+        gld.set_property(house_name, "cooling_setpoint", 80)
+        print(f"Adjusted cooling setpoint lower for house {house_name}.")
+    elif float(indoor_temp) < 65:
+        gld.set_property(house_name, "heating_setpoint", 70)
+        print(f"Adjusted heating setpoint higher for house {house_name}.")
+gld.run()
+gld.exit_gld()
+```
+
+### Data Collecting and Monitoring
+GridLAB-D has many existing data collection capabilities that are often sufficient but if the data collection mechanism or the output data format needs to be customized, the Python API provides mechanisms for doing so. Using the Python APIs to read data out of a model, its possible to write that data to disk in an arbitrary format (_e.g._ parquet, zarr) or write it to a database (_e.g._ SQLite, Postgres). Furthermore, it would not be difficult to make a data monitoring application that runs the GridLAB-D model and pulls out particular parameters and graphs their change in value or simulated time or presents, say, hourly histograms of the indoor air temperature of the house objects. 
+
+
+## Getting Started with the GridLAB-D Python API
+Introduction and examples that show how to use the Python API
+
+### Installation
+
+PyPI, baby: `pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ gridlabd==1.0.10`
+
+### Core APIs
+
+**TODO** - I'm not sure if we need this or how it goes with the above section showing actual code. Maybe, for the reasons I stated in the section with code, we don't have code in that section and this section is where we show some of the APIs? Same problem as above, though: we don't want to write literal code here to avoid problems with forgetting about it if the APIs get updated and leaving inaccurate code laying around in the documentation.
+
+That said, somehow we need to introduce new users to the APIs and explain them. Maybe that is part of the examples and we keep this whole page free of code?
+
+#### Time Management
+
+Adjusting model start and stop time
+
+Advancing through simulation time
+
+#### Model Editing
+
+Can only add objects before starting the simulation.
+
+Can always adjust object parameter values. 
+
+Not all parameter values can be adjusted after the simulation starts; some are just used to initialize the simulation.
+
+
+
+## User-Facing Python Class
+
+**TODO** - Add description of class once finalized. I'm holding off on writing a lot on this for now.
+
+**TODO** - Add class and sequence diagram for final Python class.
+
 
 ```mermaid
 classDiagram
@@ -137,22 +238,22 @@ classDiagram
 
 ## Source Code
 
-Links to any relevant source code for the feature as it is developed.
+**TODO** - Update link to master branch once the features is merged in.
 
-- [gldapi.h](https://github.com/gridlab-d/gridlab-d/blob/feature/1478/gldcore/gldapi.h): brief description
+- [GLD Python Bindings](https://github.com/gridlab-d/gridlab-d/tree/feature/1478/python_bindings/src/gridlabd): 
 
 
 ## Workflow
 
 !!! Team
 
-    Feature Lead:
-    Team Members:
+    Feature Lead: Trevor Hardy
+    Team Members: Victoria Reynolds, Riley Maltos
 
 
 !!! Status
 
-        Complete by October 31, 2025
+        Complete by March 31, 2026
 
 !!! Tracking
 
