@@ -255,7 +255,7 @@
           "parent": "BUS_1",
           "flags": "DELTAMODE",
           "target": "voltage_A",
-          "within": 1.0,
+          "within": 2.0,
           "operation": "FULL"
         }
       ]

@@ -76,13 +76,13 @@ public:
     }
 
 protected:
-    enumeration status;    // Member variable of type `enumeration`.
-    enumeration operation; // Member variable of type `enumeration`.
-    enumeration once;      // Member variable of type `enumeration`.
-    double within;         // Member variable of type `double`.
-    complex value;         // Member variable of type `complex`.
-    complex once_value;    // Member variable of type `complex`.
-    char1024 target;       // Protected member variable
+    enumeration status;      // Member variable of type `enumeration`.
+    enumeration operation;   // Member variable of type `enumeration`.
+    enumeration once;        // Member variable of type `enumeration`.
+    double within;           // Member variable of type `double`.
+    gld::complex value;      // Member variable of type `complex`.
+    gld::complex once_value; // Member variable of type `complex`.
+    char1024 target;         // Protected member variable
 
 public:
     // Static inline method to get the byte offset of the member `status`.
@@ -285,7 +285,7 @@ public:
     }
 
     // Inline function to get the value of `value`.
-    inline complex get_value(void)
+    inline gld::complex get_value(void)
     {
         auto &mtx = SharedMutexManager::get_mutex(my());
         std::unique_lock<std::shared_mutex> lock(mtx);
@@ -301,7 +301,7 @@ public:
     }
 
     // Inline method to set the value of `value`.
-    inline void set_value(complex p)
+    inline void set_value(gld::complex p)
     {
         auto &mtx = SharedMutexManager::get_mutex(my());
         std::unique_lock<std::shared_mutex> lock(mtx);
@@ -333,7 +333,7 @@ public:
     }
 
     // Inline function to get the value of `once_value`.
-    inline complex get_once_value(void)
+    inline gld::complex get_once_value(void)
     {
         auto &mtx = SharedMutexManager::get_mutex(my());
         std::shared_lock<std::shared_mutex> lock(mtx);
@@ -371,7 +371,7 @@ public:
         get_once_value_property().from_string(const_cast<char *>(str.c_str()));
     }
 
-    inline void set_once_value(complex p)
+    inline void set_once_value(gld::complex p)
     {
         auto &mtx = SharedMutexManager::get_mutex(my());
         std::unique_lock<std::shared_mutex> lock(mtx);

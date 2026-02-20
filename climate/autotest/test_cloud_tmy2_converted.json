@@ -73,18 +73,6 @@
         }
       ]
     },
-    "house": {
-      "instances": [
-        {
-          "name": "myHouse",
-          "parent": "tpm2_R1-12-47-1_tm_21",
-          "floor_area": "random.normal(1750,400)",
-          "heating_setpoint": 70,
-          "cooling_setpoint": 78,
-          "air_temperature": 79
-        }
-      ]
-    },
     "inverter": {
       "instances": [
         {
@@ -98,7 +86,7 @@
     "player": {
       "instances": [
         {
-          "parent": "double_assert_8",
+          "parent": "double_assert_7",
           "property": "value",
           "file": "../cloud_insolation_tmy2.player",
           "loop": 1
@@ -108,7 +96,7 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_8",
+          "name": "double_assert_7",
           "parent": "DHHL_3_PV",
           "target": "Insolation",
           "within": 0.01

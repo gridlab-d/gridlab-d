@@ -60,9 +60,7 @@ public:
         defaults->once_value = 0.0;
         std::memset(defaults->target, 0, sizeof(defaults->target));
     }
-    ~double_assert()
-    {
-        }
+    ~double_assert() {}
 
 protected:
     enumeration status;      // Member variable of type `enumeration`.

@@ -30,6 +30,7 @@
     "house": {
       "instances": [
         {
+		  "object_declaration": ":",
           "groupid": "A",
           "outside_comments": [
             "// This is a syntax error. The colon is for assigning IDs, and should be omitted from anonymous objects.",
@@ -37,6 +38,7 @@
           ]
         },
         {
+		  "object_declaration": ":",
           "groupid": "B"
         }
       ]

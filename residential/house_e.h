@@ -449,8 +449,8 @@ private:
 		XPFV_TWOV	= 2,		// will set both external_v1N and v2N, require v12 = v1N - v2N
 	} EXTERNALPFMODE;
 	enumeration external_pf_mode;
-	complex external_v1N;            // from OpenDSS or another external power flow program
-	complex external_v2N;            // from OpenDSS or another external power flow program
+	gld::complex external_v1N;            // from OpenDSS or another external power flow program
+	gld::complex external_v2N;            // from OpenDSS or another external power flow program
 
 	// interface to powerflow calculations
 	void check_external_voltage(void);
