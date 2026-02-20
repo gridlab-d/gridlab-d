@@ -7,12 +7,15 @@ This package provides Python bindings for GridLAB-D, a power system simulation p
 1. **Build the GridLAB-D core** (if not already built):
    ```bash
    # From the repository root
+   mkdir build
    cd build
-   cmake --build . --parallel
+   cmake -DCMAKE_BUILD_TYPE=Debug ..
+   cmake --build .
    ```
 
 2. **Install the Python package in development mode**:
    ```bash
+   # From the repository root
    cd python_bindings
    pip install -e .
    ```
@@ -23,6 +26,25 @@ This package provides Python bindings for GridLAB-D, a power system simulation p
    pytest -v
    ```
 
+## Building Wheels for Distribution
+
+To create wheel (.whl) and source distribution (.tar.gz) files for PyPI:
+
+1. **Run the preparation script** (copies built libraries into the package):
+   ```bash
+   cd python_bindings
+   ./prepare_pypi_build.sh
+   ```
+
+2. **Build the distribution files**:
+   ```bash
+   python3 -m build
+   ```
+
+   This creates both files in the `dist/` directory.
+
+**Note:** `pip install -e .` works for local development without running the preparation script because it accesses libraries directly from `../build/lib/`. However, `python -m build` creates an isolated environment and requires the prebuilt libraries to be bundled within the package directory.
+
 ## API Usage Examples
 
 ### Basic Usage
@@ -31,7 +53,7 @@ This package provides Python bindings for GridLAB-D, a power system simulation p
 import gridlabd
 
 # Create a GridLAB-D instance
-gld = gridlabd.GridLabD()
+gld = gridlabd.GridLabD()S
 
 # Load a model file
 result = gld.load("path/to/model.glm")
@@ -129,21 +151,20 @@ for i in range(10):
 
 ### Message Capture
 
+GridLAB-D messages (warnings, errors, debug output) are automatically captured and can be retrieved programmatically. By default, C++ output is suppressed to keep your console clean.
+
 ```python
 import gridlabd
 
+# Default: C++ output suppressed, clean console
 gld = gridlabd.GridLabD()
-
-# Enable message capture
-gld.enable_message_capture(True)
-gld.clear_messages()
 
 # Load and run model
 gld.load("model.glm")
 gld.setup_after_load()
 gld.run()
 
-# Get captured messages
+# Get captured messages programmatically
 messages = gld.get_messages()
 for msg in messages:
     print(f"[{msg['type']}] {msg['timestamp']}: {msg['message']}")
@@ -151,5 +172,31 @@ for msg in messages:
 # Filter for errors only
 errors = [m for m in messages if m['type'] == 'ERROR']
 print(f"Found {len(errors)} errors")
+```
+
+**Verbose mode** - Enable C++ console output for debugging:
+
+```python
+# Show C++ output on stderr (useful for debugging)
+gld = gridlabd.GridLabD(verbose=True)
+gld.load("model.glm")
+gld.run()
+
+# Messages are still captured even in verbose mode
+messages = gld.get_messages()
+```
+
+**Message capture controls**:
+
+```python
+# Disable message capture (not recommended)
+gld.enable_message_capture(False)
+
+# Clear captured messages
+gld.clear_messages()
+
+# Set message limit (default: 10000)
+gld.set_message_capture_limit(5000)
+limit = gld.get_message_capture_limit()
 ```
    

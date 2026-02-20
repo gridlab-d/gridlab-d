@@ -8,6 +8,8 @@ Tests:
 - Execution without loading model
 """
 
+from datetime import datetime
+
 import pytest
 
 
@@ -28,7 +30,9 @@ def test_step_minimal_model(minimal_model):
     # First step initializes the simulation
     status, timestamp = minimal_model.step()
     assert status >= 0  # Non-negative status
-    assert isinstance(timestamp, (int, float))
+    assert isinstance(timestamp, str)
+    # Verify ISO 8601 format (contains 'T' separator)
+    assert "T" in timestamp
     
     # Should be able to step again
     status2, timestamp2 = minimal_model.step()
@@ -91,4 +95,6 @@ def test_step_respects_fixed_timestep(gld_instance, test_models_dir):
     status2, time2 = gld_instance.step()
     assert status2 >= 0
 
-    assert time2 - time1 == pytest.approx(900.0, abs=1e-6)
+    dt1 = datetime.fromisoformat(time1)
+    dt2 = datetime.fromisoformat(time2)
+    assert (dt2 - dt1).total_seconds() == pytest.approx(900.0, abs=1e-6)
