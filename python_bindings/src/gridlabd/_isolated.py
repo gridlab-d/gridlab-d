@@ -537,7 +537,7 @@ class IsolatedGridLabD:
         return response.result["code"], response.result["value"]
     
     def get_property_info(self, object_name: str, property_name: str) -> tuple[int, dict]:
-        """Get property metadata (type, unit, description).
+        """Get property metadata (type, unit, description, access).
         
         Args:
             object_name: Name or ID of the object
@@ -546,9 +546,9 @@ class IsolatedGridLabD:
         Returns:
             tuple: (error_code, info_dict) where info_dict contains:
                 - type: PropertyType enum value (int)
-                - type_name: PropertyType enum name (str)
                 - unit: Unit string (str, empty if no unit)
                 - description: Property description (str)
+                - access: Access flags (int)
         """
         response = self._send_command(Command.GET_PROPERTY_INFO, {
             "object_name": object_name,
@@ -557,6 +557,98 @@ class IsolatedGridLabD:
         if not response.success:
             raise RuntimeError(response.error)
         return response.result["code"], response.result["info"]
+    
+    @staticmethod
+    def _reconstruct_complex(value):
+        """Reconstruct a complex number from its JSON-safe dict representation."""
+        if isinstance(value, dict) and value.get("__complex__"):
+            return complex(value["real"], value["imag"])
+        return value
+
+    def get_object_property_value(self, object_name: str, property_name: str):
+        """Get a property value as its native Python data type (no units).
+        
+        Unlike :meth:`get_property` which returns a raw string with units
+        appended (e.g. ``"+68.1022 degF"``), this method strips the unit
+        suffix and converts the value to the appropriate Python type:
+        
+        - ``PT_double`` / ``PT_float`` / ``PT_real`` → ``float``
+        - ``PT_complex`` → ``complex``
+        - ``PT_int16`` / ``PT_int32`` / ``PT_int64`` → ``int``
+        - ``PT_bool`` → ``bool``
+        - ``PT_enumeration`` / ``PT_set`` / ``PT_char*`` → ``str``
+        
+        Args:
+            object_name: Name or ID of the object
+            property_name: Name of the property
+            
+        Returns:
+            The property value as the appropriate Python data type.
+            
+        Raises:
+            RuntimeError: If the object or property is not found.
+            
+        Examples:
+            >>> temp = gld.get_object_property_value("house1", "air_temperature")
+            >>> type(temp)
+            <class 'float'>
+            >>> power = gld.get_object_property_value("meter1", "measured_power")
+            >>> type(power)
+            <class 'complex'>
+        """
+        response = self._send_command(Command.GET_OBJECT_PROPERTY_VALUE, {
+            "object_name": object_name,
+            "property_name": property_name
+        })
+        if not response.success:
+            raise RuntimeError(response.error)
+        return self._reconstruct_complex(response.result["value"])
+    
+    def get_object_properties_detailed(self, object_name: str) -> dict[str, dict]:
+        """Get all properties of an object with rich metadata.
+        
+        Returns a dictionary keyed by property name, where each value is a
+        metadata dictionary with the following structure::
+        
+            {
+                "value":       <appropriate Python type>,
+                "unit":        "degF",          # empty string if unitless
+                "type":        "double",         # GridLAB-D type name
+                "access":      "read-only",      # or "read-write"
+                "description": "indoor air temperature"
+            }
+        
+        Values are converted to their native Python types (float, int,
+        complex, bool, or str) — see :meth:`get_object_property_value`.
+        
+        Args:
+            object_name: Name or ID of the object
+            
+        Returns:
+            dict[str, dict]: Property metadata keyed by property name.
+            
+        Raises:
+            RuntimeError: If the object is not found.
+            
+        Examples:
+            >>> props = gld.get_object_properties_detailed("house1")
+            >>> props["air_temperature"]["value"]
+            68.1022
+            >>> props["air_temperature"]["unit"]
+            'degF'
+            >>> props["air_temperature"]["access"]
+            'read-only'
+        """
+        response = self._send_command(Command.GET_OBJECT_PROPERTIES_DETAILED, {
+            "object_name": object_name
+        })
+        if not response.success:
+            raise RuntimeError(response.error)
+        # Reconstruct complex values in the result
+        result = response.result
+        for prop_name, meta in result.items():
+            meta["value"] = self._reconstruct_complex(meta["value"])
+        return result
     
     def set_property(self, object_name: str, property_name: str, value) -> int:
         """Set a property value on an object.

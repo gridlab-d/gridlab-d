@@ -177,7 +177,8 @@ public:
                                  const std::string &property_name,
                                  int &prop_type,
                                  std::string &unit_str,
-                                 std::string &description);
+                                 std::string &description,
+                                 int &access);
 
   /** Set a property value on an object
    * @param object_name The name of the object

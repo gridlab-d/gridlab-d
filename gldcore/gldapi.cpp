@@ -1044,7 +1044,8 @@ GLDErrorCode GridLabD::get_property_info(const std::string &object_name,
                                         const std::string &property_name,
                                         int &prop_type,
                                         std::string &unit_str,
-                                        std::string &description) {
+                                        std::string &description,
+                                        int &access) {
   // Find the object by name
   OBJECT *obj = nullptr;
 
@@ -1090,6 +1091,9 @@ GLDErrorCode GridLabD::get_property_info(const std::string &object_name,
   } else {
     description = "";
   }
+
+  // Get access flags
+  access = static_cast<int>(prop->access);
 
   return GLD_SUCCESS;
 }
