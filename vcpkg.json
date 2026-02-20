@@ -1,6 +1,6 @@
 {
   "name": "gridlab-d",
-  "version-string": "0.1.0",
+  "version-string": "5.4.0",
   "builtin-baseline": "856505bb767458c99d8e3c3ed441f59a058d3687",
   "dependencies": [
     "eigen3"
