@@ -230,17 +230,37 @@ std::string GridLabD::get_install_root() {
   return global_gl_bin.parent_path().string();
 }
 
-std::string GridLabD::get_executable_path() {
-  if (g_executable_override.has_value()) {
-    return g_executable_override.value().string();
-  }
-  return global_gl_executable.string();
-}
-
 // constructor
 GridLabD::GridLabD() : selected_timestep(0) {
   strcpy(global_environment, "batch");
   char *browser = getenv("GLBROWSER");
+
+  /* determine current working directory */
+  if (!getcwd(global_workdir, 1024)) {
+    global_workdir[0] = 0;
+  }
+
+  // Auto-discover paths if not already set (must happen before timestamp_set_tz
+  // so that find_file() can locate tzinfo.txt via global_gl_path)
+  if (!g_install_root_override.has_value()) {
+    // Try environment variables in priority order: GRIDLABD_HOME >
+    // GRIDLABD_ROOT GRIDLABD_HOME: For custom GridLAB-D installations
+    // (modules/data) GRIDLABD_ROOT: For bundled package installations (backward
+    // compatibility)
+    const char *override_path = std::getenv("GRIDLABD_HOME");
+    if (override_path == nullptr || *override_path == '\0') {
+      override_path = std::getenv("GRIDLABD_ROOT");
+    }
+
+    if (override_path != nullptr && *override_path != '\0') {
+      try {
+        set_install_root(override_path);
+      } catch (...) {
+        // If environment variable path is invalid, continue without setting
+        // paths. The find_file() function will search GLPATH.
+      }
+    }
+  }
 
   /* set the default timezone */
   timestamp_set_tz(nullptr);
@@ -263,35 +283,6 @@ GridLabD::GridLabD() : selected_timestep(0) {
   kill_starthandler();
   atexit(kill_stophandler);
 #endif
-
-  /* determine current working directory */
-  if (!getcwd(global_workdir, 1024)) {
-    global_workdir[0] = 0;
-  }
-
-  // Auto-discover paths if not already set
-  if (!g_install_root_override.has_value()) {
-    // Try environment variables in priority order: GRIDLABD_HOME >
-    // GRIDLABD_ROOT GRIDLABD_HOME: For custom GridLAB-D installations
-    // (modules/data) GRIDLABD_ROOT: For bundled package installations (backward
-    // compatibility)
-    const char *override_path = std::getenv("GRIDLABD_HOME");
-    if (override_path == nullptr || *override_path == '\0') {
-      override_path = std::getenv("GRIDLABD_ROOT");
-    }
-
-    if (override_path != nullptr && *override_path != '\0') {
-      try {
-        set_install_root(override_path);
-      } catch (...) {
-        // If environment variable path is invalid, continue without setting
-        // paths The find_file() function will search GLPATH
-      }
-    }
-    // Note: For Python packages, paths should be set via GRIDLABD_HOME or
-    // GRIDLABD_ROOT environment variables, or by calling set_install_root()
-    // explicitly from Python
-  }
 
   if (setup_before_load() == GLD_OPERATION_FAILED) {
     exit(XC_INIERR);
@@ -363,7 +354,6 @@ GLDErrorCode GridLabD::load_glm(const std::string &filepath) {
   if (!fs::exists(glm_path)) {
     return GLD_FILE_NOT_FOUND;
   }
-
   std::vector<std::string> argument_storage;
   argument_storage.emplace_back("gridlabd");
   argument_storage.emplace_back(glm_path.string());
@@ -529,11 +519,18 @@ nlohmann::ordered_json GridLabD::get_checkpoint_json(const std::string& filepath
         // Extract directory from filepath for do_checkpoint
         size_t last_slash = filepath.find_last_of("/\\");
         std::string directory;
-    }
-    if (last_slash != std::string::npos) {
-      directory = filepath.substr(0, last_slash);
-    } else {
-      directory = "."; // Current directory if no path separators found
+
+        if (last_slash != std::string::npos)
+        {
+            directory = filepath.substr(0, last_slash);
+        }
+        else
+        {
+            directory = "."; // Current directory if no path separators found
+        }
+
+        // Get checkpoint JSON with directory specified
+        checkpoint = do_checkpoint(directory.c_str());
     }
 
     // Set the internal gld_model representation to be equal to checkpoint
@@ -1071,6 +1068,85 @@ GLDErrorCode GridLabD::set_property(const std::string &object_name,
 
   printf("Set property '%s.%s' = '%s'\n", object_name.c_str(),
          property_name.c_str(), value.c_str());
+  return GLD_SUCCESS;
+}
+
+void *GridLabD::find_object_by_name(const std::string &object_name) {
+  if (object_name.empty()) {
+    output_error("Object name cannot be empty");
+    return nullptr;
+  }
+
+  OBJECT *obj = object_find_name(object_name.c_str());
+  if (obj != nullptr) {
+    return static_cast<void *>(obj);
+  }
+
+  char *endptr = nullptr;
+  long id = strtol(object_name.c_str(), &endptr, 10);
+  if (endptr != nullptr && *endptr == '\0') {
+    obj = object_find_by_id(static_cast<OBJECTNUM>(id));
+    if (obj != nullptr) {
+      return static_cast<void *>(obj);
+    }
+  }
+
+  output_error("Object '%s' not found", object_name.c_str());
+  return nullptr;
+}
+
+GLDErrorCode GridLabD::get_property_value(void *object_ptr,
+                                         const std::string &property_name,
+                                         std::string &value) {
+  if (object_ptr == nullptr) {
+    output_error("Null object pointer");
+    return GLD_OBJECT_NOT_FOUND;
+  }
+  if (property_name.empty()) {
+    output_error("Property name cannot be empty");
+    return GLD_OPERATION_FAILED;
+  }
+
+  OBJECT *obj = static_cast<OBJECT *>(object_ptr);
+
+  char buffer[1024];
+  int result = object_get_value_by_name(obj, property_name.c_str(), buffer,
+                                        sizeof(buffer));
+  if (result == 0) {
+    output_error("Failed to get property '%s' from object", property_name.c_str());
+    return GLD_OPERATION_FAILED;
+  }
+
+  value = std::string(buffer);
+  return GLD_SUCCESS;
+}
+
+GLDErrorCode GridLabD::set_property_value(void *object_ptr,
+                                         const std::string &property_name,
+                                         const std::string &value) {
+  if (object_ptr == nullptr) {
+    output_error("Null object pointer");
+    return GLD_OBJECT_NOT_FOUND;
+  }
+  if (property_name.empty()) {
+    output_error("Property name cannot be empty");
+    return GLD_OPERATION_FAILED;
+  }
+
+  OBJECT *obj = static_cast<OBJECT *>(object_ptr);
+
+  char value_copy[1024];
+  strncpy(value_copy, value.c_str(), sizeof(value_copy) - 1);
+  value_copy[sizeof(value_copy) - 1] = '\0';
+
+  int result = object_set_value_by_name(
+      obj, const_cast<char *>(property_name.c_str()), value_copy);
+  if (result == 0) {
+    output_error("Failed to set property '%s' on object to '%s'",
+                 property_name.c_str(), value.c_str());
+    return GLD_OPERATION_FAILED;
+  }
+
   return GLD_SUCCESS;
 }
 

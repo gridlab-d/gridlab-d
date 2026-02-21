@@ -67,9 +67,6 @@ public:
   // Set the global environment (internal use - for subprocess initialization)
   void set_environment(const std::string &env);
 
-  // Set the configuration file path
-  GLDErrorCode set_config_file(const std::string &config_file);
-
   // Set working directory (for resolving relative paths in GLM files)
   GLDErrorCode set_working_directory(const std::string &dir);
 
@@ -85,9 +82,6 @@ public:
 
   // Setup GLD and return an error code
   GLDErrorCode setup_after_load();
-
-  // Get the GLM data based on a query, optionally save to filepath
-  nlohmann::json get_checkpoint_json(const std::string &filepath = "");
 
   // Set the GLM based on input data
   GLDErrorCode set_glm_data(const GLDData &data);
@@ -128,8 +122,6 @@ public:
   // Self-contained API health check (suitable for Python packages)
   GLDErrorCode validate_api(bool verbose = true);
 
-    private:
-        std::string glm_file_path;  // Path to the GLM file
   // Set poststep callback function
   GLDErrorCode set_poststep_callback(GLDCallback callback);
 

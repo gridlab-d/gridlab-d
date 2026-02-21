@@ -448,25 +448,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
         now = 0;
         break;
     }
-    nlohmann::json checkpoint;
-    /* checkpoint may be needed */
-    if (now > 0)
-    {
-        // TODO: Take a look at global_checkpoint_interval and if we want to keep it
-        /* checkpoint time lapsed */
-        // if ( last_checkpoint + global_checkpoint_interval <= now )
-        if (last_checkpoint <= now)
-        {
-            static char fn[1024] = "";
-            static char json_fn[1024] = "";
-            FILE *fp = nullptr;
-            FILE *json_fp = nullptr;
 
-	/* no checkpoints used */
-	case CPT_NONE:
-		now = 0;
-		break;
-	}
 	nlohmann::ordered_json checkpoint;
 	/* checkpoint may be needed */
 	if (now > 0)
@@ -496,7 +478,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 			if (!directory_exists(json_dir))
 			{
 				output_error("directory '%s' does not exist for JSON checkpoint files", json_dir);
-				return nlohmann::json(); // Return empty JSON value on error
+				return nlohmann::ordered_json(); // Return empty JSON value on error
 			}
 
 			/* initial value of last checkpoint */
@@ -506,12 +488,18 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 			// Create JSON structure using nlohmann::json
 			// Add preamble (ensure comments is an array)
 			if (!checkpoint.contains("__preamble"))
-				checkpoint["__preamble"] = nlohmann::json::object();
+				checkpoint["__preamble"] = nlohmann::ordered_json::object();
 			if (!checkpoint["__preamble"].contains("comments") || !checkpoint["__preamble"]["comments"].is_array())
-				checkpoint["__preamble"]["comments"] = nlohmann::json::array();
+				checkpoint["__preamble"]["comments"] = nlohmann::ordered_json::array();
 			checkpoint["__preamble"]["comments"].push_back("// GridLAB-D checkpoint data export");
-			std::string timestamp_comment = "// Generated at timestamp: " + std::to_string(global_clock);
-			checkpoint["__preamble"]["comments"].push_back(timestamp_comment);
+			{
+				std::time_t sys_now = std::time(nullptr);
+				struct tm *tm_local = std::localtime(&sys_now);
+				char sys_time_buf[64] = "";
+				std::strftime(sys_time_buf, sizeof(sys_time_buf), "%Y-%m-%d %H:%M:%S %Z", tm_local);
+				std::string timestamp_comment = std::string("// Generated at: ") + sys_time_buf;
+				checkpoint["__preamble"]["comments"].push_back(timestamp_comment);
+			}
 
 			// Add clock info (format timestamps as strings with timezone)
 			char ts_buffer[64];
@@ -743,12 +731,6 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 			for (MODULE *mod = module_get_first(); mod != nullptr; mod = mod->next)
 			{
 				nlohmann::ordered_json module = nlohmann::ordered_json::object();
-				
-				// Add module name
-				// module["name"] = std::string(mod->name);
-				
-				// Add module ID
-				// module["id"] = mod->id;
 				
 			// Iterate through module's own property list
 			if (mod->globals != nullptr)

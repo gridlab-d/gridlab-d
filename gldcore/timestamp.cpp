@@ -1037,38 +1037,6 @@ char *timestamp_set_tz(char *tz_name) {
     tz_name = env_tz != nullptr ? env_tz : const_cast<char *>("UTC0");
   }
 
-  // TODO: makes timezones work reliably
-  /*
-if(tz_name == nullptr || strlen(tz_name) == 0)
-  {
-          static char guess[64];
-          static unsigned int tzlock=0;
-
-          if (strcmp(_tzname[0], "") == 0){
-                  throw_exception(const_cast<char *>("timezone not
-identified"));
-                  *//* TROUBLESHOOT
-				An attempt to use timezones was made before the timezome has been specified.  Try adding or moving the
-				timezone spec to the top of the <code>clock</code> directive and try again.  Alternatively, you can set the '''TZ''' environment
-				variable.
-
-			 *//*
-		}
-
-		wlock(&tzlock);
-		if (_timezone % 60 == 0){
-			sprintf(guess, "%s%d%s", _tzname[0], (int)(_timezone / 3600), _daylight?_tzname[1]:"");
-		} else {
-			sprintf(guess, "%s%d:%d%s", _tzname[0], (int)(_timezone / 3600), (int)(_timezone / 60), _daylight?_tzname[1]:"");
-		}
-		if (_timezone==0 && _daylight==0)
-			tz_name= const_cast<char*>("UTC0");
-		else
-			tz_name = guess;
-		wunlock(&tzlock);
-	}
-    */
-
   load_tzspecs(tz_name);
 
   return current_tzname;
