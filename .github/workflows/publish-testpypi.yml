@@ -63,7 +63,7 @@ jobs:
   publish:
     name: Publish all wheels to TestPyPI
     needs: build-and-publish
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     environment: testpypi
     permissions:
       id-token: write
