@@ -4,8 +4,10 @@ Related to issues #1555 and #1559: all time-returning methods should return
 ISO 8601 formatted strings.
 """
 
+import json
 import re
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -113,3 +115,19 @@ class TestTimeConsistency:
         assert get_dt == clock_dt, (
             f"get_time() returned {get_time} but get_clock() returned {clock}"
         )
+
+    def test_checkpoint_clock_times_are_iso(self, gld_instance):
+        """Checkpoint clock values should be ISO 8601 strings."""
+        model_path = Path(__file__).parent.parent / "house_with_solar"
+        gld_instance.set_working_directory(str(model_path))
+        assert gld_instance.load("houses.glm") == 0
+
+        gld_instance.set_time_step(900)
+        gld_instance.step()
+        checkpoint = json.loads(gld_instance.get_checkpoint_json())
+        clock = checkpoint.get("clock", {})
+
+        for key in ("starttime", "stoptime", "timestamp"):
+            value = clock.get(key)
+            assert isinstance(value, str), f"{key} should be a string"
+            assert ISO_8601_PATTERN.match(value), f"Not ISO 8601: {value}"

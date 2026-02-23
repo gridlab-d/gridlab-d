@@ -45,6 +45,26 @@ load_glm_with_arguments(GridLabD &instance,
   return instance.load_glm(static_cast<int>(argv.size()), argv.data());
 }
 
+void normalize_checkpoint_clock(nlohmann::json &value) {
+     if (!value.contains("clock") || !value["clock"].is_object()) {
+          return;
+     }
+
+     auto &clock = value["clock"];
+     const char *keys[] = {"starttime", "stoptime", "timestamp"};
+     for (const char *key : keys) {
+          if (!clock.contains(key) || !clock[key].is_number()) {
+               continue;
+          }
+
+          int64_t ts = clock[key].get<int64_t>();
+          char buffer[64];
+          if (convert_from_timestamp(ts, buffer, sizeof(buffer)) > 0) {
+               clock[key] = std::string(buffer);
+          }
+     }
+}
+
 } // namespace
 
 NB_MODULE(gridlabd_core, m) {
@@ -238,6 +258,7 @@ NB_MODULE(gridlabd_core, m) {
           "get_checkpoint_json",
           [](GridLabD &self, const std::string &filepath) {
             nlohmann::json value = self.get_checkpoint_json(filepath);
+                              normalize_checkpoint_clock(value);
             return value.dump();
           },
           nb::arg("filepath") = std::string(),
