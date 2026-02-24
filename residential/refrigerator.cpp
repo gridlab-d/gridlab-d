@@ -173,9 +173,17 @@ int refrigerator::create()
 
 /** Shared initialization for both normal init and checkpoint restore
  **/
-void refrigerator::shared_init(void)
+int refrigerator::shared_init(OBJECT *parent)
 {
-	OBJECT *parent = object_header(this)->parent;
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("refrigerator::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	OBJECT *hdr = object_header(this);
 	
 	// Initialize pointer to parent properties
@@ -186,34 +194,20 @@ void refrigerator::shared_init(void)
 		gl_warning("%s (%s:%d) parent object lacks air temperature, using %0f degF instead", hdr->name, hdr->oclass->name, hdr->id, default_air_temperature);
 		pTout = &default_air_temperature;
 	}
+	return 1;
 }
 
 /** Called when restoring from checkpoint to reinitialize non-published variables
  **/
 int refrigerator::checkpoint_init(OBJECT *parent)
 {
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("refrigerator::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
-
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	return residential_enduse::checkpoint_init(parent);
 }
 
 int refrigerator::init(OBJECT *parent)
 {
-
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("refrigerator::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
@@ -225,7 +219,8 @@ int refrigerator::init(OBJECT *parent)
 	if (load.power_factor==0)		load.power_factor = 0.95;
 
 	// Initialize pointers and other non-published variables
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	/* derived values */
 	Tair = gl_random_uniform(&hdr->rng_state,Tset-thermostat_deadband/2, Tset+thermostat_deadband/2);

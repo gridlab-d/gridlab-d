@@ -476,7 +476,7 @@ private:
 	CIRCUIT *pHVAC_EnduseLoad;
 	void dump_house_parameters_function(void);
 
-	void shared_init(OBJECT *parent); ///<Shared initialization for non-published variables used by both checkpoint_init and init
+	int shared_init(OBJECT *parent); ///<Shared initialization for non-published variables used by both checkpoint_init and init
 
 public:
 	int error_flag;

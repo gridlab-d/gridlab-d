@@ -112,42 +112,40 @@ int freezer::create()
 	return res;
 }
 
-void freezer::shared_init(void)
+int freezer::shared_init(OBJECT *parent)
 {
-	// These variables need initialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-	last_time = 0;
-	next_time = 0;
-}
-
-int freezer::checkpoint_init(OBJECT *parent)
-{
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
 			char objname[256];
 			gl_verbose("freezer::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	last_time = 0;
+	next_time = 0;
+	return 1;
+}
+
+int freezer::checkpoint_init(OBJECT *parent)
+{
 	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	return residential_enduse::checkpoint_init(parent);
 }
 
 int freezer::init(OBJECT *parent)
 {
 	// Initialize non-published variables
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	gl_warning("This device, %s, is considered very experimental and has not been validated.", get_name());
 
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("freezer::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
 	// defaults for unset values */
 	if (size==0)				size = gl_random_uniform(RNGSTATE,20,40); // cf
 	if (thermostat_deadband==0) thermostat_deadband = gl_random_uniform(RNGSTATE,2,3);

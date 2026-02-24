@@ -112,7 +112,7 @@ public:
   GLDErrorCode set_prestep_callback(GLDCallback callback);
 
   // Validation and testing
-  GLDErrorCode validate(const std::string& repo_root = "/mnt/c/dev/gridlab-d_fork", 
+  GLDErrorCode validate(const std::string& repo_root, 
                         const std::vector<std::string>& modules = {});
   
   // Self-contained API health check (suitable for Python packages)

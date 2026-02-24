@@ -257,9 +257,17 @@ int waterheater::create()
 
 /** Shared initialization for both normal init and checkpoint restore
  **/
-void waterheater::shared_init(void)
+int waterheater::shared_init(OBJECT *parent)
 {
-	OBJECT *parent = object_header(this)->parent;
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("waterheater::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	static double sTair = 74;
 	static double sTout = 68;
 	static double sRH = 0.05;
@@ -283,21 +291,15 @@ void waterheater::shared_init(void)
 		pRH = &sRH;
 		gl_warning("waterheater parent lacks \'outdoor_rh\' property, using default");
 	}
+	return 1;
 }
 
 /** Called when restoring from checkpoint to reinitialize non-published variables
  **/
 int waterheater::checkpoint_init(OBJECT *parent)
 {
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("waterheater::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
-
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	return residential_enduse::checkpoint_init(parent);
 }
 
@@ -310,14 +312,6 @@ int waterheater::init(OBJECT *parent)
 	nominal_voltage = (2.0 * default_line_voltage); //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
 	actual_voltage = nominal_voltage;
 
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("waterheater::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
-
 	hdr->flags |= OF_SKIPSAFE;
 
 	if(current_model == FORTRAN){
@@ -326,7 +320,8 @@ int waterheater::init(OBJECT *parent)
 	}
 
 	// Initialize pointers and other non-published variables
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	/* sanity checks */
 	/* initialize water tank volume */

@@ -25,7 +25,7 @@ private:
 	void update_next_t(void);
 	void update_power(void);
 	void update_state(void);
-	void shared_init(void); ///<Shared initialization for non-published variables used by both checkpoint_init and init
+	int shared_init(OBJECT *parent); ///<Shared initialization for non-published variables used by both checkpoint_init and init
 public:
 	appliance(MODULE *module);
 	~appliance() { if (defaults) delete defaults; }

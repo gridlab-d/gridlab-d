@@ -196,28 +196,31 @@ int dishwasher::create()
 	return res;
 }
 
-void dishwasher::shared_init(void)
+int dishwasher::shared_init(OBJECT *parent)
 {
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("dishwasher::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	// These variables need intialized every time regardless of checkpoint load
 	// Non-published variables (not loaded from checkpoint) must be initialized here
 	new_running_state = false;
 	last_t = 0;
 	cycle_time = 0.0;
 	state_time = 0.0;
+	return 1;
 }
 
 int dishwasher::checkpoint_init(OBJECT *parent)
 {
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("dishwasher::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
-	
 	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	return residential_enduse::checkpoint_init(parent);
 }
 
@@ -226,17 +229,10 @@ int dishwasher::init(OBJECT *parent)
 	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
 
 	// Initialize non-published variables
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	OBJECT *hdr = object_header(this);
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("dishwasher::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
-	int rv = 0;
 	// default properties
 	if (motor_power==0) motor_power = gl_random_uniform(&hdr->rng_state,150,350);
 	if (heat_fraction==0) heat_fraction = 0.2;

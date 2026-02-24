@@ -63,39 +63,37 @@ int occupantload::create()
 	return res;
 }
 
-void occupantload::shared_init(void)
+int occupantload::shared_init(OBJECT *parent)
 {
-	// These variables need initialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-	// (occupantload class has no non-published variables at this time)
-}
-
-int occupantload::checkpoint_init(OBJECT *parent)
-{
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
 			char objname[256];
 			gl_verbose("occupantload::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
-	}	
+	}
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	// (occupantload class has no non-published variables at this time)
+	return 1;
+}
+
+int occupantload::checkpoint_init(OBJECT *parent)
+{
 	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	return SUCCESS;
 }
 
 int occupantload::init(OBJECT *parent)
 {
 	// Initialize non-published variables
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("occupantload::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
 	if (number_of_occupants==0)	number_of_occupants = 4;		// defaulted to 4, but perhaps define it based on house size??
 	if (heatgain_per_person==0) heatgain_per_person = 400.0;	// Based on DOE-2, includes latent and sensible heatgain
 
