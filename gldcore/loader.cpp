@@ -979,6 +979,18 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                     obj->out_svc = convert_to_timestamp_delta(propValue.c_str(), &obj->out_svc_micro,
                                                               &obj->out_svc_double);
                 }
+                else if (propName.compare("in_svc_double") == 0)
+                {
+                    obj->in_svc_double = stod(propValue);
+                }
+                else if (propName.compare("out_svc_double") == 0)
+                {
+                    obj->out_svc_double = stod(propValue);
+                }
+                else if (propName.compare("rng_state") == 0)
+                {
+                    obj->rng_state = static_cast<unsigned int>(stoul(propValue));
+                }
                 else if (propName.compare("name") == 0)
                 {
                     if (object_set_name(obj,propValue.data())==nullptr)

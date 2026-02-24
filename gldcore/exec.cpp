@@ -619,6 +619,58 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 						}
 					}
 
+					// Write s_object_list (built-in) properties if not null/empty/default
+
+					// groupid
+					if (obj->groupid[0] != '\0')
+						instance["groupid"] = std::string(obj->groupid);
+
+					// rank
+					if (obj->rank != 0)
+						instance["rank"] = static_cast<int>(obj->rank);
+
+					// schedule_skew
+					if (obj->schedule_skew != 0)
+						instance["schedule_skew"] = static_cast<int64_t>(obj->schedule_skew);
+
+					// latitude / longitude
+					if (!std::isnan(obj->latitude) && obj->latitude != 0.0)
+						instance["latitude"] = obj->latitude;
+					if (!std::isnan(obj->longitude) && obj->longitude != 0.0)
+						instance["longitude"] = obj->longitude;
+
+					// in_svc / out_svc (as formatted timestamp strings, skip TS_NEVER/0)
+					if (obj->in_svc != 0 && obj->in_svc != TS_NEVER)
+					{
+						char svc_buf[64] = "";
+						convert_from_timestamp(obj->in_svc, svc_buf, sizeof(svc_buf));
+						instance["in_svc"] = std::string(svc_buf);
+					}
+					if (obj->out_svc != 0 && obj->out_svc != TS_NEVER)
+					{
+						char svc_buf[64] = "";
+						convert_from_timestamp(obj->out_svc, svc_buf, sizeof(svc_buf));
+						instance["out_svc"] = std::string(svc_buf);
+					}
+
+					// in_svc_double / out_svc_double
+					if (!std::isnan(obj->in_svc_double) && obj->in_svc_double != 0.0 && obj->in_svc_double != TS_NEVER_DBL)
+						instance["in_svc_double"] = obj->in_svc_double;
+					if (!std::isnan(obj->out_svc_double) && obj->out_svc_double != 0.0 && obj->out_svc_double != TS_NEVER_DBL)
+						instance["out_svc_double"] = obj->out_svc_double;
+
+					// rng_state
+					if (obj->rng_state != 0)
+						instance["rng_state"] = static_cast<uint32_t>(obj->rng_state);
+
+					// heartbeat
+					if (obj->heartbeat != 0 && obj->heartbeat != TS_NEVER)
+						instance["heartbeat"] = static_cast<int64_t>(obj->heartbeat);
+
+					// flags — only write if deltamode flag is set
+					if (obj->flags & OF_DELTAMODE)
+						instance["flags"] = static_cast<uint32_t>(obj->flags);
+
 					// Add all properties from this object's class and all parent classes
 					std::set<std::string> processed_properties; // Track processed properties to avoid duplicates
 
@@ -658,7 +710,6 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 									continue;
 								}
 
-								// Parse the string value based on property type
 								switch (pmap->ptype)
 								{
 								case PT_double:
