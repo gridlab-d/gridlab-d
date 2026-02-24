@@ -31,8 +31,7 @@ enum GLDApplicationType {
 
 enum GLDCheckPointMode {
   GLD_CHECKPOINT_MODE_NONE = 0,
-  GLD_CHECKPOINT_MODE_SAVE = 1,
-  GLD_CHECKPOINT_MODE_LOAD = 2
+  GLD_CHECKPOINT_MODE_SAVE = 1
 };
 
 // Forward declaration of GridLabD class
@@ -90,9 +89,6 @@ public:
   GLDErrorCode
   save_checkpoint(const std::string &save_path,
                   GLDCheckPointMode mode = GLD_CHECKPOINT_MODE_SAVE);
-
-  // Load simulation state
-  GLDErrorCode load_checkpoint(const std::string &file_path);
 
   // Add a new object to the model
   GLDErrorCode add_object(GLDData &object_data);

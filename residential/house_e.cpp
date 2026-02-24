@@ -1362,12 +1362,18 @@ int house_e::checkpoint_init(OBJECT *parent)
 	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
 	shared_init(parent);
 
+	// Set simulation beginning time
+	simulation_beginning_time = gl_globalclock;
+	simulation_beginning_time_dbl = (double)simulation_beginning_time;
 
 	// Re-initialize pMeterStatus if parent is available
 	if (parent != nullptr && pMeterStatus == nullptr) {
 		if (pMeterStatus) delete pMeterStatus;
 		pMeterStatus = new gld_property(parent, "service_status");
 	}
+
+	// Attach implicit enduses to the panel (built in create(), must be attached here as in init())
+	attach_implicit_enduses();
 
 	// Re-initialize pHVAC_EnduseLoad
 	if(pHVAC_EnduseLoad == nullptr){

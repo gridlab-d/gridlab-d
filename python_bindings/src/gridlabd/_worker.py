@@ -217,15 +217,6 @@ def handle_save_checkpoint(message: Message) -> Response:
         return Response(success=False, error=str(e))
 
 
-def handle_load_checkpoint(message: Message) -> Response:
-    """Load a checkpoint."""
-    try:
-        code = _gld_instance.load_checkpoint(message.args["file_path"])
-        return Response(success=True, result=int(code) if isinstance(code, int) else int(code.value))
-    except Exception as e:
-        return Response(success=False, error=str(e))
-
-
 def handle_get_checkpoint_json(message: Message) -> Response:
     """Get checkpoint as JSON."""
     try:
@@ -455,7 +446,6 @@ COMMAND_HANDLERS = {
     Command.GET_TIME: handle_get_time,
     Command.SET_TIME_STEP: handle_set_time_step,
     Command.SAVE_CHECKPOINT: handle_save_checkpoint,
-    Command.LOAD_CHECKPOINT: handle_load_checkpoint,
     Command.GET_CHECKPOINT_JSON: handle_get_checkpoint_json,
     Command.START: handle_start,
     Command.STOP: handle_stop,

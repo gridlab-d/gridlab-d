@@ -274,13 +274,6 @@ class IsolatedGridLabD:
             raise RuntimeError(response.error)
         return response.result
     
-    def load_checkpoint(self, file_path: str) -> int:
-        """Load a previously saved simulation state."""
-        response = self._send_command(Command.LOAD_CHECKPOINT, {"file_path": file_path})
-        if not response.success:
-            raise RuntimeError(response.error)
-        return response.result
-    
     def get_checkpoint_json(self, filepath: str = "") -> str:
         """Return checkpoint data as a JSON string."""
         response = self._send_command(Command.GET_CHECKPOINT_JSON, {"filepath": filepath})

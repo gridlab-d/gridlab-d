@@ -559,11 +559,6 @@ GLDErrorCode GridLabD::save_checkpoint(const std::string &save_path,
 }
 
 // Load simulation checkpoint
-GLDErrorCode GridLabD::load_checkpoint(const std::string &file_path) {
-  printf("Loading checkpoint from %s\n", file_path.c_str());
-  return GLD_SUCCESS;
-}
-
 // Add an object
 GLDErrorCode GridLabD::add_object(GLDData &object_data) {
   printf("Adding object with %zu fields.\n", object_data.size());
