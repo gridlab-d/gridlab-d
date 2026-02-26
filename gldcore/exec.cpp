@@ -694,73 +694,63 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 							processed_properties.insert(prop_name);
 
 							/* Get property value based on type */
-							void *addr = (char *)obj + (ptrdiff_t)pmap->addr;
-							char value_str[1024] = "";
-
-							// Use object_get_value_by_name for all property types to ensure proper access
-							if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0)
+							switch (pmap->ptype)
 							{
-								// Skip if value is empty, null, or invalid to avoid unusable values
-								if (value_str == nullptr || strlen(value_str) == 0 || 
-								    strcmp(value_str, "null") == 0 || strcmp(value_str, "NULL") == 0 ||
-								    strcmp(value_str, "\"\"") == 0 || strcmp(value_str, "''") == 0 ||
-								    strcmp(value_str, "NAN") == 0 || strcmp(value_str, "nan") == 0)
+							case PT_double:
+							{
+								double *dptr = object_get_double_quick(obj, pmap);
+								if (dptr != nullptr)
 								{
-									// Skip this property - don't add empty/null values
-									continue;
-								}
-
-								switch (pmap->ptype)
-								{
-								case PT_double:
-								{
-									double val = strtod(value_str, nullptr);
-									// Skip NaN values - they become null in JSON
-									if (!std::isnan(val))
-									{
+									double val = *dptr;
+									// Skip NaN and subnormal values - subnormals (< DBL_MIN)
+									// are almost always uninitialized memory, not valid data.
+									if (!std::isnan(val) && std::fpclassify(val) != FP_SUBNORMAL)
 										instance[pmap->name] = val;
-									}
 								}
 								break;
-								case PT_int32:
+							}
+							case PT_int32:
+							{
+								int32 *iptr = object_get_int32(obj, pmap);
+								if (iptr != nullptr)
+									instance[pmap->name] = *iptr;
+								break;
+							}
+							case PT_int64:
+							{
+								int64 *iptr = object_get_int64(obj, pmap);
+								if (iptr != nullptr)
+									instance[pmap->name] = static_cast<int64_t>(*iptr);
+								break;
+							}
+							case PT_bool:
+							{
+								bool *bptr = object_get_bool(obj, pmap);
+								if (bptr != nullptr)
+									instance[pmap->name] = *bptr;
+								break;
+							}
+							case PT_timestamp:
+							{
+								int64 *tptr = object_get_int64(obj, pmap);
+								if (tptr != nullptr)
+									instance[pmap->name] = static_cast<int64_t>(*tptr);
+								break;
+							}
+							default:
+							{
+								// For string and all other types, use object_get_value_by_name
+								char value_str[1024] = "";
+								if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0
+								    && strlen(value_str) > 0
+								    && strcmp(value_str, "null") != 0 && strcmp(value_str, "NULL") != 0
+								    && strcmp(value_str, "\"\"") != 0 && strcmp(value_str, "''") != 0
+								    && strcmp(value_str, "NAN") != 0 && strcmp(value_str, "nan") != 0)
 								{
-									int32 val = (int32)strtol(value_str, nullptr, 10);
-									instance[pmap->name] = val;
-								}
-								break;
-								case PT_int64:
-								{
-									int64 val = strtoll(value_str, nullptr, 10);
-									instance[pmap->name] = static_cast<int64_t>(val);
-								}
-								break;
-								case PT_bool:
-								{
-									bool val = (strcmp(value_str, "TRUE") == 0 || strcmp(value_str, "1") == 0);
-									instance[pmap->name] = val;
-								}
-								break;
-								case PT_timestamp:
-								{
-									TIMESTAMP val = strtoll(value_str, nullptr, 10);
-									instance[pmap->name] = static_cast<int64_t>(val);
-								}
-								break;
-								case PT_char8:
-								case PT_char32:
-								case PT_char256:
-								case PT_char1024:
 									instance[pmap->name] = std::string(value_str);
-									break;
-								case PT_complex:
-									// Complex values are already formatted as strings by object_get_value_by_name
-									instance[pmap->name] = std::string(value_str);
-									break;
-								default:
-									// For all other types, store as string
-									instance[pmap->name] = std::string(value_str);
-									break;
 								}
+								break;
+							}
 							}
 							// Skip properties that couldn't be retrieved - don't add null values
 						}

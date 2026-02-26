@@ -1,4 +1,5 @@
 #include "loader.h"
+#include <unordered_set>
 
 void loader::clearQuotesFromStr(string &str)
 {
@@ -1218,6 +1219,46 @@ STATUS loader::loadSchedules()
     return rv;
 }
 
+STATUS loader::loadGlobals()
+{
+    if (!this->jsn.contains("globals") || !this->jsn["globals"].is_object())
+    {
+        return SUCCESS; // no globals section — nothing to do
+    }
+
+    // Read-only or runtime-set globals that must not be overridden on reload
+    static const std::unordered_set<std::string> skip_globals = {
+        "version", "version.major", "version.minor", "version.patch",
+        "version.build", "version.branch",
+        "platform", "exename", "execdir",
+        "checkpoint_loaded",
+    };
+
+    STATUS result = SUCCESS;
+    std::string propValue;
+    for (auto& [name, value] : this->jsn["globals"].items())
+    {
+        if (skip_globals.count(name))
+        {
+            continue;
+        }
+        if (convert(value, propValue) == FAILED)
+        {
+            output_warning("loader::loadGlobals() parsing file, %s: unable to convert value for global '%s', skipping",
+                           this->filename.string().c_str(), name.c_str());
+            continue;
+        }
+        STATUS rv = global_setvar(name.c_str(), propValue.data());
+        if (rv == FAILED)
+        {
+            output_warning("loader::loadGlobals() parsing file, %s: could not set global '%s', skipping",
+                           this->filename.string().c_str(), name.c_str());
+            // Non-fatal — continue with remaining globals
+        }
+    }
+    return result;
+}
+
 STATUS loader::loadJsonFile(filesystem::path filename)
 {
     if (this->open_file(filename))
@@ -1243,6 +1284,10 @@ STATUS loader::loadJsonFile(filesystem::path filename)
             return FAILED;
         }
         if (this->loadModules() == FAILED)
+        {
+            return FAILED;
+        }
+        if (global_checkpoint_loaded && this->loadGlobals() == FAILED)
         {
             return FAILED;
         }

@@ -633,7 +633,7 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
 		int retval;
 		if (var == nullptr)
 		{
-			if (global_strictnames)
+			if (global_strictnames && !global_checkpoint_loaded)
 			{
 				output_error("strict naming prevents implicit creation of %s", name);
 				/* TROUBLESHOOT
