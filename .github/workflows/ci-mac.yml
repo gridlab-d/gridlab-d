@@ -1,0 +1,300 @@
+# .github/workflows/ci-mac.yml
+name: CI – macOS Multipass (Ubuntu ARM64 VM)
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      config:
+        description: "CMake build type"
+        required: false
+        default: "Release"
+      ubuntu_version:
+        description: "Ubuntu release for the VM"
+        required: false
+        default: "24.04"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos-multipass-build:
+    runs-on: macos-15
+    timeout-minutes: 120
+    env:
+      VM_NAME:         gld-builder
+      BUILD_TYPE:      ${{ github.event.inputs.config         || 'Release' }}
+      UBUNTU_VER:      ${{ github.event.inputs.ubuntu_version || '24.04'   }}
+      SRC_DIR:         /home/ubuntu/gridlab-d
+      BUILD_DIR:       /home/ubuntu/gridlab-d/build
+      INSTALL_PREFIX:  /home/ubuntu/.local/GridLAB-D
+
+    steps:
+      # ════════════════════════════════════════════════════════
+      #  HOST – checkout the triggering commit (standard way)
+      # ════════════════════════════════════════════════════════
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Host diagnostics
+        run: |
+          set -x
+          sw_vers
+          uname -m
+          sysctl -n hw.ncpu hw.memsize_usable 2>/dev/null || sysctl -n hw.ncpu hw.memsize
+          df -h .
+          echo "Checked-out ref: ${{ github.ref }}"
+          echo "SHA: ${{ github.sha }}"
+          git log --oneline -3
+
+      # ════════════════════════════════════════════════════════
+      #  HOST – install Multipass
+      # ════════════════════════════════════════════════════════
+      - name: Install Multipass via Homebrew
+        run: |
+          set -euo pipefail
+          brew install --cask multipass
+
+          echo "Waiting for multipassd…"
+          for i in $(seq 1 30); do
+            if multipass version 2>/dev/null; then
+              echo "multipassd ready after ~$(( i * 5 ))s"
+              break
+            fi
+            sleep 5
+          done
+          multipass version || { echo "::error::multipassd did not start"; exit 1; }
+          multipass set local.driver=qemu 2>/dev/null || true
+
+      # ════════════════════════════════════════════════════════
+      #  HOST – launch Ubuntu ARM64 VM
+      # ════════════════════════════════════════════════════════
+      - name: Launch Ubuntu ${{ env.UBUNTU_VER }} VM
+        run: |
+          set -euo pipefail
+          HOST_CPUS=$(sysctl -n hw.ncpu)
+          VM_CPUS=$(( HOST_CPUS > 2 ? HOST_CPUS - 1 : 2 ))
+          VM_MEMORY="4G"
+
+          echo "Launching VM: cpus=$VM_CPUS  mem=$VM_MEMORY  disk=25G"
+          multipass launch "${{ env.UBUNTU_VER }}" \
+            --name   "$VM_NAME" \
+            --cpus   "$VM_CPUS" \
+            --memory "$VM_MEMORY" \
+            --disk   25G \
+            --timeout 600
+
+          multipass info "$VM_NAME"
+
+      # ════════════════════════════════════════════════════════
+      #  HOST → VM – transfer the checked-out source tree
+      # ════════════════════════════════════════════════════════
+      - name: Transfer source into VM
+        run: |
+          set -euo pipefail
+
+          # Pack the checkout (including submodules, excluding .git bulk)
+          TARBALL=/tmp/gld-src.tar.gz
+          tar czf "$TARBALL" \
+            -C "${{ github.workspace }}" .
+          ls -lh "$TARBALL"
+
+          multipass transfer "$TARBALL" "${VM_NAME}:/home/ubuntu/"
+
+          multipass exec "$VM_NAME" -- bash -c "
+            set -euo pipefail
+            mkdir -p ${{ env.SRC_DIR }}
+            tar xzf /home/ubuntu/gld-src.tar.gz -C ${{ env.SRC_DIR }}
+            rm -f   /home/ubuntu/gld-src.tar.gz
+            echo '── source root ──'
+            ls -la ${{ env.SRC_DIR }}
+            echo '── git log (proves we have the right commit) ──'
+            cd ${{ env.SRC_DIR }}
+            git log --oneline -3 || true
+          "
+
+      # ════════════════════════════════════════════════════════
+      #  VM – install build toolchain & libraries
+      # ════════════════════════════════════════════════════════
+      - name: Install build dependencies
+        run: |
+          multipass exec "$VM_NAME" -- bash -c '
+            set -euxo pipefail
+            export DEBIAN_FRONTEND=noninteractive
+            sudo apt-get update -yq
+            sudo apt-get install -yq --no-install-recommends \
+              build-essential \
+              cmake \
+              ninja-build \
+              pkg-config \
+              libboost-dev \
+              libeigen3-dev \
+              git \
+              ca-certificates
+            echo "─── toolchain versions ───"
+            uname -a
+            gcc   --version | head -1
+            g++   --version | head -1
+            cmake --version | head -1
+            ninja --version
+            dpkg -l libeigen3-dev | tail -1
+          '
+
+      # ════════════════════════════════════════════════════════
+      #  VM – configure / build / install
+      # ════════════════════════════════════════════════════════
+      - name: Configure (CMake + Ninja)
+        run: |
+          multipass exec "$VM_NAME" -- bash -c '
+            set -euxo pipefail
+            cd ${{ env.SRC_DIR }}
+            cmake -S . -B build \
+              -G Ninja \
+              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+              -DCMAKE_INSTALL_PREFIX=${{ env.INSTALL_PREFIX }} \
+              -DGLD_CI_BUILD=ON
+          '
+
+      - name: Build GridLAB-D
+        run: |
+          multipass exec "$VM_NAME" -- bash -c '
+            set -euxo pipefail
+            cd ${{ env.SRC_DIR }}
+            cmake --build build --parallel $(nproc) --verbose
+          '
+
+      - name: Install GridLAB-D
+        run: |
+          multipass exec "$VM_NAME" -- bash -c '
+            set -euxo pipefail
+            cd ${{ env.SRC_DIR }}
+            cmake --install build --verbose
+            echo "─── installed tree (first 100 entries) ───"
+            find ${{ env.INSTALL_PREFIX }} -type f | head -100
+          '
+
+      # ════════════════════════════════════════════════════════
+      #  VM – sanity-check the installed binary
+      # ════════════════════════════════════════════════════════
+      - name: Verify installation
+        run: |
+          multipass exec "$VM_NAME" -- bash -c '
+            set -euxo pipefail
+            PREFIX=${{ env.INSTALL_PREFIX }}
+            export PATH="$PREFIX/bin:$PATH"
+            export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:$PREFIX/lib:$PREFIX/lib/gridlabd"
+
+            echo "── which ──"
+            which gridlabd
+
+            echo "── ldd ──"
+            ldd "$(which gridlabd)" || true
+
+            echo "── version ──"
+            gridlabd --version
+
+            echo "── modhelp ──"
+            gridlabd --modhelp 2>&1 | head -40 || true
+          '
+
+      # ════════════════════════════════════════════════════════
+      #  VM – run the full validation suite
+      # ════════════════════════════════════════════════════════
+      - name: Run gridlabd --validate
+        id: validate
+        run: |
+          multipass exec "$VM_NAME" -- bash -c '
+            set -euxo pipefail
+            SRC="${{ env.SRC_DIR }}"
+            PREFIX="${{ env.INSTALL_PREFIX }}"
+
+            export PATH="$PREFIX/bin:$PATH"
+            export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:$PREFIX/lib:$PREFIX/lib/gridlabd"
+            export GLPATH="$SRC:$PREFIX:$PREFIX/bin:$PREFIX/lib:$PREFIX/share:$SRC/gldcore"
+
+            echo "PATH=$PATH"
+            echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+            echo "GLPATH=$GLPATH"
+
+            cd "$SRC"
+            gridlabd -T 0 --redirect none --validate
+          '
+
+      # ════════════════════════════════════════════════════════
+      #  VM – CTest
+      # ════════════════════════════════════════════════════════
+      - name: Run CTest
+        if: always()
+        run: |
+          multipass exec "$VM_NAME" -- bash -c '
+            set -euxo pipefail
+            SRC="${{ env.SRC_DIR }}"
+            PREFIX="${{ env.INSTALL_PREFIX }}"
+
+            export PATH="$PREFIX/bin:$PATH"
+            export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:$PREFIX/lib:$PREFIX/lib/gridlabd"
+            export GLPATH="$SRC:$PREFIX:$PREFIX/bin:$PREFIX/lib:$PREFIX/share:$SRC/gldcore"
+
+            cd "$SRC/build"
+            ctest --verbose --output-on-failure
+          '
+
+      # ════════════════════════════════════════════════════════
+      #  HOST ← VM – pull artefacts back
+      # ════════════════════════════════════════════════════════
+      - name: Retrieve validation logs from VM
+        if: always()
+        run: |
+          set +e
+          mkdir -p "${{ github.workspace }}/artifacts"
+          for f in validate.txt validate_errors.txt gridlabd.xml; do
+            echo "Fetching $f …"
+            multipass transfer \
+              "${VM_NAME}:${{ env.SRC_DIR }}/$f" \
+              "${{ github.workspace }}/artifacts/$f" 2>/dev/null \
+              && echo "  ✓ $f" \
+              || echo "  ✗ $f not found in VM"
+          done
+
+      - name: Show validate.txt
+        if: always()
+        run: |
+          FILE="${{ github.workspace }}/artifacts/validate.txt"
+          if [[ -f "$FILE" ]]; then
+            echo "==== validate.txt (first 300 lines) ===="
+            head -300 "$FILE"
+            {
+              echo "### validate.txt (macOS Multipass – Ubuntu ARM64)"
+              echo '```'
+              head -200 "$FILE"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "validate.txt was not produced."
+          fi
+
+      - name: Upload validation artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validate-macos-multipass
+          path: |
+            artifacts/validate.txt
+            artifacts/validate_errors.txt
+            artifacts/gridlabd.xml
+          if-no-files-found: ignore
+
+      # ════════════════════════════════════════════════════════
+      #  HOST – tear down VM
+      # ════════════════════════════════════════════════════════
+      - name: Tear down VM
+        if: always()
+        run: |
+          multipass stop   "$VM_NAME" 2>/dev/null || true
+          multipass delete  "$VM_NAME" 2>/dev/null || true
+          multipass purge               2>/dev/null || true
