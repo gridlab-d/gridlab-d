@@ -297,7 +297,7 @@ GridLabD::GridLabD() : selected_timestep(0) {
 
 // Set configuration file
 GLDErrorCode GridLabD::set_config_file(const std::string &config_file) {
-  printf("Setting config file: %s\n", config_file.c_str());
+  output_verbose("Setting config file: %s", config_file.c_str());
   return GLD_SUCCESS;
 }
 
@@ -315,7 +315,7 @@ GLDErrorCode GridLabD::set_working_directory(const std::string &dir) {
     return GLD_OPERATION_FAILED;
   }
 
-  printf("Working directory set to: %s\n", global_workdir);
+  output_verbose("Working directory set to: %s", global_workdir);
   return GLD_SUCCESS;
 }
 
@@ -370,16 +370,16 @@ GLDErrorCode GridLabD::load_glm(const std::string &filepath) {
 void set_clocks(std::optional<double> start_time,
                 std::optional<double> stop_time) {
   if (start_time.has_value()) {
-    printf("Setting start_time: %.2f\n", start_time.value());
+    output_verbose("Setting start_time: %.2f", start_time.value());
     global_starttime = start_time.value();
   } else {
-    printf("Using previous start_time: %.2f\n", global_starttime);
+    output_verbose("Using previous start_time: %.2f", global_starttime);
   }
   if (stop_time.has_value()) {
-    printf("Setting stop_time: %.2f\n", stop_time.value());
+    output_verbose("Setting stop_time: %.2f", stop_time.value());
     global_stoptime = stop_time.value();
   } else {
-    printf("Using previous stop_time: %.2f\n", global_stoptime);
+    output_verbose("Using previous stop_time: %.2f", global_stoptime);
   }
   global_clock = global_starttime;
 }
@@ -433,7 +433,7 @@ GLDErrorCode GridLabD::setup_after_load() {
 // Exit GLD
 GLDErrorCode GridLabD::exit_gld(const std::string &filepath) {
   glm_file_path = filepath;
-  printf("Exit GLD: %s\n", filepath.c_str());
+  output_verbose("Exit GLD: %s", filepath.c_str());
   /* do legal stuff */
 #ifdef LEGAL_NOTICE
   if (strcmp(global_pidfile, "") == 0 && legal_notice() == FAILED)
@@ -541,15 +541,15 @@ nlohmann::ordered_json GridLabD::get_checkpoint_json(const std::string& filepath
 
 // Set the GLM model with provided data
 GLDErrorCode GridLabD::set_glm_data(const GLDData &data) {
-  printf("Setting GLM data with %zu fields.\n", data.size());
+  output_verbose("Setting GLM data with %zu fields.", data.size());
   return GLD_SUCCESS;
 }
 
 // Save simulation checkpoint
 GLDErrorCode GridLabD::save_checkpoint(const std::string &save_path,
                                        GLDCheckPointMode mode) {
-  printf("Saving checkpoint to %s with mode %d\n", save_path.c_str(),
-         static_cast<int>(mode));
+  output_verbose("Saving checkpoint to %s with mode %d", save_path.c_str(),
+                 static_cast<int>(mode));
   nlohmann::json checkpoint =
       do_checkpoint(save_path.c_str()); // Use provided directory
 
@@ -561,21 +561,21 @@ GLDErrorCode GridLabD::save_checkpoint(const std::string &save_path,
 // Load simulation checkpoint
 // Add an object
 GLDErrorCode GridLabD::add_object(GLDData &object_data) {
-  printf("Adding object with %zu fields.\n", object_data.size());
+  output_verbose("Adding object with %zu fields.", object_data.size());
   return GLD_SUCCESS;
 }
 
 // Delete an object
 GLDErrorCode GridLabD::delete_object(const std::string &name) {
-  printf("Deleting object named: %s\n", name.c_str());
+  output_verbose("Deleting object named: %s", name.c_str());
   return GLD_SUCCESS;
 }
 
 // Edit an object
 GLDErrorCode GridLabD::edit_object(const std::string &name,
                                    const GLDData &updated_data) {
-  printf("Editing object: %s with %zu fields.\n", name.c_str(),
-         updated_data.size());
+  output_verbose("Editing object: %s with %zu fields.", name.c_str(),
+                 updated_data.size());
   return GLD_SUCCESS;
 }
 
@@ -639,7 +639,7 @@ GLDErrorCode handle_simulation_failure(const char *context_message) {
 // Common helper to ensure simulation is initialized for stepping
 GLDErrorCode ensure_simulation_initialized() {
   if (!exec_is_initialized()) {
-    printf("Simulation not initialized, attempting to initialize...\n");
+    output_verbose("Simulation not initialized, attempting to initialize...");
 
     GLDErrorCode env_check = check_environment_and_handle_failure();
     if (env_check != GLD_SUCCESS) {
@@ -651,7 +651,7 @@ GLDErrorCode ensure_simulation_initialized() {
       return GLD_OPERATION_FAILED;
     }
 
-    printf("Simulation initialized successfully\n");
+    output_verbose("Simulation initialized successfully");
   }
   return GLD_SUCCESS;
 }
@@ -708,7 +708,7 @@ GLDErrorCode GridLabD::run(std::optional<double> start_time,
 
 // Perform a single time step
 GLDErrorCode GridLabD::step(double &simulation_time) {
-  printf("Stepping simulation forward\n");
+  output_verbose("Stepping simulation forward");
 
   // Ensure simulation is initialized
   GLDErrorCode init_result = ensure_simulation_initialized();
@@ -719,7 +719,7 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
 
   // If selected_timestep is 0, use default event-driven behavior (single step)
   if (selected_timestep == 0) {
-    printf("Using default event-driven stepping (selected_timestep = 0)\n");
+    output_verbose("Using default event-driven stepping (selected_timestep = 0)");
     TIMESTAMP prev_clock = global_clock;
 
     STATUS result = exec_step();
@@ -731,8 +731,8 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
     }
 
     simulation_time = (double)global_clock;
-    printf("Stepped from %.2f to %.2f (advanced to next event)\n",
-           (double)prev_clock, simulation_time);
+    output_verbose("Stepped from %.2f to %.2f (advanced to next event)",
+                   (double)prev_clock, simulation_time);
     return GLD_SUCCESS;
   }
 
@@ -740,8 +740,13 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
   TIMESTAMP start_clock = global_clock;
   TIMESTAMP target_clock = start_clock + selected_timestep;
 
-  printf("Stepping from time %.2f to target %.2f (step size: %d seconds)\n",
-         (double)start_clock, (double)target_clock, selected_timestep);
+  // Respect global stoptime when using fixed timesteps
+  if (global_stoptime != TS_NEVER && target_clock > global_stoptime) {
+    target_clock = global_stoptime;
+  }
+
+  output_verbose("Stepping from time %.2f to target %.2f (step size: %d seconds)",
+                 (double)start_clock, (double)target_clock, selected_timestep);
 
   // Cap the next event time so exec_step doesn't overshoot the target.
   global_step_time = target_clock;
@@ -784,7 +789,7 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
   // Update the simulation time
   simulation_time = (double)global_clock;
 
-  printf("Completed step: advanced from %.2f to %.2f\n", (double)start_clock,
+  output_verbose("Completed step: advanced from %.2f to %.2f", (double)start_clock,
          simulation_time);
 
   return GLD_SUCCESS;
@@ -792,26 +797,26 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
 
 // Set pre-step callback
 GLDErrorCode GridLabD::set_prestep_callback(GLDCallback callback) {
-  printf("Setting pre-step callback\n");
+  output_verbose("Setting pre-step callback");
   return GLD_SUCCESS;
 }
 
 // Set post-step callback
 GLDErrorCode GridLabD::set_poststep_callback(GLDCallback callback) {
-  printf("Setting post-step callback\n");
+  output_verbose("Setting post-step callback");
   return GLD_SUCCESS;
 }
 
 // Reset timestep
 GLDErrorCode GridLabD::reset_step(double &current_time) {
-  printf("Resetting simulation step\n");
+  output_verbose("Resetting simulation step");
   current_time = 0.0;
   return GLD_SUCCESS;
 }
 
 // Set time manually
 GLDErrorCode GridLabD::set_time(const std::string &timestamp) {
-  printf("Setting time to: %s\n", timestamp.c_str());
+  output_verbose("Setting time to: %s", timestamp.c_str());
   return GLD_SUCCESS;
 }
 
@@ -830,7 +835,7 @@ GLDErrorCode GridLabD::get_time(std::string &current_time) {
 
 // Set application mode
 GLDErrorCode GridLabD::set_application_mode(GLDApplicationType mode) {
-  printf("Setting application mode: %d\n", static_cast<int>(mode));
+  output_verbose("Setting application mode: %d", static_cast<int>(mode));
   return GLD_SUCCESS;
 }
 
@@ -846,16 +851,16 @@ GLDErrorCode GridLabD::set_time_step(double time_step) {
   // GridLAB-D's core behavior
   selected_timestep = static_cast<int>(time_step);
 
-  printf("Setting API timestep to: %d seconds (global_minimum_timestep "
-         "unchanged at %d)\n",
-         selected_timestep, global_minimum_timestep);
+  output_verbose("Setting API timestep to: %d seconds (global_minimum_timestep "
+                 "unchanged at %d)",
+                 selected_timestep, global_minimum_timestep);
   return GLD_SUCCESS;
 }
 
 // Step the simulation to a specific target timestamp
 GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
                                double &simulation_time) {
-  printf("Stepping to target time: %s\n", target_time_str.c_str());
+  output_verbose("Stepping to target time: %s", target_time_str.c_str());
 
   // Ensure simulation is initialized
   GLDErrorCode init_result = ensure_simulation_initialized();
@@ -870,7 +875,7 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
   TIMESTAMP target_clock = convert_to_timestamp_delta(
       target_time_str.c_str(), &target_nanoseconds, &target_time_dbl);
 
-  printf("Formatted target time: %lld\n", target_clock);
+  output_verbose("Formatted target time: %lld", target_clock);
 
   if (target_clock == TS_INVALID) {
     output_error("Invalid timestamp string: %s", target_time_str.c_str());
@@ -899,8 +904,8 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
 
   char start_buffer[64];
   convert_from_timestamp(start_clock, start_buffer, sizeof(start_buffer));
-  printf("Stepping from %s to target %s\n", start_buffer,
-         target_time_str.c_str());
+  output_verbose("Stepping from %s to target %s", start_buffer,
+                 target_time_str.c_str());
 
   // Keep stepping until we reach or pass the target time (with sub-second
   // precision)
@@ -940,8 +945,8 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
 
   char final_buffer[64];
   convert_from_timestamp(global_clock, final_buffer, sizeof(final_buffer));
-  printf("Reached time %s (target was %s)\n", final_buffer,
-         target_time_str.c_str());
+  output_verbose("Reached time %s (target was %s)", final_buffer,
+                 target_time_str.c_str());
 
   global_step_time = TS_NEVER;
 
@@ -978,8 +983,8 @@ GridLabD::get_objects_by_class(const std::string &class_name) {
     obj = object_get_next(obj);
   }
 
-  printf("Found %zu objects of class '%s'\n", object_names.size(),
-         class_name.c_str());
+  output_verbose("Found %zu objects of class '%s'", object_names.size(),
+                 class_name.c_str());
   return object_names;
 }
 
@@ -1022,6 +1027,61 @@ GLDErrorCode GridLabD::get_property(const std::string &object_name,
   return GLD_SUCCESS;
 }
 
+// Get property metadata (type, units, description)
+GLDErrorCode GridLabD::get_property_info(const std::string &object_name,
+                                        const std::string &property_name,
+                                        int &prop_type,
+                                        std::string &unit_str,
+                                        std::string &description) {
+  // Find the object by name
+  OBJECT *obj = nullptr;
+
+  // Try to find by name first
+  obj = object_find_name(object_name.c_str());
+
+  // If not found by name, try to parse as ID
+  if (obj == nullptr) {
+    char *endptr;
+    long id = strtol(object_name.c_str(), &endptr, 10);
+    if (*endptr == '\0') { // Valid integer
+      obj = object_find_by_id(static_cast<OBJECTNUM>(id));
+    }
+  }
+
+  if (obj == nullptr) {
+    output_error("Object '%s' not found", object_name.c_str());
+    return GLD_OPERATION_FAILED;
+  }
+
+  // Find the property
+  PROPERTY *prop = object_get_property(obj, property_name.c_str(), nullptr);
+  
+  if (prop == nullptr) {
+    output_error("Property '%s' not found on object '%s'",
+                 property_name.c_str(), object_name.c_str());
+    return GLD_OPERATION_FAILED;
+  }
+
+  // Get property type
+  prop_type = static_cast<int>(prop->ptype);
+
+  // Get unit string
+  if (prop->unit != nullptr && prop->unit->name != nullptr) {
+    unit_str = std::string(prop->unit->name);
+  } else {
+    unit_str = "";
+  }
+
+  // Get description
+  if (prop->description != nullptr) {
+    description = std::string(prop->description);
+  } else {
+    description = "";
+  }
+
+  return GLD_SUCCESS;
+}
+
 // Set a property value on an object
 GLDErrorCode GridLabD::set_property(const std::string &object_name,
                                     const std::string &property_name,
@@ -1061,8 +1121,8 @@ GLDErrorCode GridLabD::set_property(const std::string &object_name,
     return GLD_OPERATION_FAILED;
   }
 
-  printf("Set property '%s.%s' = '%s'\n", object_name.c_str(),
-         property_name.c_str(), value.c_str());
+  output_verbose("Set property '%s.%s' = '%s'", object_name.c_str(),
+                 property_name.c_str(), value.c_str());
   return GLD_SUCCESS;
 }
 
@@ -1185,8 +1245,8 @@ GLDErrorCode GridLabD::set_property_by_class(const std::string &class_name,
     obj = object_get_next(obj);
   }
 
-  printf(
-      "Set property '%s.%s' = '%s' on %d objects (%d succeeded, %d failed)\n",
+  output_verbose(
+      "Set property '%s.%s' = '%s' on %d objects (%d succeeded, %d failed)",
       class_name.c_str(), property_name.c_str(), value.c_str(),
       success_count + failure_count, success_count, failure_count);
 
@@ -1239,8 +1299,8 @@ GridLabD::get_properties_by_class(const std::string &class_name,
     obj = object_get_next(obj);
   }
 
-  printf("Retrieved property '%s.%s' from %zu objects\n", class_name.c_str(),
-         property_name.c_str(), property_map.size());
+  output_verbose("Retrieved property '%s.%s' from %zu objects", class_name.c_str(),
+                 property_name.c_str(), property_map.size());
 
   return property_map;
 }
@@ -1258,7 +1318,7 @@ std::vector<std::string> GridLabD::get_all_classes() {
     oclass = oclass->next;
   }
 
-  printf("Found %zu classes in the model\n", class_names.size());
+  output_verbose("Found %zu classes in the model", class_names.size());
   return class_names;
 }
 
@@ -1297,8 +1357,8 @@ GridLabD::get_object_properties(const std::string &object_name) {
                                    ? property_map.size() - meta_fields
                                    : 0;
 
-  printf("Retrieved %zu properties from object '%s' (class: %s)\n",
-         reported_properties, object_name.c_str(), obj->oclass->name);
+  output_verbose("Retrieved %zu properties from object '%s' (class: %s)",
+                 reported_properties, object_name.c_str(), obj->oclass->name);
 
   return property_map;
 }
@@ -1325,8 +1385,8 @@ GridLabD::get_all_objects(const std::string &class_name) {
     obj = object_get_next(obj);
   }
 
-  printf("Collected %zu objects for class '%s'\n", objects.size(),
-         class_name.c_str());
+  output_verbose("Collected %zu objects for class '%s'", objects.size(),
+                 class_name.c_str());
   return objects;
 }
 
@@ -1348,8 +1408,8 @@ GridLabD::get_model() {
     }
   }
 
-  printf("Retrieved entire model: %zu classes with %zu total objects\n",
-         model.size(), total_objects);
+  output_verbose("Retrieved entire model: %zu classes with %zu total objects",
+                 model.size(), total_objects);
 
   return model;
 }

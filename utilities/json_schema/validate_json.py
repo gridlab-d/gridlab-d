@@ -1,5 +1,7 @@
 import os
 import json
+import sys
+
 from jsonschema import Draft7Validator, SchemaError
 
 # Function to load a JSON file from the specified directory
@@ -66,11 +68,13 @@ def validate_json(data, json_schema):
 
 if __name__ == "__main__":
     # File names
-    json_file_name = "TE_CHALLENGE_values.json"  # The JSON file
-    schema_file_name = "default_schema.json"  # The schema file
+    json_file_name = "Te_Challange_test.json"  # The JSON file
+    schema_file_name = "glm_schema.json"  # The schema file
+    if len(sys.argv[1:]) > 0:
+        json_file_name = sys.argv[1]  # The JSON file
 
     # Load the schema
-    schema = load_json(schema_file_name, directory="output")
+    schema = load_json(schema_file_name, directory="references")
 
     # Load the JSON data
     json_data = load_json(json_file_name, directory="output")

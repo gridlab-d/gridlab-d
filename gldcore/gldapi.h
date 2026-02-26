@@ -163,6 +163,20 @@ public:
                             const std::string &property_name,
                             std::string &value);
 
+  /** Get property metadata (type, units, description)
+   * @param object_name The name of the object  
+   * @param property_name The name of the property
+   * @param prop_type Output: property type enum value
+   * @param unit_str Output: unit string (empty if no unit)
+   * @param description Output: property description
+   * @return Error code indicating success or failure
+   */
+  GLDErrorCode get_property_info(const std::string &object_name,
+                                 const std::string &property_name,
+                                 int &prop_type,
+                                 std::string &unit_str,
+                                 std::string &description);
+
   /** Set a property value on an object
    * @param object_name The name of the object
    * @param property_name The name of the property

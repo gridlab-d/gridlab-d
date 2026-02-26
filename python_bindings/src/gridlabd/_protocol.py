@@ -62,6 +62,7 @@ class Command(Enum):
     GET_MODEL = "get_model"
     GET_OBJECT_COUNT = "get_object_count"
     GET_PROPERTY = "get_property"
+    GET_PROPERTY_INFO = "get_property_info"
     SET_PROPERTY = "set_property"
     GET_PROPERTIES_BY_CLASS = "get_properties_by_class"
     SET_PROPERTY_BY_CLASS = "set_property_by_class"

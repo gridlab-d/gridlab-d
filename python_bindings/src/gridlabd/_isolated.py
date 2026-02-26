@@ -5,13 +5,37 @@ This module provides a GridLabD interface that runs each instance in a separate
 subprocess, preventing global state conflicts in the C++ core.
 """
 
+import atexit
 import subprocess
 import sys
 import os
+import weakref
+import re
+from datetime import datetime
 from subprocess import PIPE
 from typing import Any, Optional
 
 from ._protocol import Command, Message, Response
+from ._time_utils import gld_to_iso
+
+def _normalize_time_input(value: str) -> str:
+    """Normalize ISO 8601 time strings into GridLAB-D friendly format.
+
+    GridLAB-D core APIs generally accept "YYYY-MM-DD HH:MM:SS" without
+    timezone offsets. If an ISO string is provided, strip the offset and
+    replace the T separator.
+    """
+    if not isinstance(value, str):
+        return value
+
+    if "T" in value:
+        try:
+            parsed = datetime.fromisoformat(value)
+            return parsed.strftime("%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return value.replace("T", " ", 1)
+
+    return value
 
 
 class IsolatedGridLabD:
@@ -21,15 +45,31 @@ class IsolatedGridLabD:
     Each instance spawns its own worker process, ensuring complete isolation
     of global state in the C++ core.
     """
+
+    _instances: "weakref.WeakSet[IsolatedGridLabD]" = weakref.WeakSet()
+    _atexit_registered = False
     
-    def __init__(self):
-        """Create a new isolated GridLabD instance."""
+    def __init__(self, verbose: bool = False):
+        """Create a new isolated GridLabD instance.
+
+        Args:
+            verbose: If True, pass C++ debug/warning output through to stderr.
+                     If False (default), suppress console output. Use
+                     get_messages() to retrieve warnings and errors.
+        """
         self._process: Optional[subprocess.Popen] = None
+        self._verbose = verbose
         self._spawn_worker()
         # Initialize the GridLabD instance in the worker
         response = self._send_command(Command.INIT, {})
         if not response.success:
             raise RuntimeError(f"Failed to initialize worker: {response.error}")
+
+        # Track instances to ensure clean shutdown on interpreter exit
+        IsolatedGridLabD._instances.add(self)
+        if not IsolatedGridLabD._atexit_registered:
+            atexit.register(IsolatedGridLabD._shutdown_all)
+            IsolatedGridLabD._atexit_registered = True
     
     def _spawn_worker(self):
         """Spawn a new worker subprocess and wait for it to be ready."""
@@ -37,9 +77,10 @@ class IsolatedGridLabD:
             [sys.executable, "-m", "gridlabd._worker"],
             stdin=PIPE,
             stdout=PIPE,
-            stderr=sys.stderr,  # Send worker stderr to parent stderr for debugging
+            stderr=sys.stderr if self._verbose else subprocess.DEVNULL,
             text=True,
-            bufsize=1
+            bufsize=1,
+            start_new_session=True
         )
         
         # Read the READY signal (worker sends it immediately on startup)
@@ -78,10 +119,13 @@ class IsolatedGridLabD:
                 # ensure the worker is terminated.
                 if exit_code is None:
                     try:
-                        self._process.terminate()
                         self._process.wait(timeout=2)
-                    except Exception:
-                        pass
+                    except subprocess.TimeoutExpired:
+                        try:
+                            self._process.kill()
+                            self._process.wait(timeout=3)
+                        except Exception:
+                            pass
                 self._process = None
                 return Response(success=True, result=0)
             if exit_code is not None:
@@ -115,21 +159,28 @@ class IsolatedGridLabD:
             if exit_code is not None:
                 raise RuntimeError(f"Worker process crashed (exit code {exit_code}) while processing {command.name}. Last output: {response_line[:100]}")
             raise RuntimeError(f"Invalid JSON response from worker for {command.name}: {e}. Response: {response_line[:100]}")
+
+    @classmethod
+    def _shutdown_all(cls):
+        """Ensure all worker processes are cleanly stopped at interpreter exit."""
+        for inst in list(cls._instances):
+            try:
+                inst._shutdown_worker()
+            except Exception:
+                pass
+
+    def _shutdown_worker(self):
+        """Attempt clean worker shutdown without sending SIGTERM."""
+        if self._process and self._process.poll() is None:
+            try:
+                self._process.kill()
+                self._process.wait(timeout=3)
+            except Exception:
+                pass
     
     def __del__(self):
         """Clean up the worker process."""
-        if self._process and self._process.poll() is None:
-            try:
-                # Try graceful termination first
-                self._process.terminate()
-                try:
-                    self._process.wait(timeout=2)
-                except subprocess.TimeoutExpired:
-                    # Force kill if it doesn't terminate
-                    self._process.kill()
-                    self._process.wait(timeout=3)
-            except Exception:
-                pass
+        self._shutdown_worker()
     
     # Static methods
     @staticmethod
@@ -189,8 +240,103 @@ class IsolatedGridLabD:
         return self.setup_before_load()
     
     # Loading methods
-    def load_glm(self, arguments: list[str]) -> int:
-        """Load a model using argv-style arguments (list of strings)."""
+    def load_glm(
+        self, 
+        filename_or_args: str | list[str],
+        *,
+        defines: dict[str, str] | None = None,
+        verbose: bool = False,
+        warn: bool = False,
+        quiet: bool = False,
+        debug: bool = False,
+        debugger: bool = False,
+        check: bool = False,
+        workdir: str | None = None,
+        threads: int | None = None,
+        compile_only: bool = False,
+        save: str | None = None,
+        **kwargs
+    ) -> int:
+        """Load a model using either argv-style arguments or Pythonic kwargs.
+        
+        Args:
+            filename_or_args: Either a GLM filename (str) for Pythonic style,
+                            or a list of argv-style arguments for backward compatibility
+            defines: Dictionary of global variables to define (e.g., {"VAR": "value"})
+            verbose: Enable verbose output messages
+            warn: Enable warning messages
+            quiet: Suppress all but error and fatal messages
+            debug: Enable debug messages
+            debugger: Enable the debugger
+            check: Perform module checks before starting
+            workdir: Set the working directory for resolving relative paths
+            threads: Set maximum number of threads allowed
+            compile_only: Enable compile-only mode
+            save: Enable save of output to specified file
+            **kwargs: Additional arguments (ignored for forward compatibility)
+        
+        Returns:
+            Error code (0 for success)
+            
+        Examples:
+            # Old style (backward compatible)
+            gld.load_glm(["model.glm"])
+            gld.load_glm(["model.glm", "-D", "VAR=123", "--verbose"])
+            
+            # New Pythonic style
+            gld.load_glm("model.glm")
+            gld.load_glm("model.glm", verbose=True)
+            gld.load_glm("model.glm", defines={"VAR": "123", "PARAM": "value"})
+            gld.load_glm("model.glm", workdir="/path/to/dir", warn=True)
+            gld.load_glm("model.glm", defines={"X": "10"}, threads=4, verbose=True)
+        """
+        # Backward compatibility: if first arg is a list, use old behavior
+        if isinstance(filename_or_args, list):
+            arguments = filename_or_args
+        else:
+            # Build argv-style arguments from kwargs
+            # GridLAB-D expects: [filename, options...]
+            arguments = [filename_or_args]
+            
+            # Add options after filename
+            if check:
+                arguments.append("--check")
+            
+            if debug:
+                arguments.append("--debug")
+            
+            if debugger:
+                arguments.append("--debugger")
+            
+            if verbose:
+                arguments.append("--verbose")
+            
+            if warn:
+                arguments.append("--warn")
+            
+            if quiet:
+                arguments.append("--quiet")
+            
+            if workdir is not None:
+                arguments.append("-W")
+                arguments.append(workdir)
+            
+            if threads is not None:
+                arguments.append("--threadcount")
+                arguments.append(str(threads))
+            
+            if defines:
+                for key, value in defines.items():
+                    arguments.append("-D")
+                    arguments.append(f"{key}={value}")
+            
+            if compile_only:
+                arguments.append("--compile")
+            
+            if save is not None:
+                arguments.append("--save")
+                arguments.append(save)
+        
         response = self._send_command(Command.LOAD_GLM, {"arguments": arguments})
         if not response.success:
             raise RuntimeError(response.error)
@@ -223,38 +369,61 @@ class IsolatedGridLabD:
             raise RuntimeError(response.error)
         return response.result
     
-    def step(self) -> tuple[int, float]:
-        """Advance the simulation by one time step."""
+    def step(self) -> tuple[int, Optional[str]]:
+        """Advance the simulation by one time step.
+
+        Returns:
+            tuple: (error_code, simulation_time) where simulation_time is an
+                   ISO 8601 string in the simulation's local timezone, or None
+                   if the time is a sentinel value (INIT, NEVER).
+        """
         if self.get_object_count() == 0:
             raise RuntimeError("Cannot step simulation: no objects loaded in model")
-  
+
         response = self._send_command(Command.STEP, {})
         if not response.success:
             raise RuntimeError(response.error)
-        
-        return response.result["code"], response.result["time"]
+
+        return response.result["code"], gld_to_iso(response.result["time"])
     
-    def step_to(self, target_time_str: str) -> tuple[int, float]:
-        """Step the simulation to a specific timestamp (ISO 8601 string)."""
-        response = self._send_command(Command.STEP_TO, {"target_time": target_time_str})
+    def step_to(self, target_time_str: str) -> tuple[int, Optional[str]]:
+        """Step the simulation to a specific timestamp.
+
+        Args:
+            target_time_str: Target time as an ISO 8601 string.
+
+        Returns:
+            tuple: (error_code, simulation_time) where simulation_time is an
+                   ISO 8601 string in the simulation's local timezone, or None
+                   if the time is a sentinel value.
+        """
+        normalized_time = _normalize_time_input(target_time_str)
+        response = self._send_command(Command.STEP_TO, {"target_time": normalized_time})
         if not response.success:
             raise RuntimeError(response.error)
-        return response.result["code"], response.result["time"]
+        return response.result["code"], gld_to_iso(response.result["time"])
     
     # Time management methods
     def set_time(self, timestamp: str) -> int:
         """Set the simulation time."""
-        response = self._send_command(Command.SET_TIME, {"timestamp": timestamp})
+        normalized_time = _normalize_time_input(timestamp)
+        response = self._send_command(Command.SET_TIME, {"timestamp": normalized_time})
         if not response.success:
             raise RuntimeError(response.error)
         return response.result
     
-    def get_time(self) -> tuple[int, str]:
-        """Get the current simulation time."""
+    def get_time(self) -> tuple[int, Optional[str]]:
+        """Get the current simulation time.
+
+        Returns:
+            tuple: (error_code, current_time) where current_time is an
+                   ISO 8601 string in the simulation's local timezone, or None
+                   if the time represents INIT or NEVER.
+        """
         response = self._send_command(Command.GET_TIME, {})
         if not response.success:
             raise RuntimeError(response.error)
-        return response.result["code"], response.result["time"]
+        return response.result["code"], gld_to_iso(response.result["time"])
     
     def set_time_step(self, time_step: int) -> int:
         """Set the simulation time step."""
@@ -360,12 +529,62 @@ class IsolatedGridLabD:
             raise RuntimeError(response.error)
         return response.result["code"], response.result["value"]
     
-    def set_property(self, object_name: str, property_name: str, value: str) -> int:
-        """Set a property value on an object."""
+    def get_property_info(self, object_name: str, property_name: str) -> tuple[int, dict]:
+        """Get property metadata (type, unit, description).
+        
+        Args:
+            object_name: Name or ID of the object
+            property_name: Name of the property
+            
+        Returns:
+            tuple: (error_code, info_dict) where info_dict contains:
+                - type: PropertyType enum value (int)
+                - type_name: PropertyType enum name (str)
+                - unit: Unit string (str, empty if no unit)
+                - description: Property description (str)
+        """
+        response = self._send_command(Command.GET_PROPERTY_INFO, {
+            "object_name": object_name,
+            "property_name": property_name
+        })
+        if not response.success:
+            raise RuntimeError(response.error)
+        return response.result["code"], response.result["info"]
+    
+    def set_property(self, object_name: str, property_name: str, value) -> int:
+        """Set a property value on an object.
+        
+        Args:
+            object_name: Name or ID of the object
+            property_name: Name of the property
+            value: Value to set - can be str, int, float, bool, or complex
+                   Native Python types are automatically converted to GridLAB-D format
+        
+        Returns:
+            Error code (0 for success)
+        """
+        # Convert Python native types to strings for C++ binding
+        if isinstance(value, bool):
+            # Handle bool before int since bool is subclass of int
+            str_value = "TRUE" if value else "FALSE"
+        elif isinstance(value, complex):
+            # Convert complex to GridLAB-D format: "real+imagj" or "real-imagj"
+            if value.imag >= 0:
+                str_value = f"{value.real}+{value.imag}j"
+            else:
+                str_value = f"{value.real}{value.imag}j"
+        elif isinstance(value, (int, float)):
+            str_value = str(value)
+        elif isinstance(value, str):
+            str_value = value
+        else:
+            # Let it through and see what happens
+            str_value = str(value)
+        
         response = self._send_command(Command.SET_PROPERTY, {
             "object_name": object_name,
             "property_name": property_name,
-            "value": value
+            "value": str_value
         })
         if not response.success:
             raise RuntimeError(response.error)
@@ -394,18 +613,76 @@ class IsolatedGridLabD:
     
     # Legacy global variable methods (for backward compatibility)
     def global_setvar(self, name: str, value: str) -> int:
-        """Set a global variable (legacy support)."""
+        """Set a global variable."""
         response = self._send_command(Command.SET_GLOBAL, {"name": name, "value": value})
         if not response.success:
             raise RuntimeError(response.error)
         return response.result
     
     def global_getvar(self, name: str) -> str:
-        """Get a global variable (legacy support)."""
+        """Get a global variable."""
         response = self._send_command(Command.GET_GLOBAL, {"name": name})
         if not response.success:
             raise RuntimeError(response.error)
         return response.result
+    
+    # Convenience methods for clock properties
+    def get_clock(self) -> Optional[str]:
+        """Get the current simulation time.
+
+        Returns:
+            ISO 8601 string in the simulation's local timezone, or None
+            if the clock has not been initialized.
+        """
+        return gld_to_iso(self.global_getvar("clock"))
+
+    def get_starttime(self) -> Optional[str]:
+        """Get the simulation start time.
+
+        Returns:
+            ISO 8601 string in the simulation's local timezone, or None
+            if start time is not set.
+        """
+        return gld_to_iso(self.global_getvar("starttime"))
+
+    def get_stoptime(self) -> Optional[str]:
+        """Get the simulation stop time.
+
+        Returns:
+            ISO 8601 string in the simulation's local timezone, or None
+            if stop time is NEVER (unbounded simulation).
+        """
+        return gld_to_iso(self.global_getvar("stoptime"))
+    
+    def set_starttime(self, value: str) -> int:
+        """Set the simulation start time.
+        
+        Args:
+            value: Start time as string (ISO 8601 format or timestamp)
+            
+        Returns:
+            Error code (0 for success)
+        """
+        return self.global_setvar("starttime", _normalize_time_input(value))
+    
+    def set_stoptime(self, value: str) -> int:
+        """Set the simulation stop time.
+        
+        Args:
+            value: Stop time as string (ISO 8601 format or timestamp)
+            
+        Returns:
+            Error code (0 for success)
+        """
+        return self.global_setvar("stoptime", _normalize_time_input(value))
+    
+    def get_timezone(self) -> str:
+        """Get the current timezone.
+        
+        Returns:
+            Timezone string
+        """
+        return self.global_getvar("timezone")
     
     # Message capture methods
     def get_messages(self) -> list[dict[str, str]]:

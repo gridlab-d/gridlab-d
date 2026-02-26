@@ -10,6 +10,37 @@ import json
 from typing import Any
 
 from ._protocol import Command, Message, Response
+import re
+
+_TZ_OFFSETS = {
+    "PST": "-08:00",
+    "PDT": "-07:00",
+    "MST": "-07:00",
+    "MDT": "-06:00",
+    "CST": "-06:00",
+    "CDT": "-05:00",
+    "EST": "-05:00",
+    "EDT": "-04:00",
+}
+
+
+def _to_iso8601(time_str: str) -> str:
+    value = time_str.strip()
+    if re.match(r"^\d{4}-\d{2}-\d{2}T", value):
+        return value
+
+    parts = value.split()
+    if len(parts) < 2:
+        return value
+
+    date_part = parts[0]
+    time_part = parts[1]
+    tz_part = parts[2] if len(parts) >= 3 else None
+
+    iso = f"{date_part}T{time_part}"
+    if tz_part in _TZ_OFFSETS:
+        iso = f"{iso}{_TZ_OFFSETS[tz_part]}"
+    return iso
 
 # Import the direct C++ binding
 from .gridlabd_core import GridLabD as DirectGridLabD, GLDErrorCode
@@ -161,7 +192,8 @@ def handle_step(message: Message) -> Response:
     """Step the simulation."""
     try:
         code, simulation_time = _gld_instance.step()
-        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "time": simulation_time})
+        iso_time = _to_iso8601(simulation_time)
+        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "time": iso_time})
     except Exception as e:
         return Response(success=False, error=str(e))
 
@@ -171,7 +203,8 @@ def handle_step_to(message: Message) -> Response:
     try:
         target_time = message.args["target_time"]
         code, simulation_time = _gld_instance.step_to(target_time)
-        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "time": simulation_time})
+        iso_time = _to_iso8601(simulation_time)
+        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "time": iso_time})
     except Exception as e:
         return Response(success=False, error=str(e))
 
@@ -189,7 +222,8 @@ def handle_get_time(message: Message) -> Response:
     """Get the current simulation time."""
     try:
         code, current_time = _gld_instance.get_time()
-        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "time": current_time})
+        iso_time = _to_iso8601(current_time)
+        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "time": iso_time})
     except Exception as e:
         return Response(success=False, error=str(e))
 
@@ -325,6 +359,22 @@ def handle_get_property(message: Message) -> Response:
         return Response(success=False, error=str(e))
 
 
+def handle_get_property_info(message: Message) -> Response:
+    """Get property metadata (type, unit, description)."""
+    try:
+        # Check if the method exists on the C++ binding
+        if not hasattr(_gld_instance, 'get_property_info'):
+            return Response(success=False, error="'gridlabd.gridlabd_core.GridLabD' object has no attribute 'get_property_info'")
+        
+        code, info = _gld_instance.get_property_info(
+            message.args["object_name"],
+            message.args["property_name"]
+        )
+        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "info": info})
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
 def handle_set_property(message: Message) -> Response:
     """Set a property value."""
     try:
@@ -364,19 +414,22 @@ def handle_set_property_by_class(message: Message) -> Response:
 
 
 def handle_set_global(message: Message) -> Response:
-    """Set a global variable (legacy support)."""
+    """Set a global variable."""
     try:
-        # For now, just return success - globals are handled differently
-        return Response(success=True, result=0)
+        result = _gld_instance.set_global(
+            message.args["name"],
+            message.args["value"]
+        )
+        return Response(success=True, result=result)
     except Exception as e:
         return Response(success=False, error=str(e))
 
 
 def handle_get_global(message: Message) -> Response:
-    """Get a global variable (legacy support)."""
+    """Get a global variable."""
     try:
-        # For now, return empty string
-        return Response(success=True, result="")
+        result = _gld_instance.get_global(message.args["name"])
+        return Response(success=True, result=result)
     except Exception as e:
         return Response(success=False, error=str(e))
 
@@ -459,6 +512,7 @@ COMMAND_HANDLERS = {
     Command.GET_ALL_OBJECTS: handle_get_all_objects,
     Command.GET_MODEL: handle_get_model,
     Command.GET_PROPERTY: handle_get_property,
+    Command.GET_PROPERTY_INFO: handle_get_property_info,
     Command.SET_PROPERTY: handle_set_property,
     Command.GET_PROPERTIES_BY_CLASS: handle_get_properties_by_class,
     Command.SET_PROPERTY_BY_CLASS: handle_set_property_by_class,
@@ -500,6 +554,8 @@ def main():
             
             protocol_out.write(response.to_json() + "\n")
             protocol_out.flush()
+            if message.command in (Command.EXIT_GLD, Command.FINALIZE):
+                break
         except Exception as e:
             response = Response(success=False, error=f"Worker error: {str(e)}")
             protocol_out.write(response.to_json() + "\n")

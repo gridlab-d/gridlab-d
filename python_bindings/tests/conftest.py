@@ -22,11 +22,14 @@ test_data_dir = Path(__file__).parent
 glpath_parts = []
 if (BUILD_ROOT / "share").exists():
     glpath_parts.append(str(BUILD_ROOT / "share"))
+if (BUILD_ROOT / "lib").exists():
+    glpath_parts.append(str(BUILD_ROOT / "lib"))
 glpath_parts.append(str(test_data_dir))
 existing_glpath = os.environ.get("GLPATH")
 if existing_glpath:
     glpath_parts.append(existing_glpath)
 os.environ["GLPATH"] = os.pathsep.join(glpath_parts)
+print(f"[tests] GLPATH={os.environ['GLPATH']}")
 
 import pytest
 from gridlabd import GridLabD
