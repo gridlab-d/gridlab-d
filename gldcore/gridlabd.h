@@ -123,6 +123,12 @@
 #endif
 #endif
 
+#ifdef _MSC_VER
+#include <string.h>
+#define strcasecmp _stricmp
+#define strncasecmp _strnicmp
+#endif
+
 #include <cstdarg>
 #include <atomic>
 // #include <execinfo.h>
