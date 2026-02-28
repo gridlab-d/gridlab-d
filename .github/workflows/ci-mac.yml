@@ -1,5 +1,5 @@
-# .github/workflows/ci-linux-matrix.yml
-name: CI – Linux (ARM64 + x86_64) with Python validator
+# .github/workflows/ci-matrix.yml
+name: CI – Linux (ARM64 + x86_64), Windows & macOS with Python validator
 
 on:
   push:
@@ -16,16 +16,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-validate:
+  # ─────────────────────────────────────────────
+  # Linux (matrix): Ubuntu ARM64 + Ubuntu x86_64
+  # ─────────────────────────────────────────────
+  linux-build-and-validate:
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: ubuntu-arm64
-            runs-on: ubuntu-24.04-arm64   # ARM64 native hosted runner
+            runs-on: ubuntu-24.04-arm       # Official ARM64 label
             triplet: aarch64
           - name: ubuntu-x64
-            runs-on: ubuntu-latest        # x86_64 runner
+            runs-on: ubuntu-latest
             triplet: x86_64
 
     name: ${{ matrix.name }}
@@ -79,8 +82,7 @@ jobs:
             -DGLD_CI_BUILD=ON
 
       - name: Build GridLAB-D
-        run: |
-          cmake --build build --parallel $(nproc) --verbose
+        run: cmake --build build --parallel $(nproc) --verbose
 
       - name: Install GridLAB-D
         run: |
@@ -88,30 +90,24 @@ jobs:
           echo "─── installed tree (first 100 entries) ───"
           find "$INSTALL_PREFIX" -type f | head -100
 
-      # ─────────────────────────────────────────────
-      # Python-based validation replaces gridlabd --validate
-      # ─────────────────────────────────────────────
-      - name: Install Python 3 + pip
-        run: |
-          sudo apt-get update -yq
-          sudo apt-get install -yq python3 python3-pip
+      # Python-based validation
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
       - name: Install validator dependencies (optional)
         if: ${{ hashFiles('tools/validate/requirements.txt') != '' }}
         run: |
-          pip3 install -r tools/validate/requirements.txt
+          pip install -r tools/validate/requirements.txt
 
       - name: Run Python GridLAB-D validator
         run: |
           set -euxo pipefail
-
-          # Export runtime env so the validator can find GLD binaries/modules
           export PATH="${INSTALL_PREFIX}/bin:$PATH"
           export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib/gridlabd"
           export GLPATH="$(pwd):${INSTALL_PREFIX}:${INSTALL_PREFIX}/bin:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/share:$(pwd)/gldcore"
-
-          # If your script lives elsewhere, adjust the path accordingly
-          python3 validate_gld.py
+          python validate_gld.py
 
       - name: Upload validation artefacts
         if: always()
@@ -132,3 +128,226 @@ jobs:
           export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib/gridlabd"
           export GLPATH="$(pwd)/..:${INSTALL_PREFIX}:${INSTALL_PREFIX}/bin:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/share:$(pwd)/../gldcore"
           ctest --verbose --output-on-failure
+
+  # ─────────────────────────────────────────────
+  # Windows: Visual Studio 2022 + vcpkg + Python validator
+  # ─────────────────────────────────────────────
+  win-build-and-validate:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup vcpkg (manifest mode + cache)
+        uses: lukka/run-vcpkg@v11
+        with:
+          runVcpkgInstall: true
+          logCollectionRegExps: |
+            .*/CMakeOutput\.log$
+            .*/CMakeError\.log$
+            .*/vcpkg/buildtrees/.+\.log$
+
+      - name: Clean install prefix (Windows)
+        shell: pwsh
+        run: |
+          $installRoot = "$env:USERPROFILE\.temp\GridLAB-D"
+          if (Test-Path $installRoot) {
+            Write-Host "Removing previous install at $installRoot..."
+            Remove-Item -Path $installRoot -Recurse -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Configure CMake (VS2022 + vcpkg toolchain)
+        shell: pwsh
+        run: >
+          cmake -S .
+          --log-level=VERBOSE
+          --log-context
+          --debug-output
+          -B out/build/ci-windows
+          -G "Visual Studio 17 2022"
+          -A x64
+          -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
+          -DVCPKG_TARGET_TRIPLET=x64-windows
+          "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          "-DCMAKE_INSTALL_PREFIX=$env:USERPROFILE/.temp/GridLAB-D"
+          -DGLD_CI_BUILD=ON
+
+      - name: Build GridLAB-D (Release)
+        shell: pwsh
+        run: cmake --build out/build/ci-windows --config Release -t ALL_BUILD
+        env:
+          CFLAGS: "/W0"
+          CXXFLAGS: "/W0"
+
+      - name: Install GridLAB-D (Release)
+        shell: pwsh
+        run: cmake --install out/build/ci-windows --config Release --verbose
+
+      - name: List installed DLLs and EXEs
+        shell: pwsh
+        run: |
+          $installRoot = "$env:USERPROFILE\.temp\GridLAB-D"
+          Write-Host "Listing under $installRoot..."
+          Get-ChildItem -Path $installRoot -Include *.dll, *.exe -Recurse | ForEach-Object {
+            Write-Host $_.FullName
+          }
+
+      # Python-based validation
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Python GridLAB-D validator (Windows)
+        shell: pwsh
+        run: |
+          $prefix = "$env:USERPROFILE\.temp\GridLAB-D"
+          $bin    = Join-Path $prefix "bin"
+          $lib    = Join-Path $prefix "lib"
+          $share  = Join-Path $prefix "share"
+          $gldcore= Join-Path $pwd "gldcore"
+
+          # Ensure the validator sees GLD binaries and modules
+          $env:PATH   = "$env:PATH;$bin"
+          $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
+
+          python validate_gld.py
+
+      - name: Upload validation artefacts (Windows)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validate-windows
+          path: |
+            validate.txt
+            validate_errors.txt
+            gridlabd.xml
+          if-no-files-found: ignore
+
+  # ─────────────────────────────────────────────
+  # macOS: AppleClang + Homebrew + Python validator
+  # ─────────────────────────────────────────────
+  macos-build-and-validate:
+    runs-on: macos-15   # ARM64 macOS runner
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Cache Homebrew (optional)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+            /Library/Caches/Homebrew
+          key: brew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('ci/Brewfile') }}
+          restore-keys: |
+            brew-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Install build tools and Eigen via Homebrew
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          if ! command -v brew >/dev/null 2>&1; then
+            echo "Homebrew not found"; exit 1
+          fi
+
+          brew update
+
+          if [[ -f ci/Brewfile ]]; then
+            brew bundle --file=ci/Brewfile
+          else
+            brew install cmake ninja pkg-config eigen
+          fi
+
+          HOMEBREW_PREFIX="$(brew --prefix)"
+          echo "HOMEBREW_PREFIX=${HOMEBREW_PREFIX}"
+
+          # Help CMake find Homebrew-installed packages
+          export PKG_CONFIG_PATH="${HOMEBREW_PREFIX}/lib/pkgconfig:${HOMEBREW_PREFIX}/share/pkgconfig:${PKG_CONFIG_PATH:-}"
+          echo "CMAKE_PREFIX_PATH=${HOMEBREW_PREFIX}" >> "$GITHUB_ENV"
+          echo "PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"   >> "$GITHUB_ENV"
+
+      - name: Print toolchain info
+        run: |
+          sw_vers
+          clang --version
+          cmake --version
+          ninja --version
+          brew list --versions cmake ninja pkg-config eigen
+
+      - name: Clean build
+        run: |
+          rm -rf build/ out/ CMakeCache.txt CMakeFiles 2>/dev/null || true
+
+      - name: Configure CMake (AppleClang + Ninja)
+        shell: bash
+        env:
+          CMAKE_PREFIX_PATH: ${{ env.CMAKE_PREFIX_PATH }}
+          PKG_CONFIG_PATH:   ${{ env.PKG_CONFIG_PATH }}
+        run: |
+          set -euxo pipefail
+          BUILD_DIR="out/build/ci-macos"
+
+          cmake -S . -B "$BUILD_DIR" \
+            -G Ninja \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
+            -DCMAKE_BUILD_TYPE="Release" \
+            -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
+            -DCMAKE_MACOSX_RPATH=ON \
+            -DCMAKE_INSTALL_RPATH="$HOME/.temp/GridLAB-D/lib;$HOME/.temp/GridLAB-D/lib/gridlabd"
+
+      - name: Build (Release)
+        shell: bash
+        run: cmake --build out/build/ci-macos -- -v
+
+      - name: Install (Release)
+        shell: bash
+        run: cmake --install out/build/ci-macos --prefix "$HOME/.temp/GridLAB-D" --verbose
+
+      # Python-based validation
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Python GridLAB-D validator (macOS)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          PREFIX="$HOME/.temp/GridLAB-D"
+          BIN_DIR="$PREFIX/bin"
+          LIB_DIR="$PREFIX/lib"
+          SHARE_DIR="$PREFIX/share"
+          GLDCORE_DIR="$(pwd)/gldcore"
+
+          export DYLD_LIBRARY_PATH="${LIB_DIR}:${LIB_DIR}/gridlabd:${DYLD_LIBRARY_PATH:-}"
+          export GLPATH="$(pwd):${PREFIX}:${BIN_DIR}:${LIB_DIR}:${SHARE_DIR}:${GLDCORE_DIR}"
+          export PATH="${PATH}:${BIN_DIR}"
+
+          python validate_gld.py
+
+      - name: Upload validation artefacts (macOS)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validate-macos
+          path: |
+            validate.txt
+            validate_errors.txt
+            gridlabd.xml
+          if-no-files-found: ignore
