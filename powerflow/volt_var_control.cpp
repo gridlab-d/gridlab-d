@@ -2859,7 +2859,7 @@ static TIMESTAMP sync_volt_var_control_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFI
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP int sync_volt_var_control(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+extern "C" MODULE_API TIMESTAMP sync_volt_var_control(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	return sync_volt_var_control_impl(obj, t0, pass);
 }

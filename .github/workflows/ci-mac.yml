@@ -1,20 +1,5 @@
-# .github/workflows/ci-mac.yml
-# ─────────────────────────────────────────────────────────────
-# Build & validate GridLAB-D on Ubuntu ARM64 — the closest
-# GitHub CI equivalent to "M4 Max → Multipass → Ubuntu ARM64".
-#
-# Why not Multipass on macOS?
-#   GitHub macOS runners are already VMs.  Nested virtualisation
-#   is blocked → Multipass installer fails with:
-#     "Your CPU does not have the features necessary for Multipass"
-#
-# Instead we use GitHub's native ARM64 Linux runner:
-#   ✅ Same architecture  : aarch64 (matches Apple Silicon)
-#   ✅ Same OS             : Ubuntu 24.04
-#   ✅ Same toolchain      : GCC + CMake + Ninja
-#   ✅ No VM overhead      : faster than Multipass-in-a-VM
-# ─────────────────────────────────────────────────────────────
-name: CI – Ubuntu ARM64 (Apple Silicon equivalent)
+# .github/workflows/ci-linux-matrix.yml
+name: CI – Linux (ARM64 + x86_64) with Python validator
 
 on:
   push:
@@ -31,11 +16,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ──────────────────────────────────────────────────────────
-  #  ARM64 build  –  closest match to M4 Max + Multipass
-  # ──────────────────────────────────────────────────────────
-  ubuntu-arm64-build:
-    runs-on: ubuntu-24.04-arm64               # GitHub ARM64 runner
+  build-and-validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ubuntu-arm64
+            runs-on: ubuntu-24.04-arm64   # ARM64 native hosted runner
+            triplet: aarch64
+          - name: ubuntu-x64
+            runs-on: ubuntu-latest        # x86_64 runner
+            triplet: x86_64
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 60
     env:
       BUILD_TYPE:     ${{ github.event.inputs.config || 'Release' }}
@@ -52,12 +46,13 @@ jobs:
         run: |
           set -x
           uname -a
-          arch                          # expect: aarch64
-          lsb_release -a 2>/dev/null || cat /etc/os-release
+          arch
           nproc
-          free -h
+          free -h || true
           df -h .
-          gcc --version | head -1
+          gcc --version | head -1 || true
+          cmake --version | head -1 || true
+          ninja --version || true
           echo "── git info ──"
           git log --oneline -3
 
@@ -72,7 +67,6 @@ jobs:
             pkg-config \
             libboost-dev \
             libeigen3-dev
-          echo "─── versions ───"
           cmake --version | head -1
           ninja --version
 
@@ -94,126 +88,41 @@ jobs:
           echo "─── installed tree (first 100 entries) ───"
           find "$INSTALL_PREFIX" -type f | head -100
 
-      - name: Verify installation
-        run: |
-          set -euxo pipefail
-          export PATH="${INSTALL_PREFIX}/bin:$PATH"
-          export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib/gridlabd"
-
-          which gridlabd
-          ldd "$(which gridlabd)" || true
-          gridlabd --version
-          gridlabd --modhelp 2>&1 | head -40 || true
-
-      - name: Run gridlabd --validate
-        id: validate
-        run: |
-          set -euxo pipefail
-          export PATH="${INSTALL_PREFIX}/bin:$PATH"
-          export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib/gridlabd"
-          export GLPATH="$(pwd):${INSTALL_PREFIX}:${INSTALL_PREFIX}/bin:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/share:$(pwd)/gldcore"
-
-          echo "PATH=$PATH"
-          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-          echo "GLPATH=$GLPATH"
-
-          gridlabd -T 0 --redirect none --validate
-
-      - name: Run CTest
-        if: always()
-        working-directory: build
-        run: |
-          export PATH="${INSTALL_PREFIX}/bin:$PATH"
-          export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib/gridlabd"
-          export GLPATH="$(pwd)/..:${INSTALL_PREFIX}:${INSTALL_PREFIX}/bin:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/share:$(pwd)/../gldcore"
-          ctest --verbose --output-on-failure
-
-      - name: Show validate.txt
-        if: always()
-        run: |
-          FILE="validate.txt"
-          if [[ -f "$FILE" ]]; then
-            echo "==== validate.txt (first 300 lines) ===="
-            head -300 "$FILE"
-            {
-              echo "### validate.txt (Ubuntu ARM64)"
-              echo '```'
-              head -200 "$FILE"
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "validate.txt was not produced."
-          fi
-
-      - name: Upload validation artefacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: validate-ubuntu-arm64
-          path: |
-            validate.txt
-            validate_errors.txt
-            gridlabd.xml
-          if-no-files-found: ignore
-
-  # ──────────────────────────────────────────────────────────
-  #  x86_64 build  –  fallback / cross-arch coverage
-  # ──────────────────────────────────────────────────────────
-  ubuntu-x64-build:
-    runs-on: ubuntu-latest                    # x86_64
-    timeout-minutes: 60
-    env:
-      BUILD_TYPE:     ${{ github.event.inputs.config || 'Release' }}
-      INSTALL_PREFIX: ${{ github.workspace }}/.local/GridLAB-D
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      - name: System diagnostics
-        run: |
-          uname -a
-          arch
-          nproc
-          free -h
-
-      - name: Install build dependencies
+      # ─────────────────────────────────────────────
+      # Python-based validation replaces gridlabd --validate
+      # ─────────────────────────────────────────────
+      - name: Install Python 3 + pip
         run: |
           sudo apt-get update -yq
-          sudo apt-get install -yq --no-install-recommends \
-            build-essential \
-            cmake \
-            ninja-build \
-            pkg-config \
-            libboost-dev \
-            libeigen3-dev
+          sudo apt-get install -yq python3 python3-pip
 
-      - name: Configure (CMake + Ninja)
+      - name: Install validator dependencies (optional)
+        if: ${{ hashFiles('tools/validate/requirements.txt') != '' }}
         run: |
-          cmake -S . -B build \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-            -DCMAKE_INSTALL_PREFIX=${{ env.INSTALL_PREFIX }} \
-            -DGLD_CI_BUILD=ON
+          pip3 install -r tools/validate/requirements.txt
 
-      - name: Build GridLAB-D
+      - name: Run Python GridLAB-D validator
         run: |
-          cmake --build build --parallel $(nproc) --verbose
+          set -euxo pipefail
 
-      - name: Install GridLAB-D
-        run: |
-          cmake --install build --verbose
-
-      - name: Run gridlabd --validate
-        run: |
+          # Export runtime env so the validator can find GLD binaries/modules
           export PATH="${INSTALL_PREFIX}/bin:$PATH"
           export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib/gridlabd"
           export GLPATH="$(pwd):${INSTALL_PREFIX}:${INSTALL_PREFIX}/bin:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/share:$(pwd)/gldcore"
 
-          gridlabd -T 0 --redirect none --validate
+          # If your script lives elsewhere, adjust the path accordingly
+          python3 validate_gld.py
+
+      - name: Upload validation artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validate-${{ matrix.name }}
+          path: |
+            validate.txt
+            validate_errors.txt
+            gridlabd.xml
+          if-no-files-found: ignore
 
       - name: Run CTest
         if: always()
@@ -223,14 +132,3 @@ jobs:
           export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib/gridlabd"
           export GLPATH="$(pwd)/..:${INSTALL_PREFIX}:${INSTALL_PREFIX}/bin:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/share:$(pwd)/../gldcore"
           ctest --verbose --output-on-failure
-
-      - name: Upload validation artefacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: validate-ubuntu-x64
-          path: |
-            validate.txt
-            validate_errors.txt
-            gridlabd.xml
-          if-no-files-found: ignore
