@@ -1120,7 +1120,7 @@ object overhead_line  {
      name OH_line_30-250;
 	 phases "ABCN";
      from load_30;
-     to node_250_1;
+     to node_250;
      length 200;
      configuration line_configuration_2;
 }
@@ -2411,7 +2411,7 @@ object node {
 }
  
 object node {
-     name node_250_1;
+     name node_250;
 	 phases "ABCN";
      flags DELTAMODE;
      nominal_voltage 2401.7;
