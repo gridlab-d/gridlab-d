@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   # ─────────────────────────────────────────────
-  # Linux (matrix): Ubuntu ARM64 + Ubuntu x86_64
+  # Linux (matrix): Ubuntu ARM64 + Ubuntu x86_64 - Try!
   # ─────────────────────────────────────────────
   linux-build-and-validate:
     strategy:
