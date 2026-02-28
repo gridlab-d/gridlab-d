@@ -28,7 +28,7 @@ CLASS *PARENTgen_cost::pclass = nullptr;
 #endif
 
 /* TODO: remove passes that aren't needed */
-static PASSCONFIG passconfig = PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN;
+static PASSCONFIG passconfig = PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN;
 
 /* TODO: specify which pass the clock advances */
 static PASSCONFIG clockpass = PC_BOTTOMUP;
@@ -36,33 +36,34 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* Class registration is only called once to register the class with the core */
 gen_cost::gen_cost(MODULE *module)
 #ifdef OPTIONAL
-/* TODO: include this if you are deriving this from a superclass */
-: SUPERCLASS(module)
+	/* TODO: include this if you are deriving this from a superclass */
+	: SUPERCLASS(module)
 #endif
 {
 #ifdef OPTIONAL
 	/* TODO: include this if you are deriving this from a superclass */
 	pclass = SUPERCLASS::oclass;
 #endif
-	if (oclass==nullptr)
+	if (oclass == nullptr)
 	{
-		oclass = gl_register_class(module,"gen_cost",sizeof(gen_cost),passconfig);
-		if (oclass==nullptr)
+		oclass = gl_register_class(module, "gen_cost", sizeof(gen_cost), passconfig);
+		if (oclass == nullptr)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		if (gl_publish_variable(oclass,
-			/* TODO: add your published properties here */
-                        PT_int16, "MODEL", PADDR(MODEL), PT_DESCRIPTION, "cost model",
-                                                                // 1 = piecewise linear
-                                                                // 2 = polynomial
-                        PT_double, "STARTUP", PADDR(STARTUP), PT_DESCRIPTION, "start up cost in US dollars",
-                        PT_double, "SHUTDOWN", PADDR(SHUTDOWN), PT_DESCRIPTION, "shutdown cost in US dollars",
-                        PT_int16, "NCOST", PADDR(NCOST), "number of cost coeff for poly cost function or number of data points for piecewise linear",
-                        /*Only support model 2 right now -- LYZ @ Jan 11th, 2012*/
-                        PT_char1024, "COST", PADDR(COST), PT_DESCRIPTION, "n+1 coeff of n-th order polynomial cost, starting with highest order",
-			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+								/* TODO: add your published properties here */
+								PT_int16, "MODEL", PADDR(MODEL), PT_DESCRIPTION, "cost model",
+								// 1 = piecewise linear
+								// 2 = polynomial
+								PT_double, "STARTUP", PADDR(STARTUP), PT_DESCRIPTION, "start up cost in US dollars",
+								PT_double, "SHUTDOWN", PADDR(SHUTDOWN), PT_DESCRIPTION, "shutdown cost in US dollars",
+								PT_int16, "NCOST", PADDR(NCOST), "number of cost coeff for poly cost function or number of data points for piecewise linear",
+								/*Only support model 2 right now -- LYZ @ Jan 11th, 2012*/
+								PT_char1024, "COST", PADDR(COST), PT_DESCRIPTION, "n+1 coeff of n-th order polynomial cost, starting with highest order",
+								nullptr) < 1)
+			GL_THROW("unable to publish properties in %s", __FILE__);
 		defaults = this;
-		memset(this,0,sizeof(gen_cost));
+		memset(this, 0, sizeof(gen_cost));
 		/* TODO: set the default values of all properties here */
 	}
 }
@@ -70,7 +71,7 @@ gen_cost::gen_cost(MODULE *module)
 /* Object creation is called once for each object that is created by the core */
 int gen_cost::create(void)
 {
-	memcpy(this,defaults,sizeof(gen_cost));
+	memcpy(this, defaults, sizeof(gen_cost));
 	/* TODO: set the context-free initial value of properties, such as random distributions */
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -115,8 +116,8 @@ EXPORT int create_gen_cost(OBJECT **obj)
 	try
 	{
 		*obj = gl_create_object(gen_cost::oclass);
-		if (*obj!=nullptr)
-			return OBJECTDATA(*obj,gen_cost)->create();
+		if (*obj != nullptr)
+			return OBJECTDATA(*obj, gen_cost)->create();
 	}
 	catch (char *msg)
 	{
@@ -129,43 +130,61 @@ EXPORT int init_gen_cost(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=nullptr)
-			return OBJECTDATA(obj,gen_cost)->init(parent);
+		if (obj != nullptr)
+			return OBJECTDATA(obj, gen_cost)->init(parent);
 	}
 	catch (char *msg)
 	{
-		gl_error("init_gen_cost(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		gl_error("init_gen_cost(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
 	}
 	return 0;
 }
 
-EXPORT TIMESTAMP sync_gen_cost(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_gen_cost_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	gen_cost *my = OBJECTDATA(obj,gen_cost);
+	gen_cost *my = OBJECTDATA(obj, gen_cost);
 	try
 	{
-		switch (pass) {
+		switch (pass)
+		{
 		case PC_PRETOPDOWN:
-			t2 = my->presync(obj->clock,t1);
+			t2 = my->presync(obj->clock, t1);
 			break;
 		case PC_BOTTOMUP:
-			t2 = my->sync(obj->clock,t1);
+			t2 = my->sync(obj->clock, t1);
 			break;
 		case PC_POSTTOPDOWN:
-			t2 = my->postsync(obj->clock,t1);
+			t2 = my->postsync(obj->clock, t1);
 			break;
 		default:
 			GL_THROW("invalid pass request (%d)", pass);
 			break;
 		}
-		if (pass==clockpass)
+		if (pass == clockpass)
 			obj->clock = t1;
 		return t2;
 	}
 	catch (char *msg)
 	{
-		gl_error("sync_gen_cost(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		gl_error("sync_gen_cost(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
 	}
 	return TS_INVALID;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_gen_cost(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_gen_cost_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_gen_cost(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_gen_cost_impl(obj, t1, pass);
+}
+#endif

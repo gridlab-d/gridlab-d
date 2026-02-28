@@ -18,57 +18,59 @@
 //////////////////////////////////////////////////////////////////////////
 // CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* network_message::oclass = nullptr;
+CLASS *network_message::oclass = nullptr;
 
 // the constructor registers the class and properties and sets the defaults
-network_message::network_message(MODULE *mod) 
+network_message::network_message(MODULE *mod)
 {
 	// first time init
-	if (oclass==nullptr)
+	if (oclass == nullptr)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"network_message",sizeof(network_message),PC_BOTTOMUP);
-		if (oclass==nullptr)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
-			/* TROUBLESHOOT
-				The registration for the network_message class failed.   This is usually caused
-				by a coding error in the core implementation of classes or the module implementation.
-				Please report this error to the developers.
-			 */
+		oclass = gl_register_class(mod, "network_message", sizeof(network_message), PC_BOTTOMUP);
+		if (oclass == nullptr)
+			GL_THROW("unable to register object class implemented by %s", __FILE__);
+		/* TROUBLESHOOT
+			The registration for the network_message class failed.   This is usually caused
+			by a coding error in the core implementation of classes or the module implementation.
+			Please report this error to the developers.
+		 */
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_object, "from", PADDR(from), PT_DESCRIPTION, "the network interface this message is being sent from",
-			PT_object, "to", PADDR(to), PT_DESCRIPTION, "the network interface this message is being sent to",
-			PT_double, "size[MB]", PADDR(size), PT_DESCRIPTION, "the number of bytes being sent across the network object",
-			PT_char1024, "message", PADDR(message), PT_DESCRIPTION, "the contents of the data being sent, whether binary, ASCII, or faked",
-			PT_int16, "buffer_size", PADDR(buffer_size), PT_DESCRIPTION, "number of bytes held within the message buffer",
-			PT_int64, "start_time", PADDR(start_time), PT_DESCRIPTION, "the simulation time that the message started to be sent",
-			PT_int64, "end_time", PADDR(end_time), PT_DESCRIPTION, "the simulation time that the message finished sending",
-			PT_double, "start_time_frac[s]", PADDR(start_time_frac), PT_DESCRIPTION, "the subsecond time that the message started to be sent, based on the sending network interface",
-			PT_double, "end_time_frac[s]", PADDR(end_time_frac), PT_DESCRIPTION, "the subsecond time that the message finished sending, based on the receiving network interface",
-			PT_double, "bytes_sent[MB]", PADDR(bytes_sent), PT_DESCRIPTION, "the number of bytes sent by the transmitting interface",
-			PT_double, "bytes_resent[MB]", PADDR(bytes_resent), PT_DESCRIPTION, "the number of bytes that had to be resent across the network",
-			PT_double, "byte_received[MB]", PADDR(bytes_recv),  PT_DESCRIPTION, "the number of bytes received by the receiving interface",
-			PT_enumeration, "msg_state", PADDR(msg_state), PT_DESCRIPTION, "the current state of the message",
-				PT_KEYWORD, "NONE", NMS_NONE,
-				PT_KEYWORD, "PENDING", NMS_PENDING,
-				PT_KEYWORD, "SENDING", NMS_SENDING,
-				PT_KEYWORD, "DELIVERED", NMS_DELIVERED,
-				PT_KEYWORD, "REJECTED", NMS_REJECTED,
-				PT_KEYWORD, "FAILED", NMS_FAILED,
-				PT_KEYWORD, "ERROR", NMS_ERROR,
-				PT_KEYWORD, "DELAYED", NMS_DELAYED,
-			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
-			/* TROUBLESHOOT
-				The registration for the network_message properties failed.   This is usually caused
-				by a coding error in the core implementation of classes or the module implementation.
-				Please report this error to the developers.
-			 */
+								PT_object, "from", PADDR(from), PT_DESCRIPTION, "the network interface this message is being sent from",
+								PT_object, "to", PADDR(to), PT_DESCRIPTION, "the network interface this message is being sent to",
+								PT_double, "size[MB]", PADDR(size), PT_DESCRIPTION, "the number of bytes being sent across the network object",
+								PT_char1024, "message", PADDR(message), PT_DESCRIPTION, "the contents of the data being sent, whether binary, ASCII, or faked",
+								PT_int16, "buffer_size", PADDR(buffer_size), PT_DESCRIPTION, "number of bytes held within the message buffer",
+								PT_int64, "start_time", PADDR(start_time), PT_DESCRIPTION, "the simulation time that the message started to be sent",
+								PT_int64, "end_time", PADDR(end_time), PT_DESCRIPTION, "the simulation time that the message finished sending",
+								PT_double, "start_time_frac[s]", PADDR(start_time_frac), PT_DESCRIPTION, "the subsecond time that the message started to be sent, based on the sending network interface",
+								PT_double, "end_time_frac[s]", PADDR(end_time_frac), PT_DESCRIPTION, "the subsecond time that the message finished sending, based on the receiving network interface",
+								PT_double, "bytes_sent[MB]", PADDR(bytes_sent), PT_DESCRIPTION, "the number of bytes sent by the transmitting interface",
+								PT_double, "bytes_resent[MB]", PADDR(bytes_resent), PT_DESCRIPTION, "the number of bytes that had to be resent across the network",
+								PT_double, "byte_received[MB]", PADDR(bytes_recv), PT_DESCRIPTION, "the number of bytes received by the receiving interface",
+								PT_enumeration, "msg_state", PADDR(msg_state), PT_DESCRIPTION, "the current state of the message",
+								PT_KEYWORD, "NONE", NMS_NONE,
+								PT_KEYWORD, "PENDING", NMS_PENDING,
+								PT_KEYWORD, "SENDING", NMS_SENDING,
+								PT_KEYWORD, "DELIVERED", NMS_DELIVERED,
+								PT_KEYWORD, "REJECTED", NMS_REJECTED,
+								PT_KEYWORD, "FAILED", NMS_FAILED,
+								PT_KEYWORD, "ERROR", NMS_ERROR,
+								PT_KEYWORD, "DELAYED", NMS_DELAYED,
+								nullptr) < 1)
+			GL_THROW("unable to publish properties in %s", __FILE__);
+		/* TROUBLESHOOT
+			The registration for the network_message properties failed.   This is usually caused
+			by a coding error in the core implementation of classes or the module implementation.
+			Please report this error to the developers.
+		 */
 	}
 }
 
-network_message::network_message(){
+network_message::network_message()
+{
 	from = to = 0;
 	size = buffer_size = 0;
 	bytes_sent = bytes_resent = bytes_recv = 0;
@@ -77,12 +79,14 @@ network_message::network_message(){
 	start_time_frac = end_time_frac = 0.0;
 }
 
-int network_message::send_message(network_interface *nif, TIMESTAMP ts, double latency){
-	return send_message(OBJECTHDR(nif), nif->destination, nif->data_buffer, nif->buffer_size, 
-		nif->size, ts, nif->bandwidth_used/nif->send_rate, latency);
+int network_message::send_message(network_interface *nif, TIMESTAMP ts, double latency)
+{
+	return send_message(OBJECTHDR(nif), nif->destination, nif->data_buffer, nif->buffer_size,
+						nif->size, ts, nif->bandwidth_used / nif->send_rate, latency);
 }
 
-int network_message::send_message(OBJECT *f, OBJECT *t, char *m, int len, double sz, TIMESTAMP ts, double frac, double latency){
+int network_message::send_message(OBJECT *f, OBJECT *t, char *m, int len, double sz, TIMESTAMP ts, double frac, double latency)
+{
 	char name_buf[64];
 	from = f;
 	to = t;
@@ -95,71 +99,87 @@ int network_message::send_message(OBJECT *f, OBJECT *t, char *m, int len, double
 	// new
 	tx_start_sec = ts;
 	tx_start_frac = frac;
-	rx_start_sec = ts+floor(latency+frac);
-	rx_start_frac = fmod(latency+frac, 1.0);
+	rx_start_sec = ts + floor(latency + frac);
+	rx_start_frac = fmod(latency + frac, 1.0);
 	// /new
 	msg_state = NMS_NONE;
 	last_update = ts;
 	// validate to & from interfaces
-	if(from == 0){
+	if (from == 0)
+	{
 		gl_error("send_message(): no 'from' interface");
 		msg_state = NMS_ERROR;
 		return 0;
-	} else if(gl_object_isa(from, "network_interface")){
+	}
+	else if (gl_object_isa(from, "network_interface"))
+	{
 		pFrom = OBJECTDATA(from, network_interface);
-		switch(pFrom->duplex_mode){
-			case DXM_FULL_DUPLEX:
-			case DXM_HALF_DUPLEX:
-			case DXM_XMIT_ONLY:
-				break;
-			default:
-				gl_error("send_message(): 'from' interface '%s' not configured to send messages", gl_name(from, name_buf, 63));
-				msg_state = NMS_ERROR;
-				return 0;
+		switch (pFrom->duplex_mode)
+		{
+		case DXM_FULL_DUPLEX:
+		case DXM_HALF_DUPLEX:
+		case DXM_XMIT_ONLY:
+			break;
+		default:
+			gl_error("send_message(): 'from' interface '%s' not configured to send messages", gl_name(from, name_buf, 63));
+			msg_state = NMS_ERROR;
+			return 0;
 		}
-	} else {
+	}
+	else
+	{
 		gl_error("send_message(): 'from' object is not a network_interface");
 		msg_state = NMS_ERROR;
 		return 0;
 	}
-	
-	if(to == 0){
+
+	if (to == 0)
+	{
 		gl_error("send_message(): no 'to' interface");
 		msg_state = NMS_ERROR;
 		return 0;
-	} else if(gl_object_isa(to, "network_interface")){
+	}
+	else if (gl_object_isa(to, "network_interface"))
+	{
 		pTo = OBJECTDATA(to, network_interface);
-		switch(pTo->duplex_mode){
-			case DXM_FULL_DUPLEX:
-			case DXM_HALF_DUPLEX:
-			case DXM_RECV_ONLY:
-				break;
-			default:
-				gl_error("send_message(): 'to' interface '%s' not configured to receive messages", gl_name(to, name_buf, 63));
-				msg_state = NMS_ERROR;
-				return 0;
+		switch (pTo->duplex_mode)
+		{
+		case DXM_FULL_DUPLEX:
+		case DXM_HALF_DUPLEX:
+		case DXM_RECV_ONLY:
+			break;
+		default:
+			gl_error("send_message(): 'to' interface '%s' not configured to receive messages", gl_name(to, name_buf, 63));
+			msg_state = NMS_ERROR;
+			return 0;
 		}
-	} else {
+	}
+	else
+	{
 		gl_error("send_message(): 'to' object is not a network_interface");
 		msg_state = NMS_ERROR;
 		return 0;
 	}
-	if(sz < 0){
+	if (sz < 0)
+	{
 		gl_error("send_message(): size is negative");
 		msg_state = NMS_ERROR;
 		return 0;
 	}
-	if(len < 0){
+	if (len < 0)
+	{
 		gl_error("send_message(): length is negative");
 		msg_state = NMS_ERROR;
 		return 0;
 	}
-	if(ts < 0){
+	if (ts < 0)
+	{
 		gl_error("send_message(): timestamp is nonsensical");
 		msg_state = NMS_ERROR;
 		return 0;
 	}
-	if(pTo->pNetwork != pFrom->pNetwork){
+	if (pTo->pNetwork != pFrom->pNetwork)
+	{
 		gl_error("send_message(): network interfaces exist on different networks");
 		msg_state = NMS_ERROR;
 		return 0;
@@ -168,17 +188,19 @@ int network_message::send_message(OBJECT *f, OBJECT *t, char *m, int len, double
 }
 
 // create is called every time a new object is loaded
-int network_message::create() 
+int network_message::create()
 {
 	gl_error("network_message is an internally used class and should not be instantiated by a model");
 	return 0;
 }
 
-int network_message::isa(char *classname){
-	return strcmp(classname,"network_message")==0;
+int network_message::isa(char *classname)
+{
+	return strcmp(classname, "network_message") == 0;
 }
 
-int network_message::notify(int update_mode, PROPERTY *prop){
+int network_message::notify(int update_mode, PROPERTY *prop)
+{
 	OBJECT *obj = object_header(this);
 	return 1;
 }
@@ -190,11 +212,12 @@ int network_message::notify(int update_mode, PROPERTY *prop){
 EXPORT int create_network_message(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(network_message::oclass);
-	if (*obj!=nullptr)
+	if (*obj != nullptr)
 	{
-		network_message *my = OBJECTDATA(*obj,network_message);
-		gl_set_parent(*obj,parent);
-		try {
+		network_message *my = OBJECTDATA(*obj, network_message);
+		// gl_set_parent(*obj,parent);
+		try
+		{
 			my->create();
 		}
 		catch (char *msg)
@@ -207,22 +230,45 @@ EXPORT int create_network_message(OBJECT **obj, OBJECT *parent)
 	return 0;
 }
 
-EXPORT TIMESTAMP sync_network_message(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass){
+static TIMESTAMP sync_network_message_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
 	obj->clock = t1;
 	return TS_NEVER;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_network_message(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_network_message_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP classtemplate_sync(void *object, ...)
+{
+	OBJECT *obj = static_cast<OBJECT *>(object);
+	va_list args;
+	va_start(args, object);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_network_message_impl(obj, t1, pass);
+}
+#endif
+
 EXPORT int isa_network_message(OBJECT *obj, char *classname)
 {
-	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,network_message)->isa(classname);
-	} else {
+	if (obj != 0 && classname != 0)
+	{
+		return OBJECTDATA(obj, network_message)->isa(classname);
+	}
+	else
+	{
 		return 0;
 	}
 }
 
-EXPORT int notify_network_message(OBJECT *obj, int update_mode, PROPERTY *prop){
-	network_message *my = OBJECTDATA(obj,network_message);
+EXPORT int notify_network_message(OBJECT *obj, int update_mode, PROPERTY *prop)
+{
+	network_message *my = OBJECTDATA(obj, network_message);
 	return my->notify(update_mode, prop);
 }
 /**@}**/

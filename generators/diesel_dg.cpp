@@ -679,6 +679,11 @@ int diesel_dg::create(void)
 int diesel_dg::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj->parent; // AppleClang seems to have an issue with the parent pointer in init - it is always null, even when it shouldn't be. This is a workaround to get the proper parent pointer
+#endif
+
 	OBJECT *tmp_obj = nullptr;
 	gld_object *tmp_gld_obj = nullptr;
 
@@ -5112,7 +5117,7 @@ EXPORT int create_diesel_dg(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			diesel_dg *my = /*OBJECTDATA(*obj, diesel_dg)*/ object_data<diesel_dg>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -5133,7 +5138,7 @@ EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent)
 	INIT_CATCHALL(diesel_dg);
 }
 
-EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_diesel_dg_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP t1 = TS_INVALID;
 	diesel_dg *my = /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj);
@@ -5160,6 +5165,23 @@ EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	SYNC_CATCHALL(diesel_dg);
 	return t1;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	return sync_diesel_dg_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_diesel_dg(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = (PASSCONFIG)va_arg(args, int);
+	va_end(args);
+	return sync_diesel_dg_impl(obj, t0, pass);
+}
+#endif
 
 // EXPORT for object-level call (as opposed to module-level)
 /*

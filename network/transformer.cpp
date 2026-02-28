@@ -3,7 +3,7 @@
 	@file transformer.cpp
 	@addtogroup transformer Transformer
 	@ingroup network
-	
+
  @{
  **/
 
@@ -14,14 +14,11 @@
 
 #include "network.h"
 
-
-
-
 //////////////////////////////////////////////////////////////////////////
 // transformer CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* transformer::oclass = nullptr;
-CLASS* transformer::pclass = nullptr;
+CLASS *transformer::oclass = nullptr;
+CLASS *transformer::pclass = nullptr;
 transformer *transformer::defaults = nullptr;
 
 CLASS *transformer_class = (nullptr);
@@ -29,46 +26,47 @@ CLASS *transformer_class = (nullptr);
 transformer::transformer(MODULE *mod) : link(mod)
 {
 	// first time init
-	if (oclass==nullptr)
+	if (oclass == nullptr)
 	{
 		// register the class definition
-		transformer_class = oclass = gl_register_class(mod,"transformer",sizeof(transformer),PC_BOTTOMUP);
-		if (oclass==nullptr)
+		transformer_class = oclass = gl_register_class(mod, "transformer", sizeof(transformer), PC_BOTTOMUP);
+		if (oclass == nullptr)
 			throw "unable to register class transformer";
 		else
 			oclass->trl = TRL_CONCEPT;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_enumeration,"Type",PADDR(Type),
-				PT_KEYWORD,"TT_YY",TT_YY,
-				PT_KEYWORD,"TT_YD",TT_YD,
-				PT_KEYWORD,"TT_DY",TT_DY,
-				PT_KEYWORD,"TT_DD",TT_DD,
-			PT_double, "Sbase", PADDR(Sbase),
-			PT_double, "Vbase", PADDR(Vbase),
-			PT_double, "Zpu", PADDR(Zpu),
-			PT_double, "Vprimary", PADDR(Vprimary),
-			PT_double, "Vsecondary", PADDR(Vsecondary),
-			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+								PT_enumeration, "Type", PADDR(Type),
+								PT_KEYWORD, "TT_YY", TT_YY,
+								PT_KEYWORD, "TT_YD", TT_YD,
+								PT_KEYWORD, "TT_DY", TT_DY,
+								PT_KEYWORD, "TT_DD", TT_DD,
+								PT_double, "Sbase", PADDR(Sbase),
+								PT_double, "Vbase", PADDR(Vbase),
+								PT_double, "Zpu", PADDR(Zpu),
+								PT_double, "Vprimary", PADDR(Vprimary),
+								PT_double, "Vsecondary", PADDR(Vsecondary),
+								nullptr) < 1)
+			GL_THROW("unable to publish properties in %s", __FILE__);
 
 		// setup the default values
 		defaults = this;
 	}
 }
 
-int transformer::create() 
+int transformer::create()
 {
 	int result = link::create();
-	memcpy(this,defaults,sizeof(*this));
+	memcpy(this, defaults, sizeof(*this));
 	return result;
 }
 
-TIMESTAMP transformer::sync(TIMESTAMP t0) 
+TIMESTAMP transformer::sync(TIMESTAMP t0)
 {
-	node *f = OBJECTDATA(from,node);
-	node *t = OBJECTDATA(to,node);
-	if (f==nullptr || t==nullptr)
+	node *f = OBJECTDATA(from, node);
+	node *t = OBJECTDATA(to, node);
+	if (f == nullptr || t == nullptr)
 		return TS_NEVER;
 	// TODO: update transformer state
 	return link::sync(t0);
@@ -80,10 +78,10 @@ TIMESTAMP transformer::sync(TIMESTAMP t0)
 EXPORT int create_transformer(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(transformer_class);
-	if (*obj!=nullptr)
+	if (*obj != nullptr)
 	{
-		transformer *my = OBJECTDATA(*obj,transformer);
-		gl_set_parent(*obj,parent);
+		transformer *my = OBJECTDATA(*obj, transformer);
+		// gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
 	}
@@ -92,7 +90,7 @@ EXPORT int create_transformer(OBJECT **obj, OBJECT *parent)
 
 EXPORT TIMESTAMP sync_transformer(OBJECT *obj, TIMESTAMP t0)
 {
-	TIMESTAMP t1 = OBJECTDATA(obj,transformer)->sync(t0);
+	TIMESTAMP t1 = OBJECTDATA(obj, transformer)->sync(t0);
 	obj->clock = t0;
 	return t1;
 }

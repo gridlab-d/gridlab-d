@@ -256,7 +256,7 @@ EXPORT int create_billdump(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -275,7 +275,7 @@ EXPORT int init_billdump(OBJECT *obj)
 	INIT_CATCHALL(billdump);
 }
 
-EXPORT TIMESTAMP sync_billdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_billdump_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	try
 	{
@@ -287,6 +287,23 @@ EXPORT TIMESTAMP sync_billdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(billdump);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_billdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_billdump_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_billdump(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_billdump_impl(obj, t1, pass);
+}
+#endif
 
 EXPORT TIMESTAMP commit_billdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {

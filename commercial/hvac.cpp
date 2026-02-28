@@ -8,7 +8,7 @@
 
 #include "hvac.h"
 
-hvac::hvac() 
+hvac::hvac()
 {
 }
 
@@ -16,19 +16,19 @@ hvac::~hvac()
 {
 }
 
-void hvac::create() 
+void hvac::create()
 {
 }
 
-TIMESTAMP hvac::sync(TIMESTAMP t0) 
+TIMESTAMP hvac::sync(TIMESTAMP t0)
 {
-	return TS_NEVER; 
+	return TS_NEVER;
 }
-void hvac::pre_update(void) 
+void hvac::pre_update(void)
 {
 }
 
-void hvac::post_update(void) 
+void hvac::post_update(void)
 {
 }
 
@@ -44,11 +44,11 @@ OBJECT *last_hvac = nullptr;
 EXPORT int create_hvac(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(hvac_class);
-	if (*obj!=nullptr)
+	if (*obj != nullptr)
 	{
 		last_hvac = *obj;
-		hvac *my = /*OBJECTDATA(*obj, hvac)*/   object_data<hvac>(*obj) ;
-		gl_set_parent(*obj,parent);
+		hvac *my = /*OBJECTDATA(*obj, hvac)*/ object_data<hvac>(*obj);
+		// gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
 	}
@@ -57,8 +57,7 @@ EXPORT int create_hvac(OBJECT **obj, OBJECT *parent)
 
 EXPORT TIMESTAMP sync_hvac(OBJECT *obj, TIMESTAMP t0)
 {
-	TIMESTAMP t1 = /*OBJECTDATA(obj, hvac)*/   object_data<hvac>(obj)->sync(t0);
+	TIMESTAMP t1 = /*OBJECTDATA(obj, hvac)*/ object_data<hvac>(obj)->sync(t0);
 	obj->clock = t0;
 	return t1;
 }
-

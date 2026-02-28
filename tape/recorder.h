@@ -77,13 +77,18 @@ public: // Does this need to be Private?
 };
 
 extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
-EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
+#else
+extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, ...);
+#endif
+
 EXPORT TIMESTAMP sync_recorder_error(OBJECT **obj, struct recorder **my, char2048 buffer);
 
 extern "C"
 {
     EXPORT int create_recorder(OBJECT **obj, OBJECT *parent);
     EXPORT int init_recorder(OBJECT *obj);
-    EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
 }
 #endif //_RECORDER_H

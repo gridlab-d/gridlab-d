@@ -746,6 +746,11 @@ int climate::init(OBJECT *parent)
 {
 	char *dot = 0;
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj->parent;
+#endif
+
 	TIMESTAMP t0 = obj->clock;
 	double meter_to_feet = 1.0;
 	double tz_num_offset;
@@ -816,7 +821,7 @@ int climate::init(OBJECT *parent)
 		// write_out_cloud_pattern('C');
 		convert_to_binary_cloud();
 		// write_out_cloud_pattern('B');
-		convert_to_fuzzy_cloud(EMPTY_VALUE, cloud_num_layers, cloud_alpha);
+		// convert_to_fuzzy_cloud(EMPTY_VALUE, cloud_num_layers, cloud_alpha);
 		prev_NTime = t0 - 60;
 	}
 
@@ -1123,12 +1128,14 @@ int climate::get_solar_for_location(double latitude, double longitude, double *d
 	switch (get_cloud_model())
 	{
 	case (enumeration)CLOUDMODEL::CM_CUMULUS:
+	{
 		// cloud = 0 -> clear view of sun
 		// cloud = 1 -> very dark cloud blocking sun
-		retval = get_fuzzy_cloud_value_for_location(latitude, longitude, &cloud); // Fuzzy cloud pattern evaluation
-		f = 1 - (cloud * cloud_opacity);										  // f=1 -> clear view of sun, f=0 -> very dark cloud blocking view of sun.
-		// retval = get_binary_cloud_value_for_location(latitude, longitude, &cloud); //Binary cloud pattern evaluation
-		// f = cloud ? 1.-cloud_opacity : 1.;
+		// retval = get_fuzzy_cloud_value_for_location(latitude, longitude, &cloud); // Fuzzy cloud pattern evaluation
+		// f = 1 - (cloud * cloud_opacity);										  // f=1 -> clear view of sun, f=0 -> very dark cloud blocking view of sun.
+		int cloud_bin = 1;															   // default to "blue sky"
+		retval = get_binary_cloud_value_for_location(latitude, longitude, &cloud_bin); // Binary cloud pattern evaluation
+		f = cloud_bin ? 1. - cloud_opacity : 1.;
 		sol_z = get_solar_zenith();
 		ETRN = get_direct_normal_extra();
 		ETR = ETRN * cos(sol_z);
@@ -1148,6 +1155,7 @@ int climate::get_solar_for_location(double latitude, double longitude, double *d
 		solar_cloud_diffuse = *diffuse;
 		solar_cloud_global = *global;
 		break;
+	}
 	default:
 		*direct = get_solar_direct();
 		*global = get_solar_global();
@@ -1552,7 +1560,7 @@ void climate::update_cloud_pattern(TIMESTAMP delta_t)
 			double cut_elevation = 0;
 			cut_elevation = convert_to_binary_cloud();
 			// write_out_cloud_pattern('B');
-			convert_to_fuzzy_cloud(cut_elevation, cloud_num_layers, cloud_alpha);
+			// convert_to_fuzzy_cloud(cut_elevation, cloud_num_layers, cloud_alpha);
 			// write_out_cloud_pattern('F');
 		}
 	}

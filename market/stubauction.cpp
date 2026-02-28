@@ -100,6 +100,10 @@ int stubauction::create(void)
 int stubauction::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	market_id = 0;
 	if (period == 0)
 		period = 300;
@@ -235,7 +239,7 @@ EXPORT int create_stubauction(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			stubauction *my = /*OBJECTDATA(obj,<>)*/ object_data<stubauction>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -268,7 +272,7 @@ EXPORT int isa_stubauction(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT TIMESTAMP sync_stubauction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_stubauction_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
 	stubauction *my = /*OBJECTDATA(obj,<>)*/ object_data<stubauction>(obj);
@@ -294,3 +298,19 @@ EXPORT TIMESTAMP sync_stubauction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(stubauction);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_stubauction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_stubauction_impl(obj, t1, pass);
+}
+#else // variadic
+extern "C" MODULE_API TIMESTAMP sync_stubauction(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	return sync_stubauction_impl(obj, t1, pass);
+}
+#endif

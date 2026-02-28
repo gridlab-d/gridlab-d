@@ -110,7 +110,7 @@ TIMESTAMP int_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
     gld_property target_prop(get_parent(), get_target().c_str());
     if (!target_prop.is_valid() || !(target_prop.get_type() == PT_int16 || target_prop.get_type() == PT_int32 || target_prop.get_type() == PT_int64))
     {
-        gl_error("Specified target %s for %s is not valid.", get_target(), get_parent()->get_name());
+        gl_error("Specified target %s for %s is not valid.", get_target().c_str(), get_parent()->get_name());
         /*  TROUBLESHOOT
          Check to make sure the target you are specifying is a published variable for the object
          that you are pointing to.  Refer to the documentation of the command flag --modhelp, or
@@ -149,7 +149,7 @@ TIMESTAMP int_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
         if (m > range)
         {
             gl_error("Assert failed on %s: %s %i not within %i of given value %i",
-                     get_parent()->get_name(), get_target(), x, range, value);
+                     get_parent()->get_name(), get_target().c_str(), x, range, value);
             return 0;
         }
         gl_verbose("Assert passed on %s", get_parent()->get_name());
@@ -166,7 +166,7 @@ TIMESTAMP int_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
         if (m < range)
         {
             gl_error("Assert failed on %s: %s %i is within %i of given value %i",
-                     get_parent()->get_name(), get_target(), x, range, value);
+                     get_parent()->get_name(), get_target().c_str(), x, range, value);
             return 0;
         }
         gl_verbose("Assert passed on %s", get_parent()->get_name());

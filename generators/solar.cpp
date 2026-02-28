@@ -521,6 +521,11 @@ int solar::init_climate()
 int solar::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj->parent;
+#endif
+
 	int climate_result;
 	gld_property *temp_property_pointer = nullptr;
 	unsigned test_rlock = 0;
@@ -647,6 +652,19 @@ int solar::init(OBJECT *parent)
 	// find parent inverter, if not defined, use a default voltage
 	if (parent != nullptr)
 	{
+
+		// at the top of solar::init
+		OBJECT *obj = object_header(this);
+		if (parent != nullptr)
+		{
+			// EXTRA guard – catches corrupted parents early
+			if (parent->oclass == nullptr || parent->oclass->name == nullptr)
+			{
+				GL_THROW("solar:%d %s - invalid parent class pointer/state",
+						 obj->id, (obj->name ? obj->name : "Unnamed"));
+			}
+		}
+
 		if (gl_object_isa(parent, "inverter", "generators")) // SOLAR has a PARENT and PARENT is an INVERTER - old-school inverter
 		{
 			// Map the inverter voltage
@@ -1663,7 +1681,7 @@ EXPORT int create_solar(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -1684,7 +1702,7 @@ EXPORT int init_solar(OBJECT *obj, OBJECT *parent)
 	INIT_CATCHALL(solar);
 }
 
-EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_solar_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
 	solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(obj);
@@ -1711,6 +1729,23 @@ EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	SYNC_CATCHALL(solar);
 	return t2;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_solar_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_solar(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = (PASSCONFIG)va_arg(args, int);
+	va_end(args);
+	return sync_solar_impl(obj, t1, pass);
+}
+#endif
 
 // DELTAMODE Linkage
 EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)

@@ -26,6 +26,16 @@
 #include "transform.h"
 #include "enduse.h"
 
+#if defined(_WIN32)
+#define MODULE_API __declspec(dllexport) // always exporting from this module
+#else
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+#define MODULE_API __attribute__((visibility("default")))
+#else
+#define MODULE_API
+#endif
+#endif
+
 /* this must match property_type list in object.c */
 typedef int OBJECTRANK;			   /**< Object rank number */
 typedef unsigned short OBJECTSIZE; /** Object data size */
@@ -453,7 +463,12 @@ extern "C"
 
 	int object_get_oflags(KEYWORD **extflags);
 
-	TIMESTAMP object_sync(OBJECT *obj, TIMESTAMP to, PASSCONFIG pass);
+#ifndef __APPLE__
+	MODULE_API TIMESTAMP object_sync(OBJECT *obj, TIMESTAMP to, PASSCONFIG pass);
+#else
+MODULE_API TIMESTAMP object_sync(OBJECT *obj, ...);
+#endif
+
 	OBJECT **object_get_object(OBJECT *obj, PROPERTY *prop);
 	OBJECT **object_get_object_by_name(OBJECT *obj, const char *name);
 	enumeration *object_get_enum(OBJECT *obj, PROPERTY *prop);

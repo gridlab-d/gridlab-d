@@ -148,6 +148,11 @@ int vfd::create()
  */
 int vfd::init(OBJECT *parent)
 {
+	OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	OBJECT *obj = object_header(this);
 	FUNCTIONADDR temp_fxn;
 	STATUS temp_status_val;
@@ -1014,7 +1019,7 @@ EXPORT int create_vfd(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			vfd *my = object_data<vfd>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -1047,7 +1052,7 @@ EXPORT int init_vfd(OBJECT *obj)
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-EXPORT TIMESTAMP sync_vfd(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_vfd_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try
 	{
@@ -1069,6 +1074,23 @@ EXPORT TIMESTAMP sync_vfd(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(vfd);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_vfd(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	return sync_vfd_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_vfd(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_vfd_impl(obj, t0, pass);
+}
+#endif
 
 EXPORT int isa_vfd(OBJECT *obj, char *classname)
 {

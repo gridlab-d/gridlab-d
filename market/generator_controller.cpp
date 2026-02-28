@@ -166,6 +166,10 @@ int generator_controller::create(void)
 int generator_controller::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	PROPERTY *ptemp;
 	gld::set *temp_set;
 	int index;
@@ -1936,7 +1940,7 @@ EXPORT int create_generator_controller(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			generator_controller *my = /*OBJECTDATA(obj,<>)*/ object_data<generator_controller>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 	}
@@ -1970,7 +1974,7 @@ EXPORT int init_generator_controller(OBJECT *obj, OBJECT *parent)
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-EXPORT TIMESTAMP sync_generator_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_generator_controller_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
 	generator_controller *my = /*OBJECTDATA(obj,<>)*/ object_data<generator_controller>(obj);
@@ -2003,6 +2007,23 @@ EXPORT TIMESTAMP sync_generator_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG
 	}
 	return t2;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int sync_generator_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_generator_controller_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API int sync_generator_controller(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_generator_controller_impl(obj, t1, pass);
+}
+#endif
 
 EXPORT int isa_generator_controller(OBJECT *obj, char *classname)
 {

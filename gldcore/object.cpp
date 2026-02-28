@@ -1629,10 +1629,27 @@ int object_set_parent(OBJECT *obj,	  /**< the object to set */
 		output_error("object %s tried to set itself as its parent", object_name(obj, b, 63));
 		return -1;
 	}
+	// obj->parent = parent;
+	// obj->child_count++;
+	// if (parent != nullptr)
+	// 	return set_rank(parent, obj->rank, nullptr);
+
+	// If the object already had a parent, decrement that parent's child_count
+	if (obj->parent != nullptr && obj->parent != parent)
+	{
+		if (obj->parent->child_count > 0)
+		{
+			obj->parent->child_count--;
+		}
+	}
+	// Attach to the new parent and increment the NEW parent's child_count
 	obj->parent = parent;
-	obj->child_count++;
 	if (parent != nullptr)
+	{
+		parent->child_count++;
 		return set_rank(parent, obj->rank, nullptr);
+	}
+	// No parent: keep current rank
 	return obj->rank;
 }
 
@@ -1706,9 +1723,9 @@ void object_profile(OBJECT *obj, OBJECTPROFILEITEM pass, clock_t t)
 	}
 }
 
-TIMESTAMP _object_sync(OBJECT *obj,		/**< the object to synchronize */
-					   TIMESTAMP ts,	/**< the desire clock to sync to */
-					   PASSCONFIG pass) /**< the pass configuration */
+static TIMESTAMP _object_sync(OBJECT *obj,	   /**< the object to synchronize */
+							  TIMESTAMP ts,	   /**< the desire clock to sync to */
+							  PASSCONFIG pass) /**< the pass configuration */
 {
 	CLASS *oclass = obj->oclass;
 	TIMESTAMP plc_time = TS_NEVER, sync_time;
@@ -1813,9 +1830,9 @@ TIMESTAMP _object_sync(OBJECT *obj,		/**< the object to synchronize */
 
 	@return  the time of the next event for this object.
  */
-TIMESTAMP object_sync(OBJECT *obj,	   /**< the object to synchronize */
-					  TIMESTAMP ts,	   /**< the desire clock to sync to */
-					  PASSCONFIG pass) /**< the pass configuration */
+static TIMESTAMP object_sync_impl(OBJECT *obj,	   /**< the object to synchronize */
+								  TIMESTAMP ts,	   /**< the desire clock to sync to */
+								  PASSCONFIG pass) /**< the pass configuration */
 {
 	clock_t t = (clock_t)exec_clock();
 	TIMESTAMP t2 = TS_NEVER;
@@ -1859,6 +1876,29 @@ TIMESTAMP object_sync(OBJECT *obj,	   /**< the object to synchronize */
 	return t2;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP object_sync(OBJECT *obj,	 /**< the object to synchronize */
+											TIMESTAMP ts,	 /**< the desire clock to sync to */
+											PASSCONFIG pass) /**< the pass configuration */
+{
+	return object_sync_impl(obj, /**< the object to synchronize */
+							ts,	 /**< the desire clock to sync to */
+							pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP object_sync(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP ts = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return object_sync_impl(obj, /**< the object to synchronize */
+							ts,	 /**< the desire clock to sync to */
+							pass);
+}
+#endif
+
 TIMESTAMP object_heartbeat(OBJECT *obj)
 {
 	clock_t t = (clock_t)exec_clock();
@@ -1880,6 +1920,7 @@ TIMESTAMP object_heartbeat(OBJECT *obj)
  **/
 int object_init(OBJECT *obj) /**< the object to initialize */
 {
+
 	clock_t t = (clock_t)exec_clock();
 	int rv = 1;
 	obj->clock = global_starttime;

@@ -44,24 +44,25 @@ plc *plc::defaults = nullptr; ///< a pointer to the default values for new objec
 plc::plc(MODULE *mod)
 {
 	// first time init
-	if (oclass==nullptr)
+	if (oclass == nullptr)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"plc",sizeof(plc),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==nullptr)
+		oclass = gl_register_class(mod, "plc", sizeof(plc), PC_BOTTOMUP | PC_AUTOLOCK);
+		if (oclass == nullptr)
 			throw "unable to register class plc";
 		else
 			oclass->trl = TRL_INTEGRATED;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_char1024,"source",PADDR(source),
-			PT_object,"network",PADDR(network),
-			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+								PT_char1024, "source", PADDR(source),
+								PT_object, "network", PADDR(network),
+								nullptr) < 1)
+			GL_THROW("unable to publish properties in %s", __FILE__);
 
 		// set defaults
-		memset(this,0,sizeof(plc));
-		strcpy(source,"");
+		memset(this, 0, sizeof(plc));
+		strcpy(source, "");
 		controller = nullptr;
 		network = nullptr;
 		defaults = this;
@@ -72,7 +73,7 @@ plc::plc(MODULE *mod)
 int plc::create()
 {
 	// copy the defaults
-	memcpy(this,defaults,sizeof(plc));
+	memcpy(this, defaults, sizeof(plc));
 
 	// set object specific defaults
 	controller = new machine;
@@ -82,18 +83,24 @@ int plc::create()
 /** Initialize the new object */
 int plc::init(OBJECT *parent)
 {
-	if (strcmp(source,"")==0 && parent!=nullptr) /* default source */
-		sprintf(source.get_string(),"%s.plc",parent->oclass->name);
-	if (controller->compile(source)<0)
+	OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
+	if (strcmp(source, "") == 0 && parent != nullptr) /* default source */
+		sprintf(source.get_string(), "%s.plc", parent->oclass->name);
+	if (controller->compile(source) < 0)
 		GL_THROW("%s: PLC compile failed", source.get_string());
-	if (controller->init(parent)<0)
+	if (controller->init(parent) < 0)
 		GL_THROW("%s: PLC init failed", source.get_string());
 	parent->flags |= OF_HASPLC; /* enable external PLC flag */
-	
+
 	if (network)
 	{
-		controller->connect(OBJECTDATA(network,comm));
-		gl_verbose("machine %x has connected to network '%s'", controller, network->name?network->name:"anonymous");
+		controller->connect(OBJECTDATA(network, comm));
+		gl_verbose("machine %x has connected to network '%s'", controller, network->name ? network->name : "anonymous");
 	}
 
 	return 1; // return 0 on failure
@@ -102,15 +109,15 @@ int plc::init(OBJECT *parent)
 /** Synchronize the object */
 TIMESTAMP plc::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	if (t0>0)
+	if (t0 > 0)
 	{
-		int dt = controller->run((double)(t1-t0)/TS_SECOND);
-		if (dt<0)
+		int dt = controller->run((double)(t1 - t0) / TS_SECOND);
+		if (dt < 0)
 			return TS_INVALID;
-		else if (dt==0x7fffffff)
+		else if (dt == 0x7fffffff)
 			return TS_NEVER;
 		else
-			return t1+(TIMESTAMP)(dt*TS_SECOND);
+			return t1 + (TIMESTAMP)(dt * TS_SECOND);
 	}
 	else
 		return t1;
@@ -121,13 +128,13 @@ TIMESTAMP plc::sync(TIMESTAMP t0, TIMESTAMP t1)
 //////////////////////////////////////////////////////////////////////////
 EXPORT int create_plc(OBJECT **obj, OBJECT *parent)
 {
-	try 
+	try
 	{
 		*obj = gl_create_object(plc::oclass);
-		if (*obj!=nullptr)
+		if (*obj != nullptr)
 		{
-			plc *my = OBJECTDATA(*obj,plc);
-			gl_set_parent(*obj,parent);
+			plc *my = OBJECTDATA(*obj, plc);
+			// gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
 		}
@@ -141,9 +148,9 @@ EXPORT int init_plc(OBJECT *obj)
 {
 	try
 	{
-		if (obj!=nullptr)
+		if (obj != nullptr)
 		{
-			plc *my = OBJECTDATA(obj,plc);
+			plc *my = OBJECTDATA(obj, plc);
 			return my->init(obj->parent);
 		}
 		else
@@ -154,9 +161,9 @@ EXPORT int init_plc(OBJECT *obj)
 
 EXPORT TIMESTAMP sync_plc(OBJECT *obj, TIMESTAMP t0)
 {
-	try 
+	try
 	{
-		TIMESTAMP t1 = OBJECTDATA(obj,plc)->sync(obj->clock,t0);
+		TIMESTAMP t1 = OBJECTDATA(obj, plc)->sync(obj->clock, t0);
 		obj->clock = t0;
 		return t1;
 	}

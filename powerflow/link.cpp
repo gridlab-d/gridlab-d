@@ -93,6 +93,11 @@
 #include <cstdlib>
 #include <array>
 
+#include "gridlabd.h" // gl_error, gl_warning wrappers  (core output)     // [1](https://gridlab-d.shoutwiki.com/wiki/Class_functions)
+#include "object.h"	  // object_name(OBJECT*, char*, int) declaration     // [2](https://github.com/gridlab-d/gridlab-d/blob/master/powerflow/powerflow_object.h)
+#include <cstring>	  // strcmp
+#include <cstdio>	  // for snprintf
+
 #include "link.h"
 #include "node.h"
 #include "gld_complex.h"
@@ -305,6 +310,9 @@ int link_object::create(void)
 int link_object::init(OBJECT *parent)
 {
 	OBJECT *obj = GETOBJECT(this);
+#ifdef __APPLE__
+	parent = obj->parent; // AppleClang bug workaround - parent is coming in as null, but is actually set in the object header, so pull it from there
+#endif
 
 	/* check link from node */
 	if (from == nullptr)
@@ -317,23 +325,6 @@ int link_object::init(OBJECT *parent)
 	/*  TROUBLESHOOT
 	The to node for a line or link is not connected to anything.
 	*/
-
-	// General check - make sure the from and to are actually node objects!
-	if (!gl_object_isa(from, "node", "powerflow"))
-	{
-		GL_THROW("link::init(): link:%d - %s - 'from' object is not a powerflow node", obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		The "from" object of a link-based powerflow object is not actually a powerflow node.  It must be a node-based object to properly work.
-		*/
-	}
-
-	if (!gl_object_isa(to, "node", "powerflow"))
-	{
-		GL_THROW("link::init(): link:%d - %s - 'to' object is not a powerflow node", obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		The "to" object of a link-based powerflow object is not actually a powerflow node.  It must be a node-based object to properly work.
-		*/
-	}
 
 	// Make sure nodes have initialized in NR - otherwise some lines get missed (if connected to children)
 	if (solver_method == SM_NR)
@@ -384,8 +375,18 @@ int link_object::init(OBJECT *parent)
 	case SM_FBS: /* forward backsweep method only */
 		if (obj->parent == nullptr)
 		{
-			/* make 'from' object parent of this object */
+/* make 'from' object parent of this object */
+#ifdef __APPLE__
+			if (gl_object_isa(from, "node", "powerflow") ||
+				gl_object_isa(from, "triplex_node", "powerflow") ||
+				gl_object_isa(from, "triplex_meter", "powerflow") ||
+				gl_object_isa(from, "load", "powerflow") ||
+				gl_object_isa(from, "meter", "powerflow"))
+#else
 			if (gl_object_isa(from, "node"))
+#endif
+
+			// if (gl_object_isa(from, "node"))
 			{
 				if (gl_set_parent(obj, from) < 0)
 					throw "error when setting parent";
@@ -407,8 +408,16 @@ int link_object::init(OBJECT *parent)
 
 		if (to->parent == nullptr)
 		{
-			/* make this object parent to 'to' object */
+/* make this object parent to 'to' object */
+#ifdef __APPLE__
+			if (gl_object_isa(to, "node", "powerflow") ||
+				gl_object_isa(to, "triplex_node", "powerflow") ||
+				gl_object_isa(to, "triplex_meter", "powerflow") ||
+				gl_object_isa(to, "load", "powerflow") ||
+				gl_object_isa(to, "meter", "powerflow"))
+#else
 			if (gl_object_isa(to, "node"))
+#endif
 			{
 				if (gl_set_parent(to, obj) < 0)
 					throw "error when setting parent";
@@ -3728,7 +3737,7 @@ EXPORT int create_link(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			link_object *my = object_data<link_object>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -3761,7 +3770,7 @@ EXPORT int init_link(OBJECT *obj)
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_link_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try
 	{
@@ -3783,6 +3792,23 @@ EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(link);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_link_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_link(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_link_impl(obj, t1, pass);
+}
+#endif
 
 EXPORT int isa_link(OBJECT *obj, char *classname)
 {

@@ -3,7 +3,7 @@
 	@file link.cpp
 	@addtogroup link Network link (branch)
 	@ingroup network
-	
+
 	The link object implements the general solution elements
 	for branches using the Gauss-Seidel method.
 
@@ -12,9 +12,9 @@
 	The effective admittance Y is calculated by including half of the line charging capacitance \p B [Kundur 1993, p. 258]:
 
 		\f[ \widetilde{Y}_{eff} = \widetilde{Y} + \jmath \frac{B}{2} \f]
-	
+
 	The admittance coefficient is the inverse of the transformer turns ratio \p n, if any [Kundur 1993, p. 236]:
-	
+
 		\f[ c \leftarrow \frac{1}{n} \f]
 
 	The effective line self-admittance is the product of the admittance coefficient and component admittance
@@ -57,78 +57,79 @@
 // link CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* link::oclass = nullptr;
-CLASS* link::pclass = nullptr;
+CLASS *link::oclass = nullptr;
+CLASS *link::pclass = nullptr;
 link *link::defaults = nullptr;
 CLASS *link_class = (nullptr);
 OBJECT *last_link = (nullptr);
 
-link::link(MODULE *mod) 
+link::link(MODULE *mod)
 {
 	// first time init
-	if (oclass==nullptr)
+	if (oclass == nullptr)
 	{
 		// register the class definition
-		link_class = oclass = gl_register_class(mod,"link",sizeof(link),PC_BOTTOMUP|PC_UNSAFE_OVERRIDE_OMIT);
-		if (oclass==nullptr)
+		link_class = oclass = gl_register_class(mod, "link", sizeof(link), PC_BOTTOMUP | PC_UNSAFE_OVERRIDE_OMIT);
+		if (oclass == nullptr)
 			throw "unable to register class link";
 		else
 			oclass->trl = TRL_STANDALONE;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_complex, "Y", PADDR(Y),
-			PT_complex, "I", PADDR(I),
-			PT_double, "B", PADDR(B),
-			PT_object, "from", PADDR(from),
-			PT_object, "to", PADDR(to),
-			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+								PT_complex, "Y", PADDR(Y),
+								PT_complex, "I", PADDR(I),
+								PT_double, "B", PADDR(B),
+								PT_object, "from", PADDR(from),
+								PT_object, "to", PADDR(to),
+								nullptr) < 1)
+			GL_THROW("unable to publish properties in %s", __FILE__);
 
 		// setup the default values
 		defaults = this;
-		Y = complex(0,0);
+		Y = complex(0, 0);
 		B = 0.0;
-		I = complex(0,0);
+		I = complex(0, 0);
 		from = nullptr;
 		to = nullptr;
 		turns_ratio = 1.0;
 	}
 }
 
-int link::create() 
+int link::create()
 {
-	memcpy(this,defaults,sizeof(*this));
+	memcpy(this, defaults, sizeof(*this));
 	return 1;
 }
 
 int link::init(node *parent)
 {
-	node *f = OBJECTDATA(from,node);
-	if (f==nullptr)
+	node *f = OBJECTDATA(from, node);
+	if (f == nullptr)
 		throw "from node not specified";
 	f->attach(this);
 
-	node *t = OBJECTDATA(to,node);
-	if (t==nullptr)
+	node *t = OBJECTDATA(to, node);
+	if (t == nullptr)
 		throw "to node not specified";
 	t->attach(this);
 
 	// compute effective impedance
-	Yeff = Y + complex(0,B/2);
+	Yeff = Y + complex(0, B / 2);
 
 	// off-nominal ratio [Kundur 1993, p.236]
-	c = 1/turns_ratio; 
+	c = 1 / turns_ratio;
 
 	// compute effective admittance
-	Yc = Yeff*c;
+	Yc = Yeff * c;
 
 	return 1;
 }
 
-TIMESTAMP link::sync(TIMESTAMP t0) 
+TIMESTAMP link::sync(TIMESTAMP t0)
 {
-	node *f = OBJECTDATA(from,node);
-	node *t = OBJECTDATA(to,node);
+	node *f = OBJECTDATA(from, node);
+	node *t = OBJECTDATA(to, node);
 
 	// Note: n!=1 <=> B==0
 	// compute line currents (note from/to switched)
@@ -137,13 +138,13 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 
 	// add to self admittance (contribution diagonal terms)
 	// add to current injections (contribution to off-diagonal terms)
-	complex Ys = Yc + Yc*(c-1);
+	complex Ys = Yc + Yc * (c - 1);
 	LOCK_OBJECT(from);
 	f->Ys += Ys;
 	f->YVs += Ifrom;
 	UNLOCK_OBJECT(from);
 
-	Ys = Yc + Yeff*(1-c);
+	Ys = Yc + Yeff * (1 - c);
 	LOCK_OBJECT(to);
 	t->YVs += Ito;
 	t->Ys += Ys;
@@ -152,28 +153,28 @@ TIMESTAMP link::sync(TIMESTAMP t0)
 	// compute current over line (from->to)
 	I = Ito - Ifrom;
 
-
 #ifdef _DEBUG
 	// link debugging
-	if (debug_link==1)
+	if (debug_link == 1)
 	{
-		OBJECT* obj = object_header(this);
-		static int first=-1;
-		if (first==-1) first = obj->id;
-		if (obj->id==first)
+		OBJECT *obj = object_header(this);
+		static int first = -1;
+		if (first == -1)
+			first = obj->id;
+		if (obj->id == first)
 		{
 			printf("\n");
 			printf("Link  From -> To             R        X        B        Y                 Ifrom             Ito               I               \n");
 			printf("===== ====================== ======== ======== ======== ================= ================= ================= =================\n");
 		}
-		printf("%2d-%2d %-9.9s -> %-9.9s %+8.4f %+8.4f %+8.4f %+8.4f%+8.4fj %+8.4f%+8.4fj %+8.4f%+8.4fj %+8.4f%+8.4fj\n", 
-			from->id, to->id, 
-			from->name,to->name,
-			(complex(1,0)/Y).Re(),(complex(1,0)/Y).Im(), B,
-			Y.Re(), Y.Im(),
-			Ifrom.Re(), Ifrom.Im(), 
-			Ito.Re(), Ito.Im(), 
-			I.Re(), I.Im());
+		printf("%2d-%2d %-9.9s -> %-9.9s %+8.4f %+8.4f %+8.4f %+8.4f%+8.4fj %+8.4f%+8.4fj %+8.4f%+8.4fj %+8.4f%+8.4fj\n",
+			   from->id, to->id,
+			   from->name, to->name,
+			   (complex(1, 0) / Y).Re(), (complex(1, 0) / Y).Im(), B,
+			   Y.Re(), Y.Im(),
+			   Ifrom.Re(), Ifrom.Im(),
+			   Ito.Re(), Ito.Im(),
+			   I.Re(), I.Im());
 	}
 #endif // _DEBUG
 
@@ -185,13 +186,13 @@ void link::apply_dV(OBJECT *source, complex dV)
 	complex dI = dV * Y * c;
 	OBJECT *obj;
 	node *n;
-	if (source==from)
-		n = OBJECTDATA(obj=to,node);
-	else if (source==to)
-		n = OBJECTDATA(obj=from,node);
+	if (source == from)
+		n = OBJECTDATA(obj = to, node);
+	else if (source == to)
+		n = OBJECTDATA(obj = from, node);
 	else
 		throw "apply_dV() - source is not valid";
-	LOCKED(obj,n->YVs += dI);
+	LOCKED(obj, n->YVs += dI);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -201,11 +202,11 @@ void link::apply_dV(OBJECT *source, complex dV)
 EXPORT int create_link(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(link_class);
-	if (*obj!=nullptr)
+	if (*obj != nullptr)
 	{
 		last_link = *obj;
-		link *my = OBJECTDATA(*obj,link);
-		gl_set_parent(*obj,parent);
+		link *my = OBJECTDATA(*obj, link);
+		// gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
 	}
@@ -214,7 +215,7 @@ EXPORT int create_link(OBJECT **obj, OBJECT *parent)
 
 EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0)
 {
-	TIMESTAMP t1 = OBJECTDATA(obj,link)->sync(t0);
+	TIMESTAMP t1 = OBJECTDATA(obj, link)->sync(t0);
 	obj->clock = t0;
 	return t1;
 }
@@ -222,8 +223,7 @@ EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0)
 EXPORT int init_link(OBJECT *obj)
 {
 
-	return OBJECTDATA(obj,link)->init(OBJECTDATA(obj->parent,node));
+	return OBJECTDATA(obj, link)->init(OBJECTDATA(obj->parent, node));
 }
-
 
 /**@}*/

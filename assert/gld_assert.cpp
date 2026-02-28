@@ -135,10 +135,10 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
             char buf[1024];
             // char *p = get_part();
             gl_error("%s: assert failed on %s %s.%s.%s %s %s %s %s", get_name(), status == AS_TRUE ? "" : "NOT",
-                     get_parent() ? get_parent()->get_name() : "global variable", get_target().c_str(), get_part(),
+                     get_parent() ? get_parent()->get_name() : "global variable", get_target().c_str(), get_part().c_str(),
                      target_prop.to_string(buf, sizeof(buf)) ? buf : "(void)",
                      rel_name, // pKeyword->get_name(),
-                     get_value(), get_value2());
+                     get_value().c_str(), get_value2().c_str());
             return 0;
         }
         else

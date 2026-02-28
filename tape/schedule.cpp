@@ -357,6 +357,11 @@ int schedule::create()
 
 int schedule::init(OBJECT *parent)
 {
+	OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	OBJECT *hdr = object_header(this);
 	int rv = 1;
 
@@ -571,7 +576,7 @@ EXPORT int create_schedule(OBJECT **obj, OBJECT *parent)
 	if (*obj != nullptr)
 	{
 		schedule *my = OBJECTDATA(*obj, schedule);
-		gl_set_parent(*obj, parent);
+		// gl_set_parent(*obj, parent);
 		my->create();
 		return 1;
 	}
@@ -590,7 +595,7 @@ EXPORT TIMESTAMP commit_schedule(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 	return TS_NEVER;
 }
 
-EXPORT TIMESTAMP sync_schedule(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_schedule_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	schedule *my = OBJECTDATA(obj, schedule);
 	TIMESTAMP t1 = my->sync(obj->clock, t0);
@@ -627,5 +632,23 @@ EXPORT TIMESTAMP sync_schedule(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	obj->clock = t0;
 	return t1;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_schedule(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	return sync_schedule_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_schedule(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+
+	return sync_schedule_impl(obj, t0, pass);
+}
+#endif
 
 /**@}**/

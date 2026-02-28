@@ -1,7 +1,7 @@
 /** $Id: sync_check
 
-    Implements sychronization check functionality for switches to close
-    when two grids are within parameters
+	Implements sychronization check functionality for switches to close
+	when two grids are within parameters
 
 	Copyright (C) 2020 Battelle Memorial Institute
 **/
@@ -50,7 +50,7 @@ sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 								PT_double, "voltage_magnitude_tolerance[V]", PADDR(voltage_magnitude_tolerance), PT_DESCRIPTION, "tolerance in Volts for the difference in voltage magnitudes - used in SEP_DIFF mode - prioritized over voltage_magnitude_tolerance_pu",
 								PT_double, "voltage_angle_tolerance[deg]", PADDR(voltage_angle_tolerance_deg), PT_DESCRIPTION, "tolerance in degrees for the difference in voltage angles - used in SEP_DIFF mode",
 								PT_double, "delta_trigger_mult", PADDR(delta_trigger_mult), PT_DESCRIPTION, "multiplier against voltage and frequency tolerances to trigger/maintain deltamode",
-								//Measurement Properties (16=1+6+9)(+4 for sync_ctrl)
+								// Measurement Properties (16=1+6+9)(+4 for sync_ctrl)
 								PT_double, "freq_diff_noabs_hz", PADDR(freq_diff_noabs_hz), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: frequency difference in Hz without abs()",
 								PT_double, "volt_A_mag_diff_noabs_pu", PADDR(volt_A_mag_diff_noabs_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase A voltage magnitude in pu without abs()",
 								PT_double, "volt_B_mag_diff_noabs_pu", PADDR(volt_B_mag_diff_noabs_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase B voltage magnitude in pu without abs()",
@@ -95,6 +95,11 @@ int sync_check::create(void)
 
 int sync_check::init(OBJECT *parent)
 {
+	OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	OBJECT *obj = object_header(this);
 	int retval = powerflow_object::init(parent);
 
@@ -151,38 +156,38 @@ TIMESTAMP sync_check::postsync(TIMESTAMP t0)
 	OBJECT *obj = object_header(this);
 	TIMESTAMP tret = powerflow_object::postsync(t0);
 
-	//Code to check if we need a deltamode call
+	// Code to check if we need a deltamode call
 	if (next_trigger_update_time <= t0)
 	{
-		//Reset accumulator timer, while we're in here (just because)
+		// Reset accumulator timer, while we're in here (just because)
 		t_sat = 0.0;
 
-		//Update the timing tracker - set it one second up (just because)
+		// Update the timing tracker - set it one second up (just because)
 		next_trigger_update_time = t0 + 1;
 
 		if (sc_enabled_flag)
 		{
-			//Update measurements and check
+			// Update measurements and check
 			update_measurements();
 			check_metrics(false);
 
-			//Check if we were flagged
+			// Check if we were flagged
 			if (deltamode_trigger_keep_flag)
 			{
-				//Request deltamode
+				// Request deltamode
 				schedule_deltamode_start(t0);
 
-				//Reset our flag, out of paranoia
+				// Reset our flag, out of paranoia
 				deltamode_check_return_val = SM_EVENT;
 
-				//Force a reiteration, just in case
+				// Force a reiteration, just in case
 				tret = t0;
 			}
-			//Default else - don't trigger anything
+			// Default else - don't trigger anything
 		}
-		else //not armed, so no need to check things
+		else // not armed, so no need to check things
 		{
-			//Set variables/flags, just in case something else pulls us into deltamode (paranoia set)
+			// Set variables/flags, just in case something else pulls us into deltamode (paranoia set)
 			deltamode_trigger_keep_flag = false;
 			deltamode_check_return_val = SM_EVENT;
 		}
@@ -358,12 +363,12 @@ void sync_check::init_vars()
 
 	/* Settings for SEP_DIFF Mode */
 	voltage_magnitude_tolerance_pu = 1e-2;
-	voltage_magnitude_tolerance = -99.0; //Flag value
+	voltage_magnitude_tolerance = -99.0; // Flag value
 	voltage_angle_tolerance_deg = 5;
 
 	/* init member with default values */
 	reg_dm_flag = false;
-	deltamode_inclusive = false; //By default, don't be included in deltamode simulations
+	deltamode_inclusive = false; // By default, don't be included in deltamode simulations
 
 	metrics_flag = false;
 	t_sat = 0;
@@ -371,7 +376,7 @@ void sync_check::init_vars()
 	temp_property_pointer = nullptr;
 
 	/* init some published properties that have the default value */
-	sc_enabled_flag = false; //Unarmed
+	sc_enabled_flag = false; // Unarmed
 
 	/* init measurements, gld objs, & Nominal Values*/
 	volt_norm = 0;
@@ -408,7 +413,7 @@ void sync_check::init_vars()
 	swt_ph_B_flag = false;
 	swt_ph_C_flag = false;
 
-	//Get frequency to populate default - powerflow global has been set by now
+	// Get frequency to populate default - powerflow global has been set by now
 	/* Get the nominal frequency property */
 	temp_property_pointer = new gld_property("powerflow::nominal_frequency");
 
@@ -428,21 +433,21 @@ void sync_check::init_vars()
 	// Clean the temporary property pointer
 	delete temp_property_pointer;
 
-	//Defaults - mostly to cut down on messages
+	// Defaults - mostly to cut down on messages
 	frequency_tolerance_hz = 0.01 * temp_freq_val; // i.e., 1%
 	voltage_tolerance_pu = 1e-2;				   // i.e., 1%
 	voltage_tolerance = -99.0;
 	metrics_period_sec = 1.2;
 
-	//Initialize deltmode trigger variables (will populate most later)
-	delta_trigger_mult = 2.0; //Defaults to 2x the bands
+	// Initialize deltmode trigger variables (will populate most later)
+	delta_trigger_mult = 2.0; // Defaults to 2x the bands
 	frequency_tolerance_hz_deltamode_trig = 0.0;
 	voltage_tolerance_pu_deltamode_trig = 0.0;
 	voltage_magnitude_tolerance_pu_deltamode_trig = 0.0;
 	voltage_angle_tolerance_deg_deltamode_trig = 0.0;
 
 	deltamode_trigger_keep_flag = false;
-	deltamode_check_return_val = SM_EVENT; //By default, just want event-driven
+	deltamode_check_return_val = SM_EVENT; // By default, just want event-driven
 }
 
 void sync_check::data_sanity_check(OBJECT *par)
@@ -489,7 +494,7 @@ void sync_check::data_sanity_check(OBJECT *par)
 		if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 		{
 			GL_THROW("sync_check:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
-			//Defined above
+			// Defined above
 		}
 
 		// Get the value of nominal frequency from this property
@@ -498,7 +503,7 @@ void sync_check::data_sanity_check(OBJECT *par)
 		// Clean the temporary property pointer
 		delete temp_property_pointer;
 
-		//Default it to 1%
+		// Default it to 1%
 		frequency_tolerance_hz = 0.01 * temp_freq_val;
 
 		gl_warning("sync_check:%d %s - frequency_tolerance was not set as a positive value, it is reset to %f [Hz].",
@@ -511,15 +516,15 @@ void sync_check::data_sanity_check(OBJECT *par)
 	}
 
 	// The voltage tolerance settings of both modes are checked, regardless of the mode at init as the mode may be modified later on
-	//Sequence it - see if we specified a non-per-unit one first
+	// Sequence it - see if we specified a non-per-unit one first
 	if (voltage_tolerance > 0.0)
 	{
-		//Set this to per-unit value
+		// Set this to per-unit value
 		voltage_tolerance_pu = voltage_tolerance / volt_norm;
 	}
-	//Default else - just fallback on voltage_tolerance_pu
+	// Default else - just fallback on voltage_tolerance_pu
 
-	//Overall check
+	// Overall check
 	if (voltage_tolerance_pu <= 0)
 	{
 		voltage_tolerance_pu = 1e-2; // i.e., 1%
@@ -532,13 +537,13 @@ void sync_check::data_sanity_check(OBJECT *par)
 		*/
 	}
 
-	//Sequence it - see if we specified a non-per-unit one first
+	// Sequence it - see if we specified a non-per-unit one first
 	if (voltage_magnitude_tolerance > 0.0)
 	{
-		//Set this to per-unit value
+		// Set this to per-unit value
 		voltage_magnitude_tolerance_pu = voltage_magnitude_tolerance / volt_norm;
 	}
-	//Default else - just fallback on voltage_magnitude_tolerance_pu
+	// Default else - just fallback on voltage_magnitude_tolerance_pu
 
 	if (voltage_magnitude_tolerance_pu <= 0)
 	{
@@ -577,7 +582,7 @@ void sync_check::data_sanity_check(OBJECT *par)
 		*/
 	}
 
-	//Populate default tolerances for deltamode triggers
+	// Populate default tolerances for deltamode triggers
 	if (delta_trigger_mult <= 1.0)
 	{
 		delta_trigger_mult = 2.0;
@@ -588,13 +593,13 @@ void sync_check::data_sanity_check(OBJECT *par)
 		*/
 	}
 
-	//Update deltamode triggers
+	// Update deltamode triggers
 	frequency_tolerance_hz_deltamode_trig = delta_trigger_mult * frequency_tolerance_hz;
 	voltage_tolerance_pu_deltamode_trig = delta_trigger_mult * voltage_tolerance_pu;
 	voltage_magnitude_tolerance_pu_deltamode_trig = delta_trigger_mult * voltage_magnitude_tolerance_pu;
 	voltage_angle_tolerance_deg_deltamode_trig = delta_trigger_mult * voltage_angle_tolerance_deg;
 
-	//Set initial value
+	// Set initial value
 	next_trigger_update_time = gl_globalclock;
 }
 
@@ -605,7 +610,7 @@ void sync_check::reg_deltamode_check()
 	// Set the deltamode flag, if desired
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
 	{
-		deltamode_inclusive = true; //Set the flag and off we go
+		deltamode_inclusive = true; // Set the flag and off we go
 	}
 
 	// Check the module deltamode flag & the object deltamode flag for consistency
@@ -650,7 +655,7 @@ void sync_check::reg_deltamode()
 		// Turn off this one-time flag
 		reg_dm_flag = false;
 
-		//Check limits first
+		// Check limits first
 		if (pwr_object_current >= pwr_object_count)
 		{
 			GL_THROW("Too many objects tried to populate deltamode objects array in the powerflow module!");
@@ -685,7 +690,7 @@ void sync_check::reg_deltamode()
 		// Set the post delta function to nullptr, thus it does not need to be checked
 		post_delta_functions[pwr_object_current] = nullptr;
 
-		//Increment
+		// Increment
 		pwr_object_current++;
 	}
 }
@@ -703,9 +708,9 @@ void sync_check::init_norm_values(OBJECT *par)
 		GL_THROW("sync_check:%d %s Failed to map the switch property 'from'!",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
-        While attempting to map the a property from the switch object, an error occurred.  Please try again.
-        If the error persists, please submit your GLM and a bug report to the ticketing system.
-        */
+		While attempting to map the a property from the switch object, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
 	}
 
 	swt_fm_node = temp_property_pointer->get_objectref();
@@ -719,9 +724,9 @@ void sync_check::init_norm_values(OBJECT *par)
 		GL_THROW("sync_check:%d %s Failed to map the switch property 'to'!",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
-        While attempting to map the a property from the switch object, an error occurred.  Please try again.
-        If the error persists, please submit your GLM and a bug report to the ticketing system.
-        */
+		While attempting to map the a property from the switch object, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
 	}
 
 	swt_to_node = temp_property_pointer->get_objectref();
@@ -746,7 +751,7 @@ void sync_check::init_norm_values(OBJECT *par)
 	// 'To' node voltage
 	temp_property_pointer = new gld_property(swt_to_node, "nominal_voltage");
 	// Double check the validity of the nominal frequency property
-	if (!temp_property_pointer->is_valid() ||!temp_property_pointer->is_double())
+	if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 	{
 		GL_THROW("sync_check:%d %s failed to map the nominal_voltage property",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -796,7 +801,7 @@ void sync_check::update_diff_prop()
 	double volt_A_ang_rad_diff = abs(swt_fm_volt_A.Arg() - swt_to_volt_A.Arg());
 	double volt_A_ang_deg_diff_temp = RAD_TO_DEG(volt_A_ang_rad_diff);
 
-	//Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
+	// Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
 	if (volt_A_ang_deg_diff_temp > 180.0)
 		volt_A_ang_deg_diff = 360.0 - volt_A_ang_deg_diff_temp;
 	else
@@ -810,7 +815,7 @@ void sync_check::update_diff_prop()
 	double volt_B_ang_rad_diff = abs(swt_fm_volt_B.Arg() - swt_to_volt_B.Arg());
 	double volt_B_ang_deg_diff_temp = RAD_TO_DEG(volt_B_ang_rad_diff);
 
-	//Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
+	// Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
 	if (volt_B_ang_deg_diff_temp > 180.0)
 		volt_B_ang_deg_diff = 360.0 - volt_B_ang_deg_diff_temp;
 	else
@@ -824,7 +829,7 @@ void sync_check::update_diff_prop()
 	double volt_C_ang_rad_diff = abs(swt_fm_volt_C.Arg() - swt_to_volt_C.Arg());
 	double volt_C_ang_deg_diff_temp = RAD_TO_DEG(volt_C_ang_rad_diff);
 
-	//Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
+	// Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
 	if (volt_C_ang_deg_diff_temp > 180.0)
 		volt_C_ang_deg_diff = 360.0 - volt_C_ang_deg_diff_temp;
 	else
@@ -866,15 +871,15 @@ void sync_check::check_metrics(bool deltamode_run)
 	//== Mode Selection
 	if (volt_compare_mode == MAG_DIFF)
 	{
-		//See if the metric needs updating - Sequence it - see if we specified a non-per-unit one first
+		// See if the metric needs updating - Sequence it - see if we specified a non-per-unit one first
 		if (voltage_tolerance > 0.0)
 		{
-			//Set this to per-unit value
+			// Set this to per-unit value
 			voltage_tolerance_pu = voltage_tolerance / volt_norm;
 		}
-		//Default else - just fallback on voltage_tolerance_pu
+		// Default else - just fallback on voltage_tolerance_pu
 
-		//See if we should be calling/remaining in deltamode - all instances call this
+		// See if we should be calling/remaining in deltamode - all instances call this
 		if ((freq_diff_hz <= frequency_tolerance_hz_deltamode_trig) && (volt_A_diff_pu <= voltage_tolerance_pu_deltamode_trig) &&
 			(volt_B_diff_pu <= voltage_tolerance_pu_deltamode_trig) && (volt_C_diff_pu <= voltage_tolerance_pu_deltamode_trig))
 		{
@@ -885,7 +890,7 @@ void sync_check::check_metrics(bool deltamode_run)
 			deltamode_trigger_keep_flag = false;
 		}
 
-		//See if we're in deltamode - in that case, do the standard "closure" check
+		// See if we're in deltamode - in that case, do the standard "closure" check
 		if (deltamode_run)
 		{
 			if ((freq_diff_hz <= frequency_tolerance_hz) && (volt_A_diff_pu <= voltage_tolerance_pu) &&
@@ -897,19 +902,19 @@ void sync_check::check_metrics(bool deltamode_run)
 			{
 				metrics_flag = false;
 			}
-		} //End standard closure check
+		} // End standard closure check
 	}
 	else // SEP_DIFF Mode
 	{
-		//See if the metric needs updating - Sequence it - see if we specified a non-per-unit one first
+		// See if the metric needs updating - Sequence it - see if we specified a non-per-unit one first
 		if (voltage_magnitude_tolerance > 0.0)
 		{
-			//Set this to per-unit value
+			// Set this to per-unit value
 			voltage_magnitude_tolerance_pu = voltage_magnitude_tolerance / volt_norm;
 		}
-		//Default else - just fallback on voltage_magnitude_tolerance_pu
+		// Default else - just fallback on voltage_magnitude_tolerance_pu
 
-		//See if we should be calling/remaining in deltamode - all instances call this
+		// See if we should be calling/remaining in deltamode - all instances call this
 		if ((freq_diff_hz <= frequency_tolerance_hz_deltamode_trig) &&
 			(volt_A_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) &&
 			(volt_B_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) && (volt_C_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) &&
@@ -923,7 +928,7 @@ void sync_check::check_metrics(bool deltamode_run)
 			deltamode_trigger_keep_flag = false;
 		}
 
-		//See if we're in deltamode - in that case, do the standard "closure" check
+		// See if we're in deltamode - in that case, do the standard "closure" check
 		if (deltamode_run)
 		{
 			if ((freq_diff_hz <= frequency_tolerance_hz) &&
@@ -938,7 +943,7 @@ void sync_check::check_metrics(bool deltamode_run)
 			{
 				metrics_flag = false;
 			}
-		} //End standard closure check
+		} // End standard closure check
 	}
 }
 
@@ -967,7 +972,7 @@ void sync_check::check_excitation(unsigned long dt)
 void sync_check::reset_after_excitation()
 {
 	// After closing the swtich, disable itself
-	sc_enabled_flag = false; //Unarmed
+	sc_enabled_flag = false; // Unarmed
 
 	// Reset other buffers & variables
 	metrics_flag = false;
@@ -975,8 +980,8 @@ void sync_check::reset_after_excitation()
 	init_diff_prop(FLAG_VAL);
 }
 
-//Deltamode call
-//Module-level call
+// Deltamode call
+// Module-level call
 SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
 	update_measurements(); //@TODO: Always update for sync_ctrl
@@ -986,33 +991,33 @@ SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_tim
 	{
 		if ((iteration_count_val == 0) && (!interupdate_pos)) //@TODO: Need further testings
 		{
-			//Do the bound and deltamode "remain" check
+			// Do the bound and deltamode "remain" check
 			check_metrics(true);
 
-			//See how to proceed
-			if (deltamode_trigger_keep_flag) //In bounds, track!
+			// See how to proceed
+			if (deltamode_trigger_keep_flag) // In bounds, track!
 			{
 				deltamode_check_return_val = SM_DELTA;
 			}
-			else //Out of bounds, just let other objects drive us
+			else // Out of bounds, just let other objects drive us
 			{
 				deltamode_check_return_val = SM_EVENT;
 			}
 
-			//Actual sync_check tests - see if it should close
+			// Actual sync_check tests - see if it should close
 			check_excitation(dt);
 		}
-		//Default else - other passes, just return whatever value we had set
+		// Default else - other passes, just return whatever value we had set
 	}
-	else //Not enabled, so something else gets to drive deltamode
+	else // Not enabled, so something else gets to drive deltamode
 	{
-		//Paranoia set the flag, just in case
+		// Paranoia set the flag, just in case
 		deltamode_trigger_keep_flag = false;
 
-		//Set return status
+		// Set return status
 		deltamode_check_return_val = SM_EVENT;
 
-		//Reset accumulator timer, in case disabled before a closing happened
+		// Reset accumulator timer, in case disabled before a closing happened
 		t_sat = 0.0;
 	}
 
@@ -1024,12 +1029,12 @@ SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_tim
 //////////////////////////////////////////////////////////////////////////
 
 /**
-* REQUIRED: allocate and initialize an object.
-*
-* @param obj a pointer to a pointer of the last object in the list
-* @param parent a pointer to the parent of this object
-* @return 1 for a successfully created object, 0 for error
-*/
+ * REQUIRED: allocate and initialize an object.
+ *
+ * @param obj a pointer to a pointer of the last object in the list
+ * @param parent a pointer to the parent of this object
+ * @return 1 for a successfully created object, 0 for error
+ */
 EXPORT int create_sync_check(OBJECT **obj, OBJECT *parent)
 {
 	try
@@ -1038,7 +1043,7 @@ EXPORT int create_sync_check(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			sync_check *my = object_data<sync_check>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -1058,14 +1063,14 @@ EXPORT int init_sync_check(OBJECT *obj)
 }
 
 /**
-* Sync is called when the clock needs to advance on the bottom-up pass (PC_BOTTOMUP)
-*
-* @param obj the object we are sync'ing
-* @param t0 this objects current timestamp
-* @param pass the current pass for this sync call
-* @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
-*/
-EXPORT TIMESTAMP sync_sync_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+ * Sync is called when the clock needs to advance on the bottom-up pass (PC_BOTTOMUP)
+ *
+ * @param obj the object we are sync'ing
+ * @param t0 this objects current timestamp
+ * @param pass the current pass for this sync call
+ * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
+ */
+static TIMESTAMP sync_sync_check_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try
 	{
@@ -1088,12 +1093,29 @@ EXPORT TIMESTAMP sync_sync_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	SYNC_CATCHALL(sync_check);
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_sync_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	return sync_sync_check_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_sync_check(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_sync_check_impl(obj, t0, pass);
+}
+#endif
+
 EXPORT int isa_sync_check(OBJECT *obj, char *classname)
 {
 	return object_data<sync_check>(obj)->isa(classname);
 }
 
-//Deltamode export
+// Deltamode export
 EXPORT SIMULATIONMODE interupdate_sync_check(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
 	sync_check *my = object_data<sync_check>(obj);

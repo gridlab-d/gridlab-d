@@ -27,7 +27,8 @@
 #ifndef _GRIDLABD_JAVA_H_
 #define _GRIDLABD_JAVA_H_
 
-typedef struct s_javacallbacks {
+typedef struct s_javacallbacks
+{
 	JavaVM *(*get_jvm)();
 	JNIEnv *(*get_env)();
 	void *(*set_obj)(jobject, OBJECT *, void *, int);
@@ -35,7 +36,7 @@ typedef struct s_javacallbacks {
 
 CDECL JavaVM *get_jvm();
 CDECL JNIEnv *get_env();
-CDECL void *set_obj(jobject obj, OBJECT * object_addr, void *block_addr, int id);
+CDECL void *set_obj(jobject obj, OBJECT *object_addr, void *block_addr, int id);
 EXPORT void *getvar(char *varname, char *value, unsigned int size);
 
 char *get_classpath();
@@ -48,7 +49,7 @@ void *get_jcb();
 
 #ifdef JDLMAIN
 #define EXTERN
-#define INIT(X) =(X)
+#define INIT(X) = (X)
 #else
 #ifdef __cplusplus
 #define EXTERN
@@ -62,89 +63,104 @@ CDECL EXPORT EXTERN JAVACALLBACKS *jcallback INIT(NULL);
 #undef EXTERN
 
 #define EXPORT_JAVA_CREATE(name) EXPORT_JAVA_CREATE_EX(name, name)
-#define EXPORT_JAVA_CREATE_EX(N, C)											\
-																			\
-CLASS *N##_class=NULL;														\
-OBJECT *last_##N=NULL;														\
-																			\
-EXPORT int create_##N(OBJECT **obj, OBJECT *parent){						\
-	JNIEnv *jnienv = jgl_get_env();											\
-	jclass cls = jnienv->FindClass(#N);										\
-	if(cls == NULL){														\
-		gl_error("create_%s: unable to find %s.class", #N, #N);				\
-		return 0;															\
-	}																		\
-	jmethodID cfunc = jnienv->GetStaticMethodID(cls, "create", "(J)J");		\
-	if(cfunc == NULL){														\
-		gl_error("create_%s: unable to find long %s.create(long)", #N, #N);	\
-		return 0;															\
-	}																		\
-	int64 rv = jnienv->CallStaticLongMethod(cls, cfunc, (int64)parent);		\
-	if(rv == 0){															\
-		gl_error("create_%s: %s.create() failed", #N, #N);					\
-		GL_THROW("%s.create() failed", #N);									\
-	}																		\
-	if (jnienv->ExceptionOccurred()) {										\
-		jnienv->ExceptionDescribe();										\
-	}																		\
-	*obj = (OBJECT *)rv;													\
-	last_##N = *obj;														\
-	gl_set_parent(*obj, parent);											\
+#define EXPORT_JAVA_CREATE_EX(N, C)                                             \
+                                                                                \
+	CLASS *N##_class = NULL;                                                    \
+	OBJECT *last_##N = NULL;                                                    \
+                                                                                \
+	EXPORT int create_##N(OBJECT **obj, OBJECT *parent)                         \
+	{                                                                           \
+		JNIEnv *jnienv = jgl_get_env();                                         \
+		jclass cls = jnienv->FindClass(#N);                                     \
+		if (cls == NULL)                                                        \
+		{                                                                       \
+			gl_error("create_%s: unable to find %s.class", #N, #N);             \
+			return 0;                                                           \
+		}                                                                       \
+		jmethodID cfunc = jnienv->GetStaticMethodID(cls, "create", "(J)J");     \
+		if (cfunc == NULL)                                                      \
+		{                                                                       \
+			gl_error("create_%s: unable to find long %s.create(long)", #N, #N); \
+			return 0;                                                           \
+		}                                                                       \
+		int64 rv = jnienv->CallStaticLongMethod(cls, cfunc, (int64)parent);     \
+		if (rv == 0)                                                            \
+		{                                                                       \
+			gl_error("create_%s: %s.create() failed", #N, #N);                  \
+			GL_THROW("%s.create() failed", #N);                                 \
+		}                                                                       \
+		if (jnienv->ExceptionOccurred())                                        \
+		{                                                                       \
+			jnienv->ExceptionDescribe();                                        \
+		}                                                                       \
+		*obj = (OBJECT *)rv;                                                    \
+		last_##N = *obj;                                                        \
+		// gl_set_parent(*obj, parent);											\
 	return 1;																\
 }																			\
 
-#define EXPORT_JAVA_SYNC(name) EXPORT_JAVA_SYNC_EX(name,name)
-#define EXPORT_JAVA_SYNC_EX(name, classname)											\
-EXPORT TIMESTAMP sync_##name(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass){				\
-	JNIEnv *jnienv = jgl_get_env();														\
-	jclass cls = jnienv->FindClass(#name);												\
-	if(cls == NULL){																	\
-		gl_error("sync_%s: unable to find %s.class", #name, #name);						\
-		return 0;																		\
-	}																					\
-	jmethodID cfunc = jnienv->GetStaticMethodID(cls, "sync", "(JJI)J");					\
-	if(cfunc == NULL){																	\
-		gl_error("sync_%s: unable to find long %s.sync(long, long, int)", #name, #name);\
-		return 0;																		\
-	}																					\
-	int64 t1 = jnienv->CallStaticLongMethod(cls, cfunc, (int64)obj, t0, pass);			\
-	if (pass==PC_POSTTOPDOWN) obj->clock = t0;											\
-	return t1;																			\
-}
+#define EXPORT_JAVA_SYNC(name) EXPORT_JAVA_SYNC_EX(name, name)
+#define EXPORT_JAVA_SYNC_EX(name, classname)                                                 \
+	EXPORT TIMESTAMP sync_##name(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)                 \
+	{                                                                                        \
+		JNIEnv *jnienv = jgl_get_env();                                                      \
+		jclass cls = jnienv->FindClass(#name);                                               \
+		if (cls == NULL)                                                                     \
+		{                                                                                    \
+			gl_error("sync_%s: unable to find %s.class", #name, #name);                      \
+			return 0;                                                                        \
+		}                                                                                    \
+		jmethodID cfunc = jnienv->GetStaticMethodID(cls, "sync", "(JJI)J");                  \
+		if (cfunc == NULL)                                                                   \
+		{                                                                                    \
+			gl_error("sync_%s: unable to find long %s.sync(long, long, int)", #name, #name); \
+			return 0;                                                                        \
+		}                                                                                    \
+		int64 t1 = jnienv->CallStaticLongMethod(cls, cfunc, (int64)obj, t0, pass);           \
+		if (pass == PC_POSTTOPDOWN)                                                          \
+			obj->clock = t0;                                                                 \
+		return t1;                                                                           \
+	}
 
-#define EXPORT_JAVA_INIT(name)														\
-EXPORT int init_##name(OBJECT *obj, OBJECT *parent){								\
-	JNIEnv *jnienv = jgl_get_env();													\
-	jclass cls = jnienv->FindClass(#name);											\
-	if(cls == NULL){																\
-		gl_error("init_%s: unable to find %s.class", #name, #name);					\
-		return 0;																	\
-	}																				\
-	jmethodID cfunc = jnienv->GetStaticMethodID(cls, "init", "(JJ)I");				\
-	if(cfunc == NULL){																\
-		gl_error("init_%s: unable to find int %s.init(long, long)", #name, #name);	\
-		return 0;																	\
-	}																				\
-	int rv = jnienv->CallStaticIntMethod(cls, cfunc, (int64)obj, (int64)parent);	\
-	return rv;																		\
-}
+#define EXPORT_JAVA_INIT(name)                                                         \
+	EXPORT int init_##name(OBJECT *obj, OBJECT *parent)                                \
+	{                                                                                  \
+		JNIEnv *jnienv = jgl_get_env();                                                \
+		jclass cls = jnienv->FindClass(#name);                                         \
+		if (cls == NULL)                                                               \
+		{                                                                              \
+			gl_error("init_%s: unable to find %s.class", #name, #name);                \
+			return 0;                                                                  \
+		}                                                                              \
+		jmethodID cfunc = jnienv->GetStaticMethodID(cls, "init", "(JJ)I");             \
+		if (cfunc == NULL)                                                             \
+		{                                                                              \
+			gl_error("init_%s: unable to find int %s.init(long, long)", #name, #name); \
+			return 0;                                                                  \
+		}                                                                              \
+		int rv = jnienv->CallStaticIntMethod(cls, cfunc, (int64)obj, (int64)parent);   \
+		return rv;                                                                     \
+	}
 
-#define EXPORT_JAVA_PLC(name)														\
-EXPORT int64 plc_##name(OBJECT *obj, TIMESTAMP t0){									\
-	JNIEnv *jnienv = jgl_get_env();													\
-	jclass cls = jnienv->FindClass(#name);											\
-	if(cls == NULL){																\
-		gl_error("plc_%s: unable to find %s.class", #name, #name);					\
-		return 0;																	\
-	}																				\
-	jmethodID cfunc = jnienv->GetStaticMethodID(cls, "plc", "(JJ)J");				\
-	if(cfunc == NULL){																\
-		gl_error("init_%s: unable to find long %s.plc(long, long)", #name, #name);	\
-		return 0;																	\
-	}																				\
-	int64 rv = jnienv->CallStaticLongMethod(cls, cfunc, (int64)obj, t0);			\
-	return rv;																		\
-}
+#define EXPORT_JAVA_PLC(name)                                                          \
+	EXPORT int64 plc_##name(OBJECT *obj, TIMESTAMP t0)                                 \
+	{                                                                                  \
+		JNIEnv *jnienv = jgl_get_env();                                                \
+		jclass cls = jnienv->FindClass(#name);                                         \
+		if (cls == NULL)                                                               \
+		{                                                                              \
+			gl_error("plc_%s: unable to find %s.class", #name, #name);                 \
+			return 0;                                                                  \
+		}                                                                              \
+		jmethodID cfunc = jnienv->GetStaticMethodID(cls, "plc", "(JJ)J");              \
+		if (cfunc == NULL)                                                             \
+		{                                                                              \
+			gl_error("init_%s: unable to find long %s.plc(long, long)", #name, #name); \
+			return 0;                                                                  \
+		}                                                                              \
+		int64 rv = jnienv->CallStaticLongMethod(cls, cfunc, (int64)obj, t0);           \
+		return rv;                                                                     \
+	}
 
 EXPORT jint JNICALL Java_GridlabD_verbose(JNIEnv *env, jclass _this, jstring str);
 EXPORT jint JNICALL Java_GridlabD_output(JNIEnv *, jclass, jstring);

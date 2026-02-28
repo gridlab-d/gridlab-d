@@ -328,6 +328,12 @@ static void occupancy_schedule(char *text, char occupied[24])
 /* Object initialization is called once after all object have been created */
 int office::init(OBJECT *parent)
 {
+	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj->parent;
+#endif
+
 	double oversize = 1.2; /* oversizing factor */
 	update_control_setpoints();
 	/* sets up default office parameters if none were passed:  floor height = 9ft; interior mass = 2000 Btu/degF;

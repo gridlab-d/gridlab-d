@@ -975,7 +975,7 @@ EXPORT int create_group_recorder(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			group_recorder *my = object_data<group_recorder>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			rv = my->create();
 		}
 	}
@@ -1013,7 +1013,7 @@ EXPORT int init_group_recorder(OBJECT *obj)
 	return rv;
 }
 
-EXPORT TIMESTAMP sync_group_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_group_recorder_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	group_recorder *my = object_data<group_recorder>(obj);
 	TIMESTAMP rv = 0;
@@ -1045,6 +1045,23 @@ EXPORT TIMESTAMP sync_group_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 	return rv;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_group_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	return sync_group_recorder_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_group_recorder(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_group_recorder_impl(obj, t0, pass);
+}
+#endif
 
 EXPORT int commit_group_recorder(OBJECT *obj)
 {

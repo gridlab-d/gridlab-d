@@ -5104,6 +5104,21 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 			}
 			object_set_parent(obj, parent);
 		}
+
+		// Ensure parent is set for all objects (even if module's create ignored it)
+		if (parent != nullptr && obj->parent == nullptr)
+		{
+			object_set_parent(obj, parent);
+		}
+
+		//  Ensure every object has a unique name if not already set
+		if (obj->name == nullptr || obj->name[0] == '\0')
+		{
+			char buf[256];
+			snprintf(buf, sizeof(buf), "%s_auto_%d", obj->oclass->name, obj->id);
+			object_set_name(obj, buf);
+		}
+
 		if (id != -1 && load_set_index(obj, (OBJECTNUM)id) == FAILED)
 		{
 			output_error_raw("%s(%d): unable to index object id number for %s:%d", filename, linenum, classname, id);
@@ -7281,7 +7296,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 		else
 		{
 			suppress |= (1 << (nesting - 1));
-        }
+		}
 		term = line + 5;
 		strip_right_white(term);
 		if (strlen(term) != 0)
@@ -8098,11 +8113,11 @@ STATUS loadall(char *file)
 
 	/* if nothing requested only config files are loaded */
 	if (file == nullptr)
-	if (file == nullptr)
-		return SUCCESS;
+		if (file == nullptr)
+			return SUCCESS;
 
 	/* handle default extension */
-	strcpy(filename,file);
+	strcpy(filename, file);
 	if (ext == nullptr)
 	{
 		ext = filename + strlen(filename);
@@ -8127,7 +8142,8 @@ STATUS loadall(char *file)
 	else if (strcmp(ext, ".xml") == 0)
 		load_status = loadall_xml(filename);
 #endif
-	else if (strcmp(ext, ".json")==0) {
+	else if (strcmp(ext, ".json") == 0)
+	{
 		loader json_ldr = loader();
 		load_status = json_ldr.loadall_json_roll(filename);
 	}

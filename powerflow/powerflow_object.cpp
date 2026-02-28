@@ -4,12 +4,12 @@
 	@addtogroup powerflow_object Powerflow objects (abstract)
 	@ingroup powerflow
 
-	The powerflow_object class is an abstract class that implements 
+	The powerflow_object class is an abstract class that implements
 	basic elements of powerflow solutions.  There are two critical
 	pieces of information:
 
 	-# \p phases indicates the phases which are connected by this object.
-		This may be any feasible combination of the phase flags 
+		This may be any feasible combination of the phase flags
 		- \p PHASE_A for phase A connections
 		- \p PHASE_B for phase B connections
 		- \p PHASE_C for phase C connections
@@ -62,17 +62,17 @@
 
 	@par Outage support
 
-	When <code>SUPPORT_OUTAGES</code> is defined, the \p postsync pass will examine whether 
+	When <code>SUPPORT_OUTAGES</code> is defined, the \p postsync pass will examine whether
 	\p condition and \p solution are matched.  If there is an inconsistency
 	(i.e., \p <code>condition != OC_NORMAL &&</code> \p <code>solution == PS_NORMAL</code> or
 	\p <code>condition == OC_NORMAL &&</code> \p <code>solution != PS_NORMAL</code>), then
-	they will be reconciled and the solver will iterate again. 
+	they will be reconciled and the solver will iterate again.
 	Object derived from powerflow_object can inspect the value of \p condition
 	to determine whether they can use the normal powerflow solution method, or
 	an alternative method that is appropriate for abnormal conditions.
 	Be aware that this may result in a change of state in some other object
-	that may cause the solver to reiterate. It is highly recommended that state 
-	changes to OC_NORMAL have a non-zero delay built in (i.e., allow the 
+	that may cause the solver to reiterate. It is highly recommended that state
+	changes to OC_NORMAL have a non-zero delay built in (i.e., allow the
 	clock to advanced).	Failure to do so may result in non-convergence of the solver.
 
  @{
@@ -89,55 +89,56 @@
 //////////////////////////////////////////////////////////////////////////
 // powerflow_object CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* powerflow_object::oclass = nullptr;
-CLASS* powerflow_object::pclass = nullptr;
+CLASS *powerflow_object::oclass = nullptr;
+CLASS *powerflow_object::pclass = nullptr;
 
 powerflow_object::powerflow_object(MODULE *mod)
-{	
-	if (oclass==nullptr)
+{
+	if (oclass == nullptr)
 	{
 #ifdef SUPPORT_OUTAGES
-		oclass = gl_register_class(mod,"powerflow_object",sizeof(powerflow_object),PC_ABSTRACTONLY|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod, "powerflow_object", sizeof(powerflow_object), PC_ABSTRACTONLY | PC_POSTTOPDOWN | PC_UNSAFE_OVERRIDE_OMIT | PC_AUTOLOCK);
 #else
-		oclass = gl_register_class(mod,"powerflow_object",sizeof(powerflow_object),PC_ABSTRACTONLY|PC_NOSYNC|PC_AUTOLOCK);
+		oclass = gl_register_class(mod, "powerflow_object", sizeof(powerflow_object), PC_ABSTRACTONLY | PC_NOSYNC | PC_AUTOLOCK);
 #endif
-		if (oclass==nullptr)
+		if (oclass == nullptr)
 			throw "unable to register class powerflow_object";
 		else
 			oclass->trl = TRL_PROVEN;
 
-		if(gl_publish_variable(oclass,
-			PT_set, "phases", PADDR(phases),
-				PT_KEYWORD, "G", (gld::set)GROUND,
-				PT_KEYWORD, "S", (gld::set)PHASE_S,
-				PT_KEYWORD, "N", (gld::set)PHASE_N,
-				PT_KEYWORD, "D", (gld::set)PHASE_D,
-				PT_KEYWORD, "C", (gld::set)PHASE_C,
-				PT_KEYWORD, "B", (gld::set)PHASE_B,
-				PT_KEYWORD, "A", (gld::set)PHASE_A,
-			PT_double,"nominal_voltage[V]",PADDR(nominal_voltage),
-			PT_enumeration, "inrush_integration_method",PADDR(inrush_integration_method),PT_DESCRIPTION,"Integration method for in-rush",
-				PT_KEYWORD,"NONE",(enumeration)IRM_NONE,
-				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
-				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
+		if (gl_publish_variable(oclass,
+								PT_set, "phases", PADDR(phases),
+								PT_KEYWORD, "G", (gld::set)GROUND,
+								PT_KEYWORD, "S", (gld::set)PHASE_S,
+								PT_KEYWORD, "N", (gld::set)PHASE_N,
+								PT_KEYWORD, "D", (gld::set)PHASE_D,
+								PT_KEYWORD, "C", (gld::set)PHASE_C,
+								PT_KEYWORD, "B", (gld::set)PHASE_B,
+								PT_KEYWORD, "A", (gld::set)PHASE_A,
+								PT_double, "nominal_voltage[V]", PADDR(nominal_voltage),
+								PT_enumeration, "inrush_integration_method", PADDR(inrush_integration_method), PT_DESCRIPTION, "Integration method for in-rush",
+								PT_KEYWORD, "NONE", (enumeration)IRM_NONE,
+								PT_KEYWORD, "TRAPEZOIDAL", (enumeration)IRM_TRAPEZOIDAL,
+								PT_KEYWORD, "BACKWARD_EULER", (enumeration)IRM_BACKEULER,
 #ifdef SUPPORT_OUTAGES
-			PT_set, "condition", PADDR(condition),
-				PT_KEYWORD, "OPEN", (gld::set)OC_OPEN,
-				PT_KEYWORD, "CONTACT", (gld::set)OC_CONTACT,
-				PT_KEYWORD, "NORMAL", (gld::set)OC_NORMAL,
-				PT_KEYWORD, "SN", (gld::set)PHASE_SN,
-				PT_KEYWORD, "S2", (gld::set)PHASE_S2,
-				PT_KEYWORD, "S1", (gld::set)PHASE_S1,
-				PT_KEYWORD, "G", (gld::set)GROUND,
-				PT_KEYWORD, "N", (gld::set)PHASE_N,
-				PT_KEYWORD, "C", (gld::set)PHASE_C,
-				PT_KEYWORD, "B", (gld::set)PHASE_B,
-				PT_KEYWORD, "A", (gld::set)PHASE_A,
-			PT_enumeration, "solution", PADDR(solution),
-				PT_KEYWORD, "NORMAL", PS_NORMAL,
-				PT_KEYWORD, "OUTAGE", PS_OUTAGE,
+								PT_set, "condition", PADDR(condition),
+								PT_KEYWORD, "OPEN", (gld::set)OC_OPEN,
+								PT_KEYWORD, "CONTACT", (gld::set)OC_CONTACT,
+								PT_KEYWORD, "NORMAL", (gld::set)OC_NORMAL,
+								PT_KEYWORD, "SN", (gld::set)PHASE_SN,
+								PT_KEYWORD, "S2", (gld::set)PHASE_S2,
+								PT_KEYWORD, "S1", (gld::set)PHASE_S1,
+								PT_KEYWORD, "G", (gld::set)GROUND,
+								PT_KEYWORD, "N", (gld::set)PHASE_N,
+								PT_KEYWORD, "C", (gld::set)PHASE_C,
+								PT_KEYWORD, "B", (gld::set)PHASE_B,
+								PT_KEYWORD, "A", (gld::set)PHASE_A,
+								PT_enumeration, "solution", PADDR(solution),
+								PT_KEYWORD, "NORMAL", PS_NORMAL,
+								PT_KEYWORD, "OUTAGE", PS_OUTAGE,
 #endif
-         	nullptr) < 1) GL_THROW("unable to publish powerflow_object properties in %s",__FILE__);
+								nullptr) < 1)
+			GL_THROW("unable to publish powerflow_object properties in %s", __FILE__);
 
 		// set defaults
 	}
@@ -145,12 +146,12 @@ powerflow_object::powerflow_object(MODULE *mod)
 
 powerflow_object::powerflow_object(CLASS *oclass)
 {
-	gl_create_foreign((OBJECT*)this);
+	gl_create_foreign((OBJECT *)this);
 }
 
 int powerflow_object::isa(const char *classname)
 {
-	return strcmp(classname,"powerflow_object")==0;
+	return strcmp(classname, "powerflow_object") == 0;
 }
 
 int powerflow_object::create(void)
@@ -159,11 +160,11 @@ int powerflow_object::create(void)
 	phases = NO_PHASE;
 	nominal_voltage = 0.0;
 
-	//Deltamode override flag
+	// Deltamode override flag
 	if (all_powerflow_delta)
 		obj->flags |= OF_DELTAMODE;
-	
-	//Set a default for inrush integration - overarching (can be overridden)
+
+	// Set a default for inrush integration - overarching (can be overridden)
 	inrush_integration_method = default_inrush_integration_method;
 
 #ifdef SUPPORT_OUTAGES
@@ -177,18 +178,22 @@ int powerflow_object::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
 
+#ifdef __APPLE__
+	parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	/* unspecified phase inherits from parent, if any */
-	if (parent && gl_object_isa(parent,"powerflow_object"))
+	if (parent && gl_object_isa(parent, "powerflow_object"))
 	{
 		powerflow_object *pParent = object_data<powerflow_object>(parent);
-		if (phases==NO_PHASE)
+		if (phases == NO_PHASE)
 			phases = pParent->phases;
 	}
 
-	//General warning, just in case
+	// General warning, just in case
 	if (enable_subsecond_models && ((obj->flags & OF_DELTAMODE) != OF_DELTAMODE))
 	{
-		gl_warning("object:%d - %s - Deltamode is enabled for the module, but not this object - is all_power_delta set?",obj->id,(obj->name ? obj->name : "Unnamed"));
+		gl_warning("object:%d - %s - Deltamode is enabled for the module, but not this object - is all_power_delta set?", obj->id, (obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		The enable_subsecond_models flag is set for powerflow, but this specific object is not deltamode flagged.  If this is unintentional,
 		individually flag it, or set all_power_delta to continue.  If this is a desired behavior, ignore this message.
@@ -196,14 +201,14 @@ int powerflow_object::init(OBJECT *parent)
 	}
 
 	/* no phase info */
-	if (phases==0)
+	if (phases == 0)
 		throw "phases not specified";
 
 	/* split connection must connect to a phase */
-	//Compromised and made it a verbose, since it is still useful for debugging
+	// Compromised and made it a verbose, since it is still useful for debugging
 	if (has_phase(PHASE_S) && !(has_phase(PHASE_A) || has_phase(PHASE_B) || has_phase(PHASE_C)))
 	{
-		gl_verbose("object:%d - %s - split connection is missing A,B, or C phase connection",obj->id,(obj->name?obj->name:"Unnamed"));
+		gl_verbose("object:%d - %s - split connection is missing A,B, or C phase connection", obj->id, (obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		A triplex-based object does not have the three-phase basis specified.  If this behavior is not intended, please adjust your model
 		and try again.
@@ -211,10 +216,9 @@ int powerflow_object::init(OBJECT *parent)
 	}
 
 	/* split connection must connect to only one phase */
-	if (has_phase(PHASE_S) && (
-		(has_phase(PHASE_A) && has_phase(PHASE_B)) ||
-		(has_phase(PHASE_B) && has_phase(PHASE_C)) ||
-		(has_phase(PHASE_C) && has_phase(PHASE_A))))
+	if (has_phase(PHASE_S) && ((has_phase(PHASE_A) && has_phase(PHASE_B)) ||
+							   (has_phase(PHASE_B) && has_phase(PHASE_C)) ||
+							   (has_phase(PHASE_C) && has_phase(PHASE_A))))
 		throw "split connection is connected to two phases simultaneously";
 
 	/* split connection is not permitted with delta connection */
@@ -222,7 +226,7 @@ int powerflow_object::init(OBJECT *parent)
 		throw "split and delta connection cannot occur simultaneously";
 
 	/* split connection is not permitted on neutral */
-	if (has_phase(PHASE_N) && has_phase(PHASE_S)) 
+	if (has_phase(PHASE_N) && has_phase(PHASE_S))
 	{
 		gl_warning("neutral phase ignored on split connection.");
 		phases ^= PHASE_N;
@@ -247,15 +251,15 @@ TIMESTAMP powerflow_object::postsync(TIMESTAMP t0)
 {
 #ifdef SUPPORT_OUTAGES
 	OBJECT *obj = object_header(this);
-	if (condition!=OC_NORMAL && solution==PS_NORMAL)
+	if (condition != OC_NORMAL && solution == PS_NORMAL)
 	{
-		char buffer[1024]="???";
-		gl_get_value_by_name(obj,"condition",buffer,sizeof(buffer));
+		char buffer[1024] = "???";
+		gl_get_value_by_name(obj, "condition", buffer, sizeof(buffer));
 		gl_debug("powerflow_object %s (%s:%d): abnormal condition detected (condition=%s), switching solver to OUTAGE method", obj->name, obj->oclass->name, obj->id, buffer);
 		solution = PS_OUTAGE;
 		return t0;
 	}
-	else if (condition==OC_NORMAL && solution==PS_OUTAGE)
+	else if (condition == OC_NORMAL && solution == PS_OUTAGE)
 	{
 		gl_debug("powerflow_object %s (%s:%d): normal condition restored, switching solver to NORMAL method", obj->name, obj->oclass->name, obj->id);
 		solution = PS_NORMAL;
@@ -274,21 +278,21 @@ int powerflow_object::kmldump(FILE *fp)
 //////////////////////////////////////////////////////////////////////////
 
 /**
-* REQUIRED: allocate and initialize an object.
-*
-* @param obj a pointer to a pointer of the last object in the list
-* @param parent a pointer to the parent of this object
-* @return 1 for a successfully created object, 0 for error
-*/
+ * REQUIRED: allocate and initialize an object.
+ *
+ * @param obj a pointer to a pointer of the last object in the list
+ * @param parent a pointer to the parent of this object
+ * @return 1 for a successfully created object, 0 for error
+ */
 EXPORT int create_powerflow_object(OBJECT **obj, OBJECT *parent)
 {
 	try
 	{
 		*obj = gl_create_object(powerflow_object::oclass);
-		if (*obj!=nullptr)
+		if (*obj != nullptr)
 		{
 			powerflow_object *my = object_data<powerflow_object>(*obj);
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			return my->create();
 		}
 		else
@@ -298,14 +302,15 @@ EXPORT int create_powerflow_object(OBJECT **obj, OBJECT *parent)
 }
 
 /**
-* Object initialization is called once after all object have been created
-*
-* @param obj a pointer to this object
-* @return 1 on success, 0 on error
-*/
+ * Object initialization is called once after all object have been created
+ *
+ * @param obj a pointer to this object
+ * @return 1 on success, 0 on error
+ */
 EXPORT int init_powerflow_object(OBJECT *obj)
 {
-	try {
+	try
+	{
 		powerflow_object *my = object_data<powerflow_object>(obj);
 		return my->init(obj->parent);
 	}
@@ -313,19 +318,21 @@ EXPORT int init_powerflow_object(OBJECT *obj)
 }
 
 /**
-* Sync is called when the clock needs to advance on the bottom-up pass (PC_BOTTOMUP)
-*
-* @param obj the object we are sync'ing
-* @param t0 this objects current timestamp
-* @param pass the current pass for this sync call
-* @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
-*/
-EXPORT TIMESTAMP sync_powerflow_object(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+ * Sync is called when the clock needs to advance on the bottom-up pass (PC_BOTTOMUP)
+ *
+ * @param obj the object we are sync'ing
+ * @param t0 this objects current timestamp
+ * @param pass the current pass for this sync call
+ * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
+ */
+static TIMESTAMP sync_powerflow_object_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	powerflow_object *pObj = object_data<powerflow_object>(obj);
-	try {
+	try
+	{
 		TIMESTAMP t1 = TS_NEVER;
-		switch (pass) {
+		switch (pass)
+		{
 		case PC_PRETOPDOWN:
 			return pObj->presync(t0);
 		case PC_BOTTOMUP:
@@ -337,9 +344,26 @@ EXPORT TIMESTAMP sync_powerflow_object(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pas
 		default:
 			throw "invalid pass request";
 		}
-	} 
+	}
 	SYNC_CATCHALL(powerflow_object);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_powerflow_object(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	return sync_powerflow_object_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_powerflow_object(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_powerflow_object_impl(obj, t0, pass);
+}
+#endif
 
 EXPORT int isa_powerflow_object(OBJECT *obj, char *classname)
 {

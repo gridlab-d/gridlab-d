@@ -211,7 +211,7 @@ EXPORT int create_currdump(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			currdump *my = /*OBJECTDATA(obj,<>)*/ object_data<currdump>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 	}
@@ -236,7 +236,7 @@ EXPORT int init_currdump(OBJECT *obj)
 	}
 }
 
-EXPORT TIMESTAMP sync_currdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_currdump_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	currdump *my = /*OBJECTDATA(obj,<>)*/ object_data<currdump>(obj);
 	TIMESTAMP rv;
@@ -244,6 +244,23 @@ EXPORT TIMESTAMP sync_currdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	rv = my->runtime > t1 ? my->runtime : TS_NEVER;
 	return rv;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_currdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_currdump_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_currdump(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_currdump_impl(obj, t1, pass);
+}
+#endif
 
 EXPORT TIMESTAMP commit_currdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {

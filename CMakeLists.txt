@@ -13,6 +13,8 @@ endif()
 set(CMAKE_CXX_STANDARD 23) # Or 14, 11 if 17 is not supported
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+add_compile_definitions(EIGEN_HAS_STD_RESULT_OF=0)
+
 # if(MSVC)
 #     # MSVC compiler (cl.exe)
 #     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address /Zi /Od")

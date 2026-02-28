@@ -1,7 +1,7 @@
 /** $Id: triplex_line.cpp 1186 2009-01-02 18:15:30Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file triplex_line.cpp
-	@addtogroup triplex_line 
+	@addtogroup triplex_line
 	@ingroup line
 
 	@{
@@ -16,39 +16,40 @@ using namespace std;
 
 #include "line.h"
 
-CLASS* triplex_line::oclass = nullptr;
-CLASS* triplex_line::pclass = nullptr;
+CLASS *triplex_line::oclass = nullptr;
+CLASS *triplex_line::pclass = nullptr;
 
 triplex_line::triplex_line(MODULE *mod) : line(mod)
 {
-	if(oclass == nullptr)
+	if (oclass == nullptr)
 	{
 		pclass = line::oclass;
-		
-		oclass = gl_register_class(mod,"triplex_line",sizeof(triplex_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==nullptr)
+
+		oclass = gl_register_class(mod, "triplex_line", sizeof(triplex_line), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_UNSAFE_OVERRIDE_OMIT | PC_AUTOLOCK);
+		if (oclass == nullptr)
 			throw "unable to register class triplex_line";
 		else
 			oclass->trl = TRL_PROVEN;
 
-        if(gl_publish_variable(oclass,
-			PT_INHERIT, "line",
-            nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+		if (gl_publish_variable(oclass,
+								PT_INHERIT, "line",
+								nullptr) < 1)
+			GL_THROW("unable to publish properties in %s", __FILE__);
 
-		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
+		// Publish deltamode functions
+		if (gl_publish_function(oclass, "interupdate_pwr_object", (FUNCTIONADDR)interupdate_link) == nullptr)
 			GL_THROW("Unable to publish triplex line deltamode function");
-		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_triplex_line)==nullptr)
+		if (gl_publish_function(oclass, "recalc_distribution_line", (FUNCTIONADDR)recalc_triplex_line) == nullptr)
 			GL_THROW("Unable to publish triplex line recalc function");
 
-		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
+		// Publish restoration-related function (current update)
+		if (gl_publish_function(oclass, "update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link) == nullptr)
 			GL_THROW("Unable to publish triplex line external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
+		if (gl_publish_function(oclass, "check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link) == nullptr)
 			GL_THROW("Unable to publish triplex line external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
+		if (gl_publish_function(oclass, "perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link) == nullptr)
 			GL_THROW("Unable to publish triplex line external current calculation function");
-    }
+	}
 }
 
 int triplex_line::create(void)
@@ -59,11 +60,16 @@ int triplex_line::create(void)
 
 int triplex_line::isa(char *classname)
 {
-	return strcmp(classname,"triplex_line")==0 || line::isa(classname);
+	return strcmp(classname, "triplex_line") == 0 || line::isa(classname);
 }
 
 int triplex_line::init(OBJECT *parent)
 {
+	OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	double *temp_rating_value = nullptr;
 	double temp_rating_continuous = 10000.0;
 	double temp_rating_emergency = 20000.0;
@@ -71,33 +77,34 @@ int triplex_line::init(OBJECT *parent)
 	OBJECT *temp_obj;
 	OBJECT *obj = object_header(this);
 	triplex_line_configuration *temp_config = nullptr;
-	
+
 	int result = line::init(parent);
 
-	//Check for deferred
+	// Check for deferred
 	if (result == 2)
-		return 2;	//Return the deferment - no sense doing everything else!
+		return 2; // Return the deferment - no sense doing everything else!
 
 	if (!has_phase(PHASE_S))
 		gl_warning("%s (%s:%d) is triplex but doesn't have phases S set", obj->name, obj->oclass->name, obj->id);
-		/*  TROUBLESHOOT
-		A triplex line has been used, but this triplex line does not have the phase S designated to indicate it
-		contains single-phase components.  Without this specified, you may get invalid results.
-		*/
+	/*  TROUBLESHOOT
+	A triplex line has been used, but this triplex line does not have the phase S designated to indicate it
+	contains single-phase components.  Without this specified, you may get invalid results.
+	*/
 
-	//Check phase validity
+	// Check phase validity
 	phase_conductor_checks();
 
 	recalc();
 
-	//Map the line configuration
+	// Map the line configuration
 	temp_config = object_data<triplex_line_configuration>(configuration);
 
-	//Values are populated now - populate link ratings parameter
-	if (temp_config->phaseA_conductor != nullptr || temp_config->phaseB_conductor != nullptr) {
-		for (index=0; index<2; index++)
+	// Values are populated now - populate link ratings parameter
+	if (temp_config->phaseA_conductor != nullptr || temp_config->phaseB_conductor != nullptr)
+	{
+		for (index = 0; index < 2; index++)
 		{
-			if (index==0)
+			if (index == 0)
 			{
 				temp_obj = temp_config->phaseA_conductor;
 			}
@@ -106,125 +113,126 @@ int triplex_line::init(OBJECT *parent)
 				temp_obj = temp_config->phaseB_conductor;
 			}
 
-			//See if Phase exists
+			// See if Phase exists
 			if (temp_obj != nullptr)
 			{
-				//Get continuous - summer
-				temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
+				// Get continuous - summer
+				temp_rating_value = get_double(temp_obj, "rating.summer.continuous");
 
-				//Check if nullptr
+				// Check if nullptr
 				if (temp_rating_value != nullptr)
 				{
-					//Update - if necessary
+					// Update - if necessary
 					if (temp_rating_continuous > *temp_rating_value)
 					{
 						temp_rating_continuous = *temp_rating_value;
 					}
 				}
 
-				//Get continuous - winter
-				temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
+				// Get continuous - winter
+				temp_rating_value = get_double(temp_obj, "rating.winter.continuous");
 
-				//Check if nullptr
+				// Check if nullptr
 				if (temp_rating_value != nullptr)
 				{
-					//Update - if necessary
+					// Update - if necessary
 					if (temp_rating_continuous > *temp_rating_value)
 					{
 						temp_rating_continuous = *temp_rating_value;
 					}
 				}
 
-				//Now get emergency - summer
-				temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
+				// Now get emergency - summer
+				temp_rating_value = get_double(temp_obj, "rating.summer.emergency");
 
-				//Check if nullptr
+				// Check if nullptr
 				if (temp_rating_value != nullptr)
 				{
-					//Update - if necessary
+					// Update - if necessary
 					if (temp_rating_emergency > *temp_rating_value)
 					{
 						temp_rating_emergency = *temp_rating_value;
 					}
 				}
 
-				//Now get emergency - winter
-				temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
+				// Now get emergency - winter
+				temp_rating_value = get_double(temp_obj, "rating.winter.emergency");
 
-				//Check if nullptr
+				// Check if nullptr
 				if (temp_rating_value != nullptr)
 				{
-					//Update - if necessary
+					// Update - if necessary
 					if (temp_rating_emergency > *temp_rating_value)
 					{
 						temp_rating_emergency = *temp_rating_value;
 					}
 				}
 
-				//Populate link array
+				// Populate link array
 				link_rating[0][index] = temp_rating_continuous;
 				link_rating[1][index] = temp_rating_emergency;
-			}//End Phase valid
-		}//End FOR
+			} // End Phase valid
+		} // End FOR
 	}
-	else {
+	else
+	{
 		temp_obj = configuration;
-		//See if configuration exists
+		// See if configuration exists
 		if (temp_obj != nullptr)
 		{
-			//Get continuous - summer
-			temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
+			// Get continuous - summer
+			temp_rating_value = get_double(temp_obj, "rating.summer.continuous");
 
-			//Check if nullptr
+			// Check if nullptr
 			if (temp_rating_value != nullptr)
 			{
-				//Update - if necessary
+				// Update - if necessary
 				if (temp_rating_continuous > *temp_rating_value)
 				{
 					temp_rating_continuous = *temp_rating_value;
 				}
 			}
 
-			//Get continuous - winter
-			temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
+			// Get continuous - winter
+			temp_rating_value = get_double(temp_obj, "rating.winter.continuous");
 
-			//Check if nullptr
+			// Check if nullptr
 			if (temp_rating_value != nullptr)
 			{
-				//Update - if necessary
+				// Update - if necessary
 				if (temp_rating_continuous > *temp_rating_value)
 				{
 					temp_rating_continuous = *temp_rating_value;
 				}
 			}
 
-			//Now get emergency - summer
-			temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
+			// Now get emergency - summer
+			temp_rating_value = get_double(temp_obj, "rating.summer.emergency");
 
-			//Check if nullptr
+			// Check if nullptr
 			if (temp_rating_value != nullptr)
 			{
-				//Update - if necessary
+				// Update - if necessary
 				if (temp_rating_emergency > *temp_rating_value)
 				{
 					temp_rating_emergency = *temp_rating_value;
 				}
 			}
 
-			//Now get emergency - winter
-			temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
+			// Now get emergency - winter
+			temp_rating_value = get_double(temp_obj, "rating.winter.emergency");
 
-			//Check if nullptr
+			// Check if nullptr
 			if (temp_rating_value != nullptr)
 			{
-				//Update - if necessary
+				// Update - if necessary
 				if (temp_rating_emergency > *temp_rating_value)
 				{
 					temp_rating_emergency = *temp_rating_value;
 				}
 			}
 
-			//Populate link array
+			// Populate link array
 			link_rating[0][0] = link_rating[0][1] = link_rating[0][2] = temp_rating_continuous;
 			link_rating[1][0] = link_rating[1][1] = link_rating[1][2] = temp_rating_emergency;
 		}
@@ -232,71 +240,71 @@ int triplex_line::init(OBJECT *parent)
 	return result;
 }
 
-//Phase checking routine -- make sure triplex components ARE triplex
+// Phase checking routine -- make sure triplex components ARE triplex
 void triplex_line::phase_conductor_checks(void)
 {
-	//Map the configuration and object header
+	// Map the configuration and object header
 	OBJECT *obj = object_header(this);
 	triplex_line_configuration *line_config = object_data<triplex_line_configuration>(configuration);
 
-	//See if an impedance matrix is specified first -- if so, skip this
+	// See if an impedance matrix is specified first -- if so, skip this
 	if ((line_config->impedance11 == 0.0) && (line_config->impedance22 == 0.0))
 	{
-		//Check all three conductors -- make sure they're triplex
-		if (line_config->phaseA_conductor != nullptr)	//1
+		// Check all three conductors -- make sure they're triplex
+		if (line_config->phaseA_conductor != nullptr) // 1
 		{
-			//Make sure it is a valid conductor
+			// Make sure it is a valid conductor
 			if (!gl_object_isa(line_config->phaseA_conductor, "triplex_line_conductor", "powerflow"))
 			{
-				GL_THROW("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!", obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				A triplex_line has an object specified for conductor_1, conductor_2, or conductor_N that is not a triplex_line_conductor object.
 				Fix this and try again.
 				*/
 			}
-			//Default else -- it's a valid conductor
+			// Default else -- it's a valid conductor
 		}
 		else
 		{
-			GL_THROW("triplex_line:%d - %s - configuration doesn't have a valid phase conductor!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW("triplex_line:%d - %s - configuration doesn't have a valid phase conductor!", obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLSHOOT
 			A triplex_line's triplex_line_configuration does not have the proper phase specified for the conductor
 			 */
 		}
 
-		if (line_config->phaseB_conductor != nullptr)	//2
+		if (line_config->phaseB_conductor != nullptr) // 2
 		{
-			//Make sure it is a valid conductor
+			// Make sure it is a valid conductor
 			if (!gl_object_isa(line_config->phaseB_conductor, "triplex_line_conductor", "powerflow"))
 			{
-				GL_THROW("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!",obj->id,(obj->name ? obj->name : "Unnamed"));
-				//Defined above
+				GL_THROW("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!", obj->id, (obj->name ? obj->name : "Unnamed"));
+				// Defined above
 			}
-			//Default else -- it's a valid conductor
+			// Default else -- it's a valid conductor
 		}
 		else
 		{
-			GL_THROW("triplex_line:%d - %s - configuration doesn't have a valid phase conductor!",obj->id,(obj->name ? obj->name : "Unnamed"));
-			//Defined above
+			GL_THROW("triplex_line:%d - %s - configuration doesn't have a valid phase conductor!", obj->id, (obj->name ? obj->name : "Unnamed"));
+			// Defined above
 		}
 
-		if (line_config->phaseC_conductor != nullptr)	//N
+		if (line_config->phaseC_conductor != nullptr) // N
 		{
-			//Make sure it is a valid conductor
+			// Make sure it is a valid conductor
 			if (!gl_object_isa(line_config->phaseC_conductor, "triplex_line_conductor", "powerflow"))
 			{
-				GL_THROW("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!",obj->id,(obj->name ? obj->name : "Unnamed"));
-				//Defined above
+				GL_THROW("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!", obj->id, (obj->name ? obj->name : "Unnamed"));
+				// Defined above
 			}
-			//Default else -- it's a valid conductor
+			// Default else -- it's a valid conductor
 		}
 		else
 		{
-			GL_THROW("triplex_line:%d - %s - configuration doesn't have a valid phase conductor!",obj->id,(obj->name ? obj->name : "Unnamed"));
-			//Defined above
+			GL_THROW("triplex_line:%d - %s - configuration doesn't have a valid phase conductor!", obj->id, (obj->name ? obj->name : "Unnamed"));
+			// Defined above
 		}
-	}//End not specified as impedance directly
-	//Default else -- was an impedance specification, so skip this
+	} // End not specified as impedance directly
+	// Default else -- was an impedance specification, so skip this
 }
 
 void triplex_line::recalc(void)
@@ -304,23 +312,23 @@ void triplex_line::recalc(void)
 	triplex_line_configuration *line_config = object_data<triplex_line_configuration>(configuration);
 
 	OBJECT *obj = object_header(this);
-	
+
 	if (line_config->impedance11 != 0.0 || line_config->impedance22 != 0.0)
 	{
 		gl_warning("Using a 2x2 z-matrix, instead of geometric values, is an under-determined system. Ground and/or neutral currents will be incorrect.");
-	
-		gld::complex miles = gld::complex(length/5280,0);
+
+		gld::complex miles = gld::complex(length / 5280, 0);
 		if ((solver_method == SM_FBS) || (solver_method == SM_NR))
 		{
 			b_mat[0][0] = B_mat[0][0] = line_config->impedance11 * miles;
 			b_mat[0][1] = B_mat[0][1] = line_config->impedance12 * miles;
 			b_mat[1][0] = B_mat[1][0] = line_config->impedance21 * miles;
-			b_mat[1][1] = B_mat[1][1] = line_config->impedance22 * miles; 
-			b_mat[2][0] = B_mat[2][0] = gld::complex(0,0);
-			b_mat[2][1] = B_mat[2][1] = gld::complex(0,0);
-			b_mat[2][2] = B_mat[2][2] = gld::complex(0,0);
-			b_mat[0][2] = B_mat[0][2] = gld::complex(0,0);
-			b_mat[1][2] = B_mat[1][2] = gld::complex(0,0);
+			b_mat[1][1] = B_mat[1][1] = line_config->impedance22 * miles;
+			b_mat[2][0] = B_mat[2][0] = gld::complex(0, 0);
+			b_mat[2][1] = B_mat[2][1] = gld::complex(0, 0);
+			b_mat[2][2] = B_mat[2][2] = gld::complex(0, 0);
+			b_mat[0][2] = B_mat[0][2] = gld::complex(0, 0);
+			b_mat[1][2] = B_mat[1][2] = gld::complex(0, 0);
 
 			tn[0] = 0;
 			tn[1] = 0;
@@ -328,30 +336,29 @@ void triplex_line::recalc(void)
 		}
 		else
 			GL_THROW("Only NR and FBS support z-matrix components.");
-
 	}
 	else
 	{
 		// create local variables that will be used to calculate matrices.
-		double dcond,ins_thick,D12,D13,D23;
-		double r1,r2,rn,gmr1,gmr2,gmrn;
-		gld::complex zp11,zp22,zp33,zp12,zp13,zp23;
+		double dcond, ins_thick, D12, D13, D23;
+		double r1, r2, rn, gmr1, gmr2, gmrn;
+		gld::complex zp11, zp22, zp33, zp12, zp13, zp23;
 		gld::complex zs[3][3];
 		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
 
-		//Calculate coefficients for self and mutual impedance - incorporates frequency values
-		//Per Kersting (4.39) and (4.40) - coefficients end up same as OHLs
-		if (enable_frequency_dependence)	//See which frequency to use
+		// Calculate coefficients for self and mutual impedance - incorporates frequency values
+		// Per Kersting (4.39) and (4.40) - coefficients end up same as OHLs
+		if (enable_frequency_dependence) // See which frequency to use
 		{
-			freq_coeff_real = 0.00158836*current_frequency;
-			freq_coeff_imag = 0.00202237*current_frequency;
-			freq_additive_term = log(EARTH_RESISTIVITY/current_frequency)/2.0 + 7.6786;
+			freq_coeff_real = 0.00158836 * current_frequency;
+			freq_coeff_imag = 0.00202237 * current_frequency;
+			freq_additive_term = log(EARTH_RESISTIVITY / current_frequency) / 2.0 + 7.6786;
 		}
 		else
 		{
-			freq_coeff_real = 0.00158836*nominal_frequency;
-			freq_coeff_imag = 0.00202237*nominal_frequency;
-			freq_additive_term = log(EARTH_RESISTIVITY/nominal_frequency)/2.0 + 7.6786;
+			freq_coeff_real = 0.00158836 * nominal_frequency;
+			freq_coeff_imag = 0.00202237 * nominal_frequency;
+			freq_additive_term = log(EARTH_RESISTIVITY / nominal_frequency) / 2.0 + 7.6786;
 		}
 
 		// Gather data stored in configuration objects
@@ -364,7 +371,7 @@ void triplex_line::recalc(void)
 
 		if (l1 == nullptr || l2 == nullptr || lN == nullptr)
 		{
-			GL_THROW("triplex_line_configuration:%d (%s) is missing a conductor specification.",line_config->get_id(),line_config->get_name());
+			GL_THROW("triplex_line_configuration:%d (%s) is missing a conductor specification.", line_config->get_id(), line_config->get_name());
 			/* TROUBLESHOOT
 			At this point, triplex lines are assumed to have three conductor values: conductor_1, conductor_2,
 			and conductor_N.  If any of these are missing, the triplex line cannot be specified.  Please
@@ -380,8 +387,8 @@ void triplex_line::recalc(void)
 		gmrn = lN->geometric_mean_radius;
 
 		// Perform calculations and fill in values in the matrices
-		D12 = (dcond + 2 * ins_thick)/12;
-		D13 = (dcond + ins_thick)/12;
+		D12 = (dcond + 2 * ins_thick) / 12;
+		D13 = (dcond + ins_thick) / 12;
 		D23 = D13;
 
 		if (D12 <= 0.0 || D13 <= 0.0)
@@ -395,24 +402,24 @@ void triplex_line::recalc(void)
 			*/
 		}
 
-		zp11 = gld::complex(r1,0) + freq_coeff_real + gld::complex(0.0,freq_coeff_imag) * (log(1/gmr1) + freq_additive_term);
-		zp22 = gld::complex(r2,0) + freq_coeff_real + gld::complex(0.0,freq_coeff_imag) * (log(1/gmr2) + freq_additive_term);
-		zp33 = gld::complex(rn,0) + freq_coeff_real + gld::complex(0.0,freq_coeff_imag) * (log(1/gmrn) + freq_additive_term);
-		zp12 = gld::complex(freq_coeff_real,0.0) + gld::complex(0.0,freq_coeff_imag) * (log(1/D12) + freq_additive_term);
-		zp13 = gld::complex(freq_coeff_real,0.0) + gld::complex(0.0,freq_coeff_imag) * (log(1/D13) + freq_additive_term);
-		zp23 = gld::complex(freq_coeff_real,0.0) + gld::complex(0.0,freq_coeff_imag) * (log(1/D23) + freq_additive_term);
-		
-		if ((solver_method==SM_FBS) || (solver_method==SM_NR))
+		zp11 = gld::complex(r1, 0) + freq_coeff_real + gld::complex(0.0, freq_coeff_imag) * (log(1 / gmr1) + freq_additive_term);
+		zp22 = gld::complex(r2, 0) + freq_coeff_real + gld::complex(0.0, freq_coeff_imag) * (log(1 / gmr2) + freq_additive_term);
+		zp33 = gld::complex(rn, 0) + freq_coeff_real + gld::complex(0.0, freq_coeff_imag) * (log(1 / gmrn) + freq_additive_term);
+		zp12 = gld::complex(freq_coeff_real, 0.0) + gld::complex(0.0, freq_coeff_imag) * (log(1 / D12) + freq_additive_term);
+		zp13 = gld::complex(freq_coeff_real, 0.0) + gld::complex(0.0, freq_coeff_imag) * (log(1 / D13) + freq_additive_term);
+		zp23 = gld::complex(freq_coeff_real, 0.0) + gld::complex(0.0, freq_coeff_imag) * (log(1 / D23) + freq_additive_term);
+
+		if ((solver_method == SM_FBS) || (solver_method == SM_NR))
 		{
-			zs[0][0] = zp11-((zp13*zp13)/zp33);
-			zs[0][1] = zp12-((zp13*zp23)/zp33);
-			zs[1][0] = -(zp12-((zp13*zp23)/zp33));
-			zs[1][1] = -(zp22-((zp23*zp23)/zp33));
-			zs[0][2] = gld::complex(0,0);
-			zs[1][2] = gld::complex(0,0);
-			zs[2][2] = gld::complex(0,0);
-			zs[2][1] = gld::complex(0,0);
-			zs[2][0] = gld::complex(0,0);
+			zs[0][0] = zp11 - ((zp13 * zp13) / zp33);
+			zs[0][1] = zp12 - ((zp13 * zp23) / zp33);
+			zs[1][0] = -(zp12 - ((zp13 * zp23) / zp33));
+			zs[1][1] = -(zp22 - ((zp23 * zp23) / zp33));
+			zs[0][2] = gld::complex(0, 0);
+			zs[1][2] = gld::complex(0, 0);
+			zs[2][2] = gld::complex(0, 0);
+			zs[2][1] = gld::complex(0, 0);
+			zs[2][0] = gld::complex(0, 0);
 		}
 		else
 		{
@@ -424,73 +431,75 @@ void triplex_line::recalc(void)
 			*/
 		}
 
-		
-		//No solver check here -- NR and FBS are the same, and if it is something else, it should have failed above
-		tn[0] = -zp13/zp33;
-		tn[1] = -zp23/zp33;
+		// No solver check here -- NR and FBS are the same, and if it is something else, it should have failed above
+		tn[0] = -zp13 / zp33;
+		tn[1] = -zp23 / zp33;
 		tn[2] = 0;
 
-		multiply(length/5280.0,zs,b_mat); // Length comes in ft, convert to miles.
-		multiply(length/5280.0,zs,B_mat);
+		multiply(length / 5280.0, zs, b_mat); // Length comes in ft, convert to miles.
+		multiply(length / 5280.0, zs, B_mat);
 	}
-	
-	//Check for negative resistance in the line's impedance matrix
+
+	// Check for negative resistance in the line's impedance matrix
 	bool neg_res = false;
-	for (int n = 0; n < 2; n++){
-		if(b_mat[0][n].Re() < 0.0){
+	for (int n = 0; n < 2; n++)
+	{
+		if (b_mat[0][n].Re() < 0.0)
+		{
 			neg_res = true;
 		}
 	}
-	
-	if(neg_res){
+
+	if (neg_res)
+	{
 		gl_warning("INIT: triplex_line:%s has a negative resistance in it's impedance matrix. This will result in unusual behavior. Please check the line's geometry and cable parameters.", obj->name);
 		/*  TROUBLESHOOT
 		A negative resistance value was found for one or more the real parts of the triplex_line's impedance matrix.
-		While this is numerically possible, it is a physical impossibility. This resulted most likely from a improperly 
+		While this is numerically possible, it is a physical impossibility. This resulted most likely from a improperly
 		defined conductor cable. Please check and modify the conductor objects used for this line to correct this issue.
 		*/
 	}
 
 	// Same in all cases
-	a_mat[0][0] = gld::complex(1,0);
-	a_mat[0][1] = gld::complex(0,0);
-	a_mat[0][2] = gld::complex(0,0);
-	a_mat[1][0] = gld::complex(0,0);
-	a_mat[1][1] = gld::complex(1,0);
-	a_mat[1][2] = gld::complex(0,0);
-	a_mat[2][0] = gld::complex(0,0);
-	a_mat[2][1] = gld::complex(0,0);
-	a_mat[2][2] = gld::complex(1,0);
-	
-	c_mat[0][0] = gld::complex(0,0);
-	c_mat[0][1] = gld::complex(0,0);
-	c_mat[0][2] = gld::complex(0,0);
-	c_mat[1][0] = gld::complex(0,0);
-	c_mat[1][1] = gld::complex(0,0);
-	c_mat[1][2] = gld::complex(0,0);
-	c_mat[2][0] = gld::complex(0,0);
-	c_mat[2][1] = gld::complex(0,0);
-	c_mat[2][2] = gld::complex(0,0);
-	
-	d_mat[0][0] = gld::complex(1,0);
-	d_mat[0][1] = gld::complex(0,0);
-	d_mat[0][2] = gld::complex(0,0);
-	d_mat[1][0] = gld::complex(0,0);
-	d_mat[1][1] = gld::complex(1,0);
-	d_mat[1][2] = gld::complex(0,0);
-	d_mat[2][0] = gld::complex(0,0);
-	d_mat[2][1] = gld::complex(0,0);
-	d_mat[2][2] = gld::complex(1,0);
-	
-	A_mat[0][0] = gld::complex(1,0);
-	A_mat[0][1] = gld::complex(0,0);
-	A_mat[0][2] = gld::complex(0,0);
-	A_mat[1][0] = gld::complex(0,0);
-	A_mat[1][1] = gld::complex(1,0);
-	A_mat[1][2] = gld::complex(0,0);
-	A_mat[2][0] = gld::complex(0,0);
-	A_mat[2][1] = gld::complex(0,0);
-	A_mat[2][2] = gld::complex(1,0);
+	a_mat[0][0] = gld::complex(1, 0);
+	a_mat[0][1] = gld::complex(0, 0);
+	a_mat[0][2] = gld::complex(0, 0);
+	a_mat[1][0] = gld::complex(0, 0);
+	a_mat[1][1] = gld::complex(1, 0);
+	a_mat[1][2] = gld::complex(0, 0);
+	a_mat[2][0] = gld::complex(0, 0);
+	a_mat[2][1] = gld::complex(0, 0);
+	a_mat[2][2] = gld::complex(1, 0);
+
+	c_mat[0][0] = gld::complex(0, 0);
+	c_mat[0][1] = gld::complex(0, 0);
+	c_mat[0][2] = gld::complex(0, 0);
+	c_mat[1][0] = gld::complex(0, 0);
+	c_mat[1][1] = gld::complex(0, 0);
+	c_mat[1][2] = gld::complex(0, 0);
+	c_mat[2][0] = gld::complex(0, 0);
+	c_mat[2][1] = gld::complex(0, 0);
+	c_mat[2][2] = gld::complex(0, 0);
+
+	d_mat[0][0] = gld::complex(1, 0);
+	d_mat[0][1] = gld::complex(0, 0);
+	d_mat[0][2] = gld::complex(0, 0);
+	d_mat[1][0] = gld::complex(0, 0);
+	d_mat[1][1] = gld::complex(1, 0);
+	d_mat[1][2] = gld::complex(0, 0);
+	d_mat[2][0] = gld::complex(0, 0);
+	d_mat[2][1] = gld::complex(0, 0);
+	d_mat[2][2] = gld::complex(1, 0);
+
+	A_mat[0][0] = gld::complex(1, 0);
+	A_mat[0][1] = gld::complex(0, 0);
+	A_mat[0][2] = gld::complex(0, 0);
+	A_mat[1][0] = gld::complex(0, 0);
+	A_mat[1][1] = gld::complex(1, 0);
+	A_mat[1][2] = gld::complex(0, 0);
+	A_mat[2][0] = gld::complex(0, 0);
+	A_mat[2][1] = gld::complex(0, 0);
+	A_mat[2][2] = gld::complex(1, 0);
 
 	// print out matrices when testing.
 #ifdef _TESTING
@@ -522,14 +531,12 @@ void triplex_line::recalc(void)
 //////////////////////////////////////////////////////////////////////////
 
 /**
-* REQUIRED: allocate and initialize an object.
-*
-* @param obj a pointer to a pointer of the last object in the list
-* @param parent a pointer to the parent of this object
-* @return 1 for a successfully created object, 0 for error
-*/
-
-
+ * REQUIRED: allocate and initialize an object.
+ *
+ * @param obj a pointer to a pointer of the last object in the list
+ * @param parent a pointer to the parent of this object
+ * @return 1 for a successfully created object, 0 for error
+ */
 
 /* This can be added back in after tape has been moved to commit
 EXPORT TIMESTAMP commit_triplex_line(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
@@ -547,10 +554,10 @@ EXPORT int create_triplex_line(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(triplex_line::oclass);
-		if (*obj!=nullptr)
+		if (*obj != nullptr)
 		{
 			triplex_line *my = object_data<triplex_line>(*obj);
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			return my->create();
 		}
 		else
@@ -559,12 +566,14 @@ EXPORT int create_triplex_line(OBJECT **obj, OBJECT *parent)
 	CREATE_CATCHALL(triplex_line);
 }
 
-EXPORT TIMESTAMP sync_triplex_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_triplex_line_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	try {
+	try
+	{
 		triplex_line *pObj = object_data<triplex_line>(obj);
 		TIMESTAMP t1 = TS_NEVER;
-		switch (pass) {
+		switch (pass)
+		{
 		case PC_PRETOPDOWN:
 			return pObj->presync(t0);
 		case PC_BOTTOMUP:
@@ -576,13 +585,31 @@ EXPORT TIMESTAMP sync_triplex_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} 
+	}
 	SYNC_CATCHALL(triplex_line);
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_triplex_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	return sync_triplex_line_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_triplex_line(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_triplex_line_impl(obj, t0, pass);
+}
+#endif
+
 EXPORT int init_triplex_line(OBJECT *obj)
 {
-	try {
+	try
+	{
 		triplex_line *my = object_data<triplex_line>(obj);
 		return my->init(obj->parent);
 	}

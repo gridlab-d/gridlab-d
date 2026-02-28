@@ -27,34 +27,34 @@ multizone *multizone::defaults = nullptr;
 static PASSCONFIG passconfig = PC_BOTTOMUP;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
 
-
 /* Class registration is only called once to register the class with the core */
 multizone::multizone(MODULE *module)
 {
-	if (oclass==nullptr)
+	if (oclass == nullptr)
 	{
-		oclass = gl_register_class(module,"multizone",sizeof(multizone),passconfig);
-		if (oclass==nullptr)
+		oclass = gl_register_class(module, "multizone", sizeof(multizone), passconfig);
+		if (oclass == nullptr)
 			throw "unable to register class multizone";
 		else
 			oclass->trl = TRL_INTEGRATED;
 
 		if (gl_publish_variable(oclass,
-			/* TODO: add your published properties here */
-			PT_object, "from", PADDR(from),
-			PT_object, "to", PADDR(to),
-			PT_double, "ua", PADDR(ua),
-			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+								/* TODO: add your published properties here */
+								PT_object, "from", PADDR(from),
+								PT_object, "to", PADDR(to),
+								PT_double, "ua", PADDR(ua),
+								nullptr) < 1)
+			GL_THROW("unable to publish properties in %s", __FILE__);
 		defaults = this;
 		/* TODO: set the default values of all properties here */
-		memset(this,0,sizeof(multizone));
+		memset(this, 0, sizeof(multizone));
 	}
 }
 
 /* Object creation is called once for each object that is created by the core */
 int multizone::create(void)
 {
-	memcpy(this,defaults,sizeof(multizone));
+	memcpy(this, defaults, sizeof(multizone));
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -62,18 +62,23 @@ int multizone::create(void)
 int multizone::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
-	if (from==nullptr)
-		gl_error("%s (multizone:%d): from zone is not specified", obj->name?obj->name:"unnamed",obj->id);
-	else if (!gl_object_isa(from,"office"))
-		gl_error("%s (multizone:%d): from object is not an commercial office space", obj->name?obj->name:"unnamed",obj->id);
-	if (to==nullptr)
-		gl_error("%s (multizone:%d): to zone is not specified", obj->name?obj->name:"unnamed",obj->id);
-	else if (!gl_object_isa(to,"office"))
-		gl_error("%s (multizone:%d): to object is not an commercial office space", obj->name?obj->name:"unnamed",obj->id);
-	if (ua<=0)
-		gl_error("%s (multizone:%d): ua must be positive (value is %.2f)", obj->name?obj->name:"unnamed",obj->id,ua);
-	gl_set_rank(from,obj->rank+1);
-	gl_set_rank(to,obj->rank+1);
+
+#ifdef __APPLE__
+	parent = obj->parent;
+#endif
+
+	if (from == nullptr)
+		gl_error("%s (multizone:%d): from zone is not specified", obj->name ? obj->name : "unnamed", obj->id);
+	else if (!gl_object_isa(from, "office"))
+		gl_error("%s (multizone:%d): from object is not an commercial office space", obj->name ? obj->name : "unnamed", obj->id);
+	if (to == nullptr)
+		gl_error("%s (multizone:%d): to zone is not specified", obj->name ? obj->name : "unnamed", obj->id);
+	else if (!gl_object_isa(to, "office"))
+		gl_error("%s (multizone:%d): to object is not an commercial office space", obj->name ? obj->name : "unnamed", obj->id);
+	if (ua <= 0)
+		gl_error("%s (multizone:%d): ua must be positive (value is %.2f)", obj->name ? obj->name : "unnamed", obj->id, ua);
+	gl_set_rank(from, obj->rank + 1);
+	gl_set_rank(to, obj->rank + 1);
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -87,11 +92,11 @@ TIMESTAMP multizone::presync(TIMESTAMP t0, TIMESTAMP t1)
 /* Sync is called when the clock needs to advance on the bottom-up pass */
 TIMESTAMP multizone::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	if (t1>t0 && t0>0)
+	if (t1 > t0 && t0 > 0)
 	{
-		office *pFrom = /*OBJECTDATA(from,office)*/    object_data<office>(from);
-		office *pTo = /*OBJECTDATA(to, office)*/       object_data<office>(to);
-	
+		office *pFrom = /*OBJECTDATA(from,office)*/ object_data<office>(from);
+		office *pTo = /*OBJECTDATA(to, office)*/ object_data<office>(to);
+
 		/* initial delta T */
 		double dT = pFrom->zone.current.air_temperature - pTo->zone.current.air_temperature;
 
@@ -99,14 +104,14 @@ TIMESTAMP multizone::sync(TIMESTAMP t0, TIMESTAMP t1)
 		double ddT = pFrom->zone.current.temperature_change - pTo->zone.current.temperature_change;
 
 		/* mean delta T */
-		double DT = dT + ddT/2;
+		double DT = dT + ddT / 2;
 
 		/* mean heat transfer */
-		double dQ = ua * DT * (t1-t0)/TS_SECOND/3600;
-	
+		double dQ = ua * DT * (t1 - t0) / TS_SECOND / 3600;
+
 		double x;
-		x = dQ*(t1-t0);	
-		//LOCKED(from, pFrom->Qz -= x);
+		x = dQ * (t1 - t0);
+		// LOCKED(from, pFrom->Qz -= x);
 		{
 			std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(from));
 			pFrom->Qz -= x;
@@ -114,14 +119,14 @@ TIMESTAMP multizone::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		{
 			std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(to));
-			//LOCKED(to, pTo->Qz += dQ);
+			// LOCKED(to, pTo->Qz += dQ);
 			pTo->Qz += dQ;
 		}
 
-		if (ddT!=0)
+		if (ddT != 0)
 
 			/* time for 1 deg temperature change */
-			return (TIMESTAMP)(t1+fabs(1/ddT)*3600*TS_SECOND); 
+			return (TIMESTAMP)(t1 + fabs(1 / ddT) * 3600 * TS_SECOND);
 		else
 			return TS_NEVER;
 	}
@@ -145,10 +150,10 @@ EXPORT int create_multizone(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(multizone::oclass);
-		if (*obj!=nullptr)
+		if (*obj != nullptr)
 		{
-			multizone *my = /*OBJECTDATA(*obj, multizone)*/   object_data<multizone>(*obj)   ;
-			gl_set_parent(*obj,parent);
+			multizone *my = /*OBJECTDATA(*obj, multizone)*/ object_data<multizone>(*obj);
+			// gl_set_parent(*obj,parent);
 			return my->create();
 		}
 		else
@@ -161,37 +166,56 @@ EXPORT int init_multizone(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=nullptr)
-			return /*OBJECTDATA(obj, multizone)*/  object_data<multizone>(obj)->init(parent);
+		if (obj != nullptr)
+			return /*OBJECTDATA(obj, multizone)*/ object_data<multizone>(obj)->init(parent);
 		else
 			return 0;
 	}
 	INIT_CATCHALL(multizone);
 }
 
-EXPORT TIMESTAMP sync_multizone(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_multizone_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	multizone *my = /*OBJECTDATA(obj, multizone)*/   object_data<multizone>(obj);
+	multizone *my = /*OBJECTDATA(obj, multizone)*/ object_data<multizone>(obj);
 	try
 	{
-		switch (pass) {
+		switch (pass)
+		{
 		case PC_PRETOPDOWN:
-			t2 = my->presync(obj->clock,t1);
+			t2 = my->presync(obj->clock, t1);
 			break;
 		case PC_BOTTOMUP:
-			t2 = my->sync(obj->clock,t1);
+			t2 = my->sync(obj->clock, t1);
 			break;
 		case PC_POSTTOPDOWN:
-			t2 = my->postsync(obj->clock,t1);
+			t2 = my->postsync(obj->clock, t1);
 			break;
 		default:
 			GL_THROW("invalid pass request (%d)", pass);
 			break;
 		}
-		if (pass==clockpass)
+		if (pass == clockpass)
 			obj->clock = t1;
 		return t2;
 	}
 	SYNC_CATCHALL(multizone);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_multizone(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_multizone_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_multizone(void *object, ...)
+{
+	OBJECT *obj = static_cast<OBJECT *>(object);
+	va_list args;
+	va_start(args, object);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_multizone_impl(obj, t1, pass);
+}
+#endif

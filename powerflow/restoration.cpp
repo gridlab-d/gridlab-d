@@ -226,6 +226,11 @@ int restoration::create(void)
 
 int restoration::init(OBJECT *parent)
 {
+	OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	OBJECT *obj = object_header(this);
 	int working_int_val, indexval;
 
@@ -2503,7 +2508,7 @@ int restoration::spanningTreeSearch(void)
 			if (powerflow_result == -1)
 			{
 				return -2; // Serious error occurred, so flag us as "really bad"
-				// basically, the state of the system may be corrupted, so any subsequent powerflows can't be trusted
+						   // basically, the state of the system may be corrupted, so any subsequent powerflows can't be trusted
 			}
 			else if (powerflow_result == 0)
 			{
@@ -2694,7 +2699,7 @@ int restoration::spanningTreeSearch(void)
 			if (powerflow_result == -1)
 			{
 				return -2; // Serious error occurred, so flag us as "really bad"
-				// basically, the state of the system may be corrupted, so any subsequent powerflows can't be trusted
+						   // basically, the state of the system may be corrupted, so any subsequent powerflows can't be trusted
 			}
 			else if (powerflow_result == 0)
 			{
@@ -6186,7 +6191,7 @@ EXPORT int create_restoration(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			restoration *my = object_data<restoration>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -6212,10 +6217,28 @@ EXPORT int init_restoration(OBJECT *obj, OBJECT *parent)
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-EXPORT TIMESTAMP sync_restoration(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_restoration_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	return TS_NEVER;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_restoration(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_restoration_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_restoration(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_restoration_impl(obj, t1, pass);
+}
+#endif
+
 EXPORT int isa_restoration(OBJECT *obj, char *classname)
 {
 	return object_data<restoration>(obj)->isa(classname);

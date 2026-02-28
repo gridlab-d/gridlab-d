@@ -3,7 +3,7 @@
 	@file node.cpp
 	@addtogroup node Network node (bus)
 	@ingroup network
-	
+
 	The node object implements the general node solution elements
 	of the Gauss-Seidel solver.
 
@@ -61,68 +61,67 @@
 
 #include "network.h"
 
-
-
 //////////////////////////////////////////////////////////////////////////
 // node CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* node::oclass = nullptr;
-CLASS* node::pclass = nullptr;
+CLASS *node::oclass = nullptr;
+CLASS *node::pclass = nullptr;
 node *node::defaults = nullptr;
 
 CLASS *node_class = (nullptr);
 OBJECT *last_node = (nullptr);
 
-node::node(MODULE *mod) 
+node::node(MODULE *mod)
 {
 
 	// first time init
-	if (oclass==nullptr)
+	if (oclass == nullptr)
 	{
 		// register the class definition
-		node_class = oclass = gl_register_class(mod,"node",sizeof(node),PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT);
-		if (oclass==nullptr)
+		node_class = oclass = gl_register_class(mod, "node", sizeof(node), PC_PRETOPDOWN | PC_POSTTOPDOWN | PC_UNSAFE_OVERRIDE_OMIT);
+		if (oclass == nullptr)
 			throw "unable to register class node";
 		else
 			oclass->trl = TRL_STANDALONE;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_complex, "V", PADDR(V),
-			PT_complex, "S", PADDR(S),
-			PT_double, "G", PADDR(G),
-			PT_double, "B", PADDR(B),
-			PT_double, "Qmax_MVAR", PADDR(Qmax_MVAR),
-			PT_double, "Qmin_MVAR", PADDR(Qmin_MVAR),
-			PT_enumeration,"type",PADDR(type),
-				PT_KEYWORD,"PQ",PQ,
-				PT_KEYWORD,"PQV",PQV,
-				PT_KEYWORD,"PV",PV,
-				PT_KEYWORD,"SWING",SWING,
-			PT_int16, "flow_area_num", PADDR(flow_area_num),
-			PT_double, "base_kV", PADDR(base_kV),
+								PT_complex, "V", PADDR(V),
+								PT_complex, "S", PADDR(S),
+								PT_double, "G", PADDR(G),
+								PT_double, "B", PADDR(B),
+								PT_double, "Qmax_MVAR", PADDR(Qmax_MVAR),
+								PT_double, "Qmin_MVAR", PADDR(Qmin_MVAR),
+								PT_enumeration, "type", PADDR(type),
+								PT_KEYWORD, "PQ", PQ,
+								PT_KEYWORD, "PQV", PQV,
+								PT_KEYWORD, "PV", PV,
+								PT_KEYWORD, "SWING", SWING,
+								PT_int16, "flow_area_num", PADDR(flow_area_num),
+								PT_double, "base_kV", PADDR(base_kV),
 #ifdef HYBRID
-			PT_complex, "Vobs", PADDR(Vobs),
-			PT_double, "Vstdev", PADDR(Vstdev),
+								PT_complex, "Vobs", PADDR(Vobs),
+								PT_double, "Vstdev", PADDR(Vstdev),
 #endif
-			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+								nullptr) < 1)
+			GL_THROW("unable to publish properties in %s", __FILE__);
 
 		// setup the default values
-		memset(this,0,sizeof(node));
+		memset(this, 0, sizeof(node));
 		defaults = this;
 		type = PQ;
-		V = complex(1,0,A);
-		S = complex(0,0,J);
-		flow_area_num=1;
-		loss_zone_num=1;
-		Vobs = complex(0,0,A); /* default observation is 0+0j */
+		V = complex(1, 0, A);
+		S = complex(0, 0, J);
+		flow_area_num = 1;
+		loss_zone_num = 1;
+		Vobs = complex(0, 0, A); /* default observation is 0+0j */
 	}
 }
 
 node::~node()
 {
-	while (linklist!=nullptr)
+	while (linklist != nullptr)
 	{
 		LINKLIST *next = linklist->next;
 		delete linklist;
@@ -130,16 +129,16 @@ node::~node()
 	}
 }
 
-int node::create() 
+int node::create()
 {
-	memcpy(this,defaults,sizeof(*this));
+	memcpy(this, defaults, sizeof(*this));
 	return 1;
 }
 
 void node::attach(link *pLink)
 {
 	LINKLIST *item = new LINKLIST;
-	if (item==nullptr)
+	if (item == nullptr)
 		throw "node::attach() - memory allocation failed";
 	item->data = pLink;
 	item->next = linklist;
@@ -150,51 +149,55 @@ int node::init(OBJECT *parent)
 {
 	// check that parent is swing bus
 	OBJECT *hdr = object_header(this);
-	node *swing = parent?OBJECTDATA(parent,node):this;
+
+#ifdef __APPLE__
+	parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+	node *swing = parent ? OBJECTDATA(parent, node) : this;
 	OBJECT *swing_hdr = OBJECTHDR(swing);
-	if (swing_hdr->oclass!=hdr->oclass || swing->type!=SWING)
+	if (swing_hdr->oclass != hdr->oclass || swing->type != SWING)
 	{
-		gl_error("node %s:%d parent is not a swing bus",hdr->oclass->name,hdr->id);
+		gl_error("node %s:%d parent is not a swing bus", hdr->oclass->name, hdr->id);
 		return 0;
 	}
 #ifdef HYBRID
 	// add observation residual
-	if (Vstdev>0)
+	if (Vstdev > 0)
 		swing->add_obs_residual(this);
 
 	// add injection error
 	swing->add_inj_residual(this);
 #endif
 
-	YVs=complex(0,0);
-	Ys=complex(0,0);
+	YVs = complex(0, 0);
+	Ys = complex(0, 0);
 	return 1;
 }
 
 #ifdef HYBRID
 void node::add_inj_residual(node *pNode)
 {
-	if (pNode!=this)
+	if (pNode != this)
 	{
-		pNode->Sr2 = (~(~pNode->V*((pNode->Ys + complex(pNode->G,pNode->B))*pNode->V + pNode->YVs)) - pNode->S).Mag();
-		Sr2 += pNode->Sr2*pNode->Sr2;
+		pNode->Sr2 = (~(~pNode->V * ((pNode->Ys + complex(pNode->G, pNode->B)) * pNode->V + pNode->YVs)) - pNode->S).Mag();
+		Sr2 += pNode->Sr2 * pNode->Sr2;
 		n_inj++;
 	}
 }
 
 void node::del_inj_residual(node *pNode)
 {
-	if (pNode!=this)
+	if (pNode != this)
 	{
-		Sr2 -= pNode->Sr2*pNode->Sr2;
+		Sr2 -= pNode->Sr2 * pNode->Sr2;
 		n_inj--;
 	}
 }
 
 double node::get_inj_residual(void) const
 {
-	if (Sr2>0 && n_inj>0)
-		return sqrt(Sr2/n_inj);
+	if (Sr2 > 0 && n_inj > 0)
+		return sqrt(Sr2 / n_inj);
 	else
 		return Sr2;
 }
@@ -202,8 +205,8 @@ double node::get_inj_residual(void) const
 void node::add_obs_residual(node *pNode)
 {
 	double r = (pNode->V - pNode->Vobs).Mag() / pNode->Vstdev;
-	r*=r;
-	if (pNode!=this)
+	r *= r;
+	if (pNode != this)
 	{
 		pNode->r2 = r;
 		pNode->n_obs = 1;
@@ -214,30 +217,30 @@ void node::add_obs_residual(node *pNode)
 
 void node::del_obs_residual(node *pNode)
 {
-	if (pNode!=this)
+	if (pNode != this)
 		r2 -= pNode->r2;
 	else
 	{
 		double r = (pNode->V - pNode->Vobs).Mag() / pNode->Vstdev;
-		r2 -= r*r;
+		r2 -= r * r;
 	}
 	n_obs--;
 }
 
 double node::get_obs_residual(void) const
 {
-	if (r2>0 && n_obs>0)
-		return sqrt(r2/n_obs);
+	if (r2 > 0 && n_obs > 0)
+		return sqrt(r2 / n_obs);
 	else
 		return r2;
 }
 
 double node::get_obs_probability(void) const
 {
-	if (r2<0)
+	if (r2 < 0)
 		return 1;
-	double pr = exp(-0.5*r2); /// @todo there should be a 1/sqrt(2*pi) coeff on the observability probability, yet it works. (network, low priority)
-	if (pr>1)
+	double pr = exp(-0.5 * r2); /// @todo there should be a 1/sqrt(2*pi) coeff on the observability probability, yet it works. (network, low priority)
+	if (pr > 1)
 		gl_warning("node:%d observation probability exceeds 1!", object_header(this)->id);
 	return pr;
 }
@@ -251,36 +254,37 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	return TS_NEVER;
 }
 
-TIMESTAMP node::postsync(TIMESTAMP t0) 
+TIMESTAMP node::postsync(TIMESTAMP t0)
 {
 	OBJECT *hdr = object_header(this);
-	node *swing = hdr->parent?OBJECTDATA(hdr->parent,node):this;
+	node *swing = hdr->parent ? OBJECTDATA(hdr->parent, node) : this;
 	complex dV(0.0);
-	complex YY = Ys + complex(G,B);
+	complex YY = Ys + complex(G, B);
 	// copy values that might get updated while we work on this object
 	complex old_YVs = YVs;
 #ifdef HYBRID
 	swing->del_inj_residual(this);
 #endif
-	if (!YY.IsZero() || type==SWING)
+	if (!YY.IsZero() || type == SWING)
 	{
-		switch (type) {
+		switch (type)
+		{
 		case PV:
-			S.Im() = ((~V*(YY*V-old_YVs)).Im());
-			if (Qmin_MVAR<Qmax_MVAR && S.Im()<Qmin_MVAR) 
+			S.Im() = ((~V * (YY * V - old_YVs)).Im());
+			if (Qmin_MVAR < Qmax_MVAR && S.Im() < Qmin_MVAR)
 				S.Im() = Qmin_MVAR;
-			else if (Qmax_MVAR>Qmin_MVAR && S.Im()>Qmax_MVAR) 
+			else if (Qmax_MVAR > Qmin_MVAR && S.Im() > Qmax_MVAR)
 				S.Im() = Qmax_MVAR;
-			//else
+			// else
 			{
-				complex Vnew = (-(~S/~V) + old_YVs) / YY;
-				Vnew.SetPolar(V.Mag(),Vnew.Arg());
+				complex Vnew = (-(~S / ~V) + old_YVs) / YY;
+				Vnew.SetPolar(V.Mag(), Vnew.Arg());
 #ifdef HYBRID
-				if (Vstdev>0)
+				if (Vstdev > 0)
 				{
 					double pr = swing->get_obs_probability();
 					swing->del_obs_residual(this);
-					dV = Vobs*(1-pr) + (Vnew)*pr - V;
+					dV = Vobs * (1 - pr) + (Vnew)*pr - V;
 					V += dV;
 					swing->add_obs_residual(this);
 				}
@@ -296,27 +300,27 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 		case PQ:
 			if (!V.IsZero())
 			{
-				complex Vnew = (-(~S/~V) + old_YVs) / YY;
+				complex Vnew = (-(~S / ~V) + old_YVs) / YY;
 #ifdef HYBRID
-				if (Vstdev>0) // need to consider observation
+				if (Vstdev > 0) // need to consider observation
 				{
 					double pr = swing->get_obs_probability();
 					swing->del_obs_residual(this);
-					dV = Vobs*(1-pr) + (Vnew)*pr - V;
+					dV = Vobs * (1 - pr) + (Vnew)*pr - V;
 					V += dV;
 					swing->add_obs_residual(this);
 				}
-				else // no observation 
+				else // no observation
 #endif
 				{
-					dV = (Vnew - V)*acceleration_factor;
+					dV = (Vnew - V) * acceleration_factor;
 					V += dV;
 				}
 				V.Notation() = A;
 			}
 			break;
 		case SWING:
-			S = ~(~V*(YY*V - YVs));
+			S = ~(~V * (YY * V - YVs));
 			S.Notation() = J;
 			break;
 		default:
@@ -331,37 +335,38 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 
 #ifdef _DEBUG
 	// node debugging
-	if (debug_node>0)
+	if (debug_node > 0)
 	{
-		OBJECT* obj = object_header(this);
-		static int first=-1;
-		if (first==-1) first = obj->id;
-		if (obj->id==first)
+		OBJECT *obj = object_header(this);
+		static int first = -1;
+		if (first == -1)
+			first = obj->id;
+		if (obj->id == first)
 		{
 			printf("\n");
 			printf("Node           Type  V                 Vobs              Stdev    Power             G        B        dV       Pr{Vobs} r2     Sr2\n");
 			printf("============== ===== ================= ================= ======== ================= ======== ======== ======== ======== ====== ======\n");
 		}
-		if (((debug_node&1)==1 && dV.Mag()>convergence_limit )  // only on dV
+		if (((debug_node & 1) == 1 && dV.Mag() > convergence_limit) // only on dV
 #ifdef HYBRID
-			|| ((debug_node&2)==2 && Vstdev>0 ) // only on observation
-			|| ((debug_node&4)==4 && get_inj_residual()>0.001)// non-zero power residual
+			|| ((debug_node & 2) == 2 && Vstdev > 0)				 // only on observation
+			|| ((debug_node & 4) == 4 && get_inj_residual() > 0.001) // non-zero power residual
 #endif
-			)
+		)
 		{
-			printf("%2d (%-9.9s) %5s %+8.4f%+8.3fd %+8.4f%+8.3fd %8.5f %+8.4f%+8.4fj %+8.5f ", 
-				obj->id, obj->name, type==SWING?"SWING":(type==PQ?"PQ   ":"PV"),
-				V.Mag(),V.Arg()*180/3.1416, 
-				Vobs.Mag(), Vobs.Arg()*180/3.1416, Vstdev,
-				S.Re(), S.Im(), 
-				G, B,
-				dV.Mag());
+			printf("%2d (%-9.9s) %5s %+8.4f%+8.3fd %+8.4f%+8.3fd %8.5f %+8.4f%+8.4fj %+8.5f ",
+				   obj->id, obj->name, type == SWING ? "SWING" : (type == PQ ? "PQ   " : "PV"),
+				   V.Mag(), V.Arg() * 180 / 3.1416,
+				   Vobs.Mag(), Vobs.Arg() * 180 / 3.1416, Vstdev,
+				   S.Re(), S.Im(),
+				   G, B,
+				   dV.Mag());
 #ifdef HYBRID
 			printf("%+8.5f %8.5f ", get_obs_probability(), r2);
-			if (Vstdev>0)
+			if (Vstdev > 0)
 				printf("%8.5f %6.3f %6.3f\n", get_obs_probability(), r2, get_inj_residual());
 			else
-				printf("   --      --   %6.3f\n",get_inj_residual());
+				printf("   --      --   %6.3f\n", get_inj_residual());
 #else
 			printf("\n");
 #endif
@@ -371,10 +376,10 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 
 	// send dV through all links
 	LINKLIST *item;
-	for (item=linklist; item!=nullptr; item=item->next)
-		item->data->apply_dV(hdr,dV);
+	for (item = linklist; item != nullptr; item = item->next)
+		item->data->apply_dV(hdr, dV);
 
-	if (dV.Mag()>convergence_limit)
+	if (dV.Mag() > convergence_limit)
 		return t0; /* did not converge, hold the clock */
 	else
 		return TS_NEVER; /* converged, no further updates needed */
@@ -387,11 +392,11 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 EXPORT int create_node(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(node_class);
-	if (*obj!=nullptr)
+	if (*obj != nullptr)
 	{
 		last_node = *obj;
-		node *my = OBJECTDATA(*obj,node);
-		gl_set_parent(*obj,parent);
+		node *my = OBJECTDATA(*obj, node);
+		// gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
 	}
@@ -400,30 +405,47 @@ EXPORT int create_node(OBJECT **obj, OBJECT *parent)
 
 EXPORT int init_node(OBJECT *obj)
 {
-	return OBJECTDATA(obj,node)->init(obj->parent);
+	return OBJECTDATA(obj, node)->init(obj->parent);
 }
 
-EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_node_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP t1;
-	try {
+	try
+	{
 		switch (pass)
 		{
 		case PC_PRETOPDOWN:
-			return OBJECTDATA(obj,node)->presync(t0);
+			return OBJECTDATA(obj, node)->presync(t0);
 		case PC_POSTTOPDOWN:
-			t1 = OBJECTDATA(obj,node)->postsync(t0);
+			t1 = OBJECTDATA(obj, node)->postsync(t0);
 			obj->clock = t0;
 			return t1;
 		default:
 			throw "invalid passconfig";
 		}
 	}
-	catch (char *msg) 
+	catch (char *msg)
 	{
-		gl_error("%s(%s:%d): %s", obj->name?obj->name:"(anon)", obj->oclass->name, obj->id, msg);
+		gl_error("%s(%s:%d): %s", obj->name ? obj->name : "(anon)", obj->oclass->name, obj->id, msg);
 		return TS_INVALID;
 	}
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	return sync_node_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_node(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_node_impl(obj, t0, pass);
+}
+#endif
 /**@}*/

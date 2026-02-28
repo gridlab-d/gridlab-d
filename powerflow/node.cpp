@@ -414,6 +414,11 @@ int node::create(void)
 int node::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+	OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	OBJECT *tmp_obj, *tmp_subnode_parent;
 	node *tmp_node, *tmp_par_node;
 	int index_loop_val;
@@ -593,10 +598,21 @@ int node::init(OBJECT *parent)
 		}
 
 		// Check for parents to see if they are a parent/childed load
-		if (obj->parent != nullptr)									// Has a parent, let's see if it is a node and link it up
-		{															//(this will break anything intentionally done this way - e.g. switch between two nodes)
+		if (obj->parent != nullptr) // Has a parent, let's see if it is a node and link it up
+		{
+#ifdef __APPLE__
+			if (!gl_object_isa(obj->parent, "node", "powerflow") &&
+				!gl_object_isa(obj->parent, "triplex_node", "powerflow") &&
+				!gl_object_isa(obj->parent, "triplex_meter", "powerflow") &&
+				!gl_object_isa(obj->parent, "load", "powerflow") &&
+				!gl_object_isa(obj->parent, "meter", "powerflow"))
+#else
+			//(this will break anything intentionally done this way - e.g. switch between two nodes)
 			if (!(gl_object_isa(obj->parent, "node", "powerflow"))) // All others alias up to isa:node eventually
+#endif
+
 				GL_THROW("NR: Parent is not a node-based object!");
+
 			/*  TROUBLESHOOT
 			A Newton-Raphson parent-child connection was attempted on a non-node.  The parent object must be a node, load, or meter object in the
 			powerflow module for this connection to be successful.
@@ -3561,7 +3577,7 @@ EXPORT int create_node(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			node *my = object_data<node>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -3633,7 +3649,7 @@ EXPORT int init_node(OBJECT *obj)
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_node_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try
 	{
@@ -3656,6 +3672,22 @@ EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	SYNC_CATCHALL(node);
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API int sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	return sync_node_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_node(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_node_impl(obj, t0, pass);
+}
+#endif
 /**
  * Function to search for a master swing node, one swing to rule them all
  * Functionalized to help compartmentalize the code

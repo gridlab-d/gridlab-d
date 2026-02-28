@@ -127,6 +127,10 @@ int sec_control::create(void)
 int sec_control::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	STATUS fxn_return_status;
 
 	// Deferred initialization code
@@ -940,7 +944,7 @@ double sec_control::get_pelec(SEC_CNTRL_PARTICIPANT &obj)
 	{
 		out = (get_complex_value(obj.ptr, "VA_Out")).Re() * 1e-6;
 	}
-	else if (gl_object_isa(obj.ptr, "link", "powerflow"))
+	else if (gl_object_isa(obj.ptr, "link", "powerflow") || gl_object_isa(obj.ptr, "switch", "powerflow"))
 	{
 		// Average is taken to get the same value for both regions.
 		out = (get_complex_value(obj.ptr, "power_in").Re() + get_complex_value(obj.ptr, "power_out").Re()) / 2.0 * 1e-6;
@@ -1004,7 +1008,7 @@ void sec_control::add_obj(std::vector<std::string> &vals)
 		tmp.dp_dn = (dp_dn_default < 0) ? ((tmp.pmax - tmp.pmin) * tmp.rate) : dp_dn_default;
 		tmp.dp_up = (dp_up_default < 0) ? ((tmp.pmax - tmp.pmin) * tmp.rate) : dp_up_default;
 	} // END Inverter_dyn specific
-	else if (gl_object_isa(tmp.ptr, "link", "powerflow"))
+	else if (gl_object_isa(tmp.ptr, "link", "powerflow") || gl_object_isa(tmp.ptr, "switch", "powerflow"))
 	{
 		// ==== tie-line options ========
 		tmp.rate = 1; // not uses for links. 1 so that any units-to-pu conversions will not do anything
@@ -1214,7 +1218,7 @@ EXPORT int create_sec_control(OBJECT **obj, OBJECT *parent)
 		if (*obj != NULL)
 		{
 			sec_control *my = /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -1235,7 +1239,7 @@ EXPORT int init_sec_control(OBJECT *obj, OBJECT *parent)
 	INIT_CATCHALL(sec_control);
 }
 
-EXPORT TIMESTAMP sync_sec_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_sec_control_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
 	sec_control *my = /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(obj);
@@ -1262,6 +1266,23 @@ EXPORT TIMESTAMP sync_sec_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	SYNC_CATCHALL(sec_control);
 	return t2;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_sec_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_sec_control_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_sec_control(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_sec_control_impl(obj, t1, pass);
+}
+#endif
 
 EXPORT int isa_sec_control(OBJECT *obj, char *classname)
 {

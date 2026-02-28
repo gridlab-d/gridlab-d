@@ -30,14 +30,16 @@ EXPORT int commit_java(OBJECT *obj);
 
 CLASS *java_init(CALLBACKS *, JAVACALLBACKS *, MODULE *, char *, int, char *[]);
 
-EXPORT MODULE *subload(char *modname, MODULE **pMod, CLASS **cptr, int argc, char **argv){
+EXPORT MODULE *subload(char *modname, MODULE **pMod, CLASS **cptr, int argc, char **argv)
+{
 	MODULE *mod = (MODULE *)malloc(sizeof(MODULE));
 	CLASS *c = nullptr;
 	memset(mod, 0, sizeof(MODULE));
 	gl_output("glmjava: trying to subload \"%s\"", modname);
 	java_init(callback, (JAVACALLBACKS *)getvar("jcallback", nullptr, nullptr), mod, modname, argc, argv);
 	c = *cptr;
-	while(c != nullptr){
+	while (c != nullptr)
+	{
 		c->create = (FUNCTIONADDR)create_java;
 		c->init = (FUNCTIONADDR)init_java;
 		c->isa = (FUNCTIONADDR)isa_java;
@@ -56,38 +58,45 @@ EXPORT int create_java(OBJECT **obj, OBJECT *parent)
 	JNIEnv *jnienv = (JNIEnv *)getvar("jnienv", nullptr, nullptr);
 	char *classname = (*obj) ? (*obj)->name : "ERROR_NO_CLASSNAME";
 	jclass cls = jnienv->FindClass(classname);
-	if(cls == nullptr){
+	if (cls == nullptr)
+	{
 		gl_error("create_java: unable to find %s.class", classname);
 		return 0;
 	}
 	jmethodID cfunc = jnienv->GetStaticMethodID(cls, "create", "(J)J");
-	if(cfunc == nullptr){
+	if (cfunc == nullptr)
+	{
 		gl_error("create_java: unable to find long %s.create(long)", classname);
 		return 0;
 	}
 	int64 rv = jnienv->CallStaticLongMethod(cls, cfunc, (int64)parent);
-	if(rv == 0){
+	if (rv == 0)
+	{
 		gl_error("create_java: %s.create() failed", classname);
 		GL_THROW("%s.create() failed", classname);
 	}
-	if (jnienv->ExceptionOccurred()) {
+	if (jnienv->ExceptionOccurred())
+	{
 		jnienv->ExceptionDescribe();
 	}
 	*obj = (OBJECT *)rv;
-	gl_set_parent(*obj, parent);
+	// gl_set_parent(*obj, parent);
 	return 1;
 }
 
-EXPORT int init_java(OBJECT *obj, OBJECT *parent){
+EXPORT int init_java(OBJECT *obj, OBJECT *parent)
+{
 	JNIEnv *jnienv = (JNIEnv *)getvar("jnienv", nullptr, nullptr);
 	char *name = obj->oclass->name;
 	jclass cls = jnienv->FindClass(name);
-	if(cls == nullptr){
+	if (cls == nullptr)
+	{
 		gl_error("init_java: unable to find %s.class", name);
 		return 0;
 	}
 	jmethodID cfunc = jnienv->GetStaticMethodID(cls, "init", "(JJ)I");
-	if(cfunc == nullptr){
+	if (cfunc == nullptr)
+	{
 		gl_error("init_java: unable to find int %s.init(long, long)", name);
 		return 0;
 	}
@@ -95,16 +104,19 @@ EXPORT int init_java(OBJECT *obj, OBJECT *parent){
 	return rv;
 }
 
-EXPORT int commit_java(OBJECT *obj){
+EXPORT int commit_java(OBJECT *obj)
+{
 	JNIEnv *jnienv = (JNIEnv *)getvar("jnienv", nullptr, nullptr);
 	char *name = obj->oclass->name;
 	jclass cls = jnienv->FindClass(name);
-	if(cls == nullptr){
+	if (cls == nullptr)
+	{
 		gl_error("commit_java: unable to find %s.class", name);
 		return 0;
 	}
 	jmethodID cfunc = jnienv->GetStaticMethodID(cls, "commit", "(J)I");
-	if(cfunc == nullptr){
+	if (cfunc == nullptr)
+	{
 		gl_error("commit_java: unable to find int %s.commit(long)", name);
 		return 0;
 	}
@@ -112,52 +124,58 @@ EXPORT int commit_java(OBJECT *obj){
 	return rv;
 }
 
-EXPORT TIMESTAMP sync_java(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass){
+EXPORT TIMESTAMP sync_java(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
 	JNIEnv *jnienv = (JNIEnv *)getvar("jnienv", nullptr, nullptr);
-		jclass cls = jnienv->FindClass(obj->oclass->name);
-	if(cls == nullptr){
+	jclass cls = jnienv->FindClass(obj->oclass->name);
+	if (cls == nullptr)
+	{
 		gl_error("sync_java: unable to find %s.class", obj->oclass->name);
 		return 0;
 	}
 	jmethodID cfunc = jnienv->GetStaticMethodID(cls, "sync", "(JJI)J");
-	if(cfunc == nullptr){
+	if (cfunc == nullptr)
+	{
 		gl_error("sync_java: unable to find long %s.sync(long, long, int)", obj->oclass->name);
 		return 0;
 	}
 	int64 t1 = jnienv->CallStaticLongMethod(cls, cfunc, (int64)obj, t0, pass);
-	if (pass==PC_POSTTOPDOWN) obj->clock = t0;
+	if (pass == PC_POSTTOPDOWN)
+		obj->clock = t0;
 	return t1;
 }
 
-int notify_java(OBJECT *obj, NOTIFYMODULE msg){
+int notify_java(OBJECT *obj, NOTIFYMODULE msg)
+{
 	JNIEnv *jnienv = (JNIEnv *)getvar("jnienv", nullptr, nullptr);
 	jclass cls = jnienv->FindClass(obj->oclass->name);
-	if(cls == nullptr)
+	if (cls == nullptr)
 	{
 		gl_error("notify_java: unable to find %s.class", obj->oclass->name);
 		return 0;
 	}
 	jmethodID cfunc = jnienv->GetStaticMethodID(cls, "notify", "(JLjava.lang.String;)I");
-	if(cfunc == nullptr)
+	if (cfunc == nullptr)
 	{
 		/* acceptable omission */
-		//gl_error("notify_java: unable to find int %s.notify(long, int)", obj->oclass->name);
+		// gl_error("notify_java: unable to find int %s.notify(long, int)", obj->oclass->name);
 		obj->oclass->notify = nullptr;
 		return 0;
 	}
 	return jnienv->CallStaticIntMethod(cls, cfunc, (int64)obj, (int)msg);
 }
 
-EXPORT int isa_java(OBJECT *obj, char *classname){
+EXPORT int isa_java(OBJECT *obj, char *classname)
+{
 	JNIEnv *jnienv = (JNIEnv *)getvar("jnienv", nullptr, nullptr);
 	jclass cls = jnienv->FindClass(obj->oclass->name);
-	if(cls == nullptr)
+	if (cls == nullptr)
 	{
 		gl_error("isa_java: unable to find %s.class", obj->oclass->name);
 		return 0;
 	}
 	jmethodID cfunc = jnienv->GetStaticMethodID(cls, "isa", "(JLjava.lang.String;)I");
-	if(cfunc == nullptr)
+	if (cfunc == nullptr)
 	{
 		gl_error("isa_java: unable to find int %s.isa(long, String)", obj->oclass->name);
 		return 0;
@@ -168,17 +186,20 @@ EXPORT int isa_java(OBJECT *obj, char *classname){
 	return rv;
 }
 
-EXPORT int64 plc_java(OBJECT *obj, TIMESTAMP t0){
+EXPORT int64 plc_java(OBJECT *obj, TIMESTAMP t0)
+{
 	JNIEnv *jnienv = (JNIEnv *)getvar("jnienv", nullptr, nullptr);
 	jclass cls = jnienv->FindClass(obj->oclass->name);
-	if(cls == nullptr){
+	if (cls == nullptr)
+	{
 		gl_error("plc_java: unable to find %s.class", obj->oclass->name);
 		return 0;
 	}
 	jmethodID cfunc = jnienv->GetStaticMethodID(cls, "plc", "(JJ)J");
-	if(cfunc == nullptr){
+	if (cfunc == nullptr)
+	{
 		// reasonable omission
-		//gl_error("plc_java: unable to find long %s.plc(long, long)", obj->oclass->name);
+		// gl_error("plc_java: unable to find long %s.plc(long, long)", obj->oclass->name);
 		obj->oclass->plc = nullptr;
 		return 0;
 	}
@@ -186,17 +207,20 @@ EXPORT int64 plc_java(OBJECT *obj, TIMESTAMP t0){
 	return rv;
 }
 
-EXPORT int recalc_java(OBJECT *obj){
+EXPORT int recalc_java(OBJECT *obj)
+{
 	JNIEnv *jnienv = (JNIEnv *)getvar("jnienv", nullptr, nullptr);
 	jclass cls = jnienv->FindClass(obj->oclass->name);
-	if(cls == nullptr){
+	if (cls == nullptr)
+	{
 		gl_error("recalc_java: unable to find %s.class", obj->oclass->name);
 		return 0;
 	}
 	jmethodID cfunc = jnienv->GetStaticMethodID(cls, "recalc", "(J)V");
-	if(cfunc == nullptr){
+	if (cfunc == nullptr)
+	{
 		// reasonable omission
-		//gl_error("recalc_java: unable to find void %s.recalc(long)", obj->oclass->name);
+		// gl_error("recalc_java: unable to find void %s.recalc(long)", obj->oclass->name);
 		obj->oclass->recalc = nullptr;
 		return 0;
 	}
@@ -208,62 +232,70 @@ CLASS *java_init(CALLBACKS *fntable, JAVACALLBACKS *jfntable, MODULE *module, ch
 {
 	JavaVM *jvm = nullptr;
 	JNIEnv *jnienv = nullptr;
-	if (!set_callback(fntable)) {
+	if (!set_callback(fntable))
+	{
 		errno = EINVAL;
 		return nullptr;
 	}
 	JAVACALLBACKS *jcallback = jfntable;
-	if(jcallback == nullptr){
+	if (jcallback == nullptr)
+	{
 		gl_error("%s:java_init() - unable to find jcallback", modulename);
 		return nullptr;
 	}
-	if(jvm == nullptr)
+	if (jvm == nullptr)
 		jvm = get_jvm();
-	if(jnienv == nullptr)
+	if (jnienv == nullptr)
 		jnienv = get_env();
 	jstring *jargv = new jstring[argc];
 	int i = 0;
 	gl_output("javamod init entered\n");
 
 	jclass cls = jnienv->FindClass(modulename);
-	if(cls == nullptr){
+	if (cls == nullptr)
+	{
 		gl_error("javamod:init.cpp: unable to find %s.class", modulename);
 		return nullptr;
 	}
 
 	jmethodID init_mid = jnienv->GetStaticMethodID(cls, "init", "(JLjava/lang/String;I[Ljava/lang/String;)J");
 
-	if(init_mid == nullptr){
+	if (init_mid == nullptr)
+	{
 		gl_error("javamod:init.cpp: unable to find \"int %s.init(long, string, int, string[])\"", modulename);
 		return nullptr;
 	}
 
 	jobjectArray args = jnienv->NewObjectArray(argc, jnienv->FindClass("[Ljava/lang/String;"), nullptr);
-	if(args == nullptr){
+	if (args == nullptr)
+	{
 		gl_error("javamod:init.cpp: unable to allocate args[] for %s.init()", modulename);
 		return nullptr;
 	}
-	
-	for(i = 0; i < argc; ++i){
+
+	for (i = 0; i < argc; ++i)
+	{
 		jargv[i] = jnienv->NewStringUTF(argv[i]);
 		jnienv->SetObjectArrayElement(args, i, jargv[i]);
 	}
 
 	jstring jmodname = jnienv->NewStringUTF(modulename);
-	if(jmodname == nullptr){
+	if (jmodname == nullptr)
+	{
 		gl_error("javamod:init.cpp: unable to allocate jmodname for %s.init()", modulename);
 	}
 
 	gl_output("javamod:init.cpp(): moduleaddr = %x", module);
 
 	int64 rv = jnienv->CallStaticLongMethod(cls, init_mid, (int64)module, jmodname, argc, jargv);
-	if (jnienv->ExceptionOccurred()) {
+	if (jnienv->ExceptionOccurred())
+	{
 		jnienv->ExceptionDescribe();
 	}
-	
+
 	// JNI cleanup
 	jnienv->DeleteLocalRef(args);
-	for(i = 0; i < argc; ++i)
+	for (i = 0; i < argc; ++i)
 		; /* delete the strings */
 
 	gl_output("finished javamod init\n");

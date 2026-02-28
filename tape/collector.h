@@ -4,7 +4,7 @@
 #ifndef TAPE_COLLECTOR_H
 #define TAPE_COLLECTOR_H
 
-#include<vector>
+#include <vector>
 #include <memory>
 
 #include "aggregate.h"
@@ -12,10 +12,11 @@
 #include "tape.h"
 
 /** @}
-	@addtogroup collector
-	@{
+    @addtogroup collector
+    @{
  **/
-struct collector {
+struct collector
+{
     /* public */
     char1024 file;
     char8 filetype;
@@ -35,7 +36,8 @@ struct collector {
     /* private */
     TAPEOPS *ops;
     FILETYPE type;
-    union {
+    union
+    {
         FILE *fp;
         MEMORY *memory;
         void *tsp;
@@ -43,7 +45,8 @@ struct collector {
     };
     TAPESTATUS status;
     char8 delim;
-    struct {
+    struct
+    {
         TIMESTAMP ts;
         char1024 value;
     } last;
@@ -51,7 +54,12 @@ struct collector {
     std::vector<std::shared_ptr<struct s_aggregate>> aggr;
 };
 
-EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
+#else
+extern "C" MODULE_API TIMESTAMP sync_collector(OBJECT *obj, ...);
+#endif
+
 EXPORT TIMESTAMP sync_collector_error(OBJECT **obj, struct collector **my, char2048 buffer);
 
 #endif //_COLLECTOR_H

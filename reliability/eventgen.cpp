@@ -162,6 +162,11 @@ int eventgen::create(void)
 /* Object initialization is called once after all object have been created */
 int eventgen::init(OBJECT *parent)
 {
+	OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	OBJECT *hdr = object_header(this);
 	int index, comma_count;
 	TIMESTAMP tempTime, globStartTimeVal;
@@ -2385,14 +2390,17 @@ void eventgen::parse_external_fault_events(char *events_char)
 {
 	std::string events_str((const char *)events_char);
 	nlohmann::json json_events;
-	std::string errors {};
+	std::string errors{};
 
-	try {	
+	try
+	{
 		json_events = nlohmann::json::parse(events_str);
-		for (auto& i : json_events.items()) {
+		for (auto &i : json_events.items())
+		{
 			nlohmann::json json_event = i.value();
 			std::string event_name = "";
-			if (json_event.contains("name")) {
+			if (json_event.contains("name"))
+			{
 				event_name = json_event["name"].template get<std::string>();
 			}
 
@@ -2433,7 +2441,9 @@ void eventgen::parse_external_fault_events(char *events_char)
 				}
 			}
 		}
-	} catch (...) {
+	}
+	catch (...)
+	{
 		GL_THROW("eventgent::parse_external_fault_events():Json parse failed to parse string = %s", events_char);
 	}
 }
@@ -2450,7 +2460,7 @@ EXPORT int create_eventgen(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			eventgen *my = object_data<eventgen>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -2471,7 +2481,7 @@ EXPORT int init_eventgen(OBJECT *obj, OBJECT *parent)
 	INIT_CATCHALL(eventgen);
 }
 
-EXPORT TIMESTAMP sync_eventgen(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_eventgen_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	try
 	{
@@ -2496,6 +2506,23 @@ EXPORT TIMESTAMP sync_eventgen(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(eventgen);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_eventgen(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return (int)sync_eventgen_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_eventgen(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = (PASSCONFIG)va_arg(args, int);
+	va_end(args);
+	return sync_eventgen_impl(obj, t1, pass);
+}
+#endif
 
 // Exposed function to add items
 EXPORT int add_event(OBJECT *event_obj, OBJECT *obj_to_fault, char *event_type, TIMESTAMP fail_time, TIMESTAMP rest_length, int implemented_fault, bool fault_state)

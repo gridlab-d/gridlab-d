@@ -73,6 +73,11 @@ int jsondump::create(void)
 int jsondump::init(OBJECT *parent)
 {
 	OBJECT *hdr = object_header(this);
+	OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 
 	// Check if we need to dump line and line configuration to JSON file
 	if ((filename_dump_system[0] == '\0') && write_system)
@@ -146,7 +151,7 @@ STATUS jsondump::dump_system(void)
 	bool found_match_config;
 
 	// metrics JSON value
-	nlohmann::json metrics_lines;	// Output dictionary for line and line configuration metrics
+	nlohmann::json metrics_lines; // Output dictionary for line and line configuration metrics
 	nlohmann::json node_object;
 	nlohmann::json load_object;
 	nlohmann::json line_object;
@@ -3585,16 +3590,19 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append opening status to array
-			if ((fuseData->phases & 0x04) == 0x04) {
-				sprintf(buffer, "%d", (fuseData->phase_A_state == 1)? true:false);
+			if ((fuseData->phases & 0x04) == 0x04)
+			{
+				sprintf(buffer, "%d", (fuseData->phase_A_state == 1) ? true : false);
 				jsonArray.push_back(buffer);
 			}
-			if ((fuseData->phases & 0x02) == 0x02) {
-				sprintf(buffer, "%d", ((fuseData->phase_B_state == 1)? true:false));
+			if ((fuseData->phases & 0x02) == 0x02)
+			{
+				sprintf(buffer, "%d", ((fuseData->phase_B_state == 1) ? true : false));
 				jsonArray.push_back(buffer);
 			}
-			if ((fuseData->phases & 0x01) == 0x01) {
-				sprintf(buffer, "%d", ((fuseData->phase_C_state == 1)? true:false));
+			if ((fuseData->phases & 0x01) == 0x01)
+			{
+				sprintf(buffer, "%d", ((fuseData->phase_C_state == 1) ? true : false));
 				jsonArray.push_back(buffer);
 			}
 
@@ -3634,16 +3642,19 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append opening status to array
-			if ((reclData->phases & 0x04) == 0x04) {
-				sprintf(buffer, "%d", ((reclData->phase_A_state == 1)? true:false));
+			if ((reclData->phases & 0x04) == 0x04)
+			{
+				sprintf(buffer, "%d", ((reclData->phase_A_state == 1) ? true : false));
 				jsonArray.push_back(buffer);
 			}
-			if ((reclData->phases & 0x02) == 0x02) {
-				sprintf(buffer, "%d", ((reclData->phase_B_state == 1)? true:false));
+			if ((reclData->phases & 0x02) == 0x02)
+			{
+				sprintf(buffer, "%d", ((reclData->phase_B_state == 1) ? true : false));
 				jsonArray.push_back(buffer);
 			}
-			if ((reclData->phases & 0x01) == 0x01) {
-				sprintf(buffer, "%d", ((reclData->phase_C_state == 1)? true:false));
+			if ((reclData->phases & 0x01) == 0x01)
+			{
+				sprintf(buffer, "%d", ((reclData->phase_C_state == 1) ? true : false));
 				jsonArray.push_back(buffer);
 			}
 
@@ -3683,16 +3694,19 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append opening status to array
-			if ((secData->phases & 0x04) == 0x04) {
-				sprintf(buffer, "%d", ((secData->phase_A_state == 1)? true:false));
+			if ((secData->phases & 0x04) == 0x04)
+			{
+				sprintf(buffer, "%d", ((secData->phase_A_state == 1) ? true : false));
 				jsonArray.push_back(buffer);
 			}
-			if ((secData->phases & 0x02) == 0x02) {
-				sprintf(buffer, "%d", ((secData->phase_B_state == 1)? true:false));
+			if ((secData->phases & 0x02) == 0x02)
+			{
+				sprintf(buffer, "%d", ((secData->phase_B_state == 1) ? true : false));
 				jsonArray.push_back(buffer);
 			}
-			if ((secData->phases & 0x01) == 0x01) {
-				sprintf(buffer, "%d", ((secData->phase_C_state == 1)? true:false));
+			if ((secData->phases & 0x01) == 0x01)
+			{
+				sprintf(buffer, "%d", ((secData->phase_C_state == 1) ? true : false));
 				jsonArray.push_back(buffer);
 			}
 
@@ -3739,16 +3753,19 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append opening status to array
-			if ((capData->pt_phase & 0x04) == 0x04) {
-				sprintf(buffer, "%d", ((capData->switchA_state == 1)? true:false));
+			if ((capData->pt_phase & 0x04) == 0x04)
+			{
+				sprintf(buffer, "%d", ((capData->switchA_state == 1) ? true : false));
 				jsonArray.push_back(buffer);
 			}
-			if ((capData->pt_phase & 0x02) == 0x02) {
-				sprintf(buffer, "%d", ((capData->switchB_state == 1)? true:false));
+			if ((capData->pt_phase & 0x02) == 0x02)
+			{
+				sprintf(buffer, "%d", ((capData->switchB_state == 1) ? true : false));
 				jsonArray.push_back(buffer);
 			}
-			if ((capData->pt_phase & 0x01) == 0x01) {
-				sprintf(buffer, "%d", ((capData->switchC_state == 1)? true:false));
+			if ((capData->pt_phase & 0x01) == 0x01)
+			{
+				sprintf(buffer, "%d", ((capData->switchC_state == 1) ? true : false));
 				jsonArray.push_back(buffer);
 			}
 
@@ -3788,13 +3805,16 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append tap positions to array
-			if ((regData->phases & 0x04) == 0x04) {
+			if ((regData->phases & 0x04) == 0x04)
+			{
 				jsonArray.push_back(regData->tap[0]);
 			}
-			if ((regData->phases & 0x02) == 0x02) {
+			if ((regData->phases & 0x02) == 0x02)
+			{
 				jsonArray.push_back(regData->tap[1]);
 			}
-			if ((regData->phases & 0x01) == 0x01) {
+			if ((regData->phases & 0x01) == 0x01)
+			{
 				jsonArray.push_back(regData->tap[2]);
 			}
 
@@ -4052,7 +4072,7 @@ EXPORT int create_jsondump(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 	}
@@ -4077,7 +4097,7 @@ EXPORT int init_jsondump(OBJECT *obj)
 	}
 }
 
-EXPORT TIMESTAMP sync_jsondump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_jsondump_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	try
 	{
@@ -4089,6 +4109,23 @@ EXPORT TIMESTAMP sync_jsondump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(jsondump);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_jsondump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_jsondump_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_jsondump(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_jsondump_impl(obj, t1, pass);
+}
+#endif
 
 EXPORT TIMESTAMP commit_jsondump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {

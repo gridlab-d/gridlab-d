@@ -28,7 +28,7 @@ CLASS *PARENTbaseMVA::pclass = nullptr;
 #endif
 
 /* TODO: remove passes that aren't needed */
-static PASSCONFIG passconfig = PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN;
+static PASSCONFIG passconfig = PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN;
 
 /* TODO: specify which pass the clock advances */
 static PASSCONFIG clockpass = PC_BOTTOMUP;
@@ -36,26 +36,27 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* Class registration is only called once to register the class with the core */
 baseMVA::baseMVA(MODULE *module)
 #ifdef OPTIONAL
-/* TODO: include this if you are deriving this from a superclass */
-: SUPERCLASS(module)
+	/* TODO: include this if you are deriving this from a superclass */
+	: SUPERCLASS(module)
 #endif
 {
 #ifdef OPTIONAL
 	/* TODO: include this if you are deriving this from a superclass */
 	pclass = SUPERCLASS::oclass;
 #endif
-	if (oclass==nullptr)
+	if (oclass == nullptr)
 	{
-		oclass = gl_register_class(module,"baseMVA",sizeof(baseMVA),passconfig);
-		if (oclass==nullptr)
+		oclass = gl_register_class(module, "baseMVA", sizeof(baseMVA), passconfig);
+		if (oclass == nullptr)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
 		if (gl_publish_variable(oclass,
-			/* TODO: add your published properties here */
-			PT_int16, "BASEMVA", PADDR(BASEMVA), PT_DESCRIPTION,"base MVA",  
-			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+								/* TODO: add your published properties here */
+								PT_int16, "BASEMVA", PADDR(BASEMVA), PT_DESCRIPTION, "base MVA",
+								nullptr) < 1)
+			GL_THROW("unable to publish properties in %s", __FILE__);
 		defaults = this;
-		memset(this,0,sizeof(baseMVA));
+		memset(this, 0, sizeof(baseMVA));
 		/* TODO: set the default values of all properties here */
 	}
 }
@@ -63,7 +64,7 @@ baseMVA::baseMVA(MODULE *module)
 /* Object creation is called once for each object that is created by the core */
 int baseMVA::create(void)
 {
-	memcpy(this,defaults,sizeof(baseMVA));
+	memcpy(this, defaults, sizeof(baseMVA));
 	/* TODO: set the context-free initial value of properties, such as random distributions */
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -108,8 +109,8 @@ EXPORT int create_baseMVA(OBJECT **obj)
 	try
 	{
 		*obj = gl_create_object(baseMVA::oclass);
-		if (*obj!=nullptr)
-			return OBJECTDATA(*obj,baseMVA)->create();
+		if (*obj != nullptr)
+			return OBJECTDATA(*obj, baseMVA)->create();
 	}
 	catch (char *msg)
 	{
@@ -122,43 +123,60 @@ EXPORT int init_baseMVA(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=nullptr)
-			return OBJECTDATA(obj,baseMVA)->init(parent);
+		if (obj != nullptr)
+			return OBJECTDATA(obj, baseMVA)->init(parent);
 	}
 	catch (char *msg)
 	{
-		gl_error("init_baseMVA(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		gl_error("init_baseMVA(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
 	}
 	return 0;
 }
 
-EXPORT TIMESTAMP sync_baseMVA(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_baseMVA_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	baseMVA *my = OBJECTDATA(obj,baseMVA);
+	baseMVA *my = OBJECTDATA(obj, baseMVA);
 	try
 	{
-		switch (pass) {
+		switch (pass)
+		{
 		case PC_PRETOPDOWN:
-			t2 = my->presync(obj->clock,t1);
+			t2 = my->presync(obj->clock, t1);
 			break;
 		case PC_BOTTOMUP:
-			t2 = my->sync(obj->clock,t1);
+			t2 = my->sync(obj->clock, t1);
 			break;
 		case PC_POSTTOPDOWN:
-			t2 = my->postsync(obj->clock,t1);
+			t2 = my->postsync(obj->clock, t1);
 			break;
 		default:
 			GL_THROW("invalid pass request (%d)", pass);
 			break;
 		}
-		if (pass==clockpass)
+		if (pass == clockpass)
 			obj->clock = t1;
 		return t2;
 	}
 	catch (char *msg)
 	{
-		gl_error("sync_baseMVA(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		gl_error("sync_baseMVA(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
 	}
 	return TS_INVALID;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_baseMVA(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_baseMVA_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_baseMVA(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	return sync_baseMVA_impl(obj, t1, pass);
+}
+#endif

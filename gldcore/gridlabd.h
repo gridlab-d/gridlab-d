@@ -57,6 +57,9 @@
 #include <shared_mutex>
 #include <string>
 
+#include <stdarg.h>	 // va_list
+#include <exception> // std::exception
+
 /* permanently disable use of CPPUNIT */
 #ifndef _NO_CPPUNIT
 #define _NO_CPPUNIT
@@ -108,6 +111,16 @@
 #endif
 #else
 #define EXPORT CDECL
+#endif
+
+#if defined(_WIN32)
+#define MODULE_API __declspec(dllexport) // always exporting from this module
+#else
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+#define MODULE_API __attribute__((visibility("default")))
+#else
+#define MODULE_API
+#endif
 #endif
 
 #include <cstdarg>
@@ -3352,7 +3365,6 @@ CDECL int dllkill() { return do_kill(NULL); }
 			if (*obj != NULL)                           \
 			{                                           \
 				C *my = object_data<C>(*obj);           \
-				gl_set_parent(*obj, parent);            \
 				return my->create();                    \
 			}                                           \
 			else                                        \
@@ -3391,63 +3403,200 @@ CDECL int dllkill() { return do_kill(NULL); }
 /// Implement class commit export
 #define EXPORT_COMMIT(X) EXPORT_COMMIT_C(X, X)
 
-#define EXPORT_NOTIFY_C(X, C)                                                   \
-	EXPORT int notify_##X(OBJECT *obj, int notice, PROPERTY *prop, char *value) \
-	{ /*C *my = OBJECTDATA(obj,C);*/                                            \
-		C *my = object_data<C>(obj);                                            \
-		try                                                                     \
-		{                                                                       \
-			if (obj != NULL)                                                    \
-			{                                                                   \
-				switch (notice)                                                 \
-				{                                                               \
-				case NM_POSTUPDATE:                                             \
-					return my->postnotify(prop, value);                         \
-				case NM_PREUPDATE:                                              \
-					return my->prenotify(prop, value);                          \
-				default:                                                        \
-					return 0;                                                   \
-				}                                                               \
-			}                                                                   \
-			else                                                                \
-				return 0;                                                       \
-		}                                                                       \
-		T_CATCHALL(X, commit);                                                  \
-		return 1;                                                               \
+// #define EXPORT_NOTIFY_C(X, C)                                                   \
+// 	EXPORT int notify_##X(OBJECT *obj, int notice, PROPERTY *prop, char *value) \
+// 	{ /*C *my = OBJECTDATA(obj,C);*/                                            \
+// 		C *my = object_data<C>(obj);                                            \
+// 		try                                                                     \
+// 		{                                                                       \
+// 			if (obj != NULL)                                                    \
+// 			{                                                                   \
+// 				switch (notice)                                                 \
+// 				{                                                               \
+// 				case NM_POSTUPDATE:                                             \
+// 					return my->postnotify(prop, value);                         \
+// 				case NM_PREUPDATE:                                              \
+// 					return my->prenotify(prop, value);                          \
+// 				default:                                                        \
+// 					return 0;                                                   \
+// 				}                                                               \
+// 			}                                                                   \
+// 			else                                                                \
+// 				return 0;                                                       \
+// 		}                                                                       \
+// 		T_CATCHALL(X, commit);                                                  \
+// 		return 1;                                                               \
+// 	}
+
+#define EXPORT_NOTIFY_C(X, C)                      \
+	EXPORT int64 notify_##X(void *obj, ...)        \
+	{                                              \
+		va_list args;                              \
+		va_start(args, obj);                       \
+		int notice = va_arg(args, int);            \
+		PROPERTY *prop = va_arg(args, PROPERTY *); \
+		char *value = va_arg(args, char *);        \
+		va_end(args);                              \
+		C *my = object_data<C>((OBJECT *)obj);     \
+		if (!my)                                   \
+			return 0;                              \
+		switch (notice)                            \
+		{                                          \
+		case NM_POSTUPDATE:                        \
+			return my->postnotify(prop, value);    \
+		case NM_PREUPDATE:                         \
+			return my->prenotify(prop, value);     \
+		default:                                   \
+			return 0;                              \
+		}                                          \
 	}
-/// Implement class notify export
 #define EXPORT_NOTIFY(X) EXPORT_NOTIFY_C(X, X)
 
-#define EXPORT_SYNC_C(X, C)                                                                                   \
-	EXPORT TIMESTAMP sync_##X(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)                                     \
-	{                                                                                                         \
-		try                                                                                                   \
-		{                                                                                                     \
-			TIMESTAMP t1 = TS_NEVER; /*C *p=OBJECTDATA(obj,C);*/                                              \
-			C *p = object_data<C>(obj);                                                                       \
-			switch (pass)                                                                                     \
-			{                                                                                                 \
-			case PC_PRETOPDOWN:                                                                               \
-				t1 = p->presync(t0);                                                                          \
-				break;                                                                                        \
-			case PC_BOTTOMUP:                                                                                 \
-				t1 = p->sync(t0);                                                                             \
-				break;                                                                                        \
-			case PC_POSTTOPDOWN:                                                                              \
-				t1 = p->postsync(t0);                                                                         \
-				break;                                                                                        \
-			default:                                                                                          \
-				throw "invalid pass request";                                                                 \
-				break;                                                                                        \
-			}                                                                                                 \
-			if ((obj->oclass->passconfig & (PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN) & (~pass)) <= pass) \
-				obj->clock = t0;                                                                              \
-			return t1;                                                                                        \
-		}                                                                                                     \
-		SYNC_CATCHALL(X);                                                                                     \
+// #define EXPORT_SYNC_C(X, C)                                                                                   \
+// 	EXPORT TIMESTAMP sync_##X(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)                                     \
+// 	{                                                                                                         \
+// 		try                                                                                                   \
+// 		{                                                                                                     \
+// 			TIMESTAMP t1 = TS_NEVER; /*C *p=OBJECTDATA(obj,C);*/                                              \
+// 			C *p = object_data<C>(obj);                                                                       \
+// 			switch (pass)                                                                                     \
+// 			{                                                                                                 \
+// 			case PC_PRETOPDOWN:                                                                               \
+// 				t1 = p->presync(t0);                                                                          \
+// 				break;                                                                                        \
+// 			case PC_BOTTOMUP:                                                                                 \
+// 				t1 = p->sync(t0);                                                                             \
+// 				break;                                                                                        \
+// 			case PC_POSTTOPDOWN:                                                                              \
+// 				t1 = p->postsync(t0);                                                                         \
+// 				break;                                                                                        \
+// 			default:                                                                                          \
+// 				throw "invalid pass request";                                                                 \
+// 				break;                                                                                        \
+// 			}                                                                                                 \
+// 			if ((obj->oclass->passconfig & (PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN) & (~pass)) <= pass) \
+// 				obj->clock = t0;                                                                              \
+// 			return t1;                                                                                        \
+// 		}                                                                                                     \
+// 		SYNC_CATCHALL(X);                                                                                     \
+// 	}
+
+#pragma once
+#include <stdarg.h>
+#include <exception>
+
+// Let callers override the sentinel constants, but default sensibly.
+#ifndef SYNC_NEVER_TS
+#define SYNC_NEVER_TS TS_NEVER
+#endif
+
+#ifndef SYNC_INVALID_TS
+#define SYNC_INVALID_TS ((TIMESTAMP) - 1) // matches your ((long long)-1)
+#endif
+
+// ------------------------------
+// Core impl generator (mimics your expansion)
+// ------------------------------
+#define EXPORT_SYNC_IMPL_C(NAME, CLASS)                                                                          \
+	static TIMESTAMP sync_##NAME##_impl(OBJECT *object, TIMESTAMP t0, PASSCONFIG pass)                           \
+	{                                                                                                            \
+		try                                                                                                      \
+		{                                                                                                        \
+			TIMESTAMP t1 = SYNC_NEVER_TS;                                                                        \
+			CLASS *p = object_data<CLASS>(object);                                                               \
+			switch (pass)                                                                                        \
+			{                                                                                                    \
+			case PC_PRETOPDOWN:                                                                                  \
+				t1 = p->presync(t0);                                                                             \
+				break;                                                                                           \
+			case PC_BOTTOMUP:                                                                                    \
+				t1 = p->sync(t0);                                                                                \
+				break;                                                                                           \
+			case PC_POSTTOPDOWN:                                                                                 \
+				t1 = p->postsync(t0);                                                                            \
+				break;                                                                                           \
+			default:                                                                                             \
+				throw "invalid pass request";                                                                    \
+			}                                                                                                    \
+			/* Keep the original clock update expression to match your expansion */                              \
+			if ((object->oclass->passconfig & (PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN) & (~pass)) <= pass) \
+				object->clock = t0;                                                                              \
+			return t1;                                                                                           \
+		}                                                                                                        \
+		catch (char *msg)                                                                                        \
+		{                                                                                                        \
+			(*callback->output_error)("sync_%s(obj=%d;%s): %s",                                                  \
+									  #NAME, object->id, object->name ? object->name : "unnamed", msg);          \
+			return SYNC_INVALID_TS;                                                                              \
+		}                                                                                                        \
+		catch (const char *msg)                                                                                  \
+		{                                                                                                        \
+			(*callback->output_error)("sync_%s(obj=%d;%s): %s",                                                  \
+									  #NAME, object->id, object->name ? object->name : "unnamed", msg);          \
+			return SYNC_INVALID_TS;                                                                              \
+		}                                                                                                        \
+		catch (const std::exception &ex)                                                                         \
+		{                                                                                                        \
+			(*callback->output_error)("sync_%s(obj=%d;%s): unhandled exception - %s",                            \
+									  #NAME, object->id, object->name ? object->name : "unnamed", ex.what());    \
+			return SYNC_INVALID_TS;                                                                              \
+		}                                                                                                        \
 	}
-/// Implement class sync export
-#define EXPORT_SYNC(X) EXPORT_SYNC_C(X, X)
+
+// ------------------------------
+// Exported symbol generator (typed on non-Apple; varargs shim on Apple)
+// ------------------------------
+#ifndef __APPLE__
+
+#define EXPORT_SYNC_C(NAME, CLASS)                                                             \
+	extern "C" MODULE_API TIMESTAMP sync_##NAME(OBJECT *object, TIMESTAMP t0, PASSCONFIG pass) \
+	{                                                                                          \
+		return sync_##NAME##_impl(object, t0, pass);                                           \
+	}
+
+#else // __APPLE__
+
+/* On macOS, variadic arguments undergo default promotions:
+ * - Enums are passed as 'int'. Read PASSCONFIG as 'int' and cast.
+ * - TIMESTAMP is typically a 64-bit integral type; read with that exact type. */
+#define EXPORT_SYNC_C(NAME, CLASS)                                                    \
+	extern "C" MODULE_API TIMESTAMP sync_##NAME(void *obj, ...)                       \
+	{                                                                                 \
+		va_list args;                                                                 \
+		va_start(args, obj);                                                          \
+		TIMESTAMP t0 = va_arg(args, TIMESTAMP);                                       \
+		int pass_i = va_arg(args, int); /* enum promotion */                          \
+		va_end(args);                                                                 \
+                                                                                      \
+		PASSCONFIG pass = static_cast<PASSCONFIG>(pass_i);                            \
+		OBJECT *object = static_cast<OBJECT *>(obj);                                  \
+                                                                                      \
+		if (!callback)                                                                \
+		{                                                                             \
+			gl_error("callback is null in sync_%s", #NAME);                           \
+			return SYNC_INVALID_TS;                                                   \
+		}                                                                             \
+		if (!callback->time.local_datetime)                                           \
+		{                                                                             \
+			gl_error("CRITICAL: local_datetime callback is null in pass %d", pass_i); \
+			return SYNC_INVALID_TS;                                                   \
+		}                                                                             \
+		return sync_##NAME##_impl(object, t0, pass);                                  \
+	}
+
+#endif // __APPLE__
+
+// ------------------------------
+// Convenience wrappers
+// ------------------------------
+
+// Emit BOTH: impl + export with distinct NAME and CLASS
+#define EXPORT_SYNC2(NAME, CLASS)   \
+	EXPORT_SYNC_IMPL_C(NAME, CLASS) \
+	EXPORT_SYNC_C(NAME, CLASS)
+
+// Emit BOTH when CLASS == NAME
+#define EXPORT_SYNC(NAME) EXPORT_SYNC2(NAME, NAME)
 
 #define EXPORT_ISA_C(X, C)                                                                         \
 	EXPORT int isa_##X(OBJECT *obj, char *name)                                                    \

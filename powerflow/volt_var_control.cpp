@@ -118,6 +118,11 @@ int volt_var_control::create(void)
 
 int volt_var_control::init(OBJECT *parent)
 {
+	OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	int retval = powerflow_object::init(parent);
 
 	int index, indexa;
@@ -2803,7 +2808,7 @@ EXPORT int create_volt_var_control(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			volt_var_control *my = object_data<volt_var_control>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -2830,7 +2835,7 @@ EXPORT int init_volt_var_control(OBJECT *obj)
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-EXPORT TIMESTAMP sync_volt_var_control(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_volt_var_control_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try
 	{
@@ -2852,6 +2857,23 @@ EXPORT TIMESTAMP sync_volt_var_control(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pas
 	}
 	SYNC_CATCHALL(volt_var_control);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP int sync_volt_var_control(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	return sync_volt_var_control_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_volt_var_control(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_volt_var_control_impl(obj, t0, pass);
+}
+#endif
 
 EXPORT int isa_volt_var_control(OBJECT *obj, char *classname)
 {

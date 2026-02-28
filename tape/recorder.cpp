@@ -45,7 +45,7 @@ EXPORT int create_recorder(OBJECT **obj, OBJECT *parent)
 	{
 		struct recorder *my = object_data<recorder>(*obj);
 		last_recorder = *obj;
-		gl_set_parent(*obj, parent);
+		// gl_set_parent(*obj, parent);
 		strcpy(my->file, "");
 		strcpy(my->multifile, "");
 		strcpy(my->filetype, "txt");
@@ -740,7 +740,7 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 	return count;
 }
 
-EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_recorder_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP return_value;
 	struct recorder *my = object_data<struct recorder>(obj);
@@ -896,6 +896,23 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 	return sync_recorder_error(&obj, &my, buffer);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	return sync_recorder_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_recorder_impl(obj, t0, pass);
+}
+#endif
 
 TIMESTAMP sync_recorder_error(OBJECT **obj, struct recorder **my, char2048 buffer)
 {

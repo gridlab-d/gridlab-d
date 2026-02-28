@@ -138,7 +138,7 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
     gld_property target_prop(get_parent(), get_target().c_str());
     if (!target_prop.is_valid() || target_prop.get_type() != PT_double)
     {
-        gl_error("Specified target %s for %s is not valid.", get_target(), get_parent()->get_name());
+        gl_error("Specified target %s for %s is not valid.", get_target().c_str(), get_parent()->get_name());
         /*  TROUBLESHOOT
         Check to make sure the target you are specifying is a published variable of type double for the object
         that you are pointing to.  Refer to the documentation of the command flag --modhelp, or
@@ -277,7 +277,7 @@ EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned i
 
             if (x == nullptr)
             {
-                gl_error("Specified target %s for %s is not valid.", da->get_target(), gl_name(obj->parent, buff, 64));
+                gl_error("Specified target %s for %s is not valid.", da->get_target().c_str(), gl_name(obj->parent, buff, 64));
                 /*  TROUBLESHOOT
                 Check to make sure the target you are specifying is a published variable for the object
                 that you are pointing to.  Refer to the documentation of the command flag --modhelp, or

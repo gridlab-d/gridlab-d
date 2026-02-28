@@ -28,7 +28,7 @@ CLASS *PARENTline::pclass = nullptr;
 #endif
 
 /* TODO: remove passes that aren't needed */
-static PASSCONFIG passconfig = PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN;
+static PASSCONFIG passconfig = PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN;
 
 /* TODO: specify which pass the clock advances */
 static PASSCONFIG clockpass = PC_BOTTOMUP;
@@ -36,49 +36,51 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* Class registration is only called once to register the class with the core */
 line::line(MODULE *module)
 #ifdef OPTIONAL
-/* TODO: include this if you are deriving this from a superclass */
-: SUPERCLASS(module)
+	/* TODO: include this if you are deriving this from a superclass */
+	: SUPERCLASS(module)
 #endif
 {
 #ifdef OPTIONAL
 	/* TODO: include this if you are deriving this from a superclass */
-  pclass = SUPERCLASS::oclass;
+	pclass = SUPERCLASS::oclass;
 #endif
-  if (oclass==nullptr)
-    {
-      // pclass = wholesale_object::oclass;
-      oclass = gl_register_class(module,"line",sizeof(line),passconfig);
-      if (oclass==nullptr)
-	GL_THROW("unable to register object class implemented by %s", __FILE__);
-      
-      if (gl_publish_variable(oclass,
-              PT_int16, "F_BUS", PADDR(F_BUS),          // "from" bus number
-              PT_int16, "T_BUS", PADDR(T_BUS),          // "to" bus number
-              PT_double, "BR_R", PADDR(BR_R),           // resistance (p.u.)
-              PT_double, "BR_X", PADDR(BR_X),           // reactance (p.u.)
-              PT_double, "BR_B", PADDR(BR_B),           // total line charging susceptance (p.u.)
-              PT_double, "RATE_A", PADDR(RATE_A),       // MVA rating A (long term rating)
-              PT_double, "RATE_B", PADDR(RATE_B),       // MVA rating B (short term rating)
-              PT_double, "RATE_C", PADDR(RATE_C),       // MVA rating C (emergency rating)
-              PT_double, "TAP", PADDR(TAP),             // transformer off nominal turns ratio
-                                                        // ( taps at "from" bus, impedance at "to"
-                                                        // bus, i.e. if r=x=0, tap = \frac{|V_f|}{|V_t|}
-              PT_double, "SHIFT", PADDR(SHIFT),         // transformer phase shift angle (degrees)
-              PT_int16,	 "BR_STATUS", PADDR(BR_STATUS),   // initial branch status, 1 = in-service,0=out-of-service
-              PT_double, "ANGMIN", PADDR(ANGMIN),       // minimum angle difference, \theta_f - \theta_t (degrees)
-              PT_double, "ANGMAX", PADDR(ANGMAX),       // maximum angle difference, \theta_f - \theta_t (degrees)
-           
-              nullptr)<1 && errno) GL_THROW("unable to publish properties in %s",__FILE__);
-      defaults = this;
-      memset(this,0,sizeof(line));
-      /* TODO: set the default values of all properties here */
-    }
+	if (oclass == nullptr)
+	{
+		// pclass = wholesale_object::oclass;
+		oclass = gl_register_class(module, "line", sizeof(line), passconfig);
+		if (oclass == nullptr)
+			GL_THROW("unable to register object class implemented by %s", __FILE__);
+
+		if (gl_publish_variable(oclass,
+								PT_int16, "F_BUS", PADDR(F_BUS),		 // "from" bus number
+								PT_int16, "T_BUS", PADDR(T_BUS),		 // "to" bus number
+								PT_double, "BR_R", PADDR(BR_R),			 // resistance (p.u.)
+								PT_double, "BR_X", PADDR(BR_X),			 // reactance (p.u.)
+								PT_double, "BR_B", PADDR(BR_B),			 // total line charging susceptance (p.u.)
+								PT_double, "RATE_A", PADDR(RATE_A),		 // MVA rating A (long term rating)
+								PT_double, "RATE_B", PADDR(RATE_B),		 // MVA rating B (short term rating)
+								PT_double, "RATE_C", PADDR(RATE_C),		 // MVA rating C (emergency rating)
+								PT_double, "TAP", PADDR(TAP),			 // transformer off nominal turns ratio
+																		 // ( taps at "from" bus, impedance at "to"
+																		 // bus, i.e. if r=x=0, tap = \frac{|V_f|}{|V_t|}
+								PT_double, "SHIFT", PADDR(SHIFT),		 // transformer phase shift angle (degrees)
+								PT_int16, "BR_STATUS", PADDR(BR_STATUS), // initial branch status, 1 = in-service,0=out-of-service
+								PT_double, "ANGMIN", PADDR(ANGMIN),		 // minimum angle difference, \theta_f - \theta_t (degrees)
+								PT_double, "ANGMAX", PADDR(ANGMAX),		 // maximum angle difference, \theta_f - \theta_t (degrees)
+
+								nullptr) < 1 &&
+			errno)
+			GL_THROW("unable to publish properties in %s", __FILE__);
+		defaults = this;
+		memset(this, 0, sizeof(line));
+		/* TODO: set the default values of all properties here */
+	}
 }
 
 /* Object creation is called once for each object that is created by the core */
 int line::create(void)
 {
-	memcpy(this,defaults,sizeof(line));
+	memcpy(this, defaults, sizeof(line));
 	/* TODO: set the context-free initial value of properties, such as random distributions */
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -123,7 +125,7 @@ EXPORT int create_line(OBJECT **obj)
 	try
 	{
 		*obj = gl_create_object(line::oclass);
-		if (*obj!=nullptr)
+		if (*obj != nullptr)
 			return /*OBJECTDATA(obj,<>)*/ object_data<line>(*obj)->create();
 	}
 	catch (char *msg)
@@ -137,43 +139,61 @@ EXPORT int init_line(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=nullptr)
+		if (obj != nullptr)
 			return /*OBJECTDATA(obj,<>)*/ object_data<line>(obj)->init(parent);
 	}
 	catch (char *msg)
 	{
-		gl_error("init_line(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		gl_error("init_line(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
 	}
 	return 0;
 }
 
-EXPORT TIMESTAMP sync_line(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_line_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
 	line *my = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
 	try
 	{
-		switch (pass) {
+		switch (pass)
+		{
 		case PC_PRETOPDOWN:
-			t2 = my->presync(obj->clock,t1);
+			t2 = my->presync(obj->clock, t1);
 			break;
 		case PC_BOTTOMUP:
-			t2 = my->sync(obj->clock,t1);
+			t2 = my->sync(obj->clock, t1);
 			break;
 		case PC_POSTTOPDOWN:
-			t2 = my->postsync(obj->clock,t1);
+			t2 = my->postsync(obj->clock, t1);
 			break;
 		default:
 			GL_THROW("invalid pass request (%d)", pass);
 			break;
 		}
-		if (pass==clockpass)
+		if (pass == clockpass)
 			obj->clock = t1;
 		return t2;
 	}
 	catch (char *msg)
 	{
-		gl_error("sync_line(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		gl_error("sync_line(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
 	}
 	return TS_INVALID;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_line(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_line_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_line(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_line_impl(obj, t1, pass);
+}
+#endif

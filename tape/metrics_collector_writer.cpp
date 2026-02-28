@@ -55,6 +55,11 @@ int metrics_collector_writer::create()
 
 int metrics_collector_writer::init(OBJECT *parent)
 {
+	OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	OBJECT *obj = object_header(this);
 	FILE *fn = nullptr;
 	int index = 0;
@@ -1893,7 +1898,7 @@ EXPORT int create_metrics_collector_writer(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			metrics_collector_writer *my = object_data<metrics_collector_writer>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			rv = my->create();
 		}
 	}
@@ -1931,7 +1936,7 @@ EXPORT int init_metrics_collector_writer(OBJECT *obj)
 	return rv;
 }
 
-EXPORT TIMESTAMP sync_metrics_collector_writer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_metrics_collector_writer_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	metrics_collector_writer *my = object_data<metrics_collector_writer>(obj);
 	TIMESTAMP rv = 0;
@@ -1963,6 +1968,23 @@ EXPORT TIMESTAMP sync_metrics_collector_writer(OBJECT *obj, TIMESTAMP t0, PASSCO
 	}
 	return rv;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_metrics_collector_writer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	return sync_metrics_collector_writer_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_metrics_collector_writer(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_metrics_collector_writer_impl(obj, t0, pass);
+}
+#endif
 
 EXPORT int commit_metrics_collector_writer(OBJECT *obj)
 {

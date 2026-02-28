@@ -77,15 +77,15 @@
 	t2 = NEVER; % set t2 as appropriate (in seconds)
 	end	@endverbatim
 
-	The \p char implementation is required by GridLAB-D's internal data conversion routines and 
+	The \p char implementation is required by GridLAB-D's internal data conversion routines and
 	must convert the object's data to a character string that can be embedded in GLM and XML files.
 	The implementation must be as follows
 
 	@verbatim
 	function s = char(my)
-	
+
 	s = sprintf('var1="%g kV"; var2="%s";',my.var1,my.var2); % adjust for your variables
-	
+
 	end	@endverbatim
 
 	The \p display implementation is necessary for Matlab's internal data conversion routines and
@@ -96,7 +96,7 @@
 	function display(obj)
 
 	disp(' ');
-	% display your variables in gridlab debugger style 
+	% display your variables in gridlab debugger style
 	disp(['object ' inputname(1), ' {']);
 	disp(['  var1 ' sprintf('%g',obj.var1) ' kV;']);
 	disp(['  var2 "' obj.var2 '";']);
@@ -119,41 +119,41 @@
 #include "engine.h"
 
 // matlab implementation data
-Engine *engine=nullptr;
+Engine *engine = nullptr;
 char output[4096];
 PASSCONFIG passconfig;
-CLASS *oclass=nullptr;
+CLASS *oclass = nullptr;
 mxArray *defaults = nullptr;
 char *matlab_server = ""; // use "standalone" to engage single use servers for each run
 bool debugmode = false;
 
-//#define TOSERIAL(DT) (719529.0+(double)(DT)/(double)TS_SECOND/86400.0)
-//#define FROMSERIAL(DN) ((TIMESTAMP)((DN-719529)*86400*TS_SECOND))
-#define TOSERIAL(DT) ((double)DT/(double)TS_SECOND)
-#define FROMSERIAL(DN) (TIMESTAMP)((double)DN*(double)TS_SECOND)
+// #define TOSERIAL(DT) (719529.0+(double)(DT)/(double)TS_SECOND/86400.0)
+// #define FROMSERIAL(DN) ((TIMESTAMP)((DN-719529)*86400*TS_SECOND))
+#define TOSERIAL(DT) ((double)DT / (double)TS_SECOND)
+#define FROMSERIAL(DN) (TIMESTAMP)((double)DN * (double)TS_SECOND)
 
 void gl_matlab_output(void)
 {
-	if (strncmp(output,"???",3)==0)
-		gl_error("[MATLAB] %s", output+4);
-	else if (output[0]!='\0')
+	if (strncmp(output, "???", 3) == 0)
+		gl_error("[MATLAB] %s", output + 4);
+	else if (output[0] != '\0')
 		gl_debug("[MATLAB] %s", output);
 }
 
 int object_from_string(void *addr, char *value)
 {
-	mxArray **data = (mxArray**)addr;
+	mxArray **data = (mxArray **)addr;
 	return 0;
 }
 int object_to_string(void *addr, char *value, int size)
 {
-	mxArray **my = (mxArray**)addr;
-	if (*my!=nullptr)
+	mxArray **my = (mxArray **)addr;
+	if (*my != nullptr)
 	{
-		engPutVariable(engine,"object",*my);
-		engEvalString(engine,"disp(char(object));");
-		output[strlen(output)-1]='\0'; // trim CR off end
-		return _snprintf(value,size-1,"[[%s]]",output);
+		engPutVariable(engine, "object", *my);
+		engEvalString(engine, "disp(char(object));");
+		output[strlen(output) - 1] = '\0'; // trim CR off end
+		return _snprintf(value, size - 1, "[[%s]]", output);
 	}
 	else
 		return 0;
@@ -161,74 +161,74 @@ int object_to_string(void *addr, char *value, int size)
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
-	if (set_callback(fntable)==nullptr)
+	if (set_callback(fntable) == nullptr)
 	{
 		errno = EINVAL;
 		return nullptr;
 	}
 
 	// open a connection to the Matlab engine
-	int status=0;
+	int status = 0;
 	static char server[1024];
-	if (gl_global_getvar("matlab_server",server,sizeof(server)))
+	if (gl_global_getvar("matlab_server", server, sizeof(server)))
 		matlab_server = server;
-	if (strcmp(matlab_server,"standalone")==0)
-		engine = engOpenSingleUse(nullptr,nullptr,&status);
+	if (strcmp(matlab_server, "standalone") == 0)
+		engine = engOpenSingleUse(nullptr, nullptr, &status);
 	else
 		engine = engOpen(matlab_server);
-	if (engine==nullptr)
+	if (engine == nullptr)
 	{
-		gl_error("unable to start Matlab engine (code %d)",status);
+		gl_error("unable to start Matlab engine (code %d)", status);
 		return nullptr;
 	}
 
 	// prepare session
 	char debug[8];
-	if (gl_global_getvar("debug",debug,sizeof(debug)))
-		debugmode = (atoi(debug)==1);
-	engSetVisible(engine,debugmode?1:0);
-	engEvalString(engine,"clear all;");
+	if (gl_global_getvar("debug", debug, sizeof(debug)))
+		debugmode = (atoi(debug) == 1);
+	engSetVisible(engine, debugmode ? 1 : 0);
+	engEvalString(engine, "clear all;");
 	char env[1024];
-	_snprintf(env,sizeof(env),"NEVER=%g;INVALID=%g;",TOSERIAL(TS_NEVER),TOSERIAL(TS_INVALID));
-	engEvalString(engine,env);
+	_snprintf(env, sizeof(env), "NEVER=%g;INVALID=%g;", TOSERIAL(TS_NEVER), TOSERIAL(TS_INVALID));
+	engEvalString(engine, env);
 
 	// collect output from Matlab
-	engOutputBuffer(engine,output,sizeof(output)); 
+	engOutputBuffer(engine, output, sizeof(output));
 
 	// setup the Matlab module and run the class constructor
-	engEvalString(engine,"global passconfig;");
-	if (engEvalString(engine,argv[0])!=0)
+	engEvalString(engine, "global passconfig;");
+	if (engEvalString(engine, argv[0]) != 0)
 		gl_error("unable to evaluate function '%s' in Matlab", argv[0]);
 	else
 		gl_matlab_output();
 
 	// read the pass configuration
-	mxArray *pcfg= engGetVariable(engine,"passconfig");
+	mxArray *pcfg = engGetVariable(engine, "passconfig");
 	if (pcfg && mxIsChar(pcfg))
 	{
 		char passinfo[1024];
 		KEYWORD keys[] = {
-			{"NOSYNC",PC_NOSYNC,keys+1},
-			{"PRETOPDOWN",PC_PRETOPDOWN,keys+2},
-			{"BOTTOMUP",PC_BOTTOMUP,keys+3},
-			{"POSTTOPDOWN",PC_POSTTOPDOWN,nullptr},
+			{"NOSYNC", PC_NOSYNC, keys + 1},
+			{"PRETOPDOWN", PC_PRETOPDOWN, keys + 2},
+			{"BOTTOMUP", PC_BOTTOMUP, keys + 3},
+			{"POSTTOPDOWN", PC_POSTTOPDOWN, nullptr},
 		};
-		PROPERTY pctype = {0,"passconfig",PT_set,1,PA_PUBLIC,nullptr,&passconfig,nullptr,keys,nullptr};
+		PROPERTY pctype = {0, "passconfig", PT_set, 1, PA_PUBLIC, nullptr, &passconfig, nullptr, keys, nullptr};
 		set passdata;
-		if (mxGetString(pcfg,passinfo,sizeof(passinfo))==0 && callback->convert.string_to_property(&pctype,&passdata,passinfo)>0)
+		if (mxGetString(pcfg, passinfo, sizeof(passinfo)) == 0 && callback->convert.string_to_property(&pctype, &passdata, passinfo) > 0)
 		{
 			passconfig = (PASSCONFIG)passdata;
-			oclass=gl_register_class(module,argv[0],passconfig);
-			if (oclass==nullptr)
-				gl_error("unable to register '%s' as a class",argv[0]);
+			oclass = gl_register_class(module, argv[0], passconfig);
+			if (oclass == nullptr)
+				gl_error("unable to register '%s' as a class", argv[0]);
 
 			DELEGATEDTYPE *pDelegate = new DELEGATEDTYPE;
 			pDelegate->oclass = oclass;
-			strncpy(pDelegate->type,"matlab",sizeof(pDelegate->type));
+			strncpy(pDelegate->type, "matlab", sizeof(pDelegate->type));
 			pDelegate->from_string = object_from_string;
 			pDelegate->to_string = object_to_string;
-			if (gl_publish_variable(oclass,PT_delegated,pDelegate,"data",0,nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
-
+			if (gl_publish_variable(oclass, PT_delegated, pDelegate, "data", 0, nullptr) < 1)
+				GL_THROW("unable to publish properties in %s", __FILE__);
 		}
 		else
 			gl_error("passconfig is invalid (expected set of NOSYNC, PRETOPDOWN, BOTTOMUP, and POSTTOPDOWN)", passinfo);
@@ -237,17 +237,17 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		gl_error("passconfig not specified");
 
 	// read the pass configuration
-	mxArray *ans= engGetVariable(engine,"ans");
+	mxArray *ans = engGetVariable(engine, "ans");
 	if (ans && mxIsStruct(ans))
 	{
 		defaults = mxDuplicateArray(ans);
 
 		// process the answer
 		int nFields = mxGetNumberOfFields(ans), i;
-		for (i=0; i<nFields; i++)
+		for (i = 0; i < nFields; i++)
 		{
-			const char *name = mxGetFieldNameByNumber(ans,i);
-			mxArray *data = mxGetFieldByNumber(ans,0,i);
+			const char *name = mxGetFieldNameByNumber(ans, i);
+			mxArray *data = mxGetFieldByNumber(ans, 0, i);
 			// @todo publish the structure
 		}
 	}
@@ -264,17 +264,17 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	return oclass;
 }
 
-EXPORT int create_matlab(OBJECT **obj, OBJECT *parent) 
+EXPORT int create_matlab(OBJECT **obj, OBJECT *parent)
 {
-	try 
+	try
 	{
-		*obj = gl_create_object(oclass,sizeof(mxArray*));
-		if (*obj!=nullptr)
+		*obj = gl_create_object(oclass, sizeof(mxArray *));
+		if (*obj != nullptr)
 		{
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			char createcall[1024];
 
-			if (engPutVariable(engine,"object",defaults))
+			if (engPutVariable(engine, "object", defaults))
 			{
 				gl_error("matlab::%s_create(...) unable to set defaults for object", oclass->name);
 				throw "create failed";
@@ -282,51 +282,51 @@ EXPORT int create_matlab(OBJECT **obj, OBJECT *parent)
 			if (parent)
 			{
 				// @todo transfer parent data in matlab create call
-				mxArray *pParent = mxCreateStructMatrix(0,0,0,nullptr);
-				engPutVariable(engine,"parent",pParent);
-				sprintf(createcall,"create(object,parent)");
+				mxArray *pParent = mxCreateStructMatrix(0, 0, 0, nullptr);
+				engPutVariable(engine, "parent", pParent);
+				sprintf(createcall, "create(object,parent)");
 			}
 			else
-				sprintf(createcall,"create(object,[])");
-			if (engEvalString(engine,createcall)!=0)
+				sprintf(createcall, "create(object,[])");
+			if (engEvalString(engine, createcall) != 0)
 			{
 				gl_error("matlab::%s_create(...) unable to evaluate '%s' in Matlab", oclass->name, createcall);
 				throw "create failed";
 			}
 			else
 				gl_matlab_output();
-			mxArray *ans= engGetVariable(engine,"ans");
-			mxArray **my = OBJECTDATA(*obj,mxArray*);
-			if (ans && mxIsClass(ans,oclass->name))
-				*my = engGetVariable(engine,"ans");
+			mxArray *ans = engGetVariable(engine, "ans");
+			mxArray **my = OBJECTDATA(*obj, mxArray *);
+			if (ans && mxIsClass(ans, oclass->name))
+				*my = engGetVariable(engine, "ans");
 			else
 			{
 				*my = nullptr;
-				gl_error("matlab::@%s/create(...) failed to return an object of class %s",oclass->name,oclass->name);
+				gl_error("matlab::@%s/create(...) failed to return an object of class %s", oclass->name, oclass->name);
 				throw "create failed";
 			}
 			return 1;
 		}
 		else
 			throw "create failed due to memory allocation failure";
-	} 
-	catch (char *msg) 
+	}
+	catch (char *msg)
 	{
 		gl_error("create_matlab(): %s", msg);
 	}
 	return 0;
 }
 
-EXPORT int init_matlab(OBJECT *obj, OBJECT *parent) 
+EXPORT int init_matlab(OBJECT *obj, OBJECT *parent)
 {
-	try 
+	try
 	{
-		if (obj!=nullptr)
+		if (obj != nullptr)
 		{
 			char initcall[1024];
 			// @todo transfer parent data in matlab init call
-			mxArray **my = OBJECTDATA(obj,mxArray*);
-			if (engPutVariable(engine,"object",*my))
+			mxArray **my = OBJECTDATA(obj, mxArray *);
+			if (engPutVariable(engine, "object", *my))
 			{
 				gl_error("%s_init() unable to send object data", oclass->name);
 				return 0;
@@ -334,61 +334,62 @@ EXPORT int init_matlab(OBJECT *obj, OBJECT *parent)
 			if (parent)
 			{
 				// @todo transfer parent data in matlab init call
-				mxArray *pParent = mxCreateStructMatrix(0,0,0,nullptr);
-				engPutVariable(engine,"parent",pParent);
-				sprintf(initcall,"init(object,parent)",oclass->name);
+				mxArray *pParent = mxCreateStructMatrix(0, 0, 0, nullptr);
+				engPutVariable(engine, "parent", pParent);
+				sprintf(initcall, "init(object,parent)", oclass->name);
 			}
 			else
-				sprintf(initcall,"init(object,[])",oclass->name);
-			if (engEvalString(engine,initcall)!=0)
+				sprintf(initcall, "init(object,[])", oclass->name);
+			if (engEvalString(engine, initcall) != 0)
 				gl_error("unable to evaluate '%s' in Matlab", initcall);
 			else
 				gl_matlab_output();
-			mxArray *ans= engGetVariable(engine,"ans");
-			if (ans && mxIsClass(ans,oclass->name))
+			mxArray *ans = engGetVariable(engine, "ans");
+			if (ans && mxIsClass(ans, oclass->name))
 			{
-				mxArray **my = OBJECTDATA(obj,mxArray*);
-				if (*my!=nullptr)
+				mxArray **my = OBJECTDATA(obj, mxArray *);
+				if (*my != nullptr)
 					mxFree(*my);
 				*my = mxDuplicateArray(ans);
 				return 1;
 			}
 			else
 			{
-				gl_error("matlab::@%s/create(...) failed to return an object of class %s",oclass->name,oclass->name);
+				gl_error("matlab::@%s/create(...) failed to return an object of class %s", oclass->name, oclass->name);
 				throw "create failed";
 			}
 		}
 	}
 	catch (char *msg)
 	{
-		gl_error("init_matlab(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		gl_error("init_matlab(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
 	}
 	return 0;
 }
 
-EXPORT TIMESTAMP sync_matlab(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_matlab_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	CLASSNAME *my = OBJECTDATA(obj,CLASSNAME);
+	CLASSNAME *my = OBJECTDATA(obj, CLASSNAME);
 	try
 	{
 		char synccall[1024];
-		
-		switch (pass) {
+
+		switch (pass)
+		{
 		case PC_PRETOPDOWN:
-			sprintf(synccall,"[ans t2]=presync(object,%g,%g)",TOSERIAL(obj->clock),TOSERIAL(t1));
-			if ((passconfig&(PC_BOTTOMUP|PC_POSTTOPDOWN))==0)
-				obj->clock = t1;		
+			sprintf(synccall, "[ans t2]=presync(object,%g,%g)", TOSERIAL(obj->clock), TOSERIAL(t1));
+			if ((passconfig & (PC_BOTTOMUP | PC_POSTTOPDOWN)) == 0)
+				obj->clock = t1;
 			break;
 		case PC_BOTTOMUP:
-			sprintf(synccall,"[ans t2]=sync(object,%g,%g)",TOSERIAL(obj->clock),TOSERIAL(t1));
-			if ((passconfig&PC_POSTTOPDOWN)==0)
-				obj->clock = t1;		
+			sprintf(synccall, "[ans t2]=sync(object,%g,%g)", TOSERIAL(obj->clock), TOSERIAL(t1));
+			if ((passconfig & PC_POSTTOPDOWN) == 0)
+				obj->clock = t1;
 			break;
 		case PC_POSTTOPDOWN:
-			sprintf(synccall,"[ans t2]=postsync(object,%g,%g)",TOSERIAL(obj->clock),TOSERIAL(t1));
-			obj->clock = t1;		
+			sprintf(synccall, "[ans t2]=postsync(object,%g,%g)", TOSERIAL(obj->clock), TOSERIAL(t1));
+			obj->clock = t1;
 			break;
 		default:
 			throw("invalid pass request");
@@ -396,27 +397,27 @@ EXPORT TIMESTAMP sync_matlab(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		}
 
 		// send object data
-		mxArray **my = OBJECTDATA(obj,mxArray*);
-		if (engPutVariable(engine,"object",*my))
+		mxArray **my = OBJECTDATA(obj, mxArray *);
+		if (engPutVariable(engine, "object", *my))
 		{
 			gl_error("%s unable to send object data", oclass->name);
 			return 0;
 		}
 
 		// perform sync
-		if (engEvalString(engine,synccall)!=0)
+		if (engEvalString(engine, synccall) != 0)
 			gl_error("%s call failed", synccall);
 		else
 			gl_matlab_output();
 
 		// get object data
-		mxArray *ans= engGetVariable(engine,"ans");
-		if (ans && mxIsClass(ans,oclass->name))
+		mxArray *ans = engGetVariable(engine, "ans");
+		if (ans && mxIsClass(ans, oclass->name))
 		{
-			if (mxIsClass(ans,oclass->name))
+			if (mxIsClass(ans, oclass->name))
 			{
-				mxArray **my = OBJECTDATA(obj,mxArray*);
-				if (*my!=nullptr)
+				mxArray **my = OBJECTDATA(obj, mxArray *);
+				if (*my != nullptr)
 					mxFree(*my);
 				*my = mxDuplicateArray(ans);
 			}
@@ -426,30 +427,45 @@ EXPORT TIMESTAMP sync_matlab(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 
 		else
 		{
-			gl_error("matlab::%s: %s failed to return an object of class %s",oclass->name,synccall,oclass->name);
+			gl_error("matlab::%s: %s failed to return an object of class %s", oclass->name, synccall, oclass->name);
 			throw "sync failed";
 		}
 
 		// get t2
-		mxArray *pT2 = engGetVariable(engine,"t2");
+		mxArray *pT2 = engGetVariable(engine, "t2");
 		if (pT2 && mxIsNumeric(pT2))
 		{
 			t2 = FROMSERIAL(mxGetScalar(pT2));
 		}
 		else
 		{
-			gl_error("matlab::@%s/%s failed to return a sync time",oclass->name,synccall);
+			gl_error("matlab::@%s/%s failed to return a sync time", oclass->name, synccall);
 			throw "sync failed";
 		}
 	}
 	catch (char *msg)
 	{
-		gl_error("sync_matlab(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		gl_error("sync_matlab(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
 		return TS_INVALID;
 	}
 	return t2;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_matlab(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_matlab_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_matlab(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	return sync_matlab_impl(obj, t1, pass);
+}
+#endif
 
 CDECL int do_kill()
 {
@@ -457,7 +473,7 @@ CDECL int do_kill()
 	return 0;
 }
 
-EXPORT int check(){
+EXPORT int check()
+{
 	return 0;
 }
-

@@ -1,8 +1,8 @@
-/** 
+/**
  * $Id: sync_ctrl.cpp
  * Implements sychronization control functionality for the sychronization check function.
  * Copyright (C) 2020 Battelle Memorial Institute
-**/
+ **/
 
 #include "sync_ctrl.h"
 
@@ -37,8 +37,8 @@ sync_ctrl::sync_ctrl(MODULE *mod)
         oclass = gl_register_class(mod, "sync_ctrl", sizeof(sync_ctrl), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_AUTOLOCK);
         if (oclass == nullptr)
             GL_THROW("unable to register object class implemented by %s", __FILE__);
-		else
-			oclass->trl = TRL_DEMONSTRATED;
+        else
+            oclass->trl = TRL_DEMONSTRATED;
 
         if (gl_publish_variable(oclass,
                                 //==Flag
@@ -130,7 +130,7 @@ TIMESTAMP sync_ctrl::postsync(TIMESTAMP t0, TIMESTAMP t1)
 // Module-level call
 SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-    if ((sct_armed_flag) && (iteration_count_val == 1)) //Corrector pass
+    if ((sct_armed_flag) && (iteration_count_val == 1)) // Corrector pass
     {
         dm_update_measurements();
         // dm_data_sanity_check();
@@ -144,7 +144,7 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
         {
             if (mode_status == SCT_MODE_ENUM::MODE_A)
             {
-                //In Mode A
+                // In Mode A
                 if (sct_metrics_check_mode_A(dt))
                 {
                     mode_transition(SCT_MODE_ENUM::MODE_B, true);
@@ -153,7 +153,7 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
                 {
                     if (sck_armed_flag)
                     {
-                        set_prop(prop_sck_armed_ptr, false); //disarm sync_check if it is armed
+                        set_prop(prop_sck_armed_ptr, false); // disarm sync_check if it is armed
                     }
 
                     cgu_ctrl((double)dt / (double)DT_SECOND);
@@ -161,7 +161,7 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
             }
             else
             {
-                //In Mode B
+                // In Mode B
                 if (sct_metrics_check_mode_B())
                 {
                     if (~sck_armed_flag)
@@ -337,10 +337,10 @@ void sync_ctrl::reset_timer()
 void sync_ctrl::dm_reset_controllers()
 {
     delete pi_ctrl_cgu_volt_set;
-    pi_ctrl_cgu_volt_set = nullptr; //avoid segamentation fault caused by the double delete in unexpected mode transitions
+    pi_ctrl_cgu_volt_set = nullptr; // avoid segamentation fault caused by the double delete in unexpected mode transitions
 
     delete pi_ctrl_cgu_freq_set;
-    pi_ctrl_cgu_freq_set = nullptr; //avoid segamentation fault caused by the double delete in unexpected mode transitions
+    pi_ctrl_cgu_freq_set = nullptr; // avoid segamentation fault caused by the double delete in unexpected mode transitions
 
     init_controllers();
     init_hidden_prop_controllers(FLAG_VAL); // FLAG_VAL is the flag value that indicates the update of these hidden properties is stopped
@@ -352,7 +352,7 @@ void sync_ctrl::dm_reset_after_disarmed()
     dm_reset_controllers();
 
     init_hidden_prop(FLAG_VAL);
-    mode_status = SCT_MODE_ENUM::MODE_A; //Back to Mode_A as the starting mode
+    mode_status = SCT_MODE_ENUM::MODE_A; // Back to Mode_A as the starting mode
 }
 
 /* parameter/data sanity check */
@@ -370,9 +370,9 @@ void sync_ctrl::dm_data_sanity_check()
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    sck_obj_ptr->name);
         /*  TROUBLESHOOT
-		The sck_metrics_period_sec should be smaller than the pp_t_mon_sec!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
+        The sck_metrics_period_sec should be smaller than the pp_t_mon_sec!
+        If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+        */
     }
 }
 
@@ -381,12 +381,12 @@ void sync_ctrl::dm_data_sanity_check()
 //////////////////////////////////////////////////////////////////////////
 
 /**
-* REQUIRED: allocate and initialize an object.
-*
-* @param obj a pointer to a pointer of the last object in the list
-* @param parent a pointer to the parent of this object
-* @return 1 for a successfully created object, 0 for error
-*/
+ * REQUIRED: allocate and initialize an object.
+ *
+ * @param obj a pointer to a pointer of the last object in the list
+ * @param parent a pointer to the parent of this object
+ * @return 1 for a successfully created object, 0 for error
+ */
 EXPORT int create_sync_ctrl(OBJECT **obj, OBJECT *parent)
 {
     try
@@ -395,24 +395,24 @@ EXPORT int create_sync_ctrl(OBJECT **obj, OBJECT *parent)
         if (*obj != nullptr)
         {
             sync_ctrl *my = object_data<sync_ctrl>(*obj);
-            gl_set_parent(*obj, parent);
+            // gl_set_parent(*obj, parent);
             return my->create();
         }
         else
             return 0;
     }
-    //CREATE_CATCHALL(sync_ctrl);
-    catch (char* msg)
+    // CREATE_CATCHALL(sync_ctrl);
+    catch (char *msg)
     {
         gl_error("create_sync_ctrl: %s", msg);
         return 0;
     }
-    catch (const char* msg)
+    catch (const char *msg)
     {
         gl_error("create_sync_ctrl: %s", msg);
         return 0;
     }
-    catch (const std::exception& ex)
+    catch (const std::exception &ex)
     {
         gl_error("create_sync_ctrl: unhandled exception - %s", ex.what());
         return 0;
@@ -430,14 +430,14 @@ EXPORT int init_sync_ctrl(OBJECT *obj)
 }
 
 /**
-* Sync is called when the clock needs to advance on the bottom-up pass (PC_BOTTOMUP)
-*
-* @param obj the object we are sync'ing
-* @param t0 this objects current timestamp
-* @param pass the current pass for this sync call
-* @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
-*/
-EXPORT TIMESTAMP sync_sync_ctrl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+ * Sync is called when the clock needs to advance on the bottom-up pass (PC_BOTTOMUP)
+ *
+ * @param obj the object we are sync'ing
+ * @param t0 this objects current timestamp
+ * @param pass the current pass for this sync call
+ * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
+ */
+static TIMESTAMP sync_sync_ctrl_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
     sync_ctrl *pObj = /*OBJECTDATA(obj,<>)*/ object_data<sync_ctrl>(obj);
     TIMESTAMP t1 = TS_INVALID;
@@ -465,6 +465,24 @@ EXPORT TIMESTAMP sync_sync_ctrl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
     SYNC_CATCHALL(sync_ctrl);
     return t1;
 }
+
+#ifndef __APPLE__
+EXPORT TIMESTAMP sync_sync_ctrl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_sync_ctrl_impl(obj, t0, pass);
+}
+#else
+// variadic
+extern "C" MODULE_API TIMESTAMP sync_sync_ctrl(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_sync_ctrl_impl(obj, t0, pass);
+}
+#endif
 
 EXPORT int isa_sync_ctrl(OBJECT *obj, char *classname)
 {
@@ -534,16 +552,16 @@ void sync_ctrl::init_vars() // Init local variables with default settings
 template <class T>
 void sync_ctrl::set_prop(gld_property *prop_ptr, T prop_value)
 {
-    
+
     prop_ptr->setp<T>(prop_value, rlock);
 }
 /* Get */
 template <class T>
 void sync_ctrl::get_prop(gld_property *prop_ptr, T prop_value)
 {
-    //gld_wlock *rlock = nullptr;
-    //replace the above with SharedMutexManager
-	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&rlock));
+    // gld_wlock *rlock = nullptr;
+    // replace the above with SharedMutexManager
+    std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&rlock));
     prop_ptr->getp<T>(prop_value, rlock);
 }
 
@@ -622,9 +640,9 @@ gld_property *sync_ctrl::get_prop_ptr(T *obj_ptr, const char *prop_name_char_ptr
         GL_THROW("%s:%d %s failed to map the property: '%s'",
                  STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"), prop_name_char_ptr);
         /*  TROUBLESHOOT
-		While attempting to map the property named via variable 'prop_name_char_ptr', an error occurred. Please try again.
-		If the error persists, please submit your GLM and a bug report to the ticketing system.
-		*/
+        While attempting to map the property named via variable 'prop_name_char_ptr', an error occurred. Please try again.
+        If the error persists, please submit your GLM and a bug report to the ticketing system.
+        */
     }
 
     return temp_prop_ptr;
@@ -634,7 +652,7 @@ gld_property *sync_ctrl::get_prop_ptr(T *obj_ptr, const char *prop_name_char_ptr
 void sync_ctrl::init_pub_prop() // Init published properties with default settings
 {
     //==Flag
-    sct_armed_flag = false; //Start as disabled
+    sct_armed_flag = false; // Start as disabled
 
     //==Object
     sck_obj_ptr = nullptr;
@@ -700,19 +718,19 @@ void sync_ctrl::init_data_sanity_check()
                  STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                  STR(sck_obj_ptr));
         /*  TROUBLESHOOT
-		The sck_obj_ptr property is not specified! Please try again.
-		If the error persists, please submit your GLM and a bug report to the ticketing system.
-		*/
+        The sck_obj_ptr property is not specified! Please try again.
+        If the error persists, please submit your GLM and a bug report to the ticketing system.
+        */
     }
-    else if (!gl_object_isa(sck_obj_ptr, "sync_check", "powerflow")) //Check if the sck_obj_ptr is pointing to a sync_check object
+    else if (!gl_object_isa(sck_obj_ptr, "sync_check", "powerflow")) // Check if the sck_obj_ptr is pointing to a sync_check object
     {
         GL_THROW("%s:%d %s the %s property must be set as the name of a sync_check object!",
                  STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                  STR(sck_obj_ptr));
         /*  TROUBLESHOOT
-		The sck_obj_ptr property must be set as the name of a sync_check object. Please try again.
-		If the error persists, please submit your GLM and a bug report to the ticketing system.
-		*/
+        The sck_obj_ptr property must be set as the name of a sync_check object. Please try again.
+        If the error persists, please submit your GLM and a bug report to the ticketing system.
+        */
     }
 
     //--controlled generation unit
@@ -722,21 +740,21 @@ void sync_ctrl::init_data_sanity_check()
                  STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                  STR(cgu_obj_ptr));
         /*  TROUBLESHOOT
-		The cgu_obj_ptr property is not specified! Please try again.
-		If the error persists, please submit your GLM and a bug report to the ticketing system.
-		*/
+        The cgu_obj_ptr property is not specified! Please try again.
+        If the error persists, please submit your GLM and a bug report to the ticketing system.
+        */
     }
     // @NOTE: the gl_object_isa is implemented in an "interesting" way that leads the isa() to return int (implicit bool to int conversion) instead of bool
     else if (!gl_object_isa(cgu_obj_ptr, "inverter_dyn", "generators") &&
-             (!gl_object_isa(cgu_obj_ptr, "diesel_dg", "generators"))) //Check if the sck_obj_ptr is pointing to a sync_check object
+             (!gl_object_isa(cgu_obj_ptr, "diesel_dg", "generators"))) // Check if the sck_obj_ptr is pointing to a sync_check object
     {
         GL_THROW("%s:%d %s the %s property must be set as the name of a DG or Inverter object!",
                  STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                  STR(cgu_obj_ptr));
         /*  TROUBLESHOOT
-		The cgu_obj_ptr property must be set as the name of a DG or Inverter object. Please try again.
-		If the error persists, please submit your GLM and a bug report to the ticketing system.
-		*/
+        The cgu_obj_ptr property must be set as the name of a DG or Inverter object. Please try again.
+        If the error persists, please submit your GLM and a bug report to the ticketing system.
+        */
     }
 
     //==Tolerance
@@ -758,15 +776,15 @@ void sync_ctrl::init_data_sanity_check()
     /* Voltage magnitude tolerance */
     if (sct_volt_mag_tol_pu <= 0)
     {
-        sct_volt_mag_tol_pu = 1e-2; //Default it to 0.01 pu
+        sct_volt_mag_tol_pu = 1e-2; // Default it to 0.01 pu
 
         gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [pu].",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    STR(sct_volt_mag_tol_pu), sct_volt_mag_tol_pu);
         /*  TROUBLESHOOT
-		The sct_volt_mag_tol_pu was not set as a positive value!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
+        The sct_volt_mag_tol_pu was not set as a positive value!
+        If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+        */
     }
 
     //==Time
@@ -778,9 +796,9 @@ void sync_ctrl::init_data_sanity_check()
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    STR(pp_t_ctrl_sec), pp_t_ctrl_sec);
         /*  TROUBLESHOOT
-		The pp_t_ctrl_sec was not set as a positive value!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
+        The pp_t_ctrl_sec was not set as a positive value!
+        If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+        */
     }
 
     if (pp_t_mon_sec <= 0)
@@ -791,9 +809,9 @@ void sync_ctrl::init_data_sanity_check()
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    STR(pp_t_mon_sec), pp_t_mon_sec);
         /*  TROUBLESHOOT
-		The pp_t_mon_sec was not set as a positive value!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
+        The pp_t_mon_sec was not set as a positive value!
+        If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+        */
     }
 
     //==Controller
@@ -819,9 +837,9 @@ void sync_ctrl::init_deltamode_check()
                        obj->oclass->name, obj->id, (obj->name ? obj->name : "Unnamed"),
                        obj->oclass->name, obj->oclass->module->name);
             /*  TROUBLESHOOT
-			Deltamode is enabled for this 'sync_ctrl' object, but not the 'generators' module!
-			If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-			*/
+            Deltamode is enabled for this 'sync_ctrl' object, but not the 'generators' module!
+            If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+            */
         }
         else
         {
@@ -829,17 +847,17 @@ void sync_ctrl::init_deltamode_check()
                        obj->oclass->name, obj->id, (obj->name ? obj->name : "Unnamed"),
                        obj->oclass->module->name, obj->oclass->name);
             /*  TROUBLESHOOT
-			Deltamode is enabled for the 'generators' module, but not this 'sync_ctrl' object!
-			If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-			*/
+            Deltamode is enabled for the 'generators' module, but not this 'sync_ctrl' object!
+            If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+            */
         }
     }
     else if (deltamode_inclusive) // Both the 'generators' module and 'sync_ctrl' object are enabled for the deltamode
     {
-        //Add us to the list
-        fxn_return_status = add_gen_delta_obj(obj,false);
+        // Add us to the list
+        fxn_return_status = add_gen_delta_obj(obj, false);
 
-        //Check it
+        // Check it
         if (fxn_return_status == FAILED)
         {
             GL_THROW("sync_ctrl:%s - failed to add object to generator deltamode object list", obj->name ? obj->name : "unnamed");
@@ -872,7 +890,7 @@ void sync_ctrl::init_sensors()
     prop_sck_armed_ptr = get_prop_ptr(sck_obj_ptr, "armed",
                                       &gld_property::is_valid,
                                       &gld_property::is_bool);
-    sck_armed_flag = get_prop_value<bool>(prop_sck_armed_ptr, &gld_property::get_bool, false); //i.e., get_prop(prop_sck_armed_ptr, sck_armed_flag);
+    sck_armed_flag = get_prop_value<bool>(prop_sck_armed_ptr, &gld_property::get_bool, false); // i.e., get_prop(prop_sck_armed_ptr, sck_armed_flag);
 
     prop_sck_freq_diff_hz_ptr = get_prop_ptr(sck_obj_ptr, "freq_diff_noabs_hz",
                                              &gld_property::is_valid,
@@ -901,7 +919,7 @@ void sync_ctrl::init_sensors()
                                                        &gld_property::is_enumeration);
     cgu_P_f_droop_setting_mode = static_cast<PF_DROOP_MODE>(
         get_prop_value<enumeration>(prop_cgu_P_f_droop_setting_mode_ptr,
-                                        &gld_property::get_enumeration, false));
+                                    &gld_property::get_enumeration, false));
 
     //--DG or INV
     if (gl_object_isa(cgu_obj_ptr, "inverter_dyn", "generators"))

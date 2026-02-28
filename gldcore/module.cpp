@@ -2252,8 +2252,12 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 	if (global_threadcount == 1)
 	{
 		policy.affinity_tag = cpu;
-		if (thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY, reinterpret_cast<thread_policy_t>(&policy), THREAD_AFFINITY_POLICY_COUNT) != KERN_SUCCESS)
-			output_warning("unable to set thread policy: %s", strerror(errno));
+		// if (thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY, reinterpret_cast<thread_policy_t>(&policy), THREAD_AFFINITY_POLICY_COUNT) != KERN_SUCCESS)
+		// 	output_warning("unable to set thread policy: %s", strerror(errno));
+
+		kern_return_t ret = thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY, reinterpret_cast<thread_policy_t>(&policy), THREAD_AFFINITY_POLICY_COUNT);
+		if (ret != KERN_SUCCESS && ret != KERN_INVALID_ARGUMENT && ret != KERN_FAILURE && ret != KERN_NOT_SUPPORTED)
+			output_warning("unable to set thread policy: %s (kern_return_t=%d)", strerror(errno), ret);
 	}
 #elif defined DYN_PROC_AFFINITY
 	if (sched_setaffinity(pid, CPU_ALLOC_SIZE(n_procs), cpuset))

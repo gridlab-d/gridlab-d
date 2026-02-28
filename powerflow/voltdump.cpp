@@ -252,7 +252,7 @@ EXPORT int create_voltdump(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			voltdump *my = object_data<voltdump>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -271,7 +271,7 @@ EXPORT int init_voltdump(OBJECT *obj)
 	INIT_CATCHALL(voltdump);
 }
 
-EXPORT TIMESTAMP sync_voltdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_voltdump_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	try
 	{
@@ -283,6 +283,23 @@ EXPORT TIMESTAMP sync_voltdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(voltdump);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_voltdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_voltdump_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_voltdump(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_voltdump_impl(obj, t1, pass);
+}
+#endif
 
 EXPORT TIMESTAMP commit_voltdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {

@@ -60,6 +60,8 @@ complex_assert::complex_assert(MODULE *module)
             throw msg;
         }
 
+        oclass->notify = notify_complex_assert;
+
         // status = ASSERT_TRUE;
         // within = 0.0;
         // value = 0.0;
@@ -90,6 +92,12 @@ int complex_assert::create(void)
 
 int complex_assert::init(OBJECT *parent)
 {
+    OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+    parent = obj->parent;
+#endif
+
     if (within <= 0.0)
     {
         throw "A non-positive value has been specified for within.";
@@ -263,8 +271,20 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
     }
 }
 
+int complex_assert::prenotify(PROPERTY *prop, char *value)
+{
+
+    // printf("prenotify called for %s\n", prop ? prop->name : "(null)");
+
+    // Only block or handle specific properties if needed
+    // Otherwise, always return 1 (success)
+    return 1;
+}
+
 int complex_assert::postnotify(PROPERTY *prop, char *value)
 {
+    if (!prop || !prop->name)
+        return 1; // don't fail on nulls
     if (once == ONCE_DONE && strcmp(prop->name, "value") == 0)
     {
         once = ONCE_TRUE;

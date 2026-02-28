@@ -3,7 +3,7 @@
 	@file regulator.cpp
 	@addtogroup regulator Voltage regulator
 	@ingroup network
-	
+
  @{
  **/
 
@@ -14,59 +14,57 @@
 
 #include "network.h"
 
-
-
 //////////////////////////////////////////////////////////////////////////
 // regulator CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* regulator::oclass = nullptr;
-CLASS* regulator::pclass = nullptr;
+CLASS *regulator::oclass = nullptr;
+CLASS *regulator::pclass = nullptr;
 regulator *regulator::defaults = nullptr;
 CLASS *regulator_class = (nullptr);
 
 regulator::regulator(MODULE *mod) : link(mod)
 {
 	// first time init
-	if (oclass==nullptr)
+	if (oclass == nullptr)
 	{
 		// register the class definition
-		regulator_class = oclass = gl_register_class(mod,"regulator",sizeof(regulator),PC_BOTTOMUP);
-		if (oclass==nullptr)
+		regulator_class = oclass = gl_register_class(mod, "regulator", sizeof(regulator), PC_BOTTOMUP);
+		if (oclass == nullptr)
 			throw "unable to register class regulator";
 		else
 			oclass->trl = TRL_CONCEPT;
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
-			PT_enumeration,"Type",PADDR(Type),
-				PT_KEYWORD,"RT_LTC",RT_LTC,
-				PT_KEYWORD,"RT_VR",RT_VR,
-			PT_double, "Vmax", PADDR(Vmax),
-			PT_double, "Vmin", PADDR(Vmin),
-			PT_double, "Vstep", PADDR(Vstep),
-			PT_object, "CTlink", PADDR(CTlink),
-			PT_object, "PTbus", PADDR(PTbus),
-			PT_double, "TimeDelay", PADDR(TimeDelay),
-			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+								PT_enumeration, "Type", PADDR(Type),
+								PT_KEYWORD, "RT_LTC", RT_LTC,
+								PT_KEYWORD, "RT_VR", RT_VR,
+								PT_double, "Vmax", PADDR(Vmax),
+								PT_double, "Vmin", PADDR(Vmin),
+								PT_double, "Vstep", PADDR(Vstep),
+								PT_object, "CTlink", PADDR(CTlink),
+								PT_object, "PTbus", PADDR(PTbus),
+								PT_double, "TimeDelay", PADDR(TimeDelay),
+								nullptr) < 1)
+			GL_THROW("unable to publish properties in %s", __FILE__);
 
 		// setup the default values
 		defaults = this;
 	}
-
 }
 
-int regulator::create() 
+int regulator::create()
 {
 	int result = link::create();
-	memcpy(this,defaults,sizeof(*this));
+	memcpy(this, defaults, sizeof(*this));
 	return result;
 }
 
-TIMESTAMP regulator::sync(TIMESTAMP t0) 
+TIMESTAMP regulator::sync(TIMESTAMP t0)
 {
-	node *f = OBJECTDATA(from,node);
-	node *t = OBJECTDATA(to,node);
-	if (f==nullptr || t==nullptr)
+	node *f = OBJECTDATA(from, node);
+	node *t = OBJECTDATA(to, node);
+	if (f == nullptr || t == nullptr)
 		return TS_NEVER;
 	// TODO: update regulator state
 	return link::sync(t0);
@@ -78,10 +76,10 @@ TIMESTAMP regulator::sync(TIMESTAMP t0)
 EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(regulator_class);
-	if (*obj!=nullptr)
+	if (*obj != nullptr)
 	{
-		regulator *my = OBJECTDATA(*obj,regulator);
-		gl_set_parent(*obj,parent);
+		regulator *my = OBJECTDATA(*obj, regulator);
+		// gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
 	}
@@ -90,10 +88,9 @@ EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)
 
 EXPORT TIMESTAMP sync_regulator(OBJECT *obj, TIMESTAMP t0)
 {
-	TIMESTAMP t1 = OBJECTDATA(obj,regulator)->sync(t0);
+	TIMESTAMP t1 = OBJECTDATA(obj, regulator)->sync(t0);
 	obj->clock = t0;
 	return t1;
 }
-
 
 /**@}*/

@@ -90,6 +90,11 @@ int metrics::create(void)
 /* Object initialization is called once after all object have been created */
 int metrics::init(OBJECT *parent)
 {
+	OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	OBJECT *hdr = object_header(this);
 	int index, indexa, indexb, returnval;
 	char work_metrics[1025];
@@ -1097,7 +1102,7 @@ EXPORT int create_metrics(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			metrics *my = object_data<metrics>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -1118,7 +1123,7 @@ EXPORT int init_metrics(OBJECT *obj, OBJECT *parent)
 	INIT_CATCHALL(metrics);
 }
 
-EXPORT TIMESTAMP sync_metrics(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_metrics_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
 	metrics *my = object_data<metrics>(obj);
@@ -1141,3 +1146,23 @@ EXPORT TIMESTAMP sync_metrics(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(metrics);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_metrics(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_metrics_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_metrics(OBJECT *obj, ...)
+{
+	va_list args;
+	TIMESTAMP t1;
+	PASSCONFIG pass;
+
+	va_start(args, obj);
+	t1 = va_arg(args, TIMESTAMP);
+	pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_metrics_impl(obj, t1, pass);
+}
+#endif

@@ -62,11 +62,17 @@ extern CLASS *collector_class;
 extern "C"
 {
 	int create_player(OBJECT **obj, OBJECT *parent);
-	TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
 	int create_recorder(OBJECT **obj, OBJECT *parent);
 	int init_recorder(OBJECT *obj);
-	TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
+extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
+#else
+extern "C" MODULE_API TIMESTAMP sync_player(OBJECT *obj, ...);
+extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, ...);
+#endif
 
 /* delta mode control */
 TIMESTAMP delta_mode_needed = TS_NEVER; /* the time at which delta mode needs to start */

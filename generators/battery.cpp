@@ -221,6 +221,11 @@ int battery::create(void)
 int battery::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	gld_property *temp_property_pointer;
 	double temp_value_SocReserve;
 	enumeration temp_value_control_mode;
@@ -2556,7 +2561,7 @@ EXPORT int create_battery(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			battery *my = /*OBJECTDATA(*obj, battery)*/ object_data<battery>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -2577,7 +2582,7 @@ EXPORT int init_battery(OBJECT *obj, OBJECT *parent)
 	INIT_CATCHALL(battery);
 }
 
-EXPORT TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_battery_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
 	battery *my = /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj);
@@ -2604,6 +2609,23 @@ EXPORT TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	SYNC_CATCHALL(battery);
 	return t2;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return sync_battery_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_battery(OBJECT *object, ...)
+{
+	va_list args;
+	va_start(args, object);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_battery_impl(object, t1, pass);
+}
+#endif
 
 EXPORT STATUS preupdate_battery(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)
 {
