@@ -1,36 +1,26 @@
 cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
-if(WIN32)
-    add_compile_options(
-        $<$<CONFIG:Debug>:/MDd>
-        $<$<CONFIG:Release>:/MD>
-    )
+
+if(MSVC)
+  # Let targets select the MSVC runtime via property (CMP0091 must be NEW)
+  cmake_policy(SET CMP0091 NEW)
+  # Default: dynamic runtime (/MD for Release, /MDd for Debug)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+  # If you prefer static runtime, uncomment the next line:
+  # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
 
+if(WIN32)
+    # Avoid legacy includes and macro collisions from Windows headers
+    add_compile_definitions(WIN32_LEAN_AND_MEAN NOMINMAX)
+endif()
 
 set(CMAKE_CXX_STANDARD 23) # Or 14, 11 if 17 is not supported
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_definitions(EIGEN_HAS_STD_RESULT_OF=0)
-
-# if(MSVC)
-#     # MSVC compiler (cl.exe)
-#     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=address /Zi /Od")
-#     set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO /fsanitize=address")
-# elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-#     # Clang on Windows or Linux
-#     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=address -fno-omit-frame-pointer")
-#     set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
-#     set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address")
-# elseif(UNIX)
-#     # GCC or Clang on Linux
-#     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=address -fno-omit-frame-pointer")
-#     set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
-#     set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -fsanitize=address")
-# endif()
-
 
 # Include FetchContent module
 include(FetchContent)
@@ -184,14 +174,14 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
      set(DL_NAME dl)
      set(DL_LIB dl)
 
-     set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
-
-
+   
+    # Winsock 2: only Ws2_32.lib is needed.
     if(WIN32)
-        set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME})
+      set(OS_SPECIFIC_LIBRARIES ws2_32 ${DL_NAME})
     else()
-        set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
+      set(OS_SPECIFIC_LIBRARIES ws2_32 ${DL_NAME} m)
     endif()
+
 
     set(FOUND_WINDOWS yes CACHE INTERNAL "Tell script generator we're Windows")
 
@@ -206,8 +196,10 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     endif()
 
 elseif (APPLE)
-    set(`zk ${CMAKE_DL_LIBS})
     set(FOUND_MACOS yes CACHE INTERNAL "Tell script generator we're MacOS")
+    # macOS: use the platform dl libs provided by CMake
+    set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
+
 else ()
     set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
 endif ()
@@ -434,6 +426,12 @@ if(MSVC)
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
     )
 endif()
+
+
+if (WIN32)
+  target_link_libraries(gridlabd PRIVATE Ws2_32)
+endif()
+
 
 # Link Curses only on Unix/Linux platforms
 if(UNIX AND CURSES_FOUND)

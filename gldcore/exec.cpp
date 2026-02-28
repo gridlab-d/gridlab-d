@@ -106,9 +106,25 @@ update time and those that are immediately related to it need be updated.  This
 #include <vector>
 
 #ifdef _WIN32
-#include <direct.h>
-#include <winbase.h>
+// Reduce header bloat and avoid legacy winsock.h from windows.h
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+// Prevent <windows.h> from defining min/max macros that break std::min/max
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+// Winsock2 must precede windows.h
 #include <winsock2.h>
+#include <ws2tcpip.h> // if you use modern TCP/IP helpers
+
+// Umbrella Windows header — brings in windef.h, winnt.h, etc.
+#include <windows.h>
+
+// CRT utils on Windows
+#include <direct.h>
 #else
 #include <algorithm>
 #include <arpa/inet.h>
