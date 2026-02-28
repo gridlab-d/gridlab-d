@@ -2427,7 +2427,7 @@ static TIMESTAMP sync_fault_check_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pas
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_fault_check_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+extern "C" MODULE_API TIMESTAMP sync_fault_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	return sync_fault_check_impl(obj, t0, pass);
 }
