@@ -11,6 +11,11 @@ autotestFiles = []
 gldBinary = None
 
 
+def _run_one(args):
+    """Unpack a (autotestFile, binFile) tuple and run the test."""
+    return runAutotest(*args)
+
+
 def getGLDBinary():
     """
     Check developement environment for the gridlabd binary file.
@@ -178,7 +183,18 @@ def main(module: str, runOptionalTests: bool, threads: int):
         results = []
         startTime = time.perf_counter_ns()
         with multiprocessing.Pool(procs) as p:
-            results = p.starmap(runAutotest, autotestFiles)
+            # results = p.starmap(runAutotest, autotestFiles)
+            done = 0
+            total = len(autotestFiles)
+            for rv in p.imap_unordered(_run_one, autotestFiles):  # <-- no lambda here
+                results.append(rv)
+                done += 1
+                # Emit progress every few completions (and at the end)
+                if done % 5 == 0 or done == total:
+                    print(
+                        f"[progress] {done}/{total} autotests completed...", flush=True
+                    )
+
         endTime = time.perf_counter_ns()
         testPerformance = math.ceil((endTime - startTime) / 1.0e9)
         rv = processResults(results, resultsFile, testPerformance)
