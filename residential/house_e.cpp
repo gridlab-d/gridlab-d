@@ -205,17 +205,17 @@ Sets default randomized values for published variables.
 house_e::house_e(MODULE *mod) : residential_enduse(mod)
 {
 	// first time init
-	if (oclass == nullptr)
+	if (house_e::oclass == nullptr)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod, "house", sizeof(house_e), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_AUTOLOCK);
-		if (oclass == nullptr)
+		house_e::oclass = gl_register_class(mod, "house", sizeof(house_e), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_AUTOLOCK);
+		if (house_e::oclass == nullptr)
 			throw "unable to register class house";
 		else
-			oclass->trl = TRL_PROVEN;
+			house_e::oclass->trl = TRL_PROVEN;
 
 		// publish the class properties
-		if (gl_publish_variable(oclass,
+		if (gl_publish_variable(house_e::oclass,
 								PT_INHERIT, "residential_enduse",
 								PT_object, "weather", PADDR(weather), PT_DESCRIPTION, "reference to the climate object",
 								PT_double, "floor_area[sf]", PADDR(floor_area), PT_DESCRIPTION, "home conditioned floor area",
@@ -461,6 +461,13 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 								PT_complex, "hvac_power[kVA]", PADDR(hvac_power), PT_DESCRIPTION, "describes hvac load complex power consumption",
 								PT_double, "total_load[kVA]", PADDR(total_load),
 								PT_enduse, "panel", PADDR(total), PT_DESCRIPTION, "total panel enduse load",
+
+								PT_complex, "energy", PADDR(total.energy), PT_UNITS, "kVAh",
+								PT_DESCRIPTION, "Cumulative complex panel energy (kWh + j kVArh)",
+
+								PT_complex, "power", PADDR(total.total), PT_UNITS, "kVA",
+								PT_DESCRIPTION, "Aggregate complex panel power",
+
 								PT_double, "design_internal_gain_density[W/sf]", PADDR(design_internal_gain_density), PT_DESCRIPTION, "average density of heat generating devices in the house",
 								PT_bool, "compressor_on", PADDR(compressor_on),
 								PT_int64, "compressor_count", PADDR(compressor_count),
@@ -557,9 +564,9 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 					 PT_DESCRIPTION, "the outdoor air temperature below which AUX heating is used",
 					 nullptr);
 
-	if (gl_publish_function(oclass, "interupdate_res_object", (FUNCTIONADDR)interupdate_house_e) == nullptr)
+	if (gl_publish_function(house_e::oclass, "interupdate_res_object", (FUNCTIONADDR)interupdate_house_e) == nullptr)
 		GL_THROW("Unable to publish house_e deltamode function");
-	if (gl_publish_function(oclass, "postupdate_res_object", (FUNCTIONADDR)postupdate_house_e) == nullptr)
+	if (gl_publish_function(house_e::oclass, "postupdate_res_object", (FUNCTIONADDR)postupdate_house_e) == nullptr)
 		GL_THROW("Unable to publish house_e deltamode function");
 }
 

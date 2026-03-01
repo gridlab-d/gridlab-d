@@ -27,13 +27,35 @@
 #include "file.h"
 #include "odbc.h"
 
-#if defined(_WIN32) || defined(_MSC_VER)
-// Windows already has strtok_s
-// Nothing to do as strtok_s is already defined in string.h
+#include <string.h>
+#include <ctype.h>
+
+// Platform mapping for secure tokenization
+#if defined(_WIN32) && defined(_MSC_VER)
+// MSVC/Windows: use strtok_s provided by the CRT
 #else
-// For Linux/POSIX systems, define strtok_s to use strtok_r
-#define strtok_s(str, delimiters, context) strtok_r(str, delimiters, context)
+// POSIX: map strtok_s to strtok_r
+#define strtok_s(str, delimiters, context) strtok_r((str), (delimiters), (context))
 #endif
+
+static inline char *gld_next_token(char *str, const char *delims, char **ctx)
+{
+	char *tok = strtok_s(str, delims, ctx);
+	if (!tok)
+		return nullptr;
+
+	// left trim
+	while (*tok && isspace((unsigned char)*tok))
+		++tok;
+
+	// right trim
+	char *end = tok + strlen(tok) - 1;
+	while (end >= tok && isspace((unsigned char)*end))
+	{
+		*end-- = '\0';
+	}
+	return tok;
+}
 
 CLASS *recorder_class = nullptr;
 static OBJECT *last_recorder = nullptr;
@@ -45,7 +67,7 @@ EXPORT int create_recorder(OBJECT **obj, OBJECT *parent)
 	{
 		struct recorder *my = object_data<recorder>(*obj);
 		last_recorder = *obj;
-		// gl_set_parent(*obj, parent);
+		gl_set_parent(*obj, parent);
 		strcpy(my->file, "");
 		strcpy(my->multifile, "");
 		strcpy(my->filetype, "txt");
@@ -350,14 +372,24 @@ static int recorder_open(OBJECT *obj)
 			strcpy(my->out_property, my->property);
 			break;
 		case HU_ALL:
+		{
 			strcpy(unit_buffer, my->property);
-			for (token = strtok(unit_buffer, ","); token != nullptr; token = strtok(nullptr, ","))
+
+			char *ctx = nullptr;
+
+			// for (token = strtok(unit_buffer, ",\r\n"); token != nullptr; token = strtok(nullptr, ",\r\n"))
+
+			for (token = gld_next_token(unit_buffer, ",\r\n", &ctx);
+				 token != nullptr;
+				 token = gld_next_token(nullptr, ",\r\n", &ctx))
+
 			{
 				unit = 0;
 				prop = 0;
 				unitstr[0] = 0;
 				propstr[0] = 0;
-				if (2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n0]", propstr, unitstr))
+				// if (2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n0]", propstr, unitstr))
+				if (2 == sscanf(token, "%[A-Za-z0-9_.]%*1[[]%[^]]]", propstr, unitstr))
 				{
 					unit = gl_find_unit(unitstr);
 					if (unit == 0)
@@ -385,9 +417,17 @@ static int recorder_open(OBJECT *obj)
 				first = 0;
 			}
 			break;
+		}
 		case HU_NONE:
+		{
 			strcpy(unit_buffer, my->property);
-			for (token = strtok(unit_buffer, ","); token != nullptr; token = strtok(nullptr, ","))
+			// for (token = strtok(unit_buffer, ","); token != nullptr; token = strtok(nullptr, ","))
+			char *ctx = nullptr;
+
+			for (token = gld_next_token(unit_buffer, ",\r\n", &ctx);
+				 token != nullptr;
+				 token = gld_next_token(nullptr, ",\r\n", &ctx))
+
 			{
 				if (2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n0]", propstr, unitstr))
 				{
@@ -399,6 +439,7 @@ static int recorder_open(OBJECT *obj)
 				first = 0;
 			}
 			break;
+		}
 		default:
 			// error
 			break;
@@ -527,8 +568,11 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 
 			// NOTE: this is not thread safe!
 			// split on first comma
-			in_ts = strtok_s(inbuffer, ",\n", &lasts);
-			in_tok = strtok_s(nullptr, "\n", &lasts);
+			// in_ts = strtok_s(inbuffer, ",\n", &lasts);
+			// in_tok = strtok_s(nullptr, "\n", &lasts);
+
+			in_ts = gld_next_token(inbuffer, ",\r\n", &lasts);
+			in_tok = gld_next_token(nullptr, "\r\n", &lasts);
 
 			if (in_ts == nullptr)
 			{
@@ -556,6 +600,12 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 
 PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list)
 {
+	if (obj == nullptr)
+	{
+		gl_error("recorder: parent object is null, cannot link properties");
+		return nullptr;
+	}
+
 	char *item;
 	PROPERTY *first = nullptr, *last = nullptr;
 	UNIT *unit = nullptr;
@@ -569,7 +619,14 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 	int64 cid = -1;
 
 	strcpy(list, property_list); /* avoid destroying orginal list */
-	for (item = strtok(list, ","); item != nullptr; item = strtok(nullptr, ","))
+								 // for (item = strtok(list, ","); item != nullptr; item = strtok(nullptr, ","))
+
+	char *ctx = nullptr;
+
+	for (item = gld_next_token(list, ",\r\n", &ctx);
+		 item != nullptr;
+		 item = gld_next_token(nullptr, ",\r\n", &ctx))
+
 	{
 
 		prop = nullptr;
@@ -617,6 +674,18 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 
 		target = gl_get_property(obj, item, nullptr);
 
+		if (target == nullptr)
+		{
+			gl_warning("recorder: property '%s' not found on object '%s' (class '%s')",
+					   item, obj->name ? obj->name : "unnamed", obj->oclass->name);
+			// List available properties for debugging
+			PROPERTY *p;
+			for (p = obj->oclass->pmap; p != nullptr; p = p->next)
+			{
+				gl_verbose("  available: '%s'", p->name);
+			}
+		}
+
 		if (prop != nullptr && target != nullptr)
 		{
 			if (unit != nullptr && target->unit == nullptr)
@@ -658,6 +727,13 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 EXPORT int init_recorder(OBJECT *obj)
 {
 	struct recorder *my = object_data<recorder>(obj);
+
+	if (obj->parent == nullptr)
+	{
+		gl_error("recorder %s: no parent object defined, cannot record properties",
+				 obj->name ? (const char *)obj->name : "anonymous");
+		return 0; // FAILED
+	}
 
 	// Perform the property linking here, during the INIT pass.
 	// This is safe because all parent properties (even formulas)

@@ -105,6 +105,13 @@ update time and those that are immediately related to it need be updated.  This
 #include <thread>
 #include <vector>
 
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <chrono>
+#include <iomanip>
+
 #ifdef _WIN32
 // Reduce header bloat and avoid legacy winsock.h from windows.h
 #ifndef WIN32_LEAN_AND_MEAN
@@ -3846,6 +3853,56 @@ STATUS exec_step(int64 *passes, int64 *tsteps)
     return result;
 }
 
+namespace logger
+{
+
+    inline std::string temp_log_path(const std::string &filename = "env_check.log")
+    {
+        namespace fs = std::filesystem;
+        try
+        {
+            return (fs::temp_directory_path() / filename).string();
+        }
+        catch (const std::exception &ex)
+        {
+            std::cerr << "Warning: temp_directory_path() failed: " << ex.what()
+                      << " — using ./env_check.log\n";
+            return "env_check.log";
+        }
+    }
+
+    inline std::string now_timestamp()
+    {
+        using clock = std::chrono::system_clock;
+        const auto t = clock::now();
+        const auto tt = clock::to_time_t(t);
+        std::tm tm{};
+#if defined(_WIN32)
+        localtime_s(&tm, &tt);
+#else
+        localtime_r(&tt, &tm);
+#endif
+        char buf[32];
+        std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm);
+        return buf;
+    }
+
+    inline void append(const std::string &line,
+                       const std::string &filename = "env_check.log")
+    {
+        const std::string path = temp_log_path(filename);
+        std::ofstream out(path, std::ios::out | std::ios::app);
+        if (!out)
+        {
+            std::cerr << "Warning: unable to open log file: " << path
+                      << " — writing to stderr\n";
+            std::cerr << line << '\n';
+            return;
+        }
+        out << "[" << now_timestamp() << "] " << line << '\n';
+    }
+}
+
 /** This is the main simulation loop with optional parameters
         @return STATUS is SUCCESS if the simulation reached equilibrium,
         and FAILED if a problem was encountered.
@@ -3866,15 +3923,19 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
     // Create local variables for internal use (use provided values or defaults)
     int64 local_passes = (passes != nullptr) ? *passes : 0;
     int64 local_tsteps = (tsteps != nullptr) ? *tsteps : 0;
-    FILE *prep_dbg = fopen("/tmp/env_check.log", "a");
-    fprintf(prep_dbg, "About to call run_preparation()\n");
-    fclose(prep_dbg);
+    // FILE *prep_dbg = fopen("/tmp/env_check.log", "a");
+    // fprintf(prep_dbg, "About to call run_preparation()\n");
+    // fclose(prep_dbg);
+
+    logger::append("About to call run_preparation()");
 
     if (run_preparation() == FAILED)
     {
-        FILE *prep_fail = fopen("/tmp/env_check.log", "a");
-        fprintf(prep_fail, "run_preparation() returned FAILED\n");
-        fclose(prep_fail);
+        // FILE *prep_fail = fopen("/tmp/env_check.log", "a");
+        // fprintf(prep_fail, "run_preparation() returned FAILED\n");
+        // fclose(prep_fail);
+
+        logger::append("run_preparation() returned FAILED");
 
         return FAILED;
     }
@@ -3966,9 +4027,15 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
 
     /* terminate links */
     STATUS final_status = exec_sync_getstatus(sync_data_nullptr);
-    FILE *status_dbg = fopen("/tmp/env_check.log", "a");
-    fprintf(status_dbg, "exec_start returning status=%d\n", final_status);
-    fclose(status_dbg);
+    // FILE *status_dbg = fopen("/tmp/env_check.log", "a");
+    // fprintf(status_dbg, "exec_start returning status=%d\n", final_status);
+    // fclose(status_dbg);
+
+    std::ostringstream oss;
+    oss << "exec_start returning status=" << final_status;
+
+    logger::append(oss.str());
+
     // delete threadpool;
     return final_status;
 }

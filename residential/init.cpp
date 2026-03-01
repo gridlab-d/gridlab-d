@@ -116,7 +116,7 @@ void schedule_deltamode_start(TIMESTAMP tstart)
 	}
 	else
 	{
-		GL_THROW("resi�dential: a call was made to deltamode functions, but subsecond models are not enabled!");
+		GL_THROW("residential: a call was made to deltamode functions, but subsecond models are not enabled!");
 		/*  TROUBLESHOOT
 		The schedule_deltamode_start function was called by an object when residential's overall enabled_subsecond_models
 		flag was not set.  The module-level flag indicates that no devices should use deltamode, but one made the call
