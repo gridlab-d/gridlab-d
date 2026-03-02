@@ -107,7 +107,9 @@ jobs:
           export PATH="${INSTALL_PREFIX}/bin:$PATH"
           export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib/gridlabd"
           export GLPATH="$(pwd):${INSTALL_PREFIX}:${INSTALL_PREFIX}/bin:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/share:$(pwd)/gldcore"
-          python validate_gld.py
+          # python validate_gld.py
+          gridlabd --validate
+
 
       - name: Upload validation artefacts
         if: always()
@@ -219,7 +221,9 @@ jobs:
           $env:PATH   = "$env:PATH;$bin"
           $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
 
-          python validate_gld.py
+          # python validate_gld.py
+          gridlabd --validate
+
 
       - name: Upload validation artefacts (Windows)
         if: always()
@@ -339,7 +343,8 @@ jobs:
           export GLPATH="$(pwd):${PREFIX}:${BIN_DIR}:${LIB_DIR}:${SHARE_DIR}:${GLDCORE_DIR}"
           export PATH="${PATH}:${BIN_DIR}"
 
-          python -u validate_gld.py
+          # python -u validate_gld.py
+          gridlabd --validate
 
       - name: Upload validation artefacts (macOS)
         if: always()
