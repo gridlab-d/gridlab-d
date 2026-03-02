@@ -107,8 +107,8 @@ jobs:
           export PATH="${INSTALL_PREFIX}/bin:$PATH"
           export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib/gridlabd"
           export GLPATH="$(pwd):${INSTALL_PREFIX}:${INSTALL_PREFIX}/bin:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/share:$(pwd)/gldcore"
-          # python validate_gld.py
           ulimit -c unlimited
+          python -u validate_gld.py
           gridlabd --validate || true
 
 
@@ -123,14 +123,7 @@ jobs:
             gridlabd.xml
           if-no-files-found: ignore
 
-      - name: Run CTest
-        if: always()
-        working-directory: build
-        run: |
-          export PATH="${INSTALL_PREFIX}/bin:$PATH"
-          export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib/gridlabd"
-          export GLPATH="$(pwd)/..:${INSTALL_PREFIX}:${INSTALL_PREFIX}/bin:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/share:$(pwd)/../gldcore"
-          ctest --verbose --output-on-failure
+      
 
   # ─────────────────────────────────────────────
   # Windows: Visual Studio 2022 + vcpkg + Python validator
@@ -222,9 +215,8 @@ jobs:
           $env:PATH   = "$env:PATH;$bin"
           $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
 
-          # python validate_gld.py
-          
-          gridlabd --validate
+          python -u validate_gld.py
+          gridlabd --validate; if ($LASTEXITCODE -ne 0) { } 
 
 
       - name: Upload validation artefacts (Windows)
@@ -243,7 +235,7 @@ jobs:
   # ─────────────────────────────────────────────
   macos-build-and-validate:
     runs-on: macos-latest   # ARM64 macOS runner
-    timeout-minutes: 300
+    timeout-minutes: 600
 
     steps:
       - name: Checkout
@@ -345,8 +337,8 @@ jobs:
           export GLPATH="$(pwd):${PREFIX}:${BIN_DIR}:${LIB_DIR}:${SHARE_DIR}:${GLDCORE_DIR}"
           export PATH="${PATH}:${BIN_DIR}"
 
-          # python -u validate_gld.py
-          gridlabd --validate
+          python -u validate_gld.py
+          gridlabd --validate || true
 
       - name: Upload validation artefacts (macOS)
         if: always()

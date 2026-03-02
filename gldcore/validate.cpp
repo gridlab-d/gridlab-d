@@ -702,7 +702,7 @@ static int vsystem(const char *fmt, ...)
 	return rc;
 }
 
-static constexpr int DEFAULT_TEST_TIMEOUT_SECONDS = 60;
+static constexpr int DEFAULT_TEST_TIMEOUT_SECONDS = 20;
 
 #ifdef _WIN32
 #include <windows.h>
