@@ -1294,8 +1294,9 @@ static counters run_test(char *file, double *elapsed_time = nullptr)
 	if (WIFSIGNALED(raw) && WTERMSIG(raw) == SIGSEGV)
 	{
 		output_error("Test crashed with segmentation fault: %s", name);
-		// Mark as failed but don't abort the entire validation
-		return FAILED;
+		result.inc_failed(file, 139, t); // 139 is the typical exit code for SIGSEGV (128 + 11)
+		log_test_error(file, 'X', "Segmentation fault (SIGSEGV)");
+		return result;
 	}
 
 	bool exited = WIFEXITED(code);
