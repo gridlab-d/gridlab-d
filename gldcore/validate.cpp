@@ -416,7 +416,7 @@ static bool report_open(void)
 		return false;
 	}
 
-	if (report_fp == nullptr)
+	if (report_fp != nullptr)
 	{
 		report_ext = strrchr(report_file, '.');
 		if (strcmp(report_ext, ".csv") == 0)
@@ -702,7 +702,7 @@ static int vsystem(const char *fmt, ...)
 	return rc;
 }
 
-static constexpr int DEFAULT_TEST_TIMEOUT_SECONDS = 300; // 5 minutes
+static constexpr int DEFAULT_TEST_TIMEOUT_SECONDS = 60;
 
 #ifdef _WIN32
 #include <windows.h>

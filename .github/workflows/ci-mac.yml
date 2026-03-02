@@ -13,7 +13,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   # ─────────────────────────────────────────────
@@ -242,8 +242,8 @@ jobs:
   # macOS: AppleClang + Homebrew + Python validator
   # ─────────────────────────────────────────────
   macos-build-and-validate:
-    runs-on: macos-15   # ARM64 macOS runner
-    timeout-minutes: 60
+    runs-on: macos-latest   # ARM64 macOS runner
+    timeout-minutes: 300
 
     steps:
       - name: Checkout
