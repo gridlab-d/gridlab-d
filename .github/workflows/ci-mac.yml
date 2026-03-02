@@ -27,7 +27,7 @@ jobs:
           - name: ubuntu-arm64
             runs-on: ubuntu-24.04-arm       # Official ARM64 label
             triplet: aarch64
-          - name: ubuntu-x64
+          - name: ubuntu-x86_64
             runs-on: ubuntu-latest
             triplet: x86_64
 
