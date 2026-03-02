@@ -1082,7 +1082,11 @@ static counters run_test(char *file, double *elapsed_time = nullptr)
 	char dir[1024];
 	strcpy(dir, file);
 	char *ext = strrchr(dir, '.');
-	char *name = strrchr(dir, '/') + 1;
+	// char *name = strrchr(dir, '/') + 1;
+
+	char *slash = strrchr(dir, '/');
+	char *name = (slash != nullptr) ? slash + 1 : dir;
+
 	char *char_result;
 
 	if (ext == nullptr || strcmp(ext, ".glm") != 0)
@@ -1599,44 +1603,19 @@ static size_t process_dir(const char *path, bool runglms = false)
 // char *encode_result(char *data, size_t sz)
 char *encode_result(std::atomic<char> *data, size_t sz)
 {
-	size_t len = (sz + 1) / 2 + 1;
-	char *code = (char *)malloc(len);
-	if (code == NULL)
-		return NULL;
-	memset(code, 0, len);
-	size_t i;
-	for (i = 0; i < sz; i++)
-	{
-		size_t ndx = i / 2;
-		size_t shft = (i % 2) * 4;
-		code[ndx] |= (data[i] << shft);
-		// encode_result(result_code.get(), next_id);
-	}
-	// for (i = 0; i < len; i++)
-	// {
-	// 	static char t[] = "0123456789ABCDEF";
-	// 	code[i] = t[code[i]];
-	// }
-	// code[len] = '\0';
-	// return code;
-
-	char *result = (char *)malloc(sz + 1);
+	char *result = (char *)malloc(sz * 2 + 1); // Correct size
 	if (result == NULL)
-	{
-		free(code);
 		return NULL;
-	}
-	for (i = 0; i < sz; i++)
+
+	for (size_t i = 0; i < sz; i++)
 	{
 		static const char hex[] = "0123456789ABCDEF";
-		unsigned char val = (unsigned char)data[i].load(); // Use .load() for atomics
+		unsigned char val = (unsigned char)data[i].load();
 		result[i * 2] = hex[val >> 4];
 		result[i * 2 + 1] = hex[val & 0x0F];
 	}
 	result[sz * 2] = '\0';
-
-	free(code);	   // Free the intermediate buffer
-	return result; // Return the final hex string
+	return result;
 }
 
 /** main validation routine */
