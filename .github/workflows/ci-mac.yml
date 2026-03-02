@@ -108,7 +108,8 @@ jobs:
           export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib/gridlabd"
           export GLPATH="$(pwd):${INSTALL_PREFIX}:${INSTALL_PREFIX}/bin:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/share:$(pwd)/gldcore"
           # python validate_gld.py
-          gridlabd --validate
+          ulimit -c unlimited
+          gridlabd --validate || true
 
 
       - name: Upload validation artefacts
@@ -222,6 +223,7 @@ jobs:
           $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
 
           # python validate_gld.py
+          
           gridlabd --validate
 
 

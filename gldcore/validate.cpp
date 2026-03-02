@@ -1290,6 +1290,14 @@ static counters run_test(char *file, double *elapsed_time = nullptr)
 		return result;
 	}
 
+	// Add handling for segfault (signal 11)
+	if (WIFSIGNALED(raw) && WTERMSIG(raw) == SIGSEGV)
+	{
+		output_error("Test crashed with segmentation fault: %s", name);
+		// Mark as failed but don't abort the entire validation
+		return FAILED;
+	}
+
 	bool exited = WIFEXITED(code);
 	bool signaled = WIFSIGNALED(code);
 	// int exit_code = WEXITSTATUS(code);
@@ -1820,11 +1828,16 @@ int validate(int argc, char *argv[])
 	{
 		threads.emplace_back([i]()
 							 {
-								 // Cast run_job_proc to the appropriate type and convert i to int
-								 using FuncType = void *(*)(int);
-								 FuncType func = run_test_proc;
-								 func(static_cast<int>(i)); // Convert size_t to int
-							 });
+								// Cast run_job_proc to the appropriate type and convert i to int
+								using FuncType = void *(*)(int);
+								FuncType func = run_test_proc;
+								try {
+								 	func(static_cast<int>(i)); // Convert size_t to int
+								} catch (const std::exception& e) {
+        							output_error("Thread %d exception: %s", i, e.what());
+  							    } catch (...) {
+									output_error("Thread %d unknown exception", i);
+								} });
 	}
 
 	// Debug message: waiting for threads
