@@ -67,7 +67,7 @@ EXPORT int create_recorder(OBJECT **obj, OBJECT *parent)
 	{
 		struct recorder *my = object_data<recorder>(*obj);
 		last_recorder = *obj;
-		gl_set_parent(*obj, parent);
+		// gl_set_parent(*obj, parent);
 		strcpy(my->file, "");
 		strcpy(my->multifile, "");
 		strcpy(my->filetype, "txt");

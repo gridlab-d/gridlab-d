@@ -357,7 +357,7 @@ public:
 	struct
 	{
 		int (*create)(struct s_enduse *e);
-		TIMESTAMP (*sync)(struct s_enduse *e, PASSCONFIG pass, TIMESTAMP t1);
+		TIMESTAMP (*sync)(struct s_enduse *e, TIMESTAMP t1, PASSCONFIG pass);
 	} enduse;
 	struct
 	{

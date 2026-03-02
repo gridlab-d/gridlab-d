@@ -5109,7 +5109,7 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 		// Unconditional parent assignment — this is the actual fix
 		if (parent != nullptr && obj->parent == nullptr)
 		{
-			if (object_set_parent(obj, parent) == FAILED)
+			if (object_set_parent(obj, parent) < 0)
 			{
 				output_error_raw("%s(%d): failed to set parent for %s:%d",
 								 filename, linenum, classname, obj->id);

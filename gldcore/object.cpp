@@ -1495,7 +1495,7 @@ OBJECT *object_get_next(OBJECT *obj)
 	the request to prevent looping.  This will prevent
 	an object_set_parent call from creating a parent loop.
  */
-static unsigned int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+static int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
 	OBJECTRANK parent_rank = -1;
 	if (obj == nullptr)
@@ -1542,7 +1542,7 @@ static unsigned int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 	return obj != nullptr ? obj->rank : 0;
 }
 /* this version is fast, blind to errors, and not recursive -- it's only used when global_fastrank is TRUE */
-static unsigned int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+static int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
 	int n = object_get_count();
 	if (obj == nullptr)
@@ -1588,9 +1588,9 @@ static unsigned int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 	for (obj = first; obj != nullptr; obj = obj->parent)
 		obj->flags &= ~OF_RERANK;
 
-	return obj != nullptr ? obj->rank : 0;
+	return obj != nullptr ? (int)obj->rank : 0;
 }
-static unsigned int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
 	return global_bigranks == true ? _set_rankx(obj, rank, nullptr) : _set_rank(obj, rank, nullptr);
 }
@@ -1606,8 +1606,9 @@ int object_set_rank(OBJECT *obj,	 /**< the object to set */
 	if (obj == nullptr)
 		return 0;
 	if (rank <= obj->rank)
-		return obj->rank;
-	return set_rank(obj, rank, nullptr);
+		return (int)obj->rank;
+	int result = set_rank(obj, rank, nullptr);
+	return result < 0 ? -1 : result;
 }
 
 /** Set the parent of an object
@@ -1642,15 +1643,26 @@ int object_set_parent(OBJECT *obj,	  /**< the object to set */
 			obj->parent->child_count--;
 		}
 	}
+	// If the object already had a parent, decrement that parent's child_count
+	if (obj->parent != nullptr && obj->parent != parent)
+	{
+		if (obj->parent->child_count > 0)
+		{
+			obj->parent->child_count--;
+		}
+	}
 	// Attach to the new parent and increment the NEW parent's child_count
 	obj->parent = parent;
 	if (parent != nullptr)
 	{
 		parent->child_count++;
-		return set_rank(parent, obj->rank, nullptr);
+		if (set_rank(parent, obj->rank, nullptr) < 0)
+			return -1;
 	}
 	// No parent: keep current rank
-	return obj->rank;
+	// return obj->rank;
+	// Return 0 on success, -1 on failure (already handled above)
+	return 0;
 }
 
 unsigned int object_get_child_count(OBJECT *obj)

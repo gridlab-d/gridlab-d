@@ -131,7 +131,7 @@ int enduse_initall(void)
 	return SUCCESS;
 }
 
-TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
+static TIMESTAMP enduse_sync_impl(enduse *e, TIMESTAMP t1, PASSCONFIG pass)
 {
 #ifdef _DEBUG
 	if (e->magic != enduse_magic)
@@ -209,6 +209,25 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 	}
 	return (e->shape && e->shape->type != MT_UNKNOWN) ? e->shape->t2 : TS_NEVER;
 }
+
+// #ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP enduse_sync(enduse *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return enduse_sync_impl(obj, t1, pass);
+}
+// #else
+// extern "C" MODULE_API TIMESTAMP enduse_sync(enduse *obj, ...)
+// {
+// 	va_list args;
+// 	va_start(args, obj);
+// 	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+// 	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+// 	va_end(args);
+
+// 	return enduse_sync_impl(obj, t1, pass);
+// }
+
+// #endif
 
 typedef struct s_endusesyncdata
 {
@@ -313,7 +332,7 @@ void enduse_syncproc(ENDUSESYNCDATA *data)
 		t2 = TS_NEVER;
 		for (e = data->e, n = 0; e != nullptr && n < data->ne; e = e->next, n++)
 		{
-			TIMESTAMP t = enduse_sync(e, PC_PRETOPDOWN, next_t1_ed);
+			TIMESTAMP t = enduse_sync(e, next_t1_ed, PC_PRETOPDOWN);
 			if (t < t2)
 				t2 = t;
 		}
@@ -429,7 +448,7 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 		// Process list directly
 		for (enduse *e = enduse_list; e != nullptr; e = e->next)
 		{
-			TIMESTAMP t3 = enduse_sync(e, PC_PRETOPDOWN, t1);
+			TIMESTAMP t3 = enduse_sync(e, t1, PC_PRETOPDOWN);
 			if (t3 < t2)
 				t2 = t3;
 		}
