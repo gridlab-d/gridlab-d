@@ -133,7 +133,10 @@ if(UNIX)
 endif()
 
 # Link required libraries for symbol checks
+
+if (NOT MSVC)
 list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+endif ()
 
 configure_file(gldcore/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/headers/config.h @ONLY)
 configure_file(gldcore/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h @ONLY)
@@ -160,8 +163,8 @@ if (NOT MSVC)
 endif ()
 
 if (NOT MSVC)
-# Compiler/Linker flags for all build types
-add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
+    # Compiler/Linker flags for all build types
+    add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
 endif ()
 
 ## Set up platform specific library linking and platform identification
