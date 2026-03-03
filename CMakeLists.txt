@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.13)
-project(GridLAB-D)
+
+# Set the architecture BEFORE project() on Windows
+if(MSVC OR CMAKE_GENERATOR MATCHES "Visual Studio")
+    # Ensure we have a valid platform
+    if(NOT CMAKE_GENERATOR_PLATFORM)
+        set(CMAKE_GENERATOR_PLATFORM "x64" CACHE STRING "Generator platform" FORCE)
+    endif()
+endif()
 
 
 if(MSVC)
@@ -9,12 +16,28 @@ if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
   # If you prefer static runtime, uncomment the next line:
   # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+  # Ensure architecture macros are defined
+    # This shouldn't be necessary normally, but helps with edge cases
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        add_compile_definitions(_AMD64_ AMD64)
+    else()
+        add_compile_definitions(_X86_ _WIN32)
+    endif()
+    
 endif()
+project(GridLAB-D)
+
+
 
 
 if(WIN32)
     # Avoid legacy includes and macro collisions from Windows headers
     add_compile_definitions(WIN32_LEAN_AND_MEAN NOMINMAX)
+    # Ensure _WIN32 is defined (should be automatic, but be explicit)
+    if(MSVC)
+        add_compile_definitions(_WINDOWS)
+    endif()
 endif()
 
 set(CMAKE_CXX_STANDARD 23) # Or 14, 11 if 17 is not supported

@@ -196,7 +196,8 @@ using namespace std::literals;
 #endif
 
 /** Set/get exit code **/
-int exec_setexitcode(int xc) {
+int exec_setexitcode(int xc)
+{
   int oldxc = global_exit_code;
   if (oldxc != XC_SUCCESS)
     output_warning("new exitcode %d overwrites existing exitcode %d", xc,
@@ -207,8 +208,10 @@ int exec_setexitcode(int xc) {
 }
 int exec_getexitcode() { return global_exit_code; }
 
-const char *exec_getexitcodestr(EXITCODE xc) {
-  switch (xc) {
+const char *exec_getexitcodestr(EXITCODE xc)
+{
+  switch (xc)
+  {
   case XC_SUCCESS: /* per system(3) */
     return "ok";
   case XC_EXFAILED: /* exec/wait failure - per system(3) */
@@ -245,16 +248,20 @@ const char *exec_getexitcodestr(EXITCODE xc) {
 }
 
 /** Elapsed wallclock **/
-int64 exec_clock() {
+int64 exec_clock()
+{
   using std::chrono::system_clock;
   static bool initialized = false;
   static std::chrono::time_point<system_clock> nt1;
   static std::chrono::time_point<system_clock> nt2;
-  if (!initialized) { // [[unlikely]] {
+  if (!initialized)
+  { // [[unlikely]] {
     nt1 = system_clock::now();
     nt2 = nt1;
     initialized = true;
-  } else { // [[likely]] {
+  }
+  else
+  { // [[likely]] {
     nt2 = system_clock::now();
   }
   return std::chrono::duration_cast<std::chrono::microseconds>(nt2 - nt1)
@@ -264,7 +271,8 @@ int64 exec_clock() {
 /** The main system initialization sequence
         @return 1 on success, 0 on failure
  **/
-int exec_init() {
+int exec_init()
+{
 #if 0
 #ifdef _WIN32
 	char glpathvar[1024];
@@ -309,7 +317,7 @@ clock_t cstart, clock_end;
 #endif
 
 #define PASSINIT(p) (p % 2 ? ranks[p]->first_used : ranks[p]->last_used)
-#define PASSCMP(i, p)                                                          \
+#define PASSCMP(i, p) \
   (p % 2 ? i <= ranks[p]->last_used : i >= ranks[p]->first_used)
 #define PASSINC(p) (p % 2 ? 1 : -1)
 
@@ -335,7 +343,8 @@ extern unsigned int mls_inst_lock;
 extern std::condition_variable_any mls_inst_signal;
 
 // sjin: struct for pthread_create arguments
-struct arg_data {
+struct arg_data
+{
   int thread;
   void *item;
   int incr;
@@ -344,7 +353,8 @@ struct arg_data arg_data_array[2];
 
 INDEX **exec_getranks() { return ranks; }
 
-static STATUS setup_ranks() {
+static STATUS setup_ranks()
+{
   OBJECT *obj;
   int i;
   static INDEX *passlist[] = {
@@ -358,12 +368,14 @@ static STATUS setup_ranks() {
   ranks[2] = index_create(0, 10);
 
   /* build the ranks of each pass type */
-  for (i = 0; i < sizeof(passtype) / sizeof(passtype[0]); i++) {
+  for (i = 0; i < sizeof(passtype) / sizeof(passtype[0]); i++)
+  {
     if (ranks[i] == nullptr)
       return FAILED;
 
     /* add every object to index based on rank */
-    for (obj = object_get_first(); obj != nullptr; obj = object_get_next(obj)) {
+    for (obj = object_get_first(); obj != nullptr; obj = object_get_next(obj))
+    {
       /* ignore objects that don't use this passconfig */
       if ((obj->oclass->passconfig & passtype[i]) == 0)
         continue;
@@ -386,14 +398,16 @@ static STATUS setup_ranks() {
   return SUCCESS;
 }
 
-const char *simtime() {
+const char *simtime()
+{
   static char buffer[64];
   return convert_from_timestamp(global_clock, buffer, sizeof(buffer)) > 0
              ? buffer
              : "(invalid)";
 }
 
-static STATUS show_progress() {
+static STATUS show_progress()
+{
   extern GUIACTIONSTATUS wait_status;
   output_progress();
   /* reschedule report */
@@ -405,24 +419,28 @@ static STATUS show_progress() {
 /* CHECKPOINTS */
 
 // Helper function to check if directory exists
-static bool directory_exists(const char *path) {
+static bool directory_exists(const char *path)
+{
   if (!path || strlen(path) == 0)
     return false;
 
   struct stat info;
-  if (stat(path, &info) != 0) {
+  if (stat(path, &info) != 0)
+  {
     return false; // Path doesn't exist or can't be accessed
   }
   return (info.st_mode & S_IFDIR) != 0; // Check if it's a directory
 }
 
 // Do Checkpoint
-nlohmann::json do_checkpoint(const char *output_directory) {
+nlohmann::json do_checkpoint(const char *output_directory)
+{
   /* last checkpoint value */
   static TIMESTAMP last_checkpoint = 0;
   TIMESTAMP now = 0;
   /* check point type selection */
-  switch (global_checkpoint_type) {
+  switch (global_checkpoint_type)
+  {
   /* wallclock checkpoint interval */
   case CPT_WALL:
     /* checkpoint based on wall time */
@@ -448,18 +466,21 @@ nlohmann::json do_checkpoint(const char *output_directory) {
   }
   nlohmann::json checkpoint;
   /* checkpoint may be needed */
-  if (now > 0) {
+  if (now > 0)
+  {
     // TODO: Take a look at global_checkpoint_interval and if we want to keep it
     /* checkpoint time lapsed */
     // if ( last_checkpoint + global_checkpoint_interval <= now )
-    if (last_checkpoint <= now) {
+    if (last_checkpoint <= now)
+    {
       static char fn[1024] = "";
       static char json_fn[1024] = "";
       FILE *fp = nullptr;
       FILE *json_fp = nullptr;
 
       /* default checkpoint filename */
-      if (strcmp(global_checkpoint_file, "") == 0) {
+      if (strcmp(global_checkpoint_file, "") == 0)
+      {
         char *ext;
         /* use the model name by default */
         strcpy(global_checkpoint_file, global_modelname);
@@ -470,7 +491,8 @@ nlohmann::json do_checkpoint(const char *output_directory) {
           *ext = '\0';
       }
       /* delete old checkpoint file if not desired */
-      if (global_checkpoint_keepall == 0 && strcmp(fn, "") != 0) {
+      if (global_checkpoint_keepall == 0 && strcmp(fn, "") != 0)
+      {
         unlink(fn);
         if (strcmp(json_fn, "") != 0)
           unlink(json_fn);
@@ -488,20 +510,23 @@ nlohmann::json do_checkpoint(const char *output_directory) {
 
       /* check if output directory exists */
       /* check if output directory exists (only when actually writing files) */
-      if (output_directory != nullptr && !directory_exists(json_dir)) {
+      if (output_directory != nullptr && !directory_exists(json_dir))
+      {
         output_error("directory '%s' does not exist for JSON checkpoint files",
                      json_dir);
         return nlohmann::json(); // Return empty JSON value on error
       }
 
       /* Only open and write files if we're actually writing to disk */
-      if (output_directory != nullptr) {
+      if (output_directory != nullptr)
+      {
         fp = fopen(fn, "w");
         json_fp = fopen(json_fn, "w");
 
         if (fp == nullptr)
           output_error("unable to open checkpoint file '%s' for writing", fn);
-        else {
+        else
+        {
           if (stream(fp, SF_OUT) <= 0)
             output_error("checkpoint failure (stream context is %s)",
                          stream_context());
@@ -520,7 +545,8 @@ nlohmann::json do_checkpoint(const char *output_directory) {
 
       /* Write JSON data using JsonCpp */
       {
-        if (json_fp != nullptr) {
+        if (json_fp != nullptr)
+        {
           fclose(json_fp);
         }
         // Create JSON structure using nlohmann::json
@@ -548,13 +574,16 @@ nlohmann::json do_checkpoint(const char *output_directory) {
         std::set<OBJECT *>
             processed_objects; // Track processed objects to prevent duplicates
         /* Traverse all objects to group by class */
-        for (int pass = 0; ranks[pass] != nullptr; pass++) {
-          for (int i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass)) {
+        for (int pass = 0; ranks[pass] != nullptr; pass++)
+        {
+          for (int i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
+          {
             if (ranks[pass]->ordinal[i] == nullptr)
               continue;
 
             for (LISTITEM *ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr;
-                 ptr = ptr->next) {
+                 ptr = ptr->next)
+            {
               OBJECT *obj = static_cast<OBJECT *>(ptr->data);
 
               // Skip if we've already processed this object
@@ -570,16 +599,19 @@ nlohmann::json do_checkpoint(const char *output_directory) {
 
         // Build objects section grouped by class
         int classnameCounter = 0;
-        for (auto &class_pair : objects_by_class) {
+        for (auto &class_pair : objects_by_class)
+        {
           nlohmann::json instances = nlohmann::json::array();
 
-          for (OBJECT *obj : class_pair.second) {
+          for (OBJECT *obj : class_pair.second)
+          {
             nlohmann::json instance = nlohmann::json::object();
 
             // Add object name if it exists
             if (obj->name && strlen(obj->name) > 0)
               instance["name"] = obj->name;
-            else {
+            else
+            {
               instance["name"] = std::string(obj->oclass->name) +
                                  std::to_string(classnameCounter);
               classnameCounter++;
@@ -592,9 +624,11 @@ nlohmann::json do_checkpoint(const char *output_directory) {
 
             // Traverse the entire class hierarchy (class and all parents)
             CLASS *current_class = obj->oclass;
-            while (current_class != nullptr) {
+            while (current_class != nullptr)
+            {
               PROPERTY *pmap = current_class->pmap;
-              for (; pmap != nullptr; pmap = pmap->next) {
+              for (; pmap != nullptr; pmap = pmap->next)
+              {
                 // Skip if this is the name property and we already added it
                 if (strcmp(pmap->name, "name") == 0)
                   continue;
@@ -616,30 +650,42 @@ nlohmann::json do_checkpoint(const char *output_directory) {
                 // Use object_get_value_by_name for all property types to ensure
                 // proper access
                 if (object_get_value_by_name(obj, pmap->name, value_str,
-                                             sizeof(value_str)) > 0) {
+                                             sizeof(value_str)) > 0)
+                {
                   // Parse the string value based on property type
-                  switch (pmap->ptype) {
-                  case PT_double: {
+                  switch (pmap->ptype)
+                  {
+                  case PT_double:
+                  {
                     double val = strtod(value_str, nullptr);
                     instance[pmap->name] = val;
-                  } break;
-                  case PT_int32: {
+                  }
+                  break;
+                  case PT_int32:
+                  {
                     int32 val = (int32)strtol(value_str, nullptr, 10);
                     instance[pmap->name] = val;
-                  } break;
-                  case PT_int64: {
+                  }
+                  break;
+                  case PT_int64:
+                  {
                     int64 val = strtoll(value_str, nullptr, 10);
                     instance[pmap->name] = static_cast<int64_t>(val);
-                  } break;
-                  case PT_bool: {
+                  }
+                  break;
+                  case PT_bool:
+                  {
                     bool val = (strcmp(value_str, "TRUE") == 0 ||
                                 strcmp(value_str, "1") == 0);
                     instance[pmap->name] = val;
-                  } break;
-                  case PT_timestamp: {
+                  }
+                  break;
+                  case PT_timestamp:
+                  {
                     TIMESTAMP val = strtoll(value_str, nullptr, 10);
                     instance[pmap->name] = static_cast<int64_t>(val);
-                  } break;
+                  }
+                  break;
                   case PT_char8:
                   case PT_char32:
                   case PT_char256:
@@ -656,7 +702,9 @@ nlohmann::json do_checkpoint(const char *output_directory) {
                     instance[pmap->name] = std::string(value_str);
                     break;
                   }
-                } else {
+                }
+                else
+                {
                   // Property value could not be retrieved, set to null
                   instance[pmap->name] = nullptr;
                 }
@@ -674,19 +722,23 @@ nlohmann::json do_checkpoint(const char *output_directory) {
 
         // TODO: Output_directory is nullptr in python API calls.
         // Advise if we need to report an error writing files for other cases.
-        if (output_directory == nullptr) {
+        if (output_directory == nullptr)
+        {
           // If output_directory is nullptr, we're not writing files
           return checkpoint;
         }
         // Write JSON to file with pretty formatting
         std::ofstream json_file(json_fn);
-        if (json_file.is_open()) {
+        if (json_file.is_open())
+        {
           // pretty print with 2-space indentation
           std::string out = checkpoint.dump(2);
           json_file << out;
           json_file.close();
           output_verbose("JSON checkpoint written to '%s'", json_fn);
-        } else {
+        }
+        else
+        {
           output_error("unable to open JSON checkpoint file '%s' for writing",
                        json_fn);
         }
@@ -698,7 +750,8 @@ nlohmann::json do_checkpoint(const char *output_directory) {
 /***********************************************************************/
 
 threadpool_thread_data::threadpool_thread_data(int size,
-                                               cpp_threadpool *threadpool) {
+                                               cpp_threadpool *threadpool)
+{
   //	data = std::vector<struct sync_data>(size);
   data = new struct sync_data[size];
   count = size;
@@ -708,14 +761,17 @@ threadpool_thread_data::threadpool_thread_data(int size,
 }
 
 struct sync_data *
-threadpool_thread_data::get_thread_data(std::thread::id thread_id) {
+threadpool_thread_data::get_thread_data(std::thread::id thread_id)
+{
   return &data[thread_map.at(thread_id)];
 }
-struct sync_data *threadpool_thread_data::get_data(int index) {
+struct sync_data *threadpool_thread_data::get_data(int index)
+{
   return &data[index];
 };
 
-static void tp_do_object_sync(OBJECT *obj) {
+static void tp_do_object_sync(OBJECT *obj)
+{
   std::thread::id thread_id = std::this_thread::get_id();
   struct sync_data *data = threadpool_data->get_thread_data(thread_id);
   TIMESTAMP this_t;
@@ -726,16 +782,19 @@ static void tp_do_object_sync(OBJECT *obj) {
     this_t = obj->in_svc; /* yet to go in service */
   else if ((global_clock == obj->in_svc) &&
            (obj->in_svc_micro !=
-            0)) /* If our in service is a little higher, delay to next time */
+            0))               /* If our in service is a little higher, delay to next time */
     this_t = obj->in_svc + 1; /* Technically yet to go into service -- deltamode
                                  handled separately */
-  else if (global_clock <= obj->out_svc) {
+  else if (global_clock <= obj->out_svc)
+  {
     this_t = object_sync(obj, global_clock, passtype[pass]);
-    if (this_t == global_clock) {
+    if (this_t == global_clock)
+    {
       output_verbose("%s: object %s calling for re-sync", simtime(),
                      object_name(obj, b, 63));
     }
-  } else
+  }
+  else
     this_t = TS_NEVER; /* already out of service */
 
   /* check for "soft" event (events that are ignored when stopping) */
@@ -745,7 +804,8 @@ static void tp_do_object_sync(OBJECT *obj) {
     data->hard_event++; /* this counts the number of hard events */
 
   /* check for stopped clock */
-  if (this_t < global_clock) {
+  if (this_t < global_clock)
+  {
     char b[64];
     output_error("%s: object %s stopped its clock (exec)!", simtime(),
                  object_name(obj, b, 63));
@@ -756,13 +816,18 @@ static void tp_do_object_sync(OBJECT *obj) {
        object's class.
      */
     data->status = FAILED;
-  } else {
+  }
+  else
+  {
     /* check for iteration limit approach */
-    if (iteration_counter == 2 && this_t == global_clock) {
+    if (iteration_counter == 2 && this_t == global_clock)
+    {
       char b[64];
       output_verbose("%s: object %s iteration limit imminent", simtime(),
                      object_name(obj, b, 63));
-    } else if (iteration_counter == 1 && this_t == global_clock) {
+    }
+    else if (iteration_counter == 1 && this_t == global_clock)
+    {
       output_error("convergence iteration limit reached for object %s:%d",
                    obj->oclass->name, obj->id);
       /* TROUBLESHOOT
@@ -780,7 +845,8 @@ static void tp_do_object_sync(OBJECT *obj) {
                global_minimum_timestep;
 
     /* if this event precedes next step, next step is now this event */
-    if (data->step_to > this_t) {
+    if (data->step_to > this_t)
+    {
       // LOCK(data);
       data->step_to = this_t;
       // UNLOCK(data);
@@ -789,7 +855,8 @@ static void tp_do_object_sync(OBJECT *obj) {
   }
 }
 
-static void ss_do_object_sync(int thread, void *item) {
+static void ss_do_object_sync(int thread, void *item)
+{
   // struct sync_data *data = &thread_data->data[thread];
   std::shared_ptr<struct sync_data> data = thread_data->data[thread];
   OBJECT *obj = (OBJECT *)item;
@@ -804,23 +871,28 @@ static void ss_do_object_sync(int thread, void *item) {
     this_t = obj->in_svc; /* yet to go in service */
   else if ((global_clock == obj->in_svc) &&
            (obj->in_svc_micro !=
-            0)) /* If our in service is a little higher, delay to next time */
+            0))               /* If our in service is a little higher, delay to next time */
     this_t = obj->in_svc + 1; /* Technically yet to go into service -- deltamode
                                  handled separately */
-  else if (global_clock <= obj->out_svc) {
+  else if (global_clock <= obj->out_svc)
+  {
     this_t = object_sync(obj, global_clock, passtype[pass]);
-    if (this_t == global_clock) {
+    if (this_t == global_clock)
+    {
       output_verbose("%s: object %s calling for re-sync", simtime(),
                      object_name(obj, b, 63));
     }
 
 #ifdef _DEBUG
     /* sync dumpfile */
-    if (global_sync_dumpfile[0] != '\0') {
+    if (global_sync_dumpfile[0] != '\0')
+    {
       static FILE *fp = nullptr;
-      if (fp == nullptr) {
+      if (fp == nullptr)
+      {
         static int tried = 0;
-        if (!tried) {
+        if (!tried)
+        {
           fp = fopen(global_sync_dumpfile, "wt");
           if (fp == nullptr)
             output_error("sync_dumpfile '%s' is not writeable",
@@ -830,16 +902,19 @@ static void ss_do_object_sync(int thread, void *item) {
           tried = 1;
         }
       }
-      if (fp != nullptr) {
+      if (fp != nullptr)
+      {
         static int64 lasttime = 0;
         static char lastdate[64] = "";
         char syncdate[64] = "";
         static std::string passname;
         static int lastpass = -1;
         char objname[1024];
-        if (lastpass != passtype[pass]) {
+        if (lastpass != passtype[pass])
+        {
           lastpass = passtype[pass];
-          switch (lastpass) {
+          switch (lastpass)
+          {
           case PC_PRETOPDOWN:
             passname = "PRESYNC";
             break;
@@ -854,7 +929,8 @@ static void ss_do_object_sync(int thread, void *item) {
             break;
           }
         }
-        if (lasttime != global_clock) {
+        if (lasttime != global_clock)
+        {
           lasttime = global_clock;
           convert_from_timestamp(global_clock, lastdate, sizeof(lastdate));
         }
@@ -870,7 +946,8 @@ static void ss_do_object_sync(int thread, void *item) {
       }
     }
 #endif
-  } else
+  }
+  else
     this_t = TS_NEVER; /* already out of service */
 
   /* check for "soft" event (events that are ignored when stopping) */
@@ -880,7 +957,8 @@ static void ss_do_object_sync(int thread, void *item) {
     data->hard_event++; /* this counts the number of hard events */
 
   /* check for stopped clock */
-  if (this_t < global_clock) {
+  if (this_t < global_clock)
+  {
     char b[64];
     output_error("%s: object %s stopped its clock (exec)!", simtime(),
                  object_name(obj, b, 63));
@@ -891,13 +969,18 @@ static void ss_do_object_sync(int thread, void *item) {
        object's class.
      */
     data->status = FAILED;
-  } else {
+  }
+  else
+  {
     /* check for iteration limit approach */
-    if (iteration_counter == 2 && this_t == global_clock) {
+    if (iteration_counter == 2 && this_t == global_clock)
+    {
       char b[64];
       output_verbose("%s: object %s iteration limit imminent", simtime(),
                      object_name(obj, b, 63));
-    } else if (iteration_counter == 1 && this_t == global_clock) {
+    }
+    else if (iteration_counter == 1 && this_t == global_clock)
+    {
       output_error("convergence iteration limit reached for object %s:%d",
                    obj->oclass->name, obj->id);
       /* TROUBLESHOOT
@@ -915,7 +998,8 @@ static void ss_do_object_sync(int thread, void *item) {
                global_minimum_timestep;
 
     /* if this event precedes next step, next step is now this event */
-    if (data->step_to > this_t) {
+    if (data->step_to > this_t)
+    {
       // LOCK(data);
       data->step_to = this_t;
       // UNLOCK(data);
@@ -925,7 +1009,8 @@ static void ss_do_object_sync(int thread, void *item) {
 }
 
 // sjin: implement new ss_do_object_sync_list for pthreads
-static void *ss_do_object_sync_list(void *threadarg) {
+static void *ss_do_object_sync_list(void *threadarg)
+{
   LISTITEM *ptr;
   int iPtr;
 
@@ -935,8 +1020,10 @@ static void *ss_do_object_sync_list(void *threadarg) {
   int incr = mydata->incr;
 
   iPtr = 0;
-  for (ptr = static_cast<LISTITEM *>(item); ptr != nullptr; ptr = ptr->next) {
-    if (iPtr < incr) {
+  for (ptr = static_cast<LISTITEM *>(item); ptr != nullptr; ptr = ptr->next)
+  {
+    if (iPtr < incr)
+    {
       ss_do_object_sync(thread, ptr->data);
       iPtr++;
     }
@@ -944,13 +1031,17 @@ static void *ss_do_object_sync_list(void *threadarg) {
   return nullptr;
 }
 
-static STATUS init_by_creation() {
+static STATUS init_by_creation()
+{
   OBJECT *obj;
   char b[64];
   STATUS rv = SUCCESS;
-  TRY {
-    for (obj = object_get_first(); obj != nullptr; obj = object_get_next(obj)) {
-      if (object_init(obj) == FAILED) {
+  TRY
+  {
+    for (obj = object_get_first(); obj != nullptr; obj = object_get_next(obj))
+    {
+      if (object_init(obj) == FAILED)
+      {
         memset(b, 0, 64);
         output_error("init_all(): object %s initialization failed",
                      object_name(obj, b, 63));
@@ -962,8 +1053,10 @@ static STATUS init_by_creation() {
         rv = FAILED;
         break;
       }
-      if ((obj->oclass->passconfig & PC_FORCE_NAME) == PC_FORCE_NAME) {
-        if (0 == strcmp(obj->name, "")) {
+      if ((obj->oclass->passconfig & PC_FORCE_NAME) == PC_FORCE_NAME)
+      {
+        if (0 == strcmp(obj->name, ""))
+        {
           output_warning("init: object %s:%d should have a name, but doesn't",
                          obj->oclass->name, obj->id);
           /* TROUBLESHOOT
@@ -975,7 +1068,8 @@ static STATUS init_by_creation() {
       }
     }
   }
-  CATCH(const char *msg) {
+  CATCH(const char *msg)
+  {
     output_error("init failure: %s", msg);
     /* TROUBLESHOOT
             The initialization procedure failed.  This is usually preceded
@@ -989,7 +1083,8 @@ static STATUS init_by_creation() {
 }
 
 static int init_by_deferral_retry(std::vector<OBJECT *> &def_array,
-                                  int def_ct) {
+                                  int def_ct)
+{
   OBJECT *obj;
   int ct = 0, i = 0, obj_rv = 0;
   // OBJECT **next_arr, **tarray;
@@ -1003,12 +1098,15 @@ static int init_by_deferral_retry(std::vector<OBJECT *> &def_array,
   // Split out the malloc so it can be checked
   // next_arr = (OBJECT **)malloc(def_ct * sizeof(OBJECT *));
 
-  if (global_init_max_defer < 1) {
+  if (global_init_max_defer < 1)
+  {
     output_warning(
         "init_max_defer is less than 1, disabling deferred initialization");
   }
-  while (retry) {
-    if (global_init_max_defer <= tries) {
+  while (retry)
+  {
+    if (global_init_max_defer <= tries)
+    {
       output_error(
           "init_by_deferral_retry(): exhausted initialization attempts");
       rv = FAILED;
@@ -1022,10 +1120,12 @@ static int init_by_deferral_retry(std::vector<OBJECT *> &def_array,
     ct = 0;
 
     // initialize each object in def_array
-    for (i = 0; i < def_ct; ++i) {
+    for (i = 0; i < def_ct; ++i)
+    {
       obj = def_array[i];
       obj_rv = object_init(obj);
-      switch (obj_rv) {
+      switch (obj_rv)
+      {
       case 0:
         rv = FAILED;
         memset(b, 0, 64);
@@ -1033,7 +1133,8 @@ static int init_by_deferral_retry(std::vector<OBJECT *> &def_array,
             "init_by_deferral_retry(): object %s initialization failed",
             object_name(obj, b, 63));
         break;
-      case 1: {
+      case 1:
+      {
         // wlock(&obj->lock);
         // replace the above with SharedMutexManager
         std::unique_lock<std::shared_mutex> write_lock(
@@ -1051,14 +1152,16 @@ static int init_by_deferral_retry(std::vector<OBJECT *> &def_array,
         break;
         // no default
       }
-      if (rv == FAILED) {
+      if (rv == FAILED)
+      {
         // free(next_arr);
         next_arr = {}; // nullptr;
         return rv;
       }
     }
 
-    if (ct == def_ct) {
+    if (ct == def_ct)
+    {
       output_error("init_by_deferral_retry(): all uninitialized objects "
                    "deferred, model is unable to initialize");
       rv = FAILED;
@@ -1069,7 +1172,8 @@ static int init_by_deferral_retry(std::vector<OBJECT *> &def_array,
       exit_check = tries % 2;
 
       // Determine how to handle that iteration
-      if (exit_check == 1) {
+      if (exit_check == 1)
+      {
         // Yes - fix the pointers before leaving, otherwise we'll double-free
         // things!
         tarray = def_array;
@@ -1078,7 +1182,9 @@ static int init_by_deferral_retry(std::vector<OBJECT *> &def_array,
       }
       // Default else - we failed first try, so pointer swap-around below didn't
       // occur
-    } else if (0 == ct) {
+    }
+    else if (0 == ct)
+    {
       rv = SUCCESS;
       retry = 0;
 
@@ -1087,7 +1193,8 @@ static int init_by_deferral_retry(std::vector<OBJECT *> &def_array,
       exit_check = tries % 2;
 
       // Determine how to handle that iteration
-      if (exit_check == 1) {
+      if (exit_check == 1)
+      {
         // Yes - fix the pointers before leaving, otherwise we'll double-free
         // things!
         tarray = def_array;
@@ -1096,7 +1203,9 @@ static int init_by_deferral_retry(std::vector<OBJECT *> &def_array,
       }
       // Default else - we succeeded first try, so pointer swap-around below
       // didn't occur
-    } else {
+    }
+    else
+    {
       ++tries;
       retry = 1;
       tarray = next_arr;
@@ -1113,7 +1222,8 @@ static int init_by_deferral_retry(std::vector<OBJECT *> &def_array,
   return rv;
 }
 
-static int init_by_deferral() {
+static int init_by_deferral()
+{
   // OBJECT **def_array = 0;
   int i = 0, obj_rv = 0, def_ct = 0;
   OBJECT *obj = 0;
@@ -1126,16 +1236,19 @@ static int init_by_deferral() {
   std::vector<OBJECT *> def_array(object_get_count());
 
   obj = object_get_first();
-  while (obj != 0) {
+  while (obj != 0)
+  {
     obj_rv = object_init(obj);
-    switch (obj_rv) {
+    switch (obj_rv)
+    {
     case 0:
       rv = FAILED;
       memset(b, 0, 64);
       output_error("init_by_deferral(): object %s initialization failed",
                    object_name(obj, b, 63));
       break;
-    case 1: {
+    case 1:
+    {
       // wlock(&obj->lock);
       // replace the above with SharedMutexManager
       std::unique_lock<std::shared_mutex> write_lock(
@@ -1145,7 +1258,8 @@ static int init_by_deferral() {
       write_lock.unlock();
       break;
     }
-    case 2: {
+    case 2:
+    {
       def_array[def_ct] = obj;
       ++def_ct;
       // wlock(&obj->lock);
@@ -1160,7 +1274,8 @@ static int init_by_deferral() {
       // no default
     }
 
-    if (rv == FAILED) {
+    if (rv == FAILED)
+    {
       // free(def_array);
       def_array = {};
       return rv;
@@ -1170,7 +1285,8 @@ static int init_by_deferral() {
   }
 
   // recursecursecursive
-  if (def_ct > 0) {
+  if (def_ct > 0)
+  {
     rv = static_cast<STATUS>(init_by_deferral_retry(def_array, def_ct));
     if (rv == FAILED) // got hung up retrying
     {
@@ -1183,9 +1299,12 @@ static int init_by_deferral() {
   def_array = {}; // nullptr;
 
   obj = object_get_first();
-  while (obj != 0) {
-    if ((obj->oclass->passconfig & PC_FORCE_NAME) == PC_FORCE_NAME) {
-      if (0 == strcmp(obj->name, "")) {
+  while (obj != 0)
+  {
+    if ((obj->oclass->passconfig & PC_FORCE_NAME) == PC_FORCE_NAME)
+    {
+      if (0 == strcmp(obj->name, ""))
+      {
         output_warning("init: object %s:%d should have a name, but doesn't",
                        obj->oclass->name, obj->id);
         /* TROUBLESHOOT
@@ -1205,7 +1324,8 @@ std::vector<OBJECT *> object_heartbeats = {}; // use vector for dynamic sizing
 unsigned int n_object_heartbeats = 0;
 unsigned int max_object_heartbeats = 0;
 
-static STATUS init_all() {
+static STATUS init_all()
+{
   OBJECT *obj;
   STATUS rv = SUCCESS;
   output_verbose("initializing objects...");
@@ -1218,7 +1338,8 @@ static STATUS init_all() {
   if (loadshape_initall() == FAILED || enduse_initall() == FAILED)
     return FAILED;
 
-  switch (global_init_sequence) {
+  switch (global_init_sequence)
+  {
   case IS_CREATION:
     rv = init_by_creation();
     break;
@@ -1242,11 +1363,14 @@ static STATUS init_all() {
     return FAILED;
 
   /* collect heartbeat objects */
-  for (obj = object_get_first(); obj != nullptr; obj = obj->next) {
+  for (obj = object_get_first(); obj != nullptr; obj = obj->next)
+  {
     /* this is a heartbeat object */
-    if (obj->heartbeat > 0) {
+    if (obj->heartbeat > 0)
+    {
       /* need more space */
-      if (n_object_heartbeats >= max_object_heartbeats) {
+      if (n_object_heartbeats >= max_object_heartbeats)
+      {
         // OBJECT **bigger;
         int size =
             (max_object_heartbeats == 0 ? 256 : (max_object_heartbeats * 2));
@@ -1254,7 +1378,8 @@ static STATUS init_all() {
 
         std::vector<OBJECT *> bigger(size);
 
-        if (max_object_heartbeats > 0) {
+        if (max_object_heartbeats > 0)
+        {
           // memcpy(bigger,object_heartbeats,max_object_heartbeats*sizeof(OBJECT*));
           std::copy(object_heartbeats.begin(),
                     object_heartbeats.begin() + max_object_heartbeats,
@@ -1286,7 +1411,8 @@ static STATUS init_all() {
 // } SIMPLELINKLIST;
 
 // Define the linked list node structure
-struct s_simplelinklist {
+struct s_simplelinklist
+{
   void *data; // Use std::shared_ptr<void> for data to improve safety compared
               // to raw void*.
   std::unique_ptr<s_simplelinklist>
@@ -1299,18 +1425,23 @@ using SIMPLELINKLIST = s_simplelinklist;
 /**************************************************************************
  ** PRECOMMIT ITERATOR
  **************************************************************************/
-static STATUS precommit_all(TIMESTAMP t0) {
+static STATUS precommit_all(TIMESTAMP t0)
+{
   STATUS rv = SUCCESS;
   static int first = 1;
   static std::unique_ptr<SIMPLELINKLIST> precommit_list = nullptr;
   std::unique_ptr<SIMPLELINKLIST> item = nullptr;
-  if (first) {
+  if (first)
+  {
     OBJECT *obj;
-    for (obj = object_get_first(); obj != nullptr; obj = object_get_next(obj)) {
-      if (obj->oclass->precommit != nullptr) {
+    for (obj = object_get_first(); obj != nullptr; obj = object_get_next(obj))
+    {
+      if (obj->oclass->precommit != nullptr)
+      {
         /*item = (SIMPLELINKLIST*)malloc(sizeof(SIMPLELINKLIST));*/
         item = std::make_unique<SIMPLELINKLIST>();
-        if (item == nullptr) {
+        if (item == nullptr)
+        {
           char name[64];
           output_error("object %s precommit memory allocation failed",
                        object_name(obj, name, sizeof(name) - 1));
@@ -1328,14 +1459,18 @@ static STATUS precommit_all(TIMESTAMP t0) {
     first = 0;
   }
 
-  TRY {
+  TRY
+  {
     /* TODO implement this multithreaded */
     for (SIMPLELINKLIST *item = precommit_list.get(); item != nullptr;
-         item = item->next.get()) {
+         item = item->next.get())
+    {
       OBJECT *obj = (OBJECT *)item->data;
       if ((obj->in_svc <= t0 && obj->out_svc >= t0) &&
-          (obj->in_svc_micro >= obj->out_svc_micro)) {
-        if (object_precommit(obj, t0) == FAILED) {
+          (obj->in_svc_micro >= obj->out_svc_micro))
+      {
+        if (object_precommit(obj, t0) == FAILED)
+        {
           char name[64];
           output_error("object %s precommit failed",
                        object_name(obj, name, sizeof(name) - 1));
@@ -1350,7 +1485,8 @@ static STATUS precommit_all(TIMESTAMP t0) {
       }
     }
   }
-  CATCH(const char *msg) {
+  CATCH(const char *msg)
+  {
     output_error("precommit_all() failure: %s", msg);
     /* TROUBLESHOOT
             The precommit'ing procedure failed.  This is usually preceded
@@ -1368,14 +1504,17 @@ static STATUS precommit_all(TIMESTAMP t0) {
  **************************************************************************/
 static std::unique_ptr<SIMPLELINKLIST> commit_list[2] = {nullptr, nullptr};
 /* initialize commit_list - must be called only once */
-static int commit_init() {
+static int commit_init()
+{
   int n_commits = 0;
   OBJECT *obj;
   std::unique_ptr<SIMPLELINKLIST> item = nullptr;
 
   /* build commit list */
-  for (obj = object_get_first(); obj != nullptr; obj = object_get_next(obj)) {
-    if (obj->oclass->commit != nullptr) {
+  for (obj = object_get_first(); obj != nullptr; obj = object_get_next(obj))
+  {
+    if (obj->oclass->commit != nullptr)
+    {
       /* separate observers */
       unsigned int pc =
           ((obj->oclass->passconfig & PC_OBSERVER) == PC_OBSERVER) ? 1 : 0;
@@ -1392,26 +1531,31 @@ static int commit_init() {
   return n_commits;
 }
 /* commit_list iterator */
-static MTIITEM commit_get0(MTIITEM item) {
+static MTIITEM commit_get0(MTIITEM item)
+{
   if (item == nullptr)
     return (MTIITEM)commit_list[0].get();
-  else {
+  else
+  {
     // return (MTIITEM)(((SIMPLELINKLIST*)item)->next);
     SIMPLELINKLIST *node = static_cast<SIMPLELINKLIST *>(item);
     return static_cast<void *>(node->next.get());
   }
 }
-static MTIITEM commit_get1(MTIITEM item) {
+static MTIITEM commit_get1(MTIITEM item)
+{
   if (item == nullptr)
     return (MTIITEM)commit_list[1].get();
-  else {
+  else
+  {
     // return (MTIITEM)(((SIMPLELINKLIST*)item)->next);
     SIMPLELINKLIST *node = static_cast<SIMPLELINKLIST *>(item);
     return static_cast<void *>(node->next.get());
   }
 }
 /* commit function call */
-static void commit_call(MTIDATA output, MTIITEM item, MTIDATA input) {
+static void commit_call(MTIDATA output, MTIITEM item, MTIDATA input)
+{
   // OBJECT *obj = (OBJECT*)(((SIMPLELINKLIST*)item)->data);
   // TIMESTAMP *t2 = (TIMESTAMP*)output;
   // TIMESTAMP *t0 = (TIMESTAMP*)input;
@@ -1440,34 +1584,45 @@ static void commit_call(MTIDATA output, MTIITEM item, MTIDATA input) {
   TIMESTAMP *t2 = static_cast<TIMESTAMP *>(output.get());
 
   // Ensure timestamps point to valid memory
-  if (t0 && t2) {
-    if (*t0 < obj->in_svc) {
+  if (t0 && t2)
+  {
+    if (*t0 < obj->in_svc)
+    {
       *t2 = obj->in_svc;
-    } else if ((*t0 == obj->in_svc) && (obj->in_svc_micro != 0)) {
+    }
+    else if ((*t0 == obj->in_svc) && (obj->in_svc_micro != 0))
+    {
       *t2 = obj->in_svc + 1;
-    } else if (obj->out_svc >= *t0) {
+    }
+    else if (obj->out_svc >= *t0)
+    {
       *t2 = obj->oclass->commit(obj, *t0);
-    } else {
+    }
+    else
+    {
       *t2 = TS_NEVER;
     }
   }
 }
 /* commit data set accessor */
-static MTIDATA commit_set(MTIDATA to, MTIDATA from) {
+static MTIDATA commit_set(MTIDATA to, MTIDATA from)
+{
   /* allocation request */
   if (to == nullptr)
     // to = (MTIDATA)malloc(sizeof(TIMESTAMP));
     to = std::make_shared<MTIDATA>();
 
   /* clear request (may follow allocation request) */
-  if (from == nullptr) {
+  if (from == nullptr)
+  {
     //*(TIMESTAMP*)to = TS_NEVER;
     auto to_timestamp = static_cast<TIMESTAMP *>(to.get());
     *to_timestamp = TS_NEVER;
   }
 
   /* copy request */
-  else {
+  else
+  {
     // memcpy(to,from,sizeof(TIMESTAMP));
     auto from_timestamp = static_cast<TIMESTAMP *>(from.get());
     auto to_timestamp = static_cast<TIMESTAMP *>(to.get());
@@ -1477,7 +1632,8 @@ static MTIDATA commit_set(MTIDATA to, MTIDATA from) {
   return to;
 }
 /* commit data compare accessor */
-static int commit_compare(MTIDATA a, MTIDATA b) {
+static int commit_compare(MTIDATA a, MTIDATA b)
+{
   /*TIMESTAMP t0 = (a?*(TIMESTAMP*)a:TS_NEVER);
   TIMESTAMP t1 = (b?*(TIMESTAMP*)b:TS_NEVER);
   */
@@ -1490,7 +1646,8 @@ static int commit_compare(MTIDATA a, MTIDATA b) {
   return 0;
 }
 /* commit data gather accessor */
-static void commit_gather(MTIDATA a, MTIDATA b) {
+static void commit_gather(MTIDATA a, MTIDATA b)
+{
   // TIMESTAMP *t0 = (TIMESTAMP*)a;
   // TIMESTAMP *t1 = (TIMESTAMP*)b;
   // if ( a==nullptr || b==nullptr ) return;
@@ -1509,7 +1666,8 @@ static void commit_gather(MTIDATA a, MTIDATA b) {
     t0 = t1;
 }
 /* commit iterator reject test */
-static int commit_reject(MTI *mti, MTIDATA value) {
+static int commit_reject(MTI *mti, MTIDATA value)
+{
   // TIMESTAMP *t1 = (TIMESTAMP*)value;
   // TIMESTAMP *t2 = (TIMESTAMP*)mti->output;
   // if ( value==nullptr ) return 0;
@@ -1530,23 +1688,32 @@ static int commit_reject(MTI *mti, MTIDATA value) {
   return (t2 > t1 && t2 < TS_NEVER) ? 1 : 0;
 }
 /* single threaded version of commit_all */
-static TIMESTAMP commit_all_st(TIMESTAMP t0, TIMESTAMP t2) {
+static TIMESTAMP commit_all_st(TIMESTAMP t0, TIMESTAMP t2)
+{
   TIMESTAMP result = TS_NEVER;
   SIMPLELINKLIST *item;
   unsigned int pc;
-  for (pc = 0; pc < 2; pc++) {
+  for (pc = 0; pc < 2; pc++)
+  {
     for (item = commit_list[pc].get(); item != nullptr;
-         item = item->next.get()) {
+         item = item->next.get())
+    {
       OBJECT *obj = (OBJECT *)item->data;
-      if (t0 < obj->in_svc) {
+      if (t0 < obj->in_svc)
+      {
         if (obj->in_svc < result)
           result = obj->in_svc;
-      } else if ((t0 == obj->in_svc) && (obj->in_svc_micro != 0)) {
+      }
+      else if ((t0 == obj->in_svc) && (obj->in_svc_micro != 0))
+      {
         if (obj->in_svc == result)
           result = obj->in_svc + 1;
-      } else if (obj->out_svc >= t0) {
+      }
+      else if (obj->out_svc >= t0)
+      {
         TIMESTAMP next = object_commit(obj, t0, t2);
-        if (next == TS_INVALID) {
+        if (next == TS_INVALID)
+        {
           char name[64];
           throw_exception("object %s commit failed",
                           object_name(obj, name, sizeof(name) - 1));
@@ -1564,7 +1731,8 @@ static TIMESTAMP commit_all_st(TIMESTAMP t0, TIMESTAMP t2) {
   return result;
 }
 /* multi-threaded version of commit_all */
-static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2) {
+static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
+{
   static int n_commits = -1;
   static MTI *mti[] = {nullptr, nullptr};
   static int init_tried = false;
@@ -1576,7 +1744,8 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2) {
 
   TIMESTAMP result = TS_NEVER;
 
-  TRY {
+  TRY
+  {
     unsigned int pc;
 
     /* build commit list */
@@ -1584,12 +1753,17 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2) {
       n_commits = commit_init();
 
     /* if no commits found, stop here */
-    if (n_commits == 0) {
+    if (n_commits == 0)
+    {
       result = TS_NEVER;
-    } else {
+    }
+    else
+    {
       /* initialize MTI */
-      for (pc = 0; pc < 2; pc++) {
-        if (mti[pc] == nullptr && global_threadcount != 1 && !init_tried) {
+      for (pc = 0; pc < 2; pc++)
+      {
+        if (mti[pc] == nullptr && global_threadcount != 1 && !init_tried)
+        {
           /* build mti */
           static MTIFUNCTIONS fns[] = {
               {commit_get0, commit_call, commit_set, commit_compare,
@@ -1598,7 +1772,8 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2) {
                commit_gather, commit_reject},
           };
           mti[pc] = mti_init("commit", &fns[pc], 8);
-          if (mti[pc] == nullptr) {
+          if (mti[pc] == nullptr)
+          {
             output_warning(
                 "commit_all multi-threaded iterator initialization failed - "
                 "using single-threaded iterator as fallback");
@@ -1617,7 +1792,8 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2) {
       }
     }
   }
-  CATCH(const char *msg) {
+  CATCH(const char *msg)
+  {
     output_error("commit_all() failure: %s", msg);
     /* TROUBLESHOOT
             The commit'ing procedure failed.  This is usually preceded
@@ -1703,18 +1879,23 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2) {
 /**************************************************************************
  ** FINALIZE ITERATOR
  **************************************************************************/
-static STATUS finalize_all() {
+static STATUS finalize_all()
+{
   STATUS rv = SUCCESS;
   static int first = 1;
   static std::unique_ptr<SIMPLELINKLIST> finalize_list = nullptr;
   std::unique_ptr<SIMPLELINKLIST> item = nullptr;
-  if (first) {
+  if (first)
+  {
     OBJECT *obj;
-    for (obj = object_get_first(); obj != nullptr; obj = object_get_next(obj)) {
-      if (obj->oclass->finalize != nullptr) {
+    for (obj = object_get_first(); obj != nullptr; obj = object_get_next(obj))
+    {
+      if (obj->oclass->finalize != nullptr)
+      {
         // item = (SIMPLELINKLIST*)malloc(sizeof(SIMPLELINKLIST));
         item = std::make_unique<SIMPLELINKLIST>();
-        if (item == nullptr) {
+        if (item == nullptr)
+        {
           char name[64];
           output_error("object %s finalize memory allocation failed",
                        object_name(obj, name, sizeof(name) - 1));
@@ -1732,12 +1913,15 @@ static STATUS finalize_all() {
     first = 0;
   }
 
-  TRY {
+  TRY
+  {
     /* TODO implement this multithreaded */
     for (SIMPLELINKLIST *item = finalize_list.get(); item != nullptr;
-         item = item->next.get()) {
+         item = item->next.get())
+    {
       OBJECT *obj = (OBJECT *)item->data;
-      if (object_finalize(obj) == FAILED) {
+      if (object_finalize(obj) == FAILED)
+      {
         char name[64];
         output_error("object %s finalize failed",
                      object_name(obj, name, sizeof(name) - 1));
@@ -1751,7 +1935,8 @@ static STATUS finalize_all() {
       }
     }
   }
-  CATCH(const char *msg) {
+  CATCH(const char *msg)
+  {
     output_error("finalize_all() failure: %s", msg);
     /* TROUBLESHOOT
             The finalizing procedure failed.  This is usually preceded
@@ -1767,25 +1952,29 @@ static STATUS finalize_all() {
 STATUS exec_test(struct sync_data *data, int pass, OBJECT *obj);
 
 STATUS t_setup_ranks() { return setup_ranks(); }
-STATUS t_sync_all(PASSCONFIG pass) {
+STATUS t_sync_all(PASSCONFIG pass)
+{
   struct sync_data sync = {TS_NEVER, 0, SUCCESS};
   int pass_index = ((int)(pass / 2)); /* 1->0, 2->1, 4->2; NB: if a fourth pass
                                          is added this won't work right */
 
   /* scan the ranks of objects */
-  if (ranks[pass_index] != nullptr) {
+  if (ranks[pass_index] != nullptr)
+  {
     int i;
 
     /* process object in order of rank using index */
     for (i = PASSINIT(pass_index); PASSCMP(i, pass_index);
-         i += PASSINC(pass_index)) {
+         i += PASSINC(pass_index))
+    {
       LISTITEM *item;
       /* skip empty lists */
       if (ranks[pass_index]->ordinal[i] == nullptr)
         continue;
 
       for (item = ranks[pass_index]->ordinal[i]->first; item != nullptr;
-           item = item->next) {
+           item = item->next)
+      {
         OBJECT *obj = static_cast<OBJECT *>(item->data);
         if (exec_test(&sync, pass, obj) == FAILED)
           return FAILED;
@@ -1810,10 +1999,12 @@ STATUS t_sync_all(PASSCONFIG pass) {
   return SUCCESS;
 }
 
-TIMESTAMP sync_heartbeats() {
+TIMESTAMP sync_heartbeats()
+{
   TIMESTAMP t1 = TS_NEVER;
   unsigned int n;
-  for (n = 0; n < n_object_heartbeats; n++) {
+  for (n = 0; n < n_object_heartbeats; n++)
+  {
     TIMESTAMP t2 = object_heartbeat(object_heartbeats[n]);
     if (absolute_timestamp(t2) < absolute_timestamp(t1))
       t1 = t2;
@@ -1824,7 +2015,8 @@ TIMESTAMP sync_heartbeats() {
 }
 
 /* this function synchronizes all internal behaviors */
-TIMESTAMP syncall_internals(TIMESTAMP t1) {
+TIMESTAMP syncall_internals(TIMESTAMP t1)
+{
   TIMESTAMP h1, h2, s1, s2, s3, s4, s5, s6, se, sa;
 
   /* external link must be first */
@@ -1851,7 +2043,8 @@ TIMESTAMP syncall_internals(TIMESTAMP t1) {
 
   // Round off to the minimum timestep
   if (global_minimum_timestep > 1 && absolute_timestamp(sa) > global_clock &&
-      sa < TS_NEVER) {
+      sa < TS_NEVER)
+  {
     if (sa > 0)
       sa = (((sa - 1) / global_minimum_timestep) + 1) * global_minimum_timestep;
     else
@@ -1861,7 +2054,8 @@ TIMESTAMP syncall_internals(TIMESTAMP t1) {
   return sa;
 }
 
-void exec_sleep(unsigned int usec) {
+void exec_sleep(unsigned int usec)
+{
 #ifdef _WIN32
   Sleep(usec / 1000);
 #else
@@ -1869,7 +2063,8 @@ void exec_sleep(unsigned int usec) {
 #endif
 }
 
-typedef struct s_objsyncdata {
+typedef struct s_objsyncdata
+{
   unsigned int n; // thread id 0~n_threads for this object rank list
   // pthread_t pt;
   bool ok;
@@ -1899,7 +2094,8 @@ std::condition_variable_any mls_svr_signal;
 
 int mls_created = 0;
 
-void exec_mls_create() {
+void exec_mls_create()
+{
   int rv = 0;
 
   mls_created = 1;
@@ -1917,8 +2113,10 @@ void exec_mls_create() {
   // }
 }
 
-void exec_mls_init() {
-  if (mls_created == 0) {
+void exec_mls_init()
+{
+  if (mls_created == 0)
+  {
     exec_mls_create();
   }
   if (global_mainloopstate == MLS_PAUSED)
@@ -1927,7 +2125,8 @@ void exec_mls_init() {
     sched_update(global_clock, global_mainloopstate);
 }
 
-void exec_mls_suspend() {
+void exec_mls_suspend()
+{
   int loopctr = 10;
   int rv = 0;
   output_debug("pausing simulation");
@@ -1949,8 +2148,10 @@ void exec_mls_suspend() {
   sched_update(global_clock, global_mainloopstate = MLS_PAUSED);
   output_debug("wait loop_");
   while (global_clock == TS_ZERO || (global_clock >= global_mainlooppauseat &&
-                                     global_mainlooppauseat < TS_NEVER)) {
-    if (loopctr > 0) {
+                                     global_mainlooppauseat < TS_NEVER))
+  {
+    if (loopctr > 0)
+    {
       output_debug(" * tick (%i)", --loopctr);
     }
     // rv = pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
@@ -1971,7 +2172,8 @@ void exec_mls_suspend() {
   }*/
 }
 
-void exec_mls_resume(TIMESTAMP ts) {
+void exec_mls_resume(TIMESTAMP ts)
+{
   int rv = 0;
   // rv = pthread_mutex_lock(&mls_svr_lock);
   std::unique_lock<std::shared_mutex> lock(
@@ -2000,7 +2202,8 @@ void exec_mls_resume(TIMESTAMP ts) {
   mls_svr_signal.notify_all();
 }
 
-void exec_mls_statewait(unsigned states) {
+void exec_mls_statewait(unsigned states)
+{
   // pthread_mutex_lock(&mls_svr_lock);
   std::unique_lock<std::shared_mutex> lock(
       SharedMutexManager::get_mutex(&mls_svr_lock));
@@ -2010,7 +2213,8 @@ void exec_mls_statewait(unsigned states) {
   // pthread_mutex_unlock(&mls_svr_lock);
 }
 
-void exec_mls_done() {
+void exec_mls_done()
+{
   sched_update(global_clock, global_mainloopstate = MLS_DONE);
   // pthread_mutex_destroy(&mls_svr_lock);
   // pthread_cond_destroy(&mls_svr_signal);
@@ -2061,7 +2265,7 @@ void exec_sync_reset(std::shared_ptr<struct sync_data>
 // to merge from */
 void exec_sync_merge(
     std::shared_ptr<struct sync_data>
-        &to, /**< sync data to merge to (nullptr to update main)  **/
+        &to,                                 /**< sync data to merge to (nullptr to update main)  **/
     std::shared_ptr<struct sync_data> &from) /**< sync data to merge from */
 {
   if (to == nullptr)
@@ -2072,7 +2276,8 @@ void exec_sync_merge(
     return;
   if (exec_sync_isinvalid(from))
     exec_sync_set(to, TS_INVALID, false);
-  else if (exec_sync_isnever(from)) {
+  else if (exec_sync_isnever(from))
+  {
   } /* do nothing */
   else if (exec_sync_ishard(from))
     exec_sync_set(to, exec_sync_get(from), false);
@@ -2095,9 +2300,9 @@ void exec_sync_merge(
  **/
 void exec_sync_set(
     std::shared_ptr<struct sync_data>
-        &d,      /**< sync data to update (nullptr to update main) */
-    TIMESTAMP t, /**< timestamp to update with (negative time means soft event,
-                    0 means failure) */
+        &d,         /**< sync data to update (nullptr to update main) */
+    TIMESTAMP t,    /**< timestamp to update with (negative time means soft event,
+                       0 means failure) */
     bool deltaflag) /**< flag to let us know this was a deltamode exit - force
                        it forward, otherwise can fail to exit */
 {
@@ -2105,7 +2310,8 @@ void exec_sync_set(
     d = main_sync;
   if (t == TS_NEVER)
     return; /* nothing to do */
-  if (t == TS_INVALID) {
+  if (t == TS_INVALID)
+  {
     d->status = FAILED;
     return;
   }
@@ -2115,29 +2321,37 @@ void exec_sync_set(
         "hard_event=%d, STATUS=%s}, TIMESTAMP t=%lli): timestamp is not valid",
         d->step_to, d->hard_event, d->status == SUCCESS ? "SUCCESS" : "FAILED",
         t);
-  if (d->step_to == TS_NEVER) {
-    if (t < TS_NEVER && t > 0) {
+  if (d->step_to == TS_NEVER)
+  {
+    if (t < TS_NEVER && t > 0)
+    {
       d->step_to = t;
       d->hard_event++;
-    } else if (t < 0)
+    }
+    else if (t < 0)
       d->step_to = -t;
     else
       d->status = FAILED;
-  } else if (t > 0) /* hard event */
+  }
+  else if (t > 0) /* hard event */
   {
     d->hard_event++;
-    if (deltaflag == false) {
+    if (deltaflag == false)
+    {
       if (d->step_to > t)
         d->step_to = t;
-    } else /* Deltamode exit - override us */
+    }
+    else /* Deltamode exit - override us */
     {
       d->step_to = t;
     }
-  } else if (t < 0) /* soft event */
+  }
+  else if (t < 0) /* soft event */
   {
     if (d->step_to > -t)
       d->step_to = -t;
-  } else // t==0 -> invalid
+  }
+  else // t==0 -> invalid
   {
     d->status = FAILED;
   }
@@ -2217,22 +2431,28 @@ STATUS exec_sync_getstatus(
         @return true if the simulation should keep going, false if it should
  stop
  **/
-bool exec_sync_isrunning(std::shared_ptr<struct sync_data> d) {
+bool exec_sync_isrunning(std::shared_ptr<struct sync_data> d)
+{
   return exec_sync_get(d) <= global_stoptime && !exec_sync_isnever(d) &&
          exec_sync_ishard(d);
 }
 
-void exec_clock_update_modules() {
+void exec_clock_update_modules()
+{
   std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
   TIMESTAMP t1 = exec_sync_get(sync_data_nullptr);
   MODULE *mod;
   int ok = 0;
-  while (!ok) {
+  while (!ok)
+  {
     ok = 1;
-    for (mod = module_get_first(); mod != nullptr; mod = mod->next) {
-      if (mod->clockupdate != nullptr) {
+    for (mod = module_get_first(); mod != nullptr; mod = mod->next)
+    {
+      if (mod->clockupdate != nullptr)
+      {
         TIMESTAMP t2 = mod->clockupdate(reinterpret_cast<TIMESTAMP *>(t1));
-        if (t2 < t1) {
+        if (t2 < t1)
+        {
           t1 = t2;
           ok = 0;
         }
@@ -2242,7 +2462,8 @@ void exec_clock_update_modules() {
   exec_sync_set(sync_data_nullptr, t1, false);
 }
 
-STATUS multi_thread_init() {
+STATUS multi_thread_init()
+{
   // Only setup threadpool for each object rank list at the first iteration;
   cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
   // int n_threads; //number of thread used in the threadpool of an object rank
@@ -2252,7 +2473,8 @@ STATUS multi_thread_init() {
   std::vector<std::shared_ptr<struct arg_data>> arg_data_array = {};
   int j;
   /* set thread count equal to processor count if not passed on command-line */
-  if (global_threadcount == 0) {
+  if (global_threadcount == 0)
+  {
     global_threadcount = processor_count();
     output_verbose("using %d helper thread(s)", global_threadcount);
   }
@@ -2267,7 +2489,8 @@ STATUS multi_thread_init() {
   // threadpool_data = new threadpool_thread_data(global_threadcount,
   // threadpool);
   thread_data = std::make_shared<struct thread_data>();
-  if (!thread_data) {
+  if (!thread_data)
+  {
     output_error("thread memory allocation failed");
     /* TROUBLESHOOT
             A thread memory allocation failed.
@@ -2281,7 +2504,8 @@ STATUS multi_thread_init() {
   // for (j = 0; j < thread_data->count; j++)
   // thread_data->data[j].status = SUCCESS;
 
-  for (j = 0; j < thread_data->count; j++) {
+  for (j = 0; j < thread_data->count; j++)
+  {
     thread_data->data[j] = std::make_shared<struct sync_data>();
     thread_data->data[j]->status = SUCCESS;
   }
@@ -2394,7 +2618,8 @@ STATUS multi_thread_init() {
  *  MAIN EXEC LOOP
  ******************************************************************/
 // Commenting everything related to multithreading
-STATUS run_preparation() {
+STATUS run_preparation()
+{
   // Only setup threadpool for each object rank list at the first iteration;
   cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
   // After the first iteration, setTP = false;
@@ -2408,7 +2633,8 @@ STATUS run_preparation() {
 
   // Ensure deterministic behavior by setting a fixed random seed if not already
   // set
-  if (global_randomseed == 0) {
+  if (global_randomseed == 0)
+  {
     global_randomseed = 42; // Default seed for reproducibility
     output_verbose(
         "Setting default random seed to %d for deterministic behavior",
@@ -2420,7 +2646,8 @@ STATUS run_preparation() {
   exec_mls_init();
 
   /* perform object initialization */
-  if (init_all() == FAILED) {
+  if (init_all() == FAILED)
+  {
     output_error("model initialization failed");
     /* TROUBLESHOOT
             The initialization procedure failed.  This is usually preceded
@@ -2431,7 +2658,8 @@ STATUS run_preparation() {
   }
 
   /* establish rank index if necessary */
-  if (ranks == nullptr && setup_ranks() == FAILED) {
+  if (ranks == nullptr && setup_ranks() == FAILED)
+  {
     output_error("ranks setup failed");
     /* TROUBLESHOOT
             The rank setup procedure failed.  This is usually preceded
@@ -2453,22 +2681,28 @@ STATUS run_preparation() {
   if (global_randomseed != 0 && global_threadcount > 1)
     global_nondeterminism_warning = 1;
 
-  if (!global_debug_mode) {
+  if (!global_debug_mode)
+  {
     /* schedule progress report event */
-    if (global_show_progress) {
+    if (global_show_progress)
+    {
       realtime_schedule_event(realtime_now() + 1, show_progress);
     }
 
-    if (multi_thread_init() == FAILED) {
+    if (multi_thread_init() == FAILED)
+    {
       return FAILED;
     }
-  } else {
+  }
+  else
+  {
     output_debug("debug mode running single threaded");
     output_message("GridLAB-D entering debug mode");
   }
 
   /* realtime startup */
-  if (global_run_realtime > 0) {
+  if (global_run_realtime > 0)
+  {
     char buffer[64];
     time_t gtime;
     time(&gtime);
@@ -2499,7 +2733,8 @@ STATUS run_preparation() {
   signal(SIGTERM, exec_sighandler);
 
   /* initialize delta mode */
-  if (!delta_init()) {
+  if (!delta_init())
+  {
     output_error("delta mode initialization failed");
     /* TROUBLESHOOT
        The initialization of the deltamode subsystem failed.
@@ -2511,10 +2746,12 @@ STATUS run_preparation() {
   // count how many object rank list in one iteration
   nObjRankList = 0;
   /* scan the ranks of objects */
-  for (pass = 0; ranks[pass] != nullptr; pass++) {
+  for (pass = 0; ranks[pass] != nullptr; pass++)
+  {
     int i;
     /* process object in order of rank using index */
-    for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass)) {
+    for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
+    {
       /* skip empty lists */
       if (ranks[pass]->ordinal[i] == nullptr)
         continue;
@@ -2541,17 +2778,20 @@ STATUS run_preparation() {
   //	n_threads = new unsigned int[nObjRankList]{0};
 
   next_t1.resize(nObjRankList);
-  for (iObjRankList = 0; iObjRankList < nObjRankList; iObjRankList++) {
+  for (iObjRankList = 0; iObjRankList < nObjRankList; iObjRankList++)
+  {
     next_t1[iObjRankList] = std::make_unique<unsigned int>(0);
   }
 
   donecount.resize(nObjRankList);
-  for (iObjRankList = 0; iObjRankList < nObjRankList; iObjRankList++) {
+  for (iObjRankList = 0; iObjRankList < nObjRankList; iObjRankList++)
+  {
     donecount[iObjRankList] = std::make_unique<unsigned int>(0);
   }
 
   // allocation and nitialize mutex and cond for object rank lists
-  for (k = 0; k < nObjRankList; k++) {
+  for (k = 0; k < nObjRankList; k++)
+  {
     startlock.push_back(std::make_unique<std::mutex>());
     donelock.push_back(std::make_unique<std::mutex>());
     start.push_back(std::make_unique<std::condition_variable>());
@@ -2573,9 +2813,11 @@ STATUS run_preparation() {
   return SUCCESS;
 }
 
-int handle_delta_mode_operation() {
+int handle_delta_mode_operation()
+{
   DT deltatime = delta_update();
-  if (deltatime == DT_INVALID) {
+  if (deltatime == DT_INVALID)
+  {
     output_error("delta_update() failed, deltamode operation cannot continue");
     /*  TROUBLESHOOT
     An error was encountered while trying to perform a deltamode update.  Look
@@ -2586,7 +2828,9 @@ int handle_delta_mode_operation() {
     global_simulation_mode = SM_ERROR;
     THROW("Deltamode simulation failure");
     return -1; // Just in case, but probably not needed
-  } else if (deltatime > 0) {
+  }
+  else if (deltatime > 0)
+  {
     /* Reset the iteration counter here - if we made it this far, we moved
      * forward */
     /* If a simulate "stays" in deltamode too long, the periodic checks will
@@ -2601,10 +2845,12 @@ int handle_delta_mode_operation() {
 }
 
 void report_performance_after_run(time_t start_time, int64 passes,
-                                  int64 tsteps) {
+                                  int64 tsteps)
+{
   std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
   /* report performance */
-  if (global_profiler && !exec_sync_isinvalid(sync_data_nullptr)) {
+  if (global_profiler && !exec_sync_isinvalid(sync_data_nullptr))
+  {
     double elapsed_sim =
         timestamp_to_hours(global_clock) - timestamp_to_hours(global_starttime);
     double elapsed_wall = (double)(realtime_now() - start_time + 1);
@@ -2705,7 +2951,8 @@ void report_performance_after_run(time_t start_time, int64 passes,
                    (double)(global_clock - global_starttime) / tsteps);
     output_profile("Simulation rate         %7.0lf x realtime",
                    (double)(global_clock - global_starttime) / elapsed_wall);
-    if (dp->t_count > 0) {
+    if (dp->t_count > 0)
+    {
       double total =
           dp->t_preupdate + dp->t_update + dp->t_interupdate + dp->t_postupdate;
       output_profile("\nDelta mode profiler results");
@@ -2755,7 +3002,8 @@ void report_performance_after_run(time_t start_time, int64 passes,
 static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
                                                 int64 &passes, int64 &tsteps,
                                                 int &j, LISTITEM *&ptr,
-                                                int &pc_rv, int &iObjRankList) {
+                                                int &pc_rv, int &iObjRankList)
+{
   std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
   TIMESTAMP internal_synctime;
   output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, "
@@ -2775,7 +3023,8 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   if (global_run_realtime == 0 && global_clock >= global_enter_realtime)
     global_run_realtime = 1;
 
-  if (global_run_realtime > 0 && iteration_counter > 0) {
+  if (global_run_realtime > 0 && iteration_counter > 0)
+  {
     double metric = 0.;
     short fall_behind = 0;
     using std::chrono::system_clock;
@@ -2786,16 +3035,20 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
     static std::chrono::time_point<
         system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>>
         t2;
-    if (!initialized) { //[[unlikely]] {
+    if (!initialized)
+    { //[[unlikely]] {
       t1 = system_clock::now();
       t2 = t1 + 1s;
       initialized = true;
-    } else { //[[likely]] {
+    }
+    else
+    { //[[likely]] {
       t1 = t2;
       t2 += 1s; // One second from last time step
     }
 
-    if (system_clock::now() < t2) {
+    if (system_clock::now() < t2)
+    {
       output_verbose(
           "waiting %d nsec",
           std::chrono::nanoseconds(t2 - system_clock::now()).count());
@@ -2803,12 +3056,15 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
       global_clock += global_run_realtime;
       metric = (1.0 * (t2 - t1)) / std::chrono::seconds(1);
       fall_behind = 0;
-    } else {
+    }
+    else
+    {
       output_error("simulation failed to keep up with real time");
       fall_behind++;
     }
 
-    if (fall_behind > 5) { // [[unlikely]] {
+    if (fall_behind > 5)
+    { // [[unlikely]] {
       output_fatal(
           "simulation fell behind realtime for more than 5 consecutive cycles");
     }
@@ -2838,7 +3094,8 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   DT delta_dt = delta_modedesired(&flags);
   TIMESTAMP t = TS_NEVER;
   output_debug("delta_dt is %d", (int)delta_dt);
-  switch (delta_dt) {
+  switch (delta_dt)
+  {
   case DT_INFINITY: /* no dt -> event mode */
     global_simulation_mode = SM_EVENT;
     t = TS_NEVER;
@@ -2848,17 +3105,21 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
     t = TS_INVALID;
     break; /* simulation mode error */
   default: /* valid dt */
-    if (global_minimum_timestep > 1) {
+    if (global_minimum_timestep > 1)
+    {
       global_simulation_mode = SM_ERROR;
       output_error("minimum_timestep must be 1 second to operate in deltamode");
       t = TS_INVALID;
       break;
-    } else {
+    }
+    else
+    {
       if (delta_dt == 0) /* Delta mode now */
       {
         global_simulation_mode = SM_DELTA;
         t = global_clock;
-      } else /* Normal sync - get us to delta point */
+      }
+      else /* Normal sync - get us to delta point */
       {
         global_simulation_mode = SM_EVENT;
         t = global_clock + delta_dt;
@@ -2866,7 +3127,8 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
     }
     break;
   }
-  if (global_simulation_mode == SM_ERROR) {
+  if (global_simulation_mode == SM_ERROR)
+  {
     output_error("a simulation mode error has occurred");
     return false; /* terminate main loop immediately */
   }
@@ -2876,7 +3138,8 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   /* synchronize all internal schedules */
   if (global_clock < 0)
     throw_exception("clock time is negative (global_clock=%lli)", global_clock);
-  else if (global_debug_output) {
+  else if (global_debug_output)
+  {
     char dt[64] = "(invalid)";
     convert_from_timestamp(global_clock, dt, sizeof(dt));
     output_debug("global_clock -> %s\n", dt);
@@ -2894,7 +3157,8 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   /* synchronize all internal schedules */
   internal_synctime = syncall_internals(global_clock);
   if (internal_synctime != TS_NEVER &&
-      absolute_timestamp(internal_synctime) < global_clock) {
+      absolute_timestamp(internal_synctime) < global_clock)
+  {
     // must be able to force reiterations for m/s mode.
     THROW("internal property sync failure");
     /* TROUBLESHOOT
@@ -2909,8 +3173,10 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   exec_sync_set(sync_data_nullptr, internal_synctime, false);
   /* prepare multithreading */
 
-  if (!global_debug_mode) {
-    for (j = 0; j < thread_data->count; j++) {
+  if (!global_debug_mode)
+  {
+    for (j = 0; j < thread_data->count; j++)
+    {
       thread_data->data[j]->hard_event = 0;
       thread_data->data[j]->step_to = TS_NEVER;
     }
@@ -2921,9 +3187,11 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
 #endif
 
   /* run precommit only on first iteration */
-  if (iteration_counter == global_iteration_limit) {
+  if (iteration_counter == global_iteration_limit)
+  {
     pc_rv = precommit_all(global_clock);
-    if (SUCCESS != pc_rv) {
+    if (SUCCESS != pc_rv)
+    {
 
       THROW("precommit failure");
     }
@@ -2931,45 +3199,57 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   iObjRankList = -1;
 
   /* scan the ranks of objects for each pass */
-  for (pass = 0; ranks[pass] != nullptr; pass++) {
+  for (pass = 0; ranks[pass] != nullptr; pass++)
+  {
     int i;
 
     /* process object in order of rank using index */
-    for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass)) {
+    for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
+    {
       /* skip empty lists */
       if (ranks[pass]->ordinal[i] == nullptr)
         continue;
 
       iObjRankList++;
 
-      if (global_debug_mode) {
+      if (global_debug_mode)
+      {
         LISTITEM *item;
         for (item = ranks[pass]->ordinal[i]->first; item != nullptr;
-             item = item->next) {
+             item = item->next)
+        {
           OBJECT *obj = static_cast<OBJECT *>(item->data);
           // @todo change debug so it uses sync API
-          if (exec_debug(main_sync, pass, i, obj) == FAILED) {
+          if (exec_debug(main_sync, pass, i, obj) == FAILED)
+          {
             THROW("debugger quit");
           }
         }
-      } else {
+      }
+      else
+      {
         // sjin: if global_threadcount == 1, no pthread multhreading
-        if (global_threadcount == 1) {
+        if (global_threadcount == 1)
+        {
           for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr;
-               ptr = ptr->next) {
+               ptr = ptr->next)
+          {
             OBJECT *obj = static_cast<OBJECT *>(ptr->data);
             ss_do_object_sync(0, ptr->data);
 
-            if (obj->valid_to == TS_INVALID) {
+            if (obj->valid_to == TS_INVALID)
+            {
               // Get us out of the loop so others don't exec on bad status
               break;
             }
             /// printf("%d %s %d\n", obj->id, obj->name, obj->rank);
           }
           // printf("\n");
-        } else { // sjin: implement pthreads
-                 //  multithread_stuff(i, threadpool, iObjRankList); // Function
-                 //  is disabled
+        }
+        else
+        { // sjin: implement pthreads
+          //  multithread_stuff(i, threadpool, iObjRankList); // Function
+          //  is disabled
         }
       }
     }
@@ -2985,8 +3265,10 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   }
   //	setTP = false;
 
-  if (!global_debug_mode) {
-    for (j = 0; j < thread_data->count; j++) {
+  if (!global_debug_mode)
+  {
+    for (j = 0; j < thread_data->count; j++)
+    {
       exec_sync_merge(sync_data_nullptr, thread_data->data[j]);
     }
 
@@ -2998,7 +3280,8 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   passes++;
 
   /**** LOOPED SLAVE PAUSE HERE ****/
-  if (global_multirun_mode == MRM_SLAVE) {
+  if (global_multirun_mode == MRM_SLAVE)
+  {
     output_debug("step_to = %lli", exec_sync_get(sync_data_nullptr));
     output_debug("exec_start(), slave waiting for looped time signal");
 
@@ -3025,16 +3308,19 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   */
   /* check for clock advance (indicating last pass) */
   if (exec_sync_get(sync_data_nullptr) != global_clock &&
-      global_simulation_mode == SM_EVENT) {
+      global_simulation_mode == SM_EVENT)
+  {
     /* clock update is the very last chance to change the next time */
     exec_clock_update_modules();
-    if (exec_sync_get(sync_data_nullptr) > global_clock) {
+    if (exec_sync_get(sync_data_nullptr) > global_clock)
+    {
       global_federation_reiteration = false;
       TIMESTAMP commit_time = TS_NEVER;
       commit_time = commit_all(global_clock, exec_sync_get(sync_data_nullptr));
       //		commit_time = tp_commit_all(global_clock,
       // exec_sync_get(sync_data_nullptr), threadpool);
-      if (absolute_timestamp(commit_time) <= global_clock) {
+      if (absolute_timestamp(commit_time) <= global_clock)
+      {
         // commit cannot force reiterations, and any event where the time is
         // less than the global clock
         //  indicates that the object is reporting a failure
@@ -3045,8 +3331,10 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
                 the guidance for that message and try again.
          */
         THROW("commit failure");
-      } else if (absolute_timestamp(commit_time) <
-                 exec_sync_get(sync_data_nullptr)) {
+      }
+      else if (absolute_timestamp(commit_time) <
+               exec_sync_get(sync_data_nullptr))
+      {
         exec_sync_set(sync_data_nullptr, commit_time, false);
       }
       /* reset iteration count */
@@ -3055,10 +3343,13 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
 
       /* count number of timesteps */
       tsteps++;
-    } else if (exec_sync_get(sync_data_nullptr) == global_clock) {
+    }
+    else if (exec_sync_get(sync_data_nullptr) == global_clock)
+    {
       iteration_counter = global_iteration_limit;
       global_federation_reiteration = true;
-      if (--federation_iteration_counter == 0) {
+      if (--federation_iteration_counter == 0)
+      {
         output_error(
             "federation convergence iteration limit reached at %s (exec)",
             simtime());
@@ -3073,7 +3364,8 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   }
 
   /* check iteration limit */
-  else if (--iteration_counter == 0) {
+  else if (--iteration_counter == 0)
+  {
     output_error("convergence iteration limit reached at %s (exec)", simtime());
     /* TROUBLESHOOT
             This indicates that the core's solver was unable to determine
@@ -3087,8 +3379,10 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
 
   /* handle delta mode operation */
   if (global_simulation_mode == SM_DELTA &&
-      exec_sync_get(sync_data_nullptr) >= global_clock) {
-    if (handle_delta_mode_operation() == -1) {
+      exec_sync_get(sync_data_nullptr) >= global_clock)
+  {
+    if (handle_delta_mode_operation() == -1)
+    {
       return false; // DELTA MODE FAILURE
     }
   }
@@ -3114,12 +3408,14 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
  **/
 static void run_main_simulation_loop(cpp_threadpool *threadpool, int64 &passes,
                                      int64 &tsteps, int &j, LISTITEM *&ptr,
-                                     int &pc_rv, int &iObjRankList) {
+                                     int &pc_rv, int &iObjRankList)
+{
   int i = 0;
   /* main loop runs for iteration limit, or when nothing futher occurs (ignoring
    * soft events) */
   while (execute_single_simulation_iteration(threadpool, passes, tsteps, j, ptr,
-                                             pc_rv, iObjRankList)) {
+                                             pc_rv, iObjRankList))
+  {
     continue;
   }
 }
@@ -3139,7 +3435,8 @@ static void run_main_simulation_loop(cpp_threadpool *threadpool, int64 &passes,
 static void run_single_simulation_step(cpp_threadpool *threadpool,
                                        int64 &passes, int64 &tsteps, int &j,
                                        LISTITEM *&ptr, int &pc_rv,
-                                       int &iObjRankList) {
+                                       int &iObjRankList)
+{
   /* Execute one iteration using the shared iteration function */
   execute_single_simulation_iteration(threadpool, passes, tsteps, j, ptr, pc_rv,
                                       iObjRankList);
@@ -3149,7 +3446,8 @@ static void run_single_simulation_step(cpp_threadpool *threadpool,
         @return TRUE if simulation is initialized and ready to step, FALSE
  otherwise.
  **/
-bool exec_is_initialized(void) {
+bool exec_is_initialized(void)
+{
   // Check if ranks have been set up - this indicates proper initialization
   return (ranks != nullptr);
 }
@@ -3166,7 +3464,8 @@ STATUS exec_finalize_all(void) { return finalize_all(); }
         @return STATUS is SUCCESS if the step completed successfully, FAILED
  otherwise.
  **/
-STATUS exec_step(void) {
+STATUS exec_step(void)
+{
   // Setup variables needed for the step (similar to exec_start)
   cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
   std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
@@ -3179,7 +3478,8 @@ STATUS exec_step(void) {
   // Check if simulation has been properly initialized
   // exec_step should only be used after exec_start has been called or
   // simulation is initialized
-  if (ranks == nullptr) {
+  if (ranks == nullptr)
+  {
     output_error(
         "exec_step: simulation not properly initialized - ranks not set up");
     delete threadpool;
@@ -3187,7 +3487,8 @@ STATUS exec_step(void) {
   }
 
   // Check if we're in a valid state to step
-  if (iteration_counter <= 0) {
+  if (iteration_counter <= 0)
+  {
     output_verbose(
         "exec_step: simulation has completed or iteration limit reached");
     delete threadpool;
@@ -3195,15 +3496,18 @@ STATUS exec_step(void) {
   }
 
   /* main step exception handler */
-  TRY {
+  TRY
+  {
     /* Store the current clock to detect when it advances */
     TIMESTAMP start_clock = global_clock;
 
     /* Cap the next event time before stepping to avoid overshooting the API
      * step target. */
-    if (global_step_time != TS_NEVER) {
+    if (global_step_time != TS_NEVER)
+    {
       TIMESTAMP next_event = exec_sync_get(sync_data_nullptr);
-      if (next_event > global_step_time) {
+      if (next_event > global_step_time)
+      {
         exec_sync_set(sync_data_nullptr, global_step_time, false);
       }
     }
@@ -3211,24 +3515,29 @@ STATUS exec_step(void) {
     /* Keep running iterations until the clock advances or simulation should
      * stop */
     while (execute_single_simulation_iteration(threadpool, passes, tsteps, j,
-                                               ptr, pc_rv, iObjRankList)) {
+                                               ptr, pc_rv, iObjRankList))
+    {
       /* Check if the clock has advanced - if so, we've completed one step */
-      if (global_clock > start_clock) {
+      if (global_clock > start_clock)
+      {
         break;
       }
 
       /* Check if we need to cap the next event time to avoid overshooting step
        * target */
-      if (global_step_time != TS_NEVER) {
+      if (global_step_time != TS_NEVER)
+      {
         TIMESTAMP next_event = exec_sync_get(sync_data_nullptr);
-        if (next_event > global_step_time) {
+        if (next_event > global_step_time)
+        {
           exec_sync_set(sync_data_nullptr, global_step_time, false);
         }
       }
     }
   }
 
-  CATCH(const char *msg) {
+  CATCH(const char *msg)
+  {
     output_error("exec_step halted: %s", msg);
     result = FAILED;
   }
@@ -3246,9 +3555,11 @@ STATUS exec_step(void) {
     @param target_time The exact time to sync to
     @return STATUS is SUCCESS if the sync succeeded, FAILED otherwise
  **/
-STATUS exec_force_sync_to_time(TIMESTAMP target_time) {
+STATUS exec_force_sync_to_time(TIMESTAMP target_time)
+{
   // Verify simulation is initialized
-  if (ranks == nullptr) {
+  if (ranks == nullptr)
+  {
     output_error(
         "exec_force_sync_to_time: simulation not properly initialized");
     return FAILED;
@@ -3271,24 +3582,29 @@ STATUS exec_force_sync_to_time(TIMESTAMP target_time) {
   // Synchronize internal schedules first
   TIMESTAMP internal_synctime = syncall_internals(global_clock);
   if (internal_synctime != TS_NEVER &&
-      absolute_timestamp(internal_synctime) < global_clock) {
+      absolute_timestamp(internal_synctime) < global_clock)
+  {
     output_error("exec_force_sync_to_time: internal property sync failure");
     return FAILED;
   }
   exec_sync_set(sync_data_nullptr, internal_synctime, false);
 
   // Perform sync passes for all objects
-  for (int pass = 0; ranks[pass] != nullptr; pass++) {
-    for (int i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass)) {
+  for (int pass = 0; ranks[pass] != nullptr; pass++)
+  {
+    for (int i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
+    {
       if (ranks[pass]->ordinal[i] == nullptr)
         continue;
 
       for (LISTITEM *item = ranks[pass]->ordinal[i]->first; item != nullptr;
-           item = item->next) {
+           item = item->next)
+      {
         OBJECT *obj = static_cast<OBJECT *>(item->data);
         TIMESTAMP sync_result = object_sync(obj, target_time, passtype[pass]);
 
-        if (sync_result == TS_INVALID) {
+        if (sync_result == TS_INVALID)
+        {
           output_error("exec_force_sync_to_time: object sync failed for %s",
                        obj->name ? obj->name : "(unnamed)");
           return FAILED;
@@ -3310,7 +3626,8 @@ STATUS exec_force_sync_to_time(TIMESTAMP target_time) {
   // Commit all object states
   TIMESTAMP commit_result = commit_all(global_clock, next_event);
   if (commit_result == TS_INVALID ||
-      absolute_timestamp(commit_result) <= global_clock) {
+      absolute_timestamp(commit_result) <= global_clock)
+  {
     output_error("exec_force_sync_to_time: commit failed");
     return FAILED;
   }
@@ -3324,7 +3641,8 @@ STATUS exec_force_sync_to_time(TIMESTAMP target_time) {
         @return STATUS is SUCCESS if the simulation reached equilibrium,
         and FAILED if a problem was encountered.
  **/
-STATUS exec_start() {
+STATUS exec_start()
+{
   std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
   cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
   int64 passes = 0, tsteps = 0;
@@ -3337,12 +3655,14 @@ STATUS exec_start() {
   LISTITEM *ptr;
   int incr, iObjRankList;
 
-  if (run_preparation() == FAILED) {
+  if (run_preparation() == FAILED)
+  {
     return FAILED;
   }
 
   /* main loop exception handler */
-  TRY {
+  TRY
+  {
     /* Run the main simulation loop */
     run_main_simulation_loop(threadpool, passes, tsteps, j, ptr, pc_rv,
                              iObjRankList);
@@ -3351,7 +3671,8 @@ STATUS exec_start() {
     signal(SIGINT, nullptr);
 
     /* check end state */
-    if (exec_sync_isnever(sync_data_nullptr)) {
+    if (exec_sync_isnever(sync_data_nullptr))
+    {
       char buffer[64];
       output_verbose(
           "simulation at steady state at %s",
@@ -3363,7 +3684,8 @@ STATUS exec_start() {
     /* terminate main loop state control */
     exec_mls_done();
   }
-  CATCH(const char *msg) {
+  CATCH(const char *msg)
+  {
     output_error("exec halted: %s", msg);
     exec_sync_set(sync_data_nullptr, TS_INVALID, false);
     /* TROUBLESHOOT
@@ -3377,7 +3699,8 @@ STATUS exec_start() {
                "exitcode=%i ***",
                exec_sync_get(sync_data_nullptr), global_stoptime,
                exec_sync_getevents(sync_data_nullptr), exec_getexitcode());
-  if (global_multirun_mode == MRM_MASTER) {
+  if (global_multirun_mode == MRM_MASTER)
+  {
     instance_master_done(TS_NEVER); // tell everyone to pack up and go home
   }
 
@@ -3385,7 +3708,8 @@ STATUS exec_start() {
   clock_end = (clock_t)exec_clock();
 
   fnl_rv = finalize_all();
-  if (FAILED == fnl_rv) {
+  if (FAILED == fnl_rv)
+  {
     output_error("finalize_all() failed");
   }
 
@@ -3398,7 +3722,8 @@ STATUS exec_start() {
   //}
 
   /* deallocate threadpool */
-  if (!global_debug_mode) {
+  if (!global_debug_mode)
+  {
     thread_data = nullptr;
 
 #ifdef NEVER
@@ -3458,7 +3783,8 @@ STATUS exec_start() {
   return SUCCESS;
 }
 
-STATUS exec_step(int64 *passes, int64 *tsteps) {
+STATUS exec_step(int64 *passes, int64 *tsteps)
+{
   std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
   cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
   int j = 0, pc_rv = 0, iObjRankList = 0;
@@ -3473,7 +3799,8 @@ STATUS exec_step(int64 *passes, int64 *tsteps) {
   // Check if simulation has been properly initialized
   // exec_step should only be used after exec_start has been called or
   // simulation is initialized
-  if (ranks == nullptr) {
+  if (ranks == nullptr)
+  {
     output_error(
         "exec_step: simulation not properly initialized - ranks not set up");
     delete threadpool;
@@ -3481,7 +3808,8 @@ STATUS exec_step(int64 *passes, int64 *tsteps) {
   }
 
   // Check if we're in a valid state to step
-  if (iteration_counter <= 0) {
+  if (iteration_counter <= 0)
+  {
     output_verbose(
         "exec_step: simulation has completed or iteration limit reached");
     delete threadpool;
@@ -3489,21 +3817,25 @@ STATUS exec_step(int64 *passes, int64 *tsteps) {
   }
 
   /* main step exception handler */
-  TRY {
+  TRY
+  {
     /* Store the current clock to detect when it advances */
     TIMESTAMP start_clock = global_clock;
 
     /* Keep running iterations until the clock advances or simulation should
      * stop */
     while (execute_single_simulation_iteration(
-        threadpool, local_passes, local_tsteps, j, ptr, pc_rv, iObjRankList)) {
+        threadpool, local_passes, local_tsteps, j, ptr, pc_rv, iObjRankList))
+    {
       /* Check if the clock has advanced - if so, we've completed one step */
-      if (global_clock > start_clock) {
+      if (global_clock > start_clock)
+      {
         break;
       }
     }
   }
-  CATCH(const char *msg) {
+  CATCH(const char *msg)
+  {
     output_error("exec_step halted: %s", msg);
     result = FAILED;
   }
@@ -3521,54 +3853,63 @@ STATUS exec_step(int64 *passes, int64 *tsteps) {
   return result;
 }
 
-namespace logger {
+namespace logger
+{
 
-inline std::string
-temp_log_path(const std::string &filename = "env_check.log") {
-  namespace fs = std::filesystem;
-  try {
-    return (fs::temp_directory_path() / filename).string();
-  } catch (const std::exception &ex) {
-    std::cerr << "Warning: temp_directory_path() failed: " << ex.what()
-              << " — using ./env_check.log\n";
-    return "env_check.log";
+  inline std::string
+  temp_log_path(const std::string &filename = "env_check.log")
+  {
+    namespace fs = std::filesystem;
+    try
+    {
+      return (fs::temp_directory_path() / filename).string();
+    }
+    catch (const std::exception &ex)
+    {
+      std::cerr << "Warning: temp_directory_path() failed: " << ex.what()
+                << " — using ./env_check.log\n";
+      return "env_check.log";
+    }
   }
-}
 
-inline std::string now_timestamp() {
-  using clock = std::chrono::system_clock;
-  const auto t = clock::now();
-  const auto tt = clock::to_time_t(t);
-  std::tm tm{};
+  inline std::string now_timestamp()
+  {
+    using clock = std::chrono::system_clock;
+    const auto t = clock::now();
+    const auto tt = clock::to_time_t(t);
+    std::tm tm{};
 #if defined(_WIN32)
-  localtime_s(&tm, &tt);
+    localtime_s(&tm, &tt);
 #else
-  localtime_r(&tt, &tm);
+    localtime_r(&tt, &tm);
 #endif
-  char buf[32];
-  std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm);
-  return buf;
-}
-
-inline void append(const std::string &line,
-                   const std::string &filename = "env_check.log") {
-  const std::string path = temp_log_path(filename);
-  std::ofstream out(path, std::ios::out | std::ios::app);
-  if (!out) {
-    std::cerr << "Warning: unable to open log file: " << path
-              << " — writing to stderr\n";
-    std::cerr << line << '\n';
-    return;
+    char buf[32];
+    std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm);
+    return buf;
   }
-  out << "[" << now_timestamp() << "] " << line << '\n';
-}
+
+  inline void append(const std::string &line,
+                     const std::string &filename = "env_check.log")
+  {
+    const std::string path = temp_log_path(filename);
+    std::ofstream out(path, std::ios::out | std::ios::app);
+    if (!out)
+    {
+      std::cerr << "Warning: unable to open log file: " << path
+                << " — writing to stderr\n";
+      std::cerr << line << '\n';
+      return;
+    }
+    out << "[" << now_timestamp() << "] " << line << '\n';
+  }
 } // namespace logger
 
 /** This is the main simulation loop with optional parameters
         @return STATUS is SUCCESS if the simulation reached equilibrium,
         and FAILED if a problem was encountered.
  **/
-STATUS exec_start(int64 *passes, int64 *tsteps) {
+STATUS exec_start(int64 *passes, int64 *tsteps)
+{
   std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
   cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
   int ptc_rv = 0;                         // unused
@@ -3589,7 +3930,8 @@ STATUS exec_start(int64 *passes, int64 *tsteps) {
 
   logger::append("About to call run_preparation()");
 
-  if (run_preparation() == FAILED) {
+  if (run_preparation() == FAILED)
+  {
     // FILE *prep_fail = fopen("/tmp/env_check.log", "a");
     // fprintf(prep_fail, "run_preparation() returned FAILED\n");
     // fclose(prep_fail);
@@ -3600,7 +3942,8 @@ STATUS exec_start(int64 *passes, int64 *tsteps) {
   }
 
   /* main loop exception handler */
-  TRY {
+  TRY
+  {
 
     /* Run the main simulation loop */
     run_main_simulation_loop(threadpool, local_passes, local_tsteps, j, ptr,
@@ -3610,7 +3953,8 @@ STATUS exec_start(int64 *passes, int64 *tsteps) {
     signal(SIGINT, nullptr);
 
     /* check end state */
-    if (exec_sync_isnever(sync_data_nullptr)) {
+    if (exec_sync_isnever(sync_data_nullptr))
+    {
       char buffer[64];
       output_verbose(
           "simulation at steady state at %s",
@@ -3622,7 +3966,8 @@ STATUS exec_start(int64 *passes, int64 *tsteps) {
     /* terminate main loop state control */
     exec_mls_done();
   }
-  CATCH(const char *msg) {
+  CATCH(const char *msg)
+  {
     output_error("exec halted: %s", msg);
     exec_sync_set(sync_data_nullptr, TS_INVALID, false);
     /* TROUBLESHOOT
@@ -3636,7 +3981,8 @@ STATUS exec_start(int64 *passes, int64 *tsteps) {
                "exitcode=%i ***",
                exec_sync_get(sync_data_nullptr), global_stoptime,
                exec_sync_getevents(sync_data_nullptr), exec_getexitcode());
-  if (global_multirun_mode == MRM_MASTER) {
+  if (global_multirun_mode == MRM_MASTER)
+  {
     instance_master_done(TS_NEVER); // tell everyone to pack up and go home
   }
 
@@ -3644,7 +3990,8 @@ STATUS exec_start(int64 *passes, int64 *tsteps) {
   clock_end = (clock_t)exec_clock();
 
   fnl_rv = finalize_all();
-  if (FAILED == fnl_rv) {
+  if (FAILED == fnl_rv)
+  {
     output_error("finalize_all() failed");
   }
 
@@ -3656,7 +4003,8 @@ STATUS exec_start(int64 *passes, int64 *tsteps) {
   // }
 
   /* deallocate threadpool */
-  if (!global_debug_mode) {
+  if (!global_debug_mode)
+  {
     // free(thread_data);
     thread_data = nullptr;
 
@@ -3719,7 +4067,8 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
     data->hard_event++; /* this counts the number of hard events */
 
   /* check for stopped clock */
-  if (this_t < global_clock) {
+  if (this_t < global_clock)
+  {
     char b[64];
     output_error("%s: object %s stopped its clock! (test)", simtime(),
                  object_name(obj, b, 63));
@@ -3730,13 +4079,18 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
        object's class.
      */
     data->status = FAILED;
-  } else {
+  }
+  else
+  {
     /* check for iteration limit approach */
-    if (iteration_counter == 2 && this_t == global_clock) {
+    if (iteration_counter == 2 && this_t == global_clock)
+    {
       char b[64];
       output_verbose("%s: object %s iteration limit imminent", simtime(),
                      object_name(obj, b, 63));
-    } else if (iteration_counter == 1 && this_t == global_clock) {
+    }
+    else if (iteration_counter == 1 && this_t == global_clock)
+    {
       output_error(
           "convergence iteration limit reached for object %s:%d (test)",
           obj->oclass->name, obj->id);
