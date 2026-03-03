@@ -35,19 +35,23 @@
 
 // IMPORTANT: include winsock2.h BEFORE windows.h (timeval is defined here on
 // Windows)
-#include <sysinfoapi.h> // GetSystemTime[Precise]AsFileTime
-#include <windows.h>
 #include <winsock2.h> // provides struct timeval on Windows
+#include <windows.h>
+
+#include <sysinfoapi.h> // GetSystemTime[Precise]AsFileTime
 
 // Dummy timezone for API compatibility (POSIX code may pass it)
-struct timezone {
+struct timezone
+{
   int tz_minuteswest; // Minutes west of Greenwich
-  int tz_dsttime; // DST flag (non-zero if Daylight Saving Time is in effect)
+  int tz_dsttime;     // DST flag (non-zero if Daylight Saving Time is in effect)
 };
 
 // Windows gettimeofday() shim
-static inline int gettimeofday(struct timeval *tv, struct timezone *tz) {
-  if (tv) {
+static inline int gettimeofday(struct timeval *tv, struct timezone *tz)
+{
+  if (tv)
+  {
     FILETIME ft;
     // Prefer highest precision when available (Win8+), else fall back
 #if defined(_WIN32_WINNT) && (_WIN32_WINNT >= 0x0602) // Windows 8 = 0x0602
@@ -72,7 +76,8 @@ static inline int gettimeofday(struct timeval *tv, struct timezone *tz) {
     tv->tv_usec = static_cast<long>(usec % 1000000ULL);
   }
 
-  if (tz) {
+  if (tz)
+  {
     TIME_ZONE_INFORMATION tzi;
     const DWORD tzid = GetTimeZoneInformation(&tzi);
     // Bias is minutes difference between UTC and local time (commonly used for
@@ -117,16 +122,19 @@ static inline int gettimeofday(struct timeval *tv, struct timezone *tz) {
 #endif
 
 #ifdef __MINGW32__
-char *strtok_t(char *str, const char *delim, char **nextp) {
+char *strtok_t(char *str, const char *delim, char **nextp)
+{
   char *ret;
 
-  if (str == nullptr) {
+  if (str == nullptr)
+  {
     str = *nextp;
   }
 
   str += strspn(str, delim);
 
-  if (*str == '\0') {
+  if (*str == '\0')
+  {
     return nullptr;
   }
 
@@ -134,7 +142,8 @@ char *strtok_t(char *str, const char *delim, char **nextp) {
 
   str += strcspn(str, delim);
 
-  if (*str) {
+  if (*str)
+  {
     *str++ = '\0';
   }
 
@@ -148,13 +157,15 @@ char *strtok_t(char *str, const char *delim, char **nextp) {
 
 static unsigned int *ur_state = nullptr;
 
-unsigned entropy_source(void) {
+unsigned entropy_source(void)
+{
   struct timeval t;
   gettimeofday(&t, nullptr);
   return (unsigned)(getpid() * t.tv_usec);
 }
 
-int random_init(void) {
+int random_init(void)
+{
   /* randomizes the random number generator start value */
   if (global_randomseed == 0)
     global_randomseed = entropy_source();
@@ -167,7 +178,8 @@ int random_init(void) {
 
 /** Converts a distribution name to a #RANDOMTYPE
  **/
-static struct {
+static struct
+{
   const char *name;
   RANDOMTYPE type;
   int nargs;
@@ -195,18 +207,21 @@ static struct {
 RANDOMTYPE random_type(char *name) /**< the name of the distribution */
 {
   for (p = random_map;
-       p < random_map + sizeof(random_map) / sizeof(random_map[0]); p++) {
+       p < random_map + sizeof(random_map) / sizeof(random_map[0]); p++)
+  {
     if (strcmp(p->name, name) == 0)
       return p->type;
   }
   return RANDOMTYPE::RT_INVALID;
 }
 /** Gets the number of arguments required by distribution (0=failed,
-  * -1=variable)
+ * -1=variable)
  **/
-int random_nargs(char *name) {
+int random_nargs(char *name)
+{
   for (p = random_map;
-       p < random_map + sizeof(random_map) / sizeof(random_map[0]); p++) {
+       p < random_map + sizeof(random_map) / sizeof(random_map[0]); p++)
+  {
     if (strcmp(p->name, name) == 0)
       return p->nargs;
   }
@@ -214,32 +229,41 @@ int random_nargs(char *name) {
 }
 
 /** randwarn checks to see if non-determinism warning is necessary **/
-int randwarn(unsigned int *state) {
+int randwarn(unsigned int *state)
+{
   static int warned = 0;
-  if (global_nondeterminism_warning && !warned) {
+  if (global_nondeterminism_warning && !warned)
+  {
     warned = 1;
     output_warning("non-deterministic behavior probable--rand was called while "
                    "running multiple threads");
   }
 
-  if (global_randomnumbergenerator == RNG2) {
+  if (global_randomnumbergenerator == RNG2)
+  {
     /* use the stdc (RNG2) rand functions */
     if (state != nullptr)
       srand(*state);
     return rand();
     /* note that RNG2 does not write back the state */
-  } else if (global_randomnumbergenerator == RNG3) {
+  }
+  else if (global_randomnumbergenerator == RNG3)
+  {
     /* Park-Miller LCG allows very large modulus - this one is use in Cray RANF
      */
 #define MODULUS 281474976710656ULL(2 ^ 48)
 #define MULTIPLIER 44485709377909ULL
-    if (state == nullptr) {
-      if (ur_state != nullptr) {
+    if (state == nullptr)
+    {
+      if (ur_state != nullptr)
+      {
         state = ur_state;
         *ur_state = (unsigned int)((MULTIPLIER * (unsigned int64)(*ur_state)) &
                                    0xffffffffffffULL);
         return ((*state) >> 16) & 0x7fff;
-      } else {
+      }
+      else
+      {
         /* stateless - use the OS rng, which keeps its own internal state */
         return rand();
       }
@@ -250,7 +274,9 @@ int randwarn(unsigned int *state) {
     /* state is truncated to 2^32 */
     return ((*state) >> 16) & 0x7fff;
     /* note that RNG3 writes back the state */
-  } else {
+  }
+  else
+  {
     /* can't recognize what RNG is selected */
     throw_exception("unknown random number generator selected "
                     "(global_randomnumbergenerator==%d)",
@@ -260,7 +286,8 @@ int randwarn(unsigned int *state) {
 }
 
 /* generate a random id number */
-unsigned int64 random_id(void) {
+unsigned int64 random_id(void)
+{
   static unsigned int state = 0;
   int64 rv = 0;
   if (state == 0)
@@ -270,14 +297,16 @@ unsigned int64 random_id(void) {
   rv = (rv << 15) ^ randwarn(&state);
   rv = (rv << 15) ^ randwarn(&state);
   rv = (rv << 3) ^ randwarn(&state);
-  if (rv < 0) {
+  if (rv < 0)
+  {
     return -rv;
   }
   return rv;
 }
 
 /* uniform distribution in range (0,1( */
-double randunit(unsigned int *state) {
+double randunit(unsigned int *state)
+{
   double u;
   unsigned int ur;
   static unsigned int random_lock = 0;
@@ -291,7 +320,8 @@ double randunit(unsigned int *state) {
   bool needs_lock = (state == nullptr || state == ur_state);
   std::unique_lock<std::shared_mutex> lock;
 
-  if (needs_lock) {
+  if (needs_lock)
+  {
     state = ur_state;
     lock = std::unique_lock<std::shared_mutex>(
         SharedMutexManager::get_mutex(&random_lock));
@@ -302,8 +332,10 @@ TryAgain:
   if (state != nullptr && global_randomnumbergenerator == RNG2)
     *state = ur;
   u = ur / (0x7fff + 1.0);
-  if (u <= 0 || u >= 1) {
-    if (state != 0 && *state == 0) {
+  if (u <= 0 || u >= 1)
+  {
+    if (state != 0 && *state == 0)
+    {
       *state = randwarn(0);
       output_warning("randunit() introducing extra randomness to prevent state "
                      "stagnation and infinite loops");
@@ -316,7 +348,8 @@ TryAgain:
 
   return u;
 }
-double randunit_pos(unsigned int *state) {
+double randunit_pos(unsigned int *state)
+{
   double ur = 0.0;
   while (ur <= 0)
     ur = randunit(state);
@@ -329,7 +362,8 @@ double randunit_pos(unsigned int *state) {
         \f[ \varphi\left(a\right) = 1.0 \f]
 
  **/
-double random_degenerate(unsigned int *state, double a) {
+double random_degenerate(unsigned int *state, double a)
+{
   /* returns a, i.e., Dirac delta function */
   double aa = fabs(a);
   if (a != 0 && (aa < 1e-30 || aa > 1e30))
@@ -419,7 +453,7 @@ method:
 double
 random_normal(unsigned int *state, /**< the rng state */
               double m,            /**< the mean of the distribution */
-              double s) /**< the standard deviation of the distribution */
+              double s)            /**< the standard deviation of the distribution */
 {
   /* normal distribution centered on m, with variance s^2 */
   double r = randunit(state);
@@ -443,7 +477,7 @@ random_normal(unsigned int *state, /**< the rng state */
         Note that the Bernoulli distribution is a discrete distribution.
  **/
 double random_bernoulli(unsigned int *state, /**< the rng state */
-                        double p) /**< the probability of generating a 1 */
+                        double p)            /**< the probability of generating a 1 */
 {
   double ap = fabs(p);
   if (ap != 0 && (ap < 1e-30 || ap > 1e30))
@@ -475,10 +509,11 @@ double random_bernoulli(unsigned int *state, /**< the rng state */
         Note that the sampled distriution is a discrete distribution.
  **/
 double random_sampled(unsigned int *state, /**< the rng state */
-                      unsigned n, /**< the number of samples in the list */
-                      double *x)  /**< the sample list */
+                      unsigned n,          /**< the number of samples in the list */
+                      double *x)           /**< the sample list */
 {
-  if (n > 0) {
+  if (n > 0)
+  {
     double v = x[(unsigned)(randunit(state) * n)];
     double av = fabs(v);
     if (v != 0 && (v < 1e-30 || v > 1e30))
@@ -491,7 +526,9 @@ double random_sampled(unsigned int *state, /**< the rng state */
        definition of the random number and try again.
      */
     return v;
-  } else {
+  }
+  else
+  {
     throw_exception("random_sampled(n=%d,...): n must be a positive number", n);
     /* TROUBLESHOOT
             An attempt to generate a random number used a parameter that was
@@ -558,7 +595,7 @@ double random_pareto(unsigned int *state, /**< the rng state */
  **/
 double random_lognormal(unsigned int *state, /**< the rng state */
                         double gmu,          /**< the geometric mean */
-                        double gsigma) /**< the geometric standard deviation */
+                        double gsigma)       /**< the geometric standard deviation */
 {
   return exp(random_normal(state, 0, 1) * gsigma + gmu);
 }
@@ -650,7 +687,8 @@ double random_rayleigh(unsigned int *state, /**< the rng state */
 
  **/
 double random_gamma(unsigned int *state, /**< the rng state */
-                    double alpha, double beta) {
+                    double alpha, double beta)
+{
   /* used a different method depending on alpha */
   double na = floor(alpha);
   if (fabs(na - alpha) < 1e-8 &&
@@ -661,28 +699,36 @@ double random_gamma(unsigned int *state, /**< the rng state */
     for (i = 0; i < na; i++)
       prod *= randunit_pos(state);
     return -beta * log(prod);
-  } else if (na < 1) /* a is small */
+  }
+  else if (na < 1) /* a is small */
   {
     double p, q, x, u, v;
     p = GLD_E / (alpha + GLD_E);
-    do {
+    do
+    {
       u = randunit(state);
       v = randunit_pos(state);
-      if (u < p) {
+      if (u < p)
+      {
         x = exp((1 / alpha) * log(v));
         q = exp(-x);
-      } else {
+      }
+      else
+      {
         x = 1 - log(v);
         q = exp((alpha - 1) * log(x));
       }
     } while (randunit(state) >= q);
     return beta * x;
-  } else /* a is large */
+  }
+  else /* a is large */
   {
     double sqrta = sqrt(2 * alpha - 1);
     double x, y, v;
-    do {
-      do {
+    do
+    {
+      do
+      {
         y = tan(PI * randunit(state));
         x = sqrta * y + alpha - 1;
       } while (x <= 0);
@@ -728,13 +774,16 @@ double random_beta(unsigned int *state,       /**< the rng state */
  **/
 
 double random_triangle(unsigned int *state, /**< the rng state */
-                       double a, double b) {
+                       double a, double b)
+{
   return (randunit(state) + randunit(state)) * (b - a) / 2 + a;
 }
 
 /* internal function that generates a random number */
-static double _random_value(RANDOMTYPE type, unsigned int *state, va_list ptr) {
-  switch (type) {
+static double _random_value(RANDOMTYPE type, unsigned int *state, va_list ptr)
+{
+  switch (type)
+  {
   case RANDOMTYPE::RT_DEGENERATE: /* ... double value */
   {
     double a = va_arg(ptr, double);
@@ -820,8 +869,10 @@ static double _random_value(RANDOMTYPE type, unsigned int *state, va_list ptr) {
 
 /** Convert a random distribution to a string spec
  **/
-int _random_specs(RANDOMTYPE type, double a, double b, char *buffer, int size) {
-  switch (type) {
+int _random_specs(RANDOMTYPE type, double a, double b, char *buffer, int size)
+{
+  switch (type)
+  {
   case RANDOMTYPE::RT_DEGENERATE: /* ... double value */
     return sprintf(buffer, "degenerate(%lf)", a);
   case RANDOMTYPE::RT_UNIFORM: /* ... double min, double max */
@@ -874,7 +925,8 @@ int random_apply(
   unsigned count = 0;
   va_list ptr;
   va_start(ptr, type);
-  for (obj = find_first(list); obj != nullptr; find_next(list, obj)) {
+  for (obj = find_first(list); obj != nullptr; find_next(list, obj))
+  {
     /* this is quite slow and should use a class property lookup */
     object_set_double_by_name(obj, property, _random_value(type, nullptr, ptr));
     count++;
@@ -914,7 +966,8 @@ double pseudorandom_value(
 }
 
 /******************************************************************************/
-static double samp_mean(double sample[], unsigned int count) {
+static double samp_mean(double sample[], unsigned int count)
+{
   double sum = 0;
   unsigned int i;
   for (i = 0; i < count; i++)
@@ -922,10 +975,12 @@ static double samp_mean(double sample[], unsigned int count) {
   return sum / count;
 }
 
-static double samp_min(double sample[], unsigned int count) {
+static double samp_min(double sample[], unsigned int count)
+{
   double min_val;
   unsigned int i;
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     if (i == 0)
       min_val = sample[0];
     else if (sample[i] < min_val)
@@ -934,10 +989,12 @@ static double samp_min(double sample[], unsigned int count) {
   return min_val;
 }
 
-static double samp_max(double sample[], unsigned int count) {
+static double samp_max(double sample[], unsigned int count)
+{
   double max_val;
   unsigned int i;
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     if (i == 0)
       max_val = sample[0];
     else if (sample[i] > max_val)
@@ -945,10 +1002,12 @@ static double samp_max(double sample[], unsigned int count) {
   }
   return max_val;
 }
-static double samp_stdev(double sample[], unsigned int count) {
+static double samp_stdev(double sample[], unsigned int count)
+{
   double sum = 0, mean = 0;
   unsigned int n = 0, i;
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     double delta = sample[i] - mean;
     n++;
     mean += delta / n;
@@ -958,12 +1017,16 @@ static double samp_stdev(double sample[], unsigned int count) {
 }
 static void sort(double sample[], unsigned int count) {}
 static int report(const char *parameter, double actual, double expected,
-                  double error) {
-  if (parameter == nullptr) {
+                  double error)
+{
+  if (parameter == nullptr)
+  {
     output_test("   Parameter       Actual    Expected    Error");
     output_test("---------------- ---------- ---------- ----------");
     return 0;
-  } else {
+  }
+  else
+  {
     int iserror = fabs(actual - expected) > error ? 1 : 0;
     if (expected == 0)
       output_test("%-16.16s %10.4f %10.4f %9.6f  %s", parameter, actual,
@@ -983,7 +1046,8 @@ static int report(const char *parameter, double actual, double expected,
  global_testoutputfile variable.
         @return number of failed tests
  **/
-int random_test(void) {
+int random_test(void)
+{
   int failed = 0, ok = 0, errorcount = 0, preverrors = 0;
   static double sample[1000000];
   double a, b;
@@ -996,7 +1060,8 @@ int random_test(void) {
   /* Dirac distribution test */
   a = 10 * randunit(nullptr) / 2 - 5;
   output_test("\ndegenerate(x=%g)", a);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     sample[i] = random_degenerate(nullptr, a);
     if (!isfinite(sample[i]))
       failed++, output_test("Sample %d is not a finite number!", i--);
@@ -1016,7 +1081,8 @@ int random_test(void) {
   a = 10 * randunit(nullptr) / 2;
   b = 10 * randunit(nullptr) / 2 + 5;
   output_test("\nuniform(min=%g, max=%g)", a, b);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     sample[i] = random_uniform(nullptr, a, b);
     if (!isfinite(sample[i]))
       failed++, output_test("Sample %d is not a finite number!", i--);
@@ -1036,7 +1102,8 @@ int random_test(void) {
   /* Bernoulli distribution test */
   a = randunit(nullptr);
   output_test("\nBernoulli(prob=%g)", a);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     sample[i] = random_bernoulli(nullptr, a);
     if (!isfinite(sample[i]))
       failed++, output_test("Sample %d is not a finite number!", i--);
@@ -1057,7 +1124,8 @@ int random_test(void) {
   a = 20 * randunit(nullptr) - 5;
   b = 5 * randunit(nullptr);
   output_test("\nnormal(mean=%g, stdev=%g)", a, b);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     sample[i] = random_normal(nullptr, a, b);
     if (!isfinite(sample[i]))
       failed++, output_test("Sample %d is not a finite number!", i--);
@@ -1074,7 +1142,8 @@ int random_test(void) {
   /* exponential distribution test */
   a = 1 / randunit(nullptr) - 1;
   output_test("\nexponential(lambda=%g)", a);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     sample[i] = random_exponential(nullptr, a);
     if (!isfinite(sample[i]))
       failed++, output_test("Sample %d is not a finite number!", i--);
@@ -1093,7 +1162,8 @@ int random_test(void) {
   a = 2 * randunit(nullptr) - 1;
   b = 2 * randunit(nullptr);
   output_test("\nlognormal(gmean=%g, gstdev=%g)", a, b);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     sample[i] = random_lognormal(nullptr, a, b);
     if (!isfinite(sample[i]))
       failed++, output_test("Sample %d is not a finite number!", i--);
@@ -1114,7 +1184,8 @@ int random_test(void) {
   a = 10 * randunit(nullptr);
   b = randunit(nullptr) + 2.5;
   output_test("\nPareto(base=%g, gamma=%g)", a, b);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     sample[i] = random_pareto(nullptr, a, b);
     if (!isfinite(sample[i]))
       failed++, output_test("Sample %d is not a finite number!", i--);
@@ -1134,7 +1205,8 @@ int random_test(void) {
   a = 10 * randunit(nullptr);
   b = 4 * randunit(nullptr);
   output_test("\nRayleigh(sigma=%g)", a);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     sample[i] = random_rayleigh(nullptr, a);
     if (!isfinite(sample[i]))
       failed++, output_test("Sample %d is not a finite number!", i--);
@@ -1154,7 +1226,8 @@ int random_test(void) {
   a = 15 * randunit(nullptr);
   b = 4 * randunit(nullptr);
   output_test("\nBeta(a=%f,b=%f)", a, b);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     sample[i] = random_beta(nullptr, a, b);
     if (!isfinite(sample[i]))
       failed++, output_test("Sample %d is not a finite number!", i--);
@@ -1173,7 +1246,8 @@ int random_test(void) {
   a = 15 * randunit(nullptr);
   b = 4 * randunit(nullptr);
   output_test("\nGamma(a=%f,b=%f)", a, b);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     sample[i] = random_gamma(nullptr, a, b);
     if (!isfinite(sample[i]))
       failed++, output_test("Sample %d is not a finite number!", i--);
@@ -1192,7 +1266,8 @@ int random_test(void) {
   a = -randunit(nullptr) * 10;
   b = randunit(nullptr) * 10;
   output_test("\nTriangle(a=%f,b=%f)", a, b);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     sample[i] = random_triangle(nullptr, a, b);
     if (!isfinite(sample[i]))
       output_test("Sample %d is not a finite number!", i--);
@@ -1209,7 +1284,8 @@ int random_test(void) {
 
   /* sampled distribution test */
   output_test("\nSampled(count=10, sample=[0..9])");
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     double set[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     sample[i] = random_sampled(nullptr, 10, set);
     if (!isfinite(sample[i]))
@@ -1219,8 +1295,8 @@ int random_test(void) {
   errorcount += report("Mean", samp_mean(sample, count), 4.5, 0.01);
   // report("Stdev",samp_stdev(sample,count),sqrt(9*9/12),0.01);
   errorcount += report("Stdev", samp_stdev(sample, count), sqrt(99 / 12), 0.1);
-      /* sqrt((b-a+1)^2-1 / 12)*/ /* 2.87 is more accurate and was Mathematica's
-                                     answer */
+  /* sqrt((b-a+1)^2-1 / 12)*/ /* 2.87 is more accurate and was Mathematica's
+                                 answer */
   errorcount += report("Min", samp_min(sample, count), 0, 0.01);
   errorcount += report("Max", samp_max(sample, count), 9, 0.01);
   if (preverrors == errorcount)
@@ -1233,7 +1309,8 @@ int random_test(void) {
   output_test("\nNon-deterministic test (N=%d)", count);
   for (i = 0; i < count; i++)
     sample[i] = random_value(RANDOMTYPE::RT_NORMAL, 0.0, 1.0);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     double v = random_value(RANDOMTYPE::RT_NORMAL, 0.0, 1.0);
     if (sample[i] == v)
       failed++, output_test("Sample %d matched (%f==%f)", i, sample[i], v);
@@ -1250,7 +1327,8 @@ int random_test(void) {
   for (i = 0; i < count; i++)
     sample[i] = pseudorandom_value(RANDOMTYPE::RT_UNIFORM, &state, 0.0, 1.0);
   state = initstate;
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; i++)
+  {
     double v = pseudorandom_value(RANDOMTYPE::RT_UNIFORM, &state, 0.0, 1.0);
     if (sample[i] != v)
       failed++,
@@ -1273,13 +1351,16 @@ int random_test(void) {
     output_test("Modulus = %d", count);
 
   /* report results */
-  if (failed) {
+  if (failed)
+  {
     output_error("randtest: %d random distributions tests failed--see test.txt "
                  "for more information",
                  failed);
     output_test("!!! %d random distributions tests failed, %d errors found",
                 failed, errorcount);
-  } else {
+  }
+  else
+  {
     output_verbose("%d random distributions tests completed with no "
                    "errors--see test.txt for details",
                    ok);
@@ -1298,7 +1379,8 @@ static randomvar_struct *randomvar_list = nullptr;
 static unsigned int n_randomvars = 0;
 clock_t randomvar_synctime = 0;
 
-int convert_to_randomvar(char *string, void *data, PROPERTY *prop) {
+int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
+{
   randomvar_struct *var = (randomvar_struct *)data;
   char buffer[1024];
   char *token = nullptr;
@@ -1310,7 +1392,8 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop) {
   var->next = next;
 
   /* check string length before copying to buffer */
-  if (strlen(string) > sizeof(buffer) - 1) {
+  if (strlen(string) > sizeof(buffer) - 1)
+  {
     output_error("convert_to_randomvar(string='%-.64s...', ...) input string "
                  "is too long (max is 1023)",
                  string);
@@ -1320,7 +1403,8 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop) {
 
   /* parse tuples separate by semicolon*/
   while ((token = strtok_s(token == nullptr ? buffer : nullptr, ";", &last)) !=
-         nullptr) {
+         nullptr)
+  {
     /* colon separate tuple parts */
     char *param = token;
     char *value = strchr(token, ':');
@@ -1336,14 +1420,17 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop) {
       value++;
 
     // parse params
-    if (strcmp(param, "type") == 0) {
+    if (strcmp(param, "type") == 0)
+    {
       char *a;
       a = strchr(value, '(');
-      if (a) {
+      if (a)
+      {
         int nargs;
         *a++ = '\0';
         var->type = random_type(value);
-        if (var->type == RANDOMTYPE::RT_INVALID) {
+        if (var->type == RANDOMTYPE::RT_INVALID)
+        {
           output_error("convert_to_randomvar(string='%-.64s...', ...) type "
                        "'%s' is invalid",
                        string, value);
@@ -1351,51 +1438,69 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop) {
         }
         var->a = atof(a);
         nargs = random_nargs(value);
-        if (nargs == 2) {
+        if (nargs == 2)
+        {
           char *b = strchr(a, ',');
-          if (b) {
+          if (b)
+          {
             *b++ = '\0';
             var->b = atof(b);
-          } else {
+          }
+          else
+          {
             output_error("convert_to_randomvar(string='%-.64s...', ...) "
                          "missing second arg in type spec '%s'",
                          string, value);
             return 0;
           }
         }
-      } else {
+      }
+      else
+      {
         output_error("convert_to_randomvar(string='%-.64s...', ...) missing "
                      "'(' in type spec '%s'",
                      string, value);
         return 0;
       }
-    } else if (strcmp(param, "min") == 0)
+    }
+    else if (strcmp(param, "min") == 0)
       var->low = atof(value);
     else if (strcmp(param, "max") == 0)
       var->high = atof(value);
-    else if (strcmp(param, "refresh") == 0) {
+    else if (strcmp(param, "refresh") == 0)
+    {
       char unit[256];
-      if (sscanf(value, "%d%s", &(var->update_rate), unit) == 2) {
+      if (sscanf(value, "%d%s", &(var->update_rate), unit) == 2)
+      {
         double dt = var->update_rate;
-        if (!unit_convert(unit, "s", &dt)) {
+        if (!unit_convert(unit, "s", &dt))
+        {
           output_error("convert_to_randomvar(string='%-.64s...', ...) refresh "
                        "unit '%s' is not valid",
                        string, unit);
           return 0;
-        } else
+        }
+        else
           var->update_rate = (int)dt;
       }
-    } else if (strcmp(param, "state") == 0) {
+    }
+    else if (strcmp(param, "state") == 0)
+    {
       var->state = atoi(value);
-    } else if (strcmp(param, "integrate") == 0) {
+    }
+    else if (strcmp(param, "integrate") == 0)
+    {
       var->flags |= RNF_INTEGRATE;
     }
     /* fixed value */
     else if (param[0] == '-' || param[0] == '+' || isdigit(param[0]) ||
-             param[0] == '.') {
+             param[0] == '.')
+    {
       var->type = RANDOMTYPE::RT_DEGENERATE;
       var->a = atof(param);
-    } else if (strcmp(param, "") != 0) {
+    }
+    else if (strcmp(param, "") != 0)
+    {
       output_error("convert_to_randomvar(string='%-.64s...', ...) parameter "
                    "'%s' is not valid",
                    string, param);
@@ -1411,12 +1516,14 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop) {
   return 1;
 }
 
-int convert_from_randomvar(char *string, int size, void *data, PROPERTY *prop) {
+int convert_from_randomvar(char *string, int size, void *data, PROPERTY *prop)
+{
   randomvar_struct *var = (randomvar_struct *)data;
   return sprintf(string, "%lf", var->value);
 }
 
-int randomvar_create(randomvar_struct *var) {
+int randomvar_create(randomvar_struct *var)
+{
   memset(var, 0, sizeof(randomvar_struct));
   var->next = randomvar_list;
   var->state = randwarn(nullptr);
@@ -1425,8 +1532,10 @@ int randomvar_create(randomvar_struct *var) {
   return 1;
 }
 
-int randomvar_update(randomvar_struct *var) {
-  do {
+int randomvar_update(randomvar_struct *var)
+{
+  do
+  {
     double v = pseudorandom_value(var->type, &(var->state), var->a, var->b);
     if (var->flags & RNF_INTEGRATE)
       var->value += v;
@@ -1437,21 +1546,25 @@ int randomvar_update(randomvar_struct *var) {
   return 1;
 }
 
-int randomvar_init(randomvar_struct *var) {
+int randomvar_init(randomvar_struct *var)
+{
   randomvar_update(var);
   return 1;
 }
 
-int randomvar_initall(void) {
+int randomvar_initall(void)
+{
   randomvar_struct *var;
-  for (var = randomvar_list; var != nullptr; var = var->next) {
+  for (var = randomvar_list; var != nullptr; var = var->next)
+  {
     if (randomvar_init(var) == 1)
       return FAILED;
   }
   return SUCCESS;
 }
 
-TIMESTAMP randomvar_sync(randomvar_struct *var, TIMESTAMP t1) {
+TIMESTAMP randomvar_sync(randomvar_struct *var, TIMESTAMP t1)
+{
   if (var->update_rate <= 0 || t1 % var->update_rate == 0)
     randomvar_update(var);
   return var->update_rate <= 0
@@ -1459,11 +1572,13 @@ TIMESTAMP randomvar_sync(randomvar_struct *var, TIMESTAMP t1) {
              : ((t1 / var->update_rate) + 1) * var->update_rate;
 }
 
-randomvar_struct *randomvar_getnext(randomvar_struct *var) {
+randomvar_struct *randomvar_getnext(randomvar_struct *var)
+{
   return var ? randomvar_list : var->next;
 }
 
-size_t randomvar_getspec(char *str, size_t size, const randomvar_struct *var) {
+size_t randomvar_getspec(char *str, size_t size, const randomvar_struct *var)
+{
   char buffer[1024];
   char specs[1024];
   size_t len;
@@ -1472,30 +1587,37 @@ size_t randomvar_getspec(char *str, size_t size, const randomvar_struct *var) {
   len = sprintf(buffer, "state: %u; type: %s; min: %g; max: %g; refresh: %u%s",
                 var->state, specs, var->low, var->high, var->update_rate,
                 var->flags & RNF_INTEGRATE ? "; integrate" : "");
-  if (len > 0 && len < size) {
+  if (len > 0 && len < size)
+  {
     strcpy(str, buffer);
     return len;
-  } else
+  }
+  else
     return 0;
 }
 
-TIMESTAMP randomvar_syncall(TIMESTAMP t1) {
-  if (randomvar_list) {
+TIMESTAMP randomvar_syncall(TIMESTAMP t1)
+{
+  if (randomvar_list)
+  {
     randomvar_struct *var;
     TIMESTAMP t2 = TS_NEVER;
     clock_t ts = (clock_t)exec_clock();
-    for (var = randomvar_list; var != nullptr; var = var->next) {
+    for (var = randomvar_list; var != nullptr; var = var->next)
+    {
       TIMESTAMP t3 = randomvar_sync(var, t1);
       if (absolute_timestamp(t3) < absolute_timestamp(t2))
         t2 = t3;
     }
     randomvar_synctime += (clock_t)exec_clock() - ts;
     return t2 != TS_NEVER ? -absolute_timestamp(t2) : TS_NEVER;
-  } else
+  }
+  else
     return TS_NEVER;
 }
 
-double random_get_part(void *x, const char *name) {
+double random_get_part(void *x, const char *name)
+{
   randomvar_struct *v = (randomvar_struct *)x;
   if (strcmp(name, "a") == 0)
     return v->a;
