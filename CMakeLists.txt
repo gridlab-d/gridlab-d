@@ -159,8 +159,10 @@ if (NOT MSVC)
     set(FORCE_ERROR "-Werror=return-type" "-Werror=write-strings")
 endif ()
 
+if (NOT MSVC)
 # Compiler/Linker flags for all build types
 add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
+endif ()
 
 ## Set up platform specific library linking and platform identification
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
