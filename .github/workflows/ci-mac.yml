@@ -386,3 +386,201 @@ jobs:
             validate_errors.txt
             gridlabd.xml
           if-no-files-found: ignore
+
+# ─────────────────────────────────────────────
+  # macOS (ARM64) with Homebrew GCC + Python validator
+  # ─────────────────────────────────────────────
+  mac-arm64-gcc:
+    runs-on: macos-latest   # Apple Silicon runner (ARM64)
+    timeout-minutes: 600
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Cache Homebrew (optional)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+            /Library/Caches/Homebrew
+          key: brew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('ci/Brewfile') }}
+          restore-keys: |
+            brew-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Install build tools via Homebrew (incl. GCC)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          brew update
+
+          if [[ -f ci/Brewfile ]]; then
+            # Ensure Brewfile contains: gcc, cmake, ninja, pkg-config, eigen
+            grep -q '^brew "gcc"$' ci/Brewfile || echo 'brew "gcc"' >> ci/Brewfile
+            grep -q '^brew "cmake"$' ci/Brewfile || echo 'brew "cmake"' >> ci/Brewfile
+            grep -q '^brew "ninja"$' ci/Brewfile || echo 'brew "ninja"' >> ci/Brewfile
+            grep -q '^brew "pkg-config"$' ci/Brewfile || echo 'brew "pkg-config"' >> ci/Brewfile
+            grep -q '^brew "eigen"$' ci/Brewfile || echo 'brew "eigen"' >> ci/Brewfile
+            brew bundle --file=ci/Brewfile
+          else
+            brew install gcc cmake ninja pkg-config eigen
+          fi
+
+          HOMEBREW_PREFIX="$(brew --prefix)"
+          echo "HOMEBREW_PREFIX=${HOMEBREW_PREFIX}"
+
+          # Help CMake find Homebrew-installed packages
+          export PKG_CONFIG_PATH="${HOMEBREW_PREFIX}/lib/pkgconfig:${HOMEBREW_PREFIX}/share/pkgconfig:${PKG_CONFIG_PATH:-}"
+          echo "CMAKE_PREFIX_PATH=${HOMEBREW_PREFIX}" >> "$GITHUB_ENV"
+          echo "PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"   >> "$GITHUB_ENV"
+
+      - name: Detect GCC toolchain (major version)
+        id: gcc
+        shell: bash
+        run: |
+          set -euxo pipefail
+          # Try common Homebrew gcc suffixes from newest to older
+          for v in 15 14 13 12 11; do
+            if command -v "gcc-${v}" >/dev/null 2>&1 && command -v "g++-${v}" >/dev/null 2>&1; then
+              echo "found gcc-${v}"
+              echo "major=${v}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "No suffixed gcc found; falling back to default gcc/g++"
+          echo "major=default" >> "$GITHUB_OUTPUT"
+
+      - name: Print toolchain info
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sw_vers
+          clang --version || true
+          cmake --version
+          ninja --version
+          brew list --versions gcc cmake ninja pkg-config eigen
+          if [[ "${{ steps.gcc.outputs.major }}" != "default" ]]; then
+            "gcc-${{ steps.gcc.outputs.major }}" --version | head -1
+            "g++-${{ steps.gcc.outputs.major }}" --version | head -1
+          else
+            gcc --version | head -1
+            g++ --version | head -1
+          fi
+
+      - name: Clean build
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf build/ out/ CMakeCache.txt CMakeFiles 2>/dev/null || true
+
+      - name: Configure CMake (GNU GCC + Ninja)
+        shell: bash
+        env:
+          CMAKE_PREFIX_PATH: ${{ env.CMAKE_PREFIX_PATH }}
+          PKG_CONFIG_PATH:   ${{ env.PKG_CONFIG_PATH }}
+        run: |
+          set -euxo pipefail
+          BUILD_DIR="out/build/ci-macos-gcc"
+          PREFIX_DIR="$HOME/.temp/GridLAB-D"
+
+          if [[ "${{ steps.gcc.outputs.major }}" != "default" ]]; then
+            export CC="gcc-${{ steps.gcc.outputs.major }}"
+            export CXX="g++-${{ steps.gcc.outputs.major }}"
+          else
+            export CC="gcc"
+            export CXX="g++"
+          fi
+
+          cmake -S . -B "$BUILD_DIR" \
+            -G Ninja \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
+            -DCMAKE_BUILD_TYPE="Release" \
+            -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
+            -DCMAKE_MACOSX_RPATH=ON \
+            -DCMAKE_INSTALL_RPATH="$PREFIX_DIR/lib;$PREFIX_DIR/lib/gridlabd" \
+            -DCMAKE_C_COMPILER="${CC}" \
+            -DCMAKE_CXX_COMPILER="${CXX}" \
+            -DGLD_CI_BUILD=ON
+
+      - name: Build (Release)
+        shell: bash
+        run: cmake --build out/build/ci-macos-gcc -- -v
+
+      - name: Install (Release)
+        shell: bash
+        run: cmake --install out/build/ci-macos-gcc --prefix "$HOME/.temp/GridLAB-D" --verbose
+
+      # Python-based validation
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Python GridLAB-D validator (macOS GCC)(glm)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          PREFIX="$HOME/.temp/GridLAB-D"
+          BIN_DIR="$PREFIX/bin"
+          LIB_DIR="$PREFIX/lib"
+          SHARE_DIR="$PREFIX/share"
+          GLDCORE_DIR="$(pwd)/gldcore"
+          HB_PREFIX="$(brew --prefix)"
+          GCC_OPT_DIR="${HB_PREFIX}/opt/gcc"
+
+          # Try to include GCC runtime libs (libstdc++.6, libgcc_s.*)
+          # This avoids runtime issues when using GNU C++ on macOS.
+          # Common locations under Homebrew:
+          GCC_LIB_CANDIDATES=()
+          if [[ -d "${GCC_OPT_DIR}/lib/gcc" ]]; then
+            GCC_LIB_CANDIDATES+=("${GCC_OPT_DIR}/lib/gcc")
+            # deepest versioned subdir (e.g., lib/gcc/15)
+            vdir="$(ls -1d ${GCC_OPT_DIR}/lib/gcc/* 2>/dev/null | sort -V | tail -1 || true)"
+            [[ -n "$vdir" ]] && GCC_LIB_CANDIDATES+=("$vdir")
+          fi
+
+          export DYLD_LIBRARY_PATH="$(IFS=:; echo "${LIB_DIR}:${LIB_DIR}/gridlabd:${GCC_LIB_CANDIDATES[*]}:${DYLD_LIBRARY_PATH:-}")"
+          export GLPATH="$(pwd):${PREFIX}:${BIN_DIR}:${LIB_DIR}:${SHARE_DIR}:${GLDCORE_DIR}"
+          export PATH="${PATH}:${BIN_DIR}"
+
+          gridlabd --validate || true
+
+      - name: Run Python GridLAB-D validator (macOS GCC)(JSON)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          PREFIX="$HOME/.temp/GridLAB-D"
+          BIN_DIR="$PREFIX/bin"
+          LIB_DIR="$PREFIX/lib"
+          SHARE_DIR="$PREFIX/share"
+          GLDCORE_DIR="$(pwd)/gldcore"
+          HB_PREFIX="$(brew --prefix)"
+          GCC_OPT_DIR="${HB_PREFIX}/opt/gcc"
+
+          GCC_LIB_CANDIDATES=()
+          if [[ -d "${GCC_OPT_DIR}/lib/gcc" ]]; then
+            GCC_LIB_CANDIDATES+=("${GCC_OPT_DIR}/lib/gcc")
+            vdir="$(ls -1d ${GCC_OPT_DIR}/lib/gcc/* 2>/dev/null | sort -V | tail -1 || true)"
+            [[ -n "$vdir" ]] && GCC_LIB_CANDIDATES+=("$vdir")
+          fi
+
+          export DYLD_LIBRARY_PATH="$(IFS=:; echo "${LIB_DIR}:${LIB_DIR}/gridlabd:${GCC_LIB_CANDIDATES[*]}:${DYLD_LIBRARY_PATH:-}")"
+          export GLPATH="$(pwd):${PREFIX}:${BIN_DIR}:${LIB_DIR}:${SHARE_DIR}:${GLDCORE_DIR}"
+          export PATH="${PATH}:${BIN_DIR}"
+
+          python -u validate_gld.py
+
+      - name: Upload validation artefacts (macOS GCC)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validate-mac-arm64-gcc
+          path: |
+            validate.txt
+            validate_errors.txt
+            gridlabd.xml
+          if-no-files-found: ignore
