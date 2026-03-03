@@ -373,8 +373,20 @@ if (GLD_USE_SUPERLU)
     set(enable_examples OFF CACHE BOOL "Build SuperLU examples" FORCE)
     set(enable_tests OFF CACHE BOOL "Build SuperLU tests" FORCE)
 
+
     include_directories(third_party/SuperLU/SRC)
+
+    #Choose 64-bit indices for SuperLU at configure time
+    set(XSDK_INDEX_SIZE 32 CACHE STRING "SuperLU index size" FORCE)
+
     add_subdirectory(third_party/SuperLU)
+
+
+    target_include_directories(superlu BEFORE PRIVATE
+        ${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC
+        ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC  # if superlu_config.h is generated here
+    )
+
     set(SUPERLU_LIB superlu)
 endif ()
 
@@ -418,6 +430,12 @@ add_subdirectory(gldcore)
 add_executable(test_gldapi gldcore/test_gldapi.cpp)
 target_link_libraries(test_gldapi PRIVATE gldapi ${DL_LIB} ${JSONCPP_LIB} ${SUPERLU_LIB} Threads::Threads)
 add_dependencies(test_gldapi gldapi)  
+
+
+set_source_files_properties(
+  ${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC/slu_util.c
+  PROPERTIES LANGUAGE C
+)
 
 if(MSVC)
     set_target_properties(gldapi PROPERTIES

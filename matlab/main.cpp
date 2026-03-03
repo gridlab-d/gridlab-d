@@ -3,7 +3,7 @@
 
 /* TODO: replace the above Doxygen comments with your documentation */
 
-/* DO NOT EDIT THE NEXT LINE 
+/* DO NOT EDIT THE NEXT LINE
 MODULE:matlab
  */
 
@@ -17,31 +17,26 @@ MODULE:matlab
 
 #include "gridlabd.h"
 
-EXPORT int do_kill(void*);
+EXPORT int do_kill(void *);
 
-EXPORT int major=MAJOR, minor=MINOR;
+EXPORT int major = MAJOR, minor = MINOR;
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN  // Exclude rarely used Windows headers
-#include <winsock2.h>
+#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
 #include <windows.h>
+#include <winsock2.h>
 
-BOOL APIENTRY DllMain( HANDLE hModule, 
-                       DWORD  ul_reason_for_call, 
-                       LPVOID
-					 )
-{
-    switch (ul_reason_for_call)
-	{
-		case DLL_PROCESS_ATTACH:
-		case DLL_THREAD_ATTACH:
-			break;
-		case DLL_THREAD_DETACH:
-		case DLL_PROCESS_DETACH:
-			do_kill(hModule);
-			break;
-    }
-    return TRUE;
+BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID) {
+  switch (ul_reason_for_call) {
+  case DLL_PROCESS_ATTACH:
+  case DLL_THREAD_ATTACH:
+    break;
+  case DLL_THREAD_DETACH:
+  case DLL_PROCESS_DETACH:
+    do_kill(hModule);
+    break;
+  }
+  return TRUE;
 }
 
 #else // !WIN32
@@ -49,13 +44,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 CDECL int dllinit() __attribute__((constructor));
 CDECL int dllkill() __attribute__((destructor));
 
-CDECL int dllinit()
-{
-	return 0;
-}
+CDECL int dllinit() { return 0; }
 
-CDECL int dllkill() {
-	do_kill(nullptr);
-}
+CDECL int dllkill() { do_kill(nullptr); }
 
 #endif // !WIN32

@@ -1,8 +1,8 @@
 /** $Id: loadshape.cpp 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2009 Battelle Memorial Institute
-	@file loadshape.cpp
-	@addtogroup loadshape
-	@ingroup tape
+        Copyright (C) 2009 Battelle Memorial Institute
+        @file loadshape.cpp
+        @addtogroup loadshape
+        @ingroup tape
 
 
  @{
@@ -10,11 +10,11 @@
 
 #if 0
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <cctype>
 #include <errno.h>
 #include <math.h>
-#include <cctype>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "loadshape.h"
 

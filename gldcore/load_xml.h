@@ -1,6 +1,6 @@
 /* $Id: load_xml.h 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
- * 
+        Copyright (C) 2008 Battelle Memorial Institute
+ *
  * Authors:
  *	Matthew Hauer <matthew.hauer@pnl.gov>, 6 Nov 07 -
  *
@@ -19,17 +19,17 @@
 #ifndef _XML_LOAD_H_
 #define _XML_LOAD_H_
 
-#include <cstring>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 #include "globals.h"
 
 #ifdef __cplusplus
 extern "C" {
-	#include "output.h"
+#include "output.h"
 
-	STATUS loadall_xml(const char *file);
+STATUS loadall_xml(const char *file);
 }
 #else
 STATUS loadall_xml(const char *file);
