@@ -38,6 +38,62 @@ Dependencies:
 
 The core interaction between GridLAB-D™ and MATLAB comes in two parts. The first is a set of three MATLAB commands that can be defined, each running at a different stage in the process: initialization (`on_init`), each timestep (`on_sync`) and at the conclusion of the GridLAB-D™ simulation (`on_term`). These three functions determine what MATLAB will do, the functionality it will provide during the run of the GridLAB-D™ simulation. 
 
+!!! note
+
+    The `script` directives cause external commands to be executed. The simulation will wait for the command to exit. If the exit code is non-zero, the simulation will immediately terminate with the exit code returned by the script. The recognized exit codes are listed in the exit codes page.
+
+    Loader scripts (those without event specifications) are loaded one at a time in the order in which they are encountered by the loader.
+
+    Event scripts may be run in parallel if the threadcount is greater than 1.
+
+        script command-line;
+        script on_create command-line;
+        script on_init command-line;
+        script on_sync command-line;
+        script on_term command-line;
+        script export global-name;
+
+    * **export** - The variable listed is exported to the shell's environment before script are executed.
+
+      Note that the syntax for accessing a variable is dependent on the shell being used to interpret the script commands. For example, DOS uses the %_name_ % syntax whereas bash uses the $_name_ syntax.
+
+    * **on_create** - The script is executed after all objects have been created and before the first object is initialized.
+
+    * **on_init** - The script is executed after all objects have been initialized and before the first sync event.
+
+    * **on_sync** - The script is executed after each clock synchronization pass has been completed.
+
+    * **on_term** - The script is executed when the simulation terminates.
+
+    Caveats:
+    
+    * **platform independence** - In the current implementation, scripts are interpreted by the platform's native shell command processor (e.g., DOS for MS Windows, bash for linux and Mac). This means GLM files that use scripts are not normally portable from one platform to another.
+
+    On most platforms you can specify the shell to use by preceding the command with the name of the shell, e.g.
+    
+        script python my_script.py
+    
+    provided you include the shell command in the your PATH environment. If platform independent scripts are desired, care should be take to only use those shell features that are platform independent. See the shell's documentation for details.
+
+    * **Asynchronous calls** - On MS Windows platform the DOS shell interprets the `start` command as a request for asynchronous execution of the script. On Linux/Mac platforms, a trailing `&` causes asynchronous execution of the script. If a script request is repeated before the previous copy if done (e.g., `on_sync`), this can result in many copies of the script running concurrently and the system becoming bogged down with multiple copies of the same process.
+
+    * **Variable expansion** - Variable names are interpreted when the script command is parsed by the GLM rather than when it is executed. It is currently not possible to update the value of a variable when the script is executed. As a result, the following directive will not work as expected
+    
+        script on_sync echo ${clock}
+    
+    because the value of the `clock` is interpreted when the directive is encountered (when `clock` contains the start time) and not when the script is executed. You must use the export option to export variables to scripts. The correct syntax for the above example is
+    
+    
+        script export clock;
+        script on_sync echo $clock; // linux/mac variable expansion syntax
+    
+      or
+    
+        script export clock;
+        script on_sync echo %clock%; // windows variable expansion syntax
+
+    
+
 The second portion of the interaction is the variable value exchange. Though there are probably cases in which MATLAB functions need to be called without using any data from the GridLAB-D™ simulation, the far more likely scenario is that the MATLAB function being called will be using values from GridLAB-D™ and may be returning values that need to be incorporated into GridLAB-D™. 
 
 Note that the link between MATLAB and GridLAB-D™ can be problematic at times. If difficulties in the compiling or use of the link is not behaving properly, check the [GridLAB-D™ forums](https://sourceforge.net/p/gridlab-d/discussion/842562/) to see if other users have encountered similar problems.

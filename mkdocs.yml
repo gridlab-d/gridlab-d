@@ -72,7 +72,7 @@ nav:
       - Basic Distribution System Modeling: docs/2.0 - New Users/Tutorial/2.5.1 - Basic Distribution System Modeling.md
       - GLM Models: docs/2.0 - New Users/Tutorial/2.5.2 - GLM Models.md
       - Modules: docs/2.0 - New Users/Tutorial/2.5.3 - Modules.md
-      - Simulation time: docs/2.0 - New Users/Tutorial/2.5.3.1 - Clock Block.md
+      - Simulation time: docs/2.0 - New Users/Tutorial/2.5.3.1 - SimulationTime.md
       - Recorders and Players: docs/2.0 - New Users/Tutorial/2.5.4 - Recorders and Players.md
       - Built-in Schedules and Loadshapes: docs/2.0 - New Users/Tutorial/2.5.5 - Schedules and Loadshapes.md
       - Distributed Generation: docs/2.0 - New Users/Tutorial/2.5.6 - Distributed_Generation.md
@@ -134,6 +134,7 @@ nav:
         - Metrics collector writer: docs/3.0 - Modeling Reference/Modules/Tape/6.1 - Metrics_collector_writer.md
     - Other Features:
       - Checkpoints: docs/3.0 - Modeling Reference/Other Features/Checkpoints.md
+      - Command Line Options: docs/3.0 - Modeling Reference/Other Features/CommandLineOptions.md
       - Complex Numbers: docs/3.0 - Modeling Reference/Other Features/ComplexNumbers.md
       - Microgrids: docs/3.0 - Modeling Reference/Other Features/Microgrids.md
       - Performance profiling: docs/3.0 - Modeling Reference/Other Features/Performance_profiling.md
@@ -143,12 +144,12 @@ nav:
       - Validate: docs/3.0 - Modeling Reference/Other Features/Validate.md
   - 4.0 Developing Reference:
     - 4.0 - Feature Development:
-      - Basic C/C++ API: docs/4.0 Developing Reference/4.0 - Feature Development/Basic C-C++ API.md
       - Checkpointing: docs/4.0 Developing Reference/4.0 - Feature Development/Checkpointing.md
       - Docker Containerization/Build Process: docs/4.0 Developing Reference/4.0 - Feature Development/Docker Containerization.md
       - JSON Loader: docs/4.0 Developing Reference/4.0 - Feature Development/JSON Loader.md
       - Multithreaded Random Number Generation: docs/4.0 Developing Reference/4.0 - Feature Development/Multithreaded_Random_Number_Generation.md
       - Multithreading: docs/4.0 Developing Reference/4.0 - Feature Development/Multithreading.md
+      - Python API: docs/4.0 Developing Reference/4.0 - Feature Development/Python API.md
       - Miscelaneous Features and Updates: docs/4.0 Developing Reference/4.0 - Feature Development/Stretch Goals.md
     - 4.1 - Introduction - TBD: docs/4.0 Developing Reference/4.1 - Introduction.md
     - 4.2 - Building from Source:
@@ -169,7 +170,7 @@ nav:
       - GridLAB-D™ Loader: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.7 - Loader.md
       - GridLAB-D™ Data Transforms: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.8 - Transforms.md
       - libgld: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.9 - libgld.md
-      - Spec:Initialization: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/Spec_Initialization.md
+      - Initialization: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/Spec_Initialization.md
     - 4.4 - Development Fundamentals:
       - Programming conventions: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.1 - Programming_conventions.md
       - Creating a module - v1: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.2 - Creating_a_module.md
@@ -178,10 +179,12 @@ nav:
       - GridLAB-D™ Device Modeling: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.5 - GridLAB-D Device Modeling.md
       - Integrated Testing: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.6 - Integrated_Testing.md
       - Issue Tracking: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.7 - Issue Tracking.md
-    - 4.5 - Debugging:
-      - Command options: docs/4.0 Developing Reference/4.5 - Debugging/4.6.1 - Command_line_arguments.md
-      - Performance Profiling: docs/4.0 Developing Reference/4.5 - Debugging/4.6.2 - performance-profiling.md
-      - Assert: docs/4.0 Developing Reference/4.5 - Debugging/Assert.md
+    - 4.5 - Testing & Debugging:
+      - Command options: docs/4.0 Developing Reference/4.5 - Testing & Debugging/4.6.1 - Command_line_arguments.md
+      - Performance Profiling: docs/4.0 Developing Reference/4.5 - Testing & Debugging/4.6.2 - performance-profiling.md
+      - Assert: docs/4.0 Developing Reference/4.5 - Testing & Debugging/Assert.md
+      - Testing and Validation: docs/4.0 Developing Reference/4.5 - Testing & Debugging/Testing_and_Validation.md
+      - Runtime/gl_* Output  Functions: docs/4.0 Developing Reference/4.5 - Testing & Debugging/runtime-functions.md
     - 4.6 - Style Guide: docs/4.0 Developing Reference/4.6 - Style_guide.md
     - 4.7 - GridLAB-D Release Process: docs/4.0 Developing Reference/4.7 - Release_Process.md
   - 5.0 Integration:
@@ -243,6 +246,7 @@ nav:
         - Spec:NEVNode: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVNode.md
         - Spec:NEVSolver: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVSolver.md
       - Transmission: docs/7.0 References/Unimplemented/Transmission.md
+    - python_api: docs/7.0 References/python_api.md
   - reference:
     - ReadMeConfig:
       - authentication: reference/ReadMeConfig/authentication.md

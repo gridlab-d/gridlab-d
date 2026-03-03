@@ -301,3 +301,30 @@ The default control strategy for node _n_ is as follows:
 !!! note
 
     Implementing the `plc()` function for a building means that the default controller is disabled for all nodes in the building. This means that if you want to continue using the default controller for some nodes you must call the `building::plc()` function directly for that node.
+
+
+## Options 
+
+### Warn Control
+
+Determines whether air temperature control in commercial buildings is monitored.
+
+	module commercial {
+	warn_control TRUE
+	}
+
+### Warn High Temp
+
+Determines the commercial building indoor air temperature above which a warning is produced.
+
+	module commercial {
+	warn_high_temp 90 degF;
+	}
+
+### Warn Low Temp
+
+Determines the commercial building indoor air temperature below which a warning is produced.
+
+	module commercial {
+	warn_low_temp 50 degF;
+	}
