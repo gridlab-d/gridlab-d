@@ -1367,7 +1367,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 				// Compute the realized charge rate
 				if (load.voltage_factor > 0.0)
 				{
-					actual_power_value = load.power + (load.current + load.admittance * load.voltage_factor) * load.voltage_factor;
+					actual_power_value = load.constant_power + (load.constant_current + load.constant_admittance * load.voltage_factor) * load.voltage_factor;
 				}
 				else
 				{
@@ -1473,7 +1473,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 				// Compute the realized charge rate
 				if (load.voltage_factor > 0.0)
 				{
-					actual_power_value = load.power + (load.current + load.admittance * load.voltage_factor) * load.voltage_factor;
+					actual_power_value = load.constant_power + (load.constant_current + load.constant_admittance * load.voltage_factor) * load.voltage_factor;
 				}
 				else
 				{
@@ -1729,7 +1729,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 				// Compute the realized charge rate
 				if (load.voltage_factor > 0.0)
 				{
-					actual_power_value = load.power + (load.current + load.admittance * load.voltage_factor) * load.voltage_factor;
+					actual_power_value = load.constant_power + (load.constant_current + load.constant_admittance * load.voltage_factor) * load.voltage_factor;
 				}
 				else
 				{
@@ -1897,15 +1897,15 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 	if (temp_complex.Mag() > 0.0)
 	{
 		// Loads are already in kVA
-		load.power = load.total * load.power_fraction;
-		load.current = load.total * load.current_fraction;
-		load.admittance = load.total * load.impedance_fraction;
+		load.constant_power = load.total * load.power_fraction;
+		load.constant_current = load.total * load.current_fraction;
+		load.constant_admittance = load.total * load.impedance_fraction;
 	}
 	else // Just zero it all
 	{
-		load.power = gld::complex(0.0, 0.0);
-		load.current = gld::complex(0.0, 0.0);
-		load.admittance = gld::complex(0.0, 0.0);
+		load.constant_power = gld::complex(0.0, 0.0);
+		load.constant_current = gld::complex(0.0, 0.0);
+		load.constant_admittance = gld::complex(0.0, 0.0);
 	}
 
 	// See if we're in deltamode and ramp-limited

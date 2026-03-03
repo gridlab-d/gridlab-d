@@ -55,9 +55,9 @@ double enduse_get_part(void *x, const char *name)
 	DO_COMPLEX(energy);
 	DO_COMPLEX(demand);
 	DO_DOUBLE(breaker_amps);
-	DO_COMPLEX(admittance);
-	DO_COMPLEX(current);
-	DO_COMPLEX(power);
+	DO_COMPLEX(constant_admittance);
+	DO_COMPLEX(constant_current);
+	DO_COMPLEX(constant_power);
 	DO_DOUBLE(impedance_fraction);
 	DO_DOUBLE(current_fraction);
 	DO_DOUBLE(power_fraction);
@@ -101,7 +101,7 @@ int enduse_create(enduse *data)
 	// check the power factor
 	data->power_factor = 1.0;
 	data->heatgain_fraction = 1.0;
-
+	data->voltage_factor = 1.0;
 #ifdef _DEBUG
 	data->magic = enduse_magic;
 #endif
@@ -172,18 +172,18 @@ static TIMESTAMP enduse_sync_impl(enduse *e, TIMESTAMP t1, PASSCONFIG pass)
 					e->total.Im() = 0;
 
 				// beware: these are misnomers (they are e->constant_power, e->constant_current, ...)
-				e->power.Re() = e->total.Re() * e->power_fraction;
-				e->power.Im() = e->total.Im() * e->power_fraction;
-				e->current.Re() = e->total.Re() * e->current_fraction;
-				e->current.Im() = e->total.Im() * e->current_fraction;
-				e->admittance.Re() = e->total.Re() * e->impedance_fraction;
-				e->admittance.Im() = e->total.Im() * e->impedance_fraction;
+				e->constant_power.Re() = e->total.Re() * e->power_fraction;
+				e->constant_power.Im() = e->total.Im() * e->power_fraction;
+				e->constant_current.Re() = e->total.Re() * e->current_fraction;
+				e->constant_current.Im() = e->total.Im() * e->current_fraction;
+				e->constant_admittance.Re() = e->total.Re() * e->impedance_fraction;
+				e->constant_admittance.Im() = e->total.Im() * e->impedance_fraction;
 			}
 		}
 		else if (e->voltage_factor > 0 && !(e->config & EUC_HEATLOAD)) // no shape electric - use ZIP component directly
 		{
-			e->total.Re() = e->power.Re() + e->current.Re() + e->admittance.Re();
-			e->total.Im() = e->power.Im() + e->current.Im() + e->admittance.Im();
+			e->total.Re() = e->constant_power.Re() + e->constant_current.Re() + e->constant_admittance.Re();
+			e->total.Im() = e->constant_power.Im() + e->constant_current.Im() + e->constant_admittance.Im();
 		}
 		else
 		{
@@ -210,24 +210,24 @@ static TIMESTAMP enduse_sync_impl(enduse *e, TIMESTAMP t1, PASSCONFIG pass)
 	return (e->shape && e->shape->type != MT_UNKNOWN) ? e->shape->t2 : TS_NEVER;
 }
 
-// #ifndef __APPLE__
+#ifndef __APPLE__
 extern "C" MODULE_API TIMESTAMP enduse_sync(enduse *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	return enduse_sync_impl(obj, t1, pass);
 }
-// #else
-// extern "C" MODULE_API TIMESTAMP enduse_sync(enduse *obj, ...)
-// {
-// 	va_list args;
-// 	va_start(args, obj);
-// 	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
-// 	PASSCONFIG pass = va_arg(args, PASSCONFIG);
-// 	va_end(args);
+#else
+extern "C" MODULE_API TIMESTAMP enduse_sync(enduse *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
 
-// 	return enduse_sync_impl(obj, t1, pass);
-// }
+	return enduse_sync_impl(obj, t1, pass);
+}
 
-// #endif
+#endif
 
 typedef struct s_endusesyncdata
 {
@@ -645,8 +645,8 @@ int convert_from_enduse(char *string, int size, void *data, PROPERTY *prop)
 	OUTPUT_NZ(current_fraction);
 	OUTPUT_NZ(power_fraction);
 	OUTPUT(power_factor);
-	OUTPUT(power.Re());
-	OUTPUT_NZ(power.Im());
+	OUTPUT(constant_power.Re());
+	OUTPUT_NZ(constant_power.Im());
 	return len;
 }
 
@@ -673,9 +673,9 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 			  {.type = PT_double, .name = "impedance_fraction[pu]", .addr = (char *)PADDR_C(impedance_fraction), .description = "the fraction of total power that is constant impedance"},
 			  {.type = PT_double, .name = "power_fraction[pu]", .addr = (char *)PADDR_C(power_fraction), .description = "the fraction of the total power that is constant power"},
 			  {.type = PT_double, .name = "power_factor", .addr = (char *)PADDR_C(power_factor), .description = "the power factor of the load"},
-			  {.type = PT_complex, .name = "constant_power[kVA]", .addr = (char *)PADDR_C(power), .description = "the constant power portion of the total load"},
-			  {.type = PT_complex, .name = "constant_current[kVA]", .addr = (char *)PADDR_C(current), .description = "the constant current portion of the total load"},
-			  {.type = PT_complex, .name = "constant_admittance[kVA]", .addr = (char *)PADDR_C(admittance), .description = "the constant admittance portion of the total load"},
+			  {.type = PT_complex, .name = "constant_power[kVA]", .addr = (char *)PADDR_C(constant_power), .description = "the constant power portion of the total load"},
+			  {.type = PT_complex, .name = "constant_current[kVA]", .addr = (char *)PADDR_C(constant_current), .description = "the constant current portion of the total load"},
+			  {.type = PT_complex, .name = "constant_admittance[kVA]", .addr = (char *)PADDR_C(constant_admittance), .description = "the constant admittance portion of the total load"},
 			  {.type = PT_double, .name = "voltage_factor[pu]", .addr = (char *)PADDR_C(voltage_factor), .description = "the voltage change factor"},
 			  {.type = PT_double, .name = "breaker_amps[A]", .addr = (char *)PADDR_C(breaker_amps), .description = "the rated breaker amperage"},
 			  {.type = PT_set, .name = "configuration", .addr = (char *)PADDR_C(config), .description = "the load configuration options"},
@@ -829,9 +829,9 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 		else if (strcmp(param, "power_factor") == 0)
 			e->power_factor = atof(value);
 		else if (strcmp(param, "power.r") == 0)
-			e->power.Re() = atof(value);
+			e->constant_power.Re() = atof(value);
 		else if (strcmp(param, "power.i") == 0)
-			e->power.Im() = atof(value);
+			e->constant_power.Im() = atof(value);
 		else if (strcmp(param, "loadshape") == 0)
 		{
 			PROPERTY *pref = class_find_property(prop->oclass, value);

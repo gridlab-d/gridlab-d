@@ -142,7 +142,7 @@ int refrigerator::create()
 	// name of enduse
 	load.name = oclass->name;
 
-	load.power = load.admittance = load.current = load.total = gld::complex(0, 0, J);
+	load.constant_power = load.constant_admittance = load.constant_current = load.total = gld::complex(0, 0, J);
 	load.voltage_factor = 1.0;
 	load.power_factor = 0.95;
 	load.power_fraction = 1;
@@ -743,9 +743,9 @@ double refrigerator::update_refrigerator_state(double dt0, TIMESTAMP t1)
 		}
 	}
 
-	load.power.SetPowerFactor(posted_power / 1000, load.power_factor);
-	load.admittance = gld::complex(0, 0, J);
-	load.current = gld::complex(0, 0, J);
+	load.constant_power.SetPowerFactor(posted_power / 1000, load.power_factor);
+	load.constant_admittance = gld::complex(0, 0, J);
+	load.constant_current = gld::complex(0, 0, J);
 
 	if (true == door_open && true == door_to_open)
 	{
@@ -799,8 +799,8 @@ double refrigerator::update_refrigerator_state(double dt0, TIMESTAMP t1)
 		}
 	}
 
-	load.total = load.power + load.current + load.admittance;
-	total_power = (load.power.Re() + (load.current.Re() + load.admittance.Re() * load.voltage_factor) * load.voltage_factor);
+	load.total = load.constant_power + load.constant_current + load.constant_admittance;
+	total_power = (load.constant_power.Re() + (load.constant_current.Re() + load.constant_admittance.Re() * load.voltage_factor) * load.voltage_factor);
 
 	last_dr_mode = dr_mode;
 

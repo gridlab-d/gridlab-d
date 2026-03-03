@@ -138,9 +138,9 @@ void appliance::update_next_t(void)
 void appliance::update_power(void)
 {
 	gld::complex Z = impedance(0, state);
-	load.admittance = Z.Mag() == 0 ? gld::complex(0) : gld::complex(1) / Z;
-	load.current = current(0, state);
-	load.power = power(0, state);
+	load.constant_admittance = Z.Mag() == 0 ? gld::complex(0) : gld::complex(1) / Z;
+	load.constant_current = current(0, state);
+	load.constant_power = power(0, state);
 	load.heatgain = heatgain(0, state);
 }
 void appliance::update_state(void)

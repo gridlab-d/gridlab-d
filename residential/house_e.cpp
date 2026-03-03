@@ -1775,7 +1775,7 @@ int house_e::init(OBJECT *parent)
 	// set defaults for panel/meter variables
 	if (panel.max_amps == 0)
 		panel.max_amps = 200;
-	load.power = gld::complex(0, 0, J);
+	load.constant_power = gld::complex(0, 0, J);
 
 	// old-style HVAC system variable mapping
 
@@ -2820,15 +2820,15 @@ void house_e::update_system(double dt)
 			// See if we're active, and don't have an attached motor
 			if (external_motor_attached == false)
 			{
-				load.power.SetRect(load.power_fraction * load.total.Re(), load.power_fraction * load.total.Re() * sqrt(1 / (load.power_factor * load.power_factor) - 1));
-				load.admittance.SetRect(load.impedance_fraction * load.total.Re(), load.impedance_fraction * load.total.Re() * sqrt(1 / (load.power_factor * load.power_factor) - 1));
-				load.current.SetRect(load.current_fraction * load.total.Re(), load.current_fraction * load.total.Re() * sqrt(1 / (load.power_factor * load.power_factor) - 1));
+				load.constant_power.SetRect(load.power_fraction * load.total.Re(), load.power_fraction * load.total.Re() * sqrt(1 / (load.power_factor * load.power_factor) - 1));
+				load.constant_admittance.SetRect(load.impedance_fraction * load.total.Re(), load.impedance_fraction * load.total.Re() * sqrt(1 / (load.power_factor * load.power_factor) - 1));
+				load.constant_current.SetRect(load.current_fraction * load.total.Re(), load.current_fraction * load.total.Re() * sqrt(1 / (load.power_factor * load.power_factor) - 1));
 			}
 			else // Attached, but zero these, because below are accumulators
 			{
-				load.power = gld::complex(0.0, 0.0);
-				load.admittance = gld::complex(0.0, 0.0);
-				load.current = gld::complex(0.0, 0.0);
+				load.constant_power = gld::complex(0.0, 0.0);
+				load.constant_admittance = gld::complex(0.0, 0.0);
+				load.constant_current = gld::complex(0.0, 0.0);
 			}
 
 			// Motor losses that are related to the efficiency of the induction motor. These contribute to electric power
@@ -2846,7 +2846,7 @@ void house_e::update_system(double dt)
 					hvac_motor_reactive_loss = sqrt(1 / (hvac_motor_loss_power_factor * hvac_motor_loss_power_factor) - 1) * hvac_motor_real_loss;
 				}
 
-				load.admittance += gld::complex(hvac_motor_real_loss, hvac_motor_reactive_loss);
+				load.constant_admittance += gld::complex(hvac_motor_real_loss, hvac_motor_reactive_loss);
 			}
 			else if (motor_model == MM_FULL)
 				gl_warning("FULL motor model is not yet supported. No losses are assumed.");
@@ -2855,17 +2855,17 @@ void house_e::update_system(double dt)
 		{
 			//	gas heat & resistive heat -> fan power P and heating power Z
 			//	else just fan & system_rated_power = 0
-			load.power.SetRect(fan_power * fan_power_fraction, fan_power * fan_power_fraction * sqrt(1 / (fan_power_factor * fan_power_factor) - 1));
-			load.admittance.SetRect(system_rated_power + fan_power * fan_impedance_fraction, fan_power * fan_impedance_fraction * sqrt(1 / (fan_power_factor * fan_power_factor) - 1));
-			load.current.SetRect(fan_power * fan_current_fraction, fan_power * fan_current_fraction * sqrt(1 / (fan_power_factor * fan_power_factor) - 1));
+			load.constant_power.SetRect(fan_power * fan_power_fraction, fan_power * fan_power_fraction * sqrt(1 / (fan_power_factor * fan_power_factor) - 1));
+			load.constant_admittance.SetRect(system_rated_power + fan_power * fan_impedance_fraction, fan_power * fan_impedance_fraction * sqrt(1 / (fan_power_factor * fan_power_factor) - 1));
+			load.constant_current.SetRect(fan_power * fan_current_fraction, fan_power * fan_current_fraction * sqrt(1 / (fan_power_factor * fan_power_factor) - 1));
 		}
 	} // End if for meter in service
 	else // Meter not in service, zero HVAC
 	{
 		load.total = 0.0;
-		load.power = 0.0;
-		load.admittance = 0.0;
-		load.current = 0.0;
+		load.constant_power = 0.0;
+		load.constant_admittance = 0.0;
+		load.constant_current = 0.0;
 		load.heatgain = 0.0; // No HVAC gains
 	}
 
@@ -2876,7 +2876,7 @@ void house_e::update_system(double dt)
 		last_cooling_load = hvac_load;
 	else if (system_mode == SM_AUX || system_mode == SM_HEAT)
 		last_heating_load = hvac_load;
-	hvac_power = load.power + load.admittance * load.voltage_factor * load.voltage_factor + load.current * load.voltage_factor;
+	hvac_power = load.constant_power + load.constant_admittance * load.voltage_factor * load.voltage_factor + load.constant_current * load.voltage_factor;
 	// increment compressor_count?
 	if (compressor_on)
 	{
@@ -3713,7 +3713,7 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 	{
 		total.heatgain = 0;
 	}
-	total.total = total.power = total.current = total.admittance = gld::complex(0, 0);
+	total.total = total.constant_power = total.constant_current = total.constant_admittance = gld::complex(0, 0);
 
 	// Pull in the current powerflow values, if relevant
 	if (proper_meter_parent == true)
@@ -3762,7 +3762,7 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 			}
 
 			// Current flow is based on the actual load, not nominal load
-			gld::complex actual_power = c->pLoad->power + (c->pLoad->current + c->pLoad->admittance * c->pLoad->voltage_factor) * c->pLoad->voltage_factor;
+			gld::complex actual_power = c->pLoad->constant_power + (c->pLoad->constant_current + c->pLoad->constant_admittance * c->pLoad->voltage_factor) * c->pLoad->voltage_factor;
 			gld::complex current = ~(actual_power * 1000 / value_Circuit_V[(int)c->type]);
 
 			// check breaker
@@ -3818,21 +3818,21 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 				{
 					if (n == 0) // 1-2 240 V load
 					{
-						value_Power[2] += c->pLoad->power * 1000.0;
-						value_Line_I[2] += ~(c->pLoad->current * 1000.0 / (2.0 * default_line_voltage));
-						value_Shunt[2] += ~(c->pLoad->admittance * 1000.0 / (4.0 * default_line_voltage * default_line_voltage)); // Note that the denom is 2*120 * 2, so 4 * nominal
+						value_Power[2] += c->pLoad->constant_power * 1000.0;
+						value_Line_I[2] += ~(c->pLoad->constant_current * 1000.0 / (2.0 * default_line_voltage));
+						value_Shunt[2] += ~(c->pLoad->constant_admittance * 1000.0 / (4.0 * default_line_voltage * default_line_voltage)); // Note that the denom is 2*120 * 2, so 4 * nominal
 					}
 					else if (n == 1) // 2-N 120 V load
 					{
-						value_Power[1] += c->pLoad->power * 1000.0;
-						value_Line_I[1] += ~(c->pLoad->current * 1000.0 / default_line_voltage);
-						value_Shunt[1] += ~(c->pLoad->admittance * 1000.0 / (default_line_voltage * default_line_voltage));
+						value_Power[1] += c->pLoad->constant_power * 1000.0;
+						value_Line_I[1] += ~(c->pLoad->constant_current * 1000.0 / default_line_voltage);
+						value_Shunt[1] += ~(c->pLoad->constant_admittance * 1000.0 / (default_line_voltage * default_line_voltage));
 					}
 					else // n has to equal 2 here (checked above) - 1-N 120 V load
 					{
-						value_Power[0] += c->pLoad->power * 1000.0;
-						value_Line_I[0] += ~(c->pLoad->current * 1000.0 / default_line_voltage);
-						value_Shunt[0] += ~(c->pLoad->admittance * 1000.0 / (default_line_voltage * default_line_voltage));
+						value_Power[0] += c->pLoad->constant_power * 1000.0;
+						value_Line_I[0] += ~(c->pLoad->constant_current * 1000.0 / default_line_voltage);
+						value_Shunt[0] += ~(c->pLoad->constant_admittance * 1000.0 / (default_line_voltage * default_line_voltage));
 					}
 				}
 				else // Convert to impedance on the powerflow side - toss a verbose too
@@ -3842,21 +3842,21 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 
 					if (n == 0) // 1-2 240 V load
 					{
-						value_Shunt[2] += ~(c->pLoad->power * 1000.0 / (4.0 * default_line_voltage * default_line_voltage)); // Note that the denom is 2*120 * 2, so 4 * nominal
-						value_Shunt[2] += ~(c->pLoad->current * 1000.0 / (4.0 * default_line_voltage * default_line_voltage));
-						value_Shunt[2] += ~(c->pLoad->admittance * 1000.0 / (4.0 * default_line_voltage * default_line_voltage));
+						value_Shunt[2] += ~(c->pLoad->constant_power * 1000.0 / (4.0 * default_line_voltage * default_line_voltage)); // Note that the denom is 2*120 * 2, so 4 * nominal
+						value_Shunt[2] += ~(c->pLoad->constant_current * 1000.0 / (4.0 * default_line_voltage * default_line_voltage));
+						value_Shunt[2] += ~(c->pLoad->constant_admittance * 1000.0 / (4.0 * default_line_voltage * default_line_voltage));
 					}
 					else if (n == 1) // 2-N 120 V load
 					{
-						value_Shunt[1] += ~(c->pLoad->power * 1000.0 / (default_line_voltage * default_line_voltage));
-						value_Shunt[1] += ~(c->pLoad->current * 1000.0 / (default_line_voltage * default_line_voltage));
-						value_Shunt[1] += ~(c->pLoad->admittance * 1000.0 / (default_line_voltage * default_line_voltage));
+						value_Shunt[1] += ~(c->pLoad->constant_power * 1000.0 / (default_line_voltage * default_line_voltage));
+						value_Shunt[1] += ~(c->pLoad->constant_current * 1000.0 / (default_line_voltage * default_line_voltage));
+						value_Shunt[1] += ~(c->pLoad->constant_admittance * 1000.0 / (default_line_voltage * default_line_voltage));
 					}
 					else // n has to equal 2 here (checked above) - 1-N 120 V load
 					{
-						value_Shunt[0] += ~(c->pLoad->power * 1000.0 / (default_line_voltage * default_line_voltage));
-						value_Shunt[0] += ~(c->pLoad->current * 1000.0 / (default_line_voltage * default_line_voltage));
-						value_Shunt[0] += ~(c->pLoad->admittance * 1000.0 / (default_line_voltage * default_line_voltage));
+						value_Shunt[0] += ~(c->pLoad->constant_power * 1000.0 / (default_line_voltage * default_line_voltage));
+						value_Shunt[0] += ~(c->pLoad->constant_current * 1000.0 / (default_line_voltage * default_line_voltage));
+						value_Shunt[0] += ~(c->pLoad->constant_admittance * 1000.0 / (default_line_voltage * default_line_voltage));
 					}
 				}
 
@@ -3869,9 +3869,9 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 					total.total += c->pLoad->total;
 				}
 
-				total.power += c->pLoad->power;
-				total.current += c->pLoad->current;
-				total.admittance += c->pLoad->admittance;
+				total.constant_power += c->pLoad->constant_power;
+				total.constant_current += c->pLoad->constant_current;
+				total.constant_admittance += c->pLoad->constant_admittance;
 				if (((t0_dbl != 0) && (t1_dbl > t0_dbl)) || (!heat_start))
 				{
 					total.heatgain += c->pLoad->heatgain;
@@ -3886,7 +3886,10 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 	}
 	/* using an enduse structure for the total is more a matter of having all the values add up for the house,
 	 * and it should not sync the struct! ~MH */
-	// TIMESTAMP t = gl_enduse_sync(&total,t1); if (t<t2) t2 = t;
+	// Set voltage_factor so gl_enduse_sync will process the components
+	// total.voltage_factor = 1.0;
+	// TIMESTAMP t = gl_enduse_sync(&total,t1_dbl);
+	// if (t < t2_dbl) t2_dbl = (double)t;
 
 	total_load = total.total.Mag();
 
@@ -3909,7 +3912,7 @@ TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)
 	for (eu = implicit_enduse_list; eu != nullptr; eu = eu->next)
 	{
 		TIMESTAMP t = 0;
-		t = gl_enduse_sync(&(eu->load), t1);
+		t = gl_enduse_sync(&(eu->load), t1, PC_BOTTOMUP);
 		if (t < t2)
 			t2 = t;
 	}

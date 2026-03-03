@@ -333,7 +333,7 @@ int evcharger::create()
 
 	// name of enduse
 	load.name = oclass->name;
-	load.power = load.admittance = load.current = load.total = gld::complex(0, 0, J);
+	load.constant_power = load.constant_admittance = load.constant_current = load.total = gld::complex(0, 0, J);
 	vehicle_type = VT_HYBRID;
 
 	charging_efficiency = 1.0; // Assumed 100% Efficient charging at first
@@ -561,24 +561,24 @@ double evcharger::update_state(double dt /* seconds */)
 			else
 				dt = -1; // never
 
-			load.power.SetPowerFactor(charge_kw, power_factor, J);
+			load.constant_power.SetPowerFactor(charge_kw, power_factor, J);
 		}
 		else
 		{
-			load.power = gld::complex(0, 0, J);
+			load.constant_power = gld::complex(0, 0, J);
 			dt = -1; // never
 		}
 		break;
 	case VS_WORK:
-		load.power = gld::complex(0, 0, J);
+		load.constant_power = gld::complex(0, 0, J);
 		dt = -1; // never
 		break;
 	// these are not yet supported
 	// case SHORTTRIP:
-	//	load.power = gld::complex(0,0,J);
+	//	load.constant_power = gld::complex(0,0,J);
 	//	break;
 	// case LONGTRIP:
-	//	load.power = gld::complex(0,0,J);
+	//	load.constant_power = gld::complex(0,0,J);
 	//	break;
 	default:
 		GL_THROW("invalid state");
@@ -599,7 +599,7 @@ double evcharger::update_state(double dt /* seconds */)
 		entire offending model file, or create a simplified model using subsections of the
 		offending model to isolate or eradicate the error.
 	*/
-	load.total = load.power;
+	load.total = load.constant_power;
 	load.heatgain = load.total.Mag() * heat_fraction;
 
 	return dt < 3600 && dt >= 0 ? dt : 3600;

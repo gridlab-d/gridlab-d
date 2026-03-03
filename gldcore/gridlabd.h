@@ -1221,9 +1221,9 @@ inline int gl_enduse_create(enduse *e)
 }
 /** Synchronize an enduse
  **/
-inline TIMESTAMP gl_enduse_sync(enduse *e, TIMESTAMP t1)
+inline TIMESTAMP gl_enduse_sync(enduse *e, TIMESTAMP t1, PASSCONFIG pass = PC_BOTTOMUP)
 {
-	return callback->enduse.sync(e, PC_BOTTOMUP, t1);
+	return callback->enduse.sync(e, t1, pass);
 }
 /** Create a loadshape
  **/

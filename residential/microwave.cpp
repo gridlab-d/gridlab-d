@@ -63,7 +63,7 @@ int microwave::create()
 
 	// name of enduse
 	load.name = oclass->name;
-	load.power = load.admittance = load.current = load.total = gld::complex(0, 0, J);
+	load.constant_power = load.constant_admittance = load.constant_current = load.total = gld::complex(0, 0, J);
 
 	load.heatgain_fraction = 0.25;
 	load.power_factor = 0.95;
@@ -178,7 +178,7 @@ int microwave::init(OBJECT *parent)
 		gl_error("unrecognized loadshape");
 		return 0;
 	}
-	load.total = load.power = standby_power;
+	load.total = load.constant_power = standby_power;
 
 	// waiting this long to initialize the parent class is normal
 	return residential_enduse::init(parent);
@@ -347,7 +347,7 @@ TIMESTAMP microwave::sync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			dt = update_state(gl_toseconds(t1 - t0));
 		}
-		load.power.SetPowerFactor((state == ON ? shape.params.analog.power : standby_power), load.power_factor);
+		load.constant_power.SetPowerFactor((state == ON ? shape.params.analog.power : standby_power), load.power_factor);
 	}
 
 	gl_enduse_sync(&(residential_enduse::load), t1);

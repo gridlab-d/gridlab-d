@@ -102,7 +102,7 @@ int thermal_storage::create(void)
 
 	// name of enduse
 	load.name = oclass->name;
-	load.power = 0;
+	load.constant_power = 0;
 	load.power_factor = 1;
 	load.heatgain = 0;
 
@@ -441,7 +441,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 				recharge = 0;
 				stored_capacity = total_capacity;
 				state_of_charge = 100;
-				load.power = 0;
+				load.constant_power = 0;
 				load.power_factor = recharge_power_factor;
 				load.heatgain = 0;
 			}
@@ -452,7 +452,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 				next_timestep = (TIMESTAMP)((total_capacity - stored_capacity) / ((total_capacity / 30) / (9 * outside_temperature_val + 705)));
 				if (next_timestep == 0)
 					next_timestep = 1;
-				load.power = actual_recharge_power;
+				load.constant_power = actual_recharge_power;
 				load.power_factor = recharge_power_factor;
 				load.heatgain = 0;
 			}
@@ -494,7 +494,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 				next_timestep = (TIMESTAMP)((stored_capacity / discharge_rate) * 3600);
 				if (next_timestep == 0)
 					next_timestep = 1;
-				load.power = discharge_power;
+				load.constant_power = discharge_power;
 				load.power_factor = discharge_power_factor;
 				load.heatgain = -discharge_rate;
 			}
@@ -505,7 +505,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 				thermal_storage_available->setp<bool>(temp_bool_val, test_rlock);
 
 				state_of_charge = 0;
-				load.power = 0;
+				load.constant_power = 0;
 				load.power_factor = discharge_power_factor;
 				load.heatgain = 0;
 			}
@@ -517,7 +517,7 @@ TIMESTAMP thermal_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 			load.heatgain = 0;
 			if (*discharge_time_ptr == 1 && *recharge_time_ptr != 1)
 			{
-				load.power = 0;
+				load.constant_power = 0;
 				load.power_factor = 1;
 			}
 		}

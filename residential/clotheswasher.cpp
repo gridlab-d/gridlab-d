@@ -146,7 +146,7 @@ int clotheswasher::create()
 	// name of enduse
 	load.name = oclass->name;
 
-	load.power = load.admittance = load.current = load.total = gld::complex(0, 0, J);
+	load.constant_power = load.constant_admittance = load.constant_current = load.total = gld::complex(0, 0, J);
 	load.voltage_factor = 1.0;
 	load.power_factor = 0.95;
 	load.power_fraction = 1.0;
@@ -781,7 +781,7 @@ double clotheswasher::update_state(double dt)
 	if (state == STOPPED)
 	{
 		// nothing running
-		load.power = load.current = load.admittance = gld::complex(0, 0, J);
+		load.constant_power = load.constant_current = load.constant_admittance = gld::complex(0, 0, J);
 		// time to next expected state change
 		// dt = (enduse_demand<=0) ? -1 : 	dt = 3600/enduse_demand;
 		if (0 == enduse_demand)
@@ -815,15 +815,15 @@ double clotheswasher::update_state(double dt)
 			cycle_time -= dt;
 		}
 
-		load.power = gld::complex(clothesWasherPower / 1000, 0, J);
-		load.current = 0;
-		load.admittance = 0;
+		load.constant_power = gld::complex(clothesWasherPower / 1000, 0, J);
+		load.constant_current = 0;
+		load.constant_admittance = 0;
 
 		dt = cycle_time;
 	}
 
 	// compute the total electrical load
-	load.total = load.power;
+	load.total = load.constant_power;
 
 	if (dt > 0 && dt < 1)
 		dt = 1;

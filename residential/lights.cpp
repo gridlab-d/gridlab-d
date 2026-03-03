@@ -109,7 +109,7 @@ int lights::create(void)
 	// name of enduse
 	load.name = oclass->name;
 	load.power_fraction = load.current_fraction = load.impedance_fraction = 0;
-	load.power = load.admittance = load.current = load.total = gld::complex(0, 0, J);
+	load.constant_power = load.constant_admittance = load.constant_current = load.total = gld::complex(0, 0, J);
 	load.voltage_factor = 1.0;
 	// load.power_factor = 0.95; commenting out this line means a default power factor of 1.00
 	load.breaker_amps = 0;
@@ -119,11 +119,12 @@ int lights::create(void)
 
 int lights::init(OBJECT *parent)
 {
-	OBJECT *obj_this = object_header(this);
+	OBJECT *hdr = object_header(this);
 
 #ifdef __APPLE__
-	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+	parent = hdr->parent;
 #endif
+
 	if (parent != nullptr)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
@@ -133,7 +134,6 @@ int lights::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	// check the load configuration before initializing the parent class
@@ -264,20 +264,20 @@ TIMESTAMP lights::sync(TIMESTAMP t0, TIMESTAMP t1)
 			gl_warning("lights shape demand exceeds installed lighting power, capping to 100%%");
 			shape.load = 1.0;
 		}
-		load.power = shape.params.analog.power * shape.load;
+		load.constant_power = shape.params.analog.power * shape.load;
 		if (fabs(load.power_factor) < 1)
 		{
-			val = (load.power_factor < 0 ? -1.0 : 1.0) * load.power.Re() * sqrt(1 / (load.power_factor * load.power_factor) - 1);
+			val = (load.power_factor < 0 ? -1.0 : 1.0) * load.constant_power.Re() * sqrt(1 / (load.power_factor * load.power_factor) - 1);
 		}
 		else
 		{
 			val = 0;
 		}
-		load.power.SetRect(load.power.Re(), val);
+		load.constant_power.SetRect(load.constant_power.Re(), val);
 	}
 
-	gl_enduse_sync(&(residential_enduse::load), t1);
-	lights_actual_power = load.power + (load.current + load.admittance * load.voltage_factor) * load.voltage_factor;
+	gl_enduse_sync(&(residential_enduse::load), t1, PC_BOTTOMUP);
+	lights_actual_power = load.constant_power + (load.constant_current + load.constant_admittance * load.voltage_factor) * load.voltage_factor;
 
 	return t2;
 }
@@ -294,7 +294,7 @@ EXPORT int create_lights(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			lights *my = object_data<lights>(*obj);
-			// gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else

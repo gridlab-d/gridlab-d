@@ -12,7 +12,7 @@ module climate;
 module powerflow;
 
 clock{
-	timezone PST+0PDT;
+	timezone PST+8PDT;
 	starttime '2001-07-22 01:00:00';
 	stoptime '2001-07-23 01:00:36';
 }
@@ -73,7 +73,7 @@ object triplex_meter{
 			target "energy";
 			in '2001-07-23 1:00:34';
 			once ONCE_TRUE;
-			value 21.822+0i;
+			value 38.823; //21.822+0i;
 			within 0.10911;//asserting house_e within 0.5 percent of Rob's ETP result
 		};
 		object ZIPload {

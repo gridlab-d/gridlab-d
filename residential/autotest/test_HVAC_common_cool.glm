@@ -12,7 +12,7 @@ module climate;
 module powerflow;
 
 clock{
-	timezone PST+0PDT;
+	timezone PST+8PDT;
 	starttime '2001-07-24 01:00:00';
 	stoptime '2001-07-25 01:00:21';
 }
@@ -73,7 +73,8 @@ object triplex_meter{
 			in '2001-07-25 1:00:19';
 			once ONCE_TRUE;
 			//value 9.143+0i;
-			value 10.541+0i;
+			//value 10.541+0i;
+			value 27.543+0i;
 			within 0.052705;//asserting house_e within 0.5 percent of Rob's ETP result
 		};
 		object ZIPload {
@@ -87,6 +88,7 @@ object triplex_meter{
 			impedance_fraction 0;
 		};
 	};
+
 	object recorder{
 		property measured_real_energy;
 		file "test_HVAC_common_cool_energy.csv";

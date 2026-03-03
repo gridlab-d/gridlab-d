@@ -154,7 +154,7 @@ int dishwasher::create()
 	// name of enduse
 	load.name = oclass->name;
 
-	load.power = load.admittance = load.current = load.total = gld::complex(0, 0, J);
+	load.constant_power = load.constant_admittance = load.constant_current = load.total = gld::complex(0, 0, J);
 	load.voltage_factor = 1.0;
 	load.power_factor = 0.95;
 	load.power_fraction = 1;
@@ -1317,7 +1317,7 @@ double dishwasher::update_state(double dt) //,TIMESTAMP t1)
 	case dishwasher_STOPPED:
 
 		// nothing running
-		load.power = load.current = load.admittance = gld::complex(0, 0, J);
+		load.constant_power = load.constant_current = load.constant_admittance = gld::complex(0, 0, J);
 
 		dt = ((enduse_queue >= 1) || (enduse_queue == 0)) ? 0 : ((1 - enduse_queue) * 3600) / (enduse_queue * 24);
 
@@ -1326,9 +1326,9 @@ double dishwasher::update_state(double dt) //,TIMESTAMP t1)
 	case dishwasher_MOTOR_COIL_ONLY:
 
 		cycle_time -= dt;
-		load.power.SetPowerFactor(motor_power / 1000, load.power_factor);
-		load.admittance = gld::complex((coil_power[3]) / 1000, 0, J); // assume pure resistance
-		load.current = gld::complex(0, 0, J);
+		load.constant_power.SetPowerFactor(motor_power / 1000, load.power_factor);
+		load.constant_admittance = gld::complex((coil_power[3]) / 1000, 0, J); // assume pure resistance
+		load.constant_current = gld::complex(0, 0, J);
 
 		dt = cycle_time;
 		break;
@@ -1336,8 +1336,8 @@ double dishwasher::update_state(double dt) //,TIMESTAMP t1)
 	case dishwasher_COIL_ONLY:
 
 		cycle_time -= dt;
-		load.power = load.current = gld::complex(0, 0, J);
-		load.admittance = gld::complex((coil_power[1]) / 1000, 0, J); // assume pure resistance
+		load.constant_power = load.constant_current = gld::complex(0, 0, J);
+		load.constant_admittance = gld::complex((coil_power[1]) / 1000, 0, J); // assume pure resistance
 
 		dt = cycle_time;
 		break;
@@ -1345,8 +1345,8 @@ double dishwasher::update_state(double dt) //,TIMESTAMP t1)
 	case dishwasher_HEATEDDRY_ONLY:
 
 		cycle_time -= dt;
-		load.power = load.current = gld::complex(0, 0, J);
-		load.admittance = gld::complex((coil_power[2]) / 1000, 0, J); // assume pure resistance
+		load.constant_power = load.constant_current = gld::complex(0, 0, J);
+		load.constant_admittance = gld::complex((coil_power[2]) / 1000, 0, J); // assume pure resistance
 
 		dt = cycle_time;
 		break;
@@ -1363,16 +1363,16 @@ double dishwasher::update_state(double dt) //,TIMESTAMP t1)
 
 			cycle_time -= dt;
 		}
-		load.power = load.current = gld::complex(0, 0, J);
-		load.admittance = gld::complex(coil_power[0] / 1000, 0, J);
+		load.constant_power = load.constant_current = gld::complex(0, 0, J);
+		load.constant_admittance = gld::complex(coil_power[0] / 1000, 0, J);
 
 		dt = cycle_time;
 		break;
 
 	case dishwasher_STALLED:
 
-		load.power = load.current = gld::complex(0, 0, J);
-		load.admittance = gld::complex(1) / stall_impedance;
+		load.constant_power = load.constant_current = gld::complex(0, 0, J);
+		load.constant_admittance = gld::complex(1) / stall_impedance;
 
 		dt = trip_delay;
 
@@ -1380,7 +1380,7 @@ double dishwasher::update_state(double dt) //,TIMESTAMP t1)
 
 	case dishwasher_TRIPPED:
 
-		load.power = load.current = load.admittance = gld::complex(0, 0, J);
+		load.constant_power = load.constant_current = load.constant_admittance = gld::complex(0, 0, J);
 
 		dt = reset_delay;
 
@@ -1391,9 +1391,9 @@ double dishwasher::update_state(double dt) //,TIMESTAMP t1)
 		motor_coil_on_off = both_coils_on_off = 0;
 		cycle_time -= dt;
 
-		load.power.SetPowerFactor(motor_power / 1000, load.power_factor);
-		load.admittance = gld::complex(0, 0, J);
-		load.current = gld::complex(0, 0, J);
+		load.constant_power.SetPowerFactor(motor_power / 1000, load.power_factor);
+		load.constant_admittance = gld::complex(0, 0, J);
+		load.constant_current = gld::complex(0, 0, J);
 
 		dt = cycle_time;
 		break;
@@ -1409,8 +1409,8 @@ double dishwasher::update_state(double dt) //,TIMESTAMP t1)
 	}
 
 	// compute the total electrical load - first for the enduse structure and second for an internal variable
-	load.total = load.power + load.current + load.admittance;
-	total_power = (load.power.Re() + (load.current.Re() + load.admittance.Re() * load.voltage_factor) * load.voltage_factor) * 1000;
+	load.total = load.constant_power + load.constant_current + load.constant_admittance;
+	total_power = (load.constant_power.Re() + (load.constant_current.Re() + load.constant_admittance.Re() * load.voltage_factor) * load.voltage_factor) * 1000;
 
 	// compute the total heat gain
 	load.heatgain = load.total.Mag() * heat_fraction;

@@ -96,7 +96,7 @@ int ZIPload::create()
 
 	// name of enduse
 	load.name = oclass->name;
-	load.power = load.admittance = load.current = load.total = 0.0;
+	load.constant_power = load.constant_admittance = load.constant_current = load.total = 0.0;
 	base_power = 0.0;
 	load.heatgain_fraction = 0.90;
 	load.power_factor = 1.00;
@@ -535,7 +535,7 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 				imag_power *= -1.0; // Adjust imaginary portion for negative PF
 			}
 
-			load.power.SetRect(real_power, imag_power);
+			load.constant_power.SetRect(real_power, imag_power);
 
 			// Calculate current portion
 			real_power = demand_power * load.current_fraction;
@@ -547,7 +547,7 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 				imag_power *= -1.0; // Adjust imaginary portion for negative PF
 			}
 
-			load.current.SetRect(real_power, imag_power);
+			load.constant_current.SetRect(real_power, imag_power);
 
 			// Calculate impedance portion
 			real_power = demand_power * load.impedance_fraction;
@@ -559,11 +559,11 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 				imag_power *= -1.0; // Adjust imaginary portion for negative PF
 			}
 
-			load.admittance.SetRect(real_power, imag_power); // Put impedance in admittance.  From a power point of view, they are the same
+			load.constant_admittance.SetRect(real_power, imag_power); // Put impedance in admittance.  From a power point of view, they are the same
 
 			// Compute total power - not sure if needed, but will use below
-			load.total = load.power + load.current + load.admittance;
-			actual_power = load.power + load.current * load.voltage_factor + load.admittance * load.voltage_factor * load.voltage_factor;
+			load.total = load.constant_power + load.constant_current + load.constant_admittance;
+			actual_power = load.constant_power + load.constant_current * load.voltage_factor + load.constant_admittance * load.voltage_factor * load.voltage_factor;
 
 			// Update power factor, just in case
 			angleval = load.total.Arg();
@@ -574,7 +574,7 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 		else
 		{
-			load.power = load.current = load.admittance = actual_power = load.total = 0.0;
+			load.constant_power = load.constant_current = load.constant_admittance = actual_power = load.total = 0.0;
 			load.heatgain = demand_power * BTUPHPKW;
 			return TS_NEVER;
 		}
@@ -582,9 +582,9 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	else // Breaker's open - nothing happens
 	{
 		load.total = 0.0;
-		load.power = 0.0;
-		load.current = 0.0;
-		load.admittance = 0.0;
+		load.constant_power = 0.0;
+		load.constant_current = 0.0;
+		load.constant_admittance = 0.0;
 		load.heatgain = 0.0;
 		load.power_factor = 0.0;
 	}

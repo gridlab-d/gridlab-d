@@ -61,6 +61,7 @@ residential_enduse::residential_enduse(MODULE *mod)
 // create is called every time a new object is loaded
 int residential_enduse::create(bool connect_shape)
 {
+
 	// attach loadshape
 	load.end_obj = my();
 	if (connect_shape)
@@ -68,6 +69,10 @@ int residential_enduse::create(bool connect_shape)
 	load.breaker_amps = 20;
 	load.config = 0;
 	load.heatgain_fraction = 1.0; /* power has no effect on heat loss */
+
+	// Ensure nominal voltage at t=0 (until parent updates it)
+	load.voltage_factor = 1.0;
+
 	re_override = OV_NORMAL;
 	power_state = PS_UNKNOWN;
 	return 1;
@@ -125,6 +130,10 @@ int residential_enduse::isa(char *classname)
 TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	gl_debug("%s shape load = %8g", get_name(), gl_get_loadshape_value(&shape));
+
+	// >>> Ensure the embedded enduse 'load' computes P/Q at this tick
+	gl_enduse_sync(&load, t1, PC_BOTTOMUP);
+
 	if (load.voltage_factor > 1.2 || load.voltage_factor < 0.8)
 		gl_verbose("%s voltage is out of normal +/- 20%% range of nominal (vf=%.2f)", get_name(), load.voltage_factor);
 	/* TROUBLESHOOT

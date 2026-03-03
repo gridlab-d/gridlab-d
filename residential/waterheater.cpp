@@ -1400,15 +1400,15 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	// load.total = load.power = /* power_kw */ load.power;
-	load.power = load.total * load.power_fraction;
-	load.admittance = load.total * load.impedance_fraction;
-	load.current = load.total * load.current_fraction;
+	load.constant_power = load.total * load.power_fraction;
+	load.constant_admittance = load.total * load.impedance_fraction;
+	load.constant_current = load.total * load.current_fraction;
 	if (current_model != FORTRAN)
 	{
 		load.heatgain = internal_gain;
 	}
 
-	waterheater_actual_power = load.power + (load.current + load.admittance * load.voltage_factor) * load.voltage_factor;
+	waterheater_actual_power = load.constant_power + (load.constant_current + load.constant_admittance * load.voltage_factor) * load.voltage_factor;
 	actual_load = waterheater_actual_power.Re();
 
 	if (actual_load != 0.0)

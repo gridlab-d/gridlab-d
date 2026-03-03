@@ -74,9 +74,9 @@ typedef struct s_enduse
 	double breaker_amps; /* breaker limit (if any) */
 
 	/* zip values */
-	gld::complex admittance; /* constant impedance oprtion of load in kW */
-	gld::complex current;	 /* constant current portion of load in kW */
-	gld::complex power;		 /* constant power portion of load in kW */
+	gld::complex constant_admittance; /* constant impedance oprtion of load in kW */
+	gld::complex constant_current;	  /* constant current portion of load in kW */
+	gld::complex constant_power;	  /* constant power portion of load in kW */
 
 	/* composite load data */
 	EUMOTOR motor[_EUMT_COUNT];			  /* motor loads (A-D) */
@@ -116,11 +116,11 @@ int enduse_initall(void);
 extern "C"
 {
 
-	// #ifndef __APPLE__
+#ifndef __APPLE__
 	MODULE_API TIMESTAMP enduse_sync(enduse *e, TIMESTAMP t1, PASSCONFIG pass);
-	// #else
-	// MODULE_API TIMESTAMP enduse_sync(enduse *e, ...);
-	// #endif
+#else
+	MODULE_API TIMESTAMP enduse_sync(enduse *e, ...);
+#endif
 }
 
 TIMESTAMP enduse_syncall(TIMESTAMP t1);

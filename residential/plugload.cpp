@@ -57,7 +57,7 @@ int plugload::create()
 
 	// name of enduse
 	load.name = oclass->name;
-	load.power = load.admittance = load.current = load.total = gld::complex(0, 0, J);
+	load.constant_power = load.constant_admittance = load.constant_current = load.total = gld::complex(0, 0, J);
 	load.power_fraction = load.current_fraction = load.impedance_fraction = 0;
 	load.heatgain_fraction = 0.90;
 	load.power_factor = 0.90;
@@ -119,26 +119,26 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 				gl_error("plugload demand cannot be negative, capping");
 				shape.load = 0.0;
 			}
-			load.power = load.power_fraction * shape.load;
-			load.current = load.current_fraction * shape.load;
-			load.admittance = load.impedance_fraction * shape.load;
+			load.constant_power = load.power_fraction * shape.load;
+			load.constant_current = load.current_fraction * shape.load;
+			load.constant_admittance = load.impedance_fraction * shape.load;
 			if (fabs(load.power_factor) < 1 && load.power_factor != 0.0)
 			{
-				val = (load.power_factor < 0 ? -1.0 : 1.0) * load.power.Re() * sqrt(1 / (load.power_factor * load.power_factor) - 1);
+				val = (load.power_factor < 0 ? -1.0 : 1.0) * load.constant_power.Re() * sqrt(1 / (load.power_factor * load.power_factor) - 1);
 			}
 			else
 			{
 				val = 0;
 			}
-			load.power.SetRect(load.power.Re(), val);
+			load.constant_power.SetRect(load.constant_power.Re(), val);
 		}
 	}
 	else
-		load.power = load.current = load.admittance = gld::complex(0, 0, J);
+		load.constant_power = load.constant_current = load.constant_admittance = gld::complex(0, 0, J);
 
 	gl_enduse_sync(&(residential_enduse::load), t1);
 
-	plugs_actual_power = load.power + (load.current + load.admittance * load.voltage_factor) * load.voltage_factor;
+	plugs_actual_power = load.constant_power + (load.constant_current + load.constant_admittance * load.voltage_factor) * load.voltage_factor;
 	return t2;
 }
 

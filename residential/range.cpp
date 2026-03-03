@@ -648,12 +648,12 @@ TIMESTAMP range::sync(TIMESTAMP t0, TIMESTAMP t1)
 	dt = update_state(dt, t1);
 
 	// load.total = load.power = /* power_kw */ load.power;
-	load.power = load.total * load.power_fraction;
-	load.admittance = load.total * load.impedance_fraction;
-	load.current = load.total * load.current_fraction;
+	load.constant_power = load.total * load.power_fraction;
+	load.constant_admittance = load.total * load.impedance_fraction;
+	load.constant_current = load.total * load.current_fraction;
 	load.heatgain = internal_gain;
 
-	range_actual_power = load.power + (load.current + load.admittance * load.voltage_factor) * load.voltage_factor;
+	range_actual_power = load.constant_power + (load.constant_current + load.constant_admittance * load.voltage_factor) * load.voltage_factor;
 	actual_load = range_actual_power.Re();
 	if (heat_needed == true)
 		total_power_oven = actual_load;
@@ -851,7 +851,7 @@ double range::update_state(double dt1, TIMESTAMP t1)
 	case CT_STOPPED:
 
 		// nothing running
-		load.power = load.current = load.admittance = gld::complex(0, 0, J);
+		load.constant_power = load.constant_current = load.constant_admittance = gld::complex(0, 0, J);
 
 		// time to next expected state_cooktop change
 		// dt = (enduse_demand_cooktop<=0) ? -1 : 	dt = 3600/enduse_demand_cooktop;
@@ -864,8 +864,8 @@ double range::update_state(double dt1, TIMESTAMP t1)
 		// motor_on_off = motor_coil_on_off = both_coils_on_off = 1;
 		cycle_time_cooktop -= dt1;
 
-		load.power = load.current = gld::complex(0, 0, J);
-		load.admittance = gld::complex((cooktop_coil_power[0]) / 1000, 0, J);
+		load.constant_power = load.constant_current = gld::complex(0, 0, J);
+		load.constant_admittance = gld::complex((cooktop_coil_power[0]) / 1000, 0, J);
 
 		dt1 = cycle_time_cooktop;
 		break;
@@ -875,8 +875,8 @@ double range::update_state(double dt1, TIMESTAMP t1)
 		// motor_on_off = motor_coil_on_off = both_coils_on_off = 1;
 		cycle_time_cooktop -= dt1;
 
-		load.power = load.current = gld::complex(0, 0, J);
-		load.admittance = gld::complex((cooktop_coil_power[1]) / 1000, 0, J);
+		load.constant_power = load.constant_current = gld::complex(0, 0, J);
+		load.constant_admittance = gld::complex((cooktop_coil_power[1]) / 1000, 0, J);
 
 		dt1 = cycle_time_cooktop;
 		break;
@@ -886,8 +886,8 @@ double range::update_state(double dt1, TIMESTAMP t1)
 		// motor_on_off = motor_coil_on_off = both_coils_on_off = 1;
 		cycle_time_cooktop -= dt1;
 
-		load.power = load.current = gld::complex(0, 0, J);
-		load.admittance = gld::complex((cooktop_coil_power[2]) / 1000, 0, J);
+		load.constant_power = load.constant_current = gld::complex(0, 0, J);
+		load.constant_admittance = gld::complex((cooktop_coil_power[2]) / 1000, 0, J);
 
 		dt1 = cycle_time_cooktop;
 		break;
@@ -895,8 +895,8 @@ double range::update_state(double dt1, TIMESTAMP t1)
 	case CT_STALLED:
 
 		// running in constant impedance mode
-		load.power = load.current = gld::complex(0, 0, J);
-		load.admittance = gld::complex(1) / stall_impedance;
+		load.constant_power = load.constant_current = gld::complex(0, 0, J);
+		load.constant_admittance = gld::complex(1) / stall_impedance;
 
 		// time to trip
 		dt1 = trip_delay;
@@ -906,7 +906,7 @@ double range::update_state(double dt1, TIMESTAMP t1)
 	case CT_TRIPPED:
 
 		// nothing running
-		load.power = load.current = load.admittance = gld::complex(0, 0, J);
+		load.constant_power = load.constant_current = load.constant_admittance = gld::complex(0, 0, J);
 
 		// time to next expected state change
 		dt1 = reset_delay;
@@ -923,8 +923,8 @@ double range::update_state(double dt1, TIMESTAMP t1)
 		break;
 	}
 
-	load.total += load.power + load.current + load.admittance;
-	total_power_cooktop = (load.power.Re() + (load.current.Re() + load.admittance.Re() * load.voltage_factor) * load.voltage_factor) * 1000;
+	load.total += load.constant_power + load.constant_current + load.constant_admittance;
+	total_power_cooktop = (load.constant_power.Re() + (load.constant_current.Re() + load.constant_admittance.Re() * load.voltage_factor) * load.voltage_factor) * 1000;
 
 	// End of cook top
 
