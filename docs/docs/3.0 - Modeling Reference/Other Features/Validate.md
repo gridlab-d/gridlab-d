@@ -32,7 +32,7 @@ will run a single two-threaded validation test at a time.
 
 Validation test failures are reported as errors. Optional test failures are reported as warning. 
 
-By default all output is redirected to the default output streams (see redirect**TODO** - Redirect - pull in def for redirect). You can send all output to the console using --redirect none command option. 
+By default all output is redirected to the default output streams (see redirect**TODO** - Redirect - pull in def for redirect). You can send all output to the console using `--redirect none command option`. 
 
 ### Options
 
@@ -120,12 +120,12 @@ Unhandled exceptions in Windows can cause modal dialogs to pop up that block the
 
 # Test
 
-The user may provide a command option `--test` to enable the various test routines supported in GridLAB-D. The routines are made available to users by listing the core test routines in the `test_list` variable and/or exporting the `module_test` routine from modules the support self-tests.
+The user may provide a command option `--test` to enable the various test routines supported in GridLAB-D. The routines are made available to users by listing the core test routines in the `* **test_list` variable and/or exporting the `module_test` routine from modules the support self-tests.
 
 
 Core (in `core/test.c`)
 
-        static TESTLIST test_list[] = {
+        static TESTLIST * **test_list[] = {
         // ...
         {"name", component_test, 0, next_ptr}
         };
@@ -145,6 +145,110 @@ Module (in `_module_ /test.cpp`)
         // ...
         return SUCCESS; // or FAILED
         }
+
+# Test: Core
+
+!!! note
+
+    TECHNICAL MANUAL REVIEW NEEDED
+
+
+The following tests are current performed on the GridLAB-D.
+
+* **test_bare_class** - Create a new runtime class with a single property, initializes the property, and verify that the property is set correctly.
+
+* **test_c_include** -  Verify the "C" include functionality of runtime class compilation.
+
+* **test_core_4blocks_schedule** -  Verify that 96 unique values schedule split into 4 blocks place the correct values into properties of an object at the correct time.
+
+* **test_core_5blocks_schedule_err** -  Verify that a schedule with more than 4 blocks cannot be compiled.
+
+* **test_core_63_schedule** -  Verify that a schedule with 63 entries can be compiled.
+
+* **test_core_64_schedule_err** -  Verify that a schedule with 64 entries cannot be compiled.
+
+* **test_core_player_schedule_1** -  Verify that a player with no parent can serve as a schedule and work with transforms.
+
+* **test_core_schedules_boolean_err** -  Verify that the boolean flag detects a schedule with a non-boolean values.
+
+* **test_core_schedules_nonzero_err** -  Verify that the nonzero flag detects a schedule with a zero value.
+
+* **test_core_schedules_positive_err** -  Verify that the positive flag detects a schedule with a zero or negative values.
+
+* **test_deltamode** -  Verify basic deltamode operation.
+
+* **test_double_array** -  Verify basic double_array operations in a runtime class.
+
+* **test_duplication_function_err Verify that export functions from a runtime class cannot be given duplicate names.
+
+* **test_exec_mainloop** - Verify that the main loop stoptime works properly.
+
+* **test_external_null_source** - Verify that non-existent external transform sources work properly.
+
+* **test_filter_delay** - Verify basic delay filter functionality.
+
+* **test_filter_second** - Verify second-order filter functionality.
+
+* **test_global_unit_convert** - Verify unit conversion on a global variable.
+
+* **test_global_var_expansion** - Verify inline expansion variables and operation.
+
+* **test_groupid** - Verify groupid implementation.
+
+* **test_guid** - Verify globally unique id implementation.
+
+* **test_inline_plc** - Verify inline PLC code ( TODO: : does not appear to do that.)
+
+* **test_kml_output** - Verify kml output ( TODO: : does not appear to do that.)
+
+* **test_latlon** - Verify all the allowed formats of latitude and longitude.
+
+* **test_loadshape_exercise_2_3_3** - Verify end-use loadshapes.
+
+* **test_locale** - Verify the use of locale names instead of timezone specifications ( TODO: : only checks syntax, does not check proper functionality).
+
+* **test_notz** - Verify that omitted timezone does not cause a loader problem when datetime is used.
+
+* **test_now** - Verify the use of the NOW variable.
+
+* **test_opt_alternate_syntax** - Verify the use of alternate value loader syntax.
+
+* **test_opt_commit** - Verify the use of intrinsic commit to influence the advance of global clock.
+
+* **test_opt_core_pc_and_fn** - Verify general runtime class compilation.
+
+* **test_opt_core_runtime_class** - Verify general runtime class compilation.
+
+* **test_opt_runtime_exercise_3_1_1** - Verify basic runtime class compilation.
+
+* **test_parameter_expansion** - Verify general example variables functionality.
+
+* **test_quoted_value** - Verify quoted string concatenation by loader.
+
+* **test_run** - Verify RUN variable implementation.
+
+* **test_schedule_types** - Verify basic schedule flags functionality.
+
+* **test_schedule_xform** - Verify transform implementation.
+
+* **test_schedule_xform_external** - Verify external transform implementation.
+
+* **test_script** - Verify script success detection.
+
+* **test_script_err** - Verify script failure detection.
+
+* **test_script_event** - Verify script event calls.
+
+* **test_seq** - Verify sequence numbering and usage.
+
+* **test_simple_schedule** - Verify a simple schedule implementation.
+
+* **test_statefull_randomization** - Verify implementation of RNG3 stateful random number streams.
+
+* **test_stream_out** - Verify stream output.
+
+* **test_struct** - Verify struct parser.
+
 
 ## Related Concepts:
 

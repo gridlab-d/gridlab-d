@@ -508,7 +508,58 @@ where the conditions $T_M(0)$, $T_O(0)$, and $Q_A(0)$ are all known states of th
 
 ### Solving for time
 
-Solving equation (10) for time must be done using a numerical solver that implements Newton's method. GridLAB-D™ has an ETP solver function built-in for this purpose. See [Solvers API] for details. 
+Solving equation (10) for time must be done using a numerical solver that implements Newton's method. GridLAB-D™ has an ETP solver function built-in for this purpose. 
+
+!!! ETP Solver
+
+    The data structure for the ETP solver is as follows:
+
+        struct etp {
+          double t; // the time solution to the ETP equation
+          double a; // the a parameter
+          double n; // the n parameter
+          double b; // the b parameter
+          double m; // the m parameter
+          double c; // the c parameter
+          double p; // the precision of the solution
+          double *e; // the pointer to the error estimate
+        };
+
+    To use the ETP solver in a module, you must define the macro USE_GLSOLVERS in each source file that will makes solver call, including the init.cpp file (which loads and initializes the solver):
+
+        #define USE_GLSOLVERS
+        #include "gridlabd.h"
+    
+    When the module is initialized, you must load the ETP solver (which will automatically initialize it).
+
+        glsolver *etp_solver;
+
+        EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
+        {
+          if ( set_callback(fntable)==NULL ) return NULL;
+          etp_solver = new glsolver("etp");
+          // ...
+          return first_class;
+        }
+    
+    To set/get parameters for the ETP solver, use the set/get calls:
+
+        int iteration_limit;
+
+        if ( etp_solver->get("max_iterations",&iteration_limit,NULL)==0 )
+          gl_error("unable to get iteration limit");
+
+        if ( etp_solver->set("max_iterations",iteration_limit,NULL)==0 )
+          gl_error("unable to set iteration limit");
+      
+    To call the ETP solver, you must construct the ETP data structure required by the solver. For example:
+
+        struct { double t,a,n,b,m,c,p,*e; } etp = {0,0.1,-0.1,0.2,-0.2,0.3,1e-6,NULL};
+
+        if ( etp_solver->solve((void*)&etp)==0 || isnan(t) )
+          gl_error("no solution found");
+
+    Where `max_iterations` is used to control the maximum number of iterations used by the solver.
 
 ## Caveats
 
@@ -560,7 +611,7 @@ Equation | Explanation
 | $A_{wt} = 2 n h (1 + R) \sqrt{\frac{A}{nR}}$ | The gross exterior wall area ($A_{wt}$)   
 | $A_g = WWR\ A_{wt}\ EWR$ | The gross window area ($A_g$)   
 | $A_d = n_d\ A_{1d}$ | The total door area ($A_d$), used to calculate `net_exterior_wall_area`, `envelope_UA`, and `house_content_heat_transfer`. This is an automatically calculated value, not a variable that the user may set. The default door area is 78 square feet.  It is calculated by <br/> *door_area = number_of_doors * 3.0 * (78.0/12.0)*
-| $A_w = (A_{wt}-(A_g + A_d))\ EWR$ | The net exterior wall area ($A_w$)   
+| $A_w = (A_{wt}-(A_g + A_d))\ EWR$ | The net exterior wall area ($A_w$). This is used to calculate `envelope_UA` and `house_content_heat_transfer_coeff`. The default `net_exterior_wall_area` is about **1310** square feet. It is calculated by <br/> 1 $\cdot 1633\text{ft}^2 - 244.95\text{ft}^2 - 78\text{ft}^2 = 1310.05\text{ft}^2$
 | $A_c = \frac{A}{n} ECR$ | The net exterior ceiling area ($A_c$). This is an automatically calculated value, not a variable that the user may set. The default exterior ceiling area is 2500 sqft. It is calculated by <br/> *exterior_ceiling_area = floor_area * exterior_ceiling_fraction / number_of_stories*
 | $A_f = \frac{A}{n} EFR$ | The net exterior floor area ($A_f$). This is an automatically calculated value, not a variable that the user may set. The default exterior floor area is 2500 sqft. It is calcualted by <br/> *exterior_floor_area = floor_area * exterior_floor_fraction / number_of_stories*
   

@@ -2,6 +2,18 @@
 
 A solar panel (also known as solar module or photovoltaic module/panel) is an assembly of solar cells. Solar panels must be connected via a parent inverter. 
 
+A minimal model could be created via: 
+    
+    
+    object solar {
+        generator_mode SUPPLY_DRIVEN;
+        generator_status ONLINE;
+        panel_type SINGLE_CRYSTAL_SILICON;
+        efficiency 0.2;
+        parent inverter1;
+        area 2500;
+    }
+
 ## Properties
 
 Property name | Type | Unit | Description | Default  
@@ -42,7 +54,7 @@ Property name | Type | Unit | Description | Default
 **weather** | object | n/a | Reference to a climate object from which temperature, humidity, and solar flux are collected   
 **shading_factor** | double | pu | Shading factor for scaling solar power to the array | 1 (no shading)   
 **tilt_angle** | double | deg | Tilt angle of PV array | 45 [deg] 
-**orientation_azimuth** | double | deg | Facing direction of the PV array | 0 (equator facing) 
+**orientation_azimuth** | double | deg | Facing direction of the PV array; referenced on the normal cardinal coordinate scheme (0 = N, 90 = E, 180 = S, 270 = W). Used for calculating solar insulation with panel `orientation` type is `FIXED`. | 180 (equator facing) 
 **latitude_angle_fix** | bool | n/a | Fix tilt angle to installation latitude value (latitude comes from climate data) | FALSE  
 **orientation** | enumeration | n/a | Type of panel orientation. Types DEFAULT and FIXED_AXIS are currently implemented | DEFAULT   
 **pvc_U_oc_V** | double | V | Open circuit voltage   
@@ -98,10 +110,7 @@ Property name | Type | Unit | Description | Default
   
 ## Orientation
 
-Type of panel orientation 
-
-### Synopsis
-    
+Type of panel orientation. Currently implemented orientation types include DEFAULT and FIXED_AXIS. DEFAULT implies the panel is tracking for ideal insolation. FIXED_AXIS represents an array with a fixed tilt angle and a fixed direction it faces. 
     
     module generators;
     class solar {
@@ -112,46 +121,42 @@ Type of panel orientation
     }
     
 
-### Remarks
-
-Currently implemented orientation types include DEFAULT and FIXED_AXIS. DEFAULT implies the panel is tracking for ideal insolation. FIXED_AXIS represents an array with a fixed tilt angle and a fixed direction it faces. 
-
-### DEFAULT
-
 This orientation uses ideal insolation. Insolation is calculated by 
-    
     
     Insolation = solar_flux * shading_factor
     
 
 where the value for solar_flux either comes from a climate object, or if no climate object is included solar_flux is set to 1000. 
 
-* FIXED_AXIS -
+* **FIXED_AXIS** -
 When orientation is set as FIXED_AXIS, weather, tilt_angle, orientation_azimuth, SOLAR_TILT_MODEL, and shading_factor are all used to calculate the solar radiation. 
 
-* ONE_AXIS -
+* **ONE_AXIS** -
 _Not yet implemented_
 
-* TWO_AXIS -
+* **TWO_AXIS** -
 _Not yet implemented_
 
-* AZIMUTH_AXIS - 
+* **AZIMUTH_AXIS** - 
 _Not yet implemented_
 
-#### Example
+## Solar Tilt Model
 
-A minimal model could be created via: 
-    
-    
-    object solar {
-        generator_mode SUPPLY_DRIVEN;
-        generator_status ONLINE;
-        panel_type SINGLE_CRYSTAL_SILICON;
-        efficiency 0.2;
-        parent inverter1;
-        area 2500;
+Underlying solar position and tilt model used to calculate irradiance on the panel. Currently implemented model types include **DEFAULT** and **SOLPOS**. Both models are only used when the panel is in **FIXED_AXIS** mode.
+
+    module generators;
+    class solar {
+        enumeration {DEFAULT=1, SOLPOS=1} SOLAR_TILT_MODEL;
     }
-    
+    object solar {
+        SOLAR_TILT_MODEL value;
+    }
+
+* **DEFAULT** - 
+The incident solar radiation on a tilted array is calculated using algorithms from Solar Energy Thermal Processes by Duffie and Beckman (1974).
+
+* **SOLPOS** - 
+The incident solar radiation on a tilted array is calculated using algoirthms from the [NREL SOLPOS] page and from "Modeling Daylight Availability and Irradiance Components from Direct and Global Irradiance" in Solar Energy volume 44, number 3 by Perez et al.
 
 ## Model with DC Bus Model
 

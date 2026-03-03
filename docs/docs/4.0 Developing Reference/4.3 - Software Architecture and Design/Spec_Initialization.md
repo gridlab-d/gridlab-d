@@ -1,4 +1,4 @@
-# Spec:Initialization
+# Initialization
 
 Approval item:  SPECIFICATION REVIEW NEEDED 
 
@@ -49,6 +49,93 @@ Initialization time
 
 Initialization state
     As of Hassayampa (Version 3.0), all objects will have the OF_INIT flag set until after initialization is successfully completed (R9).
+
+
+Approval item:  TECHNICAL MANUAL
+
+## Before Hassayampa
+
+The following initialization process is implemented in `exec.c/init_all()`: 
+    
+    
+    set all clock to TS_INIT 
+    if initialize all instances fails return error
+    if initialize all loadshapes fails return error
+    for each object
+      if initialize object fails return error
+      if object must be named and is not named return error
+    end for
+    
+
+The following initialization process is implemented in `object.c/object_init()`: 
+    
+    
+    if initialize the object fails, then return error
+    
+
+!!! note
+    
+    The object clock remains set to the initial clock value 0 until the first call to sync, at which time sync uses the object clock value to determine whether any late initialization will take place.
+
+## As of Hassayampa (Version 3.0)
+
+Object creation set the OF_INIT flag. 
+
+The following initialization process is implemented in `exec.c/init_all()`: 
+    
+    
+    set the global clock to the start time
+    if initialize all instances fails, then return error
+    if initialize all loadshapes fails, then return error
+    if initialize all objects fails, then return error
+    return ok
+    
+
+The process to initialize all objects is implemented in `object.c/object_initall()`: 
+    
+    
+    when initialization sequence is creation
+      for each object
+        if initialize object fails, then return error
+    or when initialization sequence is deferred or auto
+      add all objects to initialization list
+      do until initialization list empty
+        for each object in initialization list
+          if initialize object fails, then return error
+          else if initialize object ok, then remove object from initialization list
+        end for
+      end do
+    or when initialization sequence is topdown or bottom up
+      add all objects to initialization list
+      do until initialization list empty
+        for each rank in initialization sequence
+          for each object in initialization list
+            if initialize object fails, then return error
+            else if initialize object ok, then remove object from initialization list
+          end for
+        end for
+      end do
+    end when
+    
+
+The process to initialize an object is implemented in `object.c/object_init()`: 
+    
+    
+    lock the object
+    set the object clock to start time
+    if the object is not named but the class requires it be named, then return error
+    if initialization sequence is creation or auto, then
+      if the object's parent clock is not set and the PC_NODEFERRAL flag is not set, then return deferred
+      if any of the object's properties are objects that are not initialized and the property's PF_DEFER is the same as the class's PC_NODEFERRAL flag, then return deferred
+    if initialize the object fails, then return error
+    clear the OF_INIT flag
+    unlock the object
+    return success
+    
+
+!!! note
+
+    The object clock value is set to the start time during object initialization. As a result, synchronization functions may no longer implement late initialization. The requirement for late initialization is preempted by the use of deferred initialization and all objects that employed late initialization prior to [Hassayampa (Version 3.0)](/wiki/Hassayampa "Hassayampa") should be upgraded to use deferred initialization instead.
 
 ## Related Concepts:
 

@@ -256,11 +256,17 @@ Running server-side scripts of various types is also an available feature of GRI
 
 !!! note
 
-    To Execute a Java script:
+    To execute a Java script:
         
-        http://_server_ :_port_ /java/_filename_.jar
+        http://server:port/java/filename.jar
         
+    
+    To execute an Octave script:
+
+        http://server:port/octave/filename.m
+
     The specified _filename_ must exist on the server. The stdout and stderr are sent to the server's output streams. The output file is sent to the client as MIME-type content. 
+
 
 To retrieve output files, such as CSV files, is also available in GridLAB-D™ server mode by using the syntax <http://localhost/output/filename.ext>.   
 
