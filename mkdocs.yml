@@ -179,12 +179,12 @@ nav:
       - GridLAB-D™ Device Modeling: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.5 - GridLAB-D Device Modeling.md
       - Integrated Testing: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.6 - Integrated_Testing.md
       - Issue Tracking: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.7 - Issue Tracking.md
-    - 4.5 - Testing & Debugging:
-      - Command options: docs/4.0 Developing Reference/4.5 - Testing & Debugging/4.6.1 - Command_line_arguments.md
-      - Performance Profiling: docs/4.0 Developing Reference/4.5 - Testing & Debugging/4.6.2 - performance-profiling.md
-      - Assert: docs/4.0 Developing Reference/4.5 - Testing & Debugging/Assert.md
-      - Testing and Validation: docs/4.0 Developing Reference/4.5 - Testing & Debugging/Testing_and_Validation.md
-      - Runtime/gl_* Output  Functions: docs/4.0 Developing Reference/4.5 - Testing & Debugging/runtime-functions.md
+    - 4.5 - Testing and Debugging:
+      - Command options: docs/4.0 Developing Reference/4.5 - Testing and Debugging/4.6.1 - Command_line_arguments.md
+      - Performance Profiling: docs/4.0 Developing Reference/4.5 - Testing and Debugging/4.6.2 - performance-profiling.md
+      - Assert: docs/4.0 Developing Reference/4.5 - Testing and Debugging/Assert.md
+      - Testing and Validation: docs/4.0 Developing Reference/4.5 - Testing and Debugging/Testing_and_Validation.md
+      - Runtime/gl_* Output  Functions: docs/4.0 Developing Reference/4.5 - Testing and Debugging/runtime-functions.md
     - 4.6 - Style Guide: docs/4.0 Developing Reference/4.6 - Style_guide.md
     - 4.7 - GridLAB-D Release Process: docs/4.0 Developing Reference/4.7 - Release_Process.md
   - 5.0 Integration:
