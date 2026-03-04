@@ -3,7 +3,7 @@
 	@file object.c
 	@addtogroup object Objects
 	@ingroup core
-	
+
 	Object functions support object operations.  Objects have two parts, an #OBJECTHDR
 	block followed by an #OBJECTDATA block.  The #OBJECTHDR contains all the common
 	object information, such as it's id and clock.  The #OBJECTDATA contains all the
@@ -344,8 +344,17 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	obj->out_svc_double = (double)obj->out_svc;
 	obj->space = object_current_namespace();
 	obj->flags = OF_NONE;
-	obj->rng_state = randwarn(nullptr);
 	obj->heartbeat = 0;
+
+	if(global_randomseed > 0)
+	{
+		std::hash<std::string> hasher;
+		obj->rng_state = hasher(oclass->name + std::to_string(global_randomseed));
+	}
+	else
+	{
+		obj->rng_state = randwarn(nullptr);
+	}
 
 	for ( prop=obj->oclass->pmap; prop!=nullptr; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:nullptr)))
 		property_create(prop,(void*)((char *)(obj+1)+(int64)(prop->addr)));

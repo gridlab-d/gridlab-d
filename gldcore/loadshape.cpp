@@ -3,7 +3,7 @@
 	@file loadshape.c
 	@addtogroup loadshape
 
-	@par MT_ANALOG 
+	@par MT_ANALOG
 	<code>loadshape_create(s,MT_ANALOG,double energy)</code>
 	where #energy is the total energy used over the schedule definition
 
@@ -84,7 +84,7 @@ TurnOff:
 		ls->load = 0;
 
 		/* if a value is given in the schedule */
-		if (ls->schedule->value>0) 
+		if (ls->schedule->value>0)
 		{
 			/* calculate the decay rate of the queue */
 			ls->r = ls->schedule->value * ls->params.pulsed.scalar / (ls->params.pulsed.energy);
@@ -114,7 +114,7 @@ TurnOff:
 #endif
 			goto TurnOff;
 		}
-TurnOn:	
+TurnOn:
 		/* the load is on */
 		ls->s = static_cast<MACHINESTATE>(1);
 
@@ -123,7 +123,7 @@ TurnOn:
 		{
 			/* load has fixed power */
 			ls->load = ls->params.pulsed.pulsevalue * ls->dPdV;
-			
+
 			/* rate is based on energy and load */
 			ls->r = -ls->params.pulsed.scalar * ls->load / (ls->params.pulsed.energy);
 			if (ls->r>=0)
@@ -133,7 +133,7 @@ TurnOn:
 		{
 			/* load has fixed duration so power is energy/duration */
 			ls->load = ls->params.pulsed.energy / (ls->params.pulsed.pulsevalue/3600 * ls->params.pulsed.scalar) * ls->dPdV;
-			
+
 			/* rate is based on time */
 			ls->r = -3600 /ls->params.pulsed.pulsevalue;
 			if (ls->r>=0)
@@ -165,20 +165,20 @@ TurnOff:
 		ls->load = 0;
 
 		// amplitude modulation
-		if (ls->schedule->value>0) 
+		if (ls->schedule->value>0)
 		{
-			if (ls->params.modulated.modulation==MMT_AMPLITUDE) 
+			if (ls->params.modulated.modulation==MMT_AMPLITUDE)
 			{
 				// AM off time
 				double period = ls->schedule->duration / ls->params.modulated.scalar;
-				double duty_cycle = (ls->params.modulated.pulsetype==MPT_TIME) 
-					? ls->params.modulated.pulsevalue / period 
+				double duty_cycle = (ls->params.modulated.pulsetype==MPT_TIME)
+					? ls->params.modulated.pulsevalue / period
 					: ls->params.modulated.energy * 3600 / ls->params.modulated.pulsevalue / period;
 				ls->r = 3600 / (period - duty_cycle * period);
 			}
 
 			// pulse-width modulation
-			else if (ls->params.modulated.modulation==MMT_PULSEWIDTH) 
+			else if (ls->params.modulated.modulation==MMT_PULSEWIDTH)
 			{
 				// PWM off time
 				double power = (ls->params.modulated.pulsetype==MPT_TIME)
@@ -190,7 +190,7 @@ TurnOff:
 			}
 
 			// frequency modulation
-			else if (ls->params.modulated.modulation==MMT_FREQUENCY) 
+			else if (ls->params.modulated.modulation==MMT_FREQUENCY)
 			{
 				double ton = ls->params.modulated.pulsevalue;
 				double power = ls->params.modulated.pulsevalue;
@@ -231,23 +231,23 @@ TurnOff:
 #endif
 			goto TurnOff;
 		}
-TurnOn:	
+TurnOn:
 		ls->s = static_cast<MACHINESTATE>(1);
 
 		// amplitude modulation
-		if (ls->params.modulated.modulation==MMT_AMPLITUDE) 
+		if (ls->params.modulated.modulation==MMT_AMPLITUDE)
 		{
 			// AM on time
 			double period = ls->schedule->duration / ls->params.modulated.scalar;
-			double duty_cycle = (ls->params.modulated.pulsetype==MPT_TIME) 
-					? ls->params.modulated.pulsevalue / period 
+			double duty_cycle = (ls->params.modulated.pulsetype==MPT_TIME)
+					? ls->params.modulated.pulsevalue / period
 					: ls->params.modulated.energy * 3600 / ls->params.modulated.pulsevalue / period;
 			ls->r  = -3600 / (duty_cycle * period);
 			ls->load = ls->schedule->value * ls->params.modulated.scalar;
 		}
 
 		// pulse-width modulation
-		else if (ls->params.modulated.modulation==MMT_PULSEWIDTH) 
+		else if (ls->params.modulated.modulation==MMT_PULSEWIDTH)
 		{
 			// PWM on time
 			double power = (ls->params.modulated.pulsetype==MPT_TIME)
@@ -284,9 +284,9 @@ static void sync_queued(loadshape *ls, double dt)
 {
 	double queue_value = (ls->d[1] - ls->d[0]);
 	if (ls->params.queued.pulsetype==MPT_POWER)
-		ls->load = ls->s * ls->params.queued.pulsevalue * ls->dPdV; 
+		ls->load = ls->s * ls->params.queued.pulsevalue * ls->dPdV;
 	else /* MPT_TIME */
-		ls->load = ls->s * ls->params.queued.energy / ls->params.queued.pulsevalue / ls->params.queued.scalar * ls->dPdV;		
+		ls->load = ls->s * ls->params.queued.energy / ls->params.queued.pulsevalue / ls->params.queued.scalar * ls->dPdV;
 
 #define duration ((ls->params.queued.energy*queue_value)/ ls->load)
 
@@ -296,12 +296,12 @@ static void sync_queued(loadshape *ls, double dt)
 		ls->s = static_cast<MACHINESTATE>(1);
 
 		ls->r = -1/duration;
-		
+
 	}
 	else if (ls->q < ls->d[1])
 	{
 		ls->s = static_cast<MACHINESTATE>(0);
-		ls->r = 1/random_exponential(&(ls->rng_state),ls->schedule->value*ls->params.pulsed.scalar*queue_value);
+		ls->r = 1/random_exponential(ls->obj_rng_state_ptr,ls->schedule->value*ls->params.pulsed.scalar*queue_value);
 	}
 	/* else state remains unchanged */
 #undef duration
@@ -314,7 +314,7 @@ static void sync_scheduled(loadshape *ls, TIMESTAMP t1)
 	if (t1>=ls->t2)
 	{
 		/* initial state */
-		if (ls->t2==TS_ZERO) 
+		if (ls->t2==TS_ZERO)
 		{
 			DATETIME now;
 			double hour;
@@ -328,7 +328,7 @@ static void sync_scheduled(loadshape *ls, TIMESTAMP t1)
 			{
 				ls->s = MS_OFF;
 				ls->q = ls->params.scheduled.low;
-				ls->r = 0; 
+				ls->r = 0;
 				dt = ls->params.scheduled.on_time - hour;
 			}
 			else if (hour < ls->params.scheduled.on_time + (ls->params.scheduled.high-ls->params.scheduled.low)/ls->params.scheduled.on_ramp)
@@ -360,9 +360,9 @@ static void sync_scheduled(loadshape *ls, TIMESTAMP t1)
 				dt = 24-hour+ls->params.scheduled.on_time;;
 			}
 		}
-		
+
 		/* state change now */
-		else 
+		else
 		{
 			int weekday = ((int)(t1/86400)+4)%7;
 			int skipday = !(ls->params.scheduled.weekdays & (1<<weekday));
@@ -400,7 +400,7 @@ static void sync_scheduled(loadshape *ls, TIMESTAMP t1)
 	}
 	else
 		ls->q += ls->r * dt;
-	
+
 	ls->load = ls->q;
 }
 
@@ -510,7 +510,7 @@ void loadshape_recalc(loadshape *ls)
 	case MT_PULSED:
 		ls->d[MS_OFF] = 1; /* scalar determine how many pulses per period are emitted */
 		ls->d[MS_ON] = 0;
-		ls->q = random_uniform(&(ls->rng_state), 0,1);
+		ls->q = random_uniform(ls->obj_rng_state_ptr, 0,1);
 		sync_pulsed(ls,0);
 		break;
 	case MT_MODULATED:
@@ -523,7 +523,7 @@ void loadshape_recalc(loadshape *ls)
 		if (ls->s == 0 && ls->schedule!=nullptr) /* load is off */
 		{
 			/* recalculate time to next on */
-			ls->r = 1/random_exponential(&(ls->rng_state),ls->schedule->value * ls->params.pulsed.scalar * (ls->params.queued.q_on - ls->params.queued.q_off));
+			ls->r = 1/random_exponential(ls->obj_rng_state_ptr,ls->schedule->value * ls->params.pulsed.scalar * (ls->params.queued.q_on - ls->params.queued.q_off));
 		}
 		break;
 	case MT_SCHEDULED:
@@ -732,15 +732,12 @@ int loadshape_init(loadshape *ls) /**< load shape */
 		return 1;
 		break;
 	}
-	
-	/* initialize the random number generator state */
-	ls->rng_state = randwarn(nullptr);
 
 	/* establish the initial parameters */
 	loadshape_recalc(ls);
 
 	/* randomize the initial state */
-	if (ls->q==0) ls->q = ls->d[0]<ls->d[1] ? random_uniform(&(ls->rng_state), ls->d[0], ls->d[1]) : random_uniform(&(ls->rng_state), ls->d[1], ls->d[0]); ; 
+	if (ls->q==0) ls->q = ls->d[0]<ls->d[1] ? random_uniform(ls->obj_rng_state_ptr, ls->d[0], ls->d[1]) : random_uniform(ls->obj_rng_state_ptr, ls->d[1], ls->d[0]); ;
 
 	/* initial power per-unit factor */
 	if (ls->dPdV==0) ls->dPdV = 1.0;
@@ -777,7 +774,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 
 		case MT_PULSED:
 
-			/* udpate q */ 
+			/* udpate q */
 			ls->q += ls->r * dt;
 
 			sync_pulsed(ls, dt);
@@ -814,7 +811,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 
 		case MT_MODULATED:
 
-			/* udpate q */ 
+			/* udpate q */
 			ls->q += ls->r * dt;
 
 			sync_modulated(ls, dt);
@@ -829,7 +826,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 		case MT_QUEUED:
 
 
-			/* udpate q */ 
+			/* udpate q */
 			ls->q += ls->r * dt;
 
 			sync_queued(ls, dt);
@@ -840,7 +837,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 			/* choose sooner of schedule change or state change */
 			if (ls->schedule->next_t < ls->t2) ls->t2 = ls->schedule->next_t;
 			break;
-			
+
 
 		default:
 			break;
@@ -899,9 +896,9 @@ void *loadshape_syncproc(void *ptr)
 		pthread_mutex_lock(&startlock_ls);
 
 		// wait for thread start condition
-		while ( data->t0==next_t1_ls && data->ran==run ) 
+		while ( data->t0==next_t1_ls && data->ran==run )
 			pthread_cond_wait(&start_ls,&startlock_ls);
-		
+
 		// unlock access to start count
 		pthread_mutex_unlock(&startlock_ls);
 
@@ -946,7 +943,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 		return TS_NEVER;
 
 	// number of threads desired
-	if (n_threads_ls==0) 
+	if (n_threads_ls==0)
 	{
 		loadshape *s;
 		int n_items, ln=0;
@@ -1008,7 +1005,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 		return next_t2_ls;
 
 	// no threading required
-	if (n_threads_ls<2) 
+	if (n_threads_ls<2)
 	{
 		// process list directly
 		loadshape *s;
@@ -1117,11 +1114,11 @@ int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 		break;
 	case MT_SCHEDULED:
 		return sprintf(string,"type: scheduled; weekdays: %s; on-time: %.3g; off-time: %.3g; on-ramp: %.3g; off-ramp: %.3g; low: %.3g; high: %.3g; dt: %u m",
-			schedule_weekday_to_string(ls->params.scheduled.weekdays, buffer,sizeof(buffer)), ls->params.scheduled.on_time, ls->params.scheduled.off_time, 
+			schedule_weekday_to_string(ls->params.scheduled.weekdays, buffer,sizeof(buffer)), ls->params.scheduled.on_time, ls->params.scheduled.off_time,
 			ls->params.scheduled.on_ramp, ls->params.scheduled.off_ramp, ls->params.scheduled.low, ls->params.scheduled.high, ls->params.scheduled.dt/60);
 	}
 	return 1;
-} 
+}
 int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 {
 	loadshape *ls = (loadshape*)data;
@@ -1147,7 +1144,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 		char *value = strchr(token,':');
 
 		/* isolate param and token and eliminte leading whitespaces */
-		while (*param!='\0' && (isspace(*param) || iscntrl(*param))) param++;		
+		while (*param!='\0' && (isspace(*param) || iscntrl(*param))) param++;
 		if (value==nullptr)
 			value= const_cast<char*>("1");
 		else
@@ -1381,10 +1378,10 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 		else if (strcmp(param,"stdev")==0)
 		{
 			double dev = atof(value);
-			double err = random_triangle(&(ls->rng_state),-3,3);
+			double err = random_triangle(ls->obj_rng_state_ptr,-3,3);
 			if (ls->type==MT_ANALOG)
 			{
-				if (ls->params.analog.energy!=0) 
+				if (ls->params.analog.energy!=0)
 				{
 					if (!convert_unit_double(value,"kWh",&dev))
 					{
@@ -1547,42 +1544,42 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 		{
 			if (ls->type!=MT_SCHEDULED)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
-			else if (sample_from_diversity(&(ls->rng_state),&ls->params.scheduled.low,value)==0)
+			else if (sample_from_diversity(ls->obj_rng_state_ptr,&ls->params.scheduled.low,value)==0)
 				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
 		}
 		else if (strcmp(param,"on-time")==0)
 		{
 			if (ls->type!=MT_SCHEDULED)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
-			else if	(sample_from_diversity(&(ls->rng_state),&ls->params.scheduled.on_time,value)==0)
+			else if	(sample_from_diversity(ls->obj_rng_state_ptr,&ls->params.scheduled.on_time,value)==0)
 				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
 		}
 		else if (strcmp(param,"on-ramp")==0)
 		{
 			if (ls->type!=MT_SCHEDULED)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
-			else if	(sample_from_diversity(&(ls->rng_state),&ls->params.scheduled.on_ramp,value)==0)
+			else if	(sample_from_diversity(ls->obj_rng_state_ptr,&ls->params.scheduled.on_ramp,value)==0)
 				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
 		}
 		else if (strcmp(param,"high")==0)
 		{
 			if (ls->type!=MT_SCHEDULED)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
-			else if	(sample_from_diversity(&(ls->rng_state),&ls->params.scheduled.high,value)==0)
+			else if	(sample_from_diversity(ls->obj_rng_state_ptr,&ls->params.scheduled.high,value)==0)
 				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
 		}
 		else if (strcmp(param,"off-time")==0)
 		{
 			if (ls->type!=MT_SCHEDULED)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
-			else if (sample_from_diversity(&(ls->rng_state),&ls->params.scheduled.off_time,value)==0)
+			else if (sample_from_diversity(ls->obj_rng_state_ptr,&ls->params.scheduled.off_time,value)==0)
 				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
 		}
 		else if (strcmp(param,"off-ramp")==0)
 		{
 			if (ls->type!=MT_SCHEDULED)
 				output_warning("convert_to_loadshape(string='%-.64s...', ...) %s is not used by analog loadshapes",string, param);
-			else if (sample_from_diversity(&(ls->rng_state),&ls->params.scheduled.off_ramp,value)==0)
+			else if (sample_from_diversity(ls->obj_rng_state_ptr,&ls->params.scheduled.off_ramp,value)==0)
 				output_error("convert_to_loadshape(string='%-.64s...', ...) %s syntax error, '%s' not valid", string, param, value);
 		}
 		else if (strcmp(param,"")!=0)
@@ -1598,7 +1595,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 
 	/* everything converted ok */
 	return 1;
-} 
+}
 
 int loadshape_test(void)
 {

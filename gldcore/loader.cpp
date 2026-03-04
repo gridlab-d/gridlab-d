@@ -687,7 +687,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
     }
     else
     {
-        PROPERTY *prop = class_find_property(oClass, propName.c_str());
+            PROPERTY *prop = class_find_property(oClass, propName.c_str());
         if (prop != nullptr)
             prop->raw = propValue;
         this->currentObject = obj;
@@ -864,6 +864,10 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 else if (propName.compare("schedule_skew") == 0)
                 {
                     obj->schedule_skew = stoll(propValue);
+                }
+                else if (propName.compare("rng_state") == 0)
+                {
+                    obj->rng_state = stoul(propValue);
                 }
                 else if (propName.compare("latitude") == 0)
                 {

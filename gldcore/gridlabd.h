@@ -1038,7 +1038,7 @@ inline char* gl_name(OBJECT *my, char *buffer, size_t size)
 	return buffer;
 }
 
-/** Find a schedule 
+/** Find a schedule
  **/
 inline SCHEDULE *gl_schedule_find(const char *name)
 {
@@ -1084,9 +1084,9 @@ inline TIMESTAMP gl_enduse_sync(enduse *e, TIMESTAMP t1)
 {
 	return callback->enduse.sync(e,PC_BOTTOMUP,t1);
 }
-/** Create a loadshape 
+/** Create a loadshape
  **/
-inline loadshape *gl_loadshape_create(SCHEDULE *s)
+inline loadshape *gl_loadshape_create(SCHEDULE *s, unsigned int *rng_state_ptr)
 {
 	loadshape *ls = (loadshape*)malloc(sizeof(loadshape));
 	memset(ls,0,sizeof(loadshape));
@@ -1094,6 +1094,7 @@ inline loadshape *gl_loadshape_create(SCHEDULE *s)
 		return NULL;
 	}
 	ls->schedule = s;
+	ls->obj_rng_state_ptr = rng_state_ptr;
 	return ls;
 }
 /** Get the current value of a loadshape
@@ -1282,7 +1283,7 @@ inline void gl_write(void *local, /** local memory for data */
 #endif
 /**@}*/
 
-// locking functions 
+// locking functions
 #ifdef __cplusplus
 #define READLOCK(X) gld_core::rlock(X); /**< Locks an item for reading (allows other reads but blocks write) */
 #define WRITELOCK(X) gld_core::wlock(X); /**< Locks an item for writing (blocks all operations) */
@@ -1372,15 +1373,15 @@ public: // casts
 	/// cast to a pointer to the string data
 	inline operator STRBUF *(void) { return buf; };
 private: // internals
-	inline void init(void) { buf=(STRBUF*)malloc(sizeof(STRBUF)); memset(buf,0,sizeof(STRBUF)); }; 
+	inline void init(void) { buf=(STRBUF*)malloc(sizeof(STRBUF)); memset(buf,0,sizeof(STRBUF)); };
 	inline void lock(void) { if ( buf ) gld_core::wlock(&buf->lock); };
 	inline void unlock(void) { if ( buf ) gld_core::wunlock(&buf->lock); };
 	inline void fit(size_t n) { if ( buf==NULL || n>buf->len) alloc(n); };
-	inline void alloc(size_t n) 
+	inline void alloc(size_t n)
 	{
 		size_t len = nextpow2(n);
-		if ( len<sizeof(NATIVE) ) 
-			len=sizeof(NATIVE); 
+		if ( len<sizeof(NATIVE) )
+			len=sizeof(NATIVE);
 		char *newstr=(char*)malloc(len);
 		if ( buf->str!=NULL )
 		{
@@ -1445,7 +1446,7 @@ public: // manipulation
 	inline size_t findstr(const char *s) { if ( is_null() ) return -1; char *p=strstr(buf->str,s); return p==NULL ? -1 : (p-buf->str); };
 	/// find character
 	inline size_t findchr(char c) { if ( is_null() ) return -1; char *p=strchr(buf->str,c); return p==NULL ? -1 : (p-buf->str); };
-	inline size_t split(gld_string *&list, const char *delim=" ") 
+	inline size_t split(gld_string *&list, const char *delim=" ")
 	{
 		// TODO
 		if ( is_null() ) return 0;
@@ -1464,7 +1465,7 @@ private: // data
 	DATETIME dt;
 public: // constructors
 	/// Clock constructor for current global clock
-	gld_clock(void) { callback->time.local_datetime(*(callback->global_clock),&dt); }; 
+	gld_clock(void) { callback->time.local_datetime(*(callback->global_clock),&dt); };
 	/// Clock constructor for an arbitrary TIMESTAMP
 	gld_clock(TIMESTAMP ts) { if ( !callback->time.local_datetime(ts,&dt)) memset(&dt,0,sizeof(dt)); };
 	/// Clock constructor for a time string
@@ -1572,7 +1573,7 @@ public: // special functions
 	/// Extract the total number of nanoseconds since 1/1/1970 0:00:00 UTC
 	inline double to_nanoseconds(TIMESTAMP ts=0) { return (dt.timestamp-ts)*1e9 + dt.nanosecond; };
 	/// Get the timestamp as a string
-	inline gld_string get_string(const size_t sz=1024) 
+	inline gld_string get_string(const size_t sz=1024)
 	{
 		gld_string res;
 		char buf[1024];
@@ -1663,7 +1664,7 @@ public: // read accessors
 	inline gld_function* get_first_function(void) { return (gld_function*)core.fmap; };
 	/// Get the next function in the class
 	inline gld_function* get_next_function(FUNCTION*f) { return (gld_function*)f->next; };
-	/// Get TRL 
+	/// Get TRL
 	inline TECHNOLOGYREADINESSLEVEL get_trl(void) { return core.trl; };
 
 public: // write accessors
@@ -1671,9 +1672,9 @@ public: // write accessors
 	inline void set_trl(TECHNOLOGYREADINESSLEVEL t) { core.trl=t; };
 
 public: // special functions
-	/// Register a class	
+	/// Register a class
 	static inline CLASS *create(MODULE *m, const char *n, size_t s, unsigned int f) { return callback->register_class(m,n,(unsigned int)s,f); };
-	
+
 public: // iterators
 	/// Check if last class registered
 	inline bool is_last(void) { return core.next==NULL; };
@@ -1736,7 +1737,7 @@ public: // iterators
 	/// Get the next property type
 	inline PROPERTYTYPE get_next(void) { return (PROPERTYTYPE)(((int)type)+1); };
 	/// Check whether this is the last property type
-	inline bool is_last(void) { return (PROPERTYTYPE)(((int)type)+1)==_PT_LAST; }; 
+	inline bool is_last(void) { return (PROPERTYTYPE)(((int)type)+1)==_PT_LAST; };
 };
 
 /// Unit container
@@ -1923,9 +1924,9 @@ public: // iterators
 #define IMPL_METHOD(C,X) int C::X(char *buffer, size_t len)  // use this to implement a method
 
 /// Set bits of a bitflag property
-inline void setbits(unsigned long &flags, unsigned int bits) { flags|=bits; }; 
+inline void setbits(unsigned long &flags, unsigned int bits) { flags|=bits; };
 /// Clear bits of a bitflag property
-inline void clearbits(unsigned long &flags, unsigned int bits) { flags&=~bits; }; 
+inline void clearbits(unsigned long &flags, unsigned int bits) { flags&=~bits; };
 /// Test bits of a bitflag property
 inline bool hasbits(unsigned long flags, unsigned int bits) { return (flags&bits) ? true : false; };
 
@@ -2054,24 +2055,24 @@ private: // data
 public: // constructors/casts
 	inline gld_property(void) : obj(NULL), pstruct(nullpstruct) {};
 	inline gld_property(gld_object *o, const char *n) : obj(o->my()), pstruct(nullpstruct)
-	{ 
-		if (o) 
+	{
+		if (o)
 			callback->properties.get_property(o->my(), n,&pstruct);
-		else 
+		else
 		{
-			GLOBALVAR *v=callback->global.find(n); 
+			GLOBALVAR *v=callback->global.find(n);
 			pstruct.prop= (v?v->prop:NULL);
-		} 
+		}
 	};
 	inline gld_property(OBJECT *o, const char *n) : obj(o), pstruct(nullpstruct)
-	{ 
-		if (o) 
+	{
+		if (o)
 			callback->properties.get_property(o,n,&pstruct);
-		else 
+		else
 		{
-			GLOBALVAR *v=callback->global.find(n); 
+			GLOBALVAR *v=callback->global.find(n);
 			pstruct.prop= (v?v->prop:NULL);
-		} 
+		}
 	};
 	inline gld_property(OBJECT *o) : obj(o), pstruct(nullpstruct) { pstruct.prop=o->oclass->pmap; };
 	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), pstruct(nullpstruct) { pstruct.prop=p; };
@@ -2089,8 +2090,8 @@ public: // constructors/casts
 				return;
 			}
 		}
-		GLOBALVAR *v=callback->global.find(n); 
-		pstruct.prop = (v?v->prop:NULL);  
+		GLOBALVAR *v=callback->global.find(n);
+		pstruct.prop = (v?v->prop:NULL);
 	};
 	inline gld_property(const char *m, const char *n) : obj(NULL), pstruct(nullpstruct)
 	{
@@ -2098,11 +2099,11 @@ public: // constructors/casts
 		if ( obj != NULL ) {
 			callback->properties.get_property(obj, n, &pstruct);
 			return;
-		} 
-		char1024 vn; 
-		sprintf(vn,"%s::%s",m,n); 
-		GLOBALVAR *v=callback->global.find(vn); 
-		pstruct.prop= (v?v->prop:NULL);  
+		}
+		char1024 vn;
+		sprintf(vn,"%s::%s",m,n);
+		GLOBALVAR *v=callback->global.find(vn);
+		pstruct.prop= (v?v->prop:NULL);
 	};
 	inline operator PROPERTY*(void) { return pstruct.prop; };
 	inline operator OBJECT*(void) { return obj; };
@@ -2191,15 +2192,15 @@ public: // special operations
 	inline void setp(gld::set value) { gld_core::wlock(&obj->lock); *(gld::set*)get_addr()=value; gld_core::wunlock(&obj->lock); };
 	inline gld_keyword* find_keyword(unsigned long value) { return get_first_keyword()->find(value); };
 	inline gld_keyword* find_keyword(const char *name) { return get_first_keyword()->find(name); };
-	inline bool compare(char *op, char *a, char *b=NULL, char *p=NULL) 
-	{ 
-		PROPERTYCOMPAREOP n = callback->properties.get_compare_op(pstruct.prop->ptype,op); 
+	inline bool compare(char *op, char *a, char *b=NULL, char *p=NULL)
+	{
+		PROPERTYCOMPAREOP n = callback->properties.get_compare_op(pstruct.prop->ptype,op);
 		if (n==TCOP_ERR) throw "invalid property compare operation";
 		return compare((enumeration)n, a, b, p);
 	};
 	inline bool compare(enumeration op, char *a, char *b=NULL)
-	{ 
-		char v1[1024], v2[1024]; 
+	{
+		char v1[1024], v2[1024];
 		return callback->convert.string_to_property(pstruct.prop,(void*)v1,a)>0 && callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),(void*)v1,(b&&callback->convert.string_to_property(pstruct.prop,(void*)v2,b)>0)?(void*)v2:NULL, NULL);
 	};
 	inline bool compare(enumeration op, char *a, char *b, char *p)
@@ -2208,11 +2209,11 @@ public: // special operations
 		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),(void*)&v1,b?(void*)&v2:NULL, p);
 	};
 	inline bool compare(enumeration op, double *a, double *b=NULL, char *p=NULL)
-	{ 
+	{
 		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),a,b,p);
 	};
 	inline bool compare(enumeration op, void *a, void *b=NULL)
-	{ 
+	{
 		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),a,b,NULL);
 	};
 
@@ -2232,12 +2233,12 @@ public: // comparators
 
 private: // exceptions
 	inline void exception(const char *msg, ...)
-	{ 
-		static char buf[1024]; 
-		va_list ptr; 
-		va_start(ptr,msg); 
-		vsprintf(buf+sprintf(buf,"%s.%s: ",OBJECTDATA(obj,gld_object)->get_name(),pstruct.prop->name),msg,ptr); 
-		va_end(ptr); 
+	{
+		static char buf[1024];
+		va_list ptr;
+		va_start(ptr,msg);
+		vsprintf(buf+sprintf(buf,"%s.%s: ",OBJECTDATA(obj,gld_object)->get_name(),pstruct.prop->name),msg,ptr);
+		va_end(ptr);
 		throw (const char*)buf;
 	};
 };
@@ -2314,28 +2315,28 @@ public:
 	inline gld_objlist(void) : list(NULL) {};
 	inline gld_objlist(char *group) { list=callback->objlist.search(group); };
 	inline gld_objlist(CLASS *c, PROPERTY *m, char *p, char *o, void *a, void *b=NULL) { list=callback->objlist.create(c,m,p,o,a,b); };
-	inline gld_objlist(char *cn, char *mn, char *p, char *o, void *a, void *b=NULL) 
-	{ 
-		CLASS *c=callback->class_getname(cn); if (!c) exception("gld_objlist(): class '%s' is not found",cn); 
+	inline gld_objlist(char *cn, char *mn, char *p, char *o, void *a, void *b=NULL)
+	{
+		CLASS *c=callback->class_getname(cn); if (!c) exception("gld_objlist(): class '%s' is not found",cn);
 		PROPERTY *m=callback->find_property(c,mn); if (!m) exception("gld_objlist(): property '%s' is not found in class '%s'",mn,cn);
-		list=callback->objlist.create(c,m,p,o,a,b); 
+		list=callback->objlist.create(c,m,p,o,a,b);
 	};
 	inline ~gld_objlist(void) { callback->objlist.destroy(list); };
 public:
 	inline size_t set(char *group) { if ( list ) callback->objlist.destroy(list); list=callback->objlist.search(group); return list?list->size:-1; };
 	inline size_t add(PROPERTY *m, char *p, char *o, void *a, void *b=NULL) { return callback->objlist.add(list,m,p,o,a,b); };
 	inline size_t del(PROPERTY *m, char *p, char *o, void *a, void *b=NULL) { return callback->objlist.add(list,m,p,o,a,b); };
-	inline size_t add(char *cn, char *mn, char *p, char *o, void *a, void *b=NULL) 
+	inline size_t add(char *cn, char *mn, char *p, char *o, void *a, void *b=NULL)
 	{
-		CLASS *c=callback->class_getname(cn); if (!c) exception("gld_objlist(): class '%s' is not found",cn); 
+		CLASS *c=callback->class_getname(cn); if (!c) exception("gld_objlist(): class '%s' is not found",cn);
 		PROPERTY *m=callback->find_property(c,mn); if (!m) exception("gld_objlist(): property '%s' is not found in class '%s'",mn,cn);
-		return callback->objlist.add(list,m,p,o,a,b); 
+		return callback->objlist.add(list,m,p,o,a,b);
 	};
-	inline size_t del(char *cn, char *mn, char *p, char *o, void *a, void *b=NULL) 
-	{ 
-		CLASS *c=callback->class_getname(cn); if (!c) exception("gld_objlist(): class '%s' is not found",cn); 
+	inline size_t del(char *cn, char *mn, char *p, char *o, void *a, void *b=NULL)
+	{
+		CLASS *c=callback->class_getname(cn); if (!c) exception("gld_objlist(): class '%s' is not found",cn);
 		PROPERTY *m=callback->find_property(c,mn); if (!m) exception("gld_objlist(): property '%s' is not found in class '%s'",mn,cn);
-		return callback->objlist.add(list,m,p,o,a,b); 
+		return callback->objlist.add(list,m,p,o,a,b);
 	};
 public:
 	inline bool is_valid(void) { return list!=NULL; };
@@ -2378,7 +2379,7 @@ EXPORT int do_kill(void*);
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-EXPORT int gld_major=MAJOR, gld_minor=MINOR; 
+EXPORT int gld_major=MAJOR, gld_minor=MINOR;
 BOOL APIENTRY DllMain(HANDLE h, DWORD r) { if (r==DLL_PROCESS_DETACH) do_kill(h); return TRUE; }
 #else // !WIN32
 CDECL int gld_major, gld_minor;
@@ -2491,7 +2492,7 @@ CDECL int dllkill() { return do_kill(NULL); }
 #endif
 
 /****************************************
- * GENERAL SOLVERS 
+ * GENERAL SOLVERS
  ****************************************/
 #ifdef USE_GLSOLVERS
 
