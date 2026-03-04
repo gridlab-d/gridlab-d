@@ -111,7 +111,6 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_7",
           "phases": "ABCD",
           "from": "node1",
           "to": "node2",
@@ -142,21 +141,18 @@
     "player": {
       "instances": [
         {
-          "name": "player_13",
           "parent": "load4",
           "flags": "DELTAMODE",
           "property": "constant_power_A",
           "file": "../loader_fastA.player"
         },
         {
-          "name": "player_14",
           "parent": "load4",
           "flags": "DELTAMODE",
           "property": "constant_power_B",
           "file": "../loader_fastB.player"
         },
         {
-          "name": "player_15",
           "parent": "load4",
           "flags": "DELTAMODE",
           "property": "constant_power_C",
@@ -170,21 +166,18 @@
           "file": "../data_cap_deltamode_trigger.player"
         },
         {
-          "name": "player_18",
           "parent": "complex_assert_17",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../cap_volt_A_indiv_VOLTVAR_dwell.player"
         },
         {
-          "name": "player_20",
           "parent": "complex_assert_19",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../cap_volt_B_indiv_VOLTVAR_dwell.player"
         },
         {
-          "name": "player_22",
           "parent": "complex_assert_21",
           "flags": "DELTAMODE",
           "property": "value",

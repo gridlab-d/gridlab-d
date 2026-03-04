@@ -6,6 +6,9 @@
       "//#set profiler=1",
       "//#set pauseatexit=1",
       "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit",
       "//#set deltamode_forced_always=true"
     ]
   },
@@ -17,9 +20,9 @@
       "suppress_repeat_messages": 1,
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -56,7 +59,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "A1",
           "file": "Inverter_1_meter.csv",
           "flags": "DELTAMODE",
@@ -71,14 +73,12 @@
     "player": {
       "instances": [
         {
-          "name": "player_4",
           "parent": "complex_assert_3",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_inverter_dyn_GFM_power.csv"
         },
         {
-          "name": "player_23",
           "parent": "Load4",
           "file": "../data_inverter_GFM_GFL_Load4_A.player",
           "property": "constant_impedance_A",
@@ -86,7 +86,6 @@
           "all_events_delta": true
         },
         {
-          "name": "player_24",
           "parent": "Load4",
           "file": "../data_inverter_GFM_GFL_Load4_B.player",
           "property": "constant_impedance_B",
@@ -94,7 +93,6 @@
           "all_events_delta": true
         },
         {
-          "name": "player_25",
           "parent": "Load4",
           "file": "../data_inverter_GFM_GFL_Load4_C.player",
           "property": "constant_impedance_C",

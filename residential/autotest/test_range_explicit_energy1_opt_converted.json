@@ -25,7 +25,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_3",
           "parent": "range_2",
           "target": "energy",
           "within": 0.01,
@@ -37,7 +36,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "range_2",
           "property": "power,energy",
           "file": "test_range_explicit_energy1.csv",
@@ -52,7 +50,7 @@
           "name": "range_2",
           "parent": "house_1",
           "installed_power": "500 W",
-          "shape": "\"type:pulsed",
+          "shape": "type:pulsed; schedule: cooking; energy: 1.0 kWh; power: 0.5 kW; count: 1; stdev: 95 W",
           "inside_comments": [
             "//Weekday Summer test",
             "//WARNING: This test may be off by 1 hour. Please adjust accordingly."

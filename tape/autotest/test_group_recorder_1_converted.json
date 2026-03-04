@@ -214,7 +214,6 @@
     "group_recorder": {
       "instances": [
         {
-          "name": "group_recorder_14",
           "interval": 3600,
           "group": "groupid=meter_group",
           "property": "measured_real_energy",
@@ -231,7 +230,6 @@
           }
         },
         {
-          "name": "group_recorder_15",
           "interval": 3600,
           "group": "groupid=meter_group",
           "property": "measured_power",
@@ -242,7 +240,6 @@
           ]
         },
         {
-          "name": "group_recorder_16",
           "interval": 3600,
           "group": "groupid=meter_group",
           "property": "measured_voltage_A",
@@ -252,7 +249,6 @@
           ]
         },
         {
-          "name": "group_recorder_17",
           "interval": 3600,
           "group": "groupid=meter_group",
           "property": "measured_current_C",
@@ -263,7 +259,7 @@
         },
         {
           "name": "ResidentialMetersEnergy",
-          "group": " \"groupid=meter_group\"",
+          "group": "groupid=meter_group",
           "property": "measured_real_energy",
           "file": "test_group_recorder_epoch.csv",
           "format": 1,

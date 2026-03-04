@@ -25,28 +25,24 @@
     "player": {
       "instances": [
         {
-          "name": "player_2",
           "parent": "substation_1",
           "property": "positive_sequence_voltage",
           "file": "../PSV.player",
           "loop": 1
         },
         {
-          "name": "player_4",
           "parent": "complex_assert_3",
           "property": "value",
           "file": "../dist_volt_A_Aref.player",
           "loop": 1
         },
         {
-          "name": "player_6",
           "parent": "complex_assert_5",
           "property": "value",
           "file": "../dist_volt_B_Aref.player",
           "loop": 1
         },
         {
-          "name": "player_8",
           "parent": "complex_assert_7",
           "property": "value",
           "file": "../dist_volt_C_Aref.player",
@@ -79,7 +75,6 @@
     "load": {
       "instances": [
         {
-          "name": "load_9",
           "parent": "substation_1",
           "phases": "ABCN",
           "constant_impedance_A": "1000+2000j",

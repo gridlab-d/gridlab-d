@@ -22,24 +22,21 @@
     "house": {
       "instances": [
         {
-          "name": "house_1",
-          "id": 1
+          "object_declaration": "house:1"
         }
       ]
     },
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
-          "parent": "microwave_2",
+          "parent": "microwave:2",
           "property": "heatgain,constant_power",
           "file": "test_microwave_internal_gains_1.csv",
           "interval": 1,
           "limit": 10
         },
         {
-          "name": "recorder_5",
-          "parent": "microwave_3",
+          "parent": "microwave:3",
           "property": "heatgain,constant_power",
           "file": "test_microwave_internal_gains_0.csv",
           "interval": 1,
@@ -50,9 +47,8 @@
     "microwave": {
       "instances": [
         {
-          "name": "microwave_2",
-          "id": 2,
-          "parent": "house_1",
+          "object_declaration": "microwave:2",
+          "parent": "house:1",
           "installed_power": "1000 W",
           "standby_power": "20 W",
           "heatgain_fraction": 0.5,
@@ -61,9 +57,8 @@
           ]
         },
         {
-          "name": "microwave_3",
-          "id": 3,
-          "parent": "house_1",
+          "object_declaration": "microwave:3",
+          "parent": "house:1",
           "installed_power": "1000 W",
           "standby_power": "20 W",
           "heatgain_fraction": 0.5,
@@ -76,14 +71,12 @@
     "player": {
       "instances": [
         {
-          "name": "player_7",
-          "parent": "complex_assert_4",
+          "parent": "complex_assert:4",
           "property": "value",
           "file": "../test_microwave_internal_gains_1.player"
         },
         {
-          "name": "player_9",
-          "parent": "complex_assert_5",
+          "parent": "complex_assert:5",
           "property": "value",
           "file": "../test_microwave_internal_gains_0.player"
         }
@@ -92,9 +85,8 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_4",
-          "id": 4,
-          "parent": "microwave_2",
+          "object_declaration": "complex_assert:4",
+          "parent": "microwave:2",
           "target": "internal_gains",
           "within": 0.6,
           "inside_comments": [
@@ -105,9 +97,8 @@
           }
         },
         {
-          "name": "complex_assert_5",
-          "id": 5,
-          "parent": "microwave_3",
+          "object_declaration": "complex_assert:5",
+          "parent": "microwave:3",
           "target": "internal_gains",
           "within": 0.03,
           "inside_comments": [

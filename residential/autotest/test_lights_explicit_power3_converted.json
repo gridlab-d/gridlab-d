@@ -25,7 +25,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_4",
           "parent": "complex_assert_3",
           "property": "value",
           "file": "../test_lights_explicit_power3.player",
@@ -50,7 +49,7 @@
           "parent": "house_1",
           "type": "HID",
           "installed_power": "760 W",
-          "shape": "\"type: analog",
+          "shape": "type: analog; schedule: lighting; power: .76 kW",
           "inside_comments": [
             "//Weekday Winter test",
             "//WARNING: This test may be off by 1 hour. Please adjust accordingly."
@@ -61,7 +60,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_5",
           "parent": "house_1",
           "property": "power",
           "file": "test_lights_explicit_power3.csv",

@@ -32,7 +32,7 @@
     "climate": {
       "instances": [
         {
-          "name": "WA_Yakima",
+          "name": "WA-Yakima",
           "tmyfile": "../WA-Yakima.tmy2",
           "interpolate": "NONE"
         }
@@ -57,13 +57,11 @@
     "player": {
       "instances": [
         {
-          "name": "player_7",
           "parent": "double_assert_6",
           "property": "value",
           "file": "../test_wh_explicit_2_temperature.player"
         },
         {
-          "name": "player_9",
           "parent": "double_assert_8",
           "property": "value",
           "file": "../test_wh_explicit_2_height.player"
@@ -89,7 +87,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_10",
           "parent": "w1",
           "file": "waterheater1.csv",
           "property": "tank_setpoint,thermostat_deadband,temperature,height,water_demand,demand,is_waterheater_on,actual_load,previous_load",

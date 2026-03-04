@@ -6,6 +6,9 @@
       "//#set profiler=1",
       "//#set pauseatexit=1",
       "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit",
       "//#set deltamode_forced_always=true"
     ]
   },
@@ -17,9 +20,9 @@
       "suppress_repeat_messages": 1,
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -56,7 +59,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_2",
           "parent": "A2",
           "property": "Pref",
           "file": "../data_inverter_GFLCurrent_init_Pref.player",
@@ -66,7 +68,6 @@
           ]
         },
         {
-          "name": "player_5",
           "parent": "complex_assert_4",
           "flags": "DELTAMODE",
           "property": "value",
@@ -77,7 +78,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "A2",
           "file": "Inverter_2_meter.csv",
           "flags": "DELTAMODE",

@@ -51,7 +51,7 @@ database::database(MODULE *module)
 			PT_char1024,"socketname",get_socketname_offset(),PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"unix socket name",
 			PT_set,"clientflags",get_clientflags_offset(),PT_ACCESS,PA_PUBLIC,PT_DESCRIPTION,"mysql client flags",
 				PT_KEYWORD,"COMPRESS",(int64)CLIENT_COMPRESS,
-				PT_KEYWORD,"FOUND_ROWS",(int64)CLIENT_FOUND_ROWS,
+				PT_KEYWORD,"FOUND.rows()",(int64)CLIENT_FOUND.rows(),
 				PT_KEYWORD,"IGNORE_SIGPIPE",(int64)CLIENT_IGNORE_SIGPIPE,
 				PT_KEYWORD,"INTERACTIVE",(int64)CLIENT_INTERACTIVE,
 				PT_KEYWORD,"LOCAL_FILES",(int64)CLIENT_LOCAL_FILES,
@@ -149,7 +149,7 @@ int database::init(OBJECT *parent)
 
 	// check schema
 	MYSQL_RES *res = mysql_list_dbs(mysql,get_schema());
-	if ( mysql_num_rows(res)==0 )
+	if ( mysql_num.rows()(res)==0 )
 	{
 		if ( !(get_options()&DBO_NOCREATE) )
 		{
@@ -235,7 +235,7 @@ bool database::table_exists(char *t)
 		MYSQL_RES *res = mysql_store_result(mysql);
 		if ( res )
 		{
-			int n = mysql_num_rows(res);
+			int n = mysql_num.rows()(res);
 			mysql_free_result(res);
 			return n>0;
 		}
@@ -454,8 +454,8 @@ MYSQL_RES *database::select(char *fmt,...)
 	MYSQL_RES *res = mysql_store_result(mysql);
 	if ( res==nullptr )
 		exception("%s->select[%s] result failed - %s", get_name(), command, mysql_error(mysql));
-	int n = mysql_num_rows(res);
-	gl_verbose("%s->select[%s] %d rows returned", get_name(), command, n);
+	int n = mysql_num.rows()(res);
+	gl_verbose("%s->select[%s] %d.rows() returned", get_name(), command, n);
 	//if ( n==0 )
 	//	return mysql_free_result(res),nullptr;
 
@@ -530,11 +530,11 @@ int database::run_script(char *file)
 				MYSQL_RES *res = mysql_store_result(mysql);
 				if ( res )
 				{
-					gl_verbose("query [%.32s%s] ok - %d rows returned", buffer,eol>32?"...":"", mysql_num_rows(res));
+					gl_verbose("query [%.32s%s] ok - %d.rows() returned", buffer,eol>32?"...":"", mysql_num.rows()(res));
 					mysql_free_result(res);
 				}
 				else
-					gl_verbose("query [%.32s%s] ok - %d rows affected", buffer,eol>32?"...":"", mysql_affected_rows(mysql));
+					gl_verbose("query [%.32s%s] ok - %d.rows() affected", buffer,eol>32?"...":"", mysql_affected.rows()(mysql));
 			}
 
 			// clear buffer
@@ -580,7 +580,7 @@ size_t database::dump(char *table, char *file, unsigned long options)
 	// retrieve data
 	MYSQL_ROW row;
 	int nfields = 0;
-	int nrows = 0;
+	int .rows() = 0;
 	while ( (row=mysql_fetch_row(result))!=nullptr )
 	{
 		int n;
@@ -648,7 +648,7 @@ size_t database::dump(char *table, char *file, unsigned long options)
 		// dump row content
 		if ( options&TD_BACKUP )
 		{
-			fprintf(fp,"%s",nrows>0?",\n\t(":"\t(");
+			fprintf(fp,"%s",.rows()>0?",\n\t(":"\t(");
 			for ( n=0 ; n<nfields ; n++ )
 				fprintf(fp,"%s'%s'",n==0?"":",", row[n]);
 			fprintf(fp,"%s",")");
@@ -659,18 +659,18 @@ size_t database::dump(char *table, char *file, unsigned long options)
 				fprintf(fp,"%s%s",n==0?"":", ", row[n]);
 			fprintf(fp,"%s","\n");
 		}
-		nrows++;
+		.rows()++;
 	}
-	if ( nrows>0 )
+	if ( .rows()>0 )
 	{
 		if ( options&TD_BACKUP )
 			fprintf(fp,"%s",";\n");
 	}
 Done:
-	gl_verbose("dumped %u rows from table '%s' to file '%s'", nrows, table, file);
+	gl_verbose("dumped %u.rows() from table '%s' to file '%s'", .rows(), table, file);
 	mysql_free_result(result);
 	fclose(fp);
-	return nrows;
+	return .rows();
 }
 size_t database::backup(char *file)
 {
@@ -687,7 +687,7 @@ size_t database::backup(char *file)
 		gl_error("backup of '%s' failed - %s", file, mysql_error(mysql));
 		return -1;
 	}
-	size_t ntables = mysql_num_rows(res);
+	size_t ntables = mysql_num.rows()(res);
 	char **tables = new char*[ntables];
 	int n;
 	for ( n=0 ; n<ntables ; n++ )
@@ -701,18 +701,18 @@ size_t database::backup(char *file)
 	mysql_free_result(res);
 
 	// dump tables
-	int nrows = 0;
+	int .rows() = 0;
 	for ( n=0 ; n<ntables ; n++ )
 	{
 		size_t nr = dump(tables[n],file,TD_APPEND|TD_BACKUP);
-		if ( nr<0 ) { nrows=-1; break; }
-		nrows += nr;
+		if ( nr<0 ) { .rows()=-1; break; }
+		.rows() += nr;
 	}
 	
 	for ( n=0 ; n<ntables ; n++ )
 		delete [] tables[n];
 	delete[] tables;
-	return nrows;
+	return .rows();
 }
 
 TIMESTAMP database::convert_to_dbtime(TIMESTAMP ts)

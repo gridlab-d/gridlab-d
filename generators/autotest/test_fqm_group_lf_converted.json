@@ -495,25 +495,21 @@
           "file": "../fqm_group_lf_load.player"
         },
         {
-          "name": "player_61",
           "parent": "complex_assert_60",
           "property": "value",
           "file": "../fqm_group_lf_batt633_power.player"
         },
         {
-          "name": "player_62",
           "parent": "complex_assert_60",
           "property": "status",
           "file": "../fqm_group_lf_status.player"
         },
         {
-          "name": "player_68",
           "parent": "complex_assert_67",
           "property": "value",
           "file": "../fqm_group_lf_batt684_power.player"
         },
         {
-          "name": "player_69",
           "parent": "complex_assert_67",
           "property": "status",
           "file": "../fqm_group_lf_status.player"
@@ -692,7 +688,6 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_55",
           "filename": "Volt_Dump_NR.csv"
         }
       ]
@@ -700,7 +695,6 @@
     "currdump": {
       "instances": [
         {
-          "name": "currdump_56",
           "filename": "Current_Dump_NR.csv"
         }
       ]
@@ -708,7 +702,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_57",
           "parent": "Reg1",
           "file": "reg1_output.csv",
           "interval": 3600,
@@ -716,7 +709,6 @@
           "property": "tap_A,tap_B,tap_C,power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_in.real,power_in.imag"
         },
         {
-          "name": "recorder_58",
           "parent": "Node630",
           "file": "Node630_power.csv",
           "interval": 3600,
@@ -724,7 +716,6 @@
           "property": "measured_real_power, measured_reactive_power"
         },
         {
-          "name": "recorder_65",
           "parent": "battery_meter_633",
           "file": "battery_meter_633.csv",
           "interval": 3600,
@@ -741,7 +732,6 @@
           ]
         },
         {
-          "name": "recorder_72",
           "parent": "battery_meter_684",
           "file": "battery_meter_684.csv",
           "interval": 3600,
@@ -795,6 +785,7 @@
           "max_charge_rate": "900 kW",
           "group_rated_power": "1200 kW",
           "group_max_charge_rate": "1200 kW",
+          "group_max_discharge_rate": "1200 kW",
           "pf_reg": "INCLUDED",
           "pf_reg_activate": 0.9,
           "pf_reg_deactivate": 0.95,

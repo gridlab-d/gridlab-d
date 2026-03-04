@@ -26,7 +26,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "house_for_sake_of_a_house",
           "property": "hvac_load",
           "interval": 3600,
@@ -50,7 +49,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_5",
           "parent": "double_assert_4",
           "file": "../data_min_new_EV_det_output_m1.player",
           "property": "value",

@@ -54,7 +54,6 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "ZIPload_3",
           "parent": "bldg",
           "schedule_skew": -129,
           "heatgain_fraction": 0.9,
@@ -148,7 +147,7 @@
   "schedules": {
     "retail_lights": [
       {
-        "name": "Weekday {",
+        "name": "Weekday",
         "items": [
           "* 0 * * 0-6 0.27",
           "* 1 * * 0-6 0.27",
@@ -177,7 +176,7 @@
         ]
       },
       {
-        "name": "Weekend {",
+        "name": "Weekend",
         "items": [
           "* 0 * * 7 0.27",
           "* 1 * * 7 0.27",

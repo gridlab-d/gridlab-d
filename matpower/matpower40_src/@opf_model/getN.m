@@ -1,20 +1,20 @@
 function N = getN(om, selector, name)
-%GETN  Returns the number of variables, constraints or cost rows.
+%GETN  Returns the number of variables, constraints or cost.rows().
 %   N = GETN(OM, SELECTOR)
 %   N = GETN(OM, SELECTOR, NAME)
 %
-%   Returns either the total number of variables/constraints/cost rows
+%   Returns either the total number of variables/constraints/cost.rows()
 %   or the number corresponding to a specified named block.
 %
 %   Examples:
 %       N = getN(om, 'var')         : total number of variables
 %       N = getN(om, 'lin')         : total number of linear constraints
 %       N = getN(om, 'nln')         : total number of nonlinear constraints
-%       N = getN(om, 'cost')        : total number of cost rows (in N)
+%       N = getN(om, 'cost')        : total number of cost.rows() (in N)
 %       N = getN(om, 'var', name)   : number of variables in named set
 %       N = getN(om, 'lin', name)   : number of linear constraints in named set
 %       N = getN(om, 'nln', name)   : number of nonlinear cons. in named set
-%       N = getN(om, 'cost', name)  : number of cost rows (in N) in named set
+%       N = getN(om, 'cost', name)  : number of cost.rows() (in N) in named set
 %
 %   See also OPF_MODEL.
 

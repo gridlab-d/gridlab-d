@@ -29,7 +29,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_2",
           "parent": "Market_1",
           "property": "current_market.clearing_price,current_market.clearing_quantity,buyer_1:price,buyer_1:quantity,buyer_2:price,buyer_2:quantity,seller_1:price,seller_1:quantity,",
           "file": "test_auction_3.csv",
@@ -71,7 +70,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_3",
           "parent": "Market_1",
           "target": "current_market.clearing_price",
           "in": "'2001-01-02 01:00:00'",
@@ -84,7 +82,6 @@
           }
         },
         {
-          "name": "double_assert_4",
           "parent": "Market_1",
           "target": "current_market.clearing_quantity",
           "in": "'2001-01-02 01:00:00'",
@@ -147,18 +144,32 @@
       {
         "name": "",
         "items": [
-          "* 0-1 * * * 40;   // buyers with same bids, different quantities, enough supply*",
-          "* 2-3 * * * 50;   // buyers with different bids, same quantities, enough supply*",
-          "* 4-5 * * * 40;   // buyers with same bids, different quantities, not enough supply*",
-          "* 6-7 * * * 45;   // buyers with different bids, same quantities, not enough supply*",
-          "* 8-9 * * * 40;   // buyers with same bids, same quantities, not enough supply*",
-          "* 10-11 * * * 40; // buyers with same bids, same quantities, enough supply*",
-          "* 12-13 * * * 40; // seller with enough supply",
-          "* 14-15 * * * 40; // seller with enough supply",
-          "* 16-17 * * * 40; // seller with not enough supply",
-          "* 18-19 * * * 50; // seller with not enough supply",
-          "* 20-21 * * * 40; // seller with not enough supply",
-          "* 22-23 * * * 40; // seller with enough supply"
+          "* 0-1 * * * 40",
+          "* 2-3 * * * 50",
+          "* 4-5 * * * 40",
+          "* 6-7 * * * 45",
+          "* 8-9 * * * 40",
+          "* 10-11 * * * 40",
+          "* 12-13 * * * 40",
+          "* 14-15 * * * 40",
+          "* 16-17 * * * 40",
+          "* 18-19 * * * 50",
+          "* 20-21 * * * 40",
+          "* 22-23 * * * 40"
+        ],
+        "inline_comments": [
+          "buyers with same bids, different quantities, enough supply*",
+          "buyers with different bids, same quantities, enough supply*",
+          "buyers with same bids, different quantities, not enough supply*",
+          "buyers with different bids, same quantities, not enough supply*",
+          "buyers with same bids, same quantities, not enough supply*",
+          "buyers with same bids, same quantities, enough supply*",
+          "seller with enough supply",
+          "seller with enough supply",
+          "seller with not enough supply",
+          "seller with not enough supply",
+          "seller with not enough supply",
+          "seller with enough supply"
         ]
       }
     ],
@@ -166,18 +177,32 @@
       {
         "name": "",
         "items": [
-          "* 0-1 * * * 40;   // buyers with same bids, different quantities, enough supply",
-          "* 2-3 * * * 40;   // buyers with different bids, same quantities, enough supply",
-          "* 4-5 * * * 40;   // buyers with same bids, different quantities, not enough supply",
-          "* 6-7 * * * 40;   // buyers with different bids, same quantities, not enough supply",
-          "* 8-9 * * * 40;   // buyers with same bids, same quantities, not enough supply",
-          "* 10-11 * * * 40; // buyers with same bids, same quantities, enough supply",
-          "* 12-13 * * * 40; // seller with enough supply",
-          "* 14-15 * * * 40; // seller with enough supply",
-          "* 16-17 * * * 40; // seller with not enough supply",
-          "* 18-19 * * * 40; // seller with not enough supply",
-          "* 20-21 * * * 40; // seller with not enough supply",
-          "* 22-23 * * * 40; // seller with enough supply"
+          "* 0-1 * * * 40",
+          "* 2-3 * * * 40",
+          "* 4-5 * * * 40",
+          "* 6-7 * * * 40",
+          "* 8-9 * * * 40",
+          "* 10-11 * * * 40",
+          "* 12-13 * * * 40",
+          "* 14-15 * * * 40",
+          "* 16-17 * * * 40",
+          "* 18-19 * * * 40",
+          "* 20-21 * * * 40",
+          "* 22-23 * * * 40"
+        ],
+        "inline_comments": [
+          "buyers with same bids, different quantities, enough supply",
+          "buyers with different bids, same quantities, enough supply",
+          "buyers with same bids, different quantities, not enough supply",
+          "buyers with different bids, same quantities, not enough supply",
+          "buyers with same bids, same quantities, not enough supply",
+          "buyers with same bids, same quantities, enough supply",
+          "seller with enough supply",
+          "seller with enough supply",
+          "seller with not enough supply",
+          "seller with not enough supply",
+          "seller with not enough supply",
+          "seller with enough supply"
         ]
       }
     ],
@@ -185,18 +210,32 @@
       {
         "name": "",
         "items": [
-          "* 0-1 * * * 30;   // buyers with same bids, different quantities, enough supply",
-          "* 2-3 * * * 30;   // buyers with different bids, same quantities, enough supply",
-          "* 4-5 * * * 30;   // buyers with same bids, different quantities, not enough supply",
-          "* 6-7 * * * 30;   // buyers with different bids, same quantities, not enough supply",
-          "* 8-9 * * * 30;   // buyers with same bids, same quantities, not enough supply",
-          "* 10-11 * * * 30; // buyers with same bids, same quantities, enough supply",
-          "* 12-13 * * * 40; // seller with enough supply*",
-          "* 14-15 * * * 35; // seller with enough supply*",
-          "* 16-17 * * * 40; // seller with not enough supply*",
-          "* 18-19 * * * 45; // seller with not enough supply*",
-          "* 20-21 * * * 40; // seller with not enough supply*",
-          "* 22-23 * * * 40; // seller with enough supply"
+          "* 0-1 * * * 30",
+          "* 2-3 * * * 30",
+          "* 4-5 * * * 30",
+          "* 6-7 * * * 30",
+          "* 8-9 * * * 30",
+          "* 10-11 * * * 30",
+          "* 12-13 * * * 40",
+          "* 14-15 * * * 35",
+          "* 16-17 * * * 40",
+          "* 18-19 * * * 45",
+          "* 20-21 * * * 40",
+          "* 22-23 * * * 40"
+        ],
+        "inline_comments": [
+          "buyers with same bids, different quantities, enough supply",
+          "buyers with different bids, same quantities, enough supply",
+          "buyers with same bids, different quantities, not enough supply",
+          "buyers with different bids, same quantities, not enough supply",
+          "buyers with same bids, same quantities, not enough supply",
+          "buyers with same bids, same quantities, enough supply",
+          "seller with enough supply*",
+          "seller with enough supply*",
+          "seller with not enough supply*",
+          "seller with not enough supply*",
+          "seller with not enough supply*",
+          "seller with enough supply"
         ]
       }
     ],
@@ -204,18 +243,32 @@
       {
         "name": "",
         "items": [
-          "* 0-1 * * * 6;   // buyers with same bids, different quantities, enough supply",
-          "* 2-3 * * * 5;   // buyers with different bids, same quantities, enough supply",
-          "* 4-5 * * * 5;   // buyers with same bids, different quantities, not enough supply",
-          "* 6-7 * * * 3;   // buyers with different bids, same quantities, not enough supply",
-          "* 8-9 * * * 5.5;   // buyers with same bids, same quantities, not enough supply",
-          "* 10-11 * * * 4; // buyers with same bids, same quantities, enough supply",
-          "* 12-13 * * * 4; // seller with enough supply",
-          "* 14-15 * * * 4; // seller with enough supply",
-          "* 16-17 * * * 4; // seller with not enough supply",
-          "* 18-19 * * * 4; // seller with not enough supply",
-          "* 20-21 * * * 4; // seller with not enough supply",
-          "* 22-23 * * * 4; // seller with enough supply"
+          "* 0-1 * * * 6",
+          "* 2-3 * * * 5",
+          "* 4-5 * * * 5",
+          "* 6-7 * * * 3",
+          "* 8-9 * * * 5.5",
+          "* 10-11 * * * 4",
+          "* 12-13 * * * 4",
+          "* 14-15 * * * 4",
+          "* 16-17 * * * 4",
+          "* 18-19 * * * 4",
+          "* 20-21 * * * 4",
+          "* 22-23 * * * 4"
+        ],
+        "inline_comments": [
+          "buyers with same bids, different quantities, enough supply",
+          "buyers with different bids, same quantities, enough supply",
+          "buyers with same bids, different quantities, not enough supply",
+          "buyers with different bids, same quantities, not enough supply",
+          "buyers with same bids, same quantities, not enough supply",
+          "buyers with same bids, same quantities, enough supply",
+          "seller with enough supply",
+          "seller with enough supply",
+          "seller with not enough supply",
+          "seller with not enough supply",
+          "seller with not enough supply",
+          "seller with enough supply"
         ]
       }
     ],
@@ -223,18 +276,32 @@
       {
         "name": "",
         "items": [
-          "* 0-1 * * * 8;   // buyers with same bids, different quantities, enough supply",
-          "* 2-3 * * * 5;   // buyers with different bids, same quantities, enough supply",
-          "* 4-5 * * * 3;   // buyers with same bids, different quantities, not enough supply",
-          "* 6-7 * * * 3;   // buyers with different bids, same quantities, not enough supply",
-          "* 8-9 * * * 5.5;   // buyers with same bids, same quantities, not enough supply",
-          "* 10-11 * * * 4; // buyers with same bids, same quantities, enough supply",
-          "* 12-13 * * * 4; // seller with enough supply",
-          "* 14-15 * * * 4; // seller with enough supply",
-          "* 16-17 * * * 4; // seller with not enough supply",
-          "* 18-19 * * * 4; // seller with not enough supply",
-          "* 20-21 * * * 4; // seller with not enough supply",
-          "* 22-23 * * * 4; // seller with enough supply"
+          "* 0-1 * * * 8",
+          "* 2-3 * * * 5",
+          "* 4-5 * * * 3",
+          "* 6-7 * * * 3",
+          "* 8-9 * * * 5.5",
+          "* 10-11 * * * 4",
+          "* 12-13 * * * 4",
+          "* 14-15 * * * 4",
+          "* 16-17 * * * 4",
+          "* 18-19 * * * 4",
+          "* 20-21 * * * 4",
+          "* 22-23 * * * 4"
+        ],
+        "inline_comments": [
+          "buyers with same bids, different quantities, enough supply",
+          "buyers with different bids, same quantities, enough supply",
+          "buyers with same bids, different quantities, not enough supply",
+          "buyers with different bids, same quantities, not enough supply",
+          "buyers with same bids, same quantities, not enough supply",
+          "buyers with same bids, same quantities, enough supply",
+          "seller with enough supply",
+          "seller with enough supply",
+          "seller with not enough supply",
+          "seller with not enough supply",
+          "seller with not enough supply",
+          "seller with enough supply"
         ]
       }
     ],
@@ -242,18 +309,32 @@
       {
         "name": "",
         "items": [
-          "* 0-1 * * * 7;   // buyers with same bids, different quantities, enough supply",
-          "* 2-3 * * * 6;   // buyers with different bids, same quantities, enough supply",
-          "* 4-5 * * * 2;   // buyers with same bids, different quantities, not enough supply",
-          "* 6-7 * * * 2.5;   // buyers with different bids, same quantities, not enough supply",
-          "* 8-9 * * * 4;   // buyers with same bids, same quantities, not enough supply",
-          "* 10-11 * * * 5; // buyers with same bids, same quantities, enough supply",
-          "* 12-13 * * * 5; // seller with enough supply",
-          "* 14-15 * * * 6; // seller with enough supply",
-          "* 16-17 * * * 3; // seller with not enough supply",
-          "* 18-19 * * * 5; // seller with not enough supply",
-          "* 20-21 * * * 3; // seller with not enough supply",
-          "* 22-23 * * * 5; // seller with enough supply"
+          "* 0-1 * * * 7",
+          "* 2-3 * * * 6",
+          "* 4-5 * * * 2",
+          "* 6-7 * * * 2.5",
+          "* 8-9 * * * 4",
+          "* 10-11 * * * 5",
+          "* 12-13 * * * 5",
+          "* 14-15 * * * 6",
+          "* 16-17 * * * 3",
+          "* 18-19 * * * 5",
+          "* 20-21 * * * 3",
+          "* 22-23 * * * 5"
+        ],
+        "inline_comments": [
+          "buyers with same bids, different quantities, enough supply",
+          "buyers with different bids, same quantities, enough supply",
+          "buyers with same bids, different quantities, not enough supply",
+          "buyers with different bids, same quantities, not enough supply",
+          "buyers with same bids, same quantities, not enough supply",
+          "buyers with same bids, same quantities, enough supply",
+          "seller with enough supply",
+          "seller with enough supply",
+          "seller with not enough supply",
+          "seller with not enough supply",
+          "seller with not enough supply",
+          "seller with enough supply"
         ]
       }
     ],
@@ -261,18 +342,32 @@
       {
         "name": "",
         "items": [
-          "* 1-2 * * * 35;   // buyers with same bids, different quantities, enough supply(seller_price)",
-          "* 3-4 * * * 30;   // buyers with different bids, same quantities, enough supply(seller_price)",
-          "* 5-6 * * * 40;   // buyers with same bids, different quantities, not enough supply(bidder_price)",
-          "* 7-8 * * * 40;   // buyers with different bids, same quantities, not enough supply(low_bidder_price)",
-          "* 9-10 * * * 40;   // buyers with same bids, same quantities, not enough supply(bidder_price)",
-          "* 11-12 * * * 30; // buyers with same bids, same quantities, enough supply(seller_price)",
-          "* 13-14 * * * 40; // seller with enough supply(seller_price)",
-          "* 15-16 * * * 35; // seller with enough supply(high_seller_price)",
-          "* 17-18 * * * 40; // seller with not enough supply(bidder_price)",
-          "* 19-20 * * * 45; // seller with not enough supply(bidder_price)",
-          "* 21-22 * * * 40; // seller with not enough supply(bidder_price)",
-          "* 23-0 * * * 40; // seller with enough supply(seller_bid))"
+          "* 1-2 * * * 35",
+          "* 3-4 * * * 30",
+          "* 5-6 * * * 40",
+          "* 7-8 * * * 40",
+          "* 9-10 * * * 40",
+          "* 11-12 * * * 30",
+          "* 13-14 * * * 40",
+          "* 15-16 * * * 35",
+          "* 17-18 * * * 40",
+          "* 19-20 * * * 45",
+          "* 21-22 * * * 40",
+          "* 23-0 * * * 40"
+        ],
+        "inline_comments": [
+          "buyers with same bids, different quantities, enough supply(seller_price)",
+          "buyers with different bids, same quantities, enough supply(seller_price)",
+          "buyers with same bids, different quantities, not enough supply(bidder_price)",
+          "buyers with different bids, same quantities, not enough supply(low_bidder_price)",
+          "buyers with same bids, same quantities, not enough supply(bidder_price)",
+          "buyers with same bids, same quantities, enough supply(seller_price)",
+          "seller with enough supply(seller_price)",
+          "seller with enough supply(high_seller_price)",
+          "seller with not enough supply(bidder_price)",
+          "seller with not enough supply(bidder_price)",
+          "seller with not enough supply(bidder_price)",
+          "seller with enough supply(seller_bid))"
         ]
       }
     ],
@@ -280,18 +375,32 @@
       {
         "name": "",
         "items": [
-          "* 1-2 * * * 14;   // buyers with same bids, different quantities, enough supply(bidder_quantity)*",
-          "* 3-4 * * * 10;   // buyers with different bids, same quantities, enough supply(bidder_quantity)*",
-          "* 5-6 * * * 4;   // buyers with same bids, different quantities, not enough supply(seller_quantity)*",
-          "* 7-8 * * * 5;   // buyers with different bids, same quantities, not enough supply(seller_quantity)*",
-          "* 9-10 * * * 8;   // buyers with same bids, same quantities, not enough supply(seller_quantity)*",
-          "* 11-12 * * * 8; // buyers with same bids, same quantities, enough supply(bidder_quantity)*",
-          "* 13-14 * * * 8; // seller with enough supply(bidder_quantity)*",
-          "* 15-16 * * * 8; // seller with enough supply(bidder_quantity)*",
-          "* 17-18 * * * 6; // seller with not enough supply(seller_quantity)*",
-          "* 19-20 * * * 4; // seller with not enough supply(seller_quantity)*",
-          "* 21-22 * * * 6; // seller with not enough supply(seller_quantity)*",
-          "* 23-0 * * * 8; // seller with enough supply(bidder_quantity)*"
+          "* 1-2 * * * 14",
+          "* 3-4 * * * 10",
+          "* 5-6 * * * 4",
+          "* 7-8 * * * 5",
+          "* 9-10 * * * 8",
+          "* 11-12 * * * 8",
+          "* 13-14 * * * 8",
+          "* 15-16 * * * 8",
+          "* 17-18 * * * 6",
+          "* 19-20 * * * 4",
+          "* 21-22 * * * 6",
+          "* 23-0 * * * 8"
+        ],
+        "inline_comments": [
+          "buyers with same bids, different quantities, enough supply(bidder_quantity)*",
+          "buyers with different bids, same quantities, enough supply(bidder_quantity)*",
+          "buyers with same bids, different quantities, not enough supply(seller_quantity)*",
+          "buyers with different bids, same quantities, not enough supply(seller_quantity)*",
+          "buyers with same bids, same quantities, not enough supply(seller_quantity)*",
+          "buyers with same bids, same quantities, enough supply(bidder_quantity)*",
+          "seller with enough supply(bidder_quantity)*",
+          "seller with enough supply(bidder_quantity)*",
+          "seller with not enough supply(seller_quantity)*",
+          "seller with not enough supply(seller_quantity)*",
+          "seller with not enough supply(seller_quantity)*",
+          "seller with enough supply(bidder_quantity)*"
         ]
       }
     ]

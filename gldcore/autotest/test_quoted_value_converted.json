@@ -13,7 +13,7 @@
     "climate": {
       "instances": [
         {
-          "name": "valid invalid"
+          "name": "\"valid\" \"invalid\""
         }
       ]
     }

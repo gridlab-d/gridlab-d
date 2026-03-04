@@ -33,7 +33,7 @@
     "climate": {
       "instances": [
         {
-          "name": "WA_Yakima",
+          "name": "WA-Yakima",
           "tmyfile": "../WA-Yakima.tmy2",
           "interpolate": "NONE"
         }
@@ -58,13 +58,11 @@
     "player": {
       "instances": [
         {
-          "name": "player_7",
           "parent": "double_assert_6",
           "property": "value",
           "file": "../test_wh_explicit_2_multilayer_lower_tank_temperature.player"
         },
         {
-          "name": "player_9",
           "parent": "double_assert_8",
           "property": "value",
           "file": "../test_wh_explicit_2_multilayer_upper_tank_temperature.player"
@@ -90,7 +88,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_10",
           "parent": "w1",
           "file": "waterheater_multilayer.csv",
           "property": "lower_tank_temperature, upper_tank_temperature, lower_heating_element_state, upper_heating_element_state, demand, actual_power, is_waterheater_on, heating_element_capacity, waterheater_model, water_demand",

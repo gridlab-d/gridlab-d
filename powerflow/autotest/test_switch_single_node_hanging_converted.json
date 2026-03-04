@@ -39,7 +39,7 @@
       "instances": [
         {
           "name": "external_event_handler",
-          "manual_outages": "sw_node34,2001-01-01 00:00:05,2001-01-01 00:00_30",
+          "manual_outages": "sw_node34,2001-01-01 00:00:05,2001-01-01 00:00:30",
           "inside_comments": [
             "//use_external_faults TRUE;"
           ]
@@ -217,7 +217,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_17",
           "parent": "node5",
           "property": "voltage_A,voltage_B,voltage_C",
           "interval": 1,
@@ -228,21 +227,18 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_18",
           "parent": "node5",
           "target": "voltage_A",
           "value": "0.0+0.0j",
           "within": 0.1
         },
         {
-          "name": "complex_assert_19",
           "parent": "node5",
           "target": "voltage_B",
           "value": "0.0+0.0j",
           "within": 0.1
         },
         {
-          "name": "complex_assert_20",
           "parent": "node5",
           "target": "voltage_C",
           "value": "0.0+0.0j",

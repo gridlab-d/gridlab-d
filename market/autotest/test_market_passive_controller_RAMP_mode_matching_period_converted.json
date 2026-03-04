@@ -54,7 +54,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_2",
           "parent": "Market_1",
           "property": "current_market.clearing_price,current_market.clearing_quantity,current_price_mean_12h,current_price_stdev_12h,current_market.clearing_type,current_market.marginal_quantity",
           "file": "test_market_passive_controller_RAMP_mode_matching_period_output.csv",
@@ -62,7 +61,6 @@
           "limit": 168
         },
         {
-          "name": "multi_recorder_21",
           "parent": "house_10",
           "property": "cooling_setpoint,cool_control:expectation,cool_control:observation,cool_control:stdev_observation,cool_control:range_low,cool_control:range_high,cool_control:ramp_low,cool_control:ramp_high,heating_setpoint,heat_control:expectation,heat_control:observation,heat_control:stdev_observation,heat_control:range_low,heat_control:range_high,heat_control:ramp_low,heat_control:ramp_high",
           "file": "test_market_passive_controller_RAMP_mode_matching_period_output2.csv",
@@ -74,7 +72,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_3",
           "parent": "Market_1",
           "in": "'2001-01-01 01:00:00'",
           "value": "clearing_prices*1",
@@ -82,7 +79,6 @@
           "target": "current_market.clearing_price"
         },
         {
-          "name": "double_assert_4",
           "parent": "Market_1",
           "in": "'2001-01-01 01:00:00'",
           "value": 1,
@@ -90,7 +86,6 @@
           "target": "current_market.clearing_quantity"
         },
         {
-          "name": "double_assert_5",
           "parent": "Market_1",
           "in": "'2001-01-01 01:00:00'",
           "value": "averages*1",
@@ -98,7 +93,6 @@
           "target": "current_price_mean_12h"
         },
         {
-          "name": "double_assert_6",
           "parent": "Market_1",
           "in": "'2001-01-01 01:00:00'",
           "value": "standard_deviations*1",
@@ -106,7 +100,6 @@
           "target": "current_price_stdev_12h"
         },
         {
-          "name": "double_assert_8",
           "parent": "Market_1",
           "in": "'2001-01-01 01:00:00'",
           "value": 0,
@@ -114,7 +107,6 @@
           "within": 1e-05
         },
         {
-          "name": "double_assert_12",
           "parent": "cool_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "clearing_prices*1",
@@ -122,7 +114,6 @@
           "within": 0.0001
         },
         {
-          "name": "double_assert_13",
           "parent": "cool_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "averages*1",
@@ -130,7 +121,6 @@
           "within": 0.0001
         },
         {
-          "name": "double_assert_14",
           "parent": "cool_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "standard_deviations*1",
@@ -138,7 +128,6 @@
           "within": 0.0001
         },
         {
-          "name": "double_assert_15",
           "parent": "cool_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "cooling_setpoints*1",
@@ -146,7 +135,6 @@
           "within": 0.0001
         },
         {
-          "name": "double_assert_17",
           "parent": "heat_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "clearing_prices*1",
@@ -154,7 +142,6 @@
           "within": 0.0001
         },
         {
-          "name": "double_assert_18",
           "parent": "heat_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "averages*1",
@@ -162,7 +149,6 @@
           "within": 0.0001
         },
         {
-          "name": "double_assert_19",
           "parent": "heat_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "standard_deviations*1",
@@ -170,7 +156,6 @@
           "within": 0.0001
         },
         {
-          "name": "double_assert_20",
           "parent": "heat_control",
           "in": "'2001-01-01 01:00:00'",
           "value": "heating_setpoints*1",
@@ -182,7 +167,6 @@
     "enum_assert": {
       "instances": [
         {
-          "name": "enum_assert_7",
           "parent": "Market_1",
           "in": "'2001-01-01 01:00:00'",
           "value": 4,
@@ -456,12 +440,12 @@
           "* 3 1 * * 78.0000",
           "* 4 1 * * 78.0000",
           "* 5 1 * * 78.0000",
-          "* 6 1 * * 78.0000; //should be 78",
-          "* 7 1 * * 78.0000; //should be 78",
-          "* 8 1 * * 78.0000; //should be 78",
-          "* 9 1 * * 78.0000; //should be 78",
-          "* 10 1 * * 78.0000; //should be 78",
-          "* 11 1 * * 78.0000; //should be 78",
+          "* 6 1 * * 78.0000",
+          "* 7 1 * * 78.0000",
+          "* 8 1 * * 78.0000",
+          "* 9 1 * * 78.0000",
+          "* 10 1 * * 78.0000",
+          "* 11 1 * * 78.0000",
           "* 12 1 * * 83.0000",
           "* 13 1 * * 82.2444",
           "* 14 1 * * 81.5355",
@@ -522,6 +506,14 @@
           "* 21 3 * * 81.0317",
           "* 22 3 * * 80.6726",
           "* 23 3 * * 80.5000"
+        ],
+        "inline_comments": [
+          "should be 78",
+          "should be 78",
+          "should be 78",
+          "should be 78",
+          "should be 78",
+          "should be 78"
         ]
       }
     ],
@@ -535,12 +527,12 @@
           "* 3 1 * * 62.0000",
           "* 4 1 * * 62.0000",
           "* 5 1 * * 62.0000",
-          "* 6 1 * * 62.0000; //should be 62",
-          "* 7 1 * * 62.0000; //should be 62",
-          "* 8 1 * * 62.0000; //should be 62",
-          "* 9 1 * * 62.0000; //should be 62",
-          "* 10 1 * * 62.0000; //should be 62",
-          "* 11 1 * * 62.0000; //should be 62",
+          "* 6 1 * * 62.0000",
+          "* 7 1 * * 62.0000",
+          "* 8 1 * * 62.0000",
+          "* 9 1 * * 62.0000",
+          "* 10 1 * * 62.0000",
+          "* 11 1 * * 62.0000",
           "* 12 1 * * 55.0000",
           "* 13 1 * * 55.0000",
           "* 14 1 * * 55.0000",
@@ -601,6 +593,14 @@
           "* 21 3 * * 55.0000",
           "* 22 3 * * 55.0000",
           "* 23 3 * * 55.0000"
+        ],
+        "inline_comments": [
+          "should be 62",
+          "should be 62",
+          "should be 62",
+          "should be 62",
+          "should be 62",
+          "should be 62"
         ]
       }
     ]

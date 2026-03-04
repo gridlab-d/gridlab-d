@@ -151,7 +151,6 @@
     "triplex_line": {
       "instances": [
         {
-          "name": "triplex_line_12",
           "groupid": "Triplex_Line",
           "phases": "AS",
           "from": "triplex_NODE_1",
@@ -164,7 +163,6 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_15",
           "filename": "test_volt.csv",
           "mode": "POLAR"
         }

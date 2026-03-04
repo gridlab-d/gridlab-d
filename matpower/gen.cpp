@@ -121,7 +121,7 @@ int gen::init(OBJECT *parent)
 	
 	// Get the bus id (BUS_I) from bus object (parent) and set generator id (GEN_BUS)
 /*	
-	OBJECT *obj_gen = OBJECTHDR(this);
+	OBJECT *obj_gen = object_header(this);
 	gen *tempgen = OBJECTDATA(obj_gen,gen);
 
 	bus *tempbus = OBJECTDATA(parent,bus);

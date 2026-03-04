@@ -126,7 +126,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_7",
           "parent": "switch3_3B",
           "property": "status",
           "file": "switch_status_value.csv",
@@ -141,7 +140,6 @@
     "group_recorder": {
       "instances": [
         {
-          "name": "group_recorder_8",
           "flags": "DELTAMODE",
           "group": "groupid=connection_point",
           "property": "measured_frequency",
@@ -153,7 +151,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_11",
           "parent": "enum_assert_10",
           "flags": "DELTAMODE",
           "property": "value",

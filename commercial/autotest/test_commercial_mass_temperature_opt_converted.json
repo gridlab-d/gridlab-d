@@ -29,7 +29,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_3",
           "parent": "double_assert_2",
           "file": "../office_interior_temp.player",
           "property": "value"
@@ -49,7 +48,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "office_1",
           "file": "commercial_hvac_usage2.csv",
           "interval": 1,

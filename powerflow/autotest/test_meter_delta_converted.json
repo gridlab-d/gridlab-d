@@ -118,25 +118,21 @@
     "player": {
       "instances": [
         {
-          "name": "player_11",
           "parent": "assert_10",
           "property": "value",
           "file": "../meter_real_energy_delta.player"
         },
         {
-          "name": "player_13",
           "parent": "assert_12",
           "property": "value",
           "file": "../meter_reactive_energy_delta.player"
         },
         {
-          "name": "player_20",
           "parent": "assert_19",
           "property": "value",
           "file": "../triplex_meter_real_energy_delta.player"
         },
         {
-          "name": "player_22",
           "parent": "assert_21",
           "property": "value",
           "file": "../triplex_meter_reactive_energy_delta.player"
@@ -216,7 +212,6 @@
     "triplex_line": {
       "instances": [
         {
-          "name": "triplex_line_16",
           "groupid": "Triplex_Line",
           "phases": "AS",
           "from": "triplex_NODE_1",

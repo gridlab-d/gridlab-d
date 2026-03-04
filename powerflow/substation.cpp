@@ -121,7 +121,7 @@ int substation::create()
 }
 
 void substation::fetch_complex(gld::complex **prop, const char *name, OBJECT *parent){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	*prop = gl_get_complex_by_name(parent, name);
 	if(*prop == nullptr){
 		char tname[32];
@@ -137,7 +137,7 @@ void substation::fetch_complex(gld::complex **prop, const char *name, OBJECT *pa
 }
 
 void substation::fetch_double(double **prop, const char *name, OBJECT *parent){
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	*prop = gl_get_double_by_name(parent, name);
 	if(*prop == nullptr){
 		char tname[32];
@@ -155,7 +155,7 @@ void substation::fetch_double(double **prop, const char *name, OBJECT *parent){
 // Initialize a distribution meter, return 1 on success
 int substation::init(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	int i,n;
 
 	//Base check higher so can be used below
@@ -319,7 +319,7 @@ TIMESTAMP substation::presync(TIMESTAMP t0, TIMESTAMP t1)
 }
 TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP t2;
 	double dist_power_A_diff = 0;
 	double dist_power_B_diff = 0;
@@ -387,7 +387,7 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 SIMULATIONMODE substation::inter_deltaupdate_substation(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
 	double total_load;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double dist_power_A_diff = 0;
 	double dist_power_B_diff = 0;
 	double dist_power_C_diff = 0;
@@ -465,7 +465,7 @@ SIMULATIONMODE substation::inter_deltaupdate_substation(unsigned int64 delta_tim
 
 EXPORT int isa_substation(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,substation)->isa(classname);
+	return object_data<substation>(obj)->isa(classname);
 }
 
 EXPORT int create_substation(OBJECT **obj, OBJECT *parent)
@@ -475,7 +475,7 @@ EXPORT int create_substation(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(substation::oclass);
 		if (*obj!=nullptr)
 		{
-			substation *my = OBJECTDATA(*obj,substation);
+			substation *my = object_data<substation>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -488,7 +488,7 @@ EXPORT int create_substation(OBJECT **obj, OBJECT *parent)
 EXPORT int init_substation(OBJECT *obj)
 {
 	try {
-		substation *my = OBJECTDATA(obj,substation);
+		substation *my = object_data<substation>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(substation);
@@ -497,7 +497,7 @@ EXPORT int init_substation(OBJECT *obj)
 EXPORT TIMESTAMP sync_substation(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		substation *pObj = OBJECTDATA(obj,substation);
+		substation *pObj = object_data<substation>(obj);
 		TIMESTAMP t1;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -532,7 +532,7 @@ EXPORT TIMESTAMP sync_substation(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 }
 
 EXPORT int notify_substation(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
-	substation *n = OBJECTDATA(obj, substation);
+	substation *n = object_data<substation>(obj);
 	int rv = 1;
 
 	rv = n->notify(update_mode, prop, value);
@@ -543,7 +543,7 @@ EXPORT int notify_substation(OBJECT *obj, int update_mode, PROPERTY *prop, char 
 //Deltamode export
 EXPORT SIMULATIONMODE interupdate_substation(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	substation *my = OBJECTDATA(obj,substation);
+	substation *my = object_data<substation>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{

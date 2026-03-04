@@ -28,8 +28,7 @@
     "house": {
       "instances": [
         {
-          "name": "house_1",
-          "occupancy": "\"type: scheduled",
+          "occupancy": "type: scheduled; weekdays: MTWRF; on-time: 7<8~1<9; off-time: 17",
           "inside_comments": [
             "// don't really have an idea about an assert to use here"
           ]

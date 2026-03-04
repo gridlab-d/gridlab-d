@@ -23,6 +23,14 @@
       {
         "type": "enumeration",
         "name": "{A=0, B=1, C=2, D=3, E=4} my_enum"
+      },
+      {
+        "type": "set",
+        "name": "{A=0, B=1, C=2, D=3, E=4} my_set"
+      },
+      {
+        "type": "complex",
+        "name": "my_complex"
       }
     ]
   },
@@ -39,7 +47,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "house_1",
           "property": "my_double,my_int32,my_enum,my_set,my_complex",
           "file": "test_schedule_xform_output.csv"

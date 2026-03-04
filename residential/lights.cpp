@@ -115,7 +115,7 @@ int lights::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	// check the load configuration before initializing the parent class
@@ -262,7 +262,7 @@ EXPORT int create_lights(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(lights::oclass);
 		if (*obj!=nullptr)
 		{
-			lights *my = OBJECTDATA(*obj,lights);
+			lights *my = object_data<lights>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -275,7 +275,7 @@ EXPORT int create_lights(OBJECT **obj, OBJECT *parent)
 EXPORT int init_lights(OBJECT *obj)
 {
 	try {
-		lights *my = OBJECTDATA(obj,lights);
+		lights *my = object_data<lights>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(lights);
@@ -284,7 +284,7 @@ EXPORT int init_lights(OBJECT *obj)
 EXPORT int isa_lights(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,lights)->isa(classname);
+		return object_data<lights>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -293,7 +293,7 @@ EXPORT int isa_lights(OBJECT *obj, char *classname)
 EXPORT TIMESTAMP sync_lights(OBJECT *obj, TIMESTAMP t1)
 {
 	try {
-		lights *my = OBJECTDATA(obj,lights);
+		lights *my = object_data<lights>(obj);
 		TIMESTAMP t2 = my->sync(obj->clock, t1);
 		obj->clock = t1;
 		return t2;

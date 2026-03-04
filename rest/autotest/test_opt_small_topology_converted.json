@@ -31,7 +31,6 @@
     "server": {
       "instances": [
         {
-          "name": "server_1",
           "port": 8080
         }
       ]
@@ -39,9 +38,9 @@
     "regulator": {
       "instances": [
         {
-          "name": "R2_25_00_1_reg_1",
-          "from": "R2_25_00_1_node_324",
-          "to": "R2_25_00_1_meter_73",
+          "name": "R2-25-00-1_reg_1",
+          "from": "R2-25-00-1_node_324",
+          "to": "R2-25-00-1_meter_73",
           "phases": "ABCN",
           "configuration": "feeder_reg_cfg",
           "outside_comments": [
@@ -71,8 +70,7 @@
     "underground_line_conductor": {
       "instances": [
         {
-          "name": "underground_line_conductor_1",
-          "id": 1,
+          "object_declaration": "underground_line_conductor:1",
           "rating.summer.continuous": 564.0,
           "outer_diameter": 2.291,
           "conductor_gmr": "0.03592 ft",
@@ -93,8 +91,7 @@
     "line_spacing": {
       "instances": [
         {
-          "name": "line_spacing_2",
-          "id": 2,
+          "object_declaration": "line_spacing:2",
           "distance_AB": "6.0 in",
           "distance_BC": "6.0 in",
           "distance_AC": "6.0 in",
@@ -107,20 +104,19 @@
     "line_configuration": {
       "instances": [
         {
-          "name": "line_configuration_3",
-          "id": 3,
-          "conductor_A": "underground_line_conductor_1",
-          "conductor_B": "underground_line_conductor_1",
-          "conductor_C": "underground_line_conductor_1",
-          "conductor_N": "underground_line_conductor_1",
-          "spacing": "line_spacing_2"
+          "object_declaration": "line_configuration:3",
+          "conductor_A": "underground_line_conductor:1",
+          "conductor_B": "underground_line_conductor:1",
+          "conductor_C": "underground_line_conductor:1",
+          "conductor_N": "underground_line_conductor:1",
+          "spacing": "line_spacing:2"
         }
       ]
     },
     "meter": {
       "instances": [
         {
-          "name": "R2_25_00_1_meter_73",
+          "name": "R2-25-00-1_meter_73",
           "latitude": "37N25:16.497719914761433",
           "longitude": "122W12:41.37121539425152",
           "phases": "ABCN",
@@ -137,7 +133,7 @@
     "node": {
       "instances": [
         {
-          "name": "R2_25_00_1_node_37",
+          "name": "R2-25-00-1_node_37",
           "latitude": "37N25:27.0694852441884",
           "longitude": "122W11:31.76351989411182",
           "phases": "ABCN",
@@ -147,7 +143,7 @@
           "nominal_voltage": 14376.02
         },
         {
-          "name": "R2_25_00_1_node_150",
+          "name": "R2-25-00-1_node_150",
           "latitude": "37N25:32.0795603722388",
           "longitude": "122W11:34.30398299925855",
           "phases": "ABCN",
@@ -157,7 +153,7 @@
           "nominal_voltage": 14376.02
         },
         {
-          "name": "R2_25_00_1_node_324",
+          "name": "R2-25-00-1_node_324",
           "latitude": "37N25:26.0694852441884",
           "longitude": "122W11:38.850931757890394",
           "phases": "ABCN",
@@ -168,10 +164,10 @@
           "voltage_C": "-7188.01+12450j"
         },
         {
-          "name": "R2_25_00_1_node_317",
+          "name": "R2-25-00-1_node_317",
           "latitude": "37N25:28.0694852441884",
           "longitude": "122W11:38.550931757890394",
-          "parent": "R2_25_00_1_meter_73",
+          "parent": "R2-25-00-1_meter_73",
           "phases": "ABCN",
           "voltage_A": "14376.02+0.0j",
           "voltage_B": "-7188.01-12450j",
@@ -179,7 +175,7 @@
           "nominal_voltage": 14376.02
         },
         {
-          "name": "R2_25_00_1_node_300",
+          "name": "R2-25-00-1_node_300",
           "latitude": "37N25:35.824359317537755",
           "longitude": "122W11:38.77949254396481",
           "phases": "ABCN",
@@ -193,17 +189,17 @@
     "switch": {
       "instances": [
         {
-          "name": "R2_25_00_1_switch_6",
+          "name": "R2-25-00-1_switch_6",
           "phases": "ABCN",
-          "from": "R2_25_00_1_node_150",
-          "to": "R2_25_00_1_node_37",
+          "from": "R2-25-00-1_node_150",
+          "to": "R2-25-00-1_node_37",
           "status": "CLOSED"
         },
         {
-          "name": "R2_25_00_1_switch_29",
+          "name": "R2-25-00-1_switch_29",
           "phases": "ABCN",
-          "from": "R2_25_00_1_node_150",
-          "to": "R2_25_00_1_node_300",
+          "from": "R2-25-00-1_node_150",
+          "to": "R2-25-00-1_node_300",
           "status": "CLOSED"
         }
       ]
@@ -211,12 +207,12 @@
     "underground_line": {
       "instances": [
         {
-          "name": "R2_25_00_1_ul_34",
+          "name": "R2-25-00-1_ul_34",
           "phases": "ABCN",
-          "from": "R2_25_00_1_node_317",
-          "to": "R2_25_00_1_node_150",
+          "from": "R2-25-00-1_node_317",
+          "to": "R2-25-00-1_node_150",
           "length": 165.0,
-          "configuration": "line_configuration_3"
+          "configuration": "line_configuration:3"
         }
       ]
     }

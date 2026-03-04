@@ -11,6 +11,7 @@
  **/
 
 #include <cmath>
+//#include<Eigen/Dense>
 
 #include "class.h"
 #include "output.h"
@@ -27,6 +28,9 @@
 #include "stream.h"
 #include "exec.h"
 
+
+
+
 /* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
 /* TODO: Fix "method" - was missing from list and causing segfaults, so populated.  No idea if it works or what it does */
 PROPERTYSPEC property_type[_PT_LAST] = {
@@ -41,6 +45,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 		{"set",           "string",  sizeof(int64),         32,                 convert_from_set,            convert_to_set,            nullptr, nullptr, {TCOPS(uint64)},},
 		{"int16",         "integer", sizeof(int16),         6,                  convert_from_int16,          convert_to_int16,          nullptr, nullptr, {TCOPS(uint16)},},
 		{"int32",         "integer", sizeof(int32),         12,                 convert_from_int32,          convert_to_int32,          nullptr, nullptr, {TCOPS(uint32)},},
+		{"uint32",         "integer", sizeof(uint32),       12,                 convert_from_uint32,          convert_to_uint32,          nullptr, nullptr, {TCOPS(uint32)},},
 		{"int64",         "integer", sizeof(int64),         24,                 convert_from_int64,          convert_to_int64,          nullptr, nullptr, {TCOPS(uint64)},},
 		{"char8",         "string",  sizeof(char8),         8,                  convert_from_char8,          convert_to_char8,          nullptr, nullptr, {TCOPS(string)},},
 		{"char32",        "string",  sizeof(char32),        32,                 convert_from_char32,         convert_to_char32,         nullptr, nullptr, {TCOPS(string)},},
@@ -50,11 +55,9 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 		{"delegated",     "string",  (unsigned int) -1,     0,                  convert_from_delegated,      convert_to_delegated},
 		{"bool",          "string",  sizeof(bool),          6,                  convert_from_boolean,        convert_to_boolean,        nullptr, nullptr, {TCOPB(bool)},},
 		{"timestamp",     "string",  sizeof(int64),         24,                 convert_from_timestamp_stub, convert_to_timestamp_stub, nullptr, nullptr, {TCOPS(uint64)}, timestamp_get_part},
-		{"double_array",  "string",  sizeof(double_array),  0,                  convert_from_double_array,   convert_to_double_array,  reinterpret_cast<int (*)(
-				void *)>(double_array_create),                                                                                                nullptr, {TCNONE},        double_array_get_part},
-		{"complex_array", "string",  sizeof(complex_array), 0,                  convert_from_complex_array,  convert_to_complex_array, reinterpret_cast<int (*)(
-				void *)>(complex_array_create),                                                                                               nullptr, {TCNONE},        complex_array_get_part},
-		{"real",          "decimal", sizeof(real),          24,                 convert_from_real,           convert_to_real},
+		{"double_array",  "string",  0,  0,                  nullptr,   nullptr,  nullptr,                                                                                                nullptr, {TCNONE},        nullptr},
+		{"complex_array", "string",  sizeof(Eigen::MatrixXcd), 0,                  convert_from_complex_array,  convert_to_complex_array, nullptr,                                                                                               nullptr, {TCNONE},        nullptr},
+		{"real",          "decimal", sizeof(real_type),          24,                 convert_from_real,           convert_to_real},
 		{"float",         "decimal", sizeof(float),         24,                 convert_from_float,          convert_to_float},
 		{"loadshape",     "string",  sizeof(loadshape),     0,                  convert_from_loadshape,      reinterpret_cast<int (*)(
 				const char *,
@@ -103,9 +106,9 @@ int property_check(void)
 		case PT_object: sz = sizeof(OBJECT*); break;
 		case PT_bool: sz = sizeof(bool); break;
 		case PT_timestamp: sz = sizeof(TIMESTAMP); break;
-		case PT_double_array: sz = sizeof(double_array); break;
-		case PT_complex_array: sz = sizeof(complex_array); break;
-		case PT_real: sz = sizeof(real); break;
+		case PT_double_array: sz = sizeof(Eigen::MatrixXd); break;
+		case PT_complex_array: sz = sizeof(Eigen::MatrixXcd); break;
+		case PT_real: sz = sizeof(real_type); break;
 		case PT_float: sz = sizeof(float); break;
 		case PT_loadshape: sz = sizeof(loadshape); break;
 		case PT_enduse: sz = sizeof(enduse); break;
@@ -126,7 +129,7 @@ int property_check(void)
 	return status;
 }
 
-PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void *addr, DELEGATEDTYPE *delegation)
+PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, std::string_view name, void *addr, DELEGATEDTYPE *delegation)
 {
 	char unitspec[1024];
 	PROPERTY *prop = (PROPERTY*)malloc(sizeof(PROPERTY));
@@ -153,7 +156,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 	prop->unit = nullptr;
 	prop->notify = 0;
 	prop->notify_override = false;
-	if (sscanf(name,"%[^[][%[^]]]",prop->name,unitspec)==2)
+	if (sscanf(name.data(), "%[^[][%[^]]]", prop->name, unitspec) == 2)
 	{
 		/* detect when a unit is associated with non-double/complex property */
 		if (prop->ptype!=PT_double && prop->ptype!=PT_complex)
@@ -245,7 +248,7 @@ PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr)
 }
 
 
-bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b, char *part)
+bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b, const char *part)
 {
 	if ( part==nullptr && property_type[ptype].compare[op].fn!=nullptr )
 		return property_type[ptype].compare[op].fn(x,a,b);
@@ -284,7 +287,7 @@ double property_get_part(OBJECT *obj, PROPERTY *prop, const char *part)
 	PROPERTYSPEC *spec = property_getspec(prop->ptype);
 	if ( spec && spec->get_part )
 	{
-		return spec->get_part(GETADDR(obj,prop),part);
+		return spec->get_part(get_addr(obj,prop),part);
 	}
 	else
 		return QNAN;
@@ -307,51 +310,51 @@ double complex_get_part(void *x, const char *name)
 /*********************************************************
  * DOUBLE ARRAYS
  *********************************************************/
-int double_array_create(double_array &a)
-{
-	a = double_array();
+//int double_array_create(double_array &a)
+//{
+//	a = double_array();
+//
+//	return 1;
+//}
 
-	return 1;
-}
-
-double double_array_get_part(void *x, const char *name)
-{
-	unsigned int n,m;
-	if (sscanf(name,"%d.%d",&n,&m)==2)
-	{
-		double_array *a = (double_array*)x;
-		if ( n<a->get_rows() && m<a->get_cols() && a->get_addr(n,m)!=nullptr )
-			return *(a->get_addr(n,m));
-	}
-	return QNAN;
-}
+//double double_array_get_part(void *x, const char *name)
+//{
+//	unsigned int n,m;
+//	if (sscanf(name,"%d.%d",&n,&m)==2)
+//	{
+//		double_array *a = (double_array*)x;
+//		if ( n<a-.rows() && m<a->get_cols() && a->get_addr(n,m)!=nullptr )
+//			return *(a->get_addr(n,m));
+//	}
+//	return QNAN;
+//}
 
 /*********************************************************
  * COMPLEX ARRAYS
  *********************************************************/
-int complex_array_create(complex_array &a)
-{
-    a = complex_array();
-
-	return 1;
-}
-
-double complex_array_get_part(void *x, const char *name)
-{
-	int n,m;
-	char subpart[32];
-	if (sscanf(name,"%d.%d.%31s",&n,&m,subpart)==2)
-	{
-		complex_array *a = (complex_array*)x;
-		if ( n<a->get_rows() && m<a->get_cols() && a->get_addr(n,m)!=nullptr )
-		{
-			if ( strcmp(subpart,"real")==0 ) return a->get_addr(n,m)->Re();
-			else if ( strcmp(subpart,"imag")==0 ) return a->get_addr(n,m)->Im();
-			else return QNAN;
-		}
-	}
-	return QNAN;
-}
+//int complex_array_create(complex_array &a)
+//{
+//    a = complex_array();
+//
+//	return 1;
+//}
+//
+//double complex_array_get_part(void *x, const char *name)
+//{
+//	int n,m;
+//	char subpart[32];
+//	if (sscanf(name,"%d.%d.%31s",&n,&m,subpart)==2)
+//	{
+//		complex_array *a = (complex_array*)x;
+//		if ( n<a-.rows() && m<a->get_cols() && a->get_addr(n,m)!=nullptr )
+//		{
+//			if ( strcmp(subpart,"real")==0 ) return a->get_addr(n,m)->Re();
+//			else if ( strcmp(subpart,"imag")==0 ) return a->get_addr(n,m)->Im();
+//			else return QNAN;
+//		}
+//	}
+//	return QNAN;
+//}
 
 
 

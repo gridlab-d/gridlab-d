@@ -86,14 +86,12 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "Market_1",
           "property": "current_price_mean_1h,current_price_stdev_1h,market_id,current_market.clearing_price",
           "file": "test_fncs_msg_client_auction.csv",
           "interval": -1
         },
         {
-          "name": "recorder_8",
           "parent": "C_1",
           "property": "proxy_average,proxy_standard_deviation,proxy_market_id,proxy_clear_price",
           "file": "test_fncs_msg_client_proxy.csv",

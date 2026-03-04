@@ -29,7 +29,6 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_1",
           "mode": "RECT",
           "file": "voltage_vals_out.csv"
         }
@@ -186,21 +185,18 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_19",
           "parent": "load4",
           "target": "voltage_A",
           "value": "1893.754675-302.379786j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_20",
           "parent": "load4",
           "target": "voltage_B",
           "value": "-1277.912894-1617.302456j",
           "within": 0.01
         },
         {
-          "name": "complex_assert_21",
           "parent": "load4",
           "target": "voltage_C",
           "value": "-705.244792+1850.942204j",

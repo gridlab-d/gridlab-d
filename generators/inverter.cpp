@@ -11,7 +11,9 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <Eigen/Dense>
 
+#include "gld_complex.h"
 #include "inverter.h"
 
 //CLASS *inverter::plcass = power_electronics;
@@ -627,7 +629,7 @@ int inverter::create(void)
 /* Object initialization is called once after all object have been created */
 int inverter::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	PROPERTY *pval = nullptr;
 	bool *dyn_gen_posting;
 	unsigned iindex, jindex;
@@ -642,11 +644,12 @@ int inverter::init(OBJECT *parent)
 	double temp_volt_mag;
 	gld_property *temp_property_pointer = nullptr;
 	gld_property *Frequency_mapped = nullptr;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	bool temp_bool_value;
 	int temp_idx_x, temp_idx_y;
 	gld::complex temp_complex_value;
-	complex_array temp_complex_array, temp_child_complex_array;;
+	//complex_array temp_complex_array, temp_child_complex_array;;
+	Eigen::MatrixXcd temp_complex_array, temp_child_complex_array;
 	gld::set parent_phases;
 	OBJECT *tmp_obj = nullptr;
 	gld_object *tmp_gld_obj = nullptr;
@@ -743,7 +746,7 @@ int inverter::init(OBJECT *parent)
 
 						//Flag it to true
 						temp_bool_value = true;
-						temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+						temp_property_pointer->setp<bool>(temp_bool_value,test_rlock);
 
 						//Remove it
 						delete temp_property_pointer;
@@ -760,7 +763,7 @@ int inverter::init(OBJECT *parent)
 
 						//Flag it to true
 						temp_bool_value = true;
-						temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+						temp_property_pointer->setp<bool>(temp_bool_value,test_rlock);
 
 						//Remove it
 						delete temp_property_pointer;
@@ -865,7 +868,7 @@ int inverter::init(OBJECT *parent)
 
 				//Flag it to true
 				temp_bool_value = true;
-				temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+				temp_property_pointer->setp<bool>(temp_bool_value,test_rlock);
 
 				//Remove it
 				delete temp_property_pointer;
@@ -890,7 +893,7 @@ int inverter::init(OBJECT *parent)
 				}
 
 				//Pull the value
-				Frequency_mapped->getp<bool>(temp_bool_value,*test_rlock);
+				Frequency_mapped->getp<bool>(temp_bool_value,test_rlock);
 				
 				//Check the value
 				if (!temp_bool_value)	//No one has mapped yet, we are volunteered
@@ -907,7 +910,7 @@ int inverter::init(OBJECT *parent)
 
 					//Flag the frequency mapping as having occurred
 					temp_bool_value = true;
-					Frequency_mapped->setp<bool>(temp_bool_value,*test_rlock);
+					Frequency_mapped->setp<bool>(temp_bool_value,test_rlock);
 				}
 				//Default else -- someone else is already mapped, just continue onward
 
@@ -976,26 +979,26 @@ int inverter::init(OBJECT *parent)
 				}
 
 				//Pull down the variable
-				pbus_full_Y_mat->getp<complex_array>(temp_complex_array,*test_rlock);
+				pbus_full_Y_mat->getp<Eigen::MatrixXcd>(temp_complex_array,test_rlock);
 
 				//See if it is valid
-				if (!temp_complex_array.is_valid(0, 0))
+				if (!emh::is_element_valid(temp_complex_array,0, 0))
 				{
 					//Create it
-					temp_complex_array.grow_to(3,3);
+					temp_complex_array.resize(3,3);
 
 					//Zero it, by default
 					for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
 					{
 						for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 						{
-							temp_complex_array.set_at(temp_idx_x,temp_idx_y,gld::complex(0.0,0.0));
+							temp_complex_array(temp_idx_x,temp_idx_y) = gld::complex(0.0,0.0);
 						}
 					}
 				}
 				else	//Already populated, make sure it is the right size!
 				{
-					if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
+					if ((temp_complex_array.rows() != 3) && (temp_complex_array.cols() != 3))
 					{
 						GL_THROW("inverter:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
 						/*  TROUBLESHOOT
@@ -1019,26 +1022,26 @@ int inverter::init(OBJECT *parent)
 					}
 
 					//Pull down the variable
-					temp_property_pointer->getp<complex_array>(temp_child_complex_array,*test_rlock);
+					temp_property_pointer->getp<Eigen::MatrixXcd>(temp_child_complex_array,test_rlock);
 
 					//See if it is valid
-					if (!temp_child_complex_array.is_valid(0,0))
+					if (!emh::is_element_valid(temp_child_complex_array,0,0))
 					{
 						//Create it
-						temp_child_complex_array.grow_to(3,3);
+						temp_child_complex_array.resize(3,3);
 
 						//Zero it, by default
 						for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
 						{
 							for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 							{
-								temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,gld::complex(0.0,0.0));
+								temp_child_complex_array(temp_idx_x,temp_idx_y) = gld::complex(0.0,0.0);
 							}
 						}
 					}
 					else	//Already populated, make sure it is the right size!
 					{
-						if ((temp_child_complex_array.get_rows() != 3) && (temp_child_complex_array.get_cols() != 3))
+						if ((temp_child_complex_array.rows() != 3) && (temp_child_complex_array.cols() != 3))
 						{
 							GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
 							//Defined above
@@ -1053,36 +1056,36 @@ int inverter::init(OBJECT *parent)
 					for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 					{
 						//Read the existing value
-						temp_complex_value = temp_complex_array.get_at(temp_idx_x,temp_idx_y);
+						temp_complex_value = temp_complex_array(temp_idx_x,temp_idx_y);
 
 						//Accumulate into it
 						temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
 
 						//Store it
-						temp_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+						temp_complex_array(temp_idx_x,temp_idx_y) = temp_complex_value;
 
 						//Do the childed object, if exists
 						if (childed_connection)
 						{
 							//Read the existing value
-							temp_complex_value = temp_child_complex_array.get_at(temp_idx_x,temp_idx_y);
+							temp_complex_value = temp_child_complex_array(temp_idx_x,temp_idx_y);
 
 							//Accumulate into it
 							temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
 
 							//Store it
-							temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+							temp_child_complex_array(temp_idx_x,temp_idx_y) = temp_complex_value;
 						}
 					}
 				}
 
 				//Push it back up
-				pbus_full_Y_mat->setp<complex_array>(temp_complex_array,*test_rlock);
+				pbus_full_Y_mat->setp<Eigen::MatrixXcd>(temp_complex_array,test_rlock);
 
 				//See if the childed powerflow exists
 				if (childed_connection)
 				{
-					temp_property_pointer->setp<complex_array>(temp_child_complex_array,*test_rlock);
+					temp_property_pointer->setp<Eigen::MatrixXcd>(temp_child_complex_array,test_rlock);
 
 					//Clear it
 					delete temp_property_pointer;
@@ -2126,7 +2129,7 @@ int inverter::init(OBJECT *parent)
 TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//If we have a meter, reset the accumulators
 	if (parent_is_a_meter)
@@ -2458,7 +2461,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP tret_value;
 	double curr_ts_dbl, diff_dbl;
 	double ieee_1547_return_value;
@@ -2474,7 +2477,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	gld::complex temp_power_val[3];
 
 	gld::complex temp_complex_value;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	//Assume always want TS_NEVER
 	tret_value = TS_NEVER;
@@ -2575,7 +2578,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							temp_complex_value = gld::complex(P_Out, Q_Out);
 
 							//Push it up
-							pGenerated->setp<gld::complex>(temp_complex_value,*test_rlock);
+							pGenerated->setp<gld::complex>(temp_complex_value,test_rlock);
 
 							//Map the current injection function
 							test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_current_injection_update_map"));
@@ -2780,7 +2783,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					else if(number_of_phases_out == 2) // two-phase connection
 					{
-						OBJECT *obj = OBJECTHDR(this);
+						OBJECT *obj = object_header(this);
 
 						if ( ((phases & 0x01) == 0x01) && phaseA_V_Out.Mag() != 0)
 						{
@@ -2916,8 +2919,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						phaseA_I_Out = ~ phaseA_I_Out;
 
 						//Zero the others in here, just for paranoia reasons
-						phaseB_I_Out = complex(0.0,0.0);
-						phaseC_I_Out = complex(0.0,0.0);
+						phaseB_I_Out = gld::complex(0.0,0.0);
+						phaseC_I_Out = gld::complex(0.0,0.0);
 					}
 					else
 					{
@@ -2972,8 +2975,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 
 						//Zero the other currents, just because
-						phaseB_I_Out = complex(0.0,0.0);
-						phaseC_I_Out = complex(0.0,0.0);
+						phaseB_I_Out = gld::complex(0.0,0.0);
+						phaseC_I_Out = gld::complex(0.0,0.0);
 					}
 					else	//Not triplex
 					{
@@ -3843,7 +3846,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 								}
 								else
 								{
-									value_IGenerated[0] = complex(0.0,0.0);
+									value_IGenerated[0] = gld::complex(0.0,0.0);
 								}
 
 								//Compute desired output - sign convention appears to be backwards
@@ -4281,7 +4284,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 /* Postsync is called when the clock needs to advance on the second top-down pass */
 TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP t2 = TS_NEVER;		//By default, we're done forever!
 	LOAD_FOLLOW_STATUS new_lf_status;
 	PF_REG_STATUS new_pf_reg_status;
@@ -5363,7 +5366,7 @@ STATUS inverter::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 {
 	STATUS stat_val;
 	FUNCTIONADDR funadd = nullptr;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	//See which method we are
 	if (inverter_dyn_mode == PI_CONTROLLER)
@@ -5447,9 +5450,9 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 	int i;
 
 	double inputPower;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	SIMULATIONMODE simmode_return_value = SM_EVENT;
 
@@ -5986,7 +5989,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						// Update the system frequency
 						if (mapped_freq_variable!=nullptr)
 						{
-							mapped_freq_variable->setp<double>(VSI_freq,*test_rlock);
+							mapped_freq_variable->setp<double>(VSI_freq,test_rlock);
 						}
 
 						if (VSI_mode == VSI_ISOCHRONOUS)
@@ -6107,7 +6110,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						// Update the system frequency
 						if (mapped_freq_variable!=nullptr)
 						{
-							mapped_freq_variable->setp<double>(VSI_freq,*test_rlock);
+							mapped_freq_variable->setp<double>(VSI_freq,test_rlock);
 						}
 
 						if (VSI_mode == VSI_ISOCHRONOUS) {
@@ -7748,7 +7751,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 		//Default else, who knows
 
 		//Zero the output variable too - for giggles
-		VA_Out = complex(0.0,0.0);
+		VA_Out = gld::complex(0.0,0.0);
 
 		//We're disabled - unless something else wants deltamode, we're done
 		simmode_return_value = SM_EVENT;
@@ -8265,7 +8268,7 @@ void inverter::update_control_references(void)
 	double VA_Efficiency, temp_PF, temp_QVal;
 	gld::complex temp_VA, VA_Outref;
 	gld::complex battery_power_out = gld::complex(0,0);
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	bool VA_changed = false; // A flag indicating whether VAref is changed due to limitations
 
 	//Compute power in
@@ -8491,7 +8494,7 @@ void inverter::update_control_references(void)
 //Functionalized IEEE 1547 initalizer - mostly so it can easily be done in either deltamode or ss
 STATUS inverter::initalize_IEEE_1547_checks(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	gld_property *temp_nominal_pointer;
 
 	//Check parents and map the variables
@@ -9130,7 +9133,7 @@ gld::complex inverter::complex_exp(double angle)
 gld_property *inverter::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -9153,7 +9156,7 @@ gld_property *inverter::map_complex_value(OBJECT *obj, const char *name)
 gld_property *inverter::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -9242,7 +9245,7 @@ void inverter::reset_complex_powerflow_accumulators(void)
 void inverter::push_complex_powerflow_values(void)
 {
 	gld::complex temp_complex_val;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 	int indexval;
 
 	//See which one we are, since that will impact things
@@ -9259,7 +9262,7 @@ void inverter::push_complex_powerflow_values(void)
 			temp_complex_val += value_Line_I[indexval];
 
 			//Push it back up
-			pLine_I[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
+			pLine_I[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 
 			//**** Power value ***/
 			//Pull current value again, just in case
@@ -9269,7 +9272,7 @@ void inverter::push_complex_powerflow_values(void)
 			temp_complex_val += value_Power[indexval];
 
 			//Push it back up
-			pPower[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
+			pPower[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 
 			//**** pre-rotated Current value ***/
 			//Pull current value again, just in case
@@ -9279,13 +9282,13 @@ void inverter::push_complex_powerflow_values(void)
 			temp_complex_val += value_Line_unrotI[indexval];
 
 			//Push it back up
-			pLine_unrotI[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
+			pLine_unrotI[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 
 			if ((VSI_mode == VSI_ISOCHRONOUS) || (VSI_mode == VSI_DROOP))
 			{
 				//**** IGenerated Current value ***/
 				//Direct write, not an accumulator
-				pIGenerated[indexval]->setp<gld::complex>(value_IGenerated[indexval],*test_rlock);
+				pIGenerated[indexval]->setp<gld::complex>(value_IGenerated[indexval],test_rlock);
 			}
 		}
 	}
@@ -9301,7 +9304,7 @@ void inverter::push_complex_powerflow_values(void)
 		temp_complex_val += value_Line12;
 
 		//Push it back up
-		pLine12->setp<gld::complex>(temp_complex_val,*test_rlock);
+		pLine12->setp<gld::complex>(temp_complex_val,test_rlock);
 
 		//**** powert12 value ***/
 		//Pull current value again, just in case
@@ -9311,7 +9314,7 @@ void inverter::push_complex_powerflow_values(void)
 		temp_complex_val += value_Power12;
 
 		//Push it back up
-		pPower12->setp<gld::complex>(temp_complex_val,*test_rlock);
+		pPower12->setp<gld::complex>(temp_complex_val,test_rlock);
 
 		//**** prerotated_12 value ***/
 		//Pull current value again, just in case
@@ -9321,13 +9324,13 @@ void inverter::push_complex_powerflow_values(void)
 		temp_complex_val += value_Line_unrotI[0];
 
 		//Push it back up
-		pLine_unrotI[0]->setp<gld::complex>(temp_complex_val,*test_rlock);
+		pLine_unrotI[0]->setp<gld::complex>(temp_complex_val,test_rlock);
 
 		//**** IGenerated_12 ****/
 		if ((VSI_mode == VSI_ISOCHRONOUS) || (VSI_mode == VSI_DROOP))
 		{
 			//Direct write, not an accumulator
-			pIGenerated[0]->setp<gld::complex>(value_IGenerated[0],*test_rlock);
+			pIGenerated[0]->setp<gld::complex>(value_IGenerated[0],test_rlock);
 		}
 	}
 }
@@ -9348,7 +9351,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count, bool *converged_fail
 	bool ramp_change;
 	double deltat, temp_time;
 	char idx;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	gld::complex temp_VA;
 	bool bus_is_a_swing, bus_is_swing_pq_entry;
 	STATUS temp_status_val;
@@ -9675,7 +9678,7 @@ EXPORT int create_inverter(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(inverter::oclass);
 		if (*obj!=nullptr)
 		{
-			inverter *my = OBJECTDATA(*obj,inverter);
+			inverter *my = /*OBJECTDATA(*obj, inverter)*/ object_data<inverter>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -9690,7 +9693,7 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
 	try 
 	{
 		if (obj!=nullptr)
-			return OBJECTDATA(obj,inverter)->init(parent);
+			return /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -9700,7 +9703,7 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	inverter *my = OBJECTDATA(obj,inverter);
+	inverter *my = /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj);
 	try
 	{
 		switch (pass) {
@@ -9726,12 +9729,12 @@ EXPORT TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 
 EXPORT int isa_inverter(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,inverter)->isa(classname);
+	return /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj)->isa(classname);
 }
 
 EXPORT STATUS preupdate_inverter(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)
 {
-	inverter *my = OBJECTDATA(obj,inverter);
+	inverter *my = /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj);
 	STATUS status_output = FAILED;
 
 	try
@@ -9748,7 +9751,7 @@ EXPORT STATUS preupdate_inverter(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta
 
 EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	inverter *my = OBJECTDATA(obj,inverter);
+	inverter *my = /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -9764,7 +9767,7 @@ EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_tim
 
 EXPORT STATUS postupdate_inverter(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
-	inverter *my = OBJECTDATA(obj,inverter);
+	inverter *my = /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj);
 	STATUS status = FAILED;
 	try
 	{
@@ -9784,7 +9787,7 @@ EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_
 	STATUS temp_status;
 
 	//Map the node
-	inverter *my = OBJECTDATA(obj,inverter);
+	inverter *my = /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj);
 
 	//Call the function, where we can update the IGenerated injection
 	temp_status = my->updateCurrInjection(iteration_count,converged_failure);

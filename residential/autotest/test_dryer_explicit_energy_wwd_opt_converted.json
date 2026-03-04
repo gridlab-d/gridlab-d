@@ -26,7 +26,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_3",
           "parent": "dryer_2",
           "target": "energy",
           "within": 0.01,
@@ -38,7 +37,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_4",
           "parent": "dryer_2",
           "property": "enduse_load,energy",
           "file": "test_dryer_external_power.csv",
@@ -54,7 +52,7 @@
           "parent": "house_1",
           "motor_power": 200,
           "coil_power": 3800,
-          "shape": "\"type: pulsed",
+          "shape": "type: pulsed; schedule: drying; energy: 4 kWh; count: 3; power: 4 kW; stdev: 0.5 kW",
           "inside_comments": [
             "//Weekdend winter test",
             "//WARNING: This test may be off by 1 hour. Please adjust accordingly."

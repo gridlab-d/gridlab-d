@@ -26,7 +26,6 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_1",
           "filename": "IEEE_13_NR_TS_voltage.csv",
           "mode": "POLAR"
         }
@@ -277,7 +276,7 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "line_632_645",
+          "name": "line_632-645",
           "phases": "BCN",
           "from": "n632",
           "to": "l645",
@@ -288,7 +287,7 @@
           ]
         },
         {
-          "name": "line_645_646",
+          "name": "line_645-646",
           "phases": "BCN",
           "from": "l645",
           "to": "l646",
@@ -296,7 +295,7 @@
           "configuration": "lc603"
         },
         {
-          "name": "line_630_632",
+          "name": "line_630-632",
           "phases": "ABCN",
           "from": "n630",
           "to": "n632",
@@ -307,7 +306,7 @@
           }
         },
         {
-          "name": "line_632_6321",
+          "name": "line_632-6321",
           "phases": "ABCN",
           "from": "n632",
           "to": "l6321",
@@ -321,7 +320,7 @@
           }
         },
         {
-          "name": "line_6321_671",
+          "name": "line_6321-671",
           "phases": "ABCN",
           "from": "l6321",
           "to": "l671",
@@ -332,7 +331,7 @@
           }
         },
         {
-          "name": "line_671_680",
+          "name": "line_671-680",
           "phases": "ABCN",
           "from": "l671",
           "to": "n680",
@@ -346,7 +345,7 @@
           }
         },
         {
-          "name": "line_671_684",
+          "name": "line_671-684",
           "phases": "ACN",
           "from": "l671",
           "to": "n684",
@@ -357,7 +356,7 @@
           }
         },
         {
-          "name": "line_684_611",
+          "name": "line_684-611",
           "phases": "CN",
           "from": "n684",
           "to": "l611",
@@ -368,7 +367,7 @@
           }
         },
         {
-          "name": "line_632_633",
+          "name": "line_632-633",
           "phases": "ABCN",
           "from": "n632",
           "to": "n633",
@@ -383,7 +382,7 @@
     "underground_line": {
       "instances": [
         {
-          "name": "line_692_675",
+          "name": "line_692-675",
           "phases": "ABC",
           "from": "l692",
           "to": "l675",
@@ -394,7 +393,7 @@
           }
         },
         {
-          "name": "line_684_652",
+          "name": "line_684-652",
           "phases": "AC",
           "from": "n684",
           "to": "l652",
@@ -482,28 +481,24 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_39",
           "parent": "n684",
           "target": "voltage_A",
           "value": "2427.62-4.52d",
           "within": 2
         },
         {
-          "name": "complex_assert_40",
           "parent": "n684",
           "target": "voltage_C",
           "value": "2343.69+115.30d",
           "within": 2
         },
         {
-          "name": "complex_assert_45",
           "parent": "l652",
           "target": "voltage_A",
           "within": 2,
           "value": "2427.62-4.52d"
         },
         {
-          "name": "complex_assert_46",
           "parent": "l652",
           "target": "voltage_C",
           "within": 2,
@@ -662,7 +657,7 @@
     "switch": {
       "instances": [
         {
-          "name": "switch_671_692",
+          "name": "switch_671-692",
           "phases": "ABCN",
           "from": "l671",
           "to": "l692",
@@ -693,7 +688,7 @@
     "transformer": {
       "instances": [
         {
-          "name": "transformer_633_634",
+          "name": "transformer_633-634",
           "phases": "ABCN",
           "from": "n633",
           "to": "l634",

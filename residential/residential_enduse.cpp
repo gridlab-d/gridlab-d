@@ -74,11 +74,14 @@ int residential_enduse::create(bool connect_shape)
 int residential_enduse::init(OBJECT *parent)
 {
 	set_flags(get_flags()|OF_SKIPSAFE);
-	gld_object *pParent = OBJECTDATA(parent,gld_object);
-
+	gld_object *pParent = object_data<gld_object>(parent);
 	//	pull parent attach_enduse and attach the enduseload
 	if ( pParent!=nullptr && pParent->is_valid() )
 	{
+        if ((pParent->get_flags() & OF_INIT) != OF_INIT)
+        {
+            return 2;
+        }
 		ATTACHFUNCTION attach = (ATTACHFUNCTION)pParent->get_function("attach_enduse");
 		if ( attach )
 			pCircuit = (*attach)(parent, &load, load.breaker_amps, (load.config&EUC_IS220)!=0);
@@ -133,7 +136,7 @@ EXPORT int create_residential_enduse(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(residential_enduse::oclass);
 		if (*obj!=nullptr)
 		{
-			residential_enduse *my = OBJECTDATA(*obj,residential_enduse);
+			residential_enduse *my = object_data<residential_enduse>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -146,7 +149,7 @@ EXPORT int create_residential_enduse(OBJECT **obj, OBJECT *parent)
 EXPORT int init_residential_enduse(OBJECT *obj)
 {
 	try {
-		residential_enduse *my = OBJECTDATA(obj,residential_enduse);
+		residential_enduse *my = object_data<residential_enduse>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(residential_enduse);
@@ -155,7 +158,7 @@ EXPORT int init_residential_enduse(OBJECT *obj)
 EXPORT int isa_residential_enduse(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,residential_enduse)->isa(classname);
+		return object_data<residential_enduse>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -163,7 +166,7 @@ EXPORT int isa_residential_enduse(OBJECT *obj, char *classname)
 
 EXPORT TIMESTAMP sync_residential_enduse(OBJECT *obj, TIMESTAMP t1)
 {
-	residential_enduse *my = OBJECTDATA(obj,residential_enduse);
+	residential_enduse *my = object_data<residential_enduse>(obj);
 	try {
 		TIMESTAMP t2 = my->sync(obj->clock, t1);
 		obj->clock = t1;

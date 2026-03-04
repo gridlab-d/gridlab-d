@@ -207,7 +207,7 @@
     "underground_line": {
       "instances": [
         {
-          "name": "node701_702",
+          "name": "node701-702",
           "phases": "ABC",
           "from": "load801",
           "to": "node702",
@@ -218,7 +218,7 @@
           ]
         },
         {
-          "name": "node702_705",
+          "name": "node702-705",
           "phases": "ABC",
           "from": "node702",
           "to": "node705",
@@ -226,7 +226,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node702_713",
+          "name": "node702-713",
           "phases": "ABC",
           "from": "node702b",
           "to": "load813",
@@ -234,7 +234,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node702_703",
+          "name": "node702-703",
           "phases": "ABC",
           "from": "node702",
           "to": "node703",
@@ -242,7 +242,7 @@
           "configuration": "lc_7221"
         },
         {
-          "name": "node703_727",
+          "name": "node703-727",
           "phases": "ABC",
           "from": "node703b",
           "to": "load827",
@@ -250,7 +250,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node703_730",
+          "name": "node703-730",
           "phases": "ABC",
           "from": "node703",
           "to": "load830",
@@ -258,7 +258,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node704_714",
+          "name": "node704-714",
           "phases": "ABC",
           "from": "node704",
           "to": "load814",
@@ -266,7 +266,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node704_720",
+          "name": "node704-720",
           "phases": "ABC",
           "from": "node704b",
           "to": "load820",
@@ -274,7 +274,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node705_742",
+          "name": "node705-742",
           "phases": "ABC",
           "from": "node705",
           "to": "load842",
@@ -282,7 +282,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node705_712",
+          "name": "node705-712",
           "phases": "ABC",
           "from": "node705",
           "to": "load812",
@@ -290,7 +290,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node706_725",
+          "name": "node706-725",
           "phases": "ABC",
           "from": "node706",
           "to": "load825",
@@ -298,7 +298,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node707_724",
+          "name": "node707-724",
           "phases": "ABC",
           "from": "node707",
           "to": "load824",
@@ -306,7 +306,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node707_722",
+          "name": "node707-722",
           "phases": "ABC",
           "from": "node707",
           "to": "load822",
@@ -314,7 +314,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node708_733",
+          "name": "node708-733",
           "groupid": "PIEBYE",
           "phases": "ABC",
           "from": "node708b",
@@ -323,7 +323,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node708_732",
+          "name": "node708-732",
           "phases": "ABC",
           "from": "node708",
           "to": "load832",
@@ -331,7 +331,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node709_731",
+          "name": "node709-731",
           "phases": "ABC",
           "from": "node709",
           "to": "load831",
@@ -339,7 +339,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node709_708",
+          "name": "node709-708",
           "phases": "ABC",
           "from": "node709",
           "to": "node708",
@@ -347,7 +347,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node710_735",
+          "name": "node710-735",
           "phases": "ABC",
           "from": "node710",
           "to": "load835",
@@ -355,7 +355,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node710_736",
+          "name": "node710-736",
           "phases": "ABC",
           "from": "node710",
           "to": "load836",
@@ -363,7 +363,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node711_741",
+          "name": "node711-741",
           "phases": "ABC",
           "from": "node711",
           "to": "load841",
@@ -372,7 +372,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node711_740",
+          "name": "node711-740",
           "phases": "ABC",
           "from": "node711",
           "to": "load840",
@@ -380,7 +380,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node713_704",
+          "name": "node713-704",
           "phases": "ABC",
           "from": "load813",
           "to": "node704",
@@ -388,7 +388,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node714_718",
+          "name": "node714-718",
           "phases": "ABC",
           "from": "load814",
           "to": "load818",
@@ -396,7 +396,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node720_707",
+          "name": "node720-707",
           "phases": "ABC",
           "from": "load820",
           "to": "node707",
@@ -404,7 +404,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node720_706",
+          "name": "node720-706",
           "phases": "ABC",
           "from": "load820",
           "to": "node706",
@@ -412,7 +412,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node727_744",
+          "name": "node727-744",
           "phases": "ABC",
           "from": "load827",
           "to": "load844",
@@ -420,7 +420,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node730_709",
+          "name": "node730-709",
           "phases": "ABC",
           "from": "load830a",
           "to": "node709",
@@ -428,7 +428,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node733_734",
+          "name": "node733-734",
           "phases": "ABC",
           "from": "load833",
           "to": "load834",
@@ -436,7 +436,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node734_737",
+          "name": "node734-737",
           "phases": "ABC",
           "from": "load834",
           "to": "load837",
@@ -444,7 +444,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node734_710",
+          "name": "node734-710",
           "phases": "ABC",
           "from": "load834b",
           "to": "node710",
@@ -452,7 +452,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node737_738",
+          "name": "node737-738",
           "phases": "ABC",
           "from": "load837",
           "to": "load838",
@@ -460,7 +460,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node738_711",
+          "name": "node738-711",
           "phases": "ABC",
           "groupid": "PIEBYE",
           "from": "load838b",
@@ -469,7 +469,7 @@
           "configuration": "lc_7231"
         },
         {
-          "name": "node744_728",
+          "name": "node744-728",
           "phases": "ABC",
           "groupid": "PIEBYE",
           "from": "load844",
@@ -478,7 +478,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node744_729",
+          "name": "node744-729",
           "phases": "ABC",
           "groupid": "PIEBYE",
           "from": "load844",
@@ -487,7 +487,7 @@
           "configuration": "lc_7241"
         },
         {
-          "name": "node781_701",
+          "name": "node781-701",
           "phases": "ABC",
           "groupid": "PIEBYE",
           "from": "node781",
@@ -500,7 +500,7 @@
     "sectionalizer": {
       "instances": [
         {
-          "name": "node708_708b",
+          "name": "node708-708b",
           "phases": "ABC",
           "from": "node708",
           "to": "node708b",
@@ -508,7 +508,7 @@
           "operating_mode": "INDIVIDUAL"
         },
         {
-          "name": "node704_704b",
+          "name": "node704-704b",
           "phases": "ABC",
           "from": "node704",
           "to": "node704b",
@@ -1252,7 +1252,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_105",
           "parent": "test_assert",
           "flags": "DELTAMODE",
           "property": "value",
@@ -1293,7 +1292,7 @@
           ]
         },
         {
-          "name": "node702_702b",
+          "name": "node702-702b",
           "phases": "ABCN",
           "from": "node702",
           "to": "node702b",
@@ -1327,7 +1326,7 @@
     "transformer": {
       "instances": [
         {
-          "name": "xform709_775",
+          "name": "xform709-775",
           "phases": "ABC",
           "from": "node709",
           "to": "node775",
@@ -1370,7 +1369,7 @@
     "regulator": {
       "instances": [
         {
-          "name": "reg799_781",
+          "name": "reg799-781",
           "phases": "ABC",
           "from": "node799",
           "to": "node781",
@@ -1381,7 +1380,7 @@
     "fuse": {
       "instances": [
         {
-          "name": "node703_703b",
+          "name": "node703-703b",
           "from": "node703",
           "to": "node703b",
           "phases": "ABC",

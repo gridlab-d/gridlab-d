@@ -69,7 +69,7 @@ int triplex_line::init(OBJECT *parent)
 	double temp_rating_emergency = 20000.0;
 	char index;
 	OBJECT *temp_obj;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	triplex_line_configuration *temp_config = nullptr;
 	
 	int result = line::init(parent);
@@ -91,7 +91,7 @@ int triplex_line::init(OBJECT *parent)
 	recalc();
 
 	//Map the line configuration
-	temp_config = OBJECTDATA(configuration,triplex_line_configuration);
+	temp_config = object_data<triplex_line_configuration>(configuration);
 
 	//Values are populated now - populate link ratings parameter
 	if (temp_config->phaseA_conductor != nullptr || temp_config->phaseB_conductor != nullptr) {
@@ -236,8 +236,8 @@ int triplex_line::init(OBJECT *parent)
 void triplex_line::phase_conductor_checks(void)
 {
 	//Map the configuration and object header
-	OBJECT *obj = OBJECTHDR(this);
-	triplex_line_configuration *line_config = OBJECTDATA(configuration,triplex_line_configuration);
+	OBJECT *obj = object_header(this);
+	triplex_line_configuration *line_config = object_data<triplex_line_configuration>(configuration);
 
 	//See if an impedance matrix is specified first -- if so, skip this
 	if ((line_config->impedance11 == 0.0) && (line_config->impedance22 == 0.0))
@@ -301,9 +301,9 @@ void triplex_line::phase_conductor_checks(void)
 
 void triplex_line::recalc(void)
 {
-	triplex_line_configuration *line_config = OBJECTDATA(configuration,triplex_line_configuration);
+	triplex_line_configuration *line_config = object_data<triplex_line_configuration>(configuration);
 
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	
 	if (line_config->impedance11 != 0.0 || line_config->impedance22 != 0.0)
 	{
@@ -358,9 +358,9 @@ void triplex_line::recalc(void)
 		dcond = line_config->diameter;
 		ins_thick = line_config->ins_thickness;
 
-		triplex_line_conductor *l1 = OBJECTDATA(line_config->phaseA_conductor,triplex_line_conductor);
-		triplex_line_conductor *l2 = OBJECTDATA(line_config->phaseB_conductor,triplex_line_conductor);
-		triplex_line_conductor *lN = OBJECTDATA(line_config->phaseC_conductor,triplex_line_conductor);
+		triplex_line_conductor *l1 = object_data<triplex_line_conductor>(line_config->phaseA_conductor);
+		triplex_line_conductor *l2 = object_data<triplex_line_conductor>(line_config->phaseB_conductor);
+		triplex_line_conductor *lN = object_data<triplex_line_conductor>(line_config->phaseC_conductor);
 
 		if (l1 == nullptr || l2 == nullptr || lN == nullptr)
 		{
@@ -536,7 +536,7 @@ EXPORT TIMESTAMP commit_triplex_line(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
 	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 	{
-		triplex_line *plink = OBJECTDATA(obj,triplex_line);
+		triplex_line *plink = object_data<triplex_line>(obj);
 		plink->calculate_power_splitphase();
 	}
 	return TS_NEVER;
@@ -549,7 +549,7 @@ EXPORT int create_triplex_line(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(triplex_line::oclass);
 		if (*obj!=nullptr)
 		{
-			triplex_line *my = OBJECTDATA(*obj,triplex_line);
+			triplex_line *my = object_data<triplex_line>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -562,7 +562,7 @@ EXPORT int create_triplex_line(OBJECT **obj, OBJECT *parent)
 EXPORT TIMESTAMP sync_triplex_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		triplex_line *pObj = OBJECTDATA(obj,triplex_line);
+		triplex_line *pObj = object_data<triplex_line>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -583,7 +583,7 @@ EXPORT TIMESTAMP sync_triplex_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int init_triplex_line(OBJECT *obj)
 {
 	try {
-		triplex_line *my = OBJECTDATA(obj,triplex_line);
+		triplex_line *my = object_data<triplex_line>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(triplex_line);
@@ -591,12 +591,12 @@ EXPORT int init_triplex_line(OBJECT *obj)
 
 EXPORT int isa_triplex_line(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,triplex_line)->isa(classname);
+	return object_data<triplex_line>(obj)->isa(classname);
 }
 
 EXPORT int recalc_triplex_line(OBJECT *obj)
 {
-	OBJECTDATA(obj,triplex_line)->recalc();
+	object_data<triplex_line>(obj)->recalc();
 	return 1;
 }
 

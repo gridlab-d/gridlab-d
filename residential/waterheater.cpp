@@ -254,7 +254,7 @@ int waterheater::create()
  **/
 int waterheater::init(OBJECT *parent)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	nominal_voltage = (2.0 * default_line_voltage); //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
 	actual_voltage = nominal_voltage;
@@ -826,7 +826,7 @@ void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 	/* time has passed ~ calculate internal gains, height change, temperature change */
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
-	OBJECT *my = OBJECTHDR(this);
+	OBJECT *my = object_header(this);
 	double Tamb = get_Tambient(location);
 
 	DATETIME t_next;
@@ -1212,7 +1212,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
                     &fwh_power,
 					&fwh_cop,
 					&fwh_energy);*/
-            load.total = complex(fwh_energy/(1000*simulation_time), 0);
+            load.total = gld::complex(fwh_energy/(1000*simulation_time), 0);
             fwh_energy = 0;
 			fwh_sim_time = t1+ (TIMESTAMP)simulation_time;
 		}
@@ -1693,7 +1693,7 @@ double waterheater::dhdt(double h)
 
 double waterheater::actual_kW(void)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
     static int trip_counter = 0;
 
 	// calculate rated heat capacity adjusted for the current line voltage
@@ -1861,7 +1861,7 @@ inline double waterheater::new_h_2zone(double h0, double delta_t)
 double waterheater::get_Tambient(enumeration loc)
 {
 	double ratio;
-	OBJECT *parent = OBJECTHDR(this)->parent;
+	OBJECT *parent = object_header(this)->parent;
 
 	switch (loc) {
 	case GARAGE: // temperature is about 1/2 way between indoor and outdoor
@@ -1874,7 +1874,7 @@ double waterheater::get_Tambient(enumeration loc)
 	}
 
 	// return temperature of location
-	//house *pHouse = OBJECTDATA(OBJECTHDR(this)->parent,house);
+	//house *pHouse = OBJECTDATA(object_header(this)->parent,house);
 	//return pHouse->get_Tair()*ratio + pHouse->get_Tout()*(1-ratio);
 	return *pTair * ratio + *pTout *(1-ratio);
 }
@@ -1882,7 +1882,7 @@ double waterheater::get_Tambient(enumeration loc)
 void waterheater::wrong_model(WRONGMODEL msg)
 {
 	const char *errtxt[] = {"model is not one-zone","model is not two-zone"};
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	gl_warning("%s (waterheater:%d): %s", obj->name?obj->name:"(anonymous object)", obj->id, errtxt[msg]);
 	throw msg; // this must be caught by the waterheater code, not by the core
 }
@@ -2079,7 +2079,7 @@ EXPORT int create_waterheater(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(waterheater::oclass);
 		if (*obj!=nullptr)
 		{
-			waterheater *my = OBJECTDATA(*obj,waterheater);;
+			waterheater *my = object_data<waterheater>(*obj);;
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
@@ -2094,7 +2094,7 @@ EXPORT int init_waterheater(OBJECT *obj)
 {
 	try
 	{
-		waterheater *my = OBJECTDATA(obj,waterheater);
+		waterheater *my = object_data<waterheater>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(waterheater);
@@ -2103,7 +2103,7 @@ EXPORT int init_waterheater(OBJECT *obj)
 EXPORT int isa_waterheater(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,waterheater)->isa(classname);
+		return object_data<waterheater>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -2113,7 +2113,7 @@ EXPORT int isa_waterheater(OBJECT *obj, char *classname)
 EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
-		waterheater *my = OBJECTDATA(obj, waterheater);
+		waterheater *my = object_data<waterheater>(obj);
 		if (obj->clock <= ROUNDOFF)
 			obj->clock = t0;  //set the object clock if it has not been set yet
 		TIMESTAMP t1 = TS_NEVER;
@@ -2136,7 +2136,7 @@ EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT TIMESTAMP commit_waterheater(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
-	waterheater *my = OBJECTDATA(obj,waterheater);
+	waterheater *my = object_data<waterheater>(obj);
 	return my->commit();
 }
 
@@ -2146,7 +2146,7 @@ EXPORT TIMESTAMP plc_waterheater(OBJECT *obj, TIMESTAMP t0)
 	if (obj->clock <= ROUNDOFF)
 		obj->clock = t0;  //set the clock if it has not been set yet
 
-	waterheater *my = OBJECTDATA(obj,waterheater);
+	waterheater *my = object_data<waterheater>(obj);
 	if(my->current_model != 4) {
 		my->thermostat(obj->clock, t0);
 	}

@@ -4,6 +4,10 @@
 #ifndef TAPE_COLLECTOR_H
 #define TAPE_COLLECTOR_H
 
+#include<vector>
+#include <memory>
+
+#include "aggregate.h"
 #include "property.h"
 #include "tape.h"
 
@@ -44,7 +48,7 @@ struct collector {
         char1024 value;
     } last;
     int32 samples;
-    AGGREGATION *aggr;
+    std::vector<std::shared_ptr<struct s_aggregate>> aggr;
 };
 
 EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);

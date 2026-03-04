@@ -18,6 +18,8 @@
 #include <string.h>
 #include <math.h>
 
+typedef struct s_aggregate AGGREGATION; /**< forward declaration of the aggregation type */
+
 #ifdef _WINDOWS
 #define isfinite _finite
 #endif
@@ -373,22 +375,22 @@ typedef union {
 	unsigned int index;
 } SCHEDULEINDEX;
 
-typedef enum {
-	RT_INVALID=-1,	/**< used to flag bad random types */
-	RT_DEGENERATE,	/**< degenerate distribution (Dirac delta function); double only_value */
-	RT_UNIFORM,		/**< uniform distribution; double minimum_value, double maximum_value */
-	RT_NORMAL,		/**< normal distribution; double arithmetic_mean, double arithmetic_stdev */
-	RT_LOGNORMAL,	/**< log-normal distribution; double geometric_mean, double geometric_stdev */
-	RT_BERNOULLI,	/**< Bernoulli distribution; double probability_of_observing_1 */
-	RT_PARETO,		/**< Pareto distribution; double minimum_value, double gamma_scale */
-	RT_EXPONENTIAL, /**< exponential distribution; double coefficient, double k_scale */
-	RT_SAMPLED,		/**< sampled distribution; unsigned number_of_samples, double samples[n_samples] */
-	RT_RAYLEIGH,	/**< Rayleigh distribution; double sigma */
-	RT_WEIBULL,		/**< Weibull distribution; double lambda, double k */
-	RT_GAMMA,		/**< Gamma distribution; double alpha, double beta */
-	RT_BETA,		/**< Beta distribution; double alpha, double beta */
-	RT_TRIANGLE,	/**< Triangle distribution; double a, double b */
-} RANDOMTYPE;
+//enum class RANDOMTYPE {
+//	RT_INVALID = -1,	/**< used to flag bad random types */
+//	RT_DEGENERATE,	/**< degenerate distribution (Dirac delta function); double only_value */
+//	RT_UNIFORM,		/**< uniform distribution; double minimum_value, double maximum_value */
+//	RT_NORMAL,		/**< normal distribution; double arithmetic_mean, double arithmetic_stdev */
+//	RT_LOGNORMAL,	/**< log-normal distribution; double geometric_mean, double geometric_stdev */
+//	RT_BERNOULLI,	/**< Bernoulli distribution; double probability_of_observing_1 */
+//	RT_PARETO,		/**< Pareto distribution; double minimum_value, double gamma_scale */
+//	RT_EXPONENTIAL, /**< exponential distribution; double coefficient, double k_scale */
+//	RT_SAMPLED,		/**< sampled distribution; unsigned number_of_samples, double samples[n_samples] */
+//	RT_RAYLEIGH,	/**< Rayleigh distribution; double sigma */
+//	RT_WEIBULL,		/**< Weibull distribution; double lambda, double k */
+//	RT_GAMMA,		/**< Gamma distribution; double alpha, double beta */
+//	RT_BETA,		/**< Beta distribution; double alpha, double beta */
+//	RT_TRIANGLE,	/**< Triangle distribution; double a, double b */
+//}; // RANDOMTYPE;
 
 typedef char char1024[1025]; /**< strings up to 1024 characters */
 typedef char char256[257]; /**< strings up to 256 characters */
@@ -536,6 +538,7 @@ typedef enum {
 } NOTIFYMODULE; /**< notification message types */
 
 #include "setjmp.h"
+#include<memory>
 typedef struct s_exception_handler {
 	int id; /**< the exception handler id */
 	jmp_buf buf; /**< the \p jmpbuf containing the context for the exception handler */
@@ -1168,8 +1171,8 @@ public:
     void *(*malloc)(size_t);
     void (*free)(void*);
     struct {
-        struct s_aggregate *(*create)(char *aggregator, char *group_expression);
-        double (*refresh)(struct s_aggregate *aggregate);
+        std::shared_ptr<struct s_aggregate> (*create)(char *aggregator, char *group_expression);
+        double (*refresh)(std::shared_ptr<struct s_aggregate> aggregate);
     } aggregate;
     struct {
         double *(*getvar)(MODULE *module, const char *varname);
@@ -1587,7 +1590,7 @@ public:
 };
 class double_array {
 private:
-	size_t n, m; /** n rows, m cols */
+	size_t n, m; /** n.rows(), m cols */
 	size_t max; /** current allocation size max x max */
 	unsigned int *refs; /** reference count **/
 	double ***x; /** pointer to 2D array of pointers to double values */
@@ -1605,7 +1608,7 @@ private:
 		throw (const char*)buf;
 		va_end(ptr);
 	};
-	inline void set_rows(const size_t i) { n=i; };
+	inline void set.rows()(const size_t i) { n=i; };
 	inline void set_cols(const size_t i) { m=i; };
 	inline void set_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]|=b;};
 	inline void clr_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]&=~b;};
@@ -1618,16 +1621,16 @@ private:
 public:
 	inline double_vector operator[] (const size_t n) { return double_vector(x[n]); }
 	inline const double_vector operator[] (const size_t n) const { return double_vector(x[n]); }
-	double_array(const size_t rows=0, const size_t cols=0, double **data=NULL)
+	double_array(const size_t.rows()=0, const size_t cols=0, double **data=NULL)
 	{
 		refs = new unsigned int;
 		*refs = 0;
 		m = n = max = 0;
 		x = NULL;
 		f = NULL;
-		if ( rows>0 )
-			grow_to(rows,cols);
-		for ( size_t r=0 ; r<rows ; r++ )
+		if (.rows()>0 )
+			grow_to.rows(),cols);
+		for ( size_t r=0 ; r.rows() ; r++ )
 		{
 			for ( size_t c=0 ; c<cols ; c++ )
 			{
@@ -1668,7 +1671,7 @@ public:
 	void set_name(const char *v) { name = v; }; 
 	inline const char *get_name(void) const { return name; };
 	void copy_name(const char *v) { char *s=(char*)malloc(strlen(v)+1); strcpy(s,v); name=(const char*)s; };
-	inline const size_t get_rows(void) const { return n; };
+	inline const size_t.rows()(void) const { return n; };
 	inline const size_t get_cols(void) const { return m; };
 	inline const size_t get_max(void) const { return max; };
 	void set_max(const size_t size) 
@@ -1676,7 +1679,7 @@ public:
 		if ( size<=max ) exception(".set_max(%u): cannot shrink double_array",size);
 		size_t r;
 		double ***z = (double***)malloc(sizeof(double**)*size);
-		// create new rows
+		// create new.rows()
 		for ( r=0 ; r<max ; r++ )
 		{
 			if ( x[r]!=NULL )
@@ -1712,7 +1715,7 @@ public:
 		while ( c>=s || r>=s ) s*=2; 
 		if ( s>max ) set_max(s);
 
-		// add rows
+		// add.rows()
 		while ( n<r ) 
 		{
 			if ( x[n]==NULL ) 
@@ -1742,7 +1745,7 @@ public:
 		}
 	};
 	void grow_to(const size_t c) { grow_to(n>0?n:1,c); };
-	void grow_to(const double_array &y) { grow_to(y.get_rows(),y.get_cols()); };
+	void grow_to(const double_array &y) { grow_to(y.rows(),y.cols()); };
 	void check_valid(const size_t r, const size_t c) const { if ( !is_valid(r,c) ) exception(".check_value(%u,%u): invalid (r,c)",r,c); };
 	inline void check_valid(const size_t c) const { check_valid(0,c); };
 	bool is_valid(const size_t r, const size_t c) const { return r<n && c<m; };
@@ -1845,7 +1848,7 @@ public:
 	void set_ident(void)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) = (r==c) ? 1 : 0;
@@ -1869,7 +1872,7 @@ public:
 	void operator= (const double y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) = y;
@@ -1879,9 +1882,9 @@ public:
 	{
 		size_t r,c;
 		grow_to(y);
-		for ( r=0 ; r<y.get_rows() ; r++ )
+		for ( r=0 ; r<y.rows() ; r++ )
 		{
-			for ( c=0 ; c<y.get_cols() ; c++ )
+			for ( c=0 ; c<y.cols() ; c++ )
 				my(r,c) = y[r][c];
 		}
 		return *this;
@@ -1889,7 +1892,7 @@ public:
 	double_array &operator+= (const double &y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) += y;
@@ -1899,7 +1902,7 @@ public:
 	double_array &operator+= (const double_array &y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) += y[r][c];
@@ -1909,7 +1912,7 @@ public:
 	double_array &operator-= (const double &y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) -= y;
@@ -1919,7 +1922,7 @@ public:
 	double_array &operator-= (const double_array &y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) -= y[r][c];
@@ -1929,7 +1932,7 @@ public:
 	double_array &operator *= (const double y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) *= y;
@@ -1939,7 +1942,7 @@ public:
 	double_array &operator /= (const double y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) /= y;
@@ -1949,36 +1952,36 @@ public:
 	// binary operators
 	double_array operator+ (const double y)
 	{
-		double_array a(get_rows(),get_cols());
+		double_array a.rows(),get_cols());
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 			for ( c=0 ; c<get_cols() ; c++ )
 				a[r][c] = my(r,c) + y;
 		return a;
 	}
 	double_array operator- (const double y)
 	{
-		double_array a(get_rows(),get_cols());
+		double_array a.rows(),get_cols());
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 			for ( c=0 ; c<get_cols() ; c++ )
 				a[r][c] = my(r,c) - y;
 		return a;
 	}
 	double_array operator* (const double y)
 	{
-		double_array a(get_rows(),get_cols());
+		double_array a.rows(),get_cols());
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 			for ( c=0 ; c<get_cols() ; c++ )
 				a[r][c] = my(r,c) * y;
 		return a;
 	}
 	double_array operator/ (const double y)
 	{
-		double_array a(get_rows(),get_cols());
+		double_array a.rows(),get_cols());
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 			for ( c=0 ; c<get_cols() ; c++ )
 				a[r][c] = my(r,c) / y;
 		return a;
@@ -1986,37 +1989,37 @@ public:
 	double_array operator + (const double_array &y)
 	{
 		size_t r,c;
-		if ( get_rows()!=y.get_rows() || get_cols()!=y.get_cols() )
+		if (.rows()!=y.rows() || get_cols()!=y.cols() )
 			exception("+%s: size mismatch",y.get_name());
-		double_array a(get_rows(),get_cols());
+		double_array a.rows(),get_cols());
 		a.set_name("(?+?)");
-		for ( r=0 ; r<get_rows() ; r++ )
-			for ( c=0 ; c<y.get_cols() ; c++ )
+		for ( r=0 ; r.rows() ; r++ )
+			for ( c=0 ; c<y.cols() ; c++ )
 				a[r][c] = my(r,c) + y[r][c];
 		return a;
 	};
 	double_array operator - (const double_array &y)
 	{
 		size_t r,c;
-		if ( get_rows()!=y.get_rows() || get_cols()!=y.get_cols() )
+		if (.rows()!=y.rows() || get_cols()!=y.cols() )
 			exception("-%s: size mismatch",y.get_name());
-		double_array a(get_rows(),get_cols());
+		double_array a.rows(),get_cols());
 		a.set_name("(?-?)");
-		for ( r=0 ; r<get_rows() ; r++ )
-			for ( c=0 ; c<y.get_cols() ; c++ )
+		for ( r=0 ; r.rows() ; r++ )
+			for ( c=0 ; c<y.cols() ; c++ )
 				a[r][c] = my(r,c) - y[r][c];
 		return a;
 	};
 	double_array operator * (const double_array &y)
 	{
 		size_t r,c,k;
-		if ( get_cols()!=y.get_rows() )
+		if ( get_cols()!=y.rows() )
 			exception("*%s: size mismatch",y.get_name());
-		double_array a(get_rows(),y.get_cols());
+		double_array a.rows(),y.cols());
 		a.set_name("(?*?)");
-		for ( r=0 ; r<get_rows() ; r++ )
+		for ( r=0 ; r.rows() ; r++ )
 		{
-			for ( c=0 ; c<y.get_cols() ; c++ )
+			for ( c=0 ; c<y.cols() ; c++ )
 			{	
 				double b = 0;
 				for ( k=0 ; k<get_cols() ; k++ )

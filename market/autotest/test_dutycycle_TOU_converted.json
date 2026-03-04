@@ -161,7 +161,7 @@
           "name": "transformer_15",
           "phases": "AS",
           "configuration": "AS_config",
-          "from": "load4",
+          "from": "load_4",
           "to": "triplex_1",
           "nominal_voltage": 2401.777
         }
@@ -185,7 +185,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_16",
           "parent": "transformer_15",
           "file": "test_dutycycle_TOU.csv",
           "interval": 60,
@@ -196,7 +195,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_18",
           "parent": "complex_assert_17",
           "property": "value",
           "file": "../dutycycle_TOU_player.player",
@@ -269,7 +267,6 @@
     "passive_controller": {
       "instances": [
         {
-          "name": "passive_controller_26",
           "parent": "ZIPload_25",
           "period": 300,
           "control_mode": "DUTYCYCLE",
@@ -286,7 +283,6 @@
           "third_tier_price": 10
         },
         {
-          "name": "passive_controller_29",
           "parent": "ZIPload_28",
           "period": 300,
           "control_mode": "DUTYCYCLE",

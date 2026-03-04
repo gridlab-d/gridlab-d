@@ -13,7 +13,10 @@
       "//#set profiler=1",
       "// #set verbose=1",
       "//Overall GridLAB-D parameters",
-      "//Deltamode declarations - global values"
+      "//Deltamode declarations - global values",
+      "#set deltamode_timestep //100 ms",
+      "#set deltamode_maximumtime //1 minute",
+      "#set deltamode_iteration_limit //Iteration limit"
     ]
   },
   "_directives": {
@@ -26,9 +29,9 @@
       "double_format": "%+.12lg",
       "complex_format": "%+.12lg%+.12lg%c",
       "complex_output_format": "RECT",
-      "deltamode_timestep": "100000000  //100 ms",
-      "deltamode_maximumtime": "60000000000 //1 minute",
-      "deltamode_iteration_limit": "10  //Iteration limit"
+      "deltamode_timestep": 100000000,
+      "deltamode_maximumtime": 60000000000,
+      "deltamode_iteration_limit": 10
     }
   },
   "clock": {
@@ -60,7 +63,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "Gen_Bus_1",
           "property": "rotor_speed,rotor_angle,flux1d,flux2q,EpRotated,VintRotated,Eint_A,Eint_B,Eint_C,Irotated,pwr_electric,pwr_mech",
           "flags": "DELTAMODE",
@@ -71,7 +73,6 @@
           ]
         },
         {
-          "name": "recorder_7",
           "parent": "BUS_1",
           "file": "bus_1_output_recorder.csv",
           "property": "voltage_A,voltage_B,voltage_C,measured_power",
@@ -85,7 +86,6 @@
           ]
         },
         {
-          "name": "recorder_11",
           "parent": "BUS_1_p",
           "file": "bus_1_p_output_recorder.csv",
           "property": "voltage_A,voltage_B,voltage_C,measured_power",
@@ -93,7 +93,6 @@
           "interval": 1
         },
         {
-          "name": "recorder_14",
           "parent": "BUS_1_p_p_p",
           "file": "bus_1_p_p_p_output_recorder.csv",
           "property": "voltage_A,voltage_B,voltage_C,measured_power",
@@ -101,7 +100,6 @@
           "interval": 1
         },
         {
-          "name": "recorder_16",
           "parent": "BUS_2",
           "file": "bus_2_output_recorder.csv",
           "property": "voltage_A,voltage_B,voltage_C,measured_power",
@@ -109,7 +107,6 @@
           "interval": 1
         },
         {
-          "name": "recorder_18",
           "parent": "Gen_Bus_2",
           "property": "rotor_speed,rotor_angle,flux1d,flux2q,EpRotated,VintRotated,Eint_A,Eint_B,Eint_C,Irotated,pwr_electric,pwr_mech",
           "flags": "DELTAMODE",
@@ -123,7 +120,6 @@
           ]
         },
         {
-          "name": "recorder_24",
           "parent": "LOAD_1_p",
           "file": "load_output_recorder.csv",
           "property": "voltage_A,voltage_B,voltage_C,measured_power",
@@ -131,7 +127,6 @@
           "interval": 1
         },
         {
-          "name": "recorder_26",
           "parent": "BUS_1_to_BUS_2",
           "flags": "DELTAMODE",
           "property": "power_in,power_out",
@@ -142,7 +137,6 @@
           ]
         },
         {
-          "name": "recorder_28",
           "parent": "BUS_1_to_LOAD_1",
           "flags": "DELTAMODE",
           "property": "power_in,power_out",
@@ -154,35 +148,30 @@
     "player": {
       "instances": [
         {
-          "name": "player_4",
           "parent": "double_assert_3",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_G1SpeedAssert.csv"
         },
         {
-          "name": "player_9",
           "parent": "complex_assert_8",
           "flags": "DELTAMODE",
           "property": "value",
           "file": "../data_Bus1_voltageA.csv"
         },
         {
-          "name": "player_21",
           "parent": "LOAD_1_p",
           "file": "../diesel_deltamode_load_player_A.csv",
           "property": "constant_power_A",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_22",
           "parent": "LOAD_1_p",
           "file": "../diesel_deltamode_load_player_B.csv",
           "property": "constant_power_B",
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_23",
           "parent": "LOAD_1_p",
           "file": "../diesel_deltamode_load_player_C.csv",
           "property": "constant_power_C",
@@ -266,7 +255,7 @@
           "parent": "BUS_1",
           "flags": "DELTAMODE",
           "target": "voltage_A",
-          "within": 1.0,
+          "within": 2.0,
           "operation": "FULL"
         }
       ]
@@ -364,7 +353,6 @@
     "group_recorder": {
       "instances": [
         {
-          "name": "group_recorder_30",
           "flags": "DELTAMODE",
           "group": "class=meter",
           "property": "measured_power",

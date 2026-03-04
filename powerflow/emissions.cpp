@@ -300,7 +300,7 @@ int emissions::create(void)
 int emissions::init(OBJECT *parent)
 {
 	int rval;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	rval = powerflow_object::init(parent);
  
@@ -445,7 +445,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 	gld::complex temp_power;
 	gld::complex energy_for_calc;
 	bool energy_requirement;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP tret = powerflow_object::postsync(t0);
 
 	//First cycle, set up the interval
@@ -890,7 +890,7 @@ EXPORT int create_emissions(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(emissions::oclass);
 		if (*obj!=nullptr)
 		{
-			emissions *my = OBJECTDATA(*obj,emissions);
+			emissions *my = /*OBJECTDATA(obj,<>)*/ object_data<emissions>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -906,7 +906,7 @@ EXPORT int create_emissions(OBJECT **obj, OBJECT *parent)
 EXPORT int init_emissions(OBJECT *obj, OBJECT *parent)
 {
 	try {
-			return OBJECTDATA(obj,emissions)->init(parent);
+			return /*OBJECTDATA(obj,<>)*/ object_data<emissions>(obj)->init(parent);
 	}
 	catch (const char *msg)
 	{
@@ -926,7 +926,7 @@ EXPORT int init_emissions(OBJECT *obj, OBJECT *parent)
 */
 EXPORT TIMESTAMP sync_emissions(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	emissions *pObj = OBJECTDATA(obj,emissions);
+	emissions *pObj = /*OBJECTDATA(obj,<>)*/ object_data<emissions>(obj);
 	try {
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
@@ -955,7 +955,7 @@ EXPORT TIMESTAMP sync_emissions(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_emissions(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,emissions)->isa(classname);
+	return /*OBJECTDATA(obj,<>)*/ object_data<emissions>(obj)->isa(classname);
 }
 
 /**@}**/

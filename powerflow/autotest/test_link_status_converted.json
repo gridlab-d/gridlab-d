@@ -145,7 +145,7 @@
         {
           "name": "testgendev",
           "fault_type": "SW-ABC",
-          "manual_outages": "switch3_3B,2000-01-01 00:00:10,2000-01-01 00:00_20",
+          "manual_outages": "switch3_3B,2000-01-01 00:00:10,2000-01-01 00:00:20",
           "outside_comments": [
             "//Eventgen-triggered switch, for testing"
           ],
@@ -322,7 +322,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_20",
           "parent": "load4",
           "in": "'2000-01-01 00:00:10'",
           "out": "'2000-01-01 00:00:19'",
@@ -334,7 +333,6 @@
           }
         },
         {
-          "name": "complex_assert_21",
           "parent": "load4",
           "in": "'2000-01-01 00:00:30'",
           "out": "'2000-01-01 00:00:44'",
@@ -346,7 +344,6 @@
           }
         },
         {
-          "name": "complex_assert_30",
           "parent": "node1C",
           "in": "'2000-01-01 00:00:55'",
           "out": "'2000-01-01 00:01:14'",
@@ -361,7 +358,6 @@
           }
         },
         {
-          "name": "complex_assert_37",
           "parent": "load4C",
           "in": "'2000-01-01 00:00:55'",
           "out": "'2000-01-01 00:01:14'",
@@ -373,7 +369,6 @@
           }
         },
         {
-          "name": "complex_assert_38",
           "parent": "load4C",
           "in": "'2000-01-01 00:01:30'",
           "out": "'2000-01-01 00:01:49'",
@@ -385,7 +380,6 @@
           }
         },
         {
-          "name": "complex_assert_41",
           "parent": "node_removed",
           "target": "voltage_B",
           "value": 0.0,
@@ -442,7 +436,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_42",
           "parent": "ol34",
           "property": "status",
           "file": "../data_link_status_player_1.player",
@@ -451,13 +444,11 @@
           ]
         },
         {
-          "name": "player_44",
           "parent": "switch2B_2C",
           "property": "status",
           "file": "../data_link_status_player_2.player"
         },
         {
-          "name": "player_45",
           "parent": "ug34C",
           "property": "status",
           "file": "../data_link_status_player_3.player"
@@ -467,7 +458,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_43",
           "parent": "ol34",
           "property": "status",
           "file": "testout_status_link.csv",

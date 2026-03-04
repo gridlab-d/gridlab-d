@@ -87,7 +87,7 @@ EXPORT int create_triplex_line_configuration(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(triplex_line_configuration::oclass);
 		if (*obj!=nullptr)
 		{
-			triplex_line_configuration *my = OBJECTDATA(*obj,triplex_line_configuration);
+			triplex_line_configuration *my = object_data<triplex_line_configuration>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -103,7 +103,7 @@ EXPORT TIMESTAMP sync_triplex_line_configuration(OBJECT *obj, TIMESTAMP t1, PASS
 
 EXPORT int isa_triplex_line_configuration(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,triplex_line_configuration)->isa(classname);
+	return object_data<triplex_line_configuration>(obj)->isa(classname);
 }
 
 /**@}**/

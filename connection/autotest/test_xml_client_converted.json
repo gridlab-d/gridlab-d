@@ -14,12 +14,10 @@
     "xml": {
       "instances": [
         {
-          "name": "xml_1",
           "mode": "CLIENT",
           "transport": "TCP"
         },
         {
-          "name": "xml_2",
           "mode": "CLIENT",
           "transport": "UDP"
         }

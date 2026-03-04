@@ -58,7 +58,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_4",
           "parent": "Market1",
           "property": "next.P",
           "rank": 8,
@@ -66,7 +65,6 @@
           "loop": 1
         },
         {
-          "name": "player_17",
           "parent": "double_assert_16",
           "rank": 4,
           "property": "value",
@@ -123,7 +121,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_9",
           "parent": "transformer_meter",
           "property": "measured_real_power",
           "limit": 100000000,
@@ -131,7 +128,6 @@
           "file": "totalload.csv"
         },
         {
-          "name": "recorder_10",
           "parent": "transformer_meter",
           "property": "measured_real_power",
           "limit": 100000000,
@@ -139,7 +135,6 @@
           "file": "driver.csv"
         },
         {
-          "name": "recorder_14",
           "parent": "passive_controller_13",
           "property": "observation",
           "limit": 100000000,
@@ -147,7 +142,6 @@
           "file": "results1.csv"
         },
         {
-          "name": "recorder_15",
           "parent": "zip1",
           "property": "multiplier",
           "limit": 100000000,

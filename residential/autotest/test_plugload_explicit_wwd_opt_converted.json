@@ -20,19 +20,16 @@
     "player": {
       "instances": [
         {
-          "name": "player_4",
           "parent": "complex_assert_3",
           "property": "value",
           "file": "../test_plugload_enduse_load_wwd.player"
         },
         {
-          "name": "player_6",
           "parent": "complex_assert_5",
           "property": "value",
           "file": "../test_plugload_energy_wwd.player"
         },
         {
-          "name": "player_8",
           "parent": "double_assert_7",
           "property": "value",
           "file": "../test_plugload_heatgain_wwd.player"
@@ -71,7 +68,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_9",
           "parent": "plugload_2",
           "property": "power,energy,heatgain",
           "file": "test_plugload_explicit_wwd.csv",
@@ -87,7 +83,7 @@
           "parent": "House",
           "installed_power": 0.36,
           "heatgain_fraction": 0.9,
-          "shape": "\"type: analog"
+          "shape": "type: analog; schedule: plugs; power: .36 kW"
         }
       ]
     },

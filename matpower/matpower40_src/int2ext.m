@@ -59,7 +59,7 @@ function [bus, gen, branch, areas] = int2ext(i2e, bus, gen, branch, areas)
 %   gen or branch, they can be converted with a single call by
 %   specifying ORDERING as a cell array of strings.
 %
-%   Any extra elements, rows, columns, etc. beyond those indicated
+%   Any extra elements,.rows(), columns, etc. beyond those indicated
 %   in ORDERING, are not disturbed.
 %
 %   Examples:
@@ -74,11 +74,11 @@ function [bus, gen, branch, areas] = int2ext(i2e, bus, gen, branch, areas)
 %       gencost_ext = int2ext(mpc, gencost_int, gencost_orig, {'gen','gen'}, 1);
 %
 %       Converts a GENCOST matrix that has both real and reactive power
-%       costs (in rows 1--ng and ng+1--2*ng, respectively).
+%       costs (in.rows() 1--ng and ng+1--2*ng, respectively).
 %
 %       mpc = int2ext(mpc, {'reserves', 'cost'}, 'gen');
 %
-%       Reorders rows of mpc.reserves.cost to match external generator
+%       Reorders.rows() of mpc.reserves.cost to match external generator
 %       ordering.
 %
 %       mpc = int2ext(mpc, {'reserves', 'zones'}, 'gen', 2);

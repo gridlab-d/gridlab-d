@@ -29,41 +29,46 @@
         }
       ]
     },
-    "triplex_line_configuration": {
+    "triplex_line_conductor": {
       "instances": [
         {
-          "name": "triplex_line_configuration_1",
-          "conductor_1": "object triplex_line_conductor ",
+          "name": "conductor_1",
+          "resistance": 0.97,
+          "geometric_mean_radius": 0.0111
+        },
+        {
+          "name": "conductor_2",
+          "resistance": 0.97,
+          "geometric_mean_radius": 0.0111
+        },
+        {
+          "name": "conductor_N",
           "resistance": 0.97,
           "geometric_mean_radius": 0.0111
         }
       ]
     },
-    "triplex_line_conductor": {
+    "triplex_line_configuration": {
       "instances": [
         {
-          "name": "triplex_line_conductor_3",
-          "resistance": 0.97,
-          "geometric_mean_radius": 0.0111
-        },
-        {
-          "name": "triplex_line_conductor_4",
-          "resistance": 0.97,
-          "geometric_mean_radius": 0.0111
+          "name": "triplex_line_configuration_1",
+          "conductor_1": "conductor_1",
+          "conductor_2": "conductor_2",
+          "conductor_N": "conductor_N",
+          "insulation_thickness": 0.08,
+          "diameter": 0.368
         }
       ]
     },
     "overhead_line_conductor": {
       "instances": [
         {
-          "name": "overhead_line_conductor_100",
-          "id": 100,
+          "object_declaration": "overhead_line_conductor:100",
           "geometric_mean_radius": 0.0244,
           "resistance": 0.306
         },
         {
-          "name": "overhead_line_conductor_101",
-          "id": 101,
+          "object_declaration": "overhead_line_conductor:101",
           "geometric_mean_radius": 0.00814,
           "resistance": 0.592
         }
@@ -72,8 +77,7 @@
     "line_spacing": {
       "instances": [
         {
-          "name": "line_spacing_200",
-          "id": 200,
+          "object_declaration": "line_spacing:200",
           "distance_AB": 2.5,
           "distance_BC": 4.5,
           "distance_AC": 7.0,
@@ -86,21 +90,19 @@
     "line_configuration": {
       "instances": [
         {
-          "name": "line_configuration_300",
-          "id": 300,
-          "conductor_A": "overhead_line_conductor_100",
-          "conductor_B": "overhead_line_conductor_100",
-          "conductor_C": "overhead_line_conductor_100",
-          "conductor_N": "overhead_line_conductor_101",
-          "spacing": "line_spacing_200"
+          "object_declaration": "line_configuration:300",
+          "conductor_A": "overhead_line_conductor:100",
+          "conductor_B": "overhead_line_conductor:100",
+          "conductor_C": "overhead_line_conductor:100",
+          "conductor_N": "overhead_line_conductor:101",
+          "spacing": "line_spacing:200"
         }
       ]
     },
     "transformer_configuration": {
       "instances": [
         {
-          "name": "transformer_configuration_400",
-          "id": 400,
+          "object_declaration": "transformer_configuration:400",
           "connect_type": "WYE_WYE",
           "power_rating": 6000,
           "primary_voltage": 12470,
@@ -136,8 +138,7 @@
     "node": {
       "instances": [
         {
-          "name": "node_1",
-          "id": 1,
+          "object_declaration": "node:1",
           "bustype": "SWING",
           "phases": "ABCN",
           "voltage_A": "+7199.558+0.000j",
@@ -146,8 +147,7 @@
           "nominal_voltage": 7200
         },
         {
-          "name": "node_2",
-          "id": 2,
+          "object_declaration": "node:2",
           "phases": "ABCN",
           "voltage_A": "+7199.558+0.000j",
           "voltage_B": "-3599.779-6235.000j",
@@ -155,8 +155,7 @@
           "nominal_voltage": 7200
         },
         {
-          "name": "node_3",
-          "id": 3,
+          "object_declaration": "node:3",
           "phases": "ABCN",
           "voltage_A": "+2401.777+0.000j",
           "voltage_B": "-1200.889-2080.000j",
@@ -164,8 +163,7 @@
           "nominal_voltage": 2400
         },
         {
-          "name": "node_4",
-          "id": 4,
+          "object_declaration": "node:4",
           "phases": "ABCN",
           "voltage_A": "+2401.777+0.000j",
           "voltage_B": "-1200.889-2080.000j",
@@ -177,39 +175,37 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_12",
-          "id": 12,
+          "object_declaration": "overhead_line:12",
           "phases": "ABCN",
-          "from": "node_1",
-          "to": "node_2",
+          "from": "node:1",
+          "to": "node:2",
           "length": 2000,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         },
         {
-          "name": "overhead_line_34",
-          "id": 34,
+          "object_declaration": "overhead_line:34",
           "phases": "ABCN",
-          "from": "node_3",
-          "to": "node_4",
+          "from": "node:3",
+          "to": "node:4",
           "length": 2500,
-          "configuration": "line_configuration_300"
+          "configuration": "line_configuration:300"
         }
       ]
     },
     "transformer": {
       "instances": [
         {
-          "name": "transformer_23",
-          "id": 23,
+          "name": "Transformer1",
+          "object_declaration": "transformer:23",
           "phases": "ABCN",
-          "from": "node_2",
-          "to": "node_3",
-          "configuration": "transformer_configuration_400"
+          "from": "node:2",
+          "to": "node:3",
+          "configuration": "transformer_configuration:400"
         },
         {
           "name": "center_tap_1",
           "phases": "AS",
-          "from": "node_4",
+          "from": "node:4",
           "to": "trip_node1",
           "configuration": "AS_config",
           "climate": "yakima",
@@ -223,7 +219,6 @@
     "double_assert": {
       "instances": [
         {
-          "name": "double_assert_19",
           "parent": "center_tap_1",
           "target": "percent_loss_of_life",
           "in": "'2011-02-28 23:55:00'",
@@ -260,7 +255,6 @@
     "ZIPload": {
       "instances": [
         {
-          "name": "ZIPload_24",
           "parent": "house1",
           "base_power": "transformer_load*15",
           "power_fraction": 1,

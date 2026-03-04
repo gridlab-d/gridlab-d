@@ -23,28 +23,24 @@
     "player": {
       "instances": [
         {
-          "name": "player_2",
           "parent": "STUB",
           "file": "../Price_Static.player",
           "loop": 10000000,
           "property": "next.P"
         },
         {
-          "name": "player_6",
           "parent": "assert_lastP",
           "property": "value",
           "file": "../lastP_static.player",
           "loop": 100000
         },
         {
-          "name": "player_9",
           "parent": "STUB2",
           "file": "../Price_Changing.player",
           "loop": 10000000,
           "property": "next.P"
         },
         {
-          "name": "player_12",
           "parent": "assert_nextP_2",
           "property": "value",
           "file": "../Price_Changing.player",
@@ -55,7 +51,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "STUB",
           "property": "avg24,std24,last.P,next.P",
           "limit": 8808,
@@ -63,7 +58,6 @@
           "file": "Output.csv"
         },
         {
-          "name": "recorder_10",
           "parent": "STUB2",
           "property": "avg24,std24,last.P,next.P",
           "limit": 8808,

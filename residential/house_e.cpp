@@ -133,8 +133,8 @@ char *_strlwr(char *s)
 #endif
 
 // for commercial house-zone sequence transforms
-static complex A_OPERATOR =  complex (-0.5,  0.8660254);
-static complex A2_OPERATOR = complex (-0.5, -0.8660254);
+static gld::complex A_OPERATOR =  gld::complex (-0.5,  0.8660254);
+static gld::complex A2_OPERATOR = gld::complex (-0.5, -0.8660254);
 // list of enduses that are implicitly active
 gld::set house_e::implicit_enduses_active = IEU_ALL;
 enumeration house_e::implicit_enduse_source = IES_ELCAP1990;
@@ -178,7 +178,7 @@ EXPORT CIRCUIT *attach_enduse_house_e(OBJECT *obj, enduse *target, double breake
 		GL_THROW("attach_house_e: breaker amps of %f unrealistic", breaker_amps);
 	}
 
-	pHouse = OBJECTDATA(obj,house_e);
+	pHouse = object_data<house_e>(obj);
 	return pHouse->attach(obj,breaker_amps,is220,target);
 }
 
@@ -801,8 +801,8 @@ int house_e::create()
 	value_MeterStatus = 1;
 	value_Frequency = 60.0;
 	external_pf_mode = XPFV_NONE;
-	external_v1N = complex(0,0);
-	external_v2N = complex(0,0);
+	external_v1N = gld::complex(0,0);
+	external_v2N = gld::complex(0,0);
 
 	proper_meter_parent = false;	//By default, assume we have no proper parent
 	commercial_load_parent = false;
@@ -841,7 +841,7 @@ then Tout will be set to 74 degF, RHout is set to 75% and solar flux will be set
 int house_e::init_climate()
 {
 	gld_property *temp_property = nullptr;
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 
 	// link to climate data
 	FINDLIST *climates = nullptr;
@@ -1339,7 +1339,7 @@ and internal gain variables.
 int house_e::init(OBJECT *parent)
 {
 	gld_property *temp_gld_property;
-	gld_wlock *test_rlock;
+	unsigned int test_rlock = 0;
 	bool temp_bool_val;
 
 	if(parent != nullptr){
@@ -1349,13 +1349,13 @@ int house_e::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	heat_start = false;
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	if (parent!=nullptr && (gl_object_isa(parent,"triplex_meter","powerflow") || gl_object_isa(obj->parent,"triplex_node","powerflow") || gl_object_isa(parent,"triplex_load","powerflow")))	// for single-phase houses
 	{
@@ -1376,7 +1376,7 @@ int house_e::init(OBJECT *parent)
 
 		//Set the value
 		temp_bool_val = true;
-		temp_gld_property->setp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->setp<bool>(temp_bool_val,test_rlock);
 
 		//Remove the temp property
 		delete temp_gld_property;
@@ -1442,7 +1442,7 @@ int house_e::init(OBJECT *parent)
 		}
 
 		//Pull the value to a temporary
-		temp_gld_property->getp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->getp<bool>(temp_bool_val,test_rlock);
 
 		//Delete the link
 		delete temp_gld_property;
@@ -1461,7 +1461,7 @@ int house_e::init(OBJECT *parent)
 		}
 
 		//Pull the value to a temporary
-		temp_gld_property->getp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->getp<bool>(temp_bool_val,test_rlock);
 
 		//Delete the link
 		delete temp_gld_property;
@@ -1480,7 +1480,7 @@ int house_e::init(OBJECT *parent)
 		}
 
 		//Pull the value to a temporary
-		temp_gld_property->getp<double>(powerflow_impedance_conversion_level,*test_rlock);
+		temp_gld_property->getp<double>(powerflow_impedance_conversion_level,test_rlock);
 
 		//Delete the link
 		delete temp_gld_property;
@@ -1500,7 +1500,7 @@ int house_e::init(OBJECT *parent)
 
 		//Set the value
 		temp_bool_val = true;
-		temp_gld_property->setp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->setp<bool>(temp_bool_val,test_rlock);
 
 		//Remove the temp property
 		delete temp_gld_property;
@@ -1589,7 +1589,7 @@ int house_e::init(OBJECT *parent)
 		}
 
 		//Pull the value to a temporary
-		temp_gld_property->getp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->getp<bool>(temp_bool_val,test_rlock);
 
 		//Delete the link
 		delete temp_gld_property;
@@ -1608,7 +1608,7 @@ int house_e::init(OBJECT *parent)
 		}
 
 		//Pull the value to a temporary
-		temp_gld_property->getp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->getp<bool>(temp_bool_val,test_rlock);
 
 		//Delete the link
 		delete temp_gld_property;
@@ -1627,7 +1627,7 @@ int house_e::init(OBJECT *parent)
 		}
 
 		//Pull the value to a temporary
-		temp_gld_property->getp<double>(powerflow_impedance_conversion_level,*test_rlock);
+		temp_gld_property->getp<double>(powerflow_impedance_conversion_level,test_rlock);
 
 		//Delete the link
 		delete temp_gld_property;
@@ -1984,7 +1984,7 @@ int house_e::init(OBJECT *parent)
 	else
 		load.breaker_amps = hvac_breaker_rating;
 	load.config = EUC_IS220;
-	pHVAC_EnduseLoad = attach(OBJECTHDR(this),hvac_breaker_rating, true, &load);
+	pHVAC_EnduseLoad = attach(object_header(this),hvac_breaker_rating, true, &load);
 
 	//Continue initialization - update_system uses the HVAC pointer, so it has to be inited first
 	update_system(-1.0);
@@ -2283,7 +2283,7 @@ void house_e::update_system(double dt)
 	double cooling_capacity_adj=0;
 	double temp_c;
 	double rough_amps;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//Pull climate values, if we're properly linked
 	if (proper_climate_found == true)
@@ -2577,9 +2577,9 @@ void house_e::update_system(double dt)
 				}
 				else	//Attached, but zero these, because below are accumulators
 				{
-					load.power = complex(0.0,0.0);
-					load.admittance = complex(0.0,0.0);
-					load.current = complex(0.0,0.0);
+					load.power = gld::complex(0.0,0.0);
+					load.admittance = gld::complex(0.0,0.0);
+					load.current = gld::complex(0.0,0.0);
 				}
 
 				// Motor losses that are related to the efficiency of the induction motor. These contribute to electric power
@@ -2646,7 +2646,7 @@ void house_e::update_system(double dt)
 **/
 TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	const double dt = (double)((t1-t0)*TS_SECOND)/3600;
 
 	//Zero the accumulator
@@ -2846,7 +2846,7 @@ Also synchronizes the voltages and current in the panel with the meter.
 **/
 TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	TIMESTAMP t2 = TS_NEVER, t;
 	double tpan_ret, t0_dbl, t1_dbl;
 	const double dt1 = (double)(t1-t0)*TS_SECOND;
@@ -3003,7 +3003,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 /** Removes load contributions from parent object **/
 TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	//If we're a proper meter, zero the accumulators, then remove the values
 	if (proper_meter_parent == true)
@@ -3035,7 +3035,7 @@ TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 void house_e::update_Tevent()
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 	// Tevent is based on temperature bracket and assumes state is correct
 	switch(system_mode) {
@@ -3197,7 +3197,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	if (TcoolOff<TheatOff && cooling_system_type!=CT_NONE)
 	{
 		char buffer[64];
-		gl_error("%s: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", gl_name(OBJECTHDR(this),buffer,sizeof(buffer)), TcoolOff, TheatOff);
+		gl_error("%s: thermostat setpoints deadbands overlap (TcoolOff=%.1f < TheatOff=%.1f)", gl_name(object_header(this),buffer,sizeof(buffer)), TcoolOff, TheatOff);
 		return TS_INVALID;
 	}
 
@@ -3205,7 +3205,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	if(system_mode == SM_UNKNOWN)
 	{
 		char buffer[64];
-		gl_warning("%s: system_mode was unknown, changed to off", gl_name(OBJECTHDR(this),buffer,sizeof(buffer)));
+		gl_warning("%s: system_mode was unknown, changed to off", gl_name(object_header(this),buffer,sizeof(buffer)));
 		system_mode = SM_OFF;
 	}
 
@@ -3373,7 +3373,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 double house_e::sync_panel(double t0_dbl, double t1_dbl)
 {
 	double t2_dbl = TS_NEVER_DBL;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	bool perform_impedance_conversion;
 
 	//Set impedance default - don't do conversion
@@ -3569,7 +3569,7 @@ TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP t2 = TS_NEVER;
 	IMPLICITENDUSE *eu;
-	//OBJECT *obj = OBJECTHDR(this);
+	//OBJECT *obj = object_header(this);
 	//char one[128], two[128];
 	for (eu=implicit_enduse_list; eu!=nullptr; eu=eu->next)
 	{
@@ -3594,7 +3594,7 @@ void house_e::check_controls()
 	char buffer[256];
 	if (warn_control)
 	{
-		OBJECT *obj = OBJECTHDR(this);
+		OBJECT *obj = object_header(this);
 		/* check for air temperature excursion */
 		if (Tair<warn_low_temp || Tair>warn_high_temp)
 		{
@@ -3640,7 +3640,7 @@ void house_e::check_controls()
 gld_property *house_e::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -3663,7 +3663,7 @@ gld_property *house_e::map_complex_value(OBJECT *obj, const char *name)
 gld_property *house_e::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *objhdr = object_header(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
@@ -3698,14 +3698,14 @@ void house_e::pull_complex_powerflow_values()
 	//Pull in the various values from powerflow - straight reads
 	if (commercial_load_parent == true) {
 		if (numPhases == 3) { // V1n = positive-sequence voltage
-			complex Va = pCircuit_V[0]->get_complex();
-			complex Vb = pCircuit_V[1]->get_complex();
-			complex Vc = pCircuit_V[2]->get_complex();
+			gld::complex Va = pCircuit_V[0]->get_complex();
+			gld::complex Vb = pCircuit_V[1]->get_complex();
+			gld::complex Vc = pCircuit_V[2]->get_complex();
 			value_Circuit_V[1] = Va + A_OPERATOR * Vb + A2_OPERATOR * Vc;
 			value_Circuit_V[1] /= 3.0;
 		} else if (numPhases == 2) {
-			complex v1;
-			complex v2;
+			gld::complex v1;
+			gld::complex v2;
 			if (!(externalPhases & 1)) { // phases B and C
 				v1 = pCircuit_V[1]->get_complex();
 				v2 = pCircuit_V[2]->get_complex();
@@ -3732,7 +3732,7 @@ void house_e::pull_complex_powerflow_values()
 		value_Circuit_V[2] = -value_Circuit_V[1]; // equal and opposite hot voltages, i.e., V2n = -V1n
 		value_Circuit_V[0] = value_Circuit_V[1] * 2.0; // line-to-line is V1n - V2n, or just 2V1n as assumed above
 /*
-		OBJECT *obj = OBJECTHDR(this);
+		OBJECT *obj = object_header(this);
     gl_output ("house: %s is commercial with %d phases and equivalent panel voltages [%g, %g, %g] angle %g",
                obj->name, numPhases,
                value_Circuit_V[1].Mag(), value_Circuit_V[2].Mag(), value_Circuit_V[0].Mag(),
@@ -3751,12 +3751,12 @@ void house_e::pull_complex_powerflow_values()
 void house_e::push_complex_powerflow_values()
 {
 	gld::complex temp_complex_val;
-	gld_wlock *test_rlock;
+	unsigned int test_rlock = 0;
 	int indexval;
 
 	if (commercial_load_parent == true) {
 /*
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 
 		// for value_Shunt, value_Line_I and value_Power the circuit indices are:
 		//  0 = 1-N, 1 = 2-N, 2 = 1-2s
@@ -3780,14 +3780,14 @@ void house_e::push_complex_powerflow_values()
 
 		double denom = numPhases;
 		// split the total power equally among the phases
-		complex balPower = (value_Power[0] + value_Power[1] + value_Power[2]) / denom;
+		gld::complex balPower = (value_Power[0] + value_Power[1] + value_Power[2]) / denom;
 		int insertP = 0;
 		if (balPower.Mag() > 0.0) {
 			insertP = 1;
 //			gl_output ("house: %s commercial per-phase P=[%g +j%g]", obj->name, balPower.Re(), balPower.Im());
 		}
 		// adjust the constant shunt for voltages and internal turns, then balance among phases
-		complex balShunt = (value_Shunt[0] + value_Shunt[1] + value_Shunt[2] * 4.0)
+		gld::complex balShunt = (value_Shunt[0] + value_Shunt[1] + value_Shunt[2] * 4.0)
 			/ (internalTurnsRatio * internalTurnsRatio) / denom;
 		int insertS = 0;
 		if (balShunt.Mag() > 0.0) {
@@ -3795,7 +3795,7 @@ void house_e::push_complex_powerflow_values()
 //			gl_output ("house: %s commercial per-phase Y=[%g +j%g]", obj->name, balShunt.Re(), balShunt.Im());
 		}
 		// adjust the constant current for voltages and internal turns, then balance among phases
-		complex balCurrent = (value_Line_I[0] + value_Line_I[1] + value_Line_I[2] * 2.0)
+		gld::complex balCurrent = (value_Line_I[0] + value_Line_I[1] + value_Line_I[2] * 2.0)
 			/ internalTurnsRatio / denom;
 		int insertI = 0;
 		if (balCurrent.Mag() > 0.0) {
@@ -3811,7 +3811,7 @@ void house_e::push_complex_powerflow_values()
 //					gl_output ("  adding P to [%g +j%g] on phase mask %d",
 //										 temp_complex_val.Re(), temp_complex_val.Im(), mask);
 					temp_complex_val += balPower;
-					pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+					pPower[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 				}
 				if (insertS > 0) {
 					temp_complex_val = pShunt[indexval]->get_complex();
@@ -3820,7 +3820,7 @@ void house_e::push_complex_powerflow_values()
 					temp_complex_val += balShunt;
 
 					//Push it back up
-					pShunt[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+					pShunt[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 				}
 				if (insertI > 0) {
 					temp_complex_val = pLine_I[indexval]->get_complex();
@@ -3829,7 +3829,7 @@ void house_e::push_complex_powerflow_values()
 					temp_complex_val += balCurrent;
 
 					//Push the value back up
-					pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+					pLine_I[indexval]->setp<gld::complex>(temp_complex_val,test_rlock);
 				}
 			}
 			mask *= 2;
@@ -3844,7 +3844,7 @@ void house_e::push_complex_powerflow_values()
             temp_complex_val += value_Line_I[indexval];
 
             //Push it back up
-            pLine_I[indexval]->setp<gld::complex>(temp_complex_val, *test_rlock);
+            pLine_I[indexval]->setp<gld::complex>(temp_complex_val, test_rlock);
 
             //**** shunt value ***/
             //Pull current value again, just in case
@@ -3854,7 +3854,7 @@ void house_e::push_complex_powerflow_values()
             temp_complex_val += value_Shunt[indexval];
 
             //Push it back up
-            pShunt[indexval]->setp<gld::complex>(temp_complex_val, *test_rlock);
+            pShunt[indexval]->setp<gld::complex>(temp_complex_val, test_rlock);
 
             //**** Power value ***/
             //Pull current value again, just in case
@@ -3864,7 +3864,7 @@ void house_e::push_complex_powerflow_values()
             temp_complex_val += value_Power[indexval];
 
             //Push it back up
-            pPower[indexval]->setp<gld::complex>(temp_complex_val, *test_rlock);
+            pPower[indexval]->setp<gld::complex>(temp_complex_val, test_rlock);
         }
 	}
 }
@@ -3890,7 +3890,7 @@ void house_e::pull_climate_values()
 //Function to update the voltage factors
 void house_e::circuit_voltage_factor_update()
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	CIRCUIT *c;
 
 	for (c=panel.circuits; c!=nullptr; c=c->next)
@@ -3945,7 +3945,7 @@ void house_e::powerflow_accumulator_remover()
 
 void house_e::dump_house_parameters_function()
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	std::string house_name = (obj->name?obj->name:"Unnamed");
 	std::string dump_file_name = house_name + "_house_parameters_dump.txt";
 	std::ofstream dump_file(dump_file_name, std::ofstream::out);
@@ -4070,7 +4070,7 @@ void house_e::dump_house_parameters_function()
 //Module-level call
 SIMULATIONMODE house_e::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	double t0_dbl, t1_dbl, tret_dbl;
 
 	//Not on the very first run -- remove our prior contributions
@@ -4089,9 +4089,9 @@ SIMULATIONMODE house_e::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 		t1_dbl = t0_dbl + (double)(dt)/(double)(DT_SECOND);
 
 		//Zero the accumulator
-		value_Power[0] = value_Power[1] = value_Power[2] = complex(0.0,0.0);
-		value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
-		value_Shunt[0] = value_Shunt[1] = value_Shunt[2] = complex(0.0,0.0);
+		value_Power[0] = value_Power[1] = value_Power[2] = gld::complex(0.0,0.0);
+		value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = gld::complex(0.0,0.0);
+		value_Shunt[0] = value_Shunt[1] = value_Shunt[2] = gld::complex(0.0,0.0);
 
 		if (proper_meter_parent == true)
 		{
@@ -4135,7 +4135,7 @@ EXPORT int create_house(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(house_e::oclass);
 		if (*obj!=nullptr)
 		{
-			house_e *my = OBJECTDATA(*obj,house_e);;
+			house_e *my = object_data<house_e>(*obj);;
 			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
@@ -4149,7 +4149,7 @@ EXPORT int create_house(OBJECT **obj, OBJECT *parent)
 EXPORT int init_house(OBJECT *obj)
 {
 	try {
-		house_e *my = OBJECTDATA(obj,house_e);
+		house_e *my = object_data<house_e>(obj);
 		int rv = my->init_climate();
 		if(rv == 0){// climate object has not initialized
 			return 2;
@@ -4163,7 +4163,7 @@ EXPORT int init_house(OBJECT *obj)
 EXPORT int isa_house(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,house_e)->isa(classname);
+		return object_data<house_e>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -4173,7 +4173,7 @@ EXPORT TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 
 	try {
-		house_e *my = OBJECTDATA(obj,house_e);
+		house_e *my = object_data<house_e>(obj);
 		TIMESTAMP t1 = TS_NEVER;
 		if (obj->clock <= ROUNDOFF)
 			obj->clock = t0;  //set the object clock if it has not been set yet
@@ -4206,14 +4206,14 @@ EXPORT TIMESTAMP plc_house(OBJECT *obj, TIMESTAMP t0)
 	if (obj->clock <= ROUNDOFF)
 		obj->clock = t0;  //set the clock if it has not been set yet
 
-	house_e *my = OBJECTDATA(obj,house_e);
+	house_e *my = object_data<house_e>(obj);
 	return my->sync_thermostat(obj->clock, t0);
 }
 
 //Deltamode exposed functions
 EXPORT SIMULATIONMODE interupdate_house_e(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	house_e *my = OBJECTDATA(obj,house_e);
+	house_e *my = object_data<house_e>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -4229,7 +4229,7 @@ EXPORT SIMULATIONMODE interupdate_house_e(OBJECT *obj, unsigned int64 delta_time
 
 EXPORT STATUS postupdate_house_e(OBJECT *obj)
 {
-	house_e *my = OBJECTDATA(obj,house_e);
+	house_e *my = object_data<house_e>(obj);
 	STATUS status = FAILED;
 	try
 	{

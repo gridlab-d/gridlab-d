@@ -103,7 +103,7 @@ EXPORT int create_overhead_line_conductor(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(overhead_line_conductor::oclass);
 		if (*obj!=nullptr)
 		{
-			overhead_line_conductor *my = OBJECTDATA(*obj,overhead_line_conductor);
+			overhead_line_conductor *my = object_data<overhead_line_conductor>(*obj);
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -116,7 +116,7 @@ EXPORT int create_overhead_line_conductor(OBJECT **obj, OBJECT *parent)
 EXPORT int init_overhead_line_conductor(OBJECT *obj)
 {
 	try {
-		overhead_line_conductor *my = OBJECTDATA(obj,overhead_line_conductor);
+		overhead_line_conductor *my = object_data<overhead_line_conductor>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(overhead_line_conductor);
@@ -129,7 +129,7 @@ EXPORT TIMESTAMP sync_overhead_line_conductor(OBJECT *obj, TIMESTAMP t1, PASSCON
 
 EXPORT int isa_overhead_line_conductor(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,overhead_line_conductor)->isa(classname);
+	return object_data<overhead_line_conductor>(obj)->isa(classname);
 }
 
 

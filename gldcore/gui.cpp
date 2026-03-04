@@ -32,6 +32,18 @@ GUIACTIONSTATUS wait_status = GUIACT_NONE;
 #define TABLEOPTIONS 
 #endif
 
+#ifndef X_OK
+#define X_OK 0x01
+#endif
+
+#ifndef R_OK
+#define R_OK 0x02
+#endif
+
+#ifndef F_OK
+#define F_OK 0  // Define F_OK to represent file existence checks
+#endif
+
 static int gui_default_stream(void *ref, const char *format,...)
 {
 	int len;
@@ -161,9 +173,9 @@ void gui_set_propertyname(GUIENTITY *entity, char *propertyname)
 	entity->data = nullptr;
 	strncpy(entity->propertyname,propertyname,sizeof(entity->propertyname));
 }
-void gui_set_span(GUIENTITY *entity, int span)
+void gui_set_span(GUIENTITY *entity, int gui_span)
 {
-	entity->span = span;
+	entity->gui_span = gui_span;
 }
 void gui_set_unit(GUIENTITY *entity, char *unit)
 {
@@ -195,7 +207,7 @@ char *gui_get_dump(GUIENTITY *entity)
 {
 	static char buffer[4096];
 	sprintf(buffer,"{type=%s,srcref='%s',value='%s',globalname='%s',object='%s',property='%s',action='%s',span=%d}",
-		gui_get_typename(entity), entity->srcref, entity->value, entity->globalname, entity->objectname, entity->propertyname, entity->action, entity->span);
+		gui_get_typename(entity), entity->srcref, entity->value, entity->globalname, entity->objectname, entity->propertyname, entity->action, entity->gui_span);
 	return buffer;
 }
 GUIENTITY *gui_get_parent(GUIENTITY *entity)
@@ -298,7 +310,7 @@ char *gui_get_environment(GUIENTITY *entity)
 }
 int gui_get_span(GUIENTITY *entity)
 {
-	return entity->span;
+	return entity->gui_span;
 }
 UNIT *gui_get_unit(GUIENTITY *entity)
 {
@@ -506,14 +518,14 @@ void gui_html_start(void)
 }
 
 #define MAX_TABLES 16
-static int table=-1, row[MAX_TABLES], col[MAX_TABLES], span[MAX_TABLES];
+static int table=-1, row[MAX_TABLES], col[MAX_TABLES], gui_span[MAX_TABLES];
 static void startspan()
 {
-	if (table>=0) span[table]++;
+	if (table>=0) gui_span[table]++;
 }
 static void endspan()
 {
-	if (table>=0) span[table]--;
+	if (table>=0) gui_span[table]--;
 }
 static void newtable(GUIENTITY *entity)
 {
@@ -538,7 +550,7 @@ static void newrow(GUIENTITY *entity)
 }
 static void newcol(GUIENTITY *entity)
 {
-	if (span[table]>0) return;
+	if (gui_span[table]>0) return;
 	if (table<0 || row[table]==0) newrow(entity);
 	if (col[table]>0) gui_html_output(fp,"\t</td> <!-- table %d col %d -->\n",  table, col[table]);
 	col[table]++;

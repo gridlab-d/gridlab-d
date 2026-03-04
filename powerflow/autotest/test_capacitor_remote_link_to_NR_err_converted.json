@@ -104,7 +104,6 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_7",
           "phases": "ABCD",
           "from": "node1",
           "to": "node2",

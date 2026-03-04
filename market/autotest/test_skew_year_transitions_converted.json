@@ -30,7 +30,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_2",
           "parent": "Market_1",
           "property": "fixed_price",
           "file": "test_skew_year_transitions_output.csv",

@@ -474,7 +474,6 @@
           ]
         },
         {
-          "name": "player_58",
           "parent": "complex_assert_57",
           "property": "value",
           "file": "../fqm_pf_reg_power.player",
@@ -483,7 +482,6 @@
           ]
         },
         {
-          "name": "player_59",
           "parent": "complex_assert_57",
           "property": "status",
           "file": "../fqm_pf_reg_status.player"
@@ -664,7 +662,6 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_53",
           "filename": "Volt_Dump_NR.csv"
         }
       ]
@@ -672,7 +669,6 @@
     "currdump": {
       "instances": [
         {
-          "name": "currdump_54",
           "filename": "Current_Dump_NR.csv"
         }
       ]
@@ -680,7 +676,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_55",
           "parent": "Reg1",
           "file": "reg1_output.csv",
           "interval": 3600,
@@ -688,7 +683,6 @@
           "property": "tap_A,tap_B,tap_C,power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_in.real,power_in.imag"
         },
         {
-          "name": "recorder_62",
           "parent": "battery_meter_1",
           "file": "batt_meter.csv",
           "interval": 3600,

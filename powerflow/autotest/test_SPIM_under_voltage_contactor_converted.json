@@ -464,7 +464,7 @@
     "triplex_line_conductor": {
       "instances": [
         {
-          "name": "F2407_4/0_AA_triplex",
+          "name": "F2407-4/0_AA_triplex",
           "resistance": 0.484,
           "geometric_mean_radius": 0.0158,
           "rating.summer.continuous": 299,
@@ -586,7 +586,6 @@
     "player": {
       "instances": [
         {
-          "name": "player_43",
           "parent": "enum_assert_42",
           "property": "value",
           "file": "../SPIM_under_voltage_contactor_status.player",
@@ -594,7 +593,6 @@
           "flags": "DELTAMODE"
         },
         {
-          "name": "player_51",
           "flags": "DELTAMODE",
           "parent": "SwingNode",
           "property": "voltage_A",
@@ -604,14 +602,12 @@
           ]
         },
         {
-          "name": "player_52",
           "flags": "DELTAMODE",
           "parent": "SwingNode",
           "property": "voltage_B",
           "file": "../data_simple_voltage_player_up_down_B.csv"
         },
         {
-          "name": "player_53",
           "flags": "DELTAMODE",
           "parent": "SwingNode",
           "property": "voltage_C",
@@ -679,7 +675,6 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "overhead_line_48",
           "phases": "ABCN",
           "from": "SwingNode",
           "to": "TopSwitchNode",
@@ -690,7 +685,6 @@
           ]
         },
         {
-          "name": "overhead_line_49",
           "phases": "ABCN",
           "from": "BottomSwitchNode",
           "to": "LoadNode",

@@ -19,7 +19,6 @@
     "office": {
       "instances": [
         {
-          "name": "office_1",
           "floor_height": "9 ft",
           "interior_mass": 2000,
           "interior_ua": 2,

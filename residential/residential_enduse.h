@@ -34,6 +34,7 @@ public:
 public:
 	static CLASS *oclass;
 	residential_enduse(MODULE *mod);
+	residential_enduse() {}
 	int create(bool connect_shape=true);
 	int init(OBJECT *parent);
 	int isa(char *classname);

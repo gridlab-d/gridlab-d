@@ -27,7 +27,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "waterheater_2",
           "file": "exerces_2_3_3.csv",
           "property": "power,water_demand,energy",
@@ -41,7 +40,7 @@
         {
           "name": "waterheater_2",
           "parent": "house_1",
-          "myshape": "\"type: pulsed",
+          "myshape": "type: pulsed; schedule: waterheater_demand_prob; energy: 1 kWh; count: 6; power: 1.1 kW",
           "impedance_fraction": 1.0,
           "water_demand": "this.myshape",
           "heating_element_capacity": 4500,

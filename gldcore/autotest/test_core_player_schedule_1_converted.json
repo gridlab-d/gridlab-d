@@ -40,7 +40,6 @@
           "loop": 2
         },
         {
-          "name": "player_5",
           "parent": "double_assert_4",
           "property": "value",
           "file": "../test_core_player_schedule_2.player",
@@ -51,7 +50,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_3",
           "parent": "house_2",
           "property": "heating_setpoint",
           "file": "transform_check.csv",

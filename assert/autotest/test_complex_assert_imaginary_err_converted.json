@@ -12,7 +12,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_2",
           "parent": "meter_1",
           "target": "voltage_A",
           "value": "110+10j",

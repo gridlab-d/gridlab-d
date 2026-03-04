@@ -40,10 +40,10 @@ int parser::replaceAll(string& s, string const& toReplace, string const& replace
 string parser::extractBetween(string str, char startChar, char endChar)
 {
     size_t startPos = str.find(startChar);
-    size_t endPos = str.find(startPos + 1);
+    size_t endPos = str.find(endChar, startPos + 1);
     if (startPos != string::npos && endPos != string::npos)
     {
-        return str.substr(startPos + 1, endPos);
+        return str.substr(startPos + 1, endPos - startPos - 1);
     }
     return string(""); // Return empty string if characters not found
 }
@@ -99,30 +99,31 @@ void parser::filename_parts(string file, string& path, string& name, string& ext
 }
 
 bool parser::property_specs(string csv_keys, KEYWORD **keys) {
+	size_t pos1;
+	size_t pos2;
 	int32 keyvalue;
 	string key_name;
 	string key_value;
 	KEYWORD *last = nullptr;
 
 	while (true) {
-        *keys = static_cast<KEYWORD *>(malloc(sizeof(KEYWORD)));
-		(*keys)->next = nullptr;
-		if (last != nullptr)
-			last->next = (*keys);
-		size_t pos1 = csv_keys.find("=");
-		size_t pos2 = csv_keys.find(",");
+		if (last == nullptr)
+	        *keys = last = static_cast<KEYWORD *>(malloc(sizeof(KEYWORD)));
+		else {
+	        last->next = static_cast<KEYWORD *>(malloc(sizeof(KEYWORD)));
+			last = last->next;
+		}
+		last->next = nullptr;
+		pos1 = csv_keys.find("=");
+		pos2 = csv_keys.find(",");
 		if (pos1 < 32) {
 			key_name = csv_keys.substr(0, pos1);
-			if (pos2 > -1) {
-				key_value = csv_keys.substr(pos1, pos2);
-			}
-			else {
-				key_value = csv_keys.substr(pos1);
-			}
-			strcpy((*keys)->name,key_name.data());
-			(*keys)->value = atoi(key_value.data());
-			csv_keys = csv_keys.substr(pos2+1);
-			last = (*keys);
+			key_value = csv_keys.substr(pos1 + 1, pos2 - pos1 - 1);
+			strcpy(last->name,key_name.data());
+			last->value = atoi(key_value.data());
+			if (pos2 == string::npos)
+				break;
+			csv_keys = csv_keys.substr(pos2 + 1);
 		}
 		else {
 			return false;
@@ -523,7 +524,7 @@ int parser::functional(PARSER, double *pValue)
 		RANDOMTYPE rtype = random_type(fname);
 		int nargs = random_nargs(fname);
 		double a;
-		if (rtype == RT_INVALID || nargs == 0 || (WHITE, !LITERAL("(")))
+		if (rtype == RANDOMTYPE::RT_INVALID || nargs == 0 || (WHITE, !LITERAL("(")))
 		{
 			output_error_raw("parser::functional() parsing file, %s: %s is not a valid random distribution",
                              this->filename.c_str(), fname.get_string());
@@ -1390,6 +1391,44 @@ bool parser::alternate_value(string& text)
 	return false;
 }
 
+bool parser::replace_variables(string& text)
+{
+    /**
+        attempts to replace variable references in the ${varname}
+        format with either environment variables or global variables
+        returns false if no no environment variable or global variable with name varname is defined.
+        returns true if there was not need for replacement or the replacement was succesful.
+    **/
+    char varBuffer[1024] = "";
+    size_t varnameStart = text.find("${");
+    size_t varnameEnd = text.find("}");
+    string varname = "";
+    char *varPtr = nullptr;
+    if (varnameStart != string::npos && varnameEnd != string::npos && varnameEnd > varnameStart)
+    {
+        size_t varnameLength = varnameEnd - varnameStart - 2;
+        size_t replaceLength = varnameEnd - varnameStart + 1;
+        varname = text.substr(varnameStart + 2, varnameLength);
+        varPtr = getenv(varname.c_str());
+        if (varPtr != nullptr)
+        {
+            text.replace(varnameStart, replaceLength, varPtr);
+            return true;
+        }
+        else if (global_getvar(varname.c_str(), varBuffer, sizeof(varBuffer)) != nullptr)
+        {
+            text.replace(varnameStart, replaceLength, string(varBuffer));
+            return true;
+        }
+        else
+        {
+            output_error_raw("parser::replace_variables() parsing file, %s: variable name, %s, is not defined as a "
+                             "global variable or an environment variable!", this->filename.c_str(), varname.c_str());
+            return false;
+        }
+    }
+    return true;
+}
 int parser::linear_transform(string valueString, TRANSFORMSOURCE *xstype, void **source, double *scale, double *bias,
                              OBJECT *from)
 {
@@ -1570,7 +1609,7 @@ int parser::property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *fr
 		if (obj == nullptr)
 		{
 			// add to unresolved list
-			char id[1024];
+			char id[1088];
 			sprintf(id, "%s.%s", oname, pname);
 			*ref = (void*)add_unresolved(from, PT_double, nullptr, from->oclass, id, this->filename.data(),
                                          UR_TRANSFORM);

@@ -22,13 +22,11 @@
     "player": {
       "instances": [
         {
-          "name": "player_2",
           "parent": "office_1",
           "file": "../generic_demand_pf.glt",
           "property": "lights.power_factor"
         },
         {
-          "name": "player_4",
           "parent": "complex_assert_3",
           "property": "value",
           "file": "../load_pf.player"
@@ -48,7 +46,6 @@
     "recorder": {
       "instances": [
         {
-          "name": "recorder_5",
           "parent": "office_1",
           "file": "commercial_lights_usage.csv",
           "interval": 3600,

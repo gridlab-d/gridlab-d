@@ -75,7 +75,6 @@
     "complex_assert": {
       "instances": [
         {
-          "name": "complex_assert_5",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -85,7 +84,6 @@
           "in": "'2000-01-01 0:30:00'"
         },
         {
-          "name": "complex_assert_6",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -95,7 +93,6 @@
           "in": "'2000-01-01 1:30:00'"
         },
         {
-          "name": "complex_assert_7",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -105,7 +102,6 @@
           "in": "'2000-01-01 2:30:00'"
         },
         {
-          "name": "complex_assert_8",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -115,7 +111,6 @@
           "in": "'2000-01-01 3:30:00'"
         },
         {
-          "name": "complex_assert_9",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -125,7 +120,6 @@
           "in": "'2000-01-01 4:30:00'"
         },
         {
-          "name": "complex_assert_10",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -135,7 +129,6 @@
           "in": "'2000-01-01 5:30:00'"
         },
         {
-          "name": "complex_assert_11",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -145,7 +138,6 @@
           "in": "'2000-01-01 6:30:00'"
         },
         {
-          "name": "complex_assert_12",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -155,7 +147,6 @@
           "in": "'2000-01-01 7:30:00'"
         },
         {
-          "name": "complex_assert_13",
           "parent": "m692",
           "target": "measured_voltage_A",
           "operation": "REAL",
@@ -165,7 +156,6 @@
           "in": "'2000-01-01 8:30:00'"
         },
         {
-          "name": "complex_assert_53",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -175,7 +165,6 @@
           "in": "'2000-01-01 0:30:00'"
         },
         {
-          "name": "complex_assert_54",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -185,7 +174,6 @@
           "in": "'2000-01-01 1:30:00'"
         },
         {
-          "name": "complex_assert_55",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -195,7 +183,6 @@
           "in": "'2000-01-01 2:30:00'"
         },
         {
-          "name": "complex_assert_56",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -205,7 +192,6 @@
           "in": "'2000-01-01 3:30:00'"
         },
         {
-          "name": "complex_assert_57",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -215,7 +201,6 @@
           "in": "'2000-01-01 4:30:00'"
         },
         {
-          "name": "complex_assert_58",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -225,7 +210,6 @@
           "in": "'2000-01-01 5:30:00'"
         },
         {
-          "name": "complex_assert_59",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -235,7 +219,6 @@
           "in": "'2000-01-01 6:30:00'"
         },
         {
-          "name": "complex_assert_60",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -245,7 +228,6 @@
           "in": "'2000-01-01 7:30:00'"
         },
         {
-          "name": "complex_assert_61",
           "parent": "n650",
           "target": "distribution_load",
           "operation": "REAL",
@@ -259,13 +241,11 @@
     "voltdump": {
       "instances": [
         {
-          "name": "voltdump_14",
           "runtime": "'2000-01-01 0:30:00'",
           "filename": "vdump1.csv",
           "mode": "POLAR"
         },
         {
-          "name": "voltdump_15",
           "runtime": "'2000-01-01 8:30:00'",
           "filename": "vdump2.csv",
           "mode": "POLAR"
@@ -275,13 +255,11 @@
     "currdump": {
       "instances": [
         {
-          "name": "currdump_16",
           "runtime": "'2000-01-01 0:30:00'",
           "filename": "cdump1.csv",
           "mode": "POLAR"
         },
         {
-          "name": "currdump_17",
           "runtime": "'2000-01-01 8:30:00'",
           "filename": "cdump2.csv",
           "mode": "POLAR"
@@ -500,7 +478,7 @@
     "overhead_line": {
       "instances": [
         {
-          "name": "line_632_645",
+          "name": "line_632-645",
           "phases": "BCN",
           "from": "n632",
           "to": "l645",
@@ -511,7 +489,7 @@
           ]
         },
         {
-          "name": "line_645_646",
+          "name": "line_645-646",
           "phases": "BCN",
           "from": "l645",
           "to": "l646",
@@ -519,7 +497,7 @@
           "configuration": "lc603"
         },
         {
-          "name": "line_630_632",
+          "name": "line_630-632",
           "phases": "ABCN",
           "from": "n630",
           "to": "n632",
@@ -530,7 +508,7 @@
           }
         },
         {
-          "name": "line_632_6321",
+          "name": "line_632-6321",
           "phases": "ABCN",
           "from": "n632",
           "to": "l6321",
@@ -544,7 +522,7 @@
           }
         },
         {
-          "name": "line_6321_671",
+          "name": "line_6321-671",
           "phases": "ABCN",
           "from": "l6321",
           "to": "l671",
@@ -555,7 +533,7 @@
           }
         },
         {
-          "name": "line_671_680",
+          "name": "line_671-680",
           "phases": "ABCN",
           "from": "l671",
           "to": "n680",
@@ -569,7 +547,7 @@
           }
         },
         {
-          "name": "line_671_684",
+          "name": "line_671-684",
           "phases": "ACN",
           "from": "l671",
           "to": "n684",
@@ -580,7 +558,7 @@
           }
         },
         {
-          "name": "line_684_611",
+          "name": "line_684-611",
           "phases": "CN",
           "from": "n684",
           "to": "l611",
@@ -591,7 +569,7 @@
           }
         },
         {
-          "name": "line_632_633",
+          "name": "line_632-633",
           "phases": "ABCN",
           "from": "n632",
           "to": "n633",
@@ -606,7 +584,7 @@
     "underground_line": {
       "instances": [
         {
-          "name": "line_684_652",
+          "name": "line_684-652",
           "phases": "AN",
           "from": "n684",
           "to": "l652",
@@ -617,7 +595,7 @@
           }
         },
         {
-          "name": "line_692_675",
+          "name": "line_692-675",
           "phases": "ABC",
           "from": "l692",
           "to": "l675",
@@ -873,7 +851,7 @@
     "transformer": {
       "instances": [
         {
-          "name": "transformer_633_634",
+          "name": "transformer_633-634",
           "phases": "ABCN",
           "from": "n633",
           "to": "l634",
@@ -927,7 +905,6 @@
     "multi_recorder": {
       "instances": [
         {
-          "name": "multi_recorder_78",
           "property": "n650:distribution_load,n630:voltage_A.real,m692:measured_voltage_A,m692:measured_voltage_B,m692:measured_voltage_C",
           "interval": 1800.0,
           "file": "switching_13_output.csv"
