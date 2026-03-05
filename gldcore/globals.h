@@ -226,6 +226,10 @@ GLOBAL TIMESTAMP global_api_step_target INIT(TS_NEVER);
 
 GLOBAL unsigned int global_api_clock_nanoseconds INIT(0); 
 
+GLOBAL bool global_api_force_deltamode_once INIT(false);
+
+GLOBAL int64 global_api_delta_trigger_count INIT(0);
+
 
 GLOBAL TIMESTAMP global_step_time INIT(TS_NEVER);
 

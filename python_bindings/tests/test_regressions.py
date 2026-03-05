@@ -92,6 +92,22 @@ def test_get_time_returns_iso8601(gld_instance, test_models_dir):
     assert re.match(iso_pattern, time_str), f"Non-ISO timestamp: {time_str}"
 
 
+def test_step_to_subseconds_triggers_delta_branch(gld_instance, test_models_dir):
+    """Fractional step_to should trigger at least one delta branch entry."""
+    model_path = test_models_dir / "minimal.glm"
+    assert gld_instance.load(str(model_path)) == 0
+
+    before = int(gld_instance.global_getvar("api_delta_trigger_count") or "0")
+
+    status, _ = gld_instance.step_to("2020-01-01T00:00:05.250000")
+    assert status >= 0
+
+    after = int(gld_instance.global_getvar("api_delta_trigger_count") or "0")
+    assert after > before, (
+        f"Expected api_delta_trigger_count to increase, but before={before}, after={after}"
+    )
+
+
 def test_step_does_not_exceed_stoptime(gld_instance, test_models_dir):
     """Ensure step() does not advance beyond the clock stoptime."""
     model_path = test_models_dir / "minimal.glm"

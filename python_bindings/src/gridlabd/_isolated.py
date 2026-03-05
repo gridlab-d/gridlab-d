@@ -62,7 +62,13 @@ def _normalize_time_input(value: str) -> str:
     if "T" in value:
         try:
             parsed = datetime.fromisoformat(value)
-            return parsed.strftime("%Y-%m-%d %H:%M:%S")
+            # GridLAB-D parsers used by step_to don't support timezone offsets,
+            # so strip tzinfo but preserve fractional seconds.
+            parsed = parsed.replace(tzinfo=None)
+            text = parsed.isoformat(sep=" ", timespec="microseconds")
+            if "." in text:
+                text = text.rstrip("0").rstrip(".")
+            return text
         except ValueError:
             return value.replace("T", " ", 1)
 

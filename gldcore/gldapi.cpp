@@ -26,6 +26,7 @@ extern size_t output_get_message_capture_limit();
 #include "save.h"
 #include "threadpool.h"
 #include <array>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -46,6 +47,55 @@ extern size_t output_get_message_capture_limit();
 
 namespace fs = std::filesystem;
 
+namespace {
+constexpr double kNanosecondsPerSecond = 1e9;
+constexpr double kTimeEpsilon = 1e-12;
+
+double current_api_time_in_seconds() {
+  const double event_time =
+      (double)global_clock +
+      (double)global_api_clock_nanoseconds / kNanosecondsPerSecond;
+
+  if (global_simulation_mode == SM_DELTA ||
+      global_simulation_mode == SM_DELTA_ITER) {
+    return (global_delta_curr_clock > event_time) ? global_delta_curr_clock
+                                                  : event_time;
+  }
+
+  return event_time;
+}
+
+unsigned int fractional_nanoseconds(double seconds, TIMESTAMP &whole_seconds) {
+  double integral_part = 0.0;
+  double fraction = std::modf(seconds, &integral_part);
+  if (fraction < 0.0) {
+    fraction += 1.0;
+    integral_part -= 1.0;
+  }
+
+  whole_seconds = static_cast<TIMESTAMP>(integral_part);
+
+  if (fraction <= kTimeEpsilon) {
+    return 0;
+  }
+  unsigned int nanos =
+      static_cast<unsigned int>(std::round(fraction * kNanosecondsPerSecond));
+
+  if (nanos >= (unsigned int)kNanosecondsPerSecond) {
+    // Handle edge case where rounding pushes us to the next second
+    nanos = 0;
+    whole_seconds += 1;
+  }
+  return nanos;
+}
+
+void sync_api_fractional_clock(unsigned int nanoseconds) {
+  global_api_clock_nanoseconds = nanoseconds;
+  global_delta_curr_clock =
+      (double)global_clock +
+      (double)global_api_clock_nanoseconds / kNanosecondsPerSecond;
+}
+} // namespace
 namespace {
 
 std::optional<fs::path> g_install_root_override;
@@ -671,7 +721,30 @@ GLDErrorCode ensure_simulation_initialized() {
 // Run simulation from start to end
 GLDErrorCode GridLabD::run(std::optional<double> start_time,
                            std::optional<double> stop_time) {
-  set_clocks(start_time, stop_time);
+  std::optional<double> sanitized_start = start_time;
+  std::optional<double> sanitized_stop;
+  unsigned int stop_nanoseconds = 0;
+  TIMESTAMP stop_whole = 0;
+
+  if (start_time.has_value()) {
+    TIMESTAMP start_whole = 0;
+    unsigned int start_nanos =
+        fractional_nanoseconds(start_time.value(), start_whole);
+    if (start_nanos != 0) {
+      output_error("run() start_time cannot include fractional seconds (got %.9f)",
+                   start_time.value());
+      return GLD_TIME_STEP_ERROR;
+    }
+    sanitized_start = static_cast<double>(start_whole);
+  }
+
+  if (stop_time.has_value()) {
+    stop_nanoseconds = fractional_nanoseconds(stop_time.value(), stop_whole);
+    sanitized_stop = static_cast<double>(stop_whole);
+  }
+
+  set_clocks(sanitized_start, sanitized_stop);
+  sync_api_fractional_clock(0);
 
   FILE *f = fopen("/tmp/gld_debug.log", "a");
   if (f) {
@@ -702,6 +775,12 @@ GLDErrorCode GridLabD::run(std::optional<double> start_time,
     return handle_simulation_failure("exec_start failed");
   }
 
+  if (stop_time.has_value() && stop_nanoseconds != 0 && global_clock >= stop_whole) {
+    output_verbose("run() preserving fractional stop component (%u ns)",
+                   stop_nanoseconds);
+    sync_api_fractional_clock(stop_nanoseconds);
+  }
+
   FILE *f3 = fopen("/tmp/gld_debug.log", "a");
   if (f3) {
     fprintf(f3, "DEBUG: exec_start succeeded, getting checkpoint\n");
@@ -725,24 +804,25 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
   // Ensure simulation is initialized
   GLDErrorCode init_result = ensure_simulation_initialized();
   if (init_result != GLD_SUCCESS) {
-    simulation_time = (double)global_clock;
+    simulation_time = current_api_time_in_seconds();
     return init_result;
   }
 
   // If selected_timestep is 0, use default event-driven behavior (single step)
   if (selected_timestep == 0) {
-    output_verbose("Using default event-driven stepping (selected_timestep = 0)");
+    output_verbose(
+        "Using default event-driven stepping (selected_timestep = 0)");
     TIMESTAMP prev_clock = global_clock;
 
     STATUS result = exec_step();
 
     if (result == FAILED) {
       output_error("Error occurred during simulation step");
-      simulation_time = (double)global_clock;
+      simulation_time = current_api_time_in_seconds();
       return GLD_OPERATION_FAILED;
     }
 
-    simulation_time = (double)global_clock;
+    simulation_time = current_api_time_in_seconds();
     output_verbose("Stepped from %.2f to %.2f (advanced to next event)",
                    (double)prev_clock, simulation_time);
     return GLD_SUCCESS;
@@ -757,8 +837,9 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
     target_clock = global_stoptime;
   }
 
-  output_verbose("Stepping from time %.2f to target %.2f (step size: %d seconds)",
-                 (double)start_clock, (double)target_clock, selected_timestep);
+  output_verbose(
+      "Stepping from time %.2f to target %.2f (step size: %d seconds)",
+      (double)start_clock, (double)target_clock, selected_timestep);
 
   // Cap the next event time so exec_step doesn't overshoot the target.
   global_step_time = target_clock;
@@ -772,7 +853,7 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
 
     if (result == FAILED) {
       output_error("Error occurred during simulation step");
-      simulation_time = (double)global_clock;
+      simulation_time = current_api_time_in_seconds();
       global_step_time = TS_NEVER;
       return GLD_OPERATION_FAILED;
     }
@@ -790,19 +871,23 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
     // Clamp to the exact target time to avoid overshoot.
     if (exec_force_sync_to_time(target_clock) == FAILED) {
       output_error("Failed to force sync to target time");
-      simulation_time = (double)global_clock;
+      simulation_time = current_api_time_in_seconds();
       global_step_time = TS_NEVER;
       return GLD_OPERATION_FAILED;
     }
+
+    // Fixed-time API stepping is second-resolution and should not retain
+    // stale deltamode clock offsets from overshoot correction.
+    sync_api_fractional_clock(0);
   }
 
   global_step_time = TS_NEVER;
 
   // Update the simulation time
-  simulation_time = (double)global_clock;
+  simulation_time = current_api_time_in_seconds();
 
-  output_verbose("Completed step: advanced from %.2f to %.2f", (double)start_clock,
-         simulation_time);
+  output_verbose("Completed step: advanced from %.2f to %.2f",
+                 (double)start_clock, simulation_time);
 
   return GLD_SUCCESS;
 }
@@ -835,7 +920,8 @@ GLDErrorCode GridLabD::set_time(const std::string &timestamp) {
 // Get current simulation time
 GLDErrorCode GridLabD::get_time(std::string &current_time) {
   char buffer[64];
-  if (convert_from_timestamp(global_clock, buffer, sizeof(buffer)) > 0) {
+  const double now = current_api_time_in_seconds();
+  if (convert_from_deltatime_timestamp(now, buffer, sizeof(buffer)) > 0) {
     current_time = buffer;
     output_verbose("Getting current time: %s", current_time.c_str());
     return GLD_SUCCESS;
@@ -853,6 +939,12 @@ GLDErrorCode GridLabD::set_application_mode(GLDApplicationType mode) {
 
 // Set timestep
 GLDErrorCode GridLabD::set_time_step(double time_step) {
+  if (global_simulation_mode == SM_DELTA ||
+      global_simulation_mode == SM_DELTA_ITER) {
+    output_error("set_time_step() is not allowed while in delta mode");
+    return GLD_TIME_STEP_ERROR;
+  }
+
   if (time_step <= 0) {
     output_error("Time step must be positive, got: %.2f", time_step);
     return GLD_OPERATION_FAILED;
@@ -870,6 +962,7 @@ GLDErrorCode GridLabD::set_time_step(double time_step) {
 }
 
 // Step the simulation to a specific target timestamp
+// Detect if delta mode step then update
 GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
                                double &simulation_time) {
   output_verbose("Stepping to target time: %s", target_time_str.c_str());
@@ -877,7 +970,7 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
   // Ensure simulation is initialized
   GLDErrorCode init_result = ensure_simulation_initialized();
   if (init_result != GLD_SUCCESS) {
-    simulation_time = (double)global_clock;
+    simulation_time = current_api_time_in_seconds();
     return init_result;
   }
 
@@ -887,11 +980,20 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
   TIMESTAMP target_clock = convert_to_timestamp_delta(
       target_time_str.c_str(), &target_nanoseconds, &target_time_dbl);
 
+  if (target_nanoseconds != 0) {
+    // Request one deltamode entry at the floor-second boundary while stepping
+    // to a sub-second target.
+    global_api_force_deltamode_once = true;
+  } else {
+    global_api_force_deltamode_once = false;
+  }
+
   output_verbose("Formatted target time: %lld", target_clock);
 
   if (target_clock == TS_INVALID) {
     output_error("Invalid timestamp string: %s", target_time_str.c_str());
-    simulation_time = (double)global_clock;
+    simulation_time = current_api_time_in_seconds();
+    global_api_force_deltamode_once = false;
     return GLD_OPERATION_FAILED;
   }
 
@@ -899,8 +1001,7 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
 
   // Check if target is in the past (compare as doubles for sub-second
   // precision)
-  double current_time_dbl =
-      (double)global_clock + (double)global_api_clock_nanoseconds / 1e9;
+  double current_time_dbl = current_api_time_in_seconds();
   if (target_time_dbl <= current_time_dbl) {
     char start_buffer[64];
     convert_from_timestamp(start_clock, start_buffer, sizeof(start_buffer));
@@ -908,6 +1009,7 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
                    target_time_str.c_str(), start_buffer);
     simulation_time = current_time_dbl;
     global_step_time = TS_NEVER;
+    global_api_force_deltamode_once = false;
     return GLD_SUCCESS;
   }
 
@@ -922,8 +1024,7 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
   // Keep stepping until we reach or pass the target time (with sub-second
   // precision)
   while (true) {
-    current_time_dbl =
-        (double)global_clock + (double)global_api_clock_nanoseconds / 1e9;
+    current_time_dbl = current_api_time_in_seconds();
 
     if (current_time_dbl >= target_time_dbl) {
       break;
@@ -936,23 +1037,26 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
       output_error("Error occurred during simulation step");
       simulation_time = current_time_dbl;
       global_step_time = TS_NEVER;
+      global_api_force_deltamode_once = false;
       return GLD_OPERATION_FAILED;
     }
   }
 
-  simulation_time =
-      (double)global_clock + (double)global_api_clock_nanoseconds / 1e9;
+  simulation_time = current_api_time_in_seconds();
 
   if (global_clock > target_clock) {
     // Clamp to the exact target time to avoid overshoot.
     if (exec_force_sync_to_time(target_clock) == FAILED) {
       output_error("Failed to force sync to target time");
       global_step_time = TS_NEVER;
+      global_api_force_deltamode_once = false;
       return GLD_OPERATION_FAILED;
     }
-    global_api_clock_nanoseconds = target_nanoseconds;
-    simulation_time =
-        (double)global_clock + (double)global_api_clock_nanoseconds / 1e9;
+    sync_api_fractional_clock(target_nanoseconds);
+    simulation_time = current_api_time_in_seconds();
+  } else if (global_clock == target_clock && target_nanoseconds != 0) {
+    sync_api_fractional_clock(target_nanoseconds);
+    simulation_time = current_api_time_in_seconds();
   }
 
   char final_buffer[64];
@@ -961,6 +1065,7 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
                  target_time_str.c_str());
 
   global_step_time = TS_NEVER;
+  global_api_force_deltamode_once = false;
 
   return GLD_SUCCESS;
 }
@@ -1041,11 +1146,10 @@ GLDErrorCode GridLabD::get_property(const std::string &object_name,
 
 // Get property metadata (type, units, description)
 GLDErrorCode GridLabD::get_property_info(const std::string &object_name,
-                                        const std::string &property_name,
-                                        int &prop_type,
-                                        std::string &unit_str,
-                                        std::string &description,
-                                        int &access) {
+                                         const std::string &property_name,
+                                         int &prop_type, std::string &unit_str,
+                                         std::string &description,
+                                         int &access) {
   // Find the object by name
   OBJECT *obj = nullptr;
 
@@ -1068,7 +1172,7 @@ GLDErrorCode GridLabD::get_property_info(const std::string &object_name,
 
   // Find the property
   PROPERTY *prop = object_get_property(obj, property_name.c_str(), nullptr);
-  
+
   if (prop == nullptr) {
     output_error("Property '%s' not found on object '%s'",
                  property_name.c_str(), object_name.c_str());
@@ -1128,10 +1232,11 @@ GLDErrorCode GridLabD::set_property(const std::string &object_name,
   // timestep.  Warn the user and skip the write rather than hard-failing.
   PROPERTY *prop = object_get_property(obj, property_name.c_str(), nullptr);
   if (prop != nullptr && !(prop->access & PA_W)) {
-    output_warning("Property '%s' on object '%s' is read-only (PA_REFERENCE); "
-                   "it is computed by the simulation and any written value will "
-                   "be overwritten on the next timestep",
-                   property_name.c_str(), object_name.c_str());
+    output_warning(
+        "Property '%s' on object '%s' is read-only (PA_REFERENCE); "
+        "it is computed by the simulation and any written value will "
+        "be overwritten on the next timestep",
+        property_name.c_str(), object_name.c_str());
     return GLD_SUCCESS;
   }
 
@@ -1248,8 +1353,9 @@ GridLabD::get_properties_by_class(const std::string &class_name,
     obj = object_get_next(obj);
   }
 
-  output_verbose("Retrieved property '%s.%s' from %zu objects", class_name.c_str(),
-                 property_name.c_str(), property_map.size());
+  output_verbose("Retrieved property '%s.%s' from %zu objects",
+                 class_name.c_str(), property_name.c_str(),
+                 property_map.size());
 
   return property_map;
 }

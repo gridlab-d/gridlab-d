@@ -2843,6 +2843,15 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
     }
     break;
   }
+
+  if (global_api_force_deltamode_once && global_simulation_mode == SM_EVENT &&
+      global_run_realtime == 0) {
+    output_verbose("API requested one-shot deltamode entry");
+    global_simulation_mode = SM_DELTA;
+    t = global_clock;
+    global_api_force_deltamode_once = false;
+  }
+
   if (global_simulation_mode == SM_ERROR) {
     output_error("a simulation mode error has occurred");
     return false; /* terminate main loop immediately */
@@ -3065,6 +3074,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
   /* handle delta mode operation */
   if (global_simulation_mode == SM_DELTA &&
       exec_sync_get(sync_data_nullptr) >= global_clock) {
+    global_api_delta_trigger_count++;
     if (handle_delta_mode_operation() == -1) {
       return false; // DELTA MODE FAILURE
     }
