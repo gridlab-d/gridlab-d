@@ -27,14 +27,14 @@ plugins:
         python:
           options:
             docstring_style: sphinx
-  - mkdoxy:
-      projects:
-       gridlabd:
-          src-dirs: assert autotest build climate comm commercial connection control debug generators gldcore GldEditor market matlab matpower mysql network optimize plc powerflow python reliability residential rest tape tape_file tape_memory tape_plot utilities
-          full-doc: True 
-          doxy-cfg: 
-            FILE_PATTERNS: "*.cpp *.h*" 
-            RECURSIVE: True 
+  # - mkdoxy:
+  #     projects:
+  #      gridlabd:
+  #         src-dirs: assert autotest build climate comm commercial connection control debug generators gldcore GldEditor market matlab matpower mysql network optimize plc powerflow python reliability residential rest tape tape_file tape_memory tape_plot utilities
+  #         full-doc: True 
+  #         doxy-cfg: 
+  #           FILE_PATTERNS: "*.cpp *.h*" 
+  #           RECURSIVE: True 
 markdown_extensions:
   - pymdownx.arithmatex:
       generic: true
