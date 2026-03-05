@@ -58,11 +58,13 @@ residential_enduse::residential_enduse(MODULE *mod)
 }
 
 // create is called every time a new object is loaded
-int residential_enduse::create(bool connect_shape) 
+int residential_enduse::create(bool connect_shape)
 {
-	// attach loadshape 
+	// attach loadshape
 	load.end_obj = my();
 	if (connect_shape) load.shape = &shape;
+	// Point loadshape rng_seed at parent object's RNG seed
+	load.shape->obj_rng_state_ptr = &(object_header(this)->rng_state);
 	load.breaker_amps = 20;
 	load.config = 0;
 	load.heatgain_fraction = 1.0; /* power has no effect on heat loss */
@@ -88,7 +90,7 @@ int residential_enduse::init(OBJECT *parent)
 		else
 			gl_warning("%s (%s:%d) parent %s (%s:%d) does not export attach_enduse function so voltage response cannot be modeled", get_name(), get_oclass()->get_name(), get_id(), pParent->get_name(), pParent->get_oclass()->get_name(), pParent->get_id());
 			/* TROUBLESHOOT
-				Enduses must have a voltage source from a parent object that exports an attach_enduse function.  
+				Enduses must have a voltage source from a parent object that exports an attach_enduse function.
 				The residential_enduse object references a parent object that does not conform with this requirement.
 				Fix the parent reference and try again.
 			 */
@@ -113,7 +115,7 @@ int residential_enduse::isa(char *classname){
 	return strcmp(classname,"residential_enduse")==0;
 }
 
-TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1) 
+TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	gl_debug("%s shape load = %8g", get_name(), gl_get_loadshape_value(&shape));
 	if (load.voltage_factor>1.2 || load.voltage_factor<0.8)
@@ -123,7 +125,7 @@ TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1)
 		   This is usually caused by an impropely configure circuit (e.g., 110V on 220V or vice versa).
 		   Fix the circuit configuration for that enduse and try again.
 		 */
-	return shape.t2>t1 ? shape.t2 : TS_NEVER; 
+	return shape.t2>t1 ? shape.t2 : TS_NEVER;
 }
 
 //////////////////////////////////////////////////////////////////////////

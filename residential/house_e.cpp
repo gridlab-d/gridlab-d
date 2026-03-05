@@ -663,7 +663,7 @@ int house_e::create()
 					IMPLICITENDUSE *item = (IMPLICITENDUSE*)gl_malloc(sizeof(IMPLICITENDUSE));
 					memset(item,0,sizeof(IMPLICITENDUSE));
 					gl_enduse_create(&(item->load));
-					item->load.shape = gl_loadshape_create(sched, &(OBJECTHDR(this)->rng_state));
+					item->load.shape = gl_loadshape_create(sched, &(object_header(this)->rng_state));
 					if (gl_set_value_by_type(PT_loadshape,item->load.shape, strdup(eu->shape))==0)
 					{
 						gl_error("loadshape '%s' could not be created", name);
