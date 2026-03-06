@@ -155,9 +155,15 @@ set(SOURCE_LIST
 set(LIBRARY_SOURCE_LIST ${SOURCE_LIST})
 list(REMOVE_ITEM LIBRARY_SOURCE_LIST main.cpp)
 
+
+
 # Build the single shared core (SHARED library) from library sources
 add_library(gldapi SHARED ${LIBRARY_SOURCE_LIST})
  
+if (WIN32)
+  target_link_libraries(gldapi PRIVATE Ws2_32)
+endif ()
+
 
 # globals.cpp carries core singletons/registry; define only for this TU
 set_source_files_properties(globals.cpp PROPERTIES COMPILE_DEFINITIONS _MAIN_C)

@@ -1445,9 +1445,6 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 
-  const enumeration PS_OFF_VAL = PS_OFF->get_enumeration_value();
-  const enumeration PS_ON_VAL = PS_ON->get_enumeration_value();
-
   double bid = -1.0;
   int64 no_bid =
       0; // flag gets set when the current temperature drops in between the the
@@ -2727,10 +2724,10 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
       {
         KEY bid = (KEY)(lastmkt_id == marketId ? lastbid_id : -1);
         double my_bid = -pCap;
-        if (ps != PS_OFF_VAL) //*PS_OFF)
+        if (ps != *PS_OFF)
           my_bid = last_p;
 
-        if (ps == PS_ON_VAL) // *PS_ON)
+        if (ps == *PS_ON)
         {
           controller_bid.state = BS_ON;
         }
