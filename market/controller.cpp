@@ -12,8 +12,10 @@
 CLASS *controller::oclass = nullptr;
 controller *controller::defaults = nullptr;
 
-controller::controller(MODULE *module) {
-  if (oclass == nullptr) {
+controller::controller(MODULE *module)
+{
+  if (oclass == nullptr)
+  {
     oclass = gl_register_class(module, "controller", sizeof(controller),
                                PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN |
                                    PC_AUTOLOCK);
@@ -200,7 +202,8 @@ controller::controller(MODULE *module) {
   }
 }
 
-int controller::create() {
+int controller::create()
+{
   ////memset(this, 0, sizeof(controller));
   sprintf((char *)(&avg_target), "avg24");
   sprintf((char *)(&std_target), "std24");
@@ -238,8 +241,10 @@ int controller::create() {
 /** provides some easy default inputs for the transactive controller,
          and some examples of what various configurations would look like.
  **/
-void controller::cheat() {
-  switch (simplemode) {
+void controller::cheat()
+{
+  switch (simplemode)
+  {
   case SM_NONE:
     break;
   case SM_HOUSE_HEAT:
@@ -340,22 +345,27 @@ void controller::cheat() {
 /** convenience shorthand
  **/
 int controller::fetch_property(gld_property **prop, const char *propName,
-                               OBJECT *obj) {
+                               OBJECT *obj)
+{
   OBJECT *hdr = object_header(this);
   *prop = new gld_property(obj, propName);
-  if (!(*prop)->is_valid()) {
+  if (!(*prop)->is_valid())
+  {
     gl_error("controller::fetch_property: controller %s can't find property %s "
              "in object %s.",
              hdr->name, propName, obj->name);
     return 0;
-  } else {
+  }
+  else
+  {
     return 1;
   }
 }
 
 /** initialization process
  **/
-int controller::init(OBJECT *parent) {
+int controller::init(OBJECT *parent)
+{
   OBJECT *hdr = object_header(this);
 
 #ifdef __APPLE__
@@ -370,255 +380,322 @@ int controller::init(OBJECT *parent) {
 
   cheat();
 
-  if (parent == nullptr) {
+  if (parent == nullptr)
+  {
     gl_error("%s: controller has no parent, therefore nothing to control",
              namestr);
     return 0;
   }
 
-  if (bidmode != BM_PROXY) {
+  if (bidmode != BM_PROXY)
+  {
     pMarket = gl_get_object((char *)(&pMkt));
-    if (pMarket == nullptr) {
+    if (pMarket == nullptr)
+    {
       gl_error("%s: controller has no market, therefore no price signals",
                namestr);
       return 0;
     }
 
-    if ((pMarket->flags & OF_INIT) != OF_INIT) {
+    if ((pMarket->flags & OF_INIT) != OF_INIT)
+    {
       char objname[256];
       gl_verbose("controller::init(): deferring initialization on %s",
                  gl_name(pMarket, objname, 255));
       return 2; // defer
     }
 
-    if (gl_object_isa(pMarket, "auction")) {
+    if (gl_object_isa(pMarket, "auction"))
+    {
       gl_set_dependent(hdr, pMarket);
     }
 
-    if (dPeriod == 0.0) {
+    if (dPeriod == 0.0)
+    {
       gld_property *pPeriod = nullptr;
-      if (fetch_property(&pPeriod, "period", pMarket) == 0) {
+      if (fetch_property(&pPeriod, "period", pMarket) == 0)
+      {
         return 0;
       }
       pPeriod->getp(dPeriod);
     }
     period = (TIMESTAMP)floor(dPeriod + 0.5);
 
-    if (control_mode == CN_DEV_LEVEL) {
+    if (control_mode == CN_DEV_LEVEL)
+    {
       pMarket2 = gl_get_object((char *)(&pMkt2));
-      if (pMarket2 == nullptr) {
+      if (pMarket2 == nullptr)
+      {
         gl_error("%s: controller has no second market, therefore no price "
                  "signals from the second market",
                  namestr);
         return 0;
       }
 
-      if (gl_object_isa(pMarket2, "auction")) {
+      if (gl_object_isa(pMarket2, "auction"))
+      {
         gl_set_dependent(hdr, pMarket2);
-      } else {
+      }
+      else
+      {
         gl_error("controllers only work in the secnond market when attached to "
                  "an 'auction' object");
         return 0;
       }
 
-      if ((pMarket2->flags & OF_INIT) != OF_INIT) {
+      if ((pMarket2->flags & OF_INIT) != OF_INIT)
+      {
         char objname[256];
         gl_verbose(
             "Second market: controller::init(): deferring initialization on %s",
             gl_name(pMarket2, objname, 255));
         return 2; // defer
       }
-      if (dPeriod2 == 0.0) {
+      if (dPeriod2 == 0.0)
+      {
         gld_property *pPeriod2 = nullptr;
-        if (fetch_property(&pPeriod2, "period", pMarket2) == 0) {
+        if (fetch_property(&pPeriod2, "period", pMarket2) == 0)
+        {
           return 0;
         }
         pPeriod2->getp(dPeriod2);
       }
       period2 = (TIMESTAMP)floor(dPeriod2 + 0.5);
     }
-    if (fetch_property(&pAvg, (char *)(&avg_target), pMarket) == 0) {
+    if (fetch_property(&pAvg, (char *)(&avg_target), pMarket) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pStd, (char *)(&std_target), pMarket) == 0) {
+    if (fetch_property(&pStd, (char *)(&std_target), pMarket) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pMarketId, "market_id", pMarket) == 0) {
+    if (fetch_property(&pMarketId, "market_id", pMarket) == 0)
+    {
       return 0;
     }
     if (fetch_property(&pClearedPrice, "current_market.clearing_price",
-                       pMarket) == 0) {
+                       pMarket) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pPriceCap, "price_cap", pMarket) == 0) {
+    if (fetch_property(&pPriceCap, "price_cap", pMarket) == 0)
+    {
       return 0;
     }
     if (fetch_property(&pMarginalFraction,
-                       "current_market.marginal_quantity_frac", pMarket) == 0) {
+                       "current_market.marginal_quantity_frac", pMarket) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pMarginMode, "margin_mode", pMarket) == 0) {
+    if (fetch_property(&pMarginMode, "margin_mode", pMarket) == 0)
+    {
       return 0;
     }
     if (fetch_property(&pClearedQuantity, "current_market.clearing_quantity",
-                       pMarket) == 0) {
+                       pMarket) == 0)
+    {
       return 0;
     }
     if (fetch_property(&pSellerTotalQuantity,
-                       "current_market.seller_total_quantity", pMarket) == 0) {
+                       "current_market.seller_total_quantity", pMarket) == 0)
+    {
       return 0;
     }
     if (fetch_property(&pClearingType, "current_market.clearing_type",
-                       pMarket) == 0) {
+                       pMarket) == 0)
+    {
       return 0;
     }
     gld_property *marketunit;
-    if (fetch_property(&marketunit, "unit", pMarket) == 0) {
+    if (fetch_property(&marketunit, "unit", pMarket) == 0)
+    {
       return 0;
     }
     gld_string mku;
     mku = marketunit->get_string();
     strncpy(market_unit, mku.get_buffer(), 31);
     submit = (FUNCTIONADDR)(gl_get_function(pMarket, "submit_bid_state"));
-    if (submit == nullptr) {
+    if (submit == nullptr)
+    {
       char buf[256];
       gl_error("Unable to find function, submit_bid_state(), for object %s.",
                (char *)gl_name(pMarket, buf, 255));
       return 0;
     }
-    if (fetch_property(&pInitPrice, "init_price", pMarket) == 0) {
+    if (fetch_property(&pInitPrice, "init_price", pMarket) == 0)
+    {
       return 0;
     }
-    if (control_mode == CN_DEV_LEVEL) {
-      if (fetch_property(&pMarketId2, "market_id", pMarket2) == 0) {
+    if (control_mode == CN_DEV_LEVEL)
+    {
+      if (fetch_property(&pMarketId2, "market_id", pMarket2) == 0)
+      {
         return 0;
       }
       if (fetch_property(&pClearedPrice2, "current_market.clearing_price",
-                         pMarket2) == 0) {
+                         pMarket2) == 0)
+      {
         return 0;
       }
-      if (fetch_property(&pPriceCap2, "price_cap", pMarket2) == 0) {
+      if (fetch_property(&pPriceCap2, "price_cap", pMarket2) == 0)
+      {
         return 0;
       }
       if (fetch_property(&pMarginalFraction2,
                          "current_market.marginal_quantity_frac",
-                         pMarket2) == 0) {
+                         pMarket2) == 0)
+      {
         return 0;
       }
       if (fetch_property(&pClearedQuantity2, "current_market.clearing_quantity",
-                         pMarket2) == 0) {
+                         pMarket2) == 0)
+      {
         return 0;
       }
       if (fetch_property(&pSellerTotalQuantity2,
                          "current_market.seller_total_quantity",
-                         pMarket2) == 0) {
+                         pMarket2) == 0)
+      {
         return 0;
       }
       if (fetch_property(&pClearingType2, "current_market.clearing_type",
-                         pMarket2) == 0) {
+                         pMarket2) == 0)
+      {
         return 0;
       }
       gld_property *marketunit2;
-      if (fetch_property(&pClearingType2, "unit", pMarket2) == 0) {
+      if (fetch_property(&pClearingType2, "unit", pMarket2) == 0)
+      {
         return 0;
       }
       mku = marketunit2->get_string();
       strncpy(market_unit2, mku.get_buffer(), 31);
       submit2 = (FUNCTIONADDR)(gl_get_function(pMarket2, "submit_bid_state"));
-      if (submit2 == nullptr) {
+      if (submit2 == nullptr)
+      {
         char buf[256];
         gl_error("Unable to find function, submit_bid_state(), for object %s.",
                  (char *)gl_name(pMarket2, buf, 255));
         return 0;
       }
     }
-  } else {
-    if (dPeriod == 0.0) {
+  }
+  else
+  {
+    if (dPeriod == 0.0)
+    {
       period = 300;
-    } else {
+    }
+    else
+    {
       period = (TIMESTAMP)floor(dPeriod + 0.5);
     }
     pMarket = object_header(this);
-    if (fetch_property(&pAvg, "proxy_average", pMarket) == 0) {
+    if (fetch_property(&pAvg, "proxy_average", pMarket) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pStd, "proxy_standard_deviation", pMarket) == 0) {
+    if (fetch_property(&pStd, "proxy_standard_deviation", pMarket) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pMarketId, "proxy_market_id", pMarket) == 0) {
+    if (fetch_property(&pMarketId, "proxy_market_id", pMarket) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pClearedPrice, "proxy_clear_price", pMarket) == 0) {
+    if (fetch_property(&pClearedPrice, "proxy_clear_price", pMarket) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pPriceCap, "proxy_price_cap", pMarket) == 0) {
+    if (fetch_property(&pPriceCap, "proxy_price_cap", pMarket) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pMarginMode, "proxy_margin_mode", pMarket) == 0) {
+    if (fetch_property(&pMarginMode, "proxy_margin_mode", pMarket) == 0)
+    {
       return 0;
     }
     if (fetch_property(&pMarginalFraction, "proxy_marginal_fraction",
-                       pMarket) == 0) {
+                       pMarket) == 0)
+    {
       return 0;
     }
     if (fetch_property(&pClearedQuantity, "proxy_clearing_quantity", pMarket) ==
-        0) {
+        0)
+    {
       return 0;
     }
     if (fetch_property(&pSellerTotalQuantity, "proxy_seller_total_quantity",
-                       pMarket) == 0) {
+                       pMarket) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pClearingType, "proxy_clearing_type", pMarket) == 0) {
+    if (fetch_property(&pClearingType, "proxy_clearing_type", pMarket) == 0)
+    {
       return 0;
     }
     strncpy(market_unit, proxy_mkt_unit, 31);
     submit = (FUNCTIONADDR)(gl_get_function(pMarket, "submit_bid_state"));
-    if (submit == nullptr) {
+    if (submit == nullptr)
+    {
       char buf[256];
       gl_error("Unable to find function, submit_bid_state(), for object %s.",
                (char *)gl_name(pMarket, buf, 255));
       return 0;
     }
-    if (fetch_property(&pInitPrice, "proxy_initial_price", pMarket) == 0) {
+    if (fetch_property(&pInitPrice, "proxy_initial_price", pMarket) == 0)
+    {
       return 0;
     }
-    if (control_mode == CN_DEV_LEVEL) {
-      if (dPeriod2 == 0.0) {
+    if (control_mode == CN_DEV_LEVEL)
+    {
+      if (dPeriod2 == 0.0)
+      {
         period2 = 300;
-      } else {
+      }
+      else
+      {
         period2 = (TIMESTAMP)floor(dPeriod2 + 0.5);
       }
       pMarket2 = object_header(this);
-      if (fetch_property(&pMarketId2, "proxy_market2_id", pMarket2) == 0) {
+      if (fetch_property(&pMarketId2, "proxy_market2_id", pMarket2) == 0)
+      {
         return 0;
       }
       if (fetch_property(&pClearedPrice2, "proxy_clear_price2", pMarket2) ==
-          0) {
+          0)
+      {
         return 0;
       }
-      if (fetch_property(&pPriceCap2, "proxy_price_cap2", pMarket2) == 0) {
+      if (fetch_property(&pPriceCap2, "proxy_price_cap2", pMarket2) == 0)
+      {
         return 0;
       }
       if (fetch_property(&pMarginalFraction2, "proxy_marginal_fraction2",
-                         pMarket2) == 0) {
+                         pMarket2) == 0)
+      {
         return 0;
       }
       if (fetch_property(&pClearedQuantity2, "proxy_clearing_quantity2",
-                         pMarket2) == 0) {
+                         pMarket2) == 0)
+      {
         return 0;
       }
       if (fetch_property(&pSellerTotalQuantity2, "proxy_seller_total_quantity2",
-                         pMarket2) == 0) {
+                         pMarket2) == 0)
+      {
         return 0;
       }
       if (fetch_property(&pClearingType2, "proxy_clearing_type2", pMarket2) ==
-          0) {
+          0)
+      {
         return 0;
       }
       strncpy(market_unit2, proxy_mkt_unit2, 31);
       submit2 = (FUNCTIONADDR)(gl_get_function(pMarket2, "submit_bid_state"));
-      if (submit2 == nullptr) {
+      if (submit2 == nullptr)
+      {
         char buf[256];
         gl_error("Unable to find function, submit_bid_state(), for object %s.",
                  (char *)gl_name(pMarket2, buf, 255));
@@ -627,158 +704,203 @@ int controller::init(OBJECT *parent) {
     }
   }
 
-  if (bid_delay < 0) {
+  if (bid_delay < 0)
+  {
     bid_delay = -bid_delay;
   }
-  if (bid_delay > period) {
+  if (bid_delay > period)
+  {
     gl_warning("Bid delay is greater than the controller period. Resetting bid "
                "delay to 0.");
     bid_delay = 0;
   }
 
-  if (control_mode == CN_DEV_LEVEL) {
-    if (bid_delay2 < 0) {
+  if (control_mode == CN_DEV_LEVEL)
+  {
+    if (bid_delay2 < 0)
+    {
       bid_delay2 = -bid_delay2;
     }
-    if (bid_delay2 > period2) {
+    if (bid_delay2 > period2)
+    {
       gl_warning("Bid delay is greater than the controller period. Resetting "
                  "bid delay to 0.");
       bid_delay2 = 0;
     }
   }
 
-  if (target[0] == 0) {
+  if (target[0] == 0)
+  {
     GL_THROW("controller: %i, target property not specified", hdr->id);
   }
   if (setpoint[0] == 0 &&
-      (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE)) {
+      (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE))
+  {
     GL_THROW("controller: %i, setpoint property not specified", hdr->id);
   }
   if (demand[0] == 0 &&
-      (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE)) {
+      (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE))
+  {
     GL_THROW("controller: %i, demand property not specified", hdr->id);
   }
   if (deadband[0] == 0 &&
       (use_predictive_bidding == true &&
-       (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE))) {
+       (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE)))
+  {
     GL_THROW("controller: %i, deadband property not specified", hdr->id);
   }
 
-  if (bid_delay < 0) {
+  if (bid_delay < 0)
+  {
     bid_delay = -bid_delay;
   }
-  if (bid_delay > period) {
+  if (bid_delay > period)
+  {
     gl_warning("Bid delay is greater than the controller period. Resetting bid "
                "delay to 0.");
     bid_delay = 0;
   }
 
-  if (setpoint[0] == 0 && control_mode == CN_DEV_LEVEL) {
+  if (setpoint[0] == 0 && control_mode == CN_DEV_LEVEL)
+  {
     GL_THROW("controller: %i, setpoint property not specified", hdr->id);
   }
 
-  if (demand[0] == 0 && control_mode == CN_DEV_LEVEL) {
+  if (demand[0] == 0 && control_mode == CN_DEV_LEVEL)
+  {
     GL_THROW("controller: %i, demand property not specified", hdr->id);
   }
 
   if (deadband[0] == 0 && use_predictive_bidding == true &&
-      control_mode == CN_DEV_LEVEL) {
+      control_mode == CN_DEV_LEVEL)
+  {
     GL_THROW("controller: %i, deadband property not specified", hdr->id);
   }
 
-  if (total[0] == 0) {
+  if (total[0] == 0)
+  {
     GL_THROW("controller: %i, total property not specified", hdr->id);
   }
-  if (load[0] == 0) {
+  if (load[0] == 0)
+  {
     GL_THROW("controller: %i, load property not specified", hdr->id);
   }
 
-  if (heating_setpoint[0] == 0 && control_mode == CN_DOUBLE_RAMP) {
+  if (heating_setpoint[0] == 0 && control_mode == CN_DOUBLE_RAMP)
+  {
     GL_THROW("controller: %i, heating_setpoint property not specified",
              hdr->id);
   }
-  if (heating_demand[0] == 0 && control_mode == CN_DOUBLE_RAMP) {
+  if (heating_demand[0] == 0 && control_mode == CN_DOUBLE_RAMP)
+  {
     GL_THROW("controller: %i, heating_demand property not specified", hdr->id);
   }
 
-  if (cooling_setpoint[0] == 0 && control_mode == CN_DOUBLE_RAMP) {
+  if (cooling_setpoint[0] == 0 && control_mode == CN_DOUBLE_RAMP)
+  {
     GL_THROW("controller: %i, cooling_setpoint property not specified",
              hdr->id);
   }
-  if (cooling_demand[0] == 0 && control_mode == CN_DOUBLE_RAMP) {
+  if (cooling_demand[0] == 0 && control_mode == CN_DOUBLE_RAMP)
+  {
     GL_THROW("controller: %i, cooling_demand property not specified", hdr->id);
   }
 
-  if (deadband[0] == 0 && control_mode == CN_DOUBLE_RAMP) {
+  if (deadband[0] == 0 && control_mode == CN_DOUBLE_RAMP)
+  {
     GL_THROW("controller: %i, deadband property not specified", hdr->id);
   }
 
-  if (fetch_property(&pMonitor, (char *)(&target), parent) == 0) {
+  if (fetch_property(&pMonitor, (char *)(&target), parent) == 0)
+  {
     return 0;
   }
-  if (control_mode == CN_RAMP || control_mode == CN_DEV_LEVEL) {
-    if (fetch_property(&pSetpoint, (char *)(&setpoint), parent) == 0) {
+  if (control_mode == CN_RAMP || control_mode == CN_DEV_LEVEL)
+  {
+    if (fetch_property(&pSetpoint, (char *)(&setpoint), parent) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pDemand, (char *)(&demand), parent) == 0) {
+    if (fetch_property(&pDemand, (char *)(&demand), parent) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pTotal, (char *)(&total), parent) == 0) {
+    if (fetch_property(&pTotal, (char *)(&total), parent) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pLoad, (char *)(&load), parent) == 0) {
+    if (fetch_property(&pLoad, (char *)(&load), parent) == 0)
+    {
       return 0;
     }
-    if (use_predictive_bidding == true) {
-      if (fetch_property(&pDeadband, (char *)(&deadband), parent) == 0) {
+    if (use_predictive_bidding == true)
+    {
+      if (fetch_property(&pDeadband, (char *)(&deadband), parent) == 0)
+      {
         return 0;
       }
     }
-  } else if (control_mode == CN_DOUBLE_RAMP) {
+  }
+  else if (control_mode == CN_DOUBLE_RAMP)
+  {
     sprintf(aux_state, "is_AUX_on");
     sprintf(heat_state, "is_HEAT_on");
     sprintf(cool_state, "is_COOL_on");
     if (fetch_property(&pHeatingSetpoint, (char *)(&heating_setpoint),
-                       parent) == 0) {
+                       parent) == 0)
+    {
       return 0;
     }
     if (fetch_property(&pHeatingDemand, (char *)(&heating_demand), parent) ==
-        0) {
+        0)
+    {
       return 0;
     }
-    if (fetch_property(&pHeatingTotal, (char *)(&total), parent) == 0) {
+    if (fetch_property(&pHeatingTotal, (char *)(&total), parent) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pHeatingLoad, (char *)(&load), parent) == 0) {
+    if (fetch_property(&pHeatingLoad, (char *)(&load), parent) == 0)
+    {
       return 0;
     }
     if (fetch_property(&pCoolingSetpoint, (char *)(&cooling_setpoint),
-                       parent) == 0) {
+                       parent) == 0)
+    {
       return 0;
     }
     if (fetch_property(&pCoolingDemand, (char *)(&cooling_demand), parent) ==
-        0) {
+        0)
+    {
       return 0;
     }
-    if (fetch_property(&pCoolingTotal, (char *)(&total), parent) == 0) {
+    if (fetch_property(&pCoolingTotal, (char *)(&total), parent) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pCoolingLoad, (char *)(&load), parent) == 0) {
+    if (fetch_property(&pCoolingLoad, (char *)(&load), parent) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pDeadband, (char *)(&deadband), parent) == 0) {
+    if (fetch_property(&pDeadband, (char *)(&deadband), parent) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pAuxState, (char *)(&aux_state), parent) == 0) {
+    if (fetch_property(&pAuxState, (char *)(&aux_state), parent) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pHeatState, (char *)(&heat_state), parent) == 0) {
+    if (fetch_property(&pHeatState, (char *)(&heat_state), parent) == 0)
+    {
       return 0;
     }
-    if (fetch_property(&pCoolState, (char *)(&cool_state), parent) == 0) {
+    if (fetch_property(&pCoolState, (char *)(&cool_state), parent) == 0)
+    {
       return 0;
     }
-  } else if (control_mode == CN_DOUBLE_PRICE) {
+  }
+  else if (control_mode == CN_DOUBLE_PRICE)
+  {
     if (fetch_property(&pSetpoint, setpoint, parent) == 0)
       return 0;
     if (fetch_property(&pDemand, demand, parent) == 0)
@@ -820,45 +942,62 @@ int controller::init(OBJECT *parent) {
       return 0;
   }
 
-  if (bid_id == -1) {
+  if (bid_id == -1)
+  {
     controller_bid.bid_id = (int64)hdr->id;
     bid_id = (int64)hdr->id;
-  } else {
+  }
+  else
+  {
     controller_bid.bid_id = bid_id;
   }
   controller_bid2.bid_id = controller_bid.bid_id;
-  if (thermostat_state[0] == 0) {
+  if (thermostat_state[0] == 0)
+  {
     pThermostatState = nullptr;
-  } else {
+  }
+  else
+  {
     pThermostatState =
         gl_get_enum_by_name(parent, thermostat_state.get_string());
-    if (pThermostatState == 0) {
+    if (pThermostatState == 0)
+    {
       gl_error("thermostat state property name \'%s\' is not published by "
                "parent class.",
                (char *)&thermostat_state);
       return 0;
     }
   }
-  if (dir == 0) {
+  if (dir == 0)
+  {
     double high = ramp_high * range_high;
     double low = ramp_low * range_low;
-    if (high > low) {
+    if (high > low)
+    {
       dir = 1;
-    } else if (high < low) {
+    }
+    else if (high < low)
+    {
       dir = -1;
-    } else if ((high == low) &&
-               (fabs(ramp_high) > 0.001 || fabs(ramp_low) > 0.001)) {
+    }
+    else if ((high == low) &&
+             (fabs(ramp_high) > 0.001 || fabs(ramp_low) > 0.001))
+    {
       dir = 0;
-      if (ramp_high > 0) {
+      if (ramp_high > 0)
+      {
         direction = 1;
-      } else {
+      }
+      else
+      {
         direction = -1;
       }
       gl_warning("%s: controller has no price ramp", namestr);
       /* occurs given no price variation, or no control width (use a normal
        * thermostat?) */
     }
-    if (ramp_low * ramp_high < 0) {
+    if (ramp_low * ramp_high < 0)
+    {
       gl_warning("%s: controller price curve is not injective and may behave "
                  "strangely");
       /* TROUBLESHOOT
@@ -878,7 +1017,7 @@ int controller::init(OBJECT *parent) {
 
   //	double period = market->period;
   //	next_run = gl_globalclock + (TIMESTAMP)(period -
-  //fmod(gl_globalclock+period,period));
+  // fmod(gl_globalclock+period,period));
   next_run =
       gl_globalclock; // + (market->period - gl_globalclock%market->period);
   last_run = next_run;
@@ -889,10 +1028,12 @@ int controller::init(OBJECT *parent) {
   else
     dtime_delay = (int64)sliding_time_delay;
 
-  if (state[0] != 0) {
+  if (state[0] != 0)
+  {
     // grab state pointer
     powerstate_prop = gld_property(parent, state);
-    if (!powerstate_prop.is_valid()) {
+    if (!powerstate_prop.is_valid())
+    {
       gl_error(
           "state property name '%s' is not published by parent object '%s'",
           state, get_object(parent)->get_name());
@@ -901,7 +1042,8 @@ int controller::init(OBJECT *parent) {
     PS_OFF = powerstate_prop.find_keyword("OFF");
     PS_ON = powerstate_prop.find_keyword("ON");
     PS_UNKNOWN = powerstate_prop.find_keyword("UNKNOWN");
-    if (PS_OFF == nullptr || PS_ON == nullptr || PS_UNKNOWN == nullptr) {
+    if (PS_OFF == nullptr || PS_ON == nullptr || PS_UNKNOWN == nullptr)
+    {
       gl_error("state property '%s' of object '%s' does not published all "
                "required keywords OFF, ON, and UNKNOWN",
                state, get_object(parent)->get_name());
@@ -909,10 +1051,12 @@ int controller::init(OBJECT *parent) {
     last_pState = *PS_UNKNOWN;
   }
 
-  if (heating_state[0] != 0) {
+  if (heating_state[0] != 0)
+  {
     // grab state pointer
     pHeatingState = gl_get_enum_by_name(parent, heating_state.get_string());
-    if (pHeatingState == 0) {
+    if (pHeatingState == 0)
+    {
       gl_error(
           "heating_state property name \'%s\' is not published by parent class",
           (char *)(&heating_state));
@@ -920,10 +1064,12 @@ int controller::init(OBJECT *parent) {
     }
   }
 
-  if (cooling_state[0] != 0) {
+  if (cooling_state[0] != 0)
+  {
     // grab state pointer
     pCoolingState = gl_get_enum_by_name(parent, cooling_state.get_string());
-    if (pCoolingState == 0) {
+    if (pCoolingState == 0)
+    {
       gl_error(
           "cooling_state property name \'%s\' is not published by parent class",
           (char *)(&cooling_state));
@@ -931,9 +1077,11 @@ int controller::init(OBJECT *parent) {
     }
   }
   // get override, if set
-  if (re_override[0] != 0) {
+  if (re_override[0] != 0)
+  {
     override_prop = gld_property(parent, re_override);
-    if (!override_prop.is_valid()) {
+    if (!override_prop.is_valid())
+    {
       gl_error("use_override property '%s' is not found in object '%s'",
                (const char *)re_override, get_object(parent)->get_name());
       return 0;
@@ -941,52 +1089,65 @@ int controller::init(OBJECT *parent) {
     OV_OFF = override_prop.find_keyword("OFF");
     OV_ON = override_prop.find_keyword("ON");
     OV_NORMAL = override_prop.find_keyword("NORMAL");
-    if (OV_OFF == nullptr || OV_ON == nullptr || OV_NORMAL == nullptr) {
+    if (OV_OFF == nullptr || OV_ON == nullptr || OV_NORMAL == nullptr)
+    {
       gl_error("the use_override property '%s' does not define the expected "
                "enumeration keywords NORMAL, ON, and OFF");
       return 0;
     }
   }
-  if (use_override == OU_ON && bid_delay <= 0) {
+  if (use_override == OU_ON && bid_delay <= 0)
+  {
     bid_delay = 1;
   }
 
-  if ((control_mode == CN_RAMP) || (control_mode == CN_DOUBLE_PRICE)) {
-    if (slider_setting < -0.001) {
+  if ((control_mode == CN_RAMP) || (control_mode == CN_DOUBLE_PRICE))
+  {
+    if (slider_setting < -0.001)
+    {
       gl_warning("slider_setting is negative, reseting to 0.0");
       slider_setting = 0.0;
     }
-    if (slider_setting > 1.0) {
+    if (slider_setting > 1.0)
+    {
       gl_warning("slider_setting is greater than 1.0, reseting to 1.0");
       slider_setting = 1.0;
     }
   }
 
-  if (control_mode == CN_DEV_LEVEL) {
-    if (slider_setting < -0.001) {
+  if (control_mode == CN_DEV_LEVEL)
+  {
+    if (slider_setting < -0.001)
+    {
       gl_warning("slider_setting is negative, reseting to 0.0");
       slider_setting = 0.0;
     }
-    if (slider_setting > 1.0) {
+    if (slider_setting > 1.0)
+    {
       gl_warning("slider_setting is greater than 1.0, reseting to 1.0");
       slider_setting = 1.0;
     }
   }
 
-  if (control_mode == CN_DOUBLE_RAMP) {
-    if (slider_setting_heat < -0.001) {
+  if (control_mode == CN_DOUBLE_RAMP)
+  {
+    if (slider_setting_heat < -0.001)
+    {
       gl_warning("slider_setting_heat is negative, reseting to 0.0");
       slider_setting_heat = 0.0;
     }
-    if (slider_setting_cool < -0.001) {
+    if (slider_setting_cool < -0.001)
+    {
       gl_warning("slider_setting_cool is negative, reseting to 0.0");
       slider_setting_cool = 0.0;
     }
-    if (slider_setting_heat > 1.0) {
+    if (slider_setting_heat > 1.0)
+    {
       gl_warning("slider_setting_heat is greater than 1.0, reseting to 1.0");
       slider_setting_heat = 1.0;
     }
-    if (slider_setting_cool > 1.0) {
+    if (slider_setting_cool > 1.0)
+    {
       gl_warning("slider_setting_cool is greater than 1.0, reseting to 1.0");
       slider_setting_cool = 1.0;
     }
@@ -1002,19 +1163,24 @@ int controller::init(OBJECT *parent) {
   return 1;
 }
 
-int controller::isa(char *classname) {
+int controller::isa(char *classname)
+{
   return strcmp(classname, "controller") == 0;
 }
 
-TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1) {
+TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1)
+{
   double setPoint = 0.0;
   double heatSetPoint = 0.0;
   double coolSetPoint = 0.0;
 
   if (control_mode == CN_RAMP || control_mode == CN_DEV_LEVEL ||
-      control_mode == CN_DOUBLE_PRICE) {
+      control_mode == CN_DOUBLE_PRICE)
+  {
     pSetpoint->getp(setPoint);
-  } else if (control_mode == CN_DOUBLE_RAMP) {
+  }
+  else if (control_mode == CN_DOUBLE_RAMP)
+  {
     pHeatingSetpoint->getp(heatSetPoint);
     pCoolingSetpoint->getp(coolSetPoint);
   }
@@ -1041,11 +1207,15 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1) {
   if (control_mode == CN_DOUBLE_RAMP && cooling_setpoint0 == -1)
     cooling_setpoint0 = coolSetPoint;
 
-  if (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE) {
-    if (slider_setting == -0.001) {
+  if (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE)
+  {
+    if (slider_setting == -0.001)
+    {
       min = setpoint0 + range_low;
       max = setpoint0 + range_high;
-    } else if (slider_setting > 0) {
+    }
+    else if (slider_setting > 0)
+    {
       min = setpoint0 + range_low * slider_setting;
       max = setpoint0 + range_high * slider_setting;
       if (range_low != 0)
@@ -1056,15 +1226,22 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1) {
         ramp_high = 2 + (1 - slider_setting);
       else
         ramp_high = 0;
-    } else {
+    }
+    else
+    {
       min = setpoint0;
       max = setpoint0;
     }
-  } else if (control_mode == CN_DEV_LEVEL) {
-    if (slider_setting == -0.001) {
+  }
+  else if (control_mode == CN_DEV_LEVEL)
+  {
+    if (slider_setting == -0.001)
+    {
       min = setpoint0 + range_low;
       max = setpoint0 + range_high;
-    } else if (slider_setting > 0) {
+    }
+    else if (slider_setting > 0)
+    {
       min = setpoint0 + range_low * slider_setting;
       max = setpoint0 + range_high * slider_setting;
       if (range_low != 0)
@@ -1075,15 +1252,22 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1) {
         ramp_high = 2 + (1 - slider_setting);
       else
         ramp_high = 0;
-    } else {
+    }
+    else
+    {
       min = setpoint0;
       max = setpoint0;
     }
-  } else if (control_mode == CN_DOUBLE_RAMP) {
-    if (slider_setting_cool == -0.001) {
+  }
+  else if (control_mode == CN_DOUBLE_RAMP)
+  {
+    if (slider_setting_cool == -0.001)
+    {
       cool_min = cooling_setpoint0 + cool_range_low;
       cool_max = cooling_setpoint0 + cool_range_high;
-    } else if (slider_setting_cool > 0.0) {
+    }
+    else if (slider_setting_cool > 0.0)
+    {
       cool_min = cooling_setpoint0 + cool_range_low * slider_setting_cool;
       cool_max = cooling_setpoint0 + cool_range_high * slider_setting_cool;
       if (cool_range_low != 0.0)
@@ -1094,14 +1278,19 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1) {
         cool_ramp_high = 2 + (1 - slider_setting_cool);
       else
         cool_ramp_high = 0;
-    } else {
+    }
+    else
+    {
       cool_min = cooling_setpoint0;
       cool_max = cooling_setpoint0;
     }
-    if (slider_setting_heat == -0.001) {
+    if (slider_setting_heat == -0.001)
+    {
       heat_min = heating_setpoint0 + heat_range_low;
       heat_max = heating_setpoint0 + heat_range_high;
-    } else if (slider_setting_heat > 0.0) {
+    }
+    else if (slider_setting_heat > 0.0)
+    {
       heat_min = heating_setpoint0 + heat_range_low * slider_setting_heat;
       heat_max = heating_setpoint0 + heat_range_high * slider_setting_heat;
       if (heat_range_low != 0.0)
@@ -1112,7 +1301,9 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1) {
         heat_ramp_high = -2 - (1 - slider_setting_heat);
       else
         heat_ramp_high = 0;
-    } else {
+    }
+    else
+    {
       heat_min = heating_setpoint0;
       heat_max = heating_setpoint0;
     }
@@ -1130,7 +1321,8 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1) {
     previous_mode = TM_OFF;
 
   // DOUBLE_PRICE logic
-  if (control_mode == CN_DOUBLE_PRICE) {
+  if (control_mode == CN_DOUBLE_PRICE)
+  {
     int64 marketId = 0;
     double clrP = 0.0;
     double shift_direction = 0.0;
@@ -1141,12 +1333,15 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1) {
     double stdP = 0.0;
 
     // Pull values
-    if (bidmode != BM_PROXY) {
+    if (bidmode != BM_PROXY)
+    {
       pAvg->getp(avgP);
       pStd->getp(stdP);
       pMarketId->getp(marketId);
       pClearedPrice->getp(clrP);
-    } else if (bidmode == BM_PROXY) {
+    }
+    else if (bidmode == BM_PROXY)
+    {
       avgP = pAvg->get_double();
       stdP = pStd->get_double();
       marketId = pMarketId->get_integer();
@@ -1154,7 +1349,8 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1) {
     }
 
     if (marketId !=
-        lastmkt_id) { // && (*pAvg == 0.0 || *pStd == 0.0 || setpoint0 == 0.0)){
+        lastmkt_id)
+    { // && (*pAvg == 0.0 || *pStd == 0.0 || setpoint0 == 0.0)){
       lastmkt_id = marketId;
       lastbid_id = -1; // clear last bid id, refers to an old market
       // update using last price
@@ -1164,48 +1360,68 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1) {
       clear_price = clrP;
       controller_bid.rebid = false;
 
-      if (use_predictive_bidding == true) {
+      if (use_predictive_bidding == true)
+      {
         if ((dir > 0 && clear_price < last_p) ||
-            (dir < 0 && clear_price > last_p)) {
+            (dir < 0 && clear_price > last_p))
+        {
           shift_direction = -1;
-        } else if ((dir > 0 && clear_price >= last_p) ||
-                   (dir < 0 && clear_price <= last_p)) {
+        }
+        else if ((dir > 0 && clear_price >= last_p) ||
+                 (dir < 0 && clear_price <= last_p))
+        {
           shift_direction = 1;
-        } else {
+        }
+        else
+        {
           shift_direction = 0;
         }
       }
 
-      if (fabs(stdP) < b_offset_DP) {
+      if (fabs(stdP) < b_offset_DP)
+      {
         set_temp = setpoint0;
-      } else if (clear_price < avgP && range_low != 0) {
+      }
+      else if (clear_price < avgP && range_low != 0)
+      {
         set_temp = setpoint0 +
                    (clear_price - avgP) * fabs(range_low) / (ramp_low * stdP) +
                    deadband_shift * shift_direction;
-      } else if (clear_price > avgP && range_high != 0) {
+      }
+      else if (clear_price > avgP && range_high != 0)
+      {
         set_temp =
             setpoint0 +
             (clear_price - avgP) * fabs(range_high) / (ramp_high * stdP) +
             deadband_shift * shift_direction;
-      } else {
+      }
+      else
+      {
         set_temp = setpoint0 + deadband_shift * shift_direction;
       }
 
-      if (use_override == OU_ON && override_prop.is_valid()) {
-        if (clear_price <= last_p) {
+      if (use_override == OU_ON && override_prop.is_valid())
+      {
+        if (clear_price <= last_p)
+        {
           // if we're willing to pay as much as, or for more than the offered
           // price, then run.
           override_prop.setp(OV_ON->get_enumeration_value()); // *pOverride = 1;
-        } else {
+        }
+        else
+        {
           override_prop.setp(
               OV_OFF->get_enumeration_value()); // *pOverride = -1;
         }
       }
 
       // clip
-      if (set_temp > max) {
+      if (set_temp > max)
+      {
         set_temp = max;
-      } else if (set_temp < min) {
+      }
+      else if (set_temp < min)
+      {
         set_temp = min;
       }
 
@@ -1215,8 +1431,10 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1) {
     }
   }
 
-  if (override_prop.is_valid()) {
-    if (use_override == OU_OFF && override_prop.get_enumeration() != 0) {
+  if (override_prop.is_valid())
+  {
+    if (use_override == OU_OFF && override_prop.get_enumeration() != 0)
+    {
       override_prop.setp(OV_NORMAL->get_enumeration_value());
     }
   }
@@ -1224,7 +1442,9 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1) {
   return TS_NEVER;
 }
 
-TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
+TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
+{
+
   double bid = -1.0;
   int64 no_bid =
       0; // flag gets set when the current temperature drops in between the the
@@ -1262,7 +1482,8 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
   double dBand = 0.0;
   double heatDemand = 0.0;
   double coolDemand = 0.0;
-  if (bidmode != BM_PROXY) {
+  if (bidmode != BM_PROXY)
+  {
     pAvg->getp(avgP);
     pStd->getp(stdP);
     pMarketId->getp(marketId);
@@ -1273,7 +1494,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
     pClearedQuantity->getp(clrQ);
     pSellerTotalQuantity->getp(sellerTotalQ);
     pClearingType->getp(clrType);
-  } else if (bidmode == BM_PROXY) {
+  }
+  else if (bidmode == BM_PROXY)
+  {
     avgP = pAvg->get_double();
     stdP = pStd->get_double();
     marketId = pMarketId->get_integer();
@@ -1287,25 +1510,33 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
   }
   pMonitor->getp(monitor);
   if (control_mode == CN_RAMP || control_mode == CN_DEV_LEVEL ||
-      control_mode == CN_DOUBLE_PRICE) {
+      control_mode == CN_DOUBLE_PRICE)
+  {
     pDemand->getp(demandP);
     pLoad->getp(loadP);
-    if ((use_predictive_bidding == true) || (control_mode == CN_DOUBLE_PRICE)) {
+    if ((use_predictive_bidding == true) || (control_mode == CN_DOUBLE_PRICE))
+    {
       pDeadband->getp(dBand);
     }
-  } else if (control_mode == CN_DOUBLE_RAMP) {
+  }
+  else if (control_mode == CN_DOUBLE_RAMP)
+  {
     pDeadband->getp(dBand);
     pHeatingDemand->getp(heatDemand);
     pCoolingDemand->getp(coolDemand);
   }
-  if (control_mode == CN_DEV_LEVEL) {
-    if (bidmode != BM_PROXY) {
+  if (control_mode == CN_DEV_LEVEL)
+  {
+    if (bidmode != BM_PROXY)
+    {
       pMarketId2->getp(market2Id);
       pPriceCap2->getp(pCap2);
       pMarginalFraction2->getp(marginalFraction2);
       pClearedQuantity2->getp(clrQ2);
       pClearingType2->getp(clrType2);
-    } else if (bidmode == BM_PROXY) {
+    }
+    else if (bidmode == BM_PROXY)
+    {
       market2Id = pMarketId2->get_integer();
       pCap2 = pPriceCap2->get_double();
       marginalFraction2 = pMarginalFraction2->get_double();
@@ -1317,14 +1548,17 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
         gl_globalclock +
         (TIMESTAMP)(reg_period - (gl_globalclock + reg_period) % reg_period);
 
-    if (t1 == fast_reg_run - reg_period) {
-      if (dev_level_ctrl(t0, t1) != 0) {
+    if (t1 == fast_reg_run - reg_period)
+    {
+      if (dev_level_ctrl(t0, t1) != 0)
+      {
         GL_THROW("error occured when handling the device level controller");
       }
     }
   }
 
-  if (t1 == next_run && marketId == lastmkt_id && bidmode == BM_PROXY) {
+  if (t1 == next_run && marketId == lastmkt_id && bidmode == BM_PROXY)
+  {
     /*
      * This case is only true when dealing with co-simulation with FNCS.
      */
@@ -1337,31 +1571,43 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
       -1; // ps==-1 means the powerstate is not found -- -1 should never be used
   if (powerstate_prop.is_valid())
     powerstate_prop.getp(ps);
-  if ((t1 < next_run) && (marketId == lastmkt_id)) {
-    if (t1 <= next_run - bid_delay) {
+  if ((t1 < next_run) && (marketId == lastmkt_id))
+  {
+    if (t1 <= next_run - bid_delay)
+    {
       if (use_predictive_bidding == true &&
           (((control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE) &&
             last_setpoint != setpoint0) ||
            (control_mode == CN_DOUBLE_RAMP &&
             (last_heating_setpoint != heating_setpoint0 ||
-             last_cooling_setpoint != cooling_setpoint0)))) {
+             last_cooling_setpoint != cooling_setpoint0))))
+      {
         ; // do nothing
-      } else if (use_override == OU_ON && t1 == next_run - bid_delay) {
+      }
+      else if (use_override == OU_ON && t1 == next_run - bid_delay)
+      {
         ;
-      } else { // check to see if we have changed states
-        if (!powerstate_prop.is_valid()) {
+      }
+      else
+      { // check to see if we have changed states
+        if (!powerstate_prop.is_valid())
+        {
           if (control_mode == CN_DEV_LEVEL)
             return fast_reg_run;
           else
             return next_run;
-        } else if (ps == last_pState) { // *pState == last_pState)
+        }
+        else if (ps == last_pState)
+        { // *pState == last_pState)
           if (control_mode == CN_DEV_LEVEL)
             return fast_reg_run;
           else
             return next_run;
         }
       }
-    } else {
+    }
+    else
+    {
       if (control_mode == CN_DEV_LEVEL)
         return fast_reg_run;
       else
@@ -1369,34 +1615,48 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
     }
   }
 
-  if (control_mode == CN_DEV_LEVEL) {
+  if (control_mode == CN_DEV_LEVEL)
+  {
 
-    if ((t1 < next_run) && (market2Id == lastmkt_id2)) {
-      if (t1 <= next_run - bid_delay2) {
+    if ((t1 < next_run) && (market2Id == lastmkt_id2))
+    {
+      if (t1 <= next_run - bid_delay2)
+      {
         if (use_predictive_bidding == true &&
-            (control_mode == CN_DEV_LEVEL && last_setpoint != setpoint0)) {
+            (control_mode == CN_DEV_LEVEL && last_setpoint != setpoint0))
+        {
           ;
-        } else { // check to see if we have changed states
-          if (!powerstate_prop.is_valid()) {
+        }
+        else
+        { // check to see if we have changed states
+          if (!powerstate_prop.is_valid())
+          {
             return fast_reg_run;
-          } else if (ps == last_pState) {
+          }
+          else if (ps == last_pState)
+          {
             return fast_reg_run;
           }
         }
-      } else {
+      }
+      else
+      {
         return fast_reg_run;
       }
     }
   }
 
-  if (use_predictive_bidding == true) {
+  if (use_predictive_bidding == true)
+  {
     deadband_shift = dBand * 0.5;
   }
 
-  if (control_mode == CN_RAMP) {
+  if (control_mode == CN_RAMP)
+  {
     // if market has updated, continue onwards
     if (marketId !=
-        lastmkt_id) { // && (*pAvg == 0.0 || *pStd == 0.0 || setpoint0 == 0.0)){
+        lastmkt_id)
+    { // && (*pAvg == 0.0 || *pStd == 0.0 || setpoint0 == 0.0)){
       lastmkt_id = marketId;
       lastbid_id = -1; // clear last bid id, refers to an old market
       // update using last price
@@ -1406,47 +1666,67 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
       clear_price = clrP;
       controller_bid.rebid = false;
 
-      if (use_predictive_bidding == true) {
+      if (use_predictive_bidding == true)
+      {
         if ((dir > 0 && clear_price < last_p) ||
-            (dir < 0 && clear_price > last_p)) {
+            (dir < 0 && clear_price > last_p))
+        {
           shift_direction = -1;
-        } else if ((dir > 0 && clear_price >= last_p) ||
-                   (dir < 0 && clear_price <= last_p)) {
+        }
+        else if ((dir > 0 && clear_price >= last_p) ||
+                 (dir < 0 && clear_price <= last_p))
+        {
           shift_direction = 1;
-        } else {
+        }
+        else
+        {
           shift_direction = 0;
         }
       }
-      if (fabs(stdP) < bid_offset) {
+      if (fabs(stdP) < bid_offset)
+      {
         set_temp = setpoint0;
-      } else if (clear_price < avgP && range_low != 0) {
+      }
+      else if (clear_price < avgP && range_low != 0)
+      {
         set_temp = setpoint0 +
                    (clear_price - avgP) * fabs(range_low) / (ramp_low * stdP) +
                    deadband_shift * shift_direction;
-      } else if (clear_price > avgP && range_high != 0) {
+      }
+      else if (clear_price > avgP && range_high != 0)
+      {
         set_temp =
             setpoint0 +
             (clear_price - avgP) * fabs(range_high) / (ramp_high * stdP) +
             deadband_shift * shift_direction;
-      } else {
+      }
+      else
+      {
         set_temp = setpoint0 + deadband_shift * shift_direction;
       }
 
-      if (use_override == OU_ON && override_prop.is_valid()) {
-        if (clear_price <= last_p) {
+      if (use_override == OU_ON && override_prop.is_valid())
+      {
+        if (clear_price <= last_p)
+        {
           // if we're willing to pay as much as, or for more than the offered
           // price, then run.
           override_prop.setp(OV_ON->get_enumeration_value()); // *pOverride = 1;
-        } else {
+        }
+        else
+        {
           override_prop.setp(
               OV_OFF->get_enumeration_value()); // *pOverride = -1;
         }
       }
 
       // clip
-      if (set_temp > max) {
+      if (set_temp > max)
+      {
         set_temp = max;
-      } else if (set_temp < min) {
+      }
+      else if (set_temp < min)
+      {
         set_temp = min;
       }
 
@@ -1455,93 +1735,147 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
       // %f",set_temp, market->next.price, market->avg24);
     }
 
-    if (dir > 0) {
-      if (use_predictive_bidding == true) {
-        if (ps == *PS_OFF && monitor > (max - deadband_shift)) {
+    if (dir > 0)
+    {
+      if (use_predictive_bidding == true)
+      {
+        if (ps == *PS_OFF && monitor > (max - deadband_shift))
+        {
           bid = pCap;
-        } else if (ps != *PS_OFF && monitor < (min + deadband_shift)) {
-          bid = 0.0;
-          no_bid = 1;
-        } else if (ps != *PS_OFF && monitor > max) {
-          bid = pCap;
-        } else if (ps == *PS_OFF && monitor < min) {
+        }
+        else if (ps != *PS_OFF && monitor < (min + deadband_shift))
+        {
           bid = 0.0;
           no_bid = 1;
         }
-      } else {
-        if (monitor > max) {
+        else if (ps != *PS_OFF && monitor > max)
+        {
           bid = pCap;
-        } else if (monitor < min) {
-          bid = 0.0;
-          no_bid = 1;
         }
-      }
-    } else if (dir < 0) {
-      if (use_predictive_bidding == true) {
-        if (ps == *PS_OFF && monitor < (min + deadband_shift)) {
-          bid = pCap;
-        } else if (ps != *PS_OFF && monitor > (max - deadband_shift)) {
-          bid = 0.0;
-          no_bid = 1;
-        } else if (ps != *PS_OFF && monitor < min) {
-          bid = pCap;
-        } else if (ps == *PS_OFF && monitor > max) {
-          bid = 0.0;
-          no_bid = 1;
-        }
-      } else {
-        if (monitor < min) {
-          bid = pCap;
-        } else if (monitor > max) {
+        else if (ps == *PS_OFF && monitor < min)
+        {
           bid = 0.0;
           no_bid = 1;
         }
       }
-    } else if (dir == 0) {
-      if (use_predictive_bidding == true) {
-        if (direction == 0.0) {
+      else
+      {
+        if (monitor > max)
+        {
+          bid = pCap;
+        }
+        else if (monitor < min)
+        {
+          bid = 0.0;
+          no_bid = 1;
+        }
+      }
+    }
+    else if (dir < 0)
+    {
+      if (use_predictive_bidding == true)
+      {
+        if (ps == *PS_OFF && monitor < (min + deadband_shift))
+        {
+          bid = pCap;
+        }
+        else if (ps != *PS_OFF && monitor > (max - deadband_shift))
+        {
+          bid = 0.0;
+          no_bid = 1;
+        }
+        else if (ps != *PS_OFF && monitor < min)
+        {
+          bid = pCap;
+        }
+        else if (ps == *PS_OFF && monitor > max)
+        {
+          bid = 0.0;
+          no_bid = 1;
+        }
+      }
+      else
+      {
+        if (monitor < min)
+        {
+          bid = pCap;
+        }
+        else if (monitor > max)
+        {
+          bid = 0.0;
+          no_bid = 1;
+        }
+      }
+    }
+    else if (dir == 0)
+    {
+      if (use_predictive_bidding == true)
+      {
+        if (direction == 0.0)
+        {
           gl_error("the variable direction did not get set correctly.");
-        } else if ((monitor > max + deadband_shift ||
-                    (ps != *PS_OFF && monitor > min - deadband_shift)) &&
-                   direction > 0) {
+        }
+        else if ((monitor > max + deadband_shift ||
+                  (ps != *PS_OFF && monitor > min - deadband_shift)) &&
+                 direction > 0)
+        {
           bid = pCap;
-        } else if ((monitor < min - deadband_shift ||
-                    (ps != *PS_OFF && monitor < max + deadband_shift)) &&
-                   direction < 0) {
+        }
+        else if ((monitor < min - deadband_shift ||
+                  (ps != *PS_OFF && monitor < max + deadband_shift)) &&
+                 direction < 0)
+        {
           bid = pCap;
-        } else {
+        }
+        else
+        {
           bid = 0.0;
           no_bid = 1;
         }
-      } else {
-        if (monitor < min) {
+      }
+      else
+      {
+        if (monitor < min)
+        {
           bid = pCap;
-        } else if (monitor > max) {
+        }
+        else if (monitor > max)
+        {
           bid = 0.0;
           no_bid = 1;
-        } else {
+        }
+        else
+        {
           bid = avgP;
         }
       }
     }
 
     // calculate bid price
-    if (monitor > setpoint0) {
+    if (monitor > setpoint0)
+    {
       k_T = ramp_high;
       T_lim = range_high;
-    } else if (monitor < setpoint0) {
+    }
+    else if (monitor < setpoint0)
+    {
       k_T = ramp_low;
       T_lim = range_low;
-    } else {
+    }
+    else
+    {
       k_T = 0.0;
       T_lim = 0.0;
     }
 
-    if (bid < 0.0 && monitor != setpoint0) {
+    if (bid < 0.0 && monitor != setpoint0)
+    {
       bid = avgP + ((fabs(stdP) < bid_offset)
                         ? 0.0
                         : (monitor - setpoint0) * (k_T * stdP) / fabs(T_lim));
-    } else if (monitor == setpoint0) {
+    }
+    else if (monitor == setpoint0)
+    {
       bid = avgP;
     }
 
@@ -1553,11 +1887,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
     //  override
     // bid_id = -1;
 
-    if (demandP > 0 && no_bid != 1) {
+    if (demandP > 0 && no_bid != 1)
+    {
       last_p = bid;
       last_q = demandP;
-      if (0 != strcmp(market_unit, "")) {
-        if (0 == gl_convert("kW", market_unit, &(last_q))) {
+      if (0 != strcmp(market_unit, ""))
+      {
+        if (0 == gl_convert("kW", market_unit, &(last_q)))
+        {
           gl_error("unable to convert bid units from 'kW' to '%s'",
                    market_unit);
           return TS_INVALID;
@@ -1568,10 +1905,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
       controller_bid.market_id = lastmkt_id;
       controller_bid.price = last_p;
       controller_bid.quantity = -last_q;
-      if (powerstate_prop.is_valid()) {
-        if (ps == *PS_ON) {
+      if (powerstate_prop.is_valid())
+      {
+        if (ps == *PS_ON)
+        {
           controller_bid.state = BS_ON;
-        } else {
+        }
+        else
+        {
           controller_bid.state = BS_OFF;
         }
         ((void (*)(char *, char *, const char *, const char *, void *, size_t))(
@@ -1579,7 +1920,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
                       "submit_bid_state", "auction", (void *)&controller_bid,
                       (size_t)sizeof(controller_bid));
         controller_bid.rebid = true;
-      } else {
+      }
+      else
+      {
         controller_bid.state = BS_UNKNOWN;
         ((void (*)(char *, char *, const char *, const char *, void *, size_t))(
             *submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt),
@@ -1587,11 +1930,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
                       (size_t)sizeof(controller_bid));
         controller_bid.rebid = true;
       }
-      if (controller_bid.bid_accepted == false) {
+      if (controller_bid.bid_accepted == false)
+      {
         return TS_INVALID;
       }
       residual -= loadP;
-    } else {
+    }
+    else
+    {
       last_p = 0;
       last_q = 0;
       gl_verbose("%s's is not bidding", hdr->name);
@@ -1600,11 +1946,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
       gl_warning(
           "controller:%d: residual unresponsive load is negative! (%.1f kW)",
           hdr->id, residual);
-  } else if (control_mode == CN_DEV_LEVEL) {
+  }
+  else if (control_mode == CN_DEV_LEVEL)
+  {
     // if market has updated, continue onwards
     if (marketId != lastmkt_id &&
-        market2Id != lastmkt_id2) { // && (*pAvg == 0.0 || *pStd == 0.0 ||
-                                    // setpoint0 == 0.0)){
+        market2Id != lastmkt_id2)
+    { // && (*pAvg == 0.0 || *pStd == 0.0 ||
+      // setpoint0 == 0.0)){
       controller_bid.rebid = false;
       controller_bid2.rebid = false;
       lastmkt_id = marketId;
@@ -1621,190 +1970,287 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
 
       // If the market failed with some sellers, let's go ahead and use what is
       // available
-      if (clrQ == 0) {
+      if (clrQ == 0)
+      {
         P_OFF = sellerTotalQ;
-      } else {
+      }
+      else
+      {
         P_OFF = clrQ;
       }
 
-      if (clrQ2 == 0) {
-        if (bidmode != BM_PROXY) {
+      if (clrQ2 == 0)
+      {
+        if (bidmode != BM_PROXY)
+        {
           pSellerTotalQuantity2->getp(P_ON);
-        } else if (bidmode == BM_PROXY) {
+        }
+        else if (bidmode == BM_PROXY)
+        {
           P_ON = pSellerTotalQuantity2->get_double();
         }
-      } else {
+      }
+      else
+      {
         P_ON = clrQ2;
       }
 
       // Choose whether we should be part of the control action or not.
       // We didn't actually bid in the last market
-      if (last_q == 0) {
+      if (last_q == 0)
+      {
         engaged = 0;
       }
       // One of the markets failed
       else if (clrType == CT_FAILURE || clrType == CT_NULL ||
-               clrType2 == CT_FAILURE || clrType2 == CT_NULL) {
+               clrType2 == CT_FAILURE || clrType2 == CT_NULL)
+      {
         engaged = 0;
       }
       // The cleared quantities weren't balanced - we could eventually allow
       // some percentage of difference
-      else if (clrQ != clrQ2) {
+      else if (clrQ != clrQ2)
+      {
         engaged = 0;
       }
       // One of the markets didn't clear with any quantity
-      else if (clrQ == 0) {
+      else if (clrQ == 0)
+      {
         engaged = 0;
       }
       // One of the markets didn't clear with any quantity
-      else if (clrQ2 == 0) {
+      else if (clrQ2 == 0)
+      {
         engaged = 0;
       }
       // We bid into the OFF->ON market
-      else if (market_flag == 0) {
+      else if (market_flag == 0)
+      {
         clear_price = clrP;
 
-        if (last_p < clear_price) { // Cleared at the right price
+        if (last_p < clear_price)
+        { // Cleared at the right price
           engaged = 1;
-        } else if (last_p ==
-                   clear_price) { // We're a marginal unit, so randomize whether
-                                  // to engage or not
+        }
+        else if (last_p ==
+                 clear_price)
+        { // We're a marginal unit, so randomize whether
+          // to engage or not
           double my_rand = gl_random_uniform(RNGSTATE, 0, 1.0);
-          if (my_rand <= marginalFraction) {
+          if (my_rand <= marginalFraction)
+          {
             engaged = 1;
-          } else {
+          }
+          else
+          {
             engaged = 0;
           }
-        } else {
+        }
+        else
+        {
           engaged = 0;
         }
       }
       // We bid into the ON->OFF market
-      else if (market_flag == 1) {
-        if (bidmode != BM_PROXY) {
+      else if (market_flag == 1)
+      {
+        if (bidmode != BM_PROXY)
+        {
           pClearedPrice2->getp(clear_price);
-        } else if (bidmode == BM_PROXY) {
+        }
+        else if (bidmode == BM_PROXY)
+        {
           clear_price = pClearedPrice2->get_double();
         }
 
-        if (last_p < clear_price) { // Cleared at the right price
+        if (last_p < clear_price)
+        { // Cleared at the right price
           engaged = 1;
-        } else if (last_p ==
-                   clear_price) { // We're a marginal unit, so randomize whether
-                                  // to engage or not
+        }
+        else if (last_p ==
+                 clear_price)
+        { // We're a marginal unit, so randomize whether
+          // to engage or not
           double my_rand = gl_random_uniform(RNGSTATE, 0, 1.0);
-          if (my_rand <= marginalFraction2) {
+          if (my_rand <= marginalFraction2)
+          {
             engaged = 1;
-          } else {
+          }
+          else
+          {
             engaged = 0;
           }
-        } else {
+        }
+        else
+        {
           engaged = 0;
         }
-      } else {
+      }
+      else
+      {
         engaged = 0;
       }
 
-      if (use_predictive_bidding == true) {
+      if (use_predictive_bidding == true)
+      {
         if ((dir > 0 && clear_price < last_p) ||
-            (dir < 0 && clear_price > last_p)) {
+            (dir < 0 && clear_price > last_p))
+        {
           shift_direction = -1;
-        } else if ((dir > 0 && clear_price >= last_p) ||
-                   (dir < 0 && clear_price <= last_p)) {
+        }
+        else if ((dir > 0 && clear_price >= last_p) ||
+                 (dir < 0 && clear_price <= last_p))
+        {
           shift_direction = 1;
-        } else {
+        }
+        else
+        {
           shift_direction = 0;
         }
       }
     }
 
-    if (dir > 0) {
-      if (use_predictive_bidding == true) {
-        if (ps == *PS_OFF && monitor > (max - deadband_shift)) {
+    if (dir > 0)
+    {
+      if (use_predictive_bidding == true)
+      {
+        if (ps == *PS_OFF && monitor > (max - deadband_shift))
+        {
           bid = pCap;
-        } else if (ps != *PS_OFF && monitor < (min + deadband_shift)) {
-          bid = 0.0;
-          no_bid = 1;
-        } else if (ps != *PS_OFF && monitor > max) {
-          bid = pCap;
-        } else if (ps == *PS_OFF && monitor < min) {
+        }
+        else if (ps != *PS_OFF && monitor < (min + deadband_shift))
+        {
           bid = 0.0;
           no_bid = 1;
         }
-      } else {
-        if (monitor > max) {
+        else if (ps != *PS_OFF && monitor > max)
+        {
           bid = pCap;
-        } else if (monitor < min) {
-          bid = 0.0;
-          no_bid = 1;
         }
-      }
-    } else if (dir < 0) {
-      if (use_predictive_bidding == true) {
-        if (ps == *PS_OFF && monitor < (min + deadband_shift)) {
-          bid = pCap;
-        } else if (ps != *PS_OFF && monitor > (max - deadband_shift)) {
-          bid = 0.0;
-          no_bid = 1;
-        } else if (ps != *PS_OFF && monitor < min) {
-          bid = pCap;
-        } else if (ps == *PS_OFF && monitor > max) {
-          bid = 0.0;
-          no_bid = 1;
-        }
-      } else {
-        if (monitor < min) {
-          bid = pCap;
-        } else if (monitor > max) {
+        else if (ps == *PS_OFF && monitor < min)
+        {
           bid = 0.0;
           no_bid = 1;
         }
       }
-    } else if (dir == 0) {
-      if (use_predictive_bidding == true) {
-        if (direction == 0.0) {
+      else
+      {
+        if (monitor > max)
+        {
+          bid = pCap;
+        }
+        else if (monitor < min)
+        {
+          bid = 0.0;
+          no_bid = 1;
+        }
+      }
+    }
+    else if (dir < 0)
+    {
+      if (use_predictive_bidding == true)
+      {
+        if (ps == *PS_OFF && monitor < (min + deadband_shift))
+        {
+          bid = pCap;
+        }
+        else if (ps != *PS_OFF && monitor > (max - deadband_shift))
+        {
+          bid = 0.0;
+          no_bid = 1;
+        }
+        else if (ps != *PS_OFF && monitor < min)
+        {
+          bid = pCap;
+        }
+        else if (ps == *PS_OFF && monitor > max)
+        {
+          bid = 0.0;
+          no_bid = 1;
+        }
+      }
+      else
+      {
+        if (monitor < min)
+        {
+          bid = pCap;
+        }
+        else if (monitor > max)
+        {
+          bid = 0.0;
+          no_bid = 1;
+        }
+      }
+    }
+    else if (dir == 0)
+    {
+      if (use_predictive_bidding == true)
+      {
+        if (direction == 0.0)
+        {
           gl_error("the variable direction did not get set correctly.");
-        } else if ((monitor > max + deadband_shift ||
-                    (ps != *PS_OFF && monitor > min - deadband_shift)) &&
-                   direction > 0) {
+        }
+        else if ((monitor > max + deadband_shift ||
+                  (ps != *PS_OFF && monitor > min - deadband_shift)) &&
+                 direction > 0)
+        {
           bid = pCap;
-        } else if ((monitor < min - deadband_shift ||
-                    (ps != *PS_OFF && monitor < max + deadband_shift)) &&
-                   direction < 0) {
+        }
+        else if ((monitor < min - deadband_shift ||
+                  (ps != *PS_OFF && monitor < max + deadband_shift)) &&
+                 direction < 0)
+        {
           bid = pCap;
-        } else {
+        }
+        else
+        {
           bid = 0.0;
           no_bid = 1;
         }
-      } else {
-        if (monitor < min) {
+      }
+      else
+      {
+        if (monitor < min)
+        {
           bid = pCap;
-        } else if (monitor > max) {
+        }
+        else if (monitor > max)
+        {
           bid = 0.0;
           no_bid = 1;
-        } else {
+        }
+        else
+        {
           bid = avgP;
         }
       }
     }
 
     // calculate bid price
-    if (monitor > setpoint0) {
+    if (monitor > setpoint0)
+    {
       k_T = ramp_high;
       T_lim = range_high;
-    } else if (monitor < setpoint0) {
+    }
+    else if (monitor < setpoint0)
+    {
       k_T = ramp_low;
       T_lim = range_low;
-    } else {
+    }
+    else
+    {
       k_T = 0.0;
       T_lim = 0.0;
     }
 
-    if (bid < 0.0 && monitor != setpoint0) {
+    if (bid < 0.0 && monitor != setpoint0)
+    {
       bid = avgP + ((fabs(stdP) < bid_offset)
                         ? 0.0
                         : (monitor - setpoint0) * (k_T * stdP) / fabs(T_lim));
-    } else if (monitor == setpoint0) {
+    }
+    else if (monitor == setpoint0)
+    {
       bid = avgP;
     }
 
@@ -1816,13 +2262,17 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
     // KEY bid_id = (KEY)(lastmkt_id == *pMarketId ? lastbid_id : -1);
     // KEY bid_id2 = (KEY)(lastmkt_id2 == *pMarketId2 ? lastbid_id2 : -1);
 
-    if (demandP > 0 && no_bid != 1) {
+    if (demandP > 0 && no_bid != 1)
+    {
       last_p = bid;
       last_q = demandP;
 
-      if (ps == *PS_ON) {
-        if (0 != strcmp(market_unit2, "")) {
-          if (0 == gl_convert("kW", market_unit2, &(last_q))) {
+      if (ps == *PS_ON)
+      {
+        if (0 != strcmp(market_unit2, ""))
+        {
+          if (0 == gl_convert("kW", market_unit2, &(last_q)))
+          {
             gl_error("unable to convert bid units from 'kW' to '%s'",
                      market_unit2);
             return TS_INVALID;
@@ -1842,14 +2292,16 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
                        "submit_bid_state", "auction", (void *)&controller_bid2,
                        (size_t)sizeof(controller_bid2));
         controller_bid2.rebid = true;
-        if (controller_bid2.bid_accepted == false) {
+        if (controller_bid2.bid_accepted == false)
+        {
           return TS_INVALID;
         }
         market_flag = 1;
 
         // We had already bid into the other market, so let's cancel that bid
         // out
-        if (controller_bid.rebid) {
+        if (controller_bid.rebid)
+        {
           // lastbid_id = submit_bid(pMarket, hdr, 0, *pPriceCap, bid_id);
           controller_bid.market_id = lastmkt_id;
           controller_bid.price = pCap;
@@ -1861,13 +2313,18 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
                                         "auction", (void *)&controller_bid,
                                         (size_t)sizeof(controller_bid));
           controller_bid.rebid = true;
-          if (controller_bid.bid_accepted == false) {
+          if (controller_bid.bid_accepted == false)
+          {
             return TS_INVALID;
           }
         }
-      } else if (ps == *PS_OFF) {
-        if (0 != strcmp(market_unit, "")) {
-          if (0 == gl_convert("kW", market_unit, &(last_q))) {
+      }
+      else if (ps == *PS_OFF)
+      {
+        if (0 != strcmp(market_unit, ""))
+        {
+          if (0 == gl_convert("kW", market_unit, &(last_q)))
+          {
             gl_error("unable to convert bid units from 'kW' to '%s'",
                      market_unit);
             return TS_INVALID;
@@ -1887,14 +2344,16 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
                       "submit_bid_state", "auction", (void *)&controller_bid,
                       (size_t)sizeof(controller_bid));
         controller_bid.rebid = true;
-        if (controller_bid.bid_accepted == false) {
+        if (controller_bid.bid_accepted == false)
+        {
           return TS_INVALID;
         }
         market_flag = 0;
 
         // We had already bid into the other market, so let's cancel that bid
         // out
-        if (controller_bid2.rebid) {
+        if (controller_bid2.rebid)
+        {
           // lastbid_id2 = submit_bid(pMarket2, hdr, 0, *pPriceCap2, bid_id2);
           controller_bid2.market_id = lastmkt_id2;
           controller_bid2.price = pCap2;
@@ -1906,17 +2365,22 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
                                          "auction", (void *)&controller_bid2,
                                          (size_t)sizeof(controller_bid2));
           controller_bid2.rebid = true;
-          if (controller_bid2.bid_accepted == false) {
+          if (controller_bid2.bid_accepted == false)
+          {
             return TS_INVALID;
           }
         }
       }
-    } else {
+    }
+    else
+    {
       last_p = 0;
       last_q = 0;
       gl_verbose("%s's is not bidding", hdr->name);
     }
-  } else if (control_mode == CN_DOUBLE_RAMP) {
+  }
+  else if (control_mode == CN_DOUBLE_RAMP)
+  {
     /*
     double heat_range_high;
     double heat_range_low;
@@ -1933,36 +2397,46 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
 
     // find crossover
     double midpoint = 0.0;
-    if (cool_min - heat_max < dBand) {
-      switch (resolve_mode) {
+    if (cool_min - heat_max < dBand)
+    {
+      switch (resolve_mode)
+      {
       case RM_DEADBAND:
         midpoint = (heat_max + cool_min) / 2;
         if (midpoint - dBand / 2 < heating_setpoint0 ||
-            midpoint + dBand / 2 > cooling_setpoint0) {
+            midpoint + dBand / 2 > cooling_setpoint0)
+        {
           gl_error("The midpoint between the max heating setpoint and the min "
                    "cooling setpoint must be half a deadband away from each "
                    "base setpoint");
           return TS_INVALID;
-        } else {
+        }
+        else
+        {
           heat_max = midpoint - dBand / 2;
           cool_min = midpoint + dBand / 2;
         }
         break;
       case RM_SLIDING:
-        if (heat_max > cooling_setpoint0 - dBand) {
+        if (heat_max > cooling_setpoint0 - dBand)
+        {
           gl_error("the max heating setpoint must be a full deadband less than "
                    "the cooling_base_setpoint");
           return TS_INVALID;
         }
 
-        if (cool_min < heating_setpoint0 + dBand) {
+        if (cool_min < heating_setpoint0 + dBand)
+        {
           gl_error("The min cooling setpoint must be a full deadband greater "
                    "than the heating_base_setpoint");
           return TS_INVALID;
         }
-        if (last_mode == TM_OFF || last_mode == TM_COOL) {
+        if (last_mode == TM_OFF || last_mode == TM_COOL)
+        {
           heat_max = cool_min - dBand;
-        } else if (last_mode == TM_HEAT) {
+        }
+        else if (last_mode == TM_HEAT)
+        {
           cool_min = heat_max + dBand;
         }
         break;
@@ -1973,15 +2447,18 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
       }
     }
     // if the market has updated,
-    if (lastmkt_id != marketId) {
+    if (lastmkt_id != marketId)
+    {
       lastmkt_id = marketId;
       lastbid_id = -1;
       // retrieve cleared price
       clear_price = clrP;
       controller_bid.rebid = false;
-      if (clear_price == last_p) {
+      if (clear_price == last_p)
+      {
         // determine what to do at the marginal price
-        switch (clrType) {
+        switch (clrType)
+        {
         case CT_SELLER: // may need to curtail
           break;
         case CT_PRICE: // should not occur
@@ -1994,51 +2471,65 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
           break;
         }
       }
-      if (use_predictive_bidding == true) {
+      if (use_predictive_bidding == true)
+      {
         if ((thermostat_mode == TM_COOL && clear_price < last_p) ||
-            (thermostat_mode == TM_HEAT && clear_price > last_p)) {
+            (thermostat_mode == TM_HEAT && clear_price > last_p))
+        {
           shift_direction = -1;
-        } else if ((thermostat_mode == TM_COOL && clear_price >= last_p) ||
-                   (thermostat_mode == TM_HEAT && clear_price <= last_p)) {
+        }
+        else if ((thermostat_mode == TM_COOL && clear_price >= last_p) ||
+                 (thermostat_mode == TM_HEAT && clear_price <= last_p))
+        {
           shift_direction = 1;
-        } else {
+        }
+        else
+        {
           shift_direction = 0;
         }
       }
       may_run = 1;
       // calculate setpoints
-      if (fabs(stdP) < bid_offset) {
+      if (fabs(stdP) < bid_offset)
+      {
         pCoolingSetpoint->setp(cooling_setpoint0);
         pHeatingSetpoint->setp(heating_setpoint0);
-      } else {
+      }
+      else
+      {
         double res;
-        if (clear_price > avgP) {
+        if (clear_price > avgP)
+        {
           res = cooling_setpoint0 +
                 (clear_price - avgP) * fabs(cool_range_high) /
                     (cool_ramp_high * stdP) +
                 deadband_shift * shift_direction;
           pCoolingSetpoint->setp(res);
           //*pHeatingSetpoint = heating_setpoint0 + (clear_price - *pAvg) *
-          //fabs(heat_range_high) / (heat_ramp_high * *pStd);
+          // fabs(heat_range_high) / (heat_ramp_high * *pStd);
           res = heating_setpoint0 +
                 (clear_price - avgP) * fabs(heat_range_low) /
                     (heat_ramp_low * stdP) +
                 deadband_shift * shift_direction;
           pHeatingSetpoint->setp(res);
-        } else if (clear_price < avgP) {
+        }
+        else if (clear_price < avgP)
+        {
           res = cooling_setpoint0 +
                 (clear_price - avgP) * fabs(cool_range_low) /
                     (cool_ramp_low * stdP) +
                 deadband_shift * shift_direction;
           pCoolingSetpoint->setp(res);
           //*pHeatingSetpoint = heating_setpoint0 + (clear_price - *pAvg) *
-          //fabs(heat_range_low) / (heat_ramp_low * *pStd);
+          // fabs(heat_range_low) / (heat_ramp_low * *pStd);
           res = heating_setpoint0 +
                 (clear_price - avgP) * fabs(heat_range_high) /
                     (heat_ramp_high * stdP) +
                 deadband_shift * shift_direction;
           pHeatingSetpoint->setp(res);
-        } else {
+        }
+        else
+        {
           res = cooling_setpoint0 + deadband_shift * shift_direction;
           pCoolingSetpoint->setp(res);
           res = heating_setpoint0 + deadband_shift * shift_direction;
@@ -2047,30 +2538,44 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
       }
 
       // apply overrides
-      if ((use_override == OU_ON)) {
-        if (last_q != 0.0) {
-          if (clear_price == last_p && clear_price != pCap) {
-            if (marginMode == AM_DENY) {
+      if ((use_override == OU_ON))
+      {
+        if (last_q != 0.0)
+        {
+          if (clear_price == last_p && clear_price != pCap)
+          {
+            if (marginMode == AM_DENY)
+            {
               override_prop.setp(
                   OV_OFF->get_enumeration_value()); // *pOverride = -1;
-            } else if (marginMode == AM_PROB) {
+            }
+            else if (marginMode == AM_PROB)
+            {
               double r = gl_random_uniform(RNGSTATE, 0, 1.0);
-              if (r < marginalFraction) {
+              if (r < marginalFraction)
+              {
                 override_prop.setp(
                     OV_ON->get_enumeration_value()); // *pOverride = 1;
-              } else {
+              }
+              else
+              {
                 override_prop.setp(
                     OV_OFF->get_enumeration_value()); // *pOverride = -1;
               }
             }
-          } else if (clrP <= last_p) {
+          }
+          else if (clrP <= last_p)
+          {
             override_prop.setp(
                 OV_ON->get_enumeration_value()); // *pOverride = 1;
-          } else {
+          }
+          else
+          {
             override_prop.setp(
                 OV_OFF->get_enumeration_value()); // *pOverride = -1;
           }
-        } else // last_q==0
+        }
+        else // last_q==0
         {
           override_prop.setp(
               OV_OFF->get_enumeration_value()); // *pOverride = 0; // 'normal
@@ -2103,35 +2608,42 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
     // We have to cool
     if (monitor > cool_max &&
         (pThermostatState == nullptr || *pThermostatState == 1 ||
-         *pThermostatState == 3)) {
+         *pThermostatState == 3))
+    {
       last_p = pCap;
       last_q = coolDemand;
     }
     // We have to heat
     else if (monitor < heat_min &&
              (pThermostatState == nullptr || *pThermostatState == 1 ||
-              *pThermostatState == 2)) {
+              *pThermostatState == 2))
+    {
       last_p = pCap;
       last_q = heatDemand;
     }
     // We're floating in between heating and cooling
-    else if (monitor > heat_max && monitor < cool_min) {
+    else if (monitor > heat_max && monitor < cool_min)
+    {
       last_p = 0.0;
       last_q = 0.0;
     }
     // We might heat, if the price is right
     else if (monitor <= heat_max && monitor >= heat_min &&
              (pThermostatState == nullptr || *pThermostatState == 1 ||
-              *pThermostatState == 2)) {
+              *pThermostatState == 2))
+    {
       double ramp, range;
       ramp = (monitor > heating_setpoint0 ? heat_ramp_high : heat_ramp_low);
       range = (monitor > heating_setpoint0 ? heat_range_high : heat_range_low);
-      if (monitor != heating_setpoint0) {
+      if (monitor != heating_setpoint0)
+      {
         last_p = avgP + ((fabs(stdP) < bid_offset)
                              ? 0.0
                              : (monitor - heating_setpoint0) * ramp * (stdP) /
                                    fabs(range));
-      } else {
+      }
+      else
+      {
         last_p = avgP;
       }
       last_q = heatDemand;
@@ -2139,16 +2651,20 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
     // We might cool, if the price is right
     else if (monitor <= cool_max && monitor >= cool_min &&
              (pThermostatState == nullptr || *pThermostatState == 1 ||
-              *pThermostatState == 3)) {
+              *pThermostatState == 3))
+    {
       double ramp, range;
       ramp = (monitor > cooling_setpoint0 ? cool_ramp_high : cool_ramp_low);
       range = (monitor > cooling_setpoint0 ? cool_range_high : cool_range_low);
-      if (monitor != cooling_setpoint0) {
+      if (monitor != cooling_setpoint0)
+      {
         last_p = avgP + ((fabs(stdP) < bid_offset)
                              ? 0
                              : (monitor - cooling_setpoint0) * ramp * (stdP) /
                                    fabs(range));
-      } else {
+      }
+      else
+      {
         last_p = avgP;
       }
       last_q = coolDemand;
@@ -2158,8 +2674,10 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
       last_p = pCap;
     if (last_p < -pCap)
       last_p = -pCap;
-    if (0 != strcmp(market_unit, "")) {
-      if (0 == gl_convert("kW", market_unit, &(last_q))) {
+    if (0 != strcmp(market_unit, ""))
+    {
+      if (0 == gl_convert("kW", market_unit, &(last_q)))
+      {
         gl_error("unable to convert bid units from 'kW' to '%s'", market_unit);
         return TS_INVALID;
       }
@@ -2168,11 +2686,16 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
     controller_bid.price = last_p;
     controller_bid.quantity = -last_q;
 
-    if (last_q > 0.001) {
-      if (powerstate_prop.is_valid()) {
-        if (ps == *PS_ON) {
+    if (last_q > 0.001)
+    {
+      if (powerstate_prop.is_valid())
+      {
+        if (ps == *PS_ON)
+        {
           controller_bid.state = BS_ON;
-        } else {
+        }
+        else
+        {
           controller_bid.state = BS_OFF;
         }
         ((void (*)(char *, char *, const char *, const char *, void *, size_t))(
@@ -2180,7 +2703,9 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
                       "submit_bid_state", "auction", (void *)&controller_bid,
                       (size_t)sizeof(controller_bid));
         controller_bid.rebid = true;
-      } else {
+      }
+      else
+      {
         controller_bid.state = BS_UNKNOWN;
         ((void (*)(char *, char *, const char *, const char *, void *, size_t))(
             *submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt),
@@ -2188,26 +2713,62 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
                       (size_t)sizeof(controller_bid));
         controller_bid.rebid = true;
       }
-      if (controller_bid.bid_accepted == false) {
+      if (controller_bid.bid_accepted == false)
+      {
         return TS_INVALID;
       }
-    } else {
-      if (last_pState != ps) {
+    }
+    else
+    {
+      if (last_pState != ps)
+      {
         KEY bid = (KEY)(lastmkt_id == marketId ? lastbid_id : -1);
         double my_bid = -pCap;
         if (ps != *PS_OFF)
           my_bid = last_p;
 
-        if (ps == *PS_ON) {
+        if (ps == *PS_ON)
+        {
           controller_bid.state = BS_ON;
-        } else {
+        }
+        else
+        {
           controller_bid.state = BS_OFF;
         }
-        ((void (*)(char *, char *, const char *, const char *, void *, size_t))(
-            *submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt),
-                      "submit_bid_state", "auction", (void *)&controller_bid,
-                      (size_t)sizeof(controller_bid));
-        if (controller_bid.bid_accepted == false) {
+        // ((void (*)(char *, char *, const char *, const char *, void *, size_t))(
+        //     *submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt),
+        //               "submit_bid_state", "auction", (void *)&controller_bid,
+        //               (size_t)sizeof(controller_bid));
+
+        using submit_fn_t = void (*)(char *, char *, const char *, const char *, void *, size_t);
+        auto submit_fn = reinterpret_cast<submit_fn_t>(*submit);
+
+        // Prepare controller name
+        char ctrname[1024] = {0};
+        // IMPORTANT: use 'obj' here, not 'hdr'
+        char *ctrl_name = gl_name(hdr, ctrname, sizeof(ctrname));
+        if (ctrl_name == nullptr || *ctrl_name == '\0')
+        {
+          gl_error("controller has no valid name (obj=%p)", hdr);
+          return TS_INVALID;
+        }
+
+        // Prepare market name
+        // pMkt is char[33], so it decays to char* automatically
+        char *market_name = pMkt;
+        if (market_name == nullptr || *market_name == '\0')
+        {
+          gl_error("controller '%s' market name is empty", ctrl_name);
+          return TS_INVALID;
+        }
+
+        // Submit bid state
+        submit_fn(ctrl_name, market_name, "submit_bid_state", "auction",
+                  static_cast<void *>(&controller_bid),
+                  sizeof(controller_bid));
+
+        if (controller_bid.bid_accepted == false)
+        {
           return TS_INVALID;
         }
         controller_bid.rebid = true;
@@ -2223,19 +2784,23 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1) {
   // gl_verbose("controller:%i::sync(): bid $%f for %f kW at
   // %s",hdr->id,last_p,last_q,timebuf); return postsync(t0, t1);
 
-  if (control_mode == CN_DEV_LEVEL) {
+  if (control_mode == CN_DEV_LEVEL)
+  {
     return fast_reg_run;
   }
 
   return TS_NEVER;
 }
 
-TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1) {
+TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1)
+{
   TIMESTAMP rv = next_run - bid_delay;
 
   // If DOUBLE_PRICE, compute new value
-  if (control_mode == CN_DOUBLE_PRICE) {
-    if (t1 == next_run - bid_delay) {
+  if (control_mode == CN_DOUBLE_PRICE)
+  {
+    if (t1 == next_run - bid_delay)
+    {
       double monitor = 0.0;
       double doubleTemp[2];
       double bid = -1.0;
@@ -2259,11 +2824,14 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1) {
       if (powerstate_prop.is_valid())
         powerstate_prop.getp(ps);
 
-      if (bidmode != BM_PROXY) {
+      if (bidmode != BM_PROXY)
+      {
         pAvg->getp(avgP);
         pStd->getp(stdP);
         pPriceCap->getp(pCap);
-      } else if (bidmode == BM_PROXY) {
+      }
+      else if (bidmode == BM_PROXY)
+      {
         avgP = pAvg->get_double();
         stdP = pStd->get_double();
         pCap = pPriceCap->get_double();
@@ -2273,7 +2841,8 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1) {
       pMonitor->getp(monitor);
       pDemand->getp(demandP);
       pLoad->getp(loadP);
-      if (use_predictive_bidding == true) {
+      if (use_predictive_bidding == true)
+      {
         deadband_shift = dBand * 0.5;
       }
 
@@ -2285,93 +2854,147 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1) {
           pQi, pQs, pQh, pTout, monitor, pTmass, dBand, ps);
       monitor = (doubleTemp[0] + doubleTemp[1]) / 2;
 
-      if (dir > 0) {
-        if (use_predictive_bidding == true) {
-          if (ps == *PS_OFF && monitor > (max - deadband_shift)) {
+      if (dir > 0)
+      {
+        if (use_predictive_bidding == true)
+        {
+          if (ps == *PS_OFF && monitor > (max - deadband_shift))
+          {
             bid = pCap;
-          } else if (ps != *PS_OFF && monitor < (min + deadband_shift)) {
-            bid = 0.0;
-            no_bid = 1;
-          } else if (ps != *PS_OFF && monitor > max) {
-            bid = pCap;
-          } else if (ps == *PS_OFF && monitor < min) {
+          }
+          else if (ps != *PS_OFF && monitor < (min + deadband_shift))
+          {
             bid = 0.0;
             no_bid = 1;
           }
-        } else {
-          if (monitor > max) {
+          else if (ps != *PS_OFF && monitor > max)
+          {
             bid = pCap;
-          } else if (monitor < min) {
-            bid = 0.0;
-            no_bid = 1;
           }
-        }
-      } else if (dir < 0) {
-        if (use_predictive_bidding == true) {
-          if (ps == *PS_OFF && monitor < (min + deadband_shift)) {
-            bid = pCap;
-          } else if (ps != *PS_OFF && monitor > (max - deadband_shift)) {
-            bid = 0.0;
-            no_bid = 1;
-          } else if (ps != *PS_OFF && monitor < min) {
-            bid = pCap;
-          } else if (ps == *PS_OFF && monitor > max) {
-            bid = 0.0;
-            no_bid = 1;
-          }
-        } else {
-          if (monitor < min) {
-            bid = pCap;
-          } else if (monitor > max) {
+          else if (ps == *PS_OFF && monitor < min)
+          {
             bid = 0.0;
             no_bid = 1;
           }
         }
-      } else if (dir == 0) {
-        if (use_predictive_bidding == true) {
-          if (direction == 0.0) {
+        else
+        {
+          if (monitor > max)
+          {
+            bid = pCap;
+          }
+          else if (monitor < min)
+          {
+            bid = 0.0;
+            no_bid = 1;
+          }
+        }
+      }
+      else if (dir < 0)
+      {
+        if (use_predictive_bidding == true)
+        {
+          if (ps == *PS_OFF && monitor < (min + deadband_shift))
+          {
+            bid = pCap;
+          }
+          else if (ps != *PS_OFF && monitor > (max - deadband_shift))
+          {
+            bid = 0.0;
+            no_bid = 1;
+          }
+          else if (ps != *PS_OFF && monitor < min)
+          {
+            bid = pCap;
+          }
+          else if (ps == *PS_OFF && monitor > max)
+          {
+            bid = 0.0;
+            no_bid = 1;
+          }
+        }
+        else
+        {
+          if (monitor < min)
+          {
+            bid = pCap;
+          }
+          else if (monitor > max)
+          {
+            bid = 0.0;
+            no_bid = 1;
+          }
+        }
+      }
+      else if (dir == 0)
+      {
+        if (use_predictive_bidding == true)
+        {
+          if (direction == 0.0)
+          {
             gl_error("the variable direction did not get set correctly.");
-          } else if ((monitor > max + deadband_shift ||
-                      (ps != *PS_OFF && monitor > min - deadband_shift)) &&
-                     direction > 0) {
+          }
+          else if ((monitor > max + deadband_shift ||
+                    (ps != *PS_OFF && monitor > min - deadband_shift)) &&
+                   direction > 0)
+          {
             bid = pCap;
-          } else if ((monitor < min - deadband_shift ||
-                      (ps != *PS_OFF && monitor < max + deadband_shift)) &&
-                     direction < 0) {
+          }
+          else if ((monitor < min - deadband_shift ||
+                    (ps != *PS_OFF && monitor < max + deadband_shift)) &&
+                   direction < 0)
+          {
             bid = pCap;
-          } else {
+          }
+          else
+          {
             bid = 0.0;
             no_bid = 1;
           }
-        } else {
-          if (monitor < min) {
+        }
+        else
+        {
+          if (monitor < min)
+          {
             bid = pCap;
-          } else if (monitor > max) {
+          }
+          else if (monitor > max)
+          {
             bid = 0.0;
             no_bid = 1;
-          } else {
+          }
+          else
+          {
             bid = avgP;
           }
         }
       }
 
       // calculate bid price
-      if (monitor > setpoint0) {
+      if (monitor > setpoint0)
+      {
         k_T = ramp_high;
         T_lim = range_high;
-      } else if (monitor < setpoint0) {
+      }
+      else if (monitor < setpoint0)
+      {
         k_T = ramp_low;
         T_lim = range_low;
-      } else {
+      }
+      else
+      {
         k_T = 0.0;
         T_lim = 0.0;
       }
 
-      if (bid < 0.0 && monitor != setpoint0) {
+      if (bid < 0.0 && monitor != setpoint0)
+      {
         bid = avgP + ((fabs(stdP) < b_offset_DP)
                           ? 0.0
                           : (monitor - setpoint0) * (k_T * stdP) / fabs(T_lim));
-      } else if (monitor == setpoint0) {
+      }
+      else if (monitor == setpoint0)
+      {
         bid = avgP;
       }
 
@@ -2388,24 +3011,34 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1) {
       Rated_cooling_capacity_value = pRated_cooling_capacity->get_double();
       Cooling_COP_Value = pCooling_COP->get_double();
 
-      if (last_q <= 0) {
-        if (demandP > 0) {
+      if (last_q <= 0)
+      {
+        if (demandP > 0)
+        {
           last_q = demandP;
-        } else {
+        }
+        else
+        {
           last_q = Rated_cooling_capacity_value * 0.001 /
                    (3.4120 * Cooling_COP_Value);
         }
-      } else {
-        if (demandP > 0) {
+      }
+      else
+      {
+        if (demandP > 0)
+        {
           last_q = demandP;
         }
       }
 
       last_p = bid;
 
-      if (!(last_q > 0 && demandP <= 0)) {
-        if (0 != strcmp(market_unit, "")) {
-          if (0 == gl_convert("kW", market_unit, &(last_q))) {
+      if (!(last_q > 0 && demandP <= 0))
+      {
+        if (0 != strcmp(market_unit, ""))
+        {
+          if (0 == gl_convert("kW", market_unit, &(last_q)))
+          {
             gl_error("unable to convert bid units from 'kW' to '%s'",
                      market_unit);
             return TS_INVALID;
@@ -2418,10 +3051,14 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1) {
       controller_bid.market_id = lastmkt_id;
       controller_bid.price = last_p;
       controller_bid.quantity = -last_q;
-      if (powerstate_prop.is_valid()) {
-        if (ps == *PS_ON) {
+      if (powerstate_prop.is_valid())
+      {
+        if (ps == *PS_ON)
+        {
           controller_bid.state = BS_ON;
-        } else {
+        }
+        else
+        {
           controller_bid.state = BS_OFF;
         }
         ((void (*)(char *, char *, const char *, const char *, void *, size_t))(
@@ -2429,7 +3066,9 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1) {
                       "submit_bid_state", "auction", (void *)&controller_bid,
                       (size_t)sizeof(controller_bid));
         controller_bid.rebid = true;
-      } else {
+      }
+      else
+      {
         controller_bid.state = BS_UNKNOWN;
         ((void (*)(char *, char *, const char *, const char *, void *, size_t))(
             *submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt),
@@ -2437,7 +3076,8 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1) {
                       (size_t)sizeof(controller_bid));
         controller_bid.rebid = true;
       }
-      if (controller_bid.bid_accepted == false) {
+      if (controller_bid.bid_accepted == false)
+      {
         return TS_INVALID;
       }
 
@@ -2451,46 +3091,59 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1) {
   } // End DOUBLE_PRICE
 
   if (last_setpoint != setpoint0 &&
-      (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE)) {
+      (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE))
+  {
     last_setpoint = setpoint0;
   }
-  if (last_setpoint != setpoint0 && control_mode == CN_DEV_LEVEL) {
+  if (last_setpoint != setpoint0 && control_mode == CN_DEV_LEVEL)
+  {
     last_setpoint = setpoint0;
   }
   if (last_heating_setpoint != heating_setpoint0 &&
-      control_mode == CN_DOUBLE_RAMP) {
+      control_mode == CN_DOUBLE_RAMP)
+  {
     last_heating_setpoint = heating_setpoint0;
   }
   if (last_cooling_setpoint != cooling_setpoint0 &&
-      control_mode == CN_DOUBLE_RAMP) {
+      control_mode == CN_DOUBLE_RAMP)
+  {
     last_cooling_setpoint = cooling_setpoint0;
   }
 
   // Determine the system_mode the HVAC is in
-  if (t1 < next_run - bid_delay) {
+  if (t1 < next_run - bid_delay)
+  {
     return next_run - bid_delay;
   }
 
-  if (resolve_mode == RM_SLIDING) {
+  if (resolve_mode == RM_SLIDING)
+  {
     double auxState = 0;
     double heatState = 0;
     double coolState = 0;
     pAuxState->getp(auxState);
     pHeatState->getp(heatState);
     pCoolState->getp(coolState);
-    if (heatState == 1 || auxState == 1) {
+    if (heatState == 1 || auxState == 1)
+    {
       thermostat_mode = TM_HEAT;
       if (last_mode == TM_OFF)
         time_off = TS_NEVER;
-    } else if (coolState == 1) {
+    }
+    else if (coolState == 1)
+    {
       thermostat_mode = TM_COOL;
       if (last_mode == TM_OFF)
         time_off = TS_NEVER;
-    } else if (heatState == 0 && auxState == 0 && coolState == 0) {
+    }
+    else if (heatState == 0 && auxState == 0 && coolState == 0)
+    {
       thermostat_mode = TM_OFF;
       if (previous_mode != TM_OFF)
         time_off = t1 + dtime_delay;
-    } else {
+    }
+    else
+    {
       gl_error("The HVAC is in two or more modes at once. This is impossible");
       if (resolve_mode == RM_SLIDING)
         return TS_INVALID; // If the HVAC is in two modes at once then the
@@ -2499,11 +3152,13 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1) {
     }
   }
 
-  if (t1 - next_run < bid_delay) {
+  if (t1 - next_run < bid_delay)
+  {
     rv = next_run;
   }
 
-  if (next_run == t1) {
+  if (next_run == t1)
+  {
     next_run += (TIMESTAMP)(this->period);
     rv = next_run - bid_delay;
   }
@@ -2511,7 +3166,8 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1) {
   return rv;
 }
 
-int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1) {
+int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1)
+{
   if (engaged == 1)
     if (last_market == 1)
       is_engaged = 1;
@@ -2526,32 +3182,41 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1) {
   // Not sure if this is needed, but lets clean up the Override signal if we are
   // entering a new market
   //  We'll catch the new signal one reg signal too late for now
-  if (((t1 - last_run) % int(dPeriod)) == 0) {
+  if (((t1 - last_run) % int(dPeriod)) == 0)
+  {
     override_prop.setp(OV_NORMAL->get_enumeration_value());
     last_override = 0;
   }
   // If engaged and during the first pass, check to see if we should override
-  else if (engaged == 1) {
-    if (t0 < t1) {
+  else if (engaged == 1)
+  {
+    if (t0 < t1)
+    {
       // Only re-calculate this stuff on the defined regulation time
-      if (((t1 - last_run) % reg_period) == 0) {
+      if (((t1 - last_run) % reg_period) == 0)
+      {
 
         // First time through this market period, grab some of the initial data
-        if (t1 <= last_run + reg_period) {
+        if (t1 <= last_run + reg_period)
+        {
           P_ON_init = P_ON;
           delta_u = fast_reg_signal * P_ON_init;
           locked = 0;
           override_prop.setp(OV_NORMAL->get_enumeration_value());
           last_override = 0;
           u_last = (1 + fast_reg_signal) * P_ON_init;
-        } else {
+        }
+        else
+        {
           delta_u = (1 + fast_reg_signal) * P_ON_init - u_last;
           u_last = (1 + fast_reg_signal) * P_ON_init;
         }
 
         // if we are part of the OFF->ON market
-        if (delta_u > 0 && last_market == 0) {
-          if (locked == 0) {
+        if (delta_u > 0 && last_market == 0)
+        {
+          if (locked == 0)
+          {
             if (P_OFF != 0)
               mu0 = delta_u / P_OFF;
             else
@@ -2560,10 +3225,13 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1) {
 
             r1 = gl_random_uniform(RNGSTATE, 0, 1.0);
 
-            if (r1 < mu0) {
+            if (r1 < mu0)
+            {
               override_prop.setp(OV_ON->get_enumeration_value());
               locked = 1;
-            } else {
+            }
+            else
+            {
               if (use_override == OU_ON)
                 override_prop.setp(
                     OV_OFF->get_enumeration_value()); // keep it in the OFF
@@ -2574,19 +3242,23 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1) {
                         ->get_enumeration_value()); // else operate normally is
                                                     // probably not needed
             }
-          } else if (use_override == OU_ON) {
+          }
+          else if (use_override == OU_ON)
+          {
             override_prop.setp(
                 OV_ON->get_enumeration_value()); // keep it in the ON position
           }
         }
         // Ensure that it stays in the position we have decided on
-        else if (last_market == 0) {
+        else if (last_market == 0)
+        {
           mu0 = 0;
           if (P_ON != 0.0)
             mu1 = -delta_u / P_ON;
           else
             mu1 = 0;
-          if (use_override == OU_ON) {
+          if (use_override == OU_ON)
+          {
             if (locked == 1)
               override_prop.setp(
                   OV_ON->get_enumeration_value()); // keep it in the ON position
@@ -2597,8 +3269,10 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1) {
           }
         }
         // If we are part of the ON->OFF market
-        else if (delta_u < 0 && last_market == 1) {
-          if (locked == 0) {
+        else if (delta_u < 0 && last_market == 1)
+        {
+          if (locked == 0)
+          {
             mu0 = 0;
             if (P_ON != 0.0)
               mu1 = -delta_u / P_ON;
@@ -2607,10 +3281,13 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1) {
 
             r1 = gl_random_uniform(RNGSTATE, 0, 1.0);
 
-            if (r1 < mu1) {
+            if (r1 < mu1)
+            {
               override_prop.setp(OV_OFF->get_enumeration_value());
               locked = 1;
-            } else {
+            }
+            else
+            {
               if (use_override == OU_ON)
                 override_prop.setp(
                     OV_ON->get_enumeration_value()); // keep it in the ON
@@ -2620,17 +3297,22 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1) {
                     OV_NORMAL->get_enumeration_value()); // operate normally is
                                                          // probably not needed
             }
-          } else if (use_override == OU_ON) {
+          }
+          else if (use_override == OU_ON)
+          {
             override_prop.setp(
                 OV_OFF->get_enumeration_value()); // keep it in the OFF position
           }
-        } else if (last_market == 1) {
+        }
+        else if (last_market == 1)
+        {
           if (P_OFF != 0)
             mu0 = delta_u / P_OFF;
           else
             mu0 = 0;
           mu1 = 0;
-          if (use_override == OU_ON) {
+          if (use_override == OU_ON)
+          {
             if (locked == 1)
               override_prop.setp(
                   OV_OFF
@@ -2639,7 +3321,9 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1) {
               override_prop.setp(
                   OV_ON->get_enumeration_value()); // keep it in the ON position
           }
-        } else {
+        }
+        else
+        {
           mu0 = 0;
           mu1 = 0;
           override_prop.setp(OV_NORMAL->get_enumeration_value());
@@ -2651,10 +3335,14 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1) {
         P_ON = (1 - mu1) * P_ON;
         P_ONLOCK = P_ONLOCK + mu0 * P_OFF;
         P_OFF = (1 - mu0) * P_OFF;
-      } else {
+      }
+      else
+      {
         override_prop.setp(last_override);
       }
-    } else {
+    }
+    else
+    {
       override_prop.setp(last_override);
     }
   }
@@ -2663,13 +3351,17 @@ int controller::dev_level_ctrl(TIMESTAMP t0, TIMESTAMP t1) {
 
 // Double-price bidding from CCSI (controller_ccsi in older code sets)
 double controller::calcTemp1_double_price(double Tair, double Deadband,
-                                          enumeration State) {
+                                          enumeration State)
+{
   double halfband = Deadband * 0.5;
   double temp1 = 0.0;
 
-  if (State != 0) {
+  if (State != 0)
+  {
     temp1 = Tair + halfband;
-  } else {
+  }
+  else
+  {
     temp1 = Tair - halfband;
   }
 
@@ -2680,7 +3372,8 @@ double controller::calcTemp2_double_price(
     gld_property *pUa, gld_property *pHm, gld_property *pCa, gld_property *pCm,
     gld_property *pMGF, gld_property *pMSFG, gld_property *pQi,
     gld_property *pQs, gld_property *pQh, gld_property *pTout, double Tair,
-    gld_property *pTmass, double Deadband, enumeration State) {
+    gld_property *pTmass, double Deadband, enumeration State)
+{
   // Pull the properties
   double Ua = pUa->get_double();
   double Hm = pHm->get_double();
@@ -2732,13 +3425,15 @@ double controller::calcTemp2_double_price(
   double temp2 = 0.0; // L*inv(A_ETP)*expm(A_ETP*T)*(A_ETP*x + B_ETP_ON/OFF) -
                       // L*inv(A_ETP)*B_ETP_ON/OFF +/- halfband
   // Calculate A_ETP, B_ETP_ON, and B_ETP_OFF
-  if (Ca != 0.0) {
+  if (Ca != 0.0)
+  {
     A_ETP[0][0] = -1.0 * (Ua + Hm) / Ca;
     A_ETP[0][1] = Hm / Ca;
     B_ETP_ON[0] = (Ua * Tout / Ca) + (Qa_ON / Ca);
     B_ETP_OFF[0] = (Ua * Tout / Ca) + (Qa_OFF / Ca);
   }
-  if (Cm != 0.0) {
+  if (Cm != 0.0)
+  {
     A_ETP[1][0] = Hm / Cm;
     A_ETP[1][1] = -1.0 * Hm / Cm;
     B_ETP_ON[1] = Qm / Cm;
@@ -2746,16 +3441,22 @@ double controller::calcTemp2_double_price(
   }
   // Calculate inverse of A_ETP
   double detA = 0.0;
-  if (((A_ETP[0][0] * A_ETP[1][1]) - (A_ETP[0][1] * A_ETP[1][0])) != 0.0) {
+  if (((A_ETP[0][0] * A_ETP[1][1]) - (A_ETP[0][1] * A_ETP[1][0])) != 0.0)
+  {
     detA = ((A_ETP[0][0] * A_ETP[1][1]) - (A_ETP[0][1] * A_ETP[1][0]));
     AEI[0][0] = A_ETP[1][1] / detA;
     AEI[0][1] = -1 * A_ETP[0][1] / detA;
     AEI[1][1] = A_ETP[0][0] / detA;
     AEI[1][0] = -1 * A_ETP[1][0] / detA;
-  } else {
-    if (State == 0) {
+  }
+  else
+  {
+    if (State == 0)
+    {
       return Tair - (Deadband / 2.0);
-    } else {
+    }
+    else
+    {
       return Tair + (Deadband / 2.0);
     }
   }
@@ -2764,34 +3465,45 @@ double controller::calcTemp2_double_price(
   AET[0][1] = A_ETP[0][1] * T;
   AET[1][0] = A_ETP[1][0] * T;
   AET[1][1] = A_ETP[1][1] * T;
-  if (AET[0][1] == 0.0 && AET[1][0] == 0.0) { // diagonal matrix
+  if (AET[0][1] == 0.0 && AET[1][0] == 0.0)
+  { // diagonal matrix
     eAET[0][0] = exp(AET[0][0]);
     eAET[0][1] = eAET[1][0] = 0.0;
     eAET[1][1] = exp(AET[1][1]);
-  } else if (AET[1][0] == 0.0) {                // upper triangular matrix
-    if (fabs(AET[0][0] - AET[1][1]) <= 1e-37) { // nilpotent
+  }
+  else if (AET[1][0] == 0.0)
+  { // upper triangular matrix
+    if (fabs(AET[0][0] - AET[1][1]) <= 1e-37)
+    { // nilpotent
       eAET[0][0] = exp(AET[0][0]);
       eAET[0][1] = exp(AET[0][0]) * AET[0][1];
       eAET[1][0] = 0.0;
       eAET[1][1] = exp(AET[0][0]);
-    } else {
+    }
+    else
+    {
       eAET[0][0] = exp(AET[0][0]);
       eAET[0][1] = (AET[0][1] * (exp(AET[0][0]) - exp(AET[1][1]))) /
                    (AET[0][0] - AET[1][1]);
       eAET[1][0] = 0.0;
       eAET[1][1] = exp(AET[1][1]);
     }
-  } else {
+  }
+  else
+  {
     double discr = (AET[0][0] - AET[1][1]) * (AET[0][0] - AET[1][1]) +
                    (4.0 * AET[0][1] * AET[1][0]);
     double pre = exp((AET[0][0] + AET[1][1]) / 2.0);
     double g = 0.0;
-    if (fabs(discr) <= 1e-37) {
+    if (fabs(discr) <= 1e-37)
+    {
       eAET[0][0] = pre * (1.0 + ((AET[0][0] - AET[1][1]) / 2.0));
       eAET[0][1] = pre * AET[0][1];
       eAET[1][0] = pre * AET[1][0];
       eAET[1][1] = pre * (1.0 - ((AET[0][0] - AET[1][1]) / 2.0));
-    } else if (discr > 1e-37) {
+    }
+    else if (discr > 1e-37)
+    {
       g = 0.5 * sqrt(discr);
       eAET[0][0] =
           pre * (cosh(g) + ((AET[0][0] - AET[1][1]) * sinh(g) / (2.0 * g)));
@@ -2799,7 +3511,9 @@ double controller::calcTemp2_double_price(
       eAET[1][0] = pre * AET[1][0] * sinh(g) / g;
       eAET[1][1] =
           pre * (cosh(g) - ((AET[0][0] - AET[1][1]) * sinh(g) / (2.0 * g)));
-    } else {
+    }
+    else
+    {
       g = 0.5 * sqrt(fabs(discr));
       eAET[0][0] =
           pre * (cos(g) + ((AET[0][0] - AET[1][1]) * sin(g) / (2.0 * g)));
@@ -2819,26 +3533,35 @@ double controller::calcTemp2_double_price(
   AEx[0] = (A_ETP[0][0] * x[0]) + (A_ETP[0][1] * x[1]);
   AEx[1] = (A_ETP[1][0] * x[0]) + (A_ETP[1][1] * x[1]);
   // Calculate A_ETP*x + B_ETP_ON/OFF
-  if (State == 0) {
+  if (State == 0)
+  {
     AxB[0] = AEx[0] + B_ETP_OFF[0];
     AxB[1] = AEx[1] + B_ETP_OFF[1];
-  } else {
+  }
+  else
+  {
     AxB[0] = AEx[0] + B_ETP_ON[0];
     AxB[1] = AEx[1] + B_ETP_ON[1];
   }
   // Calculate L*inv(A_ETP)expm(A_ETP*T)(A_ETP*x + B_ETP_ON/OFF)
   LAxB = (LT[0] * AxB[0]) + (LT[1] * AxB[1]);
   // Calculate L*inv(A_ETP)*B_ETP_ON/OFF
-  if (State == 0) {
+  if (State == 0)
+  {
     LAIB = (LAEI[0] * B_ETP_OFF[0]) + (LAEI[1] * B_ETP_OFF[1]);
-  } else {
+  }
+  else
+  {
     LAIB = (LAEI[0] * B_ETP_ON[0]) + (LAEI[1] * B_ETP_ON[1]);
   }
   // Calculate L*inv(A_ETP)expm(A_ETP*T)(A_ETP*x + B_ETP_ON/OFF) -
   // L*inv(A_ETP)*B_ETP_ON/OFF +/- halfband
-  if (State == 0) {
+  if (State == 0)
+  {
     temp2 = LAxB - LAIB - (Deadband / 2.0);
-  } else {
+  }
+  else
+  {
     temp2 = LAxB - LAIB + (Deadband / 2.0);
   }
   return temp2;
@@ -2848,43 +3571,58 @@ double controller::calcTemp2_double_price(
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
-EXPORT int create_controller(OBJECT **obj, OBJECT *parent) {
-  try {
+EXPORT int create_controller(OBJECT **obj, OBJECT *parent)
+{
+  try
+  {
     *obj = gl_create_object(controller::oclass);
-    if (*obj != nullptr) {
+    if (*obj != nullptr)
+    {
       controller *my = /*OBJECTDATA(*obj,<>)*/ object_data<controller>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
-    } else
+    }
+    else
       return 0;
   }
   CREATE_CATCHALL(controller);
 }
 
-EXPORT int init_controller(OBJECT *obj, OBJECT *parent) {
-  try {
-    if (obj != nullptr) {
+EXPORT int init_controller(OBJECT *obj, OBJECT *parent)
+{
+  try
+  {
+    if (obj != nullptr)
+    {
       return /*OBJECTDATA(obj,<>)*/ object_data<controller>(obj)->init(parent);
-    } else
+    }
+    else
       return 0;
   }
   INIT_CATCHALL(controller);
 }
 
-EXPORT int isa_controller(OBJECT *obj, char *classname) {
-  if (obj != 0 && classname != 0) {
+EXPORT int isa_controller(OBJECT *obj, char *classname)
+{
+  if (obj != 0 && classname != 0)
+  {
     return /*OBJECTDATA(obj,<>)*/ object_data<controller>(obj)->isa(classname);
-  } else {
+  }
+  else
+  {
     return 0;
   }
 }
 
 static TIMESTAMP sync_controller_impl(OBJECT *obj, TIMESTAMP t1,
-                                      PASSCONFIG pass) {
+                                      PASSCONFIG pass)
+{
   TIMESTAMP t2 = TS_NEVER;
   controller *my = /*OBJECTDATA(obj,<>)*/ object_data<controller>(obj);
-  try {
-    switch (pass) {
+  try
+  {
+    switch (pass)
+    {
     case PC_PRETOPDOWN:
       t2 = my->presync(obj->clock, t1);
       // obj->clock = t1;
@@ -2909,11 +3647,13 @@ static TIMESTAMP sync_controller_impl(OBJECT *obj, TIMESTAMP t1,
 
 #ifndef __APPLE__
 extern "C" MODULE_API int sync_controller(OBJECT *obj, TIMESTAMP t1,
-                                          PASSCONFIG pass) {
+                                          PASSCONFIG pass)
+{
   return sync_controller_impl(obj, t1, pass);
 }
 #else
-extern "C" MODULE_API int sync_controller(OBJECT *obj, ...) {
+extern "C" MODULE_API int sync_controller(OBJECT *obj, ...)
+{
   va_list ap;
   TIMESTAMP t1;
   PASSCONFIG pass;

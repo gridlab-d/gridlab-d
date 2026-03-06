@@ -92,6 +92,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <typeinfo>
 
 #include "gld_complex.h"
 #include <array>

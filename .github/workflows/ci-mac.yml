@@ -374,7 +374,9 @@ jobs:
           export GLPATH="$(pwd):${PREFIX}:${BIN_DIR}:${LIB_DIR}:${SHARE_DIR}:${GLDCORE_DIR}"
           export PATH="${PATH}:${BIN_DIR}"
 
-          python -u validate_gld.py
+          # python -u validate_gld.py
+          gridlabd -T 0 --validate
+
 
       - name: Upload validation artefacts (macOS)
         if: always()

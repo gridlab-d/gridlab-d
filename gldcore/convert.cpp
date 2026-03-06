@@ -100,7 +100,8 @@ int convert_from_double(
   int count = 0;
 
   double scale = 1.0;
-  if (prop->unit != nullptr) {
+  if (prop->unit != nullptr)
+  {
 
     /* only do conversion if the target unit differs from the class's unit for
      * that property */
@@ -108,27 +109,38 @@ int convert_from_double(
                           ? prop
                           : class_find_property(prop->oclass, prop->name));
     scale = *(double *)data;
-    if (prop->unit != ptmp->unit && ptmp->unit != nullptr) {
-      if (0 == unit_convert_ex(ptmp->unit, prop->unit, &scale)) {
+    if (prop->unit != ptmp->unit && ptmp->unit != nullptr)
+    {
+      if (0 == unit_convert_ex(ptmp->unit, prop->unit, &scale))
+      {
         output_error("convert_from_double(): unable to convert unit '%s' to "
                      "'%s' for property '%s' (tape experiment error)",
                      ptmp->unit->name, prop->unit->name, prop->name);
         return 0;
-      } else {
+      }
+      else
+      {
         count = sprintf(temp, global_double_format, scale);
       }
-    } else {
+    }
+    else
+    {
       count = sprintf(temp, global_double_format, *(double *)data);
     }
-  } else {
+  }
+  else
+  {
     count = sprintf(temp, global_double_format, *(double *)data);
   }
 
-  if (count < size + 1) {
+  if (count < size + 1)
+  {
     memcpy(buffer, temp, count);
     buffer[count] = 0;
     return count;
-  } else {
+  }
+  else
+  {
     return 0;
   }
 }
@@ -151,7 +163,8 @@ int convert_to_double(
     {
       UNIT *from = unit_find(unit);
       if (from != prop->unit &&
-          unit_convert_ex(from, prop->unit, (double *)data) == 0) {
+          unit_convert_ex(from, prop->unit, (double *)data) == 0)
+      {
         output_error(
             "convert_to_double(const char *buffer='%s', void *data=0x%*p, "
             "PROPERTY *prop={name='%s',...}): unit conversion failed",
@@ -163,7 +176,8 @@ int convert_to_double(
         */
         return 0;
       }
-    } else // Unit not specified, give a more general error
+    }
+    else // Unit not specified, give a more general error
     {
       output_error(
           "convert_to_double(const char *buffer='%s', void *data=0x%*p, "
@@ -198,7 +212,8 @@ int convert_from_complex(
   CNOTATION cplex_output_type = J;
 
   double scale = 1.0;
-  if (prop->unit != nullptr) {
+  if (prop->unit != nullptr)
+  {
 
     /* only do conversion if the target unit differs from the class's unit for
      * that property */
@@ -206,8 +221,10 @@ int convert_from_complex(
                           ? prop
                           : class_find_property(prop->oclass, prop->name));
 
-    if (prop->unit != ptmp->unit) {
-      if (0 == unit_convert_ex(ptmp->unit, prop->unit, &scale)) {
+    if (prop->unit != ptmp->unit)
+    {
+      if (0 == unit_convert_ex(ptmp->unit, prop->unit, &scale))
+      {
         output_error("convert_from_complex(): unable to convert unit '%s' to "
                      "'%s' for property '%s' (tape experiment error)",
                      ptmp->unit->name, prop->unit->name, prop->name);
@@ -223,40 +240,54 @@ int convert_from_complex(
   }
 
   /* Check the format or global override */
-  if (global_complex_output_format == CNF_RECT) {
+  if (global_complex_output_format == CNF_RECT)
+  {
     cplex_output_type = J;
-  } else if (global_complex_output_format == CNF_POLAR_DEG) {
+  }
+  else if (global_complex_output_format == CNF_POLAR_DEG)
+  {
     cplex_output_type = A;
-  } else if (global_complex_output_format == CNF_POLAR_RAD) {
+  }
+  else if (global_complex_output_format == CNF_POLAR_RAD)
+  {
     cplex_output_type = R;
-  } else /* Must be default - see what the property wants */
+  }
+  else /* Must be default - see what the property wants */
   {
     cplex_output_type = v->Notation();
   }
 
   /* Now output appropriately */
-  if (cplex_output_type == A) {
+  if (cplex_output_type == A)
+  {
     double m = v->Mag() * scale;
     double a = v->Arg();
     if (a > PI)
       a -= (2 * PI);
     count = sprintf(temp, global_complex_format, m, a * 180 / PI, A);
-  } else if (cplex_output_type == R) {
+  }
+  else if (cplex_output_type == R)
+  {
     double m = v->Mag() * scale;
     double a = v->Arg();
     if (a > PI)
       a -= (2 * PI);
     count = sprintf(temp, global_complex_format, m, a, R);
-  } else {
+  }
+  else
+  {
     count =
         sprintf(temp, global_complex_format, v->Re() * scale, v->Im() * scale,
                 cplex_output_type ? cplex_output_type : 'i');
   }
-  if (count < size - 1) {
+  if (count < size - 1)
+  {
     memcpy(buffer, temp, count);
     buffer[count] = 0;
     return count;
-  } else {
+  }
+  else
+  {
     return 0;
   }
 }
@@ -277,7 +308,8 @@ int convert_to_complex(
   char notation[2] = {'\0', '\0'}; /* force detection invalid complex number */
   int n;
   double a = 0, b = 0;
-  if (buffer[0] == 0) {
+  if (buffer[0] == 0)
+  {
     /* empty string */
     v->SetRect(0.0, 0.0, v->Notation());
     return 1;
@@ -306,14 +338,15 @@ int convert_to_complex(
     v->SetPolar(a, b, v->Notation());
   else
     v->SetRect(a, b, v->Notation()); /* rectangular */
-  if (v->Notation() == I) /* only override notation when property is using I */
+  if (v->Notation() == I)            /* only override notation when property is using I */
     v->Notation() = (CNOTATION)notation[0];
 
   if (n > 3 && prop->unit != nullptr) /* unit given and unit allowed */
   {
     UNIT *from = unit_find(unit);
     double scale = 1.0;
-    if (from != prop->unit && unit_convert_ex(from, prop->unit, &scale) == 0) {
+    if (from != prop->unit && unit_convert_ex(from, prop->unit, &scale) == 0)
+    {
       output_error(
           "convert_to_double(const char *buffer='%s', void *data=0x%*p, "
           "PROPERTY *prop={name='%s',...}): unit conversion failed",
@@ -348,9 +381,11 @@ int convert_from_enumeration(
   int value = *(uint32 *)data;
 
   /* process the keyword list, if any */
-  for (; keys != nullptr; keys = keys->next) {
+  for (; keys != nullptr; keys = keys->next)
+  {
     /* if the key value matched */
-    if (keys->value == value) {
+    if (keys->value == value)
+    {
       /* use the keyword */
       count = strncpy(temp, keys->name, 1024) ? (int)strlen(temp) : 0;
       break;
@@ -358,14 +393,18 @@ int convert_from_enumeration(
   }
 
   /* no keyword found, return the numeric value instead */
-  if (count == 0) {
+  if (count == 0)
+  {
     count = sprintf(temp, "%d", value);
   }
-  if (count < size - 1) {
+  if (count < size - 1)
+  {
     memcpy(buffer, temp, count);
     buffer[count] = 0;
     return count;
-  } else {
+  }
+  else
+  {
     return 0;
   }
 }
@@ -383,8 +422,10 @@ int convert_to_enumeration(
   KEYWORD *keys = prop->keywords;
 
   /* process the keyword list */
-  for (; keys != nullptr; keys = keys->next) {
-    if (strcmp(keys->name, buffer) == 0) {
+  for (; keys != nullptr; keys = keys->next)
+  {
+    if (strcmp(keys->name, buffer) == 0)
+    {
       *(uint32 *)data = (uint32)(keys->value);
       found = true;
       break;
@@ -427,10 +468,12 @@ int convert_from_set(
   buffer[0] = '\0';
 
   /* process each keyword */
-  for (keys = prop->keywords; keys != nullptr; keys = keys->next) {
+  for (keys = prop->keywords; keys != nullptr; keys = keys->next)
+  {
     /* if the keyword matches */
     if ((!ISZERO && keys->value != 0 && (keys->value & value) == keys->value) ||
-        (keys->value == 0 && ISZERO)) {
+        (keys->value == 0 && ISZERO))
+    {
       /* get the length of the keyword */
       int len = (int)strlen(keys->name);
 
@@ -438,11 +481,14 @@ int convert_from_set(
       value &= ~(keys->value);
 
       /* if there's room for it in the buffer */
-      if (size > count + len + 1) {
+      if (size > count + len + 1)
+      {
         /* if the buffer already has keywords in it */
-        if (buffer[0] != '\0') {
+        if (buffer[0] != '\0')
+        {
           /* add a separator to the buffer */
-          if (!(prop->flags & PF_CHARSET)) {
+          if (!(prop->flags & PF_CHARSET))
+          {
             count++;
             strcat(buffer, SETDELIM);
           }
@@ -495,41 +541,52 @@ int convert_to_set(
   strcpy(temp, buffer);
 
   /* check for CHARSET keys (single character keys) and usage without | */
-  if ((prop->flags & PF_CHARSET) && strchr(buffer, '|') == nullptr) {
-    for (ptr = buffer; *ptr != '\0'; ptr++) {
+  if ((prop->flags & PF_CHARSET) && strchr(buffer, '|') == nullptr)
+  {
+    for (ptr = buffer; *ptr != '\0'; ptr++)
+    {
       bool found = false;
       KEYWORD *key;
-      for (key = keys; key != nullptr; key = key->next) {
-        if (*ptr == key->name[0]) {
+      for (key = keys; key != nullptr; key = key->next)
+      {
+        if (*ptr == key->name[0])
+        {
           value |= key->value;
           count++;
           found = true;
           break; /* we found our key */
         }
       }
-      if (!found) {
+      if (!found)
+      {
         output_error("set member '%c' is not a keyword of property %s", *ptr,
                      prop->name);
         return 0;
       }
     }
-  } else {
+  }
+  else
+  {
     /* process each keyword in the temporary buffer*/
     for (ptr = strtok(temp, SETDELIM); ptr != nullptr;
-         ptr = strtok(nullptr, SETDELIM)) {
+         ptr = strtok(nullptr, SETDELIM))
+    {
       bool found = false;
       KEYWORD *key;
 
       /* scan each of the keywords in the set */
-      for (key = keys; key != nullptr; key = key->next) {
-        if (strcmp(ptr, key->name) == 0) {
+      for (key = keys; key != nullptr; key = key->next)
+      {
+        if (strcmp(ptr, key->name) == 0)
+        {
           value |= key->value;
           count++;
           found = true;
           break; /* we found our key */
         }
       }
-      if (!found) {
+      if (!found)
+      {
         output_error("set member '%s' is not a keyword of property %s", ptr,
                      prop->name);
         return 0;
@@ -552,11 +609,14 @@ int convert_from_int16(
 {
   char temp[1025];
   int count = sprintf(temp, "%hd", *(short *)data);
-  if (count < size - 1) {
+  if (count < size - 1)
+  {
     memcpy(buffer, temp, count);
     buffer[count] = 0;
     return count;
-  } else {
+  }
+  else
+  {
     return 0;
   }
 }
@@ -577,9 +637,11 @@ int convert_to_int16(
         Converts an \e int32 property to a string.
         @return the number of character written to the string
  **/
-int convert_from_uint32(char *buffer, int size, void *data, PROPERTY *prop) {
-  if (!buffer || !data) { // Null pointer checks
-    return -1;            // Return an error code distinct from success
+int convert_from_uint32(char *buffer, int size, void *data, PROPERTY *prop)
+{
+  if (!buffer || !data)
+  {            // Null pointer checks
+    return -1; // Return an error code distinct from success
   }
 
   const int MAX_LENGTH = 1024; // Define a safe maximum length for numbers
@@ -588,28 +650,32 @@ int convert_from_uint32(char *buffer, int size, void *data, PROPERTY *prop) {
   // Use snprintf for safer bounds checking
   int count =
       snprintf(temp, sizeof(temp), "%d", *(reinterpret_cast<int *>(data)));
-  if (count < 0 || count > size - 1) { // Handle snprintf errors and size issues
-    return -2;                         // Return error code for overflow
+  if (count < 0 || count > size - 1)
+  {            // Handle snprintf errors and size issues
+    return -2; // Return error code for overflow
   }
 
   strncpy(buffer, temp, static_cast<size_t>(count)); // Safer copy
-  buffer[count] = '\0'; // Null-terminate explicitly
-  return count;         // Return character count
+  buffer[count] = '\0';                              // Null-terminate explicitly
+  return count;                                      // Return character count
 }
 
 /** Convert to an \e uint32
         Converts a string to an \e uint32 property.
         @return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_uint32(const char *buffer, void *data, PROPERTY *prop) {
-  if (!buffer || !data) { // Null pointer check
-    return -1;            // Return an error code for null pointers
+int convert_to_uint32(const char *buffer, void *data, PROPERTY *prop)
+{
+  if (!buffer || !data)
+  {            // Null pointer check
+    return -1; // Return an error code for null pointers
   }
 
   int temp;
   int result = sscanf(buffer, "%d", &temp); // Parse into a temporary integer
-  if (result != 1) {                        // Conversion failed
-    return 0;                               // Return 0 for failed conversions
+  if (result != 1)
+  {           // Conversion failed
+    return 0; // Return 0 for failed conversions
   }
 
   *reinterpret_cast<int *>(data) = temp; // Write back to `data`
@@ -628,11 +694,14 @@ int convert_from_int32(
 {
   char temp[1025];
   int count = sprintf(temp, "%d", *(int *)data);
-  if (count < size - 1) {
+  if (count < size - 1)
+  {
     memcpy(buffer, temp, static_cast<size_t>(count));
     buffer[count] = 0;
     return count;
-  } else {
+  }
+  else
+  {
     return 0;
   }
 }
@@ -663,11 +732,14 @@ int convert_from_int64(
 {
   char temp[1025];
   int count = sprintf(temp, "%" FMT_INT64 "d", *(int64 *)data);
-  if (count < size - 1) {
+  if (count < size - 1)
+  {
     memcpy(buffer, temp, count);
     buffer[count] = 0;
     return count;
-  } else {
+  }
+  else
+  {
     return 0;
   }
 }
@@ -701,9 +773,12 @@ int convert_from_char8(
       strchr((char *)data, ';') != nullptr || ((char *)data)[0] == '\0')
     format = "\"%s\"";
   count = sprintf(temp, format, (char *)data);
-  if (count > size - 1) {
+  if (count > size - 1)
+  {
     return 0;
-  } else {
+  }
+  else
+  {
     memcpy(buffer, temp, count);
     buffer[count] = 0;
     return count;
@@ -720,7 +795,8 @@ int convert_to_char8(
     PROPERTY *prop)     /**< a pointer to keywords that are supported */
 {
   char c = ((char *)buffer)[0];
-  switch (c) {
+  switch (c)
+  {
   case '\0':
     return ((char *)data)[0] = '\0', 1;
   case '"':
@@ -747,9 +823,12 @@ int convert_from_char32(
       strchr((char *)data, ';') != nullptr || ((char *)data)[0] == '\0')
     format = "\"%s\"";
   count = sprintf(temp, format, (char *)data);
-  if (count > size - 1) {
+  if (count > size - 1)
+  {
     return 0;
-  } else {
+  }
+  else
+  {
     memcpy(buffer, temp, count);
     buffer[count] = 0;
     return count;
@@ -760,12 +839,13 @@ int convert_from_char32(
         Converts a string to a \e char32 property.
         @return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-// I’ve changed the signature so that `buffer` is a C-string
+// Iï¿½ve changed the signature so that `buffer` is a C-string
 // and `data` is a char array of exactly 32 bytes.
 
 // signature unchanged
-int convert_to_char32(const char *buffer, void *data, PROPERTY *prop) {
-  // silence “unused” warning for prop
+int convert_to_char32(const char *buffer, void *data, PROPERTY *prop)
+{
+  // silence ï¿½unusedï¿½ warning for prop
   (void)prop;
 
   // out is our 32-byte destination
@@ -775,7 +855,8 @@ int convert_to_char32(const char *buffer, void *data, PROPERTY *prop) {
   std::string_view sv{buffer ? buffer : ""};
 
   // 1) empty string special case from your original code
-  if (sv.empty()) {
+  if (sv.empty())
+  {
     out[0] = '\0';
     return 1; // you returned 1 for the empty buffer case
   }
@@ -784,17 +865,21 @@ int convert_to_char32(const char *buffer, void *data, PROPERTY *prop) {
   std::string_view token;
 
   // 2) if it starts with a quote, grab everything up to the next quote
-  if (sv.front() == '"') {
+  if (sv.front() == '"')
+  {
     // find the closing quote (or end of string)
     auto end = sv.find('"', /*startpos=*/1);
     if (end == std::string_view::npos)
       end = sv.size();
     // slice out the contents between the quotes
     token = sv.substr(1, end - 1);
-  } else {
+  }
+  else
+  {
     // skip any leading whitespace (sscanf("%s") skips it for us)
     auto start = sv.find_first_not_of(" \t\r\n");
-    if (start == std::string_view::npos) {
+    if (start == std::string_view::npos)
+    {
       // nothing but whitespace => no assignment
       out[0] = '\0';
       return 0;
@@ -822,7 +907,7 @@ int convert_to_char32(const char *buffer, void *data, PROPERTY *prop) {
 
 // int convert_to_char32(const char *buffer, /**< a pointer to the string buffer
 // */ 					    void *data, /**< a pointer to the data */ 					    PROPERTY *prop) /**< a pointer
-//to keywords that are supported */
+// to keywords that are supported */
 //{
 //	char c=((char*)buffer)[0];
 //	switch (c) {
@@ -852,9 +937,12 @@ int convert_from_char256(
       strchr((char *)data, ';') != nullptr || ((char *)data)[0] == '\0')
     format = "\"%s\"";
   count = sprintf(temp, format, (char *)data);
-  if (count > size - 1) {
+  if (count > size - 1)
+  {
     return 0;
-  } else {
+  }
+  else
+  {
     memcpy(buffer, temp, count);
     buffer[count] = 0;
     return count;
@@ -865,7 +953,8 @@ int convert_from_char256(
         Converts a string to a \e char256 property.
         @return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_char256(const char *buffer, void *data, PROPERTY *prop) {
+int convert_to_char256(const char *buffer, void *data, PROPERTY *prop)
+{
   // keep the signature the same
   (void)prop;
 
@@ -876,23 +965,28 @@ int convert_to_char256(const char *buffer, void *data, PROPERTY *prop) {
   std::string_view sv{buffer ? buffer : ""};
 
   // 1) empty-string case
-  if (sv.empty()) {
+  if (sv.empty())
+  {
     out[0] = '\0';
     return 1;
   }
 
   // 2) decide which chunk of text to copy
   std::string_view token;
-  if (sv.front() == '"') {
+  if (sv.front() == '"')
+  {
     // quoted: grab everything up to the next quote (or EOL)
     auto end = sv.find('"', /*start=*/1);
     if (end == std::string_view::npos)
       end = sv.size();
     token = sv.substr(1, end - 1);
-  } else {
+  }
+  else
+  {
     // unquoted: skip leading whitespace, then stop at '\n', '\r', or ';'
     auto start = sv.find_first_not_of(" \t\r\n");
-    if (start == std::string_view::npos) {
+    if (start == std::string_view::npos)
+    {
       out[0] = '\0';
       return 0;
     }
@@ -911,13 +1005,13 @@ int convert_to_char256(const char *buffer, void *data, PROPERTY *prop) {
   std::memcpy(out, token.data(), len);
   out[len] = '\0';
 
-  // mimic sscanf’s return value: 1 if we actually stored something, else 0
+  // mimic sscanfï¿½s return value: 1 if we actually stored something, else 0
   return (len > 0) ? 1 : 0;
 }
 
 // int convert_to_char256(const char *buffer, /**< a pointer to the string
 // buffer */ 					    void *data, /**< a pointer to the data */ 					    PROPERTY *prop) /**< a
-//pointer to keywords that are supported */
+// pointer to keywords that are supported */
 //{
 //	char c=((char*)buffer)[0];
 //	switch (c) {
@@ -948,9 +1042,12 @@ int convert_from_char1024(
       strchr((char *)data, ';') != nullptr || ((char *)data)[0] == '\0')
     format = "\"%s\"";
   count = sprintf(temp, format, (char *)data);
-  if (count > size - 1) {
+  if (count > size - 1)
+  {
     return 0;
-  } else {
+  }
+  else
+  {
     memcpy(buffer, temp, count);
     buffer[count] = 0;
     return count;
@@ -961,16 +1058,19 @@ int convert_from_char1024(
         Converts a string to a \e char1024 property.
         @return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_char1024(const char *_buffer, void *_data, PROPERTY *_prop) {
+int convert_to_char1024(const char *_buffer, void *_data, PROPERTY *_prop)
+{
   (void)_prop; // Suppress unused parameter warnings, or use it if needed.
 
   // Validate the input buffer pointer
-  if (!_buffer) {
+  if (!_buffer)
+  {
     throw std::invalid_argument("The _buffer pointer is null.");
   }
 
   // Validate the _data pointer
-  if (!_data) {
+  if (!_data)
+  {
     throw std::invalid_argument("The _data pointer is null.");
   }
 
@@ -979,32 +1079,40 @@ int convert_to_char1024(const char *_buffer, void *_data, PROPERTY *_prop) {
 
   // Handle the case where the buffer string starts with '\0'
   char c = _buffer[0];
-  if (c == '\0') {
+  if (c == '\0')
+  {
     data[0] = '\0';
     return 1; // Successfully handled
   }
 
   // Handle the case where the buffer string starts with a double quote ('"')
-  if (c == '"') {
+  if (c == '"')
+  {
     // Safely parse the content within quotes
-    if (sscanf(_buffer + 1, "%1023[^\"]", data) == 1) {
+    if (sscanf(_buffer + 1, "%1023[^\"]", data) == 1)
+    {
       return 1; // Successfully parsed
-    } else {
+    }
+    else
+    {
       throw std::runtime_error("Failed to parse the quoted string.");
     }
   }
 
   // Handle all other cases (read until a newline character or max size)
-  if (sscanf(_buffer, "%1023[^\n]", data) == 1) {
+  if (sscanf(_buffer, "%1023[^\n]", data) == 1)
+  {
     return 1; // Successfully parsed
-  } else {
+  }
+  else
+  {
     throw std::runtime_error("Failed to parse the input string.");
   }
 }
 
 // int convert_to_char1024(const char *buffer, /**< a pointer to the string
 // buffer */ 					    void *data, /**< a pointer to the data */ 					    PROPERTY *prop) /**< a
-//pointer to keywords that are supported */
+// pointer to keywords that are supported */
 //{
 //	char c=((char*)buffer)[0];
 //	switch (c) {
@@ -1030,24 +1138,29 @@ int convert_from_object(
   OBJECT *obj = (data ? *(OBJECT **)data : nullptr);
   char temp[256];
   memset(temp, 0, 256);
-  if (obj == nullptr) {
+  if (obj == nullptr)
+  {
     strcpy(buffer, "");
     return 1;
   }
 
   /* get the object's namespace */
-  if (object_current_namespace() != obj->space) {
+  if (object_current_namespace() != obj->space)
+  {
     if (object_get_namespace(obj, buffer, size))
       strcat(buffer, "::");
-  } else
+  }
+  else
     strcpy(buffer, "");
 
-  if (obj->name != nullptr) {
+  if (obj->name != nullptr)
+  {
     size_t a = strlen(obj->name);
     size_t b = size - 1;
     // if ((strlen(obj->name) != 0) && (strlen(obj->name) < (size_t)(size -
     // 1))){
-    if ((a != 0) && (a < b)) {
+    if ((a != 0) && (a < b))
+    {
       strcat(buffer, obj->name);
       return 1;
     }
@@ -1080,23 +1193,30 @@ int convert_to_object(
   {
     *target = nullptr;
     return 1;
-  } else if (sscanf(buffer, "\"%[^\"]\"", oname) == 1 ||
-             (strchr(buffer, ':') == nullptr &&
-              strncpy(oname, buffer, sizeof(oname)))) {
+  }
+  else if (sscanf(buffer, "\"%[^\"]\"", oname) == 1 ||
+           (strchr(buffer, ':') == nullptr &&
+            strncpy(oname, buffer, sizeof(oname))))
+  {
     oname[sizeof(oname) - 1] = '\0'; /* terminate unterminated string */
     *target = object_find_name(oname);
     return (*target) != nullptr;
-  } else if (sscanf(buffer, global_object_scan, cname, &id) == 2) {
+  }
+  else if (sscanf(buffer, global_object_scan, cname, &id) == 2)
+  {
     OBJECT *obj = object_find_by_id(id);
-    if (obj == nullptr) { /* failure case, make noisy if desired. */
+    if (obj == nullptr)
+    { /* failure case, make noisy if desired. */
       *target = nullptr;
       return 0;
     }
-    if (obj != nullptr && strcmp(obj->oclass->name, cname) == 0) {
+    if (obj != nullptr && strcmp(obj->oclass->name, cname) == 0)
+    {
       *target = obj;
       return 1;
     }
-  } else
+  }
+  else
     *target = nullptr;
   return 0;
 }
@@ -1140,15 +1260,18 @@ int convert_to_delegated(
         Converts a \e boolean data type reference to a string.
         @return the number of characters written to the string
  **/
-int convert_from_boolean(char *buffer, int size, void *data, PROPERTY *prop) {
+int convert_from_boolean(char *buffer, int size, void *data, PROPERTY *prop)
+{
   unsigned int b = 0;
   if (buffer == nullptr || data == nullptr || prop == nullptr)
     return 0;
   b = *(bool *)data;
-  if (b == 1 && (size > 4)) {
+  if (b == 1 && (size > 4))
+  {
     return sprintf(buffer, "TRUE");
   }
-  if (b == 0 && (size > 5)) {
+  if (b == 0 && (size > 5))
+  {
     return sprintf(buffer, "FALSE");
   }
   return 0;
@@ -1159,14 +1282,18 @@ int convert_from_boolean(char *buffer, int size, void *data, PROPERTY *prop) {
         @return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
 /* booleans are handled internally as 1-byte uchar's. -MH */
-int convert_to_boolean(const char *buffer, void *data, PROPERTY *prop) {
+int convert_to_boolean(const char *buffer, void *data, PROPERTY *prop)
+{
   char str[32];
-  if (sscanf(buffer, "%31[A-Za-z]", str) == 1) {
-    if (stricmp_portable(str, "TRUE") == 0) {
+  if (sscanf(buffer, "%31[A-Za-z]", str) == 1)
+  {
+    if (stricmp_portable(str, "TRUE") == 0)
+    {
       *(bool *)data = 1;
       return 1;
     }
-    if (stricmp_portable(str, "FALSE") == 0) {
+    if (stricmp_portable(str, "FALSE") == 0)
+    {
       *(bool *)data = 0;
       return 1;
     }
@@ -1174,7 +1301,8 @@ int convert_to_boolean(const char *buffer, void *data, PROPERTY *prop) {
   }
 
   int v;
-  if (sscanf(buffer, "%d", &v) == 1) {
+  if (sscanf(buffer, "%d", &v) == 1)
+  {
     *(bool *)data = (v != 0);
     return 1;
   }
@@ -1183,13 +1311,15 @@ int convert_to_boolean(const char *buffer, void *data, PROPERTY *prop) {
 }
 
 int convert_from_timestamp_stub(char *buffer, int size, void *data,
-                                PROPERTY *prop) {
+                                PROPERTY *prop)
+{
   TIMESTAMP ts = *(int64 *)data;
   return convert_from_timestamp(ts, buffer, size);
   // return 0;
 }
 
-int convert_to_timestamp_stub(const char *buffer, void *data, PROPERTY *prop) {
+int convert_to_timestamp_stub(const char *buffer, void *data, PROPERTY *prop)
+{
   TIMESTAMP ts = convert_to_timestamp(buffer);
   *(int64 *)data = ts;
   return 1;
@@ -1202,24 +1332,30 @@ int convert_to_timestamp_stub(const char *buffer, void *data, PROPERTY *prop) {
 // Example function to simulate converting a double value into a string
 // int convert_from_double(char* buffer, int size, void* data, PROPERTY* prop) {
 //	double value = *reinterpret_cast<double*>(data); // Extract the double
-//value 	return snprintf(buffer, size, "%.3f", value); // Serialize into the
-//buffer
+// value 	return snprintf(buffer, size, "%.3f", value); // Serialize into the
+// buffer
 // }
 
 // Implementation of convert_from_double_array
 int convert_from_double_array(char *_buffer, int size, void *data,
-                              PROPERTY *prop) {
+                              PROPERTY *prop)
+{
   Eigen::MatrixXd &_a =
       *reinterpret_cast<Eigen::MatrixXd *>(data); // Cast void* data to MatrixXd
   unsigned int n, m;                              // Row and column counters
   unsigned int p = 0;                             // Buffer position tracker
 
-  for (n = 0; n < _a.rows(); n++) {
-    for (m = 0; m < _a.cols(); m++) {
+  for (n = 0; n < _a.rows(); n++)
+  {
+    for (m = 0; m < _a.cols(); m++)
+    {
       // Handle NaN
-      if (emh::is_element_nan(_a, n, m)) {
+      if (emh::is_element_nan(_a, n, m))
+      {
         p += snprintf(_buffer + p, size - p, "%s", "NAN");
-      } else {
+      }
+      else
+      {
         // Serialize valid double elements
         /*p += convert_from_double(_buffer + p, size - p, get_element_addr(_a,
          * n, m), prop);*/
@@ -1228,13 +1364,15 @@ int convert_from_double_array(char *_buffer, int size, void *data,
       }
 
       // Add space between columns (but not for the last column in a row)
-      if (m < _a.cols() - 1) {
+      if (m < _a.cols() - 1)
+      {
         std::strcpy(_buffer + p++, " ");
       }
     }
 
     // Add semicolon between.rows() (but not for the last row of the matrix)
-    if (n < _a.rows() - 1) {
+    if (n < _a.rows() - 1)
+    {
       std::strcpy(_buffer + p++, ";");
     }
   }
@@ -1256,15 +1394,16 @@ int convert_from_double_array(char *_buffer, int size, void *data,
 //				p += sprintf(buffer+p,"%s","NAN");
 //			else
 //				p +=
-//convert_from_double(buffer+p,size,(void*)a->get_addr(n,m),prop); 			if (
-//m<a->cols()-1 ) strcpy(buffer+p++," ");
+// convert_from_double(buffer+p,size,(void*)a->get_addr(n,m),prop); 			if (
+// m<a->cols()-1 ) strcpy(buffer+p++," ");
 //		}
 //		if ( n<a-.rows()-1 ) strcpy(buffer+p++,";");
 //	}
 //	return p;
 //}
 
-int convert_to_double_array(const char *_buffer, void *data, PROPERTY *prop) {
+int convert_to_double_array(const char *_buffer, void *data, PROPERTY *prop)
+{
   Eigen::MatrixXd &_a =
       *reinterpret_cast<Eigen::MatrixXd *>(data); // Cast void* to MatrixXd
   Eigen::Index row = 0;
@@ -1280,23 +1419,28 @@ int convert_to_double_array(const char *_buffer, void *data, PROPERTY *prop) {
 
   // Parse input buffer
   while (std::getline(ss, word,
-                      ' ')) { // Use space delimiter for basic token parsing
+                      ' '))
+  { // Use space delimiter for basic token parsing
 
     // Skip spaces
-    if (word.empty() || std::isspace(word[0])) {
+    if (word.empty() || std::isspace(word[0]))
+    {
       continue;
     }
 
     // Process end of row (semicolon)
-    if (word == ";") {
+    if (word == ";")
+    {
       row++;
       col = 0;
       continue;
     }
 
     // Process special "NAN" value
-    if (word == "NAN") {
-      if (row >= _a.rows()) {
+    if (word == "NAN")
+    {
+      if (row >= _a.rows())
+      {
         _a.conservativeResize(row + 1, std::max(_a.cols(), col + 1));
       }
       _a(row, col) = std::numeric_limits<double>::quiet_NaN(); // Set to NaN
@@ -1304,9 +1448,11 @@ int convert_to_double_array(const char *_buffer, void *data, PROPERTY *prop) {
     }
     // Process numerical value
     else if (std::isdigit(word[0]) || word[0] == '.' || word[0] == '-' ||
-             word[0] == '+') {
+             word[0] == '+')
+    {
       double value = std::atof(word.c_str()); // Convert to double
-      if (row >= _a.rows() || col >= _a.cols()) {
+      if (row >= _a.rows() || col >= _a.cols())
+      {
         _a.conservativeResize(row + 1,
                               std::max(_a.cols(), col + 1)); // Grow matrix
       }
@@ -1314,7 +1460,8 @@ int convert_to_double_array(const char *_buffer, void *data, PROPERTY *prop) {
       col++;
     }
     // Handle object property or other unsupported types
-    else {
+    else
+    {
       std::cerr << "Unsupported or invalid value: " << word << " at row " << row
                 << ", col " << col << std::endl;
       return 0; // Unsupported
@@ -1332,8 +1479,8 @@ int convert_to_double_array(const char *_buffer, void *data, PROPERTY *prop) {
 //{
 //	unsigned row=0, col=0;
 //	double_array *a= new double_array(row, col,
-//reinterpret_cast<double**>(&data)); 	a->set_name(prop->name); 	const char *p =
-//buffer;
+// reinterpret_cast<double**>(&data)); 	a->set_name(prop->name); 	const char *p =
+// buffer;
 //
 //	/* new array */
 //	/* parse input */
@@ -1370,46 +1517,46 @@ int convert_to_double_array(const char *_buffer, void *data, PROPERTY *prop) {
 //			{
 //				OBJECT *obj = load_get_current_object();
 //				if ( obj!=nullptr &&
-//strcmp(objectname,"parent")==0 ) 					obj = obj->parent; 				else if (
-//strcmp(objectname,"this")!=0 ) 					obj = object_find_name(objectname); 				if (
-//obj==nullptr )
+// strcmp(objectname,"parent")==0 ) 					obj = obj->parent; 				else if (
+// strcmp(objectname,"this")!=0 ) 					obj = object_find_name(objectname); 				if (
+// obj==nullptr )
 //				{
 //					output_error("convert_to_double_array(const
-//char *buffer='%10s...',...): entry at row %d, col %d - object property '%s'
-//not found", buffer,row,col,objectname); 					return 0;
+// char *buffer='%10s...',...): entry at row %d, col %d - object property '%s'
+// not found", buffer,row,col,objectname); 					return 0;
 //				}
 //				PROPERTY *prop =
-//object_get_property(obj,propertyname,nullptr); 				if ( prop==nullptr )
+// object_get_property(obj,propertyname,nullptr); 				if ( prop==nullptr )
 //				{
 //					output_error("convert_to_double_array(const
-//char *buffer='%10s...',...): entry at row %d, col %d - property '%s' not found
-//in object '%s'", buffer,row,col,propertyname,objectname); 					return 0;
+// char *buffer='%10s...',...): entry at row %d, col %d - property '%s' not found
+// in object '%s'", buffer,row,col,propertyname,objectname); 					return 0;
 //				}
 //				a->resize(row+1,col+1);
 //				a->set_at(row,col,object_get_double(obj,prop));
 //				if ( a->is_nan(row,col) )
 //				{
 //					output_error("convert_to_double_array(const
-//char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object
+// char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object
 //'%s' is not accessible", buffer,row,col,propertyname,objectname); 					return 0;
 //				}
 //				col++;
 //			}
 //			else if ( sscanf(value,"%[^; \t]",propertyname)==1 ) /*
-//current object/global property */
+// current object/global property */
 //			{
 //				OBJECT *obj;
 //				PROPERTY *target = nullptr;
 //				obj  = (OBJECT*)((char*)data -
 //(char*)prop->addr)-1; 				object_name(obj,objectname,sizeof(objectname)); 				target =
-//object_get_property(obj,propertyname,nullptr); 				if ( target!=nullptr )
+// object_get_property(obj,propertyname,nullptr); 				if ( target!=nullptr )
 //				{
 //					if ( target->ptype!=PT_double &&
-//target->ptype!=PT_random && target->ptype!=PT_enduse &&
-//target->ptype!=PT_loadshape && target->ptype!=PT_enduse )
+// target->ptype!=PT_random && target->ptype!=PT_enduse &&
+// target->ptype!=PT_loadshape && target->ptype!=PT_enduse )
 //					{
 //						output_error("convert_to_double_array(const
-//char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object
+// char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object
 //'%s' refers to property '%s', which is not an underlying double",
 //								buffer,row,col,propertyname,objectname,target->name);
 //						return 0;
@@ -1419,7 +1566,7 @@ int convert_to_double_array(const char *_buffer, void *data, PROPERTY *prop) {
 //					if ( a->is_nan(row,col) )
 //					{
 //						output_error("convert_to_double_array(const
-//char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object
+// char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object
 //'%s' is not accessible", buffer,row,col,propertyname,objectname); 						return 0;
 //					}
 //					col++;
@@ -1427,25 +1574,25 @@ int convert_to_double_array(const char *_buffer, void *data, PROPERTY *prop) {
 //				else
 //				{
 //					GLOBALVAR *var =
-//global_find(propertyname); 					if ( var==nullptr )
+// global_find(propertyname); 					if ( var==nullptr )
 //					{
 //						output_error("convert_to_double_array(const
-//char *buffer='%10s...',...): entry at row %d, col %d global '%s' not found",
-//buffer,row,col,propertyname); 						return 0;
+// char *buffer='%10s...',...): entry at row %d, col %d global '%s' not found",
+// buffer,row,col,propertyname); 						return 0;
 //					}
 //					if ( var->prop->ptype!=PT_double )
 //					{
 //						output_error("convert_to_double_array(const
-//char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object
+// char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object
 //'%s' refers to a global '%s', which is not an underlying double",
-//buffer,row,col,propertyname,objectname,propertyname); 						return 0;
+// buffer,row,col,propertyname,objectname,propertyname); 						return 0;
 //					}
 //					a->resize(row+1,col+1);
 //					a->set_at(row,col,(double*)var->prop->addr);
 //					if ( a->is_nan(row,col) )
 //					{
 //						output_error("convert_to_double_array(const
-//char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object
+// char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object
 //'%s' is not accessible", buffer,row,col,propertyname,objectname); 						return 0;
 //					}
 //					col++;
@@ -1455,10 +1602,10 @@ int convert_to_double_array(const char *_buffer, void *data, PROPERTY *prop) {
 //			{
 //				output_error("convert_to_double_array(const char
 //*buffer='%10s...',...): entry at row %d, col %d is not valid (value='%10s')",
-//buffer,row,col,p); 				return 0;
+// buffer,row,col,p); 				return 0;
 //			}
 //			while ( *p!='\0' && !isspace(*p) && *p!=';' ) p++; /*
-//skip characters just parsed */
+// skip characters just parsed */
 //		}
 //	}
 //	return 1;
@@ -1466,24 +1613,30 @@ int convert_to_double_array(const char *_buffer, void *data, PROPERTY *prop) {
 
 // int convert_from_complex(char* buffer, int size, void* data, PROPERTY* prop)
 // { 	std::complex<double>* complex_value =
-//reinterpret_cast<std::complex<double>*>(data); 	return snprintf(buffer, size,
+// reinterpret_cast<std::complex<double>*>(data); 	return snprintf(buffer, size,
 //"(%.3f, %.3f)", complex_value->real(), complex_value->imag());
 // }
 
 int convert_from_complex_array(char *buffer, int size, void *data,
-                               PROPERTY *prop) {
+                               PROPERTY *prop)
+{
   Eigen::MatrixXcd &_a = *reinterpret_cast<Eigen::MatrixXcd *>(
       data); // Cast void* data to Eigen::MatrixXcd
   unsigned int n, m;
 
   unsigned int p = 0; // Position in the buffer
-  for (n = 0; n < _a.rows(); n++) {
-    for (m = 0; m < _a.cols(); m++) {
+  for (n = 0; n < _a.rows(); n++)
+  {
+    for (m = 0; m < _a.cols(); m++)
+    {
       // Check if the current element is NaN
-      if (emh::is_element_nan(_a, n, m)) {
+      if (emh::is_element_nan(_a, n, m))
+      {
         // Serialize "NAN" into the buffer
         p += snprintf(buffer + p, size - p, "%s", "NAN");
-      } else {
+      }
+      else
+      {
         // Serialize the complex value into the buffer using
         // convert_from_complex
         /*p += convert_from_complex(buffer + p, size - p, get_element_addr(_a,
@@ -1493,13 +1646,15 @@ int convert_from_complex_array(char *buffer, int size, void *data,
       }
 
       // Add space between columns
-      if (m < _a.cols() - 1) {
+      if (m < _a.cols() - 1)
+      {
         std::strcpy(buffer + p++, " ");
       }
     }
 
     // Add semicolon between.rows()
-    if (n < _a.rows() - 1) {
+    if (n < _a.rows() - 1)
+    {
       std::strcpy(buffer + p++, ";");
     }
   }
@@ -1525,8 +1680,8 @@ int convert_from_complex_array(char *buffer, int size, void *data,
 //				p += sprintf(buffer+p,"%s","NAN");
 //			else
 //				p +=
-//convert_from_complex(buffer+p,size,(void*)get_element_addr(*a,n,m),prop); 			if (
-//m<a->cols()-1 ) strcpy(buffer+p++," ");
+// convert_from_complex(buffer+p,size,(void*)get_element_addr(*a,n,m),prop); 			if (
+// m<a->cols()-1 ) strcpy(buffer+p++," ");
 //		}
 //		if ( n<a-.rows()-1 ) strcpy(buffer+p++,";");
 //	}
@@ -1537,20 +1692,23 @@ int convert_from_complex_array(char *buffer, int size, void *data,
         Converts a string to a \e complex_array data type property.
         @return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
-int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop) {
+int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop)
+{
   Eigen::MatrixXcd *a = (Eigen::MatrixXcd *)data;
   unsigned row = 0, col = 0;
   const char *p = buffer;
 
   /* new array */
   /* parse input */
-  for (p = buffer; *p != '\0';) {
+  for (p = buffer; *p != '\0';)
+  {
     char value[256];
     char objectname[64], propertyname[64];
     gld::complex c;
     while (*p != '\0' && isspace(*p))
       p++; /* skip spaces */
-    if (*p != '\0' && sscanf(p, "%s", value) == 1) {
+    if (*p != '\0' && sscanf(p, "%s", value) == 1)
+    {
 
       if (*p == ';') /* end row */
       {
@@ -1558,23 +1716,27 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop) {
         col = 0;
         p++;
         continue;
-      } else if (strnicmp_portable(p, "NAN", 3) == 0) /* nullptr value */
+      }
+      else if (strnicmp_portable(p, "NAN", 3) == 0) /* nullptr value */
       {
         a->resize(row, col);
         (*a)(row, col) = 0.0;
         col++;
-      } else if (convert_to_complex(value, (void *)&c,
-                                    prop)) /* probably real value */
+      }
+      else if (convert_to_complex(value, (void *)&c,
+                                  prop)) /* probably real value */
       {
         a->resize(row, col);
         (*a)(row, col) = c;
         col++;
-      } else if (sscanf(value, "%[^.].%[^; \t]", objectname, propertyname) ==
-                 2) /* object property */
+      }
+      else if (sscanf(value, "%[^.].%[^; \t]", objectname, propertyname) ==
+               2) /* object property */
       {
         OBJECT *obj = object_find_name(objectname);
         PROPERTY *prop;
-        if (obj == nullptr) {
+        if (obj == nullptr)
+        {
           output_error(
               "convert_to_double_array(const char *buffer='%10s...',...): "
               "entry at row %d, col %d - object '%s' not found",
@@ -1582,7 +1744,8 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop) {
           return 0;
         }
         prop = object_get_property(obj, propertyname, nullptr);
-        if (prop == nullptr) {
+        if (prop == nullptr)
+        {
           output_error("convert_to_double_array(const char "
                        "*buffer='%10s...',...): entry at row %d, col %d - "
                        "property '%s' not found in object '%s'",
@@ -1591,7 +1754,8 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop) {
         }
         a->resize(row, col);
         (*a)(row, col) = *object_get_complex(obj, prop);
-        if (emh::is_element_nan(*a, row, col)) {
+        if (emh::is_element_nan(*a, row, col))
+        {
           output_error("convert_to_double_array(const char "
                        "*buffer='%10s...',...): entry at row %d, col %d "
                        "property '%s' in object '%s' is not accessible",
@@ -1599,11 +1763,13 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop) {
           return 0;
         }
         col++;
-      } else if (sscanf(value, "%[^; \t]", propertyname) ==
-                 1) /* object property */
+      }
+      else if (sscanf(value, "%[^; \t]", propertyname) ==
+               1) /* object property */
       {
         GLOBALVAR *var = global_find(propertyname);
-        if (var == nullptr) {
+        if (var == nullptr)
+        {
           output_error(
               "convert_to_double_array(const char *buffer='%10s...',...): "
               "entry at row %d, col %d global '%s' not found",
@@ -1612,7 +1778,8 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop) {
         }
         a->resize(row, col);
         (*a)(row, col) = *(gld::complex *)var->prop->addr;
-        if (emh::is_element_nan(*a, row, col)) {
+        if (emh::is_element_nan(*a, row, col))
+        {
           output_error("convert_to_double_array(const char "
                        "*buffer='%10s...',...): entry at row %d, col %d "
                        "property '%s' in object '%s' is not accessible",
@@ -1620,7 +1787,8 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop) {
           return 0;
         }
         col++;
-      } else /* not a valid entry */
+      }
+      else /* not a valid entry */
       {
         output_error(
             "convert_to_double_array(const char *buffer='%10s...',...): entry "
@@ -1639,7 +1807,8 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop) {
    @return 1 on success, 0 on failure
  **/
 extern "C" int convert_unit_double(char *buffer, const char *unit,
-                                   double *data) {
+                                   double *data)
+{
   char *from = strchr(buffer, ' ');
   *data = atof(buffer);
 
@@ -1657,9 +1826,11 @@ extern "C" int convert_unit_double(char *buffer, const char *unit,
         The structure is defined as a linked list of PROPERTY entities
         @return length of string on success, 0 for empty, <0 for failure
  **/
-int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop) {
+int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop)
+{
   int pos = sprintf(buffer, "%s", "{ ");
-  while (prop != nullptr) {
+  while (prop != nullptr)
+  {
     void *addr = (char *)data + (size_t)prop->addr;
     PROPERTYSPEC *spec = property_getspec(prop->ptype);
     char temp[1025];
@@ -1676,7 +1847,8 @@ int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop) {
         The structure is defined as a linked list of PROPERTY entities
         @return length of string on success, 0 for empty, -1 for failure
  **/
-int convert_to_struct(const char *buffer, void *data, PROPERTY *structure) {
+int convert_to_struct(const char *buffer, void *data, PROPERTY *structure)
+{
   int len = 0;
   char temp[1025];
   if (buffer[0] != '{')
@@ -1684,7 +1856,8 @@ int convert_to_struct(const char *buffer, void *data, PROPERTY *structure) {
   strncpy(temp, buffer + 1, sizeof(temp));
   char *item = nullptr;
   char *last = nullptr;
-  while ((item = strtok_s(item ? nullptr : temp, ";", &last)) != nullptr) {
+  while ((item = strtok_s(item ? nullptr : temp, ";", &last)) != nullptr)
+  {
     char name[64], value[1024];
     while (isspace(*item))
       item++;
@@ -1693,8 +1866,10 @@ int convert_to_struct(const char *buffer, void *data, PROPERTY *structure) {
     if (sscanf(item, "%s %[^\n]", name, value) != 2)
       return -len;
     PROPERTY *prop;
-    for (prop = structure; prop != nullptr; prop = prop->next) {
-      if (strcmp(prop->name, name) == 0) {
+    for (prop = structure; prop != nullptr; prop = prop->next)
+    {
+      if (strcmp(prop->name, name) == 0)
+      {
         void *addr = (char *)data + (size_t)prop->addr;
         PROPERTYSPEC *spec = property_getspec(prop->ptype);
         len += spec->string_to_data(value, addr, prop);
@@ -1713,19 +1888,23 @@ int convert_from_method(
     void *data,     /**< a pointer to the data that is not changed */
     PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-  if (buffer == nullptr) {
+  if (buffer == nullptr)
+  {
     output_error("gldcore/convert_from_method(): buffer is null");
     return -1;
   }
-  if (data == nullptr) {
+  if (data == nullptr)
+  {
     output_error("gldcore/convert_from_method(): data is null");
     return -1;
   }
-  if (prop == nullptr) {
+  if (prop == nullptr)
+  {
     output_error("gldcore/convert_from_method(): prop is null");
     return -1;
   }
-  if (prop->method == nullptr) {
+  if (prop->method == nullptr)
+  {
     output_error("gldcore/convert_from_method(prop='%s'): method is null",
                  prop->name ? prop->name : "(anon)");
     return -1;
@@ -1737,19 +1916,23 @@ int convert_to_method(
     void *data,         /**< a pointer to the data that is not changed */
     PROPERTY *prop)     /**< a pointer to keywords that are supported */
 {
-  if (buffer == nullptr) {
+  if (buffer == nullptr)
+  {
     output_error("gldcore/convert_to_method(): buffer is null");
     return -1;
   }
-  if (data == nullptr) {
+  if (data == nullptr)
+  {
     output_error("gldcore/convert_to_method(): data is null");
     return -1;
   }
-  if (prop == nullptr) {
+  if (prop == nullptr)
+  {
     output_error("gldcore/convert_to_method(): prop is null");
     return -1;
   }
-  if (prop->method == nullptr) {
+  if (prop->method == nullptr)
+  {
     output_error("gldcore/convert_to_method(prop='%s'): method is null",
                  prop->name ? prop->name : "(anon)");
     return -1;

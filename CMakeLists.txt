@@ -1,4 +1,31 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.15)
+
+
+set(CMAKE_CXX_VISIBILITY_PRESET default)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN OFF)
+
+
+
+# --- Global MSVC settings to eliminate C1041 ---
+if (MSVC)
+  # Use embedded debug info in Debug and RelWithDebInfo (/Z7)
+  add_compile_options(
+    $<$<CONFIG:Debug>:/Z7>
+    $<$<CONFIG:RelWithDebInfo>:/Z7>
+  )
+
+  # Force synchronous PDB writes as extra safety (/FS)
+  add_compile_options(
+    $<$<CONFIG:Debug>:/FS>
+    $<$<CONFIG:RelWithDebInfo>:/FS>
+  )
+endif ()
+
+
+if(APPLE)
+  set(CMAKE_MACOSX_RPATH ON)
+endif()
+
 
 # Set the architecture BEFORE project() on Windows
 if(MSVC OR CMAKE_GENERATOR MATCHES "Visual Studio")
@@ -44,6 +71,12 @@ set(CMAKE_CXX_STANDARD 23) # Or 14, 11 if 17 is not supported
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_definitions(EIGEN_HAS_STD_RESULT_OF=0)
+
+
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW)
+endif()
+
 
 # Include FetchContent module
 include(FetchContent)
@@ -91,8 +124,6 @@ else ()
     endif ()
 endif ()
 
-set(CMAKE_CXX_STANDARD 23) 
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(GLD_PACKAGE gridlabd)
 set(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION OFF) # This shouldn't be needed, but seems to fix issues
@@ -108,7 +139,6 @@ include(CheckIncludeFiles)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
 include(CMakeDependentOption)
-include(FetchContent)
 
 # Clean up remnant files from the old autotools build system
 include(cmake/Cleanup.cmake)
@@ -180,6 +210,26 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib/${GLD_PACKAGE}")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 option(BUILD_SHARED_LIBS "Sets Gridlab-d libraries to be built as shared. *DANGER - will currently break build if changed.*" ON)
 
+
+##
+## Portable RPATH helper (NON-intrusive for Windows; applied per-target on UNIX)
+## - macOS: @loader_path resolves to the directory of the loading binary or module
+## - Linux: $ORIGIN resolves to the directory of the loading binary or module
+##
+function(set_portable_rpath tgt)
+  if(APPLE)
+    set_target_properties(${tgt} PROPERTIES
+      BUILD_RPATH "$<TARGET_FILE_DIR:gldapi>"
+      INSTALL_RPATH "@loader_path"
+    )
+  elseif(UNIX)  # excludes Windows
+    set_target_properties(${tgt} PROPERTIES
+      BUILD_RPATH "$<TARGET_FILE_DIR:gldapi>"
+      INSTALL_RPATH "$ORIGIN"
+    )
+  endif()
+endfunction()
+
 # Forces certain warnings to trigger errors.
 if (NOT MSVC)
     set(FORCE_ERROR "-Werror=return-type" "-Werror=write-strings")
@@ -196,6 +246,7 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
              dlfcn-win32
              GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
              GIT_TAG v1.4.2
+             DOWNLOAD_EXTRACT_TIMESTAMP true
      )
      FetchContent_MakeAvailable(dlfcn-win32)
      include_directories(${dlfcn-win32_SOURCE_DIR}/src)
@@ -458,6 +509,35 @@ add_subdirectory(gldcore)
 add_executable(test_gldapi gldcore/test_gldapi.cpp)
 target_link_libraries(test_gldapi PRIVATE gldapi ${DL_LIB} ${JSONCPP_LIB} ${SUPERLU_LIB} Threads::Threads)
 add_dependencies(test_gldapi gldapi)  
+
+
+
+##
+## Apply portable RPATH and ensure modules link to the shared core
+## (SAFE: no effect on Windows RPATH; additional PRIVATE links to gldapi are additive)
+##
+
+# Core + host:
+if(TARGET gldapi)
+  set_portable_rpath(gldapi)
+endif()
+if(TARGET gridlabd)
+  set_portable_rpath(gridlabd)
+endif()
+
+# Test host:
+set_portable_rpath(test_gldapi)
+
+# Modules: bind to shared core and apply portable RPATH (if targets exist)
+foreach(mod ${GLD_MODULES})
+  if(TARGET ${mod})
+    # Ensure the module resolves symbols from the single shared core library
+    target_link_libraries(${mod} PRIVATE gldapi)
+    # Ensure the loader finds the shared core next to the module/exe on UNIX
+    set_portable_rpath(${mod})
+  endif()
+endforeach()
+
 
 
 set_source_files_properties(

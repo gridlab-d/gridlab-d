@@ -14,7 +14,9 @@
 #include <cstdio>
 #include <cstdlib>
 
+#define _MAIN_C 1
 #include "globals.h"
+
 #include "lock.h"
 #include "module.h"
 #include "output.h"
@@ -48,7 +50,7 @@ static KEYWORD trl_keys[] = {
 static KEYWORD cpt_keys[] = {
     {"NONE", CPT_NONE, cpt_keys + 1}, /**< no checkpoint done */
     {"WALL", CPT_WALL, cpt_keys + 2}, /**< checkpoint on wall clock interval */
-    {"SIM", CPT_SIM, nullptr}, /**< checkpoint on simulation clock interval */
+    {"SIM", CPT_SIM, nullptr},        /**< checkpoint on simulation clock interval */
 };
 
 static KEYWORD rng_keys[] = {
@@ -71,8 +73,8 @@ static KEYWORD mls_keys[] = {
 
 static KEYWORD mrm_keys[] = {
     {"STANDALONE", MRM_STANDALONE, mrm_keys + 1}, /**< run is standalone */
-    {"MASTER", MRM_MASTER, mrm_keys + 2}, /**< run is a master of multirun */
-    {"SLAVE", MRM_SLAVE, nullptr},        /**< run is a slave of a multirun */
+    {"MASTER", MRM_MASTER, mrm_keys + 2},         /**< run is a master of multirun */
+    {"SLAVE", MRM_SLAVE, nullptr},                /**< run is a slave of a multirun */
 };
 
 static KEYWORD mrc_keys[] = {
@@ -100,11 +102,16 @@ static KEYWORD mcf_keys[] = {
      nullptr}, /**< flag to output commands as they are executed */
 };
 static KEYWORD vo_keys[] = {
-    {"NONE", VO_NONE, vo_keys + 1},   {"TSTD", VO_TSTSTD, vo_keys + 2},
-    {"TALL", VO_TSTALL, vo_keys + 3}, {"TRUN", VO_TSTRUN, vo_keys + 4},
-    {"TERR", VO_TSTERR, vo_keys + 5}, {"TEXC", VO_TSTEXC, vo_keys + 6},
-    {"TOPT", VO_TSTOPT, vo_keys + 7}, {"RALL", VO_RPTALL, vo_keys + 8},
-    {"RDIR", VO_RPTDIR, vo_keys + 9}, {"RGLM", VO_RPTGLM, nullptr},
+    {"NONE", VO_NONE, vo_keys + 1},
+    {"TSTD", VO_TSTSTD, vo_keys + 2},
+    {"TALL", VO_TSTALL, vo_keys + 3},
+    {"TRUN", VO_TSTRUN, vo_keys + 4},
+    {"TERR", VO_TSTERR, vo_keys + 5},
+    {"TEXC", VO_TSTEXC, vo_keys + 6},
+    {"TOPT", VO_TSTOPT, vo_keys + 7},
+    {"RALL", VO_RPTALL, vo_keys + 8},
+    {"RDIR", VO_RPTDIR, vo_keys + 9},
+    {"RGLM", VO_RPTGLM, nullptr},
 };
 static KEYWORD so_keys[] = {
     {"NAMES", SO_NAMES, so_keys + 1},
@@ -118,7 +125,8 @@ static KEYWORD sm_keys[] = {
     {"ERROR", SM_ERROR, nullptr},
 };
 
-static struct s_varmap {
+static struct s_varmap
+{
   const char *name;
   PROPERTYTYPE type;
   void *addr;
@@ -370,14 +378,17 @@ static struct s_varmap {
 #define USERVAR "USER"
 #endif
 
-static void buildtmp(void) {
+static void buildtmp(void)
+{
   const char *tmp, *home, *user;
 
-  if ((tmp = getenv("GLTEMP"))) {
+  if ((tmp = getenv("GLTEMP")))
+  {
     snprintf(global_tmp, sizeof(global_tmp), "%s", tmp);
     return;
   }
-  if (home = getenv(HOMEVAR)) {
+  if (home = getenv(HOMEVAR))
+  {
 #ifdef _WIN32
     const char *drive;
     if (!(drive = getenv("HOMEDRIVE")))
@@ -401,7 +412,8 @@ static void buildtmp(void) {
 /** Register global variables
         @return SUCCESS or FAILED
  **/
-STATUS global_init(void) {
+STATUS global_init(void)
+{
   unsigned int i;
 
   buildtmp();
@@ -413,13 +425,15 @@ STATUS global_init(void) {
   strncpy(global_version_branch, version_branch(),
           sizeof(global_version_branch));
 
-  for (i = 0; i < sizeof(map) / sizeof(map[0]); i++) {
+  for (i = 0; i < sizeof(map) / sizeof(map[0]); i++)
+  {
     struct s_varmap *p = &(map[i]);
     GLOBALVAR *var =
         global_create(p->name, p->type, p->addr, PT_ACCESS, p->access,
                       p->description ? PT_DESCRIPTION : 0, p->description,
                       p->units ? PT_UNITS : 0, p->units, nullptr);
-    if (var == nullptr) {
+    if (var == nullptr)
+    {
       output_error("global_init(): global variable '%s' registration failed",
                    p->name);
       /* TROUBLESHOOT
@@ -428,7 +442,9 @@ STATUS global_init(void) {
               detailed explanation of the error.  Follow the troubleshooting for
               that message and try again.
       */
-    } else {
+    }
+    else
+    {
       var->prop->keywords = p->keys;
       var->callback = p->callback;
     }
@@ -446,8 +462,10 @@ global_find(std::string_view name) /**< name of global variable to find */
   if (name.empty()) /* get first global in list */
     return global_getnext(nullptr);
   for (var = global_getnext(nullptr); var != nullptr;
-       var = global_getnext(var)) {
-    if (strcmp(var->prop->name, std::string(name).c_str()) == 0) {
+       var = global_getnext(var))
+  {
+    if (strcmp(var->prop->name, std::string(name).c_str()) == 0)
+    {
       return var;
     }
   }
@@ -465,11 +483,15 @@ global_find(std::string_view name) /**< name of global variable to find */
  nullptr of none found.
  **/
 GLOBALVAR *
-global_getnext(GLOBALVAR *previous) { /**< a pointer to the previous variable
-                                         name (nullptr for first) */
-  if (previous == nullptr) {
+global_getnext(GLOBALVAR *previous)
+{ /**< a pointer to the previous variable
+     name (nullptr for first) */
+  if (previous == nullptr)
+  {
     return global_varlist;
-  } else {
+  }
+  else
+  {
     return previous->next;
   }
 }
@@ -486,14 +508,16 @@ global_getnext(GLOBALVAR *previous) { /**< a pointer to the previous variable
         @todo this does not support module globals but needs to (no ticket)
 
  **/
-GLOBALVAR *global_create(const char *name, ...) {
+GLOBALVAR *global_create(const char *name, ...)
+{
   va_list arg;
   PROPERTY *prop = nullptr, *lastprop = nullptr;
   PROPERTYTYPE proptype;
   GLOBALVAR *var = nullptr;
 
   /* don't create duplicate entries */
-  if (global_find(name) != nullptr) {
+  if (global_find(name) != nullptr)
+  {
     errno = EINVAL;
     output_error("tried to create global variable '%s' a second time", name);
     /* TROUBLESHOOT
@@ -508,7 +532,8 @@ GLOBALVAR *global_create(const char *name, ...) {
   var = (GLOBALVAR *)malloc(sizeof(GLOBALVAR));
   memset(var, 0, sizeof(GLOBALVAR));
 
-  if (var == nullptr) {
+  if (var == nullptr)
+  {
     errno = ENOMEM;
     throw_exception("global_create(char *name='%s',...): unable to allocate "
                     "memory for global variable",
@@ -528,19 +553,25 @@ GLOBALVAR *global_create(const char *name, ...) {
 
   //	while ((proptype = va_arg(arg,PROPERTYTYPE)) != 0){
   uint64 prop_buffer;
-  while ((prop_buffer = va_arg(arg, uint64)) != 0) {
+  while ((prop_buffer = va_arg(arg, uint64)) != 0)
+  {
     proptype = PROPERTYTYPE(prop_buffer);
-    if (proptype > _PT_LAST) {
-      if (prop == nullptr) {
+    if (proptype > _PT_LAST)
+    {
+      if (prop == nullptr)
+      {
         throw_exception(
             "global_create(char *name='%s',...): property keyword not "
             "specified after an enumeration property definition",
             name);
-      } else if (proptype == PT_KEYWORD && prop->ptype == PT_enumeration) {
+      }
+      else if (proptype == PT_KEYWORD && prop->ptype == PT_enumeration)
+      {
         char *keyword = va_arg(arg, char *);
         int32 keyvalue = va_arg(arg, int32);
         KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
-        if (key == nullptr) {
+        if (key == nullptr)
+        {
           throw_exception("global_create(char *name='%s',...): property "
                           "keyword could not be stored",
                           name);
@@ -553,11 +584,14 @@ GLOBALVAR *global_create(const char *name, ...) {
         strncpy(key->name, keyword, sizeof(key->name));
         key->value = keyvalue;
         prop->keywords = key;
-      } else if (proptype == PT_KEYWORD && prop->ptype == PT_set) {
+      }
+      else if (proptype == PT_KEYWORD && prop->ptype == PT_set)
+      {
         char *keyword = va_arg(arg, char *);
         unsigned int64 keyvalue = va_arg(arg, uint64);
         KEYWORD *key = (KEYWORD *)malloc(sizeof(KEYWORD));
-        if (key == nullptr) {
+        if (key == nullptr)
+        {
           throw_exception("global_create(char *name='%s',...): property "
                           "keyword could not be stored",
                           name);
@@ -570,10 +604,13 @@ GLOBALVAR *global_create(const char *name, ...) {
         strncpy(key->name, keyword, sizeof(key->name));
         key->value = keyvalue;
         prop->keywords = key;
-      } else if (proptype == PT_ACCESS) {
+      }
+      else if (proptype == PT_ACCESS)
+      {
         prop_buffer = va_arg(arg, uint64);
         PROPERTYACCESS pa = PROPERTYACCESS(prop_buffer);
-        switch (pa) {
+        switch (pa)
+        {
         case PA_PUBLIC:
         case PA_REFERENCE:
         case PA_PROTECTED:
@@ -592,12 +629,18 @@ GLOBALVAR *global_create(const char *name, ...) {
            */
           break;
         }
-      } else if (proptype == PT_SIZE) {
+      }
+      else if (proptype == PT_SIZE)
+      {
         prop->size = va_arg(arg, uint32);
-        if (prop->addr == 0) {
-          if (prop->size > 0) {
+        if (prop->addr == 0)
+        {
+          if (prop->size > 0)
+          {
             prop->addr = (PROPERTYADDR)malloc(prop->size * property_size(prop));
-          } else {
+          }
+          else
+          {
             throw_exception("global_create(char *name='%s',...): property size "
                             "must be greater than 0 to allocate memory",
                             name);
@@ -606,9 +649,12 @@ GLOBALVAR *global_create(const char *name, ...) {
              */
           }
         }
-      } else if (proptype == PT_UNITS) {
+      }
+      else if (proptype == PT_UNITS)
+      {
         char *unitspec = va_arg(arg, char *);
-        if ((prop->unit = unit_find(unitspec)) == nullptr) {
+        if ((prop->unit = unit_find(unitspec)) == nullptr)
+        {
           output_warning("global_create(char *name='%s',...): property %s unit "
                          "'%s' is not recognized",
                          name, prop->name, unitspec);
@@ -618,11 +664,17 @@ GLOBALVAR *global_create(const char *name, ...) {
              adding it to <code>.../etc/unitfile.txt</code>.
            */
         }
-      } else if (proptype == PT_DESCRIPTION) {
+      }
+      else if (proptype == PT_DESCRIPTION)
+      {
         prop->description = va_arg(arg, char *);
-      } else if (proptype == PT_DEPRECATED) {
+      }
+      else if (proptype == PT_DEPRECATED)
+      {
         prop->flags |= PF_DEPRECATED;
-      } else {
+      }
+      else
+      {
         throw_exception("global_create(char *name='%s',...): property "
                         "extension code not recognized (PROPERTYTYPE=%d)",
                         name, proptype);
@@ -634,11 +686,14 @@ GLOBALVAR *global_create(const char *name, ...) {
 
       //            prop = property_malloc(proptype, nullptr, name, nullptr,
       //            nullptr);
-    } else {
+    }
+    else
+    {
 
       prop_buffer = va_arg(arg, uint64);
       PROPERTYADDR addr = PROPERTYADDR(prop_buffer);
-      if (strlen(name) >= sizeof(prop->name)) {
+      if (strlen(name) >= sizeof(prop->name))
+      {
         throw_exception("global_create(char *name='%s',...): property name "
                         "'%s' is too big to store",
                         name, name);
@@ -673,7 +728,8 @@ GLOBALVAR *global_create(const char *name, ...) {
   if (lastvar == nullptr)
     /* first variable */
     global_varlist = lastvar = var;
-  else { /* not first */
+  else
+  { /* not first */
     lastvar->next = var;
     lastvar = var;
   }
@@ -693,13 +749,15 @@ GLOBALVAR *global_create(const char *name, ...) {
 STATUS global_setvar(const char *def, ...) /**< the definition */
 {
   char name[65] = "", value[1024] = "";
-  if (sscanf(def, "%[^=]=%[^\r\n]", name, value) < 2) {
+  if (sscanf(def, "%[^=]=%[^\r\n]", name, value) < 2)
+  {
     va_list ptr;
     char *v;
     va_start(ptr, def);
     v = va_arg(ptr, char *);
     va_end(ptr);
-    if (v != nullptr) {
+    if (v != nullptr)
+    {
       strncpy(value, v, sizeof(value));
       if (strcmp(value, v) != 0)
         output_error(
@@ -715,8 +773,10 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
     GLOBALVAR *var = global_find(name);
     static unsigned int globalvar_lock = 0;
     int retval;
-    if (var == nullptr) {
-      if (global_strictnames) {
+    if (var == nullptr)
+    {
+      if (global_strictnames)
+      {
         output_error("strict naming prevents implicit creation of %s", name);
         /* TROUBLESHOOT
                 The global_strictnames variable prevents the system from
@@ -730,7 +790,8 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
       /** @todo autotype global variables when creating them (ticket #26) */
       var = global_create(name, PT_char1024, nullptr, PT_SIZE, 1, PT_ACCESS,
                           PA_PUBLIC, nullptr);
-      if (var == nullptr) {
+      if (var == nullptr)
+      {
         output_error("unable to implicitly create the global variable '%s'",
                      name);
         /* TROUBLESHOOT
@@ -749,7 +810,8 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
         class_string_to_property(var->prop, (void *)var->prop->addr, value);
     // wunlock(&globalvar_lock);
     lock.unlock();
-    if (retval == 0) {
+    if (retval == 0)
+    {
       output_error("global_setvar(): unable to set %s to %s", name, value);
       /* TROUBLESHOOT
               The input value was not convertable into the desired type for the
@@ -757,11 +819,14 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
          adjust the input value appropriately.
        */
       return FAILED;
-    } else if (var->callback)
+    }
+    else if (var->callback)
       var->callback(var->prop->name);
 
     return SUCCESS;
-  } else {
+  }
+  else
+  {
     output_error("global variable definition '%s' not formatted correctedly",
                  def);
     /* TROUBLESHOOT
@@ -773,9 +838,12 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
 }
 
 static int guid_first = 1;
-char *global_guid(char *buffer, int size) {
-  if (size > 36) {
-    if (guid_first) {
+char *global_guid(char *buffer, int size)
+{
+  if (size > 36)
+  {
+    if (guid_first)
+    {
       srand(entropy_source());
       guid_first = 0;
     }
@@ -783,61 +851,81 @@ char *global_guid(char *buffer, int size) {
             rand() & 0xffff, rand() & 0xffff, rand() & 0x0fff, rand() & 0xffff,
             rand() & 0xffff, rand() & 0xffff, rand() & 0xffff);
     return buffer;
-  } else {
+  }
+  else
+  {
     output_error("global_guid(...): buffer too small");
     return nullptr;
   }
 }
-char *global_run(char *buffer, int size) {
+char *global_run(char *buffer, int size)
+{
   static char value[37] = "";
   if (value[0] == '\0')
     global_guid(value, sizeof(value));
-  if (size > 36) {
+  if (size > 36)
+  {
     strcpy(buffer, value);
     return buffer;
-  } else
+  }
+  else
     return nullptr;
 }
-char *global_now(char *buffer, int size) {
-  if (size > 32) {
+char *global_now(char *buffer, int size)
+{
+  if (size > 32)
+  {
     time_t now = time(nullptr);
     struct tm *tmbuf = gmtime(&now);
     strftime(buffer, size, "%Y%m%d-%H%M%S", tmbuf);
     return buffer;
-  } else {
+  }
+  else
+  {
     output_error("global_now(...): buffer too small");
     return nullptr;
   }
 }
-char *global_true(char *buffer, int size) {
+char *global_true(char *buffer, int size)
+{
   if (size > 1)
     return strcpy(buffer, "1");
-  else {
+  else
+  {
     output_error("global_now(...): buffer too small");
     return nullptr;
   }
 }
 
-char *global_seq(char *buffer, int size, const char *name) {
+char *global_seq(char *buffer, int size, const char *name)
+{
   char seq[64], opt[64] = "";
-  if (sscanf(name, "%63[^:]:%63s", seq, opt) == 2) {
-    if (strcmp(opt, "INIT") == 0) {
-      if (global_find(seq) != nullptr) {
+  if (sscanf(name, "%63[^:]:%63s", seq, opt) == 2)
+  {
+    if (strcmp(opt, "INIT") == 0)
+    {
+      if (global_find(seq) != nullptr)
+      {
         output_warning(
             "global_seq(char *name='%s'): sequence is already initialized",
             seq);
         return nullptr;
-      } else {
+      }
+      else
+      {
         int32 *addr = (int32 *)malloc(sizeof(int32));
         GLOBALVAR *var =
             global_create(seq, PT_int32, addr, PT_ACCESS, PA_PUBLIC, nullptr);
         *addr = 0;
         return global_getvar(seq, buffer, size);
       }
-    } else if (strcmp(opt, "INC") == 0) {
+    }
+    else if (strcmp(opt, "INC") == 0)
+    {
       GLOBALVAR *var = global_find(seq);
       int32 *addr;
-      if (var == nullptr || var->prop->ptype != PT_int32) {
+      if (var == nullptr || var->prop->ptype != PT_int32)
+      {
         output_error("global_seq(char *name='%s'): sequence name is missing or "
                      "not an int32 variable",
                      name);
@@ -847,13 +935,17 @@ char *global_seq(char *buffer, int size, const char *name) {
       (*addr)++;
       output_debug("updating global sequence '%s' to value '%d'", seq, *addr);
       return global_getvar(seq, buffer, size);
-    } else {
+    }
+    else
+    {
       output_error(
           "global_seq(..., char *name='%s'): sequence spec '%s' is invalid",
           name, opt);
       return nullptr;
     }
-  } else {
+  }
+  else
+  {
     output_error("global_seq(..., char *name='%s'): sequence spec is invalid",
                  name);
     return nullptr;
@@ -862,21 +954,24 @@ char *global_seq(char *buffer, int size, const char *name) {
 
 int global_isdefined(const char *name) { return global_find(name) != nullptr; }
 
-int parameter_expansion(char *buffer, int size, const char *spec) {
+int parameter_expansion(char *buffer, int size, const char *spec)
+{
   char name[64], value[1023], pattern[64], op[64],
       string[64] = "", yes[1024] = "1", no[1024] = "0";
   int offset, length;
   int32 number;
 
   /* ${name:-value} */
-  if (sscanf(spec, "%63[^:]:-%1023[^}]", name, value) == 2) {
+  if (sscanf(spec, "%63[^:]:-%1023[^}]", name, value) == 2)
+  {
     if (global_getvar(name, buffer, size) == nullptr)
       strncpy(buffer, value, size);
     return 1;
   }
 
   /* ${name:=value} */
-  if (sscanf(spec, "%63[^:]:=%1023[^}]", name, value) == 2) {
+  if (sscanf(spec, "%63[^:]:=%1023[^}]", name, value) == 2)
+  {
     if (!global_isdefined(name))
       global_setvar(name, value);
     global_getvar(name, buffer, size);
@@ -884,7 +979,8 @@ int parameter_expansion(char *buffer, int size, const char *spec) {
   }
 
   /* ${name:+value} */
-  if (sscanf(spec, "%63[^:]:+%1023[^}]", name, value) == 2) {
+  if (sscanf(spec, "%63[^:]:+%1023[^}]", name, value) == 2)
+  {
     if (!global_isdefined(name))
       strcpy(buffer, "");
     else
@@ -893,35 +989,43 @@ int parameter_expansion(char *buffer, int size, const char *spec) {
   }
 
   /* ${name:offset:length} */
-  if (sscanf(spec, "%63[^:]:%d:%d", name, &offset, &length) == 3) {
+  if (sscanf(spec, "%63[^:]:%d:%d", name, &offset, &length) == 3)
+  {
     char temp[1024];
-    if (global_getvar(name, temp, sizeof(temp) - 1)) {
+    if (global_getvar(name, temp, sizeof(temp) - 1))
+    {
       strncpy(buffer, temp + offset, size);
       buffer[length] = '\0';
       return 1;
-    } else
+    }
+    else
       return 0;
   }
 
   /* ${name:offset} */
-  if (sscanf(spec, "%63[^:]:%d", name, &offset) == 2) {
+  if (sscanf(spec, "%63[^:]:%d", name, &offset) == 2)
+  {
     char temp[1024];
-    if (global_getvar(name, temp, sizeof(temp) - 1)) {
+    if (global_getvar(name, temp, sizeof(temp) - 1))
+    {
       strncpy(buffer, temp + offset, size);
       return 1;
-    } else
+    }
+    else
       return 0;
   }
 
   /* ${name/offset/length} */
-  if (sscanf(spec, "%63[^/]/%63[^/]/%63[^}]", name, pattern, string) >= 2) {
+  if (sscanf(spec, "%63[^/]/%63[^/]/%63[^}]", name, pattern, string) >= 2)
+  {
     char temp[1024], *ptr;
     size_t start;
     if (global_getvar(name, temp, sizeof(temp) - 1) == nullptr)
       return 0;
     strcpy(buffer, "");
     ptr = strstr(temp, pattern);
-    if (ptr != nullptr) {
+    if (ptr != nullptr)
+    {
       start = ptr - temp;
       strncpy(buffer, temp, size);
       strncpy(buffer + start, string, size - start);
@@ -932,13 +1036,15 @@ int parameter_expansion(char *buffer, int size, const char *spec) {
   }
 
   /* ${name//offset/length} */
-  if (sscanf(spec, "%63[^/]//%63[^/]/%63[^}]", name, pattern, string) == 2) {
+  if (sscanf(spec, "%63[^/]//%63[^/]/%63[^}]", name, pattern, string) == 2)
+  {
     char temp[1024], *ptr = nullptr;
     size_t start;
     if (global_getvar(name, temp, sizeof(temp) - 1) == nullptr)
       return 0;
     strcpy(buffer, "");
-    while (true) {
+    while (true)
+    {
       ptr = strstr(temp, pattern);
       if (ptr == nullptr)
         break;
@@ -953,7 +1059,8 @@ int parameter_expansion(char *buffer, int size, const char *spec) {
   }
 
   /* ${++name} */
-  if (sscanf(spec, "++%63s", name) == 1) {
+  if (sscanf(spec, "++%63s", name) == 1)
+  {
     GLOBALVAR *var = global_find(name);
     int32 *addr;
     if (var == nullptr || var->prop->ptype != PT_int32)
@@ -964,7 +1071,8 @@ int parameter_expansion(char *buffer, int size, const char *spec) {
   }
 
   /* ${--name} */
-  if (sscanf(spec, "--%63s", name) == 1) {
+  if (sscanf(spec, "--%63s", name) == 1)
+  {
     GLOBALVAR *var = global_find(name);
     int32 *addr;
     if (var == nullptr || var->prop->ptype != PT_int32)
@@ -975,17 +1083,21 @@ int parameter_expansion(char *buffer, int size, const char *spec) {
   }
 
   /* ${++name} */
-  if (sscanf(spec, "%63[^-+]%63[-+]", name, op) == 2) {
+  if (sscanf(spec, "%63[^-+]%63[-+]", name, op) == 2)
+  {
     GLOBALVAR *var = global_find(name);
     int32 *addr;
     if (var == nullptr || var->prop->ptype != PT_int32)
       return 0;
     addr = (int32 *)&(var->prop->addr);
     sprintf(buffer, "%d", (*addr));
-    if (strcmp(op, "++") == 0) {
+    if (strcmp(op, "++") == 0)
+    {
       (*addr)++;
       return 1;
-    } else if (strcmp(op, "--") == 0) {
+    }
+    else if (strcmp(op, "--") == 0)
+    {
       (*addr)--;
       return 1;
     }
@@ -993,32 +1105,49 @@ int parameter_expansion(char *buffer, int size, const char *spec) {
 
   /* ${name op value} */
   if (sscanf(spec, "%63[^!<>=&|~]%63[!<>=&|~]%d?%1023[^:]:%1023s", name, op,
-             &number, yes, no) >= 3) {
+             &number, yes, no) >= 3)
+  {
     GLOBALVAR *var = global_find(name);
-    if (var != nullptr && var->prop->ptype == PT_int32) {
+    if (var != nullptr && var->prop->ptype == PT_int32)
+    {
       int32 *addr = (int32 *)&(var->prop->addr);
-      if (strcmp(op, "==") == 0) {
+      if (strcmp(op, "==") == 0)
+      {
         strcpy(buffer, (*addr == number) ? yes : no);
         return 1;
-      } else if (strcmp(op, "!=") == 0 || strcmp(op, "<>") == 0) {
+      }
+      else if (strcmp(op, "!=") == 0 || strcmp(op, "<>") == 0)
+      {
         strcpy(buffer, (*addr != number) ? yes : no);
         return 1;
-      } else if (strcmp(op, "<=") == 0) {
+      }
+      else if (strcmp(op, "<=") == 0)
+      {
         strcpy(buffer, (*addr <= number) ? yes : no);
         return 1;
-      } else if (strcmp(op, "<") == 0) {
+      }
+      else if (strcmp(op, "<") == 0)
+      {
         strcpy(buffer, (*addr < number) ? yes : no);
         return 1;
-      } else if (strcmp(op, ">=") == 0) {
+      }
+      else if (strcmp(op, ">=") == 0)
+      {
         strcpy(buffer, (*addr >= number) ? yes : no);
         return 1;
-      } else if (strcmp(op, ">") == 0) {
+      }
+      else if (strcmp(op, ">") == 0)
+      {
         strcpy(buffer, (*addr > number) ? yes : no);
         return 1;
-      } else if (strcmp(op, "&") == 0) {
+      }
+      else if (strcmp(op, "&") == 0)
+      {
         strcpy(buffer, ((*addr) & number) ? yes : no);
         return 1;
-      } else if (strcmp(op, "|~") == 0) {
+      }
+      else if (strcmp(op, "|~") == 0)
+      {
         strcpy(buffer, ((*addr) | ~number) ? yes : no);
         return 1;
       }
@@ -1027,52 +1156,65 @@ int parameter_expansion(char *buffer, int size, const char *spec) {
 
   /* ${name op= value} */
   if (sscanf(spec, "%63[^-+/*%&^|~=]%63[-+/*%&^|~=]%d", name, op, &number) ==
-      3) {
+      3)
+  {
     GLOBALVAR *var = global_find(name);
-    if (var != nullptr && var->prop->ptype == PT_int32) {
+    if (var != nullptr && var->prop->ptype == PT_int32)
+    {
       int32 *addr = (int32 *)&(var->prop->addr);
       sprintf(buffer, "%d", (*addr));
-      if (strcmp(op, "+=") == 0) {
+      if (strcmp(op, "+=") == 0)
+      {
         sprintf(buffer, "%d", (*addr) += number);
         return 1;
       }
-      if (strcmp(op, "-=") == 0) {
+      if (strcmp(op, "-=") == 0)
+      {
         sprintf(buffer, "%d", (*addr) -= number);
         return 1;
       }
-      if (strcmp(op, "*=") == 0) {
+      if (strcmp(op, "*=") == 0)
+      {
         sprintf(buffer, "%d", (*addr) *= number);
         return 1;
       }
-      if (strcmp(op, "/=") == 0) {
+      if (strcmp(op, "/=") == 0)
+      {
         sprintf(buffer, "%d", (*addr) /= number);
         return 1;
       }
-      if (strcmp(op, "%=") == 0) {
+      if (strcmp(op, "%=") == 0)
+      {
         sprintf(buffer, "%d", (*addr) %= number);
         return 1;
       }
-      if (strcmp(op, "&=") == 0) {
+      if (strcmp(op, "&=") == 0)
+      {
         sprintf(buffer, "%d", (*addr) &= number);
         return 1;
       }
-      if (strcmp(op, "|=") == 0) {
+      if (strcmp(op, "|=") == 0)
+      {
         sprintf(buffer, "%d", (*addr) |= number);
         return 1;
       }
-      if (strcmp(op, "^=") == 0) {
+      if (strcmp(op, "^=") == 0)
+      {
         sprintf(buffer, "%d", (*addr) ^= number);
         return 1;
       }
-      if (strcmp(op, "&=~") == 0) {
+      if (strcmp(op, "&=~") == 0)
+      {
         sprintf(buffer, "%d", (*addr) &= ~number);
         return 1;
       }
-      if (strcmp(op, "|=~") == 0) {
+      if (strcmp(op, "|=~") == 0)
+      {
         sprintf(buffer, "%d", (*addr) |= ~number);
         return 1;
       }
-      if (strcmp(op, "^=~") == 0) {
+      if (strcmp(op, "^=~") == 0)
+      {
         sprintf(buffer, "%d", (*addr) ^= ~number);
         return 1;
       }
@@ -1080,13 +1222,16 @@ int parameter_expansion(char *buffer, int size, const char *spec) {
   }
 
   /* ${name=number} */
-  if (sscanf(spec, "%63[A-Za-z0-9_:.]=%d", name, &number) == 2) {
+  if (sscanf(spec, "%63[A-Za-z0-9_:.]=%d", name, &number) == 2)
+  {
     GLOBALVAR *var = global_find(name);
     int32 *addr;
-    if (var == nullptr) {
+    if (var == nullptr)
+    {
       addr = (int32 *)malloc(sizeof(int32));
       var = global_create(name, PT_int32, addr, PT_ACCESS, PA_PUBLIC, nullptr);
-    } else
+    }
+    else
       addr = (int32 *)&(var->prop->addr);
     *addr = number;
     sprintf(buffer, "%d", number);
@@ -1094,7 +1239,8 @@ int parameter_expansion(char *buffer, int size, const char *spec) {
   }
 
   /* ${name=string} */
-  if (sscanf(spec, "%63[A-Za-z0-9_:.]=%s", name, string) == 2) {
+  if (sscanf(spec, "%63[A-Za-z0-9_:.]=%s", name, string) == 2)
+  {
     global_setvar(name, string);
     strncpy(buffer, string, size);
     return 1;
@@ -1112,11 +1258,13 @@ not found.
         This function searches global, user-defined, and module variables for a
 match.
 **/
-char *global_getvar(const char *name, char *buffer, int size) {
+char *global_getvar(const char *name, char *buffer, int size)
+{
   char temp[1024];
   int len = 0;
   GLOBALVAR *var = nullptr;
-  struct {
+  struct
+  {
     const char *name;
     char *(*call)(char *buffer, int size);
   } map[] = {
@@ -1140,22 +1288,26 @@ char *global_getvar(const char *name, char *buffer, int size) {
 #endif
   };
   int i;
-  if (buffer == nullptr) {
+  if (buffer == nullptr)
+  {
     output_error("global_getvar: buffer not supplied");
     return 0;
   }
-  if (name == nullptr) {
+  if (name == nullptr)
+  {
     output_error("global_getvar: variable name not supplied");
     return nullptr;
   }
-  if (size < 1) {
+  if (size < 1)
+  {
     output_error("global_getvar: invalid buffer size");
     return nullptr; /* user error ... could force it, but that's asking for
                        trouble. */
   }
 
   /* special variables names */
-  for (i = 0; i < sizeof(map) / sizeof(map[0]); i++) {
+  for (i = 0; i < sizeof(map) / sizeof(map[0]); i++)
+  {
     if (strcmp(name, map[i].name) == 0)
       return map[i].call(buffer, size);
   }
@@ -1169,7 +1321,8 @@ char *global_getvar(const char *name, char *buffer, int size) {
     return buffer;
 
   var = global_find(name);
-  if (var == nullptr) {
+  if (var == nullptr)
+  {
     /* try parameter expansion */
     if (parameter_expansion(buffer, size, name))
       return buffer;
@@ -1178,14 +1331,16 @@ char *global_getvar(const char *name, char *buffer, int size) {
   }
   len = class_property_to_string(var->prop, (void *)var->prop->addr, temp,
                                  sizeof(temp));
-  if (len < size) { /* if we have enough space, copy to the supplied buffer */
+  if (len < size)
+  { /* if we have enough space, copy to the supplied buffer */
     strncpy(buffer, temp, len + 1);
     return buffer; /* wrote buffer, return ptr for printf funcs */
   }
   return nullptr; /* nullptr if insufficient buffer space */
 }
 
-size_t global_getcount(void) {
+size_t global_getcount(void)
+{
   size_t count = 0;
   GLOBALVAR *var = nullptr;
   while ((var = global_getnext(var)) != nullptr)
@@ -1193,11 +1348,13 @@ size_t global_getcount(void) {
   return count;
 }
 
-void global_dump(void) {
+void global_dump(void)
+{
   GLOBALVAR *var = nullptr;
   int old = global_suppress_repeat_messages;
   global_suppress_repeat_messages = 0;
-  while ((var = global_getnext(var)) != nullptr) {
+  while ((var = global_getnext(var)) != nullptr)
+  {
     char buffer[1024];
     if (class_property_to_string(var->prop, (void *)var->prop->addr, buffer,
                                  sizeof(buffer)))
@@ -1208,23 +1365,26 @@ void global_dump(void) {
 
 /** threadsafe remote global read **/
 void *global_remote_read(
-    void *local, /** local memory for data (must be correct size for global */
+    void *local,    /** local memory for data (must be correct size for global */
     GLOBALVAR *var) /** global variable from which to get data */
 {
   int size = property_size(var->prop);
   void *addr = var->prop->addr;
 
   /* single host */
-  if (global_multirun_mode == MRM_STANDALONE) {
+  if (global_multirun_mode == MRM_STANDALONE)
+  {
     /* single thread */
-    if (global_threadcount == 1) {
+    if (global_threadcount == 1)
+    {
       /* no lock or fetch required */
       memcpy(local, addr, size);
       return local;
     }
 
     /* multithread */
-    else {
+    else
+    {
       // auto v = rlock(&var->lock);
       // replace the above with SharedMutexManager
       std::shared_lock<std::shared_mutex> lock(
@@ -1233,7 +1393,9 @@ void *global_remote_read(
       // runlock();
       return local;
     }
-  } else {
+  }
+  else
+  {
     /* @todo remote object read for multihost */
     return nullptr;
   }
@@ -1247,15 +1409,18 @@ void global_remote_write(
   void *addr = var->prop->addr;
 
   /* single host */
-  if (global_multirun_mode == MRM_STANDALONE) {
+  if (global_multirun_mode == MRM_STANDALONE)
+  {
     /* single thread */
-    if (global_threadcount == 1) {
+    if (global_threadcount == 1)
+    {
       /* no lock or fetch required */
       memcpy(addr, local, size);
     }
 
     /* multithread */
-    else {
+    else
+    {
       // wlock(&var->lock);
       // replace the above with SharedMutexManager
       std::unique_lock<std::shared_mutex> lock(
@@ -1263,16 +1428,21 @@ void global_remote_write(
       memcpy(addr, local, size);
       // wunlock(&var->lock);
     }
-  } else {
+  }
+  else
+  {
     /* @todo remote object write for multihost */
   }
 }
 
-int stricmp_portable(const char *str1, const char *str2) {
-  while (*str1 && *str2) {
+int stricmp_portable(const char *str1, const char *str2)
+{
+  while (*str1 && *str2)
+  {
     int c1 = std::tolower(static_cast<unsigned char>(*str1));
     int c2 = std::tolower(static_cast<unsigned char>(*str2));
-    if (c1 != c2) {
+    if (c1 != c2)
+    {
       return c1 - c2;
     }
     ++str1;
@@ -1284,10 +1454,13 @@ int stricmp_portable(const char *str1, const char *str2) {
   return c1 - c2;
 }
 
-int strnicmp_portable(const char *str1, const char *str2, size_t n) {
-  for (size_t i = 0; i < n; ++i) {
+int strnicmp_portable(const char *str1, const char *str2, size_t n)
+{
+  for (size_t i = 0; i < n; ++i)
+  {
     // Stop if we reach the end of either string
-    if (str1[i] == '\0' || str2[i] == '\0') {
+    if (str1[i] == '\0' || str2[i] == '\0')
+    {
       int c1 = std::tolower(static_cast<unsigned char>(str1[i]));
       int c2 = std::tolower(static_cast<unsigned char>(str2[i]));
       return c1 - c2;
@@ -1295,7 +1468,8 @@ int strnicmp_portable(const char *str1, const char *str2, size_t n) {
     // Compare characters case-insensitively
     int c1 = std::tolower(static_cast<unsigned char>(str1[i]));
     int c2 = std::tolower(static_cast<unsigned char>(str2[i]));
-    if (c1 != c2) {
+    if (c1 != c2)
+    {
       return c1 - c2;
     }
   }
@@ -1305,7 +1479,8 @@ int strnicmp_portable(const char *str1, const char *str2, size_t n) {
 #if defined(_WIN32) && defined(_DEBUG)
 /** Implements a pause on exit capability for Windows consoles
  **/
-void pause_at_exit(void) {
+void pause_at_exit(void)
+{
   if (global_pauseatexit)
     system("pause");
 }

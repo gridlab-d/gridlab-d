@@ -57,6 +57,8 @@
 #include <mutex>
 #include <shared_mutex>
 #include <string>
+#include <string_view>
+#include <cstring>
 
 #include <exception> // std::exception
 #include <stdarg.h>  // va_list
@@ -167,9 +169,11 @@ typedef struct s_aggregate AGGREGATION;
 template <typename O, typename P>
 constexpr void *get_addr(O *obj, const P *prop);
 
-template <typename T, typename U> constexpr T *object_data(U *obj);
+template <typename T, typename U>
+constexpr T *object_data(U *obj);
 
-template <typename T> constexpr OBJECT *object_header(T *data);
+template <typename T>
+constexpr OBJECT *object_header(T *data);
 
 #ifdef DLMAIN
 #define EXTERN
@@ -198,6 +202,12 @@ CDECL EXTERN CALLBACKS *callback INIT(NULL);
 #define gl_version_patch (*callback->version.patch)
 #define gl_version_build (*callback->version.build)
 #define gl_version_branch (*callback->version.branch)
+
+#ifdef __cplusplus
+extern "C" int object_isa(OBJECT *obj, const char *type);
+#else
+int object_isa(OBJECT *obj, const char *type);
+#endif
 
 /******************************************************************************
  * Variable publishing
@@ -234,35 +244,35 @@ CDECL EXTERN CALLBACKS *callback INIT(NULL);
  **/
 /** The PUBLISH_STRUCT macro is used to publish a member of a structure.
  **/
-#define PUBLISH_STRUCT(C, T, N)                                                \
-  {                                                                            \
-    struct C *_t = NULL;                                                       \
-    if (gl_publish_variable(C##_class, PT_##T, #N,                             \
-                            (char *)&(_t->N) - (char *)_t, NULL) < 1)          \
-      return NULL;                                                             \
+#define PUBLISH_STRUCT(C, T, N)                                       \
+  {                                                                   \
+    struct C *_t = NULL;                                              \
+    if (gl_publish_variable(C##_class, PT_##T, #N,                    \
+                            (char *)&(_t->N) - (char *)_t, NULL) < 1) \
+      return NULL;                                                    \
   }
 /** The PUBLISH_CLASS macro is used to publish a member of a class (C++ only).
  **/
-#define PUBLISH_CLASS(C, T, N)                                                 \
-  {                                                                            \
-    class C *_t = NULL;                                                        \
-    if (gl_publish_variable(C##_class, PT_##T, #N,                             \
-                            (char *)&(_t->N) - (char *)_t, NULL) < 1)          \
-      return NULL;                                                             \
+#define PUBLISH_CLASS(C, T, N)                                        \
+  {                                                                   \
+    class C *_t = NULL;                                               \
+    if (gl_publish_variable(C##_class, PT_##T, #N,                    \
+                            (char *)&(_t->N) - (char *)_t, NULL) < 1) \
+      return NULL;                                                    \
   }
 /** The PUBLISH_CLASSX macro is used to publish a member of a class (C++ only)
-  * using a different name from the member name.
+ * using a different name from the member name.
  **/
-#define PUBLISH_CLASSX(C, T, N, V)                                             \
-  {                                                                            \
-    class C *_t = NULL;                                                        \
-    if (gl_publish_variable(C##_class, PT_##T, V,                              \
-                            (char *)&(_t->N) - (char *)_t, NULL) < 1)          \
-      return NULL;                                                             \
+#define PUBLISH_CLASSX(C, T, N, V)                                    \
+  {                                                                   \
+    class C *_t = NULL;                                               \
+    if (gl_publish_variable(C##_class, PT_##T, V,                     \
+                            (char *)&(_t->N) - (char *)_t, NULL) < 1) \
+      return NULL;                                                    \
   }
 
 /** The PUBLISH_CLASS_UNT macros is used to publish a member of a class (C++
-  * only) including a unit specification.
+ * only) including a unit specification.
  **/
 // #define PUBLISH_CLASS_UNIT(C,T,N,U) {class C _t;if
 // (gl_publish_variable(C##_class,PT_##T,#N"["U"]",(char*)&_t.N-(char*)&_t,NULL)<1)
@@ -271,16 +281,16 @@ CDECL EXTERN CALLBACKS *callback INIT(NULL);
 delegated type.
 
 **/
-#define PUBLISH_DELEGATED(C, T, N)                                             \
-  {                                                                            \
-    class C *_t = NULL;                                                        \
-    if (gl_publish_variable(C##_class, PT_delegated, T, #N,                    \
-                            (char *)&(_t->N) - (char *)_t, NULL) < 1)          \
-      return NULL;                                                             \
+#define PUBLISH_DELEGATED(C, T, N)                                    \
+  {                                                                   \
+    class C *_t = NULL;                                               \
+    if (gl_publish_variable(C##_class, PT_delegated, T, #N,           \
+                            (char *)&(_t->N) - (char *)_t, NULL) < 1) \
+      return NULL;                                                    \
   }
 
 /** The PUBLISH_ENUM(C,N,E) macro is used to define a keyword for an enumeration
-  * variable
+ * variable
  **/
 // #define PUBLISH_ENUM(C,N,E)
 // (*callback->define_enumeration_member)(C##_class,#N,#E,C::E)
@@ -341,15 +351,16 @@ delegated type.
  GL_THROW(Msg,...) within this try block will be transfer control to the
  GL_CATCH(Msg) block.
  **/
-#define GL_TRY                                                                 \
-  {                                                                            \
-    EXCEPTIONHANDLER *_handler =                                               \
-        (*callback->exception.create_exception_handler)();                     \
-    if (_handler == NULL)                                                      \
-      (*callback->output_error)(                                               \
-          "%s(%d): module exception handler creation failed", __FILE__,        \
-          __LINE__);                                                           \
-    else if (setjmp(_handler->buf) == 0) {
+#define GL_TRY                                                          \
+  {                                                                     \
+    EXCEPTIONHANDLER *_handler =                                        \
+        (*callback->exception.create_exception_handler)();              \
+    if (_handler == NULL)                                               \
+      (*callback->output_error)(                                        \
+          "%s(%d): module exception handler creation failed", __FILE__, \
+          __LINE__);                                                    \
+    else if (setjmp(_handler->buf) == 0)                                \
+    {
 /* TROUBLESHOOT
         This error is caused when the system is unable to implement an exception
    handler for a module. This is an internal error and should be reported to the
@@ -364,7 +375,8 @@ delegated type.
  main core exception handler.
  **/
 #ifdef __cplusplus
-inline void GL_THROW(char *format, ...) {
+inline void GL_THROW(char *format, ...)
+{
   static char buffer[1024];
   va_list ptr;
   va_start(ptr, format);
@@ -373,7 +385,8 @@ inline void GL_THROW(char *format, ...) {
   throw std::runtime_error(buffer);
 }
 
-inline void GL_THROW(const char *format, ...) {
+inline void GL_THROW(const char *format, ...)
+{
   static char buffer[1024];
   va_list ptr;
   va_start(ptr, format);
@@ -392,15 +405,16 @@ inline void GL_THROW(const char *format, ...) {
         GL_CATCH blocks must always be terminated by a #GL_ENDCATCH statement.
  **/
 #endif
-#define GL_CATCH(Msg)                                                          \
-  }                                                                            \
-  else {                                                                       \
+#define GL_CATCH(Msg) \
+  }                   \
+  else                \
+  {                   \
     Msg = (*callback->exception.exception_msg)();
 /** GL_CATCH(Msg) blocks must always be terminated by a #GL_ENDCATCH statement.
  **/
-#define GL_ENDCATCH                                                            \
-  }                                                                            \
-  (*callback->exception.delete_exception_handler)(_handler);                   \
+#define GL_ENDCATCH                                          \
+  }                                                          \
+  (*callback->exception.delete_exception_handler)(_handler); \
   }
 /** @} **/
 
@@ -513,9 +527,9 @@ global_exit_code to XC_ARGERR.
 inline int gl_module_depends(
     char *name, /**< module name */
     unsigned char major =
-        0, /**< major version, if any required (module must match exactly) */
-    unsigned char minor = 0, /**< minor version, if any required (module must be
-                                greater or equal) */
+        0,                    /**< major version, if any required (module must match exactly) */
+    unsigned char minor = 0,  /**< minor version, if any required (module must be
+                                 greater or equal) */
     unsigned short build = 0) /**< build number, if any required (module must be
                                  greater or equal) */
 {
@@ -580,26 +594,121 @@ inline int gl_module_depends(
 
         @see object_isa()
  **/
+// #ifdef __cplusplus
+// inline bool gl_object_isa(OBJECT *obj, /**< object to test */
+//                           const char *type,
+//                           const char *modname = NULL) /**< type to test */
+// {
+//   bool rv = (*callback->object_isa)(obj, type) != 0;
+//   bool mv =
+//       modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
+//   return (rv && mv);
+// }
+
+// inline bool gl_object_isa(OBJECT *obj, /**< object to test */
+//                           char *type, char *modname = NULL) /**< type to test */
+// {
+//   bool rv = (*callback->object_isa)(obj, type) != 0;
+//   bool mv =
+//       modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
+//   return (rv && mv);
+// }
+// #else
+// #define gl_object_isa (*callback->object_isa)
+// #endif
+
 #ifdef __cplusplus
-inline bool gl_object_isa(OBJECT *obj, /**< object to test */
-                          const char *type,
-                          const char *modname = NULL) /**< type to test */
+
+// Strip directory components from a module path (e.g., "/usr/lib/powerflow.dylib" -> "powerflow.dylib")
+constexpr std::string_view gl_basename(std::string_view s)
 {
-  bool rv = (*callback->object_isa)(obj, type) != 0;
-  bool mv =
-      modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
-  return (rv && mv);
+  // Find last '/' or '\'
+  const auto pos_slash = s.find_last_of('/');
+  const auto pos_bslash = s.find_last_of('\\');
+  const auto pos = (pos_slash == std::string_view::npos && pos_bslash == std::string_view::npos)
+                       ? std::string_view::npos
+                       : std::max(pos_slash, pos_bslash);
+  return (pos == std::string_view::npos) ? s : s.substr(pos + 1);
 }
 
-inline bool gl_object_isa(OBJECT *obj, /**< object to test */
-                          char *type, char *modname = NULL) /**< type to test */
+// Strip common dynamic library suffixes (.dylib/.so/.dll)
+constexpr std::string_view gl_strip_lib_suffix(std::string_view s)
 {
-  bool rv = (*callback->object_isa)(obj, type) != 0;
-  bool mv =
-      modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
-  return (rv && mv);
+  constexpr std::string_view suf_dylib{".dylib"};
+  constexpr std::string_view suf_so{".so"};
+  constexpr std::string_view suf_dll{".dll"};
+
+  if (s.size() >= suf_dylib.size() && s.substr(s.size() - suf_dylib.size()) == suf_dylib)
+  {
+    return s.substr(0, s.size() - suf_dylib.size());
+  }
+  if (s.size() >= suf_so.size() && s.substr(s.size() - suf_so.size()) == suf_so)
+  {
+    return s.substr(0, s.size() - suf_so.size());
+  }
+  if (s.size() >= suf_dll.size() && s.substr(s.size() - suf_dll.size()) == suf_dll)
+  {
+    return s.substr(0, s.size() - suf_dll.size());
+  }
+  return s;
 }
+
+// Normalize a module identifier for robust comparison across platforms:
+//   - strips directory,
+//   - strips library suffix,
+//   - returns the "core" module name (e.g., "powerflow")
+constexpr std::string_view gl_normalize_module_name(std::string_view s)
+{
+  return gl_strip_lib_suffix(gl_basename(s));
+}
+
+// Safe wrapper to turn a possibly-null C string into a string_view
+constexpr std::string_view sv_or_empty(const char *s)
+{
+  return s ? std::string_view{s} : std::string_view{};
+}
+
+// --------- Portable gl_object_isa (no lambdas) ---------
+
+inline bool gl_object_isa(OBJECT *obj, const char *type, const char *modname = nullptr)
+{
+  if (!obj || !type || *type == '\0')
+    return false;
+
+  bool is_type = false;
+
+  // Prefer the per-class ISA first (it works in your LLDB probe)
+  if (obj->oclass && obj->oclass->isa)
+    is_type = (obj->oclass->isa(obj, const_cast<char *>(type)) != 0);
+
+  // If that didn’t match, try the core callback ancestry search
+  if (!is_type && callback && callback->object_isa)
+    is_type = ((*callback->object_isa)(obj, type) != 0);
+
+  if (!is_type)
+    return false;
+
+  // Optional module constraint – normalize and compare
+  if (modname && *modname)
+  {
+    const MODULE *runtime_mod = (obj->oclass ? obj->oclass->module : nullptr);
+    const std::string_view lhs = gl_normalize_module_name(sv_or_empty(runtime_mod && runtime_mod->name ? runtime_mod->name : nullptr));
+    const std::string_view rhs = gl_normalize_module_name(sv_or_empty(modname));
+    return lhs == rhs;
+  }
+  return true;
+}
+
+// Legacy overload to preserve older call sites that pass char*
+inline bool gl_object_isa(OBJECT *obj, char *type, char *modname = nullptr)
+{
+  return gl_object_isa(obj,
+                       const_cast<const char *>(type),
+                       const_cast<const char *>(modname));
+}
+
 #else
+// C fallback keeps macro behavior for pure-C translation units
 #define gl_object_isa (*callback->object_isa)
 #endif
 
@@ -615,14 +724,15 @@ inline bool gl_object_isa(OBJECT *obj, /**< object to test */
  **/
 #ifdef __cplusplus
 inline FUNCTION *
-gl_publish_function(CLASS *oclass, /**< class to which function belongs */
+gl_publish_function(CLASS *oclass,                   /**< class to which function belongs */
                     const FUNCTIONNAME functionname, /**< name of function */
-                    FUNCTIONADDR call) /**< address of function entry */
+                    FUNCTIONADDR call)               /**< address of function entry */
 {
 
   return (*callback->function.define)(oclass, functionname, call);
 }
-inline FUNCTIONADDR gl_get_function(OBJECT *obj, const char *name) {
+inline FUNCTIONADDR gl_get_function(OBJECT *obj, const char *name)
+{
   return obj ? (*callback->function.get)(obj->oclass->name,
                                          const_cast<char *>(name))
              : NULL;
@@ -775,10 +885,10 @@ char *gl_name(OBJECT *my, char *buffer, size_t size);
 /// @return nothing
 template <class T>
 inline int
-gl_set_value(OBJECT *obj, ///< the object whose property value is being obtained
+gl_set_value(OBJECT *obj,    ///< the object whose property value is being obtained
              PROPERTY *prop, ///< the name of the property being obtained
-             T &value) ///< a reference to the local value where the property's
-                       ///< value is being copied
+             T &value)       ///< a reference to the local value where the property's
+                             ///< value is being copied
 {
   // T *ptr = (T*)gl_get_addr(obj,propname);
   char buffer[256];
@@ -789,15 +899,19 @@ gl_set_value(OBJECT *obj, ///< the object whose property value is being obtained
   if (ptr == NULL)
     GL_THROW("property %s not found in object %s", prop->name,
              gl_name(obj, buffer, 255));
-  if (obj->oclass->notify) {
-    if (obj->oclass->notify(obj, NM_PREUPDATE, prop) == 0) {
+  if (obj->oclass->notify)
+  {
+    if (obj->oclass->notify(obj, NM_PREUPDATE, prop) == 0)
+    {
       gl_error("preupdate notify failure on %s in %s", prop->name,
                obj->name ? obj->name : "an unnamed object");
     }
   }
   *ptr = value;
-  if (obj->oclass->notify) {
-    if (obj->oclass->notify(obj, NM_POSTUPDATE, prop) == 0) {
+  if (obj->oclass->notify)
+  {
+    if (obj->oclass->notify(obj, NM_POSTUPDATE, prop) == 0)
+    {
       gl_error("postupdate notify failure on %s in %s", prop->name,
                obj->name ? obj->name : "an unnamed object");
     }
@@ -816,7 +930,8 @@ gl_set_value(OBJECT *obj, ///< the object whose property value is being obtained
  **/
 #ifdef __cplusplus
 inline int gl_get_value_by_name(OBJECT *obj, const PROPERTYNAME name,
-                                char *value, int size) {
+                                char *value, int size)
+{
   return (*callback->properties.get_value_by_name)(obj, name, value, size);
 }
 #else
@@ -825,7 +940,8 @@ inline int gl_get_value_by_name(OBJECT *obj, const PROPERTYNAME name,
 
 #ifdef __cplusplus
 inline char *gl_getvalue(OBJECT *obj, const PROPERTYNAME name, char *buffer,
-                         int sz) {
+                         int sz)
+{
   return gl_get_value_by_name(obj, name, buffer, sz) >= 0 ? buffer : NULL;
 }
 #endif
@@ -859,7 +975,8 @@ inline char *gl_getvalue(OBJECT *obj, const PROPERTYNAME name, char *buffer,
 #define gl_get_object_count (*callback->object_count)
 
 #ifdef __cplusplus
-inline OBJECT **gl_get_object_prop(OBJECT *obj, PROPERTY *prop) {
+inline OBJECT **gl_get_object_prop(OBJECT *obj, PROPERTY *prop)
+{
   return (*callback->objvar.object_var)(obj, prop);
 }
 #else
@@ -1110,12 +1227,14 @@ inline bool *gl_get_bool(OBJECT *obj,    /**< object to set dependency */
 #define gl_localtime_delta (*callback->time.local_datetime_delta)
 
 #ifdef __cplusplus
-inline int gl_getweekday(TIMESTAMP t) {
+inline int gl_getweekday(TIMESTAMP t)
+{
   DATETIME dt;
   gl_localtime(t, &dt);
   return dt.weekday;
 }
-inline int gl_gethour(TIMESTAMP t) {
+inline int gl_gethour(TIMESTAMP t)
+{
   DATETIME dt;
   gl_localtime(t, &dt);
   return dt.hour;
@@ -1186,16 +1305,19 @@ bitof(unsigned int64 x, /**< bit pattern to scan */
           false) /**< flag to use throw when more than one bit is set */
 {
   char n = 0;
-  if (x == 0) {
+  if (x == 0)
+  {
     if (use_throw)
       throw "bitof empty bit pattern";
     return -0x7f;
   }
-  while ((x & 1) == 0) {
+  while ((x & 1) == 0)
+  {
     x >>= 1;
     n++;
   }
-  if (x != 0) {
+  if (x != 0)
+  {
     if (use_throw)
       throw "bitof found more than one bit";
     else
@@ -1206,7 +1328,8 @@ bitof(unsigned int64 x, /**< bit pattern to scan */
 /** Construct a proper object object
         @return a pointer to the struct buffer or NULL if failed
  **/
-inline char *gl_name(OBJECT *my, char *buffer, size_t size) {
+inline char *gl_name(OBJECT *my, char *buffer, size_t size)
+{
   char temp[256];
   if (my == NULL || buffer == NULL)
     return NULL;
@@ -1222,30 +1345,36 @@ inline char *gl_name(OBJECT *my, char *buffer, size_t size) {
 
 /** Find a schedule
  **/
-inline SCHEDULE *gl_schedule_find(const char *name) {
+inline SCHEDULE *gl_schedule_find(const char *name)
+{
   return callback->schedule.find(name);
 }
 /** Create a schedule
  **/
-inline SCHEDULE *gl_schedule_create(const char *name, const char *definition) {
+inline SCHEDULE *gl_schedule_create(const char *name, const char *definition)
+{
   return callback->schedule.create(name, definition);
 }
 /** Find the time index in a schedule
  **/
-inline SCHEDULEINDEX gl_schedule_index(SCHEDULE *sch, TIMESTAMP ts) {
+inline SCHEDULEINDEX gl_schedule_index(SCHEDULE *sch, TIMESTAMP ts)
+{
   return callback->schedule.index(sch, ts);
 }
 /** Find the value at a time index in a schedule
  **/
-inline double gl_schedule_value(SCHEDULE *sch, SCHEDULEINDEX index) {
+inline double gl_schedule_value(SCHEDULE *sch, SCHEDULEINDEX index)
+{
   return callback->schedule.value(sch, index);
 }
 /** Find the elapsed time until the value at an index changes
  **/
-inline int32 gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index) {
+inline int32 gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
+{
   return callback->schedule.dtnext(sch, index);
 }
-inline SCHEDULE *gl_schedule_getfirst(void) {
+inline SCHEDULE *gl_schedule_getfirst(void)
+{
   return callback->schedule.getfirst();
 }
 /** Create an enduse
@@ -1254,15 +1383,18 @@ inline int gl_enduse_create(enduse *e) { return callback->enduse.create(e); }
 /** Synchronize an enduse
  **/
 inline TIMESTAMP gl_enduse_sync(enduse *e, TIMESTAMP t1,
-                                PASSCONFIG pass = PC_BOTTOMUP) {
+                                PASSCONFIG pass = PC_BOTTOMUP)
+{
   return callback->enduse.sync(e, t1, pass);
 }
 /** Create a loadshape
  **/
-inline loadshape *gl_loadshape_create(SCHEDULE *s) {
+inline loadshape *gl_loadshape_create(SCHEDULE *s)
+{
   loadshape *ls = (loadshape *)malloc(sizeof(loadshape));
   memset(ls, 0, sizeof(loadshape));
-  if (0 == callback->loadshape.create(ls)) {
+  if (0 == callback->loadshape.create(ls))
+  {
     return NULL;
   }
   ls->schedule = s;
@@ -1270,7 +1402,8 @@ inline loadshape *gl_loadshape_create(SCHEDULE *s) {
 }
 /** Get the current value of a loadshape
  **/
-inline double gl_get_loadshape_value(loadshape *shape) {
+inline double gl_get_loadshape_value(loadshape *shape)
+{
   if (shape)
     return shape->load;
   else
@@ -1278,32 +1411,40 @@ inline double gl_get_loadshape_value(loadshape *shape) {
 }
 /** Format a DATETIME into a string buffer
  **/
-inline char *gl_strftime(DATETIME *dt, char *buffer, int size) {
+inline char *gl_strftime(DATETIME *dt, char *buffer, int size)
+{
   return callback->time.strdatetime(dt, buffer, size) ? buffer : NULL;
 };
 /** Format a TIMESTAMP into a string buffer
  **/
-inline char *gl_strftime(TIMESTAMP ts, char *buffer, int size) {
+inline char *gl_strftime(TIMESTAMP ts, char *buffer, int size)
+{
   // static char buffer[64];
   DATETIME dt;
-  if (buffer == 0) {
+  if (buffer == 0)
+  {
     gl_error("gl_strftime: buffer is a null pointer");
     return 0;
   }
-  if (size < 15) {
+  if (size < 15)
+  {
     gl_error("gl_strftime: buffer size is too small");
     return 0;
   }
-  if (gl_localtime(ts, &dt)) {
+  if (gl_localtime(ts, &dt))
+  {
     return gl_strftime(&dt, buffer, size);
-  } else {
+  }
+  else
+  {
     strncpy(buffer, "(invalid time)", size);
   }
   return buffer;
 }
 /** Calculate the next power of 2 greater than a number
  **/
-inline size_t nextpow2(size_t x) {
+inline size_t nextpow2(size_t x)
+{
   if (x < 0)
     return 0;
   x--;
@@ -1370,40 +1511,46 @@ inline size_t nextpow2(size_t x) {
 ///
 /// Catchall for sync
 ///
-#define SYNC_CATCHALL(C)                                                       \
-  catch (char *msg) {                                                          \
-    gl_error("sync_" #C "(obj=%d;%s): %s", obj->id,                            \
-             obj->name ? obj->name : "unnamed", msg);                          \
-    return TS_INVALID;                                                         \
-  }                                                                            \
-  catch (const char *msg) {                                                    \
-    gl_error("sync_" #C "(obj=%d;%s): %s", obj->id,                            \
-             obj->name ? obj->name : "unnamed", msg);                          \
-    return TS_INVALID;                                                         \
-  }                                                                            \
-  catch (const std::exception &ex) {                                           \
-    gl_error("sync_" #C "(obj=%d;%s): unhandled exception - %s", obj->id,      \
-             obj->name ? obj->name : "unnamed", ex.what());                    \
-    return TS_INVALID;                                                         \
+#define SYNC_CATCHALL(C)                                                  \
+  catch (char *msg)                                                       \
+  {                                                                       \
+    gl_error("sync_" #C "(obj=%d;%s): %s", obj->id,                       \
+             obj->name ? obj->name : "unnamed", msg);                     \
+    return TS_INVALID;                                                    \
+  }                                                                       \
+  catch (const char *msg)                                                 \
+  {                                                                       \
+    gl_error("sync_" #C "(obj=%d;%s): %s", obj->id,                       \
+             obj->name ? obj->name : "unnamed", msg);                     \
+    return TS_INVALID;                                                    \
+  }                                                                       \
+  catch (const std::exception &ex)                                        \
+  {                                                                       \
+    gl_error("sync_" #C "(obj=%d;%s): unhandled exception - %s", obj->id, \
+             obj->name ? obj->name : "unnamed", ex.what());               \
+    return TS_INVALID;                                                    \
   }
 ///
 /// Catchall for init
 ///
-#define INIT_CATCHALL(C)                                                       \
-  catch (char *msg) {                                                          \
-    gl_error("init_" #C "(obj=%d;%s): %s", obj->id,                            \
-             obj->name ? obj->name : "unnamed", msg);                          \
-    return 0;                                                                  \
-  }                                                                            \
-  catch (const char *msg) {                                                    \
-    gl_error("init_" #C "(obj=%d;%s): %s", obj->id,                            \
-             obj->name ? obj->name : "unnamed", msg);                          \
-    return 0;                                                                  \
-  }                                                                            \
-  catch (const std::exception &ex) {                                           \
-    gl_error("init_" #C "(obj=%d;%s): unhandled exception - %s", obj->id,      \
-             obj->name ? obj->name : "unnamed", ex.what());                    \
-    return 0;                                                                  \
+#define INIT_CATCHALL(C)                                                  \
+  catch (char *msg)                                                       \
+  {                                                                       \
+    gl_error("init_" #C "(obj=%d;%s): %s", obj->id,                       \
+             obj->name ? obj->name : "unnamed", msg);                     \
+    return 0;                                                             \
+  }                                                                       \
+  catch (const char *msg)                                                 \
+  {                                                                       \
+    gl_error("init_" #C "(obj=%d;%s): %s", obj->id,                       \
+             obj->name ? obj->name : "unnamed", msg);                     \
+    return 0;                                                             \
+  }                                                                       \
+  catch (const std::exception &ex)                                        \
+  {                                                                       \
+    gl_error("init_" #C "(obj=%d;%s): unhandled exception - %s", obj->id, \
+             obj->name ? obj->name : "unnamed", ex.what());               \
+    return 0;                                                             \
   }
 ///
 /// Catchall for create
@@ -1413,48 +1560,57 @@ inline size_t nextpow2(size_t x) {
 // msg); return 0; } catch (const std::exception& ex) { gl_error("create_" #C ":
 // unhandled exception - %s", ex.what()); return 0; }
 
-#define CREATE_CATCHALL(C)                                                     \
-  catch (char *msg) {                                                          \
-    gl_error("create_" #C ": %s", msg);                                        \
-    return 0;                                                                  \
-  }                                                                            \
-  catch (const char *msg) {                                                    \
-    gl_error("create_" #C ": %s", msg);                                        \
-    return 0;                                                                  \
-  }                                                                            \
-  catch (const std::exception &ex) {                                           \
-    gl_error("create_" #C ": unhandled exception - %s", ex.what());            \
-    return 0;                                                                  \
+#define CREATE_CATCHALL(C)                                          \
+  catch (char *msg)                                                 \
+  {                                                                 \
+    gl_error("create_" #C ": %s", msg);                             \
+    return 0;                                                       \
+  }                                                                 \
+  catch (const char *msg)                                           \
+  {                                                                 \
+    gl_error("create_" #C ": %s", msg);                             \
+    return 0;                                                       \
+  }                                                                 \
+  catch (const std::exception &ex)                                  \
+  {                                                                 \
+    gl_error("create_" #C ": unhandled exception - %s", ex.what()); \
+    return 0;                                                       \
   }
 
-#define I_CATCHALL(T, C)                                                       \
-  catch (char *msg) {                                                          \
-    gl_error(#T "_" #C ": %s", msg);                                           \
-    return 0;                                                                  \
-  }                                                                            \
-  catch (const char *msg) {                                                    \
-    gl_error(#T "_" #C ": %s", msg);                                           \
-    return 0;                                                                  \
-  }                                                                            \
-  catch (const std::exception &ex) {                                           \
-    gl_error(#T "_" #C ": unhandled exception - %s", ex.what());               \
-    return 0;                                                                  \
+#define I_CATCHALL(T, C)                                         \
+  catch (char *msg)                                              \
+  {                                                              \
+    gl_error(#T "_" #C ": %s", msg);                             \
+    return 0;                                                    \
+  }                                                              \
+  catch (const char *msg)                                        \
+  {                                                              \
+    gl_error(#T "_" #C ": %s", msg);                             \
+    return 0;                                                    \
+  }                                                              \
+  catch (const std::exception &ex)                               \
+  {                                                              \
+    gl_error(#T "_" #C ": unhandled exception - %s", ex.what()); \
+    return 0;                                                    \
   }
-#define T_CATCHALL(T, C)                                                       \
-  catch (char *msg) {                                                          \
-    gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id,                             \
-             obj->name ? obj->name : "unnamed", msg);                          \
-    return TS_INVALID;                                                         \
-  }                                                                            \
-  catch (const char *msg) {                                                    \
-    gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id,                             \
-             obj->name ? obj->name : "unnamed", msg);                          \
-    return TS_INVALID;                                                         \
-  }                                                                            \
-  catch (const std::exception &ex) {                                           \
-    gl_error(#T "_" #C "(obj=%d;%s): unhandled exception - %s", obj->id,       \
-             obj->name ? obj->name : "unnamed", ex.what());                    \
-    return TS_INVALID;                                                         \
+#define T_CATCHALL(T, C)                                                 \
+  catch (char *msg)                                                      \
+  {                                                                      \
+    gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id,                       \
+             obj->name ? obj->name : "unnamed", msg);                    \
+    return TS_INVALID;                                                   \
+  }                                                                      \
+  catch (const char *msg)                                                \
+  {                                                                      \
+    gl_error(#T "_" #C "(obj=%d;%s): %s", obj->id,                       \
+             obj->name ? obj->name : "unnamed", msg);                    \
+    return TS_INVALID;                                                   \
+  }                                                                      \
+  catch (const std::exception &ex)                                       \
+  {                                                                      \
+    gl_error(#T "_" #C "(obj=%d;%s): unhandled exception - %s", obj->id, \
+             obj->name ? obj->name : "unnamed", ex.what());              \
+    return TS_INVALID;                                                   \
   }
 /**@}*/
 
@@ -1465,64 +1621,72 @@ inline size_t nextpow2(size_t x) {
  * @{
  */
 #ifdef __cplusplus
-inline TRANSFORM *gl_transform_getfirst(void) {
+inline TRANSFORM *gl_transform_getfirst(void)
+{
   return callback->transform.getnext(NULL);
 };
-inline TRANSFORM *gl_transform_getnext(TRANSFORM *xform) {
+inline TRANSFORM *gl_transform_getnext(TRANSFORM *xform)
+{
   return callback->transform.getnext(xform);
 };
 inline int gl_transform_add_linear(TRANSFORMSOURCE stype, double *source,
                                    void *target, double scale, double bias,
                                    OBJECT *obj, PROPERTY *prop,
-                                   SCHEDULE *sched) {
+                                   SCHEDULE *sched)
+{
   return callback->transform.add_linear(stype, source, target, scale, bias, obj,
                                         prop, sched);
 };
 inline int gl_transform_add_external(OBJECT *target_obj, PROPERTY *target_prop,
                                      char *function, OBJECT *source_obj,
-                                     PROPERTY *source_prop) {
+                                     PROPERTY *source_prop)
+{
   return callback->transform.add_external(target_obj, target_prop, function,
                                           source_obj, source_prop);
 };
 inline const char *
-gl_module_find_transform_function(TRANSFORMFUNCTION function) {
+gl_module_find_transform_function(TRANSFORMFUNCTION function)
+{
   return callback->module.find_transform_function(function);
 };
 #else
-#define gl_transform_getnext                                                   \
-  (*callback->transform                                                        \
+#define gl_transform_getnext \
+  (*callback->transform      \
         .getnext) /* TRANSFORM *(*transform.getnext)(TRANSFORM*); */
-#define gl_transform_add_linear                                                \
-  (*callback->transfor                                                         \
-        .add_linear) /* int transform_add_linear(TRANSFORMSOURCE stype,double  \
-                        *source,void *target,double scale,double bias,OBJECT   \
-                        *obj,PROPERTY *prop,SCHEDULE *sched) */
+#define gl_transform_add_linear                                               \
+  (*callback->transfor                                                        \
+        .add_linear) /* int transform_add_linear(TRANSFORMSOURCE stype,double \
+                      *source,void *target,double scale,double bias,OBJECT    \
+                      *obj,PROPERTY *prop,SCHEDULE *sched) */
 #define gl_transform_add_external                                                                              \
   (*callback->transform.add_external) /* int                                                                   \
                                          (*transform.add_external)(OBJECT*,PROPERTY*,char*,OBJECT*,PROPERTY*); \
                                        */
-#define gl_module_find_transform_function                                      \
+#define gl_module_find_transform_function \
   (*callback->module.find_transform_function)
 #endif
 /**@}*/
 
 #ifdef __cplusplus
-inline randomvar_struct *gl_randomvar_getfirst(void) {
+inline randomvar_struct *gl_randomvar_getfirst(void)
+{
   return callback->randomvar.getnext(NULL);
 };
-inline randomvar_struct *gl_randomvar_getnext(randomvar_struct *var) {
+inline randomvar_struct *gl_randomvar_getnext(randomvar_struct *var)
+{
   return callback->randomvar.getnext(var);
 };
 inline size_t gl_randomvar_getspec(char *str, size_t size,
-                                   const randomvar_struct *var) {
+                                   const randomvar_struct *var)
+{
   return callback->randomvar.getspec(str, size, var);
 };
 #else
-#define gl_randomvar_getnext                                                   \
-  (*callback->randomvar                                                        \
+#define gl_randomvar_getnext \
+  (*callback->randomvar      \
         .getnext) /* randomvar *(*randomvar.getnext)(randomvar*) */
-#define gl_randomvar_getspec                                                   \
-  (*callback->randomvar                                                        \
+#define gl_randomvar_getspec \
+  (*callback->randomvar      \
         .getspec) /* size_t (*randomvar.getspec(char*,size_t,randomvar*) */
 #endif
 
@@ -1552,7 +1716,7 @@ inline void gl_write(void *local,    /** local memory for data */
 }
 /** read remote global data **/
 inline void *gl_read(
-    void *local, /** local memory for data (must be correct size for global */
+    void *local,    /** local memory for data (must be correct size for global */
     GLOBALVAR *var) /** global variable from which to get data */
 {
   /* @todo */
@@ -1576,23 +1740,24 @@ gl_write(void *local,    /** local memory for data */
 // gld_core::wlock(X); /**< Locks an item for writing (blocks all operations) */
 // #define READUNLOCK() gld_core::runlock(); /**< Unlocks an read lock */
 // #define WRITEUNLOCK(X) gld_core::wunlock(X); /**< Unlocks a write lock */
-namespace gld_core {
-// inline std::shared_lock<std::shared_mutex> rlock(unsigned int* lock) { return
-// callback->lock.read(lock); } inline void wlock(unsigned int* lock) {
-// callback->lock.write(lock); } inline void runlock() {
-// callback->unlock.read(); } inline void wunlock(unsigned int* lock) {
-// callback->unlock.write(lock); }
+namespace gld_core
+{
+  // inline std::shared_lock<std::shared_mutex> rlock(unsigned int* lock) { return
+  // callback->lock.read(lock); } inline void wlock(unsigned int* lock) {
+  // callback->lock.write(lock); } inline void runlock() {
+  // callback->unlock.read(); } inline void wunlock(unsigned int* lock) {
+  // callback->unlock.write(lock); }
 }
 // TODO: locking templates
 // template <class T>
 // void rlock(T object) {gld_core::rlock(&object.lock);}
 
 #else
-#define READLOCK(X)                                                            \
-  rlock(X); /**< Locks an item for reading (allows other reads but blocks      \
+#define READLOCK(X)                                                       \
+  rlock(X); /**< Locks an item for reading (allows other reads but blocks \
                write) */
-#define WRITELOCK(X)                                                           \
-  wlock(X); /**< Locks an item for writing (blocks all operations) */
+#define WRITELOCK(X) \
+  wlock(X);                        /**< Locks an item for writing (blocks all operations) */
 #define READUNLOCK(X) runlock(X);  /**< Unlocks an read lock */
 #define WRITEUNLOCK(X) wunlock(X); /**< Unlocks a write lock */
 #endif
@@ -1635,9 +1800,11 @@ static unsigned long _nan[] = {
 #include "property.h"
 
 /// General string encapsulation
-class gld_string {
+class gld_string
+{
 private: // data
-  typedef struct strbuf {
+  typedef struct strbuf
+  {
     unsigned int lock; // TODO implement locking
     size_t len;
     unsigned int nrefs;
@@ -1649,17 +1816,20 @@ public: // construction/destructor
   /// construct an empty string
   inline gld_string(void) : buf(NULL) { init(); };
   /// construct a linked string
-  inline gld_string(gld_string &s) : buf(NULL) {
+  inline gld_string(gld_string &s) : buf(NULL)
+  {
     init();
     link(s);
   };
   /// construct a new string
-  inline gld_string(const char *s) : buf(NULL) {
+  inline gld_string(const char *s) : buf(NULL)
+  {
     init();
     copy(s);
   };
   /// construct a new string of a particular length
-  inline gld_string(const char *s, size_t n) : buf(NULL) {
+  inline gld_string(const char *s, size_t n) : buf(NULL)
+  {
     init();
     copy(s, n);
   };
@@ -1668,12 +1838,14 @@ public: // construction/destructor
 
 public: // copy
   /// copy a string
-  inline gld_string &operator=(const char *s) {
+  inline gld_string &operator=(const char *s)
+  {
     copy(s);
     return *this;
   };
   /// link to a string
-  inline gld_string &operator=(gld_string &s) {
+  inline gld_string &operator=(gld_string &s)
+  {
     link(s);
     return *this;
   };
@@ -1687,47 +1859,58 @@ public: // casts
   inline operator STRBUF *(void) { return buf; };
 
 private: // internals
-  inline void init(void) {
+  inline void init(void)
+  {
     buf = (STRBUF *)malloc(sizeof(STRBUF));
     memset(buf, 0, sizeof(STRBUF));
   };
   // inline void lock(void) { if ( buf ) gld_core::wlock(&buf->lock); };
   // inline void unlock(void) { if ( buf ) gld_core::wunlock(&buf->lock); };
-  inline void fit(size_t n) {
+  inline void fit(size_t n)
+  {
     if (buf == NULL || n > buf->len)
       alloc(n);
   };
-  inline void alloc(size_t n) {
+  inline void alloc(size_t n)
+  {
     size_t len = nextpow2(n);
     if (len < sizeof(NATIVE))
       len = sizeof(NATIVE);
     char *newstr = (char *)malloc(len);
-    if (buf->str != NULL) {
+    if (buf->str != NULL)
+    {
       strcpy(newstr, buf->str);
       free(buf->str);
-    } else
+    }
+    else
       buf->nrefs = 1;
     buf->str = newstr;
     buf->len = len;
   };
-  inline void copy(const char *s) {
+  inline void copy(const char *s)
+  {
     fit(strlen(s) + 1);
     strcpy(buf->str, s);
   };
-  inline void copy(const char *s, size_t n) {
+  inline void copy(const char *s, size_t n)
+  {
     fit(n + 1);
     strncpy(buf->str, s, n);
   };
-  inline void link(gld_string &s) {
+  inline void link(gld_string &s)
+  {
     unlink();
     buf = (STRBUF *)s;
     buf->nrefs++;
   };
-  inline void unlink() {
-    if (buf->nrefs <= 1) {
+  inline void unlink()
+  {
+    if (buf->nrefs <= 1)
+    {
       free(buf->str);
       free(buf);
-    } else
+    }
+    else
       buf->nrefs--;
   };
 
@@ -1743,7 +1926,8 @@ public: // read accessors
   /// get the size of the string buffer (as allocated)
   inline size_t get_size(void) { return buf ? buf->len : -1; };
   /// get the length of the string (up to the null termination)
-  inline size_t get_length(void) {
+  inline size_t get_length(void)
+  {
     return buf && buf->str ? strlen(buf->str) : -1;
   };
 
@@ -1753,7 +1937,8 @@ public: // write accessors
   /// set the string buffer size
   inline void set_size(size_t n) { fit(n); };
   /// format the string (a la printf)
-  inline size_t format(const char *fmt, ...) {
+  inline size_t format(const char *fmt, ...)
+  {
     va_list ptr;
     va_start(ptr, fmt);
     int len = vsnprintf(buf->str, buf->len, fmt, ptr);
@@ -1761,7 +1946,8 @@ public: // write accessors
     return len;
   };
   /// format the string with a specific buffer size
-  inline size_t format(size_t len, const char *fmt, ...) {
+  inline size_t format(size_t len, const char *fmt, ...)
+  {
     fit(len);
     va_list ptr;
     va_start(ptr, fmt);
@@ -1786,7 +1972,8 @@ public: // compare ops
 
 public: // manipulation
   /// trim left whitespace
-  inline void trimleft(void) {
+  inline void trimleft(void)
+  {
     if (is_null())
       return;
     size_t n = 0;
@@ -1795,7 +1982,8 @@ public: // manipulation
     strcpy(buf->str, buf->str + n);
   };
   /// trim right whitespace
-  inline void trimright(void) {
+  inline void trimright(void)
+  {
     if (is_null())
       return;
     size_t n = strlen(buf->str);
@@ -1803,62 +1991,72 @@ public: // manipulation
       buf->str[--n] = '\0';
   };
   /// extract left string
-  inline gld_string left(size_t n) {
+  inline gld_string left(size_t n)
+  {
     if (is_null())
       return gld_string();
     return gld_string(buf->str, n);
   };
   /// extract right string
-  inline gld_string right(size_t n) {
+  inline gld_string right(size_t n)
+  {
     if (is_null())
       return gld_string();
     return gld_string(buf->str + buf->len - n);
   };
   /// extract mid string
-  inline gld_string mid(size_t n, size_t m) {
+  inline gld_string mid(size_t n, size_t m)
+  {
     if (is_null())
       return gld_string();
     return gld_string(buf->str + buf->len - n, m);
   };
   /// locate substring
-  inline size_t findstr(const char *s) {
+  inline size_t findstr(const char *s)
+  {
     if (is_null())
       return -1;
     char *p = strstr(buf->str, s);
     return p == NULL ? -1 : (p - buf->str);
   };
   /// find character
-  inline size_t findchr(char c) {
+  inline size_t findchr(char c)
+  {
     if (is_null())
       return -1;
     char *p = strchr(buf->str, c);
     return p == NULL ? -1 : (p - buf->str);
   };
-  inline size_t split(gld_string *&list, const char *delim = " ") {
+  inline size_t split(gld_string *&list, const char *delim = " ")
+  {
     // TODO
     if (is_null())
       return 0;
     return 0;
   }
   inline gld_string merge(gld_string *&list, size_t n,
-                          const char *delim = " ") {
+                          const char *delim = " ")
+  {
     // TODO
     return gld_string();
   }
 };
 
 /// Date/time encapsulation
-class gld_clock {
+class gld_clock
+{
 private: // data
   DATETIME dt;
 
 public: // constructors
   /// Clock constructor for current global clock
-  gld_clock(void) {
+  gld_clock(void)
+  {
     callback->time.local_datetime(*(callback->global_clock), &dt);
   };
   /// Clock constructor for an arbitrary TIMESTAMP
-  gld_clock(TIMESTAMP ts) {
+  gld_clock(TIMESTAMP ts)
+  {
     if (!callback->time.local_datetime(ts, &dt))
       memset(&dt, 0, sizeof(dt));
   };
@@ -1868,7 +2066,8 @@ public: // constructors
   /// values
   gld_clock(unsigned short y, unsigned short m = 0, unsigned short d = 0,
             unsigned short H = 0, unsigned short M = 0, unsigned short S = 0,
-            unsigned short int ms = 0, char *tz = NULL, int dst = -1) {
+            unsigned short int ms = 0, char *tz = NULL, int dst = -1)
+  {
     dt.year = y;
     dt.month = m;
     dt.day = d;
@@ -1924,7 +2123,8 @@ public: // read accessors
   /// Get the Unix Day Number (full days since the Unix Epoch)
   inline unsigned int get_uday(void) { return dt.timestamp / 86400; };
   /// Get the Julian Day Number
-  inline unsigned int get_jday(void) {
+  inline unsigned int get_jday(void)
+  {
     return (dt.timestamp / 86400) + 2440587.5;
   };
   /// Get the timezone spec
@@ -1940,18 +2140,21 @@ public: // read accessors
   /// Get the TIMESTAMP value (UTC)
   inline TIMESTAMP get_timestamp(void) { return dt.timestamp; };
   /// Get the local TIMESTAMP value (ignoring DST)
-  inline TIMESTAMP get_localtimestamp(void) {
+  inline TIMESTAMP get_localtimestamp(void)
+  {
     return dt.timestamp - dt.tzoffset;
   };
   /// Get the local TIMESTAMP value (including DST)
-  inline TIMESTAMP get_localtimestamp_dst(bool force_dst = false) {
+  inline TIMESTAMP get_localtimestamp_dst(bool force_dst = false)
+  {
     return dt.timestamp - dt.tzoffset + (dt.is_dst || force_dst ? 3600 : 0);
   };
 
 public: // write accessors
   /// Set the date
   inline TIMESTAMP set_date(unsigned short y, unsigned short m,
-                            unsigned short d) {
+                            unsigned short d)
+  {
     dt.year = y;
     dt.month = m;
     dt.day = d;
@@ -1960,7 +2163,8 @@ public: // write accessors
   /// Set the time
   inline TIMESTAMP set_time(unsigned short H, unsigned short M,
                             unsigned short S, unsigned long u = 0,
-                            char *t = NULL, bool force_dst = false) {
+                            char *t = NULL, bool force_dst = false)
+  {
     dt.hour = H;
     dt.minute = M;
     dt.second = S;
@@ -1975,7 +2179,8 @@ public: // write accessors
                                 unsigned short d, unsigned short H,
                                 unsigned short M, unsigned short S,
                                 unsigned long u = 0, char *t = NULL,
-                                bool force_dst = false) {
+                                bool force_dst = false)
+  {
     dt.year = y;
     dt.month = m;
     dt.day = d;
@@ -1989,85 +2194,102 @@ public: // write accessors
     return callback->time.mkdatetime(&dt);
   };
   /// Set the year
-  inline TIMESTAMP set_year(unsigned short y) {
+  inline TIMESTAMP set_year(unsigned short y)
+  {
     dt.year = y;
     return callback->time.mkdatetime(&dt);
   };
   /// Set the month (Jan=0)
-  inline TIMESTAMP set_month(unsigned short m) {
+  inline TIMESTAMP set_month(unsigned short m)
+  {
     dt.month = m;
     return callback->time.mkdatetime(&dt);
   };
   /// Set the day (1-31)
-  inline TIMESTAMP set_day(unsigned short d) {
+  inline TIMESTAMP set_day(unsigned short d)
+  {
     dt.day = d;
     return callback->time.mkdatetime(&dt);
   };
   /// Set the hour (0-23)
-  inline TIMESTAMP set_hour(unsigned short h) {
+  inline TIMESTAMP set_hour(unsigned short h)
+  {
     dt.hour = h;
     return callback->time.mkdatetime(&dt);
   };
   /// Set the minute (0-59)
-  inline TIMESTAMP set_minute(unsigned short m) {
+  inline TIMESTAMP set_minute(unsigned short m)
+  {
     dt.minute = m;
     return callback->time.mkdatetime(&dt);
   };
   /// Set the second (0-59)
-  inline TIMESTAMP set_second(unsigned short s) {
+  inline TIMESTAMP set_second(unsigned short s)
+  {
     dt.second = s;
     return callback->time.mkdatetime(&dt);
   };
   /// Set the nanosecond (0-999999)
-  inline TIMESTAMP set_nanosecond(unsigned int u) {
+  inline TIMESTAMP set_nanosecond(unsigned int u)
+  {
     dt.nanosecond = u;
     return callback->time.mkdatetime(&dt);
   };
   /// Set the timezone (see tzinfo.txt)
-  inline TIMESTAMP set_tz(char *t) {
+  inline TIMESTAMP set_tz(char *t)
+  {
     strncpy(dt.tz, t, sizeof(dt.tz));
     return callback->time.mkdatetime(&dt);
   };
   /// Set the DST flag
-  inline TIMESTAMP set_is_dst(bool i) {
+  inline TIMESTAMP set_is_dst(bool i)
+  {
     dt.is_dst = i;
     return callback->time.mkdatetime(&dt);
   };
 
 public: // special functions
   /// Convert from string
-  inline bool from_string(char *str) {
+  inline bool from_string(char *str)
+  {
     return callback->time.local_datetime(
                callback->time.convert_to_timestamp(str), &dt)
                ? true
                : false;
   };
   /// Convert to string
-  inline unsigned int to_string(char *str, int size) {
+  inline unsigned int to_string(char *str, int size)
+  {
     return callback->time.convert_from_timestamp(dt.timestamp, str, size);
   };
   /// Extract the total number of days since 1/1/1970 0:00:00 UTC
-  inline double to_days(TIMESTAMP ts = 0) {
+  inline double to_days(TIMESTAMP ts = 0)
+  {
     return (dt.timestamp - ts) / 86400.0 + dt.nanosecond * 1e-9;
   };
   /// Extract the total number of hours since 1/1/1970 0:00:00 UTC
-  inline double to_hours(TIMESTAMP ts = 0) {
+  inline double to_hours(TIMESTAMP ts = 0)
+  {
     return (dt.timestamp - ts) / 3600.0 + dt.nanosecond * 1e-9;
   };
   /// Extract the total number of minutes since 1/1/1970 0:00:00 UTC
-  inline double to_minutes(TIMESTAMP ts = 0) {
+  inline double to_minutes(TIMESTAMP ts = 0)
+  {
     return (dt.timestamp - ts) / 60.0 + dt.nanosecond * 1e-9;
   };
   /// Extract the total number of seconds since 1/1/1970 0:00:00 UTC
-  inline double to_seconds(TIMESTAMP ts = 0) {
+  inline double to_seconds(TIMESTAMP ts = 0)
+  {
     return dt.timestamp - ts + dt.nanosecond * 1e-9;
   };
   /// Extract the total number of nanoseconds since 1/1/1970 0:00:00 UTC
-  inline double to_nanoseconds(TIMESTAMP ts = 0) {
+  inline double to_nanoseconds(TIMESTAMP ts = 0)
+  {
     return (dt.timestamp - ts) * 1e9 + dt.nanosecond;
   };
   /// Get the timestamp as a string
-  inline gld_string get_string(const size_t sz = 1024) {
+  inline gld_string get_string(const size_t sz = 1024)
+  {
     gld_string res;
     char buf[1024];
     if (sizeof(buf) < sz)
@@ -2104,14 +2326,16 @@ public: // special functions
 
 class gld_class;
 /// Module container
-class gld_module {
+class gld_module
+{
 
 private: // data
   MODULE core;
 
 public: // constructors/casts
   /// Constructor
-  inline gld_module(void) {
+  inline gld_module(void)
+  {
     MODULE *m = callback->module.getfirst();
     if (m)
       core = *m;
@@ -2142,7 +2366,8 @@ public: // iterators
 class gld_property;
 class gld_function;
 /// Class container
-class gld_class {
+class gld_class
+{
 
 private: // data
   CLASS core;
@@ -2163,20 +2388,24 @@ public: // read accessors
   /// Get module that implements the class
   inline gld_module *get_module(void) { return (gld_module *)core.module; };
   /// Get the first property in the class
-  inline gld_property *get_first_property(void) {
+  inline gld_property *get_first_property(void)
+  {
     return (gld_property *)core.pmap;
   };
   /// Get the next property in the class
-  inline gld_property *get_next_property(PROPERTY *p) {
+  inline gld_property *get_next_property(PROPERTY *p)
+  {
     PROPERTY *prop = (PROPERTY *)p->next;
     return (prop && prop->oclass == &core) ? (gld_property *)prop : NULL;
   };
   /// Get the first function in the class
-  inline gld_function *get_first_function(void) {
+  inline gld_function *get_first_function(void)
+  {
     return (gld_function *)core.fmap;
   };
   /// Get the next function in the class
-  inline gld_function *get_next_function(FUNCTION *f) {
+  inline gld_function *get_next_function(FUNCTION *f)
+  {
     return (gld_function *)f->next;
   };
   /// Get TRL
@@ -2189,7 +2418,8 @@ public: // write accessors
 public: // special functions
   /// Register a class
   static inline CLASS *create(MODULE *m, const char *n, size_t s,
-                              unsigned int f) {
+                              unsigned int f)
+  {
     return callback->register_class(m, n, (unsigned int)s, f);
   };
 
@@ -2197,7 +2427,8 @@ public: // iterators
   /// Check if last class registered
   inline bool is_last(void) { return core.next == NULL; };
   /// Check if last class defined by this class' module
-  inline bool is_module_last(void) {
+  inline bool is_module_last(void)
+  {
     return core.next == NULL || core.module != core.next->module;
   };
   /// Get the next class
@@ -2205,7 +2436,8 @@ public: // iterators
 };
 
 /// Function container
-class gld_function {
+class gld_function
+{
 
 private: // data
   FUNCTION core;
@@ -2233,7 +2465,8 @@ public: // iterators
 };
 
 /// Built-in type container
-class gld_type {
+class gld_type
+{
 
 private: // data
   PROPERTYTYPE type;
@@ -2253,17 +2486,20 @@ public: // iterators
   /// Get the first property type
   static inline PROPERTYTYPE get_first(void) { return PT_double; };
   /// Get the next property type
-  inline PROPERTYTYPE get_next(void) {
+  inline PROPERTYTYPE get_next(void)
+  {
     return (PROPERTYTYPE)(((int)type) + 1);
   };
   /// Check whether this is the last property type
-  inline bool is_last(void) {
+  inline bool is_last(void)
+  {
     return (PROPERTYTYPE)(((int)type) + 1) == _PT_LAST;
   };
 };
 
 /// Unit container
-class gld_unit {
+class gld_unit
+{
 
 private: // data
   UNIT core;
@@ -2272,7 +2508,8 @@ public: // constructors/casts
   /// Construct empty unit container
   inline gld_unit(void) { memset(&core, 0, sizeof(core)); };
   /// Construct a container for a named or derived unit
-  inline gld_unit(char *name) {
+  inline gld_unit(char *name)
+  {
     UNIT *unit = callback->unit_find(name);
     if (unit)
       memcpy(&core, unit, sizeof(UNIT));
@@ -2308,12 +2545,16 @@ public: // read accessors
 
 public: // write accessors
   /// Change the unit
-  inline bool set_unit(char *name) {
+  inline bool set_unit(char *name)
+  {
     UNIT *unit = callback->unit_find(name);
-    if (unit) {
+    if (unit)
+    {
       memcpy(&core, unit, sizeof(UNIT));
       return true;
-    } else {
+    }
+    else
+    {
       memset(&core, 0, sizeof(UNIT));
       return false;
     }
@@ -2321,17 +2562,20 @@ public: // write accessors
 
 public: // special functions
   /// Convert a value to another named or derived unit
-  inline bool convert(char *name, double &value) {
+  inline bool convert(char *name, double &value)
+  {
     UNIT *unit = callback->unit_find(name);
     return unit && (callback->unit_convert_ex(&core, unit, &value)) ? true
                                                                     : false;
   }
   /// Convert a value to another UNIT
-  inline bool convert(UNIT *unit, double &value) {
+  inline bool convert(UNIT *unit, double &value)
+  {
     return callback->unit_convert_ex(&core, unit, &value) ? true : false;
   }
   /// Convert a value to another gld_unit
-  inline bool convert(gld_unit &unit, double &value) {
+  inline bool convert(gld_unit &unit, double &value)
+  {
     return callback->unit_convert_ex(&core, (UNIT *)unit, &value) ? true
                                                                   : false;
   }
@@ -2344,7 +2588,8 @@ public: // iterators
 };
 
 /// Keyword container
-class gld_keyword {
+class gld_keyword
+{
 
 private: // data
   KEYWORD core;
@@ -2362,7 +2607,8 @@ public: // read accessors
   inline const char *get_name(void) { return core.name; };
   /// Get the bit pattern for the keyword
   inline long unsigned int get_value(void) { return core.value; };
-  inline enumeration get_enumeration_value(void) {
+  inline enumeration get_enumeration_value(void)
+  {
     return (enumeration)get_value();
   };
   inline gld::set get_set_value(void) { return (gld::set)get_value(); };
@@ -2375,30 +2621,37 @@ public: // write accessors
   inline bool operator<(const char *name) { return compare(name) < 0; };
   inline bool operator>(const char *name) { return compare(name) > 0; };
   inline bool operator!=(const char *name) { return compare(name) != 0; };
-  inline int compare(long unsigned int value) {
+  inline int compare(long unsigned int value)
+  {
     return value < (long unsigned int)core.value
                ? -1
                : (value > core.value ? +1 : 0);
   };
-  inline bool operator==(long unsigned int value) {
+  inline bool operator==(long unsigned int value)
+  {
     return compare(value) == 0;
   };
-  inline bool operator<=(long unsigned int value) {
+  inline bool operator<=(long unsigned int value)
+  {
     return compare(value) <= 0;
   };
-  inline bool operator>=(long unsigned int value) {
+  inline bool operator>=(long unsigned int value)
+  {
     return compare(value) >= 0;
   };
   inline bool operator<(long unsigned int value) { return compare(value) < 0; };
   inline bool operator>(long unsigned int value) { return compare(value) > 0; };
-  inline bool operator!=(long unsigned int value) {
+  inline bool operator!=(long unsigned int value)
+  {
     return compare(value) != 0;
   };
 
 public: // iterators
   /// Get the next keyword (NULL if last)
   inline gld_keyword *get_next(void) { return (gld_keyword *)core.next; };
-  template <class T> inline gld_keyword *find(T value) {
+  template <class T>
+  inline gld_keyword *find(T value)
+  {
     if (compare(value) == 0)
       return this;
     if (get_next() == NULL)
@@ -2414,13 +2667,13 @@ public: // iterators
 //(char*)&(defaults->X)-(char*)defaults; }; \
 //	inline T get_##X(void) { return X; }; \
 //	inline gld_property get_##X##_property(void) { return
-//gld_property(my(),strdup(#X)); }; \
+// gld_property(my(),strdup(#X)); }; \
 //	inline T get_##X(gld_rlock&) { return X; }; \
 //	inline T get_##X(gld_wlock&) { return X; }; \
 //	inline void set_##X(T p) { X=p; }; \
 //	inline void set_##X(T p, gld_wlock&) { X=p; }; \
 //	inline gld_string get_##X##_string(void) { return
-//get_##X##_property().get_string(); }; \
+// get_##X##_property().get_string(); }; \
 //	inline void set_##X(char *str) { get_##X##_property().from_string(str);
 //}; \
 //
@@ -2430,13 +2683,13 @@ public: // iterators
 //(char*)&(defaults->X)-(char*)defaults; }; \
 //	inline T get_##X(void) { gld_rlock _lock(my()); return X; }; \
 //	inline gld_property get_##X##_property(void) { return
-//gld_property(my(),strdup(#X)); }; \
+// gld_property(my(),strdup(#X)); }; \
 //	inline T get_##X(gld_rlock&) { return X; }; \
 //	inline T get_##X(gld_wlock&) { return X; }; \
 //	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; \
 //	inline void set_##X(T p, gld_wlock&) { X=p; }; \
 //	inline gld_string get_##X##_string(void) { return
-//get_##X##_property().get_string(); }; \
+// get_##X##_property().get_string(); }; \
 //	inline void set_##X(char *str) { get_##X##_property().from_string(str);
 //}; \
 //
@@ -2445,9 +2698,9 @@ public: // iterators
 //	static inline size_t get_##X##_offset(void) { return
 //(char*)&(defaults->X)-(char*)defaults; }; \
 //	inline char* get_##X(void) { gld_rlock _lock(my()); return
-//X.get_string(); }; \
+// X.get_string(); }; \
 //	inline gld_property get_##X##_property(void) { return
-//gld_property(my(),strdup(#X)); }; \
+// gld_property(my(),strdup(#X)); }; \
 //	inline char* get_##X(gld_rlock&) { return X.get_string(); }; \
 //	inline char* get_##X(gld_wlock&) { return X.get_string(); }; \
 //	inline char get_##X(size_t n) { gld_rlock _lock(my()); return (char)X;
@@ -2455,7 +2708,7 @@ public: // iterators
 //	inline char get_##X(size_t n, gld_rlock&) { return (char)X; }; \
 //	inline char get_##X(size_t n, gld_wlock&) { return (char)X; }; \
 //	inline void set_##X(char *p) { gld_wlock _lock(my());
-//strncpy(X,p,sizeof(X)); }; \
+// strncpy(X,p,sizeof(X)); }; \
 //	inline void set_##X(char *p, gld_wlock&) { strncpy(X,p,sizeof(X)); }; \
 //	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c;
 //}; \
@@ -2466,7 +2719,7 @@ public: // iterators
 //	static inline size_t get_##X##_offset(void) { return
 //(char*)&(defaults->X)-(char*)defaults; }; \
 //	inline gld_property get_##X##_property(void) { return
-//gld_property(my(),#X); }; \
+// gld_property(my(),#X); }; \
 //	inline T* get_##X(void) { gld_rlock _lock(my()); return X; }; \
 //	inline T* get_##X(gld_rlock&) { return X; }; \
 //	inline T* get_##X(gld_wlock&) { return X; }; \
@@ -2474,61 +2727,69 @@ public: // iterators
 //	inline T get_##X(size_t n, gld_rlock&) { return X[n]; }; \
 //	inline T get_##X(size_t n, gld_wlock&) { return X[n]; }; \
 //	inline void set_##X(T* p) { gld_wlock _lock(my());
-//memcpy(X,p,sizeof(X)); }; \
+// memcpy(X,p,sizeof(X)); }; \
 //	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
 //	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
 //	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; };  \
 
 /// Define a bitflag property
-#define GL_BITFLAGS(T, X)                                                      \
-protected:                                                                     \
-  T X;                                                                         \
-                                                                               \
-public:                                                                        \
-  static inline size_t get_##X##_offset(void) {                                \
-    return (char *)&(defaults->X) - (char *)defaults;                          \
-  };                                                                           \
-  inline T get_##X(T mask = -1) { return X & mask; };                          \
-  inline gld_property get_##X##_property(void) {                               \
-    return gld_property(my(), #X);                                             \
-  };                                                                           \
-  inline void set_##X(T p) { X = p; };                                         \
-  inline gld_string get_##X##_string(void) {                                   \
-    return get_##X##_property().get_string();                                  \
-  };                                                                           \
+#define GL_BITFLAGS(T, X)                             \
+protected:                                            \
+  T X;                                                \
+                                                      \
+public:                                               \
+  static inline size_t get_##X##_offset(void)         \
+  {                                                   \
+    return (char *)&(defaults->X) - (char *)defaults; \
+  };                                                  \
+  inline T get_##X(T mask = -1) { return X & mask; }; \
+  inline gld_property get_##X##_property(void)        \
+  {                                                   \
+    return gld_property(my(), #X);                    \
+  };                                                  \
+  inline void set_##X(T p) { X = p; };                \
+  inline gld_string get_##X##_string(void)            \
+  {                                                   \
+    return get_##X##_property().get_string();         \
+  };                                                  \
   inline void set_##X(char *str) { get_##X##_property().from_string(str); };
 
 /// Define a method property
-#define GL_METHOD(C, X)                                                        \
-public:                                                                        \
-  int X(char *buffer, size_t len);                                             \
-  static inline size_t get_##X##_offset(void) {                                \
-    return (size_t)method_##C##_##X;                                           \
-  };                                                                           \
-  inline int get_##X(char *buffer, size_t len) { return X(buffer, len); };     \
+#define GL_METHOD(C, X)                                                    \
+public:                                                                    \
+  int X(char *buffer, size_t len);                                         \
+  static inline size_t get_##X##_offset(void)                              \
+  {                                                                        \
+    return (size_t)method_##C##_##X;                                       \
+  };                                                                       \
+  inline int get_##X(char *buffer, size_t len) { return X(buffer, len); }; \
   inline int set_##X(char *buffer) { return X(buffer, 0); }
-#define IMPL_METHOD(C, X)                                                      \
+#define IMPL_METHOD(C, X) \
   int C::X(char *buffer, size_t len) // use this to implement a method
 
 /// Set bits of a bitflag property
 inline void setbits(unsigned long &flags, unsigned int bits) { flags |= bits; };
 /// Clear bits of a bitflag property
-inline void clearbits(unsigned long &flags, unsigned int bits) {
+inline void clearbits(unsigned long &flags, unsigned int bits)
+{
   flags &= ~bits;
 };
 /// Test bits of a bitflag property
-inline bool hasbits(unsigned long flags, unsigned int bits) {
+inline bool hasbits(unsigned long flags, unsigned int bits)
+{
   return (flags & bits) ? true : false;
 };
 
 /// Object container
-class gld_object {
+class gld_object
+{
 private:
   // static std::atomic<int> deletion_count;
   mutable std::atomic<bool> is_deleted{false};
 
 public:
-  virtual ~gld_object() {
+  virtual ~gld_object()
+  {
     mark_deleted();
     // Log or track destructor calls
     // std::cout << "Destructor called for object at "
@@ -2543,7 +2804,8 @@ public:
 #include <execinfo.h>
 #include <iostream>
 
-  void print_stack_trace() {
+  void print_stack_trace()
+  {
     void *array[10];
     size_t size;
     char **strings;
@@ -2554,7 +2816,8 @@ public:
 
     std::cerr << "Obtained " << size << " stack frames:" << std::endl;
 
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < size; i++)
+    {
       std::cerr << strings[i] << std::endl;
     }
 
@@ -2562,14 +2825,17 @@ public:
   }
 #else
   // Windows does not support POSIX-style stack trace printing
-  void print_stack_trace() {
+  void print_stack_trace()
+  {
     std::cerr << "Stack trace functionality not available on this platform."
               << std::endl;
   }
 #endif
 
-  void mark_deleted() {
-    if (is_deleted.exchange(true)) {
+  void mark_deleted()
+  {
+    if (is_deleted.exchange(true))
+    {
       // Object was already deleted
       std::cerr << "WARNING: Attempted to delete already deleted object at "
                 << static_cast<void *>(this) << std::endl;
@@ -2579,7 +2845,8 @@ public:
   }
 
   // Virtual cleanup method
-  virtual void destroy() {
+  virtual void destroy()
+  {
     // Default no-op cleanup
   }
 
@@ -2589,8 +2856,10 @@ public:
   // }
 
   // Prevent multiple deletions
-  void operator delete(void *ptr) {
-    if (ptr) {
+  void operator delete(void *ptr)
+  {
+    if (ptr)
+    {
       // std::cout << "Deleting object at " << ptr << std::endl;
       ::operator delete(ptr);
     }
@@ -2605,17 +2874,23 @@ public:
   // }
 
   // Virtual method for cleanup
-  virtual void release() {
+  virtual void release()
+  {
     // Default implementation does nothing
   }
 
   // Static method to safely delete an object
-  static void safe_delete(gld_object *ptr) {
-    if (ptr) {
-      try {
+  static void safe_delete(gld_object *ptr)
+  {
+    if (ptr)
+    {
+      try
+      {
         ptr->release();
         delete ptr;
-      } catch (const std::exception &e) {
+      }
+      catch (const std::exception &e)
+      {
         // Log the error
         fprintf(stderr, "Error during object deletion: %s\n", e.what());
       }
@@ -2629,7 +2904,8 @@ private:
   gld_object &operator=(const gld_object &) = delete;
 
 public: // constructors
-  inline static gld_object *find_object(char *n) {
+  inline static gld_object *find_object(char *n)
+  {
     OBJECT *obj = callback->get_object(n);
     if (obj)
       return (gld_object *)(obj + 1);
@@ -2641,7 +2917,8 @@ public: // header read accessors (no locking)
   inline OBJECTNUM get_id(void) { return my()->id; };
   inline char *get_groupid(void) { return my()->groupid.get_string(); };
   inline gld_class *get_oclass(void) { return (gld_class *)my()->oclass; };
-  inline gld_object *get_parent(void) {
+  inline gld_object *get_parent(void)
+  {
     return my()->parent
                ? object_data<gld_object>(
                      my()->parent) /*OBJECTDATA(my()->parent, gld_object)*/
@@ -2656,14 +2933,20 @@ public: // header read accessors (no locking)
   inline double get_longitude(void) { return my()->longitude; };
   inline TIMESTAMP get_in_svc(void) { return my()->in_svc; };
   inline TIMESTAMP get_out_svc(void) { return my()->out_svc; };
-  inline const char *get_name(void) {
+  inline const char *get_name(void)
+  {
     static char _name[sizeof(CLASS) + 16];
-    if (my()->name) {
+    if (my()->name)
+    {
       return my()->name;
-    } else if (my()->oclass) {
+    }
+    else if (my()->oclass)
+    {
       snprintf(_name, sizeof(CLASS) + 16, "%s:%d", my()->oclass->name,
                my()->id);
-    } else {
+    }
+    else
+    {
       snprintf(_name, sizeof(CLASS) + 16, "Unknown");
     }
     return _name;
@@ -2672,12 +2955,14 @@ public: // header read accessors (no locking)
   inline unsigned int get_lock(void) { return my()->lock; };
   inline unsigned int get_rng_state(void) { return my()->rng_state; };
   inline TIMESTAMP get_heartbeat(void) { return my()->heartbeat; };
-  inline unsigned long get_flags(unsigned long mask = 0xffffffff) {
+  inline unsigned long get_flags(unsigned long mask = 0xffffffff)
+  {
     return (my()->flags) & mask;
   };
 
 protected: // header write accessors (no locking)
-  inline void set_clock(TIMESTAMP ts = 0) {
+  inline void set_clock(TIMESTAMP ts = 0)
+  {
     my()->clock = (ts ? ts : gl_globalclock);
   };
   inline void set_heartbeat(TIMESTAMP dt) { my()->heartbeat = dt; };
@@ -2704,16 +2989,19 @@ protected: // locking (others)
   // inline void wunlock(OBJECT *obj) { gld_core::wunlock(&obj->lock); };
 
 protected: // special functions
-  inline bool operator==(gld_object *o) {
+  inline bool operator==(gld_object *o)
+  {
     return o != NULL && my() == o->my();
   };
   inline bool operator==(OBJECT *o) { return o != NULL && my() == o; };
 
 public: // member lookup functions
-  inline PROPERTY *get_property(char *name, PROPERTYSTRUCT *pstruct = NULL) {
+  inline PROPERTY *get_property(char *name, PROPERTYSTRUCT *pstruct = NULL)
+  {
     return callback->properties.get_property(my(), name, pstruct);
   };
-  inline FUNCTIONADDR get_function(const char *name) {
+  inline FUNCTIONADDR get_function(const char *name)
+  {
     return (*callback->function.get)(my()->oclass->name, name);
   };
 
@@ -2735,35 +3023,43 @@ public: // external accessors
   // *(T*)(get_addr(my(),&prop))=value; };
 
 public: // core interface
-  inline int set_dependent(OBJECT *obj) {
+  inline int set_dependent(OBJECT *obj)
+  {
     return callback->object.set_dependent(my(), obj);
   };
-  inline int set_parent(OBJECT *obj) {
+  inline int set_parent(OBJECT *obj)
+  {
     return callback->object.set_parent(my(), obj);
   };
-  inline int set_rank(unsigned int r) {
+  inline int set_rank(unsigned int r)
+  {
     return callback->object.set_rank(my(), r);
   };
-  inline bool isa(char *type) {
+  inline bool isa(char *type)
+  {
     return callback->object_isa(my(), type) ? true : false;
   };
-  inline bool is_valid(void) {
+  inline bool is_valid(void)
+  {
     return my() != NULL && my() == object_header(this); /*object_header(this);*/
   };
 
 public: // iterators
   inline bool is_last(void) { return my()->next == NULL; };
-  inline static gld_object *get_first(void) {
+  inline static gld_object *get_first(void)
+  {
     OBJECT *o = callback->object.get_first();
     return object_data<gld_object>(o); /*OBJECTDATA(o, gld_object);*/
   };
-  inline gld_object *get_next(void) {
+  inline gld_object *get_next(void)
+  {
     return object_data<gld_object>(
         my()->next); /*OBJECTDATA(my()->next, gld_object);*/
   };
 
 public: // exceptions
-  inline void exception(const char *msg, ...) {
+  inline void exception(const char *msg, ...)
+  {
     static char buf[1024];
     va_list ptr;
     va_start(ptr, msg);
@@ -2771,7 +3067,8 @@ public: // exceptions
     va_end(ptr);
     throw (const char *)buf;
   };
-  inline void error(const char *msg, ...) {
+  inline void error(const char *msg, ...)
+  {
     static char buf[1024];
     va_list ptr;
     va_start(ptr, msg);
@@ -2779,7 +3076,8 @@ public: // exceptions
     va_end(ptr);
     gl_error("%s", buf);
   };
-  inline void warning(const char *msg, ...) {
+  inline void warning(const char *msg, ...)
+  {
     static char buf[1024];
     va_list ptr;
     va_start(ptr, msg);
@@ -2787,7 +3085,8 @@ public: // exceptions
     va_end(ptr);
     gl_warning("%s", buf);
   };
-  inline void debug(const char *msg, ...) {
+  inline void debug(const char *msg, ...)
+  {
     static char buf[1024];
     va_list ptr;
     va_start(ptr, msg);
@@ -2802,23 +3101,27 @@ public:
 };
 
 // Custom deleter for gld_object
-struct gld_object_deleter {
+struct gld_object_deleter
+{
   void operator()(gld_object *ptr) const { gld_object::safe_delete(ptr); }
 };
 
 /// Create a gld_object from an OBJECT
-static inline gld_object *get_object(OBJECT *obj) {
+static inline gld_object *get_object(OBJECT *obj)
+{
   return obj ? (gld_object *)(obj + 1) : NULL;
 }
 /// Find a gld_object from an object name
-static inline gld_object *get_object(char *n) {
+static inline gld_object *get_object(char *n)
+{
   OBJECT *obj = callback->get_object(n);
   return get_object(obj);
 }
 
 static PROPERTYSTRUCT nullpstruct;
 /// Property container
-class gld_property {
+class gld_property
+{
 
 private: // data
   PROPERTYSTRUCT pstruct;
@@ -2828,40 +3131,51 @@ public: // constructors/casts
   inline gld_property(void) : obj(NULL), pstruct(nullpstruct) {};
   virtual ~gld_property() {}
   inline gld_property(gld_object *o, const char *n)
-      : obj(o->my()), pstruct(nullpstruct) {
+      : obj(o->my()), pstruct(nullpstruct)
+  {
     if (o)
       callback->properties.get_property(o->my(), n, &pstruct);
-    else {
+    else
+    {
       GLOBALVAR *v = callback->global.find(n);
       pstruct.prop = (v ? v->prop : NULL);
     }
   };
-  inline gld_property(OBJECT *o, const char *n) : obj(o), pstruct(nullpstruct) {
+  inline gld_property(OBJECT *o, const char *n) : obj(o), pstruct(nullpstruct)
+  {
     if (o)
       callback->properties.get_property(o, n, &pstruct);
-    else {
+    else
+    {
       GLOBALVAR *v = callback->global.find(n);
       pstruct.prop = (v ? v->prop : NULL);
     }
   };
-  inline gld_property(OBJECT *o) : obj(o), pstruct(nullpstruct) {
+  inline gld_property(OBJECT *o) : obj(o), pstruct(nullpstruct)
+  {
     pstruct.prop = o->oclass->pmap;
   };
-  inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), pstruct(nullpstruct) {
+  inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), pstruct(nullpstruct)
+  {
     pstruct.prop = p;
   };
   inline gld_property(OBJECT *o, PROPERTYSTRUCT *p)
-      : obj(o), pstruct(nullpstruct) {
+      : obj(o), pstruct(nullpstruct)
+  {
     pstruct = *p;
   };
-  inline gld_property(GLOBALVAR *v) : obj(NULL), pstruct(nullpstruct) {
+  inline gld_property(GLOBALVAR *v) : obj(NULL), pstruct(nullpstruct)
+  {
     pstruct.prop = v->prop;
   };
-  inline gld_property(const char *n) : obj(NULL), pstruct(nullpstruct) {
+  inline gld_property(const char *n) : obj(NULL), pstruct(nullpstruct)
+  {
     char oname[256], vname[256];
-    if (sscanf(n, "%[A-Za-z0-9_].%[A-Za-z0-9_.]", oname, vname) == 2) {
+    if (sscanf(n, "%[A-Za-z0-9_].%[A-Za-z0-9_.]", oname, vname) == 2)
+    {
       obj = callback->get_object(oname);
-      if (obj) {
+      if (obj)
+      {
         callback->properties.get_property(obj, vname, &pstruct);
         return;
       }
@@ -2870,9 +3184,11 @@ public: // constructors/casts
     pstruct.prop = (v ? v->prop : NULL);
   };
   inline gld_property(const char *m, const char *n)
-      : obj(NULL), pstruct(nullpstruct) {
+      : obj(NULL), pstruct(nullpstruct)
+  {
     obj = callback->get_object(m);
-    if (obj != NULL) {
+    if (obj != NULL)
+    {
       callback->properties.get_property(obj, n, &pstruct);
       return;
     }
@@ -2888,14 +3204,19 @@ public: // read accessors
   inline OBJECT *get_object(void) { return obj; };
   inline PROPERTY *get_property(void) { return pstruct.prop; };
   inline PROPERTYSTRUCT *get_property_struct(void) { return &pstruct; };
-  inline gld_class *get_class(void) {
+  inline gld_class *get_class(void)
+  {
     return (gld_class *)pstruct.prop->oclass;
   };
   inline char *get_name(void) { return pstruct.prop->name; };
-  inline char *get_sql_safe_name(char *return_val) {
-    if (pstruct.part[0] != '\0') {
+  inline char *get_sql_safe_name(char *return_val)
+  {
+    if (pstruct.part[0] != '\0')
+    {
       sprintf(return_val, "%s_%s", pstruct.prop->name, pstruct.part);
-    } else {
+    }
+    else
+    {
       sprintf(return_val, "%s", pstruct.prop->name);
     }
     return return_val;
@@ -2904,27 +3225,33 @@ public: // read accessors
   inline size_t get_size(void) { return (size_t)(pstruct.prop->size); };
   inline size_t get_width(void) { return (size_t)(pstruct.prop->width); };
   inline PROPERTYACCESS get_access(void) { return pstruct.prop->access; };
-  inline bool get_access(unsigned int bits, unsigned int mask = 0xffff) {
+  inline bool get_access(unsigned int bits, unsigned int mask = 0xffff)
+  {
     return ((pstruct.prop->access & mask) | bits);
   };
   inline gld_unit *get_unit(void) { return (gld_unit *)pstruct.prop->unit; };
-  inline void *get_addr(void) {
+  inline void *get_addr(void)
+  {
     return obj ? ((void *)((char *)(obj + 1) +
                            (unsigned int64)(pstruct.prop->addr)))
                : pstruct.prop->addr;
   };
-  inline gld_keyword *get_first_keyword(void) {
+  inline gld_keyword *get_first_keyword(void)
+  {
     return (gld_keyword *)pstruct.prop->keywords;
   };
-  inline const char *get_description(void) {
+  inline const char *get_description(void)
+  {
     return pstruct.prop->description;
   };
   inline PROPERTYFLAGS get_flags(void) { return pstruct.prop->flags; };
-  inline int to_string(char *buffer, int size) {
+  inline int to_string(char *buffer, int size)
+  {
     return callback->convert.property_to_string(pstruct.prop, get_addr(),
                                                 buffer, size);
   };
-  inline gld_string get_string(const size_t sz = 1024) {
+  inline gld_string get_string(const size_t sz = 1024)
+  {
     gld_string res;
     char buf[1024];
     if (sizeof(buf) < sz)
@@ -2933,12 +3260,14 @@ public: // read accessors
       res = buf;
     return res;
   };
-  inline int from_string(char *string) {
+  inline int from_string(char *string)
+  {
     return callback->convert.string_to_property(pstruct.prop, get_addr(),
                                                 string);
   };
   inline char *get_partname(void) { return pstruct.part; };
-  inline double get_part(const char *part = nullptr) {
+  inline double get_part(const char *part = nullptr)
+  {
     return callback->properties.get_part(obj, pstruct.prop,
                                          part ? part : pstruct.part);
   };
@@ -2946,7 +3275,8 @@ public: // read accessors
 public: // write accessors
   inline void set_object(OBJECT *o) { obj = o; };
   inline void set_object(gld_object *o) { obj = o->my(); };
-  inline void set_property(char *n) {
+  inline void set_property(char *n)
+  {
     callback->properties.get_property(obj, n, &pstruct);
   };
   inline void set_property(PROPERTY *p) { pstruct.prop = p; };
@@ -2954,13 +3284,16 @@ public: // write accessors
 public: // special operations
   inline bool is_valid(void) { return pstruct.prop != NULL; }
   inline bool has_part(void) { return pstruct.part[0] != '\0'; };
-  inline bool is_complex(void) {
+  inline bool is_complex(void)
+  {
     if (pstruct.prop->ptype == PT_complex)
       return true;
     return false;
   }
-  inline bool is_double(void) {
-    switch (pstruct.prop->ptype) {
+  inline bool is_double(void)
+  {
+    switch (pstruct.prop->ptype)
+    {
     case PT_double:
     case PT_random:
     case PT_enduse:
@@ -2970,8 +3303,10 @@ public: // special operations
       return false;
     }
   };
-  inline bool is_integer(void) {
-    switch (pstruct.prop->ptype) {
+  inline bool is_integer(void)
+  {
+    switch (pstruct.prop->ptype)
+    {
     case PT_int16:
     case PT_int32:
     case PT_int64:
@@ -2980,12 +3315,15 @@ public: // special operations
       return false;
     }
   };
-  inline bool is_enumeration(void) {
+  inline bool is_enumeration(void)
+  {
     return pstruct.prop->ptype == PT_enumeration;
   };
   inline bool is_set(void) { return pstruct.prop->ptype == PT_set; };
-  inline bool is_character(void) {
-    switch (pstruct.prop->ptype) {
+  inline bool is_character(void)
+  {
+    switch (pstruct.prop->ptype)
+    {
     case PT_char8:
     case PT_char32:
     case PT_char256:
@@ -2997,31 +3335,38 @@ public: // special operations
   };
   inline bool is_random(void) { return pstruct.prop->ptype == PT_random; };
   inline bool is_enduse(void) { return pstruct.prop->ptype == PT_enduse; };
-  inline bool is_loadshape(void) {
+  inline bool is_loadshape(void)
+  {
     return pstruct.prop->ptype == PT_loadshape;
   };
-  inline bool is_double_array(void) {
+  inline bool is_double_array(void)
+  {
     return pstruct.prop->ptype == PT_double_array;
   };
-  inline bool is_complex_array(void) {
+  inline bool is_complex_array(void)
+  {
     return pstruct.prop->ptype == PT_complex_array;
   };
   inline bool is_objectref(void) { return pstruct.prop->ptype == PT_object; };
   inline bool is_bool(void) { return pstruct.prop->ptype == PT_bool; };
-  inline bool is_timestamp(void) {
+  inline bool is_timestamp(void)
+  {
     return pstruct.prop->ptype == PT_timestamp;
   };
 
   // TODO these need to use throw instead of returning overloaded values
-  inline bool get_bool(void) {
+  inline bool get_bool(void)
+  {
     errno = 0;
     if (pstruct.prop->ptype != PT_bool)
       exception("get_bool() called on a property that is not a bool");
     return *(bool *)get_addr();
   };
-  inline double get_double(void) {
+  inline double get_double(void)
+  {
     errno = 0;
-    switch (pstruct.prop->ptype) {
+    switch (pstruct.prop->ptype)
+    {
     case PT_double:
     case PT_random:
     case PT_enduse:
@@ -3032,32 +3377,39 @@ public: // special operations
       return NaN;
     }
   };
-  inline double get_double(UNIT *to) {
+  inline double get_double(UNIT *to)
+  {
     double rv = get_double();
     return get_unit()->convert(to, rv) ? rv : QNAN;
   };
-  inline double get_double(gld_unit &to) {
+  inline double get_double(gld_unit &to)
+  {
     double rv = get_double();
     return get_unit()->convert(to, rv) ? rv : QNAN;
   };
-  inline double get_double(char *to) {
+  inline double get_double(char *to)
+  {
     double rv = get_double();
     return get_unit()->convert(to, rv) ? rv : QNAN;
   };
-  inline double get_double(const char *to) {
+  inline double get_double(const char *to)
+  {
     double rv = get_double();
     return get_unit()->convert(const_cast<char *>(to), rv) ? rv : QNAN;
   };
-  inline gld::complex get_complex(void) {
+  inline gld::complex get_complex(void)
+  {
     errno = 0;
     if (pstruct.prop->ptype == PT_complex)
       return *(gld::complex *)get_addr();
     else
       return gld::complex(QNAN, QNAN);
   };
-  inline int64 get_integer(void) {
+  inline int64 get_integer(void)
+  {
     errno = 0;
-    switch (pstruct.prop->ptype) {
+    switch (pstruct.prop->ptype)
+    {
     case PT_int16:
       return (int64) * (int16 *)get_addr();
     case PT_int32:
@@ -3069,29 +3421,35 @@ public: // special operations
       return 0;
     }
   };
-  inline TIMESTAMP get_timestamp(void) {
+  inline TIMESTAMP get_timestamp(void)
+  {
     if (pstruct.prop->ptype != PT_timestamp)
       exception("get_timestamp() called on a property that is not a timestamp");
     return *(TIMESTAMP *)get_addr();
   };
-  inline enumeration get_enumeration(void) {
+  inline enumeration get_enumeration(void)
+  {
     if (pstruct.prop->ptype != PT_enumeration)
       exception(
           "get_enumeration() called on a property that is not an enumeration");
     return *(enumeration *)get_addr();
   };
-  inline gld::set get_set(void) {
+  inline gld::set get_set(void)
+  {
     if (pstruct.prop->ptype != PT_set)
       exception("get_set() called on a property that is not a set");
     return *(gld::set *)get_addr();
   };
-  inline gld_object *get_objectref(void) {
+  inline gld_object *get_objectref(void)
+  {
     if (is_objectref())
       return ::get_object(*(OBJECT **)get_addr());
     else
       return NULL;
   };
-  template <class T> inline void getp(T &value) {
+  template <class T>
+  inline void getp(T &value)
+  {
     // auto v = gld_core::rlock(&obj->lock);
     // replace gld_rlock with SharedMutexManager
     auto &v = SharedMutexManager::get_mutex(&obj->lock);
@@ -3100,7 +3458,9 @@ public: // special operations
     value = *(T *)get_addr();
     // gld_core::runlock(&obj->lock);
   };
-  template <class T> inline void setp(T &value) {
+  template <class T>
+  inline void setp(T &value)
+  {
     // gld_core::wlock(&obj->lock);
     // replace wlock with SharedMutexManager
     auto &v = SharedMutexManager::get_mutex(&obj->lock);
@@ -3111,7 +3471,9 @@ public: // special operations
   };
   // template <class T> inline void getp(T& value, gld_rlock&) { value =
   // *(T*)get_addr(); };
-  template <class T> inline void getp(T &value, unsigned int &gld_rlock) {
+  template <class T>
+  inline void getp(T &value, unsigned int &gld_rlock)
+  {
     // auto v = gld_core::rlock(&gld_rlock);
     // replace gld_rlock with SharedMutexManager
     auto &v = SharedMutexManager::get_mutex(&gld_rlock);
@@ -3120,33 +3482,40 @@ public: // special operations
   };
   // template <class T> inline void getp(T &value, gld_wlock&) { value =
   // *(T*)get_addr(); };
-  template <class T> inline void setp(T &value, unsigned int &wl) {
+  template <class T>
+  inline void setp(T &value, unsigned int &wl)
+  {
     auto &v = SharedMutexManager::get_mutex(&wl);
     std::unique_lock<std::shared_mutex> lock(v);
 
     *(T *)get_addr() = value;
   };
-  inline void setp(enumeration value) {
+  inline void setp(enumeration value)
+  {
     // gld_core::wlock(&obj->lock);
     std::unique_lock<std::shared_mutex> lock(
         SharedMutexManager::get_mutex(&obj->lock));
     *(enumeration *)get_addr() = value;
     // gld_core::wunlock(&obj->lock);
   };
-  inline void setp(gld::set value) {
+  inline void setp(gld::set value)
+  {
     // gld_core::wlock(&obj->lock);
     std::unique_lock<std::shared_mutex> lock(
         SharedMutexManager::get_mutex(&obj->lock));
     *(gld::set *)get_addr() = value;
     // gld_core::wunlock(&obj->lock);
   };
-  inline gld_keyword *find_keyword(unsigned long value) {
+  inline gld_keyword *find_keyword(unsigned long value)
+  {
     return get_first_keyword()->find(value);
   };
-  inline gld_keyword *find_keyword(const char *name) {
+  inline gld_keyword *find_keyword(const char *name)
+  {
     return get_first_keyword()->find(name);
   };
-  inline bool compare(char *op, char *a, char *b = NULL, char *p = NULL) {
+  inline bool compare(char *op, char *a, char *b = NULL, char *p = NULL)
+  {
     PROPERTYCOMPAREOP n =
         callback->properties.get_compare_op(pstruct.prop->ptype, op);
     if (n == TCOP_ERR)
@@ -3163,7 +3532,8 @@ public: // special operations
   };*/
 
   inline bool compare(enumeration op, const char *_a,
-                      const char *_b = nullptr) {
+                      const char *_b = nullptr)
+  {
     // Allocate dynamic strings for conversions
     char v1[1024], v2[1024];
 
@@ -3176,7 +3546,8 @@ public: // special operations
                                 pstruct.prop, (void *)v2, _b) > 0);
 
     // Perform the comparison
-    if (success_a) {
+    if (success_a)
+    {
       return callback->properties.compare_basic(
           pstruct.prop->ptype, (PROPERTYCOMPAREOP)op,
           get_addr(), // Comparison usually requires an address
@@ -3191,7 +3562,8 @@ public: // special operations
     return false;
   }
   inline bool compare(enumeration op, const char *a, const char *b,
-                      const char *p) {
+                      const char *p)
+  {
     double v1, v2;
     v1 = atof(a);
     v2 = b ? atof(b) : 0;
@@ -3200,21 +3572,25 @@ public: // special operations
         b ? (void *)&v2 : NULL, p);
   };
   inline bool compare(enumeration op, double *a, double *b = NULL,
-                      char *p = NULL) {
+                      char *p = NULL)
+  {
     return callback->properties.compare_basic(
         pstruct.prop->ptype, (PROPERTYCOMPAREOP)op, get_addr(), a, b, p);
   };
-  inline bool compare(enumeration op, void *a, void *b = NULL) {
+  inline bool compare(enumeration op, void *a, void *b = NULL)
+  {
     return callback->properties.compare_basic(
         pstruct.prop->ptype, (PROPERTYCOMPAREOP)op, get_addr(), a, b, NULL);
   };
 
 public: // iterators
-  inline bool is_last(void) {
+  inline bool is_last(void)
+  {
     return pstruct.prop == NULL || pstruct.prop->next == NULL ||
            pstruct.prop->oclass != pstruct.prop->next->oclass;
   };
-  inline PROPERTY *get_next(void) {
+  inline PROPERTY *get_next(void)
+  {
     return is_last() ? NULL : pstruct.prop->next;
   };
 
@@ -3229,13 +3605,14 @@ public: // comparators
   inline bool outside(char *a, char *b) { return compare(TCOP_NI, a, b); };
 
 private: // exceptions
-  inline void exception(const char *msg, ...) {
+  inline void exception(const char *msg, ...)
+  {
     static char buf[1024];
     va_list ptr;
     va_start(ptr, msg);
     vsprintf(buf + sprintf(buf,
                            "%s.%s: ", /*OBJECTDATA(obj, gld_object)*/
-                                      object_data<gld_object>(obj)->get_name(),
+                           object_data<gld_object>(obj)->get_name(),
                            pstruct.prop->name),
              msg, ptr);
     va_end(ptr);
@@ -3244,7 +3621,8 @@ private: // exceptions
 };
 
 /// Global variable container
-class gld_global {
+class gld_global
+{
 
 private: // data
   GLOBALVAR *var;
@@ -3253,30 +3631,35 @@ public: // constructors
   inline gld_global(void) { var = callback->global.find(""); };
   inline gld_global(GLOBALVAR *v) : var(v) {};
   inline gld_global(const char *n) { var = callback->global.find(n); };
-  inline gld_global(const char *n, PROPERTYTYPE t, void *p) {
+  inline gld_global(const char *n, PROPERTYTYPE t, void *p)
+  {
     var = callback->global.create(n, t, p, NULL);
   };
 
 public: // read accessors
   inline operator GLOBALVAR *(void) { return var; };
   inline bool is_valid(void) { return var != NULL; };
-  inline PROPERTY *get_property(void) {
+  inline PROPERTY *get_property(void)
+  {
     if (!var)
       return NULL;
     return var->prop;
   };
-  inline unsigned long get_flags(void) {
+  inline unsigned long get_flags(void)
+  {
     if (!var)
       return -1;
     return var->flags;
   };
-  inline size_t to_string(char *bp, size_t sz) {
+  inline size_t to_string(char *bp, size_t sz)
+  {
     if (!var)
       return -1;
     gld_property p(var);
     return p.to_string(bp, (int)sz);
   };
-  inline gld_string get_string(const size_t sz = 1024) {
+  inline gld_string get_string(const size_t sz = 1024)
+  {
     gld_string res;
     char buf[1024];
     if (sizeof(buf) < sz)
@@ -3290,25 +3673,30 @@ public: // read accessors
   inline int32 get_int32(void) { return *(int32 *)(var->prop->addr); };
   inline int64 get_int64(void) { return *(int64 *)(var->prop->addr); };
   inline double get_double(void) { return *(double *)(var->prop->addr); };
-  inline gld::complex get_complex(void) {
+  inline gld::complex get_complex(void)
+  {
     return *(gld::complex *)(var->prop->addr);
   };
-  inline TIMESTAMP get_timestamp(void) {
+  inline TIMESTAMP get_timestamp(void)
+  {
     return *(TIMESTAMP *)(var->prop->addr);
   };
 
 public: // write accessors
-  inline size_t from_string(char *bp) {
+  inline size_t from_string(char *bp)
+  {
     if (!var)
       return -1;
     gld_property p(var);
     return p.from_string(bp);
   };
-  inline bool get(char *n) {
+  inline bool get(char *n)
+  {
     var = callback->global.find(n);
     return var != NULL;
   };
-  inline bool create(char *n, PROPERTYTYPE t, void *p) {
+  inline bool create(char *n, PROPERTYTYPE t, void *p)
+  {
     var = callback->global.create(n, t, p, NULL);
     return var != NULL;
   };
@@ -3317,13 +3705,15 @@ public: // external accessors
         // TODO
 public: // iterators
   inline GLOBALVAR *get_first(void) { return callback->global.find(""); };
-  inline bool is_last(void) {
+  inline bool is_last(void)
+  {
     if (!var)
       return false;
     else
       return (var->next == NULL);
   };
-  inline GLOBALVAR *get_next(void) {
+  inline GLOBALVAR *get_next(void)
+  {
     if (!var)
       return NULL;
     else
@@ -3332,13 +3722,15 @@ public: // iterators
 };
 
 /// Aggregation container
-class gld_aggregate {
+class gld_aggregate
+{
 private:
   std::shared_ptr<struct s_aggregate> aggr = nullptr;
 
 public:
   // inline gld_aggregate(void) { aggr= nullptr; };
-  inline gld_aggregate(char *spec, char *group) {
+  inline gld_aggregate(char *spec, char *group)
+  {
     // set_aggregate(spec,group);
     this->aggr = aggregate_mkgroup(spec, group);
   };
@@ -3353,7 +3745,8 @@ public:
 };
 
 /// Object list container
-class gld_objlist {
+class gld_objlist
+{
 private:
   struct s_objlist *list;
 
@@ -3364,11 +3757,13 @@ public:
   inline gld_objlist(void) : list(NULL) {};
   inline gld_objlist(char *group) { list = callback->objlist.search(group); };
   inline gld_objlist(CLASS *c, PROPERTY *m, char *p, char *o, void *a,
-                     void *b = NULL) {
+                     void *b = NULL)
+  {
     list = callback->objlist.create(c, m, p, o, a, b);
   };
   inline gld_objlist(char *cn, char *mn, char *p, char *o, void *a,
-                     void *b = NULL) {
+                     void *b = NULL)
+  {
     CLASS *c = callback->class_getname(cn);
     if (!c)
       exception("gld_objlist(): class '%s' is not found", cn);
@@ -3381,20 +3776,24 @@ public:
   inline ~gld_objlist(void) { callback->objlist.destroy(list); };
 
 public:
-  inline size_t set(char *group) {
+  inline size_t set(char *group)
+  {
     if (list)
       callback->objlist.destroy(list);
     list = callback->objlist.search(group);
     return list ? list->size : -1;
   };
-  inline size_t add(PROPERTY *m, char *p, char *o, void *a, void *b = NULL) {
+  inline size_t add(PROPERTY *m, char *p, char *o, void *a, void *b = NULL)
+  {
     return callback->objlist.add(list, m, p, o, a, b);
   };
-  inline size_t del(PROPERTY *m, char *p, char *o, void *a, void *b = NULL) {
+  inline size_t del(PROPERTY *m, char *p, char *o, void *a, void *b = NULL)
+  {
     return callback->objlist.add(list, m, p, o, a, b);
   };
   inline size_t add(char *cn, char *mn, char *p, char *o, void *a,
-                    void *b = NULL) {
+                    void *b = NULL)
+  {
     CLASS *c = callback->class_getname(cn);
     if (!c)
       exception("gld_objlist(): class '%s' is not found", cn);
@@ -3405,7 +3804,8 @@ public:
     return callback->objlist.add(list, m, p, o, a, b);
   };
   inline size_t del(char *cn, char *mn, char *p, char *o, void *a,
-                    void *b = NULL) {
+                    void *b = NULL)
+  {
     CLASS *c = callback->class_getname(cn);
     if (!c)
       exception("gld_objlist(): class '%s' is not found", cn);
@@ -3420,10 +3820,12 @@ public:
   inline bool is_valid(void) { return list != NULL; };
   inline size_t get_size(void) { return list->size; };
   inline OBJECT *get(size_t n) { return list->objlist[n]; };
-  inline int apply(void *arg, int (*function)(OBJECT *, void *, int)) {
+  inline int apply(void *arg, int (*function)(OBJECT *, void *, int))
+  {
     return callback->objlist.apply(list, arg, function);
   };
-  inline void exception(const char *msg, ...) {
+  inline void exception(const char *msg, ...)
+  {
     static char buf[1024];
     va_list ptr;
     va_start(ptr, msg);
@@ -3434,10 +3836,13 @@ public:
 };
 
 /// Web data container
-class gld_webdata {
+class gld_webdata
+{
 private:
-  struct s_http {
-    struct {
+  struct s_http
+  {
+    struct
+    {
       char *data;
       int size;
     } header,
@@ -3451,7 +3856,8 @@ public:
   inline ~gld_webdata(void) {};
 
 public:
-  inline bool open(char *url, size_t maxlen = 4096) {
+  inline bool open(char *url, size_t maxlen = 4096)
+  {
     result = (struct s_http *)callback->http.read(url, (int)maxlen);
     return is_valid();
   };
@@ -3475,7 +3881,8 @@ EXPORT int do_kill(void *);
 #include <winsock2.h>
 
 EXPORT int gld_major = MAJOR, gld_minor = MINOR;
-BOOL APIENTRY DllMain(HANDLE h, DWORD r) {
+BOOL APIENTRY DllMain(HANDLE h, DWORD r)
+{
   if (r == DLL_PROCESS_DETACH)
     do_kill(h);
   return TRUE;
@@ -3498,42 +3905,50 @@ CDECL int dllkill() { return do_kill(NULL); }
 #include "console.h"
 #endif // DLMAIN
 
-#define EXPORT_CREATE_C(X, C)                                                  \
-  EXPORT int create_##X(OBJECT **obj, OBJECT *parent) {                        \
-    try {                                                                      \
-      *obj = gl_create_object(C::oclass);                                      \
-      if (*obj != NULL) {                                                      \
-        C *my = object_data<C>(*obj);                                          \
-        return my->create();                                                   \
-      } else                                                                   \
-        return 0;                                                              \
-    }                                                                          \
-    CREATE_CATCHALL(X);                                                        \
+#define EXPORT_CREATE_C(X, C)                         \
+  EXPORT int create_##X(OBJECT **obj, OBJECT *parent) \
+  {                                                   \
+    try                                               \
+    {                                                 \
+      *obj = gl_create_object(C::oclass);             \
+      if (*obj != NULL)                               \
+      {                                               \
+        C *my = object_data<C>(*obj);                 \
+        return my->create();                          \
+      }                                               \
+      else                                            \
+        return 0;                                     \
+    }                                                 \
+    CREATE_CATCHALL(X);                               \
   }
 /// Implement class create export
 #define EXPORT_CREATE(X) EXPORT_CREATE_C(X, X)
 
-#define EXPORT_INIT_C(X, C)                                                    \
-  EXPORT int init_##X(OBJECT *obj, OBJECT *parent) {                           \
-    try {                                                                      \
-      if (obj != NULL)                                                         \
-        return /*OBJECTDATA(obj,C)*/ object_data<C>(obj)->init(parent);        \
-      else                                                                     \
-        return 0;                                                              \
-    }                                                                          \
-    INIT_CATCHALL(X);                                                          \
+#define EXPORT_INIT_C(X, C)                                             \
+  EXPORT int init_##X(OBJECT *obj, OBJECT *parent)                      \
+  {                                                                     \
+    try                                                                 \
+    {                                                                   \
+      if (obj != NULL)                                                  \
+        return /*OBJECTDATA(obj,C)*/ object_data<C>(obj)->init(parent); \
+      else                                                              \
+        return 0;                                                       \
+    }                                                                   \
+    INIT_CATCHALL(X);                                                   \
   }
 /// Implement class init export
 #define EXPORT_INIT(X) EXPORT_INIT_C(X, X)
 
-#define EXPORT_COMMIT_C(X, C)                                                  \
-  EXPORT TIMESTAMP commit_##X(OBJECT *obj, TIMESTAMP t1,                       \
-                              TIMESTAMP t2) { /*C *my = OBJECTDATA(obj,C);*/   \
-    C *my = object_data<C>(obj);                                               \
-    try {                                                                      \
-      return obj != NULL ? my->commit(t1, t2) : TS_NEVER;                      \
-    }                                                                          \
-    T_CATCHALL(C, commit);                                                     \
+#define EXPORT_COMMIT_C(X, C)                             \
+  EXPORT TIMESTAMP commit_##X(OBJECT *obj, TIMESTAMP t1,  \
+                              TIMESTAMP t2)               \
+  { /*C *my = OBJECTDATA(obj,C);*/                        \
+    C *my = object_data<C>(obj);                          \
+    try                                                   \
+    {                                                     \
+      return obj != NULL ? my->commit(t1, t2) : TS_NEVER; \
+    }                                                     \
+    T_CATCHALL(C, commit);                                \
   }
 /// Implement class commit export
 #define EXPORT_COMMIT(X) EXPORT_COMMIT_C(X, X)
@@ -3564,25 +3979,27 @@ CDECL int dllkill() { return do_kill(NULL); }
 // 		return 1; \
 // 	}
 
-#define EXPORT_NOTIFY_C(X, C)                                                  \
-  EXPORT int64 notify_##X(void *obj, ...) {                                    \
-    va_list args;                                                              \
-    va_start(args, obj);                                                       \
-    int notice = va_arg(args, int);                                            \
-    PROPERTY *prop = va_arg(args, PROPERTY *);                                 \
-    char *value = va_arg(args, char *);                                        \
-    va_end(args);                                                              \
-    C *my = object_data<C>((OBJECT *)obj);                                     \
-    if (!my)                                                                   \
-      return 0;                                                                \
-    switch (notice) {                                                          \
-    case NM_POSTUPDATE:                                                        \
-      return my->postnotify(prop, value);                                      \
-    case NM_PREUPDATE:                                                         \
-      return my->prenotify(prop, value);                                       \
-    default:                                                                   \
-      return 0;                                                                \
-    }                                                                          \
+#define EXPORT_NOTIFY_C(X, C)                  \
+  EXPORT int64 notify_##X(void *obj, ...)      \
+  {                                            \
+    va_list args;                              \
+    va_start(args, obj);                       \
+    int notice = va_arg(args, int);            \
+    PROPERTY *prop = va_arg(args, PROPERTY *); \
+    char *value = va_arg(args, char *);        \
+    va_end(args);                              \
+    C *my = object_data<C>((OBJECT *)obj);     \
+    if (!my)                                   \
+      return 0;                                \
+    switch (notice)                            \
+    {                                          \
+    case NM_POSTUPDATE:                        \
+      return my->postnotify(prop, value);      \
+    case NM_PREUPDATE:                         \
+      return my->prenotify(prop, value);       \
+    default:                                   \
+      return 0;                                \
+    }                                          \
   }
 #define EXPORT_NOTIFY(X) EXPORT_NOTIFY_C(X, X)
 
@@ -3634,11 +4051,14 @@ CDECL int dllkill() { return do_kill(NULL); }
 // ------------------------------
 #define EXPORT_SYNC_IMPL_C(NAME, CLASS)                                        \
   static TIMESTAMP sync_##NAME##_impl(OBJECT *object, TIMESTAMP t0,            \
-                                      PASSCONFIG pass) {                       \
-    try {                                                                      \
+                                      PASSCONFIG pass)                         \
+  {                                                                            \
+    try                                                                        \
+    {                                                                          \
       TIMESTAMP t1 = SYNC_NEVER_TS;                                            \
       CLASS *p = object_data<CLASS>(object);                                   \
-      switch (pass) {                                                          \
+      switch (pass)                                                            \
+      {                                                                        \
       case PC_PRETOPDOWN:                                                      \
         t1 = p->presync(t0);                                                   \
         break;                                                                 \
@@ -3656,15 +4076,21 @@ CDECL int dllkill() { return do_kill(NULL); }
            (PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN) & (~pass)) <= pass)  \
         object->clock = t0;                                                    \
       return t1;                                                               \
-    } catch (char *msg) {                                                      \
+    }                                                                          \
+    catch (char *msg)                                                          \
+    {                                                                          \
       (*callback->output_error)("sync_%s(obj=%d;%s): %s", #NAME, object->id,   \
                                 object->name ? object->name : "unnamed", msg); \
       return SYNC_INVALID_TS;                                                  \
-    } catch (const char *msg) {                                                \
+    }                                                                          \
+    catch (const char *msg)                                                    \
+    {                                                                          \
       (*callback->output_error)("sync_%s(obj=%d;%s): %s", #NAME, object->id,   \
                                 object->name ? object->name : "unnamed", msg); \
       return SYNC_INVALID_TS;                                                  \
-    } catch (const std::exception &ex) {                                       \
+    }                                                                          \
+    catch (const std::exception &ex)                                           \
+    {                                                                          \
       (*callback->output_error)(                                               \
           "sync_%s(obj=%d;%s): unhandled exception - %s", #NAME, object->id,   \
           object->name ? object->name : "unnamed", ex.what());                 \
@@ -3677,10 +4103,11 @@ CDECL int dllkill() { return do_kill(NULL); }
 // ------------------------------
 #ifndef __APPLE__
 
-#define EXPORT_SYNC_C(NAME, CLASS)                                             \
-  extern "C" MODULE_API TIMESTAMP sync_##NAME(OBJECT *object, TIMESTAMP t0,    \
-                                              PASSCONFIG pass) {               \
-    return sync_##NAME##_impl(object, t0, pass);                               \
+#define EXPORT_SYNC_C(NAME, CLASS)                                          \
+  extern "C" MODULE_API TIMESTAMP sync_##NAME(OBJECT *object, TIMESTAMP t0, \
+                                              PASSCONFIG pass)              \
+  {                                                                         \
+    return sync_##NAME##_impl(object, t0, pass);                            \
   }
 
 #else // __APPLE__
@@ -3689,27 +4116,30 @@ CDECL int dllkill() { return do_kill(NULL); }
  * - Enums are passed as 'int'. Read PASSCONFIG as 'int' and cast.
  * - TIMESTAMP is typically a 64-bit integral type; read with that exact type.
  */
-#define EXPORT_SYNC_C(NAME, CLASS)                                             \
-  extern "C" MODULE_API TIMESTAMP sync_##NAME(void *obj, ...) {                \
-    va_list args;                                                              \
-    va_start(args, obj);                                                       \
-    TIMESTAMP t0 = va_arg(args, TIMESTAMP);                                    \
-    int pass_i = va_arg(args, int); /* enum promotion */                       \
-    va_end(args);                                                              \
-                                                                               \
-    PASSCONFIG pass = static_cast<PASSCONFIG>(pass_i);                         \
-    OBJECT *object = static_cast<OBJECT *>(obj);                               \
-                                                                               \
-    if (!callback) {                                                           \
-      gl_error("callback is null in sync_%s", #NAME);                          \
-      return SYNC_INVALID_TS;                                                  \
-    }                                                                          \
-    if (!callback->time.local_datetime) {                                      \
-      gl_error("CRITICAL: local_datetime callback is null in pass %d",         \
-               pass_i);                                                        \
-      return SYNC_INVALID_TS;                                                  \
-    }                                                                          \
-    return sync_##NAME##_impl(object, t0, pass);                               \
+#define EXPORT_SYNC_C(NAME, CLASS)                                     \
+  extern "C" MODULE_API TIMESTAMP sync_##NAME(void *obj, ...)          \
+  {                                                                    \
+    va_list args;                                                      \
+    va_start(args, obj);                                               \
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);                            \
+    int pass_i = va_arg(args, int); /* enum promotion */               \
+    va_end(args);                                                      \
+                                                                       \
+    PASSCONFIG pass = static_cast<PASSCONFIG>(pass_i);                 \
+    OBJECT *object = static_cast<OBJECT *>(obj);                       \
+                                                                       \
+    if (!callback)                                                     \
+    {                                                                  \
+      gl_error("callback is null in sync_%s", #NAME);                  \
+      return SYNC_INVALID_TS;                                          \
+    }                                                                  \
+    if (!callback->time.local_datetime)                                \
+    {                                                                  \
+      gl_error("CRITICAL: local_datetime callback is null in pass %d", \
+               pass_i);                                                \
+      return SYNC_INVALID_TS;                                          \
+    }                                                                  \
+    return sync_##NAME##_impl(object, t0, pass);                       \
   }
 
 #endif // __APPLE__
@@ -3719,98 +4149,117 @@ CDECL int dllkill() { return do_kill(NULL); }
 // ------------------------------
 
 // Emit BOTH: impl + export with distinct NAME and CLASS
-#define EXPORT_SYNC2(NAME, CLASS)                                              \
-  EXPORT_SYNC_IMPL_C(NAME, CLASS)                                              \
+#define EXPORT_SYNC2(NAME, CLASS) \
+  EXPORT_SYNC_IMPL_C(NAME, CLASS) \
   EXPORT_SYNC_C(NAME, CLASS)
 
 // Emit BOTH when CLASS == NAME
 #define EXPORT_SYNC(NAME) EXPORT_SYNC2(NAME, NAME)
 
-#define EXPORT_ISA_C(X, C)                                                     \
-  EXPORT int isa_##X(OBJECT *obj, char *name) {                                \
-    return (obj != 0 && name != 0)                                             \
-               ? /*OBJECTDATA(obj,C)*/ object_data<C>(obj)->isa(name)          \
-               : 0;                                                            \
+#define EXPORT_ISA_C(X, C)                                            \
+  EXPORT int isa_##X(OBJECT *obj, char *name)                         \
+  {                                                                   \
+    return (obj != 0 && name != 0)                                    \
+               ? /*OBJECTDATA(obj,C)*/ object_data<C>(obj)->isa(name) \
+               : 0;                                                   \
   }
 /// Implement class isa export
 #define EXPORT_ISA(X) EXPORT_ISA_C(X, X)
 
-#define EXPORT_PLC_C(X, C)                                                     \
-  EXPORT TIMESTAMP plc_##X(OBJECT *obj, TIMESTAMP t1) {                        \
-    try {                                                                      \
-      return object_data<C>(obj)->plc(t1); /*OBJECTDATA(obj,C)->plc(t1);*/     \
-    }                                                                          \
-    T_CATCHALL(plc, X);                                                        \
+#define EXPORT_PLC_C(X, C)                                                 \
+  EXPORT TIMESTAMP plc_##X(OBJECT *obj, TIMESTAMP t1)                      \
+  {                                                                        \
+    try                                                                    \
+    {                                                                      \
+      return object_data<C>(obj)->plc(t1); /*OBJECTDATA(obj,C)->plc(t1);*/ \
+    }                                                                      \
+    T_CATCHALL(plc, X);                                                    \
   }
 /// Implement class plc export
 #define EXPORT_PLC(X) EXPORT_PLC_C(X, X)
 
 // TODO add other linkages as needed
-#define EXPORT_PRECOMMIT_C(X, C)                                               \
-  EXPORT int precommit_##X(OBJECT *obj,                                        \
-                           TIMESTAMP t1) { /*C *my = OBJECTDATA(obj,C);*/      \
-    C *my = object_data<C>(obj);                                               \
-    try {                                                                      \
-      return obj != NULL ? my->precommit(t1) : 0;                              \
-    }                                                                          \
-    T_CATCHALL(C, precommit);                                                  \
+#define EXPORT_PRECOMMIT_C(X, C)                  \
+  EXPORT int precommit_##X(OBJECT *obj,           \
+                           TIMESTAMP t1)          \
+  { /*C *my = OBJECTDATA(obj,C);*/                \
+    C *my = object_data<C>(obj);                  \
+    try                                           \
+    {                                             \
+      return obj != NULL ? my->precommit(t1) : 0; \
+    }                                             \
+    T_CATCHALL(C, precommit);                     \
   }
 /// Implement class precommit export
 #define EXPORT_PRECOMMIT(X) EXPORT_PRECOMMIT_C(X, X)
 
-#define EXPORT_FINALIZE_C(X, C)                                                \
-  EXPORT int finalize_##X(OBJECT *obj) { /*C *my = OBJECTDATA(obj,C);*/        \
-    C *my = object_data<C>(obj);                                               \
-    try {                                                                      \
-      return obj != NULL ? my->finalize() : 0;                                 \
-    }                                                                          \
-    T_CATCHALL(C, finalize);                                                   \
+#define EXPORT_FINALIZE_C(X, C)                \
+  EXPORT int finalize_##X(OBJECT *obj)         \
+  { /*C *my = OBJECTDATA(obj,C);*/             \
+    C *my = object_data<C>(obj);               \
+    try                                        \
+    {                                          \
+      return obj != NULL ? my->finalize() : 0; \
+    }                                          \
+    T_CATCHALL(C, finalize);                   \
   }
 /// Implement class finalize export
 #define EXPORT_FINALIZE(X) EXPORT_FINALIZE_C(X, X)
 
-#define EXPORT_NOTIFY_C_P(X, C, P)                                             \
-  EXPORT int notify_##X##_##P(OBJECT *obj,                                     \
-                              char *value) { /*C *my = OBJECTDATA(obj,C);*/    \
-    C *my = object_data<C>(obj);                                               \
-    try {                                                                      \
-      if (obj != NULL) {                                                       \
-        return my->notify_##P(value);                                          \
-      } else                                                                   \
-        return 0;                                                              \
-    }                                                                          \
-    T_CATCHALL(X, notify_##P);                                                 \
-    return 1;                                                                  \
+#define EXPORT_NOTIFY_C_P(X, C, P)         \
+  EXPORT int notify_##X##_##P(OBJECT *obj, \
+                              char *value) \
+  { /*C *my = OBJECTDATA(obj,C);*/         \
+    C *my = object_data<C>(obj);           \
+    try                                    \
+    {                                      \
+      if (obj != NULL)                     \
+      {                                    \
+        return my->notify_##P(value);      \
+      }                                    \
+      else                                 \
+        return 0;                          \
+    }                                      \
+    T_CATCHALL(X, notify_##P);             \
+    return 1;                              \
   }
 /// Implement property notify export
 #define EXPORT_NOTIFY_PROP(X, P) EXPORT_NOTIFY_C_P(X, X, P)
 
-#define EXPORT_LOADMETHOD_C(X, C, N)                                           \
-  EXPORT int loadmethod_##X##_##N(                                             \
-      OBJECT *obj, char *value) { /*C *my = OBJECTDATA(obj,C);*/               \
-    C *my = object_data<C>(obj);                                               \
-    try {                                                                      \
-      if (obj != NULL) {                                                       \
-        return my->N(value);                                                   \
-      } else                                                                   \
-        return 0;                                                              \
-    }                                                                          \
-    T_CATCHALL(X, loadmethod);                                                 \
+#define EXPORT_LOADMETHOD_C(X, C, N) \
+  EXPORT int loadmethod_##X##_##N(   \
+      OBJECT *obj, char *value)      \
+  { /*C *my = OBJECTDATA(obj,C);*/   \
+    C *my = object_data<C>(obj);     \
+    try                              \
+    {                                \
+      if (obj != NULL)               \
+      {                              \
+        return my->N(value);         \
+      }                              \
+      else                           \
+        return 0;                    \
+    }                                \
+    T_CATCHALL(X, loadmethod);       \
   }
 #define EXPORT_LOADMETHOD(X, N) EXPORT_LOADMETHOD_C(X, X, N)
 
-#define DECL_METHOD(X, N)                                                      \
+#define DECL_METHOD(X, N) \
   EXPORT int method_##X##_##N(OBJECT *obj, char *value, size_t size)
-#define EXPORT_METHOD_C(X, C, N)                                               \
-  DECL_METHOD(X, N) { /*C *my = OBJECTDATA(obj,C);*/                           \
-    C *my = object_data<C>(obj);                                               \
-    try {                                                                      \
-      if (obj != NULL) {                                                       \
-        return my->N(value, size);                                             \
-      } else                                                                   \
-        return 0;                                                              \
-    }                                                                          \
-    T_CATCHALL(X, method);                                                     \
+#define EXPORT_METHOD_C(X, C, N)   \
+  DECL_METHOD(X, N)                \
+  { /*C *my = OBJECTDATA(obj,C);*/ \
+    C *my = object_data<C>(obj);   \
+    try                            \
+    {                              \
+      if (obj != NULL)             \
+      {                            \
+        return my->N(value, size); \
+      }                            \
+      else                         \
+        return 0;                  \
+    }                              \
+    T_CATCHALL(X, method);         \
   }
 #define EXPORT_METHOD(X, N) EXPORT_METHOD_C(X, X, N)
 
@@ -3852,7 +4301,8 @@ CDECL int dllkill() { return do_kill(NULL); }
 #define DLSYM(H, S) dlsym(H, S)
 #endif
 
-class glsolver {
+class glsolver
+{
 public:
   int (*init)(void *);
   int (*solve)(void *);
@@ -3860,7 +4310,8 @@ public:
   int (*get)(const char *, ...);
 
 private:
-  inline void exception(const char *fmt, ...) {
+  inline void exception(const char *fmt, ...)
+  {
     static char buffer[1024] = "";
     va_list ptr;
     va_start(ptr, fmt);
@@ -3872,18 +4323,22 @@ private:
   };
 
 public:
-  inline glsolver(const char *name, const char *lib = "glsolvers" DLEXT) {
+  inline glsolver(const char *name, const char *lib = "glsolvers" DLEXT)
+  {
     char path[1024];
     errno = 0;
     if (callback->file.find_file(lib, NULL, X_OK | R_OK, path, sizeof(path)) !=
-        NULL) {
+        NULL)
+    {
       errno = 0;
       void *handle = DLLOAD(path);
       if (handle == NULL)
         exception("glsolver(char *name='%s'): load of '%s' failed", name, path);
-      else {
+      else
+      {
         char fname[64];
-        struct {
+        struct
+        {
           const char *part;
           void **func;
         } map[] = {
@@ -3893,7 +4348,8 @@ public:
             {"get", (void **)&get},
         };
         int n;
-        for (n = 0; n < sizeof(map) / sizeof(map[0]); n++) {
+        for (n = 0; n < sizeof(map) / sizeof(map[0]); n++)
+        {
           strcpy(fname, name);
           strcat(fname, "_");
           strcat(fname, map[n].part);
@@ -3908,7 +4364,8 @@ public:
         if (!(*init)(callback))
           exception("glsolver(char *name='%s'): init failed", name);
       }
-    } else
+    }
+    else
       exception("glsolver(char *name='%s'): solver library '%s' not found",
                 name, lib);
   };

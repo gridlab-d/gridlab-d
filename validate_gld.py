@@ -1,3 +1,7 @@
+
+import os
+print(f"[validate_gld.py] __file__={__file__}", flush=True)
+
 from argparse import ArgumentParser
 from pathlib import Path
 import math
@@ -11,9 +15,16 @@ autotestFiles = []
 gldBinary = None
 
 
-def _run_one(args):
+def _run_one(args):   
     """Unpack a (autotestFile, binFile) tuple and run the test."""
-    return runAutotest(*args)
+    try:
+        return runAutotest(*args)
+    except Exception as e:
+        # Log minimal info and mark as failure (rv=1)
+        autotestFile, _ = args
+        print(f"[worker-error] {autotestFile}: {e}", flush=True)
+        return 1
+
 
 
 def getGLDBinary():
@@ -68,7 +79,8 @@ def processModuleDirectory(moduleDirectory: Path, runOptionalTests: bool):
                     autotestDir.resolve()
                     if not autotestDir.exists():
                         autotestDir.mkdir()
-                    shutil.copy(autotestChild, autotestDir)
+                    # shutil.copy(autotestChild, autotestDir)
+
 
 
 def runAutotest(autotestFile: Path, binFile: str) -> int:
@@ -76,17 +88,39 @@ def runAutotest(autotestFile: Path, binFile: str) -> int:
     Run a single autotest file using GridLAB-D.
     """
     print(f"Running autotest: {autotestFile}", flush=True)
-    autotestDir = autotestFile.parent / autotestFile.stem
-    autotestDir.resolve()
-    command = [binFile, str(autotestFile.name)]
-    result = subprocess.run(command, cwd=autotestDir, capture_output=True)
+
+    # Parent directory that holds the model and all its assets (players, CSVs, etc.)
+    src_dir = autotestFile.parent                 # e.g., .../<module>/autotest
+
+    # Per-test work directory (where logs like gridlabd.err/out will be written)
+    work_dir = src_dir / autotestFile.stem        # e.g., .../autotest/test_foo
+    work_dir.resolve()
+    if not work_dir.exists():
+        work_dir.mkdir()
+
+    # Compose command: run from parent directory, write outputs into work_dir
+    command = [binFile, "-W", str(work_dir), autotestFile.name]
+
+    # Capture raw bytes to avoid UnicodeDecodeError
+    result = subprocess.run(
+        command,
+        cwd=src_dir,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=False,  # <-- CRITICAL: captures bytes, no decoding
+    )
+
+    # Persist outputs (parity with validate.cpp)
+    (work_dir / "gridlabd.out").write_bytes(result.stdout)
+    (work_dir / "gridlabd.err").write_bytes(result.stderr)
+
+    # Classification logic (same as your harness)
     rv = 0
     if result.returncode != 0 and "_err" not in autotestFile.stem:
         rv = 1
     elif result.returncode == 0 and "_err" in autotestFile.stem:
         rv = 2
     return rv
-
 
 def getGLDVersionInfo() -> str:
     """
@@ -182,6 +216,7 @@ def main(module: str, runOptionalTests: bool, threads: int):
         procs = min(procs, len(autotestFiles))
         results = []
         startTime = time.perf_counter_ns()
+        
         with multiprocessing.Pool(procs) as p:
             # results = p.starmap(runAutotest, autotestFiles)
             done = 0

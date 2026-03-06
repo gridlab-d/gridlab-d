@@ -258,19 +258,23 @@ PROPERTYSPEC property_type[_PT_LAST] = {
     {"method", "string", sizeof(METHODCALL), 0, convert_from_method,
      convert_to_method}};
 
-PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype) {
+PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype)
+{
   return &(property_type[ptype]);
 }
 
 /** Check whether the properties as defined are mapping safely to memory
         @return 0 on failure, 1 on success
  **/
-int property_check(void) {
+int property_check(void)
+{
   PROPERTYTYPE ptype;
   int status = 1;
-  for (ptype = _PT_FIRST, ++ptype; ptype < _PT_LAST; ++ptype) {
+  for (ptype = _PT_FIRST, ++ptype; ptype < _PT_LAST; ++ptype)
+  {
     size_t sz = 0;
-    switch (ptype) {
+    switch (ptype)
+    {
     case PT_double:
       sz = sizeof(double);
       break;
@@ -340,12 +344,15 @@ int property_check(void) {
     output_verbose(
         "property_check of %s: declared size is %d, actual size is %d",
         property_type[ptype].name, property_type[ptype].size, sz);
-    if (sz > 0 && property_type[ptype].size < sz) {
+    if (sz > 0 && property_type[ptype].size < sz)
+    {
       status = 0;
       output_error("declared size of property %s smaller than actual size in "
                    "memory on this platform (declared %d, actual %d)",
                    property_type[ptype].name, property_type[ptype].size, sz);
-    } else if (sz > 0 && property_type[ptype].size != sz) {
+    }
+    else if (sz > 0 && property_type[ptype].size != sz)
+    {
       output_warning("declared size of property %s does not match actual size "
                      "in memory on this platform (declared %d, actual %d)",
                      property_type[ptype].name, property_type[ptype].size, sz);
@@ -356,12 +363,16 @@ int property_check(void) {
 
 PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass,
                           std::string_view name, void *addr,
-                          DELEGATEDTYPE *delegation) {
+                          DELEGATEDTYPE *delegation)
+{
   // Guard against duplicate properties — but only if oclass is valid
-  if (oclass != nullptr) {
+  if (oclass != nullptr)
+  {
     for (PROPERTY *existing = oclass->pmap;
-         existing && existing->oclass == oclass; existing = existing->next) {
-      if (name == std::string_view(existing->name)) {
+         existing && existing->oclass == oclass; existing = existing->next)
+    {
+      if (name == std::string_view(existing->name))
+      {
         // Already exists — return the existing one instead of creating a
         // duplicate
         return existing;
@@ -371,7 +382,8 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass,
   char unitspec[1024];
   PROPERTY *prop = (PROPERTY *)malloc(sizeof(PROPERTY));
 
-  if (prop == nullptr) {
+  if (prop == nullptr)
+  {
     output_error("property_malloc(oclass='%s',...): memory allocation failed",
                  oclass->name, name);
     /*	TROUBLESHOOT
@@ -394,7 +406,8 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass,
   prop->unit = nullptr;
   prop->notify = 0;
   prop->notify_override = false;
-  if (sscanf(name.data(), "%[^[][%[^]]]", prop->name, unitspec) == 2) {
+  if (sscanf(name.data(), "%[^[][%[^]]]", prop->name, unitspec) == 2)
+  {
     /* detect when a unit is associated with non-double/complex property */
     if (prop->ptype != PT_double && prop->ptype != PT_complex)
       output_error("property_malloc(oclass='%s',...): property %s cannot have "
@@ -407,7 +420,8 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass,
      */
 
     /* verify that the requested unit exists or can be derived */
-    else {
+    else
+    {
       if ((prop->unit = unit_find(unitspec)) == nullptr)
         throw_exception("property_malloc(oclass='%s',...): property %s unit "
                         "'%s' is not recognized",
@@ -442,33 +456,40 @@ Error:
 /** Get the size of a single instance of a property
         @return the size in bytes of the a property
  **/
-uint32 property_size(PROPERTY *prop) {
+uint32 property_size(PROPERTY *prop)
+{
   if (prop && prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
     return property_type[prop->ptype].size;
   else
     return 0;
 }
 
-uint32 property_size_by_type(PROPERTYTYPE type) {
+uint32 property_size_by_type(PROPERTYTYPE type)
+{
   return property_type[type].size;
 }
 
-int property_create(PROPERTY *prop, void *addr) {
-  if (prop && prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST) {
+int property_create(PROPERTY *prop, void *addr)
+{
+  if (prop && prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
+  {
     if (property_type[prop->ptype].create)
       return property_type[prop->ptype].create(addr);
     if ((int)property_type[prop->ptype].size > 0)
       memset(addr, 0, property_type[prop->ptype].size);
     return 1;
-  } else
+  }
+  else
     return 0;
 }
 
-size_t property_minimum_buffersize(PROPERTY *prop) {
+size_t property_minimum_buffersize(PROPERTY *prop)
+{
   size_t size = property_type[prop->ptype].csize;
   if (size > 0)
     return size;
-  switch (prop->ptype) {
+  switch (prop->ptype)
+  {
   /* @todo dynamic sizing */
   default:
     return 0;
@@ -476,7 +497,8 @@ size_t property_minimum_buffersize(PROPERTY *prop) {
   return 0;
 }
 
-PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr) {
+PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr)
+{
   int n;
   for (n = 0; n < _TCOP_LAST; n++)
     if (strcmp(property_type[ptype].compare[n].str, opstr) == 0)
@@ -485,22 +507,26 @@ PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr) {
 }
 
 bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x,
-                            void *a, void *b, const char *part) {
+                            void *a, void *b, const char *part)
+{
   if (part == nullptr && property_type[ptype].compare[op].fn != nullptr)
     return property_type[ptype].compare[op].fn(x, a, b);
-  else if (property_type[ptype].get_part != nullptr) {
+  else if (property_type[ptype].get_part != nullptr)
+  {
     double d = property_type[ptype].get_part
                    ? property_type[ptype].get_part(x, part)
                    : QNAN;
     if (isfinite(d))
       // parts always double (for now)
       return property_type[PT_double].compare[op].fn((void *)&d, a, b);
-    else {
+    else
+    {
       output_error("part %s is not defined for type %s", part,
                    property_type[ptype].name);
       return 0;
     }
-  } else // no comparison possible
+  }
+  else // no comparison possible
   {
     output_error(
         "property type '%s' does not support comparison operations or parts",
@@ -509,27 +535,33 @@ bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x,
   }
 }
 
-PROPERTYTYPE property_get_type(char *name) {
+PROPERTYTYPE property_get_type(char *name)
+{
   PROPERTYTYPE ptype;
-  for (ptype = _PT_FIRST, ++ptype; ptype < _PT_LAST; ++ptype) {
+  for (ptype = _PT_FIRST, ++ptype; ptype < _PT_LAST; ++ptype)
+  {
     if (strcmp(property_type[ptype].name, name) == 0)
       return ptype;
   }
   return PT_void;
 }
 
-double property_get_part(OBJECT *obj, PROPERTY *prop, const char *part) {
+double property_get_part(OBJECT *obj, PROPERTY *prop, const char *part)
+{
   PROPERTYSPEC *spec = property_getspec(prop->ptype);
-  if (spec && spec->get_part) {
+  if (spec && spec->get_part)
+  {
     return spec->get_part(get_addr(obj, prop), part);
-  } else
+  }
+  else
     return QNAN;
 }
 
 /*********************************************************
  * PROPERTY PARTS
  *********************************************************/
-double complex_get_part(void *x, const char *name) {
+double complex_get_part(void *x, const char *name)
+{
   gld::complex *c = (gld::complex *)x;
   if (strcmp(name, "real") == 0)
     return c->Re();
@@ -587,8 +619,8 @@ double complex_get_part(void *x, const char *name) {
 //)
 //		{
 //			if ( strcmp(subpart,"real")==0 ) return
-//a->get_addr(n,m)->Re(); 			else if ( strcmp(subpart,"imag")==0 ) return
-//a->get_addr(n,m)->Im(); 			else return QNAN;
+// a->get_addr(n,m)->Re(); 			else if ( strcmp(subpart,"imag")==0 ) return
+// a->get_addr(n,m)->Im(); 			else return QNAN;
 //		}
 //	}
 //	return QNAN;
