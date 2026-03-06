@@ -16,7 +16,8 @@
 #include "gridlabd.h"
 #include "market.h"
 
-class controller : public gld_object {
+class controller : public gld_object
+{
 public:
   controller(MODULE *);
   int create(void);
@@ -28,7 +29,8 @@ public:
   static CLASS *oclass;
 
 public:
-  typedef enum {
+  typedef enum
+  {
     SM_NONE,
     SM_HOUSE_HEAT,
     SM_HOUSE_COOL,
@@ -39,14 +41,16 @@ public:
   } SIMPLE_MODE;
   enumeration simplemode;
 
-  typedef enum {
+  typedef enum
+  {
     BM_OFF,
     BM_ON,
     BM_PROXY,
   } BIDMODE;
   enumeration bidmode;
 
-  typedef enum {
+  typedef enum
+  {
     CN_RAMP,
     CN_DOUBLE_RAMP,
     CN_DEV_LEVEL,
@@ -54,13 +58,15 @@ public:
   } CONTROLMODE;
   enumeration control_mode;
 
-  typedef enum {
+  typedef enum
+  {
     RM_DEADBAND,
     RM_SLIDING,
   } RESOLVEMODE;
   enumeration resolve_mode;
 
-  typedef enum {
+  typedef enum
+  {
     TM_INVALID = 0,
     TM_OFF = 1,
     TM_HEAT = 2,
@@ -68,9 +74,19 @@ public:
   } THERMOSTATMODE;
   enumeration thermostat_mode, last_mode, previous_mode;
 
-  typedef enum { OU_OFF = 0, OU_ON = 1 } OVERRIDE_USE;
+  typedef enum
+  {
+    OU_OFF = 0,
+    OU_ON = 1
+  } OVERRIDE_USE;
   enumeration use_override;
 
+private:
+  enumeration ENUM_OFF = 0;
+  enumeration ENUM_ON = 0;
+  enumeration ENUM_UNKNOWN = 0;
+
+public:
   double kT_L, kT_H;
   char target[33];
   char setpoint[33];
@@ -277,15 +293,18 @@ private:
   double proxy_marginal_fraction2;
 
 public:
-  static inline controller *get_defaults() {
-    if (!defaults) {
+  static inline controller *get_defaults()
+  {
+    if (!defaults)
+    {
       defaults = new controller(); // Initialize lazily
     }
     return defaults;
   }
 
   controller() {}
-  ~controller() {
+  ~controller()
+  {
     if (defaults)
       delete defaults;
   }
@@ -295,26 +314,30 @@ protected:
 
 public:
   // Static inline method to get the byte offset of the member `marketunit`.
-  static inline size_t get_marketunit_offset(void) {
+  static inline size_t get_marketunit_offset(void)
+  {
     controller *current_defaults = get_defaults();
     return reinterpret_cast<const char *>(&(current_defaults->marketunit)) -
            reinterpret_cast<const char *>(current_defaults);
   }
 
   // Getter method to safely retrieve the string value of `marketunit`.
-  inline std::string get_marketunit(void) {
+  inline std::string get_marketunit(void)
+  {
     auto &mtx = SharedMutexManager::get_mutex(my());
     std::shared_lock<std::shared_mutex> lock(mtx);
     return std::string(marketunit);
   }
 
   // Getter method to retrieve `gld_property` for `marketunit`.
-  inline gld_property get_marketunit_property(void) {
+  inline gld_property get_marketunit_property(void)
+  {
     return gld_property(my(), std::string("marketunit").c_str());
   }
 
   // Setter method to update the value for `marketunit` using a string.
-  inline void set_marketunit(const std::string &str) {
+  inline void set_marketunit(const std::string &str)
+  {
     auto &mtx = SharedMutexManager::get_mutex(my());
     std::unique_lock<std::shared_mutex> lock(mtx);
     strncpy(marketunit, str.c_str(), sizeof(marketunit) - 1);
